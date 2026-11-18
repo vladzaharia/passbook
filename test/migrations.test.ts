@@ -1369,8 +1369,8 @@ describe('0095_tag_enrollments migration', () => {
     ) =>
       run(
         env.DB,
-        `INSERT INTO tag_enrollments (id, org_id, mode, pass_id, scanner_id, requested_by, scope, user_id, state, created_at, expires_at)
-         VALUES (?, ?, 'live', ?, ?, 'admin', ?, ?, ?, 1000, ?)`,
+        `INSERT INTO tag_enrollments (id, org_id, mode, pass_id, scanner_id, requested_by, scope, user_id, state, created_at, expires_at, holder_generation)
+         VALUES (?, ?, 'live', ?, ?, 'admin', ?, ?, ?, 1000, ?, 0)`,
         [
           id,
           over.org ?? org.id,
@@ -1403,9 +1403,9 @@ describe('0095_tag_enrollments migration', () => {
     expect(scanner.id).not.toBe(spare.id);
   });
 
-  it('refuses a window over two minutes, a scanner or pass of another tenant, and a user scope for a stranger', async () => {
+  it('refuses a window over 90 seconds, a scanner or pass of another tenant, and a user scope for a stranger', async () => {
     const { f, pass, insert } = await setup();
-    await expect(insert('long', { ttl: 120_001 })).rejects.toThrow(/CHECK/);
+    await expect(insert('long', { ttl: 90_001 })).rejects.toThrow(/CHECK/);
     const foreign = await makeOrg(f);
     const foreignScanner = await makeScanner(f, { orgId: foreign.id });
     await expect(insert('x1', { scanner: foreignScanner.id })).rejects.toThrow(/enrollment_tenant/);
@@ -1435,5 +1435,70 @@ describe('0095_tag_enrollments migration', () => {
     ).rejects.toThrow(/enrollment_immutable/);
     await run(env.DB, 'DELETE FROM scanners WHERE id = ?', [scanner.id]);
     expect(await first(env.DB, "SELECT 1 AS x FROM tag_enrollments WHERE id = 'e5'")).toBeNull();
+  });
+
+  /** A finished request pointing at a binding of its pass. */
+  async function done() {
+    const { f, org, pass, scanner, insert } = await setup();
+    const tagId = `t-${f.ids.token(4)}`;
+    const ref = f.ids
+      .token(32)
+      .replace(/[^0-9a-f]/g, 'a')
+      .padEnd(64, 'a')
+      .slice(0, 64);
+    const eid = `d-${f.ids.token(4)}`;
+    const bid = `b-${f.ids.token(4)}`;
+    await run(
+      env.DB,
+      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES (?, ?, 'live', ?, 'uid', ?, 1)",
+      [tagId, org.id, ref, ref.slice(0, 4).toUpperCase()],
+    );
+    await insert(eid);
+    await run(
+      env.DB,
+      `INSERT INTO tag_bindings (id, tag_id, scope, pass_id, source, bound_at, bound_by_type, bound_by, holder_generation)
+       VALUES (?, ?, 'pass', ?, 'remote', 1, 'user', 'x', 0)`,
+      [bid, tagId, pass.id],
+    );
+    await run(
+      env.DB,
+      "UPDATE tag_enrollments SET state = 'done', ended_at = 2000, binding_id = ? WHERE id = ?",
+      [bid, eid],
+    );
+    return { org, pass, scanner, tagId, eid, bid };
+  }
+  const bindingOf = async (id: string) =>
+    (
+      await first<{ binding_id: string | null }>(
+        env.DB,
+        'SELECT binding_id FROM tag_enrollments WHERE id = ?',
+        [id],
+      )
+    )?.binding_id;
+  const rowOf = (id: string) =>
+    first(env.DB, 'SELECT 1 AS x FROM tag_enrollments WHERE id = ?', [id]);
+
+  it('lets the binding of a finished request go with its tag, and the row go with its pass', async () => {
+    const a = await done();
+    await run(env.DB, 'DELETE FROM nfc_tags WHERE id = ?', [a.tagId]);
+    expect(await bindingOf(a.eid)).toBeNull();
+    expect(await rowOf(a.eid)).not.toBeNull();
+    const b = await done();
+    await run(env.DB, 'DELETE FROM passes WHERE id = ?', [b.pass.id]);
+    expect(await rowOf(b.eid)).toBeNull();
+  });
+
+  it('lets a binding be deleted (as a user delete cascades) and still fixes the rest of a finished row', async () => {
+    const c = await done();
+    await run(env.DB, 'DELETE FROM tag_bindings WHERE id = ?', [c.bid]);
+    expect(await bindingOf(c.eid)).toBeNull();
+    for (const set of [
+      "error_code = 'X'",
+      "state = 'pending', ended_at = NULL",
+      'holder_generation = 9',
+    ])
+      await expect(
+        run(env.DB, `UPDATE tag_enrollments SET ${set} WHERE id = ?`, [c.eid]),
+      ).rejects.toThrow(/enrollment_immutable|CHECK/);
   });
 });

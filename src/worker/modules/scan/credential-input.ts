@@ -1,7 +1,7 @@
 import type { ScanCodeInput, ScanInput } from '../../../shared/contracts/scan.ts';
 import { isKeyEnvName } from '../../platform/crypto.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { UnavailableError, ValidationError } from '../../platform/errors.ts';
+import { UnavailableError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
@@ -17,15 +17,8 @@ import {
 } from './repo-credential-tombstones.ts';
 
 type Mode = 'live' | 'test';
-
-/** Until tag reads resolve, a tag input is refused before it reaches the code and pass-id paths. */
-export function withCodeInput<T extends { input: ScanInput }>(
-  req: T,
-): Omit<T, 'input'> & { input: ScanCodeInput } {
-  if ('tag' in req.input)
-    throw new ValidationError('Tag reads are not available yet.', [], 'TAG_READS_UNAVAILABLE');
-  return { ...req, input: req.input };
-}
+/** A request's input as sent, or as the code and pass-id paths take it. */
+type AnyScanInput = ScanInput | ScanCodeInput;
 
 /** Keyed refs are transient input authority, never ledger or response fields. */
 export interface CredentialTombstoneSnapshot {
@@ -131,11 +124,12 @@ export async function credentialTombstoneRefsForInput(
   ctx: ServiceContext,
   orgId: string,
   mode: Mode,
-  input: ScanCodeInput,
+  input: AnyScanInput,
   includeOtherMode = true,
   keysetPolicy: 'require' | 'defer' = 'defer',
 ): Promise<CredentialTombstoneSnapshot> {
-  const code = 'passId' in input ? null : input.code;
+  // A tag read carries no credential refs, like a pass id: the tag is checked on its own rows.
+  const code = 'code' in input ? input.code : null;
   const credentialEnv = snapshotCredentialEnv(ctx.env);
   const credentialKeysetCommitment = await (keysetPolicy === 'require'
     ? requireCredentialRefKeyset(credentialEnv.DB, credentialEnv)
@@ -158,9 +152,9 @@ export async function credentialTombstoneRefsForInput(
   return { credentialKeysetCommitment, credentialTombstoneRefs, otherModeCredentialTombstoneRefs };
 }
 
-/** A code must carry both mode-specific ref sets; only an explicit passId uses empty sets. */
+/** A code must carry both mode-specific ref sets; a pass id or a tag read uses empty sets. */
 export function credentialInputValid(
-  input: ScanCodeInput,
+  input: AnyScanInput,
   observed: CredentialTombstoneSnapshot,
 ): boolean {
   if (!observed || typeof observed !== 'object') return false;
@@ -168,7 +162,7 @@ export function credentialInputValid(
   const other = observed.otherModeCredentialTombstoneRefs;
   if (!validCredentialKeysetCommitment(observed.credentialKeysetCommitment)) return false;
   if (!validCredentialTombstoneRefs(own) || !validCredentialTombstoneRefs(other)) return false;
-  return 'passId' in input
-    ? own.length === 0 && other.length === 0
-    : own.length > 0 && other.length > 0;
+  return 'code' in input
+    ? own.length > 0 && other.length > 0
+    : own.length === 0 && other.length === 0;
 }

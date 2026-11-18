@@ -172,3 +172,14 @@ export function dueNow(g: Grant, places: readonly string[], now: number): Grante
     );
   return out;
 }
+
+/** Put an in row on a recomputed due time; it holds only while no scan has touched the row since it was read. */
+export const setDue = (
+  g: Grant,
+  r: { passId: string; place: string; lastScanId: string },
+  due: number | null,
+): GrantedStatement =>
+  g.update('scan_presence', {
+    set: { due_at: due },
+    where: { pass_id: r.passId, scope: r.place, last_scan_id: r.lastScanId, state: 'in' },
+  });

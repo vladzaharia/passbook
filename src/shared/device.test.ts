@@ -6,6 +6,10 @@ const SAFARI = 'Version/18.0 Mobile/15E148 Safari/604.1';
 const IPHONE = `Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) ${SAFARI}`;
 const MAC = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Version/18.0 Safari/605.1.15';
 const GSA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) GSA/330.0 Mobile/15E148';
+const PIXEL =
+  'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36';
+const GALAXY =
+  'Mozilla/5.0 (Linux; Android 15; SM-S928B) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36';
 const FB_ANDROID = 'Mozilla/5.0 (Linux; Android 14) [FBAN/FB4A;FBAV/450.0]';
 
 describe('passDevice', () => {
@@ -17,7 +21,7 @@ describe('passDevice', () => {
     // iPadOS asks for the desktop site with a Mac agent; its touch points give it away.
     [MAC, 5, 'other', false],
     [`Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) ${SAFARI}`, 5, 'other', false],
-    [FB_ANDROID, 5, 'other', true],
+    [FB_ANDROID, 5, 'android', true],
     [GSA, 5, 'iphone', true],
     [
       'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 [LinkedInApp]',
@@ -25,6 +29,15 @@ describe('passDevice', () => {
       'iphone',
       true,
     ],
+    [PIXEL, 5, 'android', false],
+    [GALAXY, 5, 'galaxy', false],
+    [
+      'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-A546B) Chrome/120.0 Mobile Safari/537.36',
+      5,
+      'galaxy',
+      false,
+    ],
+    ['Mozilla/5.0 (Linux; Android 14; Pixel 8) SamsungBrowser/25.0 Mobile', 5, 'android', false],
     [undefined, undefined, 'other', false],
   ])('%s (%s touch points)', (ua, touch, device, inApp) => {
     expect(passDevice(ua, touch)).toEqual({ device, inApp });
@@ -33,16 +46,9 @@ describe('passDevice', () => {
 
 describe('the add path', () => {
   it('adds on iPhone and Mac; shows the QR wherever it is not the phone', () => {
-    expect(['iphone', 'mac', 'other'].map((d) => canAddToWallet(d as never))).toEqual([
-      true,
-      true,
-      false,
-    ]);
-    expect(['iphone', 'mac', 'other'].map((d) => showsAddQr(d as never))).toEqual([
-      false,
-      true,
-      true,
-    ]);
+    const all = ['iphone', 'mac', 'other', 'android', 'galaxy'] as never[];
+    expect(all.map(canAddToWallet)).toEqual([true, true, false, false, false]);
+    expect(all.map(showsAddQr)).toEqual([false, true, true, false, false]);
   });
 
   it('says how to add where this browser cannot', () => {
@@ -52,5 +58,6 @@ describe('the add path', () => {
     expect(addLine(passDevice(GSA))).toBe(HOLDER_COPY.openInSafari);
     // Safari means nothing on Android: an in-app view there still goes to an Apple device.
     expect(addLine(passDevice(FB_ANDROID))).toBe(HOLDER_COPY.openOnApple);
+    expect(addLine(passDevice(PIXEL))).toBe(HOLDER_COPY.openOnApple);
   });
 });

@@ -1,6 +1,9 @@
 import type { z } from 'zod';
-import type { ScanTagEnrollmentDoneSchema } from '../../../shared/contracts/nfc-tag-admin.ts';
-import type { ScanTagEnrollmentSchema, TagRead } from '../../../shared/contracts/nfc-tags.ts';
+import type {
+  ScanTagEnrollmentDoneSchema,
+  ScanTagEnrollmentSchema,
+} from '../../../shared/contracts/nfc-tag-enrollments.ts';
+import type { TagRead } from '../../../shared/contracts/nfc-tags.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
 import { gt } from '../../platform/authority-expr.ts';
@@ -8,6 +11,7 @@ import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
+import { assertBindable } from '../nfc/pass-state.ts';
 import { tagsEnabled } from '../nfc/policy.ts';
 import {
   deviceFacts,
@@ -86,7 +90,12 @@ export function pendingEnrollment(
     const now = ctx.clock.now();
     if (!row || row.expiresAt <= now) return none;
     const facts = await deviceFacts(ctx.env.DB, row);
-    if (facts.deleted || (row.scope === 'user' && facts.ownerId !== row.userId)) return none;
+    if (
+      facts.deleted ||
+      facts.credentialGeneration !== row.holderGeneration ||
+      facts.ownerId !== row.holderOwner
+    )
+      return none;
     if (row.shownAt === null) {
       const g = scanWriteGrant(ctx, actor, {
         purpose: 'org_mode.scan.tag.enroll',
@@ -198,8 +207,12 @@ async function complete(
     new ConflictError('The pass changed hands. Ask for a new request.', 'TAG_HOLDER_CHANGED');
   if (!pass || pass.orgId !== orgId || pass.mode !== mode || pass.deletedAt !== null)
     throw holderChanged();
+  // The holder the admin saw: a transfer inside the window refuses, whatever the scope.
+  if (pass.credentialGeneration !== row.holderGeneration || pass.ownerUserId !== row.holderOwner)
+    throw holderChanged();
   if (row.scope === 'user' && (pass.ownerUserId === null || pass.ownerUserId !== row.userId))
     throw holderChanged();
+  await assertBindable(ctx, orgId, pass.id);
   await ensureCredentialRefKeyset(db, ctx.env);
   const { ref, hint } = await tagRef(ctx.env, orgId, mode, canonicalUid(uid));
   const facts: PassFacts = pass;

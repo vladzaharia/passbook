@@ -56,7 +56,7 @@ export function projectScanRecord(
     staffName: verified ? row.staffName : null,
     apiKeyId: verified ? row.apiKeyId : null,
     approvedBy: verified ? row.approvedBy : null,
-    method: row.method === 'auto' ? 'manual' : row.method,
+    method: row.method,
     amount: action ? row.amount : null,
     before: action ? effectValue(row.before, history) : null,
     after: action ? effectValue(row.after, history) : null,

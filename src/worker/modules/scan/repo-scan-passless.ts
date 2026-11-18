@@ -1,12 +1,14 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, chunk, type SqlValue } from '../../platform/db.ts';
-import type { PasslessScan } from './scan-passless.ts';
+import { PASSLESS_REASONS, type PasslessScan } from './scan-passless.ts';
+
+const REASONS_SQL = PASSLESS_REASONS.map((reason) => `'${reason}'`).join(',');
 
 /** Trusted SQL aliases only. Any pass or action evidence disqualifies a passless row. */
 function scanPristinePasslessSql(s: string): string {
   // The ledger scope embeds this predicate in larger queries; group the checks to
   // bound SQLite expression depth without weakening the passless evidence fence.
-  return `((${s}.state='done' AND ${s}.outcome='refused' AND ${s}.reason IN ('not_found','ambiguous')
+  return `((${s}.state='done' AND ${s}.outcome='refused' AND ${s}.reason IN (${REASONS_SQL})
     AND ${s}.pass_id IS NULL AND ${s}.template_id IS NULL AND ${s}.pass_version IS NULL)
     AND (${s}.action_id IS NULL AND ${s}.action_kind IS NULL AND ${s}.direction IS NULL
       AND ${s}.amount IS NULL AND ${s}.before_value IS NULL AND ${s}.after_value IS NULL)

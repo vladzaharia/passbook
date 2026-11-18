@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   ScanActRequestSchema,
   ScanCountsSchema,
+  type ScanInput,
   ScanOutcomeSchema,
   ScanResolveRequestSchema,
   ScanUndoRequestSchema,
@@ -22,13 +23,13 @@ import {
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { act } from './act.ts';
-import { withCodeInput } from './credential-input.ts';
 import { deepFreeze } from './freeze.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
 import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
 import { lookup } from './lookup.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
+import { actTag, resolveTag } from './resolve-tag.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
 import { registerScanEnrollmentRoutes } from './routes-enrollment.ts';
@@ -44,6 +45,10 @@ import { statsFor } from './stats.ts';
 import { undo } from './undo.ts';
 
 /** Device API: /api/v1/scan. */
+
+/** A tag read is never a presented credential: customer screens skip it and hub rows carry no tag. */
+const liveMethod = (input: ScanInput) => ('tag' in input ? 'manual' : input.method);
+
 export const scanRoutes = createRouter();
 
 // Admin scope rides the query on a GET (`?orgId&eventId&templateIds&timeZone`); the guard reads it.
@@ -164,17 +169,21 @@ register(
   async (c) => {
     const ctx = capturingContext(serviceContext(c)),
       actor = cloneObservedScanActor(scanActorOf(c)),
-      req = withCodeInput(c.req.valid('json'));
-    const { outcome, evaluatedSnapshot, credentialContext } = await resolveOutcome(ctx, actor, req);
+      req = c.req.valid('json');
+    const input = req.input;
+    const { outcome, evaluatedSnapshot, credentialContext } =
+      'tag' in input
+        ? await resolveTag(ctx, actor, { ...req, input })
+        : await resolveOutcome(ctx, actor, { ...req, input });
     publishScan(
       ctx,
       actor,
       outcome,
       evaluatedSnapshot,
       credentialContext,
-      req.input.method,
+      liveMethod(input),
       false,
-      'code' in req.input,
+      'code' in input,
     );
     return c.json(outcome);
   },
@@ -194,8 +203,12 @@ register(
     // The request and the actor are frozen once, here: nothing below changes either.
     const ctx = capturingContext(serviceContext(c)),
       actor = deepFreeze(cloneObservedScanActor(scanActorOf(c))),
-      req = deepFreeze(withCodeInput(c.req.valid('json')));
-    const { outcome, evaluatedSnapshot, credentialContext } = await act(ctx, actor, req);
+      req = deepFreeze(c.req.valid('json'));
+    const input = req.input;
+    const { outcome, evaluatedSnapshot, credentialContext } =
+      'tag' in input
+        ? await actTag(ctx, actor, { ...req, input })
+        : await act(ctx, actor, { ...req, input });
     if (!outcome.replay)
       publishScan(
         ctx,
@@ -203,9 +216,9 @@ register(
         outcome,
         evaluatedSnapshot,
         credentialContext,
-        req.input.method,
+        liveMethod(input),
         false,
-        'code' in req.input,
+        'code' in input,
       );
     return c.json(outcome);
   },
