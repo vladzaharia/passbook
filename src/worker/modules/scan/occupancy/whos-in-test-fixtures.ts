@@ -91,11 +91,17 @@ export async function personInside(
   tpl: string,
   name: string,
   places: string[],
-  o: { at?: number; mode?: 'live' | 'test'; orgId?: string; dueAt?: number | null } = {},
+  o: {
+    at?: number;
+    mode?: 'live' | 'test';
+    orgId?: string;
+    dueAt?: number | null;
+    input?: Record<string, unknown>;
+  } = {},
 ) {
   const pass = await kit.scanPass(
     tpl,
-    { memberName: name },
+    { memberName: name, ...o.input },
     { ...(o.mode ? { mode: o.mode } : {}), ...(o.orgId ? { orgId: o.orgId } : {}) },
   );
   const at = o.at ?? kit.clock.now();

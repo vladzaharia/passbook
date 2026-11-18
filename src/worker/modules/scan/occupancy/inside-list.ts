@@ -8,6 +8,7 @@ export interface WhoIdentity {
   holder: string | null;
   photoUrl: string | null;
   plan: string | null;
+  host: string | null;
   /** The pass can no longer be used. */
   ended: boolean;
 }
@@ -117,6 +118,7 @@ export async function whosInList(i: WhosInQuery): Promise<ScanWhosInList> {
         holder: id.holder,
         photoUrl: id.photoUrl,
         plan: id.plan,
+        host: id.host,
         place: r.place,
         placeName: p?.name ?? '',
         parentName: p?.parentName ?? null,

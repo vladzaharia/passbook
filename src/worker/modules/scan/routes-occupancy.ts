@@ -13,6 +13,7 @@ import { deepFreeze } from './freeze.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
 import { publishScan } from './live.ts';
 import { markOut } from './occupancy/mark-out.ts';
+import { withParentHint } from './occupancy/parent-hint.ts';
 import { setOverrideNote } from './override-note.ts';
 import { overrideScan } from './overrides.ts';
 import { capturingContext } from './scan-capture.ts';
@@ -66,7 +67,7 @@ export function registerScanOccupancyRoutes(scanRoutes: OpenAPIHono<AppBindings>
           result.credentialContext,
           'manual',
         );
-      return c.json(result.outcome);
+      return c.json(await withParentHint(ctx.env.DB, who.orgId, result.outcome));
     },
   );
   register(

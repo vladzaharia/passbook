@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ScanWhosInList } from '../../../../shared/contracts/scan-whos-in.ts';
+import { accessTemplate } from '../access-test-fixtures.ts';
 import { kit, setupActionFixture } from '../act-test-fixtures.ts';
 import {
   DISPLAY_TPL,
@@ -147,5 +148,24 @@ describe("who's in: isolation, filter and paging", () => {
     const s = await station([tpl], [pool.id]);
     const { body } = await list(s.headers);
     expect(body.items).toMatchObject([{ holder: 'Long Stay', flags: ['long_stay'] }]);
+  });
+});
+
+describe("who's in: access plan and host", () => {
+  it('names the plan and a visitor host, and leaves the host null when there is none', async () => {
+    const acc = await accessTemplate();
+    const pool = await trackedZone();
+    const place = `zone:${pool.id}`;
+    const now = kit.clock.now();
+    await personInside(acc, 'Visitor', [place], {
+      at: now - 2000,
+      input: { plan: 'guest', visits: 2, sponsor: 'Ana R.' },
+    });
+    await personInside(acc, 'Member', [place], { at: now - 1000, input: { plan: 'gold' } });
+    const s = await station([acc], [pool.id]);
+    const { body } = await list(s.headers);
+    const rows = Object.fromEntries(body.items.map((i) => [i.holder, i]));
+    expect(rows.Visitor).toMatchObject({ plan: 'Guest day', host: 'Ana R.' });
+    expect(rows.Member).toMatchObject({ plan: '24/7 Gold', host: null });
   });
 });

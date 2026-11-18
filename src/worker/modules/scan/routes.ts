@@ -27,6 +27,7 @@ import { requireScanActor, scanActorOf } from './guard.ts';
 import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
 import { lookup } from './lookup.ts';
+import { withParentHint } from './occupancy/parent-hint.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
@@ -212,7 +213,7 @@ register(
         false,
         'code' in req.input,
       );
-    return c.json(outcome);
+    return c.json(await withParentHint(ctx.env.DB, actor.orgId, outcome));
   },
 );
 

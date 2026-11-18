@@ -12,7 +12,7 @@ import { scanAuthorizedStmt, scanReadAuthority } from '../repo-read-authority.ts
 import { foundOf } from '../resolve.ts';
 import type { Identify, WhoIdentity } from './inside-list.ts';
 
-const HIDDEN: WhoIdentity = { holder: null, photoUrl: null, plan: null, ended: false };
+const HIDDEN: WhoIdentity = { holder: null, photoUrl: null, plan: null, host: null, ended: false };
 
 /**
  * A pass this role cannot read, or one that no longer resolves, is listed without a name: it is
@@ -47,23 +47,28 @@ export function scanIdentify(
         candidate.otherModeCredentialTombstoneRefs = [];
         const found = await foundOf(ctx, candidate, actor);
         if (!found) continue;
-        const identity = visibleIdentity(found, actor, cardPrivacy(found, actor));
+        const privacy = cardPrivacy(found, actor);
+        const identity = visibleIdentity(found, actor, privacy);
         const photo = candidate.hasPhoto
           ? await knownPhotoUrl(ctx, actor, candidate, found.template, found.activePolicy)
           : null;
         const access = accessManifestOf(found);
-        const input = access
-          ? applyDefaults(found.activePolicy.manifest, candidate.pass.personalization)[
-              access.input.plan
-            ]
-          : undefined;
+        const inputs = access
+          ? applyDefaults(found.activePolicy.manifest, candidate.pass.personalization)
+          : null;
+        const sponsor = access?.input.sponsor && inputs ? inputs[access.input.sponsor] : undefined;
+        const host =
+          typeof sponsor === 'string' && sponsor.trim() && privacy.safe(sponsor)
+            ? sponsor.trim().slice(0, 80)
+            : null;
         out.set(candidate.pass.id, {
           holder: identity.title,
           photoUrl:
             photo && photo.grant.expiresAt > now
               ? photoGrantUrl(actor, candidate.pass.id, photo.grant)
               : null,
-          plan: access?.plans.find((p) => p.id === input)?.label ?? null,
+          plan: access?.plans.find((p) => p.id === inputs?.[access.input.plan])?.label ?? null,
+          host,
           ended: !scannerPassActive(candidate, found.passJson, now),
         });
       }

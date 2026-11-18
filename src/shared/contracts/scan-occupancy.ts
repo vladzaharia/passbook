@@ -53,6 +53,8 @@ export const ScanOccupancySchema = z.object({
   capacity: z.number().int().nullable(),
   /** A held Auto flip: the dock's one-tap direction. */
   turnaround: z.enum(['in', 'out']).nullable(),
+  /** On `not_inside`: the zone the person must be in first. */
+  parent: z.object({ id: IdSchema, name: z.string() }).nullable().optional(),
 });
 export type ScanOccupancy = z.infer<typeof ScanOccupancySchema>;
 export const ScanPlaceCountSchema = z.object({

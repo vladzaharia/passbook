@@ -191,3 +191,23 @@ describe('desk overrides', () => {
     void key;
   });
 });
+
+describe('a held entry names the zone to tap in at first', () => {
+  it('puts the enforcing parent on a not_inside hold', async () => {
+    const tpl = await accessTemplate();
+    const gym = await trackedZone({ occupancy: 'enforce' });
+    const pool = await trackedZone({ occupancy: 'track', parentId: gym });
+    const door = await makeDoor([tpl], [pool]);
+    const pass = await kit.scanPass(tpl, { plan: 'gold' });
+    const [row] = await all<{ name: string }>(
+      kit.env.DB,
+      'SELECT name FROM scan_zones WHERE id = ?',
+      [gym],
+    );
+    expect(await scanAt(door, pass)).toMatchObject({
+      kind: 'heads_up',
+      reason: 'not_inside',
+      occupancy: { parent: { id: gym, name: row?.name } },
+    });
+  });
+});
