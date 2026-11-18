@@ -4,6 +4,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import {
   ScanLiveEnrollSchema,
   ScanLiveResolvedSchema,
+  type ScanLiveSnapshotSchema,
 } from '../../../shared/contracts/scan-setups.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createDetachedContext, type ServiceContext } from '../../platform/service-context.ts';
@@ -129,20 +130,19 @@ export class ScanHub extends DurableObject<AppEnv> {
     attachment: LiveAttachment,
     after?: string | null,
     authenticated?: LiveRecipient,
-  ) {
+  ): Promise<z.infer<typeof ScanLiveSnapshotSchema>> {
     // The request's own time: the work below must not move the places' rev.
     const at = ctx.clock.now();
     const captured = cloneLiveAttachment(attachment);
     if (!captured) return { rows: [], cursor: null };
     const recipient = authenticated ?? (await liveRecipient(ctx, captured));
-    if (!recipient) return { rows: [], cursor: null };
+    if (!recipient || captured.role === 'device') return { rows: [], cursor: null };
     if (!(await this.tenant(captured.orgId, captured.mode))) return { rows: [], cursor: null };
-    if (captured.role === 'device') return { rows: [], cursor: null };
     const ring = await readRing(this.ctx.storage, ctx.clock.now());
     // A customer reconnect never replays a previous person's result.
     const cursor = ring.at(-1)?.row.id ?? null;
     if (captured.role === 'customer')
-      return { rows: [], cursor, welcome: recipient.customer.welcome, places: undefined };
+      return { rows: [], cursor, welcome: recipient.customer.welcome };
     const index = after ? ring.findIndex((r) => r.row.id === after) : -1;
     const unseen = ring.slice(index + 1);
     const rows = await liveRowsFor(ctx, recipient, unseen);
