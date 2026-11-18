@@ -1,4 +1,4 @@
-import type { ScanInput } from '../../../shared/contracts/scan.ts';
+import type { ScanCodeInput } from '../../../shared/contracts/scan.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
@@ -43,7 +43,7 @@ export interface EvaluationOptions {
 export async function evaluate(
   ctx: ServiceContext,
   actor: ScanActor,
-  input: ScanInput,
+  input: ScanCodeInput,
   waive: Waive = {},
   observed?: CredentialTombstoneSnapshot,
   options: EvaluationOptions = {},
@@ -72,7 +72,7 @@ export async function evaluate(
 async function evaluateObserved(
   ctx: ServiceContext,
   actor: ScanActor,
-  input: ScanInput,
+  input: ScanCodeInput,
   waive: Waive,
   refs: CredentialTombstoneSnapshot,
   options: EvaluationOptions,
