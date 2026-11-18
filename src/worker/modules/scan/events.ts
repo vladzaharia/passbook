@@ -61,35 +61,57 @@ function toDto(row: ConsoleEventRow, now: number): ScanEventDto {
 /**
  * Cache the initial live count only while the event is the one the count was derived from. A cache
  * fill is best effort: losing a race to an edit, or the access, skips it and never fails the read.
+ * The fills of one page commit as one grant; when it is refused each is retried alone, so one
+ * raced event costs only its own fill.
  */
-async function refreshExpectedCache(
+async function refreshExpectedCaches(
   ctx: ServiceContext,
-  row: ConsoleEventRow,
+  rows: readonly ConsoleEventRow[],
   authority: EventAuthority,
-  cacheBudget?: { remaining: number },
+  budget = Number.POSITIVE_INFINITY,
 ): Promise<void> {
-  const n = row.liveExpected;
-  if (n === null) throw new Error('Event count was not included in the scoped read.');
-  if (!releaseHeadsComplete(row.releaseHeads)) return;
   const now = ctx.clock.now();
-  if (row.expected === n && row.expectedAt !== null && row.expectedAt > now - EXPECTED_TTL_MS)
-    return;
-  if (cacheBudget?.remaining === 0) return;
-  if (cacheBudget) cacheBudget.remaining -= 1;
-  if (authority.kind !== 'session') return;
-  try {
+  const fills: { row: ConsoleEventRow; n: number }[] = [];
+  for (const row of rows) {
+    const n = row.liveExpected;
+    if (n === null) throw new Error('Event count was not included in the scoped read.');
+    if (!releaseHeadsComplete(row.releaseHeads)) continue;
+    if (row.expected === n && row.expectedAt !== null && row.expectedAt > now - EXPECTED_TTL_MS)
+      continue;
+    if (fills.length < budget) fills.push({ row, n });
+  }
+  if (authority.kind !== 'session' || fills.length === 0) return;
+  const commit = async (batch: typeof fills) => {
+    const [only] = batch;
     const g = sessionGrant(
       ctx,
       'org_mode.scan.event.cache',
       authority,
-      eventCacheChecks(row),
-      row.id,
+      batch.flatMap((fill) => eventCacheChecks(fill.row)),
+      batch.length === 1 ? only?.row.id : undefined,
     );
-    addEventCache(g, row.id, n, now);
+    for (const fill of batch) addEventCache(g, fill.row.id, fill.n, now);
     await g.commit();
+  };
+  const skippable = (error: unknown): error is AppError =>
+    error instanceof AppError && error.status < 500;
+  try {
+    await commit(fills);
+    return;
   } catch (error) {
-    if (!(error instanceof AppError) || error.status >= 500) throw error;
-    ctx.log.info('scan.event_cache_skipped', { orgId: row.orgId, code: error.code });
+    if (!skippable(error)) throw error;
+    if (fills.length === 1) {
+      ctx.log.info('scan.event_cache_skipped', { orgId: fills[0]?.row.orgId, code: error.code });
+      return;
+    }
+  }
+  for (const fill of fills) {
+    try {
+      await commit([fill]);
+    } catch (error) {
+      if (!skippable(error)) throw error;
+      ctx.log.info('scan.event_cache_skipped', { orgId: fill.row.orgId, code: error.code });
+    }
   }
 }
 
@@ -147,9 +169,12 @@ export async function listEvents(
     now: ctx.clock.now(),
     limit: query.limit + 1,
   });
-  const cacheBudget = { remaining: LIST_CACHE_WRITES };
-  for (const row of initial.rows.slice(0, query.limit))
-    await refreshExpectedCache(ctx, row, authority, cacheBudget);
+  await refreshExpectedCaches(
+    ctx,
+    initial.rows.slice(0, query.limit),
+    authority,
+    LIST_CACHE_WRITES,
+  );
   const now = ctx.clock.now();
   const { authorized, rows } = await listConsoleEvents(ctx.env.DB, readAuth(ctx, authority), {
     ...query,
@@ -207,7 +232,7 @@ export async function eventView(
 ): Promise<ScanEventDto> {
   if (!canReadEvents(authority)) throw new ForbiddenError();
   const row = await scopedEventRow(ctx, id, authority, ctx.clock.now());
-  await refreshExpectedCache(ctx, row, authority);
+  await refreshExpectedCaches(ctx, [row], authority);
   const now = ctx.clock.now();
   const current = await scopedEventRow(ctx, id, authority, now);
   return toDto(current, now);
