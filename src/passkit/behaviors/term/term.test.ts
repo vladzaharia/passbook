@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { BehaviorContext, PassJson } from '../../types.ts';
-import { type TermConfig, term } from './index.ts';
+import { firstScanInput, type TermConfig, term } from './index.ts';
 
 const ctx = (now = '2030-01-01T00:00:00Z'): BehaviorContext => ({
   now: new Date(now),
@@ -146,5 +146,13 @@ describe('term', () => {
     expect(() =>
       run({ s: '2030-01-01T00:00:00Z' }, { ...months(1), timeZone: 'Mars/Base' }),
     ).toThrow(/not a time zone/);
+  });
+
+  it('names the input a first-scan term waits on', () => {
+    const use = (config: TermConfig) => ({ behaviors: [{ use: 'term', version: 1, config }] });
+    expect(firstScanInput(use({ ...months(12), firstScan: true }) as never)).toBe('s');
+    expect(firstScanInput(use(months(12)) as never)).toBeNull();
+    expect(firstScanInput({})).toBeNull();
+    expect(() => run({}, { unit: 'months', length: 1, firstScan: true })).toThrow(/start input/);
   });
 });

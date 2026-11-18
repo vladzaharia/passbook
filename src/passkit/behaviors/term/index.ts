@@ -1,4 +1,4 @@
-import type { BehaviorPlugin, JsonSchemaObject } from '../../types.ts';
+import type { BehaviorPlugin, JsonSchemaObject, TemplateManifest } from '../../types.ts';
 import { addDays, addMonths, daysInMonth, instantOf, isTimeZone, localOf } from './calendar.ts';
 
 export type TermUnit = 'days' | 'months' | 'years' | 'month-end';
@@ -6,6 +6,8 @@ export type TermUnit = 'days' | 'months' | 'years' | 'month-end';
 export interface TermConfig {
   /** Input holding the start as ISO 8601. Omit to start at build time. */
   start?: string;
+  /** The scanner stamps `start` at the first successful check-in. Needs `start`. */
+  firstScan?: boolean;
   /**
    * The term. `months` and `years` are calendar months from the start day (31 Jan + 1 month is the
    * last day of February). `month-end` ends at the close of the start's month, then `length - 1`
@@ -31,6 +33,7 @@ const configSchema: JsonSchemaObject = {
   additionalProperties: false,
   properties: {
     start: { type: 'string', minLength: 1 },
+    firstScan: { type: 'boolean' },
     unit: { enum: ['days', 'months', 'years', 'month-end'] },
     length: { type: 'integer', minimum: 1, maximum: 3650 },
     renewals: { type: 'string', minLength: 1 },
@@ -40,6 +43,15 @@ const configSchema: JsonSchemaObject = {
     voidWhenPast: { type: 'boolean' },
   },
 };
+
+/** The input a first-scan term waits on: the scanner stamps it once, at the first successful scan. */
+export function firstScanInput(manifest: Pick<TemplateManifest, 'behaviors'>): string | null {
+  for (const use of manifest.behaviors ?? []) {
+    const config = use.config as Partial<TermConfig> | undefined;
+    if (use.use === 'term' && config?.firstScan === true && config.start) return config.start;
+  }
+  return null;
+}
 
 const DAY = 86_400_000;
 const MAX_RENEWALS = 100;
@@ -91,6 +103,8 @@ export const term: BehaviorPlugin<TermConfig> = {
     if (config.timeZone !== undefined && !isTimeZone(config.timeZone)) {
       throw new Error(`${config.timeZone} is not a time zone.`);
     }
+    if (config.firstScan && !config.start)
+      throw new Error('A first-scan term needs a start input.');
     let startMs = ctx.now.getTime();
     if (config.start !== undefined) {
       const raw = input[config.start];
