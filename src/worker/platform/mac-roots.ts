@@ -1,4 +1,6 @@
+import { UnavailableError } from './errors.ts';
 import { fromBase64, toBase64 } from './ids.ts';
+import { createLogger } from './log.ts';
 
 /**
  * MAC roots. The HMAC keys behind retained evidence (tombstones, retention proofs, commitments, token
@@ -11,6 +13,12 @@ import { fromBase64, toBase64 } from './ids.ts';
 const SALT = new TextEncoder().encode('passbook.derived-hmac.v1');
 const encoder = new TextEncoder();
 
+/** A MAC key cannot be derived: a 503 with a stable code, logged, never a plain Error at the HTTP layer. */
+export function macRootUnavailable(message: string): UnavailableError {
+  createLogger().error('mac_root.unavailable', { code: 'MAC_ROOT_UNAVAILABLE' });
+  return new UnavailableError(message, 'MAC_ROOT_UNAVAILABLE');
+}
+
 const hmacImport = (raw: Uint8Array, usages: ('sign' | 'verify')[]) =>
   crypto.subtle.importKey(
     'raw',
@@ -22,7 +30,7 @@ const hmacImport = (raw: Uint8Array, usages: ('sign' | 'verify')[]) =>
 
 const rawKey = (base64: string, what: string): Uint8Array => {
   const raw = fromBase64(base64.trim());
-  if (raw.length !== 32) throw new Error(`${what} must be 32 bytes, base64 encoded`);
+  if (raw.length !== 32) throw macRootUnavailable(`${what} must be 32 bytes, base64 encoded`);
   return raw;
 };
 
@@ -98,7 +106,7 @@ export async function derivedMacKey(
   if (typeof kek === 'string' && kek) return fromKek(kek, label);
   const root = vars[`MAC_ROOT_V${version}`];
   if (typeof root === 'string' && root) return fromRoot(root, label);
-  throw new Error(`KEK version ${version} is not available for MAC keys`);
+  throw macRootUnavailable(`KEK version ${version} is not available for MAC keys`);
 }
 
 /**

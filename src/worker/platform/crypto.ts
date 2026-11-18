@@ -1,6 +1,6 @@
 import { fromBase64, randomBytes, toHex } from './ids.ts';
 import { EVIDENCE_ROOT, parseKekVersion } from './mac-key-config.ts';
-import { derivedMacKey, macRootVersions } from './mac-roots.ts';
+import { derivedMacKey, macRootUnavailable, macRootVersions } from './mac-roots.ts';
 
 /**
  * Envelope encryption. Each secret gets a random 256-bit DEK (AES-256-GCM); the DEK is wrapped
@@ -160,7 +160,7 @@ export const isKeyEnvName = (name: string): boolean =>
  * deployment that never sets it keeps every stored MAC valid). A missing root 1 fails at derivation.
  */
 export function macKeyVersion(env: object): number {
-  if (macRootVersions(env).length === 0) throw new Error('No KEK configured');
+  if (macRootVersions(env).length === 0) throw macRootUnavailable('No KEK configured');
   return versionSetting(env, 'MAC_KEY_VERSION') ?? EVIDENCE_ROOT;
 }
 
@@ -168,7 +168,7 @@ function versionSetting(env: object, name: string): number | null {
   const raw = (env as Record<string, unknown>)[name];
   if (raw === undefined || raw === null || raw === '') return null;
   const version = parseKekVersion(raw);
-  if (version === null) throw new Error(`${name} must be a KEK version number`);
+  if (version === null) throw macRootUnavailable(`${name} must be a KEK version number`);
   return version;
 }
 
@@ -211,7 +211,7 @@ export async function derivedHmacKey(
   label: string,
   version?: number,
 ): Promise<CryptoKey> {
-  if (macRootVersions(env).length === 0) throw new Error('No KEK configured');
+  if (macRootVersions(env).length === 0) throw macRootUnavailable('No KEK configured');
   const wanted = version ?? (ROTATABLE_LABELS.has(label) ? macKeyVersion(env) : EVIDENCE_ROOT);
   return derivedMacKey(env, wanted, label);
 }

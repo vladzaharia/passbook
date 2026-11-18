@@ -150,6 +150,20 @@ describe('root 1 is explicit', () => {
   });
 });
 
+describe('a key that cannot be derived is a 503 with a stable code', () => {
+  it('never lets a plain Error out of the derivation', async () => {
+    const refused = { status: 503, code: 'MAC_ROOT_UNAVAILABLE' };
+    await expect(derivedMacKey({ KEK_V2: kek(2) }, 1, 'x')).rejects.toMatchObject(refused);
+    await expect(derivedHmacKey({}, 'scan-pin')).rejects.toMatchObject(refused);
+    await expect(derivedHmacKey({ KEK_V2: kek(2) }, 'scan-pin')).rejects.toMatchObject(refused);
+    await expect(
+      derivedHmacKey({ KEK_V1: kek(1), MAC_KEY_VERSION: 'two' }, 'scan-pin'),
+    ).rejects.toMatchObject(refused);
+    await expect(derivedMacKey({ MAC_ROOT_V1: 'AAAA' }, 1, 'x')).rejects.toMatchObject(refused);
+    expect(() => macKeyVersion({})).toThrow('No KEK configured');
+  });
+});
+
 describe('a MAC root is not a key encryption key', () => {
   it('cannot unwrap a DEK, even as raw AES key material', async () => {
     const one = kek(1);

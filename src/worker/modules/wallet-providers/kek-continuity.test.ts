@@ -873,7 +873,7 @@ describe('provider identity continuity across KEK rotation', () => {
           { kind: 'tenant-holder', expected },
         ),
         // Root 1 is explicit: with V1 gone the retired references cannot even be derived (no drift to V2).
-      ).rejects.toThrow('KEK version 1 is not available for MAC keys');
+      ).rejects.toMatchObject({ status: 503, code: 'MAC_ROOT_UNAVAILABLE' });
       expect(await snapshot()).toEqual(before);
       expect(await first(db, 'SELECT commitment FROM credential_ref_keyset WHERE id = 1')).toEqual({
         commitment,
