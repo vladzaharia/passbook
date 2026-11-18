@@ -19,8 +19,14 @@ import {
 import { renderBundlePage } from '../../ssr/bundle-page.tsx';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage } from '../../ssr/pass-page.tsx';
+import {
+  PRESENTATION_HEADERS,
+  renderPresentationNotFound,
+  renderPresentationPage,
+} from '../../ssr/presentation-page.tsx';
 import { servePassFile } from '../passes/file.ts';
 import { svc } from '../passes/http.ts';
+import { presentationForPass } from '../public/presentation.ts';
 import { EMAILED, langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
 import { isTokenShape, openPublicAsset, supportContacts } from '../public/service.ts';
 import {
@@ -51,6 +57,7 @@ bundlePublicRoutes.use(
 bundlePublicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/passes.pkpasses', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/:passId/pass.pkpass', rateLimit('RL_PUBLIC'));
+bundlePublicRoutes.use('/:token/:passId/barcode', rateLimit('RL_PUBLIC'));
 
 register(
   bundlePublicRoutes,
@@ -90,6 +97,7 @@ register(
                 ? ('voided' as const)
                 : ('active' as const),
           downloadHref: `/b/${token}/${pass.id}/pass.pkpass`,
+          barcodeHref: `/b/${token}/${pass.id}/barcode`,
         };
       });
       const org = members[0]?.model.orgName ?? '';
@@ -189,6 +197,43 @@ register(
     return response.body
       ? new Response(fenceBundleStream(ctx, bundle, [pass], response.body, false), response)
       : response;
+  },
+);
+
+register(
+  bundlePublicRoutes,
+  'public',
+  {
+    method: 'get',
+    path: '/{token}/{passId}/barcode',
+    summary: 'Present one pass barcode of the bundle',
+    params: PublicBundlePassParamSchema,
+  },
+  async (c) => {
+    const ctx = svc(c);
+    const theme = requestTheme(c);
+    try {
+      const p = c.req.valid('param');
+      const bundle = await bundleForToken(ctx, p.token);
+      const pass = await addablePass(ctx, bundle, p.passId);
+      const model = await presentationForPass(ctx, pass);
+      const html = renderPresentationPage({
+        ...model,
+        backHref: `/b/${p.token}`,
+        nonce: c.var.nonce,
+        theme,
+      });
+      await assertBundleMember(ctx, bundle, pass);
+      return new Response(html, { headers: PRESENTATION_HEADERS });
+    } catch (error) {
+      if (error instanceof AppError && error.status === 404) {
+        return new Response(renderPresentationNotFound(c.var.nonce, theme), {
+          status: 404,
+          headers: PRESENTATION_HEADERS,
+        });
+      }
+      throw error;
+    }
   },
 );
 

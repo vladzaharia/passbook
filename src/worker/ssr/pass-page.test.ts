@@ -185,4 +185,26 @@ describe('/p renders the portal HolderPassView', () => {
     expect(b).not.toContain('data-awb');
     expect(b).toMatch(PORTAL_LINK);
   });
+
+  it.each([['android'], ['galaxy']] as const)(
+    'drops the Apple badge and QR on %s and keeps one text line',
+    (device) => {
+      const b = body(page({ device: { device, inApp: false }, barcodeHref: '/p/t/barcode' }));
+      expect(b).not.toContain('data-awb');
+      expect(b).not.toContain('wl-add-scan');
+      expect(b).not.toContain('/apple/badge/');
+      expect(b).toContain('href="/p/t/barcode"');
+      expect(b.split(HOLDER_COPY.openOnApple)).toHaveLength(2);
+      expect(b.indexOf(HOLDER_COPY.browserTitle)).toBeLessThan(b.indexOf(HOLDER_COPY.openOnApple));
+    },
+  );
+
+  it('words the link preview the same on every device', () => {
+    for (const device of ['iphone', 'android', 'other'] as const) {
+      expect(page({ device: { device, inApp: false } })).toContain(
+        `property="og:description" content="${HOLDER_COPY.previewActive}"`,
+      );
+    }
+    expect(HOLDER_COPY.previewActive).not.toMatch(/Apple/);
+  });
 });

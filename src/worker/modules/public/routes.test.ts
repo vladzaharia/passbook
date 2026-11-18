@@ -129,8 +129,6 @@ describe('GET /p/:token', () => {
     ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', false, false],
     ['Mac', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', true, false],
     ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1', true, true],
-    ['Android', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129.0 Mobile', true, true],
-    ['Samsung', 'Mozilla/5.0 (Linux; Android 14; SM-S928B) SamsungBrowser/25.0 Mobile', true, true],
     ['Windows', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36', true, true],
   ])('keeps the Apple badge available on %s', async (_name, ua, qr, guidance) => {
     const pass = await kit.pass();
