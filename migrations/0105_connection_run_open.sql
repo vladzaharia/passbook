@@ -15,3 +15,6 @@ WHERE outcome = 'running' AND trigger IN ('schedule', 'admin') AND pass_id IS NU
 
 -- The last continuation of a chained sync run; the scheduler checks that instance when a run looks stuck.
 ALTER TABLE workflow_runs ADD COLUMN tip_seq INTEGER NOT NULL DEFAULT 0;
+
+-- The connection generation a sync run was enqueued under, so a late launch cannot adopt a newer one.
+ALTER TABLE workflow_runs ADD COLUMN generation INTEGER;

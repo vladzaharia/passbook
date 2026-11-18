@@ -472,6 +472,26 @@ describe('sync hand-off', () => {
     expect(ok.created[0]?.params).toMatchObject({ runId: 'sync-q-1', trigger: 'admin' });
   });
 
+  it('launches an adopted run under the generation it was enqueued with', async () => {
+    const dto = await demo(5);
+    const conn = await getConnection(kit.env.DB, dto.id);
+    if (!conn) throw new Error('no connection');
+    const broken = withWorkflow(kit, async () => {
+      throw new Error('launch failed');
+    });
+    await expect(startSync(broken.sctx, conn, 'admin', 'sync-g-1')).rejects.toThrow(
+      'launch failed',
+    );
+    await run(kit.env.DB, 'UPDATE connections SET generation = generation + 1 WHERE id = ?', [
+      dto.id,
+    ]);
+    const bumped = await getConnection(kit.env.DB, dto.id);
+    if (!bumped) throw new Error('no connection');
+    const ok = withWorkflow(kit);
+    await startSync(ok.sctx, bumped, 'admin', 'sync-g-2');
+    expect(ok.created[0]?.params).toMatchObject({ runId: 'sync-g-1', generation: conn.generation });
+  });
+
   describe('pass refreshes are not sync runs', () => {
     const insert = (id: string, connectionId: string, passId: string | null, at: number) =>
       run(

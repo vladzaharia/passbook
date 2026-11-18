@@ -65,7 +65,8 @@ async function ensureInstance(
       params: {
         connectionId: conn.id,
         orgId: conn.orgId,
-        generation: conn.generation,
+        // The generation it was enqueued under: a bump since then ends the run as stale.
+        generation: open.generation ?? conn.generation,
         credentialKeysetCommitment: open.keyset,
         trigger: open.trigger,
         runId: open.id,

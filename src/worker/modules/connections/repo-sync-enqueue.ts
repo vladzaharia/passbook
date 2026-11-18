@@ -53,13 +53,14 @@ export async function commitSyncEnqueue(
     plainWrite(
       g,
       `INSERT OR IGNORE INTO workflow_runs
-         (instance_id, kind, org_id, target_id, status, started_at, credential_keyset_commitment)
-       SELECT ?, 'connection_sync', {org}, ?, 'queued', ?, ? WHERE {grant}`,
+         (instance_id, kind, org_id, target_id, status, started_at, credential_keyset_commitment, generation)
+       SELECT ?, 'connection_sync', {org}, ?, 'queued', ?, ?, ? WHERE {grant}`,
       [
         expected.instanceId,
         expected.connectionId,
         expected.startedAt,
         expected.credentialKeysetCommitment,
+        expected.generation,
       ],
     );
     if (withRun)

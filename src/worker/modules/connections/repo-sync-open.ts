@@ -11,6 +11,7 @@ export async function openRunOf(
   tipSeq: number;
   trigger: 'schedule' | 'admin';
   keyset: string | null;
+  generation: number | null;
 } | null> {
   const row = await first<{
     id: string;
@@ -19,10 +20,11 @@ export async function openRunOf(
     tip_seq: number | null;
     trigger: 'schedule' | 'admin';
     keyset: string | null;
+    generation: number | null;
   }>(
     db,
     `SELECT r.id, r.started_at, w.status, w.tip_seq, r.trigger,
-       w.credential_keyset_commitment AS keyset FROM connection_runs r
+       w.credential_keyset_commitment AS keyset, w.generation FROM connection_runs r
      LEFT JOIN workflow_runs w ON w.instance_id = r.id AND w.kind = 'connection_sync'
        AND w.target_id = r.connection_id
      WHERE r.connection_id = ? AND r.id <> ? AND r.outcome = 'running'
@@ -38,6 +40,7 @@ export async function openRunOf(
         tipSeq: row.tip_seq ?? 0,
         trigger: row.trigger,
         keyset: row.keyset,
+        generation: row.generation,
       }
     : null;
 }
