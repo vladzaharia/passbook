@@ -151,6 +151,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'tag.enroll.complete': a('Tag read on a scanner', Link2, 'success'),
   'tag.enroll.cancel': a('Tag request cancelled', I.delete, 'warning'),
   'tag.enroll.decline': a('Tag request declined', I.delete, 'warning'),
+  'tag.enroll.fail': a('Tag request failed', I.delete, 'warning'),
   'tag.enroll.expire': a('Tag request expired', Clock, 'warning'),
   'tag.lost': a('Tag reported lost', ShieldX, 'danger'),
   'tag.move': a('Tag moved', ArrowRightLeft, 'info'),

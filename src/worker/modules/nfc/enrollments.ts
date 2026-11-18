@@ -1,9 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import {
-  type TagEnrollment,
-  TagErrorCodeSchema,
-  type TagScanner,
-} from '../../../shared/contracts/nfc-tags.ts';
+import type { TagEnrollment } from '../../../shared/contracts/nfc-tag-enrollments.ts';
+import { TagErrorCodeSchema } from '../../../shared/contracts/nfc-tags.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
 import { lte } from '../../platform/authority-expr.ts';
@@ -12,14 +9,15 @@ import { ConflictError, NotFoundError, ValidationError } from '../../platform/er
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { scanHub } from '../scan/live.ts';
+import { assertBindable } from './pass-state.ts';
 import { tagsEnabled } from './policy.ts';
 import {
+  bindingHint,
   type EnrollmentRow,
   enrollmentRow,
   enrollScanners,
   ownerIsActive,
   pendingFor,
-  type ScannerFacts,
 } from './repo-enrollments.ts';
 import { passFacts } from './repo-tag-bindings.ts';
 import { bindingView } from './repo-tag-history.ts';
@@ -30,48 +28,6 @@ import { commitTag } from './tags.ts';
 export const ENROLL_TTL_MS = 90_000;
 
 const notFound = () => new NotFoundError('Request not found.', 'ENROLLMENT_NOT_FOUND');
-
-function unavailable(f: ScannerFacts, online: boolean): TagScanner['unavailable'] {
-  if (!online) return 'offline';
-  if (!f.nfcTags) return 'no_tags';
-  // A door reader never takes a request; nor does a desk with assigning turned off.
-  if (f.role === 'door' || f.assign === 'never') return 'requests_off';
-  if (f.busy) return 'busy';
-  return null;
-}
-
-async function connectedIds(
-  ctx: ServiceContext,
-  a: TagAuthority,
-  ids: string[],
-): Promise<Set<string>> {
-  if (ids.length === 0) return new Set();
-  return new Set(await scanHub(ctx, a.orgId, a.mode).connected(ids));
-}
-
-/** Scan-role devices of the org and mode, with what an admin needs to pick one. */
-export async function listEnrollScanners(
-  ctx: ServiceContext,
-  a: TagAuthority,
-): Promise<TagScanner[]> {
-  const now = ctx.clock.now();
-  const facts = await enrollScanners(ctx.env.DB, a.orgId, a.mode, a.userId, now);
-  const online = await connectedIds(
-    ctx,
-    a,
-    facts.map((f) => f.id),
-  );
-  return facts.map((f) => ({
-    id: f.id,
-    name: f.name,
-    sessionName: f.sessionName,
-    role: f.role,
-    online: online.has(f.id),
-    unavailable: unavailable(f, online.has(f.id)),
-    secureOnly: false,
-    lastUsedAt: f.lastUsedAt,
-  }));
-}
 
 const KNOWN_CODES = new Set<string>(TagErrorCodeSchema.options);
 
@@ -93,6 +49,7 @@ export async function enrollmentView(
     endedAt: lapsed ? row.expiresAt : row.endedAt,
     shownAt: row.shownAt,
     binding: row.bindingId ? await bindingView(ctx.env.DB, row.bindingId) : null,
+    hint: row.bindingId ? await bindingHint(ctx.env.DB, row.bindingId) : null,
     errorCode:
       row.errorCode && KNOWN_CODES.has(row.errorCode)
         ? (row.errorCode as TagEnrollment['errorCode'])
@@ -136,6 +93,7 @@ export async function requestEnrollment(
   const pass = await passFacts(ctx.env.DB, passId);
   if (!pass || pass.orgId !== orgId || pass.mode !== mode || pass.deletedAt !== null)
     throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  await assertBindable(ctx, orgId, passId);
   if (req.binding === 'user' && !(await ownerIsActive(ctx.env.DB, pass.ownerUserId)))
     throw new ValidationError(
       'This person has no account yet. Assign the tag to the pass instead.',
@@ -180,8 +138,8 @@ export async function requestEnrollment(
       ctx,
       {
         orgId,
-        actorType: 'user',
-        actorId: a.userId,
+        actorType: 'system',
+        actorId: null,
         action: 'tag.enroll.expire',
         targetType: 'enrollment',
         targetId: s.id,
@@ -199,6 +157,8 @@ export async function requestEnrollment(
       'requested_by',
       'scope',
       'user_id',
+      'holder_generation',
+      'holder_owner',
       'state',
       'created_at',
       'expires_at',
@@ -210,6 +170,8 @@ export async function requestEnrollment(
       a.userId,
       req.binding,
       req.binding === 'user' ? pass.ownerUserId : null,
+      pass.credentialGeneration,
+      pass.ownerUserId,
       'pending',
       now,
       expiresAt,
@@ -257,6 +219,20 @@ export async function requestEnrollment(
       set: { state: 'failed', ended_at: ctx.clock.now(), error_code: 'SCANNER_OFFLINE' },
       where: { id, state: 'pending' },
     });
+    grantedAudit(
+      f,
+      ctx,
+      {
+        orgId,
+        actorType: 'user',
+        actorId: a.userId,
+        action: 'tag.enroll.fail',
+        targetType: 'enrollment',
+        targetId: id,
+        detail: { code: 'SCANNER_OFFLINE', passId, scannerId: scanner.id },
+      },
+      [exists('tag_enrollments', { id, state: 'failed' })],
+    );
     await commitTag(f);
     throw new ConflictError('The scanner is offline. Open it and try again.', 'SCANNER_OFFLINE');
   }

@@ -159,51 +159,6 @@ export const UpdateTagSchema = z.strictObject({
   pool: z.boolean().optional(),
 });
 
-export const TagEnrollmentStateSchema = z.enum([
-  'pending',
-  'done',
-  'cancelled',
-  'declined',
-  'expired',
-  'failed',
-]);
-/** The admin's view of a remote enrollment. */
-export const TagEnrollmentSchema = z.object({
-  id: IdSchema,
-  passId: IdSchema,
-  scannerId: IdSchema,
-  scannerName: z.string(),
-  scope: TagScopeSchema,
-  state: TagEnrollmentStateSchema,
-  createdAt: TimestampSchema,
-  expiresAt: TimestampSchema,
-  endedAt: TimestampSchema.nullable(),
-  /** The device fetched the request and shows it. */
-  shownAt: TimestampSchema.nullable(),
-  /** Set when `state` is `done`. */
-  binding: TagBindingSchema.nullable(),
-  errorCode: TagErrorCodeSchema.nullable(),
-});
-export type TagEnrollment = z.infer<typeof TagEnrollmentSchema>;
-export const CreateTagEnrollmentSchema = z.strictObject({
-  scannerId: IdSchema,
-  binding: TagScopeSchema.default('pass'),
-});
-/** A scanner an admin can send a request to. */
-export const TagScannerSchema = z.object({
-  id: IdSchema,
-  name: z.string(),
-  sessionName: z.string().nullable(),
-  role: z.enum(['door', 'desk', 'manager']).nullable(),
-  online: z.boolean(),
-  /** Why the scanner cannot take a request now; null when it can. */
-  unavailable: z.enum(['offline', 'no_tags', 'requests_off', 'busy', 'mode', 'screen']).nullable(),
-  secureOnly: z.boolean(),
-  lastUsedAt: TimestampSchema.nullable(),
-});
-
-export type TagScanner = z.infer<typeof TagScannerSchema>;
-
 /** The card a tag is assigned to: a possession credential, or a lookup that needs a Manager PIN. */
 const TagCardInputSchema = z.union([
   z.object({
@@ -278,19 +233,6 @@ export const ScanTagBindResultSchema = z.object({
   /** Undo on this device until then. */
   undoUntil: TimestampSchema.nullable(),
 });
-/** What the device shows for a request an admin sent it. No pass data beyond the two names. */
-export const ScanTagEnrollmentSchema = z.object({
-  id: IdSchema,
-  holderName: z.string(),
-  passTitle: z.string(),
-  scope: TagScopeSchema,
-  requestedByName: z.string().nullable(),
-  expiresAt: TimestampSchema,
-});
-export const ScanTagEnrollmentPendingSchema = z.object({
-  enrollment: ScanTagEnrollmentSchema.nullable(),
-});
-export const ScanTagEnrollmentCompleteRequestSchema = z.strictObject({ tag: TagReadSchema });
 
 export const TagKeysetSchema = z.object({
   id: IdSchema,

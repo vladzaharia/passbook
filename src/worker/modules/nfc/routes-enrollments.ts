@@ -1,21 +1,17 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
 import { IdSchema, pageOf } from '../../../shared/contracts/common.ts';
-import { TagScannerQuerySchema } from '../../../shared/contracts/nfc-tag-admin.ts';
 import {
   CreateTagEnrollmentSchema,
   TagEnrollmentSchema,
+  TagScannerQuerySchema,
   TagScannerSchema,
-} from '../../../shared/contracts/nfc-tags.ts';
+} from '../../../shared/contracts/nfc-tag-enrollments.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import {
-  cancelEnrollment,
-  getEnrollment,
-  listEnrollScanners,
-  requestEnrollment,
-} from './enrollments.ts';
+import { listEnrollScanners } from './enrollment-scanners.ts';
+import { cancelEnrollment, getEnrollment, requestEnrollment } from './enrollments.ts';
 import { passFacts } from './repo-tag-bindings.ts';
 import { actingIn, orgNotFound, passNotFound } from './route-access.ts';
 import { tagAuthorityOf } from './tags-admin.ts';

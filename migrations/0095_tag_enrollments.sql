@@ -1,5 +1,5 @@
 -- Remote tag enrollment: an admin asks a connected scanner to read a tag for a pass. The row is the truth;
--- the ScanHub only rings the device. One pending request per scanner and per pass; a request lasts at most 120 s.
+-- the ScanHub only rings the device. One pending request per scanner and per pass; a request lasts at most 90 s.
 
 CREATE TABLE tag_enrollments (
   id TEXT PRIMARY KEY,
@@ -13,7 +13,10 @@ CREATE TABLE tag_enrollments (
   user_id TEXT,
   state TEXT NOT NULL DEFAULT 'pending' CHECK (state IN ('pending', 'done', 'cancelled', 'declined', 'expired', 'failed')),
   created_at INTEGER NOT NULL,
-  expires_at INTEGER NOT NULL CHECK (expires_at - created_at BETWEEN 1 AND 120000),
+  expires_at INTEGER NOT NULL CHECK (expires_at - created_at BETWEEN 1 AND 90000),
+  -- The pass's credential generation and owner when asked: completion needs them unchanged.
+  holder_generation INTEGER NOT NULL,
+  holder_owner TEXT,
   -- The device fetched the request and shows it.
   shown_at INTEGER,
   ended_at INTEGER,
@@ -43,7 +46,11 @@ END;
 -- Update: identity columns never change; a pending request leaves 'pending' once; shown_at is set once.
 CREATE TRIGGER tag_enrollments_update_check BEFORE UPDATE ON tag_enrollments
 BEGIN
-  SELECT RAISE(ABORT, 'enrollment_immutable') WHERE OLD.state <> 'pending'
+  -- A finished request keeps its row; only the binding it made may go (the foreign key sets it NULL).
+  SELECT RAISE(ABORT, 'enrollment_immutable') WHERE (OLD.state <> 'pending'
+      AND NOT (NEW.binding_id IS NULL AND OLD.binding_id IS NOT NULL AND NEW.state IS OLD.state
+        AND NEW.ended_at IS OLD.ended_at AND NEW.error_code IS OLD.error_code AND NEW.shown_at IS OLD.shown_at))
+    OR NEW.holder_generation IS NOT OLD.holder_generation OR NEW.holder_owner IS NOT OLD.holder_owner
     OR NEW.id IS NOT OLD.id OR NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD.mode
     OR NEW.pass_id IS NOT OLD.pass_id OR NEW.scanner_id IS NOT OLD.scanner_id
     OR NEW.requested_by IS NOT OLD.requested_by OR NEW.scope IS NOT OLD.scope

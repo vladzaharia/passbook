@@ -3,7 +3,6 @@ import { IdSchema, pageOf, TimestampSchema } from './common.ts';
 import { TagBindingSchema, TagSchema, TagScopeSchema } from './nfc-tags.ts';
 
 /** What an admin changes on a tag that is bound, and the device's answers to a tag request. */
-export const TagScannerQuerySchema = z.object({ orgId: IdSchema });
 /** Change what a binding works with: this pass, or the holder's every pass. `passId` narrows a person-wide tag. */
 export const ChangeTagBindingSchema = z.strictObject({
   binding: TagScopeSchema,
@@ -24,12 +23,3 @@ export const UserTagSchema = TagSchema.extend({ orgId: IdSchema, orgName: z.stri
 /** `orgId` narrows to one org; absent, every org the caller can read passes in. */
 export const UserTagListQuerySchema = z.object({ orgId: IdSchema.optional() });
 export const UserTagListSchema = pageOf(UserTagSchema);
-
-/** What the device shows when its tag was bound. */
-export const ScanTagEnrollmentDoneSchema = z.object({
-  status: z.literal('done'),
-  hint: z.string().regex(/^[0-9A-F]{4}$/),
-  scope: TagScopeSchema,
-  bindingId: IdSchema,
-});
-export const ScanTagEnrollmentDeclinedSchema = z.object({ status: z.literal('declined') });
