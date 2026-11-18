@@ -1,105 +1,90 @@
 import { describe, expect, it } from 'vitest';
 import { applyResolutions, mergePackages } from './apply.ts';
-import { baseDoc, edit, sha, stringsFile } from './merge-test-fixtures.ts';
+import { mutate, rng } from './laws-test-fixtures.ts';
+import { baseDoc, edit, lostEdits } from './merge-test-fixtures.ts';
 import { normalize } from './normalize.ts';
-import type { PackageDoc } from './types.ts';
+import type { PackageDoc, Resolution } from './types.ts';
 
-function rng(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const GROUPS = ['primaryFields', 'secondaryFields', 'backFields'];
-
-/** A random, benign edit: no renames, so the symmetry law applies. */
-function mutate(doc: PackageDoc, r: () => number, n: number): PackageDoc {
-  const pick = <T>(xs: T[]) => xs[Math.floor(r() * xs.length)] as T;
-  const tok = () => `v${Math.floor(r() * 1e6)}`;
-  return edit(doc, (d) => {
-    const pass = d.passJson;
-    const man = d.manifest;
-    const fields = () => GROUPS.flatMap((g) => pass.generic[g] ?? []);
-    const ops: (() => void)[] = [
-      () => (pass.description = tok()),
-      () => (pass.foregroundColor = pick(['red', 'blue', tok()])),
-      () => (pass[`extra${Math.floor(r() * 3)}`] = tok()),
-      () => (pass.semantics[`s${Math.floor(r() * 3)}`] = tok()),
-      () => ((pick(fields()) as any).label = tok()),
-      () => {
-        const g = pick(GROUPS);
-        pass.generic[g] = pass.generic[g] ?? [];
-        pass.generic[g].splice(Math.floor(r() * 3), 0, { key: tok(), label: tok(), value: '' });
-      },
-      () => {
-        const f = pick(fields()) as any;
-        for (const g of GROUPS)
-          pass.generic[g] = (pass.generic[g] ?? []).filter((x: any) => x !== f);
-        man.bindings = man.bindings.filter((b: any) => b.to.field !== f.key);
-      },
-      () => pass.generic.secondaryFields.reverse(),
-      () => (pass.barcodes[0].message = tok()),
-      () => pass.locations.push({ latitude: r(), longitude: r() }),
-      () => (man.description = tok()),
-      () => (man.display.title = tok()),
-      () => {
-        const key = pick(['tier', 'pts', 'name']);
-        if (!man.display.search.includes(key)) man.display.search.push(key);
-      },
-      () => man.bindings.splice(Math.floor(r() * 3), 0, { to: { field: 'name' }, value: tok() }),
-      () =>
-        (man.inputs.properties[tok()] = { type: 'string', maxLength: Math.floor(r() * 50) + 1 }),
-      () => (man.inputs.properties.name.maxLength = Math.floor(r() * 90)),
-      () => (man.sample[`k${Math.floor(r() * 3)}`] = tok()),
-      () => (man.scan.actions[0].label = tok()),
-      () =>
-        man.scan.actions.push({ id: tok(), label: tok(), kind: 'add', input: 'pts', amount: 1 }),
-      () => (man.scan.display.panels[0].rows[0].text = tok()),
-      () => (man.scan.display.header.chips[0].text = tok()),
-      () => (man.scan.display.customer.greet = r() < 0.5),
-      () => (man.stamps.goal = Math.floor(r() * 10) + 3),
-      () => (man.nfc[`n${Math.floor(r() * 2)}`] = tok()),
-      () => (d.files[pick(['icon@2x.png', 'logo@2x.png', 'icon@3x.png'])] = { sha1: sha(tok()) }),
-      () =>
-        (d.files['en.lproj/pass.strings'] = stringsFile({
-          Name: tok(),
-          Tier: 'Tier',
-          [tok()]: tok(),
-        })),
-    ];
-    for (let i = 0; i < n; i++) pick(ops)();
-  });
-}
-
-const SEEDS = Array.from({ length: 120 }, (_, i) => i + 1);
+const SEEDS = Array.from({ length: 200 }, (_, i) => i + 1);
 const ids = (b: PackageDoc, o: PackageDoc, t: PackageDoc) =>
   mergePackages(b, o, t).conflicts.map((c) => c.id);
+/** pass.json and the manifest as bytes: key order counts. Files are sorted by name by design. */
+const bytes = (d: PackageDoc) => JSON.stringify([d.passJson, d.manifest]);
+
+/** A deep copy with every object's keys in reverse order. */
+const reversed = <T>(v: T): T =>
+  Array.isArray(v)
+    ? (v.map(reversed) as T)
+    : v && typeof v === 'object' && !(v instanceof Uint8Array)
+      ? (Object.fromEntries(
+          Object.entries(v)
+            .reverse()
+            .map(([k, x]) => [k, reversed(x)]),
+        ) as T)
+      : v;
 
 describe('merge laws', () => {
-  const base = baseDoc();
+  // Two barcodes, so either side can remove one at either index.
+  const base = edit(baseDoc(), (d) =>
+    d.passJson.barcodes.push({
+      format: 'PKBarcodeFormatAztec',
+      message: 'z',
+      messageEncoding: 'x',
+    }),
+  );
   const each = (fn: (o: PackageDoc, t: PackageDoc, seed: number) => void) => {
     for (const seed of SEEDS) {
       const r = rng(seed);
-      fn(mutate(base, r, 1 + Math.floor(r() * 4)), mutate(base, r, 1 + Math.floor(r() * 4)), seed);
+      fn(mutate(base, r, 1 + Math.floor(r() * 5)), mutate(base, r, 1 + Math.floor(r() * 5)), seed);
     }
   };
 
-  it('merge(b, x, x) = x', () => {
-    each((x) => {
+  it('merge(b, x, x) = x, byte for byte', () => {
+    each((x, _, seed) => {
       const r = mergePackages(base, x, x);
-      expect(r.status).toBe('clean');
-      expect(r.merged).toEqual(normalize(x));
+      expect(r.status, `seed ${seed}`).toBe('clean');
+      expect(bytes(r.merged), `seed ${seed}`).toBe(bytes(normalize(x)));
+      expect(r.merged.files).toEqual(normalize(x).files);
     });
   });
-  it('merge(b, b, t) = t and merge(b, o, b) = o', () => {
-    each((o, t) => {
-      expect(mergePackages(base, base, t).merged).toEqual(normalize(t));
-      expect(mergePackages(base, o, base).merged).toEqual(normalize(o));
-      expect(mergePackages(base, o, base).theirs).toEqual([]);
+  it('merge(b, b, t) = t and merge(b, o, b) = o, clean and byte for byte', () => {
+    each((o, t, seed) => {
+      const ff = mergePackages(base, base, t);
+      expect([ff.status, bytes(ff.merged)], `seed ${seed}`).toEqual(['clean', bytes(normalize(t))]);
+      const kept = mergePackages(base, o, base);
+      expect([kept.status, bytes(kept.merged)], `seed ${seed}`).toEqual([
+        'clean',
+        bytes(normalize(o)),
+      ]);
+      expect(kept.theirs).toEqual([]);
+    });
+  });
+  it('no lost edit: a clean merge has every edit of either side', () => {
+    let clean = 0;
+    each((o, t, seed) => {
+      const m = mergePackages(base, o, t);
+      if (m.status !== 'clean') return;
+      clean++;
+      expect(lostEdits(base, o, m.merged), `ours, seed ${seed}`).toEqual([]);
+      expect(lostEdits(base, t, m.merged), `theirs, seed ${seed}`).toEqual([]);
+    });
+    expect(clean).toBeGreaterThan(SEEDS.length / 5);
+  });
+  it('no lost edit: a conflicted merge is provisionally ours and keeps every ours edit', () => {
+    each((o, t, seed) => {
+      expect(lostEdits(base, o, mergePackages(base, o, t).merged), `seed ${seed}`).toEqual([]);
+    });
+  });
+  it('a result never has two main styles, under any side picked', () => {
+    const MAIN = ['generic', 'storeCard', 'coupon', 'eventTicket', 'boardingPass'];
+    const mains = (d: PackageDoc) =>
+      Object.keys(d.passJson as object).filter((k) => MAIN.includes(k));
+    each((o, t, seed) => {
+      const m = mergePackages(base, o, t);
+      for (const side of [undefined, 'ours', 'theirs'] as const) {
+        const picks = side ? Object.fromEntries(m.conflicts.map((c) => [c.id, side])) : {};
+        expect(mains(applyResolutions(base, o, t, picks)), `${side}, seed ${seed}`).toHaveLength(1);
+      }
     });
   });
   it('conflict ids do not depend on which side is ours', () => {
@@ -111,33 +96,44 @@ describe('merge laws', () => {
     each((o, t) => {
       const m = mergePackages(base, o, t);
       if (m.status !== 'clean') return;
-      expect(mergePackages(base, m.merged, t).merged).toEqual(m.merged);
+      expect(bytes(mergePackages(base, m.merged, t).merged)).toBe(bytes(m.merged));
     });
   });
   it('applyResolutions with every conflict taken as ours equals merged', () => {
     each((o, t) => {
       const m = mergePackages(base, o, t);
       const picks = Object.fromEntries(m.conflicts.map((c) => [c.id, 'ours' as const]));
-      expect(applyResolutions(base, o, t, picks)).toEqual(m.merged);
+      expect(bytes(applyResolutions(base, o, t, picks))).toBe(bytes(m.merged));
       expect(applyResolutions(base, o, t, {})).toEqual(m.merged);
     });
   });
-  it('taking theirs for every conflict leaves only reference conflicts or none', () => {
-    each((o, t) => {
-      const m = mergePackages(base, o, t);
-      const picks = Object.fromEntries(m.conflicts.map((c) => [c.id, 'theirs' as const]));
-      const left = mergePackages(base, o, t, { picks }).conflicts;
-      expect(left.every((c) => c.kind === 'reference' || c.kind === 'invalid')).toBe(true);
+  it('picking a side for every conflict, round by round, reaches clean', () => {
+    each((o, t, seed) => {
+      for (const side of ['theirs', 'ours'] as const) {
+        const picks: Record<string, Resolution> = {};
+        let m = mergePackages(base, o, t);
+        for (let round = 0; round < 4 && m.status !== 'clean'; round++) {
+          for (const c of m.conflicts) picks[c.id] = side;
+          m = mergePackages(base, o, t, { picks });
+        }
+        // A target `theirs` cannot bring back (its parent is gone) is kept by `ours`.
+        for (const c of m.conflicts) picks[c.id] = 'ours';
+        m = mergePackages(base, o, t, { picks });
+        expect(
+          m.conflicts.map((c) => c.id),
+          `${side}, seed ${seed}`,
+        ).toEqual([]);
+      }
     });
   });
-  it('is deterministic: same bytes out for equal input, in any key order', () => {
-    each((o, t) => {
-      const a = JSON.stringify(mergePackages(base, o, t));
-      expect(
-        JSON.stringify(
-          mergePackages(structuredClone(base), structuredClone(o), structuredClone(t)),
-        ),
-      ).toBe(a);
+  it('is deterministic: the same bytes for equal input, whatever the base key order', () => {
+    each((o, t, seed) => {
+      const a = mergePackages(base, o, t);
+      const again = mergePackages(structuredClone(base), structuredClone(o), structuredClone(t));
+      expect(JSON.stringify(again)).toBe(JSON.stringify(a));
+      const shuffled = mergePackages(reversed(base), o, t);
+      expect(bytes(shuffled.merged), `seed ${seed}`).toBe(bytes(a.merged));
+      expect(shuffled.conflicts.map((c) => c.id)).toEqual(a.conflicts.map((c) => c.id));
     });
   });
   it('outputs are sorted', () => {
@@ -150,11 +146,13 @@ describe('merge laws', () => {
       expect(Object.keys(m.merged.files)).toEqual(sorted(Object.keys(m.merged.files)));
     });
   });
-  it('two-way: merge(null, x, x) = x', () => {
-    each((x) => {
+  it('two-way: merge(null, x, x) = x, and a clean two-way merge is ours', () => {
+    each((x, y, seed) => {
       const r = mergePackages(null, x, x);
       expect(r.status).toBe('clean');
-      expect(r.merged).toEqual(normalize(x));
+      expect(bytes(r.merged)).toBe(bytes(normalize(x)));
+      const d = mergePackages(null, x, y);
+      if (d.status === 'clean') expect(bytes(d.merged), `seed ${seed}`).toBe(bytes(normalize(x)));
     });
   });
 });
