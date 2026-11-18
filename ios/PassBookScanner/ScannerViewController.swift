@@ -8,6 +8,7 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
     private let trustedHost = "passbook.mobile"
     private var trustedOrigin: String { "https://\(trustedHost)" }
     private var ready = false
+    private var wireVersion = 1
     private var armed = false
     private var pendingID: String?
     private var scanTimeout: Task<Void, Never>?
@@ -37,6 +38,7 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         view = webView
         hardware.onChange = { [weak self] in self?.refreshCapabilities() }
         hardware.onRead = { [weak self] value, method in self?.sendScan(value, method: method) }
+        hardware.onTag = { [weak self] id, result in self?.sendTagScan(id: id, result: result) }
         hardware.onCancelled = { [weak self] in self?.send(["event": "cancelled"]) }
     }
 
@@ -157,7 +159,12 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
               let raw = message.body as? String, raw.utf8.count <= 8192,
               let data = raw.data(using: .utf8),
               let request = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              request["version"] as? Int == 1, let op = request["op"] as? String else { return }
+              let version = request["version"] as? Int, version == 1 || version == 2,
+              let op = request["op"] as? String else { return }
+        if op == "hello" {
+            wireVersion = version == 2 && (request["versions"] as? [Int])?.contains(2) == true ? 2 : 1
+            hardware.tagsEnabled = wireVersion == 2
+        } else if version != wireVersion { return }
         switch op {
         case "hello":
             ready = true
@@ -170,6 +177,15 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         case "nfcRead":
             guard ready, armed, UIApplication.shared.applicationState == .active else { return }
             hardware.readNFC()
+        case "tagRead":
+            guard ready, wireVersion == 2, UIApplication.shared.applicationState == .active, pendingID == nil,
+                  let id = request["id"] as? String, (1...100).contains(id.count),
+                  let prompt = request["prompt"] as? String, prompt.count <= 200,
+                  let timeoutMs = request["timeoutMs"] as? Int, (1...60000).contains(timeoutMs) else { return }
+            hardware.readTag(id: id, prompt: prompt, timeoutMs: timeoutMs)
+        case "tagCancel":
+            guard wireVersion == 2, let id = request["id"] as? String else { return }
+            hardware.cancelTag(id: id)
         case "result":
             guard request["id"] as? String == pendingID,
                   let outcome = request["outcome"] as? String,
@@ -207,6 +223,17 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
               value.utf8.count <= 2048,
               !value.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else { return }
         let id = UUID().uuidString
+        awaitResult(id)
+        send(["event": "scan", "id": id, "source": "barcode", "value": value, "method": method])
+    }
+
+    private func sendTagScan(id: String, result: TagReadResult) {
+        guard ready, wireVersion == 2, UIApplication.shared.applicationState == .active, pendingID == nil else { return }
+        awaitResult(id)
+        send(["event": "scan", "id": id, "readAt": Int(Date().timeIntervalSince1970 * 1000), "source": "nfc-tag", "tag": result.wire])
+    }
+
+    private func awaitResult(_ id: String) {
         pendingID = id
         scanTimeout = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(15))
@@ -215,13 +242,12 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
             self.scanTimeout = nil
             self.send(["event": "timeout"])
         }
-        send(["event": "scan", "id": id, "source": "barcode", "value": value, "method": method])
     }
 
     private func send(_ fields: [String: Any]) {
         guard webView.url?.host == trustedHost, webView.url?.scheme == "https" else { return }
         var event = fields
-        event["version"] = 1
+        event["version"] = wireVersion
         guard let data = try? JSONSerialization.data(withJSONObject: event),
               let json = String(data: data, encoding: .utf8),
               let script = try? JSONSerialization.data(withJSONObject: [json]),
@@ -246,6 +272,8 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         ready = false
+        wireVersion = 1
+        hardware.tagsEnabled = false
         capabilitiesSent = false
         armed = false
         pendingID = nil
