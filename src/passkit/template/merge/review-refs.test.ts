@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyResolutions, mergePackages } from './apply.ts';
 import { baseDoc, edit, ids, kinds, man, run } from './merge-test-fixtures.ts';
-import type { PackageDoc } from './types.ts';
 
 // Regressions for the Opus review of WP-1 (review-forks1.md): H1, H2, M3, L6.
 const m = (d: any) => d.manifest;
@@ -229,7 +228,7 @@ describe('L6: a rename of what ours deleted', () => {
       m(d).inputs.properties = { name: p.name, tier: p.tier, points: p.pts };
       m(d).bindings.push({ to: { field: 'pts', prop: 'label' }, value: '{{points}} pts' });
     };
-    const r: { conflicts: any[]; renames: any[]; merged: PackageDoc } = run(o, t);
+    const r = run(o, t);
     expect(r.renames).toEqual([{ kind: 'input', from: 'pts', to: 'points', applied: false }]);
     expect(kinds(r)).toMatchObject({
       'references:input/pts/bindings/{"field":"pts","prop":"label"}#0': 'reference',

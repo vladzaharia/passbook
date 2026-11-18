@@ -39,7 +39,9 @@ export function mutate(doc: PackageDoc, r: () => number, n: number): PackageDoc 
       () => (pass[`extra${Math.floor(r() * 3)}`] = tok()),
       () => (pass.sameExtra = 'same'),
       () => (pass.semantics[`s${Math.floor(r() * 3)}`] = tok()),
-      () => fields().length && ((pick(fields()) as Any).label = tok()),
+      () => {
+        if (fields().length) (pick(fields()) as Any).label = tok();
+      },
       () => {
         const g = pick(GROUPS);
         style()[g] = style()[g] ?? [];
@@ -68,7 +70,9 @@ export function mutate(doc: PackageDoc, r: () => number, n: number): PackageDoc 
         pass[to] = pass[from];
         delete pass[from];
       },
-      () => pass.barcodes[0] && (pass.barcodes[0].message = tok()),
+      () => {
+        if (pass.barcodes[0]) pass.barcodes[0].message = tok();
+      },
       () =>
         pass.barcodes.push({
           format: 'PKBarcodeFormatPDF417',
@@ -91,26 +95,36 @@ export function mutate(doc: PackageDoc, r: () => number, n: number): PackageDoc 
       () =>
         (man.inputs.properties[tok()] = { type: 'string', maxLength: Math.floor(r() * 50) + 1 }),
       () => (man.inputs.properties.same = { type: 'string' }),
-      () =>
-        man.inputs.properties.name && (man.inputs.properties.name.maxLength = Math.floor(r() * 90)),
+      () => {
+        if (man.inputs.properties.name) man.inputs.properties.name.maxLength = Math.floor(r() * 90);
+      },
       () => delete man.inputs.properties[pick(Object.keys(man.inputs.properties))],
       () => (man.inputs.required = man.inputs.required.length ? [] : ['name']),
       () => (man.sample[`k${Math.floor(r() * 3)}`] = tok()),
       () => delete man.sample.name,
       () => (man.lookups.tiers.a.label = tok()),
       () => (man.lookups.tiers[`t${Math.floor(r() * 3)}`] = { label: tok() }),
-      () => scan.actions[0] && (scan.actions[0].label = tok()),
+      () => {
+        if (scan.actions[0]) scan.actions[0].label = tok();
+      },
       () => scan.actions.push({ id: tok(), label: tok(), kind: 'add', input: 'pts', amount: 1 }),
       () => drop(scan.actions),
-      () => panel()?.rows[0] && (panel()!.rows[0].text = tok()),
+      () => {
+        const row = panel()?.rows[0];
+        if (row) row.text = tok();
+      },
       () => panel()?.rows.push({ id: tok(), type: 'note', text: `{{${pick(['tier', 'pts'])}}}` }),
       () => drop(panel()?.rows),
       () => drop(scan.display.panels),
-      () => scan.display.header.chips[0] && (scan.display.header.chips[0].text = tok()),
+      () => {
+        if (scan.display.header.chips[0]) scan.display.header.chips[0].text = tok();
+      },
       () => drop(scan.display.header.chips),
       () => drop(scan.display.variants),
       () => (scan.display.customer.greet = r() < 0.5),
-      () => (scan.access.plans[0] ? (scan.access.plans[0].label = tok()) : undefined),
+      () => {
+        if (scan.access.plans[0]) scan.access.plans[0].label = tok();
+      },
       () => drop(scan.access.plans),
       () => (scan.access.rules.visitGapMinutes = Math.floor(r() * 30)),
       () => (man.stamps.goal = Math.floor(r() * 10) + 3),
