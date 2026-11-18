@@ -2,6 +2,7 @@ import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
+import { deferTermClear } from './act-term-stamp.ts';
 import { adminActor, captureScanTenantAuthority, type ScanActor, tenantScanRole } from './actor.ts';
 import { verifyApproval } from './approval.ts';
 import { captureScanEpochs } from './authority-checks.ts';
@@ -154,7 +155,9 @@ async function run(
     if (error instanceof AppError && error.code === UNDO_CODES.stale) throw notFound();
     throw error;
   }
-  return answer.finish(after, id);
+  const finished = answer.finish(after, id);
+  deferTermClear({ ctx, actor, target, event: plan.event, approver });
+  return finished;
 }
 
 export const consoleUndo: ConsoleUndo = async (ctx, session, input) => {

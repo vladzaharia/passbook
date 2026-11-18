@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { BehaviorContext, PassJson } from '../../types.ts';
-import { firstScanInput, type TermConfig, term } from './index.ts';
+import { instantOf } from './calendar.ts';
+import { renewedStart, stampInput, type TermConfig, term } from './index.ts';
 
 const ctx = (now = '2030-01-01T00:00:00Z'): BehaviorContext => ({
   now: new Date(now),
@@ -19,6 +20,7 @@ const run = (
   return pass;
 };
 const months = (length: number): TermConfig => ({ start: 's', unit: 'months', length });
+const ms = (iso: string) => Date.parse(iso);
 
 describe('term', () => {
   it('adds calendar months', () => {
@@ -58,11 +60,9 @@ describe('term', () => {
 
   it('keeps wall-clock time across a DST change', () => {
     const tz = 'America/New_York';
-    // 10:00 EST (15:00Z) in January, 6 months on is 10:00 EDT (14:00Z).
     expect(run({ s: '2030-01-15T15:00:00Z' }, { ...months(6), timeZone: tz }).expirationDate).toBe(
       '2030-07-15T14:00:00Z',
     );
-    // Days are calendar days too: 24h later would be 11:00 local across the jump.
     expect(
       run({ s: '2030-03-09T15:00:00Z' }, { start: 's', unit: 'days', length: 1, timeZone: tz })
         .expirationDate,
@@ -80,47 +80,128 @@ describe('term', () => {
     ).toBe('2030-04-01T03:59:59Z');
   });
 
-  it('starts at build time when no start input is set', () => {
-    expect(run({}, { unit: 'months', length: 12 }).expirationDate).toBe('2031-01-01T00:00:00Z');
+  it('reads a date-only start as a local date in the zone', () => {
+    const c: TermConfig = {
+      start: 's',
+      unit: 'month-end',
+      length: 1,
+      timeZone: 'America/New_York',
+    };
+    // 1 Mar local, not the evening of 28 Feb: the month ends 31 Mar at 23:59:59 EDT.
+    expect(run({ s: '2030-03-01' }, c).expirationDate).toBe('2030-04-01T03:59:59Z');
+    expect(run({ s: '2030-03-01' }, { ...months(1), timeZone: 'Asia/Tokyo' }).expirationDate).toBe(
+      '2030-03-31T15:00:00Z',
+    );
+    expect(run({ s: '2030-03-01' }, months(1)).expirationDate).toBe('2030-04-01T00:00:00Z');
   });
 
-  it('has no end until the first scan stamps the start', () => {
-    const pass = run({}, months(12), undefined, { expirationDate: '2099-01-01T00:00:00Z' });
-    expect(pass.expirationDate).toBeUndefined();
-    expect(run({ s: '2030-06-02T09:30:00Z' }, months(12)).expirationDate).toBe(
-      '2031-06-02T09:30:00Z',
+  it('rejects dates that do not exist or predate 1970', () => {
+    expect(() => run({ s: '2030-02-30' }, months(1))).toThrow(/not a date/);
+    expect(() => run({ s: '2030-02-30T10:00:00Z' }, months(1))).toThrow(/not a date/);
+    expect(() => run({ s: '0030-03-01' }, months(1))).toThrow(/not a date/);
+    expect(() => run({ s: '1969-12-31T00:00:00Z' }, months(1))).toThrow(/not a date/);
+  });
+
+  it('puts a skipped local time after the jump, whatever the gap', () => {
+    const wall = { y: 2030, mo: 3, d: 10, h: 2, mi: 30, s: 0 };
+    // New York springs forward 02:00 to 03:00: 02:30 does not exist.
+    expect(instantOf(wall, 'America/New_York')).toBe(ms('2030-03-10T07:30:00Z'));
+    // Lord Howe's gap is 30 minutes: 02:15 (on 6 Oct 2030) does not exist; 02:30 is after it.
+    const after = instantOf({ y: 2030, mo: 10, d: 6, h: 2, mi: 15, s: 0 }, 'Australia/Lord_Howe');
+    expect(new Date(after).toISOString() >= '2030-10-05T15:30:00.000Z').toBe(true);
+    expect(
+      instantOf({ y: 2030, mo: 10, d: 6, h: 2, mi: 45, s: 0 }, 'Australia/Lord_Howe'),
+    ).toBeGreaterThanOrEqual(after);
+  });
+
+  it('keeps the end of day after grace across a DST change', () => {
+    const c: TermConfig = {
+      start: 's',
+      unit: 'month-end',
+      length: 1,
+      timeZone: 'America/New_York',
+      graceDays: 7,
+    };
+    // 28 Feb close + 10 calendar days is 10 Mar 23:59:59, after the jump (EDT); adding 240h would be an hour off.
+    expect(run({ s: '2030-03-01' }, { ...c, graceDays: 0 }).expirationDate).toBe(
+      '2030-04-01T03:59:59Z',
+    );
+    expect(run({ s: '2030-03-01' }, c).expirationDate).toBe('2030-04-08T03:59:59Z');
+    expect(run({ s: '2030-02-01' }, { ...c, graceDays: 10 }).expirationDate).toBe(
+      '2030-03-11T03:59:59Z',
     );
   });
 
-  it('renews from the current end, not from today', () => {
-    const c: TermConfig = { ...months(12), renewals: 'n' };
-    // Renewed early (now is mid-term): the second term starts where the first ends.
-    expect(
-      run({ s: '2030-03-15T10:00:00Z', n: '1' }, c, '2030-09-01T00:00:00Z').expirationDate,
-    ).toBe('2032-03-15T10:00:00Z');
-    expect(run({ s: '2030-03-15T10:00:00Z', n: 0 }, c).expirationDate).toBe('2031-03-15T10:00:00Z');
-    // Anchored on the start day: no drift through short months.
-    expect(
-      run({ s: '2030-01-31T00:00:00Z', n: '1' }, { ...months(1), renewals: 'n' }).expirationDate,
-    ).toBe('2030-03-31T00:00:00Z');
-    expect(() =>
-      run({ s: '2030-01-31T00:00:00Z', n: 'x' }, { ...months(1), renewals: 'n' }),
-    ).toThrow(/not a count/);
+  it('has no end until the first scan stamps the start, and drops a template default', () => {
+    const c: TermConfig = { ...months(12), startOn: 'first-scan' };
+    const pass = run({}, c, undefined, { expirationDate: '2099-01-01T00:00:00Z' });
+    expect(pass.expirationDate).toBeUndefined();
+    expect(run({ s: '2030-06-02T09:30:00Z' }, c).expirationDate).toBe('2031-06-02T09:30:00Z');
   });
 
-  it('supports terms over a year, up to ten', () => {
+  it('leaves an existing expiry alone when the start is empty and no scan will stamp it', () => {
+    const base = { expirationDate: '2099-01-01T00:00:00Z' };
+    expect(run({}, months(12), undefined, base).expirationDate).toBe('2099-01-01T00:00:00Z');
+    expect(run({}, { ...months(12), startOn: 'issue' }, undefined, base).expirationDate).toBe(
+      '2099-01-01T00:00:00Z',
+    );
+  });
+
+  it('an issue-time start never moves with the build time', () => {
+    const c: TermConfig = { ...months(12), startOn: 'issue' };
+    const input = { s: '2030-01-01T00:00:00Z' };
+    expect(run(input, c, '2030-01-01T00:00:00Z').expirationDate).toBe('2031-01-01T00:00:00Z');
+    expect(run(input, c, '2030-09-01T00:00:00Z').expirationDate).toBe('2031-01-01T00:00:00Z');
+  });
+
+  it('renews from the current end when early, and from the renewal when lapsed', () => {
+    const c = months(12);
+    const start = ms('2030-03-15T10:00:00Z');
+    expect(renewedStart(start, c, ms('2030-09-01T00:00:00Z'))).toBe(ms('2031-03-15T10:00:00Z'));
+    const lapsed = ms('2033-01-10T08:00:00Z');
+    expect(renewedStart(start, c, lapsed)).toBe(lapsed);
     expect(
-      run({ s: '2030-03-15T10:00:00Z' }, { start: 's', unit: 'years', length: 5 }).expirationDate,
-    ).toBe('2035-03-15T10:00:00Z');
+      run(
+        { s: new Date(renewedStart(start, c, lapsed)).toISOString() },
+        c,
+        '2033-01-10T08:00:00Z',
+        {},
+      ).expirationDate,
+    ).toBe('2034-01-10T08:00:00Z');
+    expect(
+      run(
+        { s: new Date(renewedStart(start, c, lapsed)).toISOString() },
+        { ...c, voidWhenPast: true },
+        '2033-01-10T08:00:00Z',
+      ).voided,
+    ).toBeUndefined();
+    // A day-end term starts the next one at the following midnight.
+    const eom: TermConfig = { start: 's', unit: 'month-end', length: 1 };
+    expect(renewedStart(ms('2030-04-10T08:00:00Z'), eom, ms('2030-04-12T00:00:00Z'))).toBe(
+      ms('2030-05-01T00:00:00Z'),
+    );
+  });
+
+  it('caps one term at ten years, not the span of renewals', () => {
+    const start = ms('2030-03-15T10:00:00Z');
+    const yearly: TermConfig = { start: 's', unit: 'years', length: 1 };
+    let at = start;
+    for (let i = 0; i < 12; i++) at = renewedStart(at, yearly, 0);
+    expect(run({ s: new Date(at).toISOString() }, yearly).expirationDate).toBe(
+      '2043-03-15T10:00:00Z',
+    );
+    expect(
+      run({ s: '2030-03-15T10:00:00Z' }, { start: 's', unit: 'years', length: 10 }).expirationDate,
+    ).toBe('2040-03-15T10:00:00Z');
+    expect(() =>
+      run({ s: '2030-03-15T10:00:00Z' }, { start: 's', unit: 'years', length: 11 }),
+    ).toThrow(/over ten years/);
     expect(run({ s: '2030-03-15T10:00:00Z' }, months(30)).expirationDate).toBe(
       '2032-09-15T10:00:00Z',
     );
     expect(
       run({ s: '2030-03-15T10:00:00Z' }, { start: 's', unit: 'days', length: 800 }).expirationDate,
     ).toBe('2032-05-23T10:00:00Z');
-    expect(() =>
-      run({ s: '2030-03-15T10:00:00Z' }, { start: 's', unit: 'years', length: 11 }),
-    ).toThrow(/over ten years/);
   });
 
   it('adds grace days', () => {
@@ -132,8 +213,7 @@ describe('term', () => {
   it('voids a lapsed pass only when asked, and the scanner check follows', () => {
     const input = { s: '2029-01-10T00:00:00Z' };
     expect(run(input, months(1)).voided).toBeUndefined();
-    const pass = run(input, { ...months(1), voidWhenPast: true });
-    expect(pass.voided).toBe(true);
+    expect(run(input, { ...months(1), voidWhenPast: true }).voided).toBe(true);
     const lapsed = run(input, months(1));
     expect(validityOf(lapsed, ctx().now).status).toBe('expired');
     const live = run({ s: '2029-12-20T00:00:00Z' }, months(1));
@@ -148,11 +228,14 @@ describe('term', () => {
     ).toThrow(/not a time zone/);
   });
 
-  it('names the input a first-scan term waits on', () => {
+  it('names the input a scan or a publish stamps', () => {
     const use = (config: TermConfig) => ({ behaviors: [{ use: 'term', version: 1, config }] });
-    expect(firstScanInput(use({ ...months(12), firstScan: true }) as never)).toBe('s');
-    expect(firstScanInput(use(months(12)) as never)).toBeNull();
-    expect(firstScanInput({})).toBeNull();
-    expect(() => run({}, { unit: 'months', length: 1, firstScan: true })).toThrow(/start input/);
+    expect(stampInput(use({ ...months(12), startOn: 'first-scan' }) as never, 'first-scan')).toBe(
+      's',
+    );
+    expect(stampInput(use({ ...months(12), startOn: 'issue' }) as never, 'issue')).toBe('s');
+    expect(stampInput(use({ ...months(12), startOn: 'issue' }) as never, 'first-scan')).toBeNull();
+    expect(stampInput(use(months(12)) as never, 'issue')).toBeNull();
+    expect(stampInput({}, 'issue')).toBeNull();
   });
 });

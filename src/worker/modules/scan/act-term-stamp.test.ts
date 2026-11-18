@@ -1,25 +1,54 @@
 import { unzipSync } from 'fflate';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { first } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { act, kit, MINUTE, out, reviseReplayTemplate, tpl } from './act-test-fixtures.ts';
+import {
+  act,
+  kit,
+  MINUTE,
+  out,
+  reviseReplayTemplate,
+  setupActionFixture,
+} from './act-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';
 
-let termTpl: string;
+const CHECK_IN = { id: 'check_in', label: 'Check in', kind: 'check_in' } as const;
+const ADD = {
+  id: 'add',
+  label: 'Add',
+  kind: 'add',
+  input: 'balance',
+  repeat: 'always',
+  amount: 1,
+} as const;
+const term = (startOn: 'first-scan' | 'issue') => [
+  {
+    use: 'term',
+    version: 1,
+    config: { start: 'startsAt', startOn, unit: 'months' as const, length: 12 },
+  },
+];
+
+let scanTpl: string;
+let valueTpl: string;
+let issueTpl: string;
+
+const desk = (id: string) =>
+  kit.scanner({ templateIds: [id], settings: { roleWithoutSignIn: 'desk' } });
+
+async function termTemplate(name: string, actions: unknown[], startOn: 'first-scan' | 'issue') {
+  const id = await kit.scanTemplate(name, { actions } as never);
+  await reviseReplayTemplate(id, (m) => {
+    m.behaviors = term(startOn);
+  });
+  return id;
+}
 
 beforeAll(async () => {
-  const { setupActionFixture } = await import('./act-test-fixtures.ts');
   await setupActionFixture();
-  termTpl = tpl;
-  await reviseReplayTemplate(termTpl, (m) => {
-    m.behaviors = [
-      {
-        use: 'term',
-        version: 1,
-        config: { start: 'startsAt', firstScan: true, unit: 'months', length: 12 },
-      },
-    ];
-  });
+  scanTpl = await termTemplate('Gym term', [CHECK_IN, ADD], 'first-scan');
+  valueTpl = await termTemplate('Value term', [ADD], 'first-scan');
+  issueTpl = await termTemplate('Issue term', [CHECK_IN, ADD], 'issue');
 });
 
 async function stored(passId: string) {
@@ -33,66 +62,123 @@ async function stored(passId: string) {
   return { start: pass.personalization.startsAt, expires: json.expirationDate, pass };
 }
 
+/** The stamp runs after the response: wait for the pass to show it. */
+async function stamped(passId: string) {
+  for (let i = 0; i < 100; i++) {
+    const s = await stored(passId);
+    if (typeof s.start === 'string') return s;
+    await new Promise((r) => setTimeout(r, 20));
+  }
+  throw new Error('not stamped');
+}
+const settle = () => new Promise((r) => setTimeout(r, 300));
+const plusYear = (at: number) => {
+  const end = new Date(at);
+  end.setUTCFullYear(end.getUTCFullYear() + 1);
+  return end.toISOString().replace('.000Z', 'Z');
+};
+
 describe('term: first scan', () => {
   it('stamps the start at the first scan and re-signs with the end', async () => {
-    const s = await kit.scanner({ templateIds: [termTpl] });
-    const pass = await kit.scanPass(termTpl);
+    const s = await kit.scanner({ templateIds: [scanTpl] });
+    const pass = await kit.scanPass(scanTpl);
     expect((await stored(pass.id)).expires).toBeUndefined();
-    const at = kit.clock.now();
-    const o = await out(await act(s.headers, codeOf(pass)));
+    const o = await out(await act(s.headers, codeOf(pass), { actionId: 'check_in' }));
     expect(o.kind).toBe('ok');
-    const after = await stored(pass.id);
-    expect(after.start).toBe(new Date(at).toISOString());
-    const end = new Date(at);
-    end.setUTCFullYear(end.getUTCFullYear() + 1);
-    expect(after.expires).toBe(end.toISOString().replace('.000Z', 'Z'));
-    expect(after.pass.version).toBe(pass.version + 1);
+    const row = await first<{ at: number }>(kit.env.DB, 'SELECT at FROM scans WHERE id = ?', [
+      o.scanId ?? '',
+    ]);
+    const after = await stamped(pass.id);
+    expect(after.start).toBe(new Date(row?.at ?? 0).toISOString());
+    expect((await stored(pass.id)).expires).toBe(plusYear(row?.at ?? 0));
   });
 
-  it('leaves the start where it is on a second scan, a retry and an override', async () => {
-    const a = await kit.scanner({ templateIds: [termTpl] });
-    const b = await kit.scanner({ templateIds: [termTpl] });
-    const pass = await kit.scanPass(termTpl);
-    const request = { idempotencyKey: key() };
-    const first1 = await out(await act(a.headers, codeOf(pass), request));
-    const before = await stored(pass.id);
+  it('leaves the start where it is on a second scan, a retry and a heads-up', async () => {
+    const a = await kit.scanner({ templateIds: [scanTpl] });
+    const b = await kit.scanner({ templateIds: [scanTpl] });
+    const pass = await kit.scanPass(scanTpl);
+    const request = { idempotencyKey: key(), actionId: 'check_in' };
+    expect((await out(await act(a.headers, codeOf(pass), request))).kind).toBe('ok');
+    const before = await stamped(pass.id);
     kit.clock.advance(5 * MINUTE);
     await act(a.headers, codeOf(pass), request);
-    const second = await out(await act(b.headers, codeOf(pass)));
-    expect(first1.kind).toBe('ok');
+    const second = await out(await act(b.headers, codeOf(pass), { actionId: 'check_in' }));
     expect(second.kind).toBe('heads_up');
+    await settle();
     const after = await stored(pass.id);
-    expect(before.start).toEqual(expect.any(String));
     expect(after.start).toBe(before.start);
     expect(after.expires).toBe(before.expires);
     expect(after.pass.version).toBe(before.pass.version);
   });
 
-  it('keeps the stamp when the first scan is undone', async () => {
-    const s = await kit.scanner({ templateIds: [termTpl] });
-    const pass = await kit.scanPass(termTpl);
-    const o = await out(await act(s.headers, codeOf(pass)));
-    const before = await stored(pass.id);
-    const res = await kit.post(s.headers, `/scans/${o.scanId}/undo`, { idempotencyKey: key() });
-    expect(res.status).toBe(200);
-    expect(
-      await first(kit.env.DB, 'SELECT undone_by FROM scans WHERE id = ?', [o.scanId ?? '']),
-    ).not.toEqual({ undone_by: null });
-    const after = await stored(pass.id);
-    expect(before.start).toEqual(expect.any(String));
-    expect(after.start).toBe(before.start);
-    expect(after.expires).toBe(before.expires);
+  it('stamps from a value action too', async () => {
+    const s = await desk(valueTpl);
+    const pass = await kit.scanPass(valueTpl, { balance: 1 });
+    const o = await out(await act(s.headers, codeOf(pass), { actionId: 'add' }));
+    expect(o.kind).toBe('ok');
+    const after = await stamped(pass.id);
+    expect((await stored(pass.id)).expires).toEqual(expect.any(String));
+    expect(after.pass.personalization.balance).toBe(2);
   });
 
-  it('does not stamp a template without a first-scan term', async () => {
-    const s = await kit.scanner({ templateIds: [tpl] });
-    const plain = await kit.scanTemplate('Plain', {
-      actions: [{ id: 'check_in', label: 'In', kind: 'check_in' }],
-    });
-    const s2 = await kit.scanner({ templateIds: [plain] });
-    const pass = await kit.scanPass(plain);
-    await act(s2.headers, codeOf(pass));
+  it('does not write an input a connection owns', async () => {
+    const s = await kit.scanner({ templateIds: [scanTpl] });
+    const pass = await kit.scanPass(scanTpl);
+    await run(kit.env.DB, 'UPDATE passes SET field_sources = ? WHERE id = ?', [
+      JSON.stringify({ startsAt: 'connection' }),
+      pass.id,
+    ]);
+    await act(s.headers, codeOf(pass), { actionId: 'check_in' });
+    await settle();
     expect((await stored(pass.id)).start).toBeUndefined();
-    expect(s.headers).toBeDefined();
+  });
+
+  it('undo takes the start back when it is the pass only scan', async () => {
+    const s = await kit.scanner({ templateIds: [scanTpl] });
+    const pass = await kit.scanPass(scanTpl);
+    const o = await out(await act(s.headers, codeOf(pass), { actionId: 'check_in' }));
+    await stamped(pass.id);
+    const res = await kit.post(s.headers, `/scans/${o.scanId}/undo`, { idempotencyKey: key() });
+    expect(res.status).toBe(200);
+    for (let i = 0; i < 100 && typeof (await stored(pass.id)).start === 'string'; i++)
+      await new Promise((r) => setTimeout(r, 20));
+    const after = await stored(pass.id);
+    expect(after.start).toBeUndefined();
+    expect(after.expires).toBeUndefined();
+    // The rescan starts it again.
+    kit.clock.advance(MINUTE);
+    await act(s.headers, codeOf(pass), { actionId: 'check_in' });
+    expect(typeof (await stamped(pass.id)).start).toBe('string');
+  });
+
+  it('undo keeps the start when another scan of the pass stands', async () => {
+    const s = await desk(scanTpl);
+    const pass = await kit.scanPass(scanTpl);
+    const o = await out(await act(s.headers, codeOf(pass), { actionId: 'check_in' }));
+    const before = await stamped(pass.id);
+    kit.clock.advance(MINUTE);
+    expect((await out(await act(s.headers, codeOf(pass), { actionId: 'add' }))).kind).toBe('ok');
+    const res = await kit.post(s.headers, `/scans/${o.scanId}/undo`, { idempotencyKey: key() });
+    expect(res.status).toBe(200);
+    await settle();
+    expect((await stored(pass.id)).start).toBe(before.start);
+  });
+});
+
+describe('term: issue', () => {
+  it('stamps the start once at create and never moves it on a rebuild', async () => {
+    const pass = await kit.scanPass(issueTpl);
+    const created = await stored(pass.id);
+    expect(created.start).toBe(new Date(kit.clock.now()).toISOString());
+    expect(created.expires).toBe(plusYear(kit.clock.now()));
+    kit.clock.advance(90 * 24 * 60 * MINUTE);
+    // A value action republishes the pass: the rebuild keeps the stamped start.
+    const s = await desk(issueTpl);
+    const o = await out(await act(s.headers, codeOf(pass), { actionId: 'add' }));
+    expect(o.kind).toBe('ok');
+    const again = await stored(pass.id);
+    expect(again.start).toBe(created.start);
+    expect(again.expires).toBe(created.expires);
+    expect(again.pass.version).toBe(created.pass.version + 1);
   });
 });

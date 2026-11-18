@@ -14,7 +14,7 @@ import { heldOutcome } from './act-held.ts';
 import type { HeldHolder } from './act-held-holder.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight } from './act-preflight.ts';
-import { stampTermStart } from './act-term-stamp.ts';
+import { deferTermStart } from './act-term-stamp.ts';
 import type { ScanActor } from './actor.ts';
 import { planCommitCounts } from './counts.ts';
 import type { LedgerFacts } from './ledger.ts';
@@ -281,7 +281,7 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
         })
       : null,
   });
-  await stampTermStart({
+  deferTermStart({
     ctx,
     actor,
     found,
@@ -290,7 +290,6 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
     claim,
     originalCandidate,
     approver,
-    at: authorityNow,
   });
   return outcome;
 }

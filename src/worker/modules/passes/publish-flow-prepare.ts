@@ -1,3 +1,4 @@
+import { stampInput } from '../../../passkit/behaviors/term/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -125,7 +126,23 @@ export async function preparePublishAttempt(
       authSeal: reads.authSeal,
     },
   };
-  const artifact = await buildArtifact(buildCtx, buildRequest);
+  let artifact = await buildArtifact(buildCtx, buildRequest);
+  // A term that starts at issue gets its start stamped once, into the input, so a rebuild never moves it.
+  const issueInput = stampInput(artifact.template.manifest, 'issue');
+  const issueValue = issueInput ? next.personalization[issueInput] : undefined;
+  if (
+    issueInput &&
+    (issueValue === undefined || issueValue === null || issueValue === '') &&
+    next.fieldSources[issueInput] !== 'connection'
+  ) {
+    next.personalization = {
+      ...next.personalization,
+      [issueInput]: new Date(ctx.clock.now()).toISOString(),
+    };
+    next.fieldSources = { ...next.fieldSources, [issueInput]: 'manual' };
+    buildRequest.personalization = next.personalization;
+    artifact = await buildArtifact(buildCtx, buildRequest);
+  }
   assertReleaseArtifact(release, artifact.template);
   // Every publish that changes the input is held to the Access card's rules (AX 2.4), whoever asks.
   if (JSON.stringify(next.personalization) !== JSON.stringify(current.personalization))

@@ -1,27 +1,37 @@
 import type { BehaviorPlugin, JsonSchemaObject, TemplateManifest } from '../../types.ts';
-import { addDays, addMonths, daysInMonth, instantOf, isTimeZone, localOf } from './calendar.ts';
+import {
+  addDays,
+  addMonths,
+  daysInMonth,
+  instantOf,
+  isRealDate,
+  isTimeZone,
+  localOf,
+} from './calendar.ts';
 
 export type TermUnit = 'days' | 'months' | 'years' | 'month-end';
+/** Where the start comes from: set by hand, stamped at the first successful scan, or stamped once at issue. */
+export type TermStartOn = 'input' | 'first-scan' | 'issue';
 
 export interface TermConfig {
-  /** Input holding the start as ISO 8601. Omit to start at build time. */
-  start?: string;
-  /** The scanner stamps `start` at the first successful check-in. Needs `start`. */
-  firstScan?: boolean;
+  /**
+   * Input holding the start: `YYYY-MM-DD` (a local date in `timeZone`) or an ISO 8601 date-time.
+   * A `first-scan` or `issue` start is stamped into it once, only while it is empty.
+   */
+  start: string;
+  startOn?: TermStartOn;
   /**
    * The term. `months` and `years` are calendar months from the start day (31 Jan + 1 month is the
    * last day of February). `month-end` ends at the close of the start's month, then `length - 1`
-   * more months.
+   * more months. One term is at most ten years.
    */
   unit: TermUnit;
   length: number;
-  /** Input holding how many whole terms were renewed. Each extends the end by one term from the current end. */
-  renewals?: string;
   /** IANA zone the calendar and the end-of-day are read in. Default UTC. */
   timeZone?: string;
   /** End at 23:59:59 local on the last day instead of at the start's time of day. Always on for `month-end`. */
   endOfDay?: boolean;
-  /** Days the pass stays valid past the term. */
+  /** Calendar days the pass stays valid past the term. */
   graceDays?: number;
   /** Set `voided` when the end is already past. */
   voidWhenPast?: boolean;
@@ -29,14 +39,13 @@ export interface TermConfig {
 
 const configSchema: JsonSchemaObject = {
   type: 'object',
-  required: ['unit', 'length'],
+  required: ['start', 'unit', 'length'],
   additionalProperties: false,
   properties: {
     start: { type: 'string', minLength: 1 },
-    firstScan: { type: 'boolean' },
+    startOn: { enum: ['input', 'first-scan', 'issue'] },
     unit: { enum: ['days', 'months', 'years', 'month-end'] },
     length: { type: 'integer', minimum: 1, maximum: 3650 },
-    renewals: { type: 'string', minLength: 1 },
     timeZone: { type: 'string', minLength: 1 },
     endOfDay: { type: 'boolean' },
     graceDays: { type: 'integer', minimum: 0, maximum: 365 },
@@ -44,79 +53,95 @@ const configSchema: JsonSchemaObject = {
   },
 };
 
-/** The input a first-scan term waits on: the scanner stamps it once, at the first successful scan. */
-export function firstScanInput(manifest: Pick<TemplateManifest, 'behaviors'>): string | null {
+const MAX_MONTHS = 120;
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+const DATE_PART = /^(\d{4})-(\d{2})-(\d{2})(?:T|$)/;
+const iso = (ms: number) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
+
+/** The input a term waits on for the scanner (`first-scan`) or the publish (`issue`) to stamp. */
+export function stampInput(
+  manifest: Pick<TemplateManifest, 'behaviors'>,
+  on: 'first-scan' | 'issue',
+): string | null {
   for (const use of manifest.behaviors ?? []) {
     const config = use.config as Partial<TermConfig> | undefined;
-    if (use.use === 'term' && config?.firstScan === true && config.start) return config.start;
+    if (use.use === 'term' && config?.startOn === on && config.start) return config.start;
   }
   return null;
 }
 
-const DAY = 86_400_000;
-const MAX_RENEWALS = 100;
-const MAX_DAYS = 3650;
-const MAX_MONTHS = 120;
-const iso = (ms: number) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
-
-function renewalCount(raw: unknown, key: string): number {
-  if (raw === undefined || raw === '' || raw === null) return 0;
-  const n = typeof raw === 'number' ? raw : Number(raw);
-  if (!Number.isInteger(n) || n < 0 || n > MAX_RENEWALS) throw new Error(`${key} is not a count.`);
-  return n;
+function parseStart(raw: string, key: string, tz: string): number {
+  const parts = DATE_PART.exec(raw);
+  if (parts && !isRealDate(Number(parts[1]), Number(parts[2]), Number(parts[3])))
+    throw new Error(`${key} is not a date.`);
+  const dateOnly = DATE_ONLY.exec(raw);
+  if (dateOnly) {
+    const [, y, mo, d] = dateOnly;
+    return instantOf({ y: Number(y), mo: Number(mo), d: Number(d), h: 0, mi: 0, s: 0 }, tz);
+  }
+  const ms = Date.parse(raw);
+  if (Number.isNaN(ms) || new Date(ms).getUTCFullYear() < 1970)
+    throw new Error(`${key} is not a date.`);
+  return ms;
 }
 
-/** The end of a term as an instant. Anchored on the start, so renewals never drift from the start day. */
-export function termEnd(startMs: number, config: TermConfig, renewals = 0): number {
+/** The end of one term as an instant, grace included. */
+export function termEnd(startMs: number, config: TermConfig): number {
   const tz = config.timeZone ?? 'UTC';
-  const terms = 1 + renewals;
   const start = localOf(startMs, tz);
-  const endOfDay = config.endOfDay === true || config.unit === 'month-end';
   let local = start;
   if (config.unit === 'days') {
-    if (config.length * terms > MAX_DAYS) throw new Error('The term is over ten years.');
-    local = addDays(start, config.length * terms);
+    local = addDays(start, config.length);
   } else {
     const months = config.unit === 'years' ? config.length * 12 : config.length;
-    if (months * terms > MAX_MONTHS) throw new Error('The term is over ten years.');
+    if (months > MAX_MONTHS) throw new Error('The term is over ten years.');
     if (config.unit === 'month-end') {
-      local = addMonths({ ...start, d: 1 }, months * terms - 1);
+      local = addMonths({ ...start, d: 1 }, months - 1);
       local = { ...local, d: daysInMonth(local.y, local.mo) };
     } else {
-      local = addMonths(start, months * terms);
+      local = addMonths(start, months);
     }
   }
-  if (endOfDay) local = { ...local, h: 23, mi: 59, s: 59 };
-  return instantOf(local, tz);
+  if (config.endOfDay === true || config.unit === 'month-end')
+    local = { ...local, h: 23, mi: 59, s: 59 };
+  return instantOf(addDays(local, config.graceDays ?? 0), tz);
+}
+
+/**
+ * Where the next term starts on a renewal: at the current end when renewed early, at the renewal
+ * when the term had lapsed, so a late renewal never starts in the past. The caller writes it into
+ * the start input. A day-end boundary starts the next term at the following midnight.
+ */
+export function renewedStart(
+  startMs: number,
+  config: Omit<TermConfig, 'graceDays'>,
+  renewedAtMs: number,
+): number {
+  const end = termEnd(startMs, config);
+  const dayEnd = config.endOfDay === true || config.unit === 'month-end';
+  return Math.max(dayEnd ? end + 1000 : end, renewedAtMs);
 }
 
 /**
  * Sets `expirationDate` from a start and a term, in calendar units. The scanner reads the same
- * field, so validity follows the term. No start yet (a term that begins at first scan, before the
- * scan has stamped its input) leaves the pass without an end.
+ * field, so validity follows the term. A `first-scan` term has no end until the scan stamps its
+ * start input; any other empty start leaves the pass as it is.
  */
 export const term: BehaviorPlugin<TermConfig> = {
   id: 'term',
   version: 1,
   configSchema,
   apply(pass, input, config, ctx) {
+    const tz = config.timeZone ?? 'UTC';
     if (config.timeZone !== undefined && !isTimeZone(config.timeZone)) {
       throw new Error(`${config.timeZone} is not a time zone.`);
     }
-    if (config.firstScan && !config.start)
-      throw new Error('A first-scan term needs a start input.');
-    let startMs = ctx.now.getTime();
-    if (config.start !== undefined) {
-      const raw = input[config.start];
-      if (typeof raw !== 'string' || raw === '') {
-        delete pass.expirationDate;
-        return;
-      }
-      startMs = Date.parse(raw);
-      if (Number.isNaN(startMs)) throw new Error(`${config.start} is not a date.`);
+    const raw = input[config.start];
+    if (typeof raw !== 'string' || raw === '') {
+      if (config.startOn === 'first-scan') delete pass.expirationDate;
+      return;
     }
-    const renewals = config.renewals ? renewalCount(input[config.renewals], config.renewals) : 0;
-    const end = termEnd(startMs, config, renewals) + (config.graceDays ?? 0) * DAY;
+    const end = termEnd(parseStart(raw, config.start, tz), config);
     pass.expirationDate = iso(end);
     if (config.voidWhenPast && end <= ctx.now.getTime()) pass.voided = true;
   },

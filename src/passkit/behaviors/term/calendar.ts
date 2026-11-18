@@ -58,12 +58,20 @@ const offsetAt = (ms: number, tz: string): number => {
   return Date.UTC(l.y, l.mo - 1, l.d, l.h, l.mi, l.s) - Math.floor(ms / 1000) * 1000;
 };
 
-/** Wall time to an instant. A time skipped by a DST jump lands after the jump; a repeated one takes the first. */
+/**
+ * Wall time to an instant. A repeated time takes the first; a time skipped by a DST jump lands
+ * on the jump's far side (whatever the size of the gap).
+ */
 export function instantOf(l: Local, tz: string): number {
   const wall = Date.UTC(l.y, l.mo - 1, l.d, l.h, l.mi, l.s);
   const first = wall - offsetAt(wall, tz);
   const second = wall - offsetAt(first, tz);
-  return second === first ? first : wall - offsetAt(second, tz) === second ? second : first;
+  const reads = (ms: number) => {
+    const p = localOf(ms, tz);
+    return Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi, p.s) === wall;
+  };
+  const valid = [first, second].filter(reads);
+  return valid.length > 0 ? Math.min(...valid) : Math.max(first, second);
 }
 
 export function daysInMonth(y: number, mo: number): number {
@@ -81,6 +89,11 @@ export function addMonths(l: Local, months: number): Local {
 export function addDays(l: Local, days: number): Local {
   const t = new Date(Date.UTC(l.y, l.mo - 1, l.d + days));
   return { ...l, y: t.getUTCFullYear(), mo: t.getUTCMonth() + 1, d: t.getUTCDate() };
+}
+
+/** A real calendar date: no 30 February, no year before 1970. */
+export function isRealDate(y: number, mo: number, d: number): boolean {
+  return y >= 1970 && mo >= 1 && mo <= 12 && d >= 1 && d <= daysInMonth(y, mo);
 }
 
 export type { Local };

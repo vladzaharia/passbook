@@ -10,6 +10,7 @@ import { finishHeldGate } from './act-held.ts';
 import { type Override, StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight, ActionPreflight } from './act-preflight.ts';
 import { ScanAttemptRaced } from './act-stale-refusal.ts';
+import { deferTermStart } from './act-term-stamp.ts';
 import { commitValue } from './act-value.ts';
 import { deepFreeze } from './freeze.ts';
 import { gateRule, gateScope, settledAccessGate } from './gate.ts';
@@ -240,8 +241,12 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
       reservation,
       onFailureCommitted,
     });
-  if (action.kind !== 'check_in')
-    return commitValue({
+  if (action.kind !== 'check_in') {
+    const approver =
+      approvedBy && approvedAuthEpoch !== null
+        ? { id: approvedBy, authEpoch: approvedAuthEpoch }
+        : null;
+    const outcome = await commitValue({
       ctx,
       actor,
       found,
@@ -254,12 +259,13 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
       stopAuthority,
       originalCandidate,
       facts,
-      approver:
-        approvedBy && approvedAuthEpoch !== null
-          ? { id: approvedBy, authEpoch: approvedAuthEpoch }
-          : null,
+      approver,
       onFailureCommitted,
     });
+    if (outcome.kind === 'ok' && !outcome.replay)
+      deferTermStart({ ctx, actor, found, req, action, claim, originalCandidate, approver });
+    return outcome;
+  }
   return commitCheckInSuccess({
     ctx,
     actor,
