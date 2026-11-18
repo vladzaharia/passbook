@@ -48,6 +48,12 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   template_candidates: { org: 'org_id', mode: 'mode' },
   template_approvals: { org: null, edges: [edge('candidate_id', 'template_candidates')] },
   template_releases: { org: 'org_id', mode: 'mode' },
+  template_forks: { org: 'org_id' },
+  template_fork_updates: { org: 'org_id' },
+  template_version_bases: {
+    org: null,
+    edges: [edge('template_id', 'template_forks', 'template_id')],
+  },
   outbox: { org: 'org_id', pass: 'pass_id' },
   bundles: { org: 'org_id', mode: 'mode' },
   bundle_passes: {
