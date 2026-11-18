@@ -8,15 +8,29 @@ import { canPresent } from '../public/presentation.ts';
 import { passJsonAtVersion } from '../public/repo.ts';
 import { readWalletPassSnapshot } from './instance.ts';
 import { type NativeProvider, projectionPolicy } from './projection-contract.ts';
+import { offersPaused } from './projection-pause.ts';
 import { type ApprovedProjection, getApprovedProjection } from './projection-service.ts';
 import { walletProviderEnabled } from './provider-policy.ts';
-import { canRenderSamsungProjection, renderGoogleProjection } from './render-projection.ts';
+import { canRenderProjection } from './render-projection.ts';
 import { walletOfferSnapshotCurrent } from './repo-offers.ts';
 import {
   assertWalletRuntimeAccount,
   WalletRuntimeError,
   type WalletRuntimeScope,
 } from './runtime.ts';
+
+let runtimeAccountCheck = assertWalletRuntimeAccount;
+
+/** Tests only: Google's runtime account is deliberately unavailable until its typed runtime ships. */
+export function setRuntimeAccountCheckForTest(
+  replacement: typeof assertWalletRuntimeAccount,
+): () => void {
+  const previous = runtimeAccountCheck;
+  runtimeAccountCheck = replacement;
+  return () => {
+    runtimeAccountCheck = previous;
+  };
+}
 
 export interface OfferPassSnapshot {
   pass: Pass;
@@ -149,8 +163,9 @@ export async function offerStillCurrent(
     current.release.providerIdentityHash !== runtimeScope.providerIdentityHash
   )
     return false;
+  if (await offersPaused(ctx, current)) return false;
   try {
-    await assertWalletRuntimeAccount(ctx, runtimeScope, approved.projection.provider);
+    await runtimeAccountCheck(ctx, runtimeScope, approved.projection.provider);
   } catch (error) {
     if (error instanceof WalletRuntimeError && error.code === 'account_unavailable') return false;
     throw error;
@@ -221,11 +236,7 @@ export async function eligibleWalletProvider(
     providerIdentityHash: approved.release.providerIdentityHash,
     credentialKeysetCommitment: snapshot.credentialKeysetCommitment,
   };
-  const renderable =
-    approved.projection.provider === 'google'
-      ? renderGoogleProjection(approved.projection, snapshot.passJson) !== null
-      : canRenderSamsungProjection(approved.projection, snapshot.passJson);
-  if (!renderable) return null;
+  if (!canRenderProjection(approved.projection, snapshot.passJson)) return null;
   const result = { snapshot, approved, runtimeScope };
   return (await offerStillCurrent(ctx, result)) ? result : null;
 }

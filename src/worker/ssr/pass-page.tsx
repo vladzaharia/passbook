@@ -65,7 +65,7 @@ export interface PassPageProps {
   walletOffers: readonly WalletOffer[];
   /** The release gate per native wallet, when the caller has it. */
   issuance?: Partial<Record<WalletProvider, WalletProviderIssuance>>;
-  /** Scriptless presentation page; never the QR that opens this page. */
+  /** The browser barcode page; never the QR that opens this page. */
   barcodeHref?: string | undefined;
   /** The absolute URL of this page: the add QR encodes it. */
   publicUrl: string;

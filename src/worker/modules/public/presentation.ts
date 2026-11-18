@@ -106,6 +106,8 @@ export async function presentationForPass(ctx: ServiceContext, pass: Pass) {
     orgName,
     passTitle: pass.displayTitle ?? json?.description ?? orgName,
     mode: pass.mode,
+    /** The pass's own expiry, so a saved copy is never shown past it. */
+    expiresAt: json ? validityOf(json, ctx.clock.now()).validUntil : null,
   };
   await assertPassSnapshot(ctx, snapshot);
   return model;
