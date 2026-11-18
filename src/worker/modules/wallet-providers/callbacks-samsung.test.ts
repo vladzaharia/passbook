@@ -321,7 +321,10 @@ describe('Samsung authenticated callback route', () => {
       expectedRevision: account.revision,
       credentials: rotated.samsung,
     });
-    expect((await rotated.call({ token: await rotated.token() })).status).toBe(401);
+    // The instance still operated under the old revision's credential: authentic, answered, no card.
+    const answered = await rotated.call({ token: await rotated.token() });
+    expect(answered.status).toBe(204);
+    expect(await answered.text()).toBe('');
   });
 
   it('fences captured offers, refreshes and callbacks when a real credential transfer starts', async () => {

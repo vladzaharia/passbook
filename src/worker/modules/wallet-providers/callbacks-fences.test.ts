@@ -289,7 +289,10 @@ describe('Samsung callback authority fences', () => {
       expectedRevision: account.revision,
       credentials: rotated.samsung,
     });
-    expect((await rotated.call({ token: await rotated.token() })).status).toBe(401);
+    // The instance still operated under the old revision's credential: authentic, answered, no card.
+    const answered = await rotated.call({ token: await rotated.token() });
+    expect(answered.status).toBe(204);
+    expect(await answered.text()).toBe('');
   });
 
   it('retains refresh across link rotation but fences an old ref during a pending transfer', async () => {
