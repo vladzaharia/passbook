@@ -11,7 +11,7 @@ import {
   useUnsavedChangesGuard,
   Wizard,
 } from '../../ui/index.ts';
-import { fromRows, type MappingRow, toRows } from '../mapping/mapping.ts';
+import { fromRows, type MappingRow } from '../mapping/mapping.ts';
 import { MappingEditor, targetsOf } from '../mapping/mapping-editor.tsx';
 import { markCreated } from '../passes/created.tsx';
 import { describeSchema, flatFields } from '../passes/schema-form/index.ts';

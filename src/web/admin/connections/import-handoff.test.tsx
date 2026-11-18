@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
-import { checked, finished } from '../passes/import/import-test-fixtures.ts';
+import { finished, PLAN } from '../passes/import/import-test-fixtures.ts';
 import { CONNECTOR, ORG, templateDetail, templateSummary } from '../passes/test-fixtures.ts';
 import {
   handOffToConnection,
@@ -62,7 +62,7 @@ describe('import to connection handoff', () => {
 
   it('leaves the link empty when this tab did not start the import, and unescapes the column', () => {
     handOffToConnection(
-      imp({ plan: { ...checked().plan, externalId: { from: '/a~1b' }, holderEmail: null } }),
+      imp({ plan: { ...PLAN, externalId: { from: '/a~1b' }, holderEmail: null } }),
     );
     expect(takeConnectionPrefill()).toMatchObject({
       url: '',

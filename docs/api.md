@@ -333,6 +333,43 @@ Current pass details include `reissueRequired`, true only while an eligible veri
 holder needs a replacement because its credential cannot be safely rotated. It does not mean the
 holder has been attached.
 
+## Import passes
+
+Bulk create and update from a CSV, over `/api/v1/pass-imports`. Create, check, commit and discard need
+`passes:operate` (a session) or `passes:write` (a key); reads need `passes:read`. Send `orgId` as a query
+parameter (an org-bound key needs none). An import belongs to the caller's mode.
+
+| Route | Notes |
+|---|---|
+| `POST /pass-imports` | `{ templateId, source, plan? }`. `source` is `{ kind: "file", name, csv }` (up to 2,000,000 bytes) or `{ kind: "url", url }` (https). With a `plan`, or a mapping saved for the template, it is checked at once (`state: "ready"`); otherwise `mapping` with the `columns`. 30 an hour per org and mode. |
+| `POST /pass-imports/{id}/check` | `{ plan }`: `mapping`, `holderEmail`, `externalId`, `match` (`externalId`, `email`, `none`), `keepManual`, `save`. 120 an hour. |
+| `POST /pass-imports/{id}/commit` | `{ skipInvalid, email }`. Starts the run; a repeat returns the running import. 409 `IMPORT_HAS_ERRORS`, `IMPORT_BUSY`, `IMPORT_EXPIRED`, `IMPORT_STATE`. |
+| `GET /pass-imports`, `GET /pass-imports/{id}` | State, `counts`, `progress`, `problems` (first 100, errors first), `previews`. Poll `state` until `done`, `failed` or `stale`. |
+| `GET /pass-imports/{id}/rows?state=` | 100 a page: `result`, `passId`, `code`, `message`. |
+| `GET /pass-imports/{id}/errors.csv` | The rows that failed the check, columns kept, with a Problem column. `no-store`; 410 `IMPORT_FILE_GONE` after a day. |
+| `GET /pass-imports/{id}/results.csv` | Row, result, pass id, links. Session only in practice: the links are capabilities, so a key's read scope is refused (403). |
+| `POST /pass-imports/{id}/remove-created` | Session only. `{ cursor }`, 50 a call; loop on `nextCursor`. Edited or scanned passes are skipped (`IMPORT_PASS_CHANGED`, `IMPORT_PASS_SCANNED`). |
+| `POST /pass-imports/{id}/email-rest` | `{ cursor }`, 50 a call. Mails created passes that went out without mail; a repeat mails nobody twice. `skipped` counts mail held back by the daily or hourly cap. |
+| `DELETE /pass-imports/{id}` | Discards a draft that is not running. |
+
+```
+curl -X POST "https://passbook.mobile/api/v1/pass-imports" \
+  -H "Authorization: Bearer $WALLET_API_KEY" -H "Content-Type: application/json" \
+  -d '{ "templateId": "<template id>",
+        "source": { "kind": "file", "name": "people.csv", "csv": "Name,Ref\nAna,A1\nBen,A2" },
+        "plan": { "mapping": { "holder": { "from": "/Name" } },
+                  "holderEmail": null, "externalId": { "from": "/Ref" },
+                  "match": "externalId", "keepManual": false, "save": false } }'
+# state "ready" with counts; fix errors or send skipInvalid, then:
+curl -X POST ".../pass-imports/$ID/commit" -H "Authorization: Bearer $WALLET_API_KEY" \
+  -H "Content-Type: application/json" -d '{ "skipInvalid": false, "email": false }'
+```
+
+Column pointers are `/` plus the header (`~` as `~0`, `/` as `~1`). Row problems carry `row` (the
+spreadsheet row; the header is row 1), `column`, `code` and a one-sentence `message`. A cell starting with
+`=`, `+`, `-` or `@` (after any spaces) is written back with a leading `'` in CSV downloads and read back
+without it. Guide: [importing-passes.md](importing-passes.md).
+
 ## Update a pass
 
 `PATCH /api/v1/passes/{id}` with `If-Match: <version>`. A stale version returns 412

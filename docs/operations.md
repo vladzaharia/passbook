@@ -294,6 +294,32 @@ Pass download tokens, bundle tokens and Apple web-service tokens are stored as M
 - Every `.pkpass` object in R2 carries the device token that was current at its version (Wallet needs it in the signed bytes). Keep the bucket private (no public bucket, no `r2.dev`, an API token scoped to the Worker). Purged versions and purged deleted passes delete their objects.
 - A soft-deleted pass drops its sealed copies at once.
 
+## Pass imports
+
+Spec and guide: `docs/importing-passes.md`, `docs/api.md` ("Import passes").
+
+- **Limits**: 2,000 rows, 2,000,000 bytes, 100 columns, 2,000 characters a cell; 3 MB request body for a
+  create; 30 creates and 120 checks an hour per org and mode; one running import per org, mode and template.
+  A link source follows up to 3 redirects (every hop re-checked, https only, 15 s in all).
+- **Run**: the `PassImport` Workflow (`PASS_IMPORT`), 20 rows a step. `subrequests` is raised to 500,000 in
+  `wrangler.jsonc`: a create is about 58 D1 calls. A 2,000-row create run is about 116,000.
+- **Stuck imports**: the minute cron `passes.import_stuck` ends an import that stayed `committing` for 10
+  minutes with no live instance as `failed` (`IMPORT_FAILED`) and gives back its email hold. Logs:
+  `pass_import.swept`, `IMPORT_SWEEP`, `IMPORT_SWEEP_STATUS`, `IMPORT_START_STATUS`.
+- **Retention** (daily cron `passes.import_retention`, 50 imports a batch, 10 batches a phase):
+  drafts not committed within 23 h become `expired` and lose their file; 30 days after an import ends its
+  rows lose cell values, emails, External IDs and earlier values (also for a suspended org); imports go 400
+  days after they end, counts with them. The upload also has a 1-day R2 lifecycle (`uploads/`). Logs:
+  `pass_import.retention`, `IMPORT_RETENTION`, `IMPORT_RETENTION_FILE`.
+- **Privacy**: logs carry ids, row numbers and codes, never cells, emails, links or the sheet URL. A published
+  sheet link is a secret; only its host is stored.
+- **Sheet connection** (`csv-url`): polls every 15 min (6 requests a minute at most), 2 MB cap, up to 3 redirect
+  hops, at most 2,000 rows (more fails the run as a permanent `CONFIG`). Rows with no ID or a repeated ID are
+  skipped and logged as `CSV_ROW_NO_ID` and `CSV_ROW_DUP_ID` with a count.
+- **Redirects**: `maxRedirects` on `createSafeFetch` (default 0, at most 5). A hop to another host drops every
+  header except accept, accept-language and user-agent. Only GET and HEAD follow redirects; `Location` is
+  never echoed.
+
 ## Day two
 
 - **Migrations**: `npm run deploy` handles them. Manual: `npx wrangler d1 time-travel info wallet-platform`,

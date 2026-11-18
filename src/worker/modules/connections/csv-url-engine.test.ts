@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  makeApiKey,
-  makeOrg,
-  makeSession,
-  type SessionFixture,
-} from '../../../../test/helpers/index.ts';
+import { makeSession, type SessionFixture } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
