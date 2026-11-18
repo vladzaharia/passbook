@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { applyResolutions, mergePackages } from './apply.ts';
-import { mutate, rng } from './laws-test-fixtures.ts';
+import { mutate, renameUpstream, rng } from './laws-test-fixtures.ts';
 import { baseDoc, edit, lostEdits } from './merge-test-fixtures.ts';
 import { normalize } from './normalize.ts';
+import { renameIn } from './renames.ts';
 import type { PackageDoc, Resolution } from './types.ts';
 
 const SEEDS = Array.from({ length: 200 }, (_, i) => i + 1);
@@ -107,13 +108,62 @@ describe('merge laws', () => {
       expect(applyResolutions(base, o, t, {})).toEqual(m.merged);
     });
   });
+  it('a value or file pick of theirs value is the same as picking theirs', () => {
+    const KINDS = ['both-changed', 'add-add', 'binary', 'delete-modify', 'invalid'];
+    let tried = 0;
+    each((o, t, seed) => {
+      const m = mergePackages(base, o, t);
+      const cs = m.conflicts.filter((c) => KINDS.includes(c.kind) && c.theirs !== undefined);
+      if (!cs.length) return;
+      tried += cs.length;
+      const theirs = Object.fromEntries(cs.map((c) => [c.id, 'theirs' as const]));
+      const want = bytes(applyResolutions(base, o, t, theirs));
+      const value = Object.fromEntries(cs.map((c) => [c.id, { value: c.theirs as never }]));
+      const v = mergePackages(base, o, t, { picks: value });
+      expect(bytes(v.merged), `value, seed ${seed}`).toBe(want);
+      expect(
+        v.conflicts.filter((c) => c.id in value).map((c) => c.id),
+        `seed ${seed}`,
+      ).toEqual([]);
+      const whole = cs.filter(
+        (c) => c.path.length === 1 && c.part !== 'files.image' && c.part.match(/^(files|strings)/),
+      );
+      const file = Object.fromEntries(whole.map((c) => [c.id, { file: c.theirs as never }]));
+      expect(
+        bytes(applyResolutions(base, o, t, { ...theirs, ...file })),
+        `file, seed ${seed}`,
+      ).toBe(want);
+    });
+    expect(tried).toBeGreaterThan(10);
+  });
+  it('with upstream renames: a clean merge loses no edit, and fast-forwards', () => {
+    let renamed = 0;
+    each((o, t0, seed) => {
+      const t = renameUpstream(t0, rng(seed * 7));
+      expect(mergePackages(base, base, t).merged, `seed ${seed}`).toEqual(normalize(t));
+      const m = mergePackages(base, o, t);
+      if (m.status !== 'clean') return;
+      const applied = m.renames.filter((x) => x.applied);
+      renamed += applied.length;
+      const rn = (d: PackageDoc) => applied.reduce((x, step) => renameIn(x, step), d);
+      expect(lostEdits(rn(base), rn(o), m.merged), `ours, seed ${seed}`).toEqual([]);
+      expect(lostEdits(rn(base), t, m.merged), `theirs, seed ${seed}`).toEqual([]);
+    });
+    expect(renamed).toBeGreaterThan(10);
+  });
   it('picking a side for every conflict, round by round, reaches clean', () => {
     each((o, t, seed) => {
-      for (const side of ['theirs', 'ours'] as const) {
+      for (const side of ['theirs', 'value', 'ours'] as const) {
         const picks: Record<string, Resolution> = {};
         let m = mergePackages(base, o, t);
         for (let round = 0; round < 4 && m.status !== 'clean'; round++) {
-          for (const c of m.conflicts) picks[c.id] = side;
+          for (const c of m.conflicts)
+            picks[c.id] =
+              side !== 'value'
+                ? side
+                : c.theirs === undefined
+                  ? 'theirs'
+                  : { value: c.theirs as never };
           m = mergePackages(base, o, t, { picks });
         }
         // A target `theirs` cannot bring back (its parent is gone) is kept by `ours`.

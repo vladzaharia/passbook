@@ -1,4 +1,6 @@
 import { type Any, edit, sha, stringsFile } from './merge-test-fixtures.ts';
+import { renameIn } from './renames.ts';
+import { sha1Hex } from './sha1.ts';
 import type { PackageDoc } from './types.ts';
 
 export function rng(seed: number) {
@@ -141,7 +143,38 @@ export function mutate(doc: PackageDoc, r: () => number, n: number): PackageDoc 
           [tok()]: tok(),
         })),
       () => (d.files['en.lproj/pass.strings'] = stringsFile({ Name: 'Name' })),
+      () =>
+        (man.wallets.google.images = {
+          hero: pick(['wallets/google/hero.png', 'wallets/google/x.png']),
+        }),
+      () =>
+        man.bindings.push({
+          to: { image: pick(['logo', 'icon']) },
+          remove: { input: 'tier', eq: 'a' },
+        }),
+      () => {
+        const bytes = new TextEncoder().encode(
+          JSON.stringify({ description: tok(), requiredPersonalizationFields: ['a'] }),
+        );
+        d.files['personalization.json'] = { sha1: sha1Hex(bytes), bytes };
+      },
+      () => {
+        const f = pass.posterGeneric?.primaryFields?.[0];
+        if (f) f.label = tok();
+      },
     ];
     for (let i = 0; i < n; i++) pick(ops)();
   });
+}
+
+/** An upstream rename of an input or a field, with every reference rewritten. */
+export function renameUpstream(doc: PackageDoc, r: () => number): PackageDoc {
+  const man = doc.manifest as unknown as Any;
+  const inputs = Object.keys(man.inputs?.properties ?? {});
+  const main = Object.keys(doc.passJson as Any).find((k) => STYLES.includes(k)) as string;
+  const style = (doc.passJson as Any)[main] as Any;
+  const fields = GROUPS.flatMap((g) => style[g] ?? []).map((f: Any) => f.key as string);
+  const [kind, names] = r() < 0.5 ? (['input', inputs] as const) : (['field', fields] as const);
+  const from = names[Math.floor(r() * names.length)];
+  return from ? renameIn(doc, { kind, from, to: `${from}Renamed` }) : doc;
 }
