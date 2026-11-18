@@ -30,6 +30,7 @@ import {
   type ScanningSessionRow,
   scanningSessionRow,
 } from './repo-scanning-sessions.ts';
+import { addSessionZones, sessionZoneIds } from './repo-zones.ts';
 import { acceptedTemplateIds, checkAccepts } from './scanner-validation.ts';
 import {
   assertSessionReadAuthority,
@@ -43,6 +44,7 @@ import {
   sessionDto,
 } from './scanning-session-dto.ts';
 import { scanningSessionActivity } from './session-activity.ts';
+import { assertNoZonesLeft, eventOfAccepts, sessionZoneChecks } from './session-zones.ts';
 
 export { startAdminSetup } from './scanning-session-admin-setup.ts';
 
@@ -81,10 +83,11 @@ async function scanningSessionDetailForAuthority(
   countAuthority: SessionReadAuthority,
 ) {
   const row = await loadScanningSession(ctx, id, mode, countAuthority.orgId);
-  const [session, devices, scope] = await Promise.all([
+  const [session, devices, scope, zoneIds] = await Promise.all([
     sessionDto(ctx, row, countAuthority),
     scanningDeviceRows(ctx.env.DB, row.org_id, id),
     resolveSessionScope(ctx, row),
+    sessionZoneIds(ctx.env.DB, row.org_id, id),
   ]);
   const deviceViews = await sessionDeviceViews(ctx, row, session, scope, devices);
   const role = countAuthority.tenant ? tenantScanRole(countAuthority.tenant) : null;
@@ -93,7 +96,7 @@ async function scanningSessionDetailForAuthority(
   const activity = scope.valid ? await scanningSessionActivity(ctx, row, countAuthority, role) : [];
   if (activity === null)
     throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
-  return { ...session, devices: deviceViews, activity };
+  return { ...session, zoneIds, devices: deviceViews, activity };
 }
 export async function createScanningSession(
   ctx: ServiceContext,
@@ -117,6 +120,8 @@ export async function createScanningSession(
   });
   if (settings.checkIn?.eventId)
     await checkAccepts(ctx, input.orgId, mode, { eventId: settings.checkIn.eventId });
+  const zoneIds = input.zoneIds ?? [];
+  const zoneChecks = await sessionZoneChecks(ctx, input.orgId, zoneIds, accepts?.eventId);
   const now = ctx.clock.now();
   const id = ctx.ids.id();
   const g = adminGrant(
@@ -128,6 +133,7 @@ export async function createScanningSession(
     [
       ...eventsOpen([accepts?.eventId, settings.checkIn?.eventId]),
       ...templatesUsable(accepts?.templateIds ?? []),
+      ...zoneChecks,
     ],
     SESSION_CODES,
     id,
@@ -146,6 +152,7 @@ export async function createScanningSession(
     },
     userId,
   );
+  if (zoneIds.length > 0) addSessionZones(g, id, zoneIds, false);
   g.add(
     audited(g, ctx, {
       orgId: input.orgId,
@@ -217,6 +224,10 @@ export async function updateScanningSession(
           : JSON.stringify(input.accepts),
     settings: settings ? JSON.stringify(settings) : row.settings,
   };
+  const eventId = accepted === undefined ? eventOfAccepts(row.accepts) : accepted?.eventId;
+  const zoneChecks = await sessionZoneChecks(ctx, row.org_id, input.zoneIds ?? [], eventId, id);
+  if (eventId && input.zoneIds === undefined && accepted !== undefined)
+    await assertNoZonesLeft(ctx, row.org_id, id);
   const now = ctx.clock.now();
   const devices = await scanningDeviceRows(ctx.env.DB, row.org_id, id);
   const g = adminGrant(
@@ -233,6 +244,7 @@ export async function updateScanningSession(
       sessionDevicesAre(id, devices),
       ...eventsOpen([accepted?.eventId, input.settings?.checkIn?.eventId]),
       ...scopeTemplatesUsable(accepted?.templateIds ?? [], attached),
+      ...zoneChecks,
     ],
     SESSION_CODES,
     id,
@@ -249,6 +261,7 @@ export async function updateScanningSession(
     },
     now,
   );
+  if (input.zoneIds) addSessionZones(g, id, input.zoneIds, true);
   addSessionPropagation(
     g,
     next,

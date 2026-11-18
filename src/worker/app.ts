@@ -29,6 +29,7 @@ import { scanningSessionsRoutes } from './modules/scan/routes-scanning-sessions.
 import { scansRoutes } from './modules/scan/routes-scans.ts';
 import { scanSetupsRoutes } from './modules/scan/routes-setups.ts';
 import { scanStaffRoutes } from './modules/scan/routes-staff.ts';
+import { scanZonesRoutes } from './modules/scan/routes-zones.ts';
 import { settingsRoutes } from './modules/settings/routes.ts';
 import { statusRoutes } from './modules/status/routes.ts';
 import { templatesRoutes } from './modules/templates/routes.ts';
@@ -142,6 +143,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/scan/live', scanLiveRoutes);
   app.route('/api/v1/scan-events', scanEventsRoutes);
   app.route('/api/v1/scan-staff', scanStaffRoutes);
+  app.route('/api/v1/scan-zones', scanZonesRoutes);
   app.route('/api/v1/scans', scansRoutes);
   app.route('/api/v1/scan-display', scanDisplayRoutes);
   app.route('/api/v1/nfc', nfcRoutes);

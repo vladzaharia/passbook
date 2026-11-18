@@ -74,6 +74,13 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   // Its triggers move scanners.config_epoch: written only through a scanner of the grant's tenant.
   scanner_templates: { org: null, edges: [edge('scanner_id', 'scanners')] },
   scanning_sessions: { org: 'org_id', mode: 'mode' },
+  // Org data, not per mode: a test scanner opens the same pool.
+  scan_zones: { org: 'org_id' },
+  // Its triggers move scanning_sessions.config_epoch. Both parents must be in the grant's tenant.
+  scanning_session_zones: {
+    org: null,
+    edges: [edge('session_id', 'scanning_sessions'), edge('zone_id', 'scan_zones')],
+  },
   scanning_devices: { org: 'org_id', mode: 'mode' },
   pass_events: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   // Its triggers write passes.image_generation, so a part could reach a pass of another tenant.
