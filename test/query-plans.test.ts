@@ -10,14 +10,18 @@ import { versionsToPurge } from '../src/worker/modules/passes/repo.ts';
 import { upsertAsset } from '../src/worker/modules/passes/repo-history-assets.ts';
 import { listPasses } from '../src/worker/modules/passes/repo-list.ts';
 import { plainBundles, plainPasses } from '../src/worker/modules/passes/repo-token-seal.ts';
+import { expiredTestPasses } from '../src/worker/modules/sandbox/repo.ts';
 import { expectedCount } from '../src/worker/modules/scan/repo-counts-query.ts';
 import { eventTotalsStmt } from '../src/worker/modules/scan/repo-event-attendance.ts';
+import { capacityFullPredicate } from '../src/worker/modules/scan/repo-gates.ts';
+import { backfillCandidates } from '../src/worker/modules/scan/repo-lookup-backfill.ts';
 import { orgZoneRows, sessionZoneIds } from '../src/worker/modules/scan/repo-zones.ts';
 import {
   olderLivePasses,
   quietUnqueuedTemplates,
 } from '../src/worker/modules/templates/repo-stale.ts';
 import { listUsers } from '../src/worker/modules/users/repo.ts';
+import { listDirtyInstances } from '../src/worker/modules/wallet-providers/repo-instance.ts';
 import {
   beginSamsungSyncTarget,
   finishSamsungSyncTarget,
@@ -201,6 +205,25 @@ describe('scan and template sweep plans', () => {
     expect(common).toContain('LIST SUBQUERY');
   });
 
+  it('capacity reads the ledger only for live witnesses, by primary key', async () => {
+    for (const reentry of [false, true]) {
+      const { sql, params } = capacityFullPredicate('o', 'live', 'e', 10, reentry, 'p');
+      const rows = await env.DB.prepare(`EXPLAIN QUERY PLAN SELECT ${sql}`)
+        .bind(...params)
+        .all<{ detail: string }>();
+      const lines = rows.results.map((r) => r.detail);
+      expect(fullScans(lines, 'scans'), String(reentry)).toEqual([]);
+      const text = lines.join('\n');
+      expect(text.indexOf('MATERIALIZE live')).toBeLessThan(text.indexOf('MATERIALIZE common'));
+      const common = text.slice(
+        text.indexOf('MATERIALIZE common'),
+        text.indexOf('MATERIALIZE candidate'),
+      );
+      expect(common).toContain('SEARCH witness USING INDEX sqlite_autoindex_scans_1 (id=?)');
+      expect(common).toContain('LIST SUBQUERY');
+    }
+  });
+
   it('olderLivePasses: scope and join use passes_active_scope, never a passes scan', async () => {
     for (const orgId of [undefined, 'o']) {
       const lines = await plans((db) => olderLivePasses(db, 't', 'live', orgId));
@@ -292,5 +315,52 @@ describe('zone query plans', () => {
         .all();
     });
     expect(log.join('\n')).toContain('USING INDEX scans_zone');
+  });
+});
+
+describe('keyset cursors seek the index', () => {
+  const after = 'a';
+  const commitment = 'a'.repeat(64);
+
+  it.each([
+    [
+      'holder sweep',
+      (db: D1Database) => listSweepWaitingPasses(db, { after, upper: 'z' }, 10),
+      'passes_waiting_holder (id>? AND id<?)',
+    ],
+    [
+      'plain download tokens',
+      (db: D1Database) => plainPasses(db, 'download_token', after, 10),
+      'passes_token_plain (id>?)',
+    ],
+    [
+      'plain bundle tokens',
+      (db: D1Database) => plainBundles(db, after, 10),
+      'bundles_token_plain (id>?)',
+    ],
+    [
+      'lookup backfill',
+      (db: D1Database) => backfillCandidates(db, after, 10),
+      'sqlite_autoindex_passes_1 (id>?)',
+    ],
+    [
+      'dirty wallet instances',
+      (db: D1Database) => listDirtyInstances(db, 1, 10, after, commitment),
+      'sqlite_autoindex_wallet_provider_instances_1 (id>?)',
+    ],
+    [
+      'bundle list',
+      (db: D1Database) =>
+        listBundleRows(db, { orgId: 'o', mode: 'live', cursor: after, limit: 10 }),
+      'bundles_org (org_id=? AND mode=? AND id<?)',
+    ],
+    [
+      'expired test passes',
+      (db: D1Database) => expiredTestPasses(db, 5, 10, { after: { createdAt: 3, id: after } }),
+      'passes_test_age (created_at>? AND created_at<?)',
+    ],
+  ])('%s: the cursor is a range on the index', async (_name, run, range) => {
+    const text = (await plans(run)).join('\n');
+    expect(text).toContain(range);
   });
 });
