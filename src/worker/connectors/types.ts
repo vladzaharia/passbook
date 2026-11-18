@@ -60,6 +60,8 @@ export interface WebhookDelivery {
    * Ingress refuses a recipe delivery without one.
    */
   signedAt?: number;
+  /** True when only the previous webhook secret verified this delivery (the sender has not switched). */
+  usedPreviousSecret?: true;
   /** Set: refs is empty, the delivery is acknowledged and logged, nothing is applied. */
   ignored?: WebhookIgnoreKind;
 }

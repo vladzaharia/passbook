@@ -103,16 +103,20 @@ export function newWebhookSecret(ctx: ServiceContext): string {
   return `whsec_${ctx.ids.token(32)}`;
 }
 
-/** Where the replaced secret goes: kept as the previous one while it overlaps, else forgotten. */
+/**
+ * Where the replaced secret goes: kept as the previous one (with its fingerprint, so it stays unique
+ * until the overlap ends) or forgotten.
+ */
 export function overlapPatch(
-  conn: Pick<ConnectionRow, 'webhookCredentialId'>,
+  conn: Pick<ConnectionRow, 'webhookCredentialId' | 'webhookSecretFp'>,
   overlapSeconds: number,
   now: number,
-): Pick<ConnectionPatch, 'webhookPrevCredentialId' | 'webhookPrevUntil'> {
+): Pick<ConnectionPatch, 'webhookPrevCredentialId' | 'webhookPrevUntil' | 'webhookPrevSecretFp'> {
   return conn.webhookCredentialId && overlapSeconds > 0
     ? {
         webhookPrevCredentialId: conn.webhookCredentialId,
         webhookPrevUntil: now + overlapSeconds * 1000,
+        webhookPrevSecretFp: conn.webhookSecretFp,
       }
-    : { webhookPrevCredentialId: null, webhookPrevUntil: null };
+    : { webhookPrevCredentialId: null, webhookPrevUntil: null, webhookPrevSecretFp: null };
 }

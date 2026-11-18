@@ -85,7 +85,7 @@ const definition: ConnectorDefinition<z.infer<typeof config>, undefined> = {
     if (c.recipe !== 'custom') {
       return verifyRecipe(RECIPES[c.recipe], ctx, req, { acceptTestEvents: c.acceptTestEvents });
     }
-    const { body, signature, signedAt } = await verifySignedRequest(req, {
+    const { body, signature, signedAt, usedPrevious } = await verifySignedRequest(req, {
       secrets: webhookSecretsOf(ctx),
       now: ctx.now(),
       signatureHeader: c.signatureHeader,
@@ -122,7 +122,14 @@ const definition: ConnectorDefinition<z.infer<typeof config>, undefined> = {
       typeof rawId === 'string' || typeof rawId === 'number'
         ? String(rawId).slice(0, 200)
         : `sig:${signature.slice(0, 32)}`;
-    return { eventId, refs, records, deleted, signedAt };
+    return {
+      eventId,
+      refs,
+      records,
+      deleted,
+      signedAt,
+      ...(usedPrevious ? { usedPreviousSecret: true as const } : {}),
+    };
   },
 };
 export default definition;

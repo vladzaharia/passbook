@@ -144,3 +144,19 @@ export function listExpiredPreviousSecrets(
     rows.map((r) => ({ id: r.id, orgId: r.org_id, credentialId: r.webhook_prev_credential_id })),
   );
 }
+
+/** True when another connection holds this secret fingerprint as its current or previous secret. */
+export async function secretFingerprintTaken(
+  db: D1Database,
+  fingerprint: string,
+  ownConnectionId: string | null,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 FROM connections WHERE (webhook_secret_fp = ? OR webhook_prev_secret_fp = ?)
+         AND id IS NOT ? LIMIT 1`,
+      [fingerprint, fingerprint, ownConnectionId],
+    )) !== null
+  );
+}

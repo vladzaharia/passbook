@@ -17,7 +17,12 @@ import { listConnections } from './repo-list.ts';
 import { listRuns, runStats } from './repo-runs.ts';
 import { passCountsFor } from './repo-stats.ts';
 import { purgeConnectionWebhooks } from './repo-sync.ts';
-import { pastesSecret, rethrowSecretReuse, secretFingerprint } from './secret-fingerprint.ts';
+import {
+  assertSecretFree,
+  pastesSecret,
+  rethrowSecretReuse,
+  secretFingerprint,
+} from './secret-fingerprint.ts';
 import { dropCredentials, newWebhookSecret, storeCredential } from './secrets.ts';
 import {
   auditActor,
@@ -190,11 +195,12 @@ export async function create(
     }
     if (input.webhookSecret && pastesSecret(def, row.config)) {
       row.webhookSecretFp = await secretFingerprint(sctx, input.webhookSecret);
+      await assertSecretFree(sctx, row.webhookSecretFp, null);
     }
     await insertConnection(sctx, row, { orgId: row.orgId, authority, issuing: issues });
   } catch (error) {
     await dropCredentials(sctx, newCredentials);
-    return rethrowSecretReuse(error);
+    return rethrowSecretReuse(sctx, error);
   }
   await recordAudit(sctx, {
     orgId: row.orgId,

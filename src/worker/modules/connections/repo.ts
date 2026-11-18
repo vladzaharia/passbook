@@ -198,6 +198,8 @@ export interface PatchGuard {
   syncMode?: Mode;
   /** Refuse unless the connection is enabled. */
   enabled?: boolean;
+  /** Refuse unless the previous webhook credential is still this one. */
+  prevCredentialId?: string;
   /** The sync workflow that pinned this credential keyset must still be tracked. */
   keyset?: { commitment: string; instanceId: string } | { commitment: string; source: 'webhook' };
 }
@@ -221,6 +223,7 @@ export async function patchConnection(
       ...(guard.generation === undefined ? {} : { generation: guard.generation }),
       ...(guard.syncMode === undefined ? {} : { syncMode: guard.syncMode }),
       ...(guard.enabled ? { enabled: true } : {}),
+      ...(guard.prevCredentialId === undefined ? {} : { prevCredentialId: guard.prevCredentialId }),
     }),
   ];
   const keyset = guard.keyset;

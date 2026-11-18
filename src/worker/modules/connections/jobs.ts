@@ -1,5 +1,5 @@
 import type { JobOf } from '../../jobs/types.ts';
-import { claim } from '../../platform/counters.ts';
+import { claim, prune } from '../../platform/counters.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
@@ -145,6 +145,9 @@ export async function dailyConnections(ctx: ServiceContext): Promise<void> {
     deleteIdleRefVersions(ctx, now - REF_VERSION_IDLE_MS),
   );
   const secrets = await step(ctx, 'previous_secrets', () => dropExpiredPreviousSecrets(ctx, now));
+  await step(ctx, 'prev_secret_counters', () =>
+    prune(ctx.env.DB, 'webhook-prev-secret:%', now - DAY_MS),
+  );
   ctx.log.info('connections.retention', { runs, events, workflows, versions, secrets });
 }
 

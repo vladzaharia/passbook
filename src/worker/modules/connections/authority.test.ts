@@ -1068,6 +1068,27 @@ describe('ambiguous D1 writes and credential cleanup', () => {
     },
   );
 
+  it('drops the older previous webhook credential when a rotation reports failure after it committed', async () => {
+    const connection = await createDemo(kit, {
+      connectorType: 'webhook-push',
+      config: {},
+      mode: 'webhook',
+    });
+    await actions.rotateWebhookSecret(kit.sctx, kit.actor, connection.id, authority);
+    const seam = atWrite(kit.sctx, connectionUpdate, 'after', async () => {
+      throw new Error('uncertain rotation');
+    });
+    await expect(
+      actions.rotateWebhookSecret(seam.sctx, kit.actor, connection.id, authority, 0),
+    ).rejects.toThrow('uncertain rotation');
+    const stored = await getConnection(kit.env.DB, connection.id);
+    if (!stored) throw new Error('Missing connection');
+    const after = await state();
+    expect(stored.webhookPrevCredentialId).toBeNull();
+    expect(after.credentials).toHaveLength(1);
+    expect(after.credentials[0]).toMatchObject({ id: stored.webhookCredentialId });
+  });
+
   it.each(['before', 'after'] as const)(
     'cleans only unreferenced credentials when connection DELETE fails %s commit',
     async (phase) => {

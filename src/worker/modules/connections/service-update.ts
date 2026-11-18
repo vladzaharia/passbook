@@ -8,7 +8,12 @@ import { schedules } from './health.ts';
 import { assertMayIssue, updateIssues } from './issuing.ts';
 import { validateMapping } from './mapping.ts';
 import { type ConnectionPatch, type ConnectionRow, patchConnection } from './repo.ts';
-import { pastesSecret, rethrowSecretReuse, secretFingerprint } from './secret-fingerprint.ts';
+import {
+  assertSecretFree,
+  pastesSecret,
+  rethrowSecretReuse,
+  secretFingerprint,
+} from './secret-fingerprint.ts';
 import { dropCredentials, newWebhookSecret, overlapPatch, storeCredential } from './secrets.ts';
 import {
   auditActor,
@@ -152,6 +157,7 @@ export async function update(
       input.webhookSecret !== undefined && pastesSecret(def, conn.config)
         ? await secretFingerprint(sctx, input.webhookSecret)
         : null;
+    if (patch.webhookSecretFp) await assertSecretFree(sctx, patch.webhookSecretFp, conn.id);
     changed.add('webhookSecret');
   }
 
@@ -213,7 +219,7 @@ export async function update(
   } catch (error) {
     // A reported failure can still follow a committed update; preserve any linked credentials.
     await dropCredentials(sctx, [...newCredentials, ...staleCredentials]);
-    return rethrowSecretReuse(error);
+    return rethrowSecretReuse(sctx, error);
   }
   await dropCredentials(sctx, staleCredentials);
   await recordAudit(sctx, {

@@ -162,7 +162,11 @@ export async function rotateWebhookSecret(
       throw new ConflictError('The connection changed. Reload and retry.', 'CONNECTION_CONFLICT');
     }
   } catch (error) {
-    await dropCredentials(sctx, [credentialId, conn.webhookCredentialId]);
+    await dropCredentials(sctx, [
+      credentialId,
+      conn.webhookCredentialId,
+      conn.webhookPrevCredentialId,
+    ]);
     throw error;
   }
   // The old current secret is now the previous one (when it overlaps); the previous one is gone.
@@ -226,8 +230,16 @@ export async function revokePreviousWebhookSecret(
     const updated = await patchConnection(
       sctx,
       id,
-      { webhookPrevCredentialId: null, webhookPrevUntil: null, updatedAt: sctx.clock.now() },
-      { actor: { orgId: conn.orgId, authority } },
+      {
+        webhookPrevCredentialId: null,
+        webhookPrevUntil: null,
+        webhookPrevSecretFp: null,
+        updatedAt: sctx.clock.now(),
+      },
+      {
+        actor: { orgId: conn.orgId, authority },
+        prevCredentialId: conn.webhookPrevCredentialId,
+      },
     );
     if (!updated) {
       throw new ConflictError('The connection changed. Reload and retry.', 'CONNECTION_CONFLICT');

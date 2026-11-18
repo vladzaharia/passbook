@@ -538,7 +538,10 @@ describe('review hardening', () => {
     await expect(mk('b')).resolves.toBeDefined();
     const { update } = await import('./service.ts');
     const dto = await stripeConn();
-    await update(kit.sctx, kit.actor, dto.id, { webhookSecret: `whsec_${crypto.randomUUID()}` });
+    await update(kit.sctx, kit.actor, dto.id, {
+      webhookSecret: `whsec_${crypto.randomUUID()}`,
+      overlapSeconds: 0,
+    });
     await expect(stripeConn({ name: 'Reuse old' })).resolves.toBeDefined();
   });
 });

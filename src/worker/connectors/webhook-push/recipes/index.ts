@@ -48,7 +48,8 @@ export async function verifyRecipe(
     topic: recipe.topicHeader ? req.headers.get(recipe.topicHeader) : null,
   });
   const eventId = out.eventId ?? `${recipe.idPrefix}:${signed.digest}`;
-  if (out.ignored) return { eventId, refs: [], ignored: out.ignored };
+  const previous = signed.usedPrevious ? { usedPreviousSecret: true as const } : {};
+  if (out.ignored) return { eventId, refs: [], ignored: out.ignored, ...previous };
   const signedAt = verifier.replay === 'body-window' ? out.signedAt : signed.signedAt;
   if (signedAt === undefined) throw new ConnectorError('AUTH');
   if (
@@ -64,5 +65,6 @@ export async function verifyRecipe(
     createRefs: out.createRefs,
     versions: out.versions,
     signedAt,
+    ...previous,
   };
 }
