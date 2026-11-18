@@ -92,7 +92,7 @@ export function unhealthyConnections(
   );
 }
 
-/** Staff PINs whose hash was made under MAC root `version` (a NULL column is the oldest KEK, `oldest`). */
+/** Staff PINs whose hash was made under MAC root `version` (a NULL column is `oldest`, the evidence root). */
 export async function staffPinsOnRoot(
   db: D1Database,
   version: number,
@@ -104,4 +104,10 @@ export async function staffPinsOnRoot(
     [oldest, version],
   );
   return row?.n ?? 0;
+}
+
+/** Whether the credential-reference keyset is initialized (a fresh install has none to check). */
+export async function keysetInitialized(db: D1Database): Promise<boolean> {
+  const row = await first<{ n: number }>(db, 'SELECT count(*) AS n FROM credential_ref_keyset');
+  return (row?.n ?? 0) > 0;
 }

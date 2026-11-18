@@ -94,15 +94,16 @@ function marketFenceFixture(db: D1Database): D1Database {
 describe('native offer authority fences', () => {
   it('pins the entire KEK ring before asynchronous offer snapshot work', async () => {
     const f = await setupWalletOfferKit({ google: 'absent', samsung: 'configured' });
-    const env = { ...f.kit.env, KEK_V0: '' };
+    const env = { ...f.kit.env };
     const ctx = { ...f.kit.ctx, env };
     const captured = captureOfferContext(ctx);
     const pending = offerPassSnapshot(ctx, f.pass.id, f.credentialKeysetCommitment);
-    env.KEK_V0 = btoa(String.fromCharCode(...new Uint8Array(32).fill(42)));
+    env.KEK_V1 = btoa(String.fromCharCode(...new Uint8Array(32).fill(42)));
     const snapshot = await pending;
     expect(snapshot?.credentialKeysetCommitment).toBe(f.credentialKeysetCommitment);
     expect(Object.isFrozen(captured.env)).toBe(true);
-    expect((await loadKekRing(captured.env)).keys.has(0)).toBe(false);
+    expect((captured.env as { KEK_V1?: string }).KEK_V1).toBe(f.kit.env.KEK_V1);
+    expect([...(await loadKekRing(captured.env)).keys.keys()]).toEqual([1]);
     expect(await requireCredentialRefKeyset(f.kit.env.DB, captured.env)).toBe(
       f.credentialKeysetCommitment,
     );
