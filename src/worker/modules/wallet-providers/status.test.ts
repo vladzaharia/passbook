@@ -431,13 +431,14 @@ describe('provider pass status read', () => {
     const member = await eventMember(kit, kit.org.id);
     const credentialKeysetCommitment = await ensureCredentialRefKeyset(kit.env.DB, kit.env);
     const wrongKey = btoa('x'.repeat(32));
-    expect(await credentialRefKeysetCommitment({ ...kit.env, KEK_V0: wrongKey })).not.toBe(
+    expect(await credentialRefKeysetCommitment({ ...kit.env, KEK_V1: wrongKey })).not.toBe(
       credentialKeysetCommitment,
     );
     const baseline = await read(await call(kit, pass.id, member.session.headers));
 
     async function requestWithKeyChange(startsWrong: boolean) {
-      const env = { ...kit.env, KEK_V0: startsWrong ? wrongKey : '' };
+      const realKey = kit.env.KEK_V1;
+      const env = { ...kit.env, KEK_V1: startsWrong ? wrongKey : realKey };
       let intercepted = false;
       const wrap = (statement: D1PreparedStatement, sql: string): D1PreparedStatement =>
         new Proxy(statement, {
@@ -448,7 +449,7 @@ describe('provider pass status read', () => {
               return () => {
                 if (!intercepted && sql.includes('AS org_slug FROM passes')) {
                   intercepted = true;
-                  env.KEK_V0 = startsWrong ? '' : wrongKey;
+                  env.KEK_V1 = startsWrong ? realKey : wrongKey;
                 }
                 return target.first();
               };
@@ -507,7 +508,7 @@ describe('provider pass status read', () => {
       priorGenerationRetirementPending: true,
     });
 
-    const wrongEnv = { ...f.kit.env, KEK_V0: btoa('x'.repeat(32)) };
+    const wrongEnv = { ...f.kit.env, KEK_V1: btoa('x'.repeat(32)) };
     const replacement = await credentialRefKeysetCommitment(wrongEnv);
     expect(replacement).not.toBe(credentialKeysetCommitment);
     const mismatch = await unavailable(

@@ -27,8 +27,8 @@ import {
   CURSOR,
   DONE,
   READ_BUDGET,
+  RETRY_MS,
   rewrapEnvelopes,
-  UNREADABLE_RETRY_MS,
   WRITE_BATCH,
   WRITE_BUDGET,
 } from './rewrap.ts';
@@ -171,7 +171,7 @@ describe('keys.rewrap', () => {
     expect(await openBody(only2, cap, kit.org.id, stored?.text ?? '')).toBe('plain');
   });
 
-  it('is done after a clean sweep, and a later run then costs one read', async () => {
+  it('is done after a clean sweep, and a later run then costs one read and the ring record', async () => {
     const kit = await setup();
     await untilDone(kit.v2, kit.f);
     const done = (await readSystemValue(kit.f.env.DB, DONE)) as {
@@ -182,7 +182,8 @@ describe('keys.rewrap', () => {
     const counted = countQueries(kit.v2);
     const { ctx, lines } = jobOf(counted.env, kit.f);
     await rewrapEnvelopes(ctx);
-    expect(counted.count()).toBe(1);
+    // The done marker and the ring record: one read and one write.
+    expect(counted.count()).toBe(2);
     expect(lines).toEqual([]);
   });
 
@@ -317,7 +318,7 @@ describe('keys.rewrap', () => {
     const still = jobOf(kit.v2, kit.f);
     await rewrapEnvelopes(still.ctx);
     expect(still.lines).toEqual([]);
-    kit.f.clock.advance(UNREADABLE_RETRY_MS + 1);
+    kit.f.clock.advance(RETRY_MS + 1);
     await run(db, "DELETE FROM credentials WHERE id = 'cred-bad'");
     const retry = await untilDone(kit.v2, kit.f);
     expect(codes(retry)).toContain('KEK_REWRAP_DONE');
@@ -416,5 +417,102 @@ describe('keys.rewrap', () => {
     await rewrapEnvelopes(ctx);
     expect(await readSystemValue(db, 'keys.macRoots')).toMatchObject({ '1': 'mismatch' });
     expect(codes(lines)).toContain('MAC_ROOT_MISMATCH');
+  });
+
+  it('records the ring and pins the Worker runs, for keys:retire, on every run', async () => {
+    const kit = await setup();
+    const env = {
+      ...kit.v2,
+      MAC_KEY_VERSION: '2',
+      MAC_KEY_VERSION_PREVIOUS: 1,
+    } as unknown as AppEnv;
+    await rewrapEnvelopes(jobOf(env, kit.f).ctx);
+    expect(await readSystemValue(kit.f.env.DB, 'keys.ring')).toEqual({
+      at: kit.f.clock.now(),
+      pin: 2,
+      previous: 1,
+      kek: [1, 2],
+      macRoot: [],
+    });
+    // Even with one KEK (the rewrap has nothing to do).
+    kit.f.clock.advance(60_000);
+    await rewrapEnvelopes(jobOf(kit.base, kit.f).ctx);
+    expect(await readSystemValue(kit.f.env.DB, 'keys.ring')).toMatchObject({
+      at: kit.f.clock.now(),
+      pin: null,
+      kek: [1],
+    });
+  });
+
+  it('records the rows left per KEK version when the sweep ends, and an unreadable row stays counted', async () => {
+    const kit = await setup();
+    await insertCredential(kit, 'cred-bad', 'some-other-id');
+    await untilDone(kit.v2, kit.f);
+    expect(await readSystemValue(kit.f.env.DB, DONE)).toMatchObject({ remaining: { '1': 1 } });
+    await run(kit.f.env.DB, "DELETE FROM credentials WHERE id = 'cred-bad'");
+  });
+
+  it('finds a row written under the old KEK after the pair was done, within the hour', async () => {
+    const kit = await setup();
+    const db = kit.f.env.DB;
+    await untilDone(kit.v2, kit.f);
+    expect(((await readSystemValue(db, DONE)) as { remaining: object }).remaining).toEqual({});
+    // An isolate that still ran with V1 seals a credential after the sweep.
+    await insertCredential(kit, 'late-after-done');
+    await rewrapEnvelopes(jobOf(kit.v2, kit.f).ctx);
+    expect(
+      (
+        await first<{ kek_version: number }>(
+          db,
+          "SELECT kek_version FROM credentials WHERE id = 'late-after-done'",
+        )
+      )?.kek_version,
+    ).toBe(1);
+    kit.f.clock.advance(RETRY_MS + 1);
+    const lines = await untilDone(kit.v2, kit.f);
+    expect(codes(lines)).toContain('KEK_REWRAP_LATE');
+    expect(
+      (
+        await first<{ kek_version: number }>(
+          db,
+          "SELECT kek_version FROM credentials WHERE id = 'late-after-done'",
+        )
+      )?.kek_version,
+    ).toBe(2);
+    // A quiet hour is probed too, and costs one query per place and nothing is swept.
+    kit.f.clock.advance(RETRY_MS + 1);
+    const counted = countQueries(kit.v2);
+    const quiet = jobOf(counted.env, kit.f);
+    await rewrapEnvelopes(quiet.ctx);
+    expect(codes(quiet.lines)).toEqual([]);
+    expect(counted.count()).toBe(2 + 15 + 1);
+    expect(((await readSystemValue(db, DONE)) as { at: number }).at).toBe(kit.f.clock.now());
+  });
+
+  it('does not trust a sweep that failed after a batch: the cursor is saved dirty', async () => {
+    const kit = await setup();
+    const db = kit.f.env.DB;
+    await insertCredential(kit, 'cred-failing');
+    let batches = 0;
+    const failing = new Proxy(db, {
+      get(target, prop) {
+        if (prop === 'batch')
+          return async (statements: D1PreparedStatement[]) => {
+            const out = await target.batch(statements);
+            if (++batches === 1) throw new Error('lost after commit');
+            return out;
+          };
+        const value = Reflect.get(target, prop, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    const env = Object.assign(Object.create(kit.v2), { ...kit.v2, DB: failing }) as AppEnv;
+    const { ctx, lines } = jobOf(env, kit.f);
+    await rewrapEnvelopes(ctx);
+    expect(codes(lines)).toContain('KEK_REWRAP_FAILED');
+    expect(await readSystemValue(db, CURSOR)).toMatchObject({ dirty: true });
+    // The next sweep starts after it and finds nothing more to move before it is done.
+    const lines2 = await untilDone(kit.v2, kit.f);
+    expect(codes(lines2)).toContain('KEK_REWRAP_RESWEEP');
   });
 });

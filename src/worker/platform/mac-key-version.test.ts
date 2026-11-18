@@ -112,7 +112,7 @@ describe('macKeyProblems', () => {
 
   it('names every problem', () => {
     expect(macKeyProblems({ pin: '3' }, [1, 2])).toEqual([
-      'MAC_KEY_VERSION=3 names a KEK that is not set (KEK_V3).',
+      'MAC_KEY_VERSION=3 names a root that is not set (KEK_V3 or MAC_ROOT_V3).',
     ]);
     expect(macKeyProblems({ pin: '0', previous: 'x' }, [1])).toHaveLength(2);
     expect(macKeyProblems({ pin: '2', previous: '2' }, [1, 2])).toEqual([
@@ -164,7 +164,7 @@ describe('keyRingProblems', () => {
   it('checks the pins against KEKs and roots together', () => {
     expect(keyRingProblems({ kek: [2], macRoot: [1], pin: '1' })).toEqual([]);
     expect(keyRingProblems({ kek: [2], macRoot: [1], pin: '3' })).toEqual([
-      'MAC_KEY_VERSION=3 names a KEK that is not set (KEK_V3).',
+      'MAC_KEY_VERSION=3 names a root that is not set (KEK_V3 or MAC_ROOT_V3).',
     ]);
   });
 

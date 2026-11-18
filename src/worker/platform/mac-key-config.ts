@@ -1,3 +1,9 @@
+/**
+ * The root every retained-evidence MAC derives from, and what `MAC_KEY_VERSION` defaults to: every deployment
+ * started at V1. Explicit, not "the oldest": with V1 gone and no `MAC_ROOT_V1` it must fail, not drift to V2.
+ */
+export const EVIDENCE_ROOT = 1;
+
 /** A KEK version setting: an integer or a digit string, 1 or more; null for anything else. */
 export function parseKekVersion(raw: unknown): number | null {
   if (typeof raw === 'number') return Number.isSafeInteger(raw) && raw >= 1 ? raw : null;
@@ -30,7 +36,9 @@ export function macKeyProblems(
       continue;
     }
     if (kekVersions && !kekVersions.includes(version))
-      problems.push(`${name}=${version} names a KEK that is not set (KEK_V${version}).`);
+      problems.push(
+        `${name}=${version} names a root that is not set (KEK_V${version} or MAC_ROOT_V${version}).`,
+      );
     parsed[name] = version;
   }
   if (
@@ -56,8 +64,10 @@ export function keyRingProblems(input: {
   const { kek, macRoot } = input;
   if (kek.length === 0) return ['No KEK is set (KEK_V1, KEK_V2, ...).'];
   const problems: string[] = [];
-  if (!kek.includes(1) && !macRoot.includes(1))
-    problems.push('Root 1 is missing: set KEK_V1 or MAC_ROOT_V1.');
+  if (!kek.includes(EVIDENCE_ROOT) && !macRoot.includes(EVIDENCE_ROOT))
+    problems.push(
+      `Root ${EVIDENCE_ROOT} is missing: set KEK_V${EVIDENCE_ROOT} or MAC_ROOT_V${EVIDENCE_ROOT}.`,
+    );
   const current = Math.max(...kek);
   for (const version of macRoot)
     if (version >= current)

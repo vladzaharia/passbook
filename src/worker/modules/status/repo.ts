@@ -92,7 +92,7 @@ export function unhealthyConnections(
   );
 }
 
-/** Staff PINs whose hash was made under MAC root `version` (a NULL column is the oldest KEK, `oldest`). */
+/** Staff PINs whose hash was made under MAC root `version` (a NULL column is `oldest`, the evidence root). */
 export async function staffPinsOnRoot(
   db: D1Database,
   version: number,

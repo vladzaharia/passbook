@@ -1,3 +1,4 @@
+import { parseKekVersion } from '../../platform/mac-key-config.ts';
 import { macRootAgrees, secretVersions } from '../../platform/mac-roots.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { writeSystemValue } from '../settings/repo.ts';
@@ -22,4 +23,27 @@ export async function recordMacRoots(ctx: ServiceContext): Promise<void> {
     if (!agrees) ctx.log.error('keys.mac_root', { code: 'MAC_ROOT_MISMATCH', version });
   }
   await writeSystemValue(ctx.env.DB, MAC_ROOTS, value, now);
+}
+
+export const KEY_RING = 'keys.ring';
+
+/**
+ * Every run: the ring and the MAC pins as this Worker sees them (`wrangler.jsonc` vars and secrets as
+ * deployed), so `npm run keys:retire` judges what runs in production, not the local checkout.
+ */
+export async function recordKeyRing(ctx: ServiceContext): Promise<void> {
+  const env = ctx.env as { MAC_KEY_VERSION?: unknown; MAC_KEY_VERSION_PREVIOUS?: unknown };
+  const now = ctx.clock.now();
+  await writeSystemValue(
+    ctx.env.DB,
+    KEY_RING,
+    {
+      at: now,
+      pin: parseKekVersion(env.MAC_KEY_VERSION),
+      previous: parseKekVersion(env.MAC_KEY_VERSION_PREVIOUS),
+      kek: secretVersions(ctx.env, 'KEK'),
+      macRoot: secretVersions(ctx.env, 'MAC_ROOT'),
+    },
+    now,
+  );
 }

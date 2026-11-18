@@ -10,6 +10,10 @@
 -- unwrap, which anyone able to write these rows can already do. kek_version must rise, so the carve-out
 -- cannot move a row back to a retired or compromised KEK.
 --
+-- The argument assumes an honest ciphertext: one encryptSecret produced under a single DEK. A ciphertext
+-- crafted to authenticate under two keys (an invisible-salamander forgery) could read differently after a
+-- rewrap, but writing one takes write access to these rows, which already allows writing any secret.
+--
 -- Everything else in the three triggers is unchanged (0034, 0037, 0042).
 DROP TRIGGER signing_identity_revision_credential_update;
 CREATE TRIGGER signing_identity_revision_credential_update AFTER UPDATE OF

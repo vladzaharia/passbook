@@ -28,7 +28,7 @@ const rawKey = (base64: string, what: string): Uint8Array => {
 
 /** The versions `env` holds a secret for, ascending: `KEK_V<n>` when `prefix` is KEK, else `MAC_ROOT_V<n>`. */
 export function secretVersions(env: object, prefix: 'KEK' | 'MAC_ROOT'): number[] {
-  const pattern = new RegExp(`^${prefix}_V(\\d+)$`);
+  const pattern = new RegExp(`^${prefix}_V([1-9]\\d*)$`);
   return Object.entries(env as Record<string, unknown>)
     .flatMap(([name, value]) => {
       const match = pattern.exec(name);

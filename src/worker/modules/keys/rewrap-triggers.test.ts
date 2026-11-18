@@ -1,3 +1,4 @@
+import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
 import {
@@ -8,7 +9,7 @@ import {
   makeTemplate,
   withoutTrigger,
 } from '../../../../test/helpers/index.ts';
-import { first, run, type SqlValue } from '../../platform/db.ts';
+import { all, first, run, type SqlValue } from '../../platform/db.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 
 const blob = (byte: number, length: number) => new Uint8Array(length).fill(byte);
@@ -240,4 +241,43 @@ describe('rewrap-shaped updates: pass_credential_transfer_payloads', () => {
       run(db, 'DELETE FROM pass_credential_transfer_payloads WHERE transfer_id = ?', [t]),
     ).rejects.toThrow(/credential transfer payload is immutable/);
   });
+});
+
+describe('the carve-out names every column of its table', () => {
+  // A column a migration adds later must be named in the trigger, or a rewrap-shaped update could change it.
+  const CASES: { table: string; trigger: string; notTriggered?: string[] }[] = [
+    {
+      table: 'credentials',
+      trigger: 'signing_identity_revision_credential_update',
+      // The trigger fires on UPDATE OF the other columns only; these never fire it.
+      notTriggered: ['id', 'created_by', 'created_at', 'rotated_at'],
+    },
+    { table: 'wallet_provider_credentials', trigger: 'wallet_provider_credentials_no_update' },
+    {
+      table: 'pass_credential_transfer_payloads',
+      trigger: 'pass_credential_transfer_payload_no_update',
+    },
+  ];
+
+  it.each(CASES)(
+    '$table: every column is compared in $trigger',
+    async ({ table, trigger, notTriggered }) => {
+      const columns = await all<{ name: string }>(env.DB, `PRAGMA table_info("${table}")`);
+      const sql = await first<{ sql: string }>(
+        env.DB,
+        "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = ?",
+        [trigger],
+      );
+      const text = sql?.sql ?? '';
+      expect(text).not.toBe('');
+      const compared = (name: string) =>
+        new RegExp(`(NEW|OLD)\\.${name} (IS (NOT )?|> )(NEW|OLD)\\.${name}\\b`).test(text);
+      expect(columns.map((c) => c.name).filter((name) => !compared(name))).toEqual(
+        notTriggered ?? [],
+      );
+      // The columns it does not compare really are outside its UPDATE OF list.
+      const fires = /UPDATE OF([\s\S]*?)\bON\b/i.exec(text)?.[1] ?? '';
+      for (const name of notTriggered ?? []) expect(fires).not.toMatch(new RegExp(`\\b${name}\\b`));
+    },
+  );
 });

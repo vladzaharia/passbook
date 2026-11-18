@@ -93,7 +93,7 @@ describe('staff read and response authority', () => {
           if (prop === 'first')
             return async (...values: unknown[]) => {
               intercepted++;
-              Object.assign(requestEnv, { KEK_V0: btoa('z'.repeat(32)) });
+              Object.assign(requestEnv, { KEK_V1: btoa('z'.repeat(32)) });
               return (value as (...args: unknown[]) => Promise<unknown>).apply(target, values);
             };
           return typeof value === 'function' ? value.bind(target) : value;

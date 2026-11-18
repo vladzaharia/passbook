@@ -5,7 +5,7 @@ import {
   macPreviousVersion,
 } from '../../platform/crypto.ts';
 import { all } from '../../platform/db.ts';
-import { macKeyProblems } from '../../platform/mac-key-config.ts';
+import { EVIDENCE_ROOT, macKeyProblems } from '../../platform/mac-key-config.ts';
 import { macRootVersions } from '../../platform/mac-roots.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Draft } from './checks.ts';
@@ -32,10 +32,7 @@ export async function checkKek(ctx: ServiceContext): Promise<Draft> {
     const data = { currentVersion: ring.current, versions: ring.keys.size };
     // During a rotation, staff PINs hashed under the previous root must be reset before it is unset.
     const previous = macPreviousVersion(ctx.env);
-    const pins =
-      previous === null
-        ? 0
-        : await staffPinsOnRoot(ctx.env.DB, previous, macRootVersions(ctx.env)[0] ?? 1);
+    const pins = previous === null ? 0 : await staffPinsOnRoot(ctx.env.DB, previous, EVIDENCE_ROOT);
     if (pins > 0)
       return {
         ...base,

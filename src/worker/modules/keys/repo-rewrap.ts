@@ -173,7 +173,7 @@ const CAS: Record<PlaceTable, (db: D1Database, m: Move) => D1PreparedStatement> 
 };
 
 /** One D1 batch of compare-and-set moves; returns how many rows moved (the rest changed since they were read). */
-export async function moveEnvelopes(
+async function moveEnvelopes(
   db: D1Database,
   table: PlaceTable,
   moves: readonly Move[],
@@ -225,7 +225,7 @@ export interface CaptureMove {
 }
 
 /** Replaces the headers in place; the body is never read or bound. A forward in flight locks the row. */
-export async function moveCaptures(db: D1Database, moves: readonly CaptureMove[]): Promise<number> {
+async function moveCaptures(db: D1Database, moves: readonly CaptureMove[]): Promise<number> {
   const results = await batch(
     db,
     moves.map((m) =>
@@ -251,4 +251,57 @@ export async function moveCaptures(db: D1Database, moves: readonly CaptureMove[]
     ),
   );
   return results.reduce((n, r) => n + (r.results?.length ?? 0), 0);
+}
+
+/** The one entry for writes: a batch of moves for one place. */
+export type MoveBatch =
+  | { table: PlaceTable; moves: readonly Move[] }
+  | { table: 'captured_emails'; moves: readonly CaptureMove[] };
+
+export function moveRows(db: D1Database, batch: MoveBatch): Promise<number> {
+  return batch.table === 'captured_emails'
+    ? moveCaptures(db, batch.moves)
+    : moveEnvelopes(db, batch.table, batch.moves);
+}
+
+const CAPTURE_OLDER = `(t.html GLOB 'enc1:*' AND CAST(substr(t.html, 6, instr(t.html, '.') - 6) AS INTEGER) < ?)
+  OR (t.text GLOB 'enc1:*' AND CAST(substr(t.text, 6, instr(t.text, '.') - 6) AS INTEGER) < ?)`;
+
+/** Whether any row of `table` is still under a KEK older than `current` (one row at most is read). */
+export async function hasOlderEnvelope(
+  db: D1Database,
+  table: PlaceTable | 'captured_emails',
+  current: number,
+): Promise<boolean> {
+  const row =
+    table === 'captured_emails'
+      ? await all(db, `SELECT 1 AS x FROM captured_emails t WHERE ${CAPTURE_OLDER} LIMIT 1`, [
+          current,
+          current,
+        ])
+      : await all(db, `SELECT 1 AS x FROM ${table} WHERE kek_version < ? LIMIT 1`, [current]);
+  return row.length > 0;
+}
+
+/** Rows (columns, for captured emails) of `table` per KEK version older than `current`. */
+export async function countOlderEnvelopes(
+  db: D1Database,
+  table: PlaceTable | 'captured_emails',
+  current: number,
+): Promise<{ v: number; n: number }[]> {
+  return table === 'captured_emails'
+    ? all<{ v: number; n: number }>(
+        db,
+        `SELECT v, count(*) AS n FROM (
+           SELECT CAST(substr(t.html, 6, instr(t.html, '.') - 6) AS INTEGER) AS v FROM captured_emails t WHERE t.html GLOB 'enc1:*'
+           UNION ALL
+           SELECT CAST(substr(t.text, 6, instr(t.text, '.') - 6) AS INTEGER) AS v FROM captured_emails t WHERE t.text GLOB 'enc1:*')
+         WHERE v < ? GROUP BY v`,
+        [current],
+      )
+    : all<{ v: number; n: number }>(
+        db,
+        `SELECT kek_version AS v, count(*) AS n FROM ${table} WHERE kek_version < ? GROUP BY kek_version`,
+        [current],
+      );
 }

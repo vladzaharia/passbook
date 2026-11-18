@@ -87,7 +87,7 @@ const checkSecrets = () => {
   }
   const versions = (prefix: string) =>
     secretNames(listed).flatMap((name) => {
-      const match = new RegExp(`^${prefix}_V(\\d+)$`).exec(name);
+      const match = new RegExp(`^${prefix}_V([1-9]\\d*)$`).exec(name);
       return match ? [Number(match[1])] : [];
     });
   const macProblems = keyRingProblems({

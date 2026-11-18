@@ -1,4 +1,4 @@
-import { parseKekVersion } from '../../platform/mac-key-config.ts';
+import { EVIDENCE_ROOT, parseKekVersion } from '../../platform/mac-key-config.ts';
 import { stampOf } from './rewrap-tables.ts';
 
 const DAY = 86_400_000;
@@ -12,22 +12,20 @@ export interface RetireInput {
   macRoot: readonly number[];
   pin?: unknown;
   previous?: unknown;
-  done: { stamp?: unknown; unreadable?: unknown; startedAt?: unknown } | null;
+  done: {
+    stamp?: unknown;
+    unreadable?: unknown;
+    startedAt?: unknown;
+    remaining?: unknown;
+  } | null;
   /** `MAC_ROOT_V<n>` derives the same keys as `KEK_V<n>` (Status computes it; the tool reads `keys.macRoots`). */
   rootVerified: boolean;
   now: number;
 }
 
-/** The MAC root versions in use: the oldest (retained evidence), `MAC_KEY_VERSION` and the previous one. */
-export function rootsInUse(
-  input: Pick<RetireInput, 'kek' | 'macRoot' | 'pin' | 'previous'>,
-): number[] {
-  const all = [...new Set([...input.kek, ...input.macRoot])].sort((a, b) => a - b);
-  const oldest = all[0];
-  const used = new Set<number>();
-  if (oldest !== undefined) used.add(oldest);
-  const pin = parseKekVersion(input.pin) ?? oldest;
-  if (pin !== undefined) used.add(pin);
+/** The MAC root versions in use: `EVIDENCE_ROOT` (retained evidence), `MAC_KEY_VERSION` and the previous one. */
+export function rootsInUse(input: Pick<RetireInput, 'pin' | 'previous'>): number[] {
+  const used = new Set<number>([EVIDENCE_ROOT, parseKekVersion(input.pin) ?? EVIDENCE_ROOT]);
   const previous = parseKekVersion(input.previous);
   if (previous !== null) used.add(previous);
   return [...used];
@@ -49,6 +47,12 @@ export function retireProblems(input: RetireInput): string[] {
   else {
     if (done.unreadable !== 0)
       problems.push(`The rewrap left ${String(done.unreadable)} rows it could not open.`);
+    const left =
+      done.remaining && typeof done.remaining === 'object'
+        ? Number((done.remaining as Record<string, unknown>)[String(n)] ?? 0)
+        : null;
+    if (left === null) problems.push('The sweep recorded no row counts.');
+    else if (left > 0) problems.push(`${left} rows still used KEK_V${n} when the sweep ended.`);
     const startedAt = typeof done.startedAt === 'number' ? done.startedAt : now;
     if (now - startedAt < DAY)
       problems.push('Wait 24 hours from the first rewrap run: console cursors live that long.');

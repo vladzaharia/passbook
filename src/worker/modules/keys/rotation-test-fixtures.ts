@@ -4,6 +4,12 @@ import { credentialAad, type Envelope, encryptSecret, loadKekRing } from '../../
 import { first, run } from '../../platform/db.ts';
 import { sealBody } from '../sandbox/captured-body.ts';
 import type { setupSamsungCallbacks } from '../wallet-providers/callbacks-test-fixtures.ts';
+import {
+  claimWalletOperation,
+  newWalletClaimHandle,
+  recordWalletOperationOutcome,
+} from '../wallet-providers/instance.ts';
+import { personalizeThroughRoute } from './personalize-test-fixtures.ts';
 import { CAPTURE_TABLE, ENVELOPE_TABLES } from './rewrap-tables.ts';
 
 export type Samsung = Awaited<ReturnType<typeof setupSamsungCallbacks>>;
@@ -14,6 +20,7 @@ export interface Seeded {
   webhookCredentialId: string;
   signerCredentialId: string;
   signerCertSha: string;
+  platformCredentialId: string;
   team: string;
   personalizedPassId: string;
   retentionId: string;
@@ -56,6 +63,34 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
   await credential(webhookCredentialId, 'webhook', 'webhook-secret');
   await credential(signerCredentialId, 'pass_signer', 'signer-pem');
   const signerCertSha = `sha-${signerCredentialId}`;
+  // A platform identity: its org is NULL while the credential row carries the org, so the signer's AAD takes
+  // the identity's org (db-resolver.ts), not the credential's.
+  const platformCredentialId = id();
+  const platformSigner = await seal(
+    platformCredentialId,
+    null,
+    'pass_signer',
+    'platform-signer-pem',
+  );
+  await run(
+    db,
+    `INSERT INTO credentials (id, org_id, kind, kek_version, iv, wrapped_dek, ciphertext, fingerprint, created_at)
+     VALUES (?, ?, 'pass_signer', ?, ?, ?, ?, ?, ?)`,
+    [platformCredentialId, org, ...bytes(platformSigner), `fp-${platformCredentialId}`, now],
+  );
+  await run(
+    db,
+    `INSERT INTO signing_identities (id, org_id, label, pass_type_identifier, team_identifier, source,
+       credential_id, cert_pem, cert_sha256, created_at)
+     VALUES (?, NULL, 'Platform', ?, 'TEAMPLT', 'db', ?, 'pem', ?, ?)`,
+    [
+      id(),
+      `pass.platform.${platformCredentialId}`,
+      platformCredentialId,
+      `sha-${platformCredentialId}`,
+      now,
+    ],
+  );
   await run(
     db,
     `INSERT INTO signing_identities (id, org_id, label, pass_type_identifier, team_identifier, source,
@@ -81,25 +116,13 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
     [apnsId, team, ...bytes(apns), now],
   );
 
-  const personalized = await kit.pass();
-  const personalization = await seal(
-    personalized.id,
-    org,
-    'personalization',
-    '{"memberName":"Sam"}',
-  );
-  await run(
-    db,
-    `INSERT INTO pass_personalizations (pass_id, token_sha256, kek_version, iv, wrapped_dek, ciphertext, created_at)
-     VALUES (?, 'sha', ?, ?, ?, ?, ?)`,
-    [personalized.id, ...bytes(personalization), now],
-  );
+  const personalized = await personalizeThroughRoute(t);
   plain.push({
     table: 'pass_personalizations',
     id: personalized.id,
     org,
     kind: 'personalization',
-    text: '{"memberName":"Sam"}',
+    text: personalized.text,
   });
 
   const retentionId = id();
@@ -138,26 +161,40 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
     text: '{"rows":[]}',
   });
 
-  const outcomeId = id();
-  const outcome = await seal(outcomeId, org, 'wallet.provider.outcome', 'outcome-body');
-  const operation = await first<{ id: string }>(
+  const claim = {
+    orgId: t.operation.orgId,
+    mode: t.operation.mode,
+    provider: t.operation.provider,
+    instanceId: t.operation.instanceId,
+    version: t.operation.version,
+    credentialKeysetCommitment: t.credentialKeysetCommitment,
+    claimHandle: newWalletClaimHandle(),
+    now,
+  };
+  if ((await claimWalletOperation(db, claim)) !== 'claimed')
+    throw new Error('operation not claimed');
+  const outcomeText = 'outcome-body';
+  const receipt = await recordWalletOperationOutcome(kit.ctx, {
+    ...claim,
+    sequence: 1,
+    eventKey: 'response',
+    body: new TextEncoder().encode(outcomeText),
+    reason: 'ok',
+  });
+  if (receipt === 'stale') throw new Error('outcome not recorded');
+  const outcomeRow = await first<{ id: string }>(
     db,
-    'SELECT id FROM wallet_provider_instance_operations WHERE instance_id = ? LIMIT 1',
+    `SELECT o.id FROM wallet_provider_instance_outcomes o
+     JOIN wallet_provider_instance_operations p ON p.id = o.operation_id WHERE p.instance_id = ?`,
     [t.operation.instanceId],
   );
-  await run(
-    db,
-    `INSERT INTO wallet_provider_instance_outcomes
-     (id, operation_id, attempt, sequence, event_hash, payload_hash, kek_version, iv, wrapped_dek, ciphertext, received_at)
-     VALUES (?, ?, 1, 1, ?, ?, ?, ?, ?, ?, ?)`,
-    [outcomeId, operation?.id, 'a'.repeat(64), 'b'.repeat(64), ...bytes(outcome), now],
-  );
+  const outcomeId = outcomeRow?.id ?? '';
   plain.push({
     table: 'wallet_provider_instance_outcomes',
     id: outcomeId,
     org,
     kind: 'wallet.provider.outcome',
-    text: 'outcome-body',
+    text: outcomeText,
   });
 
   const googleReceiptId = id();
@@ -214,6 +251,7 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
     webhookCredentialId,
     signerCredentialId,
     signerCertSha,
+    platformCredentialId,
     team,
     personalizedPassId: personalized.id,
     retentionId,

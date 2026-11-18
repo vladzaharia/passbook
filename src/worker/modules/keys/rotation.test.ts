@@ -31,6 +31,7 @@ import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 import { checkKeys } from '../status/checks-keys.ts';
 import { setupSamsungCallbacks } from '../wallet-providers/callbacks-test-fixtures.ts';
 import { recordMacRoots } from './mac-root-check.ts';
+import { packedEnvelopeColumns } from './packed-scan-test-fixtures.ts';
 import { DONE, rewrapEnvelopes } from './rewrap.ts';
 import { rowsOnKek, type Samsung, seedEnvelopes, seedTransfer } from './rotation-test-fixtures.ts';
 
@@ -250,6 +251,14 @@ async function expectEverythingOpens(r: Rotated) {
       org_id: org,
     } as IdentityRow),
   ).toBe('signer-pem');
+  // A platform identity (org NULL) while the credential row carries an org.
+  expect(
+    await loadIdentityKey(kit.env, {
+      credential_id: seeded.platformCredentialId,
+      cert_sha256: `sha-${seeded.platformCredentialId}`,
+      org_id: null,
+    } as IdentityRow),
+  ).toBe('platform-signer-pem');
   clearPushKeyCache();
   expect((await loadPushKey(kit.env, seeded.team))?.keyId).toBe('KEYID12345');
   const after = await r.stored();
@@ -335,6 +344,8 @@ async function expectEverythingOpens(r: Rotated) {
   // Retired credentials stay refused, and no authority epoch moved.
   expect(await r.epochs()).toEqual({ ...r.epochsBefore, walletAuthority: expect.anything() });
   expect(await checkKeys(r.jobCtx())).toMatchObject({ state: 'verified' });
+  // Nothing else in the database holds a packed envelope that the rewrap does not see.
+  expect(await packedEnvelopeColumns(db)).toEqual([]);
   // The ring has no KEK_V1 any more.
   expect(env.KEK_V1).toBeUndefined();
   expect(await tokenMac(kit.env, 'pass', r.plainTokens.link)).toBe(after.link);

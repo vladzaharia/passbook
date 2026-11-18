@@ -696,7 +696,7 @@ describe('Google Wallet callbacks', () => {
     const f = await fixture();
     const app = callbackApp(f.f);
     const body = await eventBody(f, rawEvent(f, 'changed-oldest-key'));
-    const changedEnv = { ...f.f.kit.env, KEK_V0: btoa('x'.repeat(32)) };
+    const changedEnv = { ...f.f.kit.env, KEK_V1: btoa('x'.repeat(32)) };
     const changedCommitment = await credentialRefKeysetCommitment(changedEnv);
     expect(changedCommitment).not.toBe(f.credentialKeysetCommitment);
     vi.stubGlobal('fetch', async () =>
@@ -785,9 +785,9 @@ describe('Google Wallet callbacks', () => {
   it('rejects a keyset replaced after opening the account even when the replacement also matches the environment', async () => {
     const f = await fixture();
     const body = await eventBody(f, rawEvent(f, 'keyset-after-account'));
-    const env = { ...f.f.kit.env, KEK_V0: '' };
+    const env = { ...f.f.kit.env };
     vi.stubGlobal('fetch', async () => {
-      env.KEK_V0 = btoa('r'.repeat(32));
+      env.KEK_V1 = btoa('r'.repeat(32));
       await replaceKeysetForTest(f.f.kit.env.DB, await credentialRefKeysetCommitment(env));
       return Response.json(await callbackKeyset(keys.root, f.f.kit.clock.now() + 60_000));
     });
@@ -808,9 +808,9 @@ describe('Google Wallet callbacks', () => {
   it('pins the original keyset at the replay and receipt transaction boundary', async () => {
     const f = await fixture();
     const body = await eventBody(f, rawEvent(f, 'keyset-before-receipt'));
-    const env = { ...f.f.kit.env, KEK_V0: '' };
+    const env = { ...f.f.kit.env };
     env.DB = interceptReceiptBatch(env.DB, async (db) => {
-      env.KEK_V0 = btoa('q'.repeat(32));
+      env.KEK_V1 = btoa('q'.repeat(32));
       await replaceKeysetForTest(db, await credentialRefKeysetCommitment(env));
     });
     vi.stubGlobal('fetch', async () =>
@@ -861,9 +861,9 @@ describe('Google Wallet callbacks', () => {
   it('fences the success acknowledgement against a keyset replacement after the receipt commits', async () => {
     const f = await fixture();
     const body = await eventBody(f, rawEvent(f, 'keyset-before-acknowledgement'));
-    const env = { ...f.f.kit.env, KEK_V0: '' };
+    const env = { ...f.f.kit.env };
     env.DB = interceptReceiptOutput(env.DB, async (db) => {
-      env.KEK_V0 = btoa('s'.repeat(32));
+      env.KEK_V1 = btoa('s'.repeat(32));
       await replaceKeysetForTest(db, await credentialRefKeysetCommitment(env));
     });
     vi.stubGlobal('fetch', async () =>

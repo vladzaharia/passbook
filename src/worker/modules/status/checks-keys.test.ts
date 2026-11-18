@@ -91,11 +91,34 @@ describe('Status keys', () => {
       state: 'verified',
       data: { rewrapState: 'running', retirable: '' },
     });
-    await done({ stamp: '1>2', unreadable: 0, at: TEST_NOW, startedAt: TEST_NOW - HOUR });
+    await done({
+      stamp: '1>2',
+      unreadable: 0,
+      at: TEST_NOW,
+      startedAt: TEST_NOW - HOUR,
+      remaining: {},
+    });
     // Finished, but the cursors that were sealed under V1 may still be live.
     expect(await keys(ring)).toMatchObject({ data: { rewrapState: 'done', retirable: '' } });
-    await done({ stamp: '1>2', unreadable: 0, at: TEST_NOW, startedAt: TEST_NOW - 25 * HOUR });
+    await done({
+      stamp: '1>2',
+      unreadable: 0,
+      at: TEST_NOW,
+      startedAt: TEST_NOW - 25 * HOUR,
+      remaining: {},
+    });
     expect(await keys(ring)).toMatchObject({ state: 'verified', data: { retirable: '1' } });
+    // Rows the sweep left on V1, or no counts at all, hold it back.
+    await done({
+      stamp: '1>2',
+      unreadable: 0,
+      at: TEST_NOW,
+      startedAt: TEST_NOW - 25 * HOUR,
+      remaining: { '1': 2 },
+    });
+    expect(await keys(ring)).toMatchObject({ data: { retirable: '' } });
+    await done({ stamp: '1>2', unreadable: 0, at: TEST_NOW, startedAt: TEST_NOW - 25 * HOUR });
+    expect(await keys(ring)).toMatchObject({ data: { retirable: '' } });
     // Version 1 is a root in use: without its root it is not retirable, and Status fails anyway.
     expect(await keys({ KEK_V2: kek(2) })).toMatchObject({ data: { retirable: '' } });
     // Version 2 is the current KEK and never retirable.
@@ -103,7 +126,13 @@ describe('Status keys', () => {
   });
 
   it('is degraded while the finished rewrap left rows it could not open', async () => {
-    await done({ stamp: '1>2', unreadable: 3, at: TEST_NOW, startedAt: TEST_NOW - 30 * HOUR });
+    await done({
+      stamp: '1>2',
+      unreadable: 3,
+      at: TEST_NOW,
+      startedAt: TEST_NOW - 30 * HOUR,
+      remaining: { '1': 3 },
+    });
     const s = await keys({ KEK_V2: kek(2) });
     expect(s).toMatchObject({ state: 'degraded', data: { rewrapUnreadable: 3, retirable: '' } });
     expect(s.detail).toContain('3 rows');

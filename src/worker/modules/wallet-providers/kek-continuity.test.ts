@@ -13,9 +13,11 @@ import {
   decryptSecretText,
   encryptSecret,
   loadKekRing,
+  rewrapSecret,
 } from '../../platform/crypto.ts';
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
 import { fromBase64Url, sha256Hex } from '../../platform/ids.ts';
+import { extractMacRoot } from '../../platform/mac-roots.ts';
 import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -504,7 +506,13 @@ describe('provider identity continuity across KEK rotation', () => {
 
     // Keep the derived HMAC key stable while omitting the envelope's recorded KEK version.
     const missingCtx = createServiceContext(
-      { ...f.env, KEK_V1: '', KEK_V2: KEK_V1, KEK_V3: undefined },
+      {
+        ...f.env,
+        KEK_V1: '',
+        KEK_V2: KEK_V1,
+        KEK_V3: undefined,
+        MAC_ROOT_V1: await extractMacRoot(KEK_V1),
+      },
       { clock: f.clock },
     );
     await expect(
@@ -597,7 +605,13 @@ describe('provider identity continuity across KEK rotation', () => {
     // Preserve the sentinel's HMAC key while removing version 1: the envelope must still
     // require its recorded version, even when version 2 contains the same key material.
     const missingCtx = createServiceContext(
-      { ...f.kit.env, KEK_V1: '', KEK_V2: f.kit.env.KEK_V1, KEK_V3: undefined },
+      {
+        ...f.kit.env,
+        KEK_V1: '',
+        KEK_V2: f.kit.env.KEK_V1,
+        KEK_V3: undefined,
+        MAC_ROOT_V1: await extractMacRoot(f.kit.env.KEK_V1 ?? ''),
+      },
       { clock: f.kit.clock },
     );
     await expect(getSamsungRefreshTarget(missingCtx, f.refScope)).rejects.toThrow(
@@ -763,10 +777,8 @@ describe('provider identity continuity across KEK rotation', () => {
       countryCodes: [],
     });
 
-    // Change only the oldest derived-key source. The original envelope is still decryptable,
-    // so denial cannot be explained by a missing or invalid encryption key.
-    const wrongOldestEnv = { ...kit.env, KEK_V0: KEK_V2 };
-    const wrongOldestCtx = createServiceContext(wrongOldestEnv, { clock: kit.clock });
+    // Change only the root-1 evidence key. The ref moves to V2 (what the rewrap does) and V1 is gone, so
+    // the envelope is still decryptable and denial cannot be explained by a missing encryption key.
     const refRow = await first<{
       kek_version: number;
       iv: number[];
@@ -784,11 +796,29 @@ describe('provider identity continuity across KEK rotation', () => {
       wrappedDek: new Uint8Array(refRow.wrapped_dek),
       ciphertext: new Uint8Array(refRow.ciphertext),
     };
+    const refAad = credentialAad(f.refRowId, pass.orgId, `samsung-ref|${pass.mode}|${instanceId}`);
+    const moved = await rewrapSecret(
+      await loadKekRing({ KEK_V1: kit.env.KEK_V1, KEK_V2 }),
+      envelope,
+      refAad,
+    );
+    await run(
+      db,
+      'UPDATE wallet_samsung_fetch_refs SET kek_version = 2, wrapped_dek = ? WHERE id = ?',
+      [moved.wrappedDek, f.refRowId],
+    );
+    const wrongOldestEnv = {
+      ...kit.env,
+      KEK_V1: '',
+      KEK_V2,
+      MAC_ROOT_V1: await extractMacRoot(KEK_V2),
+    };
+    const wrongOldestCtx = createServiceContext(wrongOldestEnv, { clock: kit.clock });
     expect(
       await decryptSecretText(
         await loadKekRing(wrongOldestCtx.env),
-        envelope,
-        credentialAad(f.refRowId, pass.orgId, `samsung-ref|${pass.mode}|${instanceId}`),
+        { ...envelope, ...moved },
+        refAad,
       ),
     ).toBe(f.refId);
     await expect(getSamsungRefreshTarget(wrongOldestCtx, f.refScope)).rejects.toMatchObject({
@@ -817,6 +847,11 @@ describe('provider identity continuity across KEK rotation', () => {
         result: { kind: 'success', httpStatus: 200 },
       }),
     ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
+    await run(
+      db,
+      'UPDATE wallet_samsung_fetch_refs SET kek_version = ?, wrapped_dek = ? WHERE id = ?',
+      [envelope.kekVersion, envelope.wrappedDek, f.refRowId],
+    );
     expect(await snapshot()).toEqual(before);
 
     const originalV1 = kit.env.KEK_V1;
@@ -837,7 +872,8 @@ describe('provider identity continuity across KEK rotation', () => {
           null,
           { kind: 'tenant-holder', expected },
         ),
-      ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
+        // Root 1 is explicit: with V1 gone the retired references cannot even be derived (no drift to V2).
+      ).rejects.toThrow('KEK version 1 is not available for MAC keys');
       expect(await snapshot()).toEqual(before);
       expect(await first(db, 'SELECT commitment FROM credential_ref_keyset WHERE id = 1')).toEqual({
         commitment,

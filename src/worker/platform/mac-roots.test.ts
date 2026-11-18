@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { derivedHmacKey, isKeyEnvName, keyedDigest, macKeyVersion } from './crypto.ts';
+import {
+  decryptSecret,
+  derivedHmacKey,
+  encryptSecret,
+  importKek,
+  isKeyEnvName,
+  keyedDigest,
+  loadKekRing,
+  macKeyVersion,
+} from './crypto.ts';
 import { toBase64 } from './ids.ts';
 import { derivedMacKey, extractMacRoot, macRootAgrees, macRootVersions } from './mac-roots.ts';
 
@@ -112,6 +121,47 @@ describe('the oldest root and the pins', () => {
   it('keeps a root in the key environment that callers snapshot', () => {
     expect(isKeyEnvName('MAC_ROOT_V1')).toBe(true);
     expect(isKeyEnvName('MAC_ROOT_V')).toBe(false);
+  });
+});
+
+describe('root 1 is explicit', () => {
+  it('fails, never drifts to the next root, when root 1 is gone', async () => {
+    const env = { KEK_V2: kek(2) };
+    expect(macKeyVersion(env)).toBe(1);
+    for (const label of ['pass-credential-tombstone-v1', 'scan-pin', 'counter.magic-ip.v1'])
+      await expect(derivedHmacKey(env, label)).rejects.toThrow('KEK version 1');
+    // With a pin it still derives from the pinned root.
+    expect(await mac(await derivedHmacKey({ ...env, MAC_KEY_VERSION: '2' }, 'scan-pin'))).toBe(
+      await mac(await derivedMacKey(env, 2, 'scan-pin')),
+    );
+  });
+
+  it('reads only versions that start at 1 without a leading zero', () => {
+    const env = {
+      KEK_V0: kek(1),
+      KEK_V01: kek(1),
+      KEK_V3: kek(3),
+      MAC_ROOT_V07: kek(1),
+      MAC_ROOT_V2: kek(2),
+    };
+    expect(macRootVersions(env)).toEqual([2, 3]);
+    for (const name of ['KEK_V0', 'KEK_V01', 'MAC_ROOT_V0', 'MAC_ROOT_V007'])
+      expect(isKeyEnvName(name)).toBe(false);
+  });
+});
+
+describe('a MAC root is not a key encryption key', () => {
+  it('cannot unwrap a DEK, even as raw AES key material', async () => {
+    const one = kek(1);
+    const ring = await loadKekRing({ KEK_V1: one });
+    const aad = 'id|org|kind';
+    const sealed = await encryptSecret(ring, 'secret', aad);
+    const root = await extractMacRoot(one);
+    // The 32 bytes of the root, tried as the KEK of the same envelope.
+    const imposter = { current: 1, keys: new Map([[1, await importKek(root)]]) };
+    await expect(decryptSecret(imposter, sealed, aad)).rejects.toThrow();
+    // And the real KEK still opens it.
+    expect(new TextDecoder().decode(await decryptSecret(ring, sealed, aad))).toBe('secret');
   });
 });
 

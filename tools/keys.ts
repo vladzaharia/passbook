@@ -1,7 +1,8 @@
 // Key ring tools (owner only). docs/operations.md, KEK rotation.
 //   <KEK in base64 on stdin> | node tools/keys.ts mac-root | wrangler secret put MAC_ROOT_V1
 //     Prints the MAC root of a KEK (HKDF-Extract, src/worker/platform/mac-roots.ts). It derives every MAC key
-//     the KEK does and unwraps no envelope. Never reads .secrets/: pipe the KEK from your vault.
+//     the KEK does and unwraps no envelope, but it forges every MAC the KEK would: keep and escrow it like the
+//     KEK. Never reads .secrets/: pipe the KEK from your vault.
 //   npm run keys:retire -- <n>            print what stands in the way of deleting KEK_V<n>
 //   npm run keys:retire -- <n> --apply    delete KEK_V<n> when nothing does (reads production with --remote)
 import { execFileSync } from 'node:child_process';
