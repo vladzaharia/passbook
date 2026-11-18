@@ -821,6 +821,8 @@ exports[`resolveWalletView over every starter and baked template > starter-pack 
   },
   "messaging": {
     "fields": [
+      "headerFields.left",
+      "primaryFields.pack",
       "backFields.message",
     ],
     "input": "message",
@@ -833,10 +835,10 @@ exports[`resolveWalletView over every starter and baked template > starter-pack 
   },
   "roles": {
     "offerDetails": "style text: Show the code each time. Packs don't refund.",
-    "offerTitle": "style text: 10 washes",
+    "offerTitle": "style text: 7 of 10 washes",
     "redemptionChannel": "style channel: both",
     "subtitle": "style text: Dana Ortiz",
-    "title": "style text: 10 washes",
+    "title": "style text: 7 of 10 washes",
     "validUntil": "style date: 2030-11-18T00:00:00Z",
   },
   "schemes": [],

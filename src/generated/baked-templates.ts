@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "d7fff8739c22ba48882d13522e7b52b6cfde2365";
+export const BAKED_BUILD_HASH = "651984c398fa5481ddbec0bfaabddd735c4e9926";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -6526,7 +6526,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-pack",
     "slug": "starter-pack",
-    "version": "d6c1212da36da2d5",
+    "version": "62c7f9746c07ba51",
     "name": "Pack",
     "description": "Ten washes, classes or trips. Use one.",
     "org": null,
@@ -6650,13 +6650,13 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "to": {
             "field": "left"
           },
-          "value": "{{left}}"
+          "value": "{{pass.counters.uses.left}}"
         },
         {
           "to": {
             "field": "pack"
           },
-          "value": "{{size}} {{unit}}"
+          "value": "{{pass.counters.uses.left}} of {{pass.counters.uses.size}} {{unit}}"
         },
         {
           "to": {
@@ -6714,8 +6714,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "display": {
         "icon": "ticket",
         "title": "{{name}}",
-        "subtitle": "{{left}} left",
-        "status": "{{left}} left",
+        "subtitle": "{{pass.counters.uses.text}}",
+        "status": "{{pass.counters.uses.text}}",
         "search": [
           "name",
           "packId"
@@ -6727,6 +6727,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "multi-pass",
           "prepaid"
         ]
+      },
+      "counters": {
+        "uses": {
+          "input": "left",
+          "size": {
+            "input": "size"
+          }
+        }
       },
       "behaviors": [
         {
@@ -6912,7 +6920,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 4168214438,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/d6c1212da36da2d5/en.lproj/pass.strings"
+          "path": "/templates/starter-pack/62c7f9746c07ba51/en.lproj/pass.strings"
         }
       },
       {
@@ -6926,7 +6934,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/d6c1212da36da2d5/icon@2x.png"
+          "path": "/templates/starter-pack/62c7f9746c07ba51/icon@2x.png"
         }
       },
       {
@@ -6940,7 +6948,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/d6c1212da36da2d5/icon@3x.png"
+          "path": "/templates/starter-pack/62c7f9746c07ba51/icon@3x.png"
         }
       },
       {
@@ -6954,7 +6962,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/d6c1212da36da2d5/logo@2x.png"
+          "path": "/templates/starter-pack/62c7f9746c07ba51/logo@2x.png"
         }
       },
       {
@@ -6968,7 +6976,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/d6c1212da36da2d5/logo@3x.png"
+          "path": "/templates/starter-pack/62c7f9746c07ba51/logo@3x.png"
         }
       },
       {
@@ -6982,7 +6990,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/d6c1212da36da2d5/strip@2x.png"
+          "path": "/templates/starter-pack/62c7f9746c07ba51/strip@2x.png"
         }
       },
       {
@@ -6996,7 +7004,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/d6c1212da36da2d5/strip@3x.png"
+          "path": "/templates/starter-pack/62c7f9746c07ba51/strip@3x.png"
         }
       }
     ],

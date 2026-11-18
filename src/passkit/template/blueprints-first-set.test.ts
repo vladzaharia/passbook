@@ -67,6 +67,16 @@ describe('first blueprint set', () => {
     expect(refill).toMatchObject({ kind: 'add', input: 'left', minRole: 'desk', confirm: true });
   });
 
+  it('Pack text follows the uses counter', async () => {
+    const sample = await SAMPLE('starter-pack');
+    const fields = (p: Awaited<ReturnType<typeof buildBaked>>['passJson']) =>
+      [...(p.coupon?.headerFields ?? []), ...(p.coupon?.primaryFields ?? [])].map((f) => f.value);
+    const some = await buildBaked('starter-pack', material, { ...sample, left: 7, size: 10 });
+    expect(fields(some.passJson)).toEqual([7, '7 of 10 washes']);
+    const none = await buildBaked('starter-pack', material, { ...sample, left: 0, size: 12 });
+    expect(fields(none.passJson)).toEqual([0, '0 of 12 washes']);
+  });
+
   it('flags a frozen or past-due Membership and takes guests from the count', async () => {
     const { template } = await loadBaked('starter-generic', { strips: false });
     const scan = template.manifest.scan;
