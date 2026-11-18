@@ -69,10 +69,10 @@ export async function plainPasses(
     db,
     `SELECT id, org_id, mode, row_version, ${column} AS token, ${ORG_ACTIVE('passes')} AS org_active,
        (deleted_at IS NULL AND ${ORG_KEEPS('passes')}) AS keep_seal
-     FROM passes WHERE ${PLAIN[column]} AND (? IS NULL OR id > ?)
+     FROM passes WHERE ${PLAIN[column]} ${after === null ? '' : 'AND id > ?'}
        AND NOT ${PASS_PENDING} AND NOT ${PASS_RESERVED}
      ORDER BY id LIMIT ?`,
-    [after, after, limit],
+    [...(after === null ? [] : [after]), limit],
   );
   return rows.map(map);
 }
@@ -87,10 +87,10 @@ export async function plainBundles(
     db,
     `SELECT id, org_id, mode, NULL AS row_version, token, ${ORG_ACTIVE('bundles')} AS org_active,
        ${ORG_KEEPS('bundles')} AS keep_seal
-     FROM bundles WHERE token NOT GLOB 'h1:*' AND (? IS NULL OR id > ?)
+     FROM bundles WHERE token NOT GLOB 'h1:*' ${after === null ? '' : 'AND id > ?'}
        AND NOT ${BUNDLE_RESERVED}
      ORDER BY id LIMIT ?`,
-    [after, after, limit],
+    [...(after === null ? [] : [after]), limit],
   );
   return rows.map(map);
 }

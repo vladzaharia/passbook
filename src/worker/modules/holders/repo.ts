@@ -295,7 +295,7 @@ export function listSweepWaitingPasses(
       AND EXISTS (SELECT 1 FROM user_emails candidate
         WHERE candidate.email = p.holder_email
           AND ${verifiedAttachSql('p', 'candidate.user_id', 'p.holder_email')})
-      AND (? IS NULL OR p.id > ?) AND p.id <= ? ORDER BY p.id LIMIT ?`,
-    [cursor.after, cursor.after, cursor.upper, limit],
+      ${cursor.after === null ? '' : 'AND p.id > ?'} AND p.id <= ? ORDER BY p.id LIMIT ?`,
+    [...(cursor.after === null ? [] : [cursor.after]), cursor.upper, limit],
   );
 }
