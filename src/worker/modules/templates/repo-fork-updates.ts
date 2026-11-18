@@ -201,3 +201,24 @@ export async function anyDue(db: D1Database): Promise<boolean> {
 export async function orgActive(db: D1Database, orgId: string): Promise<boolean> {
   return !!(await first(db, "SELECT 1 FROM orgs WHERE id = ? AND status = 'active'", [orgId]));
 }
+
+/** Forks that have had an offer, the most recently active first. */
+export async function forksWithOffers(
+  db: D1Database,
+  limit: number,
+): Promise<{ templateId: string; orgId: string }[]> {
+  return all<{ templateId: string; orgId: string }>(
+    db,
+    `SELECT template_id AS templateId, org_id AS orgId FROM template_fork_updates
+     GROUP BY template_id, org_id ORDER BY max(updated_at) DESC LIMIT ?`,
+    [limit],
+  );
+}
+
+export async function versionExists(db: D1Database, templateId: string, version: string) {
+  return !!(await first(
+    db,
+    'SELECT 1 FROM template_versions WHERE template_id = ? AND version = ?',
+    [templateId, version],
+  ));
+}

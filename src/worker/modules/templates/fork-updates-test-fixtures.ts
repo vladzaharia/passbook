@@ -5,6 +5,7 @@ import { JobSchema } from '../../jobs/types.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createJobContext, createServiceContext } from '../../platform/service-context.ts';
+import type { BakedTemplate } from './baked-types.ts';
 import { type BlueprintKit, blueprintKit } from './blueprint-test-fixtures.ts';
 import { handleForkUpdate } from './fork-updates-job.ts';
 import { planForkUpdates } from './fork-updates-plan.ts';
@@ -49,6 +50,8 @@ export interface ForkKit {
   kit: BlueprintKit;
   source: SyncSource;
   publish(slug: string, v?: Variant): Promise<string>;
+  /** Syncs these baked templates as a new build. */
+  sync(templates: BakedTemplate[]): Promise<void>;
   fork(slug: string, name: string): Promise<string>;
   edit(id: string, change: (d: Draft) => Draft): Promise<string>;
   /** Plans without running the jobs; returns the queued messages. */
@@ -112,10 +115,7 @@ export async function forkKit(): Promise<ForkKit> {
   const self: ForkKit = {
     kit,
     source: sourceOf([]),
-    async publish(slug, v = {}) {
-      const fixture = await bakedFrom(slug, files(slug, v));
-      for (const [path, bytes] of fixture.files)
-        (kit.env.ASSETS as unknown as { files: Map<string, Uint8Array> }).files.set(path, bytes);
+    async sync(templates) {
       build += 1;
       resetBakedSync();
       const worker: AppEnv = {
@@ -127,8 +127,14 @@ export async function forkKit(): Promise<ForkKit> {
         },
       };
       kit.clock.set(kit.clock.now() + 1000);
-      self.source = sourceOf([fixture], `fork-build-${build}`);
+      self.source = { templates, hash: `fork-build-${build}` };
       await syncBakedTemplates(createServiceContext(worker, { clock: kit.clock }), self.source);
+    },
+    async publish(slug, v = {}) {
+      const fixture = await bakedFrom(slug, files(slug, v));
+      for (const [path, bytes] of fixture.files)
+        (kit.env.ASSETS as unknown as { files: Map<string, Uint8Array> }).files.set(path, bytes);
+      await self.sync([fixture.template]);
       return fixture.template.version;
     },
     async fork(slug, name) {

@@ -18,6 +18,7 @@ import { dailySandbox, sweepSandboxForwards } from '../modules/sandbox/jobs.ts';
 import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan/jobs.ts';
 import { autoTapOut } from '../modules/scan/occupancy/jobs.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
+import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
 import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
@@ -72,6 +73,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'identities.apns_probe', run: dailyApnsProbe },
     { name: 'scan.retention', run: dailyScans },
     { name: 'orgs.branding_gc', run: sweepBrandingGc },
+    { name: 'templates.fork_orphans', run: sweepForkOrphans },
     // Last: a backlog of test data must never starve the checks above.
     { name: 'sandbox.purge', run: dailySandbox },
   ],
