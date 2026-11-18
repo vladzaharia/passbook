@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import type {
   CreateScanZoneSchema,
   ScanZoneListQuerySchema,
@@ -40,12 +41,17 @@ type Update = z.infer<typeof UpdateScanZoneSchema>;
 const ZONE_CODES = { config: 'SCAN_ZONE_CHANGED', lineage: 'SCAN_ZONE_CHANGED' } as const;
 const invalid = (message: string, code: string) => new ValidationError(message, [], code);
 
-export async function listZones(ctx: ServiceContext, authority: Authority, query: Query) {
+export async function listZones(
+  ctx: ServiceContext,
+  authority: Authority,
+  query: Query,
+  mode: Mode,
+) {
   assertAuthority(authority, query.orgId, 'scanning:read');
   const [rows, templates, checked] = await Promise.all([
     orgZoneRows(ctx.env.DB, query.orgId),
     accessTemplates(ctx.env.DB, query.orgId),
-    checkedAtByZone(ctx.env.DB, query.orgId),
+    checkedAtByZone(ctx.env.DB, query.orgId, mode),
   ]);
   const plans = plansByZone(rows, templates);
   const shown = treeOrder(
@@ -82,6 +88,7 @@ export async function createZone(
   userId: string,
   input: Create,
   authority: Authority,
+  mode: Mode,
 ) {
   assertAuthority(authority, input.orgId, 'scanning:manage');
   if (!(await orgIsActive(ctx.env.DB, input.orgId)))
@@ -139,7 +146,7 @@ export async function createZone(
   } catch (error) {
     mutationError(error);
   }
-  return committed(ctx, input.orgId, id);
+  return committed(ctx, input.orgId, id, mode);
 }
 
 export async function updateZone(
@@ -149,6 +156,7 @@ export async function updateZone(
   id: string,
   input: Update,
   authority: Authority,
+  mode: Mode,
 ) {
   assertAuthority(authority, orgId, 'scanning:manage');
   const rows = await orgZoneRows(ctx.env.DB, orgId);
@@ -255,7 +263,7 @@ export async function updateZone(
   } catch (error) {
     mutationError(error);
   }
-  return committed(ctx, orgId, id);
+  return committed(ctx, orgId, id, mode);
 }
 
 export const archiveZone = (
@@ -265,4 +273,5 @@ export const archiveZone = (
   id: string,
   archived: boolean,
   authority: Authority,
-) => updateZone(ctx, userId, orgId, id, { archived }, authority);
+  mode: Mode,
+) => updateZone(ctx, userId, orgId, id, { archived }, authority, mode);

@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { makeUser } from '../../../../test/helpers/index.ts';
+import { makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import type { ScanZone } from '../../../shared/contracts/scan-access.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 import { grantScanMembership } from './test-kit.ts';
 
@@ -191,6 +191,32 @@ describe('zones: archive and restore', () => {
       { id: session.id, name: 'Lab door' },
     ]);
     expect(live.find((r) => r.id === lone.id)?.checkedAt).toEqual([]);
+  });
+
+  it('leaves out ended sessions, other modes and other orgs', async () => {
+    const { DB } = fixture.kit.env;
+    const z = await make();
+    const open = await fixture.parent('Open door');
+    const ended = await fixture.parent('Ended door');
+    const other = await makeOrg(fixture.kit.fx);
+    const add = (id: string, orgId: string, mode: string, status: string) =>
+      run(
+        DB,
+        `INSERT INTO scanning_sessions(id,org_id,mode,name,status,settings,time_zone,created_at,updated_at)
+         VALUES (?,?,?,?,?,'{}','UTC',1,1)`,
+        [id, orgId, mode, id, status],
+      );
+    await add('s-test', fixture.kit.org.id, 'test', 'active');
+    await add('s-foreign', other.id, 'live', 'active');
+    await run(DB, "UPDATE scanning_sessions SET status = 'ended' WHERE id = ?", [ended.id]);
+    for (const id of [open.id, ended.id, 's-test', 's-foreign'])
+      await run(DB, 'INSERT INTO scanning_session_zones(session_id, zone_id) VALUES (?, ?)', [
+        id,
+        z.id,
+      ]);
+    expect((await list()).find((r) => r.id === z.id)?.checkedAt).toEqual([
+      { id: open.id, name: 'Open door' },
+    ]);
   });
 
   it('refuses edits to an archived zone, and a restore into a taken name', async () => {

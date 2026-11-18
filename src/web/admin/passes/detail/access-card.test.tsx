@@ -86,6 +86,13 @@ describe('Access card', () => {
     expect(screen.getByText('Lab, Lobby')).toBeInTheDocument();
   });
 
+  it('leaves out archived zones', () => {
+    vi.setSystemTime(new Date('2026-11-16T16:00:00Z'));
+    view(pass({ plan: 'offpeak', zones: ['pool', 'old'] }));
+    expect(screen.getByText('Lab, Lobby')).toBeInTheDocument();
+    expect(screen.queryByText(/Old door/)).toBeNull();
+  });
+
   it('says when it opens next', () => {
     vi.setSystemTime(new Date('2026-11-17T16:00:00Z'));
     view(pass({ plan: 'offpeak' }));

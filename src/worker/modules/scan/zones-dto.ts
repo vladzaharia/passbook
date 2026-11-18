@@ -1,3 +1,4 @@
+import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScanZone } from '../../../shared/contracts/scan-access.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -52,11 +53,16 @@ export function toDto(
   };
 }
 
-export async function committed(ctx: ServiceContext, orgId: string, id: string): Promise<ScanZone> {
+export async function committed(
+  ctx: ServiceContext,
+  orgId: string,
+  id: string,
+  mode: Mode,
+): Promise<ScanZone> {
   const [rows, templates, checked] = await Promise.all([
     orgZoneRows(ctx.env.DB, orgId),
     accessTemplates(ctx.env.DB, orgId),
-    checkedAtByZone(ctx.env.DB, orgId),
+    checkedAtByZone(ctx.env.DB, orgId, mode),
   ]);
   const row = rows.find((r) => r.id === id);
   if (!row) throw notFound();

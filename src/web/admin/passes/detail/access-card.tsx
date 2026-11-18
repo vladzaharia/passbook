@@ -113,7 +113,7 @@ export function AccessCard({ pass, manifest }: { pass: PassDetailDto; manifest: 
   const checkedAt = useMemo(() => {
     const keys = new Set(state?.zones.map((z) => z.key));
     const every = keys.has('*');
-    return checkedAtNames((list ?? []).filter((z) => every || keys.has(z.key)));
+    return checkedAtNames((list ?? []).filter((z) => !z.archivedAt && (every || keys.has(z.key))));
   }, [state, list]);
   if (!state) return null;
   return (

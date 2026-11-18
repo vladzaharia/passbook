@@ -71,17 +71,18 @@ export async function orgZoneRows(db: Db, orgId: string): Promise<ZoneRow[]> {
   return rows.map(toRow);
 }
 
-/** The live sessions of the org that check each zone, by zone id, in name order. */
+/** The sessions of the org in this mode that check each zone, by zone id, in name order. */
 export async function checkedAtByZone(
   db: Db,
   orgId: string,
+  mode: 'live' | 'test',
 ): Promise<Map<string, { id: string; name: string }[]>> {
   const rows = await all<{ zone_id: string; id: string; name: string }>(
     db,
     `SELECT l.zone_id, s.id, s.name FROM scanning_session_zones l
      JOIN scanning_sessions s ON s.id = l.session_id
-     WHERE s.org_id = ? AND s.status != 'ended' ORDER BY s.name, s.id LIMIT 2000`,
-    [orgId],
+     WHERE s.org_id = ? AND s.mode = ? AND s.status != 'ended' ORDER BY s.name, s.id`,
+    [orgId, mode],
   );
   const out = new Map<string, { id: string; name: string }[]>();
   for (const r of rows)
