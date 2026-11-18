@@ -121,7 +121,7 @@ verify on a device.
 | # | Decision |
 | --- | --- |
 | 1 | **A scanner is one credential for one org and one mode.** Kind `device` (a browser on `/scan`, cookie) or `terminal` (a till, bearer token). Its name is its place ("Front door"), shown as *where* on every heads-up. Many phones at one door are many scanners (**Duplicate** in the console). |
-| 2 | **Two principals scan:** a scanner credential, or an authorized user session. Both become a `ScanActor` in the guard; session capabilities and scanner device/staff rights are checked separately. API keys never act on passes through the scanner; they get `scans:read` (feed only). |
+| 2 | **Two principals scan:** a scanner credential, or an authorized user session. Both become a `ScanActor` in the guard; session capabilities and scanner device/staff rights are checked separately. API keys act only as a named terminal (`scans:write`, `x-passbook-device`, org-bound, Desk at most, no approvals; 2026-11-17, addenda WP-P); otherwise they get `scans:read` (feed only). |
 | 3 | **Tenant console access.** User sessions are authorized against the org and the capability required by the specific route; platform administrators use their authorized session. Scanner credentials remain scoped to their own org and mode. |
 | 4 | **Staff are org people who scan, with a name, a role and a 6-digit PIN.** No platform account, no console access, no mode. Roles form a ladder **Door ⊂ Desk ⊂ Manager**. A scanner runs as its **role without sign-in** (Door or Desk, never Manager) or asks staff to sign in. A Manager's PIN approves one risky action in place. This replaces AA's staff codes (they need org membership) and UK's separate manager codes. |
 | 5 | **Rights = role ≥ the template action's `minRole`.** Over the action's `max`, `set`, cooldown overrides and undo past the own window need a Manager. The server decides; the client mirrors with visible locks. |
@@ -260,7 +260,7 @@ verify on a device.
 | --- | --- | --- | --- | --- | --- |
 | `session` (admin) | `__Host-wallet_sid` | Console: every org. `/scan`: one org it picks per request | `x-passbook-mode` (n6) | `x-csrf-token` | as today; `RL_SCAN` on scan routes |
 | `session` (user) | same | own passes | — | same | refused on every scan route (403) |
-| `api_key` | `Bearer wlt_…` | its org or all | key row | none | `RL_API_KEY`; scan feed only (`scans:read`) |
+| `api_key` | `Bearer wlt_…` | its org or all | key row | none | `RL_API_KEY`; scan feed (`scans:read`), or with `scans:write` and `x-passbook-device` one terminal of its own org and mode: `resolve`, `actions`, `lookup`, `undo`, Desk at most, no approvals |
 | **`scanner`** (new) | cookie `__Host-wallet_scan` (device) or `Bearer wls_…` (terminal) | one org; `/api/v1/scan/*` only | scanner row | cookie: `x-csrf-token` = scanner secret; bearer: none | `RL_SCAN`, `RL_SCAN_LOOKUP`, `RL_SCAN_ORG` |
 | Apple device | `ApplePass` | one pass | — | — | unchanged |
 

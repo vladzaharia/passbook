@@ -22,6 +22,7 @@ curl "https://passbook.mobile/api/v1/passes?orgId=$ORG_ID" \
 | `templates:read` | GET templates |
 | `messages:write` | broadcasts: list, read, create, edit, preview, send, send again, cancel, per-pass items. A `change` also needs `passes:write` |
 | `scans:read` | scoped scanner event and scan-log reads |
+| `scans:write` | scan from a till as one named terminal (see Scan from a till); org-bound keys only |
 | `connections:read` | scoped connection reads |
 | `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
 
@@ -457,6 +458,24 @@ The paired scanner (or an admin session joining a scanning session) calls `/api/
 - Codes not found are counted per scanner (or admin actor) in 10-minute windows: after 30, 429 `SCAN_TOO_MANY_MISSES` with `Retry-After`. The first crossing of the cap is audited (`scan.misses_capped`).
 - 409 `SCAN_UNCONFIRMED`: the action committed but the answer could not be confirmed (its template changed meanwhile). Scan again; the key replays the result.
 - Photo and asset links in answers are short-lived grants (`docs/security.md`); an expired or voided one is 404 `ASSET_NOT_FOUND`.
+
+## Scan from a till
+
+A `scans:write` key scans as one named terminal of its own organization and mode. Create the terminal in Scanning (Scanners), then send the key and the terminal's id:
+
+```bash
+curl -X POST https://passbook.mobile/api/v1/scan/actions \
+  -H "Authorization: Bearer $WALLET_API_KEY" \
+  -H "x-passbook-device: $TERMINAL_ID" \
+  -H "Content-Type: application/json" -d '{ ... }'
+```
+
+- Only `POST /scan/resolve`, `/scan/actions`, `/scan/lookup` and `/scan/scans/{id}/undo` accept a key; any other scan route is 403 `API_KEY_ROUTE`.
+- The key must be org-bound (a platform key is 403 `API_KEY_ORG_REQUIRED`) and list `scans:write` (403 `MISSING_SCOPE`). A missing header is 422 `DEVICE_REQUIRED`.
+- The terminal must be a `terminal` in the key's organization and mode. Any other id, including another org's or mode's, is 404 `TERMINAL_NOT_FOUND`; a device or display is 403 `TERMINAL_ONLY`.
+- The actor is the terminal: scans are its own (`s:<terminalId>`), at its role (Desk at most) and scope, with its session rules. A key never approves or overrides: `approval` or `overrideOf` is 403 `API_KEY_NO_APPROVAL`, and a Manager-only action is refused like on any terminal.
+- A key revoked while a scan is in flight is checked again when the scan commits: 401 `INVALID_API_KEY`, nothing written.
+- Ledger events and undo audits carry `apiKeyId`. Rate limits: the key's, then the terminal's.
 
 ## Scanner history
 

@@ -250,6 +250,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
           scannerId: actor.scanner?.id ?? null,
           staffId: actor.staff?.id ?? null,
           approvedBy: approver?.id ?? null,
+          ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
         }),
         now,
       ],
@@ -265,7 +266,10 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
       targetId: target.id,
       requestId: ctx.requestId,
       ipPrefix: null,
-      detail: JSON.stringify({ kind: target.actionKind ?? 'check_in' }),
+      detail: JSON.stringify({
+        kind: target.actionKind ?? 'check_in',
+        ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
+      }),
     }),
   ];
   if (presence) {

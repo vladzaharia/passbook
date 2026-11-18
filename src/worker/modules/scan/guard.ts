@@ -38,6 +38,7 @@ import { managedAdminActor } from './admin-setup.ts';
 import { resolvedRowOf } from './auth-store.ts';
 import { captureScanEpochs } from './authority-checks.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
+import { API_KEY_TOKEN, type KeyTerminal, keyTerminalOf } from './guard-api-key.ts';
 import { getScanner, scannerEpochsOf, unbindStaff } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import type { ScanStaffRow } from './repo-staff.ts';
@@ -66,15 +67,19 @@ export function scanActorOf(c: Context<AppBindings>): ScanActor {
 const unauthenticated = () =>
   new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
 
-type Credential = { scanner: ScannerAuth } | { admin: SessionAuth };
+type Credential = { scanner: ScannerAuth; key?: KeyTerminal } | { admin: SessionAuth };
 
-/** Terminal bearer, else the device cookie, else a user session. */
+/** Terminal bearer or a till's API key, else the device cookie, else a user session. */
 async function credentialOf(c: Context<AppBindings>): Promise<Credential> {
   const { scanners, sessions } = c.var.stores;
   const meta = { ipPrefix: ipPrefix(c.req.header('cf-connecting-ip')) };
   const header = c.req.header('authorization');
   if (header) {
     const token = /^Bearer\s+(\S+)$/i.exec(header)?.[1];
+    if (token && API_KEY_TOKEN.test(token)) {
+      const key = await keyTerminalOf(c, token);
+      return { scanner: key.auth, key };
+    }
     const auth =
       token && SCANNER_TOKEN.test(token) ? await scanners.resolve(token, 'bearer', meta) : null;
     if (!auth) throw unauthenticated();
@@ -118,7 +123,9 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
     const context = serviceContext(c);
     const ctx = { ...context, env: snapshotCredentialEnv(context.env) };
     const original = await credentialOf(c);
-    const storeRow = 'scanner' in original ? resolvedRowOf(original.scanner) : undefined;
+    const keyId = 'scanner' in original ? original.key?.keyId : undefined;
+    const storeRow =
+      'scanner' in original ? (original.key?.row ?? resolvedRowOf(original.scanner)) : undefined;
     const resolvedRow = storeRow ? { ...storeRow, csrfSecret: null } : undefined;
     const credential: Credential =
       'scanner' in original
@@ -168,6 +175,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
         ? await scanScannerCsrfProof(ctx.env, scanner.id, csrfSecret)
         : null;
       pendingStaff = scope.staff;
+      if (keyId) actor.apiKeyId = keyId;
       c.set('auth', auth);
       withRole(actor, null);
       c.set('scanActor', actor);

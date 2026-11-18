@@ -19,8 +19,7 @@ import {
 import { KeyDisclosure } from './key-disclosure.tsx';
 import { type ApiKey, SCOPE_LABEL, useCreateKey } from './queries.ts';
 
-// Hidden until the POS package honours `scans:write`; the contract refuses it too.
-const SCOPES = ApiScopeSchema.options.filter((s) => s !== 'scans:write');
+const SCOPES = ApiScopeSchema.options;
 const DAY = 86_400_000;
 const EXPIRY = [
   { value: '30', label: '30 days' },
@@ -45,11 +44,15 @@ function ScopeRows({
   value,
   onChange,
   error,
+  platform,
 }: {
   value: readonly string[];
   onChange: (next: string[]) => void;
   error?: string | undefined;
+  /** A platform key has no org to scan for. */
+  platform: boolean;
 }) {
+  const offered = platform ? SCOPES.filter((s) => s !== 'scans:write') : SCOPES;
   return (
     <fieldset
       className="flex min-w-0 flex-col"
@@ -62,7 +65,7 @@ function ScopeRows({
         </span>
       </legend>
       <ul className="divide-y divide-border rounded-md border border-border-strong">
-        {SCOPES.map((s, i) => {
+        {offered.map((s, i) => {
           const id = `scope-${s.replace(':', '-')}`;
           // The first box carries the group's error, so a blocked submit focuses it once.
           const flagged = Boolean(error) && i === 0;
@@ -256,7 +259,12 @@ export function CreateKeyDialog({
               />
             )}
           </FormField>
-          <ScopeRows value={scopes} onChange={setScopes} error={errors.scopes} />
+          <ScopeRows
+            value={scopes}
+            onChange={setScopes}
+            error={errors.scopes}
+            platform={orgId === null}
+          />
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}
         </Form>
       </DialogContent>

@@ -829,3 +829,25 @@ describe('creator label privacy', () => {
     expect(await listAs(false)).toBe('Ada');
   });
 });
+
+describe('the scans:write scope', () => {
+  it('is minted for an org key and resolves with the scope', async () => {
+    const org = await makeOrg(f());
+    const { res, key } = await create(
+      { name: 'Till', scopes: ['scans:write'], orgId: org.id },
+      org.id,
+    );
+    expect(res.status).toBe(201);
+    expect(key.scopes).toEqual(['scans:write']);
+    expect(await createApiKeyStore(h.env, h.clock).resolve(key.secret)).toMatchObject({
+      keyId: key.id,
+      orgId: org.id,
+      scopes: ['scans:write'],
+    });
+  });
+
+  it('is refused on a platform-wide key', async () => {
+    const { res } = await create({ name: 'Till', scopes: ['scans:write'], orgId: null });
+    await expectProblem(res, 422, 'API_KEY_SCAN_ORG_REQUIRED');
+  });
+});

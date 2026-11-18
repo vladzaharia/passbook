@@ -77,6 +77,8 @@ export async function createApiKey(
   ) {
     throw new ForbiddenError();
   }
+  if (orgId === null && input.scopes.includes('scans:write'))
+    throw new ValidationError('A platform key cannot scan.', [], 'API_KEY_SCAN_ORG_REQUIRED');
   const delegable = delegableScopes(authority);
   if (input.scopes.some((scope) => !delegable.includes(scope))) {
     throw new ForbiddenError(

@@ -8,6 +8,7 @@ export { captureScanEpochs } from './authority-capture.ts';
 
 import type { ScanActor } from './actor.ts';
 import {
+  apiKeyActsCheck,
   deviceAwakeCheck,
   noScannerTemplatesCheck,
   noStaffBindingCheck,
@@ -79,7 +80,8 @@ export interface ScanReadRelaxations {
 export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check[] {
   const epochs = scanEpochsOf(actor);
   if (!epochs) throw epochsMissing();
-  const checks: Check[] = [];
+  // A till's key acts through its terminal: the key must still be live, in this org and mode, at commit.
+  const checks: Check[] = actor.apiKeyId ? [apiKeyActsCheck(actor.apiKeyId, input.now)] : [];
   const read = input.read ?? {};
   const { scanner, scanningSession: session } = actor;
   if (scanner) {
