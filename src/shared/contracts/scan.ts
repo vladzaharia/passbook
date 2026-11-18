@@ -178,6 +178,8 @@ export const ScanValueSchema = z.object({
   goal: z.number().nullable(),
   format: z.enum(['number', 'currency', 'text']),
   currency: z.string().optional(),
+  /** The input is a counter: a refusal uses the counter's wording. */
+  counter: z.boolean().optional(),
 });
 export const ScanCardActionSchema = z.object({
   id: z.string(),

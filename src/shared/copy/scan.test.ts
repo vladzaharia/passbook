@@ -3,6 +3,7 @@ import { ScanReasonSchema } from '../contracts/scan.ts';
 import { OVERRIDE_NOTES } from '../contracts/scan-occupancy.ts';
 import {
   SCAN_COPY,
+  SCAN_COUNTER_COPY,
   SCAN_OCCUPANCY_COPY,
   SCAN_REASON_COPY,
   SCAN_REASON_VARIANTS,
@@ -118,5 +119,22 @@ describe('SCAN_COPY', () => {
           action: 'Redeem',
         }),
       ).not.toMatch(/\{\w+\}/);
+  });
+});
+
+describe('SCAN_COUNTER_COPY', () => {
+  it('words a counter refusal beside, not over, the balance and stamp lines', () => {
+    expect(SCAN_COUNTER_COPY.no_balance?.headline).toBe('None left');
+    expect(`${SCAN_COUNTER_COPY.card_full?.headline}. ${SCAN_COUNTER_COPY.card_full?.sub}`).toBe(
+      'Already full. Use some first.',
+    );
+    expect(SCAN_REASON_COPY.no_balance.headline).toBe('Not enough {unit}');
+    expect(SCAN_REASON_COPY.card_full.headline).toBe('Card is full');
+  });
+  it('has a headline and a sub for each reason it words', () => {
+    for (const line of Object.values(SCAN_COUNTER_COPY)) {
+      expect(line.headline.length).toBeGreaterThan(0);
+      expect(line.sub.length).toBeGreaterThan(0);
+    }
   });
 });

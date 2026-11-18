@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SCAN_STAMPS_MAX } from '../../stamps/layout.ts';
-import type { TemplateManifest } from '../../types.ts';
+import type { Json, TemplateManifest } from '../../types.ts';
 import type { ScanDisplayDoc } from './schema.ts';
 import { actionGoals } from './scope.ts';
 import { renderDoc, scopeOf } from './test-kit.ts';
@@ -42,5 +42,26 @@ describe('a stamp card on the scanner', () => {
       },
     } as unknown as TemplateManifest;
     expect(actionGoals(manifest)).toEqual({ stamps: { goal: 14 } });
+  });
+});
+
+describe('a counter on the scanner', () => {
+  const left = (n: number, goals: Record<string, Json>) =>
+    renderDoc(
+      {
+        v: 1,
+        header: {},
+        panels: [{ id: 'p_a', rows: [{ id: 'r_p', type: 'progress', value: '{{inputs.left}}' }] }],
+      } as ScanDisplayDoc,
+      { ...scopeOf({ left: n }), goals },
+    ).panels[0]?.rows[0];
+  const goals = { left: { goal: 10, counter: true } };
+
+  it('shows what is left out of its size, with no reward', () => {
+    expect(left(7, goals)).toMatchObject({ value: 7, goal: 10, rewards: 0, caption: '7 left' });
+    expect(left(10, goals)).toMatchObject({ rewards: 0, caption: '10 left' });
+  });
+  it('says None left at zero', () => {
+    expect(left(0, goals)).toMatchObject({ value: 0, caption: 'None left' });
   });
 });

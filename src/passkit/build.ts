@@ -6,10 +6,10 @@ import { normalizePass } from './schema/normalize.ts';
 import type { SignedPass } from './sign/index.ts';
 import { sha1Hex, signPass } from './sign/index.ts';
 import { bindPass } from './template/bindings.ts';
+import { derivedPassScope, stripCount } from './template/counters.ts';
 import { applyDefaults, checkInput } from './template/manifest.ts';
 import type { ResolvedTemplate, TemplateRegistry } from './template/registry.ts';
 import { unmetRequirements } from './template/requires.ts';
-import { stampScopeFor } from './template/stamps.ts';
 import type {
   PassIdentity,
   PassJson,
@@ -164,13 +164,13 @@ export function planPass(args: BuildPassInput): PlannedPass {
   validateInput(template, input);
   const unmet = unmetRequirements(template.manifest, server.identity);
   if (unmet.length > 0) fail('TEMPLATE', unmet.join(' '), 'requires');
-  const stamps = stampScopeFor(template.manifest, applyDefaults(template.manifest, input));
+  const derived = applyDefaults(template.manifest, input);
   let pass: PassJson;
   let dropped: string[];
   try {
     ({ pass, droppedImages: dropped } = bindPass(template, input, {
       ...(server.scanCode ? { scanCode: server.scanCode } : {}),
-      ...(stamps ? { stamps } : {}),
+      ...derivedPassScope(template.manifest, derived),
     }));
   } catch (error) {
     if (error instanceof Error) fail('TEMPLATE', `Binding failed: ${error.message}`);
@@ -208,7 +208,12 @@ export function planPass(args: BuildPassInput): PlannedPass {
 
   let assets: ShippedAsset[];
   try {
-    assets = shippedAssets(template, dropped, args.assetOverrides ?? {}, stamps?.card);
+    assets = shippedAssets(
+      template,
+      dropped,
+      args.assetOverrides ?? {},
+      stripCount(template.manifest, derived),
+    );
   } catch (error) {
     if (error instanceof AssetPlanError) fail(error.code, error.message, error.path);
     throw error;

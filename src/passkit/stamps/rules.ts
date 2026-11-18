@@ -1,4 +1,6 @@
 // Stamp arithmetic shared by the pass build, the scanner and the goal-change flow.
+import { COUNTER_COPY } from '../../shared/copy/counters.ts';
+import { scanLine } from '../../shared/copy/scan.ts';
 import { GOAL_MAX, GOAL_MIN } from './layout.ts';
 
 export const isGoal = (goal: unknown): goal is number =>
@@ -21,6 +23,27 @@ export function stampScope(stamps: number, goal: number): StampScope {
   const count = Math.max(0, Math.floor(stamps));
   const card = Math.min(count, goal);
   return { goal, card, left: goal - card, ready: count >= goal, extra: Math.max(0, count - goal) };
+}
+
+export interface CounterScope {
+  /** What is left; may exceed `size` after a refill that carries over. */
+  left: number;
+  /** `size` less what is left, never below 0. */
+  used: number;
+  size: number;
+  /** Nothing left. */
+  none: boolean;
+  /** "7 left", or "None left". */
+  text: string;
+}
+
+export const counterText = (left: number): string =>
+  left > 0 ? scanLine(COUNTER_COPY.left, { n: left }) : COUNTER_COPY.none;
+
+/** `pass.counters.<id>.*` for a count that goes down from `size`. */
+export function counterScope(left: number, size: number): CounterScope {
+  const n = Math.max(0, Math.floor(left));
+  return { left: n, used: Math.max(0, size - n), size, none: n === 0, text: counterText(n) };
 }
 
 /** Adds `count` stamps. Past `max` it is refused (null): the card is full until a redeem. */

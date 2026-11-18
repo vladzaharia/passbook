@@ -25,17 +25,8 @@ export function stampScopeFor(
   return stampScope(typeof raw === 'number' ? raw : 0, block.goal);
 }
 
-/** The expression scope's `pass` part for a stamp card; empty for any other template. */
-export function stampPassScope(
-  manifest: TemplateManifest,
-  input: Personalization,
-): { pass?: { stamps: StampScope } } {
-  const stamps = stampScopeFor(manifest, input);
-  return stamps ? { pass: { stamps } } : {};
-}
-
-const STRIP_STYLES = ['storeCard', 'coupon', 'eventTicket'] as const;
-const STRIP_LOCALIZED = /^[\w-]+\.lproj\/strip(?:@[23]x)?\.png$/;
+export const STRIP_STYLES = ['storeCard', 'coupon', 'eventTicket'] as const;
+export const STRIP_LOCALIZED = /^[\w-]+\.lproj\/strip(?:@[23]x)?\.png$/;
 
 function readsStamps(binding: Binding, input: string): boolean {
   if (typeof binding.value !== 'string') return false;

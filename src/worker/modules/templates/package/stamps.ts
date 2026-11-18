@@ -1,5 +1,6 @@
 import { stampKey } from '../../../../passkit/stamps/key.ts';
 import { renderStampFiles, type StampFiles } from '../../../../passkit/stamps/package.ts';
+import { stripBlock } from '../../../../passkit/template/counters.ts';
 import type { AssetEntry, TemplateManifest, ValidationIssue } from '../../../../passkit/types.ts';
 import { crc32, sha1Hex, sha256BytesHex } from './hash.ts';
 import type { CheckedImage } from './images.ts';
@@ -79,7 +80,7 @@ export async function stampOutput(
     out.files.set(name, bytes);
     out.assets.push({ ...m, slot: 'source', scale: 1 });
   }
-  const block = manifest?.stamps;
+  const block = manifest && stripBlock(manifest);
   if (!block) return out;
   const inputs = new Map(art);
   for (const s of strips)

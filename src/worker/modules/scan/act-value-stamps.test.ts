@@ -113,6 +113,7 @@ describe('stamp card scans', () => {
     expect(await stampsOf(pass.id)).toBe(2);
     const short = await out(await scan('redeem'));
     expect(short).toMatchObject({ kind: 'refused', reason: 'no_balance', value: { after: 2 } });
+    expect(short.value).not.toHaveProperty('counter');
     expect(await stampsOf(pass.id)).toBe(2);
   });
 

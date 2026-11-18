@@ -1,9 +1,9 @@
 import type { AssetOverride, PassBuildError } from './build.ts';
 import { stampStripName } from './stamps/strips.ts';
+import { stripBlock, stripCount } from './template/counters.ts';
 import { applyDefaults } from './template/manifest.ts';
 import { classifyAsset, pngSize, STAMP_STRIP, slotOf } from './template/package.ts';
 import type { ResolvedTemplate } from './template/registry.ts';
-import { stampScopeFor } from './template/stamps.ts';
 import type { Personalization } from './types.ts';
 
 export interface ShippedAsset {
@@ -45,7 +45,7 @@ export function shippedAssets(
     const slot = slotOf(name);
     return slot !== null && dropped.includes(slot);
   };
-  const stamped = stampCount !== undefined && template.manifest.stamps !== undefined;
+  const stamped = stampCount !== undefined && stripBlock(template.manifest) !== undefined;
   const out = new Map<string, ShippedAsset>();
   for (const entry of template.assets) {
     const strip = STAMP_STRIP.exec(entry.name);
@@ -126,8 +126,7 @@ export function stampCountOf(
   template: ResolvedTemplate,
   personalization: Personalization,
 ): number | undefined {
-  if (!template.manifest.stamps) return undefined;
-  return stampScopeFor(template.manifest, applyDefaults(template.manifest, personalization))?.card;
+  return stripCount(template.manifest, applyDefaults(template.manifest, personalization));
 }
 
 /** The stored file a stamp card shows as `name` at `count` stamps: the strip drawn for that count. */
@@ -136,7 +135,7 @@ export function stampedName(
   name: string,
   count: number | undefined,
 ): string {
-  const goal = template.manifest.stamps?.goal;
+  const goal = stripBlock(template.manifest)?.goal;
   const scale = /^strip@([23])x\.png$/.exec(name)?.[1];
   if (count === undefined || goal === undefined || !scale) return name;
   return stampStripName(Math.max(0, Math.min(count, goal)), scale === '3' ? 3 : 2);
