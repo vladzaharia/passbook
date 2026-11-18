@@ -16,7 +16,7 @@ export function claimGrant(ctx: ServiceContext, actor: ScanActor, claim: Claim):
   return scanWriteGrant(ctx, actor, {
     purpose: 'org_mode.scan.claim',
     now: claim.now,
-    tables: CLAIM_TABLES,
+    tables: claim.tagId ? [...CLAIM_TABLES, 'nfc_tags'] : CLAIM_TABLES,
   });
 }
 
@@ -41,6 +41,7 @@ export function claimOnGrant(g: Grant, claim: Claim) {
       'idempotency_key',
       'request_hash',
       'method',
+      'tag_id',
       'state',
       'client_ts',
       'at',
@@ -59,12 +60,19 @@ export function claimOnGrant(g: Grant, claim: Claim) {
       claim.idempotencyKey,
       claim.requestHash,
       claim.method,
+      claim.tagId ?? null,
       'pending',
       claim.clientTs,
       claim.now,
     ],
     { doNothing: true, returning: ['id', 'at'] },
   );
+}
+
+/** A tag read is seen when its scan is claimed. */
+export function tagSeenOnGrant(g: Grant, claim: Claim): void {
+  if (claim.tagId)
+    g.update('nfc_tags', { set: { last_seen_at: claim.now }, where: { id: claim.tagId } });
 }
 
 /** The one-time keyset initialization rides the claim's grant instead of a claim-proving predicate. */

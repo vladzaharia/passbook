@@ -124,8 +124,13 @@ export const ScanInputSchema = z.union([
   z.object({ tag: TagReadSchema, method: z.literal('nfc'), passId: IdSchema.optional() }),
 ]);
 export type ScanInput = z.infer<typeof ScanInputSchema>;
-/** What the code and pass-id paths take. Tag reads have their own path. */
-export type ScanCodeInput = Exclude<ScanInput, { tag: unknown }>;
+/**
+ * What the code and pass-id paths take. A tag read reaches them as the pass it chose, read by NFC
+ * (worker only: the wire never sends `passId` with `nfc`).
+ */
+export type ScanCodeInput =
+  | Exclude<ScanInput, { tag: unknown }>
+  | { passId: string; method: 'nfc' };
 
 const request = {
   idempotencyKey: UuidV7Schema,

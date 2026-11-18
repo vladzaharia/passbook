@@ -12,6 +12,7 @@ export interface TagRow {
   label: string | null;
   status: 'active' | 'retired';
   lostAt: number | null;
+  lostBy: string | null;
 }
 
 const VIEW = `SELECT t.id, t.mode, t.kind, t.hint, t.label, t.status, t.created_at, t.last_seen_at,
@@ -185,6 +186,7 @@ interface TagRaw {
   label: string | null;
   status: 'active' | 'retired';
   lost_at: number | null;
+  lost_by: string | null;
 }
 
 const toRow = (r: TagRaw): TagRow => ({
@@ -195,6 +197,7 @@ const toRow = (r: TagRaw): TagRow => ({
   label: r.label,
   status: r.status,
   lostAt: r.lost_at,
+  lostBy: r.lost_by,
 });
 
 export async function tagByRef(
@@ -205,7 +208,7 @@ export async function tagByRef(
 ): Promise<TagRow | null> {
   const r = await first<TagRaw>(
     db,
-    'SELECT id, org_id, mode, hint, label, status, lost_at FROM nfc_tags WHERE org_id = ? AND mode = ? AND tag_ref = ?',
+    'SELECT id, org_id, mode, hint, label, status, lost_at, lost_by FROM nfc_tags WHERE org_id = ? AND mode = ? AND tag_ref = ?',
     [orgId, mode, ref],
   );
   return r ? toRow(r) : null;
@@ -215,7 +218,7 @@ export async function tagByRef(
 export async function tagTarget(db: Db, id: string): Promise<TagRow | null> {
   const r = await first<TagRaw>(
     db,
-    'SELECT id, org_id, mode, hint, label, status, lost_at FROM nfc_tags WHERE id = ?',
+    'SELECT id, org_id, mode, hint, label, status, lost_at, lost_by FROM nfc_tags WHERE id = ?',
     [id],
   );
   return r ? toRow(r) : null;

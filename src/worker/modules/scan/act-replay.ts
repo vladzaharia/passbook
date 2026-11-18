@@ -3,6 +3,7 @@ import {
   type ScanReason,
   ScanReasonSchema,
 } from '../../../shared/contracts/scan.ts';
+
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import { scanOf } from '../../../shared/scan-defaults.ts';
 import { safeEqual } from '../../platform/ids.ts';
@@ -26,6 +27,7 @@ import { foundOf } from './resolve.ts';
 import { overridePolicyKind, scanPolicy } from './rules.ts';
 import { capturingContext } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
+import { isPasslessReason } from './scan-passless.ts';
 
 /** A validated historical receipt with no current-policy-derived data or mutation affordances. */
 export function minimalReceipt(row: ScanRow): ScanOutcome {
@@ -39,7 +41,7 @@ export function minimalReceipt(row: ScanRow): ScanOutcome {
       row.passId === null &&
       row.templateId === null &&
       row.actionId === null &&
-      (row.reason === 'not_found' || row.reason === 'ambiguous')
+      isPasslessReason(row.reason)
         ? row.reason
         : null,
     at: row.at,

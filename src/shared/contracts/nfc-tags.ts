@@ -66,11 +66,26 @@ export const ScannerTagsSettingsSchema = z.object({
   assignAll: TagAssignRoleSchema.default('manager'),
 });
 
-/** What a scan outcome or card says about the tag it was read from. Desk and up only. */
+/**
+ * One of a user-bound tag's passes, for **Why this pass** / **Why not?** (Desk and up). `used`: the pass the
+ * scan acted on; `lets_in`: also valid; `refused`: its reason; `unchecked`: not evaluated after a valid one;
+ * `not_here`: this scanner does not take it (never named).
+ */
+export const ScanTagPassSchema = z.object({
+  passId: IdSchema.nullable(),
+  templateName: z.string().nullable(),
+  state: z.enum(['used', 'lets_in', 'refused', 'unchecked', 'not_here']),
+  reason: z.string().nullable(),
+});
+/** What a scan outcome or card says about the tag it was read from. Never on a customer screen. */
 export const ScanTagSchema = z.object({
   hint: z.string().regex(/^[0-9A-F]{4}$/),
   assurance: TagAssuranceSchema,
   scope: TagScopeSchema,
+  /** A user binding: how many of the holder's passes it read ("1 of {name}'s 3 passes"). */
+  count: z.number().int().min(0).max(8).optional(),
+  /** A user binding, Desk and up: each pass in the order it was tried. */
+  passes: z.array(ScanTagPassSchema).max(8).optional(),
 });
 export type ScanTag = z.infer<typeof ScanTagSchema>;
 
@@ -169,7 +184,7 @@ export const TagEnrollmentSchema = z.object({
 export type TagEnrollment = z.infer<typeof TagEnrollmentSchema>;
 export const CreateTagEnrollmentSchema = z.strictObject({
   scannerId: IdSchema,
-  scope: TagScopeSchema.default('pass'),
+  binding: TagScopeSchema.default('pass'),
 });
 /** A scanner an admin can send a request to. */
 export const TagScannerSchema = z.object({
@@ -220,7 +235,7 @@ export const ScanTagBindRequestSchema = z.strictObject({
   card: TagCardInputSchema,
   /** True: check and describe, write nothing. */
   preview: z.boolean().default(false),
-  scope: TagScopeSchema.default('pass'),
+  binding: TagScopeSchema.default('pass'),
   /** Move the tag from another holder. Needs a Manager PIN. */
   move: z.boolean().optional(),
   /** A loaner on a visitor pass; pass scope only. */
