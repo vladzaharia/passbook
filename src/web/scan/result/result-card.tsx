@@ -1,12 +1,12 @@
 import { Info } from 'lucide-react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
 import { SCAN_COPY, SCAN_REASON_COPY, scanLine } from '../../../shared/copy/scan.ts';
 import { formatDateTime, formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
 import { DisplayPanels } from '../display/display-panels.tsx';
 import { scanIcon } from '../display/icons.ts';
-import type { Draft, ScanOutcome } from '../machine/types.ts';
+import type { Draft, PinNote, ScanOutcome } from '../machine/types.ts';
 import { ApprovalSheet } from './approval-sheet.tsx';
 import { IdentityRow } from './identity-row.tsx';
 import { ValuePicker } from './value-picker.tsx';
@@ -38,11 +38,20 @@ export function ResultCard({
     onConfirm: () => void;
     onCancel: () => void;
     managers: { id: string; name: string }[];
+    /** Staff sign-in is off: the PIN is a manager code, no name picked. */
+    code?: boolean;
+    /** The last PIN was refused. */
+    note?: PinNote | undefined;
     onApprove: (staffId: string | undefined, pin: string) => void;
   };
 }) {
   const [pin, setPin] = useState(false);
   const root = useRef<HTMLElement>(null);
+  const refused = desk?.note;
+  // A refused PIN brings the sheet back with the tries left.
+  useEffect(() => {
+    if (refused) setPin(true);
+  }, [refused]);
   const d = o.display;
   const ok = o.kind === 'ok';
   const ready = o.kind === 'ready';
@@ -222,12 +231,15 @@ export function ResultCard({
             pin ? (
               <ApprovalSheet
                 managers={desk.managers}
+                code={desk.code ?? false}
+                action={o.action?.label}
+                note={desk.note}
                 onApprove={desk.onApprove}
                 onCancel={() => setPin(false)}
               />
             ) : (
               <Button data-testid="scan-manager-pin" onClick={() => setPin(true)}>
-                Manager PIN
+                {desk.code ? SCAN_COPY.managerCode.action : SCAN_COPY.actions.managerPin}
               </Button>
             )
           ) : null}

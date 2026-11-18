@@ -119,6 +119,8 @@ export async function setupKit(
     db?: D1Database;
     /** Seed at a fixed epoch instead of rewinding the clock after setup. */
     clockStart?: number;
+    /** Bindings to override, e.g. the build's `CF_VERSION`. */
+    env?: Partial<AppEnv>;
     /** Supply a specialized source before it is persisted or approved. */
     template?: (id: string) => TestTemplate;
   } = {},
@@ -136,6 +138,7 @@ export async function setupKit(
     ...(db ? { DB: db } : {}),
     JOBS: queue as unknown as Queue,
     BULK_REISSUE: workflow as unknown as Workflow,
+    ...options.env,
   });
   // Fixed epoch by default; kits that read wall time pass clockStart.
   const clock = new ManualClock(options.clockStart ?? TEST_NOW);

@@ -204,7 +204,7 @@ describe('live plain rows', () => {
       ...ring,
       row: { ...ring.row, id: kit.ctx.ids.token(16), passId: foreign.id },
     };
-    await runInDurableObject(hub(), async (_object, state) => {
+    await runInDurableObject(hub().stub, async (_object, state) => {
       await state.storage.put('recent', [ring, crafted]);
     });
     const rows = (await hub().snapshot(f.monitor.attachment)).rows;
@@ -226,7 +226,7 @@ describe('live plain rows', () => {
       ...ring,
       row: { ...ring.row, id: kit.ctx.ids.token(16), passId: testPass.id },
     };
-    await runInDurableObject(hub(), async (_object, state) => {
+    await runInDurableObject(hub().stub, async (_object, state) => {
       await state.storage.put('recent', [crafted]);
     });
     expect((await hub().snapshot(f.monitor.attachment)).rows).toMatchObject([REDACTED]);

@@ -82,7 +82,7 @@ describe('live photo lineage', () => {
       holder: 'Private Member',
       sourceProof: 'sealed-by-an-earlier-deploy',
     };
-    await runInDurableObject(hub(), async (_object, state) => {
+    await runInDurableObject(hub().stub, async (_object, state) => {
       const ring = (await state.storage.get<unknown[]>('recent')) ?? [];
       await state.storage.put('recent', [...ring, old]);
     });

@@ -14,6 +14,7 @@ import {
   persistTemplate,
   type ScannerFixture,
   type SessionFixture,
+  TEST_NOW,
   type TestTemplate,
 } from '../../../../test/helpers/index.ts';
 import { pageOf, ScanEventSchema } from '../../../shared/contracts/index.ts';
@@ -64,7 +65,7 @@ async function account(roles: OrgRole[] | null, platformAdmin = false) {
 }
 
 beforeEach(async () => {
-  clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
+  clock = new ManualClock(TEST_NOW);
   env = await makeEnv();
   await ensureCredentialRefKeyset(env.DB, env);
   Object.assign(env, {

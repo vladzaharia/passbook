@@ -5,7 +5,7 @@ import { acceptedIgnore, addIgnore, refusedIgnore, settleShown, shownIgnore } fr
 import type { Env, MachineState, Out } from './internal.ts';
 import { headlineOf } from './outcome.ts';
 import { presentOutcome } from './present.ts';
-import type { Card, CardLayer, Cmd, Draft, Recent, ScanOutcome } from './types.ts';
+import type { Card, CardLayer, Cmd, Draft, PinNote, Recent, ScanOutcome } from './types.ts';
 
 /** Raises a card, or swaps it in over the one that is up. */
 export function raiseCard(
@@ -80,6 +80,8 @@ export interface VerdictOpts {
   replaceRecentAt?: number;
   /** The draft that was sent, kept for a Manager's PIN. */
   draft?: Draft;
+  /** The Manager's PIN was refused. */
+  pin?: PinNote;
 }
 
 /** Enters `verdict`: holds, ignore windows, counts, recent, and the commands of AC 4.1 in order. */
@@ -140,6 +142,7 @@ export function enterVerdict(s: MachineState, o: VerdictOpts, env: Env): Out {
       openFrom: now + SCAN_TIMING.NEXT_SCAN_AFTER_VERDICT,
       next: o.next ?? null,
       ...(o.draft ? { draft: o.draft } : {}),
+      ...(o.pin ? { pin: o.pin } : {}),
     },
     ignore,
     recent: withRow(s.recent, row, o.replaceRecentAt),

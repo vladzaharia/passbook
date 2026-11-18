@@ -14,6 +14,7 @@ import {
   makeUser,
   persistTemplate,
   type SessionFixture,
+  TEST_NOW,
   type TestTemplate,
 } from '../../../../test/helpers/index.ts';
 import { ProblemSchema } from '../../../shared/contracts/common.ts';
@@ -61,7 +62,7 @@ export function setupStaffAdminTestKit() {
   let activityPasses: Map<string, { passId: string; templateId: string }>;
 
   beforeEach(async () => {
-    clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
+    clock = new ManualClock(TEST_NOW);
     env = await makeEnv();
     await ensureCredentialRefKeyset(env.DB, env);
     f = fixtures(env, clock);

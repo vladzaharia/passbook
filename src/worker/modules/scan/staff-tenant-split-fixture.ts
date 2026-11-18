@@ -8,6 +8,7 @@ import {
   makeSession,
   makeUser,
   type SessionFixture,
+  TEST_NOW,
 } from '../../../../test/helpers/index.ts';
 import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
 import { createApp } from '../../app.ts';
@@ -50,7 +51,7 @@ export interface StaffTenantFixture {
 
 /** Construct a separate harness inside each test's D1-isolated beforeEach. */
 export async function makeStaffTenantFixture(): Promise<StaffTenantFixture> {
-  const clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
+  const clock = new ManualClock(TEST_NOW);
   const env = await makeEnv();
   const f = fixtures(env, clock);
   const fake = fakeAuth(ORIGIN);

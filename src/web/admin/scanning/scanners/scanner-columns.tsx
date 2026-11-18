@@ -3,7 +3,7 @@ import type { ScannerSetup as ScannerDto } from '@/shared/contracts/scan-setups.
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { Badge, Button, RowActions, RowLink, StatusPill } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
-import { RelTime } from '../../passes/detail/rel-time.tsx';
+import { RelTime } from '../../../ui/rel-time.tsx';
 import { acceptsText, scannerStatus } from './labels.ts';
 
 export interface ScannerActions {
