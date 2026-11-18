@@ -5,6 +5,7 @@ import { jobGrant } from '../../../platform/authority.ts';
 import { not } from '../../../platform/authority-cond.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
 import { scanIs } from '../scan-write-grant.ts';
+import type { DueRow } from './repo-reads.ts';
 import type { ExitPlan } from './rules.ts';
 import { addExit } from './service.ts';
 
@@ -13,19 +14,6 @@ export const OCCUPANCY_ACTOR_KEY = 'sys:occupancy';
 const TABLES = ['scans', 'scan_presence', 'scan_place_revs'];
 
 export type OutCause = 'stay' | 'clear' | 'zone';
-
-/** An in row as the cron read it. */
-export interface DueRow {
-  pass_id: string;
-  org_id: string;
-  mode: 'live' | 'test';
-  scope: string;
-  entered_at: number;
-  last_entry_at: number;
-  last_scan_id: string;
-  due_at: number;
-  template_id: string;
-}
 
 const grantFor = (ctx: ServiceContext, row: DueRow): Grant =>
   jobGrant(ctx, {

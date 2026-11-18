@@ -7,8 +7,9 @@ import { createJobContext } from '../../../platform/service-context.ts';
 import { toFeed } from '../feed-projection.ts';
 import type { HistoryRow } from '../history-row.ts';
 import { scanningSessionsFixture } from '../scanning-sessions-test-fixtures.ts';
-import { type DueRow, exitGrant } from './auto-exit.ts';
+import { exitGrant } from './auto-exit.ts';
 import { autoTapOut, DUE_BATCH, verdict } from './jobs.ts';
+import type { DueRow } from './repo-reads.ts';
 import { exitAsGiven, type OccZone } from './rules.ts';
 
 const fixture = scanningSessionsFixture();

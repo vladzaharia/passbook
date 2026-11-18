@@ -1,11 +1,11 @@
 // Minute cron `scan.occupancy` (SA §20.8): taps out passes whose Max stay or Clear at has passed, and
 // those inside a zone that stopped tracking, was archived or moved. 200 rows a run, 25 grants a batch.
 import { grantedBatch } from '../../../platform/authority.ts';
-import { all } from '../../../platform/db.ts';
 import { AppError } from '../../../platform/errors.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
 import { effectiveTimeZone, indexZones } from '../zones-tree.ts';
-import { type DueRow, exitGrant, type OutCause, rearmGrant } from './auto-exit.ts';
+import { exitGrant, type OutCause, rearmGrant } from './auto-exit.ts';
+import { type DueRow, dueRows } from './repo-reads.ts';
 import {
   dueAt,
   exitAsGiven,
@@ -48,17 +48,7 @@ const refusal = (error: unknown) => error instanceof AppError && error.status < 
 export async function autoTapOut(ctx: ServiceContext): Promise<void> {
   const db = ctx.env.DB;
   const now = ctx.clock.now();
-  const rows = await all<DueRow>(
-    db,
-    `SELECT x.pass_id, x.org_id, x.mode, x.scope, x.entered_at, x.last_entry_at, x.last_scan_id, x.due_at,
-            p.template_id
-     FROM scan_presence x
-     JOIN orgs o ON o.id = x.org_id AND o.status = 'active'
-     JOIN passes p ON p.id = x.pass_id
-     WHERE x.state = 'in' AND x.due_at IS NOT NULL AND x.due_at <= ? AND x.entered_at IS NOT NULL
-     ORDER BY x.due_at LIMIT ?`,
-    [now, DUE_BATCH],
-  );
+  const rows = await dueRows(db, now, DUE_BATCH);
   if (rows.length === 0) return;
   const zones = new Map<string, OccZone[]>();
   const made: { row: DueRow; make: () => ReturnType<typeof exitGrant> }[] = [];
