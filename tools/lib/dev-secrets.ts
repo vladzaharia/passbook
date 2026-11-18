@@ -6,6 +6,12 @@
  */
 export const LOCAL_SECRETS = ['KEK_V1'] as const;
 
-export function localSecrets(): { secrets: { required: string[] } } {
-  return { secrets: { required: [...LOCAL_SECRETS] } };
+/**
+ * `npm run dev:vars` writes the fixture WWDR as `SIGNER_PLATFORM_INTERMEDIATE`; without it here the worker
+ * falls back to Apple's G4 and rejects the fixture leaf. The e2e build declares it as a var instead.
+ */
+export const DEV_ONLY_SECRETS = ['SIGNER_PLATFORM_INTERMEDIATE'] as const;
+
+export function localSecrets(e2e = false): { secrets: { required: string[] } } {
+  return { secrets: { required: [...LOCAL_SECRETS, ...(e2e ? [] : DEV_ONLY_SECRETS)] } };
 }

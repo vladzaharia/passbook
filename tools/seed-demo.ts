@@ -9,6 +9,7 @@ import { join, resolve } from 'node:path';
 import { zipSync } from 'fflate';
 import { assertLocal, discPng, Session } from './lib/demo-client.ts';
 import { demoPlans, emailOf, PORTAL } from './lib/demo-data.ts';
+import { releaseTemplates } from './lib/demo-releases.ts';
 import { DEMO_OWNER, tenancyCommand } from './lib/demo-tenancy.ts';
 
 const root = resolve(import.meta.dirname, '..');
@@ -131,9 +132,10 @@ if (!byName('Harbor Crew Badge')) {
 templates = await listTemplates();
 const member = byName('Northwind Member')?.id as string;
 
-// Tenancy: a demo owner becomes org_admin everywhere and uploaded templates get a legacy release,
-// without which passes cannot be issued. Writes the local D1 (.wrangler/state); safe to re-run.
+// Tenancy: the demo owner is org_admin everywhere. Passes issue only from a live release, so the
+// owner approves and publishes each org template. Safe to re-run.
 applyTenancy();
+await releaseTemplates(owner, templates);
 
 // Passes
 const plans = demoPlans({ henrys, northwind, harbor, member, store, ticket, coupon, crew });
@@ -207,7 +209,8 @@ for (const [i, plan] of plans.entries()) {
   }
   if (plan.void) await api.send('POST', `/api/v1/passes/${pass.id}/void`, undefined, auth);
 }
-for (const { id } of issuers.values()) await owner.send('DELETE', `/api/v1/api-keys/${id}`);
+for (const [org, { id }] of issuers)
+  await owner.send('DELETE', `/api/v1/api-keys/${id}?orgId=${org}`);
 
 // Portal users: a magic-link sign-in creates the user and attaches their waiting passes.
 const users = await admin.all('/api/v1/users');
@@ -278,7 +281,12 @@ for (const spec of CONNECTIONS) {
 }
 
 // API keys, one revoked.
-const keys = (await admin.get('/api/v1/api-keys')).items as { name: string; id: string }[];
+const keys = (
+  await Promise.all([
+    ...orgs.map((o) => owner.all(`/api/v1/api-keys?orgId=${o.id}`)),
+    admin.all('/api/v1/api-keys?orgId=null'),
+  ])
+).flat() as { name: string; id: string }[];
 const KEYS = [
   { name: 'Henry’s CRM', orgId: henrys, scopes: ['passes:read', 'passes:write', 'holders:write'] },
   { name: 'Box office', orgId: harbor, scopes: ['passes:write'], expiresAt: Date.now() + 30 * DAY },
@@ -287,8 +295,10 @@ const KEYS = [
 ];
 for (const { revoke, ...key } of KEYS) {
   if (keys.some((k) => k.name === key.name)) continue;
-  const made = await admin.send('POST', '/api/v1/api-keys', key);
-  if (revoke) await admin.send('DELETE', `/api/v1/api-keys/${made.id}`);
+  // Org keys are the owner's to manage; a platform admin is not a member.
+  const who = key.orgId ? owner : admin;
+  const made = await who.send('POST', '/api/v1/api-keys', key);
+  if (revoke) await who.send('DELETE', `/api/v1/api-keys/${made.id}?orgId=${key.orgId}`);
 }
 
 // One pass email for the delivery log (and a rendered email under the local mail directory).
