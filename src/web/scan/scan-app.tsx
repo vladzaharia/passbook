@@ -21,6 +21,9 @@ const Paired = lazy(() => import('./paired.tsx').then((m) => ({ default: m.Paire
 const AdminStart = lazy(() =>
   import('./boot/admin-start.tsx').then((m) => ({ default: m.AdminStart })),
 );
+const RoleUnlock = lazy(() =>
+  import('./role/unlock-sheet.tsx').then((m) => ({ default: m.RoleUnlock })),
+);
 const LiveScreen = lazy(() =>
   import('./live/live-screen.tsx').then((m) => ({ default: m.LiveScreen })),
 );
@@ -128,7 +131,17 @@ function ScanBoot() {
         />
       );
     if (session.session.scanner?.deviceRole !== 'scan' && session.session.scanner !== null)
-      return <LiveScreen session={session.session} refetch={session.refetch} />;
+      return (
+        <>
+          <LiveScreen session={session.session} refetch={session.refetch} />
+          {session.session.scanner?.kind === 'device' &&
+          session.session.scanner.deviceRole === 'customer' ? (
+            <Suspense fallback={null}>
+              <RoleUnlock api={api} refetch={session.refetch} />
+            </Suspense>
+          ) : null}
+        </>
+      );
     if (session.session.state === 'staff_required')
       return (
         <ScanShell

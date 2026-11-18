@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { ValidationIssue } from '@/passkit/types.ts';
+import { serverDuplicate } from './access/issues.ts';
 import { localIssues } from './local-issues.ts';
 import type { DesignDoc } from './model.ts';
 import { scanIssues } from './scan/document.ts';
@@ -23,14 +24,19 @@ export function useDesignerIssues(
   serverIssues: readonly ValidationIssue[] | undefined,
 ) {
   const scanValidation = useMemo(() => scanIssues(doc), [doc]);
+  const local = useMemo(() => localIssues(doc), [doc]);
   const issues = useMemo(
     () =>
       mergeIssues(
         readOnly
           ? [...readOnly.issues, ...scanValidation]
-          : [...localIssues(doc), ...scanValidation, ...(serverIssues ?? [])],
+          : [
+              ...local,
+              ...scanValidation,
+              ...(serverIssues ?? []).filter((i) => !serverDuplicate(i, local)),
+            ],
       ),
-    [readOnly, doc, scanValidation, serverIssues],
+    [readOnly, local, scanValidation, serverIssues],
   );
   const blocking = issues.filter((i) => i.severity === 'error').length;
   return { issues, blocking };

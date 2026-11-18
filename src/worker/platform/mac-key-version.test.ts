@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { makeEnv } from '../../../test/helpers/index.ts';
 import { tokenKeys, tokenMac, tokenMacs, tokenMatches } from './capability-token.ts';
 import { derivedHmacKey, isKeyEnvName, macKeyVersion, macPreviousVersion } from './crypto.ts';
-import { macKeyProblems, parseKekVersion } from './mac-key-config.ts';
+import { keyRingProblems, macKeyProblems, parseKekVersion } from './mac-key-config.ts';
 
 const kek = (byte: number) => btoa(String.fromCharCode(...new Uint8Array(32).fill(byte)));
 const mac = async (key: CryptoKey) =>
@@ -93,7 +93,7 @@ describe('token MACs across a rotation', () => {
     const moved = await tokenMac(after, 'pass', 'link-token');
     expect(moved).not.toBe(old);
     expect(await tokenMacs(during, 'pass', 'link-token')).toEqual([moved, old]);
-    expect(await tokenKeys(during, 'pass', 'link-token')).toEqual([moved, 'link-token', old]);
+    expect(await tokenKeys(during, 'pass', 'link-token')).toEqual([moved, old]);
     expect(await tokenMatches(during, 'pass', old, 'link-token')).toBe(true);
     expect(await tokenMatches(during, 'pass', moved, 'link-token')).toBe(true);
     expect(await tokenMatches(after, 'pass', moved, 'link-token')).toBe(true);
@@ -112,7 +112,7 @@ describe('macKeyProblems', () => {
 
   it('names every problem', () => {
     expect(macKeyProblems({ pin: '3' }, [1, 2])).toEqual([
-      'MAC_KEY_VERSION=3 names a KEK that is not set (KEK_V3).',
+      'MAC_KEY_VERSION=3 names a root that is not set (KEK_V3 or MAC_ROOT_V3).',
     ]);
     expect(macKeyProblems({ pin: '0', previous: 'x' }, [1])).toHaveLength(2);
     expect(macKeyProblems({ pin: '2', previous: '2' }, [1, 2])).toEqual([
@@ -138,5 +138,40 @@ describe('one parser for the rotation settings', () => {
     expect(macKeyProblems({ pin: 2, previous: 1 }, [1, 2])).toEqual([]);
     expect(() => macKeyVersion({ ...base, MAC_KEY_VERSION: '2.0' })).toThrow('MAC_KEY_VERSION');
     expect(macKeyProblems({ pin: '2.0' }, [1, 2])).toHaveLength(1);
+  });
+});
+
+describe('keyRingProblems', () => {
+  const ok = { kek: [1, 2], macRoot: [] as number[] };
+
+  it('accepts a plain ring, and a retired KEK_V1 whose root is set', () => {
+    expect(keyRingProblems({ kek: [1], macRoot: [] })).toEqual([]);
+    expect(keyRingProblems(ok)).toEqual([]);
+    expect(keyRingProblems({ kek: [2], macRoot: [1] })).toEqual([]);
+    expect(keyRingProblems({ kek: [2], macRoot: [1], pin: '1', previous: '2' })).toEqual([]);
+  });
+
+  it('needs a KEK', () => {
+    expect(keyRingProblems({ kek: [], macRoot: [1] })).toHaveLength(1);
+  });
+
+  it('needs root 1: removing KEK_V1 without MAC_ROOT_V1 is the mistake to catch', () => {
+    expect(keyRingProblems({ kek: [2], macRoot: [] })).toEqual([
+      'Root 1 is missing: set KEK_V1 or MAC_ROOT_V1.',
+    ]);
+  });
+
+  it('checks the pins against KEKs and roots together', () => {
+    expect(keyRingProblems({ kek: [2], macRoot: [1], pin: '1' })).toEqual([]);
+    expect(keyRingProblems({ kek: [2], macRoot: [1], pin: '3' })).toEqual([
+      'MAC_KEY_VERSION=3 names a root that is not set (KEK_V3 or MAC_ROOT_V3).',
+    ]);
+  });
+
+  it('allows a root only for a version older than the current KEK', () => {
+    expect(keyRingProblems({ kek: [1, 2], macRoot: [1] })).toEqual([]);
+    expect(keyRingProblems({ kek: [1, 2], macRoot: [2] })).toEqual([
+      'MAC_ROOT_V2 must be older than the current KEK (KEK_V2).',
+    ]);
   });
 });

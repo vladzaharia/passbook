@@ -273,7 +273,9 @@ export interface PassRow {
   id: string;
   orgId: string;
   serial: string;
+  /** The plain device token, as Wallet sends it. The column holds its MAC. */
   authToken: string;
+  /** The plain link token, as the holder's link carries it. The column holds its MAC. */
   downloadToken: string;
   objectKey: string;
 }

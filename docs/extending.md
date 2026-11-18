@@ -123,6 +123,27 @@ the build key and the Apple release hash ignore it, so editing it never reissues
 - Unknown keys are errors. Issues are `WALLETS_*`, plus `WALLET_ART_PNG` for a file that is not a
   PNG (`src/passkit/template/wallets/`).
 
+## Google and Samsung wallets
+
+Both compile from the same pass; the matrix of what each carries is
+`docs/design/wallet-providers/capabilities.md` (generated). The fidelity report lists what a
+wallet cannot show (`FidelityReportSchema`, `src/shared/contracts/wallet-fidelity.ts`).
+
+- Google types: `generic`, `event`, `loyalty`, `gift`, `offer`. Chosen from the pass style
+  (eventTicket to event, coupon to offer, storeCard to loyalty or gift), else `generic`; set
+  `wallets.google.type` to force one. A type whose roles are missing falls back to generic and says so.
+- Samsung types: `loyalty`, `ticket`, `coupon`. Anything without a native attribute (gift cards,
+  boarding passes, extra fields) goes to the notice text and is reported.
+- Roles: `title`, `eventName`, `memberId`, `points`, `balance`, `validUntil` and the rest of
+  `WALLET_ROLES`. Set one with `wallets.roles` (field, value or `false`); otherwise semantics and
+  style defaults fill it.
+- Art slots: Google `logo`, `hero`, `thumbnail`; Samsung `logo`, `main`, `background`, as
+  `wallets/<target>/<name>.png`. Only template art with a public URL is sent; a per-pass image never is.
+- Omit forms (`wallets.<target>.omit`): a capability id (`barcode.altText`), a field path
+  (`backFields.terms`) or a bare field key. Omitting approves that loss; unlisted omissions need
+  release approval. Identity values (barcode message, member id, ticket number) are never cut: too
+  long blocks the pass on that wallet.
+
 ## Add scan actions
 
 A top-level `scan.actions` array (1 to 6) lists what staff can do with the pass at a scanner.

@@ -31,8 +31,8 @@ export interface BuildRequest {
   orgName: string;
   passId: string;
   serial: string;
-  /** The `auth_token` column value or a token just made (see `plainAuthToken`). */
-  authToken: string;
+  /** The `auth_token` column value (a MAC), or `{ fresh }` for a token just made and not yet stored. */
+  authToken: string | { fresh: string };
   /** Frozen at creation: rebuilds must not change the pass identity (audit B7). */
   webServiceUrl: string;
   identityId: string;

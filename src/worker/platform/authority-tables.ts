@@ -64,6 +64,11 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     org: null,
     edges: [edge('retention_id', 'connection_webhook_retention')],
   },
+  // Written once with its key (`createKey`); the migration's triggers refuse any later change.
+  api_key_terminals: {
+    org: null,
+    edges: [edge('key_id', 'api_keys'), edge('scanner_id', 'scanners')],
+  },
   scans: { org: 'org_id', mode: 'mode', conflict: ['actor_key', 'idempotency_key'] },
   scan_gates: { org: 'org_id', mode: 'mode', conflict: ['pass_id', 'action_id', 'scope'] },
   // `mode` from 0074: the pass decides it (insert triggers). No holder writes, so no `pass` pin.

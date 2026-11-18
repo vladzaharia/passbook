@@ -8,18 +8,19 @@ export interface PrefetchedAuthSeal {
 }
 
 /**
- * The plain device token a build embeds in pass.json. `authToken` is the column value (a MAC once
- * sealed) or a token just made; a prefetched copy is used only while it still names that value.
+ * The plain device token a build embeds in pass.json. `authToken` is the column value (a MAC) or a
+ * `{ fresh }` token just made; a prefetched copy is used only while it still names that value.
  */
 export async function plainAuthToken(
   env: { DB: D1Database },
   req: {
     passId: string;
     orgId: string;
-    authToken: string;
+    authToken: string | { fresh: string };
     prefetched?: { authSeal?: PrefetchedAuthSeal };
   },
 ): Promise<string> {
+  if (typeof req.authToken !== 'string') return req.authToken.fresh;
   const seal = req.prefetched?.authSeal;
   try {
     return seal && seal.stored === req.authToken

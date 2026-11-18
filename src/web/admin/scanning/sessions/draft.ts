@@ -1,4 +1,7 @@
-import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
+import type {
+  ScanningSession,
+  SessionCustomerSettings,
+} from '@/shared/contracts/scanning-sessions.ts';
 import { localZone } from '@/web/lib/timezones.ts';
 import {
   acceptsOf,
@@ -7,13 +10,21 @@ import {
   settingsOf,
 } from '../scanners/scanner-draft.ts';
 
-export type SessionDraft = ScannerDraft & { timeZone: string };
+export type SessionDraft = ScannerDraft & {
+  timeZone: string;
+  /** Zones this session checks. Absent while the server has not said (a list row). */
+  zoneIds?: string[];
+  /** The session already stores Desk actions, so Off is sent rather than left out. */
+  deskActionsSaved?: boolean;
+  customer?: SessionCustomerSettings;
+};
 
 export const emptySessionDraft = (): SessionDraft => ({
   ...EMPTY_DRAFT,
   timeZone: localZone(),
   accepts: 'all',
   lookup: true,
+  zoneIds: [],
 });
 export function sessionDraft(s: ScanningSession): SessionDraft {
   return {
@@ -41,6 +52,10 @@ export function sessionDraft(s: ScanningSession): SessionDraft {
     dailyAmount: s.settings.dailyAmount,
     direction: s.settings.direction ?? 'pass',
     showPhoto: s.settings.showPhoto ?? true,
+    zoneIds: s.zoneIds,
+    deskActions: s.settings.deskActions ?? false,
+    deskActionsSaved: s.settings.deskActions !== undefined,
+    customer: s.settings.customer,
   };
 }
 export const sessionBody = (d: SessionDraft) => ({
@@ -48,8 +63,27 @@ export const sessionBody = (d: SessionDraft) => ({
   orgId: d.orgId,
   timeZone: d.timeZone,
   accepts: acceptsOf(d),
-  settings: settingsOf(d),
+  settings: {
+    ...settingsOf(d),
+    ...(d.deskActions || d.deskActionsSaved ? { deskActions: d.deskActions } : {}),
+    ...(d.customer === undefined ? {} : { customer: cleanCustomer(d.customer) }),
+  },
+  // Events check in once: a session on one holds no zones.
+  ...(d.zoneIds === undefined ? {} : { zoneIds: d.accepts === 'event' ? [] : d.zoneIds }),
 });
+
+/** Empty lines are absent, so the defaults in `copy/scan-customer.ts` apply. */
+export function cleanCustomer(c: SessionCustomerSettings): SessionCustomerSettings {
+  const welcome = c.welcome?.trim();
+  const refusedLine = c.refusedLine?.trim();
+  return {
+    ...(welcome ? { welcome } : {}),
+    ...(refusedLine ? { refusedLine } : {}),
+    ...(c.greet === undefined ? {} : { greet: c.greet }),
+    ...(c.showReady === undefined ? {} : { showReady: c.showReady }),
+    ...(c.showDraft === undefined ? {} : { showDraft: c.showDraft }),
+  };
+}
 export function sessionReady(d: ScannerDraft) {
   return (
     !!d.name.trim() &&

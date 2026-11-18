@@ -92,7 +92,9 @@ export function Issues({
                   {row.target ? (
                     <span className="text-xs text-fg-muted">
                       {sectionLabel(row.target.section)}
-                      {row.target.key ? `: ${row.target.key}` : ''}
+                      {row.target.key && row.target.section !== 'access'
+                        ? `: ${row.target.key}`
+                        : ''}
                     </span>
                   ) : row.managed ? (
                     <span className="text-xs text-fg-muted">Set by PassBook</span>

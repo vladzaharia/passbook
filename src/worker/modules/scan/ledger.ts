@@ -45,6 +45,7 @@ export function ledgerRow(ctx: ServiceContext, actor: ScanActor, f: LedgerFacts)
     offline: false,
     notified: false,
     ...(f.direction ? { direction: f.direction } : {}),
+    ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
   };
   return {
     id: ctx.ids.ordered(at),

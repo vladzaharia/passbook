@@ -1,3 +1,4 @@
+import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { snapshotWalletCredentialContext } from './account-service.ts';
@@ -16,6 +17,7 @@ import { reconcileWalletInstance } from './lifecycle.ts';
 import { walletProviderDisabledReason, walletProviderEnabled } from './provider-policy.ts';
 import { purgeExpiredGoogleCallbackReplays } from './repo-google-callback.ts';
 import { ackCleanWalletPlaceholder, deferWalletSyncOperation } from './repo-sync-queue.ts';
+import { walletSyncHasWork } from './repo-sync-work.ts';
 import { runWalletProviderOperation } from './sync-operation.ts';
 import { finishWalletProviderRetirement } from './sync-operation-retirement.ts';
 
@@ -36,9 +38,18 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
     });
   ctx = snapshotWalletCredentialContext(ctx);
   const db = ctx.env.DB;
-  const credentialKeysetCommitment = await requireCredentialRefKeyset(db, ctx.env);
   await purgeExpiredWalletOffers(db, ctx.clock.now(), BATCH_SIZE);
   await purgeExpiredGoogleCallbackReplays(db, ctx.clock.now());
+  // Nothing queued means nothing to pin: a fresh deployment has no keyset until its first pass.
+  if (!(await walletSyncHasWork(db, ctx.clock.now()))) return;
+  let credentialKeysetCommitment: string;
+  try {
+    credentialKeysetCommitment = await requireCredentialRefKeyset(db, ctx.env);
+  } catch (error) {
+    if (!(error instanceof AppError)) throw error;
+    ctx.log.error('wallet.sync_keyset_unavailable', { code: error.code });
+    return;
+  }
   await expireWalletClaims(db, ctx.clock.now(), BATCH_SIZE, credentialKeysetCommitment);
   const dirty = await listDirtyWalletInstances(
     db,

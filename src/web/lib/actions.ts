@@ -113,6 +113,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'scanner.setup_create': a('Scanner setup created', ENTITY.scanner.icon, 'success'),
   'scanner.setup_update': a('Scanner setup changed', Settings, 'info'),
   'scanner.update': a('Scanner changed', I.edit, 'info'),
+  'scanner.role_change': a('Scanner switched mode', ENTITY.scanner.icon, 'info'),
   'scanner.pairing_create': a('Pairing code made', QrCode, 'info'),
   'scanner.pair': a('Scanner paired', ENTITY.scanner.icon, 'success'),
   'scanner.unpair': a('Scanner unpaired', ENTITY.scanner.icon, 'neutral'),

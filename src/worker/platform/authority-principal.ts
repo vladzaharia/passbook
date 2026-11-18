@@ -98,14 +98,8 @@ const adminSession = (b: Binds, now: number, idHash: string, userId: string) =>
       AND json_type(s.roles) = 'array'
       AND EXISTS (SELECT 1 FROM json_each(s.roles) r WHERE r.type = 'text' AND r.value = 'admin'))`;
 
-/**
- * Work queued by the pre-0052 Worker persisted `orgs.updated_at` (milliseconds) as its org revision. It can
- * never equal an `access_revision`, so it is accepted on org status alone. Remove one release after cutover.
- */
-export const LEGACY_REVISION_MS = 1e12;
-
 const orgOk = (b: Binds, revision: number | undefined) =>
-  revision === undefined || revision >= LEGACY_REVISION_MS
+  revision === undefined
     ? `o.status = 'active'`
     : `o.status = 'active' AND o.access_revision = ${b.bind(revision)}`;
 

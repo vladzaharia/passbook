@@ -63,7 +63,6 @@
 
   "secrets": {
     "required": [
-      "KEK_V1",
       "TURNSTILE_SECRET",
       "SIGNER_PLATFORM_CERTIFICATE",
       "SIGNER_PLATFORM_PRIVATE_KEY",

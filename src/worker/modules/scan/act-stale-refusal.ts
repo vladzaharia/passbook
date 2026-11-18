@@ -12,6 +12,7 @@ import { StaleScanAuthority } from './act-override.ts';
 import type { ScanActor } from './actor.ts';
 import { epochsMissing } from './authority-capture.ts';
 import { scanActorChecks, scanPrincipal } from './authority-checks.ts';
+import { apiKeyRefusal } from './guard-api-key.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
 import { scannerCredentialLost } from './scanner-credential-lost.ts';
 
@@ -49,6 +50,8 @@ export async function staleActorRefusal(
   actor: ScanActor,
   claimed: boolean,
 ): Promise<AppError | null> {
+  const keyLost = await apiKeyRefusal(ctx, actor);
+  if (keyLost) return keyLost;
   if (await scannerCredentialLost(ctx, actor))
     return new UnauthenticatedError('Pair this device again.', 'SCANNER_REPAIR');
   const now = ctx.clock.now();

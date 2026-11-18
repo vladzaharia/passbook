@@ -8,6 +8,7 @@ import { captureScanEpochs } from './authority-checks.ts';
 import { localDay } from './counts.ts';
 import { policyActor } from './dto.ts';
 import type { ConsoleUndo } from './feed.ts';
+import { refuseKeyApproval } from './guard-api-key.ts';
 import { undoWindowMinutes } from './outcome.ts';
 import { scanByKey } from './repo-scans.ts';
 import { commitUndo, UNDO_CODES } from './repo-undo.ts';
@@ -33,6 +34,7 @@ export async function undo(
   req: UndoRequest,
   maxAgeMs?: number,
 ): Promise<ScanEvaluation> {
+  refuseKeyApproval(actor, req);
   if (req.approval && !req.approval.staffId && actor.settings.staffSignIn)
     throw new ValidationError('Choose the manager.', [], 'PIN_MANAGER_REQUIRED');
   const read = await readUndo(
@@ -84,6 +86,7 @@ async function run(
           scan: {
             actorKey: target.actorKey,
             staffId: target.staffId,
+            apiKeyId: target.apiKeyId ?? null,
             at: target.at,
             sameScannerToday:
               target.scannerId === actor.scanner?.id &&

@@ -34,52 +34,21 @@ import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts
 import { addScannerInsert, addScannerPatch } from './repo-scanners.ts';
 import { scanningDeviceRow } from './repo-scanning-devices.ts';
 import { type ScanningSessionRow, scanningSessionForDevice } from './repo-scanning-sessions.ts';
-import {
-  addDeviceRole,
-  addSetupAcceptsClear,
-  setupMeta,
-  watchedScanners,
-  watchOf,
-} from './repo-setups.ts';
+import { addDeviceRole, addSetupAcceptsClear, setupMeta, watchOf } from './repo-setups.ts';
 import { acceptedTemplateIds, checkAccepts, requireScannerSettings } from './scanner-validation.ts';
 import { loadScanner } from './scanner-views.ts';
 import { addEnrollment, type DeviceEnrollment } from './scanning-enrollment.ts';
 import { setupView } from './setup-views.ts';
+import { checkWatch } from './setup-watch.ts';
 
 const SETUP_CODES = { config: 'SCANNER_CHANGED', lineage: 'SCANNER_CHANGED' } as const;
 
 type Create = z.infer<typeof CreateScannerSetupSchema>;
 type Update = z.infer<typeof UpdateScannerSetupSchema>;
-type Watch = Create['watch'];
 
 function roleAllowed(kind: Create['kind'], role: Create['deviceRole']) {
   if ((kind === 'terminal' && role !== 'scan') || (kind === 'display' && role === 'scan'))
     throw new ValidationError('Choose a role this device supports.', [], 'SCANNER_ROLE_INVALID');
-}
-
-async function checkWatch(
-  ctx: ServiceContext,
-  orgId: string,
-  mode: Mode,
-  role: Create['deviceRole'],
-  watch: Watch,
-  id?: string,
-) {
-  if (role === 'scan') return;
-  if (
-    !watch ||
-    (role === 'customer' && watch.allOrg) ||
-    (!watch.allOrg && !watch.scannerIds.length) ||
-    watch.scannerIds.includes(id ?? '')
-  )
-    throw new ValidationError(
-      'Choose the scanners this screen should follow.',
-      [],
-      'SCANNER_WATCH_INVALID',
-    );
-  const ids = [...new Set(watch.scannerIds)];
-  if ((await watchedScanners(ctx.env.DB, orgId, mode, ids)).length !== ids.length)
-    throw new NotFoundError('A watched scanner is unavailable.', 'SCANNER_WATCH_NOT_FOUND');
 }
 
 function conflict(error: unknown): never {
