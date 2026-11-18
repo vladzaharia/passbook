@@ -1,6 +1,10 @@
 import type { z } from 'zod';
 import { ZodError } from 'zod';
 import { ScanWatchSchema } from '../../../shared/contracts/scan-setups.ts';
+import {
+  ScanningSessionSettingsSchema,
+  type SessionCustomerSettings,
+} from '../../../shared/contracts/scanning-sessions.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
@@ -73,6 +77,8 @@ export function cloneLiveAttachment(a: LiveAttachment): LiveAttachment | null {
 
 export interface LiveRecipient {
   actor: ScanActor;
+  /** A customer screen's session settings: welcome, refused line, greet. Empty means the defaults. */
+  customer: SessionCustomerSettings;
   watch: z.infer<typeof ScanWatchSchema>;
   attachment: LiveAttachment;
 }
@@ -174,6 +180,18 @@ function parseWatch(
   }
 }
 
+/** The session's customer block; a stored value that no longer parses is the defaults. */
+function parseCustomer(raw: unknown): SessionCustomerSettings {
+  if (typeof raw !== 'string') return {};
+  try {
+    const parsed = ScanningSessionSettingsSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? (parsed.data.customer ?? {}) : {};
+  } catch (error) {
+    if (error instanceof SyntaxError) return {};
+    throw error;
+  }
+}
+
 /**
  * The recipient screen, read in one statement under its own authority: the same checks as a scan
  * write (credential, device and staff liveness, session and event epochs), so a cached socket never
@@ -206,11 +224,17 @@ export async function liveRecipient(
     const row = await liveRecipientStmt(ctx.env.DB, auth, actor, scanner.id).first<{
       watch?: unknown;
       session_watch?: unknown;
+      session_settings?: unknown;
     }>();
     if (!row) return null;
     const watch = parseWatch(actor, scanner.id, row);
     if (!watch || (attachment.role === 'customer' && watch.allOrg)) return null;
-    return { actor: cloneObservedScanActor(actor), watch, attachment };
+    return {
+      actor: cloneObservedScanActor(actor),
+      customer: parseCustomer(row.session_settings),
+      watch,
+      attachment,
+    };
   } catch (error) {
     if (error instanceof AppError && (error.status < 500 || error.code === 'SCAN_EPOCHS_MISSING'))
       return null;

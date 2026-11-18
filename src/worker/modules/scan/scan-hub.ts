@@ -1,5 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
+import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { ScanLiveResolvedSchema } from '../../../shared/contracts/scan-setups.ts';
 import { systemClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { problemResponse } from '../../platform/errors.ts';
@@ -12,7 +14,8 @@ import {
   type LiveRecipient,
   liveRecipient,
 } from './live-auth.ts';
-import { liveRowFor, liveRowsFor } from './live-render.ts';
+import { livePlaces } from './live-places.ts';
+import { liveRowFor, liveRowsFor, watches } from './live-render.ts';
 import { LIVE_ROW_TTL_MS, type LiveRingRow, ringRowOf, scrubbedEntry } from './live-ring.ts';
 import { getScanner } from './repo-device.ts';
 import { liveRingStaleStmt } from './repo-live-render.ts';
@@ -120,7 +123,12 @@ export class ScanHub extends DurableObject<AppEnv> {
           return;
         }
         const body = await liveRowFor(ctx, recipient, entry);
-        if (body) this.send(socket, JSON.stringify({ rows: [body], cursor: row.id }));
+        if (!body) return;
+        const places = await livePlaces(ctx, recipient, [entry]);
+        this.send(
+          socket,
+          JSON.stringify({ rows: [body], cursor: row.id, ...(places.length ? { places } : {}) }),
+        );
       }),
     );
     return true;
@@ -146,8 +154,14 @@ export class ScanHub extends DurableObject<AppEnv> {
     // A customer reconnect never replays a previous person's result.
     if (captured.role === 'customer') return { rows: [], cursor: ring.at(-1)?.row.id ?? null };
     const index = after ? ring.findIndex((r) => r.row.id === after) : -1;
-    const rows = await liveRowsFor(ctx, recipient, ring.slice(index + 1));
-    return { rows, cursor: ring.at(-1)?.row.id ?? null };
+    const unseen = ring.slice(index + 1);
+    const rows = await liveRowsFor(ctx, recipient, unseen);
+    const places = await livePlaces(
+      ctx,
+      recipient,
+      unseen.filter((entry) => watches(recipient, entry)),
+    );
+    return { rows, cursor: ring.at(-1)?.row.id ?? null, ...(places.length ? { places } : {}) };
   }
 
   /** Server-side only: the retained, unexpired ring entry of a live event, for its photo. */
@@ -165,6 +179,35 @@ export class ScanHub extends DurableObject<AppEnv> {
       socket.close(4409, 'Setup changed');
     }
     return sockets.length;
+  }
+
+  /**
+   * Tell the device whose refusal was overridden, and only it: sockets are tagged by device. A socket
+   * whose authority no longer holds is closed instead of told.
+   */
+  async resolved(input: {
+    orgId: string;
+    mode: Mode;
+    scannerId: string;
+    resolved: z.input<typeof ScanLiveResolvedSchema>;
+    now?: number;
+  }): Promise<number> {
+    const ctx = liveContext(this.env, input.now);
+    if (!(await this.tenant(input.orgId, input.mode))) return 0;
+    const message = JSON.stringify({ resolved: ScanLiveResolvedSchema.parse(input.resolved) });
+    let sent = 0;
+    for (const socket of this.ctx.getWebSockets(input.scannerId)) {
+      const sealed: unknown = socket.deserializeAttachment();
+      const attachment =
+        typeof sealed === 'string' ? await openLiveAttachment(ctx.env, sealed) : null;
+      if (!attachment || !(await liveRecipient(ctx, attachment))) {
+        socket.close(4409, 'Setup changed');
+        continue;
+      }
+      this.send(socket, message);
+      sent++;
+    }
+    return sent;
   }
 
   override webSocketMessage(socket: WebSocket) {
@@ -233,6 +276,9 @@ export class ScanHub extends DurableObject<AppEnv> {
 
   private async tenant(orgId: string, mode: Mode) {
     const expected = `${orgId}:${mode}`;
+    // The object's own name is its tenant: a test hub never takes a live row, and the reverse.
+    const named = this.ctx.id.name;
+    if (named !== undefined && named !== expected) return false;
     return this.ctx.storage.transaction(async (transaction) => {
       const current = await transaction.get<string>('tenant');
       if (current) return current === expected;

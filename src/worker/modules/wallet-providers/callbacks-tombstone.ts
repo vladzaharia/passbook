@@ -78,6 +78,7 @@ export async function authenticateSamsungTombstone(
       await verifySamsungTombstoneRuntimeRequest(ctx, scope, {
         request,
         refId,
+        method: request.method === 'POST' ? 'POST' : 'GET',
         claimReplay: (tokenHash, expiresAt) =>
           claimSamsungTombstoneReplay(ctx.env.DB, scope, {
             tokenHash,

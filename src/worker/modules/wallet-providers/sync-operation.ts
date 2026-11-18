@@ -45,6 +45,7 @@ export async function runWalletProviderOperation(
   )
     return 'not_claimed';
   let unissuedCandidate = false;
+  let unconfirmed = false;
   if (candidate.provider === 'samsung') {
     const scope = {
       instanceId: candidate.instanceId,
@@ -60,12 +61,14 @@ export async function runWalletProviderOperation(
     )
       return 'not_claimed';
     if (!target || target.countryCodes.length === 0) {
-      if (
-        candidate.kind !== 'revoke' ||
-        (await inspectSamsungRefRetirement(ctx, scope)) !== 'no_external_card'
-      )
+      if (candidate.kind !== 'revoke') return 'deferred';
+      // A served ref that was never confirmed and has no known market is closed, not waited for
+      // forever: erasure must not depend on evidence that may never arrive.
+      const disposition = await inspectSamsungRefRetirement(ctx, scope);
+      if (disposition !== 'no_external_card' && disposition !== 'served_unconfirmed')
         return 'deferred';
       unissuedCandidate = true;
+      unconfirmed = disposition === 'served_unconfirmed';
     }
   }
   // A disabled provider is never called and the operation is not claimed, so it cannot go uncertain.
@@ -171,6 +174,12 @@ export async function runWalletProviderOperation(
         ? 'deferred'
         : 'uncertain';
     }
+    if (unconfirmed)
+      ctx.log.warn('wallet.samsung_served_unconfirmed', {
+        code: 'WALLET_SAMSUNG_SERVED_UNCONFIRMED',
+        orgId: op.orgId,
+        mode: op.mode,
+      });
     // This is a locally proven absence, not a fabricated provider HTTP response.
     return complete(ctx, claim, op, { kind: 'not_issued' });
   }

@@ -1,5 +1,5 @@
 import { compactVerify, importX509 } from 'jose';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import {
   probeSamsungActiveTemplate,
@@ -7,6 +7,7 @@ import {
   type ValidatedSamsungCredentials,
   validateSamsungCredentials,
 } from './samsung.ts';
+import { SAMSUNG_REQUEST_TIMEOUT_MS } from './samsung-limits.ts';
 
 const NOW = Date.UTC(2026, 0, 1);
 const input = {
@@ -15,6 +16,7 @@ const input = {
   countryCode: 'US',
   mode: 'live' as const,
   now: NOW,
+  requestId: 'probe-1',
 };
 let account: ValidatedSamsungCredentials;
 let certificate: string;
@@ -75,7 +77,7 @@ describe('Samsung template evidence', () => {
       expect(request.init.signal).toBeDefined();
       const headers = new Headers(request.init.headers);
       expect(headers.get('x-smcs-partner-id')).toBe('partner123');
-      expect(headers.get('x-request-id')).toMatch(/^[a-f0-9]{32}$/);
+      expect(headers.get('x-request-id')).toBe('probe-1');
       const token = headers.get('Authorization')?.replace(/^Bearer /, '') ?? '';
       const signed = await compactVerify(token, publicKey, { algorithms: ['RS256'] });
       expect(signed.protectedHeader).toMatchObject({
@@ -151,17 +153,27 @@ describe('Samsung template evidence', () => {
     ).rejects.toMatchObject({ name: 'SamsungTemplateError', code: 'not_eligible' });
   });
 
-  it('requires ACTIVE and disabled testing mode in test mode as well', async () => {
-    const evidence = await probeSamsungActiveTemplate(
+  it('is mode-aware: live needs a launched card, test also accepts one still in testing mode', async () => {
+    const sandbox = { ...template, state: 'VERIFYING', testingModeOff: 'N' };
+    const launched = await probeSamsungActiveTemplate(
       account,
       { ...input, mode: 'test' },
       fetchPage(response(template)),
     );
-    expect(evidence).toMatchObject({ state: 'ACTIVE', testingModeOff: 'Y' });
+    expect(launched).toMatchObject({ state: 'ACTIVE', testingModeOff: 'Y' });
+    await expect(
+      probeSamsungActiveTemplate(account, { ...input, mode: 'test' }, fetchPage(response(sandbox))),
+    ).resolves.toMatchObject({ state: 'VERIFYING', testingModeOff: 'N', verifiedAt: NOW });
+    // Live never accepts a card that is still in testing mode.
+    await expect(
+      probeSamsungActiveTemplate(account, input, fetchPage(response(sandbox))),
+    ).rejects.toMatchObject({ code: 'not_eligible' });
     for (const candidate of [
+      { ...sandbox, state: 'BLOCKED' },
+      { ...sandbox, testingModeOff: undefined },
+      { ...sandbox, cardId: 'other' },
+      { ...sandbox, countryCode: 'GB' },
       { ...template, state: 'VERIFYING' },
-      { ...template, testingModeOff: 'N' },
-      { ...template, testingModeOff: undefined },
     ])
       await expect(
         probeSamsungActiveTemplate(
@@ -170,6 +182,31 @@ describe('Samsung template evidence', () => {
           fetchPage(response(candidate)),
         ),
       ).rejects.toMatchObject({ code: 'not_eligible' });
+  });
+
+  it('sends the caller-supplied request id, bounded by the request timeout', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+    try {
+      let headers = new Headers();
+      let signal: AbortSignal | null | undefined;
+      await probeSamsungActiveTemplate(account, input, (async (
+        _url: unknown,
+        init?: RequestInit,
+      ) => {
+        headers = new Headers(init?.headers);
+        signal = init?.signal;
+        return response(template);
+      }) as typeof fetch);
+      expect(headers.get('x-request-id')).toBe('probe-1');
+      expect(signal).toBeInstanceOf(AbortSignal);
+      expect(timeout).toHaveBeenCalledWith(SAMSUNG_REQUEST_TIMEOUT_MS);
+    } finally {
+      timeout.mockRestore();
+    }
+    for (const requestId of ['', 'x'.repeat(33), 'bad id'])
+      await expect(
+        probeSamsungActiveTemplate(account, { ...input, requestId }, fetchPage(response(template))),
+      ).rejects.toMatchObject({ code: 'invalid_input' });
   });
 
   it('rejects duplicate object keys, including escaped equivalents, at every depth', async () => {

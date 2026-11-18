@@ -3,7 +3,10 @@ import type { Envelope } from '../../platform/crypto.ts';
 import { all, batch, first, stmt } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { walletProviderEnabled } from './provider-policy.ts';
+import { samsungRevocableRefSql, samsungRouteCountriesSql } from './repo-callbacks-routing.ts';
+import { samsungInitialWindowSql } from './repo-callbacks-window.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
+import { SAMSUNG_UNCONFIRMED_SERVE_MS } from './samsung-limits.ts';
 
 export interface SamsungOperationScope {
   orgId: string;
@@ -57,15 +60,6 @@ const join = `JOIN wallet_provider_instances i ON i.id = r.instance_id
   JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id
     AND op.instance_id = i.id AND op.version = i.desired_version
   CROSS JOIN (SELECT ? AS now) clock`;
-
-/** Before promotion, only a delivered wrapper in the current pass-authority epoch opens a window. */
-export const samsungInitialWindowSql = `(r.promoted_at IS NOT NULL OR
-  (r.initial_expires_at > ? AND EXISTS (
-    SELECT 1 FROM wallet_provider_offer_refs offer
-    WHERE offer.instance_id = i.id AND offer.operation_version = op.version
-      AND offer.consumed_at IS NOT NULL AND offer.delivered_at IS NOT NULL AND offer.expires_at > ?
-      AND offer.pass_authority_generation = COALESCE(
-        (SELECT generation FROM wallet_provider_pass_authority authority WHERE authority.pass_id = i.pass_id), 0))))`;
 
 /** Create or reopen the same pre-promotion ref only under the exact current operation. */
 export async function putSamsungFetchRef(
@@ -233,9 +227,9 @@ export async function samsungFetchSnapshotCurrent(
     db,
     `SELECT 1 AS ok FROM wallet_samsung_fetch_refs r ${join}
     JOIN passes p ON p.id = i.pass_id
-    WHERE ${samsungSnapshotPredicate()} AND r.promoted_at IS NOT NULL
+    WHERE ${samsungSnapshotPredicate()} AND ${samsungInitialWindowSql}
       AND ${samsungPassJsonCurrentSql}`,
-    [now, ...samsungSnapshotParams(snapshot), rawPassJson],
+    [now, ...samsungSnapshotParams(snapshot), now, now, rawPassJson],
   );
   return row !== null;
 }
@@ -253,7 +247,7 @@ export async function samsungRefStillCurrent(
     `SELECT r.id FROM wallet_samsung_fetch_refs r ${join}
     WHERE r.id = ? AND i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'samsung'
       AND op.version = ? AND r.retired_at IS NULL
-      AND ${forSync ? `r.promoted_at IS NOT NULL AND ${current}` : upsert}
+      AND ${forSync ? `${samsungRevocableRefSql('r', 'op')} AND ${current}` : upsert}
       AND r.credential_keyset_commitment = i.credential_keyset_commitment AND ${samsungOperationKeysetSql}`,
     [
       now,
@@ -262,6 +256,7 @@ export async function samsungRefStillCurrent(
       scope.orgId,
       scope.mode,
       scope.operationVersion,
+      ...(forSync ? [now - SAMSUNG_UNCONFIRMED_SERVE_MS] : []),
       scope.credentialKeysetCommitment,
       scope.credentialKeysetCommitment,
     ],
@@ -279,7 +274,7 @@ export function getSamsungRefForSync(
     db,
     `SELECT r.* FROM wallet_samsung_fetch_refs r ${join}
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'samsung' AND op.version = ?
-      AND r.promoted_at IS NOT NULL AND r.retired_at IS NULL AND ${current}
+      AND ${samsungRevocableRefSql('r', 'op')} AND r.retired_at IS NULL AND ${current}
       AND r.credential_keyset_commitment = i.credential_keyset_commitment AND ${samsungOperationKeysetSql}`,
     [
       now,
@@ -287,6 +282,7 @@ export function getSamsungRefForSync(
       scope.orgId,
       scope.mode,
       scope.operationVersion,
+      now - SAMSUNG_UNCONFIRMED_SERVE_MS,
       scope.credentialKeysetCommitment,
       scope.credentialKeysetCommitment,
     ],
@@ -300,7 +296,7 @@ export async function listSamsungCountryHints(
 ): Promise<string[]> {
   const rows = await all<{ country_code: string }>(
     db,
-    'SELECT country_code FROM wallet_samsung_country_hints WHERE ref_id = ? ORDER BY country_code',
+    `SELECT country_code FROM ${samsungRouteCountriesSql} WHERE ref_id = ? ORDER BY country_code`,
     [referenceId],
   );
   return rows.map((row) => row.country_code);
