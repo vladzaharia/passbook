@@ -2,7 +2,7 @@ import { TAG_COPY, TAG_ERROR_COPY } from '@/shared/copy/tags.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { Callout, useNow } from '@/web/ui/index.ts';
 import { formatCountdown } from '../scanning/scanners/labels.ts';
-import { ENROLL_TTL_MS, type Enrollment } from './enroll-api.ts';
+import type { Enrollment } from './enroll-api.ts';
 import { EnrollArt } from './enroll-art.tsx';
 import { fill } from './words.ts';
 
@@ -69,10 +69,10 @@ function Steps({ current }: { current: 0 | 1 | 2 }) {
 }
 
 /** A ring that drains over the request's life: state, so it moves under reduced motion too. */
-function Ring({ left }: { left: number }) {
+function Ring({ left, total }: { left: number; total: number }) {
   const r = 9;
   const c = 2 * Math.PI * r;
-  const part = Math.min(1, Math.max(0, left / ENROLL_TTL_MS));
+  const part = Math.min(1, Math.max(0, left / Math.max(1, total)));
   return (
     <svg aria-hidden viewBox="0 0 24 24" className="wl-enroll-ring wl-essential size-5 -rotate-90">
       <circle cx="12" cy="12" r={r} fill="none" stroke="var(--color-border)" strokeWidth="2.5" />
@@ -131,7 +131,7 @@ export function WaitingFace({
       </p>
       {slow ? <p className="text-sm text-fg-muted">{fill(D.slow, { scanner })}</p> : null}
       <p className="flex items-center justify-center gap-2 text-sm text-fg-muted">
-        <Ring left={left} />
+        <Ring left={left} total={enrollment.expiresAt - enrollment.createdAt} />
         <span aria-live="off">{fill(D.expires, { time: formatCountdown(Math.max(0, left)) })}</span>
       </p>
       <p role="status" className="sr-only">

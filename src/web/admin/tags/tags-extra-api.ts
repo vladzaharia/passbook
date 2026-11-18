@@ -1,27 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
-import { IdSchema, pageOf } from '@/shared/contracts/common.ts';
-import {
-  type CreateTagEnrollmentSchema,
-  TagBindingSchema,
-  TagSchema,
-} from '@/shared/contracts/nfc-tags.ts';
+import type { z } from 'zod';
+import { TagHistorySchema, UserTagListSchema } from '@/shared/contracts/nfc-tag-admin.ts';
+import { type CreateTagEnrollmentSchema, TagSchema } from '@/shared/contracts/nfc-tags.ts';
 import { api } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { tagKeys } from './api.ts';
 
-/**
- * Routes T5 builds for the tag UI (not on the server yet), typed here so the screens run against
- * fakes in tests. Exact shapes are listed in agent-logs/t9-results.md:
- *   PATCH /api/v1/nfc/bindings/{bindingId}   { binding: 'pass' | 'user', passId? }          -> Tag
- *   POST  /api/v1/nfc/passes/{passId}/tags   { tagId, binding }                      -> Tag
- *   GET   /api/v1/nfc/tags/{tagId}/history                                           -> page of TagBinding (ended too, newest first)
- *   GET   /api/v1/nfc/users/{userId}/tags                                            -> page of Tag + { orgId, orgName }
- */
+/** The T5 admin routes for changing, rebinding, history and a user's tags. */
 const NFC = '/api/v1/nfc';
 export type BindingKind = z.input<typeof CreateTagEnrollmentSchema>['binding'];
-
-export const UserTagSchema = TagSchema.extend({ orgId: IdSchema, orgName: z.string() });
 
 export function useExtraTagMutations() {
   const client = useQueryClient();
@@ -67,7 +54,7 @@ export function useTagHistory(tagId: string) {
   return useQuery({
     queryKey: ['tags', 'history', tagId],
     queryFn: ({ signal }) =>
-      api.get(`${NFC}/tags/${encodeURIComponent(tagId)}/history`, pageOf(TagBindingSchema), {
+      api.get(`${NFC}/tags/${encodeURIComponent(tagId)}/history`, TagHistorySchema, {
         signal,
       }),
   });
@@ -78,7 +65,7 @@ export function useUserTagList(userId: string) {
   return useQuery({
     queryKey: ['tags', 'user', userId, mode],
     queryFn: ({ signal }) =>
-      api.get(`${NFC}/users/${encodeURIComponent(userId)}/tags`, pageOf(UserTagSchema), {
+      api.get(`${NFC}/users/${encodeURIComponent(userId)}/tags`, UserTagListSchema, {
         signal,
       }),
   });

@@ -20,13 +20,21 @@ const CAUSE: Record<NonNullable<TagBinding['endCause']>, string> = {
   tag_retired: 'The tag was retired',
 };
 
+const EVENT = {
+  lost: 'Reported lost',
+  retire: 'Retired',
+  restore: 'Restored',
+  update: 'Renamed',
+} as const;
+
 /** Every binding the tag has had, newest first: what it worked with, when, and how it ended. */
 export function TagHistory({ tagId }: { tagId: string }) {
   const query = useTagHistory(tagId);
   if (query.isPending) return <SkeletonRows rows={2} label="Loading history" />;
   if (query.isError)
     return <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />;
-  if (query.data.items.length === 0) return null;
+  const events = query.data.events;
+  if (query.data.items.length === 0 && events.length === 0) return null;
   return (
     <section className="flex flex-col gap-2">
       <h3 className="text-sm font-semibold text-fg-strong">History</h3>
@@ -51,6 +59,17 @@ export function TagHistory({ tagId }: { tagId: string }) {
           />
         ))}
       </ListRows>
+      {events.length > 0 ? (
+        <ListRows label="Changes">
+          {events.map((e) => (
+            <ListRow
+              key={`${e.at}-${e.action}`}
+              title={EVENT[e.action]}
+              meta={`${formatDateTime(e.at)}${e.actorName ? ` by ${e.actorName}` : ''}`}
+            />
+          ))}
+        </ListRows>
+      ) : null}
     </section>
   );
 }

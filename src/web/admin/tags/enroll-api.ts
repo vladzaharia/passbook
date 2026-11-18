@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
-import { pageOf, TimestampSchema } from '@/shared/contracts/common.ts';
+import { pageOf } from '@/shared/contracts/common.ts';
 import {
   type CreateTagEnrollmentSchema,
   TagEnrollmentSchema,
@@ -10,29 +10,13 @@ import { api } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { tagKeys } from './api.ts';
 
-/**
- * Remote enrollment, "Assign with a scanner" (T5). T5 is not built; these are the routes the
- * design names (access-nfc-design 8.2), typed by the contract so a change there fails here:
- *   GET    /api/v1/nfc/scanners?orgId              NFC-capable scanners in this org and mode
- *   POST   /api/v1/nfc/passes/{passId}/enrollments { scannerId, binding }
- *   GET    /api/v1/nfc/passes/{passId}/enrollments/{id}
- *   DELETE /api/v1/nfc/passes/{passId}/enrollments/{id}
- */
+/** Remote enrollment, "Assign with a scanner": the T5 routes under /api/v1/nfc. A request lasts until `expiresAt` (90 s). */
 const NFC = '/api/v1/nfc';
 const enrollments = (passId: string) => `${NFC}/passes/${encodeURIComponent(passId)}/enrollments`;
 
 /** The admin polls every 1.5 s while a request is pending. */
 export const ENROLL_POLL_MS = 1500;
-/** A request lasts two minutes. */
-export const ENROLL_TTL_MS = 120_000;
-
-/**
- * The contract has no "the scanner showed it" signal, yet the dialog's second step needs one.
- * Assumed: T5 adds `shownAt` to the enrollment. Until then it reads null and the step stays open.
- */
-export const EnrollmentSchema = TagEnrollmentSchema.extend({
-  shownAt: TimestampSchema.nullable().default(null),
-});
+export const EnrollmentSchema = TagEnrollmentSchema;
 export type Enrollment = z.infer<typeof EnrollmentSchema>;
 export type EnrollmentBody = z.input<typeof CreateTagEnrollmentSchema>;
 
