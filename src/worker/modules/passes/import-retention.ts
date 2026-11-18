@@ -1,5 +1,8 @@
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { writeReceipt } from '../retention/receipt-service.ts';
+import type { Scope } from '../retention/repo-sweep.ts';
+import { retentionTargets } from '../retention/targets.ts';
 import {
   clearPii,
   deleteImport,
@@ -79,9 +82,10 @@ async function dropFile(ctx: ServiceContext, imp: RetentionImport): Promise<void
 }
 
 /**
- * Daily: drafts past their 23 hours end `expired` and lose their file; rows of imports that ended 30 days ago
- * lose their cell values, emails and earlier values; imports 400 days old go with their counts. Each phase
- * takes at most 500 imports a run, so a backlog drains over several days.
+ * Daily: drafts past their 23 hours end `expired` and lose their file. Then, under the `imports` retention plan
+ * (the org's days, floors, holds and the platform maximum), rows of imports that ended that many days ago lose
+ * their cell values, emails and earlier values. Imports `COUNTS_KEPT_MS` old go with their counts; an org under
+ * a hold keeps both. Each phase takes at most 500 imports per target a run, so a backlog drains over several days.
  */
 export async function dailyImports(ctx: ServiceContext): Promise<void> {
   const now = ctx.clock.now();
@@ -94,21 +98,47 @@ export async function dailyImports(ctx: ServiceContext): Promise<void> {
       await dropFile(ctx, imp);
     },
   );
-  const cleared = await phase(
-    ctx,
-    'clear',
-    (after) => importsWithPii(ctx.env.DB, now - PII_KEPT_MS, after, BATCH),
-    (imp) => clearPii(ctx, imp),
-  );
-  const deleted = await phase(
-    ctx,
-    'delete',
-    (after) => oldImports(ctx.env.DB, now - COUNTS_KEPT_MS, after, BATCH),
-    async (imp) => {
-      await deleteImport(ctx, imp);
-      await dropFile(ctx, imp);
-    },
-  );
+  const targets = await retentionTargets(ctx, ['imports']);
+  let cleared = 0;
+  let deleted = 0;
+  if (targets) {
+    const run = async (orgId: string | null, days: number, scope: Scope) => {
+      const c = await phase(
+        ctx,
+        'clear',
+        (after) => importsWithPii(ctx.env.DB, now - days * DAY, after, BATCH, scope),
+        (imp) => clearPii(ctx, imp),
+      );
+      const d = await phase(
+        ctx,
+        'delete',
+        (after) => oldImports(ctx.env.DB, now - COUNTS_KEPT_MS, after, BATCH, scope),
+        async (imp) => {
+          await deleteImport(ctx, imp);
+          await dropFile(ctx, imp);
+        },
+      );
+      cleared += c;
+      deleted += d;
+      if (c + d > 0)
+        await writeReceipt(ctx, {
+          orgId,
+          cls: 'imports',
+          kind: 'sweep',
+          policyDays: days,
+          cutoffAt: now - days * DAY,
+          deleted: d,
+          anonymised: c,
+        });
+    };
+    await run(null, targets.platform.imports, { kind: 'platform', exclude: targets.exclude });
+    let visited = 0;
+    for (const o of targets.orgs) {
+      await run(o.orgId, o.days.imports, { kind: 'org', orgId: o.orgId });
+      visited++;
+    }
+    await targets.finish(visited);
+  }
   if (expired + cleared + deleted > 0)
     ctx.log.info('pass_import.retention', { expired, cleared, deleted });
 }

@@ -205,11 +205,11 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/webhooks/repo-retention.ts': {
     reason: 'daily purge of event_feed, deliveries, attempts and expired secrets; platform job',
     writes: [
-      'event_feed:64c24d3f1d97',
-      'webhook_attempts:5ff82e16f6e9',
-      'webhook_attempts:9017ace0b5c0',
-      'webhook_deliveries:160f2ac154d3',
-      'webhook_endpoint_secrets:3a87aa5ed8d1',
+      'event_feed:5feaab02774b',
+      'webhook_attempts:0d4ee4239362',
+      'webhook_attempts:68aa7f1fc016',
+      'webhook_deliveries:eb582508a58d',
+      'webhook_endpoint_secrets:98644d3fe974',
     ],
   },
   'src/worker/modules/delivery/repo-outbox-processing.ts': {
