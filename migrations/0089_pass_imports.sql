@@ -15,6 +15,8 @@ CREATE TABLE pass_imports (
   state TEXT NOT NULL CHECK (state IN
     ('mapping', 'checking', 'ready', 'committing', 'done', 'failed', 'stale', 'expired', 'discarded')),
   error_code TEXT,
+  -- Set by each check run; its row inserts and its finish must carry it, so two runs cannot mix rows.
+  check_id TEXT,
   email INTEGER NOT NULL DEFAULT 0 CHECK (email IN (0, 1)),
   skip_invalid INTEGER NOT NULL DEFAULT 0 CHECK (skip_invalid IN (0, 1)),
   email_budget INTEGER,
