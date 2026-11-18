@@ -29,6 +29,7 @@ import { styleList } from '../templates/labels.ts';
 import { TemplateInputs } from '../templates/template-overview.tsx';
 import { useBlueprint, useBlueprintPreview } from './api.ts';
 import { BlueprintAvatar, BlueprintStage } from './identity.tsx';
+import { StaffView } from './staff-view.tsx';
 import { UseBlueprintDialog } from './use-dialog.tsx';
 import '../passes/passes.css';
 
@@ -171,6 +172,7 @@ function Loaded({ blueprint: b, tab }: { blueprint: Blueprint; tab: BlueprintTab
           <TabsContent value="overview">
             <div className="grid gap-6">
               <LegacyPasses blueprint={b} />
+              <StaffView blueprintId={b.id} version={b.activeVersion} />
               <Card>
                 <CardHeader title="Included" />
                 <CardBody>

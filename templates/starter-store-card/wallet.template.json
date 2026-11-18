@@ -319,6 +319,14 @@
   ],
   "display": {
     "icon": "coins",
+    "group": "save-spend",
+    "aliases": [
+      "gift",
+      "gift card",
+      "prepaid",
+      "top up",
+      "balance"
+    ],
     "title": "{{holder}}",
     "subtitle": "{{tier}} · {{cardNumber}}",
     "status": "{{tier}}",

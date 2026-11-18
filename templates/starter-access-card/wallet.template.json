@@ -228,6 +228,16 @@
   ],
   "display": {
     "icon": "key",
+    "group": "get-in",
+    "aliases": [
+      "gym",
+      "door",
+      "key",
+      "entry",
+      "office",
+      "staff",
+      "studio"
+    ],
     "title": "{{memberName}}",
     "subtitle": "{{lookups.plans[plan].label}} · {{memberId}}",
     "status": "{{status}}",

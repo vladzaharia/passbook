@@ -246,6 +246,10 @@ export interface NfcManifest {
   requiresAuthentication?: boolean;
 }
 
+/** The gallery's jobs, in order. A blueprint names one in `display.group`. */
+export const BLUEPRINT_GROUPS = ['get-in', 'save-spend', 'membership-id', 'prove-collect'] as const;
+export type BlueprintGroup = (typeof BLUEPRINT_GROUPS)[number];
+
 export interface TemplateManifest {
   schema: 1;
   name: string;
@@ -255,7 +259,17 @@ export interface TemplateManifest {
   lookups?: Record<string, Record<string, Record<string, Json>>>;
   bindings: Binding[];
   /** `icon` is a curated icon id (`SCAN_ICONS`): a blueprint's glyph. */
-  display: { title: Expr; subtitle?: Expr; status?: Expr; search?: string[]; icon?: string };
+  display: {
+    title: Expr;
+    subtitle?: Expr;
+    status?: Expr;
+    search?: string[];
+    icon?: string;
+    /** A blueprint's gallery group. Additive and optional, so the schema version stays 1. */
+    group?: BlueprintGroup;
+    /** Words the gallery search also matches ("gift", "punch card"). */
+    aliases?: string[];
+  };
   behaviors?: { use: string; version: number; config: Json }[];
   requires?: { styles?: PassStyle[]; nfc?: boolean };
   /** Baked templates belong to an org by slug; starters have none. */

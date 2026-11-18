@@ -316,6 +316,14 @@
   ],
   "display": {
     "icon": "id-card",
+    "group": "membership-id",
+    "aliases": [
+      "member",
+      "loyalty",
+      "library",
+      "student",
+      "id"
+    ],
     "title": "{{holder}}",
     "subtitle": "{{tier}}",
     "status": "{{tier}}",

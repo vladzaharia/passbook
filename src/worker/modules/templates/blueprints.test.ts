@@ -19,6 +19,8 @@ interface Item {
   orgId: string | null;
   activeVersion: string | null;
   icon: string | null;
+  group: string | null;
+  aliases: string[];
   fromBlueprint: { id: string; name: string } | null;
 }
 interface Detail extends Item {
@@ -100,6 +102,44 @@ describe('the blueprint flag', () => {
     expect(errors({ ...manifest, display: { title: 'x', icon: 'rocket' } }, true)).toContain(
       'MANIFEST_ICON',
     );
+  });
+});
+
+describe('gallery metadata', () => {
+  it('puts every starter in one of the gallery groups, with search aliases', async () => {
+    const listed = await items('?blueprint=true&limit=200');
+    const groups = ['get-in', 'save-spend', 'membership-id', 'prove-collect'];
+    expect(listed.every((i) => i.group !== null && groups.includes(i.group))).toBe(true);
+    expect(listed.every((i) => i.aliases.length > 0)).toBe(true);
+    expect(listed.find((i) => i.id === STORE)).toMatchObject({
+      group: 'save-spend',
+      aliases: expect.arrayContaining(['gift']),
+    });
+  });
+
+  it('refuses an unknown group and malformed aliases', () => {
+    const base = {
+      schema: 1,
+      name: 'X',
+      inputs: { type: 'object' },
+      sample: {},
+      bindings: [],
+    };
+    const pass = { generic: { primaryFields: [] } } as never;
+    const codes = (display: Record<string, unknown>) =>
+      validateManifest(
+        { ...base, display: { title: 'x', ...display } } as unknown as TemplateManifest,
+        pass,
+        {
+          uploaded: true,
+        },
+      )
+        .filter((i) => i.severity === 'error')
+        .map((i) => i.code);
+    expect(codes({ group: 'get-in', aliases: ['gift'] })).toEqual([]);
+    expect(codes({ group: 'fun' })).toContain('MANIFEST_GROUP');
+    expect(codes({ aliases: 'gift' })).toContain('MANIFEST_ALIASES');
+    expect(codes({ aliases: [''] })).toContain('MANIFEST_ALIASES');
   });
 });
 
@@ -306,5 +346,23 @@ describe('pickers', () => {
     expect(
       (await eligible(kit.org.id, 'scan')).filter((id) => id.startsWith('baked:starter-')),
     ).toEqual([STORE]);
+  });
+});
+
+describe('quick setup', () => {
+  it('makes a tracked template with the chosen colours', async () => {
+    const draft = await draftOf(STORE);
+    const res = await kit.post(`/${STORE}/use`, {
+      orgId: kit.org.id,
+      name: 'Branded Card',
+      version: { ...draft, passJson: { ...draft.passJson, backgroundColor: 'rgb(29,58,186)' } },
+    });
+    expect(res.status, await res.clone().text()).toBe(201);
+    const body = (await res.json()) as Detail;
+    expect(body).toMatchObject({ blueprint: false, fromBlueprint: { id: STORE } });
+    const saved = (await (
+      await kit.call(`/${body.id}/versions/${body.versions[0]?.version}`)
+    ).json()) as { passJson: Record<string, unknown> };
+    expect(saved.passJson.backgroundColor).toBe('rgb(29,58,186)');
   });
 });
