@@ -1,8 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { TagEnrollment, TagScanner } from '../../../shared/contracts/nfc-tags.ts';
+import type { TagEnrollment, TagScanner } from '../../../shared/contracts/nfc-tag-enrollments.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { type EnrollFixture, enrollFixture } from '../scan/tags-enroll-test-fixtures.ts';
 import { startScanCredentialTransfer } from '../scan/test-kit.ts';
+import { sweepEnrollments } from './enrollment-retention.ts';
 
 let f: EnrollFixture;
 beforeAll(async () => {
@@ -546,5 +548,98 @@ describe('the device side', () => {
     );
     expect(rows.length).toBeGreaterThan(0);
     for (const r of rows) expect(r.detail ?? '').not.toMatch(/04[0-9a-f]{12}/);
+  });
+});
+
+describe('review fixes', () => {
+  it('refuses a pass-scope request when the pass changed hands inside the window', async () => {
+    const { scanner, socket, pass } = await ready();
+    const e = await f.json<TagEnrollment>(await request(pass.id, scanner.id));
+    await startScanCredentialTransfer(f.kit, pass.id);
+    expect(await (await f.deviceGet(scanner, '/tag-enrollments/pending')).json()).toEqual({
+      enrollment: null,
+    });
+    const response = await f.kit.post(scanner.headers, `/tag-enrollments/${e.id}/complete`, {
+      tag: f.read(),
+    });
+    expect(response.status).toBe(409);
+    expect((await problem(response)).code).toBe('TAG_HOLDER_CHANGED');
+    expect(await first_('SELECT count(*) AS n FROM tag_bindings WHERE pass_id = ?', pass.id)).toBe(
+      0,
+    );
+    socket.socket.close(1000);
+  });
+
+  it('refuses a voided pass at the request and at completion', async () => {
+    const { scanner, socket, pass } = await ready();
+    await run(db(), "UPDATE passes SET status = 'voided' WHERE id = ?", [pass.id]);
+    const refused = await request(pass.id, scanner.id);
+    expect(refused.status).toBe(409);
+    expect((await problem(refused)).code).toBe('TAG_PASS_VOIDED');
+    await run(db(), "UPDATE passes SET status = 'active' WHERE id = ?", [pass.id]);
+    const e = await f.json<TagEnrollment>(await request(pass.id, scanner.id));
+    await run(db(), "UPDATE passes SET status = 'voided' WHERE id = ?", [pass.id]);
+    const late = await f.kit.post(scanner.headers, `/tag-enrollments/${e.id}/complete`, {
+      tag: f.read(),
+    });
+    expect((await problem(late)).code).toBe('TAG_PASS_VOIDED');
+    socket.socket.close(1000);
+  });
+
+  it('gives the admin the tag hint once done', async () => {
+    const { scanner, socket, pass } = await ready();
+    const e = await f.json<TagEnrollment>(await request(pass.id, scanner.id));
+    expect(e.hint).toBeNull();
+    const done = await f.kit.post(scanner.headers, `/tag-enrollments/${e.id}/complete`, {
+      tag: f.read(),
+    });
+    const { hint } = (await done.json()) as { hint: string };
+    const view = await f.json<TagEnrollment>(
+      await f.nfc(f.operator.headers, 'GET', `/passes/${pass.id}/enrollments/${e.id}`),
+    );
+    expect(view.hint).toBe(hint);
+    socket.socket.close(1000);
+  });
+
+  it('audits an offline failure, and audits expiry as the system', async () => {
+    const scanner = await f.device('desk');
+    const { pass } = await f.pass();
+    await request(pass.id, scanner.id);
+    const failed = await first<{ target_id: string }>(
+      db(),
+      "SELECT target_id FROM audit_log WHERE action = 'tag.enroll.fail' ORDER BY id DESC LIMIT 1",
+    );
+    expect(failed?.target_id).toBeTruthy();
+    const socket = await f.connect(scanner.id);
+    const e = await f.json<TagEnrollment>(await request(pass.id, scanner.id));
+    f.kit.clock.advance(120_000);
+    await sweepEnrollments(jobCtxOf(f.kit));
+    const row = await first<{ actor_type: string; actor_id: string | null }>(
+      db(),
+      "SELECT actor_type, actor_id FROM audit_log WHERE action = 'tag.enroll.expire' AND target_id = ?",
+      [e.id],
+    );
+    expect(row).toEqual({ actor_type: 'system', actor_id: null });
+    expect(
+      await first_(
+        'SELECT count(*) AS n FROM tag_enrollments WHERE id = ? AND state = ?',
+        e.id,
+        'expired',
+      ),
+    ).toBe(1);
+    socket.socket.close(1000);
+  });
+
+  it('purges finished requests after 400 days and keeps newer ones and pending ones', async () => {
+    const { scanner, socket, pass } = await ready();
+    const e = await f.json<TagEnrollment>(await request(pass.id, scanner.id));
+    await f.kit.post(scanner.headers, `/tag-enrollments/${e.id}/decline`, {});
+    f.kit.clock.advance(399 * 86_400_000);
+    await sweepEnrollments(jobCtxOf(f.kit));
+    expect(await first_('SELECT count(*) AS n FROM tag_enrollments WHERE id = ?', e.id)).toBe(1);
+    f.kit.clock.advance(2 * 86_400_000);
+    await sweepEnrollments(jobCtxOf(f.kit));
+    expect(await first_('SELECT count(*) AS n FROM tag_enrollments WHERE id = ?', e.id)).toBe(0);
+    socket.socket.close(1000);
   });
 });

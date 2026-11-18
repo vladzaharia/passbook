@@ -224,7 +224,7 @@ export async function liveRecipient(
       return null;
     const auth = scanReadAuthority(actor, {
       now: ctx.clock.now(),
-      read: { stafflessMonitor: true },
+      read: attachment.role === 'device' ? { deviceSocket: true } : { stafflessMonitor: true },
     });
     const row = await liveRecipientStmt(ctx.env.DB, auth, actor, scanner.id).first<{
       watch?: unknown;

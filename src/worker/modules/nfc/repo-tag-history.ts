@@ -104,6 +104,8 @@ export async function lastEndedBinding(
   passId: string;
   scope: 'pass' | 'user';
   userId: string | null;
+  holderGeneration: number;
+  holderOwner: string | null;
   endCause: string;
   endedAt: number;
   endedBy: string | null;
@@ -113,13 +115,15 @@ export async function lastEndedBinding(
     pass_id: string;
     scope: 'pass' | 'user';
     user_id: string | null;
+    holder_generation: number;
+    holder_owner: string | null;
     end_cause: string;
     ended_at: number;
     ended_by: string | null;
     ended_by_type: string | null;
   }>(
     db,
-    `SELECT pass_id, scope, user_id, end_cause, ended_at, ended_by, ended_by_type FROM tag_bindings
+    `SELECT pass_id, scope, user_id, holder_generation, holder_owner, end_cause, ended_at, ended_by, ended_by_type FROM tag_bindings
      WHERE tag_id = ? AND ended_at IS NOT NULL ORDER BY rowid DESC LIMIT 1`,
     [tagId],
   );
@@ -128,6 +132,8 @@ export async function lastEndedBinding(
         passId: r.pass_id,
         scope: r.scope,
         userId: r.user_id,
+        holderGeneration: r.holder_generation,
+        holderOwner: r.holder_owner,
         endCause: r.end_cause,
         endedAt: r.ended_at,
         endedBy: r.ended_by,

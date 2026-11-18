@@ -9,6 +9,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
+import { assertBindable } from './pass-state.ts';
 import { tagsEnabled } from './policy.ts';
 import { ownerIsActive } from './repo-enrollments.ts';
 import { activeBinding, bindingTarget, type PassFacts, passFacts } from './repo-tag-bindings.ts';
@@ -34,6 +35,7 @@ async function livePass(ctx: ServiceContext, a: TagAuthority, passId: string): P
   const pass = await passFacts(ctx.env.DB, passId);
   if (!pass || pass.orgId !== a.orgId || pass.mode !== a.mode || pass.deletedAt !== null)
     throw passGone();
+  await assertBindable(ctx, a.orgId, passId);
   return pass;
 }
 
@@ -151,6 +153,9 @@ export async function rebindRemoved(
     last.endCause === 'admin' &&
     last.endedByType === 'user' &&
     last.endedBy === a.userId &&
+    last.scope === req.binding &&
+    last.holderGeneration === pass.credentialGeneration &&
+    last.holderOwner === pass.ownerUserId &&
     (last.scope === 'user' ? last.userId === pass.ownerUserId : last.passId === pass.id);
   const active = await activeBinding(ctx.env.DB, tag.id);
   if (active) {

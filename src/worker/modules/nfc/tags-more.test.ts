@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { Tag, TagBinding } from '../../../shared/contracts/nfc-tags.ts';
 import { first, run } from '../../platform/db.ts';
 import { type EnrollFixture, enrollFixture } from '../scan/tags-enroll-test-fixtures.ts';
+import { startScanCredentialTransfer } from '../scan/test-kit.ts';
 
 let f: EnrollFixture;
 beforeAll(async () => {
@@ -200,6 +201,18 @@ describe('undo on remove', () => {
     const back = await put(b.pass.id, b.tagId);
     expect(back.status).toBe(409);
     expect(await code(back)).toBe('TAG_ALREADY_ASSIGNED');
+  });
+
+  it('refuses after the pass changed hands, and never widens a removed pass tag', async () => {
+    const b = await bound({ owner: true });
+    expect((await remove(b.bindingId)).status).toBe(200);
+    const wider = await put(b.pass.id, b.tagId, 'user');
+    expect(await code(wider)).toBe('TAG_UNDO_EXPIRED');
+    await startScanCredentialTransfer(f.kit, b.pass.id);
+    const back = await put(b.pass.id, b.tagId);
+    expect(back.status).toBe(403);
+    expect(await code(back)).toBe('TAG_UNDO_EXPIRED');
+    expect(await activeCount(b.tagId)).toBe(0);
   });
 
   it('checks the capability and the org', async () => {

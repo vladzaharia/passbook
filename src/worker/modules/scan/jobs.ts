@@ -3,6 +3,7 @@ import type { Grant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { sweepEnrollments } from '../nfc/enrollment-retention.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { credentialTombstoneRef } from '../passes/credential-tombstones.ts';
 import { newScanCode, primaryBarcodeMessage } from '../passes/scan-code.ts';
@@ -225,4 +226,5 @@ export async function dailyScans(ctx: ServiceContext): Promise<void> {
     now - settings['sandbox.purgeDays'] * DAY,
   );
   ctx.log.info('scan.retention', { live, test });
+  await sweepEnrollments(ctx);
 }

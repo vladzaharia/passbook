@@ -27,6 +27,8 @@ export interface EnrollmentRow {
   bindingId: string | null;
   errorCode: string | null;
   scannerName: string;
+  holderGeneration: number;
+  holderOwner: string | null;
 }
 
 interface Raw {
@@ -46,10 +48,12 @@ interface Raw {
   binding_id: string | null;
   error_code: string | null;
   scanner_name: string;
+  holder_generation: number;
+  holder_owner: string | null;
 }
 
 const SELECT = `SELECT e.id, e.org_id, e.mode, e.pass_id, e.scanner_id, e.requested_by, e.scope, e.user_id, e.state,
-    e.created_at, e.expires_at, e.shown_at, e.ended_at, e.binding_id, e.error_code, s.name AS scanner_name
+    e.created_at, e.expires_at, e.shown_at, e.ended_at, e.binding_id, e.error_code, s.name AS scanner_name, e.holder_generation, e.holder_owner
   FROM tag_enrollments e JOIN scanners s ON s.id = e.scanner_id`;
 
 const toRow = (r: Raw): EnrollmentRow => ({
@@ -69,6 +73,8 @@ const toRow = (r: Raw): EnrollmentRow => ({
   bindingId: r.binding_id,
   errorCode: r.error_code,
   scannerName: r.scanner_name,
+  holderGeneration: r.holder_generation,
+  holderOwner: r.holder_owner,
 });
 
 /** An enrollment by id, before any authority exists for it. */
@@ -274,4 +280,43 @@ export async function enrollScanners(
       lastUsedAt: r.last_used,
     };
   });
+}
+
+/** Pending requests past their expiry, for the sweep. */
+export async function lapsedEnrollments(
+  db: Db,
+  now: number,
+  limit: number,
+): Promise<EnrollmentRow[]> {
+  return (
+    await all<Raw>(
+      db,
+      `${SELECT} WHERE e.state = 'pending' AND e.expires_at <= ? ORDER BY e.id LIMIT ?`,
+      [now, limit],
+    )
+  ).map(toRow);
+}
+
+/** The orgs and modes holding finished requests that ended before `before`. */
+export async function purgeableEnrollmentTenants(
+  db: Db,
+  before: number,
+): Promise<{ orgId: string; mode: Mode }[]> {
+  return (
+    await all<{ org_id: string; mode: Mode }>(
+      db,
+      "SELECT DISTINCT org_id, mode FROM tag_enrollments WHERE state <> 'pending' AND ended_at < ?",
+      [before],
+    )
+  ).map((r) => ({ orgId: r.org_id, mode: r.mode }));
+}
+
+/** A binding's tag hint, for the admin's view of a finished request. */
+export async function bindingHint(db: Db, bindingId: string): Promise<string | null> {
+  const r = await first<{ hint: string }>(
+    db,
+    'SELECT t.hint FROM tag_bindings b JOIN nfc_tags t ON t.id = b.tag_id WHERE b.id = ?',
+    [bindingId],
+  );
+  return r?.hint ?? null;
 }
