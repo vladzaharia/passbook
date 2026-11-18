@@ -4,13 +4,16 @@ import { jobGrant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
+import { readSystemValue } from '../settings/repo.ts';
 import { kickScreen } from './live.ts';
+import { FRESH_STATE, parseBackfillState, saveBackfillState } from './repo-lookup-backfill.ts';
 import { scanningDeviceRows } from './repo-scanning-devices.ts';
 import { dueHoursRows, type ScanningSessionRow } from './repo-scanning-sessions.ts';
 import { nextEdgeAt, openAt } from './session-hours.ts';
 
 export const SESSION_HOURS_JOB = 'scan.session_hours';
 export const SESSION_HOURS_BATCH = 200;
+const CURSOR = 'scan.sessionHoursCursor';
 
 /** A grant refusal (the row moved, a suspended org) is a skip; anything else is a bug. */
 const refusal = (error: unknown) => error instanceof AppError && error.status < 500;
@@ -48,7 +51,14 @@ async function settle(ctx: ServiceContext, row: ScanningSessionRow, now: number)
 
 export async function sweepSessionHours(ctx: ServiceContext): Promise<void> {
   const now = ctx.clock.now();
-  const rows = await dueHoursRows(ctx.env.DB, now, SESSION_HOURS_BATCH);
+  // The batch walks the due sessions by id from a saved cursor, so rows that keep failing cannot
+  // keep the healthy ones behind them out of every batch.
+  const cursor = parseBackfillState(await readSystemValue(ctx.env.DB, CURSOR)).after;
+  let rows = await dueHoursRows(ctx.env.DB, now, SESSION_HOURS_BATCH, cursor);
+  if (rows.length === 0 && cursor !== null)
+    rows = await dueHoursRows(ctx.env.DB, now, SESSION_HOURS_BATCH, null);
+  const next = rows.length < SESSION_HOURS_BATCH ? null : (rows.at(-1)?.id ?? null);
+  if (next !== cursor) await saveBackfillState(ctx, CURSOR, { ...FRESH_STATE, after: next });
   if (rows.length === 0) return;
   let flips = 0;
   let refused = 0;

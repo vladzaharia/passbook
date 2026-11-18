@@ -45,13 +45,13 @@ export const scanningSessionForDevice = (db: D1Database, orgId: string, scannerI
     WHERE d.scanner_id=? AND s.org_id=?`,
     [scannerId, orgId],
   );
-/** Active sessions whose open state may have changed, oldest edge first. */
-export const dueHoursRows = (db: D1Database, now: number, limit: number) =>
+/** Active sessions whose open state may have changed, by id after the cursor. */
+export const dueHoursRows = (db: D1Database, now: number, limit: number, after: string | null) =>
   all<ScanningSessionRow>(
     db,
     `${SELECT} WHERE s.status='active' AND s.hours_next_at IS NOT NULL AND s.hours_next_at<=?
-    ORDER BY s.hours_next_at LIMIT ?`,
-    [now, limit],
+    ${after === null ? '' : 'AND s.id>?'} ORDER BY s.id LIMIT ?`,
+    [now, ...(after === null ? [] : [after]), limit],
   );
 export const listScanningSessionRows = (
   db: D1Database,

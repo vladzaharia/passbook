@@ -198,6 +198,74 @@ describe('closed sessions, more doors', () => {
     expect(await code(await doAct(s, codeOf(pass)))).toBe('SCANNING_SESSION_CLOSED');
   });
 
+  it('answers a retry of a tag assign committed before close with its stored result', async () => {
+    const { s } = await session(WED);
+    const { card } = await f.pass();
+    f.kit.clock.set(at(3, 21, 59));
+    const tag = f.read();
+    const bindKey = key();
+    const body = { card, tag, idempotencyKey: bindKey };
+    const first = await f.kit.post(s.headers, '/tags/bind', body);
+    expect(first.status).toBe(200);
+    f.kit.clock.set(at(3, 22, 1));
+    const again = await f.kit.post(s.headers, '/tags/bind', body);
+    expect(again.status).toBe(200);
+    const fresh = await f.kit.post(s.headers, '/tags/bind', { ...body, idempotencyKey: key() });
+    expect(await code(fresh)).toBe('SCANNING_SESSION_CLOSED');
+  });
+
+  it('refuses a lookup by pass while closed', async () => {
+    const { s } = await session(WED);
+    f.kit.clock.set(at(3, 23));
+    const res = await f.kit.post(s.headers, '/resolve', { input: 'x' });
+    expect(res.status).toBe(403);
+    expect(await code(res)).toBe('SCANNING_SESSION_CLOSED');
+  });
+
+  it('still takes a device report while closed', async () => {
+    const { s } = await session(WED);
+    f.kit.clock.set(at(3, 23));
+    const res = await f.kit.post(s.headers, '/device', {
+      capabilities: {
+        width: 400,
+        height: 800,
+        touch: true,
+        camera: 'available',
+        keyboard: false,
+        nativeBarcode: false,
+        surfaces: ['phone'],
+        preferred: 'phone',
+      },
+    });
+    expect(await code(res)).not.toBe('SCANNING_SESSION_CLOSED');
+    expect(res.status).toBeLessThan(400);
+  });
+
+  it('does not open a paused session from the door', async () => {
+    const m = await f.manager();
+    const id = await f.workspace(
+      f.kit,
+      m.scanner,
+      { templateIds: [f.tpl] },
+      { ...DEFAULT_SETTINGS, staffSignIn: true },
+    );
+    await run(
+      f.kit.env.DB,
+      "UPDATE scanning_sessions SET hours = ?, status = 'paused' WHERE id = ?",
+      [WED, id],
+    );
+    f.kit.clock.set(at(3, 6));
+    const res = await f.kit.post(m.scanner.headers, '/session/open-now', {});
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(
+      await first(
+        f.kit.env.DB,
+        'SELECT 1 FROM scanning_sessions WHERE id = ? AND hold IS NOT NULL',
+        [id],
+      ),
+    ).toBeNull();
+  });
+
   it('fails a scan as stale when a Close now lands between the guard and the epoch capture', async () => {
     const { s, id } = await session(WED);
     f.kit.clock.set(at(3, 9));

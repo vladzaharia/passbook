@@ -236,4 +236,33 @@ describe('the session hours cron', () => {
       await run(kit.env.DB, 'DROP TRIGGER zz_hours_boom');
     }
   });
+
+  it('reaches healthy sessions even when 200 rows keep failing', async () => {
+    const { kit } = fixture;
+    const { run } = await import('../../platform/db.ts');
+    const db = kit.env.DB;
+    const insert = (id: string, name: string) =>
+      run(
+        db,
+        `INSERT INTO scanning_sessions (id, org_id, mode, name, settings, time_zone, hours, hours_next_at, created_at, updated_at)
+         VALUES (?, ?, 'live', ?, '{}', 'UTC', ?, ?, 1, 1)`,
+        [id, kit.org.id, name, JSON.stringify(WED), at(3, 8)],
+      );
+    for (let i = 0; i < 205; i++) await insert(`zzbad-${String(i).padStart(4, '0')}`, 'zzbad');
+    await insert('zzzgood', 'zzgood');
+    await run(
+      db,
+      `CREATE TRIGGER zz_hours_many BEFORE UPDATE OF hours_next_at ON scanning_sessions
+       WHEN OLD.name = 'zzbad' BEGIN SELECT RAISE(ABORT, 'boom'); END`,
+    );
+    try {
+      const ctx = createJobContext(kit.env, 'test', { clock: kit.clock });
+      kit.clock.set(at(3, 8, 1));
+      for (let i = 0; i < 3; i++) await sweepSessionHours(ctx);
+      expect(await audits('zzzgood', 'scanning.session_opened')).toHaveLength(1);
+    } finally {
+      await run(db, 'DROP TRIGGER zz_hours_many');
+      await run(db, "DELETE FROM scanning_sessions WHERE name IN ('zzbad', 'zzgood')");
+    }
+  });
 });
