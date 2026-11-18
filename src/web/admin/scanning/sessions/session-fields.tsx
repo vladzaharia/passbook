@@ -16,6 +16,8 @@ import { CheckInFields } from '../check-in-fields.tsx';
 import { EligibleTemplatePicker } from '../eligible-template-picker.tsx';
 import { useScanEvents } from '../scanner-api.ts';
 import type { SessionDraft as ScannerDraft } from './draft.ts';
+import { SessionAccessFields } from './session-access-fields.tsx';
+import { SessionCustomerFields } from './session-customer-fields.tsx';
 
 function SessionScope({
   draft,
@@ -209,6 +211,8 @@ export function SessionFields({
       <TabsList aria-label="Session settings">
         <TabsTrigger value="passes">Passes</TabsTrigger>
         <TabsTrigger value="rules">Admission</TabsTrigger>
+        <TabsTrigger value="access">Access</TabsTrigger>
+        <TabsTrigger value="customer">Customer screen</TabsTrigger>
         <TabsTrigger value="defaults">Device defaults</TabsTrigger>
       </TabsList>
       <TabsContent value="passes">
@@ -222,6 +226,12 @@ export function SessionFields({
           onChange={(checkIn) => set({ checkIn })}
         />
         <SessionStaff draft={draft} set={set} />
+      </TabsContent>
+      <TabsContent value="access">
+        <SessionAccessFields draft={draft} set={set} />
+      </TabsContent>
+      <TabsContent value="customer">
+        <SessionCustomerFields value={draft.customer} onChange={(customer) => set({ customer })} />
       </TabsContent>
       <TabsContent value="defaults">
         <SessionDefaults draft={draft} set={set} />

@@ -6,7 +6,9 @@ import type { ScanActor } from './actor.ts';
 
 /** Misses for one actor are independent across tenants and live/test modes. */
 export function missCounterKey(actor: ScanActor): string {
-  return `scan:miss:${JSON.stringify([actor.orgId, actor.mode, actor.actorKey])}`;
+  // A key's misses count apart from the terminal's own, so a key cannot lock the physical till out.
+  const who = actor.apiKeyId ? `k:${actor.apiKeyId}:${actor.actorKey}` : actor.actorKey;
+  return `scan:miss:${JSON.stringify([actor.orgId, actor.mode, who])}`;
 }
 
 const INCREMENT = (when: string) =>

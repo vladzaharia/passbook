@@ -175,6 +175,8 @@ export const ScanRecordSchema = z.object({
   scannerName: z.string().nullable(),
   staffId: IdSchema.nullable(),
   staffName: z.string().nullable(),
+  /** The API key a till scanned with. */
+  apiKeyId: IdSchema.nullable().default(null),
   approvedBy: z.string().nullable(),
   method: ScanMethodSchema,
   amount: z.number().nullable(),

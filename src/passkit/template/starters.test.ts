@@ -23,6 +23,7 @@ const STYLE_OF: Record<string, string> = {
   'starter-coupon': 'coupon',
   'starter-event-ticket': 'eventTicket',
   'starter-boarding-pass': 'boardingPass',
+  'starter-access-card': 'generic',
 };
 
 const groups = (pass: PassJson, style: string) =>
@@ -128,6 +129,7 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
         'balance',
         'tier',
         'stamps',
+        'plan',
       ]).toContain(key);
   });
 
@@ -197,8 +199,11 @@ describe('field coverage', () => {
     for (const slug of Object.keys(STYLE_OF)) {
       const { barcodes } = (await build(slug, material)).passJson;
       expect(barcodes?.length, slug).toBeGreaterThan(0);
+      // The access card's code is the server's {{pass.scanCode}}; its alt text is the member ID.
       expect(
-        barcodes?.every((b) => b.altText === b.message),
+        barcodes?.every((b) =>
+          slug === 'starter-access-card' ? !!b.altText : b.altText === b.message,
+        ),
         slug,
       ).toBe(true);
     }

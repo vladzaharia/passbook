@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const SCANNING_TABS = ['sessions', 'scanners', 'events', 'staff', 'scans'] as const;
+export const SCANNING_TABS = ['sessions', 'scanners', 'events', 'zones', 'staff', 'scans'] as const;
 export type ScanningTab = (typeof SCANNING_TABS)[number];
 export const DEFAULT_TAB: ScanningTab = 'sessions';
 

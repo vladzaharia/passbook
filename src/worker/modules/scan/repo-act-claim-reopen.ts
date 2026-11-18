@@ -27,6 +27,7 @@ const ownerOf = (claim: Claim, previousAt: number, previousState: 'failed' | 'pe
   actor_id: claim.actorId,
   actor_key: claim.actorKey,
   staff_id: claim.staffId,
+  api_key_id: claim.apiKeyId ?? null,
   method: claim.method,
   idempotency_key: claim.idempotencyKey,
   request_hash: claim.requestHash,

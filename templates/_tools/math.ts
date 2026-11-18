@@ -49,6 +49,7 @@ export const PALETTE = {
   tangerine: { bg: hex('#B54000'), fg: hex('#FFFFFF'), label: hex('#FFEEDD') },
   sky: { bg: hex('#03528E'), fg: hex('#FFFFFF'), label: hex('#BFE4FB') },
   teal: { bg: hex('#004B41'), fg: hex('#FFFFFF'), label: hex('#F2D07D') },
+  cobalt: { bg: hex('#1D3ABA'), fg: hex('#FFFFFF'), label: hex('#CFE0FF') },
   paper: { bg: hex('#FCF4E6'), fg: hex('#311C0F'), label: hex('#A24019') },
 } as const;
 export const FOIL_TEAL = hex('#2DD4BF');

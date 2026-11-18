@@ -4,6 +4,7 @@ import {
 } from '../../../passkit/template/scan-display/index.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { accessScopeOf } from './access.ts';
 import {
   pick,
   safeJson,
@@ -43,6 +44,7 @@ export function scopeOf(
     scan: { actions },
     ...(manifest.stamps ? { stamps: manifest.stamps } : {}),
   });
+  const access = safe(accessScopeOf(found, actor, input.access ?? null));
   return {
     inputs: safe(projectScanInputs(found, actor)) ?? {},
     fields: visibleFields(found, actor),
@@ -77,6 +79,7 @@ export function scopeOf(
       input.photoUrl && actor.settings.showPhoto !== false && isOwnPhotoUrl(input.photoUrl)
         ? { photo: input.photoUrl }
         : {},
+    ...(access ? { access } : {}),
     templateVersion: safe(String(template.version)) ?? '',
     now: safeTime(ctx.clock.now()) ?? undefined,
   };

@@ -50,7 +50,7 @@ Files here:
 | X3 | **Zones are org data.** `scan_zones`: name, key, optional parent (≤ 3 levels below a root), a time zone on roots. Not per mode: a test scanner opens the same pool. Plans grant zones by **key** (or `*`), so templates stay portable and blueprints grant `*`. |
 | X4 | **A scanner checks 0-8 zones.** It grants when the pass opens **any** of them now. No zones means "any zone the pass opens". A grant on a parent opens its children; the **nearest** grant decides the hours; a grant's hours only narrow the plan's (intersection). |
 | X5 | **Hours are wall-clock in the zone's time zone** (nearest root zone, else the org's, else the scanner's), evaluated with `Intl` at scan time. DST: a span starting in the spring gap opens when the gap ends; the repeated autumn hour is open both times. **Holidays are out of scope** in v1 (seam in 2.6). |
-| X6 | **Every grant records a scan; a visit is a grant more than `visitGapMinutes` (default 120) after the last.** One atomic gate row per pass (`scan_gates`, scope `access`) counts visits, enforces the guest limit and the optional re-entry wait in one UPSERT. History (`visits this month`, `last visit`) is computed from `scans.visit = 1`. |
+| X6 | **Every grant records a scan; a visit is a grant more than `visitGapMinutes` (default 120) after the start of the current visit.** One atomic gate row per pass (`scan_gates`, scope `access`) counts visits, enforces the guest limit and the optional re-entry wait in one UPSERT. History (`visits this month`, `last visit`) is computed from `scans.visit = 1`. |
 | X7 | **Anti-passback is not offered. An optional re-entry wait is, default off.** True anti-passback needs exit reads; one-reader gyms would lock out members who stepped outside. The wait (1-240 min) stops a phone being passed back through a door; it answers amber `cooldown` ("Entered 2 min ago"). The photo is the main anti-sharing control. |
 | X8 | **Denials are red refusals** with five new reasons: `zone_not_included`, `outside_hours`, `guest_expired`, `guest_visits_used`, `suspended`; plus `not_yet_valid` answered as `refused` on access templates. The buddy shakes its head (M12). A Manager may **Let in anyway** on the four soft ones (2.8); hard ones (voided, removed, expired, suspended, test/live) are never overridable. |
 | X9 | **One scanner can do both.** Per template: an access template scanned by a template scanner grants access; a ticket template on the same scanner checks in once. A scanner on an **event** checks every template in once per event, access cards included (a members' night), with zones and hours off. |
@@ -95,7 +95,7 @@ branches on access. `ScanCard.access` carries the same object on `ready` (the de
 
 | Setting (`scan.access.rules`) | Default | Range | Meaning |
 | --- | --- | --- | --- |
-| `visitGapMinutes` | 120 | 0-720 | grants within this time of the last grant are the same visit. 0: every grant is a visit |
+| `visitGapMinutes` | 120 | 0-720 | grants within this time of the visit's start are the same visit, so a chain of short re-scans cannot hold one visit open. 0: every grant is a visit |
 | `reentryMinutes` | null (off) | 1-240 | a grant within this time of the last grant is held: amber `cooldown` |
 
 Why the gap is on and the wait is off: the gap only changes counts, never who gets in, and without it a member who
@@ -343,26 +343,33 @@ Unknown plan id at scan (a version removed it despite 2.4): refused `zone_not_in
 ### 3.5 The gate
 
 One `scan_gates` row per pass, `action_id = 'access'` (a literal: renaming the action keeps the count), `scope = 'access'`, `kind = 'check_in'`, `state =
-'in'`. `count` holds **visits**, not grants. One UPSERT decides, as SA §7.3:
+'in'`. `count` holds **visits**, not grants. Two UPSERTs decide, as SA §7.3 (built by `writeAccessGate`; `scan_gates.visit_at` and `prev_visit_at`, migration
+`0083_access_visit_start.sql`, hold the visit's start). Exactly one writes the row (`last_scan_id <> :scan`):
 
 ```sql
-INSERT INTO scan_gates (pass_id, action_id, scope, org_id, mode, template_id, kind, state, count, first_at, last_at, last_scan_id)
-VALUES (:pass, :action, 'access', :org, :mode, :tpl, 'check_in', 'in', 1, :now, :now, :scan)
+-- new visit: the current one began more than the gap ago
+INSERT INTO scan_gates (pass_id, action_id, scope, ..., count, first_at, last_at, last_scan_id, visit_at)
+VALUES (:pass, 'access', 'access', ..., 1, :now, :now, :scan, :now)
 ON CONFLICT (pass_id, action_id, scope) DO UPDATE SET
-  prev_state = state, prev_last_at = last_at, prev_scan_id = last_scan_id,
-  count = count + (CASE WHEN :now - last_at > :gapMs OR :gapMs = 0 THEN 1 ELSE 0 END),
-  last_at = :now, last_scan_id = :scan
-WHERE (:waitMs IS NULL OR :override = 1 OR :now - last_at >= :waitMs)
-  AND (:limit IS NULL OR :override = 1 OR NOT ((:now - last_at > :gapMs OR :gapMs = 0) AND count >= :limit))
-RETURNING last_scan_id, count, prev_last_at;
+  prev_state = state, prev_last_at = last_at, prev_scan_id = last_scan_id, prev_visit_at = visit_at,
+  count = count + 1, last_at = :now, last_scan_id = :scan, visit_at = :now
+WHERE (:gapMs = 0 OR visit_at < :now - :gapMs)
+  AND last_at <= :now - COALESCE(:waitMs, 0)            -- the wait, and the row's time never moves back
+  AND (:limit IS NULL OR count < :limit) AND last_scan_id <> :scan;
+-- same visit (gap > 0): no count, no limit
+... DO UPDATE SET prev_* = ..., prev_visit_at = visit_at, last_at = :now, last_scan_id = :scan
+WHERE visit_at >= :now - :gapMs AND last_at <= :now - COALESCE(:waitMs, 0) AND last_scan_id <> :scan;
 ```
 
-- Won: the scan finalizes `ok` with `visit = (prev_last_at IS NULL OR now − prev_last_at > gap)`, in the check-in
+- A Manager's override of `cooldown` waives the wait only; the limit is waived only by an override of `guest_visits_used`.
+  Any other override (`capacity_full`) waives neither.
+- A scan that loses both statements to a racing one is a heads-up `in_progress`; the client rescans.
+- Won: the scan finalizes `ok` with `visit = (prev_visit_at IS NULL OR now − prev_visit_at > gap)` (read from the row the first statement wrote), in the check-in
   fast-path batch (SA §7.3), so the row, gate and ledger commit together.
 - Lost: one read of the row says which: within the wait → heads-up `cooldown` (`cooldownRemainingMs`), else refused
   `guest_visits_used`.
 - Undo of a grant only while `last_scan_id` is that grant (else `UNDO_SUPERSEDED`): the first grant ever deletes
-  the row; otherwise `last_at = prev_last_at`, `last_scan_id` = the undo's scan id, `prev_*` cleared (one step), and
+  the row; otherwise `last_at = prev_last_at`, `visit_at = prev_visit_at`, `last_scan_id` = the undo's scan id, `prev_*` cleared (one step), and
   `count − 1` when the grant had `visit = 1` (`undoGate`).
 - A new guest window (an edited `validFrom`) doesn't reset visits; **Reset visits** in the pass's Access card does
   (Manager-only console action, audited `pass.access_visits_reset`, deletes the gate row).

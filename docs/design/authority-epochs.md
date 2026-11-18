@@ -146,6 +146,7 @@ g.insertJoined('bundle_passes', { parents: { bundle_id, pass_id }, columns: ['po
 const results = await g.commit();                         // one batch: [grant insert, ...statements, grant delete]
 ```
 
+- **A key acting as a terminal.** A `scans:write` key has no principal of its own in a scan grant: the grant's principal is the `scanner` it was bound to (`api_key_terminals`, written when the key is minted), with its credential epoch. The key is extra checks, in every scan write grant and read fence: the `api_keys` row of the grant's org and mode is live (not revoked or expired), lists `scans:write`, is bound to that terminal, and the org's `access_revision` is the one captured when the key was admitted. Refused as `actor` (401 `INVALID_API_KEY`) or `org` (403 `ORG_ACCESS_CHANGED`). Org-bound keys only; the actor stays `s:<terminalId>`, and `scans.api_key_id` records the key.
 - **Principals.** A membership is `via: 'session'` (a synchronous request: `sessionIdHash` is required and must be live) or `via: 'deferred'` (queued work: the captured `orgAccessRevision` is required, no session is checked, Rule 4). There is no third form. A `platform` or `system` principal that names an org (`orgId`) acts on it only while the org is active. A holder acts only while its pass's org is active, except a session holder with `unlink: true` (`holder_remove`, built only by `unlinkOwner`): an owner can take a pass off their account in a suspended or deleted org, which unlinks it as it is (`holders/service-remove.ts`). The transfer grants of the same holder (START, FINISH) need an active org; `pass_credential_transfer_insert_guard` also refuses a re-sign there.
 - **No raw statements leak.** Statements are opaque values that only that grant can commit. They are not `D1PreparedStatement`s until `commit()` runs, so they cannot run outside their batch. `Grant.prepare` is module-private; `prepareGrantForTest` exists for tests, and the lint rejects it elsewhere. The `GrantedStatement` constructor is token-gated (the lint flags `new GrantedStatement`). Two escape hatches stay inside the grant: `Grant.audit(entry, when?)` appends an `audit_log` row (append-only table; `when` is evaluated at its batch position), and `Grant.unguarded(sql, params)` runs SQL on unguarded tables only.
 - **Cross-grant mixing throws** `GRANT_FOREIGN_STATEMENT`.
@@ -222,6 +223,7 @@ Tables under Rule 2 get BEFORE INSERT guards. Each aborts when a row with the sa
 | --- | --- |
 | `org_memberships`, `org_invitations` | `0029` (role names are validated once at insert: a JSON array of distinct, known roles) |
 | `api_keys` | `0039` |
+| `api_key_terminals` (edges `key_id`, `scanner_id`) | `0075`: written once with its `scans:write` key by `createKey`; update and delete abort, and an insert for a used or revoked key aborts |
 | `template_releases` | `0031` |
 | `scan_staff`, `scan_events`, `scanning_sessions`, `scanning_devices` (`scanner_id` is the key) | `0052` |
 | `api_keys` ids after delete | `0052`: `retired_api_key_ids` records every deleted id and `api_keys_no_id_reuse` aborts a re-insert, so a deleted key's id is never issued again (D1 counts the retire row in a delete's `meta.changes`) |
@@ -447,6 +449,7 @@ The cutover ran 2026-11-18 (`docs/operations.md`, "Cutover from schema 0024"). T
 | `0030`, `0042` | pass lifecycle and credential generations; transfer guards compare `pass_credential_transfers.source_row_version` and the current release head |
 | `0031`, `0038` | `template_releases` (immutable, no-replace), the `legacy` source |
 | `0039` | `api_keys` identity immutable, no-replace |
+| `0075` | `api_key_terminals` (fixed key-to-terminal binding), `scans.api_key_id` |
 | `0044` | `connections_generation_bump`; item claims carry `legacy_pass_row_version` and `claim_row_version` |
 | `0045` | issuance delivery guard on generations plus `transfer_id` |
 | `0047` | `sessions` identity, CSRF secret, lifetime, `roles` and `amr` immutable; `scanners_credential_revision` dropped by `0063` |
@@ -515,8 +518,9 @@ Done:
 - Done: migration `0070` drops the plain-to-MAC exception (0059 `passes_token_change_moves_link`, `passes_row_version_a`, the wallet-provider triggers; 0065 `passes_auth_token_change_follows_generation`, `pass_credential_transfer_required`, `passes_row_version_a`) after the seal sweep finished in production (no plain pass or bundle token, no unscrubbed `pass_versions`). The six triggers are the 0069 versions with the plain branch deleted. A plain value is refused outright, and 0070 starts with a guard that fails (and rolls back, unrecorded) while any plain token or stored device token is left; it also deletes the `tokens.sealCursor` setting. The cron `tokens.seal`, its code and the plaintext lookup are gone, and so are the sweep's partial indexes.
 - Done: migration `0069` also lets a MAC replace a MAC (cron `tokens.remac`, after `MAC_KEY_VERSION` moved) while a `token_remac_marks` row names exactly that value; the job writes and deletes the mark in one batch. `token_remac_marks` is a guarded table (raw writes only in `passes/repo-pass-trusted.ts`). The marks stay: they are the only MAC-to-MAC path.
 - Done: `LEGACY_REVISION_MS` is removed. An org revision is its `access_revision` and nothing else (`orgEpochMatchSql`, `orgRevision`, the principal's org check).
-- Open (post-cutover): the credential-reference evidence (tombstones, retention proofs, webhook and action references, the keyset commitment) derives from the oldest KEK, not from `MAC_KEY_VERSION`. KEK_V1 cannot be retired until a reviewed rekey of that evidence exists; no rekey tool exists.
-- Open (post-cutover): no job rewraps envelope-encrypted secrets and token seals to a newer KEK (`rewrapSecret` has no caller; 14 envelope tables with their own AADs, and a `credentials` rewrite bumps signing-identity revisions). Until one exists, answer a KEK compromise by rotating links and credentials; the key itself stays.
+- Done: cron `keys.rewrap` moves every envelope (14 tables and the packed captured emails) to the newest KEK with `rewrapSecret`, a compare-and-set on `(kek_version, wrapped_dek)`; migration `0071` lets the three triggers that guard `credentials`, `wallet_provider_credentials` and `pass_credential_transfer_payloads` ignore a rewrap-shaped update (higher `kek_version`, new `wrapped_dek`, every other column equal), which AES-GCM makes unable to change a secret. No epoch or signing-identity revision moves. `rewrap-tables.test.ts` fails for a table with envelope columns, or a writer of one, that is not registered.
+- Done: the evidence is not rekeyed but kept: `MAC_ROOT_V<n>` (HKDF-Extract of `KEK_V<n>`) derives every MAC key byte for byte and unwraps nothing, so `KEK_V1` can be deleted (`npm run keys:retire`) with the keyset commitment, tombstones, retention proofs, references and token MACs unchanged. Status checks the key ring (`keyRingProblems`: root 1 present, pins name a root, a root is older than the current KEK) and that each root matches its KEK. Runbook: operations.md, KEK rotation.
+- Open (deferred): evidence root 2. After a confirmed V1 compromise, evidence made under root 1 stays open to offline guessing of its low-entropy inputs (barcodes, serials, scanner names) by anyone holding a database copy; a dual-root scheme (a per-row root tag, both commitments accepted, every `credentialRefKeysetSql` site and the 0043/0044 immutability triggers) would stop that for future evidence only, since retired credentials exist only as their MACs. Build it only after a confirmed compromise.
 
 ### 7.3 Provider track
 
@@ -578,7 +582,7 @@ Raw writes to these tables are banned outside `platform/authority.ts`:
 - **Passes and templates:** `passes`, `pass_assets`, `pass_credential_transfers`, `pass_credential_tombstones`, `pass_issuance_deliveries`, `templates`, `template_candidates`, `template_approvals`, `template_releases`.
 - **Delivery:** `outbox`, `bundles`, `bundle_passes`, `captured_emails`, `sandbox_forwards`.
 - **Connections:** `connections`, `connection_runs`, `connection_webhook_retention`, `connection_webhook_items`.
-- **Scan:** `scans`, `scan_gates`, `scan_presence`, `scan_staff`, `scan_events`, `scan_event_templates`, `scanners`, `scanning_sessions`, `scanning_devices`, `scan_zones`, `scanning_session_zones`.
+- **Scan:** `scans`, `scan_gates`, `scan_presence`, `scan_staff`, `scan_events`, `scan_event_templates`, `scanners`, `scanning_sessions`, `scanning_devices`, `scan_zones`, `scanning_session_zones`, `scan_place_revs`.
 - **Ledger:** `pass_events`.
 
 **Allowlist:**
