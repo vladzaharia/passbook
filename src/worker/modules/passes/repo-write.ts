@@ -2,6 +2,7 @@ import { ConnectionModeSchema } from '../../../shared/contracts/connections.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { createGrant, createRefusal } from './create-grant.ts';
 import { addCreateStatements } from './create-records.ts';
+import { starterFits } from './repo-bulk-principal.ts';
 import { validPassReleaseSnapshot } from './repo-release.ts';
 import { permitsPassMutation } from './repo-write-authority.ts';
 import { attachableOwner } from './repo-write-insert-statement.ts';
@@ -18,7 +19,15 @@ export async function insertPass(
   const execution = row.execution;
   if (
     !execution ||
-    (execution.kind !== 'tenant' && execution.kind !== 'connection' && execution.kind !== 'system')
+    (execution.kind !== 'tenant' &&
+      execution.kind !== 'connection' &&
+      execution.kind !== 'system' &&
+      execution.kind !== 'deferred')
+  )
+    return false;
+  if (
+    execution.kind === 'deferred' &&
+    (row.source !== 'manual' || !starterFits(execution.starter, row.orgId, row.mode))
   )
     return false;
   const authority = execution.kind === 'tenant' ? execution.authority : undefined;

@@ -3,6 +3,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ConnectionMode } from '../../../shared/contracts/connections.ts';
 import type { SampleScannerScope } from '../scan/sample-scope-fence.ts';
 import type { TenantPassWrite } from './http.ts';
+import type { DeferredStarter } from './repo-bulk-principal.ts';
 import type { RetainedIssuanceClaim } from './repo-write-retained.ts';
 import type { Actor } from './service.ts';
 
@@ -14,7 +15,9 @@ export type PassIssuanceExecution =
       sampleScannerScope?: SampleScannerScope;
     }
   | { kind: 'connection'; connectionId: string; generation: number }
-  | { kind: 'system' };
+  | { kind: 'system' }
+  /** A bulk import's create: the starter is re-proved in the grant. `guard` refuses a live pass with that External ID. */
+  | { kind: 'deferred'; starter: DeferredStarter; guard?: { externalId: string } };
 
 export interface CreateParams {
   orgId: string;
@@ -32,6 +35,8 @@ export interface CreateParams {
   externalRef?: string | null;
   sendEmail?: boolean;
   source: 'manual' | 'connection';
+  /** Marks each input key with this source instead of `source` (an import's own fields). */
+  fieldSource?: 'import';
   /** The mode explicitly reviewed by the caller (connection syncs are Live-only). */
   mode: Mode;
   /** Generation captured before a connection run fetched its source data. */

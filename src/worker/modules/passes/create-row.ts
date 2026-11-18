@@ -21,6 +21,7 @@ import { depsOf } from './deps.ts';
 import { assertPassDetailReadable } from './detail.ts';
 import { insertPass, type Pass } from './repo.ts';
 import { tombstoneExists } from './repo-credential-transfer-read.ts';
+import { livePassesBy } from './repo-import-lookup.ts';
 import { connectionForPass, connectionInOrg } from './repo-read-connection.ts';
 import { getOrg } from './repo-read-issuance.ts';
 import { getPass } from './repo-read-pass.ts';
@@ -155,7 +156,10 @@ export async function createPassRowWithRelease(
       personalization: p.input,
       // A bound pass takes its fields from the connection until an admin edits them.
       fieldSources: Object.fromEntries(
-        Object.keys(p.input).map((k) => [k, p.connectionId ? 'connection' : p.source]),
+        Object.keys(p.input).map((k) => [
+          k,
+          p.connectionId ? 'connection' : (p.fieldSource ?? p.source),
+        ]),
       ),
       displayTitle: artifact.title,
       displaySubtitle: artifact.subtitle,
@@ -207,6 +211,13 @@ export async function createPassRowWithRelease(
           'The scanner or its scope changed. Reload and retry.',
           'PASS_CONFLICT',
         );
+      if (p.execution.kind === 'deferred' && p.execution.guard) {
+        const taken = await livePassesBy(db, p.orgId, mode, 'external_id', [
+          p.execution.guard.externalId,
+        ]);
+        if (taken.length > 0)
+          throw new ConflictError('Another pass already has this External ID.', 'CREATE_STALE');
+      }
       throw releaseChanged();
     }
     issuedOwnerUserId = inserted.ownerUserId;

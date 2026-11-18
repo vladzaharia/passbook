@@ -1,10 +1,17 @@
 import { type Grant, grant, jobGrant } from '../../platform/authority.ts';
 import { type Check, releaseHead } from '../../platform/authority-checks.ts';
+import { condCheck, notExists } from '../../platform/authority-cond.ts';
 import { AppError, type DenyReason } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { connectionIs } from '../connections/repo-grants.ts';
 import { sampleScannerScopeCheck } from '../scan/sample-scope-fence.ts';
-import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
+import {
+  capabilityChecks,
+  keyScope,
+  membershipCapability,
+  tenantPrincipal,
+} from './repo-authority.ts';
+import { reissuePrincipalCheck, starterPrincipal } from './repo-bulk-principal.ts';
 import { notBlueprintCheck, releaseOrgCheck, releaseSnapshotCheck } from './repo-create-checks.ts';
 import { type RetainedIssuanceScope, retainedIssuanceChecks } from './repo-write-retained.ts';
 import type { NewPassRow } from './repo-write-types.ts';
@@ -72,6 +79,32 @@ export function createGrant(
       target: row.id,
       tables: CREATE_TABLES,
     });
+  if (ex.kind === 'deferred') {
+    const s = ex.starter;
+    return grant(ctx, {
+      purpose: 'org_mode.pass.create',
+      principal: starterPrincipal(s, row.orgId, row.mode),
+      target: row.id,
+      checks: [
+        s.kind === 'membership'
+          ? membershipCapability(s.membershipId, 'passes:operate')
+          : keyScope(s.keyId, 'passes:write'),
+        reissuePrincipalCheck(row.orgId, s, row.now),
+        ...checks,
+        // A pass made by hand or by API since the check took the External ID: this row fails, not the run.
+        ...(ex.guard
+          ? [
+              condCheck(
+                'stale',
+                notExists('passes', { external_id: ex.guard.externalId, removed_at: null }),
+              ),
+            ]
+          : []),
+      ],
+      codes: CREATE_CODES,
+      tables: CREATE_TABLES,
+    });
+  }
   return grant(ctx, {
     purpose: 'org_mode.pass.create',
     principal: tenantPrincipal(ex.authority),
