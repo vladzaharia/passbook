@@ -4,6 +4,31 @@ import '../../lib/test-utils.tsx';
 import { fixtureCard, fixtureDisplay, fixtureOutcome } from '../machine/fixtures.test-support.ts';
 import { ResultCard } from './result-card.tsx';
 
+describe('a refused counter', () => {
+  const value = (counter: boolean) => ({
+    input: 'uses',
+    label: 'Uses',
+    before: 0,
+    after: 0,
+    goal: 10,
+    format: 'number' as const,
+    ...(counter ? { counter } : {}),
+  });
+  it.each([
+    ['no_balance', 'None left'],
+    ['card_full', 'Already full'],
+  ] as const)('reads %s in the counter wording', (reason, headline) => {
+    render(<ResultCard outcome={fixtureOutcome('refused', reason, { value: value(true) })} />);
+    expect(screen.getByRole('heading')).toHaveTextContent(headline);
+  });
+  it('keeps the balance and stamp wording for other inputs', () => {
+    render(
+      <ResultCard outcome={fixtureOutcome('refused', 'card_full', { value: value(false) })} />,
+    );
+    expect(screen.getByRole('heading')).toHaveTextContent('Card is full');
+  });
+});
+
 describe('the scanner result interface', () => {
   it('uses the outcome display and keeps meta under the identity', () => {
     const outcome = fixtureOutcome('ok', null, {

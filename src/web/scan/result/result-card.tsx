@@ -1,7 +1,12 @@
 import { Info } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
-import { SCAN_COPY, SCAN_REASON_COPY, scanLine } from '../../../shared/copy/scan.ts';
+import {
+  SCAN_COPY,
+  SCAN_COUNTER_COPY,
+  SCAN_REASON_COPY,
+  scanLine,
+} from '../../../shared/copy/scan.ts';
 import { formatDateTime, formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
 import { DisplayPanels } from '../display/display-panels.tsx';
@@ -60,7 +65,8 @@ export function ResultCard({
     o.reason === 'not_accepted' && o.checkIn?.direction === 'out' && o.checkIn.mode !== 'in_out';
   const noReentry =
     o.reason === 'already_done' && o.checkIn?.mode === 'in_out' && !o.checkIn.inside;
-  const line = o.reason ? SCAN_REASON_COPY[o.reason] : null;
+  const counterLine = o.reason && o.value?.counter ? SCAN_COUNTER_COPY[o.reason] : undefined;
+  const line = o.reason ? (counterLine ?? SCAN_REASON_COPY[o.reason]) : null;
   const now = o.at ?? 0;
   const held = accessLines(o, now);
   const pill = directionPill(o);

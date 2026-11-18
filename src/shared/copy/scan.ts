@@ -111,6 +111,12 @@ export const SCAN_OCCUPANCY_COPY: Record<string, ScanLine> = {
   alreadyOut: { headline: 'Already out', sub: '{ago} · {scanner}' },
 };
 
+/** Refusals on a counter ("7 left"): used in place of the balance and stamp-card lines. */
+export const SCAN_COUNTER_COPY: Record<string, ScanLine> = {
+  no_balance: { headline: 'None left', sub: 'Refill it first.' },
+  card_full: { headline: 'Already full', sub: 'Use some first.' },
+};
+
 export const SCAN_COPY = {
   reasons: SCAN_REASON_COPY,
   display: SCAN_DISPLAY_COPY,

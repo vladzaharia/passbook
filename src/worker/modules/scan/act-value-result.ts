@@ -1,3 +1,4 @@
+import { counterSizes } from '../../../passkit/template/counters.ts';
 import type { Json } from '../../../passkit/types.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
@@ -36,18 +37,22 @@ export function scanValueOf(
       | undefined;
     const label = prop?.['x-label'] ?? prop?.title ?? input;
     const stamps = found.template.manifest.stamps;
+    const size = counterSizes(found.template.manifest)[input];
     const goal =
       stamps?.input === input
         ? stamps.goal
-        : action.kind === 'take' && typeof action.amount === 'number'
-          ? action.amount
-          : null;
+        : size !== undefined
+          ? size
+          : action.kind === 'take' && typeof action.amount === 'number'
+            ? action.amount
+            : null;
     return {
       input,
       label: privacy.safe(label) ? label : 'Value',
       before: privacy.valueSafe(before) ? before : null,
       after,
       goal,
+      ...(size !== undefined ? { counter: true } : {}),
       format:
         prop?.['x-format'] === 'currency'
           ? 'currency'
