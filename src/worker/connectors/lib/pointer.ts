@@ -1,1 +1,1 @@
-export { getPointer, isPointer, normalizePointer } from '../../../shared/mapping/pointer.ts';
+export { getPointer, isPointer } from '../../../shared/mapping/pointer.ts';
