@@ -10,7 +10,8 @@ const OWNER_SQL = `(SELECT CASE WHEN count(*) = 1 THEN min(u.id) END FROM users 
 
 /** The one active user who verified the holder email and is not blocked from this pass, or null. */
 export async function attachableOwner(db: D1Database, row: NewPassRow): Promise<string | null> {
-  if (!row.holderEmail) return null;
+  // An address typed into a public form proves nothing: a joined pass never attaches to an account.
+  if (!row.holderEmail || row.execution.kind === 'join') return null;
   const found = await first<{ id: string | null }>(db, `SELECT ${OWNER_SQL} AS id`, [
     row.holderEmail,
     row.id,
@@ -21,13 +22,16 @@ export async function attachableOwner(db: D1Database, row: NewPassRow): Promise<
 /**
  * The pass row, in the create grant. The owner read before the grant is re-proved in the insert, so a
  * user change in between inserts nothing; a credential tombstone of the org and mode does the same.
- * `org_id` and `mode` come from the grant. The `pass_created` trigger records version 1.
+ * `org_id` and `mode` come from the grant. The `pass_created` trigger records version 1. A join create
+ * inserts owner NULL and holds no owner proof.
  */
 export function grantPassInsert(
   g: Grant,
   row: NewPassRow,
-  ownerUserId: string | null,
+  requested: string | null,
 ): GrantedStatement {
+  const join = row.execution.kind === 'join';
+  const ownerUserId = join ? null : requested;
   return g.insertSelect(
     'passes',
     [
@@ -107,7 +111,7 @@ export function grantPassInsert(
             AND dead.mode = {mode} AND dead.credential_hash IN (SELECT value FROM json_each(?)))`,
           [JSON.stringify(row.credentialRefs)],
         ),
-        tenantSql(`${OWNER_SQL} IS ?`, [row.holderEmail, row.id, ownerUserId]),
+        ...(join ? [] : [tenantSql(`${OWNER_SQL} IS ?`, [row.holderEmail, row.id, ownerUserId])]),
       ],
       returning: ['id', 'owner_user_id'],
     },

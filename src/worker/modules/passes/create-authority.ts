@@ -7,6 +7,12 @@ import { tenantOrgAccessRevision, tenantPassAuthorityValid } from './repo-author
 import { reissuePrincipalValid, starterFits } from './repo-bulk-principal.ts';
 import { connectionForPass } from './repo-read-connection.ts';
 
+const DIGEST = /^[A-Za-z0-9_-]{43}$/;
+/** The ledger digests are keyed 256-bit digests (base64url) or absent, never a raw address, cookie or field. */
+const validJoinKeys = (keys: CreateParams['joinKeys']): boolean =>
+  keys === undefined ||
+  [keys.ipKey, keys.deviceKey, keys.fieldsHash].every((k) => k === null || DIGEST.test(k));
+
 /** A suspended (or suspended and reactivated) org is a distinct refusal from a lost membership or key. */
 async function assertOrgUnchanged(ctx: ServiceContext, authority: TenantPassWrite): Promise<void> {
   const current = await tenantOrgAccessRevision(ctx.env.DB, authority.orgId);
@@ -27,9 +33,11 @@ export async function assertTenantCreateAuthority(
     (execution.kind !== 'tenant' &&
       execution.kind !== 'connection' &&
       execution.kind !== 'system' &&
-      execution.kind !== 'deferred')
+      execution.kind !== 'deferred' &&
+      execution.kind !== 'join')
   )
     throw new ForbiddenError();
+  if (p.joinKeys !== undefined && execution.kind !== 'join') throw new ForbiddenError();
   // An import's create holds only while its starter does: a job context, this org and mode, the revisions captured at the start.
   if (
     execution.kind === 'deferred' &&
@@ -37,6 +45,26 @@ export async function assertTenantCreateAuthority(
       p.source !== 'manual' ||
       !starterFits(execution.starter, p.orgId, p.mode) ||
       !(await reissuePrincipalValid(ctx.env.DB, p.orgId, execution.starter, ctx.clock.now())))
+  )
+    throw new ForbiddenError();
+  if (
+    execution.kind === 'join' &&
+    (p.source !== 'manual' ||
+      p.connectionId ||
+      p.externalId ||
+      p.serial !== undefined ||
+      p.identityId !== undefined ||
+      p.reservedPassId !== undefined ||
+      p.passId !== undefined ||
+      !validJoinKeys(p.joinKeys) ||
+      p.retainedClaim !== undefined ||
+      p.actor.type !== 'system' ||
+      p.actor.id !== `join:${execution.linkId}` ||
+      typeof execution.generation !== 'number' ||
+      !Number.isSafeInteger(execution.generation) ||
+      execution.generation < 1 ||
+      !Number.isSafeInteger(execution.orgDailyCap) ||
+      execution.orgDailyCap < 1)
   )
     throw new ForbiddenError();
   if (

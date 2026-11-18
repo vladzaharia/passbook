@@ -69,6 +69,12 @@ const ContextSchema = z.object({
       guard: z.object({ externalId: z.string() }).optional(),
     }),
     z.object({
+      kind: z.literal('join'),
+      linkId: z.string(),
+      generation: z.number().int().positive(),
+      orgDailyCap: z.number().int().positive(),
+    }),
+    z.object({
       kind: z.literal('connection'),
       connectionId: z.string(),
       generation: z.number().int().positive(),

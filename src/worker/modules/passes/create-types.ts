@@ -7,6 +7,12 @@ import type { DeferredStarter } from './repo-bulk-principal.ts';
 import type { RetainedIssuanceClaim } from './repo-write-retained.ts';
 import type { Actor } from './service.ts';
 
+export interface JoinKeys {
+  ipKey: string | null;
+  deviceKey: string | null;
+  fieldsHash: string | null;
+}
+
 export type PassIssuanceExecution =
   | {
       kind: 'tenant';
@@ -17,7 +23,9 @@ export type PassIssuanceExecution =
   | { kind: 'connection'; connectionId: string; generation: number }
   | { kind: 'system' }
   /** A bulk import's create: the starter is re-proved in the grant. `guard` refuses a live pass with that External ID. */
-  | { kind: 'deferred'; starter: DeferredStarter; guard?: { externalId: string } };
+  | { kind: 'deferred'; starter: DeferredStarter; guard?: { externalId: string } }
+  /** A public join link: the pass is pinned to the link's org and mode, owner NULL, caps in the grant. */
+  | { kind: 'join'; linkId: string; generation: number; orgDailyCap: number };
 
 export interface CreateParams {
   orgId: string;
@@ -45,6 +53,8 @@ export interface CreateParams {
   credentialKeysetCommitment?: string;
   /** Optional connection strategy captured before the upstream fetch. */
   expectedConnectionMode?: ConnectionMode;
+  /** Join ledger digests (ip, device, fields); only a `join` execution may carry them. */
+  joinKeys?: JoinKeys;
   /** Internal caller provenance, never supplied by a request body. */
   execution: PassIssuanceExecution;
   actor: Actor;
