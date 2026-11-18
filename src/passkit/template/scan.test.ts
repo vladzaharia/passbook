@@ -321,3 +321,38 @@ describe('nfcIssues', () => {
     expect(nfcIssues(m, pass(), { identity: { name: 'Platform', nfc: true } })).toEqual([]);
   });
 });
+
+describe('scanIssues: money amounts', () => {
+  const money = (code?: string) => ({
+    inputs: {
+      ...inputs,
+      properties: {
+        ...inputs.properties,
+        balance: {
+          type: 'number',
+          minimum: 0,
+          'x-format': 'currency',
+          ...(code ? { 'x-currency': code } : {}),
+        },
+      },
+    },
+  });
+  const add = (amount: unknown) => ({
+    actions: [{ id: 'a', label: 'A', kind: 'add', input: 'balance', amount }],
+  });
+
+  it('allows cents on a currency input', () => {
+    expect(only(add({ max: 50, presets: [0.5, 4.5, 10], default: 4.5 }), money())).toEqual([]);
+    expect(only(add(0.01), money())).toEqual([]);
+  });
+
+  it('refuses a third decimal and an amount under one cent', () => {
+    expect(only(add(4.505), money())).toContain('error:SCAN_AMOUNT_RANGE');
+    expect(only(add({ max: 5, presets: [0.001] }), money())).toContain('error:SCAN_AMOUNT_RANGE');
+  });
+
+  it('refuses decimals when the currency has none', () => {
+    expect(only(add(500), money('JPY'))).toEqual([]);
+    expect(only(add(4.5), money('JPY'))).toContain('error:SCAN_AMOUNT_RANGE');
+  });
+});

@@ -59,7 +59,9 @@ export async function valueRefusal(
       actor,
       localDayStart(ctx.clock.now(), actor.timeZone),
     );
-    if (used + amountOf(action, req.amount) > limit) return new ScanEffectStop('limit_reached');
+    // Summed amounts carry float residue: compare at a millionth.
+    if (Math.round((used + amountOf(action, req.amount)) * 1e6) / 1e6 > limit)
+      return new ScanEffectStop('limit_reached');
   }
   try {
     valueEffect(

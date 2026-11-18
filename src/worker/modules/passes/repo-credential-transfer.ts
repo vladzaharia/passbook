@@ -186,6 +186,21 @@ function writes(g: Grant, ctx: ServiceContext, i: StartTransferInput): void {
     );
   g.include(deviceRows(g, p.id, 'registrations'), deviceRows(g, p.id, 'pass_personalizations'));
   g.joined('bundle_passes', { via: 'pass_id', where: { pass_id: p.id }, delete: true });
+  // A new holder does not inherit the old holder's tags. An attach (same holder, now owned) keeps them.
+  if (
+    target.holderEmail !== p.holderEmail ||
+    (p.ownerUserId !== null && target.ownerUserId !== p.ownerUserId)
+  )
+    g.joined('tag_bindings', {
+      via: 'pass_id',
+      where: { pass_id: p.id, scope: 'pass', ended_at: null },
+      set: {
+        ended_at: now,
+        ended_by_type: 'system',
+        ended_by: 'transfer',
+        end_cause: 'holder_changed',
+      },
+    });
   const cancelled = { state: 'cancelled', finished_at: now, coalesce_key: null, lease: null };
   const open = inList(['pending', 'enqueued']);
   g.update('outbox', {
