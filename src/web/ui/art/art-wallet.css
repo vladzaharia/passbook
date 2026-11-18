@@ -248,6 +248,12 @@
   left: auto;
   right: var(--wl-buddy-inset, 12px);
 }
+/* Room for the buddy above its host (11/12 of the sm art, 44 px, plus a 20 px gap to whatever
+   precedes). Hosts take the class instead of a hand-picked margin, so no list page seats it on
+   text. */
+.wl-buddy-room {
+  margin-top: var(--wl-buddy-room, 4rem);
+}
 /* One in view: an open dialog's buddy takes over from the page's under the scrim. */
 body:has([role="dialog"][data-state="open"] .wl-buddy) .wl-buddy:not([role="dialog"] *) {
   visibility: hidden;

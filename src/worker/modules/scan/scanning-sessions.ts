@@ -45,6 +45,7 @@ import {
   storedCustomer,
 } from './scanning-session-dto.ts';
 import { scanningSessionActivity } from './session-activity.ts';
+import { addHoursAudit, newTiming, timingPatch } from './session-hours-write.ts';
 import { assertNoZonesLeft, eventOfAccepts, sessionZoneChecks } from './session-zones.ts';
 
 export { startAdminSetup } from './scanning-session-admin-setup.ts';
@@ -77,7 +78,7 @@ export async function scanningSessionDetail(
   return scanningSessionDetailForAuthority(ctx, id, mode, countAuthority);
 }
 
-async function scanningSessionDetailForAuthority(
+export async function scanningSessionDetailForAuthority(
   ctx: ServiceContext,
   id: string,
   mode: Mode,
@@ -149,6 +150,7 @@ export async function createScanningSession(
       accepts: input.accepts ? JSON.stringify(input.accepts) : null,
       settings: JSON.stringify(settings),
       time_zone: input.timeZone,
+      ...newTiming(input.timeZone, input.hours ?? null, now),
       created_at: now,
       updated_at: now,
     },
@@ -261,6 +263,7 @@ export async function updateScanningSession(
       ...(input.timeZone === undefined ? {} : { time_zone: input.timeZone }),
       ...(accepted === undefined ? {} : { accepts: next.accepts }),
       ...(settings ? { settings: next.settings } : {}),
+      ...timingPatch(row, input, now),
     },
     now,
   );
@@ -289,6 +292,7 @@ export async function updateScanningSession(
       detail: { status: next.status },
     }),
   );
+  addHoursAudit(g, ctx, row, userId, input.hours);
   try {
     await g.commit();
   } catch (error) {

@@ -19,7 +19,8 @@ export const SEVERITY: Record<State, number> = {
   degraded: 1,
   not_configured: 2,
   configured: 3,
-  verified: 4,
+  not_in_use: 4,
+  verified: 5,
 };
 
 export function worst(states: State[]): State {
@@ -205,7 +206,7 @@ export async function checkConnections(ctx: ServiceContext): Promise<Draft[]> {
     label: 'Connections',
     state:
       total === 0
-        ? 'not_configured'
+        ? 'not_in_use'
         : failing > 0
           ? 'failing'
           : degraded > 0
@@ -214,7 +215,11 @@ export async function checkConnections(ctx: ServiceContext): Promise<Draft[]> {
               ? 'verified'
               : 'configured',
     detail:
-      total === 0 ? 'None.' : failing + degraded > 0 ? `${failing + degraded} unhealthy.` : null,
+      total === 0
+        ? 'No connections.'
+        : failing + degraded > 0
+          ? `${failing + degraded} unhealthy.`
+          : null,
     data: { total, healthy: sum('healthy'), degraded, failing, unknown: sum('unknown') },
   };
   const bad = await unhealthyConnections(ctx.env.DB, 20);

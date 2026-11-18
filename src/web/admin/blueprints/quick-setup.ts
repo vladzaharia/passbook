@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import { GOAL_MAX, GOAL_MIN } from '@/passkit/stamps/layout.ts';
 import type { TemplateVersionDetailSchema } from '@/shared/contracts/index.ts';
-import { supportedCurrencies } from '../../lib/format.ts';
+import { currencyOptions } from '@/shared/money.ts';
 import { contrast, type Rgb, toRgbText } from '../templates/designer/contrast.ts';
 import { placeImage, setSlotImage } from '../templates/designer/images.ts';
 import { type DesignDoc, type DraftAsset, isRecord } from '../templates/designer/model.ts';
@@ -39,12 +39,6 @@ export function textColors(bg: Rgb): { foreground: Rgb; label: Rgb } {
   return { foreground, label: contrast(soft, bg) >= 3 ? soft : foreground };
 }
 
-/** The common codes lead; the rest are the ISO codes the browser's money formatting knows. */
-const COMMON = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'SEK'];
-const currencies = (): string[] => {
-  return [...COMMON, ...supportedCurrencies()];
-};
-
 type Dict = Record<string, unknown>;
 const currencyNode = (doc: DesignDoc): Dict | null => {
   const props = isRecord(doc.manifest.inputs) ? doc.manifest.inputs.properties : null;
@@ -69,7 +63,7 @@ export function choicesOf(doc: DesignDoc): Choices {
   const node = currencyNode(doc);
   if (node) {
     const own = typeof node.default === 'string' ? node.default : 'USD';
-    const options = [...new Set([own, ...currencies()])].filter((c) => acceptable(node, c));
+    const options = [...new Set([own, ...currencyOptions()])].filter((c) => acceptable(node, c));
     out.currency = { value: own, options };
   }
   return out;

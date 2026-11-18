@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import { expect, it } from 'vitest';
+import { beforeAll, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fixtures,
@@ -32,8 +32,9 @@ const STARTERS = [
   ['poster-generic', ['generic', 'posterGeneric']],
 ] as const;
 
-// Builds every starter's art; over 30 s under istanbul coverage in CI.
-it('starter clones open in the designer as inactive drafts, and a draft can be saved', async () => {
+// One baked env per file (test storage is per file); each starter gets its own test so the
+// file stays under the per-test timeout as starters are added (istanbul coverage in CI is slow).
+async function setup() {
   const clock = new ManualClock();
   const assets = fakeAssets();
   // Workerd has no filesystem; Vite embeds the source bytes used to build the baked index.
@@ -105,7 +106,16 @@ it('starter clones open in the designer as inactive drafts, and a draft can be s
       },
       env,
     );
+  return { org, outsider, call };
+}
 
+let t: Awaited<ReturnType<typeof setup>>;
+beforeAll(async () => {
+  t = await setup();
+}, 120_000);
+
+it('starter sources and clones refuse callers outside the org', async () => {
+  const { org, outsider, call } = t;
   const unscoped = await call('/baked:starter-generic');
   expect(unscoped.status).toBe(403);
   expect(await unscoped.json()).toMatchObject({ code: 'ORG_REQUIRED' });
@@ -124,117 +134,123 @@ it('starter clones open in the designer as inactive drafts, and a draft can be s
       )
     ).status,
   ).toBe(404);
+});
 
-  for (const [slug, styles] of STARTERS) {
-    const sourceId = `baked:starter-${slug}`;
-    const sourceResponse = await call(`/${sourceId}?orgId=${org.id}`);
-    expect(sourceResponse.status, slug).toBe(200);
-    const source = TemplateDetailSchema.parse(await sourceResponse.json());
-    expect(source).toMatchObject({ id: sourceId, orgId: null, origin: 'baked', styles });
-    const sourceVersion = source.activeVersion;
-    if (!sourceVersion) throw new Error(`Starter ${slug} has no active version`);
-    const sourceVersionResponse = await call(
-      `/${sourceId}/versions/${sourceVersion}?orgId=${org.id}`,
-    );
-    expect(sourceVersionResponse.status, slug).toBe(200);
-    const sourceVersionDetail = TemplateVersionDetailSchema.parse(
-      await sourceVersionResponse.json(),
-    );
-    expect(sourceVersionDetail).toMatchObject({ version: sourceVersion, active: true });
+async function cloneStarter(slug: string, styles: readonly string[], name: string) {
+  const { org, call } = t;
+  const sourceId = `baked:starter-${slug}`;
+  const sourceResponse = await call(`/${sourceId}?orgId=${org.id}`);
+  expect(sourceResponse.status, slug).toBe(200);
+  const source = TemplateDetailSchema.parse(await sourceResponse.json());
+  expect(source).toMatchObject({ id: sourceId, orgId: null, origin: 'baked', styles });
+  const sourceVersion = source.activeVersion;
+  if (!sourceVersion) throw new Error(`Starter ${slug} has no active version`);
+  const sourceVersionResponse = await call(
+    `/${sourceId}/versions/${sourceVersion}?orgId=${org.id}`,
+  );
+  expect(sourceVersionResponse.status, slug).toBe(200);
+  const sourceVersionDetail = TemplateVersionDetailSchema.parse(await sourceVersionResponse.json());
+  expect(sourceVersionDetail).toMatchObject({ version: sourceVersion, active: true });
 
-    const clone = await call(`/${sourceId}/clone`, { orgId: org.id, name: `Copy ${slug}` });
-    expect(clone.status, slug).toBe(201);
-    const cloned = TemplateDetailSchema.parse(await clone.json());
-    expect(cloned).toMatchObject({
-      orgId: org.id,
-      origin: 'uploaded',
-      name: `Copy ${slug}`,
-      activeVersion: null,
-      styles,
-    });
-    const detailResponse = await call(`/${cloned.id}`);
-    expect(detailResponse.status, slug).toBe(200);
-    const detail = TemplateDetailSchema.parse(await detailResponse.json());
-    expect(detail.activeVersion, slug).toBeNull();
-    expect(detail.versions, slug).toHaveLength(1);
-    const version = detail.versions[0];
-    if (!version) throw new Error(`Clone of ${slug} has no saved version`);
-    expect(version.active, slug).toBe(false);
-    const versionResponse = await call(`/${cloned.id}/versions/${version.version}`);
-    expect(versionResponse.status, slug).toBe(200);
-    const v = TemplateVersionDetailSchema.parse(await versionResponse.json());
-    expect(v).toMatchObject({
-      version: version.version,
-      active: false,
-      manifest: { name: `Copy ${slug}` },
-      passJson: sourceVersionDetail.passJson,
-    });
-    expect(v.assets.map(({ name, sha1 }) => ({ name, sha1 }))).toEqual(
-      sourceVersionDetail.assets.map(({ name, sha1 }) => ({ name, sha1 })),
-    );
-    for (const style of styles) expect(v.passJson, slug).toHaveProperty(style);
-    const draft = {
-      passJson: v.passJson,
-      manifest: v.manifest,
-      assets: v.assets.map(({ name, sha1 }) => ({ name, sha1 })),
-    };
-    const res = await call(`/${cloned.id}/versions`, { ...draft, dryRun: true });
-    expect(res.status, slug).toBe(200);
-    const body = SaveVersionResponseSchema.parse(await res.json());
-    expect(body).toMatchObject({ saved: false });
-    expect(
-      body.report.issues.filter((i) => i.severity === 'error'),
-      slug,
-    ).toEqual([]);
-    expect(body.passJson, slug).not.toBeNull();
+  const clone = await call(`/${sourceId}/clone`, { orgId: org.id, name: name });
+  expect(clone.status, slug).toBe(201);
+  const cloned = TemplateDetailSchema.parse(await clone.json());
+  expect(cloned).toMatchObject({
+    orgId: org.id,
+    origin: 'uploaded',
+    name: name,
+    activeVersion: null,
+    styles,
+  });
+  const detailResponse = await call(`/${cloned.id}`);
+  expect(detailResponse.status, slug).toBe(200);
+  const detail = TemplateDetailSchema.parse(await detailResponse.json());
+  expect(detail.activeVersion, slug).toBeNull();
+  expect(detail.versions, slug).toHaveLength(1);
+  const version = detail.versions[0];
+  if (!version) throw new Error(`Clone of ${slug} has no saved version`);
+  expect(version.active, slug).toBe(false);
+  const versionResponse = await call(`/${cloned.id}/versions/${version.version}`);
+  expect(versionResponse.status, slug).toBe(200);
+  const v = TemplateVersionDetailSchema.parse(await versionResponse.json());
+  expect(v).toMatchObject({
+    version: version.version,
+    active: false,
+    manifest: { name: name },
+    passJson: sourceVersionDetail.passJson,
+  });
+  expect(v.assets.map(({ name, sha1 }) => ({ name, sha1 }))).toEqual(
+    sourceVersionDetail.assets.map(({ name, sha1 }) => ({ name, sha1 })),
+  );
+  for (const style of styles) expect(v.passJson, slug).toHaveProperty(style);
+  const draft = {
+    passJson: v.passJson,
+    manifest: v.manifest,
+    assets: v.assets.map(({ name, sha1 }) => ({ name, sha1 })),
+  };
+  const res = await call(`/${cloned.id}/versions`, { ...draft, dryRun: true });
+  expect(res.status, slug).toBe(200);
+  const body = SaveVersionResponseSchema.parse(await res.json());
+  expect(body).toMatchObject({ saved: false });
+  expect(
+    body.report.issues.filter((i) => i.severity === 'error'),
+    slug,
+  ).toEqual([]);
+  expect(body.passJson, slug).not.toBeNull();
 
-    if (slug === 'generic') {
-      await expectProblem(
-        await call(`/${cloned.id}`, undefined, outsider),
-        404,
-        'TEMPLATE_NOT_FOUND',
-      );
-      await expectProblem(
-        await call(`/${cloned.id}/versions`, draft, outsider),
-        404,
-        'TEMPLATE_NOT_FOUND',
-      );
-      const saved = await call(`/${cloned.id}/versions`, {
-        ...draft,
-        passJson: { ...draft.passJson, description: 'Edited starter draft' },
-      });
-      expect(saved.status).toBe(200);
-      const result = SaveVersionResponseSchema.parse(await saved.json());
-      expect(result).toMatchObject({
-        saved: true,
-        created: true,
-        template: { activeVersion: null },
-      });
-      const savedVersion = result.version;
-      if (!savedVersion || !result.template)
-        throw new Error('Saved draft has no version or template');
-      expect(savedVersion).not.toBe(version.version);
-      expect(result.template.versions).toEqual(
-        expect.arrayContaining([expect.objectContaining({ version: savedVersion, active: false })]),
-      );
-      const savedVersionResponse = await call(`/${cloned.id}/versions/${savedVersion}`);
-      expect(savedVersionResponse.status).toBe(200);
-      expect(TemplateVersionDetailSchema.parse(await savedVersionResponse.json())).toMatchObject({
-        version: savedVersion,
-        active: false,
-        manifest: v.manifest,
-        passJson: { ...v.passJson, description: 'Edited starter draft' },
-      });
-      const activation = await call(`/${cloned.id}/activate`, { version: savedVersion });
-      await expectProblem(activation, 404, 'NOT_FOUND');
-      const savedDetail = await call(`/${cloned.id}`);
-      expect(savedDetail.status).toBe(200);
-      expect(TemplateDetailSchema.parse(await savedDetail.json())).toMatchObject({
-        activeVersion: null,
-        versions: expect.arrayContaining([
-          expect.objectContaining({ version: savedVersion, active: false }),
-        ]),
-      });
-    }
-  }
+  return { cloned, version, v, draft };
+}
+
+it.each(STARTERS)(
+  'starter %s clones into an inactive draft that validates',
+  async (slug, styles) => {
+    await cloneStarter(slug, styles, `Copy ${slug}`);
+  },
+  60_000,
+);
+
+it('a starter draft saves as a new inactive version and cannot be activated', async () => {
+  const { outsider, call } = t;
+  const { cloned, version, v, draft } = await cloneStarter('generic', ['generic'], 'Saved generic');
+  await expectProblem(await call(`/${cloned.id}`, undefined, outsider), 404, 'TEMPLATE_NOT_FOUND');
+  await expectProblem(
+    await call(`/${cloned.id}/versions`, draft, outsider),
+    404,
+    'TEMPLATE_NOT_FOUND',
+  );
+  const saved = await call(`/${cloned.id}/versions`, {
+    ...draft,
+    passJson: { ...draft.passJson, description: 'Edited starter draft' },
+  });
+  expect(saved.status).toBe(200);
+  const result = SaveVersionResponseSchema.parse(await saved.json());
+  expect(result).toMatchObject({
+    saved: true,
+    created: true,
+    template: { activeVersion: null },
+  });
+  const savedVersion = result.version;
+  if (!savedVersion || !result.template) throw new Error('Saved draft has no version or template');
+  expect(savedVersion).not.toBe(version.version);
+  expect(result.template.versions).toEqual(
+    expect.arrayContaining([expect.objectContaining({ version: savedVersion, active: false })]),
+  );
+  const savedVersionResponse = await call(`/${cloned.id}/versions/${savedVersion}`);
+  expect(savedVersionResponse.status).toBe(200);
+  expect(TemplateVersionDetailSchema.parse(await savedVersionResponse.json())).toMatchObject({
+    version: savedVersion,
+    active: false,
+    manifest: v.manifest,
+    passJson: { ...v.passJson, description: 'Edited starter draft' },
+  });
+  const activation = await call(`/${cloned.id}/activate`, { version: savedVersion });
+  await expectProblem(activation, 404, 'NOT_FOUND');
+  const savedDetail = await call(`/${cloned.id}`);
+  expect(savedDetail.status).toBe(200);
+  expect(TemplateDetailSchema.parse(await savedDetail.json())).toMatchObject({
+    activeVersion: null,
+    versions: expect.arrayContaining([
+      expect.objectContaining({ version: savedVersion, active: false }),
+    ]),
+  });
 }, 60_000);

@@ -14,7 +14,8 @@ const SEVERITY: Record<Component['state'], number> = {
   degraded: 1,
   not_configured: 2,
   configured: 3,
-  verified: 4,
+  not_in_use: 4,
+  verified: 5,
 };
 
 /** Worst first; ties keep label order. */

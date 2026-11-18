@@ -1,0 +1,5 @@
+[
+  { "role": "org", "path": "/admin", "name": "admin-overview" },
+  { "role": "holder", "path": "/", "name": "portal-my-passes" },
+  { "role": "anon", "path": "/p/{passToken}", "name": "hosted-pass" }
+]

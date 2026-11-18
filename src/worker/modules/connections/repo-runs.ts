@@ -173,7 +173,7 @@ export async function syncRunCurrent(
      JOIN workflow_runs w ON w.instance_id = r.id AND w.kind = 'connection_sync'
        AND w.org_id = c.org_id AND w.target_id = c.id
      WHERE r.id = ? AND c.id = ? AND c.org_id = ? AND r.trigger = ? AND c.generation = ? AND c.mode = ?
-       AND r.outcome = 'running'
+       AND r.outcome = 'running' AND w.status IN ('queued', 'running')
        AND c.enabled = 1 AND o.status = 'active'
        AND (r.trigger <> 'schedule' OR c.mode IN ('poll', 'hybrid'))
        AND w.credential_keyset_commitment = ?`,

@@ -366,6 +366,24 @@
     },
     {
       "to": {
+        "pointer": "/backgroundColor"
+      },
+      "value": "{{lookups.tier[tier].bg}}"
+    },
+    {
+      "to": {
+        "pointer": "/foregroundColor"
+      },
+      "value": "{{lookups.tier[tier].fg}}"
+    },
+    {
+      "to": {
+        "pointer": "/labelColor"
+      },
+      "value": "{{lookups.tier[tier].label}}"
+    },
+    {
+      "to": {
         "pointer": "/voided"
       },
       "value": "{{lookups.void[status].void}}"
@@ -473,6 +491,23 @@
     }
   },
   "lookups": {
+    "tier": {
+      "Standard": {
+        "bg": "rgb(20,26,43)",
+        "fg": "rgb(255,255,255)",
+        "label": "rgb(94,234,212)"
+      },
+      "Plus": {
+        "bg": "rgb(23,52,110)",
+        "fg": "rgb(255,255,255)",
+        "label": "rgb(147,197,253)"
+      },
+      "Pro": {
+        "bg": "rgb(76,29,149)",
+        "fg": "rgb(255,255,255)",
+        "label": "rgb(253,224,71)"
+      }
+    },
     "void": {
       "Active": {
         "void": false

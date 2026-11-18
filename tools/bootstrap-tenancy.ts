@@ -120,6 +120,8 @@ try {
     console.log(
       `SQL: ${BOOTSTRAP_SQL}\nNext, production:\n  ${remoteCommands(owner, database)[2]}`,
     );
+  } else if (flag('--apply') && plan.length === 0) {
+    console.log('Nothing to apply.');
   } else if (flag('--apply')) {
     writePrivate(sqlFile, sql);
     wranglerLocal('--file', sqlFile);

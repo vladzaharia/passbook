@@ -12,7 +12,7 @@ export const staffEpochStmt = (db: D1Database, staffId: string, orgId: string) =
 export const sessionEpochStmt = (db: D1Database, sessionId: string, orgId: string, mode: Mode) =>
   stmt(
     db,
-    `SELECT status, accepts, settings, time_zone, config_epoch FROM scanning_sessions
+    `SELECT status, accepts, settings, time_zone, hours, hold, config_epoch FROM scanning_sessions
       WHERE id=? AND org_id=? AND mode=?`,
     [sessionId, orgId, mode],
   );

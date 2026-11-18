@@ -159,8 +159,19 @@ export const EPOCH_TABLES: EpochTable[] = [
   },
   {
     table: 'scanning_sessions',
-    epochs: { config_epoch: ['status', 'accepts', 'settings', 'time_zone', 'org_id', 'mode'] },
-    volatile: ['name', 'updated_at'],
+    epochs: {
+      config_epoch: [
+        'status',
+        'accepts',
+        'settings',
+        'time_zone',
+        'org_id',
+        'mode',
+        'hours',
+        'hold',
+      ],
+    },
+    volatile: ['name', 'updated_at', 'hours_next_at'],
     fixed: ['id', 'created_at', 'created_by'],
   },
   {

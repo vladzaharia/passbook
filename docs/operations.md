@@ -15,7 +15,14 @@
 - Real Pass Type ID certificate: `P12_PASSWORD=… npm run credentials -- Pass.p12` writes
   `.secrets/platform-{certificate,key}.pem` and `.dev.vars`. Neither is committed.
 - Demo data: with `npm run dev` running, `node tools/seed-demo.ts` (token from `npm run breakglass`;
-  `--url` for another port) adds 3 orgs, ~45 passes, portal users, connections and API keys.
+  `--url` for another port) adds 3 orgs, ~45 passes, portal users, connections and API keys. It waits for the
+  baked blueprints, invites and signs in `demo.owner@example.com` (org_admin in every org; org work runs as
+  them, since a platform admin without membership gets 404), and needs a valid signing identity in `.dev.vars`
+  (the fixture one lasts 2 to 3 days; on "Incorrect or expired WWDR intermediate" delete its `SIGNER_PLATFORM_*` lines, run `npm run dev:vars`, restart).
+  Sign-in mail is capped at 5 an hour per address, so reruns an hour apart.
+- Visual sweep: `node tools/dev/visual-sweep.ts --url http://localhost:5173 --routes tools/dev/visual-routes/admin.json[,portal.json,public.json,scanner.json] [--only name] [--viewports desktop,tablet,mobile] [--themes light,dark] [--emails]`
+  screenshots every route at 3 viewports and 2 themes into `.wrangler/visual-sweep/<run>/` with an `index.json` of console errors, failed requests and statuses.
+- It signs in once per role (break-glass, `demo.owner@example.com`, a portal holder), keeps the state in `.wrangler/visual-sweep/state/` and needs seeded demo data (`tools/seed-demo.ts`).
 - Tests: `npm run test:unit|worker|web`, `npm run test:e2e`, `npm run coverage`.
 - e2e runs the dev server or, in CI, the built preview. Both raise `RL_SCAN_PAIR` (30 a minute in production) to 100,000: `vite.config.ts` for dev, `tools/e2e-server.ts` patches the built `wrangler.json` for preview. A worker test covers the real limit.
 - `npm run gen` rewrites `src/generated/*` and `worker-configuration.d.ts`. Commit the result.
@@ -69,10 +76,15 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
 6. **Provision** (owner only): `node tools/provision.ts` prints the wrangler commands;
    `--apply` runs them. It creates the D1 database `wallet-platform` (id written to
    `wrangler.jsonc`), the queues and the R2 bucket, adds the R2 lifecycle rule (`uploads/` expires
-   after one day) and deletes the legacy secrets `ADMIN_TOKEN`, `SIGNER_HENRYS_CERTIFICATE` and
-   `SIGNER_HENRYS_PRIVATE_KEY` from the `wallet` Worker. Each step probes first; a rerun skips what
-   exists. `npm run deploy -- --apply` (step 9) then applies all migrations.
-7. **R2 lifecycle**: done by step 6.
+   after one day) and the receipt lock, and deletes the legacy secrets `ADMIN_TOKEN`,
+   `SIGNER_HENRYS_CERTIFICATE` and `SIGNER_HENRYS_PRIVATE_KEY` from the `wallet` Worker. Each step
+   probes first; a rerun skips what exists, so rerun it after a release that adds a queue.
+   `npm run deploy -- --apply` (step 9) then applies all migrations.
+7. **R2 lifecycle and receipt lock**: done by step 6. The lock rule `retention-receipts` keeps
+   every object under `retention/receipts/` for 2190 days (the D1 receipt retention): no delete or
+   overwrite, the Worker's included. Retention verification relies on it. Anyone allowed to edit R2
+   bucket settings can remove it (`npx wrangler r2 bucket lock remove wallet-passes --name retention-receipts`); while it
+   exists the bucket cannot be emptied.
 8. **Analytics Engine**: needs the Workers Analytics Engine entitlement on the account. The
    `EVENTS` dataset `wallet_events` is created by the first write. Charts query it through the
    `ANALYTICS_SQL` binding (no API token); if the query fails they fall back to D1 and the
@@ -388,6 +400,10 @@ GROUP BY t.id, t.origin, t.status, p.org_id
 ```
 
 Only archived templates may be listed; the wait ignores them.
+
+### Large connection syncs
+
+A first sync that writes more than 2,000 passes continues in a new workflow instance `<run id>-cN`; the run stays one row, open until the last instance ends. Each instance pins the template release again, so a release approved mid-run applies from the next instance. A connection has one open schedule or admin run: Sync now during one returns that run. A run whose instance died closes as `RUN_LOST`; a run that hits the 50-instance limit ends with `SYNC_CAPPED` in its detail and the next run resumes.
 
 ### Connection webhook recovery
 

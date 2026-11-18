@@ -1680,6 +1680,12 @@ describe('circuit breaker', () => {
     kit.clock.advance(300_000);
     await reconcileConnections({ ...sctx, clock: kit.clock });
     expect(mine()).toHaveLength(1);
+    // The probe instance never runs here; close its run so the test's own run can open (one open run).
+    await run(
+      kit.env.DB,
+      "UPDATE connection_runs SET outcome = 'skipped', finished_at = ? WHERE connection_id = ? AND outcome = 'running'",
+      [kit.clock.now(), dto.id],
+    );
     const sixth = await sync(dto.id);
     expect(sixth.conn?.breakerOpenUntil).toBe(kit.clock.now() + 600_000);
     expect(

@@ -339,8 +339,9 @@ describe('tenant metrics authorization', () => {
       for (let i = 0; i < count; i++) {
         await run(
           base.DB,
-          "INSERT INTO connection_runs (id, connection_id, trigger, started_at) VALUES (?, ?, 'schedule', ?)",
-          [s.f.ids.id(), connectionId, at],
+          // Finished runs: a connection holds at most one open sync run (0105).
+          "INSERT INTO connection_runs (id, connection_id, trigger, started_at, finished_at, outcome) VALUES (?, ?, 'schedule', ?, ?, 'unchanged')",
+          [s.f.ids.id(), connectionId, at, at],
         );
         await run(
           base.DB,

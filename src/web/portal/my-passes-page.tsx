@@ -33,8 +33,9 @@ import { useRemovalStatus } from './removal-status.ts';
 import { AddLine, PassMoreMenu, publicUrlOf, ShowQrButton } from './wallet-actions.tsx';
 import './portal.css';
 
-// mt-8: the buddy's room over the first tile (56 px with the 24 px above), skeleton included.
-const GRID = 'mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
+// The buddy's room over the first tile (32 px and the 24 px gap above), skeleton included.
+const GRID =
+  'wl-buddy-room [--wl-buddy-room:2rem] grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
 
 /**
  * What the list's buddy acts out (motion-and-expression.md, The buddy). Passes to add: it aims at
@@ -236,9 +237,6 @@ export function MyPassesPage() {
           </section>
         ) : null}
         <div>
-          <div className="mb-5">
-            <h2 className="text-lg font-semibold text-fg-strong">{HOLDER_COPY.fromOrgs}</h2>
-          </div>
           <ul className={GRID}>
             {passes.map((pass, i) => (
               <li

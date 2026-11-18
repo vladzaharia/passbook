@@ -148,7 +148,3 @@ export function formatWeekdayTime(ms: number, timeZone: string): string {
 /** A person's label: the name, else the verified email, else a plain "no email" label. */
 export const personLabel = (person: { name: string | null; primaryEmail: string | null }): string =>
   person.name ?? person.primaryEmail ?? NO_EMAIL_LABEL;
-
-/** ISO currency codes the browser's money formatting knows; none where it cannot say. */
-export const supportedCurrencies = (): string[] =>
-  typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('currency') : [];

@@ -1,7 +1,7 @@
 import { type Check, rawCheck } from '../../platform/authority-checks.ts';
 import { authorityPredicate } from '../../platform/authority-read.ts';
 import { bump } from '../../platform/counters.ts';
-import { first } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 import { RateLimitedError } from '../../platform/errors.ts';
 import { scanPrincipal } from './authority-checks.ts';
 import type { ScanActor } from './guard.ts';
@@ -192,4 +192,20 @@ export async function passTemplate(db: D1Database, passId: string): Promise<stri
     [passId],
   );
   return r?.template_id ?? null;
+}
+
+/** The owner's live passes, oldest first, for the user-fob preview. */
+export async function ownerPassIds(
+  db: D1Database,
+  orgId: string,
+  mode: 'live' | 'test',
+  ownerUserId: string,
+): Promise<string[]> {
+  const rows = await all<{ id: string }>(
+    db,
+    `SELECT id FROM passes WHERE org_id = ? AND mode = ? AND owner_user_id = ?
+    AND status <> 'voided' AND removed_at IS NULL AND deleted_at IS NULL ORDER BY created_at, id LIMIT 50`,
+    [orgId, mode, ownerUserId],
+  );
+  return rows.map((r) => r.id);
 }

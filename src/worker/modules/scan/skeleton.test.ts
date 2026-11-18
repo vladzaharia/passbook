@@ -88,7 +88,7 @@ describe('scan cron hooks', () => {
     const hooks = [MINUTE_CRON, DAILY_CRON]
       .flatMap((cron) => CRON_HOOKS[cron] ?? [])
       .filter((h) => h.name.startsWith('scan.'));
-    expect(hooks).toHaveLength(4);
+    expect(hooks).toHaveLength(5);
     for (const hook of hooks) await hook.run(ctx);
     expect(queries.length).toBeLessThan(CRON_QUERY_BUDGET);
   });

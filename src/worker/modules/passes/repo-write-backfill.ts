@@ -47,17 +47,18 @@ export async function backfillScanKeys(
     db,
     `SELECT p.id, p.org_id, p.mode, p.identity_id, p.template_id, p.template_version, p.row_version, p.version,
        p.credential_generation, p.lifecycle_generation, p.scan_code, p.barcode_hash, p.lookup_hash, p.removed_at, p.personalization,
-       json_extract(tv.manifest, '$.scan.lookup.input') AS lookup_input, pv.pass_json
+       json_extract(tv.manifest, '$.scan.lookup.input') AS lookup_input,
+       (SELECT pv.pass_json FROM pass_versions pv WHERE pv.pass_id = p.id AND pv.version <= p.version
+        ORDER BY pv.version DESC LIMIT 1) AS pass_json
      FROM passes p
      LEFT JOIN template_versions tv ON tv.template_id = p.template_id AND tv.version = p.template_version
-     LEFT JOIN pass_versions pv ON pv.pass_id = p.id AND pv.version = p.version
      WHERE p.deleted_at IS NULL
        AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = p.id AND t.state = 'pending')
        AND (
        p.scan_code IS NULL
        OR (p.barcode_hash IS NULL AND p.removed_at IS NULL AND (
-            json_extract(pv.pass_json, '$.barcodes[0].message') IS NOT NULL
-            OR json_extract(pv.pass_json, '$.barcode.message') IS NOT NULL))
+            json_extract(pass_json, '$.barcodes[0].message') IS NOT NULL
+            OR json_extract(pass_json, '$.barcode.message') IS NOT NULL))
        OR (p.lookup_hash IS NULL AND json_extract(tv.manifest, '$.scan.lookup.input') IS NOT NULL
            AND json_extract(p.personalization, '$."' || json_extract(tv.manifest, '$.scan.lookup.input') || '"') IS NOT NULL
            AND json_extract(p.personalization, '$."' || json_extract(tv.manifest, '$.scan.lookup.input') || '"') <> '')
@@ -99,7 +100,8 @@ export async function backfillScanKeys(
           'stale',
           `(SELECT json_extract(tv.manifest, '$.scan.lookup.input') FROM template_versions tv
             WHERE tv.template_id = ? AND tv.version = ?) IS ?
-           AND (SELECT pv.pass_json FROM pass_versions pv WHERE pv.pass_id = ? AND pv.version = ?) IS ?`,
+           AND (SELECT pv.pass_json FROM pass_versions pv WHERE pv.pass_id = ? AND pv.version <= ?
+             ORDER BY pv.version DESC LIMIT 1) IS ?`,
           [
             row.template_id,
             row.template_version,

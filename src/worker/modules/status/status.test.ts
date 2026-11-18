@@ -79,7 +79,14 @@ describe('status components', () => {
     expect(find(s, 'oidc')?.state).toBe('verified');
     expect(find(s, 'build')?.data?.id).toBe(base.CF_VERSION?.id ?? null);
 
-    const rank = { failing: 0, degraded: 1, not_configured: 2, configured: 3, verified: 4 };
+    const rank = {
+      failing: 0,
+      degraded: 1,
+      not_configured: 2,
+      configured: 3,
+      not_in_use: 4,
+      verified: 5,
+    };
     const ranks = s.components.map((c) => rank[c.state]);
     expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
     expect(s.components[0]?.state).toBe('failing');
@@ -149,6 +156,12 @@ describe('status components', () => {
     const t = await status({ JOBS: queue(0), JOBS_DLQ: undefined } as unknown as Partial<AppEnv>);
     expect(find(t, 'queue')).toMatchObject({ state: 'verified', data: { dlq: null } });
     expect(find(t, 'queue')?.detail).toContain('Dead-letter depth unavailable');
+  });
+
+  it('surfaces a required part that is not configured in overall', async () => {
+    const s = await status({ OIDC_ISSUER: '' });
+    expect(find(s, 'oidc')?.state).toBe('not_configured');
+    expect(['failing', 'degraded', 'not_configured']).toContain(s.overall);
   });
 
   it('flags email and the issuer honestly', async () => {
@@ -359,6 +372,15 @@ describe('status components', () => {
     });
     expect(find(s, 'connection:c2')).toMatchObject({ state: 'failing', data: { orgId: org.id } });
     expect(find(s, 'connection:c1')).toBeUndefined();
+  });
+
+  it('reports no connections as not in use', async () => {
+    const s = await status();
+    expect(find(s, 'connections')).toMatchObject({
+      state: 'not_in_use',
+      detail: 'No connections.',
+    });
+    expect(s.overall).not.toBe('not_in_use');
   });
 
   it('tracks cron runs and flags overdue ones', async () => {

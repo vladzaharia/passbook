@@ -225,6 +225,8 @@ export interface ScanManifest {
   display?: ScanDisplayDoc;
   /** An Access card: plans and zones decide the verdict. Every check-in repeats. */
   access?: AccessManifest;
+  /** The weakest tag that may be bound to or admit on this pass. Absent means `basic`. */
+  tags?: { min?: 'basic' | 'secure' };
 }
 
 /** A card that fills a strip with stamps; the compositor draws one strip pair per count at save. */
