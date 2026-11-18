@@ -9,7 +9,7 @@ import { TimestampSchema } from '../../../shared/contracts/common.ts';
 import { ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
 import {
   PlaceKeySchema,
-  ScanMarkOutRequestSchema,
+  type ScanMarkOutRequestSchema,
   ScanPlaceRevSchema,
 } from '../../../shared/contracts/scan-occupancy.ts';
 
@@ -95,10 +95,7 @@ export interface InsideQuery {
 
 export const INSIDE_Q_MAX = 80;
 
-export {
-  ScanMarkOutRequestSchema as MarkOutRequestSchema,
-  ScanOutcomeSchema as MarkOutResultSchema,
-};
+export { ScanOutcomeSchema as MarkOutResultSchema };
 export type MarkOutRequest = z.infer<typeof ScanMarkOutRequestSchema>;
 export type MarkOutResult = z.infer<typeof ScanOutcomeSchema>;
 
