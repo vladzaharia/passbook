@@ -394,6 +394,10 @@ GROUP BY t.id, t.origin, t.status, p.org_id
 
 Only archived templates may be listed; the wait ignores them.
 
+### Large connection syncs
+
+A first sync that writes more than 2,000 passes continues in a new workflow instance `<run id>-cN`; the run stays one row, open until the last instance ends. Each instance pins the template release again, so a release approved mid-run applies from the next instance. A connection has one open schedule or admin run: Sync now during one returns that run. A run whose instance died closes as `RUN_LOST`; a run that hits the 50-instance limit ends with `SYNC_CAPPED` in its detail and the next run resumes.
+
 ### Connection webhook recovery
 
 - New webhook work is retained encrypted with per-item execution state. Keep the KEK versions
