@@ -1,6 +1,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { axe } from 'vitest-axe';
 import { json, membershipFixture, renderApp, sessionFixture } from '@/web/lib/test-utils.tsx';
 
 const reader = membershipFixture('o1', {
@@ -234,5 +235,28 @@ describe('API key platform and membership authority', () => {
     expect(screen.queryByRole('dialog', { name: 'New API key' })).toBeNull();
     next.resolve(page([key('new', null, 'New key')]));
     expect(await screen.findByText('New key')).toBeInTheDocument();
+  });
+});
+
+// jsdom has no layout: width sets the viewport the kit's media queries read.
+describe.each(
+  [1440, 820, 390].flatMap((width) =>
+    (['light', 'dark'] as const).map((theme) => [width, theme] as const),
+  ),
+)('organization API keys axe at %i, %s theme', (width, theme) => {
+  it('lists the organization keys', async () => {
+    document.documentElement.dataset.theme = theme;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+    await renderApp('/admin/api-keys?orgId=o1', {
+      session: 'user',
+      memberships: [manager],
+      handlers: { '/api/v1/api-keys': () => page([key('k1', 'o1', 'Door feed')]) },
+    });
+    await screen.findByText('Door feed');
+    expect((await axe(document.body)).violations).toEqual([]);
+    delete document.documentElement.dataset.theme;
   });
 });

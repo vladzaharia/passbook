@@ -61,10 +61,8 @@ async function setup() {
   const added = await makePass(f, { orgId: org.id, template: tpl.resolved });
   const waiting = await makePass(f, { orgId: org.id, template: tpl.resolved });
   const removed = await makePass(f, { orgId: org.id, template: tpl.resolved });
-  const foreign = await makePass(f, {
-    orgId: other.id,
-    template: makeTemplate({ orgId: other.id }).resolved,
-  });
+  const otherTemplate = makeTemplate({ orgId: other.id });
+  const foreign = await makePass(f, { orgId: other.id, template: otherTemplate.resolved });
   await run(
     env.DB,
     'INSERT INTO devices (device_id, identity_id, push_token, updated_at) SELECT ?, identity_id, ?, ? FROM passes WHERE id = ?',
@@ -78,7 +76,7 @@ async function setup() {
   await run(env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [clock.now(), removed.id]);
   await scan(org.id, added.id, tpl.resolved.id, 'check_in', clock.now());
   await scan(org.id, added.id, tpl.resolved.id, 'use_up', clock.now());
-  await scan(other.id, foreign.id, foreign.templateId ?? 'x', 'use_up', clock.now());
+  await scan(other.id, foreign.id, otherTemplate.resolved.id, 'use_up', clock.now());
   const reader = await makeUser(f);
   await join(f, org.id, reader.id, 'read_only');
   const author = await makeUser(f);

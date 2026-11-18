@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Plus, Table2 } from 'lucide-react';
 import { useState } from 'react';
 import type { OrgActivity } from '@/shared/contracts/metrics.ts';
+import { canSeeOrgOverview } from '@/web/lib/guards.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { useArrival } from '@/web/lib/motion.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
@@ -111,7 +112,8 @@ export function OrgOverviewPage({
   const { membership } = useOrgScope();
   const principal = useSession().authed?.user.id;
   const mode = useMode();
-  const orgId = membership?.orgId;
+  // The route gate decides; this keeps a page that is mid-navigation from asking anyway.
+  const orgId = canSeeOrgOverview(membership) ? membership?.orgId : undefined;
   const caps = membership?.capabilities ?? [];
   const activity = useOrgActivity(orgId, principal, range);
   const data = activity.data;
