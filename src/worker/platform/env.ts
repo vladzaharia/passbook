@@ -26,8 +26,13 @@ export interface AppEnv
   MAC_KEY_VERSION?: string;
   /** Set only while `tokens.remac` rewrites MACs after MAC_KEY_VERSION changed: the version they were under. */
   MAC_KEY_VERSION_PREVIOUS?: string;
+  /** Not a required secret: once a newer KEK holds every envelope, KEK_V1 is retired (docs/operations.md, KEK rotation). */
+  KEK_V1?: string;
   KEK_V2?: string;
   KEK_V3?: string;
+  /** HKDF-Extract of the KEK of that version (tools/keys.ts mac-root): derives every MAC key, opens no envelope. */
+  MAC_ROOT_V1?: string;
+  MAC_ROOT_V2?: string;
 }
 
 /** Binding names come from the generated Env, so renaming a ratelimits entry fails typecheck. */

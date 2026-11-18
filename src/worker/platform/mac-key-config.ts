@@ -40,3 +40,28 @@ export function macKeyProblems(
     problems.push('MAC_KEY_VERSION and MAC_KEY_VERSION_PREVIOUS must differ.');
   return problems;
 }
+
+/**
+ * Problems with the key ring as a whole (Status and deploy:check). `kek` and `macRoot` are the versions of
+ * `KEK_V<n>` and `MAC_ROOT_V<n>` that are set. Root 1 must stay available (as the KEK or its extracted
+ * root): every deployment started there, and its retained evidence MACs derive from it. `MAC_KEY_VERSION*`
+ * may name either kind of root.
+ */
+export function keyRingProblems(input: {
+  kek: readonly number[];
+  macRoot: readonly number[];
+  pin?: unknown;
+  previous?: unknown;
+}): string[] {
+  const { kek, macRoot } = input;
+  if (kek.length === 0) return ['No KEK is set (KEK_V1, KEK_V2, ...).'];
+  const problems: string[] = [];
+  if (!kek.includes(1) && !macRoot.includes(1))
+    problems.push('Root 1 is missing: set KEK_V1 or MAC_ROOT_V1.');
+  const current = Math.max(...kek);
+  for (const version of macRoot)
+    if (version >= current)
+      problems.push(`MAC_ROOT_V${version} must be older than the current KEK (KEK_V${current}).`);
+  problems.push(...macKeyProblems(input, [...new Set([...kek, ...macRoot])]));
+  return problems;
+}
