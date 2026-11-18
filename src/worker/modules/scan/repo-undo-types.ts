@@ -1,6 +1,8 @@
 import type { AfterRead } from '../../platform/authority-after.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
+import type { OccupancyRow } from './occupancy/repo.ts';
+import type { OccZone } from './occupancy/rules.ts';
 import type { ScanRow } from './repo-scans.ts';
 import type { ScanEventRow } from './repo-scope.ts';
 
@@ -44,6 +46,8 @@ export interface UndoCommit {
   target: ScanRow & { passId: string; actionId: string };
   gate: UndoGate;
   presence: UndoPresence | null;
+  /** A scan at a tracked zone: its group's rows go back together (SA §20.8). */
+  occupancy?: OccupancyUndo | null;
   event: ScanEventRow | null;
   /** The manager whose PIN was verified: still enabled, still a manager, same `auth_epoch`. */
   approver: { id: string; authEpoch: number } | null;
@@ -51,4 +55,13 @@ export interface UndoCommit {
   key: string;
   /** The answer's reads: they commit with the grant, so the undo needs no trip of its own for them. */
   reads?: readonly AfterRead[];
+}
+
+/** What an occupancy scan's undo read: its group, the rows the group still holds, and the zones. */
+export interface OccupancyUndo {
+  group: string[];
+  /** The group's latest scan time: a zone saved after it supersedes the undo. */
+  scannedAt: number;
+  rows: OccupancyRow[];
+  zones: OccZone[];
 }
