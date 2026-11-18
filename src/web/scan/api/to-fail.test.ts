@@ -33,6 +33,11 @@ describe('toFail (SA 2.8)', () => {
     });
     expect(toFail(pin(400, 'PIN_INVALID', {}))).toEqual({ error: 'pin_invalid', triesLeft: 0 });
     expect(toFail(pin(429, 'RATE_LIMITED', { pin: 'locked' }))).toEqual({ error: 'pin_locked' });
+    const withWait = new ScanApiError(
+      { status: 429, code: 'RATE_LIMITED', fields: { pin: 'locked' } },
+      180_000,
+    );
+    expect(toFail(withWait)).toEqual({ error: 'pin_locked', retryAfterMs: 180_000 });
     expect(toFail(err(429, 'RATE_LIMITED', { retryAfterMs: 1000 }))).toEqual({
       error: 'rate_limited',
       retryAfterMs: 1000,

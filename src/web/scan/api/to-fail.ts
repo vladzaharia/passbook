@@ -37,7 +37,10 @@ export function toFail(error: unknown, principal: 'scanner' | 'admin' = 'scanner
     case 422:
       return { error: 'forbidden' };
     case 429: {
-      if (error.fields.pin === 'locked') return { error: 'pin_locked' };
+      if (error.fields.pin === 'locked')
+        return error instanceof ScanApiError && error.retryAfterMs !== undefined
+          ? { error: 'pin_locked', retryAfterMs: error.retryAfterMs }
+          : { error: 'pin_locked' };
       const wait = error instanceof ScanApiError ? error.retryAfterMs : undefined;
       return wait === undefined
         ? { error: 'rate_limited' }

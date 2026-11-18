@@ -60,4 +60,27 @@ describe('manager code tries', () => {
     expect(status).toBe(429);
     expect((await add('135790')).status).toBe(429);
   });
+
+  it('reports the real wait: minutes for the person lock, longer for the hourly scanner lock', async () => {
+    await makeScanStaff(kit.fx, { orgId: kit.org.id, role: 'manager', pin: '864209' });
+    const HOUR = 3_600_000;
+    // Start at the top of an hour so five-minute windows fit inside one hourly window.
+    kit.clock.set(Math.ceil((kit.clock.now() + HOUR) / HOUR) * HOUR + 1000);
+    const add = await door();
+    const waits: number[] = [];
+    for (let i = 0; i < 80; i++) {
+      const res = await add('000000');
+      if (res.status !== 429) continue;
+      const wait = Number(res.headers.get('retry-after'));
+      waits.push(wait);
+      if (wait > 300) break;
+      kit.clock.advance((wait + 1) * 1000);
+    }
+    const hourly = waits.at(-1) ?? 0;
+    const person = waits[0] ?? 0;
+    expect(person).toBeGreaterThan(0);
+    expect(person).toBeLessThanOrEqual(300);
+    expect(hourly).toBeGreaterThan(300);
+    expect(hourly).toBeLessThanOrEqual(3600);
+  });
 });

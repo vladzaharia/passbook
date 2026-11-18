@@ -7,12 +7,22 @@ import { Select } from '../../ui/select.tsx';
 import type { PinNote } from '../machine/types.ts';
 import './picker.css';
 
+/** "3 min" (rounded up, at least 1), or "1 hour" from 60. */
+export function waitLine(ms: number): string {
+  const n = Math.max(1, Math.ceil(ms / 60_000));
+  return n >= 60 ? '1 hour' : `${n} min`;
+}
+
 const noteLine = (note: PinNote | undefined, code: boolean) => {
   if (!note) return undefined;
   const copy = code ? SCAN_COPY.managerCode : null;
-  if ('locked' in note) return copy ? copy.locked : SCAN_COPY.boot.pinLocked;
+  const locked = copy ? copy.locked : SCAN_COPY.boot.pinLocked;
+  // No Retry-After yet (the last try was just used): the person window is 5 min.
+  if ('locked' in note) return scanLine(locked, { wait: waitLine(note.retryAfterMs ?? 300_000) });
   const wrong = copy ? copy.wrong : SCAN_COPY.boot.wrongPin;
-  return note.triesLeft > 0 ? scanLine(wrong, { n: note.triesLeft }) : SCAN_COPY.boot.pinLocked;
+  return note.triesLeft > 0
+    ? scanLine(wrong, { n: note.triesLeft })
+    : scanLine(locked, { wait: waitLine(300_000) });
 };
 
 /**

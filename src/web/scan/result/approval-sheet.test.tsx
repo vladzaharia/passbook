@@ -57,9 +57,45 @@ describe('Use manager code', () => {
   });
 
   it('locks the field when the tries are used up', () => {
-    render(<ResultCard outcome={needs()} desk={desk({ code: true, note: { locked: true } })} />);
-    expect(screen.getByText('Too many tries. Try again in 5 min.')).toBeVisible();
+    render(
+      <ResultCard
+        outcome={needs()}
+        desk={desk({ code: true, note: { locked: true, retryAfterMs: 240_000 } })}
+      />,
+    );
+    expect(screen.getByText('Too many tries. Try again in 4 min.')).toBeVisible();
     expect(screen.getByLabelText('6-digit code')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
+  });
+
+  it('shows the real wait: person lock in minutes, hourly lock as 1 hour', () => {
+    const { rerender } = render(
+      <ResultCard
+        outcome={needs()}
+        desk={desk({ code: true, note: { locked: true, retryAfterMs: 61_000 } })}
+      />,
+    );
+    expect(screen.getByText('Too many tries. Try again in 2 min.')).toBeVisible();
+    rerender(
+      <ResultCard
+        outcome={needs()}
+        desk={desk({ code: true, note: { locked: true, retryAfterMs: 1_000 } })}
+      />,
+    );
+    expect(screen.getByText('Too many tries. Try again in 1 min.')).toBeVisible();
+    rerender(
+      <ResultCard
+        outcome={needs()}
+        desk={desk({ code: true, note: { locked: true, retryAfterMs: 3_000_000 } })}
+      />,
+    );
+    expect(screen.getByText('Too many tries. Try again in 50 min.')).toBeVisible();
+    rerender(
+      <ResultCard
+        outcome={needs()}
+        desk={desk({ code: true, note: { locked: true, retryAfterMs: 3_540_001 } })}
+      />,
+    );
+    expect(screen.getByText('Too many tries. Try again in 1 hour.')).toBeVisible();
   });
 });

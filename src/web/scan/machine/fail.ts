@@ -13,4 +13,4 @@ export type FailCode =
   | 'pin_locked';
 
 /** Why a Manager's PIN was not taken: `triesLeft` is the lockout's own count. */
-export type PinNote = { triesLeft: number } | { locked: true };
+export type PinNote = { triesLeft: number } | { locked: true; retryAfterMs?: number };

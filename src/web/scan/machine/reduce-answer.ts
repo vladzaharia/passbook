@@ -172,7 +172,13 @@ function pinRefused(s: MachineState, l: MachineState['loop'], ev: Fail, env: Env
       inPlace: true,
       next: l.next,
       draft: withoutApproval(l.draft),
-      pin: ev.error === 'pin_locked' ? { locked: true } : { triesLeft: ev.triesLeft ?? 0 },
+      pin:
+        ev.error === 'pin_locked'
+          ? {
+              locked: true,
+              ...(ev.retryAfterMs !== undefined ? { retryAfterMs: ev.retryAfterMs } : {}),
+            }
+          : { triesLeft: ev.triesLeft ?? 0 },
     },
     env,
   );
