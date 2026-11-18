@@ -10,7 +10,7 @@ import type { ScanEventRow } from './repo-scope.ts';
 import { type ScanPassFacts, scanPassChecks } from './scan-pass-checks.ts';
 
 export interface ScanWriteInput {
-  purpose: `org_mode.scan.${'claim' | 'check_in' | 'value' | 'held' | 'stop' | 'undo' | 'tag_bind' | 'tag_undo' | 'tag.enroll'}`;
+  purpose: `org_mode.scan.${'claim' | 'check_in' | 'value' | 'held' | 'stop' | 'undo' | 'tag.bind' | 'tag.unbind' | 'tag.enroll'}`;
   now: number;
   /** The operation's event when it is not the actor's. */
   event?: ScanEventRow | null;
