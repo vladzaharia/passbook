@@ -11,7 +11,13 @@ import { TINY_PNG } from '../passes/pass-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { handleJoinResend } from './jobs.ts';
 import { joinTemplate } from './join-test-fixtures.ts';
-import { type Jar, type PublicKit, publicKit, turnstile } from './public-test-fixtures.ts';
+import {
+  type Jar,
+  type PublicKit,
+  publicKit,
+  turnstile,
+  verdictOf,
+} from './public-test-fixtures.ts';
 
 let t: PublicKit;
 let n = 0;
@@ -22,7 +28,7 @@ afterAll(() => t.restore());
 beforeEach(async () => {
   // The platform breaker counts a UTC day: each test starts from its own count.
   await run(t.kit.env.DB, "DELETE FROM counters WHERE key = 'join:platform'");
-  turnstile.verdict = { success: true, hostname: 'passbook.mobile', action: 'join' };
+  turnstile.verdict = verdictOf();
   turnstile.asked.length = 0;
 });
 
@@ -219,7 +225,7 @@ describe('POST /j/:token: a new card', () => {
     // Also a refusal path, so its log lines are read too.
     turnstile.verdict = { success: false };
     await t.post(l, { name: secretName, email: email() }, { ip: '198.51.100.77', jar: new Map() });
-    turnstile.verdict = { success: true, hostname: 'passbook.mobile', action: 'join' };
+    turnstile.verdict = verdictOf();
     const { token } = await cardOf(res);
     const logged = JSON.stringify(spies.flatMap((s) => s.mock.calls));
     for (const secret of [secretName, addr, token, l.token, '198.51.100'])
@@ -251,11 +257,11 @@ describe('POST /j/:token: Turnstile', () => {
     const before = await passCount();
     expect((await t.post(l, { 'cf-turnstile-response': null })).status).toBe(403);
     expect(turnstile.asked).toEqual([]);
-    turnstile.verdict = { success: true, hostname: 'passbook.mobile', action: 'magic_request' };
+    turnstile.verdict = verdictOf({ action: 'magic_request' });
     const wrongAction = await t.post(l);
     expect(wrongAction.status).toBe(403);
     expect(await wrongAction.text()).toContain('Verification failed. Try again.');
-    turnstile.verdict = { success: true, hostname: 'evil.example', action: 'join' };
+    turnstile.verdict = verdictOf({ hostname: 'evil.example' });
     expect((await t.post(l)).status).toBe(403);
     turnstile.verdict = { success: false };
     expect((await t.post(l)).status).toBe(403);

@@ -8,14 +8,20 @@ import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { joinTemplate } from './join-test-fixtures.ts';
 
 export const BASE = 'https://passbook.mobile';
+const HOST = new URL(BASE).hostname;
+
+/** siteverify's answer for a good token; `over` changes it. */
+export const verdictOf = (over: Record<string, unknown> = {}): Record<string, unknown> => ({
+  success: true,
+  hostname: HOST,
+  action: 'join',
+  ...over,
+});
 export { absorb, type Jar };
 
 /** What Cloudflare's siteverify answers in these tests, and the tokens it was asked about. */
 export const turnstile = {
-  verdict: { success: true, hostname: 'passbook.mobile', action: 'join' } as Record<
-    string,
-    unknown
-  >,
+  verdict: verdictOf(),
   asked: [] as string[],
 };
 
@@ -133,7 +139,7 @@ export async function publicKit(): Promise<PublicKit> {
     restore() {
       globalThis.fetch = original;
       vi.restoreAllMocks();
-      turnstile.verdict = { success: true, hostname: 'passbook.mobile', action: 'join' };
+      turnstile.verdict = verdictOf();
       turnstile.asked.length = 0;
     },
   };
