@@ -102,6 +102,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass.rotate_link': a('Pass link rotated', I.rotate, 'info'),
   'pass.stamps.add': a('Stamp added', ENTITY.pass.icon, 'info'),
   'pass.stamps.redeem': a('Reward redeemed', Star, 'success'),
+  'pass.term.renew': a('Term renewed', I.restore, 'success'),
   'pass.transfer_started': a('Credential transfer started', ArrowRightLeft, 'info'),
   'pass.transfer_completed': a('Credential transfer completed', ArrowRightLeft, 'success'),
   'pass.unvoid': a('Pass restored', I.unvoid, 'success'),

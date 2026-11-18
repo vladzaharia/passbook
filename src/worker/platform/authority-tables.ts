@@ -207,6 +207,7 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'pass_auth_seals',
   'bundle_token_seals',
   'join_link_seals',
+  'org_reply_to',
 ]);
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',
