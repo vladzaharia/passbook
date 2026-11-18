@@ -88,6 +88,17 @@ export function readWebhookSecret(
   return read(ctx, conn.orgId, conn.webhookCredentialId, 'webhook');
 }
 
+/** The replaced secret, only while its overlap lasts. */
+export function readPreviousWebhookSecret(
+  ctx: ServiceContext,
+  conn: ConnectionRow,
+): Promise<string | undefined> {
+  if (conn.webhookPrevUntil === null || ctx.clock.now() >= conn.webhookPrevUntil) {
+    return Promise.resolve(undefined);
+  }
+  return read(ctx, conn.orgId, conn.webhookPrevCredentialId, 'webhook');
+}
+
 export function newWebhookSecret(ctx: ServiceContext): string {
   return `whsec_${ctx.ids.token(32)}`;
 }

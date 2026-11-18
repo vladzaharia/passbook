@@ -10,7 +10,7 @@ import { createSafeFetch, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getDeps } from './deps.ts';
 import type { ConnectionRow } from './repo.ts';
-import { readConnectorSecrets, readWebhookSecret } from './secrets.ts';
+import { readConnectorSecrets, readPreviousWebhookSecret, readWebhookSecret } from './secrets.ts';
 
 export interface Prepared {
   def: AnyConnector;
@@ -64,6 +64,7 @@ export async function prepare(
     secrets = parsed.data;
   }
   const webhookSecret = await readWebhookSecret(sctx, conn);
+  const previousSecret = webhookSecret ? await readPreviousWebhookSecret(sctx, conn) : undefined;
   const timeoutMs = def.defaults.timeoutMs;
   const deps = getDeps();
   const fetch = createSafeFetch({
@@ -80,7 +81,12 @@ export async function prepare(
       config: config.data,
     },
     secrets,
-    ...(webhookSecret ? { webhookSecret } : {}),
+    ...(webhookSecret
+      ? {
+          webhookSecret,
+          webhookSecrets: previousSecret ? [webhookSecret, previousSecret] : [webhookSecret],
+        }
+      : {}),
     now: () => sctx.clock.now(),
     fetch,
     signal: options.signal ?? AbortSignal.timeout(10 * 60_000),

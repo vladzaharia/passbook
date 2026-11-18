@@ -21,8 +21,10 @@ export interface ConnectorContext<C, S> {
   connection: { id: string; orgId: string; generation: number; config: C };
   /** Decrypted per run; never the Worker env. */
   secrets: S;
-  /** Decrypted shared secret for inbound webhooks; absent when none is set. */
+  /** Decrypted shared secret for inbound webhooks; absent when none is set. Equals `webhookSecrets[0]`. */
   webhookSecret?: string;
+  /** Current secret first, then the previous one while its overlap lasts. At most two. */
+  webhookSecrets?: readonly string[];
   now(): number;
   /** HTTPS-only, public hosts, no redirects, timeout and size caps. */
   fetch: SafeFetch;

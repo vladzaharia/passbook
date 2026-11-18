@@ -7,8 +7,75 @@ export const TIMESTAMP_HEADER = 'x-wallet-timestamp';
 export const REPLAY_WINDOW_MS = 5 * 60_000;
 const FUTURE_SKEW_MS = 60_000;
 export const MAX_WEBHOOK_BYTES = 256 * 1024;
+const SHOPIFY_MAX_BYTES = 1024 * 1024;
+/** Stripe's v1 entries to try; during a rollover Stripe sends one per active secret. */
+const MAX_STRIPE_V1 = 8;
+const MAX_SECRETS = 2;
+
+/** Always ArrayBuffer-backed, as SubtleCrypto requires. */
+type Bytes = Uint8Array<ArrayBuffer>;
 
 const encoder = new TextEncoder();
+
+// ---- strict decoders: exact length, exact alphabet, null on anything else ----
+
+/** Lowercase hex, exactly 64 characters. */
+export function decodeHex32(s: string): Bytes | null {
+  if (!/^[0-9a-f]{64}$/.test(s)) return null;
+  return Uint8Array.from(s.match(/../g) ?? [], (h) => Number.parseInt(h, 16));
+}
+
+/** Standard-alphabet base64, padded, 44 characters, canonical (no stray trailing bits). */
+export function decodeBase64_32(s: string): Bytes | null {
+  if (!/^[A-Za-z0-9+/]{43}=$/.test(s)) return null;
+  const bytes = Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  return btoa(String.fromCharCode(...bytes)) === s ? bytes : null;
+}
+
+/** Stripe's `t=<seconds>,v1=<hex>,…`. Unknown entries are ignored; `v0` is never read. */
+export function parseStripeSignature(h: string): { t: number; v1: Bytes[] } | null {
+  let t: string | null = null;
+  const v1: Bytes[] = [];
+  let seen = 0;
+  for (const entry of h.split(',')) {
+    const eq = entry.indexOf('=');
+    if (eq < 0) continue;
+    const key = entry.slice(0, eq);
+    const value = entry.slice(eq + 1);
+    if (key === 't') {
+      if (t !== null || !/^[1-9]\d{8,11}$/.test(value)) return null;
+      t = value;
+    } else if (key === 'v1' && seen < MAX_STRIPE_V1) {
+      seen += 1;
+      const sig = decodeHex32(value);
+      if (sig) v1.push(sig);
+    }
+  }
+  return t === null || v1.length === 0 ? null : { t: Number(t), v1 };
+}
+
+/** The decoded body only ever comes after the MAC: invalid UTF-8 is a bad payload, not bad auth. */
+export function decodeUtf8Strict(bytes: Uint8Array): string {
+  try {
+    return new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes);
+  } catch {
+    throw new ConnectorError('INVALID_PAYLOAD');
+  }
+}
+
+export function parseJsonBody(body: string): unknown {
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new ConnectorError('INVALID_PAYLOAD');
+  }
+}
+
+export function decodeJsonStrict(bytes: Uint8Array): unknown {
+  return parseJsonBody(decodeUtf8Strict(bytes));
+}
+
+// ---- primitives ----
 
 function hmacKey(secret: string, usage: 'sign' | 'verify'): Promise<CryptoKey> {
   return crypto.subtle.importKey(
@@ -19,6 +86,190 @@ function hmacKey(secret: string, usage: 'sign' | 'verify'): Promise<CryptoKey> {
     [usage],
   );
 }
+
+/** Constant-time compare (SubtleCrypto verify). `signature` must already be a strictly decoded MAC. */
+export async function hmacVerify(
+  secret: string,
+  signature: Bytes,
+  message: Bytes,
+): Promise<boolean> {
+  return crypto.subtle.verify('HMAC', await hmacKey(secret, 'verify'), signature, message);
+}
+
+/** The message is exactly `prefix` then the received bytes, never re-encoded text. */
+function withPrefix(prefix: string, bytes: Bytes): Bytes {
+  const head = encoder.encode(prefix);
+  const out = new Uint8Array(head.byteLength + bytes.byteLength);
+  out.set(head, 0);
+  out.set(bytes, head.byteLength);
+  return out;
+}
+
+/** Content-length check, then a capped read. The only reader of `req.body`. */
+export async function readSignedBytes(req: Request, maxBytes: number): Promise<Bytes> {
+  // readCapped allocates its result, so it is never shared memory.
+  return (await readCapped(
+    req.body,
+    maxBytes,
+    () => new ConnectorError('INVALID_PAYLOAD'),
+    Number(req.headers.get('content-length') ?? 0),
+  )) as Bytes;
+}
+
+async function sha256Hex(bytes: Bytes): Promise<string> {
+  return toHex(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)));
+}
+
+/** Any (secret, signature) pair matching passes; at most MAX_SECRETS x MAX_STRIPE_V1 compares. */
+async function matchesAny(
+  secrets: readonly string[],
+  signatures: readonly Bytes[],
+  message: Bytes,
+): Promise<boolean> {
+  let ok = false;
+  for (const secret of secrets) {
+    for (const signature of signatures) {
+      if (await hmacVerify(secret, signature, message)) ok = true;
+    }
+  }
+  return ok;
+}
+
+/** `signedAt` is not older than `pastMs` and not further ahead than `futureMs`. */
+export function withinWindow(now: number, signedAt: number, pastMs: number, futureMs: number) {
+  const age = now - signedAt;
+  return age <= pastMs && age >= -futureMs;
+}
+
+// ---- verifier strategies ----
+
+export interface SignedBody {
+  /** Exactly what was received; read once. */
+  bytes: Bytes;
+  /** sha256(bytes) hex; the event id for senders without one. */
+  digest: string;
+  /** ms; only when the scheme signs a timestamp (custom, stripe). */
+  signedAt?: number;
+  /** Hex of the matched MAC (custom scheme only). */
+  signature?: string;
+}
+
+export interface CustomHeaders {
+  signatureHeader?: string;
+  timestampHeader?: string;
+}
+
+export interface WebhookVerifier {
+  id: 'custom' | 'shopify' | 'stripe' | 'calcom';
+  maxBytes: number;
+  /** Throws ConnectorError('AUTH') on any mismatch and 'INVALID_PAYLOAD' on size. `secrets`: current first. */
+  verify(
+    req: Request,
+    secrets: readonly string[],
+    now: number,
+    opts?: CustomHeaders,
+  ): Promise<SignedBody>;
+}
+
+function checkSecrets(secrets: readonly string[]): void {
+  if (secrets.length > MAX_SECRETS) throw new Error('At most two webhook secrets.');
+  if (secrets.length === 0 || secrets.some((s) => s.length === 0)) {
+    throw new ConnectorError('AUTH', { permanent: true });
+  }
+}
+
+const auth = () => new ConnectorError('AUTH');
+
+async function signed(
+  req: Request,
+  secrets: readonly string[],
+  maxBytes: number,
+  scheme: (bytes: Bytes) => { signatures: Bytes[]; message: Bytes } | null,
+): Promise<{ bytes: Bytes; digest: string; signatures: Bytes[] }> {
+  checkSecrets(secrets);
+  const bytes = await readSignedBytes(req, maxBytes);
+  const parsed = scheme(bytes);
+  if (!parsed || !(await matchesAny(secrets, parsed.signatures, parsed.message))) throw auth();
+  return { bytes, digest: await sha256Hex(bytes), signatures: parsed.signatures };
+}
+
+const shopify: WebhookVerifier = {
+  id: 'shopify',
+  maxBytes: SHOPIFY_MAX_BYTES,
+  async verify(req, secrets) {
+    const header = req.headers.get('x-shopify-hmac-sha256');
+    const { bytes, digest } = await signed(req, secrets, SHOPIFY_MAX_BYTES, (b) => {
+      const sig = header === null ? null : decodeBase64_32(header);
+      return sig && { signatures: [sig], message: b };
+    });
+    return { bytes, digest };
+  },
+};
+
+const calcom: WebhookVerifier = {
+  id: 'calcom',
+  maxBytes: MAX_WEBHOOK_BYTES,
+  async verify(req, secrets) {
+    const header = req.headers.get('x-cal-signature-256');
+    const hex = header?.startsWith('sha256=') ? header.slice(7) : header;
+    const { bytes, digest } = await signed(req, secrets, MAX_WEBHOOK_BYTES, (b) => {
+      const sig = hex == null ? null : decodeHex32(hex);
+      return sig && { signatures: [sig], message: b };
+    });
+    return { bytes, digest };
+  },
+};
+
+const stripe: WebhookVerifier = {
+  id: 'stripe',
+  maxBytes: MAX_WEBHOOK_BYTES,
+  async verify(req, secrets, now) {
+    const header = req.headers.get('stripe-signature');
+    const parsed = header === null ? null : parseStripeSignature(header);
+    const { bytes, digest } = await signed(req, secrets, MAX_WEBHOOK_BYTES, (b) =>
+      parsed ? { signatures: parsed.v1, message: withPrefix(`${parsed.t}.`, b) } : null,
+    );
+    // A matching MAC proves `t` is authentic; the window then bounds replays.
+    const signedAt = (parsed?.t ?? 0) * 1000;
+    if (!withinWindow(now, signedAt, REPLAY_WINDOW_MS, FUTURE_SKEW_MS)) throw auth();
+    return { bytes, digest, signedAt };
+  },
+};
+
+const custom: WebhookVerifier = {
+  id: 'custom',
+  maxBytes: MAX_WEBHOOK_BYTES,
+  async verify(req, secrets, now, opts = {}) {
+    const header = req.headers.get(opts.signatureHeader ?? SIGNATURE_HEADER);
+    const ts = req.headers.get(opts.timestampHeader ?? TIMESTAMP_HEADER);
+    const match = header === null ? null : /^v1=([0-9a-f]{64})$/.exec(header);
+    const sig = match?.[1] ? decodeHex32(match[1]) : null;
+    const valid = sig !== null && ts !== null && /^\d{9,12}$/.test(ts);
+    const { bytes, digest } = await signed(req, secrets, MAX_WEBHOOK_BYTES, (b) =>
+      valid ? { signatures: [sig], message: withPrefix(`${ts}.`, b) } : null,
+    );
+    const signedAt = Number(ts) * 1000;
+    if (!withinWindow(now, signedAt, REPLAY_WINDOW_MS, FUTURE_SKEW_MS)) throw auth();
+    return { bytes, digest, signedAt, signature: match?.[1] ?? '' };
+  },
+};
+
+export const VERIFIERS: Record<WebhookVerifier['id'], WebhookVerifier> = {
+  custom,
+  shopify,
+  stripe,
+  calcom,
+};
+
+/** Current secret first, the previous one only while its overlap lasts (runtime.ts decides). */
+export function webhookSecretsOf(ctx: {
+  webhookSecret?: string;
+  webhookSecrets?: readonly string[];
+}): readonly string[] {
+  return ctx.webhookSecrets ?? (ctx.webhookSecret ? [ctx.webhookSecret] : []);
+}
+
+// ---- the custom scheme's public surface ----
 
 /** Header value `v1=<hex>` over `<timestamp>.<body>`; the timestamp is in seconds. */
 export async function signWebhook(
@@ -40,46 +291,11 @@ export interface VerifiedWebhook {
   signature: string;
 }
 
-/** Checks size, timestamp window and the HMAC (constant time). Throws ConnectorError('AUTH'). */
+/** Custom scheme: size, HMAC over the received bytes (constant time), then the timestamp window. */
 export async function verifySignedRequest(
   req: Request,
-  options: {
-    secret: string | undefined;
-    now: number;
-    signatureHeader?: string;
-    timestampHeader?: string;
-  },
+  options: { secrets: readonly string[]; now: number } & CustomHeaders,
 ): Promise<VerifiedWebhook> {
-  const { secret } = options;
-  if (!secret) throw new ConnectorError('AUTH', { permanent: true });
-  const sigHeader = req.headers.get(options.signatureHeader ?? SIGNATURE_HEADER);
-  const tsHeader = req.headers.get(options.timestampHeader ?? TIMESTAMP_HEADER);
-  if (Number(req.headers.get('content-length') ?? 0) > MAX_WEBHOOK_BYTES) {
-    throw new ConnectorError('INVALID_PAYLOAD');
-  }
-  const body = new TextDecoder().decode(
-    await readCapped(req.body, MAX_WEBHOOK_BYTES, () => new ConnectorError('INVALID_PAYLOAD')),
-  );
-  if (!sigHeader || !tsHeader || !/^\d{9,12}$/.test(tsHeader)) throw new ConnectorError('AUTH');
-  const skew = options.now - Number(tsHeader) * 1000;
-  if (skew > REPLAY_WINDOW_MS || skew < -FUTURE_SKEW_MS) throw new ConnectorError('AUTH');
-  const match = /^v1=([0-9a-f]{64})$/.exec(sigHeader.trim());
-  if (!match?.[1]) throw new ConnectorError('AUTH');
-  const given = Uint8Array.from(match[1].match(/../g) ?? [], (h) => Number.parseInt(h, 16));
-  const ok = await crypto.subtle.verify(
-    'HMAC',
-    await hmacKey(secret, 'verify'),
-    given,
-    encoder.encode(`${tsHeader}.${body}`),
-  );
-  if (!ok) throw new ConnectorError('AUTH');
-  return { body, signature: match[1] };
-}
-
-export function parseJsonBody(body: string): unknown {
-  try {
-    return JSON.parse(body);
-  } catch {
-    throw new ConnectorError('INVALID_PAYLOAD');
-  }
+  const { bytes, signature } = await custom.verify(req, options.secrets, options.now, options);
+  return { body: decodeUtf8Strict(bytes), signature: signature ?? '' };
 }

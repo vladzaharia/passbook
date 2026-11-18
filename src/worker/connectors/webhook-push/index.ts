@@ -4,6 +4,7 @@ import {
   SIGNATURE_HEADER,
   TIMESTAMP_HEADER,
   verifySignedRequest,
+  webhookSecretsOf,
 } from '../lib/hmac.ts';
 import { isAllowedHeaderName } from '../lib/http.ts';
 import { getPointer, isPointer } from '../lib/pointer.ts';
@@ -66,7 +67,7 @@ const definition: ConnectorDefinition<z.infer<typeof config>, undefined> = {
   async verifyWebhook(ctx, req) {
     const c = ctx.connection.config;
     const { body, signature } = await verifySignedRequest(req, {
-      secret: ctx.webhookSecret,
+      secrets: webhookSecretsOf(ctx),
       now: ctx.now(),
       signatureHeader: c.signatureHeader,
       timestampHeader: c.timestampHeader,
