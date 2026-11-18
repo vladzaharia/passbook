@@ -80,9 +80,38 @@ export class Grant {
     this.#db = db;
     this.#input = input;
     this.#now = now;
-    this.#pin = input.principal.kind === 'holder' ? input.principal.passId : undefined;
+    // A holder is pinned to its pass; a join link to the pass it makes (its `target`).
+    this.#pin =
+      input.principal.kind === 'holder'
+        ? input.principal.passId
+        : input.principal.kind === 'join'
+          ? input.target
+          : undefined;
     this.#tables = input.tables ? new Set(input.tables.map(identifier)) : undefined;
     this.#insert();
+  }
+
+  /** Whether writes are pinned to the grant's one pass (holder and join grants): pass `{ holder: g.pinned }` to `sealPart`. */
+  get pinned(): boolean {
+    return this.#pin !== undefined;
+  }
+
+  /** A join link only creates: it never changes or deletes a row. */
+  #noChange(what: string): void {
+    if (this.principal.kind === 'join')
+      throw new AuthorityError('GRANT_SCOPE_OVERRIDE', `A join grant only inserts, not ${what}.`);
+  }
+
+  /** The ledger row names the grant's own link and generation. */
+  #ledger(table: string, columns: string[], values: SqlValue[]): void {
+    const p = this.principal;
+    if (p.kind !== 'join' || table.toLowerCase() !== 'join_issues') return;
+    const at = (c: string) => values[columns.indexOf(c)];
+    if (at('link_id') !== p.linkId || at('link_generation') !== p.generation)
+      throw new AuthorityError(
+        'GRANT_SCOPE_OVERRIDE',
+        'A join issue names its own link and generation.',
+      );
   }
 
   /** Built at prepare time: `require: 'one'` writes add their lineage checks to it. */
@@ -121,10 +150,12 @@ export class Grant {
   }
 
   update(table: string, options: WriteOptions): GrantedStatement {
+    this.#noChange('updating');
     return this.#push(buildUpdate(this.id, this.scope, this.#allow(table), options, this.#pin));
   }
 
   delete(table: string, options: Omit<WriteOptions, 'set' | 'inc'>): GrantedStatement {
+    this.#noChange('deleting');
     return this.#push(buildDelete(this.id, this.scope, this.#allow(table), options, this.#pin));
   }
 
@@ -134,6 +165,7 @@ export class Grant {
     values: SqlValue[],
     options?: InsertOptions,
   ): GrantedStatement {
+    this.#ledger(table, columns, values);
     return this.#push(
       buildInsertSelect(
         this.id,
@@ -154,6 +186,7 @@ export class Grant {
     values: SqlValue[],
     options: UpsertOptions,
   ): GrantedStatement {
+    this.#noChange('upserting');
     return this.#push(
       buildUpsert(this.id, this.scope, this.#allow(table), columns, values, options, this.#pin),
     );
@@ -161,11 +194,13 @@ export class Grant {
 
   /** Update or delete an org-less child through a declared foreign key to a parent in the tenant. */
   joined(table: string, options: JoinedOptions): GrantedStatement {
+    this.#noChange('updating');
     return this.#push(buildJoined(this.id, this.scope, this.#allow(table), options, this.#pin));
   }
 
   /** Insert an org-less child under parents in the tenant; the parent rows supply its foreign keys. */
   insertJoined(table: string, options: InsertJoinedOptions): GrantedStatement {
+    this.#noChange('inserting children');
     return this.#push(
       buildInsertJoined(this.id, this.scope, this.#allow(table), options, this.#pin),
     );

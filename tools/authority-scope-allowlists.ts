@@ -122,9 +122,10 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/passes/repo-pass-trusted.ts': {
     reason:
-      'link rotation, refresh claim, soft delete and the re-MAC of a stored token MAC under a new root (cron tokens.remac: a token_remac_marks row, the CAS update and the mark removal in one batch) for callers with no tenant authority (holder refresh, fixtures, service tests); tenant requests take repo-pass-grants.ts',
+      'link rotation, refresh claim, soft delete and the re-MAC of a stored token MAC under a new root (cron tokens.remac: a token_remac_marks row, the CAS update and the mark removal in one batch; a join link or bundle token is one CAS update) for callers with no tenant authority (holder refresh, fixtures, service tests); tenant requests take repo-pass-grants.ts',
     writes: [
       'bundles:4d66feaeeccb',
+      'join_links:4a5b982fa241',
       'passes:8dac9824a940',
       'passes:a565c31165b3',
       'passes:a978e7f9948b',

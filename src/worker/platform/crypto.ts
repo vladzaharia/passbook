@@ -182,7 +182,7 @@ export function macPreviousVersion(env: object): number | null {
 }
 
 /**
- * The labels whose keys follow `MAC_KEY_VERSION`: the MACs of capability and device tokens (re-MACed from
+ * The labels whose keys follow `MAC_KEY_VERSION`: the MACs of capability, join link and device tokens (re-MACed from
  * their sealed copies by cron tokens.remac), staff PINs (checked under both roots while `MAC_KEY_VERSION_PREVIOUS` is set), pair codes
  * (ten minutes), scanner asset grants (one hour) and the scan CSRF proofs (computed on every request). Every other label stays on root 1 (`EVIDENCE_ROOT`): its MACs are retained evidence bound
  * to the credential-reference keyset commitment (tombstones, retention proofs, webhook and action
@@ -191,6 +191,7 @@ export function macPreviousVersion(env: object): number | null {
 const ROTATABLE_LABELS: ReadonlySet<string> = new Set([
   'capability-token.v1',
   'apple-auth-token.v1',
+  'join-link-token.v1',
   'scan-pin',
   'scan-pair-code.v1',
   'scan-asset-grant-v2',

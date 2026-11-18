@@ -150,9 +150,7 @@ function writes(g: Grant, ctx: ServiceContext, i: StartTransferInput): void {
     require: 'one',
     returning: ['id'],
   });
-  g.include(
-    sealPart('pass', p.id, i.token.mac, i.token.seal, { holder: g.principal.kind === 'holder' }),
-  );
+  g.include(sealPart('pass', p.id, i.token.mac, i.token.seal, { holder: g.pinned }));
   g.add(
     ...grantTransferStart(g, {
       passId: p.id,

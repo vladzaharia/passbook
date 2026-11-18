@@ -8,7 +8,8 @@ const override = (message: string) => new AuthorityError('GRANT_SCOPE_OVERRIDE',
 
 /** Under a holder grant a table must declare its pass column. */
 export function holderTable(t: TableScope, table: string, pin: string | undefined): void {
-  if (pin !== undefined && !t.pass) throw override(`${table} is not written under a holder grant.`);
+  if (pin !== undefined && !t.pass)
+    throw override(`${table} is not written under a pinned (holder or join) grant.`);
 }
 
 /**
@@ -35,7 +36,7 @@ export function pinWhere(
   pin: string | undefined,
 ): void {
   if (pin === undefined || !t.pass || !(t.pass in where)) return;
-  if (where[t.pass] !== pin) throw override(`${table}.${t.pass} is pinned to the holder's pass.`);
+  if (where[t.pass] !== pin) throw override(`${table}.${t.pass} is pinned to the grant's pass.`);
 }
 
 /** An insert names the grant's pass: JS check on the value, and the SQL carries `g.target_id` too. */
@@ -54,5 +55,5 @@ export function pinInsert(
   const source = copy?.[pass];
   if (at >= 0 && values[at] === pin) return { sql: ' AND g.target_id = ?', params: [pin] };
   if (at < 0 && source !== undefined) return { sql: ` AND g.target_id = s.${source}`, params: [] };
-  throw override(`${table}.${pass} must be the holder's pass.`);
+  throw override(`${table}.${pass} must be the grant's pass.`);
 }

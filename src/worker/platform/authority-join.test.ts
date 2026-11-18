@@ -3,7 +3,7 @@ import { makeApiKey, makePass } from '../../../test/helpers/index.ts';
 import { makeJoinLink } from '../../../test/helpers/join.ts';
 import { grant, jobGrant } from './authority.ts';
 import { codeOf, db, refusal } from './authority-ext-fixtures.ts';
-import { JOIN_PURPOSE, JOIN_TABLES } from './authority-granted.ts';
+import { grantInsert, JOIN_PURPOSE, JOIN_TABLES, scopeOf } from './authority-granted.ts';
 import type { Principal } from './authority-principal.ts';
 import { setupGrant } from './authority-test-fixtures.ts';
 import { all, first, run } from './db.ts';
@@ -95,15 +95,118 @@ describe('join principal', () => {
     expect(e?.code).toBe('ORG_ACCESS_CHANGED');
   });
 
-  it('labels the grant join:<linkId>', async () => {
-    const { x, link } = await seed('jp-label');
+  it('labels the grant row and the audit actor join:<linkId>', async () => {
+    const { x, pass, link } = await seed('jp-label');
+    const g = ledger(x, link, pass.id);
+    g.audit({
+      at: 1,
+      orgId: x.s.org.id,
+      actorType: 'system',
+      actorId: `join:${link.id}`,
+      action: 'pass.create',
+      targetType: 'pass',
+      targetId: pass.id,
+      requestId: null,
+      ipPrefix: null,
+      detail: null,
+    });
+    // The label bound into the grant row's `principal` column.
+    const insert = grantInsert(
+      g.id,
+      g.scope,
+      { purpose: JOIN_PURPOSE, principal: join(link), target: pass.id },
+      [],
+      1,
+    );
+    expect(insert.params).toContain(`join:${link.id}`);
+    expect(insert.params).toContain(JOIN_PURPOSE);
+    await g.commit();
+    expect(
+      await first(
+        db,
+        "SELECT actor_id FROM audit_log WHERE action = 'pass.create' AND target_id = ?",
+        [pass.id],
+      ),
+    ).toEqual({ actor_id: `join:${link.id}` });
+  });
+
+  it('refuses a system principal with the join purpose in scopeOf', async () => {
+    const { x } = await seed('jp-scopeof');
+    expect(
+      codeOf(() =>
+        scopeOf({
+          purpose: JOIN_PURPOSE,
+          principal: { kind: 'system', job: 'j', orgId: x.s.org.id, mode: 'live' },
+          target: 'p',
+          tables: JOIN_TABLES,
+        }),
+      ),
+    ).toBe('GRANT_BAD_PRINCIPAL');
+  });
+});
+
+describe('join grant pin', () => {
+  it('writes only its target pass and only inserts', async () => {
+    const { x, pass, link } = await seed('jpin');
+    const other = await makePass(x.s.f, { orgId: x.s.org.id, template: x.s.template.resolved });
     const g = grant(x.route, {
       purpose: JOIN_PURPOSE,
       principal: join(link),
-      target: 'p',
+      target: pass.id,
+      tables: JOIN_TABLES,
+    });
+    expect(g.pinned).toBe(true);
+    // Changing, deleting or upserting is not what a join does, even on its own pass.
+    for (const fn of [
+      () => g.update('passes', { set: { holder_email: 'x@y.co' }, where: { id: other.id } }),
+      () => g.update('passes', { set: { holder_email: 'x@y.co' }, where: { id: pass.id } }),
+      () => g.delete('join_issues', { where: { pass_id: other.id } }),
+      () => g.upsert('scans', ['id'], ['i'], { doNothing: true }),
+    ])
+      expect(codeOf(fn)).toBe('GRANT_SCOPE_OVERRIDE');
+    // An insert names the target pass, not another.
+    expect(
+      codeOf(() =>
+        g.insertSelect('pass_events', ['pass_id', 'kind', 'data', 'at'], [other.id, 'k', '{}', 1]),
+      ),
+    ).toBe('GRANT_SCOPE_OVERRIDE');
+    expect(
+      codeOf(() =>
+        g.insertSelect('pass_events', ['kind', 'data', 'at'], ['k', '{}', 1], {
+          from: { table: 'passes', where: { id: pass.id }, copy: { pass_id: 'id' } },
+        }),
+      ),
+    ).toBeNull();
+    // The ledger names its own link and generation.
+    for (const [linkId, generation] of [
+      ['other-link', link.generation],
+      [link.id, link.generation + 1],
+    ] as const)
+      expect(
+        codeOf(() =>
+          g.insertSelect(
+            'join_issues',
+            ['id', 'link_id', 'link_generation', 'created_at'],
+            ['i', linkId, generation, 1],
+            {
+              from: { table: 'passes', where: { id: pass.id }, copy: { pass_id: 'id' } },
+            },
+          ),
+        ),
+      ).toBe('GRANT_SCOPE_OVERRIDE');
+  });
+
+  it('a pinned grant cannot reach a table without a pass column', async () => {
+    const { x, pass, link } = await seed('jpin-table');
+    const g = grant(x.route, {
+      purpose: JOIN_PURPOSE,
+      principal: join(link),
+      target: pass.id,
       tables: ['passes'],
     });
-    expect(g.principal).toEqual(join(link));
+    expect(codeOf(() => g.insertSelect('passes', ['id'], ['someone-else']))).toBe(
+      'GRANT_SCOPE_OVERRIDE',
+    );
   });
 });
 
@@ -146,10 +249,8 @@ describe('join purpose bound', () => {
       target: 'p',
       tables: ['join_issues'],
     });
-    expect(codeOf(() => g.update('orgs', { set: { name: 'x' }, where: {} }))).toBe(
-      'GRANT_TABLE_NOT_ALLOWED',
-    );
-    expect(codeOf(() => g.update('join_links', { set: { enabled: 1 }, where: {} }))).toBe(
+    expect(codeOf(() => g.insertSelect('orgs', ['name'], ['x']))).toBe('GRANT_TABLE_NOT_ALLOWED');
+    expect(codeOf(() => g.insertSelect('join_links', ['id'], ['x']))).toBe(
       'GRANT_TABLE_NOT_ALLOWED',
     );
   });

@@ -1,7 +1,7 @@
 import {
   type IssuedToken,
-  type RemacPurpose,
   sealStatement,
+  type TokenPurpose,
 } from '../../platform/capability-token.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
 import type { Pass } from './repo-map.ts';
@@ -123,11 +123,21 @@ const REMAC_SQL = {
  */
 export async function remacTrusted(
   db: D1Database,
-  purpose: RemacPurpose,
+  purpose: TokenPurpose,
   id: string,
   from: string,
   to: string,
 ): Promise<boolean> {
+  if (purpose === 'join') {
+    const [updated] = await batch(db, [
+      stmt(db, 'UPDATE join_links SET token = ? WHERE id = ? AND token = ? RETURNING id', [
+        to,
+        id,
+        from,
+      ]),
+    ]);
+    return (updated?.results.length ?? 0) === 1;
+  }
   if (purpose === 'bundle') {
     const [updated] = await batch(db, [
       stmt(

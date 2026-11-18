@@ -19,8 +19,6 @@ import {
 
 export { sealPart, sealStatement } from './repo-capability-token.ts';
 export type { SealRaw, SealRow, TokenPurpose };
-/** The purposes the MAC-root sweep (cron tokens.remac) moves. Join link tokens are not swept yet. */
-export type RemacPurpose = Exclude<TokenPurpose, 'join'>;
 
 /**
  * Capability tokens (pass download links, bundle links, the Apple web-service token) at rest. The token

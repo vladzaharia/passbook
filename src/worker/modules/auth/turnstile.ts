@@ -1,4 +1,3 @@
-import { TURNSTILE_ACTION } from '../../../shared/turnstile.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import type { Logger } from '../../platform/log.ts';
 
@@ -13,7 +12,7 @@ export async function verifyTurnstile(
   ip: string | null,
   log: Logger,
   fetchImpl: typeof fetch = fetch,
-  action: string = TURNSTILE_ACTION,
+  action: string,
 ): Promise<boolean> {
   if (!env.TURNSTILE_SECRET) {
     log.error('auth.turnstile_unconfigured', { code: 'TURNSTILE_UNCONFIGURED' });

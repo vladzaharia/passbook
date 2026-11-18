@@ -1,4 +1,4 @@
-import type { RemacPurpose } from '../../platform/capability-token.ts';
+import type { TokenPurpose } from '../../platform/capability-token.ts';
 import { all } from '../../platform/db.ts';
 import { SEALS, type SealRaw } from '../../platform/repo-capability-token.ts';
 
@@ -17,7 +17,12 @@ interface Raw extends Partial<SealRaw> {
   mac: string;
 }
 
-const COLUMN = { pass: 'download_token', 'apple-auth': 'auth_token', bundle: 'token' } as const;
+const COLUMN = {
+  pass: 'download_token',
+  'apple-auth': 'auth_token',
+  bundle: 'token',
+  join: 'token',
+} as const;
 /** A stored MAC; case-sensitive, like the triggers of 0059 and 0065. */
 const MAC_GLOB = "GLOB 'h1:*'";
 
@@ -36,7 +41,7 @@ const toRow = (r: Raw): MacRow => ({
         },
 });
 
-const selectMacs = (purpose: RemacPurpose, where: string, tail: string) => {
+const selectMacs = (purpose: TokenPurpose, where: string, tail: string) => {
   const { table, column, owner } = SEALS[purpose];
   const col = COLUMN[purpose];
   return `SELECT t.id, t.org_id, t.${col} AS mac, s.kek_version, s.iv, s.wrapped_dek, s.ciphertext
@@ -47,7 +52,7 @@ const selectMacs = (purpose: RemacPurpose, where: string, tail: string) => {
 /** Up to `limit` rows after `after` in id order whose column holds a MAC; the sweep of cron tokens.remac. */
 export async function macRows(
   db: D1Database,
-  purpose: RemacPurpose,
+  purpose: TokenPurpose,
   after: string | null,
   limit: number,
 ): Promise<MacRow[]> {
@@ -62,7 +67,7 @@ export async function macRows(
 /** Up to `limit` MAC rows from a random place in the table (the root probe); fewer near its end. */
 export async function macSample(
   db: D1Database,
-  purpose: RemacPurpose,
+  purpose: TokenPurpose,
   limit: number,
 ): Promise<MacRow[]> {
   const { owner } = SEALS[purpose];

@@ -6,12 +6,13 @@ CREATE TABLE join_links (
   org_id TEXT NOT NULL REFERENCES orgs (id),
   mode TEXT NOT NULL CHECK (mode IN ('live', 'test')),
   template_id TEXT NOT NULL REFERENCES templates (id) ON DELETE CASCADE,
-  token TEXT NOT NULL UNIQUE CHECK (token LIKE 'h1:%'),
+  token TEXT NOT NULL UNIQUE CHECK (token GLOB 'h1:*'),
   generation INTEGER NOT NULL DEFAULT 1 CHECK (generation >= 1),
   enabled INTEGER NOT NULL DEFAULT 0 CHECK (enabled IN (0, 1)),
   name_input TEXT,
   ask_email INTEGER NOT NULL DEFAULT 0 CHECK (ask_email IN (0, 1)),
-  daily_limit INTEGER NOT NULL DEFAULT 200
+  -- 50 fits both modes; the service always writes the limit it means (200 for a live link by default).
+  daily_limit INTEGER NOT NULL DEFAULT 50
     CHECK (daily_limit BETWEEN 1 AND 5000 AND (mode = 'live' OR daily_limit <= 50)),
   revision INTEGER NOT NULL DEFAULT 1,
   created_at INTEGER NOT NULL,
@@ -59,11 +60,21 @@ CREATE TRIGGER join_links_scope_immutable BEFORE UPDATE OF org_id, mode, templat
 WHEN NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD.mode OR NEW.template_id IS NOT OLD.template_id
 BEGIN SELECT RAISE(ABORT, 'a join link keeps its org, mode and template'); END;
 
--- A card is made by a link of its own org and mode, for a pass of that org and mode, at the link's generation.
+-- The generation is the link's epoch: a new token moves it up (the trigger below when the writer did not),
+-- and it never goes down. An in-flight submit at the old generation then fails its actor check.
+CREATE TRIGGER join_links_generation_up BEFORE UPDATE OF generation ON join_links
+WHEN NEW.generation < OLD.generation
+BEGIN SELECT RAISE(ABORT, 'a join link generation never goes down'); END;
+CREATE TRIGGER join_links_token_bumps_generation AFTER UPDATE OF token ON join_links
+WHEN NEW.token IS NOT OLD.token AND NEW.generation = OLD.generation
+BEGIN UPDATE join_links SET generation = OLD.generation + 1 WHERE id = NEW.id; END;
+
+-- A card is made by a link of its own org and mode, for a pass of that org, mode and template, at the link's generation.
 CREATE TRIGGER join_issues_scope BEFORE INSERT ON join_issues
 WHEN NOT EXISTS (SELECT 1 FROM join_links l WHERE l.id = NEW.link_id AND l.org_id = NEW.org_id
     AND l.mode = NEW.mode AND l.generation = NEW.link_generation)
-  OR NOT EXISTS (SELECT 1 FROM passes p WHERE p.id = NEW.pass_id AND p.org_id = NEW.org_id AND p.mode = NEW.mode)
+  OR NOT EXISTS (SELECT 1 FROM passes p JOIN join_links l ON l.id = NEW.link_id
+    WHERE p.id = NEW.pass_id AND p.org_id = NEW.org_id AND p.mode = NEW.mode AND p.template_id = l.template_id)
 BEGIN SELECT RAISE(ABORT, 'a join issue matches its link and pass in org, mode and generation'); END;
 
 -- The ledger is append-only: only the three keys are ever cleared.
@@ -75,3 +86,9 @@ WHEN NEW.id IS NOT OLD.id OR NEW.link_id IS NOT OLD.link_id OR NEW.org_id IS NOT
   OR (NEW.device_key IS NOT NULL AND NEW.device_key IS NOT OLD.device_key)
   OR (NEW.fields_hash IS NOT NULL AND NEW.fields_hash IS NOT OLD.fields_hash)
 BEGIN SELECT RAISE(ABORT, 'join issues change only by clearing their keys'); END;
+
+-- A row leaves only with its pass or its link (the foreign key cascades run once the parent is gone), so no
+-- grant can delete one to free a cap slot or the device limit.
+CREATE TRIGGER join_issues_no_delete BEFORE DELETE ON join_issues
+WHEN EXISTS (SELECT 1 FROM passes p WHERE p.id = OLD.pass_id) AND EXISTS (SELECT 1 FROM join_links l WHERE l.id = OLD.link_id)
+BEGIN SELECT RAISE(ABORT, 'a join issue goes with its pass or link'); END;

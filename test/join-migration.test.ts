@@ -48,7 +48,7 @@ const issue = (x: Awaited<ReturnType<typeof seed>>, over: Record<string, unknown
   );
 };
 
-describe('0090_join: join_links', () => {
+describe('0091_join: join_links', () => {
   it('keeps org, mode and template for good', async () => {
     const x = await seed('jm-immutable');
     const other = await makeOrg(x.f);
@@ -64,28 +64,83 @@ describe('0090_join: join_links', () => {
     await run(db, 'UPDATE join_links SET enabled = 0, generation = 2 WHERE id = ?', [x.link.id]);
   });
 
-  it('checks the token, the limit and the test cap', async () => {
+  it('checks the token, the mode and the limits (only the CHECK can refuse these inserts)', async () => {
     const x = await seed('jm-checks');
-    const insert = (token: string, mode: string, limit: number, extra = 'jm-t') =>
+    const insert = (id: string, token: string, mode: string, limit?: number) =>
       run(
         db,
         `INSERT INTO join_links (id, org_id, mode, template_id, token, daily_limit, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 1, 1)`,
-        [x.f.ids.id(), x.org.id, mode, `${extra}-${mode}`, token, limit],
+         VALUES (?, ?, ?, ?, ?, ${limit === undefined ? '50' : '?'}, 1, 1)`,
+        [
+          id,
+          x.org.id,
+          mode,
+          x.template.resolved.id,
+          token,
+          ...(limit === undefined ? [] : [limit]),
+        ],
       );
-    // template FK: use a real template for the accepted rows.
-    await expect(insert('plain-token', 'live', 10)).rejects.toThrow();
-    await expect(insert('h1:abc', 'staging', 10)).rejects.toThrow();
-    await expect(insert('h1:abc', 'live', 0)).rejects.toThrow();
-    await expect(insert('h1:abc', 'live', 5001)).rejects.toThrow();
-    await expect(insert('h1:abd', 'test', 51)).rejects.toThrow();
+    // Positive control: the same shape with valid values is accepted (a test link; live is taken by the seed).
+    await insert('ok-test', 'h1:ok', 'test', 50);
+    await expect(insert('b1', 'plain-token', 'test', 10)).rejects.toThrow(/CHECK/);
+    await expect(insert('b2', 'H1:upper', 'test', 10)).rejects.toThrow(/CHECK/);
+    await expect(insert('b3', 'h1:b3', 'staging', 10)).rejects.toThrow(/CHECK/);
+    const other = await makeOrg(x.f);
+    const live = (id: string, limit: number) =>
+      run(
+        db,
+        `INSERT INTO join_links (id, org_id, mode, template_id, token, daily_limit, created_at, updated_at)
+         VALUES (?, ?, 'live', ?, ?, ?, 1, 1)`,
+        [id, other.id, x.template.resolved.id, `h1:${id}`, limit],
+      );
+    await expect(live('l0', 0)).rejects.toThrow(/CHECK/);
+    await expect(live('l1', 5001)).rejects.toThrow(/CHECK/);
+    await live('l2', 5000);
+    await expect(
+      run(
+        db,
+        `INSERT INTO join_links (id, org_id, mode, template_id, token, daily_limit, created_at, updated_at)
+         VALUES ('b4', ?, 'test', ?, 'h1:b4', 51, 1, 1)`,
+        [other.id, x.template.resolved.id],
+      ),
+    ).rejects.toThrow(/CHECK/);
     await run(db, 'UPDATE join_links SET daily_limit = 5000 WHERE id = ?', [x.link.id]);
+    await expect(
+      run(db, 'UPDATE join_links SET enabled = 2 WHERE id = ?', [x.link.id]),
+    ).rejects.toThrow(/CHECK/);
     await expect(
       run(db, 'UPDATE join_links SET generation = 0 WHERE id = ?', [x.link.id]),
     ).rejects.toThrow();
+    // The default limit satisfies both modes.
+    await run(
+      db,
+      `INSERT INTO join_links (id, org_id, mode, template_id, token, created_at, updated_at)
+       VALUES ('d1', ?, 'test', ?, 'h1:d1', 1, 1)`,
+      [other.id, x.template.resolved.id],
+    );
+  });
+
+  it('keeps the generation going up: a new token bumps it, and it never goes down', async () => {
+    const x = await seed('jm-generation');
+    const gen = async () =>
+      (
+        await first<{ g: number }>(db, 'SELECT generation AS g FROM join_links WHERE id = ?', [
+          x.link.id,
+        ])
+      )?.g;
+    expect(await gen()).toBe(1);
+    await run(db, "UPDATE join_links SET token = 'h1:rotated' WHERE id = ?", [x.link.id]);
+    expect(await gen()).toBe(2);
+    // A writer that bumps it itself is not bumped twice.
+    await run(db, "UPDATE join_links SET token = 'h1:again', generation = 3 WHERE id = ?", [
+      x.link.id,
+    ]);
+    expect(await gen()).toBe(3);
     await expect(
-      run(db, 'UPDATE join_links SET enabled = 2 WHERE id = ?', [x.link.id]),
-    ).rejects.toThrow();
+      run(db, 'UPDATE join_links SET generation = 2 WHERE id = ?', [x.link.id]),
+    ).rejects.toThrow(/never goes down/);
+    await run(db, 'UPDATE join_links SET enabled = 0 WHERE id = ?', [x.link.id]);
+    expect(await gen()).toBe(3);
   });
 
   it('allows a test link up to 50 and one link per org, mode and template', async () => {
@@ -117,7 +172,7 @@ describe('0090_join: join_links', () => {
   });
 });
 
-describe('0090_join: join_issues', () => {
+describe('0091_join: join_issues', () => {
   it('takes a row whose org, mode and generation match its link and pass', async () => {
     const x = await seed('jm-issue-ok');
     await issue(x);
@@ -146,6 +201,26 @@ describe('0090_join: join_issues', () => {
     await run(db, 'UPDATE join_links SET generation = 2 WHERE id = ?', [x.link.id]);
     await expect(issue(x, { link_generation: 1 })).rejects.toThrow();
     await issue(x, { link_generation: 2 });
+  });
+
+  it('refuses a pass of another template than the link', async () => {
+    const x = await seed('jm-issue-template');
+    const other = makeTemplate({ id: 'tpl-jm-issue-template-2' });
+    const pass = await makePass(x.f, { orgId: x.org.id, template: other.resolved });
+    await expect(issue(x, { pass_id: pass.id })).rejects.toThrow(/matches its link and pass/);
+    await issue(x);
+  });
+
+  it('cannot be deleted while its pass and link exist, and goes with either', async () => {
+    const x = await seed('jm-issue-delete');
+    await issue(x);
+    await expect(run(db, 'DELETE FROM join_issues WHERE link_id = ?', [x.link.id])).rejects.toThrow(
+      /goes with its pass or link/,
+    );
+    await run(db, 'DELETE FROM passes WHERE id = ?', [x.pass.id]);
+    expect(
+      await first(db, 'SELECT count(*) AS n FROM join_issues WHERE link_id = ?', [x.link.id]),
+    ).toEqual({ n: 0 });
   });
 
   it('is one row per pass', async () => {
@@ -195,7 +270,7 @@ describe('0090_join: join_issues', () => {
   });
 });
 
-describe('0090_join: query plans', () => {
+describe('0091_join: query plans', () => {
   const plan = async (sql: string, params: unknown[]) =>
     (await all<{ detail: string }>(db, `EXPLAIN QUERY PLAN ${sql}`, params as never[]))
       .map((r) => r.detail)

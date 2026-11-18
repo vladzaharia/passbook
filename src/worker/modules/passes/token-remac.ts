@@ -1,4 +1,4 @@
-import { type RemacPurpose, tokenMac, unsealToken } from '../../platform/capability-token.ts';
+import { type TokenPurpose, tokenMac, unsealToken } from '../../platform/capability-token.ts';
 import { macKeyVersion, macPreviousVersion } from '../../platform/crypto.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -15,9 +15,9 @@ const DONE = 'tokens.remacDone';
 const PROBE = 'tokens.macProbeAt';
 const PROBE_EVERY_MS = 6 * 60 * 60_000;
 const UNREADABLE = new Set(['TOKEN_SEAL_MISSING', 'TOKEN_SEAL_UNREADABLE', 'TOKEN_SEAL_MISMATCH']);
-const PURPOSES = ['pass', 'apple-auth', 'bundle'] as const;
+const PURPOSES = ['pass', 'apple-auth', 'bundle', 'join'] as const;
 
-type After = Record<RemacPurpose, string | null>;
+type After = Record<TokenPurpose, string | null>;
 /** One sweep of one version pair: where it is, what it left, and what it could not read. */
 interface Cursor {
   stamp: string;
@@ -29,7 +29,7 @@ type Outcome = 'moved' | 'current' | 'skipped' | 'unreadable';
 
 const fresh = (stamp: string): Cursor => ({
   stamp,
-  after: { pass: null, 'apple-auth': null, bundle: null },
+  after: { pass: null, 'apple-auth': null, bundle: null, join: null },
   skipped: 0,
   unreadable: 0,
 });
@@ -38,11 +38,16 @@ const fresh = (stamp: string): Cursor => ({
 function parseCursor(value: unknown, stamp: string): Cursor {
   const v = (value ?? {}) as Partial<Cursor> & { after?: Partial<After> };
   if (v.stamp !== stamp) return fresh(stamp);
-  const id = (k: RemacPurpose) =>
+  const id = (k: TokenPurpose) =>
     typeof v.after?.[k] === 'string' ? (v.after[k] as string) : null;
   return {
     stamp,
-    after: { pass: id('pass'), 'apple-auth': id('apple-auth'), bundle: id('bundle') },
+    after: {
+      pass: id('pass'),
+      'apple-auth': id('apple-auth'),
+      bundle: id('bundle'),
+      join: id('join'),
+    },
     skipped: typeof v.skipped === 'number' ? v.skipped : 0,
     unreadable: typeof v.unreadable === 'number' ? v.unreadable : 0,
   };
@@ -113,7 +118,7 @@ export async function remacCapabilityTokens(ctx: ServiceContext): Promise<void> 
 }
 
 /** One row on its own: a refused or failing row is counted and logged, and the sweep moves on. */
-async function remacOne(ctx: ServiceContext, purpose: RemacPurpose, row: MacRow): Promise<Outcome> {
+async function remacOne(ctx: ServiceContext, purpose: TokenPurpose, row: MacRow): Promise<Outcome> {
   try {
     const plain = await unsealToken(ctx.env, purpose, row.id, row.orgId, row.mac, row.seal);
     const to = await tokenMac(ctx.env, purpose, plain);
