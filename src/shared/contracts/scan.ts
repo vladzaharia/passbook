@@ -1,37 +1,35 @@
 import { z } from 'zod';
 import { CheckInPolicySchema, CheckInStateSchema, SetupDirectionSchema } from './check-in.ts';
 import { IdSchema, JsonSchema, ModeSchema, TimestampSchema } from './common.ts';
+import { ScanAccessSchema } from './scan-access.ts';
 import { ScanActionInputSchema } from './scan-action-input.ts';
+import {
+  ScanAdminScopeSchema,
+  ScanApprovalSchema,
+  ScanDirectionSchema,
+  UuidV7Schema,
+} from './scan-base.ts';
 import { ScanDisplayReadSchema } from './scan-display.ts';
+import { ScanOccupancySchema, ScanPlaceCountSchema } from './scan-occupancy.ts';
 
+// Moved to leaf files so the access and occupancy contracts can use them without a cycle.
+export { type ScanAccess, ScanAccessSchema } from './scan-access.ts';
 export type { ScanActionInput } from './scan-action-input.ts';
 export { ScanActionInputSchema } from './scan-action-input.ts';
-
-/** Idempotency keys: UUIDv7, made by the client. */
-export const UuidV7Schema = z
-  .string()
-  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-
-/** An IANA zone name the runtime knows. */
-export const TimeZoneSchema = z
-  .string()
-  .min(1)
-  .max(64)
-  .refine((zone) => {
-    try {
-      new Intl.DateTimeFormat('en', { timeZone: zone });
-      return true;
-    } catch {
-      return false;
-    }
-  }, 'Use an IANA time zone, such as Europe/Berlin.');
+export {
+  ScanAdminScopeSchema,
+  ScanApprovalSchema,
+  ScanDirectionSchema,
+  TimeZoneSchema,
+  UuidV7Schema,
+} from './scan-base.ts';
+export { type ScanOccupancy, ScanOccupancySchema } from './scan-occupancy.ts';
 
 export const ScanMethodSchema = z.enum(['camera', 'wedge', 'nfc', 'manual']);
 export type ScanMethod = z.infer<typeof ScanMethodSchema>;
 export const ScanActionKindSchema = z.enum(['check_in', 'add', 'take', 'set', 'use_up']);
 export const ScanRoleSchema = z.enum(['door', 'desk', 'manager']);
 export type ScanRole = z.infer<typeof ScanRoleSchema>;
-export const ScanDirectionSchema = z.enum(['in', 'out']);
 export const CodeFormatSchema = z.enum([
   'qr',
   'pdf417',
@@ -104,6 +102,8 @@ export const ScannerSettingsSchema = z.object({
   lookup: z.boolean(),
   offline: z.boolean(),
   dailyAmount: z.number().int().min(1).max(10_000_000).nullable(),
+  /** A monitor may act (Let in, Mark as out) when this is on. Off when absent. */
+  deskActions: z.boolean().optional(),
 });
 export type ScannerSettings = z.infer<typeof ScannerSettingsSchema>;
 
@@ -112,36 +112,6 @@ export const ScanInputSchema = z.union([
   z.object({ passId: IdSchema, method: z.literal('manual') }),
 ]);
 export type ScanInput = z.infer<typeof ScanInputSchema>;
-
-/**
- * An admin names the org, and optionally the event or templates, per request: in the JSON body's
- * `scope`, or on a GET as `?orgId&eventId&templateIds=a,b&timeZone`. The asset route, which an
- * `<img>` loads, takes the same query next to `g`. A scanner never sends it.
- */
-export const ScanAdminScopeSchema = z.object({
-  setupId: IdSchema.optional(),
-  orgId: IdSchema,
-  eventId: IdSchema.optional(),
-  templateIds: z.array(IdSchema).max(20).optional(),
-  timeZone: TimeZoneSchema,
-});
-/** What an Access card's plan says about a verdict. Null on every other template. */
-export const ScanAccessSchema = z.object({
-  plan: z.object({ id: z.string(), label: z.string(), kind: z.enum(['always', 'timed', 'guest']) }),
-  zone: z.object({ id: IdSchema, name: z.string() }).nullable(),
-  closesAt: TimestampSchema.nullable(),
-  nextOpenAt: TimestampSchema.nullable(),
-  visits: z.object({ used: z.number().int(), limit: z.number().int().nullable() }).nullable(),
-  visit: z.boolean(),
-  /** The deciding zone's clock; the client formats {time} and {when} with it. */
-  timeZone: TimeZoneSchema,
-});
-export type ScanAccess = z.infer<typeof ScanAccessSchema>;
-/** A Manager's PIN for one action. `staffId` is optional: a PIN alone is matched against the org's managers. */
-export const ScanApprovalSchema = z.object({
-  staffId: IdSchema.optional(),
-  pin: z.string().regex(/^\d{6}$/),
-});
 
 const request = {
   idempotencyKey: UuidV7Schema,
@@ -258,6 +228,8 @@ export const ScanCardSchema = z.object({
     .nullable(),
   door: z.object({ state: z.enum(['in', 'out']).nullable() }).nullable(),
   access: ScanAccessSchema.nullable().default(null),
+  /** Where the pass is now, for a scanner with a place. Null on every other card. */
+  occupancy: ScanOccupancySchema.nullable().optional(),
   /** The pass JSON minus barcode, barcodes, nfc, authenticationToken, webServiceURL and serialNumber. */
   passView: z.object({
     passJson: JsonSchema,
@@ -276,6 +248,8 @@ export const ScanCountsSchema = z.object({
       capacity: z.number().int().nullable(),
     })
     .nullable(),
+  /** The scanner's zone, when it has one. Null on every other scanner. */
+  place: ScanPlaceCountSchema.nullable().optional(),
   asOf: TimestampSchema,
   configRev: z.number().int(),
 });
@@ -311,6 +285,7 @@ export const ScanOutcomeSchema = z.object({
   milestone: ScanMilestoneSchema.nullable(),
   undoUntil: TimestampSchema.nullable(),
   access: ScanAccessSchema.nullable().default(null),
+  occupancy: ScanOccupancySchema.nullable().optional(),
   /** The outcome's screen. Null for system screens and unknown passes, so refusals stay byte-equal across orgs. */
   display: ScanDisplayReadSchema.nullable(),
 });

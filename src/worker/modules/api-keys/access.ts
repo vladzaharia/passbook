@@ -39,6 +39,7 @@ export const scopeCapability: Record<ApiScope, OrgCapability> = {
   'templates:read': 'templates:read',
   'messages:write': 'messages:manage',
   'scans:read': 'scanning:read',
+  'scans:write': 'passes:operate',
   'connections:read': 'integrations:read',
   'connections:write': 'integrations:manage',
 };

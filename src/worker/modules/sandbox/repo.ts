@@ -137,15 +137,14 @@ export async function expiredTestPasses(
        ${PROVIDER_RETIREMENT_COMPLETE} AS provider_retirement_complete
      FROM passes p WHERE p.mode = 'test' AND p.created_at < ? AND ${UNRESERVED_PASS}
        AND (? = 0 OR ${NEEDS_PROVIDER_RETIREMENT} OR ${PROVIDER_RETIREMENT_COMPLETE})
-       AND (? IS NULL OR p.created_at > ? OR (p.created_at = ? AND p.id > ?))
+       ${options.after ? 'AND p.created_at >= ? AND (p.created_at > ? OR p.id > ?)' : ''}
      ORDER BY p.created_at, p.id LIMIT ?`,
     [
       before,
       options.actionableOnly ? 1 : 0,
-      options.after?.createdAt ?? null,
-      options.after?.createdAt ?? null,
-      options.after?.createdAt ?? null,
-      options.after?.id ?? null,
+      ...(options.after
+        ? [options.after.createdAt, options.after.createdAt, options.after.id]
+        : []),
       limit,
     ],
   );

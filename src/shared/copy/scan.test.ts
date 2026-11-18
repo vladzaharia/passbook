@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { ScanReasonSchema } from '../contracts/scan.ts';
-import { SCAN_COPY, SCAN_REASON_COPY, SCAN_REASON_VARIANTS, scanLine } from './scan.ts';
+import { OVERRIDE_NOTES } from '../contracts/scan-occupancy.ts';
+import {
+  SCAN_COPY,
+  SCAN_OCCUPANCY_COPY,
+  SCAN_REASON_COPY,
+  SCAN_REASON_VARIANTS,
+  scanLine,
+} from './scan.ts';
 
 const CLIENT = [
   'network',
@@ -70,5 +77,45 @@ describe('SCAN_COPY', () => {
   it('fills markers and leaves a missing one visible', () => {
     expect(scanLine(SCAN_REASON_COPY.rate_limited.sub, { seconds: 20 })).toBe('Try again in 20 s.');
     expect(scanLine(SCAN_REASON_COPY.wrong_event.sub)).toBe('For {event}.');
+  });
+
+  it('has the occupancy words, terse and without a trailing filler', () => {
+    expect(SCAN_COPY.verdict.tappedOut).toBe('Tapped out');
+    expect(SCAN_COPY.actions).toMatchObject({
+      tapIn: 'Tap in',
+      tapOut: 'Tap out',
+      markAsOut: 'Mark as out',
+      letIn: 'Let in',
+      signInToAct: 'Sign in to act',
+    });
+    expect(SCAN_OCCUPANCY_COPY.zoneFull?.headline).toBe('{zone} full');
+    expect(SCAN_OCCUPANCY_COPY.parentNotIn?.sub).toBe('Tap in at {zone} first.');
+    for (const note of OVERRIDE_NOTES)
+      expect(SCAN_COPY.overrideNotes[note].length).toBeGreaterThan(0);
+  });
+
+  it('every line fills with the placeholders it names', () => {
+    const lines = [
+      ...Object.values(SCAN_OCCUPANCY_COPY).flatMap((l) => [l.headline, l.sub]),
+      ...Object.values(SCAN_COPY.managerCode),
+      SCAN_COPY.verdict.tappedOutSub,
+      SCAN_COPY.verdict.letInBy,
+      SCAN_COPY.verdict.overrideTaken,
+    ];
+    for (const line of lines)
+      expect(
+        scanLine(line, {
+          n: 4,
+          zone: 'Pool',
+          staff: 'Ana',
+          stay: '1 h',
+          in: 1,
+          capacity: 2,
+          ago: 'now',
+          scanner: 'D',
+          time: '9',
+          action: 'Redeem',
+        }),
+      ).not.toMatch(/\{\w+\}/);
   });
 });
