@@ -126,6 +126,7 @@ export async function preparePublishAttempt(
   };
   const artifact = await buildArtifact(buildCtx, buildRequest);
   assertReleaseArtifact(release, artifact.template);
+  await options.inputCheck?.(artifact.template, next.personalization, current.orgId);
   const expectedPass = {
     ...expectedPassBase,
     credentialKeysetCommitment,

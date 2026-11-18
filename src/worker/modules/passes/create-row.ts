@@ -8,6 +8,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { ensurePlatformIdentity } from '../identities/repo.ts';
 import { PLATFORM_IDENTITY_ID } from '../identities/resolver.ts';
 import type { TemplateRelease } from '../templates/releases.ts';
+import { assertAccessInput } from './access-input.ts';
 import { buildArtifact, resolveTemplate } from './builder.ts';
 import { assertTenantCreateAuthority } from './create-authority.ts';
 import { scheduleRequiredIssuanceDelivery } from './create-delivery.ts';
@@ -74,6 +75,7 @@ export async function createPassRowWithRelease(
   if (template.id !== release.templateId || template.version !== release.version)
     throw releaseChanged();
   await assertCreateAuthority(ctx, p, connectionGeneration, release);
+  await assertAccessInput(ctx, p.orgId, template, p.input);
   const identity = await depsOf(ctx.env).identities.forOrg(p.orgId, p.identityId);
   if (identity.id === PLATFORM_IDENTITY_ID) await ensurePlatformIdentity(ctx.env, ctx.clock.now());
 

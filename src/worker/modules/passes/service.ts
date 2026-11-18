@@ -4,6 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
 import { recordPassEvent } from '../events/record.ts';
+import { assertAccessInput } from './access-input.ts';
 import { ensureCredentialRefKeyset } from './credential-keyset.ts';
 import { currentSummary, detailOf, toSummary } from './detail.ts';
 import type { TenantPassWrite } from './http.ts';
@@ -126,6 +127,12 @@ export async function updatePass(
     ...(options.ifMatch !== undefined ? { expectedVersion: options.ifMatch } : {}),
     ...(resetContext ? { connectionContext: resetContext } : {}),
     notify: patch.notify === true,
+    ...(patch.input && Object.keys(patch.input).length > 0
+      ? {
+          inputCheck: (template, personalization, orgId) =>
+            assertAccessInput(ctx, orgId, template, personalization),
+        }
+      : {}),
     mutate: (current): Mutation => {
       changedKeys.length = 0;
       const personalization: Personalization = { ...current.personalization };
