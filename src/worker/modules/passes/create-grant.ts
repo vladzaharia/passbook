@@ -6,6 +6,7 @@ import { connectionIs } from '../connections/repo-grants.ts';
 import { sampleScannerScopeCheck } from '../scan/sample-scope-fence.ts';
 import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import { notBlueprintCheck, releaseOrgCheck, releaseSnapshotCheck } from './repo-create-checks.ts';
+import { externalIdFreeCheck } from './repo-external-id.ts';
 import { type RetainedIssuanceScope, retainedIssuanceChecks } from './repo-write-retained.ts';
 import type { NewPassRow } from './repo-write-types.ts';
 
@@ -41,6 +42,8 @@ export function createGrant(
     releaseSnapshotCheck(row),
     releaseOrgCheck(row.release),
   ];
+  if (row.uniqueExternalId && row.externalId !== null)
+    checks.push(externalIdFreeCheck(row.templateId, row.externalId));
   if (row.connectionId !== null)
     checks.push(
       connectionIs({

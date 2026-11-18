@@ -269,6 +269,8 @@ export interface TemplateManifest {
    * so a new value shows on the lock screen.
    */
   messaging?: { input: string };
+  /** `unique`: at most one pass per externalId for this template, per org and mode. */
+  externalId?: { unique?: boolean };
   /** What a scanner may do with this template's passes, and what its result screen says. */
   scan?: ScanManifest;
   /** Apple NFC (VAS). Off until the pass type is approved. */

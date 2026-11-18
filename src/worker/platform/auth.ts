@@ -156,7 +156,11 @@ export type ScopeSelector = ApiScope | ((c: Context<AppBindings>) => ApiScope);
 
 /** Picks the scope from the HTTP method: reads need `read`, everything else `write`. */
 export function methodScope(scopes: { read: ApiScope; write: ApiScope }): ScopeSelector {
-  return (c) => (c.req.method === 'GET' || c.req.method === 'HEAD' ? scopes.read : scopes.write);
+  return Object.assign(
+    (c: Context<AppBindings>) =>
+      c.req.method === 'GET' || c.req.method === 'HEAD' ? scopes.read : scopes.write,
+    { scopes },
+  );
 }
 
 /**

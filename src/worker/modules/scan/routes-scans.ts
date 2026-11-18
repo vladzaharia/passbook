@@ -19,6 +19,7 @@ import {
   ValidationError,
 } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess, rolesGranting } from '../orgs/access.ts';
 import {
@@ -74,10 +75,13 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
   const keyOrSession = requireTenantSessionOrApiKey('scans:read');
   routes.use(
     '*',
-    createMiddleware<AppBindings>(async (c, next) => {
-      const isList = c.req.method === 'GET' && /\/scans\/?$/.test(c.req.path);
-      return isList ? keyOrSession(c, next) : requireTenantSession(c, next);
-    }),
+    declareKeyAccess(
+      createMiddleware<AppBindings>(async (c, next) => {
+        const isList = c.req.method === 'GET' && /\/scans\/?$/.test(c.req.path);
+        return isList ? keyOrSession(c, next) : requireTenantSession(c, next);
+      }),
+      { read: ['scans:read'], only: /\/scans\/?$/ },
+    ),
   );
   routes.use('*', limitBody(16 * 1024));
 

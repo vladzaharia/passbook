@@ -42,6 +42,14 @@ function toDto(row: repo.ApiKeyRow & { created_by_name?: string | null }): ApiKe
   };
 }
 
+/** The key behind a bearer: its settings and use, never the secret or its hash. */
+export async function describeOwnKey(ctx: ServiceContext, auth: ApiKeyAuth) {
+  const row = await repo.getKey(ctx.env.DB, auth.keyId, auth.orgId);
+  if (!row) return null;
+  const { id, orgId, name, prefix, scopes, mode, createdAt, lastUsedAt, expiresAt } = toDto(row);
+  return { id, orgId, name, prefix, scopes, mode, createdAt, lastUsedAt, expiresAt };
+}
+
 /** One page, plus how many revoked keys the same org filter holds. */
 export async function listApiKeys(
   ctx: ServiceContext,

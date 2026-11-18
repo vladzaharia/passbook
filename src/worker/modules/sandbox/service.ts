@@ -25,6 +25,7 @@ import {
   getCaptured,
   getCapturedReference,
   type InboxAuthority,
+  type InboxReader,
   listCaptured,
   readCaptured,
 } from './repo-capture.ts';
@@ -57,7 +58,7 @@ const summaryOf = (r: CapturedRow): Summary => ({
 export async function listCapturedEmails(
   ctx: ServiceContext,
   q: { mode: Mode; orgId: string; cursor?: string | undefined; limit: number },
-  authority: InboxAuthority,
+  authority: InboxReader,
 ): Promise<{ items: Summary[]; nextCursor: string | null }> {
   if (q.mode !== 'test' || authority.mode !== 'test' || q.orgId !== authority.orgId)
     return { items: [], nextCursor: null };
@@ -78,7 +79,7 @@ export async function listCapturedEmails(
 export async function getCapturedEmail(
   ctx: ServiceContext,
   id: string,
-  authority: InboxAuthority,
+  authority: InboxReader,
 ): Promise<Detail> {
   const row = await getCaptured(ctx.env.DB, id, authority, ctx.clock.now());
   if (!row) throw new NotFoundError('Email not found.', 'CAPTURED_EMAIL_NOT_FOUND');

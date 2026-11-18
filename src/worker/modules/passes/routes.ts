@@ -93,6 +93,7 @@ register(
         ...(q.holderState ? { holderState: q.holderState } : {}),
         ...(q.onDevice !== undefined ? { onDevice: q.onDevice } : {}),
         ...(q.q ? { q: q.q } : {}),
+        ...(q.externalId ? { externalId: q.externalId } : {}),
         ...(q.cursor ? { cursor: q.cursor } : {}),
         limit: q.limit,
       }),

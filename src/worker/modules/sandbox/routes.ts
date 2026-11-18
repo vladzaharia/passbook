@@ -11,12 +11,39 @@ import {
 import { modeOf } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
-import { authOf, type C, requireTenantSession, svc, tenantAuthorityOf } from '../passes/http.ts';
+import {
+  authOf,
+  type C,
+  requireTenantSessionOrApiKey,
+  svc,
+  tenantAuthorityOf,
+} from '../passes/http.ts';
 import { getCapturedEmail, listCapturedEmails, sendCapturedToMe } from './service.ts';
 
 /** /api/v1/test-inbox: Test mail held back for members of the selected organization. */
 export const sandboxRoutes = createRouter();
-guard(sandboxRoutes, requireTenantSession);
+guard(sandboxRoutes, requireTenantSessionOrApiKey(['passes:read']));
+
+/** A Test key reads its own organization's Test inbox and nothing else; Live and platform keys are refused. */
+async function keyInboxAuthority(
+  c: C,
+  auth: Extract<ReturnType<typeof authOf>, { kind: 'api_key' }>,
+  orgId: string,
+  capability: 'passes:read' | 'passes:operate',
+  mode: 'live' | 'test',
+) {
+  if (capability !== 'passes:read' || auth.mode !== 'test' || mode !== 'test')
+    throw new ForbiddenError('Reading the test inbox needs a test key.', 'TEST_KEY_REQUIRED');
+  if (auth.orgId !== orgId) throw new ForbiddenError();
+  return tenantAuthorityOf(svc(c), auth, orgId, capability);
+}
+
+/** Who reads the list or one message: a session as before, or a Test key of the same organization. */
+function readerAuthority(c: C, orgId: string, mode: 'live' | 'test', hide: boolean) {
+  const auth = authOf(c);
+  if (auth.kind === 'api_key') return keyInboxAuthority(c, auth, orgId, 'passes:read', mode);
+  return inboxAuthority(c, orgId, 'passes:read', mode, hide);
+}
 
 async function inboxAuthority(
   c: C,
@@ -26,6 +53,8 @@ async function inboxAuthority(
   hide: boolean,
 ) {
   const auth = authOf(c);
+  if (auth.kind === 'api_key')
+    throw new ForbiddenError('Use a signed-in session.', 'SESSION_REQUIRED');
   if (auth.kind !== 'session') throw new UnauthenticatedError();
   if (hide && mode !== 'test')
     throw new NotFoundError('Email not found.', 'CAPTURED_EMAIL_NOT_FOUND');
@@ -55,10 +84,11 @@ register(
     const mode = modeOf(authOf(c));
     c.header('cache-control', 'no-store');
     try {
-      const authority = await inboxAuthority(c, q.orgId, 'passes:read', mode, false);
+      const authority = await readerAuthority(c, q.orgId, mode, false);
       return c.json(await listCapturedEmails(svc(c), { ...q, mode }, authority));
     } catch (error) {
-      if (error instanceof ForbiddenError) return c.json({ items: [], nextCursor: null });
+      if (error instanceof ForbiddenError && authOf(c).kind === 'session')
+        return c.json({ items: [], nextCursor: null });
       throw error;
     }
   },
@@ -77,13 +107,7 @@ register(
   },
   async (c) => {
     const q = c.req.valid('query');
-    const authority = await inboxAuthority(
-      c,
-      q.orgId,
-      'passes:read',
-      q.mode ?? modeOf(authOf(c)),
-      true,
-    );
+    const authority = await readerAuthority(c, q.orgId, q.mode ?? modeOf(authOf(c)), true);
     const email = await getCapturedEmail(svc(c), c.req.valid('param').id, authority);
     c.header('cache-control', 'no-store');
     return c.json(email);

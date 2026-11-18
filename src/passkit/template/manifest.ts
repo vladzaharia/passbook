@@ -117,6 +117,9 @@ export function validateManifest(
   const properties = isRecord(manifest.inputs.properties) ? manifest.inputs.properties : {};
   const inputNames = new Set(Object.keys(properties));
   issues.push(...reservedInputIssues(manifest));
+  const extId = (manifest as { externalId?: unknown }).externalId;
+  if (extId !== undefined && !(isRecord(extId) && typeof extId.unique === 'boolean'))
+    error('EXTERNAL_ID_SHAPE', 'externalId must be { "unique": true | false }.', 'externalId');
 
   const sample = manifest.sample ?? {};
   try {

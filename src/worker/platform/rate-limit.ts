@@ -31,13 +31,47 @@ export async function checkRateLimit(
   return success;
 }
 
+/** Every ratelimits binding in wrangler.jsonc counts per 60-second window. */
+const WINDOW_SECONDS = 60;
+/** The RL_API_KEY budget per key and window; keep equal to wrangler.jsonc. */
+export const API_KEY_LIMIT = 600;
+
+/** Seconds until the current window turns over: the longest a limited caller must wait. */
+export const secondsToReset = (nowMs: number): number =>
+  WINDOW_SECONDS - (Math.floor(nowMs / 1000) % WINDOW_SECONDS);
+
+/** `RateLimit-Policy: 600;w=60`, with the limit and reset; sent on every API-key response. */
+function apiKeyPolicyHeaders(nowMs: number): Record<string, string> {
+  return {
+    'ratelimit-policy': `${API_KEY_LIMIT};w=${WINDOW_SECONDS}`,
+    'ratelimit-limit': String(API_KEY_LIMIT),
+    'ratelimit-reset': String(secondsToReset(nowMs)),
+  };
+}
+
 export async function enforceRateLimit(
   env: AppEnv,
   name: RateLimitName,
   key: string,
 ): Promise<void> {
-  if (!(await checkRateLimit(env, name, key))) throw new RateLimitedError();
+  if (await checkRateLimit(env, name, key)) return;
+  const now = Date.now();
+  throw new RateLimitedError(
+    secondsToReset(now),
+    undefined,
+    name === 'RL_API_KEY' ? { ...apiKeyPolicyHeaders(now), 'ratelimit-remaining': '0' } : {},
+  );
 }
+
+/** Middleware: tells an API-key caller its budget. The limiter reports pass or fail only, so `RateLimit-Remaining` is sent on 429 alone. */
+export const apiKeyRateHeaders: MiddlewareHandler<AppBindings> = createMiddleware(
+  async (c, next) => {
+    await next();
+    if (c.var.auth?.kind !== 'api_key' || c.res.headers.has('ratelimit-policy')) return;
+    for (const [name, value] of Object.entries(apiKeyPolicyHeaders(Date.now())))
+      c.header(name, value);
+  },
+);
 
 export function clientIp(c: Context): string {
   return c.req.header('cf-connecting-ip') ?? 'unknown';

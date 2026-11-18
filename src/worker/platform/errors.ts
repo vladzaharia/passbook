@@ -72,8 +72,14 @@ export class PayloadTooLargeError extends AppError {
   }
 }
 export class RateLimitedError extends AppError {
-  constructor(retryAfterSeconds = 60, message = 'Too many requests. Try again later.') {
-    super('RATE_LIMITED', 429, message, { headers: { 'retry-after': String(retryAfterSeconds) } });
+  constructor(
+    retryAfterSeconds = 60,
+    message = 'Too many requests. Try again later.',
+    headers: Record<string, string> = {},
+  ) {
+    super('RATE_LIMITED', 429, message, {
+      headers: { ...headers, 'retry-after': String(retryAfterSeconds) },
+    });
   }
 }
 export class UpstreamError extends AppError {
