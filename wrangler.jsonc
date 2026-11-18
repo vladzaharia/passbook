@@ -107,6 +107,7 @@
     },
     { "name": "wallet-bulk-reissue", "binding": "BULK_REISSUE", "class_name": "BulkReissue" },
     { "name": "wallet-broadcast", "binding": "BROADCAST", "class_name": "Broadcast" },
+    { "name": "wallet-pass-import", "binding": "PASS_IMPORT", "class_name": "PassImport" },
     {
       "name": "wallet-connection-sync",
       "binding": "CONNECTION_SYNC",
@@ -154,8 +155,10 @@
   "triggers": { "crons": ["* * * * *", "17 3 * * *"] },
 
   "observability": { "enabled": true, "logs": { "invocation_logs": false } },
+  // Workflows count every D1 call as a subrequest: 10,000 an instance by default. A 2,000-row import is about 110,000.
   "limits": {
-    "cpu_ms": 10000
+    "cpu_ms": 10000,
+    "subrequests": 500000
   },
   "mtls_certificates": [
     {

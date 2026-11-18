@@ -20,6 +20,7 @@ import {
   matchesPass,
 } from './binding.ts';
 import {
+  actorOfStarter,
   authorityMayQueue,
   captureActor,
   type DeliveryActor,
@@ -153,6 +154,7 @@ export async function scheduleIssuanceDelivery(
     // A system or connection issuance has no principal row: only a queue, cron or workflow context
     // may act for it, so a request leaves it pending for the next sweep.
     if (execution.kind !== 'tenant' && !ctx.job) return 'deferred';
+    const starter = execution.kind === 'deferred' ? execution.starter : null;
     await enqueuePassEmail(ctx, {
       passId,
       to: row.recipient,
@@ -166,9 +168,11 @@ export async function scheduleIssuanceDelivery(
               [context.userRevision ?? undefined, context.additionalUserRevision ?? undefined],
             ),
           }
-        : context.orgRevision === undefined
-          ? {}
-          : { queuedFor: [{ kind: 'system' as const, orgRevision: context.orgRevision }] }),
+        : starter
+          ? { queuedFor: [actorOfStarter(starter, row.org_id, row.mode)] }
+          : context.orgRevision === undefined
+            ? {}
+            : { queuedFor: [{ kind: 'system' as const, orgRevision: context.orgRevision }] }),
       issuanceIntentId: passId,
       schedule: false,
     });

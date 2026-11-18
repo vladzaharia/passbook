@@ -4,6 +4,7 @@ import type { OrgCapability } from '../../../shared/contracts/org-membership.ts'
 import {
   CheckPassImportSchema,
   CreatePassImportSchema,
+  PassImportCommitSchema,
   PassImportListQuerySchema,
   PassImportPageSchema,
   PassImportRowsPageSchema,
@@ -22,6 +23,7 @@ import {
   svc,
   tenantAuthorityOf,
 } from './http.ts';
+import { commitImport } from './import-commit.ts';
 import { errorsCsv, importDto, rowsPage } from './import-read.ts';
 import {
   checkImport,
@@ -127,6 +129,26 @@ register(
     const authority = await authorityFor(c, c.req.valid('query').orgId, 'passes:operate');
     return c.json(
       await checkImport(svc(c), authority, c.req.valid('param').id, c.req.valid('json').plan),
+    );
+  },
+);
+
+register(
+  passImportRoutes,
+  TAG,
+  {
+    method: 'post',
+    path: '/{id}/commit',
+    summary: 'Apply the checked rows: create the new passes and update the matched ones',
+    params: IdParamSchema,
+    query: OrgQuerySchema,
+    body: PassImportCommitSchema,
+    response: PassImportSchema,
+  },
+  async (c) => {
+    const authority = await authorityFor(c, c.req.valid('query').orgId, 'passes:operate');
+    return c.json(
+      await commitImport(svc(c), authority, c.req.valid('param').id, c.req.valid('json')),
     );
   },
 );

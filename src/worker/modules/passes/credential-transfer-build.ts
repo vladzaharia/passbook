@@ -115,7 +115,9 @@ export function captureContent(value: ConnectionTransferContent): ConnectionTran
     !row.fieldSources ||
     typeof row.fieldSources !== 'object' ||
     Array.isArray(row.fieldSources) ||
-    Object.values(row.fieldSources).some((value) => value !== 'manual' && value !== 'connection')
+    Object.values(row.fieldSources).some(
+      (value) => value !== 'manual' && value !== 'connection' && value !== 'import',
+    )
   )
     throw new ValidationError('Invalid mapped pass content.');
   return captured as ConnectionTransferContent;

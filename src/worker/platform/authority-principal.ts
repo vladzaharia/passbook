@@ -59,7 +59,15 @@ export type Principal =
   | { kind: 'scanner'; scannerId: string; credentialEpoch: number }
   | { kind: 'holder'; passId: string; proof: HolderProof }
   | { kind: 'platform'; userId: string; sessionIdHash: string; orgId?: string; mode?: Mode }
-  | { kind: 'system'; job: string; orgId?: string; mode?: Mode; orgAccessRevision?: number };
+  | {
+      kind: 'system';
+      job: string;
+      orgId?: string;
+      mode?: Mode;
+      orgAccessRevision?: number;
+      /** Terminal bookkeeping of a dead run (a stuck import): holds while the org is suspended. `jobGrant` allowlists the purposes. */
+      inactiveOk?: true;
+    };
 
 export type HolderPrincipal = Extract<Principal, { kind: 'holder' }>;
 
@@ -182,7 +190,10 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
       // A platform or system principal that names an org acts on it only while the org is active.
       if (p.orgId === undefined)
         return `SELECT NULL AS org_id, ${mode} AS mode, ${flag(actor)} AS actor_ok, 1 AS org_ok`;
-      const org = orgOk(b, p.kind === 'system' ? p.orgAccessRevision : undefined);
+      const org =
+        p.kind === 'system' && p.inactiveOk
+          ? `o.status IN ('active', 'suspended')${p.orgAccessRevision === undefined ? '' : ` AND o.access_revision = ${b.bind(p.orgAccessRevision)}`}`
+          : orgOk(b, p.kind === 'system' ? p.orgAccessRevision : undefined);
       return `SELECT o.id AS org_id, ${mode} AS mode, ${flag(actor)} AS actor_ok, ${flag(org)} AS org_ok
         FROM orgs o WHERE o.id = ${b.bind(p.orgId)}`;
     }

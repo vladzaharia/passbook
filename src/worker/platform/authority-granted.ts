@@ -217,6 +217,7 @@ export function jobPrincipal(j: {
   orgId: string | undefined;
   mode: Mode | undefined;
   orgAccessRevision: number | undefined;
+  inactiveOk?: true | undefined;
 }): Principal {
   return {
     kind: 'system',
@@ -224,5 +225,6 @@ export function jobPrincipal(j: {
     ...(j.orgId === undefined ? {} : { orgId: j.orgId }),
     ...(j.mode === undefined ? {} : { mode: j.mode }),
     ...(j.orgAccessRevision === undefined ? {} : { orgAccessRevision: j.orgAccessRevision }),
+    ...(j.inactiveOk ? { inactiveOk: true as const } : {}),
   };
 }

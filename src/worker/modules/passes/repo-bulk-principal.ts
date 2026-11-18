@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { type Check, rawCheck } from '../../platform/authority-checks.ts';
+import type { Principal } from '../../platform/authority-principal.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import type { TenantPassWrite } from './http.ts';
@@ -23,6 +24,37 @@ export type ReissuePrincipal =
       orgAccessRevision: number;
     }
   | { kind: 'platform'; userId: string; userAccessRevision: number };
+
+/** Who started an import: a membership or a key, never a platform session. Ids and revisions only, no secret. */
+export type DeferredStarter = Exclude<ReissuePrincipal, { kind: 'platform' }>;
+
+/** The starter names this org and mode: a key's own org and mode, a membership's org (proved by the grant). */
+export function starterFits(starter: DeferredStarter, orgId: string, mode: Mode): boolean {
+  return (
+    starter.kind === 'membership' ||
+    (starter.mode === mode && (starter.keyOrgId === null || starter.keyOrgId === orgId))
+  );
+}
+
+/** The grant principal of a starter: deferred, so every grant re-proves the revisions captured at the start. */
+export function starterPrincipal(starter: DeferredStarter, orgId: string, mode: Mode): Principal {
+  return starter.kind === 'membership'
+    ? {
+        kind: 'membership',
+        membershipId: starter.membershipId,
+        via: 'deferred',
+        orgAccessRevision: starter.orgAccessRevision,
+        userAccessRevision: starter.userAccessRevision,
+        mode,
+      }
+    : {
+        kind: 'api_key',
+        keyId: starter.keyId,
+        scope: 'passes:write',
+        orgAccessRevision: starter.orgAccessRevision,
+        ...(starter.keyOrgId === null ? { orgId } : {}),
+      };
+}
 
 /** The principal behind a start request, captured once the start is authorized. */
 export async function reissuePrincipalOf(

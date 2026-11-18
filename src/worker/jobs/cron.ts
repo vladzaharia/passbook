@@ -10,6 +10,7 @@ import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
 import { rewrapEnvelopes } from '../modules/keys/rewrap.ts';
 import { sweepBrandingGc } from '../modules/orgs/branding-gc.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
+import { sweepStuckImports } from '../modules/passes/import-sweep.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
 import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
 import { remacCapabilityTokens } from '../modules/passes/token-remac.ts';
@@ -55,6 +56,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
       },
     },
     { name: 'passes.transfer_asset_gc', run: sweepTransferAssetGc },
+    { name: 'passes.import_stuck', run: sweepStuckImports },
   ],
   [DAILY_CRON]: [
     { name: 'authority.sweep', run: async (ctx) => void (await sweepLeakedGrants(ctx)) },

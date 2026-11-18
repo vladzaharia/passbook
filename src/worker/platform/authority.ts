@@ -299,7 +299,13 @@ export interface JobGrantInput extends Omit<GrantInput, 'principal'> {
   orgId?: string;
   mode?: Mode;
   orgAccessRevision?: number;
+  inactiveOk?: true;
 }
+
+/** The purposes that may act while the org is suspended, with the tables each may write. */
+const INACTIVE_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
+  'org_mode.job.pass_import.finish': ['pass_imports', 'counters'],
+};
 
 /** Only a context built by `createJobContext` (queue, cron, workflow) can mint a `system:` grant. */
 export function jobGrant(ctx: ServiceContext, input: JobGrantInput): Grant {
@@ -310,8 +316,13 @@ export function jobGrant(ctx: ServiceContext, input: JobGrantInput): Grant {
       'GRANT_BAD_PURPOSE',
       'A job grant purpose names a job: <scope>.job.<name>.',
     );
-  const { job, orgId, mode, orgAccessRevision, ...rest } = input;
-  const principal = jobPrincipal({ job, orgId, mode, orgAccessRevision });
+  if (input.inactiveOk) {
+    const allowed = INACTIVE_OK_PURPOSES[input.purpose];
+    if (!allowed || !input.tables?.every((t) => allowed.includes(t)))
+      throw new AuthorityError('GRANT_BAD_PURPOSE', 'inactiveOk is for allowlisted purposes.');
+  }
+  const { job, orgId, mode, orgAccessRevision, inactiveOk, ...rest } = input;
+  const principal = jobPrincipal({ job, orgId, mode, orgAccessRevision, inactiveOk });
   const full = { ...rest, principal };
   return new Grant(ctx.env.DB, ctx.ids.token(), scopeOf(full), full, ctx.clock.now());
 }

@@ -107,6 +107,8 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass.unbind': a('Pass unbound from connection', ENTITY.connection.icon, 'neutral'),
   'pass.update': a('Pass updated', I.edit, 'info'),
   'pass.void': a('Pass voided', I.void, 'warning'),
+  'pass_import.commit': a('Import started', ENTITY.pass.icon, 'info'),
+  'pass_import.finish': a('Import finished', CircleCheck, 'success'),
   'scanning.session_create': a('Scanning session created', ENTITY.scanner.icon, 'success'),
   'scanning.session_update': a('Scanning session changed', Settings, 'info'),
   'scanning.device_update': a('Scanning device changed', Settings, 'info'),

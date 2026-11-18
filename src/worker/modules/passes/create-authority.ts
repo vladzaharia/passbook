@@ -1,9 +1,10 @@
 import { ConnectionModeSchema } from '../../../shared/contracts/connections.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
+import { isJobContext, type ServiceContext } from '../../platform/service-context.ts';
 import type { CreateParams } from './create-types.ts';
 import type { TenantPassWrite } from './http.ts';
 import { tenantOrgAccessRevision, tenantPassAuthorityValid } from './repo-authority.ts';
+import { reissuePrincipalValid, starterFits } from './repo-bulk-principal.ts';
 import { connectionForPass } from './repo-read-connection.ts';
 
 /** A suspended (or suspended and reactivated) org is a distinct refusal from a lost membership or key. */
@@ -23,7 +24,19 @@ export async function assertTenantCreateAuthority(
   const execution = p.execution;
   if (
     !execution ||
-    (execution.kind !== 'tenant' && execution.kind !== 'connection' && execution.kind !== 'system')
+    (execution.kind !== 'tenant' &&
+      execution.kind !== 'connection' &&
+      execution.kind !== 'system' &&
+      execution.kind !== 'deferred')
+  )
+    throw new ForbiddenError();
+  // An import's create holds only while its starter does: a job context, this org and mode, the revisions captured at the start.
+  if (
+    execution.kind === 'deferred' &&
+    (!isJobContext(ctx) ||
+      p.source !== 'manual' ||
+      !starterFits(execution.starter, p.orgId, p.mode) ||
+      !(await reissuePrincipalValid(ctx.env.DB, p.orgId, execution.starter, ctx.clock.now())))
   )
     throw new ForbiddenError();
   if (
