@@ -7,6 +7,7 @@ import { Buddy } from '../ui/art/buddy.tsx';
 import { Button } from '../ui/button.tsx';
 import type { ScanApi } from './api/scan-api.ts';
 import { ScanAppView } from './app.tsx';
+import { useTagUi } from './assign/use-tag-ui.tsx';
 import { needsSessionRefetch } from './boot/use-scan-session.ts';
 import { localOutcome } from './machine/outcome.ts';
 import type { ScanOutcome } from './machine/types.ts';
@@ -132,6 +133,16 @@ export function ScanLoop({
     overlay: s.overlay,
     dispatch,
   });
+  const tags = useTagUi({
+    runtime,
+    session,
+    api,
+    state: s,
+    outcome: result && 'input' in l ? { outcome: result, input: l.input } : null,
+    lookUp: () => open(true),
+    dispatch,
+    announce: runtime.announce,
+  });
   const lastUndo = last?.scanId && last.undoable && (last.outcome.undoUntil ?? 0) > now;
   const menu = (
     <ScanMenu
@@ -151,6 +162,7 @@ export function ScanLoop({
         setCameraChoice(choice);
         runtime.camera.choose(choice);
       }}
+      tags={tags.menu}
       hasReader={readerUsable}
       cameraOff={s.camera === 'disabled'}
       onCameraOff={(off) => {
@@ -220,6 +232,7 @@ export function ScanLoop({
               {readerUsable ? <ReaderChip state={s.focused ? 'ready' : 'paused'} /> : null}
               {!s.online ? <SyncChip state={{ kind: 'offline', queued: 0 }} /> : null}
               {access.chips}
+              {tags.chip}
             </>
           ),
         }}
@@ -229,7 +242,7 @@ export function ScanLoop({
               videoRef={videoRef}
               status={s.camera}
               checking={l.s === 'checking' || l.s === 'applying'}
-              result={Boolean(result) || l.s === 'paused' || Boolean(s.block)}
+              result={Boolean(result) || l.s === 'paused' || Boolean(s.block) || tags.dim}
               onRetry={runtime.camera.start}
               reader={readerUsable}
             />
@@ -244,6 +257,8 @@ export function ScanLoop({
             >
               <Button onClick={leave}>Pair again</Button>
             </BootCard>
+          ) : tags.card ? (
+            tags.card
           ) : result && s.card ? (
             <ResultCard
               key={s.card.id}
@@ -258,6 +273,7 @@ export function ScanLoop({
               holdMs={l.s === 'verdict' && l.closeAt ? Math.max(0, l.closeAt - l.since) : null}
               onAction={(actionId) => dispatch({ type: 'pick', actionId })}
               desk={deskOf(l, session.staffList, dispatch)}
+              tagRead={'input' in l && Boolean(l.input.tag)}
             />
           ) : l.s === 'paused' ? (
             <BootCard title="Paused">
@@ -265,29 +281,32 @@ export function ScanLoop({
             </BootCard>
           ) : null
         }
-        tint={view.tint}
+        tint={tags.tint ?? view.tint}
         buddy={
           <Buddy
             key={view.buddy.key}
             scene="scan"
             size="xl-scan"
             mood={view.buddy.mood === 'neutral' ? 'flat' : view.buddy.mood}
-            pose={view.buddy.pose}
+            pose={tags.pose ?? view.buddy.pose}
             beat={view.buddy.beat ?? undefined}
             card={view.buddy.card}
             immediate
           />
         }
         dockRow={
-          <DoorDock
-            outcome={result}
-            runtime={runtime}
-            open={open}
-            onError={setCameraError}
-            inside={access.inside}
-          />
+          tags.dock ?? (
+            <DoorDock
+              outcome={result}
+              runtime={runtime}
+              open={open}
+              onError={setCameraError}
+              inside={access.inside}
+              tags={tags}
+            />
+          )
         }
-        strip={stripOf(last, Boolean(lastUndo))}
+        strip={tags.strip ?? stripOf(last, Boolean(lastUndo))}
         announcement={announcement}
         on={{
           start: () => {
@@ -296,11 +315,13 @@ export function ScanLoop({
           },
           openRecent: () => showPanel('recent'),
           undo: () => {
-            if (last?.scanId) dispatch({ type: 'undo', scanId: last.scanId });
+            if (tags.strip && tags.onUndo) tags.onUndo();
+            else if (last?.scanId) dispatch({ type: 'undo', scanId: last.scanId });
           },
         }}
       />
       {access.layer}
+      {tags.layer}
       <ScanOverlays
         allowPeople={scanner?.settings.lookup ?? true}
         orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}

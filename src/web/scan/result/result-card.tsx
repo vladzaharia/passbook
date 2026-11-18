@@ -4,6 +4,9 @@ import type { ScanCard } from '../../../shared/contracts/scan.ts';
 import { SCAN_COPY, SCAN_REASON_COPY, scanLine } from '../../../shared/copy/scan.ts';
 import { formatDateTime, formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
+import { TagFlag } from '../assign/tag-flag.tsx';
+import { tagReasonLine } from '../assign/tag-lines.ts';
+import type { TagView } from '../assign/types.ts';
 import { DisplayPanels } from '../display/display-panels.tsx';
 import { scanIcon } from '../display/icons.ts';
 import { accessLines, accessValues, directionPill } from '../machine/access-view.ts';
@@ -24,7 +27,10 @@ export function ResultCard({
   holdMs,
   onPass,
   desk,
+  tagRead = false,
 }: {
+  /** The scan was a tag read: an unknown one has its own words. */
+  tagRead?: boolean;
   outcome: ScanOutcome;
   phase?: string;
   onAction?: (actionId: string) => void;
@@ -60,7 +66,7 @@ export function ResultCard({
     o.reason === 'not_accepted' && o.checkIn?.direction === 'out' && o.checkIn.mode !== 'in_out';
   const noReentry =
     o.reason === 'already_done' && o.checkIn?.mode === 'in_out' && !o.checkIn.inside;
-  const line = o.reason ? SCAN_REASON_COPY[o.reason] : null;
+  const line = tagReasonLine(o, tagRead) ?? (o.reason ? SCAN_REASON_COPY[o.reason] : null);
   const now = o.at ?? 0;
   const held = accessLines(o, now);
   const pill = directionPill(o);
@@ -202,7 +208,7 @@ export function ResultCard({
           Choose an action
         </h1>
       )}
-      {d || o.card || notes.length ? (
+      {d || o.card || o.tag || notes.length ? (
         <div className="scan-result-body">
           <IdentityRow
             outcome={o}
@@ -211,6 +217,13 @@ export function ResultCard({
               onPass?.(o.card);
             }}
           />
+          {o.tag ? (
+            <TagFlag
+              tag={o.tag as TagView}
+              holder={d?.identity.holder ?? o.card?.title}
+              refused={o.kind === 'refused'}
+            />
+          ) : null}
           {d && o.kind !== 'refused' && !desk?.picker ? <DisplayPanels display={d} /> : null}
           {notes.length ? (
             <div className="scan-result-notes">

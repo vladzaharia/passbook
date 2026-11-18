@@ -2,10 +2,13 @@ import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { getMode } from '../../lib/mode.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import { toFail } from '../api/to-fail.ts';
+import { TAG_EXTRA_COPY } from '../assign/copy.ts';
+import { tagsPortOf } from '../assign/tags-port.ts';
 import { createCamera } from '../camera/controller.ts';
 import { createBus } from '../input/bus.ts';
 import { connectNativeReader } from '../input/native-reader.ts';
 import type { RawRead } from '../input/types.ts';
+import { createWebNfcSource } from '../input/web-nfc-source.ts';
 import { createWedgeSource, WedgeFields } from '../input/wedge-source.ts';
 import { decodeActive } from '../machine/derive.ts';
 import { createDirectionPin } from '../machine/direction-pin.ts';
@@ -108,6 +111,9 @@ export async function createRuntime(
   state.camera = cameraDisabled() ? 'disabled' : 'off';
   if (scanner) state.unsure = await hydrateUnsure(unsure, scanner.id, clock.now());
   const fields = new WedgeFields();
+  const webNfc = createWebNfcSource();
+  const tagEnded = new Set<(why: 'cancelled' | 'timeout') => void>();
+  let tagReading = false;
   const pin = createDirectionPin(clock);
   const notice = (text: string, polite = true) => announce({ text, polite, n: Date.now() });
   let native: ReturnType<typeof connectNativeReader> = null;
@@ -122,6 +128,7 @@ export async function createRuntime(
   const store = createScanStore(
     {
       api,
+      tags: tagsPortOf(api),
       toFail,
       camera,
       clock,
@@ -202,8 +209,20 @@ export async function createRuntime(
         store.dispatch({ type: 'fail', key: l.key, error: 'timeout' });
     },
     unsupported: () => notice('Wallet pass verification is unavailable. Scan the barcode.', false),
+    tagEnded(why) {
+      for (const listener of tagEnded) listener(why);
+    },
     capabilities(value) {
       setNativeCapabilities(value);
+      // Android reads tags continuously: ask for them with every start from now on.
+      const nfc = getNativeCapabilities()?.nfc;
+      const wants = nfc?.continuous === true && nfc.formats.includes('tag-uid');
+      if (wants !== tagReading) {
+        tagReading = wants;
+        native?.setTagReading(wants);
+        const now = store.getSnapshot().state;
+        if (now.started && !now.block && !document.hidden) native?.start();
+      }
       if (
         !vasFallbackNoticeShown &&
         scanner?.settings.reader === 'nfc' &&
@@ -222,6 +241,7 @@ export async function createRuntime(
     onFocus: (focused) => store.dispatch({ type: 'focus', focused }),
     onBadLayout: (badLayout) => store.dispatch({ type: 'reader', reader: { badLayout } }),
   }).start((read) => emit(read));
+  const stopWebNfc = webNfc.start((read) => emit(read));
   const onOnline = () => store.dispatch({ type: 'online', online: navigator.onLine });
   const onVisible = () => {
     store.dispatch({ type: 'visible', visible: !document.hidden });
@@ -296,6 +316,19 @@ export async function createRuntime(
     readNfc() {
       native?.readNfc();
     },
+    /** Opens the system sheet for one tag (iPhone, iPad). False when the app cannot. */
+    readTag(): boolean {
+      return native?.tagRead(TAG_EXTRA_COPY.tapToReadPrompt) != null;
+    },
+    cancelTag() {
+      native?.tagCancel();
+    },
+    announce: notice,
+    webNfc,
+    onTagEnded(listener: (why: 'cancelled' | 'timeout') => void) {
+      tagEnded.add(listener);
+      return () => void tagEnded.delete(listener);
+    },
     update(next: ScanSession) {
       native?.customerBranding(customerBrandingOf(next));
       pending = next;
@@ -312,6 +345,7 @@ export async function createRuntime(
     dispose() {
       unsubscribe();
       stopWedge();
+      stopWebNfc();
       native?.dispose();
       camera.stop();
       void wake?.release();

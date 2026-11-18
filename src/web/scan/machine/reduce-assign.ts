@@ -3,7 +3,10 @@
  * loop, driven by events, asking the runner for the calls. Tag first, then the pass, then the
  * choice. Nothing here reads a clock or makes an id.
  */
+
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
+import { WEDGE_UID } from '../assign/tag-reader.ts';
+import type { TagRead } from '../assign/types.ts';
 import type { ScanInput } from '../input/types.ts';
 import { applyAnswer } from './assign-answers.ts';
 import {
@@ -61,7 +64,17 @@ export const cardOf = (input: ScanInput): CardRef =>
 /** Commits a new assign state; every input pushes the idle time-out. */
 export function put(s: MachineState, a: AssignState, env: Env, cmds: Cmd[] = []): Out {
   const idleAt = a.source === 'request' ? a.idleAt : env.now + ASSIGN_TIMING.IDLE;
-  return out({ ...s, assign: { ...a, idleAt }, assignStrip: null, lastActivity: env.now }, cmds);
+  return out(
+    {
+      ...s,
+      assign: { ...a, idleAt },
+      assignStrip: null,
+      // A row picked in Look up closes the sheet it came from.
+      overlay: s.overlay === 'lookup' || s.overlay === 'camera' ? null : s.overlay,
+      lastActivity: env.now,
+    },
+    cmds,
+  );
 }
 
 const send = (cmd: AssignCmd): Cmd => asCmd(cmd);
@@ -105,7 +118,16 @@ export function assignRead(s: MachineState, input: ScanInput, env: Env): Out {
   const a = s.assign;
   if (!a) return same(s);
   const { now } = env;
-  const tag = input.tag;
+  // A USB reader types the tag's ID like a barcode: at the tag step an ID-shaped code is the tag.
+  const typed =
+    !input.tag &&
+    (a.step === 'tag' || a.step === 'error') &&
+    input.method === 'wedge' &&
+    input.code !== undefined &&
+    WEDGE_UID.test(input.code)
+      ? ({ uid: input.code.toLowerCase(), tech: 'unknown', source: 'native' } satisfies TagRead)
+      : undefined;
+  const tag: TagRead | undefined = input.tag ?? typed;
   const noting = (kind: 'is_pass' | 'is_tag'): Out =>
     put(s, { ...a, note: { kind, until: now + ASSIGN_TIMING.NOTE } }, env);
   if (a.busy) return same(s);
@@ -116,7 +138,7 @@ export function assignRead(s: MachineState, input: ScanInput, env: Env): Out {
     const next: AssignState = {
       ...a,
       step: 'tag',
-      tag: { read: tag, sig: input.sig },
+      tag: { read: tag, sig: typed ? `t:${typed.uid}` : input.sig },
       error: null,
       note: null,
       waiting: false,

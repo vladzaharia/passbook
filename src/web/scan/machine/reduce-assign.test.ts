@@ -490,3 +490,37 @@ describe("a result card's Add tag", () => {
     expect(r.state.card).toBeNull();
   });
 });
+
+describe('a USB reader', () => {
+  it('types the tag ID: at the tag step an ID-shaped code is the tag, with the same signature as other readers', () => {
+    const r = step(
+      opened(),
+      {
+        type: 'read',
+        input: {
+          code: '04A2B3C4',
+          method: 'wedge',
+          sig: 'c:04A2B3C4',
+          id: 'x',
+          at: at(100),
+        },
+      },
+      at(100),
+    );
+    const cmd = assignCmd(r.cmds, 'assign.inspect');
+    expect(cmd.tag).toEqual({ uid: '04a2b3c4', tech: 'unknown', source: 'native' });
+    expect(assignOf(r.state)?.tag?.sig).toBe('t:04a2b3c4');
+  });
+
+  it('a barcode at the tag step is still a pass', () => {
+    const r = step(
+      opened(),
+      {
+        type: 'read',
+        input: { code: 'CARD-0001', method: 'wedge', sig: 'c:CARD-0001', id: 'x', at: at(100) },
+      },
+      at(100),
+    );
+    expect(assignOf(r.state)?.note?.kind).toBe('is_pass');
+  });
+});
