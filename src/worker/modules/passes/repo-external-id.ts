@@ -26,10 +26,14 @@ export async function externalIdTaken(
 }
 
 /** The same rule inside the create transaction, so two concurrent creates cannot both win. */
-export const externalIdFreeCheck = (templateId: string, externalId: string): Check =>
+export const externalIdFreeCheck = (
+  templateId: string,
+  externalId: string,
+  exceptPassId: string | null = null,
+): Check =>
   tenantCheck(
     'lineage',
     `NOT EXISTS (SELECT 1 FROM passes x WHERE x.org_id = {org} AND x.mode = {mode}
-       AND x.template_id = ? AND x.external_id = ? AND x.deleted_at IS NULL)`,
-    [templateId, externalId],
+       AND x.template_id = ? AND x.external_id = ? AND x.deleted_at IS NULL AND x.id IS NOT ?)`,
+    [templateId, externalId, exceptPassId],
   );

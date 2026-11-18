@@ -55,12 +55,14 @@ export async function enforceRateLimit(
   key: string,
 ): Promise<void> {
   if (await checkRateLimit(env, name, key)) return;
+  // Only a key's own budget (`key:<id>`) has a published policy; RL_API_KEY also guards other callers.
+  if (name !== 'RL_API_KEY' || !key.startsWith('key:')) throw new RateLimitedError();
+  // The limiter's windows are not promised to align with the clock: the wait is at least this long.
   const now = Date.now();
-  throw new RateLimitedError(
-    secondsToReset(now),
-    undefined,
-    name === 'RL_API_KEY' ? { ...apiKeyPolicyHeaders(now), 'ratelimit-remaining': '0' } : {},
-  );
+  throw new RateLimitedError(Math.max(secondsToReset(now), 1), undefined, {
+    ...apiKeyPolicyHeaders(now),
+    'ratelimit-remaining': '0',
+  });
 }
 
 /** Middleware: tells an API-key caller its budget. The limiter reports pass or fail only, so `RateLimit-Remaining` is sent on 429 alone. */

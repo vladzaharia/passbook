@@ -66,7 +66,7 @@ describe('app shell', () => {
   });
 
   it('publishes OpenAPI for every mounted stub', async () => {
-    const res = await call('/api/v1/openapi.json');
+    const res = await call('/api/v1/openapi.json', { headers: auth.admin() });
     expect(res.status).toBe(200);
     const doc = (await res.json()) as { openapi: string; paths: Record<string, unknown> };
     expect(doc.openapi).toBe('3.1.0');

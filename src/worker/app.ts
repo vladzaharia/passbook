@@ -1,5 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Context } from 'hono';
+import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 import { apiKeysRoutes } from './modules/api-keys/routes.ts';
 import { apiKeyMeRoutes } from './modules/api-keys/routes-me.ts';
@@ -41,13 +42,13 @@ import { samsungCallbackRoutes } from './modules/wallet-providers/routes-callbac
 import { googleCallbackRoutes } from './modules/wallet-providers/routes-google-callbacks.ts';
 import { walletOfferRoutes } from './modules/wallet-providers/routes-offers.ts';
 import { walletProviderStatusRoutes } from './modules/wallet-providers/routes-status.ts';
-import { type AuthStores, denyAllStores } from './platform/auth.ts';
+import { type AuthStores, denyAllStores, SESSION_COOKIE } from './platform/auth.ts';
 import type { Clock } from './platform/clock.ts';
 import { type AppBindings, requestContext } from './platform/context.ts';
 import type { AppEnv } from './platform/env.ts';
 import { handleError, notFoundHandler } from './platform/error-handler.ts';
 import { hostPolicy } from './platform/host-policy.ts';
-import { withSecurity } from './platform/openapi-security.ts';
+import { keyCallableOnly, withSecurity } from './platform/openapi-security.ts';
 import { apiKeyRateHeaders } from './platform/rate-limit.ts';
 import { securityHeaders, staticAsset } from './platform/security-headers.ts';
 import { asBrowserPage } from './ssr/error-response.ts';
@@ -161,10 +162,11 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/b', bundlePublicRoutes);
   app.route('/hooks', hooksRoutes);
 
-  // The same JSON document at both paths: `/api/v1/docs` is the one to link.
-  let document_: unknown;
-  const document = (c: Context) => {
-    document_ ??= withSecurity(
+  // The same JSON document at both paths: `/api/v1/docs` is the one to link. Everyone gets the
+  // operations an API key can call; signed-in platform admins get the whole document.
+  const documents: { full?: unknown; keys?: unknown } = {};
+  const document = async (c: Context<AppBindings>) => {
+    documents.full ??= withSecurity(
       app,
       app.getOpenAPI31Document({
         openapi: '3.1.0',
@@ -172,7 +174,10 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
         servers: [{ url: '/' }],
       }) as never,
     );
-    return c.json(document_ as never);
+    documents.keys ??= keyCallableOnly(documents.full as never);
+    const cookie = getCookie(c, SESSION_COOKIE);
+    const session = cookie ? await c.var.stores.sessions.resolve(cookie) : null;
+    return c.json((session?.roles.includes('admin') ? documents.full : documents.keys) as never);
   };
   app.get('/api/v1/openapi.json', document);
   app.get('/api/v1/docs', document);

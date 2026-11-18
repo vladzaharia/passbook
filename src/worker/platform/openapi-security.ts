@@ -96,3 +96,18 @@ export function withSecurity(app: OpenAPIHono<AppBindings>, doc: Doc): Doc {
   };
   return doc;
 }
+
+/** The operations an API key can call: what the public document lists. */
+export function keyCallableOnly(doc: Doc): Doc {
+  const paths: NonNullable<Doc['paths']> = {};
+  for (const [path, item] of Object.entries(doc.paths ?? {})) {
+    const kept = Object.entries(item).filter(([, op]) => {
+      const security = op?.security;
+      return (
+        Array.isArray(security) && security.some((s) => s && typeof s === 'object' && 'apiKey' in s)
+      );
+    });
+    if (kept.length) paths[path] = Object.fromEntries(kept);
+  }
+  return { ...doc, paths };
+}

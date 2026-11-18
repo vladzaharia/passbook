@@ -1,6 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { fakeRateLimiter, makeApiKey } from '../../../../test/helpers/index.ts';
+import {
+  fakeRateLimiter,
+  makeApiKey,
+  makeSession,
+  makeUser,
+} from '../../../../test/helpers/index.ts';
 import { ApiKeyMeSchema } from '../../../shared/contracts/index.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { inboxApp } from '../sandbox/test-tenant-fixtures.ts';
@@ -93,6 +98,28 @@ describe('OpenAPI document', () => {
     ]);
     // The alias serves the same document.
     expect(await (await call('/api/v1/openapi.json', {})).json()).toEqual(doc);
+  });
+
+  it('lists only key-callable operations publicly; the whole document needs an admin session', async () => {
+    type Doc = { paths: Record<string, Record<string, { security?: Record<string, string[]>[] }>> };
+    const pub = (await (await call('/api/v1/docs', {})).json()) as Doc;
+    expect(pub.paths['/api/v1/orgs']).toBeUndefined();
+    expect(pub.paths['/api/v1/passes']).toBeDefined();
+    // The preview frame is session-only, so a key never sees it.
+    expect(pub.paths['/api/v1/test-inbox/{id}/html']).toBeUndefined();
+    expect(pub.paths['/api/v1/test-inbox/{id}']?.get).toBeDefined();
+    const admin = await makeSession(kit.fx, {
+      userId: (await makeUser(kit.fx)).id,
+      roles: ['admin', 'user'],
+    });
+    const full = (await (await call('/api/v1/docs', admin.headers)).json()) as Doc;
+    expect(full.paths['/api/v1/orgs']).toBeDefined();
+    expect(full.paths['/api/v1/test-inbox/{id}/html']?.get).toBeDefined();
+    expect(full.paths['/api/v1/test-inbox/{id}/html']?.get?.security).toBeUndefined();
+    const user = await makeSession(kit.fx, { userId: (await makeUser(kit.fx)).id });
+    expect(
+      ((await (await call('/api/v1/docs', user.headers)).json()) as Doc).paths['/api/v1/orgs'],
+    ).toBeUndefined();
   });
 });
 

@@ -1,7 +1,7 @@
 # API
 
 Machine API under `/api/v1`. The reference is generated from the code at `GET /api/v1/docs` (JSON,
-public; `/api/v1/openapi.json` is the same document). It lists the security schemes and, per operation,
+public; `/api/v1/openapi.json` is the same document). Anyone gets the operations an API key can call; a signed-in platform admin gets all of them. It lists the security schemes and, per operation,
 the key scopes that allow it (an operation without an `apiKey` entry is not callable with a key). This
 page covers what it does not: conventions, headers, common tasks.
 
@@ -55,9 +55,9 @@ management use session authorization as described below.
 600 requests per minute per key, in fixed 60-second windows. Every response to a key carries
 `RateLimit-Policy: 600;w=60`, `RateLimit-Limit: 600` and `RateLimit-Reset` (seconds until the window
 turns over). Past the limit the answer is `429 RATE_LIMITED` with `Retry-After` (whole seconds, at
-most 60), `RateLimit-Remaining: 0` and the same policy and reset. The limiter reports pass or fail
+most 60; wait at least that long, the limiter's windows are not guaranteed to align with the clock), `RateLimit-Remaining: 0` and the same policy and reset. The limiter reports pass or fail
 only, so `RateLimit-Remaining` is sent on 429 alone. Other limits (login, scanners, public links) send
-`Retry-After` on 429 and no `RateLimit-*` headers.
+`Retry-After: 60` or their own wait on 429 and no `RateLimit-*` headers.
 
 ### Request headers
 

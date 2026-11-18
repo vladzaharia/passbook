@@ -7,6 +7,8 @@ import { activeRelease } from '../templates/releases.ts';
 import { approveAppleRelease } from './apple-release-test-fixtures.ts';
 import { createPassRow } from './create.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
+import { publishPass } from './publish.ts';
+import { externalIdFreeCheck } from './repo-external-id.ts';
 import { getPass } from './repo-read-pass.ts';
 import { updatePass } from './service.ts';
 
@@ -120,5 +122,20 @@ describe('per-template external id uniqueness', () => {
       options,
     );
     expect((await getPass(uniqueKit.env.DB, a.id))?.externalId).toBe('up-3');
+  });
+
+  it('refuses inside the write when the id is taken after the pre-check', async () => {
+    const mine = await create(uniqueKit, 'race-a');
+    await create(uniqueKit, 'race-b');
+    // The service pre-check is skipped here: only the write's own guard stands.
+    const err = await publishPass(jobCtxOf({ ctx: uniqueKit.ctx }), {
+      passId: mine.id,
+      cause: 'api',
+      actor: { type: 'system', id: null },
+      mutate: () => ({ externalId: 'race-b' }),
+      extraChecks: [externalIdFreeCheck(uniqueKit.template.id, 'race-b', mine.id)],
+    }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect((await getPass(uniqueKit.env.DB, mine.id))?.externalId).toBe('race-a');
   });
 });

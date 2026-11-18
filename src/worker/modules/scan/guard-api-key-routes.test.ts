@@ -21,7 +21,7 @@ describe('every /api/v1/scan route, as a key', () => {
   it('opens resolve, actions and undo only', async () => {
     const k = await t.till();
     const doc = (await (
-      await t.app.request(`${ORIGIN}/api/v1/openapi.json`, {}, kit.env)
+      await t.app.request(`${ORIGIN}/api/v1/openapi.json`, { headers: t.adminHeaders }, kit.env)
     ).json()) as {
       paths: Record<string, Record<string, unknown>>;
     };

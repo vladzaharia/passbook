@@ -4,10 +4,9 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
 import { recordPassEvent } from '../events/record.ts';
-import { resolveTemplate } from './builder.ts';
 import { ensureCredentialRefKeyset } from './credential-keyset.ts';
 import { currentSummary, detailOf, toSummary } from './detail.ts';
-import { assertExternalIdFree, uniqueExternalIds } from './external-id.ts';
+import { assertExternalIdFree, externalIdUpdateGuard } from './external-id.ts';
 import type { TenantPassWrite } from './http.ts';
 import { getPassForWrite } from './pass-access.ts';
 import { requestRefresh } from './pass-service-refresh.ts';
@@ -102,24 +101,16 @@ export async function updatePass(
       expectedConnectionMode: connection.mode,
     };
   }
-  if (typeof patch.externalId === 'string') {
-    const target = await getPassForWrite(ctx.env.DB, passId, options.scope);
-    if (target && patch.externalId !== target.externalId) {
-      const template = await resolveTemplate(
-        ctx,
-        target.orgId,
-        target.templateId,
-        patch.templateVersion ?? target.templateVersion,
-      );
-      if (uniqueExternalIds(template.manifest))
-        await assertExternalIdFree(
-          ctx.env.DB,
-          { orgId: target.orgId, mode: target.mode, templateId: target.templateId },
-          patch.externalId,
+  const externalIdGuard =
+    typeof patch.externalId === 'string'
+      ? await externalIdUpdateGuard(
+          ctx,
           passId,
-        );
-    }
-  }
+          options.scope,
+          patch.externalId,
+          patch.templateVersion,
+        )
+      : undefined;
   const moving =
     patch.templateVersion !== undefined
       ? await getPassForWrite(ctx.env.DB, passId, options.scope)
@@ -137,8 +128,9 @@ export async function updatePass(
         )
       : null;
   const changedKeys: string[] = [];
-  const result = await publishPass(ctx, {
+  const publishing = publishPass(ctx, {
     passId,
+    ...(externalIdGuard ? { extraChecks: [externalIdGuard.check] } : {}),
     orgScope: options.scope,
     cause: causeOf(actor),
     actor,
@@ -171,6 +163,12 @@ export async function updatePass(
         ...(patch.externalId !== undefined ? { externalId: patch.externalId } : {}),
       };
     },
+  });
+  const result = await publishing.catch(async (error: unknown) => {
+    // A lost race ends as a generic conflict: say what actually held the id.
+    if (externalIdGuard)
+      await assertExternalIdFree(ctx.env.DB, externalIdGuard.scope, externalIdGuard.value, passId);
+    throw error;
   });
   await recordAudit(ctx, {
     orgId: result.pass.orgId,

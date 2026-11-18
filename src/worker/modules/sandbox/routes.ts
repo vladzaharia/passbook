@@ -11,6 +11,7 @@ import {
 import { modeOf } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import {
   authOf,
   type C,
@@ -22,7 +23,14 @@ import { getCapturedEmail, listCapturedEmails, sendCapturedToMe } from './servic
 
 /** /api/v1/test-inbox: Test mail held back for members of the selected organization. */
 export const sandboxRoutes = createRouter();
-guard(sandboxRoutes, requireTenantSessionOrApiKey(['passes:read']));
+guard(
+  sandboxRoutes,
+  // Keys read the list and one message; the preview frame and send-to-me are session-only.
+  declareKeyAccess(requireTenantSessionOrApiKey(['passes:read']), {
+    read: ['passes:read'],
+    only: /^\/api\/v1\/test-inbox(\/\{id\})?$/,
+  }),
+);
 
 /** A Test key reads its own organization's Test inbox and nothing else; Live and platform keys are refused. */
 async function keyInboxAuthority(

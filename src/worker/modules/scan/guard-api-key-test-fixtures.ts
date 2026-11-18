@@ -127,6 +127,8 @@ export async function setupTillKit() {
   return {
     kit,
     app,
+    /** Headers of a signed-in platform admin: the full OpenAPI document. */
+    adminHeaders: fake.admin(),
     templateId,
     call,
     read,
