@@ -44,7 +44,7 @@ const AuthoritySchema = z.discriminatedUnion('kind', [
     mode: ModeSchema,
   }),
 ]);
-const StarterSchema = z.discriminatedUnion('kind', [
+export const StarterSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('membership'),
     membershipId: z.string(),

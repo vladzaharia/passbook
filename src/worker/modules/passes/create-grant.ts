@@ -96,7 +96,12 @@ export function createGrant(
           ? [
               condCheck(
                 'stale',
-                notExists('passes', { external_id: ex.guard.externalId, removed_at: null }),
+                notExists('passes', {
+                  external_id: ex.guard.externalId,
+                  removed_at: null,
+                  deleted_at: null,
+                  test_data_quarantined: 0,
+                }),
               ),
             ]
           : []),

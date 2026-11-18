@@ -1,5 +1,5 @@
 import { ConnectionModeSchema } from '../../../shared/contracts/connections.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
+import { isJobContext, type ServiceContext } from '../../platform/service-context.ts';
 import { createGrant, createRefusal } from './create-grant.ts';
 import { addCreateStatements } from './create-records.ts';
 import { starterFits } from './repo-bulk-principal.ts';
@@ -27,7 +27,9 @@ export async function insertPass(
     return false;
   if (
     execution.kind === 'deferred' &&
-    (row.source !== 'manual' || !starterFits(execution.starter, row.orgId, row.mode))
+    (!isJobContext(ctx) ||
+      row.source !== 'manual' ||
+      !starterFits(execution.starter, row.orgId, row.mode))
   )
     return false;
   const authority = execution.kind === 'tenant' ? execution.authority : undefined;

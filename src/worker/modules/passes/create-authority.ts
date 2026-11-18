@@ -1,6 +1,6 @@
 import { ConnectionModeSchema } from '../../../shared/contracts/connections.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
-import type { ServiceContext } from '../../platform/service-context.ts';
+import { isJobContext, type ServiceContext } from '../../platform/service-context.ts';
 import type { CreateParams } from './create-types.ts';
 import type { TenantPassWrite } from './http.ts';
 import { tenantOrgAccessRevision, tenantPassAuthorityValid } from './repo-authority.ts';
@@ -30,10 +30,10 @@ export async function assertTenantCreateAuthority(
       execution.kind !== 'deferred')
   )
     throw new ForbiddenError();
-  // An import's create holds only while its starter does: a job context (the grant re-checks the brand), this org and mode, the revisions captured at the start.
+  // An import's create holds only while its starter does: a job context, this org and mode, the revisions captured at the start.
   if (
     execution.kind === 'deferred' &&
-    (!ctx.job ||
+    (!isJobContext(ctx) ||
       p.source !== 'manual' ||
       !starterFits(execution.starter, p.orgId, p.mode) ||
       !(await reissuePrincipalValid(ctx.env.DB, p.orgId, execution.starter, ctx.clock.now())))

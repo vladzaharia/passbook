@@ -49,7 +49,7 @@ describe('commit', () => {
     expect(res.status).toBe(200);
     expect((await h.commit(d.id)).status).toBe(200);
     expect(h.created).toHaveLength(1);
-    expect(h.created[0]?.id).toBe(`pass-import-${d.id}`);
+    expect(h.created[0]?.id).toBe(await h.instanceOf(d.id));
 
     const end = await h.runWorkflow(d.id);
     expect(end).toEqual({ state: 'done', code: null });

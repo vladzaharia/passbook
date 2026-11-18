@@ -10,8 +10,8 @@ import { importGrant } from './repo-imports.ts';
 const TABLES = ['pass_imports', 'pass_import_rows'] as const;
 const CODES = { stale: 'IMPORT_STATE', lineage: 'IMPORT_NOT_FOUND' };
 
-/** Rows a workflow step takes: the plan is applied 20 rows at a time. */
-export const CHUNK_ROWS = 20;
+/** Rows a workflow step takes. A create costs about 55 D1 queries, so 5 rows stay under 400 a step (D1 allows 1,000 an invocation). */
+export const CHUNK_ROWS = 5;
 
 export interface CommitStart {
   checkId: string;
@@ -87,12 +87,19 @@ export async function revertCommit(
 }
 
 /** A write of the running import's own rows, by the workflow: only while the import is still `committing`. */
-function runGrant(ctx: ServiceContext, orgId: string, mode: 'live' | 'test', id: string) {
+function runGrant(
+  ctx: ServiceContext,
+  orgId: string,
+  mode: 'live' | 'test',
+  id: string,
+  inactiveOk = false,
+) {
   return jobGrant(ctx, {
     purpose: 'org_mode.job.pass_import.progress',
     job: 'pass-import',
     orgId,
     mode,
+    ...(inactiveOk ? { inactiveOk: true as const } : {}),
     target: id,
     tables: TABLES,
     codes: CODES,
@@ -236,7 +243,8 @@ export async function finishImport(
   end: { state: 'done' | 'failed' | 'stale'; code: string | null; progress: Progress },
 ): Promise<void> {
   const now = ctx.clock.now();
-  const g = runGrant(ctx, s.orgId, s.mode, s.importId);
+  // The terminal write holds while the org is suspended: a stuck import must always be freeable.
+  const g = runGrant(ctx, s.orgId, s.mode, s.importId, true);
   const p = end.progress;
   g.update('pass_imports', {
     where: { id: s.importId },
@@ -266,4 +274,28 @@ export async function finishImport(
     detail: JSON.stringify({ importId: s.importId, ...p, state: end.state, errorCode: end.code }),
   });
   await g.commit();
+}
+
+export interface StuckImport {
+  id: string;
+  org_id: string;
+  mode: 'live' | 'test';
+  check_id: string | null;
+  email: number;
+  email_budget: number | null;
+  committed_at: number;
+}
+
+/** Imports that have been `committing` since before `before`: their workflow may have died. */
+export function stuckImports(
+  db: D1Database,
+  before: number,
+  limit: number,
+): Promise<StuckImport[]> {
+  return all<StuckImport>(
+    db,
+    `SELECT id, org_id, mode, check_id, email, email_budget, committed_at FROM pass_imports
+     WHERE state = 'committing' AND committed_at < ? ORDER BY committed_at LIMIT ?`,
+    [before, limit],
+  );
 }

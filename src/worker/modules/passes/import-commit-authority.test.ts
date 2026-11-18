@@ -115,7 +115,7 @@ describe('revocation stops the run', () => {
 
   it('a membership revoked between chunks: the next chunk does not run', async () => {
     const member = await h.newMember();
-    const d = await h.draft(rows(45, 'MB'), plan(), member.headers);
+    const d = await h.draft(rows(12, 'MB'), plan(), member.headers);
     expect((await h.commit(d.id, {}, member.headers)).status).toBe(200);
     const end = await h.runWorkflow(
       d.id,
@@ -129,8 +129,8 @@ describe('revocation stops the run', () => {
       }),
     );
     expect(end).toEqual({ state: 'failed', code: 'IMPORT_STARTER_REVOKED' });
-    expect(await passCount(Array.from({ length: 45 }, (_, i) => `MB${i}`))).toBe(20);
-    expect((await h.get(d.id)).progress).toMatchObject({ created: 20, done: 20 });
+    expect(await passCount(Array.from({ length: 12 }, (_, i) => `MB${i}`))).toBe(5);
+    expect((await h.get(d.id)).progress).toMatchObject({ created: 5, done: 5 });
   });
 
   it('a user disabled and enabled again is not the starter any more', async () => {

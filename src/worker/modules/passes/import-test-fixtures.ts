@@ -2,7 +2,7 @@ import type { WorkflowStep } from 'cloudflare:workers';
 import { makeSession, makeTemplate, makeUser } from '../../../../test/helpers/index.ts';
 import { PassImportSchema } from '../../../shared/contracts/pass-imports.ts';
 import { createApp } from '../../app.ts';
-import { run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { runPassImport } from '../../workflows/pass-import.ts';
 import { grantKitMembership } from './apple-release-test-fixtures.ts';
 import type { TenantPassWrite } from './http.ts';
@@ -47,10 +47,17 @@ export const stepOf = (after?: (name: string) => Promise<void>) =>
 
 export async function setupImportHarness() {
   const created: { id: string; params: unknown }[] = [];
+  /** What the fake instance reports as its status; unset means `running`. */
+  const statuses: Record<string, string> = {};
   const workflow = {
     async create(o: { id: string; params: unknown }) {
+      if (created.some((c) => c.id === o.id)) throw new Error('instance exists');
       created.push(o);
       return { id: o.id };
+    },
+    async get(id: string) {
+      if (!created.some((c) => c.id === id)) throw new Error('instance.not_found');
+      return { status: async () => ({ status: statuses[id] ?? 'running' }) };
     },
   };
   const kit: Kit = await setupKit({
@@ -116,10 +123,21 @@ export async function setupImportHarness() {
     api(headers, 'POST', `/${id}/commit`, body);
   const get = async (id: string, headers = admin) =>
     PassImportSchema.parse(await (await api(headers, 'GET', `/${id}`)).json());
-  const runWorkflow = (id: string, step = stepOf()) =>
+  const instanceOf = async (id: string) =>
+    importInstanceId(
+      id,
+      (
+        await first<{ check_id: string }>(
+          kit.env.DB,
+          'SELECT check_id FROM pass_imports WHERE id = ?',
+          [id],
+        )
+      )?.check_id ?? '',
+    );
+  const runWorkflow = async (id: string, step = stepOf()) =>
     runPassImport(
       kit.env,
-      importInstanceId(id),
+      await instanceOf(id),
       { importId: id, orgId: kit.org.id, mode: 'live' },
       step,
     );
@@ -154,6 +172,8 @@ export async function setupImportHarness() {
     runWorkflow,
     existing,
     created,
+    statuses,
+    instanceOf,
     q,
   };
 }

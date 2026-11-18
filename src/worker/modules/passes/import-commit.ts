@@ -3,14 +3,26 @@ import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { startRun } from '../../platform/workflow-runs.ts';
-import { orgEmailBudget } from '../delivery/repo-email-budget.ts';
 import type { TenantPassWrite } from './http.ts';
+import { releaseImportEmail, reserveImportEmail } from './import-email.ts';
 import { importDto } from './import-read.ts';
 import { requireImport } from './import-service.ts';
 import { type DeferredStarter, reissuePrincipalOf } from './repo-bulk-principal.ts';
 import { beginCommit, revertCommit } from './repo-import-commit.ts';
+import { emailableCount } from './repo-import-rows.ts';
 
-export const importInstanceId = (id: string) => `pass-import-${id}`;
+/** One instance per commit: a re-commit after `stale` is a new run, and Workflows never reuse an id. */
+export const importInstanceId = (id: string, checkId: string) => `pass-import-${id}-${checkId}`;
+
+async function instanceExists(ctx: ServiceContext, instanceId: string): Promise<boolean> {
+  try {
+    await ctx.env.PASS_IMPORT.get(instanceId);
+    return true;
+  } catch {
+    // Workflows rejects for an id it does not know.
+    return false;
+  }
+}
 
 /** The starter of a request: a membership or a key, never a platform session (those act through a membership). */
 async function starterOf(ctx: ServiceContext, a: TenantPassWrite): Promise<DeferredStarter> {
@@ -42,22 +54,39 @@ export async function commitImport(
       `${imp.errors} rows have errors. Fix them or skip them.`,
       'IMPORT_HAS_ERRORS',
     );
+  const reserved = body.email
+    ? await reserveImportEmail(
+        ctx.env.DB,
+        a.mode,
+        a.orgId,
+        now,
+        await emailableCount(ctx.env.DB, id),
+      )
+    : 0;
+  const reservation = {
+    mode: a.mode,
+    org_id: a.orgId,
+    email: 1,
+    email_budget: reserved,
+    committed_at: now,
+  };
   try {
     await beginCommit(ctx, a, id, {
       checkId: imp.check_id,
       email: body.email,
       skipInvalid: body.skipInvalid,
       starter: await starterOf(ctx, a),
-      emailBudget: await orgEmailBudget(ctx.env.DB, a.mode, a.orgId, now),
+      emailBudget: reserved,
       templateId: imp.template_id,
       counts: { create: imp.to_create, update: imp.to_update, errors: imp.errors },
     });
   } catch (error) {
+    await releaseImportEmail(ctx.env.DB, reservation);
     if (classifyD1Error(error)?.kind === 'unique')
       throw new ConflictError('Another import of this template is running.', 'IMPORT_BUSY');
     throw error;
   }
-  const instanceId = importInstanceId(id);
+  const instanceId = importInstanceId(id, imp.check_id);
   try {
     await startRun(
       ctx.env.DB,
@@ -75,7 +104,11 @@ export async function commitImport(
       code: 'WORKFLOW_START_FAILED',
       error,
     });
+    // An ambiguous failure may have created the instance: it then owns the commit.
+    if (await instanceExists(ctx, instanceId))
+      return importDto(ctx, await requireImport(ctx, a, id));
     await revertCommit(ctx, a, id);
+    await releaseImportEmail(ctx.env.DB, reservation);
     throw new UnavailableError('The import did not start. Try again.', 'WORKFLOW_START');
   }
   return importDto(ctx, await requireImport(ctx, a, id));

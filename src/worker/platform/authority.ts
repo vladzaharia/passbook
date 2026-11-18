@@ -299,6 +299,7 @@ export interface JobGrantInput extends Omit<GrantInput, 'principal'> {
   orgId?: string;
   mode?: Mode;
   orgAccessRevision?: number;
+  inactiveOk?: true;
 }
 
 /** Only a context built by `createJobContext` (queue, cron, workflow) can mint a `system:` grant. */
@@ -310,8 +311,8 @@ export function jobGrant(ctx: ServiceContext, input: JobGrantInput): Grant {
       'GRANT_BAD_PURPOSE',
       'A job grant purpose names a job: <scope>.job.<name>.',
     );
-  const { job, orgId, mode, orgAccessRevision, ...rest } = input;
-  const principal = jobPrincipal({ job, orgId, mode, orgAccessRevision });
+  const { job, orgId, mode, orgAccessRevision, inactiveOk, ...rest } = input;
+  const principal = jobPrincipal({ job, orgId, mode, orgAccessRevision, inactiveOk });
   const full = { ...rest, principal };
   return new Grant(ctx.env.DB, ctx.ids.token(), scopeOf(full), full, ctx.clock.now());
 }

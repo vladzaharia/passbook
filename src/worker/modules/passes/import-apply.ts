@@ -1,6 +1,7 @@
 import type { Personalization } from '../../../passkit/types.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { StarterSchema } from '../delivery/issuance-context.ts';
 import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { requireApprovedRelease } from '../templates/releases.ts';
 import { createPassRow } from './create.ts';
@@ -10,6 +11,7 @@ import {
   type DeferredStarter,
   reissuePrincipalCheck,
   reissuePrincipalValid,
+  starterFits,
 } from './repo-bulk-principal.ts';
 import {
   CHUNK_ROWS,
@@ -177,7 +179,7 @@ async function updateRow(
   return replayed || published.changed ? 'updated' : 'unchanged';
 }
 
-/** Applies the next 20 planned rows of a committing import; the plan is the rows as checked, nothing else. */
+/** Applies the next planned rows of a committing import; the plan is the rows as checked, nothing else. */
 export async function applyChunk(
   ctx: ServiceContext,
   params: ImportRunParams,
@@ -186,9 +188,14 @@ export async function applyChunk(
   const s: Scope = params;
   const imp = await getImport(db, params.orgId, params.mode, params.importId);
   if (imp?.state !== 'committing' || !imp.starter) return { more: false };
-  const starter = parseJson<DeferredStarter | null>(imp.starter, null);
+  const parsed = StarterSchema.safeParse(parseJson<unknown>(imp.starter, null));
+  const starter: DeferredStarter | null = parsed.success ? parsed.data : null;
   // Re-proved before every chunk, and again in each create and publish grant.
-  if (!starter || !(await reissuePrincipalValid(db, imp.org_id, starter, ctx.clock.now()))) {
+  if (
+    !starter ||
+    !starterFits(starter, imp.org_id, imp.mode) ||
+    !(await reissuePrincipalValid(db, imp.org_id, starter, ctx.clock.now()))
+  ) {
     ctx.log.warn('pass_import.starter_revoked', {
       code: 'IMPORT_STARTER_REVOKED',
       importId: imp.id,
@@ -226,15 +233,20 @@ export async function applyChunk(
         revoked = true;
         break;
       }
+      // A create that committed and then threw (the mail schedule, a read-back) is still a created pass.
+      const made =
+        row.action === 'create' && row.pass_id ? await getPass(db, row.pass_id, imp.org_id) : null;
+      const kept = made?.mode === imp.mode && made.templateId === imp.template_id;
       ctx.log.warn('pass_import.row_failed', {
         importId: imp.id,
         row: row.row_no,
         code: error.code,
+        created: kept,
       });
       await writeRowResult(ctx, s, {
         row: row.row_no,
-        state: 'failed',
-        result: null,
+        state: kept ? 'done' : 'failed',
+        result: kept ? 'created' : null,
         code: error.code,
       });
     }
