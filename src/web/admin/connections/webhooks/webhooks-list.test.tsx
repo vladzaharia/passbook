@@ -29,6 +29,7 @@ describe('webhooks tab', () => {
       expect.stringContaining('/admin/connections/webhooks/a'),
     );
     expect(screen.getByRole('link', { name: 'Add endpoint' })).toBeVisible();
+    expect(within(table).getAllByText('HTTP 200').length).toBeGreaterThan(0);
     expect(calls[0]?.search).toContain('orgId=org1');
   });
 

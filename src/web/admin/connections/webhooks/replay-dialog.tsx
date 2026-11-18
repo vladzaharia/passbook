@@ -41,6 +41,12 @@ export function ReplayDialog({
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState<string>();
 
+  const change = (o: boolean) => {
+    if (replayRange.isPending) return;
+    if (!o) setError(undefined);
+    onOpenChange(o);
+  };
+
   async function submit() {
     const ms = RANGES.find((r) => r.value === range)?.ms ?? 24 * HOUR;
     const to = Date.now();
@@ -61,14 +67,14 @@ export function ReplayDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !replayRange.isPending && onOpenChange(o)}>
+    <Dialog open={open} onOpenChange={change}>
       <DialogContent
         title="Replay deliveries"
         description="Sent again with the same event id and body."
         size="md"
         footer={
           <>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" onClick={() => change(false)}>
               Cancel
             </Button>
             <Button loading={replayRange.isPending} onClick={() => void submit()}>

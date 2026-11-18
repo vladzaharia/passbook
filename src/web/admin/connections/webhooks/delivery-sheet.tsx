@@ -1,5 +1,5 @@
 import { RotateCw } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { formatDateTime } from '../../../lib/format.ts';
 import {
   Button,
@@ -44,6 +44,9 @@ export function DeliverySheet({
   const { replayOne } = useEndpointActions(endpointId);
   const [error, setError] = useState<string>();
   const d = delivery.data;
+  // The sheet stays mounted: a refusal belongs to the delivery it came from.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset when another delivery opens
+  useEffect(() => setError(undefined), [eventId]);
 
   async function replay() {
     if (!eventId) return;

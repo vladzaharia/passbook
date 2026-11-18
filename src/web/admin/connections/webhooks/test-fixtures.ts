@@ -27,6 +27,7 @@ export function endpoint(over: Partial<WebhookEndpointDto> = {}): WebhookEndpoin
     disabledAt: null,
     lastSuccessAt: NOW - HOUR,
     lastFailureAt: null,
+    lastStatus: 200,
     createdAt: NOW - 24 * HOUR,
     ...over,
   };

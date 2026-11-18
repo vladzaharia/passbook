@@ -107,6 +107,67 @@ describe('deliveries', () => {
   });
 });
 
+describe('row replay and reset state', () => {
+  it('replays a failed row from the list, and disables a pending one', async () => {
+    const user = userEvent.setup();
+    const calls: Calls[] = [];
+    const state = {
+      endpoints: [endpoint()],
+      deliveries: [delivery(), delivery({ eventId: 'ev2', state: 'pending', type: 'pass.issued' })],
+    };
+    await open(calls, hooks(calls, state));
+    await screen.findByRole('table', { name: 'Deliveries' });
+    expect(screen.getByRole('button', { name: 'Replay Issued delivery' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Replay Scanned delivery' }));
+    await waitFor(() =>
+      expect(sent(calls, 'POST', `${PATH}/deliveries/ev1/replay`)).toHaveLength(1),
+    );
+    expect(await screen.findByText('Queued 1 delivery.')).toBeVisible();
+  });
+
+  it('words a refused row replay in a toast', async () => {
+    const user = userEvent.setup();
+    const calls: Calls[] = [];
+    await open(
+      calls,
+      hooks(calls, undefined, {
+        [`${PATH}/deliveries/ev1/replay`]: () => problem(429, 'RATE_LIMITED', 'Slow down.'),
+      }),
+    );
+    await user.click(await screen.findByRole('button', { name: 'Replay Scanned delivery' }));
+    expect(await screen.findByText('Too many replays. Try again shortly.')).toBeVisible();
+  });
+
+  it('gives a reader no row action', async () => {
+    const calls: Calls[] = [];
+    await open(calls, hooks(calls, { endpoints: [endpoint({ url: null })] }), reader);
+    await screen.findByRole('table', { name: 'Deliveries' });
+    expect(screen.queryByRole('button', { name: /^Replay .* delivery$/ })).toBeNull();
+  });
+
+  it('clears a sheet refusal when the sheet is opened again', async () => {
+    const user = userEvent.setup();
+    const calls: Calls[] = [];
+    await open(
+      calls,
+      hooks(calls, undefined, {
+        [`${PATH}/deliveries/ev1/replay`]: () =>
+          problem(409, 'DELIVERY_PENDING', 'This delivery is already waiting to be sent.'),
+      }),
+    );
+    await user.click(await screen.findByRole('button', { name: /^Scanned,/ }));
+    let sheet = await screen.findByRole('dialog', { name: 'Delivery' });
+    await user.click(await within(sheet).findByRole('button', { name: 'Replay' }));
+    expect(await within(sheet).findByText('It is already waiting to be sent.')).toBeVisible();
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Delivery' })).toBeNull());
+    await user.click(await screen.findByRole('button', { name: /^Scanned,/ }));
+    sheet = await screen.findByRole('dialog', { name: 'Delivery' });
+    await within(sheet).findByText('First send: HTTP 503');
+    expect(within(sheet).queryByText('It is already waiting to be sent.')).toBeNull();
+  });
+});
+
 describe('bulk replay', () => {
   const openDialog = async (calls: Calls[], handlers = hooks(calls)) => {
     const user = userEvent.setup();
@@ -164,9 +225,9 @@ describe('bulk replay', () => {
       'Replay is limited to one a minute. Try again shortly.',
     ],
     [
-      'a first chunk that failed (409)',
-      problem(409, 'CONFLICT', 'The resource changed. Reload and retry.'),
-      'Nothing was queued. Try again in a minute.',
+      'a first chunk that failed (503)',
+      problem(503, 'REPLAY_NOT_QUEUED', 'Nothing was queued. Try again.'),
+      'Nothing was queued. Try again.',
     ],
   ])('keeps the dialog open and explains a refusal: %s', async (_name, response, line) => {
     const calls: Calls[] = [];
@@ -177,6 +238,23 @@ describe('bulk replay', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Replay' }));
     expect(await within(dialog).findByText(line)).toBeVisible();
     expect(screen.getByRole('dialog', { name: 'Replay deliveries' })).toBeVisible();
+  });
+
+  it('clears a refusal when the dialog is cancelled and opened again', async () => {
+    const calls: Calls[] = [];
+    const { user, dialog } = await openDialog(
+      calls,
+      hooks(calls, undefined, {
+        [`${PATH}/replay`]: () => problem(429, 'RATE_LIMITED', 'Slow down.'),
+      }),
+    );
+    await user.click(within(dialog).getByRole('button', { name: 'Replay' }));
+    await within(dialog).findByText('Replay is limited to one a minute. Try again shortly.');
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await user.click(screen.getByRole('button', { name: 'Replay' }));
+    const again = await screen.findByRole('dialog', { name: 'Replay deliveries' });
+    expect(within(again).queryByText(/limited to one a minute/)).toBeNull();
   });
 
   it('opens from the Replay failed button of a disabled endpoint', async () => {

@@ -17,8 +17,9 @@ import {
   toast,
   useFormErrors,
 } from '../../../ui/index.ts';
-import { useCreateEndpoint, validateEndpoint } from './api.ts';
+import { useSecretCalls, validateEndpoint } from './api.ts';
 import { EndpointFields } from './endpoint-fields.tsx';
+import { FocusOnMount } from './focus-on-mount.tsx';
 import { checkForm, draftOf, emptyForm, type FormState } from './form-state.ts';
 import { endpointHost } from './health.ts';
 import { VERIFY_SNIPPET } from './snippet.ts';
@@ -38,7 +39,8 @@ const urlProblem = (error: unknown) =>
 export function NewWebhookPage() {
   const navigate = useNavigate();
   const { orgId, membership } = useOrgScope();
-  const create = useCreateEndpoint();
+  const { create } = useSecretCalls();
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [serverUrl, setServerUrl] = useState<string>();
   const [checking, setChecking] = useState(false);
@@ -64,26 +66,28 @@ export function NewWebhookPage() {
         <Card className="max-w-2xl">
           <CardHeader title="Signing secret" />
           <CardBody>
-            <SecretReveal
-              fields={[
-                {
-                  label: 'Signing secret',
-                  value: created.secret,
-                  copyLabel: 'Copy signing secret',
-                },
-              ]}
-              doneLabel="Done"
-              onDone={() =>
-                void navigate({
-                  to: '/admin/connections/webhooks/$endpointId',
-                  params: { endpointId: id },
-                  replace: true,
-                })
-              }
-            >
-              <CodeBlock code={VERIFY_SNIPPET} label="Verify snippet" maxHeight="max-h-56" />
-              <TestSend endpointId={id} host={endpointHost(created.endpoint)} canManage />
-            </SecretReveal>
+            <FocusOnMount label="Signing secret">
+              <SecretReveal
+                fields={[
+                  {
+                    label: 'Signing secret',
+                    value: created.secret,
+                    copyLabel: 'Copy signing secret',
+                  },
+                ]}
+                doneLabel="Done"
+                onDone={() =>
+                  void navigate({
+                    to: '/admin/connections/webhooks/$endpointId',
+                    params: { endpointId: id },
+                    replace: true,
+                  })
+                }
+              >
+                <CodeBlock code={VERIFY_SNIPPET} label="Verify snippet" maxHeight="max-h-56" />
+                <TestSend endpointId={id} host={endpointHost(created.endpoint)} canManage />
+              </SecretReveal>
+            </FocusOnMount>
           </CardBody>
         </Card>
       </>
@@ -118,10 +122,12 @@ export function NewWebhookPage() {
 
   async function save() {
     try {
-      setCreated(await create.mutateAsync(draftOf(form)));
+      setSaving(true);
+      setCreated(await create(draftOf(form)));
       check.reset();
       return 'saved' as const;
     } catch (error) {
+      setSaving(false);
       const why = urlProblem(error);
       if (why) setServerUrl(why);
       else toast.error(error, 'Could not add the endpoint');
@@ -153,7 +159,7 @@ export function NewWebhookPage() {
               <Button variant="outline" type="button" onClick={toList}>
                 Cancel
               </Button>
-              <Button type="submit" loading={create.isPending} disabled={!canManage}>
+              <Button type="submit" loading={saving} disabled={!canManage}>
                 Add endpoint
               </Button>
             </div>

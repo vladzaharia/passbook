@@ -100,12 +100,21 @@ export function useDelivery(id: string, eventId: string | undefined) {
 export const validateEndpoint = (draft: EndpointDraft) =>
   api.post(`${BASE}?validate=1`, OkSchema, draft);
 
-export function useCreateEndpoint() {
+/**
+ * Calls that return a secret are plain async functions, not mutations: a mutation keeps its result
+ * in the cache for minutes, and a signing secret must live only in the component that shows it.
+ */
+export function useSecretCalls() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (draft: EndpointDraft) => api.post(BASE, WebhookEndpointCreatedSchema, draft),
-    onSuccess: () => refresh(qc),
-  });
+  return {
+    create: async (draft: EndpointDraft) => {
+      const created = await api.post(BASE, WebhookEndpointCreatedSchema, draft);
+      await refresh(qc);
+      return created;
+    },
+    rotate: (id: string, overlapHours: 0 | 24 | 72) =>
+      api.post(`${BASE}/${id}/secret`, WebhookSecretSchema, { overlapHours }),
+  };
 }
 
 export function useEndpointActions(id: string) {
@@ -118,12 +127,10 @@ export function useEndpointActions(id: string) {
       onSuccess: done,
     }),
     remove: useMutation({ mutationFn: () => api.delete(`${BASE}/${id}`), onSuccess: done }),
-    rotate: useMutation({
-      mutationFn: (overlapHours: 0 | 24 | 72) =>
-        api.post(`${BASE}/${id}/secret`, WebhookSecretSchema, { overlapHours }),
-    }),
     test: useMutation({
       mutationFn: () => api.post(`${BASE}/${id}/test`, WebhookTestResultSchema),
+      // A test can move the endpoint's last success or failure.
+      onSuccess: done,
     }),
     replayOne: useMutation({
       mutationFn: (eventId: string) =>

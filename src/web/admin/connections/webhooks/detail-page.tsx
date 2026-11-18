@@ -1,11 +1,9 @@
+import { Link } from '@tanstack/react-router';
+import { ArrowLeft } from 'lucide-react';
+import { backTo, notFoundTitle } from '@/shared/copy/states.ts';
+import { isApiError } from '../../../lib/errors.ts';
 import { useOrgScope, useResourceOrg } from '../../../lib/org-filter.tsx';
-import {
-  DetailNotFound,
-  detailError,
-  EmptyState,
-  PageHeader,
-  SkeletonDetail,
-} from '../../../ui/index.ts';
+import { Button, detailError, EmptyState, PageHeader, SkeletonDetail } from '../../../ui/index.ts';
 import { useWebhookEndpoint } from './api.ts';
 import { EndpointDetail } from './detail-content.tsx';
 
@@ -14,6 +12,25 @@ const crumbs = [
   { label: 'Webhook' },
 ];
 const TO = '/admin/connections';
+
+/** "Webhook not found" with the way back to the Webhooks tab. */
+function NotFound() {
+  return (
+    <EmptyState
+      art="torn"
+      mood="sad"
+      title={notFoundTitle('Webhook')}
+      action={
+        <Button asChild variant="outline">
+          <Link to={TO} search={{ tab: 'webhooks' }}>
+            <ArrowLeft aria-hidden />
+            {backTo('webhooks')}
+          </Link>
+        </Button>
+      }
+    />
+  );
+}
 
 /** Loads the endpoint, then checks it belongs to the selected org before showing anything. */
 export function EndpointDetailPage({ endpointId }: { endpointId: string }) {
@@ -48,11 +65,18 @@ function Loader({ endpointId }: { endpointId: string }) {
     return (
       <>
         {header}
-        <DetailNotFound entity="connection" to={TO} />
+        <NotFound />
       </>
     );
   if (!scope.isLoading && endpoint.isError && endpoint.isFetchedAfterMount)
-    return detailError(endpoint, { entity: 'connection', to: TO, header });
+    return isApiError(endpoint.error) && endpoint.error.isNotFound ? (
+      <>
+        {header}
+        <NotFound />
+      </>
+    ) : (
+      detailError(endpoint, { entity: 'connection', to: TO, header })
+    );
   if (resourceScope === 'choose-org')
     return (
       <>

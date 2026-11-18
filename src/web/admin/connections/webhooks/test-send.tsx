@@ -121,7 +121,9 @@ export function TestSend({
         </span>
       </div>
       <p role="status" className="mt-3 flex min-h-6 flex-wrap items-center gap-2 text-sm">
-        {outcome.kind === 'done' ? (
+        {sending ? (
+          <span className="text-fg-muted">Sending…</span>
+        ) : outcome.kind === 'done' ? (
           <>
             <StatusPill status={outcome.result.ok ? 'verified' : 'failed'}>
               {outcome.result.ok ? 'Delivered' : 'Failed'}

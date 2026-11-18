@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { resetModeForTests } from '../../../lib/mode.ts';
-import { problem, renderApp } from '../../../lib/test-utils.tsx';
+import { json, problem, renderApp } from '../../../lib/test-utils.tsx';
 import { type Calls, endpoint, hooks, manager } from './test-fixtures.ts';
 
 const open = (path: string, calls: Calls[], handlers = hooks(calls)) =>
@@ -167,7 +167,7 @@ describe('endpoint actions', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
-  it('confirms before deleting', async () => {
+  it('confirms getsOf deleting', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
     await open('/admin/connections/webhooks/we1', calls);
@@ -228,6 +228,81 @@ describe('endpoint actions', () => {
     expect(
       (await screen.findAllByText('Too many test events. Try again in a minute.')).length,
     ).toBeGreaterThan(0);
+  });
+});
+
+describe('secrets, focus, sending and lookups', () => {
+  const secretsInCache = (qc: {
+    getMutationCache: () => { getAll: () => { state: { data?: unknown } }[] };
+  }) =>
+    qc
+      .getMutationCache()
+      .getAll()
+      .filter((m) => JSON.stringify(m.state.data ?? '').includes('whsec_'));
+
+  it('moves focus to the secret and keeps it out of the mutation cache (create)', async () => {
+    const user = userEvent.setup();
+    const calls: Calls[] = [];
+    const { queryClient } = await open('/admin/connections/webhooks/new', calls);
+    await user.type(
+      await screen.findByRole('textbox', { name: /URL/ }),
+      'https://hooks.example.com/x',
+    );
+    await user.click(screen.getByRole('button', { name: 'Add endpoint' }));
+    const group = await screen.findByRole('group', { name: 'Signing secret' });
+    await waitFor(() => expect(group).toHaveFocus());
+    expect(secretsInCache(queryClient)).toEqual([]);
+  });
+
+  it('moves focus to the secret and keeps it out of the mutation cache (rotate)', async () => {
+    const user = userEvent.setup();
+    const calls: Calls[] = [];
+    const { queryClient } = await open('/admin/connections/webhooks/we1', calls);
+    await user.click(await screen.findByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Rotate secret' }));
+    await user.click(
+      within(await screen.findByRole('dialog', { name: 'Rotate secret' })).getByRole('button', {
+        name: 'Rotate',
+      }),
+    );
+    const group = await screen.findByRole('group', { name: 'New signing secret' });
+    await waitFor(() => expect(group).toHaveFocus());
+    expect(secretsInCache(queryClient)).toEqual([]);
+  });
+
+  it('says Sending… while the test request is out, then refreshes the endpoint', async () => {
+    const user = userEvent.setup();
+    const calls: Calls[] = [];
+    let release: (r: Response) => void = () => {};
+    await open(
+      '/admin/connections/webhooks/we1',
+      calls,
+      hooks(calls, undefined, {
+        '/api/v1/webhook-endpoints/we1/test': () => new Promise<Response>((r) => (release = r)),
+      }),
+    );
+    const getsOf = () =>
+      calls.filter((c) => c.method === 'GET' && c.path === '/api/v1/webhook-endpoints/we1').length;
+    await screen.findByRole('table', { name: 'Deliveries' });
+    const gets = getsOf();
+    await user.click(screen.getByRole('button', { name: 'Send test event' }));
+    expect(await screen.findByText('Sending…')).toBeVisible();
+    release(json({ ok: true, status: 200, durationMs: 5, errorCode: null }));
+    await waitFor(() => expect(getsOf()).toBeGreaterThan(gets));
+    await waitFor(() => expect(screen.queryByText('Sending…')).toBeNull());
+  });
+
+  it('names a missing endpoint a webhook', async () => {
+    const calls: Calls[] = [];
+    await open(
+      '/admin/connections/webhooks/we1',
+      calls,
+      hooks(calls, undefined, {
+        '/api/v1/webhook-endpoints/we1': () => problem(404, 'not_found', 'Not found.'),
+      }),
+    );
+    expect(await screen.findByText('Webhook not found')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Back to webhooks' })).toBeVisible();
   });
 });
 

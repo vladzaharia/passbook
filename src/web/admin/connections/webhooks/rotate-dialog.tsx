@@ -8,7 +8,8 @@ import {
   RadioGroup,
   SecretReveal,
 } from '../../../ui/index.ts';
-import { useEndpointActions } from './api.ts';
+import { useSecretCalls } from './api.ts';
+import { FocusOnMount } from './focus-on-mount.tsx';
 import { OVERLAP_OPTIONS } from './labels.ts';
 
 /**
@@ -24,21 +25,25 @@ export function RotateDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { rotate } = useEndpointActions(endpointId);
+  const { rotate } = useSecretCalls();
+  const [busy, setBusy] = useState(false);
   const [overlap, setOverlap] = useState<'0' | '24' | '72'>('24');
   const [secret, setSecret] = useState<string>();
   const [error, setError] = useState<string>();
 
   async function submit() {
     setError(undefined);
+    setBusy(true);
     try {
-      setSecret((await rotate.mutateAsync(Number(overlap) as 0 | 24 | 72)).secret);
+      setSecret((await rotate(endpointId, Number(overlap) as 0 | 24 | 72)).secret);
     } catch (cause) {
       setError(errorMessage(cause));
+    } finally {
+      setBusy(false);
     }
   }
   const close = (next: boolean) => {
-    if (next || rotate.isPending) return;
+    if (next || busy) return;
     onOpenChange(false);
     setSecret(undefined);
     setError(undefined);
@@ -57,7 +62,7 @@ export function RotateDialog({
               <Button variant="outline" onClick={() => close(false)}>
                 Cancel
               </Button>
-              <Button loading={rotate.isPending} onClick={() => void submit()}>
+              <Button loading={busy} onClick={() => void submit()}>
                 Rotate
               </Button>
             </>
@@ -65,10 +70,14 @@ export function RotateDialog({
         }
       >
         {secret ? (
-          <SecretReveal
-            fields={[{ label: 'Signing secret', value: secret, copyLabel: 'Copy signing secret' }]}
-            onDone={() => close(false)}
-          />
+          <FocusOnMount label="New signing secret">
+            <SecretReveal
+              fields={[
+                { label: 'Signing secret', value: secret, copyLabel: 'Copy signing secret' },
+              ]}
+              onDone={() => close(false)}
+            />
+          </FocusOnMount>
         ) : (
           <div className="flex flex-col gap-4">
             {error ? <Callout tone="danger">{error}</Callout> : null}

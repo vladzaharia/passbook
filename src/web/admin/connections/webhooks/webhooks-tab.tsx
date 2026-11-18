@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { useMemo } from 'react';
 import type { WebhookEndpointDto } from '@/shared/contracts/webhooks.ts';
+import { STATE_COPY } from '@/shared/copy/states.ts';
 import { useMode } from '../../../lib/mode.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import type { DataColumnDef } from '../../../ui/data-table-meta.ts';
@@ -83,7 +84,7 @@ export function WebhooksTab() {
           return (
             <span className="inline-flex items-center gap-1.5">
               <span className={last.ok ? 'text-fg' : 'text-danger'}>
-                {last.ok ? 'Delivered' : 'Failed'}
+                {last.status === null ? (last.ok ? 'Delivered' : 'Failed') : `HTTP ${last.status}`}
               </span>
               <span className="text-fg-muted">
                 <RelTime at={last.at} now={now} />
@@ -104,6 +105,7 @@ export function WebhooksTab() {
         description="Choose an organization in the top bar to see its webhooks."
       />
     );
+  if (!canRead) return <EmptyState art="lock" title={STATE_COPY.forbidden} />;
   if (list.isError && rows.length === 0)
     return <ErrorState error={list.error} onRetry={() => void list.refetch()} />;
   return (
@@ -114,7 +116,7 @@ export function WebhooksTab() {
         columns={columns}
         data={rows}
         getRowId={(e) => e.id}
-        loading={list.isPending}
+        loading={list.isPending && canRead}
         fetching={list.isFetching && !list.isPending}
         empty={
           <EmptyState

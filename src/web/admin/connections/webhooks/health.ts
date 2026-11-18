@@ -49,10 +49,13 @@ export function endpointHost(e: Pick<WebhookEndpointDto, 'url' | 'urlMasked'>): 
 }
 
 /** The last delivery's time and outcome from the endpoint's own counters. */
-export function lastDelivery(e: WebhookEndpointDto): { at: number; ok: boolean } | null {
+export function lastDelivery(
+  e: WebhookEndpointDto,
+): { at: number; ok: boolean; status: number | null } | null {
   const ok = e.lastSuccessAt;
   const bad = e.lastFailureAt;
   if (ok === null && bad === null) return null;
-  if (bad !== null && (ok === null || bad > ok)) return { at: bad, ok: false };
-  return { at: ok as number, ok: true };
+  if (bad !== null && (ok === null || bad > ok))
+    return { at: bad, ok: false, status: e.lastStatus };
+  return { at: ok as number, ok: true, status: e.lastStatus };
 }
