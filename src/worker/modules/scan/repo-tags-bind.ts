@@ -1,7 +1,10 @@
 import { type Check, rawCheck } from '../../platform/authority-checks.ts';
+import { authorityPredicate } from '../../platform/authority-read.ts';
 import { bump } from '../../platform/counters.ts';
 import { first } from '../../platform/db.ts';
 import { RateLimitedError } from '../../platform/errors.ts';
+import { scanPrincipal } from './authority-checks.ts';
+import type { ScanActor } from './guard.ts';
 
 /** Fixed windows per device. Unknown tags are counted by inspect; binds and previews by the bind route. */
 const CAPS = {
@@ -101,4 +104,10 @@ export async function boundRow(db: D1Database, id: string): Promise<BoundRow | n
         mode: r.mode,
       }
     : null;
+}
+
+/** A PIN guess is spent only while the actor is live (as the undo's guard, without a target). */
+export function liveActorGuard(actor: ScanActor, now: number) {
+  const read = authorityPredicate(scanPrincipal(actor), { scope: 'org_mode', now });
+  return { sql: `EXISTS (WITH ${read.ctes} SELECT 1 FROM actor_ok)`, params: read.params };
 }

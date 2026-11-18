@@ -5,7 +5,6 @@ import type {
   ScanTagWarningSchema,
 } from '../../../shared/contracts/nfc-tags.ts';
 import { exists } from '../../platform/authority-cond.ts';
-import { authorityPredicate } from '../../platform/authority-read.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import {
   AppError,
@@ -24,7 +23,6 @@ import { canonicalUid, tagRef } from '../nfc/tag-ref.ts';
 import { decideBind, TAGS_PER_ORG_MODE, triggerRefusal } from '../nfc/tags.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { verifyApproval } from './approval.ts';
-import { scanPrincipal } from './authority-checks.ts';
 import type { ScanActor } from './guard.ts';
 import { boundRow, bumpTagCap, cardFacts, ownerActiveCheck } from './repo-tags-bind.ts';
 import { guardMiss } from './repo-undo-approval-guard.ts';
@@ -55,11 +53,7 @@ async function approve(
   if (!approval.staffId && actor.settings.staffSignIn)
     throw new ValidationError('Choose the manager.', [], 'PIN_MANAGER_REQUIRED');
   const now = ctx.clock.now();
-  const read = authorityPredicate(scanPrincipal(actor), { scope: 'org_mode', now });
-  const verified = await verifyApproval(ctx, actor, approval, {
-    sql: `EXISTS (WITH ${read.ctes} SELECT 1 FROM actor_ok)`,
-    params: read.params,
-  });
+  const verified = await verifyApproval(ctx, actor, approval, liveActorGuard(actor, now));
   if (!verified) throw (await guardMiss(ctx.env.DB, actor, now)) ?? new ForbiddenError();
   return { id: verified.id, authEpoch: verified.authEpoch };
 }
