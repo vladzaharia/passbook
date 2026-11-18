@@ -246,6 +246,7 @@ export async function updateZone(
     ],
     ZONE_CODES,
     id,
+    ['scan_zones', 'scan_presence'],
   );
   addZoneUpdate(
     g,
@@ -268,11 +269,7 @@ export async function updateZone(
   // The tree's in(child) => in(parent) no longer holds: everyone inside it and below falls due now.
   const moved = input.parentId !== undefined && input.parentId !== row.parentId;
   if (archive || moved || (row.occupancy !== 'off' && next.occupancy === 'off'))
-    addZoneTapOut(
-      g,
-      tree.map((t) => `zone:${t}`),
-      now,
-    );
+    addZoneTapOut(g, tree, now);
   g.add(
     audited(g, ctx, {
       orgId,

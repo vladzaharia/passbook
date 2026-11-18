@@ -97,7 +97,7 @@ export const presenceHolderPart = (passId: string, scope: string): GrantPart =>
      FROM scan_presence p LEFT JOIN scans s ON s.id = p.last_scan_id AND s.org_id = {org} AND s.mode = {mode}
      LEFT JOIN scanners sc ON sc.id = s.scanner_id AND sc.org_id = {org} AND sc.mode = {mode}
      LEFT JOIN scan_staff st ON st.id = s.staff_id AND st.org_id = {org}
-     WHERE p.pass_id = ? AND p.scope = ? AND p.org_id = {org}`,
+     WHERE p.pass_id = ? AND p.scope = ? AND p.org_id = {org} AND p.mode = {mode}`,
     [passId, scope],
   );
 

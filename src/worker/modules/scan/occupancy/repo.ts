@@ -1,7 +1,6 @@
 // Occupancy statements on scan_presence (SA §20.4): one conditional statement decides each entry and exit,
 // so racing doors, capacity and nested zones resolve inside the batch. Reads for losers and counts.
 import type { Grant, GrantedStatement } from '../../../platform/authority.ts';
-import { type AfterRead, afterRead } from '../../../platform/authority-after.ts';
 import {
   exists,
   type GrantCond,
@@ -10,10 +9,10 @@ import {
   tenantSql,
 } from '../../../platform/authority-cond.ts';
 import { gt, inList, orNull } from '../../../platform/authority-expr.ts';
-import { type SqlValue, stmt } from '../../../platform/db.ts';
 import { allOf } from '../scan-write-statements.ts';
+import type { ZoneFence } from './rules.ts';
 
-/** A scan_presence row with its due time. */
+/** A scan_presence row with its due time and commit sequence. */
 export interface OccupancyRow {
   pass_id: string;
   scope: string;
@@ -30,17 +29,20 @@ export interface OccupancyRow {
   prev_first_at: number | null;
   prev_last_entry_at: number | null;
   prev_scan_id: string | null;
+  seq: number;
+  prev_seq: number | null;
 }
 
-const LIVE = `x.state = 'in' AND (x.due_at IS NULL OR x.due_at > ?)`;
-const marks = (n: number) => Array.from({ length: n }, () => '?').join(', ');
+export const LIVE = `x.state = 'in' AND (x.due_at IS NULL OR x.due_at > ?)`;
+export const marks = (n: number) => Array.from({ length: n }, () => '?').join(', ');
 
 export const anyOf = (conds: readonly GrantCond[]): GrantCond => not(allOf(conds.map(not)));
 
 /** The pass is inside `place` now: an in row not past its due time. */
 export const insideOf = (passId: string, place: string, now: number): GrantCond =>
   tenantSql(
-    `EXISTS (SELECT 1 FROM scan_presence x WHERE x.org_id = {org} AND x.pass_id = ? AND x.scope = ? AND ${LIVE})`,
+    `EXISTS (SELECT 1 FROM scan_presence x WHERE x.org_id = {org} AND x.mode = {mode} AND x.pass_id = ? AND x.scope = ?
+        AND ${LIVE})`,
     [passId, place, now],
   );
 
@@ -49,8 +51,8 @@ export const roomIn = (passId: string, place: string, capacity: number, now: num
   anyOf([
     insideOf(passId, place, now),
     tenantSql(
-      `(SELECT count(*) FROM scan_presence x JOIN passes p ON p.id = x.pass_id
-        WHERE x.org_id = {org} AND p.org_id = {org} AND p.mode = {mode} AND x.scope = ? AND ${LIVE}) < ?`,
+      `(SELECT count(*) FROM scan_presence x
+        WHERE x.org_id = {org} AND x.mode = {mode} AND x.scope = ? AND ${LIVE}) < ?`,
       [place, now, capacity],
     ),
   ]);
@@ -79,6 +81,15 @@ export const inRow = (passId: string, place: string, lastScanId?: string): Grant
     scope: place,
     state: 'in',
     ...(lastScanId ? { last_scan_id: lastScanId } : {}),
+  });
+
+/** The zone is still as the plan read it: same tracking, same parent, same archive state. */
+export const zoneIs = (z: ZoneFence): GrantCond =>
+  exists('scan_zones', {
+    id: z.id,
+    occupancy: z.occupancy,
+    parent_id: z.parentId,
+    archived_at: z.archivedAt,
   });
 
 const COLUMNS = [
@@ -149,77 +160,6 @@ export const bumpRev = (g: Grant, place: string, when: GrantCond[]): GrantedStat
     returning: ['rev'],
   });
 
-/** Undo one row a scan wrote: delete what it inserted, else put the previous values back. */
-export function undoRow(g: Grant, row: OccupancyRow, dueAt: number | null): GrantedStatement {
-  const key = {
-    pass_id: row.pass_id,
-    scope: row.scope,
-    last_scan_id: row.last_scan_id,
-    state: row.state,
-  };
-  if (row.prev_state === null)
-    return g.delete('scan_presence', {
-      where: { ...key, prev_state: null },
-      require: 'one',
-      returning: ['pass_id'],
-    });
-  return g.update('scan_presence', {
-    set: {
-      state: row.prev_state,
-      tracking: row.prev_tracking,
-      entered_at: row.prev_entered_at,
-      first_at: row.prev_first_at,
-      last_entry_at: row.prev_last_entry_at,
-      last_scan_id: row.prev_scan_id,
-      due_at: dueAt,
-      prev_state: null,
-      prev_tracking: null,
-      prev_entered_at: null,
-      prev_first_at: null,
-      prev_last_entry_at: null,
-      prev_scan_id: null,
-    },
-    where: {
-      ...key,
-      prev_state: row.prev_state,
-      prev_tracking: row.prev_tracking,
-      prev_entered_at: row.prev_entered_at,
-      prev_first_at: row.prev_first_at,
-      prev_last_entry_at: row.prev_last_entry_at,
-      prev_scan_id: row.prev_scan_id,
-    },
-    require: 'one',
-    returning: ['pass_id'],
-  });
-}
-
-/**
- * The undo still applies whole: the pass has exactly `count` rows written by the group, and no row
- * of the pass at any place was written by a scan after `after`.
- */
-export function undoStillApplies(
-  passId: string,
-  group: readonly string[],
-  count: number,
-  after: { at: number; id: string },
-): GrantCond[] {
-  const ids = marks(group.length);
-  return [
-    not(
-      tenantSql(
-        `EXISTS (SELECT 1 FROM scan_presence x JOIN scans s ON s.id = x.last_scan_id
-          WHERE x.org_id = {org} AND s.org_id = {org} AND x.pass_id = ? AND x.last_scan_id NOT IN (${ids})
-            AND (s.at > ? OR (s.at = ? AND s.id > ?)))`,
-        [passId, ...group, after.at, after.at, after.id],
-      ),
-    ),
-    tenantSql(
-      `(SELECT count(*) FROM scan_presence x WHERE x.org_id = {org} AND x.pass_id = ? AND x.last_scan_id IN (${ids})) = ?`,
-      [passId, ...group, count],
-    ),
-  ];
-}
-
 /** A zone stopped tracking, was archived or moved: its inside rows fall due now (the cron closes them). */
 export function dueNow(g: Grant, places: readonly string[], now: number): GrantedStatement[] {
   const out: GrantedStatement[] = [];
@@ -231,69 +171,4 @@ export function dueNow(g: Grant, places: readonly string[], now: number): Grante
       }),
     );
   return out;
-}
-
-/** The pass's rows at `places`, for a lost entry's reason (run after the batch, in it). */
-export const rowsRead = (orgId: string, passId: string, places: readonly string[]): AfterRead =>
-  afterRead(
-    `SELECT scope, state, due_at, last_entry_at FROM scan_presence
-     WHERE org_id = ? AND pass_id = ? AND scope IN (${marks(places.length)})`,
-    [orgId, passId, ...places],
-  );
-
-/** In now per place: live in rows of passes of this mode. */
-export const countsRead = (
-  orgId: string,
-  mode: string,
-  places: readonly string[],
-  now: number,
-): AfterRead =>
-  afterRead(
-    `SELECT x.scope AS place, count(*) AS n FROM scan_presence x JOIN passes p ON p.id = x.pass_id
-     WHERE x.org_id = ? AND p.org_id = ? AND p.mode = ? AND x.scope IN (${marks(places.length)})
-       AND ${LIVE} GROUP BY x.scope`,
-    [orgId, orgId, mode, ...places, now],
-  );
-
-export const revsRead = (orgId: string, mode: string, places: readonly string[]): AfterRead =>
-  afterRead(
-    `SELECT place, rev FROM scan_place_revs WHERE org_id = ? AND mode = ? AND place IN (${marks(places.length)})`,
-    [orgId, mode, ...places],
-  );
-
-/** Every row of the pass that `group` wrote, for an undo. */
-export const groupRowsRead = (orgId: string, passId: string, group: readonly string[]): AfterRead =>
-  afterRead(
-    `SELECT * FROM scan_presence WHERE org_id = ? AND pass_id = ? AND last_scan_id IN (${marks(group.length)})
-     ORDER BY scope`,
-    [orgId, passId, ...group],
-  );
-
-/** Live inside rows of a place, oldest entry first, after the cursor; and how many there are. */
-export function insideReads(
-  orgId: string,
-  mode: string,
-  place: string,
-  now: number,
-  page: { after: { since: number; passId: string } | null; limit: number },
-): [AfterRead, AfterRead] {
-  const after = page.after;
-  const cursor = after ? 'AND (x.entered_at > ? OR (x.entered_at = ? AND x.pass_id > ?))' : '';
-  const params: SqlValue[] = after ? [after.since, after.since, after.passId] : [];
-  return [
-    afterRead(
-      `SELECT x.pass_id AS passId, x.entered_at AS since, x.due_at AS dueAt, s.scanner_id AS via
-       FROM scan_presence x JOIN passes p ON p.id = x.pass_id LEFT JOIN scans s ON s.id = x.last_scan_id
-       WHERE x.org_id = ? AND p.org_id = ? AND p.mode = ? AND x.scope = ? AND ${LIVE} ${cursor}
-       ORDER BY x.entered_at, x.pass_id LIMIT ?`,
-      [orgId, orgId, mode, place, now, ...params, page.limit],
-    ),
-    countsRead(orgId, mode, [place], now),
-  ];
-}
-
-/** Run reads outside a grant (a preflight or a list). */
-export async function runReads(db: D1Database, reads: readonly AfterRead[]): Promise<D1Result[]> {
-  if (reads.length === 0) return [];
-  return db.batch(reads.map((r) => stmt(db, r.sql, [...r.params])));
 }

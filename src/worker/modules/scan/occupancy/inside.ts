@@ -1,6 +1,6 @@
 // Who is inside a place now (SA §20.9 "Who's inside"): live in rows of this mode, oldest entry first.
 // The route (WP-G) adds holder, photo and plan, and gates it on Desk actions.
-import { insideReads, runReads } from './repo.ts';
+import { insideReads, runReads } from './repo-reads.ts';
 
 export interface InsideRow {
   passId: string;

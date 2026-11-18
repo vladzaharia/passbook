@@ -51,7 +51,6 @@ const SCAN_ADMIN_TABLES = [
   'scanning_devices',
   'scan_zones',
   'scanning_session_zones',
-  'scan_presence',
   'scanner_templates',
   'scanner_setups',
 ] as const;
@@ -82,13 +81,14 @@ export function adminGrant(
   checks: Check[] = [],
   codes?: DenialOptions['codes'],
   target?: string,
+  tables: readonly string[] = SCAN_ADMIN_TABLES,
 ): Grant {
   const admin = adminAuthorityOf(authority, userId, orgId);
   return grant(ctx, {
     purpose,
     principal: adminPrincipal(admin),
     checks: [...capabilityChecks(admin), ...checks],
-    tables: SCAN_ADMIN_TABLES,
+    tables: [...tables],
     ...(codes ? { codes } : {}),
     ...(target ? { target } : {}),
   });

@@ -75,6 +75,28 @@ describe('a zone change taps its subtree out', () => {
     expect(await dues(q)).toEqual([earlier]);
   });
 
+  it('a parent move taps the moved zone and everything below it out, not its old parent', async () => {
+    const gym = await zone({ ...tracked, timeZone: 'UTC' });
+    const club = await zone({ ...tracked, timeZone: 'UTC' });
+    const pool = await zone({ ...tracked, parentId: gym.id });
+    const lane = await zone({ ...tracked, parentId: pool.id });
+    const p = await inside([gym, pool, lane]);
+    const res = await fixture.call('PATCH', `/scan-zones/${pool.id}`, { parentId: club.id });
+    expect(res.status).toBe(200);
+    const due = await all<{ scope: string; due_at: number | null }>(
+      fixture.kit.env.DB,
+      'SELECT scope, due_at FROM scan_presence WHERE pass_id = ?',
+      [p],
+    );
+    const at = Object.fromEntries(due.map((r) => [r.scope, r.due_at]));
+    const now = fixture.kit.clock.now();
+    expect([at[`zone:${gym.id}`], at[`zone:${pool.id}`], at[`zone:${lane.id}`]]).toEqual([
+      null,
+      now,
+      now,
+    ]);
+  });
+
   it('a rename changes nothing', async () => {
     const gym = await zone({ ...tracked, timeZone: 'UTC' });
     const p = await inside([gym]);

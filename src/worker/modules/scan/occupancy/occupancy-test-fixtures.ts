@@ -2,7 +2,7 @@ import { makePass } from '../../../../../test/helpers/index.ts';
 import { grant } from '../../../platform/authority.ts';
 import { setupGrant } from '../../../platform/authority-test-fixtures.ts';
 import { all, first, run } from '../../../platform/db.ts';
-import { entryPlan, exitPlan, type Waivers, zonePlace } from './rules.ts';
+import { entryPlan, exitAsGiven, exitPlan, type Waivers, zonePlace } from './rules.ts';
 import {
   addEntry,
   addExit,
@@ -69,8 +69,7 @@ export async function occupancyKit(label: string) {
     return out;
   };
   /** A finished scans row: the undo guard orders scans by time. */
-  const scanRow = async (at = clock.now(), mode: 'live' | 'test' = 'live') => {
-    const id = s.f.ids.id();
+  const scanRow = async (at = clock.now(), mode: 'live' | 'test' = 'live', id = s.f.ids.id()) => {
     await run(
       db,
       `INSERT INTO scans (id, org_id, mode, actor_type, actor_id, actor_key, idempotency_key, request_hash, method, state, at)
@@ -90,13 +89,20 @@ export async function occupancyKit(label: string) {
   const planEntry = async (
     passId: string,
     key: string,
-    o: { waivers?: Waivers; waitMs?: number; mode?: 'live' | 'test' } = {},
+    o: {
+      waivers?: Waivers;
+      waitMs?: number;
+      mode?: 'live' | 'test';
+      /** The scans row's id and claim time (default: a fresh id, now). */
+      scanId?: string;
+      claimedAt?: number;
+    } = {},
   ) => {
     const now = clock.now();
     const mode = o.mode ?? 'live';
     const plan = entryPlan(await occupancyZones(db, orgId), idOf(key), now, 'UTC', o.waivers);
     if (!plan) throw new Error(`${key} does not track`);
-    const scanId = await scanRow(now, mode);
+    const scanId = await scanRow(o.claimedAt ?? now, mode, o.scanId);
     const g = scanGrant(mode);
     const rules = { waitMs: o.waitMs ?? null, ...(o.waivers ? { waivers: o.waivers } : {}) };
     addEntry(g, { passId, scanId, now, plan, ...rules });
@@ -107,9 +113,15 @@ export async function occupancyKit(label: string) {
       return { ok: false, scanId, reason: why?.reason ?? 'unexplained' };
     };
   };
-  const planExit = async (passId: string, key: string, lastScanId?: string) => {
+  const planExit = async (
+    passId: string,
+    key: string,
+    o: { lastScanId?: string; asGiven?: boolean } = {},
+  ) => {
+    const { lastScanId } = o;
     const now = clock.now();
-    const plan = exitPlan(await occupancyZones(db, orgId), idOf(key));
+    const zones = await occupancyZones(db, orgId);
+    const plan = o.asGiven ? exitAsGiven(zones, place(key)) : exitPlan(zones, idOf(key));
     if (!plan) throw new Error(`${key} does not track`);
     const scanId = await scanRow(now);
     const g = scanGrant();
@@ -124,24 +136,31 @@ export async function occupancyKit(label: string) {
   const enter = async (passId: string, key: string, o: Parameters<typeof planEntry>[2] = {}) =>
     (await planEntry(passId, key, o))();
   const exit = async (passId: string, key: string) => (await planExit(passId, key))();
-  const undo = async (passId: string, group: string[]) => {
-    const rows = await readGroupRows(db, orgId, passId, group);
-    const last = group[group.length - 1] as string;
-    const at = (await first<{ at: number }>(db, 'SELECT at FROM scans WHERE id = ?', [last]))?.at;
-    const g = scanGrant();
-    addUndo(g, {
-      passId,
-      group,
-      after: { at: at ?? 0, id: last },
-      rows,
-      zones: await occupancyZones(db, orgId),
-      timeZone: 'UTC',
-    });
-    return g.commit().then(
-      () => 'ok',
-      (e: { code?: string; message?: string }) => e.code ?? e.message ?? 'error',
-    );
+  const fail = (e: { code?: string; message?: string }) => e.code ?? e.message ?? 'error';
+  /** Read and build now, commit later: a write in between races the undo. */
+  const planUndo = async (passId: string, group: string[]) => {
+    try {
+      const rows = await readGroupRows(db, orgId, passId, group);
+      const ats = await all<{ at: number }>(
+        db,
+        `SELECT at FROM scans WHERE id IN (${group.map(() => '?').join(', ')})`,
+        group,
+      );
+      const g = scanGrant();
+      addUndo(g, {
+        passId,
+        group,
+        scannedAt: Math.max(...ats.map((r) => r.at)),
+        rows,
+        zones: await occupancyZones(db, orgId),
+        orgTimeZone: 'UTC',
+      });
+      return () => g.commit().then(() => 'ok', fail);
+    } catch (e) {
+      return async () => fail(e as { code?: string });
+    }
   };
+  const undo = async (passId: string, group: string[]) => (await planUndo(passId, group))();
 
   async function wrote(passId: string, scope: string, scanId: string) {
     return !!(await first(
@@ -197,6 +216,7 @@ export async function occupancyKit(label: string) {
     planExit,
     enter,
     exit,
+    planUndo,
     undo,
     row,
     inside,

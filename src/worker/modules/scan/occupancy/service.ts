@@ -4,8 +4,12 @@ import type { Grant } from '../../../platform/authority.ts';
 import type { AfterRead } from '../../../platform/authority-after.ts';
 import { exists, type GrantCond, not } from '../../../platform/authority-cond.ts';
 import { orgZoneRows } from '../repo-zones.ts';
+import { superseded } from '../undo-authority.ts';
 import { effectiveTimeZone, indexZones } from '../zones-tree.ts';
+import type { OccupancyRow } from './repo.ts';
 import * as repo from './repo.ts';
+import * as reads from './repo-reads.ts';
+import { insertedBy, undoRow, undoStillApplies, zoneUnchanged } from './repo-undo.ts';
 import {
   dueAt,
   type EntryPlan,
@@ -15,6 +19,7 @@ import {
   type LossRow,
   type OccZone,
   type Waivers,
+  zoneChain,
   zonePlace,
 } from './rules.ts';
 
@@ -51,7 +56,7 @@ export interface Moved {
 export function addEntry(g: Grant, i: EntryInput): Moved {
   const { passId, scanId, now, plan } = i;
   const w = i.waivers ?? {};
-  const conds: GrantCond[] = [ofTenant(passId)];
+  const conds: GrantCond[] = [ofTenant(passId), ...plan.zones.map(repo.zoneIs)];
   if (plan.parent) conds.push(repo.insideOf(passId, plan.parent, now));
   if (i.waitMs && !w.wait) conds.push(repo.waitedSince(passId, plan.place, now - i.waitMs));
   if (i.limit && !w.limit) conds.push(i.limit);
@@ -110,32 +115,47 @@ export interface UndoInput {
   passId: string;
   /** The scans undone together (an override's forced exit and grant share a group). */
   group: readonly string[];
-  /** The latest scan of the group: a change by any later scan supersedes the undo. */
-  after: { at: number; id: string };
-  /** Every row the group wrote, read before the batch (`readGroupRows`). */
-  rows: readonly repo.OccupancyRow[];
+  /** When the group's latest scan was made: a zone edited after it supersedes the undo. */
+  scannedAt: number;
+  /** Every row the group still holds, read before the batch (`readGroupRows`). */
+  rows: readonly OccupancyRow[];
   zones: readonly OccZone[];
-  /** The session's clock, when no root zone has one. */
-  timeZone: string | null;
+  /** The org's clock, when no root zone has one. */
+  orgTimeZone: string | null;
 }
 
 /**
- * Restore every row the group wrote, all or nothing: one guard and an exact match per row refuse the
- * whole batch (`lineage`) when anything changed since. Rows going back in get their due time again;
- * each restored place's revision goes up.
+ * Restore every row the group wrote, all or nothing (`UNDO_SUPERSEDED`): any later write of the pass
+ * (by commit sequence), a row the group no longer holds, a row it updated but whose history is gone,
+ * or a zone a restored in row depends on that changed since the scan. Rows going back in get their
+ * due time again; each restored place's revision goes up.
+ *
+ * Capacity is not re-checked: an undone exit puts back someone who never left, even past capacity.
  */
 export function addUndo(g: Grant, i: UndoInput): { places: string[] } {
-  const ok = repo.undoStillApplies(i.passId, i.group, i.rows.length, i.after);
-  g.assert('lineage', ok);
-  const index = indexZones(i.zones);
-  for (const row of i.rows) {
+  if (i.rows.length === 0 || i.rows.some((r) => r.prev_state === null && !insertedBy(r)))
+    throw superseded();
+  const fences = new Map<string, GrantCond>();
+  const dues = i.rows.map((row) => {
+    if (row.prev_state !== 'in' || !row.scope.startsWith('zone:')) return null;
     const zone = i.zones.find((z) => zonePlace(z.id) === row.scope);
-    const back =
-      zone && row.prev_state === 'in' && row.prev_entered_at !== null
-        ? dueAt(zone, row.prev_entered_at, effectiveTimeZone(index, zone.id) ?? i.timeZone)
-        : null;
-    repo.undoRow(g, row, back);
-  }
+    if (!zone || zone.occupancy === 'off' || zone.archivedAt !== null) throw superseded();
+    for (const z of zoneChain(i.zones, zone.id)) {
+      if (z.updatedAt > i.scannedAt) throw superseded();
+      fences.set(z.id, zoneUnchanged(z));
+    }
+    const clock = effectiveTimeZone(indexZones(i.zones), zone.id) ?? i.orgTimeZone;
+    return row.prev_entered_at === null ? null : dueAt(zone, row.prev_entered_at, clock);
+  });
+  const lastSeq = Math.max(...i.rows.map((r) => r.seq));
+  g.assert('lineage', [
+    ofTenant(i.passId),
+    ...undoStillApplies(i.passId, i.group, i.rows.length, lastSeq),
+    ...fences.values(),
+  ]);
+  i.rows.forEach((row, at) => {
+    undoRow(g, row, dues[at] ?? null);
+  });
   const places = [...new Set(i.rows.map((r) => r.scope))];
   for (const place of places) repo.bumpRev(g, place, []);
   return { places };
@@ -146,9 +166,9 @@ export async function readGroupRows(
   orgId: string,
   passId: string,
   group: readonly string[],
-): Promise<repo.OccupancyRow[]> {
-  const [r] = await repo.runReads(db, [repo.groupRowsRead(orgId, passId, group)]);
-  return (r?.results ?? []) as repo.OccupancyRow[];
+): Promise<OccupancyRow[]> {
+  const [r] = await reads.runReads(db, [reads.groupRowsRead(orgId, passId, group)]);
+  return (r?.results ?? []) as OccupancyRow[];
 }
 
 /** Reads for `commitWith`: the pass's rows and the capacity places' counts after the batch. */
@@ -166,8 +186,8 @@ export function lossReads(
   ];
   const caps = [plan, ...plan.implied].filter((p) => p.capacity !== null).map((p) => p.place);
   return [
-    repo.rowsRead(orgId, passId, places),
-    ...(caps.length ? [repo.countsRead(orgId, mode, caps, now)] : []),
+    reads.rowsRead(orgId, passId, places),
+    ...(caps.length ? [reads.countsRead(orgId, mode, caps, now)] : []),
   ];
 }
 
@@ -200,7 +220,7 @@ export const countReads = (
   now: number,
 ): AfterRead[] =>
   places.length
-    ? [repo.countsRead(orgId, mode, places, now), repo.revsRead(orgId, mode, places)]
+    ? [reads.countsRead(orgId, mode, places, now), reads.revsRead(orgId, mode, places)]
     : [];
 
 export function placeCounts(places: readonly string[], results: readonly D1Result[]): PlaceCount[] {
@@ -214,5 +234,5 @@ export function placeCounts(places: readonly string[], results: readonly D1Resul
 }
 
 /** A zone stopped tracking, was archived or moved: everyone inside it and below falls due now. */
-export const addZoneTapOut = (g: Grant, places: readonly string[], now: number) =>
-  repo.dueNow(g, places, now);
+export const addZoneTapOut = (g: Grant, zoneIds: readonly string[], now: number) =>
+  repo.dueNow(g, zoneIds.map(zonePlace), now);

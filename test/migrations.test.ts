@@ -1054,6 +1054,44 @@ describe('0074_scan_occupancy migration', () => {
     await scan(org.id, 'winner', { override_of: 'held', state: 'done', outcome: 'ok' });
   });
 
+  it('fills mode for writers that name none and orders each pass write by commit', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const template = makeTemplate({ id: f.ids.id(), orgId: org.id });
+    const pass = await makePass(f, { orgId: org.id, template: template.resolved, mode: 'test' });
+    const write = (scope: string, scan: string) =>
+      run(
+        env.DB,
+        `INSERT INTO scan_presence (pass_id, org_id, scope, state, first_at, last_entry_at, last_scan_id)
+         VALUES (?, ?, ?, 'in', 1, 1, ?)
+         ON CONFLICT (pass_id, scope) DO UPDATE SET prev_scan_id = last_scan_id, last_scan_id = excluded.last_scan_id`,
+        [pass.id, org.id, scope, scan],
+      );
+    const rows = () =>
+      all<{ scope: string; mode: string; seq: number; prev_seq: number | null }>(
+        env.DB,
+        'SELECT scope, mode, seq, prev_seq FROM scan_presence WHERE pass_id = ? ORDER BY scope',
+        [pass.id],
+      );
+    await write('zone:a', 's1');
+    await write('zone:b', 's2');
+    await write('zone:a', 's3');
+    expect(await rows()).toEqual([
+      { scope: 'zone:a', mode: 'test', seq: 3, prev_seq: 1 },
+      { scope: 'zone:b', mode: 'test', seq: 2, prev_seq: null },
+    ]);
+    // A restore (no prev_scan_id) keeps the sequence the undo writes.
+    await run(
+      env.DB,
+      "UPDATE scan_presence SET last_scan_id = 's1', prev_scan_id = NULL, seq = 1, prev_seq = NULL WHERE scope = 'zone:a' AND pass_id = ?",
+      [pass.id],
+    );
+    expect((await rows())[0]).toMatchObject({ seq: 1, prev_seq: null });
+    expect(
+      await first(env.DB, "SELECT 1 AS x FROM sqlite_master WHERE name = 'scan_presence_org'"),
+    ).toBeNull();
+  });
+
   it('adds due_at with a partial index and per-place revisions that cascade with the org', async () => {
     const index = await first<{ sql: string }>(
       env.DB,

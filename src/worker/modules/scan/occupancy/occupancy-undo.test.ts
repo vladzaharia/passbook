@@ -49,24 +49,36 @@ describe('occupancy undo and revisions', () => {
     expect(await k.row(p, 'pool')).toBeNull();
     expect(await k.undo(p, [gymIn.scanId])).toBe('ok');
     expect(await k.row(p, 'gym')).toBeNull();
-    // Twice is nothing to undo: the guard counts the rows the scan still holds.
-    expect(await k.undo(p, [gymIn.scanId])).toBe('ok');
+    // Twice: the scan holds no row any more, so there is nothing it can put back.
+    expect(await k.undo(p, [gymIn.scanId])).toBe('UNDO_SUPERSEDED');
   });
 
-  it('a row changed after the read refuses the whole undo', async () => {
+  it('an exit committed between the undo read and its batch refuses the whole undo', async () => {
     const k = await occupancyKit('undo-race');
     await k.zone('gym', { occupancy: 'enforce', max_stay_minutes: 120 });
     const p = await k.pass();
     const entry = await k.enter(p, 'gym');
     k.clock.advance(MIN);
-    const exit = await k.planExit(p, 'gym');
-    // The exit commits between the undo's read and its batch.
-    const undone = k.undo(p, [entry.scanId]);
-    await exit();
-    expect(['ok', 'UNDO_SUPERSEDED']).toContain(await undone);
-    const row = await k.row(p, 'gym');
-    // Never a half state: either the entry is gone (and the exit found nothing), or both stand.
-    if (row) expect(row.state).toBe('out');
+    const undo = await k.planUndo(p, [entry.scanId]);
+    expect((await k.exit(p, 'gym')).ok).toBe(true);
+    expect(await undo()).toBe('UNDO_SUPERSEDED');
+    expect((await k.row(p, 'gym'))?.state).toBe('out');
+  });
+
+  it('a multi-row undo racing a change to one of its rows changes none of them', async () => {
+    const k = await occupancyKit('undo-multi');
+    await k.zone('gym', { occupancy: 'enforce', max_stay_minutes: 120 });
+    await k.zone('pool', { parent: 'gym' });
+    const p = await k.pass();
+    await k.enter(p, 'gym');
+    await k.enter(p, 'pool');
+    k.clock.advance(MIN);
+    const forced = await k.enter(p, 'gym', { waivers: { inside: true } });
+    const undo = await k.planUndo(p, [forced.scanId]);
+    k.clock.advance(MIN);
+    expect((await k.enter(p, 'pool')).ok).toBe(true);
+    expect(await undo()).toBe('UNDO_SUPERSEDED');
+    expect(await k.row(p, 'gym')).toMatchObject({ last_scan_id: forced.scanId });
   });
 
   it('revisions never go lower: entry, exit, undo and refused scans', async () => {

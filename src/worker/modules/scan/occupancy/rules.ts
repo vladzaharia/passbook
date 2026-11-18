@@ -16,7 +16,11 @@ export type OccZone = Pick<
   | 'maxStayMinutes'
   | 'clearAt'
   | 'archivedAt'
+  | 'updatedAt'
 >;
+
+/** A zone as the plan read it; the statement re-checks it in the batch. */
+export type ZoneFence = Pick<OccZone, 'id' | 'occupancy' | 'parentId' | 'archivedAt'>;
 
 export const zonePlace = (id: string) => `zone:${id}`;
 export const eventPlace = (id: string) => `event:${id}`;
@@ -45,6 +49,8 @@ export interface EntryPlan extends PlaceStep {
   implied: PlaceStep[];
   /** Tracked places below it, left when it is re-entered over an in row. */
   below: string[];
+  /** The zone and every ancestor as read: a racing Track off, archive or move makes the entry lose. */
+  zones: ZoneFence[];
 }
 
 export interface ExitPlan {
@@ -54,7 +60,8 @@ export interface ExitPlan {
 
 const tracked = (z: OccZone) => z.occupancy !== 'off' && z.archivedAt === null;
 
-function chain(zones: readonly OccZone[], id: string): OccZone[] {
+/** The zone and its ancestors, nearest first. */
+export function zoneChain(zones: readonly OccZone[], id: string): OccZone[] {
   const byId = new Map(zones.map((z) => [z.id, z]));
   const out: OccZone[] = [];
   const seen = new Set<string>();
@@ -78,18 +85,20 @@ function belowOf(zones: readonly OccZone[], id: string): string[] {
 /**
  * Entering `zoneId`: null when the zone does not track. Without a parent waiver the tracked
  * ancestors below the nearest enforcing one are implied; with it, every tracked ancestor is (the
- * override enters the parent too). `timeZone` is the session's clock, used when no root has one.
+ * override enters the parent too). `orgTimeZone` is the org's clock, used when no root zone has one
+ * (SA §20.2); without either, Clear at is skipped.
  */
 export function entryPlan(
   zones: readonly OccZone[],
   zoneId: string,
   now: number,
-  timeZone: string | null,
+  orgTimeZone: string | null,
   waivers: Waivers = {},
 ): EntryPlan | null {
-  const [zone, ...ancestors] = chain(zones, zoneId);
+  const all = zoneChain(zones, zoneId);
+  const [zone, ...ancestors] = all;
   if (!zone || !tracked(zone)) return null;
-  const clock = effectiveTimeZone(indexZones(zones), zoneId) ?? timeZone;
+  const clock = effectiveTimeZone(indexZones(zones), zoneId) ?? orgTimeZone;
   const step = (z: OccZone): PlaceStep => ({
     place: zonePlace(z.id),
     capacity: z.capacity,
@@ -105,6 +114,12 @@ export function entryPlan(
     parent: parent && !waivers.parent ? zonePlace(parent.id) : null,
     implied: implied.map(step),
     below: belowOf(zones, zoneId),
+    zones: all.map(({ id, occupancy, parentId, archivedAt }) => ({
+      id,
+      occupancy,
+      parentId,
+      archivedAt,
+    })),
   };
 }
 
@@ -113,6 +128,15 @@ export function exitPlan(zones: readonly OccZone[], zoneId: string): ExitPlan | 
   const zone = zones.find((z) => z.id === zoneId);
   if (!zone || !tracked(zone)) return null;
   return { place: zonePlace(zoneId), below: belowOf(zones, zoneId) };
+}
+
+/**
+ * Leaving a place as given (the cron, Mark as out): whatever the zone's settings now, every row below
+ * it is closed too. An event has nothing below.
+ */
+export function exitAsGiven(zones: readonly OccZone[], place: string): ExitPlan {
+  if (!place.startsWith('zone:')) return { place, below: [] };
+  return { place, below: subtreePlaces(zones, place.slice(5)).slice(1) };
 }
 
 /** Places whose inside rows end when the zone stops tracking, is archived or moves: it and all below. */

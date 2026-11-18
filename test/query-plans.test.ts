@@ -16,7 +16,7 @@ import {
   insideReads,
   revsRead,
   runReads,
-} from '../src/worker/modules/scan/occupancy/repo.ts';
+} from '../src/worker/modules/scan/occupancy/repo-reads.ts';
 import { expectedCount } from '../src/worker/modules/scan/repo-counts-query.ts';
 import { eventTotalsStmt } from '../src/worker/modules/scan/repo-event-attendance.ts';
 import { capacityFullPredicate } from '../src/worker/modules/scan/repo-gates.ts';
@@ -330,12 +330,14 @@ describe('occupancy query plans', () => {
       runReads(db, [countsRead('o', 'live', ['zone:a', 'zone:b'], 1)]),
     );
     expect(counts.join('\n')).toContain('USING COVERING INDEX scan_presence_inside');
+    expect(counts.join('\n')).not.toMatch(/passes/);
     expect(fullScans(counts, 'x')).toEqual([]);
     const after = { since: 1, passId: 'p' };
     const list = await plans((db) =>
       runReads(db, insideReads('o', 'live', 'zone:a', 1, { after, limit: 10 })),
     );
-    expect(list.join('\n')).toContain('scan_presence_inside');
+    expect(list.join('\n')).toContain('scan_presence_list');
+    expect(list.join('\n')).not.toMatch(/TEMP B-TREE|passes/);
     expect(fullScans(list, 'x')).toEqual([]);
     const revs = await plans((db) => runReads(db, [revsRead('o', 'live', ['zone:a'])]));
     expect(fullScans(revs, 'scan_place_revs')).toEqual([]);

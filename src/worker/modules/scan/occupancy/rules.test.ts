@@ -23,6 +23,7 @@ const zone = (id: string, z: Partial<OccZone> = {}): OccZone => ({
   maxStayMinutes: null,
   clearAt: null,
   archivedAt: null,
+  updatedAt: 0,
   ...z,
 });
 

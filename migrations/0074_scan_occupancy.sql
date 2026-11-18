@@ -1,11 +1,40 @@
--- Occupancy on scan_presence: due times, ordered In now counts, tap-out causes and one live override per scan.
+-- Occupancy on scan_presence: mode, due times, a commit-ordered sequence, ordered In now counts, tap-out
+-- causes and one live override per scan.
 
+-- The pass's mode, so In now counts without reading passes. Old writers name no mode: the insert trigger fills it.
+ALTER TABLE scan_presence ADD COLUMN mode TEXT CHECK (mode IS NULL OR mode IN ('live', 'test'));
+UPDATE scan_presence SET mode = (SELECT p.mode FROM passes p WHERE p.id = scan_presence.pass_id);
 -- When the system taps a pass out of a zone (max stay, the daily clear, a zone change). Null when out or no limit.
 -- An in row past it reads as out to every scan before the cron closes it.
 ALTER TABLE scan_presence ADD COLUMN due_at INTEGER;
+-- Commit order of the pass's in/out writes: set inside the write, so an undo can tell what came after it.
+ALTER TABLE scan_presence ADD COLUMN seq INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE scan_presence ADD COLUMN prev_seq INTEGER;
+
+CREATE TRIGGER scan_presence_seq_insert AFTER INSERT ON scan_presence
+BEGIN
+  UPDATE scan_presence SET
+    mode = COALESCE(NEW.mode, (SELECT p.mode FROM passes p WHERE p.id = NEW.pass_id)),
+    seq = (SELECT COALESCE(MAX(x.seq), 0) + 1 FROM scan_presence x WHERE x.pass_id = NEW.pass_id)
+  WHERE pass_id = NEW.pass_id AND scope = NEW.scope;
+END;
+-- A forward write moves last_scan_id and copies the old one to prev_scan_id; an undo's restore does not.
+CREATE TRIGGER scan_presence_seq_update AFTER UPDATE OF last_scan_id ON scan_presence
+WHEN NEW.last_scan_id IS NOT OLD.last_scan_id AND NEW.prev_scan_id IS OLD.last_scan_id
+BEGIN
+  UPDATE scan_presence SET
+    prev_seq = OLD.seq,
+    seq = (SELECT COALESCE(MAX(x.seq), 0) + 1 FROM scan_presence x WHERE x.pass_id = NEW.pass_id)
+  WHERE pass_id = NEW.pass_id AND scope = NEW.scope;
+END;
+
 CREATE INDEX scan_presence_due ON scan_presence (due_at) WHERE due_at IS NOT NULL;
--- In now: who is inside a place, without reading the rows.
-CREATE INDEX scan_presence_inside ON scan_presence (org_id, scope, state, due_at, pass_id);
+-- In now and capacity: equality on org, scope, state and mode, a range on due_at, without reading the rows.
+-- It starts with scan_presence_org's columns, which it replaces.
+CREATE INDEX scan_presence_inside ON scan_presence (org_id, scope, state, mode, due_at);
+DROP INDEX scan_presence_org;
+-- Who's inside, oldest entry first, paged.
+CREATE INDEX scan_presence_list ON scan_presence (org_id, mode, scope, state, entered_at, pass_id);
 
 -- Orders the In now counts monitors receive. One row per place ('zone:<id>' or 'event:<id>') and mode; only ever raised.
 CREATE TABLE scan_place_revs (

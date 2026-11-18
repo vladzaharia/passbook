@@ -66,7 +66,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   },
   scans: { org: 'org_id', mode: 'mode', conflict: ['actor_key', 'idempotency_key'] },
   scan_gates: { org: 'org_id', mode: 'mode', conflict: ['pass_id', 'action_id', 'scope'] },
-  scan_presence: { org: 'org_id', conflict: ['pass_id', 'scope'] },
+  // `mode` from 0074 (an insert trigger fills it for writers that name none).
+  scan_presence: { org: 'org_id', mode: 'mode', conflict: ['pass_id', 'scope'], pass: 'pass_id' },
   scan_staff: { org: 'org_id' },
   scan_events: { org: 'org_id', mode: 'mode' },
   scan_event_templates: { org: null, edges: [edge('event_id', 'scan_events')] },
