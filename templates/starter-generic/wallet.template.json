@@ -158,6 +158,15 @@
         "x-order": 35,
         "x-widget": "url",
         "x-placeholder": "https://"
+      },
+      "points": {
+        "type": "integer",
+        "minimum": 0,
+        "default": 0,
+        "x-label": "Points",
+        "x-group": "Holder",
+        "x-order": 40,
+        "x-hidden": true
       }
     },
     "dependentRequired": {
@@ -183,7 +192,8 @@
     "wifiSsid": "Guest",
     "wifiPassword": "change-me",
     "status": "Active",
-    "guests": 4
+    "guests": 4,
+    "points": 0
   },
   "bindings": [
     {
@@ -352,6 +362,12 @@
       },
       "value": "{{phone}}",
       "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/voided"
+      },
+      "value": "{{lookups.void[status].void}}"
     }
   ],
   "display": {
@@ -407,6 +423,60 @@
         ],
         "stop": true
       }
-    ]
+    ],
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.holder}}",
+      "photo": {
+        "minRole": "door"
+      },
+      "header": {},
+      "panels": [
+        {
+          "id": "p_member",
+          "preset": {
+            "id": "details",
+            "v": 1
+          },
+          "title": "Member",
+          "icon": "id-card",
+          "rows": [
+            {
+              "id": "r_field1",
+              "slot": "field1",
+              "type": "field",
+              "label": "Tier",
+              "value": "{{inputs.tier}}"
+            },
+            {
+              "id": "r_field2",
+              "slot": "field2",
+              "type": "field",
+              "label": "Guests left",
+              "value": "{{inputs.guests}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Ask at the front desk."
+      }
+    }
+  },
+  "lookups": {
+    "void": {
+      "Active": {
+        "void": false
+      },
+      "Frozen": {
+        "void": false
+      },
+      "Past due": {
+        "void": false
+      },
+      "Cancelled": {
+        "void": true
+      }
+    }
   }
 }

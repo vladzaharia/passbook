@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "dae982a5f51ff23c1793b5fd324eebb1682b3697";
+export const BAKED_BUILD_HASH = "db293715e80fb58f14625ee62b7a0281ce43fcca";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -2160,7 +2160,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-boarding-pass",
     "slug": "starter-boarding-pass",
-    "version": "c4a64a9dfc577ffc",
+    "version": "e377ac881b207f05",
     "name": "Boarding pass",
     "description": "Flight, gate and seat, with a route footer.",
     "org": null,
@@ -2371,6 +2371,22 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "maxLength": 256,
             "x-widget": "textarea",
             "x-help": "Shown on the back."
+          },
+          "transitType": {
+            "type": "string",
+            "enum": [
+              "air",
+              "train",
+              "bus",
+              "boat",
+              "generic"
+            ],
+            "default": "air",
+            "x-label": "Transit",
+            "x-group": "Flight",
+            "x-order": 35,
+            "x-widget": "select",
+            "x-hidden": true
           }
         }
       },
@@ -2855,7 +2871,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2152989108,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/c4a64a9dfc577ffc/en.lproj/pass.strings"
+          "path": "/templates/starter-boarding-pass/e377ac881b207f05/en.lproj/pass.strings"
         }
       },
       {
@@ -2869,7 +2885,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 30,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/c4a64a9dfc577ffc/footer@2x.png"
+          "path": "/templates/starter-boarding-pass/e377ac881b207f05/footer@2x.png"
         }
       },
       {
@@ -2883,7 +2899,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 45,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/c4a64a9dfc577ffc/footer@3x.png"
+          "path": "/templates/starter-boarding-pass/e377ac881b207f05/footer@3x.png"
         }
       },
       {
@@ -2897,7 +2913,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/c4a64a9dfc577ffc/icon@2x.png"
+          "path": "/templates/starter-boarding-pass/e377ac881b207f05/icon@2x.png"
         }
       },
       {
@@ -2911,7 +2927,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/c4a64a9dfc577ffc/icon@3x.png"
+          "path": "/templates/starter-boarding-pass/e377ac881b207f05/icon@3x.png"
         }
       },
       {
@@ -2925,7 +2941,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/c4a64a9dfc577ffc/logo@2x.png"
+          "path": "/templates/starter-boarding-pass/e377ac881b207f05/logo@2x.png"
         }
       },
       {
@@ -2939,7 +2955,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/c4a64a9dfc577ffc/logo@3x.png"
+          "path": "/templates/starter-boarding-pass/e377ac881b207f05/logo@3x.png"
         }
       },
       {
@@ -2953,7 +2969,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/c4a64a9dfc577ffc/primaryLogo@2x.png"
+          "path": "/templates/starter-boarding-pass/e377ac881b207f05/primaryLogo@2x.png"
         }
       },
       {
@@ -2967,7 +2983,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/c4a64a9dfc577ffc/primaryLogo@3x.png"
+          "path": "/templates/starter-boarding-pass/e377ac881b207f05/primaryLogo@3x.png"
         }
       }
     ],
@@ -5090,7 +5106,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-generic",
     "slug": "starter-generic",
-    "version": "eea1392bf0b5f661",
+    "version": "7f1678d511927fac",
     "name": "Membership",
     "description": "Tier, term and status, with a renew link.",
     "org": null,
@@ -5258,6 +5274,15 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-order": 35,
             "x-widget": "url",
             "x-placeholder": "https://"
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "x-label": "Points",
+            "x-group": "Holder",
+            "x-order": 40,
+            "x-hidden": true
           }
         },
         "dependentRequired": {
@@ -5283,7 +5308,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "wifiSsid": "Guest",
         "wifiPassword": "change-me",
         "status": "Active",
-        "guests": 4
+        "guests": 4,
+        "points": 0
       },
       "bindings": [
         {
@@ -5452,6 +5478,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           },
           "value": "{{phone}}",
           "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/voided"
+          },
+          "value": "{{lookups.void[status].void}}"
         }
       ],
       "display": {
@@ -5507,7 +5539,61 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             ],
             "stop": true
           }
-        ]
+        ],
+        "display": {
+          "v": 1,
+          "holder": "{{inputs.holder}}",
+          "photo": {
+            "minRole": "door"
+          },
+          "header": {},
+          "panels": [
+            {
+              "id": "p_member",
+              "preset": {
+                "id": "details",
+                "v": 1
+              },
+              "title": "Member",
+              "icon": "id-card",
+              "rows": [
+                {
+                  "id": "r_field1",
+                  "slot": "field1",
+                  "type": "field",
+                  "label": "Tier",
+                  "value": "{{inputs.tier}}"
+                },
+                {
+                  "id": "r_field2",
+                  "slot": "field2",
+                  "type": "field",
+                  "label": "Guests left",
+                  "value": "{{inputs.guests}}"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Ask at the front desk."
+          }
+        }
+      },
+      "lookups": {
+        "void": {
+          "Active": {
+            "void": false
+          },
+          "Frozen": {
+            "void": false
+          },
+          "Past due": {
+            "void": false
+          },
+          "Cancelled": {
+            "void": true
+          }
+        }
       }
     },
     "passJson": {
@@ -5653,7 +5739,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3062501488,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/eea1392bf0b5f661/en.lproj/pass.strings"
+          "path": "/templates/starter-generic/7f1678d511927fac/en.lproj/pass.strings"
         }
       },
       {
@@ -5667,7 +5753,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/eea1392bf0b5f661/icon@2x.png"
+          "path": "/templates/starter-generic/7f1678d511927fac/icon@2x.png"
         }
       },
       {
@@ -5681,7 +5767,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/eea1392bf0b5f661/icon@3x.png"
+          "path": "/templates/starter-generic/7f1678d511927fac/icon@3x.png"
         }
       },
       {
@@ -5695,7 +5781,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/eea1392bf0b5f661/logo@2x.png"
+          "path": "/templates/starter-generic/7f1678d511927fac/logo@2x.png"
         }
       },
       {
@@ -5709,7 +5795,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/eea1392bf0b5f661/logo@3x.png"
+          "path": "/templates/starter-generic/7f1678d511927fac/logo@3x.png"
         }
       },
       {
@@ -5723,7 +5809,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/eea1392bf0b5f661/thumbnail@2x.png"
+          "path": "/templates/starter-generic/7f1678d511927fac/thumbnail@2x.png"
         }
       },
       {
@@ -5737,14 +5823,21 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/eea1392bf0b5f661/thumbnail@3x.png"
+          "path": "/templates/starter-generic/7f1678d511927fac/thumbnail@3x.png"
         }
       }
     ],
     "extras": [],
     "report": {
       "ok": true,
-      "issues": []
+      "issues": [
+        {
+          "severity": "warning",
+          "code": "SCAN_DISPLAY_SHADOWED",
+          "message": "Input \"holder\" is hidden by a display root. Use inputs.holder.",
+          "path": "scan.display.holder"
+        }
+      ]
     }
   },
   {

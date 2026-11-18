@@ -201,6 +201,22 @@
         "maxLength": 256,
         "x-widget": "textarea",
         "x-help": "Shown on the back."
+      },
+      "transitType": {
+        "type": "string",
+        "enum": [
+          "air",
+          "train",
+          "bus",
+          "boat",
+          "generic"
+        ],
+        "default": "air",
+        "x-label": "Transit",
+        "x-group": "Flight",
+        "x-order": 35,
+        "x-widget": "select",
+        "x-hidden": true
       }
     }
   },

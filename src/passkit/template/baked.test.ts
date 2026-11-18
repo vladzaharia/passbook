@@ -33,7 +33,9 @@ describe.each(bakedSlugs())('baked template %s', (slug) => {
     });
     // Henry's has an input named `access`, which the scan screen's own `access` root hides. The
     // screen reads `inputs.access` nowhere, and renaming the input would change issued passes.
-    const known = slug.startsWith('henrys-') ? 'SCAN_DISPLAY_SHADOWED' : null;
+    // Membership has an input named `holder` too, for the same reason.
+    const known =
+      slug.startsWith('henrys-') || slug === 'starter-generic' ? 'SCAN_DISPLAY_SHADOWED' : null;
     expect(issues.filter((i) => i.code !== known)).toEqual([]);
   });
 

@@ -74,3 +74,23 @@ describe('first blueprint set', () => {
     expect(scanOf(template.manifest).actions.map((a) => a.id)).toEqual(['check_in', 'guest_in']);
   });
 });
+
+describe('stored passes keep rebuilding', () => {
+  it('a Membership with points still builds, and Cancelled voids it', async () => {
+    const sample = await SAMPLE('starter-generic');
+    const kept = (await buildBaked('starter-generic', material, { ...sample, points: 1200 }))
+      .passJson;
+    expect(kept.voided).toBe(false);
+    const gone = (await buildBaked('starter-generic', material, { ...sample, status: 'Cancelled' }))
+      .passJson;
+    expect(gone.voided).toBe(true);
+  });
+
+  it('a boarding pass with transitType still builds as air', async () => {
+    const sample = await SAMPLE('starter-boarding-pass');
+    const pass = (
+      await buildBaked('starter-boarding-pass', material, { ...sample, transitType: 'train' })
+    ).passJson;
+    expect(pass.boardingPass?.transitType).toBe('PKTransitTypeAir');
+  });
+});

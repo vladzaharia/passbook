@@ -17,7 +17,6 @@ export type Widget =
   | 'access-plan'
   | 'access-zones'
   | 'list';
-
 export type FormValues = Record<string, unknown>;
 
 export interface FieldDef {
@@ -146,6 +145,7 @@ export function describeSchema(schema: unknown): FieldGroup[] {
   const fields: FieldDef[] = [];
   for (const [key, raw] of Object.entries(schema.properties)) {
     const def = isObject(raw) ? raw : {};
+    if (def['x-hidden'] === true) continue; // kept for stored passes
     const type = typeOf(def);
     fields.push({
       key,

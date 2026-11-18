@@ -91,5 +91,6 @@
   "serialNumber": "SNAPSHOT-SERIAL",
   "sharingProhibited": true,
   "teamIdentifier": "48H7CLBV8Y",
+  "voided": false,
   "webServiceURL": "https://wallet.example/wallet"
 }
