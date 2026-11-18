@@ -50,7 +50,7 @@ export function SetupFields({ draft, onChange, errors }: SetupFieldsProps) {
         <>
           <SwitchRow
             label="Desk actions"
-            help="Staff sign in here to let people in and mark them out. Full and guest limits ask for a Manager."
+            help="Staff sign in here to let people in and mark them out. Guest limits ask for a Manager."
             checked={draft.deskActions}
             onCheckedChange={(deskActions) => onChange({ deskActions })}
           />

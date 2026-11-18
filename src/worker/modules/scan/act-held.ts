@@ -13,7 +13,7 @@ import { cardPrivacy } from './dto-projection.ts';
 import type { ScanActor } from './guard.ts';
 import { type LedgerFacts, ledgerRow, recordResult } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
-import { blankOutcome, canOverride, safeOutcomeDetails } from './outcome.ts';
+import { blankOutcome, canOverride, eventLine, safeOutcomeDetails } from './outcome.ts';
 import * as gates from './repo-gates.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
@@ -86,6 +86,7 @@ export function heldOutcome(i: HeldOutcomeInput): ScanOutcome {
     action: details.action,
     template: details.template,
     at: holder?.at ?? null,
+    event: eventLine(actor, reason),
     cooldownRemainingMs: remaining,
     previous: holder?.scan_id
       ? {

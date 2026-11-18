@@ -32,6 +32,10 @@ const AGAIN = [
   { value: 'manager', label: 'Managers' },
   { value: 'never', label: 'Never' },
 ];
+const APPROVALS = [
+  { value: 'managers', label: 'Managers' },
+  { value: 'desk', label: 'Desk staff too' },
+];
 const READER = [
   { value: 'none', label: 'None' },
   { value: 'barcode', label: 'Barcode reader' },
@@ -186,6 +190,22 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
                   />
                 )}
               </FormField>
+              <FormField label="Approvals">
+                {(p) => (
+                  <Select
+                    {...p}
+                    value={draft.approvals}
+                    onValueChange={(v) => onChange({ approvals: v as ScannerDraft['approvals'] })}
+                    options={APPROVALS}
+                  />
+                )}
+              </FormField>
+              <SwitchRow
+                label="Hard limit"
+                help="Full is final at this door, for everyone."
+                checked={draft.hardLimit}
+                onCheckedChange={(hardLimit) => onChange({ hardLimit })}
+              />
             </div>
           </section>
           <section className="grid min-w-0 gap-4 border-t border-border pt-6">

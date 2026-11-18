@@ -1,13 +1,13 @@
 import { Info } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
-import { SCAN_COPY, SCAN_REASON_COPY, scanLine } from '../../../shared/copy/scan.ts';
-import { formatDateTime, formatTime } from '../../lib/format.ts';
+import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { Button } from '../../ui/button.tsx';
 import { DisplayPanels } from '../display/display-panels.tsx';
 import { scanIcon } from '../display/icons.ts';
-import { accessLines, accessValues, directionPill } from '../machine/access-view.ts';
+import { accessLines, directionPill } from '../machine/access-view.ts';
 import type { Draft, PinNote, ScanOutcome } from '../machine/types.ts';
+import { verdictLine } from '../machine/verdict-lines.ts';
 import { ApprovalSheet } from './approval-sheet.tsx';
 import { IdentityRow } from './identity-row.tsx';
 import { ValuePicker } from './value-picker.tsx';
@@ -23,6 +23,7 @@ export function ResultCard({
   eventNote,
   holdMs,
   onPass,
+  clock,
   desk,
 }: {
   outcome: ScanOutcome;
@@ -31,6 +32,8 @@ export function ResultCard({
   eventNote?: string | null;
   holdMs?: number | null;
   onPass?: (card: ScanCard | null) => void;
+  /** The machine's clock, for "3 min ago". */
+  clock?: number;
   /** The desk's value regions: the open picker, and a Manager's PIN for a `needs_approval` verdict. */
   desk?: {
     picker: Draft | null;
@@ -60,33 +63,10 @@ export function ResultCard({
     o.reason === 'not_accepted' && o.checkIn?.direction === 'out' && o.checkIn.mode !== 'in_out';
   const noReentry =
     o.reason === 'already_done' && o.checkIn?.mode === 'in_out' && !o.checkIn.inside;
-  const line = o.reason ? SCAN_REASON_COPY[o.reason] : null;
   const now = o.at ?? 0;
+  const line = verdictLine(o, clock ?? Date.now());
   const held = accessLines(o, now);
   const pill = directionPill(o);
-  const values = {
-    template: o.template?.name ?? 'This pass',
-    event: 'this event',
-    date: formatDateTime(o.at),
-    time: o.at ? formatTime(o.at) : '',
-    ago: o.previous ? formatTime(o.previous.at) : o.at ? formatTime(o.at) : '',
-    scanner:
-      o.previous?.scannerName ??
-      (o.reason === 'still_inside'
-        ? 'Entry recorded'
-        : o.reason === 'already_done'
-          ? 'Earlier scan'
-          : ''),
-    flag: o.flags[0] ?? 'Check required',
-    action: o.action?.label ?? 'This action',
-    in: o.counts.event?.arrived ?? 0,
-    capacity: o.counts.event?.capacity ?? 0,
-    seconds: Math.ceil((o.retryAfterMs ?? 1000) / 1000),
-    verb: 'Checked in',
-    noun: 'check-in',
-    wait: `${Math.ceil((o.cooldownRemainingMs ?? 0) / 60000)} min`,
-    ...accessValues(o, now),
-  };
   const systemTitle =
     o.action?.id === 'undo'
       ? 'Undone'
@@ -99,7 +79,7 @@ export function ResultCard({
               : SCAN_COPY.verdict.checkedIn
             : (o.action?.label ?? 'Done')
           : line
-            ? scanLine(line.headline, values)
+            ? line.headline
             : 'Choose an action';
   const custom =
     ok &&
@@ -174,9 +154,9 @@ export function ResultCard({
               {title}
             </h1>
             {noExit ? (
-              <p>This pass only allows check-ins.</p>
+              <p>{SCAN_COPY.verdict.noExitSub}</p>
             ) : noReentry ? (
-              <p>This event allows one entry.</p>
+              <p>{SCAN_COPY.verdict.noReentrySub}</p>
             ) : pill || held?.sub || line?.sub ? (
               <p>
                 {pill ? (
@@ -184,7 +164,7 @@ export function ResultCard({
                     {SCAN_COPY.direction[pill]}
                   </span>
                 ) : null}
-                {held ? held.sub : line?.sub ? scanLine(line.sub, values) : null}
+                {held ? held.sub : (line?.sub ?? null)}
               </p>
             ) : null}
           </div>

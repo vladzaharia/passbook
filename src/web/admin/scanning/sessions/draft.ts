@@ -48,6 +48,8 @@ export function sessionDraft(s: ScanningSession): SessionDraft {
     staffSignIn: s.settings.staffSignIn,
     roleWithoutSignIn: s.settings.roleWithoutSignIn,
     letInAgain: s.settings.letInAgain,
+    approvals: s.settings.approvals ?? 'managers',
+    hardLimit: s.settings.hardLimit ?? false,
     checkIn: s.settings.checkIn ?? {},
     dailyAmount: s.settings.dailyAmount,
     direction: s.settings.direction ?? 'pass',

@@ -175,6 +175,8 @@ export const ScanValueSchema = z.object({
   goal: z.number().nullable(),
   format: z.enum(['number', 'currency', 'text']),
   currency: z.string().optional(),
+  /** A refused `take`: what it asked for. */
+  need: z.number().nullable().optional(),
 });
 export const ScanCardActionSchema = z.object({
   id: z.string(),
@@ -281,6 +283,8 @@ export const ScanOutcomeSchema = z.object({
   action: z.object({ id: z.string(), label: z.string(), kind: ScanActionKindSchema }).nullable(),
   card: ScanCardSchema.nullable(),
   previous: ScanPreviousSchema.nullable(),
+  /** The scanner's event, on `wrong_event`, `not_yet_valid`, `ended` and `capacity_full`. */
+  event: z.object({ name: z.string(), startsAt: TimestampSchema }).nullable().optional(),
   /** Set whenever a pass was found; on test_pass and live_pass it is the only identity. */
   template: ScanTemplateRefSchema.nullable(),
   at: TimestampSchema.nullable(),

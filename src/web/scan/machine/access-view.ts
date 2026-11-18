@@ -150,6 +150,9 @@ export function accessBeatOf(o: ScanOutcome): BuddyBeat | null {
   return null;
 }
 
+/** Holds a person is let in again after: a repeat. Every other hold is a first entry, `anyway`. */
+const REPEAT = new Set<string>(['already_done', 'still_inside']);
+
 export type HoldVerb =
   | { kind: 'turn'; direction: 'in' | 'out'; label: string }
   | { kind: 'letIn'; label: string };
@@ -173,9 +176,9 @@ export function holdVerbs(o: ScanOutcome): HoldVerb[] {
       {
         kind: 'letIn',
         label:
-          o.occupancy?.place.kind === 'zone'
-            ? SCAN_COPY.actions.letInAnyway
-            : SCAN_COPY.actions.letInAgain,
+          o.reason && REPEAT.has(o.reason)
+            ? SCAN_COPY.actions.letInAgain
+            : SCAN_COPY.actions.letInAnyway,
       },
     ];
   return [];

@@ -39,6 +39,10 @@ export interface ScannerDraft {
   staffSignIn: boolean;
   roleWithoutSignIn: 'door' | 'desk';
   letInAgain: 'anyone' | 'manager' | 'never';
+  /** Whose PIN approves a risky action. `set` and hard refusals always need a Manager. */
+  approvals: 'managers' | 'desk';
+  /** Full is final at this door, for every role. */
+  hardLimit: boolean;
   reader: 'none' | 'barcode';
   lookup: boolean;
   dailyAmount: number | null;
@@ -63,6 +67,8 @@ export const EMPTY_DRAFT: ScannerDraft = {
   staffSignIn: false,
   roleWithoutSignIn: 'door',
   letInAgain: 'anyone',
+  approvals: 'managers',
+  hardLimit: false,
   reader: 'none',
   lookup: false,
   dailyAmount: null,
@@ -88,6 +94,8 @@ export function draftOf(s: ScannerDto & Partial<ScannerSetup>): ScannerDraft {
     staffSignIn: s.settings.staffSignIn,
     roleWithoutSignIn: s.settings.roleWithoutSignIn,
     letInAgain: s.settings.letInAgain,
+    approvals: s.settings.approvals ?? 'managers',
+    hardLimit: s.settings.hardLimit ?? false,
     // NFC stays off this wave; a scanner already set to it shows as no reader until it is changed.
     reader: s.settings.reader === 'barcode' ? 'barcode' : 'none',
     lookup: s.settings.lookup,
@@ -139,6 +147,8 @@ export const settingsOf = (d: ScannerDraft) => ({
   staffSignIn: d.staffSignIn,
   roleWithoutSignIn: d.roleWithoutSignIn,
   letInAgain: d.letInAgain,
+  approvals: d.approvals,
+  hardLimit: d.hardLimit,
   reader: d.reader,
   lookup: d.lookup,
   dailyAmount: d.dailyAmount,

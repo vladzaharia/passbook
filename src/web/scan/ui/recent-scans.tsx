@@ -2,7 +2,9 @@ import { Check, CircleAlert, Info, TriangleAlert, Undo2 } from 'lucide-react';
 import { formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
 import { Sheet, SheetContent } from '../../ui/sheet.tsx';
+import type { ScanOutcome } from '../machine/types.ts';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
+import { verdictLine } from '../machine/verdict-lines.ts';
 
 const GLYPH = {
   ok: Check,
@@ -12,6 +14,13 @@ const GLYPH = {
   ready: Info,
   queued: Info,
 };
+/** What a row says it did: the action, or the verdict's own words. Never a reason code. */
+export function rowLabel(o: ScanOutcome, now: number): string {
+  if (o.action?.id === 'undo') return 'Undone';
+  if (o.kind === 'ok') return o.action?.label ?? 'Done';
+  return verdictLine(o, now)?.headline ?? o.action?.label ?? 'Not checked';
+}
+
 export function RecentScans({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { state, now, dispatch } = useScanMachine();
   return (
@@ -42,9 +51,7 @@ export function RecentScans({ open, onClose }: { open: boolean; onClose: () => v
                           'Unknown code'}
                       </p>
                       <p className="text-sm text-fg-muted">
-                        {row.outcome.action?.id === 'undo'
-                          ? 'Undone'
-                          : (row.outcome.action?.label ?? row.outcome.reason)}{' '}
+                        {rowLabel(row.outcome, now)}{' '}
                         · {formatTime(row.at)}
                       </p>
                     </div>

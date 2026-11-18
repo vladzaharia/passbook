@@ -40,6 +40,14 @@ const OVERRIDABLE = new Set<ScanReason>([
 export const isOverridable = (reason: ScanReason | null): boolean =>
   reason !== null && OVERRIDABLE.has(reason);
 
+const EVENT_LINE = new Set<ScanReason>(['wrong_event', 'not_yet_valid', 'ended', 'capacity_full']);
+
+/** The scanner's own event, for the verdicts that name it. Its staff already know it. */
+export const eventLine = (actor: ScanActor, reason: ScanReason | null): ScanOutcome['event'] =>
+  reason && EVENT_LINE.has(reason) && actor.event
+    ? { name: actor.event.name, startsAt: actor.event.opensAt }
+    : null;
+
 export function blankOutcome(kind: ScanOutcomeKind, read: CountsRead): ScanOutcome {
   return {
     scanId: null,
@@ -213,6 +221,7 @@ export function stopOutcome(
     card: showPass ? (options.card ?? null) : null,
     template: details.template,
     at: stop.at,
+    event: eventLine(actor, stop.reason),
     cooldownRemainingMs: stop.cooldownRemainingMs ?? null,
     access: stop.access ?? null,
     ...(stop.occupancy ? { occupancy: stop.occupancy } : {}),
