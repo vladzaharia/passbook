@@ -219,7 +219,9 @@ async function evaluateObserved(
   const zoneExit = placed?.found.direction === 'out';
   const exiting = admission?.plan.state.direction === 'out' || zoneExit;
   // Access refusals are authority: they come before the gate, the window and every heads-up.
-  const denied = exiting ? null : accessStop(ctx, actor, found, known, accessReads, now);
+  const denied = exiting
+    ? null
+    : accessStop(ctx, actor, found, known, accessReads, now, waive.access);
   if (denied) return denied;
   if (admission?.reason)
     return stop(

@@ -83,6 +83,7 @@ export async function attempt(
     req.input,
     {
       window: !!capturedOverride && !!WINDOW_REASONS[capturedOverride.reason],
+      access: capturedOverride?.reason,
       confirmed: req.confirmed === true,
       direction: req.direction,
       override: !!req.overrideOf,

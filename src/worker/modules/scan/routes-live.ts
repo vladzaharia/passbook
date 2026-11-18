@@ -1,5 +1,9 @@
 import { z } from 'zod';
 import { ScanLiveSnapshotSchema } from '../../../shared/contracts/scan-setups.ts';
+import {
+  ScanWhosInListSchema,
+  ScanWhosInQuerySchema,
+} from '../../../shared/contracts/scan-whos-in.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -11,6 +15,7 @@ import { pinKeysetOrNull } from './keyset-pin.ts';
 import { liveAttachment, scanHub } from './live.ts';
 import { sealLiveAttachment } from './live-attachment.ts';
 import { prepareLivePhoto } from './live-photo-delivery.ts';
+import { whosIn } from './occupancy/whos-in.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 
 export const scanLiveRoutes = createRouter();
@@ -105,5 +110,21 @@ register(
       if (error instanceof NotFoundError) throw missing();
       throw error;
     }
+  },
+);
+register(
+  scanLiveRoutes,
+  'scan',
+  {
+    method: 'get',
+    path: '/inside',
+    summary: "Who's in",
+    query: ScanWhosInQuerySchema,
+    response: ScanWhosInListSchema,
+  },
+  async (c) => {
+    const ctx = serviceContext(c);
+    c.header('cache-control', 'no-store');
+    return c.json(await whosIn(ctx, cloneObservedScanActor(scanActorOf(c)), c.req.valid('query')));
   },
 );

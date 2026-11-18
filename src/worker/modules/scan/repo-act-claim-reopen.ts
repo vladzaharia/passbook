@@ -2,10 +2,10 @@ import type { Grant } from '../../platform/authority.ts';
 import { not, tenantSql } from '../../platform/authority-cond.ts';
 import type { Claim } from './repo-scans.ts';
 
-/** The claim row carries no scan evidence: not a column, a gate or a presence row. */
+/** The claim row carries no scan evidence: not a column, a gate or a presence row (`override_of` is set at claim). */
 const PRISTINE = tenantSql(`{row}.pass_id IS NULL AND {row}.template_id IS NULL
   AND {row}.action_id IS NULL AND {row}.action_kind IS NULL AND {row}.pass_version IS NULL
-  AND {row}.outcome IS NULL AND {row}.reason IS NULL AND {row}.override_of IS NULL
+  AND {row}.outcome IS NULL AND {row}.reason IS NULL
   AND {row}.approved_by IS NULL AND {row}.direction IS NULL AND {row}.presence_scope IS NULL
   AND {row}.amount IS NULL AND {row}.before_value IS NULL AND {row}.after_value IS NULL
   AND {row}.group_id IS NULL AND {row}.offline = 0 AND {row}.notified = 0

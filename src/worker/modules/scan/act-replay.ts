@@ -17,6 +17,7 @@ import type { ScanActor } from './guard.ts';
 import { verifiedEventRoleProjection } from './history-policy.ts';
 import { verifyLiveTemplateSnapshot } from './live-template-snapshot.ts';
 import { blankOutcome, isOverridable, safeOutcomeDetails } from './outcome.ts';
+import { mayOverrideScan } from './override-scope.ts';
 import { readReplayEvidence } from './repo-act-authority.ts';
 import { type ActionPassFence, prepareActionPassFence } from './repo-act-pass-fence.ts';
 import { replayCurrent } from './repo-act-replay-current.ts';
@@ -211,13 +212,13 @@ export async function replayOutcome(
       currentAction.allowAgain &&
       !!target &&
       target.mode === actor.mode &&
-      target.actorKey === actor.actorKey &&
+      mayOverrideScan(actor, target) &&
       target.passId === row.passId &&
       target.actionId === row.actionId &&
       !!overrideReason &&
       isOverridable(overrideReason) &&
       scanPolicy(policyActor(actor), {
-        kind: overridePolicyKind(overrideReason),
+        kind: overridePolicyKind(overrideReason, target.outcome),
       }).allow);
   const currentEvent = found.admission?.event ?? actor.event;
   if (

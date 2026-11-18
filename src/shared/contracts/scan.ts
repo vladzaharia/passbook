@@ -110,6 +110,8 @@ export const ScannerSettingsSchema = z.object({
   dailyAmount: z.number().int().min(1).max(10_000_000).nullable(),
   /** A monitor may act (Let in, Mark as out) when this is on. Off when absent. */
   deskActions: z.boolean().optional(),
+  /** A full place refuses every role: `capacity_full` is never overridable at this door. */
+  hardLimit: z.boolean().optional(),
   /** Who may assign tags here. Absent: desk for a pass, manager for a person. */
   tags: ScannerTagsSettingsSchema.optional(),
 });
