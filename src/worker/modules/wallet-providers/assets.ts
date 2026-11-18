@@ -1,6 +1,7 @@
 import type { ResolvedTemplate, TemplateRegistry } from '../../../passkit/template/registry.ts';
 import {
   type ArtOutput,
+  type ArtRule,
   artOutput,
   artRule,
   type WalletTarget,
@@ -53,6 +54,43 @@ const isTemplateArt = (template: ResolvedTemplate, request: ArtRequest): boolean
   return request.asset.startsWith(`wallets/${request.target}/`) || TEMPLATE_SLOTS.has(entry.slot);
 };
 
+interface ArtPlan {
+  source: Uint8Array;
+  rule: ArtRule;
+  out: ArtOutput;
+  png: { width: number; height: number };
+}
+
+/** What a request would be cut to, or null (not template art, no rule, unreadable, below minimum). */
+async function planWalletArt(
+  registry: TemplateRegistry,
+  template: ResolvedTemplate,
+  request: ArtRequest,
+): Promise<ArtPlan | null> {
+  const rule = artRule(request.target, request.slot);
+  if (!rule || !isTemplateArt(template, request)) return null;
+  const source = new Uint8Array(
+    await new Response(await registry.openAsset(template, request.asset)).arrayBuffer(),
+  );
+  const png = parsePng(source);
+  if ('error' in png) return null;
+  const out = artOutput(rule, png.width, png.height);
+  return out ? { source, rule, out, png } : null;
+}
+
+/**
+ * The size `deriveWalletArt` would produce, without cutting or storing anything. Reads use this:
+ * only a release publication writes to the public image prefix.
+ */
+export async function sizeWalletArt(
+  registry: TemplateRegistry,
+  template: ResolvedTemplate,
+  request: ArtRequest,
+): Promise<{ width: number; height: number } | null> {
+  const plan = await planWalletArt(registry, template, request);
+  return plan ? { width: plan.out.width, height: plan.out.height } : null;
+}
+
 /**
  * Cuts one template art file to the target's size and stores it under its hash. Returns null when
  * the asset is not template art, has no rule for the slot, or is below the target minimum (the
@@ -65,18 +103,12 @@ export async function deriveWalletArt(
   request: ArtRequest,
   transform: ArtTransform,
 ): Promise<DerivedArt | null> {
-  const rule = artRule(request.target, request.slot);
-  if (!rule || !isTemplateArt(template, request)) return null;
-  const source = new Uint8Array(
-    await new Response(await registry.openAsset(template, request.asset)).arrayBuffer(),
-  );
-  const png = parsePng(source);
-  if ('error' in png) return null;
-  const out: ArtOutput | null = artOutput(rule, png.width, png.height);
-  if (!out) return null;
+  const plan = await planWalletArt(registry, template, request);
+  if (!plan) return null;
+  const { source, rule, out } = plan;
   let bytes: Uint8Array = source;
-  let { width, height } = png;
-  if (out.width !== png.width || out.height !== png.height) {
+  let { width, height } = plan.png;
+  if (out.width !== width || out.height !== height) {
     const cut = await transform(source, {
       width: out.width,
       height: out.height,
@@ -101,4 +133,10 @@ export async function deriveWalletArt(
 export async function openWalletArt(env: AppEnv, sha256: string): Promise<R2ObjectBody | null> {
   const object = await env.BUCKET.get(`${IMAGE_PREFIX}${sha256}`);
   return object?.customMetadata?.kind === KIND ? object : null;
+}
+
+/** Removes a derived copy; anything that is not template art is left alone. */
+export async function deleteWalletArt(env: AppEnv, sha256: string): Promise<void> {
+  const head = await env.BUCKET.head(`${IMAGE_PREFIX}${sha256}`);
+  if (head?.customMetadata?.kind === KIND) await env.BUCKET.delete(`${IMAGE_PREFIX}${sha256}`);
 }

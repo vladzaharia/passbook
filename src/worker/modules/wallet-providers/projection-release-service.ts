@@ -27,6 +27,7 @@ import {
   schemaRefused,
   scopedCandidate,
   scopedTemplate,
+  storeReleaseArt,
 } from './projection-service-support.ts';
 import {
   insertProjectionReleaseStmt,
@@ -63,6 +64,7 @@ async function publish(
     !(await ensureSamsungProjectionEvidence(ctx, candidate.id, candidate.candidateHash, proof))
   )
     throw changed();
+  await storeReleaseArt(ctx, candidate, action === 'rollback' ? 'carry' : 'exact');
   const id = ctx.ids.id();
   const results = await batch(db, [
     insertProjectionReleaseStmt(db, {
@@ -161,6 +163,7 @@ export async function rollbackProjectionRelease(
     target.candidateId,
     body.candidateHash,
     proof,
+    'carry',
   );
   const approval = await getApproval(ctx.env.DB, target.approvalId);
   if (!approval) throw changed();

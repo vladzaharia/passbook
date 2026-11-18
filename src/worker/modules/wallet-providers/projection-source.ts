@@ -58,6 +58,19 @@ export function assertProjectionSource(
   )
     throw unsupported();
   if (manifest.schema !== 1 || !Array.isArray(manifest.bindings)) throw unsupported();
+  // Schema 1 cannot honour the block, so it must not be able to bypass it: a target the author
+  // turned off, or a capability the author required, fails closed.
+  const wallets = manifest.wallets;
+  if (wallets !== undefined) {
+    const target = object(wallets) ? wallets[projection.provider] : undefined;
+    if (
+      !object(wallets) ||
+      (object(target) && target.type === 'off') ||
+      (wallets.required !== undefined &&
+        (!Array.isArray(wallets.required) || wallets.required.length > 0))
+    )
+      throw unsupported();
+  }
   if (
     manifest.nfc !== undefined &&
     (!object(manifest.nfc) || !only(manifest.nfc, ['enabled']) || manifest.nfc.enabled !== false)

@@ -1,4 +1,4 @@
-import { measure, sanitizeText } from '../../../passkit/wallets/text.ts';
+import { isPlainLine, measure } from '../../../passkit/wallets/text.ts';
 import type { GoogleGenericProjection } from './google-projection.ts';
 import {
   type GoogleProjection,
@@ -28,13 +28,7 @@ const only = (value: Record<string, unknown>, allowed: readonly string[]) =>
 
 /** Do not silently discard markup, controls, or content a provider would truncate. */
 function plain(value: unknown, max: number): value is string {
-  return (
-    typeof value === 'string' &&
-    value.trim().length > 0 &&
-    !value.includes('\n') &&
-    sanitizeText(value) === value.trim() &&
-    measure(value, 'chars') <= max
-  );
+  return typeof value === 'string' && isPlainLine(value) && measure(value, 'chars') <= max;
 }
 
 /** Recheck materialized pass semantics, not only the template that was reviewed. */
@@ -275,4 +269,24 @@ export function renderSamsungProjection(
       ],
     },
   };
+}
+
+/** Schema 2 is compiled by the typed runtimes (CW9b, CW10b); until they exist nothing renders it. */
+let compiledRuntime = false;
+
+/** Tests only: pretend the typed runtime exists, so a test of the offer path is not decided by it. */
+export function setCompiledRuntimeForTest(ready: boolean): () => void {
+  const previous = compiledRuntime;
+  compiledRuntime = ready;
+  return () => {
+    compiledRuntime = previous;
+  };
+}
+
+/** Whether a materialized pass can be offered under this projection. */
+export function canRenderProjection(projection: NativeProjection, passJson: unknown): boolean {
+  if (projection.schema === 2) return compiledRuntime;
+  return projection.provider === 'google'
+    ? renderGoogleProjection(projection, passJson) !== null
+    : canRenderSamsungProjection(projection, passJson);
 }

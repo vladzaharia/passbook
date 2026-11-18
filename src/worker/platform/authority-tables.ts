@@ -155,6 +155,7 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'wallet_samsung_tombstones',
   'wallet_provider_projection_evidence',
   'wallet_provider_projection_evidence_history',
+  'wallet_projection_art',
   'scan_retention_proofs',
   'scan_retention_event_transitions',
   'scan_retention_delete_intents',

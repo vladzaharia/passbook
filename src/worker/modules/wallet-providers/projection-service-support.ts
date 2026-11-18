@@ -32,8 +32,16 @@ import {
   projectionPolicy,
   providerIdentityHash,
 } from './projection-contract.ts';
-import { computeProjectionPins, samePins, unreleasable, walletsHash } from './projection-pins.ts';
+import {
+  type ComputedProjection,
+  carriesForward,
+  computeProjectionPins,
+  samePins,
+  unreleasable,
+  walletsHash,
+} from './projection-pins.ts';
 import { assertProjectionSource, verifiedAppleSource } from './projection-source.ts';
+import { recordProjectionArt } from './repo-projection-art.ts';
 import {
   getProjectionCandidate,
   type ProjectionCandidate,
@@ -61,8 +69,6 @@ export interface ApprovedProjection extends WalletCredentialKeysetProof {
     providerIdentityHash: string;
   };
   projection: NativeProjection;
-  /** Q21: a compiler update added an omission; new offers wait for re-approval. */
-  offersPaused: boolean;
 }
 
 export const changed = () =>
@@ -241,16 +247,57 @@ export async function verifiedCandidate(
   return true;
 }
 
+/** `exact`: review, approval and publication. `carry`: rollback, which reuses an approval (Q21). */
+export type PinRule = 'exact' | 'carry';
+
 /**
- * Review, approval and publication need the pins exactly as they are now: a compiler revision or a
- * report that moved since the candidate was made re-opens review (architecture 4.3).
+ * Review, approval and publication need the pins exactly as they are now: a pipeline, report or
+ * type that moved since the candidate was made re-opens review (architecture 4.3). Rollback
+ * restores something already approved, so it only needs the Q21 rule: same type, no omission
+ * beyond the approved ones, still releasable.
  */
-async function currentPins(ctx: ServiceContext, candidate: ProjectionCandidate): Promise<boolean> {
+function pinsAcceptable(
+  candidate: ProjectionCandidate,
+  current: ComputedProjection,
+  rule: PinRule,
+): boolean {
+  if (candidate.projection.schema !== 2) return true;
+  return rule === 'exact'
+    ? !unreleasable(current.report) && samePins(current.pins, candidate.projection)
+    : carriesForward(candidate.projection, current);
+}
+async function currentPins(
+  ctx: ServiceContext,
+  candidate: ProjectionCandidate,
+  rule: PinRule,
+): Promise<boolean> {
   if (candidate.projection.schema !== 2) return true;
   const version = await getVersion(ctx.env.DB, candidate.templateId, candidate.version);
   if (!version) return false;
-  const { pins, report } = await computeProjectionPins(ctx, candidate.provider, version);
-  return !unreleasable(report) && samePins(pins, candidate.projection);
+  return pinsAcceptable(
+    candidate,
+    await computeProjectionPins(ctx, candidate.provider, version),
+    rule,
+  );
+}
+/** Publication: writes the art copies, then records them so a purge can find them. */
+export async function storeReleaseArt(
+  ctx: ServiceContext,
+  candidate: ProjectionCandidate,
+  rule: PinRule,
+): Promise<void> {
+  if (candidate.projection.schema !== 2) return;
+  const version = await getVersion(ctx.env.DB, candidate.templateId, candidate.version);
+  if (!version) throw changed();
+  const current = await computeProjectionPins(ctx, candidate.provider, version, 'store');
+  if (!pinsAcceptable(candidate, current, rule)) throw changed();
+  await recordProjectionArt(ctx.env.DB, {
+    candidateId: candidate.id,
+    templateId: candidate.templateId,
+    orgId: candidate.orgId,
+    hashes: [...current.art.hashes],
+    now: ctx.clock.now(),
+  });
 }
 export async function scopedCandidate(
   ctx: ServiceContext,
@@ -258,13 +305,14 @@ export async function scopedCandidate(
   id: string,
   hash: string,
   proof: WalletCredentialKeysetProof,
+  rule: PinRule = 'exact',
 ): Promise<ProjectionCandidate> {
   const candidate = await getProjectionCandidate(ctx.env.DB, id);
   if (!candidate || !sameScope(candidate, scope)) throw missing();
   if (
     candidate.candidateHash !== hash ||
     !(await verifiedCandidate(ctx, candidate, proof)) ||
-    !(await currentPins(ctx, candidate))
+    !(await currentPins(ctx, candidate, rule))
   )
     throw changed();
   return candidate;

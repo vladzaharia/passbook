@@ -109,3 +109,28 @@ WHEN NEW.provider IN ('google', 'samsung') AND NOT EXISTS (
       WHERE prior.id = NEW.rollback_of_release_id
         AND prior.credential_keyset_commitment = NEW.credential_keyset_commitment)))
 BEGIN SELECT RAISE(ABORT, 'provider release keyset unavailable'); END;
+
+-- Q21 memo: whether a schema 2 release still covers the current pipeline, per (candidate, pipeline
+-- revision). Filled lazily by the offer paths; a row never changes, a new pipeline is a new row.
+CREATE TABLE wallet_projection_pause_checks (
+  candidate_id TEXT NOT NULL REFERENCES template_candidates(id) ON DELETE CASCADE,
+  pipeline TEXT NOT NULL,
+  paused INTEGER NOT NULL CHECK (paused IN (0, 1)),
+  checked_at INTEGER NOT NULL,
+  PRIMARY KEY (candidate_id, pipeline)
+) WITHOUT ROWID;
+
+-- The public art copies (`wallet-art/<sha256>` in R2) a publication wrote for a candidate, so a
+-- template or organization purge can remove them. A hash several templates share stays until the
+-- last row that names it goes.
+CREATE TABLE wallet_projection_art (
+  candidate_id TEXT NOT NULL REFERENCES template_candidates(id) ON DELETE CASCADE,
+  sha256 TEXT NOT NULL CHECK (length(sha256) = 64),
+  template_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (candidate_id, sha256)
+) WITHOUT ROWID;
+CREATE INDEX wallet_projection_art_sha ON wallet_projection_art(sha256);
+CREATE INDEX wallet_projection_art_template ON wallet_projection_art(template_id);
+CREATE INDEX wallet_projection_art_org ON wallet_projection_art(org_id);

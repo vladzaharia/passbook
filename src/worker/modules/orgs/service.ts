@@ -17,6 +17,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, diffFields, recordAudit } from '../audit/service.ts';
+import { purgeWalletArt } from '../wallet-providers/projection-art-purge.ts';
 import { markPassesStale } from './branding-stale.ts';
 import {
   COUNT_CAP,
@@ -277,6 +278,7 @@ export async function deleteOrg(
 ): Promise<void> {
   const row = await requireOrg(ctx, id);
   await moveOrgStatusAsAdmin(ctx, id, row.status, 'deleted', admin);
+  await purgeWalletArt(ctx, { orgId: id });
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: id,

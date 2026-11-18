@@ -1,269 +1,98 @@
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import {
-  type Fixtures,
-  fixtures,
-  makeEnv,
-  makeOrg,
-  makeSession,
-  makeUser,
-} from '../../../../test/helpers/index.ts';
+import { describe, expect, it } from 'vitest';
 import { omissionKeys, reportHash } from '../../../passkit/wallets/fidelity.ts';
 import { googleCompiler } from '../../../passkit/wallets/google/compilers.ts';
-import type { TemplateCandidate } from '../../../shared/contracts/template-releases.ts';
-import type { GoogleWalletCredentials } from '../../../shared/contracts/wallet-providers.ts';
-import type { SessionAuth } from '../../platform/auth.ts';
-import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
-import type { AppEnv } from '../../platform/env.ts';
-import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
-import { createSessionStore } from '../auth/sessions.ts';
-import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { basicPackage, makePng, passJson, zipOf } from '../templates/package/fixtures.ts';
+import { basicPackage, makePng, zipOf } from '../templates/package/fixtures.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { templateContentHash } from '../templates/release-content.ts';
-import { approveCandidate, createCandidate, publishRelease } from '../templates/releases.ts';
 import { getVersion } from '../templates/repo.ts';
 import { listVersionExtras } from '../templates/repo-preview-extras.ts';
-import { fakeAssets, importZip } from '../templates/testing.ts';
-import { configureWalletProviderAccount } from './account-service.ts';
+import { importZip } from '../templates/testing.ts';
 import {
   NativeProjectionSchema,
   normalizeNativeProjection,
-  type ProjectionV2,
+  type SamsungProjection,
 } from './projection-contract.ts';
-import { compilerRevision, computeProjectionPins, walletsHash } from './projection-pins.ts';
+import { computeProjectionPins, pipelineRevision, walletsHash } from './projection-pins.ts';
 import {
   approveProjectionCandidate,
-  createProjectionCandidate,
   getApprovedProjection,
   listProjectionReleases,
   publishProjectionRelease,
 } from './projection-service.ts';
 import { assertProjectionSource } from './projection-source.ts';
+import {
+  candidateOf,
+  installV2Env,
+  LOGO,
+  lookup,
+  manifest,
+  pinsOf,
+  proof,
+  released,
+  request,
+  S,
+  setup,
+} from './projection-v2-test-fixtures.ts';
 import { walletProviderDisabledReason } from './provider-policy.ts';
 import { renderGoogleProjection } from './render-projection.ts';
 
-const KEK_V1 = btoa(String.fromCharCode(...new Uint8Array(32).fill(7)));
-const manifest = {
-  schema: 1,
-  name: 'Reviewed card',
-  inputs: { type: 'object', properties: { name: { type: 'string' } } },
-  sample: { name: 'Ada' },
-  bindings: [{ to: { field: 'name' }, value: '{{name}}' }],
-  display: { title: '{{name}}' },
-};
-const LOGO = 'wallets/google/logo.png';
-const withLogo = { schema: 1, google: { images: { logo: LOGO } } };
+installV2Env();
 
-let env: AppEnv;
-let clock: ManualClock;
-let f: Fixtures;
-let google: GoogleWalletCredentials;
-
-beforeAll(async () => {
-  clock = new ManualClock();
-  env = await makeEnv({ KEK_V1, KEK_V2: undefined, KEK_V3: undefined, ASSETS: fakeAssets() });
-  f = fixtures(env, clock);
-  google = {
-    issuerId: '33880000000223344',
-    serviceAccountEmail: 'wallet@example.iam.gserviceaccount.com',
-    privateKeyPem: env.SIGNER_PLATFORM_PRIVATE_KEY,
-    scopes: ['https://www.googleapis.com/auth/wallet_object.issuer'],
-  };
-});
-
-async function member(orgId: string): Promise<SessionAuth> {
-  const user = await makeUser(f);
-  const now = clock.now();
-  const invitation = f.ids.id();
-  await run(
-    env.DB,
-    `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at, accepted_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      invitation,
-      orgId,
-      user.primaryEmail,
-      '["org_admin"]',
-      f.ids.token(),
-      now,
-      now + 3600_000,
-      now,
-    ],
-  );
-  await run(
-    env.DB,
-    `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at)
-    VALUES (?, ?, ?, ?, ?, ?)`,
-    [f.ids.id(), orgId, user.id, invitation, '["org_admin"]', now],
-  );
-  const session = await makeSession(f, { userId: user.id });
-  const auth = await createSessionStore(env, clock).resolve(session.cookieValue);
-  if (!auth) throw new Error('Test session did not resolve.');
-  return auth;
-}
-
-interface Kit {
-  ctx: ServiceContext;
-  orgId: string;
-  author: SessionAuth;
-  reviewer: SessionAuth;
-  templateId: string;
-  version: string;
-  sourceId: string;
-  scope: { orgId: string; mode: 'live'; provider: 'google' };
-}
-
-/** An uploaded template with a reviewed Apple release and a configured Google account. */
-async function setup(
-  files: Record<string, Uint8Array | string> = {},
-  wallets: unknown = withLogo,
-  existing?: Pick<Kit, 'orgId' | 'author' | 'reviewer'>,
-): Promise<Kit> {
-  const orgId = existing?.orgId ?? (await makeOrg(f)).id;
-  const author = existing?.author ?? (await member(orgId));
-  const reviewer = existing?.reviewer ?? (await member(orgId));
-  const ctx = createServiceContext(env, { clock });
-  const imported = await importZip(env, clock, {
-    orgId,
-    createdBy: author.userId,
-    name: 'Wallet card',
-    zip: zipOf(
-      basicPackage(
-        {
-          'wallet.template.json': JSON.stringify({ ...manifest, wallets }),
-          [LOGO]: makePng(660, 660),
-          ...files,
-        },
-        passJson(),
-      ),
-    ),
-  });
-  if (!imported.result) throw new Error('Test template import failed.');
-  const { templateId, version } = imported.result;
-  const apple = { orgId, mode: 'live' as const, provider: 'apple' as const };
-  const c = await createCandidate(ctx, author, templateId, { ...apple, version });
-  const a = await approveCandidate(ctx, reviewer, templateId, c.id, {
-    ...apple,
-    candidateHash: c.candidateHash,
-  });
-  const source = await publishRelease(ctx, author, templateId, {
-    ...apple,
-    candidateId: c.id,
-    approvalId: a.id,
-    candidateHash: c.candidateHash,
-    expectedGeneration: 0,
-  });
-  const scope = { orgId, mode: 'live' as const, provider: 'google' as const };
-  if (!existing)
-    await configureWalletProviderAccount(ctx, author, {
-      ...scope,
-      expectedRevision: 0,
-      credentials: google,
-    });
-  return { ctx, orgId, author, reviewer, templateId, version, sourceId: source.id, scope };
-}
-
-async function pinsOf(kit: Kit): Promise<ProjectionV2> {
-  const row = await getVersion(env.DB, kit.templateId, kit.version);
+const loadVersion = async (templateId: string, version: string) => {
+  const row = await getVersion(S.env.DB, templateId, version);
   if (!row) throw new Error('Version missing.');
-  return (await computeProjectionPins(kit.ctx, 'google', row)).pins;
-}
-const candidateOf = (kit: Kit, projection: unknown): Promise<TemplateCandidate> =>
-  createProjectionCandidate(kit.ctx, kit.author, kit.templateId, {
-    ...kit.scope,
-    version: kit.version,
-    sourceReleaseId: kit.sourceId,
-    projection,
-  });
-async function released(kit: Kit, candidate: TemplateCandidate, expectedGeneration = 0) {
-  const approval = await approveProjectionCandidate(
-    kit.ctx,
-    kit.reviewer,
-    kit.templateId,
-    candidate.id,
-    { ...kit.scope, candidateHash: candidate.candidateHash },
-  );
-  return publishProjectionRelease(kit.ctx, kit.author, kit.templateId, {
-    ...kit.scope,
-    candidateId: candidate.id,
-    approvalId: approval.id,
-    candidateHash: candidate.candidateHash,
-    expectedGeneration,
-  });
-}
-const lookup = (kit: Kit) => ({
-  ...kit.scope,
-  templateId: kit.templateId,
-  templateVersion: kit.version,
-  appleReleaseId: kit.sourceId,
-});
-const proof = async () => ({
-  credentialKeysetCommitment: await requireCredentialRefKeyset(env.DB, env),
-});
-
-/** Stands in for a compiler update: a new revision that adds an omission (or none). */
-function updateCompiler(extra: boolean): () => void {
-  const revision = googleCompiler.revision;
-  const compile = googleCompiler.compile;
-  googleCompiler.revision = revision + 1;
-  if (extra)
-    googleCompiler.compile = (view, options) => {
-      const result = compile(view, options);
-      return {
-        ...result,
-        items: [
-          ...result.items,
-          {
-            capability: 'sharing',
-            path: '',
-            support: 'omitted',
-            message: 'Google cannot prohibit sharing.',
-          },
-        ],
-      };
-    };
-  return () => {
-    googleCompiler.revision = revision;
-    googleCompiler.compile = compile;
-  };
-}
-let restore: (() => void) | undefined;
-afterEach(() => {
-  restore?.();
-  restore = undefined;
-});
+  return row;
+};
+const schema1 = {
+  schema: 1,
+  provider: 'google',
+  language: 'en',
+  logoUrl: 'https://example.test/logo.png',
+  sourceArtworkSlots: ['icon'],
+  titleField: 'name',
+  fields: ['name'],
+  barcode: 'none',
+} as const;
 
 describe('schema 2 candidate pins', () => {
-  it('pins the compiler revision, wallets hash, report hash and approved omissions', async () => {
+  it('pins the compiler, pipeline, wallets hash, report hash and approved omissions', async () => {
     const kit = await setup();
-    const version = await getVersion(env.DB, kit.templateId, kit.version);
-    if (!version) throw new Error('Version missing.');
+    const version = await loadVersion(kit.templateId, kit.version);
     const { pins, report } = await computeProjectionPins(kit.ctx, 'google', version);
-    const candidate = await candidateOf(kit, {
-      schema: 2,
-      provider: 'google',
-      approvedOmissions: pins.approvedOmissions,
-    });
+    const candidate = await candidateOf(kit, request(pins.approvedOmissions));
     expect(candidate.projection).toEqual(pins);
     expect(pins).toEqual({
       schema: 2,
       provider: 'google',
       type: report.type,
       compilerRevision: googleCompiler.revision,
+      pipeline: await pipelineRevision('google'),
       wallets: await walletsHash(version.manifest.wallets),
       report: await reportHash(report),
       approvedOmissions: omissionKeys(report),
     });
     expect(NativeProjectionSchema.safeParse(pins).success).toBe(true);
-    expect(compilerRevision('google')).toBe(googleCompiler.revision);
+  });
+
+  it('covers the whole report pipeline, not only the compiler revision', async () => {
+    const google = await pipelineRevision('google');
+    expect(google).toMatch(/^[0-9a-f]{64}$/);
+    expect(await pipelineRevision('samsung')).not.toBe(google);
+    googleCompiler.revision += 1;
+    try {
+      expect(await pipelineRevision('google')).not.toBe(google);
+    } finally {
+      googleCompiler.revision -= 1;
+    }
+    expect(await pipelineRevision('google')).toBe(google);
   });
 
   it('refuses a candidate that does not name exactly the omissions the report has', async () => {
     const kit = await setup();
-    await expect(
-      candidateOf(kit, { schema: 2, provider: 'google', approvedOmissions: ['sharing@nowhere'] }),
-    ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_CONFLICT' });
+    await expect(candidateOf(kit, request(['sharing@nowhere']))).rejects.toMatchObject({
+      code: 'WALLET_PROJECTION_CONFLICT',
+    });
     const pins = await pinsOf(kit);
     await expect(candidateOf(kit, { ...pins, report: '0'.repeat(64) })).rejects.toMatchObject({
       code: 'WALLET_PROJECTION_CONFLICT',
@@ -272,9 +101,9 @@ describe('schema 2 candidate pins', () => {
 
   it('refuses a target that is off', async () => {
     const kit = await setup({}, { schema: 1, google: { type: 'off' } });
-    await expect(
-      candidateOf(kit, { schema: 2, provider: 'google', approvedOmissions: [] }),
-    ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_BLOCKED' });
+    await expect(candidateOf(kit, request())).rejects.toMatchObject({
+      code: 'WALLET_PROJECTION_BLOCKED',
+    });
   });
 
   it('is bound to the wallets block of the version', async () => {
@@ -285,18 +114,7 @@ describe('schema 2 candidate pins', () => {
 });
 
 describe('schema 1 and the Google publish path', () => {
-  const schema1 = {
-    schema: 1,
-    provider: 'google',
-    language: 'en',
-    logoUrl: 'https://example.test/logo.png',
-    sourceArtworkSlots: ['icon'],
-    titleField: 'name',
-    fields: ['name'],
-    barcode: 'none',
-  } as const;
-
-  it('refuses schema 1 for publish, with its own code', async () => {
+  it('refuses schema 1 for publish, with its own code and in the database', async () => {
     const kit = await setup({}, undefined);
     const candidate = await candidateOf(kit, schema1);
     const approval = await approveProjectionCandidate(
@@ -316,10 +134,9 @@ describe('schema 1 and the Google publish path', () => {
       }),
     ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_SCHEMA' });
     expect(await getApprovedProjection(kit.ctx, lookup(kit), await proof())).toBeNull();
-    // The database refuses it too, not only the service.
     await expect(
       run(
-        env.DB,
+        S.env.DB,
         `INSERT INTO template_releases
         (id, template_id, org_id, mode, provider, generation, version, candidate_hash, content_hash,
          adapter_revision, adapter_capabilities, audience_policy_revision, source, action, candidate_id,
@@ -327,7 +144,7 @@ describe('schema 1 and the Google publish path', () => {
         SELECT ?, c.template_id, c.org_id, c.mode, c.provider, 1, c.version, c.candidate_hash, c.content_hash,
           c.adapter_revision, c.adapter_capabilities, c.audience_policy_revision, 'approved', 'release', c.id, ?,
           NULL, NULL, ?, ?, c.credential_keyset_commitment FROM template_candidates c WHERE c.id = ?`,
-        [f.ids.id(), approval.id, kit.author.userId, clock.now(), candidate.id],
+        [S.f.ids.id(), approval.id, kit.author.userId, S.clock.now(), candidate.id],
       ),
     ).rejects.toThrow('invalid provider release approval or source');
   });
@@ -335,89 +152,106 @@ describe('schema 1 and the Google publish path', () => {
   it('publishes a schema 2 Google release and keeps issuance closed', async () => {
     const kit = await setup();
     const pins = await pinsOf(kit);
-    const candidate = await candidateOf(kit, {
-      schema: 2,
-      provider: 'google',
-      approvedOmissions: pins.approvedOmissions,
-    });
+    const candidate = await candidateOf(kit, request(pins.approvedOmissions));
     const release = await released(kit, candidate);
     expect(release).toMatchObject({ provider: 'google', generation: 1, candidateId: candidate.id });
-    const approved = await getApprovedProjection(kit.ctx, lookup(kit), await proof());
-    expect(approved).toMatchObject({
+    expect(await getApprovedProjection(kit.ctx, lookup(kit), await proof())).toMatchObject({
       release: { id: release.id, sourceReleaseId: kit.sourceId },
       projection: pins,
-      offersPaused: false,
     });
     const list = await listProjectionReleases(kit.ctx, kit.author, kit.templateId, kit.scope);
     expect(list.active?.id).toBe(release.id);
     // The gate and the renderer both stay closed: nothing issues from a compiled projection yet.
     expect(walletProviderDisabledReason('google')).toBe('not_released');
     expect(renderGoogleProjection(pins, { formatVersion: 1 })).toBeNull();
-    // A second release of the same candidate is refused.
     await expect(released(kit, candidate, 1)).rejects.toThrow();
   });
-});
 
-describe('Q21: a compiler update that adds an omission', () => {
-  it('pauses new offers until re-approval while state changes keep flowing', async () => {
+  it('refuses a schema 2 self-approval, in the service and in the database', async () => {
     const kit = await setup();
-    const pins = await pinsOf(kit);
-    const first = await released(
-      kit,
-      await candidateOf(kit, {
-        schema: 2,
-        provider: 'google',
-        approvedOmissions: pins.approvedOmissions,
-      }),
-    );
-    expect((await getApprovedProjection(kit.ctx, lookup(kit), await proof()))?.offersPaused).toBe(
-      false,
-    );
-
-    restore = updateCompiler(false);
-    // Same report under a new revision: the approval carries forward.
-    expect(await getApprovedProjection(kit.ctx, lookup(kit), await proof())).toMatchObject({
-      release: { id: first.id },
-      offersPaused: false,
-    });
-    restore();
-
-    restore = updateCompiler(true);
-    const paused = await getApprovedProjection(kit.ctx, lookup(kit), await proof());
-    // The release stays current for passes already on the wallet; only new offers wait.
-    expect(paused).toMatchObject({ release: { id: first.id }, offersPaused: true });
-
-    // Review and publication need the pins as they are now.
-    const stale = await candidateOf(kit, {
-      schema: 2,
-      provider: 'google',
-      approvedOmissions: (await pinsOf(kit)).approvedOmissions,
-    });
-    expect(stale.projection).toMatchObject({ compilerRevision: googleCompiler.revision });
-    expect((await pinsOf(kit)).approvedOmissions).toContain('sharing');
-    const second = await released(kit, stale, 1);
-    expect(second.generation).toBe(2);
-    expect(await getApprovedProjection(kit.ctx, lookup(kit), await proof())).toMatchObject({
-      release: { id: second.id },
-      offersPaused: false,
-    });
-  });
-
-  it('refuses to approve a candidate whose compiler revision moved', async () => {
-    const kit = await setup();
-    const pins = await pinsOf(kit);
-    const candidate = await candidateOf(kit, {
-      schema: 2,
-      provider: 'google',
-      approvedOmissions: pins.approvedOmissions,
-    });
-    restore = updateCompiler(false);
+    const candidate = await candidateOf(kit, request((await pinsOf(kit)).approvedOmissions));
+    // The candidate author is also the version author here.
     await expect(
-      approveProjectionCandidate(kit.ctx, kit.reviewer, kit.templateId, candidate.id, {
+      approveProjectionCandidate(kit.ctx, kit.author, kit.templateId, candidate.id, {
         ...kit.scope,
         candidateHash: candidate.candidateHash,
       }),
-    ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_CONFLICT' });
+    ).rejects.toMatchObject({ code: 'TEMPLATE_SELF_APPROVAL' });
+    await expect(
+      run(
+        S.env.DB,
+        `INSERT INTO template_approvals (id, candidate_id, candidate_hash, reviewer_id, created_at,
+          credential_keyset_commitment)
+        SELECT ?, c.id, c.candidate_hash, c.author_id, ?, c.credential_keyset_commitment
+        FROM template_candidates c WHERE c.id = ?`,
+        [S.f.ids.id(), S.clock.now(), candidate.id],
+      ),
+    ).rejects.toThrow('stale provider projection source');
+    expect(
+      await approveProjectionCandidate(kit.ctx, kit.reviewer, kit.templateId, candidate.id, {
+        ...kit.scope,
+        candidateHash: candidate.candidateHash,
+      }),
+    ).toMatchObject({ reviewerId: kit.reviewer.userId });
+  });
+
+  it('keeps the final release trigger on the schema and Samsung-evidence rules', async () => {
+    // The database is built from every migration, so this is the final trigger. The CASE on the
+    // schema and both Samsung-only guards are what 0082 changed from 0038.
+    const trigger = await S.env.DB.prepare(
+      "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'template_provider_releases_insert'",
+    ).first<{ sql: string }>();
+    const sql = (trigger?.sql ?? '').replace(/\s+/g, ' ');
+    expect(sql).toContain("CASE c.provider WHEN 'google' THEN 2 ELSE 1 END");
+    expect(sql.split("NEW.provider = 'samsung' AND NOT EXISTS (").length - 1).toBe(2);
+    expect(sql).toContain("THEN RAISE(ABORT, 'invalid provider release approval or source')");
+  });
+});
+
+describe('schema 1 and the wallets block', () => {
+  const samsung = normalizeNativeProjection({
+    ...schema1,
+    provider: 'samsung',
+    cardType: 'loyalty',
+    cardSubType: 'others',
+    countryCode: 'GB',
+    appLinkLogo: 'https://example.test/app.png',
+    appLinkName: 'Account',
+    appLinkData: 'https://example.test/account',
+  }) as SamsungProjection;
+  const google = normalizeNativeProjection(schema1);
+
+  it('accepts a manifest with wallets and ignores its art', async () => {
+    const kit = await setup();
+    const version = await loadVersion(kit.templateId, kit.version);
+    expect(version.assets.some((asset) => asset.name === LOGO)).toBe(true);
+    expect(() => assertProjectionSource(google, version)).not.toThrow();
+  });
+
+  it('fails closed when the target is off or a capability is required', async () => {
+    const kit = await setup();
+    const version = await loadVersion(kit.templateId, kit.version);
+    const withWallets = (wallets: unknown) => ({
+      ...version,
+      manifest: { ...version.manifest, wallets } as typeof version.manifest,
+    });
+    for (const [projection, wallets] of [
+      [samsung, { schema: 1, samsung: { type: 'off' } }],
+      [google, { schema: 1, google: { type: 'off' } }],
+      [samsung, { schema: 1, required: ['barcode.format'] }],
+      [google, { schema: 1, required: ['role.memberId'] }],
+      [google, 'not an object'],
+    ] as const)
+      expect(() => assertProjectionSource(projection, withWallets(wallets))).toThrow(
+        /not supported/,
+      );
+    // Another target being off, or an empty required list, is not the author refusing this one.
+    expect(() =>
+      assertProjectionSource(samsung, withWallets({ schema: 1, google: { type: 'off' } })),
+    ).not.toThrow();
+    expect(() =>
+      assertProjectionSource(google, withWallets({ schema: 1, required: [] })),
+    ).not.toThrow();
   });
 });
 
@@ -425,7 +259,7 @@ describe('wallets-only versions', () => {
   it('keeps the Apple content hash while the provider pins move', async () => {
     const kit = await setup({}, { schema: 1, google: { type: 'generic', images: { logo: LOGO } } });
     // Importing the same package with another wallets block saves a second version of the template.
-    const next = await importZip(env, clock, {
+    const next = await importZip(S.env, S.clock, {
       orgId: kit.orgId,
       createdBy: kit.author.userId,
       name: 'Wallet card',
@@ -442,17 +276,15 @@ describe('wallets-only versions', () => {
     expect(next.result?.templateId).toBe(kit.templateId);
     const second = next.result?.version;
     expect(second).not.toBe(kit.version);
-    const load = async (name: string) => {
-      const row = await getVersion(env.DB, kit.templateId, name);
-      if (!row) throw new Error('Version missing.');
-      return row;
-    };
-    const [one, two] = [await load(kit.version), await load(second as string)];
+    const [one, two] = [
+      await loadVersion(kit.templateId, kit.version),
+      await loadVersion(kit.templateId, second as string),
+    ];
     const apple = async (row: typeof one) =>
       templateContentHash(
         kit.ctx,
         row,
-        await listVersionExtras(env.DB, kit.templateId, row.version),
+        await listVersionExtras(S.env.DB, kit.templateId, row.version),
       );
     // Apple: the same content, so the same release content hash and no new Apple review.
     expect(await apple(one)).toBe(await apple(two));
@@ -464,50 +296,43 @@ describe('wallets-only versions', () => {
     expect(p1.wallets).not.toBe(p2.wallets);
     expect(p1.report).not.toBe(p2.report);
   });
-
-  it('is accepted by the schema 1 source check', async () => {
-    const kit = await setup();
-    const version = await getVersion(env.DB, kit.templateId, kit.version);
-    if (!version?.manifest.wallets) throw new Error('Version has no wallets block.');
-    expect(version.assets.some((asset) => asset.name === LOGO)).toBe(true);
-    const projection = normalizeNativeProjection({
-      schema: 1,
-      provider: 'google',
-      language: 'en',
-      logoUrl: 'https://example.test/logo.png',
-      sourceArtworkSlots: ['icon'],
-      titleField: 'name',
-      fields: ['name'],
-      barcode: 'none',
-    });
-    expect(() => assertProjectionSource(projection, version)).not.toThrow();
-  });
 });
 
 describe('art in the projection', () => {
-  it('compiles Google art from derived copies on the public origin', async () => {
+  const prefix = { prefix: 'wallet-art/' };
+
+  it('sizes without writing on a read, and writes the public copy on a store', async () => {
     const kit = await setup();
-    const version = await getVersion(env.DB, kit.templateId, kit.version);
-    if (!version) throw new Error('Version missing.');
-    const { view, art } = await computeProjectionPins(kit.ctx, 'google', version);
-    const url = art.urls.get(LOGO);
-    expect(url).toMatch(
-      new RegExp(`^${env.PUBLIC_BASE_URL.replace(/\/+$/, '')}/w/i/[0-9a-f]{64}\\.png$`),
-    );
-    expect(art.sizes.get(LOGO)).toEqual({ width: 660, height: 660 });
+    const version = await loadVersion(kit.templateId, kit.version);
+    const before = (await S.env.BUCKET.list(prefix)).objects.length;
+    const dry = await computeProjectionPins(kit.ctx, 'google', version);
+    expect((await S.env.BUCKET.list(prefix)).objects.length).toBe(before);
+    expect(dry.art.hashes.size).toBe(0);
+    expect(dry.art.sizes.get(LOGO)).toEqual({ width: 660, height: 660 });
+
+    const stored = await computeProjectionPins(kit.ctx, 'google', version, 'store');
+    const url = stored.art.urls.get(LOGO);
+    const origin = S.env.PUBLIC_BASE_URL.replace(/\/+$/, '');
+    expect(url).toMatch(new RegExp(`^${origin}/w/i/[0-9a-f]{64}\\.png$`));
     const sha = (url as string).slice(-68, -4);
-    const stored = await env.BUCKET.get(`wallet-art/${sha}`);
-    expect(stored?.customMetadata?.kind).toBe('template-art');
-    const compiled = googleCompiler.compile(view, { now: new Date(version.createdAt), omit: [] });
+    expect([...stored.art.hashes]).toEqual([sha]);
+    expect((await S.env.BUCKET.get(`wallet-art/${sha}`))?.customMetadata?.kind).toBe(
+      'template-art',
+    );
+    // Same pins either way: the review a reader sees is the one publication stores.
+    expect(stored.pins).toEqual(dry.pins);
+    const compiled = googleCompiler.compile(stored.view, {
+      now: new Date(version.createdAt),
+      omit: [],
+    });
     expect(canonicalJson(compiled.objectBody)).toContain(url as string);
     // The Apple icon is far below Google's logo size, so it never gets an address.
-    expect(art.urls.has('icon.png')).toBe(false);
+    expect(stored.art.urls.has('icon.png')).toBe(false);
   });
 
   it('gives a file below the minimum no address and reports it', async () => {
     const kit = await setup({}, { schema: 1, google: { type: 'generic' } });
-    const version = await getVersion(env.DB, kit.templateId, kit.version);
-    if (!version) throw new Error('Version missing.');
+    const version = await loadVersion(kit.templateId, kit.version);
     const { art, report } = await computeProjectionPins(kit.ctx, 'google', version);
     expect(art.urls.has('icon.png')).toBe(false);
     expect(report.items.some((item) => item.capability.startsWith('image.'))).toBe(true);

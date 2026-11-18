@@ -99,6 +99,11 @@ export const ProjectionV2Schema = z.strictObject({
   provider: NativeProviderSchema,
   type: z.string().min(1).max(32),
   compilerRevision: z.number().int().positive(),
+  /**
+   * SHA-256 over everything that builds the report besides the version: the compiler revision, the
+   * fidelity revision, the capability matrix and the art rules. Q21 compares this, not one part.
+   */
+  pipeline: Sha256Schema,
   /** SHA-256 of the canonical `manifest.wallets` block (`null` when the version has none). */
   wallets: Sha256Schema,
   /** SHA-256 of the canonical fidelity report. */
