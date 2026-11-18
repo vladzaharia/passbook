@@ -80,7 +80,7 @@ Sources: audit units wallet-providers-1 and -2, other units' wallet findings, sy
 ### Blocks delivery
 
 1. **Samsung refs never promoted.** `callbacks-samsung.ts:53` calls `findSamsungFetchSnapshot(..., requirePromoted=true)`. `repo-callbacks.ts:175`, `repo-callbacks-events.ts:34,113` and `repo-callbacks.ts:234` require `r.promoted_at IS NOT NULL`. Nothing in `src/` or `migrations/` writes `promoted_at` (only `0037:447` declares it). The pre-promotion window `samsungInitialWindowSql` (`repo-callbacks.ts:62-68`) is unreachable. Medium.
-2. **Google can't be published.** `projection-release-service.ts:57` (`candidate.provider !== 'samsung' || ... throw changed()`), `projection-read-service.ts:90`, `repo-projection-write.ts:196`, `repo-projection.ts:95-99`. Publish returns a misleading 409 `WALLET_PROJECTION_CONFLICT` ("changed, reload"). Low in the audit; this is the Google blocker.
+2. **Google can't be published.** `projection-release-service.ts:57` (`candidate.provider !== 'samsung' || ... throw changed()`), `projection-read-service.ts:90`, `repo-projection-write.ts:196`, `repo-projection.ts:95-99`. Publish returns a misleading 409 `WALLET_PROJECTION_CONFLICT` ("changed, reload"). Low in the audit; this is the Google blocker. Fixed in CW7: publish accepts schema 2 Google candidates (migration 0082 opens the trigger).
 3. **Five kill switches** (section 1): `instance-policy.ts:5`, `runtime-core-credentials.ts:161`, `repo-offers.ts:103`, `repo-projection.ts:95-99`, `repo-projection-write.ts:196`. Medium.
 4. **Samsung UPDATED always refused.** `runtime-samsung.ts:74-79` makes a purpose only for retirement claims. `runtime-core-credentials.ts:161` throws. `sync-errors.ts:51-57` maps this to `unauthorized`/`rejected` permanently. A `RuntimeRefreshPurpose` already exists. Medium.
 5. **Google first tap always 404s.** `offers.ts:162` requires a `succeeded` operation straight after `instance-offer-refs.ts:97-112` creates it `pending`. `listWalletOffers` advertises the link regardless (`offers.ts:55-70`). Medium.
@@ -91,7 +91,7 @@ Sources: audit units wallet-providers-1 and -2, other units' wallet findings, sy
 7. **Google retirement never completes.** `sync-operation-retirement.ts:44`. Revoked Google instances are re-deferred every 60 s (`sync.ts:98-105`, `repo-instance-retirement.ts:139-155`). This blocks pass purge and new credential generations through `providerRetirementCompleteSql` (`repo-sync-retention.ts:22-29`) and `previous_settled` (`repo-instance-proof.ts:47`). Low while no instances exist. High once Google is on, and also for credential transfer.
 8. **Samsung evidence TTL.** 5 minutes (`repo-samsung-verification.ts:9`). A new probe resets a verified row to `pending` (`:149-154`). The evidence predicate sits inside `listDueOperations`, `claimOperation`, offer reads and `deferWalletSyncOperation`, so expiry stalls the durable queue. Medium.
 9. **Samsung probe ignores mode.** `samsung-template.ts:186`, `repo-samsung-verification.ts:39`, `repo-instance-proof.ts:136` hardcode `testing_mode_off = 'Y'`. Test and sandbox projections cannot verify. Medium.
-10. **Release insert tautology.** `repo-projection-write.ts:197` binds `? = ?` to `authority.userId, authority.userId`. Low.
+10. **Release insert tautology.** `repo-projection-write.ts:197` binds `? = ?` to `authority.userId, authority.userId`. Low. Fixed in CW7: removed.
 
 ### Correctness and reliability
 

@@ -289,5 +289,19 @@
   },
   "messaging": {
     "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "check_in",
+        "label": "Check in",
+        "kind": "check_in",
+        "repeat": "daily",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "memberId"
+    }
   }
 }

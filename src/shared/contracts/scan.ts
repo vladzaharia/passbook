@@ -28,6 +28,8 @@ export { type ScanOccupancy, ScanOccupancySchema } from './scan-occupancy.ts';
 
 export const ScanMethodSchema = z.enum(['camera', 'wedge', 'nfc', 'manual']);
 export type ScanMethod = z.infer<typeof ScanMethodSchema>;
+/** What a record shows: the system's auto tap-out has a method of its own; no client sends it. */
+export const ScanRecordMethodSchema = z.enum([...ScanMethodSchema.options, 'auto']);
 export const ScanActionKindSchema = z.enum(['check_in', 'add', 'take', 'set', 'use_up']);
 export const ScanRoleSchema = z.enum(['door', 'desk', 'manager']);
 export type ScanRole = z.infer<typeof ScanRoleSchema>;
@@ -108,6 +110,8 @@ export const ScannerSettingsSchema = z.object({
   dailyAmount: z.number().int().min(1).max(10_000_000).nullable(),
   /** A monitor may act (Let in, Mark as out) when this is on. Off when absent. */
   deskActions: z.boolean().optional(),
+  /** A full place refuses every role: `capacity_full` is never overridable at this door. */
+  hardLimit: z.boolean().optional(),
   /** Who may assign tags here. Absent: desk for a pass, manager for a person. */
   tags: ScannerTagsSettingsSchema.optional(),
 });

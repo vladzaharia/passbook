@@ -20,6 +20,7 @@ import {
 } from './persist.ts';
 import { type CompositeTemplateRegistry, r2Key } from './registry.ts';
 import { getOrgName, type TemplateRow, type VersionRow } from './repo.ts';
+import type { ForkLineage } from './repo-forks.ts';
 import { loadTemplate } from './service.ts';
 
 export const cloneSourceOptions = { useOrgForGlobalOnly: true } as const;
@@ -74,6 +75,7 @@ type CloneVersionArgs = {
   template: ResolvedTemplate;
   sourceVersion: VersionRow | null;
   sourceFence: NonNullable<CommitArgs['source']>;
+  lineage: ForkLineage;
   assertSource: () => Promise<void>;
   assertCloneAuthority: () => Promise<void>;
 };
@@ -87,6 +89,7 @@ export async function commitClonedVersion(
     template,
     sourceVersion,
     sourceFence,
+    lineage,
     assertSource,
     assertCloneAuthority,
   }: CloneVersionArgs,
@@ -122,6 +125,7 @@ export async function commitClonedVersion(
       createdBy,
       authorities: [authority],
       source: sourceFence,
+      lineage,
       ...(clone.source.blueprint ? { sourceBlueprint: clone.source.id } : {}),
       body: {
         version,

@@ -5,7 +5,7 @@
     {
       "altText": "SAVE-0001",
       "format": "PKBarcodeFormatPDF417",
-      "message": "SAVE-0001",
+      "message": "SNAPSHOT-SCAN-CODE",
       "messageEncoding": "iso-8859-1"
     }
   ],

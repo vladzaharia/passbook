@@ -72,4 +72,6 @@ export interface ScanDeps {
   wipe(): void;
   clock: ClockPort;
   ids: { id(): string };
+  /** The pinned direction of a Both scanner; each act sent keeps the pin alive. */
+  pin?: { get(): 'in' | 'out' | null; touch(): void };
 }

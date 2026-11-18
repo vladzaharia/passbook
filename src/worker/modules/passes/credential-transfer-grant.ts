@@ -28,6 +28,7 @@ const START_TABLES = [
   'pass_personalizations',
   'registrations',
   'bundle_passes',
+  'tag_bindings',
   'outbox',
   'pass_token_seals',
 ];

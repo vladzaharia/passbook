@@ -15,6 +15,7 @@ import {
   getRelease,
 } from '../templates/repo-releases.ts';
 import type { WalletCredentialKeysetProof } from './instance-types.ts';
+import { publishableSchema } from './projection-contract.ts';
 import {
   captureProjectionProof,
   changed,
@@ -23,8 +24,10 @@ import {
   pinProjectionContext,
   releaseDto,
   requireProjectionProof,
+  schemaRefused,
   scopedCandidate,
   scopedTemplate,
+  storeReleaseArt,
 } from './projection-service-support.ts';
 import {
   insertProjectionReleaseStmt,
@@ -54,11 +57,14 @@ async function publish(
   const db = ctx.env.DB;
   const head = await getLatestRelease(db, scope);
   if ((head?.generation ?? 0) !== expectedGeneration) throw changed();
+  if (!publishableSchema(candidate.provider, candidate.projection.schema))
+    throw schemaRefused(candidate.provider);
   if (
-    candidate.provider !== 'samsung' ||
+    candidate.provider === 'samsung' &&
     !(await ensureSamsungProjectionEvidence(ctx, candidate.id, candidate.candidateHash, proof))
   )
     throw changed();
+  await storeReleaseArt(ctx, candidate, action === 'rollback' ? 'carry' : 'exact');
   const id = ctx.ids.id();
   const results = await batch(db, [
     insertProjectionReleaseStmt(db, {
@@ -157,6 +163,7 @@ export async function rollbackProjectionRelease(
     target.candidateId,
     body.candidateHash,
     proof,
+    'carry',
   );
   const approval = await getApproval(ctx.env.DB, target.approvalId);
   if (!approval) throw changed();

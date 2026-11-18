@@ -1,0 +1,100 @@
+import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
+import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
+import type { ScanApi } from '../api/scan-api.ts';
+import type { MachineEvent } from '../machine/access-events.ts';
+import type { Counts } from '../machine/types.ts';
+import type { ScanRuntime } from '../platform/runtime.ts';
+import { CountChip, PlaceChip } from './chips.tsx';
+import { DirectionChip } from './direction-chip.tsx';
+import { DirectionSheet } from './direction-sheet.tsx';
+import { isDeskRole, trackedPlace } from './place.ts';
+import { useDirectionPin } from './use-direction-pin.ts';
+
+const InsideHost = lazy(() => import('../inside/inside-host.tsx'));
+
+type Sheet = 'direction' | 'inside' | null;
+
+/**
+ * Access and occupancy in the scanner's loop: the direction chip and sheet, the count chip of a
+ * tracked place, and Who's in for Desk scanners. Opening a sheet raises the machine's overlay (the
+ * scanner holds still); a scan result, which clears the overlay, closes it.
+ */
+export function useAccessUi({
+  runtime,
+  session,
+  api,
+  counts,
+  online,
+  overlay,
+  dispatch,
+}: {
+  runtime: ScanRuntime;
+  session: ScanSession;
+  api: ScanApi;
+  counts: Counts;
+  online: boolean;
+  overlay: string | null;
+  dispatch: (event: MachineEvent) => void;
+}): {
+  chips: ReactNode;
+  inside: { count: number; onOpen: () => void } | undefined;
+  layer: ReactNode;
+} {
+  const pin = useDirectionPin(runtime.pin);
+  const [sheet, setSheet] = useState<Sheet>(null);
+  useEffect(() => {
+    if (overlay === null) setSheet(null);
+  }, [overlay]);
+  const show = (next: Sheet) => {
+    setSheet(next);
+    dispatch({
+      type: 'overlay',
+      open: next === null ? null : next === 'inside' ? 'recent' : 'settings',
+    });
+  };
+  const place = trackedPlace(counts, session.event);
+  const setting = session.scanner?.settings.direction ?? 'in';
+  const deskInside = place !== null && isDeskRole(session);
+  const chips = place ? (
+    <>
+      <DirectionChip setting={setting} pin={pin} onOpen={() => show('direction')} />
+      <PlaceChip name={place.name} inNow={place.inNow} capacity={place.capacity} />
+    </>
+  ) : (
+    <CountChip
+      count={counts.event?.arrived ?? counts.today}
+      capacity={counts.event?.expected}
+      today={!counts.event}
+    />
+  );
+  const layer = (
+    <>
+      <DirectionSheet
+        open={sheet === 'direction'}
+        pin={pin}
+        onPick={(direction) => runtime.pin.set(direction)}
+        onClose={() => show(null)}
+      />
+      {deskInside ? (
+        <Suspense fallback={null}>
+          <InsideHost
+            api={api}
+            open={sheet === 'inside'}
+            online={online}
+            onClose={() => show(null)}
+            onOpenRow={(row) => {
+              show(null);
+              runtime.emit({ method: 'manual', passId: row.passId });
+            }}
+            onFail={(info) => dispatch({ type: 'fail', key: '', ...info })}
+          />
+        </Suspense>
+      ) : null}
+    </>
+  );
+  return {
+    chips,
+    inside: deskInside && place ? { count: place.inNow, onOpen: () => show('inside') } : undefined,
+    layer,
+  };
+}

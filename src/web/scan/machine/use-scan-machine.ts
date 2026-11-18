@@ -1,8 +1,9 @@
 /** `useScanMachine()` (C10): the state, the view and `dispatch` of the store in context. */
 import { createContext, useContext, useSyncExternalStore } from 'react';
+import type { MachineEvent } from './access-events.ts';
 import type { ScanView } from './present.ts';
 import type { ScanStore } from './store.ts';
-import type { ScanEvent, ScanState } from './types.ts';
+import type { ScanState } from './types.ts';
 
 export const ScanStoreContext = createContext<ScanStore | null>(null);
 
@@ -11,7 +12,7 @@ export interface ScanMachine {
   view: ScanView;
   /** The store clock at the last change, for hints that depend on elapsed time. */
   now: number;
-  dispatch: (event: ScanEvent) => void;
+  dispatch: (event: MachineEvent) => void;
 }
 
 export function useScanMachine(): ScanMachine {

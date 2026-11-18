@@ -3,6 +3,7 @@ import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { assertTemplateAuthority } from './access.ts';
 import { putVersionAsset } from './asset-storage.ts';
+import { editLineage } from './fork-edit.ts';
 import type { ImportParams } from './import-pipeline.ts';
 import {
   assertStageAuthority,
@@ -57,6 +58,9 @@ export async function persistAuthorizedStage(
     await assertWritable();
     await putVersionAsset(ctx, r2Key(p.orgId, plan.templateId, a.version, 'tooling.json'), tooling);
   }
+  const { lineage } = plan.isNew
+    ? { lineage: undefined }
+    : await editLineage(ctx, plan.templateId, undefined);
   const committed = await commitVersion(ctx, {
     plan,
     orgId: p.orgId,
@@ -67,6 +71,7 @@ export async function persistAuthorizedStage(
     guardActive: true,
     deferred: true,
     authorities: [authority],
+    ...(lineage ? { lineage } : {}),
     importSource: { uploadId: p.uploadId, orgId: p.orgId, objectKey: p.objectKey, createdBy },
     body: {
       version: a.version,
