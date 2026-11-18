@@ -11,7 +11,6 @@ import { type DesignDoc, type Dict, isRecord } from '../../model.ts';
 
 export const MAX_ACTIONS = 6;
 export const MAX_FLAGS = 4;
-export const LABEL_MAX = 24;
 
 export const KINDS: readonly { value: ScanActionKind; label: string; hint: string }[] = [
   { value: 'check_in', label: 'Check in', hint: 'Let someone in or log a visit.' },
