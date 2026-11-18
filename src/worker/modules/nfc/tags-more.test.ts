@@ -56,7 +56,7 @@ async function secondPass(ownerId: string | null) {
     'SELECT primary_email FROM users WHERE id = ?',
     [ownerId],
   );
-  const pass = await f.kit.scanPass(f.tpl, {}, { holderEmail: owner?.primary_email ?? null });
+  const pass = await f.kit.scanPass(f.tpl, {}, { holderEmail: owner?.primary_email });
   await run(db(), 'UPDATE passes SET owner_user_id = ? WHERE id = ?', [ownerId, pass.id]);
   return pass;
 }

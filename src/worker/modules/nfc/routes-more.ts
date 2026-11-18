@@ -5,10 +5,10 @@ import {
   ChangeTagBindingSchema,
   RebindTagSchema,
   TagHistorySchema,
-  TagSchema,
   UserTagListQuerySchema,
   UserTagListSchema,
-} from '../../../shared/contracts/nfc-tags.ts';
+} from '../../../shared/contracts/nfc-tag-admin.ts';
+import { TagSchema } from '../../../shared/contracts/nfc-tags.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';

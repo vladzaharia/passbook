@@ -1,10 +1,10 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
 import { IdSchema, pageOf } from '../../../shared/contracts/common.ts';
+import { TagScannerQuerySchema } from '../../../shared/contracts/nfc-tag-admin.ts';
 import {
   CreateTagEnrollmentSchema,
   TagEnrollmentSchema,
-  TagScannerQuerySchema,
   TagScannerSchema,
 } from '../../../shared/contracts/nfc-tags.ts';
 import type { AppBindings } from '../../platform/context.ts';

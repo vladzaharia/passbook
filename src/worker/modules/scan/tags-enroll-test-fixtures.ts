@@ -66,6 +66,8 @@ export async function enrollFixture() {
   const outsiderUser = await makeUser(kit.fx);
   const outsider = {
     user: outsiderUser,
+    /** No membership: the shape of a member, for helpers that take either. */
+    membershipId: '',
     headers: (await makeSession(kit.fx, { userId: outsiderUser.id, roles: ['user'] })).headers,
   };
   const other = await makeOrg(kit.fx);

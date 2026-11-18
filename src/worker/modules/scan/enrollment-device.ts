@@ -1,9 +1,6 @@
 import type { z } from 'zod';
-import type {
-  ScanTagEnrollmentDoneSchema,
-  ScanTagEnrollmentSchema,
-  TagRead,
-} from '../../../shared/contracts/nfc-tags.ts';
+import type { ScanTagEnrollmentDoneSchema } from '../../../shared/contracts/nfc-tag-admin.ts';
+import type { ScanTagEnrollmentSchema, TagRead } from '../../../shared/contracts/nfc-tags.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
 import { gt } from '../../platform/authority-expr.ts';
