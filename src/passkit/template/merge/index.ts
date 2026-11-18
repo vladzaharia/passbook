@@ -7,9 +7,10 @@ export type {
   MergeResult,
   PackageDoc,
   PartId,
+  RefKind,
   Rename,
   RenameKind,
   Resolution,
 } from './types.ts';
 export { MERGE_ENGINE_REVISION } from './types.ts';
-export { type Step, UPGRADERS, type Upgraders, upgrade } from './versions.ts';
+export { type Step, type StepDoc, UPGRADERS, type Upgraders, upgrade } from './versions.ts';
