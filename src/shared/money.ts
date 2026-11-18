@@ -1,5 +1,15 @@
 /** Money is counted in integer minor units (cents); a stored amount stays a plain number of major units. */
 
+/** The codes a picker leads with. */
+export const COMMON_CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'SEK'];
+
+/** Common codes first, then every ISO code the runtime's money formatting knows; no duplicates. */
+export function currencyOptions(): string[] {
+  const known =
+    typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('currency') : [];
+  return [...new Set([...COMMON_CURRENCIES, ...known])];
+}
+
 /** Minor digits of a currency (USD 2, JPY 0, BHD 3). No or unknown currency: 2. */
 export function minorDigits(currency?: string | null): number {
   if (!currency) return 2;

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { fromMinor, minorDigits, parseMoney, toMinor } from './money.ts';
+import {
+  COMMON_CURRENCIES,
+  currencyOptions,
+  fromMinor,
+  minorDigits,
+  parseMoney,
+  toMinor,
+} from './money.ts';
 
 describe('money', () => {
   it('knows the minor digits of a currency', () => {
@@ -25,5 +32,15 @@ describe('money', () => {
     expect(parseMoney('', 2)).toEqual({ error: 'format' });
     expect(parseMoney('4a', 2)).toEqual({ error: 'format' });
     expect(parseMoney('-1', 2)).toEqual({ error: 'format' });
+  });
+});
+
+describe('currencyOptions', () => {
+  it('leads with the common codes, has no duplicates and only ISO codes', () => {
+    const options = currencyOptions();
+    expect(options.slice(0, COMMON_CURRENCIES.length)).toEqual(COMMON_CURRENCIES);
+    expect(new Set(options).size).toBe(options.length);
+    expect(options.every((c) => /^[A-Z]{3}$/.test(c))).toBe(true);
+    expect(options).toContain('NOK');
   });
 });
