@@ -16,6 +16,8 @@ import {
   sectionLabel,
   styleOf,
 } from './model.ts';
+import { ActionsSection } from './scan/actions/actions-section.tsx';
+import { readActions } from './scan/actions/model.ts';
 import { BarcodeSection } from './section-barcode.tsx';
 import { ColorsSection } from './section-colors.tsx';
 import { FieldsSection } from './section-fields.tsx';
@@ -124,6 +126,9 @@ export function Outline() {
         </Disclosure>
         <Disclosure section="access" index={next()} count={readAccess(doc)?.plans.length}>
           <AccessSection />
+        </Disclosure>
+        <Disclosure section="scan-actions" index={next()} count={readActions(doc).length}>
+          <ActionsSection />
         </Disclosure>
         <Disclosure section="relevance" index={next()} count={listCount(doc)}>
           <RelevanceSection />

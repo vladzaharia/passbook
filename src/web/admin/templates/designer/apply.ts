@@ -31,6 +31,7 @@ import {
   setStyle,
   updateField,
 } from './ops-pass.ts';
+import { type ActionsOp, applyActionsOp } from './scan/actions/ops.ts';
 import { setLookupInput } from './scan/lookup.ts';
 import { applyScanOp, type ScanOp } from './scan/ops-scan.ts';
 import {
@@ -74,6 +75,7 @@ export type Op =
   | { op: 'stamps-art'; slot: ArtSlot; asset: DraftAsset | null }
   | { op: 'stamps-input'; input: string }
   | ScanOp
+  | ActionsOp
   | AccessOp;
 
 export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
@@ -140,6 +142,15 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
       return setArt(doc, o.slot, o.asset);
     case 'stamps-input':
       return setStampsInput(doc, o.input);
+    case 'scan-enable':
+    case 'scan-action-add':
+    case 'scan-action-set':
+    case 'scan-action-kind':
+    case 'scan-action-remove':
+    case 'scan-action-move':
+    case 'scan-window':
+    case 'scan-flags':
+      return applyActionsOp(doc, o);
     case 'access-enable':
     case 'access-disable':
     case 'access-plan-add':
