@@ -115,9 +115,11 @@ export async function createPassIdempotent(
   key: string | undefined,
   options: { serverResolvedRelease?: boolean } = {},
 ) {
-  // A replay returns the pass behind a key; a public join link never gets another visitor's card.
-  if (input.execution?.kind === 'join') throw new ForbiddenError();
   const p = structuredClone(input);
+  // Validates the execution first (a missing or unknown one is refused there), then keeps join out: a
+  // replay returns the pass behind a key, and a public join link never gets another visitor's card.
+  await assertTenantCreateAuthority(ctx, p);
+  if (p.execution.kind === 'join') throw new ForbiddenError();
   const credentialCtx = snapshotCredentialContext(ctx);
   if (!key) return issuanceDetail(ctx, p, await createPassFromSnapshot(ctx, p, credentialCtx));
   if (p.reservedPassId !== undefined)
