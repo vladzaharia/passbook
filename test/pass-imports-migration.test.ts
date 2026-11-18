@@ -1,0 +1,86 @@
+import { env } from 'cloudflare:workers';
+import { describe, expect, it } from 'vitest';
+import { GUARDED_TABLES } from '../src/worker/platform/authority-tables.ts';
+import { all, first, run } from '../src/worker/platform/db.ts';
+
+const migration = env.TEST_MIGRATIONS.find((m) => m.name.endsWith('_pass_imports.sql'));
+const start = (kind: string, id: string, commitment: string | null = null) =>
+  run(
+    env.DB,
+    `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at, credential_keyset_commitment)
+     VALUES (?, ?, NULL, NULL, 'queued', 1, ?)`,
+    [id, kind, commitment],
+  );
+
+describe('pass imports migration', () => {
+  it('creates the three tables and guards them', async () => {
+    const names = (
+      await all<{ name: string }>(env.DB, "SELECT name FROM sqlite_master WHERE type = 'table'")
+    ).map((r) => r.name);
+    for (const t of ['pass_imports', 'pass_import_rows', 'pass_import_mappings']) {
+      expect(names).toContain(t);
+      expect(GUARDED_TABLES[t], t).toBeDefined();
+    }
+  });
+
+  it('accepts the pass_import workflow kind and still refuses others', async () => {
+    await start('pass_import', 'pass-import-1');
+    await expect(start('bogus', 'x')).rejects.toThrow(/CHECK constraint failed/);
+  });
+
+  it('allows one committing import per org, mode and template', async () => {
+    const insert = (id: string, state: string) =>
+      run(
+        env.DB,
+        `INSERT INTO pass_imports (id, org_id, mode, template_id, source_kind, source_name, state, created_by, created_at, expires_at)
+         VALUES (?, ?, 'live', 't1', 'file', 'a.csv', ?, 'u', 1, 2)`,
+        [id, 'org-imp', state],
+      );
+    await run(
+      env.DB,
+      "INSERT INTO orgs (id, slug, name, status, created_at, updated_at) VALUES ('org-imp', 'org-imp', 'O', 'active', 1, 1)",
+    );
+    await insert('i1', 'committing');
+    await expect(insert('i2', 'committing')).rejects.toThrow(/UNIQUE/);
+    await insert('i3', 'ready');
+    await insert('i4', 'done');
+  });
+
+  it('keeps workflow runs, their snapshot sets and the key-commitment lock across the rebuild', async () => {
+    const commitment = 'a'.repeat(64);
+    await start('bulk_reissue', 'wr-keep', commitment);
+    await run(
+      env.DB,
+      "INSERT INTO workflow_release_snapshot_sets (instance_id) VALUES ('wr-keep')",
+    );
+    const rebuild = (migration?.queries ?? []).slice(
+      (migration?.queries ?? []).findIndex((q) => q.includes('_keep_workflow_runs AS')),
+    );
+    expect(rebuild.length).toBeGreaterThan(5);
+    for (const query of rebuild) await env.DB.prepare(query).run();
+
+    expect(
+      await first(
+        env.DB,
+        "SELECT kind, credential_keyset_commitment AS c FROM workflow_runs WHERE instance_id = 'wr-keep'",
+      ),
+    ).toEqual({ kind: 'bulk_reissue', c: commitment });
+    expect(
+      await first(
+        env.DB,
+        "SELECT instance_id FROM workflow_release_snapshot_sets WHERE instance_id = 'wr-keep'",
+      ),
+    ).toEqual({ instance_id: 'wr-keep' });
+    await expect(
+      run(
+        env.DB,
+        "UPDATE workflow_runs SET credential_keyset_commitment = NULL WHERE instance_id = 'wr-keep'",
+      ),
+    ).rejects.toThrow(/immutable/);
+    const left = await all<{ name: string }>(
+      env.DB,
+      "SELECT name FROM sqlite_master WHERE name LIKE '\\_keep%' ESCAPE '\\'",
+    );
+    expect(left).toEqual([]);
+  });
+});
