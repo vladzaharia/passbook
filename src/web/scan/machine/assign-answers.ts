@@ -257,16 +257,16 @@ export function failed(s: MachineState, ev: Of<'assign.failed'>, env: Env): Out 
       env,
       refuse,
     );
-  if (code === 'TAG_REQUEST_EXPIRED' || (busy === 'complete' && ev.status === 404))
-    return out(
-      {
-        ...s,
-        assign: null,
-        assignStrip: { kind: 'requestTimedOut', at: env.now },
-        tagRequest: null,
-      },
-      refuse,
-    );
+  const over = (kind: 'requestTimedOut' | 'adminCancelled'): Out =>
+    out({ ...s, assign: null, assignStrip: { kind, at: env.now }, tagRequest: null }, refuse);
+  // The admin lost the right to ask: the request is over, the scanner stays paired.
+  if (code === 'TAG_REQUEST_REVOKED') return over('adminCancelled');
+  if (
+    code === 'TAG_REQUEST_EXPIRED' ||
+    code === 'ENROLLMENT_ENDED' ||
+    (busy === 'complete' && ev.status === 404)
+  )
+    return over('requestTimedOut');
   switch (code) {
     case 'TAG_LOST':
       return error({ kind: 'lost' });

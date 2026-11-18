@@ -26,7 +26,12 @@ function boot(online = true) {
     ),
     undo: vi.fn(async () => undefined),
     pending: vi.fn(async () => null),
-    complete: vi.fn(async () => bindResultOf({ status: 'bound', bindingId: 'b2' })),
+    complete: vi.fn(async () => ({
+      status: 'done' as const,
+      hint: 'F7A1',
+      scope: 'pass' as const,
+      bindingId: 'b2',
+    })),
     decline: vi.fn(async () => undefined),
   } satisfies TagsPort;
   const store = createScanStore({ ...fake.deps, tags }, {
@@ -138,6 +143,13 @@ describe('assign over the ports', () => {
       { tag: tagOf() },
       expect.anything(),
     );
-    expect(assignOf(store.getSnapshot().state)?.step).toBe('done');
+    const a = assignOf(store.getSnapshot().state);
+    // The device's answer has no card: the done card reads the names off the request.
+    expect(a?.step).toBe('done');
+    expect(a?.result).toMatchObject({
+      bindingId: 'b2',
+      hint: 'F7A1',
+      card: { holderName: 'Maya Okafor', title: 'Gym' },
+    });
   });
 });

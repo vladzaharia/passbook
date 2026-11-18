@@ -65,12 +65,32 @@ describe('device socket', () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
     s?.onmessage?.({ data: JSON.stringify({ enroll: { id: 'e1', expiresAt: 5 } }) });
     s?.onmessage?.({ data: JSON.stringify({ enroll: { id: 'e1', cancelled: true } }) });
-    s?.onmessage?.({ data: JSON.stringify({ control: {} }) });
+    s?.onmessage?.({ data: JSON.stringify({ control: 'reset' }) });
+    s?.onmessage?.({
+      data: JSON.stringify({
+        resolved: {
+          of: '01900000-0000-7000-8000-000000000009',
+          outcome: 'ok',
+          by: { staff: 'Sam K.', device: 'Desk 1' },
+        },
+      }),
+    });
     s?.onmessage?.({ data: 'not json' });
     s?.onmessage?.({ data: new ArrayBuffer(2) });
     expect(onNudge.mock.calls).toEqual([
       [{ kind: 'enroll', id: 'e1' }],
       [{ kind: 'cancelled', id: 'e1' }],
+      [{ kind: 'reset' }],
+      [
+        {
+          kind: 'resolved',
+          resolved: {
+            of: '01900000-0000-7000-8000-000000000009',
+            outcome: 'ok',
+            by: { staff: 'Sam K.', device: 'Desk 1' },
+          },
+        },
+      ],
     ]);
   });
 

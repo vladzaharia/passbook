@@ -116,6 +116,17 @@ export function useTagUi({
     enabled: device && reader.kind !== 'none' && s.started && s.block === null,
     showing: a?.request?.id ?? null,
     dispatch,
+    onResolved: (r) => {
+      // The desk's override turns the refused card in place: the card the door kept, now granted.
+      const row = s.recent.find((x) => x.scanId === r.of);
+      if (!row) return;
+      dispatch({
+        type: 'resolved',
+        of: r.of,
+        outcome: { ...row.outcome, kind: r.outcome, reason: null, undoUntil: null },
+        by: r.by,
+      });
+    },
   });
 
   // The request's last 30 seconds are announced once, the end by the machine.

@@ -184,6 +184,19 @@ describe('completing and ending a request', () => {
     expect(assignOf(t.state)?.source).toBe('menu');
   });
 
+  it.each([
+    ['TAG_REQUEST_REVOKED', 'adminCancelled'],
+    ['ENROLLMENT_ENDED', 'requestTimedOut'],
+    ['ENROLLMENT_NOT_FOUND', 'requestTimedOut'],
+  ] as const)('%s ends the request with %s and keeps the scanner running', (code, kind) => {
+    const r = run(arrived(), [100, tagReadEvent()]);
+    const { key } = assignCmd(r.cmds, 'enroll.complete');
+    const status = code === 'ENROLLMENT_NOT_FOUND' ? 404 : 409;
+    const f = step(r.state, { type: 'assign.failed', key, code, status, network: false }, at(200));
+    expect(assignOf(f.state)).toBeNull();
+    expect(stripOfAssign(f.state)?.kind).toBe(kind);
+  });
+
   it('never opens on a blocked or offline scanner', () => {
     const blocked = step(
       { ...idle(), block: 'revoked' },

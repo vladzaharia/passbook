@@ -154,7 +154,13 @@ export function assignRead(s: MachineState, input: ScanInput, env: Env): Out {
       );
     const key = env.id();
     if (a.source === 'request' && a.request) {
-      const cmd: AssignCmd = { c: 'enroll.complete', key, id: a.request.id, tag };
+      const cmd: AssignCmd = {
+        c: 'enroll.complete',
+        key,
+        id: a.request.id,
+        tag,
+        request: a.request,
+      };
       return put(s, { ...next, key, busy: 'complete', retry: cmd }, env, [
         { c: 'beat', beat: 'look' },
         { c: 'announce', text: 'Tag read.', polite: true },

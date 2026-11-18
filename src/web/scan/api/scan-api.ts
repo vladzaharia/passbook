@@ -6,6 +6,7 @@
  * 429 must surface its `Retry-After`.
  */
 import type { z } from 'zod';
+import { ScanTagEnrollmentDoneSchema } from '../../../shared/contracts/nfc-tag-admin.ts';
 import {
   ScanTagBindResultSchema,
   ScanTagEnrollmentPendingSchema,
@@ -313,7 +314,7 @@ export function createScanApi(deps: ScanApiDeps) {
       request(
         'POST',
         `/tag-enrollments/${encodeURIComponent(id)}/complete`,
-        ScanTagBindResultSchema,
+        ScanTagEnrollmentDoneSchema,
         body,
         call,
       ),

@@ -5,15 +5,24 @@
  * back-off, and every open is a reason to read `pending` again.
  */
 import { z } from 'zod';
+import { ScanLiveResolvedSchema } from '../../../shared/contracts/scan-setups.ts';
 
-const Message = z.object({
+const Enroll = z.object({
   enroll: z.object({
     id: z.string().min(1).max(100),
     expiresAt: z.number().optional(),
     cancelled: z.boolean().optional(),
   }),
 });
-export type DeviceNudge = { kind: 'enroll'; id: string } | { kind: 'cancelled'; id: string };
+const Resolved = z.object({ resolved: ScanLiveResolvedSchema });
+const Control = z.object({ control: z.literal('reset') });
+export type DeviceNudge =
+  | { kind: 'enroll'; id: string }
+  | { kind: 'cancelled'; id: string }
+  /** A desk let the person in whom this door refused (WP-G). */
+  | { kind: 'resolved'; resolved: z.infer<typeof ScanLiveResolvedSchema> }
+  /** The hub reset the device: read the request again. */
+  | { kind: 'reset' };
 
 interface SocketLike {
   onopen: (() => void) | null;
@@ -77,10 +86,15 @@ export function connectDeviceSocket(deps: DeviceSocketDeps): { close(): void } {
       } catch {
         return;
       }
-      const parsed = Message.safeParse(json);
-      if (!parsed.success) return;
-      const { id, cancelled } = parsed.data.enroll;
-      deps.onNudge({ kind: cancelled ? 'cancelled' : 'enroll', id });
+      const enroll = Enroll.safeParse(json);
+      if (enroll.success) {
+        const { id, cancelled } = enroll.data.enroll;
+        deps.onNudge({ kind: cancelled ? 'cancelled' : 'enroll', id });
+        return;
+      }
+      const resolved = Resolved.safeParse(json);
+      if (resolved.success) deps.onNudge({ kind: 'resolved', resolved: resolved.data.resolved });
+      else if (Control.safeParse(json).success) deps.onNudge({ kind: 'reset' });
     };
     s.onclose = () => {
       stopPing();

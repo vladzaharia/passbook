@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import type { TagEnrollment } from '../assign/types.ts';
 import type { MachineEvent } from '../machine/access-events.ts';
-import { connectDeviceSocket, deviceSocketUrl } from './device-socket.ts';
+import { connectDeviceSocket, type DeviceNudge, deviceSocketUrl } from './device-socket.ts';
+
+export type ResolvedMessage = Extract<DeviceNudge, { kind: 'resolved' }>['resolved'];
 
 export interface EnrollSource {
   pending(o: { signal: AbortSignal }): Promise<TagEnrollment | null>;
@@ -17,12 +19,16 @@ export function useEnrollment({
   enabled,
   showing,
   dispatch,
+  onResolved,
 }: {
   api: EnrollSource;
   enabled: boolean;
   showing: string | null;
   dispatch: (event: MachineEvent) => void;
+  onResolved: (resolved: ResolvedMessage) => void;
 }): void {
+  const resolved = useRef(onResolved);
+  resolved.current = onResolved;
   const current = useRef(showing);
   current.current = showing;
   useEffect(() => {
@@ -49,6 +55,7 @@ export function useEnrollment({
       onOpen: read,
       onNudge: (nudge) => {
         if (nudge.kind === 'cancelled') dispatch({ type: 'enroll.cancelled', id: nudge.id });
+        else if (nudge.kind === 'resolved') resolved.current(nudge.resolved);
         else read();
       },
     });

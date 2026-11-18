@@ -2,6 +2,8 @@
  * The command runner: executes what the reducer asks for over the injected ports, and feeds the
  * results back as events. It owns the in-flight requests, their timeouts and the unsure retries.
  */
+
+import { doneResult } from '../assign/enroll-result.ts';
 import type { ScanInput } from '../input/types.ts';
 import { SCAN_TIMING } from '../timing.ts';
 import type { DirectionDraft, MachineEvent } from './access-events.ts';
@@ -52,7 +54,6 @@ function directionOf(
 export function createRunner(deps: ScanDeps, host: Host) {
   /** Requests on the wire, by key. */
   const inflight = new Set<string>();
-  /** The request behind an unsure entry, kept so a retry resends the same body. */
   const bodies = new Map<string, { wire: Wire; draft: Draft }>();
   let persisted: UnsureRow[] | null = null;
 
@@ -187,9 +188,13 @@ export function createRunner(deps: ScanDeps, host: Host) {
           : cmd.c === 'assign.undo'
             ? tags.undo(cmd.bindingId, o).then(() => host.dispatch({ type: 'assign.undone', key }))
             : cmd.c === 'enroll.complete'
-              ? tags
-                  .complete(cmd.id, { tag: cmd.tag }, o)
-                  .then((result) => host.dispatch({ type: 'assign.bound', key, result }))
+              ? tags.complete(cmd.id, { tag: cmd.tag }, o).then((done) =>
+                  host.dispatch({
+                    type: 'assign.bound',
+                    key,
+                    result: doneResult(done, cmd.request),
+                  }),
+                )
               : tags.decline(cmd.id, o);
     call.then(
       () => {

@@ -171,7 +171,7 @@ export type AssignCmd =
   | { c: 'assign.inspect'; key: string; tag: TagRead }
   | { c: 'assign.bind'; key: string; body: BindBodyIn }
   | { c: 'assign.undo'; key: string; bindingId: string }
-  | { c: 'enroll.complete'; key: string; id: string; tag: TagRead }
+  | { c: 'enroll.complete'; key: string; id: string; tag: TagRead; request: TagEnrollment }
   | { c: 'enroll.decline'; id: string };
 
 /** What the bind command carries: the whole request but its idempotency key, which is `key`. */
