@@ -79,6 +79,7 @@ describe('app shell', () => {
       '/p/{token}',
       '/p/{token}/wallet/{provider}',
       '/p/wallet/samsung/{offer}',
+      '/w/i/{file}',
       '/wallet/v1/google/{accountId}',
       '/wallet/v1/samsung/cards/{cardId}/{refId}',
       '/api/v1/wallet-providers/accounts',

@@ -34,6 +34,7 @@ import { statusRoutes } from './modules/status/routes.ts';
 import { templatesRoutes } from './modules/templates/routes.ts';
 import { usersRoutes } from './modules/users/routes.ts';
 import { walletProviderAccountRoutes } from './modules/wallet-providers/routes-accounts.ts';
+import { walletImageRoutes } from './modules/wallet-providers/routes-assets.ts';
 import { samsungCallbackRoutes } from './modules/wallet-providers/routes-callbacks.ts';
 import { googleCallbackRoutes } from './modules/wallet-providers/routes-google-callbacks.ts';
 import { walletOfferRoutes } from './modules/wallet-providers/routes-offers.ts';
@@ -56,7 +57,7 @@ export interface AppOptions {
 }
 
 /** Paths only the Worker answers: an unknown one is a 404, never the SPA. */
-const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|hooks|assets|health)(?:\/|$)/;
+const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|w|hooks|assets|health)(?:\/|$)/;
 
 /**
  * Every other GET is one of the SPA's pages, served from static assets as the asset layer would
@@ -148,6 +149,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/wallet/v1/samsung', samsungCallbackRoutes);
   app.route('/wallet/v1', appleRoutes);
   app.route('/p', walletOfferRoutes);
+  app.route('/w/i', walletImageRoutes);
   app.route('/p', publicRoutes);
   app.route('/b', bundlePublicRoutes);
   app.route('/hooks', hooksRoutes);
