@@ -109,7 +109,7 @@ public final class WebSurface {
                         reply = proxy;
                         ready = true;
                         version = negotiate(sent, json.optJSONArray("versions"));
-                    } else if (sent != version) return;
+                    } else if (sent != version && !(sent == 1 && json.optString("op").equals("stop"))) return;
                     if (ready) listener.command(json);
                 } catch (JSONException exception) {
                     listener.notice("Verifier sent an invalid reader message.");

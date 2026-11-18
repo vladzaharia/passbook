@@ -88,7 +88,7 @@ public final class NfcController {
                 if (result == null && tags) found = readTag(tag, connection, nfcA, current);
             } catch (VasReader.ReadException exception) { failure = exception.code; }
             catch (IOException exception) { failure = "TAP_LOST"; }
-            catch (IllegalArgumentException exception) { failure = "INVALID_RESPONSE"; }
+            catch (RuntimeException exception) { failure = "INVALID_RESPONSE"; }
             finally {
                 if (connection != null) {
                     try { connection.close(); }
@@ -115,7 +115,8 @@ public final class NfcController {
 
     private NdefReader.Tag readTag(Tag tag, IsoDep isoDep, NfcA nfcA, int current) {
         byte[] id = tag.getId();
-        if (id == null || id.length == 0 || !enabled || current != generation) return null;
+        if (id == null || !enabled || current != generation) return null;
+        if (id.length != 4 && id.length != 7 && id.length != 10) throw new IllegalArgumentException("uid length");
         String tech = isoDep != null ? "isodep" : nfcA != null ? "a" : NfcB.get(tag) != null ? "b" : "unknown";
         NdefReader.Ndef ndef = null;
         try {

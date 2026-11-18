@@ -57,11 +57,14 @@ public final class NdefReader {
         return parse(message.toByteArray());
     }
 
+    /** Pages 4..255: the READ page byte wraps beyond that. */
+    static final int MAX_TYPE2_AREA = 1008;
+
     /** Type 2 over NfcA: READ (0x30) returns 16 bytes, four pages. */
     public static Ndef readType2(VasReader.Channel channel) throws IOException {
         byte[] cc = page(channel, 3);
         if (cc == null || (cc[0] & 255) != 0xe1) return null;
-        int area = Math.min((cc[2] & 255) * 8, 4 * 1024);
+        int area = Math.min((cc[2] & 255) * 8, MAX_TYPE2_AREA);
         ByteArrayOutputStream data = new ByteArrayOutputStream();
         int at = 0;
         while (true) {

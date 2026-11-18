@@ -68,6 +68,19 @@ public class NdefReaderTest {
         assertThrows(IOException.class, () -> NdefReader.readType2(command -> { throw new IOException("lost"); }));
     }
 
+    @Test public void type2ReadsNeverAddressPagesPast255() throws Exception {
+        byte[] memory = new byte[1024];
+        System.arraycopy(new byte[] {(byte) 0xe1, 0x10, (byte) 0xff, 0}, 0, memory, 12, 4);
+        System.arraycopy(new byte[] {3, (byte) 0xff, 0x03, (byte) 0xf0}, 0, memory, 16, 4);
+        int[] reads = {0};
+        assertNull(NdefReader.readType2(command -> {
+            reads[0]++;
+            int offset = (command[1] & 255) * 4;
+            return Arrays.copyOfRange(memory, offset, offset + 16);
+        }));
+        assertTrue("reads " + reads[0], reads[0] <= 1 + 252 / 4);
+    }
+
     @Test public void readsType4UriAcrossChunks() throws Exception {
         byte[] message = uriRecord(3, "example.com/a/" + "x".repeat(60));
         NdefReader.Ndef ndef = NdefReader.readType4(type4(message, 16, OK));

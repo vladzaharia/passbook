@@ -211,7 +211,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
 
     @Override public void command(JSONObject json) {
         if (json.optString("op").equals("hello")) {
-            endOneShot(); vasOn = true; tagOn = false;
+            endOneShot(); vasOn = true; tagOn = false; armed = false;
             if (foreground) resumeReader();
             JSONObject ready = message("ready");
             put(ready, "nfc", nfc.available()); put(ready, "ecp", false);
@@ -288,8 +288,11 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         JSONObject event = message("scan");
         put(event, "source", "nfc-tag"); put(event, "tag", read);
         // The gate drops the same tag read again within two seconds.
-        if (deliver(event, fingerprint(data.getBytes(StandardCharsets.UTF_8))) && oneShot != null) {
-            endOneShot(); resumeReader(); reportCapabilities();
+        boolean sent = deliver(event, fingerprint(data.getBytes(StandardCharsets.UTF_8)));
+        if (oneShot != null) {
+            endOneShot();
+            if (!sent) web.send(message("cancelled"));
+            resumeReader(); reportCapabilities();
         }
     }
 
