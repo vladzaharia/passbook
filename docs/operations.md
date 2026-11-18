@@ -285,7 +285,7 @@ is preserved. Steps marked **Owner** are the owner's alone: Cloudflare console, 
 a 0024 database with every template shape and runs the SQL blocks below. Roll forward only. Design:
 `docs/design/authority-epochs.md` §6.
 
-Migrations 0056 to 0064 add no window rule: blueprints (0056), indexes (0057), `scans.session_id` (0058), stateless asset grants (0061: drops `scan_asset_grant_provenance`), scan core (0063: drops the `scanners_credential_revision` trigger), trigger narrowing (0064). 0059 and 0065 (token seals) are one-way: see the window and rollback notes in `authority-epochs.md` 6.2 and 6.3. `scanning_config_revisions` stays: the pre-cutover Worker writes it when a scanning session or device is edited.
+Migrations 0056 to 0064 add no window rule: blueprints (0056), indexes (0057), `scans.session_id` (0058), stateless asset grants (0061: drops `scan_asset_grant_provenance`), scan core (0063: drops the `scanners_credential_revision` trigger), trigger narrowing (0064). 0059 and 0065 (token seals) are one-way: see the window and rollback notes in `authority-epochs.md` 6.2 and 6.3.
 
 Old pass download, bundle and Apple web-service tokens are sealed by the minute cron `tokens.seal` (0059 and 0065, 50 of each a run, id cursors in the settings `tokens.sealCursor` and its `auth` cursor, log codes `TOKEN_SEAL_RUN` and `TOKEN_SEAL_REFUSED`); no owner step. The same run removes the device token from stored `pass_versions.pass_json` (200 a run). A pass waiting on a credential transfer or a test-inbox forward is sealed after it settles; each run logs `remaining` and `unscrubbed`, both zero when done. A forward stuck in `unknown`
 (email outcome unknown) keeps its passes plain, and `remaining` stays above zero, until the

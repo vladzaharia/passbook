@@ -68,8 +68,7 @@ The classification test (`authority-columns.test.ts`) reads `PRAGMA table_info` 
 
 **`updated_at` columns become timestamps.** `orgs`, `templates`, `scanners`, `scan_staff` and `scan_events` keep `updated_at` only as a timestamp. `tools/authority-scope.ts --strict` (part of `check:rules`) fails `updated_at = ?` in worker SQL.
 
-**`scanning_config_revisions` (`0024`, in production; the 0024-era Worker writes it):**
-- `config_epoch` replaces it. Nothing in the current Worker reads or writes it. The table stays for now: the pre-cutover Worker writes it during the migrate to promote window. Drop it one release after cutover.
+**`scanning_config_revisions` (`0024`):** dropped by `0070`. `config_epoch` replaced it.
 
 **Trigger shape.** The passes bump set has about 45 columns. To bound expression depth, it is split into three triggers by column group (`passes_row_version_a`, `_b`, `_c`), because D1 allows expression depth 100.
 
@@ -504,11 +503,11 @@ Roll forward only once migrations have run (owner answer 6). `0059` and `0065` m
 
 The scan and fence rewrite is complete. What is left:
 - Wallet providers stay on column equality (7.3).
-- Drop `scanning_config_revisions` one release after cutover (the pre-cutover Worker writes it during the migrate to promote window).
 - `LEGACY_REVISION_MS` (org status accepts a pre-cutover `updated_at` as a revision): remove one release after cutover.
 
 Done:
 
+- Done: migration `0070` drops `scanning_config_revisions`.
 - Done: `scan/repo-scanner-configuration-scope.ts` is deleted; the workspace observation carries the scanner's `config_epoch`.
 - Done: the balancer, `sql-tokens`, `repo-secret-binds` and the legacy fence families are deleted; migration `0063` drops `scanners_credential_revision`. A scanner's `updated_at` is a label: authority is `credential_epoch`. The live ring's `revision` is an in-memory self-check of one actor snapshot, not a database compare. One credential-loss rule: every scanner path uses `scannerCredentialLost`.
 
