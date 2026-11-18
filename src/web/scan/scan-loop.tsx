@@ -14,6 +14,7 @@ import { useScanMachine } from './machine/use-scan-machine.ts';
 import type { ScanRuntime } from './platform/runtime.ts';
 import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { useNativeCapabilities } from './platform/use-native-capabilities.ts';
+import { useVerdictHaptic } from './platform/use-verdict-haptic.ts';
 import { deskOf, resultOf } from './result/desk.ts';
 import type { PassInspection } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
@@ -97,6 +98,7 @@ export function ScanLoop({
     (s.reader.kind === 'nfc' && nativeCapabilities?.vas.available === true);
   const last = s.recent[0];
   const result: ScanOutcome | null = resultOf(l, counts);
+  useVerdictHaptic(l.s === 'verdict' ? l.outcome : null);
   useEffect(() => {
     if (needsSessionRefetch(session, s) && requestedRev.current !== counts.configRev) {
       requestedRev.current = counts.configRev;
@@ -247,10 +249,11 @@ export function ScanLoop({
                 dispatch({ type: 'overlay', open: 'settings' });
               }}
               phase={s.card.phase}
+              clock={now}
               eventNote={session.event?.note}
               holdMs={l.s === 'verdict' && l.closeAt ? Math.max(0, l.closeAt - l.since) : null}
               onAction={(actionId) => dispatch({ type: 'pick', actionId })}
-              desk={deskOf(l, session.staffList, dispatch)}
+              desk={deskOf(l, session, dispatch)}
               tagRead={'input' in l && Boolean(l.input.tag)}
             />
           ) : l.s === 'paused' ? (
@@ -284,7 +287,7 @@ export function ScanLoop({
             />
           )
         }
-        strip={tags.strip ?? stripOf(last, Boolean(lastUndo))}
+        strip={tags.strip ?? stripOf(last, Boolean(lastUndo), now)}
         announcement={announcement}
         on={{
           start: () => {

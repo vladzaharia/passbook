@@ -45,6 +45,7 @@ export function toDto(
     capacity: row.capacity,
     maxStayMinutes: row.maxStayMinutes,
     clearAt: row.clearAt,
+    hardLimit: row.hardLimit,
     sessions: row.sessions,
     checkedAt,
     plans,

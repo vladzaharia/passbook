@@ -74,7 +74,7 @@ export function SessionAccessFields({
       <section className="grid gap-3 border-t border-border pt-6">
         <SwitchRow
           label="Desk actions"
-          help="Staff sign in here to let people in and mark them out. Full and guest limits ask for a Manager."
+          help="Staff sign in here to let people in and mark them out. Guest limits ask for a Manager."
           checked={draft.deskActions}
           onCheckedChange={(deskActions) => set({ deskActions })}
         />

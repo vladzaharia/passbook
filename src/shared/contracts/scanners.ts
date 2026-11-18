@@ -121,6 +121,8 @@ export const ScanEventSchema = z.object({
   timeZone: z.string(),
   capacity: z.number().int().nullable(),
   reentry: z.boolean(),
+  /** Full is final for every role. Needs a capacity. */
+  hardLimit: z.boolean().optional(),
   /** The staff note. No other display field lives on an event (SA D21). */
   note: NoteSchema.nullable(),
   status: z.enum(['upcoming', 'live', 'ended', 'archived']),
@@ -138,6 +140,7 @@ const eventFields = {
   timeZone: TimeZoneSchema,
   capacity: z.number().int().min(1).nullable().optional(),
   reentry: z.boolean().optional(),
+  hardLimit: z.boolean().optional(),
   note: NoteSchema.nullable().optional(),
 };
 const closesAfterOpens = (v: { opensAt?: number; closesAt?: number }) =>

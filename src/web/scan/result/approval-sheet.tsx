@@ -32,6 +32,7 @@ const noteLine = (note: PinNote | undefined, code: boolean) => {
 export function ApprovalSheet({
   managers,
   code = false,
+  desk = false,
   action,
   note,
   onApprove,
@@ -39,11 +40,14 @@ export function ApprovalSheet({
 }: {
   managers: { id: string; name: string }[];
   code?: boolean;
+  /** Desk staff may approve too. */
+  desk?: boolean;
   action?: string;
   note?: PinNote | undefined;
   onApprove: (staffId: string | undefined, pin: string) => void;
   onCancel: () => void;
 }) {
+  // Nothing is chosen for the person while more than one may approve.
   const [staffId, setStaffId] = useState(managers.length === 1 ? (managers[0]?.id ?? '') : '');
   const [pin, setPin] = useState('');
   const locked = note !== undefined && ('locked' in note || note.triesLeft === 0);
@@ -53,25 +57,31 @@ export function ApprovalSheet({
   }, [note]);
   const error = noteLine(note, code);
   const named = !code && managers.length > 1;
+  // With names on, the PIN is only ever checked against the person chosen.
+  const ready = pin.length === 6 && !locked && (code || staffId !== '');
   return (
     <form
       className="scan-approval"
       data-testid="scan-approval"
       onSubmit={(event) => {
         event.preventDefault();
-        if (pin.length === 6 && !locked) onApprove(code ? undefined : staffId || undefined, pin);
+        if (ready) onApprove(code ? undefined : staffId, pin);
       }}
     >
       {code ? (
         <>
-          <h2 className="scan-picker-title">{SCAN_COPY.managerCode.title}</h2>
+          <h2 className="scan-picker-title">
+            {desk ? SCAN_COPY.managerCode.titleDesk : SCAN_COPY.managerCode.title}
+          </h2>
           <p className="scan-approval-verb">
-            {scanLine(SCAN_COPY.managerCode.verb, { action: action ?? 'This action' })}
+            {scanLine(desk ? SCAN_COPY.managerCode.verbDesk : SCAN_COPY.managerCode.verb, {
+              action: action ?? 'This action',
+            })}
           </p>
         </>
       ) : null}
       {named ? (
-        <FormField label="Manager">
+        <FormField label={desk ? SCAN_COPY.managerCode.approver : 'Manager'}>
           {(p) => (
             <Select
               {...p}
@@ -98,7 +108,7 @@ export function ApprovalSheet({
         <Button type="button" size="lg" variant="outline" onClick={onCancel}>
           {SCAN_COPY.actions.cancel}
         </Button>
-        <Button type="submit" size="lg" disabled={pin.length !== 6 || locked}>
+        <Button type="submit" size="lg" disabled={!ready}>
           {code ? SCAN_COPY.managerCode.continue : 'Approve'}
         </Button>
       </div>

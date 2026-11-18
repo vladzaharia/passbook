@@ -18,6 +18,7 @@ export interface ScanEventRow {
   timeZone: string;
   capacity: number | null;
   reentry: boolean;
+  hardLimit?: boolean;
   note: string | null;
   updatedAt: number;
   archivedAt: number | null;
@@ -35,13 +36,14 @@ interface Raw {
   time_zone: string;
   capacity: number | null;
   reentry: number;
+  hard_limit: number;
   note: string | null;
   updated_at: number;
   archived_at: number | null;
 }
 
 const EVENT_SQL = `SELECT id, org_id, mode, name, match_input, match_values, opens_at, closes_at, time_zone,
-            capacity, reentry, note, updated_at, archived_at
+            capacity, reentry, hard_limit, note, updated_at, archived_at
      FROM scan_events WHERE id = ? AND org_id = ?`;
 
 const toEvent = (r: Raw): ScanEventRow => ({
@@ -56,6 +58,7 @@ const toEvent = (r: Raw): ScanEventRow => ({
   timeZone: r.time_zone,
   capacity: r.capacity,
   reentry: r.reentry === 1,
+  hardLimit: r.hard_limit === 1,
   note: r.note,
   updatedAt: r.updated_at,
   archivedAt: r.archived_at,

@@ -20,39 +20,48 @@ export interface ScanLine {
 
 /** Every verdict line of the scanner. `/scan`, the admin pages and the CSV read this one file. */
 export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> = {
-  not_found: { headline: 'Not found', sub: "This code isn't a pass here." },
+  not_found: { headline: 'Not found', sub: "This code isn't a pass here. Look it up by name." },
   ambiguous: { headline: 'More than one match', sub: 'Look it up by name instead.' },
-  test_pass: { headline: 'Test pass', sub: "Live scanners don't take test passes." },
-  live_pass: { headline: 'Live pass', sub: 'This is a test scanner.' },
-  not_accepted: { headline: 'Not accepted here', sub: "{template} isn't on this scanner." },
-  wrong_event: { headline: 'Wrong event', sub: 'For {event}.' },
-  removed: { headline: 'Removed', sub: 'Removed {date}.' },
-  voided: { headline: 'Voided', sub: 'Voided {date}.' },
-  expired: { headline: 'Expired', sub: 'Ended {date}.' },
-  no_balance: { headline: 'Not enough {unit}', sub: 'Has {have}, needs {need}.' },
+  test_pass: {
+    headline: 'Test pass',
+    sub: "Live scanners don't take test passes. Use a test scanner.",
+  },
+  live_pass: { headline: 'Live pass', sub: 'This is a test scanner. Use a live scanner.' },
+  not_accepted: {
+    headline: 'Not accepted here',
+    sub: "{template} isn't on this scanner. Use another scanner.",
+  },
+  wrong_event: { headline: 'Wrong event', sub: 'This scanner is for {event}, {day}.' },
+  removed: { headline: 'Removed', sub: 'Removed {date}. Ask for a new pass.' },
+  voided: { headline: 'Voided', sub: 'Voided {date}. Ask for a new pass.' },
+  expired: { headline: 'Expired', sub: 'Ended {date}. Ask for a new pass.' },
+  no_balance: { headline: 'Not enough balance', sub: '{have} left. Needs {need}.' },
   card_full: { headline: 'Card is full', sub: 'Redeem the reward first.' },
   managed_elsewhere: {
     headline: 'Set by a connection',
-    sub: '{input} come from {source}. Change them there.',
+    sub: '{input} come from a connection. Change them there.',
   },
   limit_reached: {
     headline: 'Daily limit reached',
-    sub: "This scanner's limit resets at midnight.",
+    sub: "This scanner's limit resets at midnight. Use another scanner.",
   },
-  zone_not_included: { headline: 'Not in plan', sub: "{plan} doesn't include {zone}." },
+  zone_not_included: {
+    headline: 'Not in plan',
+    sub: "{plan} doesn't include {zone}. Ask a manager.",
+  },
   outside_hours: { headline: 'Outside hours', sub: '{plan} opens {when}.' },
-  guest_expired: { headline: 'Guest pass ended', sub: 'Ended {time}.' },
-  guest_visits_used: { headline: 'No visits left', sub: 'All {limit} visits used.' },
-  suspended: { headline: 'Suspended', sub: 'Ask them to see the front desk.' },
+  guest_expired: { headline: 'Guest pass ended', sub: 'Ended {time}. Ask a manager.' },
+  guest_visits_used: { headline: 'No visits left', sub: 'Used {used} of {limit} visits.' },
+  suspended: { headline: 'Suspended', sub: 'Ask a manager.' },
   tag_lost: { headline: 'Tag reported lost', sub: 'Keep it and call security.' },
   tag_not_allowed: { headline: 'Tag not accepted', sub: "This tag isn't accepted here." },
   tag_invalid: { headline: "Tag couldn't be checked", sub: 'Try again or use the card.' },
-  already_done: { headline: 'Already checked in', sub: '{ago} · {scanner}' },
-  cooldown: { headline: '{verb} {ago}', sub: 'Next {noun} in {wait}.' },
-  not_yet_valid: { headline: 'Not open yet', sub: 'Opens {time}.' },
-  ended: { headline: 'Event ended', sub: 'Ended {time}.' },
-  capacity_full: { headline: 'Event full', sub: '{in} of {capacity} in.' },
-  check_required: { headline: '{flag}', sub: 'Then check them in.' },
+  already_done: { headline: 'Already {done}', sub: '{ago} at {scanner}. Check ID.' },
+  cooldown: { headline: 'Just done', sub: '{action} at {time}. Next in {wait}.' },
+  not_yet_valid: { headline: 'Not open yet', sub: 'Opens {day} {time}.' },
+  ended: { headline: '{place} ended', sub: 'Ended {time}.' },
+  capacity_full: { headline: '{place} full', sub: '{in} of {capacity} in.' },
+  check_required: { headline: '{flag}', sub: 'Check it, then tap {action}.' },
   needs_approval: { headline: 'Needs a manager', sub: '{action} is for managers.' },
   stale: { headline: '{input} changed', sub: 'Now {value}. Check it and set again.' },
   in_progress: {
@@ -60,15 +69,15 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
     sub: 'Another scanner has this pass. Scan again in a moment.',
   },
   still_inside: { headline: 'Already in', sub: 'Since {time} · {scanner}' },
-  not_inside: { headline: 'Not tapped in', sub: 'No entry recorded.' },
+  not_inside: { headline: 'Not tapped in', sub: 'No entry recorded. Tap them in first.' },
   choose: { headline: 'Choose an action', sub: 'Pick what to do with this pass.' },
-  network: { headline: 'No connection', sub: "Scan again. It won't count twice." },
-  timeout: { headline: 'No answer', sub: "Scan again. It won't count twice." },
+  network: { headline: 'No connection', sub: 'Not checked. Hold them and scan again.' },
+  timeout: { headline: 'No answer', sub: 'Not checked. Hold them and scan again.' },
   unconfirmed: { headline: 'Not confirmed', sub: "Checking again when you're back online." },
   still_unconfirmed: { headline: 'Still not confirmed', sub: 'Check Recent before trying again.' },
   server: { headline: 'Something went wrong', sub: 'Scan again.' },
   rate_limited: { headline: 'Too many scans', sub: 'Try again in {seconds} s.' },
-  saved_offline: { headline: 'Checked in', sub: 'Saved offline' },
+  saved_offline: { headline: '{action}', sub: 'Saved offline' },
   add_link: { headline: 'Add-to-Wallet link', sub: 'Ask them to open the pass in Wallet.' },
 };
 
@@ -97,8 +106,17 @@ export const SCAN_DISPLAY_COPY = {
 
 /** Refusal sub-lines for a reason whose plan has nothing to say. They never ride a grant. */
 export const SCAN_REASON_VARIANTS = {
-  outside_hours: { noHours: '{plan} has no hours this week.' },
-  zone_not_included: { noZone: '{plan} opens no zone here.' },
+  outside_hours: { noHours: '{plan} has no hours this week. Ask a manager.' },
+  zone_not_included: { noZone: '{plan} opens no zone here. Ask a manager.' },
+  needs_approval: {
+    headline: 'Needs a manager or desk lead',
+    sub: '{action} needs approval.',
+  },
+  already_done: { noPrevious: 'Scanned earlier. Check ID.' },
+  wrong_event: { noEvent: 'This scanner is for a different event.' },
+  not_yet_valid: { noWhen: 'Not open yet. Try again later.' },
+  capacity_full: { noPlace: 'Full', noCapacity: '{in} in.', noCount: 'At capacity.' },
+  ended: { noPlace: 'Ended' },
 } as const;
 
 /** In/out lines that replace a reason's default when the place is a zone or the state is known. */
@@ -123,7 +141,11 @@ export const SCAN_COPY = {
   tags: SCAN_TAG_COPY,
   verdict: {
     checkedIn: 'Checked in',
+    /** The word of an `already_done` headline: a check-in is `checked in`, any other action `done`. */
+    already: { checkIn: 'checked in', other: 'done' },
     checkedOut: 'Checked out',
+    noExitSub: 'This pass only allows entry.',
+    noReentrySub: 'One entry only. Check ID.',
     redeemed: 'Redeemed',
     /** An Access card's check-in. The sub joins the zone and the closing time that exist. */
     access: {
@@ -219,6 +241,10 @@ export const SCAN_COPY = {
     action: 'Use manager code',
     title: 'Manager code',
     verb: '{action} needs a manager.',
+    /** Under Approvals: Desk staff too. */
+    titleDesk: 'Approval code',
+    verbDesk: '{action} needs a manager or desk lead.',
+    approver: 'Approver',
     field: '6-digit code',
     continue: 'Continue',
     wrong: 'Wrong code. {n} tries left.',

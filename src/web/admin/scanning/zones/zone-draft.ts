@@ -21,6 +21,8 @@ export interface ZoneDraft {
   track: boolean;
   enforce: boolean;
   capacity: number | null;
+  /** Full is final for every role. Needs a capacity. */
+  hardLimit: boolean;
   maxStayMinutes: number | null;
   clearAt: string;
 }
@@ -34,6 +36,7 @@ export const emptyZoneDraft = (parentId = '', timeZone = SESSION_CLOCK): ZoneDra
   track: false,
   enforce: false,
   capacity: null,
+  hardLimit: false,
   maxStayMinutes: null,
   clearAt: '',
 });
@@ -47,6 +50,7 @@ export const zoneDraft = (z: ScanZone): ZoneDraft => ({
   track: z.occupancy !== 'off',
   enforce: z.occupancy === 'enforce',
   capacity: z.capacity,
+  hardLimit: z.hardLimit ?? false,
   maxStayMinutes: z.maxStayMinutes,
   clearAt: z.clearAt ?? '',
 });
@@ -68,7 +72,15 @@ export function withName(d: ZoneDraft, name: string): ZoneDraft {
 /** Track on gives the 12 h default; Track off drops every limit the database would refuse. */
 export function withTrack(d: ZoneDraft, track: boolean): ZoneDraft {
   if (track) return { ...d, track, maxStayMinutes: d.maxStayMinutes ?? DEFAULT_MAX_STAY };
-  return { ...d, track, enforce: false, capacity: null, maxStayMinutes: null, clearAt: '' };
+  return {
+    ...d,
+    track,
+    enforce: false,
+    capacity: null,
+    hardLimit: false,
+    maxStayMinutes: null,
+    clearAt: '',
+  };
 }
 
 /** The clock `clearAt` runs on: the zone's own (roots) or its parent's. */
@@ -95,6 +107,7 @@ export function zoneErrors(
 const occupancyOf = (d: ZoneDraft) => ({
   occupancy: d.enforce ? ('enforce' as const) : d.track ? ('track' as const) : ('off' as const),
   capacity: d.track ? d.capacity : null,
+  hardLimit: d.track && d.capacity !== null && d.hardLimit,
   maxStayMinutes: d.track ? d.maxStayMinutes : null,
   clearAt: d.track && d.clearAt ? d.clearAt : null,
 });

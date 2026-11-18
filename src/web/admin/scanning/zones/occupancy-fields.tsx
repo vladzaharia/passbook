@@ -48,11 +48,18 @@ export function OccupancyFields({
         disabled={off}
         onCheckedChange={(enforce) => set({ ...draft, enforce })}
       />
+      <SwitchRow
+        label="Hard limit"
+        help="Full is final: no one can let anyone in, whatever their role. Needs a capacity."
+        checked={draft.hardLimit}
+        disabled={off || draft.capacity === null}
+        onCheckedChange={(hardLimit) => set({ ...draft, hardLimit })}
+      />
       <div className="grid gap-4 @[30rem]:grid-cols-3">
         <FormField
           label="Capacity"
           error={errors.capacity}
-          help="Full stops new entries. A Manager can let someone in."
+          help="Full stops new entries. Staff can let someone in, unless Hard limit is on."
         >
           {(p) => (
             <NumberField
@@ -63,7 +70,9 @@ export function OccupancyFields({
               max={100000}
               disabled={off}
               value={draft.capacity}
-              onValueChange={(capacity) => set({ ...draft, capacity })}
+              onValueChange={(capacity) =>
+                set({ ...draft, capacity, hardLimit: capacity === null ? false : draft.hardLimit })
+              }
             />
           )}
         </FormField>

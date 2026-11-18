@@ -141,7 +141,7 @@ function buildCounts(
           sessionId
             ? scanningSessionTodayStmt(db, orgId, sessionId, mode, since)
             : todayStmt(db, actorKey, orgId, mode, since),
-          managersStmt(db, orgId),
+          managersStmt(db, orgId, authority.settings.approvals === 'desk'),
         ];
         if (event) {
           prepared.push(eventTotalsStmt(db, orgId, mode, event.id));

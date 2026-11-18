@@ -177,6 +177,13 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
             pendingID = nil
             scanTimeout?.cancel()
             scanTimeout = nil
+        case "haptic":
+            guard let pattern = request["pattern"] as? [Int], let kind = Self.hapticKind(pattern) else { return }
+            switch kind {
+            case .tap: UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            case .warning: UINotificationFeedbackGenerator().notificationOccurred(.warning)
+            case .error: UINotificationFeedbackGenerator().notificationOccurred(.error)
+            }
         case "customerBranding":
             guard ready,
                   let payload = request["branding"] as? [String: Any],
@@ -199,6 +206,16 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
             }
         default: return
         }
+    }
+
+    enum HapticKind { case tap, warning, error }
+
+    /// The web's pulse pattern, as the nearest system feedback: one pulse, two, three or more.
+    /// At most 8 entries, each 0 to 500 ms; anything else is dropped.
+    static func hapticKind(_ pattern: [Int]) -> HapticKind? {
+        guard !pattern.isEmpty, pattern.count <= 8, pattern.allSatisfy({ (0...500).contains($0) }) else { return nil }
+        let pulses = (pattern.count + 1) / 2
+        return pulses == 1 ? .tap : pulses == 2 ? .warning : .error
     }
 
     private func sendScan(_ value: String, method: String) {

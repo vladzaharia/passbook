@@ -112,6 +112,8 @@ export const ScannerSettingsSchema = z.object({
   deskActions: z.boolean().optional(),
   /** A full place refuses every role: `capacity_full` is never overridable at this door. */
   hardLimit: z.boolean().optional(),
+  /** Whose PIN approves a risky action. Managers when absent; `set` and hard refusals never relax. */
+  approvals: z.enum(['managers', 'desk']).optional(),
   /** Who may assign tags here. Absent: desk for a pass, manager for a person. */
   tags: ScannerTagsSettingsSchema.optional(),
 });
@@ -180,6 +182,8 @@ export const ScanValueSchema = z.object({
   currency: z.string().optional(),
   /** The input is a counter: a refusal uses the counter's wording. */
   counter: z.boolean().optional(),
+  /** A refused `take`: what it asked for. */
+  need: z.number().nullable().optional(),
 });
 export const ScanCardActionSchema = z.object({
   id: z.string(),
@@ -286,6 +290,8 @@ export const ScanOutcomeSchema = z.object({
   action: z.object({ id: z.string(), label: z.string(), kind: ScanActionKindSchema }).nullable(),
   card: ScanCardSchema.nullable(),
   previous: ScanPreviousSchema.nullable(),
+  /** The scanner's event, on `wrong_event`, `not_yet_valid`, `ended` and `capacity_full`. */
+  event: z.object({ name: z.string(), startsAt: TimestampSchema }).nullable().optional(),
   /** Set whenever a pass was found; on test_pass and live_pass it is the only identity. */
   template: ScanTemplateRefSchema.nullable(),
   at: TimestampSchema.nullable(),

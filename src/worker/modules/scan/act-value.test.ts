@@ -105,7 +105,11 @@ describe('value actions: add and take', () => {
     const first1 = await out(await act(s.headers, codeOf(pass), { actionId: 'take', amount: 15 }));
     expect(first1).toMatchObject({ kind: 'ok', value: { before: 20, after: 5 } });
     const short = await out(await act(s.headers, codeOf(pass), { actionId: 'take', amount: 10 }));
-    expect(short).toMatchObject({ kind: 'refused', reason: 'no_balance', value: { after: 5 } });
+    expect(short).toMatchObject({
+      kind: 'refused',
+      reason: 'no_balance',
+      value: { after: 5, need: 10 },
+    });
     expect(await balanceOf(pass.id)).toMatchObject({ balance: 5 });
     const scans = await scansOf(pass.id);
     expect(scans.map((r) => [r.outcome, r.reason])).toEqual([

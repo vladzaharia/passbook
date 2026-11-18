@@ -13,7 +13,7 @@ import { cardPrivacy } from './dto-projection.ts';
 import type { ScanActor } from './guard.ts';
 import { type LedgerFacts, ledgerRow, recordResult } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
-import { blankOutcome, canOverride, safeOutcomeDetails } from './outcome.ts';
+import { blankOutcome, canOverride, eventLine, safeOutcomeDetails } from './outcome.ts';
 import * as gates from './repo-gates.ts';
 import { doneScanPredicate } from './repo-scan-checks.ts';
 import * as snapshots from './repo-scan-effect.ts';
@@ -60,6 +60,8 @@ interface HeldOutcomeInput {
   read: CountsRead;
   display: ScanDisplay | null;
   now: number;
+  /** The full place's Hard limit (an event or a zone): no one may override. */
+  hardLimit?: boolean;
 }
 
 /** The truthful heads-up for a gate that someone else holds (or an event that is full). */
@@ -84,6 +86,7 @@ export function heldOutcome(i: HeldOutcomeInput): ScanOutcome {
     action: details.action,
     template: details.template,
     at: holder?.at ?? null,
+    event: eventLine(actor, reason),
     cooldownRemainingMs: remaining,
     previous: holder?.scan_id
       ? {
@@ -99,7 +102,14 @@ export function heldOutcome(i: HeldOutcomeInput): ScanOutcome {
           override: holder.override_of !== null,
         }
       : null,
-    overridable: canOverride(actor, reason, action, read.approvals),
+    overridable: canOverride(
+      actor,
+      reason,
+      action,
+      read.approvals,
+      null,
+      i.hardLimit === true && reason === 'capacity_full',
+    ),
     display: i.display,
   };
 }
@@ -242,5 +252,6 @@ export async function finishHeldGate(input: HeldGateInput): Promise<ScanOutcome>
     read,
     display: bound.finish(committed.after.slice(counts.stmts.length)),
     now: finishAt,
+    ...(event?.hardLimit ? { hardLimit: true } : {}),
   });
 }

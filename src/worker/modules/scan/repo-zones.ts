@@ -18,6 +18,7 @@ export interface ZoneRow {
   capacity: number | null;
   maxStayMinutes: number | null;
   clearAt: string | null;
+  hardLimit: boolean;
   archivedAt: number | null;
   updatedAt: number;
   /** Sessions that check this zone. */
@@ -36,13 +37,14 @@ interface Raw {
   capacity: number | null;
   max_stay_minutes: number | null;
   clear_at: string | null;
+  hard_limit: number;
   archived_at: number | null;
   updated_at: number;
   sessions: number;
 }
 
 const SELECT = `SELECT z.id, z.org_id, z.key, z.name, z.parent_id, z.time_zone, z.sort, z.occupancy,
-    z.capacity, z.max_stay_minutes, z.clear_at, z.archived_at, z.updated_at,
+    z.capacity, z.max_stay_minutes, z.clear_at, z.hard_limit, z.archived_at, z.updated_at,
     (SELECT count(*) FROM scanning_session_zones l WHERE l.zone_id = z.id) AS sessions
   FROM scan_zones z`;
 
@@ -58,6 +60,7 @@ const toRow = (r: Raw): ZoneRow => ({
   capacity: r.capacity,
   maxStayMinutes: r.max_stay_minutes,
   clearAt: r.clear_at,
+  hardLimit: r.hard_limit === 1,
   archivedAt: r.archived_at,
   updatedAt: r.updated_at,
   sessions: r.sessions,
@@ -138,6 +141,7 @@ export interface ZoneInsert {
   capacity: number | null;
   maxStayMinutes: number | null;
   clearAt: string | null;
+  hardLimit: boolean;
 }
 
 /** org_id comes from the grant row. */
@@ -160,6 +164,7 @@ export const addZoneInsert = (
       'capacity',
       'max_stay_minutes',
       'clear_at',
+      'hard_limit',
       'created_by',
       'created_at',
       'updated_at',
@@ -175,6 +180,7 @@ export const addZoneInsert = (
       z.capacity,
       z.maxStayMinutes,
       z.clearAt,
+      z.hardLimit ? 1 : 0,
       createdBy,
       now,
       now,
@@ -190,6 +196,7 @@ export interface ZonePatch {
   capacity?: number | null;
   maxStayMinutes?: number | null;
   clearAt?: string | null;
+  hardLimit?: boolean;
 }
 
 /** Only the fields the edit names: a concurrent edit of another field survives. */
@@ -203,6 +210,7 @@ export function addZoneUpdate(g: Grant, id: string, p: ZonePatch, now: number): 
   if (p.capacity !== undefined) set.capacity = p.capacity;
   if (p.maxStayMinutes !== undefined) set.max_stay_minutes = p.maxStayMinutes;
   if (p.clearAt !== undefined) set.clear_at = p.clearAt;
+  if (p.hardLimit !== undefined) set.hard_limit = p.hardLimit ? 1 : 0;
   return g.update('scan_zones', { set, where: { id }, require: 'one' });
 }
 

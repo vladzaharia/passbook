@@ -229,7 +229,7 @@ export function preparePinReservation(
 
   return {
     stmts,
-    async verify(results, staff, pin, managerOnly, failure) {
+    async verify(results, staff, pin, managerOnly, failure, deskOk) {
       // The proof returned to the caller is exactly the immutable row we verified.
       const captured =
         resultCount(results[0]) === undefined
@@ -249,7 +249,14 @@ export function preparePinReservation(
       if (
         !(await verifyCandidate(
           results,
-          personDecision({ pinEnv, orgId, staffId }, captured, pin, managerOnly, pinMatches),
+          personDecision(
+            { pinEnv, orgId, staffId },
+            captured,
+            pin,
+            managerOnly,
+            pinMatches,
+            deskOk,
+          ),
           failure,
         ))
       )
@@ -257,7 +264,7 @@ export function preparePinReservation(
       if (!captured) throw new Error('Verified PIN has no staff snapshot');
       return captured;
     },
-    async verifyAny(results, managers, pin, failure, anyRole) {
+    async verifyAny(results, managers, pin, failure, anyRole, deskOk) {
       if (resultCount(results[0]) === undefined) {
         await verifyCandidate(results, async () => 'miss', failure);
         return null;
@@ -268,6 +275,7 @@ export function preparePinReservation(
         pin,
         pinMatches,
         anyRole,
+        deskOk,
       );
       return (await verifyCandidate(results, () => any.decide(), failure)) ? any.found() : null;
     },

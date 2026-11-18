@@ -29,12 +29,14 @@ export const personDecision =
     pin: string,
     managerOnly: boolean,
     matches: PinMatches,
+    deskOk = false,
   ) =>
   async (): Promise<'match' | 'miss'> => {
     const usable =
       staff?.orgId === orgId &&
       staff.disabledAt === null &&
-      (!managerOnly || (staff.id === staffId && staff.role === 'manager'));
+      (!managerOnly ||
+        (staff.id === staffId && (staff.role === 'manager' || (deskOk && staff.role === 'desk'))));
     const matched = await matches(pinEnv, staffId, pin, usable ? staff.pinHash : DUMMY_PIN_HASH);
     return usable && matched ? 'match' : 'miss';
   };
@@ -49,22 +51,27 @@ export function anyManagerDecision(
   pin: string,
   matches: PinMatches,
   anyRole = false,
+  deskOk = false,
 ) {
   let found: PinStaffSnapshot | null = null;
   let count = 0;
+  const matched: PinStaffSnapshot[] = [];
   return {
     async decide(): Promise<'match' | 'miss' | 'ambiguous'> {
       for (const manager of managers) {
         const usable =
           manager.orgId === orgId &&
           manager.disabledAt === null &&
-          (anyRole || manager.role === 'manager');
-        if (usable && (await matches(pinEnv, manager.id, pin, manager.pinHash))) {
-          found = manager;
-          count++;
-        }
+          (anyRole || manager.role === 'manager' || (deskOk && manager.role === 'desk'));
+        if (usable && (await matches(pinEnv, manager.id, pin, manager.pinHash)))
+          matched.push(manager);
       }
       await matches(pinEnv, staffId, pin, DUMMY_PIN_HASH);
+      // A code shared by a Manager and a Desk member is the Manager's.
+      const managersOnly = matched.filter((m) => m.role === 'manager');
+      const pool = managersOnly.length > 0 ? managersOnly : matched;
+      count = pool.length;
+      found = pool.length === 1 ? (pool[0] ?? null) : null;
       return count === 1 ? 'match' : count > 1 ? 'ambiguous' : 'miss';
     },
     found: () => found,

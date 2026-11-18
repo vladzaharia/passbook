@@ -13,7 +13,7 @@ export interface StripEntry {
 
 const GLYPH = { ok: Check, heads_up: TriangleAlert, refused: CircleAlert, system: Info } as const;
 
-/** The dock's 40 px strip. It always holds its box: an empty strip shows a muted dash. */
+/** The dock's 48 px strip. It always holds its box: an empty strip shows a muted dash. */
 export function LastScanStrip({
   entry,
   onOpen,

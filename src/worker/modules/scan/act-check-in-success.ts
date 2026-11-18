@@ -45,7 +45,7 @@ interface CheckInSuccessInput {
   stopAuthority: StopAuthority;
   originalCandidate: Candidate | null;
   facts: Omit<LedgerFacts, 'outcome' | 'reason'>;
-  approver: { id: string; authEpoch: number } | null;
+  approver: { id: string; authEpoch: number; deskOk?: boolean } | null;
   onFailureCommitted(): void;
 }
 
@@ -243,6 +243,9 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       read,
       display: null,
       now: finishAt,
+      ...(place?.hard || (reason === 'capacity_full' && event?.hardLimit)
+        ? { hardLimit: true }
+        : {}),
     });
     const answer = {
       ...heldAnswer,

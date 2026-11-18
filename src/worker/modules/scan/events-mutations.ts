@@ -61,6 +61,8 @@ export async function createEvent(
   authority: EventAuthority,
 ) {
   if (authority.orgId !== input.orgId || authority.mode !== mode) throw new ForbiddenError();
+  if (input.hardLimit && input.capacity == null)
+    throw new ValidationError('Set a capacity first.', [], 'EVENT_NEEDS_CAPACITY');
   const templateIds = [...new Set(input.templateIds)];
   const stamps = await checkTemplates(
     ctx,
@@ -81,6 +83,7 @@ export async function createEvent(
     timeZone: input.timeZone,
     capacity: input.capacity ?? null,
     reentry: input.reentry ?? false,
+    hardLimit: input.hardLimit ?? false,
     note: input.note ?? null,
   };
   const now = ctx.clock.now();
@@ -129,6 +132,10 @@ export async function updateEvent(
   const opensAt = input.opensAt ?? row.opensAt;
   const closesAt = input.closesAt ?? row.closesAt;
   checkWindow(opensAt, closesAt);
+  const capacity = input.capacity === undefined ? row.capacity : input.capacity;
+  const hardLimit = input.hardLimit ?? (capacity === null ? false : row.hardLimit);
+  if (hardLimit && capacity === null)
+    throw new ValidationError('Set a capacity first.', [], 'EVENT_NEEDS_CAPACITY');
   if (
     !input.templateIds &&
     input.match !== undefined &&
@@ -177,6 +184,7 @@ export async function updateEvent(
       ...(input.timeZone === undefined ? {} : { timeZone: input.timeZone }),
       ...(input.capacity === undefined ? {} : { capacity: input.capacity }),
       ...(input.reentry === undefined ? {} : { reentry: input.reentry }),
+      ...(hardLimit === row.hardLimit ? {} : { hardLimit }),
       ...(input.note === undefined ? {} : { note: input.note }),
     },
     now,

@@ -17,10 +17,13 @@ export type OccZone = Pick<
   | 'clearAt'
   | 'archivedAt'
   | 'updatedAt'
->;
+> &
+  Partial<Pick<ZoneRow, 'hardLimit'>>;
 
 /** A zone as the plan read it; the statement re-checks it in the batch. */
-export type ZoneFence = Pick<OccZone, 'id' | 'occupancy' | 'parentId' | 'archivedAt'>;
+export type ZoneFence = Pick<OccZone, 'id' | 'occupancy' | 'parentId' | 'archivedAt'> & {
+  hardLimit: boolean;
+};
 
 export const zonePlace = (id: string) => `zone:${id}`;
 export const eventPlace = (id: string) => `event:${id}`;
@@ -83,6 +86,14 @@ export function zoneChain(zones: readonly OccZone[], id: string): OccZone[] {
   return out;
 }
 
+/**
+ * Whether Full is final where an entry at `zoneId` counts: the zone or any zone above it has a Hard
+ * limit. The one rule for the verdict, the override check and the commit (the SQL in
+ * `repo-act-override.ts` mirrors it for the console's early answer).
+ */
+export const hardLimited = (zones: readonly OccZone[], zoneId: string): boolean =>
+  zoneChain(zones, zoneId).some((z) => z.hardLimit === true);
+
 function belowOf(zones: readonly OccZone[], id: string): string[] {
   const byId = new Map(zones.map((z) => [z.id, z]));
   return subtree(indexZones(zones), id)
@@ -125,11 +136,12 @@ export function entryPlan(
     parent: parent && !waivers.parent ? zonePlace(parent.id) : null,
     implied: implied.map(step),
     below: belowOf(zones, zoneId),
-    zones: all.map(({ id, occupancy, parentId, archivedAt }) => ({
+    zones: all.map(({ id, occupancy, parentId, archivedAt, hardLimit }) => ({
       id,
       occupancy,
       parentId,
       archivedAt,
+      hardLimit: hardLimit === true,
     })),
   };
 }

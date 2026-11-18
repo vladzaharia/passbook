@@ -102,6 +102,8 @@ export async function createZone(
   if (parentId !== null && timeZone !== null)
     throw invalid('Only the top zone has a time zone.', 'ZONE_CHILD_TZ');
   assertPlacement(indexZones(rows), id, parentId);
+  if (input.hardLimit && input.capacity == null)
+    throw invalid('Set a capacity first.', 'ZONE_NEEDS_CAPACITY');
   const now = ctx.clock.now();
   const values = {
     id,
@@ -114,6 +116,7 @@ export async function createZone(
     capacity: input.capacity ?? null,
     maxStayMinutes: input.maxStayMinutes ?? null,
     clearAt: input.clearAt ?? null,
+    hardLimit: input.hardLimit ?? false,
   };
   assertClocks(
     [...rows, { ...values, orgId: input.orgId, archivedAt: null, updatedAt: now, sessions: 0 }],
@@ -180,12 +183,15 @@ export async function updateZone(
     capacity: input.capacity === undefined ? row.capacity : input.capacity,
     maxStayMinutes: input.maxStayMinutes === undefined ? row.maxStayMinutes : input.maxStayMinutes,
     clearAt: input.clearAt === undefined ? row.clearAt : input.clearAt,
+    hardLimit: input.hardLimit ?? (input.capacity === null ? false : row.hardLimit),
   };
   if (input.parentId !== undefined) assertPlacement(indexZones(rows), id, parentId);
   if (next.parentId !== null && next.timeZone !== null)
     throw invalid('Only the top zone has a time zone.', 'ZONE_CHILD_TZ');
   if (next.occupancy === 'off' && (next.capacity ?? next.maxStayMinutes ?? next.clearAt) !== null)
     throw invalid('Turn on tracking first.', 'ZONE_NEEDS_TRACKING');
+  if (next.hardLimit && next.capacity === null)
+    throw invalid('Set a capacity first.', 'ZONE_NEEDS_CAPACITY');
   assertClocks(
     rows.map((r) => (r.id === id ? next : r)),
     id,
@@ -224,6 +230,7 @@ export async function updateZone(
       ...(input.capacity === undefined ? {} : { capacity: input.capacity }),
       ...(input.maxStayMinutes === undefined ? {} : { maxStayMinutes: input.maxStayMinutes }),
       ...(input.clearAt === undefined ? {} : { clearAt: input.clearAt }),
+      ...(next.hardLimit === row.hardLimit ? {} : { hardLimit: next.hardLimit }),
     },
     now,
   );

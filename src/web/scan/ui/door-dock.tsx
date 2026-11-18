@@ -70,7 +70,7 @@ export function DoorDock({
         <DockButton
           onClick={() => dispatch({ type: 'override', actionId: outcome.action?.id ?? '' })}
         >
-          Check in
+          {outcome.action?.label ?? 'Continue'}
         </DockButton>
       ) : null}
       {verbs.map((verb) => (

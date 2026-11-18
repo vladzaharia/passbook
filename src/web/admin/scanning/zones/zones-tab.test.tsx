@@ -127,9 +127,34 @@ describe('Zones tab', () => {
       timeZone: null,
       occupancy: 'track',
       capacity: 40,
+      hardLimit: false,
       maxStayMinutes: 720,
       clearAt: null,
     });
+  });
+
+  it('Hard limit waits for a capacity, goes with it, and is sent when on', async () => {
+    const s = setup();
+    await open(s);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'New zone' }));
+    const dialog = await screen.findByRole('dialog', { name: 'New zone' });
+    await user.type(within(dialog).getByRole('textbox', { name: /^Name/ }), 'Vessel');
+    await user.click(within(dialog).getByRole('switch', { name: 'Track who’s inside' }));
+    const hard = within(dialog).getByRole('switch', { name: 'Hard limit' });
+    expect(hard).toBeDisabled();
+    const capacity = within(dialog).getByRole('spinbutton', { name: 'Capacity' });
+    await user.type(capacity, '90');
+    expect(hard).toBeEnabled();
+    await user.click(hard);
+    await user.clear(capacity);
+    expect(hard).toBeDisabled();
+    expect(hard).not.toBeChecked();
+    await user.type(capacity, '90');
+    await user.click(hard);
+    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await waitFor(() => expect(s.calls).toHaveLength(1));
+    expect(s.calls[0]?.body).toMatchObject({ capacity: 90, hardLimit: true });
   });
 
   it('hides who is inside and Mark as out while the console has no route for them', async () => {

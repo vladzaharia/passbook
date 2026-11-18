@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { axe } from 'vitest-axe';
 import '../../lib/test-utils.tsx';
 import { fixtureCard, fixtureDisplay, fixtureOutcome } from '../machine/fixtures.test-support.ts';
 import { ResultCard } from './result-card.tsx';
@@ -69,5 +70,39 @@ describe('the scanner result interface', () => {
     render(<ResultCard outcome={fixtureOutcome('ok', null, { card })} onPass={onPass} />);
     screen.getByRole('button', { name: 'View pass' }).click();
     expect(onPass).toHaveBeenCalledWith(card);
+  });
+  it('fills a stamp cooldown from the outcome, with no check-in words', () => {
+    render(
+      <ResultCard
+        outcome={fixtureOutcome('heads_up', 'cooldown', {
+          action: { id: 'add_stamp', label: 'Add stamp', kind: 'add' },
+          cooldownRemainingMs: 3 * 60_000,
+        })}
+      />,
+    );
+    const band = screen.getByTestId('scan-verdict');
+    expect(band).toHaveTextContent('Just done');
+    expect(band).toHaveTextContent(/Add stamp at .+\. Next in 3 min\./);
+    expect(band).not.toHaveTextContent(/check-in|Checked in|\{/);
+  });
+  it('names the event on a wrong-event refusal', () => {
+    render(
+      <ResultCard
+        outcome={fixtureOutcome('refused', 'wrong_event', {
+          event: { name: 'Summer Gala', startsAt: Date.UTC(2026, 10, 14, 18, 0) },
+        })}
+      />,
+    );
+    expect(screen.getByTestId('scan-verdict')).toHaveTextContent(
+      'This scanner is for Summer Gala, Sat.',
+    );
+  });
+  it('has no axe violations on a refusal and a heads-up', async () => {
+    const { container, rerender } = render(
+      <ResultCard outcome={fixtureOutcome('refused', 'not_found', { display: null })} />,
+    );
+    expect((await axe(container)).violations).toEqual([]);
+    rerender(<ResultCard outcome={fixtureOutcome('heads_up', 'capacity_full')} />);
+    expect((await axe(container)).violations).toEqual([]);
   });
 });

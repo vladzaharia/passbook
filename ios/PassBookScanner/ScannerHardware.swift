@@ -20,7 +20,8 @@ final class ScannerHardware {
             "nfc": ["available": NFCReader.available, "reading": readingNFC, "formats": NFCReader.available ? ["ndef"] : []],
             "vas": ["deviceSupported": PaymentCardReader.isSupported, "available": false, "reader": "proximityReader", "reason": "Wallet VAS needs Apple reader entitlement, a supported payment provider, and server verification."],
             "externalReader": ["mode": "keyboard", "connected": NSNull()],
-            "customerDisplay": ["supported": false, "available": false, "active": false]
+            "customerDisplay": ["supported": false, "available": false, "active": false],
+            "haptics": true
         ]
     }
 

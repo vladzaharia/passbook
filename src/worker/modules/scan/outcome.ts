@@ -40,6 +40,14 @@ const OVERRIDABLE = new Set<ScanReason>([
 export const isOverridable = (reason: ScanReason | null): boolean =>
   reason !== null && OVERRIDABLE.has(reason);
 
+const EVENT_LINE = new Set<ScanReason>(['wrong_event', 'not_yet_valid', 'ended', 'capacity_full']);
+
+/** The scanner's own event, for the verdicts that name it. Its staff already know it. */
+export const eventLine = (actor: ScanActor, reason: ScanReason | null): ScanOutcome['event'] =>
+  reason && EVENT_LINE.has(reason) && actor.event
+    ? { name: actor.event.name, startsAt: actor.event.opensAt }
+    : null;
+
 export function blankOutcome(kind: ScanOutcomeKind, read: CountsRead): ScanOutcome {
   return {
     scanId: null,
@@ -127,10 +135,12 @@ export function canOverride(
   action: ResolvedScanAction | null,
   approvals: boolean,
   kind: string | null = null,
+  hardLimit = false,
 ): boolean {
   if (!isOverridable(reason)) return false;
   if (action?.kind === 'check_in' && action.allowAgain === false) return false;
-  const verdict = scanPolicy(policyActor(actor), {
+  const pa = policyActor(actor);
+  const verdict = scanPolicy(hardLimit ? { ...pa, settings: { ...pa.settings, hardLimit } } : pa, {
     kind: overridePolicyKind(reason, kind),
   });
   return verdict.allow || (verdict.why === 'needs_approval' && approvals);
@@ -211,6 +221,7 @@ export function stopOutcome(
     card: showPass ? (options.card ?? null) : null,
     template: details.template,
     at: stop.at,
+    event: eventLine(actor, stop.reason),
     cooldownRemainingMs: stop.cooldownRemainingMs ?? null,
     access: stop.access ?? null,
     ...(stop.occupancy ? { occupancy: stop.occupancy } : {}),

@@ -148,6 +148,7 @@ export const EPOCH_TABLES: EpochTable[] = [
         'time_zone',
         'capacity',
         'reentry',
+        'hard_limit',
         'archived_at',
         'org_id',
         'mode',

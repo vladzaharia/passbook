@@ -59,7 +59,7 @@ describe('the access band', () => {
     rerender(<ResultCard outcome={fixtureOutcome('refused', 'zone_not_included', { access })} />);
     expect(band()).toHaveTextContent("Gold doesn't include Gym.");
     rerender(<ResultCard outcome={fixtureOutcome('refused', 'guest_visits_used', { access })} />);
-    expect(band()).toHaveTextContent('All 5 visits used.');
+    expect(band()).toHaveTextContent('Used 5 of 5 visits.');
   });
   it('leaves no marker unfilled in any access verdict', () => {
     const outcomes = [

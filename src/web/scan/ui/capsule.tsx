@@ -7,7 +7,7 @@ export type CapsuleState = 'scanning' | 'checking' | 'offline' | 'paused';
 const STATE_TEXT: Record<CapsuleState, string> = {
   scanning: 'Scanning',
   checking: 'Checking…',
-  offline: 'Scanning offline',
+  offline: 'Offline',
   paused: 'Paused',
 };
 

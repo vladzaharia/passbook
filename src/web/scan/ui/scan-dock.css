@@ -1,4 +1,4 @@
-/* Dock: z 10, r 28 top. Strip 40, thumb row 50. Its height is reserved from the first frame. */
+/* Dock: z 10, r 28 top. Strip 48 (gloves), thumb row 50. Its height is reserved from the first frame. */
 .scan-dock {
   position: absolute;
   z-index: var(--scan-z-dock);
@@ -32,7 +32,7 @@
   align-items: center;
   gap: 10px;
   box-sizing: border-box;
-  height: 40px;
+  height: 48px;
   min-width: 0;
 }
 @media (min-width: 1024px) {
@@ -115,8 +115,8 @@
 }
 .scan-strip-undo {
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   padding: 0;
   border: 0;
   background: none;

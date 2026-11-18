@@ -56,7 +56,7 @@ export interface ValueInput {
   stopAuthority: StopAuthority;
   originalCandidate: Candidate | null;
   facts: Omit<LedgerFacts, 'outcome' | 'reason'>;
-  approver: { id: string; authEpoch: number } | null;
+  approver: { id: string; authEpoch: number; deskOk?: boolean } | null;
   onFailureCommitted(): void;
 }
 

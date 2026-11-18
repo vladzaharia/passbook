@@ -19,7 +19,7 @@ export interface ScanWriteInput {
   templateId?: string;
   pass?: { id: string; facts: ScanPassFacts };
   /** A manager whose PIN was verified for this action. */
-  approver?: { id: string; authEpoch: number } | null;
+  approver?: { id: string; authEpoch: number; deskOk?: boolean } | null;
   /** Held: the answer shown names this gate holder and must still be true. */
   holder?: { passId: string; actionId: string; scope: string; lastScanId: string } | null;
   /** None of the presented credential's references may be retired by a transfer in this mode. */
@@ -61,7 +61,12 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
             rowIs(
               'scan_staff',
               i.approver.id,
-              { role: 'manager', disabled_at: null, auth_epoch: i.approver.authEpoch },
+              {
+                // A Desk approver is pinned as Desk: the session allowed it, and a role change bumps `auth_epoch`.
+                role: i.approver.deskOk ? 'desk' : 'manager',
+                disabled_at: null,
+                auth_epoch: i.approver.authEpoch,
+              },
               'staff',
             ),
           ]

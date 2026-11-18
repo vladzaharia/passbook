@@ -195,6 +195,28 @@ function SessionStaff({
           />
         )}
       </FormField>
+      <SwitchRow
+        label="Hard limit"
+        help="Full is final at this door, for everyone. Set it on a zone or an event to cover every door."
+        checked={draft.hardLimit}
+        onCheckedChange={(hardLimit) => set({ hardLimit })}
+      />
+      <FormField
+        label="Approvals"
+        help="Whose PIN approves a risky action. Setting a value, an amount over its max, undo and hard refusals always need a Manager."
+      >
+        {(p) => (
+          <Select
+            {...p}
+            value={draft.approvals}
+            onValueChange={(v) => set({ approvals: v as ScannerDraft['approvals'] })}
+            options={[
+              { value: 'managers', label: 'Managers' },
+              { value: 'desk', label: 'Desk staff too' },
+            ]}
+          />
+        )}
+      </FormField>
     </section>
   );
 }

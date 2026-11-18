@@ -15,6 +15,8 @@ export const OccupancyFieldsSchema = z.object({
   occupancy: OccupancyModeSchema,
   capacity: z.number().int().min(1).max(100_000).nullable(),
   maxStayMinutes: z.number().int().min(15).max(2880).nullable(),
+  /** Full is final for every role. Needs a capacity. */
+  hardLimit: z.boolean().optional(),
   clearAt: z
     .string()
     .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use HH:MM.')
