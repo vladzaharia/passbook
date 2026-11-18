@@ -91,3 +91,30 @@ export const MetricsOverviewSchema = z.object({
 export type MetricsOverview = z.infer<typeof MetricsOverviewSchema>;
 export type MetricsQuery = z.infer<typeof MetricsQuerySchema>;
 export type SeriesKey = keyof MetricsOverview['series'];
+
+/** One template's counts for an organization. Ranged counts cover the query range; the rest are now. */
+export const TemplateActivitySchema = z.object({
+  templateId: IdSchema,
+  name: z.string(),
+  issued: z.number().int(),
+  /** Passes first put in a wallet in the range. */
+  added: z.number().int(),
+  removed: z.number().int(),
+  scans: z.number().int(),
+  redemptions: z.number().int(),
+  /** Active passes on at least one device, now. */
+  inWallet: z.number().int(),
+  /** Active, unremoved passes on no device, now. */
+  notAdded: z.number().int(),
+});
+
+/** An organization's activity by template. */
+export const OrgActivitySchema = z.object({
+  range: z.enum(['24h', '7d', '30d']),
+  bucketMs: z.number().int(),
+  totals: TemplateActivitySchema.omit({ templateId: true, name: true }),
+  series: z.object({ issued: series, scans: series }),
+  templates: z.array(TemplateActivitySchema),
+});
+export type OrgActivity = z.infer<typeof OrgActivitySchema>;
+export type TemplateActivity = z.infer<typeof TemplateActivitySchema>;

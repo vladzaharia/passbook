@@ -217,7 +217,7 @@ export async function finishSamsungSyncTarget(
   const status = outcome.status;
   if (status !== undefined && (!Number.isInteger(status) || status < 100 || status > 599))
     return false;
-  const result = await run(
+  const row = await first(
     ctx.env.DB,
     `UPDATE wallet_provider_sync_targets AS t
     SET state = ?, reason_code = ?, http_status = ?, next_attempt_at = ?, updated_at = ?
@@ -229,7 +229,8 @@ export async function finishSamsungSyncTarget(
           AND i.provider = 'samsung' AND ? = 'samsung' AND o.version = ?
           AND o.state IN ('claimed', 'uncertain') AND o.claim_hash = ?
           AND i.credential_keyset_commitment = ? AND o.credential_keyset_commitment = i.credential_keyset_commitment
-          AND ${credentialRefKeysetSql})`,
+          AND ${credentialRefKeysetSql})
+    RETURNING operation_id`,
     [
       state,
       reason,
@@ -249,5 +250,5 @@ export async function finishSamsungSyncTarget(
       claim.credentialKeysetCommitment,
     ],
   );
-  return result.changes === 1;
+  return row !== null;
 }

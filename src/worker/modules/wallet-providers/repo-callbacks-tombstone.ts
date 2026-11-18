@@ -96,7 +96,8 @@ export async function claimSamsungTombstoneReplay(
         AND approved.revision = tomb.account_revision
       WHERE tomb.ref_hash = ? AND tomb.org_id = ? AND tomb.mode = ? AND tomb.account_id = ?
         AND tomb.account_revision = ? AND tomb.credential_keyset_commitment = ?
-        AND ${credentialRefKeysetSql} AND ${noLiveRef} ON CONFLICT DO NOTHING`,
+        AND ${credentialRefKeysetSql} AND ${noLiveRef} ON CONFLICT DO NOTHING
+      RETURNING token_hash`,
       [
         claim.tokenHash,
         claim.claimId,
@@ -111,5 +112,5 @@ export async function claimSamsungTombstoneReplay(
       ],
     ),
   ]);
-  return results[1]?.meta.changes === 1;
+  return results[1]?.results.length === 1;
 }

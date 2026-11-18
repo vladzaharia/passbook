@@ -15,6 +15,8 @@ export interface PassListFilter {
   holderEmail?: string;
   holderState?: 'unassigned' | 'waiting' | 'owned';
   onDevice?: boolean;
+  /** Only passes with no completed scan since this time (ms). */
+  noScanSince?: number;
   /** Skips passes removed from Wallet. */
   excludeRemoved?: boolean;
   q?: string;
@@ -55,6 +57,12 @@ export function passFilterSql(filter: PassListFilter): {
   if (filter.onDevice !== undefined)
     where.push(
       `${filter.onDevice ? '' : 'NOT '}EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = passes.id)`,
+    );
+  if (filter.noScanSince !== undefined)
+    add(
+      `NOT EXISTS (SELECT 1 FROM scans s WHERE s.pass_id = passes.id
+        AND s.org_id = passes.org_id AND s.mode = passes.mode AND s.state = 'done' AND s.at >= ?)`,
+      filter.noScanSince,
     );
   if (filter.excludeRemoved) where.push('removed_at IS NULL');
   if (filter.cursor) add('id < ?', filter.cursor);

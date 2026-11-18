@@ -1,6 +1,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { axe } from 'vitest-axe';
 import { json, membershipFixture, renderApp, sessionFixture } from '@/web/lib/test-utils.tsx';
 
 const reader = membershipFixture('o1', {
@@ -33,18 +34,35 @@ const page = (items: unknown[], revokedCount = 0) =>
 afterEach(() => vi.unstubAllGlobals());
 
 describe('API key platform and membership authority', () => {
-  it('denies a non-platform member even with integration management and an explicit org', async () => {
-    const requests = vi.fn(() => page([]));
+  it('lets an organization manager list and create their own keys, never platform ones', async () => {
+    const requests: (string | null)[] = [];
     await renderApp('/admin/api-keys?orgId=o1&new=1', {
       session: 'user',
       memberships: [manager],
-      handlers: { '/api/v1/api-keys': requests },
+      handlers: {
+        '/api/v1/api-keys': (url) => {
+          requests.push(url.searchParams.get('orgId'));
+          return page([key('k1', 'o1', 'Door feed'), key('k2', 'o2', 'Other org')]);
+        },
+      },
     });
-    expect(
-      await screen.findByRole('heading', { name: 'You do not have access' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Door feed')).toBeInTheDocument();
+    expect(screen.queryByText('Other org')).toBeNull();
+    expect(await screen.findByRole('dialog', { name: 'New API key' })).toBeInTheDocument();
+    expect(requests.length).toBeGreaterThan(0);
+    expect(requests.every((orgId) => orgId === 'o1')).toBe(true);
+  });
+
+  it('lets a reader list keys but not create or revoke them', async () => {
+    await renderApp('/admin/api-keys?orgId=o1&new=1', {
+      session: 'user',
+      memberships: [reader],
+      handlers: { '/api/v1/api-keys': () => page([key('k1', 'o1', 'Door feed')]) },
+    });
+    expect(await screen.findByText('Door feed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New API key' })).toBeNull();
     expect(screen.queryByRole('dialog', { name: 'New API key' })).toBeNull();
-    expect(requests).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Actions for Door feed' })).toBeNull();
   });
 
   it('lets an admin without memberships list and revoke platform keys', async () => {
@@ -215,5 +233,28 @@ describe('API key platform and membership authority', () => {
     expect(screen.queryByRole('dialog', { name: 'New API key' })).toBeNull();
     next.resolve(page([key('new', null, 'New key')]));
     expect(await screen.findByText('New key')).toBeInTheDocument();
+  });
+});
+
+// jsdom has no layout: width sets the viewport the kit's media queries read.
+describe.each(
+  [1440, 820, 390].flatMap((width) =>
+    (['light', 'dark'] as const).map((theme) => [width, theme] as const),
+  ),
+)('organization API keys axe at %i, %s theme', (width, theme) => {
+  it('lists the organization keys', async () => {
+    document.documentElement.dataset.theme = theme;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+    await renderApp('/admin/api-keys?orgId=o1', {
+      session: 'user',
+      memberships: [manager],
+      handlers: { '/api/v1/api-keys': () => page([key('k1', 'o1', 'Door feed')]) },
+    });
+    await screen.findByText('Door feed');
+    expect((await axe(document.body)).violations).toEqual([]);
+    delete document.documentElement.dataset.theme;
   });
 });

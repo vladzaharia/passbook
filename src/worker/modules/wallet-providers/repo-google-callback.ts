@@ -236,7 +236,8 @@ export async function putGoogleCallbackReceipt(
       db,
       `INSERT INTO wallet_google_callback_replays (account_id, nonce_hash, claim_id, expires_at)
       SELECT a.id, ?, ?, ? ${join} WHERE ${guard}
-      ON CONFLICT(account_id, nonce_hash) DO NOTHING`,
+      ON CONFLICT(account_id, nonce_hash) DO NOTHING
+      RETURNING nonce_hash`,
       [input.nonceHash, input.id, input.expiresAt, ...params],
     ),
     stmt(
@@ -246,7 +247,8 @@ export async function putGoogleCallbackReceipt(
          received_at, kek_version, iv, wrapped_dek, ciphertext)
       SELECT ?, i.id, a.id, i.org_id, i.mode, ?, ?, ?, ?, ?, ?, ?, ? ${join}
       WHERE ${guard} AND EXISTS (SELECT 1 FROM wallet_google_callback_replays replay
-        WHERE replay.account_id = a.id AND replay.nonce_hash = ? AND replay.claim_id = ?)`,
+        WHERE replay.account_id = a.id AND replay.nonce_hash = ? AND replay.claim_id = ?)
+      RETURNING id`,
       [
         input.id,
         input.eventType,
@@ -263,7 +265,7 @@ export async function putGoogleCallbackReceipt(
       ],
     ),
   ]);
-  return results[0]?.meta.changes === 1 && results[1]?.meta.changes === 1;
+  return results[0]?.results.length === 1 && results[1]?.results.length === 1;
 }
 
 /** Replay reservations only matter until the signed message itself expires. */

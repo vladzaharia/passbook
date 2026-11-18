@@ -3,11 +3,11 @@ import type { RefObject } from 'react';
 import type { z } from 'zod';
 import { ConnectionSchema, type CreateConnectionSchema } from '@/shared/contracts/connections.ts';
 import { api } from '../../lib/api.ts';
+import type { Mapping } from '../mapping/mapping.ts';
 import { cleanValues } from '../passes/schema-form/index.ts';
 import { connectionKeys } from './api.ts';
 import { nestValues } from './config-schema.ts';
 import { type Lifecycle, lifecycleToPatch } from './lifecycle-fields.tsx';
-import type { Mapping } from './mapping.ts';
 import { generateSecret } from './webhook.tsx';
 import type { ConfigDraft } from './wizard-steps.tsx';
 

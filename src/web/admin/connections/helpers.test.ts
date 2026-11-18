@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { autoMap, blankRow, previewValue } from '../mapping/mapping.ts';
 import { connection } from '../passes/test-fixtures.ts';
 import { flattenSchema, flattenValues, nestValues, secretKeysFor } from './config-schema.ts';
 import { healthLine, healthSentence, overdue } from './health-text.ts';
-import { autoMap, blankRow, previewValue } from './mapping.ts';
 
 const NOW = new Date('2026-11-01T04:03:00').getTime();
 const c = (over: Record<string, unknown> = {}) => connection(over) as never;

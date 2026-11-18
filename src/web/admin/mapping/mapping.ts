@@ -1,5 +1,7 @@
 import type { z } from 'zod';
+import type { Json } from '@/shared/contracts/common.ts';
 import type { MappingSchema } from '@/shared/contracts/connections.ts';
+import { transform } from '@/shared/mapping/transform.ts';
 
 export type Mapping = z.infer<typeof MappingSchema>;
 export type TransformKind = NonNullable<Mapping[string]['transform']>['kind'];
@@ -9,11 +11,19 @@ export const TRANSFORMS: { value: TransformKind | 'none'; label: string; options
   { value: 'trim', label: 'Trim', options: false },
   { value: 'upper', label: 'Uppercase', options: false },
   { value: 'lower', label: 'Lowercase', options: false },
-  { value: 'date', label: 'Date', options: false },
+  { value: 'date', label: 'Date', options: true },
   { value: 'enum', label: 'Enum map', options: true },
   { value: 'bool-status', label: 'Boolean to status', options: true },
   { value: 'constant', label: 'Constant', options: true },
 ];
+
+/** Example options shown for a transform. */
+export const OPTIONS_HINT: Partial<Record<TransformKind, string>> = {
+  date: '{"input": "dmy", "output": "date"}',
+  enum: '{"map": {"gold": "Pro"}}',
+  'bool-status': '{"true": "Member", "false": "Lapsed"}',
+  constant: '{"value": "Member"}',
+};
 
 export interface MappingRow {
   id: string;
@@ -47,7 +57,11 @@ export interface MappingResult {
 }
 
 /** Rows to the API shape; blank rows are skipped, bad rows reported. */
-export function fromRows(rows: MappingRow[]): MappingResult {
+export function fromRows(
+  rows: MappingRow[],
+  /** Pinned rows may stay unmapped. */
+  pinned: readonly TargetField[] = [],
+): MappingResult {
   const mapping: Mapping = {};
   const errors: Record<string, string> = {};
   const seen = new Set<string>();
@@ -55,6 +69,7 @@ export function fromRows(rows: MappingRow[]): MappingResult {
     const input = row.input.trim();
     const from = row.from.trim();
     if (!input && !from) continue;
+    if (!from && pinned.some((p) => p.key === input)) continue;
     if (!input) errors[row.id] = 'Choose a template input.';
     else if (!from) errors[row.id] = 'Enter an upstream pointer.';
     else if (seen.has(input)) errors[row.id] = `${input} is mapped twice.`;
@@ -85,6 +100,8 @@ export function fromRows(rows: MappingRow[]): MappingResult {
 
 export interface SourceField {
   pointer: string;
+  /** Shown instead of the pointer, e.g. a column header. */
+  label?: string;
   /** Short preview from the last test sample. */
   preview?: string;
 }
@@ -104,36 +121,38 @@ export const leafOf = (pointer: string) =>
 
 /** The sample value after the row's transform, as the pass would get it. */
 export function previewValue(row: MappingRow, sources: readonly SourceField[]): string | undefined {
-  let options: Record<string, unknown> = {};
+  let options: Record<string, Json> = {};
   try {
-    options = row.options.trim() ? (JSON.parse(row.options) as Record<string, unknown>) : {};
+    options = row.options.trim() ? (JSON.parse(row.options) as Record<string, Json>) : {};
   } catch {
     // Options are mid-edit; preview without them.
     options = {};
   }
-  if (row.kind === 'constant')
-    return options.value === undefined ? undefined : String(options.value);
   const raw = sources.find((s) => s.pointer === row.from.trim())?.preview;
-  if (raw === undefined) return undefined;
-  switch (row.kind) {
-    case 'trim':
-      return raw.trim();
-    case 'upper':
-      return raw.toUpperCase();
-    case 'lower':
-      return raw.toLowerCase();
-    case 'enum': {
-      const map = (options.map ?? {}) as Record<string, unknown>;
-      const hit = Object.hasOwn(map, raw) ? map[raw] : options.default;
-      return hit === undefined ? undefined : String(hit);
-    }
-    case 'bool-status':
-      return ['true', '1', 'yes', 'active'].includes(raw.toLowerCase())
-        ? String(options.true ?? 'active')
-        : String(options.false ?? 'inactive');
-    default:
-      return raw;
+  if (row.kind !== 'constant' && raw === undefined) return undefined;
+  try {
+    const out = transform(raw, {
+      from: row.from,
+      ...(row.kind === 'none' ? {} : { transform: { kind: row.kind, options } }),
+    });
+    if (out === undefined || out === null) return undefined;
+    return typeof out === 'object' ? JSON.stringify(out) : String(out);
+  } catch {
+    // Options of the wrong shape, e.g. an enum without a map.
+    return undefined;
   }
+}
+
+/** Rows for pinned targets that have none yet, first. */
+export function withPinned(
+  rows: readonly MappingRow[],
+  pinned: readonly TargetField[],
+): MappingRow[] {
+  const have = new Set(rows.map((r) => r.input));
+  const added = pinned
+    .filter((p) => !have.has(p.key))
+    .map((p) => ({ ...blankRow(), input: p.key }));
+  return [...added, ...rows];
 }
 
 /**
@@ -146,7 +165,7 @@ export function autoMap(
   targets: readonly TargetField[],
   sources: readonly SourceField[],
 ): MappingRow[] {
-  const mapped = new Set(rows.map((r) => r.input.trim()).filter(Boolean));
+  const mapped = new Set(rows.filter((r) => r.from.trim()).map((r) => r.input.trim()));
   const taken = new Set(rows.map((r) => r.from.trim()).filter(Boolean));
   const next = rows.filter((r) => r.input.trim() || r.from.trim());
   for (const t of targets) {
@@ -156,13 +175,19 @@ export function autoMap(
     const fits = (s: SourceField) =>
       !taken.has(s.pointer) &&
       (!t.values || s.preview === undefined || t.values.includes(s.preview));
-    const exact = sources.find((s) => fits(s) && [key, label].includes(norm(leafOf(s.pointer))));
+    const names = (s: SourceField) => [
+      norm(leafOf(s.pointer)),
+      ...(s.label ? [norm(s.label)] : []),
+    ];
+    const exact = sources.find((s) => fits(s) && names(s).some((n) => [key, label].includes(n)));
     const suffix =
       exact ??
-      sources.find((s) => fits(s) && label.length > 2 && norm(leafOf(s.pointer)).endsWith(label));
+      sources.find((s) => fits(s) && label.length > 2 && names(s).some((n) => n.endsWith(label)));
     if (!suffix) continue;
     taken.add(suffix.pointer);
-    next.push({ ...blankRow(), input: t.key, from: suffix.pointer });
+    const blank = next.findIndex((r) => r.input.trim() === t.key && !r.from.trim());
+    if (blank >= 0) next[blank] = { ...(next[blank] as MappingRow), from: suffix.pointer };
+    else next.push({ ...blankRow(), input: t.key, from: suffix.pointer });
   }
   return next;
 }

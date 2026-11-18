@@ -12,6 +12,7 @@ export const CLEARED: { [K in keyof Required<ListSearch>]: undefined } = {
   status: undefined,
   holderState: undefined,
   onDevice: undefined,
+  noScanDays: undefined,
 };
 
 const ANY = 'all';
@@ -82,6 +83,18 @@ export function PassListFilters({
         { value: 'false', label: 'No' },
       ],
       onChange: (v) => onChange({ onDevice: pick(v) }),
+    },
+    {
+      id: 'scan',
+      label: 'Last scan',
+      value: search.noScanDays ? String(search.noScanDays) : ANY,
+      defaultValue: ANY,
+      options: [
+        { value: ANY, label: 'Any' },
+        { value: '30', label: 'No scan in 30 days' },
+        { value: '90', label: 'No scan in 90 days' },
+      ],
+      onChange: (v) => onChange({ noScanDays: v === '30' ? 30 : v === '90' ? 90 : undefined }),
     },
     {
       id: 'connection',

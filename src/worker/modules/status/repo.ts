@@ -1,6 +1,12 @@
 import { all, first } from '../../platform/db.ts';
 
-const KINDS = ['template_import', 'bulk_reissue', 'connection_sync', 'broadcast'] as const;
+const KINDS = [
+  'template_import',
+  'bulk_reissue',
+  'connection_sync',
+  'broadcast',
+  'pass_import',
+] as const;
 
 export interface WorkflowCount {
   kind: string;

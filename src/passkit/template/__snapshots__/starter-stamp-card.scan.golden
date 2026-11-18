@@ -1,0 +1,40 @@
+{
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "amount": {
+        "default": 1,
+        "max": 5,
+        "presets": [
+          1,
+          2,
+          3
+        ]
+      },
+      "confirm": false,
+      "cooldownMinutes": 2,
+      "id": "stamp",
+      "input": "stamps",
+      "kind": "add",
+      "label": "Add stamp",
+      "minRole": "desk",
+      "notify": false,
+      "repeat": "cooldown"
+    },
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "amount": 10,
+      "confirm": true,
+      "id": "redeem",
+      "input": "stamps",
+      "kind": "take",
+      "label": "Redeem reward",
+      "minRole": "desk",
+      "notify": false,
+      "repeat": "always",
+      "rewardLabel": "Reward"
+    }
+  ]
+}
