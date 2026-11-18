@@ -2,7 +2,7 @@ import type { InputMatch } from '../../../shared/contracts/broadcasts.ts';
 import { jobGrant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { targetFilter } from '../broadcasts/apply.ts';
+import { safeTargetFilter } from '../broadcasts/apply.ts';
 import { insertBroadcastStmt } from '../broadcasts/repo.ts';
 import { creatorLive } from '../broadcasts/repo-creator.ts';
 import { countTargeted } from '../broadcasts/repo-target.ts';
@@ -115,15 +115,21 @@ export async function checkRule(
   const window = ruleWindow(rule, kind, job.at);
   const match = row.match ? (JSON.parse(row.match) as InputMatch) : undefined;
   const target = { templateIds, ...(match ? { match } : {}), window };
-  const targeted = await countTargeted(
-    db,
-    targetFilter(
-      { org_id: row.org_id, mode: row.mode, target: JSON.stringify(target), rule_id: row.id },
-      null,
-      1,
-    ),
-    now,
+  const filter = safeTargetFilter(
+    { id: '', org_id: row.org_id, mode: row.mode, target: JSON.stringify(target), rule_id: row.id },
+    null,
+    1,
   );
+  if (!filter) {
+    ctx.log.warn('message_rule.paused', {
+      ruleId: row.id,
+      orgId: row.org_id,
+      code: 'RULE_TARGET_INVALID',
+    });
+    await pauseWithCode(db, row.id, 'RULE_TARGET_INVALID', now);
+    return;
+  }
+  const targeted = await countTargeted(db, filter, now);
   let broadcastId: string | undefined;
   if (targeted > 0) {
     await insertBroadcastStmt(db, {

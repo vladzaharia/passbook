@@ -61,7 +61,7 @@ export function ruleWindowWhere(w: RuleWindow, ruleId: string, broadcastId = '')
   return {
     sql: `(${win.sql}) AND NOT EXISTS (SELECT 1 FROM message_rule_fires f
       WHERE f.rule_id = ? AND f.pass_id = ${PASS}.id AND f.occurrence = ${occ.sql}
-        AND COALESCE(f.broadcast_id, '') <> ?)`,
+        AND f.broadcast_id IS NOT ?)`,
     params: [...win.params, ruleId, ...occ.params, broadcastId],
   };
 }

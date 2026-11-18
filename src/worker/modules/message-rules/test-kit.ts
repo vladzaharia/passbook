@@ -60,7 +60,7 @@ export interface RuleKit extends BroadcastKit {
   api(path: string, init?: RequestInit): Promise<Response>;
   /** POST/PUT/DELETE as the org admin. */
   send(method: string, path: string, body?: unknown): Promise<Response>;
-  datedPass(input?: Record<string, string>): Promise<Pass>;
+  datedPass(input?: Record<string, string>, holderEmail?: string): Promise<Pass>;
   ruleBody(extra?: Record<string, unknown>): Record<string, unknown>;
   /** Starts every due broadcast and runs its workflow to the end. */
   runDue(): Promise<void>;
@@ -85,6 +85,7 @@ export async function ruleKit(): Promise<RuleKit> {
     do: async (_n: string, a: unknown, b?: unknown) =>
       await ((typeof a === 'function' ? a : b) as () => Promise<unknown>)(),
   } as unknown as Parameters<typeof runBroadcast>[3];
+  const ran = new Set<string>();
   let release: Awaited<ReturnType<typeof approveAppleRelease>> | undefined;
   return {
     ...kit,
@@ -108,7 +109,7 @@ export async function ruleKit(): Promise<RuleKit> {
       message: 'Renew soon.',
       ...extra,
     }),
-    datedPass: async (input = {}) => {
+    datedPass: async (input = {}, holderEmail) => {
       release ??= await approveAppleRelease(kit, {
         templateId: dated.id,
         version: (await kit.registry.resolve(dated.id)).version,
@@ -122,7 +123,7 @@ export async function ruleKit(): Promise<RuleKit> {
         releaseId: release.id,
         releaseGeneration: release.generation,
         input: { memberName: 'Alex', ...input },
-        holderEmail: null,
+        holderEmail: holderEmail ?? null,
         source: 'manual',
         mode: 'live',
         execution: { kind: 'system' },
@@ -130,9 +131,9 @@ export async function ruleKit(): Promise<RuleKit> {
       });
     },
     runDue: async () => {
-      const before = kit.broadcast.created.length;
       await startDueBroadcasts(jobCtxOf(kit));
-      for (const instance of kit.broadcast.created.slice(before))
+      for (const instance of kit.broadcast.created.filter((i) => !ran.has(i.id))) {
+        ran.add(instance.id);
         await runBroadcast(
           kit.env,
           instance.id,
@@ -141,6 +142,7 @@ export async function ruleKit(): Promise<RuleKit> {
           undefined,
           kit.clock,
         );
+      }
       await kit.settle();
     },
   };
