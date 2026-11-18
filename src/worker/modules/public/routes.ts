@@ -1,5 +1,6 @@
 import { PublicAssetParamSchema, PublicTokenParamSchema } from '../../../shared/contracts/index.ts';
 import { passDevice } from '../../../shared/device.ts';
+import { PASS_SW_SOURCE } from '../../../shared/pass-offline.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
@@ -39,6 +40,18 @@ export const publicRoutes = createRouter();
 // Mail proxies fetch every emailed pass's images from a few IPs, so valid assets are limited per
 // token and network prefix only. Random tokens each get a fresh per-token bucket, so a prefix's
 // misses are counted and, past a threshold, refused before any lookup.
+// The barcode page's offline worker: scope-limited by its registration to one token's page.
+publicRoutes.get(
+  '/sw.js',
+  () =>
+    new Response(PASS_SW_SOURCE, {
+      headers: {
+        'content-type': 'text/javascript; charset=utf-8',
+        'cache-control': 'no-cache',
+        'x-content-type-options': 'nosniff',
+      },
+    }),
+);
 publicRoutes.use('/:token/assets/*', gateMisses(ASSET_MISSES_PER_MINUTE));
 publicRoutes.use(
   '/:token/assets/*',
@@ -172,6 +185,7 @@ register(
       const html = renderPresentationPage({
         ...model,
         backHref: `/p/${token}`,
+        offline: true,
         nonce: c.var.nonce,
         theme,
       });

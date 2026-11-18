@@ -1,5 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { Mode } from '../../shared/contracts/common.ts';
+import { HOLDER_COPY } from '../../shared/copy/holder.ts';
+import { OFFLINE_SCRIPT } from '../../shared/pass-offline.ts';
 import type { PresentationBarcode } from '../modules/public/presentation.ts';
 import { documentStart, type PageTheme } from './head.ts';
 import { PresentationCode } from './presentation-code.tsx';
@@ -28,6 +30,8 @@ const CSS = `${THEME_CSS}${RIBBON_CSS}
 .presentation-figure figcaption{margin-top:.75rem;font-size:.875rem;color:var(--pk-text-muted)}
 .presentation-unavailable{margin:1.25rem 0;padding:1rem;border:1px solid var(--pk-border-subtle);border-radius:var(--pk-radius-md)}
 .presentation-back{margin-top:1.5rem}
+.presentation-offline{margin-top:1.25rem;display:flex;flex-direction:column;align-items:flex-start;gap:.5rem}
+.presentation-offline p{margin:0;font-size:.875rem}
 @media(max-width:360px){.presentation-panel{padding:1rem}.presentation-code{padding:1rem}}
 `;
 
@@ -37,6 +41,8 @@ export interface PresentationPageProps {
   passTitle: string;
   mode: Mode;
   backHref: string;
+  /** A pass page's own barcode may be saved on this device; a bundle's member's may not. */
+  offline?: boolean;
   nonce: string;
   theme?: PageTheme;
 }
@@ -54,6 +60,23 @@ export function renderPresentationPage(props: PresentationPageProps): string {
         <PresentationCode barcode={props.barcode} />
         <p>This barcode is separate from the QR code that opens your pass page.</p>
         <p>Browser pages do not provide NFC.</p>
+        {props.offline && props.barcode ? (
+          <div className="presentation-offline" data-offline hidden>
+            <button type="button" className="btn outline" data-save>
+              {HOLDER_COPY.saveOffline}
+            </button>
+            <p data-state hidden>
+              {HOLDER_COPY.savedOffline}
+            </p>
+            <button type="button" className="btn outline" data-drop hidden>
+              {HOLDER_COPY.removeSaved}
+            </button>
+            <p data-fail role="alert" hidden>
+              {HOLDER_COPY.saveOfflineFailed}
+            </p>
+            <p>{HOLDER_COPY.saveOfflineLine}</p>
+          </div>
+        ) : null}
       </section>
       <div className="presentation-back">
         <a className="btn outline" href={props.backHref}>
@@ -62,7 +85,7 @@ export function renderPresentationPage(props: PresentationPageProps): string {
       </div>
     </main>,
   );
-  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer"><title>Presentation barcode</title><style nonce="${props.nonce}">${CSS}</style></head><body>${body}</body></html>`;
+  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer"><title>Presentation barcode</title><style nonce="${props.nonce}">${CSS}</style></head><body>${body}${props.offline && props.barcode ? `<script nonce="${props.nonce}">${OFFLINE_SCRIPT}</script>` : ''}</body></html>`;
 }
 
 /** Do not distinguish a rotated link from any other unavailable pass. */
