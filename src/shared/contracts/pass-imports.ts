@@ -33,7 +33,7 @@ export const PassImportPlanSchema = z
     holderEmail: MappingEntrySchema.nullable(),
     externalId: MappingEntrySchema.nullable(),
     match: PassImportMatchSchema,
-    overwriteManual: z.boolean().default(false),
+    keepManual: z.boolean().default(false),
     save: z.boolean().default(true),
   })
   .refine((p) => p.match !== 'externalId' || p.externalId !== null, {
@@ -128,6 +128,8 @@ export const PassImportSchema = z.object({
     )
     .max(PASS_IMPORT_PREVIEWS),
   problems: z.array(PassImportProblemSchema).max(PASS_IMPORT_PROBLEMS),
+  /** Every problem of the draft by severity; `problems` lists errors first, then warnings, capped. */
+  problemTotals: z.object({ errors: count, warnings: count }),
   problemsTruncated: z.boolean(),
   emailBudget: count.nullable(),
   email: z.boolean(),

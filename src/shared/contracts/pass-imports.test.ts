@@ -18,7 +18,7 @@ const file = { kind: 'file', name: 'members.csv', csv: 'a,b\n1,2' };
 
 describe('pass import contracts', () => {
   it('parses a plan and applies the defaults', () => {
-    expect(PassImportPlanSchema.parse(plan)).toMatchObject({ overwriteManual: false, save: true });
+    expect(PassImportPlanSchema.parse(plan)).toMatchObject({ keepManual: false, save: true });
     expect(PassImportCommitSchema.parse({})).toEqual({ skipInvalid: false, email: false });
   });
 
