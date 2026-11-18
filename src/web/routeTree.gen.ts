@@ -45,6 +45,8 @@ import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
 import { Route as AdminConnectionsWebhooksEndpointIdRouteImport } from './routes/admin/connections/webhooks.$endpointId'
 import { Route as AdminConnectionsWebhooksNewRouteImport } from './routes/admin/connections/webhooks.new'
+import { Route as AdminPassesImportIndexRouteImport } from './routes/admin/passes/import/index'
+import { Route as AdminPassesImportImportIdRouteImport } from './routes/admin/passes/import/$importId'
 import { Route as AdminScanningEventsEventIdRouteImport } from './routes/admin/scanning/events.$eventId'
 import { Route as AdminScanningScannersScannerIdRouteImport } from './routes/admin/scanning/scanners.$scannerId'
 import { Route as AdminScanningSessionsSessionIdRouteImport } from './routes/admin/scanning/sessions.$sessionId'
@@ -238,6 +240,17 @@ const AdminConnectionsWebhooksNewRoute =
     path: '/connections/webhooks/new',
     getParentRoute: () => AdminRouteRoute,
   } as any)
+const AdminPassesImportIndexRoute = AdminPassesImportIndexRouteImport.update({
+  id: '/passes/import/',
+  path: '/passes/import/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminPassesImportImportIdRoute =
+  AdminPassesImportImportIdRouteImport.update({
+    id: '/passes/import/$importId',
+    path: '/passes/import/$importId',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 const AdminScanningEventsEventIdRoute =
   AdminScanningEventsEventIdRouteImport.update({
     id: '/scanning/events/$eventId',
@@ -306,11 +319,13 @@ export interface FileRoutesByFullPath {
   '/admin/users/': typeof AdminUsersIndexRoute
   '/admin/connections/webhooks/$endpointId': typeof AdminConnectionsWebhooksEndpointIdRoute
   '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
+  '/admin/passes/import/$importId': typeof AdminPassesImportImportIdRoute
   '/admin/scanning/events/$eventId': typeof AdminScanningEventsEventIdRoute
   '/admin/scanning/scanners/$scannerId': typeof AdminScanningScannersScannerIdRoute
   '/admin/scanning/sessions/$sessionId': typeof AdminScanningSessionsSessionIdRoute
   '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
   '/admin/templates/$templateId/join-sign': typeof AdminTemplatesTemplateIdJoinSignRoute
+  '/admin/passes/import/': typeof AdminPassesImportIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -348,11 +363,13 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersIndexRoute
   '/admin/connections/webhooks/$endpointId': typeof AdminConnectionsWebhooksEndpointIdRoute
   '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
+  '/admin/passes/import/$importId': typeof AdminPassesImportImportIdRoute
   '/admin/scanning/events/$eventId': typeof AdminScanningEventsEventIdRoute
   '/admin/scanning/scanners/$scannerId': typeof AdminScanningScannersScannerIdRoute
   '/admin/scanning/sessions/$sessionId': typeof AdminScanningSessionsSessionIdRoute
   '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
   '/admin/templates/$templateId/join-sign': typeof AdminTemplatesTemplateIdJoinSignRoute
+  '/admin/passes/import': typeof AdminPassesImportIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -392,11 +409,13 @@ export interface FileRoutesById {
   '/admin/users/': typeof AdminUsersIndexRoute
   '/admin/connections/webhooks/$endpointId': typeof AdminConnectionsWebhooksEndpointIdRoute
   '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
+  '/admin/passes/import/$importId': typeof AdminPassesImportImportIdRoute
   '/admin/scanning/events/$eventId': typeof AdminScanningEventsEventIdRoute
   '/admin/scanning/scanners/$scannerId': typeof AdminScanningScannersScannerIdRoute
   '/admin/scanning/sessions/$sessionId': typeof AdminScanningSessionsSessionIdRoute
   '/admin/templates/$templateId_/design': typeof AdminTemplatesTemplateIdDesignRoute
   '/admin/templates/$templateId_/join-sign': typeof AdminTemplatesTemplateIdJoinSignRoute
+  '/admin/passes/import/': typeof AdminPassesImportIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -437,11 +456,13 @@ export interface FileRouteTypes {
     | '/admin/users/'
     | '/admin/connections/webhooks/$endpointId'
     | '/admin/connections/webhooks/new'
+    | '/admin/passes/import/$importId'
     | '/admin/scanning/events/$eventId'
     | '/admin/scanning/scanners/$scannerId'
     | '/admin/scanning/sessions/$sessionId'
     | '/admin/templates/$templateId/design'
     | '/admin/templates/$templateId/join-sign'
+    | '/admin/passes/import/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -479,11 +500,13 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/connections/webhooks/$endpointId'
     | '/admin/connections/webhooks/new'
+    | '/admin/passes/import/$importId'
     | '/admin/scanning/events/$eventId'
     | '/admin/scanning/scanners/$scannerId'
     | '/admin/scanning/sessions/$sessionId'
     | '/admin/templates/$templateId/design'
     | '/admin/templates/$templateId/join-sign'
+    | '/admin/passes/import'
   id:
     | '__root__'
     | '/'
@@ -522,11 +545,13 @@ export interface FileRouteTypes {
     | '/admin/users/'
     | '/admin/connections/webhooks/$endpointId'
     | '/admin/connections/webhooks/new'
+    | '/admin/passes/import/$importId'
     | '/admin/scanning/events/$eventId'
     | '/admin/scanning/scanners/$scannerId'
     | '/admin/scanning/sessions/$sessionId'
     | '/admin/templates/$templateId_/design'
     | '/admin/templates/$templateId_/join-sign'
+    | '/admin/passes/import/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -791,6 +816,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminConnectionsWebhooksNewRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/passes/import/': {
+      id: '/admin/passes/import/'
+      path: '/passes/import'
+      fullPath: '/admin/passes/import/'
+      preLoaderRoute: typeof AdminPassesImportIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/passes/import/$importId': {
+      id: '/admin/passes/import/$importId'
+      path: '/passes/import/$importId'
+      fullPath: '/admin/passes/import/$importId'
+      preLoaderRoute: typeof AdminPassesImportImportIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/scanning/events/$eventId': {
       id: '/admin/scanning/events/$eventId'
       path: '/scanning/events/$eventId'
@@ -861,11 +900,13 @@ interface AdminRouteRouteChildren {
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
   AdminConnectionsWebhooksEndpointIdRoute: typeof AdminConnectionsWebhooksEndpointIdRoute
   AdminConnectionsWebhooksNewRoute: typeof AdminConnectionsWebhooksNewRoute
+  AdminPassesImportImportIdRoute: typeof AdminPassesImportImportIdRoute
   AdminScanningEventsEventIdRoute: typeof AdminScanningEventsEventIdRoute
   AdminScanningScannersScannerIdRoute: typeof AdminScanningScannersScannerIdRoute
   AdminScanningSessionsSessionIdRoute: typeof AdminScanningSessionsSessionIdRoute
   AdminTemplatesTemplateIdDesignRoute: typeof AdminTemplatesTemplateIdDesignRoute
   AdminTemplatesTemplateIdJoinSignRoute: typeof AdminTemplatesTemplateIdJoinSignRoute
+  AdminPassesImportIndexRoute: typeof AdminPassesImportIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
@@ -901,11 +942,13 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminConnectionsWebhooksEndpointIdRoute:
     AdminConnectionsWebhooksEndpointIdRoute,
   AdminConnectionsWebhooksNewRoute: AdminConnectionsWebhooksNewRoute,
+  AdminPassesImportImportIdRoute: AdminPassesImportImportIdRoute,
   AdminScanningEventsEventIdRoute: AdminScanningEventsEventIdRoute,
   AdminScanningScannersScannerIdRoute: AdminScanningScannersScannerIdRoute,
   AdminScanningSessionsSessionIdRoute: AdminScanningSessionsSessionIdRoute,
   AdminTemplatesTemplateIdDesignRoute: AdminTemplatesTemplateIdDesignRoute,
   AdminTemplatesTemplateIdJoinSignRoute: AdminTemplatesTemplateIdJoinSignRoute,
+  AdminPassesImportIndexRoute: AdminPassesImportIndexRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
