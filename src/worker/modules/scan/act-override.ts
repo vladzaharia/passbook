@@ -61,6 +61,7 @@ export interface Override {
   event: EventRow;
   /** The refusing door's own `letInAgain`: the door's policy follows the scan to whoever overrides it. */
   doorLetInAgain: 'anyone' | 'manager' | 'never' | null;
+  doorHardLimit: boolean;
 }
 
 /** Capture a target and its original signed event with the initial claim and candidate reads. */
@@ -77,6 +78,7 @@ export function overrideEvidenceStmt(
 type OverrideEvidenceRow = RawScan & {
   taken: number;
   door_let_in_again: string | null;
+  door_hard_limit: number | null;
   evidence_id: string;
   evidence_org_id: string;
   evidence_pass_id: string;
@@ -152,6 +154,7 @@ export async function overrideFromResult(
     actionId,
     actionIdRef: data.actionIdRef,
     event,
+    doorHardLimit: row.door_hard_limit === 1,
     doorLetInAgain: door === 'anyone' || door === 'manager' || door === 'never' ? door : null,
   };
 }

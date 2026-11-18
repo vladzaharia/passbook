@@ -82,7 +82,6 @@ export const ScanMarkOutRequestSchema = z.strictObject({
   idempotencyKey: UuidV7Schema,
   passId: IdSchema,
   place: PlaceKeySchema,
-  approval: ScanApprovalSchema.optional(),
   scope: ScanAdminScopeSchema.optional(),
 });
 

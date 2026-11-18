@@ -60,10 +60,25 @@ describe("who's in: who may ask", () => {
   it('serves a monitor with Desk actions on', async () => {
     const pool = await trackedZone();
     await personInside(tpl, 'Monitor Sees', [`zone:${pool.id}`]);
-    const s = await station([tpl], [pool.id], { deviceRole: 'monitor', deskActions: true });
+    const s = await station([tpl], [pool.id], {
+      deviceRole: 'monitor',
+      deskActions: true,
+      signedIn: true,
+    });
     const { status, body } = await list(s.headers);
     expect(status).toBe(200);
     expect(body.items.map((i) => i.holder)).toEqual(['Monitor Sees']);
+  });
+
+  it('names nobody to a monitor that nobody is signed in on, whatever the sign-in setting', async () => {
+    const pool = await trackedZone();
+    await personInside(tpl, 'Unattended', [`zone:${pool.id}`]);
+    const s = await station([tpl], [pool.id], { deviceRole: 'monitor', deskActions: true });
+    const res = await kit.get(s.headers, '/live/inside');
+    expect(res.status).toBe(403);
+    const text = await res.text();
+    expect(text).toContain('STAFF_REQUIRED');
+    expect(text).not.toContain('Unattended');
   });
 
   it('needs a signed-in person when staff sign-in is on', async () => {

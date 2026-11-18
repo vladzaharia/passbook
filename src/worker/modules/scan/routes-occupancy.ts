@@ -11,7 +11,6 @@ import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { deepFreeze } from './freeze.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
-import { publishScan } from './live.ts';
 import { markOut } from './occupancy/mark-out.ts';
 import { withParentHint } from './occupancy/parent-hint.ts';
 import { setOverrideNote } from './override-note.ts';
@@ -57,16 +56,6 @@ export function registerScanOccupancyRoutes(scanRoutes: OpenAPIHono<AppBindings>
       const ctx = capturingContext(serviceContext(c));
       const who = deepFreeze(cloneObservedScanActor(scanActorOf(c)));
       const result = await overrideScan(ctx, who, deepFreeze(c.req.valid('json')));
-      // A monitor's override reaches the refusing door by `resolved`; only a scanning device has a live row.
-      if (!result.outcome.replay && who.scanner?.deviceRole === 'scan')
-        publishScan(
-          ctx,
-          who,
-          result.outcome,
-          result.evaluatedSnapshot,
-          result.credentialContext,
-          'manual',
-        );
       return c.json(await withParentHint(ctx.env.DB, who.orgId, result.outcome));
     },
   );

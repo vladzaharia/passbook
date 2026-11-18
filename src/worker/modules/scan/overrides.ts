@@ -13,12 +13,12 @@ import { act } from './act.ts';
 import type { ActRequest } from './act-claim.ts';
 import { policyActor } from './dto.ts';
 import type { ScanActor } from './guard.ts';
-import { scanHub } from './live.ts';
+import { liveRowId, publishScan, scanHub } from './live.ts';
 import { isOverridable } from './outcome.ts';
 import { setOverrideNote } from './override-note.ts';
 import { OVERRIDE_WINDOW_MS, resolvedTarget } from './override-scope.ts';
 import { overrideEvidenceForTargetStmt } from './repo-act-override.ts';
-import { countOverride } from './repo-override-cap.ts';
+import { assertUnderOverrideCap, countOverride } from './repo-override-cap.ts';
 import { overrideTakenStmt } from './repo-override-note.ts';
 import { toScan } from './repo-scan-map.ts';
 import { overridePolicyKind, scanPolicy } from './rules.ts';
@@ -44,7 +44,13 @@ export async function overrideScan(
     actor,
     req.overrideOf,
     now - OVERRIDE_WINDOW_MS,
-  ).first<Parameters<typeof toScan>[0] & { taken: number; door_let_in_again: string | null }>();
+  ).first<
+    Parameters<typeof toScan>[0] & {
+      taken: number;
+      door_let_in_again: string | null;
+      door_hard_limit: number | null;
+    }
+  >();
   if (!row) throw invalid();
   const target = toScan(row);
   if (!isOverridable(target.reason as never) || !target.passId || !target.actionId) throw invalid();
@@ -53,14 +59,20 @@ export async function overrideScan(
   const door = row.door_let_in_again;
   const pa = policyActor(actor);
   const verdict = scanPolicy(
-    door === 'anyone' || door === 'manager' || door === 'never'
-      ? { ...pa, settings: { ...pa.settings, letInAgain: door } }
-      : pa,
+    {
+      ...pa,
+      settings: {
+        ...pa.settings,
+        hardLimit: row.door_hard_limit === 1,
+        // Unreadable reads as the strictest.
+        letInAgain: door === 'anyone' || door === 'manager' || door === 'never' ? door : 'manager',
+      },
+    },
     { kind: overridePolicyKind(target.reason, target.outcome) },
   );
   if (!verdict.allow && verdict.why === 'forbidden')
     throw new ForbiddenError('This door does not let people in again.', 'SCAN_OVERRIDE_FORBIDDEN');
-  await countOverride(ctx, actor);
+  await assertUnderOverrideCap(ctx, actor);
   const request: ActRequest = {
     idempotencyKey: req.idempotencyKey,
     input: { passId: target.passId, method: 'manual' },
@@ -70,41 +82,35 @@ export async function overrideScan(
     ...(req.approval ? { approval: req.approval } : {}),
     ...(req.scope ? { scope: req.scope } : {}),
   };
-  let result: ScanEvaluation;
-  try {
-    result = await act(ctx, actor, request);
-  } catch (error) {
-    // A racing override held the claim: the loser is told who beat it, not that the scan is invalid.
-    if (
-      error instanceof ValidationError &&
-      error.code === 'SCAN_OVERRIDE_INVALID' &&
-      (await overrideTakenStmt(db, req.overrideOf).first())
-    )
-      throw taken();
-    throw error;
-  }
+  const result = await act(ctx, actor, request);
   const { outcome } = result;
   if (outcome.kind !== 'ok') {
-    // A second override that lost the claim or the gate: say who beat it, not that the scan is invalid.
+    // Lost the gate to another override: say who beat it, not that the scan is invalid.
     if (outcome.scanId === null && (await overrideTakenStmt(db, req.overrideOf).first()))
       throw taken();
     return result;
   }
   if (outcome.replay || !outcome.scanId) return result;
+  await countOverride(ctx, actor);
+  let note: string | null = null;
   if (req.note)
-    await setOverrideNote(ctx, actor, outcome.scanId, req.note).catch(() => {
+    try {
+      await setOverrideNote(ctx, actor, outcome.scanId, req.note);
+      note = req.note;
+    } catch {
       ctx.log.error('scan.override.note_failed', {
         orgId: actor.orgId,
         code: 'SCAN_OVERRIDE_NOTE_FAILED',
       });
-    });
+    }
   const via =
     actor.principal === 'admin'
       ? 'console'
       : actor.scanner?.deviceRole === 'monitor'
         ? 'monitor'
         : 'scanner';
-  ctx.waitUntil(
+  // The override committed inside `act`; its audit is awaited, and tried twice, so it is not lost with the request.
+  const audit = () =>
     auditStmt(db, ctx, {
       orgId: actor.orgId,
       actorType: actor.actor.type,
@@ -112,15 +118,32 @@ export async function overrideScan(
       action: 'scan.override',
       targetType: 'scan',
       targetId: outcome.scanId,
-      detail: { via, of: req.overrideOf, ...(req.note ? { note: req.note } : {}) },
-    })
-      .run()
-      .catch(() => {
-        ctx.log.error('scan.override.audit_failed', {
-          orgId: actor.orgId,
-          code: 'SCAN_OVERRIDE_AUDIT_FAILED',
-        });
-      }),
+      detail: { via, of: req.overrideOf, ...(note ? { note } : {}) },
+    }).run();
+  await audit()
+    .catch(audit)
+    .catch(() => {
+      ctx.log.error('scan.override.audit_failed', {
+        orgId: actor.orgId,
+        code: 'SCAN_OVERRIDE_AUDIT_FAILED',
+      });
+    });
+  // The override's row reaches monitors (the original row reads Resolved) and replaces the customer's slate.
+  publishScan(
+    ctx,
+    actor,
+    outcome,
+    result.evaluatedSnapshot,
+    result.credentialContext,
+    'manual',
+    false,
+    false,
+    {
+      label: 'Let in',
+      overrideOf: req.overrideOf,
+      resolvedBy: { staff: actor.staff?.name ?? null, device: actor.name },
+      replaces: await liveRowId(req.overrideOf),
+    },
   );
   // Only the device that refused hears of it, and not when it did the override itself.
   const refusing = resolvedTarget(actor, target);

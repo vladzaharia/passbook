@@ -17,7 +17,7 @@ import { getConsoleEventTarget } from './repo-events.ts';
 import { zoneTarget } from './repo-zones.ts';
 
 /** The org of a zone or an event, or a 404 for anyone who is not in it (and for an event of the other mode). */
-async function authorize(c: C, t: ConsoleTarget, capability: 'scanning:read' | 'scanning:manage') {
+async function authorize(c: C, t: ConsoleTarget, capability: 'scanning:read' | 'passes:operate') {
   const ctx = serviceContext(c);
   const auth = c.var.auth;
   if (auth?.kind !== 'session') throw new UnauthenticatedError();
@@ -73,7 +73,7 @@ export function registerConsoleInsideRoutes(
     },
     async (c) => {
       const t = { kind, id: c.req.valid('param').id };
-      const { ctx, authority } = await authorize(c, t, 'scanning:manage');
+      const { ctx, authority } = await authorize(c, t, 'passes:operate');
       await consoleMarkOut(ctx, currentUserId(c), authority, t, c.req.valid('json'));
       return c.body(null, 204);
     },

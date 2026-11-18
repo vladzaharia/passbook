@@ -80,7 +80,7 @@ export const ScanLiveRowSchema = z.object({
   /** The staff name and device that overrode this row. */
   resolvedBy: z.object({ staff: z.string().nullable(), device: z.string() }).nullable().optional(),
   /** The request `ref` a customer body replaces. */
-  replaces: UuidV7Schema.nullable().optional(),
+  replaces: z.string().min(1).max(64).nullable().optional(),
   /** What a customer screen draws. Only customer audiences get it. */
   customer: ScanCustomerViewSchema.nullable().optional(),
 });

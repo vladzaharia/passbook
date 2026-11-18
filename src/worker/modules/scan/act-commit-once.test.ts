@@ -60,8 +60,8 @@ describe('one heads-up is let through once', () => {
     );
     expect(fired).toBe(true);
     // `scans_override_once` holds the pending claim: the rival never reaches the gate.
-    expect(rival?.status).toBe(422);
-    expect(await rival?.json()).toMatchObject({ code: 'SCAN_OVERRIDE_INVALID' });
+    expect(rival?.status).toBe(409);
+    expect(await rival?.json()).toMatchObject({ code: 'SCAN_OVERRIDE_TAKEN' });
     const won = await outcome(result);
     expect(won.kind).toBe('ok');
     expect((await overrides(heads)).map((o) => o.id)).toEqual([won.scanId]);

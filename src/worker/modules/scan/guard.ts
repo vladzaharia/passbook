@@ -273,6 +273,14 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
     await captureScanEpochs(ctx.env.DB, actor, scannerEpochs, pendingStaff?.pinHash);
     if (actor.role === null && !options.staffOptional)
       throw new ForbiddenError('Sign in to scan.', 'STAFF_REQUIRED');
+    // A monitor acts for a person: rights come from the signed-in staff member, never from the device (SA D4).
+    if (
+      options.screenActions &&
+      actor.scanner?.deviceRole === 'monitor' &&
+      !actor.staff &&
+      !options.staffOptional
+    )
+      throw new ForbiddenError('Sign in to act.', 'STAFF_REQUIRED');
     if (
       actor.scanningSession &&
       actor.scanningSession.status !== 'active' &&

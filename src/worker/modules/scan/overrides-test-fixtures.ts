@@ -4,7 +4,20 @@ import { makeDoor } from './access-test-fixtures.ts';
 import { kit, out } from './act-test-fixtures.ts';
 import { key } from './test-kit.ts';
 
-/** A door and a monitor in one session: the monitor acts for what the door answers. */
+/** Bind a signed-in staff member to a device, as a PIN sign-in just did. */
+export async function signIn(scannerId: string, staffId: string): Promise<void> {
+  const now = kit.clock.now();
+  await run(
+    kit.env.DB,
+    'UPDATE scanners SET staff_id = ?, staff_since = ?, staff_seen_at = ? WHERE id = ?',
+    [staffId, now, now, scannerId],
+  );
+}
+
+/**
+ * A door and a monitor in one session, a staff member signed in on both (a monitor acts for a person).
+ * `unattended` leaves the monitor with nobody signed in; `role` is the signed-in person's role.
+ */
 export async function doorAndMonitor(
   tpl: string,
   zoneIds: string[],
@@ -12,26 +25,28 @@ export async function doorAndMonitor(
     deskActions?: boolean;
     role?: 'door' | 'desk';
     letInAgain?: 'anyone' | 'manager' | 'never';
-    staffSignIn?: boolean;
+    hardLimit?: boolean;
+    unattended?: boolean;
     deviceRole?: 'monitor' | 'customer';
   } = {},
 ) {
   const door = await makeDoor([tpl], zoneIds);
   await run(
     kit.env.DB,
-    'UPDATE scanning_sessions SET settings = json_set(settings, ?, json(?), ?, ?, ?, ?, ?, json(?)) WHERE id = ?',
+    'UPDATE scanning_sessions SET settings = json_set(settings, ?, json(?), ?, ?, ?, json(?), ?, json(?)) WHERE id = ?',
     [
       '$.deskActions',
       o.deskActions === false ? 'false' : 'true',
-      '$.roleWithoutSignIn',
-      o.role ?? 'desk',
       '$.letInAgain',
       o.letInAgain ?? 'anyone',
       '$.staffSignIn',
-      o.staffSignIn ? 'true' : 'false',
+      'true',
+      '$.hardLimit',
+      o.hardLimit ? 'true' : 'false',
       door.sessionId,
     ],
   );
+  const staff = await kit.staff(o.role ?? 'desk');
   const monitor = await kit.scanner({ templateIds: [tpl], deviceRole: o.deviceRole ?? 'monitor' });
   await run(
     kit.env.DB,
@@ -39,7 +54,12 @@ export async function doorAndMonitor(
      SELECT id,?,org_id,mode,'desk','desk','{}' FROM scanners WHERE id=?`,
     [door.sessionId, monitor.id],
   );
-  return { door, monitor, sessionId: door.sessionId };
+  const bind = async () => {
+    await signIn(door.scanner.id, staff.id);
+    if (!o.unattended) await signIn(monitor.id, staff.id);
+  };
+  await bind();
+  return { door, monitor, staff, sessionId: door.sessionId, bind };
 }
 
 export const overrideAs = (

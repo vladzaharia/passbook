@@ -34,7 +34,7 @@ export function registerOverrides() {
     );
     expect(row?.override_of).toBe(heads.scanId);
     const again = await act(s.headers, codeOf(pass), { overrideOf: heads.scanId });
-    expect(again.status).toBe(422);
+    expect(again.status).toBe(409);
   });
 
   it('manager: needs a Manager PIN, writes no row without it, records who approved', async () => {
@@ -139,22 +139,22 @@ export function registerOverrides() {
     const s = await kit.scanner({ eventId: ev.id });
     const [p, q] = [await kit.scanPass(t), await kit.scanPass(t)];
     expect((await out(await act(s.headers, codeOf(p)))).kind).toBe('ok');
-    // `letInAgain: anyone` is not enough: a full event is only ever let in by a manager, so a
-    // scanner with no manager to approve cannot override it.
+    // A full event follows `letInAgain` (anyone, here), unless a Hard limit refuses everyone (OC A4).
     const full = await out(await act(s.headers, codeOf(q)));
-    expect(full).toMatchObject({ kind: 'heads_up', reason: 'capacity_full', overridable: false });
-    const refused = await act(s.headers, codeOf(q), { overrideOf: full.scanId });
-    expect(refused.status === 200 ? (await out(refused)).kind : refused.status).not.toBe('ok');
+    expect(full).toMatchObject({ kind: 'heads_up', reason: 'capacity_full', overridable: true });
+    const through = await out(await act(s.headers, codeOf(q), { overrideOf: full.scanId }));
+    expect(through.kind).toBe('ok');
     // An administrator is a manager.
+    const r = await kit.scanPass(t);
     const scope = { orgId: kit.org.id, eventId: ev.id, timeZone: 'UTC' };
     const admin = kit.admin();
-    const full2 = await out(await act(admin, codeOf(q), { scope, actionId: 'check_in' }));
+    const full2 = await out(await act(admin, codeOf(r), { scope, actionId: 'check_in' }));
     expect(full2).toMatchObject({ kind: 'heads_up', reason: 'capacity_full', overridable: true });
     const ok = await out(
-      await act(admin, codeOf(q), { overrideOf: full2.scanId, scope, actionId: 'check_in' }),
+      await act(admin, codeOf(r), { overrideOf: full2.scanId, scope, actionId: 'check_in' }),
     );
     expect(ok.kind).toBe('ok');
-    expect(ok.counts.event).toMatchObject({ arrived: 2, capacity: 1 });
+    expect(ok.counts.event).toMatchObject({ arrived: 3, capacity: 1 });
   });
 
   it.each([

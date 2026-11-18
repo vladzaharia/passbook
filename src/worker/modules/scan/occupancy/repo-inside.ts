@@ -59,7 +59,7 @@ export const insideDistinctRead = (q: Omit<InsideRead, 'nested'>): AfterRead =>
 /** The pass's row at a place, to see whether it is inside and since when. */
 export const presenceRead = (orgId: string, passId: string, place: string): AfterRead =>
   afterRead(
-    `SELECT state, entered_at AS enteredAt, due_at AS dueAt FROM scan_presence
+    `SELECT state, entered_at AS enteredAt, due_at AS dueAt, last_scan_id AS lastScanId FROM scan_presence
      WHERE org_id = ? AND pass_id = ? AND scope = ?`,
     [orgId, passId, place],
   );

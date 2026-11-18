@@ -10,11 +10,13 @@ import { grantedAudit } from '../../audit/repo-granted.ts';
 import { getPass } from '../../passes/repo-read-pass.ts';
 import { policyActor } from '../dto.ts';
 import type { ScanActor } from '../guard.ts';
+import { ledgerRow } from '../ledger.ts';
 import { blankOutcome } from '../outcome.ts';
-import { countOverride } from '../repo-override-cap.ts';
+import { assertUnderOverrideCap, countOverride } from '../repo-override-cap.ts';
 import { scanByKey } from '../repo-scans.ts';
 import { scanPolicy } from '../rules.ts';
 import { SCAN_COMMIT_TABLES, scanIs, scanWriteGrant } from '../scan-write-grant.ts';
+import { ledgerEvent } from '../scan-write-statements.ts';
 import { scannerRefusal } from '../scanner-credential-lost.ts';
 import { sessionInsideScope, zoneScope } from './inside-scope.ts';
 import { presenceRead } from './repo-inside.ts';
@@ -79,12 +81,15 @@ export async function markOut(
       ? zoneScope(
           zones,
           zones.filter((z) => z.parentId === null).map((z) => z.id),
+          // Membership, not a list: no page limit.
+          Number.POSITIVE_INFINITY,
         )
       : await sessionInsideScope(db, actor);
   const place = scope.places.find((p) => p.place === req.place);
   const pass = place ? await getPass(db, req.passId, actor.orgId) : null;
   if (!place || !pass || pass.mode !== actor.mode) throw invalid();
 
+  const requestHash = await sha256Hex(JSON.stringify([req.passId, req.place]));
   const prior = await scanByKey(db, actor.actorKey, req.idempotencyKey);
   const now = ctx.clock.now();
   const done = (replay: boolean, inNow: number, stayMs: number | null, id: string, at: number) =>
@@ -94,19 +99,19 @@ export async function markOut(
     return ((counts?.results ?? [])[0] as { n?: number } | undefined)?.n ?? 0;
   };
   if (prior)
-    if (prior.state === 'done' && prior.outcome === 'ok' && prior.presenceScope === req.place)
+    if (prior.state === 'done' && prior.outcome === 'ok' && prior.requestHash === requestHash)
       return done(true, await countNow(), null, prior.id, prior.at);
     else
       throw new ConflictError('That request key was used for something else.', 'SCAN_KEY_REUSED');
 
   const [row] = await runReads(db, [presenceRead(actor.orgId, req.passId, req.place)]);
   const held = (row?.results ?? [])[0] as
-    | { state: 'in' | 'out'; enteredAt: number | null; dueAt: number | null }
+    | { state: 'in' | 'out'; enteredAt: number | null; dueAt: number | null; lastScanId: string }
     | undefined;
   if (!held || !liveIn({ state: held.state, due_at: held.dueAt }, now))
     throw new ConflictError('They are already out.', 'NOT_INSIDE');
 
-  await countOverride(ctx, actor);
+  await assertUnderOverrideCap(ctx, actor);
   const scanId = ctx.ids.ordered(now);
   const g = scanWriteGrant(ctx, actor, {
     purpose: 'org_mode.scan.check_in',
@@ -115,7 +120,14 @@ export async function markOut(
     pass: { id: pass.id, facts: { pass, credential: {} } },
     tables: SCAN_COMMIT_TABLES,
   });
-  const { won } = addExit(g, { passId: pass.id, scanId, now, plan: exitAsGiven(zones, req.place) });
+  const { won } = addExit(g, {
+    passId: pass.id,
+    scanId,
+    now,
+    plan: exitAsGiven(zones, req.place),
+    // The row the desk read: a tap-out and tap-in since is a new stay and is left alone.
+    lastScanId: held.lastScanId,
+  });
   const inserted = markOutScan(
     g,
     {
@@ -134,9 +146,26 @@ export async function markOut(
       apiKeyId: actor.apiKeyId ?? null,
       eventId: actor.event?.id ?? null,
       idempotencyKey: req.idempotencyKey,
-      requestHash: await sha256Hex(JSON.stringify([req.passId, req.place])),
+      requestHash,
     },
     [won],
+  );
+  ledgerEvent(
+    g,
+    ledgerRow(ctx, actor, {
+      pass,
+      scanId,
+      action: null,
+      outcome: 'ok',
+      reason: null,
+      method: 'manual',
+      override: false,
+      approvedBy: null,
+      direction: 'out',
+    }),
+    scanId,
+    'ok',
+    null,
   );
   grantedAudit(
     g,
@@ -164,12 +193,18 @@ export async function markOut(
   );
   try {
     const committed = await g.commit();
-    if (!(committed[g.indexOf(inserted)]?.results ?? []).length)
+    if (!(committed[g.indexOf(inserted)]?.results ?? []).length) {
+      // The same key racing itself: the winner's answer is this one's.
+      const twin = await scanByKey(db, actor.actorKey, req.idempotencyKey);
+      if (twin?.state === 'done' && twin.outcome === 'ok' && twin.requestHash === requestHash)
+        return done(true, await countNow(), null, twin.id, twin.at);
       throw new ConflictError('They are already out.', 'NOT_INSIDE');
+    }
   } catch (error) {
     if (error instanceof ConflictError) throw error;
     throw await scannerRefusal(ctx, actor, error);
   }
+  await countOverride(ctx, actor);
   return done(
     false,
     await countNow(),

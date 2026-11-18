@@ -52,6 +52,8 @@ export async function station(
     deskActions?: boolean;
     role?: 'door' | 'desk';
     staffSignIn?: boolean;
+    /** Sign a desk staff member in on the device (a monitor acts for a person). */
+    signedIn?: boolean;
     status?: 'active' | 'paused';
   } = {},
 ): Promise<Station> {
@@ -83,6 +85,20 @@ export async function station(
       'INSERT INTO scanning_session_zones (session_id, zone_id, sort) VALUES (?, ?, ?)',
       [sessionId, zoneId, sort],
     );
+  if (o.signedIn) {
+    const staff = await kit.staff('desk');
+    await run(
+      kit.env.DB,
+      "UPDATE scanning_sessions SET settings = json_set(settings, '$.staffSignIn', json('true')) WHERE id = ?",
+      [sessionId],
+    );
+    const at = kit.clock.now();
+    await run(
+      kit.env.DB,
+      'UPDATE scanners SET staff_id = ?, staff_since = ?, staff_seen_at = ? WHERE id = ?',
+      [staff.id, at, at, scanner.id],
+    );
+  }
   return { scanner, headers: scanner.headers, sessionId };
 }
 

@@ -1,4 +1,4 @@
-import { UnavailableError, ValidationError } from '../../platform/errors.ts';
+import { ConflictError, UnavailableError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
 import { type ActRequest, claimOf, rememberHistoryCapacities, requestHashOf } from './act-claim.ts';
@@ -158,7 +158,7 @@ export async function act(
       return accepts ? unknownOutcome(credentials) : notAcceptedOutcome(credentials);
     // Another override holds this heads-up (pending or won): `scans_override_once` at the claim.
     if (isOverrideOnceViolation(error))
-      throw new ValidationError('That scan cannot be let through.', [], 'SCAN_OVERRIDE_INVALID');
+      throw new ConflictError('Someone else already let them in.', 'SCAN_OVERRIDE_TAKEN');
     throw await scannerRefusal(ctx, actor, error);
   }
 }

@@ -22,7 +22,11 @@ const tracked = (z: OccZone) => z.occupancy !== 'off' && z.archivedAt === null;
 export const MAX_SCOPE_PLACES = 64;
 
 /** The tracked zones in the subtrees of `rootIds`, in tree order. */
-export function zoneScope(zones: readonly OccZone[], rootIds: readonly string[]): InsideScope {
+export function zoneScope(
+  zones: readonly OccZone[],
+  rootIds: readonly string[],
+  max = MAX_SCOPE_PLACES,
+): InsideScope {
   const byId = new Map(zones.map((z) => [z.id, z]));
   const inScope = new Set<string>();
   const below = (id: string): string[] => [
@@ -43,7 +47,7 @@ export function zoneScope(zones: readonly OccZone[], rootIds: readonly string[])
   };
   const places: ScopePlace[] = [];
   const nested: Record<string, string> = {};
-  for (const z of live.slice(0, MAX_SCOPE_PLACES)) {
+  for (const z of live.slice(0, max)) {
     const up = parentOf(z);
     if (up) nested[zonePlace(z.id)] = zonePlace(up.id);
     places.push({

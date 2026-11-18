@@ -18,25 +18,22 @@ export const actsForOthers = (actor: ScanActor): boolean =>
 
 export function mayOverrideScan(actor: ScanActor, target: OverrideTarget): boolean {
   if (target.actorKey === actor.actorKey) return true;
-  if (actor.principal === 'admin') return true;
+  // Act evaluates at the actor's own session and places, so only scans of that session can be let in there.
+  if (actor.principal === 'admin') return !target.sessionId;
   if (actor.scanner?.deviceRole !== 'monitor') return false;
-  return (
-    (!!actor.scanningSession && target.sessionId === actor.scanningSession.id) ||
-    (!!actor.event && target.eventId === actor.event.id)
-  );
+  return !!actor.scanningSession && target.sessionId === actor.scanningSession.id;
 }
 
-/** The same rule in SQL over `scans q`: own scans, plus the watch of a monitor or an admin's org. */
+/** The same rule in SQL over `scans q`: own scans, a monitor's own session, an admin's session-less scans. */
 export function overrideScopeSql(actor: ScanActor): {
   sql: string;
   params: (string | number | null)[];
 } {
   const monitor = actor.scanner?.deviceRole === 'monitor';
   const session = monitor ? (actor.scanningSession?.id ?? null) : null;
-  const event = monitor ? (actor.event?.id ?? null) : null;
   return {
-    sql: `(q.actor_key = ? OR ? = 1 OR (? IS NOT NULL AND q.session_id = ?) OR (? IS NOT NULL AND q.event_id = ?))`,
-    params: [actor.actorKey, actor.principal === 'admin' ? 1 : 0, session, session, event, event],
+    sql: `(q.actor_key = ? OR (? = 1 AND q.session_id IS NULL) OR (? IS NOT NULL AND q.session_id = ?))`,
+    params: [actor.actorKey, actor.principal === 'admin' ? 1 : 0, session, session],
   };
 }
 

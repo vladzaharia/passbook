@@ -2,14 +2,19 @@
 
 import type { Mode } from '../../../../shared/contracts/common.ts';
 import type { ScanWhosInList } from '../../../../shared/contracts/scan-whos-in.ts';
-import { ConflictError, ValidationError } from '../../../platform/errors.ts';
+import { grant } from '../../../platform/authority.ts';
+import { ConflictError, ForbiddenError, ValidationError } from '../../../platform/errors.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
 import { grantedAudit } from '../../audit/repo-granted.ts';
+import { capabilityChecks } from '../../passes/repo-authority.ts';
 import { getPass } from '../../passes/repo-read-pass.ts';
-import { type AdminAuthority, adminGrant } from '../repo-admin-grant.ts';
+import { ledgerRow } from '../ledger.ts';
+import { type AdminAuthority, adminPrincipal } from '../repo-admin-grant.ts';
+import { assertUnderOverrideCap, countOverride } from '../repo-override-cap.ts';
 import { orgZoneRows } from '../repo-zones.ts';
 import { scanPassChecks } from '../scan-pass-checks.ts';
 import { SCAN_COMMIT_TABLES, scanIs } from '../scan-write-grant.ts';
+import { ledgerEvent } from '../scan-write-statements.ts';
 import type { Identify } from './inside-list.ts';
 import { whosInList } from './inside-list.ts';
 import { type InsideScope, zoneScope } from './inside-scope.ts';
@@ -115,27 +120,31 @@ export async function consoleMarkOut(
     throw new ValidationError('That person cannot be marked out.', [], 'SCAN_MARK_OUT_INVALID');
   const now = ctx.clock.now();
   const [row] = await runReads(ctx.env.DB, [presenceRead(orgId, pass.id, input.place)]);
-  const held = (row?.results ?? [])[0] as { state: 'in' | 'out'; dueAt: number | null } | undefined;
+  const held = (row?.results ?? [])[0] as
+    | { state: 'in' | 'out'; dueAt: number | null; lastScanId: string }
+    | undefined;
   if (!held || !liveIn({ state: held.state, due_at: held.dueAt }, now))
     throw new ConflictError('They are already out.', 'NOT_INSIDE');
+  const capActor = { orgId, actorKey: `u:${userId}`, actor: { type: 'user' as const, id: userId } };
+  await assertUnderOverrideCap(ctx, capActor);
   const scanId = ctx.ids.ordered(now);
-  const g = adminGrant(
-    ctx,
-    'org_mode.scan.mark_out',
-    userId,
-    authority,
-    orgId,
-    scanPassChecks(pass.id, { pass, credential: {} }),
-    { lineage: 'SCAN_PASS_CHANGED' },
-    pass.id,
-    SCAN_COMMIT_TABLES,
-  );
+  // Desk work, so `passes:operate` suffices: the same right the device API gives an admin.
+  if (authority.userId !== userId || authority.orgId !== orgId) throw new ForbiddenError();
+  const g = grant(ctx, {
+    purpose: 'org_mode.scan.mark_out',
+    principal: adminPrincipal(authority),
+    checks: [...capabilityChecks(authority), ...scanPassChecks(pass.id, { pass, credential: {} })],
+    tables: [...SCAN_COMMIT_TABLES],
+    codes: { lineage: 'SCAN_PASS_CHANGED' },
+    target: pass.id,
+  });
   const zones = await orgZoneRows(ctx.env.DB, orgId);
   const { won } = addExit(g, {
     passId: pass.id,
     scanId,
     now,
     plan: exitAsGiven(zones, input.place),
+    lastScanId: held.lastScanId,
   });
   const inserted = markOutScan(
     g,
@@ -159,6 +168,27 @@ export async function consoleMarkOut(
     },
     [won],
   );
+  ledgerEvent(
+    g,
+    ledgerRow(
+      ctx,
+      { actor: { type: 'user', id: userId }, event: null, scanner: null, staff: null } as never,
+      {
+        pass,
+        scanId,
+        action: null,
+        outcome: 'ok',
+        reason: null,
+        method: 'manual',
+        override: false,
+        approvedBy: null,
+        direction: 'out',
+      },
+    ),
+    scanId,
+    'ok',
+    null,
+  );
   grantedAudit(
     g,
     ctx,
@@ -176,4 +206,5 @@ export async function consoleMarkOut(
   const committed = await g.commit();
   if (!(committed[g.indexOf(inserted)]?.results ?? []).length)
     throw new ConflictError('They are already out.', 'NOT_INSIDE');
+  await countOverride(ctx, capActor);
 }

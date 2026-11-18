@@ -9,6 +9,8 @@ export interface Waive {
   window?: boolean;
   confirmed?: boolean;
   direction?: 'in' | 'out';
+  /** The access refusal a Manager let through; only this reason is skipped (hard ones never are). */
+  access?: string | undefined;
 }
 
 /** Retain pinned action semantics while applying the stricter current authority policy. */

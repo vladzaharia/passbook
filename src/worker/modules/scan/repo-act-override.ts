@@ -11,6 +11,12 @@ const recordedProof = recordedScanProvenanceSql({
   walletTemplateVersionSql: 'recorded.template_version',
 });
 
+/** The refusing door's settings now: its current session, else the scan's session, else the device. Unreadable reads as the strictest. */
+const doorSettings = `COALESCE(
+  (SELECT s.settings FROM scanning_devices dv JOIN scanning_sessions s ON s.id=dv.session_id WHERE dv.scanner_id=q.scanner_id),
+  (SELECT s.settings FROM scanning_sessions s WHERE s.id=q.session_id),
+  (SELECT d.settings FROM scanners d WHERE d.id=q.scanner_id))`;
+
 /** Capture the target together with its original signed event and wallet version. */
 export function overrideEvidenceForTargetStmt(
   db: D1Database,
@@ -22,9 +28,10 @@ export function overrideEvidenceForTargetStmt(
   return stmt(
     db,
     `SELECT q.*,
-    EXISTS (SELECT 1 FROM scans o WHERE o.at>=? AND o.override_of=? AND o.outcome='ok') AS taken,
-    json_extract(COALESCE((SELECT s.settings FROM scanning_sessions s WHERE s.id=q.session_id),
-      (SELECT d.settings FROM scanners d WHERE d.id=q.scanner_id)),'$.letInAgain') AS door_let_in_again,
+    EXISTS (SELECT 1 FROM scans o WHERE o.at>=? AND o.override_of=? AND o.outcome='ok'
+      AND o.state='done' AND o.undone_at IS NULL) AS taken,
+    COALESCE(CASE WHEN json_valid(${doorSettings}) THEN json_extract(${doorSettings},'$.letInAgain') END,'manager') AS door_let_in_again,
+    CASE WHEN json_valid(${doorSettings}) THEN json_extract(${doorSettings},'$.hardLimit') END AS door_hard_limit,
     l.id AS evidence_id,l.org_id AS evidence_org_id,l.pass_id AS evidence_pass_id,l.mode AS evidence_mode,
     l.kind AS evidence_kind,l.device AS evidence_device,l.actor_type AS evidence_actor_type,
     l.actor_id AS evidence_actor_id,l.data AS evidence_data,l.at AS evidence_at,

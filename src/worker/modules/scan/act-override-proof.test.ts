@@ -14,7 +14,7 @@ import {
   state,
   templateId,
 } from './repo-act-override-proof-test-fixtures.ts';
-import { codeOf } from './test-kit.ts';
+import { codeOf, key } from './test-kit.ts';
 
 beforeAll(setupOverrideProof);
 
@@ -43,7 +43,13 @@ describe('override event provenance', () => {
         [s.pass.id, 'check_in'],
       ),
     ).toEqual({ count: 2, last_scan_id: result.scanId });
-    await expectInvalid(s);
+    // The scan is let in once: the same claim now meets `scans_override_once`.
+    const again = await request(s.scanner, s.input, {
+      overrideOf: s.headsId,
+      idempotencyKey: key(),
+    });
+    expect(again.status).toBe(409);
+    expect(await again.json()).toMatchObject({ code: 'SCAN_OVERRIDE_TAKEN' });
   });
 
   it.each([

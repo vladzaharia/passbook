@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { all, run } from '../../../platform/db.ts';
 import { kit, setupActionFixture } from '../act-test-fixtures.ts';
+import { beforeBatch } from '../batch-interceptor-test-support.ts';
 import { key } from '../test-kit.ts';
 import {
   DISPLAY_TPL,
@@ -121,7 +122,11 @@ describe('mark as out', () => {
     const pool = await trackedZone();
     const place = `zone:${pool.id}`;
     const p = await personInside(tpl, 'By Monitor', [place]);
-    const s = await station([tpl], [pool.id], { deviceRole: 'monitor', deskActions: true });
+    const s = await station([tpl], [pool.id], {
+      deviceRole: 'monitor',
+      deskActions: true,
+      signedIn: true,
+    });
     expect((await markOut(s.headers, p.id, place)).status).toBe(200);
     expect((await presenceOf(p.id, place))[0]?.state).toBe('out');
   });
@@ -190,5 +195,75 @@ describe('staff routes on a monitor', () => {
     const refused = await kit.get(off.headers, '/staff?q=a');
     expect(refused.status).toBe(403);
     expect(await refused.text()).toContain('SCREEN_ONLY');
+  });
+});
+
+describe('mark as out: races, keys and the ledger', () => {
+  it('leaves a new stay alone when the person tapped out and in before it landed', async () => {
+    const pool = await trackedZone();
+    const place = `zone:${pool.id}`;
+    const p = await personInside(tpl, 'Back In', [place]);
+    const s = await station([tpl], [pool.id]);
+    const { result, fired } = await beforeBatch(
+      kit.env,
+      /INSERT INTO scan_presence/,
+      async (db) => {
+        await run(
+          db,
+          "UPDATE scan_presence SET last_scan_id = 'later', entered_at = entered_at + 1 WHERE pass_id = ? AND scope = ?",
+          [p.id, place],
+        );
+      },
+      () => markOut(s.headers, p.id, place),
+    );
+    expect(fired).toBe(true);
+    expect(result.status).toBe(409);
+    expect((await presenceOf(p.id, place))[0]?.state).toBe('in');
+  });
+
+  it('refuses a reused key for another pass instead of replaying', async () => {
+    const pool = await trackedZone();
+    const place = `zone:${pool.id}`;
+    const a = await personInside(tpl, 'A', [place]);
+    const b = await personInside(tpl, 'B', [place]);
+    const s = await station([tpl], [pool.id]);
+    const k = key();
+    expect(
+      (await kit.post(s.headers, '/mark-out', { idempotencyKey: k, passId: a.id, place })).status,
+    ).toBe(200);
+    const reused = await kit.post(s.headers, '/mark-out', {
+      idempotencyKey: k,
+      passId: b.id,
+      place,
+    });
+    expect(reused.status).toBe(409);
+    expect((await presenceOf(b.id, place))[0]?.state).toBe('in');
+  });
+
+  it('writes the exit into the pass ledger like a tap-out', async () => {
+    const pool = await trackedZone();
+    const place = `zone:${pool.id}`;
+    const p = await personInside(tpl, 'Ledger', [place]);
+    const s = await station([tpl], [pool.id]);
+    expect((await markOut(s.headers, p.id, place)).status).toBe(200);
+    const events = await all<{ kind: string }>(
+      kit.env.DB,
+      "SELECT kind FROM pass_events WHERE pass_id = ? AND kind = 'scan.checked_out'",
+      [p.id],
+    );
+    expect(events).toHaveLength(1);
+  });
+});
+
+describe('mark as out: an unattended monitor', () => {
+  it('answers STAFF_REQUIRED', async () => {
+    const pool = await trackedZone();
+    const place = `zone:${pool.id}`;
+    const p = await personInside(tpl, 'Nobody', [place]);
+    const s = await station([tpl], [pool.id], { deviceRole: 'monitor', deskActions: true });
+    const res = await markOut(s.headers, p.id, place);
+    expect(res.status).toBe(403);
+    expect(await res.text()).toContain('STAFF_REQUIRED');
+    expect((await presenceOf(p.id, place))[0]?.state).toBe('in');
   });
 });

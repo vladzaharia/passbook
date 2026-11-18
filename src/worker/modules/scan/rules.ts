@@ -30,7 +30,7 @@ export interface PolicyActor {
   staffId: string | null;
   /** The API key acting as this terminal; its scans and the terminal's own are not each other's. */
   apiKeyId?: string | null;
-  settings: Pick<ScannerSettings, 'lookup' | 'letInAgain'>;
+  settings: Pick<ScannerSettings, 'lookup' | 'letInAgain'> & { hardLimit?: boolean | undefined };
 }
 
 export interface UndoTarget {
@@ -123,12 +123,15 @@ export function scanPolicy(
       if (actor.terminal) return FORBIDDEN;
       return approved ? ALLOW : NEEDS;
     }
+    case 'capacity_override':
     case 'let_in_again':
+      // A full place follows who can admit again, unless the door's Hard limit refuses everyone (OC A4).
+      if (request.kind === 'capacity_override' && actor.settings.hardLimit === true)
+        return FORBIDDEN;
       if (actor.settings.letInAgain === 'never') return FORBIDDEN;
       if (actor.settings.letInAgain === 'anyone') return actor.terminal ? FORBIDDEN : ALLOW;
       return managerOnly();
     case 'cooldown_override':
-    case 'capacity_override':
     case 'access_override':
       return managerOnly();
     case 'mark_out':

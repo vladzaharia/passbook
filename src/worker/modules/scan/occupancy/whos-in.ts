@@ -18,7 +18,8 @@ export function admitWhosIn(actor: ScanActor): void {
   const device = actor.scanner?.deviceRole;
   if (device === 'customer' || (device === 'monitor' && !actor.settings.deskActions))
     throw new ForbiddenError('This screen cannot list who is inside.', 'SCREEN_ONLY');
-  if (actor.role === null) throw new ForbiddenError('Sign in to scan.', 'STAFF_REQUIRED');
+  if (actor.role === null || (device === 'monitor' && !actor.staff))
+    throw new ForbiddenError('Sign in to scan.', 'STAFF_REQUIRED');
   if (!scanPolicy(policyActor(actor), { kind: 'mark_out' }).allow)
     throw new ForbiddenError('Only Desk and above can list who is inside.', 'FORBIDDEN');
 }
