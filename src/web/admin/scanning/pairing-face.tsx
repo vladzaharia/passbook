@@ -4,7 +4,7 @@ import type { z } from 'zod';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { ScannerPairingSchema } from '@/shared/contracts/scanners.ts';
 import { Scan } from '@/web/portal/add/scan.tsx';
-import { Buddy, Button, CopyButton, toast } from '@/web/ui/index.ts';
+import { Buddy, Button, CopyButton, toast, useNow } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import './pairing.css';
 import { PAIRING_POLL_MS, useNewPairing, usePairHere, usePairingState } from './scanner-api.ts';
@@ -18,17 +18,6 @@ export interface PairingFaceProps {
   pairing: Pairing;
   onClose: () => void;
   pollMs?: number;
-}
-
-/** Seconds-grained clock for the countdown only; nothing else re-renders on it. */
-function useClock(on: boolean): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!on) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [on]);
-  return now;
 }
 
 /**
@@ -46,7 +35,7 @@ export function PairingFace({
   const pairHere = usePairHere(scanner.id);
   const [paired, setPaired] = useState<{ label: string; at: number }>();
   const [spent, setSpent] = useState(false);
-  const now = useClock(!paired && !spent);
+  const now = useNow(1000, !paired && !spent);
   const left = pairing.expiresAt - now;
   const state = usePairingState(scanner.id, !paired && !spent, pollMs);
 

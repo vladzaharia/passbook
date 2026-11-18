@@ -16,7 +16,11 @@ const pass1 = () => c.legacy.passes.find((p) => p.id === 'pass-baked-unassigned-
 
 beforeAll(async () => {
   c = await runCutover(28, { bumpStarter: true });
-  kit = await withKitDatabase(c.legacy.db, () => setupScanKit({ clockStart: NOW })); // real clock: the cutover seed is wall-time based
+  // The kit serves the migrated database as the newest build: the binding's real timestamp would
+  // read as a later build than the fixed-clock cutover and archive its fixtures.
+  kit = await withKitDatabase(c.legacy.db, () =>
+    setupScanKit({ clockStart: NOW, env: { CF_VERSION: c.build } }),
+  );
   overrideDeps(kit.env, { registry: createTemplateRegistry(kit.env) });
 });
 

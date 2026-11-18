@@ -333,9 +333,10 @@ describe('scheduled broadcast execution', () => {
         [job.id, a.id],
       ),
     ).toEqual({ outcome: 'updated' });
-    expect((await runBroadcast(kit.env, instanceId, { broadcastId: job.id }, step)).state).toBe(
-      'sent',
-    );
+    expect(
+      (await runBroadcast(kit.env, instanceId, { broadcastId: job.id }, step, undefined, kit.clock))
+        .state,
+    ).toBe('sent');
     for (const pass of [test, foreign, differentTemplate]) {
       expect((await getPass(kit.env.DB, pass.id))?.personalization.message).toBeUndefined();
       expect(await versionsOf(kit, pass.id)).toBe(1);

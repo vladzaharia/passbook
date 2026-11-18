@@ -6,7 +6,7 @@ import { bakedFrom, sourceOf } from '../../src/worker/modules/templates/testing.
 import { ManualClock } from '../../src/worker/platform/clock.ts';
 import type { AppEnv } from '../../src/worker/platform/env.ts';
 import { createServiceContext } from '../../src/worker/platform/service-context.ts';
-import { makeEnv } from '../helpers/index.ts';
+import { makeEnv, TEST_NOW } from '../helpers/index.ts';
 import {
   dataFingerprint,
   type Legacy,
@@ -20,7 +20,7 @@ import {
 import { seedProduction } from './production-seed.ts';
 import { runBootstrap } from './run-bootstrap.ts';
 
-export const NOW = Date.now();
+export const NOW = TEST_NOW;
 export const TABLES = [
   'users',
   'orgs',
@@ -60,6 +60,8 @@ export interface Cutover {
   before: Awaited<ReturnType<typeof dataFingerprint>>;
   beforeSync: Record<string, string | null>;
   env: AppEnv;
+  /** The newest build the cutover synced; a kit that serves the migrated database must report it. */
+  build: AppEnv['CF_VERSION'];
   bootstrapPlan: string[];
   bootstrapSql: string;
 }
@@ -86,6 +88,7 @@ export async function runCutover(
     createServiceContext(env, { clock: new ManualClock(NOW) }),
     sourceOf(legacy.baked, 'cutover-hash'),
   );
+  let build = env.CF_VERSION;
   if (options.bumpStarter) {
     // The new build ships different baked content: the platform starter gets a new version.
     const bumped = await bakedFrom('starter', basicPackage({ 'logo.png': makePng(120, 50) }), {
@@ -101,6 +104,7 @@ export async function runCutover(
         timestamp: new Date(NOW + 1000).toISOString(),
       },
     };
+    build = later.CF_VERSION;
     resetBakedSync();
     await syncBakedTemplates(
       createServiceContext(later, { clock: new ManualClock(NOW + 2000) }),
@@ -128,6 +132,7 @@ export async function runCutover(
         timestamp: new Date(NOW + 3000).toISOString(),
       },
     };
+    build = later.CF_VERSION;
     resetBakedSync();
     await syncBakedTemplates(
       createServiceContext(later, { clock: new ManualClock(NOW + 4000) }),
@@ -135,5 +140,5 @@ export async function runCutover(
     );
     legacy.bumpedStarters = bumped.map((f) => f.template.version);
   }
-  return { legacy, before, beforeSync, env, bootstrapPlan: plan, bootstrapSql: sql };
+  return { legacy, before, beforeSync, env, build, bootstrapPlan: plan, bootstrapSql: sql };
 }

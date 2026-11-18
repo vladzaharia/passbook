@@ -10,7 +10,7 @@ import { putMemberPhoto } from '../passes/member-photo.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { adminActor, captureScanTenantAuthority } from './actor.ts';
 import { createScannerStore } from './auth-store.ts';
-import { scanHub } from './live.ts';
+import { clockedHub } from './clocked-hub-test-fixtures.ts';
 import { liveRecipient } from './live-auth.ts';
 import { liveRowFor } from './live-render.ts';
 import { asDeskDisplay } from './live-screen-test-fixtures.ts';
@@ -132,7 +132,7 @@ describe('administrator session display authorization', () => {
     );
     const entry = await withSourceProof({ ...row(source.id), passId: pass.id });
     expect(
-      await scanHub(kit.ctx, kit.org.id, 'live').publish({
+      await clockedHub(kit.ctx, kit.clock, kit.org.id, 'live').publish({
         orgId: kit.org.id,
         mode: 'live',
         row: entry,

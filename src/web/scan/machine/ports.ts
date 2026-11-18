@@ -48,6 +48,7 @@ export interface FailInfo {
   error: FailCode;
   retryAfterMs?: number;
   requestId?: string;
+  triesLeft?: number;
 }
 
 export interface ScanDeps {

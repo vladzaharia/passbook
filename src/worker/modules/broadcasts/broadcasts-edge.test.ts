@@ -18,7 +18,7 @@ let app: ReturnType<typeof createApp>;
 beforeAll(async () => {
   kit = await broadcastKit();
   auth = await broadcastAuth(kit, ORIGIN);
-  app = createApp({ stores: auth.stores });
+  app = createApp({ stores: auth.stores, clock: kit.clock });
 });
 
 const api = (path: string, init: RequestInit & { headers?: Record<string, string> } = {}) =>
@@ -54,7 +54,14 @@ async function sendNow(body: Record<string, unknown>) {
   const before = kit.broadcast.created.length;
   const made = await dto(await post('/broadcasts', body));
   const instance = kit.broadcast.created.at(before);
-  await runBroadcast(kit.env, instance?.id ?? '', { broadcastId: made.id }, stepRun);
+  await runBroadcast(
+    kit.env,
+    instance?.id ?? '',
+    { broadcastId: made.id },
+    stepRun,
+    undefined,
+    kit.clock,
+  );
   await kit.settle();
   return dto(await api(`/broadcasts/${made.id}`, { headers: auth.admin() }));
 }
@@ -145,6 +152,12 @@ describe('target', () => {
     expect(items.filter((i) => i.outcome === 'updated')).toHaveLength(5);
 
     // A chunk retried after the publish but before its item row: the pass counts as unchanged.
+    // The retry belongs to a run that started after that version, so the version is not its own.
+    kit.clock.advance(1_000);
+    await run(kit.env.DB, 'UPDATE broadcasts SET started_at = ? WHERE id = ?', [
+      kit.clock.now(),
+      made.id,
+    ]);
     await run(kit.env.DB, 'DELETE FROM broadcast_items WHERE broadcast_id = ? AND pass_id = ?', [
       made.id,
       passes[0]?.id,
@@ -213,7 +226,14 @@ describe('stuck broadcasts', () => {
       },
     } as unknown as Parameters<typeof runBroadcast>[3];
     await expect(
-      runBroadcast(kit.env, `broadcast-${made.id}`, { broadcastId: made.id }, flaky),
+      runBroadcast(
+        kit.env,
+        `broadcast-${made.id}`,
+        { broadcastId: made.id },
+        flaky,
+        undefined,
+        kit.clock,
+      ),
     ).rejects.toThrow('d1 down');
     expect(calls).toBe(2);
     expect((await dto(await api(`/broadcasts/${made.id}`, { headers: auth.admin() }))).state).toBe(

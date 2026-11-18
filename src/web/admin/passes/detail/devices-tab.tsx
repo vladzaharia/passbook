@@ -15,7 +15,7 @@ import {
   SkeletonRows,
   StatusPill,
 } from '../../../ui/index.ts';
-import { RelTime, useNow } from './rel-time.tsx';
+import { RelTime, useNow } from '../../../ui/rel-time.tsx';
 import { usePassDevices } from './sync-api.ts';
 import { pushReason, shortDevice } from './sync-model.ts';
 import { WalletProviderStatus } from './wallet-provider-status.tsx';

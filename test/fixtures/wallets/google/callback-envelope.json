@@ -1,0 +1,23 @@
+{
+  "note": "Synthetic ECv2SigningOnly callback signed with throwaway P-256 keys; not recorded from Google.",
+  "issuerId": "33880000000223344",
+  "clock": 1794873600000,
+  "keyset": {
+    "keys": [
+      {
+        "protocolVersion": "ECv2SigningOnly",
+        "keyValue": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEtbwN54usi5EH/8nm7a1kwqPHZNYfZ0X3Hh6re2xPB4nJbjTIzyq8Ts1+PTELy3KAMTaa18i3LPzpqNB6ArQO3g==",
+        "keyExpiration": "4102444800000"
+      }
+    ]
+  },
+  "envelope": "{\"protocolVersion\":\"ECv2SigningOnly\",\"intermediateSigningKey\":{\"signedKey\":\"{\\\"keyValue\\\":\\\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEwuJ4UgQEWA8bx8+nbBw0rUV23APTVaXkC6CULgceXIhbI0DlivjVUv8wWQh8bQ1HdH13hfIJs++FJs1N/v6f7g==\\\",\\\"keyExpiration\\\":\\\"4102444800000\\\"}\",\"signatures\":[\"MEUCIQCsqrxVoxx39Bg5mB+l902z5sm/bRo50wxAQoly6hBz1QIgBrSNsUYCmFd0XZiXJh5q6eZIInSjFzBteINTy/T0JS8=\"],\"futureKeyField\":1},\"signature\":\"MEUCIQDfczTk/ASozuvnzW2pgdUZYO1cgHadLFvuGLioRGfXagIgB8JsoP1lq/mcEnAlOyjwYM9lIN8tgWyPVMJRCzQkZYg=\",\"signedMessage\":\"{\\n  \\\"classId\\\": \\\"33880000000223344.c_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\",\\n  \\\"objectId\\\": \\\"33880000000223344.o_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\\\",\\n  \\\"eventType\\\": \\\"save\\\",\\n  \\\"nonce\\\": \\\"fixture-nonce-1\\\",\\n  \\\"expTimeMillis\\\": \\\"4102444800000\\\",\\n  \\\"futureMessageField\\\": {\\n    \\\"nested\\\": true\\n  }\\n}\",\"futureEnvelopeField\":\"ignored\"}",
+  "expected": {
+    "classId": "33880000000223344.c_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "objectId": "33880000000223344.o_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    "eventType": "save",
+    "nonce": "fixture-nonce-1",
+    "expiresAt": 4102444800000,
+    "validUntil": 4102444800000
+  }
+}

@@ -87,4 +87,60 @@ describe('wallet sync failure policy', () => {
       retryAfterMs: null,
     });
   });
+  it('lets a provider Retry-After lengthen the backoff but never shorten it, up to the ceiling', () => {
+    const wait = (attempt: number, retryAfterMs: number) =>
+      classifyWalletSyncFailure(
+        'google',
+        attempt,
+        new GoogleWalletError('rate_limited', 'runtime', 429, retryAfterMs),
+      );
+    expect(wait(2, 7_000)).toEqual({
+      reason: 'rate_limited',
+      disposition: 'retry',
+      status: 429,
+      retryAfterMs: 7_000,
+    });
+    expect(wait(4, 0).retryAfterMs).toBe(8_000);
+    expect(wait(4, 1_000).retryAfterMs).toBe(8_000);
+    expect(wait(1, 3_600_000).retryAfterMs).toBe(300_000);
+    expect(wait(8, 7_000)).toMatchObject({ disposition: 'failed', retryAfterMs: null });
+  });
+
+  it('retries a 401 only when a cached token went stale, and never one from the token endpoint', () => {
+    const stale = new GoogleWalletError('unauthorized', 'runtime', 401, undefined, true);
+    expect(classifyWalletSyncFailure('google', 1, stale)).toEqual({
+      reason: 'unauthorized',
+      disposition: 'retry',
+      status: 401,
+      retryAfterMs: 1_000,
+    });
+    expect(classifyWalletSyncFailure('google', 8, stale)).toMatchObject({ disposition: 'failed' });
+    const fresh = new GoogleWalletError('unauthorized', 'runtime', 401);
+    expect(classifyWalletSyncFailure('google', 1, fresh)).toEqual({
+      reason: 'unauthorized',
+      disposition: 'failed',
+      status: 401,
+      retryAfterMs: null,
+    });
+    const oauth = new GoogleWalletError('unauthorized', 'oauth', 401);
+    expect(classifyWalletSyncFailure('google', 1, oauth)).toMatchObject({ disposition: 'failed' });
+    expect(
+      classifyWalletSyncFailure('google', 1, new GoogleWalletError('forbidden', 'runtime', 403)),
+    ).toMatchObject({ reason: 'unauthorized', disposition: 'failed' });
+  });
+
+  it('retries a token-exchange timeout but treats a REST timeout as ambiguous', () => {
+    expect(
+      classifyWalletSyncFailure('google', 2, new GoogleWalletError('timeout', 'oauth')),
+    ).toEqual({ reason: 'timeout', disposition: 'retry', status: null, retryAfterMs: 2_000 });
+    expect(
+      classifyWalletSyncFailure('google', 8, new GoogleWalletError('timeout', 'oauth')),
+    ).toMatchObject({ disposition: 'failed' });
+    expect(
+      classifyWalletSyncFailure('google', 1, new GoogleWalletError('timeout', 'runtime')),
+    ).toEqual({ reason: 'timeout', disposition: 'uncertain', status: null, retryAfterMs: null });
+    expect(
+      classifyWalletSyncFailure('google', 1, new GoogleWalletError('server_error', 'oauth', 500)),
+    ).toMatchObject({ disposition: 'uncertain' });
+  });
 });

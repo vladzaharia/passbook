@@ -1,13 +1,13 @@
 import { useMutation } from '@tanstack/react-query';
 import { CircleAlert, Mail } from 'lucide-react';
-import { type FormEvent, type Ref, useEffect, useId, useState } from 'react';
+import { type FormEvent, type Ref, useId, useState } from 'react';
 import { MagicConsumeResultSchema } from '@/shared/contracts/session.ts';
 import { WRONG_CODE } from '@/shared/copy/sign-in.ts';
 import { api } from '../lib/api.ts';
 import { isApiError } from '../lib/errors.ts';
 import { safeNext } from '../lib/redirect.ts';
 import { CODE_LENGTH, CodeField } from '../ui/code-field.tsx';
-import { Button, Callout, Label } from '../ui/index.ts';
+import { Button, Callout, Label, useNow } from '../ui/index.ts';
 import { goTo } from './goto.ts';
 import { type SignInError, signInError } from './login-errors.ts';
 import { failure, type SceneActions } from './login-scene.tsx';
@@ -16,17 +16,6 @@ import { CHALLENGE_FAILED, type MagicRequest } from './use-magic-request.ts';
 /** Matches the server's magic-link lifetime (auth MAGIC_TTL_MS, "Expires in 15 minutes"). */
 export const CODE_TTL_MS = 15 * 60_000;
 export const RESEND_COOLDOWN_MS = 30_000;
-
-function useNow(active: boolean): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!active) return;
-    setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [active]);
-  return now;
-}
 
 export interface CodeFaceProps {
   email: string;
@@ -45,7 +34,7 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
   const [error, setError] = useState<SignInError>();
   const [cooldownUntil, setCooldownUntil] = useState(sentAt + RESEND_COOLDOWN_MS);
   const [resent, setResent] = useState(0);
-  const now = useNow(Boolean(email));
+  const now = useNow(1000, Boolean(email));
   const left = Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
 
   const consume = useMutation({

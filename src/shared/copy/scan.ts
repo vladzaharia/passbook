@@ -97,6 +97,16 @@ export const SCAN_REASON_VARIANTS = {
   zone_not_included: { noZone: '{plan} opens no zone here.' },
 } as const;
 
+/** In/out lines that replace a reason's default when the place is a zone or the state is known. */
+export const SCAN_OCCUPANCY_COPY: Record<string, ScanLine> = {
+  zoneFull: { headline: '{zone} full', sub: '{in} of {capacity} in.' },
+  eventStillIn: { headline: 'Already checked in', sub: 'Since {time} · {scanner}' },
+  stillInRecent: { headline: 'Already in', sub: '{ago} · {scanner}' },
+  eventNotIn: { headline: 'Not checked in', sub: 'Check them in instead?' },
+  parentNotIn: { headline: 'Not tapped in', sub: 'Tap in at {zone} first.' },
+  alreadyOut: { headline: 'Already out', sub: '{ago} · {scanner}' },
+};
+
 export const SCAN_COPY = {
   reasons: SCAN_REASON_COPY,
   display: SCAN_DISPLAY_COPY,
@@ -110,12 +120,26 @@ export const SCAN_COPY = {
       sub: '{zone} · until {time}',
     },
     letInAgain: 'Let in again.',
+    tappedOut: 'Tapped out',
+    /** The sub of an exit. */
+    tappedOutSub: '{zone} · {stay}',
+    autoOut: 'Tapped out automatically after {stay} or at {time}.',
+    letInBy: '{zone} · Let in by {staff}',
+    letInByStrip: 'Let in by {staff} at {scanner}',
+    resolvedBy: 'Resolved by {staff}',
+    overrideUndone: 'Override undone',
+    overrideTaken: '{staff} already let them in.',
     stamps: { one: '+{n} stamp', other: '+{n} stamps' },
     balanceSet: '{input} set',
   },
   actions: {
     done: 'Done',
     letInAgain: 'Let in again',
+    tapIn: 'Tap in',
+    tapOut: 'Tap out',
+    markAsOut: 'Mark as out',
+    letIn: 'Let in',
+    signInToAct: 'Sign in to act',
     letInAnyway: 'Let in anyway',
     addAnyway: 'Add anyway',
     managerPin: 'Manager PIN',
@@ -156,7 +180,7 @@ export const SCAN_COPY = {
     whoIsScanning: "Who's scanning?",
     enterPin: 'Enter your PIN',
     wrongPin: 'Wrong PIN. {n} tries left.',
-    pinLocked: 'Too many tries. Try again in 5 min.',
+    pinLocked: 'Too many tries. Try again in {wait}.',
     screenOnlyTitle: 'This device is a screen.',
     screenOnlyLine: 'Ask an admin to change it.',
   },
@@ -169,6 +193,25 @@ export const SCAN_COPY = {
     noneLine: 'Check the spelling, or use the full email.',
     rateLimited: 'Too many lookups. Try again in {seconds} s.',
     offline: 'Look up needs a connection.',
+  },
+  direction: { in: 'In', out: 'Out', auto: 'Auto' },
+  /** Why a desk let someone in. */
+  overrideNotes: {
+    forgot_out: 'Forgot to tap out',
+    known: 'Known to staff',
+    paid: 'Paid',
+    other: 'Other',
+  },
+  overrideWhy: 'Why?',
+  /** A locked item or an amount over max offers this; the sheet takes a Manager's PIN with no name. */
+  managerCode: {
+    action: 'Use manager code',
+    title: 'Manager code',
+    verb: '{action} needs a manager.',
+    field: '6-digit code',
+    continue: 'Continue',
+    wrong: 'Wrong code. {n} tries left.',
+    locked: 'Too many tries. Try again in {wait}.',
   },
   undo: {
     undone: '{action} undone',
