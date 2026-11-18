@@ -157,7 +157,11 @@
     // Outbound webhooks: POSTs per destination host (key host:<name>), across every org.
     { "name": "RL_WEBHOOK_HOST", "namespace_id": "1015", "simple": { "limit": 600, "period": 60 } },
     // Webhook sends per destination host and org (key host:<name>:<org>): one tenant's backlog cannot use the host's whole budget.
-    { "name": "RL_WEBHOOK_HOST_ORG", "namespace_id": "1018", "simple": { "limit": 120, "period": 60 } },
+    {
+      "name": "RL_WEBHOOK_HOST_ORG",
+      "namespace_id": "1018",
+      "simple": { "limit": 120, "period": 60 }
+    },
     // Webhook test sends: 10 a minute per endpoint (key test:<endpoint>).
     { "name": "RL_WEBHOOK_OUT", "namespace_id": "1016", "simple": { "limit": 10, "period": 60 } },
     // Webhook bulk replay: 1 a minute per endpoint (key replay:<endpoint>).
