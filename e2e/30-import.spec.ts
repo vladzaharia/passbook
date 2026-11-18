@@ -4,9 +4,10 @@ import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
 
-const HEAD = 'Name,MemberId,Tier,Points,Email,Ref';
-const row = (ref: string, name: string, points: string) =>
-  `${name},${ref}-M,Plus,${points},${ref.toLowerCase()}@example.test,${ref}`;
+// Points is a hidden input since PS-19: the integer column is Guests left (0 to 99).
+const HEAD = 'Name,MemberId,Tier,Guests,Email,Ref';
+const row = (ref: string, name: string, guests: string) =>
+  `${name},${ref}-M,Plus,${guests},${ref.toLowerCase()}@example.test,${ref}`;
 
 test('import a sheet: fix the error file, commit, re-import as unchanged, remove what it created', async ({
   page,
@@ -36,7 +37,7 @@ test('import a sheet: fix the error file, commit, re-import as unchanged, remove
   await expect(page.getByText('Match columns')).toBeVisible();
   await page.getByRole('button', { name: 'Check', exact: true }).click();
   await expect(page.getByText('2 to create · 0 to update · 0 unchanged · 1 error')).toBeVisible();
-  await expect(page.getByRole('table', { name: 'Problems' })).toContainText('Points');
+  await expect(page.getByRole('table', { name: 'Problems' })).toContainText('Guests');
   const [errors] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Download rows with errors' }).click(),
