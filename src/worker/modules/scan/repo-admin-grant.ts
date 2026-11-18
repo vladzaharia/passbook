@@ -51,6 +51,7 @@ const SCAN_ADMIN_TABLES = [
   'scanning_devices',
   'scan_zones',
   'scanning_session_zones',
+  'scan_presence',
   'scanner_templates',
   'scanner_setups',
 ] as const;

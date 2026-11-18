@@ -1004,3 +1004,76 @@ describe('0073_scan_zones migration', () => {
     expect(index?.sql).toContain('WHERE zone_id IS NOT NULL');
   });
 });
+
+describe('0074_scan_occupancy migration', () => {
+  const scan = (orgId: string, id: string, extra: Record<string, unknown> = {}) => {
+    const row = {
+      id,
+      org_id: orgId,
+      mode: 'live',
+      actor_type: 'scanner',
+      actor_id: 'a',
+      actor_key: 'k',
+      idempotency_key: id,
+      request_hash: 'h',
+      method: 'camera',
+      at: 1,
+      ...extra,
+    };
+    const keys = Object.keys(row);
+    return run(
+      env.DB,
+      `INSERT INTO scans (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
+      Object.values(row) as (string | number | null)[],
+    );
+  };
+
+  it('checks tap-out causes and override notes', async () => {
+    const org = await makeOrg(fixtures(await makeEnv()));
+    for (const [i, extra] of [{ out_cause: 'lost' }, { override_note: 'bribe' }].entries())
+      await expect(scan(org.id, `bad-${i}`, extra), JSON.stringify(extra)).rejects.toThrow(/CHECK/);
+    await scan(org.id, 'cause', { out_cause: 'stay', override_note: 'forgot_out' });
+  });
+
+  it('keeps one live override per scan; a lost, failed or undone one frees it', async () => {
+    const org = await makeOrg(fixtures(await makeEnv()));
+    await scan(org.id, 'held', { state: 'done', outcome: 'heads_up' });
+    await scan(org.id, 'lost', { override_of: 'held', state: 'done', outcome: 'heads_up' });
+    await scan(org.id, 'failed', { override_of: 'held', state: 'failed' });
+    await scan(org.id, 'undone', {
+      override_of: 'held',
+      state: 'done',
+      outcome: 'ok',
+      undone_at: 5,
+    });
+    await scan(org.id, 'pending', { override_of: 'held' });
+    await expect(
+      scan(org.id, 'second', { override_of: 'held', state: 'done', outcome: 'ok' }),
+    ).rejects.toThrow(/UNIQUE/);
+    await run(env.DB, "UPDATE scans SET state = 'failed' WHERE id = 'pending'");
+    await scan(org.id, 'winner', { override_of: 'held', state: 'done', outcome: 'ok' });
+  });
+
+  it('adds due_at with a partial index and per-place revisions that cascade with the org', async () => {
+    const index = await first<{ sql: string }>(
+      env.DB,
+      "SELECT sql FROM sqlite_master WHERE name = 'scan_presence_due'",
+    );
+    expect(index?.sql).toMatch(/WHERE due_at IS NOT NULL/);
+    const org = await makeOrg(fixtures(await makeEnv()));
+    const rev = (r: number, mode = 'live') =>
+      run(env.DB, 'INSERT INTO scan_place_revs (org_id, mode, place, rev) VALUES (?, ?, ?, ?)', [
+        org.id,
+        mode,
+        `zone:${r}-${mode}`,
+        r,
+      ]);
+    await expect(rev(0)).rejects.toThrow(/CHECK/);
+    await expect(rev(1, 'demo')).rejects.toThrow(/CHECK/);
+    await rev(1);
+    await run(env.DB, 'DELETE FROM orgs WHERE id = ?', [org.id]);
+    expect(
+      await first(env.DB, 'SELECT 1 AS x FROM scan_place_revs WHERE org_id = ?', [org.id]),
+    ).toBeNull();
+  });
+});

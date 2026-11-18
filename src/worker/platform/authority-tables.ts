@@ -82,6 +82,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     edges: [edge('session_id', 'scanning_sessions'), edge('zone_id', 'scan_zones')],
   },
   scanning_devices: { org: 'org_id', mode: 'mode' },
+  // In now ordering: only raised (`inc`), in the batch that changes the place.
+  scan_place_revs: { org: 'org_id', mode: 'mode', conflict: ['org_id', 'mode', 'place'] },
   pass_events: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   // Its triggers write passes.image_generation, so a part could reach a pass of another tenant.
   member_photos: { org: 'org_id', pass: 'pass_id' },
