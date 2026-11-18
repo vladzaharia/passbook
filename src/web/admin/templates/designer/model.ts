@@ -108,6 +108,7 @@ export type Section =
   | 'inputs'
   | 'barcode'
   | 'relevance'
+  | 'access'
   | 'none'
   | 'scan-display'
   | GroupId;
@@ -128,6 +129,7 @@ export const SECTION_LABEL: Record<Exclude<Section, GroupId>, string> = {
   inputs: 'Inputs',
   barcode: 'Barcode',
   relevance: 'Relevance',
+  access: 'Access',
   'scan-display': 'Scan screen',
 };
 

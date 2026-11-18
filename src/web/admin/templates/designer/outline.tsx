@@ -2,6 +2,8 @@ import { ChevronRight } from 'lucide-react';
 import { type ReactNode, useId } from 'react';
 import { useChangeCount } from '../../../lib/motion.ts';
 import { Badge } from '../../../ui/index.ts';
+import { AccessSection } from './access/access-section.tsx';
+import { readAccess } from './access/model.ts';
 import { useDesigner } from './context.tsx';
 import { readInputs } from './inputs.ts';
 import {
@@ -119,6 +121,9 @@ export function Outline() {
         </Disclosure>
         <Disclosure section="barcode" index={next()}>
           <BarcodeSection />
+        </Disclosure>
+        <Disclosure section="access" index={next()} count={readAccess(doc)?.plans.length}>
+          <AccessSection />
         </Disclosure>
         <Disclosure section="relevance" index={next()} count={listCount(doc)}>
           <RelevanceSection />
