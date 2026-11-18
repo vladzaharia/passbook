@@ -1,4 +1,4 @@
-import { batch, run, type SqlValue, stmt } from '../../platform/db.ts';
+import { batch, first, type SqlValue, stmt } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type { WalletCredentialKeysetProof, WalletOperationRef } from './instance-types.ts';
 import { isCredentialKeysetCommitment } from './instance-types.ts';
@@ -104,7 +104,8 @@ export async function requestRetirement(
         AND ${desiredOperationKeysetSql('i')} AND ${retirementProjectionSql('i')}
         AND EXISTS (SELECT 1 FROM passes p WHERE p.id = i.pass_id AND p.org_id = i.org_id AND p.mode = i.mode
           AND p.version = ? AND p.revision = ? AND p.lifecycle_generation = ?
-          AND p.credential_generation = ? AND p.release_id IS ?)`,
+          AND p.credential_generation = ? AND p.release_id IS ?)
+        RETURNING id`,
       [
         p.now,
         p.now,
@@ -125,9 +126,14 @@ export async function requestRetirement(
     stmt(
       db,
       `INSERT INTO wallet_provider_instance_dirty(instance_id, generation)
-      SELECT id, 1 FROM wallet_provider_instances WHERE id = ? AND org_id = ? AND mode = ? AND provider = ?
-        AND desired_version = ? AND retirement_requested_at IS NOT NULL AND changes() = 1
-        AND credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+      SELECT i.id, 1 FROM wallet_provider_instances i WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ?
+        AND i.desired_version = ? AND i.retirement_requested_at IS NOT NULL
+        AND i.lifecycle IN ('active', 'revoking', 'revoked')
+        AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+        AND ${desiredOperationKeysetSql('i')} AND ${retirementProjectionSql('i')}
+        AND EXISTS (SELECT 1 FROM passes p WHERE p.id = i.pass_id AND p.org_id = i.org_id AND p.mode = i.mode
+          AND p.version = ? AND p.revision = ? AND p.lifecycle_generation = ?
+          AND p.credential_generation = ? AND p.release_id IS ?)
       ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1, next_attempt_at = 0`,
       [
         p.instanceId,
@@ -137,10 +143,15 @@ export async function requestRetirement(
         p.version,
         p.credentialKeysetCommitment,
         p.credentialKeysetCommitment,
+        p.passVersion,
+        p.passRevision,
+        p.lifecycleGeneration,
+        p.passCredentialGeneration,
+        p.issuingReleaseId,
       ],
     ),
   ]);
-  return (results[0]?.meta.changes ?? 0) === 1;
+  return results[0]?.results.length === 1;
 }
 
 /** Close only a superseded or deleted, provably never-issued generation. */
@@ -157,7 +168,7 @@ export async function retireUnissuedPlaceholder(
   },
 ): Promise<boolean> {
   if (!isCredentialKeysetCommitment(p.credentialKeysetCommitment)) return false;
-  const result = await run(
+  const row = await first(
     db,
     `UPDATE wallet_provider_instances AS i
     SET lifecycle = 'retired', retirement_reason = 'not_issued', retired_at = ?, updated_at = ?
@@ -168,7 +179,8 @@ export async function retireUnissuedPlaceholder(
         AND p.credential_generation = ? AND (p.deleted_at IS NOT NULL OR i.retirement_requested_at IS NOT NULL
           OR p.credential_generation > i.credential_generation
           OR EXISTS (SELECT 1 FROM pass_credential_transfers t
-            WHERE t.pass_id = p.id AND t.state = 'pending' AND t.target_generation > i.credential_generation)))`,
+            WHERE t.pass_id = p.id AND t.state = 'pending' AND t.target_generation > i.credential_generation)))
+    RETURNING id`,
     [
       p.now,
       p.now,
@@ -182,5 +194,5 @@ export async function retireUnissuedPlaceholder(
       p.passCredentialGeneration,
     ],
   );
-  return result.changes === 1;
+  return row !== null;
 }

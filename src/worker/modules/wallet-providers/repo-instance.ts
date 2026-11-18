@@ -1,4 +1,4 @@
-import { all, first, run } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type {
   WalletCredentialKeysetProof,
@@ -218,12 +218,13 @@ export async function ackDirtyInstance(
   s: WalletScope & WalletCredentialKeysetProof & { instanceId: string; generation: number },
 ): Promise<boolean> {
   if (!validCommitment(s.credentialKeysetCommitment)) return false;
-  const result = await run(
+  const row = await first(
     db,
     `DELETE FROM wallet_provider_instance_dirty WHERE instance_id = ? AND generation = ?
     AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE i.id = instance_id
       AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND i.credential_keyset_commitment = ?)
-    AND ${credentialRefKeysetSql}`,
+    AND ${credentialRefKeysetSql}
+    RETURNING instance_id`,
     [
       s.instanceId,
       s.generation,
@@ -232,7 +233,7 @@ export async function ackDirtyInstance(
       s.credentialKeysetCommitment,
     ],
   );
-  return result.changes === 1;
+  return row !== null;
 }
 
 export async function deferDirtyInstance(
@@ -245,13 +246,14 @@ export async function deferDirtyInstance(
     },
 ): Promise<boolean> {
   if (!validCommitment(s.credentialKeysetCommitment)) return false;
-  const result = await run(
+  const row = await first(
     db,
     `UPDATE wallet_provider_instance_dirty SET next_attempt_at = ?
     WHERE instance_id = ? AND generation = ?
       AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE i.id = instance_id
         AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND i.credential_keyset_commitment = ?)
-      AND ${credentialRefKeysetSql}`,
+      AND ${credentialRefKeysetSql}
+    RETURNING instance_id`,
     [
       s.nextAttemptAt,
       s.instanceId,
@@ -261,5 +263,5 @@ export async function deferDirtyInstance(
       s.credentialKeysetCommitment,
     ],
   );
-  return result.changes === 1;
+  return row !== null;
 }

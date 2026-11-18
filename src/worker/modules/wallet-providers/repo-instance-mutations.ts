@@ -80,7 +80,8 @@ export function offerStatement(
       AND ${walletInstanceOperationCurrentSql('i', 'op', '?')}
       AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ?
       AND ${validCommitmentSql('i.credential_keyset_commitment')}
-      AND ${credentialRefKeysetSql}`,
+      AND ${credentialRefKeysetSql}
+    RETURNING ref_hash`,
     [
       offer.hash,
       now,

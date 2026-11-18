@@ -1,0 +1,63 @@
+{
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "confirm": false,
+      "id": "redeem",
+      "kind": "use_up",
+      "label": "Redeem",
+      "minRole": "door",
+      "notify": false,
+      "repeat": "once"
+    }
+  ],
+  "display": {
+    "header": {
+      "subtitle": "{{inputs.offer}}"
+    },
+    "notes": {
+      "refused": "One per customer."
+    },
+    "panels": [
+      {
+        "icon": "percent",
+        "id": "p_offer",
+        "preset": {
+          "id": "offer",
+          "v": 1
+        },
+        "rows": [
+          {
+            "id": "r_offer",
+            "slot": "offer",
+            "type": "big",
+            "value": "{{inputs.offer}}"
+          },
+          {
+            "id": "r_terms",
+            "items": [
+              {
+                "id": "i_when",
+                "label": "When",
+                "value": "{{inputs.validFor}}"
+              },
+              {
+                "id": "i_by",
+                "label": "Use by",
+                "value": "{{pass.validUntil|day}}"
+              }
+            ],
+            "slot": "terms",
+            "type": "columns"
+          }
+        ],
+        "title": "Offer"
+      }
+    ],
+    "v": 1
+  },
+  "lookup": {
+    "input": "code"
+  }
+}

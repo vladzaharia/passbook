@@ -1,4 +1,4 @@
-import { first, run } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type {
   WalletCredentialKeysetProof,
@@ -31,15 +31,15 @@ export async function insertOffer(
       now: number;
     },
 ): Promise<boolean> {
-  const result = await offerStatement(
+  const row = await offerStatement(
     db,
     input.instanceId,
     input.operationId,
     { hash: input.hash, expiresAt: input.expiresAt, authority: input.authority },
     input.now,
     input.credentialKeysetCommitment,
-  ).run();
-  return (result.meta.changes ?? 0) === 1;
+  ).first();
+  return row !== null;
 }
 
 /** The INSERT's bearer and pass-authority epoch are checked again before use and after signing. */
@@ -81,10 +81,12 @@ export async function consumeOffer(
   return changed ? readOffer(db, hash, now, credentialKeysetCommitment) : null;
 }
 export async function deleteOffer(db: D1Database, hash: string): Promise<boolean> {
-  return (
-    (await run(db, 'DELETE FROM wallet_provider_offer_refs WHERE ref_hash = ?', [hash])).changes ===
-    1
+  const row = await first(
+    db,
+    'DELETE FROM wallet_provider_offer_refs WHERE ref_hash = ? RETURNING ref_hash',
+    [hash],
   );
+  return row !== null;
 }
 
 export async function purgeExpiredOffers(
@@ -92,11 +94,12 @@ export async function purgeExpiredOffers(
   now: number,
   limit: number,
 ): Promise<number> {
-  const result = await run(
+  const rows = await all(
     db,
     `DELETE FROM wallet_provider_offer_refs WHERE ref_hash IN
-    (SELECT ref_hash FROM wallet_provider_offer_refs WHERE expires_at <= ? ORDER BY expires_at, ref_hash LIMIT ?)`,
+    (SELECT ref_hash FROM wallet_provider_offer_refs WHERE expires_at <= ? ORDER BY expires_at, ref_hash LIMIT ?)
+    RETURNING ref_hash`,
     [now, limit],
   );
-  return result.changes;
+  return rows.length;
 }

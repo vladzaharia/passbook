@@ -11,7 +11,7 @@ import { assetBaseUrl, prepareGenericAssetGrant } from './assets.ts';
 import { passViewJson } from './card-pass-view.ts';
 import { visibleIdentity, visibleSource } from './card-semantics.ts';
 import { type CardPrivacy, cardPrivacy } from './dto-projection.ts';
-import { schemaOf } from './effects-value.ts';
+import { currencyField, schemaOf } from './effects-value.ts';
 import { gateScope } from './gate.ts';
 import type { ScanActor } from './guard.ts';
 import { activeFlags, type Found } from './resolve.ts';
@@ -155,6 +155,7 @@ function cardValues(found: Found, actor: ScanActor, privacy: CardPrivacy): ScanV
           : prop?.type === 'string'
             ? 'text'
             : 'number',
+      ...currencyField(found.template.manifest, action.input, found.pass.personalization),
     });
   }
   return values;

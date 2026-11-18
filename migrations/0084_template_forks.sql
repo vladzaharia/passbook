@@ -17,9 +17,10 @@ CREATE INDEX template_forks_org ON template_forks (org_id);
 CREATE INDEX template_forks_tracking_by ON template_forks (tracking_by) WHERE tracking_by IS NOT NULL;
 CREATE TRIGGER template_forks_fixed BEFORE UPDATE OF template_id, org_id, upstream_id ON template_forks
 BEGIN SELECT RAISE(ABORT, 'template fork lineage is immutable'); END;
--- Only the template's deletion removes a fork row (the cascade runs after the template row is gone).
+-- Only the template's or the org's deletion removes a fork row (each cascade runs after its parent row is gone).
 CREATE TRIGGER template_forks_no_delete BEFORE DELETE ON template_forks
 WHEN EXISTS (SELECT 1 FROM templates t WHERE t.id = OLD.template_id)
+  AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = OLD.org_id)
 BEGIN SELECT RAISE(ABORT, 'template fork lineage is immutable'); END;
 CREATE TRIGGER template_forks_insert BEFORE INSERT ON template_forks
 WHEN NOT EXISTS (SELECT 1 FROM templates t WHERE t.id = NEW.template_id
@@ -48,7 +49,7 @@ CREATE INDEX template_version_bases_upstream ON template_version_bases (upstream
 CREATE TRIGGER template_version_bases_immutable BEFORE UPDATE ON template_version_bases
 BEGIN SELECT RAISE(ABORT, 'template version bases are immutable'); END;
 CREATE TRIGGER template_version_bases_no_delete BEFORE DELETE ON template_version_bases
-WHEN EXISTS (SELECT 1 FROM templates t WHERE t.id = OLD.template_id)
+WHEN EXISTS (SELECT 1 FROM template_forks f WHERE f.template_id = OLD.template_id)
 BEGIN SELECT RAISE(ABORT, 'template version bases are immutable'); END;
 CREATE TRIGGER template_version_bases_insert BEFORE INSERT ON template_version_bases
 WHEN NOT EXISTS (SELECT 1 FROM template_forks f WHERE f.template_id = NEW.template_id

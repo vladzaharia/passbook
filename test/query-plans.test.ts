@@ -6,6 +6,8 @@ import { deleteOldWebhookEvents } from '../src/worker/modules/connections/repo-s
 import { listEvents } from '../src/worker/modules/events/repo.ts';
 import { listSweepWaitingPasses } from '../src/worker/modules/holders/repo.ts';
 import { portfolioSnapshot } from '../src/worker/modules/me/repo.ts';
+import { activeBinding, lostBinding } from '../src/worker/modules/nfc/repo-tag-bindings.ts';
+import { listTags, passTagViews, tagByRef } from '../src/worker/modules/nfc/repo-tags.ts';
 import { versionsToPurge } from '../src/worker/modules/passes/repo.ts';
 import { upsertAsset } from '../src/worker/modules/passes/repo-history-assets.ts';
 import { listPasses } from '../src/worker/modules/passes/repo-list.ts';
@@ -141,6 +143,21 @@ describe('list and search query plans', () => {
     expect(text).toContain('users_email_nc');
     expect(text).toContain('users_name_nc');
     expect(text).toContain('user_emails_nc');
+  });
+
+  it('pass imports: the expiry sweep and the committing guard use their partial indexes', async () => {
+    const sweep = await env.DB.prepare(
+      "EXPLAIN QUERY PLAN SELECT id FROM pass_imports WHERE expires_at < ? AND state IN ('mapping', 'checking', 'ready', 'stale')",
+    )
+      .bind(1)
+      .all<{ detail: string }>();
+    expect(sweep.results.map((r) => r.detail).join('\n')).toContain('pass_imports_expiry');
+    const running = await env.DB.prepare(
+      "EXPLAIN QUERY PLAN SELECT id FROM pass_imports WHERE org_id = ? AND mode = ? AND template_id = ? AND state = 'committing'",
+    )
+      .bind('o', 'live', 't')
+      .all<{ detail: string }>();
+    expect(running.results.map((r) => r.detail).join('\n')).toContain('pass_imports_one_running');
   });
 
   it('scans: the ok-only history reads use the partial index', async () => {
@@ -355,5 +372,31 @@ describe('keyset cursors seek the index', () => {
   ])('%s: the cursor is a range on the index', async (_name, run, range) => {
     const text = (await plans(run)).join('\n');
     expect(text).toContain(range);
+  });
+});
+
+describe('tag lookups', () => {
+  it('a tag by ref uses the unique (org, mode, ref) key and its bindings use their indexes', async () => {
+    const byRef = (await plans((db) => tagByRef(db, 'o', 'live', 'r'))).join('\n');
+    expect(byRef).toMatch(/sqlite_autoindex_nfc_tags_\d \(org_id=\? AND mode=\? AND tag_ref=\?\)/);
+    expect((await plans((db) => activeBinding(db, 't'))).join('\n')).toMatch(
+      /tag_bindings_(active|tag_last)/,
+    );
+    expect((await plans((db) => lostBinding(db, 't'))).join('\n')).toContain(
+      'tag_bindings_tag_last',
+    );
+  });
+
+  it('the list and a pass`s tags use indexes, not a scan of the tag table', async () => {
+    const list = await plans((db) => listTags(db, { orgId: 'o', mode: 'live', limit: 50 }));
+    expect(fullScans(list, 'nfc_tags')).toEqual([]);
+    expect(list.join('\n')).toContain('nfc_tags_list');
+    const pass = await plans((db) =>
+      passTagViews(db, { id: 'p', orgId: 'o', mode: 'live', ownerUserId: 'u' }),
+    );
+    expect(fullScans(pass, 'tag_bindings')).toEqual([]);
+    expect(fullScans(pass, 'nfc_tags')).toEqual([]);
+    expect(pass.join('\n')).toMatch(/tag_bindings_pass/);
+    expect(pass.join('\n')).toMatch(/tag_bindings_user/);
   });
 });
