@@ -11,6 +11,7 @@ export interface TagRow {
   hint: string;
   label: string | null;
   status: 'active' | 'retired';
+  lostAt: number | null;
 }
 
 export interface BindingRow {
@@ -22,6 +23,8 @@ export interface BindingRow {
   /** The pass's owner now, for telling the same holder from another. */
   passOwnerId: string | null;
   endCause: string | null;
+  holderGeneration: number;
+  holderOwner: string | null;
 }
 
 export interface PassFacts {
@@ -29,11 +32,9 @@ export interface PassFacts {
   orgId: string;
   mode: Mode;
   ownerUserId: string | null;
+  credentialGeneration: number;
   deletedAt: number | null;
 }
-
-const LAST_CAUSE = `(SELECT lb.end_cause FROM tag_bindings lb WHERE lb.tag_id = t.id AND lb.ended_at IS NOT NULL
-  ORDER BY lb.ended_at DESC, lb.rowid DESC LIMIT 1)`;
 
 const VIEW = `SELECT t.id, t.mode, t.kind, t.hint, t.label, t.status, t.created_at, t.last_seen_at,
     b.id AS b_id, b.scope AS b_scope, b.pass_id AS b_pass_id, b.user_id AS b_user_id, b.source AS b_source,
@@ -43,7 +44,7 @@ const VIEW = `SELECT t.id, t.mode, t.kind, t.hint, t.label, t.status, t.created_
       WHEN 'staff' THEN (SELECT s.name FROM scan_staff s WHERE s.id = b.bound_by AND s.org_id = t.org_id)
       ELSE (SELECT s.name FROM scanners s WHERE s.id = b.bound_by AND s.org_id = t.org_id) END AS bound_by_name,
     (SELECT s.name FROM scanners s WHERE s.id = b.scanner_id AND s.org_id = t.org_id) AS scanner_name,
-    ${LAST_CAUSE} AS last_cause
+    t.lost_at
   FROM nfc_tags t INDEXED BY nfc_tags_list
   LEFT JOIN tag_bindings b ON b.tag_id = t.id AND b.ended_at IS NULL
   LEFT JOIN passes p ON p.id = b.pass_id AND p.org_id = t.org_id AND p.mode = t.mode
@@ -68,7 +69,7 @@ interface ViewRow {
   holder_name: string | null;
   bound_by_name: string | null;
   scanner_name: string | null;
-  last_cause: string | null;
+  lost_at: number | null;
 }
 
 function toTag(r: ViewRow): Tag {
@@ -96,7 +97,7 @@ function toTag(r: ViewRow): Tag {
       ? 'retired'
       : binding
         ? 'assigned'
-        : r.last_cause === 'lost'
+        : r.lost_at !== null
           ? 'lost'
           : 'spare';
   return {
@@ -119,8 +120,8 @@ function toTag(r: ViewRow): Tag {
 const STATE_SQL = {
   assigned: "t.status = 'active' AND b.id IS NOT NULL",
   retired: "t.status = 'retired'",
-  lost: `t.status = 'active' AND b.id IS NULL AND ${LAST_CAUSE} = 'lost'`,
-  spare: `t.status = 'active' AND b.id IS NULL AND COALESCE(${LAST_CAUSE}, '') <> 'lost'`,
+  lost: "t.status = 'active' AND b.id IS NULL AND t.lost_at IS NOT NULL",
+  spare: "t.status = 'active' AND b.id IS NULL AND t.lost_at IS NULL",
   lent: '0',
 } as const;
 
@@ -205,6 +206,7 @@ interface TagRaw {
   hint: string;
   label: string | null;
   status: 'active' | 'retired';
+  lost_at: number | null;
 }
 
 const toRow = (r: TagRaw): TagRow => ({
@@ -214,6 +216,7 @@ const toRow = (r: TagRaw): TagRow => ({
   hint: r.hint,
   label: r.label,
   status: r.status,
+  lostAt: r.lost_at,
 });
 
 export async function tagByRef(
@@ -224,7 +227,7 @@ export async function tagByRef(
 ): Promise<TagRow | null> {
   const r = await first<TagRaw>(
     db,
-    'SELECT id, org_id, mode, hint, label, status FROM nfc_tags WHERE org_id = ? AND mode = ? AND tag_ref = ?',
+    'SELECT id, org_id, mode, hint, label, status, lost_at FROM nfc_tags WHERE org_id = ? AND mode = ? AND tag_ref = ?',
     [orgId, mode, ref],
   );
   return r ? toRow(r) : null;
@@ -234,7 +237,7 @@ export async function tagByRef(
 export async function tagTarget(db: Db, id: string): Promise<TagRow | null> {
   const r = await first<TagRaw>(
     db,
-    'SELECT id, org_id, mode, hint, label, status FROM nfc_tags WHERE id = ?',
+    'SELECT id, org_id, mode, hint, label, status, lost_at FROM nfc_tags WHERE id = ?',
     [id],
   );
   return r ? toRow(r) : null;
@@ -248,6 +251,8 @@ interface BindingRaw {
   user_id: string | null;
   owner_user_id: string | null;
   end_cause: string | null;
+  holder_generation: number;
+  holder_owner: string | null;
 }
 
 const toBinding = (r: BindingRaw): BindingRow => ({
@@ -258,9 +263,11 @@ const toBinding = (r: BindingRaw): BindingRow => ({
   userId: r.user_id,
   passOwnerId: r.owner_user_id,
   endCause: r.end_cause,
+  holderGeneration: r.holder_generation,
+  holderOwner: r.holder_owner,
 });
 
-const BINDING = `SELECT b.id, b.tag_id, b.scope, b.pass_id, b.user_id, p.owner_user_id, b.end_cause
+const BINDING = `SELECT b.id, b.tag_id, b.scope, b.pass_id, b.user_id, p.owner_user_id, b.end_cause, b.holder_generation, b.holder_owner
   FROM tag_bindings b JOIN passes p ON p.id = b.pass_id`;
 
 export async function activeBinding(db: Db, tagId: string): Promise<BindingRow | null> {
@@ -270,11 +277,11 @@ export async function activeBinding(db: Db, tagId: string): Promise<BindingRow |
   return r ? toBinding(r) : null;
 }
 
-/** The binding that ended last: its cause says whether the tag was reported lost. */
-export async function lastEndedBinding(db: Db, tagId: string): Promise<BindingRow | null> {
+/** The binding that was ended by the lost report: where a restore puts the tag back. */
+export async function lostBinding(db: Db, tagId: string): Promise<BindingRow | null> {
   const r = await first<BindingRaw>(
     db,
-    `${BINDING} WHERE b.tag_id = ? AND b.ended_at IS NOT NULL ORDER BY b.ended_at DESC, b.rowid DESC LIMIT 1`,
+    `${BINDING} WHERE b.tag_id = ? AND b.end_cause = 'lost' ORDER BY b.rowid DESC LIMIT 1`,
     [tagId],
   );
   return r ? toBinding(r) : null;
@@ -287,7 +294,7 @@ export async function bindingTarget(
 ): Promise<(BindingRow & { orgId: string; mode: Mode; ended: boolean }) | null> {
   const r = await first<BindingRaw & { org_id: string; mode: Mode; ended_at: number | null }>(
     db,
-    `SELECT b.id, b.tag_id, b.scope, b.pass_id, b.user_id, p.owner_user_id, b.end_cause, t.org_id, t.mode, b.ended_at
+    `SELECT b.id, b.tag_id, b.scope, b.pass_id, b.user_id, p.owner_user_id, b.end_cause, b.holder_generation, b.holder_owner, t.org_id, t.mode, b.ended_at
      FROM tag_bindings b JOIN nfc_tags t ON t.id = b.tag_id JOIN passes p ON p.id = b.pass_id WHERE b.id = ?`,
     [id],
   );
@@ -300,14 +307,20 @@ export async function passFacts(db: Db, passId: string): Promise<PassFacts | nul
     org_id: string;
     mode: Mode;
     owner_user_id: string | null;
+    credential_generation: number;
     deleted_at: number | null;
-  }>(db, 'SELECT id, org_id, mode, owner_user_id, deleted_at FROM passes WHERE id = ?', [passId]);
+  }>(
+    db,
+    'SELECT id, org_id, mode, owner_user_id, credential_generation, deleted_at FROM passes WHERE id = ?',
+    [passId],
+  );
   return r
     ? {
         id: r.id,
         orgId: r.org_id,
         mode: r.mode,
         ownerUserId: r.owner_user_id,
+        credentialGeneration: r.credential_generation,
         deletedAt: r.deleted_at,
       }
     : null;

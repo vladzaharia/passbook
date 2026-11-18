@@ -149,6 +149,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'tag.move': a('Tag moved', ArrowRightLeft, 'info'),
   'tag.restore': a('Tag restored', I.restore, 'success'),
   'tag.retire': a('Tag retired', Archive, 'warning'),
+  'tag.update': a('Tag renamed', I.edit, 'info'),
   'tag.unbind': a('Tag removed', I.delete, 'warning'),
   'template.activate': a('Template activated', CircleCheck, 'success'),
   'template.approve': a('Template version approved', CircleCheck, 'success'),

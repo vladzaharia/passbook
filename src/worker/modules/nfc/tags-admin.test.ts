@@ -84,8 +84,8 @@ describe('lost, retire and restore', () => {
     expect(await causes(tag.id)).toEqual(['tag_retired']);
     await expect(
       f.kit.env.DB.prepare(
-        `INSERT INTO tag_bindings (id, tag_id, scope, pass_id, source, bound_at, bound_by_type, bound_by)
-         VALUES ('late', ?, 'pass', ?, 'admin', 1, 'user', 'x')`,
+        `INSERT INTO tag_bindings (id, tag_id, scope, pass_id, source, bound_at, bound_by_type, bound_by, holder_generation)
+         VALUES ('late', ?, 'pass', ?, 'admin', 1, 'user', 'x', 0)`,
       )
         .bind(tag.id, pass.id)
         .run(),

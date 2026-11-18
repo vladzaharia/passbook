@@ -14,6 +14,10 @@ CREATE TABLE nfc_tags (
   status_at INTEGER,
   created_at INTEGER NOT NULL,
   last_seen_at INTEGER,
+  -- Reported lost: kept on the tag, so a purge of its bindings cannot clear it.
+  lost_at INTEGER,
+  lost_by TEXT,
+  CHECK ((lost_at IS NULL) = (lost_by IS NULL)),
   UNIQUE (org_id, mode, tag_ref)
 );
 CREATE INDEX nfc_tags_list ON nfc_tags (org_id, mode, id DESC);
@@ -35,6 +39,9 @@ CREATE TABLE tag_bindings (
   bound_by_type TEXT NOT NULL CHECK (bound_by_type IN ('user', 'staff', 'scanner')),
   bound_by TEXT NOT NULL,
   scanner_id TEXT,
+  -- The pass's credential generation and owner when bound: a restore needs them unchanged.
+  holder_generation INTEGER NOT NULL,
+  holder_owner TEXT,
   ended_at INTEGER,
   ended_by_type TEXT CHECK (ended_by_type IS NULL OR ended_by_type IN ('user', 'staff', 'scanner', 'system')),
   ended_by TEXT,
@@ -54,6 +61,7 @@ CREATE TRIGGER tag_bindings_insert_check BEFORE INSERT ON tag_bindings
 BEGIN
   SELECT RAISE(ABORT, 'tag_binding_ended') WHERE NEW.ended_at IS NOT NULL;
   SELECT RAISE(ABORT, 'tag_retired') WHERE EXISTS (SELECT 1 FROM nfc_tags t WHERE t.id = NEW.tag_id AND t.status <> 'active');
+  SELECT RAISE(ABORT, 'tag_lost') WHERE EXISTS (SELECT 1 FROM nfc_tags t WHERE t.id = NEW.tag_id AND t.lost_at IS NOT NULL);
   SELECT RAISE(ABORT, 'tag_binding_tenant') WHERE NOT EXISTS (
     SELECT 1 FROM nfc_tags t JOIN passes p ON p.org_id = t.org_id AND p.mode = t.mode
     WHERE t.id = NEW.tag_id AND p.id = NEW.pass_id AND p.deleted_at IS NULL);
@@ -75,6 +83,7 @@ BEGIN
     OR NEW.user_id IS NOT OLD.user_id OR NEW.source IS NOT OLD.source OR NEW.bound_at IS NOT OLD.bound_at
     OR NEW.bound_by_type IS NOT OLD.bound_by_type OR NEW.bound_by IS NOT OLD.bound_by
     OR NEW.scanner_id IS NOT OLD.scanner_id
+    OR NEW.holder_generation IS NOT OLD.holder_generation OR NEW.holder_owner IS NOT OLD.holder_owner
     OR (NEW.ended_at IS NOT NULL AND NEW.pass_id IS NOT OLD.pass_id);
   SELECT RAISE(ABORT, 'tag_binding_reanchor') WHERE NEW.pass_id IS NOT OLD.pass_id AND NOT EXISTS (
     SELECT 1 FROM passes p JOIN nfc_tags t ON t.id = NEW.tag_id
@@ -82,12 +91,20 @@ BEGIN
       AND p.org_id = t.org_id AND p.mode = t.mode AND p.deleted_at IS NULL);
 END;
 
+-- Retiring a tag ends whatever binding is active, whoever wrote it.
+CREATE TRIGGER nfc_tags_retire_ends AFTER UPDATE OF status ON nfc_tags WHEN NEW.status = 'retired'
+BEGIN
+  UPDATE tag_bindings SET ended_at = CAST(unixepoch('now', 'subsec') * 1000 AS INTEGER), ended_by_type = 'system',
+    ended_by = 'tags', end_cause = 'tag_retired'
+  WHERE tag_id = NEW.id AND ended_at IS NULL;
+END;
+
 -- A pass that changes holder, is deleted or leaves its org or mode drops its pass bindings; a user binding
 -- anchored on it moves to the user's oldest other pass in that org and mode, or ends.
 CREATE TRIGGER passes_tag_bindings_follow AFTER UPDATE OF holder_email, owner_user_id, deleted_at, org_id, mode ON passes
 WHEN EXISTS (SELECT 1 FROM tag_bindings b WHERE b.pass_id = NEW.id AND b.ended_at IS NULL)
 BEGIN
-  UPDATE tag_bindings SET ended_at = CAST(strftime('%s', 'now') AS INTEGER) * 1000, ended_by_type = 'system',
+  UPDATE tag_bindings SET ended_at = CAST(unixepoch('now', 'subsec') * 1000 AS INTEGER), ended_by_type = 'system',
     ended_by = 'passes', end_cause = CASE WHEN NEW.deleted_at IS NOT NULL THEN 'pass_deleted' ELSE 'holder_changed' END
   WHERE pass_id = NEW.id AND scope = 'pass' AND ended_at IS NULL
     AND (NEW.deleted_at IS NOT NULL OR NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD.mode
@@ -103,7 +120,7 @@ BEGIN
     AND EXISTS (SELECT 1 FROM passes p2 JOIN nfc_tags t ON t.id = tag_bindings.tag_id
       WHERE p2.owner_user_id = tag_bindings.user_id AND p2.org_id = t.org_id AND p2.mode = t.mode
         AND p2.deleted_at IS NULL AND p2.id <> NEW.id);
-  UPDATE tag_bindings SET ended_at = CAST(strftime('%s', 'now') AS INTEGER) * 1000, ended_by_type = 'system',
+  UPDATE tag_bindings SET ended_at = CAST(unixepoch('now', 'subsec') * 1000 AS INTEGER), ended_by_type = 'system',
     ended_by = 'passes', end_cause = 'no_passes'
   WHERE pass_id = NEW.id AND scope = 'user' AND ended_at IS NULL
     AND (NEW.deleted_at IS NOT NULL OR NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD.mode

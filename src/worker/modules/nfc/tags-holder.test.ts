@@ -6,6 +6,7 @@ import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import { softDeletePassGranted } from '../passes/repo-pass-grants.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { bindTag } from './tags.ts';
+import { reportTagLost, restoreTag } from './tags-admin.ts';
 import { tagFixture } from './tags-test-fixtures.ts';
 
 let f: Awaited<ReturnType<typeof tagFixture>>;
@@ -216,5 +217,22 @@ describe('a user binding follows its person', () => {
         bound.tag.id,
       ]),
     ).rejects.toThrow(/tag_binding_immutable/);
+  });
+});
+
+describe('a lost tag after the pass changed hands', () => {
+  it('is not restored onto the new holder', async () => {
+    const { pass, authority } = await setup();
+    const { tag } = await bindTag(f.kit.ctx, authority, {
+      uid: f.nextUid(),
+      passId: pass.id,
+      scope: 'pass',
+    });
+    await reportTagLost(f.kit.ctx, authority, tag.id);
+    await transfer(pass.id, { holderEmail: 'second@example.test', ownerUserId: null });
+    await expect(restoreTag(f.kit.ctx, authority, tag.id)).rejects.toMatchObject({
+      code: 'TAG_HOLDER_CHANGED',
+    });
+    expect(await rows(pass.id)).toEqual([expect.objectContaining({ end_cause: 'lost' })]);
   });
 });

@@ -225,8 +225,8 @@ describe('user scope', () => {
     const insert = (user: string, pass: string) =>
       run(
         f.kit.env.DB,
-        `INSERT INTO tag_bindings (id, tag_id, scope, pass_id, user_id, source, bound_at, bound_by_type, bound_by)
-         VALUES (?, 'raw-1', 'user', ?, ?, 'admin', 1, 'user', 'x')`,
+        `INSERT INTO tag_bindings (id, tag_id, scope, pass_id, user_id, source, bound_at, bound_by_type, bound_by, holder_generation)
+         VALUES (?, 'raw-1', 'user', ?, ?, 'admin', 1, 'user', 'x', 0)`,
         [`b-${user}-${pass}`.slice(0, 40), pass, user],
       );
     await expect(insert(other.id, owned.id)).rejects.toThrow(/tag_binding_owner/);
@@ -248,8 +248,8 @@ describe('user scope', () => {
     const insert = (pass: string) =>
       run(
         f.kit.env.DB,
-        `INSERT INTO tag_bindings (id, tag_id, scope, pass_id, source, bound_at, bound_by_type, bound_by)
-         VALUES (?, 'raw-2', 'pass', ?, 'admin', 1, 'user', 'x')`,
+        `INSERT INTO tag_bindings (id, tag_id, scope, pass_id, source, bound_at, bound_by_type, bound_by, holder_generation)
+         VALUES (?, 'raw-2', 'pass', ?, 'admin', 1, 'user', 'x', 0)`,
         [`b-${pass}`.slice(0, 40), pass],
       );
     await expect(insert(passB.id)).rejects.toThrow(/tag_binding_tenant/);

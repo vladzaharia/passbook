@@ -1,6 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { type Grant, type GrantedStatement, grant } from '../../platform/authority.ts';
-import { type Check, exactlyOne } from '../../platform/authority-checks.ts';
+import { type Check, rowIs } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -68,6 +68,13 @@ export interface BindPlan {
   userId: string | null;
   /** The active binding this one replaces or takes over. */
   end: { id: string; cause: 'replaced' | 'moved' } | null;
+  /** The pass's credential generation and owner read with the plan: pinned at commit, kept on the binding. */
+  holderGeneration: number;
+  holderOwner: string | null;
+  /** The tag is reported lost: this bind (a move or a restore) clears that. */
+  clearsLost: boolean;
+  /** The caller writes its own audit row (restore). */
+  audited?: boolean;
   source: 'scanner' | 'remote' | 'admin';
   actor: TagActor;
   scannerId: string | null;
@@ -75,12 +82,14 @@ export interface BindPlan {
   mode: Mode;
 }
 
-/** The checks a bind makes: the pass is live in the tenant, and a user binding's owner still owns it. */
-export const bindChecks = (p: Pick<BindPlan, 'passId' | 'scope' | 'userId'>): Check[] => [
-  exactlyOne('passes', {
-    id: p.passId,
+/** The pass is live in the tenant, still has the holder the plan read, and a user binding's owner still owns it. */
+export const bindChecks = (
+  p: Pick<BindPlan, 'passId' | 'holderGeneration' | 'holderOwner'>,
+): Check[] => [
+  rowIs('passes', p.passId, {
     deleted_at: null,
-    ...(p.scope === 'user' ? { owner_user_id: p.userId } : {}),
+    credential_generation: p.holderGeneration,
+    owner_user_id: p.holderOwner,
   }),
 ];
 
@@ -97,6 +106,8 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
       [p.tagId, p.newTag.ref, 'uid', p.newTag.hint, p.newTag.label, now],
       { doNothing: true },
     );
+  if (p.clearsLost)
+    g.update('nfc_tags', { set: { lost_at: null, lost_by: null }, where: { id: p.tagId } });
   if (p.end) endBinding(g, p.end, p.end.cause, p.actor, now);
   const insert = g.insertJoined('tag_bindings', {
     parents: { tag_id: p.tagId, pass_id: p.passId },
@@ -109,29 +120,43 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
       'bound_by_type',
       'bound_by',
       'scanner_id',
+      'holder_generation',
+      'holder_owner',
     ],
-    values: [p.bindingId, p.scope, p.userId, p.source, now, p.actor.type, p.actor.id, p.scannerId],
+    values: [
+      p.bindingId,
+      p.scope,
+      p.userId,
+      p.source,
+      now,
+      p.actor.type,
+      p.actor.id,
+      p.scannerId,
+      p.holderGeneration,
+      p.holderOwner,
+    ],
     returning: ['id'],
   });
-  grantedAudit(
-    g,
-    ctx,
-    {
-      orgId: p.orgId,
-      actorType: p.actor.type === 'staff' ? 'user' : p.actor.type,
-      actorId: p.actor.id,
-      action: p.end?.cause === 'moved' ? 'tag.move' : 'tag.bind',
-      targetType: 'tag',
-      targetId: p.tagId,
-      detail: {
-        scope: p.scope,
-        source: p.source,
-        passId: p.passId,
-        ...(p.end ? { replaced: p.end.cause } : {}),
-        ...(p.scannerId ? { scannerId: p.scannerId } : {}),
+  if (!p.audited)
+    grantedAudit(
+      g,
+      ctx,
+      {
+        orgId: p.orgId,
+        actorType: p.actor.type === 'staff' ? 'user' : p.actor.type,
+        actorId: p.actor.id,
+        action: p.end?.cause === 'moved' ? 'tag.move' : 'tag.bind',
+        targetType: 'tag',
+        targetId: p.tagId,
+        detail: {
+          scope: p.scope,
+          source: p.source,
+          passId: p.passId,
+          ...(p.end ? { replaced: p.end.cause } : {}),
+          ...(p.scannerId ? { scannerId: p.scannerId } : {}),
+        },
       },
-    },
-    [exists('tag_bindings', { id: p.bindingId })],
-  );
+      [exists('tag_bindings', { id: p.bindingId })],
+    );
   return insert;
 }

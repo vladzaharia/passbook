@@ -1329,8 +1329,8 @@ describe('0086_nfc_tags migration', () => {
     const bind = (id: string) =>
       run(
         env.DB,
-        `INSERT INTO tag_bindings (id, tag_id, scope, pass_id, source, bound_at, bound_by_type, bound_by)
-         VALUES (?, 't-mig', 'pass', ?, 'admin', 1, 'user', 'x')`,
+        `INSERT INTO tag_bindings (id, tag_id, scope, pass_id, source, bound_at, bound_by_type, bound_by, holder_generation)
+         VALUES (?, 't-mig', 'pass', ?, 'admin', 1, 'user', 'x', 0)`,
         [id, pass.id],
       );
     await bind('b1');

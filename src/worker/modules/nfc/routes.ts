@@ -40,7 +40,6 @@ const TAG = 'nfc-tags';
 const IdParam = z.object({ id: IdSchema });
 const PassParam = z.object({ passId: IdSchema });
 const BindingParam = z.object({ bindingId: IdSchema });
-const ListQuery = TagListQuerySchema.extend({ orgId: IdSchema });
 
 const tagNotFound = () => new NotFoundError('Tag not found.', 'TAG_NOT_FOUND');
 const passNotFound = () => new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
@@ -106,7 +105,13 @@ register(
 register(
   nfcRoutes,
   TAG,
-  { method: 'get', path: '/tags', summary: 'List tags', query: ListQuery, response: TagListSchema },
+  {
+    method: 'get',
+    path: '/tags',
+    summary: 'List tags',
+    query: TagListQuerySchema,
+    response: TagListSchema,
+  },
   async (c) => {
     const q = c.req.valid('query');
     const { ctx, authority } = await actingIn(c, q.orgId, 'passes:read', orgNotFound);

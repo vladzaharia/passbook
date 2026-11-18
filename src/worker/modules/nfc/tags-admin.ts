@@ -9,22 +9,16 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
+import { tagsEnabled } from './policy.ts';
 import {
   activeBinding,
   bindingTarget,
-  lastEndedBinding,
+  lostBinding,
   passFacts,
   tagTarget,
   tagView,
 } from './repo-tags.ts';
-import {
-  addBind,
-  bindChecks,
-  endBinding,
-  type TagAuthority,
-  type TagPurpose,
-  tagGrant,
-} from './repo-tags-write.ts';
+import { addBind, bindChecks, endBinding, type TagAuthority, tagGrant } from './repo-tags-write.ts';
 import { commitTag } from './tags.ts';
 
 /** The captured console session holds passes:operate for this org. */
@@ -82,20 +76,22 @@ export async function unbindTag(
   return shown(ctx, a, binding.tagId);
 }
 
-/** The tag is lost: its binding ends with that cause, and a read answers "reported lost" until it is restored. */
+/** The tag is lost: its binding ends with that cause, the tag keeps the mark, and a read answers "reported lost" until it is restored. */
 export async function reportTagLost(
   ctx: ServiceContext,
   a: TagAuthority,
   id: string,
 ): Promise<Tag> {
   const tag = await tagIn(ctx, a, id);
+  if (tag.lostAt !== null) return shown(ctx, a, id);
   const active = await activeBinding(ctx.env.DB, tag.id);
-  if (!active) {
-    if ((await lastEndedBinding(ctx.env.DB, tag.id))?.endCause === 'lost') return shown(ctx, a, id);
-    throw new ConflictError('The tag is not assigned.', 'TAG_NOT_ASSIGNED');
-  }
-  const g = tagGrant(ctx, 'org_mode.nfc.tag.lost', a);
-  endBinding(g, active, 'lost', { type: 'user', id: a.userId }, ctx.clock.now());
+  if (!active) throw new ConflictError('The tag is not assigned.', 'TAG_NOT_ASSIGNED');
+  const now = ctx.clock.now();
+  const g = tagGrant(ctx, 'org_mode.nfc.tag.lost', a, [
+    exactlyOne('nfc_tags', { id, lost_at: null }),
+  ]);
+  endBinding(g, active, 'lost', { type: 'user', id: a.userId }, now);
+  g.update('nfc_tags', { set: { lost_at: now, lost_by: a.userId }, where: { id } });
   audit(g, ctx, a, 'tag.lost', tag.id, { scope: active.scope });
   await commitTag(g);
   return shown(ctx, a, id);
@@ -108,21 +104,25 @@ export async function retireTag(ctx: ServiceContext, a: TagAuthority, id: string
   const g = tagGrant(ctx, 'org_mode.nfc.tag.retire', a, [
     exactlyOne('nfc_tags', { id, status: 'active' }),
   ]);
-  const active = await activeBinding(ctx.env.DB, id);
   const now = ctx.clock.now();
-  if (active) endBinding(g, active, 'tag_retired', { type: 'user', id: a.userId }, now);
+  // Set-based: whatever is active when the batch runs ends, even a bind that raced this read.
+  g.joined('tag_bindings', {
+    via: 'tag_id',
+    where: { tag_id: id, ended_at: null },
+    set: { ended_at: now, ended_by_type: 'user', ended_by: a.userId, end_cause: 'tag_retired' },
+  });
   g.update('nfc_tags', {
     set: { status: 'retired', status_at: now },
     where: { id, status: 'active' },
   });
-  audit(g, ctx, a, 'tag.retire', id, active ? { scope: active.scope } : {});
+  audit(g, ctx, a, 'tag.retire', id);
   await commitTag(g);
   return shown(ctx, a, id);
 }
 
 /**
  * A retired tag becomes active again, unassigned. A lost tag works with what it was bound to again, if
- * that is still the same holder.
+ * the pass still has the holder it had when bound.
  */
 export async function restoreTag(ctx: ServiceContext, a: TagAuthority, id: string): Promise<Tag> {
   const tag = await tagIn(ctx, a, id);
@@ -139,15 +139,19 @@ export async function restoreTag(ctx: ServiceContext, a: TagAuthority, id: strin
     await commitTag(g);
     return shown(ctx, a, id);
   }
-  const last = await lastEndedBinding(ctx.env.DB, id);
-  if (last?.endCause !== 'lost' || (await activeBinding(ctx.env.DB, id))) return shown(ctx, a, id);
-  const pass = await passFacts(ctx.env.DB, last.passId);
+  if (tag.lostAt === null) return shown(ctx, a, id);
+  if (!(await tagsEnabled(ctx, a.orgId)))
+    throw new ConflictError('Turn on tags in settings first.', 'TAGS_OFF');
+  const last = await lostBinding(ctx.env.DB, id);
+  const pass = last ? await passFacts(ctx.env.DB, last.passId) : null;
   const holderBack =
+    last !== null &&
     pass?.orgId === a.orgId &&
     pass.mode === a.mode &&
     pass.deletedAt === null &&
-    (last.scope === 'pass' || pass.ownerUserId === last.userId);
-  if (!pass || !holderBack)
+    pass.credentialGeneration === last.holderGeneration &&
+    pass.ownerUserId === last.holderOwner;
+  if (!last || !pass || !holderBack)
     throw new ConflictError('The pass changed hands. Start again.', 'TAG_HOLDER_CHANGED');
   const plan = {
     tagId: id,
@@ -157,6 +161,10 @@ export async function restoreTag(ctx: ServiceContext, a: TagAuthority, id: strin
     scope: last.scope,
     userId: last.userId,
     end: null,
+    holderGeneration: last.holderGeneration,
+    holderOwner: last.holderOwner,
+    clearsLost: true,
+    audited: true,
     source: 'admin' as const,
     actor: { type: 'user' as const, id: a.userId },
     scannerId: null,
@@ -181,9 +189,9 @@ export async function updateTag(
     throw new ValidationError('Loaner tags are not available.', [], 'TAG_POOL_UNSUPPORTED');
   await tagIn(ctx, a, id);
   if (input.label === undefined) return shown(ctx, a, id);
-  const purpose: TagPurpose = 'org_mode.nfc.tag.update';
-  const g = tagGrant(ctx, purpose, a);
+  const g = tagGrant(ctx, 'org_mode.nfc.tag.update', a);
   g.update('nfc_tags', { set: { label: input.label }, where: { id }, require: 'one' });
+  audit(g, ctx, a, 'tag.update', id, { label: input.label !== null });
   await commitTag(g);
   return shown(ctx, a, id);
 }

@@ -8,8 +8,8 @@ import { listSweepWaitingPasses } from '../src/worker/modules/holders/repo.ts';
 import { portfolioSnapshot } from '../src/worker/modules/me/repo.ts';
 import {
   activeBinding,
-  lastEndedBinding,
   listTags,
+  lostBinding,
   passTagViews,
   tagByRef,
 } from '../src/worker/modules/nfc/repo-tags.ts';
@@ -372,7 +372,7 @@ describe('tag lookups', () => {
     expect((await plans((db) => activeBinding(db, 't'))).join('\n')).toMatch(
       /tag_bindings_(active|tag_last)/,
     );
-    expect((await plans((db) => lastEndedBinding(db, 't'))).join('\n')).toContain(
+    expect((await plans((db) => lostBinding(db, 't'))).join('\n')).toContain(
       'tag_bindings_tag_last',
     );
   });
