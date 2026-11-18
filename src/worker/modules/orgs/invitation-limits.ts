@@ -1,7 +1,7 @@
 import { bump } from '../../platform/counters.ts';
-import { first } from '../../platform/db.ts';
 import { ConflictError, RateLimitedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { pendingInvitationFor } from './repo-members.ts';
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -14,12 +14,7 @@ export async function checkInviteAllowed(
   input: { actorId: string; orgId: string; email: string },
 ): Promise<void> {
   const now = ctx.clock.now();
-  const pending = await first<{ found: number }>(
-    ctx.env.DB,
-    `SELECT 1 AS found FROM org_invitations
-     WHERE org_id = ? AND email = ? AND revoked_at IS NULL AND accepted_at IS NULL AND expires_at > ?`,
-    [input.orgId, input.email, now],
-  );
+  const pending = await pendingInvitationFor(ctx.env.DB, input.orgId, input.email, now);
   if (pending)
     throw new ConflictError(
       'This address already has a pending invitation. Revoke it to send a new one.',

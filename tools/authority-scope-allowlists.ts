@@ -55,8 +55,13 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/orgs/repo-members.ts': {
     reason:
-      'invitation accept (the token is the authority); manager writes are org.member.* grants',
-    writes: ['org_invitations:4b6bc4ab06f4', 'org_memberships:d5844d93f52c'],
+      'invitation accept (the token, or a sign-in link bound to the invitation, is the authority); manager writes are org.member.* grants',
+    writes: [
+      'org_invitations:4b6bc4ab06f4',
+      'org_invitations:2ed5ce3be6ec',
+      'org_memberships:d5844d93f52c',
+      'org_memberships:605b3e67a1a2',
+    ],
   },
   'src/worker/modules/settings/repo.ts': {
     reason: 'system-scope job values (cron runs, identity checks); the settings routes use grants',
