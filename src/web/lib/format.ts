@@ -127,6 +127,18 @@ export function formatEventTime(ms: number, timeZone: string): string {
   }).format(ms);
 }
 
+const WEEKDAY = new Map<string, Intl.DateTimeFormat>();
+
+/** "Sat 8:00 AM" in a zone: when something opens next. */
+export function formatWeekdayTime(ms: number, timeZone: string): string {
+  let day = WEEKDAY.get(timeZone);
+  if (!day) {
+    day = new Intl.DateTimeFormat(LOCALE, { weekday: 'short', timeZone });
+    WEEKDAY.set(timeZone, day);
+  }
+  return `${day.format(ms)} ${formatTime(ms, timeZone)}`;
+}
+
 /** A person's label: the name, else the verified email, else a plain "no email" label. */
 export const personLabel = (person: { name: string | null; primaryEmail: string | null }): string =>
   person.name ?? person.primaryEmail ?? NO_EMAIL_LABEL;

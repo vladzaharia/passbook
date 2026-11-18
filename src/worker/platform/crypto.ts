@@ -1,5 +1,6 @@
 import { fromBase64, randomBytes, toHex } from './ids.ts';
-import { parseKekVersion } from './mac-key-config.ts';
+import { EVIDENCE_ROOT, parseKekVersion } from './mac-key-config.ts';
+import { derivedMacKey, macRootUnavailable, macRootVersions } from './mac-roots.ts';
 
 /**
  * Envelope encryption. Each secret gets a random 256-bit DEK (AES-256-GCM); the DEK is wrapped
@@ -39,11 +40,11 @@ export async function importKek(base64: string): Promise<CryptoKey> {
 export async function loadKekRing(env: object): Promise<KekRing> {
   const keys = new Map<number, CryptoKey>();
   for (const [name, value] of Object.entries(env as Record<string, unknown>)) {
-    const match = /^KEK_V(\d+)$/.exec(name);
+    const match = /^KEK_V([1-9]\d*)$/.exec(name);
     if (match && typeof value === 'string' && value)
       keys.set(Number(match[1]), await importKek(value));
   }
-  if (keys.size === 0) throw new Error('No KEK configured (KEK_V1)');
+  if (keys.size === 0) throw new Error('No KEK configured');
   return { current: Math.max(...keys.keys()), keys };
 }
 
@@ -150,34 +151,24 @@ export async function rewrapSecret(
 
 /** The env entries that decide key material: the KEK ring and the pinned MAC root versions. */
 export const isKeyEnvName = (name: string): boolean =>
-  /^KEK_V\d+$/.test(name) || name === 'MAC_KEY_VERSION' || name === 'MAC_KEY_VERSION_PREVIOUS';
-
-/** The KEK version numbers configured in `env`, ascending. */
-export const kekVersionsOf = (env: object): number[] => kekVersions(env).map((e) => e.version);
-
-function kekVersions(env: object): { version: number; value: string }[] {
-  return Object.entries(env as Record<string, unknown>)
-    .map(([name, value]) => ({ match: /^KEK_V(\d+)$/.exec(name), value }))
-    .filter((e) => e.match && typeof e.value === 'string' && e.value)
-    .map((e) => ({ version: Number(e.match?.[1]), value: e.value as string }))
-    .sort((a, b) => a.version - b.version);
-}
+  /^(KEK_V|MAC_ROOT_V)[1-9]\d*$/.test(name) ||
+  name === 'MAC_KEY_VERSION' ||
+  name === 'MAC_KEY_VERSION_PREVIOUS';
 
 /**
- * The KEK version the MAC keys derive from: `MAC_KEY_VERSION` when set, else the oldest configured KEK
- * (so a deployment that never sets it keeps every stored MAC valid).
+ * The root version the MAC keys derive from: `MAC_KEY_VERSION` when set, else `EVIDENCE_ROOT` (so a
+ * deployment that never sets it keeps every stored MAC valid). A missing root 1 fails at derivation.
  */
 export function macKeyVersion(env: object): number {
-  const oldest = kekVersions(env)[0];
-  if (!oldest) throw new Error('No KEK configured (KEK_V1)');
-  return versionSetting(env, 'MAC_KEY_VERSION') ?? oldest.version;
+  if (macRootVersions(env).length === 0) throw macRootUnavailable('No KEK configured');
+  return versionSetting(env, 'MAC_KEY_VERSION') ?? EVIDENCE_ROOT;
 }
 
 function versionSetting(env: object, name: string): number | null {
   const raw = (env as Record<string, unknown>)[name];
   if (raw === undefined || raw === null || raw === '') return null;
   const version = parseKekVersion(raw);
-  if (version === null) throw new Error(`${name} must be a KEK version number`);
+  if (version === null) throw macRootUnavailable(`${name} must be a KEK version number`);
   return version;
 }
 
@@ -193,7 +184,7 @@ export function macPreviousVersion(env: object): number | null {
 /**
  * The labels whose keys follow `MAC_KEY_VERSION`: the MACs of capability and device tokens (re-MACed from
  * their sealed copies by cron tokens.remac), staff PINs (checked under both roots while `MAC_KEY_VERSION_PREVIOUS` is set), pair codes
- * (ten minutes), scanner asset grants (one hour) and the scan CSRF proofs (computed on every request). Every other label stays on the oldest KEK: its MACs are retained evidence bound
+ * (ten minutes), scanner asset grants (one hour) and the scan CSRF proofs (computed on every request). Every other label stays on root 1 (`EVIDENCE_ROOT`): its MACs are retained evidence bound
  * to the credential-reference keyset commitment (tombstones, retention proofs, webhook and action
  * references), which a changed root would fail closed. docs/operations.md, MAC key rotation.
  */
@@ -210,9 +201,9 @@ const ROTATABLE_LABELS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * An HMAC-SHA256 key derived (HKDF) from a KEK and a purpose label: the MAC root (`macKeyVersion`) for the
- * rotatable labels above, the oldest configured KEK for the rest. Removing or changing the KEK a stored MAC
- * was made with breaks it. `version` derives under another KEK, for the job that moves MACs between roots.
+ * An HMAC-SHA256 key derived (HKDF) from a KEK (or its extracted `MAC_ROOT_V<n>`, mac-roots.ts) and a purpose
+ * label: the MAC root (`macKeyVersion`) for the rotatable labels above, `EVIDENCE_ROOT` for the rest. Removing
+ * or changing the root a stored MAC was made with breaks it. `version` derives under another KEK, for the job that moves MACs between roots.
  * Never reuse a label across purposes.
  */
 export async function derivedHmacKey(
@@ -220,35 +211,16 @@ export async function derivedHmacKey(
   label: string,
   version?: number,
 ): Promise<CryptoKey> {
-  const oldest = kekVersions(env)[0];
-  if (!oldest) throw new Error('No KEK configured (KEK_V1)');
-  const wanted = version ?? (ROTATABLE_LABELS.has(label) ? macKeyVersion(env) : oldest.version);
-  const root = kekVersions(env).find((e) => e.version === wanted);
-  if (!root) throw new Error(`KEK version ${wanted} is not available for MAC keys`);
-  const raw = fromBase64(root.value.trim());
-  if (raw.length !== 32) throw new Error('KEK must be 32 bytes, base64 encoded');
-  const ikm = await crypto.subtle.importKey('raw', raw as BufferSource, 'HKDF', false, [
-    'deriveKey',
-  ]);
-  return crypto.subtle.deriveKey(
-    {
-      name: 'HKDF',
-      hash: 'SHA-256',
-      salt: encoder.encode('passbook.derived-hmac.v1') as BufferSource,
-      info: encoder.encode(label) as BufferSource,
-    },
-    ikm,
-    { name: 'HMAC', hash: 'SHA-256', length: 256 },
-    false,
-    ['sign', 'verify'],
-  );
+  if (macRootVersions(env).length === 0) throw macRootUnavailable('No KEK configured');
+  const wanted = version ?? (ROTATABLE_LABELS.has(label) ? macKeyVersion(env) : EVIDENCE_ROOT);
+  return derivedMacKey(env, wanted, label);
 }
 
 /**
  * A 128-bit hex digest of `value` under the derived key for `label`. For counter and rate-limit
  * keys built from an address: a plain hash falls to a dictionary of emails, this one does not
  * without the KEK. Stored counters under an older scheme just expire. The `counter.*` labels are not
- * rotatable labels: they stay on the oldest KEK, so a MAC root rotation does not reset their buckets.
+ * rotatable labels: they stay on root 1, so a MAC root rotation does not reset their buckets.
  */
 export async function keyedDigest(env: object, label: string, value: string): Promise<string> {
   const key = await derivedHmacKey(env, label);

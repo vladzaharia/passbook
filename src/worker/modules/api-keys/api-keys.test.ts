@@ -4,13 +4,14 @@ import {
   fixtures,
   makeApiKey,
   makeOrg,
+  makeScanner,
   makeSession,
   makeUser,
   withoutTrigger,
 } from '../../../../test/helpers/index.ts';
 import { ApiKeyListSchema, CreatedApiKeySchema } from '../../../shared/contracts/api-keys.ts';
 import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
-import { first, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { fakeLimiter, harness, type TestHarness } from '../auth/test-support.ts';
 import { createApiKeyStore } from './service.ts';
@@ -827,5 +828,104 @@ describe('creator label privacy', () => {
     expect(await listAs(true)).toBe(`${key.createdBy}@example.com`);
     await run(h.env.DB, 'UPDATE users SET name = ? WHERE id = ?', ['Ada', key.createdBy]);
     expect(await listAs(false)).toBe('Ada');
+  });
+});
+
+describe('the scans:write scope', () => {
+  const terminal = async (orgId: string, over: { revoked?: boolean } = {}) =>
+    (await makeScanner(f(), { orgId, kind: 'terminal', ...over })).id;
+  const mint = (orgId: string, over: Record<string, unknown>) =>
+    create({ name: 'Till', scopes: ['scans:write'], orgId, ...over }, orgId);
+
+  it('is minted for an org key with its terminals, and the binding is stored', async () => {
+    const org = await makeOrg(f());
+    const a = await terminal(org.id);
+    const b = await terminal(org.id);
+    const { res, key } = await mint(org.id, { terminalIds: [a, b, a] });
+    expect(res.status).toBe(201);
+    expect(key.scopes).toEqual(['scans:write']);
+    expect(
+      (
+        await all<{ scanner_id: string }>(
+          h.env.DB,
+          'SELECT scanner_id FROM api_key_terminals WHERE key_id = ? ORDER BY scanner_id',
+          [key.id],
+        )
+      ).map((r) => r.scanner_id),
+    ).toEqual([a, b].sort());
+    expect(await createApiKeyStore(h.env, h.clock).resolve(key.secret)).toMatchObject({
+      keyId: key.id,
+      scopes: ['scans:write'],
+    });
+  });
+
+  it('needs at least one terminal, and terminals need the scope', async () => {
+    const org = await makeOrg(f());
+    const a = await terminal(org.id);
+    await expectProblem((await mint(org.id, {})).res, 422, 'API_KEY_TERMINALS_REQUIRED');
+    await expectProblem(
+      (await mint(org.id, { terminalIds: [] })).res,
+      422,
+      'API_KEY_TERMINALS_REQUIRED',
+    );
+    const noScope = await create(
+      { name: 'Read', scopes: ['passes:read'], orgId: org.id, terminalIds: [a] },
+      org.id,
+    );
+    await expectProblem(noScope.res, 422, 'API_KEY_TERMINALS_UNUSED');
+    expect(await first(h.env.DB, 'SELECT 1 FROM api_key_terminals')).toBeNull();
+  });
+
+  it('refuses another org, another mode, a revoked terminal and an unknown id, writing nothing', async () => {
+    const org = await makeOrg(f());
+    const other = await makeOrg(f());
+    const foreign = await terminal(other.id);
+    const revoked = await terminal(org.id, { revoked: true });
+    const testMode = (await makeScanner(f(), { orgId: org.id, kind: 'terminal', mode: 'test' })).id;
+    const device = (await makeScanner(f(), { orgId: org.id, kind: 'device' })).id;
+    for (const id of [foreign, revoked, testMode, device, 'no-such-terminal']) {
+      const { res } = await mint(org.id, { terminalIds: [id] });
+      await expectProblem(res, 409, 'API_KEY_TERMINAL_UNKNOWN');
+    }
+    expect(await first(h.env.DB, "SELECT 1 FROM api_keys WHERE name = 'Till'")).toBeNull();
+  });
+
+  it('is refused on a platform-wide key', async () => {
+    const org = await makeOrg(f());
+    const a = await terminal(org.id);
+    const { res } = await create({
+      name: 'Till',
+      scopes: ['scans:write'],
+      orgId: null,
+      terminalIds: [a],
+    });
+    await expectProblem(res, 422, 'API_KEY_SCAN_ORG_REQUIRED');
+  });
+
+  it('keeps the binding fixed: no change, no later terminal, no delete, gone with its key', async () => {
+    const org = await makeOrg(f());
+    const a = await terminal(org.id);
+    const b = await terminal(org.id);
+    const { key } = await mint(org.id, { terminalIds: [a] });
+    await expect(
+      run(h.env.DB, 'UPDATE api_key_terminals SET scanner_id = ? WHERE key_id = ?', [b, key.id]),
+    ).rejects.toThrow('immutable');
+    await expect(
+      run(h.env.DB, 'DELETE FROM api_key_terminals WHERE key_id = ?', [key.id]),
+    ).rejects.toThrow('immutable');
+    await run(h.env.DB, 'UPDATE api_keys SET last_used_at = ? WHERE id = ?', [
+      h.clock.now(),
+      key.id,
+    ]);
+    await expect(
+      run(h.env.DB, 'INSERT INTO api_key_terminals (key_id, scanner_id) VALUES (?, ?)', [
+        key.id,
+        b,
+      ]),
+    ).rejects.toThrow('minted');
+    await run(h.env.DB, 'DELETE FROM api_keys WHERE id = ?', [key.id]);
+    expect(
+      await first(h.env.DB, 'SELECT 1 FROM api_key_terminals WHERE key_id = ?', [key.id]),
+    ).toBeNull();
   });
 });

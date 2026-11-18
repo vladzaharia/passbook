@@ -202,3 +202,21 @@ describe('undo over the wire', () => {
     expect((await kit.post(s.scanner.headers, path, req)).status).toBe(401);
   });
 });
+
+describe('the event undo keeps the commit sequence', () => {
+  it('puts back the previous seq and clears prev_seq, like the occupancy undo', async () => {
+    const s = await scenario();
+    const seqOf = () =>
+      first<{ seq: number; prev_seq: number | null; last_scan_id: string }>(
+        kit.env.DB,
+        'SELECT seq, prev_seq, last_scan_id FROM scan_presence WHERE pass_id=?',
+        [s.pass.id],
+      );
+    const before = await seqOf();
+    const exit = await scanAgain(s);
+    expect(await seqOf()).toMatchObject({ seq: (before?.seq ?? 0) + 1, prev_seq: before?.seq });
+    const result = await undo(kit.ctx, s.actor, exit.scanId ?? '', { idempotencyKey: key() });
+    expect(result.outcome).toMatchObject({ kind: 'ok', replay: false });
+    expect(await seqOf()).toEqual({ seq: before?.seq, prev_seq: null, last_scan_id: s.targetId });
+  });
+});

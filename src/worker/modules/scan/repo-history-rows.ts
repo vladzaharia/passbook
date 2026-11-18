@@ -15,7 +15,7 @@ import { type ScanReadAuthority, scanAuthorizedStmt, scanRead } from './repo-rea
 export const HISTORY_COLUMNS = `s.id, s.org_id, s.mode, s.at, s.outcome, s.reason, s.action_id,
     s.action_kind, s.direction, s.pass_id, s.template_id, t.name AS template_name,
     s.actor_key, s.state AS scan_state, s.scanner_id AS raw_scanner_id, s.event_id AS raw_event_id,
-    s.staff_id AS raw_staff_id, s.undone_by AS raw_undone_by, s.presence_scope, s.pass_version,
+    s.staff_id AS raw_staff_id, s.api_key_id, s.undone_by AS raw_undone_by, s.presence_scope, s.pass_version,
     e.id AS event_id, e.name AS event_name, sc.id AS scanner_id, sc.name AS scanner_name,
     st.id AS staff_id, st.name AS staff_name, ap.name AS approver_name, s.method, s.amount,
     s.before_value, s.after_value, s.override_of, s.offline, s.actor_type, s.actor_id, s.undone_at,

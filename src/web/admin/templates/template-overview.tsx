@@ -171,6 +171,8 @@ const TYPE_ICON = {
   image: Image,
   password: Type,
   timezone: Globe,
+  'access-plan': List,
+  'access-zones': List,
   list: List,
 } as const;
 const TYPE_LABEL: Record<string, string> = {
@@ -186,6 +188,8 @@ const TYPE_LABEL: Record<string, string> = {
   image: 'Image',
   password: 'Secret',
   timezone: 'Time zone',
+  'access-plan': 'Plan',
+  'access-zones': 'Zones',
   list: 'List',
 };
 

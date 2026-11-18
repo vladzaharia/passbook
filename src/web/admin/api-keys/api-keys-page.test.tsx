@@ -139,6 +139,7 @@ describe('api keys page', () => {
     expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
     expect(within(dialog).getByText('Pick at least one scope.')).toBeInTheDocument();
     expect(within(dialog).getByText('Platform-wide')).toBeInTheDocument();
+    expect(within(dialog).queryByRole('checkbox', { name: 'Scan as a terminal' })).toBeNull();
 
     await user.type(within(dialog).getByLabelText(/Name/), 'CI key');
     await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
@@ -220,6 +221,15 @@ describe('api keys page', () => {
       session: 'admin',
       memberships: [membershipFixture('o1', { orgName: 'North' })],
       handlers: {
+        '/api/v1/scanners': () =>
+          json({
+            items: [
+              { id: 't1', name: 'Front till', kind: 'terminal', status: 'paired' },
+              { id: 't2', name: 'Old till', kind: 'terminal', status: 'revoked' },
+              { id: 'd1', name: 'Phone', kind: 'device', status: 'paired' },
+            ],
+            nextCursor: null,
+          }),
         '/api/v1/api-keys': (url, init) => {
           if (init?.method === 'POST') {
             body = JSON.parse(String(init.body));
@@ -239,12 +249,19 @@ describe('api keys page', () => {
     expect(within(dialog).getByText('North')).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText(/Name/), 'Org integration');
     await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Scan as a terminal' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    expect(await within(dialog).findByText('Pick at least one terminal.')).toBeInTheDocument();
+    expect(within(dialog).queryByRole('checkbox', { name: 'Old till' })).toBeNull();
+    await user.click(await within(dialog).findByRole('checkbox', { name: 'Front till' }));
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     const review = await screen.findByRole('alertdialog', { name: 'Review service key' });
     expect(within(review).getByText(/bound to North in Live mode/)).toBeInTheDocument();
     expect(body).toEqual({});
     await user.click(within(review).getByRole('button', { name: 'Create key' }));
     await waitFor(() => expect(body.orgId).toBe('o1'));
+    expect(body.scopes).toEqual(['passes:read', 'scans:write']);
+    expect(body.terminalIds).toEqual(['t1']);
     expect(await screen.findByRole('dialog', { name: /Copy your key/ })).toBeInTheDocument();
   });
 
