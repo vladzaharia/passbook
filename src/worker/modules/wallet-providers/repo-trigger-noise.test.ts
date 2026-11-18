@@ -181,4 +181,50 @@ describe('row counts, not trigger counts', () => {
       expect(results).toEqual([true, false, true, false, { count: 1 }, { count: 1 }]);
     },
   );
+
+  it('refuses a receipt for a token a GET already claimed, even with the same claim id', async () => {
+    const db = (await makeEnv()).DB;
+    const t = await setupSamsungCallbacks({ db });
+    const snapshot = await findSamsungFetchSnapshot(
+      db,
+      await sha256Hex(t.refId),
+      t.kit.clock.now(),
+      t.credentialKeysetCommitment,
+    );
+    if (!snapshot) throw new Error('Missing fetch snapshot');
+    const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);
+    if (!raw) throw new Error('Missing materialized pass');
+    const now = t.kit.clock.now();
+    const claim = {
+      tokenHash: 'D'.repeat(43),
+      claimId: t.kit.ctx.ids.id(),
+      now,
+      expiresAt: now + 30_000,
+    };
+    const receipt = {
+      id: t.kit.ctx.ids.id(),
+      signedAt: now,
+      envelope: await encryptSecret(await loadKekRing(t.kit.env), 'untrusted', 'test'),
+      countryHint: 'GB',
+      event: null,
+      requestId: 'req-1',
+      queryBound: false,
+    };
+    expect(await claimSamsungFetch(db, snapshot, claim, raw)).toBe(true);
+    expect(await claimSamsungReceipt(db, snapshot, claim, receipt, raw)).toBe(false);
+    expect(
+      await first(
+        db,
+        'SELECT COUNT(*) AS count FROM wallet_samsung_callback_receipts WHERE instance_id = ?',
+        [snapshot.instanceId],
+      ),
+    ).toEqual({ count: 0 });
+    expect(
+      await first(
+        db,
+        'SELECT COUNT(*) AS count FROM wallet_samsung_country_hints WHERE ref_id = ?',
+        [snapshot.referenceId],
+      ),
+    ).toEqual({ count: 0 });
+  });
 });
