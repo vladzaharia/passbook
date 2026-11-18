@@ -5,6 +5,7 @@ import { first, type SqlValue } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { CommitArgs } from './persist.ts';
+import { writeLineage } from './repo-forks.ts';
 import {
   blueprintSource,
   cloneSource,
@@ -169,6 +170,15 @@ export async function writeVersion(
       ],
     ),
   );
+  if (args.lineage)
+    writeLineage(writer, {
+      templateId: plan.templateId,
+      version: body.version,
+      orgId: args.orgId,
+      platform: authority.kind === 'platform',
+      lineage: args.lineage,
+      now,
+    });
   const results = (await grantedBatch(ctx.env.DB, all)).at(-1) ?? [];
   const stored = await first<CommittedVersion>(
     ctx.env.DB,

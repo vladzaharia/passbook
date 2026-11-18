@@ -1,5 +1,3 @@
-import type { z } from 'zod';
-import type { CloneTemplateSchema } from '../../../shared/contracts/index.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { actorOf } from '../../platform/context.ts';
 import { classifyD1Error } from '../../platform/db.ts';
@@ -12,7 +10,6 @@ import {
   type TemplateAuthority,
 } from './access.ts';
 import { deletePrefix } from './mutations-assets.ts';
-import { cloneSourceOptions, commitClonedVersion, prepareClone } from './mutations-clone.ts';
 import { persistManifestReplacement } from './mutations-manifest.ts';
 import {
   type CompositeTemplateRegistry,
@@ -20,13 +17,7 @@ import {
   createTemplateRegistry,
   r2Prefix,
 } from './registry.ts';
-import {
-  getVersion,
-  hasPasses,
-  latestVersionName,
-  listVersions,
-  type TemplateRow,
-} from './repo.ts';
+import { hasPasses, latestVersionName, listVersions, type TemplateRow } from './repo.ts';
 import {
   archiveUploadedTemplate,
   deleteUploadedTemplate,
@@ -35,7 +26,6 @@ import {
   restoreUploadedTemplate,
   softDeleteUploadedTemplate,
 } from './repo-mutations.ts';
-import { hasCloneAuthority, hasTemplateSource } from './repo-source.ts';
 import { detail, loadTemplate } from './service.ts';
 import { assertStampsUnchanged } from './stamps.ts';
 
@@ -88,59 +78,6 @@ export async function resolveCurrentTemplate(
   const version = row.activeVersion ?? (await latestVersionName(ctx.env.DB, row.id));
   if (!version) throw new NotFoundError('Template has no version.', 'TEMPLATE_NOT_FOUND');
   return registry.resolve(row.id, version);
-}
-
-export async function cloneTemplate(
-  ctx: ServiceContext,
-  auth: AuthContext | undefined,
-  id: string,
-  body: z.infer<typeof CloneTemplateSchema>,
-) {
-  const clone = await prepareClone(ctx, auth, id, body);
-  const { source, sourceAuthority, authority, org, plan } = clone;
-
-  const registry = createTemplateRegistry(ctx.env, { ctx });
-  const template = await resolveCurrentTemplate(ctx, registry, source);
-  const sourceVersion = await getVersion(ctx.env.DB, id, template.version);
-  const sourceFence = {
-    id,
-    orgId: source.orgId,
-    version: template.version,
-    ...(sourceAuthority ? { authority: sourceAuthority } : {}),
-  };
-  const assertSource = async () => {
-    const allowed = await hasTemplateSource(ctx.env.DB, sourceFence, ctx.clock.now());
-    if (allowed) return;
-    const current = await loadTemplate(ctx, auth, id, body.orgId, cloneSourceOptions);
-    if (current.orgId !== source.orgId || !(await getVersion(ctx.env.DB, id, template.version)))
-      throw new ConflictError(
-        'The source template changed. Retry the clone.',
-        'TEMPLATE_VERSION_CONFLICT',
-      );
-    throw new ForbiddenError();
-  };
-  const assertCloneAuthority = async () => {
-    const now = ctx.clock.now();
-    const allowed = await hasCloneAuthority(ctx.env.DB, authority, org.id, sourceFence, now);
-    if (allowed) return;
-    await assertSource();
-    await assertTemplateAuthority(ctx, authority);
-    throw new ForbiddenError();
-  };
-  await commitClonedVersion(ctx, clone, {
-    registry,
-    template,
-    sourceVersion,
-    sourceFence,
-    assertSource,
-    assertCloneAuthority,
-  });
-  const action = source.blueprint ? 'template.use_blueprint' : 'template.clone';
-  await audit(ctx, auth, { id: plan.templateId, orgId: org.id }, action, {
-    sourceId: id,
-    sourceVersion: template.version,
-  });
-  return detail(ctx, auth, plan.templateId);
 }
 
 export async function replaceManifest(
