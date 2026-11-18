@@ -24,6 +24,8 @@ export interface Finalize {
   eventId?: string;
   /** A value action's amount and the input's value before and after, JSON text. */
   value?: { amount: number | null; before: string; after: string };
+  /** An Access card's scan: the deciding zone, the plan then, and whether it started a visit (grants only). */
+  access?: { zoneId: string | null; plan: string; visit: boolean | null };
 }
 
 /** Close this pending generation. Zero rows come back when the claim moved or another variant already closed it. */
@@ -45,6 +47,13 @@ export function finalizeScan(g: Grant, f: Finalize, when: GrantCond[] = []): Gra
       ...(f.eventId ? { event_id: f.eventId } : {}),
       ...(f.value
         ? { amount: f.value.amount, before_value: f.value.before, after_value: f.value.after }
+        : {}),
+      ...(f.access
+        ? {
+            zone_id: f.access.zoneId,
+            access_plan: f.access.plan,
+            ...(f.access.visit === null ? {} : { visit: f.access.visit ? 1 : 0 }),
+          }
         : {}),
     },
     where: { id: f.id, state: 'pending', at: f.claimAt },

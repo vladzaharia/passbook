@@ -1,6 +1,7 @@
 import { IdParamSchema } from '../../../shared/contracts/common.ts';
 import {
   CreateScanZoneSchema,
+  ScanVisitsResetSchema,
   ScanZoneListQuerySchema,
   ScanZoneListSchema,
   ScanZoneSchema,
@@ -13,6 +14,8 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
+import { resetVisits } from './access-visits.ts';
+import { passTarget } from './repo-access.ts';
 import { zoneTarget } from './repo-zones.ts';
 import { archiveZone, createZone, listZones, updateZone } from './zones.ts';
 
@@ -114,3 +117,27 @@ for (const [path, archived, summary] of [
       return c.json(await archiveZone(ctx, currentUserId(c), orgId, id, archived, authority));
     },
   );
+
+register(
+  scanZonesRoutes,
+  TAG,
+  {
+    method: 'post',
+    path: '/visits/{id}/reset',
+    summary: 'Reset a pass’s visits',
+    params: IdParamSchema,
+    response: ScanVisitsResetSchema,
+  },
+  async (c) => {
+    const ctx = serviceContext(c);
+    const auth = c.var.auth;
+    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    const passId = c.req.valid('param').id;
+    const pass = await passTarget(ctx.env.DB, passId);
+    if (!pass || !(await getOrgAccess(ctx, auth.userId, pass.orgId)))
+      throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+    const authority = await tenantAuthorityOf(ctx, auth, pass.orgId, 'scanning:manage');
+    if (authority.kind !== 'session') throw new UnauthenticatedError();
+    return c.json(await resetVisits(ctx, currentUserId(c), passId, authority));
+  },
+);

@@ -3,6 +3,7 @@ import type { Grant } from '../../platform/authority.ts';
 import { type GrantCond, not } from '../../platform/authority-cond.ts';
 import type { EventRow } from '../events/repo.ts';
 import type { AdmissionPlan } from './admission-types.ts';
+import { type AccessGateWrite, startedVisit, writeAccessGate } from './repo-access.ts';
 import type * as gates from './repo-gates.ts';
 import { holderPart, presenceHolderPart } from './repo-scan-checks.ts';
 import { retentionProofPart } from './repo-scan-retention-part.ts';
@@ -36,7 +37,9 @@ interface CheckInStatementsInput {
   /** What let the scan in, and the heads-up when another scan took it first. */
   admitted: { conds: GrantCond[]; reason: ScanReason };
   lost: ScanReason;
-  finalized(outcome: 'ok' | 'heads_up', reason: ScanReason | null): Finalize;
+  finalized(outcome: 'ok' | 'heads_up', reason: ScanReason | null, visit?: boolean): Finalize;
+  /** An Access card: the gate counts visits instead of taking the first scan. */
+  access: Omit<AccessGateWrite, 'passId' | 'scanId' | 'at'> | null;
   variants: {
     ok: CheckInVariant;
     admit: CheckInVariant | null;
@@ -55,29 +58,40 @@ export function addCheckInStatements(g: Grant, i: CheckInStatementsInput) {
   const { scanId, effect } = claim;
   const gateAfter = effect.gateAfter;
   if (!gateAfter) return null;
-  writeGate(
-    g,
-    {
-      passId: gate.passId,
-      actionId: gate.actionId,
-      scope: gate.scope,
-      templateId: claim.templateId,
-      kind: claim.kind,
-      scanId,
-      rule: claim.gate,
-      at: i.at,
-      before: effect.gateBefore,
-      after: gateAfter,
-    },
-    [...(capacity ? [capacity] : []), ...admitted.conds],
-  );
+  const guards = [...(capacity ? [capacity] : []), ...admitted.conds];
+  if (i.access) writeAccessGate(g, { ...i.access, passId: gate.passId, scanId, at: i.at }, guards);
+  else
+    writeGate(
+      g,
+      {
+        passId: gate.passId,
+        actionId: gate.actionId,
+        scope: gate.scope,
+        templateId: claim.templateId,
+        kind: claim.kind,
+        scanId,
+        rule: claim.gate,
+        at: i.at,
+        before: effect.gateBefore,
+        after: gateAfter,
+      },
+      guards,
+    );
   const presence = presencePlan && effect.presenceAfter;
   if (presence) writePresence(g, gate, scanId, effect.presenceBefore, presence);
-  const finalOk = finalizeScan(g, finalized('ok', null), [
+  const won = [
     wonGate(gate, scanId),
     ...(presence ? [holdsPresence(gate.passId, presence.scope, scanId)] : []),
     ...(overrideOf ? [overrideOpen(overrideOf)] : []),
-  ]);
+  ];
+  // The grant that started a visit is closed first; the rest of the winners are inside one.
+  const finalVisit = i.access
+    ? finalizeScan(g, finalized('ok', null, true), [
+        ...won,
+        startedVisit({ ...i.access, passId: gate.passId, scanId, at: i.at }),
+      ])
+    : null;
+  const finalOk = finalizeScan(g, finalized('ok', null, false), won);
   const finalAdmit = admitted.conds.length
     ? finalizeScan(g, finalized('heads_up', admitted.reason), [not(allOf(admitted.conds))])
     : null;
@@ -101,5 +115,5 @@ export function addCheckInStatements(g: Grant, i: CheckInStatementsInput) {
     ? g.include(presenceHolderPart(gate.passId, presence.scope))
     : [];
   g.assert('stale', [scanIs(scanId, { state: 'done' })]);
-  return { finalOk, finalAdmit, finalCap, holder, presenceHolder };
+  return { finalOk, finalVisit, finalAdmit, finalCap, holder, presenceHolder };
 }
