@@ -7,6 +7,7 @@ import {
   pageOf,
   TimestampSchema,
 } from './common.ts';
+import { ScannerTagsSettingsSchema, TagLevelSchema } from './nfc-tags.ts';
 import { ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
 import { ZoneIdsSchema } from './scan-access.ts';
 import { ScannerAcceptsSchema } from './scanners.ts';
@@ -31,7 +32,9 @@ export const NativeScannerCapabilitiesSchema = z.strictObject({
   nfc: z.strictObject({
     available: z.boolean(),
     reading: z.boolean(),
-    formats: z.array(z.enum(['ndef', 'wallet-vas'])).max(2),
+    /** The app reads tags without a `tagRead` request (wire v2). */
+    continuous: z.boolean().optional(),
+    formats: z.array(z.enum(['ndef', 'wallet-vas', 'tag-uid', 'tag-sun'])).max(4),
   }),
   vas: z.strictObject({
     deviceSupported: z.boolean(),
@@ -99,6 +102,8 @@ export const SessionCustomerSettingsSchema = z.strictObject({
 export type SessionCustomerSettings = z.infer<typeof SessionCustomerSettingsSchema>;
 export const ScanningSessionSettingsSchema = ScannerSettingsSchema.extend({
   customer: SessionCustomerSettingsSchema.optional(),
+  /** The assign rights of every device, plus the session's tag level (absent: the org's). */
+  tags: ScannerTagsSettingsSchema.extend({ level: TagLevelSchema.optional() }).optional(),
 });
 export const ScanningSessionStatusSchema = z.enum(['active', 'paused', 'ended']);
 export const ScanningSessionSchema = z.object({

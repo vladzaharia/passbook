@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts';
+import type { ScanCodeInput, ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction, ResolvedScanManifest } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
@@ -30,7 +30,7 @@ export function defaultAction(
 export async function resolveOutcome(
   ctx: ServiceContext,
   actor: ScanActor,
-  req: z.infer<typeof ScanResolveRequestSchema>,
+  req: Omit<z.infer<typeof ScanResolveRequestSchema>, 'input'> & { input: ScanCodeInput },
 ): Promise<ScanEvaluation> {
   req = {
     ...req,
