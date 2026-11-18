@@ -91,6 +91,14 @@ describe('Access plan widget', () => {
     expect(screen.getByLabelText('Guest of')).toBeInTheDocument();
   });
 
+  it('create: the Guest group has no empty card until a guest plan is chosen', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    expect(screen.queryByRole('heading', { name: 'Guest' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: /Guest day/ }));
+    expect(screen.getByRole('heading', { name: 'Guest' })).toBeInTheDocument();
+  });
+
   it('create: leaving a guest plan drops the guest settings from the values', async () => {
     const user = userEvent.setup();
     const seen: FormValues[] = [];

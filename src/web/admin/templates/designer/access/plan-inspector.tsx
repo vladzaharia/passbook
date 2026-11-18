@@ -15,7 +15,7 @@ const KINDS = [
   {
     value: 'guest',
     label: 'Guest',
-    description: 'A day or a few, with an optional visit limit.',
+    description: 'A few days, optional visit limit.',
     icon: Ticket,
   },
 ] as const;

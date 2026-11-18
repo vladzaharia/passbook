@@ -56,7 +56,7 @@ export function WeekGrid({ label, hours, onChange, errors, within, mergeKey }: W
             key={day}
             data-closed={closed || undefined}
             data-invalid={problem ? true : undefined}
-            className="ac-day block rounded-md border border-border-subtle bg-surface-raised px-2 py-1.5"
+            className="ac-day block rounded-md border border-border bg-surface-raised px-2 py-1.5"
           >
             <tr className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
               <th

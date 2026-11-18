@@ -109,6 +109,13 @@ export function SchemaForm({
           pairs.flatMap((p) => [p.lat.key, p.lng.key, ...(p.text ? [p.text.key] : [])]),
         );
         const visible = group.fields.filter((f) => !paired.has(f.key) && !access.hidden.has(f.key));
+        // A group whose fields are all guest-only has nothing to show: no empty card.
+        if (
+          visible.length === 0 &&
+          pairs.length === 0 &&
+          group.fields.some((f) => access.hidden.has(f.key))
+        )
+          return null;
         const only = visible.length === 1 && pairs.length === 0 ? visible[0]?.label : undefined;
         const title = group.name || 'Details';
         const grid = (

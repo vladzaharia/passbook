@@ -68,7 +68,7 @@ export function ZoneGrants({
               return (
                 <li
                   key={`${which}#${nth}`}
-                  className="ac-grant grid gap-2 rounded-md border border-border-subtle p-2"
+                  className="ac-grant grid gap-2 rounded-md border border-border p-2"
                 >
                   <div className="flex items-center gap-2">
                     <div className="min-w-0 flex-1">
