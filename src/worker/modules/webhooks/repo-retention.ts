@@ -1,70 +1,111 @@
 import { deleteInBatches } from '../../platform/batched.ts';
+import { all, stmt } from '../../platform/db.ts';
 import type { Scope } from '../retention/repo-sweep.ts';
 
-export interface Purged {
-  feed: number;
-  delivered: number;
-  attempts: number;
-  testAttempts: number;
-}
+/** Rows one chunk deletes, with its receipt. */
+export const CHUNK = 1000;
 
-/** A hold on the org or on the event's pass keeps the event's rows. */
-const heldEvent = (seqColumn: string) =>
-  `EXISTS (SELECT 1 FROM event_feed f JOIN retention_holds h ON h.released_at IS NULL AND h.org_id = f.org_id
-     AND (h.pass_id IS NULL OR h.pass_id = f.pass_id) WHERE f.seq = ${seqColumn})`;
+/** `feed` also takes its deliveries and attempts with it (cascade); the others are rows of one table. */
+export type PurgeKind = 'feed' | 'delivered' | 'attempts' | 'testAttempts';
+
+const TABLE: Record<PurgeKind, string> = {
+  feed: 'event_feed',
+  delivered: 'webhook_deliveries',
+  attempts: 'webhook_attempts',
+  testAttempts: 'webhook_attempts',
+};
+
+const COND: Record<PurgeKind, string> = {
+  feed: 'event_feed.at < ?',
+  delivered: "webhook_deliveries.state = 'delivered' AND webhook_deliveries.finished_at < ?",
+  attempts: 'webhook_attempts.at < ?',
+  testAttempts: 'webhook_attempts.event_seq IS NULL AND webhook_attempts.at < ?',
+};
+
+/** An org-wide hold, or a hold on the event's pass, keeps the row (a test send has no pass: org holds only). */
+const heldSql = (table: string) => {
+  const pass =
+    table === 'event_feed'
+      ? 'event_feed.pass_id'
+      : `(SELECT f.pass_id FROM event_feed f WHERE f.seq = ${table}.event_seq)`;
+  return `EXISTS (SELECT 1 FROM retention_holds h WHERE h.released_at IS NULL AND h.org_id = ${table}.org_id
+     AND (h.pass_id IS NULL OR h.pass_id = ${pass}))`;
+};
 
 /** The platform pass skips the listed orgs; an org pass takes one. */
-const inScope = (table: string, scope: Scope): { sql: string; params: string[] } =>
-  scope.kind === 'org'
+function scopeSql(table: string, scope: Scope): { sql: string; params: string[] } {
+  return scope.kind === 'org'
     ? { sql: `${table}.org_id = ?`, params: [scope.orgId] }
     : {
         sql: `${table}.org_id NOT IN (SELECT value FROM json_each(?))`,
         params: [JSON.stringify(scope.exclude)],
       };
+}
 
-/**
- * Purge of one scope. Feed rows past `feedBefore` go first and take their deliveries and attempts with them
- * (cascade). Then delivered rows, old attempts and test sends. Held events keep all of theirs.
- */
-export async function purge(
-  db: D1Database,
-  cut: {
-    feedBefore: number;
-    deliveredBefore: number;
-    attemptsBefore: number;
-    testAttemptsBefore: number;
-  },
-  scope: Scope,
-): Promise<Purged> {
-  const feed = inScope('event_feed', scope);
-  const deliveries = inScope('webhook_deliveries', scope);
-  const attempts = inScope('webhook_attempts', scope);
+/** What a row must satisfy to go, at select and at delete: age, scope and no hold. */
+function eligible(kind: PurgeKind, scope: Scope, cutoff: number) {
+  const table = TABLE[kind];
+  const sc = scopeSql(table, scope);
   return {
-    feed: await deleteInBatches(
-      db,
-      'event_feed',
-      `at < ? AND ${feed.sql} AND NOT ${heldEvent('event_feed.seq')}`,
-      [cut.feedBefore, ...feed.params],
-    ),
-    delivered: await deleteInBatches(
-      db,
-      'webhook_deliveries',
-      `state = 'delivered' AND finished_at < ? AND ${deliveries.sql} AND NOT ${heldEvent('webhook_deliveries.event_seq')}`,
-      [cut.deliveredBefore, ...deliveries.params],
-    ),
-    attempts: await deleteInBatches(
-      db,
-      'webhook_attempts',
-      `at < ? AND ${attempts.sql} AND (event_seq IS NULL OR NOT ${heldEvent('webhook_attempts.event_seq')})`,
-      [cut.attemptsBefore, ...attempts.params],
-    ),
-    testAttempts: await deleteInBatches(
-      db,
-      'webhook_attempts',
-      `event_seq IS NULL AND at < ? AND ${attempts.sql}`,
-      [cut.testAttemptsBefore, ...attempts.params],
-    ),
+    table,
+    sql: `${COND[kind]} AND ${sc.sql} AND NOT ${heldSql(table)}`,
+    params: [cutoff, ...sc.params],
   };
+}
+
+const IN_ROWS = (table: string) => `${table}.rowid IN (SELECT value FROM json_each(?))`;
+
+/** The next rows past the cutoff in the scope, never a held one. */
+export async function selectChunk(
+  db: D1Database,
+  kind: PurgeKind,
+  scope: Scope,
+  cutoff: number,
+): Promise<number[]> {
+  const e = eligible(kind, scope, cutoff);
+  const rows = await all<{ id: number }>(
+    db,
+    `SELECT ${e.table}.rowid AS id FROM ${e.table} WHERE ${e.sql} LIMIT ${CHUNK}`,
+    e.params,
+  );
+  return rows.map((r) => r.id);
+}
+
+/** The receipt lands only while exactly `ids.length` of the chosen rows are still eligible. */
+export function receiptGate(
+  kind: PurgeKind,
+  scope: Scope,
+  cutoff: number,
+  ids: readonly number[],
+): { sql: string; params: (string | number)[] } {
+  const e = eligible(kind, scope, cutoff);
+  return {
+    sql: `(SELECT count(*) FROM ${e.table} WHERE ${IN_ROWS(e.table)} AND ${e.sql}) = ?`,
+    params: [JSON.stringify(ids), ...e.params, ids.length],
+  };
+}
+
+/** Deletes the chosen rows while they are still eligible and the receipt that records it exists. */
+export function deleteChunkStmt(
+  db: D1Database,
+  kind: PurgeKind,
+  scope: Scope,
+  cutoff: number,
+  ids: readonly number[],
+  receiptId: string,
+): D1PreparedStatement {
+  const e = eligible(kind, scope, cutoff);
+  const where = `${IN_ROWS(e.table)} AND ${e.sql} AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`;
+  const params = [JSON.stringify(ids), ...e.params, receiptId];
+  switch (kind) {
+    case 'feed':
+      return stmt(db, `DELETE FROM event_feed WHERE ${where}`, params);
+    case 'delivered':
+      return stmt(db, `DELETE FROM webhook_deliveries WHERE ${where}`, params);
+    case 'attempts':
+    case 'testAttempts':
+      return stmt(db, `DELETE FROM webhook_attempts WHERE ${where}`, params);
+  }
 }
 
 /** Secrets of a rotated key are gone a day after they expire; not history, so no class or hold. */

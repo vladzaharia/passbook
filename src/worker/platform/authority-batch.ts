@@ -38,6 +38,8 @@ export async function grantedBatchWith(
   db: D1Database,
   grants: BatchGrant[],
   after: readonly AfterRead[],
+  /** Statements built by the caller that run first in the same transaction; a refusal rolls them back too. */
+  before: readonly D1PreparedStatement[] = [],
 ): Promise<{ grants: D1Result[][]; after: D1Result[] }> {
   if (grants.length === 0) return { grants: [], after: [] };
   if (grants.some((g) => g.codesKey !== grants[0]?.codesKey))
@@ -46,12 +48,12 @@ export async function grantedBatchWith(
   const prepared = grants.map((g) => prepare(g));
   let results: D1Result[];
   try {
-    results = await db.batch([...prepared.flat(), ...reads]);
+    results = await db.batch([...before, ...prepared.flat(), ...reads]);
   } catch (error) {
     throw grants.reduce((e, g) => g.translate(e), error);
   }
   const out: D1Result[][] = [];
-  let at = 0;
+  let at = before.length;
   for (const statements of prepared) {
     out.push(results.slice(at + 1, at + statements.length - 1));
     at += statements.length;

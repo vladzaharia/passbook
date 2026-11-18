@@ -280,6 +280,11 @@ export class Grant {
     return (await grantedBatch(this.#db, [this]))[0] ?? [];
   }
 
+  /** `commit()` with caller statements (a retention receipt) first in the same transaction: a refusal undoes them. */
+  async commitAfter(before: readonly D1PreparedStatement[]): Promise<D1Result[]> {
+    return (await grantedBatchWith(this.#db, [this], [], before)).grants[0] ?? [];
+  }
+
   /** `commit()` plus reads (`afterRead`) after the release, in the same transaction: they see its writes. */
   async commitWith(
     after: readonly AfterRead[],

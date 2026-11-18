@@ -2,11 +2,17 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createJobContext } from '../../platform/service-context.ts';
-import { readReceipts } from '../retention/receipt-service.ts';
+import { prepareReceipt, readReceipts } from '../retention/receipt-service.ts';
 import { clearSettingsCache } from '../settings/service.ts';
-import { COUNTS_KEPT_MS, dailyImports, isSettled, PII_KEPT_MS } from './import-retention.ts';
+import {
+  COUNTS_KEPT_MS,
+  dailyImports,
+  IMPORT_LIMITS,
+  isSettled,
+  PII_KEPT_MS,
+} from './import-retention.ts';
 import { HEAD, type ImportHarness, setupImportHarness } from './import-test-fixtures.ts';
-import { deleteImport } from './repo-import-retention.ts';
+import { clearPii, deleteImport } from './repo-import-retention.ts';
 
 let h: ImportHarness;
 beforeAll(async () => {
@@ -159,8 +165,15 @@ describe('retention', () => {
       await dailyImports(ctx());
       expect(await piiLeft()).toBe(0);
       const imp = { id: d.id, org_id: h.kit.org.id, mode: 'live' as const, object_key: null };
-      await deleteImport(ctx(), imp);
-      const again = await deleteImport(ctx(), imp).catch((e: unknown) => e);
+      const receipt = () =>
+        prepareReceipt(ctx(), {
+          orgId: h.kit.org.id,
+          cls: 'imports',
+          kind: 'sweep',
+          deleted: 1,
+        });
+      await deleteImport(ctx(), imp, await receipt());
+      const again = await deleteImport(ctx(), imp, await receipt()).catch((e: unknown) => e);
       expect(isSettled(again)).toBe(true);
     } finally {
       await run(h.kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [h.kit.org.id]);
@@ -280,5 +293,98 @@ describe('retention plan', () => {
     expect(await emailLeft(old)).toBe(false);
     expect(await stateOf(old)).not.toBeNull();
     expect(await stateOf(ancient)).toBeNull();
+  });
+
+  const holdPass = (orgId: string, passId: string | null) =>
+    run(
+      h.kit.env.DB,
+      "INSERT INTO retention_holds (id, org_id, pass_id, placed_by_kind, placed_by, reason, created_at) VALUES (?, ?, ?, 'platform', 'p', 'r', 1)",
+      [h.kit.fx.ids.id(), orgId, passId],
+    );
+  const asImport = (id: string, orgId: string) => ({
+    id,
+    org_id: orgId,
+    mode: 'live' as const,
+    object_key: null,
+  });
+  const receiptFor = (orgId: string) =>
+    prepareReceipt(ctx(), { orgId, cls: 'imports', kind: 'sweep', deleted: 0, anonymised: 1 });
+
+  it('a hold on a pass the import made keeps its rows at 30 and at 400 days', async () => {
+    const other = await makeOrg(h.kit.fx);
+    const id = await seed(other.id, 401);
+    await run(
+      h.kit.env.DB,
+      "UPDATE pass_import_rows SET pass_id = 'held-pass' WHERE import_id = ?",
+      [id],
+    );
+    await holdPass(other.id, 'held-pass');
+    await dailyImports(ctx());
+    expect(await emailLeft(id)).toBe(true);
+    expect(await stateOf(id)).not.toBeNull();
+  });
+
+  it('a hold placed after the page was read refuses the commit and writes no receipt', async () => {
+    const other = await makeOrg(h.kit.fx);
+    const id = await seed(other.id, 40);
+    await run(
+      h.kit.env.DB,
+      "UPDATE pass_import_rows SET pass_id = 'late-pass' WHERE import_id = ?",
+      [id],
+    );
+    await holdPass(other.id, 'late-pass');
+    const r = await receiptFor(other.id);
+    const err = await clearPii(ctx(), asImport(id, other.id), r).catch((e: unknown) => e);
+    expect(isSettled(err)).toBe(true);
+    expect(await emailLeft(id)).toBe(true);
+    expect(await readReceipts(ctx(), other.id, 'imports')).toHaveLength(0);
+  });
+
+  it('nothing is cleared when the receipt does not land', async () => {
+    const other = await makeOrg(h.kit.fx);
+    const id = await seed(other.id, 40);
+    const r = await receiptFor(other.id);
+    const broken = { ...r, stmt: h.kit.env.DB.prepare('SELECT 1') };
+    await expect(clearPii(ctx(), asImport(id, other.id), broken)).rejects.toMatchObject({
+      code: 'IMPORT_RECEIPT',
+    });
+    expect(await emailLeft(id)).toBe(true);
+  });
+
+  it('the clear and the counts delete leave separate receipts with their own days', async () => {
+    const other = await makeOrg(h.kit.fx);
+    await seed(other.id, 15);
+    await seed(other.id, 401);
+    await setDays(other.id, 10);
+    await dailyImports(ctx());
+    const days = (await readReceipts(ctx(), other.id, 'imports')).map((r) => ({
+      days: r.receipt.policyDays,
+      deleted: r.receipt.deleted,
+      anonymised: r.receipt.anonymised,
+      verified: r.verified,
+    }));
+    expect(days).toEqual(
+      expect.arrayContaining([
+        { days: 10, deleted: 0, anonymised: 1, verified: true },
+        { days: 400, deleted: 1, anonymised: 0, verified: true },
+      ]),
+    );
+  });
+
+  it('stops at the run bound and goes on the next run', async () => {
+    const other = await makeOrg(h.kit.fx);
+    const ids = [await seed(other.id, 15), await seed(other.id, 16), await seed(other.id, 17)];
+    await setDays(other.id, 10);
+    const left = async () => (await Promise.all(ids.map(emailLeft))).filter(Boolean).length;
+    const saved = IMPORT_LIMITS.orgs;
+    IMPORT_LIMITS.orgs = 2;
+    try {
+      await dailyImports(ctx());
+      expect(await left()).toBe(1);
+      await dailyImports(ctx());
+      expect(await left()).toBe(0);
+    } finally {
+      IMPORT_LIMITS.orgs = saved;
+    }
   });
 });

@@ -48,7 +48,7 @@ export function testOnlyImports(rel: string, text: string): string[] {
 const W = 'src/worker/modules/webhooks/';
 export const IMPORT_BOUNDARIES: Record<string, string[]> = {
   [`${W}repo-delivery-state.ts`]: ['deliver', 'dispatch', 'jobs', 'kick'].map((n) => `${W}${n}.ts`),
-  [`${W}repo-retention.ts`]: [`${W}jobs.ts`],
+  [`${W}repo-retention.ts`]: [`${W}jobs.ts`, `${W}purge-run.ts`],
 };
 
 export function boundaryImports(rel: string, text: string): string[] {

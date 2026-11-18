@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { all, run } from '../../platform/db.ts';
 import { recordPassEvent } from '../events/record.ts';
-import { readReceipts } from '../retention/receipt-service.ts';
+import { prepareReceipt, readReceipts } from '../retention/receipt-service.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import {
   addEvents,
@@ -13,6 +13,8 @@ import {
   setupRig,
 } from './deliver-test-fixtures.ts';
 import { dailyWebhooks } from './jobs.ts';
+import { PURGE_LIMITS } from './purge-run.ts';
+import { deleteChunkStmt, receiptGate, selectChunk } from './repo-retention.ts';
 import { ALL_TYPES, countOf } from './webhooks-test-fixtures.ts';
 
 let rig: Rig;
@@ -195,5 +197,54 @@ describe('retention plan', () => {
     await dailyWebhooks(rig.ctx);
     expect(await there(young.seq)).toBe(true);
     expect(await there(old.seq)).toBe(false);
+  });
+
+  it('the receipt records the days that drove the delete: a shorter events setting', async () => {
+    const a = await seed(15);
+    await set(a.orgId, 'retention.eventsDays', 10);
+    await dailyWebhooks(rig.ctx);
+    const feed = (await readReceipts(rig.ctx, a.orgId, 'webhooks')).map((r) => r.receipt);
+    expect(feed).toHaveLength(1);
+    expect(feed[0]).toMatchObject({ policyDays: 10, deleted: 1 });
+    expect(feed[0]?.cutoffAt).toBe(rig.kit.clock.now() - 10 * DAY);
+  });
+
+  it('a delete without its receipt, or a hold that landed after the select, removes nothing', async () => {
+    const a = await seed(40);
+    const scope = { kind: 'org' as const, orgId: a.orgId };
+    const cutoff = rig.kit.clock.now() - 30 * DAY;
+    const ids = await selectChunk(rig.db, 'feed', scope, cutoff);
+    expect(ids).toEqual([a.seq]);
+    // No receipt row: the delete is gated on it.
+    await rig.db.batch([deleteChunkStmt(rig.db, 'feed', scope, cutoff, ids, 'no-such-receipt')]);
+    expect(await there(a.seq)).toBe(true);
+    // A hold lands between the select and the batch: the receipt does not land, so neither does the delete.
+    await hold(a.orgId, a.passId);
+    const prepared = await prepareReceipt(
+      rig.ctx,
+      { orgId: a.orgId, cls: 'webhooks', kind: 'sweep', deleted: ids.length },
+      receiptGate('feed', scope, cutoff, ids),
+    );
+    const [receipt, del] = await rig.db.batch([
+      prepared.stmt,
+      deleteChunkStmt(rig.db, 'feed', scope, cutoff, ids, prepared.receipt.id),
+    ]);
+    expect([receipt?.meta.changes, del?.meta.changes]).toEqual([0, 0]);
+    expect(await there(a.seq)).toBe(true);
+  });
+
+  it('stops at the run bound and goes on the next run', async () => {
+    const a = await seed(15);
+    await set(a.orgId, 'retention.webhooksDays', 10);
+    const saved = PURGE_LIMITS.orgChunks;
+    PURGE_LIMITS.orgChunks = 0;
+    try {
+      await dailyWebhooks(rig.ctx);
+      expect(await there(a.seq)).toBe(true);
+    } finally {
+      PURGE_LIMITS.orgChunks = saved;
+    }
+    await dailyWebhooks(rig.ctx);
+    expect(await there(a.seq)).toBe(false);
   });
 });

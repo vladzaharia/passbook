@@ -1,6 +1,8 @@
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { writeReceipt } from '../retention/receipt-service.ts';
+import { healHead } from '../retention/head-store.ts';
+import { type PreparedReceipt, prepareReceipt, recordHead } from '../retention/receipt-service.ts';
+import { chainHead } from '../retention/repo-receipts.ts';
 import type { Scope } from '../retention/repo-sweep.ts';
 import { retentionTargets } from '../retention/targets.ts';
 import {
@@ -18,14 +20,22 @@ const DAY = 86_400_000;
 export const PII_KEPT_MS = 30 * DAY;
 /** The counts of an import stay this long. */
 export const COUNTS_KEPT_MS = 400 * DAY;
+const COUNTS_DAYS = 400;
 const BATCH = 50;
-const MAX_ROUNDS = 10;
+/** Imports one run touches: the platform pass, then all org passes together. A backlog drains over several days. */
+export const IMPORT_LIMITS = { platform: 150, orgs: 150 };
 
 /** A grant refused because the import is already gone or already past the state the phase needs. */
 export const isSettled = (error: unknown): boolean =>
-  error instanceof AppError && (error.code === 'IMPORT_STATE' || error.code === 'IMPORT_NOT_FOUND');
+  error instanceof AppError &&
+  (error.code === 'IMPORT_STATE' ||
+    error.code === 'IMPORT_NOT_FOUND' ||
+    error.code === 'IMPORT_HELD');
 
-type Page = (after: string) => Promise<RetentionImport[]>;
+type Page = (after: string, limit: number) => Promise<RetentionImport[]>;
+interface Budget {
+  left: number;
+}
 
 /** Runs `each` over a phase in bounded batches. A failed import is logged and skipped, never retried in the run. */
 async function phase(
@@ -33,12 +43,15 @@ async function phase(
   name: string,
   page: Page,
   each: (imp: RetentionImport) => Promise<void>,
+  budget: Budget = { left: Number.POSITIVE_INFINITY },
 ): Promise<number> {
   let done = 0;
   let after = '';
-  for (let round = 0; round < MAX_ROUNDS; round++) {
-    const imports = await page(after);
+  while (budget.left > 0) {
+    const limit = Math.min(BATCH, budget.left);
+    const imports = await page(after, limit);
     for (const imp of imports) {
+      budget.left--;
       try {
         await each(imp);
         done++;
@@ -61,7 +74,7 @@ async function phase(
       }
     }
     const last = imports[imports.length - 1];
-    if (imports.length < BATCH || !last) break;
+    if (imports.length < limit || !last) break;
     after = last.id;
   }
   return done;
@@ -92,7 +105,7 @@ export async function dailyImports(ctx: ServiceContext): Promise<void> {
   const expired = await phase(
     ctx,
     'expire',
-    (after) => expiredDrafts(ctx.env.DB, now, after, BATCH),
+    (after, limit) => expiredDrafts(ctx.env.DB, now, after, limit),
     async (imp) => {
       await expireDraft(ctx, imp);
       await dropFile(ctx, imp);
@@ -101,40 +114,58 @@ export async function dailyImports(ctx: ServiceContext): Promise<void> {
   const targets = await retentionTargets(ctx, ['imports']);
   let cleared = 0;
   let deleted = 0;
-  if (targets) {
-    const run = async (orgId: string | null, days: number, scope: Scope) => {
-      const c = await phase(
-        ctx,
-        'clear',
-        (after) => importsWithPii(ctx.env.DB, now - days * DAY, after, BATCH, scope),
-        (imp) => clearPii(ctx, imp),
-      );
-      const d = await phase(
-        ctx,
-        'delete',
-        (after) => oldImports(ctx.env.DB, now - COUNTS_KEPT_MS, after, BATCH, scope),
-        async (imp) => {
-          await deleteImport(ctx, imp);
-          await dropFile(ctx, imp);
-        },
-      );
-      cleared += c;
-      deleted += d;
-      if (c + d > 0)
-        await writeReceipt(ctx, {
-          orgId,
-          cls: 'imports',
-          kind: 'sweep',
-          policyDays: days,
-          cutoffAt: now - days * DAY,
-          deleted: d,
-          anonymised: c,
-        });
+  /** Every import commits with its own receipt, in one batch: no receipt, no delete. */
+  const target = async (orgId: string | null, days: number, scope: Scope, budget: Budget) => {
+    await healHead(ctx, orgId, 'imports', await chainHead(ctx.env.DB, orgId, 'imports'));
+    const retire = async (
+      policyDays: number,
+      counts: { deleted: number; anonymised: number },
+      commit: (receipt: PreparedReceipt) => Promise<void>,
+    ) => {
+      const receipt = await prepareReceipt(ctx, {
+        orgId,
+        cls: 'imports',
+        kind: 'sweep',
+        policyDays,
+        cutoffAt: now - policyDays * DAY,
+        ...counts,
+      });
+      await commit(receipt);
+      await recordHead(ctx, receipt.receipt);
     };
-    await run(null, targets.platform.imports, { kind: 'platform', exclude: targets.exclude });
+    cleared += await phase(
+      ctx,
+      'clear',
+      (after, limit) => importsWithPii(ctx.env.DB, now - days * DAY, after, limit, scope),
+      (imp) => retire(days, { deleted: 0, anonymised: 1 }, (r) => clearPii(ctx, imp, r)),
+      budget,
+    );
+    // The counts of an import are not the class value: their own receipt carries their own days.
+    deleted += await phase(
+      ctx,
+      'delete',
+      (after, limit) => oldImports(ctx.env.DB, now - COUNTS_DAYS * DAY, after, limit, scope),
+      async (imp) => {
+        await retire(COUNTS_DAYS, { deleted: 1, anonymised: 0 }, (r) => deleteImport(ctx, imp, r));
+        await dropFile(ctx, imp);
+      },
+      budget,
+    );
+  };
+  if (targets) {
+    await target(
+      null,
+      targets.platform.imports,
+      { kind: 'platform', exclude: targets.exclude },
+      {
+        left: IMPORT_LIMITS.platform,
+      },
+    );
+    const budget = { left: IMPORT_LIMITS.orgs };
     let visited = 0;
     for (const o of targets.orgs) {
-      await run(o.orgId, o.days.imports, { kind: 'org', orgId: o.orgId });
+      if (budget.left <= 0) break;
+      await target(o.orgId, o.days.imports, { kind: 'org', orgId: o.orgId }, budget);
       visited++;
     }
     await targets.finish(visited);
