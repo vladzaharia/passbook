@@ -41,7 +41,7 @@ describe('scanner routers', () => {
   });
 
   it('the OpenAPI document builds with device and console scan paths', async () => {
-    const res = await call('/api/v1/openapi.json');
+    const res = await call('/api/v1/openapi.json', fake.admin());
     expect(res.status).toBe(200);
     const doc = (await res.json()) as { openapi: string; paths: Record<string, unknown> };
     expect(doc.openapi).toBe('3.1.0');

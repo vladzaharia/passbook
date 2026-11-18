@@ -49,3 +49,15 @@ export const CreateApiKeySchema = z.object({
 });
 /** `secret` (wlt_<prefix>_<secret>) is returned once. */
 export const CreatedApiKeySchema = ApiKeySchema.extend({ secret: z.string() });
+/** What a key may read about itself: never the secret or its hash. */
+export const ApiKeyMeSchema = ApiKeySchema.pick({
+  id: true,
+  orgId: true,
+  name: true,
+  prefix: true,
+  scopes: true,
+  mode: true,
+  createdAt: true,
+  lastUsedAt: true,
+  expiresAt: true,
+});

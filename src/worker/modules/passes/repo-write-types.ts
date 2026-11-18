@@ -30,6 +30,8 @@ export interface NewPassRow {
   displayTitle: string | null;
   displaySubtitle: string | null;
   externalId: string | null;
+  /** The template's rule: the create grant refuses a second pass with this externalId. */
+  uniqueExternalId?: boolean;
   holderEmail: string | null;
   connectionId: string | null;
   connectionGeneration: number | null;

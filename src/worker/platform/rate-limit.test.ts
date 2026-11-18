@@ -88,3 +88,23 @@ describe('rate limit keys', () => {
     });
   });
 });
+
+describe('429 headers', () => {
+  it('keeps Retry-After 60 and no policy for other limiters', async () => {
+    const env = await makeEnv({ RL_LOGIN: fakeRateLimiter({ limit: 0 }) });
+    const err = await enforceRateLimit(env, 'RL_LOGIN', 'a').catch((e: unknown) => e);
+    expect((err as RateLimitedError).headers).toEqual({ 'retry-after': '60' });
+  });
+
+  it('sends the key policy only for a key budget, not for other RL_API_KEY users', async () => {
+    const env = await makeEnv({ RL_API_KEY: fakeRateLimiter({ limit: 0 }) });
+    const key = await enforceRateLimit(env, 'RL_API_KEY', 'key:abc').catch((e: unknown) => e);
+    const headers = (key as RateLimitedError).headers as Record<string, string>;
+    expect(Number(headers['retry-after'])).toBeGreaterThanOrEqual(1);
+    expect(headers['ratelimit-policy']).toBe('600;w=60');
+    const other = await enforceRateLimit(env, 'RL_API_KEY', 'test-config:u1').catch(
+      (e: unknown) => e,
+    );
+    expect((other as RateLimitedError).headers).toEqual({ 'retry-after': '60' });
+  });
+});

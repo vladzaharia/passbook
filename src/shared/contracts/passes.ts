@@ -84,6 +84,8 @@ export const DeliveryEntrySchema = z.object({
 export const PassDeviceSchema = z.object({
   /** Last six characters of the device library id; enough to tell devices apart. */
   shortId: z.string(),
+  /** The same device as the sync log's `device`: first 12 hex characters of SHA-256(device id). */
+  device: z.string(),
   createdAt: TimestampSchema,
   /** The newest push since the device registered. */
   lastPush: z
@@ -158,6 +160,8 @@ export const PassListQuerySchema = z.object({
     .transform((v) => v === 'true')
     .optional(),
   q: z.string().max(200).optional(),
+  /** Exact match on the pass's externalId. */
+  externalId: z.string().min(1).max(200).optional(),
   /** A ScanTarget as a JSON string: checked in at an event, or not scanned for 30 or 90 days. */
   scan: z
     .string()

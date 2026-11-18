@@ -1270,7 +1270,7 @@ describe('connections', () => {
   });
 
   it('is described in the OpenAPI document', async () => {
-    const res = await app.request('/api/v1/openapi.json', {}, kit.env);
+    const res = await app.request('/api/v1/openapi.json', { headers: admin() }, kit.env);
     const doc = (await res.json()) as { paths: Record<string, unknown> };
     for (const path of [
       '/api/v1/connections',

@@ -19,6 +19,7 @@ import { requireCredentialRefKeyset } from './credential-keyset.ts';
 import { credentialReferences } from './credential-references.ts';
 import { depsOf } from './deps.ts';
 import { assertPassDetailReadable } from './detail.ts';
+import { assertExternalIdFree, uniqueExternalIds } from './external-id.ts';
 import { insertPass, type Pass } from './repo.ts';
 import { tombstoneExists } from './repo-credential-transfer-read.ts';
 import { livePassesBy } from './repo-import-lookup.ts';
@@ -75,6 +76,9 @@ export async function createPassRowWithRelease(
   const template = await resolveTemplate(ctx, p.orgId, p.templateId, release.version);
   if (template.id !== release.templateId || template.version !== release.version)
     throw releaseChanged();
+  const uniqueExternalId = uniqueExternalIds(template.manifest);
+  const scope = { orgId: p.orgId, mode: p.mode, templateId: template.id };
+  if (uniqueExternalId && p.externalId) await assertExternalIdFree(db, scope, p.externalId);
   await assertCreateAuthority(ctx, p, connectionGeneration, release);
   await assertAccessInput(ctx, p.orgId, template, p.input);
   const identity = await depsOf(ctx.env).identities.forOrg(p.orgId, p.identityId);
@@ -167,6 +171,7 @@ export async function createPassRowWithRelease(
       displayTitle: artifact.title,
       displaySubtitle: artifact.subtitle,
       externalId: p.externalId ?? null,
+      uniqueExternalId,
       holderEmail,
       connectionId: p.connectionId ?? null,
       connectionGeneration,
@@ -198,6 +203,7 @@ export async function createPassRowWithRelease(
     });
     if (!inserted) {
       insertInFlight = false;
+      if (uniqueExternalId && p.externalId) await assertExternalIdFree(db, scope, p.externalId);
       await assertCreateAuthority(ctx, p, connectionGeneration, release);
       await requireCredentialRefKeyset(db, credentialEnv);
       if (await tombstoneExists(db, p.orgId, mode, credentialRefs))

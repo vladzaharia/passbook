@@ -146,18 +146,23 @@ export async function insertCaptured(
 }
 
 export type InboxAuthority = Extract<TenantPassWrite, { kind: 'session' }>;
+/** Who may read the inbox: a member session, or a Test key of the same org (read-only). */
+export type InboxReader = TenantPassWrite;
 
 /** An inbox statement always binds the active session and grant to the capture's actual org. */
 export function inboxAuthorityFence(
-  authority: InboxAuthority,
+  authority: InboxReader,
   capability: 'passes:read' | 'passes:operate',
   now: number,
 ): { sql: string; params: SqlValue[] } {
   const allowed =
-    authority.kind === 'session' &&
     authority.mode === 'test' &&
-    (authority.capability === capability ||
-      (capability === 'passes:read' && authority.capability === 'passes:operate'));
+    (authority.kind === 'api_key'
+      ? capability === 'passes:read' &&
+        authority.scope === 'passes:read' &&
+        authority.keyOrgId === authority.orgId
+      : authority.capability === capability ||
+        (capability === 'passes:read' && authority.capability === 'passes:operate'));
   if (!allowed) return { sql: '0', params: [] };
   return {
     sql: `c.org_id = ? AND (${tenantPassAuthoritySql(authority)})`,
@@ -184,7 +189,7 @@ const TEST_MODE_ONLY = `(c.pass_id IS NULL OR EXISTS (SELECT 1 FROM passes tp WH
 export function listCaptured(
   db: D1Database,
   f: CapturedFilter,
-  authority: InboxAuthority,
+  authority: InboxReader,
   now: number,
 ): Promise<CapturedRow[]> {
   const fence = inboxAuthorityFence(authority, 'passes:read', now);
@@ -206,7 +211,7 @@ export function listCaptured(
 export function getCaptured(
   db: D1Database,
   id: string,
-  authority: InboxAuthority,
+  authority: InboxReader,
   now: number,
 ): Promise<CapturedRow | null> {
   const fence = inboxAuthorityFence(authority, 'passes:read', now);

@@ -1,8 +1,10 @@
 import { all, first } from '../../platform/db.ts';
+import { hashDevice } from '../events/record.ts';
 import { userLabelSql } from '../orgs/repo-user-label.ts';
 
 export interface PassDevice {
   shortId: string;
+  device: string;
   createdAt: number;
   lastPush: { state: string; at: number } | null;
 }
@@ -28,11 +30,14 @@ export async function listPassDevices(db: D1Database, passId: string): Promise<P
      WHERE r.pass_id = ? ORDER BY r.created_at DESC`,
     [passId],
   );
-  return rows.map((r) => ({
-    shortId: r.device_id.slice(-6),
-    createdAt: r.created_at,
-    lastPush: r.push_state && r.push_at !== null ? { state: r.push_state, at: r.push_at } : null,
-  }));
+  return Promise.all(
+    rows.map(async (r) => ({
+      shortId: r.device_id.slice(-6),
+      device: await hashDevice(r.device_id),
+      createdAt: r.created_at,
+      lastPush: r.push_state && r.push_at !== null ? { state: r.push_state, at: r.push_at } : null,
+    })),
+  );
 }
 
 /** The newest void of a pass in the audit log, with the actor's display name. */

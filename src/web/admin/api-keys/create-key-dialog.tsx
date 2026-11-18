@@ -25,10 +25,6 @@ const EXPIRY = [
   { value: '365', label: '1 year' },
   { value: 'never', label: 'Never' },
 ];
-const MODES = [
-  { value: 'live', label: 'Live' },
-  { value: 'test', label: 'Test' },
-];
 
 export interface CreateKeyDialogProps {
   open: boolean;
@@ -51,18 +47,15 @@ export function CreateKeyDialog({
   const [terminalIds, setTerminalIds] = useState<string[]>([]);
   const scansWrite = scopes.includes('scans:write');
   const [expiry, setExpiry] = useState('90');
-  // A key made in Test mode is a Test key unless the admin picks Live.
+  // The server gives a key the mode the console is in, so the dialog shows it and offers no choice.
   const [keyMode, setKeyMode] = useState<Mode>(getMode);
-  const [openingMode, setOpeningMode] = useState<Mode>(getMode);
   const [server, setServer] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
   const [created, setCreated] = useState<ApiKey & { secret: string }>();
   const [reviewKey, setReviewKey] = useState(false);
   useEffect(() => {
     if (!open) return;
-    const mode = getMode();
-    setKeyMode(mode);
-    setOpeningMode(mode);
+    setKeyMode(getMode());
   }, [open]);
   const check = useFormErrors({
     ...(name.trim() ? {} : { name: 'Required.' }),
@@ -139,13 +132,13 @@ export function CreateKeyDialog({
   return (
     <Dialog
       open={open}
-      dirty={name.trim() !== '' || scopes.length > 0 || expiry !== '90' || keyMode !== openingMode}
+      dirty={name.trim() !== '' || scopes.length > 0 || expiry !== '90'}
       onOpenChange={(o) => (o ? onOpenChange(true) : close())}
     >
       <DialogContent
         size="md"
         title="New API key"
-        description="Choose the mode, permissions and expiry for this credential."
+        description="Choose the permissions and expiry for this credential."
         footer={
           <>
             <Button variant="outline" onClick={close}>
@@ -188,23 +181,15 @@ export function CreateKeyDialog({
               {(p) => <Select {...p} value={expiry} onValueChange={setExpiry} options={EXPIRY} />}
             </FormField>
           </div>
-          <FormField
-            label="Mode"
-            help={
-              keyMode === 'test'
-                ? 'Passes made with a Test key are test passes. Their emails stay in the Test inbox.'
-                : 'Passes are real and emails are sent.'
-            }
-          >
-            {(p) => (
-              <Select
-                {...p}
-                value={keyMode}
-                onValueChange={(v) => setKeyMode(v as Mode)}
-                options={MODES}
-              />
-            )}
-          </FormField>
+          <div>
+            <p className="text-sm font-medium text-fg">Mode</p>
+            <p className="mt-2 text-sm text-fg-strong">{keyMode === 'test' ? 'Test' : 'Live'}</p>
+            <p className="mt-1 text-xs text-fg-muted">
+              {keyMode === 'test'
+                ? 'Test passes. Their emails stay in the Test inbox. Switch the console to Live for a Live key.'
+                : 'Real passes and real emails. Switch the console to Test for a Test key.'}
+            </p>
+          </div>
           <ScopeRows
             value={scopes}
             onChange={setScopes}

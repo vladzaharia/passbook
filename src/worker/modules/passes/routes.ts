@@ -99,6 +99,7 @@ register(
           ? { noScanSince: ctx.clock.now() - q.scan.noScanDays * 86_400_000 }
           : {}),
         ...(q.q ? { q: q.q } : {}),
+        ...(q.externalId ? { externalId: q.externalId } : {}),
         ...(q.cursor ? { cursor: q.cursor } : {}),
         limit: q.limit,
       }),

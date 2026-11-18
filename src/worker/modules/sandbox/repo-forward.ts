@@ -12,6 +12,7 @@ import {
   type CapturedRef,
   type CapturedRow,
   type InboxAuthority,
+  type InboxReader,
   inboxAuthorityFence,
 } from './repo-capture.ts';
 import { snapshotFence } from './repo-snapshot-fence.ts';
@@ -27,7 +28,7 @@ export const UNKNOWN_FORWARD_MS = 24 * 3_600_000;
 export async function forwardingState(
   db: D1Database,
   captureId: string,
-  authority: InboxAuthority,
+  authority: InboxReader,
   now: number,
 ): Promise<Exclude<ForwardState, 'expired'> | 'none' | null> {
   const access = inboxAuthorityFence(authority, 'passes:read', now);

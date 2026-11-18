@@ -20,6 +20,8 @@ export interface PassListFilter {
   /** Skips passes removed from Wallet. */
   excludeRemoved?: boolean;
   q?: string;
+  /** Exact match. */
+  externalId?: string;
   cursor?: string;
   limit: number;
 }
@@ -64,6 +66,7 @@ export function passFilterSql(filter: PassListFilter): {
         AND s.org_id = passes.org_id AND s.mode = passes.mode AND s.state = 'done' AND s.at >= ?)`,
       filter.noScanSince,
     );
+  if (filter.externalId) add('external_id = ?', filter.externalId);
   if (filter.excludeRemoved) where.push('removed_at IS NULL');
   if (filter.cursor) add('id < ?', filter.cursor);
   const q = filter.q?.trim();

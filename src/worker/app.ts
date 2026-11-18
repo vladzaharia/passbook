@@ -1,7 +1,9 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Context } from 'hono';
+import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 import { apiKeysRoutes } from './modules/api-keys/routes.ts';
+import { apiKeyMeRoutes } from './modules/api-keys/routes-me.ts';
 import { appleRoutes } from './modules/apple/routes.ts';
 import { auditRoutes } from './modules/audit/routes.ts';
 import { authRoutes, sessionRoutes } from './modules/auth/routes.ts';
@@ -46,12 +48,14 @@ import { walletProviderStatusRoutes } from './modules/wallet-providers/routes-st
 import { webhookKick } from './modules/webhooks/kick.ts';
 import { webhookEndpointsRoutes } from './modules/webhooks/routes.ts';
 import { eventFeedRoutes } from './modules/webhooks/routes-feed.ts';
-import { type AuthStores, denyAllStores } from './platform/auth.ts';
+import { type AuthStores, denyAllStores, SESSION_COOKIE } from './platform/auth.ts';
 import type { Clock } from './platform/clock.ts';
 import { type AppBindings, requestContext } from './platform/context.ts';
 import type { AppEnv } from './platform/env.ts';
 import { handleError, notFoundHandler } from './platform/error-handler.ts';
 import { hostPolicy } from './platform/host-policy.ts';
+import { keyCallableOnly, withSecurity } from './platform/openapi-security.ts';
+import { apiKeyRateHeaders } from './platform/rate-limit.ts';
 import { securityHeaders, staticAsset } from './platform/security-headers.ts';
 import { asBrowserPage } from './ssr/error-response.ts';
 
@@ -102,6 +106,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   const app = new OpenAPIHono<AppBindings>();
   app.use('*', requestContext({ stores: options.stores ?? denyAllStores, clock: options.clock }));
   app.use('*', securityHeaders);
+  app.use('*', apiKeyRateHeaders);
   if (options.hostPolicy) app.use('*', hostPolicy);
   app.use('*', scanGate);
   app.use('*', webhookKick);
@@ -141,6 +146,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/wallet-providers/accounts', walletProviderAccountRoutes);
   app.route('/api/v1/wallet-providers/passes', walletProviderStatusRoutes);
   app.route('/api/v1/users', usersRoutes);
+  app.route('/api/v1/api-keys/me', apiKeyMeRoutes);
   app.route('/api/v1/api-keys', apiKeysRoutes);
   app.route('/api/v1/settings', settingsRoutes);
   app.route('/api/v1/audit', auditRoutes);
@@ -168,11 +174,25 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/j', joinPublicRoutes);
   app.route('/hooks', hooksRoutes);
 
-  app.doc31('/api/v1/openapi.json', {
-    openapi: '3.1.0',
-    info: { title: 'PassBook API', version: '1.0.0' },
-    servers: [{ url: '/' }],
-  });
+  // The same JSON document at both paths: `/api/v1/docs` is the one to link. Everyone gets the
+  // operations an API key can call; signed-in platform admins get the whole document.
+  const documents: { full?: unknown; keys?: unknown } = {};
+  const document = async (c: Context<AppBindings>) => {
+    documents.full ??= withSecurity(
+      app,
+      app.getOpenAPI31Document({
+        openapi: '3.1.0',
+        info: { title: 'PassBook API', version: '1.0.0' },
+        servers: [{ url: '/' }],
+      }) as never,
+    );
+    documents.keys ??= keyCallableOnly(documents.full as never);
+    const cookie = getCookie(c, SESSION_COOKIE);
+    const session = cookie ? await c.var.stores.sessions.resolve(cookie) : null;
+    return c.json((session?.roles.includes('admin') ? documents.full : documents.keys) as never);
+  };
+  app.get('/api/v1/openapi.json', document);
+  app.get('/api/v1/docs', document);
 
   return app;
 }

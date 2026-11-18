@@ -1,7 +1,22 @@
 # API
 
-Machine API under `/api/v1`. The reference is generated from the code at `GET /api/v1/openapi.json`
-(public). This page covers what the reference does not: auth, conventions, common tasks.
+Machine API under `/api/v1`. The reference is generated from the code at `GET /api/v1/docs` (JSON,
+public; `/api/v1/openapi.json` is the same document). Anyone gets the operations an API key can call; a signed-in platform admin gets all of them. It lists the security schemes and, per operation,
+the key scopes that allow it (an operation without an `apiKey` entry is not callable with a key). This
+page covers what it does not: conventions, headers, common tasks.
+
+## Quick start
+
+1. Ask your operator for an organization. Sign in, switch the console to Test mode.
+2. API keys, Create: Test, scopes `passes:read passes:write templates:read`. Copy the secret.
+3. `export KEY=wlt_...  BASE=https://passbook.mobile/api/v1`
+4. `curl -H "Authorization: Bearer $KEY" $BASE/api-keys/me` shows the key's org, mode and scopes.
+5. `curl -H "Authorization: Bearer $KEY" $BASE/templates` and pick a `templateId`.
+6. A template needs an approved release; a second person approves it in Templates.
+7. `curl -X POST $BASE/passes -H "Authorization: Bearer $KEY" -H "Idempotency-Key: b-1" -H "Content-Type: application/json" -d '{"templateId":"...","externalId":"b-1","input":{...}}'`
+8. Open the returned `downloadUrl` on an iPhone and tap Add.
+9. `curl -X PATCH $BASE/passes/$ID -H "Authorization: Bearer $KEY" -H "If-Match: 1" -H "Content-Type: application/json" -d '{"input":{...},"notify":true}'`
+10. `curl "$BASE/passes?externalId=b-1" -H "Authorization: Bearer $KEY"` finds it again. Go live with a Live key.
 
 ## Authenticate
 
@@ -10,7 +25,7 @@ Machine API under `/api/v1`. The reference is generated from the code at `GET /a
 3. Send it as a bearer token. No cookie, no CSRF header.
 
 ```
-curl "https://passbook.mobile/api/v1/passes?orgId=$ORG_ID" \
+curl "https://passbook.mobile/api/v1/passes" \
   -H "Authorization: Bearer $WALLET_API_KEY"
 ```
 
@@ -29,22 +44,51 @@ curl "https://passbook.mobile/api/v1/passes?orgId=$ORG_ID" \
 
 Tenant list requests name an organization with `orgId`. An org-bound key may omit it (on pass create
 and on pass, holder and bundle lists it defaults to the key's org) and must otherwise send exactly
-that org; another org is `403`. `GET /delivery` always needs `orgId` and `passId`. A global key
+that org; another org is `403`. `GET /delivery` takes `passId` and the same `orgId` rule. A global key
 sends `orgId=<org>`, or `orgId=null` for a platform-wide list. A platform-scoped bearer
 key has no tenant membership and is authorized by its scopes and each route's organization rules.
 Tenant sessions require an active membership with the operation's capability; a platform role
 alone does not grant tenant access. Platform-wide administration and organization membership
 management use session authorization as described below.
-Limit: 600 requests per minute per key, then 429.
+
+### Rate limits
+
+600 requests per minute per key, in fixed 60-second windows. Every response to a key carries
+`RateLimit-Policy: 600;w=60`, `RateLimit-Limit: 600` and `RateLimit-Reset` (seconds until the window
+turns over). Past the limit the answer is `429 RATE_LIMITED` with `Retry-After` (whole seconds, at
+most 60; wait at least that long, the limiter's windows are not guaranteed to align with the clock), `RateLimit-Remaining: 0` and the same policy and reset. The limiter reports pass or fail
+only, so `RateLimit-Remaining` is sent on 429 alone. Other limits (login, scanners, public links) send
+`Retry-After: 60` or their own wait on 429 and no `RateLimit-*` headers.
+
+### Request headers
+
+| Header | Where | Meaning |
+|---|---|---|
+| `Authorization: Bearer <key>` | all key routes | the API key |
+| `Idempotency-Key` | pass create, resend | 1 to 200 characters; a retry returns the first result |
+| `If-Match: <version>` | pass update | optimistic concurrency; stale is `412 VERSION_CONFLICT` |
+| `x-passbook-mode` | console sessions | `test` selects Test mode; keys use their own mode |
+
+Scans use the body's `idempotencyKey` (a UUIDv7), not the header.
+
+### Who am I
+
+`GET /api-keys/me` (any valid key) returns `id`, `name`, `prefix`, `scopes`, `orgId` (null for a
+platform key), `mode`, `createdAt`, `lastUsedAt` and `expiresAt`. Never the secret or its hash.
 
 ### Test mode
 
-A key is live or test (`mode` when it is created; shown with a Test badge and `wlt_test_` in the console,
-the secret format is the same). An admin session is test when it sends `x-passbook-mode: test`. Lists and
+A key is live or test. It takes the mode the console is in when it is created (the dialog's mode is
+the console's mode; a `mode` in the request body is ignored for a session). The secret is
+`wlt_<prefix>_<secret>` either way and carries no mode marker: the console shows a Test badge, and
+`GET /api-keys/me` returns `mode`. An admin session is test when it sends `x-passbook-mode: test`. Lists and
 counts show only the caller's mode. A key reads and changes only its own mode; another mode's pass or bundle is
 `404`. A session reads either mode by id (`mode` is returned) but changes only the mode it is in: otherwise
 `409 MODE_MISMATCH`. Bulk actions skip other-mode passes and list them as `MODE_MISMATCH`. A pass or bundle takes the
-creator's mode. Email for a test pass or bundle is never sent: it lands in the Test inbox. Test data older
+creator's mode. Email for a test pass or bundle is never sent: it lands in the Test inbox. A Test key
+with `passes:read` reads its own organization's inbox (`GET /test-inbox`, `GET /test-inbox/{id}`); a
+Live key is `403 TEST_KEY_REQUIRED`, another organization or a platform key is `403`. The preview
+frame and send-to-me need a session. Test data older
 than `sandbox.purgeDays` (default 30) is deleted daily.
 
 ### Organization memberships
@@ -122,7 +166,10 @@ management check and must not be used as a general tenant capability grant.
 
 ## Changes for existing clients
 
-Clients written against the earlier API keep working with these differences.
+Dated changes, newest last; `/api/v1` is unversioned and changes only additively (new fields,
+routes and filters). The reference's `info.version` is not a release number.
+
+Clients written against the earlier API keep working with these differences (as of 2026-11).
 
 - **Pass create with a key**: `templateVersion`, `releaseId` and `releaseGeneration` are optional
   together. Send none and the server uses the scope's effective approved release; with none it
@@ -134,6 +181,26 @@ Clients written against the earlier API keep working with these differences.
 - **Cutover**: uploaded templates start with a `legacy` release at their active version, so
   existing integrations keep creating passes. New versions need a candidate, a second reviewer
   and a release (see [Approved template releases](#approved-template-releases)).
+
+## Signed webhooks
+
+Inbound connector webhooks (`POST /hooks/connections/{id}`) are signed with the connection's webhook
+secret. Sign the raw request body:
+
+```
+ts=$(date +%s)
+sig=$(printf '%s.%s' "$ts" "$BODY" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" -hex | sed 's/^.* //')
+curl -X POST "https://passbook.mobile/hooks/connections/$CONNECTION_ID" \
+  -H "x-wallet-timestamp: $ts" -H "x-wallet-signature: v1=$sig" \
+  -H "Content-Type: application/json" --data-binary "$BODY"
+```
+
+The MAC is HMAC-SHA-256 over `<timestamp>.<raw body>`, hex, prefixed `v1=`. The timestamp is in
+seconds; the server refuses one older than 5 minutes or more than 1 minute ahead, a body over
+256 KB, and a signature that does not match (constant-time compare). Use the exact bytes you
+send: re-serializing the JSON changes the MAC. Rotate the secret with
+`POST /connections/{id}/webhook-secret`. PassBook sends no outbound webhooks yet; when it does, they
+will use this scheme.
 
 ## Errors
 
@@ -310,12 +377,13 @@ curl -X POST https://passbook.mobile/api/v1/passes \
   -H "Authorization: Bearer $WALLET_API_KEY" \
   -H "Idempotency-Key: member-000123-v1" \
   -H "Content-Type: application/json" \
-  -d '{ "orgId": "<org id>", "templateId": "<template id>",
-        "templateVersion": "<released version>", "releaseId": "<release id>",
-        "releaseGeneration": 1, "mode": "live",
+  -d '{ "templateId": "<template id>", "externalId": "member-000123",
         "input": { "holder": "Alex Morgan", "memberId": "000123" },
         "holderEmail": "alex@example.com", "sendEmail": true }'
 ```
+
+An org-bound key sends no `orgId`, `mode` or release fields: the key's org and mode apply and the
+effective approved release is used (see Changes for existing clients).
 
 - `input` is validated against the template's `inputs` schema. See `GET /api/v1/templates/{id}`.
 - `Idempotency-Key` (1 to 200 chars): a retry with the same key and body returns the first result.
@@ -323,6 +391,11 @@ curl -X POST https://passbook.mobile/api/v1/passes \
 - `templateId` must be a template. A blueprint answers 409 `TEMPLATE_IS_BLUEPRINT`
   (`docs/design/blueprints-and-templates.md`).
 - Optional: `serial`, `externalId`, `identityId`, `connectionId` + `externalRef`.
+- `externalId` is your own key. `GET /passes?externalId=` returns the passes with exactly that value
+  (case-sensitive, inside the key's org and mode). It is not unique by default. A template whose
+  manifest sets `"externalId": { "unique": true }` allows one pass per value, per org and mode: a
+  create or update that repeats it is `409 EXTERNAL_ID_TAKEN`. Deleted passes release their value;
+  voided and removed ones keep it.
 - `serial` is honored only for passes on the org's own Apple identity (409 `SERIAL_TAKEN` on a repeat). On the shared platform identity the server generates the serial and ignores the field; use `externalId` for your own key.
 - The response carries the pass id, the download link and the current `version`.
 
@@ -649,13 +722,19 @@ quarantine at deletion permanently excludes their historical rows.
 - Most lists take `limit` (1 to 200) and `cursor`; scanner history has the tighter limit above.
   The response has `nextCursor` (null at the end).
 - `void` and `unvoid` toggle a pass; `rotate-link` invalidates the old download link.
+- Three ways to end a pass: `void` marks it voided and republishes it (reversible with `unvoid`);
+  `remove` publishes a last voided, expired version so Wallet moves it to Expired passes (reversible
+  with `restore`); `DELETE /passes/{id}` deletes the record from lists and frees its `externalId`. After a
+  delete Wallet keeps the pass on the device and it receives no further updates.
+- Device ids: `devices[].device` in a pass detail is the sync log's `device` (first 12 hex characters of
+  SHA-256 of the device id); `shortId` is only its last six characters, for display.
 - Links are stored as a MAC plus a sealed copy (`docs/security.md`). If the sealed copy is unreadable, `downloadUrl` in `GET /me/passes` and `url` on a bundle are `null`; `rotate-link` issues a working one. Pass detail and mail answer 503 `TOKEN_SEAL_MISSING`.
 - `POST /passes/{id}/remove` (`{ message? }`) publishes a last version that is voided and expired, so Wallet
-  moves it to Expired passes; no API deletes a pass from a device. `POST /passes/{id}/restore` undoes it.
+  moves it to Expired passes; no API removes a pass from a device. `POST /passes/{id}/restore` undoes it.
   Bulk: `POST /passes/bulk` with `action: "remove"`.
 - `GET /passes/{id}/events` is the sync log, newest first: `kind` (one or a comma list) or `group`
   (`delivery`, `devices`, `changes`). `GET /passes/{id}/devices` is per-device sync and push state.
-- `GET /delivery?orgId=&passId=` lists a pass's outbox entries.
+- `GET /delivery?passId=` lists a pass's outbox entries (`orgId` as on other lists).
 - `GET /bundles` lists bundles for an organization and the caller's mode. Optional filter: `passId`.
 - `POST /bundles` (`{ orgId, passIds, name, holderEmail?, sendEmail? }`) shares 1 to 10 passes of one org
   behind one link, `/b/{token}`. Then `send-email`, `rotate-link` and `DELETE` on `/bundles/{id}`.
@@ -672,7 +751,8 @@ quarantine at deletion permanently excludes their historical rows.
 - A pass notifies its holder at most `push.budgetPerDay` times (default 3) in 24 h; later changes publish
   silently. `GET /passes/{id}` has `pushBudget` (`used`, `limit`, `resetsAt`). An update that leaves the pass
   unchanged is never pushed.
-- `GET /test-inbox` and `GET /test-inbox/{id}` require a Test-mode tenant session with `passes:read`.
+- `GET /test-inbox` and `GET /test-inbox/{id}` require a Test-mode tenant session with `passes:read`, or
+  a Test key with `passes:read` in the same organization.
   `POST /test-inbox/{id}/send-to-me` requires `passes:operate` and sends to the signed-in user's
   verified address.
 - Request and response bodies are JSON except `PUT /passes/{id}/assets/{name}` (PNG body) and
