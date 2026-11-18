@@ -13,11 +13,12 @@ import { orgEmailBudget } from '../delivery/repo-email-budget.ts';
 import { resolveTemplate } from './builder.ts';
 import { effectiveApiRelease } from './create-release.ts';
 import type { TenantPassWrite } from './http.ts';
-import { checkRows } from './import-check.ts';
+import { checkRows, rowChecker } from './import-check.ts';
 import { planRows, summarize } from './import-match.ts';
 import {
   type ImportPlan,
   missingColumns,
+  missingKeyColumn,
   parsePlan,
   planProblems,
   withoutColumns,
@@ -37,24 +38,32 @@ import { insertRows } from './repo-import-rows.ts';
 import {
   beginCheck,
   discardDraft,
+  failCheck,
   finishCheck,
   getImport,
   type ImportRow,
   insertImport,
+  listImports,
 } from './repo-imports.ts';
 
 const HOUR = 3_600_000;
 const DRAFT_TTL = 23 * HOUR;
-/** Imports an org may start an hour. */
+/** Imports an org may start an hour, and checks it may run (each re-reads the file and rewrites the rows). */
 const CREATES_PER_HOUR = 30;
+const CHECKS_PER_HOUR = 120;
 const OPEN = ['mapping', 'checking', 'ready', 'stale'];
 
 const who = (a: TenantPassWrite) => (a.kind === 'session' ? a.userId : a.keyId);
 
-async function enforceCreateRate(ctx: ServiceContext, a: TenantPassWrite): Promise<void> {
+async function enforceRate(
+  ctx: ServiceContext,
+  a: TenantPassWrite,
+  kind: 'pass-import' | 'pass-import-check',
+  cap: number,
+): Promise<void> {
   const now = ctx.clock.now();
-  const n = await bump(ctx.env.DB, `pass-import:${a.mode}:org:${a.orgId}`, now - (now % HOUR));
-  if (n > CREATES_PER_HOUR) throw new RateLimitedError(3600, 'Too many imports. Try again later.');
+  const n = await bump(ctx.env.DB, `${kind}:${a.mode}:org:${a.orgId}`, now - (now % HOUR));
+  if (n > cap) throw new RateLimitedError(3600, 'Too many imports. Try again later.');
 }
 
 async function loadFile(ctx: ServiceContext, imp: ImportRow) {
@@ -108,21 +117,21 @@ async function runCheck(
   assertPlan(plan, tpl.manifest, parsed.header);
   const zones = tpl.manifest.scan?.access?.input.zones;
   const zoneKeys = new Set(zones === undefined ? [] : await activeZoneKeys(ctx.env.DB, a.orgId));
-  const checked = checkRows(parsed.rows, {
-    manifest: tpl.manifest,
-    plan,
-    header: parsed.header,
-    zoneKeys,
-  });
+  const rc = { manifest: tpl.manifest, plan, header: parsed.header, zoneKeys };
+  const checkInputs = rowChecker(rc);
   const planned = await planRows(
     ctx.env.DB,
     { orgId: a.orgId, mode: a.mode, templateId: imp.template_id },
     plan,
     tpl.manifest,
-    checked,
+    checkRows(parsed.rows, rc),
+    (row, input) => checkInputs(row, input, 'full'),
+    ctx.log,
   );
+  const checkId = ctx.ids.id();
   const summary = summarize(planned);
   await beginCheck(ctx, a, imp.id, {
+    checkId,
     plan: JSON.stringify(plan),
     templateVersion: release.version,
     releaseId: release.id,
@@ -133,6 +142,7 @@ async function runCheck(
     ctx,
     a,
     imp.id,
+    checkId,
     planned.map((r) => ({
       row: r.row,
       action: r.action,
@@ -144,7 +154,7 @@ async function runCheck(
       problems: r.problems.length > 0 ? JSON.stringify(r.problems) : null,
     })),
   );
-  await finishCheck(ctx, a, imp.id, summary);
+  await finishCheck(ctx, a, imp.id, checkId, summary);
   if (plan.save) await savePlan(ctx, a, imp.template_id, JSON.stringify(plan), who(a));
   ctx.log.info('pass_import.checked', { orgId: a.orgId, importId: imp.id, ...summary });
 }
@@ -154,15 +164,22 @@ export async function createImport(
   a: TenantPassWrite,
   body: { templateId: string; source: ImportSource; plan?: ImportPlan | undefined },
 ): Promise<PassImportDto> {
-  await enforceCreateRate(ctx, a);
+  await enforceRate(ctx, a, 'pass-import', CREATES_PER_HOUR);
   const { release, template: tpl } = await template(ctx, a, body.templateId);
   const bytes = await sourceBytes(ctx, body.source);
   const parsed = parseImport(bytes);
   let plan: ImportPlan | null = body.plan ?? null;
   let runnable = plan !== null;
   if (plan === null) {
-    const saved = parsePlan(await savedPlan(ctx.env.DB, a.orgId, body.templateId));
+    const saved = parsePlan(await savedPlan(ctx.env.DB, a.orgId, body.templateId), ctx.log);
     if (saved && planProblems(saved, tpl.manifest).length === 0) {
+      const key = missingKeyColumn(saved, parsed.header);
+      if (key !== null)
+        throw new ValidationError(
+          `The file has no "${key.replace(/^\//, '')}" column, which the saved plan finds passes by. Map the columns again.`,
+          [],
+          'IMPORT_COLUMN_MISSING',
+        );
       runnable = missingColumns(saved, parsed.header).length === 0;
       plan = runnable ? saved : withoutColumns(saved, parsed.header);
     }
@@ -195,7 +212,22 @@ export async function createImport(
     throw error;
   }
   // From here the draft stays: a failed check leaves it in `mapping` for a retry.
-  if (plan && runnable) await runCheck(ctx, a, await requireImport(ctx, a, id), plan);
+  if (plan && runnable) {
+    try {
+      await runCheck(ctx, a, await requireImport(ctx, a, id), plan);
+    } catch (error) {
+      if (!(error instanceof AppError)) throw error;
+      // The client still gets the draft id, with the reason, and can check again.
+      ctx.log.warn('pass_import.check_failed', { code: error.code, importId: id });
+      await failCheck(ctx, a, id, error.code).catch((e) =>
+        ctx.log.warn('pass_import.fail_mark_lost', {
+          code: 'IMPORT_FAIL_MARK',
+          importId: id,
+          error: e,
+        }),
+      );
+    }
+  }
   return importDto(ctx, await requireImport(ctx, a, id));
 }
 
@@ -213,6 +245,7 @@ export async function checkImport(
         : 'This import expired. Upload the file again.',
       imp.expires_at <= ctx.clock.now() ? 'IMPORT_EXPIRED' : 'IMPORT_STATE',
     );
+  await enforceRate(ctx, a, 'pass-import-check', CHECKS_PER_HOUR);
   await runCheck(ctx, a, imp, plan);
   return importDto(ctx, await requireImport(ctx, a, id));
 }
@@ -226,4 +259,24 @@ export async function discardImport(
   if (imp.state === 'committing') throw new ConflictError('This import is running.', 'IMPORT_BUSY');
   await discardDraft(ctx, a, id);
   if (imp.object_key) await ctx.env.BUCKET.delete(imp.object_key);
+}
+
+/** Recent imports, newest first; the cursor is `<createdAt>:<id>` of the last item. */
+export async function listImportPage(
+  ctx: ServiceContext,
+  a: TenantPassWrite,
+  query: { limit: number; cursor?: string | undefined },
+) {
+  const [createdAt, id] = (query.cursor ?? '').split(':');
+  const cursor =
+    createdAt && id && Number.isSafeInteger(Number(createdAt))
+      ? { createdAt: Number(createdAt), id }
+      : null;
+  const rows = await listImports(ctx.env.DB, a.orgId, a.mode, query.limit + 1, cursor);
+  const page = rows.slice(0, query.limit);
+  const last = page[page.length - 1];
+  return {
+    items: await Promise.all(page.map((r) => importDto(ctx, r, { light: true }))),
+    nextCursor: rows.length > query.limit && last ? `${last.created_at}:${last.id}` : null,
+  };
 }

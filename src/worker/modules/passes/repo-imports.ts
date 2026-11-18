@@ -1,6 +1,6 @@
 import { grant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
-import { inList } from '../../platform/authority-expr.ts';
+import { inList, type WhereValue } from '../../platform/authority-expr.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from './http.ts';
@@ -92,6 +92,7 @@ export interface NewImport {
 }
 
 const CODES = { stale: 'IMPORT_STATE', lineage: 'IMPORT_NOT_FOUND' };
+const stateIn = (states: readonly string[]) => ({ state: inList([...states]) });
 const TABLES = ['pass_imports', 'pass_import_rows'] as const;
 
 /** A grant of the request's principal: the draft belongs to its org and mode and to nobody else. */
@@ -99,7 +100,8 @@ export function importGrant(
   ctx: ServiceContext,
   authority: TenantPassWrite,
   id: string,
-  states?: readonly string[],
+  /** What the draft must look like now: `{ state: inList([...]) }`, plus `check_id` for a check's own writes. */
+  where?: Record<string, WhereValue>,
 ) {
   return grant(ctx, {
     purpose: 'org_mode.pass.import',
@@ -108,9 +110,7 @@ export function importGrant(
     tables: TABLES,
     checks: [
       ...capabilityChecks(authority),
-      ...(states
-        ? [exactlyOne('pass_imports', { id, state: inList([...states]) }, undefined, 'stale')]
-        : []),
+      ...(where ? [exactlyOne('pass_imports', { id, ...where }, undefined, 'stale')] : []),
     ],
     codes: CODES,
   });
@@ -168,6 +168,8 @@ export async function insertImport(
 }
 
 export interface CheckStart {
+  /** This run's id: its row inserts and its finish must carry it, so a second run cannot mix rows in. */
+  checkId: string;
   plan: string;
   templateVersion: string;
   releaseId: string;
@@ -182,12 +184,13 @@ export async function beginCheck(
   id: string,
   s: CheckStart,
 ): Promise<void> {
-  const g = importGrant(ctx, authority, id, ['mapping', 'checking', 'ready', 'stale']);
+  const g = importGrant(ctx, authority, id, stateIn(['mapping', 'checking', 'ready', 'stale']));
   g.update('pass_imports', {
     where: { id },
     require: 'one',
     set: {
       state: 'checking',
+      check_id: s.checkId,
       plan: s.plan,
       template_version: s.templateVersion,
       release_id: s.releaseId,
@@ -213,9 +216,10 @@ export async function finishCheck(
   ctx: ServiceContext,
   authority: TenantPassWrite,
   id: string,
+  checkId: string,
   c: CheckCounts,
 ): Promise<void> {
-  const g = importGrant(ctx, authority, id, ['checking']);
+  const g = importGrant(ctx, authority, id, { state: 'checking', check_id: checkId });
   g.update('pass_imports', {
     where: { id },
     require: 'one',
@@ -239,12 +243,33 @@ export async function discardDraft(
   authority: TenantPassWrite,
   id: string,
 ): Promise<void> {
-  const g = importGrant(ctx, authority, id, ['mapping', 'checking', 'ready', 'stale', 'failed']);
+  const g = importGrant(
+    ctx,
+    authority,
+    id,
+    stateIn(['mapping', 'checking', 'ready', 'stale', 'failed']),
+  );
   g.update('pass_imports', {
     where: { id },
     require: 'one',
     set: { state: 'discarded' },
   });
   g.joined('pass_import_rows', { where: { import_id: id }, delete: true });
+  await g.commit();
+}
+
+/** A check that could not run: back to `mapping`, with the reason for the client. */
+export async function failCheck(
+  ctx: ServiceContext,
+  authority: TenantPassWrite,
+  id: string,
+  code: string,
+): Promise<void> {
+  const g = importGrant(ctx, authority, id, stateIn(['mapping', 'checking']));
+  g.update('pass_imports', {
+    where: { id },
+    require: 'one',
+    set: { state: 'mapping', error_code: code },
+  });
   await g.commit();
 }

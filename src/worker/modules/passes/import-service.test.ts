@@ -10,9 +10,9 @@ import {
 import { PassImportSchema } from '../../../shared/contracts/pass-imports.ts';
 import { createApp } from '../../app.ts';
 import { bump } from '../../platform/counters.ts';
-import { first, run } from '../../platform/db.ts';
-import { resetDeps, setDeps } from '../connections/deps.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { grantKitMembership } from './apple-release-test-fixtures.ts';
+import { importFetchSeam } from './import-source.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
 import { setupTenantTestAuth, type TenantTestAuth } from './tenant-test-fixtures.ts';
 
@@ -115,12 +115,13 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await run(kit.env.DB, 'DELETE FROM pass_import_mappings');
-  await run(kit.env.DB, "DELETE FROM counters WHERE key LIKE 'pass-import:%'");
+  await run(kit.env.DB, "DELETE FROM counters WHERE key LIKE 'pass-import%'");
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  resetDeps();
+  importFetchSeam.resolver = undefined;
+  importFetchSeam.fetchImpl = undefined;
 });
 
 describe('check: create, update, unchanged', () => {
@@ -251,17 +252,38 @@ describe('check: create, update, unchanged', () => {
 });
 
 describe('the dry run writes only its own draft', () => {
-  const tables = ['passes', 'pass_events', 'outbox', 'audit_log', 'pass_issuance_deliveries'];
-  const counts = async () =>
-    Promise.all(
+  const tables = [
+    'pass_events',
+    'outbox',
+    'audit_log',
+    'pass_issuance_deliveries',
+    'pass_holder_reissue_required',
+    'pass_credential_transfers',
+    'pass_credential_tombstones',
+  ];
+  /** Every pass column a write could move, the other tables by count, and R2 outside the import's own prefix. */
+  const snapshot = async () => ({
+    passes: (
+      await all(
+        kit.env.DB,
+        `SELECT id, version, row_version, revision, personalization, field_sources, status, holder_email,
+           external_id, modified_at, removed_at, object_key FROM passes ORDER BY id`,
+      )
+    ).map((r) => JSON.stringify(r)),
+    counts: await Promise.all(
       tables.map(
         async (t) => (await first<{ n: number }>(kit.env.DB, `SELECT count(*) AS n FROM ${t}`))?.n,
       ),
-    );
+    ),
+    objects: (await kit.env.BUCKET.list()).objects
+      .map((o) => o.key)
+      .filter((k) => !k.startsWith('uploads/pass-imports/'))
+      .sort(),
+  });
 
-  it('leaves passes, events, outbox and audit rows as they were', async () => {
+  it('leaves passes (every column), events, outbox, audit and R2 as they were', async () => {
     await existing('W1', 'w1@x.co', { memberName: 'Old' });
-    const before = await counts();
+    const before = await snapshot();
     const d = await draft(
       await start(
         [HEAD, 'New,1,w1@x.co,W1', 'Fresh,2,w2@x.co,W2', 'Bad,x,,W3'].join('\n'),
@@ -269,9 +291,10 @@ describe('the dry run writes only its own draft', () => {
       ),
     );
     await api(admin, 'POST', `/${d.id}/check`, { plan: plan({ match: 'email' }) });
+    await api(admin, 'POST', `/${d.id}/check`, { plan: plan({ keepManual: true }) });
     await api(admin, 'GET', `/${d.id}/rows`);
     await api(admin, 'GET', `/${d.id}/errors.csv`);
-    expect(await counts()).toEqual(before);
+    expect(await snapshot()).toEqual(before);
     const rows = await first<{ n: number }>(
       kit.env.DB,
       'SELECT count(*) AS n FROM pass_import_rows WHERE import_id = ?',
@@ -556,7 +579,9 @@ describe('file-level failures', () => {
 describe('a sheet link', () => {
   const link = 'https://docs.google.com/spreadsheets/d/e/SECRET-TOKEN/pub?output=csv';
   const make = () => ({ templateId: kit.template.id, source: { kind: 'url', url: link } });
-  const publicHost = () => setDeps({ resolver: { resolve: async () => ['93.184.216.34'] } });
+  const publicHost = () => {
+    importFetchSeam.resolver = { resolve: async () => ['93.184.216.34'] };
+  };
 
   it('fetches the CSV once and keeps only the host', async () => {
     publicHost();
@@ -602,7 +627,7 @@ describe('a sheet link', () => {
   });
 
   it('refuses a host that resolves to a private address', async () => {
-    setDeps({ resolver: { resolve: async () => ['192.168.1.1'] } });
+    importFetchSeam.resolver = { resolve: async () => ['192.168.1.1'] };
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     const res = await api(admin, 'POST', '', make());
@@ -678,5 +703,220 @@ describe('size', () => {
     const d = await draft(res);
     expect(d.counts).toMatchObject({ rows: 2000, create: 2000, errors: 0 });
     expect(ms).toBeLessThan(2000);
+  });
+});
+
+describe('updates check the pass as it will be, not the mapped slice', () => {
+  it('an update that maps one column of a template with required inputs is fine', async () => {
+    await existing('U1', null, { memberName: 'Alex', points: 1 });
+    const d = await draft(
+      await start(
+        'Points,Id\n7,U1',
+        plan({ mapping: { points: { from: '/Points' } }, holderEmail: null }),
+      ),
+    );
+    expect(d.problems).toEqual([]);
+    expect(d.counts).toMatchObject({ update: 1, create: 0, errors: 0 });
+  });
+
+  it('a create that leaves a required input unmapped is an error, an update that breaks the pass is too', async () => {
+    await existing('U2', null, { memberName: 'Alex' });
+    const d = await draft(
+      await start(
+        'Points,Id\n7,U2\n8,NEW',
+        plan({ mapping: { points: { from: '/Points' } }, holderEmail: null }),
+      ),
+    );
+    expect(d.counts).toMatchObject({ update: 1, create: 0, errors: 1 });
+    expect(d.problems).toEqual([
+      expect.objectContaining({ row: 3, code: 'INPUT', message: 'Name is required.' }),
+    ]);
+  });
+
+  it('a blank mapped cell leaves the field as it is', async () => {
+    await existing('U3', null, { memberName: 'Alex', points: 4 });
+    const d = await draft(await start(`${HEAD}\nAlex,,,U3`));
+    expect(d.counts).toMatchObject({ unchanged: 1, update: 0, errors: 0 });
+  });
+});
+
+describe('External ID is unique whatever the match', () => {
+  it('refuses a create whose External ID a live pass has, and a duplicate in the file', async () => {
+    await existing('TAKEN', 'old@x.co', { memberName: 'Old' });
+    const none = await draft(
+      await start([HEAD, 'A,1,,TAKEN', 'B,1,,DUP', 'C,1,,DUP'].join('\n'), plan({ match: 'none' })),
+    );
+    expect(none.problems.map((p) => [p.row, p.code])).toEqual([
+      [2, 'IMPORT_KEY_TAKEN'],
+      [4, 'IMPORT_DUPLICATE_KEY'],
+    ]);
+    const byEmail = await draft(
+      await start([HEAD, 'A,1,new@x.co,TAKEN'].join('\n'), plan({ match: 'email' })),
+    );
+    expect(byEmail.problems.map((p) => p.code)).toEqual(['IMPORT_KEY_TAKEN']);
+    const update = await draft(
+      await start([HEAD, 'A,1,old@x.co,TAKEN'].join('\n'), plan({ match: 'email' })),
+    );
+    expect(update.problems).toEqual([]);
+  });
+
+  it('refuses an External ID over 200 characters', async () => {
+    const d = await draft(await start(`${HEAD}\nA,1,,${'x'.repeat(201)}`));
+    expect(d.problems[0]).toMatchObject({ code: 'IMPORT_KEY_TOO_LONG' });
+  });
+});
+
+describe('the problem list', () => {
+  it('lists errors before warnings and counts both', async () => {
+    const fields = Array.from({ length: 15 }, (_, i) => `f${i + 1}`);
+    for (let i = 0; i < 7; i++) {
+      const pass = await existing(`PL${i}`, null, {
+        memberName: 'X',
+        ...Object.fromEntries(fields.map((f) => [f, 'old'])),
+      });
+      await run(kit.env.DB, 'UPDATE passes SET field_sources = ? WHERE id = ?', [
+        JSON.stringify(Object.fromEntries(fields.map((f) => [f, 'manual']))),
+        pass.id,
+      ]);
+    }
+    const cols = ['Name', 'Points', 'Id', ...fields.map((f) => f.toUpperCase())];
+    const mapping: Record<string, { from: string }> = { memberName: { from: '/Name' } };
+    for (const f of fields) mapping[f] = { from: `/${f.toUpperCase()}` };
+    const row = (id: string, points: string) => ['X', points, id, ...fields.map(() => 'new')];
+    const csv = [
+      cols.join(','),
+      ...[0, 1, 2, 3, 4, 5, 6].map((i) => row(`PL${i}`, '1').join(',')),
+      ...[0, 1, 2].map((i) => row(`BAD${i}`, 'x').join(',')),
+    ].join('\n');
+    const d = await draft(
+      await start(
+        csv,
+        plan({ mapping: { ...mapping, points: { from: '/Points' } }, holderEmail: null }),
+      ),
+    );
+    expect(d.problemTotals).toEqual({ errors: 3, warnings: 105 });
+    expect(d.problemsTruncated).toBe(true);
+    expect(d.problems).toHaveLength(100);
+    expect(d.problems.slice(0, 3).map((p) => p.severity)).toEqual(['error', 'error', 'error']);
+    expect(d.problems[3]?.severity).toBe('warning');
+  });
+});
+
+describe('concurrent checks', () => {
+  it('never leave a draft whose rows come from two plans', async () => {
+    const lines = Array.from({ length: 700 }, (_, i) => `N${i},${i},,C${i}`);
+    const d = await draft(
+      await start([HEAD, ...lines].join('\n'), plan({ match: 'none', externalId: null })),
+    );
+    const withPoints = plan({ match: 'none', externalId: null });
+    const noPoints = plan({
+      match: 'none',
+      externalId: null,
+      mapping: { memberName: { from: '/Name' } },
+    });
+    const results = await Promise.all([
+      api(admin, 'POST', `/${d.id}/check`, { plan: withPoints }),
+      api(admin, 'POST', `/${d.id}/check`, { plan: noPoints }),
+    ]);
+    expect(results.some((r) => r.status === 200)).toBe(true);
+    for (const r of results.filter((x) => x.status !== 200)) expect(r.status).toBe(409);
+    const got = await first<{ state: string; plan: string; checked: number; rows: number }>(
+      kit.env.DB,
+      `SELECT state, plan, rows,
+         (SELECT count(*) FROM pass_import_rows r WHERE r.import_id = p.id) AS checked
+       FROM pass_imports p WHERE id = ?`,
+      [d.id],
+    );
+    expect(got?.state).toBe('ready');
+    expect(got?.checked).toBe(got?.rows);
+    const rows = await all<{ input: string }>(
+      kit.env.DB,
+      'SELECT input FROM pass_import_rows WHERE import_id = ?',
+      [d.id],
+    );
+    const stored = JSON.parse(got?.plan ?? '{}');
+    const wantsPoints = Object.hasOwn(stored.mapping, 'points');
+    expect(rows.every((r) => Object.hasOwn(JSON.parse(r.input), 'points') === wantsPoints)).toBe(
+      true,
+    );
+  });
+});
+
+describe('create when the automatic check fails', () => {
+  it('returns the draft id in mapping with the reason', async () => {
+    await api(admin, 'POST', '', {
+      templateId: kit.template.id,
+      source: file(`${HEAD}\nA,1,,K1`),
+      plan: plan({ save: true }),
+    });
+    const get = vi.spyOn(kit.env.BUCKET, 'get').mockResolvedValueOnce(null);
+    const res = await api(admin, 'POST', '', {
+      templateId: kit.template.id,
+      source: file(`${HEAD}\nA,1,,K2`),
+    });
+    get.mockRestore();
+    const d = await draft(res);
+    expect(d.state).toBe('mapping');
+    expect(d.errorCode).toBe('IMPORT_FILE_GONE');
+  });
+});
+
+describe('plans and limits', () => {
+  it('refuses a saved plan whose match key column is missing instead of turning matching off', async () => {
+    await draft(await start(`${HEAD}\nA,1,,S1`, plan({ save: true })));
+    await expectProblem(
+      await api(admin, 'POST', '', {
+        templateId: kit.template.id,
+        source: file('Name,Points,Email\nA,1,a@x.co'),
+      }),
+      422,
+      'IMPORT_COLUMN_MISSING',
+    );
+  });
+
+  it('holds 120 checks an hour per org and mode', async () => {
+    const d = await draft(await start(`${HEAD}\nA,1,,R1`));
+    const now = kit.clock.now();
+    await bump(kit.env.DB, `pass-import-check:live:org:${kit.org.id}`, now - (now % HOUR), 120);
+    await expectProblem(
+      await api(admin, 'POST', `/${d.id}/check`, { plan: plan() }),
+      429,
+      'RATE_LIMITED',
+    );
+  });
+
+  it('refuses a header over 200 characters', async () => {
+    await expectProblem(
+      await api(admin, 'POST', '', {
+        templateId: kit.template.id,
+        source: file(`${'H'.repeat(201)},B\n1,2`),
+      }),
+      422,
+      'IMPORT_HEADER_TOO_LONG',
+    );
+  });
+
+  it('names the problem column apart when the upload has one', async () => {
+    const d = await draft(
+      await start('Name,Points,Id,Problem\nBad,x,Z1,mine', plan({ holderEmail: null })),
+    );
+    const text = await (await api(admin, 'GET', `/${d.id}/errors.csv`)).text();
+    expect(text.split('\r\n')[0]).toBe('Name,Points,Id,Problem,Problem (PassBook)');
+  });
+
+  it('a member of two orgs does not read one org’s draft through the other', async () => {
+    const other = await makeOrg(kit.fx, { name: 'Second' });
+    const user = await makeUser(kit.fx);
+    const session = await makeSession(kit.fx, { userId: user.id });
+    await grantKitMembership(kit, kit.org.id, user.id, ['org_admin']);
+    await grantKitMembership(kit, other.id, user.id, ['org_admin']);
+    const both = { ...session.headers, origin: 'https://wallet.test' };
+    const d = await draft(await start(`${HEAD}\nA,1,,B1`, plan(), both));
+    expect((await api(both, 'GET', `/${d.id}`)).status).toBe(200);
+    await expectProblem(
+      await api(both, 'GET', `/${d.id}`, undefined, `?orgId=${other.id}`),
+      404,
+      'IMPORT_NOT_FOUND',
+    );
   });
 });

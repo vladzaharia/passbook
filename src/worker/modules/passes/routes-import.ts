@@ -23,8 +23,13 @@ import {
   tenantAuthorityOf,
 } from './http.ts';
 import { errorsCsv, importDto, rowsPage } from './import-read.ts';
-import { checkImport, createImport, discardImport, requireImport } from './import-service.ts';
-import { listImports } from './repo-imports.ts';
+import {
+  checkImport,
+  createImport,
+  discardImport,
+  listImportPage,
+  requireImport,
+} from './import-service.ts';
 
 /** Bulk create and update from a file or a sheet link: the check (dry run) and the draft it keeps. */
 export const passImportRoutes = createRouter({ bodyLimit: false });
@@ -82,26 +87,8 @@ register(
   },
   async (c) => {
     const q = c.req.valid('query');
-    const ctx = svc(c);
     const authority = await authorityFor(c, q.orgId, 'passes:read');
-    const [createdAt, id] = (q.cursor ?? '').split(':');
-    const cursor =
-      createdAt && id && Number.isSafeInteger(Number(createdAt))
-        ? { createdAt: Number(createdAt), id }
-        : null;
-    const rows = await listImports(
-      ctx.env.DB,
-      authority.orgId,
-      authority.mode,
-      q.limit + 1,
-      cursor,
-    );
-    const page = rows.slice(0, q.limit);
-    const last = page[page.length - 1];
-    return c.json({
-      items: await Promise.all(page.map((r) => importDto(ctx, r, { light: true }))),
-      nextCursor: rows.length > q.limit && last ? `${last.created_at}:${last.id}` : null,
-    });
+    return c.json(await listImportPage(svc(c), authority, q));
   },
 );
 

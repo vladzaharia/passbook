@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AccessManifest, TemplateManifest } from '../../../passkit/types.ts';
-import { checkRows, type RowCheckContext } from './import-check.ts';
+import { checkRows, type RowCheckContext, rowChecker } from './import-check.ts';
 import type { ImportPlan } from './import-plan.ts';
 
 const ACCESS: AccessManifest = {
@@ -82,8 +82,16 @@ const one = (rows: string[][], c: RowCheckContext = ctx()) =>
     rows.map((r, i) => ({ row: i + 2, cells: r })),
     c,
   );
-const problems = (rows: string[][], c?: RowCheckContext) =>
-  one(rows, c).map((r) => r.problems.map((p) => [p.code, p.column, p.message]));
+/** What the row shows once the whole-input checks ran too (a create's view of it). */
+const problems = (rows: string[][], c: RowCheckContext = ctx()) => {
+  const full = rowChecker(c);
+  return one(rows, c).map((r) =>
+    [
+      ...r.problems,
+      ...(r.input && r.problems.length === 0 ? full(r.row, r.input, 'full') : []),
+    ].map((p) => [p.code, p.column, p.message]),
+  );
+};
 
 describe('checkRows', () => {
   it('maps, coerces and normalizes a clean row', () => {
@@ -152,15 +160,57 @@ describe('checkRows', () => {
     const got = problems([cells({ Id: 'A12' }), cells({ Id: 'B1' }), cells({ Id: 'A12' })]);
     expect(got[2]).toEqual([['IMPORT_DUPLICATE_KEY', 'Id', 'External ID A12 is also on row 2.']]);
     const byEmail = problems(
-      [cells({ Email: 'a@x.co' }), cells({ Email: 'A@X.co' })],
+      [cells({ Email: 'a@x.co', Id: 'P' }), cells({ Email: 'A@X.co', Id: 'Q' })],
       ctx({ plan: plan({ match: 'email' }) }),
     );
     expect(byEmail[1]).toEqual([['IMPORT_DUPLICATE_KEY', 'Email', 'Email is also on row 2.']]);
   });
 
-  it('does not look at keys when there is no matching', () => {
-    const got = problems([cells(), cells()], ctx({ plan: plan({ match: 'none' }) }));
-    expect(got).toEqual([[], []]);
+  it('checks a mapped External ID for duplicates whatever the match, and an Email only as the key', () => {
+    const none = ctx({ plan: plan({ match: 'none' }) });
+    expect(problems([cells(), cells()], none)[1]).toEqual([
+      ['IMPORT_DUPLICATE_KEY', 'Id', 'External ID A1 is also on row 2.'],
+    ]);
+    expect(problems([cells({ Id: 'A' }), cells({ Id: 'B' })], none)).toEqual([[], []]);
+    const email = ctx({ plan: plan({ match: 'email' }) });
+    expect(problems([cells(), cells()], email)[1]?.map((p) => p[0])).toEqual([
+      'IMPORT_DUPLICATE_KEY',
+      'IMPORT_DUPLICATE_KEY',
+    ]);
+  });
+
+  it('IMPORT_KEY_TOO_LONG for an External ID over 200 characters', () => {
+    expect(problems([cells({ Id: 'x'.repeat(201) })])[0]).toEqual([
+      ['IMPORT_KEY_TOO_LONG', 'Id', 'External ID is longer than 200 characters. Shorten it.'],
+    ]);
+  });
+
+  it('before the match only each value is checked: required inputs wait for the whole input', () => {
+    const [row] = one([cells({ Name: '' })]);
+    expect(row?.problems).toEqual([]);
+    expect(rowChecker(ctx())(2, row?.input ?? {}, 'full').map((p) => p.message)).toEqual([
+      'Name is required.',
+    ]);
+  });
+
+  it('clamps a long header so every problem still parses', () => {
+    const long = 'N'.repeat(300);
+    const header = [long, ...HEADER.slice(1)];
+    const c = ctx({ header, plan: plan({ mapping: { points: { from: `/${long}` } } }) });
+    const [r] = one([['abc', ...cells().slice(1)]], c);
+    expect(r?.problems).toHaveLength(1);
+    expect(r?.problems[0]?.column).toHaveLength(200);
+  });
+
+  it('a pattern failure never shows the validator text', () => {
+    const m = manifest(false);
+    (m.inputs.properties as Record<string, unknown>).tier = {
+      type: 'string',
+      title: 'Tier',
+      pattern: '^a$',
+    };
+    const got = problems([cells({ Tier: 'zzz' })], ctx({ manifest: m }));
+    expect(got[0]).toEqual([['INPUT', 'Tier', 'Tier is not in the right format.']]);
   });
 
   describe('a template with scan.access', () => {

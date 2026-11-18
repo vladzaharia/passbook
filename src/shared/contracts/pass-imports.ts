@@ -128,6 +128,8 @@ export const PassImportSchema = z.object({
     )
     .max(PASS_IMPORT_PREVIEWS),
   problems: z.array(PassImportProblemSchema).max(PASS_IMPORT_PROBLEMS),
+  /** Every problem of the draft by severity; `problems` lists errors first, then warnings, capped. */
+  problemTotals: z.object({ errors: count, warnings: count }),
   problemsTruncated: z.boolean(),
   emailBudget: count.nullable(),
   email: z.boolean(),

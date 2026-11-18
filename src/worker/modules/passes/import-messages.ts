@@ -6,6 +6,22 @@ import {
 
 export type ImportProblem = z.infer<typeof PassImportProblemSchema>;
 
+/** The one constructor of problems: column, field and message are clamped to the contract so a row's problems always parse. */
+export function problem(
+  row: number,
+  p: Omit<ImportProblem, 'row' | 'severity' | 'column' | 'field'> &
+    Partial<Pick<ImportProblem, 'column' | 'field' | 'severity'>>,
+): ImportProblem {
+  return {
+    row,
+    severity: 'error',
+    ...p,
+    column: p.column?.slice(0, 200) ?? null,
+    field: p.field?.slice(0, 64) ?? null,
+    message: p.message.slice(0, 200),
+  };
+}
+
 /** One sentence per row problem. The row number rides in `ImportProblem.row`, not in the text. */
 export const IMPORT_TEXT = {
   rowShape: (got: number, want: number) =>
@@ -13,6 +29,9 @@ export const IMPORT_TEXT = {
   cellTooLong: (column: string) =>
     `${column} is longer than ${PASS_IMPORT_MAX_CELL} characters. Shorten it.`,
   emailInvalid: 'Email is not valid.',
+  keyTooLong: (label: string) => `${label} is longer than 200 characters. Shorten it.`,
+  keyTaken: (id: string) => `External ID ${id} is already used by another pass.`,
+  manualReplaced: (label: string) => `${label} was edited in PassBook; the file replaces it.`,
   keyMissing: (label: string) => `${label} is empty. Fill it in.`,
   duplicateKey: (label: string, value: string | null, other: number) =>
     `${label}${value === null ? '' : ` ${value}`} is also on row ${other}.`,
@@ -20,7 +39,6 @@ export const IMPORT_TEXT = {
   otherTemplate: 'This pass uses another template. Import it with that template.',
   connected: (name: string | null) => `Synced by ${name ?? 'a connection'}. Change it there.`,
   manualKept: (label: string) => `${label} was edited in PassBook; left as is.`,
-  manualReplaced: (label: string) => `${label} was edited in PassBook; the file replaces it.`,
   emailKept: 'The holder email differs; the pass keeps its own.',
   columnMissing: (column: string) => `The file has no "${column}" column.`,
 } as const;
@@ -44,7 +62,9 @@ export function inputMessage(
   const num = (k: string) => (typeof s[k] === 'number' ? (s[k] as number) : null);
   switch (issue.keyword) {
     case 'pattern':
-      return issue.message;
+      return typeof s['x-pattern-message'] === 'string'
+        ? s['x-pattern-message']
+        : `${label} is not in the right format.`;
     case 'required':
       return `${label} is required.`;
     case 'type': {

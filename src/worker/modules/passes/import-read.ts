@@ -17,24 +17,44 @@ import {
   pageRows,
   previewRows,
   problemRows,
+  problemTotals,
 } from './repo-import-rows.ts';
 import type { ImportRow } from './repo-imports.ts';
 
 const EDITING = ['mapping', 'checking', 'ready', 'stale'];
 
-function problemsOf(json: string | null): ImportProblem[] {
+function problemsOf(ctx: ServiceContext, importId: string, json: string | null): ImportProblem[] {
   if (json === null) return [];
+  const parsed = PassImportProblemSchema.array().safeParse(safeJson(json));
+  if (parsed.success) return parsed.data;
+  ctx.log.warn('pass_import.problem_unreadable', { code: 'IMPORT_PROBLEM_UNREADABLE', importId });
+  return [];
+}
+
+function safeJson(json: string): unknown {
   try {
-    const parsed = PassImportProblemSchema.array().safeParse(JSON.parse(json));
-    return parsed.success ? parsed.data : [];
+    return JSON.parse(json);
   } catch {
-    return [];
+    return null;
   }
 }
 
 async function fileOf(ctx: ServiceContext, imp: ImportRow) {
   const object = imp.object_key ? await ctx.env.BUCKET.get(imp.object_key) : null;
   return object ? parseImport(new Uint8Array(await object.arrayBuffer())) : null;
+}
+
+async function columnsFile(ctx: ServiceContext, imp: ImportRow) {
+  try {
+    return await fileOf(ctx, imp);
+  } catch (error) {
+    ctx.log.warn('pass_import.file_unreadable', {
+      code: 'IMPORT_FILE_UNREADABLE',
+      importId: imp.id,
+      error,
+    });
+    return null;
+  }
 }
 
 /** The draft as the API shows it. `light` skips the file and row reads (list pages). */
@@ -50,14 +70,17 @@ export async function importDto(
   ) as PassImportDto['state'];
   const checked = imp.checked_at !== null;
   const light = options.light === true;
-  const columns =
-    !light && state !== 'expired' && editing
-      ? ((await fileOf(ctx, imp).catch(() => null)) ?? null)
-      : null;
+  const columns = !light && state !== 'expired' && editing ? await columnsFile(ctx, imp) : null;
   const previews = light || !checked ? [] : await previewRows(db, imp.id, PASS_IMPORT_PREVIEWS);
   const withProblems =
     light || !checked ? [] : await problemRows(db, imp.id, PASS_IMPORT_PROBLEMS + 1);
-  const flat = withProblems.flatMap((r) => problemsOf(r.problems));
+  // Errors first, then warnings, each in file order.
+  const flat = withProblems
+    .flatMap((r) => problemsOf(ctx, imp.id, r.problems))
+    .sort(
+      (a, b) => Number(b.severity === 'error') - Number(a.severity === 'error') || a.row - b.row,
+    );
+  const totals = light || !checked ? { errors: 0, warnings: 0 } : await problemTotals(db, imp.id);
   return {
     id: imp.id,
     templateId: imp.template_id,
@@ -66,7 +89,7 @@ export async function importDto(
     state,
     source: { kind: imp.source_kind, name: imp.source_name },
     columns: columns ? columnsOf(columns) : [],
-    plan: parsePlan(imp.plan),
+    plan: parsePlan(imp.plan, ctx.log),
     counts: checked
       ? {
           rows: imp.rows,
@@ -84,7 +107,8 @@ export async function importDto(
       input: p.input ? (JSON.parse(p.input) as Record<string, never>) : {},
     })),
     problems: flat.slice(0, PASS_IMPORT_PROBLEMS),
-    problemsTruncated: flat.length > PASS_IMPORT_PROBLEMS,
+    problemTotals: totals,
+    problemsTruncated: totals.errors + totals.warnings > PASS_IMPORT_PROBLEMS,
     emailBudget: imp.email_budget,
     email: imp.email === 1,
     progress:
@@ -126,7 +150,7 @@ export async function rowsPage(
   const page = rows.slice(0, 100);
   return {
     items: page.map((r: ImportRowRecord) => {
-      const first = problemsOf(r.problems).find((p) => p.severity === 'error');
+      const first = problemsOf(ctx, imp.id, r.problems).find((p) => p.severity === 'error');
       return {
         row: r.row_no,
         action: r.action,
@@ -151,11 +175,17 @@ export async function errorsCsv(ctx: ServiceContext, imp: ImportRow): Promise<st
   const out: string[][] = [];
   for (const r of await errorRows(ctx.env.DB, imp.id)) {
     const cells = byRow.get(r.row_no) ?? [];
-    const text = problemsOf(r.problems)
+    const text = problemsOf(ctx, imp.id, r.problems)
       .filter((p) => p.severity === 'error')
       .map((p) => p.message)
       .join(' ');
     out.push([...parsed.header.map((_, i) => cells[i] ?? ''), text]);
   }
-  return BOM + toCsv([...parsed.header, 'Problem'], out);
+  return (
+    BOM +
+    toCsv(
+      [...parsed.header, parsed.header.includes('Problem') ? 'Problem (PassBook)' : 'Problem'],
+      out,
+    )
+  );
 }

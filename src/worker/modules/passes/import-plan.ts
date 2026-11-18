@@ -8,6 +8,7 @@ import {
 import type { ParsedCsv } from '../../../shared/csv/parse.ts';
 import { normalizePointer } from '../../../shared/mapping/pointer.ts';
 import { mappingIssues } from '../../../shared/mapping/transform.ts';
+import type { Logger } from '../../platform/log.ts';
 
 export type ImportPlan = z.infer<typeof PassImportPlanSchema>;
 export type ImportColumn = z.infer<typeof PassImportColumnSchema>;
@@ -65,20 +66,30 @@ export function missingColumns(plan: ImportPlan, header: readonly string[]): str
   return [...missing];
 }
 
-/** A saved plan with the entries for missing columns removed; matching falls back to "none" when its key went. */
+/** The column of the plan's match key (External ID or Email) when the file lacks it; matching cannot silently turn off. */
+export function missingKeyColumn(plan: ImportPlan, header: readonly string[]): string | null {
+  const entry =
+    plan.match === 'externalId'
+      ? plan.externalId
+      : plan.match === 'email'
+        ? plan.holderEmail
+        : null;
+  return entry && usesColumn(entry) && headerOf(entry.from, header) === null ? entry.from : null;
+}
+
+/** A saved plan with the entries for missing columns removed (call `missingKeyColumn` first: the match key stays). */
 export function withoutColumns(plan: ImportPlan, header: readonly string[]): ImportPlan {
   const keep = (e: Entry | null): Entry | null =>
     e && (!usesColumn(e) || headerOf(e.from, header) !== null) ? e : null;
   const mapping = Object.fromEntries(
     Object.entries(plan.mapping).filter(([, e]) => keep(e) !== null),
   );
-  const holderEmail = keep(plan.holderEmail);
-  const externalId = keep(plan.externalId);
-  const match =
-    (plan.match === 'externalId' && !externalId) || (plan.match === 'email' && !holderEmail)
-      ? 'none'
-      : plan.match;
-  return { ...plan, mapping, holderEmail, externalId, match };
+  return {
+    ...plan,
+    mapping,
+    holderEmail: keep(plan.holderEmail),
+    externalId: keep(plan.externalId),
+  };
 }
 
 /** Structural problems of a plan against the template's inputs; empty when usable. */
@@ -95,13 +106,15 @@ export function planProblems(plan: ImportPlan, manifest: TemplateManifest): stri
   return problems;
 }
 
-/** The stored plan, or null when the JSON no longer parses (the schema moved on). */
-export function parsePlan(json: string | null): ImportPlan | null {
+/** The stored plan, or null when the JSON no longer parses (the schema moved on); logged, never silent. */
+export function parsePlan(json: string | null, log: Logger): ImportPlan | null {
   if (json === null) return null;
   try {
     const parsed = PassImportPlanSchema.safeParse(JSON.parse(json));
-    return parsed.success ? parsed.data : null;
+    if (parsed.success) return parsed.data;
   } catch {
-    return null;
+    // Not JSON: logged below like a plan the schema refuses.
   }
+  log.warn('pass_import.plan_unreadable', { code: 'IMPORT_PLAN_UNREADABLE' });
+  return null;
 }

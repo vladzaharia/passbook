@@ -7,7 +7,7 @@ import { strictEmail } from '../../../shared/email.ts';
 import { applyMapping } from '../../../shared/mapping/transform.ts';
 import { accessInputIssues } from './access-input.ts';
 import { coerceInput } from './import-coerce.ts';
-import { IMPORT_TEXT, type ImportProblem, inputMessage } from './import-messages.ts';
+import { IMPORT_TEXT, type ImportProblem, inputMessage, problem } from './import-messages.ts';
 import { headerOf, type ImportPlan, recordOf } from './import-plan.ts';
 
 /** A row after the checks that need no database; `input` is null when the row could not be mapped. */
@@ -27,11 +27,18 @@ export interface RowCheckContext {
 }
 
 const KEY_LABEL = { externalId: 'External ID', email: 'Email' } as const;
+/** The API's `externalId` limit (contracts/passes.ts). */
+const MAX_EXTERNAL_ID = 200;
 
 export const isError = (p: ImportProblem): boolean => p.severity === 'error';
 
-/** Shape, map, coerce, template input, access input, email and key, in that order (design §8, steps 1-7). */
-export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): CheckedRow[] {
+/**
+ * The template's input checks, worded per row. `keys` checks each mapped value on its own (type, range,
+ * enum, format): all that can be said before the row's pass is known. `full` adds what needs the whole
+ * input (required inputs, cross-field rules, access cards): run it on a create's input, or on an
+ * update's merged result, so unmapped required fields never fail an update.
+ */
+export function rowChecker(rc: RowCheckContext) {
   const { manifest, plan, header } = rc;
   const check = inputChecker(manifest);
   const props = (manifest.inputs.properties ?? {}) as Record<string, Record<string, unknown>>;
@@ -39,15 +46,50 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
     const entry = plan.mapping[field];
     return entry ? headerOf(entry.from, header) : null;
   };
+  return (row: number, input: Personalization, scope: 'keys' | 'full'): ImportProblem[] => {
+    const out: ImportProblem[] = [];
+    for (const issue of check(input)) {
+      const required = issue.keyword === 'required';
+      const name = required
+        ? (/required property "([^"]+)"/.exec(issue.message)?.[1] ?? '')
+        : (issue.path ?? '');
+      if (scope === 'keys' && (required || name === '')) continue;
+      const label = typeof props[name]?.title === 'string' ? (props[name].title as string) : name;
+      out.push(
+        problem(row, {
+          column: columnOf(name),
+          field: name || null,
+          code: issue.code,
+          message: inputMessage(issue, label || 'The pass', props[name]),
+        }),
+      );
+    }
+    const access = manifest.scan?.access;
+    if (scope === 'full' && access)
+      for (const issue of accessInputIssues(access, applyDefaults(manifest, input), rc.zoneKeys))
+        out.push(
+          problem(row, {
+            column: columnOf(issue.path),
+            field: issue.path || null,
+            code: issue.code ?? 'ACCESS_INPUT',
+            message: issue.message,
+          }),
+        );
+    return out;
+  };
+}
+
+/** Shape, map, coerce, per-key input checks, email and keys (design §8, steps 1-7); the whole-input checks follow the match. */
+export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): CheckedRow[] {
+  const { plan, header } = rc;
+  const checkInputs = rowChecker(rc);
   const seen = new Map<string, number>();
-  const keyOf =
+  const matchKey =
     plan.match === 'externalId' ? 'externalId' : plan.match === 'email' ? 'email' : null;
 
   return rows.map(({ row, cells }): CheckedRow => {
     const problems: ImportProblem[] = [];
-    const add = (
-      p: Omit<ImportProblem, 'row' | 'severity'> & { severity?: ImportProblem['severity'] },
-    ) => problems.push({ row, severity: 'error', ...p, message: p.message.slice(0, 200) });
+    const add = (p: Parameters<typeof problem>[1]) => problems.push(problem(row, p));
     const out = (
       input: Personalization | null,
       externalId: string | null,
@@ -63,8 +105,6 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
     // 1. Shape. A row wider or narrower than the header is refused before mapping.
     if (cells.length !== header.length) {
       add({
-        column: null,
-        field: null,
         code: 'IMPORT_ROW_SHAPE',
         message: IMPORT_TEXT.rowShape(cells.length, header.length),
       });
@@ -74,42 +114,16 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
     if (long >= 0) {
       add({
         column: header[long] ?? null,
-        field: null,
         code: 'IMPORT_CELL_TOO_LONG',
         message: IMPORT_TEXT.cellTooLong(header[long] ?? 'A cell'),
       });
       return out(null, null, null);
     }
 
-    // 2-3. Map, then read the text as the input types.
+    // 2-4. Map, read the text as the input types, check each value on its own. A blank cell is unset.
     const record = recordOf(header, cells);
-    const input = coerceInput(manifest.inputs, applyMapping(plan.mapping, record));
-
-    // 4. The template's own input check, one sentence each.
-    for (const issue of check(input)) {
-      const name =
-        issue.keyword === 'required'
-          ? (/required property "([^"]+)"/.exec(issue.message)?.[1] ?? '')
-          : (issue.path ?? '');
-      const label = typeof props[name]?.title === 'string' ? (props[name].title as string) : name;
-      add({
-        column: columnOf(name),
-        field: name || null,
-        code: issue.code,
-        message: inputMessage(issue, label || 'The pass', props[name]),
-      });
-    }
-
-    // 5. Access cards: plan, zones, window, visits.
-    const access = manifest.scan?.access;
-    if (access)
-      for (const issue of accessInputIssues(access, applyDefaults(manifest, input), rc.zoneKeys))
-        add({
-          column: columnOf(issue.path),
-          field: issue.path || null,
-          code: issue.code ?? 'ACCESS_INPUT',
-          message: issue.message,
-        });
+    const input = coerceInput(rc.manifest.inputs, applyMapping(plan.mapping, record));
+    problems.push(...checkInputs(row, input, 'keys'));
 
     // 6. Holder email.
     let holderEmail: string | null = null;
@@ -128,38 +142,45 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
         });
     }
 
-    // 7. External ID and the match key.
+    // 7. External ID: always unique in the file and at most 200 characters; empty only matters as the key.
     const mappedId = plan.externalId
       ? applyMapping({ externalId: plan.externalId }, record).externalId
       : undefined;
     const externalId: string | null = mappedId === undefined ? null : String(mappedId as Json);
-    const key = keyOf === 'email' ? holderEmail : externalId;
-    if (keyOf !== null) {
-      const label = KEY_LABEL[keyOf];
-      const column =
-        (keyOf === 'email'
-          ? emailColumn
-          : plan.externalId && headerOf(plan.externalId.from, header)) || null;
-      const empty = keyOf === 'email' ? mappedEmail === undefined : externalId === null;
-      if (empty)
+    const idColumn = plan.externalId ? headerOf(plan.externalId.from, header) : null;
+    const keyed = [
+      ['externalId', externalId, mappedId === undefined, idColumn, 'externalId'],
+      ['email', holderEmail, mappedEmail === undefined, emailColumn, 'holderEmail'],
+    ] as const;
+    for (const [kind, value, empty, column, field] of keyed) {
+      if (kind === 'externalId' && externalId !== null && externalId.length > MAX_EXTERNAL_ID)
         add({
           column,
-          field: keyOf === 'email' ? 'holderEmail' : 'externalId',
-          code: 'IMPORT_KEY_MISSING',
-          message: IMPORT_TEXT.keyMissing(label),
+          field,
+          code: 'IMPORT_KEY_TOO_LONG',
+          message: IMPORT_TEXT.keyTooLong(KEY_LABEL[kind]),
         });
-      else if (key !== null) {
-        const mark = `${keyOf}:${key}`;
-        const first = seen.get(mark);
-        if (first === undefined) seen.set(mark, row);
-        else
-          add({
-            column,
-            field: keyOf === 'email' ? 'holderEmail' : 'externalId',
-            code: 'IMPORT_DUPLICATE_KEY',
-            message: IMPORT_TEXT.duplicateKey(label, keyOf === 'email' ? null : key, first),
-          });
-      }
+      if (empty && matchKey === kind)
+        add({
+          column,
+          field,
+          code: 'IMPORT_KEY_MISSING',
+          message: IMPORT_TEXT.keyMissing(KEY_LABEL[kind]),
+        });
+      if (empty || value === null || (kind === 'email' && matchKey !== 'email')) continue;
+      const first = seen.get(`${kind}:${value}`);
+      if (first === undefined) seen.set(`${kind}:${value}`, row);
+      else
+        add({
+          column,
+          field,
+          code: 'IMPORT_DUPLICATE_KEY',
+          message: IMPORT_TEXT.duplicateKey(
+            KEY_LABEL[kind],
+            kind === 'email' ? null : value,
+            first,
+          ),
+        });
     }
     return out(input, externalId, holderEmail);
   });

@@ -49,10 +49,11 @@ export async function insertRows(
   ctx: ServiceContext,
   authority: TenantPassWrite,
   id: string,
+  checkId: string,
   rows: readonly RowInsert[],
 ): Promise<void> {
   for (let i = 0; i < rows.length; i += PER_GRANT) {
-    const g = importGrant(ctx, authority, id, ['checking']);
+    const g = importGrant(ctx, authority, id, { state: 'checking', check_id: checkId });
     const slice = rows.slice(i, i + PER_GRANT);
     for (let j = 0; j < slice.length; j += PER_STATEMENT)
       g.insertJoined('pass_import_rows', {
@@ -94,7 +95,7 @@ export function pageRows(
   );
 }
 
-/** Rows that carry problems, in file order. */
+/** Rows that carry problems: rows with errors first, each group in file order. */
 export function problemRows(
   db: D1Database,
   importId: string,
@@ -103,7 +104,8 @@ export function problemRows(
   return all(
     db,
     `SELECT row_no, problems FROM pass_import_rows
-     WHERE import_id = ? AND problems IS NOT NULL ORDER BY row_no LIMIT ?`,
+     WHERE import_id = ? AND problems IS NOT NULL
+     ORDER BY CASE action WHEN 'error' THEN 0 ELSE 1 END, row_no LIMIT ?`,
     [importId, limit],
   );
 }
@@ -142,4 +144,20 @@ export async function emailableCount(db: D1Database, importId: string): Promise<
     [importId],
   );
   return row?.n ?? 0;
+}
+
+/** Every problem of the draft by severity, not capped like the list. */
+export async function problemTotals(
+  db: D1Database,
+  importId: string,
+): Promise<{ errors: number; warnings: number }> {
+  const rows = await all<{ severity: string; n: number }>(
+    db,
+    `SELECT json_extract(j.value, '$.severity') AS severity, count(*) AS n
+     FROM pass_import_rows r, json_each(r.problems) j
+     WHERE r.import_id = ? AND r.problems IS NOT NULL GROUP BY severity`,
+    [importId],
+  );
+  const n = (s: string) => rows.find((r) => r.severity === s)?.n ?? 0;
+  return { errors: n('error'), warnings: n('warning') };
 }

@@ -1,11 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { TemplateManifest } from '../../../passkit/types.ts';
 import { parseCsv } from '../../../shared/csv/parse.ts';
+import type { Logger } from '../../platform/log.ts';
 import {
   columnsOf,
   headerOf,
   type ImportPlan,
   missingColumns,
+  missingKeyColumn,
   parsePlan,
   planProblems,
   pointerOfHeader,
@@ -63,13 +65,17 @@ describe('import plan', () => {
     expect(missingColumns(plan(), ['Full name', 'Points', 'Email', 'Member no'])).toEqual([]);
   });
 
-  it('drops the entries of missing columns and falls back to no matching', () => {
-    const cut = withoutColumns(plan(), ['Full name', 'Email']);
+  it('drops the entries of missing columns and keeps the match', () => {
+    const cut = withoutColumns(plan({ externalId: null, match: 'email' }), ['Full name', 'Email']);
     expect(Object.keys(cut.mapping)).toEqual(['name']);
-    expect(cut.externalId).toBeNull();
-    expect(cut.match).toBe('none');
+    expect(cut.match).toBe('email');
     expect(cut.holderEmail).toEqual({ from: '/Email' });
-    expect(withoutColumns(plan({ match: 'email' }), ['Email']).match).toBe('email');
+  });
+
+  it('names the match key column when the file lacks it', () => {
+    expect(missingKeyColumn(plan(), ['Full name', 'Email'])).toBe('/Member no');
+    expect(missingKeyColumn(plan({ match: 'email' }), ['Email'])).toBeNull();
+    expect(missingKeyColumn(plan({ match: 'none' }), [])).toBeNull();
   });
 
   it('refuses a mapping to an input the template lacks and a bad transform', () => {
@@ -88,9 +94,12 @@ describe('import plan', () => {
   });
 
   it('reads a stored plan, or null when it no longer parses', () => {
-    expect(parsePlan(JSON.stringify(plan()))?.match).toBe('externalId');
-    expect(parsePlan('{"match":"x"}')).toBeNull();
-    expect(parsePlan('nope')).toBeNull();
-    expect(parsePlan(null)).toBeNull();
+    const warn = vi.fn();
+    const log = { warn } as unknown as Logger;
+    expect(parsePlan(JSON.stringify(plan()), log)?.match).toBe('externalId');
+    expect(parsePlan('{"match":"x"}', log)).toBeNull();
+    expect(parsePlan('nope', log)).toBeNull();
+    expect(parsePlan(null, log)).toBeNull();
+    expect(warn).toHaveBeenCalledTimes(2);
   });
 });
