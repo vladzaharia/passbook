@@ -37,11 +37,20 @@ export function isTimeZone(tz: string): boolean {
 }
 
 export function localOf(ms: number, tz: string): Local {
-  const p: Record<string, number> = { year: 0, month: 1, day: 1, hour: 0, minute: 0, second: 0 };
+  const l: Local = { y: 0, mo: 1, d: 1, h: 0, mi: 0, s: 0 };
+  const keys: Record<string, keyof Local> = {
+    year: 'y',
+    month: 'mo',
+    day: 'd',
+    hour: 'h',
+    minute: 'mi',
+    second: 's',
+  };
   for (const part of formatter(tz).formatToParts(new Date(ms))) {
-    if (part.type !== 'literal') p[part.type] = Number(part.value);
+    const key = keys[part.type];
+    if (key) l[key] = Number(part.value);
   }
-  return { y: p.year, mo: p.month, d: p.day, h: p.hour, mi: p.minute, s: p.second };
+  return l;
 }
 
 const offsetAt = (ms: number, tz: string): number => {
