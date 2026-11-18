@@ -95,7 +95,7 @@ describe('print sign', () => {
       document.documentElement.dataset.theme = theme;
       const view = mount(<JoinSign orgId="org-1" orgName="Dos Olas" url={URL_OK} />);
       await screen.findByRole('img', { name: /QR code for/ });
-      await waitFor(async () => expect(await axe(view.container)).toHaveNoViolations());
+      await waitFor(async () => expect((await axe(view.container)).violations).toEqual([]));
       view.unmount();
     }
   });

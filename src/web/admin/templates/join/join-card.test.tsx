@@ -281,7 +281,7 @@ describe('join card: axe', () => {
         );
         const view = await card({ mode: 'test' });
         await screen.findByRole('img', { name: /QR code for/ });
-        expect(await axe(view.container)).toHaveNoViolations();
+        expect((await axe(view.container)).violations).toEqual([]);
         delete document.documentElement.dataset.theme;
       });
     }
@@ -294,6 +294,6 @@ describe('join card: axe', () => {
       }),
     );
     const view = await card();
-    expect(await axe(view.container)).toHaveNoViolations();
+    expect((await axe(view.container)).violations).toEqual([]);
   });
 });
