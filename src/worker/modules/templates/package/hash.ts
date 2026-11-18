@@ -1,3 +1,4 @@
+import { isWalletArtName } from '../../../../passkit/template/wallets/schema.ts';
 import type { TemplateManifest } from '../../../../passkit/types.ts';
 
 const TABLE = (() => {
@@ -63,16 +64,26 @@ export async function contentVersion(input: VersionInput): Promise<string> {
   return digest.slice(0, 16);
 }
 
-/** SHA-256 of the inputs that can affect an issued pass, independently of the version ID. */
+/**
+ * SHA-256 of the inputs that can affect an issued pass, independently of the version ID. The
+ * `wallets` block and `wallets/**` art are for other wallets: Apple output ignores them, so they
+ * never change this key.
+ */
 export async function buildKey(input: {
   passJson: unknown;
   manifest: TemplateManifest;
   assets: readonly { name: string; sha1: string }[];
 }): Promise<string> {
-  const { description: _description, previewOnlyAssets = [], scan, ...manifest } = input.manifest;
+  const {
+    description: _description,
+    previewOnlyAssets = [],
+    scan,
+    wallets: _wallets,
+    ...manifest
+  } = input.manifest;
   const previewOnly = new Set(previewOnlyAssets);
   const assets = input.assets
-    .filter((asset) => !previewOnly.has(asset.name))
+    .filter((asset) => !previewOnly.has(asset.name) && !isWalletArtName(asset.name))
     .map(({ name, sha1 }) => ({ name, sha1 }))
     .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   const { display: _display, ...scanForPass } = scan ?? {};

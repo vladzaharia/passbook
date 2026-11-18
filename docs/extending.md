@@ -93,6 +93,36 @@ A top-level `stamps` block turns a strip card (store card, coupon, event ticket)
   above the new version's input `maximum` fails for that card with `STAMPS_ABOVE_MAX` (the card
   stays on its version; a bulk reissue reports it as `aboveMax`). Stamps are never dropped.
 
+## Add a wallets block
+
+An optional top-level `wallets` block holds what Apple's model cannot say, for Google and Samsung
+(`docs/design/wallet-providers/architecture.md`, 2.3). Without it nothing changes. Apple output,
+the build key and the Apple release hash ignore it, so editing it never reissues a pass.
+
+```json
+"wallets": {
+  "schema": 1,
+  "roles": { "points": { "field": "points" }, "tier": { "value": "{{level}}" }, "balance": false },
+  "required": ["barcode.format"],
+  "google": { "type": "loyalty", "classKey": "{{event_code}}", "omit": ["backFields.terms"],
+              "images": { "logo": "wallets/google/logo.png" } },
+  "samsung": { "type": "loyalty", "subType": "others", "images": { "main": "wallets/samsung/main.png" } }
+}
+```
+
+- `roles`: a role is `{ "field": key }`, `{ "value": expression }` (the manifest expression
+  language) or `false` (absent on purpose). Names: `title`, `eventStart`, `memberId`, `tier`,
+  `points`, `balance`, `validUntil` and the rest of the table in the design (2.2).
+- `required`: capability ids that must be native on a wallet, else it is blocked (`type`,
+  `barcode.format`, `role.points`, `image.strip`; the full list is `CAPABILITY_IDS` in
+  `src/passkit/wallets/vocab.ts`). `<wallet>.omit`: field paths (`backFields.terms`), field keys or
+  capability ids left out on purpose. `<wallet>.type`: a type, or `off` to skip that wallet.
+- `<wallet>.images`: slot to `wallets/<google|samsung>/<name>.png`. Slots: Google `logo`, `hero`,
+  `thumbnail`; Samsung `logo`, `main`, `background`. The files are kept in the
+  version and never signed into a pass. Other names under `wallets/` are refused.
+- Unknown keys are errors. Issues are `WALLETS_*`, plus `WALLET_ART_PNG` for a file that is not a
+  PNG (`src/passkit/template/wallets/`).
+
 ## Add scan actions
 
 A top-level `scan.actions` array (1 to 6) lists what staff can do with the pass at a scanner.

@@ -1,4 +1,5 @@
 import type { PassJson, TemplateManifest, ValidationIssue } from '../types.ts';
+import { accessIssues } from './access/index.ts';
 import {
   actionIssues,
   isDateTime,
@@ -123,7 +124,11 @@ export function scanManifestIssues(
   manifest: TemplateManifest,
   options: { passJson?: PassJson; assetNames?: string[] } = {},
 ): ValidationIssue[] {
-  const issues = [...scanIssues(manifest), ...nfcIssues(manifest, options.passJson)];
+  const issues = [
+    ...scanIssues(manifest),
+    ...accessIssues(manifest),
+    ...nfcIssues(manifest, options.passJson),
+  ];
   if (isRecord((manifest as { scan?: unknown }).scan))
     issues.push(...scanDisplayIssues(manifest, options));
   return issues;

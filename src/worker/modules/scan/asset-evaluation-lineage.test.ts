@@ -8,7 +8,8 @@ import { setTemplateStatus } from '../templates/testing.ts';
 import { act } from './act.ts';
 import { assetActorFor } from './asset-test-fixtures.ts';
 import { captureScanEpochs } from './authority-checks.ts';
-import { liveAttachment, publishScan, scanHub } from './live.ts';
+import { clockedHub } from './clocked-hub-test-fixtures.ts';
+import { liveAttachment, publishScan } from './live.ts';
 import type { LiveAttachment } from './live-auth.ts';
 import { getScanner, scannerEpochsOf } from './repo-device.ts';
 import type { Candidate } from './repo-lookup.ts';
@@ -25,8 +26,7 @@ const png = makePng(270, 270);
 const encoded = btoa(String.fromCharCode(...png));
 
 beforeAll(async () => {
-  // Real clock: the live hub's ring and photo streams are windowed by wall time.
-  kit = await setupScanKit({ clockStart: Date.now() });
+  kit = await setupScanKit();
   template = await kit.scanTemplate('Live asset lineage', {
     actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
   });
@@ -68,7 +68,7 @@ async function setup() {
 
 async function publishedRows(fixture: { attachment: LiveAttachment; source: { id: string } }) {
   await kit.settle();
-  const hub = scanHub(kit.ctx, kit.org.id, 'live');
+  const hub = clockedHub(kit.ctx, kit.clock, kit.org.id, 'live');
   const snapshot = await hub.snapshot(fixture.attachment);
   return snapshot.rows.filter((row) => row.scannerId === fixture.source.id);
 }

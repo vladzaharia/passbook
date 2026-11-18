@@ -56,6 +56,7 @@ export const RATE_LIMITS = [
   'RL_SCAN',
   'RL_SCAN_LOOKUP',
   'RL_SCAN_ORG',
+  'RL_GOOGLE_CALLBACK',
 ] as const satisfies readonly RateLimitName[];
 
 /**
