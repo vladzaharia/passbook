@@ -19,7 +19,7 @@ import {
   type RecordCache,
   recordPage,
 } from './feed-console-page.ts';
-import { csvRow, EXPORT_COLUMNS, exportCells } from './feed-csv.ts';
+import { csvRow, exportCells, exportColumns } from './feed-csv.ts';
 import {
   assertFeedKey,
   type ConsoleAuthority,
@@ -173,6 +173,8 @@ export interface ExportRequest {
   orgId: string;
   from: number;
   to: number;
+  /** Adds the local time column. */
+  timeZone?: string;
   filter: Omit<ScanLogFilter, 'mode' | 'orgId' | 'from' | 'to' | 'cursor' | 'limit' | 'now'>;
 }
 
@@ -248,7 +250,7 @@ export async function exportScans(
         if (!started) {
           await assertConsoleAuthority(ctx, actor);
           started = true;
-          controller.enqueue(encoder.encode(`﻿${csvRow(EXPORT_COLUMNS)}`));
+          controller.enqueue(encoder.encode(`﻿${csvRow(exportColumns(req.timeZone))}`));
           return;
         }
         for (;;) {
@@ -256,7 +258,7 @@ export async function exportScans(
           cursor = page.nextCursor ?? undefined;
           if (page.items.length) {
             controller.enqueue(
-              encoder.encode(page.items.map((row) => csvRow(exportCells(row))).join('')),
+              encoder.encode(page.items.map((row) => csvRow(exportCells(row, req.timeZone))).join('')),
             );
             if (!cursor) controller.close();
             return;
