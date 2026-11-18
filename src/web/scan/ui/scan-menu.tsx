@@ -7,6 +7,7 @@ import {
   Hand,
   LogOut,
   MonitorSmartphone,
+  Nfc,
   Timer,
   Unplug,
   UserRoundCog,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useState } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
+import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,6 +91,8 @@ export interface ScanMenuProps {
   onSwitchStaff?: () => void;
   /** A paired phone can face a customer; absent for terminals and admin sessions. */
   flip?: { api: ScanApi; refetch: () => Promise<void> };
+  /** Assign tag: absent when this scanner cannot assign; disabled offline. */
+  tags?: { offline: boolean; onSelect: () => void } | null;
   onShift: () => void;
   onEndShift: () => void;
   /** The last item: a paired device unpairs, an admin stops scanning as admin. */
@@ -115,6 +119,19 @@ export function ScanMenu(p: ScanMenuProps) {
             <Activity aria-hidden />
             This shift
           </DropdownMenuItem>
+          {p.tags ? (
+            <DropdownMenuItem
+              disabled={p.tags.offline}
+              onSelect={p.tags.onSelect}
+              data-testid="scan-menu-assign-tag"
+            >
+              <Nfc aria-hidden />
+              {SCAN_TAG_COPY.menu.assign}
+              {p.tags.offline ? (
+                <span className="ms-auto text-xs text-fg-muted">{SCAN_TAG_COPY.menu.offline}</span>
+              ) : null}
+            </DropdownMenuItem>
+          ) : null}
           <CheckItem icon={<Volume2 aria-hidden />} checked={p.sound} onCheckedChange={p.onSound}>
             Sound
           </CheckItem>

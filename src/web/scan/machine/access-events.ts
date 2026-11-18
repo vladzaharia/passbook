@@ -3,6 +3,7 @@
  * a resolved outcome, and the three access beats. `types.ts` takes them in the next contract PR;
  * until then the casts below are the only place that knows.
  */
+import type { AssignEvent } from './assign-state.ts';
 import type { BuddyBeat, Draft, ScanEvent, ScanOutcome } from './types.ts';
 
 export type AccessBeat = 'gate' | 'bye' | 'relent';
@@ -21,12 +22,12 @@ export type AccessEvent =
       by: { staff: string | null; device: string | null };
     };
 
-export type MachineEvent = ScanEvent | AccessEvent;
+export type MachineEvent = ScanEvent | AccessEvent | AssignEvent;
 
 export type DirectionDraft = Draft & { direction?: 'in' | 'out' };
 
 /** An outcome a desk turned: who let them in. */
 export type ResolvedOutcome = ScanOutcome & { resolvedBy?: string };
 
-export const isAccessEvent = (event: MachineEvent): event is AccessEvent =>
+export const isAccessEvent = (event: ScanEvent | AccessEvent): event is AccessEvent =>
   event.type === 'turn' || event.type === 'resolved';

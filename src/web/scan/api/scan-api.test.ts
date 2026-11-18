@@ -275,8 +275,79 @@ describe('createScanApi', () => {
         'staffSignOut',
         'stats',
         'summary',
+        'tagBind',
+        'tagComplete',
+        'tagDecline',
+        'tagInspect',
+        'tagPending',
+        'tagUndo',
         'undo',
       ].sort(),
     );
+  });
+
+  describe('tags', () => {
+    const tag = { uid: '04a2b3c4', tech: 'a' as const, source: 'native' as const };
+    const bindBody = {
+      idempotencyKey: '01900000-0000-7000-8000-000000000001',
+      tag,
+      card: { code: 'CARD-1', method: 'camera' as const },
+      preview: true,
+      binding: 'user' as const,
+    };
+
+    it('posts each call to its route with the csrf token', async () => {
+      const { api, calls } = setup(() =>
+        json({
+          state: 'new',
+          hint: 'B3C4',
+          assurance: 'basic',
+          bound: null,
+          lostAt: null,
+          boundAt: null,
+          boundByName: null,
+        }),
+      );
+      await api.tagInspect({ tag });
+      await api.tagUndo('b/1').catch(() => undefined);
+      await api.tagDecline('e1').catch(() => undefined);
+      expect(calls.map((c) => c.url)).toEqual([
+        '/api/v1/scan/tags/inspect',
+        '/api/v1/scan/tags/bindings/b%2F1/undo',
+        '/api/v1/scan/tag-enrollments/e1/decline',
+      ]);
+      expect(header(calls[0]?.init as RequestInit, 'x-csrf-token')).toBe('csrf-1');
+    });
+
+    it('keeps the binding scope in a bind body even for an admin, who is otherwise scoped', async () => {
+      const calls: { url: string; init: RequestInit }[] = [];
+      const api = createScanApi({
+        fetch: (async (url: string, init: RequestInit) => {
+          calls.push({ url, init });
+          return json({});
+        }) as unknown as typeof fetch,
+        csrf: () => 'c',
+        scope: () => ({ orgId: 'o1', timeZone: 'UTC' }),
+      });
+      await api.tagBind(bindBody).catch(() => undefined);
+      expect(JSON.parse(calls[0]?.init.body as string).binding).toBe('user');
+    });
+
+    it('reads the pending request and a null one', async () => {
+      const { api, calls } = setup(() => json({ enrollment: null }));
+      expect(await api.tagPending()).toEqual({ enrollment: null });
+      expect(calls[0]?.url).toBe('/api/v1/scan/tag-enrollments/pending');
+      expect(calls[0]?.init.method).toBe('GET');
+    });
+
+    it('carries the server code of a refusal for the machine', async () => {
+      const { api } = setup(() =>
+        json({ code: 'TAG_HELD_BY_OTHER', title: 'held' }, { status: 409 }),
+      );
+      await expect(api.tagBind(bindBody)).rejects.toMatchObject({
+        status: 409,
+        code: 'TAG_HELD_BY_OTHER',
+      });
+    });
   });
 });

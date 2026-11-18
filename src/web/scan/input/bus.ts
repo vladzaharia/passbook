@@ -22,6 +22,7 @@ export function createBus(deps: BusDeps) {
       const input: ScanInput = {
         method: raw.method,
         ...(n.code !== undefined ? { code: n.code } : {}),
+        ...(n.tag ? { tag: n.tag } : {}),
         ...(n.passId !== undefined ? { passId: n.passId } : {}),
         ...(raw.format ? { format: raw.format } : {}),
         ...(raw.box ? { box: raw.box } : {}),

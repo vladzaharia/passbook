@@ -1,16 +1,35 @@
 import { z } from 'zod';
+import type { TagRead } from '../../../shared/contracts/nfc-tags.ts';
 import type { RawRead } from './types.ts';
+
+/** The bridge versions this page speaks. The app answers `ready` with the highest it shares. */
+export const BRIDGE_VERSIONS = [1, 2] as const;
+export const TAG_READ_MAX_MS = 60_000;
 
 interface Bridge {
   postMessage(message: string): void;
   onmessage: ((event: { data: string }) => void) | null;
 }
+const NativeTag = z.object({
+  uid: z
+    .string()
+    .regex(/^(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{14}|[0-9a-fA-F]{20})$/)
+    .optional(),
+  uidRandom: z.boolean().optional(),
+  tech: z.enum(['a', 'b', 'isodep', 'unknown']),
+  ndef: z.object({ type: z.enum(['U', 'T']), value: z.string().min(1).max(1024) }).optional(),
+});
 const Scan = z.discriminatedUnion('source', [
   z.object({
     source: z.literal('barcode'),
     id: z.string().min(1).max(100),
     value: z.string().min(1).max(2048),
     method: z.enum(['wedge', 'nfc']).optional(),
+  }),
+  z.object({
+    source: z.literal('nfc-tag'),
+    id: z.string().min(1).max(100),
+    tag: NativeTag,
   }),
   z.object({
     source: z.literal('apple-vas'),
@@ -47,12 +66,19 @@ export function connectNativeReader(
     cancelled(inputId: string): void;
     unsupported(): void;
     capabilities?(value: Record<string, unknown>): void;
+    /** A one-shot `tagRead` ended without a tag (sheet cancelled or timed out). */
+    tagEnded?(why: 'cancelled' | 'timeout'): void;
   },
   bridge = (globalThis as { PassBookNative?: Bridge }).PassBookNative,
 ) {
   if (!bridge) return null;
   let pending: { nativeId: string; inputId: string } | null = null;
-  const send = (message: object) => bridge.postMessage(JSON.stringify({ version: 1, ...message }));
+  /** Until the app answers `ready`, everything but `hello` speaks v1. */
+  let version: 1 | 2 = 1;
+  let tagFormats = false;
+  let tagSeq = 0;
+  let tagPending: string | null = null;
+  const send = (message: object) => bridge.postMessage(JSON.stringify({ version, ...message }));
   let customerDisplayAvailable = false;
   let lastCustomerStatus: {
     status: CustomerDisplayStatus;
@@ -82,7 +108,10 @@ export function connectNativeReader(
     } catch {
       return;
     }
-    if (message?.version !== 1) return;
+    if (message?.version !== 1 && message?.version !== 2) return;
+    if (message.event === 'ready' && message.version === 2) version = 2;
+    // A message newer than the handshake is not from the app we agreed a version with.
+    if (message.version > version) return;
     if (message.event === 'ready' || message.event === 'capabilities') {
       const capabilities = z.record(z.string(), z.unknown()).safeParse(message.capabilities);
       if (!capabilities.success) return;
@@ -99,6 +128,10 @@ export function connectNativeReader(
     }
     if (message.event === 'timeout' || message.event === 'cancelled') {
       cancel();
+      if (tagPending) {
+        tagPending = null;
+        options.tagEnded?.(message.event);
+      }
       return;
     }
     if (message.event !== 'scan') return;
@@ -106,6 +139,25 @@ export function connectNativeReader(
     if (!parsed.success) return;
     cancel();
     const scan = parsed.data;
+    if (scan.source === 'nfc-tag') {
+      // Tags need bridge v2. A v1 app never sends one, and a stray one is refused, not read.
+      if (version < 2) {
+        sendResult(scan.id, 'error');
+        return;
+      }
+      tagPending = null;
+      const tag: TagRead = {
+        ...(scan.tag.uid ? { uid: scan.tag.uid.toLowerCase() } : {}),
+        ...(scan.tag.uidRandom !== undefined ? { uidRandom: scan.tag.uidRandom } : {}),
+        tech: scan.tag.tech,
+        ...(scan.tag.ndef ? { ndef: scan.tag.ndef } : {}),
+        source: 'native',
+      };
+      const tagInput = options.read({ method: 'nfc', tag });
+      if (!tagInput) sendResult(scan.id, 'error');
+      else pending = { nativeId: scan.id, inputId: tagInput };
+      return;
+    }
     if (scan.source === 'apple-vas') {
       sendResult(scan.id, 'error');
       options.unsupported();
@@ -116,10 +168,35 @@ export function connectNativeReader(
     else pending = { nativeId: scan.id, inputId };
   };
   bridge.onmessage = onMessage;
-  send({ op: 'hello' });
+  bridge.postMessage(JSON.stringify({ version: 2, op: 'hello', versions: [...BRIDGE_VERSIONS] }));
   send({ op: 'stop' });
+  const formats = () => (version >= 2 && tagFormats ? { formats: ['wallet-vas', 'tag'] } : {});
   return {
-    start: () => send({ op: 'start' }),
+    /** The app speaks v2: tags can be read. */
+    tags: () => version >= 2,
+    /** Continuous tag reading with `start`/`stop` (Android). Takes effect on the next `start`. */
+    setTagReading(on: boolean) {
+      tagFormats = on;
+    },
+    /** One tag read, for readers that open a sheet per read (iOS). Null when the app is v1. */
+    tagRead(prompt: string, timeoutMs = TAG_READ_MAX_MS): string | null {
+      if (version < 2) return null;
+      if (tagPending) send({ op: 'tagCancel', id: tagPending });
+      tagPending = `tag-${++tagSeq}`;
+      send({
+        op: 'tagRead',
+        id: tagPending,
+        prompt,
+        timeoutMs: Math.min(timeoutMs, TAG_READ_MAX_MS),
+      });
+      return tagPending;
+    },
+    tagCancel() {
+      if (!tagPending) return;
+      send({ op: 'tagCancel', id: tagPending });
+      tagPending = null;
+    },
+    start: () => send({ op: 'start', ...formats() }),
     result(inputId: string, outcome: ReaderOutcome) {
       if (pending?.inputId !== inputId) return false;
       sendResult(pending.nativeId, outcome);
@@ -150,13 +227,14 @@ export function connectNativeReader(
     readNfc: () => send({ op: 'nfcRead' }),
     stop: () => {
       cancel();
-      send({ op: 'stop' });
+      tagPending = null;
+      send({ op: 'stop', ...formats() });
       lastCustomerStatus = { status: 'ready', inputId: null };
     },
     dispose: () => {
       if (bridge.onmessage !== onMessage) return;
       cancel();
-      send({ op: 'stop' });
+      send({ op: 'stop', ...formats() });
       bridge.onmessage = null;
       lastCustomerStatus = { status: 'ready', inputId: null };
     },

@@ -1,4 +1,7 @@
+import { Nfc } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
+import { TAG_EXTRA_COPY } from '../assign/copy.ts';
 import { holdVerbs } from '../machine/access-view.ts';
 import type { ScanOutcome } from '../machine/types.ts';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
@@ -11,12 +14,19 @@ export function DoorDock({
   open,
   onError,
   inside,
+  tags,
 }: {
   outcome: ScanOutcome | null;
   runtime: ScanRuntime;
   open: (sheet: boolean) => void;
   onError: (message: string) => void;
   inside?: { count: number; onOpen: () => void };
+  /** Tags: Tap to read (iPhone), Add tag on a result, Assign tag on an unknown tag. */
+  tags?: {
+    tapToRead: (() => void) | null;
+    addTag: (() => void) | null;
+    assignUnknown: (() => void) | null;
+  };
 }) {
   const { state, dispatch } = useScanMachine();
   const [torch, setTorch] = useState(false);
@@ -27,6 +37,7 @@ export function DoorDock({
     return (
       <DoorThumbRow
         {...(inside ? { inside } : {})}
+        {...(tags?.tapToRead ? { tapToRead: tags.tapToRead } : {})}
         canTorch={runtime.camera.hasTorch()}
         torchOn={torch}
         onTorch={() => {
@@ -39,9 +50,22 @@ export function DoorDock({
     );
   const check = outcome.reason === 'check_required' && outcome.action;
   const verbs = check ? [] : holdVerbs(outcome);
-  const more = Boolean(check) || verbs.length > 0;
+  const unknown = tags?.assignUnknown ?? null;
+  const more = Boolean(check) || verbs.length > 0 || Boolean(unknown) || Boolean(tags?.addTag);
   return (
     <>
+      {unknown ? (
+        <DockButton primary variant="filled" data-testid="scan-assign-unknown" onClick={unknown}>
+          <Nfc aria-hidden size={20} />
+          {SCAN_TAG_COPY.menu.assign}
+        </DockButton>
+      ) : null}
+      {tags?.addTag ? (
+        <DockButton data-testid="scan-add-tag" onClick={tags.addTag}>
+          <Nfc aria-hidden size={20} />
+          {TAG_EXTRA_COPY.addTag}
+        </DockButton>
+      ) : null}
       {check ? (
         <DockButton
           onClick={() => dispatch({ type: 'override', actionId: outcome.action?.id ?? '' })}
@@ -63,8 +87,8 @@ export function DoorDock({
         </DockButton>
       ))}
       <DockButton
-        primary
-        variant="filled"
+        primary={!unknown}
+        variant={unknown ? 'gray' : 'filled'}
         shape={more ? 'fixed' : undefined}
         onClick={() => dispatch({ type: 'dismiss' })}
       >

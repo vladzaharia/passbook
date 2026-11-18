@@ -1,4 +1,5 @@
 /** Reducer plumbing shared by the reduce-*.ts files. Not part of the frozen contract. */
+import type { AssignState, AssignStrip, PendingRequest } from './assign-state.ts';
 import type { Cmd, ScanMachineDeps, ScanState } from './types.ts';
 
 /**
@@ -16,6 +17,12 @@ export interface MachineState extends ScanState {
   slowed?: boolean;
   /** A read arrived while `paused`: after its verdict the loop returns to that pause. */
   pausedReason?: 'hidden' | 'camera_lost';
+  /** The assign loop (tags): open from the menu, a result card, an unknown tag or an admin's request. */
+  assign?: AssignState | null;
+  /** What the strip says after an assign card closed. */
+  assignStrip?: AssignStrip | null;
+  /** An admin's request waiting for this scanner, or showing. */
+  tagRequest?: PendingRequest | null;
 }
 
 export interface Out {

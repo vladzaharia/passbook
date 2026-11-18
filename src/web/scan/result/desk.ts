@@ -1,5 +1,6 @@
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
-import type { ScanEvent, ScanState } from '../machine/types.ts';
+import { localOutcome } from '../machine/outcome.ts';
+import type { Counts, ScanEvent, ScanOutcome, ScanState } from '../machine/types.ts';
 
 /** What the result card's desk regions need from the machine: the open picker and the PIN's managers. */
 export function deskOf(
@@ -18,5 +19,19 @@ export function deskOf(
     managers: (staffList ?? []).filter((m) => m.role === 'manager'),
     onApprove: (staffId: string | undefined, pin: string) =>
       dispatch({ type: 'approve', ...(staffId ? { staffId } : {}), pin }),
+  };
+}
+
+/** What the result card shows for the loop: a verdict, or the desk's open member as a `ready` outcome. */
+export function resultOf(loop: ScanState['loop'], counts: Counts): ScanOutcome | null {
+  if (loop.s === 'verdict') return loop.outcome;
+  if (loop.s !== 'member') return null;
+  return {
+    ...localOutcome('system', 'server', counts),
+    kind: 'ready',
+    reason: 'choose',
+    card: loop.card,
+    display: loop.card.display,
+    local: false,
   };
 }

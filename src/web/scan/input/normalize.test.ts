@@ -49,3 +49,35 @@ describe('normalizeRead', () => {
     expect(normalizeRead({ method: 'manual' }, ORIGINS).local).toBe('not_found');
   });
 });
+
+describe('tag reads', () => {
+  const read = (tag: Parameters<typeof normalizeRead>[0]['tag']) =>
+    normalizeRead({ method: 'nfc', tag }, []);
+
+  it('signs a read t:<uid>, lowercase, so both readers dedupe together', () => {
+    expect(read({ uid: '04A2B3C4', tech: 'a', source: 'native' }).sig).toBe('t:04a2b3c4');
+    expect(read({ uid: '04a2b3c4', tech: 'unknown', source: 'webnfc' }).sig).toBe('t:04a2b3c4');
+  });
+
+  it('signs an NDEF-only read with a hash that differs per record and is stable', () => {
+    const a = read({ tech: 'unknown', source: 'webnfc', ndef: { type: 'T', value: 'abc' } }).sig;
+    const b = read({ tech: 'unknown', source: 'webnfc', ndef: { type: 'T', value: 'abd' } }).sig;
+    expect(a).toMatch(/^t:n[0-9a-f]{8}$/);
+    expect(a).not.toBe(b);
+    expect(read({ tech: 'unknown', source: 'webnfc', ndef: { type: 'T', value: 'abc' } }).sig).toBe(
+      a,
+    );
+  });
+
+  it('never puts the tag in the code and keeps it for the request', () => {
+    const n = read({ uid: '04a2b3c4', tech: 'a', source: 'native' });
+    expect(n.code).toBeUndefined();
+    expect(n.tag?.uid).toBe('04a2b3c4');
+  });
+
+  it('refuses an empty read locally but keeps it so assign can say why', () => {
+    const n = read({ tech: 'unknown', source: 'webnfc' });
+    expect(n.local).toBe('not_found');
+    expect(n.tag).toBeDefined();
+  });
+});
