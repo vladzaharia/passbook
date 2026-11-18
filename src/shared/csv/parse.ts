@@ -9,11 +9,10 @@ export type CsvErrorCode =
   | 'IMPORT_TOO_MANY_COLUMNS';
 
 export class CsvError extends Error {
-  constructor(
-    readonly code: CsvErrorCode,
-    message: string,
-  ) {
+  readonly code: CsvErrorCode;
+  constructor(code: CsvErrorCode, message: string) {
     super(message);
+    this.code = code;
     this.name = 'CsvError';
   }
 }
@@ -55,8 +54,8 @@ function decode(input: string | Uint8Array, maxBytes: number): string {
       bytes.length >= 4 &&
       bytes[0] === 0x50 &&
       bytes[1] === 0x4b &&
-      bytes[2] <= 0x08 &&
-      bytes[3] <= 0x08
+      (bytes[2] ?? 9) <= 0x08 &&
+      (bytes[3] ?? 9) <= 0x08
     ) {
       throw new CsvError('IMPORT_NOT_CSV', 'Save the sheet as CSV first.');
     }
