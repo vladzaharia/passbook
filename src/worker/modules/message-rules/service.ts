@@ -6,7 +6,12 @@ import type {
   UpdateMessageRuleBody,
 } from '../../../shared/contracts/message-rules.ts';
 import { batch } from '../../platform/db.ts';
-import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  RateLimitedError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { insertAuthorizedBroadcastStmt } from '../broadcasts/repo.ts';
@@ -18,6 +23,7 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import type { Actor } from '../passes/service.ts';
 import { anchorOf, offsetOf, toRuleDto } from './dto.ts';
 import * as repo from './repo.ts';
+import { recentTestSends } from './repo.ts';
 import { checkRuleTemplates } from './validate.ts';
 import { firstCheckAt } from './windows.ts';
 
@@ -43,6 +49,8 @@ function valuesOf(body: Body, now: number): repo.RuleValues {
     nextCheckAt: body.on ? firstCheckAt(body, now) : null,
   };
 }
+
+const TEST_SENDS_PER_HOUR = 10;
 
 const capReached = () =>
   new ConflictError(
@@ -249,6 +257,12 @@ export async function testRule(
     throw new NotFoundError('Pass not found for this automatic message.', 'PASS_NOT_FOUND');
   await checkRuleTemplates(ctx, row.org_id, templateIds, anchorOf(row), offsetOf(row));
   const now = ctx.clock.now();
+  // Each test send starts a run: one per rule a minute and ten per person an hour.
+  const recent = await recentTestSends(ctx.env.DB, id, actor.id, now);
+  if ((recent?.rule ?? 0) >= 1)
+    throw new RateLimitedError(60, 'Test sent a moment ago. Wait a minute.');
+  if ((recent?.actor ?? 0) >= TEST_SENDS_PER_HOUR)
+    throw new RateLimitedError(600, 'Too many test sends. Try again later.');
   const broadcastId = ctx.ids.id();
   const [inserted] = await batch(ctx.env.DB, [
     insertAuthorizedBroadcastStmt(

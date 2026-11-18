@@ -3,7 +3,7 @@ import { jobGrant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { safeTargetFilter } from '../broadcasts/apply.ts';
-import { insertBroadcastStmt } from '../broadcasts/repo.ts';
+import { insertRuleRunStmt } from '../broadcasts/repo.ts';
 import { creatorLive } from '../broadcasts/repo-creator.ts';
 import { countTargeted } from '../broadcasts/repo-target.ts';
 import {
@@ -14,6 +14,7 @@ import {
   runningRuleBroadcasts,
   setNextCheck,
 } from './repo.ts';
+import { LEASE_MS } from './tick.ts';
 import { checkRuleTemplates } from './validate.ts';
 import { HOUR_CHECK_MS, nextCheckAt, type RuleTiming, ruleWindow, sendDayOpen } from './windows.ts';
 
@@ -74,9 +75,15 @@ export async function checkRule(
   job: { ruleId: string; at: number },
 ): Promise<void> {
   const db = ctx.env.DB;
+  const now = ctx.clock.now();
+  // A job redelivered after its lease would compute a stale window; the next tick makes a fresh one.
+  if (now - job.at > LEASE_MS) {
+    ctx.log.info('message_rule.stale_job', { ruleId: job.ruleId, code: 'RULE_JOB_STALE' });
+    return;
+  }
   const row = await getRule(db, job.ruleId, null);
   if (row?.state !== 'on') return;
-  const now = ctx.clock.now();
+  const version = row.version;
   const rule = timingOf(row);
   if (!(await allowed(ctx, row))) return;
   const templateIds = JSON.parse(row.template_ids) as string[];
@@ -95,7 +102,7 @@ export async function checkRule(
   }
   // Day rules send only inside their day; a missed day stays unsent so the text is never wrong.
   if (rule.offset.unit === 'day' && !sendDayOpen(rule, job.at)) {
-    await setNextCheck(db, row.id, Math.max(nextCheckAt(rule, now), now + 1000));
+    await setNextCheck(db, row.id, version, Math.max(nextCheckAt(rule, now), now + 1000));
     return;
   }
   const running = await runningRuleBroadcasts(db, row.id, row.org_id, row.mode);
@@ -109,7 +116,12 @@ export async function checkRule(
       orgId: row.org_id,
       code: 'RULE_BACKPRESSURE',
     });
-    await setNextCheck(db, row.id, now + (rule.offset.unit === 'hour' ? HOUR_CHECK_MS : DEFER_MS));
+    await setNextCheck(
+      db,
+      row.id,
+      version,
+      now + (rule.offset.unit === 'hour' ? HOUR_CHECK_MS : DEFER_MS),
+    );
     return;
   }
   const window = ruleWindow(rule, kind, job.at);
@@ -132,25 +144,44 @@ export async function checkRule(
   const targeted = await countTargeted(db, filter, now);
   let broadcastId: string | undefined;
   if (targeted > 0) {
-    await insertBroadcastStmt(db, {
-      id: ctx.ids.id(),
-      orgId: row.org_id,
-      mode: row.mode,
-      kind: 'message',
-      name: row.name,
-      state: 'scheduled',
-      target,
-      patch: { message: row.message },
-      notify: true,
-      at: now,
-      clearAfter: row.clear_after,
-      ruleId: row.id,
-      windowKey: String(job.at),
-      actor: { type: row.created_by_type ?? 'system', id: row.created_by_id },
-      now,
-    }).run();
+    const inserted = await insertRuleRunStmt(
+      db,
+      {
+        id: ctx.ids.id(),
+        orgId: row.org_id,
+        mode: row.mode,
+        kind: 'message',
+        name: row.name,
+        state: 'scheduled',
+        target,
+        patch: { message: row.message },
+        notify: true,
+        at: now,
+        clearAfter: row.clear_after,
+        ruleId: row.id,
+        windowKey: String(job.at),
+        actor: { type: row.created_by_type ?? 'system', id: row.created_by_id },
+        now,
+      },
+      { org: ORG_RUNNING_CAP, platform: PLATFORM_RUNNING_CAP },
+    ).run();
     broadcastId = (await runByWindow(db, row.id, String(job.at)))?.id;
+    if (!broadcastId && inserted.meta.changes === 0) {
+      // Another rule took the last slot between the count above and the insert.
+      ctx.log.info('message_rule.deferred', {
+        ruleId: row.id,
+        orgId: row.org_id,
+        code: 'RULE_BACKPRESSURE',
+      });
+      await setNextCheck(
+        db,
+        row.id,
+        version,
+        now + (rule.offset.unit === 'hour' ? HOUR_CHECK_MS : DEFER_MS),
+      );
+      return;
+    }
     ctx.log.info('message_rule.run_created', { ruleId: row.id, orgId: row.org_id, targeted });
   }
-  await setNextCheck(db, row.id, nextCheckAt(rule, now), broadcastId);
+  await setNextCheck(db, row.id, version, nextCheckAt(rule, now), broadcastId);
 }

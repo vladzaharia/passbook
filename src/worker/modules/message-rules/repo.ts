@@ -233,34 +233,33 @@ export async function listRules(
   return { rows: page, nextCursor: rows.length > f.limit && last ? last.id : null };
 }
 
-/** Due rules, soonest first. */
-export const dueRuleIds = (db: D1Database, now: number, limit: number) =>
+/**
+ * Claims due rules in one statement: overlapping ticks cannot both get a rule. A job that never
+ * runs is claimed again after `until`.
+ */
+export const leaseDueRules = (db: D1Database, now: number, until: number, limit: number) =>
   all<{ id: string }>(
     db,
-    `SELECT id FROM message_rules WHERE state = 'on' AND next_check_at <= ? ORDER BY next_check_at LIMIT ?`,
-    [now, limit],
-  );
-
-/** The lease: a job that never runs is claimed again after `until`. */
-export const leaseRules = (db: D1Database, ids: readonly string[], now: number, until: number) =>
-  run(
-    db,
     `UPDATE message_rules SET next_check_at = ?, checked_at = ?
-     WHERE state = 'on' AND id IN (SELECT value FROM json_each(?))`,
-    [until, now, JSON.stringify(ids)],
+     WHERE state = 'on' AND next_check_at <= ? AND id IN
+       (SELECT id FROM message_rules WHERE state = 'on' AND next_check_at <= ? ORDER BY next_check_at LIMIT ?)
+     RETURNING id`,
+    [until, now, now, now, limit],
   );
 
+/** Only at the version the check read: an edit made meanwhile keeps its own schedule. */
 export const setNextCheck = (
   db: D1Database,
   id: string,
+  version: number,
   nextCheckAt: number,
   broadcastId?: string,
 ) =>
   run(
     db,
     `UPDATE message_rules SET next_check_at = ?, last_broadcast_id = COALESCE(?, last_broadcast_id)
-     WHERE id = ? AND state = 'on'`,
-    [nextCheckAt, broadcastId ?? null, id],
+     WHERE id = ? AND state = 'on' AND version = ?`,
+    [nextCheckAt, broadcastId ?? null, id, version],
   );
 
 /** The runner pauses a rule with a code; saving it again resumes. */
@@ -273,16 +272,17 @@ export const pauseWithCode = (db: D1Database, id: string, code: string, now: num
     [code, now, id],
   );
 
-/** Rule runs still waiting or sending: for this rule, for the org and mode, and platform-wide. */
+/** Rule runs waiting or sending: for this rule, for the org and mode, and platform-wide. */
 export const runningRuleBroadcasts = (db: D1Database, ruleId: string, orgId: string, mode: Mode) =>
   first<{ own: number; org: number; platform: number }>(
     db,
     `SELECT
        COALESCE(SUM(rule_id = ?), 0) AS own,
-       COALESCE(SUM(org_id = ? AND mode = ? AND state = 'sending'), 0) AS org,
-       COALESCE(SUM(state = 'sending'), 0) AS platform
+       COALESCE(SUM(org_id = ? AND mode = ?), 0) AS org,
+       COUNT(*) AS platform
      FROM broadcasts
-     WHERE rule_id IS NOT NULL AND parent_id IS NULL AND state IN ('scheduled', 'sending')`,
+     WHERE rule_id IS NOT NULL AND parent_id IS NULL AND state IN ('scheduled', 'sending')
+       AND window_key NOT LIKE 'test:%'`,
     [ruleId, orgId, mode],
   );
 
@@ -302,3 +302,18 @@ export const runByWindow = (db: D1Database, ruleId: string, windowKey: string) =
     ruleId,
     windowKey,
   ]);
+
+/** Test sends of this rule in the last minute, and by this actor in the last hour. */
+export const recentTestSends = (
+  db: D1Database,
+  ruleId: string,
+  actorId: string | null,
+  now: number,
+) =>
+  first<{ rule: number; actor: number }>(
+    db,
+    `SELECT COALESCE(SUM(rule_id = ? AND created_at > ?), 0) AS rule,
+       COALESCE(SUM(created_by_id IS ? ), 0) AS actor
+     FROM broadcasts WHERE rule_id IS NOT NULL AND window_key LIKE 'test:%' AND created_at > ?`,
+    [ruleId, now - 60_000, actorId, now - 3_600_000],
+  );

@@ -50,7 +50,7 @@ async function authorityOf(
   const ctx = svc(c);
   const auth = authOf(c);
   const row = await requireRule(ctx, id, null);
-  if (auth.kind === 'api_key' && row.mode !== modeOf(auth))
+  if (row.mode !== modeOf(auth))
     throw new NotFoundError('Automatic message not found.', 'RULE_NOT_FOUND');
   try {
     return { authority: await tenantAuthorityOf(ctx, auth, row.org_id, capability), row };

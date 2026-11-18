@@ -103,8 +103,9 @@ async function applyOne(
       // One notifying slot a day stays free for operational updates; a pass at the rule limit waits
       // for a later check inside the window and is never sent silently.
       const budget = await pushBudgetOf(ctx, passId);
-      if (budget.used >= Math.min(budget.limit, RULE_BUDGET_CAP) - 1) return 'deferred';
-      claimed = await claimFire(ctx.env.DB, {
+      const slots = Math.min(budget.limit, RULE_BUDGET_CAP) - 1;
+      if (budget.used >= slots) return 'deferred';
+      const claim = await claimFire(ctx.env.DB, {
         ruleId: rule.ruleId,
         broadcastId: row.id,
         passId,
@@ -112,7 +113,10 @@ async function applyOne(
         mode: row.mode,
         window: rule.window,
         now: ctx.clock.now(),
+        slots,
       });
+      if (claim === 'full') return 'deferred';
+      claimed = claim === 'claimed';
       if (!claimed) return { ...base, outcome: 'unchanged' };
     }
     const clearing = row.kind === 'message' && String(patch.message ?? '').trim() === '';

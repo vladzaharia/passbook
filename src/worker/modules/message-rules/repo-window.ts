@@ -74,29 +74,57 @@ export interface Claim {
   mode: string;
   window: RuleWindow;
   now: number;
+  /** Rule sends one pass may get in 24 hours; counted from the fire rows, in this statement. */
+  slots: number;
 }
 
+const DAY_MS = 86_400_000;
+
 /**
- * Writes the fire row before the publish. False when another run already fired this occurrence;
- * true again for this run's own row, so a retry resumes it (the publish is idempotent).
+ * Writes the fire row before the publish. `duplicate` when another run already fired this
+ * occurrence; `full` when the pass already got `slots` rule sends in 24 hours (counted in the same
+ * statement, so rules racing for one pass cannot both pass); `claimed` also for this run's own row,
+ * so a retry resumes it (the publish is idempotent).
  */
-export async function claimFire(db: D1Database, c: Claim): Promise<boolean> {
+export async function claimFire(
+  db: D1Database,
+  c: Claim,
+): Promise<'claimed' | 'duplicate' | 'full'> {
   const occ = occurrenceSql(c.window);
   const { changes } = await run(
     db,
     `INSERT OR IGNORE INTO message_rule_fires (rule_id, pass_id, occurrence, org_id, mode, broadcast_id, fired_at)
      SELECT ?, ${PASS}.id, ${occ.sql}, ${PASS}.org_id, ${PASS}.mode, ?, ?
-     FROM ${PASS} WHERE ${PASS}.id = ? AND ${PASS}.org_id = ? AND ${PASS}.mode = ? AND ${occ.sql} IS NOT NULL`,
-    [c.ruleId, ...occ.params, c.broadcastId, c.now, c.passId, c.orgId, c.mode, ...occ.params],
+     FROM ${PASS} WHERE ${PASS}.id = ? AND ${PASS}.org_id = ? AND ${PASS}.mode = ? AND ${occ.sql} IS NOT NULL
+       AND (SELECT COUNT(*) FROM message_rule_fires b WHERE b.pass_id = ${PASS}.id AND b.fired_at > ?) < ?`,
+    [
+      c.ruleId,
+      ...occ.params,
+      c.broadcastId,
+      c.now,
+      c.passId,
+      c.orgId,
+      c.mode,
+      ...occ.params,
+      c.now - DAY_MS,
+      c.slots,
+    ],
   );
-  if (changes === 1) return true;
+  if (changes === 1) return 'claimed';
   const own = await first<{ one: number }>(
     db,
     `SELECT 1 AS one FROM message_rule_fires f WHERE f.rule_id = ? AND f.pass_id = ? AND f.broadcast_id = ?
        AND f.occurrence = (SELECT ${occ.sql} FROM ${PASS} WHERE ${PASS}.id = ?)`,
     [c.ruleId, c.passId, c.broadcastId, ...occ.params, c.passId],
   );
-  return own !== null;
+  if (own !== null) return 'claimed';
+  const taken = await first<{ one: number }>(
+    db,
+    `SELECT 1 AS one FROM message_rule_fires f WHERE f.rule_id = ? AND f.pass_id = ?
+       AND f.occurrence = (SELECT ${occ.sql} FROM ${PASS} WHERE ${PASS}.id = ?)`,
+    [c.ruleId, c.passId, ...occ.params, c.passId],
+  );
+  return taken === null ? 'full' : 'duplicate';
 }
 
 /** A pass-level failure: the claim goes, so a later check inside the window retries. */

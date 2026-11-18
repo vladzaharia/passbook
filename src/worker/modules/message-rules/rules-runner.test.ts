@@ -195,14 +195,15 @@ describe('budget and fire claims', () => {
       mode: 'live',
       window,
       now: T0,
+      slots: 2,
     };
-    expect(await claimFire(kit.env.DB, claim)).toBe(true);
-    expect(await claimFire(kit.env.DB, { ...claim, broadcastId: 'b2' })).toBe(false);
-    expect(await claimFire(kit.env.DB, claim)).toBe(true);
+    expect(await claimFire(kit.env.DB, claim)).toBe('claimed');
+    expect(await claimFire(kit.env.DB, { ...claim, broadcastId: 'b2' })).toBe('duplicate');
+    expect(await claimFire(kit.env.DB, claim)).toBe('claimed');
     await check(id);
     expect((await runs(id)).length).toBe(0);
     await releaseFire(kit.env.DB, id, pass.id, 'b1');
-    expect(await claimFire(kit.env.DB, claim)).toBe(true);
+    expect(await claimFire(kit.env.DB, claim)).toBe('claimed');
   });
 });
 
