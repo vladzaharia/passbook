@@ -898,7 +898,7 @@ describe('connectors', () => {
     const res = await call('GET', '/api/v1/connectors');
     expect(res.status).toBe(200);
     const types = res.json.items.map((c: { type: string }) => c.type).sort();
-    expect(types).toEqual(['demo', 'http-json', 'webhook-push']);
+    expect(types).toEqual(['csv-url', 'demo', 'http-json', 'webhook-push']);
     const http = res.json.items.find((c: { type: string }) => c.type === 'http-json');
     expect(http.configSchema.properties.baseUrl).toBeDefined();
     expect(http.secretSchema.properties.token).toBeDefined();
@@ -931,6 +931,7 @@ describe('connector registry authorization', () => {
       );
       expect(list.status).toBe(200);
       expect(list.json.items.map((connector: { type: string }) => connector.type).sort()).toEqual([
+        'csv-url',
         'demo',
         'http-json',
         'webhook-push',

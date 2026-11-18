@@ -200,7 +200,15 @@ describe('broadcast tenant targets and outcomes', () => {
     const pass = await kit.makePass();
     const job = await schedule(kit, { target: { templateIds: [] } });
     await sendable(kit, job.id);
-    await expect(applyChunk(jobCtxOf(kit), job.id, null)).rejects.toThrow(/\[/);
+    // The run ends failed with a code (it never retries forever, never widens to all templates).
+    expect(await applyChunk(jobCtxOf(kit), job.id, null)).toEqual({ nextCursor: null });
+    expect(
+      await first<{ state: string; error_code: string | null }>(
+        kit.env.DB,
+        'SELECT state, error_code FROM broadcasts WHERE id = ?',
+        [job.id],
+      ),
+    ).toEqual({ state: 'failed', error_code: 'BROADCAST_TARGET_INVALID' });
     expect((await getPass(kit.env.DB, pass.id))?.personalization.message).toBeUndefined();
     expect(await versionsOf(kit, pass.id)).toBe(1);
     expect((await listItems(kit.env.DB, job.id, job.orgId, job.mode, { limit: 100 })).rows).toEqual(
