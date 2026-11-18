@@ -142,7 +142,7 @@ export class ScanHub extends DurableObject<AppEnv> {
     // A customer reconnect never replays a previous person's result.
     const cursor = ring.at(-1)?.row.id ?? null;
     if (captured.role === 'customer')
-      return { rows: [], cursor, welcome: recipient.customer.welcome };
+      return { rows: [], cursor, welcome: recipient.customer.welcome, places: undefined };
     const index = after ? ring.findIndex((r) => r.row.id === after) : -1;
     const unseen = ring.slice(index + 1);
     const rows = await liveRowsFor(ctx, recipient, unseen);
