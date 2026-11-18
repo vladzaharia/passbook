@@ -50,38 +50,39 @@ describe('the kick', () => {
     await rig.kit.pass();
     const res = await request('POST', '/api/v1/scan/pair');
     expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(rig.kit.queue.sent).toHaveLength(1);
-    expect(rig.kit.queue.sent[0]).toMatchObject({ kind: 'webhook.deliver' });
+    expect(rig.hooks.sent).toHaveLength(1);
+    expect(rig.hooks.sent[0]).toMatchObject({ kind: 'webhook.deliver' });
   });
 
   it('does nothing after a read', async () => {
     await endpointWithSecret(rig, { orgId: rig.orgId });
     await rig.kit.pass();
     await request('GET', '/health');
-    expect(rig.kit.queue.sent).toEqual([]);
+    expect(rig.hooks.sent).toEqual([]);
   });
 
   it('is a no-op when no endpoint exists, and trusts that answer for 30 s', async () => {
     await kick(rig.ctx);
-    expect(rig.kit.queue.sent).toEqual([]);
+    expect(rig.hooks.sent).toEqual([]);
+    rig.kit.clock.advance(2_000);
     // An endpoint appears with work due, but the isolate's memo still says "none".
     await endpointWithSecret(rig, { orgId: rig.orgId });
     await rig.kit.pass();
     await kick(rig.ctx);
-    expect(rig.kit.queue.sent).toEqual([]);
+    expect(rig.hooks.sent).toEqual([]);
     rig.kit.clock.advance(31_000);
     await kick(rig.ctx);
-    expect(rig.kit.queue.sent).toHaveLength(1);
+    expect(rig.hooks.sent).toHaveLength(1);
   });
 
   it('never throws when the queue is down; the lane is released for the sweep', async () => {
     const ep = await endpointWithSecret(rig, { orgId: rig.orgId });
     await rig.kit.pass();
-    rig.kit.queue.fail = true;
+    rig.hooks.fail = true;
     try {
       await expect(kick(rig.ctx)).resolves.toBeUndefined();
     } finally {
-      rig.kit.queue.fail = false;
+      rig.hooks.fail = false;
     }
     const row = await rig.db
       .prepare('SELECT lane_token FROM webhook_endpoints WHERE id = ?')

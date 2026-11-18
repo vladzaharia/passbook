@@ -1,8 +1,14 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { claimLane, type LaneKey, listDueLanes, releaseLane } from './repo-delivery-state.ts';
+import { type LaneKey, listDueLanes } from './repo-delivery-read.ts';
+import { claimLane, releaseLane } from './repo-delivery-state.ts';
 
-/** A crash frees the lane after this; the handler extends it before every POST. */
+/** A running handler holds its lane this long, extended before every POST: a crash frees it within it. */
 export const LANE_HOLD_MS = 60_000;
+/**
+ * A queued message holds its lane this long before a handler starts: the sweep leaves it alone while the
+ * queue is backed up, and a lost message frees the lane after it.
+ */
+export const ENQUEUED_HOLD_MS = 5 * 60_000;
 
 /**
  * Claims the lane and enqueues its handler. False when the lane is busy, has nothing due, or the
@@ -10,9 +16,9 @@ export const LANE_HOLD_MS = 60_000;
  */
 export async function dispatchLane(ctx: ServiceContext, lane: LaneKey): Promise<boolean> {
   const token = ctx.ids.token(16);
-  if (!(await claimLane(ctx.env.DB, lane, token, ctx.clock.now(), LANE_HOLD_MS))) return false;
+  if (!(await claimLane(ctx.env.DB, lane, token, ctx.clock.now(), ENQUEUED_HOLD_MS))) return false;
   try {
-    await ctx.env.JOBS.send({
+    await ctx.env.WEBHOOK_JOBS.send({
       kind: 'webhook.deliver',
       endpointId: lane.endpointId,
       orgId: lane.orgId,

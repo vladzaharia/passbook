@@ -17,7 +17,8 @@ import {
 } from './deliver-test-fixtures.ts';
 import { dispatchLane } from './dispatch.ts';
 import { sweepWebhooks } from './jobs.ts';
-import { claimAttempt, claimLane, nextDue } from './repo-delivery-state.ts';
+import { nextDue } from './repo-delivery-read.ts';
+import { claimAttempt, claimLane } from './repo-delivery-state.ts';
 import { ALL_TYPES } from './webhooks-test-fixtures.ts';
 
 let rig: Rig;
@@ -49,8 +50,8 @@ describe('lanes', () => {
       dispatchLane(rig.ctx, laneOf(rig, ep)),
     ]);
     expect(results.filter(Boolean)).toHaveLength(1);
-    expect(rig.kit.queue.sent).toHaveLength(1);
-    expect(rig.kit.queue.sent[0]).toMatchObject({ kind: 'webhook.deliver', endpointId: ep });
+    expect(rig.hooks.sent).toHaveLength(1);
+    expect(rig.hooks.sent[0]).toMatchObject({ kind: 'webhook.deliver', endpointId: ep });
     // While held, a third claim fails too.
     expect(await dispatchLane(rig.ctx, laneOf(rig, ep))).toBe(false);
   });
@@ -89,8 +90,8 @@ describe('lanes', () => {
   it('a runner that lost its lane stops without sending', async () => {
     const { ep } = await backlog(2);
     expect(await dispatchLane(rig.ctx, laneOf(rig, ep))).toBe(true);
-    const msg = rig.kit.queue.sent[0] as { lane: string };
-    rig.kit.queue.sent[0] = { ...msg, lane: 'stale-token' };
+    const msg = rig.hooks.sent[0] as { lane: string };
+    rig.hooks.sent[0] = { ...msg, lane: 'stale-token' };
     await drain(rig);
     expect(net.calls).toEqual([]);
   });
@@ -120,7 +121,7 @@ describe('pause', () => {
     await run(rig.db, "UPDATE webhook_endpoints SET status = 'paused' WHERE id = ?", [ep]);
     expect(await dispatchLane(rig.ctx, laneOf(rig, ep))).toBe(false);
     await sweepWebhooks(rig.ctx);
-    expect(rig.kit.queue.sent).toEqual([]);
+    expect(rig.hooks.sent).toEqual([]);
     // Fan-out continues while paused.
     await addEvents(
       rig,
@@ -192,7 +193,7 @@ describe('disable', () => {
     await sweepWebhooks(rig.ctx);
     expect((await endpointOf(rig.db, ep))?.status).toBe('disabled');
     expect(await statesOf(rig.db, ep)).toEqual([{ state: 'cancelled', n: 3 }]);
-    expect(rig.kit.queue.sent).toEqual([]);
+    expect(rig.hooks.sent).toEqual([]);
   });
 
   it('a resumed endpoint delivers again and clears its counters', async () => {

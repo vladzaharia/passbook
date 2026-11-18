@@ -2,17 +2,21 @@ import { createMiddleware } from 'hono/factory';
 import type { AppBindings } from '../../platform/context.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { dispatchDue } from './dispatch.ts';
-import { anyActiveEndpoint as readAnyActive } from './repo-delivery-state.ts';
+import { anyActiveEndpoint as readAnyActive } from './repo-delivery-read.ts';
 
 const MEMO_MS = 30_000;
 export const KICK_LANES = 10;
 const READ_ONLY = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 let memo: { at: number; any: boolean } | null = null;
+let lastKick = Number.NEGATIVE_INFINITY;
+/** At most one kick per isolate per second: an anonymous POST flood must not become a query flood. */
+const KICK_EVERY_MS = 1_000;
 
 /** For tests: the memo is per isolate. */
 export function resetKickMemo(): void {
   memo = null;
+  lastKick = Number.NEGATIVE_INFINITY;
 }
 
 async function anyActiveEndpoint(ctx: ServiceContext): Promise<boolean> {
@@ -24,6 +28,9 @@ async function anyActiveEndpoint(ctx: ServiceContext): Promise<boolean> {
 
 /** Claims the lanes that have due deliveries. Never throws: a failure waits for the minute sweep. */
 export async function kick(ctx: ServiceContext): Promise<void> {
+  const now = ctx.clock.now();
+  if (now - lastKick < KICK_EVERY_MS) return;
+  lastKick = now;
   try {
     if (await anyActiveEndpoint(ctx)) await dispatchDue(ctx, KICK_LANES);
   } catch (error) {

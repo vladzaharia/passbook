@@ -40,6 +40,28 @@ export function testOnlyImports(rel: string, text: string): string[] {
   return found;
 }
 
+/**
+ * Modules whose exports write guarded tables with raw SQL, keyed by an allowlist entry in
+ * authority-scope-allowlists.ts: only the listed files may import them. A route or service reaching one
+ * would bypass the grants the pin was reviewed against.
+ */
+const W = 'src/worker/modules/webhooks/';
+export const IMPORT_BOUNDARIES: Record<string, string[]> = {
+  [`${W}repo-delivery-state.ts`]: ['deliver', 'dispatch', 'jobs', 'kick'].map((n) => `${W}${n}.ts`),
+  [`${W}repo-retention.ts`]: [`${W}jobs.ts`],
+};
+
+export function boundaryImports(rel: string, text: string): string[] {
+  if (TEST_FILE.test(rel) || /^tools\//.test(rel) || !/\.tsx?$/.test(rel)) return [];
+  const found: string[] = [];
+  for (const m of text.matchAll(/(?:from|import)\s+'(\.{1,2}\/[^']+)'/g)) {
+    const target = relative(root, resolve(dirname(join(root, rel)), m[1] ?? ''));
+    const allowed = IMPORT_BOUNDARIES[target];
+    if (allowed && !allowed.includes(rel)) found.push(`${rel} may not import ${target}`);
+  }
+  return found;
+}
+
 if (import.meta.main) {
   const problems: string[] = [];
   for (const file of sources(join(root, 'src'))) {
@@ -48,6 +70,7 @@ if (import.meta.main) {
     const long = tooLong(rel, text);
     if (long) problems.push(long);
     problems.push(...testOnlyImports(rel, text));
+    problems.push(...boundaryImports(rel, text));
   }
   if (problems.length > 0) {
     process.stderr.write(`${problems.join('\n')}\n`);

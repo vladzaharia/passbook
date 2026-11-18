@@ -3,6 +3,7 @@ import { run } from '../../platform/db.ts';
 import {
   deliverNow,
   deliveryOf,
+  endpointOf,
   endpointWithSecret,
   type Net,
   type Rig,
@@ -98,6 +99,8 @@ describe('secrets are bound (proof 7)', () => {
       attempts: 1,
       last_error: 'SECRET_UNAVAILABLE',
     });
+    // The platform's fault, not the endpoint's: nothing counts toward disabling it.
+    expect((await endpointOf(rig.db, epB))?.consecutive_failures).toBe(0);
     // The endpoint that owns the secret still delivers.
     await deliverNow(rig, epA);
     expect(net.calls).toHaveLength(1);

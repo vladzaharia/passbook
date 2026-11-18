@@ -1,9 +1,11 @@
+import { fakeRateLimiter } from '../../../../test/helpers/fakes.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { loadKekRing } from '../../platform/crypto.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { recordPassEvent } from '../events/record.ts';
+import { createFakeQueue, type FakeQueue } from '../passes/pass-test-fixtures.ts';
 import { type ScanKit, setupScanKit } from '../scan/test-kit.ts';
 import { runLane } from './deliver.ts';
 import { dispatchLane } from './dispatch.ts';
@@ -65,6 +67,8 @@ export function stubNet(): Net {
 
 export interface Rig {
   kit: ScanKit;
+  /** The `wallet-webhooks` queue: lane messages land here, never on `kit.queue` (wallet-jobs). */
+  hooks: FakeQueue;
   ctx: ServiceContext;
   db: D1Database;
   orgId: string;
@@ -72,7 +76,12 @@ export interface Rig {
 
 export async function setupRig(): Promise<Rig> {
   const kit = await setupScanKit();
-  return { kit, ctx: jobCtxOf(kit), db: kit.env.DB, orgId: kit.org.id };
+  const hooks = createFakeQueue();
+  Object.assign(kit.env, {
+    WEBHOOK_JOBS: hooks,
+    RL_WEBHOOK_HOST: fakeRateLimiter({ limit: 100_000 }),
+  });
+  return { kit, hooks, ctx: jobCtxOf(kit), db: kit.env.DB, orgId: kit.org.id };
 }
 
 /** A raw envelope-encrypted secret, as the rotate grant would store it. */
@@ -173,7 +182,7 @@ export const endpointOf = (db: D1Database, id: string) =>
 export async function drain(rig: Rig, max = 50, timeoutMs?: number): Promise<number> {
   let handled = 0;
   for (let i = 0; i < max; i++) {
-    const msg = rig.kit.queue.sent.shift() as
+    const msg = rig.hooks.sent.shift() as
       | { kind: string; endpointId: string; orgId: string; mode: Mode; lane: string }
       | undefined;
     if (!msg) return handled;
@@ -213,5 +222,5 @@ export async function deliverNow(rig: Rig, endpointId: string, timeoutMs?: numbe
 /** A clean slate between tests: no endpoints (their deliveries, secrets and attempts cascade). */
 export async function reset(rig: Rig) {
   await run(rig.db, 'DELETE FROM webhook_endpoints');
-  rig.kit.queue.sent.length = 0;
+  rig.hooks.sent.length = 0;
 }

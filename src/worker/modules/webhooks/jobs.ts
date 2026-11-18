@@ -3,7 +3,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { finalizeDisabled, runLane } from './deliver.ts';
 import { dispatchDue } from './dispatch.ts';
-import { disableOverdue } from './repo-delivery-state.ts';
+import { overdueEndpoints } from './repo-delivery-read.ts';
 import { purge } from './repo-retention.ts';
 
 const DAY = 86_400_000;
@@ -18,7 +18,7 @@ export async function handleWebhookDeliver(
 
 /** Every minute: disable endpoints the handler missed, then claim lanes with due deliveries. */
 export async function sweepWebhooks(ctx: ServiceContext): Promise<void> {
-  await finalizeDisabled(ctx, await disableOverdue(ctx.env.DB, ctx.clock.now()));
+  await finalizeDisabled(ctx, await overdueEndpoints(ctx.env.DB, ctx.clock.now()));
   const enqueued = await dispatchDue(ctx, SWEEP_LANES);
   if (enqueued > 0) ctx.log.info('webhooks.sweep', { enqueued });
 }

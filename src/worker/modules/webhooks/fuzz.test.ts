@@ -1,7 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
+import { recordAppleEvents } from '../apple/events.ts';
+import { recordEmailOutcome } from '../delivery/email-outcome.ts';
+import { handlePushDeliver } from '../delivery/jobs.ts';
+import { enqueuePush } from '../delivery/service.ts';
 import { recordPassEvent } from '../events/record.ts';
 import {
   drain,
@@ -53,6 +57,39 @@ const TYPE_OF: Record<string, string> = {
 };
 const TYPES = [...new Set([...KINDS.map(([k]) => TYPE_OF[k] ?? k), 'pass.issued'])];
 
+type Endpoints = Map<string, { orgId: string; mode: Mode; types: string[] }>;
+
+/** Every captured POST belongs to its endpoint's tenant, and each endpoint got exactly its feed rows. */
+async function expectExactDeliveries(endpoints: Endpoints, min = 500, afterSeq = 0) {
+  const url = new Map([...endpoints].map(([id]) => [`https://hooks.example.com/${id}`, id]));
+  const got = new Map<string, Set<string>>();
+  for (const call of net.calls) {
+    const id = url.get(call.url);
+    expect(id, `a POST to an unknown URL: ${call.url}`).toBeDefined();
+    const ep = endpoints.get(id as string) as { orgId: string; mode: Mode };
+    const body = JSON.parse(call.body) as { id: string; orgId: string; mode: Mode };
+    expect(body.orgId).toBe(ep.orgId);
+    expect(body.mode).toBe(ep.mode);
+    const set = got.get(id as string) ?? new Set<string>();
+    expect(set.has(body.id), 'an event delivered twice').toBe(false);
+    set.add(body.id);
+    got.set(id as string, set);
+  }
+  let total = 0;
+  for (const [id, ep] of endpoints) {
+    const rows = await all<{ event_id: string }>(
+      rig.db,
+      `SELECT event_id FROM event_feed WHERE org_id = ? AND mode = ? AND seq > ?
+           AND type IN (${ep.types.map(() => '?').join(',')})`,
+      [ep.orgId, ep.mode, afterSeq, ...ep.types],
+    );
+    expect([...(got.get(id) ?? [])].sort()).toEqual(rows.map((r) => r.event_id).sort());
+    total += rows.length;
+  }
+  expect(total).toBeGreaterThan(min);
+  expect(net.calls).toHaveLength(total);
+}
+
 describe('proof 2: three orgs, both modes, ten endpoints each, 500 random events', () => {
   it('every captured POST belongs to its endpoint tenant, and each endpoint gets exactly its feed rows', async () => {
     const random = mulberry32(20261118);
@@ -60,7 +97,7 @@ describe('proof 2: three orgs, both modes, ten endpoints each, 500 random events
     const tenants: { orgId: string; mode: Mode }[] = orgs.flatMap((orgId) =>
       (['live', 'test'] as const).map((mode) => ({ orgId, mode })),
     );
-    const endpoints = new Map<string, { orgId: string; mode: Mode; types: string[] }>();
+    const endpoints: Endpoints = new Map();
     for (const t of tenants)
       for (let i = 0; i < 10; i++) {
         const types = TYPES.filter(() => random() < 0.4);
@@ -86,32 +123,77 @@ describe('proof 2: three orgs, both modes, ten endpoints each, 500 random events
     await dispatchDue(rig.ctx, 1000);
     await drain(rig, 5000);
 
-    const url = new Map([...endpoints].map(([id]) => [`https://hooks.example.com/${id}`, id]));
-    const got = new Map<string, Set<string>>();
-    for (const call of net.calls) {
-      const id = url.get(call.url);
-      expect(id, `a POST to an unknown URL: ${call.url}`).toBeDefined();
-      const ep = endpoints.get(id as string) as { orgId: string; mode: Mode };
-      const body = JSON.parse(call.body) as { id: string; orgId: string; mode: Mode };
-      expect(body.orgId).toBe(ep.orgId);
-      expect(body.mode).toBe(ep.mode);
-      const set = got.get(id as string) ?? new Set<string>();
-      expect(set.has(body.id), 'an event delivered twice').toBe(false);
-      set.add(body.id);
-      got.set(id as string, set);
+    await expectExactDeliveries(endpoints);
+  }, 180_000);
+
+  it('holds through the real Apple, push and email writers', async () => {
+    net.calls.length = 0;
+    await run(rig.db, 'DELETE FROM webhook_endpoints');
+    rig.hooks.sent.length = 0;
+    const afterSeq =
+      (await first<{ m: number }>(rig.db, 'SELECT max(seq) AS m FROM event_feed'))?.m ?? 0;
+    const orgs = [rig.orgId, (await makeOrg(rig.kit.fx)).id];
+    const endpoints: Endpoints = new Map();
+    for (const orgId of orgs)
+      for (let i = 0; i < 10; i++) {
+        const types = [...TYPES];
+        endpoints.set(await endpointWithSecret(rig, { orgId, mode: 'live', eventTypes: types }), {
+          orgId,
+          mode: 'live',
+          types,
+        });
+      }
+    const kit = rig.kit;
+    for (const orgId of orgs) {
+      const base = { orgId, mode: 'live' as const };
+      for (let n = 0; n < 3; n++) {
+        const pass = await kit.pass({ orgId });
+        const at = { serial: pass.serial, credentialGeneration: pass.credentialGeneration };
+        const d = `dev-${pass.id}`;
+        await kit.device(pass, d, 'a'.repeat(64));
+        await recordAppleEvents(kit.ctx, [
+          { ...base, passId: pass.id, ...at, kind: 'device.registered', device: d },
+        ]);
+        await run(rig.db, 'DELETE FROM registrations WHERE pass_id = ? AND device_id = ?', [
+          pass.id,
+          d,
+        ]);
+        await recordAppleEvents(kit.ctx, [
+          {
+            ...base,
+            passId: pass.id,
+            ...at,
+            kind: 'device.unregistered',
+            device: d,
+            data: { reason: 'device' },
+          },
+        ]);
+        const gone = 'b'.repeat(64);
+        await kit.device(pass, `g-${pass.id}`, gone);
+        await enqueuePush(rig.ctx, pass.id, 'refresh');
+        await kit.settle();
+        const outbox = await first<{ id: string }>(
+          rig.db,
+          "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'push' ORDER BY created_at DESC LIMIT 1",
+          [pass.id],
+        );
+        kit.apns.results.set(gone, { status: 400, reason: 'BadDeviceToken' });
+        try {
+          await handlePushDeliver({ kind: 'push.deliver', outboxId: outbox?.id ?? '' }, rig.ctx);
+        } finally {
+          kit.apns.results.delete(gone);
+        }
+        await recordEmailOutcome(
+          kit.ctx,
+          { id: `ob-${pass.id}` } as never,
+          { orgId, passId: pass.id, mode: 'live', templateId: null, identityId: null },
+          'failed',
+          'EMAIL_FAILED',
+        );
+      }
     }
-    let total = 0;
-    for (const [id, ep] of endpoints) {
-      const rows = await all<{ event_id: string }>(
-        rig.db,
-        `SELECT event_id FROM event_feed WHERE org_id = ? AND mode = ?
-           AND type IN (${ep.types.map(() => '?').join(',')})`,
-        [ep.orgId, ep.mode, ...ep.types],
-      );
-      expect([...(got.get(id) ?? [])].sort()).toEqual(rows.map((r) => r.event_id).sort());
-      total += rows.length;
-    }
-    expect(total).toBeGreaterThan(500);
-    expect(net.calls).toHaveLength(total);
+    await dispatchDue(rig.ctx, 1000);
+    await drain(rig, 5000);
+    await expectExactDeliveries(endpoints, 100, afterSeq);
   }, 180_000);
 });

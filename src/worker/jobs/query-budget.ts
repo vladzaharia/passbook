@@ -18,8 +18,9 @@ export function estimateQueries(job: Job): number {
     case 'pass.refresh':
       return 40;
     case 'webhook.deliver':
-      // 15 for the lane and a hand-off, 6 per delivery (due, endpoint, claim, secrets, batch, lane), at most 20.
-      return 135;
+      // 15 for the lane and a hand-off, plus 9 per failed attempt (extend, endpoint, due, claim, secrets,
+      // limit, batch, disable check), at most 20.
+      return 195;
     default:
       return 15;
   }

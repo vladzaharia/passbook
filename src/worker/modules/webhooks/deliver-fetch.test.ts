@@ -13,7 +13,7 @@ import {
   setupRig,
   stubNet,
 } from './deliver-test-fixtures.ts';
-import { nextDue } from './repo-delivery-state.ts';
+import { nextDue } from './repo-delivery-read.ts';
 import { getEndpoint } from './repo-endpoints.ts';
 
 import { ALL_TYPES } from './webhooks-test-fixtures.ts';

@@ -179,19 +179,19 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/webhooks/repo-delivery-state.ts': {
     reason:
-      'lane claim, attempt, retry, finish and disable bookkeeping for deliveries created by the pass_events trigger (the trigger and composite FKs are the authority); no tenant principal at send time',
+      'lane claim, attempt, retry, finish and cancel bookkeeping for deliveries created by the pass_events trigger (the trigger and composite FKs are the authority), plus the endpoint health and status writes no trigger authorizes (consecutive_failures, failing_since, last_success_at, lane_token, status = disabled with its cancel and audit row); no tenant principal at send time. Only webhooks/{deliver,dispatch,jobs,kick}.ts may import it (check-sizes boundary)',
     writes: [
       'webhook_attempts:14e5061ed595',
       'webhook_deliveries:32f816eb0de2',
       'webhook_deliveries:7aad02cd36d1',
+      'webhook_deliveries:c4b8616238e6',
       'webhook_deliveries:f3354348cdcf',
-      'webhook_deliveries:fca7ae3309c1',
       'webhook_endpoints:15238020ed80',
       'webhook_endpoints:42fc667a61e0',
-      'webhook_endpoints:8616faf30dd5',
+      'webhook_endpoints:641fa0530214',
       'webhook_endpoints:a887b7fdf39d',
-      'webhook_endpoints:b05fc32c2c70',
       'webhook_endpoints:ce93d6a8adaa',
+      'webhook_endpoints:f0e71da67ea9',
     ],
   },
   'src/worker/modules/webhooks/repo-retention.ts': {

@@ -2,24 +2,26 @@ import type { WebhookEvent } from '../../../shared/contracts/webhooks.ts';
 import { type KekRing, loadKekRing } from '../../platform/crypto.ts';
 import { batch } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
+import { checkRateLimit } from '../../platform/rate-limit.ts';
 import { createSafeFetch, platformHostsOf, type SafeFetch } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditStmt } from '../audit/repo.ts';
 import { dispatchLane, LANE_HOLD_MS } from './dispatch.ts';
 import { bodyOf, buildEnvelope } from './payload.ts';
 import {
-  attemptStmt,
-  cancelPendingStmt,
-  claimAttempt,
   type DisabledEndpoint,
   type DueDelivery,
-  disableOverdue,
+  type LaneKey,
+  nextDue,
+  overdueEndpoints,
+} from './repo-delivery-read.ts';
+import {
+  attemptStmt,
+  claimAttempt,
+  disableEndpoint,
   endpointFailureStmt,
   endpointSuccessStmt,
   extendLane,
   finishStmt,
-  type LaneKey,
-  nextDue,
   releaseLane,
   rescheduleStmt,
 } from './repo-delivery-state.ts';
@@ -32,6 +34,12 @@ import { requestHeaders } from './sign.ts';
 
 export const MAX_PER_MESSAGE = 20;
 export const SEND_TIMEOUT_MS = 10_000;
+/** A message stops taking new deliveries after this much wall time, and hands the rest to a new one. */
+export const LANE_WALL_MS = 60_000;
+/** After a failed or deferred attempt the lane stays closed this long: a dead endpoint costs one probe, not a stream. */
+export const COOL_DOWN_MS = 30_000;
+/** Destination-host sends are held back this long when the per-host limit is hit. */
+export const HOST_DEFER_MS = 30_000;
 
 export interface LaneJob extends LaneKey {
   lane: string;
@@ -43,6 +51,7 @@ export type AttemptOutcome =
   | 'failed'
   | 'cancelled'
   | 'skipped'
+  | 'deferred'
   | 'disabled';
 
 interface Sender {
@@ -58,7 +67,10 @@ const hostOf = (url: string): string => {
   }
 };
 
-/** The secrets this delivery signs with. One that fails to open (a moved row) is skipped, never sent. */
+/**
+ * The secrets this delivery signs with. One that fails to open (a moved row) is skipped, never sent. A
+ * missing key ring is a platform fault, not the receiver's: it throws, so the queue retries the message.
+ */
 async function openSecrets(
   ctx: ServiceContext,
   sender: Sender,
@@ -66,11 +78,13 @@ async function openSecrets(
   now: number,
 ): Promise<string[]> {
   const rows = await activeSecrets(ctx.env.DB, endpoint, endpoint.id, now);
+  if (rows.length === 0) return [];
+  const ring = await sender.ring();
   const out: string[] = [];
   for (const row of rows) {
     try {
       out.push(
-        await openSecret(await sender.ring(), row.envelope, {
+        await openSecret(ring, row.envelope, {
           secretId: row.id,
           orgId: endpoint.orgId,
           endpointId: endpoint.id,
@@ -88,25 +102,16 @@ async function openSecrets(
   return out;
 }
 
-/** An endpoint that has failed for 72 h: its pending deliveries are cancelled and an audit row is written. */
+/** Disables the given endpoints, each in one batch with its cancel and audit row. */
 export async function finalizeDisabled(
   ctx: ServiceContext,
-  disabled: readonly DisabledEndpoint[],
-): Promise<void> {
-  const db = ctx.env.DB;
-  for (const e of disabled) {
+  overdue: readonly DisabledEndpoint[],
+): Promise<string[]> {
+  const done: string[] = [];
+  for (const e of overdue) {
     const host = hostOf(e.url);
-    await batch(db, [
-      cancelPendingStmt(db, e, ctx.clock.now(), 'ENDPOINT_DISABLED'),
-      auditStmt(db, ctx, {
-        orgId: e.orgId,
-        actorType: 'system',
-        action: 'webhook.endpoint_disabled',
-        targetType: 'webhook_endpoint',
-        targetId: e.endpointId,
-        detail: { endpointId: e.endpointId, host, failingSince: e.failingSince },
-      }),
-    ]);
+    if (!(await disableEndpoint(ctx.env.DB, e, ctx.clock.now(), host))) continue;
+    done.push(e.endpointId);
     ctx.log.warn('webhooks.endpoint_disabled', {
       orgId: e.orgId,
       endpointId: e.endpointId,
@@ -114,6 +119,7 @@ export async function finalizeDisabled(
       code: 'WEBHOOK_ENDPOINT_DISABLED',
     });
   }
+  return done;
 }
 
 /**
@@ -142,6 +148,7 @@ export async function attemptDelivery(
   )
     return cancel('UNSUBSCRIBED');
   if (!due.orgActive) return cancel('ORG_INACTIVE');
+  if (due.passGone) return cancel('PASS_GONE');
   if (due.quarantined) return cancel('PASS_QUARANTINED');
 
   let event: WebhookEvent;
@@ -163,7 +170,23 @@ export async function attemptDelivery(
     return cancel('WEBHOOK_TENANT_MISMATCH');
   }
 
+  // One destination host takes a bounded number of sends a minute, across every org and lane. Over the
+  // limit the delivery waits, and neither the attempt nor the endpoint is charged.
+  const host = hostOf(endpoint.url).toLowerCase();
+  let allowed = false;
+  try {
+    allowed = await checkRateLimit(ctx.env, 'RL_WEBHOOK_HOST', `host:${host}`);
+  } catch {
+    ctx.log.error('webhooks.rate_limit_unavailable', { ...log, code: 'RATE_LIMIT_UNAVAILABLE' });
+  }
+  if (!allowed) {
+    await rescheduleStmt(db, k, ctx.clock.now() + HOST_DEFER_MS, null, 'RATE_LIMITED').run();
+    return 'deferred';
+  }
+
   const startedAt = ctx.clock.now();
+  // The claim is per sender: only one runner can move `attempts` from the value it read, so a duplicate
+  // message or a second lane holder never POSTs the same attempt twice.
   if (!(await claimAttempt(db, k, due.attempts, startedAt, CLAIM_HOLD_MS))) return 'skipped';
   const attempt = due.attempts + 1;
   const trigger = attempt === 1 ? (due.replays > 0 ? 'replay' : 'event') : 'retry';
@@ -224,7 +247,8 @@ export async function attemptDelivery(
       outcome = 'retry';
       statements.push(rescheduleStmt(db, k, now + delay, status, error));
     }
-    statements.push(endpointFailureStmt(db, k, now));
+    // A missing secret is the platform's fault: the attempt is recorded, the endpoint is not blamed.
+    if (error !== 'SECRET_UNAVAILABLE') statements.push(endpointFailureStmt(db, k, now));
   }
   await batch(db, statements);
   ctx.log.info('webhooks.attempt', {
@@ -235,10 +259,10 @@ export async function attemptDelivery(
     attempt,
     outcome,
   });
-  if (ok) return outcome;
-  const disabled = await disableOverdue(db, now);
-  await finalizeDisabled(ctx, disabled);
-  return disabled.some((d) => d.endpointId === endpoint.id) ? 'disabled' : outcome;
+  if (ok || error === 'SECRET_UNAVAILABLE') return outcome;
+  // Only this endpoint: the minute sweep disables the rest.
+  const mine = await finalizeDisabled(ctx, await overdueEndpoints(db, now, k));
+  return mine.length > 0 ? 'disabled' : outcome;
 }
 
 /**
@@ -265,16 +289,28 @@ export async function runLane(
       return ring;
     },
   };
+  const started = ctx.clock.now();
+  // The message's token is swapped for a fresh one: a redelivered copy finds it gone and stops.
+  let token = job.lane;
   for (let i = 0; i < MAX_PER_MESSAGE; i++) {
+    const next = i === 0 ? ctx.ids.token(16) : token;
     // Not ours any more (expired and re-claimed, or the endpoint was disabled): stop quietly.
-    if (!(await extendLane(db, lane, job.lane, ctx.clock.now() + LANE_HOLD_MS))) return;
+    if (!(await extendLane(db, lane, token, ctx.clock.now() + LANE_HOLD_MS, next))) return;
+    token = next;
     // Re-read each time: a pause, a disable, an edited URL or a changed subscription applies at once.
     const endpoint = await getEndpoint(db, lane, lane.endpointId);
     if (endpoint?.status !== 'active') break;
     const due = await nextDue(db, lane, ctx.clock.now());
     if (!due) break;
-    if ((await attemptDelivery(ctx, sender, endpoint, due)) === 'disabled') break;
+    const outcome = await attemptDelivery(ctx, sender, endpoint, due);
+    if (outcome === 'disabled') return;
+    if (outcome === 'retry' || outcome === 'failed' || outcome === 'deferred') {
+      // Circuit open: keep the lane, with no release and no re-dispatch, until the cool-down ends.
+      await extendLane(db, lane, token, ctx.clock.now() + COOL_DOWN_MS);
+      return;
+    }
+    if (ctx.clock.now() - started >= LANE_WALL_MS) break;
   }
-  await releaseLane(db, lane, job.lane);
+  await releaseLane(db, lane, token);
   await dispatchLane(ctx, lane);
 }

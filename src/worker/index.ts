@@ -18,6 +18,7 @@ export default {
     app ??= createApp({ stores: createAuthStores, hostPolicy: true });
     return app.fetch(request, env, ctx);
   },
+  // Serves wallet-jobs, its DLQ and wallet-webhooks (separate queue so tenant receivers never delay push or email).
   queue: (batch: MessageBatch<unknown>, env: AppEnv, ctx: ExecutionContext) =>
     handleQueue(batch, env, ctx),
   scheduled: (controller: ScheduledController, env: AppEnv, ctx: ExecutionContext) =>
