@@ -1,11 +1,13 @@
 /** An in-memory Who's in for tests and the visual gallery. It keeps WP-G's shapes. */
-import type {
-  InsideApiPort,
-  InsideList,
-  InsidePlace,
-  InsideQuery,
-  InsideRow,
-  MarkOutRequest,
+import { fixtureCounts, fixtureOutcome } from '../machine/fixture-data.test-support.ts';
+import {
+  type InsideApiPort,
+  type InsideList,
+  type InsidePlace,
+  type InsideQuery,
+  type InsideRow,
+  type MarkOutRequest,
+  MarkOutResultSchema,
 } from './inside-types.ts';
 
 export const FAKE_NOW = Date.UTC(2026, 10, 18, 11, 0, 0);
@@ -77,11 +79,17 @@ export function fakeInsideApi(
       if (fake.fail.markOut) throw fake.fail.markOut;
       fake.rows = fake.rows.filter((r) => r.passId !== body.passId);
       fake.rev += 1;
-      return {
-        scanId: `scan-${fake.calls.markOut.length}`,
-        place: { ...placesOf(fake, places)[0], rev: fake.rev } as never,
-        undoUntil: FAKE_NOW + 10 * MIN,
-      };
+      const place = placesOf(fake, places)[0];
+      return MarkOutResultSchema.parse(
+        fixtureOutcome('ok', null, {
+          scanId: `scan-${fake.calls.markOut.length}`,
+          action: { id: 'mark_out', label: 'Mark as out', kind: 'check_in' },
+          counts: fixtureCounts({
+            place: place && { name: place.name, inNow: place.inNow, capacity: place.capacity },
+          }),
+          undoUntil: FAKE_NOW + 10 * MIN,
+        }),
+      );
     },
     async undoMarkOut(scanId) {
       fake.calls.undo.push(scanId);
@@ -94,7 +102,7 @@ export function fakeInsideApi(
 function placesOf(fake: FakeInside, over: Partial<InsidePlace>[]): InsidePlace[] {
   const gym = fake.rows.filter((r) => r.place === GYM_KEY).length;
   const base: InsidePlace[] = [
-    { place: GYM_KEY, name: 'Gym', inNow: gym, capacity: 60, rev: fake.rev, parent: null },
+    { place: GYM_KEY, name: 'Gym', inNow: gym, capacity: 60, rev: fake.rev },
   ];
   return base.map((p, i) => ({ ...p, ...(over[i] ?? {}) }));
 }

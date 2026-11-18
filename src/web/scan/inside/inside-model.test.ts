@@ -9,7 +9,6 @@ const place = (over: Partial<InsidePlace> = {}): InsidePlace => ({
   inNow: 4,
   capacity: 60,
   rev: 5,
-  parent: null,
   ...over,
 });
 const list = (over: Partial<InsideList> = {}): InsideList => ({
@@ -107,20 +106,12 @@ describe('place counts and rev', () => {
     });
     expect(stale.places[0]?.inNow).toBe(3);
   });
-  it('the server answer to a mark-out wins over the optimistic count', () => {
+  it('the server count after a mark-out replaces the optimistic one', () => {
     const s = loaded();
     const gone = s.rows[0];
     if (!gone) throw new Error('row');
     const marked = insideReducer(s, { t: 'removed', passId: gone.passId });
-    const done = insideReducer(marked, {
-      t: 'rev',
-      place: { place: GYM_KEY, name: 'Gym', inNow: 2, capacity: 60, rev: 6 },
-    });
-    expect(done.places[0]).toMatchObject({ inNow: 2, rev: 6 });
-    const late = insideReducer(done, {
-      t: 'rev',
-      place: { place: GYM_KEY, name: 'Gym', inNow: 9, capacity: 60, rev: 5 },
-    });
-    expect(late.places[0]?.inNow).toBe(2);
+    const done = insideReducer(marked, { t: 'count', place: GYM_KEY, inNow: 2 });
+    expect(done.places[0]).toMatchObject({ inNow: 2, rev: 5.5 });
   });
 });

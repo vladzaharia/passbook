@@ -1,5 +1,4 @@
 /** The Who's in list as a pure reducer: rows longest first, counts that never go back in time. */
-import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { InsideList, InsidePlace, InsideRow } from './inside-types.ts';
 
 export interface InsideState {
@@ -24,7 +23,8 @@ export type InsideAction =
   | { t: 'failed' }
   | { t: 'removed'; passId: string }
   | { t: 'restored'; row: InsideRow }
-  | { t: 'rev'; place: ScanPlaceRev };
+  /** The server's count for a place after a mark-out. */
+  | { t: 'count'; place: string; inNow: number };
 
 export const initialInside = (): InsideState => ({
   loading: true,
@@ -103,12 +103,10 @@ export function insideReducer(s: InsideState, a: InsideAction): InsideState {
         total: s.total + 1,
         places: nudge(s.places, a.row.place, 1),
       };
-    case 'rev':
+    case 'count':
       return {
         ...s,
-        places: s.places.map((p) =>
-          p.place === a.place.place && a.place.rev >= p.rev ? { ...p, ...a.place } : p,
-        ),
+        places: s.places.map((p) => (p.place === a.place ? { ...p, inNow: a.inNow } : p)),
       };
   }
 }

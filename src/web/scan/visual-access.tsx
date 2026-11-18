@@ -52,7 +52,7 @@ function InsideScenario({ scenario }: { scenario: AccessScenario }) {
     api,
     active: true,
     online,
-    notify: { undo: () => undefined, error: () => undefined },
+    notify: { undo: () => undefined, error: () => undefined, info: () => undefined },
   });
   return (
     <InsideSheet

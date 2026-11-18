@@ -11,7 +11,7 @@ import { fill } from '../ui/copy.ts';
 import { ACCESS_COPY } from '../ui/copy-access.ts';
 import { InsidePlaces } from './inside-places.tsx';
 import { InsideRowView, MarkOutButton } from './inside-row.tsx';
-import type { InsideRow } from './inside-types.ts';
+import { INSIDE_Q_MAX, type InsideRow } from './inside-types.ts';
 import type { useInside } from './use-inside.ts';
 import './inside.css';
 
@@ -85,7 +85,7 @@ export function InsideSheet({
               onValueRestore={inside.setQuery}
               autoComplete="off"
               spellCheck={false}
-              maxLength={120}
+              maxLength={INSIDE_Q_MAX}
               data-scan-code
             />
           </div>

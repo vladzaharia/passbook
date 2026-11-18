@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { ApiError } from '../../lib/errors.ts';
 import { removeWithTransition } from '../../lib/motion.ts';
 import { toast } from '../../ui/toaster.tsx';
 import { toFail } from '../api/to-fail.ts';
@@ -8,16 +9,18 @@ import { SCAN_TIMING } from '../timing.ts';
 import { fill } from '../ui/copy.ts';
 import { ACCESS_COPY } from '../ui/copy-access.ts';
 import { initialInside, insideReducer } from './inside-model.ts';
-import type { InsideApiPort, InsideRow } from './inside-types.ts';
+import { INSIDE_Q_MAX, type InsideApiPort, type InsideRow } from './inside-types.ts';
 
 export interface InsideNotify {
   undo(message: string, onUndo: () => unknown): void;
   error(error: unknown, title: string): void;
+  info(message: string): void;
 }
 
 const realNotify: InsideNotify = {
   undo: (message, onUndo) => void toast.undo(message, onUndo),
   error: (error, title) => void toast.error(error, title),
+  info: (message) => void toast.info(message),
 };
 
 /** Failures that end the person's right to the list: the machine shows its own block for them. */
@@ -64,7 +67,7 @@ export function useInside({
         const list = await api.inside(
           {
             ...(s.place ? { place: s.place } : {}),
-            ...(s.q.trim() ? { q: s.q.trim() } : {}),
+            ...(s.q.trim() ? { q: s.q.trim().slice(0, INSIDE_Q_MAX) } : {}),
             ...(opts.append && s.next ? { cursor: s.next } : {}),
             limit: opts.keep ? Math.min(100, Math.max(PAGE, s.rows.length)) : PAGE,
           },
@@ -108,12 +111,21 @@ export function useInside({
           passId: row.passId,
           place: row.place,
         });
-        dispatch({ t: 'rev', place: done.place });
-        hooks.current.notify.undo(fill(ACCESS_COPY.inside.markedOut, { name }), async () => {
-          await api.undoMarkOut(done.scanId, scanId());
-          await load({ keep: true });
-        });
+        const inNow = done.counts.place?.inNow ?? done.occupancy?.inNow;
+        if (inNow != null) dispatch({ t: 'count', place: row.place, inNow });
+        if (done.scanId)
+          hooks.current.notify.undo(fill(ACCESS_COPY.inside.markedOut, { name }), async () => {
+            await api.undoMarkOut(done.scanId ?? '', scanId());
+            await load({ keep: true });
+          });
+        void load({ keep: true });
       } catch (error) {
+        if (error instanceof ApiError && error.code === 'NOT_INSIDE') {
+          // Someone else got there first: the row stays gone.
+          hooks.current.notify.info(fill(ACCESS_COPY.inside.alreadyOut, { name }));
+          void load({ keep: true });
+          return;
+        }
         dispatch({ t: 'restored', row });
         const info = hooks.current.failOf(error);
         if (BLOCKING.has(info.error)) hooks.current.onFail?.(info);

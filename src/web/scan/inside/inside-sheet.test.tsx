@@ -9,7 +9,7 @@ import { InsideSheet } from './inside-sheet.tsx';
 import type { InsideRow } from './inside-types.ts';
 import { useInside } from './use-inside.ts';
 
-const notify = { undo: vi.fn(), error: vi.fn() };
+const notify = { undo: vi.fn(), error: vi.fn(), info: vi.fn() };
 
 function Harness({
   api,

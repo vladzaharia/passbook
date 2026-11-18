@@ -7,7 +7,7 @@ import { SCAN_TIMING } from '../timing.ts';
 import { fakeInsideApi, rows } from './inside-fake.test-support.ts';
 import { useInside } from './use-inside.ts';
 
-const notify = () => ({ undo: vi.fn(), error: vi.fn() });
+const notify = () => ({ undo: vi.fn(), error: vi.fn(), info: vi.fn() });
 
 function setup(over: Partial<Parameters<typeof useInside>[0]> = {}, count = 4) {
   const api = fakeInsideApi(rows(count));
@@ -100,6 +100,26 @@ describe('useInside', () => {
     expect(result.current.state.rows.map((r) => r.passId)).toContain(row.passId);
     expect(n.error).toHaveBeenCalledWith(expect.anything(), 'Could not mark as out');
     expect(n.undo).not.toHaveBeenCalled();
+  });
+  it('a mark-out that someone else already did drops the row and says so, with no restore', async () => {
+    const { api, n, result } = setup();
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(4));
+    const row = result.current.state.rows[0];
+    if (!row) throw new Error('row');
+    api.fail.markOut = new ApiError({ status: 409, code: 'NOT_INSIDE' });
+    await act(() => result.current.markOut(row));
+    expect(n.info).toHaveBeenCalledWith(`${row.holder} is already out`);
+    expect(n.error).not.toHaveBeenCalled();
+    expect(n.undo).not.toHaveBeenCalled();
+  });
+  it('takes the count from the exit the server recorded', async () => {
+    const { api, result } = setup();
+    await waitFor(() => expect(result.current.state.rows).toHaveLength(4));
+    const row = result.current.state.rows[0];
+    if (!row) throw new Error('row');
+    await act(() => result.current.markOut(row));
+    await waitFor(() => expect(api.calls.inside.length).toBeGreaterThan(1));
+    expect(result.current.state.places[0]?.inNow).toBe(3);
   });
   it('a signed-out scanner hands the failure to the machine', async () => {
     const onFail = vi.fn();

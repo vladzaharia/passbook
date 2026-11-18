@@ -20,7 +20,7 @@ export const ACCESS_COPY = {
     emptyTitle: 'No one inside',
     empty: '{place} is empty.',
     markedOut: '{name} marked as out',
-    undone: '{name} is back in',
+    alreadyOut: '{name} is already out',
     needsConnection: 'Needs a connection',
     asOf: 'As of {time}',
     signIn: "Sign in to see who's in",
