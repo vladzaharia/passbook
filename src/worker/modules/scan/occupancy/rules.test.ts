@@ -4,10 +4,10 @@ import {
   type EntryPlan,
   entryPlan,
   entryReason,
+  hardLimited,
   instantOf,
   nextClear,
   type OccZone,
-  hardLimited,
   scanDirection,
   zonePlace,
 } from './rules.ts';

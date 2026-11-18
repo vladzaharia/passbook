@@ -1,8 +1,8 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { makeScanStaff, TEST_NOW } from '../../../../test/helpers/index.ts';
 import { act, kit, out, rows, setupActionFixture } from './act-test-fixtures.ts';
-import { deskMayApprove } from './rules.ts';
 import { signIn } from './overrides-test-fixtures.ts';
+import { deskMayApprove } from './rules.ts';
 import { codeOf } from './test-kit.ts';
 
 beforeAll(setupActionFixture);
