@@ -1209,7 +1209,7 @@ Scanning › **Devices** (`/admin/scanning?tab=devices`); detail in `addendum/ux
   menu (**Rename**, **Archive station**). Last group **No station** (dashed): scanners with no screen and monitors
   watching more than one place.
 - **Columns** (fixed widths so groups align): **Device** (role tile, name, device line) · **Role** pill · **Shows or
-  checks** (Scanner: **Checks** + zone chips, or the event, or **Accepts 2 templates**; Customer screen: **Every result
+  checks** (Scanner: **Zones** + zone chips, or the event, or **Accepts 2 templates**; Customer screen: **Every result
   from {station}**; Desk monitor: **Watches this station · Desk**, **Watches** + zones **· Door**, **Watches
   everything · Desk**) · **Status** · **Today** · **Last seen** · menu or **Pair**.
 - A phone switched on the device: device line **Safari on iPhone · switched on the device 6:02 PM** and
@@ -1229,7 +1229,7 @@ Scanning › **Devices** (`/admin/scanning?tab=devices`); detail in `addendum/ux
   (placeholder **Please see the desk**) · switches **Greet by first name**, **Show the desk card**, **Show amounts under
   review**, beside a live idle preview (aria-hidden). Footer **Archive station** (confirm **Archive Front desk?** ·
   **Its devices leave the station. Customer screens show Not set up.**) · **Cancel** · **Save**.
-- **Scanner dialog** gains **Station**, **Role** (device kind only: **Scanner** · **Customer screen**) and **Checks**
+- **Scanner dialog** gains **Station**, **Role** (device kind only: **Scanner** · **Customer screen**) and **Zones**
   (17.2).
 - **Phone** (390): one card per station, 60 px rows (role tile, name, **{Role} · {what it shows}**, status dot),
   header action **Add**.
@@ -1304,8 +1304,8 @@ scanner-zones,stills}-*.png`.
   **Show archived (n)**. Phone: indented list, second line "Key · 2 scanners".
 - **New zone** (sm): **Name** · **Inside** · **Time zone** (roots only; help **Hours at this site use this clock.**);
   the key previews. **Archive Pool?** · **Its doors stop letting anyone in. 2 scanners check it; 3 plans grant it.**
-- **Scanner Checks**: chips with the zone tree in a popover (checkbox per zone, `aria-level`, ≤ 8, **2 of 8**); help
-  **Lets in a pass that opens either zone now. Empty: Any zone.**; status line `DoorOpen` **Open now for 24/7,
+- **Scanner Zones**: chips with the zone tree in a popover (checkbox per zone, `aria-level`, ≤ 8, **2 of 8**); help
+  **Lets in passes that open one of these zones.**; status line `DoorOpen` **Open now for 24/7,
   Off-peak. Closed for Guest day.** Event scanners: disabled, **Events check in once. Zones don't apply.**
 - **Designer › Access** (after Scanning): **Use as an access card** switch for non-blueprint templates; **Plans** list
   (label, type pill, summary, **128 passes**, drag to reorder, **Add plan**); plan inspector **Name**, **Type** (tiles

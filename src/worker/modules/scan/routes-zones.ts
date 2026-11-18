@@ -7,7 +7,7 @@ import {
   ScanZoneSchema,
   UpdateScanZoneSchema,
 } from '../../../shared/contracts/scan-access.ts';
-import { currentUserId } from '../../platform/auth.ts';
+import { currentUserId, modeOf } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
@@ -60,7 +60,7 @@ register(
       return c.json({ items: [], nextCursor: null });
     const authority = await tenantAuthorityOf(ctx, auth, query.orgId, 'scanning:read');
     if (authority.kind !== 'session') throw new UnauthenticatedError();
-    return c.json(await listZones(ctx, authority, query));
+    return c.json(await listZones(ctx, authority, query, modeOf(auth)));
   },
 );
 register(
@@ -83,7 +83,7 @@ register(
       throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
     const authority = await tenantAuthorityOf(ctx, auth, input.orgId, 'scanning:manage');
     if (authority.kind !== 'session') throw new UnauthenticatedError();
-    return c.json(await createZone(ctx, currentUserId(c), input, authority), 201);
+    return c.json(await createZone(ctx, currentUserId(c), input, authority, modeOf(auth)), 201);
   },
 );
 register(
@@ -101,7 +101,15 @@ register(
     const id = c.req.valid('param').id;
     const { ctx, orgId, authority } = await manage(c, id);
     return c.json(
-      await updateZone(ctx, currentUserId(c), orgId, id, c.req.valid('json'), authority),
+      await updateZone(
+        ctx,
+        currentUserId(c),
+        orgId,
+        id,
+        c.req.valid('json'),
+        authority,
+        modeOf(c.var.auth),
+      ),
     );
   },
 );
@@ -116,7 +124,17 @@ for (const [path, archived, summary] of [
     async (c) => {
       const id = c.req.valid('param').id;
       const { ctx, orgId, authority } = await manage(c, id);
-      return c.json(await archiveZone(ctx, currentUserId(c), orgId, id, archived, authority));
+      return c.json(
+        await archiveZone(
+          ctx,
+          currentUserId(c),
+          orgId,
+          id,
+          archived,
+          authority,
+          modeOf(c.var.auth),
+        ),
+      );
     },
   );
 

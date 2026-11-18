@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import '../../../lib/test-utils.tsx';
+import starter from '../../../../../templates/starter-access-card/wallet.template.json';
 import { Card, TooltipProvider } from '../../../ui/index.ts';
 import { applyOp } from '../../templates/designer/apply.ts';
 import { sampleDoc } from '../../templates/designer/fixtures.ts';
@@ -219,5 +220,16 @@ describe('Access inputs, accessibility', () => {
   it('has no violations for a guest plan', async () => {
     const { container } = render(<Harness initial={{ plan: 'plan_3', zones: ['pool'] }} />);
     expect((await axe(container)).violations).toEqual([]);
+  });
+});
+
+describe('Zones input never takes typed keys', () => {
+  it('the starter card picks zones from the org tree', () => {
+    const schema = starter.inputs;
+    expect(schema.properties.zones['x-widget']).toBe('access-zones');
+    render(<Harness schema={schema} initial={{ plan: 'member', zones: ['pool'] }} />);
+    expect(screen.getByRole('combobox', { name: /Extra zones/ })).toBeInTheDocument();
+    const field = screen.getByRole('combobox', { name: /Extra zones/ }).closest('div');
+    expect(field?.querySelector('input[type=text], input:not([type]), textarea')).toBeNull();
   });
 });

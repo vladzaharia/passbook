@@ -6,6 +6,7 @@ const base = {
   effectiveTimeZone: null,
   sort: 0,
   sessions: 0,
+  checkedAt: [],
   plans: [],
   inNow: null,
   archivedAt: null,
@@ -30,6 +31,10 @@ export const gym = zone({
   maxStayMinutes: 720,
   inNow: 42,
   sessions: 2,
+  checkedAt: [
+    { id: 's-front', name: 'Front door' },
+    { id: 's-desk', name: 'Desk' },
+  ],
   plans: [
     { templateId: 't1', templateName: 'Membership', planId: 'p1', label: 'Off-peak' },
     { templateId: 't1', templateName: 'Membership', planId: 'p2', label: '24/7 Gold' },
@@ -48,6 +53,7 @@ export const pool = zone({
   maxStayMinutes: 720,
   inNow: 25,
   sessions: 1,
+  checkedAt: [{ id: 's-pool', name: 'Pool gate' }],
 });
 export const sauna = zone({
   id: 'z-sauna',

@@ -18,7 +18,7 @@ const DIRECTIONS = [
   },
 ] as const;
 
-/** Checks, direction and Desk actions: what the session's doors do with a scan. */
+/** Zones, direction and Desk actions: what the session's doors do with a scan. */
 export function SessionAccessFields({
   draft,
   set,
@@ -39,13 +39,13 @@ export function SessionAccessFields({
       {draft.zoneIds ? (
         <ZonePicker
           orgId={draft.orgId}
-          label="Checks"
+          label="Zones"
           value={event ? [] : draft.zoneIds}
           disabled={event}
           help={
             event
               ? 'Events check in once. Zones don’t apply.'
-              : 'Lets in a pass that opens either zone now. Empty: Any zone.'
+              : 'Lets in passes that open one of these zones.'
           }
           onChange={(zoneIds) => set({ zoneIds })}
         />

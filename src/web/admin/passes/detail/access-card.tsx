@@ -5,6 +5,7 @@ import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import { formatDateTime, formatWeekdayTime } from '../../../lib/format.ts';
 import { localZone } from '../../../lib/timezones.ts';
 import { Badge, Card, CardBody, CardHeader, KeyValue } from '../../../ui/index.ts';
+import { checkedAtNames } from '../../scanning/zones/checked-at.ts';
 import { useZones } from '../../scanning/zones-query.ts';
 import {
   type AccessState,
@@ -36,7 +37,7 @@ function StatusLine({ status, zone }: { status: AccessStatus; zone: string }) {
   }
 }
 
-function Body({ state }: { state: AccessState }) {
+function Body({ state, checkedAt }: { state: AccessState; checkedAt: string[] }) {
   const { plan } = state;
   if (!plan)
     return (
@@ -81,6 +82,10 @@ function Body({ state }: { state: AccessState }) {
               </ul>
             ) : null,
         },
+        {
+          label: 'Checked at',
+          value: checkedAt.length > 0 ? checkedAt.join(', ') : 'Not checked anywhere',
+        },
         { label: 'Now', value: <StatusLine status={state.status} zone={state.timeZone} /> },
       ]}
     />
@@ -105,12 +110,17 @@ export function AccessCard({ pass, manifest }: { pass: PassDetailDto; manifest: 
         : null,
     [access, pass.personalization, list],
   );
+  const checkedAt = useMemo(() => {
+    const keys = new Set(state?.zones.map((z) => z.key));
+    const every = keys.has('*');
+    return checkedAtNames((list ?? []).filter((z) => !z.archivedAt && (every || keys.has(z.key))));
+  }, [state, list]);
   if (!state) return null;
   return (
     <Card>
       <CardHeader title="Access" />
       <CardBody>
-        <Body state={state} />
+        <Body state={state} checkedAt={checkedAt} />
       </CardBody>
     </Card>
   );
