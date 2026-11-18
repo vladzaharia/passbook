@@ -44,6 +44,9 @@ async function main() {
     throw new Error('Pass --routes <file[,file]> and/or --emails.');
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const out = resolve(root, arg('--out') ?? `.wrangler/visual-sweep/${stamp}`);
+  if (!out.startsWith(`${resolve(root, '.wrangler')}/`)) {
+    throw new Error('--out must be inside .wrangler/ (screenshots show signed-in data).');
+  }
   const stateDir = resolve(root, '.wrangler/visual-sweep/state');
   const viewports = list<ViewportName>(
     arg('--viewports'),
