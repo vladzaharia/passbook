@@ -11,10 +11,11 @@ import {
   ErrorState,
   ListRow,
   ListRows,
+  RelTime,
   RowLink,
   SkeletonRows,
+  useNow,
 } from '@/web/ui/index.ts';
-import { formatDateTime, formatRelative } from '../../lib/format.ts';
 import { TONE_TEXT } from '../audit/audit-rows.tsx';
 import { targetRef } from '../audit/labels.ts';
 import { usePlatformAuditLog } from '../audit/queries.ts';
@@ -26,7 +27,7 @@ export function RecentActivity({ orgId }: { orgId: string | undefined }) {
   const log = usePlatformAuditLog({ filterOrgId: orgId, excludeAction: 'auth.' }, 6, 0);
   const orgName = useOrgNames();
   const items = log.data?.pages[0]?.items ?? [];
-  const now = Date.now();
+  const now = useNow();
   return (
     <Card className="flex h-full flex-col">
       <CardHeader
@@ -93,13 +94,9 @@ export function RecentActivity({ orgId }: { orgId: string | undefined }) {
                   }
                   meta={`${actor} · ${orgName(e.orgId)}`}
                   trailing={
-                    <time
-                      dateTime={new Date(e.at).toISOString()}
-                      title={formatDateTime(e.at)}
-                      className="text-xs whitespace-nowrap text-fg-muted"
-                    >
-                      {formatRelative(e.at, now)}
-                    </time>
+                    <span className="text-xs whitespace-nowrap text-fg-muted">
+                      <RelTime at={e.at} now={now} />
+                    </span>
                   }
                 />
               );

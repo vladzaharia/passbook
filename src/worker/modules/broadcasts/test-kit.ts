@@ -102,6 +102,8 @@ async function seedCreators(kit: Kit): Promise<void> {
   await addBroadcastAdminMembership(kit, kit.org.id);
 }
 
+const WEEK_MS = 7 * 86_400_000;
+
 export interface BroadcastAuth {
   stores: AuthStores;
   admin(options?: { mode?: Mode }): Record<string, string>;
@@ -114,20 +116,24 @@ export interface BroadcastAuth {
 }
 
 /**
- * Real persisted credentials for the legacy route suites. The app and stores use the system clock,
- * as those suites did previously; their manual clock separately advances scheduled jobs.
+ * Real persisted credentials for the legacy route suites. Pass `kit.clock` to `createApp` too.
+ * Sessions live a week so suites can advance `kit.clock`.
  */
 export async function broadcastAuth(
   kit: BroadcastKit,
   origin = 'https://wallet.test',
 ): Promise<BroadcastAuth> {
-  const admin = await makeSession(kit.fx, { userId: 'admin-1', roles: ['admin', 'user'] });
-  const user = await makeSession(kit.fx, { userId: 'user-1' });
+  const admin = await makeSession(kit.fx, {
+    userId: 'admin-1',
+    roles: ['admin', 'user'],
+    lifetimeMs: WEEK_MS,
+  });
+  const user = await makeSession(kit.fx, { userId: 'user-1', lifetimeMs: WEEK_MS });
   return {
     stores: {
       ...denyAllStores,
-      sessions: createSessionStore(kit.env),
-      apiKeys: createApiKeyStore(kit.env),
+      sessions: createSessionStore(kit.env, kit.clock),
+      apiKeys: createApiKeyStore(kit.env, kit.clock),
     },
     admin: ({ mode }: { mode?: Mode } = {}) => ({
       ...admin.headers,
@@ -151,8 +157,7 @@ export async function broadcastAuth(
 }
 
 export async function broadcastKit(): Promise<BroadcastKit> {
-  // Wall time: the route suites schedule against Date.now() and mint sessions on the system clock.
-  const kit = await setupKit({ clockStart: Date.now() });
+  const kit = await setupKit();
   await seedCreators(kit);
   const broadcast: FakeWorkflow = {
     created: [],

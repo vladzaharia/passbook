@@ -10,6 +10,7 @@ import {
   makeSession,
   makeTemplate,
   makeUser,
+  TEST_NOW,
 } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
@@ -38,7 +39,7 @@ export async function freshFixture(providedEnv?: AppEnv) {
     RL_SCAN_ORG: fakeRateLimiter({ limit: 100_000 }),
     RL_SCAN_LOOKUP: fakeRateLimiter({ limit: 100_000 }),
   });
-  const clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
+  const clock = new ManualClock(TEST_NOW);
   const fx = fixtures(env, clock);
   const org = await makeOrg(fx);
   const user = await makeUser(fx);

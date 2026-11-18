@@ -20,7 +20,7 @@ import {
   TwoPane,
 } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
-import { RelTime, useNow } from '../../passes/detail/rel-time.tsx';
+import { RelTime, useNow } from '../../../ui/rel-time.tsx';
 import { SCANNERS_POLL_MS, scannerQuery } from '../queries.ts';
 import { useScanEvents } from '../scanner-api.ts';
 import { acceptsText, scannerStatus } from './labels.ts';

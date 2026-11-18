@@ -29,7 +29,7 @@ import {
   SegmentedControl,
   SkeletonTimeline,
 } from '../../../ui/index.ts';
-import { RelTime, useNow } from './rel-time.tsx';
+import { RelTime, useNow } from '../../../ui/rel-time.tsx';
 import { usePassEvents } from './sync-api.ts';
 import {
   eventCodes,

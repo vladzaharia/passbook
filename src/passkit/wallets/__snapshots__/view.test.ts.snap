@@ -1,0 +1,768 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`resolveWalletView over every starter and baked template > henrys-blue 1`] = `
+{
+  "barcodes": [
+    "code39 DEMO0001",
+    "code128 DEMO0001",
+  ],
+  "colors": {
+    "background": "#060c1b",
+    "foreground": "#fff9f2",
+    "label": "#d2b49d",
+  },
+  "events": [],
+  "featured": [
+    "membershipBenefits",
+    "place",
+  ],
+  "fields": [
+    "headerFields.memberId",
+    "headerFields.memberId-poster",
+    "primaryFields.memberName",
+    "primaryFields.memberName-poster",
+    "primaryFields.homeClub-poster",
+    "secondaryFields.membership",
+    "secondaryFields.homeClub",
+    "footerFields.membership-poster",
+    "backFields.status",
+    "backFields.message",
+    "backFields.portal",
+    "backFields.directions-capitol-hill",
+    "backFields.phone",
+    "backFields.support",
+    "backFields.website",
+    "backFields.terms",
+    "backFields.pass-service",
+    "backFields.status-poster",
+    "backFields.message-poster",
+    "backFields.portal-poster",
+    "backFields.directions-capitol-hill-poster",
+    "backFields.phone-poster",
+    "backFields.support-poster",
+    "backFields.website-poster",
+    "backFields.terms-poster",
+    "backFields.pass-service-poster",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "artwork": [
+      "artwork@3x.png",
+      "artwork@2x.png",
+    ],
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "primaryLogo": [
+      "primaryLogo@3x.png",
+      "primaryLogo@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "primaryFields.homeClub-poster",
+      "secondaryFields.membership",
+      "secondaryFields.homeClub",
+      "footerFields.membership-poster",
+      "backFields.status",
+      "backFields.message",
+      "backFields.status-poster",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 1,
+  },
+  "roles": {
+    "subtitle": "style text: All-Inclusive Wellness",
+    "support": "style links: https://henrysgymnasium.thememberspot.com/ https://maps.apple.com/?daddr=47.615835,-122.323555 tel:+12066447797 mailto:epicexperience@henrysgymnasium.com https://henrysgymnasium.com/",
+    "title": "style text: Alex Morgan",
+    "venueLocation": "style location: 47.615835,-122.323555",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > henrys-copper 1`] = `
+{
+  "barcodes": [
+    "code39 DEMO0001",
+    "code128 DEMO0001",
+  ],
+  "colors": {
+    "background": "#171315",
+    "foreground": "#fff9f2",
+    "label": "#d2b49d",
+  },
+  "events": [],
+  "featured": [
+    "membershipBenefits",
+    "place",
+  ],
+  "fields": [
+    "headerFields.memberId",
+    "headerFields.memberId-poster",
+    "primaryFields.memberName",
+    "primaryFields.memberName-poster",
+    "primaryFields.homeClub-poster",
+    "secondaryFields.membership",
+    "secondaryFields.homeClub",
+    "footerFields.membership-poster",
+    "backFields.status",
+    "backFields.message",
+    "backFields.portal",
+    "backFields.directions-capitol-hill",
+    "backFields.phone",
+    "backFields.support",
+    "backFields.website",
+    "backFields.terms",
+    "backFields.pass-service",
+    "backFields.status-poster",
+    "backFields.message-poster",
+    "backFields.portal-poster",
+    "backFields.directions-capitol-hill-poster",
+    "backFields.phone-poster",
+    "backFields.support-poster",
+    "backFields.website-poster",
+    "backFields.terms-poster",
+    "backFields.pass-service-poster",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "artwork": [
+      "artwork@3x.png",
+      "artwork@2x.png",
+    ],
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "primaryLogo": [
+      "primaryLogo@3x.png",
+      "primaryLogo@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "primaryFields.homeClub-poster",
+      "secondaryFields.membership",
+      "secondaryFields.homeClub",
+      "footerFields.membership-poster",
+      "backFields.status",
+      "backFields.message",
+      "backFields.status-poster",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 1,
+  },
+  "roles": {
+    "subtitle": "style text: All-Inclusive Wellness",
+    "support": "style links: https://henrysgymnasium.thememberspot.com/ https://maps.apple.com/?daddr=47.615835,-122.323555 tel:+12066447797 mailto:epicexperience@henrysgymnasium.com https://henrysgymnasium.com/",
+    "title": "style text: Alex Morgan",
+    "venueLocation": "style location: 47.615835,-122.323555",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-boarding-pass 1`] = `
+{
+  "barcodes": [
+    "pdf417 BOARD-0001",
+  ],
+  "colors": {
+    "background": "#03528e",
+    "foreground": "#ffffff",
+    "label": "#bfe4fb",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.flight",
+    "headerFields.gate",
+    "primaryFields.origin",
+    "primaryFields.destination",
+    "secondaryFields.passenger",
+    "secondaryFields.departs",
+    "auxiliaryFields.boardsAt",
+    "auxiliaryFields.seat",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "footer": [
+      "footer@3x.png",
+      "footer@2x.png",
+    ],
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "primaryLogo": [
+      "primaryLogo@3x.png",
+      "primaryLogo@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "headerFields.gate",
+      "secondaryFields.departs",
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [
+      {
+        "end": "2030-06-01T20:30:00Z",
+        "start": "2030-06-01T13:15:00Z",
+      },
+    ],
+    "locations": 0,
+  },
+  "roles": {
+    "eventEnd": "style date: 2030-06-01T20:30:00Z",
+    "eventStart": "style date: 2030-06-01T13:15:00Z",
+    "memberName": "semantics text: Alex Morgan",
+    "seat": "semantics text: 14A",
+    "subtitle": "style text: Alex Morgan",
+    "title": "style text: SFO",
+    "validFrom": "style date: 2030-06-01T13:15:00Z",
+    "validUntil": "style date: 2030-06-01T16:30:00-04:00",
+  },
+  "schemes": [
+    "semanticBoardingPass",
+    "boardingPass",
+  ],
+  "style": "boardingPass",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-06-01T16:30:00-04:00",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-coupon 1`] = `
+{
+  "barcodes": [
+    "pdf417 SAVE-0001",
+  ],
+  "colors": {
+    "background": "#b54000",
+    "foreground": "#ffffff",
+    "label": "#ffeedd",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.expires",
+    "primaryFields.offer",
+    "secondaryFields.terms",
+    "backFields.message",
+    "backFields.fine",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    false,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "strip": [
+      "strip@3x.png",
+      "strip@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "offerDetails": "style text: One use per customer. Not combinable with other offers.",
+    "offerTitle": "style text: 20% off",
+    "redemptionChannel": "style channel: both",
+    "subtitle": "style text: One purchase",
+    "title": "style text: 20% off",
+    "validUntil": "style date: 2030-01-01T00:00:00Z",
+  },
+  "schemes": [],
+  "style": "coupon",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-01-01T00:00:00Z",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-event-ticket 1`] = `
+{
+  "barcodes": [
+    "qr TICKET-0001",
+  ],
+  "colors": {
+    "background": "#5e0636",
+    "foreground": "#ffffff",
+    "label": "#f6c5d6",
+  },
+  "events": [
+    "Sample Event",
+    "Sample Event: Encore",
+    "Sample Event: Finale",
+  ],
+  "featured": [],
+  "fields": [
+    "headerFields.date",
+    "primaryFields.event",
+    "secondaryFields.time",
+    "secondaryFields.venue",
+    "auxiliaryFields.attendee",
+    "auxiliaryFields.room",
+    "additionalInfoFields.doors",
+    "additionalInfoFields.admission",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "artwork": [
+      "artwork@3x.png",
+      "artwork@2x.png",
+    ],
+    "background": [
+      "background@3x.png",
+      "background@2x.png",
+    ],
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "primaryLogo": [
+      "primaryLogo@3x.png",
+      "primaryLogo@2x.png",
+    ],
+    "secondaryLogo": [
+      "secondaryLogo@3x.png",
+      "secondaryLogo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "headerFields.date",
+      "secondaryFields.time",
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [
+      {
+        "end": "2030-06-02T05:00:00Z",
+        "start": "2030-06-02T00:00:00Z",
+      },
+      {
+        "end": "2030-06-09T05:00:00Z",
+        "start": "2030-06-09T00:00:00Z",
+      },
+      {
+        "end": "2030-06-16T05:00:00Z",
+        "start": "2030-06-16T00:00:00Z",
+      },
+    ],
+    "locations": 1,
+  },
+  "roles": {
+    "eventEnd": "semantics date: 2030-06-01T22:00:00-07:00",
+    "eventName": "semantics text: Sample Event",
+    "eventStart": "semantics date: 2030-06-01T19:00:00-07:00",
+    "memberName": "semantics text: Alex Morgan",
+    "subtitle": "style text: 2030-06-01T19:00:00-07:00",
+    "ticketHolder": "semantics text: Alex Morgan",
+    "title": "style text: Sample Event",
+    "validFrom": "style date: 2030-06-02T00:00:00Z",
+    "validUntil": "style date: 2030-06-16T05:00:00Z",
+    "venueAddress": "semantics text: Main hall, Cupertino, CA",
+    "venueLocation": "semantics location: 37.3349,-122.009",
+    "venueName": "semantics text: Sample Hall",
+  },
+  "schemes": [
+    "posterEventTicket",
+    "eventTicket",
+  ],
+  "style": "eventTicket",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-06-16T05:00:00Z",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-generic 1`] = `
+{
+  "barcodes": [
+    "qr ID-0001",
+  ],
+  "colors": {
+    "background": "#141a2b",
+    "foreground": "#ffffff",
+    "label": "#5eead4",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.tier",
+    "headerFields.points",
+    "primaryFields.holder",
+    "secondaryFields.since",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "headerFields.tier",
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "subtitle": "style text: 2026-01-01T00:00:00Z",
+    "title": "style text: Alex Morgan",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-poster-generic 1`] = `
+{
+  "barcodes": [
+    "qr ID-0001",
+  ],
+  "colors": {
+    "background": "#361273",
+    "foreground": "#ffffff",
+    "label": "#d8c7f9",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.tier",
+    "headerFields.tier-poster",
+    "primaryFields.holder",
+    "primaryFields.holder-poster",
+    "secondaryFields.since",
+    "additionalInfoFields.plan-poster",
+    "footerFields.since-poster",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+    "backFields.terms-poster",
+    "backFields.contact-poster",
+    "backFields.pass-service-poster",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "artwork": [
+      "artwork@3x.png",
+      "artwork@2x.png",
+    ],
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "primaryLogo": [
+      "primaryLogo@3x.png",
+      "primaryLogo@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "headerFields.tier",
+      "headerFields.tier-poster",
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "subtitle": "style text: 2026-01-01T00:00:00Z",
+    "title": "style text: Alex Morgan",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-stamp-card 1`] = `
+{
+  "barcodes": [
+    "qr CARD-0001",
+  ],
+  "colors": {
+    "background": "#fcf4e6",
+    "foreground": "#311c0f",
+    "label": "#a24019",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.stamps",
+    "secondaryFields.reward",
+    "secondaryFields.holder",
+    "backFields.how",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "strip": [
+      "strip@3x.png",
+      "strip@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "memberId": "style text: CARD-0001",
+    "subtitle": "style text: Free coffee",
+    "title": "style text: PassBook",
+  },
+  "schemes": [],
+  "style": "storeCard",
+  "urls": [],
+  "validity": {
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-store-card 1`] = `
+{
+  "barcodes": [
+    "qr CARD-0001",
+  ],
+  "colors": {
+    "background": "#004b41",
+    "foreground": "#ffffff",
+    "label": "#f2d07d",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.tier",
+    "primaryFields.balance",
+    "secondaryFields.holder",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "strip": [
+      "strip@3x.png",
+      "strip@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "headerFields.tier",
+      "primaryFields.balance",
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 1,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "balance": "semantics money: 25 USD",
+    "memberId": "style text: CARD-0001",
+    "subtitle": "style text: Alex Morgan",
+    "title": "style text: 25",
+  },
+  "schemes": [],
+  "style": "storeCard",
+  "urls": [],
+  "validity": {
+    "expired": false,
+    "voided": false,
+  },
+}
+`;

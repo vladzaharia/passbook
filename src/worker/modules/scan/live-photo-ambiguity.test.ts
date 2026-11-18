@@ -89,7 +89,7 @@ describe('ambiguous live event privacy', () => {
         gen: null,
       });
     }
-    const internal = await runInDurableObject(hub(), async (_object, state) =>
+    const internal = await runInDurableObject(hub().stub, async (_object, state) =>
       ((await state.storage.get<LiveRingRow[]>('recent')) ?? []).filter(
         (entry) => entry.row.scannerId === source.id,
       ),

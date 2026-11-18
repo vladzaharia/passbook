@@ -29,11 +29,13 @@ import { scanningSessionsRoutes } from './modules/scan/routes-scanning-sessions.
 import { scansRoutes } from './modules/scan/routes-scans.ts';
 import { scanSetupsRoutes } from './modules/scan/routes-setups.ts';
 import { scanStaffRoutes } from './modules/scan/routes-staff.ts';
+import { scanZonesRoutes } from './modules/scan/routes-zones.ts';
 import { settingsRoutes } from './modules/settings/routes.ts';
 import { statusRoutes } from './modules/status/routes.ts';
 import { templatesRoutes } from './modules/templates/routes.ts';
 import { usersRoutes } from './modules/users/routes.ts';
 import { walletProviderAccountRoutes } from './modules/wallet-providers/routes-accounts.ts';
+import { walletImageRoutes } from './modules/wallet-providers/routes-assets.ts';
 import { samsungCallbackRoutes } from './modules/wallet-providers/routes-callbacks.ts';
 import { googleCallbackRoutes } from './modules/wallet-providers/routes-google-callbacks.ts';
 import { walletOfferRoutes } from './modules/wallet-providers/routes-offers.ts';
@@ -56,7 +58,7 @@ export interface AppOptions {
 }
 
 /** Paths only the Worker answers: an unknown one is a 404, never the SPA. */
-const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|hooks|assets|health)(?:\/|$)/;
+const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|w|hooks|assets|health)(?:\/|$)/;
 
 /**
  * Every other GET is one of the SPA's pages, served from static assets as the asset layer would
@@ -141,6 +143,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/scan/live', scanLiveRoutes);
   app.route('/api/v1/scan-events', scanEventsRoutes);
   app.route('/api/v1/scan-staff', scanStaffRoutes);
+  app.route('/api/v1/scan-zones', scanZonesRoutes);
   app.route('/api/v1/scans', scansRoutes);
   app.route('/api/v1/scan-display', scanDisplayRoutes);
   app.route('/api/v1/nfc', nfcRoutes);
@@ -148,6 +151,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/wallet/v1/samsung', samsungCallbackRoutes);
   app.route('/wallet/v1', appleRoutes);
   app.route('/p', walletOfferRoutes);
+  app.route('/w/i', walletImageRoutes);
   app.route('/p', publicRoutes);
   app.route('/b', bundlePublicRoutes);
   app.route('/hooks', hooksRoutes);
