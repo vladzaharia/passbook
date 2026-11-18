@@ -130,6 +130,8 @@ export class ScanHub extends DurableObject<AppEnv> {
     after?: string | null,
     authenticated?: LiveRecipient,
   ) {
+    // The request's own time: the work below must not move the places' rev.
+    const at = ctx.clock.now();
     const captured = cloneLiveAttachment(attachment);
     if (!captured) return { rows: [], cursor: null };
     const recipient = authenticated ?? (await liveRecipient(ctx, captured));
@@ -146,6 +148,7 @@ export class ScanHub extends DurableObject<AppEnv> {
       ctx,
       recipient,
       unseen.filter((entry) => watches(recipient, entry)),
+      at,
     );
     return { rows, cursor: ring.at(-1)?.row.id ?? null, ...(places.length ? { places } : {}) };
   }

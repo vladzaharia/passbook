@@ -22,18 +22,19 @@ export function watchedEvents(recipient: LiveRecipient, rows: readonly LiveRingR
 
 /**
  * In-now counts for a monitor, one per watched event that tracks entries and exits, read under the
- * monitor's own authority (nothing comes back when it fails). `rev` is the read time, so a later
- * read always orders after an earlier one. Who is inside is never returned: counts only.
+ * monitor's own authority (nothing comes back when it fails). `rev` is the read time (`at`, when the
+ * caller fixes it at the start of its request), so a later read always orders after an earlier one. Who is inside is never returned: counts only.
  */
 export async function livePlaces(
   ctx: ServiceContext,
   recipient: LiveRecipient,
   rows: readonly LiveRingRow[],
+  at?: number,
 ): Promise<ScanPlaceRev[]> {
   const out: ScanPlaceRev[] = [];
   const { actor } = recipient;
   for (const eventId of watchedEvents(recipient, rows)) {
-    const rev = ctx.clock.now();
+    const rev = at ?? ctx.clock.now();
     const auth = scanReadAuthority(actor, { now: rev, read: { stafflessMonitor: true } });
     const event = await livePlaceEventStmt(
       ctx.env.DB,
