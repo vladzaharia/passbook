@@ -73,12 +73,22 @@ describe('customerIssues', () => {
     '{{event.capacity}}',
     '{{event.arrived}}',
     '{{pass.externalId}}',
+    '{{access.zone}}',
+    '{{access.hours}}',
   ])('refuses %s in a named panel', (binding) => {
     const d = doc({
       panels: [{ id: 'p', rows: [field('f', binding)] }],
       customer: { panel: 'p' },
     });
     expect(codes(d)).toEqual(['SCAN_DISPLAY_CUSTOMER_SCOPE']);
+  });
+
+  it('lets the customer read the plan and when the access ends', () => {
+    const d = doc({
+      panels: [{ id: 'p', rows: [field('f', '{{access.plan}} {{access.until|time}}')] }],
+      customer: { panel: 'p' },
+    });
+    expect(codes(d)).toEqual([]);
   });
 
   it('reads bindings of named elements only', () => {

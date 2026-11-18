@@ -17,6 +17,7 @@ import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { addDueRecompute } from './occupancy/recompute.ts';
 import { addZoneTapOut } from './occupancy/service.ts';
+import { accessTemplates } from './repo-access.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
 import {
   addZoneArchive,
@@ -28,6 +29,7 @@ import {
   zoneSubtreeIs,
   zonesOpen,
 } from './repo-zones.ts';
+import { plansByZone } from './zones-plans.ts';
 import {
   assertPlacement,
   depthOf,
@@ -59,7 +61,7 @@ function assertAuthority(
     throw new ForbiddenError();
 }
 
-function toDto(row: ZoneRow, rows: readonly ZoneRow[]): ScanZone {
+function toDto(row: ZoneRow, rows: readonly ZoneRow[], plans: ScanZone['plans']): ScanZone {
   const index = indexZones(rows);
   return {
     id: row.id,
@@ -76,8 +78,8 @@ function toDto(row: ZoneRow, rows: readonly ZoneRow[]): ScanZone {
     maxStayMinutes: row.maxStayMinutes,
     clearAt: row.clearAt,
     sessions: row.sessions,
-    // Plans come from template manifests (access engine); occupancy counts from the occupancy package.
-    plans: [],
+    plans,
+    // The count of who is inside comes from the occupancy package.
     inNow: null,
     archivedAt: row.archivedAt,
   };
@@ -85,23 +87,30 @@ function toDto(row: ZoneRow, rows: readonly ZoneRow[]): ScanZone {
 
 export async function listZones(ctx: ServiceContext, authority: Authority, query: Query) {
   assertAuthority(authority, query.orgId, 'scanning:read');
-  const rows = await orgZoneRows(ctx.env.DB, query.orgId);
+  const [rows, templates] = await Promise.all([
+    orgZoneRows(ctx.env.DB, query.orgId),
+    accessTemplates(ctx.env.DB, query.orgId),
+  ]);
+  const plans = plansByZone(rows, templates);
   const shown = treeOrder(
     rows.filter((r) => (query.archived === 'true' ? r.archivedAt !== null : r.archivedAt === null)),
   );
   const start = query.cursor ? shown.findIndex((r) => r.id === query.cursor) + 1 : 0;
   const page = shown.slice(start, start + query.limit);
   return {
-    items: page.map((r) => toDto(r, rows)),
+    items: page.map((r) => toDto(r, rows, plans.get(r.id) ?? [])),
     nextCursor: start + query.limit < shown.length ? (page.at(-1)?.id ?? null) : null,
   };
 }
 
 async function committed(ctx: ServiceContext, orgId: string, id: string): Promise<ScanZone> {
-  const rows = await orgZoneRows(ctx.env.DB, orgId);
+  const [rows, templates] = await Promise.all([
+    orgZoneRows(ctx.env.DB, orgId),
+    accessTemplates(ctx.env.DB, orgId),
+  ]);
   const row = rows.find((r) => r.id === id);
   if (!row) throw notFound();
-  return toDto(row, rows);
+  return toDto(row, rows, plansByZone(rows, templates).get(id) ?? []);
 }
 
 function mutationError(error: unknown): never {

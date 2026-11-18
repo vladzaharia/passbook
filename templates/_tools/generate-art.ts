@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { WHITE, PALETTE } from './math.ts';
 import { icon, logo } from './marks.ts';
 import { balanceStrip, couponStrip, genericThumb, routeFooter } from './painters-cards.ts';
+import { accessThumb } from './painters-access.ts';
 import { eventArt, eventBackground, eventThumb, posterArt } from './painters-scenes.ts';
 import { type Painter, png } from './png.ts';
 
@@ -23,6 +24,11 @@ export const BLUEPRINTS: Record<string, Slot[]> = {
     { file: 'icon', w: 38, h: 38, paint: icon(PALETTE.ink.bg) },
     { file: 'logo', w: 50, h: 50, paint: logo(WHITE) },
     { file: 'thumbnail', w: 90, h: 90, paint: genericThumb },
+  ],
+  'starter-access-card': [
+    { file: 'icon', w: 38, h: 38, paint: icon(PALETTE.cobalt.bg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(WHITE) },
+    { file: 'thumbnail', w: 90, h: 90, paint: accessThumb },
   ],
   'starter-poster-generic': [
     { file: 'icon', w: 38, h: 38, paint: icon(PALETTE.violet.bg) },
