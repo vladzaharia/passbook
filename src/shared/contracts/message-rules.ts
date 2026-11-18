@@ -5,7 +5,15 @@ import {
   ClearAfterSchema,
   InputMatchSchema,
 } from './broadcasts.ts';
-import { IdSchema, ModeSchema, OrgIdSchema, PlainLineSchema, TimestampSchema } from './common.ts';
+import {
+  IdSchema,
+  ModeSchema,
+  OrgIdSchema,
+  PageQuerySchema,
+  PlainLineSchema,
+  pageOf,
+  TimestampSchema,
+} from './common.ts';
 import { TimeZoneSchema } from './scan-base.ts';
 
 const InputKey = z.string().min(1).max(64);
@@ -103,3 +111,15 @@ export const MessageRuleSchema = z.object({
   version: z.number().int().positive(),
 });
 export type MessageRuleDto = z.infer<typeof MessageRuleSchema>;
+
+/** Saving over a rule: the version the editor read. A stale version is a conflict. */
+export const UpdateMessageRuleSchema = z
+  .object({ orgId: OrgIdSchema, ...ruleFields, version: z.number().int().positive() })
+  .superRefine(refineRule);
+export type UpdateMessageRuleBody = z.infer<typeof UpdateMessageRuleSchema>;
+
+export const MessageRuleListQuerySchema = PageQuerySchema.extend({
+  orgId: OrgIdSchema.optional(),
+  state: RuleStateSchema.optional(),
+});
+export const MessageRuleListSchema = pageOf(MessageRuleSchema);

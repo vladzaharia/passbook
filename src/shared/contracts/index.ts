@@ -8,6 +8,7 @@ export * from './events.ts';
 export * from './holders.ts';
 export * from './identities.ts';
 export * from './me.ts';
+export * from './message-rules.ts';
 export * from './metrics.ts';
 export * from './nfc.ts';
 export * from './org-membership.ts';

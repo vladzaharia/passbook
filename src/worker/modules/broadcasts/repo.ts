@@ -31,6 +31,8 @@ export interface BroadcastRow {
   started_at: number | null;
   finished_at: number | null;
   checked_at: number | null;
+  rule_id: string | null;
+  window_key: string | null;
 }
 
 export interface NewBroadcast {
@@ -47,6 +49,8 @@ export interface NewBroadcast {
   clearAfter: number | null;
   expect?: unknown;
   parentId?: string | null;
+  ruleId?: string | null;
+  windowKey?: string | null;
   actor: { type: string; id: string | null };
   now: number;
 }
@@ -55,7 +59,7 @@ export interface NewBroadcast {
  * Request writes must carry the exact checked tenant/key grant. The caller binds the actual
  * resource's org and mode separately; trusted workflow writes never use this predicate.
  */
-function broadcastAuthority(
+export function broadcastAuthority(
   authority: TenantPassWrite,
   now: number,
   needsPassWrite: boolean,
@@ -85,6 +89,8 @@ function broadcastValues(b: NewBroadcast): SqlValue[] {
     b.clearAfter,
     b.expect === undefined ? null : JSON.stringify(b.expect),
     b.parentId ?? null,
+    b.ruleId ?? null,
+    b.windowKey ?? null,
     b.actor.type,
     b.actor.id,
     b.now,
@@ -96,8 +102,8 @@ export function insertBroadcastStmt(db: D1Database, b: NewBroadcast): D1Prepared
   return stmt(
     db,
     `INSERT OR IGNORE INTO broadcasts (id, org_id, mode, kind, name, state, target, patch, notify, at,
-       clear_after, expect, parent_id, created_by_type, created_by_id, created_at, started_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       clear_after, expect, parent_id, rule_id, window_key, created_by_type, created_by_id, created_at, started_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     broadcastValues(b),
   );
 }
@@ -113,8 +119,8 @@ export function insertAuthorizedBroadcastStmt(
   return stmt(
     db,
     `INSERT OR IGNORE INTO broadcasts (id, org_id, mode, kind, name, state, target, patch, notify, at,
-       clear_after, expect, parent_id, created_by_type, created_by_id, created_at, started_at)
-     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       clear_after, expect, parent_id, rule_id, window_key, created_by_type, created_by_id, created_at, started_at)
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
      WHERE ? = ? AND ? = ? AND (${guard.sql})`,
     [...broadcastValues(b), b.orgId, authority.orgId, b.mode, authority.mode, ...guard.params],
   );
@@ -132,6 +138,10 @@ export interface BroadcastListFilter {
   orgId: string;
   mode: Mode;
   state?: BroadcastState | undefined;
+  /** Default `manual`: leaves out the runs of automatic messages. */
+  origin?: 'manual' | 'rule' | undefined;
+  /** Only the runs of this automatic message. */
+  ruleId?: string | undefined;
   cursor?: string | undefined;
   limit: number;
 }
@@ -145,6 +155,11 @@ export async function listBroadcasts(
   if (f.state) {
     where.push('state = ?');
     params.push(f.state);
+  }
+  where.push(f.origin === 'rule' ? 'rule_id IS NOT NULL' : 'rule_id IS NULL');
+  if (f.ruleId) {
+    where.push('rule_id = ?');
+    params.push(f.ruleId);
   }
   if (f.cursor) {
     where.push('id < ?');
@@ -217,7 +232,8 @@ export function cancelBroadcastStmt(
 export const dueBroadcasts = (db: D1Database, now: number, limit: number) =>
   all<BroadcastRow>(
     db,
-    `SELECT * FROM broadcasts WHERE state = 'scheduled' AND at <= ? ORDER BY at LIMIT ?`,
+    `SELECT * FROM broadcasts WHERE state = 'scheduled' AND at <= ?
+     ORDER BY (rule_id IS NOT NULL), at LIMIT ?`,
     [now, limit],
   );
 
