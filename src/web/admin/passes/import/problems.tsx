@@ -14,13 +14,13 @@ export function ProblemsTable({ imp }: { imp: PassImportDto }) {
           <thead className="bg-surface-raised text-xs text-fg-muted">
             <tr>
               <th scope="col" className="px-3 py-2 font-medium">
-                Row
+                {C.results.row}
               </th>
               <th scope="col" className="px-3 py-2 font-medium">
-                Column
+                {C.results.column}
               </th>
               <th scope="col" className="px-3 py-2 font-medium">
-                Problem
+                {C.results.problem}
               </th>
             </tr>
           </thead>

@@ -14,6 +14,9 @@ export const IMPORT_COPY = {
   linkLabel: 'Link',
   linkHelp: 'In Google Sheets: File › Share › Publish to web › CSV.',
   xlsx: 'Save the sheet as CSV first.',
+  notUtf8: 'The file is not UTF-8. Save it as CSV UTF-8.',
+  savedColumns: 'A saved column is not in this file. Choose it again.',
+  checkUnfinished: 'The check did not finish. Try again.',
   notCsv: 'Use a .csv, .tsv or .txt file.',
   tooBig: 'The file is larger than 2 MB.',
   start: 'Check file',
@@ -58,7 +61,6 @@ export const IMPORT_COPY = {
     email: 'Email new holders',
     skip: (n: number) => `Skip ${n} ${n === 1 ? 'row' : 'rows'} with errors`,
     noEmail: 'No new holder has an email.',
-    cancel: 'Cancel',
   },
   progress: { title: 'Importing', leave: 'You can leave this page.' },
   results: {
@@ -81,6 +83,17 @@ export const IMPORT_COPY = {
     removeBody:
       'Removes the passes this import created. Passes edited or scanned since are kept and listed.',
     gone: 'This import is no longer available. Start a new one.',
+    stopped: 'The import stopped before the end. Check the counts, then import the rest.',
+    emailed: (sent: number, skipped: number) =>
+      skipped > 0
+        ? `${sent} emailed. ${skipped} held back by the daily or hourly mail limit: try again later.`
+        : `${sent} emailed`,
+    couldNotEmail: 'Could not email',
+    couldNotRemove: 'Could not remove',
+    couldNotDownload: 'Could not download',
+    row: 'Row',
+    problem: 'Problem',
+    column: 'Column',
   },
   countsLine: (c: { create: number; update: number; unchanged: number; errors: number }) =>
     `${c.create} to create · ${c.update} to update · ${c.unchanged} unchanged · ${c.errors} ${c.errors === 1 ? 'error' : 'errors'}`,

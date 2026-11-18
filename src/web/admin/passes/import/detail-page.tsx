@@ -43,6 +43,7 @@ export function ImportDetailPage({ importId }: { importId: string }) {
   const [editing, setEditing] = useState(false);
   const imp = query.data;
   const canSync = membership?.capabilities.includes('integrations:manage') ?? false;
+  const canOperate = membership?.capabilities.includes('passes:operate') ?? false;
   const back = () => void navigate({ to: '/admin/passes/import', search: orgId ? { orgId } : {} });
 
   let body = <Skeleton className="h-64" />;
@@ -67,16 +68,18 @@ export function ImportDetailPage({ importId }: { importId: string }) {
     else if (imp.state === 'checking') body = <Checking />;
     else if (imp.state === 'committing') body = <ImportProgress imp={imp} />;
     else if ((imp.state === 'done' || imp.state === 'failed') && imp.progress)
-      body = <ImportResults imp={imp} orgId={orgId} canSync={canSync} />;
+      body = <ImportResults imp={imp} orgId={orgId} canSync={canSync} canOperate={canOperate} />;
     else if ((imp.state === 'ready' || imp.state === 'stale') && !editing)
       body = (
         <CheckStep
           imp={imp}
           orgId={orgId}
+          canOperate={canOperate}
           onEditColumns={() => setEditing(true)}
           onDiscarded={back}
         />
       );
+    else if (!canOperate) body = <EmptyState art="lock" title={C.forbidden} />;
     else
       body = (
         <MatchStep

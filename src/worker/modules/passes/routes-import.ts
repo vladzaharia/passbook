@@ -5,6 +5,8 @@ import {
   CheckPassImportSchema,
   CreatePassImportSchema,
   PassImportCommitSchema,
+  PassImportEmailRestResultSchema,
+  PassImportEmailRestSchema,
   PassImportListQuerySchema,
   PassImportPageSchema,
   PassImportRemoveResultSchema,
@@ -27,6 +29,7 @@ import {
   tenantAuthorityOf,
 } from './http.ts';
 import { commitImport } from './import-commit.ts';
+import { emailRest } from './import-email-rest.ts';
 import { errorsCsv, importDto, rowsPage } from './import-read.ts';
 import { removeCreated } from './import-remove.ts';
 import { resultsCsv } from './import-results.ts';
@@ -244,6 +247,33 @@ register(
     const authority = await authorityFor(c, c.req.valid('query').orgId, 'passes:operate');
     return c.json(
       await removeCreated(
+        svc(c),
+        actorFor(c),
+        authority,
+        c.req.valid('param').id,
+        c.req.valid('json').cursor,
+      ),
+    );
+  },
+);
+
+register(
+  passImportRoutes,
+  TAG,
+  {
+    method: 'post',
+    path: '/{id}/email-rest',
+    summary:
+      'Email the created passes that were not emailed, 50 a call; a repeat emails nobody twice',
+    params: IdParamSchema,
+    query: OrgQuerySchema,
+    body: PassImportEmailRestSchema,
+    response: PassImportEmailRestResultSchema,
+  },
+  async (c) => {
+    const authority = await authorityFor(c, c.req.valid('query').orgId, 'passes:operate');
+    return c.json(
+      await emailRest(
         svc(c),
         actorFor(c),
         authority,

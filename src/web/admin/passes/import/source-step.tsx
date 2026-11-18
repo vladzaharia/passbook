@@ -50,10 +50,11 @@ export function SourceStep({ orgId }: { orgId: string }) {
 
   const items = templates.data?.items ?? [];
   const chosen = templateId ?? (items.length === 1 ? items[0]?.templateId : undefined);
+  const pastedTooBig = new Blob([pasted]).size > PASS_IMPORT_MAX_BYTES;
   const source =
     kind === 'file' && file
       ? ({ kind: 'file', name: file.name, csv: file.csv } as const)
-      : kind === 'paste' && pasted.trim()
+      : kind === 'paste' && pasted.trim() && !pastedTooBig
         ? ({ kind: 'file', name: 'pasted.csv', csv: pasted } as const)
         : kind === 'link' && url.trim()
           ? ({ kind: 'url', url: url.trim() } as const)
@@ -64,7 +65,16 @@ export function SourceStep({ orgId }: { orgId: string }) {
     const bad = fileProblem(picked);
     setFile(undefined);
     setProblem(bad ?? undefined);
-    if (!bad) setFile({ name: picked.name, csv: await picked.text() });
+    if (bad) return;
+    try {
+      // fatal: another encoding would reach the check as replacement characters.
+      setFile({
+        name: picked.name,
+        csv: new TextDecoder('utf-8', { fatal: true }).decode(await picked.arrayBuffer()),
+      });
+    } catch {
+      setProblem(C.notUtf8);
+    }
   }
 
   function start() {
@@ -149,7 +159,9 @@ export function SourceStep({ orgId }: { orgId: string }) {
             )}
           </FormField>
         )}
-        {problem ? <Callout tone="danger">{problem}</Callout> : null}
+        {problem || (kind === 'paste' && pastedTooBig) ? (
+          <Callout tone="danger">{problem ?? C.tooBig}</Callout>
+        ) : null}
         {create.isError ? <Callout tone="danger">{errorMessage(create.error)}</Callout> : null}
         <div>
           <Button disabled={!chosen || !source} loading={create.isPending} onClick={start}>
