@@ -146,15 +146,22 @@ export async function rebindRemoved(
   const tag = await tagTarget(ctx.env.DB, req.tagId);
   if (!tag || tag.orgId !== a.orgId || tag.mode !== a.mode) throw tagGone();
   const last = await lastEndedBinding(ctx.env.DB, tag.id);
-  const same =
+  const removedByYou =
     last !== null &&
     last.endCause === 'admin' &&
     last.endedByType === 'user' &&
     last.endedBy === a.userId &&
     (last.scope === 'user' ? last.userId === pass.ownerUserId : last.passId === pass.id);
   const active = await activeBinding(ctx.env.DB, tag.id);
-  // A second Undo finds the tag back where it was.
-  if (!active && (!last || !same || ctx.clock.now() - last.endedAt > REMOVE_UNDO_MS))
+  if (active) {
+    // A second Undo finds the tag back where it was; anything else is not an undo.
+    const same =
+      active.scope === req.binding &&
+      (req.binding === 'pass' ? active.passId === pass.id : active.userId === pass.ownerUserId);
+    if (!same) throw new ConflictError('The tag was assigned again.', 'TAG_ALREADY_ASSIGNED');
+    return shown(ctx, a, tag.id);
+  }
+  if (!last || !removedByYou || ctx.clock.now() - last.endedAt > REMOVE_UNDO_MS)
     throw new ForbiddenError('Undo timed out. Add the tag again.', 'TAG_UNDO_EXPIRED');
   return place(ctx, a, tag.id, pass, req.binding, null);
 }

@@ -169,7 +169,8 @@ export async function ownerIsActive(db: Db, userId: string | null): Promise<bool
  */
 export function requesterHolds(userId: string, requestedAt: number): Check {
   return {
-    reason: 'actor',
+    // Not 'actor': that reason re-pairs the device, and it is the admin who changed.
+    reason: 'retention',
     ok: (
       b,
     ) => `EXISTS (SELECT 1 FROM users u JOIN org_memberships m ON m.user_id = u.id AND m.org_id = a.org_id
