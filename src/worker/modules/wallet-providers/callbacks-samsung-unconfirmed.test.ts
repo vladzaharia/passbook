@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
-import { first, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import {
   configureWalletProviderAccount,
   getWalletProviderReadiness,
@@ -245,6 +245,19 @@ describe('issued-ref callbacks and the credential they verified under', () => {
     const t = await setupSamsungCallbacks({ promoted: false });
     expect((await t.call({ token: await t.token() })).status).toBe(200);
     const scope = { orgId: t.kit.org.id, mode: 'live' as const, provider: 'samsung' as const };
+    // An account is revoked only after its instances retire; lift the lifecycle guards to reach
+    // that state with the ref still unburied, as after a retirement that never wrote a tombstone.
+    const guards = await all<{ name: string }>(
+      t.kit.env.DB,
+      `SELECT name FROM sqlite_master WHERE type = 'trigger'
+      AND tbl_name = 'wallet_provider_instances' AND sql LIKE '%UPDATE OF lifecycle%'`,
+    );
+    for (const { name } of guards) await run(t.kit.env.DB, `DROP TRIGGER ${name}`);
+    await run(
+      t.kit.env.DB,
+      "UPDATE wallet_provider_instances SET lifecycle = 'retired' WHERE id = ?",
+      [t.operation.instanceId],
+    );
     const account = await getWalletProviderReadiness(t.kit.ctx, scope);
     await revokeWalletProviderAccount(t.kit.ctx, t.auth, {
       ...scope,
