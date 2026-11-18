@@ -24,35 +24,6 @@ export const OffboardResultSchema = z.object({
   tags: z.number().int(),
 });
 
-export const PassImportStateSchema = z.enum(['checking', 'ready', 'committing', 'done', 'failed']);
-export const PassImportRowProblemSchema = z.object({
-  row: z.number().int().min(1),
-  code: z.string().max(64),
-  message: z.string().max(200),
-});
-export const CreatePassImportSchema = z.strictObject({
-  templateId: IdSchema,
-  csv: z.string().min(1).max(2_000_000),
-});
-export const PassImportSchema = z.object({
-  id: IdSchema,
-  templateId: IdSchema,
-  state: PassImportStateSchema,
-  rows: z.number().int(),
-  created: z.number().int(),
-  updated: z.number().int(),
-  failed: z.number().int(),
-  problems: z.array(PassImportRowProblemSchema).max(100),
-  createdAt: TimestampSchema,
-  finishedAt: TimestampSchema.nullable(),
-});
-export const PassImportCommitSchema = z.strictObject({
-  /** Rows with problems are skipped; false refuses the whole file. */
-  skipInvalid: z.boolean().default(true),
-  /** Email each new holder their pass now. */
-  email: z.boolean().default(false),
-});
-
 /** A visitor leaves: the desk checks them out and collects a lent tag. */
 export const SignOutRequestSchema = z.strictObject({
   idempotencyKey: UuidV7Schema,
