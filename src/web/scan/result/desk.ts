@@ -13,6 +13,8 @@ export function deskOf(
     onValue: (value: unknown) => dispatch({ type: 'value', value }),
     onConfirm: () => dispatch({ type: 'confirm' }),
     onCancel: () => dispatch({ type: 'cancel' }),
+    note: loop.s === 'verdict' ? loop.pin : undefined,
+    code: staffList === null,
     managers: (staffList ?? []).filter((m) => m.role === 'manager'),
     onApprove: (staffId: string | undefined, pin: string) =>
       dispatch({ type: 'approve', ...(staffId ? { staffId } : {}), pin }),

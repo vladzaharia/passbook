@@ -72,7 +72,8 @@ async function build(slug: string, wallets: boolean, previousHash?: string) {
   });
 }
 
-describe('Apple output ignores the wallets block', () => {
+// Builds every baked pass twice; PNG composition under v8 coverage runs about 10x slower than locally.
+describe('Apple output ignores the wallets block', { timeout: 180_000 }, () => {
   it('has templates to check', () => {
     expect(bakedSlugs().length).toBeGreaterThan(5);
   });

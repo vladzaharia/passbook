@@ -205,7 +205,10 @@ describe('backfillScanKeys', () => {
 
   it('leaves a removed pass without a barcode hash', async () => {
     const pass = await legacy('Gone 1');
-    await run(kit.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [Date.now(), pass.id]);
+    await run(kit.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [
+      kit.clock.now(),
+      pass.id,
+    ]);
     await backfillScanKeys(jobCtxOf(kit), 1000, () => 'R'.repeat(26));
     const row = await first<{ s: string | null; b: string | null; l: string | null }>(
       kit.env.DB,

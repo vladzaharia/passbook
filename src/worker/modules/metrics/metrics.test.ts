@@ -296,7 +296,7 @@ describe('recent activity follows the mode', () => {
     await run(
       base.DB,
       "INSERT INTO audit_log (at, org_id, actor_type, action) VALUES (?, ?, 'user', 'pass.update')",
-      [Date.now(), a.org.id],
+      [f.clock.now(), a.org.id],
     );
     const q = { orgId: a.org.id, range: '24h' as const };
     expect((await getOverview(ctx, q, 'live')).recent.length).toBeGreaterThan(0);

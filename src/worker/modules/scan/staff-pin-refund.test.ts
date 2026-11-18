@@ -6,6 +6,7 @@ import {
   makeOrg,
   makeScanner,
   makeScanStaff,
+  TEST_NOW,
 } from '../../../../test/helpers/index.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
@@ -16,7 +17,7 @@ let f: Fixtures;
 let clock: ManualClock;
 let orgId: string;
 beforeEach(async () => {
-  clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
+  clock = new ManualClock(TEST_NOW);
   f = fixtures(await makeEnv(), clock);
   orgId = (await makeOrg(f)).id;
 });

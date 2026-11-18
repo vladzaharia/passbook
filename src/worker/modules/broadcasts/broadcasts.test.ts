@@ -19,7 +19,7 @@ let other: { id: string };
 beforeAll(async () => {
   kit = await broadcastKit();
   auth = await broadcastAuth(kit, ORIGIN);
-  app = createApp({ stores: auth.stores });
+  app = createApp({ stores: auth.stores, clock: kit.clock });
   other = await makeOrg(kit.fx, { name: 'Other Org' });
 });
 
@@ -56,7 +56,14 @@ async function sendNow(body: Record<string, unknown>, headers: Headers = auth.ad
   const created = await dto(res);
   const instance = kit.broadcast.created.at(before);
   expect(instance?.id).toBe(`broadcast-${created.id}`);
-  await runBroadcast(kit.env, instance?.id ?? '', { broadcastId: created.id }, stepRun, undefined);
+  await runBroadcast(
+    kit.env,
+    instance?.id ?? '',
+    { broadcastId: created.id },
+    stepRun,
+    undefined,
+    kit.clock,
+  );
   await kit.settle();
   return dto(await api(`/broadcasts/${created.id}`, { headers }));
 }
@@ -120,8 +127,12 @@ describe('send now', () => {
       `broadcast-${first.id}`,
       { broadcastId: first.id },
       stepRun,
+      undefined,
+      kit.clock,
     );
     expect(again.state).toBe('skipped');
+    // The second run starts after the first run's version, as it would in real time.
+    kit.clock.advance(1_000);
     const second = await sendNow(message('Same text'));
     expect(second.counts.updated).toBe(0);
     expect(second.counts.unchanged).toBeGreaterThanOrEqual(1);
@@ -168,7 +179,14 @@ describe('send now', () => {
     await startDueBroadcasts(jobCtxOf(kit));
     const instance = kit.broadcast.created.at(-1);
     expect(instance?.id).toBe(`broadcast-${follow?.id}`);
-    await runBroadcast(kit.env, instance?.id ?? '', { broadcastId: follow?.id ?? '' }, stepRun);
+    await runBroadcast(
+      kit.env,
+      instance?.id ?? '',
+      { broadcastId: follow?.id ?? '' },
+      stepRun,
+      undefined,
+      kit.clock,
+    );
     const cleared = await dto(await api(`/broadcasts/${follow?.id}`, { headers: auth.admin() }));
     expect(cleared).toMatchObject({ state: 'sent', parentId: sent.id });
     expect(cleared.counts).toMatchObject({ updated: 0, unchanged: 1 });

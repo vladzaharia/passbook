@@ -22,8 +22,8 @@ import {
   toast,
 } from '../../ui/index.ts';
 import { ModePill } from '../../ui/layout/mode-pill.tsx';
+import { RelTime, useNow } from '../../ui/rel-time.tsx';
 import { useBundleActions, useBundlesOfPass } from './bundle-api.ts';
-import { RelTime, useNow } from './detail/rel-time.tsx';
 import { reportEmailError } from './email-outcome.ts';
 import { absoluteUrl } from './format.ts';
 import { RotateLink } from './rotated-link-dialog.tsx';

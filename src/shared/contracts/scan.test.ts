@@ -6,6 +6,8 @@ import {
   ScanActRequestSchema,
   ScanAdminScopeSchema,
   ScanCardSchema,
+  ScannerSettingsSchema,
+  ScanOccupancySchema,
   ScanOutcomeSchema,
   ScanReasonSchema,
   ScanUndoRequestSchema,
@@ -380,5 +382,52 @@ describe('occupancy reasons', () => {
       expect(SCAN_HEADS_UP_REASONS).toContain(r);
       expect(ScanReasonSchema.safeParse(r).success).toBe(true);
     }
+  });
+});
+
+describe('occupancy fields on an outcome', () => {
+  const occupancy = {
+    place: { kind: 'zone', id, name: 'Pool' },
+    direction: 'in',
+    auto: false,
+    state: 'in',
+    since: 5,
+    via: 'Pool gate',
+    stayMs: null,
+    inNow: 12,
+    capacity: 25,
+    turnaround: null,
+  } as const;
+  const place = { name: 'Pool', inNow: 12, capacity: 25 };
+
+  it("keeps today's outcome byte for byte and accepts null", () => {
+    const old = ScanOutcomeSchema.parse(outcome);
+    expect('occupancy' in old).toBe(false);
+    expect(ScanOutcomeSchema.parse({ ...outcome, occupancy: null }).occupancy).toBeNull();
+  });
+  it('accepts an occupancy and a place count, and rejects a bad one', () => {
+    const parsed = ScanOutcomeSchema.parse({
+      ...outcome,
+      occupancy,
+      counts: { ...counts, place },
+    });
+    expect(parsed.occupancy).toEqual(occupancy);
+    expect(parsed.counts.place).toEqual(place);
+    expect(ScanOccupancySchema.safeParse({ ...occupancy, state: 'away' }).success).toBe(false);
+    expect(
+      ScanOccupancySchema.safeParse({ ...occupancy, place: { kind: 'door', id, name: 'x' } })
+        .success,
+    ).toBe(false);
+    expect(
+      ScanOutcomeSchema.safeParse({ ...outcome, counts: { ...counts, place: { name: 'x' } } })
+        .success,
+    ).toBe(false);
+  });
+  it('desk actions are optional on scanner settings', () => {
+    expect(ScannerSettingsSchema.parse(settings).deskActions).toBeUndefined();
+    expect(ScannerSettingsSchema.parse({ ...settings, deskActions: true }).deskActions).toBe(true);
+    expect(ScannerSettingsSchema.safeParse({ ...settings, deskActions: 'yes' }).success).toBe(
+      false,
+    );
   });
 });

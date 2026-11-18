@@ -207,7 +207,7 @@ export async function approveScanReleases(
 }
 
 /** The passes kit plus a scan template factory, a real app with the scanner store, and fixtures. */
-export async function setupScanKit(options: { clockStart?: number } = {}): Promise<ScanKit> {
+export async function setupScanKit(options: Parameters<typeof setupKit>[0] = {}): Promise<ScanKit> {
   const kit = await setupKit({ ...options, clockStart: options.clockStart ?? TEST_NOW });
   // Storage is per file, and kits are often built in beforeEach.
   const adminId = 'admin-1';

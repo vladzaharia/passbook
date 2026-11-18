@@ -25,8 +25,9 @@ const MAX_RETRY_MS = 300_000;
 
 function retryDelay(attempt: number, requested?: number): number {
   const exponential = Math.min(MAX_RETRY_MS, 1_000 * 2 ** Math.max(0, attempt - 1));
+  // A provider hint can lengthen the backoff but never shorten it.
   return requested !== undefined && Number.isFinite(requested)
-    ? Math.min(MAX_RETRY_MS, Math.max(0, requested))
+    ? Math.min(MAX_RETRY_MS, Math.max(exponential, requested))
     : exponential;
 }
 
@@ -58,14 +59,24 @@ export function classifyWalletSyncFailure(
   }
   if (provider === 'google' && error instanceof GoogleWalletError) {
     const status = statusOf(error.status);
+    if (error.operation === 'oauth' && (error.code === 'timeout' || error.code === 'network')) {
+      // Minting a token changes nothing at Google, so no request can be half done.
+      return {
+        reason: error.code === 'timeout' ? 'timeout' : 'unavailable',
+        disposition: canRetry ? 'retry' : 'failed',
+        status,
+        retryAfterMs: canRetry ? retryDelay(attempt) : null,
+      };
+    }
     if (
       error.code === 'network' ||
+      error.code === 'timeout' ||
       error.code === 'server_error' ||
       status === 408 ||
       (status !== null && status >= 500)
     ) {
       return {
-        reason: status === 408 ? 'timeout' : 'unavailable',
+        reason: status === 408 || error.code === 'timeout' ? 'timeout' : 'unavailable',
         disposition: 'uncertain',
         status,
         retryAfterMs: null,
@@ -74,6 +85,15 @@ export function classifyWalletSyncFailure(
     if (error.code === 'rate_limited') {
       return {
         reason: 'rate_limited',
+        disposition: canRetry ? 'retry' : 'failed',
+        status,
+        retryAfterMs: canRetry ? retryDelay(attempt, error.retryAfterMs) : null,
+      };
+    }
+    if (error.code === 'unauthorized' && error.staleToken) {
+      // The cached bearer was dropped; one retry mints a new one. A fresh token's 401 fails.
+      return {
+        reason: 'unauthorized',
         disposition: canRetry ? 'retry' : 'failed',
         status,
         retryAfterMs: canRetry ? retryDelay(attempt) : null,

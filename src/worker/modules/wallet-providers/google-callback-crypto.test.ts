@@ -1,5 +1,6 @@
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  clearGoogleCallbackKeyCache,
   GOOGLE_CALLBACK_BODY_LIMIT,
   GOOGLE_CALLBACK_KEYS_URL,
   GoogleCallbackInvalid,
@@ -27,6 +28,7 @@ let keys: CallbackSigningKeys;
 beforeAll(async () => {
   keys = await makeCallbackSigningKeys();
 });
+beforeEach(() => clearGoogleCallbackKeyCache());
 afterEach(() => vi.unstubAllGlobals());
 
 function provideKeyset(keyset: object) {
@@ -62,11 +64,12 @@ describe('Google ECv2SigningOnly callback signatures', () => {
   });
 
   it('fetches fresh keys when Google rotates its signing roots', async () => {
+    let clock = now;
     let keyset = await callbackKeyset(keys.root, now + 60_000);
     const fetcher = vi.fn(async () => Response.json(keyset));
     vi.stubGlobal('fetch', fetcher);
     const first = await signedGoogleEvent(keys, issuer, event, { keyExpiration: now + 30_000 });
-    await expect(verifyGoogleCallback(bytes(first), issuer, () => now)).resolves.toMatchObject({
+    await expect(verifyGoogleCallback(bytes(first), issuer, () => clock)).resolves.toMatchObject({
       nonce: event.nonce,
     });
     keyset = await callbackKeyset(keys.other, now + 60_000);
@@ -74,7 +77,8 @@ describe('Google ECv2SigningOnly callback signatures', () => {
       keyExpiration: now + 30_000,
       rootSigner: keys.other,
     });
-    await expect(verifyGoogleCallback(bytes(rotated), issuer, () => now)).resolves.toMatchObject({
+    clock = now + 20_000;
+    await expect(verifyGoogleCallback(bytes(rotated), issuer, () => clock)).resolves.toMatchObject({
       nonce: event.nonce,
     });
     expect(fetcher).toHaveBeenCalledTimes(2);
@@ -101,11 +105,8 @@ describe('Google ECv2SigningOnly callback signatures', () => {
     envelope.keysUrl = 'https://attacker.example/keys';
     await expect(
       verifyGoogleCallback(bytes(JSON.stringify(envelope)), issuer, () => now),
-    ).rejects.toBeInstanceOf(GoogleCallbackInvalid);
-    expect(fetcher).not.toHaveBeenCalled();
-    await expect(verifyGoogleCallback(bytes(raw), issuer, () => now)).rejects.toBeInstanceOf(
-      GoogleCallbackKeysUnavailable,
-    );
+    ).rejects.toBeInstanceOf(GoogleCallbackKeysUnavailable);
+    expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher).toHaveBeenCalledWith(GOOGLE_CALLBACK_KEYS_URL, {
       method: 'GET',
       redirect: 'error',
@@ -138,6 +139,7 @@ describe('Google ECv2SigningOnly callback signatures', () => {
     await expect(verifyGoogleCallback(bytes(valid), issuer, () => now)).rejects.toBeInstanceOf(
       GoogleCallbackKeysUnavailable,
     );
+    clearGoogleCallbackKeyCache();
     provideKeyset(await callbackKeyset(keys.root, now + 30_000));
     for (const raw of [
       await signedGoogleEvent(keys, issuer, event, { keyExpiration: now }),

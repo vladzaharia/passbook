@@ -2,6 +2,7 @@ import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloud
 import { applyChunk } from '../modules/broadcasts/apply.ts';
 import { finishBroadcast, sendStepAllowed, startedBroadcast } from '../modules/broadcasts/run.ts';
 import type { BroadcastParams } from '../modules/broadcasts/start.ts';
+import type { Clock } from '../platform/clock.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { createJobContext } from '../platform/service-context.ts';
 
@@ -17,8 +18,10 @@ export async function runBroadcast(
   params: BroadcastParams,
   step: StepLike,
   exec?: ExecutionContext,
+  clock?: Clock,
 ): Promise<{ state: string }> {
   const ctx = createJobContext(env, 'broadcast', {
+    ...(clock ? { clock } : {}),
     ...(exec ? { ctx: exec } : {}),
     base: { workflow: 'broadcast', instanceId, broadcastId: params.broadcastId },
   });

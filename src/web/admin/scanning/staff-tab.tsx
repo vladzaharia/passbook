@@ -20,7 +20,7 @@ import {
   RowActions,
   StatusPill,
 } from '@/web/ui/index.ts';
-import { RelTime, useNow } from '../passes/detail/rel-time.tsx';
+import { RelTime, useNow } from '../../ui/rel-time.tsx';
 import {
   type ScanStaff,
   StaffFormDialog,

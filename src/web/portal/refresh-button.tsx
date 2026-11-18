@@ -1,20 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Button, IconButton, toast } from '../ui/index.ts';
+import { Button, IconButton, toast, useNow } from '../ui/index.ts';
 import { myPassesKey, requestRefresh } from './api.ts';
 import { type RefreshFields, refreshPhase } from './refresh.ts';
-
-function useNow(active: boolean): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!active) return;
-    setNow(Date.now());
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [active]);
-  return active ? now : Date.now();
-}
 
 /**
  * Refresh in the pass page's header, or beside a tile's badge (compact). While pending the foil
@@ -36,7 +25,8 @@ export function RefreshButton({
   const [cooldownMs, setCooldownMs] = useState<number | undefined>(undefined);
   const [active, setActive] = useState(false);
   const [updated, setUpdated] = useState(0);
-  const now = useNow(active);
+  const ticking = useNow(1000, active);
+  const now = active ? ticking : Date.now();
   const { phase, secondsLeft } = refreshPhase(pass, now, localRequestedAt, cooldownMs);
   const prev = useRef(phase);
 

@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { IdSchema, ModeSchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
-import { ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
+import { ScannerSettingsSchema, TimeZoneSchema, UuidV7Schema } from './scan.ts';
+import { ZoneIdsSchema } from './scan-access.ts';
+import { ScanOccupancySchema, ScanOutCauseSchema, ScanPlaceRevSchema } from './scan-occupancy.ts';
 import {
   DeviceRoleSchema,
   ScannerAcceptsSchema,
@@ -11,6 +13,10 @@ import {
 export const ScanWatchSchema = z.strictObject({
   scannerIds: z.array(IdSchema).max(8).default([]),
   allOrg: z.boolean().default(false),
+  /** A scanning session's devices, its zones or one event. Absent: not watched. */
+  sessionIds: z.array(IdSchema).max(8).optional(),
+  eventId: IdSchema.optional(),
+  zoneIds: ZoneIdsSchema.optional(),
 });
 export const ScannerSetupSchema = ScannerSchema.extend({
   sessionId: IdSchema.optional(),
@@ -64,11 +70,28 @@ export const ScanLiveRowSchema = z.object({
   label: z.string(),
   /** Manual lookup must never publish a person's identity to the customer screen. */
   presented: z.boolean(),
+  occupancy: ScanOccupancySchema.nullable().optional(),
+  /** The places this scan changed, with revisions. Only monitors get them. */
+  places: z.array(ScanPlaceRevSchema).max(8).optional(),
+  outCause: ScanOutCauseSchema.nullable().optional(),
+  /** The refused scan this row overrides. */
+  overrideOf: IdSchema.nullable().optional(),
+  /** The staff name and device that overrode this row. */
+  resolvedBy: z.object({ staff: z.string().nullable(), device: z.string() }).nullable().optional(),
+  /** The request `ref` a customer body replaces. */
+  replaces: UuidV7Schema.nullable().optional(),
 });
 export type ScanLiveRow = z.infer<typeof ScanLiveRowSchema>;
 export const ScanLiveSnapshotSchema = z.object({
   cursor: z.string().nullable(),
   rows: z.array(ScanLiveRowSchema).max(100),
+  places: z.array(ScanPlaceRevSchema).max(64).optional(),
+});
+/** Sent only to the device whose refusal was overridden, as its own socket event: not part of `ScanLiveMessageSchema` until the hub sends it. */
+export const ScanLiveResolvedSchema = z.object({
+  of: IdSchema,
+  outcome: z.enum(['ok', 'heads_up', 'refused']),
+  by: z.object({ staff: z.string().nullable(), device: z.string() }),
 });
 export const ScanLiveMessageSchema = z.union([
   ScanLiveSnapshotSchema,

@@ -2,7 +2,7 @@ import { Settings2, SlidersHorizontal } from 'lucide-react';
 import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
 import { SCAN_SURFACE_LABELS } from '@/shared/scan-surfaces.ts';
 import { Badge, Button, Card, CardBody, StatusPill } from '@/web/ui/index.ts';
-import { RelTime, useNow } from '../../passes/detail/rel-time.tsx';
+import { RelTime, useNow } from '../../../ui/rel-time.tsx';
 import { SURFACE_ICON } from './surface-picker.tsx';
 
 export function DeviceCard({
