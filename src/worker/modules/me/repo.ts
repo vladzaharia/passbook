@@ -196,9 +196,9 @@ export const listBundlePasses = (
     `SELECT p.id, p.object_key, p.object_size, p.version, p.revision,
        p.credential_generation, p.lifecycle_generation, p.link_generation
      FROM passes AS p ${ACTIVE_ORG}
-     WHERE ${BUNDLE_WHERE} AND p.id <= ? AND (? IS NULL OR p.id > ?)
+     WHERE ${BUNDLE_WHERE} AND p.id <= ? ${range.after === null ? '' : 'AND p.id > ?'}
      ORDER BY p.id DESC LIMIT ?`,
-    [userId, range.first, range.after, range.after, limit],
+    [userId, range.first, ...(range.after === null ? [] : [range.after]), limit],
   );
 
 /** Recheck each archive entry after its object read and before any bytes are emitted. */

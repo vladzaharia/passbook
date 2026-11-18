@@ -62,4 +62,6 @@ export const OrgSettingsSchema = z.object({
     .optional(),
   /** Opt-in: the buddy sits on the pass email's card, as in the sign-in email. */
   'email.buddy': z.boolean().default(false),
+  /** Third-party NFC tags. Off until an admin turns it on. */
+  'nfc.tags': z.object({ enabled: z.boolean().default(false) }).default({ enabled: false }),
 });

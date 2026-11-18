@@ -1,4 +1,4 @@
-import type { ScanAccess, ScanOutcome } from '../../../shared/contracts/scan.ts';
+import type { ScanAccess, ScanOccupancy, ScanOutcome } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { completedAdmission } from './admission.ts';
@@ -28,6 +28,8 @@ interface CheckInResult {
   hasPresence: boolean;
   /** An Access card's grant: the plan, the zone and the visits now. */
   access?: ScanAccess | null;
+  /** A tracked zone: the direction, the row as this scan left it and In now. */
+  occupancy?: ScanOccupancy | null;
 }
 
 /**
@@ -62,6 +64,7 @@ export function finishCheckInResult(input: CheckInResult): ScanOutcome {
           : null,
     undoUntil: now + undoWindow * 60_000,
     access: input.access ?? null,
+    ...(input.occupancy ? { occupancy: input.occupancy } : {}),
     display: history
       ? safeDisplay(ctx, actor, found.pass, 'ok', {
           found,

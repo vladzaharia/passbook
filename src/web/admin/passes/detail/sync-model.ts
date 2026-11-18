@@ -96,6 +96,7 @@ const SINGLE_TITLE: Record<string, string> = {
   'message.applied': 'Message applied',
   'schedule.applied': 'Scheduled change applied',
   'scan.checked_in': 'Checked in',
+  'scan.checked_out': 'Tapped out',
   'scan.redeemed': 'Redeemed',
   'scan.adjusted': 'Balance adjusted',
   'scan.rejected': 'Scan rejected',
@@ -108,6 +109,7 @@ function singleTitle(e: PassEventDto): string {
     return 'Stopped updates: device token no longer valid';
   if (e.kind === 'device.fetched')
     return e.data.step === 'listed' ? 'Device checked for updates' : 'Device fetched the pass';
+  if (e.kind === 'scan.checked_out' && e.data.method === 'auto') return 'Auto tapped out';
   const head = HEAD_TITLE[e.kind];
   const v = versionOf(e);
   if (head && v !== null) return head(v);

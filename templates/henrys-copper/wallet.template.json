@@ -300,5 +300,63 @@
   ],
   "messaging": {
     "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "check_in",
+        "label": "Check in",
+        "kind": "check_in",
+        "repeat": "daily",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "memberId"
+    },
+    "flags": [
+      {
+        "input": "status",
+        "label": "Membership",
+        "equals": [
+          "Suspended",
+          "Expired",
+          "Cancelled"
+        ],
+        "stop": true
+      }
+    ],
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.memberName}}",
+      "panels": [
+        {
+          "id": "p_membership",
+          "preset": {
+            "id": "membership",
+            "v": 1
+          },
+          "title": "Membership",
+          "icon": "id-card",
+          "rows": [
+            {
+              "id": "r_club",
+              "type": "field",
+              "label": "Home club",
+              "value": "{{fields.homeClub}}"
+            }
+          ]
+        }
+      ],
+      "header": {
+        "chips": [
+          {
+            "id": "c_tier",
+            "text": "{{inputs.membership}}",
+            "tone": "gold"
+          }
+        ]
+      }
+    }
   }
 }

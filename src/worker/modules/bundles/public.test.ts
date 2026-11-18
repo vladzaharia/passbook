@@ -47,7 +47,7 @@ async function bundleWith(count: number, mode: 'live' | 'test' = 'live') {
     kit.env,
   );
   const bundle = BundleSchema.parse(await res.json());
-  return { passes, bundle, token: bundle.url?.split('/b/')[1] ?? '' };
+  return { passes, bundle, headers, token: bundle.url?.split('/b/')[1] ?? '' };
 }
 const get = (path: string, headers: Record<string, string> = {}, env = kit.env) =>
   app.request(`${ORIGIN}${path}`, { headers }, env);
@@ -84,6 +84,63 @@ describe('GET /b/:token', () => {
     ).text();
     expect(html).toContain('wl-add-scan');
     expect(html).toContain('<svg');
+  });
+
+  it('gives Android a Show barcode row per pass and no Apple badge', async () => {
+    const { passes, token } = await bundleWith(2);
+    const html = await (
+      await get(`/b/${token}`, {
+        'user-agent':
+          'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36',
+      })
+    ).text();
+    for (const p of passes) {
+      expect(html).toContain(`href="/b/${token}/${p.id}/barcode"`);
+      expect(html).not.toContain(`/b/${token}/${p.id}/pass.pkpass`);
+    }
+    expect(html.match(/Show barcode/g)).toHaveLength(2);
+    expect(html).not.toContain('Add all to Apple Wallet');
+    expect(html).not.toContain('data-awb=');
+    expect(html).toContain('Open on iPhone or Mac to add to Apple Wallet.');
+  });
+
+  it('serves a member barcode page under the bundle token, with nothing to save', async () => {
+    const { passes, token } = await bundleWith(2);
+    const res = await get(`/b/${token}/${passes[0]?.id}/barcode`);
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain('<svg');
+    expect(html).not.toContain('data-offline');
+    expect(html).not.toMatch(/<script\b/);
+    expect(html).toContain(`href="/b/${token}"`);
+    expect(res.headers.get('cache-control')).toContain('no-store');
+    // A pass outside the bundle and a rotated token are 404 pages.
+    const other = await makePass();
+    expect((await get(`/b/${token}/${other.id}/barcode`)).status).toBe(404);
+    expect((await get(`/b/${'a'.repeat(43)}/${passes[0]?.id}/barcode`)).status).toBe(404);
+  });
+
+  it('refuses a member barcode once the pass is voided or removed, and after the link rotates', async () => {
+    const { passes, bundle, headers, token } = await bundleWith(3);
+    const [voided, removed, live] = passes;
+    await run(kit.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [voided?.id]);
+    await run(kit.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [
+      Date.now(),
+      removed?.id,
+    ]);
+    for (const p of [voided, removed]) {
+      const res = await get(`/b/${token}/${p?.id}/barcode`);
+      expect(res.status).toBe(404);
+      expect(await res.text()).not.toContain('<svg');
+    }
+    expect((await get(`/b/${token}/${live?.id}/barcode`)).status).toBe(200);
+    const rotate = await app.request(
+      `${ORIGIN}/api/v1/bundles/${bundle.id}/rotate-link`,
+      { method: 'POST', headers },
+      kit.env,
+    );
+    expect(rotate.status).toBe(200);
+    expect((await get(`/b/${token}/${live?.id}/barcode`)).status).toBe(404);
   });
 
   it('sets the privacy headers and a matching nonce', async () => {

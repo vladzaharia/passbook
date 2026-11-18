@@ -2,6 +2,7 @@ import { parseIsoDate } from '../../../passkit/schema/util.ts';
 import type { ScanOutcome, ScanRole } from '../../../shared/contracts/scan.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { epochsMissing } from './authority-capture.ts';
@@ -21,6 +22,10 @@ import {
   captureObservedScanningSession,
   cloneObservedScanActor,
 } from './scanning-workspace-observation.ts';
+
+/** The live row id of a scan: stable, and never the scan's own id. */
+export const liveRowId = async (scanId: string): Promise<string> =>
+  (await sha256Hex(`live-row:${scanId}`)).slice(0, 32);
 
 export const scanHub = (ctx: ServiceContext, orgId: string, mode: string) =>
   ctx.env.SCAN_HUB.getByName(`${orgId}:${mode}`);
@@ -207,6 +212,8 @@ export function publishScan(
   method: string,
   undo = false,
   enteredCode = false,
+  /** A desk override's row: what it overrides, who did it, which customer body it replaces. */
+  extra: Partial<ScanLiveRow> = {},
 ) {
   if (!actor.scanner || (!actor.scanningSession && !actor.scanner.hasScreens) || out.replay) return;
   // A supplied pass must stay bound to the outcome; never downgrade it to a passless event.
@@ -236,13 +243,16 @@ export function publishScan(
             ? 'Check required'
             : 'Not accepted',
     presented: method !== 'manual' || enteredCode,
+    ...extra,
   };
   ctx.waitUntil(
     (async () => {
+      // Derived from the scan so a later override can name this row (`replaces`) without a scan id on the wire.
+      const row = out.scanId ? { ...base, id: await liveRowId(out.scanId) } : base;
       const entry = await liveRingRow(
         ctx,
         source,
-        base,
+        row,
         evaluatedSnapshot,
         out.scanId,
         credentialContext?.credentialTombstoneRefs ?? [],

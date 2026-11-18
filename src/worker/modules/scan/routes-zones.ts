@@ -17,6 +17,7 @@ import { type C, requireTenantSession, tenantAuthorityOf } from '../passes/http.
 import { resetVisits } from './access-visits.ts';
 import { passTarget } from './repo-access.ts';
 import { zoneTarget } from './repo-zones.ts';
+import { registerConsoleInsideRoutes } from './routes-occupancy-console.ts';
 import { archiveZone, createZone, listZones, updateZone } from './zones.ts';
 
 /** Console zones: /api/v1/scan-zones. Zones are org data, shared by both modes. */
@@ -25,6 +26,7 @@ guard(scanZonesRoutes, requireTenantSession);
 scanZonesRoutes.use('*', limitBody(16 * 1024));
 
 const TAG = 'scan-zones';
+registerConsoleInsideRoutes(scanZonesRoutes, TAG, 'zone');
 
 /** The zone's own org decides the authority; a zone of an org the user is not in is a 404. */
 async function manage(c: C, id: string) {

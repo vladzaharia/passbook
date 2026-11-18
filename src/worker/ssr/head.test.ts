@@ -61,8 +61,8 @@ describe('pass page head', () => {
     expect(tags).not.toContain(await linkToken(kit.env, pass));
     const org = escapeHtml(kit.org.name);
     expect(content(html, 'og:title')).toBe(`${org} pass`);
-    expect(content(html, 'og:description')).toBe('Add it to Apple Wallet.');
-    expect(content(html, 'description')).toBe('Add it to Apple Wallet.');
+    expect(content(html, 'og:description')).toBe('Open your pass.');
+    expect(content(html, 'description')).toBe('Open your pass.');
     expect(content(html, 'apple-mobile-web-app-title')).toBe(org);
     expect(tags).not.toMatch(/og:image|og:url/);
     // A pass saved to the home screen opens itself, not the portal.

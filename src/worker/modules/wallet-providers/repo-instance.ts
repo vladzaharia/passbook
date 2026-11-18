@@ -163,7 +163,7 @@ export async function listDueOperations(
       JOIN wallet_provider_instances i ON i.id = op.instance_id
         AND i.desired_operation_id = op.id AND i.desired_version = op.version
       WHERE op.state IN ('pending', 'retry') AND op.attempts < 8
-        AND (op.next_attempt_at IS NULL OR op.next_attempt_at <= ?) AND (? IS NULL OR op.id > ?)
+        AND (op.next_attempt_at IS NULL OR op.next_attempt_at <= ?) ${afterId === null ? '' : 'AND op.id > ?'}
         AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations busy
           WHERE busy.instance_id = i.id AND busy.state IN ('claimed', 'uncertain'))
         AND op.credential_keyset_commitment = ? AND ${validCommitmentSql('op.credential_keyset_commitment')}
@@ -174,7 +174,14 @@ export async function listDueOperations(
     JOIN wallet_provider_instances i ON i.id = op.instance_id
     WHERE ${walletInstanceOperationCurrentSql('i', 'op', '?')}
     ORDER BY op.id LIMIT ?`,
-    [now, afterId, afterId, credentialKeysetCommitment, credentialKeysetCommitment, now, limit],
+    [
+      now,
+      ...(afterId === null ? [] : [afterId]),
+      credentialKeysetCommitment,
+      credentialKeysetCommitment,
+      now,
+      limit,
+    ],
   );
 }
 export interface DirtyWalletInstance extends WalletScope, WalletCredentialKeysetProof {

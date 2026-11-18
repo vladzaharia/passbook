@@ -17,6 +17,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, diffFields, recordAudit } from '../audit/service.ts';
+import { purgeOrgWalletArt } from '../wallet-providers/projection-art-purge.ts';
 import { markPassesStale } from './branding-stale.ts';
 import {
   COUNT_CAP,
@@ -285,4 +286,5 @@ export async function deleteOrg(
     targetId: id,
     detail: { slug: row.slug, name: row.name },
   });
+  await purgeOrgWalletArt(ctx, id);
 }

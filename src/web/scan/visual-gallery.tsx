@@ -17,6 +17,7 @@ import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { type PassInspection, PassInspector } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
 import { DoorDock } from './ui/door-dock.tsx';
+import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
 import './visual-gallery.css';
 
@@ -225,6 +226,10 @@ export function ScanVisualGallery() {
   const status = params.get('status') ?? 'accepted';
   const phase = params.get('phase') === 'rising' ? 'rising' : 'up';
   if (surface === 'duo') return <DuoVisual status={status} />;
+  if (surface === 'access')
+    return (
+      <AccessVisual scenario={ACCESS_SCENARIOS.find((c) => c === params.get('case')) ?? 'grant'} />
+    );
   const session = sessionFor(surface);
   if (surface === 'customer') return <LiveVisual session={session} status={status} />;
   return <ScanResultVisual surface={surface} selected={selected} session={session} phase={phase} />;

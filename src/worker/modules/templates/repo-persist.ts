@@ -5,6 +5,7 @@ import { first, type SqlValue } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { CommitArgs } from './persist.ts';
+import { writeLineage } from './repo-forks.ts';
 import {
   blueprintSource,
   cloneSource,
@@ -30,6 +31,14 @@ export async function versionIsRetired(
     [templateId, version],
   );
   return !!row;
+}
+
+async function versionExists(db: D1Database, templateId: string, version: string) {
+  return !!(await first(
+    db,
+    'SELECT 1 FROM template_versions WHERE template_id = ? AND version = ?',
+    [templateId, version],
+  ));
 }
 
 /** The stored version row, read back to verify immutable content. */
@@ -169,6 +178,14 @@ export async function writeVersion(
       ],
     ),
   );
+  // An edit's base belongs to the version it created; a version that already existed keeps its own.
+  const lineage =
+    args.lineage &&
+    (args.lineage.create || !(await versionExists(ctx.env.DB, plan.templateId, body.version)))
+      ? args.lineage
+      : undefined;
+  if (lineage)
+    writeLineage(writer, { templateId: plan.templateId, version: body.version, lineage, now });
   const results = (await grantedBatch(ctx.env.DB, all)).at(-1) ?? [];
   const stored = await first<CommittedVersion>(
     ctx.env.DB,

@@ -5,11 +5,13 @@ import type {
   TemplateManifest,
   ValidationReport,
 } from '../../../passkit/types.ts';
+import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TemplateAuthority } from './access.ts';
 import { buildKey } from './package/hash.ts';
 import { findTemplateBySlug, type TemplateRow, versionContentMatches } from './repo.ts';
+import type { ForkLineage } from './repo-forks.ts';
 import { versionIsRetired, writeVersion } from './repo-persist.ts';
 
 export function slugify(name: string): string {
@@ -73,6 +75,8 @@ export interface CommitArgs {
   };
   /** The blueprint a new template is made from ("Use blueprint"). */
   sourceBlueprint?: string;
+  /** The fork this version belongs to: its row (for a new template) and the upstream versions it incorporates. */
+  lineage?: ForkLineage;
   /** Queued work (an import): the authority needs no live session (owner answer 2). */
   deferred?: boolean;
   /** Upload record whose immutable identity must still match this import. */
@@ -105,7 +109,10 @@ export async function commitVersion(
   const { plan, body } = args;
   if (!plan.isNew && args.guardActive && !plan.existing)
     throw new ConflictError('The template changed. Retry the save.', 'TEMPLATE_VERSION_CONFLICT');
-  if (plan.isNew && (await versionIsRetired(ctx.env.DB, plan.templateId, body.version)))
+  if (
+    (plan.isNew || args.lineage) &&
+    (await versionIsRetired(ctx.env.DB, plan.templateId, body.version))
+  )
     throw new ConflictError('This template version is retired.', 'TEMPLATE_VERSION_CONFLICT');
   const key = args.buildKey ?? (await buildKey(body));
   let written: Awaited<ReturnType<typeof writeVersion>>;
@@ -117,6 +124,9 @@ export async function commitVersion(
         'A template with this name was created meanwhile. Retry.',
         'TEMPLATE_SLUG_CONFLICT',
       );
+    // The version was retired after the check: its base row has nothing to refer to.
+    if (args.lineage && classifyD1Error(error)?.kind === 'foreign_key')
+      throw new ConflictError('This template version is retired.', 'TEMPLATE_VERSION_CONFLICT');
     throw error;
   }
   const { created: versionCreated, stored } = written;

@@ -1,3 +1,4 @@
+import { isWalletArtName, WALLETS_SCHEMA } from '../../../passkit/template/wallets/schema.ts';
 import type { AssetEntry } from '../../../passkit/types.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ConflictError } from '../../platform/errors.ts';
@@ -10,7 +11,7 @@ import {
 import { getVersion, type VersionRow } from '../templates/repo.ts';
 import { listVersionExtras } from '../templates/repo-preview-extras.ts';
 import { getCandidate, getRelease, type ReleaseRow } from '../templates/repo-releases.ts';
-import type { NativeProjection } from './projection-contract.ts';
+import type { GoogleProjection, SamsungProjection } from './projection-contract.ts';
 import { effectiveAppleSourceId } from './repo-projection.ts';
 
 const unsupported = () =>
@@ -31,7 +32,7 @@ export interface ProjectionSourceDocument {
 
 /** Every renderable source semantic must be represented; unknown extensions fail closed. */
 export function assertProjectionSource(
-  projection: NativeProjection,
+  projection: GoogleProjection | SamsungProjection,
   version: ProjectionSourceDocument,
 ): void {
   const manifest: unknown = version.manifest;
@@ -52,10 +53,25 @@ export function assertProjectionSource(
       'previewOnlyAssets',
       'scan',
       'nfc',
+      'wallets',
     ])
   )
     throw unsupported();
   if (manifest.schema !== 1 || !Array.isArray(manifest.bindings)) throw unsupported();
+  // Schema 1 cannot honour the block, so it must not be able to bypass it: a target the author
+  // turned off, or a capability the author required, fails closed.
+  const wallets = manifest.wallets;
+  if (wallets !== undefined) {
+    const target = object(wallets) ? wallets[projection.provider] : undefined;
+    if (
+      !object(wallets) ||
+      wallets.schema !== WALLETS_SCHEMA ||
+      (object(target) && target.type === 'off') ||
+      (wallets.required !== undefined &&
+        (!Array.isArray(wallets.required) || wallets.required.length > 0))
+    )
+      throw unsupported();
+  }
   if (
     manifest.nfc !== undefined &&
     (!object(manifest.nfc) || !only(manifest.nfc, ['enabled']) || manifest.nfc.enabled !== false)
@@ -186,7 +202,8 @@ export function assertProjectionSource(
   const previewNames = new Set((preview ?? []) as string[]);
   const slots = new Set<string>();
   for (const asset of version.assets) {
-    if (previewNames.has(asset.name)) continue;
+    // `wallets/**` is art for the compiled wallets; schema 1 never reads it.
+    if (previewNames.has(asset.name) || isWalletArtName(asset.name)) continue;
     if ((asset.slot !== 'icon' && asset.slot !== 'logo') || asset.locale !== undefined)
       throw unsupported();
     slots.add(asset.slot);

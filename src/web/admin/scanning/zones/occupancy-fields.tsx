@@ -88,7 +88,7 @@ export function OccupancyFields({
         <FormField
           label="Clear at"
           error={errors.clearAt}
-          help="Everyone still in is tapped out at this time. Empty: never."
+          help="Everyone still in is tapped out at this time, in the top zone’s time zone. Needs one. Empty: never."
         >
           {(p) => (
             <Input
