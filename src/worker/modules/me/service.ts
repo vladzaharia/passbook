@@ -6,6 +6,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError, ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { voidedAt } from '../events/repo-voided.ts';
 import { removePassFromUser } from '../holders/service-remove.ts';
 import { assetNamesOf } from '../passes/detail.ts';
 import { requestRefresh } from '../passes/pass-service-refresh.ts';
@@ -95,6 +96,7 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow): Promise<MyPassD
     status: row.status,
     mode: row.mode,
     modifiedAt: row.modified_at,
+    voidedAt: row.status === 'voided' ? await voidedAt(ctx.env.DB, row.org_id, row.id) : null,
     removedAt: row.removed_at,
     removalMessage: row.removal_message,
     lastRefreshedAt: row.last_refreshed_at,

@@ -1,7 +1,8 @@
 import type { JobOf } from '../../jobs/types.ts';
-import { AppError } from '../../platform/errors.ts';
+import { AppError, ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { dispatchSafely, enqueuePassEmail } from '../delivery/issuance-intent.ts';
+import { hasPendingIssuanceTransfer } from '../delivery/repo-issuance-recovery.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 
 /**
@@ -12,6 +13,9 @@ export async function handleHolderMail(
   job: JobOf<'pass.holder_mail'>,
   ctx: ServiceContext,
 ): Promise<void> {
+  // A lost-phone transfer still finishing: fail so the queue retries after its backoff.
+  if (await hasPendingIssuanceTransfer(ctx.env.DB, job.passId))
+    throw new ConflictError('The pass is changing. Retrying.', 'HOLDER_TRANSFER_PENDING');
   const pass = await getPass(ctx.env.DB, job.passId);
   if (
     !pass ||

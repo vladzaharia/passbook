@@ -1,10 +1,13 @@
-import { read } from '../../platform/counters.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
+import { bump } from '../../platform/counters.ts';
 import { AppError, ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { EMAIL_RECIPIENT_HOURLY_CAP } from '../delivery/issuance-intent.ts';
-import { recipientKey } from '../delivery/recipient-key.ts';
+import { recordAudit } from '../audit/service.ts';
+import { revokeAllForUser } from '../auth/sessions.ts';
+import { recipientEmailBudget } from '../delivery/repo-email-budget.ts';
 import { rotateOwnPassCredentials } from '../holders/service-rotate.ts';
+import { CredentialTransferReissueRequired } from '../passes/credential-transfer.ts';
 import * as repo from './repo.ts';
 import { sourceOf } from './service.ts';
 
@@ -16,23 +19,20 @@ async function ownedActive(ctx: ServiceContext, userId: string, passId: string) 
   return { row, to: row.holder_email };
 }
 
-const HOUR = 3_600_000;
-
 /** The queued mail would be refused at the recipient cap: say so now, not silently later. */
-export async function assertRecipientBudget(ctx: ServiceContext, mode: string, to: string) {
-  const now = ctx.clock.now();
-  const used = await read(
-    ctx.env.DB,
-    `pass-email:${mode}:to:${await recipientKey(ctx.env, to)}`,
-    now - (now % HOUR),
-  );
-  if (used >= EMAIL_RECIPIENT_HOURLY_CAP)
+export async function assertRecipientBudget(ctx: ServiceContext, mode: Mode, to: string) {
+  if ((await recipientEmailBudget(ctx.env, mode, to, ctx.clock.now())) === 0)
     throw new AppError(
       'EMAIL_RATE_LIMITED',
       429,
       'Too many emails to this address. Try again in an hour.',
     );
 }
+
+const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
+const LOST_PER_PASS_HOUR = 3;
+const LOST_PER_USER_DAY = 10;
 
 async function queueMail(
   ctx: ServiceContext,
@@ -64,7 +64,17 @@ export async function lostMyPhone(
   passId: string,
 ) {
   const { row } = await ownedActive(ctx, userId, passId);
-  if (!(await checkRateLimit(ctx.env, 'RL_REFRESH', `holder-lost:${userId}`)))
+  if (
+    !(await checkRateLimit(ctx.env, 'RL_REFRESH', `holder-lost:${userId}`)) ||
+    !(await checkRateLimit(ctx.env, 'RL_REFRESH', `holder-lost:${passId}`))
+  )
+    throw new RateLimitedError();
+  const now = ctx.clock.now();
+  if (
+    (await bump(ctx.env.DB, `holder-lost:pass:${passId}`, now - (now % HOUR))) >
+      LOST_PER_PASS_HOUR ||
+    (await bump(ctx.env.DB, `holder-lost:user:${userId}`, now - (now % DAY))) > LOST_PER_USER_DAY
+  )
     throw new RateLimitedError();
   const result = await rotateOwnPassCredentials(
     ctx,
@@ -72,7 +82,25 @@ export async function lostMyPhone(
     userId,
     sessionId,
     sourceOf(userId, row),
-  );
-  if (result.state === 'completed') await queueMail(ctx, userId, passId, 'lost_phone');
+  ).catch((error: unknown) => {
+    if (error instanceof CredentialTransferReissueRequired)
+      throw new ConflictError(
+        `This pass's code can't change. Ask ${row.org_name || 'the organization'}.`,
+        'PASS_CREDENTIAL_FIXED',
+      );
+    throw error;
+  });
+  // The lost phone's other sessions end with the old code: a finder cannot open My passes.
+  await revokeAllForUser(ctx, userId, sessionId);
+  await recordAudit(ctx, {
+    actorType: 'user',
+    actorId: userId,
+    action: 'user.sessions_revoke',
+    targetType: 'user',
+    targetId: userId,
+    detail: { reason: 'lost_phone' },
+  });
+  // A pending transfer finishes later; the job waits for it and then mails the new pass.
+  await queueMail(ctx, userId, passId, 'lost_phone');
   return result;
 }

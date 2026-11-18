@@ -64,7 +64,7 @@ describe('holder help copy', () => {
         "generic": "A wallet is the app on your phone that keeps cards and tickets.",
         "lost": [
           "I lost my phone",
-          "Done. The old copies stop working. Check your email for the new pass.",
+          "Done. The old copies stop working and your other devices are signed out. Check your email for the new pass.",
         ],
       }
     `);

@@ -501,6 +501,7 @@ describe('POST /p/:token/resend', () => {
     const env = {
       ...kit.env,
       RL_REFRESH: fakeLimiter(1000) as unknown as RateLimit,
+      RL_PUBLIC: fakeLimiter(1000) as unknown as RateLimit,
       JOBS: { send: async (job: unknown) => void sent.push(job) } as unknown as Queue,
     };
     const pass = await kit.pass({ holderEmail: 'holder@example.test' });
@@ -532,6 +533,7 @@ describe('POST /p/:token/resend', () => {
     const env = {
       ...kit.env,
       RL_REFRESH: fakeLimiter(1000) as unknown as RateLimit,
+      RL_PUBLIC: fakeLimiter(1000) as unknown as RateLimit,
       JOBS: { send: async (job: unknown) => void sent.push(job) } as unknown as Queue,
     };
     const pass = await kit.pass();
@@ -543,5 +545,30 @@ describe('POST /p/:token/resend', () => {
     );
     expect(res.status).toBe(303);
     expect(sent).toEqual([]);
+  });
+
+  it('answers the same for an unknown token and refuses a malformed one', async () => {
+    const sent: unknown[] = [];
+    const env = {
+      ...kit.env,
+      RL_REFRESH: fakeLimiter(1000) as unknown as RateLimit,
+      RL_PUBLIC: fakeLimiter(1000) as unknown as RateLimit,
+      JOBS: { send: async (job: unknown) => void sent.push(job) } as unknown as Queue,
+    };
+    const post = (token: string) =>
+      app.request(
+        `${ORIGIN}/p/${token}/resend`,
+        { method: 'POST', headers: { origin: ORIGIN } },
+        env,
+      );
+    const unknown = await post('A'.repeat(32));
+    expect(unknown.status).toBe(303);
+    expect(unknown.headers.get('location')).toBe(`/p/${'A'.repeat(32)}?again=sent`);
+    expect(sent).toEqual([]);
+    for (const bad of ['abc%0d%0aSet-Cookie:x', 'short']) {
+      const res = await post(bad);
+      expect(res.status).toBe(404);
+      expect(res.headers.get('location')).toBeNull();
+    }
   });
 });

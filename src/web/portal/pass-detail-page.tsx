@@ -110,7 +110,11 @@ function Detail({
         state === 'voided' || state === 'expired'
           ? endedOn(
               state,
-              { modifiedAt: pass.modifiedAt, expirationDate: pass.passJson.expirationDate },
+              {
+                modifiedAt: pass.modifiedAt,
+                voidedAt: pass.voidedAt,
+                expirationDate: pass.passJson.expirationDate,
+              },
               navigator.language,
             )
           : null

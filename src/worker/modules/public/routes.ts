@@ -22,6 +22,7 @@ import {
   renderPresentationPage,
 } from '../../ssr/presentation-page.tsx';
 import { recordPassEvent } from '../events/record.ts';
+import { voidedAt } from '../events/repo-voided.ts';
 import { servePassFile } from '../passes/file.ts';
 import { type C, svc } from '../passes/http.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
@@ -75,6 +76,7 @@ const againOf = (v: string | undefined) => (v === 'sent' || v === 'wait' ? v : n
 function endedFor(
   view: { voided: boolean; expired: boolean },
   pass: { status: string; modifiedAt: number },
+  voidedAt: number | null,
   passJson: { expirationDate?: unknown },
   lang: string,
   zone: string | undefined,
@@ -84,7 +86,7 @@ function endedFor(
   return state
     ? endedOn(
         state,
-        { modifiedAt: pass.modifiedAt, expirationDate: passJson.expirationDate },
+        { modifiedAt: pass.modifiedAt, voidedAt, expirationDate: passJson.expirationDate },
         lang,
         zone,
       )
@@ -168,7 +170,14 @@ register(
         mode: pass.mode,
         device: passDevice(c.req.header('user-agent')),
         support: await supportContacts(svcCtx, pass.orgId),
-        endedOn: endedFor(view, pass, model.passJson, lang, zoneOf(c)),
+        endedOn: endedFor(
+          view,
+          pass,
+          pass.status === 'voided' ? await voidedAt(svcCtx.env.DB, pass.orgId, pass.id) : null,
+          model.passJson,
+          lang,
+          zoneOf(c),
+        ),
         ...(pass.holderEmail && !model.removal
           ? { resend: { action: `${page}/resend`, again: againOf(c.req.query('again')) } }
           : {}),
