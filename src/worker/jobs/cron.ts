@@ -22,6 +22,7 @@ import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
 import { sweepLeakedGrants } from '../platform/authority.ts';
 import type { AppEnv } from '../platform/env.ts';
+import { purgeRetiredIds } from '../platform/retired-ids.ts';
 import { createJobContext, type ServiceContext } from '../platform/service-context.ts';
 import { CRON_QUERY_BUDGET, countQueries } from './query-counter.ts';
 
@@ -57,6 +58,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
   ],
   [DAILY_CRON]: [
     { name: 'authority.sweep', run: async (ctx) => void (await sweepLeakedGrants(ctx)) },
+    { name: 'authority.retired_ids', run: async (ctx) => void (await purgeRetiredIds(ctx)) },
     { name: 'passes.retention', run: dailyPasses },
     { name: 'connections.retention', run: dailyConnections },
     { name: 'delivery.retention', run: dailyDelivery },

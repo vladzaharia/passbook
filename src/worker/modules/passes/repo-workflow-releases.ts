@@ -208,7 +208,7 @@ export function passesForWorkflowReissue(
             s.release_id AS releaseId, s.generation, s.version
      FROM workflow_release_snapshots s
      JOIN passes p ON p.org_id = s.org_id AND p.mode = s.mode AND p.template_id = s.template_id
-     WHERE s.instance_id = ? AND p.id > ? AND (? IS NULL OR p.identity_id = ?)
+     WHERE s.instance_id = ? AND p.id > ? ${q.identityId === null ? '' : 'AND p.identity_id = ?'}
        AND p.status = 'active' AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
        AND p.template_version != s.version AND NOT EXISTS (
          SELECT 1 FROM template_versions current_version
@@ -220,6 +220,6 @@ export function passesForWorkflowReissue(
            AND current_version.version = p.template_version
        )
      ORDER BY p.id LIMIT ?`,
-    [q.instanceId, q.afterId ?? '', q.identityId, q.identityId, q.limit],
+    [q.instanceId, q.afterId ?? '', ...(q.identityId === null ? [] : [q.identityId]), q.limit],
   );
 }
