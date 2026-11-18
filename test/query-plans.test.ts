@@ -13,6 +13,7 @@ import { plainBundles, plainPasses } from '../src/worker/modules/passes/repo-tok
 import { expiredTestPasses } from '../src/worker/modules/sandbox/repo.ts';
 import { expectedCount } from '../src/worker/modules/scan/repo-counts-query.ts';
 import { eventTotalsStmt } from '../src/worker/modules/scan/repo-event-attendance.ts';
+import { capacityFullPredicate } from '../src/worker/modules/scan/repo-gates.ts';
 import { backfillCandidates } from '../src/worker/modules/scan/repo-lookup-backfill.ts';
 import {
   olderLivePasses,
@@ -201,6 +202,25 @@ describe('scan and template sweep plans', () => {
     );
     expect(common).toContain('SEARCH witness USING INDEX sqlite_autoindex_scans_1 (id=?)');
     expect(common).toContain('LIST SUBQUERY');
+  });
+
+  it('capacity reads the ledger only for live witnesses, by primary key', async () => {
+    for (const reentry of [false, true]) {
+      const { sql, params } = capacityFullPredicate('o', 'live', 'e', 10, reentry, 'p');
+      const rows = await env.DB.prepare(`EXPLAIN QUERY PLAN SELECT ${sql}`)
+        .bind(...params)
+        .all<{ detail: string }>();
+      const lines = rows.results.map((r) => r.detail);
+      expect(fullScans(lines, 'scans'), String(reentry)).toEqual([]);
+      const text = lines.join('\n');
+      expect(text.indexOf('MATERIALIZE live')).toBeLessThan(text.indexOf('MATERIALIZE common'));
+      const common = text.slice(
+        text.indexOf('MATERIALIZE common'),
+        text.indexOf('MATERIALIZE candidate'),
+      );
+      expect(common).toContain('SEARCH witness USING INDEX sqlite_autoindex_scans_1 (id=?)');
+      expect(common).toContain('LIST SUBQUERY');
+    }
   });
 
   it('olderLivePasses: scope and join use passes_active_scope, never a passes scan', async () => {
