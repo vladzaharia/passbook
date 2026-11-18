@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyOp } from './apply.ts';
+import { applyOp, type Op } from './apply.ts';
 import { sampleDoc } from './fixtures.ts';
 import { readActions } from './scan/actions/model.ts';
 import { docWithInputs } from './scan/actions/test-fixtures.ts';
@@ -7,7 +7,7 @@ import { docWithInputs } from './scan/actions/test-fixtures.ts';
 describe('renaming an input', () => {
   it('rewrites scan actions, window, notes, bindings and the scan display', () => {
     let doc = docWithInputs();
-    const ops = [
+    const ops: Op[] = [
       { op: 'scan-enable' },
       { op: 'scan-action-add', kind: 'add' },
       { op: 'scan-window', patch: { from: 'starts' } },
@@ -18,7 +18,7 @@ describe('renaming an input', () => {
         source: { kind: 'input', name: 'balance' },
         optional: false,
       },
-    ] as const;
+    ];
     for (const o of ops) doc = applyOp(doc, o);
     doc = {
       ...doc,
