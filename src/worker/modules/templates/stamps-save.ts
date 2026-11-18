@@ -6,6 +6,7 @@ import { sha256BytesHex } from './package/hash.ts';
 import type { StampOptions } from './package/stamps.ts';
 import { readReleaseAsset } from './release-content.ts';
 import { listVersions } from './repo.ts';
+import { upstreamReadable } from './repo-fork-updates.ts';
 import type { Resolved } from './version-files.ts';
 
 /** The sample's count on the card (0 to goal): the strip the build check and a dry run draw. */
@@ -53,6 +54,7 @@ export function stampsForSave(
   dryRun: boolean,
   carried: Resolved['carried'],
   carry = true,
+  upstreamId?: string,
 ): StampOptions | undefined {
   const block = manifest.stamps;
   if (!block || !isGoal(block.goal)) return undefined;
@@ -63,7 +65,13 @@ export function stampsForSave(
     carry: carry
       ? async (key, sha1Of) => {
           const first = await stampKey(block, sha1Of);
-          for (const v of await listVersions(ctx.env.DB, templateId)) {
+          const own = await listVersions(ctx.env.DB, templateId);
+          // A fork also reuses the strips of an upstream it may read: the merge copies them under the fork.
+          const lineage =
+            upstreamId && (await upstreamReadable(ctx.env.DB, upstreamId, templateId))
+              ? await listVersions(ctx.env.DB, upstreamId)
+              : [];
+          for (const v of [...own, ...lineage]) {
             const earlier = v.manifest.stamps;
             if (!earlier || !isGoal(earlier.goal)) continue;
             const sha1 = new Map(v.assets.map((a) => [a.name, a.sha1]));

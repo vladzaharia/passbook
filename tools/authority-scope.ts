@@ -383,6 +383,10 @@ export function scanJobContext(rel: string, text: string): Finding[] {
  */
 export const JOB_FACTORY_IMPORTERS: Record<string, string | string[]> = {
   'template-sync': 'src/worker/modules/templates/sync.ts',
+  'template-merge': [
+    'src/worker/modules/templates/fork-updates-offer.ts',
+    'src/worker/modules/templates/fork-updates-write.ts',
+  ],
   'webhook-ingress': [
     'src/worker/modules/connections/repo-grants.ts',
     'src/worker/modules/connections/webhooks.ts',

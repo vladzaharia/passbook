@@ -37,7 +37,7 @@ const capabilities = JSON.stringify(APPLE_ADAPTER_CAPABILITIES);
 const RETURN_ID = { returning: ['id'] };
 
 // The grant supplies org_id; the mode is the caller's (an org grant does not own it).
-const CANDIDATE_COLUMNS = [
+export const CANDIDATE_COLUMNS = [
   'id',
   'template_id',
   'mode',
@@ -74,7 +74,7 @@ const RELEASE_COLUMNS = [
   'created_at',
 ];
 
-function candidateValues(c: CandidateRow): SqlValue[] {
+export function candidateValues(c: CandidateRow): SqlValue[] {
   return [
     c.id,
     c.templateId,

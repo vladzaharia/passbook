@@ -1,6 +1,7 @@
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { getVersion, latestVersionName } from './repo.ts';
+import { forkTip } from './fork-base.ts';
+import { getVersion } from './repo.ts';
 import { effectiveBase, type ForkLineage, getFork } from './repo-forks.ts';
 
 /**
@@ -14,7 +15,7 @@ export async function editLineage(
 ): Promise<{ lineage?: ForkLineage; behindTip: boolean }> {
   const fork = await getFork(ctx.env.DB, templateId);
   if (!fork) return { behindTip: false };
-  const tip = await latestVersionName(ctx.env.DB, templateId);
+  const tip = (await forkTip(ctx.env.DB, templateId))?.version;
   if (parentVersion && !(await getVersion(ctx.env.DB, templateId, parentVersion)))
     throw new ConflictError('The template changed. Reload and retry.', 'TEMPLATE_VERSION_CONFLICT');
   const parent = parentVersion ?? tip;

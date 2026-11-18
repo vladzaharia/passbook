@@ -21,6 +21,8 @@ import { dailySandbox, sweepSandboxForwards } from '../modules/sandbox/jobs.ts';
 import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan/jobs.ts';
 import { autoTapOut } from '../modules/scan/occupancy/jobs.ts';
 import { recordCronRun } from '../modules/status/cron.ts';
+import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
+import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
 import { dailyWebhooks, sweepWebhooks } from '../modules/webhooks/jobs.ts';
@@ -43,6 +45,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'sandbox.forwards', run: sweepSandboxForwards },
     { name: 'connections.schedule', run: reconcileConnections },
     { name: 'templates.sync', run: syncBakedOnDeploy },
+    { name: 'templates.fork_updates', run: (ctx) => planForkUpdates(ctx) },
     { name: 'passes.stale_reissue', run: reissueStalePasses },
     { name: 'broadcasts.start', run: startDueBroadcasts },
     { name: 'broadcasts.stuck', run: failStuckBroadcasts },
@@ -79,6 +82,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'join.retention', run: dailyJoin },
     { name: 'orgs.branding_gc', run: sweepBrandingGc },
     { name: 'webhooks.retention', run: dailyWebhooks },
+    { name: 'templates.fork_orphans', run: sweepForkOrphans },
     // Last: a backlog of test data must never starve the checks above.
     { name: 'sandbox.purge', run: dailySandbox },
   ],

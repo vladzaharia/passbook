@@ -21,6 +21,10 @@ export function estimateQueries(job: Job): number {
       // 15 for the lane and a hand-off, plus 9 per failed attempt (extend, endpoint, due, claim, secrets,
       // limit, batch, disable check), at most 20.
       return 195;
+    // CPU, not queries, is the cost (image checks, stamp strips): it runs alone in its invocation,
+    // so a CPU kill cannot retry pushes and emails with it.
+    case 'template.fork_update':
+      return QUEUE_QUERY_BUDGET;
     default:
       return 15;
   }
