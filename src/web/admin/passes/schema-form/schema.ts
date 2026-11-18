@@ -1,4 +1,5 @@
 import { EMAIL_INVALID_MESSAGE, strictEmail } from '@/shared/email.ts';
+import { accessOf, type PlanChoice, plansOf } from './schema-access.ts';
 
 export type Widget =
   | 'text'
@@ -13,6 +14,8 @@ export type Widget =
   | 'image'
   | 'password'
   | 'timezone'
+  | 'access-plan'
+  | 'access-zones'
   | 'list';
 
 export type FormValues = Record<string, unknown>;
@@ -35,6 +38,9 @@ export interface FieldDef {
   schema: Record<string, unknown>;
   /** `list` widget: the fields of each row, from the schema's `items`. */
   rows?: ListDef | undefined;
+  /** Access card: the plans (`access-plan`), and an input that follows the plan. */
+  plans?: PlanChoice[] | undefined;
+  access?: 'guest' | 'visits' | 'until' | undefined;
 }
 
 export interface ListDef {
@@ -64,6 +70,8 @@ const WIDGETS = new Set<string>([
   'image',
   'password',
   'timezone',
+  'access-plan',
+  'access-zones',
   'list',
 ]);
 
@@ -86,15 +94,15 @@ function itemsOf(def: Record<string, unknown>): Record<string, unknown> | undefi
 }
 
 function typeOf(def: Record<string, unknown>): FieldDef['type'] {
-  if (def.type === 'array' && itemsOf(def)) return 'array';
+  if (def.type === 'array' && (itemsOf(def) || def['x-widget'] === 'access-zones')) return 'array';
   const t = Array.isArray(def.type) ? def.type.find((x) => x !== 'null') : def.type;
   return t === 'number' || t === 'integer' || t === 'boolean' ? t : 'string';
 }
 
 function widgetOf(def: Record<string, unknown>, type: FieldDef['type']): Widget {
-  if (type === 'array') return 'list';
-  if (def['x-timeZone'] === true) return 'timezone';
   const hint = str(def['x-widget']);
+  if (type === 'array') return hint === 'access-zones' ? 'access-zones' : 'list';
+  if (def['x-timeZone'] === true) return 'timezone';
   if (hint && WIDGETS.has(hint)) return hint as Widget;
   if (Array.isArray(def.enum) && def.enum.length > 0) return 'select';
   if (type === 'boolean') return 'boolean';
@@ -154,6 +162,8 @@ export function describeSchema(schema: unknown): FieldGroup[] {
       options: optionsOf(def),
       schema: def,
       rows: listOf(def, type),
+      plans: plansOf(def),
+      access: accessOf(def),
     });
   }
   const position = new Map(fields.map((f, i) => [f.key, i]));
