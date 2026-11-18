@@ -24,6 +24,7 @@ import {
   readSummary,
   SUMMARY_CONTRIBUTORS,
 } from './repo-scan-history.ts';
+import { isPasslessReason, type PasslessReason } from './scan-passless.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { staleScanRead } from './stale-read.ts';
 
@@ -31,12 +32,12 @@ const DAY = 86_400_000;
 const MINUTE = 60_000;
 
 /** A refusal that selected no pass (the ledger scope admits it only as such) names its own reason. */
-function passlessReason(row: HistoryRow): 'not_found' | 'ambiguous' | null {
+function passlessReason(row: HistoryRow): PasslessReason | null {
   return row.passId === null &&
     row.templateId === null &&
     row.actionId === null &&
     row.outcome === 'refused' &&
-    (row.reason === 'not_found' || row.reason === 'ambiguous')
+    isPasslessReason(row.reason)
     ? row.reason
     : null;
 }

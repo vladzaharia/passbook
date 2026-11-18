@@ -7,10 +7,11 @@ import { scanActorChecks, scanCapabilityChecks, scanPrincipal } from './authorit
 import type { ScanActor } from './guard.ts';
 import { credentialRefChecks } from './repo-scan-checks.ts';
 import type { ScanEventRow } from './repo-scope.ts';
+import { tagBindingCheck } from './repo-tags-resolve.ts';
 import { type ScanPassFacts, scanPassChecks } from './scan-pass-checks.ts';
 
 export interface ScanWriteInput {
-  purpose: `org_mode.scan.${'claim' | 'check_in' | 'value' | 'held' | 'stop' | 'undo'}`;
+  purpose: `org_mode.scan.${'claim' | 'check_in' | 'value' | 'held' | 'stop' | 'undo' | 'tag.bind' | 'tag.unbind'}`;
   now: number;
   /** The operation's event when it is not the actor's. */
   event?: ScanEventRow | null;
@@ -32,8 +33,8 @@ export interface ScanWriteInput {
 }
 
 /**
- * The one grant every scan write goes through: the actor's epochs, the pass's lineage and, when
- * present, the approving manager. Refusals keep the device paired except `actor` (a re-pair).
+ * The one grant every scan write goes through: the actor's epochs, the pass's lineage, the tag and
+ * binding a tag read chose it by and, when present, the approving manager. Refusals keep the device paired except `actor` (a re-pair).
  */
 export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWriteInput): Grant {
   const templateId = i.templateId ?? i.pass?.facts.pass.templateId;
@@ -50,6 +51,7 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
       }),
       ...(i.pass ? scanPassChecks(i.pass.id, i.pass.facts) : []),
       ...credentialRefChecks(i.credentialRefs),
+      ...(actor.tag ? [tagBindingCheck(actor.tag)] : []),
       ...(i.checks ?? []),
       ...(i.approver
         ? [
