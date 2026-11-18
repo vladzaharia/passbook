@@ -225,6 +225,13 @@
   ],
   "display": {
     "icon": "percent",
+    "group": "save-spend",
+    "aliases": [
+      "voucher",
+      "discount",
+      "offer",
+      "promo"
+    ],
     "title": "{{offer}}",
     "subtitle": "{{code}}",
     "search": [

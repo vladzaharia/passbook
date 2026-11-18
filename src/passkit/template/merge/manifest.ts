@@ -39,7 +39,7 @@ const MANIFEST: Record<string, Rule> = {
   lookups: part('lookups', c(mapOf({}, mapOf({}, mapOf())))),
   // bindings: by target and n-th with that target; order matters because later bindings win.
   bindings: part('bindings', c(listOf(bindingTarget, mapOf(), true), [])),
-  display: part('display', c(mapOf({ search: set }))),
+  display: part('display', c(mapOf({ search: set, aliases: set }))),
   behaviors: part('behaviors', c(listOf(behaviorUse, mapOf({ config: mapOf() }), true), [])),
   previewOnlyAssets: part('previewOnlyAssets', set),
   scan: scanRule,

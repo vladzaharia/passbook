@@ -47,13 +47,13 @@ type Summary = z.infer<typeof TemplateSummarySchema>;
 type Detail = z.infer<typeof TemplateDetailSchema>;
 type VersionDetail = z.infer<typeof TemplateVersionDetailSchema>;
 
-type Lineage = Pick<Summary, 'icon' | 'fromBlueprint'>;
+type Lineage = Pick<Summary, 'icon' | 'group' | 'aliases' | 'fromBlueprint'>;
 
 export function summaryOf(
   row: TemplateRow,
   passCount: number,
   orgName: string | null,
-  lineage: Lineage = { icon: null, fromBlueprint: null },
+  lineage: Lineage = { icon: null, group: null, aliases: [], fromBlueprint: null },
 ): Summary {
   return {
     id: row.id,
@@ -69,6 +69,8 @@ export function summaryOf(
     blueprint: row.blueprint,
     shared: row.shared,
     icon: lineage.icon,
+    group: lineage.group,
+    aliases: lineage.aliases,
     fromBlueprint: lineage.fromBlueprint,
     passCount,
     createdAt: row.createdAt,
@@ -149,7 +151,7 @@ export async function detail(
   let total = 0;
   for (const n of counts.values()) total += n;
   const source = row.sourceBlueprint ? await getTemplate(ctx.env.DB, row.sourceBlueprint) : null;
-  const icon = display.manifest.display?.icon;
+  const { icon, group, aliases } = display.manifest.display ?? {};
   const { older, settled } =
     passOrgId === null
       ? { older: 0, settled: false }
@@ -163,6 +165,8 @@ export async function detail(
       row.orgId ? ((await getOrgName(ctx.env.DB, row.orgId))?.name ?? null) : null,
       {
         icon: typeof icon === 'string' ? icon : null,
+        group: typeof group === 'string' ? group : null,
+        aliases: Array.isArray(aliases) ? aliases.filter((a) => typeof a === 'string') : [],
         fromBlueprint: source ? { id: source.id, name: source.name } : null,
       },
     ),

@@ -284,6 +284,13 @@
   ],
   "display": {
     "icon": "stamp",
+    "group": "save-spend",
+    "aliases": [
+      "punch card",
+      "loyalty",
+      "coffee",
+      "rewards"
+    ],
     "title": "{{holder}}",
     "subtitle": "{{pass.stamps.card}} of {{pass.stamps.goal}} · {{cardNumber}}",
     "status": "{{pass.stamps.card}} of {{pass.stamps.goal}}",
