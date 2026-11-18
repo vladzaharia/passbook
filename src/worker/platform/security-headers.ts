@@ -23,19 +23,26 @@ export function scanContentSecurityPolicy(): string {
   return contentSecurityPolicy(undefined, { scan: true });
 }
 
-export function contentSecurityPolicy(nonce?: string, options: { scan?: boolean } = {}): string {
+/** The Turnstile widget (join page only): its script and its challenge frame. */
+export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
+
+export function contentSecurityPolicy(
+  nonce?: string,
+  options: { scan?: boolean; turnstile?: boolean } = {},
+): string {
   const n = nonce ? ` 'nonce-${nonce}'` : '';
   const wasm = options.scan ? " 'wasm-unsafe-eval'" : '';
+  const turnstile = options.turnstile ? ` ${TURNSTILE_ORIGIN}` : '';
   return [
     "default-src 'none'",
-    `script-src 'self'${wasm}${n}`,
+    `script-src 'self'${wasm}${n}${turnstile}`,
     ...(options.scan ? ["worker-src 'self'"] : []),
     `style-src 'self'${n}`,
     // SSR pass cards set arbitrary pass colors through style attributes. Never scripts.
     ...(nonce ? ["style-src-attr 'unsafe-inline'"] : []),
     "img-src 'self' data: blob:",
     "font-src 'self'",
-    "frame-src 'self'",
+    `frame-src 'self'${turnstile}`,
     "connect-src 'self'",
     "manifest-src 'self'",
     "form-action 'self'",
@@ -45,7 +52,8 @@ export function contentSecurityPolicy(nonce?: string, options: { scan?: boolean 
   ].join('; ');
 }
 
-const NO_REFERRER_PREFIXES = ['/p/', '/b/', '/auth/', '/scan'];
+const NO_REFERRER_PREFIXES = ['/p/', '/b/', '/auth/', '/scan', '/j/'];
+const TURNSTILE_PREFIXES = ['/j/'];
 const NO_STORE_PREFIXES = ['/api/', '/auth/'];
 
 const passedThrough = new WeakSet<Response>();
@@ -69,7 +77,12 @@ export const securityHeaders = createMiddleware<AppBindings>(async (c, next) => 
   const set = (name: string, value: string) => {
     if (!headers.has(name)) headers.set(name, value);
   };
-  set('content-security-policy', contentSecurityPolicy(c.var.nonce));
+  set(
+    'content-security-policy',
+    contentSecurityPolicy(c.var.nonce, {
+      turnstile: TURNSTILE_PREFIXES.some((p) => path.startsWith(p)),
+    }),
+  );
   set('strict-transport-security', HSTS);
   set('x-content-type-options', 'nosniff');
   set(

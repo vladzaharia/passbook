@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { TURNSTILE_ACTION, TURNSTILE_JOIN_ACTION } from '../../../shared/turnstile.ts';
 import { createLogger } from '../../platform/log.ts';
 import { verifyTurnstile } from './turnstile.ts';
 
@@ -88,5 +89,55 @@ describe('verifyTurnstile', () => {
       true,
     );
     expect(await verifyTurnstile(env, 't', null, log, test)).toBe(false);
+  });
+});
+
+describe('verifyTurnstile action', () => {
+  const verdict = (action: string) =>
+    (async () =>
+      Response.json({
+        success: true,
+        hostname: 'passbook.mobile',
+        action,
+      })) as unknown as typeof fetch;
+
+  it('defaults to the sign-in action: a join token does not pass there', async () => {
+    expect(await verifyTurnstile(env, 't', null, log, verdict(TURNSTILE_ACTION))).toBe(true);
+    expect(await verifyTurnstile(env, 't', null, log, verdict(TURNSTILE_JOIN_ACTION))).toBe(false);
+    expect(events().at(-1)).toMatchObject({ code: 'TURNSTILE_ACTION' });
+  });
+
+  it('takes the join action, and refuses a sign-in token there', async () => {
+    const join = (f: typeof fetch) =>
+      verifyTurnstile(env, 't', null, log, f, TURNSTILE_JOIN_ACTION);
+    expect(await join(verdict(TURNSTILE_JOIN_ACTION))).toBe(true);
+    expect(await join(verdict(TURNSTILE_ACTION))).toBe(false);
+    expect(await join(verdict(''))).toBe(false);
+  });
+
+  it('still checks the hostname for the join action', async () => {
+    const wrongHost = (async () =>
+      Response.json({
+        success: true,
+        hostname: 'evil.example',
+        action: 'join',
+      })) as unknown as typeof fetch;
+    expect(await verifyTurnstile(env, 't', null, log, wrongHost, TURNSTILE_JOIN_ACTION)).toBe(
+      false,
+    );
+    expect(events().at(-1)).toMatchObject({ code: 'TURNSTILE_HOSTNAME' });
+  });
+
+  it('fails closed with no secret for the join action', async () => {
+    expect(
+      await verifyTurnstile(
+        { ...env, TURNSTILE_SECRET: undefined as never },
+        't',
+        null,
+        log,
+        fetch,
+        TURNSTILE_JOIN_ACTION,
+      ),
+    ).toBe(false);
   });
 });

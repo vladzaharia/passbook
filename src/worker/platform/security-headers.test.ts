@@ -1,5 +1,7 @@
+import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import staticHeaders from '../../../public/_headers?raw';
+import type { AppBindings } from './context.ts';
 import {
   COOP,
   CORP,
@@ -10,6 +12,7 @@ import {
   REFERRER_DEFAULT,
   SCAN_PERMISSIONS_POLICY,
   scanContentSecurityPolicy,
+  securityHeaders,
   XFO,
 } from './security-headers.ts';
 
@@ -149,5 +152,33 @@ describe('the scanner document and its decoder worker', () => {
     expect(headersFor('/scan.webmanifest').get('content-type')).toEqual([
       'application/manifest+json',
     ]);
+  });
+});
+
+describe('join page CSP', () => {
+  const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
+  const probe = async (path: string) => {
+    const app = new Hono<AppBindings>();
+    app.use('*', securityHeaders);
+    app.get('*', (c) => c.text('ok'));
+    return app.request(path);
+  };
+
+  it('adds Turnstile to script-src and frame-src for /j/ only, with no referrer', async () => {
+    const join = await probe('/j/abc');
+    const csp = join.headers.get('content-security-policy') ?? '';
+    expect(csp).toContain(`script-src 'self' ${TURNSTILE_ORIGIN}`);
+    expect(csp).toContain(`frame-src 'self' ${TURNSTILE_ORIGIN}`);
+    expect(join.headers.get('referrer-policy')).toBe('no-referrer');
+    for (const path of ['/p/abc', '/auth/magic', '/api/v1/join-links/t', '/jx', '/joined/x', '/']) {
+      const other = await probe(path);
+      expect(other.headers.get('content-security-policy'), path).not.toContain(TURNSTILE_ORIGIN);
+    }
+  });
+
+  it('leaves every other directive as the default policy', () => {
+    const strip = (v: string) => v.replaceAll(` ${TURNSTILE_ORIGIN}`, '');
+    expect(strip(contentSecurityPolicy('n', { turnstile: true }))).toBe(contentSecurityPolicy('n'));
+    expect(contentSecurityPolicy()).not.toContain(TURNSTILE_ORIGIN);
   });
 });

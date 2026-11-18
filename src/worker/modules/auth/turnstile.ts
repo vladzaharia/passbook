@@ -13,6 +13,7 @@ export async function verifyTurnstile(
   ip: string | null,
   log: Logger,
   fetchImpl: typeof fetch = fetch,
+  action: string = TURNSTILE_ACTION,
 ): Promise<boolean> {
   if (!env.TURNSTILE_SECRET) {
     log.error('auth.turnstile_unconfigured', { code: 'TURNSTILE_UNCONFIGURED' });
@@ -44,7 +45,7 @@ export async function verifyTurnstile(
       return false;
     }
     // A token minted for another widget action (another form on the same site key) is refused.
-    if (result.action !== TURNSTILE_ACTION) {
+    if (result.action !== action) {
       log.warn('auth.turnstile_action', { code: 'TURNSTILE_ACTION' });
       return false;
     }

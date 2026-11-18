@@ -91,6 +91,10 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   // In now ordering: only raised (`inc`), in the batch that changes the place.
   scan_place_revs: { org: 'org_id', mode: 'mode', conflict: ['org_id', 'mode', 'place'] },
   pass_events: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
+  // Join links (0090). Written by the admin grant; the sealed copy is an org-bearing part (below).
+  join_links: { org: 'org_id', mode: 'mode' },
+  // The ledger a join grant appends to with its pass. Its triggers hold org, mode and generation to the link.
+  join_issues: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   // Its triggers write passes.image_generation, so a part could reach a pass of another tenant.
   member_photos: { org: 'org_id', pass: 'pass_id' },
   // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
@@ -171,6 +175,7 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'pass_token_seals',
   'pass_auth_seals',
   'bundle_token_seals',
+  'join_link_seals',
 ]);
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',
