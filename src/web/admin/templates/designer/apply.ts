@@ -1,4 +1,5 @@
-import type { PassStyle } from '@/passkit/types.ts';
+import { renameIn } from '@/passkit/template/merge/renames.ts';
+import type { Json, PassStyle, TemplateManifest } from '@/passkit/types.ts';
 import { type AccessOp, applyAccessOp } from './access/ops.ts';
 import type { Source } from './bindings.ts';
 import { setSlotImage } from './images.ts';
@@ -31,6 +32,7 @@ import {
   setStyle,
   updateField,
 } from './ops-pass.ts';
+import { type ActionsOp, applyActionsOp } from './scan/actions/ops.ts';
 import { setLookupInput } from './scan/lookup.ts';
 import { applyScanOp, type ScanOp } from './scan/ops-scan.ts';
 import {
@@ -74,7 +76,25 @@ export type Op =
   | { op: 'stamps-art'; slot: ArtSlot; asset: DraftAsset | null }
   | { op: 'stamps-input'; input: string }
   | ScanOp
+  | ActionsOp
   | AccessOp;
+
+/** Rewrites every reference left to a renamed input, with the merge engine's own walk. */
+function renameReferences(doc: DesignDoc, from: string, to: string): DesignDoc {
+  const renamed = renameIn(
+    {
+      passJson: doc.passJson as Json,
+      manifest: doc.manifest as unknown as TemplateManifest,
+      files: {},
+    },
+    { kind: 'input', from, to },
+  );
+  return {
+    ...doc,
+    passJson: renamed.passJson as DesignDoc['passJson'],
+    manifest: renamed.manifest as unknown as DesignDoc['manifest'],
+  };
+}
 
 export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
   switch (o.op) {
@@ -111,7 +131,7 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
     case 'input-set': {
       const next = updateInput(doc, o.name, o.patch);
       return o.patch.name && o.patch.name !== o.name && next !== doc
-        ? renameStampsInput(next, o.name, o.patch.name)
+        ? renameReferences(renameStampsInput(next, o.name, o.patch.name), o.name, o.patch.name)
         : next;
     }
     case 'input-remove':
@@ -140,6 +160,15 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
       return setArt(doc, o.slot, o.asset);
     case 'stamps-input':
       return setStampsInput(doc, o.input);
+    case 'scan-enable':
+    case 'scan-action-add':
+    case 'scan-action-set':
+    case 'scan-action-kind':
+    case 'scan-action-remove':
+    case 'scan-action-move':
+    case 'scan-window':
+    case 'scan-flags':
+      return applyActionsOp(doc, o);
     case 'access-enable':
     case 'access-disable':
     case 'access-plan-add':

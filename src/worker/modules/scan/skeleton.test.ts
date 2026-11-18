@@ -60,9 +60,11 @@ describe('scanner routers', () => {
 });
 
 describe('scan cron hooks', () => {
-  it('registers reconcile and backfill each minute and retention daily', () => {
+  it('registers reconcile, backfill and occupancy each minute and retention daily', () => {
     const names = (cron: string) => (CRON_HOOKS[cron] ?? []).map((h) => h.name);
-    expect(names(MINUTE_CRON)).toEqual(expect.arrayContaining(['scan.reconcile', 'scan.backfill']));
+    expect(names(MINUTE_CRON)).toEqual(
+      expect.arrayContaining(['scan.reconcile', 'scan.backfill', 'scan.occupancy']),
+    );
     expect(names(DAILY_CRON)).toContain('scan.retention');
   });
 
@@ -86,7 +88,7 @@ describe('scan cron hooks', () => {
     const hooks = [MINUTE_CRON, DAILY_CRON]
       .flatMap((cron) => CRON_HOOKS[cron] ?? [])
       .filter((h) => h.name.startsWith('scan.'));
-    expect(hooks).toHaveLength(3);
+    expect(hooks).toHaveLength(4);
     for (const hook of hooks) await hook.run(ctx);
     expect(queries.length).toBeLessThan(CRON_QUERY_BUDGET);
   });

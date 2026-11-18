@@ -120,8 +120,8 @@ function effectStatements(
 }
 
 /**
- * Receipt insert, routing hint and effects, after a replay claim statement that must run just
- * before them. `gate` is the fence the receipt is admitted under; its `?` values bind in order.
+ * Receipt insert, routing hint and effects. The first statement (the receipt) must run just before
+ * the replay claim, which it reads as unclaimed; the rest run after the claim. `gate` is the fence the receipt is admitted under; its `?` values bind in order.
  */
 export function receiptStatements(
   db: D1Database,
@@ -141,9 +141,9 @@ export function receiptStatements(
        event, cc2, query_bound, token_hash, request_id)
       SELECT ?, r.id, i.id, i.account_id, i.org_id, i.mode, op.version, 'state_callback',
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ${stateJoins}
-      WHERE changes() = 1 AND ${gate.sql}
-        AND EXISTS (SELECT 1 FROM wallet_samsung_auth_replays replay
-          WHERE replay.token_hash = ? AND replay.claim_id = ?)`,
+      WHERE ${gate.sql}
+        AND NOT EXISTS (SELECT 1 FROM wallet_samsung_auth_replays prior WHERE prior.token_hash = ?)
+      RETURNING id`,
       [
         receipt.id,
         receipt.signedAt,
@@ -160,29 +160,37 @@ export function receiptStatements(
         claim.now,
         ...gate.params,
         claim.tokenHash,
-        claim.claimId,
       ],
     ),
   ];
   if (receipt.countryHint) {
+    // Marked dirty only for a country this ref has not reported yet, so it runs before the hint insert.
     statements.push(
-      stmt(
-        db,
-        `INSERT INTO wallet_samsung_country_hints (ref_id, country_code, received_at)
-      SELECT rc.ref_id, ?, ? FROM wallet_samsung_callback_receipts rc
-      JOIN wallet_samsung_fetch_refs live ON live.id = rc.ref_id AND live.retired_at IS NULL
-      WHERE rc.id = ? AND changes() = 1 AND ${credentialRefKeysetSql}
-      ON CONFLICT(ref_id, country_code) DO NOTHING`,
-        [receipt.countryHint, claim.now, receipt.id, ref.credentialKeysetCommitment],
-      ),
       stmt(
         db,
         `INSERT INTO wallet_provider_instance_dirty (instance_id, generation)
       SELECT rc.instance_id, 1 FROM wallet_samsung_callback_receipts rc
       JOIN wallet_samsung_fetch_refs live ON live.id = rc.ref_id AND live.retired_at IS NULL
-      WHERE rc.id = ? AND changes() = 1 AND ${credentialRefKeysetSql}
+      WHERE rc.id = ? AND rc.cc2 = ? AND ${credentialRefKeysetSql}
+        AND NOT EXISTS (SELECT 1 FROM wallet_samsung_country_hints known
+          WHERE known.ref_id = rc.ref_id AND known.country_code = ?)
       ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1`,
-        [receipt.id, ref.credentialKeysetCommitment],
+        [receipt.id, receipt.countryHint, ref.credentialKeysetCommitment, receipt.countryHint],
+      ),
+      stmt(
+        db,
+        `INSERT INTO wallet_samsung_country_hints (ref_id, country_code, received_at)
+      SELECT rc.ref_id, ?, ? FROM wallet_samsung_callback_receipts rc
+      JOIN wallet_samsung_fetch_refs live ON live.id = rc.ref_id AND live.retired_at IS NULL
+      WHERE rc.id = ? AND rc.cc2 = ? AND ${credentialRefKeysetSql}
+      ON CONFLICT(ref_id, country_code) DO NOTHING`,
+        [
+          receipt.countryHint,
+          claim.now,
+          receipt.id,
+          receipt.countryHint,
+          ref.credentialKeysetCommitment,
+        ],
       ),
     );
   }
@@ -268,22 +276,22 @@ export async function claimSamsungIssuedDelivery(
   if (!validClaim(claim) || (receipt && !/^[A-Za-z0-9_-]{1,64}$/.test(receipt.requestId)))
     return false;
   const gate = issuedGate(ref);
-  const statements = [
-    stmt(
-      db,
-      `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ? AND ${credentialRefKeysetSql}`,
-      [claim.now, ref.credentialKeysetCommitment],
-    ),
-    stmt(
-      db,
-      `INSERT INTO wallet_samsung_auth_replays (token_hash, claim_id, expires_at)
-      SELECT ?, ?, ? ${stateJoins} WHERE ${gate.sql} ON CONFLICT DO NOTHING`,
-      [claim.tokenHash, claim.claimId, claim.expiresAt, claim.now, ...gate.params],
-    ),
-  ];
+  const deleteExpired = stmt(
+    db,
+    `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ? AND ${credentialRefKeysetSql}`,
+    [claim.now, ref.credentialKeysetCommitment],
+  );
+  const claimReplay = stmt(
+    db,
+    `INSERT INTO wallet_samsung_auth_replays (token_hash, claim_id, expires_at)
+      SELECT ?, ?, ? ${stateJoins} WHERE ${gate.sql} ON CONFLICT DO NOTHING
+      RETURNING token_hash`,
+    [claim.tokenHash, claim.claimId, claim.expiresAt, claim.now, ...gate.params],
+  );
+  const receipts: D1PreparedStatement[] = [];
   // A pending transfer means the callback may speak for the next holder: it is answered, not recorded.
   if (receipt)
-    statements.push(
+    receipts.push(
       ...receiptStatements(
         db,
         ref,
@@ -297,5 +305,9 @@ export async function claimSamsungIssuedDelivery(
         true,
       ),
     );
-  return (await batch(db, statements))[1]?.meta.changes === 1;
+  const [receiptInsert, ...effects] = receipts;
+  const statements = receiptInsert
+    ? [deleteExpired, receiptInsert, claimReplay, ...effects]
+    : [deleteExpired, claimReplay];
+  return (await batch(db, statements))[receiptInsert ? 2 : 1]?.results.length === 1;
 }

@@ -5,13 +5,14 @@
 
 import type { ScanCounts, ScannerSettings } from '../../../shared/contracts/scan.ts';
 import { SCAN_TIMING } from '../timing.ts';
+import { accessBeat, type MachineEvent } from './access-events.ts';
 import { createRunner } from './commands.ts';
 import { nextDeadline } from './deadlines.ts';
 import { manualCheckIn } from './manual-check-in.ts';
 import type { ScanDeps } from './ports.ts';
 import { type ScanView, viewOf } from './present.ts';
 import { reduce } from './reduce.ts';
-import type { BuddyBeat, Card, Cmd, ScanEvent, ScanState } from './types.ts';
+import type { BuddyBeat, Card, Cmd, ScanState } from './types.ts';
 
 export interface ScanSnapshot {
   state: ScanState;
@@ -23,7 +24,7 @@ export interface ScanSnapshot {
 export interface ScanStore {
   getSnapshot(): ScanSnapshot;
   subscribe(listener: () => void): () => void;
-  dispatch(event: ScanEvent): void;
+  dispatch(event: MachineEvent): void;
   checkIn(card: Card, actionId: string): void;
   configure(settings: ScannerSettings, counts: ScanCounts): boolean;
   /** Resends unsure entries now (also runs on a timer, on online and on visible). */
@@ -32,7 +33,13 @@ export interface ScanStore {
 }
 
 /** Beats at the read start at once; result beats wait `BEAT_DELAY` after the verdict. */
-const IMMEDIATE: ReadonlySet<BuddyBeat | 'cut'> = new Set(['cut', 'lock', 'look']);
+/** `relent` starts at once: its own first 150 ms is the "oh" before the grant's beat. */
+const IMMEDIATE: ReadonlySet<BuddyBeat | 'cut'> = new Set([
+  'cut',
+  'lock',
+  'look',
+  accessBeat('relent'),
+]);
 
 export function createScanStore(deps: ScanDeps, initial: ScanState): ScanStore {
   let state = initial;
@@ -46,7 +53,7 @@ export function createScanStore(deps: ScanDeps, initial: ScanState): ScanStore {
   let snapshot: ScanSnapshot | null = null;
   let disposed = false;
   let busy = false;
-  const queue: ScanEvent[] = [];
+  const queue: MachineEvent[] = [];
   const listeners = new Set<() => void>();
 
   const publish = () => {
@@ -128,14 +135,14 @@ export function createScanStore(deps: ScanDeps, initial: ScanState): ScanStore {
     });
   }
 
-  function dispatch(event: ScanEvent) {
+  function dispatch(event: MachineEvent) {
     if (disposed) return;
     queue.push(event);
     if (busy) return;
     busy = true;
     try {
       while (queue.length > 0) {
-        const next = queue.shift() as ScanEvent;
+        const next = queue.shift() as MachineEvent;
         if (next.type === 'visible') visible = next.visible;
         const before = state;
         const result = reduce(state, next, { now: deps.clock.now(), id: deps.ids.id });

@@ -37,6 +37,8 @@ export interface PassFilters {
   status?: z.infer<typeof PassListStatusSchema> | undefined;
   holderState?: 'unassigned' | 'waiting' | 'owned' | undefined;
   onDevice?: 'true' | 'false' | undefined;
+  /** No completed scan in this many days. */
+  noScanDays?: 30 | 90 | undefined;
 }
 
 /** Body of PUT /passes/{id}/connection; null ids unbind. */
@@ -99,8 +101,15 @@ export function usePassList(filters: PassFilters) {
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) => {
       if (!allowed || !scope.orgId) throw new Error('Choose an authorized organization.');
+      const { noScanDays, ...rest } = filters;
       return api.get('/api/v1/passes', PassListSchema, {
-        query: { ...filters, orgId: scope.orgId, cursor: pageParam, limit: 50 },
+        query: {
+          ...rest,
+          ...(noScanDays ? { scan: JSON.stringify({ noScanDays }) } : {}),
+          orgId: scope.orgId,
+          cursor: pageParam,
+          limit: 50,
+        },
         signal,
       });
     },

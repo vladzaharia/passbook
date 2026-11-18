@@ -99,9 +99,18 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
     }),
     ...(override
       ? [
-          scanPolicy(pa, {
-            kind: overridePolicyKind(override.reason),
-          }),
+          // The door's own letInAgain follows the scan to whoever overrides it; `never` closes it for the desk.
+          scanPolicy(
+            {
+              ...pa,
+              settings: {
+                ...pa.settings,
+                hardLimit: override.doorHardLimit,
+                ...(override.doorLetInAgain ? { letInAgain: override.doorLetInAgain } : {}),
+              },
+            },
+            { kind: overridePolicyKind(override.reason, override.scan.outcome) },
+          ),
         ]
       : []),
   ];

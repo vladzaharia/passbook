@@ -1,0 +1,38 @@
+{
+  "actions": [
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "confirm": false,
+      "id": "check_in",
+      "kind": "check_in",
+      "label": "Check in",
+      "minRole": "door",
+      "notify": false,
+      "repeat": "daily"
+    },
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "amount": {
+        "max": 100,
+        "presets": [
+          1,
+          5,
+          10
+        ]
+      },
+      "confirm": false,
+      "id": "points",
+      "input": "points",
+      "kind": "add",
+      "label": "Add points",
+      "minRole": "desk",
+      "notify": false,
+      "repeat": "always"
+    }
+  ],
+  "lookup": {
+    "input": "memberId"
+  }
+}

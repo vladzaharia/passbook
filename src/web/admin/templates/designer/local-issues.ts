@@ -2,6 +2,7 @@ import type { ValidationIssue } from '@/passkit/types.ts';
 import { accessLocalIssues } from './access/issues.ts';
 import type { DesignDoc } from './model.ts';
 import { readBarcode } from './ops-more.ts';
+import { actionLocalIssues } from './scan/actions/issues.ts';
 
 export const BARCODE_TEXT_EMPTY = 'Enter the barcode text, or pick an input.';
 
@@ -25,5 +26,6 @@ export function localIssues(doc: DesignDoc): ValidationIssue[] {
         ]
       : []),
     ...accessLocalIssues(doc),
+    ...actionLocalIssues(doc),
   ];
 }

@@ -27,6 +27,8 @@ export interface ScanWriteInput {
   checks?: readonly Check[];
   target?: string;
   codes?: DenialOptions['codes'];
+  /** Mark as out only (C16): a paused session still lets the desk clear who is inside; its config epoch is still compared. */
+  pausedSession?: boolean;
   /** Unguarded tables the grant's parts write. */
   tables?: string[];
 }
@@ -45,6 +47,7 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
       ...scanCapabilityChecks(actor),
       ...scanActorChecks(actor, {
         now: i.now,
+        ...(i.pausedSession ? { read: { pausedSession: true } } : {}),
         ...(i.event === undefined ? {} : { event: i.event }),
         ...(templateId ? { templateId } : {}),
       }),

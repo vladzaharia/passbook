@@ -14,6 +14,7 @@ export interface TextLimit {
 }
 
 const MARKUP = /<\/?[A-Za-z][^>]*>/gu;
+const HAS_MARKUP = /<\/?[A-Za-z][^>]*>/u;
 // C0 and C1 controls except newline.
 // biome-ignore lint/suspicious/noControlCharactersInRegex: stripping controls is the point
 const CONTROLS = /[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/gu;
@@ -28,6 +29,18 @@ export function sanitizeText(value: string): string {
     .replace(CONTROLS, ' ')
     .replace(/[ \t]+\n/gu, '\n')
     .trim();
+}
+
+// biome-ignore lint/suspicious/noControlCharactersInRegex: finding controls is the point
+const ANY_CONTROL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069]/u;
+
+/**
+ * Single-line display text a provider may show as is: not blank, no control character at all (a
+ * newline, tab or carriage return included), no line or paragraph separator, no bidirectional
+ * override or isolate, and no markup. Nothing is trimmed or rewritten.
+ */
+export function isPlainLine(value: string): boolean {
+  return value.trim().length > 0 && !ANY_CONTROL.test(value) && !HAS_MARKUP.test(value);
 }
 
 /** True when `sanitizeText` would not change the value and it is non-empty. */

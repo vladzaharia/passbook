@@ -1,3 +1,4 @@
+import { isPlainLine, measure } from '../../../passkit/wallets/text.ts';
 import type { GoogleGenericProjection } from './google-projection.ts';
 import {
   type GoogleProjection,
@@ -24,22 +25,14 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 const only = (value: Record<string, unknown>, allowed: readonly string[]) =>
   Object.keys(value).every((key) => allowed.includes(key));
-const encoder = new TextEncoder();
 
 /** Do not silently discard markup, controls, or content a provider would truncate. */
 function plain(value: unknown, max: number): value is string {
-  if (typeof value !== 'string' || value.trim().length === 0 || /<\/?[A-Za-z][^>]*>/u.test(value))
-    return false;
-  let length = 0;
-  for (const character of value) {
-    const code = character.charCodeAt(0);
-    if (++length > max || code < 0x20 || (code >= 0x7f && code <= 0x9f)) return false;
-  }
-  return true;
+  return typeof value === 'string' && isPlainLine(value) && measure(value, 'chars') <= max;
 }
 
 /** Recheck materialized pass semantics, not only the template that was reviewed. */
-function sourceOf(projection: NativeProjection, input: unknown): Source | null {
+function sourceOf(projection: GoogleProjection | SamsungProjection, input: unknown): Source | null {
   if (
     !NativeProjectionSchema.safeParse(projection).success ||
     !isObject(input) ||
@@ -121,7 +114,7 @@ function sourceOf(projection: NativeProjection, input: unknown): Source | null {
       item.messageEncoding.toLowerCase() !== 'utf-8' ||
       typeof item.message !== 'string' ||
       !item.message ||
-      encoder.encode(item.message).byteLength > 4096 ||
+      measure(item.message, 'bytes') > 4096 ||
       /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(
         item.message,
       ) ||
@@ -154,11 +147,13 @@ export interface RenderedGoogleProjection {
 
 /** Project only values explicitly covered by a previously approved native mapping. */
 export function renderGoogleProjection(
-  projection: GoogleProjection,
+  projection: NativeProjection,
   passJson: unknown,
 ): RenderedGoogleProjection | null {
+  // Schema 2 is compiled by the typed runtime, never rendered from field mappings.
+  if (projection.schema !== 1 || projection.provider !== 'google') return null;
   const source = sourceOf(projection, passJson);
-  if (!source || projection.provider !== 'google') return null;
+  if (!source) return null;
   const textModulesData = source.fields.map((field, index) => {
     const module: Record<string, string> = { id: `f${index}`, body: field.value };
     if (field.label !== undefined) module.header = field.label;
@@ -182,22 +177,22 @@ export function renderGoogleProjection(
     textModulesData,
     ...(barcode ? { barcode } : {}),
   };
-  if (encoder.encode(JSON.stringify(objectProjection)).byteLength > 32_768) return null;
+  if (measure(JSON.stringify(objectProjection), 'bytes') > 32_768) return null;
   return { objectProjection, classProjection: {} };
 }
 
 /** Validate the current materialization without inventing a provider reference. */
 function samsungContent(
-  projection: SamsungProjection,
+  projection: NativeProjection,
   passJson: unknown,
 ): {
   source: Source;
   noticeDesc: string;
 } | null {
+  if (projection.schema !== 1 || projection.provider !== 'samsung') return null;
   const source = sourceOf(projection, passJson);
   if (
     !source ||
-    projection.provider !== 'samsung' ||
     !plain(source.organization, 32) ||
     !plain(source.title.value, 32) ||
     source.fields.some((field) => field.label === undefined)
@@ -208,11 +203,11 @@ function samsungContent(
     ...source.fields.map((field) => `${field.label}: ${field.value}`),
     `Description: ${source.description}`,
   ].join('\n');
-  return encoder.encode(noticeDesc).byteLength <= 5000 ? { source, noticeDesc } : null;
+  return measure(noticeDesc, 'bytes') <= 5000 ? { source, noticeDesc } : null;
 }
 
 export function canRenderSamsungProjection(
-  projection: SamsungProjection,
+  projection: NativeProjection,
   passJson: unknown,
 ): boolean {
   return samsungContent(projection, passJson) !== null;
@@ -223,13 +218,15 @@ export function canRenderSamsungProjection(
  * pull that changes nothing does not look like new content; it never precedes `createdAt`.
  */
 export function renderSamsungProjection(
-  projection: SamsungProjection,
+  projection: NativeProjection,
   passJson: unknown,
   refId: string,
   createdAt: number,
   revisedAt: number,
 ): SamsungCardProjection | null {
   if (
+    projection.schema !== 1 ||
+    projection.provider !== 'samsung' ||
     !/^[A-Za-z0-9_-]{32}$/.test(refId) ||
     !Number.isSafeInteger(createdAt) ||
     !Number.isSafeInteger(revisedAt) ||
@@ -272,4 +269,24 @@ export function renderSamsungProjection(
       ],
     },
   };
+}
+
+/** Schema 2 is compiled by the typed runtimes (CW9b, CW10b); until they exist nothing renders it. */
+let compiledRuntime = false;
+
+/** Tests only: pretend the typed runtime exists, so a test of the offer path is not decided by it. */
+export function setCompiledRuntimeForTest(ready: boolean): () => void {
+  const previous = compiledRuntime;
+  compiledRuntime = ready;
+  return () => {
+    compiledRuntime = previous;
+  };
+}
+
+/** Whether a materialized pass can be offered under this projection. */
+export function canRenderProjection(projection: NativeProjection, passJson: unknown): boolean {
+  if (projection.schema === 2) return compiledRuntime;
+  return projection.provider === 'google'
+    ? renderGoogleProjection(projection, passJson) !== null
+    : canRenderSamsungProjection(projection, passJson);
 }

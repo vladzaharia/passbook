@@ -8,6 +8,7 @@ import { connectNativeReader } from '../input/native-reader.ts';
 import type { RawRead } from '../input/types.ts';
 import { createWedgeSource, WedgeFields } from '../input/wedge-source.ts';
 import { decodeActive } from '../machine/derive.ts';
+import { createDirectionPin } from '../machine/direction-pin.ts';
 import { initialState } from '../machine/initial-state.ts';
 import { createScanStore } from '../machine/store.ts';
 import { openScanDb } from '../offline/db.ts';
@@ -107,6 +108,7 @@ export async function createRuntime(
   state.camera = cameraDisabled() ? 'disabled' : 'off';
   if (scanner) state.unsure = await hydrateUnsure(unsure, scanner.id, clock.now());
   const fields = new WedgeFields();
+  const pin = createDirectionPin(clock);
   const notice = (text: string, polite = true) => announce({ text, polite, n: Date.now() });
   let native: ReturnType<typeof connectNativeReader> = null;
   let vasFallbackNoticeShown = false;
@@ -124,6 +126,7 @@ export async function createRuntime(
       camera,
       clock,
       ids: { id: scanId },
+      pin,
       unsure,
       scannerId: () => scanner?.id ?? null,
       base: () => ({}),
@@ -284,6 +287,7 @@ export async function createRuntime(
   });
   return {
     store,
+    pin,
     clear: () => wipeLocal(localStores),
     fields,
     emit,
@@ -312,6 +316,7 @@ export async function createRuntime(
       camera.stop();
       void wake?.release();
       store.dispose();
+      pin.dispose();
       db?.close();
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOnline);
