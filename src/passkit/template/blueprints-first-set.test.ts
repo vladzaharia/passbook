@@ -73,7 +73,7 @@ describe('first blueprint set', () => {
     const sample = await SAMPLE('starter-pack');
     const fields = (p: Awaited<ReturnType<typeof buildBaked>>['passJson']) =>
       [...(p.coupon?.headerFields ?? []), ...(p.coupon?.primaryFields ?? [])].map((f) => f.value);
-    const build = async (over: Record<string, unknown>) =>
+    const build = async (over: Record<string, number>) =>
       fields((await buildBaked('starter-pack', material, { ...sample, ...over })).passJson);
     expect(await build({ left: 7, size: 10 })).toEqual([7, '10 washes']);
     // A refill raises left past size: never "15 of 10".
