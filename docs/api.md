@@ -448,7 +448,8 @@ An endpoint receives signed `POST`s for the events it subscribes to. Delivery is
 ordering promise: dedupe on the event `id`, and order by `createdAt` or `pass.version` when it matters.
 
 **Access.** A session needs `integrations:read` (view) or `integrations:manage` (change) in the org. An
-API key needs `webhooks:manage`. Readers get `url: null` and `urlMasked` (host plus the last four path
+API key needs `webhooks:manage`. Delivery detail and the feed carry event payloads, so `integrations:read` and `webhooks:manage` can read
+them without `passes:read`; payloads hold no personal data. Readers get `url: null` and `urlMasked` (host plus the last four path
 characters): the URL is a capability, shown in full only to managers. Both modes work. The mode is fixed at
 creation from the key's mode or the session's `x-passbook-mode`, never from the body; an endpoint receives
 events of its own mode only. Other orgs' and the other mode's endpoints answer `404`. Lists and creates take
@@ -460,7 +461,7 @@ events of its own mode only. Other orgs' and the other mode's endpoints answer `
 | `POST /webhook-endpoints` | manage | `{ orgId?, url, description?, eventTypes, templateIds? }`. `201` `{ endpoint, secret }`. `?validate=1` checks everything, writes nothing, answers `200 { ok: true }` |
 | `GET`, `PATCH`, `DELETE /webhook-endpoints/{id}` | read, manage, manage | `PATCH` takes any create field plus `status` (`active`, `paused`) and `apiVersion`. A resume clears the failure counters |
 | `POST /webhook-endpoints/{id}/secret` | manage | `{ overlapHours: 0 \| 24 \| 72 }` (default 24). `{ secret }`, shown once |
-| `POST /webhook-endpoints/{id}/test` | manage | sends one `webhook.test` to this endpoint: `{ ok, status, durationMs, errorCode }`. 10 a minute per endpoint, then `429` |
+| `POST /webhook-endpoints/{id}/test` | manage | sends one `webhook.test` to this endpoint: `{ ok, status, durationMs, errorCode }`. 10 a minute per org and mode, then `429`; the destination host's shared send budget is charged too |
 | `GET /webhook-endpoints/{id}/deliveries` | read | `state`, `type`, `limit`, `cursor`; newest first |
 | `GET /webhook-endpoints/{id}/deliveries/{eventId}` | read | adds `attemptLog` and the `payload` |
 | `POST /webhook-endpoints/{id}/deliveries/{eventId}/replay` | manage | one delivery again; `409 DELIVERY_PENDING` while it waits |
@@ -469,19 +470,22 @@ events of its own mode only. Other orgs' and the other mode's endpoints answer `
 `eventTypes` is an explicit list of 1 to 32 types, with no wildcard. `templateIds` (up to 20 of the org's
 own templates) narrows it; `null` means all. The URL must be `https` on port 443 with a public host (no
 credentials, IP literal or platform host): `422 UNSAFE_URL`. It is re-checked on every attempt. The 11th
-endpoint in a mode is `409 WEBHOOK_ENDPOINT_LIMIT`. Create, update, delete, rotate and replay are audited
+endpoint in a mode is `409 WEBHOOK_ENDPOINT_LIMIT`, and an org may create 20 endpoints an hour (`429`). Create, update, delete, rotate and replay are audited
 (`webhook.endpoint.*`, `webhook.secret.rotate`, `webhook.replay`) with the host only, never the path or a secret.
 
 **Replay.** A replayed delivery is sent with the same event `id` and body. `from` and `to` are event times
 in ms. `include` is `failed` (default), `failed_and_cancelled` or `all` (also delivered). It resets at most
 10,000 deliveries (`422 REPLAY_TOO_LARGE`: narrow the range). With `missing: true` it also creates deliveries
-for subscribed events in the window that the endpoint never had, up to 30 days back. `{ queued }` counts both.
-One bulk replay per endpoint per minute.
+for subscribed events in the window that the endpoint never had, but only from the last 7 days: older
+delivered rows are already purged, so a wider window would send events again. `{ queued }` counts both.
+One bulk replay per org and mode per minute; a single-delivery replay is limited to 10 a minute per org and
+mode, and its audit row is written once a minute per endpoint.
 
 **Retries.** Up to 9 attempts over about 3 days; a non-2xx answer, a timeout (10 s) or a refused connection
 retries, and a `Retry-After` on `429` or `503` is honored (capped). After 72 hours of failures with at least
 10 failed attempts in a row the endpoint is disabled and its pending deliveries are cancelled; patch
-`status: "active"` to resume. Redirects are not followed. The response body is ignored.
+`status: "active"` to resume. Redirects are not followed. The response body is ignored. Sends to one host are paced per org
+(120 a minute) and across all orgs (600 a minute); a delivery over its share waits, uncounted.
 
 ### Receive and verify
 
@@ -503,11 +507,14 @@ than 5 minutes off, and verify the raw bytes before parsing.
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
 function verify(rawBody, headers, secret) {
-  const ts = headers['x-passbook-timestamp'];
-  if (Math.abs(Date.now() / 1000 - Number(ts)) > 300) return false;
+  const ts = Number(headers['x-passbook-timestamp']);
+  const header = headers['x-passbook-signature'];
+  if (!Number.isFinite(ts) || !header || Math.abs(Date.now() / 1000 - ts) > 300) return false;
   const want = createHmac('sha256', secret).update(`${ts}.${rawBody}`).digest('hex');
-  return headers['x-passbook-signature'].split(',').some((part) => {
-    const got = part.trim().replace(/^v1=/, '');
+  return header.split(',').some((part) => {
+    const p = part.trim();
+    if (!p.startsWith('v1=')) return false;
+    const got = p.slice(3);
     return got.length === want.length && timingSafeEqual(Buffer.from(got), Buffer.from(want));
   });
 }
@@ -533,7 +540,7 @@ personalization value, device id, push token or capability URL appears in any pa
 catch-up. It needs `passes:read` (a key scope, or the session capability), not `webhooks:manage`, and
 follows the key's or session's mode. Take `orgId` as above.
 
-- Query: `after` (`ev1.<n>` or `now`), `types` (comma list), `passId`, `limit` (1 to 200, default 50),
+- Cursors are opaque and per org and mode: store and echo them, never compute with them. Query: `after` (`ev1.<n>` or `now`), `types` (comma list), `passId`, `limit` (1 to 200, default 50),
   `apiVersion`.
 - Response: `{ items, nextCursor, hasMore }`, ascending. `nextCursor` is never null: the last item's cursor,
   or the cursor you sent when the page is empty. Store it and call again. With no `after` the feed starts at

@@ -73,7 +73,9 @@ describe('deliveries', () => {
       attempts: 0,
       replays: 0,
     });
-    expect(p1.json.nextCursor).toBe(String(seqs[1]));
+    // Opaque and per tenant: not the platform-wide sequence.
+    expect(p1.json.nextCursor).toMatch(/^[1-9]\d+$/);
+    expect(p1.json.nextCursor).not.toBe(String(seqs[1]));
     const p2 = await api.call(
       'GET',
       `${s.base}/deliveries?limit=2&cursor=${p1.json.nextCursor}`,

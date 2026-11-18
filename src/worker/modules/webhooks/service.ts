@@ -8,13 +8,18 @@ import {
 import { authorityDenial, type Grant, grant } from '../../platform/authority.ts';
 import type { Actor } from '../../platform/context.ts';
 import { loadKekRing } from '../../platform/crypto.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import {
+  ConflictError,
+  NotFoundError,
+  RateLimitedError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import { assertPublicHost, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { redactDetail } from '../audit/redact.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
 import { fenceOf, type WebhookAccess } from './access.ts';
-import { countOrgTemplates } from './repo-api.ts';
+import { countOrgTemplates, countRecentCreates } from './repo-api.ts';
 import {
   deleteEndpoint,
   type EndpointRow,
@@ -30,6 +35,9 @@ import { hostOf, maskUrl, normalizeEndpointUrl } from './url.ts';
 
 type CreateInput = z.infer<typeof CreateWebhookEndpointSchema>;
 type UpdateInput = z.infer<typeof UpdateWebhookEndpointSchema>;
+
+const HOUR = 3_600_000;
+const MAX_CREATES_PER_HOUR = 20;
 
 const TABLES = [
   'webhook_endpoints',
@@ -171,6 +179,9 @@ export async function create(
   const url = await checkedUrl(ctx, input.url);
   const templateIds = await checkTemplates(ctx, orgId, input.templateIds);
   if (dryRun) return null;
+  // Each create costs DoH lookups and a secret: per org, counted from the audit log so a delete does not reset it.
+  if ((await countRecentCreates(ctx.env.DB, orgId, ctx.clock.now() - HOUR)) >= MAX_CREATES_PER_HOUR)
+    throw new RateLimitedError(3600, 'Too many endpoints created. Try again later.');
   const endpointId = ctx.ids.id();
   const secretId = ctx.ids.id();
   const secret = newEndpointSecret(ctx);
@@ -232,6 +243,9 @@ export async function update(
   );
   auditEndpoint(ctx, g, actor, access, 'webhook.endpoint.update', id, {
     host: hostOf(url ?? current.url),
+    ...(url !== undefined && hostOf(url) !== hostOf(current.url)
+      ? { previousHost: hostOf(current.url) }
+      : {}),
     changed,
     ...(input.eventTypes ? { eventTypes: input.eventTypes } : {}),
     ...(input.status ? { status: input.status } : {}),

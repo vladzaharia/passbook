@@ -175,7 +175,10 @@ export async function attemptDelivery(
   const host = hostOf(endpoint.url).toLowerCase();
   let allowed = false;
   try {
-    allowed = await checkRateLimit(ctx.env, 'RL_WEBHOOK_HOST', `host:${host}`);
+    // The org's own share first, so a tenant over it never spends the host's global budget.
+    allowed =
+      (await checkRateLimit(ctx.env, 'RL_WEBHOOK_HOST_ORG', `host:${host}:${endpoint.orgId}`)) &&
+      (await checkRateLimit(ctx.env, 'RL_WEBHOOK_HOST', `host:${host}`));
   } catch {
     ctx.log.error('webhooks.rate_limit_unavailable', { ...log, code: 'RATE_LIMIT_UNAVAILABLE' });
   }

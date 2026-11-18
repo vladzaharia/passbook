@@ -63,7 +63,17 @@ export async function sendTest(
   endpointId: string,
 ): Promise<TestResult> {
   const endpoint = await requireEndpoint(ctx, access, endpointId);
-  if (!(await checkRateLimit(ctx.env, 'RL_WEBHOOK_OUT', `test:${endpointId}`)))
+  // Per tenant, so recreating endpoints does not reset it; and the destination host's global budget is charged.
+  const { orgId, mode } = access.authority;
+  if (!(await checkRateLimit(ctx.env, 'RL_WEBHOOK_OUT', `test:${orgId}:${mode}`)))
+    throw new RateLimitedError();
+  if (
+    !(await checkRateLimit(
+      ctx.env,
+      'RL_WEBHOOK_HOST',
+      `host:${new URL(endpoint.url).host.toLowerCase()}`,
+    ))
+  )
     throw new RateLimitedError();
   const secrets = await secretsOf(ctx, await loadKekRing(ctx.env), access, endpoint);
   const startedAt = ctx.clock.now();

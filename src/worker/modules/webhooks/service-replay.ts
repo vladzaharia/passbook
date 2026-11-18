@@ -9,19 +9,24 @@ import { ConflictError, RateLimitedError, ValidationError } from '../../platform
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { fenceOf, type WebhookAccess } from './access.ts';
+import { decodeSeq, encodeSeq } from './cursor.ts';
 import { buildEnvelope } from './payload.ts';
 import {
-  backfillDeliveries,
-  countReplayable,
   type DeliveryRow,
   type DeliveryState,
   getDelivery,
+  hasRecentReplayAudit,
   listAttempts,
   listDeliveries,
+} from './repo-api.ts';
+import type { FeedFence } from './repo-feed.ts';
+import {
+  backfillDeliveries,
+  countReplayable,
   missingSeqs,
   replayOne,
   replayWindow,
-} from './repo-api.ts';
+} from './repo-replay.ts';
 import {
   auditEndpoint,
   commitEndpoint,
@@ -37,8 +42,12 @@ type ReplayInput = z.infer<typeof WebhookReplaySchema>;
 /** One bulk replay resets at most this many deliveries. */
 export const MAX_REPLAY = 10_000;
 const DAY = 86_400_000;
-/** Feed events are kept 30 days, so a backfill reaches no further back. */
-const BACKFILL_DAYS = 30;
+const MIN = 60_000;
+/**
+ * A backfill reaches back 7 days only: older delivered rows are already purged (retention), so a wider
+ * window would send events the endpoint did receive again.
+ */
+const BACKFILL_DAYS = 7;
 /** `inList` takes 20 values; a grant batch of 25 statements covers 500 events. */
 const PER_STATEMENT = 20;
 const STATEMENTS_PER_GRANT = 25;
@@ -58,14 +67,18 @@ const dto = (d: DeliveryRow) => ({
   replays: d.replays,
 });
 
-function seqCursor(cursor: string | undefined): number | undefined {
+async function seqCursor(
+  ctx: ServiceContext,
+  fence: FeedFence,
+  cursor: string | undefined,
+): Promise<number | undefined> {
   if (cursor === undefined) return undefined;
   if (!/^[1-9]\d{0,14}$/.test(cursor))
     throw new ValidationError('Invalid cursor.', [], 'INVALID_CURSOR');
-  return Number(cursor);
+  return decodeSeq(ctx.env, fence, cursor);
 }
 
-/** Newest first. The cursor is the last row's event sequence. */
+/** Newest first. The cursor is opaque and per tenant (see cursor.ts). */
 export async function deliveries(
   ctx: ServiceContext,
   access: WebhookAccess,
@@ -76,12 +89,14 @@ export async function deliveries(
   const { rows, hasMore } = await listDeliveries(ctx.env.DB, fenceOf(access), endpointId, {
     state: q.state,
     type: q.type,
-    before: seqCursor(q.cursor),
+    before: await seqCursor(ctx, fenceOf(access), q.cursor),
     limit: q.limit,
   });
   return {
     items: rows.map(dto),
-    nextCursor: hasMore ? String(rows[rows.length - 1]?.eventSeq) : null,
+    nextCursor: hasMore
+      ? await encodeSeq(ctx.env, fenceOf(access), rows[rows.length - 1]?.eventSeq ?? 0)
+      : null,
   };
 }
 
@@ -121,13 +136,20 @@ export async function replayDelivery(
   if (!found) throw notFound();
   if (found.delivery.state === 'pending')
     throw new ConflictError('This delivery is already waiting to be sent.', 'DELIVERY_PENDING');
+  // Per tenant, so a loop over event ids is bounded and cannot be reset by recreating the endpoint.
+  const { orgId, mode } = access.authority;
+  if (!(await checkRateLimit(ctx.env, 'RL_WEBHOOK_OUT', `replay1:${orgId}:${mode}`)))
+    throw new RateLimitedError();
   const g = webhookGrant(ctx, access, 'replay');
   replayOne(g, endpointId, found.delivery.eventSeq);
-  auditEndpoint(ctx, g, actor, access, 'webhook.replay', endpointId, {
-    host: hostOf(endpoint.url),
-    eventId,
-    count: 1,
-  });
+  // One audit row per endpoint per minute: later single replays inside it are not logged again.
+  const now = ctx.clock.now();
+  if (!(await hasRecentReplayAudit(ctx.env.DB, orgId, endpointId, now - MIN)))
+    auditEndpoint(ctx, g, actor, access, 'webhook.replay', endpointId, {
+      host: hostOf(endpoint.url),
+      eventId,
+      count: 1,
+    });
   await commitEndpoint(g);
   return { queued: 1 };
 }
@@ -164,7 +186,7 @@ export async function replayRange(
     ? await missingSeqs(ctx.env.DB, fence, endpoint, {
         from: Math.max(input.from, ctx.clock.now() - BACKFILL_DAYS * DAY),
         to: input.to,
-        limit: MAX_REPLAY,
+        limit: MAX_REPLAY + 1,
       })
     : [];
   if (existing + seqs.length > MAX_REPLAY)
@@ -174,7 +196,13 @@ export async function replayRange(
       'REPLAY_TOO_LARGE',
     );
 
-  if (!(await checkRateLimit(ctx.env, 'RL_WEBHOOK_REPLAY', `replay:${endpointId}`)))
+  if (
+    !(await checkRateLimit(
+      ctx.env,
+      'RL_WEBHOOK_REPLAY',
+      `replay:${access.authority.orgId}:${access.authority.mode}`,
+    ))
+  )
     throw new RateLimitedError();
 
   const plans: ((g: Grant) => GrantedStatement[])[] = [];
@@ -200,7 +228,21 @@ export async function replayRange(
         to: input.to,
         ...(input.missing ? { missing: true } : {}),
       });
-    const results = await commitEndpoint(g);
+    let results: D1Result[];
+    try {
+      results = await commitEndpoint(g);
+    } catch (error) {
+      // An earlier chunk is committed and audited: report it instead of failing the whole call.
+      if (queued === 0) throw error;
+      ctx.log.warn('webhooks.replay_partial', {
+        orgId: access.authority.orgId,
+        endpointId,
+        queued,
+        code: 'WEBHOOK_REPLAY_PARTIAL',
+        error,
+      });
+      break;
+    }
     for (const s of statements) queued += results[g.indexOf(s)]?.results.length ?? 0;
   }
   return { queued };

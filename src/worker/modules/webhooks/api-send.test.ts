@@ -128,7 +128,7 @@ describe('the test event', () => {
     net.dns = {};
   });
 
-  it('allows ten a minute per endpoint, then 429 with nothing sent', async () => {
+  it('allows ten a minute per tenant, whichever endpoint, then 429 with nothing sent', async () => {
     const a = await create();
     const b = await create('https://hooks.example.com/b');
     for (let i = 0; i < 10; i++)
@@ -136,14 +136,15 @@ describe('the test event', () => {
         (await api.call('POST', `${BASE}/${a.endpoint.id}/test`, undefined, admin)).status,
       ).toBe(200);
     const sent = net.calls.length;
-    expect((await api.call('POST', `${BASE}/${a.endpoint.id}/test`, undefined, admin)).status).toBe(
-      429,
-    );
+    for (const id of [a.endpoint.id, b.endpoint.id])
+      expect((await api.call('POST', `${BASE}/${id}/test`, undefined, admin)).status).toBe(429);
+    // Recreating the endpoint does not reset it.
+    await api.call('DELETE', `${BASE}/${a.endpoint.id}`, undefined, admin);
+    const again = await create();
+    expect(
+      (await api.call('POST', `${BASE}/${again.endpoint.id}/test`, undefined, admin)).status,
+    ).toBe(429);
     expect(net.calls).toHaveLength(sent);
-    // Another endpoint has its own budget.
-    expect((await api.call('POST', `${BASE}/${b.endpoint.id}/test`, undefined, admin)).status).toBe(
-      200,
-    );
   });
 
   it('is a 404 for a deleted endpoint and sends nothing', async () => {

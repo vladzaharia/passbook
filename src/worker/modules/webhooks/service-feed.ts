@@ -7,12 +7,14 @@ import {
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { fenceOf, type WebhookAccess } from './access.ts';
+import { decodeSeq, encodeSeq } from './cursor.ts';
 import { buildEnvelope } from './payload.ts';
 import { feedHead, getFeedEvent, listFeed } from './repo-feed.ts';
 
 type Query = z.infer<typeof EventFeedQuerySchema>;
 
-const cursorOf = (seq: number) => `ev1.${seq}`;
+const cursorOf = async (ctx: ServiceContext, fence: ReturnType<typeof fenceOf>, seq: number) =>
+  `ev1.${await encodeSeq(ctx.env, fence, seq)}`;
 
 /**
  * The tail of the org's event journal, ascending by `seq`. `nextCursor` is never null: the last item's
@@ -22,8 +24,12 @@ export async function page(ctx: ServiceContext, access: WebhookAccess, q: Query)
   const fence = fenceOf(access);
   const version: WebhookApiVersion = q.apiVersion ?? LATEST_WEBHOOK_API_VERSION;
   if (q.after === 'now')
-    return { items: [], nextCursor: cursorOf(await feedHead(ctx.env.DB, fence)), hasMore: false };
-  const after = q.after === undefined ? 0 : Number(q.after.slice(4));
+    return {
+      items: [],
+      nextCursor: await cursorOf(ctx, fence, await feedHead(ctx.env.DB, fence)),
+      hasMore: false,
+    };
+  const after = q.after === undefined ? 0 : await decodeSeq(ctx.env, fence, q.after.slice(4));
   const { rows, hasMore } = await listFeed(ctx.env.DB, fence, {
     after,
     types: q.types,
@@ -33,7 +39,7 @@ export async function page(ctx: ServiceContext, access: WebhookAccess, q: Query)
   const last = rows[rows.length - 1];
   return {
     items: rows.map((row) => buildEnvelope(row, version)),
-    nextCursor: cursorOf(last ? last.seq : after),
+    nextCursor: await cursorOf(ctx, fence, last ? last.seq : after),
     hasMore,
   };
 }
