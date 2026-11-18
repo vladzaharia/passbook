@@ -3037,6 +3037,8 @@ batches; the job re-reads the zone before acting, so a stale due time re-arms in
 - The hub stays a router: no D1, no timers. A test-pass purge cascades its gate rows without a rev bump; the next
   change or snapshot carries the true count. Undo bumps the revision of every place it restores (`REV_UNDO`) and
   publishes counts, like any change.
+- An undone exit is not re-checked against capacity: it puts back someone who never left, so the count may read
+  26 / 25.
 
 ### 20.9 Desk overrides
 

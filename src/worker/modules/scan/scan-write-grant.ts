@@ -92,7 +92,12 @@ export function scanWriteGrant(ctx: ServiceContext, actor: ScanActor, i: ScanWri
 export const SCAN_STOP_TABLES = ['scans', 'pass_events', 'scan_retention_proofs'];
 /** A held or committed scan also returns its verified PIN's attempt (`counters`). */
 export const SCAN_HELD_TABLES = [...SCAN_STOP_TABLES, 'counters'];
-export const SCAN_COMMIT_TABLES = [...SCAN_HELD_TABLES, 'scan_gates', 'scan_presence'];
+export const SCAN_COMMIT_TABLES = [
+  ...SCAN_HELD_TABLES,
+  'scan_gates',
+  'scan_presence',
+  'scan_place_revs',
+];
 
 /** "This scan took the gate." */
 export const wonGate = (

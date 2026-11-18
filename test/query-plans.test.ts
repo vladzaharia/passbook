@@ -10,6 +10,12 @@ import { versionsToPurge } from '../src/worker/modules/passes/repo.ts';
 import { upsertAsset } from '../src/worker/modules/passes/repo-history-assets.ts';
 import { listPasses } from '../src/worker/modules/passes/repo-list.ts';
 import { expiredTestPasses } from '../src/worker/modules/sandbox/repo.ts';
+import {
+  countsRead,
+  insideReads,
+  revsRead,
+  runReads,
+} from '../src/worker/modules/scan/occupancy/repo-reads.ts';
 import { expectedCount } from '../src/worker/modules/scan/repo-counts-query.ts';
 import { eventTotalsStmt } from '../src/worker/modules/scan/repo-event-attendance.ts';
 import { capacityFullPredicate } from '../src/worker/modules/scan/repo-gates.ts';
@@ -292,6 +298,26 @@ describe('zone query plans', () => {
         .all();
     });
     expect(log.join('\n')).toContain('USING INDEX scans_zone');
+  });
+});
+
+describe('occupancy query plans', () => {
+  it('In now reads the inside index only; the inside list and revisions use indexes', async () => {
+    const counts = await plans((db) =>
+      runReads(db, [countsRead('o', 'live', ['zone:a', 'zone:b'], 1)]),
+    );
+    expect(counts.join('\n')).toContain('USING COVERING INDEX scan_presence_inside');
+    expect(counts.join('\n')).not.toMatch(/passes/);
+    expect(fullScans(counts, 'x')).toEqual([]);
+    const after = { since: 1, passId: 'p' };
+    const list = await plans((db) =>
+      runReads(db, insideReads('o', 'live', 'zone:a', 1, { after, limit: 10 })),
+    );
+    expect(list.join('\n')).toContain('scan_presence_list');
+    expect(list.join('\n')).not.toMatch(/TEMP B-TREE|passes/);
+    expect(fullScans(list, 'x')).toEqual([]);
+    const revs = await plans((db) => runReads(db, [revsRead('o', 'live', ['zone:a'])]));
+    expect(fullScans(revs, 'scan_place_revs')).toEqual([]);
   });
 });
 

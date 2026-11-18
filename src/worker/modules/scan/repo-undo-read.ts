@@ -80,7 +80,7 @@ export async function readUndo(
     exactStmt(
       db,
       `SELECT p.state,p.tracking,p.entered_at,p.first_at,p.last_entry_at,p.prev_state,p.prev_tracking,
-         p.prev_entered_at,p.prev_first_at,p.prev_last_entry_at,p.prev_scan_id
+         p.prev_entered_at,p.prev_first_at,p.prev_last_entry_at,p.prev_scan_id,p.prev_seq
        FROM scans q JOIN scan_presence p ON p.org_id = q.org_id AND p.pass_id = q.pass_id
          AND p.scope = q.presence_scope AND p.last_scan_id = q.id
        WHERE q.id = ? AND q.org_id = ?`,

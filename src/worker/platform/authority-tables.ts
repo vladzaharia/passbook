@@ -71,7 +71,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   },
   scans: { org: 'org_id', mode: 'mode', conflict: ['actor_key', 'idempotency_key'] },
   scan_gates: { org: 'org_id', mode: 'mode', conflict: ['pass_id', 'action_id', 'scope'] },
-  scan_presence: { org: 'org_id', conflict: ['pass_id', 'scope'] },
+  // `mode` from 0074: the pass decides it (insert triggers). No holder writes, so no `pass` pin.
+  scan_presence: { org: 'org_id', mode: 'mode', conflict: ['pass_id', 'scope'] },
   scan_staff: { org: 'org_id' },
   scan_events: { org: 'org_id', mode: 'mode' },
   scan_event_templates: { org: null, edges: [edge('event_id', 'scan_events')] },
@@ -87,6 +88,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     edges: [edge('session_id', 'scanning_sessions'), edge('zone_id', 'scan_zones')],
   },
   scanning_devices: { org: 'org_id', mode: 'mode' },
+  // In now ordering: only raised (`inc`), in the batch that changes the place.
+  scan_place_revs: { org: 'org_id', mode: 'mode', conflict: ['org_id', 'mode', 'place'] },
   pass_events: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   // Its triggers write passes.image_generation, so a part could reach a pass of another tenant.
   member_photos: { org: 'org_id', pass: 'pass_id' },

@@ -32,6 +32,8 @@ export interface UndoPresence {
   prev_first_at: number | null;
   prev_last_entry_at: number | null;
   prev_scan_id: string | null;
+  /** Commit order (0074); the restore puts the previous one back. */
+  prev_seq?: number | null;
 }
 
 export interface UndoCommit {
@@ -293,6 +295,8 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
               first_at: presence.prev_first_at,
               last_entry_at: presence.prev_last_entry_at,
               last_scan_id: presence.prev_scan_id,
+              seq: presence.prev_seq ?? 0,
+              prev_seq: null,
               prev_state: null,
               prev_tracking: null,
               prev_entered_at: null,

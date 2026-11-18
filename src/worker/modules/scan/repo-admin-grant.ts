@@ -81,13 +81,14 @@ export function adminGrant(
   checks: Check[] = [],
   codes?: DenialOptions['codes'],
   target?: string,
+  tables: readonly string[] = SCAN_ADMIN_TABLES,
 ): Grant {
   const admin = adminAuthorityOf(authority, userId, orgId);
   return grant(ctx, {
     purpose,
     principal: adminPrincipal(admin),
     checks: [...capabilityChecks(admin), ...checks],
-    tables: SCAN_ADMIN_TABLES,
+    tables: [...tables],
     ...(codes ? { codes } : {}),
     ...(target ? { target } : {}),
   });

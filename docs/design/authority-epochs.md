@@ -582,7 +582,7 @@ Raw writes to these tables are banned outside `platform/authority.ts`:
 - **Passes and templates:** `passes`, `pass_assets`, `pass_credential_transfers`, `pass_credential_tombstones`, `pass_issuance_deliveries`, `templates`, `template_candidates`, `template_approvals`, `template_releases`.
 - **Delivery:** `outbox`, `bundles`, `bundle_passes`, `captured_emails`, `sandbox_forwards`.
 - **Connections:** `connections`, `connection_runs`, `connection_webhook_retention`, `connection_webhook_items`.
-- **Scan:** `scans`, `scan_gates`, `scan_presence`, `scan_staff`, `scan_events`, `scan_event_templates`, `scanners`, `scanning_sessions`, `scanning_devices`, `scan_zones`, `scanning_session_zones`.
+- **Scan:** `scans`, `scan_gates`, `scan_presence`, `scan_staff`, `scan_events`, `scan_event_templates`, `scanners`, `scanning_sessions`, `scanning_devices`, `scan_zones`, `scanning_session_zones`, `scan_place_revs`.
 - **Ledger:** `pass_events`.
 
 **Allowlist:**
