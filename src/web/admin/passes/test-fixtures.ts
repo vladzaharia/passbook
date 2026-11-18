@@ -232,6 +232,8 @@ export function connection(over: Record<string, unknown> = {}) {
     config: {},
     hasCredential: true,
     hasWebhookSecret: false,
+    webhookPrevUntil: null,
+    voidWhen: [],
     mapping: { name: { from: '/member/name', transform: { kind: 'trim' } } },
     defaultTemplateId: 'tpl1',
     holderEmailField: '/member/email',
