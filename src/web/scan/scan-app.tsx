@@ -10,7 +10,6 @@ import { usePlatformSession } from './boot/use-platform-session.ts';
 import { useScanManageAccess } from './boot/use-scan-manage-access.ts';
 import { createCsrfHolder, useScanSession } from './boot/use-scan-session.ts';
 import type { ScanState } from './machine/types.ts';
-import { RoleUnlock } from './role/unlock-sheet.tsx';
 import { BootCard } from './ui/boot-card.tsx';
 import { ScanShell } from './ui/scan-shell.tsx';
 
@@ -21,6 +20,9 @@ const PairConfirm = lazy(() =>
 const Paired = lazy(() => import('./paired.tsx').then((m) => ({ default: m.Paired })));
 const AdminStart = lazy(() =>
   import('./boot/admin-start.tsx').then((m) => ({ default: m.AdminStart })),
+);
+const RoleUnlock = lazy(() =>
+  import('./role/unlock-sheet.tsx').then((m) => ({ default: m.RoleUnlock })),
 );
 const LiveScreen = lazy(() =>
   import('./live/live-screen.tsx').then((m) => ({ default: m.LiveScreen })),
@@ -134,7 +136,9 @@ function ScanBoot() {
           <LiveScreen session={session.session} refetch={session.refetch} />
           {session.session.scanner?.kind === 'device' &&
           session.session.scanner.deviceRole === 'customer' ? (
-            <RoleUnlock api={api} refetch={session.refetch} />
+            <Suspense fallback={null}>
+              <RoleUnlock api={api} refetch={session.refetch} />
+            </Suspense>
           ) : null}
         </>
       );

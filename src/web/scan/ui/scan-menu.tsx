@@ -12,7 +12,7 @@ import {
   UserRoundCog,
   Volume2,
 } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import { lazy, type ReactNode, Suspense, useState } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import {
   DropdownMenu,
@@ -25,8 +25,11 @@ import {
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
-import { FlipSheet } from '../role/flip-sheet.tsx';
 import { MenuTrigger } from './capsule.tsx';
+
+const FlipSheet = lazy(() =>
+  import('../role/flip-sheet.tsx').then((m) => ({ default: m.FlipSheet })),
+);
 
 export type CameraChoice = 'back' | 'back-wide' | 'front';
 
@@ -176,7 +179,11 @@ export function ScanMenu(p: ScanMenuProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      {p.flip ? <FlipSheet open={flipOpen} {...p.flip} onClose={() => setFlipOpen(false)} /> : null}
+      {p.flip && flipOpen ? (
+        <Suspense fallback={null}>
+          <FlipSheet open {...p.flip} onClose={() => setFlipOpen(false)} />
+        </Suspense>
+      ) : null}
     </>
   );
 }
