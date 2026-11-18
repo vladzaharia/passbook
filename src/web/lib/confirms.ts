@@ -88,6 +88,32 @@ export function archiveConfirm(name: string, passCount: number): ConfirmCopy {
   };
 }
 
+/** Archiving a zone takes the zones inside it too; restoring brings them back. */
+export function archiveZoneConfirm(
+  name: string,
+  use: { sessions: number; plans: number; below: number },
+): ConfirmCopy {
+  const count = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
+  const s = (n: number) => (n === 1 ? 's' : '');
+  const inside = use.below ? ` ${count(use.below, 'zone')} inside it archive too.` : '';
+  return {
+    title: `Archive ${name}?`,
+    confirmLabel: 'Archive',
+    description: `Doors stop letting anyone in. ${count(use.sessions, 'session')} check${s(use.sessions)} it; ${count(use.plans, 'plan')} grant${s(use.plans)} it.${inside} You can restore it.`,
+    typed: false,
+  };
+}
+
+/** Counting someone out by hand; the pass keeps working. */
+export function markOutConfirm(holder: string, place: string): ConfirmCopy {
+  return {
+    title: `Mark ${holder} as out?`,
+    confirmLabel: 'Mark as out',
+    description: `They leave ${place}. Their pass keeps working.`,
+    typed: false,
+  };
+}
+
 /** Removing an address from an account: `self` on the holder's own Account page. */
 export function removeEmailConfirm(email: string, self: boolean): ConfirmCopy {
   return {

@@ -1,4 +1,5 @@
 import type { PassStyle } from '@/passkit/types.ts';
+import { type AccessOp, applyAccessOp } from './access/ops.ts';
 import type { Source } from './bindings.ts';
 import { setSlotImage } from './images.ts';
 import type { InputSpec } from './inputs.ts';
@@ -72,7 +73,8 @@ export type Op =
   | { op: 'stamps-set'; patch: { tilt?: boolean; keepReady?: boolean; maximum?: number } }
   | { op: 'stamps-art'; slot: ArtSlot; asset: DraftAsset | null }
   | { op: 'stamps-input'; input: string }
-  | ScanOp;
+  | ScanOp
+  | AccessOp;
 
 export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
   switch (o.op) {
@@ -138,5 +140,15 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
       return setArt(doc, o.slot, o.asset);
     case 'stamps-input':
       return setStampsInput(doc, o.input);
+    case 'access-enable':
+    case 'access-disable':
+    case 'access-plan-add':
+    case 'access-plan-set':
+    case 'access-plan-kind':
+    case 'access-plan-remove':
+    case 'access-plan-move':
+    case 'access-rules':
+    case 'access-suspend':
+      return applyAccessOp(doc, o);
   }
 }

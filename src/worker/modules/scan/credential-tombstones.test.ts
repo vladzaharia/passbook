@@ -139,7 +139,7 @@ describe('scanner credential tombstones', () => {
     mutableEnv.KEK_V1 = changedEnv.KEK_V1;
     expect((await frozenKeys).credentialTombstoneRefs).toEqual(keys.credentialTombstoneRefs);
     const originalRing = captureCredentialKeyEnv(kit.env);
-    const injectedOlderKey = { ...kit.env, KEK_V0: changedEnv.KEK_V1 };
+    const injectedOlderKey = { ...kit.env, KEK_V1: changedEnv.KEK_V1 };
     const isolated = await scanCredentialKeys(
       injectedOlderKey,
       kit.org.id,

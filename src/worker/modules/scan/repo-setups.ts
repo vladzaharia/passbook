@@ -83,3 +83,31 @@ export async function watchedScanners(db: D1Database, orgId: string, mode: Mode,
 export function watchOf(meta: SetupMeta | null): z.infer<typeof ScanWatchSchema> | null {
   return meta?.watch ? ScanWatchSchema.parse(JSON.parse(meta.watch)) : null;
 }
+
+/** Sessions of this org and mode (any status: a watch may follow a paused or ended one). */
+export async function watchedSessions(db: D1Database, orgId: string, mode: Mode, ids: string[]) {
+  if (!ids.length) return [];
+  return all<{ id: string }>(
+    db,
+    `SELECT id FROM scanning_sessions WHERE org_id=? AND mode=? AND id IN (${placeholders(ids.length)})`,
+    [orgId, mode, ...ids],
+  );
+}
+
+export async function watchedEvent(db: D1Database, orgId: string, mode: Mode, id: string) {
+  return first<{ id: string }>(
+    db,
+    'SELECT id FROM scan_events WHERE org_id=? AND mode=? AND id=?',
+    [orgId, mode, id],
+  );
+}
+
+/** Zones are org data (no mode); an archived zone cannot be newly watched. */
+export async function watchedZones(db: D1Database, orgId: string, ids: string[]) {
+  if (!ids.length) return [];
+  return all<{ id: string }>(
+    db,
+    `SELECT id FROM scan_zones WHERE org_id=? AND archived_at IS NULL AND id IN (${placeholders(ids.length)})`,
+    [orgId, ...ids],
+  );
+}

@@ -1,6 +1,6 @@
 import { AuthorityError } from './authority-error.ts';
 import { identifier, renderCond, type WhereValue } from './authority-expr.ts';
-import { type Binds, type GrantScope, LEGACY_REVISION_MS } from './authority-principal.ts';
+import type { Binds, GrantScope } from './authority-principal.ts';
 import { assertPlainParams, assertSqlText } from './authority-sqltext.ts';
 import { GUARDED_TABLES, ownedColumns } from './authority-tables.ts';
 import type { SqlValue } from './db.ts';
@@ -118,11 +118,7 @@ export function passRow(id: string, rowVersion?: number): Check[] {
 export function orgRevision(revision: number): Check {
   return {
     reason: 'org',
-    // A legacy `updated_at` (ms) from pre-cutover work is accepted on org status, which the actor row checks.
-    ok: (b) =>
-      revision >= LEGACY_REVISION_MS
-        ? '1 = 1'
-        : `(SELECT access_revision FROM orgs WHERE id = a.org_id) = ${b.bind(revision)}`,
+    ok: (b) => `(SELECT access_revision FROM orgs WHERE id = a.org_id) = ${b.bind(revision)}`,
   };
 }
 

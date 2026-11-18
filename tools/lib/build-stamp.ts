@@ -36,7 +36,7 @@ export function gitState(root: string): GitState {
 
 const LISTED = 10;
 const dirtyMessage = (changed: string[]) =>
-  `The working tree has ${changed.length} uncommitted or untracked path${changed.length === 1 ? '' : 's'}: ${changed.slice(0, LISTED).join(', ')}${changed.length > LISTED ? `, and ${changed.length - LISTED} more` : ''}. Deploy from the clean worktree that passed npm run check (docs/operations.md, pre-check 1).`;
+  `The working tree has ${changed.length} uncommitted or untracked path${changed.length === 1 ? '' : 's'}: ${changed.slice(0, LISTED).join(', ')}${changed.length > LISTED ? `, and ${changed.length - LISTED} more` : ''}. Deploy from the clean worktree that passed npm run check.`;
 
 export const stampPath = (root: string) => resolve(root, STAMP_FILE);
 

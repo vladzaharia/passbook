@@ -25,9 +25,12 @@ export async function quarantineLegacyWebhookEvents(
   before: number,
   limit = BATCH_SIZE,
 ): Promise<number> {
+  // No old event means nothing to retain and no keyset to pin (a fresh deployment has none yet).
+  if (!(await legacyEventsBefore(ctx.env.DB, before, 1)).length) return 0;
+  const env = captureCredentialKeyEnv(ctx.env);
+  // The keyset error is fixed text with a stable code, so the caller can log why.
+  const keys = { env, commitment: await requireCredentialRefKeyset(ctx.env.DB, env) };
   try {
-    const env = captureCredentialKeyEnv(ctx.env);
-    const keys = { env, commitment: await requireCredentialRefKeyset(ctx.env.DB, env) };
     return await quarantine(ctx, before, limit, keys);
   } catch {
     // Database and crypto errors can contain upstream-controlled values.

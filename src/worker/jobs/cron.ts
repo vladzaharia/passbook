@@ -7,12 +7,12 @@ import { dailyDelivery, sweepDelivery } from '../modules/delivery/jobs.ts';
 import { dailyEvents } from '../modules/events/jobs.ts';
 import { resumeVerifiedHolderAttachments } from '../modules/holders/transfer-jobs.ts';
 import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
+import { rewrapEnvelopes } from '../modules/keys/rewrap.ts';
 import { sweepBrandingGc } from '../modules/orgs/branding-gc.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
 import { dailyPasses } from '../modules/passes/jobs.ts';
 import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
 import { remacCapabilityTokens } from '../modules/passes/token-remac.ts';
-import { sealCapabilityTokens } from '../modules/passes/token-seal.ts';
 import { sweepTransferAssetGc } from '../modules/passes/transfer-asset-gc.ts';
 import { dailySandbox, sweepSandboxForwards } from '../modules/sandbox/jobs.ts';
 import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan/jobs.ts';
@@ -41,8 +41,8 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'broadcasts.stuck', run: failStuckBroadcasts },
     { name: 'scan.reconcile', run: reconcileScans },
     { name: 'scan.backfill', run: backfillScanLookups },
-    { name: 'tokens.seal', run: sealCapabilityTokens },
     { name: 'tokens.remac', run: remacCapabilityTokens },
+    { name: 'keys.rewrap', run: rewrapEnvelopes },
     { name: 'wallet.sync', run: drainWalletProviderSync },
     {
       name: 'passes.credential_transfers',

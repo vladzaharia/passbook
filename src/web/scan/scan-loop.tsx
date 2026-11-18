@@ -134,6 +134,7 @@ export function ScanLoop({
       onSwitchStaff={() =>
         void api.staffSignOut().then(refetch, (error) => setCameraError(errorMessage(error)))
       }
+      flip={scanner?.kind === 'device' ? { api, refetch } : undefined}
       hasWide={runtime.camera.hasWide()}
       onCamera={(choice) => {
         setCameraChoice(choice);

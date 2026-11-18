@@ -17,7 +17,14 @@ import { SessionFields } from './session-fields.tsx';
 function withOrganization(draft: SessionDraft, orgId: string): SessionDraft {
   if (draft.orgId === orgId) return draft;
   const { eventId: _eventId, ...checkIn } = draft.checkIn;
-  return { ...draft, orgId, eventId: '', templateIds: [], checkIn };
+  return {
+    ...draft,
+    orgId,
+    eventId: '',
+    templateIds: [],
+    checkIn,
+    zoneIds: draft.zoneIds && [],
+  };
 }
 
 export function NewSessionDialog({
@@ -47,7 +54,12 @@ export function NewSessionDialog({
   const create = useCreateSession();
   const [draft, setDraft] = useState(() => {
     const base = initial
-      ? { ...sessionDraft(initial), name: `${initial.name} copy`.slice(0, 80) }
+      ? {
+          ...sessionDraft(initial),
+          name: `${initial.name} copy`.slice(0, 80),
+          // A list row carries no zones; a copy starts with none.
+          zoneIds: initial.zoneIds ?? [],
+        }
       : emptySessionDraft();
     // Keep the source rules until the initial membership request settles.
     if (scope.isLoading || scope.isError) return { ...base, orgId: '' };

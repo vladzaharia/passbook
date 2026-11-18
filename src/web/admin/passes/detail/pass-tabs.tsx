@@ -3,6 +3,7 @@ import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ErrorState, SkeletonKeyValue, TabsContent } from '../../../ui/index.ts';
 import type { PassActionRunner } from '../pass-actions.tsx';
+import { AccessCard } from './access-card.tsx';
 import { CheckInCard } from './check-in-card.tsx';
 import { ConnectionTab } from './connection-tab.tsx';
 import { DeliveryTab } from './delivery-tab.tsx';
@@ -48,6 +49,7 @@ export function PassTabs({
         className="flex flex-col gap-4"
       >
         {pass.stamps ? <StampsCard pass={pass} stamps={pass.stamps} readOnly={readOnly} /> : null}
+        {template.data ? <AccessCard pass={pass} manifest={template.data.manifest} /> : null}
         {template.isError ? (
           <ErrorState inline error={template.error} onRetry={() => void template.refetch()} />
         ) : template.data ? (

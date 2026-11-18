@@ -7,14 +7,18 @@ import { captureScanEpochs } from './authority-checks.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { getScanner, scannerEpochsOf } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
+import { getStaff } from './repo-staff.ts';
 import { bindScanningSession } from './scanning-workspace.ts';
 import { buildSession } from './session.ts';
+import { boundStaff } from './staff-binding.ts';
 
 /** Pairing returns the same complete session as a reload. */
 export async function pairedSession(
   context: ServiceContext,
   scannerId: string,
   csrfToken: string | null,
+  /** A staff binding made since pairing (an unlock) is part of the session. */
+  withStaff = false,
 ): Promise<ScanSession> {
   const ctx = { ...context, env: snapshotCredentialEnv(context.env) };
   const row = await getScanner(ctx.env.DB, scannerId);
@@ -29,8 +33,13 @@ export async function pairedSession(
   await bindScanningSession(ctx, actor);
   denyInvalidScannerScope(actor);
   // The epochs are read in the row that verified the credential; capture them last, after derivation.
-  await captureScanEpochs(ctx.env.DB, actor, scannerEpochsOf(row));
-  const session = await buildSession(ctx, withRole(actor, null));
+  const staff =
+    withStaff && row.staffId && actor.settings.staffSignIn
+      ? await getStaff(ctx.env.DB, row.orgId, row.staffId)
+      : null;
+  withRole(actor, staff ? await boundStaff(ctx, actor.scanner ?? row, staff) : null);
+  await captureScanEpochs(ctx.env.DB, actor, scannerEpochsOf(row), staff?.pinHash);
+  const session = await buildSession(ctx, actor);
   session.csrfToken = csrfToken;
   return session;
 }
