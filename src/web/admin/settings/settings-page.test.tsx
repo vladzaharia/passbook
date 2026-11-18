@@ -287,7 +287,7 @@ describe('settings page', () => {
             body = JSON.parse(String(init.body));
             return json(entries());
           }
-          return json(entries({ 'retention.auditDays': 180 }, ['retention.auditDays']));
+          return json(entries({ 'retention.auditDays': 400 }, ['retention.auditDays']));
         },
       },
     });
@@ -301,7 +301,7 @@ describe('settings page', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }));
     const review = await screen.findByRole('alertdialog', { name: 'Review platform changes' });
     expect(
-      within(review).getByText(/180 days → 365 days \(reset to default\)/),
+      within(review).getByText(/400 days → 365 days \(reset to default\)/),
     ).toBeInTheDocument();
     await user.click(within(review).getByRole('button', { name: 'Save changes' }));
     await waitFor(() =>
@@ -368,7 +368,9 @@ describe('settings page', () => {
       session: 'admin',
       handlers: {
         '/api/v1/settings': (_url, init) =>
-          init?.method === 'PUT' ? problem(500, 'failed', 'Could not save.') : json(entries()),
+          init?.method === 'PUT'
+            ? problem(500, 'failed', 'Could not save.')
+            : json(entries({ 'retention.auditDays': 400 }, ['retention.auditDays'])),
       },
     });
     const user = userEvent.setup();
@@ -376,7 +378,7 @@ describe('settings page', () => {
     await user.click(screen.getByRole('radio', { name: 'Advanced' }));
     const input = screen.getByLabelText('Audit retention');
     await user.clear(input);
-    await user.type(input, '180');
+    await user.type(input, '380');
     await user.click(screen.getByRole('radio', { name: 'Basic' }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
     const review = await screen.findByRole('alertdialog', { name: 'Review platform changes' });
@@ -384,7 +386,7 @@ describe('settings page', () => {
     await user.click(within(review).getByRole('button', { name: 'Save changes' }));
     await screen.findByText('Could not save');
     await user.click(screen.getByRole('radio', { name: 'Advanced' }));
-    expect(input).toHaveValue(180);
+    expect(input).toHaveValue(380);
     expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
   });
 
