@@ -94,7 +94,7 @@ describe('live display transport and authorization', () => {
     socket.accept();
     await next(socket);
     try {
-      await runInDurableObject(hub(), async (_object, state) => {
+      await runInDurableObject(hub().stub, async (_object, state) => {
         const server = state.getWebSockets(monitor.id)[0];
         if (!server) throw new Error('Missing hibernating socket.');
         server.serializeAttachment(monitor.attachment);
@@ -175,7 +175,7 @@ describe('live display transport and authorization', () => {
       }),
     );
     expect(response.status).toBe(101);
-    const hibernation = await runInDurableObject(hub(), async (_object, state) =>
+    const hibernation = await runInDurableObject(hub().stub, async (_object, state) =>
       state.getWebSockets(fixture.monitor.id).map((socket) => socket.deserializeAttachment()),
     );
     expect(hibernation).toContain(sealedAttachment);

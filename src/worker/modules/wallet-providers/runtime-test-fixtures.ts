@@ -5,6 +5,7 @@ import {
   makeOrg,
   makeSession,
   makeUser,
+  TEST_NOW,
 } from '../../../../test/helpers/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import type {
@@ -39,7 +40,7 @@ import {
 } from './runtime.ts';
 import type { SamsungCardProjection } from './samsung.ts';
 
-export const NOW = Date.UTC(2026, 5, 1, 12);
+export const NOW = TEST_NOW;
 export const BEARER = 'ya29.private-bearer';
 export const refId = 'abcdefghijklmnopqrstuvwxABCDEFGH';
 export const classProjection = { enableSmartTap: false };

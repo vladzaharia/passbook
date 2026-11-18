@@ -11,6 +11,7 @@ import {
   makeTemplate,
   makeUser,
   persistTemplate,
+  TEST_NOW,
   type TestTemplate,
 } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
@@ -38,7 +39,7 @@ let userId: string;
 let templateId: string;
 
 beforeEach(async () => {
-  clock = new ManualClock(Date.UTC(2026, 5, 1, 12));
+  clock = new ManualClock(TEST_NOW);
   env = await makeEnv();
   await ensureCredentialRefKeyset(env.DB, env);
   f = fixtures(env, clock);

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
-import { scanHub } from './live.ts';
+import { clockedHub } from './clocked-hub-test-fixtures.ts';
 import { openLiveAttachment, sealLiveAttachment } from './live-attachment.ts';
 import { liveRecipient } from './live-auth.ts';
 import { liveRowFor } from './live-render.ts';
@@ -26,7 +26,7 @@ describe('session display authorization', () => {
     // The screen is already connected when these scanners are enrolled.
     const sourceA = await child(a.id, 'A scanner');
     const sourceB = await child(b.id, 'B scanner');
-    const hub = scanHub(kit.ctx, kit.org.id, 'live');
+    const hub = clockedHub(kit.ctx, kit.clock, kit.org.id, 'live');
     for (const source of [sourceA, sourceB]) {
       const paired = await kit.post({ origin: 'https://wallet.test' }, '/pair', {
         code: source.pairing?.code,

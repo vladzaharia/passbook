@@ -63,6 +63,8 @@ async function photo(kit: Kit, passId: string, orgId: string, key: string) {
 
 // Stage candidates are stamped by SQL triggers from the wall clock, not kit.clock, so every kit in
 // this file starts on wall time; a slow run can leave them newer than a fixed advance past the lease.
+// Tried TEST_NOW (kitclock follow-up): the file's kits share D1, so tombstones left due by earlier tests
+// fill the 20-key sweep batch and the two crashed-stage recovery tests no longer reach their key.
 function expireStages(kit: Kit) {
   kit.clock.set(Math.max(kit.clock.now(), Date.now()) + TRANSFER_ASSET_STAGE_LEASE_MS + 2000);
 }
