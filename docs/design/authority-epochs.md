@@ -68,8 +68,7 @@ The classification test (`authority-columns.test.ts`) reads `PRAGMA table_info` 
 
 **`updated_at` columns become timestamps.** `orgs`, `templates`, `scanners`, `scan_staff` and `scan_events` keep `updated_at` only as a timestamp. `tools/authority-scope.ts --strict` (part of `check:rules`) fails `updated_at = ?` in worker SQL.
 
-**`scanning_config_revisions` (`0024`, in production; the 0024-era Worker writes it):**
-- `config_epoch` replaces it. Nothing in the current Worker reads or writes it. The table stays for now: the pre-cutover Worker writes it during the migrate to promote window. Drop it one release after cutover.
+**`scanning_config_revisions` (`0024`):** dropped by `0070`. `config_epoch` replaced it.
 
 **Trigger shape.** The passes bump set has about 45 columns. To bound expression depth, it is split into three triggers by column group (`passes_row_version_a`, `_b`, `_c`), because D1 allows expression depth 100.
 
@@ -438,7 +437,7 @@ Each epoch check adds 2 binds and about 150 bytes.
 
 ## 6. Migration and cutover
 
-The runbook is `docs/operations.md` ("Cutover from schema 0024"): order, pre-checks, the temporary WAF rule, failure steps. This section keeps the design decisions.
+The cutover ran 2026-11-18 (`docs/operations.md`, "Cutover from schema 0024"). This section keeps the design decisions.
 
 ### 6.1 Migrations
 
@@ -461,12 +460,14 @@ The runbook is `docs/operations.md` ("Cutover from schema 0024"): order, pre-che
 | `0061` | drops `scan_asset_grant_provenance` and its triggers; `credential_ref_keyset_insert_guard` recreated without the provenance term. Grants are stateless |
 | `0063` | drops `scanners_credential_revision`; scanner authority is `credential_epoch`. Adds `scanners_updated_at_monotonic`. Additive-safe: the old Worker's writes satisfy no trigger and need none |
 | `0064` | `scanners_revision_no_replace_update` and `pass_credential_no_replace_update` fire only when a guarded column is written (`BEFORE UPDATE OF ...`); same checks and messages |
+| `0069` | `token_remac_marks` and a MAC may replace a MAC under a mark (cron `tokens.remac`) |
+| `0070` | post-cutover: drops `scanning_config_revisions`, the seal sweep indexes and the plain-to-MAC branch of six triggers |
 
 Migrations already applied are never edited; new schema takes the next free number.
 
 ### 6.2 The window between migrate and promote
 
-The old Worker serves against the new schema until the bootstrap and promote steps. Every new column has a default, guards reject only decreases, grants are unused by it, and the no-replace guards refuse only a statement that re-inserts a key. `authority-baseline.test.ts` pins each old write path against the migrated schema; `test/cutover/window.test.ts` pins the old holder writes.
+The old Worker serves against the new schema until the bootstrap and promote steps. Every new column has a default, guards reject only decreases, grants are unused by it, and the no-replace guards refuse only a statement that re-inserts a key. `authority-baseline.test.ts` pins each old write path against the migrated schema.
 
 | Old write | In the window | Why |
 | --- | --- | --- |
@@ -504,16 +505,16 @@ Roll forward only once migrations have run (owner answer 6). `0059` and `0065` m
 
 The scan and fence rewrite is complete. What is left:
 - Wallet providers stay on column equality (7.3).
-- Drop `scanning_config_revisions` one release after cutover (the pre-cutover Worker writes it during the migrate to promote window).
-- `LEGACY_REVISION_MS` (org status accepts a pre-cutover `updated_at` as a revision): remove one release after cutover.
 
 Done:
 
+- Done: migration `0070` drops `scanning_config_revisions`.
 - Done: `scan/repo-scanner-configuration-scope.ts` is deleted; the workspace observation carries the scanner's `config_epoch`.
 - Done: the balancer, `sql-tokens`, `repo-secret-binds` and the legacy fence families are deleted; migration `0063` drops `scanners_credential_revision`. A scanner's `updated_at` is a label: authority is `credential_epoch`. The live ring's `revision` is an in-memory self-check of one actor snapshot, not a database compare. One credential-loss rule: every scanner path uses `scannerCredentialLost`.
 
-- Open: drop the plain-to-MAC exception (0059 `passes_token_change_moves_link`, `passes_row_version_a`, wallet-provider triggers; 0065 `passes_auth_token_change_follows_generation`, `pass_credential_transfer_required`, `passes_row_version_a`) in a new migration once `TOKEN_SEAL_RUN remaining = 0` and `unscrubbed = 0` in production. SQL cannot verify the HMAC, so until then any `h1:` value passes the exception.
-- Done: migration `0069` also lets a MAC replace a MAC (cron `tokens.remac`, after `MAC_KEY_VERSION` moved) while a `token_remac_marks` row names exactly that value; the job writes and deletes the mark in one batch. `token_remac_marks` is a guarded table (raw writes only in `passes/repo-pass-trusted.ts`). Drop the marks with the exception above.
+- Done: migration `0070` drops the plain-to-MAC exception (0059 `passes_token_change_moves_link`, `passes_row_version_a`, the wallet-provider triggers; 0065 `passes_auth_token_change_follows_generation`, `pass_credential_transfer_required`, `passes_row_version_a`) after the seal sweep finished in production (no plain pass or bundle token, no unscrubbed `pass_versions`). The six triggers are the 0069 versions with the plain branch deleted. A plain value is refused outright, and 0070 starts with a guard that fails (and rolls back, unrecorded) while any plain token or stored device token is left; it also deletes the `tokens.sealCursor` setting. The cron `tokens.seal`, its code and the plaintext lookup are gone, and so are the sweep's partial indexes.
+- Done: migration `0069` also lets a MAC replace a MAC (cron `tokens.remac`, after `MAC_KEY_VERSION` moved) while a `token_remac_marks` row names exactly that value; the job writes and deletes the mark in one batch. `token_remac_marks` is a guarded table (raw writes only in `passes/repo-pass-trusted.ts`). The marks stay: they are the only MAC-to-MAC path.
+- Done: `LEGACY_REVISION_MS` is removed. An org revision is its `access_revision` and nothing else (`orgEpochMatchSql`, `orgRevision`, the principal's org check).
 - Open (post-cutover): the credential-reference evidence (tombstones, retention proofs, webhook and action references, the keyset commitment) derives from the oldest KEK, not from `MAC_KEY_VERSION`. KEK_V1 cannot be retired until a reviewed rekey of that evidence exists; no rekey tool exists.
 - Open (post-cutover): no job rewraps envelope-encrypted secrets and token seals to a newer KEK (`rewrapSecret` has no caller; 14 envelope tables with their own AADs, and a `credentials` rewrite bumps signing-identity revisions). Until one exists, answer a KEK compromise by rotating links and credentials; the key itself stays.
 
@@ -613,7 +614,7 @@ Decisions that differ from, or add to, the sections above. Each is checked again
 
 **Org revisions**
 - `orgs.access_revision` is the principal's staleness check; settings and branding saves move `config_revision` only. Org and settings responses carry `configRevision`; `PATCH /orgs/{id}`, `PUT /orgs/{id}/branding/{slot}` and `PUT /settings` accept it (stale: 409 `SETTINGS_CHANGED`, see `docs/api.md`). The web clients share `lib/stale-save.ts`.
-- A revision of at least `1e12` is a pre-cutover `updated_at` and is accepted on org status only (`LEGACY_REVISION_MS` in `authority-principal.ts`; `orgEpochMatchSql`). Remove it one release after cutover.
+- A captured org revision must equal `orgs.access_revision`; a pre-cutover `updated_at` is refused (`LEGACY_REVISION_MS` is gone).
 
 **Queued work**
 - Triggers cancel scheduled broadcasts: `users_disable_cancels_broadcasts`, `orgs_inactive_cancels_broadcasts` (suspended or deleted) and `memberships_revoke_cancels_broadcasts`. They stay cancelled on reactivation (owner answers 3 and 9).
@@ -639,4 +640,4 @@ Decisions that differ from, or add to, the sections above. Each is checked again
 **Tests**
 - `test/helpers/triggers.ts`: `editSessionAuthority`, `editFixedColumns`, `allowInvalidRoleNames` (the worker setup restores dropped triggers after each test). `runOne` / `runExactly` (`test/helpers/exact-rows.ts`) append `RETURNING 1` and assert the row count.
 
-**Open: remote D1 check.** Local D1 logs `broken.inputGateBroken` for the batch the sentinel foreign key fails. Confirm on a remote preview D1 that it is still an ordinary rejected batch (rows roll back, the Worker keeps serving). Agents do not run `--remote`; the owner does.
+Remote D1 check (2026-11-18): a batch whose grant row survives to commit is rejected with `D1 DB was reset and rolled back to its last known good state because the application left the database in a state where constraints were violated: FOREIGN KEY`. Its rows roll back, and the same request then commits a normal batch, so the Worker keeps serving. Local D1 additionally logs `broken.inputGateBroken`.

@@ -96,7 +96,7 @@ export async function createPassRowWithRelease(
     passId: id,
     scanCode,
     serial,
-    authToken: authToken.token,
+    authToken: { fresh: authToken.token },
     webServiceUrl,
     identityId: identity.id,
     templateId: template.id,
