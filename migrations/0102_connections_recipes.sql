@@ -11,6 +11,7 @@ CREATE INDEX connections_webhook_prev_credential ON connections (webhook_prev_cr
   WHERE webhook_prev_credential_id IS NOT NULL;
 
 CREATE TABLE connection_ref_versions (
+  org_id TEXT NOT NULL REFERENCES orgs (id),
   connection_id TEXT NOT NULL REFERENCES connections (id) ON DELETE CASCADE,
   ref TEXT NOT NULL CHECK (length(ref) <= 200),
   source_version INTEGER NOT NULL,
