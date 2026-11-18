@@ -161,6 +161,8 @@ async function issuer(org: string) {
       name: `Seed ${org.slice(-8)}`,
       orgId: org,
       scopes: ['passes:read', 'passes:write'],
+      // Revoked at the end of the run; the expiry covers a run that crashes first.
+      expiresAt: Date.now() + 3_600_000,
     });
     issuers.set(org, { secret: key.secret, id: key.id });
   }
