@@ -50,17 +50,28 @@ function logSkipped(ctx: ServiceContext, orgId: string, passId: string, error: u
  * and one that cannot stamp is logged and retried by the next scan. Check-ins and value actions
  * both call it. A connection-owned input is never written.
  */
+/**
+ * The input a scan should stamp, or null: the pass has a first-scan term whose start is still
+ * empty and not connection-owned, and the scan was not an exit (a zone's or an admission's).
+ */
+export function termInputToStamp(
+  found: Pick<Found, 'template' | 'pass' | 'occupancy' | 'admission'>,
+): string | null {
+  const input = stampInput(found.template.manifest, 'first-scan');
+  if (!input || filled(found.pass.personalization[input])) return null;
+  if (found.pass.fieldSources[input] === 'connection') return null;
+  const direction = found.occupancy?.direction ?? found.admission?.state.direction;
+  return direction === 'out' ? null : input;
+}
+
 export function deferTermStart(i: TermStamp): void {
   i.ctx.waitUntil(stampTermStart(i));
 }
 
 export async function stampTermStart(i: TermStamp): Promise<void> {
   const { ctx, actor, found, claim } = i;
-  const input = stampInput(found.template.manifest, 'first-scan');
-  if (!input || filled(found.pass.personalization[input])) return;
-  if (found.pass.fieldSources[input] === 'connection') return;
-  const direction = found.occupancy?.direction ?? found.admission?.state.direction;
-  if (direction === 'out') return;
+  const input = termInputToStamp(found);
+  if (!input) return;
   const { actor: authority, event } = claim.authority;
   try {
     const credential =
