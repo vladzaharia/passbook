@@ -1,4 +1,4 @@
-import type { ScanInput } from '../../../shared/contracts/scan.ts';
+import type { ScanCodeInput } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type CredentialTombstoneSnapshot, scanCredentialKeys } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
@@ -20,7 +20,7 @@ export { acceptedFilter, candidateEligible } from './repo-resolve-passless-read.
 export async function inputMatch(
   ctx: ServiceContext,
   actor: ScanActor,
-  input: ScanInput,
+  input: ScanCodeInput,
   credentials: CredentialTombstoneSnapshot,
 ): Promise<CandidateMatchInput | null> {
   if ('passId' in input) return { passId: input.passId };
