@@ -96,6 +96,7 @@ export async function buildBaked(slug: string, signing: SigningMaterial, input?:
       webServiceURL: 'https://wallet.example/wallet',
       organizationName: template.manifest.org?.name ?? 'PassBook',
       identity: FIXTURE_IDENTITY,
+      scanCode: 'SNAPSHOT-SCAN-CODE',
     },
     signing,
     behaviors: bakedBehaviors,

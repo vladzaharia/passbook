@@ -1,5 +1,5 @@
 import type { PassJson } from '../../../passkit/types.ts';
-import type { ScanInput } from '../../../shared/contracts/scan.ts';
+import type { ScanCodeInput } from '../../../shared/contracts/scan.ts';
 import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
@@ -51,7 +51,7 @@ export interface CandidateReadPlan {
 export async function planCandidateReads(
   ctx: ServiceContext,
   actor: ScanActor,
-  input: ScanInput,
+  input: ScanCodeInput,
   refs: CredentialTombstoneSnapshot,
   initGuard?: ((now: number) => { sql: string; params: readonly SqlValue[] } | null) | null,
   keysetOnGrant = false,
@@ -137,7 +137,7 @@ export async function planCandidateReads(
 export async function findCandidates(
   ctx: ServiceContext,
   actor: ScanActor,
-  input: ScanInput,
+  input: ScanCodeInput,
   refs: CredentialTombstoneSnapshot,
 ): Promise<Candidate[] | null> {
   const plan = await planCandidateReads(ctx, actor, input, refs);

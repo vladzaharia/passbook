@@ -1,0 +1,91 @@
+{
+  "formatVersion": 1,
+  "description": "Access card",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(29,58,186)",
+  "foregroundColor": "rgb(255,255,255)",
+  "labelColor": "rgb(207,224,255)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "expirationDate": "2030-01-01T00:00:00Z",
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "MEMBER-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "MEMBER-0001"
+    }
+  ],
+  "generic": {
+    "headerFields": [
+      {
+        "key": "plan",
+        "label": "Plan",
+        "value": "24/7 Member",
+        "changeMessage": "Your plan is now %@."
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Alex Morgan"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "until",
+        "label": "Valid until",
+        "value": "2030-01-01T00:00:00Z",
+        "dateStyle": "PKDateStyleMedium",
+        "timeStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "member",
+        "label": "Member",
+        "value": "MEMBER-0001"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "guestOf",
+        "label": "Guest of",
+        "value": ""
+      },
+      {
+        "key": "hours",
+        "label": "Hours",
+        "value": "Any time, every day."
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Show this card at the door. It's for you only."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}
