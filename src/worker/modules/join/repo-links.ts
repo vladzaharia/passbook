@@ -14,7 +14,7 @@ import {
   membershipCapability,
   tenantPrincipal,
 } from '../passes/repo-authority.ts';
-import { type PlatformOffer, TEMPLATE_OWNER } from './template-offer.ts';
+import { type PlatformOffer, TEMPLATE_OWNER } from './repo-template-offer.ts';
 
 const DAY = 24 * 60 * 60 * 1000;
 

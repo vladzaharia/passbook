@@ -1,9 +1,8 @@
 import { bump } from '../../platform/counters.ts';
-import { first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recipientKey } from '../delivery/recipient-key.ts';
 import { getPlatformSettings } from '../settings/service.ts';
-import { orgIssuedToday, type PublicLink } from './repo-issues.ts';
+import { orgIssuedToday, type PublicLink, rollingCount } from './repo-issues.ts';
 import { issuedToday, type JoinLinkRow } from './repo-links.ts';
 
 const HOUR = 60 * 60 * 1000;
@@ -48,16 +47,8 @@ export async function prefixWithinCap(
   );
 }
 
-/** A rolling 24 hours of an hourly-bucketed counter. */
-async function rolling(ctx: ServiceContext, key: string): Promise<number> {
-  const now = ctx.clock.now();
-  const r = await first<{ n: number | null }>(
-    ctx.env.DB,
-    'SELECT SUM(count) AS n FROM counters WHERE key = ? AND window_start > ?',
-    [key, now - DAY],
-  );
-  return r?.n ?? 0;
-}
+const rolling = (ctx: ServiceContext, key: string) =>
+  rollingCount(ctx.env.DB, key, ctx.clock.now() - DAY);
 
 const spend = (ctx: ServiceContext, key: string) =>
   bump(ctx.env.DB, key, windowOf(ctx.clock.now(), HOUR));

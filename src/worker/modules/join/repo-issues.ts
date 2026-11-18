@@ -126,3 +126,13 @@ export async function activeCardFor(
 export async function isJoinCard(db: D1Database, passId: string): Promise<boolean> {
   return (await first(db, 'SELECT 1 AS one FROM join_issues WHERE pass_id = ?', [passId])) !== null;
 }
+
+/** An hourly-bucketed counter summed over the windows after `since` (a rolling 24 hours). */
+export async function rollingCount(db: D1Database, key: string, since: number): Promise<number> {
+  const r = await first<{ n: number | null }>(
+    db,
+    'SELECT SUM(count) AS n FROM counters WHERE key = ? AND window_start > ?',
+    [key, since],
+  );
+  return r?.n ?? 0;
+}

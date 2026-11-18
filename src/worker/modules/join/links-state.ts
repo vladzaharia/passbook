@@ -17,7 +17,7 @@ import { assertNotBlueprint } from '../templates/blueprint-guard.ts';
 import { activeRelease, type TemplateRelease } from '../templates/releases.ts';
 import { defaultNameInput, type JoinReadiness, joinReadiness } from './readiness.ts';
 import { getLink, issuedToday, type JoinLinkRow } from './repo-links.ts';
-import { type PlatformOffer, platformOffer } from './template-offer.ts';
+import { type PlatformOffer, platformOffer } from './repo-template-offer.ts';
 
 const notFound = () => new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
 
