@@ -15,6 +15,9 @@ import type {
   WalletTarget,
 } from './types.ts';
 
+/** Bump with any change to how reports are built (severity, status, order). It joins the release pipeline pin. */
+export const FIDELITY_REVISION = 1;
+
 const compare = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 /** A required id covers itself and everything under it: `barcode.format` covers `barcode.format.pdf417`. */

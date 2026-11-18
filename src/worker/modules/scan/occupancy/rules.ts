@@ -63,7 +63,7 @@ export interface ExitPlan {
   below: string[];
 }
 
-const tracked = (z: OccZone) => z.occupancy !== 'off' && z.archivedAt === null;
+export const tracked = (z: OccZone) => z.occupancy !== 'off' && z.archivedAt === null;
 
 /** The nearest tracked ancestor that requires tap out: where the pass must be first. Null: none. */
 export function enforcingParent(zones: readonly OccZone[], zoneId: string): OccZone | null {
