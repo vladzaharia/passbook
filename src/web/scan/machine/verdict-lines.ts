@@ -1,12 +1,12 @@
 /** The verdict line of an outcome, filled from the outcome alone. Pure: every marker has a value. */
 import {
-  SCAN_COPY,
   SCAN_COUNTER_COPY,
   SCAN_REASON_COPY,
   SCAN_REASON_VARIANTS,
   type ScanLine,
   scanLine,
 } from '../../../shared/copy/scan.ts';
+import { headlineValues } from '../../../shared/copy/scan-headline.ts';
 import { formatCount, formatDateTime, formatMoney, formatTime } from '../../lib/format.ts';
 import { accessValues, agoText } from './access-view.ts';
 import type { ScanOutcome } from './types.ts';
@@ -54,23 +54,22 @@ export function lineValues(o: ScanOutcome, now: number): Values {
     time: o.at ? formatTime(o.at) : '',
     ago: o.previous ? agoText(Math.max(0, now - o.previous.at)) : '',
     scanner: o.previous?.scannerName ?? (o.reason === 'still_inside' ? 'Entry recorded' : ''),
-    flag: o.flags[0] ?? 'Check required',
-    action: o.action?.label ?? 'This action',
-    done:
-      o.action?.kind === 'check_in'
-        ? SCAN_COPY.verdict.already.checkIn
-        : SCAN_COPY.verdict.already.other,
-    place: place ?? '',
     in: o.occupancy ? (o.occupancy.inNow ?? 0) : (o.counts.event?.arrived ?? 0),
     capacity: o.occupancy?.capacity ?? o.counts.event?.capacity ?? 0,
     seconds: Math.ceil((o.retryAfterMs ?? 1000) / 1000),
     wait: `${Math.max(1, Math.ceil((o.cooldownRemainingMs ?? 0) / 60000))} min`,
-    input: v?.label ?? 'This value',
     have: v ? shown(v, v.before) : '',
     need: v ? shown(v, v.need ?? null) : '',
     value: v ? shown(v, v.after ?? v.before) : '',
     used: o.access?.visits?.used ?? 0,
     limit: o.access?.visits?.limit ?? 0,
+    ...headlineValues({
+      actionKind: o.action?.kind,
+      action: o.action?.label,
+      place,
+      flag: o.flags[0],
+      input: v?.label,
+    }),
     plan: 'This plan',
     zone: 'this area',
     when: '',

@@ -54,4 +54,14 @@ describe('scan CSV', () => {
     // A number is not text: a negative amount stays a number.
     expect(csvRow([-5])).toBe('-5\r\n');
   });
+
+  it('fills the reason headline from the row, never a raw marker', () => {
+    const reason = (over: Partial<ScanRecordDto>) => exportCells(record(over))[2];
+    expect(reason({ outcome: 'heads_up', reason: 'already_done', kind: 'check_in' })).toBe(
+      'Already checked in',
+    );
+    expect(reason({ outcome: 'refused', reason: 'ended', eventName: 'Gala' })).toBe('Gala ended');
+    expect(reason({ outcome: 'refused', reason: 'ended', eventName: null })).toBe('Ended');
+    expect(reason({ outcome: 'refused', reason: 'capacity_full' })).toBe('Full');
+  });
 });

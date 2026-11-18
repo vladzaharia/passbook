@@ -235,4 +235,18 @@ describe('lookup review and keyboard navigation', () => {
     expect(onCode).not.toHaveBeenCalled();
     expect(onCheckIn).not.toHaveBeenCalled();
   });
+
+  it('shows a repeat scan headline filled in, not its markers', async () => {
+    const { user, resolve } = setup();
+    resolve.mockResolvedValueOnce({
+      ...fixtureOutcome('heads_up', 'already_done'),
+      kind: 'heads_up',
+      reason: 'already_done',
+      action: { id: 'check_in', label: 'Check in', kind: 'check_in' },
+    });
+    await search(user);
+    await user.click(await screen.findByRole('button', { name: /Anna Popescu Gold/ }));
+    expect(await screen.findByText('Already checked in')).toBeVisible();
+    expect(screen.queryByText(/\{done\}/)).not.toBeInTheDocument();
+  });
 });

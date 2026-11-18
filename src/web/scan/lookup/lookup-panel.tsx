@@ -1,7 +1,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
-import { SCAN_REASON_COPY } from '../../../shared/copy/scan.ts';
+import { reasonHeadline } from '../../../shared/copy/scan-headline.ts';
 import { Button } from '../../ui/button.tsx';
 import { Callout } from '../../ui/callout.tsx';
 import { FormField } from '../../ui/field.tsx';
@@ -93,7 +93,13 @@ export function LookupPanel({
           ) : null}
           {picked.reason && picked.reason !== 'choose' ? (
             <Callout tone={picked.kind === 'refused' ? 'danger' : 'warning'}>
-              {SCAN_REASON_COPY[picked.reason].headline}
+              {reasonHeadline(picked.reason, {
+                actionKind: picked.action?.kind,
+                action: picked.action?.label,
+                place: picked.occupancy?.place.name ?? picked.event?.name,
+                flag: picked.flags[0],
+                input: picked.value?.label,
+              })}
             </Callout>
           ) : null}
           {card && action ? (

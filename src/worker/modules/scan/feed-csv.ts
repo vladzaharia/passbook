@@ -1,6 +1,5 @@
-import type { ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ScanRecordDto } from '../../../shared/contracts/scanners.ts';
-import { SCAN_REASON_COPY } from '../../../shared/copy/scan.ts';
+import { reasonHeadline } from '../../../shared/copy/scan-headline.ts';
 
 export const EXPORT_COLUMNS = [
   'Time (UTC)',
@@ -60,19 +59,18 @@ function cell(value: string | number | null): string {
 export const csvRow = (cells: readonly (string | number | null)[]): string =>
   `${cells.map(cell).join(',')}\r\n`;
 
-/** The reason's headline from the one copy file; a line with a value to fill shows the code. */
-function reasonText(reason: string | null): string | null {
-  if (!reason) return null;
-  const line = SCAN_REASON_COPY[reason as ScanReason]?.headline;
-  return line && !line.includes('{') ? line : reason;
-}
-
 /** Export only an already-authorized console projection, never the raw scan row. */
 export function exportCells(row: ScanRecordDto, timeZone?: string): (string | number | null)[] {
   const cells = [
     new Date(row.at).toISOString(),
     row.outcome ? RESULT[row.outcome] : null,
-    reasonText(row.reason),
+    row.reason
+      ? reasonHeadline(row.reason, {
+          actionKind: row.kind,
+          action: row.actionLabel,
+          place: row.eventName,
+        })
+      : null,
     row.actionLabel,
     row.passTitle,
     row.templateName,
