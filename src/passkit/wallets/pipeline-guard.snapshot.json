@@ -3,6 +3,18 @@
     "google": "c12ab7465416fc5e8e2075a14e3e6df569711739c09acade6befb9c338990cb2",
     "samsung": "af7807a1f4cf78f95fe4920cbecec25875d07b0b0a5b3c36efc4604c1683c44c"
   },
+  "templates": {
+    "henrys-blue": "d57125efb6cb6de6",
+    "henrys-copper": "00369f900aeb0e31",
+    "starter-access-card": "56edcb351146d9cd",
+    "starter-boarding-pass": "d43662631733563c",
+    "starter-coupon": "6c547db43e8c64d1",
+    "starter-event-ticket": "81e4183b8c57a277",
+    "starter-generic": "bac463644ee95522",
+    "starter-poster-generic": "e7913c11031d6ebe",
+    "starter-stamp-card": "134e6a2049a188b5",
+    "starter-store-card": "07f8fa6e6297514f"
+  },
   "reports": {
     "henrys-blue": {
       "google": "1106610de7f58ce3b00b3efe4084b23bf7f4af6b69c316009e3ff0aa0179b8e8",
@@ -11,6 +23,10 @@
     "henrys-copper": {
       "google": "1106610de7f58ce3b00b3efe4084b23bf7f4af6b69c316009e3ff0aa0179b8e8",
       "samsung": "cc7377f96b5f0b51a60e9801dcca2fc1213df8d630e2c820fc48985df2e5710b"
+    },
+    "starter-access-card": {
+      "google": "26e03c9b33c25d2ec0518da96027c3a4a0e6748c52bac3545f5140c083787542",
+      "samsung": "eb3a4931860ecee46ee2adfa8e0d7e409ac941556463977178390dfe3e1e94b6"
     },
     "starter-boarding-pass": {
       "google": "aaca8a69ffd928e3b22f983ee20e1589e79df135c15e80da56a31db13a6d8cf8",
