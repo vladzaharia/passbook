@@ -84,6 +84,7 @@ describe('pass actions', () => {
       'void',
       'open',
       'rotate',
+      'newcode',
       'download',
       'copy',
       'remove',

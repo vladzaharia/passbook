@@ -57,6 +57,7 @@ export async function commitPublishArtifact(
       barcodeHash: artifact.barcodeHash,
       lookupHash: artifact.lookupHash,
       scanCode,
+      rotation: prepared.rotation,
       expectedPass,
       publishedRemovalGeneration,
       connectionContext: options.connectionContext,

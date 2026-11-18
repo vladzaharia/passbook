@@ -109,6 +109,15 @@ it restores the pass's previous thumbnail. Removing the photo removes it from sc
 Wallet inclusion rebuilds and signs the pass through the normal update pipeline. If rebuilding
 fails, the previous photo settings remain in place.
 
+## Copied passes
+
+iOS lets anyone add a barcode to Wallet. A copy shows the same code, so the scanner cannot tell it from the pass.
+
+- Repeat scans say **Check ID.** Compare the photo and the person.
+- New sessions show the member photo. Turn it off per session if you don't use photos.
+- **New code** on the pass page (More menu) makes a new scan code, signs the pass again and sends it to the holder. The old code then reads as Not found at every scanner. Offline scanners check codes when they reconnect, so a copy fails there too. Three per pass per hour; each is in the audit log.
+- Every blueprint uses the scan code as its barcode. A template that prints its own number as the barcode cannot get a new code.
+
 ## Android
 
 Use the signed [PassBook Reader APK](https://github.com/vladzaharia/passbook/releases/tag/android-v0.2.3).

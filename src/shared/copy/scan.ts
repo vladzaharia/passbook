@@ -21,6 +21,7 @@ export interface ScanLine {
 /** Every verdict line of the scanner. `/scan`, the admin pages and the CSV read this one file. */
 export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> = {
   not_found: { headline: 'Not found', sub: "This code isn't a pass here. Look it up by name." },
+  code_replaced: { headline: 'Replaced code', sub: 'Check ID.' },
   ambiguous: { headline: 'More than one match', sub: 'Look it up by name instead.' },
   test_pass: {
     headline: 'Test pass',
@@ -68,7 +69,7 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
     headline: 'Being scanned',
     sub: 'Another scanner has this pass. Scan again in a moment.',
   },
-  still_inside: { headline: 'Already in', sub: 'Since {time} · {scanner}' },
+  still_inside: { headline: 'Already in', sub: 'Since {time} · {scanner}. Check ID.' },
   not_inside: { headline: 'Not tapped in', sub: 'No entry recorded. Tap them in first.' },
   choose: { headline: 'Choose an action', sub: 'Pick what to do with this pass.' },
   network: { headline: 'No connection', sub: 'Not checked. Hold them and scan again.' },
@@ -122,8 +123,8 @@ export const SCAN_REASON_VARIANTS = {
 /** In/out lines that replace a reason's default when the place is a zone or the state is known. */
 export const SCAN_OCCUPANCY_COPY: Record<string, ScanLine> = {
   zoneFull: { headline: '{zone} full', sub: '{in} of {capacity} in.' },
-  eventStillIn: { headline: 'Already checked in', sub: 'Since {time} · {scanner}' },
-  stillInRecent: { headline: 'Already in', sub: '{ago} · {scanner}' },
+  eventStillIn: { headline: 'Already checked in', sub: 'Since {time} · {scanner}. Check ID.' },
+  stillInRecent: { headline: 'Already in', sub: '{ago} · {scanner}. Check ID.' },
   eventNotIn: { headline: 'Not checked in', sub: 'Check them in instead?' },
   parentNotIn: { headline: 'Not tapped in', sub: 'Tap in at {zone} first.' },
   alreadyOut: { headline: 'Already out', sub: '{ago} · {scanner}' },

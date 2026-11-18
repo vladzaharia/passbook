@@ -1,10 +1,12 @@
 import { stampInput } from '../../../passkit/behaviors/term/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { withoutPersonalizationFiles } from '../apple/personalize-files.ts';
 import { assertAccessInput } from './access-input.ts';
 import { type BuildRequest, buildArtifact } from './builder.ts';
+import { credentialTombstoneRef } from './credential-tombstones.ts';
 import type { PublishOptions } from './publish.ts';
 import { artifactCredentialRefs, type PublishAttempt } from './publish-service-artifact.ts';
 import {
@@ -16,7 +18,7 @@ import {
 import type { Pass } from './repo-map.ts';
 import type { PublishReads } from './repo-read-publish-bundle.ts';
 import type { PublishRemovalSnapshot } from './repo-write-publish-snapshot.ts';
-import { newScanCode } from './scan-code.ts';
+import { newScanCode, primaryBarcodeMessage } from './scan-code.ts';
 
 export interface PublishReleaseState {
   capturedRelease: AppleRelease | undefined;
@@ -39,6 +41,8 @@ export interface PreparedPublishAttempt extends PublishAttempt {
   passJson: string;
   removal: PublishRemovalSnapshot | null;
   identical: boolean;
+  /** A new scan code: the keyed hash of the code it replaces. */
+  rotation: { oldCodeHash: string } | undefined;
 }
 
 export async function preparePublishAttempt(
@@ -94,7 +98,20 @@ export async function preparePublishAttempt(
   const previousJson = reads.previousJson;
   const previous = options.notify === undefined ? null : previousJson;
   // Older passes get their scan code on the first publish after it was introduced.
-  const scanCode = current.scanCode ?? newScanCode(ctx);
+  const scanCode = options.rotateScanCode
+    ? newScanCode(ctx)
+    : (current.scanCode ?? newScanCode(ctx));
+  const rotation =
+    options.rotateScanCode && current.scanCode
+      ? {
+          oldCodeHash: await credentialTombstoneRef(
+            credentialEnv,
+            current.orgId,
+            current.mode,
+            await sha256Hex(current.scanCode),
+          ),
+        }
+      : undefined;
   const removalAt = removalSnapshot.at;
   const removal = removalAt !== null ? removalSnapshot : null;
   const buildRequest = {
@@ -144,6 +161,11 @@ export async function preparePublishAttempt(
     artifact = await buildArtifact(buildCtx, buildRequest);
   }
   assertReleaseArtifact(release, artifact.template);
+  if (options.rotateScanCode && primaryBarcodeMessage(artifact.passJson) !== scanCode)
+    throw new ConflictError(
+      "This pass's barcode is not its scan code, so a new code cannot replace it.",
+      'NEW_CODE_UNSUPPORTED',
+    );
   // Every publish that changes the input is held to the Access card's rules (AX 2.4), whoever asks.
   if (JSON.stringify(next.personalization) !== JSON.stringify(current.personalization))
     await assertAccessInput(ctx, current.orgId, artifact.template, next.personalization);
@@ -182,5 +204,6 @@ export async function preparePublishAttempt(
     passJson,
     removal,
     identical,
+    rotation,
   };
 }

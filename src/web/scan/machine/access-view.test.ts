@@ -64,7 +64,7 @@ describe('access lines', () => {
       ),
     ).toEqual({
       title: 'Already in',
-      sub: '40 s ago · Front desk',
+      sub: '40 s ago · Front desk. Check ID.',
     });
     expect(accessLines(heldOut(), NOW)).toEqual({
       title: 'Already out',

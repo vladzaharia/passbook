@@ -98,6 +98,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass.remove_from_user': a('Pass removal requested', UserMinus, 'warning'),
   'pass.restore': a('Pass restored to Wallet', I.restoreToWallet, 'success'),
   'pass.resend_email': a('Pass email resent', I.sendEmail, 'info'),
+  'pass.new_code': a('New code made', I.rotate, 'info'),
   'pass.rotate_link': a('Pass link rotated', I.rotate, 'info'),
   'pass.stamps.add': a('Stamp added', ENTITY.pass.icon, 'info'),
   'pass.stamps.redeem': a('Reward redeemed', Star, 'success'),

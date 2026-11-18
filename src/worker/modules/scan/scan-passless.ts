@@ -3,6 +3,7 @@ import type { ScanReason } from '../../../shared/contracts/scan.ts';
 /** Reasons a refusal can carry without selecting a pass: a code or tag the scanner could not use. */
 export const PASSLESS_REASONS = [
   'not_found',
+  'code_replaced',
   'ambiguous',
   'tag_lost',
   'tag_not_allowed',

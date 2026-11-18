@@ -728,6 +728,7 @@ quarantine at deletion permanently excludes their historical rows.
   delete Wallet keeps the pass on the device and it receives no further updates.
 - Device ids: `devices[].device` in a pass detail is the sync log's `device` (first 12 hex characters of
   SHA-256 of the device id); `shortId` is only its last six characters, for display.
+- `POST /passes/{id}/new-code` mints a new scan code in place and updates the holder's Wallet pass; the old code stops scanning. Same serial and holder. Three per pass per hour; 409 `NEW_CODE_UNSUPPORTED` when the barcode is not the scan code.
 - Links are stored as a MAC plus a sealed copy (`docs/security.md`). If the sealed copy is unreadable, `downloadUrl` in `GET /me/passes` and `url` on a bundle are `null`; `rotate-link` issues a working one. Pass detail and mail answer 503 `TOKEN_SEAL_MISSING`.
 - `POST /passes/{id}/remove` (`{ message? }`) publishes a last version that is voided and expired, so Wallet
   moves it to Expired passes; no API removes a pass from a device. `POST /passes/{id}/restore` undoes it.

@@ -18,6 +18,7 @@ import type { TenantPassWrite } from './http.ts';
 import { capabilityChecks, tenantPrincipal } from './repo-authority.ts';
 import type { ConnectionPassContext } from './repo-connection-context.ts';
 import type { PassReleaseSnapshot } from './repo-release.ts';
+import { addRotationMark, type ScanCodeRotation } from './repo-write-publish-rotation.ts';
 import type { PublishPassSnapshot } from './repo-write-publish-snapshot.ts';
 
 export interface ConnectorWrite {
@@ -36,6 +37,8 @@ export interface ConnectorWrite {
   /** A staged removal also pins the claim it made. */
   removalClaim?: boolean | undefined;
   extraChecks?: readonly Check[] | undefined;
+  /** A new scan code: its mark is written before the update, in the same batch. */
+  rotation?: ScanCodeRotation | undefined;
 }
 
 /** What the connector's captured context pins on the pass row, beyond the publish snapshot. */
@@ -117,7 +120,7 @@ export async function casConnector(ctx: ServiceContext, w: ConnectorWrite): Prom
     target: w.id,
     checks,
     codes: CREATE_CODES,
-    tables: ['passes'],
+    tables: w.rotation ? ['passes', 'scan_code_rotations'] : ['passes'],
   };
   const g = w.holder
     ? grant(ctx, { ...common, purpose: 'org_mode.pass.personalize', principal: w.holder })
@@ -134,7 +137,8 @@ export async function casConnector(ctx: ServiceContext, w: ConnectorWrite): Prom
           orgId: p.orgId,
           mode: p.mode,
         });
-  g.update('passes', {
+  if (w.rotation) addRotationMark(g, ctx.requestId ?? null, w.id, w.expectedVersion, w.rotation);
+  const update = g.update('passes', {
     set: w.set,
     ...(w.bumpVersion ? { inc: ['version'] } : {}),
     where: {
@@ -152,7 +156,7 @@ export async function casConnector(ctx: ServiceContext, w: ConnectorWrite): Prom
     returning: ['version'],
   });
   try {
-    const [result] = await g.commit();
+    const result = (await g.commit())[g.indexOf(update)];
     return (result?.results as { version: number }[] | undefined)?.[0]?.version ?? null;
   } catch (error) {
     const reason = createRefusal(error);

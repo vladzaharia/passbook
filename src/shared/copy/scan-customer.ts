@@ -32,6 +32,7 @@ export const CUSTOMER_COPY = {
  */
 export const CUSTOMER_REASON_SUB: Record<ScanReason, string | null> = {
   not_found: null,
+  code_replaced: null,
   ambiguous: null,
   test_pass: null,
   live_pass: null,

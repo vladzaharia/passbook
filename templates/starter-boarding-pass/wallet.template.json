@@ -353,7 +353,7 @@
         "barcode": "*",
         "prop": "message"
       },
-      "value": "{{ticketId}}"
+      "value": "{{pass.scanCode}}"
     },
     {
       "to": {

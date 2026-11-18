@@ -250,7 +250,7 @@
         "barcode": "*",
         "prop": "message"
       },
-      "value": "{{cardNumber}}"
+      "value": "{{pass.scanCode}}"
     },
     {
       "to": {

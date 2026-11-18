@@ -15,6 +15,23 @@ const fixture = scanningSessionsFixture();
 beforeAll(fixture.setup);
 
 describe('shared scanning sessions', () => {
+  it('starts new sessions with photos on and leaves a stated choice alone', async () => {
+    const { kit, call } = fixture;
+    const body = { orgId: kit.org.id, timeZone: 'UTC' };
+    const on = await call('POST', '/scanning-sessions', { ...body, name: 'Photos default' });
+    expect(((await on.json()) as { settings: { showPhoto?: boolean } }).settings.showPhoto).toBe(
+      true,
+    );
+    const off = await call('POST', '/scanning-sessions', {
+      ...body,
+      name: 'Photos off',
+      settings: { showPhoto: false },
+    });
+    expect(((await off.json()) as { settings: { showPhoto?: boolean } }).settings.showPhoto).toBe(
+      false,
+    );
+  });
+
   it('creates a session with multiple independently paired devices and applies shared rules', async () => {
     const { kit, call } = fixture;
     const made = await call('POST', '/scanning-sessions', {

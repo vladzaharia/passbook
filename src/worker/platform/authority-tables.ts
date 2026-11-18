@@ -43,6 +43,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   pass_assets: { org: null, edges: [edge('pass_id', 'passes')], pass: 'pass_id' },
   pass_credential_transfers: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   pass_credential_tombstones: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
+  // The mark a new scan code needs (0099); written with the pass update, in the publish grant.
+  scan_code_rotations: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   pass_issuance_deliveries: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   templates: { org: 'org_id' },
   template_candidates: { org: 'org_id', mode: 'mode' },
