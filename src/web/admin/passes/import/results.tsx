@@ -15,6 +15,7 @@ import {
   ConfirmDialog,
   toast,
 } from '../../../ui/index.ts';
+import { handOffToConnection } from '../../connections/import-handoff.ts';
 import { downloadImportFile, emailTheRest, removeCreated, useFailedRows } from './api.ts';
 
 function Stat({ label, value }: { label: string; value: number }) {
@@ -165,7 +166,11 @@ export function ImportResults({
           ) : null}
           {canSync && imp.source.kind === 'url' && imp.mode === 'live' ? (
             <Button asChild variant="outline" iconStart={<RefreshCw aria-hidden />}>
-              <Link to="/admin/connections/new" search={{ orgId }}>
+              <Link
+                to="/admin/connections/new"
+                search={{ orgId }}
+                onClick={() => handOffToConnection(imp)}
+              >
                 {C.results.sync}
               </Link>
             </Button>

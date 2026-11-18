@@ -94,6 +94,10 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
     maxConcurrency: number;
     requestsPerMinute: number;
     timeoutMs: number;
+    /** Largest response body; the default is safe-fetch's 256 KB. */
+    maxResponseBytes?: number;
+    /** GET redirect hops to follow (each re-checked); the default is none. */
+    maxRedirects?: number;
   };
   /** Config keys that cannot change once the connection exists. */
   fixedConfig?: readonly string[];

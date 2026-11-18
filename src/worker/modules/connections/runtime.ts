@@ -70,6 +70,8 @@ export async function prepare(
   const fetch = createSafeFetch({
     platformHosts: platformHostsOf(sctx.env),
     timeoutMs,
+    ...(def.defaults.maxResponseBytes ? { maxBytes: def.defaults.maxResponseBytes } : {}),
+    ...(def.defaults.maxRedirects ? { maxRedirects: def.defaults.maxRedirects } : {}),
     ...(deps.resolver ? { resolver: deps.resolver } : {}),
     ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}),
   });
