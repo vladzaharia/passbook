@@ -23,7 +23,9 @@ export const EXPORT_COLUMNS = [
 
 /** The UTC column stays; a time zone adds the local one after it, with the offset so a repeated hour reads apart. */
 export function exportColumns(timeZone?: string): string[] {
-  return timeZone ? [EXPORT_COLUMNS[0] ?? '', `Time (${timeZone})`, ...EXPORT_COLUMNS.slice(1)] : EXPORT_COLUMNS;
+  return timeZone
+    ? [EXPORT_COLUMNS[0] ?? '', `Time (${timeZone})`, ...EXPORT_COLUMNS.slice(1)]
+    : EXPORT_COLUMNS;
 }
 
 const localFormats = new Map<string, Intl.DateTimeFormat>();

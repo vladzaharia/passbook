@@ -258,7 +258,9 @@ export async function exportScans(
           cursor = page.nextCursor ?? undefined;
           if (page.items.length) {
             controller.enqueue(
-              encoder.encode(page.items.map((row) => csvRow(exportCells(row, req.timeZone))).join('')),
+              encoder.encode(
+                page.items.map((row) => csvRow(exportCells(row, req.timeZone))).join(''),
+              ),
             );
             if (!cursor) controller.close();
             return;
