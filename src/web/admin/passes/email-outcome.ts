@@ -28,6 +28,5 @@ export function reportEmailError(error: unknown, prefix = ''): void {
   else if (state === 'retrying') {
     const limited = isApiError(error) && error.status === 429;
     toast.info(`${prefix}${limited ? 'Email limit reached' : 'Email service is busy'}. ${action}`);
-  }
-  else toast.info(`${prefix}Email status unknown. ${action}`);
+  } else toast.info(`${prefix}Email status unknown. ${action}`);
 }
