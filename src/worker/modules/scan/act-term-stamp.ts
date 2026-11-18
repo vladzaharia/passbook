@@ -3,7 +3,7 @@ import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
-import { type Mutation, publishPass } from '../passes/publish.ts';
+import { type Mutation, PublishDeclined, publishPass } from '../passes/publish.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { credentialFacts } from './act-check-in-facts.ts';
@@ -15,7 +15,7 @@ import type * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
 import { effectiveReleaseCheck } from './repo-scan-checks.ts';
 import type { ScanEventRow } from './repo-scope.ts';
-import { otherStandingScans } from './repo-term-stamp.ts';
+import { noOtherStandingScan } from './repo-term-stamp.ts';
 import type { Found } from './resolve.ts';
 import { SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
 
@@ -137,8 +137,8 @@ interface TermClear {
 /**
  * Undoing the scan that started a term takes the start back, so a pass scanned by mistake does
  * not begin its term. Only when the input still holds that scan's time and no other scan of the
- * pass still stands; the write is one compare-and-swap on the pass, so a later stamp is never
- * cleared. Deferred like the stamp; a failure leaves the stamp in place.
+ * pass still stands; both are conditions of the one write (compare-and-swap plus a NOT EXISTS over
+ * the scans), so a scan or stamp that lands after the decision is never cleared. Deferred like the stamp; a failure leaves the stamp in place.
  */
 export function deferTermClear(i: TermClear): void {
   i.ctx.waitUntil(clearTermStart(i));
@@ -152,7 +152,6 @@ export async function clearTermStart(i: TermClear): Promise<void> {
     const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
     const input = stampInput(template.manifest, 'first-scan');
     if (!input || pass.personalization[input] !== iso(target.at)) return;
-    if (await otherStandingScans(ctx.env.DB, actor.orgId, pass.id, target.id)) return;
     await publishPass(ctx, {
       passId: pass.id,
       orgScope: actor.orgId,
@@ -176,7 +175,7 @@ export async function clearTermStart(i: TermClear): Promise<void> {
               release: 'TEMPLATE_RELEASE_CONFLICT',
             },
           }),
-        when: [],
+        when: [noOtherStandingScan(pass.id, target.id)],
         add: async () => ({ settle() {} }),
       },
       mutate(current: Pass): Mutation {
@@ -187,6 +186,8 @@ export async function clearTermStart(i: TermClear): Promise<void> {
       },
     });
   } catch (error) {
+    // A scan that stands appeared since the decision: the write was skipped and the start stays.
+    if (error instanceof PublishDeclined) return;
     logSkipped(ctx, actor.orgId, target.passId, error);
   }
 }

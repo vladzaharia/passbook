@@ -67,7 +67,12 @@ export interface ScanKit extends Kit {
   event: (
     options: Partial<Parameters<typeof makeScanEvent>[1]>,
   ) => ReturnType<typeof makeScanEvent>;
-  post(headers: Record<string, string>, path: string, body: unknown): Promise<Response>;
+  post(
+    headers: Record<string, string>,
+    path: string,
+    body: unknown,
+    executionCtx?: ExecutionContext,
+  ): Promise<Response>;
   get(headers: Record<string, string>, path: string): Promise<Response>;
   admin(): Record<string, string>;
 }
@@ -299,12 +304,13 @@ export async function setupScanKit(options: Parameters<typeof setupKit>[0] = {})
     staff: (role, name) =>
       makeScanStaff(kit.fx, { orgId: kit.org.id, role, ...(name ? { name } : {}) }),
     event: (options) => makeScanEvent(kit.fx, { orgId: kit.org.id, ...options }),
-    post: (headers, path, body) =>
+    post: (headers, path, body, executionCtx) =>
       Promise.resolve(
         app.request(
           `${ORIGIN}/api/v1/scan${path}`,
           { method: 'POST', headers: json(headers), body: JSON.stringify(body) },
           kit.env,
+          executionCtx,
         ),
       ),
     get: (headers, path) =>

@@ -1,18 +1,14 @@
-import { first } from '../../platform/db.ts';
+import { type GrantCond, tenantSql } from '../../platform/authority-cond.ts';
 
-/** Scans that let this pass in and still stand, apart from `exceptId`: an undo is not one, nor is an undone scan. */
-export async function otherStandingScans(
-  db: D1Database,
-  orgId: string,
-  passId: string,
-  exceptId: string,
-): Promise<number> {
-  const row = await first<{ n: number }>(
-    db,
-    `SELECT COUNT(*) AS n FROM scans
-     WHERE org_id = ? AND pass_id = ? AND id != ? AND state = 'done' AND outcome = 'ok'
-       AND undoes IS NULL AND undone_by IS NULL`,
-    [orgId, passId, exceptId],
+/**
+ * A write condition: no scan of this pass still stands apart from `exceptId` (an undo is not one,
+ * nor is an undone scan). It is part of the pass write, so a scan that commits after the undo
+ * decided keeps the start.
+ */
+export const noOtherStandingScan = (passId: string, exceptId: string): GrantCond =>
+  tenantSql(
+    `NOT EXISTS (SELECT 1 FROM scans s WHERE s.org_id = {org} AND s.mode = {mode}
+       AND s.pass_id = ? AND s.id != ? AND s.state = 'done' AND s.outcome = 'ok'
+       AND s.undoes IS NULL AND s.undone_by IS NULL)`,
+    [passId, exceptId],
   );
-  return row?.n ?? 0;
-}

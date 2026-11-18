@@ -167,6 +167,34 @@ describe('term: first scan', () => {
   });
 });
 
+describe('term: deferred stamp', () => {
+  it('hands the publish to waitUntil, not to the scan response', async () => {
+    const s = await kit.scanner({ templateIds: [scanTpl] });
+    const pass = await kit.scanPass(scanTpl);
+    const deferred: Promise<unknown>[] = [];
+    const executionCtx = {
+      waitUntil: (p: Promise<unknown>) => void deferred.push(p),
+      passThroughOnException: () => {},
+    } as unknown as ExecutionContext;
+    const res = await kit.post(
+      s.headers,
+      '/actions',
+      {
+        idempotencyKey: key(),
+        input: codeOf(pass),
+        clientTs: kit.clock.now(),
+        actionId: 'check_in',
+      },
+      executionCtx,
+    );
+    expect((await out(res)).kind).toBe('ok');
+    // The stamp's publish went through waitUntil, so the response did not wait for it.
+    expect(deferred.length).toBeGreaterThan(0);
+    await Promise.all(deferred);
+    expect(typeof (await stored(pass.id)).start).toBe('string');
+  });
+});
+
 describe('term: exits and older passes', () => {
   it('an exit does not start the term; the next entry does', async () => {
     const tpl = await accessTemplate();
