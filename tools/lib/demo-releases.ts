@@ -1,0 +1,41 @@
+// Org templates issue passes only from a live Apple release. The demo owner is the only reviewer in
+// each org, so they approve their own candidate alone, then publish it. Skips templates that have one.
+import type { Session } from './demo-client.ts';
+
+type Template = {
+  id: string;
+  name: string;
+  orgId: string | null;
+  status: string;
+  activeVersion: string | null;
+};
+
+export async function releaseTemplates(owner: Session, templates: Template[]): Promise<void> {
+  for (const t of templates) {
+    if (t.status !== 'active' || !t.orgId || t.activeVersion) continue;
+    let version: string | undefined;
+    // An upload or blueprint copy imports asynchronously; its version appears when the build is done.
+    for (let attempt = 0; attempt < 30 && !version; attempt++) {
+      version = (await owner.get(`/api/v1/templates/${t.id}?orgId=${t.orgId}`)).versions?.[0]
+        ?.version;
+      if (!version) await new Promise((done) => setTimeout(done, 1000));
+    }
+    if (!version) continue;
+    const scope = { orgId: t.orgId, mode: 'live', provider: 'apple' };
+    const base = `/api/v1/templates/${t.id}`;
+    const candidate = await owner.send('POST', `${base}/candidates`, { ...scope, version });
+    const approval = await owner.send('POST', `${base}/candidates/${candidate.id}/approve`, {
+      ...scope,
+      candidateHash: candidate.candidateHash,
+      alone: true,
+    });
+    await owner.send('POST', `${base}/releases`, {
+      ...scope,
+      candidateId: candidate.id,
+      approvalId: approval.id,
+      candidateHash: candidate.candidateHash,
+      expectedGeneration: 0,
+    });
+    console.log(`- released ${t.name} (${version})`);
+  }
+}

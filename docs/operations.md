@@ -15,7 +15,11 @@
 - Real Pass Type ID certificate: `P12_PASSWORD=… npm run credentials -- Pass.p12` writes
   `.secrets/platform-{certificate,key}.pem` and `.dev.vars`. Neither is committed.
 - Demo data: with `npm run dev` running, `node tools/seed-demo.ts` (token from `npm run breakglass`;
-  `--url` for another port) adds 3 orgs, ~45 passes, portal users, connections and API keys.
+  `--url` for another port) adds 3 orgs, ~45 passes, portal users, connections and API keys. It waits for the
+  baked blueprints, invites and signs in `demo.owner@example.com` (org_admin in every org; org work runs as
+  them, since a platform admin without membership gets 404), and needs a valid signing identity in `.dev.vars`
+  (the fixture one lasts 2 to 3 days; on "Incorrect or expired WWDR intermediate" delete its `SIGNER_PLATFORM_*` lines, run `npm run dev:vars`, restart).
+  Sign-in mail is capped at 5 an hour per address, so reruns an hour apart.
 - Tests: `npm run test:unit|worker|web`, `npm run test:e2e`, `npm run coverage`.
 - e2e runs the dev server or, in CI, the built preview. Both raise `RL_SCAN_PAIR` (30 a minute in production) to 100,000: `vite.config.ts` for dev, `tools/e2e-server.ts` patches the built `wrangler.json` for preview. A worker test covers the real limit.
 - `npm run gen` rewrites `src/generated/*` and `worker-configuration.d.ts`. Commit the result.
