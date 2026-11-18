@@ -13,6 +13,7 @@ import {
   FormSpan,
   Tooltip,
 } from '../../../ui/index.ts';
+import { accessView, afterPlanChange } from '../inputs/access-form.ts';
 import { Control, WIDE_WIDGETS } from './controls.tsx';
 import { ListInput } from './list-input.tsx';
 import { locationPairs } from './location.ts';
@@ -74,6 +75,8 @@ export function SchemaForm({
   const zoneValue = zoneKey ? value[zoneKey] : undefined;
   const formZone = typeof zoneValue === 'string' && zoneValue ? zoneValue : undefined;
   const errors = useMemo(() => validateValues(schema, value), [schema, value]);
+  const allFields = useMemo(() => groups.flatMap((g) => g.fields), [groups]);
+  const access = accessView(allFields, value);
   // The server names a list row's field `events/0/name`; rows here use dots.
   const server = useMemo(
     () =>
@@ -105,12 +108,13 @@ export function SchemaForm({
         const paired = new Set(
           pairs.flatMap((p) => [p.lat.key, p.lng.key, ...(p.text ? [p.text.key] : [])]),
         );
-        const visible = group.fields.filter((f) => !paired.has(f.key));
+        const visible = group.fields.filter((f) => !paired.has(f.key) && !access.hidden.has(f.key));
         const only = visible.length === 1 && pairs.length === 0 ? visible[0]?.label : undefined;
         const title = group.name || 'Details';
         const grid = (
           <FormGrid>
-            {visible.map((field) => {
+            {visible.map((listed) => {
+              const field = access.override(listed);
               const error =
                 server?.[field.key] ??
                 (showAllErrors || touched.has(field.key) ? errors[field.key] : undefined);
@@ -163,7 +167,17 @@ export function SchemaForm({
                       <Control
                         field={field}
                         value={value[field.key]}
-                        onValue={(v) => patch({ [field.key]: v })}
+                        onValue={(v) =>
+                          field.widget === 'access-plan'
+                            ? onChange(
+                                afterPlanChange(
+                                  allFields,
+                                  value,
+                                  typeof v === 'string' ? v : undefined,
+                                ),
+                              )
+                            : patch({ [field.key]: v })
+                        }
                         onBlur={() => touch(field.key)}
                         control={control as unknown as Record<string, unknown>}
                         disabled={disabled || owned}

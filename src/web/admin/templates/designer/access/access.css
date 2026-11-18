@@ -1,0 +1,42 @@
+/* Access section: the week grid and the scanner strip. The week is a table for reading order and row headers; each day lays out as a card (display set on the elements). Motion only where it says something. */
+.ac-day {
+  transition:
+    border-color var(--wl-dur-hover, 120ms) var(--wl-ease-move, ease),
+    background-color var(--wl-dur-hover, 120ms) var(--wl-ease-move, ease);
+}
+.ac-day[data-invalid] {
+  border-color: var(--pk-danger-border, var(--pk-danger));
+  background: var(--pk-danger-subtle, var(--pk-surface-raised));
+}
+.ac-day[data-closed] {
+  background: var(--pk-surface-sunken);
+}
+.ac-span[data-out] {
+  opacity: 0.7;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ac-editor {
+    animation: ac-open 180ms var(--wl-ease-out, ease-out) both;
+  }
+  .ac-span {
+    animation: ac-pop 220ms var(--wl-ease-spring, ease-out) both;
+  }
+  .ac-grant {
+    animation: ac-open 200ms var(--wl-ease-out, ease-out) both;
+  }
+  .ac-strip {
+    animation: ac-open 240ms var(--wl-ease-out, ease-out) both;
+  }
+}
+@keyframes ac-open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes ac-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
