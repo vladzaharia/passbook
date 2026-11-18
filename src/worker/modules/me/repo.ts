@@ -44,18 +44,21 @@ export interface MyPassRow {
   registered: number;
 }
 
-// pass_versions keeps the built pass.json for recent versions; it is what the card renders.
+// pass_versions keeps the built pass.json for recent versions; it is what the card renders. `version`
+// also rises for a write that stores no artifact (a metadata-only sync or bind), so the card reads the
+// newest stored version at or below it, like every other reader of the current pass.json.
 const SELECT = `
   SELECT p.id, p.org_id, p.identity_id, p.template_id, p.template_version, p.display_title, p.display_subtitle, p.status, p.mode, p.modified_at, p.removed_at, p.removal_message, p.last_refreshed_at,
          p.version, p.revision, p.row_version, p.release_id, p.link_generation, p.credential_generation, p.lifecycle_generation,
          p.holder_email, p.connection_id, p.external_ref, p.test_data_quarantined, p.deleted_at,
          p.refresh_requested_at, p.download_token, p.personalization, t.name AS template_name, o.name AS org_name, o.status AS org_status,
-         COALESCE(pv.pass_json, p.pending_pass_json) AS pass_json,
+         COALESCE((SELECT pv.pass_json FROM pass_versions pv
+                   WHERE pv.pass_id = p.id AND pv.version <= p.version AND pv.pass_json IS NOT NULL
+                   ORDER BY pv.version DESC LIMIT 1), p.pending_pass_json) AS pass_json,
          EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = p.id) AS registered
   FROM passes p
   JOIN templates t ON t.id = p.template_id
-  JOIN orgs o ON o.id = p.org_id
-  LEFT JOIN pass_versions pv ON pv.pass_id = p.id AND pv.version = p.version`;
+  JOIN orgs o ON o.id = p.org_id`;
 
 const NO_PENDING_TRANSFER = `NOT EXISTS (SELECT 1 FROM pass_credential_transfers transfer
   WHERE transfer.pass_id = p.id AND transfer.state = 'pending')`;
