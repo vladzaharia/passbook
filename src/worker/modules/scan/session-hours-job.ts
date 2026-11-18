@@ -68,12 +68,15 @@ export async function sweepSessionHours(ctx: ServiceContext): Promise<void> {
     } catch (error) {
       // One session the cron cannot write never holds back the rest of the batch.
       refused++;
-      ctx.log.warn('scan.session_hours_skip', {
-        code: refusal(error) ? 'SCAN_SESSION_HOURS_REFUSED' : 'SCAN_SESSION_HOURS_FAILED',
-        orgId: row.org_id,
-        sessionId: row.id,
-        ...(refusal(error) ? {} : { error }),
-      });
+      const data = { orgId: row.org_id, sessionId: row.id };
+      if (refusal(error))
+        ctx.log.warn('scan.session_hours_skip', { code: 'SCAN_SESSION_HOURS_REFUSED', ...data });
+      else
+        ctx.log.error('scan.session_hours_failed', {
+          code: 'SCAN_SESSION_HOURS_FAILED',
+          ...data,
+          error,
+        });
       continue;
     }
     flips++;

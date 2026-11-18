@@ -214,6 +214,45 @@ describe('closed sessions, more doors', () => {
     expect(await code(fresh)).toBe('SCANNING_SESSION_CLOSED');
   });
 
+  it('refuses a bind preview while closed, even with a used key', async () => {
+    const { s } = await session(WED);
+    const { card } = await f.pass();
+    f.kit.clock.set(at(3, 21, 59));
+    const bindKey = key();
+    expect(
+      (await f.kit.post(s.headers, '/tags/bind', { card, tag: f.read(), idempotencyKey: bindKey }))
+        .status,
+    ).toBe(200);
+    f.kit.clock.set(at(3, 22, 1));
+    const preview = await f.kit.post(s.headers, '/tags/bind', {
+      card,
+      tag: f.read(),
+      idempotencyKey: bindKey,
+      preview: true,
+    });
+    expect(await code(preview)).toBe('SCANNING_SESSION_CLOSED');
+  });
+
+  it('fails a reused key with another pass after close, writing nothing', async () => {
+    const { s } = await session(WED);
+    const { pass } = await f.pass();
+    const other = await f.pass();
+    f.kit.clock.set(at(3, 21, 59));
+    const reuse = key();
+    expect((await doAct(s, codeOf(pass), reuse)).status).toBe(200);
+    const count = () =>
+      first<{ n: number }>(
+        f.kit.env.DB,
+        'SELECT count(*) AS n FROM scans WHERE idempotency_key = ?',
+        [reuse],
+      );
+    const before = await count();
+    f.kit.clock.set(at(3, 22, 1));
+    const res = await doAct(s, codeOf(other.pass), reuse);
+    expect(await code(res)).toBe('IDEMPOTENCY_KEY_REUSED');
+    expect(await count()).toEqual(before);
+  });
+
   it('refuses a lookup by pass while closed', async () => {
     const { s } = await session(WED);
     f.kit.clock.set(at(3, 23));

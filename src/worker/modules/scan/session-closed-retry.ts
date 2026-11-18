@@ -15,9 +15,13 @@ export async function retriesCommitted(
   const action = c.req.path.endsWith('/actions');
   if (!action && !c.req.path.endsWith('/tags/bind')) return false;
   // A body that is not JSON has no key: it is refused as closed, and validation answers it later.
-  const body = (await c.req.json().catch(() => null)) as { idempotencyKey?: unknown } | null;
+  const body = (await c.req.json().catch(() => null)) as {
+    idempotencyKey?: unknown;
+    preview?: unknown;
+  } | null;
   const key = body?.idempotencyKey;
-  if (typeof key !== 'string') return false;
+  // A preview writes nothing: closed refuses it like the assign itself.
+  if (typeof key !== 'string' || body?.preview === true) return false;
   if (!action) return !!actor.scanner && !!(await replayRow(db, actor.scanner.id, key));
   const row = await replayScanByKeyStmt(db, actor.actorKey, key).first<{ state: string }>();
   return row?.state === 'done';

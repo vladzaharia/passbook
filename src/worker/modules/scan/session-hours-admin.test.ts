@@ -222,7 +222,7 @@ describe('the session hours cron', () => {
     );
     try {
       const ctx = createJobContext(kit.env, 'test', { clock: kit.clock });
-      const warn = vi.spyOn(ctx.log, 'warn');
+      const warn = vi.spyOn(ctx.log, 'error');
       kit.clock.set(at(3, 8, 1));
       await sweepSessionHours(ctx);
       expect(await audits(good.id, 'scanning.session_opened')).toHaveLength(1);
