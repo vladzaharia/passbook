@@ -1,0 +1,107 @@
+import { expect, test } from '@playwright/test';
+import { apiAs, createPass, uid } from './helpers/api.ts';
+import { readSeed } from './helpers/seed.ts';
+
+test.use({ storageState: 'e2e/.auth/admin.json' });
+
+/**
+ * The console against the real Worker. The URL must be https on 443 with a public host (the
+ * SSRF rules), so the receiver here is example.com: it answers a signed POST with an error, which
+ * is enough to see attempts, failures and replay in the console. Signed delivery and the
+ * verification recipe are covered by the worker tests (sign.test, deliver.test, api-send.test).
+ */
+test('webhook endpoint: create, secret once, test event, delivery, pause, replay, delete', async ({
+  page,
+}) => {
+  const seed = readSeed();
+  const org = encodeURIComponent(seed.org.id);
+  const path = `/hooks/${uid('e2e')}`;
+  const url = `https://example.com${path}`;
+
+  await page.goto(`/admin/connections?tab=webhooks&orgId=${org}`);
+  await expect(page.getByRole('tab', { name: 'Webhooks', selected: true })).toBeVisible();
+  await expect(page.getByText('No webhooks')).toBeVisible();
+  await page.getByRole('link', { name: 'Add endpoint' }).first().click();
+
+  await page.getByRole('textbox', { name: /URL/ }).fill(url);
+  await page.getByRole('textbox', { name: /URL/ }).blur();
+  await page.getByRole('button', { name: 'Add endpoint' }).click();
+
+  // The secret shows once, behind Show, and Done waits for "I saved the secret".
+  await expect(page.getByRole('heading', { name: 'Signing secret' })).toBeVisible();
+  await page.getByRole('button', { name: 'Show Signing secret' }).click();
+  // The field shows the start of the secret (whsec_ and a token) and an ellipsis.
+  const field = page.getByRole('status').filter({ hasText: /^whsec_/ });
+  await expect(field).toBeVisible();
+  const secret = ((await field.textContent()) ?? '').trim().slice(0, 14);
+  expect(secret).toMatch(/^whsec_\w{8}/);
+  await expect(page.getByRole('button', { name: 'Done' })).toBeDisabled();
+
+  // Test event: the lane reports delivered or the endpoint's answer, never a crash.
+  await page.getByRole('button', { name: 'Send test event' }).click();
+  await expect(page.getByRole('status').filter({ hasText: /Delivered|Failed/ })).toBeVisible({
+    timeout: 20_000,
+  });
+
+  await page.getByRole('checkbox', { name: 'I saved the secret' }).check();
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'example.com' })).toBeVisible();
+  const endpointId = new URL(page.url()).pathname.split('/').pop() as string;
+
+  // Gone for good: nothing on the detail page or its API shows the secret again.
+  await expect(page.getByText(secret)).toHaveCount(0);
+  const api = await apiAs('admin');
+  const shown = JSON.stringify(await api.get(`/api/v1/webhook-endpoints/${endpointId}`));
+  expect(shown).not.toContain(secret);
+
+  // Issuing a pass queues a pass.issued delivery for this endpoint.
+  await createPass(api, seed.org.id, { email: `${uid('wh')}@example.test` });
+  const deliveries = page.getByRole('table', { name: 'Deliveries' });
+  await expect(deliveries.getByRole('button', { name: /^Issued,/ }).first()).toBeVisible({
+    timeout: 45_000,
+  });
+  await deliveries
+    .getByRole('button', { name: /^Issued,/ })
+    .first()
+    .click();
+  const sheet = page.getByRole('dialog', { name: 'Delivery' });
+  await expect(sheet.getByRole('region', { name: 'Payload JSON' })).toContainText('pass.issued');
+  await page.keyboard.press('Escape');
+
+  // Pause and resume.
+  await page.getByRole('button', { name: 'More' }).click();
+  await page.getByRole('menuitem', { name: 'Pause' }).click();
+  await expect(page.getByText('Nothing is sent until you resume.')).toBeVisible();
+  await page.getByRole('button', { name: 'Resume' }).click();
+  await expect(page.getByText('Nothing is sent until you resume.')).toHaveCount(0);
+
+  // Bulk replay answers with a count or "nothing to replay", never an error.
+  await page.getByRole('button', { name: 'Replay', exact: true }).click();
+  const replay = page.getByRole('dialog', { name: 'Replay deliveries' });
+  await replay.getByRole('checkbox', { name: 'Include events from before this endpoint' }).check();
+  await replay.getByRole('button', { name: 'Replay', exact: true }).click();
+  await expect(page.getByText(/Queued \d+ deliver|Nothing to replay/)).toBeVisible();
+
+  // Delete, after the confirm.
+  await page.getByRole('button', { name: 'More' }).click();
+  await page.getByRole('menuitem', { name: 'Delete' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+  await expect(page.getByRole('tab', { name: 'Webhooks', selected: true })).toBeVisible();
+  await expect(page.getByText('No webhooks')).toBeVisible();
+  await api.dispose();
+});
+
+test('a reader-style masked URL never carries the path', async () => {
+  const seed = readSeed();
+  const api = await apiAs('admin');
+  const made = await api.send('POST', '/api/v1/webhook-endpoints', {
+    orgId: seed.org.id,
+    url: `https://example.com/hooks/${uid('mask')}`,
+    eventTypes: ['pass.issued'],
+  });
+  const list = await api.get(`/api/v1/webhook-endpoints?orgId=${encodeURIComponent(seed.org.id)}`);
+  const row = list.items.find((e: { id: string }) => e.id === made.endpoint.id);
+  expect(row.urlMasked).toBe('example.com/…');
+  await api.send('DELETE', `/api/v1/webhook-endpoints/${made.endpoint.id}`);
+  await api.dispose();
+});
