@@ -241,6 +241,23 @@ export interface StampsManifest {
   keepReady?: boolean;
 }
 
+/**
+ * A count that goes down: "7 left". `input` holds what is left, so a scan `take` of 1 is "use
+ * one", `set` to `size` is a refill and `add` tops up. Bindings read `pass.counters.<id>.left`,
+ * `used`, `size`, `none` and `text`. At most one counter has `art`: it draws the strip, one image
+ * pair per count left, through the stamp compositor.
+ */
+export interface CounterManifest {
+  /** The integer input that holds what is left: from 0 to `size`, default `size`. */
+  input: string;
+  /** What a full counter holds, 1 to 1000; 3 to 20 with `art`. */
+  size: number;
+  /** Strip art: a filled image for each one left, an empty one for each one used. */
+  art?: { filled: string; empty: string };
+  /** Each position keeps its own angle. Default true. */
+  tilt?: boolean;
+}
+
 export interface NfcManifest {
   enabled: boolean;
   requiresAuthentication?: boolean;
@@ -275,6 +292,8 @@ export interface TemplateManifest {
   nfc?: NfcManifest;
   /** Stamp card: the goal, the art and the count input. */
   stamps?: StampsManifest;
+  /** Counters by id (lower-case letters, digits, _; up to 4): "7 left", refilled at the scanner. */
+  counters?: Record<string, CounterManifest>;
   /** Cross-wallet extras (roles, types, art). Never read by the Apple build. */
   wallets?: WalletsManifest;
 }

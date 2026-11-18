@@ -10,13 +10,14 @@ import type {
   TemplateManifest,
   ValidationIssue,
 } from '../types.ts';
+import { countersIssues, derivedPassScope } from './counters.ts';
 import { checkExpr, conditionInputs, evaluate, exprReferences, isEmpty } from './expr.ts';
 import { messagingIssues } from './messaging.ts';
 import { BINDING_STYLE_GROUPS, isAllowedPointer } from './pointer.ts';
 import { validateRequires } from './requires.ts';
 import { reservedInputIssues, unknownPassValues } from './reserved.ts';
 import { scanManifestIssues } from './scan.ts';
-import { stampPassScope, stampsIssues } from './stamps.ts';
+import { stampsIssues } from './stamps.ts';
 import { walletsManifestIssues } from './wallets/validate.ts';
 
 /** Image target: drops the slot's files from the bundle when the binding's condition says so. */
@@ -240,6 +241,7 @@ export function validateManifest(
   issues.push(...messagingIssues(manifest, options.passJson));
   issues.push(...scanManifestIssues(manifest, options));
   issues.push(...stampsIssues(manifest, options.passJson, options.assetNames));
+  issues.push(...countersIssues(manifest, options.passJson, options.assetNames));
   issues.push(...walletsManifestIssues(manifest, options));
 
   if (manifest.previewOnlyAssets && options.assetNames) {
@@ -309,7 +311,11 @@ export function projectDisplay(
   input: Personalization,
 ): DisplayProjection {
   const full = applyDefaults(manifest, input);
-  const scope = { input: full, lookups: manifest.lookups ?? {}, ...stampPassScope(manifest, full) };
+  const scope = {
+    input: full,
+    lookups: manifest.lookups ?? {},
+    pass: derivedPassScope(manifest, full),
+  };
   const ev = (expr: Expr | undefined) => (expr === undefined ? null : text(evaluate(expr, scope)));
   const search = (manifest.display.search ?? [])
     .map((name) => text(full[name]))

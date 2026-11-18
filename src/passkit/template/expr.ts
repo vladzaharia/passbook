@@ -1,4 +1,4 @@
-import type { StampScope } from '../stamps/rules.ts';
+import type { CounterScope, StampScope } from '../stamps/rules.ts';
 import type { Condition, Expr, Json, Personalization, TemplateManifest } from '../types.ts';
 
 /** Evaluation scope for expressions: user input plus the manifest's static lookup tables. */
@@ -14,6 +14,7 @@ export interface ExprScope {
 export interface PassScope {
   scanCode?: string;
   stamps?: StampScope;
+  counters?: Record<string, CounterScope>;
 }
 
 export const EXPR_LIMITS = {

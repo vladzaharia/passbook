@@ -23,6 +23,25 @@ export function stampScope(stamps: number, goal: number): StampScope {
   return { goal, card, left: goal - card, ready: count >= goal, extra: Math.max(0, count - goal) };
 }
 
+export interface CounterScope {
+  /** What is left, 0 to size. */
+  left: number;
+  used: number;
+  size: number;
+  /** Nothing left. */
+  none: boolean;
+  /** "7 left", or "None left". */
+  text: string;
+}
+
+export const counterText = (left: number): string => (left > 0 ? `${left} left` : 'None left');
+
+/** `pass.counters.<id>.*` for a count that goes down from `size`; clamped to 0..size. */
+export function counterScope(left: number, size: number): CounterScope {
+  const n = Math.min(size, Math.max(0, Math.floor(left)));
+  return { left: n, used: size - n, size, none: n === 0, text: counterText(n) };
+}
+
 /** Adds `count` stamps. Past `max` it is refused (null): the card is full until a redeem. */
 export const addStamps = (stamps: number, count: number, max: number): number | null =>
   stamps + count <= max ? stamps + count : null;
