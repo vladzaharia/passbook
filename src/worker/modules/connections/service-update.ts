@@ -7,7 +7,7 @@ import { toDto } from './dto.ts';
 import { schedules } from './health.ts';
 import { assertMayIssue, updateIssues } from './issuing.ts';
 import { validateMapping } from './mapping.ts';
-import { type ConnectionPatch, patchConnection } from './repo.ts';
+import { type ConnectionPatch, type ConnectionRow, patchConnection } from './repo.ts';
 import { dropCredentials, newWebhookSecret, storeCredential } from './secrets.ts';
 import {
   auditActor,
@@ -25,6 +25,27 @@ import {
   parseWith,
   requireConnector,
 } from './validate.ts';
+
+/** Keys the connector fixes at creation (the webhook recipe) cannot change: bound passes hold its refs. */
+function assertFixedConfig(
+  def: ReturnType<typeof requireConnector>,
+  conn: ConnectionRow,
+  next: Record<string, unknown>,
+): void {
+  if (!def.fixedConfig?.length) return;
+  const stored = def.configSchema.parse(
+    conn.connectorVersion !== def.version && def.migrate
+      ? def.migrate(conn.connectorVersion, conn.config)
+      : conn.config,
+  ) as Record<string, unknown>;
+  for (const key of def.fixedConfig) {
+    if (JSON.stringify(stored[key]) !== JSON.stringify(next[key])) {
+      throw new ValidationError('This setting cannot be changed. Create a new connection.', [
+        { path: `config.${key}`, message: 'Fixed after creation.' },
+      ]);
+    }
+  }
+}
 
 export async function update(
   sctx: ServiceContext,
@@ -54,6 +75,7 @@ export async function update(
   if (input.name !== undefined) set('name', input.name);
   if (input.config !== undefined) {
     const config = parseWith(def.configSchema, input.config, 'config');
+    assertFixedConfig(def, conn, config);
     await assertSafeUrls(sctx, def.urls?.(config) ?? []);
     patch.config = config;
     patch.connectorVersion = def.version;

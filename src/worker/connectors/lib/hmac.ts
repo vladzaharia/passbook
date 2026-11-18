@@ -314,6 +314,8 @@ export interface VerifiedWebhook {
   body: string;
   /** Hex digest; stable across retransmissions of the same delivery. */
   signature: string;
+  /** ms; the signed timestamp that passed the window. */
+  signedAt: number;
 }
 
 /** Custom scheme: size, HMAC over the received bytes (constant time), then the timestamp window. */
@@ -321,6 +323,11 @@ export async function verifySignedRequest(
   req: Request,
   options: { secrets: readonly string[]; now: number } & CustomHeaders,
 ): Promise<VerifiedWebhook> {
-  const { bytes, signature } = await custom.verify(req, options.secrets, options.now, options);
-  return { body: decodeUtf8Strict(bytes), signature: signature ?? '' };
+  const { bytes, signature, signedAt } = await custom.verify(
+    req,
+    options.secrets,
+    options.now,
+    options,
+  );
+  return { body: decodeUtf8Strict(bytes), signature: signature ?? '', signedAt: signedAt ?? 0 };
 }
