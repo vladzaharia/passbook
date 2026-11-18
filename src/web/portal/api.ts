@@ -75,6 +75,12 @@ export const mySessionsQuery = queryOptions({
 export const requestRefresh = (id: string) =>
   api.post(`/api/v1/me/passes/${encodeURIComponent(id)}/refresh`, RefreshResponseSchema);
 
+export const resendPass = (id: string) =>
+  api.post(`/api/v1/me/passes/${encodeURIComponent(id)}/resend`, OkSchema);
+
+export const lostPhone = (id: string) =>
+  api.post(`/api/v1/me/passes/${encodeURIComponent(id)}/lost-phone`, RemovePassResponseSchema);
+
 export const removePass = (id: string) =>
   api.deleteJson(`/api/v1/me/passes/${encodeURIComponent(id)}`, RemovePassResponseSchema);
 

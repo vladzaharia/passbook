@@ -1,10 +1,20 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Copy, ExternalLink, MoreHorizontal, QrCode as QrIcon, Trash2 } from 'lucide-react';
+import {
+  Copy,
+  ExternalLink,
+  Mail,
+  MoreHorizontal,
+  QrCode as QrIcon,
+  Smartphone,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { HOLDER_COPY } from '@/shared/copy/holder.ts';
 import { addLine, showsAddQr } from '@/shared/device.ts';
 import { copyText } from '../lib/clipboard.ts';
 import { cn } from '../lib/cn.ts';
+import { lostPhoneConfirm } from '../lib/confirms.ts';
+import { errorMessage } from '../lib/errors.ts';
 import { sessionQuery } from '../lib/session.ts';
 import {
   Buddy,
@@ -20,7 +30,7 @@ import {
   toast,
 } from '../ui/index.ts';
 import { Scan } from './add/scan.tsx';
-import { myPassesKey, removePass } from './api.ts';
+import { lostPhone, myPassesKey, removePass, resendPass } from './api.ts';
 import { browserDevice } from './device.ts';
 
 /** `/p/:token/pass.pkpass` -> `/p/:token`. The list contract has no public URL field. */
@@ -106,6 +116,24 @@ function useRemovePass(passId: string, onRemoved?: () => void) {
   });
 }
 
+/** Send it again, and I lost my phone: both act on the signed-in holder's own pass. */
+function useHolderHelp(passId: string) {
+  const client = useQueryClient();
+  const resend = useMutation({
+    mutationFn: () => resendPass(passId),
+    onSuccess: () => toast.success(HOLDER_COPY.sendAgainSent),
+    onError: (error) => toast.error(errorMessage(error)),
+  });
+  const lost = useMutation({
+    mutationFn: () => lostPhone(passId),
+    onSuccess: async () => {
+      await client.invalidateQueries({ queryKey: myPassesKey });
+      toast.success(HOLDER_COPY.lostPhoneDone);
+    },
+  });
+  return { resend, lost };
+}
+
 export interface PassMenuProps {
   passId: string;
   passTitle: string;
@@ -116,6 +144,8 @@ export interface PassMenuProps {
   /** An Apple device registered the pass; current installation is unknown. */
   inWallet?: boolean;
   onRemoved?: () => void;
+  /** The pass is live: Send it again and I lost my phone. */
+  help?: boolean;
 }
 
 /**
@@ -129,10 +159,13 @@ export function PassMoreMenu({
   page = false,
   inWallet = false,
   onRemoved,
+  help = false,
 }: PassMenuProps) {
   const [qrOpen, setQrOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
+  const [lostOpen, setLostOpen] = useState(false);
   const mutation = useRemovePass(passId, onRemoved);
+  const { resend, lost } = useHolderHelp(passId);
   const qr = !page && publicUrl && showsAddQr(browserDevice().device);
   return (
     <>
@@ -169,6 +202,16 @@ export function PassMoreMenu({
               </DropdownMenuItem>
             </>
           ) : null}
+          {help ? (
+            <>
+              <DropdownMenuItem onSelect={() => resend.mutate()}>
+                <Mail aria-hidden /> {HOLDER_COPY.sendAgain}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setLostOpen(true)}>
+                <Smartphone aria-hidden /> {HOLDER_COPY.lostPhone}
+              </DropdownMenuItem>
+            </>
+          ) : null}
           <DropdownMenuItem destructive onSelect={() => setRemoveOpen(true)}>
             <Trash2 aria-hidden /> Remove from My passes
           </DropdownMenuItem>
@@ -177,6 +220,14 @@ export function PassMoreMenu({
       {qr ? (
         <QrDialog passTitle={passTitle} url={publicUrl} open={qrOpen} setOpen={setQrOpen} />
       ) : null}
+      <ConfirmDialog
+        open={lostOpen}
+        onOpenChange={setLostOpen}
+        {...lostPhoneConfirm(passTitle)}
+        onConfirm={async () => {
+          await lost.mutateAsync();
+        }}
+      />
       <ConfirmDialog
         open={removeOpen}
         onOpenChange={setRemoveOpen}

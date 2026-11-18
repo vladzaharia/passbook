@@ -5,6 +5,13 @@ import { ConnectionModeSchema } from '../../shared/contracts/connections.ts';
 export const JobSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('push.deliver'), outboxId: z.string() }),
   z.object({ kind: z.literal('email.send'), outboxId: z.string() }),
+  /** A holder asked for their own pass by email (Send it again, I lost my phone). */
+  z.object({
+    kind: z.literal('pass.holder_mail'),
+    passId: z.string(),
+    userId: z.string(),
+    reason: z.enum(['resend', 'lost_phone']),
+  }),
   z.object({
     kind: z.literal('pass.refresh'),
     passId: z.string(),

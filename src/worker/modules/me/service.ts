@@ -208,6 +208,22 @@ export async function refreshMyPass(
   return { accepted: true as const, requestedAt, cooldownSeconds };
 }
 
+/** The pass as the holder saw it: the transfer refuses if it moved since. */
+export const sourceOf = (userId: string, row: repo.MyPassRow) => ({
+  orgId: row.org_id,
+  mode: row.mode,
+  holderEmail: row.holder_email,
+  ownerUserId: userId,
+  version: row.version,
+  revision: row.revision,
+  rowVersion: row.row_version,
+  credentialGeneration: row.credential_generation,
+  lifecycleGeneration: row.lifecycle_generation,
+  releaseId: row.release_id,
+  downloadToken: row.download_token,
+  linkGeneration: row.link_generation,
+});
+
 export async function removeMyPass(
   ctx: ServiceContext,
   userId: string,
@@ -217,20 +233,7 @@ export async function removeMyPass(
 ) {
   const row = await repo.getPassForRemoval(ctx.env.DB, userId, passId);
   if (!row) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  return deps.removePassFromUser(ctx, passId, userId, sessionId, {
-    orgId: row.org_id,
-    mode: row.mode,
-    holderEmail: row.holder_email,
-    ownerUserId: userId,
-    version: row.version,
-    revision: row.revision,
-    rowVersion: row.row_version,
-    credentialGeneration: row.credential_generation,
-    lifecycleGeneration: row.lifecycle_generation,
-    releaseId: row.release_id,
-    downloadToken: row.download_token,
-    linkGeneration: row.link_generation,
-  });
+  return deps.removePassFromUser(ctx, passId, userId, sessionId, sourceOf(userId, row));
 }
 
 export async function getMyRemoval(ctx: ServiceContext, userId: string, transferId: string) {

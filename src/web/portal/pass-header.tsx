@@ -60,6 +60,7 @@ export function PassHeader({ pass, view, state = 'active' }: PassHeaderProps) {
             <PassMoreMenu
               page
               passId={pass.id}
+              help={!off}
               passTitle={passName(pass)}
               inWallet={pass.inWallet}
               publicUrl={off ? null : publicUrlOf(pass.downloadUrl)}
