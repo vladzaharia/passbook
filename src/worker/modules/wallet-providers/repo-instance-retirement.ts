@@ -152,14 +152,13 @@ export function listRetirementsReady(
       AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
       AND ${retirementProjectionSql('i')}
       AND (i.provider != 'samsung' OR ${samsungRetirementProjectionSql('i')})
-      AND (? IS NULL OR i.id > ?) ORDER BY i.id LIMIT ?`,
+      ${afterId === null ? '' : 'AND i.id > ?'} ORDER BY i.id LIMIT ?`,
     [
       now,
       credentialKeysetCommitment,
       credentialKeysetCommitment,
       credentialKeysetCommitment,
-      afterId,
-      afterId,
+      ...(afterId === null ? [] : [afterId]),
       limit,
     ],
   );
