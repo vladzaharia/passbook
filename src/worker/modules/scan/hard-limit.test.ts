@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { ACCESS, accessTemplate, makeZone, uid } from './access-test-fixtures.ts';
 import { kit, setupActionFixture } from './act-test-fixtures.ts';
 import { scanAt, trackedZone } from './occupancy-scan-test-fixtures.ts';
@@ -140,5 +140,28 @@ describe('an event Hard limit', () => {
 
   it('offers nothing with it', async () => {
     expect(await fullEvent(true)).toMatchObject({ reason: 'capacity_full', overridable: false });
+  });
+});
+
+describe('an event Hard limit is part of its configuration epoch', () => {
+  it('bumps config_epoch when it changes, and not when it is set to what it was', async () => {
+    const event = await kit.event({
+      templateIds: [await kit.scanTemplate('Epoch', { actions: [] })],
+    });
+    const epoch = async () =>
+      (
+        await first<{ config_epoch: number }>(
+          kit.env.DB,
+          'SELECT config_epoch FROM scan_events WHERE id = ?',
+          [event.id],
+        )
+      )?.config_epoch ?? 0;
+    const before = await epoch();
+    await run(kit.env.DB, 'UPDATE scan_events SET hard_limit = 1 WHERE id = ?', [event.id]);
+    expect(await epoch()).toBe(before + 1);
+    await run(kit.env.DB, 'UPDATE scan_events SET hard_limit = 1 WHERE id = ?', [event.id]);
+    expect(await epoch()).toBe(before + 1);
+    await run(kit.env.DB, 'UPDATE scan_events SET hard_limit = 0 WHERE id = ?', [event.id]);
+    expect(await epoch()).toBe(before + 2);
   });
 });

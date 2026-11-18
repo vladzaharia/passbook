@@ -21,7 +21,9 @@ export type OccZone = Pick<
   Partial<Pick<ZoneRow, 'hardLimit'>>;
 
 /** A zone as the plan read it; the statement re-checks it in the batch. */
-export type ZoneFence = Pick<OccZone, 'id' | 'occupancy' | 'parentId' | 'archivedAt'>;
+export type ZoneFence = Pick<OccZone, 'id' | 'occupancy' | 'parentId' | 'archivedAt'> & {
+  hardLimit: boolean;
+};
 
 export const zonePlace = (id: string) => `zone:${id}`;
 export const eventPlace = (id: string) => `event:${id}`;
@@ -134,11 +136,12 @@ export function entryPlan(
     parent: parent && !waivers.parent ? zonePlace(parent.id) : null,
     implied: implied.map(step),
     below: belowOf(zones, zoneId),
-    zones: all.map(({ id, occupancy, parentId, archivedAt }) => ({
+    zones: all.map(({ id, occupancy, parentId, archivedAt, hardLimit }) => ({
       id,
       occupancy,
       parentId,
       archivedAt,
+      hardLimit: hardLimit === true,
     })),
   };
 }

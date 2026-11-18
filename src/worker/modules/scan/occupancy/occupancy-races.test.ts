@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { run } from '../../../platform/db.ts';
 import { occupancyKit } from './occupancy-test-fixtures.ts';
 
 /** SA §20.15 races: D1 runs batches one after another, and every rule is inside the statement. */
@@ -100,5 +101,19 @@ describe('occupancy races', () => {
     const q = await k.pass();
     await k.enter(q, 'club', { waivers: { cap: true } });
     expect((await k.enter(q, 'pool')).ok).toBe(true);
+  });
+
+  it('a Hard limit set after the read stops the admission, even an override of Full', async () => {
+    const k = await occupancyKit('hard-race');
+    await k.zone('pool', { capacity: 1 });
+    expect((await k.enter(await k.pass(), 'pool')).ok).toBe(true);
+    const waived = await k.planEntry(await k.pass(), 'pool', { waivers: { cap: true } });
+    const plain = await k.planEntry(await k.pass(), 'pool');
+    await run(k.db, 'UPDATE scan_zones SET hard_limit = 1 WHERE id = ?', [k.idOf('pool')]);
+    for (const commit of [waived, plain]) {
+      const res = await commit().catch(() => ({ ok: false }));
+      expect(res.ok).toBe(false);
+    }
+    expect(await k.inside('pool')).toBe(1);
   });
 });
