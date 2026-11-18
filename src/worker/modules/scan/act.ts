@@ -78,13 +78,17 @@ export async function act(
     let req: ActRequest;
     if ('tag' in request.input) {
       if (!tag) throw staleScanAuthority();
-      // A replayed scan answers with its stored pass (none for a refused tag), whatever the tag reads now.
+      // A finished scan replays with its stored pass (none for a refused tag), whatever the tag reads
+      // now. A claim that did not finish is retried on the pass the tag chooses now.
       const replayed = replayScanFromResult(initial[0]);
-      const chosen = replayed
-        ? { actor, input: { passId: replayed.passId ?? '', method: 'nfc' as const } }
-        : await tag.choose(initial.slice(4));
+      const chosen =
+        replayed?.state === 'done'
+          ? { actor, input: { passId: replayed.passId ?? '', method: 'nfc' as const } }
+          : await tag.choose(initial.slice(4));
       if (!('input' in chosen))
-        return await recordTagStop(ctx, actor, request, hash, captured, chosen);
+        return replayed
+          ? unknownOutcome(captured)
+          : await recordTagStop(ctx, actor, request, hash, captured, chosen);
       actor = chosen.actor;
       req = { ...request, input: chosen.input };
     } else req = { ...request, input: request.input };

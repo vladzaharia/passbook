@@ -47,6 +47,28 @@ describe('a user-bound tag at an In/Out door', () => {
   });
 });
 
+describe('a user-bound tag at an In door', () => {
+  it('answers with the pass already inside and never admits a second pass', async () => {
+    const access = await accessTemplate();
+    const gym = await trackedZone({ occupancy: 'enforce' });
+    const door = await zoneDoor(access, [gym]);
+    const user = await holder();
+    const a = await ownedPass(access, user, { plan: 'gold' });
+    kit.clock.advance(1);
+    const b = await ownedPass(access, user, { plan: 'gold' });
+    const uid = nextUid();
+    await bindTag(uid, a, { userId: user });
+    const entry = await actTag(door.headers, uid, { actionId: 'check_in' });
+    expect(entry.kind).toBe('ok');
+    expect(await passOf(entry.scanId)).toBe(a.id);
+    kit.clock.advance(10 * MINUTE);
+    const again = await actTag(door.headers, uid, { actionId: 'check_in' });
+    expect(again).toMatchObject({ kind: 'heads_up', reason: 'still_inside' });
+    expect(await passOf(again.scanId)).toBe(a.id);
+    expect(await placeRow(b.id, gym)).toBeNull();
+  });
+});
+
 describe('tag round trips (design §4.3)', () => {
   const trips = async (work: () => Promise<unknown>) =>
     (await tripsFrom(kit.env, /FROM scans|nfc_tags/, work)).trips;
@@ -79,7 +101,10 @@ describe('tag round trips (design §4.3)', () => {
 
 describe('live rows', () => {
   it('carry no tag data and never reach a customer screen', async () => {
-    const scanner = await kit.scanner({ templateIds: [tpl] });
+    const scanner = await kit.scanner({
+      templateIds: [tpl],
+      settings: { roleWithoutSignIn: 'desk' },
+    });
     await kit.scanner({ deviceRole: 'monitor' });
     const pass = await kit.scanPass(tpl);
     const uid = nextUid();

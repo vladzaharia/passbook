@@ -52,8 +52,8 @@ describe('a user-bound tag picks one pass', () => {
     await bindTag(uid, offPeak, { userId: user });
     kit.clock.set(TEST_NOW + 6 * HOUR); // Monday 18:00: off-peak is closed.
     const done = await actTag(door.headers, uid);
-    expect(done).toMatchObject({ kind: 'ok', tag: { scope: 'user', count: 2 } });
-    expect(done.tag?.passes).toBeUndefined(); // A door sees the flag only.
+    expect(done.kind).toBe('ok');
+    expect(done.tag).toBeUndefined(); // A Door never sees tag data (§7.2).
     expect(await passOf(done.scanId)).toBe(gold.id);
   });
 
@@ -72,7 +72,7 @@ describe('a user-bound tag picks one pass', () => {
   });
 
   it('reads only the user’s live passes in this org and mode', async () => {
-    const scanner = await kit.scanner({ templateIds: [tpl] });
+    const scanner = await desk();
     const user = await makeUser(kit.fx);
     const anchor = await ownedPass(tpl, user.id);
     // Waiting: an address the account has not verified, so the pass is not attached.
@@ -154,6 +154,25 @@ describe('a user-bound tag picks one pass', () => {
     await setPass(kit, a.id, "status = 'voided'", []);
     const again = await actTag(scanner.headers, uid, { idempotencyKey });
     expect(again).toMatchObject({ replay: true, scanId: once.scanId });
+  });
+
+  it('retries an unfinished claim on the pass the tag chooses, not an empty one', async () => {
+    const scanner = await kit.scanner({ templateIds: [tpl] });
+    const { a, uid } = await twoPasses();
+    const idempotencyKey = key();
+    const { result: failed, fired } = await beforeBatch(
+      kit.env,
+      /INSERT INTO scan_gates/,
+      async () => {
+        throw new Error('transient D1 failure');
+      },
+      () => act(scanner.headers, tagInput(uid), { idempotencyKey }),
+    );
+    expect(fired).toBe(true);
+    expect(failed.status).toBe(500);
+    const retried = await actTag(scanner.headers, uid, { idempotencyKey });
+    expect(retried.kind).toBe('ok');
+    expect(await passOf(retried.scanId)).toBe(a.id);
   });
 
   it('refuses a pass transferred after the resolve', async () => {

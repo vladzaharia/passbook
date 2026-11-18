@@ -93,10 +93,16 @@ describe('a tag read: step 3', () => {
     await tagsOn();
 
     const random = await resolveCode(scanner.headers, {
-      tag: { uid: '08a1b2c3', uidRandom: true, tech: 'a', source: 'native' },
+      tag: { uid: '04a1b2c3', uidRandom: true, tech: 'a', source: 'native' },
       method: 'nfc',
     });
     expect(random).toMatchObject({ reason: 'tag_invalid' });
+    // A 4-byte UID starting 08 is random per session, whatever the reader says.
+    const session = await resolveCode(scanner.headers, {
+      tag: { uid: '08a1b2c3', tech: 'a', source: 'native' },
+      method: 'nfc',
+    });
+    expect(session).toMatchObject({ reason: 'tag_invalid' });
   });
 
   it('keeps a pass code in the NDEF of an unknown tag on the code path', async () => {
@@ -207,7 +213,10 @@ describe('a refused tag read at act', () => {
 
 describe('a pass-bound tag', () => {
   it('gives the pass its own answer, checks in by tag and records the tag', async () => {
-    const scanner = await kit.scanner({ templateIds: [tpl] });
+    const scanner = await kit.scanner({
+      templateIds: [tpl],
+      settings: { roleWithoutSignIn: 'desk' },
+    });
     const pass = await kit.scanPass(tpl);
     const uid = nextUid();
     const { tagId } = await bindTag(uid, pass);
@@ -220,6 +229,10 @@ describe('a pass-bound tag', () => {
       scope: 'pass',
     });
     expect(same(rest as typeof byTag)).toEqual(same(byCode));
+
+    // A Door never sees tag data.
+    const door = await kit.scanner({ templateIds: [tpl] });
+    expect((await resolveTag(door.headers, uid)).tag).toBeUndefined();
 
     const done = await actTag(scanner.headers, uid);
     expect(done).toMatchObject({ kind: 'ok', tag: { scope: 'pass' } });
@@ -252,7 +265,10 @@ describe('a pass-bound tag', () => {
 
 describe('a user-bound tag', () => {
   it('checks in with a second pass when the first is refused', async () => {
-    const scanner = await kit.scanner({ templateIds: [tpl] });
+    const scanner = await kit.scanner({
+      templateIds: [tpl],
+      settings: { roleWithoutSignIn: 'desk' },
+    });
     const user = await holder();
     const first = await ownedPass(tpl, user);
     kit.clock.advance(1);

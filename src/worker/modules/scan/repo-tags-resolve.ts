@@ -173,6 +173,7 @@ export function tagBindingCheck(tag: ScanTagAuthority): Check {
           AND t.status = 'active' AND t.lost_at IS NULL AND ${tenantMatch('nfc_tags', 't', scope)}
           AND tp.org_id = t.org_id AND tp.mode = t.mode AND tp.deleted_at IS NULL
           AND (tb.scope = 'pass' AND tb.pass_id = tp.id
+              AND tp.credential_generation = tb.holder_generation AND tp.owner_user_id IS tb.holder_owner
             OR tb.scope = 'user' AND tp.owner_user_id = tb.user_id
               AND EXISTS (SELECT 1 FROM users tu WHERE tu.id = tb.user_id AND tu.status = 'active')))`,
   };

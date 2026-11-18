@@ -1,7 +1,7 @@
 import type { ScanTag, TagRead } from '../../../shared/contracts/nfc-tags.ts';
 import type { ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { tagRef } from '../nfc/tag-ref.ts';
+import { readableUid, tagRef } from '../nfc/tag-ref.ts';
 import { isGuestPass } from './access.ts';
 import type { ScanActor, ScanTagAuthority } from './actor.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
@@ -25,9 +25,10 @@ import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
 /** At most this many of a user's passes are evaluated for one tag read (design §3.5). */
 const EVALUATED = 4;
 
-/** Step 1: a UID is a tag; a read with only NDEF text is a pass code on today's path. */
+/** Step 1: a fixed UID is a tag; a read with only NDEF text is a pass code on today's path. */
 export function tagReadOf(read: TagRead): { uid: string } | { code: string } | null {
-  if (read.uid && read.uidRandom !== true) return { uid: read.uid.toLowerCase() };
+  const uid = readableUid(read);
+  if (uid) return { uid };
   if (read.ndef) return { code: read.ndef.value };
   return null;
 }
@@ -64,16 +65,15 @@ export async function planTagReads(
     tagRef(ctx.env, actor.orgId, other, uid),
   ]);
   const sessionId = actor.scanningSession?.id;
-  const exiting = actor.settings.direction === 'out' || actor.settings.direction === 'both';
   const stmts = [
     tagsSwitchStmt(db, actor.orgId),
     tagStateStmt(db, actor.orgId, actor.mode, own.ref),
     otherModeTagStmt(db, actor.orgId, other, otherRef.ref),
     tagCandidatesStmt(db, actor.orgId, actor.mode, own.ref),
   ];
-  const insideAt = sessionId && exiting ? stmts.length : -1;
-  if (sessionId && exiting)
-    stmts.push(tagInsideStmt(db, actor.orgId, actor.mode, own.ref, sessionId));
+  // Read on every door with tracked zones: an exit prefers the pass inside, an entry stops at it.
+  const insideAt = sessionId ? stmts.length : -1;
+  if (sessionId) stmts.push(tagInsideStmt(db, actor.orgId, actor.mode, own.ref, sessionId));
   const overrideAt = overrideOf ? stmts.length : -1;
   if (overrideOf) stmts.push(overriddenPassStmt(db, actor.orgId, actor.mode, overrideOf));
   return {
@@ -121,7 +121,7 @@ export async function planTagReads(
   };
 }
 
-/** Step 5: inside first on an exit, active, members before guests, the anchor, oldest, id. */
+/** Step 5: inside first, active, members before guests, the anchor, oldest, id. */
 function ordered(found: Extract<TagFound, { stop: null }>, list: Candidate[]): Candidate[] {
   const rank = (c: Candidate) => [
     found.inside.has(c.pass.id) ? 0 : 1,
@@ -141,7 +141,8 @@ function ordered(found: Extract<TagFound, { stop: null }>, list: Candidate[]): C
 export interface TagChoice {
   chosen: Candidate;
   actor: ScanActor;
-  view: ScanTag;
+  /** Desk and Manager only: a Door and customer screens never show tag data (§7.2). */
+  view: ScanTag | null;
 }
 
 /**
@@ -166,10 +167,13 @@ export async function chooseTagPass(
       userId: tag.binding.userId,
       passId: chosen.pass.id,
     };
-    const view: ScanTag = { hint: tag.hint, assurance: 'basic', scope: tag.binding.scope };
-    if (tag.binding.scope === 'user') {
+    const desk = actor.role === 'desk' || actor.role === 'manager';
+    const view: ScanTag | null = desk
+      ? { hint: tag.hint, assurance: 'basic', scope: tag.binding.scope }
+      : null;
+    if (view && tag.binding.scope === 'user') {
       view.count = all.length;
-      if (passes && actor.role !== null && actor.role !== 'door') view.passes = passes;
+      if (passes) view.passes = passes;
     }
     return { chosen, actor: { ...actor, tag: authority }, view };
   };
@@ -184,8 +188,11 @@ export async function chooseTagPass(
   const taken = all.filter((c) => accepts(actor, c.pass));
   const matched = taken.filter((c) => matchesEvent(actor, c.pass));
   // None here: the first pass gives today's not_accepted or wrong_event.
-  const tried = ordered(found, matched);
-  if (!tried.length) return choice(taken[0] ?? first);
+  const ordering = ordered(found, matched);
+  if (!ordering.length) return choice(taken[0] ?? first);
+  // One fob is one person: a pass already inside answers alone, so a second pass never admits again.
+  const inside = ordering[0] && found.inside.has(ordering[0].pass.id);
+  const tried = inside ? ordering.slice(0, 1) : ordering;
   const verdicts = new Map<
     string,
     { kind: 'ok' | 'heads_up' | 'refused'; reason: string | null }
