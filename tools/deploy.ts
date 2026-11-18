@@ -25,7 +25,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { resolve } from 'node:path';
-import { macKeyProblems } from '../src/worker/platform/mac-key-config.ts';
+import { keyRingProblems } from '../src/worker/platform/mac-key-config.ts';
 import {
   activeMissingHeads,
   runbookSql,
@@ -85,14 +85,17 @@ const checkSecrets = () => {
     console.error(`Not migrating. Set with wrangler secret put: ${missing.join(', ')}`);
     process.exit(1);
   }
-  const keks = secretNames(listed).flatMap((name) => {
-    const match = /^KEK_V(\d+)$/.exec(name);
-    return match ? [Number(match[1])] : [];
+  const versions = (prefix: string) =>
+    secretNames(listed).flatMap((name) => {
+      const match = new RegExp(`^${prefix}_V([1-9]\\d*)$`).exec(name);
+      return match ? [Number(match[1])] : [];
+    });
+  const macProblems = keyRingProblems({
+    kek: versions('KEK'),
+    macRoot: versions('MAC_ROOT'),
+    pin: config.vars?.MAC_KEY_VERSION,
+    previous: config.vars?.MAC_KEY_VERSION_PREVIOUS,
   });
-  const macProblems = macKeyProblems(
-    { pin: config.vars?.MAC_KEY_VERSION, previous: config.vars?.MAC_KEY_VERSION_PREVIOUS },
-    keks,
-  );
   if (macProblems.length > 0) {
     console.error(`Not migrating:\n${macProblems.map((p) => `- ${p}`).join('\n')}`);
     process.exit(1);
@@ -209,7 +212,7 @@ async function waitForBakedSync(): Promise<void> {
         .map((m) => `- ${m.id} (${m.origin}, org ${m.org_id}): ${m.passes} passes`)
         .join(
           '\n',
-        )}\nThese templates cannot issue new passes until this clears; existing passes keep scanning. See docs/operations.md, "If a step fails". Roll forward; do not roll back.`,
+        )}\nThese templates cannot issue new passes until this clears; existing passes keep scanning. See docs/operations.md, "Baked sync wait". Roll forward; do not roll back.`,
     );
     process.exit(1);
   }

@@ -7,6 +7,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantPassAuthorityValid } from '../passes/repo-authority.ts';
 import type { ScanActor } from './actor.ts';
+import { apiKeyRefusal } from './guard-api-key.ts';
 import { staffEpochStmt } from './repo-authority-capture.ts';
 import { getScanner, scannerEpochsOf } from './repo-device.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
@@ -60,8 +61,12 @@ export async function staleScanRead(ctx: ServiceContext, actor: ScanActor): Prom
   if (actor.principal === 'admin') {
     const lost = await adminAccessLost(ctx, actor);
     if (lost) return lost;
-  } else if (await scannerCredentialLost(ctx, actor))
-    return new UnauthenticatedError('Pair this device again.', 'SCANNER_REPAIR');
+  } else {
+    const keyLost = await apiKeyRefusal(ctx, actor);
+    if (keyLost) return keyLost;
+    if (await scannerCredentialLost(ctx, actor))
+      return new UnauthenticatedError('Pair this device again.', 'SCANNER_REPAIR');
+  }
   if (await staffChanged(ctx, actor))
     return new ConflictError('Staff access changed. Sign in again.', 'SCAN_STAFF_CHANGED');
   return new ConflictError('Configuration changed. Reload and retry.', 'SCAN_CONFIG_CHANGED');

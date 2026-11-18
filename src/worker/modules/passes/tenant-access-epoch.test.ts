@@ -128,15 +128,11 @@ describe('access epoch: org edits do not move it', () => {
     expect(await valid(captured)).toBe(false);
   });
 
-  it('accepts work queued before cutover (a persisted updated_at in ms) while the org is active', async () => {
+  it('refuses a revision that is not the org access revision, a pre-cutover updated_at included', async () => {
     const authority = await sessionAuthority();
     if (authority.kind !== 'session') throw new Error('expected session authority');
-    const legacy = { ...authority, orgAccessRevision: kit.clock.now() };
-    expect(await valid(legacy)).toBe(true);
-    // A small wrong revision is still refused: only the ms-sized legacy shape is relaxed.
+    expect(await valid(authority)).toBe(true);
+    expect(await valid({ ...authority, orgAccessRevision: kit.clock.now() })).toBe(false);
     expect(await valid({ ...authority, orgAccessRevision: 999 })).toBe(false);
-    await runOne(kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [kit.org.id]);
-    expect(await valid(legacy)).toBe(false);
-    await runOne(kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [kit.org.id]);
   });
 });

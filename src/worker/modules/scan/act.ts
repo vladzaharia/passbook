@@ -17,6 +17,7 @@ import {
   credentialTombstoneRefsForInput,
 } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
+import { refuseKeyApproval } from './guard-api-key.ts';
 import { notAcceptedOutcome, unknownOutcome } from './outcome.ts';
 import { replayScanByKeyStmt, replayScanFromResult } from './repo-act-authority.ts';
 import { credentialTombstonesClearStmt } from './repo-credential-tombstones.ts';
@@ -34,6 +35,7 @@ export async function act(
   req: ActRequest,
 ): Promise<ScanEvaluation> {
   ctx = capturingContext(ctx);
+  refuseKeyApproval(actor, req);
   if (req.approval && !req.approval.staffId && actor.settings.staffSignIn)
     throw new ValidationError('Choose the manager.', [], 'PIN_MANAGER_REQUIRED');
   let credentials: CredentialTombstoneSnapshot | null = null;

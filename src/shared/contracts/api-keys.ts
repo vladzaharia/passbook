@@ -41,11 +41,9 @@ export const ApiKeyListSchema = pageOf(ApiKeySchema).extend({
 export const CreateApiKeySchema = z.object({
   orgId: IdSchema.nullable(),
   name: z.string().min(1).max(120),
-  /** `scans:write` is refused until the POS package honours it. */
-  scopes: z
-    .array(ApiScopeSchema)
-    .min(1)
-    .refine((scopes) => !scopes.includes('scans:write'), 'The scan scope is not available yet.'),
+  scopes: z.array(ApiScopeSchema).min(1),
+  /** The terminals a `scans:write` key acts as, fixed for the key's life: at least one with that scope, none without. */
+  terminalIds: z.array(IdSchema).max(20).optional(),
   mode: ModeSchema.default('live'),
   expiresAt: TimestampSchema.nullable().optional(),
 });

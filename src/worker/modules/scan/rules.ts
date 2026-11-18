@@ -28,12 +28,15 @@ export interface PolicyActor {
   terminal: boolean;
   actorKey: string;
   staffId: string | null;
+  /** The API key acting as this terminal; its scans and the terminal's own are not each other's. */
+  apiKeyId?: string | null;
   settings: Pick<ScannerSettings, 'lookup' | 'letInAgain'>;
 }
 
 export interface UndoTarget {
   actorKey: string;
   staffId: string | null;
+  apiKeyId?: string | null;
   at: number;
   /** Written on this scanner, in the scanner's local day. Always false for admin-made lookups. */
   sameScannerToday: boolean;
@@ -112,6 +115,7 @@ export function scanPolicy(
       const { scan, now } = request;
       const own =
         scan.actorKey === actor.actorKey &&
+        (scan.apiKeyId ?? null) === (actor.apiKeyId ?? null) &&
         (actor.staffId === null || scan.staffId === actor.staffId);
       if (own && now - scan.at <= request.undoWindowMinutes * 60_000) return ALLOW;
       // Past the window an own scan is judged like anyone's.

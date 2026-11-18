@@ -2,6 +2,7 @@ import {
   type InfiniteData,
   useInfiniteQuery,
   useMutation,
+  useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
 import type { z } from 'zod';
@@ -11,6 +12,8 @@ import {
   type CreateApiKeySchema,
   CreatedApiKeySchema,
 } from '@/shared/contracts/api-keys.ts';
+import { pageOf } from '@/shared/contracts/common.ts';
+import { ScannerKindSchema, ScannerSchema } from '@/shared/contracts/scanners.ts';
 import { api } from '@/web/lib/api.ts';
 
 export type ApiKey = z.infer<typeof ApiKeySchema>;
@@ -96,3 +99,22 @@ export const SCOPE_LABEL: Record<string, string> = {
   'connections:read': 'Read connections',
   'connections:write': 'Create and update connections',
 };
+
+const TerminalListSchema = pageOf(
+  ScannerSchema.pick({ id: true, name: true, status: true }).extend({ kind: ScannerKindSchema }),
+);
+
+/** The org's terminals in service: the only devices a scan key can act as. */
+export function useTerminals(orgId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: [...KEYS, 'terminals', orgId],
+    enabled: enabled && orgId !== null,
+    queryFn: async ({ signal }) => {
+      const page = await api.get('/api/v1/scanners', TerminalListSchema, {
+        query: { orgId: orgId ?? undefined, limit: 100 },
+        signal,
+      });
+      return page.items.filter((s) => s.kind === 'terminal' && s.status !== 'revoked');
+    },
+  });
+}

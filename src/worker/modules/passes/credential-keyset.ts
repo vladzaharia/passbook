@@ -1,6 +1,8 @@
 import { derivedHmacKey, isKeyEnvName } from '../../platform/crypto.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import { toHex } from '../../platform/ids.ts';
+import { EVIDENCE_ROOT } from '../../platform/mac-key-config.ts';
+import { macRootVersions } from '../../platform/mac-roots.ts';
 import {
   initializeCredentialRefKeyset,
   initializeKeysetWith,
@@ -24,10 +26,14 @@ export async function credentialRefKeysetCommitment(env: object): Promise<string
   try {
     key = await derivedHmacKey(env, 'pass-credential-tombstone-v1');
   } catch {
-    throw new UnavailableError(
-      'Credential references are unavailable.',
-      'CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE',
-    );
+    // Some KEK is set but root 1 is not (removed, no MAC_ROOT_V1): the commitment cannot match, which is
+    // the keyset's own refusal. No key at all is a configuration fault.
+    throw macRootVersions(env).length > 0 && !macRootVersions(env).includes(EVIDENCE_ROOT)
+      ? unavailable()
+      : new UnavailableError(
+          'Credential references are unavailable.',
+          'CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE',
+        );
   }
   const message = encoder.encode('pass-credential-ref-keyset-v1');
   return toHex(new Uint8Array(await crypto.subtle.sign('HMAC', key, message)));

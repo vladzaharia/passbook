@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   fixtures,
-  linkToken,
   makeOrg,
   makePass,
   makeSession,
@@ -211,8 +210,8 @@ describe('passes', () => {
       orgName: 'Acme',
       status: 'active',
       passJson: { description: 'Hello' },
-      downloadUrl: `https://passbook.mobile/p/${await linkToken(h.env, mine)}/pass.pkpass`,
-      assetBaseUrl: `https://passbook.mobile/p/${await linkToken(h.env, mine)}/assets/`,
+      downloadUrl: `https://passbook.mobile/p/${mine.downloadToken}/pass.pkpass`,
+      assetBaseUrl: `https://passbook.mobile/p/${mine.downloadToken}/assets/`,
     });
     expect(user.id).toBeTruthy();
   });

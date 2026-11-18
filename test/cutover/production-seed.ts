@@ -124,14 +124,11 @@ export async function seedProduction(db: D1Database, bucket: R2Bucket, legacy: L
   add(`INSERT INTO broadcast_items (broadcast_id, pass_id, outcome, silent) VALUES
     ('bc-sent', 'prod-live-1', 'updated', 0), ('bc-sent', 'prod-live-2', 'failed', 1)`);
 
-  // Scanning sessions and a device (the admin console's model); the old config-revision claim.
+  // Scanning sessions and a device (the admin console's model).
   add(`INSERT INTO scanning_sessions (id, org_id, mode, name, status, accepts, settings, time_zone, created_at, updated_at, created_by)
     VALUES ('ss-1', 'org-a', 'live', 'Front door', 'active', '{"templates":["up-active"]}', '{"flow":"auto"}', 'UTC', ${AT}, ${AT}, 'u-owner')`);
   add(`INSERT INTO scanning_devices (scanner_id, session_id, org_id, mode, surface, effective_surface, overrides, device_key)
     VALUES ('sc-uploaded-active', 'ss-1', 'org-a', 'live', 'auto', 'phone', '{"sound":false}', 'dk-1')`);
-  add(
-    `INSERT INTO scanning_config_revisions (kind, target_id, revision) VALUES ('session', 'ss-1', 1), ('device', 'sc-uploaded-active', 1)`,
-  );
 
   add(`INSERT INTO scanners (id, org_id, mode, kind, device_role, name, settings, time_zone, created_at, updated_at)
     VALUES ('sc-test', 'org-a', 'test', 'device', 'scan', 'Test door', '{}', 'UTC', ${AT}, ${AT})`);

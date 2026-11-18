@@ -25,6 +25,7 @@ export const policyActor = (actor: ScanActor) => ({
   terminal: actor.terminal,
   actorKey: actor.actorKey,
   staffId: actor.staff?.id ?? null,
+  apiKeyId: actor.apiKeyId ?? null,
   settings: actor.settings,
 });
 

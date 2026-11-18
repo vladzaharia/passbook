@@ -4,7 +4,7 @@ import type { ScanEventRow } from './repo-scope.ts';
 import { type ScanStaffRow, type StaffRaw, staffStatement, toStaff } from './repo-staff.ts';
 import type { UndoGate, UndoPresence } from './repo-undo.ts';
 
-const COLUMNS = `id, org_id, mode, pass_id, template_id, scanner_id, event_id, actor_key, staff_id, request_hash,
+const COLUMNS = `id, org_id, mode, pass_id, template_id, scanner_id, event_id, actor_key, staff_id, api_key_id, request_hash,
   state, outcome, reason, action_id, action_kind, override_of, approved_by, pass_version, method, at, undone_by, direction, presence_scope`;
 
 export interface UndoRead {
@@ -82,7 +82,7 @@ export async function readUndo(
     exactStmt(
       db,
       `SELECT p.state,p.tracking,p.entered_at,p.first_at,p.last_entry_at,p.prev_state,p.prev_tracking,
-         p.prev_entered_at,p.prev_first_at,p.prev_last_entry_at,p.prev_scan_id
+         p.prev_entered_at,p.prev_first_at,p.prev_last_entry_at,p.prev_scan_id,p.prev_seq
        FROM scans q JOIN scan_presence p ON p.org_id = q.org_id AND p.pass_id = q.pass_id
          AND p.scope = q.presence_scope AND p.last_scan_id = q.id
        WHERE q.id = ? AND q.org_id = ?`,

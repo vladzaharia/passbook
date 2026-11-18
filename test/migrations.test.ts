@@ -13,6 +13,8 @@ import {
   makeTemplate,
   makeUser,
   persistTemplate,
+  withoutAuthTokenGuards,
+  withoutTrigger,
 } from './helpers/index.ts';
 
 const TABLES = [
@@ -865,6 +867,144 @@ describe('0052 scanning_devices REPLACE guard', () => {
   });
 });
 
+describe('0070 post-cutover', () => {
+  async function onePass() {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const pass = await makePass(f, {
+      orgId: org.id,
+      template: makeTemplate({ id: `tpl-0070-${f.ids.id()}` }).resolved,
+    });
+    return pass;
+  }
+  const names = async (type: string) =>
+    (
+      await all<{ name: string }>(env.DB, 'SELECT name FROM sqlite_master WHERE type = ?', [type])
+    ).map((row) => row.name);
+
+  it('drops scanning_config_revisions and the seal sweep indexes', async () => {
+    expect(await names('table')).not.toContain('scanning_config_revisions');
+    const indexes = await names('index');
+    for (const name of [
+      'passes_token_plain',
+      'passes_auth_plain',
+      'bundles_token_plain',
+      'pass_versions_auth_plain',
+    ])
+      expect(indexes, name).not.toContain(name);
+  });
+
+  it('refuses a plain token on update, whatever else the write moves', async () => {
+    const pass = await onePass();
+    const refused =
+      /must be a MAC|must move link_generation|credential transfer required|credential generation bump/;
+    for (const set of [
+      "download_token = 'plain'",
+      "download_token = 'plain', link_generation = link_generation + 1",
+      "auth_token = 'plain'",
+      "auth_token = 'plain', credential_generation = credential_generation + 1",
+    ])
+      await expect(
+        run(env.DB, `UPDATE passes SET ${set} WHERE id = ?`, [pass.id]),
+        set,
+      ).rejects.toThrow(refused);
+    await expect(
+      run(
+        env.DB,
+        "UPDATE passes SET download_token = 'plain', link_generation = link_generation + 1 WHERE id = ?",
+        [pass.id],
+      ),
+    ).rejects.toThrow(/download_token must be a MAC/);
+    const stored = await first<{ download_token: string; auth_token: string }>(
+      env.DB,
+      'SELECT download_token, auth_token FROM passes WHERE id = ?',
+      [pass.id],
+    );
+    expect(stored?.download_token.startsWith('h1:')).toBe(true);
+    expect(stored?.auth_token.startsWith('h1:')).toBe(true);
+  });
+
+  it('no longer lets a MAC replace a plain value without moving the link', async () => {
+    const pass = await onePass();
+    // A row as it was before the seal sweep: only reachable by dropping the plain-value guard.
+    await withoutTrigger(env.DB, 'passes_token_is_mac_update', () =>
+      run(
+        env.DB,
+        `UPDATE passes SET download_token = 'plain-download', download_token_rotated_at = 1,
+         link_generation = link_generation + 1 WHERE id = ?`,
+        [pass.id],
+      ),
+    );
+    await expect(
+      run(env.DB, "UPDATE passes SET download_token = 'h1:sealed' WHERE id = ?", [pass.id]),
+    ).rejects.toThrow(/a token change must move link_generation/);
+    await run(
+      env.DB,
+      "UPDATE passes SET download_token = 'h1:restored', link_generation = link_generation + 1 WHERE id = ?",
+      [pass.id],
+    );
+  });
+
+  it('no longer lets a MAC replace a plain device token outside a transfer', async () => {
+    const pass = await onePass();
+    const original = await first<{ auth_token: string }>(
+      env.DB,
+      'SELECT auth_token FROM passes WHERE id = ?',
+      [pass.id],
+    );
+    // A row as it was before the seal sweep: only reachable with the guards dropped.
+    await withoutTrigger(env.DB, 'passes_auth_token_is_mac_update', () =>
+      withoutAuthTokenGuards(env.DB, () =>
+        run(env.DB, "UPDATE passes SET auth_token = 'plain-device' WHERE id = ?", [pass.id]),
+      ),
+    );
+    await expect(
+      run(env.DB, "UPDATE passes SET auth_token = 'h1:sealed' WHERE id = ?", [pass.id]),
+    ).rejects.toThrow(/credential transfer required|credential generation bump/);
+    await withoutAuthTokenGuards(env.DB, () =>
+      run(env.DB, 'UPDATE passes SET auth_token = ? WHERE id = ?', [
+        original?.auth_token ?? '',
+        pass.id,
+      ]),
+    );
+  });
+
+  it('keeps no plain-to-MAC branch in any trigger', async () => {
+    const triggers = await all<{ name: string; sql: string }>(
+      env.DB,
+      "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND sql LIKE '%h1:%'",
+    );
+    expect(triggers.length).toBeGreaterThan(0);
+    for (const trigger of triggers)
+      expect(trigger.sql, trigger.name).not.toMatch(/OLD\.\w+ NOT GLOB 'h1:\*' AND NEW\.\w+ GLOB/);
+  });
+
+  it('still lets a mark name the MAC that replaces a MAC, without a pass change', async () => {
+    const pass = await onePass();
+    const before = await first<{ row_version: number; link_generation: number }>(
+      env.DB,
+      'SELECT row_version, link_generation FROM passes WHERE id = ?',
+      [pass.id],
+    );
+    await env.DB.batch([
+      env.DB.prepare(
+        "INSERT INTO token_remac_marks (pass_id, kind, mac) VALUES (?, 'download', 'h1:next')",
+      ).bind(pass.id),
+      env.DB.prepare("UPDATE passes SET download_token = 'h1:next' WHERE id = ?").bind(pass.id),
+      env.DB.prepare("DELETE FROM token_remac_marks WHERE pass_id = ? AND kind = 'download'").bind(
+        pass.id,
+      ),
+    ]);
+    expect(
+      await first(
+        env.DB,
+        'SELECT row_version, link_generation, download_token FROM passes WHERE id = ?',
+        [pass.id],
+      ),
+    ).toEqual({ ...before, download_token: 'h1:next' });
+  });
+});
+
 describe('0073_scan_zones migration', () => {
   const zone = (id: string, orgId: string, extra: Record<string, unknown> = {}) => {
     const row = { id, org_id: orgId, key: id, name: id, created_at: 1, updated_at: 1, ...extra };
@@ -1018,5 +1158,127 @@ describe('0083_access_visit_start migration', () => {
       "SELECT name FROM pragma_table_info('scan_gates') WHERE pk > 0 ORDER BY pk",
     );
     expect(key.map((c) => c.name)).toEqual(['pass_id', 'action_id', 'scope']);
+  });
+});
+
+describe('0074_scan_occupancy migration', () => {
+  const scan = (orgId: string, id: string, extra: Record<string, unknown> = {}) => {
+    const row = {
+      id,
+      org_id: orgId,
+      mode: 'live',
+      actor_type: 'scanner',
+      actor_id: 'a',
+      actor_key: 'k',
+      idempotency_key: id,
+      request_hash: 'h',
+      method: 'camera',
+      at: 1,
+      ...extra,
+    };
+    const keys = Object.keys(row);
+    return run(
+      env.DB,
+      `INSERT INTO scans (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
+      Object.values(row) as (string | number | null)[],
+    );
+  };
+
+  it('checks tap-out causes and override notes', async () => {
+    const org = await makeOrg(fixtures(await makeEnv()));
+    for (const [i, extra] of [{ out_cause: 'lost' }, { override_note: 'bribe' }].entries())
+      await expect(scan(org.id, `bad-${i}`, extra), JSON.stringify(extra)).rejects.toThrow(/CHECK/);
+    await scan(org.id, 'cause', { out_cause: 'stay', override_note: 'forgot_out' });
+  });
+
+  it('keeps one live override per scan; a lost, failed or undone one frees it', async () => {
+    const org = await makeOrg(fixtures(await makeEnv()));
+    await scan(org.id, 'held', { state: 'done', outcome: 'heads_up' });
+    await scan(org.id, 'lost', { override_of: 'held', state: 'done', outcome: 'heads_up' });
+    await scan(org.id, 'failed', { override_of: 'held', state: 'failed' });
+    await scan(org.id, 'undone', {
+      override_of: 'held',
+      state: 'done',
+      outcome: 'ok',
+      undone_at: 5,
+    });
+    await scan(org.id, 'pending', { override_of: 'held' });
+    await expect(
+      scan(org.id, 'second', { override_of: 'held', state: 'done', outcome: 'ok' }),
+    ).rejects.toThrow(/UNIQUE/);
+    await run(env.DB, "UPDATE scans SET state = 'failed' WHERE id = 'pending'");
+    await scan(org.id, 'winner', { override_of: 'held', state: 'done', outcome: 'ok' });
+  });
+
+  it('fills mode for writers that name none and orders each pass write by commit', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const template = makeTemplate({ id: f.ids.id(), orgId: org.id });
+    const pass = await makePass(f, { orgId: org.id, template: template.resolved, mode: 'test' });
+    const write = (scope: string, scan: string) =>
+      run(
+        env.DB,
+        `INSERT INTO scan_presence (pass_id, org_id, scope, state, first_at, last_entry_at, last_scan_id)
+         VALUES (?, ?, ?, 'in', 1, 1, ?)
+         ON CONFLICT (pass_id, scope) DO UPDATE SET prev_scan_id = last_scan_id, last_scan_id = excluded.last_scan_id`,
+        [pass.id, org.id, scope, scan],
+      );
+    const rows = () =>
+      all<{ scope: string; mode: string; seq: number; prev_seq: number | null }>(
+        env.DB,
+        'SELECT scope, mode, seq, prev_seq FROM scan_presence WHERE pass_id = ? ORDER BY scope',
+        [pass.id],
+      );
+    await write('zone:a', 's1');
+    await write('zone:b', 's2');
+    await write('zone:a', 's3');
+    expect(await rows()).toEqual([
+      { scope: 'zone:a', mode: 'test', seq: 3, prev_seq: 1 },
+      { scope: 'zone:b', mode: 'test', seq: 2, prev_seq: null },
+    ]);
+    // A restore (no prev_scan_id) keeps the sequence the undo writes.
+    await run(
+      env.DB,
+      "UPDATE scan_presence SET last_scan_id = 's1', prev_scan_id = NULL, seq = 1, prev_seq = NULL WHERE scope = 'zone:a' AND pass_id = ?",
+      [pass.id],
+    );
+    expect((await rows())[0]).toMatchObject({ seq: 1, prev_seq: null });
+    expect(
+      await first(env.DB, "SELECT 1 AS x FROM sqlite_master WHERE name = 'scan_presence_org'"),
+    ).toBeNull();
+    // The pass decides the mode: a writer that names another one is refused, the same one is kept.
+    const named = (scope: string, mode: string) =>
+      run(
+        env.DB,
+        `INSERT INTO scan_presence (pass_id, org_id, scope, state, first_at, last_entry_at, last_scan_id, mode)
+         VALUES (?, ?, ?, 'in', 1, 1, 's9', ?)`,
+        [pass.id, org.id, scope, mode],
+      );
+    await expect(named('zone:c', 'live')).rejects.toThrow(/mode differs from its pass/);
+    await named('zone:d', 'test');
+    expect((await rows()).find((r) => r.scope === 'zone:d')?.mode).toBe('test');
+  });
+
+  it('adds due_at with a partial index and per-place revisions that cascade with the org', async () => {
+    const index = await first<{ sql: string }>(
+      env.DB,
+      "SELECT sql FROM sqlite_master WHERE name = 'scan_presence_due'",
+    );
+    expect(index?.sql).toMatch(/WHERE due_at IS NOT NULL/);
+    const org = await makeOrg(fixtures(await makeEnv()));
+    const rev = (r: number, mode = 'live') =>
+      run(env.DB, 'INSERT INTO scan_place_revs (org_id, mode, place, rev) VALUES (?, ?, ?, ?)', [
+        org.id,
+        mode,
+        `zone:${r}-${mode}`,
+        r,
+      ]);
+    await expect(rev(0)).rejects.toThrow(/CHECK/);
+    await expect(rev(1, 'demo')).rejects.toThrow(/CHECK/);
+    await rev(1);
+    await run(env.DB, 'DELETE FROM orgs WHERE id = ?', [org.id]);
+    expect(
+      await first(env.DB, 'SELECT 1 AS x FROM scan_place_revs WHERE org_id = ?', [org.id]),
+    ).toBeNull();
   });
 });

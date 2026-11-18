@@ -9,6 +9,7 @@ import { createServiceContext } from '../../src/worker/platform/service-context.
 import { makeEnv, TEST_NOW } from '../helpers/index.ts';
 import {
   dataFingerprint,
+  finishMigrations,
   type Legacy,
   legacyDatabase,
   migrateForward,
@@ -66,7 +67,10 @@ export interface Cutover {
   bootstrapSql: string;
 }
 
-/** 0024 data, then migrations 0025+, then the bootstrap, then the baked sync: the cutover in production order. */
+/**
+ * 0024 data, then migrations 0025 to 0069, then the bootstrap, then the baked sync: the cutover in production order.
+ * Then the token seal and 0070, which production ran after the promote.
+ */
 export async function runCutover(
   slot: number,
   options: { bumpStarter?: boolean; bumpStarters?: boolean; production?: boolean } = {},
@@ -140,5 +144,6 @@ export async function runCutover(
     );
     legacy.bumpedStarters = bumped.map((f) => f.template.version);
   }
+  await finishMigrations(db);
   return { legacy, before, beforeSync, env, build, bootstrapPlan: plan, bootstrapSql: sql };
 }

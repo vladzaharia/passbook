@@ -38,6 +38,8 @@ export interface UndoPresence {
   prev_first_at: number | null;
   prev_last_entry_at: number | null;
   prev_scan_id: string | null;
+  /** Commit order (0074); the restore puts the previous one back. */
+  prev_seq?: number | null;
 }
 
 export interface UndoCommit {
@@ -209,6 +211,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
         'actor_id',
         'actor_key',
         'staff_id',
+        'api_key_id',
         'idempotency_key',
         'request_hash',
         'method',
@@ -230,6 +233,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
         actor.actor.id,
         actor.actorKey,
         actor.staff?.id ?? null,
+        actor.apiKeyId ?? null,
         c.key,
         `undo:${target.id}`,
         'manual',
@@ -263,6 +267,7 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
           scannerId: actor.scanner?.id ?? null,
           staffId: actor.staff?.id ?? null,
           approvedBy: approver?.id ?? null,
+          ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
         }),
         now,
       ],
@@ -278,7 +283,10 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
       targetId: target.id,
       requestId: ctx.requestId,
       ipPrefix: null,
-      detail: JSON.stringify({ kind: target.actionKind ?? 'check_in' }),
+      detail: JSON.stringify({
+        kind: target.actionKind ?? 'check_in',
+        ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
+      }),
     }),
   ];
   if (presence) {
@@ -300,6 +308,8 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
               first_at: presence.prev_first_at,
               last_entry_at: presence.prev_last_entry_at,
               last_scan_id: presence.prev_scan_id,
+              seq: presence.prev_seq ?? 0,
+              prev_seq: null,
               prev_state: null,
               prev_tracking: null,
               prev_entered_at: null,

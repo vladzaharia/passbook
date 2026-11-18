@@ -18,6 +18,8 @@ export interface Claim {
   actorId: string;
   actorKey: string;
   staffId: string | null;
+  /** The API key a till scanned with, when it did. */
+  apiKeyId?: string | null;
   /** The scanning session the device belongs to, kept for passless replays. */
   sessionId?: string | null;
   idempotencyKey: string;

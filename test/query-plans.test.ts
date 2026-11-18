@@ -9,8 +9,13 @@ import { portfolioSnapshot } from '../src/worker/modules/me/repo.ts';
 import { versionsToPurge } from '../src/worker/modules/passes/repo.ts';
 import { upsertAsset } from '../src/worker/modules/passes/repo-history-assets.ts';
 import { listPasses } from '../src/worker/modules/passes/repo-list.ts';
-import { plainBundles, plainPasses } from '../src/worker/modules/passes/repo-token-seal.ts';
 import { expiredTestPasses } from '../src/worker/modules/sandbox/repo.ts';
+import {
+  countsRead,
+  insideReads,
+  revsRead,
+  runReads,
+} from '../src/worker/modules/scan/occupancy/repo-reads.ts';
 import { expectedCount } from '../src/worker/modules/scan/repo-counts-query.ts';
 import { eventTotalsStmt } from '../src/worker/modules/scan/repo-event-attendance.ts';
 import { capacityFullPredicate } from '../src/worker/modules/scan/repo-gates.ts';
@@ -66,28 +71,6 @@ async function plans(run: (db: D1Database) => Promise<unknown>): Promise<string[
 /** A bare `SCAN` (no index) reads the whole table; `SCAN ... USING INDEX` ordered by LIMIT is bounded. */
 const fullScans = (lines: string[], table: string) =>
   lines.filter((l) => new RegExp(`^SCAN ${table}( |$)(?!.*USING)`).test(l));
-
-describe('token seal work lists', () => {
-  it.each([
-    [
-      'download tokens',
-      (db: D1Database) => plainPasses(db, 'download_token', null, 50),
-      'passes_token_plain',
-    ],
-    [
-      'device tokens',
-      (db: D1Database) => plainPasses(db, 'auth_token', 'a', 50),
-      'passes_auth_plain',
-    ],
-    ['bundle tokens', (db: D1Database) => plainBundles(db, null, 50), 'bundles_token_plain'],
-  ])('%s: the partial index serves the work list', async (_name, run, index) => {
-    const lines = await plans(run);
-    expect(
-      lines.some((l) => l.includes(`USING INDEX ${index}`)),
-      lines.join('\n'),
-    ).toBe(true);
-  });
-});
 
 describe('list and search query plans', () => {
   it('passes: an org and mode list uses an index', async () => {
@@ -318,6 +301,26 @@ describe('zone query plans', () => {
   });
 });
 
+describe('occupancy query plans', () => {
+  it('In now reads the inside index only; the inside list and revisions use indexes', async () => {
+    const counts = await plans((db) =>
+      runReads(db, [countsRead('o', 'live', ['zone:a', 'zone:b'], 1)]),
+    );
+    expect(counts.join('\n')).toContain('USING COVERING INDEX scan_presence_inside');
+    expect(counts.join('\n')).not.toMatch(/passes/);
+    expect(fullScans(counts, 'x')).toEqual([]);
+    const after = { since: 1, passId: 'p' };
+    const list = await plans((db) =>
+      runReads(db, insideReads('o', 'live', 'zone:a', 1, { after, limit: 10 })),
+    );
+    expect(list.join('\n')).toContain('scan_presence_list');
+    expect(list.join('\n')).not.toMatch(/TEMP B-TREE|passes/);
+    expect(fullScans(list, 'x')).toEqual([]);
+    const revs = await plans((db) => runReads(db, [revsRead('o', 'live', ['zone:a'])]));
+    expect(fullScans(revs, 'scan_place_revs')).toEqual([]);
+  });
+});
+
 describe('keyset cursors seek the index', () => {
   const after = 'a';
   const commitment = 'a'.repeat(64);
@@ -327,16 +330,6 @@ describe('keyset cursors seek the index', () => {
       'holder sweep',
       (db: D1Database) => listSweepWaitingPasses(db, { after, upper: 'z' }, 10),
       'passes_waiting_holder (id>? AND id<?)',
-    ],
-    [
-      'plain download tokens',
-      (db: D1Database) => plainPasses(db, 'download_token', after, 10),
-      'passes_token_plain (id>?)',
-    ],
-    [
-      'plain bundle tokens',
-      (db: D1Database) => plainBundles(db, after, 10),
-      'bundles_token_plain (id>?)',
     ],
     [
       'lookup backfill',

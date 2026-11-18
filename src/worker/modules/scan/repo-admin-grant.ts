@@ -88,7 +88,7 @@ export function adminGrant(
     purpose,
     principal: adminPrincipal(admin),
     checks: [...capabilityChecks(admin), ...checks],
-    tables,
+    tables: [...tables],
     ...(codes ? { codes } : {}),
     ...(target ? { target } : {}),
   });

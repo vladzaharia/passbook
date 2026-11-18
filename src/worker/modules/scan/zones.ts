@@ -15,6 +15,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
+import { addZoneTapOut } from './occupancy/service.ts';
 import { accessTemplates } from './repo-access.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
 import {
@@ -254,6 +255,7 @@ export async function updateZone(
     ],
     ZONE_CODES,
     id,
+    ['scan_zones', 'scan_presence'],
   );
   addZoneUpdate(
     g,
@@ -273,6 +275,10 @@ export async function updateZone(
   // Children follow: a zone under an archived one would be unreachable.
   if (archive) addZoneArchive(g, tree, now, now);
   if (restore) addZoneArchive(g, tree, null, now);
+  // The tree's in(child) => in(parent) no longer holds: everyone inside it and below falls due now.
+  const moved = input.parentId !== undefined && input.parentId !== row.parentId;
+  if (archive || moved || (row.occupancy !== 'off' && next.occupancy === 'off'))
+    addZoneTapOut(g, tree, now);
   g.add(
     audited(g, ctx, {
       orgId,

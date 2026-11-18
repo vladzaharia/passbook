@@ -231,6 +231,7 @@ describe('scan records', () => {
     scannerName: 'Door',
     staffId: null,
     staffName: null,
+    apiKeyId: null,
     approvedBy: null,
     method: 'manual',
     amount: null,
