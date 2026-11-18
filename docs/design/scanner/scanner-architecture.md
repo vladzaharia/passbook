@@ -2047,7 +2047,7 @@ holds and cannot fail it.
 
 The display adds **no round trips** to any path: `fields` and history statements (≤ 4) join the existing card or
 counts batch, and only when the compiled doc's `needs` lists them. Rendering is CPU only, targeted under 1 ms; a test
-asserts the worst-case doc under 5 ms. Compiled docs are cached per isolate (64 entries); rendered displays never are.
+asserts the worst-case doc under 5 ms. Parsed text templates are cached per isolate (500 entries, cleared when full); rendered displays never are.
 
 - Every answer carries `counts`, so a busy scanner never polls; idle scanners poll `stats` every 15 s.
 - Event `expected` is cached for 60 s in the row.
@@ -2062,7 +2062,7 @@ asserts the worst-case doc under 5 ms. Compiled docs are cached per isolate (64 
 
 | Chunk | Loads | Budget (gzip) |
 | --- | --- | --- |
-| SPA initial (unchanged entry) | every page | 232,500 B today. The scanner adds only the nav label and three entities. Measure; if over, raise in one step of ≤ 1 kB with a comment in `check-bundle.ts` (as n6 and n7 did). No scanner code enters it |
+| SPA initial (unchanged entry) | every page | `BUDGET_BYTES` in `check-bundle.ts` (240,000 B; the console entry measures about 221 kB). Scanning pages stay lazy. If over, raise in one step of ≤ 1 kB with a comment there. No scanner code enters it |
 | `/scan` initial (`scan.html` + modulepreloads) | `/scan` | **150,000 B** (`SCAN_BUDGET_BYTES`, a second run of `check-bundle.ts`; forbids `routeTree`, `__passbookScan`, the SPA's markers, and two string sentinels that survive minification: `scan-display:render` (a constant the renderer uses in its own error) and `SCAN_DISPLAY_DENSITY` (a validator code); function names are minified, so they can't be markers). The B shell (capsule, tint layers, dock) is about 1 kB of CSS, offset by dropping the old flood layout. Split the `tanstack` chunk group into query and router first if needed |
 | `decoder` | prefetched on the Start panel | 16 kB JS + `zxing_reader.wasm` 408 kB (immutable cache) |
 | `result` (card layer and FLIP ≈ 0.4 kB, band and glyphs, identity row, notes, the display painter ≈ 3.5 kB, 40 icons ≈ 5 kB) | idle after boot | 25 kB. The renderer never ships here: the scanner only paints `ScanDisplay` |
