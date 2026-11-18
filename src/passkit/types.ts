@@ -305,6 +305,8 @@ export interface TemplateManifest {
   messaging?: { input: string };
   /** `unique`: at most one pass per externalId for this template, per org and mode. */
   externalId?: { unique?: boolean };
+  /** Pass email settings. `subject` is an expression over the inputs: the email's subject line. */
+  email?: { subject?: Expr };
   /** What a scanner may do with this template's passes, and what its result screen says. */
   scan?: ScanManifest;
   /** Apple NFC (VAS). Off until the pass type is approved. */

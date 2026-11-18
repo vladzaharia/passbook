@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ISSUANCE_OUTCOMES } from '../copy/email.ts';
 import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { REMOVE_MESSAGE_MAX } from './events.ts';
 import { PassStampsSchema } from './pass-stamps.ts';
@@ -113,7 +114,15 @@ export const PushBudgetSchema = z.object({
 
 export type PushBudgetDto = z.infer<typeof PushBudgetSchema>;
 
+/** What issuing a pass with an email came to; only on a create that asked to send one. */
+export const IssuanceEmailSchema = z.object({
+  outcome: z.enum(ISSUANCE_OUTCOMES),
+  /** The cap that held the email, for `limited_*`. */
+  cap: z.enum(['org', 'recipient']).optional(),
+});
+
 export const PassDetailSchema = PassSummarySchema.extend({
+  email: IssuanceEmailSchema.optional(),
   /** A verified waiting holder cannot be attached until this pass is replaced with fresh credentials. */
   reissueRequired: z.boolean(),
   pushBudget: PushBudgetSchema.default({ used: 0, limit: PUSH_BUDGET_DEFAULT, resetsAt: null }),

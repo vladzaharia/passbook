@@ -7,6 +7,7 @@ import {
 import { modeOf } from '../../platform/auth.ts';
 import { BadRequestError, ConflictError, ValidationError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
+import { issuanceEmailOutcome } from '../delivery/issuance-outcome.ts';
 import { createPassIdempotent } from './create.ts';
 import { effectiveApiRelease } from './create-release.ts';
 import {
@@ -114,7 +115,11 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
         key,
         { serverResolvedRelease: pinned.every((v) => v === undefined) },
       );
-      return c.json(detail, 201);
+      const sending = Boolean(body.sendEmail && body.holderEmail);
+      return c.json(
+        sending ? { ...detail, email: await issuanceEmailOutcome(ctx, detail.id) } : detail,
+        201,
+      );
     },
   );
 

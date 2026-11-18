@@ -163,6 +163,7 @@ describe('manifest rule coverage', () => {
     previewOnlyAssets: 'rule',
     messaging: 'rule',
     externalId: 'rule',
+    email: 'rule',
     scan: 'rule',
     nfc: 'rule',
     stamps: 'rule',

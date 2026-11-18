@@ -8,7 +8,9 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishSent } from '../delivery/email-finish.ts';
+import { orgFromName } from '../delivery/email-from.ts';
 import { recordEmailOutcome, uncertainEmail } from '../delivery/email-outcome.ts';
+import { replyToFor } from '../delivery/reply-to.ts';
 import { hasDeliveryLease } from '../delivery/repo-binding.ts';
 import type { OutboxRow } from '../delivery/repo-outbox-map.ts';
 import { finishOutbox } from '../delivery/repo-outbox-processing.ts';
@@ -103,6 +105,7 @@ export async function deliverBundleEmail(
       return [];
     }),
   ]);
+  const replyTo = await replyToFor(ctx, bundle.org_id, settings['support.email']);
   const { iconUrl } = passEmailImages(
     bundleImages(images, firstToken, bundleToken, first.id),
     base,
@@ -124,6 +127,7 @@ export async function deliverBundleEmail(
     })),
     iconUrl,
     senderName: platform['email.senderName'],
+    fromName: orgFromName(ctx, settings['email.fromName'], platform['email.senderName']),
     mode: bundle.mode,
     buddyBase: settings['email.buddy'] ? base : null,
   });
@@ -182,6 +186,7 @@ export async function deliverBundleEmail(
       html: email.html,
       text: email.text,
       fromName: email.fromName ?? platform['email.senderName'],
+      ...(replyTo ? { replyTo } : {}),
     }));
   } catch {
     await uncertainEmail(ctx, claimed, target);

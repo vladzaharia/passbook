@@ -478,7 +478,11 @@ describe('issued email authority at the outbox commit', () => {
       kit.env.DB,
       `INSERT INTO counters (key, window_start, count) VALUES (?, ?, ?)
       ON CONFLICT (key, window_start) DO UPDATE SET count = excluded.count`,
-      [`pass-email:live:to:${hash}`, now - (now % HOUR), EMAIL_RECIPIENT_HOURLY_CAP],
+      [
+        `pass-email:live:org:${kit.org.id}:to:${hash}`,
+        now - (now % HOUR),
+        EMAIL_RECIPIENT_HOURLY_CAP,
+      ],
     );
     await expectRejected(input, 'EMAIL_RATE_LIMITED');
   });

@@ -26,6 +26,7 @@ const MANIFEST: Record<string, Rule> = {
   requires: part('manifest.meta', under('requires', c(mapOf({ styles: set })))),
   messaging: part('manifest.meta', under('messaging', leaf)),
   externalId: part('manifest.meta', under('externalId', leaf)),
+  email: part('manifest.meta', under('email', leaf)),
   // inputs: by name in form order; `enum` and `x-enumLabels` are one unit; `required` is a set.
   inputs: part(
     'inputs',

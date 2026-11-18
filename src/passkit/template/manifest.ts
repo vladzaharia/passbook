@@ -11,6 +11,7 @@ import type {
   ValidationIssue,
 } from '../types.ts';
 import { countersIssues, derivedPassScope } from './counters.ts';
+import { emailManifestIssues } from './email.ts';
 import { checkExpr, conditionInputs, evaluate, exprReferences, isEmpty } from './expr.ts';
 import { messagingIssues } from './messaging.ts';
 import { BINDING_STYLE_GROUPS, isAllowedPointer } from './pointer.ts';
@@ -242,6 +243,7 @@ export function validateManifest(
   }
 
   issues.push(...messagingIssues(manifest, options.passJson));
+  issues.push(...emailManifestIssues(manifest));
   issues.push(...scanManifestIssues(manifest, options));
   issues.push(...stampsIssues(manifest, options.passJson, options.assetNames));
   issues.push(...countersIssues(manifest, options.passJson, options.assetNames));

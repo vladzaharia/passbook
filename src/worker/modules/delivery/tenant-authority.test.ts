@@ -256,7 +256,7 @@ describe('tenant email enqueue authority', () => {
     });
     const after = await effects(pass.id);
     expect(after).toEqual({
-      counters: (before?.counters ?? 0) + 2,
+      counters: (before?.counters ?? 0) + 3,
       outbox: 1,
       events: 1,
       audits: before?.audits ?? 0,
@@ -361,7 +361,7 @@ describe('tenant email enqueue authority', () => {
     const replacement = await sessionAuthority();
     await queueEmail(job(), { ...input, authority: replacement.authority });
     expect(await effects(pass.id)).toEqual({
-      counters: (before?.counters ?? 0) + 2,
+      counters: (before?.counters ?? 0) + 3,
       outbox: (before?.outbox ?? 0) + 1,
       events: (before?.events ?? 0) + 1,
       audits: (before?.audits ?? 0) + 1,
@@ -416,7 +416,7 @@ describe('tenant email enqueue authority', () => {
       auditEntry,
     });
     expect(await effects(pass.id)).toEqual({
-      counters: (before?.counters ?? 0) + 2,
+      counters: (before?.counters ?? 0) + 3,
       outbox: (before?.outbox ?? 0) + 1,
       events: (before?.events ?? 0) + 1,
       audits: (before?.audits ?? 0) + 1,

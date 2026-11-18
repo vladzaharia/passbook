@@ -2,6 +2,7 @@ import { APPLE_BADGE_ALT } from '../../shared/apple-badge.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { JOIN_COPY } from '../../shared/copy/join.ts';
 import { EMAIL_BADGE, PASS_EMAIL_MOOD } from '../../shared/email-art.ts';
+import { displayFromName } from '../../shared/email-from-name.ts';
 import { contrast, parseColor } from '../../shared/pass-view/color.ts';
 import { NATIVE_WALLET_BADGES } from '../../shared/wallet-choice.ts';
 import type { WalletOffer } from '../modules/wallet-providers/offers.ts';
@@ -45,6 +46,10 @@ export interface PassEmailInput {
   logoText?: string | null;
   /** The platform sender name: the From name becomes "<Org> via <sender>". */
   senderName?: string | null;
+  /** The org's own From name (already checked): "<fromName> via <sender>" instead of "<Org> via <sender>". */
+  fromName?: string | null;
+  /** The template's own subject line (already rendered): used instead of "Your <Org> pass". */
+  subject?: string | null;
   /** A test pass's email carries the amber strip. */
   mode?: 'live' | 'test';
   /** The card came from a join link: the mail says why the address got it. */
@@ -167,7 +172,7 @@ function walletActionsHtml(base: string, offers: readonly EmailWalletOffer[]): s
 export function renderPassEmail(input: PassEmailInput): RenderedEmail {
   const footer = supportFooter(safeMail(input.supportEmail), safeUrl(input.supportUrl));
   const wallets = emailWalletOffers(input);
-  const subject = `Your ${input.orgName} pass`;
+  const subject = input.subject?.trim() || `Your ${input.orgName} pass`;
   const joinLine = input.joined ? JOIN_COPY.mailLine.replace('{org}', input.orgName) : null;
   const fields = (input.summary?.fields ?? [])
     .filter((f) => f.value !== input.passTitle)
@@ -219,5 +224,6 @@ ${footer.html}`;
     body,
   });
   const sender = input.senderName?.trim();
-  return { subject, html, text, ...(sender ? { fromName: `${input.orgName} via ${sender}` } : {}) };
+  const fromName = displayFromName(input.fromName || input.orgName, sender);
+  return { subject, html, text, fromName };
 }

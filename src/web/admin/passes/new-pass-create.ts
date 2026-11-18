@@ -10,6 +10,7 @@ import { markMinted } from '../../lib/motion.ts';
 import { MEMBERSHIPS_STALE_MS, membershipsQuery, sessionQuery } from '../../lib/session.ts';
 import { passKeys } from './api.ts';
 import { markCreated } from './created.tsx';
+import { reportIssuanceOutcome } from './email-outcome.ts';
 import { fingerprint, newKey } from './format.ts';
 import type { FormValues } from './schema-form/index.ts';
 
@@ -145,6 +146,7 @@ export function useCreatePass(
             membership.capabilities.includes('passes:read'),
         );
       if (getMode() === payload.mode && canRead) qc.setQueryData(passKeys.detail(pass.id), pass);
+      if (pass.email) reportIssuanceOutcome(pass.email.outcome);
       markMinted(pass.id);
       markCreated(`pass:${pass.id}`, { sent: payload.sendEmail, first: firstOfOrg });
       onCreated(pass.id, payload.orgId, principalId);
