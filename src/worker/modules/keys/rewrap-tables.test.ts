@@ -128,9 +128,7 @@ const SITES: Record<string, { calls: Record<string, number>; tables: string[] | 
   },
   'modules/passes/repo-credential-transfer.ts': { calls: { sealPart: 1 }, tables: SEALS },
   'modules/passes/repo-pass-grants.ts': { calls: { sealPart: 1 }, tables: SEALS },
-  'modules/passes/repo-pass-trusted.ts': { calls: { sealStatement: 2 }, tables: SEALS },
-  'modules/passes/repo-token-seal.ts': { calls: { sealPart: 1 }, tables: SEALS },
-  'modules/passes/token-seal.ts': { calls: { issueToken: 1 }, tables: SEALS },
+  'modules/passes/repo-pass-trusted.ts': { calls: { sealStatement: 1 }, tables: SEALS },
   'modules/sandbox/capture.ts': { calls: { sealBody: 2 }, tables: ['captured_emails'] },
   'modules/sandbox/captured-body.ts': { calls: { encryptSecret: 1 }, tables: ['captured_emails'] },
   'modules/scan/console-cursor.ts': { calls: { encryptSecret: 1 }, tables: 'ephemeral' },
@@ -144,7 +142,11 @@ const SITES: Record<string, { calls: Record<string, number>; tables: string[] | 
     calls: { encryptSecret: 1 },
     tables: ['wallet_samsung_fetch_refs'],
   },
-  'modules/wallet-providers/callbacks-samsung.ts': {
+  'modules/wallet-providers/callbacks-samsung-issued.ts': {
+    calls: { encryptSecret: 1 },
+    tables: ['wallet_samsung_callback_receipts'],
+  },
+  'modules/wallet-providers/callbacks-samsung-live.ts': {
     calls: { encryptSecret: 1 },
     tables: ['wallet_samsung_callback_receipts'],
   },
