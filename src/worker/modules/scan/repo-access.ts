@@ -2,9 +2,10 @@ import type { ZoneNode } from '../../../passkit/template/access/index.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { type Check, exactlyOne, rowIs } from '../../platform/authority-checks.ts';
-import { exists, type GrantCond, tenantCheck } from '../../platform/authority-cond.ts';
-import { gte, lt, lte, ne, orNull } from '../../platform/authority-expr.ts';
+import { exists, type GrantCond, notExists, tenantCheck } from '../../platform/authority-cond.ts';
+import { gt, gte, lt, lte, ne, orNull } from '../../platform/authority-expr.ts';
 import { all, first, stmt } from '../../platform/db.ts';
+import type { OccZone } from './occupancy/rules.ts';
 import { readScanEffectStmt } from './repo-scan-effect-snapshots.ts';
 import type { AccessTemplateRow } from './zones-plans.ts';
 
@@ -20,14 +21,21 @@ interface ZoneRaw {
   name: string;
   parent_id: string | null;
   time_zone: string | null;
+  sort: number;
+  occupancy: OccZone['occupancy'];
+  capacity: number | null;
+  max_stay_minutes: number | null;
+  clear_at: string | null;
   archived_at: number | null;
+  updated_at: number;
 }
 
-/** The org's zones, archived ones included, for the evaluator. Read with the preflight. */
+/** The org's zones, archived ones included, for the evaluator and occupancy. Read with the preflight. */
 export const orgZonesStmt = (db: D1Database, orgId: string): D1PreparedStatement =>
   stmt(
     db,
-    `SELECT id, key, name, parent_id, time_zone, archived_at FROM scan_zones
+    `SELECT id, key, name, parent_id, time_zone, sort, occupancy, capacity, max_stay_minutes, clear_at,
+       archived_at, updated_at FROM scan_zones
      WHERE org_id = ? ORDER BY sort, id LIMIT ${ACCESS_ZONE_LIMIT}`,
     [orgId],
   );
@@ -54,6 +62,21 @@ export const zoneNodes = (result: D1Result | undefined): ZoneNode[] =>
     parentId: r.parent_id,
     timeZone: r.time_zone,
     archived: r.archived_at !== null,
+  }));
+
+export const occZonesOf = (result: D1Result | undefined): OccZone[] =>
+  ((result?.results ?? []) as unknown as ZoneRaw[]).map((r) => ({
+    id: r.id,
+    parentId: r.parent_id,
+    name: r.name,
+    sort: r.sort,
+    timeZone: r.time_zone,
+    occupancy: r.occupancy,
+    capacity: r.capacity,
+    maxStayMinutes: r.max_stay_minutes,
+    clearAt: r.clear_at,
+    archivedAt: r.archived_at,
+    updatedAt: r.updated_at,
   }));
 
 export const zoneIdsOf = (result: D1Result | undefined): string[] =>
@@ -224,6 +247,35 @@ export const startedVisit = (w: Pick<AccessGateWrite, 'passId' | 'scanId' | 'at'
     scope: ACCESS_GATE,
     last_scan_id: w.scanId,
     ...(w.gapMs === 0 ? {} : { prev_visit_at: orNull(lt(w.at - w.gapMs)) }),
+  });
+
+const visitGate = (passId: string) => ({
+  pass_id: passId,
+  action_id: ACCESS_GATE,
+  scope: ACCESS_GATE,
+});
+
+/**
+ * The visit gate's wait, as a condition another statement can carry (an occupancy entry runs before
+ * the gate and must not move unless the gate will): past the wait, and the row's time never moves back.
+ */
+export const accessQuiet = (passId: string, at: number, waitMs: number | null): GrantCond =>
+  notExists('scan_gates', {
+    ...visitGate(passId),
+    last_at: gt(waitMs === null ? at : at - waitMs),
+  });
+
+/** The visit gate's limit, likewise: another visit is allowed, or this grant is inside the current one. */
+export const accessVisitOpen = (
+  passId: string,
+  at: number,
+  gapMs: number,
+  limit: number,
+): GrantCond =>
+  notExists('scan_gates', {
+    ...visitGate(passId),
+    count: gte(limit),
+    ...(gapMs === 0 ? {} : { visit_at: lt(at - gapMs) }),
   });
 
 /** The pass's org and mode, before any authority exists for it. */

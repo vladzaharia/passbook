@@ -12,6 +12,7 @@ import {
   snapshotCredentialEnv,
 } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
+import { occupancyAsRead, planOccupancy } from './occupancy/admission.ts';
 import { credentialTombstonesClear } from './repo-credential-tombstones.ts';
 import { type Candidate, hasScanPolicy } from './repo-lookup.ts';
 import { activeFlags, type Evaluated, type Found, foundOf } from './resolve.ts';
@@ -182,18 +183,41 @@ async function evaluateObserved(
     configured || eventAdmission
       ? await planAdmission(ctx, actor, found, configured ? waive.direction : 'in', extraReads)
       : null;
-  const admission = configured ? planned : null;
+  const now = ctx.clock.now();
+  // An Access card at a door with a tracked zone counts there (SA §20.3): that replaces admission.
+  const loaded =
+    prepared !== undefined && options.admits?.(found) !== false && accessReads?.loaded();
+  const placed = loaded
+    ? planOccupancy({
+        ...loaded.occupancy,
+        zoneIds: loaded.zoneIds,
+        setting: actor.settings.direction,
+        requested: waive.override ? 'in' : waive.direction,
+        now,
+      })
+    : null;
+  const admission = configured && !placed ? planned : null;
   // The pass's own event filter rejects it: a bare refusal, with no card, identity or grant.
   const selected = admission?.plan.event;
   if (selected && !eventAcceptsPass(actor, selected, found.pass))
     return stop('refused', 'wrong_event');
   found.admission = admission?.plan;
+  if (placed) found.occupancy = placed.found;
   if (eventAdmission && planned) {
     found.eventAdmission = planned.plan;
     found.eventAdmissionReason = planned.reason;
   }
-  const exiting = admission?.plan.state.direction === 'out';
-  const now = ctx.clock.now();
+  // Step 9a: an Auto flip under two minutes old is held, with the flip offered (not overridable).
+  if (placed?.turnaround)
+    return stop('heads_up', placed.found.inside ? 'still_inside' : 'not_inside', {
+      ...known,
+      at: placed.found.row?.changed_at ?? null,
+      hard: true,
+      occupancy: occupancyAsRead(placed.found, placed.turnaround),
+    });
+  // A tap-out skips steps 10-14 (OC4): leaving is never refused for who you are.
+  const zoneExit = placed?.found.direction === 'out';
+  const exiting = admission?.plan.state.direction === 'out' || zoneExit;
   // Access refusals are authority: they come before the gate, the window and every heads-up.
   const denied = exiting ? null : accessStop(ctx, actor, found, known, accessReads, now);
   if (denied) return denied;
@@ -209,7 +233,7 @@ async function evaluateObserved(
   const held = exiting || found.access ? null : windowStop(actor, found, now, waive);
   if (held) return held;
   const flagged = activeFlags(found).filter((flag) => flag.stop);
-  if (flagged.length > 0 && !waive.confirmed)
+  if (flagged.length > 0 && !waive.confirmed && !zoneExit)
     return stop('heads_up', 'check_required', {
       ...known,
       flags: activeFlags(found, actor)
