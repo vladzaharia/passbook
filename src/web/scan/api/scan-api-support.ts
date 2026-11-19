@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { ScanAdminScopeSchema } from '../../../shared/contracts/scan.ts';
 
-export { type Problem, problemOf } from './problem.ts';
+export { problemOf } from './problem.ts';
 
 export interface ScanApiDeps {
   fetch?: typeof fetch;
