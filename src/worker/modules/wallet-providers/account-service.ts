@@ -9,7 +9,7 @@ import {
 } from '../../../shared/contracts/wallet-providers.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
-import { ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
+import { AppError, ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import { randomBytes, toBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
@@ -35,6 +35,7 @@ import {
   saveAccountConfiguration,
   transitionAccount,
 } from './repo-accounts.ts';
+import { isNewModelAccount } from './repo-enrolments.ts';
 import { validateSamsungCredentials } from './samsung-credentials.ts';
 
 export type { WalletProviderCredentialSnapshot } from './account-credential-material.ts';
@@ -58,6 +59,13 @@ const changed = () =>
   new ConflictError(
     'The wallet provider account changed. Reload and retry.',
     'WALLET_ACCOUNT_CONFLICT',
+  );
+/** A row on the credential and enrolment model is written through those routes (410 for the old form). */
+const moved = () =>
+  new AppError(
+    'WALLET_ACCOUNT_MOVED',
+    410,
+    'Wallet provider settings moved to credentials and enrolments.',
   );
 const invalid = () =>
   new ValidationError('Invalid wallet provider credentials.', [], 'WALLET_CREDENTIALS_INVALID');
@@ -171,6 +179,7 @@ export async function configureWalletProviderAccount(
   scoped(auth, scope);
   const authority = await tenantAuthorityOf(ctx, auth, scope.orgId, 'integrations:manage');
   if (authority.kind !== 'session') throw new ForbiddenError();
+  if (await isNewModelAccount(ctx.env.DB, scope.orgId, scope.mode, scope.provider)) throw moved();
   await validateCredentials(data, ctx.clock.now());
   const row = await findAccount(ctx.env.DB, scope);
   if ((row?.revision ?? 0) !== data.expectedRevision) throw changed();
@@ -256,6 +265,7 @@ export async function revokeWalletProviderAccount(
   scoped(auth, scope);
   const authority = await tenantAuthorityOf(ctx, auth, scope.orgId, 'integrations:manage');
   if (authority.kind !== 'session') throw new ForbiddenError();
+  if (await isNewModelAccount(ctx.env.DB, scope.orgId, scope.mode, scope.provider)) throw moved();
   const row = await findAccount(ctx.env.DB, scope);
   if (!row?.credential_id || row.revision !== data.expectedRevision || row.revoked_at !== null)
     throw changed();
