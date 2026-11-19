@@ -2,12 +2,23 @@ import { templateDefault } from '../../../shared/channels.ts';
 import { CHANNELS } from '../../../shared/contracts/channels.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { journal } from './apply-journal.ts';
 import { getPolicy, type Policy } from './repo.ts';
 import { writeDrop, writeFail, writeFinish, writeStart } from './repo-apply-write.ts';
-import { getRun, hasRunning } from './repo-runs.ts';
+import { getRun, runningRun } from './repo-runs.ts';
 
-export type StartResult = 'started' | 'blocked' | 'moved' | 'dropped' | 'skipped' | 'inactive';
+export type StartResult =
+  | 'started'
+  | 'blocked'
+  | 'moved'
+  | 'dropped'
+  | 'skipped'
+  | 'inactive'
+  | 'stalled';
 
+/** A running run that has written nothing for this long is stalled. */
+export const STALLED_AFTER_MS = 10 * 60_000;
+export const PREDECESSOR_STALLED = 'CHANNEL_APPLY_PREDECESSOR_STALLED';
 export const ORG_INACTIVE = 'CHANNEL_APPLY_ORG_INACTIVE';
 export const isOrgRefusal = (error: unknown): boolean =>
   error instanceof AppError && error.code === 'ORG_ACCESS_CHANGED';
@@ -50,7 +61,10 @@ export async function startOne(ctx: ServiceContext, runId: string): Promise<Star
     if (isOrgRefusal(error)) return 'inactive';
     throw error;
   }
-  return (await hasRunning(ctx.env.DB, run.orgId, run.mode, run.templateId)) ? 'blocked' : 'moved';
+  const ahead = await runningRun(ctx.env.DB, run.orgId, run.mode, run.templateId);
+  if (!ahead) return 'moved';
+  // The run ahead may be long (a big template); it counts as gone only when it stops making progress.
+  return ctx.clock.now() - ahead.updatedAt > STALLED_AFTER_MS ? 'stalled' : 'blocked';
 }
 
 /** Ends a running run as done, audited once. Returns the state the run is in. */
@@ -66,6 +80,8 @@ export async function finishRun(ctx: ServiceContext, runId: string): Promise<str
 export async function failRun(ctx: ServiceContext, runId: string, code: string): Promise<void> {
   const run = await getRun(ctx.env.DB, runId);
   if (!run || (run.state !== 'pending' && run.state !== 'running')) return;
+  // Marks already written still owe their events to the journal.
+  if (run.state === 'running') await journal(ctx, run);
   await writeFail(ctx, run, code);
   ctx.log.error('channels.apply.failed', { runId, orgId: run.orgId, code });
 }

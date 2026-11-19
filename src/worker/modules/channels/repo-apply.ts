@@ -104,3 +104,23 @@ export async function channelRevisions(
   }
   return out;
 }
+
+/** The events of this run already in the ledger, as `passId:channel`, so a replayed journal adds none twice. */
+export async function recordedEvents(
+  db: D1Database,
+  runId: string,
+  passIds: readonly string[],
+): Promise<Set<string>> {
+  const out = new Set<string>();
+  for (const ids of chunk([...new Set(passIds)])) {
+    const rows = await all<{ pass_id: string; channel: string }>(
+      db,
+      `SELECT pass_id, json_extract(data, '$.channel') AS channel FROM pass_events
+       WHERE kind = 'pass.channels_changed' AND json_extract(data, '$.runId') = ?
+         AND pass_id IN (${placeholders(ids.length)})`,
+      [runId, ...ids],
+    );
+    for (const r of rows) out.add(`${r.pass_id}:${r.channel}`);
+  }
+  return out;
+}

@@ -25,6 +25,7 @@ export interface ApplyRun {
   replace: Channel[];
   requestedBy: string;
   dueAt: number;
+  updatedAt: number;
   cursor: string | null;
   counts: ApplyCounts;
   errorCode: string | null;
@@ -45,6 +46,7 @@ interface RunRow {
   replace_channels: string;
   requested_by: string;
   due_at: number;
+  updated_at: number;
   cursor: string | null;
   counts: string;
   error_code: string | null;
@@ -53,7 +55,7 @@ interface RunRow {
 }
 
 const COLUMNS = `id, org_id, mode, template_id, state, from_channels, from_revision, to_channels, to_revision,
-  replace_channels, requested_by, due_at, cursor, counts, error_code, started_at, finished_at`;
+  replace_channels, requested_by, due_at, updated_at, cursor, counts, error_code, started_at, finished_at`;
 
 const map = (r: RunRow): ApplyRun => ({
   id: r.id,
@@ -68,6 +70,7 @@ const map = (r: RunRow): ApplyRun => ({
   replace: JSON.parse(r.replace_channels) as Channel[],
   requestedBy: r.requested_by,
   dueAt: r.due_at,
+  updatedAt: r.updated_at,
   cursor: r.cursor,
   counts: { changed: 0, flips: 0, stale: 0, ...(JSON.parse(r.counts) as Partial<ApplyCounts>) },
   errorCode: r.error_code,
@@ -113,7 +116,10 @@ export async function listRuns(
   return rows.map(map);
 }
 
-/** Pending runs past their debounce by `grace`: no instance picked them up. */
+/**
+ * Pending runs past their debounce by the caller's grace: no instance picked them up. A run queued
+ * behind a running run of its template is not stalled, it is waiting its turn.
+ */
 export async function stalledPending(
   db: D1Database,
   before: number,
@@ -121,25 +127,37 @@ export async function stalledPending(
 ): Promise<string[]> {
   const rows = await all<{ id: string }>(
     db,
-    `SELECT id FROM channel_apply_runs WHERE state = 'pending' AND due_at < ? ORDER BY due_at LIMIT ?`,
+    `SELECT id FROM channel_apply_runs p WHERE p.state = 'pending' AND p.due_at < ?
+       AND NOT EXISTS (SELECT 1 FROM channel_apply_runs r WHERE r.org_id = p.org_id
+         AND r.mode = p.mode AND r.template_id = p.template_id AND r.state = 'running')
+     ORDER BY p.due_at LIMIT ?`,
     [before, limit],
   );
   return rows.map((r) => r.id);
 }
 
-/** Whether a run of the template is running now. */
-export async function hasRunning(
+/** The run of the template that is running now, if any. */
+export async function runningRun(
   db: D1Database,
   orgId: string,
   mode: Mode,
   templateId: string,
-): Promise<boolean> {
-  return (
-    (await first(
-      db,
-      `SELECT 1 AS hit FROM channel_apply_runs
-       WHERE org_id = ? AND mode = ? AND template_id = ? AND state = 'running'`,
-      [orgId, mode, templateId],
-    )) !== null
+): Promise<ApplyRun | null> {
+  const r = await first<RunRow>(
+    db,
+    `SELECT ${COLUMNS} FROM channel_apply_runs
+     WHERE org_id = ? AND mode = ? AND template_id = ? AND state = 'running'`,
+    [orgId, mode, templateId],
   );
+  return r ? map(r) : null;
+}
+
+/** The newest run of the template and mode. */
+export async function latestRun(
+  db: D1Database,
+  orgId: string,
+  mode: Mode,
+  templateId: string,
+): Promise<ApplyRun | null> {
+  return (await listRuns(db, orgId, mode, templateId, 1))[0] ?? null;
 }

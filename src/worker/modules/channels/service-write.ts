@@ -23,7 +23,7 @@ import { activePrint } from '../prints/repo.ts';
 import { adminWriter, writeVoid } from '../prints/repo-write.ts';
 import { startApplyInstance } from './apply-start.ts';
 import * as repo from './repo.ts';
-import { pendingRun } from './repo-runs.ts';
+import { latestRun, pendingRun } from './repo-runs.ts';
 import { writePassChannels, writeTemplatePolicy } from './repo-write.ts';
 import { loadPass, loadTemplate, passChannels } from './service.ts';
 
@@ -214,6 +214,12 @@ export async function putTemplateChannels(
   )
     throw new RateLimitedError(Math.ceil((day + DAY - now) / 1000));
   const runId = ctx.ids.id();
+  // A failed run left its range part applied: the next run starts from where that one began.
+  const failed =
+    !body.dryRun && changed.length > 0
+      ? await latestRun(ctx.env.DB, template.orgId, mode, template.id)
+      : null;
+  const applyFrom = failed?.state === 'failed' ? failed.from : (policy ?? {});
   const impact = [];
   const cleared: Channel[] = [];
   for (const channel of changed) {
@@ -252,7 +258,7 @@ export async function putTemplateChannels(
         cleared: impact.reduce((n, i) => n + i.clearedOverrides, 0),
       },
       body.revision,
-      { runId, from: policy ?? {}, dueAt: now + APPLY_DEBOUNCE_MS },
+      { runId, from: applyFrom, dueAt: now + APPLY_DEBOUNCE_MS },
     );
   let workflowInstanceId: string | null = null;
   if (!body.dryRun && changed.length > 0) {

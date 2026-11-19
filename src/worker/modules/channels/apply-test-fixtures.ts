@@ -1,6 +1,8 @@
+import { makeOrg } from '../../../../test/helpers/index.ts';
 import type { Channel } from '../../../shared/contracts/channels.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { runChannelApply } from '../../workflows/channel-apply.ts';
+import { addBroadcastAdminMembership } from '../broadcasts/test-kit.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { ruleKit } from '../message-rules/test-kit.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
@@ -20,7 +22,7 @@ export interface Stepper {
 /** A workflow step that runs inline and moves the clock instead of sleeping. */
 export function stepper(
   clock: { now(): number; set(ms: number): void },
-  opts: { retryAt?: number } = {},
+  opts: { retryAt?: number; onSleep?: (name: string) => Promise<void> } = {},
 ) {
   const s: Stepper = { names: [], ...opts };
   const wake = (ms: number) => clock.set(Math.max(clock.now(), ms));
@@ -33,7 +35,9 @@ export function stepper(
     },
     sleep: async (name: string, duration: string) => {
       s.names.push(name);
-      wake(clock.now() + Number.parseInt(duration, 10) * 1000);
+      const [n, unit] = duration.split(' ');
+      wake(clock.now() + Number(n) * (unit?.startsWith('minute') ? 60_000 : 1000));
+      await opts.onSleep?.(name);
     },
     sleepUntil: async (name: string, at: Date) => {
       s.names.push(name);
@@ -46,11 +50,16 @@ export function stepper(
 export async function applyKit(passCount = 3) {
   const kit = await ruleKit();
   const created: { id: string; params: unknown }[] = [];
+  const instanceStatus = new Map<string, string>();
   Object.assign(kit.env, {
     CHANNEL_APPLY: {
       async create(o: { id: string; params: unknown }) {
         created.push(o);
         return { id: o.id };
+      },
+      async get(id: string) {
+        if (!created.some((c) => c.id === id)) throw new Error('instance.not_found');
+        return { status: async () => ({ status: instanceStatus.get(id) ?? 'running' }) };
       },
     },
   });
@@ -91,7 +100,10 @@ export async function applyKit(passCount = 3) {
       [orgId, templateId],
     );
   /** Runs the workflow for a run id inline. */
-  const work = (runId: string, opts: { retryAt?: number } = {}) => {
+  const work = (
+    runId: string,
+    opts: { retryAt?: number; onSleep?: (name: string) => Promise<void> } = {},
+  ) => {
     const { step, s } = stepper(kit.clock, opts);
     return {
       s,
@@ -143,10 +155,54 @@ export async function applyKit(passCount = 3) {
       actor: { type: 'system', id: null },
     });
   };
+  /** A second org using the same (shared) template: its own pass and policy saves. */
+  const otherOrg = async () => {
+    const org = await makeOrg(kit.fx);
+    await addBroadcastAdminMembership(kit, org.id);
+    const version = (await kit.registry.resolve(templateId)).version;
+    const release = await approveAppleRelease(kit, {
+      templateId,
+      version,
+      orgId: org.id,
+      mode: 'live',
+    });
+    const pass = await createPassRow(jobCtxOf(kit), {
+      orgId: org.id,
+      templateId,
+      templateVersion: release.version,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
+      input: { memberName: 'Elsewhere' },
+      holderEmail: null,
+      source: 'manual',
+      mode: 'live',
+      execution: { kind: 'system' },
+      actor: { type: 'system', id: null },
+    });
+    const save = async (channels: Partial<Record<Channel, string>>) => {
+      const rev =
+        (
+          await first<{ revision: number }>(
+            db,
+            'SELECT revision FROM template_channel_policies WHERE org_id = ? AND template_id = ?',
+            [org.id, templateId],
+          )
+        )?.revision ?? 0;
+      const res = await kit.send('PUT', `/templates/${templateId}/channels`, {
+        orgId: org.id,
+        revision: rev,
+        channels,
+      });
+      return (await res.json()) as { workflowInstanceId: string };
+    };
+    return { orgId: org.id, pass, save };
+  };
   const exec = (sql: string, ...p: (string | number)[]) => run(db, sql, p);
   return {
     kit,
     created,
+    instanceStatus,
+    otherOrg,
     passes,
     ids,
     templateId,

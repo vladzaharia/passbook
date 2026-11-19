@@ -138,11 +138,15 @@ export async function writeCursor(
   await g.commit();
 }
 
-/** Marks whose events went to the journal. */
-export async function writeJournaled(ctx: ServiceContext, run: ApplyRun): Promise<void> {
+/** The marks whose events went to the journal: the ones read, not any written since. */
+export async function writeJournaled(
+  ctx: ServiceContext,
+  run: ApplyRun,
+  passIds: string[],
+): Promise<void> {
   const g = runGrant(ctx, run, 'journal', ['channel_apply_marks']);
   g.joined('channel_apply_marks', {
-    where: { run_id: run.id, journaled_at: null },
+    where: { run_id: run.id, journaled_at: null, pass_id: inList(passIds) },
     set: { journaled_at: ctx.clock.now() },
   });
   await g.commit();

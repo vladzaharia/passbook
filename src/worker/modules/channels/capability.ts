@@ -3,7 +3,6 @@ import { CHANNELS, type Channel } from '../../../shared/contracts/channels.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { recordPassEvents } from '../events/record.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { capabilityOf } from './repo.ts';
 import { channelRevisions } from './repo-apply.ts';
@@ -87,15 +86,4 @@ export async function handleCapabilityChange(
     }
     throw error;
   }
-  await recordPassEvents(
-    ctx,
-    flips.map((data) => ({
-      orgId: pass.orgId,
-      passId: pass.id,
-      mode: pass.mode,
-      kind: 'pass.channels_changed' as const,
-      actor: { type: 'system', id: 'channel-capability' },
-      data,
-    })),
-  );
 }

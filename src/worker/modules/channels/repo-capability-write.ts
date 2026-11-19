@@ -1,7 +1,10 @@
 import type { Channel } from '../../../shared/contracts/channels.ts';
+import type { Json } from '../../../shared/contracts/common.ts';
 import { jobGrant } from '../../platform/authority.ts';
 import { exists, notExists } from '../../platform/authority-cond.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+
+import { sanitizeEventData } from '../events/record.ts';
 
 export interface CapabilityRow {
   channel: Channel;
@@ -24,7 +27,7 @@ export async function writeCapabilityChange(
     orgId: pass.orgId,
     mode: pass.mode,
     target: pass.id,
-    tables: ['pass_channels'],
+    tables: ['pass_channels', 'pass_events'],
     codes: { stale: 'CHANNEL_APPLY_STALE' },
   });
   const now = ctx.clock.now();
@@ -59,6 +62,21 @@ export async function writeCapabilityChange(
       { update: ['retired_at', 'retired_cause', 'set_by', 'set_at'], inc: ['revision'] },
     );
   }
+  // The ledger rows ride the same commit: a crash after it cannot lose them, and a replay finds no change.
+  for (const detail of audits)
+    g.insertSelect(
+      'pass_events',
+      ['id', 'pass_id', 'kind', 'actor_type', 'actor_id', 'data', 'at'],
+      [
+        ctx.ids.ordered(now),
+        pass.id,
+        'pass.channels_changed',
+        'system',
+        'channel-capability',
+        JSON.stringify(sanitizeEventData(detail as Record<string, Json>)),
+        now,
+      ],
+    );
   for (const detail of audits)
     g.audit({
       at: now,

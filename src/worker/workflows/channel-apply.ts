@@ -5,6 +5,7 @@ import {
   failRun,
   finishRun,
   ORG_INACTIVE,
+  PREDECESSOR_STALLED,
   startOne,
 } from '../modules/channels/apply-run.ts';
 import type { Clock } from '../platform/clock.ts';
@@ -15,9 +16,9 @@ export interface ChannelApplyParams {
   runId: string;
 }
 
-/** Saves that may push the start back, and rounds spent waiting for an earlier run of the template. */
+/** Saves that may push the start back, and rounds (5 minutes each) spent waiting for an earlier run of the template that still makes progress. */
 const MAX_DEBOUNCE = 50;
-const MAX_BLOCKED = 120;
+const MAX_BLOCKED = 300;
 const MAX_PAGES = 2000;
 const PAGE_RETRY = { retries: { limit: 3, delay: '10 seconds', backoff: 'exponential' } } as const;
 
@@ -56,9 +57,13 @@ export async function runChannelApply(
         await step.do('fail', () => failRun(ctx, runId, ORG_INACTIVE));
         return { state: 'failed' };
       }
+      if (started === 'stalled') {
+        await step.do('fail', () => failRun(ctx, runId, PREDECESSOR_STALLED));
+        return { state: 'failed' };
+      }
       if (started === 'started') break;
       if (++blocked > MAX_BLOCKED) throw new Error('channel apply never started');
-      if (started === 'blocked') await step.sleep(`blocked-${n}`, '60 seconds');
+      if (started === 'blocked') await step.sleep(`blocked-${n}`, '5 minutes');
     }
     for (let n = 0; ; n++) {
       if (n >= MAX_PAGES) throw new Error('channel apply ran out of pages');

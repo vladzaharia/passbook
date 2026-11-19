@@ -2,9 +2,9 @@ import { channelTransition, effectiveChannels } from '../../../shared/channels.t
 import { CHANNELS, type Channel } from '../../../shared/contracts/channels.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { recordPassEvents } from '../events/record.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { type Cost, msToNextMinute, PageBudget, spend } from './apply-budget.ts';
+import { journal } from './apply-journal.ts';
 import { isOrgRefusal, ORG_INACTIVE } from './apply-run.ts';
 import {
   type ApplyEvent,
@@ -13,9 +13,8 @@ import {
   PAGE_SIZE,
   type PagePass,
   passPage,
-  unjournaled,
 } from './repo-apply.ts';
-import { type PassApply, writeCursor, writeJournaled, writePassApply } from './repo-apply-write.ts';
+import { type PassApply, writeCursor, writePassApply } from './repo-apply-write.ts';
 import { type ApplyCounts, type ApplyRun, getRun } from './repo-runs.ts';
 import { type LoadedPass, loadMany } from './service.ts';
 
@@ -29,7 +28,6 @@ export interface PageResult {
 
 const REST_AFTER_WORK = 60_000;
 const REST_IDLE = 1_000;
-const ACTOR = { type: 'system', id: 'channel-apply' } as const;
 
 interface Plan {
   write: Omit<PassApply, 'pass' | 'revisions' | 'counts'> | null;
@@ -83,26 +81,6 @@ function plan(run: ApplyRun, loaded: LoadedPass, now: number): Plan {
   const voidPrints = actions.some((a) => a.kind === 'void_prints');
   const empty = events.length === 0 && marks.length === 0 && !voidPrints;
   return { write: empty ? null : { rows: marks, events, voidPrints }, cost, appleChanged };
-}
-
-/** Events of marks written but not yet journaled (a crash, or the pass's own page). */
-async function journal(ctx: ServiceContext, run: ApplyRun): Promise<void> {
-  const pending = await unjournaled(ctx.env.DB, run.id);
-  if (pending.length === 0) return;
-  await recordPassEvents(
-    ctx,
-    pending.flatMap((m) =>
-      m.events.map((data) => ({
-        orgId: run.orgId,
-        passId: m.passId,
-        mode: run.mode,
-        kind: 'pass.channels_changed' as const,
-        actor: ACTOR,
-        data,
-      })),
-    ),
-  );
-  await writeJournaled(ctx, run);
 }
 
 /** Queues the republish that carries an Apple flip; the job skips when a publish got there first. */

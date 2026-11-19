@@ -133,7 +133,9 @@ export function channelApplyAttention(
     db,
     `SELECT id, state, error_code FROM channel_apply_runs
      WHERE (state = 'failed' AND finished_at >= ?)
-        OR (state = 'pending' AND due_at < ?)
+        OR (state = 'pending' AND due_at < ? AND NOT EXISTS (SELECT 1 FROM channel_apply_runs r
+             WHERE r.org_id = channel_apply_runs.org_id AND r.mode = channel_apply_runs.mode
+               AND r.template_id = channel_apply_runs.template_id AND r.state = 'running'))
         OR (state = 'running' AND updated_at < ?)
      ORDER BY id LIMIT 50`,
     [limits.failedSince, limits.pendingDueBefore, limits.runningIdleBefore],
