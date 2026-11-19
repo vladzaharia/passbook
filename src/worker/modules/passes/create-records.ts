@@ -76,8 +76,12 @@ export async function addCreateStatements(
     g.insertSelect('join_marks', ['created_at'], [row.now], {
       from: { table: 'passes', where: { id: row.id }, copy: { pass_id: 'id' } },
     });
-  // The caps count this row: a pass without it would escape them.
-  if (join) g.assert('stale', [exists('join_issues', { pass_id: row.id })]);
+  // The caps count this row: a pass without it would escape them. The mark is what keeps the attach safe.
+  if (join)
+    g.assert('stale', [
+      exists('join_issues', { pass_id: row.id }),
+      exists('join_marks', { pass_id: row.id }),
+    ]);
   const entry = {
     at: row.now,
     orgId: row.orgId,
