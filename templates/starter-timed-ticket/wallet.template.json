@@ -2,6 +2,11 @@
   "schema": 1,
   "name": "Timed ticket",
   "description": "A time slot for a party, no seat.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",
