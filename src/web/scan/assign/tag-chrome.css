@@ -161,7 +161,12 @@ button.scan-tag-flag {
 }
 
 /* Tablet: the assign card scales up, and a text-only refusal centres a larger tag in its right half. */
-@media (min-width: 640px) {
+@media (min-width: 640px) and (max-width: 1023px) {
+  .scan-assign {
+    zoom: 1.3;
+  }
+}
+@media (min-width: 1024px) {
   .scan-assign .scan-assign-headline {
     font-size: 30px;
     line-height: 36px;

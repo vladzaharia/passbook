@@ -154,7 +154,12 @@ export function AssignDock({
             </>
           ) : (
             <>
-              <DockButton onClick={on.done}>{TAG_EXTRA_COPY.done}</DockButton>
+              <DockButton
+                {...(kind === 'lost' ? { primary: true, variant: 'filled' as const } : {})}
+                onClick={on.done}
+              >
+                {TAG_EXTRA_COPY.done}
+              </DockButton>
               {kind === 'lost' ? null : (
                 <DockButton primary variant="filled" onClick={() => on.again(true)}>
                   {c.dock.tryAnother}
