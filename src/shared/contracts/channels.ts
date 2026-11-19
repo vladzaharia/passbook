@@ -131,3 +131,18 @@ export const PutTemplateChannelsResponseSchema = TemplateChannelsResponseSchema.
   /** The channel-apply run, when the save started one. */
   workflowInstanceId: z.string().nullable(),
 });
+
+export const ChannelApplyRunSchema = z.object({
+  id: IdSchema,
+  state: z.enum(['pending', 'running', 'done', 'dropped', 'failed']),
+  /** When a pending run starts: pushed back by each save, ten minutes after the last. */
+  dueAt: TimestampSchema,
+  startedAt: TimestampSchema.nullable(),
+  finishedAt: TimestampSchema.nullable(),
+  counts: z.record(z.string(), z.number()),
+  errorCode: z.string().nullable(),
+});
+export type ChannelApplyRunDto = z.infer<typeof ChannelApplyRunSchema>;
+
+/** GET /api/v1/templates/{id}/channels/runs: the latest ten runs, newest first. */
+export const ChannelApplyRunsResponseSchema = z.array(ChannelApplyRunSchema);

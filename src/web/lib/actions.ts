@@ -201,6 +201,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'template.clone': a('Template duplicated', I.duplicate, 'success'),
   'template.use_blueprint': a('Template made from a blueprint', ENTITY.blueprint.icon, 'success'),
   'template.channels_change': a('Template channels changed', I.edit, 'info'),
+  'template.channels_apply': a('Template channels applied', I.edit, 'info'),
   'template.delete': a('Template deleted', I.delete, 'danger'),
   'template.manifest': a('Template manifest changed', I.edit, 'info'),
   'template.release': a('Template version released', CircleCheck, 'success'),

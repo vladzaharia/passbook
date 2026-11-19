@@ -71,6 +71,18 @@ describe('channel_apply_runs', () => {
     });
   });
 
+  it('accepts a shared template (no owner org) for any org', () => {
+    rolledBack(db, () => {
+      run(
+        "INSERT INTO templates (id, org_id, slug, name, origin, created_at, updated_at) VALUES ('t-shared', NULL, 'sh', 'Shared', 'baked', 1, 1)",
+      );
+      run(runSql({ template_id: "'t-shared'" }));
+      expect(
+        one("SELECT COUNT(*) AS n FROM channel_apply_runs WHERE template_id = 't-shared'").n,
+      ).toBe(1);
+    });
+  });
+
   it('moves pending to running, dropped or failed, and running to done or failed', () => {
     for (const to of ['dropped', 'failed']) {
       rolledBack(db, () => {

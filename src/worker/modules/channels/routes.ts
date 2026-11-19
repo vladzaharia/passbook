@@ -25,6 +25,7 @@ import { tenantPassForRead, tenantPassForWrite } from '../passes/pass-access.ts'
 import { getPass } from '../passes/repo-read-pass.ts';
 import { assertWritableMode } from '../passes/scope.ts';
 import * as repo from './repo.ts';
+import { registerChannelRunRoutes } from './runs-routes.ts';
 import { passChannels, templateChannels } from './service.ts';
 import { bulkPassChannels, putPassChannels, putTemplateChannels } from './service-write.ts';
 
@@ -156,6 +157,8 @@ export function registerTemplateChannelRoutes(templatesRoutes: Router): void {
       return c.json(await templateChannels(svc(c), template, modeOf(authOf(c))));
     },
   );
+
+  registerChannelRunRoutes(templatesRoutes, templateFor);
 
   register(
     templatesRoutes,
