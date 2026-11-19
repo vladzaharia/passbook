@@ -5,7 +5,6 @@ import { endedOn } from '@/shared/ended-on.ts';
 import type { PassView } from '@/shared/pass-view/index.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
 import { Buddy, detailError, PassSideToggle, Skeleton } from '../ui/index.ts';
-import { StatusPill } from '../ui/status-pill.tsx';
 import { myPassesKey, myPassQuery } from './api.ts';
 import { browserDevice } from './device.ts';
 import { HolderPassView } from './holder-pass-view.tsx';
@@ -99,7 +98,6 @@ function Detail({
             locale={navigator.language}
             now={new Date()}
             timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
-            status={<StatusPill status="active" />}
           />
         </div>
       }

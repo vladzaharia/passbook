@@ -1,23 +1,10 @@
-import type { LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
 import { COARSE_ONLY, useMediaQuery } from '../lib/media.ts';
-import { useChangeCount } from '../lib/motion.ts';
-import type { StatusKey, Tone } from '../lib/status.ts';
+import type { Tone } from '../lib/status.ts';
 import { TOUCH_HIT } from './button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from './popover.tsx';
-import { resolveStatus, StatusBadge } from './status-badge.tsx';
+import { resolveStatus, StatusPill, type StatusPillProps } from './status-pill-base.tsx';
 import { Tooltip } from './tooltip.tsx';
-
-export interface StatusPillProps {
-  /** A known status key; unknown keys render neutral with a humanized label. */
-  status: StatusKey | (string & {});
-  tone?: Tone;
-  /** Overrides the vocabulary icon (this_device takes the device's icon). */
-  icon?: LucideIcon;
-  children?: ReactNode;
-  className?: string;
-}
 
 const TONE_TEXT: Record<Tone, string> = {
   neutral: 'text-fg-muted',
@@ -27,22 +14,6 @@ const TONE_TEXT: Record<Tone, string> = {
   danger: 'text-danger',
   info: 'text-info',
 };
-
-/** Icon plus text, never colour alone. */
-export function StatusPill({ status, tone, icon, children, className }: StatusPillProps) {
-  const changed = useChangeCount(status);
-  return (
-    <StatusBadge
-      status={status}
-      {...(tone ? { tone } : {})}
-      {...(icon ? { icon } : {})}
-      {...(className ? { className } : {})}
-      after={changed ? <span key={changed} aria-hidden className="wl-ring" /> : null}
-    >
-      {children}
-    </StatusBadge>
-  );
-}
 
 /**
  * A state every row would repeat: the icon alone, with the label and hint in a tooltip. Touch has
@@ -80,3 +51,5 @@ export function StatusIcon({ status, tone, icon, className }: Omit<StatusPillPro
     </Popover>
   );
 }
+
+export { StatusPill, type StatusPillProps };

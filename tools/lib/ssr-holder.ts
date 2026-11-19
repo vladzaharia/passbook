@@ -20,7 +20,7 @@ export const HOLDER_SOURCES = [
   'src/web/portal/pass-details.tsx',
   'src/web/ui/card-base.tsx',
   'src/web/ui/key-value.tsx',
-  'src/web/ui/status-badge.tsx',
+  'src/web/ui/status-pill-base.tsx',
   'src/web/pass-card/back.tsx',
   'src/web/portal/add/add-block.tsx',
   'src/web/portal/add/added.tsx',
