@@ -1,4 +1,4 @@
-import type { Channel, ChannelReason } from '../contracts/channels.ts';
+import type { Channel, ChannelReason, OfferHold } from '../contracts/channels.ts';
 
 export const CHANNEL_LABEL: Record<Channel, string> = {
   mobile: 'Mobile',
@@ -50,3 +50,12 @@ export const CHANNEL_COPY = {
   codesReplacedTitle: 'Your code changed',
   codesReplaced: 'Open your ticket before you arrive.',
 } as const;
+
+/** `{channel}` is a CHANNEL_LABEL. */
+export const OFFER_HOLD_COPY: Record<OfferHold, string> = {
+  provider_retiring: '{channel}: the old copy is being removed. Try again shortly.',
+  provider_epoch_limit: '{channel}: turned back on too many times. Ask for a new code.',
+};
+
+export const offerHold = (channel: Channel, hold: OfferHold): string =>
+  OFFER_HOLD_COPY[hold].replace('{channel}', CHANNEL_LABEL[channel]);

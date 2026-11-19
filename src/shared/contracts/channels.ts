@@ -30,6 +30,11 @@ export const CHANNEL_REASONS = [
 export const ChannelReasonSchema = z.enum(CHANNEL_REASONS);
 export type ChannelReason = z.infer<typeof ChannelReasonSchema>;
 
+/** Why a provider offer is withheld while its channel is on, after a channel-off retirement. */
+export const OFFER_HOLDS = ['provider_retiring', 'provider_epoch_limit'] as const;
+export const OfferHoldSchema = z.enum(OFFER_HOLDS);
+export type OfferHold = z.infer<typeof OfferHoldSchema>;
+
 export const ChannelStatusSchema = z.object({
   on: z.boolean(),
   source: ChannelSourceSchema,

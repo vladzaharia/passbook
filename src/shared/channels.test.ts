@@ -213,3 +213,15 @@ describe('channelTransition', () => {
     ]);
   });
 });
+
+describe('offer holds', () => {
+  it('has contract values and copy for each hold', async () => {
+    const { OFFER_HOLDS } = await import('./contracts/channels.ts');
+    const { offerHold, OFFER_HOLD_COPY } = await import('./copy/channels.ts');
+    expect(Object.keys(OFFER_HOLD_COPY).sort()).toEqual([...OFFER_HOLDS].sort());
+    expect(offerHold('google', 'provider_retiring')).toBe(
+      'Google Wallet: the old copy is being removed. Try again shortly.',
+    );
+    expect(offerHold('samsung', 'provider_epoch_limit')).toContain('Samsung Wallet');
+  });
+});
