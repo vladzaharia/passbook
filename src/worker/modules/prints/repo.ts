@@ -76,12 +76,9 @@ export async function manifestOf(
     [templateId, version],
   );
   if (!r?.manifest) return null;
-  try {
-    const parsed: unknown = JSON.parse(r.manifest);
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
-  }
+  // Stored versions are validated JSON; a parse failure is corruption and should surface.
+  const parsed: unknown = JSON.parse(r.manifest);
+  return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+    ? (parsed as Record<string, unknown>)
+    : null;
 }

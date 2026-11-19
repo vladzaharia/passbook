@@ -27,8 +27,10 @@ import { printPageUrl, usePassPaper, usePassPrints, usePrintActions } from '../p
  */
 function openPrintPage(passId: string, win: Window | null) {
   const url = printPageUrl(passId);
-  if (win) win.location.href = url;
-  else window.open(url, '_blank', 'noopener,noreferrer');
+  if (win) {
+    win.opener = null;
+    win.location.href = url;
+  } else window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 /**

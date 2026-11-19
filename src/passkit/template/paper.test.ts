@@ -14,7 +14,7 @@ describe('paper block validation', () => {
   it('has no issues when absent or when valid', () => {
     expect(paperManifestIssues(EVENT_MANIFEST)).toEqual([]);
     expect(
-      codes({ schema: 1, size: 'cr80', barcode: 'code128', fields: ['level'], holder: false }),
+      codes({ schema: 1, size: 'half', barcode: 'code128', fields: ['level'], holder: false }),
     ).toEqual([]);
     expect(codes({ schema: 1, size: 'a4', barcode: 'qr', terms: 'See {{terms}}' })).toEqual([]);
   });
@@ -38,6 +38,19 @@ describe('paper block validation', () => {
     expect(codes({ ...base, terms: 'No. {{ticketNo}}' })).toContain('PAPER_LOOKUP_FIELD');
     // `order` is bound to the lookup input: naming it prints the lookup value.
     expect(codes({ ...base, fields: ['order'] })).toContain('PAPER_LOOKUP_FIELD');
+  });
+
+  it('refuses a field bound to the scan code and a card with Code 128', () => {
+    const m = {
+      ...EVENT_MANIFEST,
+      bindings: [{ to: { field: 'level' }, value: '{{pass.scanCode}}' }],
+      paper: { schema: 1, size: 'a4', barcode: 'qr', fields: ['level'] },
+    } as unknown as TemplateManifest;
+    expect(paperManifestIssues(m, { passJson: EVENT_PASS }).map((i) => i.code)).toEqual([
+      'PAPER_SCAN_CODE',
+    ]);
+    expect(codes({ schema: 1, size: 'cr80', barcode: 'code128' })).toEqual(['PAPER_BARCODE']);
+    expect(resolvePaper({ schema: 1, size: 'cr80', barcode: 'code128' }).barcode).toBe('qr');
   });
 
   it('warns on a field that is not on the pass', () => {
@@ -105,6 +118,28 @@ describe('paper content derivation', () => {
     expect(json).not.toContain('SECRET-SCAN-CODE');
     expect(json).not.toContain('T-77');
     expect(json).toContain('Balcony');
+  });
+
+  it('drops a field whose text is the barcode message, its alt text or the serial', () => {
+    const pass = {
+      ...EVENT_PASS,
+      serialNumber: 'SER-9',
+      eventTicket: {
+        ...(EVENT_PASS as unknown as { eventTicket: object }).eventTicket,
+        auxiliaryFields: [
+          { key: 'a', label: 'A', value: 'SECRET-SCAN-CODE' },
+          { key: 'b', label: 'B', value: 'SER-9' },
+          { key: 'c', label: 'C', value: 'ok' },
+        ],
+      },
+    } as never;
+    const out = paperContent({
+      passJson: pass,
+      manifest: EVENT_MANIFEST,
+      personalization: {},
+      design: { ...DERIVED_PAPER, derived: false, fields: ['a', 'b', 'c'] },
+    });
+    expect(out.extras).toEqual([{ label: 'C', text: 'ok' }]);
   });
 
   it('takes terms from the design and drops a scan-code expression', () => {

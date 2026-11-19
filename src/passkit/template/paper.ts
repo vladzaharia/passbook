@@ -82,7 +82,8 @@ export function resolvePaper(raw: unknown): PaperDesign {
   const { size, barcode, fields, terms, holder } = parsed.data;
   return {
     size,
-    barcode,
+    // A card has no room for Code 128 (a validation error); it draws QR.
+    barcode: size === 'cr80' ? 'qr' : barcode,
     fields: fields ?? [],
     ...(terms === undefined ? {} : { terms }),
     holder: holder !== false,
@@ -180,17 +181,17 @@ export function paperManifestIssues(
     const path = `paper.fields.${i}`;
     const key = keyOf(ref);
     if (known.size > 0 && !known.has(key)) warn('PAPER_FIELD', `No field with key "${key}".`, path);
-    if (typeof lookupInput !== 'string') continue;
     for (const b of bindings) {
       const to = b.to as { field?: unknown };
       const targets = Array.isArray(to?.field) ? to.field : [to?.field];
-      if (
-        targets.includes(key) &&
-        b.value !== undefined &&
-        exprReferences(b.value).inputs.includes(lookupInput)
-      )
+      if (!targets.includes(key) || b.value === undefined) continue;
+      if (typeof b.value === 'string' && /\bpass\.scanCode\b/.test(b.value))
+        error('PAPER_SCAN_CODE', 'This field carries the scan code.', path);
+      if (typeof lookupInput === 'string' && exprReferences(b.value).inputs.includes(lookupInput))
         error('PAPER_LOOKUP_FIELD', 'This field carries the scan lookup value.', path);
     }
   }
+  if (paper.size === 'cr80' && paper.barcode === 'code128')
+    error('PAPER_BARCODE', 'Code 128 does not fit a card. Use QR.', 'paper.barcode');
   return issues;
 }

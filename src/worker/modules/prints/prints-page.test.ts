@@ -111,14 +111,14 @@ describe('holder print page', () => {
     expect((await holder('x'.repeat(30))).status).toBe(404);
   });
 
-  it('honours a paper size and Code 128 from the template', async () => {
+  it('honours a paper size and Code 128 (half sheet) from the template', async () => {
     const { withPaper, token, holder } = await setup();
-    const pass = await withPaper({ schema: 1, size: 'cr80', barcode: 'code128' });
+    const pass = await withPaper({ schema: 1, size: 'half', barcode: 'code128' });
     const t = await token(pass);
     await holder(t, 'POST');
     const html = await (await holder(t)).text();
-    expect(html).toContain('pp-cr80');
-    expect(html).toContain('@page{size:85.6mm 54mm;margin:0}');
+    expect(html).toContain('pp-half');
+    expect(html).toContain('@page{size:210mm 148mm;margin:0}');
     expect(html).toContain('aria-label="Code 128 barcode"');
   });
 });
@@ -169,6 +169,9 @@ describe('staff print page', () => {
     expect(html).not.toContain('data-act="reprint"');
     expect(res.headers.get('cache-control')).toBe('private, no-store');
 
+    const missing = await kit.api('/passes/nope/print', { headers: kit.auth.admin() });
+    expect(missing.status).toBe(404);
+    expect(missing.headers.get('content-type')).toContain('text/html');
     const reader = await kit.auth.apiKey({ orgId: kit.org.id, scopes: ['passes:read'] });
     const denied = await kit.api(`/passes/${pass.id}/print`, { headers: reader });
     expect(denied.status).toBe(403);

@@ -10,7 +10,7 @@ import { resolveRoles } from '../wallets/roles.ts';
 import type { ResolvedRoles, RoleValue } from '../wallets/types.ts';
 import { buildFields, styleOf } from '../wallets/view-fields.ts';
 import { relevanceOf } from '../wallets/view-parts.ts';
-import { evaluate } from './expr.ts';
+import { ExprError, evaluate } from './expr.ts';
 import { applyDefaults } from './manifest.ts';
 import type { PaperDesign } from './paper.ts';
 
@@ -108,18 +108,32 @@ export function paperContent(input: PaperContentInput): PaperContent {
   if (design.terms !== undefined) {
     try {
       terms = plain(evalExpr(design.terms));
-    } catch {
+    } catch (error) {
+      // A bad expression is the author's data problem: no terms. Anything else is a bug.
+      if (!(error instanceof ExprError)) throw error;
       terms = undefined;
     }
   }
   terms ??= text(roles.finePrint);
   const lookup = (manifest.scan as { lookup?: { input?: unknown } } | undefined)?.lookup?.input;
+  const credentials = new Set<string>(
+    [
+      passJson.serialNumber,
+      ...[...(passJson.barcodes ?? []), ...(passJson.barcode ? [passJson.barcode] : [])].flatMap(
+        (b) => [b.message, b.altText],
+      ),
+    ]
+      .filter((v): v is string => typeof v === 'string' && v.trim() !== '')
+      .map((v) => v.trim()),
+  );
   const extras = design.fields.flatMap((ref) => {
     const key = ref.split('.').at(-1);
     const f = fields.find((x) => x.path === ref || x.key === key);
     if (!f?.text.trim()) return [];
-    if (typeof lookup === 'string' && plain(input.personalization[lookup]) === f.text.trim())
-      return [];
+    const value = f.text.trim();
+    if (typeof lookup === 'string' && plain(input.personalization[lookup]) === value) return [];
+    // Never a second door credential: a field that equals a barcode message, its alt text or the serial.
+    if (credentials.has(value)) return [];
     return [{ ...(f.label ? { label: f.label } : {}), text: f.text.trim() }];
   });
   const holder =

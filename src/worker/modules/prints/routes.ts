@@ -5,7 +5,9 @@ import {
   PassPrintsResponseSchema,
   PrintParamSchema,
 } from '../../../shared/contracts/index.ts';
+import { AppError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
+import { renderErrorPage } from '../../ssr/error-page.tsx';
 import { requestTheme } from '../../ssr/head.ts';
 import { PRINT_HEADERS, renderPrintPage } from '../../ssr/print-page.tsx';
 import { actorFor, authOf, passScopeOf, svc } from '../passes/http.ts';
@@ -84,17 +86,29 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
     },
     async (c) => {
       const ctx = svc(c);
-      const { id } = c.req.valid('param');
-      const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
       const theme = requestTheme(c);
-      const model = await printPageModel(ctx, pass, 'staff');
-      const html = renderPrintPage({
-        model,
-        audience: 'staff',
-        nonce: c.var.nonce,
-        ...(theme ? { theme } : {}),
-      });
-      return new Response(html, { headers: PRINT_HEADERS });
+      try {
+        const { id } = c.req.valid('param');
+        const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+        const model = await printPageModel(ctx, pass, 'staff');
+        const html = renderPrintPage({
+          model,
+          audience: 'staff',
+          nonce: c.var.nonce,
+          ...(theme ? { theme } : {}),
+        });
+        return new Response(html, { headers: PRINT_HEADERS });
+      } catch (error) {
+        // A browser tab, not an API client: the hosted error page, same status.
+        if (!(error instanceof AppError) || error.status >= 500) throw error;
+        const html = renderErrorPage({
+          status: error.status,
+          nonce: c.var.nonce,
+          ...(theme ? { theme } : {}),
+          ...(error.status === 404 ? {} : { line: error.message }),
+        });
+        return new Response(html, { status: error.status, headers: PRINT_HEADERS });
+      }
     },
   );
 }
