@@ -7,12 +7,18 @@ export function IdentityRow({
   outcome: o,
   display: d,
   onPass,
+  hideName = false,
+  compact: forceCompact = false,
 }: {
   outcome: ScanOutcome;
   display: ScanDisplay | null;
   onPass: () => void;
+  /** The band already says the holder's name: the row keeps the rest. */
+  hideName?: boolean;
+  /** A verdict that did not apply: no photo or chips. */
+  compact?: boolean;
 }) {
-  const compact = o.kind === 'refused';
+  const compact = o.kind === 'refused' || forceCompact;
   const title = compact
     ? (d?.identity.holder ?? o.card?.title ?? o.template?.name)
     : d?.identity.holder;
@@ -28,9 +34,11 @@ export function IdentityRow({
         </span>
       )}
       <div className="scan-identity-text">
-        <p className="scan-result-holder" dir="auto">
-          {title}
-        </p>
+        {hideName ? null : (
+          <p className="scan-result-holder" dir="auto">
+            {title}
+          </p>
+        )}
         {compact ? (
           o.template?.name && title !== o.template.name ? (
             <p className="scan-identity-meta">{o.template.name}</p>

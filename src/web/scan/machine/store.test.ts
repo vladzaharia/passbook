@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ApiError } from '../../lib/errors.ts';
 import { SCAN_TIMING } from '../timing.ts';
+import { dockStrip } from '../ui/strip-of.ts';
 import { fixtureInput, fixtureOutcome, states } from './fixtures.test-support.ts';
 import { resetIds } from './reduce.test-support.ts';
 import { fakeClock, fakeDeps, flush } from './store.test-support.ts';
@@ -107,6 +108,16 @@ describe('scan store', () => {
     store.dispatch({ type: 'online', online: true });
     await flush();
     expect(api.act).toHaveBeenCalledTimes(2);
+  });
+
+  it('an unconfirmed scan counts in the offline dock strip once the connection drops', async () => {
+    const { store, api } = boot();
+    api.act.mockRejectedValueOnce(new ApiError({ status: 0, code: 'network' }));
+    store.dispatch(read('AAAA1111', 0));
+    await flush();
+    store.dispatch({ type: 'online', online: false });
+    const { state } = store.getSnapshot();
+    expect(dockStrip(state, undefined, false, 0)?.meta).toBe('1 waiting to sync');
   });
 
   it('sends the approval with an undo, and none without one', async () => {

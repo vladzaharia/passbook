@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SCAN_TIMING } from '../timing.ts';
 import { fixtureCard, fixtureOutcome, states } from './fixtures.test-support.ts';
-import { presentOutcome, viewOf } from './present.ts';
+import { moodOf, presentOutcome, viewOf } from './present.ts';
 import type { ScanOutcome } from './types.ts';
 
 const OPTS = { holdResults: false };
@@ -167,5 +167,22 @@ describe('viewOf: the whole state', () => {
       mood: 'sad',
     });
     expect(viewOf(states.verdict('system', 'network')).buddy.pose).toBe('sorry');
+  });
+});
+
+describe('a verdict reads the same in colour, word, region and buddy', () => {
+  it.each([
+    ['ok', null, 'green', 'status', 'happy'],
+    ['heads_up', 'already_done', 'amber', 'status', 'curious'],
+    ['refused', 'voided', 'red', 'alert', 'sad'],
+    ['system', 'network', 'slate', 'alert', 'sad'],
+  ] as const)('%s', (kind, reason, tint, region, mood) => {
+    const view = viewOf(states.verdict(kind, reason as never));
+    expect(view.tint).toBe(tint);
+    expect(view.announcement).toBeTruthy();
+    expect(view.buddy.mood).toBe(mood);
+    expect(moodOf(kind)).toBe(mood);
+    const p = presentOutcome(fixtureOutcome(kind, reason as never), 'door', OPTS);
+    expect(p.region).toBe(region);
   });
 });

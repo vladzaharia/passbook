@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import {
   type ScanEventDto,
@@ -21,6 +21,7 @@ import {
   detailError,
   KeyValue,
   PageHeader,
+  ProgressBar,
   SkeletonDetail,
   StatusPill,
   TwoPane,
@@ -28,6 +29,7 @@ import {
 import { AssignDialog } from './events/assign-dialog.tsx';
 import { EventDialog } from './events/event-dialog.tsx';
 import { useOrgTemplates } from './scanner-api.ts';
+import { scannerStatus } from './scanners/labels.ts';
 
 export function EventPage({ eventId }: { eventId: string }) {
   const { hasExplicitOrg, requestedOrgId } = useOrgScope();
@@ -103,6 +105,15 @@ function EventDetail({
     membership?.capabilities.includes('templates:read') &&
       membership.capabilities.includes('templates:author'),
   );
+  // Live before opensAt reads Upcoming, and flips at opensAt without a reload.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const wait = event.opensAt - Date.now();
+    if (wait <= 0) return;
+    const timer = window.setTimeout(() => setNow(Date.now()), Math.min(wait, 2 ** 31 - 1));
+    return () => window.clearTimeout(timer);
+  }, [event.opensAt]);
+  const upcoming = event.status === 'live' && event.opensAt > now;
   const [dialog, setDialog] = useState<'edit' | 'assign' | 'archive' | null>(null);
   const templates = useOrgTemplates(event.orgId);
   const scanners = useQuery({
@@ -140,7 +151,7 @@ function EventDetail({
         meta={
           event ? (
             <>
-              <StatusPill status={event.status} />
+              <StatusPill status={upcoming ? 'upcoming' : event.status} />
               <span>
                 {formatEventTime(event.opensAt, event.timeZone)} –{' '}
                 {formatEventTime(event.closesAt, event.timeZone)}
@@ -173,7 +184,7 @@ function EventDetail({
                 <h2 className="font-semibold">Readiness</h2>
                 <p>
                   {assigned.filter((s) => s.status === 'paired').length} of {assigned.length}{' '}
-                  scanners paired
+                  {assigned.length === 1 ? 'scanner' : 'scanners'} paired
                 </p>
                 {assigned.map((s) => (
                   <div key={s.id} className="flex items-center justify-between gap-2">
@@ -183,7 +194,7 @@ function EventDetail({
                     >
                       {s.name}
                     </a>
-                    <StatusPill status={s.status} />
+                    <StatusPill status={scannerStatus(s)} />
                   </div>
                 ))}
                 {editable ? (
@@ -206,12 +217,12 @@ function EventDetail({
                   {event.arrived}{' '}
                   <span className="text-lg font-normal text-fg-muted">of {event.expected}</span>
                 </p>
-                <progress
-                  className="h-2 w-full accent-accent"
+                <ProgressBar
+                  label="Checked in"
                   value={event.arrived}
                   max={Math.max(1, event.expected)}
-                  aria-label="Checked in"
-                  aria-valuetext={`${event.arrived} of ${event.expected} checked in`}
+                  valueText={`${event.arrived} of ${event.expected} checked in`}
+                  tone="success"
                 />
               </div>
             </Card>
@@ -224,10 +235,10 @@ function EventDetail({
                     { label: 'Capacity', value: event.capacity ?? 'No limit' },
                     { label: 'Re-entry', value: event.reentry ? 'Allowed' : 'Off' },
                     {
-                      label: 'Only passes where',
+                      label: 'Passes',
                       value: event.match
-                        ? `${event.match.input} = ${event.match.values.join(', ')}`
-                        : 'All passes of these templates',
+                        ? `${event.match.input} is ${event.match.values.join(' or ')}`
+                        : 'All from these templates',
                     },
                   ]}
                 />
@@ -263,7 +274,11 @@ function EventDetail({
             </Card>
             {editable ? (
               <div>
-                <Button variant="ghost" onClick={() => setDialog('archive')}>
+                <Button
+                  variant="ghost"
+                  className="text-danger"
+                  onClick={() => setDialog('archive')}
+                >
                   Archive event
                 </Button>
               </div>

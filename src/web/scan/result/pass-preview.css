@@ -1,0 +1,16 @@
+/* The pass sheet's card takes the height its content needs, and a long value wraps. The card's
+   fixed ratio is the Wallet shape; here it only left empty space under a short pass. */
+.scan-pass-fit .pc-card {
+  aspect-ratio: auto;
+  min-height: calc(var(--u) * 200);
+}
+.scan-pass-fit .pc-root[data-face="front"] .pc-row {
+  flex-wrap: wrap;
+}
+.scan-pass-fit .pc-root[data-face="front"] .pc-field > .pc-label,
+.scan-pass-fit .pc-root[data-face="front"] .pc-field > .pc-value {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}

@@ -65,7 +65,7 @@ export function LookupResults({
         <p className="text-sm text-fg-muted">
           {query.includes('@')
             ? 'Use the full email address.'
-            : 'Type at least 3 letters to search. Enter a full code or ID to scan.'}
+            : 'Type at least 3 letters to search. Enter a full code to scan.'}
         </p>
       ) : null}
       {result?.more ? (

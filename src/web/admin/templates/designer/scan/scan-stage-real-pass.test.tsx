@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { json } from '@/web/lib/test-utils.tsx';
 import {
   deferredPreview,
+  frame,
+  frameReady,
   type Pending,
   renderInApp,
   response,
@@ -30,6 +32,7 @@ describe('scan preview stage', () => {
     const user = userEvent.setup();
     const requests = deferredPreview();
     renderInApp(<Stage />);
+    await frameReady();
     await user.click(await screen.findByRole('radio', { name: 'Manager' }));
     await user.click(screen.getByRole('combobox', { name: 'Sample: Synthetic sample' }));
     await user.click(screen.getByRole('option', { name: 'Real pass' }));
@@ -48,27 +51,27 @@ describe('scan preview stage', () => {
     expect(new Headers(first.init?.headers).get('x-passbook-mode')).toBe('test');
     expect(screen.getByText(/Loading real pass · showing a synthetic sample/)).toBeVisible();
     await act(async () => first.answer(response('Manager Person', 'Manager-only tier')));
-    await screen.findByText('Manager-only tier');
-    expect(screen.queryByText('Raw-only sentinel')).not.toBeInTheDocument();
-    expect(screen.queryByText('never@example.test')).not.toBeInTheDocument();
-    expect(screen.queryByText('never-a-barcode')).not.toBeInTheDocument();
+    await frame().findByText('Manager-only tier');
+    expect(frame().queryByText('Raw-only sentinel')).not.toBeInTheDocument();
+    expect(frame().queryByText('never@example.test')).not.toBeInTheDocument();
+    expect(frame().queryByText('never-a-barcode')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('radio', { name: 'Door' }));
-    expect(screen.queryByText('Manager Person')).not.toBeInTheDocument();
-    expect(screen.queryByText('Manager-only tier')).not.toBeInTheDocument();
+    expect(frame().queryByText('Manager Person')).not.toBeInTheDocument();
+    expect(frame().queryByText('Manager-only tier')).not.toBeInTheDocument();
     expect(screen.getByText(/Loading real pass · showing a synthetic sample/)).toBeVisible();
     await waitFor(() => expect(requests).toHaveLength(2));
     expect(requests[1]?.url.searchParams.get('role')).toBe('door');
     fireEvent.click(screen.getByRole('radio', { name: 'Desk' }));
     await waitFor(() => expect(requests).toHaveLength(3));
     await act(async () => requests[1]?.answer(response('Stale Door', 'Not visible')));
-    expect(screen.queryByText('Stale Door')).not.toBeInTheDocument();
+    expect(frame().queryByText('Stale Door')).not.toBeInTheDocument();
     await act(async () => requests[2]?.answer(response('Desk Person', 'Not visible')));
-    await screen.findByText('Desk Person');
-    expect(screen.queryByText('Not visible')).not.toBeInTheDocument();
+    await frame().findByText('Desk Person');
+    expect(frame().queryByText('Not visible')).not.toBeInTheDocument();
 
     await pickPass(user, 'Pass two');
-    expect(screen.queryByText('Desk Person')).not.toBeInTheDocument();
+    expect(frame().queryByText('Desk Person')).not.toBeInTheDocument();
     expect(screen.getByText(/Loading real pass · showing a synthetic sample/)).toBeVisible();
     await waitFor(() => expect(requests).toHaveLength(4));
     expect(requests[3]?.url.searchParams.get('passId')).toBe('pass-two');
@@ -79,14 +82,14 @@ describe('scan preview stage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'That pass is not in this template and mode. Pick another.',
     );
-    expect(screen.getByText('Alex')).toBeVisible();
-    expect(screen.queryByText('Desk Person')).not.toBeInTheDocument();
+    expect(frame().getByText('Alex')).toBeVisible();
+    expect(frame().queryByText('Desk Person')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     await waitFor(() => expect(requests).toHaveLength(5));
     expect(requests[4]?.url.searchParams.get('passId')).toBe('pass-two');
     await act(async () => requests[4]?.answer(response('Retry Person', 'Not visible')));
-    await screen.findByText('Retry Person');
+    await frame().findByText('Retry Person');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

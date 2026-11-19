@@ -2,7 +2,7 @@
 export const UI_COPY = {
   scanPairingCode: 'Scan pairing code',
   confirmTitle: 'Pair this device?',
-  confirmLine: 'As {scanner} for {org}.',
+  confirmLine: 'Pair this device as {scanner} for {org}?',
   paired: 'Paired as {scanner}.',
   scanAsAdmin: 'Scan as admin',
   organization: 'Organization',

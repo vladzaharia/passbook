@@ -2,13 +2,13 @@
 import { useState } from 'react';
 import { Buddy } from '../ui/art/buddy.tsx';
 import { ScanAppView } from './app.tsx';
-import { fakeInsideApi, insideRow, rows } from './inside/inside-fake.test-support.ts';
+import { fakeInsideApi, insideRow } from './inside/inside-fake.test-support.ts';
 import { InsideSheet } from './inside/inside-sheet.tsx';
 import { useInside } from './inside/use-inside.ts';
 import type { ResolvedOutcome } from './machine/access-events.ts';
 import { exit, full, grant, heldIn, heldOut } from './machine/access-fixtures.test-support.ts';
 import { fixtureDisplay } from './machine/fixtures.test-support.ts';
-import { presentOutcome } from './machine/present.ts';
+import { moodOf, presentOutcome } from './machine/present.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { ResultCard } from './result/result-card.tsx';
 import { PlaceChip } from './ui/chips.tsx';
@@ -25,6 +25,11 @@ const verdicts: Record<string, ScanOutcome> = {
   full: full({ display: fixtureDisplay('heads_up') }),
   resolved: { ...grant({ display }), resolvedBy: 'Sam K.' } as ResolvedOutcome,
 };
+
+function faceOf(kind: ScanOutcome['kind']) {
+  const mood = moodOf(kind);
+  return mood === 'neutral' ? 'flat' : mood;
+}
 
 export const ACCESS_SCENARIOS = [
   ...Object.keys(verdicts),
@@ -43,7 +48,8 @@ function InsideScenario({ scenario }: { scenario: AccessScenario }) {
         : [
             insideRow(0, { flags: ['long_stay'] }),
             insideRow(1, { host: 'Ana R.' }),
-            ...rows(4).slice(2),
+            insideRow(2),
+            insideRow(3),
           ],
     ),
   );
@@ -87,7 +93,7 @@ export function AccessVisual({ scenario }: { scenario: AccessScenario }) {
           ),
         }}
         camera={<div className="scan-visual-camera" />}
-        buddy={<Buddy scene="scan" size="xl-scan" mood="happy" immediate />}
+        buddy={<Buddy scene="scan" size="xl-scan" mood={faceOf(outcome?.kind ?? 'ok')} immediate />}
         strip={{ kind: 'ok', title: 'Maya Okafor', meta: 'In · Gym · 6:41 PM', undoable: true }}
         dockRow={
           <DoorThumbRow

@@ -73,6 +73,8 @@
 }
 .scan-result-band[data-layout="custom"] h1 {
   margin-top: 10px;
+  font-size: 36px;
+  line-height: 40px;
 }
 .scan-result-band p {
   margin: 6px 0 0;
@@ -80,11 +82,13 @@
   line-height: 22px;
   font-weight: 500;
 }
-.scan-result-band .scan-verdict-eyebrow {
-  margin: 0;
-  font-size: 20px;
-  line-height: 24px;
-  font-weight: 600;
+.scan-result-band .scan-verdict-custom {
+  margin: 6px 0 0;
+  font-size: 26px;
+  line-height: 30px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
 }
 .scan-custom-glyph {
   display: grid;
@@ -121,6 +125,14 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* A body taller than the card shows a fade where it continues. */
+  background:
+    linear-gradient(var(--scan-card) 30%, transparent) 0 0 / 100% 24px no-repeat local,
+    linear-gradient(transparent, var(--scan-card) 70%) 0 100% / 100% 24px no-repeat local,
+    radial-gradient(farthest-side at 50% 0, rgb(0 0 0 / 0.16), transparent) 0 0 / 100% 10px
+    no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgb(0 0 0 / 0.16), transparent) 0 100% / 100% 10px
+    no-repeat scroll;
   padding: 14px 12px 12px;
   display: flex;
   flex-direction: column;
@@ -186,9 +198,9 @@
     width: 90px;
     height: 80px;
   }
-  .scan-result-band .scan-verdict-eyebrow {
-    font-size: 24px;
-    line-height: 30px;
+  .scan-result-band .scan-verdict-custom {
+    font-size: 32px;
+    line-height: 38px;
   }
   .scan-result-body {
     flex: 1;
@@ -213,6 +225,28 @@
     flex-direction: column;
   }
 }
+/* A phone's custom band (name under the verdict) puts the glyph beside the words: the stamp row keeps the room. */
+@media (max-width: 639px) {
+  .scan-result-band[data-layout="custom"] {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+  }
+  .scan-result-band[data-layout="custom"] h1 {
+    margin-top: 0;
+    font-size: 32px;
+    line-height: 36px;
+  }
+  .scan-result-band[data-layout="custom"] .scan-custom-glyph {
+    width: 48px;
+    height: 48px;
+  }
+  .scan-result-band[data-layout="custom"] .scan-verdict-custom {
+    font-size: 22px;
+    line-height: 26px;
+  }
+}
 @media (max-width: 359px), (max-height: 650px) {
   .scan-result-band h1 {
     font-size: 32px;
@@ -234,6 +268,10 @@
     margin-top: 6px;
     line-height: 32px;
   }
+  .scan-result-band .scan-verdict-custom {
+    font-size: 22px;
+    line-height: 26px;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -245,5 +283,12 @@
   .scan-result-band {
     width: min(260px, 42%);
     min-height: 0;
+  }
+}
+
+/* The pass sheet fills a phone: the verdict waits behind it instead of showing through the slide. */
+@media (max-width: 639px) {
+  body:has(.scan-detail-sheet) .scan-result {
+    visibility: hidden;
   }
 }

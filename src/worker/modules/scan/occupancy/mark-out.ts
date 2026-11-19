@@ -86,7 +86,7 @@ export async function markOut(
           // Membership, not a list: no page limit.
           Number.POSITIVE_INFINITY,
         )
-      : await sessionInsideScope(db, actor);
+      : await sessionInsideScope(db, actor, { place: req.place, max: Number.POSITIVE_INFINITY });
   const place = scope.places.find((p) => p.place === req.place);
   const pass = place ? await getPass(db, req.passId, actor.orgId) : null;
   if (!place || !pass || pass.mode !== actor.mode) throw invalid();

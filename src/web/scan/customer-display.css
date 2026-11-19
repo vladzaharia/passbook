@@ -1,135 +1,200 @@
-.duo-customer-display {
+/* The customer screen. Type scales with the viewport so it reads at 2-3 m on a TV. */
+.cstage {
+  --signal: var(--scan-org-accent, var(--pk-accent));
+  --signal-on: var(--pk-accent-on);
   position: relative;
-  display: flex;
-  align-items: center;
-  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  height: 100dvh;
+  min-height: 420px;
   overflow: hidden;
-  padding: clamp(28px, 5vw, 72px);
   isolation: isolate;
+  padding: clamp(24px, 4vw, 96px);
   background:
     radial-gradient(
-      ellipse at 20% 10%,
-      color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 12%, transparent),
-      transparent 48%
+      ellipse at 78% 62%,
+      color-mix(in oklab, var(--signal) 22%, transparent),
+      transparent 55%
     ),
-    var(--pk-surface-page);
+    color-mix(in oklab, var(--signal) 9%, var(--pk-surface-page));
   color: var(--pk-text-default);
 }
-.duo-customer-display-copy {
-  position: relative;
-  z-index: 1;
-  width: 68%;
-  max-width: 720px;
+.cstage[data-signal="success"] {
+  --signal: var(--pk-success);
+  --signal-on: var(--pk-success-on);
 }
-.duo-customer-brand {
+.cstage[data-signal="info"] {
+  --signal: var(--pk-info);
+  --signal-on: var(--pk-info-on);
+}
+.cstage[data-signal="danger"] {
+  --signal: var(--pk-danger);
+  --signal-on: var(--pk-danger-on);
+}
+.cstage[data-signal="warning"] {
+  --signal: var(--pk-warning);
+  --signal-on: var(--pk-warning-on);
+}
+.cstage-brand {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  gap: 12px;
-  max-width: min(100%, 560px);
-  margin-bottom: clamp(28px, 5vw, 56px);
+  gap: clamp(12px, 1.4vw, 28px);
+  min-width: 0;
   color: var(--pk-text-strong);
 }
-.duo-customer-brand-mark {
+.cstage-brand-mark {
   display: grid;
   flex: none;
   place-items: center;
-  width: clamp(88px, 12vw, 160px);
-  height: clamp(40px, 5vw, 64px);
+  width: clamp(88px, 10vw, 220px);
+  height: clamp(44px, 5vw, 110px);
   overflow: hidden;
-  border: 1px solid
-    color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 28%, var(--pk-border-subtle));
-  border-radius: 16px;
-  background: color-mix(
-    in oklab,
-    var(--scan-org-accent, var(--pk-accent)) 8%,
-    var(--pk-surface-raised)
-  );
-  color: var(--pk-text-strong);
-  font-size: 22px;
+  border: 1px solid color-mix(in oklab, var(--signal) 30%, var(--pk-border-subtle));
+  border-radius: clamp(14px, 1.4vw, 28px);
+  background: var(--pk-surface-raised);
+  font-size: clamp(22px, 2.4vw, 52px);
   font-weight: 700;
 }
-.duo-customer-brand-logo {
+.cstage-brand-logo {
   width: 100%;
   height: 100%;
-  padding: 5px;
+  padding: 6px;
   object-fit: contain;
 }
-.duo-customer-brand > p {
+.cstage-brand > p {
   min-width: 0;
-  max-width: 24ch;
   overflow-wrap: anywhere;
-  font-size: clamp(18px, 2.4vw, 28px);
+  font-size: clamp(18px, 2vw, 44px);
   font-weight: 650;
   line-height: 1.2;
 }
-.duo-customer-display-eyebrow {
-  color: var(--pk-text-muted);
-  font-size: 14px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
+.cstage-copy {
+  position: relative;
+  z-index: 1;
+  grid-column: 1;
+  align-self: center;
+  padding-block: clamp(16px, 3vw, 64px);
+  animation: cstage-in 420ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.cstage-badge {
+  display: grid;
+  place-items: center;
+  width: clamp(72px, 9vw, 200px);
+  aspect-ratio: 1;
+  margin-bottom: clamp(16px, 2.4vw, 52px);
+  border-radius: 50%;
+  background: var(--signal);
+  color: var(--signal-on);
+  box-shadow: 0 0 0 clamp(8px, 1vw, 22px) color-mix(in oklab, var(--signal) 22%, transparent);
+}
+.cstage-badge > svg {
+  width: 56%;
+  height: 56%;
+}
+.cstage-eyebrow {
+  color: color-mix(in oklab, var(--signal) 55%, var(--pk-text-strong));
+  font-size: clamp(16px, 1.5vw, 34px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.duo-customer-display-copy h1 {
-  margin-top: 8px;
+.cstage-copy h1 {
+  margin-top: 0.15em;
+  max-width: 12ch;
   color: var(--pk-text-strong);
-  font-size: clamp(52px, 7.5vw, 108px);
-  font-weight: 700;
-  line-height: 1;
-  overflow-wrap: anywhere;
+  font-size: clamp(44px, 6.6vw, 160px);
+  font-weight: 750;
+  line-height: 0.98;
+  text-wrap: balance;
 }
-.duo-customer-display-hint {
-  margin-top: 16px;
+.cstage-hint {
+  margin-top: 0.5em;
+  max-width: 24ch;
   color: var(--pk-text-muted);
-  font-size: clamp(22px, 2.8vw, 32px);
+  font-size: clamp(22px, 2.6vw, 58px);
+  text-wrap: balance;
 }
-.duo-customer-buddy {
+.cstage-buddy {
   position: absolute;
-  right: clamp(8px, 2vw, 32px);
-  bottom: max(24px, env(safe-area-inset-bottom, 0px) + 12px);
+  right: clamp(16px, 4vw, 120px);
+  bottom: clamp(16px, 3vw, 80px);
   z-index: 0;
-  width: clamp(240px, 34vw, 520px);
-  aspect-ratio: 4 / 3;
+  width: min(44vw, 68dvh);
   pointer-events: none;
 }
-.duo-customer-buddy::before {
+.cstage-buddy::before {
   content: "";
   position: absolute;
-  inset: auto 8% 4%;
-  height: 14%;
+  inset: auto 6% 2%;
+  height: 12%;
   border-radius: 50%;
-  background: color-mix(in oklab, var(--scan-org-accent, var(--pk-accent)) 12%, transparent);
+  background: color-mix(in oklab, var(--signal) 26%, transparent);
+  filter: blur(8px);
 }
-.duo-customer-buddy .wl-buddy {
-  top: auto;
-  right: 0;
-  bottom: 0;
-  left: auto;
+.cstage-buddy .wl-buddy {
+  position: relative;
+  inset: auto;
   width: 100%;
   translate: 0;
 }
-.duo-customer-buddy-art .wl-art {
+.cstage-buddy-art .wl-art {
   width: 100%;
   height: auto;
 }
-@media (max-width: 600px) {
-  .duo-customer-display {
-    align-items: flex-start;
-    padding: 28px 24px max(220px, 60vw);
-  }
-  .duo-customer-display-copy {
-    width: 100%;
-    max-width: 100%;
-  }
-  .duo-customer-buddy {
-    right: 0;
-    width: clamp(200px, 60vw, 280px);
+.cstage-notice {
+  position: absolute;
+  right: clamp(16px, 2vw, 48px);
+  bottom: clamp(12px, 1.4vw, 32px);
+  z-index: 2;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--pk-surface-raised);
+  color: var(--pk-text-muted);
+  font-size: clamp(14px, 1.2vw, 26px);
+}
+@keyframes cstage-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
   }
 }
-@media (max-height: 520px) and (min-width: 601px) {
-  .duo-customer-display {
-    padding-block: 24px;
+@media (prefers-reduced-motion: reduce) {
+  .cstage-copy {
+    animation: none;
   }
-  .duo-customer-buddy {
-    width: min(34vw, 320px);
+}
+@media (max-width: 700px), (max-aspect-ratio: 1 / 1) {
+  .cstage {
+    height: auto;
+    min-height: 100dvh;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    padding: 24px;
+  }
+  .cstage-copy {
+    align-self: start;
+    padding-top: 28px;
+  }
+  .cstage-copy h1 {
+    font-size: clamp(44px, 12vw, 120px);
+    max-width: 14ch;
+  }
+  .cstage-buddy {
+    position: relative;
+    inset: auto;
+    grid-row: 3;
+    align-self: end;
+    justify-self: center;
+    width: min(100%, 60vw, 520px);
+  }
+}
+@media (max-height: 520px) and (min-width: 701px) {
+  .cstage-badge {
+    width: 56px;
+  }
+  .cstage-buddy {
+    width: min(44vw, 60dvh);
   }
 }
