@@ -4,6 +4,7 @@ import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import type { Pass } from '../passes/repo-map.ts';
+import { printCodeRef } from '../prints/codes.ts';
 import {
   type CredentialTombstoneSnapshot,
   captureCredentialTombstoneSnapshot,
@@ -21,6 +22,7 @@ import {
   byBarcodeHashStmt,
   byIdStmt,
   byLookupHashStmt,
+  byPrintHashStmt,
   byScanCodeStmt,
   bySerialStmt,
   type Candidate,
@@ -97,6 +99,8 @@ export async function planCandidateReads(
       stmts.push(byBarcodeHashStmt(db, actor.orgId, barcodeHash, actor.mode));
       stmts.push(byLookupHashStmt(db, actor.orgId, lookupHash, actor.mode));
       if (input.method === 'manual') stmts.push(bySerialStmt(db, actor.orgId, clean, actor.mode));
+      const printRef = await printCodeRef(ctx.env, actor.orgId, actor.mode, clean);
+      if (printRef) stmts.push(byPrintHashStmt(db, actor.orgId, printRef, actor.mode));
     }
   }
   const now = ctx.clock.now();

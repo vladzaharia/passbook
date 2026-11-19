@@ -42,6 +42,9 @@ export type Raw = PassDbRow &
     active_template_version: string | null;
     display_template_version: string | null;
     check_in_rules: string | null;
+    print_status?: string | null;
+    print_voided_at?: number | null;
+    print_void_cause?: string | null;
   } & PhotoProjection;
 
 const NO_CREDENTIAL_REFS: readonly string[] = Object.freeze([]);
@@ -92,5 +95,14 @@ export function toCandidate(r: Raw): Candidate | null {
     displayTemplateVersion: r.display_template_version,
     checkInRules: CheckInPolicySchema.parse(JSON.parse(r.check_in_rules ?? '{}')),
     hasPhoto: r.asset_photo_version !== null,
+    ...(r.print_status
+      ? {
+          print: {
+            status: r.print_status,
+            voidedAt: r.print_voided_at ?? null,
+            cause: r.print_void_cause ?? null,
+          },
+        }
+      : {}),
   };
 }

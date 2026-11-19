@@ -1,0 +1,73 @@
+import {
+  IdParamSchema,
+  MintedPrintSchema,
+  PassPrintSchema,
+  PassPrintsResponseSchema,
+  PrintParamSchema,
+} from '../../../shared/contracts/index.ts';
+import { type createRouter, register } from '../../platform/openapi.ts';
+import { actorFor, authOf, passScopeOf, svc } from '../passes/http.ts';
+import { tenantPassForRead, tenantPassForWrite } from '../passes/pass-access.ts';
+import * as repo from './repo.ts';
+import { adminWriter } from './repo-write.ts';
+import { ADMIN_PRINTS_PER_HOUR, mintPrint, voidPrint } from './service.ts';
+
+type Router = ReturnType<typeof createRouter>;
+
+/** /api/v1/passes/{id}/prints: staff and keys with passes:operate or passes:write. */
+export function registerPassPrintRoutes(passesRoutes: Router): void {
+  register(
+    passesRoutes,
+    'passes',
+    {
+      method: 'post',
+      path: '/{id}/prints',
+      summary: 'Print a ticket; an earlier print of the pass is voided',
+      params: IdParamSchema,
+      response: MintedPrintSchema,
+    },
+    async (c) => {
+      const ctx = svc(c);
+      const { id } = c.req.valid('param');
+      const { pass, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      const caller = { writer: adminWriter(authority, actorFor(c)), limit: ADMIN_PRINTS_PER_HOUR };
+      return c.json(await mintPrint(ctx, caller, pass, true));
+    },
+  );
+
+  register(
+    passesRoutes,
+    'passes',
+    {
+      method: 'get',
+      path: '/{id}/prints',
+      summary: "A pass's prints, newest first; codes are never listed",
+      params: IdParamSchema,
+      response: PassPrintsResponseSchema,
+    },
+    async (c) => {
+      const { id } = c.req.valid('param');
+      const { pass } = await tenantPassForRead(svc(c), authOf(c), id, passScopeOf(c));
+      return c.json({ prints: await repo.listPrints(svc(c).env.DB, pass.id) });
+    },
+  );
+
+  register(
+    passesRoutes,
+    'passes',
+    {
+      method: 'post',
+      path: '/{id}/prints/{printId}/void',
+      summary: 'Void a printed ticket',
+      params: PrintParamSchema,
+      response: PassPrintSchema,
+    },
+    async (c) => {
+      const ctx = svc(c);
+      const { id, printId } = c.req.valid('param');
+      const { pass, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      const caller = { writer: adminWriter(authority, actorFor(c)), limit: ADMIN_PRINTS_PER_HOUR };
+      return c.json(await voidPrint(ctx, caller, pass, 'manual', printId));
+    },
+  );
+}

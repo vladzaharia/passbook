@@ -150,6 +150,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     pass: 'pass_id',
     conflict: ['pass_id', 'channel'],
   },
+  // Printed tickets (0110): minted and voided through grants; the triggers void them with the pass.
+  pass_prints: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   data_requests: { org: 'org_id' },
   data_request_passes: { org: null, edges: [edge('request_id', 'data_requests')] },
 };

@@ -21,6 +21,7 @@ import { recordPassEvent } from '../events/record.ts';
 import { voidedAt } from '../events/repo-voided.ts';
 import { servePassFile } from '../passes/file.ts';
 import { type C, svc } from '../passes/http.ts';
+import { holderPrintRoutes } from '../prints/routes-holder.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
 import { canPresent, presentationForPass } from './presentation.ts';
@@ -66,6 +67,7 @@ publicRoutes.use('/:token/pass.pkpass', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/barcode', rateLimit('RL_PUBLIC'));
 
 publicRoutes.route('/', resendRoutes);
+publicRoutes.route('/', holderPrintRoutes);
 
 const againOf = (v: string | undefined) => (v === 'sent' || v === 'wait' ? v : null);
 

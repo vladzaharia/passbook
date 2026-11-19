@@ -53,6 +53,8 @@ export interface Candidate extends CredentialTombstoneSnapshot {
   displayTemplateVersion: string | null;
   checkInRules?: CheckInPolicy;
   hasPhoto?: boolean;
+  /** Set when the candidate was found by a print code: that print's state. */
+  print?: { status: string; voidedAt: number | null; cause: string | null };
 }
 
 export type ReleaseSnapshot = Pick<
@@ -164,6 +166,17 @@ const ELIGIBLE = `p.deleted_at IS NULL AND p.test_data_quarantined = 0
     )}))`;
 
 const SELECT = `${PROJECTION} FROM passes p ${JOINS} WHERE p.org_id = ? AND ${ELIGIBLE}`;
+
+/** The pass behind a print code (`print_code_hash`, keyed), with the print's state beside it. */
+const PRINT_SELECT = `${PROJECTION.replace(
+  'SELECT p.*,',
+  'SELECT p.*, pr.status AS print_status, pr.voided_at AS print_voided_at, pr.void_cause AS print_void_cause,',
+)} FROM passes p JOIN pass_prints pr ON pr.pass_id = p.id ${JOINS}
+  WHERE p.org_id = ? AND pr.org_id = p.org_id AND pr.mode = p.mode AND pr.print_code_hash = ?
+    AND p.mode = ? AND ${ELIGIBLE} LIMIT 1`;
+
+export const byPrintHashStmt = (db: Db, orgId: string, hash: string, mode: 'live' | 'test') =>
+  stmt(db, PRINT_SELECT, [orgId, hash, mode]);
 
 const LOOKUP_COLUMNS = ['scan_code', 'barcode_hash', 'lookup_hash', 'serial', 'id'] as const;
 
