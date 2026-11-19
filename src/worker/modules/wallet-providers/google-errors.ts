@@ -94,8 +94,10 @@ export async function googleFetch(
 ): Promise<Response> {
   const timeout = AbortSignal.timeout(timeoutMs);
   const signal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+  let response: Response;
   try {
-    return await fetcher(url, { ...init, redirect: 'error', signal });
+    // workerd refuses redirect 'error'. 'manual' never follows, so a credential goes to one host only.
+    response = await fetcher(url, { ...init, redirect: 'manual', signal });
   } catch (error) {
     throw new GoogleWalletError(
       timeout.aborted && error instanceof Error && error.name === 'TimeoutError'
@@ -104,4 +106,7 @@ export async function googleFetch(
       operation,
     );
   }
+  if (response.status >= 300 && response.status < 400)
+    throw new GoogleWalletError('provider_error', operation, response.status);
+  return response;
 }
