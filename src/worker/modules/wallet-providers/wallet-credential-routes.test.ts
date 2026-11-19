@@ -126,6 +126,19 @@ describe('wallet credential and enrolment routes', () => {
         [org.id, 'test'],
       ),
     ).toEqual({ r: 'abuse' });
+    const listed = await call(adminH, 'GET', '/api/v1/platform/wallet-enrolments?provider=google');
+    expect(((await listed.json()) as { items: unknown[] }).items).toContainEqual(
+      expect.objectContaining({
+        orgId: org.id,
+        mode: 'test',
+        source: 'platform',
+        state: 'held',
+        hold: expect.objectContaining({ reason: 'abuse' }),
+      }),
+    );
+    expect(
+      (await call(memberH, 'GET', '/api/v1/platform/wallet-enrolments?provider=google')).status,
+    ).toBe(403);
     expect(await (await call(adminH, 'POST', `${hold}/release`)).json()).toEqual({
       status: 'released',
     });

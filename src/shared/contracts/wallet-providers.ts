@@ -180,3 +180,21 @@ export const WalletEnrolmentHoldResultSchema = z.strictObject({
   // `queued` when the org is suspended: a job writes the hold.
   status: z.enum(['held', 'released', 'queued']),
 });
+
+/** A platform admin sees every org's enrolment of a provider, Live and Test together. */
+export const PlatformWalletEnrolmentSchema = z.strictObject({
+  orgId: IdSchema,
+  orgName: z.string(),
+  mode: ModeSchema,
+  provider: WalletProviderSchema,
+  source: WalletEnrolmentSourceSchema.nullable(),
+  state: z.enum(['off', 'on', 'held', 'revoked']),
+  hold: z.strictObject({ at: TimestampSchema, reason: z.string() }).nullable(),
+  updatedAt: TimestampSchema,
+});
+export type PlatformWalletEnrolment = z.infer<typeof PlatformWalletEnrolmentSchema>;
+
+export const PlatformWalletEnrolmentListSchema = z.strictObject({
+  items: z.array(PlatformWalletEnrolmentSchema),
+});
+export type PlatformWalletEnrolmentList = z.infer<typeof PlatformWalletEnrolmentListSchema>;

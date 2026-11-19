@@ -24,17 +24,20 @@ const own = {
   isDefault: false,
   createdAt: 1_600_000_000_000,
 };
-const account = (url: URL) =>
+const enrolments = () =>
   json({
-    orgId: 'o1',
-    mode: url.searchParams.get('mode'),
-    provider: url.searchParams.get('provider'),
-    accountId: null,
-    revision: 0,
-    state: 'absent',
-    externalApprovalVerified: false,
-    issuance: { state: 'disabled', reason: 'not_released' },
-    updatedAt: null,
+    items: (['google', 'samsung'] as const).map((provider) => ({
+      mode: 'live',
+      provider,
+      accountId: null,
+      source: null,
+      platformAvailable: false,
+      state: 'absent',
+      enrolmentRevision: 0,
+      prerequisites: { check: false, roundTrip: false },
+      hold: null,
+      issuance: { state: 'disabled', reason: 'not_released' },
+    })),
   });
 const north = membershipFixture('o1', { orgName: 'North' });
 
@@ -45,7 +48,8 @@ describe('wallet accounts per scope', () => {
       memberships: [north],
       handlers: {
         '/api/v1/identities': () => json({ items: [own], nextCursor: null }),
-        '/api/v1/wallet-providers/accounts': account,
+        '/api/v1/orgs/o1/wallet-enrolments': enrolments,
+        '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [] }),
       },
     });
     expect(await screen.findByRole('heading', { name: 'Wallet accounts', level: 1 })).toBeVisible();
@@ -55,7 +59,7 @@ describe('wallet accounts per scope', () => {
     expect(identities.length).toBeGreaterThan(0);
     expect(identities.every((url) => url.searchParams.get('orgId') === 'o1')).toBe(true);
     await waitFor(() => {
-      const providers = calls.filter((url) => url.pathname === '/api/v1/wallet-providers/accounts');
+      const providers = calls.filter((url) => url.pathname === '/api/v1/orgs/o1/wallet-enrolments');
       expect(providers.length).toBeGreaterThan(0);
     });
     expect(screen.queryByText(/Platform-wide/)).toBeNull();
@@ -67,7 +71,8 @@ describe('wallet accounts per scope', () => {
       memberships: [north],
       handlers: {
         '/api/v1/identities': () => json({ items: [], nextCursor: null }),
-        '/api/v1/wallet-providers/accounts': account,
+        '/api/v1/orgs/o1/wallet-enrolments': enrolments,
+        '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [] }),
       },
     });
     expect(await screen.findByText("Signs with PassBook's identity.")).toBeInTheDocument();

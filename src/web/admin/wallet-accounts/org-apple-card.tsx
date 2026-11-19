@@ -1,19 +1,10 @@
 import { useMemo } from 'react';
-import { useOrgScope } from '@/web/lib/org-filter.tsx';
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  ErrorState,
-  PageHeader,
-  SkeletonDetail,
-  SkeletonRows,
-} from '@/web/ui/index.ts';
+import { Card, CardBody, CardHeader, ErrorState, SkeletonRows } from '@/web/ui/index.ts';
 import { ApnsPill, ExpiryPill } from '../identities/expiry.tsx';
 import { useOrgIdentities } from '../identities/queries.ts';
-import { WalletAccountsPanel } from './wallet-accounts.tsx';
 
-function AppleIdentities({ orgId }: { orgId: string }) {
+/** The organization's own Apple identity, read-only here: PassBook's platform identity signs otherwise. */
+export function OrgAppleCard({ orgId }: { orgId: string }) {
   const query = useOrgIdentities(orgId);
   const now = useMemo(() => Date.now(), []);
   return (
@@ -53,20 +44,5 @@ function AppleIdentities({ orgId }: { orgId: string }) {
         )}
       </CardBody>
     </Card>
-  );
-}
-
-/** Mounted behind the org gate, which admits an integrations:read membership. */
-export function OrgWalletAccountsPage() {
-  const { membership } = useOrgScope();
-  if (!membership) return <SkeletonDetail label="Loading wallet accounts" />;
-  return (
-    <>
-      <PageHeader title="Wallet accounts" />
-      <div className="flex flex-col gap-6">
-        <AppleIdentities orgId={membership.orgId} />
-        <WalletAccountsPanel orgId={membership.orgId} />
-      </div>
-    </>
   );
 }

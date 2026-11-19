@@ -10,6 +10,7 @@ import {
   revokeKeyConfirm,
   revokeScannerConfirm,
   revokeSessionsConfirm,
+  revokeWalletCredentialConfirm,
   voidConfirm,
 } from './confirms.ts';
 
@@ -75,6 +76,15 @@ describe('confirm copy', () => {
     expect(mine.description).toMatch(/^You can no longer sign in with it/);
     expect(theirs.description).toMatch(/^They can no longer sign in with it/);
     expect(mine.confirmLabel).toBe('Remove');
+  });
+
+  it('revokes wallet credentials and says organizations turn Off', () => {
+    expect(revokeWalletCredentialConfirm('Google Wallet')).toEqual({
+      title: 'Revoke Google Wallet credentials?',
+      confirmLabel: 'Revoke',
+      description: 'Organizations using them turn Off. This cannot be undone.',
+      typed: false,
+    });
   });
 
   it('revokes a key with the same shape', () => {

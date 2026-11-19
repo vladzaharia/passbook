@@ -1,0 +1,235 @@
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { axe } from 'vitest-axe';
+import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
+import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
+import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
+import { credential, enrolment, KEY, platformEnrolment } from './wallet-accounts-test-fixtures.ts';
+
+const READ: OrgCapability[] = ['org:read', 'integrations:read'];
+const MANAGE: OrgCapability[] = [...READ, 'integrations:manage'];
+const member = (capabilities: OrgCapability[]) =>
+  membershipFixture('o1', { orgName: 'North', capabilities });
+
+beforeEach(() => {
+  resetModeForTests();
+  setMode('test');
+});
+afterEach(() => resetModeForTests());
+
+function orgHandlers(enrolments = [enrolment(), enrolment({ provider: 'samsung' })], creds = []) {
+  return {
+    '/api/v1/identities': () => json({ items: [], nextCursor: null }),
+    '/api/v1/orgs/o1/wallet-enrolments': () => json({ items: enrolments }),
+    '/api/v1/orgs/o1/wallet-credentials': () => json({ items: creds }),
+  };
+}
+
+describe('organization wallet accounts', () => {
+  it('shows each wallet with its gates and no axe violations', async () => {
+    const { container } = await renderApp('/admin/o/o1/wallet-accounts', {
+      memberships: [member(MANAGE)],
+      handlers: orgHandlers([
+        enrolment({
+          state: 'off',
+          source: 'org',
+          prerequisites: { check: true, roundTrip: null },
+        }),
+        enrolment({ provider: 'samsung' }),
+      ]),
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    expect(within(google).getByText('Account check: Passed')).toBeInTheDocument();
+    expect(within(google).getByRole('switch', { name: 'Google Wallet on' })).toBeEnabled();
+    const samsung = screen.getByRole('region', { name: 'Samsung Wallet' });
+    expect(within(samsung).getByRole('switch')).toBeDisabled();
+    expect(within(samsung).getByText('Pick a source first.')).toBeInTheDocument();
+    expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('shows the platform hold and its reason, with no way to release it', async () => {
+    await renderApp('/admin/o/o1/wallet-accounts', {
+      memberships: [member(MANAGE)],
+      handlers: orgHandlers([
+        enrolment({ state: 'held', source: 'platform', hold: { at: 1, reason: 'abuse report' } }),
+        enrolment({ provider: 'samsung' }),
+      ]),
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    expect(within(google).getAllByText('abuse report')).toHaveLength(1);
+    expect(within(google).queryByRole('button', { name: /release|hold/i })).toBeNull();
+    expect(within(google).getByRole('switch')).toBeDisabled();
+  });
+
+  it('asks for a Test round trip before Live', async () => {
+    setMode('live');
+    await renderApp('/admin/o/o1/wallet-accounts', {
+      memberships: [member(MANAGE)],
+      handlers: orgHandlers([
+        enrolment({
+          mode: 'live',
+          state: 'off',
+          source: 'org',
+          prerequisites: { check: true, roundTrip: false },
+        }),
+        enrolment({ provider: 'samsung', mode: 'live' }),
+      ]),
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    expect(within(google).getByText('Test round trip: Needed')).toBeInTheDocument();
+    expect(within(google).getByText('Save a pass from Test mode first.')).toBeInTheDocument();
+    expect(within(google).getByRole('switch')).toBeDisabled();
+  });
+
+  it('is read-only without integrations:manage', async () => {
+    await renderApp('/admin/o/o1/wallet-accounts', {
+      memberships: [member(READ)],
+      handlers: orgHandlers([
+        enrolment({ state: 'off', source: 'org', prerequisites: { check: true, roundTrip: null } }),
+        enrolment({ provider: 'samsung' }),
+      ]),
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    expect(within(google).getByRole('switch')).toBeDisabled();
+    expect(
+      within(google).queryByRole('button', { name: /add credentials|rotate|revoke/i }),
+    ).toBeNull();
+    expect(within(google).getAllByText(/Read-only/).length).toBe(1);
+  });
+
+  it('makes no wallet request without integrations:read', async () => {
+    const { fetchMock } = await renderApp('/admin/o/o1/wallet-accounts', {
+      memberships: [member(['org:read'])],
+      handlers: orgHandlers(),
+    });
+    expect(await screen.findByText(/need integrations access/)).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('wallet-'))).toBe(false);
+  });
+
+  it('turns it on with the enrolment revision', async () => {
+    const user = userEvent.setup();
+    const bodies: unknown[] = [];
+    await renderApp('/admin/o/o1/wallet-accounts', {
+      memberships: [member(MANAGE)],
+      handlers: {
+        ...orgHandlers([
+          enrolment({
+            state: 'off',
+            source: 'org',
+            enrolmentRevision: 3,
+            prerequisites: { check: true, roundTrip: null },
+          }),
+          enrolment({ provider: 'samsung' }),
+        ]),
+        '/api/v1/orgs/o1/wallet-enrolments/google/enable': (_u, init) => {
+          bodies.push(JSON.parse(String(init?.body)));
+          return json(enrolment({ state: 'on', source: 'org', enrolmentRevision: 4 }));
+        },
+      },
+    });
+    await user.click(await screen.findByRole('switch', { name: 'Google Wallet on' }));
+    await waitFor(() => expect(bodies).toEqual([{ expectedRevision: 3 }]));
+  });
+
+  it('saves credentials, clears the private key and never shows a secret back', async () => {
+    const user = userEvent.setup();
+    const saved: Record<string, unknown>[] = [];
+    await renderApp('/admin/o/o1/wallet-accounts', {
+      memberships: [member(MANAGE)],
+      handlers: {
+        ...orgHandlers(),
+        '/api/v1/orgs/o1/wallet-credentials': (_u, init) => {
+          if (init?.method === 'PUT') {
+            saved.push(JSON.parse(String(init.body)));
+            return json(credential());
+          }
+          return json({ items: [] });
+        },
+      },
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    await user.click(within(google).getByRole('button', { name: 'Add credentials' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByLabelText(/Issuer ID/), '3388000000012345');
+    await user.type(
+      within(dialog).getByLabelText(/Service account email/),
+      'wallet@proj.iam.gserviceaccount.com',
+    );
+    await user.click(within(dialog).getByLabelText(/private key/));
+    await user.paste(KEY);
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(saved).toHaveLength(1));
+    expect(saved[0]).toMatchObject({ provider: 'google', expectedRevision: 0 });
+    expect(document.body.textContent).not.toContain('U0VDUkVUX0tFWQ');
+  });
+});
+
+describe('platform wallet accounts', () => {
+  const handlers = (
+    items = [
+      platformEnrolment(),
+      platformEnrolment({
+        orgId: 'o2',
+        orgName: 'Acme',
+        state: 'held',
+        hold: { at: 1, reason: 'abuse' },
+        mode: 'test',
+      }),
+    ],
+  ) => ({
+    '/api/v1/identities': () => json({ items: [], nextCursor: null }),
+    '/api/v1/platform/wallet-credentials': () =>
+      json({ items: [credential({ scope: 'platform', orgId: null, mode: 'live' })] }),
+    '/api/v1/platform/wallet-enrolments': () => json({ items }),
+  });
+
+  it('lists credentials per mode and every organization, with hold and release', async () => {
+    const user = userEvent.setup();
+    const calls: string[] = [];
+    const { container } = await renderApp('/admin/platform/wallet-accounts', {
+      session: 'admin',
+      handlers: {
+        ...handlers(),
+        '/api/v1/platform/orgs/o1/wallet-enrolments/live/google/hold': (_u, init) => {
+          calls.push(`hold ${init?.body}`);
+          return json({ status: 'held' });
+        },
+        '/api/v1/platform/orgs/o2/wallet-enrolments/test/google/release': () => {
+          calls.push('release');
+          return json({ status: 'released' });
+        },
+      },
+    });
+    await user.click(await screen.findByRole('tab', { name: 'Google' }));
+    expect(await screen.findByText('…4321')).toBeInTheDocument();
+    expect(screen.getByText('No credentials')).toBeInTheDocument();
+    expect(screen.getByText('abuse')).toBeInTheDocument();
+    expect((await axe(container)).violations).toEqual([]);
+    await user.click(screen.getByRole('button', { name: 'Release Acme, Test' }));
+    await waitFor(() => expect(calls).toContain('release'));
+    await user.click(screen.getByRole('button', { name: 'Hold North, Live' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Hold' }));
+    expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText(/Reason/), 'abuse');
+    await user.click(within(dialog).getByRole('button', { name: 'Hold' }));
+    await waitFor(() => expect(calls).toContain('hold {"reason":"abuse"}'));
+  });
+
+  it('keeps the Apple identities on the first tab', async () => {
+    await renderApp('/admin/platform/wallet-accounts', { session: 'admin', handlers: handlers() });
+    expect(await screen.findByRole('heading', { name: 'Apple identities' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Apple', selected: true })).toBeInTheDocument();
+  });
+
+  it('redirects the old identities route', async () => {
+    const { router } = await renderApp('/admin/identities', {
+      session: 'admin',
+      handlers: handlers(),
+    });
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/admin/platform/wallet-accounts'),
+    );
+  });
+});

@@ -2,12 +2,14 @@ import { z } from 'zod';
 import { IdSchema } from '../../../shared/contracts/common.ts';
 import {
   HoldWalletEnrolmentSchema,
+  PlatformWalletEnrolmentListSchema,
   PlatformWalletEnrolmentParamsSchema,
   RevokeWalletCredentialSchema,
   SavePlatformWalletCredentialSchema,
   WalletCredentialListSchema,
   WalletCredentialSchema,
   WalletEnrolmentHoldResultSchema,
+  WalletProviderSchema,
 } from '../../../shared/contracts/wallet-providers.ts';
 import { requireAdmin } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
@@ -20,6 +22,7 @@ import {
   savePlatformCredential,
 } from './credential-service.ts';
 import { holdEnrolment, releaseEnrolment } from './enrolment-hold.ts';
+import { listPlatformEnrolments } from './enrolment-platform-read.ts';
 
 /** Mount at /api/v1/platform. Platform admins only; the pages show Live and Test together, so the mode is named. */
 export const walletPlatformRoutes = createRouter();
@@ -119,4 +122,20 @@ register(
     c.json({
       status: await releaseEnrolment(serviceContext(c), sessionOf(c), c.req.valid('param')),
     }),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'get',
+    path: '/wallet-enrolments',
+    summary: 'List every organization enrolment of a wallet provider',
+    query: z.strictObject({ provider: WalletProviderSchema }),
+    response: PlatformWalletEnrolmentListSchema,
+  },
+  async (c) =>
+    c.json(
+      await listPlatformEnrolments(serviceContext(c), sessionOf(c), c.req.valid('query').provider),
+    ),
 );
