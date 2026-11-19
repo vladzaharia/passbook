@@ -143,7 +143,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     mode: 'mode',
     conflict: ['org_id', 'mode', 'template_id'],
   },
-  pass_channels: { org: 'org_id', mode: 'mode', pass: 'pass_id', conflict: ['pass_id', 'channel'] },
+  // No `pass` pin: holder and join grants never write overrides.
+  pass_channels: { org: 'org_id', mode: 'mode', conflict: ['pass_id', 'channel'] },
   pass_channel_copies: {
     org: 'org_id',
     mode: 'mode',

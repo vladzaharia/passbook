@@ -128,12 +128,12 @@ async function templateFor(
     const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
     return { template, authority };
   } catch (error) {
-    if (
-      error instanceof ForbiddenError &&
-      auth.kind === 'session' &&
-      !(await activeMembership(ctx.env.DB, auth.userId, orgId))
-    )
-      throw notFound();
+    if (error instanceof ForbiddenError) {
+      // Outsiders do not learn that the template exists.
+      if (auth.kind === 'api_key' && auth.orgId !== null && auth.orgId !== orgId) throw notFound();
+      if (auth.kind === 'session' && !(await activeMembership(ctx.env.DB, auth.userId, orgId)))
+        throw notFound();
+    }
     throw error;
   }
 }

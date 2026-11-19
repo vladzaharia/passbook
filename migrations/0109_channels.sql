@@ -13,9 +13,10 @@ CREATE TABLE template_channel_policies (
 ) WITHOUT ROWID;
 CREATE INDEX template_channel_policies_template ON template_channel_policies (template_id);
 
--- The template is the org's own or a shared (org-less) one.
+-- The template is the org's own, or an active baked or shared platform template (not a blueprint).
 CREATE TRIGGER template_channel_policies_tenant BEFORE INSERT ON template_channel_policies
-WHEN NOT EXISTS (SELECT 1 FROM templates t WHERE t.id = NEW.template_id AND (t.org_id IS NULL OR t.org_id = NEW.org_id))
+WHEN NOT EXISTS (SELECT 1 FROM templates t WHERE t.id = NEW.template_id AND (t.org_id = NEW.org_id
+    OR (t.org_id IS NULL AND (t.origin = 'baked' OR t.shared = 1) AND t.blueprint = 0 AND t.status = 'active')))
 BEGIN SELECT RAISE(ABORT, 'channel_policy_tenant'); END;
 CREATE TRIGGER template_channel_policies_key BEFORE UPDATE ON template_channel_policies
 WHEN NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD.mode OR NEW.template_id IS NOT OLD.template_id
@@ -53,6 +54,12 @@ CREATE TRIGGER pass_channels_key BEFORE UPDATE ON pass_channels
 WHEN NEW.pass_id IS NOT OLD.pass_id OR NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD.mode
   OR NEW.template_id IS NOT OLD.template_id OR NEW.channel IS NOT OLD.channel
 BEGIN SELECT RAISE(ABORT, 'pass_channel_key'); END;
+
+-- pass_channels.template_id copies the pass's; neither it nor the mode may move while rows exist.
+CREATE TRIGGER passes_channels_key BEFORE UPDATE OF template_id, mode ON passes
+WHEN (NEW.template_id IS NOT OLD.template_id OR NEW.mode IS NOT OLD.mode)
+  AND EXISTS (SELECT 1 FROM pass_channels c WHERE c.pass_id = OLD.id)
+BEGIN SELECT RAISE(ABORT, 'pass_channels_key'); END;
 
 -- Evidence that a copy exists in a channel; written once, never moved.
 CREATE TABLE pass_channel_copies (

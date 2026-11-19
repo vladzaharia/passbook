@@ -95,7 +95,7 @@ export const BulkPassChannelsResponseSchema = z.object({
 /** What saving would change, for "Turns off Apple for 412 passes and issues new codes." */
 export const ChannelImpactSchema = z.object({
   channel: ChannelSchema,
-  /** Passes of the caller's mode that go from on to off. */
+  /** Passes of the caller's mode that go from on to off (approximate: uses the released version's capability, not each pass's pinned one). */
   passes: z.number().int().nonnegative(),
   /** Passes whose codes rotate: those with a copy in the channel, only when `replaceCodes` is set. */
   rotated: z.number().int().nonnegative(),
@@ -107,6 +107,8 @@ export const ChannelImpactSchema = z.object({
 export const TemplateChannelsResponseSchema = z.object({
   /** Stored policy, null when the template has none (defaults apply). */
   channels: z.partialRecord(ChannelSchema, TemplateChannelStateSchema).nullable(),
+  /** Counts saves; 0 when none. Send it back on PUT: a stale one is refused (409). */
+  revision: z.number().int().nonnegative(),
   /** The template's own view: platform, org and capability, before any pass override. */
   effective: EffectiveChannelsSchema,
 });
@@ -115,6 +117,8 @@ export type TemplateChannelsDto = z.infer<typeof TemplateChannelsResponseSchema>
 /** PUT /api/v1/templates/{id}/channels. `dryRun` returns the impact without saving. */
 export const PutTemplateChannelsSchema = z.object({
   channels: TemplateChannelsSchema,
+  /** The `revision` the editor read. */
+  revision: z.number().int().nonnegative(),
   dryRun: z.boolean().default(false),
   /** Also issue new scan codes ("Turn off and replace codes"). Off by default: turning off never rotates. */
   replaceCodes: z.boolean().default(false),
@@ -122,6 +126,6 @@ export const PutTemplateChannelsSchema = z.object({
 });
 export const PutTemplateChannelsResponseSchema = TemplateChannelsResponseSchema.extend({
   impact: z.array(ChannelImpactSchema),
-  /** The bulk-reissue run, when the save started one. */
+  /** The channel-apply run, when the save started one. */
   workflowInstanceId: z.string().nullable(),
 });
