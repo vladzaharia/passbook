@@ -88,7 +88,10 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       await scanner.keyboard.press('Escape');
     }
     await expect(desk.getByRole('complementary', { name: 'Operator view' })).toBeVisible();
-    await expect(customer.getByTestId('scan-live')).toHaveAttribute('data-view', 'customer');
+    await expect(customer.getByTestId('duo-customer-display')).toHaveAttribute(
+      'data-status',
+      'ready',
+    );
     await expect(phone.locator('.scan-shell')).toHaveAttribute('data-surface', 'phone');
     const memberId = uid('MEMBER').toUpperCase();
     const holderName = uid('Shared Session Member');
@@ -115,7 +118,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await hardwareCode(desk, memberId);
     await expect(desk.getByTestId('scan-result')).toContainText('Checked in');
     await expect(customer.getByRole('heading', { name: 'Checked in', exact: true })).toBeVisible();
-    await expect(customer.getByTestId('scan-live')).not.toContainText(holderName);
+    await expect(customer.getByTestId('duo-customer-display')).not.toContainText(holderName);
     await phone.getByRole('button', { name: 'Look up', exact: true }).click();
     await phone.getByRole('textbox', { name: 'Name, email or code', exact: true }).fill(memberId);
     await phone.getByRole('textbox', { name: 'Name, email or code', exact: true }).press('Enter');
