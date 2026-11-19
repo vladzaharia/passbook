@@ -63,3 +63,25 @@ export async function nextGeneration(db: D1Database, passId: string): Promise<nu
   );
   return (r?.g ?? 0) + 1;
 }
+
+/** The pinned template version's manifest JSON; null when the version is gone or unreadable. */
+export async function manifestOf(
+  db: D1Database,
+  templateId: string,
+  version: string,
+): Promise<Record<string, unknown> | null> {
+  const r = await first<{ manifest: string | null }>(
+    db,
+    'SELECT manifest FROM template_versions WHERE template_id = ? AND version = ?',
+    [templateId, version],
+  );
+  if (!r?.manifest) return null;
+  try {
+    const parsed: unknown = JSON.parse(r.manifest);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}

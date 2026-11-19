@@ -6,8 +6,11 @@ import {
   PrintParamSchema,
 } from '../../../shared/contracts/index.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
+import { requestTheme } from '../../ssr/head.ts';
+import { PRINT_HEADERS, renderPrintPage } from '../../ssr/print-page.tsx';
 import { actorFor, authOf, passScopeOf, svc } from '../passes/http.ts';
 import { tenantPassForRead, tenantPassForWrite } from '../passes/pass-access.ts';
+import { printPageModel } from './page.ts';
 import * as repo from './repo.ts';
 import { adminWriter } from './repo-write.ts';
 import { ADMIN_PRINTS_PER_HOUR, mintPrint, voidPrint } from './service.ts';
@@ -68,6 +71,30 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
       const { pass, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
       const caller = { writer: adminWriter(authority, actorFor(c)), limit: ADMIN_PRINTS_PER_HOUR };
       return c.json(await voidPrint(ctx, caller, pass, 'manual', printId));
+    },
+  );
+  register(
+    passesRoutes,
+    'passes',
+    {
+      method: 'get',
+      path: '/{id}/print',
+      summary: 'The print page of the active print, for staff',
+      params: IdParamSchema,
+    },
+    async (c) => {
+      const ctx = svc(c);
+      const { id } = c.req.valid('param');
+      const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      const theme = requestTheme(c);
+      const model = await printPageModel(ctx, pass, 'staff');
+      const html = renderPrintPage({
+        model,
+        audience: 'staff',
+        nonce: c.var.nonce,
+        ...(theme ? { theme } : {}),
+      });
+      return new Response(html, { headers: PRINT_HEADERS });
     },
   );
 }
