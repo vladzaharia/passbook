@@ -1,25 +1,32 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import '../lib/test-utils.tsx';
 
 describe('loadTooltips', () => {
-  it('waits while a tooltipped control holds focus, then swaps tooltips in', async () => {
+  it('never remounts a control that mounted before the chunk; later ones get tooltips', async () => {
     vi.resetModules();
     const { loadTooltips, TooltipProvider } = await import('./tooltip.tsx');
     const { IconButton } = await import('./icon-button.tsx');
-    render(
+    const icon = <span aria-hidden>x</span>;
+    const { rerender } = render(
       <TooltipProvider>
-        <IconButton label="Delete" icon={<span aria-hidden>x</span>} />
-        <button type="button">Other</button>
+        <IconButton label="Delete" icon={icon} />
       </TooltipProvider>,
     );
-    const del = screen.getByRole('button', { name: 'Delete' });
-    act(() => del.focus());
+    const early = screen.getByRole('button', { name: 'Delete' });
+    act(() => early.focus());
     await act(() => loadTooltips());
-    expect(screen.getByRole('button', { name: 'Delete' })).toBe(del);
-    expect(del).toHaveFocus();
-    act(() => screen.getByRole('button', { name: 'Other' }).focus());
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Delete' })).not.toBe(del));
-    expect(screen.getByRole('button', { name: 'Other' })).toHaveFocus();
+    rerender(
+      <TooltipProvider>
+        <IconButton label="Delete" icon={icon} />
+        <IconButton label="Copy" icon={icon} />
+      </TooltipProvider>,
+    );
+    expect(screen.getByRole('button', { name: 'Delete' })).toBe(early);
+    expect(early).toHaveFocus();
+    await userEvent.setup().tab();
+    expect(screen.getByRole('button', { name: 'Copy' })).toHaveFocus();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Copy');
   });
 });
