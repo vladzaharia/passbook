@@ -31,6 +31,10 @@ function shown(value: Value, n: unknown): string {
   return n === null || n === undefined ? '' : JSON.stringify(n);
 }
 
+/** The channel as staff say it: a paper copy is a printed ticket. */
+const channelName = (channel: ScanOutcome['channel']): string =>
+  !channel ? 'This copy' : channel === 'paper' ? 'Printed ticket' : CHANNEL_LABEL[channel];
+
 /** Every marker the copy names, from `value`, `access`, `previous`, `event` and the counts. */
 export function lineValues(o: ScanOutcome, now: number): Values {
   const v = o.value;
@@ -67,7 +71,7 @@ export function lineValues(o: ScanOutcome, now: number): Values {
       flag: o.flags[0],
       input: v?.label,
     }),
-    channel: o.channel ? CHANNEL_LABEL[o.channel] : 'This copy',
+    channel: channelName(o.channel),
     plan: 'This plan',
     zone: 'this area',
     when: '',

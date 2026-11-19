@@ -170,6 +170,8 @@ async function evaluateObserved(
     connectionGeneration: found.connectionGeneration,
   };
   const channel = await channelVerdict(ctx, one, input);
+  // How the code matched is the door's, not part of the stored snapshot.
+  delete one.matchedBy;
   if (channel?.kind === 'off')
     return stop('refused', 'channel_off', { ...candidateAudit(one), channel: channel.channel });
   const configured =

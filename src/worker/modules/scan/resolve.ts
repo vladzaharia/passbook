@@ -211,8 +211,7 @@ export async function foundOf(
       activeReleaseGeneration: c.activeReleaseGeneration,
       activeReleaseVersion: c.activeReleaseVersion,
       activeReleaseCandidateHash: c.activeReleaseCandidateHash,
-      // How the code matched is the door's, not the stored snapshot's.
-      liveCandidate: { ...c, matchedBy: undefined },
+      liveCandidate: c,
       connectionGeneration: c.connectionGeneration,
       passJson,
       passPersonalizationSnapshot: c.passPersonalizationSnapshot,

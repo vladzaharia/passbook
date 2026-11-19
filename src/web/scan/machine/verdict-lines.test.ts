@@ -211,6 +211,7 @@ describe('what the lines say', () => {
       sub: 'Use another copy or check ID.',
     });
     expect(line('channel_off', { channel: 'nfc' })?.headline).toBe('Linked NFC turned off');
+    expect(line('channel_off', { channel: 'paper' })?.headline).toBe('Printed ticket turned off');
   });
 
   it('reads a typed number heads-up as Check ID', () => {

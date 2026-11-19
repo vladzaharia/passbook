@@ -56,7 +56,7 @@ export interface Candidate extends CredentialTombstoneSnapshot {
   /** Whether a pass override, a template policy or an org block can change the defaults; absent: unknown. */
   channelRules?: boolean;
   /** The credential a code input matched on; absent for a pass id or a tag. */
-  matchedBy?: 'scan_code' | 'barcode' | 'lookup' | 'serial' | undefined;
+  matchedBy?: 'scan_code' | 'barcode' | 'lookup' | 'serial';
 }
 
 export type ReleaseSnapshot = Pick<
