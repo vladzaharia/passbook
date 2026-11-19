@@ -40,6 +40,7 @@ export interface PassChannelWrite {
   channel: Channel;
   override: PassChannelState | null;
   retiredAt: number | null;
+  retiredCause: 'pass' | 'template' | null;
 }
 
 /** One pass's channel rows and their audit rows, in one grant. Needs passes:operate or a passes:write key. */
@@ -63,9 +64,21 @@ export async function writePassChannels(
   for (const w of writes)
     g.upsert(
       'pass_channels',
-      ['pass_id', 'template_id', 'channel', 'override', 'retired_at', 'set_by', 'set_at'],
-      [pass.id, pass.templateId, w.channel, w.override, w.retiredAt, by, now],
-      { update: ['override', 'retired_at', 'set_by', 'set_at'], inc: ['revision'] },
+      [
+        'pass_id',
+        'template_id',
+        'channel',
+        'override',
+        'retired_at',
+        'retired_cause',
+        'set_by',
+        'set_at',
+      ],
+      [pass.id, pass.templateId, w.channel, w.override, w.retiredAt, w.retiredCause, by, now],
+      {
+        update: ['override', 'retired_at', 'retired_cause', 'set_by', 'set_at'],
+        inc: ['revision'],
+      },
     );
   for (const detail of audits)
     g.audit(

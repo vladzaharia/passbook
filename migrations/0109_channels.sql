@@ -39,6 +39,7 @@ CREATE TABLE pass_channels (
   channel TEXT NOT NULL CHECK (channel IN ('mobile', 'apple', 'google', 'samsung', 'paper', 'nfc')),
   override TEXT CHECK (override IN ('on', 'off')),
   retired_at INTEGER,
+  retired_cause TEXT CHECK (retired_cause IN ('pass', 'template')),
   revision INTEGER NOT NULL DEFAULT 1,
   set_by TEXT NOT NULL,
   set_at INTEGER NOT NULL,
@@ -76,6 +77,23 @@ WHEN NOT EXISTS (SELECT 1 FROM passes p WHERE p.id = NEW.pass_id AND p.org_id = 
 BEGIN SELECT RAISE(ABORT, 'pass_channel_copy_tenant'); END;
 CREATE TRIGGER pass_channel_copies_once BEFORE UPDATE ON pass_channel_copies
 BEGIN SELECT RAISE(ABORT, 'pass_channel_copy_immutable'); END;
+
+-- backfill:begin
+-- Copies delivered before channels existed: an Apple registration or download, and a provider
+-- instance that was offered (not one that never left blocked or ready).
+INSERT OR IGNORE INTO pass_channel_copies (pass_id, org_id, mode, channel, copy_at)
+SELECT p.id, p.org_id, p.mode, 'apple', MIN(e.at)
+FROM (SELECT pass_id, created_at AS at FROM registrations
+      UNION ALL SELECT pass_id, at FROM pass_events WHERE kind = 'pass.downloaded') e
+JOIN passes p ON p.id = e.pass_id
+GROUP BY p.id;
+INSERT OR IGNORE INTO pass_channel_copies (pass_id, org_id, mode, channel, copy_at)
+SELECT p.id, p.org_id, p.mode, i.provider, MIN(i.created_at)
+FROM wallet_provider_instances i
+JOIN passes p ON p.id = i.pass_id
+WHERE i.lifecycle NOT IN ('blocked', 'ready') AND i.retirement_reason IS NULL
+GROUP BY p.id, i.provider;
+-- backfill:end
 
 -- Channel changes join the journal and the webhook feed (the trigger of 0090 with three more kinds).
 DROP TRIGGER pass_events_feed;

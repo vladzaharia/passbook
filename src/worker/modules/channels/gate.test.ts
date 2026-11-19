@@ -80,6 +80,7 @@ describe('channel gate on /p', () => {
     const { kit, pass, page, text, get, setting } = await setup();
     const res = await kit.send('PUT', `/templates/${pass.templateId}/channels`, {
       orgId: kit.org.id,
+      revision: 0,
       channels: { apple: 'never' },
     });
     expect(res.status).toBe(200);
@@ -89,6 +90,7 @@ describe('channel gate on /p', () => {
     expect((await get(`${await page()}/pass.pkpass`)).status).toBe(404);
     await kit.send('PUT', `/templates/${pass.templateId}/channels`, {
       orgId: kit.org.id,
+      revision: 1,
       channels: { apple: 'on' },
     });
     expect((await get(`${await page()}/pass.pkpass`)).status).toBe(200);
@@ -116,6 +118,29 @@ describe('channel gate on /p', () => {
       [pass.id],
     );
     expect(again?.copy_at).toBe(first1?.copy_at);
+  });
+});
+
+describe('pass DTO channels', () => {
+  it('carries the effective state with source, reason, retirement and its cause', async () => {
+    const { kit, pass, put } = await setup();
+    await put({ apple: 'off' });
+    const res = await kit.api(`/passes/${pass.id}`, { headers: kit.auth.admin() });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      channels: Record<
+        string,
+        { on: boolean; source: string; reason?: string; retiredAt?: number; retiredCause?: string }
+      >;
+    };
+    expect(body.channels.apple).toMatchObject({
+      on: false,
+      source: 'pass',
+      reason: 'pass_off',
+      retiredCause: 'pass',
+    });
+    expect(body.channels.apple?.retiredAt).toBeTypeOf('number');
+    expect(body.channels.mobile).toEqual({ on: true, source: 'template' });
   });
 });
 

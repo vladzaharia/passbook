@@ -75,7 +75,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/channels/repo.ts': {
     reason:
       'pass_channel_copies is insert-once evidence written where a copy is delivered (bearer link or Apple device); it grants nothing and no tenant principal exists there',
-    writes: ['pass_channel_copies:fd7ca700e78a'],
+    writes: ['pass_channel_copies:0be28c362606'],
   },
   'src/worker/modules/scan/repo-scans.ts': {
     reason:

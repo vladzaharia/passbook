@@ -5,6 +5,7 @@ import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { holderChannels } from '../channels/gate.ts';
 import { listOutboxForPass } from '../delivery/repo.ts';
 import { seesAccountEmails } from './account-email.ts';
 import { replacedBy } from './assets.ts';
@@ -186,6 +187,7 @@ export async function detailOf(
     fieldSources: pass.fieldSources,
     passJson,
     ...(await linksOf(ctx, pass)),
+    channels: (await holderChannels(ctx, pass)).effective,
     assetNames: await assetNamesOf(ctx, pass),
     stamps: await stampsOf(ctx, pass),
     term: await termOf(ctx, pass, passJson),

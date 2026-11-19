@@ -65,13 +65,17 @@ export async function putPassChannels(
 
   const touched = new Set<Channel>(Object.keys(body.channels) as Channel[]);
   const retired = { ...rows.retired };
+  const cause = { ...rows.retiredCause };
   for (const a of actions) {
     if (a.kind === 'retire') {
       touched.add(a.channel);
       retired[a.channel] = now;
+      const source = after[a.channel].source;
+      if (source === 'pass' || source === 'template') cause[a.channel] = source;
     } else if (a.kind === 'restore') {
       touched.add(a.channel);
       delete retired[a.channel];
+      delete cause[a.channel];
     }
   }
   const changes = CHANNELS.filter((c) => before[c].on !== after[c].on).map((channel) => ({
@@ -106,6 +110,7 @@ export async function putPassChannels(
       channel,
       override: overrides[channel] ?? null,
       retiredAt: retired[channel] ?? null,
+      retiredCause: cause[channel] ?? null,
     })),
     audits,
   );

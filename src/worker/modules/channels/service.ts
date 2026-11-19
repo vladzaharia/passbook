@@ -69,6 +69,7 @@ export async function loadPass(
       scanTags: cap.scanTags,
       pass: rows.overrides,
       retired: rows.retired,
+      retiredCause: rows.retiredCause,
     },
   };
 }

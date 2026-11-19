@@ -30,6 +30,8 @@ export interface ChannelInputs {
   pass: Per<PassChannelState>;
   /** When a plain Turn off retired the pass's copies. */
   retired: Per<number>;
+  /** The level that turned the channel off when it was retired. */
+  retiredCause?: Per<'pass' | 'template'>;
 }
 
 export function templateDefault(channel: Channel, scanTags: boolean): TemplateChannelState {
@@ -45,14 +47,20 @@ export function templateDefault(channel: Channel, scanTags: boolean): TemplateCh
 export function effectiveChannels(i: ChannelInputs): EffectiveChannels {
   const out = {} as EffectiveChannels;
   for (const c of CHANNELS) {
-    out[c] = withRetired(statusOf(i, c), i.retired[c]);
+    out[c] = withRetired(statusOf(i, c), i.retired[c], i.retiredCause?.[c]);
   }
   return out;
 }
 
 /** retiredAt marks an off channel only: an on channel is never retired. */
-function withRetired(s: EffectiveChannels[Channel], at: number | undefined) {
-  return at === undefined || s.on ? s : { ...s, retiredAt: at };
+function withRetired(
+  s: EffectiveChannels[Channel],
+  at: number | undefined,
+  cause: 'pass' | 'template' | undefined,
+) {
+  return at === undefined || s.on
+    ? s
+    : { ...s, retiredAt: at, ...(cause ? { retiredCause: cause } : {}) };
 }
 
 function off(source: ChannelSource, reason: ChannelReason): EffectiveChannels[Channel] {

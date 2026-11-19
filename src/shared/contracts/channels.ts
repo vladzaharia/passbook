@@ -37,6 +37,8 @@ export const ChannelStatusSchema = z.object({
   reason: ChannelReasonSchema.optional(),
   /** When the pass's copies in this channel were retired by a plain Turn off. */
   retiredAt: TimestampSchema.optional(),
+  /** Which level turned it off when the copies were retired. */
+  retiredCause: z.enum(['pass', 'template']).optional(),
 });
 export type ChannelStatus = z.infer<typeof ChannelStatusSchema>;
 

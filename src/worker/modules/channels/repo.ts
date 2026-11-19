@@ -85,25 +85,32 @@ export async function releasedVersion(
 export interface PassChannelRows {
   overrides: Partial<Record<Channel, PassChannelState>>;
   retired: Partial<Record<Channel, number>>;
+  retiredCause: Partial<Record<Channel, 'pass' | 'template'>>;
   copies: Channel[];
 }
 
 export async function getPassChannelRows(db: D1Database, passId: string): Promise<PassChannelRows> {
   const [rows, copies] = await Promise.all([
-    all<{ channel: string; override: PassChannelState | null; retired_at: number | null }>(
+    all<{
+      channel: string;
+      override: PassChannelState | null;
+      retired_at: number | null;
+      retired_cause: 'pass' | 'template' | null;
+    }>(
       db,
-      'SELECT channel, override, retired_at FROM pass_channels WHERE pass_id = ?',
+      'SELECT channel, override, retired_at, retired_cause FROM pass_channels WHERE pass_id = ?',
       [passId],
     ),
     all<{ channel: string }>(db, 'SELECT channel FROM pass_channel_copies WHERE pass_id = ?', [
       passId,
     ]),
   ]);
-  const out: PassChannelRows = { overrides: {}, retired: {}, copies: [] };
+  const out: PassChannelRows = { overrides: {}, retired: {}, retiredCause: {}, copies: [] };
   for (const r of rows) {
     if (!isChannel(r.channel)) continue;
     if (r.override) out.overrides[r.channel] = r.override;
     if (r.retired_at !== null) out.retired[r.channel] = r.retired_at;
+    if (r.retired_cause) out.retiredCause[r.channel] = r.retired_cause;
   }
   for (const r of copies) if (isChannel(r.channel)) out.copies.push(r.channel);
   return out;
