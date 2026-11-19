@@ -62,16 +62,21 @@ afterEach(() => {
 });
 
 describe('print sign', () => {
-  it('says what to do and shows the short link', async () => {
+  it('says what to do and prints no link text', async () => {
     mount(<JoinSign orgId="org-1" orgName="Dos Olas" url={URL_OK} hasLogo={false} />);
     expect(await screen.findByRole('heading', { name: JOIN_COPY.sign.title })).toBeInTheDocument();
     expect(screen.getByText(JOIN_COPY.sign.scan)).toBeInTheDocument();
     expect(screen.getByText('Dos Olas')).toBeInTheDocument();
-    expect(
-      screen.getByText('passbook.mobile/j/AAAAAAAAAAAAAAAAAAAAAA', { selector: 'code' }),
-    ).toBeInTheDocument();
+    // No URL text: the host alone does not reach the page and the path is the link's secret.
+    expect(document.querySelector('code')).toBeNull();
+    expect(document.body.textContent).not.toContain('AAAAAAAAAAAAAAAAAAAAAA');
     // No buddy on the sign: it is for print.
     expect(document.querySelector('[data-buddy]')).toBeNull();
+  });
+
+  it('prints the extra line the admin typed', async () => {
+    mount(<JoinSign orgId="org-1" orgName="Dos Olas" url={URL_OK} hasLogo={false} line="Free. One card each." />);
+    expect(await screen.findByText('Free. One card each.')).toBeInTheDocument();
   });
 
   it('requests the org logo only when the org has one', async () => {
