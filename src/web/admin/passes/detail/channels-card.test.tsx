@@ -45,9 +45,9 @@ describe('Channels card', () => {
   it('shows state, source and why a channel cannot be switched', async () => {
     renderTags(<ChannelsCard pass={pass()} readOnly={false} />, handlers(effective()));
     await screen.findByRole('switch', { name: 'Apple Wallet' });
-    expect(row('Apple Wallet')).toHaveTextContent('On · Template');
+    expect(row('Apple Wallet')).toHaveTextContent('OnTemplate');
     expect(row('Google Wallet')).toHaveTextContent(
-      'Google Wallet: organization not enrolled. Copies stay as they are.',
+      'Organization not enrolled. Copies stay as they are.',
     );
     expect(screen.getByRole('switch', { name: 'Google Wallet' })).toBeDisabled();
     expect(screen.getByRole('switch', { name: 'Paper' })).toBeEnabled();

@@ -7,6 +7,7 @@ import {
   CHANNEL_STATE_LABEL,
   channelBlocked,
 } from '@/shared/copy/channels.ts';
+import { isApiError } from '../../../lib/errors.ts';
 import {
   Card,
   CardBody,
@@ -47,7 +48,7 @@ export function TemplateChannelsPanel({
   const query = useTemplateChannels(templateId, orgId);
   const put = usePutTemplateChannels(templateId, orgId);
   const [edits, setEdits] = useState<Draft>({});
-  const [review, setReview] = useState<string[] | null>(null);
+  const [review, setReview] = useState<{ lines: string[]; cleared: number } | null>(null);
   const data = query.data;
   if (query.isPending) return <SkeletonRows rows={6} label="Loading channels" />;
   if (query.isError || !data)
@@ -62,27 +63,36 @@ export function TemplateChannelsPanel({
   });
   const discard = () => setEdits({});
 
+  const dryRun = () => put.mutateAsync({ ...body(), dryRun: true });
+  const clearedOf = (dry: Awaited<ReturnType<typeof dryRun>>) =>
+    dry.impact.reduce((n, i) => n + i.clearedOverrides, 0);
+
   async function save(): Promise<SaveResult | undefined> {
     try {
-      const dry = await put.mutateAsync({ ...body(), dryRun: true });
-      const lines = impactLines(dry.impact);
-      if (dry.impact.every((i) => i.passes === 0 && i.clearedOverrides === 0)) await commit();
-      else setReview(lines);
+      const dry = await dryRun();
+      if (dry.impact.every((i) => i.passes === 0 && i.clearedOverrides === 0))
+        await commit(clearedOf(dry));
+      else setReview({ lines: impactLines(dry.impact), cleared: clearedOf(dry) });
       return undefined;
     } catch (error) {
       toast.error(error, 'Could not save channels.');
       return 'failed';
     }
   }
-  async function commit() {
+  /** Sends the cleared-override count the user saw; if it moved, shows the new numbers and stops. */
+  async function commit(cleared: number) {
     try {
-      await put.mutateAsync(body());
-      setEdits({});
-      toast.success(CHANNEL_COPY.saved);
+      await put.mutateAsync({ ...body(), expectedCleared: cleared });
     } catch (error) {
-      toast.error(error, 'Could not save channels.');
+      if (isApiError(error) && error.code === 'TEMPLATE_CHANNELS_IMPACT_CHANGED') {
+        const dry = await dryRun();
+        setReview({ lines: impactLines(dry.impact), cleared: clearedOf(dry) });
+      }
       void query.refetch();
+      throw error;
     }
+    setEdits({});
+    toast.success(CHANNEL_COPY.saved);
   }
 
   return (
@@ -100,9 +110,7 @@ export function TemplateChannelsPanel({
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-fg-strong">{CHANNEL_LABEL[c]}</p>
                   {blocked && status.reason ? (
-                    <p className="text-xs text-fg-muted">
-                      {channelBlocked(c, status.reason, status.source)}
-                    </p>
+                    <p className="text-xs text-fg-muted">{channelBlocked(status.reason)}</p>
                   ) : null}
                 </div>
                 <SegmentedControl
@@ -141,12 +149,12 @@ export function TemplateChannelsPanel({
         confirmLabel="Save"
         description={
           <ul className="flex flex-col gap-1">
-            {review?.map((line) => (
+            {review?.lines.map((line) => (
               <li key={line}>{line}</li>
             ))}
           </ul>
         }
-        onConfirm={commit}
+        onConfirm={() => commit(review?.cleared ?? 0)}
       />
     </Card>
   );

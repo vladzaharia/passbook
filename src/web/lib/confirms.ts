@@ -308,3 +308,15 @@ export function channelOffConfirm(channel: string, paper = false): ConfirmCopy {
     typed: false,
   };
 }
+
+/** Bulk Off: no new copies for the selected passes; the ones out there keep working until New code. */
+export function bulkChannelsOffConfirm(channels: readonly string[], count: number): ConfirmCopy {
+  const last = channels.at(-1) ?? '';
+  const names = channels.length > 1 ? `${channels.slice(0, -1).join(', ')} and ${last}` : last;
+  return {
+    title: `Turn off ${names} for ${count} ${count === 1 ? 'pass' : 'passes'}?`,
+    confirmLabel: 'Turn off',
+    description: CHANNEL_COPY.copiesKeep,
+    typed: false,
+  };
+}

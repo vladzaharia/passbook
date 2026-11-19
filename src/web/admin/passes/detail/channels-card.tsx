@@ -11,6 +11,7 @@ import {
   CHANNEL_COPY,
   CHANNEL_LABEL,
   CHANNEL_SOURCE_LABEL,
+  CHANNEL_STATE_LABEL,
   channelBlocked,
 } from '@/shared/copy/channels.ts';
 import { channelOffConfirm } from '../../../lib/confirms.ts';
@@ -24,6 +25,7 @@ import {
   ConfirmDialog,
   ErrorState,
   SkeletonRows,
+  StatusPill,
   Switch,
   toast,
 } from '../../../ui/index.ts';
@@ -57,18 +59,24 @@ function Row({
   const blocked = !status.on && !canSwitch(status);
   const meta =
     blocked && status.reason
-      ? channelBlocked(channel, status.reason, status.source)
+      ? channelBlocked(status.reason)
       : [
-          `${status.on ? 'On' : 'Off'} · ${CHANNEL_SOURCE_LABEL[status.source]}`,
+          CHANNEL_SOURCE_LABEL[status.source],
           status.retiredAt ? `Retired ${formatDay(status.retiredAt)}` : null,
         ]
           .filter(Boolean)
           .join(' · ');
+  const state = status.on ? 'on' : 'off';
   return (
     <li className="flex min-h-14 items-center gap-3 py-2">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-fg-strong">{label}</p>
-        <p className="text-xs text-fg-muted">{meta}</p>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-fg-strong">
+          {label}
+          <StatusPill status={state} tone={status.on ? 'success' : 'neutral'}>
+            {CHANNEL_STATE_LABEL[state]}
+          </StatusPill>
+        </p>
+        <p className="mt-0.5 text-xs text-fg-muted">{meta}</p>
       </div>
       {overridden ? (
         <Button variant="ghost" size="sm" disabled={disabled || busy} onClick={onReset}>

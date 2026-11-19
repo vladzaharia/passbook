@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { CHANNELS, type Channel } from '@/shared/contracts/channels.ts';
 import { CHANNEL_COPY, CHANNEL_LABEL } from '@/shared/copy/channels.ts';
+import { bulkChannelsOffConfirm } from '../../lib/confirms.ts';
 import {
   Button,
   CheckboxField,
+  ConfirmDialog,
   Dialog,
   DialogContent,
   SegmentedControl,
@@ -41,6 +43,7 @@ export function BulkChannelsDialog({
   const [action, setAction] = useState<Action>('off');
   const [picked, setPicked] = useState<Channel[]>([]);
   const [notify, setNotify] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const close = () => {
     onOpenChange(false);
@@ -88,7 +91,7 @@ export function BulkChannelsDialog({
             <Button
               disabled={picked.length === 0}
               loading={bulk.isPending}
-              onClick={() => void apply()}
+              onClick={() => (action === 'off' ? setConfirming(true) : void apply())}
             >
               Apply
             </Button>
@@ -122,6 +125,15 @@ export function BulkChannelsDialog({
           ) : null}
         </div>
       </DialogContent>
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        {...bulkChannelsOffConfirm(
+          picked.map((c) => CHANNEL_LABEL[c]),
+          ids.length,
+        )}
+        onConfirm={apply}
+      />
     </Dialog>
   );
 }
