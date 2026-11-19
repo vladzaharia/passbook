@@ -19,7 +19,7 @@ export function storedAdmits(raw: string | null): Admits | null | undefined {
     // Unreadable JSON is an invalid scope; every caller fails closed on it.
     return undefined;
   }
-  // Strict shapes: anything extra is not a scope this code wrote.
+  // Unknown keys are stripped; a stored row that fits no shape is not a scope this code wrote.
   const parsed = AdmitsSchema.safeParse(value);
   if (!parsed.success) return undefined;
   return admitsOf(parsed.data);
