@@ -1,6 +1,7 @@
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const HASH = /^[0-9a-f]{12,}$/i;
-const PREFIXED = /^[a-z]+_[0-9a-z]{10,}$/i;
+// Each needs a digit, so a real word ("deadbeefcafe", "welcome_campaign") stays a name.
+const HASH = /^(?=.*\d)[0-9a-f]{12,}$/i;
+const PREFIXED = /^[a-z]{2,5}_(?=[0-9a-z]*\d)[0-9a-z]{10,}$/i;
 
 /** A UUID, a hex hash or a prefixed token: what a person never reads as a name. */
 export const looksLikeId = (value: string): boolean =>

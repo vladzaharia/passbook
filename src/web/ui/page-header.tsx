@@ -57,6 +57,19 @@ export interface PageHeaderProps {
   className?: string;
 }
 
+/** An email as a title may wrap after its @, so the domain stays whole. */
+function breakAfterAt(title: string) {
+  const at = title.indexOf('@');
+  if (at < 1 || title.includes(' ')) return title;
+  return (
+    <>
+      {title.slice(0, at + 1)}
+      <wbr />
+      {title.slice(at + 1)}
+    </>
+  );
+}
+
 /**
  * The page h1 and the tab title. Route changes move focus here (lib/route-focus.tsx). Pages use the
  * full main width; blocks cap their own (FormGrid, prose, dialogs).
@@ -79,7 +92,7 @@ export function PageHeader({
           {avatar}
           <div className="min-w-0">
             <h1 tabIndex={-1} className="text-2xl font-semibold tracking-[-0.015em] text-fg-strong">
-              {title}
+              {breakAfterAt(title)}
             </h1>
             {description ? (
               <p className="mt-1 max-w-[65ch] text-sm text-fg-muted">{description}</p>

@@ -33,7 +33,7 @@ ${HOSTED_ART_CSS}
 .card{position:relative;z-index:1;display:flex;flex-direction:column;width:100%;overflow:hidden;border:1px solid var(--pk-border-subtle);border-radius:var(--pk-radius-xl);background:var(--pk-surface-raised);box-shadow:var(--pk-elevation-1)}
 .card::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:var(--wl-foil)}
 .body{display:flex;flex-direction:column;gap:1.5rem;padding:1.25rem}
-h1{margin:0;overflow-wrap:anywhere;font-size:var(--pk-font-size-2xl);line-height:var(--pk-line-height-2xl);font-weight:var(--pk-font-weight-semibold);letter-spacing:var(--pk-tracking-tight);color:var(--pk-text-strong)}
+h1{margin:0;overflow-wrap:break-word;font-size:var(--pk-font-size-2xl);line-height:var(--pk-line-height-2xl);font-weight:var(--pk-font-weight-semibold);letter-spacing:var(--pk-tracking-tight);color:var(--pk-text-strong)}
 .lede{margin:.25rem 0 0;font-size:.875rem;line-height:1.25rem;color:var(--pk-text-muted);overflow-wrap:anywhere}
 .lede b{font-weight:500;color:var(--pk-text-strong)}
 .stack{display:flex;flex-direction:column;gap:1rem;margin:0}

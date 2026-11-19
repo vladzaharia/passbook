@@ -1,6 +1,13 @@
 import { flexRender, type RowData, useTable } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { type CSSProperties, Fragment, type ReactNode, useLayoutEffect, useState } from 'react';
+import {
+  type CSSProperties,
+  Fragment,
+  type ReactNode,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { cn } from '../lib/cn.ts';
 import { useContainerWidth } from '../lib/container-width.ts';
 import { BELOW_MD, useMediaQuery } from '../lib/media.ts';
@@ -82,6 +89,12 @@ export function DataTable<T extends RowData>({
   });
   const rows = table.getRowModel().rows;
   const { ref: scrollRef, fade, measure } = useEdgeFade();
+  // The column grew: forget the old width and measure the table again.
+  const lastWidth = useRef(0);
+  useLayoutEffect(() => {
+    if (boxWidth > lastWidth.current) setNatural(0);
+    lastWidth.current = boxWidth;
+  }, [boxWidth]);
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (el && el.scrollWidth > el.clientWidth + 1) setNatural(el.scrollWidth);

@@ -27,6 +27,8 @@ const RADIO = cn(
   'checked:border-state-checked-edge checked:bg-state-checked-fill checked:shadow-[inset_0_0_0_3px_var(--pk-surface-raised)]',
   'hover:not-disabled:not-checked:border-fg-muted',
   'disabled:cursor-not-allowed disabled:opacity-50',
+  // High contrast drops fills and shadows: the native radio draws the state.
+  'forced-colors:appearance-auto',
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
 );
 

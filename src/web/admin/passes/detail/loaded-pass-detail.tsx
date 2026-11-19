@@ -173,8 +173,9 @@ export function LoadedPassDetail({
           />
           <TechnicalDetails
             items={[
-              { label: 'Serial number', value: p.serial },
-              { label: 'Template revision', value: p.templateVersion },
+              { label: 'Version', value: `v${p.version}` },
+              { label: 'Serial number', value: p.serial, copy: true },
+              { label: 'Template revision', value: p.templateVersion, copy: true },
             ]}
           />
         </CardBody>

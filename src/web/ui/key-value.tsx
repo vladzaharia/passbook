@@ -8,6 +8,8 @@ export interface KeyValueItem {
   label: string;
   value: ReactNode;
   mono?: boolean;
+  /** TechnicalDetails: an id an admin may paste into a ticket gets a Copy ID button. */
+  copy?: boolean;
 }
 
 /**
@@ -56,9 +58,8 @@ export function TechnicalDetails({
         items={items.map((item) => ({
           ...item,
           mono: item.mono ?? true,
-          // A string value is an id an admin may need in a ticket or a script.
           value:
-            typeof item.value === 'string' ? (
+            item.copy && typeof item.value === 'string' ? (
               <span className="flex min-w-0 items-center gap-1">
                 <span className="min-w-0 break-all">{item.value}</span>
                 <CopyButton value={item.value} label="Copy ID" />

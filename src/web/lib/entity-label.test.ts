@@ -16,6 +16,11 @@ describe('entityLabel', () => {
     expect(entityLabel('b95c69194c2acbf1', 'Template')).toBe('Template');
     expect(entityLabel('wlt_9fk2x81qzm', 'API key')).toBe('API key');
   });
+  it('keeps snake_case names and plain words', () => {
+    expect(entityLabel('welcome_campaign', 'Message')).toBe('welcome_campaign');
+    expect(entityLabel('onboarding_flow', 'Message')).toBe('onboarding_flow');
+    expect(entityLabel('deadbeefcafe', 'Pass')).toBe('deadbeefcafe');
+  });
   it('does not mistake short words for ids', () => {
     expect(looksLikeId('deadbeef')).toBe(false);
     expect(looksLikeId('Facade')).toBe(false);
