@@ -5,6 +5,7 @@ import type { AssignState } from '../machine/assign-state.ts';
 import { DockButton } from '../ui/dock.tsx';
 import { TAG_EXTRA_COPY } from './copy.ts';
 import type { TagReader } from './tag-reader.ts';
+import { useRetryWait } from './use-retry-wait.ts';
 
 export interface AssignDockHandlers {
   cancel(): void;
@@ -34,6 +35,7 @@ export function AssignDock({
   on: AssignDockHandlers;
 }) {
   const c = SCAN_TAG_COPY;
+  const wait = useRetryWait(a.error);
   const cancel = <DockButton onClick={on.cancel}>{SCAN_COPY.actions.cancel}</DockButton>;
   if (a.busy)
     return (
@@ -110,8 +112,25 @@ export function AssignDock({
     case 'error': {
       const kind = a.error?.kind;
       const retryable = kind === 'not_assigned' || kind === 'went_wrong';
-      if (kind === 'too_many') return null;
+      if (kind === 'too_many')
+        return (
+          <>
+            {cancel}
+            <DockButton primary variant="filled" disabled={wait !== 0} onClick={on.retry}>
+              {c.dock.tryAgain}
+            </DockButton>
+          </>
+        );
       if (kind === 'holder_changed')
+        return (
+          <>
+            <DockButton onClick={on.done}>{TAG_EXTRA_COPY.done}</DockButton>
+            <DockButton primary variant="filled" onClick={() => on.again(false)}>
+              {c.dock.startAgain}
+            </DockButton>
+          </>
+        );
+      if (kind === 'secure_needed')
         return (
           <DockButton primary variant="filled" onClick={on.done}>
             {TAG_EXTRA_COPY.done}
@@ -122,7 +141,7 @@ export function AssignDock({
           {retryable ? (
             <>
               <DockButton primary variant="filled" onClick={on.retry}>
-                Try again
+                {c.dock.tryAgain}
               </DockButton>
               {cancel}
             </>

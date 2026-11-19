@@ -229,6 +229,21 @@ export const SCAN_COPY = {
     offline: 'Look up needs a connection.',
   },
   direction: { in: 'In', out: 'Out', auto: 'Auto' },
+  /** The mode a device scans in. */
+  mode: { door: 'Door', desk: 'Desk', manager: 'Manager', operator: 'Operator' },
+  offline: {
+    strip: 'Offline. Scans are saved and sync later.',
+    saved: '{n} saved',
+  },
+  sessionPaused: { line: 'Paused by a manager. Ask them to resume.', check: 'Check again' },
+  sessionEnded: { title: 'Session ended', line: 'Ask a manager to open a new session.' },
+  changeMode: {
+    menu: 'Change mode',
+    title: 'Change mode',
+    current: 'This device is in {mode} mode.',
+    customerSub: 'Scanning stops until staff switch back.',
+    adminNote: 'Desk and Operator are set by an admin in Scanning.',
+  },
   /** Why a desk let someone in. */
   overrideNotes: {
     forgot_out: 'Forgot to tap out',

@@ -10,32 +10,41 @@
 .scan-request-strip {
   position: absolute;
   inset-inline: 0;
-  inset-block-start: 8px;
+  inset-block-start: calc(env(safe-area-inset-top, 0px) + 66px);
   margin-inline: auto;
-  z-index: 2;
+  z-index: calc(var(--scan-z-capsule) + 1);
   display: flex;
   align-items: center;
   gap: 8px;
-  width: min(342px, calc(100% - 24px));
-  padding: 8px 8px 8px 14px;
-  border-radius: 20px;
-  background: var(--scan-glass-solid);
+  box-sizing: border-box;
+  width: min(420px, calc(100% - 24px));
+  padding: 8px 8px 8px 16px;
+  border-radius: 24px;
+  background: var(--scan-card);
   color: var(--sd-strong);
-  font: 500 14px / 18px var(--pk-font-sans);
-  box-shadow: inset 0 0 0 1px var(--sd-line);
+  font: 600 15px / 20px var(--pk-font-sans);
+  box-shadow:
+    0 8px 28px rgb(0 0 0 / 0.3),
+    inset 0 0 0 1px var(--sd-line);
+}
+@media (min-width: 1024px) {
+  .scan-request-strip {
+    inset-block-start: calc(env(safe-area-inset-top, 0px) + 100px);
+    width: min(520px, calc(100% - 48px));
+  }
 }
 .scan-request-strip span {
   flex: 1;
   min-width: 0;
 }
 .scan-request-strip button {
-  min-height: 36px;
-  padding-inline: 12px;
+  min-height: 44px;
+  padding-inline: 16px;
   border: 0;
-  border-radius: 18px;
+  border-radius: 22px;
   background: var(--sd-fill-gray);
   color: var(--sd-strong);
-  font: 600 13px / 1 var(--pk-font-sans);
+  font: 600 15px / 1 var(--pk-font-sans);
   cursor: pointer;
 }
 .scan-request-strip button[data-primary] {

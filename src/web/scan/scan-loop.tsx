@@ -23,9 +23,10 @@ import { CameraLayer } from './ui/camera-layer.tsx';
 import { ReaderChip, SyncChip, TestChip } from './ui/chips.tsx';
 import { DoorDock } from './ui/door-dock.tsx';
 import type { Announcement } from './ui/live-announcer.tsx';
+import { modeLabel } from './ui/mode-label.ts';
 import { type CameraChoice, ScanMenu } from './ui/scan-menu.tsx';
 import { ScanOverlays, type ScanPanel } from './ui/scan-overlays.tsx';
-import { stripOf } from './ui/strip-of.ts';
+import { dockStrip } from './ui/strip-of.ts';
 import { useAccessUi } from './ui/use-access-ui.tsx';
 import './buddy/beats.css';
 
@@ -136,7 +137,7 @@ export function ScanLoop({
       onSwitchStaff={() =>
         void api.staffSignOut().then(refetch, (error) => setCameraError(errorMessage(error)))
       }
-      flip={scanner?.kind === 'device' ? { api, refetch } : undefined}
+      flip={scanner?.kind === 'device' ? { api, refetch, mode: modeLabel(session) } : undefined}
       hasWide={runtime.camera.hasWide()}
       onCamera={(choice) => {
         setCameraChoice(choice);
@@ -197,6 +198,7 @@ export function ScanLoop({
           orgName: scanner?.orgName ?? session.admin?.orgs[0]?.name ?? '',
           name: scanner?.name ?? 'Scan as admin',
           staff: session.staff?.name,
+          mode: modeLabel(session),
           state: !s.online
             ? 'offline'
             : l.s === 'checking' || l.s === 'applying'
@@ -210,7 +212,7 @@ export function ScanLoop({
             <>
               <TestChip mode={scanner?.mode ?? getMode()} />
               {readerUsable ? <ReaderChip state={s.focused ? 'ready' : 'paused'} /> : null}
-              {!s.online ? <SyncChip state={{ kind: 'offline', queued: 0 }} /> : null}
+              {!s.online ? <SyncChip state={{ kind: 'offline', queued: s.queue.pending }} /> : null}
               {access.chips}
               {tags.chip}
             </>
@@ -287,7 +289,7 @@ export function ScanLoop({
             />
           )
         }
-        strip={tags.strip ?? stripOf(last, Boolean(lastUndo), now)}
+        strip={tags.strip ?? dockStrip(s, last, Boolean(lastUndo), now)}
         announcement={announcement}
         on={{
           start: () => {

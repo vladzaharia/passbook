@@ -35,6 +35,15 @@
   height: 48px;
   min-width: 0;
 }
+/* Tablet portrait: strip and row stay a phone-wide column in the middle, not a 700 px bar. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .scan-dock-strip,
+  .scan-dock-row {
+    align-self: center;
+    width: 100%;
+    max-width: 560px;
+  }
+}
 @media (min-width: 1024px) {
   .scan-dock-strip {
     flex: 0 1 460px;

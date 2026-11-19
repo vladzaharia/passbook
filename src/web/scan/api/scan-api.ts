@@ -49,7 +49,7 @@ import {
   type MarkOutRequest,
   MarkOutResultSchema,
 } from '../inside/inside-types.ts';
-import { ScanApiError } from './errors.ts';
+import { canReload, ScanApiError } from './errors.ts';
 
 export { ScanApiError } from './errors.ts';
 
@@ -200,8 +200,8 @@ export function createScanApi(deps: ScanApiDeps) {
       }
       // The door's configuration moved under this request: reload it and send the same key once more.
       // Never an unpair: only a 401 means the credential is gone.
-      else if (code === 'SCAN_CONFIG_CHANGED' && deps.refreshConfig && !call.signal?.aborted) {
-        await deps.refreshConfig();
+      else if (code === 'SCAN_CONFIG_CHANGED' && canReload(deps, path, call)) {
+        await deps.refreshConfig?.();
         attempt = await once(method, path, body, call);
       }
       // The signed-in staff member changed (role, PIN or access): drop the sign-in so the PIN prompt shows.

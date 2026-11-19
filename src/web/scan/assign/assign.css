@@ -257,7 +257,7 @@
   stroke: var(--sd-accent);
 }
 .scan-tag-arc-2 {
-  stroke: var(--sd-tone-violet);
+  stroke: color-mix(in oklab, var(--sd-accent) 55%, transparent);
 }
 .scan-tag-art[data-struck] .scan-tag-body,
 .scan-tag-art[data-struck] .scan-tag-arc {

@@ -216,3 +216,10 @@
     padding-block: 20px;
   }
 }
+
+/* Tablet portrait: boot cards (start, sign-in, pair) scale up instead of sitting small in empty space. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .scan-card.scan-boot-card {
+    zoom: 1.2;
+  }
+}

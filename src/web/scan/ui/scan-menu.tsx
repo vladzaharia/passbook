@@ -90,7 +90,7 @@ export interface ScanMenuProps {
   canSwitchStaff?: boolean;
   onSwitchStaff?: () => void;
   /** A paired phone can face a customer; absent for terminals and admin sessions. */
-  flip?: { api: ScanApi; refetch: () => Promise<void> };
+  flip?: { api: ScanApi; refetch: () => Promise<void>; mode: string };
   /** Assign tag: absent when this scanner cannot assign; disabled offline. */
   tags?: { offline: boolean; onSelect: () => void } | null;
   onShift: () => void;
@@ -183,7 +183,7 @@ export function ScanMenu(p: ScanMenuProps) {
           {p.flip ? (
             <DropdownMenuItem onSelect={() => setFlipOpen(true)}>
               <MonitorSmartphone aria-hidden />
-              Show to customer
+              {SCAN_COPY.changeMode.menu}
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem onSelect={p.onEndShift}>

@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import type { z } from 'zod';
 import { localZone } from '@/web/lib/timezones.ts';
 import type { ScanAdminScopeSchema } from '../../shared/contracts/scan.ts';
+import { SCAN_COPY } from '../../shared/copy/scan.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { buttonVariants } from '../ui/button-variants.ts';
 import { createLazyScanApi } from './api/lazy-api.ts';
@@ -117,14 +118,16 @@ function ScanBoot() {
               line={session.session.workspace.session.name}
             >
               <p className="text-sm text-fg-muted">
-                Scanning will be available when this session is resumed.
+                {session.session.workspace.session.status === 'paused'
+                  ? SCAN_COPY.sessionPaused.line
+                  : SCAN_COPY.sessionEnded.line}
               </p>
               <button
                 className={buttonVariants({ variant: 'outline' })}
                 type="button"
                 onClick={() => void session.refetch()}
               >
-                Check session
+                {SCAN_COPY.sessionPaused.check}
               </button>
             </BootCard>
           }
@@ -212,6 +215,12 @@ function ScanBoot() {
     />
   ) : session.phase === 'loading' ? (
     <BootCard title="Loading scanner…" />
+  ) : session.ended ? (
+    <BootCard title={SCAN_COPY.sessionEnded.title} line={SCAN_COPY.sessionEnded.line}>
+      <button className={buttonVariants()} type="button" onClick={() => void session.refetch()}>
+        {SCAN_COPY.actions.tryAgain}
+      </button>
+    </BootCard>
   ) : session.phase === 'error' || session.phase === 'blocked' ? (
     <BootCard title="Scanner unavailable" line="Check the connection and try again.">
       <button className={buttonVariants()} type="button" onClick={() => void session.refetch()}>

@@ -10,6 +10,7 @@ import { TAG_EXTRA_COPY } from './copy.ts';
 import { TagArt } from './tag-art.tsx';
 import { TagChip } from './tag-chip.tsx';
 import type { TagReader } from './tag-reader.ts';
+import { useRetryWait } from './use-retry-wait.ts';
 import './assign.css';
 import './tag-chrome.css';
 
@@ -23,7 +24,6 @@ export function toneOf(a: AssignState): AssignTone {
     case 'already_here':
       return 'heads_up';
     case 'lost':
-    case 'secure_needed':
     case 'failed_check':
       return 'refused';
     default:
@@ -54,6 +54,7 @@ export interface AssignCardHandlers {
 
 function Headline({ a, ctx }: { a: AssignState; ctx: AssignCardContext }) {
   const c = SCAN_TAG_COPY;
+  if (a.waiting) return <>{c.tag.read}</>;
   if (a.step === 'pass')
     return (
       <>
@@ -108,13 +109,18 @@ function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: Assi
           <TagChip hint={hint} assurance={a.inspected?.assurance ?? 'basic'} />
         </div>
       ) : null}
-      <div className="scan-assign-art">
-        <TagArt size={96} />
-      </div>
+      {a.waiting ? null : (
+        <div className="scan-assign-art">
+          <TagArt size={96} />
+        </div>
+      )}
       <h1 id="scan-result-heading" tabIndex={-1} className="scan-assign-headline">
         <Headline a={a} ctx={ctx} />
       </h1>
-      {a.step === 'tag' && ctx.reader.kind !== 'sheet' && ctx.reader.kind !== 'wedge' ? (
+      {a.step === 'tag' &&
+      !a.waiting &&
+      ctx.reader.kind !== 'sheet' &&
+      ctx.reader.kind !== 'wedge' ? (
         <p className="scan-assign-sub">{c.tag.holdSub}</p>
       ) : null}
       {a.step === 'tag' && ctx.reader.kind === 'wedge' ? (
@@ -174,9 +180,10 @@ export function AssignCard({
   phase?: 'rising' | 'up';
 }) {
   const tone = toneOf(a);
+  const wait = useRetryWait(a.error);
   const line =
     a.step === 'error' && a.error
-      ? errorLine(a.error, { org: ctx.org })
+      ? errorLine(a.error, { org: ctx.org, wait })
       : a.step === 'done' && a.result
         ? {
             headline:
