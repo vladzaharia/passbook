@@ -2575,7 +2575,7 @@ exports[`Google compilers over every starter and baked template > starter-day-pa
         "id": "auxiliaryFields.member",
       },
       {
-        "body": "Until midnight on the day of the pass.",
+        "body": "Until midnight on the day of the first visit.",
         "header": "Hours",
         "id": "backFields.hours",
       },
@@ -2685,7 +2685,7 @@ exports[`Google compilers over every starter and baked template > starter-day-pa
         "id": "auxiliaryFields.member",
       },
       {
-        "body": "Until midnight on the day of the pass.",
+        "body": "Until midnight on the day of the first visit.",
         "header": "Hours",
         "id": "backFields.hours",
       },

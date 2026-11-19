@@ -364,7 +364,7 @@ exports[`samsung compiler over every starter and baked template > starter-day-pa
       "logoImage": "https://img.example/logo@3x.png",
       "noticeDesc": "Pass: Day pass
 Pass ID: DAY-0001
-Hours: Until midnight on the day of the pass.
+Hours: Until midnight on the day of the first visit.
 Terms: Good for one day, any number of entries. It's for you only.",
       "providerName": "PassBook",
       "title": "Sam Reed",

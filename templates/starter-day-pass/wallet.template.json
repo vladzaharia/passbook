@@ -46,34 +46,11 @@
         "default": "Active",
         "x-widget": "select"
       },
-      "plan": {
-        "type": "string",
-        "x-label": "Plan",
-        "x-group": "Pass",
-        "enum": [
-          "day"
-        ],
-        "default": "day",
-        "x-widget": "select",
-        "x-enumLabels": {
-          "day": "Day pass"
-        },
-        "x-order": 40
-      },
-      "validFrom": {
-        "type": "string",
-        "format": "date-time",
-        "x-label": "Valid on",
-        "x-group": "Pass",
-        "x-order": 50,
-        "x-widget": "datetime",
-        "x-noneLabel": "Today"
-      },
       "message": {
         "type": "string",
         "x-label": "Message",
         "x-group": "Message",
-        "x-order": 60,
+        "x-order": 40,
         "maxLength": 256,
         "x-widget": "textarea",
         "x-help": "Shown on the back."
@@ -82,7 +59,7 @@
         "type": "string",
         "x-label": "Note",
         "x-group": "Message",
-        "x-order": 70,
+        "x-order": 50,
         "maxLength": 256,
         "x-widget": "textarea"
       }
@@ -91,7 +68,6 @@
   "sample": {
     "memberName": "Sam Reed",
     "memberId": "DAY-0001",
-    "plan": "day",
     "status": "Active"
   },
   "bindings": [
@@ -172,35 +148,6 @@
     "lookup": {
       "input": "memberId"
     },
-    "access": {
-      "input": {
-        "plan": "plan",
-        "from": "validFrom"
-      },
-      "plans": [
-        {
-          "id": "day",
-          "label": "Day pass",
-          "kind": "guest",
-          "days": 1,
-          "zones": [
-            {
-              "zone": "*"
-            }
-          ]
-        }
-      ],
-      "suspend": {
-        "input": "status",
-        "equals": [
-          "Suspended"
-        ]
-      },
-      "rules": {
-        "visitGapMinutes": 120,
-        "reentryMinutes": null
-      }
-    },
     "display": {
       "v": 1,
       "holder": "{{memberName}}",
@@ -208,7 +155,7 @@
         "chips": [
           {
             "id": "c_plan",
-            "text": "{{access.plan}}",
+            "text": "Day pass",
             "tone": "teal",
             "icon": "clock"
           }
@@ -233,9 +180,9 @@
               "type": "columns",
               "items": [
                 {
-                  "id": "i_until",
-                  "label": "Until",
-                  "value": "{{access.until|time}}"
+                  "id": "i_first",
+                  "label": "Today",
+                  "value": {"count": "{{history.visits.today}}", "one": "# visit", "other": "# visits", "zero": "First visit"}
                 },
                 {
                   "id": "i_last",
@@ -256,6 +203,11 @@
         ],
         "panel": null
       }
+    },
+    "checkIn": {
+      "mode": "unlimited",
+      "days": 1,
+      "durationFrom": "first_scan"
     }
   }
 }

@@ -26,6 +26,11 @@ describe('entry pass types', () => {
       (p) => ({ ...p }),
     );
 
+  it('the access card carries Guest in too', async () => {
+    const { template } = await loadBaked('starter-access-card', { strips: false });
+    expect(template.manifest.scan?.actions?.map((a) => a.id)).toEqual(['enter', 'guest_in']);
+  });
+
   it('Monthly is always-on with Guest in taking from guests', async () => {
     const { template } = await loadBaked('starter-monthly-pass', { strips: false });
     expect((await plans('starter-monthly-pass')).map((p) => [p.id, p.kind])).toEqual([
@@ -41,10 +46,14 @@ describe('entry pass types', () => {
     });
   });
 
-  it('Day pass is one day with unlimited entries', async () => {
-    const [plan] = await plans('starter-day-pass');
-    expect(plan).toMatchObject({ id: 'day', kind: 'guest', days: 1 });
-    expect(plan?.visits).toBeUndefined();
+  it('Day pass is check-in only: one day from the first scan, unlimited entries', async () => {
+    const { template } = await loadBaked('starter-day-pass', { strips: false });
+    expect(template.manifest.scan?.access).toBeUndefined();
+    expect(template.manifest.scan?.checkIn).toEqual({
+      mode: 'unlimited',
+      days: 1,
+      durationFrom: 'first_scan',
+    });
   });
 
   it('Guest pass is one day, one visit', async () => {

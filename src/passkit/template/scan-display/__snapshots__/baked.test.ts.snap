@@ -428,6 +428,16 @@ exports[`starter-access-card default display > matches its snapshot, and so does
   "holder": "{{inputs.memberName}}",
   "panels": [
     {
+      "id": "p_main",
+      "rows": [
+        {
+          "id": "r_main",
+          "type": "progress",
+          "value": "{{inputs.guests}}",
+        },
+      ],
+    },
+    {
       "icon": "info",
       "id": "p_details",
       "rows": [

@@ -53,7 +53,7 @@
       {
         "key": "hours",
         "label": "Hours",
-        "value": "Until midnight on the day of the pass."
+        "value": "Until midnight on the day of the first visit."
       },
       {
         "key": "terms",

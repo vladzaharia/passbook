@@ -4,11 +4,11 @@ exports[`build keys of the baked templates > are unchanged by the wallets extens
 {
   "henrys-blue": "59cfb67a543f18324b5ffbec6bd1b0a6182430dfb6b136cf649c1358817a5aba",
   "henrys-copper": "d80019e99d592cbb9f16abbc724fb7797dfa2be5fbb0ff2ca4095524ca0f9861",
-  "starter-access-card": "400d02d5aef5a90868cd61cd7ef933300e06436ceed2548c56c6b5dcc8b7eded",
+  "starter-access-card": "9342b0975122460faf6edb6ca61a983ec6cfc84a5ee5bc0ddbc3f5a66ebb7894",
   "starter-boarding-pass": "ab1c048da2433815935430cc7e4430477ed28c8a9e699be19cdd3f3c28f1bc48",
   "starter-booking": "def75ce42c09f73529c7ebe5e43da9528b6c5f1aeda343463ef1287b090a1d89",
   "starter-coupon": "a39dc95534d8ff294f658a194c3919fb6def97ad42c4d862a05d9d72633cab88",
-  "starter-day-pass": "29db090e745f66eb64b16967180b0cb6acbebbe2580ff54fd96bc6f1d6d5d643",
+  "starter-day-pass": "d4e6ae68b8992f48f3841470283aaadc2078664cbafa86326fe0dd36895ddf53",
   "starter-event-ticket": "c0ebc5e02ad8c15bbdbaee93a56ecc7e3c4a5a5ee5aa4ddd6b2e4ccd7a7620d9",
   "starter-generic": "1f5f1005daa9bd7205f9fd65ac49889a9d8f385f9ef045f70fd16759549b77f1",
   "starter-guest-pass": "bf050ac5161421ec0f0e714da03d3dd99537435ea058f639e47b43dce7edd109",

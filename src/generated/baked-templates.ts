@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "a9845de7f5c0ed3047e17332ff4c7b698772bbc9";
+export const BAKED_BUILD_HASH = "4c02800ed4ba8a81caab2bfdd2e7cb12a837c9f3";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -1494,7 +1494,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-access-card",
     "slug": "starter-access-card",
-    "version": "45ac9f7c379bbbbb",
+    "version": "e87dae6adff9a6e6",
     "name": "Access card",
     "description": "Door access by plan and zone, with a photo for ID checks.",
     "org": null,
@@ -1632,6 +1632,15 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-order": 110,
             "maxLength": 256,
             "x-widget": "textarea"
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99,
+            "x-label": "Guests left",
+            "x-group": "Guest",
+            "x-order": 85,
+            "x-help": "Taken by Guest in at the door."
           }
         }
       },
@@ -1712,6 +1721,13 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         },
         {
           "to": {
+            "field": "guests"
+          },
+          "value": "{{guests}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
             "field": "note"
           },
           "value": "{{note}}",
@@ -1764,6 +1780,22 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "id": "enter",
             "label": "Let in",
             "kind": "check_in"
+          },
+          {
+            "id": "guest_in",
+            "label": "Guest in",
+            "kind": "take",
+            "input": "guests",
+            "amount": {
+              "max": 10,
+              "presets": [
+                1,
+                2,
+                3
+              ]
+            },
+            "repeat": "always",
+            "minRole": "door"
           }
         ],
         "lookup": {
@@ -2039,6 +2071,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "key": "member",
             "label": "Member",
             "value": "MEMBER-0001"
+          },
+          {
+            "key": "guests",
+            "label": "Guests left",
+            "value": 0
           }
         ],
         "backFields": [
@@ -2087,12 +2124,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "slot": "strings",
         "scale": 1,
         "locale": "en",
-        "size": 294,
-        "sha1": "2524bdaa8f07408169334fad07185f8a26bd5b50",
-        "crc32": 480473760,
+        "size": 325,
+        "sha1": "cdffa92928f85d58136fd04c26639e548a7023c3",
+        "crc32": 3317106332,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/en.lproj/pass.strings"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/en.lproj/pass.strings"
         }
       },
       {
@@ -2106,7 +2143,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/icon@2x.png"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/icon@2x.png"
         }
       },
       {
@@ -2120,7 +2157,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/icon@3x.png"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/icon@3x.png"
         }
       },
       {
@@ -2134,7 +2171,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/logo@2x.png"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/logo@2x.png"
         }
       },
       {
@@ -2148,7 +2185,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/logo@3x.png"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/logo@3x.png"
         }
       },
       {
@@ -2162,7 +2199,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/thumbnail@2x.png"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/thumbnail@2x.png"
         }
       },
       {
@@ -2176,7 +2213,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/thumbnail@3x.png"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/thumbnail@3x.png"
         }
       }
     ],
@@ -4297,7 +4334,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-day-pass",
     "slug": "starter-day-pass",
-    "version": "b718574e8fda6a06",
+    "version": "ea359c60928abaa7",
     "name": "Day pass",
     "description": "One day of entry, ending at midnight. Unlimited visits until then.",
     "org": null,
@@ -4353,34 +4390,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "default": "Active",
             "x-widget": "select"
           },
-          "plan": {
-            "type": "string",
-            "x-label": "Plan",
-            "x-group": "Pass",
-            "enum": [
-              "day"
-            ],
-            "default": "day",
-            "x-widget": "select",
-            "x-enumLabels": {
-              "day": "Day pass"
-            },
-            "x-order": 40
-          },
-          "validFrom": {
-            "type": "string",
-            "format": "date-time",
-            "x-label": "Valid on",
-            "x-group": "Pass",
-            "x-order": 50,
-            "x-widget": "datetime",
-            "x-noneLabel": "Today"
-          },
           "message": {
             "type": "string",
             "x-label": "Message",
             "x-group": "Message",
-            "x-order": 60,
+            "x-order": 40,
             "maxLength": 256,
             "x-widget": "textarea",
             "x-help": "Shown on the back."
@@ -4389,7 +4403,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "type": "string",
             "x-label": "Note",
             "x-group": "Message",
-            "x-order": 70,
+            "x-order": 50,
             "maxLength": 256,
             "x-widget": "textarea"
           }
@@ -4398,7 +4412,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "sample": {
         "memberName": "Sam Reed",
         "memberId": "DAY-0001",
-        "plan": "day",
         "status": "Active"
       },
       "bindings": [
@@ -4479,35 +4492,6 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "lookup": {
           "input": "memberId"
         },
-        "access": {
-          "input": {
-            "plan": "plan",
-            "from": "validFrom"
-          },
-          "plans": [
-            {
-              "id": "day",
-              "label": "Day pass",
-              "kind": "guest",
-              "days": 1,
-              "zones": [
-                {
-                  "zone": "*"
-                }
-              ]
-            }
-          ],
-          "suspend": {
-            "input": "status",
-            "equals": [
-              "Suspended"
-            ]
-          },
-          "rules": {
-            "visitGapMinutes": 120,
-            "reentryMinutes": null
-          }
-        },
         "display": {
           "v": 1,
           "holder": "{{memberName}}",
@@ -4515,7 +4499,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "chips": [
               {
                 "id": "c_plan",
-                "text": "{{access.plan}}",
+                "text": "Day pass",
                 "tone": "teal",
                 "icon": "clock"
               }
@@ -4540,9 +4524,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
                   "type": "columns",
                   "items": [
                     {
-                      "id": "i_until",
-                      "label": "Until",
-                      "value": "{{access.until|time}}"
+                      "id": "i_first",
+                      "label": "Today",
+                      "value": {
+                        "count": "{{history.visits.today}}",
+                        "one": "# visit",
+                        "other": "# visits",
+                        "zero": "First visit"
+                      }
                     },
                     {
                       "id": "i_last",
@@ -4563,6 +4552,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             ],
             "panel": null
           }
+        },
+        "checkIn": {
+          "mode": "unlimited",
+          "days": 1,
+          "durationFrom": "first_scan"
         }
       }
     },
@@ -4621,7 +4615,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           {
             "key": "hours",
             "label": "Hours",
-            "value": "Until midnight on the day of the pass."
+            "value": "Until midnight on the day of the first visit."
           },
           {
             "key": "terms",
@@ -4652,7 +4646,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2019410701,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/b718574e8fda6a06/en.lproj/pass.strings"
+          "path": "/templates/starter-day-pass/ea359c60928abaa7/en.lproj/pass.strings"
         }
       },
       {
@@ -4666,7 +4660,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/b718574e8fda6a06/icon@2x.png"
+          "path": "/templates/starter-day-pass/ea359c60928abaa7/icon@2x.png"
         }
       },
       {
@@ -4680,7 +4674,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/b718574e8fda6a06/icon@3x.png"
+          "path": "/templates/starter-day-pass/ea359c60928abaa7/icon@3x.png"
         }
       },
       {
@@ -4694,7 +4688,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/b718574e8fda6a06/logo@2x.png"
+          "path": "/templates/starter-day-pass/ea359c60928abaa7/logo@2x.png"
         }
       },
       {
@@ -4708,7 +4702,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/b718574e8fda6a06/logo@3x.png"
+          "path": "/templates/starter-day-pass/ea359c60928abaa7/logo@3x.png"
         }
       },
       {
@@ -4722,7 +4716,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/b718574e8fda6a06/thumbnail@2x.png"
+          "path": "/templates/starter-day-pass/ea359c60928abaa7/thumbnail@2x.png"
         }
       },
       {
@@ -4736,7 +4730,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/b718574e8fda6a06/thumbnail@3x.png"
+          "path": "/templates/starter-day-pass/ea359c60928abaa7/thumbnail@3x.png"
         }
       }
     ],
