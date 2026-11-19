@@ -106,6 +106,26 @@ describe('Google access token cache (G1)', () => {
     expect(fetcher).toHaveBeenCalledTimes(4);
   });
 
+  it('mints a new token after a credential rotation that leaves the revision unchanged', async () => {
+    const fetcher = tokenFetcher();
+    const v1 = { accountId: 'account-a', revision: 1, credentialVersionId: 'version-1' };
+    const one = await getGoogleAccessToken(account, { issuedAt: now, fetcher, cacheKey: v1 });
+    const again = await getGoogleAccessToken(account, {
+      issuedAt: now + 1,
+      fetcher,
+      cacheKey: v1,
+    });
+    expect(again.cached).toBe(true);
+    const rotated = await getGoogleAccessToken(account, {
+      issuedAt: now + 2,
+      fetcher,
+      cacheKey: { ...v1, credentialVersionId: 'version-2' },
+    });
+    expect(rotated.cached).toBeUndefined();
+    expect(rotated.accessToken).not.toBe(one.accessToken);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
   it('does not cache a failed exchange and never stores or logs the token', async () => {
     const log = vi.spyOn(console, 'log');
     const fetcher = vi

@@ -2,6 +2,11 @@
   "schema": 1,
   "name": "Boarding pass",
   "description": "Flight, gate and seat, with a route footer.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",

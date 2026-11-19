@@ -2,6 +2,11 @@
   "schema": 1,
   "name": "Stamp card",
   "description": "Stamps fill the strip; a full card earns a reward.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",

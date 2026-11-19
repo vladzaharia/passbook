@@ -17,6 +17,16 @@ const INACTIVE_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
   'org_mode.job.pass_import.finish': ['pass_imports', 'counters'],
   'org_mode.job.pass_import.retention_clear': ['pass_imports', 'pass_import_rows'],
   'org_mode.job.pass_import.retention_delete': ['pass_imports', 'pass_import_rows'],
+  // A suspended org's enrolments are held, disabled and migrated all the same (design-wallet-accounts.md).
+  'org_mode.job.wallet.enrolment_hold': ['wallet_provider_accounts', 'wallet_enrolment_events'],
+  'org_mode.job.wallet.enrolment_disable': ['wallet_provider_accounts', 'wallet_enrolment_events'],
+  'org_mode.job.wallet.credential_migrate': [
+    'wallet_credentials',
+    'wallet_credential_versions',
+    'wallet_credential_events',
+    'wallet_enrolment_events',
+    'wallet_provider_accounts',
+  ],
 };
 
 /** The checked input of a `system:` grant: a job purpose, `inactiveOk` only where allowlisted, the job principal. */

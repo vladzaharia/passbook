@@ -2,6 +2,11 @@
   "schema": 1,
   "name": "Pack",
   "description": "Ten washes, classes or trips. Use one.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",
