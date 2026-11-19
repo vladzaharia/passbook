@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { grant } from '../../platform/authority.ts';
 import { credentialAad, decryptSecretText, loadKekRing } from '../../platform/crypto.ts';
 import { all, first } from '../../platform/db.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import {
   listOrgCredentials,
   revokeOrgCredential,
@@ -10,7 +11,7 @@ import {
   saveOrgCredential,
   savePlatformCredential,
 } from './credential-service.ts';
-import { type CredentialWriter, revokeCredential } from './repo-credentials.ts';
+import { type CredentialWriter, cardMapOf, revokeCredential } from './repo-credentials.ts';
 import { type Kit, kit } from './wallet-wa1b-test-fixtures.ts';
 
 let k: Kit;
@@ -150,6 +151,37 @@ describe('org credentials', () => {
         credentials: k.samsung('other-card'),
       }),
     ).rejects.toMatchObject({ code: 'WALLET_IDENTITY_IMMUTABLE' });
+  });
+
+  it('card map is append-only across rotation: types are kept, added, never changed or dropped', async () => {
+    const org = await k.org();
+    const { auth } = await k.member(org.id);
+    const save = (expectedRevision: number, cardIds?: Record<string, string>) =>
+      saveOrgCredential(k.ctx, auth, org.id, {
+        provider: 'samsung',
+        expectedRevision,
+        credentials: { ...k.samsung(), cardIds },
+      });
+    const mapOf = async (id: string) => {
+      const cur = await first<{ current_version_id: string }>(
+        env.DB,
+        'SELECT current_version_id FROM wallet_credentials WHERE id = ?',
+        [id],
+      );
+      return cardMapOf(env.DB, cur?.current_version_id ?? null);
+    };
+    const row = await save(0, { ticket: 'cardT' });
+    expect(Object.keys(await mapOf(row.id)).sort()).toEqual(['generic', 'ticket']);
+    const added = await save(1, { ticket: 'cardT', coupon: 'cardC' });
+    const map = await mapOf(added.id);
+    expect(Object.keys(map).sort()).toEqual(['coupon', 'generic', 'ticket']);
+    expect(map.ticket).toBe(await sha256Hex('cardT'));
+    await expect(save(2, { ticket: 'other', coupon: 'cardC' })).rejects.toMatchObject({
+      code: 'WALLET_IDENTITY_IMMUTABLE',
+    });
+    await expect(save(2, { ticket: 'cardT' })).rejects.toMatchObject({
+      code: 'WALLET_IDENTITY_IMMUTABLE',
+    });
   });
 
   it('an org takes no identity the platform holds', async () => {
