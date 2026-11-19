@@ -120,7 +120,7 @@ export function LookupPanel({
           }}
           className="flex flex-col gap-4"
         >
-          <FormField label={allowPeople ? 'Name, email, code or ID' : 'Code or ID'}>
+          <FormField label={allowPeople ? 'Name, email or code' : 'Code'}>
             {(props) => (
               <ScanTextField
                 {...props}

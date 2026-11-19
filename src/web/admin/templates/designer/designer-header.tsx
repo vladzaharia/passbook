@@ -1,4 +1,5 @@
 import { Redo2, Undo2 } from 'lucide-react';
+import { orgPath } from '../../../lib/scope.ts';
 import { Badge, IconButton, PageHeader } from '../../../ui/index.ts';
 import type { CreateDesign } from './create-flow.ts';
 import type { Action } from './reducer.ts';
@@ -28,8 +29,8 @@ export function DesignerHeader({
               { label: 'New template' },
             ]
           : [
-              { label: 'Templates', to: '/admin/templates', search: { orgId } },
-              { label: name, to: `/admin/templates/${templateId}`, search: { orgId } },
+              { label: 'Templates', to: orgId ? orgPath(orgId, '/templates') : undefined },
+              { label: name, to: orgId ? orgPath(orgId, `/templates/${templateId}`) : undefined },
               { label: 'Design' },
             ]
       }

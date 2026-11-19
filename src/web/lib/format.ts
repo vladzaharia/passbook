@@ -229,3 +229,12 @@ export function formatWeekdayTime(ms: number, timeZone: string): string {
 /** A person's label: the name, else the verified email, else a plain "no email" label. */
 export const personLabel = (person: { name: string | null; primaryEmail: string | null }): string =>
   person.name ?? person.primaryEmail ?? NO_EMAIL_LABEL;
+
+/** The zone's short name ("EDT") at `ms`, to tell apart the two 1:00 AM hours of a clock change. */
+export function formatZoneAbbr(ms: number, timeZone: string): string {
+  return (
+    new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'short' })
+      .formatToParts(ms)
+      .find((p) => p.type === 'timeZoneName')?.value ?? ''
+  );
+}

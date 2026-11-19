@@ -104,7 +104,10 @@ export function DeviceCard({ scanner, now }: { scanner: ScannerDto; now: number 
       <CardBody>
         <KeyValue
           items={[
-            { label: 'Device', value: scanner.kind === 'terminal' ? 'Till' : scanner.pairedLabel },
+            {
+              label: 'Paired as',
+              value: scanner.kind === 'terminal' ? 'Till' : scanner.pairedLabel,
+            },
             {
               label: 'Paired',
               value: scanner.pairedAt === null ? null : formatDateTime(scanner.pairedAt),

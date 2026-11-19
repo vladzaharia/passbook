@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { ChevronDown } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import type { ScannerSetup as ScannerDto } from '@/shared/contracts/scan-setups.ts';
@@ -7,6 +8,7 @@ import { Button, DataTable, EmptyState, ErrorState, LoadMore } from '@/web/ui/in
 import { useNow } from '../../../ui/rel-time.tsx';
 import { useScannerPages } from '../queries.ts';
 import { useScanEvents } from '../scanner-api.ts';
+import { type ScanningSearch, withTab } from '../search.ts';
 import { scannerColumns } from './scanner-columns.tsx';
 import { PairDialog, RevokeDialog } from './scanner-dialogs.tsx';
 
@@ -57,12 +59,17 @@ export function ScannersTab({ live, newButton }: { live: Pages; newButton: React
   const more = revokedList.hasNextPage ? '+' : '';
   return (
     <>
-      <div className="mb-4 flex min-w-0 items-start gap-3 rounded-lg border border-border bg-surface-raised p-4">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-fg-strong">Scanners and displays</p>
-          <p className="mt-1 text-sm text-fg-muted">Create a session to add a device.</p>
-        </div>
-      </div>
+      <p className="mb-3 text-sm text-fg-muted">
+        Add devices from a{' '}
+        <Link
+          className="text-accent-fg underline-offset-2 hover:underline"
+          to="."
+          search={(prev) => withTab(prev as ScanningSearch, 'sessions')}
+        >
+          session
+        </Link>
+        .
+      </p>
       <DataTable
         caption="Scanners"
         loading={live.isPending}
@@ -73,13 +80,13 @@ export function ScannersTab({ live, newButton }: { live: Pages; newButton: React
           <EmptyState
             art="phone"
             title="No devices yet"
-            description="Create a session, then choose Scanner, Operator or Customer display when adding a device."
+            description="Create a session, then add a scanner, desk or customer display to it."
             action={newButton}
           />
         }
         footer={
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <LoadMore query={live} shown={liveRows.length} noun={['scanner', 'scanners']} scoped />
+            <LoadMore query={live} shown={liveRows.length} noun={['device', 'devices']} scoped />
             {revoked.length > 0 ? (
               <Button
                 variant="ghost"

@@ -71,7 +71,7 @@ describe('Zones tab', () => {
     ]);
     expect(within(rows[0] as HTMLElement).getByText('Tap out required')).toBeInTheDocument();
     expect(within(rows[0] as HTMLElement).getByText('42 / 60 inside')).toBeInTheDocument();
-    expect(within(rows[1] as HTMLElement).getByText('Counts')).toBeInTheDocument();
+    expect(within(rows[1] as HTMLElement).getByText('Tracks headcount')).toBeInTheDocument();
   });
 
   it('confirms an archive with what depends on the zone, then archives', async () => {

@@ -6,6 +6,7 @@ import type {
 } from '../../../shared/contracts/scan.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { scopeSessionId } from './actor.ts';
 import { barcodeHashOfCode, cleanCode } from './codes.ts';
 import type { ScanActor } from './guard.ts';
 import { failPendingActionClaimStmt } from './repo-act-claim.ts';
@@ -69,7 +70,7 @@ export function claimOf(
     actorKey: actor.actorKey,
     staffId: actor.staff?.id ?? null,
     apiKeyId: actor.apiKeyId ?? null,
-    sessionId: actor.scanningSession?.id ?? null,
+    sessionId: scopeSessionId(actor),
     overrideOf: req.overrideOf ?? null,
     idempotencyKey: req.idempotencyKey,
     requestHash,

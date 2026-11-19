@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import '../../lib/test-utils.tsx';
+import { full, grant, heldIn, heldOut } from '../machine/access-fixtures.test-support.ts';
 import { fixtureCard, fixtureDisplay, fixtureOutcome } from '../machine/fixtures.test-support.ts';
 import { ResultCard } from './result-card.tsx';
 
@@ -37,7 +38,8 @@ describe('the scanner result interface', () => {
       display: fixtureDisplay('ok'),
     });
     render(<ResultCard outcome={outcome} />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Anna Popescu');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Checked in|Add stamp/);
+    expect(screen.getByTestId('scan-verdict')).toHaveTextContent('Anna Popescu');
     expect(screen.getByText('Gold member').closest('.scan-identity')).not.toBeNull();
     expect(screen.getByTestId('scan-verdict')).toHaveTextContent('Add stamp');
     expect(screen.getByRole('button', { name: 'View pass' })).toBeVisible();
@@ -104,5 +106,38 @@ describe('the scanner result interface', () => {
     expect((await axe(container)).violations).toEqual([]);
     rerender(<ResultCard outcome={fixtureOutcome('heads_up', 'capacity_full')} />);
     expect((await axe(container)).violations).toEqual([]);
+  });
+});
+
+describe('a hold changes nothing', () => {
+  it.each([
+    ['full', full],
+    ['held in', heldIn],
+    ['held out', heldOut],
+  ] as const)('%s shows no stamp gain or grant note', (_name, make) => {
+    const display = fixtureDisplay('heads_up');
+    render(<ResultCard outcome={make({ display })} />);
+    expect(screen.queryByText('Coffee card', { selector: '.sd-panel-title' })).toBeNull();
+    expect(document.querySelector('.sd-progress')).toBeNull();
+    expect(screen.queryByText('Check ID.')).toBeNull();
+  });
+  it('says the holder once when the band already names them', () => {
+    const display = fixtureDisplay('ok');
+    render(<ResultCard outcome={grant({ display })} />);
+    expect(screen.getAllByText(display.identity.holder as string)).toHaveLength(1);
+  });
+});
+
+describe('a refusal changes nothing', () => {
+  it('shows no stamp gain, panel or staff note', () => {
+    const display = fixtureDisplay('heads_up');
+    render(
+      <ResultCard
+        outcome={fixtureOutcome('refused', 'voided', { card: fixtureCard(), display })}
+      />,
+    );
+    expect(document.querySelector('.sd-progress')).toBeNull();
+    expect(screen.queryByText('Coffee card', { selector: '.sd-panel-title' })).toBeNull();
+    expect(screen.queryByText('Check ID.')).toBeNull();
   });
 });

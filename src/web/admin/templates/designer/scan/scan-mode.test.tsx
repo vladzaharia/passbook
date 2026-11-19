@@ -11,6 +11,7 @@ import { sampleDoc } from '../fixtures.ts';
 import type { Selection } from '../model.ts';
 import { designerReducer, initialState, isDirty } from '../reducer.ts';
 import { ScanMode } from './scan-mode.tsx';
+import { frame, frameReady } from './scan-stage-test-fixtures.ts';
 
 function Harness() {
   const [state, dispatch] = useReducer(designerReducer, undefined, () => {
@@ -66,22 +67,24 @@ describe('scan mode shared history', () => {
   it('applies a keyboard canvas removal to the shared draft and can undo it', async () => {
     const user = userEvent.setup();
     render(<Harness />);
+    await frameReady();
     const preview = screen.getByRole('group', { name: /Scan screen preview/ });
-    expect(within(preview).getByText('One')).toBeInTheDocument();
-    fireEvent.keyDown(within(preview).getAllByRole('button', { name: 'Row field' })[0]!, {
+    expect(frame().getByText('One')).toBeInTheDocument();
+    fireEvent.keyDown((await within(preview).findAllByRole('button', { name: 'Row field' }))[0]!, {
       key: 'Delete',
     });
-    expect(within(preview).queryByText('One')).not.toBeInTheDocument();
+    await waitFor(() => expect(frame().queryByText('One')).not.toBeInTheDocument());
     expect(screen.getByText('Dirty')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Undo test edit' }));
-    expect(within(preview).getByText('One')).toBeInTheDocument();
+    await waitFor(() => expect(frame().getByText('One')).toBeInTheDocument());
     expect(screen.getByText('Saved')).toBeInTheDocument();
   });
 
   it('moves keyboard focus between a canvas row and its inspector', async () => {
     render(<Harness />);
+    await frameReady();
     const preview = screen.getByRole('group', { name: /Scan screen preview/ });
-    const row = within(preview).getAllByRole('button', { name: 'Row field' })[0]!;
+    const row = (await within(preview).findAllByRole('button', { name: 'Row field' }))[0]!;
     row.focus();
     fireEvent.keyDown(row, { key: 'Enter' });
     const label = await screen.findByLabelText('Label');

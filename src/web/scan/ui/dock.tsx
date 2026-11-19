@@ -76,7 +76,7 @@ export function DoorThumbRow({
       </DockButton>
       {inside ? (
         <DockButton data-testid="scan-inside-open" onClick={inside.onOpen}>
-          <Users aria-hidden size={20} />
+          <Users aria-hidden size={20} className="scan-dock-icon-extra" />
           {ACCESS_COPY.inside.open}
           <CountUp value={inside.count} className="scan-dock-count" />
         </DockButton>

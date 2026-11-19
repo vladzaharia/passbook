@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import type { MetricsOverview } from '@/shared/contracts/metrics.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
+import { orgPath } from '@/web/lib/scope.ts';
 import { PASS_STATUS } from '@/web/lib/status.ts';
 import { EntityIcon } from '@/web/ui/index.ts';
 import { formatCount } from '../../lib/format.ts';
@@ -188,8 +189,9 @@ export function Kpis({
   listOrgId?: string | null;
 }) {
   const { totals: t, series: s } = data;
-  const passes = (search?: Record<string, string>): Pick<Target, 'search' | 'plain'> => ({
-    search: listOrgId ? { ...search, orgId: listOrgId } : search,
+  const passes = (search?: Record<string, string>): Pick<Target, 'to' | 'search' | 'plain'> => ({
+    to: listOrgId ? orgPath(listOrgId, '/passes') : '/admin/passes',
+    search,
     plain: listOrgId === null,
   });
   const kpis: Kpi[] = [
@@ -199,7 +201,6 @@ export function Kpis({
       value: t.passes,
       icon: ENTITY.pass.icon,
       series: s.issued,
-      to: '/admin/passes',
       ...passes(),
     },
     {
@@ -208,7 +209,6 @@ export function Kpis({
       value: t.activePasses,
       icon: PASS_STATUS.active.icon,
       series: s.updated,
-      to: '/admin/passes',
       ...passes({ status: 'active' }),
     },
     {
@@ -217,7 +217,6 @@ export function Kpis({
       value: t.holders,
       icon: ENTITY.user.icon,
       series: s.emails,
-      to: '/admin/passes',
       ...passes(),
     },
     {
@@ -252,16 +251,9 @@ export function Kpis({
             id={`${countScope}:voided`}
             label="Voided"
             value={t.voidedPasses}
-            to="/admin/passes"
             {...passes({ status: 'voided' })}
           />
-          <Secondary
-            id={`${countScope}:devices`}
-            label="Devices"
-            value={t.devices}
-            to="/admin/passes"
-            {...passes()}
-          />
+          <Secondary id={`${countScope}:devices`} label="Devices" value={t.devices} {...passes()} />
           <li aria-hidden className="h-4 w-px bg-border max-sm:hidden" />
           <li className="text-xs text-fg-muted">{RANGE_LABEL[range]}</li>
           <li className="text-fg-muted">
@@ -270,25 +262,12 @@ export function Kpis({
               {formatCount(t.emailUnknown)}
             </span>
           </li>
-          <Secondary
-            id={`${countScope}:issued`}
-            label="Issued"
-            value={t.issued}
-            to="/admin/passes"
-            {...passes()}
-          />
-          <Secondary
-            id={`${countScope}:updated`}
-            label="Updated"
-            value={t.updated}
-            to="/admin/passes"
-            {...passes()}
-          />
+          <Secondary id={`${countScope}:issued`} label="Issued" value={t.issued} {...passes()} />
+          <Secondary id={`${countScope}:updated`} label="Updated" value={t.updated} {...passes()} />
           <Secondary
             id={`${countScope}:downloads`}
             label="Downloads"
             value={t.downloads}
-            to="/admin/passes"
             {...passes()}
             missing={missing('downloads')}
           />

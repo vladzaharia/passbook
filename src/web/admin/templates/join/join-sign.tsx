@@ -20,6 +20,7 @@ import { useTemplate } from '../api.ts';
 import { useJoinLink } from './api.ts';
 import { useJoinQr } from './join-qr.ts';
 import './join-sign.css';
+import { orgPath } from '../../../lib/scope.ts';
 
 /** The org's logo from its branding (a stored image), else its initials on the sign's blue. No logo is never requested. */
 function Logo({ orgId, name, hasLogo }: { orgId: string; name: string; hasLogo: boolean }) {
@@ -85,11 +86,12 @@ export function JoinSignPage({ templateId }: { templateId: string }) {
   );
   const org = useOrgWorkspace(scope.orgId ?? '', Boolean(scope.orgId));
   const crumbs = [
-    { label: 'Templates', to: '/admin/templates', search: { orgId: scope.orgId } },
+    { label: 'Templates', to: scope.orgId ? orgPath(scope.orgId, '/templates') : undefined },
     {
       label: template.data?.name ?? 'Template',
-      to: `/admin/templates/${encodeURIComponent(templateId)}`,
-      search: { orgId: scope.orgId },
+      to: scope.orgId
+        ? orgPath(scope.orgId, `/templates/${encodeURIComponent(templateId)}`)
+        : undefined,
     },
     { label: JOIN_COPY.sign.crumb },
   ];

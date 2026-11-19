@@ -19,7 +19,7 @@ import { breakdown, OVERALL_TONE, overallTone } from '../status/overall.ts';
 import { useStatus } from '../status/queries.ts';
 import './overview.css';
 
-/** Platform-wide checks stay separate from the overview's organization and mode filters. */
+/** Checks across all organizations stay separate from the overview's organization and mode filters. */
 export function Health() {
   const status = useStatus();
   const identities = useIdentityOptions();

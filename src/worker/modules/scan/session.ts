@@ -97,7 +97,11 @@ async function sessionFor(
   } else if (scopedTemplates.legacy.length > 0 && actor.settings.acceptAllTemplates)
     actor = { ...actor, settings: { ...actor.settings, acceptAllTemplates: false } };
   const screen = actor.scanner && actor.scanner.deviceRole !== 'scan';
-  if (screen) actor = { ...actor, event: null, templateIds: [], staff: null };
+  // A Desk-actions monitor shows who is signed in and lists the roster for the PIN card (SA 18.4).
+  const deskMonitor =
+    actor.scanner?.deviceRole === 'monitor' && actor.settings.deskActions === true;
+  if (screen)
+    actor = { ...actor, event: null, templateIds: [], ...(deskMonitor ? {} : { staff: null }) };
   const templates = screen ? [] : (scopedTemplates?.templates ?? []);
   const db = ctx.env.DB;
   const now = ctx.clock.now();
@@ -114,7 +118,7 @@ async function sessionFor(
         );
   const listStaff =
     scopedTemplates !== null &&
-    actor.scanner?.deviceRole === 'scan' &&
+    (actor.scanner?.deviceRole === 'scan' || deskMonitor) &&
     actor.principal === 'scanner' &&
     actor.settings.staffSignIn;
   const peopleStmt =

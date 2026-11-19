@@ -6,15 +6,14 @@ import type { ScanRole } from '@/passkit/types.ts';
 import type { ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
 import { type DesignDoc, isRecord } from '../model.ts';
 import {
-  cutRows,
   displayForPreview,
   hasUnsafeRenderedText,
-  previewFit,
   previewPassFields,
   safeRealScope,
   scopeForOutcome,
   syntheticScope,
 } from './scan-preview.ts';
+import { cutRows, previewFit } from './scan-preview-fit.ts';
 import { safePreviewText } from './scan-preview-policy.ts';
 
 const NOW = Date.UTC(2026, 10, 5, 18);
