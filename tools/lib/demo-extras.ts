@@ -24,6 +24,7 @@ export async function seedExtras(owner: Session, ids: Ids, base: string): Promis
     owner.all(`${path}${path.includes('?') ? '&' : '?'}orgId=${org}`);
 
   await step('webhook endpoint', async () => {
+    // The SSRF guard refuses localhost at save time, and create takes no status, so pause it at once.
     const url = 'https://example.com/passbook-demo';
     const found = (await inOrg('/api/v1/webhook-endpoints', northwind)).find((e) => e.url === url);
     const endpoint =
