@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { strictEmail } from '../email.ts';
 import { checkFromName } from '../email-from-name.ts';
 import { DATA_CLASSES, type RetentionClass } from '../privacy/data-classes.ts';
+import { CHANNELS, ChannelSchema } from './channels.ts';
 import { PlainLineSchema } from './common.ts';
 
 export {
@@ -59,6 +60,8 @@ export const PlatformSettingsSchema = z.object({
   'scan.lookupsPerHour': z.number().int().min(20).max(2000).default(200),
   /** Apple NFC (VAS). Off until Apple approves the pass type. */
   'nfc.enabled': z.boolean().default(false),
+  /** Paper tickets. Off until the platform turns printing on. */
+  'print.enabled': z.boolean().default(false),
   /** Join links: public self-issue. Off stops every link. */
   'join.enabled': z.boolean().default(true),
   /** Join cards one org may issue per rolling 24 hours across its live links. */
@@ -134,6 +137,8 @@ export const OrgSettingsSchema = z.object({
   'email.buddy': z.boolean().default(false),
   /** Third-party NFC tags. Off until an admin turns it on. */
   'nfc.tags': z.object({ enabled: z.boolean().default(false) }).default({ enabled: false }),
+  /** Channels this org turns off for every template: copies keep working, nothing new is offered. */
+  'channels.blocked': z.array(ChannelSchema).max(CHANNELS.length).default([]),
 });
 
 export const ReplyToOrgSchema = z.object({ orgId: z.string().min(1) });

@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, ModeSchema, OrgIdSchema, TimestampSchema } from './common.ts';
-import { BULK_PASS_LIMIT } from './passes.ts';
+import { IdSchema, OrgIdSchema, TimestampSchema } from './common.ts';
 
 export const CHANNELS = ['mobile', 'apple', 'google', 'samsung', 'paper', 'nfc'] as const;
 export const ChannelSchema = z.enum(CHANNELS);
@@ -74,11 +73,14 @@ export const PutPassChannelsSchema = z.object({
   orgId: OrgIdSchema.optional(),
 });
 
+/** Same cap as BULK_PASS_LIMIT (passes.ts imports settings, which imports this file). */
+const BULK_CHANNEL_PASS_LIMIT = 100;
+
 /** POST /api/v1/passes/bulk/channels */
 export const BulkPassChannelsSchema = z.object({
   action: z.enum(['on', 'off', 'reset']),
   channels: z.array(ChannelSchema).min(1).max(CHANNELS.length),
-  ids: z.array(IdSchema).min(1).max(BULK_PASS_LIMIT),
+  ids: z.array(IdSchema).min(1).max(BULK_CHANNEL_PASS_LIMIT),
   /** Holder emails are off by default for bulk. */
   notify: z.boolean().default(false),
   /** Also issue new scan codes ("Turn off and replace codes"). Off by default: turning off never rotates. */
@@ -97,6 +99,8 @@ export const ChannelImpactSchema = z.object({
   passes: z.number().int().nonnegative(),
   /** Passes whose codes rotate: those with a copy in the channel, only when `replaceCodes` is set. */
   rotated: z.number().int().nonnegative(),
+  /** Pass overrides a `never` deletes. */
+  clearedOverrides: z.number().int().nonnegative(),
 });
 
 /** GET /api/v1/templates/{id}/channels */
