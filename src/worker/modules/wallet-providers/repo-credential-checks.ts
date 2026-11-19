@@ -23,14 +23,18 @@ export function findCheckTarget(db: D1Database, credentialId: string): Promise<C
   );
 }
 
-/** Every active credential with a version: the daily check's work list. */
-export async function listCheckableCredentialIds(db: D1Database): Promise<string[]> {
-  const rows = await all<{ id: string }>(
+/** Active credentials with a version, after `after` by id: one page of the daily check's work list. */
+export function listCheckableCredentials(
+  db: D1Database,
+  after: string,
+  limit: number,
+): Promise<{ id: string; current_version_id: string }[]> {
+  return all<{ id: string; current_version_id: string }>(
     db,
-    `SELECT id FROM wallet_credentials WHERE revoked_at IS NULL AND current_version_id IS NOT NULL
-    ORDER BY id LIMIT 1000`,
+    `SELECT id, current_version_id FROM wallet_credentials
+    WHERE revoked_at IS NULL AND current_version_id IS NOT NULL AND id > ? ORDER BY id LIMIT ?`,
+    [after, limit],
   );
-  return rows.map((r) => r.id);
 }
 
 export interface CheckRow {

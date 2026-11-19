@@ -8,7 +8,7 @@ import {
   type CheckTarget,
   findCheck,
   findCheckTarget,
-  listCheckableCredentialIds,
+  listCheckableCredentials,
   writeCheck,
 } from './repo-credential-checks.ts';
 
@@ -35,9 +35,9 @@ async function outcomeOf(ctx: ServiceContext, target: CheckTarget): Promise<Chec
     : probeSamsungCards(ctx, source.credentials, target.mode);
 }
 
-/** The id a daily check takes: one per credential per UTC day, so a rerun of the cron adds nothing. */
-export const dailyCheckId = (credentialId: string, now: number) =>
-  `${credentialId}:${Math.floor(now / DAY_MS)}`;
+/** The id a daily check takes: one per credential version per UTC day, so a rerun of the cron adds nothing. */
+export const dailyCheckId = (credentialId: string, versionId: string, now: number) =>
+  `${credentialId}:${versionId}:${Math.floor(now / DAY_MS)}`;
 
 /** Runs one check under its id and records it. A redelivered job finds its row and stops. */
 export async function runCredentialCheck(
@@ -71,15 +71,47 @@ export async function runCredentialCheck(
   });
 }
 
-/** Daily: one check job per active credential. */
-export async function enqueueCredentialChecks(ctx: ServiceContext): Promise<void> {
-  const now = ctx.clock.now();
-  const ids = await listCheckableCredentialIds(ctx.env.DB);
-  for (const credentialId of ids)
+const SEND_BATCH = 100;
+const PAGE = 200;
+
+/** Queues the check of a version the day's id covers; a failed send is left to the daily run. */
+export async function enqueueVersionCheck(
+  ctx: ServiceContext,
+  credentialId: string,
+  versionId: string,
+): Promise<void> {
+  try {
     await ctx.env.JOBS.send({
       kind: 'wallet.credential_check',
       credentialId,
-      checkId: dailyCheckId(credentialId, now),
+      checkId: dailyCheckId(credentialId, versionId, ctx.clock.now()),
     });
-  ctx.log.info('wallet.credential_checks_queued', { count: ids.length });
+  } catch (error) {
+    ctx.log.warn('wallet.credential_check_unqueued', { code: 'WALLET_CHECK_UNQUEUED', error });
+  }
+}
+
+/** Daily: one check job per active credential, paged by id and sent in queue batches. */
+export async function enqueueCredentialChecks(ctx: ServiceContext): Promise<void> {
+  const now = ctx.clock.now();
+  let after = '';
+  let count = 0;
+  for (;;) {
+    const page = await listCheckableCredentials(ctx.env.DB, after, PAGE);
+    for (let i = 0; i < page.length; i += SEND_BATCH)
+      await ctx.env.JOBS.sendBatch(
+        page.slice(i, i + SEND_BATCH).map((c) => ({
+          body: {
+            kind: 'wallet.credential_check' as const,
+            credentialId: c.id,
+            checkId: dailyCheckId(c.id, c.current_version_id, now),
+          },
+        })),
+      );
+    count += page.length;
+    const last = page.at(-1);
+    if (!last || page.length < PAGE) break;
+    after = last.id;
+  }
+  ctx.log.info('wallet.credential_checks_queued', { count });
 }

@@ -196,6 +196,26 @@ describe('redirects', () => {
     expect(await check(id)).toMatchObject({ ok: 0, code: 'provider_error' });
     expect(calls).toEqual(['manual']);
   });
+
+  it('a 3xx from the issuer read or from Samsung is a provider error', async () => {
+    stubProviders();
+    const redirect = (match: RegExp) => {
+      const inner = globalThis.fetch;
+      vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) =>
+        match.test(String(input))
+          ? Promise.resolve(
+              new Response(null, { status: 307, headers: { location: 'https://evil.test/' } }),
+            )
+          : inner(input, init),
+      );
+    };
+    redirect(/\/issuer\//);
+    const google = await platformCred('google', 'test');
+    expect(await check(google.id)).toMatchObject({ ok: 0, code: 'provider_error' });
+    redirect(/card\/template/);
+    const samsung = await platformCred('samsung', 'test', longSamsung());
+    expect(await check(samsung.id)).toMatchObject({ ok: 0, code: 'provider_error' });
+  });
 });
 
 describe('samsung check', () => {
@@ -415,16 +435,33 @@ describe('check rate limit', () => {
 });
 
 describe('daily cron', () => {
+  const batcher = (sent: Job[]) =>
+    ({
+      ...jobCtx(),
+      env: {
+        ...k.env,
+        JOBS: {
+          sendBatch: async (m: { body: Job }[]) => void sent.push(...m.map((x) => x.body)),
+          send: async (j: Job) => void sent.push(j),
+        },
+      },
+    }) as unknown as ReturnType<typeof jobCtx>;
+  const versionOf = async (id: string) =>
+    (
+      await first<{ v: string }>(
+        env.DB,
+        'SELECT current_version_id AS v FROM wallet_credentials WHERE id = ?',
+        [id],
+      )
+    )?.v ?? '';
+
   it('queues one job per active credential and a rerun adds no check', async () => {
     stubProviders();
     const live = await platformCred('google', 'live', k.google('135791357'));
     const revoked = await platformCred('samsung', 'live', longSamsung());
     await revokePlatformCredential(k.ctx, revoked.admin.auth, revoked.id, { expectedRevision: 1 });
     const sent: Job[] = [];
-    const ctx = {
-      ...jobCtx(),
-      env: { ...k.env, JOBS: { send: async (j: Job) => void sent.push(j) } },
-    } as unknown as ReturnType<typeof jobCtx>;
+    const ctx = batcher(sent);
     await enqueueCredentialChecks(ctx);
     await enqueueCredentialChecks(ctx);
     const mine = sent.filter(
@@ -432,7 +469,9 @@ describe('daily cron', () => {
     );
     expect(mine).toHaveLength(2);
     expect(mine[0]).toEqual(mine[1]);
-    expect(mine[0]).toMatchObject({ checkId: dailyCheckId(live.id, ctx.clock.now()) });
+    expect(mine[0]).toMatchObject({
+      checkId: dailyCheckId(live.id, await versionOf(live.id), ctx.clock.now()),
+    });
     expect(
       sent.some((j) => j.kind === 'wallet.credential_check' && j.credentialId === revoked.id),
     ).toBe(false);
@@ -446,5 +485,65 @@ describe('daily cron', () => {
         )
       )?.n,
     ).toBe(1);
+  });
+
+  it('pages past one page and batches within the queue limit', async () => {
+    const org = await k.org();
+    const { auth } = await k.member(org.id);
+    await saveOrgCredential(k.ctx, auth, org.id, {
+      provider: 'google',
+      expectedRevision: 0,
+      credentials: k.google('808080808'),
+    });
+    const sizes: number[] = [];
+    const ctx = {
+      ...jobCtx(),
+      env: { ...k.env, JOBS: { sendBatch: async (m: unknown[]) => void sizes.push(m.length) } },
+    } as unknown as ReturnType<typeof jobCtx>;
+    await enqueueCredentialChecks(ctx);
+    expect(sizes.length).toBeGreaterThan(0);
+    expect(Math.max(...sizes)).toBeLessThanOrEqual(100);
+  });
+
+  it('a rotation queues the new version, and the next daily run adds another check', async () => {
+    stubProviders();
+    const org = await k.org();
+    const { auth } = await k.member(org.id);
+    const sent: unknown[] = [];
+    const ctx = {
+      ...k.ctx,
+      env: { ...k.env, JOBS: { send: async (j: unknown) => void sent.push(j) } },
+    } as unknown as typeof k.ctx;
+    const created = await saveOrgCredential(ctx, auth, org.id, {
+      provider: 'google',
+      expectedRevision: 0,
+      credentials: k.google('606060606'),
+    });
+    const v1 = await versionOf(created.id);
+    await saveOrgCredential(ctx, auth, org.id, {
+      provider: 'google',
+      expectedRevision: 1,
+      credentials: k.google('606060606'),
+    });
+    const v2 = await versionOf(created.id);
+    expect(v2).not.toBe(v1);
+    expect(sent.map((j) => (j as { checkId: string }).checkId)).toEqual([
+      dailyCheckId(created.id, v1, ctx.clock.now()),
+      dailyCheckId(created.id, v2, ctx.clock.now()),
+    ]);
+    // The old version's job finds the credential on v2: it records a check of v2, and the daily id differs.
+    const queued: Job[] = [];
+    await enqueueCredentialChecks(batcher(queued));
+    const daily = queued.find(
+      (j) => j.kind === 'wallet.credential_check' && j.credentialId === created.id,
+    );
+    for (const j of [...(sent as Job[]), daily as Job]) await runJob(j, jobCtx());
+    const checks = await all<{ version_id: string }>(
+      env.DB,
+      'SELECT version_id FROM wallet_credential_checks WHERE credential_id = ?',
+      [created.id],
+    );
+    expect(checks.map((c) => c.version_id).every((v) => v === v2)).toBe(true);
+    expect(checks).toHaveLength(2);
   });
 });
