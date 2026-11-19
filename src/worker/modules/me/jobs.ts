@@ -1,6 +1,7 @@
 import type { JobOf } from '../../jobs/types.ts';
 import { AppError, ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { lastRotationAt, noticeQueuedSince } from '../channels/repo-replace.ts';
 import { dispatchSafely, enqueuePassEmail } from '../delivery/issuance-intent.ts';
 import { hasPendingIssuanceTransfer } from '../delivery/repo-issuance-recovery.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
@@ -32,6 +33,11 @@ export async function handleHolderMail(
     pass.removedAt !== null
   )
     return;
+  // A notice is queued once per new code: a retry after a crash finds the audit row of the first.
+  if (job.reason === 'codes_replaced') {
+    const since = await lastRotationAt(ctx.env.DB, pass.orgId, pass.id);
+    if (since !== null && (await noticeQueuedSince(ctx.env.DB, pass.orgId, pass.id, since))) return;
+  }
   try {
     await enqueuePassEmail(ctx, {
       passId: pass.id,

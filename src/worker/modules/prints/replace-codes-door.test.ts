@@ -102,16 +102,13 @@ describe('after replace codes', () => {
 });
 
 describe('the notice when there is no email', () => {
-  it('shows on the hosted page for two weeks after a replace, for a pass with no holder email only', async () => {
+  it('shows on the hosted page for two weeks after a replace, with or without a holder email', async () => {
     const pass = await kit.scanPass(tpl);
     const ctx = jobCtxOf({ ctx: kit.ctx });
-    const target = { id: pass.id, orgId: pass.orgId, holderEmail: null };
+    const target = { id: pass.id, orgId: pass.orgId };
     expect(await codesReplacedNotice(ctx, target)).toBeUndefined();
     await rotateCode(ctx, pass.id, 'channel_apply:run-2');
     expect(await codesReplacedNotice(ctx, target)).toBe(CHANNEL_COPY.codesReplaced);
-    expect(
-      await codesReplacedNotice(ctx, { ...target, holderEmail: 'a@example.com' }),
-    ).toBeUndefined();
     kit.clock.advance(15 * 86_400_000);
     expect(await codesReplacedNotice(ctx, target)).toBeUndefined();
   });

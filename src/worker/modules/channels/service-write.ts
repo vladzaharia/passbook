@@ -30,6 +30,7 @@ import {
   refuseAllOff,
   refuseUnsupported,
   rotateCode,
+  rotationOwed,
 } from './replace.ts';
 import { passReplaceable } from './replaceable.ts';
 import { writePassChannels } from './repo-write.ts';
@@ -71,7 +72,21 @@ export async function putPassChannels(
     retired: new Set(Object.keys(rows.retired) as Channel[]),
     replaceCodes: body.replaceCodes,
   });
-  const rotates = actions.some((a) => a.kind === 'rotate_codes');
+  const rotation = actions.find((a) => a.kind === 'rotate_codes');
+  const rotates = rotation !== undefined;
+  // A channel retired before the pass's last new code was already covered by it: no second code.
+  const retiredNow = Object.fromEntries(
+    actions.flatMap((a) => (a.kind === 'retire' ? [[a.channel, now]] : [])),
+  );
+  const owed =
+    rotation?.kind === 'rotate_codes' &&
+    (await rotationOwed(
+      ctx.env.DB,
+      pass.orgId,
+      pass.id,
+      { ...rows.retired, ...retiredNow },
+      rotation.channels,
+    ));
   if (body.replaceCodes) {
     const touchesDigital = (Object.keys(body.channels) as Channel[]).some((c) =>
       DIGITAL_CHANNELS.includes(c),
@@ -79,7 +94,7 @@ export async function putPassChannels(
     if (touchesDigital && !anyDigitalOn(after)) refuseAllOff();
   }
   // Refused before anything is written: the pass would be off with its old code still working.
-  if (rotates) {
+  if (owed) {
     if (!(await passReplaceable(ctx, pass))) refuseUnsupported();
     assertNoOpenWindow(await openWindows(ctx, pass.orgId, pass.mode, pass.templateId, now, 1));
     await assertNewCodeAllowed(ctx, pass.id);
@@ -162,7 +177,7 @@ export async function putPassChannels(
       data,
     })),
   );
-  if (rotates) {
+  if (owed) {
     // A system actor id, not the user's: a replace keeps the pass's print (the 0115 trigger reads the prefix).
     // The user is on the channel audit rows above.
     const done = await rotateCode(
@@ -171,11 +186,11 @@ export async function putPassChannels(
       `channel_replace:${ctx.requestId ?? ctx.ids.id()}`,
       authority,
     );
-    if (done === 'rotated') {
-      await countNewCode(ctx, pass.id);
-      await noticeHolder(ctx, pass.id);
-    }
+    if (done === 'rotated') await countNewCode(ctx, pass.id);
   }
+  // Queued for any pass whose code was replaced since its channel went off: the mail job sends it once,
+  // so a retry after a crash between the rotation and this line still tells the holder.
+  if (rotates) await noticeHolder(ctx, pass.id);
   const stopped = actions.flatMap((a) =>
     a.kind === 'retire' && rows.copies.includes(a.channel) && DIGITAL_CHANNELS.includes(a.channel)
       ? [a.channel]

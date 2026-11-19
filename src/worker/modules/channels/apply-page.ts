@@ -30,6 +30,8 @@ export interface PageResult {
 
 const REST_AFTER_WORK = 60_000;
 const REST_IDLE = 1_000;
+/** Passes per page of a run that replaces codes. */
+export const REPLACE_PAGE_SIZE = 5;
 
 interface Plan {
   write: Omit<PassApply, 'pass' | 'revisions' | 'counts'> | null;
@@ -162,7 +164,9 @@ async function finishMarked(
 async function page(ctx: ServiceContext, run: ApplyRun, inherited: boolean): Promise<PageResult> {
   const db = ctx.env.DB;
   await journal(ctx, run);
-  const passes = await passPage(db, run);
+  // A window can open mid-page: a replace run takes few passes at a time, so it overshoots by few.
+  const size = rotating(run) ? REPLACE_PAGE_SIZE : PAGE_SIZE;
+  const passes = await passPage(db, run, size);
   if (passes.length === 0) return { done: true };
   const ids = passes.map((p) => p.id);
   const [loaded, marks, revisions, budget, owing] = await Promise.all([
@@ -249,8 +253,9 @@ async function page(ctx: ServiceContext, run: ApplyRun, inherited: boolean): Pro
 
   await journal(ctx, run);
   if (cursor) await writeCursor(ctx, run, cursor, counts);
-  if (!stopped && passes.length < PAGE_SIZE) return { done: true };
-  return { done: false, wait: wait ?? (spent ? REST_AFTER_WORK : REST_IDLE) };
+  if (!stopped && passes.length < size) return { done: true };
+  const rest = spent && size === PAGE_SIZE ? REST_AFTER_WORK : REST_IDLE;
+  return { done: false, wait: wait ?? rest };
 }
 
 /** One page of the run, at most 100 passes. A refusal of the org ends the run as inactive. */

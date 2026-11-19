@@ -1,9 +1,10 @@
 import { anyDigitalOn, DIGITAL_CHANNELS, effectiveChannels } from '../../../shared/channels.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { assertNewCodeAllowed, countNewCode } from '../passes/new-code.ts';
 import { publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { noticeHolder, rotateCode } from './replace.ts';
+import { noticeHolder, rotateCode, rotationOwed } from './replace.ts';
 import { loadPass } from './service.ts';
 import { blockingWindow, openWindows } from './windows.ts';
 
@@ -60,8 +61,20 @@ export async function handleReplaceCode(
     await ctx.env.JOBS.send(job, { delaySeconds: Math.min(Math.max(wait, 60), MAX_DELAY_S) });
     return;
   }
-  const result = await rotateCode(ctx, pass.id, job.key);
-  if (result === 'rotated') await noticeHolder(ctx, pass.id);
+  const digitalOff = DIGITAL_CHANNELS.filter((c) => !effective[c].on && rows.copies.includes(c));
+  const result = (await rotationOwed(ctx.env.DB, pass.orgId, pass.id, rows.retired, digitalOff))
+    ? await rotateOnce(ctx, pass.id, job.key)
+    : 'already';
+  // 'already' covers a crash after the rotation committed: the mail job sends the notice once.
+  if (result === 'rotated' || result === 'already') await noticeHolder(ctx, pass.id);
   else if (result === 'unsupported')
     ctx.log.info('channels.replace.unsupported', { passId: pass.id, orgId: pass.orgId });
+}
+
+/** A bulk rotation counts against the pass's New code limit (the job retries when it is spent). */
+async function rotateOnce(ctx: ServiceContext, passId: string, key: string) {
+  await assertNewCodeAllowed(ctx, passId);
+  const result = await rotateCode(ctx, passId, key);
+  if (result === 'rotated') await countNewCode(ctx, passId);
+  return result;
 }

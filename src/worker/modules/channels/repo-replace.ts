@@ -152,3 +152,34 @@ export async function mayPublish(db: D1Database, orgId: string, userId: string):
   );
   return r !== null;
 }
+
+/** When the pass last got a new code, or null. */
+export async function lastRotationAt(
+  db: D1Database,
+  orgId: string,
+  passId: string,
+): Promise<number | null> {
+  const r = await first<{ at: number | null }>(
+    db,
+    'SELECT MAX(rotated_at) AS at FROM scan_code_rotations WHERE org_id = ? AND pass_id = ?',
+    [orgId, passId],
+  );
+  return r?.at ?? null;
+}
+
+/** Whether the "code changed" mail was already queued for the pass at or after `since`. */
+export async function noticeQueuedSince(
+  db: D1Database,
+  orgId: string,
+  passId: string,
+  since: number,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 AS hit FROM audit_log WHERE org_id = ? AND target_type = 'pass' AND target_id = ?
+         AND action = 'holder.codes_replaced_mail' AND at >= ? LIMIT 1`,
+      [orgId, passId, since],
+    )) !== null
+  );
+}

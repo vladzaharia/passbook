@@ -3,6 +3,7 @@ import { makeScanEvent } from '../../../../test/helpers/index.ts';
 import { runJob } from '../../jobs/registry.ts';
 import { all } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { applyChannelPage } from './apply-page.ts';
 import { gateOne, startOne } from './apply-run.ts';
 import { type ApplyKit, applyKit } from './apply-test-fixtures.ts';
 import { insertCopy } from './repo.ts';
@@ -237,5 +238,137 @@ describe('replace codes: bulk job', () => {
     const again = await codes(t);
     await runJob(job as never, jobCtxOf(t.kit));
     expect(await codes(t)).toEqual(again);
+  });
+});
+
+describe('replace codes: notice survives a crash, no second code, limiter', () => {
+  const bulkJob = async (t: ApplyKit, passId: string) => {
+    const res = await t.kit.send('POST', '/passes/bulk/channels', {
+      orgId: t.orgId,
+      ids: [passId],
+      action: 'off',
+      channels: ['apple'],
+      replaceCodes: true,
+    });
+    expect(res.status).toBe(200);
+    return (t.kit.queue.sent as { kind: string }[])
+      .filter((m) => m.kind === 'channel.replace_code')
+      .at(-1) as never;
+  };
+  const outbox = (t: ApplyKit, passId: string) =>
+    all(t.db, "SELECT id FROM outbox WHERE pass_id = ? AND kind = 'email'", [passId]);
+
+  it('tells the holder exactly once even when the first notice was lost', async () => {
+    const t = await replaceKit([['apple']], true);
+    const passId = t.ids[0] as string;
+    const job = await bulkJob(t, passId);
+    const ctx = jobCtxOf(t.kit);
+    await runJob(job, ctx);
+    const lost = mails(t, 'codes_replaced');
+    expect(lost).toHaveLength(1);
+    // The crash: the notice was never delivered. The retry finds the rotation done and queues it again.
+    await runJob(job, ctx);
+    const queued = mails(t, 'codes_replaced');
+    expect(queued).toHaveLength(2);
+    await runJob(queued[1] as never, ctx);
+    await runJob(queued[0] as never, ctx);
+    expect(await outbox(t, passId)).toHaveLength(1);
+  });
+
+  it('does not rotate again for a channel retired before the last new code, in bulk or on the pass', async () => {
+    const t = await replaceKit([['apple']]);
+    const passId = t.ids[0] as string;
+    const job = await bulkJob(t, passId);
+    await runJob(job, jobCtxOf(t.kit));
+    const once = await codes(t);
+    const other = { ...(job as object), key: 'channel_bulk:other' } as never;
+    await runJob(other, jobCtxOf(t.kit));
+    expect(await codes(t)).toEqual(once);
+    t.kit.clock.advance(1000);
+    const res = await t.kit.send('PUT', `/passes/${passId}/channels`, {
+      channels: { apple: 'off' },
+      replaceCodes: true,
+    });
+    expect(res.status).toBe(200);
+    expect(await codes(t)).toEqual(once);
+    expect(
+      await t.count('SELECT COUNT(*) AS n FROM scan_code_rotations WHERE pass_id = ?', passId),
+    ).toBe(1);
+  });
+
+  it('counts a bulk rotation against the New code limit, and waits when it is spent', async () => {
+    const t = await replaceKit([['apple']]);
+    const passId = t.ids[0] as string;
+    const job = await bulkJob(t, passId);
+    const now = t.kit.clock.now();
+    const win = now - (now % 3_600_000);
+    const key = `passes:newcode:${passId}`;
+    const { read, bump } = await import('../../platform/counters.ts');
+    await bump(t.db, key, win, 3);
+    await expect(runJob(job, jobCtxOf(t.kit))).rejects.toMatchObject({ status: 429 });
+    t.kit.clock.advance(3_600_000);
+    await runJob(job, jobCtxOf(t.kit));
+    const next = t.kit.clock.now() - (t.kit.clock.now() % 3_600_000);
+    expect(await read(t.db, key, next)).toBe(1);
+  });
+});
+
+describe('replace codes: tenants, modes and page size', () => {
+  it("another org's and the other mode's events and sessions never block", async () => {
+    const t = await replaceKit([['apple']]);
+    const other = await t.otherOrg();
+    await makeScanEvent(t.kit.fx, { orgId: other.orgId, templateIds: [t.templateId] });
+    await makeScanEvent(t.kit.fx, { orgId: t.orgId, mode: 'test', templateIds: [t.templateId] });
+    const hold = JSON.stringify({ state: 'open', until: t.kit.clock.now() + 3_600_000 });
+    for (const [org, mode] of [
+      [other.orgId, 'live'],
+      [t.orgId, 'test'],
+    ] as [string, string][])
+      await t.exec(
+        `INSERT INTO scanning_sessions (id, org_id, mode, name, accepts, settings, time_zone, created_at, updated_at, hours, hold)
+         VALUES (?, ?, ?, 'S', NULL, '{}', 'UTC', 1, 1, NULL, ?)`,
+        `s-${org}-${mode}`,
+        org,
+        mode,
+        hold,
+      );
+    const res = await t.kit.send('PUT', `/templates/${t.templateId}/channels`, {
+      orgId: t.orgId,
+      revision: 0,
+      channels: { apple: 'off' },
+      replaceCodes: true,
+    });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { windows: unknown[] }).windows).toEqual([]);
+  });
+
+  it('rotatedCount and rotatedSince do not cross tenants', async () => {
+    const t = await replaceKit([['apple']]);
+    const other = await t.otherOrg();
+    const { rotatedCount } = await import('./repo-replace.ts');
+    const { rotatedSince } = await import('./repo.ts');
+    expect(await rotatedCount(t.db, t.orgId, 'live', t.templateId, 'apple', 'off')).toBe(1);
+    expect(await rotatedCount(t.db, other.orgId, 'live', t.templateId, 'apple', 'off')).toBe(0);
+    expect(await rotatedCount(t.db, t.orgId, 'test', t.templateId, 'apple', 'off')).toBe(0);
+    await t.work(await replaceSave(t, { apple: 'off' })).done;
+    expect(await rotatedSince(t.db, t.orgId, t.ids[0] as string, 0)).toBe(true);
+    expect(await rotatedSince(t.db, other.orgId, t.ids[0] as string, 0)).toBe(false);
+  });
+
+  it('a run that replaces codes takes five passes a page; one without takes a full page', async () => {
+    const t = await replaceKit(Array.from({ length: 7 }, () => ['apple' as const]));
+    const id = await replaceSave(t, { apple: 'off' });
+    t.kit.clock.advance(11 * MINUTE);
+    const ctx = jobCtxOf(t.kit);
+    expect(await startOne(ctx, id)).toBe('started');
+    const page = await applyChannelPage(ctx, id);
+    expect(page.done).toBe(false);
+    expect(await t.runOf(id)).toMatchObject({ counts: expect.stringContaining('"rotated":5') });
+    expect((await applyChannelPage(ctx, id)).done).toBe(true);
+    expect(await t.runOf(id)).toMatchObject({ counts: expect.stringContaining('"rotated":7') });
+    const plain = await replaceKit(Array.from({ length: 7 }, () => ['apple' as const]));
+    const w = plain.work((await plain.saved({ apple: 'off' })).workflowInstanceId as string);
+    await w.done;
+    expect(w.s.names.filter((n) => n.startsWith('page-'))).toHaveLength(1);
   });
 });

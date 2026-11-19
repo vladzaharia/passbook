@@ -174,14 +174,13 @@ export async function templateChannels(
 const NOTICE_DAYS = 14;
 
 /**
- * The line the hosted pass page shows when the code changed: a pass with no holder email has no other way to
- * hear it, and its holder opens the page to see the new code. Shown for two weeks after a New code.
+ * The line the hosted pass page shows when the code changed, whether or not an email went out (it may
+ * be capped or skipped), and its holder opens the page to see the new code. Shown for two weeks.
  */
 export async function codesReplacedNotice(
   ctx: ServiceContext,
-  pass: { id: string; orgId: string; holderEmail: string | null },
+  pass: { id: string; orgId: string },
 ): Promise<string | undefined> {
-  if (pass.holderEmail) return undefined;
   const rotated = await repo.rotatedSince(
     ctx.env.DB,
     pass.orgId,

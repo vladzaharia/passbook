@@ -93,6 +93,7 @@ describe('replace codes: one pass', () => {
       );
       expect((await putPass(t, { channels: { apple: null } })).status).toBe(200);
     }
+    t.kit.clock.advance(1000);
     const res = await putPass(t, { channels: { apple: 'off' }, replaceCodes: true });
     expect(res.status).toBe(429);
     expect(

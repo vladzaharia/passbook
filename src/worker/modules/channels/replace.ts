@@ -6,7 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { rotatedBy } from './repo-replace.ts';
+import { lastRotationAt, rotatedBy } from './repo-replace.ts';
 import { blockingWindow } from './windows.ts';
 
 /**
@@ -85,4 +85,16 @@ export async function noticeHolder(ctx: ServiceContext, passId: string): Promise
     userId: null,
     reason: 'codes_replaced',
   });
+}
+
+/** Whether a channel was retired after the pass's last new code, so copies still scan the old one. */
+export async function rotationOwed(
+  db: D1Database,
+  orgId: string,
+  passId: string,
+  retired: Partial<Record<Channel, number>>,
+  channels: readonly Channel[],
+): Promise<boolean> {
+  const last = await lastRotationAt(db, orgId, passId);
+  return last === null || channels.some((c) => (retired[c] ?? 0) > last);
 }
