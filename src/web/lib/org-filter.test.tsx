@@ -170,7 +170,7 @@ describe('organization scope', () => {
         },
       },
     });
-    await screen.findByRole('heading', { name: 'Platform accounts', level: 1 });
+    await screen.findByRole('heading', { name: 'Users', level: 1 });
     const scope = await screen.findByRole('combobox', { name: /^Organization (filter|scope)/ });
     await user.click(scope);
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));

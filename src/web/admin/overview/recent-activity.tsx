@@ -38,9 +38,9 @@ export function RecentActivity({ orgId }: { orgId: string | undefined }) {
 }
 
 /** A member's view: their organization's log, which needs `audit:read`. */
-export function OrgRecentActivity({ orgId, orgName }: { orgId: string; orgName: string }) {
+export function OrgRecentActivity({ orgId }: { orgId: string; orgName?: string }) {
   const log = useTenantAuditLog(orgId, { excludeAction: 'auth.' }, 6, 0);
-  return <RecentCard log={log} orgLabel={() => orgName} auditSearch={{}} note="All modes" />;
+  return <RecentCard log={log} orgLabel={() => ''} auditSearch={{}} note="All modes" />;
 }
 
 function RecentCard({
@@ -110,7 +110,7 @@ function RecentCard({
                     <RowLink
                       to={link.to}
                       search={link.search}
-                      className="after:absolute after:inset-0"
+                      className="whitespace-normal after:absolute after:inset-0"
                     >
                       {action.label}
                     </RowLink>

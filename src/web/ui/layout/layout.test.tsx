@@ -76,9 +76,7 @@ describe('route guards in the app', () => {
 
   it('keeps platform pages available to an admin with no memberships', async () => {
     await renderApp('/admin/users', { session: 'admin', memberships: [] });
-    expect(
-      await screen.findByRole('heading', { name: 'Platform accounts', level: 1 }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Users', level: 1 })).toBeInTheDocument();
     const nav = screen.getByRole('navigation', { name: 'Admin' });
     for (const name of [
       'Users',
@@ -607,9 +605,7 @@ describe('admin layout', () => {
     const sheet = await screen.findByRole('dialog', { name: 'Navigation' });
     await user.click(within(sheet).getByRole('link', { name: 'Users' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect(
-      await screen.findByRole('heading', { name: 'Platform accounts', level: 1 }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Users', level: 1 })).toBeInTheDocument();
   });
 
   it('opens the command palette with Ctrl+K and navigates', async () => {

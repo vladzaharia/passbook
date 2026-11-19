@@ -38,11 +38,9 @@ export function CertificateCard({ identity, now }: { identity: Identity; now: nu
             { label: 'Team ID', value: identity.teamIdentifier, mono: true },
             { label: 'Expires', value: <ExpiryPill identity={identity} now={now} /> },
             { label: 'Valid from', value: formatDateTime(identity.notBefore, '—') },
-            {
-              label: 'APNs binding',
-              value: identity.apnsBinding ?? (identity.source === 'env' ? 'APNS' : null),
-              mono: true,
-            },
+            ...(identity.apnsBinding
+              ? [{ label: 'APNs binding', value: identity.apnsBinding, mono: true }]
+              : []),
           ]}
         />
         <TechnicalDetails
@@ -142,7 +140,7 @@ export function SettingsCard({ identity }: { identity: Identity }) {
           <div className="flex flex-col gap-4 border-t border-border pt-4">
             <SwitchRow
               label="NFC"
-              help="The pass type ID has Apple's NFC entitlement."
+              help="Allow NFC passes. Needs Apple's NFC entitlement on the pass type ID."
               checked={draft.nfc}
               onCheckedChange={(c) => edit({ nfc: c })}
             />

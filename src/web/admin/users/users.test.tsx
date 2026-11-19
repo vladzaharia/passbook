@@ -104,7 +104,7 @@ describe('users list', () => {
       handlers: { '/api/v1/users': () => json({ items: [user()], nextCursor: null }) },
     });
     const ui = userEvent.setup();
-    expect(await screen.findByRole('heading', { name: 'Platform accounts' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Users' })).toBeInTheDocument();
     expect(screen.getByText(/Roles are from the last sign-in/)).toBeInTheDocument();
     // The columns render once the list has loaded.
     expect(await screen.findByRole('columnheader', { name: 'Roles' })).toBeInTheDocument();

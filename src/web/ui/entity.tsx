@@ -81,9 +81,11 @@ export function EntityAvatar({ kind, id, name, accent, size = 24, className }: E
       )}
     >
       <span
-        data-initials={initialsOf(name).slice(0, size === 24 ? 1 : 2)}
+        data-initials={initialsOf(name).slice(0, 1)}
         style={
-          (own ? { background: own, color: onColor(own) } : undefined) as CSSProperties | undefined
+          (own
+            ? { background: own, color: onColor(own) }
+            : { background: `oklch(0.42 0.08 ${hueOf(id)})` }) as CSSProperties
         }
         className="inline-flex size-full select-none items-center justify-center rounded-[5px] bg-(--wl-org-fallback) font-semibold text-white after:content-[attr(data-initials)]"
       />

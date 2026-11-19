@@ -128,7 +128,7 @@ export function UsersPage({
   return (
     <>
       <PageHeader
-        title="Platform accounts"
+        title="Users"
         description="Roles are from the last sign-in."
         meta={
           <>
