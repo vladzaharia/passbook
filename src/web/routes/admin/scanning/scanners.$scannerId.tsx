@@ -1,20 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { lazy, Suspense } from 'react';
-
-const ScannerPage = lazy(() =>
-  import('../../../admin/scanning/scanners/scanner-page.tsx').then((m) => ({
-    default: m.ScannerPage,
-  })),
-);
-
-function ScannerRoute() {
-  return (
-    <Suspense fallback={<p role="status">Loading scanning…</p>}>
-      <ScannerPage scannerId={Route.useParams().scannerId} />
-    </Suspense>
-  );
-}
+import { legacySearch, redirectLegacy } from '../../../lib/legacy-admin.ts';
 
 export const Route = createFileRoute('/admin/scanning/scanners/$scannerId')({
-  component: ScannerRoute,
+  validateSearch: legacySearch,
+  beforeLoad: redirectLegacy,
 });

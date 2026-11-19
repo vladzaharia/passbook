@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { BlueprintsPage } from '../../../admin/blueprints/blueprints-page.tsx';
+import { legacySearch, redirectLegacy } from '../../../lib/legacy-admin.ts';
 
 export const Route = createFileRoute('/admin/blueprints/')({
-  component: BlueprintsPage,
+  validateSearch: legacySearch,
+  beforeLoad: redirectLegacy,
 });

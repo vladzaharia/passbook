@@ -1,11 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { EndpointDetailPage } from '../../../admin/connections/webhooks/detail-page.tsx';
-
-function EndpointRoute() {
-  const { endpointId } = Route.useParams();
-  return <EndpointDetailPage endpointId={endpointId} />;
-}
+import { legacySearch, redirectLegacy } from '../../../lib/legacy-admin.ts';
 
 export const Route = createFileRoute('/admin/connections/webhooks/$endpointId')({
-  component: EndpointRoute,
+  validateSearch: legacySearch,
+  beforeLoad: redirectLegacy,
 });

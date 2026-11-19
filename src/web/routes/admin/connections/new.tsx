@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { CreateConnectionWizard } from '../../../admin/connections/create-wizard.tsx';
+import { legacySearch, redirectLegacy } from '../../../lib/legacy-admin.ts';
 
 export const Route = createFileRoute('/admin/connections/new')({
-  component: CreateConnectionWizard,
+  validateSearch: legacySearch,
+  beforeLoad: redirectLegacy,
 });

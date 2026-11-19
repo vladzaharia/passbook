@@ -5,7 +5,7 @@ import { connectionDetail, passSummary } from '../admin/passes/test-fixtures.ts'
 import { membershipsQuery, sessionQuery } from './session.ts';
 import { json, membershipFixture, renderApp, sessionFixture } from './test-utils.tsx';
 
-const KEY = 'wallet-org-filter';
+const KEY = 'passbook-admin-scope';
 const deferred = Promise as PromiseConstructor & {
   withResolvers<T>(): { promise: Promise<T>; resolve: (value: T) => void };
 };
@@ -46,20 +46,21 @@ beforeEach(() => vi.stubGlobal('localStorage', memoryStorage()));
 afterEach(() => vi.unstubAllGlobals());
 
 describe('organization scope', () => {
-  it('prefers an authorized URL to another remembered membership', async () => {
-    vi.stubGlobal('localStorage', memoryStorage({ [KEY]: 'o2' }));
+  it('prefers an organization named by the link to another remembered one', async () => {
+    vi.stubGlobal('localStorage', memoryStorage({ [KEY]: 'org:o2' }));
     const seen: string[] = [];
-    await renderApp('/admin/passes?orgId=o1', {
+    const { router } = await renderApp('/admin/passes?orgId=o1', {
       session: 'user',
       memberships,
       handlers: handlers(seen),
     });
-    const scope = await screen.findByRole('combobox', { name: /^Organization (filter|scope)/ });
+    const scope = await screen.findByRole('combobox', { name: /^Scope:/ });
     await waitFor(() => expect(scope).toHaveTextContent('Northwind Climbing'));
+    expect(router.state.location.pathname).toBe('/admin/o/o1/passes');
     await waitFor(() => expect(seen).toContain('o1'));
     expect(seen).not.toContain('o2');
     expect(seen).not.toContain('all');
-    await waitFor(() => expect(localStorage.getItem(KEY)).toBe('o1'));
+    await waitFor(() => expect(localStorage.getItem(KEY)).toBe('org:o1'));
   });
 
   it.each(['123', 'true', 'null'])(
@@ -77,41 +78,40 @@ describe('organization scope', () => {
     },
   );
 
-  it('restores a validated stored membership without losing other URL filters', async () => {
-    vi.stubGlobal('localStorage', memoryStorage({ [KEY]: 'o2' }));
+  it('restores the remembered organization without losing other URL filters', async () => {
+    vi.stubGlobal('localStorage', memoryStorage({ wallet_legacy: 'x', 'wallet-org-filter': 'o2' }));
     const seen: string[] = [];
     const { router } = await renderApp('/admin/passes?status=active', {
       session: 'user',
       memberships,
       handlers: handlers(seen),
     });
-    await waitFor(() =>
-      expect(router.state.location.search).toEqual({ status: 'active', orgId: 'o2' }),
-    );
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o2/passes'));
+    expect(router.state.location.search).toEqual({ status: 'active' });
     await waitFor(() => expect(seen).toContain('o2'));
     expect(seen.every((id) => id === 'o2')).toBe(true);
+    // The old key moves to the new one.
+    await waitFor(() => expect(localStorage.getItem(KEY)).toBe('org:o2'));
+    expect(localStorage.getItem('wallet-org-filter')).toBeNull();
   });
 
-  it('requires a choice even with one membership and offers only active memberships', async () => {
+  it('asks which organization when several could open the link, then opens that section', async () => {
     const user = userEvent.setup();
     const seen: string[] = [];
     const { router } = await renderApp('/admin/passes', {
       session: 'user',
-      memberships: [northwind, membershipFixture('revoked', { revokedAt: 1 })],
+      memberships: [...memberships, membershipFixture('revoked', { revokedAt: 1 })],
       handlers: handlers(seen),
     });
     expect(
       await screen.findByRole('heading', { name: 'Choose an organization', level: 1 }),
     ).toBeInTheDocument();
     expect(seen).toEqual([]);
-    expect(localStorage.getItem(KEY)).toBeNull();
-    expect(router.state.location.search).toEqual({});
-    await user.click(screen.getByRole('combobox', { name: /^Organization (filter|scope)/ }));
-    expect(screen.queryByRole('option', { name: 'revoked' })).toBeNull();
-    expect(screen.queryByRole('option', { name: 'Directory only' })).toBeNull();
-    await user.click(await screen.findByRole('option', { name: 'Northwind Climbing' }));
-    await waitFor(() => expect(router.state.location.search).toEqual({ orgId: 'o1' }));
-    await waitFor(() => expect(seen).toContain('o1'));
+    expect(screen.queryByRole('link', { name: 'revoked' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Directory only' })).toBeNull();
+    await user.click(screen.getByRole('link', { name: 'Harbor' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o2/passes'));
+    await waitFor(() => expect(seen).toContain('o2'));
     expect(seen).not.toContain('all');
   });
 
@@ -137,8 +137,8 @@ describe('organization scope', () => {
     expect(screen.queryByRole('heading', { name: 'Passes', level: 1 })).toBeNull();
   });
 
-  it.each(['foreign', '', 'x'.repeat(101)])(
-    'discards invalid stored selection %s',
+  it.each(['foreign', '', 'x'.repeat(101), 'org:foreign'])(
+    'ignores invalid stored selection %s and opens the only organization',
     async (stored) => {
       vi.stubGlobal('localStorage', memoryStorage({ [KEY]: stored }));
       const seen: string[] = [];
@@ -147,16 +147,14 @@ describe('organization scope', () => {
         memberships: [northwind],
         handlers: handlers(seen),
       });
-      expect(
-        await screen.findByRole('heading', { name: 'Choose an organization', level: 1 }),
-      ).toBeInTheDocument();
-      await waitFor(() => expect(localStorage.getItem(KEY)).toBeNull());
-      expect(router.state.location.search).not.toHaveProperty('orgId');
-      expect(seen).toEqual([]);
+      await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o1/passes'));
+      await waitFor(() => expect(localStorage.getItem(KEY)).toBe('org:o1'));
+      await waitFor(() => expect(seen).toContain('o1'));
+      expect(seen.every((id) => id === 'o1')).toBe(true);
     },
   );
 
-  it('keeps platform pages independent from the selected workspace', async () => {
+  it('keeps platform pages out of organizations and switches to the organization overview', async () => {
     const user = userEvent.setup();
     const userScopes: (string | null)[] = [];
     const { router } = await renderApp('/admin/users', {
@@ -168,21 +166,26 @@ describe('organization scope', () => {
           userScopes.push(url.searchParams.get('orgId'));
           return json({ items: [], nextCursor: null });
         },
+        '/api/v1/metrics/overview': () => json({}),
       },
     });
     await screen.findByRole('heading', { name: 'Platform accounts', level: 1 });
-    const scope = await screen.findByRole('combobox', { name: /^Organization (filter|scope)/ });
-    await user.click(scope);
+    expect(router.state.location.pathname).toBe('/admin/platform/users');
+    await waitFor(() => expect(localStorage.getItem(KEY)).toBe('platform'));
+    const nav = screen.getByRole('navigation', { name: 'Admin' });
+    expect(within(nav).queryByRole('link', { name: 'Passes' })).toBeNull();
+    await user.click(await screen.findByRole('combobox', { name: 'Scope: Platform' }));
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
-    await waitFor(() => expect(scope).toHaveTextContent('Harbor'));
-    expect(localStorage.getItem(KEY)).toBe('o2');
+    // Users has no organization counterpart yet: the switch opens the overview.
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o2'));
+    await waitFor(() => expect(localStorage.getItem(KEY)).toBe('org:o2'));
     expect(router.state.location.search).not.toHaveProperty('orgId');
     expect(userScopes.every((value) => value === null)).toBe(true);
-    const nav = screen.getByRole('navigation', { name: 'Admin' });
-    expect(within(nav).getByRole('link', { name: 'Passes' })).toHaveAttribute(
-      'href',
-      '/admin/passes?orgId=o2',
-    );
+    expect(
+      within(screen.getByRole('navigation', { name: 'Admin' })).getByRole('link', {
+        name: 'Passes',
+      }),
+    ).toHaveAttribute('href', '/admin/o/o2/passes');
   });
 
   it('does not expose a previous principal’s memberships after identity changes', async () => {
@@ -201,7 +204,7 @@ describe('organization scope', () => {
     await waitFor(() =>
       expect(screen.queryByRole('heading', { name: 'Passes', level: 1 })).toBeNull(),
     );
-    expect(screen.queryByRole('combobox', { name: /^Organization (filter|scope)/ })).toBeNull();
+    expect(screen.queryByRole('combobox', { name: /Northwind/ })).toBeNull();
   });
 
   it('keeps an open picker mounted when grants go stale after 60 seconds', async () => {
@@ -222,7 +225,7 @@ describe('organization scope', () => {
         },
       });
       const heading = await screen.findByRole('heading', { name: 'Passes', level: 1 });
-      await user.click(await screen.findByRole('combobox', { name: /^Organization filter/ }));
+      await user.click(await screen.findByRole('combobox', { name: /^Scope:/ }));
       const option = await screen.findByRole('option', { name: 'Harbor' });
       await act(async () => {
         await vi.advanceTimersByTimeAsync(61_000);
@@ -312,7 +315,7 @@ describe('palette query isolation', () => {
       changed = true;
       if (change === 'organization') {
         await act(async () => {
-          await router.navigate({ to: '/admin/passes', search: { orgId: 'o2' } });
+          await router.navigate({ to: '/admin/o/$orgId/passes', params: { orgId: 'o2' } });
         });
         await waitFor(() => expect(requestedNext).toBe(true));
         expect(screen.queryByRole('option', { name: /Secret First/ })).toBeNull();
@@ -338,8 +341,8 @@ describe('palette query isolation', () => {
   );
 });
 
-it('fresh-validates a by-ID resource owner before adopting its organization', async () => {
-  vi.stubGlobal('localStorage', memoryStorage({ [KEY]: 'o2' }));
+it('fresh-validates a by-ID resource owner before moving to its organization', async () => {
+  vi.stubGlobal('localStorage', memoryStorage({ [KEY]: 'org:o2' }));
   const reply = deferred.withResolvers<Response>();
   let calls = 0;
   const { router } = await renderApp('/admin/connections/c1', {
@@ -356,81 +359,70 @@ it('fresh-validates a by-ID resource owner before adopting its organization', as
     },
   });
   await waitFor(() => expect(calls).toBeGreaterThanOrEqual(2));
-  expect(router.state.location.search).not.toHaveProperty('orgId');
+  expect(router.state.location.pathname).toBe('/admin/o/o2/connections/c1');
   expect(screen.queryByText('Private connection')).toBeNull();
   await act(async () => {
     reply.resolve(json({ items: [harbor] }));
   });
   expect(await screen.findByText('Connection not found')).toBeInTheDocument();
-  expect(router.state.location.search).not.toHaveProperty('orgId');
-  expect(localStorage.getItem(KEY)).not.toBe('o1');
+  expect(router.state.location.pathname).toBe('/admin/o/o2/connections/c1');
 });
 
-describe('organization workspace deep links', () => {
-  it.each(['authorized', 'revoked'] as const)(
-    'fresh-validates membership before canonicalization when it is %s',
-    async (outcome) => {
-      vi.stubGlobal('localStorage', memoryStorage({ [KEY]: 'o2' }));
-      const reply = deferred.withResolvers<Response>();
-      let calls = 0;
-      const workspaceRequests: string[] = [];
-      const { router } = await renderApp('/admin/orgs/o1?view=workspace', {
-        session: 'admin',
-        memberships,
-        handlers: {
-          ...handlers(),
-          '/api/v1/orgs/memberships/me': () => {
-            calls += 1;
-            if (calls === 2) return reply.promise;
-            return json({ items: memberships });
-          },
-          '/api/v1/orgs/o1/workspace': () => {
-            workspaceRequests.push('o1');
-            return json(org('o1', 'Northwind Climbing'));
-          },
-          '/api/v1/orgs/o1/memberships': () => json({ items: [] }),
-          '/api/v1/orgs/o1/invitations': () => json({ items: [] }),
-        },
-      });
-      await waitFor(() => expect(calls).toBeGreaterThanOrEqual(2));
-      expect(router.state.location.search).not.toHaveProperty('orgId');
-      expect(workspaceRequests).toEqual([]);
-      await act(async () => {
-        reply.resolve(json({ items: outcome === 'authorized' ? memberships : [harbor] }));
-      });
-      if (outcome === 'authorized') {
-        expect(
-          await screen.findByRole('heading', { name: 'Northwind Climbing', level: 1 }),
-        ).toBeInTheDocument();
-        await waitFor(() =>
-          expect(router.state.location.search).toMatchObject({ view: 'workspace', orgId: 'o1' }),
-        );
-        expect(localStorage.getItem(KEY)).toBe('o1');
-      } else {
-        expect(
-          await screen.findByRole('heading', { name: 'Organization not found', level: 1 }),
-        ).toBeInTheDocument();
-        expect(router.state.location.search).not.toHaveProperty('orgId');
-        expect(workspaceRequests).toEqual([]);
-      }
+it('moves a by-ID resource to its owner when the principal may open it there', async () => {
+  vi.stubGlobal('localStorage', memoryStorage({ [KEY]: 'org:o2' }));
+  const { router } = await renderApp('/admin/connections/c1?tab=mapping', {
+    session: 'user',
+    memberships,
+    handlers: {
+      ...handlers(),
+      '/api/v1/connections/c1': () =>
+        json(connectionDetail({ orgId: 'o1', name: 'Private connection' })),
     },
-  );
+  });
+  await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o1/connections/c1'));
+  expect(router.state.location.search).toMatchObject({ tab: 'mapping' });
+  expect(
+    await screen.findByRole('heading', { name: 'Private connection', level: 1 }),
+  ).toBeInTheDocument();
+});
 
-  it('masks a conflicting explicit workspace even for a platform admin', async () => {
-    vi.stubGlobal('localStorage', memoryStorage({ [KEY]: 'o1' }));
-    const { fetchMock } = await renderApp('/admin/orgs/o1?view=workspace&orgId=o2', {
+describe('organization settings links', () => {
+  it('opens the old workspace link as the organization settings', async () => {
+    const { router } = await renderApp('/admin/orgs/o1?view=workspace', {
       session: 'admin',
       memberships,
       handlers: {
         ...handlers(),
         '/api/v1/orgs/o1/workspace': () => json(org('o1', 'Northwind Climbing')),
+        '/api/v1/orgs/o1/memberships': () => json({ items: [] }),
+        '/api/v1/orgs/o1/invitations': () => json({ items: [] }),
       },
     });
     expect(
-      await screen.findByRole('heading', { name: 'Organization not found', level: 1 }),
+      await screen.findByRole('heading', { name: 'Northwind Climbing', level: 1 }),
     ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/o/o1/settings');
+    expect(router.state.location.search).not.toHaveProperty('orgId');
+  });
+
+  it('refuses an organization the principal is not a member of, even a platform admin', async () => {
+    const { fetchMock } = await renderApp('/admin/o/o3/settings', {
+      session: 'admin',
+      memberships,
+      handlers: {
+        ...handlers(),
+        '/api/v1/orgs/o3/workspace': () => json(org('o3', 'Elsewhere')),
+      },
+    });
     expect(
-      fetchMock.mock.calls.some(([url]) => String(url).includes('/api/v1/orgs/o1/workspace')),
+      await screen.findByText('You are not a member of this organization.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Go to Northwind Climbing' })).toHaveAttribute(
+      'href',
+      '/admin/o/o1',
+    );
+    expect(
+      fetchMock.mock.calls.some(([url]) => String(url).includes('/api/v1/orgs/o3/workspace')),
     ).toBe(false);
   });
 });

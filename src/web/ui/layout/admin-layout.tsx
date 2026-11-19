@@ -2,10 +2,10 @@ import { Outlet } from '@tanstack/react-router';
 import { Menu, Search } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { COARSE_ONLY, useMediaQuery } from '../../lib/media.ts';
-import { adminEntryPath } from '../../lib/nav.ts';
-import { useOrgScope, useOrgScopeUrl } from '../../lib/org-filter.tsx';
+import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
 import { PaletteContext } from '../../lib/palette.ts';
-import { useSession } from '../../lib/session.ts';
+import { scopePath } from '../../lib/scope.ts';
+import { ScopeCrumbContext } from '../../lib/scope-context.ts';
 import { Button } from '../button.tsx';
 import { IconButton } from '../icon-button.tsx';
 import { Sheet, SheetContent } from '../sheet.tsx';
@@ -24,13 +24,16 @@ export function shortcutHint(ua = typeof navigator === 'undefined' ? '' : naviga
 }
 
 export function AdminLayout({ children }: { children?: ReactNode }) {
-  useOrgScopeUrl();
-  const { isAdmin } = useSession();
-  const scope = useOrgScope();
-  const ready = !scope.isLoading && !scope.isError;
-  const membership = ready ? scope.membership : undefined;
-  const home = adminEntryPath(isAdmin, membership, ready ? scope.memberships : []);
-  const role = isAdmin ? 'Global administrator' : 'Organization console';
+  const scope = useAdminScope();
+  // The wordmark opens the scope's overview; mode only exists inside an organization.
+  const home = scope ? scopePath(scope) : '/admin';
+  const org = scope?.kind === 'org';
+  const { membership } = useOrgScope();
+  const scopeName = scope?.kind === 'platform' ? 'Platform' : membership?.orgName;
+  const crumb = useMemo(
+    () => (scopeName ? { label: scopeName, to: home } : undefined),
+    [scopeName, home],
+  );
   const [navOpen, setNavOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const touchOnly = useMediaQuery(COARSE_ONLY);
@@ -40,7 +43,9 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
     <aside className="sticky top-0 flex h-dvh flex-col pl-[env(safe-area-inset-left)]">
       <div className="shrink-0 px-4 pb-3 pt-4">
         <Wordmark to={home} />
-        <p className="mt-3 text-xs font-medium text-fg-muted">{role}</p>
+        <div className="mt-3">
+          <ScopeSwitcher />
+        </div>
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
         <SidebarNav />
@@ -72,23 +77,36 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
         )}
       </Button>
       <span className="mr-auto sm:hidden" />
-      <ModeSwitch />
-      <ScopeSwitcher />
+      {org ? <ModeSwitch /> : null}
       <UserMenu />
     </>
   );
   return (
     <PaletteContext.Provider value={palette}>
-      <AppShell bar={bar} sidebar={sidebar} band={<ModeBand />} width="console" holder={false}>
-        {children ?? <Outlet />}
-      </AppShell>
-      <Sheet open={navOpen} onOpenChange={setNavOpen}>
-        <SheetContent side="left" title="Navigation" header={<Wordmark to={home} hello={false} />}>
-          <p className="px-5 pb-2 text-xs font-medium text-fg-muted">{role}</p>
-          <SidebarNav onNavigate={() => setNavOpen(false)} />
-        </SheetContent>
-      </Sheet>
-      <AdminPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <ScopeCrumbContext.Provider value={crumb}>
+        <AppShell
+          bar={bar}
+          sidebar={sidebar}
+          band={org ? <ModeBand /> : null}
+          width="console"
+          holder={false}
+        >
+          {children ?? <Outlet />}
+        </AppShell>
+        <Sheet open={navOpen} onOpenChange={setNavOpen}>
+          <SheetContent
+            side="left"
+            title="Navigation"
+            header={<Wordmark to={home} hello={false} />}
+          >
+            <div className="px-5 pb-2">
+              <ScopeSwitcher onNavigate={() => setNavOpen(false)} />
+            </div>
+            <SidebarNav onNavigate={() => setNavOpen(false)} />
+          </SheetContent>
+        </Sheet>
+        <AdminPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      </ScopeCrumbContext.Provider>
     </PaletteContext.Provider>
   );
 }

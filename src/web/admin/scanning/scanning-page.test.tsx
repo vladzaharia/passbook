@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
-import { ADMIN_NAV, ADMIN_NAV_GROUPS, isOrgScoped } from '@/web/lib/nav.ts';
+import { ORG_NAV, PLATFORM_NAV } from '@/web/lib/nav.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 import { ScanLink } from './scan-link.tsx';
 import { managedSession } from './sessions/test-fixtures.ts';
@@ -62,13 +62,12 @@ const handlers = {
 };
 
 describe('Scanning nav and entities', () => {
-  it('puts Scanning in the Messages group, scoped to the org', () => {
-    const item = ADMIN_NAV.find((i) => i.to === '/admin/scanning');
-    expect(item).toMatchObject({ label: 'Scanning', orgScoped: true, entity: 'scanner' });
-    const group = ADMIN_NAV_GROUPS.find((g) => g.some((i) => i.to === '/admin/scanning'));
+  it('puts Scanning in the Messages group, inside the organization', () => {
+    const item = ORG_NAV.flat().find((i) => i.section === '/scanning');
+    expect(item).toMatchObject({ label: 'Scanning', entity: 'scanner' });
+    const group = ORG_NAV.find((g) => g.some((i) => i.section === '/scanning'));
     expect(group?.map((i) => i.label)).toEqual(['Messages', 'Scanning', 'Test inbox']);
-    expect(isOrgScoped('/admin/scanning')).toBe(true);
-    expect(isOrgScoped('/admin/scanning/scanners/s1')).toBe(true);
+    expect(PLATFORM_NAV.flat().some((i) => i.section === '/scanning')).toBe(false);
   });
 
   it('names the scanning entities and gives "Event" to the occasion', () => {

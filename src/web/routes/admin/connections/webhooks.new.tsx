@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { NewWebhookPage } from '../../../admin/connections/webhooks/new-page.tsx';
+import { legacySearch, redirectLegacy } from '../../../lib/legacy-admin.ts';
 
 export const Route = createFileRoute('/admin/connections/webhooks/new')({
-  component: NewWebhookPage,
+  validateSearch: legacySearch,
+  beforeLoad: redirectLegacy,
 });

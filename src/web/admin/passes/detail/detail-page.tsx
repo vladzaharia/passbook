@@ -27,7 +27,7 @@ function PassDetailContent({
   search: Search;
   bare: boolean;
 }) {
-  const navigate = useNavigate({ from: '/admin/passes/$passId' });
+  const navigate = useNavigate({ from: '/admin/o/$orgId/passes/$passId' });
   const scope = useOrgScope();
   const pass = usePass(passId, bare);
   // A bare deep link must use a newly authorized response, not an older cached pass.

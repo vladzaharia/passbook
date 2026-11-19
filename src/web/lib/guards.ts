@@ -3,64 +3,17 @@ import { redirect } from '@tanstack/react-router';
 import type { OrgCapability, OrgMembership } from '@/shared/contracts/org-membership.ts';
 import { ApiError } from './errors.ts';
 import { safeNext } from './redirect.ts';
+import { parseAdminPath } from './scope.ts';
 import { type AuthedSession, membershipsQuery, sessionQuery } from './session.ts';
 
 export const ADMIN_PREFIX = '/admin';
-
-const TENANT_PATHS = [
-  '/admin/passes',
-  '/admin/templates',
-  '/admin/connections',
-  '/admin/scanning',
-  '/admin/messages',
-  '/admin/test-inbox',
-  '/admin/audit',
-  '/admin/api-keys',
-];
-const PLATFORM_PATHS = ['/admin/users', '/admin/status', '/admin/identities', '/admin/settings'];
 
 export function isAdminPath(pathname: string): boolean {
   return pathname === ADMIN_PREFIX || pathname.startsWith(`${ADMIN_PREFIX}/`);
 }
 
-function within(pathname: string, prefix: string): boolean {
-  return pathname === prefix || pathname.startsWith(`${prefix}/`);
-}
-
-function orgDetailId(pathname: string): string | undefined {
-  const encoded = /^\/admin\/orgs\/([^/]+)$/.exec(pathname)?.[1];
-  if (!encoded) return undefined;
-  try {
-    return decodeURIComponent(encoded);
-  } catch {
-    return undefined;
-  }
-}
-
-/** Platform organization details and tenant workspaces share a path, but not authority. */
-export function isTenantAdminPath(pathname: string, view?: string): boolean {
-  const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
-  return (
-    path === ADMIN_PREFIX ||
-    (view === 'workspace' && /^\/admin\/orgs\/[^/]+$/.test(path)) ||
-    TENANT_PATHS.some((prefix) => within(path, prefix))
-  );
-}
-
-/** Detail links resolve their owning organization from the resource, not browser scope. */
-export function isTenantResourceDetail(pathname: string, view?: string): boolean {
-  const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
-  const item = /^\/admin\/(passes|connections|templates|messages)\/([^/]+)$/.exec(path);
-  if (item) {
-    const [, resource, id] = item;
-    return id !== 'new' && (resource !== 'templates' || id !== 'upload');
-  }
-  return (
-    /^\/admin\/connections\/webhooks\/(?!new$)[^/]+$/.test(path) ||
-    (view === 'workspace' && /^\/admin\/orgs\/[^/]+$/.test(path)) ||
-    /^\/admin\/templates\/[^/]+\/design$/.test(path) ||
-    /^\/admin\/scanning\/(?:events|scanners|sessions)\/[^/]+$/.test(path)
-  );
+function within(path: string, prefix: string): boolean {
+  return path === prefix || path.startsWith(`${prefix}/`);
 }
 
 function hasCapability(membership: OrgMembership | undefined, capability: OrgCapability): boolean {
@@ -72,45 +25,23 @@ export function canSeeOrgOverview(membership: OrgMembership | undefined): boolea
   return hasCapability(membership, 'org:read') && hasCapability(membership, 'passes:read');
 }
 
-/** Membership capabilities, never platform status or a selected ID alone, authorize tenant pages. */
-export function canAccessAdminPath(
-  pathname: string,
-  platformAdmin: boolean,
-  membership?: OrgMembership,
-  view?: string,
-): boolean {
-  const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
-  if (path === '/admin/account') return true;
-  if (path === '/admin') return platformAdmin || canSeeOrgOverview(membership);
-  if (path === '/admin/orgs' || PLATFORM_PATHS.some((prefix) => within(path, prefix))) {
-    return platformAdmin;
+/** A page inside an organization scope; `rest` is the path after /admin/o/$orgId. */
+export function canAccessOrgSection(rest: string, membership: OrgMembership | undefined): boolean {
+  const path = rest.replace(/\/+$/, '');
+  if (path === '') return canSeeOrgOverview(membership);
+  if (path === '/settings') return hasCapability(membership, 'org:read');
+  if (within(path, '/audit')) return hasCapability(membership, 'audit:read');
+  if (within(path, '/api-keys')) return hasCapability(membership, 'integrations:read');
+  if (within(path, '/passes')) {
+    return hasCapability(membership, path === '/passes/new' ? 'passes:operate' : 'passes:read');
   }
-  // The platform's audit log and keys are admin-wide; an organization's are its admins' own.
-  if (within(path, '/admin/audit')) return platformAdmin || hasCapability(membership, 'audit:read');
-  if (within(path, '/admin/api-keys')) {
-    return platformAdmin || hasCapability(membership, 'integrations:read');
-  }
-  if (/^\/admin\/orgs\/[^/]+$/.test(path)) {
-    const orgId = orgDetailId(path);
-    if (orgId === undefined) return false;
-    return view === 'workspace'
-      ? membership?.orgId === orgId && hasCapability(membership, 'org:read')
-      : platformAdmin;
-  }
-  if (within(path, '/admin/passes')) {
-    return hasCapability(
-      membership,
-      path === '/admin/passes/new' ? 'passes:operate' : 'passes:read',
-    );
-  }
-  // Blueprints are platform-wide: any template reader may browse them and make a template.
-  if (within(path, '/admin/blueprints'))
-    return platformAdmin || hasCapability(membership, 'templates:read');
-  if (within(path, '/admin/templates')) {
+  // Blueprints are shared starters: any template reader may browse them and make a template.
+  if (within(path, '/blueprints')) return hasCapability(membership, 'templates:read');
+  if (within(path, '/templates')) {
     const editing =
-      path === '/admin/templates/upload' ||
-      path === '/admin/templates/new' ||
-      /^\/admin\/templates\/[^/]+\/design$/.test(path);
+      path === '/templates/upload' ||
+      path === '/templates/new' ||
+      /^\/templates\/[^/]+\/design$/.test(path);
     if (!hasCapability(membership, 'templates:read')) return false;
     if (editing) return hasCapability(membership, 'templates:author');
     // Pass issuance can read templates without granting access to template management.
@@ -120,23 +51,41 @@ export function canAccessAdminPath(
       hasCapability(membership, 'templates:publish')
     );
   }
-  if (within(path, '/admin/connections')) {
+  if (within(path, '/connections')) {
     return hasCapability(
       membership,
-      path === '/admin/connections/new' || path === '/admin/connections/webhooks/new'
+      path === '/connections/new' || path === '/connections/webhooks/new'
         ? 'integrations:manage'
         : 'integrations:read',
     );
   }
-  if (within(path, '/admin/scanning')) return hasCapability(membership, 'scanning:read');
-  if (within(path, '/admin/messages')) {
+  if (within(path, '/scanning')) return hasCapability(membership, 'scanning:read');
+  if (within(path, '/messages')) {
     return hasCapability(
       membership,
-      path === '/admin/messages/new' ? 'messages:manage' : 'messages:read',
+      path === '/messages/new' ? 'messages:manage' : 'messages:read',
     );
   }
-  if (within(path, '/admin/test-inbox')) return hasCapability(membership, 'passes:read');
+  if (within(path, '/test-inbox')) return hasCapability(membership, 'passes:read');
   return false;
+}
+
+/**
+ * Platform pages need platform rights; an organization's pages need an active membership in
+ * that exact organization. Platform status never opens an organization, and the scope in the
+ * URL is never a grant on its own.
+ */
+export function canAccessAdminPath(
+  pathname: string,
+  platformAdmin: boolean,
+  membership?: OrgMembership,
+): boolean {
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+  if (path === ADMIN_PREFIX || path === '/admin/account') return true;
+  const { scope, rest } = parseAdminPath(path);
+  if (!scope) return false;
+  if (scope.kind === 'platform') return platformAdmin;
+  return membership?.orgId === scope.orgId && canAccessOrgSection(rest, membership);
 }
 
 /** Routes the session guard skips: the sign-in page. */

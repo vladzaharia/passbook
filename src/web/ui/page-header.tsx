@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
 import { useDocumentTitle } from '../lib/route-focus.tsx';
+import { useScopeCrumb } from '../lib/scope-context.ts';
 import { TOUCH_HIT } from './button.tsx';
 
 export interface Crumb {
@@ -71,9 +72,12 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   useDocumentTitle(title);
+  // Detail pages lead with the console scope: Northwind › Templates › Spring.
+  const root = useScopeCrumb();
+  const crumbs = breadcrumbs?.length && root ? [root, ...breadcrumbs] : breadcrumbs;
   return (
     <header className={cn('mb-6 flex min-w-0 flex-col gap-3', className)}>
-      {breadcrumbs?.length ? <Breadcrumbs items={breadcrumbs} /> : null}
+      {crumbs?.length ? <Breadcrumbs items={crumbs} /> : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
           {avatar}

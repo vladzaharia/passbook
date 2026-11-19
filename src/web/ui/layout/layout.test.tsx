@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { orgActivity } from '../../admin/overview/overview-fixtures.ts';
-import { ADMIN_NAV } from '../../lib/nav.ts';
+import { ORG_NAV } from '../../lib/nav.ts';
 import { membershipsQuery, sessionQuery } from '../../lib/session.ts';
 import { json, membershipFixture, renderApp, sessionFixture } from '../../lib/test-utils.tsx';
 
@@ -509,7 +509,7 @@ describe('admin layout', () => {
     await screen.findByRole('heading', { name: 'Passes', level: 1 });
     const nav = await screen.findByRole('navigation', { name: 'Admin' });
     const links = within(nav).getAllByRole('link');
-    expect(links.map((l) => l.textContent)).toEqual(ADMIN_NAV.map((i) => i.label));
+    expect(links.map((l) => l.textContent)).toEqual(ORG_NAV.flat().map((i) => i.label));
     expect(within(nav).getByRole('link', { name: 'Passes' })).toHaveAttribute(
       'aria-current',
       'page',

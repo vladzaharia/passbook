@@ -1,8 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ImportPage } from '../../../../admin/passes/import/import-page.tsx';
-import { importSearchSchema } from '../../../../admin/passes/import/search.ts';
+import { legacySearch, redirectLegacy } from '../../../../lib/legacy-admin.ts';
 
 export const Route = createFileRoute('/admin/passes/import/')({
-  validateSearch: importSearchSchema,
-  component: ImportPage,
+  validateSearch: legacySearch,
+  beforeLoad: redirectLegacy,
 });

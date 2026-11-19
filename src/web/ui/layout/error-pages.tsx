@@ -63,19 +63,38 @@ export function ScopedDeniedPage({
 }: {
   orgName: string;
   section: string | undefined;
-  entry: { to: string; label: string | undefined; orgId: string };
+  entry: { to: string; label: string | undefined } | undefined;
+}) {
+  return (
+    <ScopeRefusal
+      description={`${orgName}: your role does not include ${section ?? 'this section'}.`}
+      entry={entry && { to: entry.to, label: entry.label ? `Go to ${entry.label}` : undefined }}
+    />
+  );
+}
+
+/**
+ * A scope the principal cannot open (platform pages without platform rights, an organization
+ * without a membership): say why and offer one they can.
+ */
+export function ScopeRefusal({
+  description,
+  entry,
+}: {
+  description: string;
+  entry: { to: string; label: string | undefined } | undefined;
 }) {
   return (
     <EmptyState
       heading
       art="lock"
       title={STATE_COPY.forbidden}
-      description={`${orgName}: your role does not include ${section ?? 'this section'}.`}
+      description={description}
       action={
         <Button variant="outline" asChild>
-          <Link to={entry.to} search={{ orgId: entry.orgId }}>
+          <Link to={entry?.to ?? '/admin/account'}>
             <LayoutDashboard aria-hidden />
-            {entry.label ? `Go to ${entry.label}` : 'Go to Account'}
+            {entry?.label ?? 'Go to Account'}
           </Link>
         </Button>
       }
