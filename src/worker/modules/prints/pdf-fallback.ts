@@ -13,11 +13,55 @@ interface Fonts {
   bold: PDFFont;
 }
 
-/** The standard fonts hold Latin-1 only; anything else becomes "?" rather than failing the whole ticket. */
+/** The standard fonts hold Latin-1 only; `safe` is the last guard so drawing text never throws. */
 const safe = (font: PDFFont, s: string): string => {
   const set = new Set(font.getCharacterSet());
   return [...s].map((ch) => (set.has(ch.codePointAt(0) ?? 0) ? ch : '?')).join('');
 };
+
+/**
+ * Maps text to what the font can draw: a character it lacks becomes its closest Latin-1 form (NFKD,
+ * marks stripped: "Ł" stays "?", "ｆｕｌｌ" becomes "full") or "?". `lossy` is set when any "?" was made.
+ */
+function fold(font: PDFFont, s: string, state: { lossy: boolean }): string {
+  const set = new Set(font.getCharacterSet());
+  const ok = (ch: string) => set.has(ch.codePointAt(0) ?? 0);
+  let out = '';
+  for (const ch of s.replace(/\s+/g, ' ')) {
+    if (ok(ch)) out += ch;
+    else {
+      const near = [...ch.normalize('NFKD').replace(/\p{M}/gu, '')];
+      if (near.length > 0 && near.every(ok)) out += near.join('');
+      else {
+        out += '?';
+        state.lossy = true;
+      }
+    }
+  }
+  return out;
+}
+
+function foldSheet(font: PDFFont, sheet: PrintSheet, state: { lossy: boolean }): PrintSheet {
+  const f = (v: string) => fold(font, v, state);
+  const c = sheet.content;
+  return {
+    ...sheet,
+    content: {
+      brand: f(c.brand),
+      event: f(c.event),
+      ...(c.date === undefined ? {} : { date: f(c.date) }),
+      ...(c.venue === undefined ? {} : { venue: f(c.venue) }),
+      ...(c.holder === undefined ? {} : { holder: f(c.holder) }),
+      ...(c.type === undefined ? {} : { type: f(c.type) }),
+      ...(c.seat === undefined ? {} : { seat: f(c.seat) }),
+      ...(c.terms === undefined ? {} : { terms: f(c.terms) }),
+      extras: c.extras.map((e) => ({
+        ...(e.label === undefined ? {} : { label: f(e.label) }),
+        text: f(e.text),
+      })),
+    },
+  };
+}
 
 function wrap(font: PDFFont, text: string, size: number, width: number): string[] {
   const lines: string[] = [];
@@ -173,15 +217,21 @@ function drawSheet(page: PDFPage, sheet: PrintSheet, f: Fonts): void {
  * The tickets without a browser: the same words and the same bwip-js code, drawn by hand on pages
  * of the design's size. Plainer than the Browser Run copy (Latin-1 text, no wallpaper) but it scans.
  */
-export async function fallbackPdf(sheets: readonly PrintSheet[]): Promise<Uint8Array> {
+export async function fallbackPdf(
+  sheets: readonly PrintSheet[],
+  onLossy?: () => void,
+): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   const fonts: Fonts = {
     text: await doc.embedFont(StandardFonts.Helvetica),
     bold: await doc.embedFont(StandardFonts.HelveticaBold),
   };
+  const state = { lossy: false };
   for (const sheet of sheets) {
     const spec = PAPER_SPECS[sheet.design.size];
-    drawSheet(doc.addPage([spec.widthMm * PT, spec.heightMm * PT]), sheet, fonts);
+    const page = doc.addPage([spec.widthMm * PT, spec.heightMm * PT]);
+    drawSheet(page, foldSheet(fonts.text, sheet, state), fonts);
   }
+  if (state.lossy) onLossy?.();
   return doc.save();
 }

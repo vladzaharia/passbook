@@ -37,7 +37,10 @@ export async function ticketPdf(
   const sheets = [{ design: model.design, content: model.content, code: model.code }];
   const { bytes, engine } = await renderPdf(ctx, {
     html: renderPrintSheets(sheets),
-    fallback: () => fallbackPdf(sheets),
+    fallback: () =>
+      fallbackPdf(sheets, () =>
+        ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' }),
+      ),
     whenBusy: 'fallback',
   });
   await putPdf(ctx.env.BUCKET, key, bytes, { passVersion: pass.version, engine });

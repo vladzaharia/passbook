@@ -36,7 +36,10 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
   }
   const { bytes, engine } = await renderPdf(ctx, {
     html: renderPrintSheets(sheets),
-    fallback: () => fallbackPdf(sheets),
+    fallback: () =>
+      fallbackPdf(sheets, () =>
+        ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' }),
+      ),
     whenBusy: 'retry',
   });
   await putPdf(bucket, bulkKey(job.orgId, job.jobId, 'pdf'), bytes, { engine });

@@ -64,6 +64,41 @@ describe('PDF deletion hooks', () => {
   });
 });
 
+describe('sweep cursor', () => {
+  it('continues from the saved cursor, then starts over when the listing ends', async () => {
+    const { kit } = await pdfKit();
+    const real = kit.env.BUCKET;
+    const all = [0, 1, 2].map((i) => pdfKey(kit.org.id, `p${i}`, `orphan${i}`));
+    for (const key of all) await put(real, key);
+    const starts: (string | undefined)[] = [];
+    // A listing of one key per page; the real bucket still holds the objects and the cursor.
+    const stub = {
+      get: (k: string) => real.get(k),
+      put: (k: string, v: string) => real.put(k, v),
+      delete: (k: string | string[]) => real.delete(k),
+      list: async (o: { cursor?: string }) => {
+        starts.push(o.cursor);
+        const at = o.cursor ? Number(o.cursor) : 0;
+        const truncated = at + 1 < all.length;
+        return {
+          objects: [{ key: all[at] as string, uploaded: new Date() }],
+          truncated,
+          ...(truncated ? { cursor: String(at + 1) } : {}),
+        };
+      },
+    } as unknown as R2Bucket;
+    const base = jobCtxOf(kit);
+    const ctx = { ...base, env: { ...base.env, BUCKET: stub } };
+    await sweepPrintPdfs(ctx, 1);
+    await sweepPrintPdfs(ctx, 1);
+    await sweepPrintPdfs(ctx, 1);
+    await sweepPrintPdfs(ctx, 1);
+    expect(starts).toEqual([undefined, '1', '2', undefined]);
+    expect(await keys(real)).not.toEqual(expect.arrayContaining([all[0]]));
+    for (const key of all) expect(await real.head(key)).toBeNull();
+  });
+});
+
 describe('credential transfer deletes the PDFs', () => {
   let kit: ScanKit;
   let tpl: string;

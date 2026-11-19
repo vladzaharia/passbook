@@ -6,28 +6,35 @@ const PAGES = 20;
 const IN_LIMIT = 90;
 /** A bulk PDF and its status stay this long for the download. */
 const BULK_KEEP_MS = 7 * DAY;
+/** Where the next run starts: outside `prints/`, so the sweep never lists it. */
+const CURSOR_KEY = 'sweep/prints-cursor';
 const KEY = /^prints\/[^/]+\/([^/]+)\/([^/]+)\.pdf$/;
 
 /**
  * Daily: deletes PDFs whose print is no longer active (a void, holder change, New code or a purge
- * the inline hooks missed) and bulk PDFs after a week. Reads at most PAGES x 1,000 keys a run.
+ * the inline hooks missed) and bulk PDFs after a week. Reads at most PAGES x 1,000 keys a run and keeps its list cursor in R2, so the next run continues.
  */
-export async function sweepPrintPdfs(ctx: ServiceContext): Promise<void> {
+export async function sweepPrintPdfs(ctx: ServiceContext, pages = PAGES): Promise<void> {
   const bucket = ctx.env.BUCKET;
   const before = ctx.clock.now() - BULK_KEEP_MS;
   const stale: string[] = [];
   const perPrint: { key: string; printId: string }[] = [];
-  let cursor: string | undefined;
-  for (let page = 0; page < PAGES; page++) {
+  let cursor = (await (await bucket.get(CURSOR_KEY))?.text()) || undefined;
+  let more = false;
+  for (let page = 0; page < pages; page++) {
     const listed = await bucket.list({ prefix: 'prints/', ...(cursor ? { cursor } : {}) });
     for (const o of listed.objects) {
       const m = KEY.exec(o.key);
       if (m?.[1] && m[1] !== 'bulk' && m[2]) perPrint.push({ key: o.key, printId: m[2] });
       else if (o.uploaded.getTime() < before) stale.push(o.key);
     }
+    more = listed.truncated;
     if (!listed.truncated) break;
     cursor = listed.cursor;
   }
+  // A full pass starts over next time; a cut one carries on from where it stopped.
+  if (more && cursor) await bucket.put(CURSOR_KEY, cursor);
+  else await bucket.delete(CURSOR_KEY);
   for (let i = 0; i < perPrint.length; i += IN_LIMIT) {
     const part = perPrint.slice(i, i + IN_LIMIT);
     const active = await activePrintIds(
