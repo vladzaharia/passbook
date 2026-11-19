@@ -47,9 +47,9 @@ async function requireRow(ctx: ServiceContext, id: string): Promise<IdentityRow>
 
 export async function listIdentities(
   ctx: ServiceContext,
-  query: { cursor?: string | undefined; limit: number },
+  query: { cursor?: string | undefined; limit: number; orgId?: string | undefined },
 ): Promise<{ items: IdentityDto[]; nextCursor: string | null }> {
-  const rows = await pageIdentityRows(ctx.env.DB, query.cursor, query.limit + 1);
+  const rows = await pageIdentityRows(ctx.env.DB, query.cursor, query.limit + 1, query.orgId);
   const page = rows.slice(0, query.limit);
   return {
     items: await toDtos(ctx, page),

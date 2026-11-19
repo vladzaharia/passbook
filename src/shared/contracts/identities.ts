@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, pageOf, TimestampSchema } from './common.ts';
+import { IdSchema, PageQuerySchema, pageOf, TimestampSchema } from './common.ts';
 import { VasKeySchema } from './nfc.ts';
 
 /** How pushes reach Apple: the identity's mTLS certificate binding, the team's .p8 key, or neither. */
@@ -49,6 +49,9 @@ export const IdentitySchema = z.object({
 export type IdentityDto = z.infer<typeof IdentitySchema>;
 /** Oldest first (the platform identity leads); `cursor` is the last id of the previous page. */
 export const IdentityListSchema = pageOf(IdentitySchema);
+
+/** With `orgId`, only that organization's own identities; readable by a member with org:read. */
+export const IdentityListQuerySchema = PageQuerySchema.extend({ orgId: IdSchema.optional() });
 
 export const UploadIdentitySchema = z.object({
   orgId: IdSchema.nullable().optional(),

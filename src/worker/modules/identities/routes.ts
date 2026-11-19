@@ -2,19 +2,23 @@ import {
   ApnsProbeResultSchema,
   IdentityListSchema,
   IdentitySchema,
+  IdentityListQuerySchema,
   IdParamSchema,
   OkSchema,
-  PageQuerySchema,
   PushKeyInputSchema,
   RotateIdentitySchema,
   UpdateIdentitySchema,
   UploadIdentitySchema,
 } from '../../../shared/contracts/index.ts';
+import { createMiddleware } from 'hono/factory';
 import { requireAdmin } from '../../platform/auth.ts';
+import type { AppBindings } from '../../platform/context.ts';
+import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestActor } from '../audit/http.ts';
+import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { probeApns } from './apns-probe.ts';
 import { removePushKey, setPushKey } from './push-key-service.ts';
 import {
@@ -27,7 +31,17 @@ import {
 } from './service.ts';
 
 export const identitiesRoutes = createRouter();
-guard(identitiesRoutes, requireAdmin);
+
+const isOrgList = (c: Parameters<typeof requireAdmin>[0]) =>
+  c.req.method === 'GET' && !!c.req.query('orgId') && /\/identities\/?$/.test(c.req.path);
+
+/** The list with `orgId` is an org read (org:read, checked in the handler); everything else is platform-admin only. */
+guard(
+  identitiesRoutes,
+  createMiddleware<AppBindings>((c, next) =>
+    isOrgList(c) ? requireTenantSession(c, next) : requireAdmin(c, next),
+  ),
+);
 
 register(
   identitiesRoutes,
@@ -36,10 +50,21 @@ register(
     method: 'get',
     path: '/',
     summary: 'List Apple identities',
-    query: PageQuerySchema,
+    query: IdentityListQuerySchema,
     response: IdentityListSchema,
   },
-  async (c) => c.json(await listIdentities(serviceContext(c), c.req.valid('query'))),
+  async (c) => {
+    const ctx = serviceContext(c);
+    const query = c.req.valid('query');
+    const auth = c.var.auth;
+    // A platform admin reads any organization; a member reads only an organization they belong to.
+    if (query.orgId && !(auth?.kind === 'session' && auth.roles.includes('admin'))) {
+      if (auth?.kind !== 'session') throw new UnauthenticatedError();
+      const authority = await tenantAuthorityOf(ctx, auth, query.orgId, 'org:read');
+      if (authority.kind !== 'session') throw new ForbiddenError();
+    }
+    return c.json(await listIdentities(ctx, query));
+  },
 );
 register(
   identitiesRoutes,
