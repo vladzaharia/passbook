@@ -162,7 +162,10 @@ export async function readWalletProviderRetirementCredentials(
     typeof pinned.credentialKeysetCommitment !== 'string' ||
     !/^[0-9a-f]{64}$/.test(pinned.credentialKeysetCommitment) ||
     (pinned.provider === 'google' &&
-      (!Number.isSafeInteger(pinned.credentialGeneration) || pinned.credentialGeneration < 1)) ||
+      (!Number.isSafeInteger(pinned.credentialGeneration) ||
+        pinned.credentialGeneration < 1 ||
+        !Number.isSafeInteger(pinned.channelEpoch) ||
+        pinned.channelEpoch < 1)) ||
     (pinned.provider === 'samsung' && !/^[0-9a-f]{64}$/.test(pinned.refHash))
   )
     throw new ValidationError();

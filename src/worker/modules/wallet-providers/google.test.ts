@@ -17,6 +17,7 @@ const scope = {
   passId: 'pass-private',
   mode: 'live' as const,
   credentialGeneration: 1,
+  channelEpoch: 1,
 };
 let credentials: GoogleAccountCredentials;
 let account: GoogleValidatedAccount;
@@ -136,6 +137,7 @@ describe('Google account credentials and scoped IDs', () => {
     const newHolder = await googleObjectIds(account.issuerId, idSecret, {
       ...scope,
       credentialGeneration: 2,
+      channelEpoch: 1,
     });
     expect(newHolder.classId).toBe(ids.classId);
     expect(newHolder.objectId).not.toBe(ids.objectId);
@@ -158,18 +160,21 @@ describe('Google account credentials and scoped IDs', () => {
       googleObjectIds(account.issuerId, idSecret, {
         ...scope,
         credentialGeneration: -1,
+        channelEpoch: 1,
       }),
     ).rejects.toMatchObject({ code: 'invalid_input' });
     await expect(
       googleObjectIds(account.issuerId, idSecret, {
         ...scope,
         credentialGeneration: 0,
+        channelEpoch: 1,
       }),
     ).rejects.toMatchObject({ code: 'invalid_input' });
     await expect(
       googleObjectIds(account.issuerId, idSecret, {
         ...scope,
         credentialGeneration: Number.MAX_SAFE_INTEGER + 1,
+        channelEpoch: 1,
       }),
     ).rejects.toMatchObject({ code: 'invalid_input' });
   });

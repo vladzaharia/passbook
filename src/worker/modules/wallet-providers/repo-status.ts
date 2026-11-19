@@ -62,6 +62,9 @@ export async function readWalletProviderStatus(
     LEFT JOIN wallet_provider_instances i ON i.pass_id = p.id AND i.org_id = p.org_id
       AND i.mode = p.mode AND i.provider = provider.provider
       AND i.credential_generation = p.credential_generation
+      AND i.channel_epoch = (SELECT MAX(slot.channel_epoch) FROM wallet_provider_instances slot
+        WHERE slot.pass_id = i.pass_id AND slot.provider = i.provider
+          AND slot.credential_generation = i.credential_generation)
     LEFT JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id
       AND op.instance_id = i.id AND op.version = i.desired_version
     WHERE keyset.matches = 1

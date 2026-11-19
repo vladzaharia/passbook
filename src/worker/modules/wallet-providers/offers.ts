@@ -22,7 +22,7 @@ import {
   offerPassSnapshot,
   offerStillCurrent,
 } from './offers-eligibility.ts';
-import { instanceMatches } from './offers-instance.ts';
+import { channelOffSuccessor, instanceMatches } from './offers-instance.ts';
 import { type NativeProvider, projectionPolicy } from './projection-contract.ts';
 import { assertWalletProviderEnabled, walletProviderEnabled } from './provider-policy.ts';
 import { walletOfferKeysetCurrent } from './repo-offers.ts';
@@ -70,7 +70,10 @@ export async function listWalletOffers(
       provider,
       passId: snapshot.pass.id,
     });
-    if (instance && !(await instanceMatches(ctx, eligible, instance, true))) continue;
+    const successor = instance && channelOffSuccessor(instance);
+    if (successor) {
+      if (successor.hold) continue;
+    } else if (instance && !(await instanceMatches(ctx, eligible, instance, true))) continue;
     // Neither provider proves a particular holder's installation or removal.
     candidates.push({
       eligible,
@@ -114,7 +117,10 @@ export async function issueWalletOffer(
     provider,
     passId: pass.id,
   });
-  if (existing && !(await instanceMatches(ctx, eligible, existing, true))) throw notFound();
+  const successor = existing && channelOffSuccessor(existing);
+  if (successor) {
+    if (successor.hold) throw notFound();
+  } else if (existing && !(await instanceMatches(ctx, eligible, existing, true))) throw notFound();
   const policy = projectionPolicy(provider);
   const proof: WalletInstanceProof = {
     orgId: pass.orgId,
@@ -179,6 +185,7 @@ export async function issueWalletOffer(
         passId: pass.id,
         releaseId: instance.identityProjectionReleaseId,
         credentialGeneration: instance.credentialGeneration,
+        channelEpoch: instance.channelEpoch,
         operationVersion: operation.version,
       });
       const lifetimeSeconds = Math.min(900, Math.floor((expiresAt - ctx.clock.now()) / 1000) - 1);
@@ -187,6 +194,7 @@ export async function issueWalletOffer(
         releaseId: instance.identityProjectionReleaseId,
         passId: pass.id,
         credentialGeneration: instance.credentialGeneration,
+        channelEpoch: instance.channelEpoch,
         origins: [new URL(baseUrl(ctx.env)).origin],
         lifetimeSeconds,
         assertCurrent,
