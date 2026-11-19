@@ -1,5 +1,6 @@
 import type { Envelope } from '../../platform/crypto.ts';
 import { run } from '../../platform/db.ts';
+import { accountHmacKind } from './rewrap-tables.ts';
 
 /** An org credential at revision 1 with one sealed version, written as a rotation writes it (event, then pointer). */
 export async function seedWalletCredentialVersion(
@@ -49,4 +50,26 @@ export async function seedWalletCredentialVersion(
     credentialId,
   ]);
   return { table: 'wallet_credential_versions', id: versionId, org: c.orgId, kind, text };
+}
+
+/** The enrolment's own HMAC key on its account row, sealed as the enrolment writer seals it. */
+export async function seedAccountHmac(
+  db: D1Database,
+  c: {
+    orgId: string;
+    accountId: string;
+    mode: string;
+    seal: (rowId: string, orgId: string, kind: string, text: string) => Promise<Envelope>;
+  },
+) {
+  const kind = accountHmacKind(c.accountId, c.mode, 'google');
+  const text = 'hmac-body';
+  const sealed = await c.seal(c.accountId, c.orgId, kind, text);
+  await run(
+    db,
+    `UPDATE wallet_provider_accounts
+     SET hmac_kek_version = ?, hmac_iv = ?, hmac_wrapped_dek = ?, hmac_ciphertext = ? WHERE id = ?`,
+    [sealed.kekVersion, sealed.iv, sealed.wrappedDek, sealed.ciphertext, c.accountId],
+  );
+  return { table: 'wallet_provider_accounts', id: c.accountId, org: c.orgId, kind, text };
 }
