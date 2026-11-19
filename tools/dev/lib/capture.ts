@@ -1,7 +1,7 @@
 // Screenshots every (route, viewport, theme) and records console errors, failed requests, status.
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { type Browser, chromium } from '@playwright/test';
+import { type Browser, chromium, type Page } from '@playwright/test';
 import { statePath } from './auth.ts';
 import {
   fillPath,
@@ -36,7 +36,31 @@ type Options = {
 };
 
 /** Index entries never carry pass, bundle or join capability tokens. */
-const redact = (text: string) => text.replace(/\/(p|b|j)\/[A-Za-z0-9_-]{20,}/g, '/$1/:token');
+export const redact = (text: string) =>
+  text
+    .replace(/\/(p|b|j)\/[A-Za-z0-9_-]{20,}/g, '/$1/:token')
+    .replace(/([?&]t=)[A-Za-z0-9_-]+/g, '$1:token');
+
+/** Collects console errors and failed or 4xx/5xx requests (capability tokens redacted) on `page`. */
+export function listen(page: Page): { consoleErrors: string[]; failedRequests: string[] } {
+  const consoleErrors: string[] = [];
+  const failedRequests: string[] = [];
+  page.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text().slice(0, 300)));
+  page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message.slice(0, 300)}`));
+  page.on(
+    'requestfailed',
+    (r) =>
+      r.failure()?.errorText !== 'net::ERR_ABORTED' &&
+      failedRequests.push(redact(`${r.method()} ${r.url()} ${r.failure()?.errorText ?? ''}`)),
+  );
+  page.on(
+    'response',
+    (r) =>
+      r.status() >= 400 &&
+      failedRequests.push(redact(`${r.request().method()} ${r.url()} ${r.status()}`)),
+  );
+  return { consoleErrors, failedRequests };
+}
 
 const SETTLE = '[aria-busy="true"], .wl-skeleton';
 
@@ -77,22 +101,7 @@ async function shoot(
       continue;
     }
     const page = await context.newPage();
-    const consoleErrors: string[] = [];
-    const failedRequests: string[] = [];
-    page.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text().slice(0, 300)));
-    page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message.slice(0, 300)}`));
-    page.on(
-      'requestfailed',
-      (r) =>
-        r.failure()?.errorText !== 'net::ERR_ABORTED' &&
-        failedRequests.push(redact(`${r.method()} ${r.url()} ${r.failure()?.errorText ?? ''}`)),
-    );
-    page.on(
-      'response',
-      (r) =>
-        r.status() >= 400 &&
-        failedRequests.push(redact(`${r.request().method()} ${r.url()} ${r.status()}`)),
-    );
+    const { consoleErrors, failedRequests } = listen(page);
     const file = shotName(route.name, viewport, theme);
     let status: number | null = null;
     let note: string | undefined;

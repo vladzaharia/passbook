@@ -13,14 +13,14 @@ const TURNSTILE = 'XXXX.DUMMY.TOKEN.XXXX';
 
 export const statePath = (stateDir: string, role: Role) => resolve(stateDir, `${role}.json`);
 
-const open = (base: string, storageState?: string) =>
+export const open = (base: string, storageState?: string) =>
   request.newContext({
     baseURL: base,
     extraHTTPHeaders: { origin: base },
     ...(storageState ? { storageState } : {}),
   });
 
-async function signedIn(ctx: APIRequestContext): Promise<boolean> {
+export async function signedIn(ctx: APIRequestContext): Promise<boolean> {
   const res = await ctx.get('/api/v1/session');
   return res.ok() && ((await res.json()) as { authenticated?: boolean }).authenticated === true;
 }
@@ -35,7 +35,11 @@ async function breakglass(ctx: APIRequestContext): Promise<void> {
   if (res.status() !== 302) throw new Error(`Break-glass sign-in failed (${res.status()}).`);
 }
 
-async function magicLink(ctx: APIRequestContext, base: string, email: string): Promise<void> {
+export async function magicLink(
+  ctx: APIRequestContext,
+  base: string,
+  email: string,
+): Promise<void> {
   const before = mailFiles(MAIL_DIR);
   for (let attempt = 0; ; attempt++) {
     const res = await ctx.post('/auth/magic/request', {
