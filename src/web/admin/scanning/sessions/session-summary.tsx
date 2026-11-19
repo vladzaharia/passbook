@@ -15,9 +15,9 @@ export function SessionSummary({
   const shared = [
     ['Accepts', sessionAccepts(session)],
     ['Admission', sessionRuleLabel(session)],
-    ['Paired scanner staff PIN', session.settings.staffSignIn ? 'Required' : 'Not required'],
+    ['Staff PIN', session.settings.staffSignIn ? 'Required' : 'Not required'],
     [
-      'Access without staff PIN',
+      'Without a PIN',
       session.settings.roleWithoutSignIn === 'desk' ? 'Desk staff' : 'Check-in staff',
     ],
     ['Time zone', zoneLabel(session.timeZone)],
@@ -57,11 +57,6 @@ export function SessionSummary({
               </dd>
             </div>
           </dl>
-          <p className="mt-3 text-xs text-fg-muted">
-            Staff PINs apply only to paired, staff-operated scanners. Bearer-token terminals always
-            use the access level without a staff PIN. Admin-as-scanner sessions use the signed-in
-            administrator’s Manager permissions.
-          </p>
         </div>
         <div className="border-t border-border pt-4">
           <h3 className="mb-1 text-xs font-semibold text-fg-muted">DEVICE DEFAULTS</h3>

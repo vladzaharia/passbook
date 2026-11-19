@@ -221,15 +221,14 @@
   align-self: center;
 }
 @media (max-width: 420px) {
-  /* A narrow phone: the action drops under the person, full width. */
-  .scan-in-row {
-    flex-wrap: wrap;
+  /* A narrow phone: the action stays on the row as an icon. */
+  .scan-in-mark-label {
+    display: none;
   }
-  .scan-in-open {
-    flex-basis: 100%;
-  }
-  .scan-in-trailing {
-    margin-inline-start: 52px;
+  .scan-in-mark {
+    min-width: 44px;
+    min-height: 44px;
+    padding-inline: 0;
   }
 }
 @media (prefers-reduced-motion: no-preference) {

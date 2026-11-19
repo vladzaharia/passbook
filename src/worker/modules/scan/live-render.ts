@@ -117,8 +117,15 @@ function visibleRow(
     actor.settings.showPhoto !== false &&
     entry.photoRoles.includes(role) &&
     (entry.validUntil === null || now <= entry.validUntil);
+  const letIn =
+    entry.overridable &&
+    entry.scanId &&
+    actor.scanner?.deviceRole === 'monitor' &&
+    actor.settings.deskActions &&
+    actor.role !== null;
   return {
     ...visible,
+    ...(letIn && entry.scanId ? { scanId: entry.scanId } : {}),
     holder,
     photoUrl: photo && row.passId ? livePhotoUrl(actor, row.passId, row.id) : null,
   };

@@ -21,7 +21,12 @@ export async function resendMagic(c: Context<AppBindings>) {
   const token = typeof form.token === 'string' ? form.token : '';
   const trace = await magicLinkTrace(ctx, token);
   const next = safeNext(trace?.next);
-  if (trace?.purpose === 'sign_in' && !trace.invited && (await isEmailSignInEnabled(ctx))) {
+  if (
+    trace?.purpose === 'sign_in' &&
+    !trace.invited &&
+    !trace.identity &&
+    (await isEmailSignInEnabled(ctx))
+  ) {
     const existing = readCookie(c, MAGIC_COOKIE);
     const binding = existing && existing.length >= 32 ? existing : ctx.ids.token(32);
     setBindingCookie(c, MAGIC_COOKIE, binding, MAGIC_TTL_MS / 1000);

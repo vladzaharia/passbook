@@ -16,7 +16,12 @@ beforeAll(async () => {
   base = await makeEnv();
 });
 
-async function seedImport(orgId: string, templateId: string, passIds: string[]) {
+async function seedImport(
+  orgId: string,
+  templateId: string,
+  passIds: string[],
+  result = 'created',
+) {
   const id = crypto.randomUUID();
   await run(
     env.DB,
@@ -27,8 +32,8 @@ async function seedImport(orgId: string, templateId: string, passIds: string[]) 
   for (const [i, passId] of passIds.entries())
     await run(
       env.DB,
-      `INSERT INTO pass_import_rows (import_id, row_no, action, pass_id, state) VALUES (?, ?, 'create', ?, 'done')`,
-      [id, i + 1, passId],
+      `INSERT INTO pass_import_rows (import_id, row_no, action, pass_id, state, result) VALUES (?, ?, 'create', ?, 'done', ?)`,
+      [id, i + 1, passId, result],
     );
   return id;
 }
@@ -51,5 +56,15 @@ describe('pass list: from an import', () => {
       limit: 10,
     });
     expect(elsewhere.items).toEqual([]);
+  });
+
+  it('leaves out rows that changed nothing', async () => {
+    const f = fixtures(base);
+    const org = await makeOrg(f);
+    const tpl = makeTemplate({ id: `imp-${f.ids.id()}`, orgId: org.id });
+    const same = await makePass(f, { orgId: org.id, template: tpl.resolved });
+    const importId = await seedImport(org.id, tpl.resolved.id, [same.id], 'unchanged');
+    const page = await listPasses(env.DB, { orgId: org.id, mode: 'live', importId, limit: 10 });
+    expect(page.items).toEqual([]);
   });
 });

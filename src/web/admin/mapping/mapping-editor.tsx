@@ -249,6 +249,16 @@ export function MappingEditor({
 }
 
 /** Template input fields as mapping targets. */
+/** A field with no label shows its key: "guestsLeft" reads as "Guests left". */
+export function humanizeKey(key: string): string {
+  const words = key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_.-]+/g, ' ')
+    .trim()
+    .toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export function targetsOf(
   fields: readonly {
     key: string;
@@ -259,7 +269,7 @@ export function targetsOf(
 ): TargetField[] {
   return fields.map((f) => ({
     key: f.key,
-    label: f.label,
+    label: f.label === f.key ? humanizeKey(f.key) : f.label,
     required: f.required,
     values: f.options?.map((o) => o.value),
   }));

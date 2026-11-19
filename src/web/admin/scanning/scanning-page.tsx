@@ -76,10 +76,11 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
           onClose={() => setCreatingSession(undefined)}
           onCreated={(sessionId) => {
             setCreatingSession(undefined);
+            if (!scope.orgId) return;
             void navigate({
-              to: '/admin/scanning/sessions/$sessionId',
-              params: { sessionId },
-              search: { orgId: scope.orgId, addDevice: '1' },
+              to: '/admin/o/$orgId/scanning/sessions/$sessionId',
+              params: { orgId: scope.orgId, sessionId },
+              search: { addDevice: '1' },
             });
           }}
         />
@@ -151,6 +152,7 @@ function ScopedScanningPage({
         <TabsContent value="sessions">
           <SessionsTab
             canManage={canManage}
+            onNew={() => setCreatingSession({})}
             onDuplicate={(initial) => setCreatingSession({ initial })}
           />
         </TabsContent>

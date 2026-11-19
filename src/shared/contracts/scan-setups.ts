@@ -75,6 +75,8 @@ export const ScanLiveRowSchema = z.object({
   /** The places this scan changed, with revisions. Only monitors get them. */
   places: z.array(ScanPlaceRevSchema).max(8).optional(),
   outCause: ScanOutCauseSchema.nullable().optional(),
+  /** A monitor with Desk actions and a signed-in person gets the scan it may let in. */
+  scanId: IdSchema.optional(),
   /** The refused scan this row overrides. */
   overrideOf: IdSchema.nullable().optional(),
   /** The staff name and device that overrode this row. */

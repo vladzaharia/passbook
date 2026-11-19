@@ -52,7 +52,7 @@ describe('Scanners tab', () => {
     expect(within(table).getByText('Offline')).toBeInTheDocument();
     expect(within(table).getAllByText('Not paired')).toHaveLength(2);
     expect(within(table).getByText('2 templates')).toBeInTheDocument();
-    expect(within(table).getAllByText('Sign-in off').length).toBeGreaterThan(0);
+    expect(within(table).getAllByText('No PIN').length).toBeGreaterThan(0);
     expect(within(table).getByRole('button', { name: 'Pair' })).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });

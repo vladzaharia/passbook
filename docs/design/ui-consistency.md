@@ -186,9 +186,9 @@ health items):
 
 ## Filters
 
-- The top-bar scope switcher is the only org control. No page-level Org select. The scope is
-  `?orgId=` in the URL (`useOrgScope()`), carried between admin pages; pages it does not apply to
-  (Users, Identities, Status, Account) strip it with `UNSCOPED_SEARCH` and the switcher hides.
+- The top-bar scope switcher is the only org control. No page-level Org select. The scope is the
+  path (`/admin/platform/...`, `/admin/o/$orgId/...`, `useAdminScope()`, `useOrgScope()`); never a
+  search param. Pages without an org scope live under `/admin/platform` and the switcher hides.
 - One toolbar row above the table: search (`w-64` at ≥640), then selects that always read
   `Label: value` (`Status: Voided`) and get an `accent-subtle` fill when set, then `Clear`.
 - Below 1280: the first two filters inline, the rest in `Filters (n)` with `Clear` in its footer.
@@ -487,7 +487,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Pass toggles | `PassSideToggle` (`Front` / `Details`); `PassTargetToggle` (`iOS 27` / `iOS 26 and earlier`), shown only when `usePassFacesDiffer(passJson)` |
 | Motion hooks | `useArrivalMode`, `useInsertHighlight(ids)`, `removeWithTransition(update)` (`lib/motion.ts`) |
 | Offline | `useOnline()` (`lib/online.ts`); the shells mount `OfflineBanner`; an unloaded route chunk offline renders the route error inside the shell (`lib/offline-routes.ts`) |
-| Org scope | `useOrgScope()` reads `?orgId=` (`lib/org-filter.tsx`); `isOrgScoped(path)` hides the switcher; `UNSCOPED_SEARCH` (`lib/route-search.ts`) on routes it does not apply to |
+| Org scope | the path names it: `useAdminScope()`, `useOrgScope()` (`lib/org-filter.tsx`); `switchTarget`/`withOrg` (`lib/scope.ts`); no `orgId` search param |
 | Shell | `AppShell bar sidebar? width holder` (`ui/layout/app-shell.tsx`); `UserMenu` (the one account menu); `useDocumentTitle` (`lib/route-focus.tsx`) |
 | Theme | `useTheme()`; `THEME_OPTIONS` (menu and palette), `THEME_ICON`; `readPref`/`writePref` (`lib/theme.tsx`) |
 | Palette | `usePalette()?.open()` opens the admin palette (null outside the shell) |

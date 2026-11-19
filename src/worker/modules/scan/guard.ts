@@ -42,6 +42,7 @@ import { API_KEY_TOKEN, type KeyTerminal, keyTerminalOf } from './guard-api-key.
 import { getScanner, scannerEpochsOf, unbindStaff } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import type { ScanStaffRow } from './repo-staff.ts';
+import { loadWatchCover } from './repo-watch-cover.ts';
 import { bindScanningSession } from './scanning-workspace.ts';
 import {
   captureObservedScanningSession,
@@ -240,6 +241,8 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
     }
     const actor = scanActorOf(c);
     await bindScanningSession(ctx, actor);
+    const cover = await loadWatchCover(ctx.env.DB, actor);
+    if (cover) actor.watchCover = cover;
     denyInvalidScannerScope(actor);
     if (
       options.screenActions &&

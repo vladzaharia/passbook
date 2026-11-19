@@ -209,7 +209,7 @@ export function TemplateDetailContent({
         <Tabs
           value={tab}
           onValueChange={(v) =>
-            void navigate({ to: '.', search: { tab: v as Tab, orgId: scope.orgId }, replace: true })
+            void navigate({ to: '.', search: { tab: v as Tab }, replace: true })
           }
           className="min-w-0"
         >

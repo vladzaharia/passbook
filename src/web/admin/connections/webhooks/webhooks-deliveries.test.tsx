@@ -179,7 +179,7 @@ describe('bulk replay', () => {
   it('replays failed deliveries of the last 24 hours and reports the count', async () => {
     const calls: Calls[] = [];
     const { user, dialog } = await openDialog(calls);
-    await user.click(within(dialog).getByRole('button', { name: 'Replay' }));
+    await user.click(within(dialog).getByRole('button', { name: /^Replay/ }));
     expect(await screen.findByText('Queued 42 deliveries.')).toBeVisible();
     const body = sent(calls, 'POST', `${PATH}/replay`)[0]?.body as {
       from: number;
@@ -196,20 +196,43 @@ describe('bulk replay', () => {
     const calls: Calls[] = [];
     const { user, dialog } = await openDialog(calls);
     await user.click(
-      within(dialog).getByRole('checkbox', { name: 'Include events from before this endpoint' }),
+      within(dialog).getByRole('checkbox', {
+        name: 'Also send events from before this endpoint was added',
+      }),
     );
-    await user.click(within(dialog).getByRole('button', { name: 'Replay' }));
+    await user.click(within(dialog).getByRole('button', { name: /^Replay/ }));
     await waitFor(() => expect(sent(calls, 'POST', `${PATH}/replay`)).toHaveLength(1));
     expect(sent(calls, 'POST', `${PATH}/replay`)[0]?.body).toMatchObject({ missing: true });
+  });
+
+  it('shows how many deliveries match before sending', async () => {
+    const calls: Calls[] = [];
+    const { dialog } = await openDialog(calls);
+    expect(await within(dialog).findByText('42 deliveries match.')).toBeVisible();
+    expect(within(dialog).getByRole('button', { name: 'Replay 42' })).toBeEnabled();
+    expect(sent(calls, 'POST', `${PATH}/replay`)).toHaveLength(0);
+  });
+
+  it('disables Replay when no delivery matches', async () => {
+    const calls: Calls[] = [];
+    const { dialog } = await openDialog(
+      calls,
+      hooks(calls, undefined, { [`${PATH}/replay`]: () => json({ queued: 0 }) }),
+    );
+    expect(await within(dialog).findByText('No deliveries match.')).toBeVisible();
+    expect(within(dialog).getByRole('button', { name: 'Replay' })).toBeDisabled();
   });
 
   it('says so when nothing is in range', async () => {
     const calls: Calls[] = [];
     const { user, dialog } = await openDialog(
       calls,
-      hooks(calls, undefined, { [`${PATH}/replay`]: () => json({ queued: 0 }) }),
+      hooks(calls, undefined, {
+        [`${PATH}/replay`]: (_u, init) =>
+          json({ queued: JSON.parse(String(init?.body)).dryRun ? 5 : 0 }),
+      }),
     );
-    await user.click(within(dialog).getByRole('button', { name: 'Replay' }));
+    await user.click(within(dialog).getByRole('button', { name: /^Replay/ }));
     expect(await screen.findByText('Nothing to replay in that range.')).toBeVisible();
   });
 
@@ -235,7 +258,7 @@ describe('bulk replay', () => {
       calls,
       hooks(calls, undefined, { [`${PATH}/replay`]: () => response.clone() }),
     );
-    await user.click(within(dialog).getByRole('button', { name: 'Replay' }));
+    await user.click(within(dialog).getByRole('button', { name: /^Replay/ }));
     expect(await within(dialog).findByText(line)).toBeVisible();
     expect(screen.getByRole('dialog', { name: 'Replay deliveries' })).toBeVisible();
   });
@@ -248,7 +271,7 @@ describe('bulk replay', () => {
         [`${PATH}/replay`]: () => problem(429, 'RATE_LIMITED', 'Slow down.'),
       }),
     );
-    await user.click(within(dialog).getByRole('button', { name: 'Replay' }));
+    await user.click(within(dialog).getByRole('button', { name: /^Replay/ }));
     await within(dialog).findByText('Replay is limited to one a minute. Try again shortly.');
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());

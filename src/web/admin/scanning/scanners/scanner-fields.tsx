@@ -56,7 +56,6 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
       <section className="grid min-w-0 gap-4">
         <div>
           <h3 className="text-sm font-semibold text-fg-strong">Device details</h3>
-          <p className="mt-1 text-xs text-fg-muted">Name the device and choose its purpose.</p>
         </div>
         <div className="grid min-w-0 gap-4">
           <FormField
@@ -159,10 +158,8 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
                     onCheckedChange={(c) => onChange({ staffSignIn: c === true })}
                   />
                   <p className="text-xs text-fg-muted">
-                    Add staff and share their PINs from the Staff tab before enabling this. The
-                    scanner requires sign-in to scan. Staff accounts are shared across this
-                    organization’s live and test modes. With several managers, turn this on: a
-                    manager PIN is then checked against the manager chosen, not all of them.
+                    The scanner needs a staff PIN to scan. Staff accounts are shared across this
+                    organization’s live and test modes.
                   </p>
                 </div>
               )}
@@ -226,10 +223,7 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
                 checked={draft.lookup}
                 onCheckedChange={(lookup) => onChange({ lookup })}
               />
-              <FormField
-                label="Daily limit"
-                help="Optional. An amount, for scanners that take or add."
-              >
+              <FormField label="Daily limit" help="Optional.">
                 {(p) => (
                   <NumberField
                     {...p}

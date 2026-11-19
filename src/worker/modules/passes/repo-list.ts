@@ -58,7 +58,7 @@ export function passFilterSql(filter: PassListFilter): {
   if (filter.importId)
     add(
       `EXISTS (SELECT 1 FROM pass_import_rows r JOIN pass_imports i ON i.id = r.import_id
-        WHERE r.pass_id = passes.id AND r.import_id = ? AND i.org_id = passes.org_id)`,
+        WHERE r.pass_id = passes.id AND r.import_id = ? AND r.result IN ('created', 'updated') AND i.org_id = passes.org_id)`,
       filter.importId,
     );
   if (filter.status === 'removed') where.push('removed_at IS NOT NULL');

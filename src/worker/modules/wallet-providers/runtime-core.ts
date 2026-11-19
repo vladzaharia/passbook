@@ -2,6 +2,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { snapshotWalletCredentialContext } from './account-service.ts';
 import { GoogleWalletError } from './google-errors.ts';
 import { walletClaimHash } from './instance-claims.ts';
+import { mockProviderInput } from './mock-endpoint.ts';
 import {
   assertRuntimeCredentialKeyset,
   copyRuntimeScope,
@@ -158,7 +159,7 @@ export function runtimeExecution(
     const signal = init?.signal
       ? AbortSignal.any([init.signal, AbortSignal.timeout(PROVIDER_FETCH_TIMEOUT_MS)])
       : AbortSignal.timeout(PROVIDER_FETCH_TIMEOUT_MS);
-    const response = await globalThis.fetch(input, { ...init, signal });
+    const response = await globalThis.fetch(mockProviderInput(ctx.env, input), { ...init, signal });
     await assertRuntimeCredentialKeyset(ctx, scope);
     if (!capture || oauth) return response;
     try {

@@ -3,6 +3,7 @@ import { UnauthenticatedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
+import { isDonePasslessRow } from './feed-projection-history.ts';
 import {
   createHistoryEvidenceCache,
   historyEvidenceOf,
@@ -35,6 +36,8 @@ export async function scanningSessionActivity(
   row: ScanningSessionRow,
   authority: SessionReadAuthority,
   role: ScanRole,
+  /** The console names who recorded a passless refusal; a device never does. */
+  consoleView = false,
 ) {
   if (
     !authority ||
@@ -73,7 +76,10 @@ export async function scanningSessionActivity(
       id: scan.id,
       at: scan.at,
       deviceId: scan.raw.raw_scanner_id ?? '',
-      deviceName: policy?.scannerNameVisible(name) ? name : 'Scanner',
+      deviceName:
+        policy?.scannerNameVisible(name) || (consoleView && isDonePasslessRow(scan) && name)
+          ? name
+          : 'Scanner',
       passId: policy ? scan.passId : null,
       title: policy?.titleVisible(title) ? title : null,
       outcome: scan.raw.raw_undone_by !== null ? ('undone' as const) : (scan.outcome ?? 'refused'),

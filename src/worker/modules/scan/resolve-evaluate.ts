@@ -84,6 +84,7 @@ async function evaluateObserved(
   // Fail closed first: an empty or invalid scope accepts nothing, whatever the code names.
   if (
     actor.principal === 'scanner' &&
+    !actor.overrideScope &&
     actor.templateIds.length === 0 &&
     !actor.settings.acceptAllTemplates
   )

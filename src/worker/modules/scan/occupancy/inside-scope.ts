@@ -1,6 +1,9 @@
 // The places Who's in covers: what a session checks, or what a console zone or event holds.
 import type { ScanActor } from '../guard.ts';
+import { watchedOrgEvents, watchZoneRoots } from '../repo-watch-cover.ts';
 import { orgZoneRows, sessionZoneIds } from '../repo-zones.ts';
+import { eventPlaceRead } from './repo-inside.ts';
+import { runReads } from './repo-reads.ts';
 import { eventPlace, type OccZone, zonePlace } from './rules.ts';
 
 export interface ScopePlace {
@@ -61,13 +64,23 @@ export function zoneScope(
   return { places, nested };
 }
 
-/** What the actor's session checks: its linked tracked zones and those below, plus its event when it tracks exits. */
-export async function sessionInsideScope(db: D1Database, actor: ScanActor): Promise<InsideScope> {
+/**
+ * What the actor checks: its session's linked tracked zones and those below, a monitor's watched
+ * zones, and the event (the actor's or the one it watches) when it tracks exits.
+ */
+export async function sessionInsideScope(
+  db: D1Database,
+  actor: ScanActor,
+  /** The one place being asked about: an `allOrg` watch reads that event, not a capped list. */
+  o: { place?: string | undefined; max?: number } = {},
+): Promise<InsideScope> {
   const scope: InsideScope = { places: [], nested: {} };
-  if (actor.scanningSession) {
-    const ids = await sessionZoneIds(db, actor.orgId, actor.scanningSession.id);
-    if (ids.length) Object.assign(scope, zoneScope(await orgZoneRows(db, actor.orgId), ids));
-  }
+  const ids = actor.scanningSession
+    ? await sessionZoneIds(db, actor.orgId, actor.scanningSession.id)
+    : [];
+  if (actor.watchCover) ids.push(...(await watchZoneRoots(db, actor, actor.watchCover)));
+  if (ids.length)
+    Object.assign(scope, zoneScope(await orgZoneRows(db, actor.orgId), [...new Set(ids)], o.max));
   const { event } = actor;
   if (event?.reentry && event.archivedAt === null)
     scope.places.push({
@@ -77,5 +90,32 @@ export async function sessionInsideScope(db: D1Database, actor: ScanActor): Prom
       capacity: event.capacity,
       maxStayMs: null,
     });
+  if (actor.watchCover?.allOrg)
+    for (const e of await watchedOrgEvents(db, actor.orgId, actor.mode, {
+      ...(o.place?.startsWith('event:') ? { id: o.place.slice(6) } : {}),
+    }))
+      if (e.id !== event?.id)
+        scope.places.push({
+          place: eventPlace(e.id),
+          name: e.name,
+          parentName: null,
+          capacity: e.capacity,
+          maxStayMs: null,
+        });
+  const watched = actor.watchCover?.eventId;
+  if (watched && watched !== event?.id) {
+    const [res] = await runReads(db, [eventPlaceRead(actor.orgId, actor.mode, watched)]);
+    const e = (res?.results ?? [])[0] as
+      | { name: string; capacity: number | null; reentry: number }
+      | undefined;
+    if (e?.reentry === 1)
+      scope.places.push({
+        place: eventPlace(watched),
+        name: e.name,
+        parentName: null,
+        capacity: e.capacity,
+        maxStayMs: null,
+      });
+  }
   return scope;
 }

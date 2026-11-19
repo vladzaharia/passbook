@@ -5,6 +5,7 @@ import { normalize } from '../../../shared/pass-view/normalize.ts';
 import { modeHeaders } from '../../lib/mode.ts';
 import { PassCard, PassCardFlip } from '../../pass-card/PassCard.tsx';
 import { ScanAssetScope } from '../platform/asset-scope.ts';
+import './pass-preview.css';
 
 export function PassPreview({
   card,
@@ -67,7 +68,10 @@ export function PassPreview({
   const view = normalize(pass as PassJson, { assets });
   return (
     <>
-      <div aria-hidden={still || undefined} className={still ? 'scan-pass-preview' : undefined}>
+      <div
+        aria-hidden={still || undefined}
+        className={still ? 'scan-pass-preview' : 'scan-pass-fit'}
+      >
         {still ? (
           <PassCard view={view} removed={card.status === 'removed'} />
         ) : (

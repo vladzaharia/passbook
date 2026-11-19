@@ -59,6 +59,9 @@ export async function peekMagicLink(
   };
 }
 
+/** An invitation behind a link: pending is still open (the address has an account, so it signs in). */
+export type InvitationState = 'pending' | 'accepted' | 'revoked' | 'expired';
+
 export interface LinkTrace {
   next: string | null;
   purpose: repo.MagicPurpose;
@@ -66,6 +69,9 @@ export interface LinkTrace {
   state: 'used' | 'expired';
   /** Set for an invitation link: a fresh sign-in would not join the org. */
   invited: boolean;
+  invitation: InvitationState | null;
+  /** The link carries a Pocket ID subject to link: a plain sign-in mail would not do it. */
+  identity: boolean;
   /** The address the link was for. Pages show it masked; it is never logged. */
   email: string;
 }
@@ -78,11 +84,20 @@ export async function magicLinkTrace(
   if (token.length < 16 || token.length > 256) return null;
   const row = await repo.linkTrace(ctx.env.DB, await sha256Hex(token));
   if (!row) return null;
+  let invitation: InvitationState | null = null;
+  if (row.invitation_id !== null) {
+    if (row.inv_accepted_at !== null) invitation = 'accepted';
+    else if (row.inv_revoked_at !== null || row.org_status !== 'active') invitation = 'revoked';
+    else if ((row.inv_expires_at ?? 0) <= ctx.clock.now()) invitation = 'expired';
+    else invitation = row.has_account ? 'pending' : 'expired';
+  }
   return {
     next: row.redirect_path,
     purpose: row.purpose,
     state: row.consumed_at === null ? 'expired' : 'used',
     invited: row.invitation_id !== null,
+    invitation,
+    identity: row.has_identity === 1,
     email: row.email,
   };
 }

@@ -1,7 +1,7 @@
 import { formatShortDate } from '../../lib/format.ts';
 
 export interface AuditSearch {
-  /** Platform-wide display filter, never a tenant scope: the admin route does not retain it. */
+  /** Cross-org display filter, never a tenant scope: the admin route does not retain it. */
   filterOrgId?: string | undefined;
   actorId?: string | undefined;
   action?: string | undefined;

@@ -44,6 +44,8 @@ export interface LiveRingRow {
    * It names the holder's pass, so it is dropped with the identity.
    */
   customer?: Pick<ScanCustomerView, 'chips' | 'panel' | 'lines' | 'milestone'> | null;
+  /** A refusal or hold a desk may let in (SA 20.9). */
+  overridable?: boolean;
 }
 
 /** The entry with every identity field removed: what is kept once its pass is no longer visible. */

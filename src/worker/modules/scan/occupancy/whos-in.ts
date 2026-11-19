@@ -42,7 +42,7 @@ export async function whosIn(
     db: ctx.env.DB,
     orgId: actor.orgId,
     mode: actor.mode,
-    scope: await sessionInsideScope(ctx.env.DB, actor),
+    scope: await sessionInsideScope(ctx.env.DB, actor, { place: q.place }),
     ...q,
     now: ctx.clock.now(),
     identify: scanIdentify(ctx, named, keyset),

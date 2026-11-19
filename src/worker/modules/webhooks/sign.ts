@@ -1,6 +1,7 @@
+import { WEBHOOK_USER_AGENT } from '../../../shared/contracts/webhooks.ts';
 import { signWebhook } from '../../connectors/lib/hmac.ts';
 
-export const USER_AGENT = 'PassBook-Webhooks/1.0';
+export const USER_AGENT = WEBHOOK_USER_AGENT;
 
 /** One `v1=` value per live secret, so a receiver mid-rotation can verify with either. */
 export async function signatureHeader(

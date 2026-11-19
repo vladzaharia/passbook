@@ -1,4 +1,3 @@
-import { stripSearchParams } from '@tanstack/react-router';
 import { z } from 'zod';
 
 // Route configs load with the entry chunk; keep this module free of UI and nav imports.
@@ -28,11 +27,6 @@ export const orgScopeSearchSchema = z.object({
     .optional()
     .catch(INVALID_ORG_SCOPE),
 });
-
-/** Routes the scope does not apply to (nav.ts orgScoped: false) drop `orgId` from their URL. */
-export const UNSCOPED_SEARCH = {
-  middlewares: [stripSearchParams<{ orgId?: string | undefined }>(['orgId'])],
-};
 
 /**
  * Both Account routes: ?add=email (from the empty My passes) focuses the add-email row;

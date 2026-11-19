@@ -59,7 +59,16 @@ test('scanner and operator pass layouts stay readable at phone, tablet and desk 
         const card = page.getByTestId('scan-result');
         await expect(card).toBeVisible();
         await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
-        await expect(page.locator('.scan-buddy-seat')).toHaveCSS('opacity', '0');
+        // A verdict keeps the buddy; the card stops above its seat so they never overlap.
+        // On a short screen (height <= 650) the seat is not drawn at all.
+        if (viewport.height > 650)
+          await expect(page.locator('.scan-buddy-seat')).toHaveCSS('opacity', '1');
+        const cardBox = await card.boundingBox();
+        const seatBox = await page.locator('.scan-buddy-seat').boundingBox();
+        expect(cardBox).not.toBeNull();
+        if (viewport.height > 650) expect(seatBox).not.toBeNull();
+        if (cardBox && seatBox)
+          expect(cardBox.y + cardBox.height).toBeLessThanOrEqual(seatBox.y + 1);
         await expectWithinViewport(page, '.scan-result');
         await expectNoHorizontalOverflow(page);
         if (pass === 'generic' && viewport.height <= 650) {
@@ -74,13 +83,12 @@ test('scanner and operator pass layouts stay readable at phone, tablet and desk 
           });
         }
         if (pass === 'identity' && viewport.height <= 650) {
-          const eyebrow = await page
-            .locator('.scan-result-band .scan-verdict-eyebrow')
-            .boundingBox();
+          // The verdict word is the headline; its line sits below it without overlap.
           const title = await page.locator('.scan-result-band h1').boundingBox();
-          expect(eyebrow).not.toBeNull();
+          const sub = await page.locator('.scan-result-band p').first().boundingBox();
           expect(title).not.toBeNull();
-          if (eyebrow && title) expect(title.y).toBeGreaterThanOrEqual(eyebrow.y + eyebrow.height);
+          expect(sub).not.toBeNull();
+          if (title && sub) expect(sub.y).toBeGreaterThanOrEqual(title.y + title.height - 1);
         }
         if (surface === 'operator' && viewport.width >= 900) {
           const resultBox = await card.boundingBox();
@@ -91,7 +99,10 @@ test('scanner and operator pass layouts stay readable at phone, tablet and desk 
             expect(resultBox.x).toBeGreaterThanOrEqual(lookupBox.x + lookupBox.width - 1);
         }
         if (surface === 'operator') {
-          await expect(page.getByRole('complementary', { name: 'Operator view' })).toBeVisible();
+          // Under 900px the panel steps aside while a result shows, so the card never overlays it.
+          const panel = page.getByRole('complementary', { name: 'Operator view' });
+          if (viewport.width >= 900) await expect(panel).toBeVisible();
+          else await expect(panel).toBeHidden();
           await expect(page.getByRole('region', { name: 'Session activity' })).toBeHidden();
         }
         await page.screenshot({
@@ -165,12 +176,18 @@ test('customer screens stay pass-agnostic and legible across sizes', async ({ pa
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.emulateMedia({ colorScheme: viewport.scheme, reducedMotion: 'no-preference' });
       await page.goto(`/scan?visual=1&surface=customer&pass=${pass}`);
-      await expect(page.getByTestId('scan-live')).toHaveAttribute('data-view', 'customer');
-      await expect(page.getByRole('heading', { name: 'Checked in', exact: true })).toBeVisible();
+      await expect(page.getByTestId('duo-customer-display')).toHaveAttribute(
+        'data-status',
+        'accepted',
+      );
+      await expect(page.getByRole('heading', { name: "You're in" })).toBeVisible();
+      await expect(page.getByText('Hi, Sam')).toBeVisible();
       await expect(page.getByRole('button', { name: 'Refresh setup' })).toHaveCount(0);
-      await expect(page.getByTestId('scan-live')).not.toContainText('Private pass holder');
-      await expectWithinViewport(page, '.scan-live-welcome');
-      await expectWithinViewport(page, '.scan-live-buddy');
+      await expect(page.getByTestId('duo-customer-display')).not.toContainText(
+        'Private pass holder',
+      );
+      await expectWithinViewport(page, '.cstage-copy');
+      await expectWithinViewport(page, '.cstage-buddy');
       await expectNoHorizontalOverflow(page);
       await page.screenshot({
         animations: 'disabled',
@@ -189,7 +206,7 @@ test('Duo customer display keeps its brand lockup and status clear in short and 
     await page.goto('/scan?visual=1&surface=duo&status=accepted');
     await expect(page.getByText('Northwind Live')).toBeVisible();
     await expect(page.getByRole('heading', { name: "You're checked in" })).toBeVisible();
-    await expectWithinViewport(page, '.duo-customer-display-copy');
+    await expectWithinViewport(page, '.cstage-copy');
     await expectNoHorizontalOverflow(page);
     await page.screenshot({
       animations: 'disabled',

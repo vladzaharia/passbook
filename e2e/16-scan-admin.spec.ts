@@ -59,7 +59,7 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
       .getByRole('dialog')
       .getByRole('button', { name: 'Assign scanners', exact: true })
       .click();
-    await expect(page.getByText('0 of 1 scanners paired')).toBeVisible();
+    await expect(page.getByText('0 of 1 scanner paired')).toBeVisible();
     await page.screenshot({ path: 'test-results/scanner-event-admin.png', fullPage: true });
     const outcome = await api.send('POST', '/api/v1/scan/actions', {
       scope: { orgId, timeZone: 'UTC' },
@@ -73,7 +73,7 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
     const row = page.getByRole('row').filter({ hasText: 'Admin Door Guest' });
     await row.getByRole('button').click();
     await expect(page.getByRole('dialog', { name: 'Scan', exact: true })).toContainText(
-      'Admin console',
+      'Admin scan',
     );
     await page.getByRole('button', { name: 'Undo check-in', exact: true }).click();
     await expect(page.getByRole('alertdialog')).toContainText('The pass can be checked in again.');

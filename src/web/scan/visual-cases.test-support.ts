@@ -90,7 +90,7 @@ const cases: { id: string; name: string; display: ScanDisplay; style: string }[]
           [
             field('organization', 'Organization', 'Northwind Arts Council'),
             field('role', 'Role', 'Volunteer coordinator'),
-            field('member', 'Member ID', 'NW-2048-771'),
+            field('member', 'Member number', 'NW-2048-771'),
           ],
           { kind: 'details', title: 'Identity details', icon: 'id-card', tone: 'violet' },
         ),

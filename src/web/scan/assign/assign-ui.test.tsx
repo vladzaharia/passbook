@@ -1,9 +1,8 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
-import { TAG_ERROR_COPY } from '../../../shared/copy/tags.ts';
 import '../../lib/test-utils.tsx';
 import { type TAG_SCENARIOS, TagVisual } from '../visual-tags.tsx';
 import { flagText, noneLine } from './tag-lines.ts';
@@ -69,9 +68,32 @@ describe('the assign card', () => {
     show(scenario);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(headline);
   });
-  it('a pass that changed hands says so, in the copy deck words', () => {
+  it('a pass that was reassigned offers Start again and Done', () => {
     show('assign-holder-changed');
-    expect(screen.getByText(TAG_ERROR_COPY.TAG_HOLDER_CHANGED)).toBeTruthy();
+    expect(screen.getByText(SCAN_TAG_COPY.err.holderChanged.sub)).toBeTruthy();
+    expect(screen.getByRole('button', { name: SCAN_TAG_COPY.dock.startAgain })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Done' })).toBeTruthy();
+  });
+  it('too many tries keeps Cancel and a Try again that waits for the countdown', () => {
+    vi.useFakeTimers();
+    try {
+      show('assign-too-many');
+      const again = screen.getByRole('button', { name: SCAN_TAG_COPY.dock.tryAgain });
+      expect((again as HTMLButtonElement).disabled).toBe(true);
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
+      act(() => {
+        vi.advanceTimersByTime(21_000);
+      });
+      expect((again as HTMLButtonElement).disabled).toBe(false);
+      expect(screen.getByText(SCAN_TAG_COPY.err.tooMany.ready)).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it('a policy refusal names the next step and offers only Done', () => {
+    show('assign-secure');
+    expect(screen.getByText(/Ask an admin/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Done' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: SCAN_TAG_COPY.dock.tryAnother })).toBeNull();
   });
   it('the web hint rides an unreadable tag', () => {
@@ -185,6 +207,11 @@ const NOT_YET = new Set([
   'settings.assign.desk',
   'settings.assign.manager',
   'pass.cantAssign',
+  'err.tooMany.ready',
+  'dock.startAgain',
+  'dock.tryAgain',
+  'err.holderChanged.headline',
+  'err.holderChanged.sub',
   'err.secureNeededDoor.headline',
   'err.secureNeededDoor.sub',
   'approval',

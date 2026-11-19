@@ -113,8 +113,7 @@ describe('labels', () => {
     );
     expect(targetRef({ ...e, targetType: 'settings', targetId: 'org:o1' })).toMatchObject({
       name: 'Organization settings',
-      to: '/admin/orgs/o1',
-      search: { view: 'workspace', orgId: 'o1' },
+      to: '/admin/o/o1/settings',
     });
     expect(targetRef({ ...e, targetType: 'broadcast', targetId: 'b1' })).toMatchObject({
       name: 'Message',
