@@ -139,6 +139,22 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   retention_holds: { org: 'org_id' },
   retention_receipts: { org: 'org_id' },
   retention_receipt_anchors: { org: 'org_id' },
+  // Delivery channels (0109). Policy per template, override per pass; copy evidence is insert-once.
+  template_channel_policies: {
+    org: 'org_id',
+    mode: 'mode',
+    conflict: ['org_id', 'mode', 'template_id'],
+  },
+  // No `pass` pin: holder and join grants never write overrides.
+  pass_channels: { org: 'org_id', mode: 'mode', conflict: ['pass_id', 'channel'] },
+  pass_channel_copies: {
+    org: 'org_id',
+    mode: 'mode',
+    pass: 'pass_id',
+    conflict: ['pass_id', 'channel'],
+  },
+  // Printed tickets (0110): minted and voided through grants; the triggers void them with the pass.
+  pass_prints: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   data_requests: { org: 'org_id' },
   data_request_passes: { org: null, edges: [edge('request_id', 'data_requests')] },
 };

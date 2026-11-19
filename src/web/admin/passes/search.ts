@@ -9,6 +9,7 @@ export const passListSearchSchema = z.object({
   orgId: opt(z.string()),
   templateId: opt(z.string()),
   connectionId: opt(z.string()),
+  importId: opt(z.string()),
   status: opt(PassListStatusSchema),
   holderState: opt(z.enum(['unassigned', 'waiting', 'owned'])),
   onDevice: opt(z.enum(['true', 'false'])),

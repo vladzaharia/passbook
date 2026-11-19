@@ -11,6 +11,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import { ipRatePrefix } from '../../platform/ip.ts';
 import { redactString } from '../../platform/log.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { recordCopy } from '../channels/gate.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getPassBySerial } from '../passes/repo-read-pass.ts';
 import { recordAppleEvents } from './events.ts';
@@ -158,6 +159,7 @@ export async function registerDevice(
     }
     throw error;
   }
+  await recordCopy(ctx, pass, 'apple');
   writeEvent(ctx.env, {
     event: 'pass.registered',
     orgId: pass.orgId,

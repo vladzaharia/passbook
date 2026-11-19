@@ -88,10 +88,10 @@ describe('match columns', () => {
     const user = userEvent.setup();
     await open(importDto());
     await screen.findByText('Match columns');
-    expect(screen.getByText('Keep values edited in the admin')).toBeTruthy();
+    expect(screen.getByText("Don't overwrite edits made in the console")).toBeTruthy();
     await user.click(screen.getByRole('combobox', { name: 'Find passes by' }));
     await user.click(await screen.findByRole('option', { name: "Don't match" }));
-    expect(screen.queryByText('Keep values edited in the admin')).toBeNull();
+    expect(screen.queryByText("Don't overwrite edits made in the console")).toBeNull();
   });
 
   it('shows the check failure', async () => {
@@ -180,7 +180,7 @@ describe('check', () => {
         );
       },
     });
-    await user.click(await screen.findByRole('button', { name: 'Create passes' }));
+    await user.click(await screen.findByRole('button', { name: /^(Create|Update) \d+/ }));
     const go = await screen.findByRole('button', { name: 'Create 120 and update 40' });
     expect(go).toHaveProperty('disabled', true);
     expect(
@@ -196,7 +196,7 @@ describe('check', () => {
   it('shows the plain budget when it covers everyone, and no switch when nobody has an email', async () => {
     const user = userEvent.setup();
     await open(checked({ counts: { ...COUNTS, errors: 0, emailable: 50 } }));
-    await user.click(await screen.findByRole('button', { name: 'Create passes' }));
+    await user.click(await screen.findByRole('button', { name: /^(Create|Update) \d+/ }));
     expect(await screen.findByText('You can send 80 more pass emails today.')).toBeTruthy();
     expect(screen.queryByRole('checkbox')).toBeNull();
   });
@@ -211,7 +211,10 @@ describe('check', () => {
       },
     });
     expect(await screen.findByText('The template changed. Check again to finish.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Create passes' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: /^(Create|Update) \d+/ })).toHaveProperty(
+      'disabled',
+      true,
+    );
     await user.click(screen.getByRole('button', { name: 'Check again' }));
     await waitFor(() => expect(posts).toHaveLength(1));
   });
@@ -326,6 +329,30 @@ describe('progress and results', () => {
     await waitFor(() => expect(seen).toEqual(['/api/v1/pass-imports/imp1/results.csv']));
   });
 
+  it('says what was skipped, lists it, and links to the passes of this import', async () => {
+    await open(
+      finished({
+        counts: { ...COUNTS, errors: 1 },
+        problems: [
+          {
+            row: 4,
+            column: 'Tier',
+            field: 'tier',
+            code: 'INPUT',
+            severity: 'error',
+            message: 'Tier must be Plus or Pro.',
+          },
+        ],
+        problemTotals: { errors: 1, warnings: 0 },
+      }),
+    );
+    expect(await screen.findByText('172 rows done, 1 skipped.')).toBeTruthy();
+    expect(screen.getByText('Skipped rows')).toBeTruthy();
+    expect(screen.getByText('Tier must be Plus or Pro.')).toBeTruthy();
+    const link = screen.getByRole('link', { name: 'View passes' });
+    expect(link.getAttribute('href')).toContain('importId=imp1');
+  });
+
   it('emails the rest through the server, page by page, and says how many were held back', async () => {
     const user = userEvent.setup();
     const cursors: unknown[] = [];
@@ -354,6 +381,8 @@ describe('progress and results', () => {
       },
     );
     await user.click(await screen.findByRole('button', { name: 'Email the rest' }));
+    expect(cursors).toEqual([]);
+    await user.click(await screen.findByRole('button', { name: 'Send' }));
     await waitFor(() => expect(cursors).toEqual([null, '51']));
     expect(await screen.findByText(/60 emailed\. 4 held back/)).toBeTruthy();
   });
@@ -384,7 +413,7 @@ describe('progress and results', () => {
   it('hides Create, Discard and Change columns from a member who cannot operate', async () => {
     await open(checked(), {}, ['passes:read']);
     await screen.findByText(/120 to create/);
-    for (const name of ['Create passes', 'Discard', 'Change columns'])
+    for (const name of [/^(Create|Update) \d+/, 'Discard', 'Change columns'])
       expect(screen.queryByRole('button', { name })).toBeNull();
   });
 

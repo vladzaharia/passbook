@@ -22,10 +22,16 @@ export const HOLDER_COPY = {
   addHere: 'Add to this iPhone',
   hide: 'Hide',
   qrFailed: 'Could not draw the QR code. Reload.',
-  voided: 'This pass was voided.',
-  voidedMany: 'These passes were voided.',
+  voided: 'This pass was voided. It no longer works.',
+  /** Under one voided pass in a bundle. */
+  voidedShort: 'No longer valid.',
+  voidedMany: 'These passes were voided. They no longer work.',
+  /** A bundle with nothing to add: every pass removed, or a mix of voided and removed. */
+  removedMany: 'These passes were removed.',
+  endedMany: 'None of these passes can be added.',
   expired: 'This pass has expired.',
   /** The org took the pass out of Wallet; its own note follows. */
+  removedPlain: 'This pass was removed.',
   removed: 'Removed from Wallet. It stays in Expired passes until you delete it.',
   /** A voided pass whose org has no contact of its own: name the org, never the platform. */
   askForNew: (org: string) => `Ask ${org || 'the organization'} for a new pass.`,
@@ -41,6 +47,12 @@ export const HOLDER_COPY = {
   browserTitle: 'Show a barcode in your browser',
   browserLine: 'For readers that scan a screen.',
   showBarcode: 'Show barcode',
+  /** The paper channel: a link to the print page. */
+  printTitle: 'Print your ticket',
+  printLine: 'For entry on paper.',
+  print: 'Print',
+  /** Every channel is off for this pass. */
+  noTicket: (org: string) => `No ticket available. Contact ${org || 'the organizer'}.`,
   /** The barcode page: one line for the reader, then the offline copy (this device only). */
   presentLine: 'Show this to the reader.',
   presentUnavailable: 'Barcode unavailable',
@@ -54,6 +66,8 @@ export const HOLDER_COPY = {
   saveOfflineFailed: 'Could not save. Try again.',
   /** The pass email, under the Apple badge: it reads the same on any phone. */
   emailAddLine: 'Open this email on your phone to add the pass to your wallet.',
+  /** The bundle email's, for several passes. */
+  emailAddLines: 'Open this email on your phone to add the passes to your wallet.',
   /** The pass page's link preview when native wallets are offered too. */
   previewWallets: 'Add it to your wallet.',
   /** Mail the pass again: the pass page, My passes and the sign-in code. */
@@ -67,8 +81,10 @@ export const HOLDER_COPY = {
   lostPhoneDone:
     'Done. The old copies stop working and your other devices are signed out. Check your email for the new pass.',
   /** A voided or expired pass: when, then who to ask. */
-  voidedOn: (date: string) => `This pass was voided on ${date}.`,
+  voidedOn: (date: string) => `This pass was voided on ${date}. It no longer works.`,
   expiredOn: (date: string) => `This pass expired on ${date}.`,
+  /** My passes: the group of voided and removed ones, under the live ones. */
+  endedTitle: 'Voided and removed',
   /** My passes. */
   noPasses: 'Passes sent to your verified emails show up here.',
   addAllTitle: 'Add all to Apple Wallet',
@@ -87,6 +103,7 @@ export const HOLDER_COPY = {
   count: (n: number) => `${n} ${n === 1 ? 'pass' : 'passes'}`,
   /** /p link previews. */
   previewActive: 'Open your pass.',
+  previewVoided: 'This pass was voided.',
   previewRemoved: 'This pass was removed from Wallet.',
   /**
    * An unknown, rotated or expired /p or /b link. The server cannot say which (that would tell a

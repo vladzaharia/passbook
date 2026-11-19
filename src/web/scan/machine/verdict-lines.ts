@@ -1,10 +1,13 @@
 /** The verdict line of an outcome, filled from the outcome alone. Pure: every marker has a value. */
+
+import { CHANNEL_LABEL } from '../../../shared/copy/channels.ts';
 import {
   SCAN_COUNTER_COPY,
   SCAN_REASON_COPY,
   SCAN_REASON_VARIANTS,
   type ScanLine,
   scanLine,
+  TYPED_NUMBER_FLAG,
 } from '../../../shared/copy/scan.ts';
 import { headlineValues } from '../../../shared/copy/scan-headline.ts';
 import {
@@ -27,6 +30,10 @@ function shown(value: Value, n: unknown): string {
   if (typeof n === 'string') return n;
   return n === null || n === undefined ? '' : JSON.stringify(n);
 }
+
+/** The channel as staff say it: a paper copy is a printed ticket. */
+const channelName = (channel: ScanOutcome['channel']): string =>
+  !channel ? 'This copy' : channel === 'paper' ? 'Printed ticket' : CHANNEL_LABEL[channel];
 
 /** Every marker the copy names, from `value`, `access`, `previous`, `event` and the counts. */
 export function lineValues(o: ScanOutcome, now: number): Values {
@@ -64,6 +71,7 @@ export function lineValues(o: ScanOutcome, now: number): Values {
       flag: o.flags[0],
       input: v?.label,
     }),
+    channel: channelName(o.channel),
     plan: 'This plan',
     zone: 'this area',
     when: '',
@@ -79,6 +87,8 @@ function pick(o: ScanOutcome, desk: boolean): ScanLine | null {
   const v = SCAN_REASON_VARIANTS;
   const counter = o.value?.counter ? SCAN_COUNTER_COPY[reason] : undefined;
   if (counter) return counter;
+  if (reason === 'check_required' && o.flags[0] === TYPED_NUMBER_FLAG)
+    return { ...line, sub: v.check_required.typedNumber };
   if (reason === 'needs_approval' && desk) return v.needs_approval;
   if (reason === 'already_done' && !o.previous) return { ...line, sub: v.already_done.noPrevious };
   if (reason === 'wrong_event' && !o.event) return { ...line, sub: v.wrong_event.noEvent };

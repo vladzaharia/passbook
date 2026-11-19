@@ -10,6 +10,7 @@ import { sameOriginOnly } from '../../platform/csrf.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { breakglassForm, breakglassSignIn } from './breakglass-handlers.ts';
 import { confirmMagic, consumeMagic, requestMagic } from './magic-handlers.ts';
+import { resendMagic } from './magic-resend.ts';
 import { clientMetadataDocument } from './oidc-cimd.ts';
 import { callbackOidc, noAccess, startOidc } from './oidc-handlers.ts';
 import { getSession, logout } from './session-handlers.ts';
@@ -80,6 +81,12 @@ register(
   'auth',
   { method: 'post', path: '/magic/consume', summary: 'Consume a magic link or code', status: 302 },
   consumeMagic,
+);
+register(
+  authRoutes,
+  'auth',
+  { method: 'post', path: '/magic/resend', summary: 'Email a new link for a dead one (HTML)' },
+  resendMagic,
 );
 register(
   authRoutes,

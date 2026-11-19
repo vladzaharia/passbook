@@ -33,6 +33,9 @@ export const CUSTOMER_COPY = {
 export const CUSTOMER_REASON_SUB: Record<ScanReason, string | null> = {
   not_found: null,
   code_replaced: null,
+  channel_off: null,
+  print_replaced: null,
+  print_voided: null,
   ambiguous: null,
   test_pass: null,
   live_pass: null,

@@ -9,6 +9,7 @@ export const CLEARED: { [K in keyof Required<ListSearch>]: undefined } = {
   q: undefined,
   templateId: undefined,
   connectionId: undefined,
+  importId: undefined,
   status: undefined,
   holderState: undefined,
   onDevice: undefined,
@@ -66,7 +67,7 @@ export function PassListFilters({
       defaultValue: ANY,
       options: [
         { value: ANY, label: 'Any' },
-        { value: 'owned', label: 'Claimed' },
+        { value: 'owned', label: 'Holder signed in' },
         { value: 'waiting', label: 'Not claimed' },
         { value: 'unassigned', label: 'No holder' },
       ],
@@ -107,6 +108,21 @@ export function PassListFilters({
       ],
       onChange: (v) => onChange({ connectionId: pick(v) }),
     },
+    ...(search.importId
+      ? [
+          {
+            id: 'import',
+            label: 'Source',
+            value: search.importId,
+            defaultValue: ANY,
+            options: [
+              { value: ANY, label: 'All passes' },
+              { value: search.importId, label: 'From this import' },
+            ],
+            onChange: (v: string) => onChange({ importId: pick(v) }),
+          },
+        ]
+      : []),
   ];
   return (
     <FilterBar

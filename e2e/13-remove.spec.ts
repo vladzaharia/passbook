@@ -23,11 +23,8 @@ test('remove from Wallet, check the sync log, then restore', async ({ page }) =>
   const log = await admin.get(`/api/v1/passes/${pass.id}/events?group=changes`);
   expect(log.items.map((e: { kind: string }) => e.kind)).toContain('pass.removed');
 
-  // The header and the Fields callout both offer Restore; they run the same action.
-  await page
-    .getByRole('tabpanel', { name: 'Fields' })
-    .getByRole('button', { name: 'Restore', exact: true })
-    .click();
+  // One Restore, in the header.
+  await page.getByRole('button', { name: 'Restore', exact: true }).click();
   await expect(page.getByText('Pass restored')).toBeVisible();
   const restored = await admin.get(`/api/v1/passes/${pass.id}`);
   expect(restored.removedAt).toBeNull();

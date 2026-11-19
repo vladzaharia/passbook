@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { Download, Mail, RefreshCw, Trash2 } from 'lucide-react';
+import { Download, List, Mail, RefreshCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { PassImportDto } from '@/shared/contracts/pass-imports.ts';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
@@ -17,12 +17,14 @@ import {
 } from '../../../ui/index.ts';
 import { handOffToConnection } from '../../connections/import-handoff.ts';
 import { downloadImportFile, emailTheRest, removeCreated, useFailedRows } from './api.ts';
+import { ProblemsTable } from './problems.tsx';
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({ label, value, hint }: { label: string; value: number; hint?: string }) {
   return (
     <div className="flex flex-col gap-1">
       <dt className="text-xs text-fg-muted">{label}</dt>
       <dd className="text-2xl font-semibold tabular-nums text-fg-strong">{value}</dd>
+      {hint && value > 0 ? <dd className="text-xs text-fg-muted">{hint}</dd> : null}
     </div>
   );
 }
@@ -81,9 +83,13 @@ export function ImportResults({
   const qc = useQueryClient();
   const [removing, setRemoving] = useState(false);
   const [mailing, setMailing] = useState(false);
+  const [confirmMail, setConfirmMail] = useState(false);
   const p = imp.progress;
   if (!p) return null;
-  const clean = imp.state === 'done' && p.failed === 0;
+  // Rows with errors the person chose to skip at the check.
+  const skipped = imp.counts?.errors ?? 0;
+  const clean = imp.state === 'done' && p.failed === 0 && skipped === 0;
+  const done = p.created + p.updated + p.unchanged;
   const live = p.created - p.removed;
   const save = (file: 'errors.csv' | 'results.csv') =>
     downloadImportFile(imp.id, orgId, file).catch((e: unknown) =>
@@ -107,14 +113,18 @@ export function ImportResults({
       <CardHeader title={C.results.title} />
       <CardBody className="relative flex flex-col gap-4">
         <Celebrate when={clean} />
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 pt-4">
           <Buddy
             scene={clean ? 'cheer' : 'sorry'}
             mood={clean ? 'happy' : 'sad'}
             size="sm"
             className="shrink-0"
           />
-          {clean ? <p className="text-base font-medium text-fg-strong">{C.results.clean}</p> : null}
+          {imp.state === 'failed' ? null : (
+            <p className="text-base font-medium text-fg-strong">
+              {clean ? C.results.clean : C.results.summary(done, skipped + p.failed)}
+            </p>
+          )}
         </div>
         {imp.state === 'failed' ? <Callout tone="danger">{C.results.stopped}</Callout> : null}
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -122,11 +132,17 @@ export function ImportResults({
           <Stat label={C.results.updated} value={p.updated} />
           <Stat label={C.results.unchanged} value={p.unchanged} />
           <Stat label={C.results.failed} value={p.failed} />
-          <Stat label={C.results.notEmailed} value={p.notEmailed} />
+          <Stat label={C.results.notEmailed} value={p.notEmailed} hint={C.results.notEmailedHelp} />
           <Stat label={C.results.removed} value={p.removed} />
         </dl>
         <FailedRows imp={imp} orgId={orgId} />
+        {skipped > 0 ? <ProblemsTable imp={imp} title={C.results.skippedRows} /> : null}
         <div className="flex flex-wrap gap-2">
+          <Button asChild iconStart={<List aria-hidden />}>
+            <Link to="/admin/passes" search={{ orgId, importId: imp.id }}>
+              {C.results.viewPasses}
+            </Link>
+          </Button>
           {canOperate ? (
             <Button
               variant="outline"
@@ -150,7 +166,7 @@ export function ImportResults({
               variant="outline"
               iconStart={<Mail aria-hidden />}
               loading={mailing}
-              onClick={mail}
+              onClick={() => setConfirmMail(true)}
             >
               {C.results.emailRest}
             </Button>
@@ -158,6 +174,7 @@ export function ImportResults({
           {canOperate && live > 0 ? (
             <Button
               variant="outline"
+              className="text-danger"
               iconStart={<Trash2 aria-hidden />}
               onClick={() => setRemoving(true)}
             >
@@ -181,6 +198,17 @@ export function ImportResults({
             </Link>
           </Button>
         </div>
+        <ConfirmDialog
+          open={confirmMail}
+          onOpenChange={setConfirmMail}
+          title={C.results.emailRestTitle}
+          description={C.results.emailRestBody(p.notEmailed)}
+          confirmLabel={C.results.emailRestConfirm}
+          onConfirm={async () => {
+            setConfirmMail(false);
+            await mail();
+          }}
+        />
         <ConfirmDialog
           open={removing}
           onOpenChange={setRemoving}

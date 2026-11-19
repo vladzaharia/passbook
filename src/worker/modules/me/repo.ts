@@ -163,6 +163,10 @@ const NOT_IN_WALLET = 'NOT EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id
 
 export interface BundleRow {
   id: string;
+  org_id: string;
+  mode: 'live' | 'test';
+  template_id: string;
+  template_version: string;
   object_key: string;
   object_size: number | null;
   version: number;
@@ -178,14 +182,13 @@ const BUNDLE_WHERE = `p.owner_user_id = ? AND p.status = 'active' AND p.deleted_
 const ACTIVE_ORG = "JOIN orgs AS o ON o.id = p.org_id AND o.status = 'active'";
 
 /** Every pass Add all would bundle, newest first: the snapshot's ordered ids. */
-export const listBundleIds = async (db: Db, userId: string) =>
-  (
-    await all<{ id: string }>(
-      db,
-      `SELECT p.id FROM passes AS p ${ACTIVE_ORG} WHERE ${BUNDLE_WHERE} ORDER BY p.id DESC`,
-      [userId],
-    )
-  ).map((row) => row.id);
+export const listBundleCandidates = (db: Db, userId: string) =>
+  all<Pick<BundleRow, 'id' | 'org_id' | 'mode' | 'template_id' | 'template_version'>>(
+    db,
+    `SELECT p.id, p.org_id, p.mode, p.template_id, p.template_version
+     FROM passes AS p ${ACTIVE_ORG} WHERE ${BUNDLE_WHERE} ORDER BY p.id DESC`,
+    [userId],
+  );
 
 /** One part, by id range from the snapshot: a pass leaving the set never shifts its neighbours. */
 export const listBundlePasses = (
@@ -196,7 +199,7 @@ export const listBundlePasses = (
 ) =>
   all<BundleRow>(
     db,
-    `SELECT p.id, p.object_key, p.object_size, p.version, p.revision,
+    `SELECT p.id, p.org_id, p.mode, p.template_id, p.template_version, p.object_key, p.object_size, p.version, p.revision,
        p.credential_generation, p.lifecycle_generation, p.link_generation
      FROM passes AS p ${ACTIVE_ORG}
      WHERE ${BUNDLE_WHERE} AND p.id <= ? ${range.after === null ? '' : 'AND p.id > ?'}

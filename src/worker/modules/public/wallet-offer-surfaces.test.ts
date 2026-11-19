@@ -177,7 +177,7 @@ describe('native offers on public and holder surfaces', () => {
       const path = surface === 'list' ? '/api/v1/me/passes' : `/api/v1/me/passes/${pass.id}`;
       const response = await get(path, headers);
       expect(response.status).toBe(surface === 'list' ? 200 : 404);
-      expect(lookup).toHaveBeenCalledWith(expect.anything(), pass.id);
+      expect(lookup).toHaveBeenCalledWith(expect.anything(), pass.id, expect.anything());
       const text = await response.text();
       if (surface === 'list') {
         const body = JSON.parse(text) as { items: { id: string }[] };
@@ -223,7 +223,7 @@ describe('native offers on public and holder surfaces', () => {
         return offersFor(pass);
       });
       const response = await get(`/api/v1/me/passes/${pass.id}`, headers);
-      expect(lookup).toHaveBeenCalledWith(expect.anything(), pass.id);
+      expect(lookup).toHaveBeenCalledWith(expect.anything(), pass.id, expect.anything());
       const body = await response.text();
       expect(body).not.toContain('private-google-token');
       expect(body).not.toContain('private-samsung-token');
@@ -250,7 +250,7 @@ describe('native offers on public and holder surfaces', () => {
     try {
       const response = await get(`/api/v1/me/passes/${pass.id}`, headers);
       expect(response.status).toBe(200);
-      expect(lookup).toHaveBeenCalledWith(expect.anything(), pass.id);
+      expect(lookup).toHaveBeenCalledWith(expect.anything(), pass.id, expect.anything());
       const body = await response.text();
       expect(JSON.parse(body)).toMatchObject({ presentationEligible: false, walletOffers: [] });
       expect(body).not.toContain('private-google-token');
@@ -272,7 +272,7 @@ describe('native offers on public and holder surfaces', () => {
     const response = await get(`/p/${await linkToken(kit.env, pass)}`);
     expect(response.status).toBe(404);
     expect(response.headers.get('cache-control')).toBe('private, no-store');
-    expect(lookup).toHaveBeenCalledWith(expect.anything(), pass.id);
+    expect(lookup).toHaveBeenCalledWith(expect.anything(), pass.id, expect.anything());
     const html = await response.text();
     expect(html).not.toContain(replacement);
     expect(html).not.toContain('/wallet/google');

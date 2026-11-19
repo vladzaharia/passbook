@@ -3,20 +3,21 @@ import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
 import { Badge } from '../../../ui/index.ts';
 
 /** The first 100 problems, errors first: Row, Column, Problem. */
-export function ProblemsTable({ imp }: { imp: PassImportDto }) {
+export function ProblemsTable({ imp, title }: { imp: PassImportDto; title?: string }) {
   if (imp.problems.length === 0) return null;
   const total = imp.problemTotals.errors + imp.problemTotals.warnings;
   return (
     <div className="flex flex-col gap-2">
+      {title ? <h3 className="text-sm font-semibold text-fg-strong">{title}</h3> : null}
       <div className="overflow-x-auto rounded-md border border-border">
-        <table className="w-full min-w-[28rem] text-left text-sm">
+        <table className="w-full text-left text-sm">
           <caption className="sr-only">{C.check.errors}</caption>
           <thead className="bg-surface-raised text-xs text-fg-muted">
             <tr>
               <th scope="col" className="px-3 py-2 font-medium">
                 {C.results.row}
               </th>
-              <th scope="col" className="px-3 py-2 font-medium">
+              <th scope="col" className="px-3 py-2 font-medium max-sm:hidden">
                 {C.results.column}
               </th>
               <th scope="col" className="px-3 py-2 font-medium">
@@ -28,8 +29,8 @@ export function ProblemsTable({ imp }: { imp: PassImportDto }) {
             {imp.problems.map((p) => (
               <tr key={`${p.row}:${p.code}:${p.column ?? ''}`}>
                 <td className="px-3 py-2 tabular-nums text-fg-strong">{p.row}</td>
-                <td className="px-3 py-2 text-fg-muted">{p.column ?? ''}</td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2 text-fg-muted max-sm:hidden">{p.column ?? ''}</td>
+                <td className="px-3 py-2 break-words">
                   {p.severity === 'warning' ? (
                     <Badge tone="warning" className="mr-2">
                       Warning

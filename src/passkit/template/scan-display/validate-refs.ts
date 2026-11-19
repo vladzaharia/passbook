@@ -243,7 +243,7 @@ function checkWarnings(ctx: Ctx): void {
         'warning',
         'SHADOWED',
         'holder',
-        `Input "${name}" is hidden by a display root. Use inputs.${name}.`,
+        `The scanner display cannot read "${name}" directly. Write inputs.${name} to show it.`,
         { name },
       );
   doc.variants?.forEach((variant, i) => {

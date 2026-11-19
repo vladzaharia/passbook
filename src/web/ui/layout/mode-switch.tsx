@@ -19,7 +19,7 @@ export function ModeSwitch() {
     >
       <FlaskConical aria-hidden className="size-4 shrink-0" />
       {/* The visible words are the switch's name; the band and the state say which mode is on. */}
-      <span id={label} className="whitespace-nowrap max-sm:sr-only">
+      <span id={label} className="whitespace-nowrap">
         Test mode
       </span>
       <Tooltip content={on ? 'Leave Test mode' : 'Try things without sending email'}>

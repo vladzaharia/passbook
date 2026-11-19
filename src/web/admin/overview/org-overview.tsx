@@ -155,8 +155,9 @@ export function OrgOverviewPage({
             <EmptyState
               art="passes"
               title="No passes yet"
+              // With the checklist up, its first open step is the one action.
               action={
-                canOperate ? (
+                canOperate && !(checklist && !dismissed) ? (
                   <Button asChild variant="primary" iconStart={<Plus aria-hidden />}>
                     <Link to="/admin/passes/new">New pass</Link>
                   </Button>

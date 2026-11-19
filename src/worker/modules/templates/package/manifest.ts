@@ -1,6 +1,7 @@
 import { Validator } from '@cfworker/json-schema';
 import type { BehaviorRegistry } from '../../../../passkit/behaviors/registry.ts';
 import { messagingIssues } from '../../../../passkit/template/messaging.ts';
+import { paperManifestIssues } from '../../../../passkit/template/paper.ts';
 import { reservedInputIssues } from '../../../../passkit/template/reserved.ts';
 import { scanManifestIssues } from '../../../../passkit/template/scan.ts';
 import { stampsIssues } from '../../../../passkit/template/stamps.ts';
@@ -271,6 +272,7 @@ export function validateManifest(
       passJson: pass,
       ...(options.assetNames ? { assetNames: options.assetNames } : {}),
     }),
+    ...paperManifestIssues(manifest, { passJson: pass }),
   );
 
   for (const [i, use] of (manifest.behaviors ?? []).entries()) {

@@ -155,6 +155,8 @@ export async function inviteOrgMember(
       to: row.email,
       ...invitationEmail({
         orgName: org?.name ?? 'an organization',
+        roles: parsed.data.roles,
+        inviter: await repo.userName(ctx.env.DB, auth.userId),
         link: signIn ?? acceptLink,
         ...(signIn ? { acceptLink } : {}),
         base: baseUrl(ctx.env),

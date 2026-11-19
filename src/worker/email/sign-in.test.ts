@@ -31,6 +31,12 @@ describe('renderSignInEmail', () => {
     expect(mail.html).toContain('lang="en"');
   });
 
+  it('says which address the sign-in is for', () => {
+    const mail = signIn({ to: 'ada@example.test' });
+    expect(mail.text).toContain('For ada@example.test.');
+    expect(mail.html).toContain('For ada@example.test.');
+  });
+
   it('uses the shared fluid shell with a title and color-scheme meta', () => {
     const mail = signIn();
     expect(mail.html).toContain('max-width:480px');

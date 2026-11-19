@@ -734,7 +734,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         {
           "severity": "warning",
           "code": "SCAN_DISPLAY_SHADOWED",
-          "message": "Input \"access\" is hidden by a display root. Use inputs.access.",
+          "message": "The scanner display cannot read \"access\" directly. Write inputs.access to show it.",
           "path": "scan.display.holder",
           "params": {
             "name": "access"
@@ -1472,7 +1472,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         {
           "severity": "warning",
           "code": "SCAN_DISPLAY_SHADOWED",
-          "message": "Input \"access\" is hidden by a display root. Use inputs.access.",
+          "message": "The scanner display cannot read \"access\" directly. Write inputs.access to show it.",
           "path": "scan.display.holder",
           "params": {
             "name": "access"
@@ -6071,7 +6071,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         {
           "severity": "warning",
           "code": "SCAN_DISPLAY_SHADOWED",
-          "message": "Input \"holder\" is hidden by a display root. Use inputs.holder.",
+          "message": "The scanner display cannot read \"holder\" directly. Write inputs.holder to show it.",
           "path": "scan.display.holder",
           "params": {
             "name": "holder"

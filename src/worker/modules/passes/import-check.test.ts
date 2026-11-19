@@ -129,7 +129,7 @@ describe('checkRows', () => {
     expect(got[0]).toEqual(
       expect.arrayContaining([
         ['INPUT', 'Pts', 'Points must be a whole number.'],
-        ['INPUT', 'Tier', 'Tier must be one of: gold, silver.'],
+        ['INPUT', 'Tier', 'Tier must be gold or silver.'],
         ['INPUT', 'Note', 'Note must have at most 5 characters.'],
       ]),
     );

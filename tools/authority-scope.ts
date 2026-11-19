@@ -124,8 +124,9 @@ const PART_TENANT_BIND =
 const UPDATED_AT_PREDICATE = /\bWHERE\b[^;`]*?\bupdated_at\s*=\s*\?/is;
 /** The number of reviewed raw-write files. Removing one lowers it; a new entry fails until a design decision raises it. */
 // 31: outbound webhooks add repo-delivery-state.ts and repo-retention.ts (design-webhooks.md section 11.3);
-// the trust pack adds retention/repo-receipts.ts and retention/repo-sweep.ts.
-export const RAW_WRITE_ALLOWLIST_LIMIT = 31;
+// the trust pack adds retention/repo-receipts.ts and retention/repo-sweep.ts;
+// 32: delivery channels add channels/repo.ts, the insert-once copy evidence (design-channels.md N3).
+export const RAW_WRITE_ALLOWLIST_LIMIT = 32;
 const REPLACE = /\bOR\s+REPLACE\b|\bREPLACE\s+INTO\b/i;
 
 const TENANT_TABLES = new Set([

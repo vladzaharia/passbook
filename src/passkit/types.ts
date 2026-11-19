@@ -1,6 +1,7 @@
 /** Shared passkit types. No Cloudflare or Hono imports: this module runs in Node and in Workers. */
 
 import type { PassJson } from './schema/pass-types.ts';
+import type { PaperManifest } from './template/paper.ts';
 import type { ScanDisplayDoc } from './template/scan-display/schema.ts';
 import type { WalletsManifest } from './template/wallets/schema.ts';
 import type { CounterManifest } from './types-counters.ts';
@@ -306,6 +307,8 @@ export interface TemplateManifest {
   counters?: Record<string, CounterManifest>;
   /** Cross-wallet extras (roles, types, art). Never read by the Apple build. */
   wallets?: WalletsManifest;
+  /** Printed ticket layout (size, barcode, fields, terms). Absent: derived from the roles. */
+  paper?: PaperManifest;
 }
 
 export type Personalization = Record<string, Json>;

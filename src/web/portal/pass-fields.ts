@@ -75,6 +75,27 @@ export function fieldRows(
   return rows.map((r) => ((count.get(r.label) ?? 0) > 1 ? { ...r, label: humanizeKey(r.id) } : r));
 }
 
+const NOTE_KEYS = /^(message|note|notes)$/i;
+
+/**
+ * What the org wrote to the holder, from the back of the pass: its latest message first, then its
+ * note. Plain text only; an empty field is not a note.
+ */
+export function noteRows(
+  passJson: Record<string, unknown>,
+): { id: string; label: string; value: string }[] {
+  const style = STYLES.find((s) => passJson[s] && typeof passJson[s] === 'object');
+  const list = style ? (passJson[style] as Record<string, unknown>).backFields : null;
+  if (!Array.isArray(list)) return [];
+  const rows = list.flatMap((f: Record<string, unknown> | null) => {
+    const value = typeof f?.value === 'string' ? f.value.trim() : '';
+    const key = String(f?.key ?? '');
+    if (!value || !NOTE_KEYS.test(key)) return [];
+    return [{ id: key, label: sentenceCase(String(f?.label ?? humanizeKey(key))), value }];
+  });
+  return rows.sort((a, b) => Number(/^message$/i.test(b.id)) - Number(/^message$/i.test(a.id)));
+}
+
 /** "Updated Nov 1"; the year shows once it is not this year. */
 export function updatedLine(ms: number, now = Date.now()): string {
   const sameYear = new Date(ms).getFullYear() === new Date(now).getFullYear();
