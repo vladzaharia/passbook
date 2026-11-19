@@ -1,8 +1,8 @@
 import { DIGITAL_CHANNELS, effectiveChannels } from '../../../shared/channels.ts';
 import type { Channel } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { rotatedSince } from './repo.ts';
 import { loadPass } from './service.ts';
 
 export interface DoorChannels {
@@ -40,12 +40,7 @@ export async function doorChannels(ctx: ServiceContext, pass: PassRef): Promise<
     .filter((d) => d.retiredAt !== undefined)
     .sort((a, b) => (b.retiredAt ?? 0) - (a.retiredAt ?? 0))[0];
   const rotated =
-    retired.length > 0 &&
-    (await first(
-      ctx.env.DB,
-      'SELECT 1 AS hit FROM scan_code_rotations WHERE pass_id = ? AND rotated_at >= ? LIMIT 1',
-      [pass.id, Math.min(...retired)],
-    )) !== null;
+    retired.length > 0 && (await rotatedSince(ctx.env.DB, pass.id, Math.min(...retired)));
   return {
     nfcOn,
     digitalOff: digital.every((d) => !d.on),

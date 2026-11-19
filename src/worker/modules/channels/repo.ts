@@ -165,3 +165,17 @@ export async function overrideGroups(
   );
   return rows.map((r) => ({ override: r.override, passes: r.n }));
 }
+
+/** Whether a New code was issued for the pass at or after `since`. */
+export async function rotatedSince(
+  db: D1Database,
+  passId: string,
+  since: number,
+): Promise<boolean> {
+  const r = await first(
+    db,
+    'SELECT 1 AS hit FROM scan_code_rotations WHERE pass_id = ? AND rotated_at >= ? LIMIT 1',
+    [passId, since],
+  );
+  return r !== null;
+}
