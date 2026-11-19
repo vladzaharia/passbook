@@ -54,7 +54,7 @@ interface FailureCount {
 
 /** Terminal failures kept for review: outbox rows that gave up and webhook payloads that failed. */
 export async function checkTerminalFailures(ctx: ServiceContext): Promise<Draft> {
-  const base = { id: 'failures', kind: 'queue', label: 'Terminal failures' } as const;
+  const base = { id: 'failures', kind: 'queue', label: 'Failed jobs' } as const;
   let rows: FailureCount[];
   try {
     rows = await all<FailureCount>(

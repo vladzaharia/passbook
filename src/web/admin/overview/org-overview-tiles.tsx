@@ -34,7 +34,6 @@ export function OrgTiles({
       icon: ENTITY.pass.icon,
       series: s.issued,
       to: '/admin/passes',
-      ranged: true,
     },
     {
       id: 'inWallet',
@@ -53,7 +52,6 @@ export function OrgTiles({
       series: [],
       to: '/admin/passes',
       search: { status: 'removed' },
-      ranged: true,
     },
     {
       id: 'scans',
@@ -61,7 +59,6 @@ export function OrgTiles({
       value: t.scans,
       icon: ScanLine,
       series: s.scans,
-      ranged: true,
       ...scans,
     },
     {
@@ -70,14 +67,16 @@ export function OrgTiles({
       value: t.redemptions,
       icon: BadgeCheck,
       series: [],
-      ranged: true,
       ...scans,
     },
   ];
   return (
     <ul
       aria-label="Totals"
-      className={cn('grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5', enter && 'wl-stagger')}
+      className={cn(
+        'grid grid-cols-2 gap-3 md:grid-cols-6 xl:grid-cols-5 max-md:[&>li:last-child:nth-child(odd)]:col-span-2 md:[&>li]:col-span-2 md:[&>li:nth-child(n+4)]:col-span-3 xl:[&>li]:col-span-1 xl:[&>li:nth-child(n+4)]:col-span-1',
+        enter && 'wl-stagger',
+      )}
     >
       {kpis.map((k, i) => (
         <Tile key={k.id} kpi={k} index={i} range={range} countScope={countScope} />

@@ -13,6 +13,7 @@ import {
   Input,
   KeyValue,
   SaveBar,
+  StatusPill,
   SwitchRow,
   TechnicalDetails,
   Tooltip,
@@ -38,11 +39,9 @@ export function CertificateCard({ identity, now }: { identity: Identity; now: nu
             { label: 'Team ID', value: identity.teamIdentifier, mono: true },
             { label: 'Expires', value: <ExpiryPill identity={identity} now={now} /> },
             { label: 'Valid from', value: formatDateTime(identity.notBefore, '—') },
-            {
-              label: 'APNs binding',
-              value: identity.apnsBinding ?? (identity.source === 'env' ? 'APNS' : null),
-              mono: true,
-            },
+            ...(identity.apnsBinding
+              ? [{ label: 'APNs binding', value: identity.apnsBinding, mono: true }]
+              : []),
           ]}
         />
         <TechnicalDetails
@@ -142,25 +141,39 @@ export function SettingsCard({ identity }: { identity: Identity }) {
           <div className="flex flex-col gap-4 border-t border-border pt-4">
             <SwitchRow
               label="NFC"
-              help="The pass type ID has Apple's NFC entitlement."
+              help="Allow NFC passes. Needs Apple's NFC entitlement on the pass type ID."
               checked={draft.nfc}
               onCheckedChange={(c) => edit({ nfc: c })}
             />
-            <Locked locked={env}>
-              <SwitchRow
-                label="Default identity"
-                help={
-                  env
-                    ? 'Set in the environment'
-                    : identity.isDefault
-                      ? 'Current default. Select another identity to change it; existing passes keep their identity.'
-                      : 'Fallback for eligible organizations without their own identity. Changing it does not migrate existing passes.'
-                }
-                checked={draft.isDefault}
-                disabled={env || identity.isDefault}
-                onCheckedChange={(c) => edit({ isDefault: c })}
-              />
-            </Locked>
+            {identity.isDefault ? (
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-fg-strong">Default identity</p>
+                  <p className="mt-0.5 text-xs text-fg-muted">
+                    {env
+                      ? 'Set in the environment'
+                      : 'Select another identity to change it; existing passes keep their identity.'}
+                  </p>
+                </div>
+                <StatusPill status="default" />
+              </div>
+            ) : (
+              <Locked locked={env}>
+                <SwitchRow
+                  label="Default identity"
+                  help={
+                    env
+                      ? 'Set in the environment'
+                      : identity.isDefault
+                        ? 'Current default. Select another identity to change it; existing passes keep their identity.'
+                        : 'Fallback for eligible organizations without their own identity. Changing it does not migrate existing passes.'
+                  }
+                  checked={draft.isDefault}
+                  disabled={env}
+                  onCheckedChange={(c) => edit({ isDefault: c })}
+                />
+              </Locked>
+            )}
           </div>
         </Form>
       </CardBody>

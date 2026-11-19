@@ -26,7 +26,7 @@ import {
   toast,
 } from '@/web/ui/index.ts';
 import { CreatedCallout, useCreated } from '../passes/created.tsx';
-import { BootstrapOrgAdmin, ProvisioningCounts } from './org-provisioning.tsx';
+import { BootstrapOrgAdmin, ProvisioningCounts, showBootstrap } from './org-provisioning.tsx';
 import { OrgStatus } from './orgs-page.tsx';
 import { useDeleteOrg, useOrg, useSetOrgStatus } from './queries.ts';
 
@@ -199,14 +199,9 @@ export function OrgDetailPage({
             Suspended: passes do not update and its API keys do not work.
           </Callout>
         ) : null}
-        <Card>
-          <CardHeader title="Lifecycle" actions={<OrgStatus status={org.status} />} />
-          <CardBody className="flex flex-col gap-2 text-sm text-fg-muted">
-            <p>Suspending stops pass updates and API keys until you reactivate.</p>
-            <p>Deleting keeps pass and audit records. Wallet copies stay on devices.</p>
-          </CardBody>
-        </Card>
-        <BootstrapOrgAdmin orgId={org.id} active={org.status === 'active'} />
+        {showBootstrap(org) ? (
+          <BootstrapOrgAdmin orgId={org.id} active={org.status === 'active'} />
+        ) : null}
         <Card>
           <CardHeader
             title="Signing identities"
@@ -217,7 +212,7 @@ export function OrgDetailPage({
             }
           />
           <CardBody className="text-sm text-fg-muted">
-            Platform signing identities are managed in the directory.
+            Signing identities are managed under Identities.
           </CardBody>
         </Card>
       </TwoPane>
