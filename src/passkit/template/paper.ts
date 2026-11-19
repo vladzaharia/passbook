@@ -138,8 +138,9 @@ export function paperManifestIssues(
 
   const issues: ValidationIssue[] = [];
   const add =
-    (severity: ValidationIssue['severity']) => (code: string, message: string, path: string) =>
-      issues.push({ severity, code, message, path });
+    (severity: ValidationIssue['severity']) =>
+    (code: string, message: string, path: string, params?: ValidationIssue['params']) =>
+      issues.push({ severity, code, message, path, ...(params ? { params } : {}) });
   const error = add('error');
   const warn = add('warning');
   const paper = parsed.data;
@@ -160,7 +161,7 @@ export function paperManifestIssues(
       if (name === lookupInput)
         error('PAPER_LOOKUP_FIELD', 'Paper never prints the scan lookup value.', path);
       else if (!Object.hasOwn(properties, name))
-        warn('PAPER_INPUT', `Unknown input "${name}".`, path);
+        warn('PAPER_INPUT', `Unknown input "${name}".`, path, { name });
     }
     for (const name of refs.lookups)
       if (!lookups.has(name)) error('PAPER_LOOKUP', `Unknown lookup table "${name}".`, path);
@@ -180,7 +181,8 @@ export function paperManifestIssues(
   for (const [i, ref] of (paper.fields ?? []).entries()) {
     const path = `paper.fields.${i}`;
     const key = keyOf(ref);
-    if (known.size > 0 && !known.has(key)) warn('PAPER_FIELD', `No field with key "${key}".`, path);
+    if (known.size > 0 && !known.has(key))
+      warn('PAPER_FIELD', `No field with key "${key}".`, path, { name: key });
     for (const b of bindings) {
       const to = b.to as { field?: unknown };
       const targets = Array.isArray(to?.field) ? to.field : [to?.field];
