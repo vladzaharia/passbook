@@ -55,6 +55,8 @@ export interface AccountRow {
   iv: number[] | Uint8Array | ArrayBuffer | null;
   wrapped_dek: number[] | Uint8Array | ArrayBuffer | null;
   ciphertext: number[] | Uint8Array | ArrayBuffer | null;
+  /** The credential version a reference or tombstone was made under; NULL is a legacy envelope. */
+  pin_version_id?: string | null;
 }
 
 /** Account and its current envelope are selected in one database snapshot. */
@@ -213,13 +215,15 @@ export function findSamsungTombstoneCredential(
     refHash: string;
     credentialKeysetCommitment: string;
   },
-): Promise<(AccountRow & { provider_identity_hash: string }) | null> {
+): Promise<
+  (AccountRow & { provider_identity_hash: string; pin_version_id: string | null }) | null
+> {
   return first(
     db,
     `SELECT a.id, a.org_id, a.mode, a.provider, t.account_revision AS revision,
       e.credential_id, NULL AS revoked_at,
       e.created_at AS updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext,
-      t.provider_identity_hash
+      t.provider_identity_hash, t.credential_version_id AS pin_version_id
     FROM wallet_samsung_tombstones t
     JOIN wallet_provider_accounts a ON a.id = t.account_id AND a.org_id = t.org_id
       AND a.mode = t.mode AND a.provider = 'samsung'

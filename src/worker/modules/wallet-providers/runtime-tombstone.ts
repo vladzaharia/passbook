@@ -112,49 +112,58 @@ export async function verifySamsungTombstoneRuntimeRequest(
         value.accountRevision !== scope.accountRevision
       )
         throw runtimeAccountUnavailable();
-      return value;
+      // The pinned credential first, then its later versions (a certificate rotation).
+      return [value, ...value.later];
     } catch {
       throw runtimeAccountUnavailable();
     }
   }
 
-  const original = await readHistorical();
-  let account: ValidatedSamsungCallbackCredentials;
-  try {
-    account = await validateSamsungCallbackCredentials(original, ctx.clock.now());
-    await assertKeyset();
-  } catch (error) {
-    await assertKeyset();
-    if (error instanceof SamsungCredentialError) throw new SamsungTokenError();
-    throw new WalletRuntimeError('provider_failure');
+  const candidates = await readHistorical();
+  let chosen = -1;
+  for (const [index, candidate] of candidates.entries()) {
+    let account: ValidatedSamsungCallbackCredentials;
+    try {
+      account = await validateSamsungCallbackCredentials(candidate, ctx.clock.now());
+      await assertKeyset();
+    } catch (error) {
+      await assertKeyset();
+      if (error instanceof SamsungCredentialError) continue;
+      throw new WalletRuntimeError('provider_failure');
+    }
+    try {
+      await verifySamsungTombstoneRequest(account, {
+        request,
+        refId,
+        method,
+        now: ctx.clock.now(),
+        claimReplay: async (key, expiresAt, signedAt, queryBound) => {
+          await assertKeyset();
+          const claimed = await claimReplay(
+            key,
+            expiresAt,
+            signedAt,
+            queryBound,
+            'writable' in candidate && candidate.writable === true,
+          );
+          await assertKeyset();
+          return claimed;
+        },
+      });
+      chosen = index;
+      break;
+    } catch (error) {
+      await assertKeyset();
+      if (error instanceof SamsungTokenError) continue;
+      if (error instanceof SamsungReplayStoreError) throw new SamsungReplayStoreError();
+      throw new WalletRuntimeError('provider_failure');
+    }
   }
-  try {
-    await verifySamsungTombstoneRequest(account, {
-      request,
-      refId,
-      method,
-      now: ctx.clock.now(),
-      claimReplay: async (key, expiresAt, signedAt, queryBound) => {
-        await assertKeyset();
-        const claimed = await claimReplay(
-          key,
-          expiresAt,
-          signedAt,
-          queryBound,
-          'writable' in original && original.writable === true,
-        );
-        await assertKeyset();
-        return claimed;
-      },
-    });
-  } catch (error) {
-    await assertKeyset();
-    if (error instanceof SamsungTokenError) throw new SamsungTokenError();
-    if (error instanceof SamsungReplayStoreError) throw new SamsungReplayStoreError();
-    throw new WalletRuntimeError('provider_failure');
-  }
-  const current = await readHistorical();
+  const original = candidates[chosen];
+  if (!original) throw new SamsungTokenError();
+  const current = (await readHistorical())[chosen];
   if (
+    !current ||
     current.partnerId !== original.partnerId ||
     current.certificateId !== original.certificateId ||
     current.cardId !== original.cardId ||
