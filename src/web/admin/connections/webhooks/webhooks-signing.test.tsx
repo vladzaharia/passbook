@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetModeForTests } from '../../../lib/mode.ts';
 import { json, renderApp } from '../../../lib/test-utils.tsx';
 import {
@@ -18,7 +18,10 @@ import {
 const open = (path: string, calls: Calls[], handlers = hooks(calls), as = manager) =>
   renderApp(path, { session: 'admin', memberships: [as], selectedOrg: 'org1', handlers });
 
-afterEach(() => resetModeForTests());
+afterEach(() => {
+  resetModeForTests();
+  vi.unstubAllGlobals();
+});
 
 describe('signing on the endpoint page', () => {
   it('shows when the secret was made, never the secret, and how to verify', async () => {
@@ -168,5 +171,45 @@ describe('endpoint page order', () => {
     expect(
       deliveries.compareDocumentPosition(settings) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+});
+
+describe('delivery curl', () => {
+  it('copies a script that signs a fresh timestamp and posts the same body', async () => {
+    const user = userEvent.setup();
+    const calls: Calls[] = [];
+    await open('/admin/connections/webhooks/we1', calls);
+    await user.click(await screen.findByRole('button', { name: /^Scanned,/ }));
+    const sheet = await screen.findByRole('dialog', { name: 'Delivery' });
+    await user.click(await within(sheet).findByText('Copy as curl'));
+    const script = within(sheet).getByRole('region', { name: 'curl command' });
+    expect(script).toHaveTextContent('curl -X POST "$ENDPOINT_URL"');
+    expect(script).toHaveTextContent("-H 'x-passbook-event-id: ev1'");
+    expect(script).toHaveTextContent('openssl dgst -sha256 -hmac "$SECRET"');
+    expect(script).toHaveTextContent('"type":"pass.scanned"');
+    expect(script).not.toHaveTextContent('whsec_');
+  });
+});
+
+describe('settings fold', () => {
+  it('starts folded on a narrow screen and opens with Show', async () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      matches: q.includes('max-width'),
+      media: q,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+    }));
+    const user = userEvent.setup();
+    const calls: Calls[] = [];
+    await open('/admin/connections/webhooks/we1', calls);
+    await screen.findByRole('heading', { name: 'Settings' });
+    expect(screen.getByLabelText(/^URL/)).not.toBeVisible();
+    const toggle = screen.getByRole('button', { name: 'Show' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await user.click(toggle);
+    expect(await screen.findByLabelText(/^URL/)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Hide' })).toHaveAttribute('aria-expanded', 'true');
   });
 });

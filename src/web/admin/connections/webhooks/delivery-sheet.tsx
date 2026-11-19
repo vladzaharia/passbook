@@ -157,7 +157,22 @@ export function DeliverySheet({
               </div>
               <div>
                 <h3 className="mb-3 text-sm font-semibold text-fg-strong">Request</h3>
-                <CodeBlock code={requestText(d)} label="Request headers" maxHeight="max-h-48" />
+                <CodeBlock
+                  code={requestText(d)}
+                  label="Request headers"
+                  maxHeight="max-h-48"
+                  wrap
+                />
+                <details className="mt-3 text-sm">
+                  <summary className="cursor-pointer text-fg-muted pointer-coarse:min-h-11">
+                    Copy as curl
+                  </summary>
+                  <p className="py-2 text-xs text-fg-muted">
+                    Signs the body with your secret and posts it to the URL you set. Nothing is sent
+                    to PassBook.
+                  </p>
+                  <CodeBlock code={curlText(d)} label="curl command" maxHeight="max-h-48" wrap />
+                </details>
                 <details className="mt-3 text-sm">
                   <summary className="cursor-pointer text-fg-muted pointer-coarse:min-h-11">
                     How to verify the signature
@@ -223,5 +238,24 @@ function requestText(d: Detail): string {
     `x-passbook-event-type: ${d.type}`,
     `x-passbook-timestamp: ${at === undefined ? '<unix seconds>' : Math.floor(at / 1000)}`,
     'x-passbook-signature: v1=<hex>',
+  ].join('\n');
+}
+
+const shq = (text: string) => `'${text.replaceAll("'", "'\\''")}'`;
+
+/** A script that re-sends this event to a receiver under test: the same headers, signed fresh. */
+function curlText(d: Detail): string {
+  return [
+    '# Set ENDPOINT_URL and SECRET (the signing secret) first.',
+    'TS=$(date +%s)',
+    `BODY=${shq(JSON.stringify(d.payload))}`,
+    'SIG=$(printf \'%s.%s\' "$TS" "$BODY" | openssl dgst -sha256 -hmac "$SECRET" -hex | sed \'s/^.* //\')',
+    'curl -X POST "$ENDPOINT_URL" \\',
+    "  -H 'content-type: application/json' \\",
+    `  -H ${shq(`x-passbook-event-id: ${d.eventId}`)} \\`,
+    `  -H ${shq(`x-passbook-event-type: ${d.type}`)} \\`,
+    '  -H "x-passbook-timestamp: $TS" \\',
+    '  -H "x-passbook-signature: v1=$SIG" \\',
+    '  --data-raw "$BODY"',
   ].join('\n');
 }

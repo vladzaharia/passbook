@@ -465,6 +465,8 @@ describe('create connection wizard', () => {
     await user.type(await screen.findByLabelText(/^Name/), 'Hooked');
     await next(user);
     expect(await screen.findByText('Nothing mapped yet')).toBeVisible();
+    // The same Test as on Configuration, so a sample can be loaded here.
+    expect(screen.getByRole('button', { name: 'Test' })).toBeVisible();
     await next(user);
     await next(user);
     expect(await screen.findByRole('button', { name: 'Create without mappings' })).toBeEnabled();

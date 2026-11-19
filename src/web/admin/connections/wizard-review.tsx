@@ -190,7 +190,7 @@ export function WizardAside({
               : step === 1
                 ? 'Test shows a sample record here.'
                 : step === 2
-                  ? 'Run Test on Configuration to load a sample.'
+                  ? 'Test to load a sample.'
                   : null}
           </p>
         </div>
