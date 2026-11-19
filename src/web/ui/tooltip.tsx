@@ -52,17 +52,26 @@ function swapIn(next: Impl) {
   for (const l of listeners) l();
 }
 
+/** The DOM used here, typed locally: the worker typecheck (via pass-card) has no DOM lib. */
+interface FocusDocument {
+  activeElement: { closest(selector: string): unknown } | null;
+  addEventListener(type: 'focusout', listener: () => void): void;
+  removeEventListener(type: 'focusout', listener: () => void): void;
+}
+const focusDoc = () => (globalThis as unknown as { document: FocusDocument }).document;
+
 /** The swap remounts each tooltip's child, so wait while one holds focus (a keyboard user). */
 function whenNoTipFocused(run: () => void) {
-  const tipFocused = () => document.activeElement?.closest('[data-tip]') != null;
+  const doc = focusDoc();
+  const tipFocused = () => doc.activeElement?.closest('[data-tip]') != null;
   if (!tipFocused()) return run();
   const onOut = () =>
     setTimeout(() => {
       if (tipFocused()) return;
-      document.removeEventListener('focusout', onOut);
+      doc.removeEventListener('focusout', onOut);
       run();
     }, 0);
-  document.addEventListener('focusout', onOut);
+  doc.addEventListener('focusout', onOut);
 }
 
 function subscribe(l: () => void) {
