@@ -15,7 +15,12 @@ export function revokeWalletCredentialConfirm(name: string): ConfirmCopy {
 export type MigrationAction = 'migrate' | 'assign_platform' | 'merge' | 'retire';
 
 /** Moving legacy wallet accounts onto credential sources; `who` names the account. */
-export function walletMigrationConfirm(action: MigrationAction, who: string): ConfirmCopy {
+export function walletMigrationConfirm(
+  action: MigrationAction,
+  who: string,
+  /** The organizations that claim the identity, for a merge. */
+  claimants: readonly string[] = [],
+): ConfirmCopy {
   const copy: Record<MigrationAction, Omit<ConfirmCopy, 'typed'>> = {
     migrate: {
       title: 'Run the migration?',
@@ -30,8 +35,9 @@ export function walletMigrationConfirm(action: MigrationAction, who: string): Co
     merge: {
       title: `Merge ${who} into a PassBook account?`,
       confirmLabel: 'Merge',
-      description:
-        'The shared identity becomes a PassBook credential, and every account that claims it follows.',
+      description: `This identity becomes PassBook's credential. ${
+        claimants.length > 0 ? `${claimants.join(', ')} and any` : 'Any'
+      } other organization that claims it will sign with it.`,
     },
     retire: {
       title: `Retire ${who}?`,

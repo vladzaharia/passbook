@@ -17,6 +17,7 @@ import {
 } from '@/web/ui/index.ts';
 import { useOrgNames } from '../orgs/queries.ts';
 import { MIGRATION_REASON, PROVIDER_NAME, safeError } from './copy.ts';
+import { actionsFor } from './migration-actions.ts';
 import { useMigrationActions, useMigrationReport } from './queries.ts';
 
 type Item = z.infer<typeof WalletMigrationItemSchema>;
@@ -104,7 +105,7 @@ export function MigrationSection() {
       cell: ({ row }) =>
         row.original.state === 'refused' ? (
           <div className="flex flex-wrap gap-2">
-            {ACTIONS.map((a) => (
+            {ACTIONS.filter((a) => actionsFor(row.original.reason).includes(a.action)).map((a) => (
               <Button
                 key={a.action}
                 size="sm"
@@ -161,8 +162,11 @@ export function MigrationSection() {
         {...walletMigrationConfirm(
           pending?.action ?? 'migrate',
           pending?.item ? who(pending.item) : '',
+          pending?.item
+            ? [pending.item.orgId, ...pending.item.identityShared.map((s) => s.orgId)].map(orgName)
+            : [],
         )}
-        destructive={pending?.action === 'retire'}
+        destructive={pending?.action === 'retire' || pending?.action === 'merge'}
         onConfirm={confirm}
       />
     </div>

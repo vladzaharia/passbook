@@ -19,5 +19,11 @@ describe('wallet confirm copy', () => {
       typed: false,
     });
     expect(walletMigrationConfirm('migrate', '').confirmLabel).toBe('Run');
+    expect(walletMigrationConfirm('merge', 'North', ['North', 'Acme']).description).toBe(
+      "This identity becomes PassBook's credential. North, Acme and any other organization that claims it will sign with it.",
+    );
+    expect(walletMigrationConfirm('merge', 'North').description).toBe(
+      "This identity becomes PassBook's credential. Any other organization that claims it will sign with it.",
+    );
   });
 });

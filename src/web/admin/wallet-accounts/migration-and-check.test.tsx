@@ -65,6 +65,30 @@ describe('credential check', () => {
   });
 });
 
+describe('check abort', () => {
+  it('aborts the poll when the page unmounts', async () => {
+    const user = userEvent.setup();
+    const signals: AbortSignal[] = [];
+    const base = orgHandlers(() => json({ checkId: 'k1', status: 'queued' }));
+    const { unmount } = await renderApp('/admin/o/o1/wallet-accounts', {
+      memberships: [north],
+      handlers: {
+        ...base,
+        '/api/v1/orgs/o1/wallet-credentials/c1/check': (_u, init) => {
+          if (init?.signal) signals.push(init.signal);
+          return json({ checkId: 'k1', status: 'queued' });
+        },
+      },
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    await user.click(within(google).getByRole('button', { name: 'Check' }));
+    await waitFor(() => expect(signals).toHaveLength(1));
+    expect(signals[0]?.aborted).toBe(false);
+    unmount();
+    expect(signals[0]?.aborted).toBe(true);
+  });
+});
+
 describe('migration', () => {
   const item = (over: Record<string, unknown>) => ({
     accountId: 'a1',
@@ -142,6 +166,69 @@ describe('migration', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Retire' }));
     expect(
       await within(dialog).findByText('It still has live wallet passes. Retire them first.'),
+    ).toBeInTheDocument();
+  });
+
+  it('offers only the actions the API accepts for each reason', async () => {
+    const user = userEvent.setup();
+    const base = handlers(() => json({ accounts: 1 }));
+    await renderApp('/admin/platform/wallet-accounts', {
+      session: 'admin',
+      handlers: {
+        ...base,
+        '/api/v1/platform/wallet-credentials/migrate': () =>
+          json({
+            pending: 4,
+            migrated: 0,
+            next: null,
+            items: [
+              item({ accountId: 'a1', orgId: 'o1', reason: 'identity_shared' }),
+              item({ accountId: 'a2', orgId: 'o2', reason: 'unproven_claim' }),
+              item({
+                accountId: 'a3',
+                orgId: 'o3',
+                reason: 'org_credential_exists',
+                identityShared: [],
+              }),
+              item({ accountId: 'a4', orgId: 'o4', reason: 'unreadable', identityShared: [] }),
+            ],
+          }),
+      },
+    });
+    await user.click(await screen.findByRole('tab', { name: 'Migration' }));
+    await screen.findByText(/Shares its provider identity/);
+    const has = (verb: string, org: string) =>
+      screen.queryByRole('button', { name: new RegExp(`^${verb} ${org}`) }) !== null;
+    expect(
+      ['o1', 'o2'].map((o) => [has('Use PassBook', o), has('Merge', o), has('Retire', o)]),
+    ).toEqual([
+      [true, true, true],
+      [true, true, true],
+    ]);
+    expect([has('Use PassBook', 'o3'), has('Merge', 'o3'), has('Retire', 'o3')]).toEqual([
+      true,
+      false,
+      true,
+    ]);
+    expect([has('Use PassBook', 'o4'), has('Merge', 'o4'), has('Retire', 'o4')]).toEqual([
+      false,
+      false,
+      true,
+    ]);
+  });
+
+  it('names the claimants in the merge confirm', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/platform/wallet-accounts', {
+      session: 'admin',
+      handlers: handlers(() => json({ accounts: 2 })),
+    });
+    await user.click(await screen.findByRole('tab', { name: 'Migration' }));
+    await user.click(await screen.findByRole('button', { name: /^Merge o1/ }));
+    expect(
+      await screen.findByText(
+        "This identity becomes PassBook's credential. o1, o2 and any other organization that claims it will sign with it.",
+      ),
     ).toBeInTheDocument();
   });
 

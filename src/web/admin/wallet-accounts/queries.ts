@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import {
   PlatformWalletEnrolmentListSchema,
@@ -139,22 +140,49 @@ export function useWalletActions() {
   };
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number, signal: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        reject(new DOMException('Aborted', 'AbortError'));
+      },
+      { once: true },
+    );
+  });
 
-/** Queues a check, then polls its result (about every 1.5 s, up to a minute). */
+export const isAbort = (cause: unknown) =>
+  cause instanceof DOMException && cause.name === 'AbortError';
+
+/**
+ * Queues a check, then polls its result (about every 1.5 s, up to a minute). Leaving the page
+ * aborts the poll; the caller sees an AbortError (`isAbort`).
+ */
 export function useCheckCredential() {
   const client = useQueryClient();
+  const controller = useRef<AbortController>(new AbortController());
+  useEffect(() => {
+    const c = new AbortController();
+    controller.current = c;
+    return () => c.abort();
+  }, []);
   return async (target: CredentialTarget, credential: WalletCredential) => {
+    const { signal } = controller.current;
     const base =
       target.kind === 'platform'
         ? `/api/v1/platform/wallet-credentials/${credential.id}`
         : `${orgBase(target.orgId)}/wallet-credentials/${credential.id}`;
-    const queued = await api.post(`${base}/check`, WalletCredentialCheckQueuedSchema);
+    const queued = await api.post(`${base}/check`, WalletCredentialCheckQueuedSchema, undefined, {
+      signal,
+    });
     for (let i = 0; i < 40; i++) {
-      await sleep(1500);
+      await sleep(1500, signal);
       const result = await api.get(
         `${base}/checks/${queued.checkId}`,
         WalletCredentialCheckResultSchema,
+        { signal },
       );
       if (result.status !== 'pending') {
         await client.invalidateQueries({ queryKey: KEY });

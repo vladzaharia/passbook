@@ -9,7 +9,7 @@ import { Button, ConfirmDialog, StatusPill, toast } from '@/web/ui/index.ts';
 import { checkFresh } from './check.ts';
 import { CHECK_WAIT, COPY, checkWords, PROVIDER_NAME, safeError } from './copy.ts';
 import { CredentialDialog } from './credential-dialog.tsx';
-import { type CredentialTarget, useCheckCredential, useWalletActions } from './queries.ts';
+import { type CredentialTarget, isAbort, useCheckCredential, useWalletActions } from './queries.ts';
 
 /** The check state a credential shows: the DTO's verifiedAt, never a secret. */
 export function CheckPill({
@@ -62,6 +62,7 @@ export function CredentialRow({
       else if (result.status === 'failed') setFailed(checkWords(result.code));
       else toast.info('The check is still running. Reload in a moment.');
     } catch (cause) {
+      if (isAbort(cause)) return;
       toast.error(
         cause instanceof ApiError && cause.status === 429 ? CHECK_WAIT : safeError(cause),
         'Could not check',
