@@ -60,6 +60,8 @@ jobs:
       - run: npm run test:e2e
         env:
           WALLET_E2E_PREVIEW: '1'
+          # Actions resets HOME to /github/home (owned by pwuser) in container steps; Firefox refuses to start as root there.
+          HOME: /root
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -91,6 +93,8 @@ jobs:
       - run: npm run test:e2e:camera
         env:
           WALLET_E2E_PREVIEW: '1'
+          # Actions resets HOME to /github/home (owned by pwuser) in container steps; Firefox refuses to start as root there.
+          HOME: /root
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
