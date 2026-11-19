@@ -50,4 +50,12 @@ describe('refusal copy', () => {
     const guest = fixtureOutcome('refused', 'guest_expired', { at: FIXTURE_NOW });
     expect(verdictLine(guest, FIXTURE_NOW)?.headline).toBe('Guest pass ended');
   });
+  it('words the end in the admit zone', () => {
+    const at = Date.UTC(2026, 10, 5, 15, 0, 0);
+    const o = fixtureOutcome('refused', 'ended', {
+      at,
+      admit: { type: 'Day pass', rule: null, timeZone: 'America/New_York' },
+    } as never);
+    expect(verdictLine({ ...o, event: null }, at)?.sub).toBe('Ended 10:00 AM.');
+  });
 });

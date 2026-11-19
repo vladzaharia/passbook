@@ -52,7 +52,7 @@ export function lineValues(o: ScanOutcome, now: number): Values {
             ? formatWeekday(o.at)
             : '',
     date: formatDateTime(o.at),
-    time: o.at ? formatTime(o.at) : '',
+    time: o.at ? formatTime(o.at, o.admit?.timeZone) : '',
     ago: o.previous ? agoText(Math.max(0, now - o.previous.at)) : '',
     scanner: o.previous?.scannerName ?? (o.reason === 'still_inside' ? 'Entry recorded' : ''),
     in: o.occupancy ? (o.occupancy.inNow ?? 0) : (o.counts.event?.arrived ?? 0),

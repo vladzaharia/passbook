@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { run } from '../../platform/db.ts';
+import { putPassCheckIn } from '../passes/check-in.ts';
 import { dayLimitEnd } from './admission.ts';
 import { admitOf } from './admit.ts';
 import type { ScanActor } from './guard.ts';
@@ -64,14 +65,30 @@ describe('day pass', () => {
   });
 
   it('a pass rule replaces the type default', async () => {
-    const template = await kit.scanTemplate('Two-day pass', {
+    const template = await kit.scanTemplate('Three-day pass', {
       actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
-      checkIn: { mode: 'unlimited', days: 2 },
+      checkIn: { mode: 'unlimited', days: 3 },
+    });
+    const scanner = await door(template);
+    const own = await kit.scanPass(template);
+    await putPassCheckIn(kit.ctx, { type: 'system', id: null }, own.id, { days: 1 }, null);
+    expect((await scan(scanner, own)).admit?.rule).toEqual({ kind: 'until', at: MIDNIGHT });
+    const plain = await kit.scanPass(template);
+    expect((await scan(scanner, plain)).admit?.rule).toEqual({
+      kind: 'until',
+      at: MIDNIGHT + 2 * 86_400_000,
+    });
+  });
+
+  it('a pass cannot erase the type limit with null', async () => {
+    const template = await kit.scanTemplate('Capped pass', {
+      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
+      checkIn: { mode: 'unlimited', days: 1 },
     });
     const p = await kit.scanPass(template);
-    const scanner = await door(template);
-    const out = await scan(scanner, p);
-    expect(out.admit?.rule).toEqual({ kind: 'until', at: MIDNIGHT + 86_400_000 });
+    await putPassCheckIn(kit.ctx, { type: 'system', id: null }, p.id, { days: null }, null);
+    const out = await scan(await door(template), p);
+    expect(out.admit?.rule).toEqual({ kind: 'until', at: MIDNIGHT });
   });
 });
 

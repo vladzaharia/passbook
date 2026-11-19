@@ -32,7 +32,8 @@ export function templateRules(found: Pick<Found, 'scan'>): CheckInPolicy {
 /** The rules of the pass: its type's defaults under its own. */
 export const passRulesOf = (found: Pick<Found, 'scan' | 'checkInRules'>): CheckInPolicy => ({
   ...templateRules(found),
-  ...found.checkInRules,
+  // A null clears nothing: a pass cannot erase its type's limit.
+  ...Object.fromEntries(Object.entries(found.checkInRules ?? {}).filter(([, v]) => v !== null)),
 });
 
 export function completedAdmission(plan: AdmissionPlan, now: number): CheckInState {
