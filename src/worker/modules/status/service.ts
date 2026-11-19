@@ -21,6 +21,7 @@ import {
   SEVERITY,
   worst,
 } from './checks.ts';
+import { checkChannelApply } from './checks-channels.ts';
 import { checkKek, checkTerminalFailures } from './checks-health.ts';
 import { identityComponent } from './checks-identity.ts';
 import { checkKeys } from './checks-keys.ts';
@@ -101,6 +102,7 @@ export async function getStatus(ctx: ServiceContext, deps: StatusDeps = {}): Pro
     checkKek(ctx),
     checkKeys(ctx),
     checkTerminalFailures(ctx),
+    checkChannelApply(ctx),
   ]);
   const components: Component[] = parts
     .flat()

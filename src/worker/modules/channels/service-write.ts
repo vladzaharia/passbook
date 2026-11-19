@@ -21,7 +21,9 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import type { Actor } from '../passes/service.ts';
 import { activePrint } from '../prints/repo.ts';
 import { adminWriter, writeVoid } from '../prints/repo-write.ts';
+import { startApplyInstance } from './apply-start.ts';
 import * as repo from './repo.ts';
+import { latestRun, pendingRun } from './repo-runs.ts';
 import { writePassChannels, writeTemplatePolicy } from './repo-write.ts';
 import { loadPass, loadTemplate, passChannels } from './service.ts';
 
@@ -31,6 +33,11 @@ type Bulk = z.infer<typeof BulkPassChannelsSchema>;
 type BulkResponse = z.infer<typeof BulkPassChannelsResponseSchema>;
 
 const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
+/** Policy saves one template may make per UTC day and mode; a revert counts. */
+export const TEMPLATE_SAVES_PER_DAY = 6;
+/** A save starts its apply run this long after the last save of the template. */
+export const APPLY_DEBOUNCE_MS = 10 * 60_000;
 /** Override changes one pass may make per hour (the same window as New code). */
 export const OVERRIDE_CHANGES_PER_HOUR = 20;
 
@@ -197,6 +204,22 @@ export async function putTemplateChannels(
   const changed = (Object.keys(body.channels) as Channel[]).filter(
     (c) => (policy?.[c] ?? templateDefault(c)) !== body.channels[c],
   );
+  const now = ctx.clock.now();
+  const day = now - (now % DAY);
+  const saves = `channels:template:${template.orgId}:${mode}:${template.id}`;
+  if (
+    !body.dryRun &&
+    changed.length > 0 &&
+    (await read(ctx.env.DB, saves, day)) >= TEMPLATE_SAVES_PER_DAY
+  )
+    throw new RateLimitedError(Math.ceil((day + DAY - now) / 1000));
+  const runId = ctx.ids.id();
+  // A failed run left its range part applied: the next run starts from where that one began.
+  const failed =
+    !body.dryRun && changed.length > 0
+      ? await latestRun(ctx.env.DB, template.orgId, mode, template.id)
+      : null;
+  const applyFrom = failed?.state === 'failed' ? failed.from : (policy ?? {});
   const impact = [];
   const cleared: Channel[] = [];
   for (const channel of changed) {
@@ -235,7 +258,16 @@ export async function putTemplateChannels(
         cleared: impact.reduce((n, i) => n + i.clearedOverrides, 0),
       },
       body.revision,
+      { runId, from: applyFrom, dueAt: now + APPLY_DEBOUNCE_MS },
     );
+  let workflowInstanceId: string | null = null;
+  if (!body.dryRun && changed.length > 0) {
+    await bump(ctx.env.DB, saves, day);
+    const pending = await pendingRun(ctx.env.DB, template.orgId, mode, template.id);
+    workflowInstanceId = pending?.id ?? null;
+    // Only the save that opened the run starts its instance; later saves just push the start back.
+    if (pending?.id === runId) await startApplyInstance(ctx, runId);
+  }
   const saved = body.dryRun ? policy : merged;
   const view = await loadTemplate(ctx, template, mode, saved ?? undefined);
   const wrote = !body.dryRun && changed.length > 0;
@@ -244,6 +276,6 @@ export async function putTemplateChannels(
     revision: wrote ? revision + 1 : revision,
     effective: effectiveChannels(view.inputs),
     impact,
-    workflowInstanceId: null,
+    workflowInstanceId,
   };
 }

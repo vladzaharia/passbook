@@ -32,7 +32,7 @@ async function levels(
   return { platform, org: blocked };
 }
 
-function capabilityReasons(cap: repo.Capability): Per<ChannelReason> {
+export function capabilityReasons(cap: repo.Capability): Per<ChannelReason> {
   const out: Per<ChannelReason> = {};
   if (!cap.google) out.google = 'no_design';
   if (!cap.samsung) out.samsung = 'no_design';
