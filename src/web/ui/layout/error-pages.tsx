@@ -111,7 +111,7 @@ export function NotFoundPage() {
               </Link>
             </Button>
           </div>
-        ) : signedOut ? (
+        ) : session === undefined ? null : signedOut ? (
           <Button variant="outline" asChild>
             <Link to="/login">
               <LogIn aria-hidden />

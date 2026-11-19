@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import type { MyPassListSchema } from '@/shared/contracts/me.ts';
 import { endedOn } from '@/shared/ended-on.ts';
 import type { PassView } from '@/shared/pass-view/index.ts';
+import { useSession } from '../lib/session.ts';
 import { Upcoming } from '../pass-card/back.tsx';
 import { PassCardStage } from '../pass-card/index.tsx';
 import {
@@ -20,7 +21,7 @@ import { browserDevice } from './device.ts';
 import { HolderPassView } from './holder-pass-view.tsx';
 import { fieldRows } from './pass-fields.ts';
 import { PassHeader } from './pass-header.tsx';
-import { type HolderState, holderState, type MyPass, passName, toView } from './pass-view.ts';
+import { type HolderState, holderPassName, holderState, type MyPass, toView } from './pass-view.ts';
 import { isPendingRefresh } from './refresh.ts';
 import { TagsCard } from './tags-card.tsx';
 import { publicUrlOf } from './wallet-actions.tsx';
@@ -35,9 +36,19 @@ function fromList(client: ReturnType<typeof useQueryClient>, id: string): MyPass
 }
 
 /** The pass's fields, then its upcoming events. The header's pill carries the state. */
-function DetailsCard({ pass, view, state }: { pass: MyPass; view: PassView; state: HolderState }) {
+function DetailsCard({
+  pass,
+  view,
+  state,
+  title,
+}: {
+  pass: MyPass;
+  view: PassView;
+  state: HolderState;
+  title: string;
+}) {
   // The card already says what the pass is called.
-  const rows = fieldRows(pass.passJson).filter((r) => r.value !== passName(pass));
+  const rows = fieldRows(pass.passJson).filter((r) => r.value !== title);
   return (
     <Card>
       <CardHeader title="Details" />
@@ -72,6 +83,8 @@ function Detail({
 }) {
   const [dip, setDip] = useState(0);
   const [device] = useState(browserDevice);
+  const { authed } = useSession();
+  const title = holderPassName(pass, authed?.user);
   const stale = state === 'voided' || state === 'removed';
   return (
     <HolderPassView
@@ -88,7 +101,7 @@ function Detail({
           transitionName={`pass-${pass.id}`}
         />
       }
-      passTitle={passName(pass)}
+      passTitle={title}
       orgName={pass.orgName}
       state={state}
       removalMessage={pass.removalMessage}
@@ -97,7 +110,8 @@ function Detail({
       walletOffers={pass.presentationEligible === true ? pass.walletOffers : []}
       issuance={pass.walletIssuance}
       barcodeHref={
-        pass.presentationEligible === true
+        // On the phone that adds, the badge leads and the card carries the code.
+        pass.presentationEligible === true && device.device !== 'iphone'
           ? `/api/v1/me/passes/${encodeURIComponent(pass.id)}/barcode`
           : undefined
       }
@@ -122,7 +136,7 @@ function Detail({
       details={
         <div className="flex flex-col gap-6">
           {state === 'active' ? <TagsCard tags={pass.tags} orgName={pass.orgName} /> : null}
-          <DetailsCard pass={pass} view={view} state={state} />
+          <DetailsCard pass={pass} view={view} state={state} title={title} />
         </div>
       }
       buddy={(props) => <Buddy {...props} />}

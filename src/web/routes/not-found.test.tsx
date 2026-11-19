@@ -22,4 +22,21 @@ describe('unknown URLs', () => {
     expect(await screen.findByRole('link', { name: STATE_COPY.goToMyPasses })).toBeVisible();
     expect(screen.queryByRole('link', { name: 'Sign in' })).toBeNull();
   });
+
+  it('send a signed-out visitor from a pass link to Sign in, keeping the way back', async () => {
+    const { router } = await renderApp('/passes/p1', { session: 'anon' });
+    expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeVisible();
+    expect(router.state.location.pathname).toBe('/login');
+    expect(router.state.location.search).toMatchObject({ next: '/passes/p1' });
+  });
+
+  it('offer no way out until the session is known', async () => {
+    await renderApp('/no-such-page', {
+      session: 'user',
+      handlers: { '/api/v1/session': () => new Promise<Response>(() => {}) },
+    });
+    expect(await screen.findByRole('heading', { name: STATE_COPY.pageNotFound })).toBeVisible();
+    expect(screen.queryByRole('link', { name: STATE_COPY.goToMyPasses })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Sign in' })).toBeNull();
+  });
 });

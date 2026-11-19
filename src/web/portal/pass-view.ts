@@ -29,18 +29,16 @@ export function holderState(pass: MyPass, view: PassView): HolderState {
   return pass.status === 'voided' || view.voided ? 'voided' : view.expired ? 'expired' : 'active';
 }
 
-const words = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .trim();
-
-/** The pass is titled with the signed-in holder's own name (or the name their email spells). */
+/** The pass is titled with the signed-in holder's own name: no title on their own page. */
 export function isHolderName(
   title: string | null,
-  user: { name: string | null; primaryEmail: string | null } | undefined,
+  user: { name: string | null } | undefined,
 ): boolean {
-  if (!title || !user) return false;
-  const t = words(title);
-  return t === words(user.name ?? '') || t === words((user.primaryEmail ?? '').split('@')[0] ?? '');
+  const own = user?.name?.trim().toLowerCase();
+  return Boolean(own) && title?.trim().toLowerCase() === own;
+}
+
+/** What the holder's pages call the pass: its title, or its kind when the title is their name. */
+export function holderPassName(pass: MyPass, user: { name: string | null } | undefined): string {
+  return isHolderName(pass.title, user) ? pass.templateName : passName(pass);
 }

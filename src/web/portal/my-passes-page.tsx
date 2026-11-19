@@ -27,7 +27,7 @@ import {
 import { ModePill } from '../ui/layout/mode-pill.tsx';
 import { myPassesQuery } from './api.ts';
 import { browserDevice } from './device.ts';
-import { isHolderName, type MyPass, passName, toView } from './pass-view.ts';
+import { holderPassName, type MyPass, toView } from './pass-view.ts';
 import { isPendingRefresh } from './refresh.ts';
 import { RefreshIconButton, useRefresh } from './refresh-button.tsx';
 import { useRemovalStatus } from './removal-status.ts';
@@ -76,7 +76,7 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
   const { authed } = useSession();
   const refresh = useRefresh(pass.id, pass);
   // The holder's own name is no title on their own page: the pass kind leads instead.
-  const name = isHolderName(pass.title, authed?.user) ? pass.templateName : passName(pass);
+  const name = holderPassName(pass, authed?.user);
   const publicUrl = publicUrlOf(pass.downloadUrl);
   const removed = pass.removedAt !== null;
   const voided = pass.status === 'voided' || removed;

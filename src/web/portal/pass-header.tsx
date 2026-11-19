@@ -2,11 +2,12 @@ import { useNavigate } from '@tanstack/react-router';
 import { Clock } from 'lucide-react';
 import type { PassView } from '@/shared/pass-view/index.ts';
 import { useDocumentTitle } from '../lib/route-focus.tsx';
+import { useSession } from '../lib/session.ts';
 import { Breadcrumbs, StatusPill } from '../ui/index.ts';
 import { type PassHeading, passHeading } from './add/heading.ts';
 import { HolderHeading } from './holder-heading.tsx';
 import { updatedLine } from './pass-fields.ts';
-import { type HolderState, type MyPass, passName } from './pass-view.ts';
+import { type HolderState, holderPassName, type MyPass } from './pass-view.ts';
 import { RefreshButton } from './refresh-button.tsx';
 import { PassMoreMenu, publicUrlOf } from './wallet-actions.tsx';
 
@@ -41,9 +42,14 @@ function Meta({ pass, state }: { pass: MyPass; state: HolderState }) {
  */
 export function PassHeader({ pass, view, state = 'active' }: PassHeaderProps) {
   const navigate = useNavigate();
+  const { authed } = useSession();
   const heading =
     pass && view
-      ? passHeading(view.description, [view.organizationName, pass.orgName], passName(pass))
+      ? passHeading(
+          view.description,
+          [view.organizationName, pass.orgName],
+          holderPassName(pass, authed?.user),
+        )
       : LOADING;
   useDocumentTitle(heading.title);
   const off = state === 'voided' || state === 'removed';
@@ -55,7 +61,7 @@ export function PassHeader({ pass, view, state = 'active' }: PassHeaderProps) {
         <Breadcrumbs
           items={[
             { label: 'My passes', to: '/' },
-            { label: pass ? passName(pass) : heading.title },
+            { label: pass ? holderPassName(pass, authed?.user) : heading.title },
           ]}
         />
       }
@@ -68,7 +74,7 @@ export function PassHeader({ pass, view, state = 'active' }: PassHeaderProps) {
               page
               passId={pass.id}
               help={!off}
-              passTitle={passName(pass)}
+              passTitle={holderPassName(pass, authed?.user)}
               inWallet={pass.inWallet}
               publicUrl={off ? null : publicUrlOf(pass.downloadUrl)}
               onRemoved={() => void navigate({ to: '/', replace: true })}
