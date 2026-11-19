@@ -9,8 +9,8 @@ export type ChannelVerdict = { kind: 'off'; channel: Channel } | { kind: 'typed'
 /**
  * The door's channel rules for a found pass (design-channels §3). A tag read needs Linked NFC. A code hit
  * is the code family: a scan code or barcode is refused when every digital channel is off; a typed number
- * (lookup or serial alone) is only checked, and only on a pass that had a New code after a retirement or
- * has no digital channel left, so a plain Turn off never makes every scan a heads-up.
+ * (lookup or serial alone) is only checked, and only on a pass that had a New code after a retirement,
+ * has a print or has no digital channel left, so a plain Turn off never makes every scan a heads-up.
  */
 export async function channelVerdict(
   ctx: ServiceContext,
@@ -18,12 +18,13 @@ export async function channelVerdict(
   input: ScanCodeInput,
 ): Promise<ChannelVerdict> {
   const nfc = input.method === 'nfc' && 'passId' in input;
-  if ((!nfc && !one.matchedBy) || one.channelRules === false) return null;
+  if ((!nfc && !one.matchedBy) || one.matchedBy === 'print' || one.channelRules === false)
+    return null;
   const door = await doorChannels(ctx, one.pass);
   if (nfc) return door.nfcOn ? null : { kind: 'off', channel: 'nfc' };
   const typed = one.matchedBy === 'lookup' || one.matchedBy === 'serial';
   if (door.digitalOff) return typed ? { kind: 'typed' } : { kind: 'off', channel: door.named };
-  return typed && door.rotatedAfterRetire ? { kind: 'typed' } : null;
+  return typed && (door.rotatedAfterRetire || door.printed) ? { kind: 'typed' } : null;
 }
 
 /**

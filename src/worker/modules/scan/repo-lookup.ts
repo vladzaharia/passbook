@@ -56,7 +56,9 @@ export interface Candidate extends CredentialTombstoneSnapshot {
   /** Whether a pass override, a template policy or an org block can change the defaults; absent: unknown. */
   channelRules?: boolean;
   /** The credential a code input matched on; absent for a pass id or a tag. */
-  matchedBy?: 'scan_code' | 'barcode' | 'lookup' | 'serial';
+  matchedBy?: 'scan_code' | 'barcode' | 'lookup' | 'serial' | 'print';
+  /** Set when the candidate was found by a print code: that print's state. */
+  print?: { status: string; voidedAt: number | null; cause: string | null };
 }
 
 export type ReleaseSnapshot = Pick<
@@ -130,6 +132,7 @@ const PROJECTION = `SELECT p.*, snapshot.pass_json AS pass_json,
       WHERE transfer.pass_id=p.id AND transfer.state='pending') AS transfer_pending,
     credential_keyset.commitment AS credential_keyset_commitment,
     (EXISTS(SELECT 1 FROM pass_channels pc WHERE pc.pass_id=p.id)
+      OR EXISTS(SELECT 1 FROM pass_prints pp WHERE pp.pass_id=p.id)
       OR EXISTS(SELECT 1 FROM template_channel_policies tp
         WHERE tp.org_id=p.org_id AND tp.mode=p.mode AND tp.template_id=p.template_id)
       OR EXISTS(SELECT 1 FROM settings cs WHERE cs.scope='org:'||p.org_id
@@ -184,6 +187,17 @@ const ELIGIBLE = `p.deleted_at IS NULL AND p.test_data_quarantined = 0
     )}))`;
 
 const SELECT = `${PROJECTION} FROM passes p ${JOINS} WHERE p.org_id = ? AND ${ELIGIBLE}`;
+
+/** The pass behind a print code (`print_code_hash`, keyed), with the print's state beside it. */
+const PRINT_SELECT = `${PROJECTION.replace(
+  'SELECT p.*,',
+  'SELECT p.*, pr.status AS print_status, pr.voided_at AS print_voided_at, pr.void_cause AS print_void_cause,',
+)} FROM passes p JOIN pass_prints pr ON pr.pass_id = p.id ${JOINS}
+  WHERE p.org_id = ? AND pr.org_id = p.org_id AND pr.mode = p.mode AND pr.print_code_hash = ?
+    AND p.mode = ? AND ${ELIGIBLE} LIMIT 1`;
+
+export const byPrintHashStmt = (db: Db, orgId: string, hash: string, mode: 'live' | 'test') =>
+  stmt(db, PRINT_SELECT, [orgId, hash, mode]);
 
 const LOOKUP_COLUMNS = ['scan_code', 'barcode_hash', 'lookup_hash', 'serial', 'id'] as const;
 

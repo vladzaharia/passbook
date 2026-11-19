@@ -2,7 +2,7 @@ import { DIGITAL_CHANNELS, effectiveChannels } from '../../../shared/channels.ts
 import type { Channel } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { rotatedSince } from './repo.ts';
+import { hasPrint, rotatedSince } from './repo.ts';
 import { loadPass } from './service.ts';
 
 export interface DoorChannels {
@@ -14,6 +14,8 @@ export interface DoorChannels {
   named: Channel;
   /** A New code was issued after a digital channel was retired: typed numbers are checked. */
   rotatedAfterRetire: boolean;
+  /** The pass has an active or past print. */
+  printed: boolean;
 }
 
 interface PassRef {
@@ -44,5 +46,6 @@ export async function doorChannels(ctx: ServiceContext, pass: PassRef): Promise<
     digitalOff: digital.every((d) => !d.on),
     named: (latest ?? digital[0])?.channel ?? 'mobile',
     rotatedAfterRetire: rotated,
+    printed: await hasPrint(ctx.env.DB, pass.id),
   };
 }

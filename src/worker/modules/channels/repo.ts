@@ -176,3 +176,11 @@ export async function rotatedSince(
   );
   return r !== null;
 }
+
+/** Whether the pass has any print, active or past. */
+export async function hasPrint(db: D1Database, passId: string): Promise<boolean> {
+  return (
+    (await first(db, 'SELECT 1 AS hit FROM pass_prints WHERE pass_id = ? LIMIT 1', [passId])) !==
+    null
+  );
+}

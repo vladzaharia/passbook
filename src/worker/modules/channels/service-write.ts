@@ -18,6 +18,8 @@ import { recordPassEvents } from '../events/record.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import type { Actor } from '../passes/service.ts';
+import { activePrint } from '../prints/repo.ts';
+import { adminWriter, writeVoid } from '../prints/repo-write.ts';
 import * as repo from './repo.ts';
 import { writePassChannels, writeTemplatePolicy } from './repo-write.ts';
 import { loadPass, loadTemplate, passChannels } from './service.ts';
@@ -108,6 +110,8 @@ export async function putPassChannels(
     })),
     audits,
   );
+  if (actions.some((a) => a.kind === 'void_prints') && (await activePrint(ctx.env.DB, pass.id)))
+    await writeVoid(ctx, adminWriter(authority, actor), pass.id, 'channel_off');
   await bump(ctx.env.DB, key, window);
   await recordPassEvents(
     ctx,
