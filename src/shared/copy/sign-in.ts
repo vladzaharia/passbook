@@ -132,6 +132,11 @@ export const EXPIRED_LINK_COPY = {
     message: 'Ask the organization admin to send a new invitation.',
     action: AUTH_PAGE_COPY.backToSignIn,
   },
+  invitation_pending: {
+    title: 'Invitation pending',
+    message: 'Sign in with this address to accept.',
+    action: AUTH_PAGE_COPY.signIn,
+  },
   invitation_used: {
     title: 'Invitation already used',
     message: 'If you are signed in, open PassBook. Otherwise sign in with this address.',

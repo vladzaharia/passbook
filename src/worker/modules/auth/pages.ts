@@ -105,7 +105,9 @@ export function verifyPage(
 function deadCopy(link: LinkTrace | null) {
   if (link?.purpose === 'verify_email') return EXPIRED_LINK_COPY.verify_email;
   if (link?.invited) {
-    return EXPIRED_LINK_COPY[link.state === 'used' ? 'invitation_used' : 'invitation'];
+    if (link.invitation === 'pending') return EXPIRED_LINK_COPY.invitation_pending;
+    const used = link.state === 'used' || link.invitation === 'accepted';
+    return EXPIRED_LINK_COPY[used ? 'invitation_used' : 'invitation'];
   }
   return EXPIRED_LINK_COPY[link?.state === 'used' ? 'used' : 'sign_in'];
 }
@@ -120,23 +122,31 @@ export function expiredPage(
   link: LinkTrace | null = null,
   theme?: PageTheme,
   token = '',
+  canResend = true,
 ): string {
   const verify = link?.purpose === 'verify_email';
   const copy = deadCopy(link);
+  const pending = link?.invitation === 'pending';
   const resend =
-    link && token && !verify && !link.invited
+    link && token && canResend && !verify && !link.invited && !link.identity
       ? `<p class="lede">New link to <b>${escapeHtml(maskEmail(link.email))}</b>.</p>${postButton('/auth/magic/resend', COPY.emailNewLink, { token })}`
       : '';
   const home =
-    link?.state === 'used' && !verify ? actionHtml({ label: COPY.openPassBook, href: '/' }) : '';
+    link?.state === 'used' && !verify && !pending
+      ? actionHtml({ label: COPY.openPassBook, href: '/' })
+      : '';
   const back = actionHtml(
-    verify ? { label: copy.action, href: '/account' } : backToSignIn(loginPath(link?.next)),
+    verify
+      ? { label: copy.action, href: '/account' }
+      : pending
+        ? { label: copy.action, href: loginPath(link?.next), primary: true }
+        : backToSignIn(loginPath(link?.next)),
   );
   return hostedPage({
     nonce,
     theme,
     title: copy.title,
-    art: 'expired',
+    art: pending ? 'login' : 'expired',
     lede: escapeHtml(copy.message),
     footer: !verify && !link?.invited,
     body: `<div class="stack">${resend}${home}${back}</div>`,

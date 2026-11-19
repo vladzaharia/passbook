@@ -103,7 +103,7 @@ export const peekLink = (db: Db, tokenHash: string, now: number) =>
     [tokenHash, now, now],
   );
 
-/** A link's purpose, address, next and fate, live or not: its dead-link page says which. */
+/** A link's purpose, address, next and fate, live or not, and its invitation's: its dead-link page says which. */
 export const linkTrace = (db: Db, tokenHash: string) =>
   first<{
     redirect_path: string | null;
@@ -111,9 +111,23 @@ export const linkTrace = (db: Db, tokenHash: string) =>
     email: string;
     consumed_at: number | null;
     invitation_id: string | null;
+    has_identity: number;
+    has_account: number;
+    inv_accepted_at: number | null;
+    inv_revoked_at: number | null;
+    inv_expires_at: number | null;
+    org_status: string | null;
   }>(
     db,
-    'SELECT redirect_path, purpose, email, consumed_at, invitation_id FROM magic_links WHERE token_hash = ?',
+    `SELECT m.redirect_path, m.purpose, m.email, m.consumed_at, m.invitation_id,
+       m.pending_identity IS NOT NULL AS has_identity,
+       EXISTS (SELECT 1 FROM user_emails e WHERE e.email = m.email) AS has_account,
+       i.accepted_at AS inv_accepted_at, i.revoked_at AS inv_revoked_at,
+       i.expires_at AS inv_expires_at, o.status AS org_status
+     FROM magic_links m
+     LEFT JOIN org_invitations i ON i.id = m.invitation_id
+     LEFT JOIN orgs o ON o.id = i.org_id
+     WHERE m.token_hash = ?`,
     [tokenHash],
   );
 

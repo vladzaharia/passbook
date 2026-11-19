@@ -192,6 +192,8 @@ describe('hosted auth pages', () => {
       purpose: 'sign_in',
       state: 'expired',
       invited: false,
+      invitation: null,
+      identity: false,
       email: 'a@b.co',
     });
     expect(signIn).toContain('Request a new one to sign in.');
@@ -201,6 +203,8 @@ describe('hosted auth pages', () => {
       purpose: 'verify_email',
       state: 'expired',
       invited: false,
+      invitation: null,
+      identity: false,
       email: 'a@b.co',
     });
     expect(verify).toMatch(/<h1>Link expired<\/h1>/);

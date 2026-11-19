@@ -278,4 +278,108 @@ describe('dead links', () => {
     expect(dead).toMatch(/<h1[^>]*>Invitation expired<\/h1>/);
     expect(dead).not.toContain('/auth/magic/resend');
   });
+
+  async function invitedLink(token: string, email: string, id: string) {
+    const org = await makeOrg(fixtures(h.env));
+    const now = h.clock.now();
+    await run(
+      h.env.DB,
+      `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at)
+       VALUES (?, ?, ?, '["org_admin"]', ?, ?, ?)`,
+      [id, org.id, email, await sha256Hex(`h${id}`), now, now + 86_400_000],
+    );
+    await run(
+      h.env.DB,
+      `INSERT INTO magic_links (token_hash, email, purpose, redirect_path, invitation_id, created_at, expires_at)
+       VALUES (?, ?, 'sign_in', '/account', ?, ?, ?)`,
+      [await sha256Hex(token), email, id, now, now + 86_400_000],
+    );
+  }
+
+  it('an invitation whose address already has an account is pending, not expired', async () => {
+    const email = (await makeUser(fixtures(h.env))).primaryEmail;
+    const token = 'p'.repeat(43);
+    await invitedLink(token, email, 'inv-pend');
+    const html = await (await page(`/auth/magic?t=${token}`)).text();
+    expect(html).toMatch(/<h1[^>]*>Invitation pending<\/h1>/);
+    expect(html).toContain('Sign in with this address to accept.');
+    expect(hrefs(html)).toContain('/login?next=%2Faccount');
+    expect(html).not.toContain('/auth/magic/resend');
+  });
+
+  it('an accepted invitation says used; a revoked one says expired', async () => {
+    const token = 'a'.repeat(43);
+    await invitedLink(token, addr(), 'inv-acc');
+    await run(h.env.DB, "UPDATE org_invitations SET accepted_at = 1 WHERE id = 'inv-acc'");
+    const accepted = await (await page(`/auth/magic?t=${token}`)).text();
+    expect(accepted).toMatch(/<h1[^>]*>Invitation already used<\/h1>/);
+    const other = 'r'.repeat(43);
+    await invitedLink(other, addr(), 'inv-rev');
+    await run(h.env.DB, "UPDATE org_invitations SET revoked_at = 1 WHERE id = 'inv-rev'");
+    const revoked = await (await page(`/auth/magic?t=${other}`)).text();
+    expect(revoked).toMatch(/<h1[^>]*>Invitation expired<\/h1>/);
+  });
+});
+
+describe('resend refusals send no mail', () => {
+  const resend = (token: string, headers: Record<string, string> = {}) =>
+    h.call('/auth/magic/resend', {
+      method: 'POST',
+      body: new URLSearchParams({ token }),
+      headers: { ...FORM, ...HTML, ...headers },
+    });
+
+  it('an invitation link', async () => {
+    const org = await makeOrg(fixtures(h.env));
+    const email = addr();
+    const now = h.clock.now();
+    await run(
+      h.env.DB,
+      `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at)
+       VALUES ('inv-rs', ?, ?, '["org_admin"]', ?, ?, ?)`,
+      [org.id, email, await sha256Hex('inv-rs'), now, now + 86_400_000],
+    );
+    const token = 'q'.repeat(43);
+    await run(
+      h.env.DB,
+      `INSERT INTO magic_links (token_hash, email, purpose, invitation_id, created_at, expires_at)
+       VALUES (?, ?, 'sign_in', 'inv-rs', ?, ?)`,
+      [await sha256Hex(token), email, now, now + 86_400_000],
+    );
+    const before = h.mail.length;
+    expect((await resend(token)).status).toBe(200);
+    expect(h.mail.length).toBe(before);
+  });
+
+  it('an add-email link', async () => {
+    const me = await signedIn();
+    const { token } = await verifyLink(me);
+    const before = h.mail.length;
+    expect((await resend(token)).status).toBe(200);
+    expect(h.mail.length).toBe(before);
+  });
+
+  it('email sign-in off', async () => {
+    const email = (await makeUser(fixtures(h.env))).primaryEmail;
+    await requestLink(email);
+    const token = tokenOf(h.mail.at(-1));
+    await setMagic(false);
+    h.clock.advance(16 * 60_000);
+    expect(await (await page(`/auth/magic?t=${token}`)).text()).not.toContain('/auth/magic/resend');
+    const before = h.mail.length;
+    expect((await resend(token)).status).toBe(200);
+    expect(h.mail.length).toBe(before);
+  });
+
+  it('a cross-origin POST', async () => {
+    const email = (await makeUser(fixtures(h.env))).primaryEmail;
+    await requestLink(email);
+    const token = tokenOf(h.mail.at(-1));
+    const before = h.mail.length;
+    expect(
+      (await resend(token, { origin: 'https://evil.example', 'sec-fetch-site': 'cross-site' }))
+        .status,
+    ).toBe(403);
+    expect(h.mail.length).toBe(before);
+  });
 });

@@ -84,7 +84,10 @@ export async function confirmMagic(c: Context<AppBindings>) {
   const theme = requestTheme(c);
   const token = c.req.query('t') ?? '';
   const link = token.length >= 16 && token.length <= 256 ? await peekMagicLink(ctx, token) : null;
-  if (!link) return c.html(expiredPage(nonce, await magicLinkTrace(ctx, token), theme, token), 400);
+  if (!link) {
+    const trace = await magicLinkTrace(ctx, token);
+    return c.html(expiredPage(nonce, trace, theme, token, await isEmailSignInEnabled(ctx)), 400);
+  }
   if (link.purpose === 'sign_in') {
     if (link.needsEmailSignIn && !(await isEmailSignInEnabled(ctx))) {
       const page = signInErrorPage(nonce, 'MAGIC_LINK_DISABLED', { next: link.next }, theme);
@@ -145,7 +148,10 @@ async function consumeErrorPage(
   const field = (body as Record<string, unknown> | null)?.token;
   const token = typeof field === 'string' ? field : '';
   const trace = await magicLinkTrace(serviceContext(c), token);
-  if (code === 'LINK_INVALID') return c.html(expiredPage(nonce, trace, theme, token), 400);
+  if (code === 'LINK_INVALID') {
+    const on = await isEmailSignInEnabled(serviceContext(c));
+    return c.html(expiredPage(nonce, trace, theme, token, on), 400);
+  }
   for (const [name, value] of Object.entries(error.headers ?? {})) c.header(name, value);
   const opts =
     code === 'SESSION_REQUIRED' && token
