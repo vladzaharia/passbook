@@ -55,10 +55,11 @@ export function useOrg(id: string) {
   });
 }
 
-export function useOrgWorkspace(id: string) {
+export function useOrgWorkspace(id: string, enabled = true) {
   return useQuery({
     queryKey: orgKeys.workspace(id),
     queryFn: ({ signal }) => api.get(`${orgPath(id)}/workspace`, OrgSummarySchema, { signal }),
+    enabled,
   });
 }
 

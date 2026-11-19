@@ -208,6 +208,6 @@ export function renderJoinPage(page: JoinPage, nonce: string, theme?: PageTheme)
     });
   }
   const title = JOIN_COPY.page.title.replace('{org}', page.orgName);
-  const head = `<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer"><meta property="og:type" content="website"><meta property="og:title" content="${escapeHtml(title)}">`;
+  const head = `<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="strict-origin"><meta property="og:type" content="website"><meta property="og:title" content="${escapeHtml(title)}">`;
   return `${documentStart(theme)}${head}<title>${escapeHtml(title)}</title>${SCRIPT}${REPLAY_SCRIPT}<style nonce="${nonce}">${JOIN_PAGE_CSS}</style></head><body>${renderToStaticMarkup(<JoinForm {...page} />)}</body></html>`;
 }
