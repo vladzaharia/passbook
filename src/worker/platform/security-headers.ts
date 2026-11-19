@@ -52,7 +52,14 @@ export function contentSecurityPolicy(
   ].join('; ');
 }
 
-const NO_REFERRER_PREFIXES = ['/p/', '/b/', '/auth/', '/scan', '/j/'];
+const NO_REFERRER_PREFIXES = ['/p/', '/b/', '/auth/', '/scan'];
+/**
+ * The join page's form posts to itself. A browser sends `Origin: null` on a POST from a
+ * `no-referrer` page, which the join origin check refuses. `strict-origin` keeps the token in the
+ * URL path out of every Referer, our own server's included, and lets the POST carry its origin.
+ */
+export const REFERRER_ORIGIN_ONLY = 'strict-origin';
+const ORIGIN_ONLY_PREFIXES = ['/j/'];
 const TURNSTILE_PREFIXES = ['/j/'];
 const NO_STORE_PREFIXES = ['/api/', '/auth/'];
 
@@ -87,7 +94,11 @@ export const securityHeaders = createMiddleware<AppBindings>(async (c, next) => 
   set('x-content-type-options', 'nosniff');
   set(
     'referrer-policy',
-    NO_REFERRER_PREFIXES.some((p) => path.startsWith(p)) ? 'no-referrer' : REFERRER_DEFAULT,
+    ORIGIN_ONLY_PREFIXES.some((p) => path.startsWith(p))
+      ? REFERRER_ORIGIN_ONLY
+      : NO_REFERRER_PREFIXES.some((p) => path.startsWith(p))
+        ? 'no-referrer'
+        : REFERRER_DEFAULT,
   );
   set('permissions-policy', PERMISSIONS_POLICY);
   set('cross-origin-opener-policy', COOP);

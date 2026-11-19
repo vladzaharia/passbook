@@ -17,8 +17,8 @@ beforeAll(async () => {
 
 const owner = async (id: string) => (await getPass(kit.env.DB, id))?.ownerUserId ?? null;
 
-describe('a joined pass is never attached by a hook', () => {
-  it('the minute sweep and the sign-in hook leave the owner NULL; an operator pass attaches', async () => {
+describe('a joined pass is attached only by its owner signing in', () => {
+  it("the minute sweep leaves the owner NULL; the verified owner's sign-in attaches it", async () => {
     const email = `join-attach-${kit.fx.ids.token(6).toLowerCase()}@example.com`;
     const user = await makeUser(kit.fx, { primaryEmail: email });
     const live = kit.liveRelease;
@@ -38,13 +38,20 @@ describe('a joined pass is never attached by a hook', () => {
     });
     // The sweep pages the whole table; run it until it has passed this pass.
     for (let i = 0; i < 4; i++) await resumeVerifiedHolderAttachments(jobCtxOf(kit));
-    expect(await attachWaitingPassesForEmail(jobCtxOf(kit), user.id, email)).toBe(0);
     expect(await owner(joined.id)).toBeNull();
-    // Positive control: an operator pass with the same address attaches through the same paths.
+    // Positive control: an operator pass with the same address attaches by the sweep.
     const operated = await kit.pass({ holderEmail: email });
     for (let i = 0; i < 4 && (await owner(operated.id)) === null; i++)
       await resumeVerifiedHolderAttachments(jobCtxOf(kit));
     expect(await owner(operated.id)).toBe(user.id);
     expect(await owner(joined.id)).toBeNull();
+    // The owner's own sign-in is the proof for the joined card; another account's is not.
+    const stranger = await makeUser(kit.fx, {
+      primaryEmail: `join-attach-${kit.fx.ids.token(6).toLowerCase()}@example.com`,
+    });
+    expect(await attachWaitingPassesForEmail(jobCtxOf(kit), stranger.id, email)).toBe(0);
+    expect(await owner(joined.id)).toBeNull();
+    expect(await attachWaitingPassesForEmail(jobCtxOf(kit), user.id, email)).toBe(1);
+    expect(await owner(joined.id)).toBe(user.id);
   });
 });

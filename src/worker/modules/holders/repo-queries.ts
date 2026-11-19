@@ -82,6 +82,15 @@ export async function userVerifiedEmail(
   return row !== null;
 }
 
+/** A card made from a public join link: its address was typed into a form nobody verified. */
+export async function isJoinedPass(db: D1Database, passId: string): Promise<boolean> {
+  return (
+    (await first<{ ok: number }>(db, 'SELECT 1 AS ok FROM join_issues WHERE pass_id = ?', [
+      passId,
+    ])) !== null
+  );
+}
+
 /** Candidates for the verified-email hook; each is transferred under its own source fence. */
 export async function waitingPassIds(
   db: D1Database,
@@ -93,8 +102,6 @@ export async function waitingPassIds(
     `SELECT p.id FROM passes p
      WHERE p.holder_email = ? AND p.owner_user_id IS NULL
        AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
-       -- A joined card's address was typed into a public form: the holder attaches it, never a hook.
-       AND NOT EXISTS (SELECT 1 FROM join_issues ji WHERE ji.pass_id = p.id)
        AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
          WHERE t.pass_id = p.id AND t.state = 'pending')
      ORDER BY p.id LIMIT ?`,
