@@ -1,0 +1,246 @@
+import {
+  type RevokeWalletCredential,
+  type SaveWalletCredential,
+  SaveWalletCredentialSchema,
+  type WalletCredential,
+  type WalletCredentialList,
+} from '../../../shared/contracts/wallet-providers.ts';
+import type { SessionAuth } from '../../platform/auth.ts';
+import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../platform/errors.ts';
+import { sha256Hex } from '../../platform/ids.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { tenantAuthorityOf } from '../passes/http.ts';
+import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
+import { snapshotWalletCredentialContext } from './account-credential-material.ts';
+import { validateGoogleAccount } from './google-credentials.ts';
+import {
+  type CredentialRow,
+  type CredentialWriter,
+  cardMapOf,
+  findActiveCredential,
+  findCredential,
+  listCredentials,
+  revokeCredential,
+  saveCredential,
+} from './repo-credentials.ts';
+import { validateSamsungCredentials } from './samsung-credentials.ts';
+
+export function credentialDto(row: CredentialRow): WalletCredential {
+  return {
+    id: row.id,
+    scope: row.scope,
+    orgId: row.org_id,
+    mode: row.mode,
+    provider: row.provider,
+    identityHint: row.identity_hint,
+    revision: row.revision,
+    verifiedAt: row.verified_at,
+    revokedAt: row.revoked_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+const changed = () =>
+  new ConflictError('The wallet credential changed. Reload and retry.', 'WALLET_ACCOUNT_CONFLICT');
+
+function sessionOf(auth: SessionAuth): SessionAuth {
+  if (auth?.kind !== 'session') throw new ForbiddenError();
+  return auth;
+}
+
+/** The org's member writer: `integrations:manage`, a live session, the session's mode. */
+async function orgWriter(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  orgId: string,
+  purpose: string,
+): Promise<CredentialWriter> {
+  const authority = await tenantAuthorityOf(ctx, sessionOf(auth), orgId, 'integrations:manage');
+  if (authority.kind !== 'session') throw new ForbiddenError();
+  return {
+    purpose,
+    principal: tenantPrincipal(authority),
+    checks: capabilityChecks(authority),
+    actor: { type: 'user', id: authority.userId },
+    platform: false,
+  };
+}
+
+function platformWriter(auth: SessionAuth, purpose: string): CredentialWriter {
+  const session = sessionOf(auth);
+  if (!session.roles.includes('admin')) throw new ForbiddenError('Admin access is required.');
+  return {
+    purpose,
+    principal: { kind: 'platform', userId: session.userId, sessionIdHash: session.sessionId },
+    checks: [],
+    actor: { type: 'platform', id: session.userId },
+    platform: true,
+  };
+}
+
+async function validate(input: SaveWalletCredential, now: number): Promise<void> {
+  try {
+    if (input.provider === 'google') await validateGoogleAccount(input.credentials);
+    else await validateSamsungCredentials(input.credentials, now);
+  } catch {
+    throw new ValidationError(
+      'Invalid wallet provider credentials.',
+      [],
+      'WALLET_CREDENTIALS_INVALID',
+    );
+  }
+}
+
+/** The identity (issuer or partner) and the card map entries this credential carries. */
+async function identityOf(input: SaveWalletCredential) {
+  if (input.provider === 'google')
+    return { id: input.credentials.issuerId, cards: {} as Record<string, string> };
+  return {
+    id: input.credentials.partnerId,
+    cards: { generic: await sha256Hex(input.credentials.cardId) },
+  };
+}
+
+/** Creates or rotates the scope's one active credential for (mode, provider), always as a new version. */
+async function save(
+  ctx: ServiceContext,
+  w: CredentialWriter,
+  scope: { orgId: string | null; mode: 'live' | 'test' },
+  input: SaveWalletCredential,
+): Promise<CredentialRow> {
+  const parsed = SaveWalletCredentialSchema.safeParse(input);
+  if (!parsed.success)
+    throw new ValidationError(
+      'Invalid wallet provider credentials.',
+      [],
+      'WALLET_CREDENTIALS_INVALID',
+    );
+  const data = parsed.data;
+  await validate(data, ctx.clock.now());
+  const current = await findActiveCredential(ctx.env.DB, scope.orgId, scope.mode, data.provider);
+  if ((current?.revision ?? 0) !== data.expectedRevision) throw changed();
+  const identity = await identityOf(data);
+  const identityHash = await sha256Hex(identity.id);
+  if (current && current.identity_hash !== identityHash)
+    throw new ConflictError('The provider identity cannot change.', 'WALLET_IDENTITY_IMMUTABLE');
+  const previous = await cardMapOf(ctx.env.DB, current?.current_version_id ?? null);
+  for (const [type, hash] of Object.entries(previous))
+    if (identity.cards[type] !== undefined && identity.cards[type] !== hash)
+      throw new ConflictError('The provider identity cannot change.', 'WALLET_IDENTITY_IMMUTABLE');
+  const credentialId = current?.id ?? ctx.ids.id();
+  const versionId = ctx.ids.id();
+  const kind = `wallet-credential:${credentialId}:${w.platform ? 'platform' : 'org'}:${scope.mode}:${data.provider}`;
+  const envelope = await encryptSecret(
+    await loadKekRing(ctx.env),
+    JSON.stringify({ version: 1, provider: data.provider, credentials: data.credentials }),
+    credentialAad(versionId, scope.orgId, kind),
+  );
+  await saveCredential(ctx, w, {
+    credentialId,
+    expectedRevision: data.expectedRevision,
+    mode: scope.mode,
+    provider: data.provider,
+    identityHash,
+    identityHint: identity.id.slice(-4),
+    versionId,
+    eventId: ctx.ids.id(),
+    cardMap: { ...previous, ...identity.cards },
+    envelope,
+  });
+  const saved = await findCredential(ctx.env.DB, credentialId, scope.orgId);
+  if (!saved) throw changed();
+  return saved;
+}
+
+async function revoke(
+  ctx: ServiceContext,
+  w: CredentialWriter,
+  row: CredentialRow | null,
+  input: RevokeWalletCredential,
+): Promise<CredentialRow> {
+  if (!row) throw new NotFoundError();
+  if (row.revoked_at !== null || row.revision !== input.expectedRevision) throw changed();
+  await revokeCredential(ctx, w, {
+    credentialId: row.id,
+    expectedRevision: row.revision,
+    eventId: ctx.ids.id(),
+  });
+  const done = await findCredential(ctx.env.DB, row.id, row.org_id);
+  if (!done) throw changed();
+  return done;
+}
+
+export async function listOrgCredentials(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  orgId: string,
+  provider?: 'google' | 'samsung',
+): Promise<WalletCredentialList> {
+  await tenantAuthorityOf(ctx, sessionOf(auth), orgId, 'integrations:read');
+  const rows = await listCredentials(ctx.env.DB, {
+    orgId,
+    mode: auth.mode,
+    ...(provider ? { provider } : {}),
+  });
+  return { items: rows.map(credentialDto) };
+}
+
+export async function saveOrgCredential(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  orgId: string,
+  input: SaveWalletCredential,
+): Promise<WalletCredential> {
+  ctx = snapshotWalletCredentialContext(ctx);
+  const w = await orgWriter(ctx, auth, orgId, 'org_mode.wallet.credential_save');
+  return credentialDto(await save(ctx, w, { orgId, mode: auth.mode }, input));
+}
+
+export async function revokeOrgCredential(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  orgId: string,
+  id: string,
+  input: RevokeWalletCredential,
+): Promise<WalletCredential> {
+  const w = await orgWriter(ctx, auth, orgId, 'org_mode.wallet.credential_revoke');
+  const row = await findCredential(ctx.env.DB, id, orgId);
+  // A credential of the other mode is not this session's to revoke.
+  return credentialDto(await revoke(ctx, w, row?.mode === auth.mode ? row : null, input));
+}
+
+export async function listPlatformCredentials(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+): Promise<WalletCredentialList> {
+  platformWriter(auth, 'platform.wallet.credential_save');
+  return { items: (await listCredentials(ctx.env.DB, { orgId: null })).map(credentialDto) };
+}
+
+export async function savePlatformCredential(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  input: SaveWalletCredential & { mode: 'live' | 'test' },
+): Promise<WalletCredential> {
+  ctx = snapshotWalletCredentialContext(ctx);
+  const w = platformWriter(auth, 'platform.wallet.credential_save');
+  const { mode, ...rest } = input;
+  return credentialDto(await save(ctx, w, { orgId: null, mode }, rest as SaveWalletCredential));
+}
+
+export async function revokePlatformCredential(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  id: string,
+  input: RevokeWalletCredential,
+): Promise<WalletCredential> {
+  const w = platformWriter(auth, 'platform.wallet.credential_revoke');
+  return credentialDto(await revoke(ctx, w, await findCredential(ctx.env.DB, id, null), input));
+}
