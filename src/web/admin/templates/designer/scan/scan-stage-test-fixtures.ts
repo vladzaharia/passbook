@@ -5,9 +5,9 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router';
-import { render } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { createElement, type ReactElement, useState } from 'react';
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
 import type { ScanDisplayDoc } from '@/passkit/template/scan-display/schema.ts';
 import type { ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
 import { membershipsQuery, sessionQuery } from '@/web/lib/session.ts';
@@ -171,3 +171,21 @@ export function renderInApp(node: ReactElement) {
     createElement(QueryClientProvider, { client }, createElement(RouterProvider, { router })),
   );
 }
+
+/** Waits for the scanner frame to paint, and gives its elements a box (jsdom has no layout). */
+export async function frameReady() {
+  const iframe = (await screen.findByTitle(/^Scanner screen/)) as HTMLIFrameElement;
+  await waitFor(() =>
+    expect(iframe.contentDocument?.getElementById('root')?.childElementCount).toBeGreaterThan(0),
+  );
+  const win = iframe.contentWindow as unknown as { Element: typeof Element };
+  win.Element.prototype.getBoundingClientRect = () =>
+    ({ x: 0, y: 0, left: 0, top: 0, right: 10, bottom: 10, width: 10, height: 10 }) as DOMRect;
+}
+
+/** Queries inside the scanner's screen: its own document, as the scanner paints it. */
+export const frame = () =>
+  within(
+    (document.querySelector('iframe.sp-frame') as HTMLIFrameElement).contentDocument
+      ?.body as HTMLElement,
+  );

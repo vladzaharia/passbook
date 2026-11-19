@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 export interface FrameSize {
@@ -62,13 +62,22 @@ export function ScanFrame({
   const frame = useRef<HTMLIFrameElement>(null);
   const [mount, setMount] = useState<HTMLElement | null>(null);
   const [scale, setScale] = useState(1);
-  const onLoad = useCallback(() => {
+  // A blank frame gets its page written in; a browser that swaps the blank document after load
+  // is answered by the load handler, which writes it again.
+  const init = useCallback(() => {
     const doc = frame.current?.contentDocument;
-    const root = doc?.getElementById('root');
-    if (!doc || !root) return;
+    if (!doc) return;
+    if (!doc.getElementById('root')) {
+      doc.open();
+      doc.write(SHELL);
+      doc.close();
+    }
+    const root = doc.getElementById('root');
+    if (!root) return;
     copyStyles(document, doc);
     setMount(root);
   }, []);
+  useLayoutEffect(init, [init]);
   useEffect(() => {
     const doc = frame.current?.contentDocument;
     if (!mount || !doc) return;
@@ -104,8 +113,7 @@ export function ScanFrame({
       <iframe
         ref={frame}
         title={label}
-        srcDoc={SHELL}
-        onLoad={onLoad}
+        onLoad={init}
         className="sp-frame"
         width={size.width}
         height={size.height}

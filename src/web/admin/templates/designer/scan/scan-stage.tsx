@@ -177,7 +177,7 @@ export function ScanStage({
             [
               { value: 'phone', label: 'Phone' },
               { value: 'ipad', label: 'iPad' },
-              { value: 'desk', label: 'Desk' },
+              { value: 'desk', label: 'Landscape' },
             ] as const
           }
           value={device}
@@ -312,14 +312,13 @@ export function ScanStage({
           </div>
         ) : null}
         {restricted.length > 0 ? (
-          <p className="sp-help">
-            {restricted
-              .map(
-                (action) =>
-                  `${safePreviewText(action.label) ? action.label : 'Action'} · ${action.minRole === 'manager' ? 'Manager' : 'Desk'} required`,
-              )
-              .join('. ')}
-          </p>
+          <div className="sp-help">
+            {restricted.map((action) => (
+              <p key={action.id}>
+                {`${safePreviewText(action.label) ? action.label : 'Action'} · ${action.minRole === 'manager' ? 'Manager' : 'Desk'} required`}
+              </p>
+            ))}
+          </div>
         ) : null}
       </fieldset>
       <StageDiagnostics fit={fit} cuts={cuts} phone={phone} onSelect={onSelect} />
