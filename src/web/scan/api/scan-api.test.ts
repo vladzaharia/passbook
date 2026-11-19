@@ -160,6 +160,17 @@ describe('createScanApi', () => {
       expect(calls[1]?.init.body).toBe(calls[0]?.init.body);
     });
 
+    it('a session read refused for drift never waits on its own refetch', async () => {
+      const refresh = vi.fn(() => new Promise<void>(() => {}));
+      const { api, calls } = withRefresh(() => conflict('SCAN_CONFIG_CHANGED'), refresh);
+      await expect(api.session()).rejects.toMatchObject({
+        status: 409,
+        code: 'SCAN_CONFIG_CHANGED',
+      });
+      expect(refresh).not.toHaveBeenCalled();
+      expect(calls).toHaveLength(1);
+    });
+
     it('a counts poll refused for drift reloads the configuration and reads again', async () => {
       const refresh = vi.fn(async () => {});
       let n = 0;
@@ -263,6 +274,8 @@ describe('createScanApi', () => {
         'lookup',
         'markOut',
         'openNow',
+        'override',
+        'overrideNote',
         'pair',
         'pairPreview',
         'recent',

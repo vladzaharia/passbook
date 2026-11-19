@@ -24,6 +24,6 @@ export const SCAN_SURFACE_LABELS: Record<ScanSurface | 'auto', string> = {
   auto: 'Automatic',
   phone: 'Scanner',
   operator: 'Operator',
-  desk: 'Desk display',
+  desk: 'Desk monitor',
   customer: 'Customer display',
 };

@@ -1,23 +1,28 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
 import type { DesignDoc } from '../model.ts';
 import { ScanStage } from './scan-stage.tsx';
-import { fixture, Stage } from './scan-stage-test-fixtures.ts';
+import { fixture, frame, frameReady, Stage } from './scan-stage-test-fixtures.ts';
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('scan preview stage', () => {
-  it('links row selections, locks system content and supports every outcome for a non-event check-in', async () => {
+  it("paints the scanner's own screen and links row selections to it", async () => {
     const user = userEvent.setup();
     const select = vi.fn();
     const { rerender } = render(<Stage onSelect={select} />);
+    await frameReady();
     const canvas = screen.getByRole('group', { name: 'Scan screen preview, Check in' });
-    expect(within(canvas).getByText('A12')).toBeVisible();
+    const scanner = frame();
+    expect(scanner.getByText('A12')).toBeVisible();
+    expect(scanner.getByText('West entrance')).toBeInTheDocument();
+    expect(scanner.getByTestId('scan-result')).toBeInTheDocument();
+    expect(scanner.getByTestId('scan-dock')).toBeInTheDocument();
     expect(screen.getByText(/Phone fit:/)).toBeInTheDocument();
-    await user.click(within(canvas).getByRole('button', { name: 'Row field' }));
+    await user.click(await within(canvas).findByRole('button', { name: 'Row field' }));
     expect(select).toHaveBeenCalledWith('r_seat');
     rerender(<Stage selected="r_seat" onSelect={select} />);
     expect(within(canvas).getByRole('button', { name: 'Row field' })).toHaveAttribute(
@@ -25,25 +30,29 @@ describe('scan preview stage', () => {
       'true',
     );
     select.mockClear();
-    await user.click(within(canvas).getByRole('button', { name: /System\. The verdict/ }));
+    expect(within(canvas).queryByRole('button', { name: /System\. The verdict/ })).toBeNull();
+    await user.click(screen.getByRole('checkbox', { name: 'Locked areas' }));
+    await user.click(await within(canvas).findByRole('button', { name: /System\. The verdict/ }));
     expect(select).not.toHaveBeenCalled();
-    await user.keyboard('{ArrowDown}');
-    expect(within(canvas).getByRole('button', { name: /System\. The holder line/ })).toHaveFocus();
+    await user.click(screen.getByRole('checkbox', { name: 'Edit marks' }));
+    expect(within(canvas).queryAllByRole('button')).toHaveLength(0);
+    expect(frame().getByText('A12')).toBeVisible();
     await user.click(screen.getByRole('tab', { name: 'Card' }));
     expect(screen.getByRole('group', { name: 'Scan screen preview, Card' })).toBeVisible();
     await user.click(screen.getByRole('tab', { name: 'Heads-up' }));
-    expect(screen.getByText('Already checked in')).toBeVisible();
+    await waitFor(() => expect(frame().getByText('Already checked in')).toBeVisible());
     await user.click(screen.getByRole('tab', { name: 'Refused' }));
-    const refused = screen.getByRole('group', { name: 'Scan screen preview, Refused' });
-    expect(within(refused).getByText('See the desk.')).toBeVisible();
-    expect(within(refused).queryByText('A12')).not.toBeInTheDocument();
+    await waitFor(() => expect(frame().getByText('See the desk.')).toBeVisible());
+    expect(frame().queryByText('A12')).not.toBeInTheDocument();
   });
 
-  it('dispatches edit shortcuts only for editable canvas elements', () => {
+  it('dispatches edit shortcuts only for editable canvas elements', async () => {
     const action = vi.fn();
     const { rerender } = render(<Stage onAction={action} />);
+    await frameReady();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Locked areas' }));
     const canvas = screen.getByRole('group', { name: 'Scan screen preview, Check in' });
-    const row = within(canvas).getByRole('button', { name: 'Row field' });
+    const row = await within(canvas).findByRole('button', { name: 'Row field' });
     fireEvent.keyDown(row, { key: 'ArrowUp', altKey: true });
     fireEvent.keyDown(row, { key: 'ArrowDown', altKey: true });
     fireEvent.keyDown(row, { key: 'd', metaKey: true });
@@ -57,7 +66,7 @@ describe('scan preview stage', () => {
       ['r_seat', 'remove'],
     ]);
     action.mockClear();
-    const locked = within(canvas).getByRole('button', { name: /System\. The verdict/ });
+    const locked = await within(canvas).findByRole('button', { name: /System\. The verdict/ });
     fireEvent.keyDown(locked, { key: 'Delete' });
     fireEvent.keyDown(locked, { key: 'ArrowUp', altKey: true });
     expect(action).not.toHaveBeenCalled();
@@ -138,14 +147,15 @@ describe('scan preview stage', () => {
       );
     }
     render(<Actions />);
-    expect(screen.queryByText('A12')).not.toBeInTheDocument();
+    await frameReady();
+    expect(frame().queryByText('A12')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Lounge, hidden for this sample' }));
     expect(select).toHaveBeenCalledWith('p_hidden');
     await user.click(screen.getByRole('tab', { name: 'Redeem' }));
-    const canvas = screen.getByRole('group', { name: 'Scan screen preview, Redeem' });
-    expect(within(canvas).getByText('A12')).toBeVisible();
+    expect(screen.getByRole('group', { name: 'Scan screen preview, Redeem' })).toBeVisible();
+    await waitFor(() => expect(frame().getByText('A12')).toBeVisible());
     await user.click(screen.getByRole('tab', { name: 'Add stamp' }));
-    expect(screen.queryByText('A12')).not.toBeInTheDocument();
+    await waitFor(() => expect(frame().queryByText('A12')).not.toBeInTheDocument());
     await user.click(screen.getByRole('tab', { name: 'Card' }));
     expect(screen.getByText('Add stamp · Desk required')).toBeVisible();
     await user.click(screen.getByRole('radio', { name: 'Desk' }));
@@ -162,7 +172,7 @@ describe('scan preview stage', () => {
     expect(select).not.toHaveBeenCalled();
   });
 
-  it('does not replace a malformed authored display with the default preview', () => {
+  it('does not replace a malformed authored display with the default preview', async () => {
     const { doc } = fixture();
     const actions = [{ id: 'check_in', label: 'Check in', kind: 'check_in' }];
     const malformed: DesignDoc = {
@@ -185,6 +195,7 @@ describe('scan preview stage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('The authored scan screen is invalid');
     rerender(<ScanStage {...props} doc={absent} />);
     expect(screen.queryByText(/The authored scan screen is invalid/)).not.toBeInTheDocument();
-    expect(screen.getByText('A12')).toBeVisible();
+    await frameReady();
+    expect(frame().getByText('A12')).toBeVisible();
   });
 });

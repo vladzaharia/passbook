@@ -89,7 +89,8 @@ export function SessionDetail({
             <SessionStatePill session={s} />
             <ModePill mode={s.mode} />
             <span>
-              {s.onlineCount} online · {s.deviceCount} devices · {s.today} scans today
+              {s.onlineCount} online · {s.deviceCount} {s.deviceCount === 1 ? 'device' : 'devices'}{' '}
+              · {s.today} done today
             </span>
           </>
         }
@@ -208,7 +209,7 @@ export function SessionDetail({
           )}
         </section>
         {canManage ? <SessionTonight sessionId={s.id} /> : null}
-        <SessionActivity items={s.activity} />
+        <SessionActivity items={s.activity} timeZone={s.timeZone} />
       </TwoPane>
       {canManage && dialog === 'rules' ? (
         <SessionRulesDialog session={s} onClose={() => setDialog(undefined)} />

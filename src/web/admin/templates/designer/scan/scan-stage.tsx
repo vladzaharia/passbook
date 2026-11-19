@@ -1,23 +1,24 @@
 import { LockKeyhole } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ScanDisplayDoc } from '@/passkit/template/scan-display/schema.ts';
+import { roleAtLeast } from '@/passkit/template/scan-display/scope.ts';
 import type { Json, ScanRole } from '@/passkit/types.ts';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
-import { SegmentedControl, Select } from '@/web/ui/index.ts';
-import type { DesignDoc } from '../model.ts';
+import { ScanPreviewScreen } from '@/web/scan/preview-screen.tsx';
+import { CheckboxField, SegmentedControl, Select } from '@/web/ui/index.ts';
+import { type DesignDoc, styleOf } from '../model.ts';
+import { type FRAME_SIZES, ScanFrame, useFrameLayout } from './scan-frame.tsx';
+import { ScanOverlay } from './scan-overlay.tsx';
+import { previewOutcome } from './scan-preview-outcome.ts';
+import { useOrgLook } from './scan-stage-brand.ts';
 import { StageDiagnostics } from './scan-stage-diagnostics.tsx';
 import { useStageFocus } from './scan-stage-focus.ts';
 import { useStagePreview } from './scan-stage-model.ts';
+import { SourceStatus, StageNotes } from './scan-stage-notes.tsx';
 import { RealPassPicker } from './scan-stage-pass.tsx';
-import { PreviewCard } from './scan-stage-preview-card.tsx';
-import type { HitState } from './scan-stage-preview-hit.tsx';
 import { SampleInputs, useRealPreview } from './scan-stage-samples.tsx';
 import type { ScanStageAction } from './scan-stage-types.ts';
-import '@/web/scan/display/display.css';
-import '@/web/scan/display/display-rows.css';
-import '@/web/scan/result/result.css';
-import '@/web/scan/result/identity.css';
 import './scan-stage-controls.css';
 import './scan-stage.css';
 
@@ -52,7 +53,10 @@ export function ScanStage({
 }: ScanStageProps) {
   const [role, setRole] = useState<ScanRole>('door');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [device, setDevice] = useState<'phone' | 'ipad'>('phone');
+  const [device, setDevice] = useState<keyof typeof FRAME_SIZES>('phone');
+  const [marks, setMarks] = useState(true);
+  const [showLocked, setShowLocked] = useState(false);
+  const [layout, onLayout] = useFrameLayout();
   const [source, setSource] = useState<'synthetic' | 'real'>('synthetic');
   const [passId, setPassId] = useState<string | null>(null);
   const [request, setRequest] = useState(0);
@@ -93,7 +97,27 @@ export function ScanStage({
     onScreenChange,
     setTabId,
   });
-  const hit: HitState = { selected, active: focusId, onSelect, onFocus: setFocusId, phone };
+  const { look, failed } = useOrgLook(orgId);
+  const outcome = useMemo(
+    () =>
+      rendered
+        ? previewOutcome({
+            rendered,
+            tab,
+            actions,
+            role,
+            template: {
+              name: String(doc.manifest.name ?? 'Template'),
+              style: styleOf(doc.passJson),
+            },
+            passJson: doc.passJson,
+            now,
+          })
+        : null,
+    [rendered, tab, actions, role, doc, now],
+  );
+  const restricted =
+    tab.screen === 'ready' ? actions.filter((action) => !roleAtLeast(role, action.minRole)) : [];
   return (
     <section className="sp-stage" aria-label="Scan screen preview controls">
       <div className="sp-tabs" role="tablist" aria-label="Preview outcome" onKeyDown={onTabsKey}>
@@ -148,11 +172,28 @@ export function ScanStage({
             [
               { value: 'phone', label: 'Phone' },
               { value: 'ipad', label: 'iPad' },
+              { value: 'desk', label: 'Landscape' },
+              { value: 'operator', label: 'Operator' },
             ] as const
           }
           value={device}
           onValueChange={setDevice}
         />
+        {phone ? null : (
+          <>
+            <CheckboxField
+              label="Edit marks"
+              checked={marks}
+              onCheckedChange={(on) => setMarks(on === true)}
+            />
+            <CheckboxField
+              label="Locked areas"
+              checked={showLocked}
+              disabled={!marks}
+              onCheckedChange={(on) => setShowLocked(on === true)}
+            />
+          </>
+        )}
       </div>
       <div className="sp-sample-controls">
         <Select
@@ -184,21 +225,15 @@ export function ScanStage({
           />
         ) : null}
       </div>
-      <p className="sp-source" role="status">
-        {usingReal
-          ? 'Real pass · filtered for the selected role'
-          : source === 'real' && orgId && passId && real.status !== 'error'
-            ? 'Loading real pass · showing a synthetic sample'
-            : source === 'real' && orgId && real.status === 'error'
-              ? 'Real pass unavailable · showing a synthetic sample'
-              : 'Synthetic sample · not a real pass'}
-      </p>
-      {!usingReal && synthetic?.previewRestricted === true ? (
-        <p className="sp-help">
-          Some synthetic inputs and lookups are omitted to protect restricted data.
-        </p>
-      ) : null}
-      {!orgId ? <p className="sp-help">Real-pass preview needs an organization.</p> : null}
+      <SourceStatus
+        usingReal={usingReal}
+        wantsReal={source === 'real' && orgId !== null}
+        passId={passId}
+        realStatus={real.status}
+        restricted={!usingReal && synthetic?.previewRestricted === true}
+        noOrg={!orgId}
+        lookFailed={failed}
+      />
       {source === 'synthetic' && !phone ? (
         <details className="sp-sample-editor">
           <summary>Edit synthetic sample inputs</summary>
@@ -217,25 +252,45 @@ export function ScanStage({
         aria-label={`Scan screen preview, ${tab.label}`}
         onKeyDown={onCanvasKey}
       >
-        <div className="sp-device" data-device={device} data-theme={theme}>
-          <div className="sp-device-notch" aria-hidden />
-          {rendered ? (
-            <PreviewCard
-              rendered={rendered}
-              tab={tab}
-              actions={actions}
-              hit={hit}
-              hiddenPanels={hiddenPanels}
-              role={role}
+        {rendered && outcome ? (
+          <ScanFrame
+            device={device}
+            theme={theme}
+            label={`Scanner screen, ${tab.label}`}
+            onLayout={onLayout}
+            overlay={
+              marks && !phone ? (
+                <ScanOverlay
+                  doc={layout?.doc ?? null}
+                  scale={layout?.scale ?? 1}
+                  rendered={rendered}
+                  contentKey={`${tab.id}:${role}:${device}:${theme}:${usingReal}`}
+                  showLocked={showLocked}
+                  state={{ selected, active: focusId, onSelect, onFocus: setFocusId }}
+                />
+              ) : null
+            }
+          >
+            <ScanPreviewScreen
+              outcome={outcome}
+              surface={device === 'operator' ? 'operator' : 'phone'}
+              orgName={look.orgName}
+              branding={look.branding}
+              logoUrl={look.logoUrl}
             />
-          ) : (
-            <p className="sp-error" role="alert">
-              {invalidDisplay
-                ? 'The authored scan screen is invalid. Correct or replace it before previewing.'
-                : 'This scan screen cannot be previewed until its invalid fields are corrected.'}
-            </p>
-          )}
-        </div>
+          </ScanFrame>
+        ) : (
+          <p className="sp-error" role="alert">
+            {invalidDisplay
+              ? 'The authored scan screen is invalid. Correct or replace it before previewing.'
+              : 'This scan screen cannot be previewed until its invalid fields are corrected.'}
+          </p>
+        )}
+        <StageNotes
+          hiddenPanels={phone ? [] : hiddenPanels}
+          restricted={restricted}
+          onSelect={onSelect}
+        />
       </fieldset>
       <StageDiagnostics fit={fit} cuts={cuts} phone={phone} onSelect={onSelect} />
     </section>

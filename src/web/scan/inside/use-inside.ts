@@ -102,7 +102,7 @@ export function useInside({
   }, [active, online, load]);
 
   const markOut = useCallback(
-    async (row: InsideRow) => {
+    async (row: InsideRow): Promise<boolean> => {
       const name = row.holder ?? ACCESS_COPY.inside.unnamed;
       removeWithTransition(() => dispatch({ t: 'removed', passId: row.passId }));
       try {
@@ -119,17 +119,19 @@ export function useInside({
             await load({ keep: true });
           });
         void load({ keep: true });
+        return true;
       } catch (error) {
         if (error instanceof ApiError && error.code === 'NOT_INSIDE') {
           // Someone else got there first: the row stays gone.
           hooks.current.notify.info(fill(ACCESS_COPY.inside.alreadyOut, { name }));
           void load({ keep: true });
-          return;
+          return false;
         }
         dispatch({ t: 'restored', row });
         const info = hooks.current.failOf(error);
         if (BLOCKING.has(info.error)) hooks.current.onFail?.(info);
         hooks.current.notify.error(error, 'Could not mark as out');
+        return false;
       }
     },
     [api, load],

@@ -151,6 +151,7 @@ function ScopedScanningPage({
         <TabsContent value="sessions">
           <SessionsTab
             canManage={canManage}
+            onNew={() => setCreatingSession({})}
             onDuplicate={(initial) => setCreatingSession({ initial })}
           />
         </TabsContent>

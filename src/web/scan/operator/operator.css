@@ -118,7 +118,28 @@
   }
   .scan-shell[data-surface="operator"] > .scan-card-layer:has(.scan-result) {
     justify-content: flex-start;
+    align-items: flex-start;
     padding-left: calc(max(20px, (100vw - 1120px) / 2) + 464px);
+    padding-block: 120px calc(var(--scan-dock-h) + 24px);
+  }
+}
+@media (min-width: 1024px) {
+  /* Next to the form the card is narrower: the holder gets the room, not the green half. */
+  .scan-shell[data-surface="operator"] .scan-result-band,
+  .scan-shell[data-surface="operator"] .scan-result-band[data-layout] {
+    width: min(280px, 40%);
+    padding: 28px;
+  }
+  .scan-shell[data-surface="operator"] .scan-result-band h1,
+  .scan-shell[data-surface="operator"] .scan-result-band[data-layout="custom"] h1 {
+    font-size: 44px;
+    line-height: 48px;
+  }
+}
+/* On a phone or portrait tablet the card has the screen: the form waits behind it. */
+@media (max-width: 899px) {
+  .scan-shell[data-surface="operator"]:has(.scan-result) .scan-operator {
+    visibility: hidden;
   }
 }
 .scan-shell[data-surface="operator"] > .scan-cam {
@@ -136,4 +157,14 @@
 
 .scan-shell[data-surface="operator"]:not(:has(.scan-result)) > .scan-buddy-seat {
   display: none;
+}
+
+/* Beside the desk the buddy sits under the form, never over the card. */
+@media (min-width: 900px) {
+  .scan-shell[data-surface="operator"] > .scan-buddy-seat {
+    inset-inline: max(20px, calc((100vw - 1120px) / 2)) auto;
+    margin-inline: 0;
+    /* The buddy sits on the seat's top edge: a short seat keeps it low, clear of the form. */
+    height: 24px;
+  }
 }

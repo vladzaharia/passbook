@@ -40,8 +40,10 @@ export function overrideEvidenceForTargetStmt(
   actor: ScanActor,
   targetId: string,
   since: number,
+  /** The watch reaches a target only for `overrideScan`, which then checks in at the target's scope. */
+  viaWatch = !!actor.overrideScope,
 ): D1PreparedStatement {
-  const scope = overrideScopeSql(actor);
+  const scope = overrideScopeSql(actor, viaWatch);
   return stmt(
     db,
     `SELECT q.*,

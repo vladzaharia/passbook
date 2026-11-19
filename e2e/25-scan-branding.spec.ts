@@ -12,7 +12,9 @@ async function pair(page: Page, code: string, sha: string) {
       response.url().includes('/api/v1/scan/branding/logo') && response.status() === 200,
   );
   await pairScanner(page, code);
-  await expect(page.locator('.scan-capsule-logo, .scan-live-logo')).toBeVisible();
+  await expect(
+    page.locator('.scan-capsule-logo, .scan-live-logo, .cstage-brand-logo'),
+  ).toBeVisible();
   const image = await logoResponse;
   expect(image.headers()['content-type']).toBe('image/png');
   expect(image.url()).toContain(`v=${sha}`);
@@ -53,12 +55,13 @@ test('paired scanner, operator and customer surfaces use authenticated org brand
     const pairOn = async (
       device: { pairing?: { code?: string } | null },
       viewport: { width: number; height: number },
+      customer = false,
     ) => {
       const context = await browser.newContext({ viewport, reducedMotion: 'reduce' });
       contexts.push(context);
       const page = await context.newPage();
       await pair(page, device.pairing?.code ?? '', sha);
-      const surface = page.locator('[data-testid="scan-live"], .scan-shell');
+      const surface = page.locator('.cstage, .scan-shell');
       await expect
         .poll(() =>
           surface.evaluate((element) =>
@@ -66,24 +69,26 @@ test('paired scanner, operator and customer surfaces use authenticated org brand
           ),
         )
         .toBe('#0f766e');
-      await expect(page.locator('.scan-capsule-logo, .scan-live-logo')).toHaveAttribute(
-        'alt',
-        `${org.name} logo`,
-      );
+      // The customer stage names the org in text beside the logo, so its logo alt is generic.
+      await expect(
+        page.locator('.scan-capsule-logo, .scan-live-logo, .cstage-brand-logo'),
+      ).toHaveAttribute('alt', customer ? 'Organization logo' : `${org.name} logo`);
       return page;
     };
 
     const [phone, operator, customer] = await Promise.all([
       pairOn(devices[0], { width: 390, height: 844 }),
       pairOn(devices[1], { width: 1366, height: 900 }),
-      pairOn(devices[2], { width: 820, height: 1180 }),
+      pairOn(devices[2], { width: 820, height: 1180 }, true),
     ]);
     await expect(phone.getByTestId('scan-start')).toBeVisible();
     await operator.getByTestId('scan-start').click();
     await expect(operator.getByRole('complementary', { name: 'Operator view' })).toBeVisible();
-    await expect(customer.getByTestId('scan-live')).toHaveAttribute('data-view', 'customer');
-    await expect(customer.getByTestId('scan-live')).not.toContainText('Private pass holder');
-    await expect(customer.locator('.scan-live-logo')).toHaveJSProperty('naturalWidth', 480);
+    await expect(customer.getByTestId('duo-customer-display')).toBeVisible();
+    await expect(customer.getByTestId('duo-customer-display')).not.toContainText(
+      'Private pass holder',
+    );
+    await expect(customer.locator('.cstage-brand-logo')).toHaveJSProperty('naturalWidth', 480);
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
     await api.dispose();

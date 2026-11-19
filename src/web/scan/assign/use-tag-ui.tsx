@@ -192,7 +192,8 @@ export function useTagUi({
     (outcome.outcome.kind === 'ok' || outcome.outcome.kind === 'ready') &&
     !outcome.outcome.local;
 
-  const chip = a ? (
+  const answered = a !== null && (a.step === 'error' || a.step === 'done');
+  const chip = answered ? null : a ? (
     <AssignChip
       mode={a.request ? 'request-open' : 'assigning'}
       {...(a.request ? { holderName: a.request.holderName, expiresAt: a.request.expiresAt } : {})}

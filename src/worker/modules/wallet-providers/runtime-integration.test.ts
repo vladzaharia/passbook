@@ -469,6 +469,68 @@ describe('existing provider instance runtime', () => {
     expect(calls).toHaveLength(3);
   }, 30_000);
 
+  it('sends provider calls to the mock when both URLs are loopback, and only then', async () => {
+    const mockUrl = 'http://localhost:5175';
+    for (const [publicBaseUrl, origin] of [
+      ['http://localhost:5173', mockUrl],
+      ['https://passbook.mobile', 'https://walletobjects.googleapis.com'],
+    ] as const) {
+      dropGoogleAccessToken();
+      const f = await runtimeGoogleLegacyFixture();
+      const old = await googleObjectIds(f.verification.issuerId, f.verification.objectIdHmacKey, {
+        tenantId: f.pass.orgId,
+        mode: f.pass.mode,
+        passId: f.pass.id,
+        releaseId: f.releaseId,
+        credentialGeneration: f.credentialGeneration,
+      });
+      const urls: string[] = [];
+      vi.stubGlobal('fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
+        urls.push(String(url));
+        if (String(url).endsWith('/token'))
+          return Response.json({
+            access_token: 'ya29.fixture-token',
+            token_type: 'Bearer',
+            expires_in: 3600,
+          });
+        if ((init?.method ?? 'GET') === 'GET')
+          return Response.json({ id: old.objectId, classId: old.classId });
+        return new Response('{}', { status: 200 });
+      });
+      const ctx = {
+        ...f.kit.ctx,
+        env: {
+          ...f.kit.ctx.env,
+          PUBLIC_BASE_URL: publicBaseUrl,
+          WALLET_MOCK_PROVIDERS_URL: mockUrl,
+        },
+      };
+      await inactivateGoogleRuntimeObject(ctx, f.scope, {
+        releaseId: f.releaseId,
+        passId: f.pass.id,
+        credentialGeneration: f.credentialGeneration,
+        retirement: {
+          instanceId: f.instanceId,
+          operationId: f.operationId,
+          version: 1,
+          claimHandle: f.claimHandle,
+        },
+        onProviderResponse: f.onProviderResponse,
+      });
+      const object = `/walletobjects/v1/genericObject/${old.objectId}`;
+      expect(urls).toEqual(
+        origin === mockUrl
+          ? [`${mockUrl}/token`, `${mockUrl}${object}`, `${mockUrl}${object}`]
+          : [
+              'https://oauth2.googleapis.com/token',
+              `https://walletobjects.googleapis.com${object}`,
+              `https://walletobjects.googleapis.com${object}`,
+            ],
+      );
+      vi.unstubAllGlobals();
+    }
+  }, 60_000);
+
   it('reuses the cached OAuth token across operations and drops it after a 401', async () => {
     dropGoogleAccessToken();
     const f = await runtimeGoogleLegacyFixture();
