@@ -40,7 +40,11 @@ export function CertificateCard({ identity, now }: { identity: Identity; now: nu
             { label: 'Expires', value: <ExpiryPill identity={identity} now={now} /> },
             { label: 'Valid from', value: formatDateTime(identity.notBefore, '—') },
             ...(identity.apnsBinding
-              ? [{ label: 'APNs binding', value: identity.apnsBinding, mono: true }]
+              ? [
+                  identity.source === 'env' && identity.apnsBinding === 'APNS'
+                    ? { label: 'Push credentials', value: 'Environment default' }
+                    : { label: 'APNs binding', value: identity.apnsBinding, mono: true },
+                ]
               : []),
           ]}
         />
