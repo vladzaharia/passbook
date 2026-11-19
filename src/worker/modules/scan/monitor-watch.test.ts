@@ -363,4 +363,27 @@ describe("a monitor's Let in checks in at the refused scan's place", () => {
     expect(res.status).toBe(422);
     expect(await res.text()).toContain('SCAN_OVERRIDE_INVALID');
   });
+
+  it('refuses when the refusing session is paused between the pre-read and the commit', async () => {
+    const r = await lobbyHold();
+    const monitor = await standalone({ scannerIds: [r.door.scanner.id] });
+    const { result, fired } = await beforeBatch(
+      kit.env,
+      /INSERT INTO scans|UPDATE scan_gates|scan_presence/,
+      async (db) => {
+        await run(db, "UPDATE scanning_sessions SET status = 'paused' WHERE id = ?", [
+          r.door.sessionId,
+        ]);
+      },
+      () => overrideAs(monitor.headers, r.hold),
+    );
+    expect(fired).toBe(true);
+    expect(result.status).not.toBe(200);
+    const done = await all<{ n: number }>(
+      kit.env.DB,
+      "SELECT count(*) AS n FROM scans WHERE override_of = ? AND outcome = 'ok'",
+      [r.hold],
+    );
+    expect(done[0]?.n).toBe(0);
+  });
 });

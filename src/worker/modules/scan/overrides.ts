@@ -44,6 +44,7 @@ async function scopedToTarget(
   const sessionId = target.sessionId ?? null;
   const eventId = target.eventId ?? null;
   const db = ctx.env.DB;
+  let targetEpoch: number | null = null;
   // The refusing door's session must still be active and open: a paused, ended or closed one lets nobody in.
   if (sessionId) {
     const session = await sessionEpochStmt(db, sessionId, actor.orgId, actor.mode).first<{
@@ -51,15 +52,23 @@ async function scopedToTarget(
       time_zone: string;
       hours: string | null;
       hold: string | null;
+      config_epoch: number;
     }>();
     if (session?.status !== 'active' || !sessionWindow(session, ctx.clock.now()).open)
       throw invalid();
+    targetEpoch = session.config_epoch;
   }
   // The pass and action are the target's, so its template is accepted for this one let-in.
   const scoped: ScanActor = {
     ...actor,
     overrideScope: { sessionId, eventId, templateId: target.templateId },
   };
+  const base = scanEpochsOf(actor);
+  const epochs =
+    base && sessionId && targetEpoch !== null
+      ? { ...base, targetSession: { id: sessionId, config: targetEpoch } }
+      : base;
+  if (epochs) setScanEpochs(scoped, epochs);
   if (eventId === (actor.event?.id ?? null)) return scoped;
   if (!eventId) return { ...scoped, event: null };
   // The event, its templates and its epoch are read apart: an edit between the reads is refused.
@@ -84,7 +93,6 @@ async function scopedToTarget(
   )
     throw invalid();
   const withEvent: ScanActor = { ...scoped, event: e, templateIds: pinned.templateIds };
-  const epochs = scanEpochsOf(actor);
   if (epochs)
     setScanEpochs(withEvent, {
       ...epochs,
