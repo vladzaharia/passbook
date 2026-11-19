@@ -22,8 +22,9 @@ async function lookupValueFor(ctx: ServiceContext, transferId: string): Promise<
 
 /**
  * A joined card moving to its verified owner: its desk lookup value, which the join generated, is replaced
- * with the credentials, so the joiner's copy finds nothing. A lookup input the join did not generate (a
- * default, or a value the org assigned) is left as it is: the transfer then asks for a reissue instead.
+ * with the credentials, so the joiner's copy finds nothing. Only a value the join generated on the card's own
+ * version and on this one is replaced: a shared default or a value the org assigned is left as it is, and the
+ * transfer then asks for a reissue instead.
  */
 export async function joinAttachContent(
   ctx: ServiceContext,
@@ -32,15 +33,31 @@ export async function joinAttachContent(
   version: string,
   content: ConnectionTransferContent,
   ownerUserId: string | null,
-): Promise<ConnectionTransferContent> {
-  if (!source.joined || source.pass.ownerUserId !== null || ownerUserId === null) return content;
+): Promise<{ content: ConnectionTransferContent; replaced: boolean }> {
+  const kept = { content, replaced: false };
+  if (!source.joined || source.pass.ownerUserId !== null || ownerUserId === null) return kept;
   const p = source.pass;
-  const manifest = (await resolveTemplate(ctx, p.orgId, p.templateId, version)).manifest;
-  const input = manifest.scan?.lookup?.input;
-  if (!input || !joinReadiness(manifest, null).generated.some((g) => g.key === input))
-    return content;
+  const generated = async (v: string) => {
+    const m = (await resolveTemplate(ctx, p.orgId, p.templateId, v)).manifest;
+    return { input: m.scan?.lookup?.input, ok: joinReadiness(m, null).generated };
+  };
+  const head = await generated(version);
+  const own = version === p.templateVersion ? head : await generated(p.templateVersion);
+  const input = head.input;
+  if (
+    !input ||
+    source.lookupInput !== input ||
+    ![head, own].every((g) => g.input === input && g.ok.some((x) => x.key === input))
+  )
+    return kept;
   return {
-    ...content,
-    personalization: { ...content.personalization, [input]: await lookupValueFor(ctx, transferId) },
+    content: {
+      ...content,
+      personalization: {
+        ...content.personalization,
+        [input]: await lookupValueFor(ctx, transferId),
+      },
+    },
+    replaced: true,
   };
 }

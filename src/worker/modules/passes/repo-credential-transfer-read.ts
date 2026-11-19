@@ -132,7 +132,7 @@ export async function readTransferPass(
     `SELECT p.*,
     (SELECT json_extract(tv.manifest, '$.scan.lookup.input') FROM template_versions tv
       WHERE tv.template_id = p.template_id AND tv.version = p.template_version) AS lookup_input,
-    EXISTS (SELECT 1 FROM join_issues j WHERE j.pass_id = p.id) AS joined,
+    EXISTS (SELECT 1 FROM join_marks j WHERE j.pass_id = p.id) AS joined,
     (SELECT v.pass_json FROM pass_versions v WHERE v.pass_id = p.id AND v.pass_json IS NOT NULL
       ORDER BY v.version DESC LIMIT 1) AS prior_pass_json,
     (SELECT si.revision FROM signing_identities si WHERE si.id = p.identity_id

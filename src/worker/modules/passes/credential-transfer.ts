@@ -123,7 +123,7 @@ export async function startCredentialTransfer(
   )
     throw conflict();
   const transferId = ctx.ids.id();
-  const content = await joinAttachContent(
+  const { content } = await joinAttachContent(
     ctx,
     transferId,
     source,
@@ -259,7 +259,7 @@ export async function finishCredentialTransfer(
   // The finish rebuilds against the release head and the connection as they are now; an approval or a
   // connection edit while the transfer is pending moves neither the binding nor the write (F11/F15).
   const release = await approvedForTransfer(ctx, source);
-  const content = await joinAttachContent(
+  const { content, replaced } = await joinAttachContent(
     ctx,
     transfer.id,
     source,
@@ -297,6 +297,7 @@ export async function finishCredentialTransfer(
       objectSize: build.artifact.bytes.length,
       contentHash: build.artifact.contentHash,
       content: build.content,
+      lookupReplaced: replaced,
       credentialKeysetCommitment,
       passJson: JSON.stringify(build.artifact.passJson),
       title: build.artifact.title,

@@ -72,6 +72,10 @@ export async function addCreateStatements(
       ],
       { from: { table: 'passes', where: { id: row.id }, copy: { pass_id: 'id' } } },
     );
+  if (join)
+    g.insertSelect('join_marks', ['created_at'], [row.now], {
+      from: { table: 'passes', where: { id: row.id }, copy: { pass_id: 'id' } },
+    });
   // The caps count this row: a pass without it would escape them.
   if (join) g.assert('stale', [exists('join_issues', { pass_id: row.id })]);
   const entry = {

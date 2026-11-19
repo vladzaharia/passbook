@@ -273,7 +273,7 @@ export async function waitingHolderSweepUpper(db: D1Database): Promise<string | 
     `SELECT MAX(p.id) AS id FROM passes p
     WHERE p.holder_email IS NOT NULL AND p.owner_user_id IS NULL
       AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
-      AND NOT EXISTS (SELECT 1 FROM join_issues ji WHERE ji.pass_id = p.id)`,
+      AND NOT EXISTS (SELECT 1 FROM join_marks ji WHERE ji.pass_id = p.id)`,
   );
   return row?.id ?? null;
 }
@@ -290,7 +290,7 @@ export function listSweepWaitingPasses(
     WHERE p.holder_email IS NOT NULL AND p.owner_user_id IS NULL
       AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
       -- A joined card's address was typed into a public form: only the holder's own sign-in attaches it.
-      AND NOT EXISTS (SELECT 1 FROM join_issues ji WHERE ji.pass_id = p.id)
+      AND NOT EXISTS (SELECT 1 FROM join_marks ji WHERE ji.pass_id = p.id)
       AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = p.org_id AND o.status = 'active')
       AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
         WHERE t.pass_id = p.id AND t.state = 'pending')
