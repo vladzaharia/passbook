@@ -1,5 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { runJob } from '../../jobs/registry.ts';
+import type { Job } from '../../jobs/types.ts';
 import { grant } from '../../platform/authority.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createJobContext } from '../../platform/service-context.ts';
@@ -298,5 +300,42 @@ describe('platform hold', () => {
       ),
     ).toEqual({ actor_id: admin.user.id });
     expect(m).toBeDefined();
+  });
+
+  it('queues the hold through JOBS.send, runs it through runJob, and a rerun adds no second event', async () => {
+    const { org, admin } = await enrolled();
+    await run(env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org.id]);
+    const scope = { orgId: org.id, mode: 'test' as const, provider: 'google' as const };
+    const sent: unknown[] = [];
+    const ctx = {
+      ...k.ctx,
+      env: { ...k.env, JOBS: { send: async (j: unknown) => void sent.push(j) } },
+    };
+    expect(
+      await holdEnrolment(ctx as unknown as typeof k.ctx, admin.auth, scope, 'suspended'),
+    ).toBe('queued');
+    expect(sent).toEqual([
+      { kind: 'wallet.enrolment_hold', ...scope, reason: 'suspended', userId: admin.user.id },
+    ]);
+    for (let i = 0; i < 2; i++)
+      await runJob(sent[0] as Job, createJobContext(k.env, 'wallet.enrolment_hold'));
+    expect(
+      (
+        await first<{ n: number }>(
+          env.DB,
+          "SELECT count(*) AS n FROM wallet_enrolment_events WHERE org_id = ? AND kind = 'hold'",
+          [org.id],
+        )
+      )?.n,
+    ).toBe(1);
+  });
+
+  it('a hold or release on a deleted org is a 404', async () => {
+    const { org, admin } = await enrolled();
+    await run(env.DB, "UPDATE orgs SET status = 'deleted' WHERE id = ?", [org.id]);
+    const scope = { orgId: org.id, mode: 'test' as const, provider: 'google' as const };
+    await expect(holdEnrolment(k.ctx, admin.auth, scope, 'x')).rejects.toMatchObject({
+      status: 404,
+    });
   });
 });
