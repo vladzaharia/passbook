@@ -226,6 +226,13 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
       return json(200, { ok: true });
     }
     if (name === 'inject' && request.method === 'POST') {
+      if (typeof body?.match === 'string') {
+        try {
+          new RegExp(body.match);
+        } catch {
+          return json(400, { error: 'match is not a valid regular expression' });
+        }
+      }
       const status = Number(body?.status);
       if (!Number.isInteger(status) || status < 200 || status > 599)
         return json(400, { error: 'status must be an HTTP status' });

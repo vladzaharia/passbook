@@ -150,6 +150,17 @@ describe('failure injection', () => {
     expect(await upsertGoogleGenericClass(ctx, scope, projection)).toBe('updated');
   });
 
+  it('refuses an invalid inject regex with a 400', async () => {
+    const response = await mock.handle(
+      new Request('http://localhost:5175/__mock/inject', {
+        method: 'POST',
+        body: JSON.stringify({ status: 500, match: '(' }),
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: expect.stringContaining('regular') });
+  });
+
   it('honours times and over the control endpoints', async () => {
     const call = (path: string, init?: RequestInit) =>
       mock.handle(new Request(`http://localhost:5175${path}`, init));
