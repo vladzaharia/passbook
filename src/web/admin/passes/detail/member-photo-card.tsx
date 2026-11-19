@@ -12,7 +12,7 @@ import {
   CheckboxField,
   ConfirmDialog,
   ErrorState,
-  Input,
+  FileDrop,
   toast,
 } from '../../../ui/index.ts';
 import { canMutatePass, passKeys, passMutationPrincipal } from '../api.ts';
@@ -68,14 +68,12 @@ export function MemberPhotoCard({ pass, readOnly }: { pass: PassDetailDto; readO
                 className="size-28 rounded-lg object-cover"
               />
             ) : null}
-            <Input
-              type="file"
+            <FileDrop
               accept="image/*"
-              aria-label="Member photo"
+              label="Choose a photo"
+              art="badge"
               disabled={disabled || photo.isPending}
-              onChange={(event) => {
-                const file = event.currentTarget.files?.[0];
-                event.currentTarget.value = '';
+              onFiles={([file]) => {
                 if (file)
                   void write('Member photo uploaded', async (isAllowed) => {
                     const png = await memberPhotoPng(file);
