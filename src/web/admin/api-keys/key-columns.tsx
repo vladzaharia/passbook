@@ -2,6 +2,7 @@ import { Copy, KeyRound } from 'lucide-react';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { copyText } from '@/web/lib/clipboard.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
+import { entityLabel } from '@/web/lib/entity-label.ts';
 import { formatDay } from '@/web/lib/format.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { MetaLink, RowActions, StatusPill } from '@/web/ui/index.ts';
@@ -90,7 +91,7 @@ export function keyColumns({
                 icon={ENTITY.user.icon}
                 className="min-h-0 max-w-full text-xs [&_svg]:size-3.5"
               >
-                <span className="truncate">{createdByName ?? `User ${createdBy.slice(-6)}`}</span>
+                <span className="truncate">{entityLabel(createdByName, 'User')}</span>
               </MetaLink>
             ) : null}
           </span>

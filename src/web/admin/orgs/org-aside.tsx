@@ -105,7 +105,7 @@ export function OverviewCard({ org }: { org: Org }) {
             { label: 'Updated', value: formatDateTime(org.updatedAt) },
           ]}
         />
-        <TechnicalDetails className="mt-3" items={[{ label: 'ID', value: org.id }]} />
+        <TechnicalDetails className="mt-3" items={[{ label: 'ID', value: org.id, copy: true }]} />
       </CardBody>
     </Card>
   );

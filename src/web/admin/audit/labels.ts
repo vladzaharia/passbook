@@ -1,6 +1,7 @@
 import { Bot, type LucideIcon, Mail, Monitor, Settings } from 'lucide-react';
 import { humanize } from '@/web/lib/actions.ts';
 import { ENTITY, type EntityKind } from '@/web/lib/entities.ts';
+import { entityLabel } from '@/web/lib/entity-label.ts';
 import type { AuditEntry } from './entry-drawer.tsx';
 
 type Labeled = AuditEntry & { actorLabel?: string | null; targetLabel?: string | null };
@@ -55,7 +56,7 @@ export interface Ref {
 function refOf(type: string, id: string | null, label: string | null | undefined): Ref {
   const def = REFS[type] ?? { label: humanize(type) };
   const icon = def.icon ?? (def.kind ? ENTITY[def.kind].icon : ENTITY.audit.icon);
-  const name = label ?? def.name?.(id) ?? def.label;
+  const name = entityLabel(label ?? def.name?.(id), def.label);
   return {
     kind: def.kind,
     icon,

@@ -1,11 +1,10 @@
 /* Sign-in scene (motion-and-expression.md, moment 8). The art parts come from the kit wallet
    (art-wallet.css, wallet-states.css: the hourglass, the drooping pass); these rules add the
    sign-in beats: parallax, lift, post, return, shake and the tuck on success. The wallet sits on
-   the card (seat): its base is y 66 of 72, so the scene overlaps the card by 8 px at L, 128×96,
-   and 7 px at 112×84 (under 640), above it. */
+   the card (seat): its feet end on the card's top edge and never cross it. */
 
 /* Header band: the wordmark's mark on the card's left text inset, centred on the wallet's face
-   (21/72 of the art above its base: 28 px, 24.5 px under 640); the wallet at the right, its
+   (21/72 of the art above its base: 36 px, 31.5 px under 640, from the edge); the wallet at the right, its
    pocket's edge on the right text inset. The card border is 1 px; the mark's ink fills its box. */
 .wl-login-band {
   display: flex;
@@ -19,14 +18,14 @@
   z-index: 20;
   display: flex;
   align-items: center;
-  height: 56px;
+  height: 72px;
 }
 @media (max-width: 39.99rem) {
   .wl-login-band {
     padding-inline: calc(1px + 1.25rem) calc(1.25rem - 17px);
   }
   .wl-login-brand {
-    height: 49px;
+    height: 63px;
   }
 }
 
@@ -39,14 +38,14 @@
   flex: none;
   width: 128px;
   height: 96px;
-  margin-bottom: -8px;
+  margin-bottom: 0;
   pointer-events: none;
 }
 @media (max-width: 39.99rem) {
   .wl-login-scene {
     width: 112px;
     height: 84px;
-    margin-bottom: -7px;
+    margin-bottom: 0;
   }
 }
 .wl-login-lean,

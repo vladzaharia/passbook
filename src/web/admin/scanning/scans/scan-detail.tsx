@@ -118,7 +118,7 @@ export function ScanDetail({
             <TechnicalDetails
               items={[
                 { label: 'Reason', value: row.reason },
-                { label: 'Scan ID', value: row.id },
+                { label: 'Scan ID', value: row.id, copy: true },
               ]}
             />
             {canUndo ? (

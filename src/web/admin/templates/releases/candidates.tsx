@@ -102,7 +102,7 @@ function CandidateCard({
       <TechnicalDetails
         className="mt-3"
         items={[
-          { label: 'Candidate ID', value: candidate.id },
+          { label: 'Candidate ID', value: candidate.id, copy: true },
           { label: 'Version hash', value: candidate.version },
           { label: 'Candidate hash', value: candidate.candidateHash },
           { label: 'Content hash', value: candidate.contentHash },

@@ -228,18 +228,18 @@
   }
 }
 
-/* Buddy (buddy.tsx): on its host's top edge, base (y 66 of 72) on the border line (a 2 px border
+/* Buddy (buddy.tsx): on its host's top edge, feet (y 72 of 72) on the border line (a 2 px border
    sets --wl-seat-border), the prop on the same edge at its right. Centred, or at the start or end
    inset (a card with a title at its left). */
 .wl-buddy {
   position: absolute;
   top: calc(-1 * var(--wl-seat-border, 1px));
   left: 50%;
-  translate: -50% -91.67%;
+  translate: -50% -100%;
   pointer-events: none;
 }
 .wl-buddy[data-at] {
-  translate: 0 -91.67%;
+  translate: 0 -100%;
 }
 .wl-buddy[data-at="start"] {
   left: var(--wl-buddy-inset, 12px);
@@ -248,7 +248,7 @@
   left: auto;
   right: var(--wl-buddy-inset, 12px);
 }
-/* Room for the buddy above its host (11/12 of the sm art, 44 px, plus a 20 px gap to whatever
+/* Room for the buddy above its host (the sm art, 48 px, plus a 16 px gap to whatever
    precedes). Hosts take the class instead of a hand-picked margin, so no list page seats it on
    text. */
 .wl-buddy-room {
