@@ -187,6 +187,7 @@ export async function putTemplateChannels(
     revision: number;
     dryRun: boolean;
     replaceCodes: boolean;
+    expectedCleared?: number | undefined;
   },
 ): Promise<PutTemplateResponse> {
   if (body.replaceCodes) throw replaceUnavailable();
@@ -220,6 +221,12 @@ export async function putTemplateChannels(
     if (next === 'never') cleared.push(channel);
     impact.push({ channel, passes, rotated: 0, clearedOverrides });
   }
+  const clearedTotal = impact.reduce((n, i) => n + i.clearedOverrides, 0);
+  if (!body.dryRun && body.expectedCleared !== undefined && body.expectedCleared !== clearedTotal)
+    throw new ConflictError(
+      `This now clears ${clearedTotal} pass overrides, not ${body.expectedCleared}. Review and save again.`,
+      'TEMPLATE_CHANNELS_IMPACT_CHANGED',
+    );
   if (!body.dryRun && changed.length > 0)
     await writeTemplatePolicy(
       ctx,
@@ -232,7 +239,7 @@ export async function putTemplateChannels(
       {
         mode,
         channels: Object.fromEntries(changed.map((c) => [c, body.channels[c]])),
-        cleared: impact.reduce((n, i) => n + i.clearedOverrides, 0),
+        cleared: clearedTotal,
       },
       body.revision,
     );

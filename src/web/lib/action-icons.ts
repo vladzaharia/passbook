@@ -16,6 +16,7 @@ import {
   Pencil,
   PenTool,
   Plus,
+  Radio,
   RefreshCw,
   RotateCw,
   Send,
@@ -38,6 +39,8 @@ export const ACTION_ICON = {
   rotate: RotateCw,
   pushKey: KeyRound,
   void: Ban,
+  /** Delivery channels: a pass's, a template's, a selection's. */
+  channels: Radio,
   unvoid: Undo2,
   /** Remove from Wallet, and its undo. */
   removeFromWallet: EyeOff,

@@ -57,3 +57,6 @@ export function usePrintActions(passId: string) {
     }),
   };
 }
+
+/** The pass's effective channels (the Channels card reads all six). */
+export const usePassChannels = usePassPaper;

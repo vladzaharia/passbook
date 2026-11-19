@@ -26,6 +26,7 @@ import { useCreated } from '../passes/created.tsx';
 import { PassPreview, PassPreviewPanel } from '../passes/pass-preview.tsx';
 import { PreviewLayout } from '../passes/preview-layout.tsx';
 import { useTemplatePreview } from './api.ts';
+import { TemplateChannelsPanel } from './channels/channels-panel.tsx';
 import { TemplateDetailHeader } from './detail-header.tsx';
 import { ManifestEditor } from './manifest-editor.tsx';
 import { TemplateReleasesPanel } from './releases/template-releases-panel.tsx';
@@ -216,6 +217,7 @@ export function TemplateDetailContent({
           <TabsList aria-label="Template sections">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="versions">Versions</TabsTrigger>
+            <TabsTrigger value="channels">Channels</TabsTrigger>
             <TabsTrigger value="manifest">Manifest</TabsTrigger>
             <TabsTrigger value="inputs">Inputs</TabsTrigger>
           </TabsList>
@@ -238,6 +240,16 @@ export function TemplateDetailContent({
               />
             ) : null}
             <VersionsPanel template={t} />
+          </TabsContent>
+          <TabsContent value="channels">
+            {scope.orgId ? (
+              <TemplateChannelsPanel
+                key={`${scope.orgId}:${mode}`}
+                templateId={t.id}
+                orgId={scope.orgId}
+                canPublish={canPublish && !archived}
+              />
+            ) : null}
           </TabsContent>
           <TabsContent value="manifest">
             {baked || !canEdit ? (
