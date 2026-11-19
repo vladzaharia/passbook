@@ -4,6 +4,7 @@ import type { Check } from '../../platform/authority-checks.ts';
 import { tenantSql } from '../../platform/authority-cond.ts';
 import { inList, maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { all, stmt } from '../../platform/db.ts';
+import { admitsJson, storedAdmits } from './admits.ts';
 import { eventScannersAre, eventSessionsAre } from './repo-admin-grant.ts';
 import { clearTemplatesOfScanners } from './repo-admin-unguarded.ts';
 
@@ -127,7 +128,7 @@ export function addEventTemplates(
 /** The scanners and sessions an archive detaches, as read for the edit. */
 export interface EventDependents {
   scanners: { id: string; settings: string }[];
-  sessions: { id: string; settings: string }[];
+  sessions: { id: string; settings: string; accepts: string | null }[];
 }
 
 const closedOpen = (settings: string): string =>
@@ -147,13 +148,25 @@ export function addEventArchive(
       require: 'one',
     }),
   ];
-  for (const session of dependents.sessions)
+  // A session loses only this event; one left with no entries closes, as an event session does.
+  for (const session of dependents.sessions) {
+    const admits = storedAdmits(session.accepts);
+    const left = admits && {
+      templateIds: admits.templateIds,
+      eventIds: admits.eventIds.filter((eventId) => eventId !== id),
+    };
     out.push(
       g.update('scanning_sessions', {
-        set: { accepts: null, settings: closedOpen(session.settings), updated_at: maxNow(now) },
-        where: { id: session.id },
+        set:
+          left && left.templateIds.length + left.eventIds.length > 0
+            ? { accepts: admitsJson(left), updated_at: maxNow(now) }
+            : { accepts: null, settings: closedOpen(session.settings), updated_at: maxNow(now) },
+        // The admits read for the edit are still the stored ones, or the archive aborts.
+        where: { id: session.id, accepts: session.accepts },
+        require: 'one',
       }),
     );
+  }
   // The grant checks the event's scanners are exactly `dependents.scanners`.
   out.push(
     ...clearTemplatesOfScanners(
@@ -266,9 +279,10 @@ export async function eventDependents(
     ),
     stmt(
       db,
-      `SELECT id, settings FROM scanning_sessions WHERE org_id = ? AND mode = ?
-        AND EXISTS (SELECT 1 FROM json_each(accepts, '$.eventIds') j WHERE j.value = ?) ORDER BY id`,
-      [orgId, mode, eventId],
+      `SELECT id, settings, accepts FROM scanning_sessions WHERE org_id = ? AND mode = ?
+        AND (json_extract(accepts, '$.eventId') = ?
+          OR EXISTS (SELECT 1 FROM json_each(accepts, '$.eventIds') j WHERE j.value = ?)) ORDER BY id`,
+      [orgId, mode, eventId, eventId],
     ),
   ]);
   return {

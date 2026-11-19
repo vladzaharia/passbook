@@ -231,8 +231,19 @@ function sampleScopePredicate(
     } else if (admits.eventIds.length === 0) {
       if (scope.event !== null || !sameIds(admits.templateIds, scope.templateIds)) return deny();
     }
-    // A mixed scope issues no sample pass.
-    else return deny();
+    // A mixed scope: the sample's entry is one of its events, or its template entries.
+    else if (scope.event) {
+      if (
+        !admits.eventIds.includes(scope.event.id) ||
+        !validEvent(scope.event, orgId, mode) ||
+        scope.templateIds.length === 0
+      )
+        return deny();
+    } else if (
+      scope.templateIds.length === 0 ||
+      !scope.templateIds.every((id) => admits.templateIds.includes(id))
+    )
+      return deny();
     predicate.withSession(row, device, scope);
     effective = scope.templateIds;
   }

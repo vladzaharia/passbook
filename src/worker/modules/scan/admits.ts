@@ -1,4 +1,9 @@
-import { type Admits, AdmitsSchema, admitsOf } from '../../../shared/contracts/scanners.ts';
+import {
+  type Admits,
+  AdmitsSchema,
+  admitsOf,
+  admitsWire,
+} from '../../../shared/contracts/scanners.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import type { ScanActor } from './actor.ts';
 import { eventMatch } from './repo-event-match.ts';
@@ -20,9 +25,11 @@ export function storedAdmits(raw: string | null): Admits | null | undefined {
   return admitsOf(parsed.data);
 }
 
-/** The stored form: both lists, in this key order. */
-export const admitsJson = (admits: Admits): string =>
-  JSON.stringify({ templateIds: admits.templateIds, eventIds: admits.eventIds });
+/**
+ * The stored form: a single shape stays in the older one-key form, which a Worker that predates
+ * Admits still reads; only a mix is stored as both lists.
+ */
+export const admitsJson = (admits: Admits): string => JSON.stringify(admitsWire(admits));
 
 /** An event takes a pass by its org, mode, archive state and pass filter. */
 export function eventAcceptsPass(

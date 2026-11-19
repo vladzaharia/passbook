@@ -70,13 +70,13 @@ describe('session admits', () => {
     ).toEqual({ event_id: event.id });
   });
 
-  it('stores the legacy one-event form as lists and shows it as before', async () => {
+  it('stores and shows one event in the older form', async () => {
     const event = await fixture.kit.event({ templateIds: [await template('Legacy event')] });
     const made = await create({ eventId: event.id });
     expect(made.status).toBe(201);
     const session = ScanningSessionDetailSchema.parse(await made.json());
     expect(session.accepts).toEqual({ eventId: event.id });
-    expect(await stored(session.id)).toBe(admitsJson({ templateIds: [], eventIds: [event.id] }));
+    expect(await stored(session.id)).toBe(JSON.stringify({ eventId: event.id }));
   });
 
   it("refuses another org's event or template and an event of the other mode", async () => {
@@ -113,15 +113,25 @@ describe('session admits', () => {
     expect(((await eventOnly.json()) as { code?: string }).code).toBe('ZONE_EVENT_SESSION');
   });
 
-  it('archiving an admitted event detaches every session that admits it', async () => {
+  it('archiving an event drops it from each session; one left with nothing closes', async () => {
     const { kit, call } = fixture;
     const event = await kit.event({ templateIds: [await template('Archived event')] });
-    const made = await create({
-      templateIds: [await template('Archive entry')],
-      eventIds: [event.id],
-    });
-    const session = ScanningSessionDetailSchema.parse(await made.json());
+    const other = await kit.event({ templateIds: [await template('Other event')] });
+    const entry = await template('Archive entry');
+    const ids = async (accepts: unknown) =>
+      ScanningSessionDetailSchema.parse(await (await create(accepts)).json()).id;
+    const mixed = await ids({ templateIds: [entry], eventIds: [event.id, other.id] });
+    const two = await ids({ templateIds: [], eventIds: [event.id, other.id] });
+    const only = await ids({ eventId: event.id });
     expect((await call('POST', `/scan-events/${event.id}/archive`)).status).toBe(200);
-    expect(await stored(session.id)).toBeNull();
+    expect(await stored(mixed)).toBe(admitsJson({ templateIds: [entry], eventIds: [other.id] }));
+    expect(await stored(two)).toBe(JSON.stringify({ eventId: other.id }));
+    expect(await stored(only)).toBeNull();
+    const closed = await first<{ settings: string }>(
+      kit.env.DB,
+      'SELECT settings FROM scanning_sessions WHERE id=?',
+      [only],
+    );
+    expect(JSON.parse(closed?.settings ?? '{}')).toMatchObject({ acceptAllTemplates: false });
   });
 });

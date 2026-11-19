@@ -167,7 +167,8 @@ export function eventSessionsAre(eventId: string, ids: readonly string[]): Check
     `(SELECT COALESCE(group_concat(x.id), '') FROM (SELECT ss.id FROM scanning_sessions ss
       WHERE ss.org_id = {org} AND ss.mode = {mode} AND EXISTS (SELECT 1 FROM scan_events e
         WHERE e.id = ? AND e.org_id = {org} AND e.mode = {mode}
-          AND EXISTS (SELECT 1 FROM json_each(ss.accepts, '$.eventIds') j WHERE j.value = e.id))
+          AND (json_extract(ss.accepts, '$.eventId') = e.id
+            OR EXISTS (SELECT 1 FROM json_each(ss.accepts, '$.eventIds') j WHERE j.value = e.id)))
       ORDER BY ss.id) x) = ?`,
     [eventId, [...ids].sort().join(',')],
   );

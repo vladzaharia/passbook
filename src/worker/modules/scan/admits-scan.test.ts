@@ -1,4 +1,3 @@
-import { env } from 'cloudflare:workers';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { makeOrg, TEST_NOW } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
@@ -168,24 +167,24 @@ describe('admits: grants made under the narrowed entry', () => {
 });
 
 describe('admits: scope fences', () => {
-  it('still reads a session stored in the legacy one-event form, and the migration rewrites it', async () => {
+  it('reads one event stored in the older form or as lists', async () => {
     const tpl = await template('Legacy');
     const event = await kit.event({ templateIds: [tpl] });
-    const d = await door(JSON.stringify({ eventId: event.id }));
-    const done = await out(await act(d.headers, codeOf(await kit.scanPass(tpl))));
-    expect(await eventOf(done.scanId)).toBe(event.id);
-    const migration = (
-      env as unknown as { TEST_MIGRATIONS: { name: string; queries: string[] }[] }
-    ).TEST_MIGRATIONS.find((m) => m.name.startsWith('0113'));
-    for (const query of migration?.queries ?? []) await run(kit.env.DB, query, []);
-    const row = await first<{ accepts: string }>(
-      kit.env.DB,
-      'SELECT accepts FROM scanning_sessions WHERE id=?',
-      [d.sessionId],
+    for (const accepts of [
+      JSON.stringify({ eventId: event.id }),
+      JSON.stringify({ templateIds: [], eventIds: [event.id] }),
+    ]) {
+      const d = await door(accepts);
+      const done = await out(await act(d.headers, codeOf(await kit.scanPass(tpl))));
+      expect(await eventOf(done.scanId)).toBe(event.id);
+    }
+    // A single shape is stored in the older one-key form, which a Worker before Admits reads.
+    expect(admitsJson({ templateIds: [], eventIds: [event.id] })).toBe(
+      JSON.stringify({ eventId: event.id }),
     );
-    expect(row?.accepts).toBe(admitsJson({ templateIds: [], eventIds: [event.id] }));
-    const again = await out(await act(d.headers, codeOf(await kit.scanPass(tpl))));
-    expect(await eventOf(again.scanId)).toBe(event.id);
+    expect(admitsJson({ templateIds: [tpl], eventIds: [] })).toBe(
+      JSON.stringify({ templateIds: [tpl] }),
+    );
   });
 
   it("never admits through another org's event or template, or an event of the other mode", async () => {
