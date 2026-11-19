@@ -15,6 +15,16 @@ describe('issueWords', () => {
       expect(words, code).not.toMatch(/\b(undefined|\$\{)/);
     }
   });
+  it('never passes a validator message through', () => {
+    for (const code of WARNING_CODES) {
+      const raw = 'RAW VALIDATOR TEXT';
+      for (const params of [undefined, { name: 'x', kind: 'input', screen: 'ok', source: 'photo' }])
+        expect(
+          issueWords({ code, message: raw, ...(params ? { params } : {}) }),
+          code,
+        ).not.toContain(raw);
+    }
+  });
   it('words the scan screen issues from their params, not their text', () => {
     const at = (code: string, params: Record<string, string>) =>
       issueWords({ code, message: 'ignored', params });
