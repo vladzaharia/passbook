@@ -113,6 +113,28 @@ describe('session admits', () => {
     expect(((await eventOnly.json()) as { code?: string }).code).toBe('ZONE_EVENT_SESSION');
   });
 
+  it('saves an older-form body with an extra key, as before', async () => {
+    const tpl = await template('Lenient');
+    const made = await create({ templateIds: [tpl], note: 'kept by an old client' });
+    expect(made.status).toBe(201);
+    const session = ScanningSessionDetailSchema.parse(await made.json());
+    expect(await stored(session.id)).toBe(JSON.stringify({ templateIds: [tpl] }));
+  });
+
+  it("shows a device its session's admits, also after an archive narrows them", async () => {
+    const { kit, call, device } = fixture;
+    const first = await kit.event({ templateIds: [await template('Device event one')] });
+    const second = await kit.event({ templateIds: [await template('Device event two')] });
+    const made = await create({ templateIds: [], eventIds: [first.id, second.id] });
+    const session = ScanningSessionDetailSchema.parse(await made.json());
+    const dev = await device(session.id, 'Narrowed door');
+    const view = async () =>
+      ((await (await call('GET', `/scanners/${dev.id}`)).json()) as { accepts: unknown }).accepts;
+    expect(await view()).toEqual({ templateIds: [], eventIds: [first.id, second.id] });
+    expect((await call('POST', `/scan-events/${first.id}/archive`)).status).toBe(200);
+    expect(await view()).toEqual({ eventId: second.id });
+  });
+
   it('archiving an event drops it from each session; one left with nothing closes', async () => {
     const { kit, call } = fixture;
     const event = await kit.event({ templateIds: [await template('Archived event')] });

@@ -68,3 +68,35 @@ it('issues no sample when the mixed admits change at commit', async () => {
   expect([403, 409, 412]).toContain(response.status);
   expect(await passState()).toEqual(before);
 });
+
+it('takes exactly 100 pass types, samples from them, and refuses a 101st through an event', async () => {
+  const actor = await member();
+  const headers = { ...actor.session.headers, 'x-passbook-mode': 'test' };
+  const check = { actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' as const }] };
+  const ids = [templateId];
+  for (let i = 1; i < 100; i++) ids.push(await kit.scanTemplate(`Cap ${i}`, check));
+  const made = await request('POST', '/scanning-sessions', headers, {
+    orgId: kit.org.id,
+    name: `Cap ${kit.fx.ids.token(5)}`,
+    timeZone: 'UTC',
+    accepts: { templateIds: ids },
+  });
+  expect(made.status).toBe(201);
+  const session = (await made.json()) as { id: string };
+  const device = await request('POST', `/scanning-sessions/${session.id}/devices`, headers, {
+    name: `Device ${kit.fx.ids.token(5)}`,
+    surface: 'phone',
+  });
+  const deviceId = ((await device.json()) as { id: string }).id;
+  const sample = await request('POST', scannerPath(deviceId, 'sample-pass'), headers);
+  expect(sample.status).toBe(201);
+  expect(ids).toContain(((await sample.json()) as { templateId: string }).templateId);
+  const event = await kit.event({
+    mode: 'test',
+    templateIds: [await kit.scanTemplate('Cap extra', check)],
+  });
+  const over = await request('PATCH', `/scanning-sessions/${session.id}`, headers, {
+    accepts: { templateIds: ids, eventIds: [event.id] },
+  });
+  expect(((await over.json()) as { code?: string }).code).toBe('ADMITS_TOO_MANY');
+}, 600_000);

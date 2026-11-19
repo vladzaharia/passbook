@@ -53,18 +53,22 @@ export function eventAcceptsPass(
 
 /**
  * The entry of a mixed scope that admits the pass: an event that takes it (the one open now, then
- * the earliest close), else the template entries. Null when none does.
+ * the earliest close), else the template entries. When the template is also an entry, only an open
+ * event wins, so a closed one never shadows the entry's own zones, hours and plan. Null when none does.
  */
 function admittingEntry(
   actor: ScanActor,
   pass: Pass,
   now: number,
 ): EventScope | 'templates' | null {
+  const open = (scope: EventScope) => scope.event.opensAt <= now && now <= scope.event.closesAt;
+  const entry = actor.entryTemplateIds?.includes(pass.templateId) === true;
   const taking = (actor.events ?? []).filter(
     (scope) =>
-      scope.templateIds.includes(pass.templateId) && eventAcceptsPass(actor, scope.event, pass),
+      scope.templateIds.includes(pass.templateId) &&
+      eventAcceptsPass(actor, scope.event, pass) &&
+      (!entry || open(scope)),
   );
-  const open = (scope: EventScope) => scope.event.opensAt <= now && now <= scope.event.closesAt;
   const [best] = taking.sort(
     (a, b) =>
       Number(open(b)) - Number(open(a)) ||
@@ -72,7 +76,7 @@ function admittingEntry(
       (a.event.id < b.event.id ? -1 : 1),
   );
   if (best) return best;
-  return actor.entryTemplateIds?.includes(pass.templateId) ? 'templates' : null;
+  return entry ? 'templates' : null;
 }
 
 export function matchesEvent(actor: ScanActor, pass: Pass): boolean {

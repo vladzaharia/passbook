@@ -28,12 +28,17 @@ describe('Admits', () => {
     expect(AdmitsSchema.safeParse({ templateIds: [], eventIds: ids(11) }).success).toBe(false);
   });
 
-  it('refuses an empty or unknown shape', () => {
+  it('refuses an empty shape and strips unknown keys as before', () => {
     expect(AdmitsSchema.safeParse({ templateIds: [], eventIds: [] }).success).toBe(false);
-    expect(AdmitsSchema.safeParse({ templateIds: [T1], eventIds: [], extra: 1 }).success).toBe(
-      false,
-    );
     expect(AdmitsSchema.safeParse({}).success).toBe(false);
+    expect(admitsOf(AdmitsSchema.parse({ templateIds: [T1], note: 'x' }))).toEqual({
+      templateIds: [T1],
+      eventIds: [],
+    });
+    expect(admitsOf(AdmitsSchema.parse({ templateIds: [T1], eventIds: [E1], note: 'x' }))).toEqual({
+      templateIds: [T1],
+      eventIds: [E1],
+    });
   });
 
   it('shows a single shape in the older form and a mix as lists', () => {

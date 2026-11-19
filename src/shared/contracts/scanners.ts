@@ -29,21 +29,20 @@ export const ScannerAcceptsSchema = z.union([
   z.object({ eventId: IdSchema }),
   z.object({ templateIds: z.array(IdSchema).min(1).max(100) }),
 ]);
-/** Pass types and events in any mix, at least one. A session stores this form. */
+/** Pass types and events in any mix, at least one. A session stores a mix in this form. */
 const AdmitsListsSchema = z
-  .strictObject({
+  .object({
     templateIds: z.array(IdSchema).max(100),
     eventIds: z.array(IdSchema).max(10),
   })
   .refine((a) => a.templateIds.length + a.eventIds.length > 0, {
     message: 'Choose a pass type or an event.',
   });
-/** What a session admits; null elsewhere admits any pass type. Also parses the older one-shape form. */
-export const AdmitsSchema = z.union([
-  AdmitsListsSchema,
-  z.strictObject({ eventId: IdSchema }),
-  z.strictObject({ templateIds: z.array(IdSchema).min(1).max(100) }),
-]);
+/**
+ * What a session admits; null elsewhere admits any pass type. Also parses the older one-shape form.
+ * Unknown keys are stripped, as before; a body naming both lists is always read as the mix.
+ */
+export const AdmitsSchema = z.union([AdmitsListsSchema, ...ScannerAcceptsSchema.options]);
 export type AdmitsInput = z.infer<typeof AdmitsSchema>;
 /** Template entries and events' templates together name at most this many. */
 export const ADMITS_TEMPLATE_CAP = 100;
@@ -72,7 +71,7 @@ export const ScannerSchema = z.object({
   kind: ScannerKindSchema,
   deviceRole: DeviceRoleSchema,
   name: z.string(),
-  /** Null only for kind `display`. A session device shows its session's admits. */
+  /** A session device shows its session's admits (events and templates). Null: a display, every template (`acceptAllTemplates`) or nothing. */
   accepts: AdmitsSchema.nullable(),
   settings: ScannerSettingsSchema,
   timeZone: z.string(),

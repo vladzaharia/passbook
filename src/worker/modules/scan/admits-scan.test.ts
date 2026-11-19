@@ -58,6 +58,29 @@ describe('admits: which entry admits a pass', () => {
     expect(await eventOf(done.scanId)).toBe(event.id);
   });
 
+  it('falls back to the template entry, zones and all, while the event holding it is closed', async () => {
+    const tpl = await accessTemplate(undefined, 'Closed event access');
+    const gym = await makeZone('closed-event-gym');
+    const now = kit.clock.now();
+    const closed = await kit.event({
+      templateIds: [tpl],
+      opensAt: now - 3 * HOUR,
+      closesAt: now - HOUR,
+    });
+    const open = await kit.event({ templateIds: [tpl] });
+    const byClosed = await mixed({ templateIds: [tpl], eventIds: [closed.id] }, [gym]);
+    expect(
+      await grantOf(byClosed.headers, await kit.scanPass(tpl, { plan: 'pool_only' })),
+    ).toMatchObject({
+      kind: 'refused',
+      reason: 'zone_not_included',
+    });
+    const byOpen = await mixed({ templateIds: [tpl], eventIds: [open.id] }, [gym]);
+    const admitted = await grantOf(byOpen.headers, await kit.scanPass(tpl, { plan: 'pool_only' }));
+    expect(admitted).toMatchObject({ kind: 'ok' });
+    expect(await eventOf(admitted.scanId)).toBe(open.id);
+  });
+
   it('takes the open event, then the earliest close, of two that take the pass', async () => {
     const tpl = await template('Two events');
     const now = kit.clock.now();
