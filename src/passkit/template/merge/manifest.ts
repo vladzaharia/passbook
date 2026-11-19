@@ -56,6 +56,9 @@ const MANIFEST: Record<string, Rule> = {
   ),
 };
 
+/** Paper: the field list is a set; size, barcode, terms and holder move per key. */
+MANIFEST.paper = part('paper', c(mapOf({ fields: set })));
+
 /** The manifest keys with a row of their own; the rest merge as one atomic value per key. */
 export const RULED_KEYS = Object.keys(MANIFEST);
 

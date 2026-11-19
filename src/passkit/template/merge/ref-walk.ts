@@ -58,7 +58,7 @@ const nth = (items: Json[], idOf: (x: Json) => string) => {
 
 /**
  * Walks every cross-reference in a document: bindings, display, stamps, messaging, behaviors,
- * scan (lookup, flags, actions, access, display) and wallets. Sites are identities, not indexes.
+ * scan (lookup, flags, actions, access, display), wallets and paper. Sites are identities, not indexes.
  * Mutates when `visit` answers.
  */
 export function walkRefs(doc: PackageDoc, visit: RefVisit): void {
@@ -160,6 +160,9 @@ export function walkRefs(doc: PackageDoc, visit: RefVisit): void {
     expr(obj(src), 'value', `wallets/roles/${role}`);
   }
   expr(obj(wallets?.google), 'classKey', 'wallets/google/classKey');
+  const paper = obj(man.paper);
+  list(paper, 'fields', 'field', 'paper/fields');
+  expr(paper, 'terms', 'paper/terms');
   for (const target of ['google', 'samsung']) {
     const images = obj(obj(wallets?.[target])?.images);
     for (const slot of Object.keys(images ?? {}))

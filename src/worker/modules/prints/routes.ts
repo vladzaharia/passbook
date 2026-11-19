@@ -5,9 +5,14 @@ import {
   PassPrintsResponseSchema,
   PrintParamSchema,
 } from '../../../shared/contracts/index.ts';
+import { AppError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
+import { renderErrorPage } from '../../ssr/error-page.tsx';
+import { requestTheme } from '../../ssr/head.ts';
+import { PRINT_HEADERS, renderPrintPage } from '../../ssr/print-page.tsx';
 import { actorFor, authOf, passScopeOf, svc } from '../passes/http.ts';
 import { tenantPassForRead, tenantPassForWrite } from '../passes/pass-access.ts';
+import { printPageModel } from './page.ts';
 import * as repo from './repo.ts';
 import { adminWriter } from './repo-write.ts';
 import { ADMIN_PRINTS_PER_HOUR, mintPrint, voidPrint } from './service.ts';
@@ -68,6 +73,42 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
       const { pass, authority } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
       const caller = { writer: adminWriter(authority, actorFor(c)), limit: ADMIN_PRINTS_PER_HOUR };
       return c.json(await voidPrint(ctx, caller, pass, 'manual', printId));
+    },
+  );
+  register(
+    passesRoutes,
+    'passes',
+    {
+      method: 'get',
+      path: '/{id}/print',
+      summary: 'The print page of the active print, for staff',
+      params: IdParamSchema,
+    },
+    async (c) => {
+      const ctx = svc(c);
+      const theme = requestTheme(c);
+      try {
+        const { id } = c.req.valid('param');
+        const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+        const model = await printPageModel(ctx, pass, 'staff');
+        const html = renderPrintPage({
+          model,
+          audience: 'staff',
+          nonce: c.var.nonce,
+          ...(theme ? { theme } : {}),
+        });
+        return new Response(html, { headers: PRINT_HEADERS });
+      } catch (error) {
+        // A browser tab, not an API client: the hosted error page, same status.
+        if (!(error instanceof AppError) || error.status >= 500) throw error;
+        const html = renderErrorPage({
+          status: error.status,
+          nonce: c.var.nonce,
+          ...(theme ? { theme } : {}),
+          ...(error.status === 404 ? {} : { line: error.message }),
+        });
+        return new Response(html, { status: error.status, headers: PRINT_HEADERS });
+      }
     },
   );
 }

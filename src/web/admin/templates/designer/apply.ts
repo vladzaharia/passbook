@@ -17,6 +17,7 @@ import {
   setMeta,
   updateInput,
 } from './ops-more.ts';
+import { type PaperPatch, setPaper } from './ops-paper.ts';
 import {
   addField,
   moveField,
@@ -69,6 +70,7 @@ export type Op =
   | { op: 'barcode'; settings: BarcodeSettings }
   | { op: 'scan-lookup'; input: string }
   | { op: 'list'; key: ListKey; items: Record<string, unknown>[] }
+  | { op: 'paper'; patch: PaperPatch }
   | { op: 'image'; slot: string; asset: DraftAsset | null }
   | { op: 'stamps-add'; art: Partial<Record<ArtSlot, DraftAsset>> }
   | { op: 'stamps-goal'; goal: number }
@@ -146,6 +148,8 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
       return setLookupInput(doc, o.input);
     case 'list':
       return setList(doc, o.key, o.items);
+    case 'paper':
+      return setPaper(doc, o.patch);
     case 'image':
       return setSlotImage(doc, o.slot, o.asset);
     case 'scan-display':

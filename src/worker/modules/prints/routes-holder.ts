@@ -1,8 +1,14 @@
 import { sameOriginOnly } from '../../platform/csrf.ts';
+import { AppError } from '../../platform/errors.ts';
 import { createRouter } from '../../platform/openapi.ts';
 import { ASSET_MISSES_PER_MINUTE, gateMisses, rateLimit } from '../../platform/rate-limit.ts';
+import { requestTheme } from '../../ssr/head.ts';
+import { renderNotFoundPage } from '../../ssr/pass-page.tsx';
+import { PRINT_HEADERS, renderPrintPage } from '../../ssr/print-page.tsx';
 import { svc } from '../passes/http.ts';
 import { passForToken } from '../public/service.ts';
+import { printPageModel } from './page.ts';
+import { assertHolderMayPrint } from './paper.ts';
 import { linkWriter } from './repo-write.ts';
 import { HOLDER_PRINTS_PER_HOUR, mintPrint, voidPrint } from './service.ts';
 
@@ -18,14 +24,44 @@ holderPrintRoutes.use('/:token/print/*', gateMisses(ASSET_MISSES_PER_MINUTE));
 holderPrintRoutes.use('/:token/print', rateLimit('RL_PUBLIC'));
 holderPrintRoutes.use('/:token/print/*', rateLimit('RL_PUBLIC'));
 
-/** An unknown, rotated or malformed link is a plain 404 (passForToken throws it). */
+/**
+ * An unknown, rotated or malformed link is a plain 404 (passForToken throws it). A template whose
+ * paper block says `holder: false` refuses every holder change, a void of a staff print included.
+ */
 async function holderCall(c: Parameters<typeof svc>[0]) {
   const ctx = svc(c);
   const pass = await passForToken(ctx, c.req.param('token') ?? '');
+  await assertHolderMayPrint(ctx, pass);
   return { ctx, pass, caller: { writer: linkWriter(pass), limit: HOLDER_PRINTS_PER_HOUR } };
 }
 
 const noStore = { 'cache-control': 'private, no-store' };
+
+/** The page: the active print, or a button that makes one by POST. A GET never mints. */
+holderPrintRoutes.get('/:token/print', async (c) => {
+  const ctx = svc(c);
+  const theme = requestTheme(c);
+  const token = c.req.param('token') ?? '';
+  try {
+    const pass = await passForToken(ctx, token);
+    const model = await printPageModel(ctx, pass, 'holder');
+    const html = renderPrintPage({
+      model,
+      audience: 'holder',
+      backHref: `/p/${token}`,
+      nonce: c.var.nonce,
+      ...(theme ? { theme } : {}),
+    });
+    return new Response(html, { headers: PRINT_HEADERS });
+  } catch (error) {
+    if (error instanceof AppError && error.status === 404)
+      return new Response(renderNotFoundPage(c.var.nonce, theme, { replay: false }), {
+        status: 404,
+        headers: PRINT_HEADERS,
+      });
+    throw error;
+  }
+});
 
 holderPrintRoutes.post('/:token/print', async (c) => {
   const call = await holderCall(c);
