@@ -20,6 +20,7 @@ import {
 import { saveOrgCredential, savePlatformCredential } from './credential-service.ts';
 import { setEnrolmentSource } from './enrolment-service.ts';
 import { findAccount } from './repo-accounts.ts';
+import { verify } from './repo-wallet-credentials-test-fixtures.ts';
 import { type Kit, kit } from './wallet-wa1b-test-fixtures.ts';
 
 let k: Kit;
@@ -219,5 +220,57 @@ describe('queueing', () => {
     const member = await k.member(org.id, 'live');
     await expect(queueMigration(ctx, member.auth)).rejects.toMatchObject({ status: 403 });
     await expect(migrationReport(ctx, member.auth)).rejects.toMatchObject({ status: 403 });
+  });
+});
+
+describe('another org that only claims the identity (live Samsung)', () => {
+  const samsung = (partnerId: string) => ({ ...k.samsung('card-claim'), partnerId });
+  async function claim(partnerId: string) {
+    const org = await k.org();
+    const m = await k.member(org.id, 'live');
+    const saved = await saveOrgCredential(k.ctx, m.auth, org.id, {
+      provider: 'samsung',
+      expectedRevision: 0,
+      credentials: samsung(partnerId),
+    });
+    return { org, saved };
+  }
+  const reportItem = async (id: string) => {
+    const admin = await k.admin();
+    for (let after = ''; ; ) {
+      const page = await migrationReport(k.ctx, admin.auth, after);
+      const item = page.items.find((i) => i.accountId === id);
+      if (item || !page.next) return item;
+      after = page.next;
+    }
+  };
+
+  it('an unverified squatter does not block the real org, and the report names it as unproven', async () => {
+    const { org: squatter } = await claim('P-SQUAT');
+    const a = await seedLegacy(k, (await k.org()).id, 'live', 'samsung', samsung('P-SQUAT'));
+    expect(await reportItem(a.id)).toMatchObject({
+      state: 'ready',
+      reason: 'unproven_claim',
+      identityShared: [{ orgId: squatter.id, mode: 'live', provider: 'samsung' }],
+    });
+    expect(await migrate(a)).toBe('migrated');
+    expect(await pendingAmong([a.id])).toEqual([]);
+  });
+
+  it('a verified rival still refuses', async () => {
+    const { org: rival, saved } = await claim('P-VERIFIED');
+    const version = await first<{ v: string; h: string }>(
+      env.DB,
+      'SELECT current_version_id AS v, identity_hash AS h FROM wallet_credentials WHERE id = ?',
+      [saved.id],
+    );
+    await verify({ id: saved.id, versionId: version?.v ?? '', identity: version?.h ?? '' });
+    const b = await seedLegacy(k, (await k.org()).id, 'live', 'samsung', samsung('P-VERIFIED'));
+    expect(await migrate(b)).toBe('refused');
+    expect(await reportItem(b.id)).toMatchObject({
+      state: 'refused',
+      reason: 'identity_shared',
+      identityShared: [{ orgId: rival.id }],
+    });
   });
 });

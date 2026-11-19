@@ -7,6 +7,7 @@ import type { Grant } from '../../platform/authority.ts';
 import { jobGrant } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
+import { classifyD1Error } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -20,6 +21,7 @@ import {
   noRivalCredential,
   pendingAccounts,
   rivalOrgs,
+  unprovenOrgs,
 } from './repo-credential-migrate.ts';
 import {
   CREDENTIAL_TABLES,
@@ -51,6 +53,8 @@ export type Plan =
       hint: string;
       cardMap: Record<string, string>;
       secret: SourceCredentials;
+      /** Other orgs' unverified claims of the identity: they never block, the report names them. */
+      unproven: WalletProviderScope[];
     }
   | {
       kind: 'refused';
@@ -121,6 +125,11 @@ export async function planSource(
     cardMap:
       secret.provider === 'samsung' ? { generic: await sha256Hex(secret.credentials.cardId) } : {},
     secret,
+    unproven: (await unprovenOrgs(db, a.org_id, a.mode, a.provider, identityHash)).map((r) => ({
+      orgId: r.org_id,
+      mode: a.mode,
+      provider: a.provider,
+    })),
   };
 }
 
@@ -290,7 +299,7 @@ export async function migrationReport(
         ctx.log.warn('wallet.credential_migrate_unreadable', {
           code: 'WALLET_CREDENTIALS_UNAVAILABLE',
           accountId: a.id,
-          error,
+          d1: classifyD1Error(error)?.kind ?? null,
         });
       }
     items.push(
@@ -298,7 +307,9 @@ export async function migrationReport(
         ? { ...base, state: 'refused', reason: 'unreadable', identityShared: [] }
         : plan.kind === 'refused'
           ? { ...base, state: 'refused', reason: plan.reason, identityShared: plan.shared }
-          : { ...base, state: 'ready', reason: null, identityShared: [] },
+          : plan.kind === 'create' && plan.unproven.length > 0
+            ? { ...base, state: 'ready', reason: 'unproven_claim', identityShared: plan.unproven }
+            : { ...base, state: 'ready', reason: null, identityShared: [] },
     );
   }
   return { ...counts, items, next };

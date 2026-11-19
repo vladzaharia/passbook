@@ -188,7 +188,9 @@ export const WalletMigrationItemSchema = z.strictObject({
   mode: ModeSchema,
   provider: WalletProviderSchema,
   state: z.enum(['ready', 'refused']),
-  reason: z.enum(['identity_shared', 'org_credential_exists', 'unreadable']).nullable(),
+  reason: z
+    .enum(['identity_shared', 'org_credential_exists', 'unreadable', 'unproven_claim'])
+    .nullable(),
   identityShared: z.array(WalletProviderScopeSchema),
 });
 

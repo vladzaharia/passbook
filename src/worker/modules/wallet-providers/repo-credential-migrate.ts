@@ -81,21 +81,44 @@ export function findLegacy(
   );
 }
 
-/** Another org's active org-scope credential with this identity, verified or not. */
-export function rivalOrgs(
+/** An org credential someone relies on: verified, or the source of a legacy account. A bare claim is neither. */
+const PROVEN = `(x.verified_at IS NOT NULL OR EXISTS (SELECT 1 FROM wallet_provider_accounts p
+  WHERE p.credential_source_id = x.id AND p.credential_id IS NOT NULL))`;
+
+async function otherOrgs(
   db: D1Database,
   orgId: string,
   mode: Mode,
   provider: Provider,
   identityHash: string,
+  proven: boolean,
 ): Promise<{ org_id: string }[]> {
   return all<{ org_id: string }>(
     db,
-    `SELECT org_id FROM wallet_credentials WHERE scope = 'org' AND revoked_at IS NULL
-       AND mode = ? AND provider = ? AND identity_hash = ? AND org_id != ? ORDER BY org_id`,
+    `SELECT x.org_id FROM wallet_credentials x WHERE x.scope = 'org' AND x.revoked_at IS NULL
+       AND x.mode = ? AND x.provider = ? AND x.identity_hash = ? AND x.org_id != ?
+       AND ${proven ? '' : 'NOT '}${PROVEN} ORDER BY x.org_id`,
     [mode, provider, identityHash, orgId],
   );
 }
+
+/** Another org's active, proven org-scope credential with this identity: it refuses the migration. */
+export const rivalOrgs = (
+  db: D1Database,
+  orgId: string,
+  mode: Mode,
+  provider: Provider,
+  identityHash: string,
+) => otherOrgs(db, orgId, mode, provider, identityHash, true);
+
+/** Unproven claims of the identity (unverified, no legacy account on them): reported, never blocking. */
+export const unprovenOrgs = (
+  db: D1Database,
+  orgId: string,
+  mode: Mode,
+  provider: Provider,
+  identityHash: string,
+) => otherOrgs(db, orgId, mode, provider, identityHash, false);
 
 /** The refusal in the grant itself, so two accounts migrating at once cannot both create the identity. */
 export const noRivalCredential = (
@@ -108,7 +131,7 @@ export const noRivalCredential = (
   ok: (b) =>
     `NOT EXISTS (SELECT 1 FROM wallet_credentials x WHERE x.scope = 'org' AND x.revoked_at IS NULL
        AND x.mode = ${b.bind(mode)} AND x.provider = ${b.bind(provider)}
-       AND x.identity_hash = ${b.bind(identityHash)} AND x.org_id != ${b.bind(orgId)})`,
+       AND x.identity_hash = ${b.bind(identityHash)} AND x.org_id != ${b.bind(orgId)} AND ${PROVEN})`,
 });
 
 /** The account is still at the revision the caller read (`revision` legacy, `enrolment_revision` source), not retired. */
