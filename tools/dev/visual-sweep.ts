@@ -7,16 +7,21 @@ import { assertLocal } from '../lib/demo-client.ts';
 import { contextFor } from './lib/auth.ts';
 import { capture } from './lib/capture.ts';
 import { captureEmails } from './lib/emails.ts';
+import { pickJourneys } from './lib/journey.ts';
+import { makeEnv } from './lib/journey-env.ts';
+import { runJourney } from './lib/journey-run.ts';
 import { resolvePlaceholders } from './lib/resolve.ts';
 import {
+  ALL_VIEWPORTS,
+  DEFAULT_VIEWPORTS,
   filterRoutes,
   loadRoutes,
   placeholdersOf,
   type Role,
   type Theme,
-  VIEWPORTS,
   type ViewportName,
 } from './lib/routes.ts';
+import { journeys } from './visual-journeys/index.ts';
 
 const root = resolve(import.meta.dirname, '../..');
 const args = process.argv.slice(2);
@@ -37,22 +42,62 @@ const list = <T extends string>(
   return picked;
 };
 
+/** Org slug to id, as the break-glass admin sees them. */
+async function orgIds(base: string, stateDir: string): Promise<Record<string, string>> {
+  const platform = await contextFor(base, stateDir, 'platform');
+  const res = await platform.get('/api/v1/orgs?limit=100');
+  const items = ((await res.json()) as { items?: { slug: string; id: string }[] }).items ?? [];
+  await platform.dispose();
+  return Object.fromEntries(items.map((o) => [o.slug, o.id]));
+}
+
 async function main() {
   const base = assertLocal(arg('--url') ?? 'http://localhost:5173');
   const files = (arg('--routes') ?? '').split(',').filter(Boolean);
-  if (files.length === 0 && !flag('--emails'))
-    throw new Error('Pass --routes <file[,file]> and/or --emails.');
+  const journeyNames = arg('--journeys');
+  if (files.length === 0 && !flag('--emails') && !journeyNames)
+    throw new Error('Pass --routes <file[,file]>, --emails and/or --journeys <name[,name]|all>.');
+  if (journeyNames) {
+    const only = pickJourneys(journeys, journeyNames);
+    const stateDir = resolve(root, '.wrangler/visual-sweep/state');
+    const orgs = await orgIds(base, stateDir);
+    const out = resolve(root, arg('--out') ?? '.wrangler/visual-sweep/journeys');
+    if (!out.startsWith(`${resolve(root, '.wrangler')}/`))
+      throw new Error('--out must be inside .wrangler/ (screenshots show signed-in data).');
+    for (const journey of only) {
+      const env = makeEnv({
+        base,
+        stateDir,
+        orgs,
+        orgSlug: journey.org,
+        contexts: (role) => contextFor(base, stateDir, role),
+      });
+      const steps = await runJourney(journey, env, {
+        base,
+        out,
+        stateDir,
+        viewports: list<ViewportName>(arg('--viewports'), DEFAULT_VIEWPORTS, 'viewport'),
+        themes: list<Theme>(arg('--themes'), ['light', 'dark'], 'theme'),
+      });
+      const shots = steps.reduce((n, s) => n + Object.keys(s.files).length, 0);
+      const noted = steps.filter((s) => s.note);
+      console.log(
+        `${journey.name}: ${steps.length} steps, ${shots} screenshots -> ${resolve(out, journey.name)}`,
+      );
+      for (const s of noted) console.log(`  ${s.index + 1}. ${s.title}: ${s.note}`);
+    }
+    if (files.length === 0 && !flag('--emails')) return;
+  }
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const out = resolve(root, arg('--out') ?? `.wrangler/visual-sweep/${stamp}`);
   if (!out.startsWith(`${resolve(root, '.wrangler')}/`)) {
     throw new Error('--out must be inside .wrangler/ (screenshots show signed-in data).');
   }
   const stateDir = resolve(root, '.wrangler/visual-sweep/state');
-  const viewports = list<ViewportName>(
-    arg('--viewports'),
-    Object.keys(VIEWPORTS) as ViewportName[],
-    'viewport',
-  );
+  const narrow = Boolean(arg('--viewports'));
+  const viewports: ViewportName[] = narrow
+    ? list(arg('--viewports'), ALL_VIEWPORTS, 'viewport')
+    : [...DEFAULT_VIEWPORTS];
   const themes = list<Theme>(arg('--themes'), ['light', 'dark'], 'theme');
 
   const routes = filterRoutes(
@@ -66,7 +111,10 @@ async function main() {
   };
   // Sign in (or reuse saved state) once for every role a route needs.
   for (const role of new Set(routes.map((r) => r.role))) if (role !== 'anon') await ctx(role);
-  const needed = ['orgId', ...routes.flatMap((r) => placeholdersOf(r.path))];
+  const needed = [
+    'orgId',
+    ...routes.flatMap((r) => [...placeholdersOf(r.path), ...(r.filterOrg ? [r.filterOrg] : [])]),
+  ];
   const values = await resolvePlaceholders(
     { platform: () => ctx('platform'), org: () => ctx('org'), holder: () => ctx('holder') },
     needed,
@@ -75,7 +123,7 @@ async function main() {
   mkdirSync(out, { recursive: true });
   const shots =
     routes.length > 0
-      ? await capture({ base, out, stateDir, viewports, themes, values }, routes)
+      ? await capture({ base, out, stateDir, viewports, narrow, themes, values }, routes)
       : [];
   if (flag('--emails'))
     shots.push(

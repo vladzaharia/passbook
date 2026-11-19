@@ -5,7 +5,7 @@ import { knownPlaceholders } from './resolve.ts';
 import { loadRoutes, placeholdersOf } from './routes.ts';
 
 const root = resolve(import.meta.dirname, '../../..');
-const lists = ['admin', 'portal', 'public', 'scanner'].flatMap((n) =>
+const lists = ['admin', 'portal', 'public', 'scanner', 'scanning'].flatMap((n) =>
   loadRoutes(resolve(root, `tools/dev/visual-routes/${n}.json`)),
 );
 const shape = (path: string) =>
@@ -23,7 +23,9 @@ describe('visual sweep coverage', () => {
 
   it('has a resolver for every placeholder', () => {
     const known = new Set(knownPlaceholders());
-    const used = new Set(lists.flatMap((r) => placeholdersOf(r.path)));
+    const used = new Set(
+      lists.flatMap((r) => [...placeholdersOf(r.path), ...(r.filterOrg ? [r.filterOrg] : [])]),
+    );
     expect([...used].filter((p) => !known.has(p))).toEqual([]);
   });
 });
