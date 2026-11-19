@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, OrgIdSchema } from './common.ts';
+import { IdSchema, ModeSchema, OrgIdSchema, TimestampSchema } from './common.ts';
 import { BULK_PASS_LIMIT } from './passes.ts';
 
 export const CHANNELS = ['mobile', 'apple', 'google', 'samsung', 'paper', 'nfc'] as const;
@@ -36,6 +36,8 @@ export const ChannelStatusSchema = z.object({
   source: ChannelSourceSchema,
   /** Present when off. */
   reason: ChannelReasonSchema.optional(),
+  /** When the pass's copies in this channel were retired by a plain Turn off. */
+  retiredAt: TimestampSchema.optional(),
 });
 export type ChannelStatus = z.infer<typeof ChannelStatusSchema>;
 
@@ -91,9 +93,10 @@ export const BulkPassChannelsResponseSchema = z.object({
 /** What saving would change, for "Turns off Apple for 412 passes and issues new codes." */
 export const ChannelImpactSchema = z.object({
   channel: ChannelSchema,
+  /** Passes of the caller's mode that go from on to off. */
   passes: z.number().int().nonnegative(),
-  /** Whether the save rotates scan codes (only when `replaceCodes` is set). */
-  rotatesCodes: z.boolean(),
+  /** Passes whose codes rotate: those with a copy in the channel, only when `replaceCodes` is set. */
+  rotated: z.number().int().nonnegative(),
 });
 
 /** GET /api/v1/templates/{id}/channels */
