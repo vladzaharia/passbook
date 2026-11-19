@@ -14,6 +14,7 @@ const on = { on: true, source: 'template' };
 const channels = (paper: Record<string, unknown>) => () =>
   json({
     channels: null,
+    revision: 0,
     effective: { mobile: on, apple: on, google: on, samsung: on, nfc: on, paper },
   });
 
