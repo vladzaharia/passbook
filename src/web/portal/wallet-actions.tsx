@@ -5,6 +5,7 @@ import {
   Mail,
   MoreHorizontal,
   QrCode as QrIcon,
+  RefreshCw,
   Smartphone,
   Trash2,
 } from 'lucide-react';
@@ -31,6 +32,7 @@ import {
 import { Scan } from './add/scan.tsx';
 import { lostPhone, myPassesKey, removePass, resendPass } from './api.ts';
 import { browserDevice } from './device.ts';
+import type { Refresh } from './refresh-button.tsx';
 
 /** `/p/:token/pass.pkpass` -> `/p/:token`. The list contract has no public URL field. */
 export function publicUrlOf(
@@ -145,6 +147,8 @@ export interface PassMenuProps {
   onRemoved?: () => void;
   /** The pass is live: Send it again and I lost my phone. */
   help?: boolean;
+  /** Tiles: Refresh is also here, the only one when the tile is too narrow for its icon. */
+  refresh?: Refresh;
 }
 
 /**
@@ -159,6 +163,7 @@ export function PassMoreMenu({
   inWallet = false,
   onRemoved,
   help = false,
+  refresh,
 }: PassMenuProps) {
   const [qrOpen, setQrOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
@@ -184,6 +189,14 @@ export function PassMoreMenu({
           )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {refresh ? (
+            <DropdownMenuItem
+              disabled={refresh.pending || refresh.phase === 'cooldown'}
+              onSelect={refresh.request}
+            >
+              <RefreshCw aria-hidden /> {refresh.label}
+            </DropdownMenuItem>
+          ) : null}
           {qr ? (
             <DropdownMenuItem onSelect={() => setQrOpen(true)}>
               <QrIcon aria-hidden /> Show QR

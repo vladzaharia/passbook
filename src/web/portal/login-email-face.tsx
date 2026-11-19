@@ -84,7 +84,7 @@ export function EmailFace({
   const callout = error ?? (request.challengeFailed ? { message: CHALLENGE_FAILED } : null);
   const busy = request.phase !== 'idle';
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-1 flex-col justify-center gap-6">
       {callout ? (
         <Callout tone="danger" title={callout.title}>
           {callout.message}
