@@ -5,6 +5,7 @@ import {
   failRun,
   finishRun,
   gateOne,
+  handOff,
   isRotating,
   ORG_INACTIVE,
   PREDECESSOR_STALLED,
@@ -17,11 +18,14 @@ import { createJobContext } from '../platform/service-context.ts';
 
 export interface ChannelApplyParams {
   runId: string;
+  /** A continuation instance (`{runId}-cN`): the run is already running, resume from its cursor. */
+  cont?: number;
 }
 
 /** Saves that may push the start back. A run behind another waits as long as the run ahead makes progress. */
 const MAX_DEBOUNCE = 50;
-const MAX_PAGES = 2000;
+/** Pages one instance applies before it hands the run to a continuation instance. */
+export const MAX_PAGES = 2000;
 /** Gate rounds of five minutes: a window open longer than two days fails the run. */
 const MAX_GATE_ROUNDS = 576;
 const PAGE_RETRY = { retries: { limit: 3, delay: '10 seconds', backoff: 'exponential' } } as const;
@@ -36,8 +40,9 @@ export async function runChannelApply(
   step: StepLike,
   exec?: ExecutionContext,
   clock?: Clock,
+  maxPages = MAX_PAGES,
 ): Promise<{ state: string }> {
-  const { runId } = params;
+  const { runId, cont } = params;
   const ctx = createJobContext(env, 'channel-apply', {
     ...(clock ? { clock } : {}),
     ...(exec ? { ctx: exec } : {}),
@@ -46,7 +51,7 @@ export async function runChannelApply(
   try {
     let debounce = 0;
     let blocked = 0;
-    for (;;) {
+    while (cont === undefined) {
       const n = debounce + blocked;
       const due = await step.do(`due-${n}`, () => dueOf(ctx, runId));
       if (due.state !== 'pending') return { state: due.state };
@@ -72,7 +77,12 @@ export async function runChannelApply(
     let gates = 0;
     const replacing = await step.do('rotating', () => isRotating(ctx, runId));
     for (let n = 0; ; n++) {
-      if (n >= MAX_PAGES) throw new Error('channel apply ran out of pages');
+      if (n >= maxPages) {
+        // The run is not done: the next instance resumes from the stored cursor.
+        const next = (cont ?? 0) + 1;
+        await step.do('handoff', () => handOff(ctx, runId, next));
+        return { state: 'running' };
+      }
       // A window that opens mid-run pauses the pages until it closes.
       while (replacing) {
         const gate = await step.do(`gate-${n}-${gates}`, () => gateOne(ctx, runId));

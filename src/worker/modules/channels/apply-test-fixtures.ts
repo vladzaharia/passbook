@@ -154,12 +154,25 @@ export async function applyKit(passCount = 3, opts: { scan?: boolean; holders?: 
   /** Runs the workflow for a run id inline. */
   const work = (
     runId: string,
-    opts: { retryAt?: number; onSleep?: (name: string) => Promise<void> } = {},
+    opts: {
+      retryAt?: number;
+      onSleep?: (name: string) => Promise<void>;
+      maxPages?: number;
+      cont?: number;
+    } = {},
   ) => {
     const { step, s } = stepper(kit.clock, opts);
     return {
       s,
-      done: runChannelApply(kit.env, runId, { runId }, step, undefined, kit.clock),
+      done: runChannelApply(
+        kit.env,
+        opts.cont === undefined ? runId : `${runId}-c${opts.cont}`,
+        { runId, ...(opts.cont === undefined ? {} : { cont: opts.cont }) },
+        step,
+        undefined,
+        kit.clock,
+        opts.maxPages,
+      ),
     };
   };
   const count = async (sql: string, ...p: (string | number)[]) =>

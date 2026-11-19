@@ -372,3 +372,60 @@ describe('replace codes: tenants, modes and page size', () => {
     expect(w.s.names.filter((n) => n.startsWith('page-'))).toHaveLength(1);
   });
 });
+
+describe('a run longer than one instance', () => {
+  const sevenPasses = () => replaceKit(Array.from({ length: 7 }, () => ['apple' as const]));
+  const strictCreate = (t: ApplyKit) => {
+    const seen = new Set<string>();
+    const create = t.kit.env.CHANNEL_APPLY.create.bind(t.kit.env.CHANNEL_APPLY);
+    t.kit.env.CHANNEL_APPLY.create = (async (o: { id: string; params: unknown }) => {
+      if (seen.has(o.id)) throw new Error('instance.already_exists');
+      seen.add(o.id);
+      return create(o as never);
+    }) as never;
+  };
+
+  it('hands off at the page cap and finishes in the next instance, with no double events or codes', async () => {
+    const t = await sevenPasses();
+    const id = await replaceSave(t, { apple: 'off' });
+    const first = t.work(id, { maxPages: 1 });
+    expect(await first.done).toEqual({ state: 'running' });
+    expect((await t.runOf(id))?.state).toBe('running');
+    const next = t.created.find((c) => c.id === `${id}-c1`);
+    expect(next?.params).toEqual({ runId: id, cont: 1 });
+    expect(await t.work(id, { maxPages: 1, cont: 1 }).done).toEqual({ state: 'done' });
+    expect(await t.runOf(id)).toMatchObject({
+      state: 'done',
+      counts: expect.stringContaining('"rotated":7'),
+    });
+    expect(await t.feed()).toBe(7);
+    expect(
+      await t.count('SELECT COUNT(*) AS n FROM scan_code_rotations WHERE org_id = ?', t.orgId),
+    ).toBe(7);
+  });
+
+  it('a crash during the hand-off resumes once', async () => {
+    // The index of the hand-off step, from an identical run.
+    const probe = await sevenPasses();
+    const run = probe.work(await replaceSave(probe, { apple: 'off' }), { maxPages: 1 });
+    await run.done;
+    const handoffAt = run.s.names.indexOf('handoff');
+    expect(handoffAt).toBeGreaterThan(0);
+    const t = await sevenPasses();
+    strictCreate(t);
+    const id = await replaceSave(t, { apple: 'off' });
+    expect(await t.work(id, { maxPages: 1, retryAt: handoffAt }).done).toEqual({
+      state: 'running',
+    });
+    expect(t.created.filter((c) => c.id === `${id}-c1`)).toHaveLength(1);
+    expect(await t.work(id, { maxPages: 1, cont: 1 }).done).toEqual({ state: 'done' });
+    expect(await t.feed()).toBe(7);
+  });
+
+  it('shows life at the hand-off so the status check does not read it as stalled', async () => {
+    const t = await sevenPasses();
+    const id = await replaceSave(t, { apple: 'off' });
+    await t.work(id, { maxPages: 1 }).done;
+    expect(Number((await t.runOf(id))?.updated_at)).toBe(t.kit.clock.now());
+  });
+});

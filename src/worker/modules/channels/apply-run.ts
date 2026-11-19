@@ -151,3 +151,20 @@ export async function failRun(ctx: ServiceContext, runId: string, code: string):
   await writeFail(ctx, run, code);
   ctx.log.error('channels.apply.failed', { runId, orgId: run.orgId, code });
 }
+
+/**
+ * A long run outgrows one workflow instance: the next one (`{runId}-cN`) resumes from the cursor. The
+ * hand-off counts as progress for the status check. An instance that already exists is fine (a retry).
+ */
+export async function handOff(ctx: ServiceContext, runId: string, next: number): Promise<void> {
+  const run = await getRun(ctx.env.DB, runId);
+  if (run?.state !== 'running') return;
+  await writeTouch(ctx, run);
+  try {
+    await ctx.env.CHANNEL_APPLY.create({ id: `${runId}-c${next}`, params: { runId, cont: next } });
+  } catch (error) {
+    if (!/already.?exist/i.test(error instanceof Error ? error.message : String(error)))
+      throw error;
+  }
+  ctx.log.info('channels.apply.handoff', { runId, orgId: run.orgId, instance: next });
+}
