@@ -176,8 +176,8 @@ describe('organization scope', () => {
     expect(within(nav).queryByRole('link', { name: 'Passes' })).toBeNull();
     await user.click(await screen.findByRole('combobox', { name: 'Scope: Platform' }));
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
-    // Users has no organization counterpart yet: the switch opens the overview.
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o2'));
+    // Users maps to Members, which the organization now has.
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o2/members'));
     await waitFor(() => expect(localStorage.getItem(KEY)).toBe('org:o2'));
     expect(router.state.location.search).not.toHaveProperty('orgId');
     expect(userScopes.every((value) => value === null)).toBe(true);
