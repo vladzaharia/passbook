@@ -134,6 +134,10 @@ export function deferredPreview() {
           answer(json({ items: PASSES, nextCursor: null }));
           return;
         }
+        if (url.pathname.endsWith('/workspace')) {
+          answer(json({ code: 'NOT_FOUND' }, 404));
+          return;
+        }
         requests.push({ url, init, answer });
       }),
   );
