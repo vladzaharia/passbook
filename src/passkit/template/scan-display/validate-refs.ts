@@ -128,7 +128,9 @@ function checkRows(ctx: Ctx, rows: ScanRowDoc[], at: string): void {
       ctx.assetNames &&
       !ctx.assetNames.some((n) => n.startsWith(row.source))
     )
-      ctx.push('warning', 'IMAGE', path, `The template has no ${row.source} image.`);
+      ctx.push('warning', 'IMAGE', path, `The template has no ${row.source} image.`, {
+        source: row.source,
+      });
     if (row.type === 'columns') {
       const size = row.size ?? 'normal';
       const cap = oneLineCap(size, row.items.length);
@@ -187,8 +189,14 @@ function checkConds(ctx: Ctx, conds: CondSlot[]): void {
       if (schema) {
         const level = scanLevel(schema);
         if (level === 'hidden' || ROLE_RANK[level] > ROLE_RANK[slot.role])
-          ctx.push('warning', 'ROLE_CONDITION', slot.path, `${name} is above who sees this.`);
-      } else if (name) ctx.push('warning', 'PATH', slot.path, `Unknown input "${name}".`);
+          ctx.push('warning', 'ROLE_CONDITION', slot.path, `${name} is above who sees this.`, {
+            name: name ?? '',
+          });
+      } else if (name)
+        ctx.push('warning', 'PATH', slot.path, `Unknown input "${name}".`, {
+          kind: 'input',
+          name,
+        });
       else if (split?.root === 'pass' && split.rest[0] === 'scanCode')
         ctx.push('error', 'SECRET', slot.path, 'pass.scanCode is never shown on scanners.');
     }
@@ -212,6 +220,7 @@ function checkDensity(ctx: Ctx, flags: number): void {
         'CUT',
         'panels',
         `Rows are cut on the ${screen.replace('_', ' ')} screen.`,
+        { screen: screen.replace('_', ' ') },
       );
   }
 }
@@ -235,6 +244,7 @@ function checkWarnings(ctx: Ctx): void {
         'SHADOWED',
         'holder',
         `Input "${name}" is hidden by a display root. Use inputs.${name}.`,
+        { name },
       );
   doc.variants?.forEach((variant, i) => {
     const earlier = doc.variants?.slice(0, i) ?? [];
@@ -244,6 +254,7 @@ function checkWarnings(ctx: Ctx): void {
         'VARIANT_UNREACHABLE',
         `variants.${i}`,
         `"${variant.name}" never applies.`,
+        { name: variant.name },
       );
   });
   const crowded = DOC_SCREENS.some((screen: DocScreen) => panelsOn(doc, screen).length > 2);

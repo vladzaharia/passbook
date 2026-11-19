@@ -27,6 +27,7 @@ export const ValidationIssueSchema = z.object({
   code: z.string(),
   message: z.string(),
   path: z.string().optional(),
+  params: z.record(z.string(), z.string()).optional(),
 });
 export const ValidationReportSchema = z.object({
   ok: z.boolean(),

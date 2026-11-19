@@ -7,19 +7,10 @@ export function HeaderActionsView({ runner }: { runner: PassActionRunner }) {
   const more = runner.defs.filter((d) => !d.bar);
   const firstDanger = more.findIndex((d) => d.destructive);
   return (
-    <>
+    <div className="flex min-w-0 flex-wrap items-center gap-2">
       {bar.map((d) => {
         const Icon = d.icon;
-        const short =
-          d.id === 'open' ? 'Open' : d.id === 'update' ? 'Update' : d.id === 'pull' ? 'Pull' : null;
-        const text = short ? (
-          <span>
-            {short}
-            <span className="max-md:sr-only">{d.label.slice(short.length)}</span>
-          </span>
-        ) : (
-          d.label
-        );
+        const text = d.label;
         if (d.id === 'open' && runner.links)
           return (
             <Button key={d.id} asChild variant="outline" iconStart={<Icon aria-hidden />}>
@@ -42,7 +33,6 @@ export function HeaderActionsView({ runner }: { runner: PassActionRunner }) {
             busy={d.id === 'pull' ? 'spin' : undefined}
             done={runner.done[d.id]}
             disabled={d.disabled || (d.id === 'open' && !runner.links) || undefined}
-            aria-label={short ? d.label : undefined}
             onClick={() => runner.run(d.id)}
           >
             {text}
@@ -77,6 +67,6 @@ export function HeaderActionsView({ runner }: { runner: PassActionRunner }) {
         })}
       </MoreMenu>
       {runner.dialogs}
-    </>
+    </div>
   );
 }

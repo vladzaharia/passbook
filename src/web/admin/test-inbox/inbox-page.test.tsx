@@ -39,7 +39,7 @@ describe('Test inbox', () => {
       handlers,
     });
     expect(await screen.findByText('Your Gym pass')).toBeInTheDocument();
-    expect(screen.getByText(/captured here instead of being sent/i)).toBeInTheDocument();
+    expect(screen.getByText(/land here, not in recipients/i)).toBeInTheDocument();
     expect(screen.getByText(/send a copy to your verified account email/i)).toBeInTheDocument();
     const listCall = fetchMock.mock.calls.find(([u]) => String(u).startsWith('/api/v1/test-inbox'));
     expect(new URL(String(listCall?.[0]), 'http://localhost').searchParams.get('orgId')).toBe('o1');

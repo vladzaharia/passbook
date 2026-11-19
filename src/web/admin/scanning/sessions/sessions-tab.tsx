@@ -30,11 +30,9 @@ import { sessionAccepts, sessionRuleLabel } from './draft.ts';
 
 export function SessionsTab({
   canManage,
-  onNew,
   onDuplicate,
 }: {
   canManage: boolean;
-  onNew: () => void;
   onDuplicate: (s: ScanningSession) => void;
 }) {
   const { orgId } = useOrgScope();
@@ -81,7 +79,6 @@ export function SessionsTab({
           art="scanner"
           title="No scanning sessions"
           description="Create a session to share admission rules across devices."
-          action={canManage ? <Button onClick={onNew}>New scanning session</Button> : undefined}
         />
       </div>
     );

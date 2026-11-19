@@ -75,7 +75,7 @@ const open = () => screen.getByRole('switch', { name: JOIN_COPY.card.open });
 describe('join card: readiness', () => {
   const lines: [JoinReadinessIssue, RegExp][] = [
     [{ code: 'no_release' }, /Release this template in Live to turn on the join link\./],
-    [{ code: 'barcode_input', label: 'Member id' }, /The barcode uses Member id\./],
+    [{ code: 'barcode_input', label: 'Member id' }, /The barcode shows Member id\./],
     [{ code: 'input_needed', label: 'Plan' }, /Plan has no default\./],
     [{ code: 'archived' }, /This template is archived\./],
   ];

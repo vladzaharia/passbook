@@ -735,7 +735,10 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "severity": "warning",
           "code": "SCAN_DISPLAY_SHADOWED",
           "message": "Input \"access\" is hidden by a display root. Use inputs.access.",
-          "path": "scan.display.holder"
+          "path": "scan.display.holder",
+          "params": {
+            "name": "access"
+          }
         }
       ]
     }
@@ -1470,7 +1473,10 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "severity": "warning",
           "code": "SCAN_DISPLAY_SHADOWED",
           "message": "Input \"access\" is hidden by a display root. Use inputs.access.",
-          "path": "scan.display.holder"
+          "path": "scan.display.holder",
+          "params": {
+            "name": "access"
+          }
         }
       ]
     }
@@ -6066,7 +6072,10 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "severity": "warning",
           "code": "SCAN_DISPLAY_SHADOWED",
           "message": "Input \"holder\" is hidden by a display root. Use inputs.holder.",
-          "path": "scan.display.holder"
+          "path": "scan.display.holder",
+          "params": {
+            "name": "holder"
+          }
         }
       ]
     }

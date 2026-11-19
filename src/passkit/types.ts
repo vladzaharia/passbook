@@ -73,6 +73,8 @@ export interface ValidationIssue {
   code: string;
   message: string;
   path?: string;
+  /** Values the message names, for words that do not parse it (scan display issues). */
+  params?: Record<string, string>;
 }
 
 export interface ValidationReport {

@@ -201,7 +201,10 @@ function NameRow({
           onValueChange={(nameInput) => save({ nameInput, revision })}
         />
       ) : (
-        <Lock aria-hidden className="size-4 text-fg-muted" />
+        <span className="flex items-center gap-1.5 text-xs text-fg-muted">
+          <Lock aria-hidden className="size-3.5" />
+          Required
+        </span>
       )}
     </div>
   );
@@ -243,6 +246,7 @@ function LimitRow({
         <NumberField
           id="join-limit"
           value={shown}
+          placeholder={current === null ? 'No limit' : undefined}
           disabled={disabled || current === null}
           onValueChange={setDraft}
           onBlur={commit}

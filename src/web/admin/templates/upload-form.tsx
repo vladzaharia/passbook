@@ -287,13 +287,11 @@ export function UploadForm({
       />
       <Callout
         tone="info"
+        className="mb-6"
         title={version ? `Uploading a version of ${version.name}` : 'Before you upload'}
       >
-        {version
-          ? `Organization: ${version.orgId ? (version.orgName ?? version.orgId) : 'All organizations (shared)'}. Imports match by name and organization, not template ID.`
-          : 'Imports match by name and organization and can create or update a template.'}{' '}
-        Imported versions are inactive; activation requires an approved release and can affect
-        existing passes. Template changes are not isolated by the Test view.
+        Uploads create inactive versions. Activate after review. The Test view does not isolate
+        template changes.
       </Callout>
       {status.isError ? (
         <ErrorState

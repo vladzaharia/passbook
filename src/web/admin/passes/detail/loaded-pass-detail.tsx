@@ -238,7 +238,6 @@ export function LoadedPassDetail({
           <KeyValue
             items={[
               { label: 'Holder', value: p.holderEmail },
-              { label: 'Status', value: <StatusPill status={removed ? 'removed' : p.status} /> },
               { label: 'Devices', value: devices(p.deviceCount) },
             ]}
           />
