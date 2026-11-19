@@ -3,6 +3,7 @@ import { makeOrg } from '../../../../test/helpers/index.ts';
 import { all, run } from '../../platform/db.ts';
 import { accessTemplate, makeDoor } from './access-test-fixtures.ts';
 import { kit, MINUTE, setupActionFixture } from './act-test-fixtures.ts';
+import { beforeBatch } from './batch-interceptor-test-support.ts';
 import {
   DISPLAY_TPL,
   personInside,
@@ -280,7 +281,7 @@ describe("a monitor's Let in checks in at the refused scan's place", () => {
     expect((await overrideAs(monitor.headers, refused.scanId)).status).toBe(422);
   });
 
-  it("checks a once-per-event card in at the refused scan's event for a sessionless monitor", async () => {
+  async function eventHold() {
     const templateId = await kit.scanTemplate('Event once', {
       actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in', repeat: 'once' }],
     });
@@ -300,15 +301,23 @@ describe("a monitor's Let in checks in at the refused scan's place", () => {
     expect((await scan()).kind).toBe('ok');
     const hold = await scan();
     expect(hold).toMatchObject({ kind: 'heads_up', reason: 'already_done' });
+    return { event, pass, hold };
+  }
+
+  it("checks a once-per-event card in at the refused scan's event for a sessionless monitor", async () => {
+    const { event, pass, hold } = await eventHold();
     const monitor = await standalone({ eventId: event.id });
     const res = await overrideAs(monitor.headers, hold.scanId);
     expect(res.status).toBe(200);
     const { scanId } = (await res.json()) as { scanId: string };
-    const [row] = await all<{ event_id: string | null; outcome: string; override_of: string }>(
-      kit.env.DB,
-      'SELECT event_id, outcome, override_of, reason FROM scans WHERE id = ?',
-      [scanId],
-    );
+    const [row] = await all<{
+      event_id: string | null;
+      outcome: string;
+      override_of: string;
+      reason: string | null;
+    }>(kit.env.DB, 'SELECT event_id, outcome, override_of, reason FROM scans WHERE id = ?', [
+      scanId,
+    ]);
     expect(row).toEqual({
       event_id: event.id,
       outcome: 'ok',
@@ -321,5 +330,37 @@ describe("a monitor's Let in checks in at the refused scan's place", () => {
       [pass.id],
     );
     expect(gates).toEqual([{ scope: `event:${event.id}` }]);
+  });
+
+  it('refuses when the event is edited between its reads', async () => {
+    const { event, hold } = await eventHold();
+    const monitor = await standalone({ eventId: event.id });
+    const { result, fired } = await beforeBatch(
+      kit.env,
+      /scan_event_templates/,
+      async (db) => {
+        await run(db, 'UPDATE scan_events SET capacity = 9 WHERE id = ?', [event.id]);
+      },
+      () => overrideAs(monitor.headers, hold.scanId),
+    );
+    expect(fired).toBe(true);
+    expect(result.status).toBe(422);
+    expect(await result.text()).toContain('SCAN_OVERRIDE_INVALID');
+  });
+
+  it.each([
+    ['paused', "UPDATE scanning_sessions SET status = 'paused' WHERE id = ?"],
+    ['ended', "UPDATE scanning_sessions SET status = 'ended' WHERE id = ?"],
+    [
+      'closed',
+      "UPDATE scanning_sessions SET hold = json_object('state', 'closed', 'until', 9999999999999) WHERE id = ?",
+    ],
+  ])('refuses a Let in when the refusing door session is %s', async (_name, sql) => {
+    const r = await lobbyHold();
+    await run(kit.env.DB, sql, [r.door.sessionId]);
+    const monitor = await standalone({ scannerIds: [r.door.scanner.id] });
+    const res = await overrideAs(monitor.headers, r.hold);
+    expect(res.status).toBe(422);
+    expect(await res.text()).toContain('SCAN_OVERRIDE_INVALID');
   });
 });

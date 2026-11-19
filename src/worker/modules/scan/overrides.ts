@@ -18,7 +18,7 @@ import { isOverridable } from './outcome.ts';
 import { setOverrideNote } from './override-note.ts';
 import { OVERRIDE_WINDOW_MS, resolvedTarget } from './override-scope.ts';
 import { overrideEvidenceForTargetStmt } from './repo-act-override.ts';
-import { eventEpochStmt } from './repo-authority-capture.ts';
+import { eventEpochStmt, sessionEpochStmt } from './repo-authority-capture.ts';
 import { assertUnderOverrideCap, countOverride } from './repo-override-cap.ts';
 import { overrideTakenStmt } from './repo-override-note.ts';
 import { toScan } from './repo-scan-map.ts';
@@ -26,6 +26,7 @@ import { readValidEventScope } from './repo-scope.ts';
 import { overridePolicyKind, scanPolicy } from './rules.ts';
 import { scanEpochsOf, setScanEpochs } from './scan-epochs.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
+import { sessionWindow } from './session-hours.ts';
 
 export type OverrideRequest = z.infer<typeof ScanOverrideRequestSchema>;
 export type OverrideNoteRequest = z.infer<typeof ScanOverrideNoteRequestSchema>;
@@ -42,33 +43,67 @@ async function scopedToTarget(
   if (actor.scanner?.deviceRole !== 'monitor' || target.actorKey === actor.actorKey) return actor;
   const sessionId = target.sessionId ?? null;
   const eventId = target.eventId ?? null;
+  const db = ctx.env.DB;
+  // The refusing door's session must still be active and open: a paused, ended or closed one lets nobody in.
+  if (sessionId) {
+    const session = await sessionEpochStmt(db, sessionId, actor.orgId, actor.mode).first<{
+      status: string;
+      time_zone: string;
+      hours: string | null;
+      hold: string | null;
+    }>();
+    if (session?.status !== 'active' || !sessionWindow(session, ctx.clock.now()).open)
+      throw invalid();
+  }
   // The pass and action are the target's, so its template is accepted for this one let-in.
   const scoped: ScanActor = {
     ...actor,
     overrideScope: { sessionId, eventId, templateId: target.templateId },
   };
   if (eventId === (actor.event?.id ?? null)) return scoped;
-  const pinned = eventId
-    ? await readValidEventScope(ctx.env.DB, actor.orgId, actor.mode, eventId)
-    : null;
-  if (eventId && !pinned) throw invalid();
-  const withEvent: ScanActor = {
-    ...scoped,
-    event: pinned?.event ?? null,
-    templateIds: pinned?.templateIds ?? actor.templateIds,
-  };
+  if (!eventId) return { ...scoped, event: null };
+  // The event, its templates and its epoch are read apart: an edit between the reads is refused.
+  const before = await eventEpochStmt(db, eventId, actor.orgId, actor.mode).first<EventEpochRow>();
+  const pinned = await readValidEventScope(db, actor.orgId, actor.mode, eventId);
+  const after = await eventEpochStmt(db, eventId, actor.orgId, actor.mode).first<EventEpochRow>();
+  const e = pinned?.event;
+  if (
+    !e ||
+    !before ||
+    !after ||
+    before.config_epoch !== after.config_epoch ||
+    after.archived_at !== null ||
+    after.match_input !== e.matchInput ||
+    after.match_values !== e.matchValues ||
+    after.opens_at !== e.opensAt ||
+    after.closes_at !== e.closesAt ||
+    after.time_zone !== e.timeZone ||
+    after.capacity !== e.capacity ||
+    (after.reentry === 1) !== e.reentry ||
+    after.tpl !== JSON.stringify([...pinned.templateIds].sort())
+  )
+    throw invalid();
+  const withEvent: ScanActor = { ...scoped, event: e, templateIds: pinned.templateIds };
   const epochs = scanEpochsOf(actor);
-  if (pinned && epochs) {
-    const row = await eventEpochStmt(ctx.env.DB, pinned.event.id, actor.orgId, actor.mode).first<{
-      config_epoch: number;
-    }>();
-    if (!row) throw invalid();
+  if (epochs)
     setScanEpochs(withEvent, {
       ...epochs,
-      events: { ...epochs.events, [pinned.event.id]: row.config_epoch },
+      events: { ...epochs.events, [e.id]: after.config_epoch },
     });
-  }
   return withEvent;
+}
+
+interface EventEpochRow {
+  match_input: string | null;
+  match_values: string | null;
+  opens_at: number;
+  closes_at: number;
+  time_zone: string;
+  capacity: number | null;
+  reentry: number;
+  archived_at: number | null;
+  config_epoch: number;
+  tpl: string;
 }
 
 const invalid = () =>
