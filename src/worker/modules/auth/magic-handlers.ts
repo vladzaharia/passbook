@@ -23,6 +23,7 @@ import {
   setBindingCookie,
   setSessionCookie,
 } from './cookies.ts';
+import { magicLinkTrace, peekMagicLink } from './magic-peek.ts';
 import {
   consumeMagicCode,
   consumeMagicToken,
@@ -31,7 +32,6 @@ import {
   type MagicOutcome,
   processSignInRequest,
 } from './magic-service.ts';
-import { magicLinkTrace, peekMagicLink } from './magic-peek.ts';
 import { homeFor, safeNext } from './next.ts';
 import { confirmPage, expiredPage, signInErrorPage, signInToConfirm, verifyPage } from './pages.ts';
 import { resolveSession } from './sessions.ts';

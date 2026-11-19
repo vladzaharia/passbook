@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { fixtures, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
-import { sha256Hex } from '../../platform/ids.ts';
 import { first, run } from '../../platform/db.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import { fakeLimiter, harness, type Jar, type SentMail, type TestHarness } from './test-support.ts';
 

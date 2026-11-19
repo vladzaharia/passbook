@@ -34,7 +34,7 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
   // Link is single use.
   await page.context().clearCookies();
   await page.goto(mail.link);
-  await expect(page.getByRole('heading', { name: 'Link expired' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Link already used' })).toBeVisible();
 
   // Force refresh: pending, then done.
   const again = await requestLink();

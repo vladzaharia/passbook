@@ -36,7 +36,7 @@ export function CheckStep({
     <Card>
       <CardHeader title={C.check.title} />
       <CardBody className="flex flex-col gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 pt-4">
           <Buddy
             scene="sweep"
             mood={counts.errors > 0 ? 'curious' : 'happy'}

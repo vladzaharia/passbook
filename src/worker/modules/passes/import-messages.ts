@@ -58,6 +58,15 @@ export function inputMessage(
   label: string,
   schema: Record<string, unknown> | undefined,
 ): string {
+  const text = describeInput(issue, label, schema);
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function describeInput(
+  issue: { keyword: string; message: string },
+  label: string,
+  schema: Record<string, unknown> | undefined,
+): string {
   const s = schema ?? {};
   const num = (k: string) => (typeof s[k] === 'number' ? (s[k] as number) : null);
   switch (issue.keyword) {

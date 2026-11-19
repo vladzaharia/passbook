@@ -2,6 +2,7 @@
 
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { ArrowRight } from 'lucide-react';
+import { INVITE_COPY } from '../../../shared/copy/invite.ts';
 import {
   AUTH_PAGE_COPY as COPY,
   EXPIRED_LINK_COPY,
@@ -11,9 +12,8 @@ import {
   SIGN_IN_ERROR_COPY,
   type SignInErrorCode,
 } from '../../../shared/copy/sign-in.ts';
-import { INVITE_COPY } from '../../../shared/copy/invite.ts';
-import { maskEmail } from '../../../shared/email.ts';
 import { STATE_COPY } from '../../../shared/copy/states.ts';
+import { maskEmail } from '../../../shared/email.ts';
 import { backToSignIn } from '../../ssr/error-page.tsx';
 import type { PageTheme } from '../../ssr/head.ts';
 import {

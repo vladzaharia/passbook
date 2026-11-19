@@ -12,8 +12,14 @@ import { useMagicRequest } from './use-magic-request.ts';
 import './login-card.css';
 
 /** An address that wraps after "@" and dots, never mid-label. */
-const breakable = (email: string) =>
-  email.split(/(?<=[@.])/).flatMap((part, i) => (i ? [<wbr key={i} />, part] : [part]));
+const breakable = (email: string) => {
+  let at = 0;
+  return email.split(/(?<=[@.])/).flatMap((part) => {
+    const key = at;
+    at += part.length;
+    return key ? [<wbr key={`b${key}`} />, part] : [part];
+  });
+};
 
 /** One face of the hosted card: body, then the footer split off by a divider. */
 function Face({
