@@ -117,3 +117,25 @@ export async function keysetInitialized(db: D1Database): Promise<boolean> {
   const row = await first<{ n: number }>(db, 'SELECT count(*) AS n FROM credential_ref_keyset');
   return (row?.n ?? 0) > 0;
 }
+
+export interface ChannelApplyAttention {
+  id: string;
+  state: 'pending' | 'running' | 'failed';
+  error_code: string | null;
+}
+
+/** Channel-apply runs needing a look: failed lately, pending long past due, or running without progress. */
+export function channelApplyAttention(
+  db: D1Database,
+  limits: { failedSince: number; pendingDueBefore: number; runningIdleBefore: number },
+): Promise<ChannelApplyAttention[]> {
+  return all<ChannelApplyAttention>(
+    db,
+    `SELECT id, state, error_code FROM channel_apply_runs
+     WHERE (state = 'failed' AND finished_at >= ?)
+        OR (state = 'pending' AND due_at < ?)
+        OR (state = 'running' AND updated_at < ?)
+     ORDER BY id LIMIT 50`,
+    [limits.failedSince, limits.pendingDueBefore, limits.runningIdleBefore],
+  );
+}

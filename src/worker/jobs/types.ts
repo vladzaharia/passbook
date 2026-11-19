@@ -86,6 +86,13 @@ export const JobSchema = z.discriminatedUnion('kind', [
     /** The pass version read after the channel change committed: a later publish already covers it. */
     version: z.number().int().positive(),
   }),
+  /** A republish changed which wallets the pass's template version can serve: retire or restore the channels. */
+  z.object({
+    kind: z.literal('channel.capability'),
+    passId: z.string().min(1),
+    /** The template version the pass was on before the publish. */
+    previousVersion: z.string().min(1),
+  }),
   z.object({
     kind: z.literal('template.fork_update'),
     updateId: z.string().min(1),

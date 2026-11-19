@@ -4,6 +4,7 @@ import type { Check } from '../../platform/authority-checks.ts';
 import type { HolderPrincipal } from '../../platform/authority-principal.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { onChannelsMaybeChanged } from '../channels/capability.ts';
 import { ensureCredentialRefKeysetWith, requireCredentialRefKeyset } from './credential-keyset.ts';
 import type { TenantPassWrite } from './http.ts';
 import { publishChangedAttempt } from './publish-flow-changed.ts';
@@ -165,7 +166,10 @@ export async function publishPass(
     const result = prepared.identical
       ? await publishUnchangedAttempt(ctx, options, prepared)
       : await publishChangedAttempt(ctx, options, prepared, credentialEnv, attempt);
-    if (result) return result;
+    if (result) {
+      await onChannelsMaybeChanged(ctx, result.pass, snapshotState.original?.templateVersion);
+      return result;
+    }
   }
   throw new ConflictError('The pass changed while publishing. Retry.', 'PASS_CONFLICT');
 }
