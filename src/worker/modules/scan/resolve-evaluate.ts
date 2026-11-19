@@ -1,4 +1,5 @@
 import type { ScanCodeInput } from '../../../shared/contracts/scan.ts';
+import { TYPED_NUMBER_FLAG } from '../../../shared/copy/scan.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
@@ -26,6 +27,7 @@ import {
   findCandidates,
   matchesEvent,
 } from './resolve-candidates.ts';
+import { channelVerdict } from './resolve-channels.ts';
 import { stop, type Waive, windowStop } from './resolve-policy.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { candidateTakesTag } from './tag-assurance.ts';
@@ -167,6 +169,9 @@ async function evaluateObserved(
     found,
     connectionGeneration: found.connectionGeneration,
   };
+  const channel = await channelVerdict(ctx, one, input);
+  if (channel?.kind === 'off')
+    return stop('refused', 'channel_off', { ...candidateAudit(one), channel: channel.channel });
   const configured =
     options.admits?.(found) !== false &&
     (Object.keys(found.checkInRules ?? {}).length > 0 ||
@@ -243,12 +248,16 @@ async function evaluateObserved(
   const held = exiting || found.access ? null : windowStop(actor, found, now, waive);
   if (held) return held;
   const flagged = activeFlags(found).filter((flag) => flag.stop);
-  if (flagged.length > 0 && !waive.confirmed && !zoneExit)
+  const typed = channel?.kind === 'typed';
+  if ((flagged.length > 0 || typed) && !waive.confirmed && !zoneExit)
     return stop('heads_up', 'check_required', {
       ...known,
-      flags: activeFlags(found, actor)
-        .filter((flag) => flag.stop)
-        .map((flag) => flag.label),
+      flags: [
+        ...(typed ? [TYPED_NUMBER_FLAG] : []),
+        ...activeFlags(found, actor)
+          .filter((flag) => flag.stop)
+          .map((flag) => flag.label),
+      ],
     });
   return { stop: false, found };
 }

@@ -204,4 +204,19 @@ describe('what the lines say', () => {
     const l = line('capacity_full', { occupancy: occupancyInfo({ inNow: null }), event: null });
     expect(l?.sub).toBe('At capacity.');
   });
+
+  it('names the channel a channel_off refusal carries', () => {
+    expect(line('channel_off', { channel: 'apple' })).toEqual({
+      headline: 'Apple Wallet turned off',
+      sub: 'Use another copy or check ID.',
+    });
+    expect(line('channel_off', { channel: 'nfc' })?.headline).toBe('Linked NFC turned off');
+  });
+
+  it('reads a typed number heads-up as Check ID', () => {
+    expect(line('check_required', { flags: ['Typed number'] })).toEqual({
+      headline: 'Typed number',
+      sub: 'Check ID.',
+    });
+  });
 });
