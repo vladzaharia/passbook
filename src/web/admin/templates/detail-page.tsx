@@ -14,6 +14,7 @@ import { useTemplate } from './api.ts';
 import { TemplateDetailContent } from './detail-content.tsx';
 import type { templateDetailSearchSchema } from './search.ts';
 import '../passes/passes.css';
+import { orgPath } from '../../lib/scope.ts';
 
 type Search = z.infer<typeof templateDetailSearchSchema>;
 
@@ -59,7 +60,7 @@ function TemplateDetailResource({ templateId, search }: { templateId: string; se
     template.refetch,
   ]);
   const crumbs = [
-    { label: 'Templates', to: '/admin/templates', search: { orgId: scope.orgId } },
+    { label: 'Templates', to: orgPath(scope.orgId ?? '', '/templates') },
     { label: 'Template' },
   ];
   if (!scope.isLoading && !canFetch) {
@@ -128,7 +129,7 @@ function TemplateDetailResource({ templateId, search }: { templateId: string; se
       template={template.data}
       tab={search.tab ?? 'overview'}
       crumbs={[
-        { label: 'Templates', to: '/admin/templates', search: { orgId: scope.orgId } },
+        { label: 'Templates', to: orgPath(scope.orgId, '/templates') },
         { label: template.data.name },
       ]}
     />

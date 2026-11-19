@@ -89,26 +89,10 @@ describe('kit lint', () => {
   });
 
   it('names the org scope in the path, not a search param, and never says Platform-wide', () => {
-    // Links still sending ?orgId= to the legacy redirect routes; migrate to withOrg() paths, then empty this.
-    const legacyLinks = new Set([
-      'routes/admin/platform/route.tsx',
-      'routes/admin/o/$orgId/route.tsx',
-      'admin/blueprints/use-dialog.tsx',
-      'admin/passes/import/source-step.tsx',
-      'admin/scanning/scanning-page.tsx',
-      'admin/scanning/sessions/session-page.tsx',
-      'admin/templates/designer/designer-header.tsx',
-      'admin/templates/designer/designer-page.tsx',
-      'admin/templates/designer/new-page.tsx',
-      'admin/templates/detail-content.tsx',
-      'admin/templates/detail-page.tsx',
-      'admin/templates/join/join-sign.tsx',
-      'admin/templates/template-dialogs.tsx',
-      'admin/templates/template-lifecycle.tsx',
-      'admin/templates/upload-form.tsx',
-    ]);
+    // The scope gates strip a legacy ?orgId= with a middleware that only types it.
+    const gates = new Set(['routes/admin/platform/route.tsx', 'routes/admin/o/$orgId/route.tsx']);
     for (const { path, text } of files) {
-      if (!legacyLinks.has(path)) expect(text, path).not.toMatch(/search:\s*\{[^}]*\borgId\b/);
+      if (!gates.has(path)) expect(text, path).not.toMatch(/search:\s*\{[^}]*\borgId\b/);
       expect(text, path).not.toMatch(/Platform-wide/);
     }
   });

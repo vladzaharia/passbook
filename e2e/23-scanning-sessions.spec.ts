@@ -37,7 +37,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await dialog.getByRole('combobox', { name: 'Default reader', exact: true }).click();
     await page.getByRole('option', { name: 'Hardware / keyboard scanner', exact: true }).click();
     await dialog.getByRole('button', { name: 'Create session', exact: true }).click();
-    await page.waitForURL(/\/admin\/scanning\/sessions\//);
+    await page.waitForURL(/\/admin\/o\/[^/]+\/scanning\/sessions\//);
     const sessionId = new URL(page.url()).pathname.split('/').pop();
     const add = page.getByRole('dialog', { name: 'Add device', exact: true });
     await expect(add).toBeVisible();

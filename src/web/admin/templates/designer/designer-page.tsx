@@ -6,6 +6,7 @@ import type {
 } from '@/shared/contracts/templates.ts';
 import { isApiError } from '../../../lib/errors.ts';
 import { useOrgScope, useResourceOrg } from '../../../lib/org-filter.tsx';
+import { orgPath } from '../../../lib/scope.ts';
 import { useSession } from '../../../lib/session.ts';
 import {
   Button,
@@ -92,7 +93,7 @@ function TemplateDesignerResource({ templateId }: { templateId: string }) {
     template.refetch,
   ]);
   const crumbs = [
-    { label: 'Templates', to: '/admin/templates', search: { orgId: scope.orgId } },
+    { label: 'Templates', to: orgPath(scope.orgId ?? '', '/templates') },
     { label: 'Template' },
     { label: 'Design' },
   ];
@@ -152,11 +153,10 @@ function TemplateDesignerResource({ templateId }: { templateId: string }) {
       key={`${scope.orgId}:${template.data.id}`}
       template={template.data}
       crumbs={[
-        { label: 'Templates', to: '/admin/templates', search: { orgId: scope.orgId } },
+        { label: 'Templates', to: orgPath(scope.orgId, '/templates') },
         {
           label: template.data.name,
-          to: `/admin/templates/${templateId}`,
-          search: { orgId: scope.orgId },
+          to: orgPath(scope.orgId, `/templates/${templateId}`),
         },
         { label: 'Design' },
       ]}

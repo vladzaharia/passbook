@@ -54,9 +54,8 @@ function NewFromBlueprint({ blueprintId, name }: { blueprintId: string; name: st
   const onCreated = useCallback(
     (templateId: string) =>
       void navigate({
-        to: '/admin/templates/$templateId',
-        params: { templateId },
-        search: { orgId },
+        to: '/admin/o/$orgId/templates/$templateId',
+        params: { orgId: orgId ?? '', templateId },
       }),
     [navigate, orgId],
   );
