@@ -30,14 +30,20 @@ const dayNumber = (p: Record<string, string>) =>
 
 export const viewerZone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-/** "08:00" in the zone. */
+/** "8:00 AM": the app's clock (lib/format.ts), in the zone. */
 export function clockIn(at: number, zone: string): string {
-  const p = parts(at, zone);
-  return `${p.hour}:${p.minute}`;
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: zone,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+    .format(at)
+    .replace(/\u202f/g, ' ');
 }
 
 /**
- * "08:00" today, "08:00 Tue" within the week, "08:00 Tue 24 Nov" beyond. The zone's short name
+ * "8:00 AM" today, "Tue 8:00 AM" within the week, "Nov 24, 8:00 AM" beyond. The zone's short name
  * follows when it is not the viewer's.
  */
 export function whenIn(
@@ -48,9 +54,11 @@ export function whenIn(
 ): string {
   const p = parts(at, zone);
   const days = dayNumber(p) - dayNumber(parts(now, zone));
-  let text = `${p.hour}:${p.minute}`;
-  if (days !== 0) text += ` ${p.weekday}`;
-  if (days < 0 || days > 6) text += ` ${p.day} ${parts(at, zone, { month: 'short' }).month}`;
+  const time = clockIn(at, zone);
+  let text = time;
+  if (days >= 1 && days <= 6) text = `${p.weekday} ${time}`;
+  else if (days < 0 || days > 6)
+    text = `${parts(at, zone, { month: 'short' }).month} ${p.day}, ${time}`;
   if (zone !== viewer) {
     const name = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'short' })
       .formatToParts(at)

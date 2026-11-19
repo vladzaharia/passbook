@@ -69,9 +69,9 @@ export function HoursBanner({
   if (w.open && w.by !== 'hold') return null;
   const at = (t: number) => whenIn(t, s.timeZone, Date.now());
   const text = w.open
-    ? `Held open until ${w.closesAt ? at(w.closesAt) : 'further notice'}. Hours resume then.`
+    ? `Held open until ${w.closesAt ? at(w.closesAt) : 'further notice'}. Then the hours resume.`
     : w.by === 'hold'
-      ? `Closed by hand${w.opensAt ? ` until ${at(w.opensAt)}` : ''}. Hours resume then.`
+      ? `Closed by hand${w.opensAt ? ` until ${at(w.opensAt)}` : ''}. Then the hours resume.`
       : 'Closed outside its hours. Scanning starts by itself when they do.';
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface-sunken p-4">

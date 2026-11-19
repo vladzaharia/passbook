@@ -44,7 +44,7 @@ describe('hours editor validation', () => {
         wed: ['08:00-22:00'],
         sat: ['22:00-02:00'],
       }),
-    ).toEqual(['Mon–Wed 08:00–22:00', 'Sat 22:00–02:00 (next day)']);
+    ).toEqual(['Mon–Wed 8 AM–10 PM', 'Sat 10 PM–2 AM']);
     expect(hoursSummary(null)).toEqual([]);
   });
 });
@@ -70,6 +70,6 @@ describe('session state', () => {
     expect(sessionState({ status: 'active', window: window({ open: true }) })).toBe('running');
     expect(sessionState({ status: 'active' })).toBe('running');
     const line = sessionWindowLine({ ...base, window: window({ opensAt: now + 3_600_000 }) }, now);
-    expect(line).toMatch(/^Opens 16:00/);
+    expect(line).toMatch(/^Opens 4:00 PM/);
   });
 });

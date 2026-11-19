@@ -1,5 +1,6 @@
 import { Pencil } from 'lucide-react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
+import { zoneLabel } from '@/web/lib/timezones.ts';
 import { Button, Card, CardBody, CardHeader } from '@/web/ui/index.ts';
 import { sessionAccepts, sessionRuleLabel } from './draft.ts';
 import { hoursSummary } from './session-hours.ts';
@@ -19,7 +20,7 @@ export function SessionSummary({
       'Access without staff PIN',
       session.settings.roleWithoutSignIn === 'desk' ? 'Desk staff' : 'Check-in staff',
     ],
-    ['Time zone', session.timeZone],
+    ['Time zone', zoneLabel(session.timeZone)],
   ];
   const hours = hoursSummary(session.hours);
   const defaults = [

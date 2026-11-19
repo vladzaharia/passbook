@@ -1,3 +1,4 @@
+import { zoneLabel } from '@/web/lib/timezones.ts';
 import { Callout, SwitchRow, WeekGrid } from '@/web/ui/index.ts';
 import type { SessionDraft } from './draft.ts';
 import { DEFAULT_HOURS, hoursProblem } from './session-hours.ts';
@@ -24,8 +25,8 @@ export function SessionHoursFields({
       {draft.hoursOn ? (
         <>
           <p className="text-xs text-fg-muted">
-            Times are in {draft.timeZone.replaceAll('_', ' ')}. A span that ends before it starts
-            runs past midnight.
+            Times are in {zoneLabel(draft.timeZone)}. A span that ends before it starts runs past
+            midnight.
           </p>
           <WeekGrid
             label="Session"

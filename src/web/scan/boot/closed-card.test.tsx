@@ -33,7 +33,7 @@ describe('Closed screen', () => {
   it('says closed and when it opens, in the session zone', () => {
     mount(closed());
     expect(screen.getByRole('heading', { name: SCAN_COPY.closed.headline })).toBeTruthy();
-    expect(screen.getByText(/^Opens \d\d:\d\d/)).toBeTruthy();
+    expect(screen.getByText(/^Opens \d{1,2}:\d\d [AP]M/)).toBeTruthy();
     expect(screen.getByRole('button', { name: SCAN_COPY.closed.check })).toBeTruthy();
   });
   it('says so when nothing opens', () => {
@@ -63,5 +63,19 @@ describe('Closed screen', () => {
     mount(closed({ principal: 'admin' }), openNow as never);
     await userEvent.click(screen.getByRole('button', { name: SCAN_COPY.closed.openNow }));
     expect(await screen.findByText(SCAN_COPY.closed.managerOnly)).toBeTruthy();
+  });
+  it('announces the screen politely', async () => {
+    mount(closed());
+    const live = await screen.findByRole('status');
+    await waitFor(() => expect(live.textContent).toMatch(/^Closed\. Opens /));
+  });
+  it('says already open and reloads on a lost race', async () => {
+    const openNow = vi.fn(async () => {
+      throw new ApiError({ status: 409, code: 'SCANNING_SESSION_OPEN' });
+    });
+    const { refetch } = mount(closed({ principal: 'admin' }), openNow as never);
+    await userEvent.click(screen.getByRole('button', { name: SCAN_COPY.closed.openNow }));
+    expect(await screen.findByText(SCAN_COPY.closed.alreadyOpen)).toBeTruthy();
+    expect(refetch).toHaveBeenCalled();
   });
 });

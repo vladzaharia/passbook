@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { SCAN_COPY, scanLine } from '../../../shared/copy/scan.ts';
 import { whenIn } from '../../../shared/session-window.ts';
+import { isApiError } from '../../lib/errors.ts';
 import { Button } from '../../ui/button.tsx';
 import { Callout } from '../../ui/callout.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
@@ -37,6 +38,12 @@ export function ClosedCard({
       await api.openNow(approval ? { approval } : {});
       await refetch();
     } catch (cause) {
+      // Someone opened it first: say so, and reload so the scanner shows.
+      if (isApiError(cause) && cause.code === 'SCANNING_SESSION_OPEN') {
+        setError(SCAN_COPY.closed.alreadyOpen);
+        await refetch();
+        return;
+      }
       const fail = toFail(cause);
       if (fail.error === 'pin_invalid') setNote({ triesLeft: fail.triesLeft ?? 0 });
       else if (fail.error === 'pin_locked')
@@ -52,20 +59,19 @@ export function ClosedCard({
       setBusy(false);
     }
   }
+  const line = opensAt
+    ? scanLine(SCAN_COPY.closed.opens, {
+        when: whenIn(opensAt, workspace?.timeZone ?? 'UTC', Date.now()),
+      })
+    : SCAN_COPY.closed.noOpening;
+  // A live region fills after it mounts, so a screen reader hears the change.
+  const [said, setSaid] = useState('');
+  useEffect(() => setSaid(`${SCAN_COPY.closed.headline}. ${line}`), [line]);
   return (
-    <BootCard
-      title={SCAN_COPY.closed.headline}
-      line={
-        opensAt
-          ? scanLine(SCAN_COPY.closed.opens, {
-              when: whenIn(opensAt, workspace?.timeZone ?? 'UTC', Date.now()),
-            })
-          : SCAN_COPY.closed.noOpening
-      }
-      mood="flat"
-      still
-      testId="scan-closed"
-    >
+    <BootCard title={SCAN_COPY.closed.headline} line={line} mood="flat" still testId="scan-closed">
+      <p role="status" aria-live="polite" className="scan-sr">
+        {said}
+      </p>
       {asking ? (
         <ApprovalSheet
           managers={managers}

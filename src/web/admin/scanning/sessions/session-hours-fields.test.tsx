@@ -21,7 +21,7 @@ describe('session hours fields', () => {
     expect(screen.queryByRole('table')).toBeNull();
     await userEvent.click(screen.getByRole('switch', { name: 'Open at set hours' }));
     expect(screen.getByRole('table', { name: 'Session hours' })).toBeTruthy();
-    expect(screen.getByText(/Times are in Europe\/London/)).toBeTruthy();
+    expect(screen.getByText(/Times are in London/)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Monday, 9 AM to 5 PM, edit/ })).toBeTruthy();
     await userEvent.click(screen.getByRole('switch', { name: 'Open at set hours' }));
     expect(screen.queryByRole('table')).toBeNull();

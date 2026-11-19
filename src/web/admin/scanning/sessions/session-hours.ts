@@ -1,7 +1,7 @@
-import { parseSpan } from '@/passkit/template/access/hours.ts';
+import { hoursText } from '@/passkit/template/access/scope.ts';
 import type { WeeklyHours } from '@/passkit/types.ts';
 import type { SessionHours } from '@/shared/contracts/scanning-sessions.ts';
-import { DAY_SHORT, DAYS, spanProblem, weekProblems } from '@/web/ui/week-grid/hours.ts';
+import { DAYS, spanProblem, weekProblems } from '@/web/ui/week-grid/hours.ts';
 
 /** A starting week for the switch: weekdays, working hours. */
 export const DEFAULT_HOURS: WeeklyHours = {
@@ -28,27 +28,6 @@ export function hoursProblem(on: boolean, hours: WeeklyHours | undefined): strin
 export const hoursBody = (on: boolean, hours: WeeklyHours | undefined): SessionHours | null =>
   on && hours && !hoursProblem(on, hours) ? hours : null;
 
-const spanLine = (text: string) => {
-  const s = parseSpan(text);
-  const [from = '', to = ''] = text.split('-');
-  return `${from}–${to}${s && s.end > 1440 ? ' (next day)' : ''}`;
-};
-
-/** Days with the same spans read as one line: "Mon–Fri 08:00–22:00", "Sat 10:00–02:00 (next day)". */
-export function hoursSummary(hours: SessionHours | null | undefined): string[] {
-  if (!hours) return [];
-  const lines: { from: number; to: number; text: string }[] = [];
-  DAYS.forEach((day, i) => {
-    const spans = hours[day];
-    if (!spans?.length) return;
-    const text = spans.map(spanLine).join(', ');
-    const last = lines.at(-1);
-    if (last && last.to === i - 1 && last.text === text) last.to = i;
-    else lines.push({ from: i, to: i, text });
-  });
-  return lines.map(({ from, to, text }) => {
-    const a = DAY_SHORT[DAYS[from] as keyof typeof DAY_SHORT];
-    const b = DAY_SHORT[DAYS[to] as keyof typeof DAY_SHORT];
-    return `${from === to ? a : `${a}–${b}`} ${text}`;
-  });
-}
+/** Days with the same spans read as one line: "Mon–Fri 9 AM–5 PM", as the access summaries do. */
+export const hoursSummary = (hours: SessionHours | null | undefined): string[] =>
+  hours ? hoursText(hours).split(' · ') : [];

@@ -259,7 +259,7 @@ export const SCAN_COPY = {
     check: 'Check again',
     openNow: 'Open now',
     openNowTitle: 'Open early',
-    refused: 'Scanning is closed now.',
+    alreadyOpen: 'Already open.',
     managerOnly: 'Only a manager can open early.',
     failed: 'Could not open. Try again.',
   },
