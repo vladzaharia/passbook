@@ -7,6 +7,7 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { localSecrets } from './tools/lib/dev-secrets.ts';
+import { DEV_MOCK_WALLETS_URL, mockWallets } from './tools/lib/mock-wallets-dev.ts';
 import { publicBaseUrl, withOrigin } from './tools/lib/site-origin.ts';
 
 /** sonner injects an inline <style> at import time, which the strict CSP blocks. Its CSS ships in app.css. */
@@ -226,6 +227,7 @@ export default defineConfig(({ command }) => ({
   resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } },
   plugins: [
     devPublicAtSign(),
+    mockWallets(),
     sonnerNoInlineCss(),
     radixNoInlineStyles(),
     // File-based routes under src/web/routes; generates src/web/routeTree.gen.ts.
@@ -249,6 +251,10 @@ export default defineConfig(({ command }) => ({
         // Local runs only see the .dev.vars secrets that `secrets.required` names (tools/lib/dev-secrets.ts).
         ...(command === 'serve' || e2e ? localSecrets(e2e) : {}),
         ...(command === 'serve' ? { assets: { run_worker_first: VITE_DEV_PATHS } } : {}),
+        // Opt-in: WALLET_MOCKS=1 npm run dev (docs/operations.md, Fake Google and Samsung wallets).
+        ...(command === 'serve' && process.env.WALLET_MOCKS === '1'
+          ? { vars: { ...c.vars, WALLET_MOCK_PROVIDERS_URL: DEV_MOCK_WALLETS_URL } }
+          : {}),
         ...(e2e
           ? {
               vars: { ...c.vars, SIGNER_PLATFORM_INTERMEDIATE: '', ADMIN_SYNC_BUCKET_MS: '' },
