@@ -64,6 +64,8 @@ export function lineValues(o: ScanOutcome, now: number): Values {
       flag: o.flags[0],
       input: v?.label,
     }),
+    // The wire names no channel yet; CH3 may fill it.
+    channel: 'This copy',
     plan: 'This plan',
     zone: 'this area',
     when: '',
