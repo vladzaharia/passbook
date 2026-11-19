@@ -214,24 +214,48 @@ describe('linked NFC', () => {
       channel: 'nfc',
       card: null,
     });
-    expect(all(kit.env.DB, 'SELECT 1 FROM scans WHERE pass_id = ?', [pass.id])).toBeTruthy();
+    expect(
+      await first(kit.env.DB, 'SELECT reason FROM scans WHERE id = ?', [done.scanId]),
+    ).toMatchObject({ reason: 'channel_off' });
   });
 });
 
 describe('the commit fence', () => {
-  it('refuses a check-in when a channel is turned off between read and commit', async () => {
+  const raced = async (change: (pass: Pass) => Promise<unknown>) => {
     const s = await door();
     const pass = await kit.scanPass(tpl);
     const { result, fired } = await beforeBatch(
       kit.env,
       /INSERT INTO scan_gates/,
-      () => allDigitalOff(pass),
+      () => change(pass),
       () => act(s.headers, codeOf(pass), { actionId: CHECK_IN.id }),
     );
     expect(fired).toBe(true);
-    expect(await out(result)).not.toMatchObject({ kind: 'ok' });
+    const gates = await first(kit.env.DB, 'SELECT 1 AS n FROM scan_gates WHERE pass_id = ?', [
+      pass.id,
+    ]);
+    return { s, pass, outcome: await out(result), gates };
+  };
+
+  it('refuses a check-in when a channel is turned off between read and commit', async () => {
+    const { s, pass, outcome, gates } = await raced(allDigitalOff);
+    expect(outcome.kind).not.toBe('ok');
+    expect(gates).toBeNull();
     const again = await out(await act(s.headers, codeOf(pass), { actionId: CHECK_IN.id }));
     expect(again).toMatchObject({ kind: 'refused', reason: 'channel_off' });
+  });
+
+  it('refuses when the template policy changes between read and commit', async () => {
+    const { outcome, gates } = await raced((pass) =>
+      run(
+        kit.env.DB,
+        `INSERT INTO template_channel_policies (org_id, mode, template_id, channels, updated_by, updated_at)
+         VALUES (?, ?, ?, '{}', 'test', 1)`,
+        [pass.orgId, pass.mode, pass.templateId],
+      ),
+    );
+    expect(outcome.kind).not.toBe('ok');
+    expect(gates).toBeNull();
   });
 });
 
@@ -250,5 +274,34 @@ describe('desk lookup', () => {
     };
     expect((await rows(off)).find((r) => r.passId === off.id)?.channelsOff).toBe(true);
     expect((await rows(on)).find((r) => r.passId === on.id)?.channelsOff).toBeUndefined();
+  });
+});
+
+describe('typed numbers: reads that are not typed, and desk picks', () => {
+  it('a camera read of an all-off pass lookup is channel_off, not a heads-up', async () => {
+    const s = await door();
+    const { pass, memberNo } = await numbered(false);
+    await allDigitalOff(pass);
+    const { out: o } = await resolve(s.headers, { code: memberNo, method: 'camera' });
+    expect(o).toMatchObject({ kind: 'refused', reason: 'channel_off' });
+  });
+
+  it('a desk pick of an all-off pass is a typed-number heads-up', async () => {
+    const s = await door();
+    const pass = await kit.scanPass(tpl);
+    await allDigitalOff(pass);
+    const { out: o } = await resolve(s.headers, { passId: pass.id, method: 'manual' });
+    expect(o).toMatchObject({
+      kind: 'heads_up',
+      reason: 'check_required',
+      flags: ['Typed number'],
+    });
+  });
+
+  it('a desk pick of a pass with a digital channel on is not checked', async () => {
+    const s = await door();
+    const pass = await kit.scanPass(tpl);
+    const { out: o } = await resolve(s.headers, { passId: pass.id, method: 'manual' });
+    expect(o.kind).toBe('ready');
   });
 });

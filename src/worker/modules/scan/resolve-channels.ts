@@ -8,27 +8,31 @@ export type ChannelVerdict = { kind: 'off'; channel: Channel } | { kind: 'typed'
 
 /**
  * The door's channel rules for a found pass (design-channels §3). A tag read needs Linked NFC. A code hit
- * is the code family: a scan code or barcode is refused when every digital channel is off; a typed number
- * (lookup or serial alone) is only checked, and only on a pass that had a New code after a retirement,
- * has a print or has no digital channel left, so a plain Turn off never makes every scan a heads-up.
+ * is the code family: a scan code or barcode (or any non-typed read) is refused when every digital
+ * channel is off. A typed number (a manual entry matching the lookup or serial alone, or a desk pick
+ * by name) is only checked: on an all-off pass, and on a pass that had a New code after a retirement
+ * or has a print, so a plain Turn off never makes every scan a heads-up.
  */
 export async function channelVerdict(
   ctx: ServiceContext,
   one: Candidate,
   input: ScanCodeInput,
+  matchedBy: Candidate['matchedBy'],
 ): Promise<ChannelVerdict> {
   const nfc = input.method === 'nfc' && 'passId' in input;
-  if ((!nfc && !one.matchedBy) || one.matchedBy === 'print' || one.channelRules === false)
+  const picked = input.method === 'manual' && 'passId' in input;
+  if ((!nfc && !picked && !matchedBy) || matchedBy === 'print' || one.channelRules === false)
     return null;
-  const door = await doorChannels(ctx, one.pass);
+  const typed =
+    picked || (input.method === 'manual' && (matchedBy === 'lookup' || matchedBy === 'serial'));
+  const door = await doorChannels(ctx, one.pass, typed);
   if (nfc) return door.nfcOn ? null : { kind: 'off', channel: 'nfc' };
-  const typed = one.matchedBy === 'lookup' || one.matchedBy === 'serial';
   if (door.digitalOff) return typed ? { kind: 'typed' } : { kind: 'off', channel: door.named };
-  return typed && (door.rotatedAfterRetire || door.printed) ? { kind: 'typed' } : null;
+  return typed && !picked && (door.rotatedAfterRetire || door.printed) ? { kind: 'typed' } : null;
 }
 
 /**
- * Linked NFC off drops a pass from a tag's candidates, in one round trip. A lone pass stays: the door
+ * Linked NFC off drops a pass from a tag's candidates, with one parallel read per pass. A lone pass stays: the door
  * answers it channel_off. So do all of them when none is left.
  */
 export async function dropNfcOff(ctx: ServiceContext, all: Candidate[]): Promise<Candidate[]> {

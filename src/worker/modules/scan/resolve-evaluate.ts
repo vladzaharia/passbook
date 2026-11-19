@@ -141,6 +141,9 @@ async function evaluateObserved(
   const one = matched[0];
   if (!one) return stop('refused', 'wrong_event');
   if (matched.length > 1) return stop('refused', 'ambiguous');
+  // How the code matched is the door's, not part of the stored snapshot's.
+  const matchedBy = one.matchedBy;
+  delete one.matchedBy;
   // The release read at commit may differ from the one the tag was chosen on.
   if (actor.tag && !candidateTakesTag(ctx, one)) return stop('refused', 'tag_not_allowed');
   if (one.orgRevision == null || one.templateRevision == null || !hasScanPolicy(one))
@@ -183,9 +186,7 @@ async function evaluateObserved(
     found,
     connectionGeneration: found.connectionGeneration,
   };
-  const channel = await channelVerdict(ctx, one, input);
-  // How the code matched is the door's, not part of the stored snapshot.
-  delete one.matchedBy;
+  const channel = await channelVerdict(ctx, one, input, matchedBy);
   if (channel?.kind === 'off')
     return stop('refused', 'channel_off', { ...candidateAudit(one), channel: channel.channel });
   const configured =

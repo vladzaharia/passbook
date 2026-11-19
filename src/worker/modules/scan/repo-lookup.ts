@@ -115,13 +115,13 @@ export function hasScanPolicy(candidate: Candidate): boolean {
 
 /**
  * What the door reads of a pass's channels, as one comparable text: the pass's rows and revisions, its
- * template's policy revision. An org block is not here (its setting cannot be read in a grant). An action commits only while it is unchanged.
+ * template's policy revision and its print count. An org block is not here (its setting cannot be read in a grant). An action commits only while it is unchanged.
  */
 export const channelEpochSql = (org: string, mode: string): string => `(
   COALESCE((SELECT COUNT(*) || ':' || SUM(pc.revision) FROM pass_channels pc WHERE pc.pass_id=p.id), '')
   || '/' || COALESCE((SELECT tp.revision FROM template_channel_policies tp
     WHERE tp.org_id=${org} AND tp.mode=${mode} AND tp.template_id=p.template_id), 0)
-  )`;
+  || '/' || (SELECT COUNT(*) FROM pass_prints pp WHERE pp.pass_id=p.id))`;
 
 const PROJECTION = `SELECT p.*, snapshot.pass_json AS pass_json,
     snapshot.version AS wallet_version, snapshot.personalization AS version_personalization,

@@ -210,3 +210,19 @@ describe('typed numbers on a printed pass', () => {
     });
   });
 });
+
+describe('print codes ignore the digital channels', () => {
+  it('admits a print code on a pass whose digital channels are all off', async () => {
+    const s = await kit.scanner({ templateIds: [tpl] });
+    const pass = await printable();
+    const p = await mint(pass.id);
+    expect(
+      (
+        await call('PUT', `/passes/${pass.id}/channels`, {
+          channels: { mobile: 'off', apple: 'off' },
+        })
+      ).status,
+    ).toBe(200);
+    expect(await resolve(s, p.code)).toMatchObject({ kind: 'ready' });
+  });
+});

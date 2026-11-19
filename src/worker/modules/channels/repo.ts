@@ -166,21 +166,24 @@ export async function overrideGroups(
 /** Whether a New code was issued for the pass at or after `since`. */
 export async function rotatedSince(
   db: D1Database,
+  orgId: string,
   passId: string,
   since: number,
 ): Promise<boolean> {
   const r = await first(
     db,
-    'SELECT 1 AS hit FROM scan_code_rotations WHERE pass_id = ? AND rotated_at >= ? LIMIT 1',
-    [passId, since],
+    'SELECT 1 AS hit FROM scan_code_rotations WHERE org_id = ? AND pass_id = ? AND rotated_at >= ? LIMIT 1',
+    [orgId, passId, since],
   );
   return r !== null;
 }
 
 /** Whether the pass has any print, active or past. */
-export async function hasPrint(db: D1Database, passId: string): Promise<boolean> {
+export async function hasPrint(db: D1Database, orgId: string, passId: string): Promise<boolean> {
   return (
-    (await first(db, 'SELECT 1 AS hit FROM pass_prints WHERE pass_id = ? LIMIT 1', [passId])) !==
-    null
+    (await first(db, 'SELECT 1 AS hit FROM pass_prints WHERE org_id = ? AND pass_id = ? LIMIT 1', [
+      orgId,
+      passId,
+    ])) !== null
   );
 }

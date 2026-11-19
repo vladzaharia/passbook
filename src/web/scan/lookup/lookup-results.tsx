@@ -18,38 +18,42 @@ export function LookupResults({
       <p className="sr-only" role="status">
         {busy ? 'Searching…' : result ? `${result.items.length} results.` : ''}
       </p>
-      {result?.items.map((row) => (
-        <button
-          className="scan-lookup-row"
-          type="button"
-          key={row.passId}
-          data-lookup-result
-          onClick={() => onPick(row.passId)}
-        >
-          {row.photoUrl ? (
-            <img src={row.photoUrl} alt="" className="scan-lookup-avatar" />
-          ) : (
-            <span className="scan-lookup-avatar">
-              <UserRound size={20} aria-hidden />
+      {result?.items.map((row) => {
+        const states = [
+          row.channelsOff ? 'Off' : null,
+          row.status !== 'active' ? row.status : row.doorState === 'in' ? 'In' : null,
+        ].filter(Boolean);
+        return (
+          <button
+            className="scan-lookup-row"
+            type="button"
+            key={row.passId}
+            data-lookup-result
+            onClick={() => onPick(row.passId)}
+          >
+            {row.photoUrl ? (
+              <img src={row.photoUrl} alt="" className="scan-lookup-avatar" />
+            ) : (
+              <span className="scan-lookup-avatar">
+                <UserRound size={20} aria-hidden />
+              </span>
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-semibold text-fg-strong">{row.title}</span>{' '}
+              <span className="block text-sm text-fg-muted">
+                {[row.subtitle, row.templateName].filter(Boolean).join(' · ')}
+              </span>{' '}
+              {row.maskedEmail ? (
+                <span className="block text-xs text-fg-muted">{row.maskedEmail}</span>
+              ) : null}
             </span>
-          )}
-          <span className="min-w-0 flex-1">
-            <span className="block truncate font-semibold text-fg-strong">{row.title}</span>{' '}
-            <span className="block text-sm text-fg-muted">
-              {[row.subtitle, row.templateName].filter(Boolean).join(' · ')}
-            </span>{' '}
-            {row.maskedEmail ? (
-              <span className="block text-xs text-fg-muted">{row.maskedEmail}</span>
+            {states.length ? (
+              <span className="scan-lookup-status">{states.join(' · ')}</span>
             ) : null}
-          </span>
-          {row.status !== 'active' || row.doorState === 'in' || row.channelsOff ? (
-            <span className="scan-lookup-status">
-              {row.status !== 'active' ? row.status : row.channelsOff ? 'Off' : 'In'}
-            </span>
-          ) : null}
-          <ChevronRight size={16} aria-hidden />
-        </button>
-      ))}
+            <ChevronRight size={16} aria-hidden />
+          </button>
+        );
+      })}
       {result && !result.items.length && !busy ? (
         <div className="scan-lookup-empty">
           <Search size={32} aria-hidden />

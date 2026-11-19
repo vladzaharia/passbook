@@ -14,7 +14,7 @@ export interface DoorChannels {
   named: Channel;
   /** A New code was issued after a digital channel was retired: typed numbers are checked. */
   rotatedAfterRetire: boolean;
-  /** The pass has an active or past print. */
+  /** The pass has an active or past print (read only for a typed number). */
   printed: boolean;
 }
 
@@ -27,7 +27,12 @@ interface PassRef {
 }
 
 /** What the door needs of a pass's channels: one read of the pass's effective state. */
-export async function doorChannels(ctx: ServiceContext, pass: PassRef): Promise<DoorChannels> {
+/** `typed` also reads the rotation and print facts a typed number is checked by. */
+export async function doorChannels(
+  ctx: ServiceContext,
+  pass: PassRef,
+  typed = false,
+): Promise<DoorChannels> {
   const { inputs } = await loadPass(ctx, pass);
   const effective = effectiveChannels(inputs);
   const digital = DIGITAL_CHANNELS.map((channel) => ({
@@ -39,13 +44,17 @@ export async function doorChannels(ctx: ServiceContext, pass: PassRef): Promise<
   const latest = digital
     .filter((d) => d.retiredAt !== undefined)
     .sort((a, b) => (b.retiredAt ?? 0) - (a.retiredAt ?? 0))[0];
-  const rotated =
-    retired.length > 0 && (await rotatedSince(ctx.env.DB, pass.id, Math.min(...retired)));
+  const [rotated, printed] = typed
+    ? await Promise.all([
+        retired.length > 0 && rotatedSince(ctx.env.DB, pass.orgId, pass.id, Math.min(...retired)),
+        hasPrint(ctx.env.DB, pass.orgId, pass.id),
+      ])
+    : [false, false];
   return {
     nfcOn: effective.nfc.on,
     digitalOff: digital.every((d) => !d.on),
     named: (latest ?? digital[0])?.channel ?? 'mobile',
     rotatedAfterRetire: rotated,
-    printed: await hasPrint(ctx.env.DB, pass.id),
+    printed,
   };
 }
