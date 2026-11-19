@@ -305,7 +305,13 @@ describe('pass detail: loading', () => {
           }),
         });
         expect(await screen.findByRole('heading', { name: 'Cached pass title' })).toBeVisible();
-        await waitFor(() => expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${ORG.id}`));
+        await waitFor(() =>
+          expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${ORG.id}`),
+        );
+        // A bare old link, opened from outside the organization.
+        await act(async () => {
+          await router.navigate({ to: '/admin/account' });
+        });
         await act(async () => {
           await router.navigate({
             to: '/admin/passes/$passId',
@@ -426,9 +432,8 @@ describe('pass detail: loading', () => {
   });
 
   it('unmounts pass and bundle data when the selected organization changes', async () => {
-    const user = userEvent.setup();
     const server = newServer({ title: 'Private member', serial: 'SECRET-001' });
-    await renderApp('/admin/passes/p1?tab=delivery', {
+    const { router } = await renderApp('/admin/passes/p1?tab=delivery', {
       session: 'admin',
       memberships: [
         ...orgScope.memberships,
@@ -442,8 +447,14 @@ describe('pass detail: loading', () => {
     expect(await screen.findByText('Private travel bundle')).toBeInTheDocument();
     expect(server.calls.filter((c) => c.path === '/api/v1/bundles')).toHaveLength(1);
 
-    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
-    await user.click(await screen.findByRole('option', { name: 'Second' }));
+    // The same pass in another organization's URL: it is not there.
+    await act(async () => {
+      await router.navigate({
+        to: '/admin/o/$orgId/passes/$passId',
+        params: { orgId: 'org2', passId: 'p1' },
+        search: { tab: 'delivery' },
+      });
+    });
     expect(await screen.findByText('Pass not found')).toBeInTheDocument();
     expect(screen.queryByText('Private member')).toBeNull();
     expect(screen.queryByText('SECRET-001')).toBeNull();

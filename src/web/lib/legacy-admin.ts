@@ -118,7 +118,10 @@ export function legacyAdminTarget(
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
   const step = plan(path, search);
   if (!step) return undefined;
-  const { orgId: _org, view: _view, ...kept } = search;
+  const { orgId: _org, ...rest } = search;
+  // view=workspace only chose the old org page's face; other pages' view (templates) stays.
+  const { view: _view, ...withoutView } = rest;
+  const kept = /^\/admin\/orgs\//.test(path) ? withoutView : rest;
   if (step.kind === 'platform') return { to: platformPath(step.rest), search: kept };
   const explicit = step.kind === 'org' ? (step.orgId ?? explicitOrg(search)) : explicitOrg(search);
   if (

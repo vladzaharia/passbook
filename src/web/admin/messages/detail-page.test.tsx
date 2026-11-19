@@ -115,6 +115,10 @@ describe('Message detail', () => {
       expect(templateScopes).toContain(messageOrg.id);
       expect(templateScopes).not.toContain(null);
       const initialTemplates = templateScopes.length;
+      // A bare old link, opened from outside the organization.
+      await act(async () => {
+        await router.navigate({ to: '/admin/account' });
+      });
       await act(async () => {
         await router.navigate({
           to: '/admin/messages/$broadcastId',

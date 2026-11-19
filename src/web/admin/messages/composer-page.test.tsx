@@ -66,9 +66,9 @@ async function writeMessage(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('Message composer', () => {
-  it('requires an explicit choice even with a single authorized organization', async () => {
+  it('opens the only authorized organization and reads its templates', async () => {
     const requests: string[] = [];
-    await renderApp('/admin/messages/new', {
+    const { router } = await renderApp('/admin/messages/new', {
       session: 'admin',
       memberships: [membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug })],
       handlers: {
@@ -79,17 +79,10 @@ describe('Message composer', () => {
         '/api/v1/templates/tpl1': () => json(MESSAGING),
       },
     });
-    expect(
-      await screen.findByRole('heading', { name: 'Choose an organization' }),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Send now' })).not.toBeInTheDocument();
-    expect(requests).toEqual([]);
-
-    const user = userEvent.setup();
-    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
-    await user.click(await screen.findByRole('option', { name: ORG.name }));
     expect(await screen.findByRole('heading', { name: 'New message' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`/admin/o/${ORG.id}/messages/new`);
     await waitFor(() => expect(requests).toContain(ORG.id));
+    expect(requests).not.toContain('unscoped');
   });
 
   it('does not hydrate or query a draft while its organization is unknown or mismatched', async () => {

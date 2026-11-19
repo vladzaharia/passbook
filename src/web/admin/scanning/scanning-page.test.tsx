@@ -79,7 +79,7 @@ describe('Scanning nav and entities', () => {
 });
 
 describe('Scanning page', () => {
-  it('does not request scan history until an authorized organization is selected', async () => {
+  it('requests scan history only for the organization in the URL', async () => {
     const previous = localStorage.getItem('wallet-org-filter');
     localStorage.removeItem('wallet-org-filter');
     try {
@@ -95,17 +95,13 @@ describe('Scanning page', () => {
           },
         },
       });
-      expect(
-        await screen.findByRole('heading', { name: 'Choose an organization', level: 1 }),
-      ).toBeInTheDocument();
-      expect(seen).toEqual([]);
-      expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/scans?'))).toBe(
-        false,
-      );
-      const user = userEvent.setup();
-      await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
-      await user.click(await screen.findByRole('option', { name: 'Northwind' }));
+      // The only organization opens; history is read in it and nowhere else.
       expect(await screen.findByText('No scans yet')).toBeInTheDocument();
+      expect(
+        fetchMock.mock.calls.every(
+          ([url]) => !String(url).startsWith('/api/v1/scans?') || String(url).includes('orgId=o1'),
+        ),
+      ).toBe(true);
       expect(seen).toContain('o1');
       expect(seen.every((id) => id === 'o1')).toBe(true);
     } finally {
@@ -264,8 +260,8 @@ describe('Scanning page', () => {
       tab: 'events',
       scannerId: 's1',
       outcome: 'refused',
-      orgId: 'o1',
     });
+    expect(router.state.location.pathname).toBe('/admin/o/o1/scanning');
   });
 
   it('leaves the default tab out of the URL', async () => {

@@ -135,12 +135,7 @@ describe('create connection wizard', () => {
         },
       },
     });
-    await user.click(await screen.findByRole('combobox', { name: /^Scope:/ }));
-    const orgOption = await screen.findByRole('option', { name: ORG.name });
-    expect(router.state.location.search).not.toMatchObject({ orgId: ORG.id });
-    expect(screen.queryByText('Fetch records from a JSON API.')).toBeNull();
-    expect(catalogRequests).toEqual([]);
-    await user.click(orgOption);
+    // The only organization opens directly; the catalog is read in it.
     await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
     expect(await screen.findByText('Fetch records from a JSON API.')).toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'Organization' })).toBeNull();
@@ -325,8 +320,8 @@ describe('create connection wizard', () => {
     await waitFor(() => expect(scopes).toContain(ORG.id));
     await act(async () => {
       await router.navigate({
-        to: '/admin/connections/new',
-        search: { orgId: 'org2' },
+        to: '/admin/o/$orgId/connections/new',
+        params: { orgId: 'org2' },
         ignoreBlocker: true,
       });
     });
@@ -394,12 +389,12 @@ describe('create connection wizard', () => {
     for (const orgId of ['org2', ORG.id]) {
       await act(async () => {
         await router.navigate({
-          to: '/admin/connections/new',
-          search: { orgId },
+          to: '/admin/o/$orgId/connections/new',
+          params: { orgId },
           ignoreBlocker: true,
         });
       });
-      await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId }));
+      await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(orgId));
     }
     await act(async () => {
       reply.resolve(
@@ -488,8 +483,8 @@ describe('create connection wizard', () => {
       expect(posts[0]?.orgId).toBe(ORG.id);
       await act(async () => {
         await router.navigate({
-          to: '/admin/connections/new',
-          search: { orgId: 'org2' },
+          to: '/admin/o/$orgId/connections/new',
+          params: { orgId: 'org2' },
           ignoreBlocker: true,
         });
         reply.resolve(
@@ -508,8 +503,8 @@ describe('create connection wizard', () => {
       expect(screen.queryByText('Private creation error.')).not.toBeInTheDocument();
       await act(async () => {
         await router.navigate({
-          to: '/admin/connections/new',
-          search: { orgId: ORG.id },
+          to: '/admin/o/$orgId/connections/new',
+          params: { orgId: ORG.id },
           ignoreBlocker: true,
         });
       });

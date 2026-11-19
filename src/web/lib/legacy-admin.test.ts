@@ -148,8 +148,8 @@ describe('legacy admin URLs', () => {
     const lone: LegacyContext = { platformAdmin: true, memberships: [] };
     expect(go('/admin/audit', {}, lone).to).toBe('/admin/platform/audit');
     expect(go('/admin/passes', {}, lone)).toEqual({ to: '/admin', search: { next: '/passes' } });
-    expect(go('/admin/account')).toBeUndefined();
-    expect(go('/admin/unknown')).toBeUndefined();
-    expect(go('/admin/passes-extra')).toBeUndefined();
+    expect(legacyAdminTarget('/admin/account', {}, one)).toBeUndefined();
+    expect(legacyAdminTarget('/admin/unknown', {}, one)).toBeUndefined();
+    expect(legacyAdminTarget('/admin/passes-extra', {}, one)).toBeUndefined();
   });
 });

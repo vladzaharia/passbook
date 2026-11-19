@@ -508,7 +508,9 @@ describe('org detail', () => {
       ),
     ).toBe(false);
     await act(async () => resolveMemberships());
-    expect(await screen.findByText('Organization not found')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /You do not have access|Organization not found/ }),
+    ).toBeInTheDocument();
     expect(
       fetchMock.mock.calls.some(
         ([url]) =>
@@ -801,7 +803,9 @@ describe('org detail', () => {
       memberships,
       handlers: handlers(),
     });
-    expect(await screen.findByText('Organization not found')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /You do not have access|Organization not found/ }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Pass branding' })).toBeNull();
     expect(
       fetchMock.mock.calls.some(

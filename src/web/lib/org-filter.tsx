@@ -27,6 +27,7 @@ export function useAdminScope(): AdminScope | undefined {
 export function useOrgScope() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const searchStr = useRouterState({ select: (state) => state.location.searchStr });
   const scope = useMemo(() => parseAdminPath(pathname).scope, [pathname]);
   const pathOrgId = scope?.kind === 'org' ? scope.orgId : undefined;
   const query = useMemberships();
@@ -54,8 +55,8 @@ export function useOrgScope() {
     [query.data, unavailable, userId],
   );
   const membership = memberships.find((m) => m.orgId === pathOrgId);
-  /** Open another organization (or the platform, with undefined) at the matching section. */
-  const setOrgId = useCallback(
+  /** The scope switcher: another organization (or the platform) at the matching section. */
+  const switchScope = useCallback(
     (next: string | undefined) => {
       if (next === undefined) {
         if (!isAdmin) return;
@@ -78,9 +79,26 @@ export function useOrgScope() {
     },
     [isAdmin, memberships, navigate, pathname],
   );
+  /**
+   * A page's own organization choice (a wizard or dialog creating elsewhere): the same page in
+   * that organization, with its search, when the membership opens it; else as the switcher.
+   */
+  const setOrgId = useCallback(
+    (next: string | undefined) => {
+      const selected = next ? memberships.find((m) => m.orgId === next) : undefined;
+      const same = next ? withOrg(pathname, next) : undefined;
+      if (selected && same && canAccessAdminPath(same, isAdmin, selected)) {
+        void navigate({ href: `${same}${searchStr}`, replace: true });
+        return;
+      }
+      switchScope(next);
+    },
+    [isAdmin, memberships, navigate, pathname, searchStr, switchScope],
+  );
   return {
     orgId: membership?.orgId,
     setOrgId,
+    switchScope,
     memberships,
     membership,
     /** The page is inside an organization scope. */

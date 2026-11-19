@@ -54,7 +54,7 @@ function Item({
 export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
   const scope = useAdminScope();
   const { isAdmin } = useSession();
-  const { memberships, membership, setOrgId, isLoading, isError, refetch } = useOrgScope();
+  const { memberships, membership, switchScope, isLoading, isError, refetch } = useOrgScope();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   if (isLoading) {
@@ -100,18 +100,23 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
   }
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+      {isError ? (
+        <span role="alert" className="sr-only">
+          Could not load organization access.
+        </span>
+      ) : null}
       <PopoverPrimitive.Trigger
         role="combobox"
         aria-expanded={open}
         aria-haspopup="listbox"
         // The accessible name contains the visible value (WCAG 2.5.3).
-        aria-label={`Scope: ${name ?? 'Choose organization'}`}
+        aria-label={`Scope: ${name ?? 'Choose an organization'}`}
         className={cn(CONTROL, CONTROL_HEIGHT, 'flex items-center justify-between gap-2 px-2')}
       >
         <span className="flex min-w-0 items-center gap-2">
           {icon}
           <span className={cn('truncate', name ? 'font-medium text-fg-strong' : 'text-fg-subtle')}>
-            {name ?? 'Choose organization'}
+            {name ?? 'Choose an organization'}
           </span>
         </span>
         <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-fg-muted" />
@@ -137,7 +142,7 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
                     current={platform}
                     icon={<PlatformMark />}
                     label="Platform"
-                    onSelect={choose(() => setOrgId(undefined))}
+                    onSelect={choose(() => switchScope(undefined))}
                   />
                 </Command.Group>
               ) : null}
@@ -152,7 +157,7 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
                       current={membership?.orgId === m.orgId}
                       icon={<EntityAvatar kind="org" id={m.orgId} name={m.orgName} />}
                       label={m.orgName}
-                      onSelect={choose(() => setOrgId(m.orgId))}
+                      onSelect={choose(() => switchScope(m.orgId))}
                     />
                   ))}
                 </Command.Group>

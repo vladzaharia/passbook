@@ -509,7 +509,8 @@ describe('connection detail', () => {
           await router.navigate({
             to: '/admin/connections/$connectionId',
             params: { connectionId: 'c1' },
-            search: {},
+            // A bare old link: it names no organization.
+            search: { orgId: undefined },
           });
         });
         await waitFor(() => expect(requested).toBe(true));

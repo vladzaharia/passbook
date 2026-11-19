@@ -98,8 +98,7 @@ async function openReview(options: {
       '/api/v1/passes/p9': () => options.passDetail?.() ?? json(passDetail({ id: 'p9' })),
     },
   });
-  await user.click(await screen.findByRole('radio', { name: /Henry's/ }));
-  await waitFor(() => expect(app.router.state.location.search).toMatchObject({ orgId: ORG.id }));
+  await waitFor(() => expect(app.router.state.location.pathname.split('/')[3]).toBe(ORG.id));
   await waitFor(() =>
     expect(
       app.queryClient.getQueryState([
@@ -113,7 +112,6 @@ async function openReview(options: {
       ])?.status,
     ).toBe('success'),
   );
-  await user.click(screen.getByRole('button', { name: 'Next' }));
   await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
   await user.click(screen.getByRole('button', { name: 'Next' }));

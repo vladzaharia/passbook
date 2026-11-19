@@ -66,23 +66,7 @@ describe('Scanning staff', () => {
           }),
       },
     });
-    expect(
-      await screen.findByRole('heading', { name: 'Choose an organization', level: 1 }),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Add staff' })).not.toBeInTheDocument();
-    expect(
-      fetchMock.mock.calls.some(([url]) =>
-        /^\/api\/v1\/(?:scan-staff|scan-setups|scan-events|scanning-sessions)(?:\?|$)/.test(
-          String(url),
-        ),
-      ),
-    ).toBe(false);
-
-    const user = userEvent.setup();
-    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
-    expect(screen.queryByRole('option', { name: 'Directory only' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('option', { name: 'All organizations' })).not.toBeInTheDocument();
-    await user.click(await screen.findByRole('option', { name: 'Northwind' }));
+    // The only organization opens; nothing is read outside it.
     expect(await screen.findByText('No staff yet')).toBeInTheDocument();
     expect(
       fetchMock.mock.calls.some(([url]) => String(url) === '/api/v1/scan-staff?orgId=o1&limit=50'),

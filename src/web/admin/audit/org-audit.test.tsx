@@ -115,11 +115,11 @@ describe('organization audit log', () => {
     const nav = await screen.findByRole('navigation', { name: 'Admin' });
     expect(within(nav).getByRole('link', { name: 'Audit log' })).toHaveAttribute(
       'href',
-      '/admin/audit?orgId=o1',
+      '/admin/o/o1/audit',
     );
     expect(within(nav).getByRole('link', { name: 'API keys' })).toHaveAttribute(
       'href',
-      '/admin/api-keys?orgId=o1',
+      '/admin/o/o1/api-keys',
     );
     expect(within(nav).queryByRole('link', { name: 'Status' })).toBeNull();
   });

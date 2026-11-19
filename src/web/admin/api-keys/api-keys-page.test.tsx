@@ -205,7 +205,9 @@ describe('api keys page', () => {
     });
     const user = userEvent.setup();
     await user.click(await screen.findByRole('link', { name: 'Review API keys' }));
-    await waitFor(() => expect(router.state.location.pathname).toMatch(/\/admin\/api-keys\/?$/));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/o1\/api-keys\/?$/),
+    );
     expect(router.state.location.pathname.split('/')[3]).toBe('o1');
     await waitFor(() => expect(seen.at(-1)).toBe('o1'));
     expect(await screen.findByText('North · All modes')).toBeInTheDocument();

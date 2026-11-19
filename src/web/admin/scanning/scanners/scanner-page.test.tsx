@@ -179,10 +179,7 @@ describe('Scanner page', () => {
     expect((await axe(container)).violations).toEqual([]);
     await userEvent.setup().click(scanning);
     await waitFor(() =>
-      expect(router.state.location).toMatchObject({
-        pathname: '/admin/scanning',
-        search: { orgId: 'o1' },
-      }),
+      expect(router.state.location).toMatchObject({ pathname: '/admin/o/o1/scanning' }),
     );
   });
 

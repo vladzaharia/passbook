@@ -58,7 +58,7 @@ export function AdminPalette({
   const memberships = ready ? scope.memberships : [];
   const membership = ready ? scope.membership : undefined;
   const orgId = membership?.orgId;
-  const { setOrgId } = scope;
+  const { switchScope } = scope;
   const { setPref } = useTheme();
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<'all' | 'orgs'>('all');
@@ -140,7 +140,7 @@ export function AdminPalette({
                 label: 'Platform',
                 icon: Globe,
                 hint: adminScope?.kind === 'platform' ? 'Current' : undefined,
-                onSelect: () => setOrgId(undefined),
+                onSelect: () => switchScope(undefined),
               },
             ]
           : []),
@@ -149,7 +149,7 @@ export function AdminPalette({
           label: item.orgName,
           icon: ENTITY.org.icon,
           hint: item.orgId === orgId ? 'Current' : undefined,
-          onSelect: () => setOrgId(item.orgId),
+          onSelect: () => switchScope(item.orgId),
         })),
       ];
   const orgResults: { id: string; name: string }[] = platformReady

@@ -408,35 +408,33 @@ describe('new pass wizard', () => {
     });
   }
 
-  it('requires an explicit organization even when only one membership is available', async () => {
+  it('opens the only membership and scopes its requests', async () => {
     const stored = new Map<string, string>();
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => stored.get(key) ?? null,
       setItem: (key: string, value: string) => void stored.set(key, value),
       removeItem: (key: string) => void stored.delete(key),
     });
-    const user = userEvent.setup();
     const { router, fetchMock, queryClient } = await renderApp('/admin/passes/new', {
       session: 'admin',
       memberships: orgScope.memberships,
       handlers: wizardHandlers(() => json({}), []),
     });
-    const organization = await screen.findByRole('radio', { name: /Henry's/ });
-    expect(organization).not.toBeChecked();
-    expect(
-      fetchMock.mock.calls.some(([url]) =>
-        /^\/api\/v1\/(?:templates\/eligible|passes)(?:\?|$)/.test(String(url)),
-      ),
-    ).toBe(false);
-    await user.click(organization);
+    // The only organization opens; the wizard starts at its templates.
     await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
+    expect(
+      fetchMock.mock.calls.every(
+        ([url]) =>
+          !/^\/api\/v1\/(?:templates\/eligible|passes)(?:\?|$)/.test(String(url)) ||
+          String(url).includes(`orgId=${ORG.id}`),
+      ),
+    ).toBe(true);
     await waitFor(() =>
       expect(
         queryClient.getQueryState(['admin', 'templates', 'eligible', ORG.id, 'live', 'apple', 'u1'])
           ?.status,
       ).toBe('success'),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByRole('radio', { name: /Copper card/ })).toBeInTheDocument();
   });
 

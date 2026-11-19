@@ -205,6 +205,10 @@ describe('designer', () => {
       fetchMock.mock.calls.filter(([url]) => String(url).includes(`/versions/${VERSION}`)).length;
     const before = versionReads();
     moved = true;
+    // A bare old link, opened from outside the organization.
+    await act(async () => {
+      await router.navigate({ to: '/admin/account' });
+    });
     await act(async () => {
       await router.navigate({
         to: '/admin/templates/$templateId/design',
@@ -248,12 +252,10 @@ describe('designer', () => {
     );
   });
 
-  it('requires an explicit organization after an unscoped shared designer read is denied', async () => {
-    localStorage.setItem('wallet-org-filter', ORG.id);
-    const user = userEvent.setup();
+  it('reads a shared template in the organization of the URL', async () => {
     const s = setup();
     const requested: (string | null)[] = [];
-    await renderApp('/admin/templates/tpl1/design', {
+    await renderApp('/admin/o/org2/templates/tpl1/design', {
       session: 'user',
       memberships: [
         membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug }),
@@ -270,13 +272,6 @@ describe('designer', () => {
         },
       },
     });
-    expect(
-      await screen.findByRole('heading', { name: 'Choose an organization' }),
-    ).toBeInTheDocument();
-    expect(requested.every((orgId) => orgId === null)).toBe(true);
-    expect(screen.queryByRole('navigation', { name: 'Structure' })).toBeNull();
-    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
-    await user.click(await screen.findByRole('option', { name: 'Harbor' }));
     expect(
       await screen.findByText(/Only platform administrators can change shared templates/),
     ).toBeInTheDocument();
@@ -389,9 +384,8 @@ describe('designer', () => {
   });
 
   it('unmounts the designer as soon as the selected organization changes', async () => {
-    const user = userEvent.setup();
     const s = setup();
-    await renderApp('/admin/templates/tpl1/design', {
+    const { router } = await renderApp('/admin/templates/tpl1/design', {
       session: 'admin',
       memberships: [
         membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug }),
@@ -401,8 +395,9 @@ describe('designer', () => {
       handlers: s.handlers,
     });
     await screen.findByRole('navigation', { name: 'Structure' });
-    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
-    await user.click(await screen.findByRole('option', { name: 'Harbor' }));
+    await act(async () => {
+      await router.navigate({ href: '/admin/o/org2/templates/tpl1/design' });
+    });
     expect(await screen.findByText('Template not found')).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Structure' })).toBeNull();
     expect(screen.queryByTestId('designer-preview')).toBeNull();
