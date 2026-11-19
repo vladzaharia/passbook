@@ -67,7 +67,7 @@ export function LiveScreen({
   const customer = session.scanner?.deviceRole === 'customer';
   const beat = useMonitorBeat(rows, own);
   const acting = Boolean(api) && !customer && deskActing(session);
-  const desk = useLetIn(api ?? NO_API, (row, id) => {
+  const onLetIn = (row: ScanLiveRow, id: string | null) => {
     if (row.scanId)
       setLetInDone((done) =>
         new Map(done).set(row.scanId ?? '', {
@@ -78,10 +78,21 @@ export function LiveScreen({
         }),
       );
     setOwn((n) => n + 1);
-  });
+  };
+  const undone = (row: ScanLiveRow) => {
+    if (row.scanId)
+      setLetInDone((done) => {
+        const next = new Map(done);
+        next.delete(row.scanId ?? '');
+        return next;
+      });
+  };
+  const desk = useLetIn(api ?? NO_API, onLetIn, undone);
+  const noting = useRef(new Set<string>());
   const why = (scanId: string, note: OverrideNote) => {
     const id = letInDone.get(scanId)?.id;
-    if (!id || !api) return;
+    if (!id || !api || noting.current.has(scanId)) return;
+    noting.current.add(scanId);
     void api
       .overrideNote(id, note)
       .then(() =>
@@ -90,7 +101,8 @@ export function LiveScreen({
           return held ? new Map(done).set(scanId, { ...held, note }) : done;
         }),
       )
-      .catch((error: unknown) => toast.error(error, 'Could not save the reason'));
+      .catch((error: unknown) => toast.error(error, 'Could not save the reason'))
+      .finally(() => noting.current.delete(scanId));
   };
 
   const branding = session.branding ?? null;

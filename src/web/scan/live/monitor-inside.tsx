@@ -34,7 +34,7 @@ export function MonitorInside({
             row={row}
             disabled={stale}
             onMark={(r) => {
-              void inside.markOut(r).then(onMarked);
+              void inside.markOut(r).then((ok) => ok && onMarked());
             }}
           />
         )}

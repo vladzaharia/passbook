@@ -17,9 +17,9 @@ import { ApprovalSheet } from '../result/approval-sheet.tsx';
 import { fill } from '../ui/copy.ts';
 import { ACCESS_COPY } from '../ui/copy-access.ts';
 
-/** Desk actions are on and a person is signed in by PIN: the only time the monitor acts (SA 20.9). */
 export type OverrideNote = (typeof OVERRIDE_NOTES)[number];
 
+/** Desk actions are on and a person is signed in by PIN: the only time the monitor acts (SA 20.9). */
 export function deskActing(session: ScanSession): boolean {
   return Boolean(session.scanner?.settings.deskActions && session.staff);
 }
@@ -38,9 +38,13 @@ export function StaffControl({
   const staff = session.staff;
   if (!session.scanner?.settings.deskActions || !session.scanner.settings.staffSignIn) return null;
   const switchStaff = async () => {
-    await api.staffSignOut();
-    await refetch();
-    setOpen(true);
+    try {
+      await api.staffSignOut();
+      await refetch();
+      setOpen(true);
+    } catch (error) {
+      toast.error(error, 'Could not switch staff');
+    }
   };
   return (
     <>
@@ -79,6 +83,7 @@ export function StaffControl({
 export function useLetIn(
   api: ScanApi,
   onDone: (row: ScanLiveRow, overrideId: string | null) => void,
+  onUndone: (row: ScanLiveRow) => void,
 ) {
   const [asking, setAsking] = useState<ScanLiveRow | null>(null);
   const [pinNote, setPinNote] = useState<PinNote | undefined>();
@@ -98,9 +103,10 @@ export function useLetIn(
           const undoId = out.scanId;
           const name = row.holder ?? 'Guest';
           if (undoId)
-            toast.undo(fill(ACCESS_COPY.inside.letInDone, { name }), () =>
-              api.undo(undoId, { idempotencyKey: scanId() }),
-            );
+            toast.undo(fill(ACCESS_COPY.inside.letInDone, { name }), async () => {
+              await api.undo(undoId, { idempotencyKey: scanId() });
+              onUndone(row);
+            });
         } else if (out.overridable && out.approvals) {
           setAsking(row);
         } else toast.info(SCAN_COPY.actions.askAdmin);
@@ -118,7 +124,7 @@ export function useLetIn(
         toast.error(error, 'Could not let in');
       }
     },
-    [api, onDone],
+    [api, onDone, onUndone],
   );
   const sheet = (
     <Sheet

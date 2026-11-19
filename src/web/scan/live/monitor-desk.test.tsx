@@ -10,6 +10,7 @@ import { insideRow } from '../inside/inside-fake.test-support.ts';
 import type { InsideList } from '../inside/inside-types.ts';
 import { fixtureOutcome } from '../machine/fixture-data.test-support.ts';
 import { LiveScreen } from './live-screen.tsx';
+import { MonitorBoard } from './monitor-board.tsx';
 
 const ID = '01900000-0000-7000-8000-000000000001';
 const SCAN = '01900000-0000-7000-8000-0000000000aa';
@@ -226,5 +227,94 @@ describe('monitor Desk actions', () => {
     expect(api.override).toHaveBeenLastCalledWith(
       expect.objectContaining({ approval: { pin: '123456' } }),
     );
+  });
+
+  it('says how long a locked PIN waits', async () => {
+    const api = fakeApi();
+    api.override
+      .mockResolvedValueOnce(
+        fixtureOutcome('heads_up', 'zone_not_included', { overridable: true, approvals: true }),
+      )
+      .mockRejectedValueOnce(
+        new ScanApiError({ status: 429, code: 'RATE_LIMITED', fields: { pin: 'locked' } }, 120_000),
+      );
+    render(
+      <ThemeProvider>
+        <LiveScreen
+          session={monitor({ deskActions: true }, true)}
+          refetch={async () => {}}
+          api={api as unknown as ScanApi}
+        />
+      </ThemeProvider>,
+    );
+    act(() => LiveSocket.instances[0]?.publish([refused({ scanId: SCAN })]));
+    fireEvent.click(screen.getByRole('button', { name: /^let in:/i }));
+    const form = await screen.findByTestId('scan-approval');
+    fireEvent.change(form.querySelector('input') as HTMLInputElement, {
+      target: { value: '123456' },
+    });
+    fireEvent.submit(form);
+    expect(await screen.findByText('Too many tries. Try again in 2 min.')).toBeInTheDocument();
+  });
+
+  it('posts a Why? note once on a double tap', async () => {
+    const api = fakeApi();
+    let release: () => void = () => {};
+    api.overrideNote.mockImplementation(
+      () => new Promise<undefined>((resolve) => (release = () => resolve(undefined))),
+    );
+    render(
+      <ThemeProvider>
+        <LiveScreen
+          session={monitor({ deskActions: true }, true)}
+          refetch={async () => {}}
+          api={api as unknown as ScanApi}
+        />
+      </ThemeProvider>,
+    );
+    act(() => LiveSocket.instances[0]?.publish([refused({ scanId: SCAN })]));
+    fireEvent.click(screen.getByRole('button', { name: /^let in:/i }));
+    const chip = await screen.findByRole('button', { name: 'Paid' });
+    fireEvent.click(chip);
+    fireEvent.click(chip);
+    act(() => release());
+    await waitFor(() => expect(api.overrideNote).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText('Could not save the reason')).toBeNull();
+  });
+
+  it('offers Why? for two minutes only', () => {
+    const now = Date.now();
+    const board = (at: number) => (
+      <MonitorBoard
+        rows={[refused({ scanId: SCAN })]}
+        places={[]}
+        now={now}
+        letInDone={new Map([[SCAN, { who: 'Ana Ruiz', id: 'o1', at, note: null }]])}
+        onWhy={() => {}}
+      />
+    );
+    const { rerender } = render(board(now - 60_000));
+    expect(screen.getByRole('button', { name: 'Paid' })).toBeInTheDocument();
+    rerender(board(now - 3 * 60_000));
+    expect(screen.queryByRole('button', { name: 'Paid' })).toBeNull();
+  });
+
+  it('puts the row back when the let-in is undone', async () => {
+    const api = fakeApi();
+    render(
+      <ThemeProvider>
+        <LiveScreen
+          session={monitor({ deskActions: true }, true)}
+          refetch={async () => {}}
+          api={api as unknown as ScanApi}
+        />
+      </ThemeProvider>,
+    );
+    act(() => LiveSocket.instances[0]?.publish([refused({ scanId: SCAN })]));
+    fireEvent.click(screen.getByRole('button', { name: /^let in:/i }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(api.undo).toHaveBeenCalledTimes(1));
+    expect(await screen.findByRole('button', { name: /^let in:/i })).toBeInTheDocument();
+    expect(screen.queryByText(/Resolved by/)).toBeNull();
   });
 });
