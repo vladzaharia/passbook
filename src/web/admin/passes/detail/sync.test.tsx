@@ -250,7 +250,7 @@ describe('A removed pass', () => {
     });
     expect(await screen.findByText('Removed from Wallet. Restore to edit.')).toBeInTheDocument();
     expect(screen.queryByText('Unvoid to edit.')).toBeNull();
-    expect(screen.getAllByRole('button', { name: 'Restore' }).length).toBeGreaterThan(1);
+    expect(screen.getAllByRole('button', { name: 'Restore' })).toHaveLength(1);
     await user.click(screen.getByRole('tab', { name: 'Fields' }));
   });
 });

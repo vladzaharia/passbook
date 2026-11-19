@@ -44,7 +44,7 @@ function ItemRow({ item }: { item: BroadcastItem }) {
       meta={item.holderEmail ? item.title : undefined}
       trailing={
         <span className="flex items-center gap-1.5">
-          {item.silent ? <Badge>Silent</Badge> : null}
+          {item.silent ? <Badge>No alert</Badge> : null}
           <Badge tone={OUTCOME_TONE[item.outcome]}>
             {item.outcome === 'updated'
               ? 'Updated'

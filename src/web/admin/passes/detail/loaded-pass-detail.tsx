@@ -271,7 +271,6 @@ export function LoadedPassDetail({
             picked={picked}
             onPick={(v) => setSearch({ v })}
             onDraft={setDraft}
-            runner={runner}
           />
         </Tabs>
       </PreviewLayout>
