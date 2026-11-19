@@ -100,7 +100,7 @@ export function BootstrapOrgAdmin({ orgId, active }: { orgId: string; active: bo
   const { authed } = useSession();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
-  const [sent, setSent] = useState(false);
+  const [sent, setSent] = useState('');
   const parsed = InviteOrgMemberSchema.safeParse({ email, roles: ['org_admin'] });
   const check = useFormErrors({
     email: parsed.success ? undefined : 'Enter a valid email address.',
@@ -116,13 +116,13 @@ export function BootstrapOrgAdmin({ orgId, active }: { orgId: string; active: bo
       return current?.authenticated === true && current.user.id === principalId;
     };
     setError('');
-    setSent(false);
+    setSent('');
     if (!parsed.success) return;
     try {
       const sent = await invite.mutateAsync({ email: parsed.data.email, principalId });
       if (!sent || !isCurrentPrincipal()) return;
       setEmail('');
-      setSent(true);
+      setSent(parsed.data.email);
     } catch (cause) {
       if (isCurrentPrincipal()) setError(errorMessage(cause));
     }
@@ -158,7 +158,7 @@ export function BootstrapOrgAdmin({ orgId, active }: { orgId: string; active: bo
           ) : null}
           {sent ? (
             <p role="status" className="text-sm text-fg-muted">
-              Administrator invitation sent.
+              Invitation sent to {sent}.
             </p>
           ) : null}
           <div>

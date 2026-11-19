@@ -102,19 +102,24 @@ export function checklistSteps(setup: MetricsOverview['setup'], orgId?: string) 
     id: s.id,
     label: s.label,
     done: s.done,
-    action: (
-      <Button
-        asChild
-        size="sm"
-        variant={i === next ? 'primary' : 'outline'}
-        iconStart={s.iconStart}
-        iconEnd={s.iconEnd}
-      >
-        <Link to={s.to} search={s.search}>
-          {s.verb}
-        </Link>
-      </Button>
-    ),
+    action:
+      next >= 0 && i > next && !s.done ? (
+        <Button size="sm" variant="outline" disabled>
+          Needs step {next + 1}
+        </Button>
+      ) : (
+        <Button
+          asChild
+          size="sm"
+          variant={i === next ? 'primary' : 'outline'}
+          iconStart={s.iconStart}
+          iconEnd={s.iconEnd}
+        >
+          <Link to={s.to} search={s.search}>
+            {s.verb}
+          </Link>
+        </Button>
+      ),
   }));
 }
 
