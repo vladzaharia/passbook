@@ -26,10 +26,11 @@ export const HOLDER_COPY = {
   /** Under one voided pass in a bundle. */
   voidedShort: 'No longer valid.',
   voidedMany: 'These passes were voided. They no longer work.',
-  expired: 'This pass has expired.',
-  /** The org took the pass out of Wallet; its own note follows. */
+  /** A bundle with nothing to add: every pass removed, or a mix of voided and removed. */
   removedMany: 'These passes were removed.',
   endedMany: 'None of these passes can be added.',
+  expired: 'This pass has expired.',
+  /** The org took the pass out of Wallet; its own note follows. */
   removedPlain: 'This pass was removed.',
   removed: 'Removed from Wallet. It stays in Expired passes until you delete it.',
   /** A voided pass whose org has no contact of its own: name the org, never the platform. */
