@@ -102,6 +102,12 @@ describe.each(ALL)('cutover: %s', (shape) => {
     );
     const { outcome } = await undo(kit.ctx, actor, scanned.scanId!, { idempotencyKey: key() });
     expect(outcome.kind).toBe('ok');
+    // The legacy row has a non-UUID id and no proof of its own; the undo is signed all the same.
+    expect(
+      await kit.env.DB.prepare('SELECT count(*) AS n FROM scan_retention_proofs WHERE scan_id = ?')
+        .bind(outcome.scanId)
+        .first(),
+    ).toEqual({ n: 1 });
     const old = await kit.env.DB.prepare('SELECT undone_by FROM scans WHERE id = ?')
       .bind(scanned.scanId)
       .first<{ undone_by: string | null }>();
