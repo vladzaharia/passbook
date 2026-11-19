@@ -146,6 +146,15 @@
   font: 600 17px / 22px var(--pk-font-sans);
   cursor: pointer;
 }
+.scan-dock-btn {
+  white-space: nowrap;
+}
+/* Narrow phones: the label and its count fit on one line; the icon is the first thing to go. */
+@media (max-width: 420px) {
+  .scan-dock-icon-extra {
+    display: none;
+  }
+}
 .scan-dock-btn[data-variant="filled"] {
   background: var(--sd-accent);
   color: var(--scan-accent-on);
@@ -211,7 +220,7 @@
   }
 }
 /* A phone's seat is smaller: the art scales from the dock edge. */
-@media (max-width: 639px), (min-width: 1024px) and (max-height: 900px) {
+@media (max-width: 1023px), (min-width: 1024px) and (max-height: 900px) {
   .scan-shell:not([data-surface="duo"]) .scan-buddy-seat {
     width: 106px;
     height: 80px;
