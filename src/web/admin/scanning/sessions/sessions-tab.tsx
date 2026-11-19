@@ -21,12 +21,12 @@ import {
   ErrorState,
   MoreMenu,
   Skeleton,
-  StatusPill,
   toast,
 } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { useScanningSessions, useUpdateSession } from './api.ts';
 import { sessionAccepts, sessionRuleLabel } from './draft.ts';
+import { SessionStatePill, sessionState } from './session-state.tsx';
 
 export function SessionsTab({
   canManage,
@@ -90,7 +90,7 @@ export function SessionsTab({
       <div className="flex flex-wrap gap-2 text-sm text-fg-muted">
         <Badge>
           <Radio aria-hidden />
-          {items.filter((s) => s.status === 'active').length} running
+          {items.filter((s) => sessionState(s) === 'running').length} running
         </Badge>
         <Badge>
           <MonitorSmartphone aria-hidden />
@@ -126,18 +126,7 @@ export function SessionsTab({
             </div>
             <CardBody className="grid gap-4">
               <div className="flex flex-wrap items-center gap-2">
-                <StatusPill
-                  status={s.status}
-                  tone={
-                    s.status === 'active'
-                      ? 'success'
-                      : s.status === 'paused'
-                        ? 'warning'
-                        : 'neutral'
-                  }
-                >
-                  {s.status === 'active' ? 'Running' : s.status === 'paused' ? 'Paused' : 'Ended'}
-                </StatusPill>
+                <SessionStatePill session={s} />
                 <ModePill mode={s.mode} />
               </div>
               <div className="grid grid-cols-3 gap-3">

@@ -260,6 +260,8 @@ export const SCAN_COPY = {
     openNow: 'Open now',
     openNowTitle: 'Open early',
     refused: 'Scanning is closed now.',
+    managerOnly: 'Only a manager can open early.',
+    failed: 'Could not open. Try again.',
   },
   undo: {
     undone: '{action} undone',

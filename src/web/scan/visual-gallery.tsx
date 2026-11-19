@@ -19,6 +19,7 @@ import { ResultCard } from './result/result-card.tsx';
 import { DoorDock } from './ui/door-dock.tsx';
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
+import { ClosedVisual } from './visual-closed.tsx';
 import { TAG_SCENARIOS, TagVisual } from './visual-tags.tsx';
 import './visual-gallery.css';
 
@@ -226,6 +227,7 @@ export function ScanVisualGallery() {
   if (!selected) return null;
   const status = params.get('status') ?? 'accepted';
   const phase = params.get('phase') === 'rising' ? 'rising' : 'up';
+  if (surface === 'closed') return <ClosedVisual who={params.get('who') ?? 'manager'} />;
   if (surface === 'duo') return <DuoVisual status={status} />;
   if (surface === 'access')
     return (

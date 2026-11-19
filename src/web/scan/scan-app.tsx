@@ -9,6 +9,7 @@ import { useDeviceReport } from './boot/use-device-report.ts';
 import { usePlatformSession } from './boot/use-platform-session.ts';
 import { useScanManageAccess } from './boot/use-scan-manage-access.ts';
 import { createCsrfHolder, useScanSession } from './boot/use-scan-session.ts';
+import { useWindowEdge } from './boot/use-window-edge.ts';
 import type { ScanState } from './machine/types.ts';
 import { BootCard } from './ui/boot-card.tsx';
 import { ScanShell } from './ui/scan-shell.tsx';
@@ -28,6 +29,9 @@ const LiveScreen = lazy(() =>
   import('./live/live-screen.tsx').then((m) => ({ default: m.LiveScreen })),
 );
 
+const ClosedCard = lazy(() =>
+  import('./boot/closed-card.tsx').then((m) => ({ default: m.ClosedCard })),
+);
 const StaffStart = lazy(() =>
   import('./boot/staff-start.tsx').then((m) => ({ default: m.StaffStart })),
 );
@@ -68,6 +72,7 @@ function ScanBoot() {
   const session = useScanSession(api, csrf, machine);
   refresh.current = session.refetch;
   useDeviceReport(api, session.session, session.refetch);
+  useWindowEdge(session.session?.workspace?.session.window, session.refetch);
   const [preview, setPreview] = useState<{
     code: string;
     scannerName: string;
@@ -165,6 +170,19 @@ function ScanBoot() {
                 Try again
               </button>
             </BootCard>
+          }
+        />
+      );
+    const hours = session.session.workspace?.session.window;
+    if (hours && !hours.open)
+      return (
+        <ScanShell
+          branding={session.session.branding}
+          cardMode="boot"
+          card={
+            <Suspense fallback={null}>
+              <ClosedCard session={session.session} api={api} refetch={session.refetch} />
+            </Suspense>
           }
         />
       );

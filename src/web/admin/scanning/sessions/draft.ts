@@ -1,3 +1,4 @@
+import type { WeeklyHours } from '@/passkit/types.ts';
 import type {
   ScanningSession,
   SessionCustomerSettings,
@@ -9,6 +10,7 @@ import {
   type ScannerDraft,
   settingsOf,
 } from '../scanners/scanner-draft.ts';
+import { hoursBody, hoursProblem } from './session-hours.ts';
 
 export type SessionDraft = ScannerDraft & {
   timeZone: string;
@@ -17,6 +19,9 @@ export type SessionDraft = ScannerDraft & {
   /** The session already stores Desk actions, so Off is sent rather than left out. */
   deskActionsSaved?: boolean;
   customer?: SessionCustomerSettings;
+  /** Open only at set hours, in the time zone above. */
+  hoursOn: boolean;
+  hours?: WeeklyHours;
 };
 
 export const emptySessionDraft = (): SessionDraft => ({
@@ -25,6 +30,7 @@ export const emptySessionDraft = (): SessionDraft => ({
   accepts: 'all',
   lookup: true,
   zoneIds: [],
+  hoursOn: false,
 });
 export function sessionDraft(s: ScanningSession): SessionDraft {
   return {
@@ -58,12 +64,15 @@ export function sessionDraft(s: ScanningSession): SessionDraft {
     deskActions: s.settings.deskActions ?? false,
     deskActionsSaved: s.settings.deskActions !== undefined,
     customer: s.settings.customer,
+    hoursOn: Boolean(s.hours),
+    ...(s.hours ? { hours: s.hours } : {}),
   };
 }
 export const sessionBody = (d: SessionDraft) => ({
   name: d.name.trim(),
   orgId: d.orgId,
   timeZone: d.timeZone,
+  hours: hoursBody(d.hoursOn, d.hours),
   accepts: acceptsOf(d),
   settings: {
     ...settingsOf(d),
@@ -86,8 +95,9 @@ export function cleanCustomer(c: SessionCustomerSettings): SessionCustomerSettin
     ...(c.showDraft === undefined ? {} : { showDraft: c.showDraft }),
   };
 }
-export function sessionReady(d: ScannerDraft) {
+export function sessionReady(d: SessionDraft) {
   return (
+    !hoursProblem(d.hoursOn, d.hours) &&
     !!d.name.trim() &&
     !!d.orgId &&
     (d.accepts === 'all' || (d.accepts === 'event' ? !!d.eventId : !!d.templateIds.length))
