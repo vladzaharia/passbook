@@ -299,9 +299,9 @@ describe('pass detail', () => {
           ),
       },
     });
-    expect(
-      await screen.findByText(/Removed from Wallet\. It stays in Expired passes/),
-    ).toBeInTheDocument();
+    // Never on a device: no Wallet jargon (the /p page cannot know and keeps it).
+    expect(await screen.findByText('This pass was removed.')).toBeInTheDocument();
+    expect(screen.queryByText(/Expired passes/)).toBeNull();
     expect(screen.getByText('The season ended.')).toBeInTheDocument();
     expect(screen.queryByText(/^This pass was voided/)).toBeNull();
     expect(screen.getAllByText('Removed').length).toBeGreaterThan(0);

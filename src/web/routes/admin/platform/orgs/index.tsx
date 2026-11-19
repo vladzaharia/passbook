@@ -1,9 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { OrgsPage } from '../../../../admin/orgs/orgs-page.tsx';
-import { UNSCOPED_SEARCH } from '../../../../lib/route-search.ts';
 
 export const Route = createFileRoute('/admin/platform/orgs/')({
-  search: UNSCOPED_SEARCH,
   validateSearch: (
     raw: Record<string, unknown>,
   ): { q?: string | undefined; new?: '1' | undefined } => ({

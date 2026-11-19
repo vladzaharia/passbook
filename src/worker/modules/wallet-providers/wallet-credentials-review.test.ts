@@ -106,6 +106,20 @@ describe('H1: hold, release and checks are the platform and the check job in the
     }
   });
 
+  it('wallet job purposes are refused for any principal but the system', async () => {
+    const { a } = await sourced();
+    for (const purpose of [
+      'org_mode.job.wallet.enrolment_hold',
+      'org_mode.job.wallet.enrolment_disable',
+      'org_mode.job.wallet.credential_migrate',
+    ]) {
+      const re = /held by the system/;
+      await refused(granted({ ...orgWriter(a), purpose }, []), re);
+      await refused(granted({ ...orgWriter(a), purpose, principal: 'platform:u1' }, []), re);
+      await granted({ ...orgWriter(a), purpose, principal: 'system:job' }, []);
+    }
+  });
+
   it('a check needs the check job grant in its batch', async () => {
     const { a, c } = await sourced();
     const version = (

@@ -111,6 +111,8 @@ export const ScanLookupRowSchema = z.object({
   photoUrl: z.string().nullable(),
   doorState: z.enum(['in', 'out']).nullable(),
   lastScanAt: TimestampSchema.nullable(),
+  /** Every digital channel is off: its code is refused at the door; staff check ID. */
+  channelsOff: z.boolean().optional(),
 });
 export const ScanLookupResultSchema = z.object({
   items: z.array(ScanLookupRowSchema).max(10),

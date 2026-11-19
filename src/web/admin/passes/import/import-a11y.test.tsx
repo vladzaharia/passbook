@@ -56,7 +56,7 @@ describe('import screens pass axe at 1440, 820 and 390, in both themes', () => {
     const { container } = await open('/admin/passes/import/imp1', checked());
     await screen.findByText(/120 to create/);
     await axeEverywhere(container);
-    await user.click(screen.getByRole('button', { name: 'Create passes' }));
+    await user.click(screen.getByRole('button', { name: /^(Create|Update) \d+/ }));
     await screen.findByRole('dialog');
     await axeEverywhere(document.body);
   });

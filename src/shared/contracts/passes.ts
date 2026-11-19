@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ISSUANCE_OUTCOMES } from '../copy/email.ts';
 import { InputMatchSchema } from './broadcasts.ts';
+import { EffectiveChannelsSchema } from './channels.ts';
 import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { REMOVE_MESSAGE_MAX } from './events.ts';
 import { PassStampsSchema } from './pass-stamps.ts';
@@ -145,6 +146,8 @@ export const PassDetailSchema = PassSummarySchema.extend({
   blockedUsers: z.array(z.object({ id: IdSchema, name: z.string().nullable() })),
   downloadUrl: z.string(),
   publicUrl: z.string(),
+  /** What each delivery channel offers this pass, with its source, reason and retirement. */
+  channels: EffectiveChannelsSchema.optional(),
   registrations: z.number().int(),
   devices: z.array(PassDeviceSchema).default([]),
   lastRefreshedAt: TimestampSchema.nullable(),
@@ -164,6 +167,8 @@ export const PassListQuerySchema = z.object({
   orgId: IdSchema.transform((value) => (value === 'null' ? null : value)).optional(),
   templateId: IdSchema.optional(),
   connectionId: IdSchema.optional(),
+  /** Passes a pass import created or updated. */
+  importId: IdSchema.optional(),
   status: PassListStatusSchema.optional(),
   holderEmail: z.string().max(254).optional(),
   holderState: z.enum(['unassigned', 'waiting', 'owned']).optional(),

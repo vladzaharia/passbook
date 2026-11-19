@@ -1,7 +1,8 @@
-import { Bot, type LucideIcon, Mail, Monitor, Settings } from 'lucide-react';
+import { Bot, type LucideIcon, Mail, Monitor, Settings, UserCheck } from 'lucide-react';
 import { humanize } from '@/web/lib/actions.ts';
 import { ENTITY, type EntityKind } from '@/web/lib/entities.ts';
 import { entityLabel } from '@/web/lib/entity-label.ts';
+import { orgPath } from '@/web/lib/scope.ts';
 import type { AuditEntry } from './entry-drawer.tsx';
 
 type Labeled = AuditEntry & { actorLabel?: string | null; targetLabel?: string | null };
@@ -26,6 +27,8 @@ const REFS: Record<string, RefDef> = {
   user: { label: 'User', kind: 'user', to: (id) => `/admin/users/${id}` },
   holder: { label: 'Holder', kind: 'user' },
   org: { label: 'Organization', kind: 'org', to: (id) => `/admin/orgs/${id}` },
+  org_invitation: { label: 'Invitation', icon: Mail },
+  org_membership: { label: 'Membership', icon: UserCheck },
   identity: { label: 'Apple identity', kind: 'identity', to: (id) => `/admin/identities/${id}` },
   api_key: { label: 'API key', kind: 'apiKey', to: () => '/admin/api-keys' },
   device: { label: 'Device', kind: 'device' },
@@ -38,8 +41,7 @@ const REFS: Record<string, RefDef> = {
     icon: Settings,
     name: (id) => (id?.startsWith('org:') ? 'Organization settings' : 'Platform settings'),
     to: (id) =>
-      id.startsWith('org:') ? `/admin/orgs/${encodeURIComponent(id.slice(4))}` : '/admin/settings',
-    search: (id) => (id.startsWith('org:') ? { view: 'workspace', orgId: id.slice(4) } : undefined),
+      id.startsWith('org:') ? orgPath(id.slice(4), '/settings') : '/admin/platform/settings',
   },
   system: { label: 'System', icon: Bot },
 };

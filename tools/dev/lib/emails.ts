@@ -1,10 +1,12 @@
 // Renders the latest dev-mail HTML of each kind (grouped by <title>) to PNG.
+
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { chromium } from '@playwright/test';
 import type { Shot } from './capture.ts';
-import { DEVICES, shotName, type Theme, VIEWPORTS, type ViewportName } from './routes.ts';
+import { DEVICES, SIZES, shotName, type Theme, type ViewportName } from './routes.ts';
+import { settledShot } from './settle.ts';
 
 type Mail = { kind: string; html: string; mtime: number };
 
@@ -46,7 +48,7 @@ export async function captureEmails(o: {
     for (const theme of o.themes) {
       for (const viewport of o.viewports) {
         const context = await browser.newContext({
-          viewport: VIEWPORTS[viewport],
+          viewport: SIZES[viewport],
           ...DEVICES[viewport],
           colorScheme: theme,
         });
@@ -55,7 +57,7 @@ export async function captureEmails(o: {
           const file = shotName(name, viewport, theme);
           const page = await context.newPage();
           await page.setContent(mail.html, { waitUntil: 'load' });
-          await page.screenshot({ path: resolve(o.out, file), fullPage: true });
+          await settledShot(page, resolve(o.out, file));
           await page.close();
           shots.push({
             route: `mail:${mail.kind}`,

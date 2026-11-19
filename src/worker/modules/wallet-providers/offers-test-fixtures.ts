@@ -44,6 +44,8 @@ export function makeProviderTestTemplate(id: string): TestTemplate {
       sample: { memberName: 'Alex Morgan' },
       bindings: [{ to: { field: 'name' }, value: '{{memberName}}' }],
       display: { title: '{{memberName}}' },
+      // The channel gate offers a provider only to a design that has its wallets block.
+      wallets: { schema: 1, google: {}, samsung: {} },
     },
     passJson: {
       formatVersion: 1,

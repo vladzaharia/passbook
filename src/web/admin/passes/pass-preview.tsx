@@ -30,11 +30,16 @@ export function usePassView(
 ): PassView | null {
   return useMemo(() => {
     try {
-      const view = normalize(passJson as unknown as PassJson, {
+      // A voided or removed pass shows no barcode, as on the hosted page, and its status field
+      // reads the state, not the template's "Active".
+      const ended = passJson.voided === true || removed;
+      const { barcode: _b, barcodes: _bs, ...bare } = passJson;
+      const view = normalize((ended ? bare : passJson) as unknown as PassJson, {
         assets: assetMap(assetBaseUrl, assetNames),
+        ...(removed ? { stateWord: 'Removed' } : {}),
       });
-      // A removed pass is stored voided, but Wallet files it under Expired passes: the card says so.
-      return removed ? { ...view, invalid: 'expired' } : view;
+      // A removed pass is stored voided: no stamp, as on the holder's pages; the card is greyed and reads Removed.
+      return removed ? { ...view, invalid: null } : view;
     } catch {
       // A malformed pass.json must not take the page down; callers show the fallback line.
       return null;

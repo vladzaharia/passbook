@@ -26,6 +26,8 @@ const SUPPLIED: Record<string, string[]> = {
   LOCALE_NAME: ['name'],
   LOCALIZED_IMAGES: ['name', 'locales'],
   LOGO_TEXT_PLATFORM: ['name'],
+  PAPER_FIELD: ['name'],
+  PAPER_INPUT: ['name'],
   PASS_SIZE: ['size'],
   PLACEHOLDER_URL: ['name'],
   PREFERRED_SCHEMES: ['name'],

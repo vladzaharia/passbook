@@ -23,6 +23,7 @@ import { BadRequestError, PayloadTooLargeError } from '../../platform/errors.ts'
 import { createRouter, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { registerTemplateChannelRoutes } from '../channels/routes.ts';
 import { requireTenantSession, requireTenantSessionOrApiKey } from '../passes/http.ts';
 import { eligibleTemplates } from './eligible.ts';
 import { cloneTemplate } from './fork.ts';
@@ -288,6 +289,7 @@ register(
 );
 
 registerVersionReads(templatesRoutes);
+registerTemplateChannelRoutes(templatesRoutes);
 
 registerVersions(templatesRoutes);
 registerStampsImpact(templatesRoutes);

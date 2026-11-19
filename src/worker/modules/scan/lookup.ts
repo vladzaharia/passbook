@@ -6,6 +6,7 @@ import { ForbiddenError, RateLimitedError } from '../../platform/errors.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
+import { doorChannels } from '../channels/door.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
@@ -181,6 +182,9 @@ export async function lookup(
           const photoGrant = candidate.hasPhoto
             ? await knownPhotoUrl(ctx, actor, candidate, found.template, found.activePolicy)
             : null;
+          const channelsOff =
+            candidate.channelRules !== false &&
+            (await doorChannels(ctx, candidate.pass)).digitalOff;
           return {
             found,
             source: candidate,
@@ -196,6 +200,7 @@ export async function lookup(
               photoUrl: null,
               doorState: null,
               lastScanAt: null,
+              ...(channelsOff ? { channelsOff } : {}),
             },
           };
         }),

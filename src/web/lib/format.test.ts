@@ -4,6 +4,7 @@ import {
   formatCount,
   formatDateTime,
   formatDay,
+  formatEndedOn,
   formatRelative,
   formatShortDate,
   formatShortDateHour,
@@ -40,5 +41,25 @@ describe('format', () => {
     expect(formatRelative(3_600_000, 0)).toBe('in 1 hour');
     expect(formatRelative(0, 10_000)).toBe('this minute');
     expect(daysUntil(3 * 86_400_000 + 5, 0)).toBe(3);
+  });
+});
+
+describe('formatEndedOn', () => {
+  // 2026-11-19 01:50 UTC is still Nov 18 in New York: one pass, one date per holder zone.
+  const at = Date.UTC(2026, 10, 19, 1, 50);
+  const pass = { modifiedAt: at, voidedAt: at };
+
+  it('is the day in the holder zone, UTC when none is given', () => {
+    expect(formatEndedOn('voided', pass, 'America/New_York')).toBe('Nov 18, 2026');
+    expect(formatEndedOn('voided', pass, 'UTC')).toBe('Nov 19, 2026');
+    expect(formatEndedOn('voided', pass)).toBe('Nov 19, 2026');
+  });
+
+  it('falls back to the last change, and an expired pass names its expiry', () => {
+    expect(formatEndedOn('voided', { modifiedAt: at, voidedAt: null }, 'UTC')).toBe('Nov 19, 2026');
+    expect(formatEndedOn('expired', { ...pass, expirationDate: '2026-10-01T12:00:00Z' })).toBe(
+      'Oct 1, 2026',
+    );
+    expect(formatEndedOn('voided', { modifiedAt: Number.NaN })).toBeNull();
   });
 });

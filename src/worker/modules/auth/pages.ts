@@ -2,15 +2,18 @@
 
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { ArrowRight } from 'lucide-react';
+import { INVITE_COPY } from '../../../shared/copy/invite.ts';
 import {
   AUTH_PAGE_COPY as COPY,
   EXPIRED_LINK_COPY,
   OIDC_FAILURE_COPY,
   type OidcFailure,
+  RESENT_COPY,
   SIGN_IN_ERROR_COPY,
   type SignInErrorCode,
 } from '../../../shared/copy/sign-in.ts';
 import { STATE_COPY } from '../../../shared/copy/states.ts';
+import { maskEmail } from '../../../shared/email.ts';
 import { backToSignIn } from '../../ssr/error-page.tsx';
 import type { PageTheme } from '../../ssr/head.ts';
 import {
@@ -22,7 +25,7 @@ import {
 } from '../../ssr/hosted.ts';
 import { iconHtml } from '../../ssr/icon.ts';
 import { escapeHtml } from '../../ssr/theme.ts';
-import type { LinkTrace } from './magic-service.ts';
+import type { LinkInvitation, LinkTrace } from './magic-peek.ts';
 import { loginPath, safeNext } from './next.ts';
 
 const ARROW = iconHtml(ArrowRight);
@@ -37,20 +40,31 @@ export const signInToConfirm = (token: string): PageAction => ({
   primary: true,
 });
 
-/** Sign-in link: one button posts the token. */
+/**
+ * Sign-in link: one button posts the token. An invitation's link says so: the org, the role and
+ * "Accept and sign in", and drops the holder footer.
+ */
 export function confirmPage(
   nonce: string,
-  input: { token: string; email: string },
+  input: { token: string; email: string; invitation?: LinkInvitation | null },
   theme?: PageTheme,
 ): string {
+  const invite = input.invitation ?? null;
+  const email = `<b>${escapeHtml(input.email)}</b>`;
   return hostedPage({
     nonce,
     theme,
-    title: COPY.signIn,
+    title: invite ? INVITE_COPY.title(invite.orgName) : COPY.confirmSignIn,
     art: 'confirm',
-    lede: `As <b>${escapeHtml(input.email)}</b>`,
-    footer: true,
-    body: postButton('/auth/magic/consume', `${COPY.signIn}${ARROW}`, { token: input.token }),
+    lede: invite
+      ? `${escapeHtml(INVITE_COPY.lede(invite.roles))} Signing in as ${email}.`
+      : `As ${email}`,
+    footer: !invite,
+    body: postButton(
+      '/auth/magic/consume',
+      `${invite ? INVITE_COPY.accept : COPY.signIn}${ARROW}`,
+      { token: input.token },
+    ),
   });
 }
 
@@ -87,27 +101,71 @@ export function verifyPage(
   });
 }
 
+/** Which dead-link copy a link gets: what it was for, and whether it was used or ran out. */
+/** Used, or an invitation accepted through another link: either way the link's work is done. */
+const linkUsed = (link: LinkTrace | null) =>
+  link?.state === 'used' || link?.invitation === 'accepted';
+
+function deadCopy(link: LinkTrace | null) {
+  if (link?.purpose === 'verify_email') return EXPIRED_LINK_COPY.verify_email;
+  if (link?.invited) {
+    if (link.invitation === 'pending') return EXPIRED_LINK_COPY.invitation_pending;
+    return EXPIRED_LINK_COPY[linkUsed(link) ? 'invitation_used' : 'invitation'];
+  }
+  return EXPIRED_LINK_COPY[link?.state === 'used' ? 'used' : 'sign_in'];
+}
+
 /**
- * A dead link: the gold pass droops. A sign-in link leads back to sign-in (keeping its next); an
- * add-email link leads to Account, where the address is added again.
+ * A dead link: the gold pass droops. Used and expired say so apart. A sign-in link can email a new
+ * one to its masked address; it leads back to sign-in (keeping its next); an add-email link leads
+ * to Account, where the address is added again.
  */
 export function expiredPage(
   nonce: string,
   link: LinkTrace | null = null,
   theme?: PageTheme,
+  token = '',
+  canResend = true,
 ): string {
   const verify = link?.purpose === 'verify_email';
-  const copy = EXPIRED_LINK_COPY[verify ? 'verify_email' : 'sign_in'];
+  const copy = deadCopy(link);
+  const pending = link?.invitation === 'pending';
+  const resend =
+    link && token && canResend && !verify && !link.invited && !link.identity
+      ? `<p class="lede">New link to <b>${escapeHtml(maskEmail(link.email))}</b>.</p>${postButton('/auth/magic/resend', COPY.emailNewLink, { token })}`
+      : '';
+  const home =
+    linkUsed(link) && !verify && !pending
+      ? actionHtml({ label: COPY.openPassBook, href: '/' })
+      : '';
+  const back = actionHtml(
+    verify
+      ? { label: copy.action, href: '/account' }
+      : pending
+        ? { label: copy.action, href: loginPath(link?.next), primary: true }
+        : backToSignIn(loginPath(link?.next)),
+  );
   return hostedPage({
     nonce,
     theme,
     title: copy.title,
-    art: 'expired',
+    art: pending ? 'login' : 'expired',
     lede: escapeHtml(copy.message),
-    footer: !verify,
-    body: actionHtml(
-      verify ? { label: copy.action, href: '/account' } : backToSignIn(loginPath(link?.next)),
-    ),
+    footer: !verify && !link?.invited,
+    body: `<div class="stack">${resend}${home}${back}</div>`,
+  });
+}
+
+/** "Email me a new link" answered: the same page whether or not a mail was sent. */
+export function resentPage(nonce: string, next: string | null, theme?: PageTheme): string {
+  return hostedPage({
+    nonce,
+    theme,
+    title: RESENT_COPY.title,
+    art: 'login',
+    lede: escapeHtml(RESENT_COPY.message),
+    footer: true,
+    body: actionHtml(backToSignIn(loginPath(next))),
   });
 }
 
@@ -227,7 +285,8 @@ export function breakglassPage(
     theme,
     title: COPY.breakglass,
     art: 'break-glass',
+    lede: escapeHtml(COPY.breakglassLede),
     ...(input.error ? { error: input.error } : {}),
-    body: `<form class="stack" method="post" action="/auth/breakglass"><div><label for="t">${COPY.token}</label><input id="t" name="token" type="password" autocomplete="off" required${input.error ? ' aria-invalid="true"' : ''}></div>${next}<button class="btn" type="submit">${COPY.signIn}</button></form>`,
+    body: `<form class="stack" method="post" action="/auth/breakglass"><div><label for="t">${COPY.token}</label><input id="t" name="token" type="password" autocomplete="off" required${input.error ? ' aria-invalid="true"' : ''}></div>${next}<button class="btn" type="submit">${COPY.signIn}</button>${actionHtml(backToSignIn(loginPath(input.next)))}</form>`,
   });
 }

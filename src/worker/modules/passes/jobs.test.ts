@@ -11,6 +11,7 @@ import {
   requireCredentialRefKeyset,
 } from './credential-keyset.ts';
 import { diffVersions, getVersionDetail } from './detail.ts';
+import { voidedKey } from './file.ts';
 import { dailyPasses } from './jobs.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
 import {
@@ -75,6 +76,17 @@ describe('version retention', () => {
     expect(await kit.env.BUCKET.head(current?.objectKey ?? '')).not.toBeNull();
     for (const row of after.filter((r) => r.purged_at === null))
       expect(await kit.env.BUCKET.head(row.object_key ?? '')).not.toBeNull();
+  });
+
+  it('deletes the voided Apple variant of every purged version', async () => {
+    const pass = await passWithVersions(8);
+    const before = await rows(pass.id);
+    const purged = before.filter((r) => r.version <= 4).map((r) => voidedKey(pass.id, r.version));
+    const kept = voidedKey(pass.id, 8);
+    for (const key of [...purged, kept]) await kit.env.BUCKET.put(key, 'x');
+    await dailyPasses(kit.ctx);
+    for (const key of purged) expect(await kit.env.BUCKET.head(key)).toBeNull();
+    expect(await kit.env.BUCKET.head(kept)).not.toBeNull();
   });
 
   it('drops personalization from purged versions and refuses to diff them', async () => {
@@ -202,6 +214,8 @@ describe('hard deletion snapshots', () => {
     });
     expect(removed.deleted).toBe(true);
     expect(removed.objectKeys).toContain(pass.objectKey);
+    // Hard deletion (pass purge and sandbox purge) also takes the voided variants.
+    expect(removed.objectKeys).toContain(voidedKey(pass.id, pass.version));
   });
 
   it('does not delete after the selected pass revision changes', async () => {

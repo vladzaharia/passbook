@@ -1,0 +1,638 @@
+[
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=event",
+    "name": "scan-gallery-scanner-event",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=boarding",
+    "name": "scan-gallery-scanner-boarding",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=identity",
+    "name": "scan-gallery-scanner-identity",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=membership",
+    "name": "scan-gallery-scanner-membership",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=loyalty",
+    "name": "scan-gallery-scanner-loyalty",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=wallet",
+    "name": "scan-gallery-scanner-wallet",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=coupon",
+    "name": "scan-gallery-scanner-coupon",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=generic",
+    "name": "scan-gallery-scanner-generic",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=operator&pass=event",
+    "name": "scan-gallery-operator-event",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=operator&pass=boarding",
+    "name": "scan-gallery-operator-boarding",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=operator&pass=identity",
+    "name": "scan-gallery-operator-identity",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=operator&pass=membership",
+    "name": "scan-gallery-operator-membership",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=operator&pass=loyalty",
+    "name": "scan-gallery-operator-loyalty",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=operator&pass=wallet",
+    "name": "scan-gallery-operator-wallet",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=operator&pass=coupon",
+    "name": "scan-gallery-operator-coupon",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=operator&pass=generic",
+    "name": "scan-gallery-operator-generic",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=event",
+    "name": "scan-gallery-scanner-event-pass-sheet",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]",
+    "click": "button[aria-label=\"View pass\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=boarding",
+    "name": "scan-gallery-scanner-boarding-pass-sheet",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]",
+    "click": "button[aria-label=\"View pass\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=identity",
+    "name": "scan-gallery-scanner-identity-pass-sheet",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]",
+    "click": "button[aria-label=\"View pass\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=membership",
+    "name": "scan-gallery-scanner-membership-pass-sheet",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]",
+    "click": "button[aria-label=\"View pass\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=loyalty",
+    "name": "scan-gallery-scanner-loyalty-pass-sheet",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]",
+    "click": "button[aria-label=\"View pass\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=wallet",
+    "name": "scan-gallery-scanner-wallet-pass-sheet",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]",
+    "click": "button[aria-label=\"View pass\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=coupon",
+    "name": "scan-gallery-scanner-coupon-pass-sheet",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]",
+    "click": "button[aria-label=\"View pass\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=scanner&pass=generic",
+    "name": "scan-gallery-scanner-generic-pass-sheet",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-result\"]",
+    "click": "button[aria-label=\"View pass\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=customer&status=accepted",
+    "name": "scan-gallery-customer-accepted",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-live\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=customer&status=refused",
+    "name": "scan-gallery-customer-refused",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch",
+    "waitFor": "[data-testid=\"scan-live\"]"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=duo&status=ready",
+    "name": "scan-gallery-duo-ready",
+    "viewports": ["mobile", "tablet", "tabletLandscape", "tv"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=duo&status=checking",
+    "name": "scan-gallery-duo-checking",
+    "viewports": ["mobile", "tablet", "tabletLandscape", "tv"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=duo&status=accepted",
+    "name": "scan-gallery-duo-accepted",
+    "viewports": ["mobile", "tablet", "tabletLandscape", "tv"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=duo&status=checkedOut",
+    "name": "scan-gallery-duo-checkedOut",
+    "viewports": ["mobile", "tablet", "tabletLandscape", "tv"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=duo&status=rejected",
+    "name": "scan-gallery-duo-rejected",
+    "viewports": ["mobile", "tablet", "tabletLandscape", "tv"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=duo&status=failed",
+    "name": "scan-gallery-duo-failed",
+    "viewports": ["mobile", "tablet", "tabletLandscape", "tv"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=access&case=grant",
+    "name": "scan-gallery-access-grant",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=access&case=exit",
+    "name": "scan-gallery-access-exit",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=access&case=held-in",
+    "name": "scan-gallery-access-held-in",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=access&case=held-out",
+    "name": "scan-gallery-access-held-out",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=access&case=full",
+    "name": "scan-gallery-access-full",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=access&case=resolved",
+    "name": "scan-gallery-access-resolved",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=access&case=direction",
+    "name": "scan-gallery-access-direction",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=access&case=inside",
+    "name": "scan-gallery-access-inside",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=access&case=inside-empty",
+    "name": "scan-gallery-access-inside-empty",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=access&case=inside-offline",
+    "name": "scan-gallery-access-inside-offline",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-tag-android",
+    "name": "scan-gallery-tags-assign-tag-android",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-tag-iphone",
+    "name": "scan-gallery-tags-assign-tag-iphone",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-tag-web",
+    "name": "scan-gallery-tags-assign-tag-web",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-tag-usb",
+    "name": "scan-gallery-tags-assign-tag-usb",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-pass",
+    "name": "scan-gallery-tags-assign-pass",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-pass-banner",
+    "name": "scan-gallery-tags-assign-pass-banner",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-confirm",
+    "name": "scan-gallery-tags-assign-confirm",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-confirm-person",
+    "name": "scan-gallery-tags-assign-confirm-person",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-confirm-other",
+    "name": "scan-gallery-tags-assign-confirm-other",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-done",
+    "name": "scan-gallery-tags-assign-done",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-done-person",
+    "name": "scan-gallery-tags-assign-done-person",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-lost",
+    "name": "scan-gallery-tags-assign-lost",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-secure",
+    "name": "scan-gallery-tags-assign-secure",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-already",
+    "name": "scan-gallery-tags-assign-already",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-unreadable-web",
+    "name": "scan-gallery-tags-assign-unreadable-web",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-offline",
+    "name": "scan-gallery-tags-assign-offline",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-too-many",
+    "name": "scan-gallery-tags-assign-too-many",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=assign-holder-changed",
+    "name": "scan-gallery-tags-assign-holder-changed",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=request-card",
+    "name": "scan-gallery-tags-request-card",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=request-card-iphone",
+    "name": "scan-gallery-tags-request-card-iphone",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=request-done",
+    "name": "scan-gallery-tags-request-done",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=request-waiting",
+    "name": "scan-gallery-tags-request-waiting",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=door-tag-ok",
+    "name": "scan-gallery-tags-door-tag-ok",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=door-tag-of-many",
+    "name": "scan-gallery-tags-door-tag-of-many",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=door-tag-none",
+    "name": "scan-gallery-tags-door-tag-none",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=door-unknown",
+    "name": "scan-gallery-tags-door-unknown",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=door-add-tag",
+    "name": "scan-gallery-tags-door-add-tag",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=door-offline",
+    "name": "scan-gallery-tags-door-offline",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=door-tap-to-read",
+    "name": "scan-gallery-tags-door-tap-to-read",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=request-chip-waiting",
+    "name": "scan-gallery-tags-request-chip-waiting",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "anon",
+    "path": "/scan?visual=1&surface=tags&case=request-strip",
+    "name": "scan-gallery-tags-request-strip",
+    "viewports": ["mobile", "tablet", "tabletLandscape"],
+    "device": "touch"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning",
+    "name": "scan-admin-sessions",
+    "filterOrg": "northwindId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning?tab=scanners",
+    "name": "scan-admin-scanners",
+    "filterOrg": "northwindId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning?tab=events",
+    "name": "scan-admin-events",
+    "filterOrg": "harborId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning?tab=zones",
+    "name": "scan-admin-zones",
+    "filterOrg": "northwindId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning?tab=staff",
+    "name": "scan-admin-staff",
+    "filterOrg": "northwindId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning?tab=scans",
+    "name": "scan-admin-scans",
+    "filterOrg": "northwindId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning?tab=scans",
+    "name": "scan-admin-scans-harbor",
+    "filterOrg": "harborId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning?tab=tags",
+    "name": "scan-admin-tags",
+    "filterOrg": "northwindId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning",
+    "name": "scan-admin-sessions-harbor",
+    "filterOrg": "harborId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/sessions/{frontDoorId}",
+    "name": "scan-admin-session-front-door",
+    "filterOrg": "northwindId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/sessions/{eveningSessionId}",
+    "name": "scan-admin-session-hours",
+    "filterOrg": "northwindId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/scanners/{monitorId}",
+    "name": "scan-admin-scanner-monitor",
+    "filterOrg": "northwindId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/scanners/{scannerId}",
+    "name": "scan-admin-scanner-gate",
+    "filterOrg": "harborId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/events/{eventId}",
+    "name": "scan-admin-event",
+    "filterOrg": "harborId"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-scan-screen",
+    "filterOrg": "northwindId",
+    "click": "text=Scan screen"
+  }
+]

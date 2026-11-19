@@ -28,6 +28,7 @@ import { endpointHost, endpointState, spanLabel } from './health.ts';
 import { ReplayDialog } from './replay-dialog.tsx';
 import { RotateDialog } from './rotate-dialog.tsx';
 import { SettingsCard } from './settings-card.tsx';
+import { SigningCard } from './signing-card.tsx';
 import { TestSend } from './test-send.tsx';
 
 /** The one sentence a state needs; the pill says which state, this says what to do. */
@@ -162,6 +163,7 @@ export function EndpointDetail({
         />
       </div>
       <TwoPane
+        asideFirst
         aside={
           <>
             <Card>
@@ -179,20 +181,21 @@ export function EndpointDetail({
               </CardBody>
             </Card>
             <TestSend endpointId={e.id} host={host} canManage={canManage} />
+            <SigningCard endpoint={e} canManage={canManage} onRotate={() => setRotate(true)} />
           </>
         }
       >
+        <Card>
+          <CardHeader title="Deliveries" />
+          <CardBody>
+            <Deliveries endpointId={e.id} canManage={canManage} endpointStatus={e.status} />
+          </CardBody>
+        </Card>
         <SettingsCard
           key={JSON.stringify([e.url, e.description, e.eventTypes, e.templateIds])}
           endpoint={e}
           canManage={canManage}
         />
-        <Card>
-          <CardHeader title="Deliveries" />
-          <CardBody>
-            <Deliveries endpointId={e.id} canManage={canManage} />
-          </CardBody>
-        </Card>
       </TwoPane>
       {canManage ? (
         <>

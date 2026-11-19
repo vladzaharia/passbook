@@ -2,14 +2,35 @@
 import { readFileSync } from 'node:fs';
 
 export type Role = 'platform' | 'org' | 'holder' | 'anon';
-export type Route = { role: Role; path: string; name: string; waitFor?: string };
+export type Route = {
+  role: Role;
+  path: string;
+  name: string;
+  waitFor?: string;
+  /** Selector clicked once the page has loaded (a mode toggle, a tab). */
+  click?: string;
+  /** Viewports for this route instead of the requested ones; `--viewports` still narrows them. */
+  viewports?: ViewportName[];
+  /** Placeholder that holds the org the console filters to for this route, instead of `{orgId}`. */
+  filterOrg?: string;
+  /** `touch`: a phone or tablet user agent with touch, sized by the viewport. */
+  device?: 'touch';
+};
 
 export const VIEWPORTS = {
   desktop: { width: 1440, height: 900 },
   tablet: { width: 820, height: 1180 },
   mobile: { width: 390, height: 844 },
 } as const;
-export type ViewportName = keyof typeof VIEWPORTS;
+/** Sizes a route can ask for beyond the default three (scanner tablets in landscape, a TV). */
+export const EXTRA_VIEWPORTS = {
+  tabletLandscape: { width: 1180, height: 820 },
+  tv: { width: 1920, height: 1080 },
+} as const;
+export const SIZES = { ...VIEWPORTS, ...EXTRA_VIEWPORTS };
+export type ViewportName = keyof typeof SIZES;
+export const DEFAULT_VIEWPORTS = Object.keys(VIEWPORTS) as ViewportName[];
+export const ALL_VIEWPORTS = Object.keys(SIZES) as ViewportName[];
 
 const IPHONE_UA =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
@@ -23,6 +44,8 @@ export const DEVICES: Record<
 > = {
   desktop: {},
   tablet: { userAgent: IPAD_UA, isMobile: true, hasTouch: true },
+  tabletLandscape: { userAgent: IPAD_UA, isMobile: true, hasTouch: true },
+  tv: {},
   mobile: { userAgent: IPHONE_UA, isMobile: true, hasTouch: true },
 };
 export type Theme = 'light' | 'dark';
@@ -39,6 +62,8 @@ export function parseRoutes(json: string, source = 'route list'): Route[] {
         `${source}[${i}]: needs role (${ROLES.join('|')}), path starting with /, name.`,
       );
     }
+    const bad = r.viewports?.find((v) => !ALL_VIEWPORTS.includes(v));
+    if (bad) throw new Error(`${source}[${i}]: unknown viewport "${bad}".`);
     return r as Route;
   });
 }

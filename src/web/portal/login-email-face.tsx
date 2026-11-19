@@ -4,11 +4,14 @@ import { INVALID_EMAIL } from '@/shared/copy/sign-in.ts';
 import { strictEmail } from '@/shared/email.ts';
 import { isApiError } from '../lib/errors.ts';
 import { caretX } from '../lib/gaze.ts';
-import { Button, Callout, FormField, Input } from '../ui/index.ts';
+import { Button, Callout, FormField, Input, useNow } from '../ui/index.ts';
 import { isStandalone } from './device.ts';
 import { type SignInError, signInError } from './login-errors.ts';
 import { failure, type SceneActions } from './login-scene.tsx';
 import { CHALLENGE_FAILED, type MagicRequest } from './use-magic-request.ts';
+
+/** A rate limit's wait when the server gives none (the copy says "a minute"). */
+const RATE_WAIT_MS = 60_000;
 
 const isEmail = (value: string) => strictEmail(value) !== null;
 
@@ -31,7 +34,7 @@ function AccountButton({ next, primary }: { next: string | null; primary: boolea
     <Button asChild variant={primary ? 'primary' : 'outline'} className="wl-sweep w-full">
       <a href={href}>
         <span aria-hidden className="wl-sweep-ring" />
-        Sign in with your account
+        Sign in with Polaris ID
       </a>
     </Button>
   );
@@ -52,6 +55,9 @@ export function EmailFace({
   const [fieldError, setFieldError] = useState<string>();
   const [error, setError] = useState<SignInError>();
   const [standalone] = useState(isStandalone);
+  const [waitUntil, setWaitUntil] = useState(0);
+  const now = useNow(1000, waitUntil > 0);
+  const waitLeft = Math.max(0, Math.ceil((waitUntil - now) / 1000));
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -71,6 +77,9 @@ export function EmailFace({
     if (isApiError(result.error) && result.error.status === 422) {
       scene.fail('slip');
       return setFieldError(INVALID_EMAIL);
+    }
+    if (isApiError(result.error) && result.error.status === 429) {
+      setWaitUntil(Date.now() + RATE_WAIT_MS);
     }
     setError(signInError(result.error));
     scene.fail(failure(result.error));
@@ -104,6 +113,7 @@ export function EmailFace({
                 autoCapitalize="none"
                 spellCheck={false}
                 autoFocus
+                placeholder="name@example.com"
                 value={email}
                 onBlur={() => scene.gaze(null)}
                 onChange={(e) => {
@@ -122,13 +132,16 @@ export function EmailFace({
             type="submit"
             className="w-full"
             loading={busy}
-            iconEnd={busy ? null : <ArrowRight aria-hidden />}
+            disabled={waitLeft > 0}
+            iconEnd={busy || waitLeft > 0 ? null : <ArrowRight aria-hidden />}
           >
             {request.phase === 'checking'
               ? 'Checking…'
-              : standalone
-                ? 'Email me a code'
-                : 'Email me a sign-in link'}
+              : waitLeft > 0
+                ? `Try again in ${waitLeft}s`
+                : standalone
+                  ? 'Email me a code'
+                  : 'Email me a sign-in link'}
           </Button>
         </form>
       ) : null}

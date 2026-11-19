@@ -125,6 +125,12 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
       });
     case 'pass.scan_undone':
       return pick(d, SCAN_IDS);
+    case 'pass.channels_changed':
+      return pick(d, { channel: 'string', from: 'string', to: 'string', source: 'string' });
+    case 'pass.printed':
+      return pick(d, { printId: 'string', generation: 'number', voided: 'number' });
+    case 'pass.print_voided':
+      return pick(d, { printId: 'string', cause: 'string' });
     case 'push.failed':
       return pick(d, { ...VERSION, status: 'number', reason: 'string', code: 'string' });
     case 'email.failed':

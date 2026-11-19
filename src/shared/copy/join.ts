@@ -61,6 +61,7 @@ export const JOIN_COPY = {
     checkEmail: {
       title: 'Check your email',
       body: 'We sent your {org} card to {email}.',
+      hint: 'Not there? Check spam. It can take a few minutes.',
       another: 'Use a different email',
     },
   },

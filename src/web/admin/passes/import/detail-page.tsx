@@ -2,6 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
+import { orgPath } from '../../../lib/scope.ts';
 import {
   Badge,
   Buddy,
@@ -44,7 +45,7 @@ export function ImportDetailPage({ importId }: { importId: string }) {
   const imp = query.data;
   const canSync = membership?.capabilities.includes('integrations:manage') ?? false;
   const canOperate = membership?.capabilities.includes('passes:operate') ?? false;
-  const back = () => void navigate({ to: '/admin/passes/import', search: orgId ? { orgId } : {} });
+  const back = () => orgId && void navigate({ href: orgPath(orgId, '/passes/import') });
 
   let body = <Skeleton className="h-64" />;
   if (!orgId) body = <EmptyState art="people" title={C.chooseOrg} />;

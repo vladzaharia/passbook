@@ -129,7 +129,7 @@ export const EMAIL_STATUS = {
 /** Holder states: owned, waiting, unassigned on the wire. */
 export const HOLDER_STATUS = {
   owned: {
-    label: 'Claimed',
+    label: 'Holder signed in',
     tone: 'success',
     icon: UserCheck,
     hint: 'The holder signed in and has this pass.',

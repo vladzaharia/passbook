@@ -4,6 +4,7 @@ import { AuthorityError } from '../../platform/authority-error.ts';
 import { type GrantPart, readPart } from '../../platform/authority-include.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
+import { channelEpochSql } from './repo-lookup.ts';
 import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
 
 /** The SQL behind the scan grant checks (`authority-checks.ts`, `scan-pass-checks.ts`, `scan-write-grant.ts`). */
@@ -209,4 +210,18 @@ export function assertReleaseCheckText(
     throw bad('The aliases a and g are reserved in a release check.');
   if ((text.match(/\?/g)?.length ?? 0) !== bound)
     throw bad('A release check binds as many values as it has marks.');
+}
+
+/** A channel turned on or off, a policy or an org block saved since the read refuses the commit. */
+export function channelEpochChecks(passId: string, epoch: string | undefined): Check[] {
+  return epoch === undefined
+    ? []
+    : [
+        tenantCheck(
+          'lineage',
+          `EXISTS (SELECT 1 FROM passes p WHERE p.id = ? AND p.org_id = {org} AND p.mode = {mode}
+             AND ${channelEpochSql('{org}', '{mode}')} = ?)`,
+          [passId, epoch],
+        ),
+      ];
 }

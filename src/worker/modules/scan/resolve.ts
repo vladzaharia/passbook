@@ -2,6 +2,7 @@ import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import { HIDDEN_STOP_LABEL } from '../../../passkit/template/scan-display/privacy.ts';
 import type { PassJson, PassStyle } from '../../../passkit/types.ts';
 import { PASS_STYLES } from '../../../passkit/types.ts';
+import type { Channel } from '../../../shared/contracts/channels.ts';
 import type { CheckInPolicy } from '../../../shared/contracts/check-in.ts';
 import type { ScanAccess, ScanOccupancy, ScanReason } from '../../../shared/contracts/scan.ts';
 import {
@@ -81,6 +82,8 @@ export interface Stop
   /** A held Auto flip: the place as read and the direction offered. */
   occupancy?: ScanOccupancy;
   flags: string[];
+  /** The channel a `channel_off` refusal names. */
+  channel?: Channel;
   found: Found | null;
   /** Internal ledger linkage for an inactive pass; never an output identity. */
   auditPassId?: string;

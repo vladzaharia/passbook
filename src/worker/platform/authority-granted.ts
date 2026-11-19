@@ -198,6 +198,7 @@ const HOLDER_PURPOSES: Record<HolderProof['via'], readonly string[]> = {
   session: ['org_mode.pass.holder_remove', 'org_mode.nfc.tag.holder_lost'],
   verified_email: ['org_mode.pass.holder_attach'],
   device: ['org_mode.pass.personalize'],
+  link: ['org_mode.pass.holder_print'],
 };
 
 /** A holder grant is org_mode, has the one purpose its proof allows, and its target is its pass. */

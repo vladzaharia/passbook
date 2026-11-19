@@ -267,6 +267,9 @@ CREATE TRIGGER authority_grants_wallet_platform_only BEFORE INSERT ON authority_
 WHEN NEW.purpose IN ('org_mode.wallet.enrolment_hold', 'org_mode.wallet.enrolment_release',
     'org_mode.wallet.migration_resolve') AND NEW.principal NOT GLOB 'platform:*'
 BEGIN SELECT RAISE(ABORT, 'wallet platform purposes are held by a platform admin'); END;
+CREATE TRIGGER authority_grants_wallet_jobs_system_only BEFORE INSERT ON authority_grants
+WHEN NEW.purpose GLOB 'org_mode.job.wallet.*' AND NEW.principal NOT GLOB 'system:*'
+BEGIN SELECT RAISE(ABORT, 'wallet job purposes are held by the system'); END;
 CREATE TRIGGER wallet_enrolment_events_platform_kinds BEFORE INSERT ON wallet_enrolment_events
 WHEN NEW.kind IN ('hold', 'release') AND NOT EXISTS (
   SELECT 1 FROM authority_grants g WHERE g.org_id = NEW.org_id AND g.mode = NEW.mode

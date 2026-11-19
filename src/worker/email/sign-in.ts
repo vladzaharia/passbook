@@ -17,6 +17,8 @@ export interface SignInEmailInput {
   link: string;
   /** PUBLIC_BASE_URL without the trailing slash: the header images live under it. */
   base: string;
+  /** The address the mail is for, under the title. */
+  to?: string;
   /** Present for sign_in only. */
   code?: string;
   expiresMinutes: number;
@@ -68,8 +70,13 @@ export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
   const title = verify ? 'Confirm your email' : codeFirst ? subject : 'Sign in to PassBook';
   const action = verify ? 'Confirm email' : 'Sign in';
   const expiry = `Expires in ${input.expiresMinutes} minutes. Ignore this email if you did not ask for it.`;
-  const askedBy =
-    verify && input.requester ? `Adds this address to the account of ${input.requester}.` : '';
+  const askedBy = verify
+    ? input.requester
+      ? `Adds this address to the account of ${input.requester}.`
+      : ''
+    : input.to
+      ? `For ${input.to}.`
+      : '';
 
   const lines = codeFirst
     ? [title, input.code, `Or open this link: ${input.link}`, expiry]

@@ -136,7 +136,14 @@ export function LifecycleFields({
       </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         {scheduled(value.mode) ? (
-          <FormField label="Interval" help="Blank uses the connector default.">
+          <FormField
+            label="Interval"
+            help={
+              defaultMinutes
+                ? `Blank uses the default, ${defaultMinutes} min.`
+                : 'Blank uses the connector default.'
+            }
+          >
             {(c) => (
               <NumberField
                 {...c}
@@ -152,7 +159,10 @@ export function LifecycleFields({
             )}
           </FormField>
         ) : null}
-        <FormField label="Holder email" help="JSON pointer to the email in each record.">
+        <FormField
+          label="Holder email"
+          help="Field that holds the holder's email, for example /email."
+        >
           {(c) => (
             <Input
               {...c}
@@ -166,7 +176,10 @@ export function LifecycleFields({
             />
           )}
         </FormField>
-        <FormField label="When a record is missing">
+        <FormField
+          label="When a record is missing"
+          help="Flag marks it for review. Void stops it working in Wallet."
+        >
           {(c) => (
             <Select
               {...c}

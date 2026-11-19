@@ -19,6 +19,7 @@ import {
   tagsSwitchStmt,
 } from './repo-tags-resolve.ts';
 import { accepts, matchesEvent } from './resolve-candidates.ts';
+import { dropNfcOff } from './resolve-channels.ts';
 import { evaluate } from './resolve-evaluate.ts';
 import { candidateTakesTag, TAG_ASSURANCE } from './tag-assurance.ts';
 import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
@@ -165,7 +166,7 @@ export async function chooseTagPass(
   options: { pin?: string | null; actionId?: string } = {},
 ): Promise<TagChoice | null> {
   const { tag } = found;
-  const all = found.candidates;
+  const all = await dropNfcOff(ctx, found.candidates);
   const choice = (chosen: Candidate, passes?: ScanTag['passes']): TagChoice => {
     const authority: ScanTagAuthority = {
       tagId: tag.id,

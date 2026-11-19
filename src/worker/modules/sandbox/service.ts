@@ -14,6 +14,7 @@ import {
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { channelOn, recordCopy } from '../channels/gate.ts';
 import type { MailAttachment, Mailer } from '../delivery/mailer.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getPlatformSettings } from '../settings/service.ts';
@@ -145,15 +146,18 @@ export async function sendCapturedToMe(
     fromName = (await getPlatformSettings(ctx))['email.senderName'];
     if (ref.attached === 1) {
       if (snapshot.kind !== 'pass') throw new Error('Invalid captured attachment.');
-      const object = await ctx.env.BUCKET.get(snapshot.pass.objectKey);
-      if (!object) throw new Error('Captured attachment is missing.');
-      attachments = [
-        {
-          filename: 'pass.pkpass',
-          type: 'application/vnd.apple.pkpass',
-          content: new Uint8Array(await object.arrayBuffer()),
-        },
-      ];
+      // Apple may have been turned off since the capture: the message goes without the copy.
+      if (await channelOn(ctx, snapshot.pass, 'apple')) {
+        const object = await ctx.env.BUCKET.get(snapshot.pass.objectKey);
+        if (!object) throw new Error('Captured attachment is missing.');
+        attachments = [
+          {
+            filename: 'pass.pkpass',
+            type: 'application/vnd.apple.pkpass',
+            content: new Uint8Array(await object.arrayBuffer()),
+          },
+        ];
+      }
     }
     // Check the exact intent, members, grant and verified address at the provider boundary.
     const content = await readForwardContent(
@@ -189,6 +193,7 @@ export async function sendCapturedToMe(
       fromName,
       ...(attachments ? { attachments } : {}),
     });
+    if (attachments && snapshot.kind === 'pass') await recordCopy(ctx, snapshot.pass, 'apple');
   } catch (error) {
     // Mailer rejection can happen after acceptance. Never retry; the lock expires after a day.
     ctx.log.warn('sandbox.forward_mailer_failed', {

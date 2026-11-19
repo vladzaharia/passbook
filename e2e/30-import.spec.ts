@@ -52,7 +52,7 @@ test('import a sheet: fix the error file, commit, re-import as unchanged, remove
   const first = page.url();
 
   // 3. Commit with email.
-  await page.getByRole('button', { name: 'Create passes' }).click();
+  await page.getByRole('button', { name: /^(Create|Update) \d+/ }).click();
   await page.getByRole('switch', { name: 'Email new holders' }).click();
   await page.getByRole('button', { name: 'Create 3', exact: true }).click();
   await expect(page.getByText('All rows done.')).toBeVisible({ timeout: 60_000 });
@@ -64,7 +64,7 @@ test('import a sheet: fix the error file, commit, re-import as unchanged, remove
   // 4. The same file again changes nothing.
   await start([HEAD, ...good, row(refs[2] as string, 'Cy', '30')].join('\n'));
   await expect(page.getByText('0 to create · 0 to update · 3 unchanged · 0 errors')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Create passes' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /^(Create|Update) \d+/ })).toBeDisabled();
 
   // 5. Results of the first run: download, then remove what it created.
   await page.goto(first);

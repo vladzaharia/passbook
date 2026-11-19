@@ -3,7 +3,7 @@ import type { PassImportState } from '@/shared/contracts/pass-imports.ts';
 type Tone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger' | 'info';
 
 export const STATE_LABEL: Record<PassImportState, string> = {
-  mapping: 'Needs columns',
+  mapping: 'Check mapping',
   checking: 'Checking',
   ready: 'Ready',
   committing: 'Running',

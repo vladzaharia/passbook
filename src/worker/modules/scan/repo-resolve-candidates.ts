@@ -3,7 +3,14 @@ import type { ScanActor } from './guard.ts';
 
 export type CandidateMatchInput =
   | { passId: string }
-  | { scanCode: string | null; barcodeHash: string; lookupHash: string; serial: string | null };
+  | {
+      scanCode: string | null;
+      barcodeHash: string;
+      lookupHash: string;
+      serial: string | null;
+      /** Keyed ref of a print code, when the input is shaped like one. */
+      printRef?: string | null;
+    };
 
 /** Match the same credential alternatives used by candidate reads, over a `passes` row aliased `p`. */
 export function candidateMatchPredicate(input: CandidateMatchInput): {
@@ -25,6 +32,10 @@ export function candidateMatchPredicate(input: CandidateMatchInput): {
     if (input.serial !== null) {
       matches.push('p.serial=?');
       params.push(input.serial);
+    }
+    if (input.printRef) {
+      matches.push('p.id IN (SELECT pass_id FROM pass_prints WHERE print_code_hash=?)');
+      params.push(input.printRef);
     }
   }
   return { sql: matches.join(' OR '), params };

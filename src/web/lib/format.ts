@@ -1,5 +1,7 @@
 import { NO_EMAIL_LABEL } from '../../shared/email.ts';
 
+export { formatEndedOn } from '../../shared/format-date.ts';
+
 // Every date and number a person reads in the app, in one locale. Engines join a date and a time
 // differently ("Nov 2, 2026, 11:51 PM" in Chromium, "… at 11:51 PM" in WebKit), so the parts are
 // formatted apart and joined here.
