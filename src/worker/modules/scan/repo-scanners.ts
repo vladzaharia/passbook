@@ -1,7 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { maxNow, type SetValue } from '../../platform/authority-expr.ts';
-import { all, first, placeholders, prefixMatch, stmt } from '../../platform/db.ts';
+import { all, first, prefixMatch, stmt } from '../../platform/db.ts';
 import { templateVisibleSql, visibleBinds } from '../templates/repo-visibility.ts';
 
 type Db = D1Database;
@@ -303,7 +303,7 @@ export const firstSampleTemplate = (db: Db, orgId: string, ids: readonly string[
     db,
     `SELECT t.id FROM templates t
      WHERE ${templateVisibleSql('t', '?')} AND t.status = 'active' AND t.blueprint = 0
-       AND t.id IN (${placeholders(ids.length)})
+       AND t.id IN (SELECT value FROM json_each(?))
      ORDER BY t.id LIMIT 1`,
-    [...visibleBinds(orgId), ...ids],
+    [...visibleBinds(orgId), JSON.stringify(ids)],
   );

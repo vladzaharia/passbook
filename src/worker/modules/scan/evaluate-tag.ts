@@ -4,6 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { readableUid, tagRef } from '../nfc/tag-ref.ts';
 import { isGuestPass } from './access.ts';
 import type { ScanActor, ScanTagAuthority } from './actor.ts';
+import { narrowToPass } from './admits.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import { type Candidate, candidatesOf } from './repo-lookup.ts';
 import {
@@ -183,7 +184,8 @@ export async function chooseTagPass(
       view.count = all.length;
       if (passes) view.passes = passes;
     }
-    return { chosen, actor: { ...actor, tag: authority }, view };
+    const admitted = narrowToPass(actor, chosen.pass, ctx.clock.now());
+    return { chosen, actor: { ...admitted, tag: authority }, view };
   };
   const pin = options.pin ?? null;
   if (pin !== null) {
@@ -212,7 +214,8 @@ export async function chooseTagPass(
       credentialTombstoneRefs: [],
       otherModeCredentialTombstoneRefs: [],
     };
-    const evaluated = await evaluate(ctx, actor, input, {}, refs, {
+    const admitted = narrowToPass(actor, c.pass, ctx.clock.now());
+    const evaluated = await evaluate(ctx, admitted, input, {}, refs, {
       candidateRead: { candidates: [structuredClone(c)] },
     });
     const lacksAction =

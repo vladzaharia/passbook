@@ -16,10 +16,12 @@ import type { ScanActor } from './actor.ts';
 import {
   apiKeyActsCheck,
   deviceAwakeCheck,
+  eventsAtEpochsCheck,
   noScannerTemplatesCheck,
   noStaffBindingCheck,
   scannerTemplateCheck,
   sessionAcceptsTemplateCheck,
+  sessionAdmitsTemplateCheck,
 } from './repo-scan-checks.ts';
 import type { ScanEventRow } from './repo-scope.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
@@ -191,6 +193,13 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
     checks.push(
       rowIs('scan_events', actor.event.id, { config_epoch: epoch, archived_at: null }, 'config'),
     );
+  } else if (actor.events) {
+    const pairs = actor.events.map(({ event }): [string, number] => {
+      const epoch = epochs.events[event.id];
+      if (epoch === undefined) throw epochsMissing();
+      return [event.id, epoch];
+    });
+    checks.push(eventsAtEpochsCheck(pairs));
   }
   // The operation's own event is usually not the actor's: its epoch was not captured at the guard,
   // so compare its configuration columns instead.
@@ -236,6 +245,8 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
           'config',
         ),
       );
+    else if (session && actor.events)
+      checks.push(sessionAdmitsTemplateCheck(session.id, templateId));
     else if (session && actor.templateIds.length > 0)
       checks.push(sessionAcceptsTemplateCheck(session.id, templateId));
     else if (scanner && !session && actor.templateIds.length > 0)

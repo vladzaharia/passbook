@@ -4,6 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { deferTermClear } from './act-term-stamp.ts';
 import { adminActor, captureScanTenantAuthority, type ScanActor, tenantScanRole } from './actor.ts';
+import { narrowToRecorded } from './admits.ts';
 import { verifyApproval } from './approval.ts';
 import { captureScanEpochs } from './authority-checks.ts';
 import { localDay } from './counts.ts';
@@ -74,6 +75,12 @@ async function run(
   req: UndoRequest,
   maxAgeMs?: number,
 ): Promise<ScanEvaluation> {
+  // A mixed scope undoes under the entry the scan ran under.
+  const scoped = read.target
+    ? narrowToRecorded(actor, read.target.eventId, read.target.templateId)
+    : actor;
+  if (!scoped) throw notFound();
+  actor = scoped;
   const plan = await planUndo(actor, read);
   const { target } = plan;
   const now = ctx.clock.now();

@@ -163,6 +163,12 @@ export async function bindScanningSession(ctx: ServiceContext, actor: ScanActor)
     scope.restricted || denied ? { ...settings, acceptAllTemplates: false } : settings;
   actor.event = denied ? null : scope.event;
   actor.templateIds = denied ? [] : scope.templateIds;
+  delete actor.events;
+  delete actor.entryTemplateIds;
+  if (!denied && scope.events) {
+    actor.events = scope.events;
+    actor.entryTemplateIds = scope.entryTemplateIds ?? [];
+  }
   actor.timeZone = actor.event?.timeZone ?? parent.time_zone;
   recordObservedScanningSession(binding, {
     parent,

@@ -1,10 +1,12 @@
 import type { ScannerSettings } from '../../../shared/contracts/scan.ts';
+import { type AdmitsInput, admitsOf } from '../../../shared/contracts/scanners.ts';
 import type {
   ScanDeviceOverrides,
   ScanSurface,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import type { Grant } from '../../platform/authority.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { admitsJson } from './admits.ts';
 import { addScanningDeviceInsert } from './repo-scanning-devices.ts';
 import { addScanningSessionInsert } from './repo-scanning-sessions.ts';
 
@@ -25,7 +27,7 @@ export function addEnrollment(
     name: string;
     deviceRole: 'scan' | 'monitor' | 'customer';
     timeZone: string;
-    accepts?: unknown;
+    accepts?: AdmitsInput | null;
     adminUserId?: string;
   },
   settings: ScannerSettings,
@@ -46,7 +48,7 @@ export function addEnrollment(
         id,
         name: input.name,
         status: 'active',
-        accepts: input.accepts ? JSON.stringify(input.accepts) : null,
+        accepts: input.accepts ? admitsJson(admitsOf(input.accepts)) : null,
         settings: JSON.stringify(settings),
         time_zone: input.timeZone,
         hours: null,

@@ -1,6 +1,8 @@
+import type { Admits } from '../../../shared/contracts/scanners.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { storedAdmits } from './admits.ts';
 import { sessionZoneIds, zonesInOrg, zonesOpen } from './repo-zones.ts';
 
 /**
@@ -39,13 +41,13 @@ export async function assertNoZonesLeft(
     throw new ValidationError('An event session takes no zones.', [], 'ZONE_EVENT_SESSION');
 }
 
-/** The event a stored `accepts` names, if any. */
-export function eventOfAccepts(raw: string | null): string | null {
-  if (raw === null) return null;
-  try {
-    const parsed = JSON.parse(raw) as { eventId?: unknown };
-    return typeof parsed.eventId === 'string' ? parsed.eventId : null;
-  } catch {
-    return null;
-  }
-}
+/** The first event of an event-only scope: such a session takes no zones. */
+export const eventOnly = (
+  admits: Admits | { admits: Admits } | null | undefined,
+): string | null => {
+  const lists = admits && 'admits' in admits ? admits.admits : admits;
+  return lists && lists.templateIds.length === 0 ? (lists.eventIds[0] ?? null) : null;
+};
+
+/** The first event of a stored event-only `accepts`, if any. */
+export const eventOfAccepts = (raw: string | null): string | null => eventOnly(storedAdmits(raw));

@@ -3,6 +3,7 @@ import { TimeZoneSchema } from '../../../shared/contracts/scan.ts';
 import { type Check, rawCheck } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
 import type { SqlValue } from '../../platform/db.ts';
+import { storedAdmits } from './admits.ts';
 import {
   denySampleScannerScope as deny,
   sampleScannerScopePredicate,
@@ -73,7 +74,7 @@ const timestamp = (value: unknown): value is number =>
 function validIds(value: unknown): value is readonly string[] {
   return (
     Array.isArray(value) &&
-    value.length <= 20 &&
+    value.length <= 100 &&
     value.every((id) => text(id) && id.length <= 64) &&
     new Set(value).size === value.length
   );
@@ -214,36 +215,35 @@ function sampleScopePredicate(
     )
       return deny();
 
-    if (row.accepts === null) {
+    const admits = storedAdmits(row.accepts);
+    const [only] = admits?.eventIds ?? [];
+    if (admits === null) {
       if (scope.restricted || scope.event !== null || scope.templateIds.length !== 0) return deny();
-    } else {
-      let accepts: unknown;
-      try {
-        accepts = JSON.parse(row.accepts);
-      } catch {
-        return deny();
-      }
+    } else if (!admits || !scope.restricted) return deny();
+    else if (only !== undefined && admits.eventIds.length === 1 && !admits.templateIds.length) {
       if (
-        !accepts ||
-        typeof accepts !== 'object' ||
-        Array.isArray(accepts) ||
-        Object.keys(accepts).length !== 1 ||
-        !scope.restricted
+        !scope.event ||
+        scope.event.id !== only ||
+        !validEvent(scope.event, orgId, mode) ||
+        scope.templateIds.length === 0
       )
         return deny();
-      const value = accepts as { eventId?: unknown; templateIds?: unknown };
-      if (typeof value.eventId === 'string') {
-        if (
-          !scope.event ||
-          scope.event.id !== value.eventId ||
-          !validEvent(scope.event, orgId, mode) ||
-          scope.templateIds.length === 0
-        )
-          return deny();
-      } else if (validIds(value.templateIds)) {
-        if (scope.event !== null || !sameIds(value.templateIds, scope.templateIds)) return deny();
-      } else return deny();
+    } else if (admits.eventIds.length === 0) {
+      if (scope.event !== null || !sameIds(admits.templateIds, scope.templateIds)) return deny();
     }
+    // A mixed scope: the sample's entry is one of its events, or its template entries.
+    else if (scope.event) {
+      if (
+        !admits.eventIds.includes(scope.event.id) ||
+        !validEvent(scope.event, orgId, mode) ||
+        scope.templateIds.length === 0
+      )
+        return deny();
+    } else if (
+      scope.templateIds.length === 0 ||
+      !scope.templateIds.every((id) => admits.templateIds.includes(id))
+    )
+      return deny();
     predicate.withSession(row, device, scope);
     effective = scope.templateIds;
   }

@@ -69,7 +69,12 @@ export async function createSamplePass(
         [],
         'SCANNER_UNASSIGNED',
       );
-    templateIds = sessionScope.templateIds;
+    // A mixed session samples its first entry: its first event, else its template entries.
+    const [firstEvent] = sessionScope.events ?? [];
+    const entry = firstEvent
+      ? { event: firstEvent.event, templateIds: firstEvent.templateIds }
+      : { event: sessionScope.event, templateIds: sessionScope.templateIds };
+    templateIds = entry.templateIds;
     sessionSnapshot = {
       row: {
         id: session.id,
@@ -93,8 +98,8 @@ export async function createSamplePass(
         device_key: device.device_key,
       },
       scope: {
-        event: sessionScope.event ? { ...sessionScope.event } : null,
-        templateIds: [...sessionScope.templateIds],
+        event: entry.event ? { ...entry.event } : null,
+        templateIds: [...entry.templateIds],
         restricted: sessionScope.restricted,
       },
     };

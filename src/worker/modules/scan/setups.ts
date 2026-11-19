@@ -5,12 +5,14 @@ import type {
   CreateScannerSetupSchema,
   UpdateScannerSetupSchema,
 } from '../../../shared/contracts/scan-setups.ts';
+import type { AdmitsInput } from '../../../shared/contracts/scanners.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { getUser } from '../users/repo.ts';
+import { admitsJson } from './admits.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { assertStandaloneSession } from './legacy-session.ts';
 import { kickScreen } from './live.ts';
@@ -43,7 +45,10 @@ import { checkWatch } from './setup-watch.ts';
 
 const SETUP_CODES = { config: 'SCANNER_CHANGED', lineage: 'SCANNER_CHANGED' } as const;
 
-type Create = z.infer<typeof CreateScannerSetupSchema>;
+/** A session's device setup takes the session's admits, which may mix events and templates. */
+type Create = Omit<z.infer<typeof CreateScannerSetupSchema>, 'accepts'> & {
+  accepts?: AdmitsInput | null;
+};
 type Update = z.infer<typeof UpdateScannerSetupSchema>;
 
 function roleAllowed(kind: Create['kind'], role: Create['deviceRole']) {
@@ -125,7 +130,7 @@ export async function createSetup(
     orgId,
     [
       ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
-      ...eventsOpen([accepts?.eventId, settings.checkIn?.eventId]),
+      ...eventsOpen([...(accepts?.eventIds ?? []), settings.checkIn?.eventId]),
       ...scopeTemplatesUsable(accepts?.templateIds ?? [], attached),
     ],
     SETUP_CODES,
@@ -224,7 +229,7 @@ export async function updateSetup(
     [
       scannerEpoch(id, row.configEpoch),
       ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
-      ...eventsOpen([accepts?.eventId, input.settings?.checkIn?.eventId]),
+      ...eventsOpen([...(accepts?.eventIds ?? []), input.settings?.checkIn?.eventId]),
       ...scopeTemplatesUsable(accepts?.templateIds ?? [], row.templateIds),
     ],
     SETUP_CODES,
@@ -253,7 +258,7 @@ export async function updateSetup(
         ...(parentSettings ? { settings: JSON.stringify(parentSettings) } : {}),
         ...(input.accepts === undefined
           ? {}
-          : { accepts: input.accepts === null ? null : JSON.stringify(input.accepts) }),
+          : { accepts: accepts ? admitsJson(accepts.admits) : null }),
       },
       now,
     );

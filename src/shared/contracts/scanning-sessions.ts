@@ -10,7 +10,7 @@ import {
 import { ScannerTagsSettingsSchema, TagLevelSchema } from './nfc-tags.ts';
 import { ScanApprovalSchema, ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
 import { WeeklyHoursSchema, ZoneIdsSchema } from './scan-access.ts';
-import { ScannerAcceptsSchema } from './scanners.ts';
+import { AdmitsSchema } from './scanners.ts';
 
 /** Layout and sign-in method are independent: an admin is another device in the session. */
 export const ScanSurfaceSchema = z.enum(['phone', 'operator', 'desk', 'customer']);
@@ -135,7 +135,7 @@ export const ScanningSessionSchema = z.object({
   mode: ModeSchema,
   name: PlainLineSchema(80),
   status: ScanningSessionStatusSchema,
-  accepts: ScannerAcceptsSchema.nullable(),
+  accepts: AdmitsSchema.nullable(),
   settings: ScanningSessionSettingsSchema,
   /** Access zones this session checks. Absent from servers that predate zones. */
   zoneIds: ZoneIdsSchema.optional(),
@@ -158,7 +158,7 @@ export const CreateScanningSessionSchema = z.strictObject({
   orgId: IdSchema,
   name: PlainLineSchema(80),
   timeZone: TimeZoneSchema,
-  accepts: ScannerAcceptsSchema.nullable().default(null),
+  accepts: AdmitsSchema.nullable().default(null),
   settings: ScanningSessionSettingsSchema.partial().optional(),
   zoneIds: ZoneIdsSchema.optional(),
   hours: SessionHoursSchema.nullable().optional(),
@@ -167,7 +167,7 @@ export const CreateScanningSessionSchema = z.strictObject({
 export const UpdateScanningSessionSchema = z.strictObject({
   name: PlainLineSchema(80).optional(),
   timeZone: TimeZoneSchema.optional(),
-  accepts: ScannerAcceptsSchema.nullable().optional(),
+  accepts: AdmitsSchema.nullable().optional(),
   settings: ScanningSessionSettingsSchema.partial().optional(),
   zoneIds: ZoneIdsSchema.optional(),
   hours: SessionHoursSchema.nullable().optional(),

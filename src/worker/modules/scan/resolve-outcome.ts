@@ -4,6 +4,7 @@ import type { ResolvedScanAction, ResolvedScanManifest } from '../../../shared/s
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
+import { narrowForCandidates } from './admits.ts';
 import { type CountsPlan, planCounts } from './counts.ts';
 import {
   type CredentialTombstoneSnapshot,
@@ -80,7 +81,15 @@ export async function resolveOutcome(
   refuseOverCap(results[plan.stmts.length + countPlan.stmts.length + 1]?.results?.[0], plan.now);
   if (!settingsResult) return refused;
   const settings = decodePlatformSettings(settingsResult);
-  const counts: CountsPlan = { stmts: [], read: () => countPlan.read(countResults) };
+  let counts: CountsPlan = { stmts: [], read: () => countPlan.read(countResults) };
+  // A mixed scope runs the scan under the entry that admits the pass; an event's counts come with it.
+  const admitted = narrowForCandidates(actor, candidateRead.candidates, plan.now);
+  if (admitted !== actor && admitted.event) {
+    const again = planCounts({ ...ctx, clock: { now: () => plan.now } }, admitted, req.dayStart);
+    const read = again.stmts.length ? await ctx.env.DB.batch(again.stmts) : [];
+    counts = { stmts: [], read: () => again.read(read) };
+  }
+  actor = admitted;
   const { unconfirmed: notConfirmed, ...result } = await resolveObserved(
     ctx,
     actor,
