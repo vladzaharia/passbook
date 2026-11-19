@@ -105,30 +105,28 @@ function GovernanceSummary({
             )}
           </p>
           <p className="text-sm text-fg-muted">
-            {filtered
-              ? 'Non-deleted organizations matching the platform filter.'
-              : 'Non-deleted organizations across the platform.'}
+            {filtered ? 'Matching the organization filter.' : 'Not deleted.'}
           </p>
           <Button asChild variant="link" className="mt-auto">
-            <Link to="/admin/orgs">View organizations</Link>
+            <Link to="/admin/platform/orgs">View organizations</Link>
           </Button>
         </CardBody>
       </Card>
       <Card>
         <CardBody className="flex h-full flex-col items-start gap-2">
-          <h2 className="text-sm font-semibold text-fg-strong">Platform accounts</h2>
-          <p className="text-sm text-fg-muted">Browse the global account directory.</p>
+          <h2 className="text-sm font-semibold text-fg-strong">Users</h2>
+          <p className="text-sm text-fg-muted">Every account on the platform.</p>
           <Button asChild variant="link" className="mt-auto">
-            <Link to="/admin/users">View accounts</Link>
+            <Link to="/admin/platform/users">View users</Link>
           </Button>
         </CardBody>
       </Card>
       <Card>
         <CardBody className="flex h-full flex-col items-start gap-2">
-          <h2 className="text-sm font-semibold text-fg-strong">Apple identities</h2>
-          <p className="text-sm text-fg-muted">Review signing identities and their certificates.</p>
+          <h2 className="text-sm font-semibold text-fg-strong">Wallet accounts</h2>
+          <p className="text-sm text-fg-muted">Signing identities and their certificates.</p>
           <Button asChild variant="link" className="mt-auto">
-            <Link to="/admin/identities">View identities</Link>
+            <Link to="/admin/platform/wallet-accounts">View wallet accounts</Link>
           </Button>
         </CardBody>
       </Card>
@@ -186,14 +184,13 @@ export function OverviewPage({
     <>
       <PageHeader
         title="Overview"
-        breadcrumbs={[{ label: 'Platform', to: '/admin/platform' }, { label: 'Overview' }]}
         // Platform pages ignore mode (lib/mode.ts): no mode words here.
         meta={`Metrics: ${organizationName ?? 'All organizations'}`}
         actions={firstRun ? undefined : picker}
       />
       <div className="flex flex-col gap-6">
         <div className="flex max-w-md flex-col gap-2">
-          <Label htmlFor={filterId}>Platform organization filter</Label>
+          <Label htmlFor={filterId}>Organization</Label>
           <Combobox
             id={filterId}
             options={orgOptions}
@@ -237,7 +234,7 @@ export function OverviewPage({
               className="self-start"
               onClick={() => onSearch({ filterOrgId: undefined })}
             >
-              Clear organization filter
+              Clear filter
             </Button>
           ) : null}
         </div>

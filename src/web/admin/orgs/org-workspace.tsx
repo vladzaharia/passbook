@@ -14,15 +14,11 @@ import {
   PageHeader,
   SaveBarGroup,
   SkeletonDetail,
-  TwoPane,
 } from '@/web/ui/index.ts';
 import { OrgSettingsSections } from '../settings/org-settings-page.tsx';
-import { AccessCard } from './org-access.tsx';
-import { CountsCard, OrgChecklist, OverviewCard, SigningCard } from './org-aside.tsx';
 import { OrgForm } from './org-form.tsx';
 import { OrgStatus } from './orgs-page.tsx';
 import { useOrgWorkspace } from './queries.ts';
-import { WalletAccountsPanel } from './wallet-accounts.tsx';
 
 type Workspace = z.infer<typeof OrgSummarySchema>;
 
@@ -59,16 +55,8 @@ export function OrgWorkspacePage({
   isAdmin: boolean;
 }) {
   const query = useOrgWorkspace(orgId);
-  const selectedOrgId = membership.orgId;
   const canManage = membership.capabilities.includes('org:manage');
-  const canManageMembers = membership.capabilities.includes('members:manage');
   const canPreviewTemplates = membership.capabilities.includes('templates:read');
-  const canUseChecklist =
-    canManage &&
-    canPreviewTemplates &&
-    membership.capabilities.includes('templates:author') &&
-    membership.capabilities.includes('passes:operate') &&
-    membership.capabilities.includes('integrations:manage');
   if (query.isPending) {
     return (
       <>
@@ -124,39 +112,12 @@ export function OrgWorkspacePage({
           The displayed organization details may be out of date. Your unsaved changes are kept.
         </Callout>
       ) : null}
-      <TwoPane
-        aside={
-          <>
-            <CountsCard org={org} showApiKeys={isAdmin} />
-            <OverviewCard org={org} />
-          </>
-        }
-      >
+      <div className="flex min-w-0 flex-col gap-6">
         {org.status === 'suspended' ? (
           <Callout tone="warning">
             Suspended: passes do not update and its API keys do not work.
           </Callout>
         ) : null}
-        {isAdmin ? (
-          <SigningCard org={org} />
-        ) : (
-          <Card>
-            <CardHeader title="Apple signing identity" />
-            <CardBody>
-              <KeyValue
-                items={[
-                  {
-                    label: 'Organization default',
-                    value: org.defaultIdentityId ?? 'No organization default selected',
-                    mono: org.defaultIdentityId !== null,
-                  },
-                ]}
-              />
-            </CardBody>
-          </Card>
-        )}
-        <WalletAccountsPanel orgId={selectedOrgId} />
-        {canUseChecklist ? <OrgChecklist org={org} /> : null}
         {canManage ? (
           <OrgForm org={org} canChooseIdentity={isAdmin} />
         ) : (
@@ -168,8 +129,7 @@ export function OrgWorkspacePage({
           canManage={canManage}
           canPreviewTemplates={canPreviewTemplates}
         />
-        {canManageMembers ? <AccessCard key={org.id} org={org} /> : null}
-      </TwoPane>
+      </div>
     </SaveBarGroup>
   );
 }

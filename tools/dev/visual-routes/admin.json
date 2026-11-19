@@ -121,6 +121,16 @@
   },
   {
     "role": "org",
+    "path": "/admin/o/{orgId}/members",
+    "name": "admin-members"
+  },
+  {
+    "role": "org",
+    "path": "/admin/o/{orgId}/wallet-accounts",
+    "name": "admin-wallet-accounts"
+  },
+  {
+    "role": "org",
     "path": "/admin/o/{orgId}/settings",
     "name": "admin-settings"
   },

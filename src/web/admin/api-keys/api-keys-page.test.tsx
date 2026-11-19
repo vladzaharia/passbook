@@ -22,19 +22,6 @@ const key = (over: Record<string, unknown> = {}) => ({
   revokedAt: null,
   ...over,
 });
-const org = (id: string, name: string) => ({
-  id,
-  slug: id,
-  name,
-  status: 'active',
-  defaultIdentityId: null,
-  branding: {},
-  createdAt: 1,
-  updatedAt: 1,
-  counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0 },
-  countsCapped: false,
-});
-
 describe('keyState', () => {
   it('prefers revoked over expired', () => {
     const base = key() as never;
@@ -97,7 +84,7 @@ describe('api keys page', () => {
     expect(await screen.findByText('CI key')).toBeInTheDocument();
     await waitFor(() => expect(seen.at(-1)).toBe('null'));
     expect(router.state.location.search.orgId).toBeUndefined();
-    expect(screen.getByText('Platform-wide · All modes')).toBeInTheDocument();
+    expect(screen.queryByText(/All modes/)).toBeNull();
   });
 
   it('shows the key empty state', async () => {
@@ -138,14 +125,14 @@ describe('api keys page', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
     expect(within(dialog).getByText('Pick at least one scope.')).toBeInTheDocument();
-    expect(within(dialog).getByText('Platform-wide')).toBeInTheDocument();
+    expect(within(dialog).getByText('Platform')).toBeInTheDocument();
     expect(within(dialog).queryByRole('checkbox', { name: 'Scan as a terminal' })).toBeNull();
     expect(within(dialog).getByRole('checkbox', { name: 'Manage webhooks' })).toBeInTheDocument();
 
     await user.type(within(dialog).getByLabelText(/Name/), 'CI key');
     await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    let review = await screen.findByRole('alertdialog', { name: 'Create a platform-wide key?' });
+    let review = await screen.findByRole('alertdialog', { name: 'Create a platform key?' });
     expect(body).toEqual({});
     expect(within(review).getByText(/all organizations in Live mode/)).toBeInTheDocument();
     await user.click(within(review).getByRole('button', { name: 'Cancel' }));
@@ -153,7 +140,7 @@ describe('api keys page', () => {
     expect(within(dialog).getByRole('checkbox', { name: 'Read passes' })).toBeChecked();
     expect(body).toEqual({});
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    review = await screen.findByRole('alertdialog', { name: 'Create a platform-wide key?' });
+    review = await screen.findByRole('alertdialog', { name: 'Create a platform key?' });
     await user.click(within(review).getByRole('button', { name: 'Create key' }));
     await waitFor(() => expect(body.name).toBe('CI key'));
     expect(body.scopes).toEqual(['passes:read']);
@@ -181,22 +168,12 @@ describe('api keys page', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
-  it('opens organization keys from an authorized workspace link', async () => {
-    const north = org('o1', 'North');
+  it("lists an organization's keys at its own address, with no key context picker", async () => {
     const seen: string[] = [];
-    const { router } = await renderApp('/admin/orgs/o1?view=workspace&orgId=o1', {
+    await renderApp('/admin/o/o1/api-keys', {
       session: 'admin',
       memberships: [membershipFixture('o1', { orgName: 'North' })],
       handlers: {
-        '/api/v1/orgs/o1/workspace': () => json(north),
-        '/api/v1/orgs/o1/memberships': () => json({ items: [] }),
-        '/api/v1/orgs/o1/invitations': () => json({ items: [] }),
-        '/api/v1/identities': () => json({ items: [], nextCursor: null }),
-        '/api/v1/settings': () =>
-          json({
-            items: [],
-            oidc: { issuer: 'https://id.plrs.im', adminGroup: null, userGroup: null },
-          }),
         '/api/v1/api-keys': (url) => {
           seen.push(url.searchParams.get('orgId') ?? '');
           return page([]);
@@ -204,13 +181,9 @@ describe('api keys page', () => {
       },
     });
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('link', { name: 'Review API keys' }));
-    await waitFor(() =>
-      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/o1\/api-keys\/?$/),
-    );
-    expect(router.state.location.pathname.split('/')[3]).toBe('o1');
-    await waitFor(() => expect(seen.at(-1)).toBe('o1'));
-    expect(await screen.findByText('North · All modes')).toBeInTheDocument();
+    expect(await screen.findByText('All modes')).toBeInTheDocument();
+    expect(seen.every((orgId) => orgId === 'o1')).toBe(true);
+    expect(screen.queryByRole('combobox', { name: 'Key context' })).toBeNull();
     await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
     expect(
       within(await screen.findByRole('dialog', { name: 'New API key' })).getByText('North'),
@@ -248,7 +221,7 @@ describe('api keys page', () => {
     await waitFor(() => expect(router.state.location.search.new).toBeUndefined());
     expect(router.state.location.pathname.split('/')[3]).toBe('o1');
     await waitFor(() => expect(seen.at(-1)).toBe('o1'));
-    expect(await screen.findByText('North · All modes')).toBeInTheDocument();
+    expect(await screen.findByText('All modes')).toBeInTheDocument();
     expect(within(dialog).getByText('North')).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText(/Name/), 'Org integration');
     await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
@@ -277,7 +250,7 @@ describe('api keys page', () => {
     const user = userEvent.setup();
     const dialog = await screen.findByRole('dialog', { name: 'New API key' });
     await waitFor(() => expect(router.state.location.search.new).toBeUndefined());
-    expect(within(dialog).getByText('Platform-wide')).toBeInTheDocument();
+    expect(within(dialog).getByText('Platform')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'New API key' })).toBeNull());
     await user.click(screen.getAllByRole('button', { name: 'New API key' })[0]!);
@@ -361,7 +334,41 @@ describe('api keys page', () => {
     }
   });
 
-  it('creates platform keys in Live mode even while the browser is in Test mode', async () => {
+  it('creates a Test platform key from the mode choice in the dialog', async () => {
+    let body: Record<string, unknown> = {};
+    let sentMode: string | null = null;
+    await renderApp('/admin/platform/api-keys', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/api-keys': (_u, init) => {
+          if (init?.method !== 'POST')
+            return page([key({ id: 'k9', name: 'Old test', mode: 'test' })]);
+          body = JSON.parse(String(init.body));
+          sentMode = new Headers(init.headers).get('x-passbook-mode');
+          return json({ ...key({ mode: 'test' }), secret: 'wlt_abc123_S' }, 201);
+        },
+      },
+    });
+    const user = userEvent.setup();
+    // Existing Test keys stay listed, and no mode switch sits on the page.
+    expect(await screen.findByText('Old test')).toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /Test mode/ })).toBeNull();
+    await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByLabelText(/Name/), 'P');
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
+    await user.click(within(dialog).getByRole('combobox', { name: /Mode/ }));
+    await user.click(await screen.findByRole('option', { name: 'Test' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    const review = await screen.findByRole('alertdialog', { name: 'Create a platform key?' });
+    expect(within(review).getByText(/all organizations in Test mode/)).toBeInTheDocument();
+    await user.click(within(review).getByRole('button', { name: 'Create key' }));
+    await waitFor(() => expect(body.mode).toBe('test'));
+    expect(sentMode).toBe('test');
+    expect(body.orgId).toBeNull();
+  });
+
+  it('creates platform keys in Live mode by default, even while the browser is in Test mode', async () => {
     setMode('test');
     try {
       let sentMode: string | null = 'unset';
@@ -383,7 +390,7 @@ describe('api keys page', () => {
       await user.click(within(dialog).getByRole('button', { name: 'Create' }));
       await user.click(
         within(
-          await screen.findByRole('alertdialog', { name: 'Create a platform-wide key?' }),
+          await screen.findByRole('alertdialog', { name: 'Create a platform key?' }),
         ).getByRole('button', { name: 'Create key' }),
       );
       await waitFor(() => expect(sentMode).not.toBe('unset'));
@@ -410,9 +417,10 @@ describe('api keys page', () => {
     await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     await user.click(
-      within(
-        await screen.findByRole('alertdialog', { name: 'Create a platform-wide key?' }),
-      ).getByRole('button', { name: 'Create key' }),
+      within(await screen.findByRole('alertdialog', { name: 'Create a platform key?' })).getByRole(
+        'button',
+        { name: 'Create key' },
+      ),
     );
     expect(await within(dialog).findByText('A key with this name exists.')).toBeInTheDocument();
     expect(within(dialog).getByLabelText(/Name/)).toHaveValue('x');
@@ -436,7 +444,7 @@ describe('api keys page', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Revoke' }));
     const dialog = await screen.findByRole('alertdialog');
     expect(revoked).toBe(false);
-    expect(within(dialog).getByText(/Organization: Platform-wide/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Organization: Platform/)).toBeInTheDocument();
     expect(within(dialog).getByText(/Mode: Live/)).toBeInTheDocument();
     expect(within(dialog).getByText(/Permissions: passes:read/)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Revoke' }));

@@ -51,7 +51,13 @@ export const ORG_NAV: readonly (readonly NavSection[])[] = [
       keywords: ['sandbox', 'emails'],
     },
   ],
-  [apiKeys, audit, { ...settings, keywords: ['organization', 'members', 'branding'] }],
+  [
+    page('Members', '/members', 'user', ['people', 'invitations', 'access']),
+    page('Wallet accounts', '/wallet-accounts', 'identity', ['apple', 'google', 'samsung']),
+    apiKeys,
+    audit,
+    { ...settings, keywords: ['organization', 'branding'] },
+  ],
 ];
 
 /** The platform console. */

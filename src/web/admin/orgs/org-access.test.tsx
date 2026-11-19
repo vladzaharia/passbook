@@ -15,7 +15,7 @@ import {
 } from '@/web/lib/test-utils.tsx';
 
 function renderApp(path: string, options: RenderAppOptions = {}) {
-  return renderBaseApp(`${path}?view=workspace`, {
+  return renderBaseApp(path, {
     memberships: [membershipFixture('o1')],
     selectedOrg: 'o1',
     ...options,
@@ -115,35 +115,31 @@ function listItem(section: string, text: string): HTMLElement {
 }
 
 describe('organization people and service access', () => {
-  it('shows empty members and invitations without hiding service access', async () => {
-    await renderApp('/admin/orgs/o1', { session: 'admin', handlers: handlers() });
+  it('shows empty members and invitations on the Members page', async () => {
+    await renderApp('/admin/o/o1/members', { session: 'admin', handlers: handlers() });
     expect(await screen.findByText('No active members.')).toBeInTheDocument();
     expect(await screen.findByText('No invitations.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Review API keys' })).toHaveAttribute(
-      'href',
-      '/admin/api-keys?orgId=o1',
-    );
+    expect(screen.getByRole('heading', { name: 'Members', level: 1 })).toBeInTheDocument();
   });
 
   it('shows people management to a member with members:manage independently of org edits', async () => {
-    const { fetchMock } = await renderBaseApp('/admin/orgs/o1?view=workspace&orgId=o1', {
+    const { fetchMock } = await renderBaseApp('/admin/o/o1/members', {
       session: 'user',
       memberships: [membershipFixture('o1', { capabilities: ['org:read', 'members:manage'] })],
       handlers: handlers(),
     });
     expect(
-      await screen.findByRole('heading', { name: 'People & service access' }),
+      await screen.findByRole('heading', { name: 'Members and invitations' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Invite member' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Accent colour')).toBeNull();
-    expect(screen.queryByRole('link', { name: 'Review API keys' })).toBeNull();
     expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/identities'))).toBe(
       false,
     );
   });
 
   it('lists members and invitation states with only pending invitations revocable', async () => {
-    const { container, fetchMock } = await renderApp('/admin/orgs/o1', {
+    const { container, fetchMock } = await renderApp('/admin/o/o1/members', {
       session: 'admin',
       handlers: handlers({
         '/api/v1/orgs/o1/memberships': () =>
@@ -200,7 +196,7 @@ describe('organization people and service access', () => {
         expect(screen.queryByRole('button', { name: `Revoke invitation for ${email}` })).toBeNull();
       }
     }
-    expect(screen.getByRole('heading', { name: 'Members' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Members', level: 3 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Invitations' })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Revoke membership for Ada Lovelace' }),
@@ -226,7 +222,7 @@ describe('organization people and service access', () => {
     const secret = 't'.repeat(43);
     const items: OrgInvitation[] = [];
     const posts: { email: string; roles: string[] }[] = [];
-    const { container, queryClient } = await renderApp('/admin/orgs/o1', {
+    const { container, queryClient } = await renderApp('/admin/o/o1/members', {
       session: 'admin',
       handlers: handlers({
         '/api/v1/orgs/o1/invitations': (_url, init) => {
@@ -290,7 +286,7 @@ describe('organization people and service access', () => {
       });
       let posts = 0;
       let currentUser = 'u1';
-      const { queryClient } = await renderApp('/admin/orgs/o1', {
+      const { queryClient } = await renderApp('/admin/o/o1/members', {
         session: 'admin',
         handlers: handlers({
           '/api/v1/orgs/memberships/me': () =>
@@ -354,7 +350,7 @@ describe('organization people and service access', () => {
     ];
     let invitations = [invitation(), invitation({ id: 'invite-2', email: 'other@example.test' })];
     const deletes: string[] = [];
-    await renderApp('/admin/orgs/o1', {
+    await renderApp('/admin/o/o1/members', {
       session: 'admin',
       handlers: handlers({
         '/api/v1/orgs/o1/memberships': () => json({ items: members }),
@@ -417,7 +413,7 @@ describe('organization people and service access', () => {
     const other = membershipFixture('o2', { orgName: 'Other organization' });
     let currentMemberships = [current, other];
     let membershipRequests = 0;
-    const { queryClient } = await renderApp('/admin/orgs/o1', {
+    const { queryClient } = await renderApp('/admin/o/o1/members', {
       session: 'admin',
       selectedOrg: 'o1',
       handlers: handlers({
@@ -468,7 +464,7 @@ describe('organization people and service access', () => {
       deletes.push(`${init?.method} ${url.pathname}`);
       return problem(503, 'unavailable', 'private server detail');
     };
-    await renderApp('/admin/orgs/o1', {
+    await renderApp('/admin/o/o1/members', {
       session: 'admin',
       handlers: handlers({
         '/api/v1/orgs/o1/memberships': () => json({ items: [membership()] }),
@@ -516,7 +512,7 @@ describe('organization people and service access', () => {
   ] as const)(
     'shows a %s server error rather than an empty list',
     async (resource, name, empty, other) => {
-      await renderApp('/admin/orgs/o1', {
+      await renderApp('/admin/o/o1/members', {
         session: 'admin',
         handlers: handlers({
           '/api/v1/orgs/o1/memberships': () => json({ items: [membership()] }),
@@ -537,7 +533,7 @@ describe('organization people and service access', () => {
 
   it('keeps an invitation draft and reports a failed server request', async () => {
     const posts: unknown[] = [];
-    await renderApp('/admin/orgs/o1', {
+    await renderApp('/admin/o/o1/members', {
       session: 'admin',
       handlers: handlers({
         '/api/v1/orgs/o1/invitations': (_url, init) => {
@@ -564,7 +560,7 @@ describe('organization people and service access', () => {
   });
 
   it('shows the server refusal to revoke the last organization admin inside the dialog', async () => {
-    await renderApp('/admin/orgs/o1', {
+    await renderApp('/admin/o/o1/members', {
       session: 'admin',
       handlers: handlers({
         '/api/v1/orgs/o1/memberships': () => json({ items: [membership()] }),
@@ -590,7 +586,7 @@ describe('organization people and service access', () => {
 
   it('flags the invitation fields and sends nothing until both are valid', async () => {
     const posts: unknown[] = [];
-    await renderApp('/admin/orgs/o1', {
+    await renderApp('/admin/o/o1/members', {
       session: 'admin',
       handlers: handlers({
         '/api/v1/orgs/o1/invitations': (_url, init) => {

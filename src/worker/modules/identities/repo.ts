@@ -85,13 +85,20 @@ export function pageIdentityRows(
   db: D1Database,
   after: string | undefined,
   limit: number,
+  orgId?: string,
 ): Promise<IdentityRow[]> {
+  const where = [
+    ...(after
+      ? ['(created_at, id) > (SELECT created_at, id FROM signing_identities WHERE id = ?)']
+      : []),
+    ...(orgId ? ['org_id = ?'] : []),
+  ];
   return all<IdentityRow>(
     db,
     `SELECT ${COLUMNS} FROM signing_identities
-     ${after ? 'WHERE (created_at, id) > (SELECT created_at, id FROM signing_identities WHERE id = ?)' : ''}
+     ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
      ORDER BY created_at, id LIMIT ?`,
-    after ? [after, limit] : [limit],
+    [...(after ? [after] : []), ...(orgId ? [orgId] : []), limit],
   );
 }
 

@@ -13,7 +13,6 @@ import {
   sessionFixture,
 } from '@/web/lib/test-utils.tsx';
 import { toast } from '@/web/ui/index.ts';
-import { overview } from '../overview/overview-fixtures.ts';
 import { templateSummary } from '../passes/test-fixtures.ts';
 import { orgPatch, orgToDraft, validateOrg } from './org-form.tsx';
 import { slugify } from './orgs-page.tsx';
@@ -399,21 +398,15 @@ describe('org detail', () => {
     ).toBe(false);
   });
 
-  it('mounts wallet accounts for the selected tenant workspace only', async () => {
+  it('leaves wallet accounts to their own page', async () => {
     const { fetchMock } = await renderApp('/admin/orgs/o1', {
       session: 'admin',
       handlers: handlers(),
     });
-    await screen.findByRole('heading', { name: 'Settings', level: 1 });
-    await waitFor(() => {
-      const accounts = fetchMock.mock.calls
-        .map(([url]) => new URL(String(url), 'http://localhost'))
-        .filter((url) => url.pathname === '/api/v1/wallet-providers/accounts');
-      expect(new Set(accounts.map((url) => url.searchParams.get('provider')))).toEqual(
-        new Set(['google', 'samsung']),
-      );
-      expect(accounts.every((url) => url.searchParams.get('orgId') === 'o1')).toBe(true);
-    });
+    await screen.findByRole('heading', { name: 'Organization details' });
+    expect(
+      fetchMock.mock.calls.some(([url]) => String(url).includes('/wallet-providers/accounts')),
+    ).toBe(false);
   });
 
   it('does not treat a member visiting the bare platform route as workspace access', async () => {
@@ -654,7 +647,6 @@ describe('org detail', () => {
       },
     });
     const name = await screen.findByLabelText(/^Name/);
-    expect(screen.getByText('saved-identity')).toBeInTheDocument();
     expect(screen.queryByLabelText('Signing identity')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'People & service access' })).toBeNull();
     expect(screen.queryByTitle('Sample pass email')).toBeNull();
@@ -674,15 +666,11 @@ describe('org detail', () => {
       memberships: [membershipFixture('o1', { orgName: 'Acme Gym' })],
       handlers: handlers(),
     });
-    const passes = await screen.findByRole('link', { name: '12 passes in Acme Gym' });
-    // The link carries the org as the list scope.
-    expect(passes).toHaveAttribute('href', '/admin/passes?orgId=o1');
-    expect(screen.getByRole('link', { name: '3 API keys in Acme Gym' })).toBeInTheDocument();
+    await screen.findByLabelText('Accent colour');
     expect(screen.queryByRole('button', { name: /^View / })).toBeNull();
     expect(screen.queryByLabelText('Status')).toBeNull();
     expect(screen.getByLabelText('Accent colour')).toHaveValue('#0f766e');
     expect(screen.getByRole('heading', { name: 'Pass branding' })).toBeInTheDocument();
-    expect(screen.queryByText('Get started')).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -939,7 +927,7 @@ describe('org detail', () => {
     expect(previews).toEqual([{ orgId: 'o1', ids: expected }]);
   });
 
-  it('shows saved signing evidence and offers only usable identities', async () => {
+  it('offers only usable identities', async () => {
     let org = summary();
     let saved: unknown;
     await renderApp('/admin/orgs/o1', {
@@ -965,122 +953,12 @@ describe('org detail', () => {
       },
     });
     const ui = userEvent.setup();
-    const link = await screen.findByRole('link', { name: 'Platform signer' });
-    expect(link).toHaveAttribute('href', '/admin/identities/platform');
-    expect(screen.getByText('5 days left')).toBeInTheDocument();
-    expect(screen.getByText(/Existing passes keep their signer/)).toBeInTheDocument();
-    expect(
-      screen.queryByText(
-        /Google Wallet and Samsung Wallet account setup and readiness are not available here/,
-      ),
-    ).toBeNull();
-    await ui.click(screen.getByLabelText('Signing identity'));
+    await ui.click(await screen.findByLabelText('Signing identity'));
     const options = screen.getByRole('listbox');
     expect(within(options).queryByRole('option', { name: 'Other signer' })).toBeNull();
     await ui.click(within(options).getByRole('option', { name: 'Acme signer' }));
     await ui.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(saved).toMatchObject({ defaultIdentityId: 'own' }));
-  });
-
-  it('keeps the saved signer and other edits while identity loading is retried', async () => {
-    let fail = true;
-    await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      handlers: {
-        ...handlers(),
-        '/api/v1/orgs/o1': () => json(summary({ defaultIdentityId: 'own' })),
-        '/api/v1/identities': () =>
-          fail
-            ? problem(500, 'identity_error', 'Identities unavailable.')
-            : json({
-                items: [identity({ id: 'own', orgId: 'o1', label: 'Acme signer' })],
-                nextCursor: null,
-              }),
-      },
-    });
-    const ui = userEvent.setup();
-    expect(await screen.findByText(/Identity options could not be loaded/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Signing identity')).toHaveTextContent(
-      'Saved identity (details unavailable)',
-    );
-    await ui.type(screen.getByLabelText(/^Name/), ' draft');
-    fail = false;
-    await ui.click(screen.getByRole('button', { name: 'Retry identities' }));
-    expect(await screen.findByRole('link', { name: 'Acme signer' })).toHaveAttribute(
-      'href',
-      '/admin/identities/own',
-    );
-    expect(screen.getByLabelText(/^Name/)).toHaveValue('Acme Gym draft');
-    expect(screen.getByLabelText('Signing identity')).toHaveTextContent('Acme signer');
-  });
-
-  it('scopes the list when a count is opened', async () => {
-    const { router, fetchMock } = await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      handlers: { ...handlers(), '/api/v1/passes': () => json({ items: [], nextCursor: null }) },
-    });
-    await userEvent.setup().click(await screen.findByRole('link', { name: /12 passes/ }));
-    await waitFor(() =>
-      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes$/),
-    );
-    await waitFor(() =>
-      expect(
-        fetchMock.mock.calls.some((c) => /\/api\/v1\/passes\?.*orgId=o1/.test(String(c[0]))),
-      ).toBe(true),
-    );
-  });
-
-  const orgSetup = (setup: Record<string, unknown>) => ({
-    '/api/v1/metrics/overview': () => json(overview({ setup: { ...overview().setup, ...setup } })),
-  });
-  const newOrg = { counts: { passes: 0, templates: 1, connections: 0, apiKeys: 0 } };
-
-  it('shows the first-run checklist for a new org, with the template step checked', async () => {
-    await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      handlers: {
-        ...handlers(),
-        ...orgSetup({
-          assignedTemplates: 1,
-          approvedTemplates: 0,
-          passes: 0,
-          walletPasses: 0,
-          latestPassId: null,
-        }),
-        '/api/v1/orgs/o1': () => json(summary(newOrg)),
-      },
-    });
-    const list = await screen.findByRole('region', { name: 'Get started' });
-    expect(
-      within(list)
-        .getAllByRole('listitem')
-        .map((step) => step.textContent),
-    ).toEqual([
-      expect.stringContaining('Use a blueprint'),
-      expect.stringContaining('Approve it'),
-      expect.stringContaining('Issue a pass'),
-      expect.stringContaining('Add it to your phone'),
-    ]);
-    expect(within(list).getAllByText('(done)', { exact: false })).toHaveLength(1);
-    expect(within(list).getByRole('link', { name: 'Review' })).toBeInTheDocument();
-  });
-
-  it('drops the org checklist once a pass is in a Wallet', async () => {
-    let asked = false;
-    await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      handlers: {
-        ...handlers(),
-        '/api/v1/metrics/overview': () => {
-          asked = true;
-          return json(overview({ setup: { ...overview().setup, walletPasses: 3 } }));
-        },
-        '/api/v1/orgs/o1': () => json(summary(newOrg)),
-      },
-    });
-    await waitFor(() => expect(asked).toBe(true));
-    await screen.findByRole('heading', { name: 'In this organization' });
-    expect(screen.queryByRole('region', { name: 'Get started' })).toBeNull();
   });
 
   it('lets a platform admin invite an initial org admin without fetching the workspace or people lists', async () => {

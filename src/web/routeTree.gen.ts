@@ -73,6 +73,7 @@ import { Route as AdminOOrgIdBlueprintsBlueprintIdRouteImport } from './routes/a
 import { Route as AdminOOrgIdConnectionsIndexRouteImport } from './routes/admin/o/$orgId/connections/index'
 import { Route as AdminOOrgIdConnectionsConnectionIdRouteImport } from './routes/admin/o/$orgId/connections/$connectionId'
 import { Route as AdminOOrgIdConnectionsNewRouteImport } from './routes/admin/o/$orgId/connections/new'
+import { Route as AdminOOrgIdMembersIndexRouteImport } from './routes/admin/o/$orgId/members/index'
 import { Route as AdminOOrgIdMessagesIndexRouteImport } from './routes/admin/o/$orgId/messages/index'
 import { Route as AdminOOrgIdMessagesBroadcastIdRouteImport } from './routes/admin/o/$orgId/messages/$broadcastId'
 import { Route as AdminOOrgIdMessagesNewRouteImport } from './routes/admin/o/$orgId/messages/new'
@@ -86,6 +87,7 @@ import { Route as AdminOOrgIdTemplatesTemplateIdRouteImport } from './routes/adm
 import { Route as AdminOOrgIdTemplatesNewRouteImport } from './routes/admin/o/$orgId/templates/new'
 import { Route as AdminOOrgIdTemplatesUploadRouteImport } from './routes/admin/o/$orgId/templates/upload'
 import { Route as AdminOOrgIdTestInboxIndexRouteImport } from './routes/admin/o/$orgId/test-inbox/index'
+import { Route as AdminOOrgIdWalletAccountsIndexRouteImport } from './routes/admin/o/$orgId/wallet-accounts/index'
 import { Route as AdminOOrgIdConnectionsWebhooksEndpointIdRouteImport } from './routes/admin/o/$orgId/connections/webhooks.$endpointId'
 import { Route as AdminOOrgIdConnectionsWebhooksNewRouteImport } from './routes/admin/o/$orgId/connections/webhooks.new'
 import { Route as AdminOOrgIdPassesImportIndexRouteImport } from './routes/admin/o/$orgId/passes/import/index'
@@ -440,6 +442,11 @@ const AdminOOrgIdConnectionsNewRoute =
     path: '/connections/new',
     getParentRoute: () => AdminOOrgIdRouteRoute,
   } as any)
+const AdminOOrgIdMembersIndexRoute = AdminOOrgIdMembersIndexRouteImport.update({
+  id: '/members/',
+  path: '/members/',
+  getParentRoute: () => AdminOOrgIdRouteRoute,
+} as any)
 const AdminOOrgIdMessagesIndexRoute =
   AdminOOrgIdMessagesIndexRouteImport.update({
     id: '/messages/',
@@ -511,6 +518,12 @@ const AdminOOrgIdTestInboxIndexRoute =
   AdminOOrgIdTestInboxIndexRouteImport.update({
     id: '/test-inbox/',
     path: '/test-inbox/',
+    getParentRoute: () => AdminOOrgIdRouteRoute,
+  } as any)
+const AdminOOrgIdWalletAccountsIndexRoute =
+  AdminOOrgIdWalletAccountsIndexRouteImport.update({
+    id: '/wallet-accounts/',
+    path: '/wallet-accounts/',
     getParentRoute: () => AdminOOrgIdRouteRoute,
   } as any)
 const AdminOOrgIdConnectionsWebhooksEndpointIdRoute =
@@ -640,12 +653,14 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/audit/': typeof AdminOOrgIdAuditIndexRoute
   '/admin/o/$orgId/blueprints/': typeof AdminOOrgIdBlueprintsIndexRoute
   '/admin/o/$orgId/connections/': typeof AdminOOrgIdConnectionsIndexRoute
+  '/admin/o/$orgId/members/': typeof AdminOOrgIdMembersIndexRoute
   '/admin/o/$orgId/messages/': typeof AdminOOrgIdMessagesIndexRoute
   '/admin/o/$orgId/passes/': typeof AdminOOrgIdPassesIndexRoute
   '/admin/o/$orgId/scanning/': typeof AdminOOrgIdScanningIndexRoute
   '/admin/o/$orgId/settings/': typeof AdminOOrgIdSettingsIndexRoute
   '/admin/o/$orgId/templates/': typeof AdminOOrgIdTemplatesIndexRoute
   '/admin/o/$orgId/test-inbox/': typeof AdminOOrgIdTestInboxIndexRoute
+  '/admin/o/$orgId/wallet-accounts/': typeof AdminOOrgIdWalletAccountsIndexRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
   '/admin/o/$orgId/passes/import/$importId': typeof AdminOOrgIdPassesImportImportIdRoute
@@ -725,12 +740,14 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/audit': typeof AdminOOrgIdAuditIndexRoute
   '/admin/o/$orgId/blueprints': typeof AdminOOrgIdBlueprintsIndexRoute
   '/admin/o/$orgId/connections': typeof AdminOOrgIdConnectionsIndexRoute
+  '/admin/o/$orgId/members': typeof AdminOOrgIdMembersIndexRoute
   '/admin/o/$orgId/messages': typeof AdminOOrgIdMessagesIndexRoute
   '/admin/o/$orgId/passes': typeof AdminOOrgIdPassesIndexRoute
   '/admin/o/$orgId/scanning': typeof AdminOOrgIdScanningIndexRoute
   '/admin/o/$orgId/settings': typeof AdminOOrgIdSettingsIndexRoute
   '/admin/o/$orgId/templates': typeof AdminOOrgIdTemplatesIndexRoute
   '/admin/o/$orgId/test-inbox': typeof AdminOOrgIdTestInboxIndexRoute
+  '/admin/o/$orgId/wallet-accounts': typeof AdminOOrgIdWalletAccountsIndexRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
   '/admin/o/$orgId/passes/import/$importId': typeof AdminOOrgIdPassesImportImportIdRoute
@@ -814,12 +831,14 @@ export interface FileRoutesById {
   '/admin/o/$orgId/audit/': typeof AdminOOrgIdAuditIndexRoute
   '/admin/o/$orgId/blueprints/': typeof AdminOOrgIdBlueprintsIndexRoute
   '/admin/o/$orgId/connections/': typeof AdminOOrgIdConnectionsIndexRoute
+  '/admin/o/$orgId/members/': typeof AdminOOrgIdMembersIndexRoute
   '/admin/o/$orgId/messages/': typeof AdminOOrgIdMessagesIndexRoute
   '/admin/o/$orgId/passes/': typeof AdminOOrgIdPassesIndexRoute
   '/admin/o/$orgId/scanning/': typeof AdminOOrgIdScanningIndexRoute
   '/admin/o/$orgId/settings/': typeof AdminOOrgIdSettingsIndexRoute
   '/admin/o/$orgId/templates/': typeof AdminOOrgIdTemplatesIndexRoute
   '/admin/o/$orgId/test-inbox/': typeof AdminOOrgIdTestInboxIndexRoute
+  '/admin/o/$orgId/wallet-accounts/': typeof AdminOOrgIdWalletAccountsIndexRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
   '/admin/o/$orgId/passes/import/$importId': typeof AdminOOrgIdPassesImportImportIdRoute
@@ -904,12 +923,14 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/audit/'
     | '/admin/o/$orgId/blueprints/'
     | '/admin/o/$orgId/connections/'
+    | '/admin/o/$orgId/members/'
     | '/admin/o/$orgId/messages/'
     | '/admin/o/$orgId/passes/'
     | '/admin/o/$orgId/scanning/'
     | '/admin/o/$orgId/settings/'
     | '/admin/o/$orgId/templates/'
     | '/admin/o/$orgId/test-inbox/'
+    | '/admin/o/$orgId/wallet-accounts/'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
     | '/admin/o/$orgId/passes/import/$importId'
@@ -989,12 +1010,14 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/audit'
     | '/admin/o/$orgId/blueprints'
     | '/admin/o/$orgId/connections'
+    | '/admin/o/$orgId/members'
     | '/admin/o/$orgId/messages'
     | '/admin/o/$orgId/passes'
     | '/admin/o/$orgId/scanning'
     | '/admin/o/$orgId/settings'
     | '/admin/o/$orgId/templates'
     | '/admin/o/$orgId/test-inbox'
+    | '/admin/o/$orgId/wallet-accounts'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
     | '/admin/o/$orgId/passes/import/$importId'
@@ -1077,12 +1100,14 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/audit/'
     | '/admin/o/$orgId/blueprints/'
     | '/admin/o/$orgId/connections/'
+    | '/admin/o/$orgId/members/'
     | '/admin/o/$orgId/messages/'
     | '/admin/o/$orgId/passes/'
     | '/admin/o/$orgId/scanning/'
     | '/admin/o/$orgId/settings/'
     | '/admin/o/$orgId/templates/'
     | '/admin/o/$orgId/test-inbox/'
+    | '/admin/o/$orgId/wallet-accounts/'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
     | '/admin/o/$orgId/passes/import/$importId'
@@ -1552,6 +1577,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOOrgIdConnectionsNewRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
+    '/admin/o/$orgId/members/': {
+      id: '/admin/o/$orgId/members/'
+      path: '/members'
+      fullPath: '/admin/o/$orgId/members/'
+      preLoaderRoute: typeof AdminOOrgIdMembersIndexRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
     '/admin/o/$orgId/messages/': {
       id: '/admin/o/$orgId/messages/'
       path: '/messages'
@@ -1641,6 +1673,13 @@ declare module '@tanstack/react-router' {
       path: '/test-inbox'
       fullPath: '/admin/o/$orgId/test-inbox/'
       preLoaderRoute: typeof AdminOOrgIdTestInboxIndexRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
+    '/admin/o/$orgId/wallet-accounts/': {
+      id: '/admin/o/$orgId/wallet-accounts/'
+      path: '/wallet-accounts'
+      fullPath: '/admin/o/$orgId/wallet-accounts/'
+      preLoaderRoute: typeof AdminOOrgIdWalletAccountsIndexRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
     '/admin/o/$orgId/connections/webhooks/$endpointId': {
@@ -1757,12 +1796,14 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdAuditIndexRoute: typeof AdminOOrgIdAuditIndexRoute
   AdminOOrgIdBlueprintsIndexRoute: typeof AdminOOrgIdBlueprintsIndexRoute
   AdminOOrgIdConnectionsIndexRoute: typeof AdminOOrgIdConnectionsIndexRoute
+  AdminOOrgIdMembersIndexRoute: typeof AdminOOrgIdMembersIndexRoute
   AdminOOrgIdMessagesIndexRoute: typeof AdminOOrgIdMessagesIndexRoute
   AdminOOrgIdPassesIndexRoute: typeof AdminOOrgIdPassesIndexRoute
   AdminOOrgIdScanningIndexRoute: typeof AdminOOrgIdScanningIndexRoute
   AdminOOrgIdSettingsIndexRoute: typeof AdminOOrgIdSettingsIndexRoute
   AdminOOrgIdTemplatesIndexRoute: typeof AdminOOrgIdTemplatesIndexRoute
   AdminOOrgIdTestInboxIndexRoute: typeof AdminOOrgIdTestInboxIndexRoute
+  AdminOOrgIdWalletAccountsIndexRoute: typeof AdminOOrgIdWalletAccountsIndexRoute
   AdminOOrgIdConnectionsWebhooksEndpointIdRoute: typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   AdminOOrgIdConnectionsWebhooksNewRoute: typeof AdminOOrgIdConnectionsWebhooksNewRoute
   AdminOOrgIdPassesImportImportIdRoute: typeof AdminOOrgIdPassesImportImportIdRoute
@@ -1791,12 +1832,14 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
   AdminOOrgIdAuditIndexRoute: AdminOOrgIdAuditIndexRoute,
   AdminOOrgIdBlueprintsIndexRoute: AdminOOrgIdBlueprintsIndexRoute,
   AdminOOrgIdConnectionsIndexRoute: AdminOOrgIdConnectionsIndexRoute,
+  AdminOOrgIdMembersIndexRoute: AdminOOrgIdMembersIndexRoute,
   AdminOOrgIdMessagesIndexRoute: AdminOOrgIdMessagesIndexRoute,
   AdminOOrgIdPassesIndexRoute: AdminOOrgIdPassesIndexRoute,
   AdminOOrgIdScanningIndexRoute: AdminOOrgIdScanningIndexRoute,
   AdminOOrgIdSettingsIndexRoute: AdminOOrgIdSettingsIndexRoute,
   AdminOOrgIdTemplatesIndexRoute: AdminOOrgIdTemplatesIndexRoute,
   AdminOOrgIdTestInboxIndexRoute: AdminOOrgIdTestInboxIndexRoute,
+  AdminOOrgIdWalletAccountsIndexRoute: AdminOOrgIdWalletAccountsIndexRoute,
   AdminOOrgIdConnectionsWebhooksEndpointIdRoute:
     AdminOOrgIdConnectionsWebhooksEndpointIdRoute,
   AdminOOrgIdConnectionsWebhooksNewRoute:
