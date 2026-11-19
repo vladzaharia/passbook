@@ -2,6 +2,11 @@
   "schema": 1,
   "name": "Poster card",
   "description": "Full-bleed artwork on iOS 27, a classic card before it.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",

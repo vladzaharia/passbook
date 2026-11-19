@@ -57,7 +57,7 @@ export async function saveAccountConfiguration(
     (id, account_id, org_id, mode, provider, kek_version, iv, wrapped_dek, ciphertext, created_at)
     SELECT ?, a.id, a.org_id, a.mode, a.provider, ?, ?, ?, ?, ?
     FROM wallet_provider_accounts a WHERE a.id = ? AND a.org_id = ? AND a.mode = ? AND a.provider = ?
-      AND a.revision = ? AND ${credentialRefKeysetSql} AND ${accountCredentialLineageSql} AND ${guard}`,
+      AND a.revision = ? AND a.credential_source_id IS NULL AND a.enrolment_revision = 0 AND ${credentialRefKeysetSql} AND ${accountCredentialLineageSql} AND ${guard}`,
       [
         input.credentialId,
         input.envelope.kekVersion,
@@ -82,7 +82,7 @@ export async function saveAccountConfiguration(
     (id, account_id, org_id, mode, provider, revision, kind, credential_id, actor_id, request_id, created_at)
     SELECT ?, a.id, a.org_id, a.mode, a.provider, a.revision + 1, 'configure', ?, ?, ?, ?
     FROM wallet_provider_accounts a WHERE a.id = ? AND a.org_id = ? AND a.mode = ? AND a.provider = ?
-      AND a.revision = ? AND EXISTS (SELECT 1 FROM wallet_provider_credentials c
+      AND a.revision = ? AND a.credential_source_id IS NULL AND a.enrolment_revision = 0 AND EXISTS (SELECT 1 FROM wallet_provider_credentials c
         WHERE c.id = ? AND c.account_id = a.id AND c.org_id = a.org_id AND c.mode = a.mode AND c.provider = a.provider)
       AND ${credentialRefKeysetSql} AND ${accountCredentialLineageSql} AND ${guard}`,
       [
@@ -107,7 +107,7 @@ export async function saveAccountConfiguration(
       db,
       `UPDATE wallet_provider_accounts AS a SET credential_id = ?,
       revoked_at = NULL, revision = revision + 1, updated_at = ?
-    WHERE a.id = ? AND a.org_id = ? AND a.mode = ? AND a.provider = ? AND a.revision = ?
+    WHERE a.id = ? AND a.org_id = ? AND a.mode = ? AND a.provider = ? AND a.revision = ? AND a.credential_source_id IS NULL AND a.enrolment_revision = 0
       AND EXISTS (SELECT 1 FROM wallet_provider_account_events e WHERE e.id = ? AND e.account_id = a.id
         AND e.revision = a.revision + 1 AND e.kind = 'configure' AND e.credential_id = ?)
       AND ${credentialRefKeysetSql} AND ${accountCredentialLineageSql} AND ${guard} RETURNING id`,
@@ -147,7 +147,7 @@ export async function transitionAccount(
   const now = ctx.clock.now();
   const guard = tenantPassAuthoritySql(authority, 'a');
   const params = tenantPassAuthorityParams(authority, now);
-  const condition = `a.revoked_at IS NULL AND NOT EXISTS (SELECT 1 FROM wallet_provider_instances i
+  const condition = `a.revoked_at IS NULL AND a.credential_source_id IS NULL AND a.enrolment_revision = 0 AND NOT EXISTS (SELECT 1 FROM wallet_provider_instances i
         WHERE i.account_id = a.id AND i.lifecycle != 'retired')`;
   const results = await batch(db, [
     stmt(

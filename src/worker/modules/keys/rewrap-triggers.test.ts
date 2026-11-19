@@ -253,6 +253,7 @@ describe('the carve-out names every column of its table', () => {
       notTriggered: ['id', 'created_by', 'created_at', 'rotated_at'],
     },
     { table: 'wallet_provider_credentials', trigger: 'wallet_provider_credentials_no_update' },
+    { table: 'wallet_credential_versions', trigger: 'wallet_credential_versions_no_update' },
     {
       table: 'pass_credential_transfer_payloads',
       trigger: 'pass_credential_transfer_payload_no_update',

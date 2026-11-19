@@ -344,7 +344,11 @@ async function expectEverythingOpens(r: Rotated) {
       })
     ).status,
   ).toBe(200);
-  // Rows with no production reader open with the writer's AAD.
+  // Rows with no production reader open with the writer's AAD. The account table keeps its envelope in hmac_*.
+  const hmacColumns = (table: string) =>
+    table === 'wallet_provider_accounts'
+      ? 'hmac_kek_version AS kek_version, hmac_iv AS iv, hmac_wrapped_dek AS wrapped_dek, hmac_ciphertext AS ciphertext'
+      : 'kek_version, iv, wrapped_dek, ciphertext';
   for (const p of seeded.plain) {
     const row = await first<{
       kek_version: number;
@@ -353,7 +357,7 @@ async function expectEverythingOpens(r: Rotated) {
       ciphertext: ArrayBuffer;
     }>(
       db,
-      `SELECT kek_version, iv, wrapped_dek, ciphertext FROM ${p.table} WHERE ${p.table === 'pass_personalizations' ? 'pass_id' : p.table === 'pass_credential_transfer_payloads' ? 'transfer_id' : 'id'} = ?`,
+      `SELECT ${hmacColumns(p.table)} FROM ${p.table} WHERE ${p.table === 'pass_personalizations' ? 'pass_id' : p.table === 'pass_credential_transfer_payloads' ? 'transfer_id' : 'id'} = ?`,
       [p.id],
     );
     expect(row?.kek_version, p.table).toBe(2);

@@ -2,6 +2,11 @@
   "schema": 1,
   "name": "Pickup",
   "description": "An order code, buzzed when ready.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",

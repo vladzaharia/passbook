@@ -2,13 +2,13 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "19bcb1d0c6dc1e19675db60eceec6acfb15b0547";
+export const BAKED_BUILD_HASH = "3ba4e2e98b0c82570e5306e75c93a9edc6dd23b0";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-blue",
     "slug": "henrys-blue",
-    "version": "7f7598441d1e66ed",
+    "version": "da5e7e0c56b2eb10",
     "name": "Henry’s · Blue Entrance",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -24,6 +24,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Henry’s · Blue Entrance",
       "description": "Member card with lock-screen suggestions at the member’s clubs.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "org": {
         "slug": "henrys",
         "name": "Henry’s Gymnasium"
@@ -584,7 +589,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/7f7598441d1e66ed/artwork@2x.png"
+          "path": "/templates/henrys-blue/da5e7e0c56b2eb10/artwork@2x.png"
         }
       },
       {
@@ -598,7 +603,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/7f7598441d1e66ed/artwork@3x.png"
+          "path": "/templates/henrys-blue/da5e7e0c56b2eb10/artwork@3x.png"
         }
       },
       {
@@ -612,7 +617,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1010,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/7f7598441d1e66ed/background@2x.png"
+          "path": "/templates/henrys-blue/da5e7e0c56b2eb10/background@2x.png"
         }
       },
       {
@@ -626,7 +631,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1515,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/7f7598441d1e66ed/background@3x.png"
+          "path": "/templates/henrys-blue/da5e7e0c56b2eb10/background@3x.png"
         }
       },
       {
@@ -639,7 +644,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/7f7598441d1e66ed/en.lproj/pass.strings"
+          "path": "/templates/henrys-blue/da5e7e0c56b2eb10/en.lproj/pass.strings"
         }
       },
       {
@@ -653,7 +658,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/7f7598441d1e66ed/icon@2x.png"
+          "path": "/templates/henrys-blue/da5e7e0c56b2eb10/icon@2x.png"
         }
       },
       {
@@ -667,7 +672,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/7f7598441d1e66ed/icon@3x.png"
+          "path": "/templates/henrys-blue/da5e7e0c56b2eb10/icon@3x.png"
         }
       },
       {
@@ -681,7 +686,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/7f7598441d1e66ed/logo@2x.png"
+          "path": "/templates/henrys-blue/da5e7e0c56b2eb10/logo@2x.png"
         }
       },
       {
@@ -695,7 +700,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/7f7598441d1e66ed/logo@3x.png"
+          "path": "/templates/henrys-blue/da5e7e0c56b2eb10/logo@3x.png"
         }
       },
       {
@@ -709,7 +714,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/7f7598441d1e66ed/primaryLogo@2x.png"
+          "path": "/templates/henrys-blue/da5e7e0c56b2eb10/primaryLogo@2x.png"
         }
       },
       {
@@ -723,7 +728,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/7f7598441d1e66ed/primaryLogo@3x.png"
+          "path": "/templates/henrys-blue/da5e7e0c56b2eb10/primaryLogo@3x.png"
         }
       }
     ],
@@ -746,7 +751,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-copper",
     "slug": "henrys-copper",
-    "version": "b95c69194c2acbf1",
+    "version": "4669b9231f23c7f2",
     "name": "Henry’s · Copper Gym",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -762,6 +767,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Henry’s · Copper Gym",
       "description": "Member card with lock-screen suggestions at the member’s clubs.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "org": {
         "slug": "henrys",
         "name": "Henry’s Gymnasium"
@@ -1322,7 +1332,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/b95c69194c2acbf1/artwork@2x.png"
+          "path": "/templates/henrys-copper/4669b9231f23c7f2/artwork@2x.png"
         }
       },
       {
@@ -1336,7 +1346,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/b95c69194c2acbf1/artwork@3x.png"
+          "path": "/templates/henrys-copper/4669b9231f23c7f2/artwork@3x.png"
         }
       },
       {
@@ -1350,7 +1360,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1010,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/b95c69194c2acbf1/background@2x.png"
+          "path": "/templates/henrys-copper/4669b9231f23c7f2/background@2x.png"
         }
       },
       {
@@ -1364,7 +1374,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1515,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/b95c69194c2acbf1/background@3x.png"
+          "path": "/templates/henrys-copper/4669b9231f23c7f2/background@3x.png"
         }
       },
       {
@@ -1377,7 +1387,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/b95c69194c2acbf1/en.lproj/pass.strings"
+          "path": "/templates/henrys-copper/4669b9231f23c7f2/en.lproj/pass.strings"
         }
       },
       {
@@ -1391,7 +1401,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/b95c69194c2acbf1/icon@2x.png"
+          "path": "/templates/henrys-copper/4669b9231f23c7f2/icon@2x.png"
         }
       },
       {
@@ -1405,7 +1415,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/b95c69194c2acbf1/icon@3x.png"
+          "path": "/templates/henrys-copper/4669b9231f23c7f2/icon@3x.png"
         }
       },
       {
@@ -1419,7 +1429,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/b95c69194c2acbf1/logo@2x.png"
+          "path": "/templates/henrys-copper/4669b9231f23c7f2/logo@2x.png"
         }
       },
       {
@@ -1433,7 +1443,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/b95c69194c2acbf1/logo@3x.png"
+          "path": "/templates/henrys-copper/4669b9231f23c7f2/logo@3x.png"
         }
       },
       {
@@ -1447,7 +1457,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/b95c69194c2acbf1/primaryLogo@2x.png"
+          "path": "/templates/henrys-copper/4669b9231f23c7f2/primaryLogo@2x.png"
         }
       },
       {
@@ -1461,7 +1471,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/b95c69194c2acbf1/primaryLogo@3x.png"
+          "path": "/templates/henrys-copper/4669b9231f23c7f2/primaryLogo@3x.png"
         }
       }
     ],
@@ -1484,7 +1494,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-access-card",
     "slug": "starter-access-card",
-    "version": "65fdc8948f915b54",
+    "version": "45ac9f7c379bbbbb",
     "name": "Access card",
     "description": "Door access by plan and zone, with a photo for ID checks.",
     "org": null,
@@ -1496,6 +1506,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Access card",
       "description": "Door access by plan and zone, with a photo for ID checks.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -2077,7 +2092,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 480473760,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/65fdc8948f915b54/en.lproj/pass.strings"
+          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/en.lproj/pass.strings"
         }
       },
       {
@@ -2091,7 +2106,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/65fdc8948f915b54/icon@2x.png"
+          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/icon@2x.png"
         }
       },
       {
@@ -2105,7 +2120,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/65fdc8948f915b54/icon@3x.png"
+          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/icon@3x.png"
         }
       },
       {
@@ -2119,7 +2134,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/65fdc8948f915b54/logo@2x.png"
+          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/logo@2x.png"
         }
       },
       {
@@ -2133,7 +2148,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/65fdc8948f915b54/logo@3x.png"
+          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/logo@3x.png"
         }
       },
       {
@@ -2147,7 +2162,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/65fdc8948f915b54/thumbnail@2x.png"
+          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/thumbnail@2x.png"
         }
       },
       {
@@ -2161,7 +2176,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/65fdc8948f915b54/thumbnail@3x.png"
+          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/thumbnail@3x.png"
         }
       }
     ],
@@ -2174,7 +2189,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-boarding-pass",
     "slug": "starter-boarding-pass",
-    "version": "4b94cd1a97dc7a1b",
+    "version": "1e40e5ccba955048",
     "name": "Boarding pass",
     "description": "Flight, gate and seat, with a route footer.",
     "org": null,
@@ -2186,6 +2201,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Boarding pass",
       "description": "Flight, gate and seat, with a route footer.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -3014,7 +3034,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2152989108,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/en.lproj/pass.strings"
+          "path": "/templates/starter-boarding-pass/1e40e5ccba955048/en.lproj/pass.strings"
         }
       },
       {
@@ -3028,7 +3048,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 30,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/footer@2x.png"
+          "path": "/templates/starter-boarding-pass/1e40e5ccba955048/footer@2x.png"
         }
       },
       {
@@ -3042,7 +3062,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 45,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/footer@3x.png"
+          "path": "/templates/starter-boarding-pass/1e40e5ccba955048/footer@3x.png"
         }
       },
       {
@@ -3056,7 +3076,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/icon@2x.png"
+          "path": "/templates/starter-boarding-pass/1e40e5ccba955048/icon@2x.png"
         }
       },
       {
@@ -3070,7 +3090,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/icon@3x.png"
+          "path": "/templates/starter-boarding-pass/1e40e5ccba955048/icon@3x.png"
         }
       },
       {
@@ -3084,7 +3104,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/logo@2x.png"
+          "path": "/templates/starter-boarding-pass/1e40e5ccba955048/logo@2x.png"
         }
       },
       {
@@ -3098,7 +3118,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/logo@3x.png"
+          "path": "/templates/starter-boarding-pass/1e40e5ccba955048/logo@3x.png"
         }
       },
       {
@@ -3112,7 +3132,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/primaryLogo@2x.png"
+          "path": "/templates/starter-boarding-pass/1e40e5ccba955048/primaryLogo@2x.png"
         }
       },
       {
@@ -3126,7 +3146,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-boarding-pass/4b94cd1a97dc7a1b/primaryLogo@3x.png"
+          "path": "/templates/starter-boarding-pass/1e40e5ccba955048/primaryLogo@3x.png"
         }
       }
     ],
@@ -3139,7 +3159,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-booking",
     "slug": "starter-booking",
-    "version": "f50daf8258ac8153",
+    "version": "15b3d0a44bd342ce",
     "name": "Booking",
     "description": "An appointment or table at a set time.",
     "org": null,
@@ -3151,6 +3171,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Booking",
       "description": "An appointment or table at a set time.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -3658,7 +3683,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 115174263,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/f50daf8258ac8153/en.lproj/pass.strings"
+          "path": "/templates/starter-booking/15b3d0a44bd342ce/en.lproj/pass.strings"
         }
       },
       {
@@ -3672,7 +3697,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/f50daf8258ac8153/icon@2x.png"
+          "path": "/templates/starter-booking/15b3d0a44bd342ce/icon@2x.png"
         }
       },
       {
@@ -3686,7 +3711,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/f50daf8258ac8153/icon@3x.png"
+          "path": "/templates/starter-booking/15b3d0a44bd342ce/icon@3x.png"
         }
       },
       {
@@ -3700,7 +3725,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/f50daf8258ac8153/logo@2x.png"
+          "path": "/templates/starter-booking/15b3d0a44bd342ce/logo@2x.png"
         }
       },
       {
@@ -3714,7 +3739,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/f50daf8258ac8153/logo@3x.png"
+          "path": "/templates/starter-booking/15b3d0a44bd342ce/logo@3x.png"
         }
       },
       {
@@ -3728,7 +3753,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/f50daf8258ac8153/thumbnail@2x.png"
+          "path": "/templates/starter-booking/15b3d0a44bd342ce/thumbnail@2x.png"
         }
       },
       {
@@ -3742,7 +3767,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-booking/f50daf8258ac8153/thumbnail@3x.png"
+          "path": "/templates/starter-booking/15b3d0a44bd342ce/thumbnail@3x.png"
         }
       }
     ],
@@ -3755,7 +3780,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-coupon",
     "slug": "starter-coupon",
-    "version": "e38658a2c7c8354c",
+    "version": "6bc9735e84b624cc",
     "name": "Coupon",
     "description": "A single-use offer with an expiry.",
     "org": null,
@@ -3767,6 +3792,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Coupon",
       "description": "A single-use offer with an expiry.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -4170,7 +4200,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3965588232,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/e38658a2c7c8354c/en.lproj/pass.strings"
+          "path": "/templates/starter-coupon/6bc9735e84b624cc/en.lproj/pass.strings"
         }
       },
       {
@@ -4184,7 +4214,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/e38658a2c7c8354c/icon@2x.png"
+          "path": "/templates/starter-coupon/6bc9735e84b624cc/icon@2x.png"
         }
       },
       {
@@ -4198,7 +4228,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/e38658a2c7c8354c/icon@3x.png"
+          "path": "/templates/starter-coupon/6bc9735e84b624cc/icon@3x.png"
         }
       },
       {
@@ -4212,7 +4242,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/e38658a2c7c8354c/logo@2x.png"
+          "path": "/templates/starter-coupon/6bc9735e84b624cc/logo@2x.png"
         }
       },
       {
@@ -4226,7 +4256,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/e38658a2c7c8354c/logo@3x.png"
+          "path": "/templates/starter-coupon/6bc9735e84b624cc/logo@3x.png"
         }
       },
       {
@@ -4240,7 +4270,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/e38658a2c7c8354c/strip@2x.png"
+          "path": "/templates/starter-coupon/6bc9735e84b624cc/strip@2x.png"
         }
       },
       {
@@ -4254,7 +4284,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-coupon/e38658a2c7c8354c/strip@3x.png"
+          "path": "/templates/starter-coupon/6bc9735e84b624cc/strip@3x.png"
         }
       }
     ],
@@ -4267,7 +4297,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-event-ticket",
     "slug": "starter-event-ticket",
-    "version": "a9fa0e97af73688b",
+    "version": "a2351ade3c8a3fb2",
     "name": "Event ticket",
     "description": "Seat, doors and venue, with a poster layout.",
     "org": null,
@@ -4279,6 +4309,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Event ticket",
       "description": "Seat, doors and venue, with a poster layout.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -5091,7 +5126,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/artwork@2x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/artwork@2x.png"
         }
       },
       {
@@ -5105,7 +5140,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/artwork@3x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/artwork@3x.png"
         }
       },
       {
@@ -5119,7 +5154,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1006,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/background@2x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/background@2x.png"
         }
       },
       {
@@ -5133,7 +5168,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1509,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/background@3x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/background@3x.png"
         }
       },
       {
@@ -5146,7 +5181,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3221089066,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/en.lproj/pass.strings"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/en.lproj/pass.strings"
         }
       },
       {
@@ -5160,7 +5195,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/icon@2x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/icon@2x.png"
         }
       },
       {
@@ -5174,7 +5209,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/icon@3x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/icon@3x.png"
         }
       },
       {
@@ -5188,7 +5223,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/logo@2x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/logo@2x.png"
         }
       },
       {
@@ -5202,7 +5237,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/logo@3x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/logo@3x.png"
         }
       },
       {
@@ -5216,7 +5251,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/primaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/primaryLogo@2x.png"
         }
       },
       {
@@ -5230,7 +5265,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/primaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/primaryLogo@3x.png"
         }
       },
       {
@@ -5244,7 +5279,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 24,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/secondaryLogo@2x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/secondaryLogo@2x.png"
         }
       },
       {
@@ -5258,7 +5293,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 36,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/secondaryLogo@3x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/secondaryLogo@3x.png"
         }
       },
       {
@@ -5272,7 +5307,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/thumbnail@2x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/thumbnail@2x.png"
         }
       },
       {
@@ -5286,7 +5321,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-event-ticket/a9fa0e97af73688b/thumbnail@3x.png"
+          "path": "/templates/starter-event-ticket/a2351ade3c8a3fb2/thumbnail@3x.png"
         }
       }
     ],
@@ -5299,7 +5334,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-generic",
     "slug": "starter-generic",
-    "version": "9ed1ffcbe0119247",
+    "version": "02f13ee46e3abb20",
     "name": "Membership",
     "description": "Tier, term and status, with a renew link.",
     "org": null,
@@ -5311,6 +5346,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Membership",
       "description": "Tier, term and status, with a renew link.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -5976,7 +6016,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3062501488,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9ed1ffcbe0119247/en.lproj/pass.strings"
+          "path": "/templates/starter-generic/02f13ee46e3abb20/en.lproj/pass.strings"
         }
       },
       {
@@ -5990,7 +6030,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9ed1ffcbe0119247/icon@2x.png"
+          "path": "/templates/starter-generic/02f13ee46e3abb20/icon@2x.png"
         }
       },
       {
@@ -6004,7 +6044,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9ed1ffcbe0119247/icon@3x.png"
+          "path": "/templates/starter-generic/02f13ee46e3abb20/icon@3x.png"
         }
       },
       {
@@ -6018,7 +6058,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9ed1ffcbe0119247/logo@2x.png"
+          "path": "/templates/starter-generic/02f13ee46e3abb20/logo@2x.png"
         }
       },
       {
@@ -6032,7 +6072,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9ed1ffcbe0119247/logo@3x.png"
+          "path": "/templates/starter-generic/02f13ee46e3abb20/logo@3x.png"
         }
       },
       {
@@ -6046,7 +6086,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9ed1ffcbe0119247/thumbnail@2x.png"
+          "path": "/templates/starter-generic/02f13ee46e3abb20/thumbnail@2x.png"
         }
       },
       {
@@ -6060,7 +6100,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/9ed1ffcbe0119247/thumbnail@3x.png"
+          "path": "/templates/starter-generic/02f13ee46e3abb20/thumbnail@3x.png"
         }
       }
     ],
@@ -6083,7 +6123,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-id-card",
     "slug": "starter-id-card",
-    "version": "5d81d385c83d617b",
+    "version": "1bc28943cc4f89c3",
     "name": "ID card",
     "description": "Photo, name, number and a scannable code.",
     "org": null,
@@ -6095,6 +6135,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "ID card",
       "description": "Photo, name, number and a scannable code.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -6473,7 +6518,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 1406535994,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/5d81d385c83d617b/en.lproj/pass.strings"
+          "path": "/templates/starter-id-card/1bc28943cc4f89c3/en.lproj/pass.strings"
         }
       },
       {
@@ -6487,7 +6532,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/5d81d385c83d617b/icon@2x.png"
+          "path": "/templates/starter-id-card/1bc28943cc4f89c3/icon@2x.png"
         }
       },
       {
@@ -6501,7 +6546,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/5d81d385c83d617b/icon@3x.png"
+          "path": "/templates/starter-id-card/1bc28943cc4f89c3/icon@3x.png"
         }
       },
       {
@@ -6515,7 +6560,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/5d81d385c83d617b/logo@2x.png"
+          "path": "/templates/starter-id-card/1bc28943cc4f89c3/logo@2x.png"
         }
       },
       {
@@ -6529,7 +6574,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/5d81d385c83d617b/logo@3x.png"
+          "path": "/templates/starter-id-card/1bc28943cc4f89c3/logo@3x.png"
         }
       },
       {
@@ -6543,7 +6588,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/5d81d385c83d617b/thumbnail@2x.png"
+          "path": "/templates/starter-id-card/1bc28943cc4f89c3/thumbnail@2x.png"
         }
       },
       {
@@ -6557,7 +6602,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-id-card/5d81d385c83d617b/thumbnail@3x.png"
+          "path": "/templates/starter-id-card/1bc28943cc4f89c3/thumbnail@3x.png"
         }
       }
     ],
@@ -6570,7 +6615,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-pack",
     "slug": "starter-pack",
-    "version": "a454f3c26d6c32f1",
+    "version": "5d3cc55f1072b0be",
     "name": "Pack",
     "description": "Ten washes, classes or trips. Use one.",
     "org": null,
@@ -6582,6 +6627,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Pack",
       "description": "Ten washes, classes or trips. Use one.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -6964,7 +7014,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 4168214438,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/a454f3c26d6c32f1/en.lproj/pass.strings"
+          "path": "/templates/starter-pack/5d3cc55f1072b0be/en.lproj/pass.strings"
         }
       },
       {
@@ -6978,7 +7028,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/a454f3c26d6c32f1/icon@2x.png"
+          "path": "/templates/starter-pack/5d3cc55f1072b0be/icon@2x.png"
         }
       },
       {
@@ -6992,7 +7042,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/a454f3c26d6c32f1/icon@3x.png"
+          "path": "/templates/starter-pack/5d3cc55f1072b0be/icon@3x.png"
         }
       },
       {
@@ -7006,7 +7056,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/a454f3c26d6c32f1/logo@2x.png"
+          "path": "/templates/starter-pack/5d3cc55f1072b0be/logo@2x.png"
         }
       },
       {
@@ -7020,7 +7070,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/a454f3c26d6c32f1/logo@3x.png"
+          "path": "/templates/starter-pack/5d3cc55f1072b0be/logo@3x.png"
         }
       },
       {
@@ -7034,7 +7084,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/a454f3c26d6c32f1/strip@2x.png"
+          "path": "/templates/starter-pack/5d3cc55f1072b0be/strip@2x.png"
         }
       },
       {
@@ -7048,7 +7098,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pack/a454f3c26d6c32f1/strip@3x.png"
+          "path": "/templates/starter-pack/5d3cc55f1072b0be/strip@3x.png"
         }
       }
     ],
@@ -7061,7 +7111,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-permit",
     "slug": "starter-permit",
-    "version": "65fdb5ebf5e2eb22",
+    "version": "59a5c387ec8d0aad",
     "name": "Permit",
     "description": "Plate and zone, valid to a date.",
     "org": null,
@@ -7073,6 +7123,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Permit",
       "description": "Plate and zone, valid to a date.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -7515,7 +7570,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3114249546,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-permit/65fdb5ebf5e2eb22/en.lproj/pass.strings"
+          "path": "/templates/starter-permit/59a5c387ec8d0aad/en.lproj/pass.strings"
         }
       },
       {
@@ -7529,7 +7584,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-permit/65fdb5ebf5e2eb22/icon@2x.png"
+          "path": "/templates/starter-permit/59a5c387ec8d0aad/icon@2x.png"
         }
       },
       {
@@ -7543,7 +7598,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-permit/65fdb5ebf5e2eb22/icon@3x.png"
+          "path": "/templates/starter-permit/59a5c387ec8d0aad/icon@3x.png"
         }
       },
       {
@@ -7557,7 +7612,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-permit/65fdb5ebf5e2eb22/logo@2x.png"
+          "path": "/templates/starter-permit/59a5c387ec8d0aad/logo@2x.png"
         }
       },
       {
@@ -7571,7 +7626,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-permit/65fdb5ebf5e2eb22/logo@3x.png"
+          "path": "/templates/starter-permit/59a5c387ec8d0aad/logo@3x.png"
         }
       },
       {
@@ -7585,7 +7640,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-permit/65fdb5ebf5e2eb22/thumbnail@2x.png"
+          "path": "/templates/starter-permit/59a5c387ec8d0aad/thumbnail@2x.png"
         }
       },
       {
@@ -7599,7 +7654,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-permit/65fdb5ebf5e2eb22/thumbnail@3x.png"
+          "path": "/templates/starter-permit/59a5c387ec8d0aad/thumbnail@3x.png"
         }
       }
     ],
@@ -7612,7 +7667,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-pickup",
     "slug": "starter-pickup",
-    "version": "2ed33fb660333ab0",
+    "version": "8ca7997fd4b0a8b4",
     "name": "Pickup",
     "description": "An order code, buzzed when ready.",
     "org": null,
@@ -7624,6 +7679,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Pickup",
       "description": "An order code, buzzed when ready.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -8040,7 +8100,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 1674255800,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pickup/2ed33fb660333ab0/en.lproj/pass.strings"
+          "path": "/templates/starter-pickup/8ca7997fd4b0a8b4/en.lproj/pass.strings"
         }
       },
       {
@@ -8054,7 +8114,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pickup/2ed33fb660333ab0/icon@2x.png"
+          "path": "/templates/starter-pickup/8ca7997fd4b0a8b4/icon@2x.png"
         }
       },
       {
@@ -8068,7 +8128,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pickup/2ed33fb660333ab0/icon@3x.png"
+          "path": "/templates/starter-pickup/8ca7997fd4b0a8b4/icon@3x.png"
         }
       },
       {
@@ -8082,7 +8142,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pickup/2ed33fb660333ab0/logo@2x.png"
+          "path": "/templates/starter-pickup/8ca7997fd4b0a8b4/logo@2x.png"
         }
       },
       {
@@ -8096,7 +8156,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pickup/2ed33fb660333ab0/logo@3x.png"
+          "path": "/templates/starter-pickup/8ca7997fd4b0a8b4/logo@3x.png"
         }
       },
       {
@@ -8110,7 +8170,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pickup/2ed33fb660333ab0/thumbnail@2x.png"
+          "path": "/templates/starter-pickup/8ca7997fd4b0a8b4/thumbnail@2x.png"
         }
       },
       {
@@ -8124,7 +8184,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-pickup/2ed33fb660333ab0/thumbnail@3x.png"
+          "path": "/templates/starter-pickup/8ca7997fd4b0a8b4/thumbnail@3x.png"
         }
       }
     ],
@@ -8137,7 +8197,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-poster-generic",
     "slug": "starter-poster-generic",
-    "version": "436ff08e83b9639f",
+    "version": "1433aace7221e55e",
     "name": "Poster card",
     "description": "Full-bleed artwork on iOS 27, a classic card before it.",
     "org": null,
@@ -8150,6 +8210,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Poster card",
       "description": "Full-bleed artwork on iOS 27, a classic card before it.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -8628,7 +8693,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/436ff08e83b9639f/artwork@2x.png"
+          "path": "/templates/starter-poster-generic/1433aace7221e55e/artwork@2x.png"
         }
       },
       {
@@ -8642,7 +8707,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/436ff08e83b9639f/artwork@3x.png"
+          "path": "/templates/starter-poster-generic/1433aace7221e55e/artwork@3x.png"
         }
       },
       {
@@ -8655,7 +8720,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2978387323,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/436ff08e83b9639f/en.lproj/pass.strings"
+          "path": "/templates/starter-poster-generic/1433aace7221e55e/en.lproj/pass.strings"
         }
       },
       {
@@ -8669,7 +8734,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/436ff08e83b9639f/icon@2x.png"
+          "path": "/templates/starter-poster-generic/1433aace7221e55e/icon@2x.png"
         }
       },
       {
@@ -8683,7 +8748,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/436ff08e83b9639f/icon@3x.png"
+          "path": "/templates/starter-poster-generic/1433aace7221e55e/icon@3x.png"
         }
       },
       {
@@ -8697,7 +8762,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/436ff08e83b9639f/logo@2x.png"
+          "path": "/templates/starter-poster-generic/1433aace7221e55e/logo@2x.png"
         }
       },
       {
@@ -8711,7 +8776,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/436ff08e83b9639f/logo@3x.png"
+          "path": "/templates/starter-poster-generic/1433aace7221e55e/logo@3x.png"
         }
       },
       {
@@ -8725,7 +8790,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/436ff08e83b9639f/primaryLogo@2x.png"
+          "path": "/templates/starter-poster-generic/1433aace7221e55e/primaryLogo@2x.png"
         }
       },
       {
@@ -8739,7 +8804,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-poster-generic/436ff08e83b9639f/primaryLogo@3x.png"
+          "path": "/templates/starter-poster-generic/1433aace7221e55e/primaryLogo@3x.png"
         }
       }
     ],
@@ -8752,7 +8817,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-stamp-card",
     "slug": "starter-stamp-card",
-    "version": "598a6743aec87c11",
+    "version": "49a1d1fe0177b098",
     "name": "Stamp card",
     "description": "Stamps fill the strip; a full card earns a reward.",
     "org": null,
@@ -8764,6 +8829,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Stamp card",
       "description": "Stamps fill the strip; a full card earns a reward.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -9217,7 +9287,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 4183522916,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/en.lproj/pass.strings"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/en.lproj/pass.strings"
         }
       },
       {
@@ -9231,7 +9301,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/icon@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/icon@2x.png"
         }
       },
       {
@@ -9245,7 +9315,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/icon@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/icon@3x.png"
         }
       },
       {
@@ -9259,7 +9329,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/logo@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/logo@2x.png"
         }
       },
       {
@@ -9273,7 +9343,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/logo@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/logo@3x.png"
         }
       },
       {
@@ -9287,7 +9357,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "scale": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/empty.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/empty.png"
         }
       },
       {
@@ -9301,7 +9371,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "scale": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/filled.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/filled.png"
         }
       },
       {
@@ -9315,7 +9385,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "scale": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/reward-earned.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/reward-earned.png"
         }
       },
       {
@@ -9329,7 +9399,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "scale": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/reward.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/reward.png"
         }
       },
       {
@@ -9344,7 +9414,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 0,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/0/strip@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/0/strip@2x.png"
         }
       },
       {
@@ -9359,7 +9429,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 0,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/0/strip@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/0/strip@3x.png"
         }
       },
       {
@@ -9374,7 +9444,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/1/strip@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/1/strip@2x.png"
         }
       },
       {
@@ -9389,7 +9459,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 1,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/1/strip@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/1/strip@3x.png"
         }
       },
       {
@@ -9404,7 +9474,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 10,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/10/strip@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/10/strip@2x.png"
         }
       },
       {
@@ -9419,7 +9489,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 10,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/10/strip@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/10/strip@3x.png"
         }
       },
       {
@@ -9434,7 +9504,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 2,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/2/strip@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/2/strip@2x.png"
         }
       },
       {
@@ -9449,7 +9519,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 2,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/2/strip@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/2/strip@3x.png"
         }
       },
       {
@@ -9464,7 +9534,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 3,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/3/strip@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/3/strip@2x.png"
         }
       },
       {
@@ -9479,7 +9549,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 3,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/3/strip@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/3/strip@3x.png"
         }
       },
       {
@@ -9494,7 +9564,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 4,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/4/strip@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/4/strip@2x.png"
         }
       },
       {
@@ -9509,7 +9579,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 4,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/4/strip@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/4/strip@3x.png"
         }
       },
       {
@@ -9524,7 +9594,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 5,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/5/strip@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/5/strip@2x.png"
         }
       },
       {
@@ -9539,7 +9609,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 5,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/5/strip@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/5/strip@3x.png"
         }
       },
       {
@@ -9554,7 +9624,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 6,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/6/strip@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/6/strip@2x.png"
         }
       },
       {
@@ -9569,7 +9639,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 6,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/6/strip@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/6/strip@3x.png"
         }
       },
       {
@@ -9584,7 +9654,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 7,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/7/strip@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/7/strip@2x.png"
         }
       },
       {
@@ -9599,7 +9669,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 7,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/7/strip@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/7/strip@3x.png"
         }
       },
       {
@@ -9614,7 +9684,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 8,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/8/strip@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/8/strip@2x.png"
         }
       },
       {
@@ -9629,7 +9699,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 8,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/8/strip@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/8/strip@3x.png"
         }
       },
       {
@@ -9644,7 +9714,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 9,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/9/strip@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/9/strip@2x.png"
         }
       },
       {
@@ -9659,7 +9729,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "stamps": 9,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/stamps/strips/9/strip@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/stamps/strips/9/strip@3x.png"
         }
       },
       {
@@ -9673,7 +9743,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/strip@2x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/strip@2x.png"
         }
       },
       {
@@ -9687,7 +9757,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-stamp-card/598a6743aec87c11/strip@3x.png"
+          "path": "/templates/starter-stamp-card/49a1d1fe0177b098/strip@3x.png"
         }
       }
     ],
@@ -9700,7 +9770,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-store-card",
     "slug": "starter-store-card",
-    "version": "a44348591b0e2cde",
+    "version": "c5ae8a7487a50b5d",
     "name": "Balance card",
     "description": "A big balance up front, on a coin strip.",
     "org": null,
@@ -9712,6 +9782,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Balance card",
       "description": "A big balance up front, on a coin strip.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -10221,7 +10296,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 581305781,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/a44348591b0e2cde/en.lproj/pass.strings"
+          "path": "/templates/starter-store-card/c5ae8a7487a50b5d/en.lproj/pass.strings"
         }
       },
       {
@@ -10235,7 +10310,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/a44348591b0e2cde/icon@2x.png"
+          "path": "/templates/starter-store-card/c5ae8a7487a50b5d/icon@2x.png"
         }
       },
       {
@@ -10249,7 +10324,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/a44348591b0e2cde/icon@3x.png"
+          "path": "/templates/starter-store-card/c5ae8a7487a50b5d/icon@3x.png"
         }
       },
       {
@@ -10263,7 +10338,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/a44348591b0e2cde/logo@2x.png"
+          "path": "/templates/starter-store-card/c5ae8a7487a50b5d/logo@2x.png"
         }
       },
       {
@@ -10277,7 +10352,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/a44348591b0e2cde/logo@3x.png"
+          "path": "/templates/starter-store-card/c5ae8a7487a50b5d/logo@3x.png"
         }
       },
       {
@@ -10291,7 +10366,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/a44348591b0e2cde/strip@2x.png"
+          "path": "/templates/starter-store-card/c5ae8a7487a50b5d/strip@2x.png"
         }
       },
       {
@@ -10305,7 +10380,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-store-card/a44348591b0e2cde/strip@3x.png"
+          "path": "/templates/starter-store-card/c5ae8a7487a50b5d/strip@3x.png"
         }
       }
     ],
@@ -10318,7 +10393,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-timed-ticket",
     "slug": "starter-timed-ticket",
-    "version": "9c68f47891a8b900",
+    "version": "6cf81660d705690d",
     "name": "Timed ticket",
     "description": "A time slot for a party, no seat.",
     "org": null,
@@ -10330,6 +10405,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Timed ticket",
       "description": "A time slot for a party, no seat.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -10783,7 +10863,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2918919439,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/9c68f47891a8b900/en.lproj/pass.strings"
+          "path": "/templates/starter-timed-ticket/6cf81660d705690d/en.lproj/pass.strings"
         }
       },
       {
@@ -10797,7 +10877,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/9c68f47891a8b900/icon@2x.png"
+          "path": "/templates/starter-timed-ticket/6cf81660d705690d/icon@2x.png"
         }
       },
       {
@@ -10811,7 +10891,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/9c68f47891a8b900/icon@3x.png"
+          "path": "/templates/starter-timed-ticket/6cf81660d705690d/icon@3x.png"
         }
       },
       {
@@ -10825,7 +10905,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/9c68f47891a8b900/logo@2x.png"
+          "path": "/templates/starter-timed-ticket/6cf81660d705690d/logo@2x.png"
         }
       },
       {
@@ -10839,7 +10919,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/9c68f47891a8b900/logo@3x.png"
+          "path": "/templates/starter-timed-ticket/6cf81660d705690d/logo@3x.png"
         }
       },
       {
@@ -10853,7 +10933,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 288,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/9c68f47891a8b900/strip@2x.png"
+          "path": "/templates/starter-timed-ticket/6cf81660d705690d/strip@2x.png"
         }
       },
       {
@@ -10867,7 +10947,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 432,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-timed-ticket/9c68f47891a8b900/strip@3x.png"
+          "path": "/templates/starter-timed-ticket/6cf81660d705690d/strip@3x.png"
         }
       }
     ],
@@ -10880,7 +10960,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-transit-ticket",
     "slug": "starter-transit-ticket",
-    "version": "7b68dda55f7ff1dc",
+    "version": "d92f75f268ce4ad9",
     "name": "Transit ticket",
     "description": "Boat, bus or train, with party and vehicle.",
     "org": null,
@@ -10892,6 +10972,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "schema": 1,
       "name": "Transit ticket",
       "description": "Boat, bus or train, with party and vehicle.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
       "blueprint": true,
       "inputs": {
         "type": "object",
@@ -11475,7 +11560,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 291132420,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/7b68dda55f7ff1dc/en.lproj/pass.strings"
+          "path": "/templates/starter-transit-ticket/d92f75f268ce4ad9/en.lproj/pass.strings"
         }
       },
       {
@@ -11489,7 +11574,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 30,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/7b68dda55f7ff1dc/footer@2x.png"
+          "path": "/templates/starter-transit-ticket/d92f75f268ce4ad9/footer@2x.png"
         }
       },
       {
@@ -11503,7 +11588,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 45,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/7b68dda55f7ff1dc/footer@3x.png"
+          "path": "/templates/starter-transit-ticket/d92f75f268ce4ad9/footer@3x.png"
         }
       },
       {
@@ -11517,7 +11602,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/7b68dda55f7ff1dc/icon@2x.png"
+          "path": "/templates/starter-transit-ticket/d92f75f268ce4ad9/icon@2x.png"
         }
       },
       {
@@ -11531,7 +11616,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/7b68dda55f7ff1dc/icon@3x.png"
+          "path": "/templates/starter-transit-ticket/d92f75f268ce4ad9/icon@3x.png"
         }
       },
       {
@@ -11545,7 +11630,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/7b68dda55f7ff1dc/logo@2x.png"
+          "path": "/templates/starter-transit-ticket/d92f75f268ce4ad9/logo@2x.png"
         }
       },
       {
@@ -11559,7 +11644,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-transit-ticket/7b68dda55f7ff1dc/logo@3x.png"
+          "path": "/templates/starter-transit-ticket/d92f75f268ce4ad9/logo@3x.png"
         }
       }
     ],

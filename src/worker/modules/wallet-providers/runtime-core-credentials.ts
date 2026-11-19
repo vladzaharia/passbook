@@ -245,6 +245,7 @@ export async function runtimeGoogleAccount(
 ): Promise<{
   account: GoogleValidatedAccount;
   hmacKey: Uint8Array;
+  credentialVersionId: string | null;
 }> {
   ctx = snapshotWalletCredentialContext(ctx);
   scope = copyRuntimeScope(scope);
@@ -252,7 +253,11 @@ export async function runtimeGoogleAccount(
   try {
     const account = await validateGoogleAccount(value.credentials);
     await assertRuntimeCredentialKeyset(ctx, scope);
-    return { account, hmacKey: value.objectIdHmacKey };
+    return {
+      account,
+      hmacKey: value.objectIdHmacKey,
+      credentialVersionId: value.credentialVersionId,
+    };
   } catch {
     throw runtimeAccountUnavailable();
   }

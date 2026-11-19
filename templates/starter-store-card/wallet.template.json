@@ -2,6 +2,11 @@
   "schema": 1,
   "name": "Balance card",
   "description": "A big balance up front, on a coin strip.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",
