@@ -103,7 +103,7 @@ describe('labels', () => {
     expect(actionLabel('pass.resend_email')).toBe('Pass email resent');
     expect(actionLabel('thing.updated')).toBe('Thing updated');
   });
-  it('prefers labels, falls back to a short id, and links targets', () => {
+  it('prefers labels, falls back to the kind (never an id), and links targets', () => {
     const e = entry(1) as Parameters<typeof actorRef>[0];
     const id = '0190a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b';
     expect(actorRef({ ...e, actorId: id })).toMatchObject({ kind: 'user', name: 'User' });
