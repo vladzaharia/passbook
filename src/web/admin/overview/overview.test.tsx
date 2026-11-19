@@ -417,9 +417,7 @@ describe('overview page', () => {
         },
       },
     });
-    expect(
-      await screen.findByText('Metrics: Numeric organization'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Metrics: Numeric organization')).toBeInTheDocument();
     await screen.findByRole('list', { name: 'Totals' });
     expect(requests[0]?.searchParams.get('orgId')).toBe(id);
     const user = userEvent.setup();
