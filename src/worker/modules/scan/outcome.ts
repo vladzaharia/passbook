@@ -10,6 +10,7 @@ import { TYPED_NUMBER_FLAG } from '../../../shared/copy/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPlatformSettings } from '../settings/service.ts';
+import { admitOf } from './admit.ts';
 import { sourcePolicyProven, visibleSource } from './card-semantics.ts';
 import type { CountsRead } from './counts.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
@@ -227,6 +228,7 @@ export function stopOutcome(
     event: eventLine(actor, stop.reason),
     cooldownRemainingMs: stop.cooldownRemainingMs ?? null,
     access: stop.access ?? null,
+    ...(stop.found ? { admit: admitOf(stop.found, actor, stop.access) } : {}),
     ...(stop.occupancy ? { occupancy: stop.occupancy } : {}),
     flags: details.flags,
     ...(stop.channel ? { channel: stop.channel } : {}),
