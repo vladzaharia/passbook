@@ -13,7 +13,7 @@ import { Input, Textarea } from './input.tsx';
 import { RadioGroup } from './radio-group.tsx';
 import { Select } from './select.tsx';
 import { Switch } from './switch.tsx';
-import { TooltipProvider } from './tooltip.tsx';
+import { loadTooltips, TooltipProvider } from './tooltip.tsx';
 
 const noViolations = async (container: HTMLElement) => {
   expect((await axe(container)).violations).toEqual([]);
@@ -95,6 +95,7 @@ describe('Button', () => {
 
 describe('IconButton', () => {
   it('uses the label as its accessible name and shows it as a tooltip on focus', async () => {
+    await loadTooltips();
     const user = userEvent.setup();
     const { container } = render(
       <TooltipProvider>

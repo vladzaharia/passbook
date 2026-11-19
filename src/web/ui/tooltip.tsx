@@ -1,8 +1,22 @@
-import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-import type { ReactElement, ReactNode } from 'react';
-import { cn } from '../lib/cn.ts';
+import {
+  type ComponentType,
+  createContext,
+  type ReactElement,
+  type ReactNode,
+  useContext,
+  useSyncExternalStore,
+} from 'react';
 
-export const TooltipProvider = TooltipPrimitive.Provider;
+export interface TooltipConfig {
+  delayDuration?: number;
+  skipDelayDuration?: number;
+}
+
+const ConfigContext = createContext<TooltipConfig>({});
+
+export function TooltipProvider({ children, ...config }: TooltipConfig & { children: ReactNode }) {
+  return <ConfigContext.Provider value={config}>{children}</ConfigContext.Provider>;
+}
 
 export interface TooltipProps {
   content: ReactNode;
@@ -11,23 +25,34 @@ export interface TooltipProps {
   className?: string;
 }
 
-export function Tooltip({ content, children, side = 'top', className }: TooltipProps) {
+type Impl = ComponentType<TooltipProps & { config: TooltipConfig }>;
+
+let impl: Impl | null = null;
+let loading: Promise<void> | null = null;
+const listeners = new Set<() => void>();
+
+/** Providers call this after first paint, so the Radix chunk stays out of the initial load. */
+export function loadTooltips(): Promise<void> {
+  loading ??= import('./tooltip-impl.tsx').then((m) => {
+    impl = m.TooltipImpl;
+    for (const l of listeners) l();
+  });
+  return loading;
+}
+
+function subscribe(l: () => void) {
+  listeners.add(l);
+  return () => listeners.delete(l);
+}
+
+export function Tooltip({ content, children, side, className }: TooltipProps) {
+  const Loaded = useSyncExternalStore(subscribe, () => impl);
+  const config = useContext(ConfigContext);
   if (content === null || content === undefined || content === '') return children;
+  if (!Loaded) return children;
   return (
-    <TooltipPrimitive.Root>
-      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
-      <TooltipPrimitive.Portal>
-        <TooltipPrimitive.Content
-          side={side}
-          sideOffset={6}
-          className={cn(
-            'wl-tip z-50 max-w-xs rounded-md border border-border bg-surface-overlay px-2 py-1 text-xs text-fg-strong shadow-elevation-2',
-            className,
-          )}
-        >
-          {content}
-        </TooltipPrimitive.Content>
-      </TooltipPrimitive.Portal>
-    </TooltipPrimitive.Root>
+    <Loaded content={content} side={side} className={className} config={config}>
+      {children}
+    </Loaded>
   );
 }
