@@ -92,6 +92,14 @@ describe('channel apply: a running run whose instance died', () => {
     expect((await t.runOf(id))?.state).toBe('running');
   });
 
+  it('does nothing while a replacement instance of the run is alive', async () => {
+    const { t, id, ctx } = await idle();
+    t.instanceStatus.set(id, 'errored');
+    t.created.push({ id: `${id}-r1`, params: { runId: id } });
+    await sweepChannelApply(ctx);
+    expect(t.created.some((c) => c.id === `${id}-c1`)).toBe(false);
+  });
+
   it('fails the run as lost after three failed instances in a row', async () => {
     const { t, id, ctx } = await idle();
     for (const n of ['', '-c1', '-c2']) {

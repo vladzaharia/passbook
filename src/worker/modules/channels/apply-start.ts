@@ -89,6 +89,9 @@ const MAX_CHAIN = 500;
  * failed instances in a row fail the run as lost; one that handed off (complete) is not a failure.
  */
 async function ensureRunning(ctx: ServiceContext, runId: string): Promise<void> {
+  // An instance made for a pending run (`-rN`) may still be going: no continuation beside it.
+  for (let n = 1; n <= MAX_RECREATE; n++)
+    if ((await instanceStatus(ctx, `${runId}-r${n}`)) === 'live') return;
   const chain: ('live' | 'complete' | 'failed')[] = [];
   for (let n = 0; n < MAX_CHAIN; n++) {
     const id = n === 0 ? runId : `${runId}-c${n}`;

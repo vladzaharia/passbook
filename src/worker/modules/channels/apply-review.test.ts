@@ -126,10 +126,13 @@ describe('channel apply: review fixes', () => {
     const b = await idOf(t.saved({ apple: 'on' }));
     const mine = () => t.created.filter((c) => c.id.startsWith(b)).length;
     const before = mine();
+    // Were it swept, its dead instance would be replaced as `b-r1`.
+    t.instanceStatus.set(b, 'errored');
     t.kit.clock.advance(20 * 60_000);
     await sweepChannelApply(ctx);
     // Only the run ahead may be looked after; the one queued behind it keeps its instance.
     expect(mine()).toBe(before);
+    expect(t.created.some((c) => c.id === `${b}-r1`)).toBe(false);
   });
 
   it('replays a journal that crashed between the ledger and the mark without repeating events', async () => {
