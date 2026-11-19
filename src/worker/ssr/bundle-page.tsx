@@ -38,10 +38,10 @@ export interface BundlePageItem {
   title: string;
   /** Voided passes and removed ones cannot be added. */
   state: 'active' | 'voided' | 'removed';
-  /** `/b/:token/:passId/pass.pkpass`. */
-  downloadHref: string;
-  /** `/b/:token/:passId/barcode`: the browser barcode, shown on Android. */
-  barcodeHref: string;
+  /** `/b/:token/:passId/pass.pkpass`; null while Apple is off for the pass. */
+  downloadHref: string | null;
+  /** `/b/:token/:passId/barcode`: the browser barcode, shown on Android; absent while mobile is off. */
+  barcodeHref?: string | undefined;
 }
 
 export interface BundlePageProps {
@@ -79,7 +79,8 @@ function BundleBody(props: BundlePageProps) {
   const addable = items.filter((i) => i.state === 'active');
   const off = items.length - addable.length;
   const android = isAndroid(device.device);
-  const mode = addable.length > 0 ? addMode('active', device, false, props.publicUrl) : 'off';
+  const apple = addable.filter((i) => i.downloadHref);
+  const mode = apple.length > 0 ? addMode('active', device, false, props.publicUrl) : 'off';
   const area: AddAreaProps | null =
     mode === 'off'
       ? null
@@ -91,7 +92,7 @@ function BundleBody(props: BundlePageProps) {
           badge: (
             <AppleWalletBadge
               href={props.addAllHref}
-              label={BUNDLE_COPY.count(addable.length)}
+              label={BUNDLE_COPY.count(apple.length)}
               className="p-0"
             />
           ),
@@ -115,9 +116,9 @@ function BundleBody(props: BundlePageProps) {
               <h2 id="bd-add">{BUNDLE_COPY.addAll}</h2>
               <AddBlock {...area} buddy={(p) => <BuddyArt {...p} playOnLoad />} />
             </section>
-          ) : (
+          ) : addable.length === 0 ? (
             <Notice state="voided" orgName={props.orgName} support={support} many />
-          )}
+          ) : null}
         </div>
         <ul className="bd-list" aria-label={BUNDLE_COPY.count(items.length)}>
           {items.map((item, i) => (
@@ -137,7 +138,7 @@ function BundleBody(props: BundlePageProps) {
               <div className="bd-way">
                 {item.state !== 'active' ? (
                   <OffBadge state={item.state} />
-                ) : android ? (
+                ) : (android || !item.downloadHref) && item.barcodeHref ? (
                   <a
                     className={OUTLINE_ACTION_CLASS}
                     href={item.barcodeHref}
@@ -145,13 +146,13 @@ function BundleBody(props: BundlePageProps) {
                   >
                     {HOLDER_COPY.showBarcode}
                   </a>
-                ) : (
+                ) : item.downloadHref && !android ? (
                   <AppleWalletBadge
                     href={item.downloadHref}
                     describedBy={`bd-n-${item.id}`}
                     className="p-0"
                   />
-                )}
+                ) : null}
               </div>
             </li>
           ))}

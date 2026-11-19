@@ -76,6 +76,9 @@ export const SCAN_REFUSED_REASONS = [
   'tag_lost',
   'tag_not_allowed',
   'tag_invalid',
+  'channel_off',
+  'print_replaced',
+  'print_voided',
 ] as const;
 export const SCAN_HEADS_UP_REASONS = [
   'already_done',

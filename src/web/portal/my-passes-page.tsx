@@ -77,7 +77,7 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
   const refresh = useRefresh(pass.id, pass);
   // The holder's own name is no title on their own page: the pass kind leads instead.
   const name = holderPassName(pass, authed?.user);
-  const publicUrl = publicUrlOf(pass.downloadUrl);
+  const publicUrl = publicUrlOf(pass.pageUrl ?? pass.downloadUrl);
   const removed = pass.removedAt !== null;
   const voided = pass.status === 'voided' || removed;
   // Where the badge cannot add, Show QR leads; elsewhere off the phone it waits in More.
@@ -136,7 +136,10 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
             {voided || pass.inWallet || !qr || !publicUrl ? null : (
               <ShowQrButton passTitle={name} url={publicUrl} />
             )}
-            {voided || pass.inWallet || !pass.downloadUrl ? null : (
+            {voided ||
+            pass.inWallet ||
+            !pass.downloadUrl ||
+            pass.channels?.apple.on === false ? null : (
               <AppleWalletBadge href={pass.downloadUrl} onClick={() => setDip((n) => n + 1)} />
             )}
           </div>

@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
 import holderCss from '../../generated/ssr-holder.css?raw';
+import type { EffectiveChannels } from '../../shared/contracts/channels.ts';
 import type { Mode } from '../../shared/contracts/common.ts';
 import type { WalletOffer } from '../../shared/contracts/me.ts';
 import type {
@@ -68,12 +69,17 @@ export interface PassPageProps {
   orgLabel: string;
   /** The pass's own title (display title, else its description). */
   passTitle: string;
-  downloadHref: string;
+  /** Null while Apple is off for this pass: no badge. */
+  downloadHref: string | null;
   walletOffers: readonly WalletOffer[];
   /** The release gate per native wallet, when the caller has it. */
   issuance?: Partial<Record<WalletProvider, WalletProviderIssuance>>;
   /** The browser barcode page; never the QR that opens this page. */
   barcodeHref?: string | undefined;
+  /** What each channel offers this holder (the one gate). */
+  channels?: EffectiveChannels;
+  /** The print page, when paper is on and the template lets the holder print. */
+  printHref?: string;
   /** The absolute URL of this page: the add QR encodes it. */
   publicUrl: string;
   /** The holder's page in the portal (sign-in first when needed). */
@@ -140,6 +146,8 @@ function PassBody(props: PassPageProps) {
           walletOffers={props.walletOffers}
           {...(props.issuance ? { issuance: props.issuance } : {})}
           barcodeHref={props.barcodeHref}
+          channels={props.channels}
+          printHref={props.printHref}
           publicUrl={props.publicUrl}
           support={props.support}
           endedOn={props.endedOn ?? null}
