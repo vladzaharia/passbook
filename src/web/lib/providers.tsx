@@ -18,7 +18,7 @@ export function AppProviders({
   }, []);
   return (
     <CoreProviders queryClient={queryClient}>
-      <TooltipProvider delayDuration={400} skipDelayDuration={300}>
+      <TooltipProvider delayDuration={400}>
         {children}
         <Toaster />
       </TooltipProvider>

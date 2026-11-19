@@ -2,7 +2,11 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from '../lib/cn.ts';
 import type { TooltipConfig, TooltipProps } from './tooltip.tsx';
 
-/** Radix and floating-ui weigh ~19 kB gzip; tooltip.tsx loads this file after first paint. */
+/**
+ * Radix and floating-ui weigh ~19 kB gzip; tooltip.tsx loads this file after first paint. Each
+ * tooltip has its own Radix provider (one at the root would remount the app), so there is no
+ * skip-delay between neighbouring tooltips.
+ */
 export function TooltipImpl({
   content,
   children,
