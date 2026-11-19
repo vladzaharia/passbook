@@ -285,6 +285,9 @@ export function Designer({
                 manifest={state.doc.manifest}
                 templateId={create ? undefined : templateId}
                 orgId={selectedOrg}
+                onPaper={
+                  readOnly || phone ? undefined : (patch) => edit({ op: 'paper', patch }, 'paper')
+                }
                 passJson={readOnly ? readOnly.passJson : (check.lastBuilt ?? null)}
                 assets={state.doc.assets}
                 assetBase={base_}

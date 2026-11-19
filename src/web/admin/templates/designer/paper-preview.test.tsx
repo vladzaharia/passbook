@@ -17,8 +17,9 @@ const channels = (paper: Record<string, unknown>) => () =>
     effective: { mobile: on, apple: on, google: on, samsung: on, nfc: on, paper },
   });
 
-const stage = (paper?: unknown) => (
+const stage = (paper?: unknown, onPaper?: (p: unknown) => void) => (
   <DesignerStage
+    onPaper={onPaper}
     manifest={{ ...EVENT_MANIFEST, ...(paper ? { paper } : {}) } as Record<string, unknown>}
     templateId="t1"
     orgId="o1"
@@ -78,5 +79,35 @@ describe('designer Paper tab', () => {
     await user.click(await screen.findByRole('radio', { name: 'Paper' }));
     expect(await screen.findByText('Staff print only.')).toBeInTheDocument();
     expect(screen.queryByText('Layout from the ticket fields.')).toBeNull();
+  });
+
+  it('edits the block: starts it, then barcode, holder, and shows validation', async () => {
+    const user = userEvent.setup();
+    const onPaper = vi.fn();
+    const first = renderTags(stage(undefined, onPaper), {
+      '/api/v1/templates/t1/channels': channels(on),
+    });
+    await user.click(await screen.findByRole('radio', { name: 'Paper' }));
+    await user.click(await screen.findByRole('button', { name: 'Edit layout' }));
+    expect(onPaper).toHaveBeenLastCalledWith({ size: 'a4' });
+    first.unmount();
+
+    const second = renderTags(
+      stage({ schema: 1, size: 'a4', barcode: 'qr', fields: ['order'] }, onPaper),
+      { '/api/v1/templates/t1/channels': channels(on) },
+    );
+    await user.click(await screen.findByRole('radio', { name: 'Paper' }));
+    expect(
+      await screen.findByText('This field carries the scan lookup value.'),
+    ).toBeInTheDocument();
+    await user.click(await screen.findByRole('radio', { name: 'Code 128' }));
+    expect(onPaper).toHaveBeenLastCalledWith({ barcode: 'code128' });
+    await user.click(screen.getByRole('checkbox', { name: 'Holders can print' }));
+    expect(onPaper).toHaveBeenLastCalledWith({ holder: false });
+    await user.click(screen.getByRole('radio', { name: 'Letter' }));
+    expect(onPaper).toHaveBeenLastCalledWith({ size: 'letter' });
+    await user.click(screen.getByRole('button', { name: 'Use derived layout' }));
+    expect(onPaper).toHaveBeenLastCalledWith(null);
+    second.unmount();
   });
 });

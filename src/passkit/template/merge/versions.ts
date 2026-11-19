@@ -20,6 +20,7 @@ export interface Upgraders {
   schema?: Record<number, Step>;
   'scan.display'?: Record<number, Step>;
   wallets?: Record<number, Step>;
+  paper?: Record<number, Step>;
 }
 
 /** Empty while every site is at version 1. A bump ships its step here, in the same change. */
@@ -30,6 +31,7 @@ export const VERSION_SITES = [
   { part: 'manifest.meta', steps: 'schema', key: 'schema', sub: undefined, version: undefined },
   { part: 'scan.display', steps: 'scan.display', key: 'scan', sub: 'display', version: 'v' },
   { part: 'wallets', steps: 'wallets', key: 'wallets', sub: undefined, version: 'schema' },
+  { part: 'paper', steps: 'paper', key: 'paper', sub: undefined, version: 'schema' },
 ] as const;
 export type VersionSite = (typeof VERSION_SITES)[number];
 

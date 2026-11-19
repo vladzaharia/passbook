@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { PRINT_COPY } from '@/shared/copy/print.ts';
 import { SegmentedControl } from '../../../ui/index.ts';
 import type { DraftAsset } from './model.ts';
+import type { PaperPatch } from './ops-paper.ts';
 import { PaperPreview } from './paper-preview.tsx';
 import { DesignerPreview } from './preview.tsx';
 
@@ -16,11 +17,13 @@ export function DesignerStage({
   manifest,
   templateId,
   orgId,
+  onPaper,
   ...card
 }: {
   manifest: Record<string, unknown>;
   templateId?: string | undefined;
   orgId?: string | undefined;
+  onPaper?: ((patch: PaperPatch) => void) | undefined;
   passJson: Record<string, unknown> | null | undefined;
   assets: readonly DraftAsset[];
   assetBase: string;
@@ -45,6 +48,7 @@ export function DesignerStage({
           manifest={manifest}
           templateId={templateId}
           orgId={orgId}
+          onEdit={onPaper}
         />
       )}
     </div>

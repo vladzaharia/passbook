@@ -17,7 +17,16 @@ import { PAPER_CSS } from '../../../paper/css.ts';
 import { drawPaperCode, type PaperDrawing } from '../../../paper/drawing.ts';
 import { PaperTicket } from '../../../paper/ticket.tsx';
 import { loadBarcodeEngine } from '../../../pass-card/barcode-engine.ts';
-import { Badge, Callout, EmptyState, SegmentedControl, Skeleton } from '../../../ui/index.ts';
+import {
+  Badge,
+  Button,
+  Callout,
+  EmptyState,
+  SegmentedControl,
+  Skeleton,
+} from '../../../ui/index.ts';
+import type { PaperPatch } from './ops-paper.ts';
+import { PaperEditor } from './paper-editor.tsx';
 
 /** A code of the print code's shape, so the preview draws a real QR; never a real ticket's. */
 const SAMPLE_CODE = 'PSAMPLEABCDEFGHIJKLMNOPQRST';
@@ -70,11 +79,14 @@ export function PaperPreview({
   manifest,
   templateId,
   orgId,
+  onEdit,
 }: {
   passJson: Record<string, unknown> | null | undefined;
   manifest: Record<string, unknown>;
   templateId?: string | undefined;
   orgId?: string | undefined;
+  /** Writes the block; absent when the draft is read-only. */
+  onEdit?: ((patch: PaperPatch) => void) | undefined;
 }) {
   const channels = useTemplatePaper(templateId, orgId);
   const saved = useMemo(() => resolvePaper(manifest.paper), [manifest.paper]);
@@ -115,7 +127,10 @@ export function PaperPreview({
             label={PRINT_COPY.sizeLabel}
             options={SIZE_OPTIONS}
             value={picked}
-            onValueChange={setPicked}
+            onValueChange={(size) => {
+              setPicked(size);
+              if (onEdit && !saved.derived) onEdit({ size });
+            }}
             className="self-center"
           />
           <div className={`w-full ${WIDTH[picked]}`}>
@@ -134,6 +149,14 @@ export function PaperPreview({
             {saved.derived ? <Badge tone="neutral">{PRINT_COPY.derived}</Badge> : null}
             {saved.holder ? null : <Badge tone="warning">{PRINT_COPY.staffOnly}</Badge>}
           </div>
+          {onEdit && saved.derived ? (
+            <Button variant="outline" onClick={() => onEdit({ size: picked })}>
+              {PRINT_COPY.editLayout}
+            </Button>
+          ) : null}
+          {onEdit && !saved.derived ? (
+            <PaperEditor design={saved} manifest={manifest} passJson={passJson} onEdit={onEdit} />
+          ) : null}
         </>
       )}
     </div>

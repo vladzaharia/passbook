@@ -49,6 +49,7 @@ export type PartId =
   | 'stamps'
   | 'counters'
   | 'wallets'
+  | 'paper'
   | 'files.image'
   | 'files.stampArt'
   | 'files.walletArt'

@@ -41,6 +41,8 @@ export const PRINT_COPY = {
   sample: 'Sample',
   derived: 'Layout from the ticket fields.',
   staffOnly: 'Staff print only.',
+  editLayout: 'Edit layout',
+  useDerived: 'Use derived layout',
 } as const;
 
 /** The print code in groups, easier to read and to type. */
