@@ -10,6 +10,7 @@ import {
   HSTS,
   PERMISSIONS_POLICY,
   REFERRER_DEFAULT,
+  REFERRER_ORIGIN_ONLY,
   SCAN_PERMISSIONS_POLICY,
   scanContentSecurityPolicy,
   securityHeaders,
@@ -164,12 +165,12 @@ describe('join page CSP', () => {
     return app.request(path);
   };
 
-  it('adds Turnstile to script-src and frame-src for /j/ only, with no referrer', async () => {
+  it('adds Turnstile to script-src and frame-src for /j/ only, with an origin-only referrer', async () => {
     const join = await probe('/j/abc');
     const csp = join.headers.get('content-security-policy') ?? '';
     expect(csp).toContain(`script-src 'self' ${TURNSTILE_ORIGIN}`);
     expect(csp).toContain(`frame-src 'self' ${TURNSTILE_ORIGIN}`);
-    expect(join.headers.get('referrer-policy')).toBe('no-referrer');
+    expect(join.headers.get('referrer-policy')).toBe(REFERRER_ORIGIN_ONLY);
     for (const path of ['/p/abc', '/auth/magic', '/api/v1/join-links/t', '/jx', '/joined/x', '/']) {
       const other = await probe(path);
       expect(other.headers.get('content-security-policy'), path).not.toContain(TURNSTILE_ORIGIN);
