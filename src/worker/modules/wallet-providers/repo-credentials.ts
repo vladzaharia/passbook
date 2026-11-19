@@ -1,4 +1,4 @@
-import { grant } from '../../platform/authority.ts';
+import { type Grant, grant } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { epochIs } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
@@ -95,12 +95,17 @@ export interface CredentialWriter {
   purpose: string;
   principal: Principal;
   checks: Check[];
-  actor: { type: 'user' | 'platform'; id: string };
+  actor: { type: 'user' | 'platform' | 'system'; id: string | null };
   /** A platform grant names the mode itself; an org_mode grant takes org and mode from its row. */
   platform: boolean;
 }
 
-const TABLES = ['wallet_credentials', 'wallet_credential_versions', 'wallet_credential_events'];
+export const CREDENTIAL_TABLES = [
+  'wallet_credentials',
+  'wallet_credential_versions',
+  'wallet_credential_events',
+];
+const TABLES = CREDENTIAL_TABLES;
 const CODES = { config: 'WALLET_ACCOUNT_CONFLICT' };
 
 export interface SaveCredentialInput {
@@ -117,29 +122,15 @@ export interface SaveCredentialInput {
   envelope: Envelope;
 }
 
-/**
- * Create (expectedRevision 0) or rotate in one batch: version, event at revision + 1, then the pointer. A
- * stale revision is refused by the grant's epoch check; the unique indexes refuse a second active credential.
- */
-export async function saveCredential(
+/** The statements of a save, for a grant that also writes the enrolment (the migration commits them as one batch). */
+export function stageCredentialSave(
+  g: Grant,
   ctx: ServiceContext,
-  w: CredentialWriter,
+  w: Pick<CredentialWriter, 'actor' | 'platform'>,
   input: SaveCredentialInput,
-): Promise<void> {
+): void {
   const now = ctx.clock.now();
   const create = input.expectedRevision === 0;
-  const g = grant(ctx, {
-    purpose: w.purpose,
-    principal: w.principal,
-    tables: TABLES,
-    codes: CODES,
-    checks: [
-      ...w.checks,
-      ...(create
-        ? []
-        : [epochIs('wallet_credentials', input.credentialId, 'revision', input.expectedRevision)]),
-    ],
-  });
   const revision = input.expectedRevision + 1;
   if (create)
     g.insertSelect(
@@ -205,20 +196,18 @@ export async function saveCredential(
     set: { revision, current_version_id: input.versionId, updated_at: now },
     where: { id: input.credentialId, ...(w.platform ? { scope: 'platform' } : {}) },
   });
-  try {
-    await g.commit();
-  } catch (error) {
-    throw mapWalletWriteError(error);
-  }
 }
 
-/** Revokes in one batch: the event, then `revoked_at`. The database turns the On enrolments on it Off. */
-export async function revokeCredential(
+/**
+ * Create (expectedRevision 0) or rotate in one batch: version, event at revision + 1, then the pointer. A
+ * stale revision is refused by the grant's epoch check; the unique indexes refuse a second active credential.
+ */
+export async function saveCredential(
   ctx: ServiceContext,
   w: CredentialWriter,
-  input: { credentialId: string; expectedRevision: number; eventId: string },
+  input: SaveCredentialInput,
 ): Promise<void> {
-  const now = ctx.clock.now();
+  const create = input.expectedRevision === 0;
   const g = grant(ctx, {
     purpose: w.purpose,
     principal: w.principal,
@@ -226,9 +215,27 @@ export async function revokeCredential(
     codes: CODES,
     checks: [
       ...w.checks,
-      epochIs('wallet_credentials', input.credentialId, 'revision', input.expectedRevision),
+      ...(create
+        ? []
+        : [epochIs('wallet_credentials', input.credentialId, 'revision', input.expectedRevision)]),
     ],
   });
+  stageCredentialSave(g, ctx, w, input);
+  try {
+    await g.commit();
+  } catch (error) {
+    throw mapWalletWriteError(error);
+  }
+}
+
+/** The statements of a revoke: the event, then `revoked_at`. The database turns the On enrolments on it Off. */
+export function stageCredentialRevoke(
+  g: Grant,
+  ctx: ServiceContext,
+  w: Pick<CredentialWriter, 'actor' | 'platform'>,
+  input: { credentialId: string; expectedRevision: number; eventId: string },
+): void {
+  const now = ctx.clock.now();
   g.insertJoined('wallet_credential_events', {
     parents: { credential_id: input.credentialId },
     columns: ['id', 'revision', 'kind', 'version_id', 'actor_type', 'actor_id', 'request_id'],
@@ -246,6 +253,25 @@ export async function revokeCredential(
     set: { revision: input.expectedRevision + 1, revoked_at: now, updated_at: now },
     where: { id: input.credentialId, ...(w.platform ? { scope: 'platform' } : {}) },
   });
+}
+
+/** Revokes in one batch. */
+export async function revokeCredential(
+  ctx: ServiceContext,
+  w: CredentialWriter,
+  input: { credentialId: string; expectedRevision: number; eventId: string },
+): Promise<void> {
+  const g = grant(ctx, {
+    purpose: w.purpose,
+    principal: w.principal,
+    tables: TABLES,
+    codes: CODES,
+    checks: [
+      ...w.checks,
+      epochIs('wallet_credentials', input.credentialId, 'revision', input.expectedRevision),
+    ],
+  });
+  stageCredentialRevoke(g, ctx, w, input);
   try {
     await g.commit();
   } catch (error) {

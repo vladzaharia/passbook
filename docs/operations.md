@@ -425,6 +425,17 @@ GROUP BY t.id, t.origin, t.status, p.org_id
 
 Only archived templates may be listed; the wait ignores them.
 
+### Wallet migration gate
+
+Before a deploy that needs every wallet account on a credential source (PE3), `npm run deploy -- --promote --apply --require-wallet-migrated` runs `wallet-migration-gate` remotely and refuses while it lists a row. Each row is a legacy account with no source. Clear them in the platform wallet page or with `POST /api/v1/platform/wallet-credentials/migrate` (queue), then `.../migrate/resolve` (`assign_platform`, `merge`, `retire`) for the refused ones. Retired accounts and deleted orgs are not listed.
+
+```sql wallet-migration-gate
+SELECT a.id, a.org_id, a.mode, a.provider FROM wallet_provider_accounts a
+JOIN orgs o ON o.id = a.org_id AND o.status != 'deleted'
+WHERE a.credential_id IS NOT NULL AND a.credential_source_id IS NULL AND a.revoked_at IS NULL
+ORDER BY a.id
+```
+
 ### Large connection syncs
 
 A first sync that writes more than 2,000 passes continues in a new workflow instance `<run id>-cN`; the run stays one row, open until the last instance ends. Each instance pins the template release again, so a release approved mid-run applies from the next instance. A connection has one open schedule or admin run: Sync now during one returns that run. A run whose instance died closes as `RUN_LOST`; a run that hits the 50-instance limit ends with `SYNC_CAPPED` in its detail and the next run resumes.
