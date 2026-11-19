@@ -17,7 +17,7 @@ import {
   verifyGoogleCallback,
 } from './google-callback-crypto.ts';
 import { googleObjectIds } from './google-ids.ts';
-import { walletProviderDisabledReason } from './provider-policy.ts';
+import { walletProviderReleaseReason } from './provider-policy.ts';
 import {
   findGoogleCallbackAccount,
   findGoogleCallbackBinding,
@@ -85,7 +85,7 @@ export async function handleGoogleCallback(
     // The size cap needs no stored state, so it applies even before the keyset is initialized.
     const raw = await readGoogleCallbackBody(request);
     // A disabled provider is acknowledged after the size cap and before any account material is read or decrypted.
-    const disabled = walletProviderDisabledReason('google');
+    const disabled = walletProviderReleaseReason('google');
     if (disabled) {
       ctx.log.info('wallet.callback_ignored', {
         code: 'WALLET_PROVIDER_DISABLED',

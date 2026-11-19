@@ -2,7 +2,7 @@ import { first } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type { NativeProvider } from './projection-contract.ts';
-import { walletProviderEnabledSql } from './provider-policy.ts';
+import { walletEnrolmentIssuesSql, walletProviderEnabledSql } from './provider-policy.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 import { walletRetiredInstanceSettledSql } from './repo-instance-retirement.ts';
 import { projectionReleaseBindingPredicateSql } from './repo-projection.ts';
@@ -101,6 +101,7 @@ export async function walletOfferSnapshotCurrent(
                 AND current_op.credential_keyset_commitment = current_instance.credential_keyset_commitment))))
       -- Single SQL form of the provider policy gate (provider-policy.ts).
       AND ${walletProviderEnabledSql('requested.provider')}
+      AND ${walletEnrolmentIssuesSql('p.org_id', 'p.mode', 'requested.provider')}
     ),
     retirement_blocker AS MATERIALIZED (
       SELECT 1 FROM offer_snapshot p

@@ -15,6 +15,7 @@ import {
   type WalletProviderCredentialSnapshot,
 } from './account-credential-material.ts';
 import { applyEnrolmentSource, enrolmentOf } from './account-credential-source.ts';
+import { walletEnrolmentIssues } from './provider-policy.ts';
 import { findOperationPin } from './repo-account-source.ts';
 import {
   findAccount,
@@ -70,8 +71,8 @@ export async function readConfiguredWalletProviderCredentials(
     await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     return null;
   }
-  // A new-model enrolment issues only while On and not held by the platform; a legacy row is unchanged.
-  if (!row.credential_id && (row.enabled_at == null || row.platform_hold_at != null)) {
+  // The one enrolment gate (provider-policy.ts): a new-model row issues only while On and not held.
+  if (!walletEnrolmentIssues(row)) {
     await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     return null;
   }

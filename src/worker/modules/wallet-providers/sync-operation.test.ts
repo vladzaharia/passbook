@@ -40,6 +40,11 @@ const mocks = vi.hoisted(() => ({
   beginTarget: vi.fn(),
   finishTarget: vi.fn(),
 }));
+// These cases run on a fake database; the org layer of the gate is covered by org-gate.test.ts.
+vi.mock('./provider-policy.ts', async (original) => ({
+  ...(await original<typeof import('./provider-policy.ts')>()),
+  walletProviderDisabledReason: async () => null,
+}));
 vi.mock('./instance.ts', () => ({
   claimWalletOperation: mocks.claim,
   completeWalletOperation: mocks.complete,

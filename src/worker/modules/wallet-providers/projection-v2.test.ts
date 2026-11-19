@@ -35,7 +35,7 @@ import {
   S,
   setup,
 } from './projection-v2-test-fixtures.ts';
-import { walletProviderDisabledReason } from './provider-policy.ts';
+import { walletProviderReleaseReason } from './provider-policy.ts';
 import { renderGoogleProjection } from './render-projection.ts';
 
 installV2Env();
@@ -163,7 +163,7 @@ describe('schema 1 and the Google publish path', () => {
     const list = await listProjectionReleases(kit.ctx, kit.author, kit.templateId, kit.scope);
     expect(list.active?.id).toBe(release.id);
     // The gate and the renderer both stay closed: nothing issues from a compiled projection yet.
-    expect(walletProviderDisabledReason('google')).toBe('not_released');
+    expect(walletProviderReleaseReason('google')).toBe('not_released');
     expect(renderGoogleProjection(pins, { formatVersion: 1 })).toBeNull();
     await expect(released(kit, candidate, 1)).rejects.toThrow();
   });
