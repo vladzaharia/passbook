@@ -238,7 +238,8 @@ BEGIN SELECT RAISE(ABORT, 'wallet enrolment event needs the server clock'); END;
 -- batch exists while its statements run, so an event kind needs a grant of its org and mode with a
 -- matching purpose. Hold and release are the platform's (a platform admin, or the hold job on a suspended
 -- org); a source comes from the source, migration or migrate-job purposes; an enable only from the
--- enable purpose, and only while the org is active.
+-- enable purpose, and only while the org is active; a revoke (permanent) from the org's own revoke purpose
+-- or a migration resolution, not from a disable or hold job.
 CREATE TRIGGER authority_grants_wallet_platform_only BEFORE INSERT ON authority_grants
 WHEN NEW.purpose IN ('org_mode.wallet.enrolment_hold', 'org_mode.wallet.enrolment_release',
     'org_mode.wallet.migration_resolve') AND NEW.principal NOT GLOB 'platform:*'
@@ -252,11 +253,13 @@ WHEN NEW.kind IN ('hold', 'release') AND NOT EXISTS (
         AND g.principal GLOB 'platform:*')))
 BEGIN SELECT RAISE(ABORT, 'wallet hold and release are the platform''s'); END;
 CREATE TRIGGER wallet_enrolment_events_purpose BEFORE INSERT ON wallet_enrolment_events
-WHEN NEW.kind IN ('source', 'enable') AND NOT EXISTS (
+WHEN NEW.kind IN ('source', 'enable', 'revoke') AND NOT EXISTS (
   SELECT 1 FROM authority_grants g WHERE g.org_id = NEW.org_id AND g.mode = NEW.mode
     AND ((NEW.kind = 'source' AND g.purpose IN ('org_mode.wallet.enrolment_source',
         'org_mode.wallet.migration_resolve', 'org_mode.job.wallet.credential_migrate'))
-      OR (NEW.kind = 'enable' AND g.purpose = 'org_mode.wallet.enrolment_enable')))
+      OR (NEW.kind = 'enable' AND g.purpose = 'org_mode.wallet.enrolment_enable')
+      OR (NEW.kind = 'revoke' AND g.purpose IN ('org_mode.wallet.enrolment_revoke',
+        'org_mode.wallet.migration_resolve'))))
 BEGIN SELECT RAISE(ABORT, 'wallet enrolment event does not match its grant'); END;
 CREATE TRIGGER wallet_enrolment_events_enable_active BEFORE INSERT ON wallet_enrolment_events
 WHEN NEW.kind = 'enable' AND NOT EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.status = 'active')
@@ -266,14 +269,14 @@ WHEN NOT EXISTS (SELECT 1 FROM authority_grants g WHERE g.purpose = 'platform.jo
   AND g.principal GLOB 'system:*')
 BEGIN SELECT RAISE(ABORT, 'wallet credential checks are written by the check job'); END;
 
--- An event takes the account's next revision. Only a hold and a source_revoked disable may skip a gap, so
+-- An event takes the account's next revision. Only a hold, a release (both the platform's) and a source_revoked disable may skip a gap, so
 -- an unused event another writer left at the next revision cannot freeze the enrolment. A source or enable
 -- names a platform credential or one of the same org's, not revoked.
 CREATE TRIGGER wallet_enrolment_events_step BEFORE INSERT ON wallet_enrolment_events
 WHEN NOT EXISTS (SELECT 1 FROM wallet_provider_accounts a WHERE a.id = NEW.account_id
   AND (NEW.enrolment_revision = a.enrolment_revision + 1
     OR (NEW.enrolment_revision > a.enrolment_revision
-      AND (NEW.kind = 'hold' OR (NEW.kind = 'disable' AND NEW.reason = 'source_revoked')))))
+      AND (NEW.kind IN ('hold', 'release') OR (NEW.kind = 'disable' AND NEW.reason = 'source_revoked')))))
 BEGIN SELECT RAISE(ABORT, 'wallet enrolment event needs the next revision'); END;
 CREATE TRIGGER wallet_enrolment_events_credential BEFORE INSERT ON wallet_enrolment_events
 WHEN NEW.kind IN ('source', 'enable') AND NOT EXISTS (
@@ -429,7 +432,7 @@ WHEN (NEW.credential_source_id IS NOT OLD.credential_source_id OR NEW.identity_h
     SELECT 1 FROM wallet_enrolment_events e
     WHERE e.account_id = NEW.id AND e.enrolment_revision = NEW.enrolment_revision
       AND (NEW.enrolment_revision = OLD.enrolment_revision + 1
-        OR e.kind = 'hold' OR (e.kind = 'disable' AND e.reason = 'source_revoked'))
+        OR e.kind IN ('hold', 'release') OR (e.kind = 'disable' AND e.reason = 'source_revoked'))
       AND (NEW.revoked_at IS OLD.revoked_at OR e.kind = 'revoke')
       AND ((e.kind = 'source' AND e.credential_id = NEW.credential_source_id
           AND NEW.credential_source_id IS NOT OLD.credential_source_id AND NEW.enabled_at IS NULL AND OLD.revoked_at IS NULL

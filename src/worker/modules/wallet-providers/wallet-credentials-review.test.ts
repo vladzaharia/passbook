@@ -20,6 +20,7 @@ import {
   hold,
   insertEnrolmentEvent,
   release,
+  revokeEnrolment,
   setSource,
 } from './repo-wallet-enrolments-test-fixtures.ts';
 
@@ -144,12 +145,27 @@ describe('M1: a stray event cannot freeze an enrolment', () => {
     expect(await enrolmentRevision(a)).toBe(at + 3);
   });
 
-  it('an event takes the next revision; only a hold and a source_revoked disable skip a gap', async () => {
+  it('a stray event at the next revision does not block a release either', async () => {
     const { a } = await sourced();
+    await hold(a);
+    const held = await enrolmentRevision(a);
+    await insertEnrolmentEvent(a, { kind: 'disable' });
+    await refused(insertEnrolmentEvent(a, { kind: 'release' }), /UNIQUE/);
+    await release(a);
+    expect(await enrolmentRevision(a)).toBe(held + 2);
+    expect(await holdAt(a)).toEqual({ at: null });
+  });
+
+  it('an event takes the next revision; only a hold, a release and a source_revoked disable skip a gap', async () => {
+    const { a, c } = await sourced();
     const next = (await enrolmentRevision(a)) + 1;
     const re = /needs the next revision/;
     await refused(insertEnrolmentEvent(a, { kind: 'disable', revision: next + 3 }), re);
     await refused(insertEnrolmentEvent(a, { kind: 'revoke', revision: next + 3 }), re);
+    await refused(
+      insertEnrolmentEvent(a, { kind: 'source', credentialId: c.id, revision: next + 3 }),
+      re,
+    );
     await refused(
       insertEnrolmentEvent(a, { kind: 'disable', reason: 'other', revision: next + 3 }),
       re,
@@ -227,6 +243,57 @@ describe('L1: suspended-org job grants and enable', () => {
     );
     await run(db(), "UPDATE orgs SET status = 'active' WHERE id = ?", [org.id]);
     await insertEnrolmentEvent(a, { kind: 'enable', credentialId: c.id, checkId });
+  });
+});
+
+describe('N2: a revoke needs its own purpose', () => {
+  it('the disable and hold jobs and a stray grant cannot revoke; the org revoke and a migration resolution can', async () => {
+    const { a } = await sourced();
+    const re = /does not match its grant/;
+    await refused(
+      insertEnrolmentEvent(a, {
+        kind: 'revoke',
+        grant: jobGrant(a, 'org_mode.job.wallet.enrolment_disable'),
+      }),
+      re,
+    );
+    await refused(
+      insertEnrolmentEvent(a, {
+        kind: 'revoke',
+        grant: jobGrant(a, 'org_mode.job.wallet.enrolment_hold'),
+      }),
+      re,
+    );
+    await refused(insertEnrolmentEvent(a, { kind: 'revoke', grant: orgWriter(a) }), re);
+    await refused(insertEnrolmentEvent(a, { kind: 'revoke', grant: null }), re);
+    await refused(
+      insertEnrolmentEvent(a, {
+        kind: 'revoke',
+        grant: { ...orgWriter(a), purpose: 'org_mode.wallet.enrolment_revoke', orgId: uid() },
+      }),
+      re,
+    );
+    await insertEnrolmentEvent(a, {
+      kind: 'revoke',
+      grant: {
+        ...orgWriter(a),
+        purpose: 'org_mode.wallet.migration_resolve',
+        principal: 'platform:u1',
+      },
+    });
+  });
+
+  it('the org revoke purpose revokes an Off enrolment', async () => {
+    const { org } = await seedOrg();
+    const a = await enrolment(org.id);
+    await revokeEnrolment(a);
+    expect(
+      await first(
+        db(),
+        'SELECT revoked_at IS NOT NULL AS gone FROM wallet_provider_accounts WHERE id = ?',
+        [a.id],
+      ),
+    ).toEqual({ gone: 1 });
   });
 });
 

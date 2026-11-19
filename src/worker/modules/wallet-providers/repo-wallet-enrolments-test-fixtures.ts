@@ -47,14 +47,14 @@ export const enrolmentRevision = async (a: { id: string }) =>
     )
   )?.r ?? 0;
 
-/** The grant a writer holds for an event kind (disable and revoke need none). */
+/** The grant a writer holds for an event kind (a disable needs none). */
 export function grantFor(a: Acct, kind: EnrolmentEvent['kind']): GrantRow | null {
   const base = { orgId: a.orgId, mode: a.mode };
   if (kind === 'hold')
     return { ...base, purpose: 'org_mode.wallet.enrolment_hold', principal: 'platform:u1' };
   if (kind === 'release')
     return { ...base, purpose: 'org_mode.wallet.enrolment_release', principal: 'platform:u1' };
-  if (kind === 'source' || kind === 'enable')
+  if (kind === 'source' || kind === 'enable' || kind === 'revoke')
     return { ...base, purpose: `org_mode.wallet.enrolment_${kind}`, principal: 'membership:m1' };
   return null;
 }
@@ -189,20 +189,23 @@ export async function enable(a: Acct, c: Cred, o: EnableOptions = {}): Promise<v
 
 export const disable = (a: Acct) => step(a, { kind: 'disable' }, { enabled_at: null });
 
-/** A hold takes the highest event revision + 1, as the writer does, so an unused event cannot block it. */
-export async function hold(a: Acct, reason = 'abuse', g?: GrantRow | null): Promise<void> {
-  const at = Date.now();
+/** The revision a hold or release takes: the highest event revision + 1, so an unused event cannot block it. */
+async function afterStrays(a: Acct): Promise<number> {
   const max = await first<{ r: number | null }>(
     db(),
     'SELECT MAX(enrolment_revision) AS r FROM wallet_enrolment_events WHERE account_id = ?',
     [a.id],
   );
-  const revision = Math.max(await enrolmentRevision(a), max?.r ?? 0) + 1;
+  return Math.max(await enrolmentRevision(a), max?.r ?? 0) + 1;
+}
+
+export async function hold(a: Acct, reason = 'abuse', g?: GrantRow | null): Promise<void> {
+  const at = Date.now();
   await step(
     a,
     { kind: 'hold', reason, createdAt: at, ...(g === undefined ? {} : { grant: g }) },
     { enabled_at: null, platform_hold_at: at, platform_hold_reason: reason },
-    revision,
+    await afterStrays(a),
   );
 }
 
@@ -212,12 +215,14 @@ export function revokeEnrolment(a: Acct): Promise<void> {
   return step(a, { kind: 'revoke', createdAt: at }, { revoked_at: at });
 }
 
-export const release = (a: Acct, g?: GrantRow | null) =>
-  step(
+export async function release(a: Acct, g?: GrantRow | null): Promise<void> {
+  await step(
     a,
     { kind: 'release', ...(g === undefined ? {} : { grant: g }) },
     { platform_hold_at: null, platform_hold_reason: null },
+    await afterStrays(a),
   );
+}
 
 /**
  * A callback receipt on a Test enrolment: a blocked instance on a Test pass carries it, with the 0043

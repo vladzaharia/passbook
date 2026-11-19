@@ -424,10 +424,18 @@ describe('enrolment source', () => {
     const wrongProvider = await credential({ orgId: org.id, provider: 'samsung' });
     await refused(setSource(a, wrongMode), /source is unavailable/);
     await refused(setSource(a, wrongProvider), /source is unavailable/);
+    // A source event written while the credential was active, then the credential is revoked: the update is refused.
     const gone = await credential({ scope: 'platform' });
+    const x = await enrolment((await seedOrg()).org.id);
+    await insertEnrolmentEvent(x, { kind: 'source', credentialId: gone.id });
     await revokeCredential(gone.id, 'platform');
-    await withoutTrigger(db(), 'wallet_enrolment_events_credential', () =>
-      refused(setSource(a, gone), /source is unavailable/),
+    await refused(
+      updateEnrolment(x, {
+        credential_source_id: gone.id,
+        identity_hash: gone.identity,
+        enabled_at: null,
+      }),
+      /source is unavailable/,
     );
     const good = await credential({ scope: 'platform' });
     await insertEnrolmentEvent(a, { kind: 'source', credentialId: good.id });
@@ -585,10 +593,12 @@ describe('enable', () => {
     await verify(c);
     await refused(enable(a, c), /needs an active source|fresh credential check/);
     await setSource(a, c);
+    // The enable event is written while the source is active; the source is revoked before the update.
+    const at = Date.now();
+    const checkId = await addCheck(c.id, c.versionId);
+    await insertEnrolmentEvent(a, { kind: 'enable', credentialId: c.id, checkId, createdAt: at });
     await revokeCredential(c.id);
-    await withoutTrigger(db(), 'wallet_enrolment_events_credential', () =>
-      refused(enable(a, c), /needs an active source/),
-    );
+    await refused(updateEnrolment(a, { enabled_at: at }), /needs an active source/);
   });
 
   it('a Live enable needs a Test round trip received after the Test source event', async () => {
