@@ -72,6 +72,7 @@ export function lineValues(o: ScanOutcome, now: number): Values {
       input: v?.label,
     }),
     channel: channelName(o.channel),
+    type: o.admit?.type ?? '',
     plan: 'This plan',
     zone: 'this area',
     when: '',
@@ -94,7 +95,10 @@ function pick(o: ScanOutcome, desk: boolean): ScanLine | null {
   if (reason === 'wrong_event' && !o.event) return { ...line, sub: v.wrong_event.noEvent };
   if (reason === 'not_yet_valid' && !o.at && !o.event)
     return { ...line, sub: v.not_yet_valid.noWhen };
-  if (reason === 'ended' && !o.event) return { headline: v.ended.noPlace, sub: line.sub };
+  if (reason === 'ended' && !o.event)
+    return { headline: o.admit ? v.ended.named : v.ended.noPlace, sub: line.sub };
+  if ((reason === 'guest_expired' || reason === 'guest_visits_used') && o.admit)
+    return { ...line, headline: v[reason].named };
   if (reason === 'capacity_full') {
     const place = o.occupancy?.place.name ?? o.event?.name;
     const known = o.occupancy

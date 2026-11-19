@@ -2,6 +2,7 @@ import type { ScanAccess, ScanOccupancy, ScanOutcome } from '../../../shared/con
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { completedAdmission } from './admission.ts';
+import { admitOf } from './admit.ts';
 import type { CountsRead } from './counts.ts';
 import type { ScanActor } from './guard.ts';
 import { recordResult } from './ledger.ts';
@@ -51,6 +52,7 @@ export function finishCheckInResult(input: CheckInResult): ScanOutcome {
   const arrived = read.counts.event?.arrived ?? 0;
   const expected = read.counts.event?.expected ?? 0;
   const history = input.display.finalize(input.display.results);
+  const checkIn = found.admission ? completedAdmission(found.admission, now) : undefined;
   return {
     ...blankOutcome('ok', read),
     scanId,
@@ -64,6 +66,7 @@ export function finishCheckInResult(input: CheckInResult): ScanOutcome {
           : null,
     undoUntil: now + undoWindow * 60_000,
     access: input.access ?? null,
+    admit: admitOf(found, actor, input.access, checkIn),
     ...(input.occupancy ? { occupancy: input.occupancy } : {}),
     display: history
       ? safeDisplay(ctx, actor, found.pass, 'ok', {
@@ -73,6 +76,6 @@ export function finishCheckInResult(input: CheckInResult): ScanOutcome {
           access: input.access ?? null,
         })
       : null,
-    checkIn: found.admission ? completedAdmission(found.admission, now) : undefined,
+    checkIn,
   };
 }

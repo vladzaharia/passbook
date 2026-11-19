@@ -9,12 +9,41 @@ import { admissionReads } from './repo-admission.ts';
 import { presenceSnapshot } from './repo-scan-effect.ts';
 import type { Found } from './resolve.ts';
 
+const HOUR = 3_600_000;
+
+/** The local midnight that ends a pass of `days` days counted from `anchor`'s day (1 = tonight). */
+export function dayLimitEnd(anchor: number, days: number, timeZone: string): number {
+  let end = localDayStart(anchor, timeZone);
+  // 36 h past a local midnight is inside the next day, whatever a DST change does to the day's length.
+  for (let i = 0; i < days; i++) end = localDayStart(end + 36 * HOUR, timeZone);
+  return end;
+}
+
+/** The pass type's own duration and day limits; a pass's rules override them, the scanner's cap tightens them. */
+export function templateRules(found: Pick<Found, 'scan'>): CheckInPolicy {
+  const c = found.scan.checkIn;
+  return {
+    ...(c?.days === undefined ? {} : { days: c.days }),
+    ...(c?.durationMinutes === undefined ? {} : { durationMinutes: c.durationMinutes }),
+    ...(c?.durationFrom === undefined ? {} : { durationFrom: c.durationFrom }),
+  };
+}
+
+/** The rules of the pass: its type's defaults under its own. */
+export const passRulesOf = (found: Pick<Found, 'scan' | 'checkInRules'>): CheckInPolicy => ({
+  ...templateRules(found),
+  ...found.checkInRules,
+});
+
 export function completedAdmission(plan: AdmissionPlan, now: number): CheckInState {
   const firstAt = plan.state.firstAt ?? now;
   const until = plan.state.validUntil === null ? [] : [plan.state.validUntil];
-  for (const rule of plan.rules)
+  for (const rule of plan.rules) {
     if (rule.durationMinutes != null && rule.durationFrom !== 'issued')
       until.push(firstAt + rule.durationMinutes * 60_000);
+    if (rule.days != null && rule.durationFrom !== 'issued')
+      until.push(dayLimitEnd(firstAt, rule.days, plan.zone));
+  }
   return {
     ...plan.state,
     firstAt,
@@ -43,7 +72,7 @@ export async function planAdmission(
     finish(results: readonly D1Result[]): Promise<void>;
   },
 ): Promise<{ plan: AdmissionPlan; reason: ScanReason | null; at: number | null; flags: string[] }> {
-  const passRule = found.checkInRules ?? {};
+  const passRule = passRulesOf(found);
   const scannerRule = actor.settings.checkIn ?? {};
   const rules = [passRule, scannerRule];
   const action = found.scan.actions.find((a) => a.kind === 'check_in');
@@ -108,6 +137,15 @@ export async function planAdmission(
           : (presence?.first_at ?? history?.first_at);
       if (anchor != null) until.push(anchor + rule.durationMinutes * 60_000);
     }
+  const zone = event?.timeZone ?? actor.timeZone;
+  for (const rule of rules)
+    if (rule.days != null) {
+      const anchor =
+        rule.durationFrom === 'issued'
+          ? found.pass.createdAt
+          : (presence?.first_at ?? history?.first_at);
+      if (anchor != null) until.push(dayLimitEnd(anchor, rule.days, zone));
+    }
   const validFrom = from.length ? Math.max(...from) : null;
   const validUntil = until.length ? Math.min(...until) : null;
   const limited =
@@ -115,6 +153,7 @@ export async function planAdmission(
     (modes.includes('single') || modes.includes('daily'));
   const plan: AdmissionPlan = {
     scope,
+    zone,
     event,
     tracked,
     rules,
