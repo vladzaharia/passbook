@@ -166,7 +166,10 @@ export function OrgDetailPage({
                     { label: 'Created', value: formatDateTime(org.createdAt) },
                   ]}
                 />
-                <TechnicalDetails className="mt-3" items={[{ label: 'ID', value: org.id }]} />
+                <TechnicalDetails
+                  className="mt-3"
+                  items={[{ label: 'ID', value: org.id, copy: true }]}
+                />
               </CardBody>
             </Card>
           </>

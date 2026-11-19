@@ -2,8 +2,7 @@ import type { InputHTMLAttributes, Ref, TextareaHTMLAttributes } from 'react';
 import { cn } from '../lib/cn.ts';
 
 /**
- * Shared control look: 3:1 border that darkens on hover, the field surface (raised in light,
- * sunken in dark), visible focus ring, danger edge when invalid. Read-only and disabled text fields
+ * Shared control look: 3:1 border that darkens on hover, the raised field surface, visible focus ring, danger edge when invalid. Read-only and disabled text fields
  * drop the fill (--wl-field-readonly: sunken in light, transparent in dark) and the strong border,
  * so they never read as editable. 16 px text and 44 px height on touch screens, so iOS never zooms.
  */
@@ -12,7 +11,8 @@ export const CONTROL = [
   'placeholder:text-(--wl-placeholder) wl-colors',
   // Buttons (select and combobox triggers) match :read-only too; only text fields sink.
   'hover:not-disabled:[&:not(:is(input,textarea):read-only)]:border-fg-muted',
-  'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
+  // One ring: the border takes the focus colour and the outline hugs it.
+  'focus-visible:border-focus focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus',
   'disabled:cursor-not-allowed disabled:border-border disabled:bg-(--wl-field-disabled) disabled:text-fg/50',
   // Disabled text fields match :read-only too, so this one rule styles both.
   '[&:is(input,textarea):read-only]:border-border [&:is(input,textarea):read-only]:bg-(--wl-field-readonly) [&:is(input,textarea):read-only]:text-fg-muted',

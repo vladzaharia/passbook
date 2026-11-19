@@ -1,11 +1,11 @@
 /* An acted state in the band (hosted-art.tsx): the buddy seated on the card's top edge like the
-   sign-in wallet, base on the line 8/96 up from the scene's bottom; with a prop (2/3 its size) on
+   sign-in wallet, feet on the line, the scene's bottom; with a prop (2/3 its size) on
    its right, the pair ends on the band's right inset. */
 .scene > .wl-buddy {
-  top: 91.67%;
+  top: 100%;
   left: auto;
   right: 0;
-  translate: 0 -91.67%;
+  translate: 0 -100%;
 }
 .scene > .wl-buddy[data-prop] {
   right: 40.67%;

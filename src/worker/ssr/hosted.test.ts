@@ -88,10 +88,10 @@ describe('hosted auth pages', () => {
     expect(html).not.toContain('data-hello');
   });
 
-  it('seats the wallet on the card: above it, legs over the edge, a contact shadow', () => {
-    // The base (y 66 of 72) meets the card's top edge: 8 px at 128×96, 7 px at 112×84.
-    expect(HOSTED_CSS).toMatch(/\.scene\{[^}]*margin-bottom:-8px;pointer-events:none\}/);
-    expect(HOSTED_CSS).toMatch(/\.scene\{margin-bottom:-7px\}/);
+  it('seats the wallet on the card: above it, feet on the edge, a contact shadow', () => {
+    // The feet (y 72 of 72) end on the card's top edge.
+    expect(HOSTED_CSS).toMatch(/\.scene\{[^}]*margin-bottom:0;pointer-events:none\}/);
+    expect(HOSTED_CSS).toMatch(/\.scene\{margin-bottom:0\}/);
     expect(HOSTED_CSS).toMatch(/\.card\{position:relative;z-index:1;/);
     const html = noAccessPage(NONCE);
     expect(html).toMatch(/data-part="w"[^>]*data-seat=""/);
