@@ -58,7 +58,6 @@ export const HOLDER_COPY = {
   previewWallets: 'Add it to your wallet.',
   /** Mail the pass again: the pass page, My passes and the sign-in code. */
   sendAgain: 'Send it again',
-  /** The same, on the pass page: it says what is sent. */
   emailPassAgain: 'Email me this pass again',
   sendAgainSent: 'Sent. Check your email.',
   sendAgainWait: 'Sent a few already. Try again in an hour.',

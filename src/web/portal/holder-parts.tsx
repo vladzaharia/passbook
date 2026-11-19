@@ -81,7 +81,10 @@ export function SendAgain({
   return (
     <div className="flex flex-col gap-2">
       <form method="post" action={action}>
-        <button type="submit" className={`${LINK} inline-flex min-h-11 items-center text-sm`}>
+        <button
+          type="submit"
+          className="inline-flex min-h-11 items-center rounded-md border border-border-strong px-4 text-sm font-medium text-fg-strong"
+        >
           {HOLDER_COPY.emailPassAgain}
         </button>
       </form>
