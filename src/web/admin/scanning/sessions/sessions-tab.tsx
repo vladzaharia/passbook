@@ -25,9 +25,11 @@ import { SessionStatePill, sessionState } from './session-state.tsx';
 
 export function SessionsTab({
   canManage,
+  onNew,
   onDuplicate,
 }: {
   canManage: boolean;
+  onNew: () => void;
   onDuplicate: (s: ScanningSession) => void;
 }) {
   const { orgId } = useOrgScope();
