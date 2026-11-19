@@ -84,7 +84,12 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
     {
       accessorKey: 'passTitle',
       header: 'Pass',
-      cell: ({ row }) => row.original.passTitle ?? 'Pass details unavailable',
+      cell: ({ row }) => (
+        <span className="block whitespace-normal break-words">
+          {row.original.passTitle ??
+            (row.original.reason === 'not_found' ? 'No pass matched' : 'Pass details unavailable')}
+        </span>
+      ),
     },
     {
       accessorKey: 'outcome',
@@ -107,6 +112,7 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
     {
       accessorKey: 'method',
       header: 'Method',
+      meta: { hideBelow: 'lg' },
       cell: ({ row }) => methodLabel(row.original.method),
     },
   ];

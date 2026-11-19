@@ -131,7 +131,7 @@ export function SessionsTab({
                   <a
                     href={`/scan?admin=1&orgId=${encodeURIComponent(s.orgId)}&sessionId=${encodeURIComponent(s.id)}`}
                   >
-                    Scan as admin
+                    Scan as Admin
                   </a>
                 </Button>
               ) : null}

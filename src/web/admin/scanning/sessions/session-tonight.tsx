@@ -69,7 +69,7 @@ export function SessionTonight({ sessionId }: { sessionId: string }) {
               ))}
             </dl>
             <List
-              title="By hour"
+              title={`By hour, ${s.timeZone ?? 'local time'}`}
               rows={s.byHour.map((h) => ({
                 key: String(h.start),
                 label: formatTime(h.start, s.timeZone ?? undefined),
@@ -80,7 +80,7 @@ export function SessionTonight({ sessionId }: { sessionId: string }) {
               title="By staff"
               rows={s.byStaff.map((p) => ({
                 key: p.staffId ?? 'none',
-                label: p.name ?? 'No one signed in',
+                label: p.name ?? 'Not signed in',
                 value: `${formatCount(p.count)}${p.overrides ? ` · ${p.overrides} overrides` : ''}`,
               }))}
             />

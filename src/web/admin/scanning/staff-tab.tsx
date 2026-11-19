@@ -204,7 +204,7 @@ function OrganizationStaff({ orgId, canManage }: { orgId: string; canManage: boo
           <p className="text-sm font-semibold text-fg-strong">Scanning staff</p>
           <p className="mt-1 text-sm text-fg-muted">
             Shared by Live and Test. Counts show {mode === 'test' ? 'Test' : 'Live'} scans since
-            each scanner's local midnight, not undone. undone.
+            each scanner's local midnight, not undone.
           </p>
         </div>
         {canManage && !staff.isPending && !staff.isError && (rows.length > 0 || q) ? (

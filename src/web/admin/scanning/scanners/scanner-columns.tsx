@@ -16,9 +16,9 @@ export const deviceLine = (s: ScannerDto): string =>
   s.adminSession
     ? `Admin · ${s.adminUser?.name ?? 'No owner'}`
     : s.deviceRole === 'customer'
-      ? 'Customer screen'
+      ? 'Customer display'
       : s.deviceRole === 'monitor'
-        ? 'Desk monitor'
+        ? 'Desk display'
         : s.kind === 'terminal'
           ? 'Till · token'
           : (s.pairedLabel ?? 'Not paired');

@@ -88,7 +88,8 @@ export function SessionDetail({
             </StatusPill>
             <ModePill mode={s.mode} />
             <span>
-              {s.onlineCount} online · {s.deviceCount} devices · {s.today} scans today
+              {s.onlineCount} online · {s.deviceCount} {s.deviceCount === 1 ? 'device' : 'devices'}{' '}
+              · {s.today} done today
             </span>
           </>
         }

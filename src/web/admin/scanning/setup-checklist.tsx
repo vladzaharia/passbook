@@ -19,9 +19,9 @@ export interface SetupCounts {
 
 const STEPS: { id: keyof SetupCounts; label: string; tab?: ScanningTab; cta: string }[] = [
   { id: 'sessions', label: 'Create a session', cta: 'New session' },
-  { id: 'zones', label: 'Add a zone', tab: 'zones', cta: 'Zones' },
-  { id: 'paired', label: 'Pair a scanner', tab: 'scanners', cta: 'Devices' },
-  { id: 'staff', label: 'Add staff', tab: 'staff', cta: 'Staff' },
+  { id: 'zones', label: 'Add a zone', tab: 'zones', cta: 'Add zone' },
+  { id: 'paired', label: 'Pair a scanner', tab: 'scanners', cta: 'Pair' },
+  { id: 'staff', label: 'Add staff', tab: 'staff', cta: 'Add staff' },
 ];
 
 /** Each step checks itself from counts. Null counts (still loading) never read as done. */
@@ -31,13 +31,13 @@ export function setupSteps(counts: SetupCounts, onNew: (() => void) | undefined)
     label,
     done: counts[id] > 0,
     action: tab ? (
-      <Button asChild variant="ghost" size="sm">
+      <Button asChild variant="outline" size="sm">
         <Link to="." search={(prev) => withTab(prev as ScanningSearch, tab)}>
           {cta}
         </Link>
       </Button>
     ) : onNew ? (
-      <Button variant="ghost" size="sm" onClick={onNew}>
+      <Button variant="outline" size="sm" onClick={onNew}>
         {cta}
       </Button>
     ) : null,
