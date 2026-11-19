@@ -31,6 +31,7 @@ export async function runGoogleWalletProviderOperation(
       releaseId: op.identityProjectionReleaseId,
       passId: op.passId,
       credentialGeneration: op.credentialGeneration,
+      channelEpoch: op.channelEpoch,
       assertCurrent,
       onProviderResponse,
     };
@@ -98,6 +99,7 @@ export async function runGoogleWalletProviderOperation(
         passId: op.passId,
         releaseId: op.identityProjectionReleaseId,
         credentialGeneration: op.credentialGeneration,
+        channelEpoch: op.channelEpoch,
         operationVersion: op.version,
       });
       await assertCurrent();

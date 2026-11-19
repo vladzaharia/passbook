@@ -34,6 +34,12 @@ export function setRuntimeAccountCheckForTest(
   };
 }
 
+/** Why a provider offer is withheld while its channel is on, after a channel-off retirement. */
+export type WalletOfferHold = 'provider_retiring' | 'provider_epoch_limit';
+
+/** Re-enabling creates a successor instance at epoch + 1; 16 is the schema's last epoch. */
+export const MAX_CHANNEL_EPOCH = 16;
+
 export interface OfferPassSnapshot {
   pass: Pass;
   lifecycleGeneration: number;

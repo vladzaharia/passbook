@@ -12,6 +12,8 @@ export interface GoogleObjectScope extends GoogleClassScope {
   passId: string;
   mode: 'live' | 'test';
   credentialGeneration: number;
+  /** Absent means 1. Epoch 1 ids are the original derivation; a successor appends its epoch. */
+  channelEpoch?: number;
 }
 
 declare const derivedGoogleId: unique symbol;
@@ -79,7 +81,11 @@ export async function googleObjectIds(
     !scope.passId.trim() ||
     (scope.mode !== 'live' && scope.mode !== 'test') ||
     !Number.isSafeInteger(scope.credentialGeneration) ||
-    scope.credentialGeneration <= 0
+    scope.credentialGeneration <= 0 ||
+    (scope.channelEpoch !== undefined &&
+      (!Number.isSafeInteger(scope.channelEpoch) ||
+        scope.channelEpoch < 1 ||
+        scope.channelEpoch > 16))
   ) {
     throw new GoogleWalletError('invalid_input', 'identifiers');
   }
@@ -91,6 +97,7 @@ export async function googleObjectIds(
       scope.mode,
       scope.passId,
       scope.credentialGeneration,
+      ...(scope.channelEpoch && scope.channelEpoch > 1 ? [scope.channelEpoch] : []),
     ]),
   ]);
   return { classId, objectId };

@@ -43,6 +43,8 @@ export type RetirementTarget =
       passId: string;
       identityProjectionReleaseId: string;
       credentialGeneration: number;
+      /** Absent means 1; the SQL target fails closed for a successor. */
+      channelEpoch?: number;
     }
   | { provider: 'samsung'; refHash: string };
 
