@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import type { ScanLiveRow } from '../../shared/contracts/scan-setups.ts';
+import { ScanApiError } from './api/errors.ts';
 import type { ScanApi } from './api/scan-api.ts';
 import { sessionFixture } from './boot/session.test-support.ts';
 import { insideRow } from './inside/inside-fake.test-support.ts';
 import { LiveScreen } from './live/live-screen.tsx';
 import { fixtureOutcome } from './machine/fixture-data.test-support.ts';
 
-export const MONITOR_DESK_CASES = ['off', 'signed-out', 'signed-in'] as const;
+export const MONITOR_DESK_CASES = ['off', 'signed-out', 'signed-in', 'manager'] as const;
 export type MonitorDeskCase = (typeof MONITOR_DESK_CASES)[number];
 
+const SCAN = '01900000-0000-7000-8000-0000000000aa';
 const ID = '01900000-0000-7000-8000-000000000001';
 
 class DeskSocket {
@@ -34,7 +36,7 @@ function sessionOf(mode: MonitorDeskCase): ScanSession {
   const scanner = base.scanner;
   return {
     ...base,
-    staff: mode === 'signed-in' ? staff : null,
+    staff: mode === 'signed-in' || mode === 'manager' ? staff : null,
     staffList: mode === 'signed-out' ? [staff] : null,
     scanner: scanner
       ? {
@@ -54,7 +56,16 @@ const api = {
     nextCursor: null,
     asOf: Date.now(),
   }),
-  override: async () => fixtureOutcome('ok'),
+  override: async (body: { approval?: unknown; overrideOf: string }) => {
+    if (!body.overrideOf.endsWith('0')) return fixtureOutcome('ok', null, { scanId: SCAN });
+    if (!body.approval)
+      return fixtureOutcome('heads_up', 'zone_not_included', {
+        overridable: true,
+        approvals: true,
+      });
+    throw new ScanApiError({ status: 400, code: 'PIN_INVALID', fields: { triesLeft: '2' } });
+  },
+  overrideNote: async () => undefined,
   undo: async () => fixtureOutcome('ok'),
   staffSignOut: async () => sessionFixture(),
 } as unknown as ScanApi;
@@ -79,7 +90,9 @@ export function MonitorDeskVisual({ mode }: { mode: MonitorDeskCase }) {
       direction: i === 1 ? null : 'in',
       label: i === 1 ? 'Check required' : 'Checked in',
       presented: true,
-      ...(i === 1 && mode === 'signed-in' ? { scanId: `${ID.slice(0, -2)}3${i}` } : {}),
+      ...(i === 1 && (mode === 'signed-in' || mode === 'manager')
+        ? { scanId: `${ID.slice(0, -2)}3${mode === 'manager' ? 0 : i}` }
+        : {}),
     }));
     const timer = window.setTimeout(
       () => DeskSocket.last?.onmessage?.({ data: JSON.stringify({ cursor: 'c', rows }) }),

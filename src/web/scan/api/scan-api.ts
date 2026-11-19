@@ -22,7 +22,10 @@ import {
   type ScanResolveRequestSchema,
   type ScanUndoRequestSchema,
 } from '../../../shared/contracts/scan.ts';
-import type { ScanOverrideRequestSchema } from '../../../shared/contracts/scan-occupancy.ts';
+import type {
+  ScanOverrideNoteSchema,
+  ScanOverrideRequestSchema,
+} from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanRoleChange } from '../../../shared/contracts/scan-role.ts';
 import {
   type ScanBatchRequestSchema,
@@ -317,6 +320,8 @@ export function createScanApi(deps: ScanApiDeps) {
       request('POST', `/tag-enrollments/${encodeURIComponent(id)}/decline`, null, {}, call),
     override: (body: z.infer<typeof ScanOverrideRequestSchema>, call?: Call) =>
       request('POST', '/overrides', ScanOutcomeSchema, body, call),
+    overrideNote: (id: string, note: z.infer<typeof ScanOverrideNoteSchema>) =>
+      request('POST', `/overrides/${encodeURIComponent(id)}/note`, null, { note }),
     markOut: (body: MarkOutRequest, call?: Call) =>
       request('POST', '/mark-out', MarkOutResultSchema, body, call),
   };

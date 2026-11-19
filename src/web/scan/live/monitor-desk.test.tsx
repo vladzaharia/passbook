@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { ThemeProvider } from '../../lib/theme.tsx';
+import { ScanApiError } from '../api/errors.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import { sessionFixture } from '../boot/session.test-support.ts';
 import { insideRow } from '../inside/inside-fake.test-support.ts';
@@ -76,6 +77,7 @@ function fakeApi() {
     inside: vi.fn(async () => list),
     override: vi.fn(async () => fixtureOutcome('ok', null, { scanId: SCAN })),
     undo: vi.fn(async () => fixtureOutcome('ok')),
+    overrideNote: vi.fn(async () => undefined),
     markOut: vi.fn(),
     undoMarkOut: vi.fn(),
     staffSignOut: vi.fn(async () => sessionFixture()),
@@ -174,5 +176,55 @@ describe('monitor Desk actions', () => {
     expect(api.override).toHaveBeenCalledWith(expect.objectContaining({ overrideOf: SCAN }));
     await waitFor(() => expect(screen.queryByRole('button', { name: /^let in:/i })).toBeNull());
     expect(screen.getByText('Resolved by Ana Ruiz')).toBeInTheDocument();
+  });
+
+  it('offers Why? chips after a let-in and posts the note to the override', async () => {
+    const api = fakeApi();
+    render(
+      <ThemeProvider>
+        <LiveScreen
+          session={monitor({ deskActions: true }, true)}
+          refetch={async () => {}}
+          api={api as unknown as ScanApi}
+        />
+      </ThemeProvider>,
+    );
+    act(() => LiveSocket.instances[0]?.publish([refused({ scanId: SCAN })]));
+    fireEvent.click(screen.getByRole('button', { name: /^let in:/i }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Known to staff' }));
+    await waitFor(() => expect(api.overrideNote).toHaveBeenCalledWith(SCAN, 'known'));
+    expect(screen.queryByRole('button', { name: 'Paid' })).toBeNull();
+  });
+
+  it('asks a Manager PIN and says how many tries are left after a wrong one', async () => {
+    const api = fakeApi();
+    const needs = fixtureOutcome('heads_up', 'zone_not_included', {
+      overridable: true,
+      approvals: true,
+    });
+    api.override
+      .mockResolvedValueOnce(needs)
+      .mockRejectedValueOnce(
+        new ScanApiError({ status: 400, code: 'PIN_INVALID', fields: { triesLeft: '2' } }),
+      );
+    render(
+      <ThemeProvider>
+        <LiveScreen
+          session={monitor({ deskActions: true }, true)}
+          refetch={async () => {}}
+          api={api as unknown as ScanApi}
+        />
+      </ThemeProvider>,
+    );
+    act(() => LiveSocket.instances[0]?.publish([refused({ scanId: SCAN })]));
+    fireEvent.click(screen.getByRole('button', { name: /^let in:/i }));
+    const form = await screen.findByTestId('scan-approval');
+    const field = form.querySelector('input') as HTMLInputElement;
+    fireEvent.change(field, { target: { value: '123456' } });
+    fireEvent.submit(form);
+    expect(await screen.findByText(/Wrong code\. 2 tries left\./)).toBeInTheDocument();
+    expect(api.override).toHaveBeenLastCalledWith(
+      expect.objectContaining({ approval: { pin: '123456' } }),
+    );
   });
 });

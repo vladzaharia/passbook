@@ -8,12 +8,13 @@ import { CustomerStage } from '../customer-stage.tsx';
 import type { StageTone } from '../customer-tone.ts';
 import { ScanOrgLogo, scanBrandLogoUrl, scanBrandStyle } from '../platform/scan-branding.tsx';
 import './live-screen.css';
-import { Toaster } from '../../ui/toaster.tsx';
+import { Toaster, toast } from '../../ui/toaster.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { useMonitorBeat } from './monitor-beat.ts';
 import { MonitorBoard } from './monitor-board.tsx';
-import { deskActing, StaffControl, useLetIn } from './monitor-desk.tsx';
+import { deskActing, type OverrideNote, StaffControl, useLetIn } from './monitor-desk.tsx';
 import { MonitorInside } from './monitor-inside.tsx';
+import type { LetIn } from './monitor-model.ts';
 import { useLiveFeed } from './use-live-feed.ts';
 
 function stageTone(row: ScanLiveRow | undefined): StageTone {
@@ -58,7 +59,7 @@ export function LiveScreen({
   const [replay, setReplay] = useState(0);
   const [setup, setSetup] = useState(false);
   const [setupFocused, setSetupFocused] = useState(false);
-  const [letInDone, setLetInDone] = useState<ReadonlyMap<string, string>>(new Map());
+  const [letInDone, setLetInDone] = useState<ReadonlyMap<string, LetIn>>(new Map());
   const [own, setOwn] = useState(0);
   const refresh = useRef<HTMLButtonElement>(null);
   const lastRow = useRef<string | null>(null);
@@ -66,11 +67,32 @@ export function LiveScreen({
   const customer = session.scanner?.deviceRole === 'customer';
   const beat = useMonitorBeat(rows, own);
   const acting = Boolean(api) && !customer && deskActing(session);
-  const desk = useLetIn(api ?? NO_API, (row) => {
+  const desk = useLetIn(api ?? NO_API, (row, id) => {
     if (row.scanId)
-      setLetInDone((done) => new Map(done).set(row.scanId ?? '', session.staff?.name ?? ''));
+      setLetInDone((done) =>
+        new Map(done).set(row.scanId ?? '', {
+          who: session.staff?.name ?? '',
+          id,
+          at: Date.now(),
+          note: null,
+        }),
+      );
     setOwn((n) => n + 1);
   });
+  const why = (scanId: string, note: OverrideNote) => {
+    const id = letInDone.get(scanId)?.id;
+    if (!id || !api) return;
+    void api
+      .overrideNote(id, note)
+      .then(() =>
+        setLetInDone((done) => {
+          const held = done.get(scanId);
+          return held ? new Map(done).set(scanId, { ...held, note }) : done;
+        }),
+      )
+      .catch((error: unknown) => toast.error(error, 'Could not save the reason'));
+  };
+
   const branding = session.branding ?? null;
   const logoUrl = scanBrandLogoUrl(branding, session);
   const orgName = session.scanner?.orgName ?? '';
@@ -182,6 +204,7 @@ export function LiveScreen({
         timeZone={session.scanner?.timeZone}
         beat={beat}
         letInDone={letInDone}
+        onWhy={why}
         {...(acting && api
           ? {
               onLetIn: desk.letIn,

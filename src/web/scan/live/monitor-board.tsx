@@ -18,8 +18,16 @@ import '../buddy/beats.css';
 import { fill } from '../ui/copy.ts';
 import './monitor-board.css';
 import type { MonitorBeat } from './monitor-beat.ts';
-import { LetInButton } from './monitor-desk.tsx';
-import { countsOf, type Fill, heroOf, resolvedOf, type Trend, trendOf } from './monitor-model.ts';
+import { LetInButton, type OverrideNote, WhyChips } from './monitor-desk.tsx';
+import {
+  countsOf,
+  type Fill,
+  heroOf,
+  type LetIn,
+  resolvedOf,
+  type Trend,
+  trendOf,
+} from './monitor-model.ts';
 
 const ROW_ICON = {
   ok: LogIn,
@@ -44,6 +52,13 @@ function Trendline({ trend }: { trend: Trend }) {
   );
 }
 
+const WHY_MS = 2 * 60_000;
+function whyOf(done: LetIn | undefined, now: number, pick: (n: OverrideNote) => void) {
+  if (!done) return null;
+  if (done.note) return <WhyChips note={done.note} onPick={pick} />;
+  return now - done.at < WHY_MS ? <WhyChips note={null} onPick={pick} /> : null;
+}
+
 /** The staff monitor: a compact occupancy header, then who just scanned, as the server allows. */
 export function MonitorBoard({
   rows,
@@ -54,6 +69,7 @@ export function MonitorBoard({
   inside,
   onLetIn,
   letInDone,
+  onWhy,
 }: {
   rows: ScanLiveRow[];
   places: ScanPlaceRev[];
@@ -64,7 +80,8 @@ export function MonitorBoard({
   inside?: ReactNode;
   onLetIn?: (row: ScanLiveRow) => void;
   /** Scans this monitor let in itself, before the feed says so. */
-  letInDone?: ReadonlyMap<string, string>;
+  letInDone?: ReadonlyMap<string, LetIn>;
+  onWhy?: (scanId: string, note: OverrideNote) => void;
 }) {
   const resolved = resolvedOf(rows, letInDone);
   const counts = countsOf(places, rows);
@@ -156,6 +173,9 @@ export function MonitorBoard({
                             : 'Resolved'}
                         </span>
                       ) : null}
+                      {row.scanId && onWhy && letInDone?.get(row.scanId)?.id
+                        ? whyOf(letInDone.get(row.scanId), now, (n) => onWhy(row.scanId ?? '', n))
+                        : null}
                     </span>
                     {row.scanId && onLetIn && !resolved.has(row.scanId) ? (
                       <LetInButton row={row} onLetIn={() => onLetIn(row)} />
