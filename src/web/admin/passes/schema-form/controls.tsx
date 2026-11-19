@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import { type ComponentProps, useState } from 'react';
 import { zoneOptions } from '../../../lib/timezones.ts';
 import { Button, Combobox, FileDrop, Input, Select, Switch, Textarea } from '../../../ui/index.ts';
 import { AccessPlanInput } from '../inputs/access-plan.tsx';
@@ -182,15 +183,7 @@ export function Control({
         <Input {...common} type="url" value={text} onChange={(e) => onValue(e.target.value)} />
       );
     case 'password':
-      return (
-        <Input
-          {...common}
-          type="password"
-          autoComplete="off"
-          value={text}
-          onChange={(e) => onValue(e.target.value)}
-        />
-      );
+      return <PasswordInput {...common} value={text} onValue={onValue} />;
     default:
       return <Input {...common} value={text} onChange={(e) => onValue(e.target.value)} />;
   }
@@ -250,6 +243,35 @@ function ImageInput({
           {error}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+/** Masked by default; Show lets the admin check what they typed. */
+function PasswordInput({
+  onValue,
+  ...props
+}: ComponentProps<typeof Input> & { onValue: (v: string) => void }) {
+  const [shown, setShown] = useState(false);
+  return (
+    <div className="flex items-center gap-1">
+      <Input
+        {...props}
+        type={shown ? 'text' : 'password'}
+        autoComplete="off"
+        onChange={(e) => onValue(e.target.value)}
+      />
+      <Button
+        variant="ghost"
+        size="sm"
+        aria-label={shown ? 'Hide password' : 'Show password'}
+        aria-pressed={shown}
+        onClick={() => setShown((v) => !v)}
+        disabled={props.disabled}
+      >
+        {shown ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+        {shown ? 'Hide' : 'Show'}
+      </Button>
     </div>
   );
 }

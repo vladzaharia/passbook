@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { managedSession } from '../../admin/scanning/sessions/test-fixtures.ts';
@@ -9,7 +9,16 @@ import type { ScanApi } from '../api/scan-api.ts';
 import { ClosedCard } from './closed-card.tsx';
 import { sessionFixture } from './session.test-support.ts';
 
-const opensAt = Date.now() + 3 * 3_600_000;
+// A fixed morning, so "opens in 3 hours" is always today (after 21:00 UTC it would be tomorrow).
+const NOW = Date.UTC(2026, 10, 19, 9, 0);
+const opensAt = NOW + 3 * 3_600_000;
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(NOW);
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 function closed(over: Partial<ScanSession> = {}, at: number | null = opensAt): ScanSession {
   const workspace = {
     session: {
