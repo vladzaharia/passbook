@@ -66,7 +66,7 @@ test('admin uploads a member photo, opts it into Wallet and configures in/out ru
     await page.goto(`/admin/passes/${pass.id}?orgId=${encodeURIComponent(orgId)}`);
     await page.getByRole('tab', { name: 'Holder', exact: true }).click();
     const encoded = await photoFixture(page);
-    await page.getByLabel('Member photo', { exact: true }).setInputFiles({
+    await page.getByLabel('Choose a photo', { exact: true }).setInputFiles({
       name: 'member.png',
       mimeType: 'image/png',
       buffer: Buffer.from(encoded, 'base64'),
