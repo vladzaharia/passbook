@@ -28,6 +28,8 @@ export const HOLDER_COPY = {
   voidedMany: 'These passes were voided. They no longer work.',
   expired: 'This pass has expired.',
   /** The org took the pass out of Wallet; its own note follows. */
+  removedMany: 'These passes were removed.',
+  endedMany: 'None of these passes can be added.',
   removedPlain: 'This pass was removed.',
   removed: 'Removed from Wallet. It stays in Expired passes until you delete it.',
   /** A voided pass whose org has no contact of its own: name the org, never the platform. */

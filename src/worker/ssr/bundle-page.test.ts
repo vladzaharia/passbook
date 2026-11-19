@@ -72,3 +72,25 @@ describe('/b with a voided pass', () => {
     expect(text(bare)).toContain('Ask Northwind for a new pass.');
   });
 });
+
+describe('/b with nothing to add', () => {
+  const only = (states: BundlePageItem['state'][]) =>
+    text(render(states.map((state, i) => item(`p${i}`, state, 'Tier: Pro'))));
+
+  it('says removed when every pass was removed, never voided', () => {
+    const body = only(['removed', 'removed']);
+    expect(body).toContain('These passes were removed.');
+    expect(body).not.toContain('These passes were voided.');
+  });
+
+  it('says voided when every pass was voided', () => {
+    expect(only(['voided', 'voided'])).toContain('These passes were voided.');
+  });
+
+  it('says neither when voided and removed are mixed', () => {
+    const body = only(['voided', 'removed']);
+    expect(body).toContain('None of these passes can be added.');
+    expect(body).not.toContain('were voided.');
+    expect(body).not.toContain('were removed.');
+  });
+});

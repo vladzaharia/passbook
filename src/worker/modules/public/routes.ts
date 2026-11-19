@@ -1,8 +1,9 @@
 import { PublicAssetParamSchema, PublicTokenParamSchema } from '../../../shared/contracts/index.ts';
 import { passDevice } from '../../../shared/device.ts';
+import { formatEndedOn } from '../../../shared/format-date.ts';
 import { PASS_SW_SOURCE } from '../../../shared/pass-offline.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
-import { formatEndedOn } from '../../../web/lib/format.ts';
+import { stateWordOption } from '../../../shared/state-word.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -75,6 +76,7 @@ function endedFor(
   voidedAt: number | null,
   passJson: { expirationDate?: unknown },
   zone: string | undefined,
+  lang: string,
 ): string | null {
   const state =
     pass.status === 'voided' || view.voided ? 'voided' : view.expired ? 'expired' : null;
@@ -83,6 +85,7 @@ function endedFor(
         state,
         { modifiedAt: pass.modifiedAt, voidedAt, expirationDate: passJson.expirationDate },
         zone,
+        lang,
       )
     : null;
 }
@@ -144,11 +147,7 @@ register(
         locale: lang,
         now: new Date(svcCtx.clock.now()),
         timeZone: zoneOf(c) ?? 'UTC',
-        ...(model.removal
-          ? { stateWord: 'Removed' }
-          : pass.status === 'voided'
-            ? { stateWord: 'Voided' }
-            : {}),
+        ...stateWordOption(pass),
       });
       const html = renderPassPage({
         view,
@@ -178,6 +177,7 @@ register(
           pass.status === 'voided' ? await voidedAt(svcCtx.env.DB, pass.orgId, pass.id) : null,
           model.passJson,
           zoneOf(c),
+          lang,
         ),
         ...(pass.holderEmail && !model.removal
           ? { resend: { action: `${page}/resend`, again: againOf(c.req.query('again')) } }

@@ -68,4 +68,17 @@ describe('distinguishingLine', () => {
     );
     expect(distinguishingLine({ generic: { primaryFields: [] } })).toBeNull();
   });
+
+  it('skips a value equal to the title, dates, long values and non-strings', () => {
+    const generic = {
+      headerFields: [
+        { key: 'a', label: 'Plan', value: 'Maya Chen' },
+        { key: 'b', label: 'Joined', value: '2026-01-01', dateStyle: 'PKDateStyleMedium' },
+        { key: 'c', label: 'Notes', value: 'x'.repeat(41) },
+        { key: 'd', label: 'Count', value: 4 },
+      ],
+      secondaryFields: [{ key: 'e', label: 'Level', value: 'Gold' }],
+    };
+    expect(distinguishingLine({ generic }, 'Maya Chen')).toBe('Level: Gold');
+  });
 });

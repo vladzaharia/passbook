@@ -1,5 +1,7 @@
 import { NO_EMAIL_LABEL } from '../../shared/email.ts';
 
+export { formatEndedOn } from '../../shared/format-date.ts';
+
 // Every date and number a person reads in the app, in one locale. Engines join a date and a time
 // differently ("Nov 2, 2026, 11:51 PM" in Chromium, "… at 11:51 PM" in WebKit), so the parts are
 // formatted apart and joined here.
@@ -40,44 +42,6 @@ export function formatDateTime(ms: number | null | undefined, empty = 'Never'): 
 /** Oct 31, 2026. */
 export function formatDay(ms: number | null | undefined, empty = 'None'): string {
   return ms == null ? empty : DAY.format(ms);
-}
-
-const ZONED_DAY = new Map<string, Intl.DateTimeFormat>();
-
-/** Oct 31, 2026 in `timeZone`: the day a holder sees something happened, in the holder's own zone. */
-export function formatDayIn(ms: number, timeZone: string): string {
-  let formatter = ZONED_DAY.get(timeZone);
-  if (!formatter) {
-    formatter = new Intl.DateTimeFormat(LOCALE, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      timeZone,
-    });
-    ZONED_DAY.set(timeZone, formatter);
-  }
-  return formatter.format(ms);
-}
-
-/**
- * The day a voided or expired pass stopped working: the expiry the pass names (expired), else the
- * recorded void time, else the day it last changed. One rule for the portal, /p and /b: the
- * visitor's zone (the browser's; Cloudflare's on the server, UTC without one). Null when no date.
- */
-export function formatEndedOn(
-  state: 'voided' | 'expired',
-  pass: { modifiedAt: number; voidedAt?: number | null; expirationDate?: unknown },
-  timeZone = 'UTC',
-): string | null {
-  const expiry = typeof pass.expirationDate === 'string' ? Date.parse(pass.expirationDate) : NaN;
-  const at =
-    state === 'expired' && Number.isFinite(expiry) ? expiry : (pass.voidedAt ?? pass.modifiedAt);
-  if (!Number.isFinite(at)) return null;
-  try {
-    return formatDayIn(at, timeZone);
-  } catch {
-    return null;
-  }
 }
 
 /** Oct 31: axes, ranges, "Updated Oct 31". */

@@ -83,6 +83,7 @@ function Detail({
                 expirationDate: pass.passJson.expirationDate,
               },
               localZone(),
+              navigator.language,
             )
           : null
       }

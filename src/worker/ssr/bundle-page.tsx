@@ -140,7 +140,13 @@ function BundleBody(props: BundlePageProps) {
               <AddBlock {...area} buddy={(p) => <BuddyArt {...p} playOnLoad />} />
             </section>
           ) : (
-            <Notice state="voided" orgName={props.orgName} support={support} many />
+            <Notice
+              state={voided === 0 ? 'removed' : 'voided'}
+              orgName={props.orgName}
+              support={support}
+              many={voided === 0 || removed === 0}
+              mixed={voided > 0 && removed > 0}
+            />
           )}
         </div>
         <ul className="bd-list" aria-label={BUNDLE_COPY.count(items.length)}>

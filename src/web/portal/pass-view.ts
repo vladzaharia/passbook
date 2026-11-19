@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import type { PassJson } from '@/passkit/types.ts';
 import type { MyPassSchema } from '@/shared/contracts/me.ts';
 import { normalize, type PassView } from '@/shared/pass-view/index.ts';
+import { stateWordOption } from '@/shared/state-word.ts';
 import { assetUrlMap } from '../pass-card/assets.ts';
 
 export type MyPass = z.infer<typeof MyPassSchema>;
@@ -14,11 +15,7 @@ export function assetUrls(base: string | null, names?: readonly string[]): Recor
 export function toView(pass: MyPass): PassView {
   return normalize(pass.passJson as unknown as PassJson, {
     assets: assetUrls(pass.assetBaseUrl, pass.assetNames),
-    ...(pass.removedAt !== null
-      ? { stateWord: 'Removed' }
-      : pass.status === 'voided'
-        ? { stateWord: 'Voided' }
-        : {}),
+    ...stateWordOption(pass),
   });
 }
 

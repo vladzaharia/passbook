@@ -21,6 +21,7 @@ export function Notice({
   many,
   endedOn,
   inWallet,
+  mixed,
 }: {
   state: 'active' | 'voided' | 'expired' | 'removed';
   orgName: string;
@@ -29,6 +30,8 @@ export function Notice({
   message?: string | null | undefined;
   /** A bundle: every pass in it. */
   many?: boolean;
+  /** A bundle with voided and removed passes together: neither word is true of all. */
+  mixed?: boolean;
   /** When it stopped working, already formatted. */
   endedOn?: string | null | undefined;
   /** Known not to be in a Wallet (the portal knows; /p does not): no Wallet jargon then. */
@@ -42,20 +45,24 @@ export function Notice({
   return (
     <div role="status">
       <Callout tone="warning" icon={voided ? Ban : state === 'removed' ? EyeOff : Clock}>
-        {voided
-          ? many
-            ? HOLDER_COPY.voidedMany
-            : endedOn
-              ? HOLDER_COPY.voidedOn(endedOn)
-              : HOLDER_COPY.voided
-          : state === 'removed'
-            ? inWallet === false
-              ? HOLDER_COPY.removedPlain
-              : HOLDER_COPY.removed
-            : endedOn
-              ? HOLDER_COPY.expiredOn(endedOn)
-              : HOLDER_COPY.expired}
-        {voided || state === 'expired' ? (
+        {mixed
+          ? HOLDER_COPY.endedMany
+          : voided
+            ? many
+              ? HOLDER_COPY.voidedMany
+              : endedOn
+                ? HOLDER_COPY.voidedOn(endedOn)
+                : HOLDER_COPY.voided
+            : state === 'removed'
+              ? many
+                ? HOLDER_COPY.removedMany
+                : inWallet === false
+                  ? HOLDER_COPY.removedPlain
+                  : HOLDER_COPY.removed
+              : endedOn
+                ? HOLDER_COPY.expiredOn(endedOn)
+                : HOLDER_COPY.expired}
+        {mixed || voided || state === 'expired' ? (
           <>
             {' '}
             {href ? (

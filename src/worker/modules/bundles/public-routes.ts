@@ -6,6 +6,7 @@ import {
 } from '../../../shared/contracts/bundles.ts';
 import { passDevice } from '../../../shared/device.ts';
 import { distinguishingLine, normalize } from '../../../shared/pass-view/index.ts';
+import { stateWordOption } from '../../../shared/state-word.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { ipRatePrefix } from '../../platform/ip.ts';
@@ -81,11 +82,7 @@ register(
           locale: lang,
           now,
           timeZone: zone,
-          ...(pass.removedAt !== null
-            ? { stateWord: 'Removed' }
-            : pass.status === 'voided'
-              ? { stateWord: 'Voided' }
-              : {}),
+          ...stateWordOption(pass),
         });
         const title = pass.displayTitle ?? view.description ?? model.orgName;
         return {
