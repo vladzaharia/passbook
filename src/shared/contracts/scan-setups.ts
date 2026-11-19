@@ -88,6 +88,8 @@ export type ScanLiveRow = z.infer<typeof ScanLiveRowSchema>;
 export const ScanLiveSnapshotSchema = z.object({
   cursor: z.string().nullable(),
   rows: z.array(ScanLiveRowSchema).max(100),
+  /** A customer screen's session welcome line, for the idle screen. */
+  welcome: z.string().max(40).optional(),
   places: z.array(ScanPlaceRevSchema).max(64).optional(),
 });
 /** Sent only to the device whose refusal was overridden, as its own socket message. */

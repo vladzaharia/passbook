@@ -25,7 +25,7 @@ export const CONNECTION_CODES = {
   release: 'TEMPLATE_RELEASE_CHANGED',
   retention: 'RETENTION_CHANGED',
   stale: 'STALE',
-} as const satisfies Record<DenyReason, string>;
+} as const satisfies Record<Exclude<DenyReason, 'proof'>, string>;
 
 const REASON_OF = new Map<string, DenyReason>(
   (Object.entries(CONNECTION_CODES) as [DenyReason, string][]).map(([reason, code]) => [

@@ -1,5 +1,6 @@
 // HTTP client for tools/seed-demo.ts: cookie sessions against a local dev server, never remote.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { crc32, deflateSync } from 'node:zlib';
 
@@ -9,7 +10,7 @@ const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 export function assertLocal(url: string): string {
   const parsed = new URL(url);
   if (!/^https?:$/.test(parsed.protocol) || !LOCAL_HOSTS.has(parsed.hostname)) {
-    throw new Error(`Refusing to seed ${parsed.origin}: only localhost is allowed.`);
+    throw new Error(`Refusing to use ${parsed.origin}: only localhost is allowed.`);
   }
   return parsed.origin;
 }
@@ -125,7 +126,7 @@ export class Session {
     await retryRateLimited(() =>
       this.send('POST', '/auth/magic/request', { email, turnstileToken: 'XXXX.DUMMY.TOKEN.XXXX' }),
     );
-    const token = await nextMagicToken(mailDir, before);
+    const token = await nextMagicToken(mailDir, this.base, before);
     await retryRateLimited(() => this.send('POST', '/auth/magic/consume', { token }));
     this.csrf = (await this.get('/api/v1/session')).csrfToken;
   }
@@ -142,27 +143,42 @@ async function retryRateLimited<T>(run: () => Promise<T>): Promise<T> {
   }
 }
 
-function mailFiles(dir: string): Set<string> {
-  if (!existsSync(dir)) return new Set();
-  return new Set(
-    readdirSync(dir).flatMap((id) => {
-      const text = join(dir, id, 'email-text');
-      return existsSync(text) ? readdirSync(text).map((f) => join(text, f)) : [];
-    }),
-  );
+// Local mail lands in <dir>/<id>/email-text (older wrangler) or, in current miniflare, in the
+// system temp dir as miniflare-*/email/email-text; every dev server shares that one.
+export function mailFiles(dir: string): Set<string> {
+  const files = new Set<string>();
+  for (const root of new Set([dir, tmpdir()])) {
+    if (!existsSync(root)) continue;
+    for (const id of readdirSync(root)) {
+      for (const sub of ['email-text', join('email', 'email-text')]) {
+        const text = join(root, id, sub);
+        if (existsSync(text)) for (const f of readdirSync(text)) files.add(join(text, f));
+      }
+    }
+  }
+  return files;
 }
 
-async function nextMagicToken(dir: string, before: Set<string>): Promise<string> {
+export async function nextMagicToken(
+  dir: string,
+  base: string,
+  before: Set<string>,
+): Promise<string> {
   const deadline = Date.now() + 20_000;
   while (Date.now() < deadline) {
     for (const file of mailFiles(dir)) {
       if (before.has(file)) continue;
-      const token = /\/auth\/magic\?t=([A-Za-z0-9_-]+)/.exec(readFileSync(file, 'utf8'))?.[1];
+      const text = readFileSync(file, 'utf8');
+      const token = text.includes(`${base}/auth/magic`)
+        ? /\/auth\/magic\?t=([A-Za-z0-9_-]+)/.exec(text)?.[1]
+        : undefined;
       if (token) return token;
     }
     await new Promise((r) => setTimeout(r, 250));
   }
-  throw new Error(`No sign-in email under ${dir}. Is the dev server running from this tree?`);
+  throw new Error(
+    `No sign-in email under ${dir}. Is the dev server running from this tree? Sign-in mail is capped at 5 an hour per address.`,
+  );
 }
 
 /** Solid PNG with a centered disc, for per-pass image overrides. */

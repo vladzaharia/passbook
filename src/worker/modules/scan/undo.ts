@@ -16,6 +16,7 @@ import { commitUndo, UNDO_CODES } from './repo-undo.ts';
 import { guardMiss, undoApprovalGuard } from './repo-undo-approval-guard.ts';
 import { readOccupancyUndo } from './repo-undo-occupancy.ts';
 import { readUndo } from './repo-undo-read.ts';
+import { prepareUndoRetention } from './repo-undo-retention.ts';
 import { scanPolicy } from './rules.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
@@ -150,7 +151,9 @@ async function run(
       key: req.idempotencyKey,
       reads: answer.reads,
     };
-    after = await (target.actionKind === 'check_in' ? commitUndo(commit) : commitValueUndo(commit));
+    const retention = await prepareUndoRetention(commit);
+    const signed = { ...commit, retention };
+    after = await (target.actionKind === 'check_in' ? commitUndo(signed) : commitValueUndo(signed));
   } catch (error) {
     if (error instanceof AppError && error.code === UNDO_CODES.stale) throw notFound();
     throw error;

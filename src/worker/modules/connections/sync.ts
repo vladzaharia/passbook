@@ -24,6 +24,12 @@ import {
 export const MAX_PASSES_PER_RUN = 500;
 export const MAX_PAGES_PER_RUN = 200;
 
+/**
+ * Pass writes (creates, updates, missing marks) one workflow instance may make before handing the
+ * run to a fresh instance. A write costs about 55 subrequests, and an instance is limited to 500k.
+ */
+export const WRITE_BUDGET_PER_INSTANCE = 2000;
+
 /** Records applied per workflow step or webhook job; bounds D1 queries and CPU per invocation. */
 export const MAX_RECORDS_PER_STEP = 20;
 

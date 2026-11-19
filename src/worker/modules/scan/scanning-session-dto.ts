@@ -27,6 +27,7 @@ import {
   readValidEventScope,
   type ScanEventRow,
 } from './repo-scope.ts';
+import { activeHold, sessionWindow, storedHours } from './session-hours.ts';
 
 /**
  * What a session read is authorized by: the org and mode, the session a device is bound to, and
@@ -235,6 +236,9 @@ export async function sessionDto(
         }
       : { ...parseSettings(row.settings), acceptAllTemplates: false, lookup: false },
     timeZone: row.time_zone,
+    hours: ((h) => (h === 'invalid' ? null : h))(storedHours(row.hours)),
+    hold: activeHold(row.hold, now),
+    window: sessionWindow(row, now),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deviceCount: stats.devices,

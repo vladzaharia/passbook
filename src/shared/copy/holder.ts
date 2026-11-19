@@ -68,7 +68,6 @@ export const HOLDER_COPY = {
   voidedOn: (date: string) => `This pass was voided on ${date}.`,
   expiredOn: (date: string) => `This pass expired on ${date}.`,
   /** My passes. */
-  fromOrgs: 'From your organizations',
   noPasses: 'Passes sent to your verified emails show up here.',
   addAllTitle: 'Add all to Apple Wallet',
   addAllOne: 'Add to Apple Wallet',

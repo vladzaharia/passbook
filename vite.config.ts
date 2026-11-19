@@ -247,7 +247,7 @@ export default defineConfig(({ command }) => ({
       // Merged into wrangler.jsonc (arrays append). The build keeps the file's config as is.
       config: (c: { vars?: Record<string, unknown>; ratelimits?: RateLimitConfig[] }) => ({
         // Local runs only see the .dev.vars secrets that `secrets.required` names (tools/lib/dev-secrets.ts).
-        ...(command === 'serve' || e2e ? localSecrets() : {}),
+        ...(command === 'serve' || e2e ? localSecrets(e2e) : {}),
         ...(command === 'serve' ? { assets: { run_worker_first: VITE_DEV_PATHS } } : {}),
         ...(e2e
           ? {

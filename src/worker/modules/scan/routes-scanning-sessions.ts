@@ -11,6 +11,7 @@ import {
   ScanningSessionDetailSchema,
   ScanningSessionListSchema,
   ScanningSessionQuerySchema,
+  SessionHoldRequestSchema,
   UpdateScanningDeviceSchema,
   UpdateScanningSessionSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
@@ -33,6 +34,7 @@ import {
   updateScanningSession,
 } from './scanning-sessions.ts';
 import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
+import { holdScanningSession } from './session-hold.ts';
 import { consoleSessionSummary } from './summary-session.ts';
 import { sessionAuthority } from './target-authority.ts';
 
@@ -200,6 +202,40 @@ register(
     return c.json(
       scopedScanningView(
         await updateScanningSession(
+          ctx,
+          currentUserId(c),
+          row.id,
+          c.req.valid('json'),
+          authority,
+          countAuthority,
+        ),
+        row.org_id,
+      ),
+    );
+  },
+);
+register(
+  scanningSessionsRoutes,
+  'scanners',
+  {
+    method: 'post',
+    path: '/{id}/hold',
+    summary: 'Close now, open now or go back to the session hours',
+    params: IdParamSchema,
+    body: SessionHoldRequestSchema,
+    response: ScanningSessionDetailSchema,
+  },
+  async (c) => {
+    const ctx = serviceContext(c);
+    const auth = authOf(c);
+    if (auth.kind !== 'session') throw new UnauthenticatedError();
+    const row = await loadScanningSession(ctx, c.req.valid('param').id, modeOf(auth));
+    const authority = await sessionAuthority(ctx, auth, row.org_id, 'scanning:manage');
+    const read = await sessionAuthority(ctx, auth, row.org_id, 'scanning:read');
+    const countAuthority = await captureConsoleSessionCountAuthority(ctx, auth, read);
+    return c.json(
+      scopedScanningView(
+        await holdScanningSession(
           ctx,
           currentUserId(c),
           row.id,

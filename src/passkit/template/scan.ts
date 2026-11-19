@@ -17,7 +17,7 @@ import { nfcIssues } from './scan-nfc.ts';
 
 export { nfcIssues };
 
-const SCAN_KEYS = new Set(['actions', 'lookup', 'window', 'flags', 'display', 'access']);
+const SCAN_KEYS = new Set(['actions', 'lookup', 'window', 'flags', 'display', 'access', 'tags']);
 const WINDOW_KEYS = new Set(['from', 'until', 'earlyMinutes', 'lateMinutes']);
 const MAX_FLAGS = 4;
 const MAX_WINDOW_MINUTES = 1440;
@@ -89,6 +89,13 @@ export function scanIssues(manifest: TemplateManifest): ValidationIssue[] {
     const size = new TextEncoder().encode(JSON.stringify(scan.display) ?? '').length;
     if (size > MAX_DISPLAY_BYTES)
       error('SCAN_DISPLAY_TOO_BIG', 'The scan screen is larger than 16 KB.', 'scan.display');
+  }
+  if (scan.tags !== undefined) {
+    const tags = scan.tags;
+    if (!isRecord(tags) || Object.keys(tags).some((k) => k !== 'min'))
+      error('SCAN_TAGS', 'tags needs only min.', 'scan.tags');
+    else if (tags.min !== undefined && tags.min !== 'basic' && tags.min !== 'secure')
+      error('SCAN_TAGS', 'tags.min must be basic or secure.', 'scan.tags.min');
   }
   return issues;
 }

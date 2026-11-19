@@ -1,8 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { scanOf } from '../../shared/scan-defaults.ts';
+import { CONTRAST_MIN, contrastRatio } from '../index.ts';
 import { createFixtureIdentity } from '../testing/fixture-identity.ts';
-import type { SigningMaterial } from '../types.ts';
+import type { PassJson, SigningMaterial } from '../types.ts';
 import { buildBaked, freezeNow, loadBaked } from './baked-fixtures.ts';
+import { defaultScanDisplay } from './scan-display/defaults.ts';
 
 let material: SigningMaterial;
 beforeAll(async () => {
@@ -67,6 +69,24 @@ describe('first blueprint set', () => {
     expect(refill).toMatchObject({ kind: 'add', input: 'left', minRole: 'desk', confirm: true });
   });
 
+  it('Pack shows what is left from the counter and the pack size apart', async () => {
+    const sample = await SAMPLE('starter-pack');
+    const fields = (p: Awaited<ReturnType<typeof buildBaked>>['passJson']) =>
+      [...(p.coupon?.headerFields ?? []), ...(p.coupon?.primaryFields ?? [])].map((f) => f.value);
+    const build = async (over: Record<string, number>) =>
+      fields((await buildBaked('starter-pack', material, { ...sample, ...over })).passJson);
+    expect(await build({ left: 7, size: 10 })).toEqual([7, '10 washes']);
+    // A refill raises left past size: never "15 of 10".
+    expect(await build({ left: 15, size: 10 })).toEqual([15, '10 washes']);
+    expect(await build({ left: 0, size: 10 })).toEqual([0, '10 washes']);
+  });
+
+  it('Pack default scan display keeps the Pack row', async () => {
+    const { template } = await loadBaked('starter-pack', { strips: false });
+    const display = defaultScanDisplay(template.manifest, template.passJson as PassJson);
+    expect(JSON.stringify(display)).toContain('"label":"Pack"');
+  });
+
   it('flags a frozen or past-due Membership and takes guests from the count', async () => {
     const { template } = await loadBaked('starter-generic', { strips: false });
     const scan = template.manifest.scan;
@@ -104,6 +124,22 @@ describe('stored passes keep rebuilding', () => {
     const fields = Object.values(pass.generic ?? {}).flat() as { key: string; value: unknown }[];
     expect(fields.find((f) => f.key === 'guests')?.value).toBe(0);
     expect(fields.find((f) => f.key === 'status')?.value).toBe('Active');
+  });
+
+  it.each([
+    ['Standard', 'rgb(20,26,43)'],
+    ['Plus', 'rgb(23,52,110)'],
+    ['Pro', 'rgb(76,29,149)'],
+  ])('a %s Membership takes its tier colours, readable', async (tier, bg) => {
+    const sample = await SAMPLE('starter-generic');
+    const { passJson: p } = await buildBaked('starter-generic', material, { ...sample, tier });
+    expect(p.backgroundColor).toBe(bg);
+    expect(contrastRatio(p.backgroundColor, p.foregroundColor)).toBeGreaterThanOrEqual(
+      CONTRAST_MIN.text,
+    );
+    expect(contrastRatio(p.backgroundColor, p.labelColor)).toBeGreaterThanOrEqual(
+      CONTRAST_MIN.label,
+    );
   });
 
   it('a cancelled Booking voids and stops at the door', async () => {

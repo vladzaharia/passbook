@@ -61,15 +61,17 @@ export function problems<T extends Pick<Component, 'id' | 'state'>>(components: 
   return bad.sort((a, b) => (a.state === b.state ? 0 : a.state === 'failing' ? -1 : 1));
 }
 
-/** Configuration is not verification, and an empty response is not evidence of good health. */
+/** An empty response is not evidence of good health. */
 export function assessmentState(
   components: readonly Pick<Component, 'state'>[],
 ): State | 'unknown' {
   if (components.length === 0) return 'unknown';
-  for (const state of ['failing', 'degraded', 'configured', 'not_configured'] as const) {
+  for (const state of ['failing', 'degraded'] as const) {
     if (components.some((component) => component.state === state)) return state;
   }
-  return 'verified';
+  if (components.some((component) => component.state === 'not_configured')) return 'not_configured';
+  // Green needs at least one part actually verified; all set up is neutral.
+  return components.some((component) => component.state === 'verified') ? 'verified' : 'configured';
 }
 
 export function countStates(components: readonly Pick<Component, 'state'>[]) {
@@ -78,6 +80,7 @@ export function countStates(components: readonly Pick<Component, 'state'>[]) {
     degraded: 0,
     not_configured: 0,
     configured: 0,
+    not_in_use: 0,
     verified: 0,
   };
   for (const c of components) counts[c.state]++;
@@ -105,12 +108,12 @@ export function headline(components: readonly Pick<Component, 'id' | 'kind' | 's
     switch (assessmentState(components)) {
       case 'unknown':
         return 'No status checks reported';
-      case 'configured':
-        return 'Some checks are not verified';
       case 'not_configured':
         return 'Some services are not configured';
+      case 'configured':
+        return 'Set up, not checked automatically';
       default:
-        return 'All reported components verified';
+        return 'All systems working';
     }
   }
   const same = bad.filter((c) => c.state === worst);

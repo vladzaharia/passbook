@@ -111,7 +111,8 @@ function scanShape(value: unknown): boolean {
     (value.lookup === undefined ||
       (record(value.lookup) && typeof value.lookup.input === 'string')) &&
     (value.display === undefined || record(value.display)) &&
-    (value.access === undefined || record(value.access))
+    (value.access === undefined || record(value.access)) &&
+    (value.tags === undefined || record(value.tags))
   );
 }
 

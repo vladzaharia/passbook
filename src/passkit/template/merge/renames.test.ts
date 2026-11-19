@@ -71,6 +71,27 @@ describe('renames', () => {
     );
     expect(man(r).display.status).toBe('{{pass.tier}} {{lookups.tier[level]}}');
   });
+  it('an input rename rewrites scan.actions[].input, ours-only actions included', () => {
+    const r = run(
+      (d) =>
+        m(d).scan.actions.push({
+          id: 'bonus',
+          label: 'Bonus',
+          kind: 'add',
+          input: 'pts',
+          amount: 2,
+        }),
+      (d) => {
+        const p = m(d).inputs.properties;
+        m(d).inputs.properties = Object.fromEntries(
+          Object.entries(p).map(([k, v]) => [k === 'pts' ? 'points' : k, v]),
+        );
+        for (const x of m(d).scan.actions) x.input = 'points';
+      },
+    );
+    expect(r.renames).toContainEqual({ kind: 'input', from: 'pts', to: 'points', applied: true });
+    expect(man(r).scan.actions.map((x: any) => x.input)).toEqual(['points', 'points', 'points']);
+  });
   it('rename against a modify is a conflict that can take theirs rename with ours edits', () => {
     const o = (d: any) => (d.passJson.generic.secondaryFields[0].label = 'Mine');
     const base = baseDoc();

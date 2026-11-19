@@ -145,7 +145,7 @@ describe('auto tap-out', () => {
       "UPDATE scan_presence SET last_scan_id = 'tap', last_entry_at = ? WHERE pass_id = ?",
       [now, p],
     );
-    await exitGrant(ctx(), row, exitAsGiven([], row.scope), 'stay', now).commit();
+    await (await exitGrant(ctx(), row, exitAsGiven([], row.scope), 'stay', now)).commit();
     expect(await rowOf(p, z)).toMatchObject({ state: 'in', last_scan_id: 'tap' });
     expect(await autoScans(p)).toEqual([]);
     expect(
@@ -165,14 +165,14 @@ describe('auto tap-out', () => {
     await inside(p, z, now - 2 * HOUR, now - HOUR);
     const row = await dueRow(p, z);
     const plan = exitAsGiven([], row.scope);
-    await exitGrant(ctx(), row, plan, 'stay', now).commit();
+    await (await exitGrant(ctx(), row, plan, 'stay', now)).commit();
     // The exit is lost but the claim stays (a crash between them): the retry must not exit again.
     await run(
       fixture.kit.env.DB,
       "UPDATE scan_presence SET state = 'in', last_scan_id = ? WHERE pass_id = ?",
       [row.last_scan_id, p],
     );
-    await exitGrant(ctx(), row, plan, 'stay', now).commit();
+    await (await exitGrant(ctx(), row, plan, 'stay', now)).commit();
     expect(await autoScans(p)).toHaveLength(1);
     expect((await rowOf(p, z))?.state).toBe('in');
   });
@@ -190,7 +190,7 @@ describe('auto tap-out', () => {
       await autoTapOut(ctx());
       expect((await rowOf(p, z))?.state).toBe('in');
       await expect(
-        exitGrant(ctx(), row, exitAsGiven([], row.scope), 'stay', now).commit(),
+        exitGrant(ctx(), row, exitAsGiven([], row.scope), 'stay', now).then((g) => g.commit()),
       ).rejects.toThrow();
       expect(await autoScans(p)).toEqual([]);
     } finally {

@@ -114,7 +114,7 @@
       "to": {
         "field": "left"
       },
-      "value": "{{left}}"
+      "value": "{{pass.counters.uses.left}}"
     },
     {
       "to": {
@@ -178,8 +178,8 @@
   "display": {
     "icon": "ticket",
     "title": "{{name}}",
-    "subtitle": "{{left}} left",
-    "status": "{{left}} left",
+    "subtitle": "{{pass.counters.uses.text}}",
+    "status": "{{pass.counters.uses.text}}",
     "search": [
       "name",
       "packId"
@@ -191,6 +191,14 @@
       "multi-pass",
       "prepaid"
     ]
+  },
+  "counters": {
+    "uses": {
+      "input": "left",
+      "size": {
+        "input": "size"
+      }
+    }
   },
   "behaviors": [
     {

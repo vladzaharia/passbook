@@ -59,6 +59,29 @@ function setup() {
 }
 
 describe('session configuration flows', () => {
+  it('resumes an ended session from its card menu', async () => {
+    const s = setup();
+    const ended = { ...managedSession, status: 'ended' as const };
+    let saved: Record<string, unknown> | undefined;
+    await renderApp('/admin/scanning?orgId=o1', {
+      session: 'admin',
+      memberships: [northwind],
+      selectedOrg: 'o1',
+      handlers: {
+        ...s.handlers,
+        '/api/v1/scanning-sessions': () => json({ items: [ended], nextCursor: null }),
+        '/api/v1/scanning-sessions/session-1': (_url: URL, init?: RequestInit) => {
+          if (init?.method === 'PATCH') saved = JSON.parse(String(init.body));
+          return json({ ...ended, status: 'active' });
+        },
+      },
+    });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: /more/i }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Resume session' }));
+    await waitFor(() => expect(saved).toMatchObject({ status: 'active' }));
+  });
+
   it('keeps the session picker open and clears tenant-specific selections when it changes scope', async () => {
     const s = setup();
     const { router } = await renderApp('/admin/scanning?orgId=o1', {

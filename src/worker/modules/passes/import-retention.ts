@@ -1,5 +1,10 @@
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { healHead } from '../retention/head-store.ts';
+import { type PreparedReceipt, prepareReceipt, recordHead } from '../retention/receipt-service.ts';
+import { chainHead } from '../retention/repo-receipts.ts';
+import type { Scope } from '../retention/repo-sweep.ts';
+import { retentionTargets } from '../retention/targets.ts';
 import {
   clearPii,
   deleteImport,
@@ -15,14 +20,22 @@ const DAY = 86_400_000;
 export const PII_KEPT_MS = 30 * DAY;
 /** The counts of an import stay this long. */
 export const COUNTS_KEPT_MS = 400 * DAY;
+const COUNTS_DAYS = 400;
 const BATCH = 50;
-const MAX_ROUNDS = 10;
+/** Imports one run touches: the platform pass, then all org passes together. A backlog drains over several days. */
+export const IMPORT_LIMITS = { drafts: 500, platform: 150, orgs: 150 };
 
 /** A grant refused because the import is already gone or already past the state the phase needs. */
 export const isSettled = (error: unknown): boolean =>
-  error instanceof AppError && (error.code === 'IMPORT_STATE' || error.code === 'IMPORT_NOT_FOUND');
+  error instanceof AppError &&
+  (error.code === 'IMPORT_STATE' ||
+    error.code === 'IMPORT_NOT_FOUND' ||
+    error.code === 'IMPORT_HELD');
 
-type Page = (after: string) => Promise<RetentionImport[]>;
+type Page = (after: string, limit: number) => Promise<RetentionImport[]>;
+interface Budget {
+  left: number;
+}
 
 /** Runs `each` over a phase in bounded batches. A failed import is logged and skipped, never retried in the run. */
 async function phase(
@@ -30,12 +43,15 @@ async function phase(
   name: string,
   page: Page,
   each: (imp: RetentionImport) => Promise<void>,
+  budget: Budget = { left: Number.POSITIVE_INFINITY },
 ): Promise<number> {
   let done = 0;
   let after = '';
-  for (let round = 0; round < MAX_ROUNDS; round++) {
-    const imports = await page(after);
+  while (budget.left > 0) {
+    const limit = Math.min(BATCH, budget.left);
+    const imports = await page(after, limit);
     for (const imp of imports) {
+      budget.left--;
       try {
         await each(imp);
         done++;
@@ -58,7 +74,7 @@ async function phase(
       }
     }
     const last = imports[imports.length - 1];
-    if (imports.length < BATCH || !last) break;
+    if (imports.length < limit || !last) break;
     after = last.id;
   }
   return done;
@@ -79,36 +95,91 @@ async function dropFile(ctx: ServiceContext, imp: RetentionImport): Promise<void
 }
 
 /**
- * Daily: drafts past their 23 hours end `expired` and lose their file; rows of imports that ended 30 days ago
- * lose their cell values, emails and earlier values; imports 400 days old go with their counts. Each phase
- * takes at most 500 imports a run, so a backlog drains over several days.
+ * Daily: drafts past their 23 hours end `expired` and lose their file. Then, under the `imports` retention plan
+ * (the org's days, floors, holds and the platform maximum), rows of imports that ended that many days ago lose
+ * their cell values, emails and earlier values. Imports `COUNTS_KEPT_MS` old go with their counts; an org under
+ * a hold keeps both. Work per run is bounded (`IMPORT_LIMITS`), so a backlog drains over several days.
  */
 export async function dailyImports(ctx: ServiceContext): Promise<void> {
   const now = ctx.clock.now();
   const expired = await phase(
     ctx,
     'expire',
-    (after) => expiredDrafts(ctx.env.DB, now, after, BATCH),
+    (after, limit) => expiredDrafts(ctx.env.DB, now, after, limit),
     async (imp) => {
       await expireDraft(ctx, imp);
       await dropFile(ctx, imp);
     },
+    { left: IMPORT_LIMITS.drafts },
   );
-  const cleared = await phase(
-    ctx,
-    'clear',
-    (after) => importsWithPii(ctx.env.DB, now - PII_KEPT_MS, after, BATCH),
-    (imp) => clearPii(ctx, imp),
-  );
-  const deleted = await phase(
-    ctx,
-    'delete',
-    (after) => oldImports(ctx.env.DB, now - COUNTS_KEPT_MS, after, BATCH),
-    async (imp) => {
-      await deleteImport(ctx, imp);
-      await dropFile(ctx, imp);
-    },
-  );
+  const targets = await retentionTargets(ctx, ['imports']);
+  let cleared = 0;
+  let deleted = 0;
+  /** Every import commits with its own receipt, in one batch: no receipt, no delete. */
+  const target = async (orgId: string | null, days: number, scope: Scope, budget: Budget) => {
+    await healHead(ctx, orgId, 'imports', await chainHead(ctx.env.DB, orgId, 'imports'));
+    const retire = async (
+      policyDays: number,
+      counts: { deleted: number; anonymised: number },
+      commit: (receipt: PreparedReceipt) => Promise<void>,
+    ) => {
+      const receipt = await prepareReceipt(ctx, {
+        orgId,
+        cls: 'imports',
+        kind: 'sweep',
+        policyDays,
+        cutoffAt: now - policyDays * DAY,
+        ...counts,
+      });
+      await commit(receipt);
+      await recordHead(ctx, receipt.receipt);
+    };
+    cleared += await phase(
+      ctx,
+      'clear',
+      (after, limit) => importsWithPii(ctx.env.DB, now - days * DAY, after, limit, scope),
+      (imp) => retire(days, { deleted: 0, anonymised: 1 }, (r) => clearPii(ctx, imp, r)),
+      budget,
+    );
+    // The counts of an import are not the class value: their own receipt carries their own days.
+    deleted += await phase(
+      ctx,
+      'delete',
+      (after, limit) => oldImports(ctx.env.DB, now - COUNTS_DAYS * DAY, after, limit, scope),
+      async (imp) => {
+        await retire(COUNTS_DAYS, { deleted: 1, anonymised: 0 }, (r) => deleteImport(ctx, imp, r));
+        await dropFile(ctx, imp);
+      },
+      budget,
+    );
+  };
+  if (targets) {
+    await target(
+      null,
+      targets.platform.imports,
+      { kind: 'platform', exclude: targets.exclude },
+      {
+        left: IMPORT_LIMITS.platform,
+      },
+    );
+    const budget = { left: IMPORT_LIMITS.orgs };
+    let visited = 0;
+    for (const o of targets.orgs) {
+      if (budget.left <= 0) break;
+      try {
+        await target(o.orgId, o.days.imports, { kind: 'org', orgId: o.orgId }, budget);
+      } catch (error) {
+        // One failing org must not stop the rotation: it runs again at its next visit.
+        ctx.log.error('pass_import.retention_org_failed', {
+          orgId: o.orgId,
+          code: 'IMPORT_RETENTION',
+          error,
+        });
+      }
+      visited++;
+    }
+    await targets.finish(visited);
+  }
   if (expired + cleared + deleted > 0)
     ctx.log.info('pass_import.retention', { expired, cleared, deleted });
 }

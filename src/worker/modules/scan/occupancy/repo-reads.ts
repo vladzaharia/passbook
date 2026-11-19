@@ -98,8 +98,12 @@ export interface DueRow {
   template_id: string;
 }
 
-/** In rows of active orgs past their due time, oldest first (`scan_presence_due`). */
-export const dueRows = (db: D1Database, now: number, limit: number) =>
+/** The key of one stay in the cron's unsigned-row backoff: a new entry is a new stay. */
+export const stayKey = (r: Pick<DueRow, 'pass_id' | 'scope' | 'last_entry_at'>) =>
+  `${r.pass_id}:${r.scope}:${r.last_entry_at}`;
+
+/** In rows of active orgs past their due time, oldest first (`scan_presence_due`), but not the `skip` stays. */
+export const dueRows = (db: D1Database, now: number, limit: number, skip: readonly string[] = []) =>
   all<DueRow>(
     db,
     `SELECT x.pass_id, x.org_id, x.mode, x.scope, x.entered_at, x.last_entry_at, x.last_scan_id, x.due_at,
@@ -108,8 +112,9 @@ export const dueRows = (db: D1Database, now: number, limit: number) =>
      JOIN orgs o ON o.id = x.org_id AND o.status = 'active'
      JOIN passes p ON p.id = x.pass_id
      WHERE x.state = 'in' AND x.due_at IS NOT NULL AND x.due_at <= ? AND x.entered_at IS NOT NULL
+       AND (x.pass_id || ':' || x.scope || ':' || x.last_entry_at) NOT IN (SELECT value FROM json_each(?))
      ORDER BY x.due_at LIMIT ?`,
-    [now, limit],
+    [now, JSON.stringify(skip), limit],
   );
 
 export interface InRow {

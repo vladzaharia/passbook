@@ -63,6 +63,7 @@ export async function setWorkflowStatus(
     db,
     `UPDATE workflow_runs SET status = ?, finished_at = ?, error_code = ?
      WHERE instance_id = ? AND kind = 'connection_sync'
+     ${status === 'running' ? "AND status IN ('queued', 'running')" : ''}
      AND org_id = ? AND target_id = ? AND credential_keyset_commitment = ?
      ${
        runnable
@@ -100,14 +101,16 @@ export async function workflowSyncTracking(
   startedAt: number;
   status: string;
   credentialKeysetCommitment: string | null;
+  tipSeq: number;
 } | null> {
   const row = await first<{
     started_at: number;
     status: string;
     credential_keyset_commitment: string | null;
+    tip_seq: number;
   }>(
     db,
-    `SELECT started_at, status, credential_keyset_commitment FROM workflow_runs
+    `SELECT started_at, status, credential_keyset_commitment, tip_seq FROM workflow_runs
      WHERE instance_id = ? AND kind = 'connection_sync' AND org_id = ? AND target_id = ?`,
     [p.instanceId, p.orgId, p.connectionId],
   );
@@ -116,6 +119,7 @@ export async function workflowSyncTracking(
         startedAt: row.started_at,
         status: row.status,
         credentialKeysetCommitment: row.credential_keyset_commitment,
+        tipSeq: row.tip_seq,
       }
     : null;
 }
@@ -244,13 +248,33 @@ export async function slotAttemptInFlight(
   db: D1Database,
   connectionId: string,
   slot: string,
-): Promise<boolean> {
-  return (
-    (await first(
-      db,
-      `SELECT 1 FROM workflow_runs WHERE kind = 'connection_sync' AND target_id = ?
+): Promise<{
+  id: string;
+  startedAt: number;
+  credentialKeysetCommitment: string | null;
+  tipSeq: number;
+  orgId: string;
+} | null> {
+  const row = await first<{
+    instance_id: string;
+    started_at: number;
+    credential_keyset_commitment: string | null;
+    tip_seq: number;
+    org_id: string;
+  }>(
+    db,
+    `SELECT instance_id, started_at, credential_keyset_commitment, tip_seq, org_id FROM workflow_runs
+       WHERE kind = 'connection_sync' AND target_id = ?
          AND substr(instance_id, 1, ?) = ? AND status IN ('queued', 'running') LIMIT 1`,
-      [connectionId, slot.length + 1, `${slot}-`],
-    )) !== null
+    [connectionId, slot.length + 1, `${slot}-`],
   );
+  return row
+    ? {
+        id: row.instance_id,
+        startedAt: row.started_at,
+        credentialKeysetCommitment: row.credential_keyset_commitment,
+        tipSeq: row.tip_seq,
+        orgId: row.org_id,
+      }
+    : null;
 }
