@@ -28,3 +28,19 @@ export function holderState(pass: MyPass, view: PassView): HolderState {
   if (pass.removedAt !== null) return 'removed';
   return pass.status === 'voided' || view.voided ? 'voided' : view.expired ? 'expired' : 'active';
 }
+
+const words = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+
+/** The pass is titled with the signed-in holder's own name (or the name their email spells). */
+export function isHolderName(
+  title: string | null,
+  user: { name: string | null; primaryEmail: string | null } | undefined,
+): boolean {
+  if (!title || !user) return false;
+  const t = words(title);
+  return t === words(user.name ?? '') || t === words((user.primaryEmail ?? '').split('@')[0] ?? '');
+}

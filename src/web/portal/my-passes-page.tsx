@@ -27,7 +27,7 @@ import {
 import { ModePill } from '../ui/layout/mode-pill.tsx';
 import { myPassesQuery } from './api.ts';
 import { browserDevice } from './device.ts';
-import { type MyPass, passName, toView } from './pass-view.ts';
+import { isHolderName, type MyPass, passName, toView } from './pass-view.ts';
 import { isPendingRefresh } from './refresh.ts';
 import { RefreshIconButton, useRefresh } from './refresh-button.tsx';
 import { useRemovalStatus } from './removal-status.ts';
@@ -60,22 +60,6 @@ function ListBuddy({ passes }: { passes: readonly MyPass[] }) {
   return (
     <Buddy key={scene} size="sm" at="start" mood={mood} scene={scene} className="wl-list-buddy" />
   );
-}
-
-const words = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .trim();
-
-/** The pass is titled with the signed-in holder's own name (or the name their email spells). */
-function isHolderName(
-  title: string | null,
-  user: { name: string | null; primaryEmail: string | null } | undefined,
-): boolean {
-  if (!title || !user) return false;
-  const t = words(title);
-  return t === words(user.name ?? '') || t === words((user.primaryEmail ?? '').split('@')[0] ?? '');
 }
 
 /** A reported Apple registration: the badge gives way to this pill. */
