@@ -180,7 +180,9 @@ function Poster({ view, layout }: Props) {
               {heading ? <h2 className="pc-title">{heading.text}</h2> : null}
               {event ? (
                 <p className="pc-poster-meta">
-                  {[event.date, event.venue].filter(Boolean).join(' · ')}
+                  {[event.date, event.venue].filter(Boolean).map((line) => (
+                    <span key={line}>{line}</span>
+                  ))}
                 </p>
               ) : (
                 <FieldRow fields={fields} className="pc-primary" />

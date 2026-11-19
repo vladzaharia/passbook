@@ -8,7 +8,7 @@ export const IMPORT_COPY = {
   fileTab: 'File',
   pasteTab: 'Paste',
   linkTab: 'Sheet link',
-  dropLabel: 'Drop a .csv file or choose',
+  dropLabel: 'Drop a .csv file or choose one',
   pasteLabel: 'Rows',
   pastePlaceholder: 'Name,Email,Id\nMaya,maya@example.com,A1',
   linkLabel: 'Link',

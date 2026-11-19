@@ -29,6 +29,8 @@ export interface CalloutProps {
   children?: ReactNode;
   items?: readonly ReactNode[];
   actions?: ReactNode;
+  /** Actions sit right of the text from sm up, not under it. */
+  actionsAside?: boolean;
   className?: string;
 }
 
@@ -40,6 +42,7 @@ export function Callout({
   children,
   items,
   actions,
+  actionsAside,
   className,
 }: CalloutProps) {
   const t = TONE[tone];
@@ -51,19 +54,30 @@ export function Callout({
       className={cn('flex gap-3 rounded-lg border px-4 py-3 text-sm', t.box, className)}
     >
       <Icon aria-hidden className={cn('mt-0.5 size-4 shrink-0', t.text)} />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        {title ? <p className="font-medium text-fg-strong">{title}</p> : null}
-        {children ? <div className="max-w-[65ch] text-fg">{children}</div> : null}
-        {list.length > 1 ? (
-          <ul className="max-w-[65ch] list-disc pl-4 text-fg">
-            {Children.map(list, (item) => (
-              <li>{item}</li>
-            ))}
-          </ul>
-        ) : list.length === 1 ? (
-          <p className="max-w-[65ch] text-fg">{list[0]}</p>
+      <div
+        className={cn(
+          'flex min-w-0 flex-1 flex-col gap-1',
+          actionsAside && 'sm:flex-row sm:items-center sm:justify-between sm:gap-4',
+        )}
+      >
+        <div className="flex min-w-0 flex-col gap-1">
+          {title ? <p className="font-medium text-fg-strong">{title}</p> : null}
+          {children ? <div className="max-w-[65ch] text-fg">{children}</div> : null}
+          {list.length > 1 ? (
+            <ul className="max-w-[65ch] list-disc pl-4 text-fg">
+              {Children.map(list, (item) => (
+                <li>{item}</li>
+              ))}
+            </ul>
+          ) : list.length === 1 ? (
+            <p className="max-w-[65ch] text-fg">{list[0]}</p>
+          ) : null}
+        </div>
+        {actions ? (
+          <div className={cn('flex flex-wrap gap-2', actionsAside ? 'shrink-0' : 'mt-1')}>
+            {actions}
+          </div>
         ) : null}
-        {actions ? <div className="mt-1 flex flex-wrap gap-2">{actions}</div> : null}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
 import { actionOf } from '@/web/lib/actions.ts';
 import { cn } from '@/web/lib/cn.ts';
+import { entityLabel } from '@/web/lib/entity-label.ts';
 import {
   Button,
   Card,
@@ -21,7 +22,7 @@ import { targetRef } from '../audit/labels.ts';
 import { usePlatformAuditLog, useTenantAuditLog } from '../audit/queries.ts';
 import { useOrgNames } from '../orgs/queries.ts';
 
-/** Six one-line rows without sign-ins; each opens its target, or the entry when it has none. */
+/** Six rows without sign-ins; each opens its target, or the entry when it has none. */
 export function RecentActivity({ orgId }: { orgId: string | undefined }) {
   // Refetch on every visit: what just happened is the point of this card.
   const log = usePlatformAuditLog({ filterOrgId: orgId, excludeAction: 'auth.' }, 6, 0);
@@ -31,22 +32,15 @@ export function RecentActivity({ orgId }: { orgId: string | undefined }) {
       log={log}
       orgLabel={orgName}
       auditSearch={{ filterOrgId: orgId }}
-      note={`Administrative activity · ${orgId ? 'selected organization · ' : ''}not filtered by mode`}
+      note="All modes"
     />
   );
 }
 
 /** A member's view: their organization's log, which needs `audit:read`. */
-export function OrgRecentActivity({ orgId, orgName }: { orgId: string; orgName: string }) {
+export function OrgRecentActivity({ orgId }: { orgId: string; orgName?: string }) {
   const log = useTenantAuditLog(orgId, { excludeAction: 'auth.' }, 6, 0);
-  return (
-    <RecentCard
-      log={log}
-      orgLabel={() => orgName}
-      auditSearch={{}}
-      note="Administrative activity · not filtered by mode"
-    />
-  );
+  return <RecentCard log={log} orgLabel={() => ''} auditSearch={{}} note="All modes" />;
 }
 
 function RecentCard({
@@ -93,9 +87,8 @@ function RecentCard({
             {items.slice(0, 6).map((e) => {
               const action = actionOf(e.action);
               const target = targetRef(e);
-              const actor =
-                e.actorLabel ??
-                e.actorId ??
+              const actor = entityLabel(
+                e.actorLabel,
                 {
                   user: 'User',
                   api_key: 'API key',
@@ -103,7 +96,8 @@ function RecentCard({
                   connection: 'Connection',
                   device: 'Device',
                   scanner: 'Scanner',
-                }[e.actorType];
+                }[e.actorType] ?? 'Someone',
+              );
               const link = target?.to
                 ? { to: target.to }
                 : { to: '/admin/audit', search: { entry: e.id, ...auditSearch } };
@@ -116,15 +110,12 @@ function RecentCard({
                     <RowLink
                       to={link.to}
                       search={link.search}
-                      className="after:absolute after:inset-0"
+                      className="whitespace-normal after:absolute after:inset-0"
                     >
                       {action.label}
-                      {target ? (
-                        <span className="ml-2 font-normal text-fg-muted">{target.name}</span>
-                      ) : null}
                     </RowLink>
                   }
-                  meta={`${actor} · ${orgName(e.orgId)}`}
+                  meta={[target?.name, actor, orgName(e.orgId)].filter(Boolean).join(' · ')}
                   trailing={
                     <span className="text-xs whitespace-nowrap text-fg-muted">
                       <RelTime at={e.at} now={now} />

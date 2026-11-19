@@ -38,6 +38,8 @@ import {
 } from '../../../shared/contracts/scan-session.ts';
 import {
   type ScanDeviceCapabilities,
+  ScanSessionOpenedSchema,
+  type ScanSessionOpenNowSchema,
   ScanWorkspaceSchema,
   SessionActivitySchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
@@ -50,39 +52,11 @@ import {
   MarkOutResultSchema,
 } from '../inside/inside-types.ts';
 import { ScanApiError } from './errors.ts';
+import { problemOf } from './problem.ts';
 
 export { ScanApiError } from './errors.ts';
 
 const BASE = '/api/v1/scan';
-
-interface Problem {
-  code: string;
-  title?: string;
-  detail?: string;
-  requestId?: string;
-  fields?: Record<string, string>;
-}
-
-/** Reads a problem+json body leniently: a proxy or an older server may leave fields out. */
-function problemOf(data: unknown): Problem | null {
-  if (typeof data !== 'object' || data === null) return null;
-  const o = data as Record<string, unknown>;
-  if (typeof o.code !== 'string') return null;
-  const str = (v: unknown) => (typeof v === 'string' ? v : undefined);
-  const fields: Record<string, string> = {};
-  if (Array.isArray(o.issues))
-    for (const issue of o.issues as unknown[]) {
-      const i = issue as { path?: unknown; message?: unknown } | null;
-      if (typeof i?.path === 'string' && typeof i.message === 'string') fields[i.path] = i.message;
-    }
-  return {
-    code: o.code,
-    title: str(o.title),
-    detail: str(o.detail),
-    requestId: str(o.requestId),
-    fields,
-  };
-}
 
 export interface ScanApiDeps {
   fetch?: typeof fetch;
@@ -206,6 +180,8 @@ export function createScanApi(deps: ScanApiDeps) {
       }
       // The signed-in staff member changed (role, PIN or access): drop the sign-in so the PIN prompt shows.
       else if (code === 'SCAN_STAFF_CHANGED') await dropStaffSignIn();
+      // The hours closed the session under this request: reload it, so the Closed screen shows.
+      else if (code === 'SCANNING_SESSION_CLOSED') void deps.refreshConfig?.();
     }
     const { res, data } = attempt;
     if (!res.ok) {
@@ -322,6 +298,8 @@ export function createScanApi(deps: ScanApiDeps) {
       ),
     tagDecline: (id: string, call?: Call) =>
       request('POST', `/tag-enrollments/${encodeURIComponent(id)}/decline`, null, {}, call),
+    openNow: (body: z.infer<typeof ScanSessionOpenNowSchema>, call?: Call) =>
+      request('POST', '/session/open-now', ScanSessionOpenedSchema, body, call),
     markOut: (body: MarkOutRequest, call?: Call) =>
       request('POST', '/mark-out', MarkOutResultSchema, body, call),
   };

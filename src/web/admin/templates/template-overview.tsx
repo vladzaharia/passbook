@@ -16,6 +16,7 @@ import {
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
+import { issueWords } from '@/shared/copy/issues.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
   Button,
@@ -150,7 +151,7 @@ export function TemplateOverview({
         <Callout
           tone="warning"
           title={`${warnings.length} ${warnings.length === 1 ? 'warning' : 'warnings'} in the active version`}
-          items={warnings.map((w) => w.message)}
+          items={warnings.map(issueWords)}
         />
       ) : null}
       {canAssign ? (

@@ -73,7 +73,7 @@ describe('RowLink, CountLink, MetaLink', () => {
     expect(many.className).toContain('text-accent-fg');
     const one = screen.getByRole('link', { name: '1 pass' });
     expect(one.querySelector('svg')).not.toBeNull();
-    expect(screen.getByTestId('zero')).toHaveTextContent('None');
+    expect(screen.getByTestId('zero')).toHaveTextContent(/^0$/);
     expect(screen.getAllByRole('link')).toHaveLength(2);
   });
 

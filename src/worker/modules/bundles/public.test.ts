@@ -131,7 +131,7 @@ describe('GET /b/:token', () => {
     for (const p of [voided, removed]) {
       const res = await get(`/b/${token}/${p?.id}/barcode`);
       expect(res.status).toBe(404);
-      expect(await res.text()).not.toContain('<svg');
+      expect(await res.text()).not.toContain('presentation-code');
     }
     expect((await get(`/b/${token}/${live?.id}/barcode`)).status).toBe(200);
     const rotate = await app.request(

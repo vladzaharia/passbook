@@ -45,7 +45,13 @@ export interface Ctx {
   fieldKeys: Set<string> | null;
   actions: ScanAction[];
   changed: Set<string>;
-  push: (severity: 'error' | 'warning', code: string, path: string, message: string) => void;
+  push: (
+    severity: 'error' | 'warning',
+    code: string,
+    path: string,
+    message: string,
+    params?: Record<string, string>,
+  ) => void;
 }
 
 export const issueOf = (
@@ -53,11 +59,13 @@ export const issueOf = (
   code: string,
   path: string,
   message: string,
+  params?: Record<string, string>,
 ): ValidationIssue => ({
   severity,
   code: `SCAN_DISPLAY_${code}`,
   message,
   path: `scan.display.${path}`,
+  ...(params ? { params } : {}),
 });
 
 const HOLDER_PARTS = new Set(['name', 'firstName', 'initials']);
@@ -72,7 +80,10 @@ export function checkPath(ctx: Ctx, path: string, at: string): string | null {
     if (first && SECRET_PASS_KEYS.has(first))
       ctx.push('error', 'SECRET', at, `pass.${first} is never shown on scanners.`);
     else if (first && !PASS_KEYS.some((k) => k.key === first))
-      ctx.push('warning', 'PATH', at, `Unknown pass value "${first}".`);
+      ctx.push('warning', 'PATH', at, `Unknown pass value "${first}".`, {
+        kind: 'pass value',
+        name: first,
+      });
     return null;
   }
   if (root === 'inputs') {
@@ -81,18 +92,22 @@ export function checkPath(ctx: Ctx, path: string, at: string): string | null {
       ctx.push('error', 'SECRET', at, `${first} is never shown on scanners.`);
       return null;
     }
-    if (!(first in ctx.inputs)) ctx.push('warning', 'PATH', at, `Unknown input "${first}".`);
+    if (!(first in ctx.inputs))
+      ctx.push('warning', 'PATH', at, `Unknown input "${first}".`, { kind: 'input', name: first });
     return first;
   }
   if (root === 'fields' && first) {
     if (ctx.hiddenFields.has(first))
       ctx.push('error', 'SECRET', at, `Field "${first}" is never shown on scanners.`);
     else if (ctx.fieldKeys && !ctx.fieldKeys.has(first))
-      ctx.push('warning', 'PATH', at, `Unknown field "${first}".`);
+      ctx.push('warning', 'PATH', at, `Unknown field "${first}".`, { kind: 'field', name: first });
   } else if (root === 'holder' && first && !HOLDER_PARTS.has(first)) {
-    ctx.push('warning', 'PATH', at, `Unknown holder value "${first}".`);
+    ctx.push('warning', 'PATH', at, `Unknown holder value "${first}".`, {
+      kind: 'holder value',
+      name: first,
+    });
   } else if (root === 'lookups' && first && !(first in (ctx.manifest.lookups ?? {}))) {
-    ctx.push('warning', 'PATH', at, `Unknown lookup "${first}".`);
+    ctx.push('warning', 'PATH', at, `Unknown lookup "${first}".`, { kind: 'lookup', name: first });
   }
   if (root === 'history' && first === 'ledger' && rest[1]) {
     const input = rest[1];

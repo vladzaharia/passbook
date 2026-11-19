@@ -18,6 +18,7 @@ import { useScanEvents } from '../scanner-api.ts';
 import type { SessionDraft as ScannerDraft } from './draft.ts';
 import { SessionAccessFields } from './session-access-fields.tsx';
 import { SessionCustomerFields } from './session-customer-fields.tsx';
+import { SessionHoursFields } from './session-hours-fields.tsx';
 
 function SessionScope({
   draft,
@@ -54,6 +55,7 @@ function SessionScope({
           />
         )}
       </FormField>
+      <SessionHoursFields draft={draft} set={set} />
       <SegmentedControl
         label="Accepted passes"
         value={draft.accepts}

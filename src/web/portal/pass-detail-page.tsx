@@ -3,14 +3,15 @@ import { useMemo, useState } from 'react';
 import type { MyPassListSchema } from '@/shared/contracts/me.ts';
 import { endedOn } from '@/shared/ended-on.ts';
 import type { PassView } from '@/shared/pass-view/index.ts';
+import { useSession } from '../lib/session.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
-import { Buddy, detailError, PassSideToggle, Skeleton } from '../ui/index.ts';
+import { Buddy, detailError, Skeleton } from '../ui/index.ts';
 import { myPassesKey, myPassQuery } from './api.ts';
 import { browserDevice } from './device.ts';
 import { HolderPassView } from './holder-pass-view.tsx';
 import { PassDetails } from './pass-details.tsx';
 import { PassHeader } from './pass-header.tsx';
-import { type HolderState, holderState, type MyPass, passName, toView } from './pass-view.ts';
+import { type HolderState, holderPassName, holderState, type MyPass, toView } from './pass-view.ts';
 import { isPendingRefresh } from './refresh.ts';
 import { TagsCard } from './tags-card.tsx';
 import { publicUrlOf } from './wallet-actions.tsx';
@@ -35,17 +36,16 @@ function Detail({
   state: HolderState;
   dealt: boolean;
 }) {
-  const [face, setFace] = useState<'front' | 'back'>('front');
   const [dip, setDip] = useState(0);
   const [device] = useState(browserDevice);
+  const { authed } = useSession();
+  const title = holderPassName(pass, authed?.user);
   const stale = state === 'voided' || state === 'removed';
   return (
     <HolderPassView
       pass={
         <PassCardStage
           view={view}
-          face={face}
-          flippable
           enter={dealt}
           dim={state !== 'active'}
           removed={state === 'removed'}
@@ -56,8 +56,7 @@ function Detail({
           transitionName={`pass-${pass.id}`}
         />
       }
-      toggle={<PassSideToggle value={face} onChange={setFace} />}
-      passTitle={passName(pass)}
+      passTitle={title}
       orgName={pass.orgName}
       state={state}
       removalMessage={pass.removalMessage}
@@ -66,7 +65,8 @@ function Detail({
       walletOffers={pass.presentationEligible === true ? pass.walletOffers : []}
       issuance={pass.walletIssuance}
       barcodeHref={
-        pass.presentationEligible === true
+        // On the phone that adds, the badge leads and the card carries the code.
+        pass.presentationEligible === true && device.device !== 'iphone'
           ? `/api/v1/me/passes/${encodeURIComponent(pass.id)}/barcode`
           : undefined
       }
@@ -95,6 +95,7 @@ function Detail({
             passJson={pass.passJson}
             view={view}
             active={state === 'active'}
+            title={title}
             locale={navigator.language}
             now={new Date()}
             timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}

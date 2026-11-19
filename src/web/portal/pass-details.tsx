@@ -13,6 +13,7 @@ export function PassDetails({
   passJson,
   view,
   active,
+  title,
   locale,
   now,
   timeZone,
@@ -20,6 +21,8 @@ export function PassDetails({
   passJson: Record<string, unknown>;
   view: PassView;
   active: boolean;
+  /** What the card already calls the pass: a field with that value is not repeated. */
+  title?: string;
   locale: string;
   /** The caller's clock: the server's request clock, the portal's own. */
   now: Date;
@@ -28,7 +31,7 @@ export function PassDetails({
 }) {
   // The badge says the state; a pass field also labelled Status would say it twice.
   const rows = fieldRows(passJson, { locale, now, ...(timeZone ? { timeZone } : {}) }).filter(
-    (r) => !(active && r.label.toLowerCase() === 'status'),
+    (r) => !(active && r.label.toLowerCase() === 'status') && r.value !== title,
   );
   return (
     <Card>

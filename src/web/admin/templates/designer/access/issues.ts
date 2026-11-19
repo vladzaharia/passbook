@@ -1,7 +1,7 @@
 import { accessIssues } from '@/passkit/template/access/validate.ts';
 import type { AccessPlan, TemplateManifest, ValidationIssue } from '@/passkit/types.ts';
+import { DAY_NAME, DAYS, weekProblems } from '../../../../ui/week-grid/hours.ts';
 import type { DesignDoc } from '../model.ts';
-import { DAY_NAME, DAYS, weekProblems } from './hours.ts';
 import { readAccess } from './model.ts';
 
 const PLAN_PATH = /^scan\.access\.plans\[(\d+)\]/;

@@ -1261,12 +1261,8 @@ describe('template upload', () => {
         '/api/v1/templates/tpl1': () => json(templateDetail({ orgId: null, orgName: null })),
       },
     });
-    expect(
-      await screen.findByText(/Organization: All organizations \(shared\)/),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Template changes are not isolated by the Test view/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Uploads create inactive versions/)).toBeInTheDocument();
+    expect(screen.getByText(/The Test view does not isolate template changes/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Upload version' })).toBeDisabled();
   });
 

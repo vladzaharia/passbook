@@ -192,13 +192,12 @@ function ScopedApiKeys({
   const columns = useMemo(
     () =>
       keyColumns({
-        orgName: (id) => (id === null ? 'Platform-wide' : id === orgId ? orgName : id),
         justRevoked,
         now,
         canRevoke: canManage,
         onRevoke: setRevoking,
       }),
-    [orgId, orgName, justRevoked, now, canManage],
+    [justRevoked, now, canManage],
   );
 
   const create = (variant: 'primary' | 'outline') =>

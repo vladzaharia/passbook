@@ -120,7 +120,7 @@ describe('pass email', () => {
     const { width, height } = EMAIL_BADGE;
     // The art alone: no white cell or padding around it.
     expect(html).toContain(
-      `margin:0 12px 12px 0"><!--<![endif]--><a href="https://w.test/p/t/pass.pkpass" style="display:block;text-decoration:none"><img src="https://w.test/apple/badge/en/black@2x.png" alt="Add to Apple Wallet" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`,
+      `<td style="padding:0 0 12px"><a href="https://w.test/p/t/pass.pkpass" style="display:block;text-decoration:none"><img src="https://w.test/apple/badge/en/black@2x.png" alt="Add to Apple Wallet" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`,
     );
     // 42 px inside a 1 px outline: the badge's 44, at lg, the radius nearest its corner.
     expect(html).toContain(
@@ -274,20 +274,13 @@ describe('pass email', () => {
     }
   });
 
-  it('wraps the pair without media queries, side by side or stacked, and in a row in Outlook', () => {
+  it('stacks the badge above its button, with no media queries', () => {
     const { html } = render();
-    const { width } = EMAIL_BADGE;
-    const items = html.match(/<div style="display:inline-block;vertical-align:top;[^"]*">/g) ?? [];
-    expect(items).toEqual([
-      `<div style="display:inline-block;vertical-align:top;width:${width}px;margin:0 12px 12px 0">`,
-      `<div style="display:inline-block;vertical-align:top;width:${width}px;margin:0 0 12px 0">`,
-    ]);
-    // Word has no inline blocks and drops div margins: the blocks are hidden from it, and it gets
-    // two badge-wide cells with a 12 px one between.
-    expect(html.match(/<!--\[if !mso\]><!--><div style="display:inline-block/g)).toHaveLength(2);
-    expect(html).toContain(
-      `<!--[if mso]></td><td width="12" style="width:12px;font-size:0;line-height:0">&nbsp;</td><td width="${width}" valign="top" style="width:${width}px;padding:0 0 12px"><![endif]-->`,
-    );
+    const badge = html.indexOf(ADD_BADGE_ALT);
+    const open = html.indexOf('>Open your pass</a>');
+    expect(badge).toBeGreaterThan(-1);
+    expect(open).toBeGreaterThan(badge);
+    expect(html).not.toMatch(/<div style="display:inline-block;vertical-align:top/);
     expect(html).not.toMatch(/@media[^{]*(max|min)-width/);
   });
 
@@ -398,7 +391,7 @@ describe('pass email', () => {
 
   it('keeps the plain-text part word for word', () => {
     expect(render().text).toBe(
-      'Your pass is ready\n\nHarbor Lights 2026\nVenue: Pier 62\nDate: Nov 16, 2026\nSeat: Row A, seat 4\n\nAdd to Apple Wallet: https://w.test/p/t/pass.pkpass\nOpen your pass: https://w.test/p/t\nOpen this email on your phone to add the pass to your wallet.\nApple Wallet is the app on your iPhone that keeps cards and tickets.\n\nKeep this email private. Its links open your pass.',
+      'Your pass is ready\n\nHarbor Lights 2026\nVenue: Pier 62\nDate: Nov 16, 2026\nSeat: Row A, seat 4\n\nAdd to Apple Wallet: https://w.test/p/t/pass.pkpass\nOpen your pass: https://w.test/p/t\nOpen this email on your phone to add the pass to your wallet.\n\nKeep this email private. Its links open your pass.',
     );
   });
 
@@ -511,7 +504,7 @@ describe('From name keeps the platform attribution', () => {
 });
 
 describe('pass email accessibility and help', () => {
-  const { html, text } = render();
+  const { html } = render();
 
   it('sizes body text in rem after a px fallback, with unitless line heights', () => {
     const sizes = [...html.matchAll(/font-size:(\d+(?:\.\d+)?)(px|rem)/g)];
@@ -520,12 +513,6 @@ describe('pass email accessibility and help', () => {
     expect(body).toMatch(/font-size:14px;font-size:0\.875rem;line-height:1\.43/);
     expect(sizes.some((m) => m[2] === 'rem')).toBe(true);
     expect(html).toContain('-webkit-text-size-adjust:100%');
-  });
-
-  it('says what Apple Wallet is once, in the page and the text part', () => {
-    const line = 'Apple Wallet is the app on your iPhone that keeps cards and tickets.';
-    expect(html.split(line)).toHaveLength(2);
-    expect(text.split(line)).toHaveLength(2);
   });
 
   it('keeps the muted text at 4.5:1 on the card', () => {

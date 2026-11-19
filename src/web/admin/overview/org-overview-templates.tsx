@@ -4,7 +4,6 @@ import type { OrgActivity, TemplateActivity } from '@/shared/contracts/metrics.t
 import { formatCount } from '@/web/lib/format.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { Card, CardHeader, DataTable } from '@/web/ui/index.ts';
-import { RANGE_LABEL } from './kpis.tsx';
 import type { Range } from './range.ts';
 
 /** In a wallet against not added, as shares of the passes that are live now. */
@@ -40,11 +39,10 @@ const num =
 /** One row per template: the wallet bar, then the counts for the range. */
 export function TemplateBreakdown({
   data,
-  range,
   canOpen,
 }: {
   data: OrgActivity;
-  range: Range;
+  range?: Range;
   /** The pass list is open to this member. */
   canOpen: boolean;
 }) {
@@ -80,14 +78,14 @@ export function TemplateBreakdown({
       {
         header: 'Removed',
         id: 'removed',
-        meta: { numeric: true, hideBelow: 'lg' },
+        meta: { numeric: true, hideBelow: 'md' },
         cell: num('removed'),
       },
       { header: 'Scans', id: 'scans', meta: { numeric: true }, cell: num('scans') },
       {
         header: 'Redemptions',
         id: 'redemptions',
-        meta: { numeric: true, hideBelow: 'lg' },
+        meta: { numeric: true, hideBelow: 'md' },
         cell: num('redemptions'),
       },
     ],
@@ -95,10 +93,7 @@ export function TemplateBreakdown({
   );
   return (
     <Card>
-      <CardHeader
-        title="By template"
-        actions={<span className="px-2 text-xs text-fg-muted">{RANGE_LABEL[range]}</span>}
-      />
+      <CardHeader title="By template" />
       <DataTable
         bare
         caption="Passes by template"

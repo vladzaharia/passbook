@@ -3,7 +3,7 @@ import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { assets, fixtures } from '../../shared/pass-view/fixtures/index.ts';
 import { normalize } from '../../shared/pass-view/index.ts';
 import { REPLAY_SCRIPT } from './hosted.ts';
-import { type PassPageProps, renderPassPage } from './pass-page.tsx';
+import { type PassPageProps, renderNotFoundPage, renderPassPage } from './pass-page.tsx';
 
 const view = (over: Record<string, unknown> = {}) =>
   normalize(
@@ -126,6 +126,14 @@ describe('/p renders the portal HolderPassView', () => {
     expect(b.indexOf(HOLDER_COPY.otherWays)).toBeLessThan(b.indexOf(HOLDER_COPY.browserTitle));
   });
 
+  it('leads with the badge on a phone and shows the QR only off the phone', () => {
+    const phone = body(page({ device: { device: 'iphone', inApp: false } }));
+    expect(phone).not.toContain(HOLDER_COPY.scanLine);
+    expect(phone).toContain('data-awb');
+    const desktop = body(page({ device: { device: 'other', inApp: false } }));
+    expect(desktop).toContain(HOLDER_COPY.scanLine);
+  });
+
   it('drops a native wallet whose issuance is disabled', () => {
     const google = {
       provider: 'google',
@@ -208,5 +216,18 @@ describe('/p renders the portal HolderPassView', () => {
       );
     }
     expect(HOLDER_COPY.previewActive).not.toMatch(/Apple/);
+  });
+});
+
+describe('dead links', () => {
+  it('names the pass or the bundle and never claims an expiry', () => {
+    const pass = renderNotFoundPage('n');
+    const bundle = renderNotFoundPage('n', undefined, { what: 'bundle' });
+    expect(pass).toContain('<h1>This pass link does not work</h1>');
+    expect(bundle).toContain('<h1>This bundle link does not work</h1>');
+    for (const html of [pass, bundle])
+      expect(html.slice(html.indexOf('<body')).replace(/<[^>]*>/g, ' ')).not.toMatch(
+        /expired|rotated|existed/i,
+      );
   });
 });

@@ -87,7 +87,7 @@ export async function checkQueue(ctx: ServiceContext): Promise<Draft> {
     }
     if (dlqDepth !== null && dlqDepth > 0) {
       state = worst([state, dlqDepth >= 100 ? 'failing' : 'degraded']);
-      notes.push(`${dlqDepth} dead-lettered.`);
+      notes.push(`${dlqDepth} failed.`);
     }
     if (dlqDepth === null) notes.push('Dead-letter depth unavailable.');
     return {

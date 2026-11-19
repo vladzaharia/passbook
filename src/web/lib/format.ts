@@ -109,6 +109,20 @@ export function formatRelative(ms: number, now: number): string {
   return RELATIVE.format(0, 'minute');
 }
 
+/** "Active now", "Today 3:05 PM", "Yesterday", "Nov 15": one short line for a last-seen time. */
+export function formatLastActive(ms: number, now: number): string {
+  if (now - ms < 5 * 60_000) return 'Active now';
+  const days = Math.round((startOfDay(now) - startOfDay(ms)) / 86_400_000);
+  if (days <= 0) return `Today ${formatTime(ms)}`;
+  if (days === 1) return 'Yesterday';
+  return `Active ${formatShortDate(ms)}`;
+}
+
+const startOfDay = (ms: number): number => {
+  const d = new Date(ms);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+};
+
 /** Whole days until `ms`; negative when past. */
 export function daysUntil(ms: number, now: number): number {
   return Math.floor((ms - now) / 86_400_000);
