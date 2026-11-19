@@ -1,5 +1,5 @@
 import { Lock } from 'lucide-react';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
 import { SIGN_IN_FOOTER, SIGN_IN_SENT } from '@/shared/copy/sign-in.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
 import { Callout, Skeleton } from '../ui/index.ts';
@@ -7,6 +7,7 @@ import { CodeFace } from './login-code-face.tsx';
 import { EmailFace } from './login-email-face.tsx';
 import type { SceneActions } from './login-scene.tsx';
 import { Turnstile } from './turnstile.tsx';
+import { useFaceHeight } from './use-face-height.ts';
 import { useMagicRequest } from './use-magic-request.ts';
 import './login-card.css';
 
@@ -14,18 +15,21 @@ import './login-card.css';
 function Face({
   side,
   hidden,
+  faceRef,
   title,
   lede,
   children,
 }: {
   side: 'email' | 'code';
   hidden: boolean;
+  faceRef: RefObject<HTMLElement | null>;
   title: string;
   lede?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <section
+      ref={faceRef}
       className="wl-login-face wl-foil-edge flex flex-col overflow-hidden rounded-xl border border-border bg-surface-raised shadow-elevation-1"
       data-side={side}
       inert={hidden}
@@ -77,8 +81,8 @@ export interface LoginCardProps {
 }
 
 /**
- * The hosted sign-in card. Two faces share one grid cell, so the card keeps one height; sending
- * the link posts the top card and flips this one (640 ms spring) to the code face, the far face
+ * The hosted sign-in card. The flipper is sized to the active face (the far face is out of
+ * flow) and its height eases with the turn; sending the link posts the top card and flips this one (640 ms spring) to the code face, the far face
  * inert. Under reduced motion the faces crossfade.
  */
 export function LoginCard({ next, notice, methods, front, scene }: LoginCardProps) {
@@ -90,6 +94,7 @@ export function LoginCard({ next, notice, methods, front, scene }: LoginCardProp
   const codeRef = useRef<HTMLInputElement>(null);
   const face = sent ? 'code' : 'email';
   const lastFace = useRef(face);
+  const sizing = useFaceHeight(face);
 
   // Focus follows the flip: the code field once the card faces front (the spring is face-on by
   // then; the 120 ms wait is in login-card.css), the email field on return.
@@ -107,9 +112,15 @@ export function LoginCard({ next, notice, methods, front, scene }: LoginCardProp
 
   return (
     <div className="wl-login-card">
-      <div className="wl-login-flipper" data-face={face}>
+      <div
+        className="wl-login-flipper"
+        data-face={face}
+        data-turning={sizing.turning || undefined}
+        style={sizing.height ? { height: sizing.height } : undefined}
+      >
         <Face
           side="email"
+          faceRef={sizing.email}
           hidden={face !== 'email'}
           title="Sign in"
           lede={
@@ -139,6 +150,7 @@ export function LoginCard({ next, notice, methods, front, scene }: LoginCardProp
         </Face>
         <Face
           side="code"
+          faceRef={sizing.code}
           hidden={face !== 'code'}
           title="Enter the code"
           lede={
