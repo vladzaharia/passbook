@@ -123,11 +123,13 @@ describe('channel apply: review fixes', () => {
     const a = await idOf(t.saved({ apple: 'off' }));
     t.kit.clock.advance(10 * 60_000);
     await startOne(ctx, a);
-    await t.saved({ apple: 'on' });
-    t.created.length = 0;
+    const b = await idOf(t.saved({ apple: 'on' }));
+    const mine = () => t.created.filter((c) => c.id.startsWith(b)).length;
+    const before = mine();
     t.kit.clock.advance(20 * 60_000);
     await sweepChannelApply(ctx);
-    expect(t.created).toHaveLength(0);
+    // Only the run ahead may be looked after; the one queued behind it keeps its instance.
+    expect(mine()).toBe(before);
   });
 
   it('replays a journal that crashed between the ledger and the mark without repeating events', async () => {

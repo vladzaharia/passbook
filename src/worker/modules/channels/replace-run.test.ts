@@ -429,3 +429,39 @@ describe('a run longer than one instance', () => {
     expect(Number((await t.runOf(id))?.updated_at)).toBe(t.kit.clock.now());
   });
 });
+
+describe('window gate rounds', () => {
+  it('count per window, not per instance: two short windows pass a cap that one long one would not', async () => {
+    const t = await replaceKit(Array.from({ length: 7 }, () => ['apple' as const]));
+    const id = await replaceSave(t, { apple: 'off' });
+    const s = t.kit.clock.now();
+    await makeScanEvent(t.kit.fx, {
+      orgId: t.orgId,
+      templateIds: [t.templateId],
+      opensAt: s + 5 * MINUTE,
+      closesAt: s + 17 * MINUTE,
+    });
+    // Opens just after the first page (the page rests one second).
+    await makeScanEvent(t.kit.fx, {
+      orgId: t.orgId,
+      templateIds: [t.templateId],
+      opensAt: s + 17 * MINUTE + 500,
+      closesAt: s + 25 * MINUTE,
+    });
+    const w = t.work(id, { maxGateRounds: 2 });
+    expect(await w.done).toEqual({ state: 'done' });
+    expect(w.s.names.filter((n) => n.startsWith('window-'))).toHaveLength(4);
+    // One window as long as both would need three rounds: over the cap, it fails the run.
+    const long = await replaceKit([['apple']]);
+    const lid = await replaceSave(long, { apple: 'off' });
+    const l = long.kit.clock.now();
+    await makeScanEvent(long.kit.fx, {
+      orgId: long.orgId,
+      templateIds: [long.templateId],
+      opensAt: l + 5 * MINUTE,
+      closesAt: l + 30 * MINUTE,
+    });
+    expect(await long.work(lid, { maxGateRounds: 2 }).done).toEqual({ state: 'failed' });
+    expect(await long.runOf(lid)).toMatchObject({ error_code: 'CHANNEL_REPLACE_WINDOW_TIMEOUT' });
+  });
+});

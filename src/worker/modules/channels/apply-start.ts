@@ -1,8 +1,8 @@
 import { jobGrant } from '../../platform/authority.ts';
 import { inList, lt } from '../../platform/authority-expr.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { failRun } from './apply-run.ts';
-import { stalledPending } from './repo-runs.ts';
+import { failRun, STALLED_AFTER_MS as RUN_IDLE_MS } from './apply-run.ts';
+import { idleRunning, stalledPending } from './repo-runs.ts';
 
 /** A pending run this long past its start time has no workflow behind it. */
 const STALLED_AFTER_MS = 2 * 60_000;
@@ -20,9 +20,10 @@ export async function startApplyInstance(
   ctx: ServiceContext,
   runId: string,
   instanceId = runId,
+  params: { runId: string; cont?: number } = { runId },
 ): Promise<void> {
   try {
-    await ctx.env.CHANNEL_APPLY.create({ id: instanceId, params: { runId } });
+    await ctx.env.CHANNEL_APPLY.create({ id: instanceId, params });
   } catch (error) {
     if (/already.?exist/i.test(error instanceof Error ? error.message : String(error))) {
       ctx.log.info('channels.apply.exists', { runId });
@@ -31,6 +32,21 @@ export async function startApplyInstance(
     // The sweep starts it within a minute.
     ctx.log.error('channels.apply.create_failed', { runId, code: 'CHANNEL_APPLY_CREATE', error });
   }
+}
+
+/** The instance's raw status, or missing. */
+async function instanceStatus(
+  ctx: ServiceContext,
+  instanceId: string,
+): Promise<'missing' | 'live' | 'complete' | 'errored'> {
+  let status: string;
+  try {
+    status = (await (await ctx.env.CHANNEL_APPLY.get(instanceId)).status()).status;
+  } catch {
+    return 'missing';
+  }
+  if (status === 'complete') return 'complete';
+  return DEAD.has(status) ? 'errored' : 'live';
 }
 
 /** Whether the instance is absent, alive (queued, waiting, running) or ended. */
@@ -64,10 +80,39 @@ async function ensureInstance(ctx: ServiceContext, runId: string): Promise<void>
   await failRun(ctx, runId, RUN_LOST);
 }
 
+const MAX_CHAIN = 500;
+
+/**
+ * A running run that went idle needs a live instance too. The instances of a run form a chain: the
+ * first, then `-c1`, `-c2` ... (each hand-off or replacement). The last one decides: alive, nothing to
+ * do; ended (or errored) without finishing the run, the next one resumes from the stored cursor. Three
+ * failed instances in a row fail the run as lost; one that handed off (complete) is not a failure.
+ */
+async function ensureRunning(ctx: ServiceContext, runId: string): Promise<void> {
+  const chain: ('live' | 'complete' | 'failed')[] = [];
+  for (let n = 0; n < MAX_CHAIN; n++) {
+    const id = n === 0 ? runId : `${runId}-c${n}`;
+    const status = await instanceStatus(ctx, id);
+    if (status === 'missing') break;
+    chain.push(status === 'live' ? 'live' : status === 'complete' ? 'complete' : 'failed');
+  }
+  if (chain.at(-1) === 'live') return;
+  let failures = chain.at(-1) === 'complete' ? 1 : 0;
+  for (let i = chain.length - 1; i >= 0 && chain[i] === 'failed'; i--) failures++;
+  if (failures >= MAX_RECREATE) {
+    await failRun(ctx, runId, RUN_LOST);
+    return;
+  }
+  const next = Math.max(1, chain.length);
+  await startApplyInstance(ctx, runId, `${runId}-c${next}`, { runId, cont: next });
+}
+
 /** Cron: gives each stalled pending run (one not waiting behind a running run) a live instance. */
 export async function sweepChannelApply(ctx: ServiceContext): Promise<void> {
   const ids = await stalledPending(ctx.env.DB, ctx.clock.now() - STALLED_AFTER_MS, SWEEP_LIMIT);
   for (const id of ids) await ensureInstance(ctx, id);
+  for (const id of await idleRunning(ctx.env.DB, ctx.clock.now() - RUN_IDLE_MS, SWEEP_LIMIT))
+    await ensureRunning(ctx, id);
 }
 
 /** Runs that ended this long ago are deleted, with their marks. */

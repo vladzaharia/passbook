@@ -189,3 +189,17 @@ export async function priorRun(db: D1Database, run: ApplyRun): Promise<ApplyRun 
   );
   return r ? map(r) : null;
 }
+
+/** Running runs that wrote nothing since `before`: their instance may be gone. */
+export async function idleRunning(
+  db: D1Database,
+  before: number,
+  limit: number,
+): Promise<string[]> {
+  const rows = await all<{ id: string }>(
+    db,
+    "SELECT id FROM channel_apply_runs WHERE state = 'running' AND updated_at < ? ORDER BY updated_at LIMIT ?",
+    [before, limit],
+  );
+  return rows.map((r) => r.id);
+}

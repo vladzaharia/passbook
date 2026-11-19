@@ -27,7 +27,7 @@ const MAX_DEBOUNCE = 50;
 /** Pages one instance applies before it hands the run to a continuation instance. */
 export const MAX_PAGES = 2000;
 /** Gate rounds of five minutes: a window open longer than two days fails the run. */
-const MAX_GATE_ROUNDS = 576;
+export const MAX_GATE_ROUNDS = 576;
 const PAGE_RETRY = { retries: { limit: 3, delay: '10 seconds', backoff: 'exponential' } } as const;
 
 type StepLike = Pick<WorkflowStep, 'do' | 'sleep' | 'sleepUntil'>;
@@ -41,6 +41,7 @@ export async function runChannelApply(
   exec?: ExecutionContext,
   clock?: Clock,
   maxPages = MAX_PAGES,
+  maxGateRounds = MAX_GATE_ROUNDS,
 ): Promise<{ state: string }> {
   const { runId, cont } = params;
   const ctx = createJobContext(env, 'channel-apply', {
@@ -86,8 +87,12 @@ export async function runChannelApply(
       // A window that opens mid-run pauses the pages until it closes.
       while (replacing) {
         const gate = await step.do(`gate-${n}-${gates}`, () => gateOne(ctx, runId));
-        if (gate.until === null) break;
-        if (++gates > MAX_GATE_ROUNDS) {
+        if (gate.until === null) {
+          // The window closed: the next one gets its own two days.
+          gates = 0;
+          break;
+        }
+        if (++gates > maxGateRounds) {
           await step.do('fail', () => failRun(ctx, runId, WINDOW_TIMEOUT));
           return { state: 'failed' };
         }

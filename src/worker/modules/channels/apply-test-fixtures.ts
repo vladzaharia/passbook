@@ -158,6 +158,7 @@ export async function applyKit(passCount = 3, opts: { scan?: boolean; holders?: 
       retryAt?: number;
       onSleep?: (name: string) => Promise<void>;
       maxPages?: number;
+      maxGateRounds?: number;
       cont?: number;
     } = {},
   ) => {
@@ -172,6 +173,7 @@ export async function applyKit(passCount = 3, opts: { scan?: boolean; holders?: 
         undefined,
         kit.clock,
         opts.maxPages,
+        opts.maxGateRounds,
       ),
     };
   };
