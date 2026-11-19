@@ -136,6 +136,30 @@ describe('print codes at the door', () => {
   });
 });
 
+describe('paper off at the door', () => {
+  it('refuses channel_off without voiding, and works again when paper is back on', async () => {
+    const s = await kit.scanner({ templateIds: [tpl] });
+    const pass = await printable();
+    const p = await mint(pass.id);
+    await run(
+      kit.env.DB,
+      "INSERT OR REPLACE INTO settings (scope, key, value, updated_by, updated_at) VALUES ('platform', 'print.enabled', 'false', 'test', 1)",
+    );
+    clearSettingsCache(kit.env.DB);
+    try {
+      expect(await resolve(s, p.code)).toMatchObject({ kind: 'refused', reason: 'channel_off' });
+      expect((await status(pass.id))[0]?.status).toBe('active');
+    } finally {
+      await run(
+        kit.env.DB,
+        "INSERT OR REPLACE INTO settings (scope, key, value, updated_by, updated_at) VALUES ('platform', 'print.enabled', 'true', 'test', 1)",
+      );
+      clearSettingsCache(kit.env.DB);
+    }
+    expect((await resolve(s, p.code)).kind).not.toBe('refused');
+  });
+});
+
 describe('what ends a print', () => {
   it('pass void', async () => {
     const pass = await printable();

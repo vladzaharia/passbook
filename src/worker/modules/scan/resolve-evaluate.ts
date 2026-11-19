@@ -2,7 +2,7 @@ import type { ScanCodeInput } from '../../../shared/contracts/scan.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
-import { printRefusal } from '../prints/door.ts';
+import { paperOff, printRefusal } from '../prints/door.ts';
 import { accessStop, isGuestPass, joinReads, planAccessReads } from './access.ts';
 import { planAdmission } from './admission.ts';
 import {
@@ -147,6 +147,10 @@ async function evaluateObserved(
   if (printed)
     return candidateWallet(one)
       ? stop('refused', printed.reason, { ...candidateAudit(one), at: printed.at })
+      : stop('refused', 'not_found', { stale: true });
+  if (await paperOff(ctx, one))
+    return candidateWallet(one)
+      ? stop('refused', 'channel_off', { ...candidateAudit(one), at: null })
       : stop('refused', 'not_found', { stale: true });
   const found = await foundOf(ctx, one, actor);
   if (!found) {

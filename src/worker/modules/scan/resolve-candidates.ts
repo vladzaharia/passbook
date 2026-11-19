@@ -89,17 +89,18 @@ export async function planCandidateReads(
       refs,
     );
     if (clean) {
+      const printRef = await printCodeRef(ctx.env, actor.orgId, actor.mode, clean);
       capacityInput = {
         scanCode,
         barcodeHash,
         lookupHash,
         serial: input.method === 'manual' ? clean : null,
+        printRef,
       };
       if (scanCode) stmts.push(byScanCodeStmt(db, actor.orgId, scanCode, actor.mode));
       stmts.push(byBarcodeHashStmt(db, actor.orgId, barcodeHash, actor.mode));
       stmts.push(byLookupHashStmt(db, actor.orgId, lookupHash, actor.mode));
       if (input.method === 'manual') stmts.push(bySerialStmt(db, actor.orgId, clean, actor.mode));
-      const printRef = await printCodeRef(ctx.env, actor.orgId, actor.mode, clean);
       if (printRef) stmts.push(byPrintHashStmt(db, actor.orgId, printRef, actor.mode));
     }
   }

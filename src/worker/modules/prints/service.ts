@@ -1,5 +1,5 @@
 import type { MintedPrint, PassPrint, PrintVoidCause } from '../../../shared/contracts/prints.ts';
-import { bump, read } from '../../platform/counters.ts';
+import { bump } from '../../platform/counters.ts';
 import { ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { passChannels } from '../channels/service.ts';
@@ -23,13 +23,12 @@ export interface PrintCaller {
 const codeOf = (ctx: ServiceContext, pass: Pass, print: PassPrint): Promise<string> =>
   printCodeOf(ctx.env, { id: print.id, passId: pass.id, orgId: pass.orgId, mode: pass.mode });
 
-async function checkRate(ctx: ServiceContext, pass: Pass, limit: number) {
+/** Spends one change of the hour's allowance; the increment is the check, so concurrent calls cannot overshoot. */
+async function spend(ctx: ServiceContext, pass: Pass, limit: number): Promise<void> {
   const now = ctx.clock.now();
   const window = now - (now % HOUR);
-  const key = `prints:${pass.id}`;
-  if ((await read(ctx.env.DB, key, window)) >= limit)
+  if ((await bump(ctx.env.DB, `prints:${pass.id}`, window)) > limit)
     throw new RateLimitedError(Math.ceil((window + HOUR - now) / 1000));
-  return () => bump(ctx.env.DB, key, window);
 }
 
 /**
@@ -44,11 +43,11 @@ export async function mintPrint(
 ): Promise<MintedPrint> {
   if (pass.status !== 'active' || pass.removedAt !== null)
     throw new ConflictError('Only an active pass can be printed.', 'PASS_NOT_ACTIVE');
-  const existing = await repo.activePrint(ctx.env.DB, pass.id);
-  if (existing && !replace) return { ...existing, code: await codeOf(ctx, pass, existing) };
   if (!(await passChannels(ctx, pass)).effective.paper.on)
     throw new ConflictError('Printing is off for this ticket.', 'PRINTING_OFF');
-  const done = await checkRate(ctx, pass, caller.limit);
+  const existing = await repo.activePrint(ctx.env.DB, pass.id);
+  if (existing && !replace) return { ...existing, code: await codeOf(ctx, pass, existing) };
+  await spend(ctx, pass, caller.limit);
   const id = ctx.ids.id();
   const generation = await repo.nextGeneration(ctx.env.DB, pass.id);
   const code = await printCodeOf(ctx.env, {
@@ -66,7 +65,6 @@ export async function mintPrint(
     { id, codeHash, rosterHash: await printRosterHash(code), generation },
     replace,
   );
-  await done();
   await recordPassEvents(ctx, [
     {
       orgId: pass.orgId,
@@ -96,8 +94,7 @@ export async function voidPrint(
   if (!target) throw new NotFoundError('Print not found.', 'PRINT_NOT_FOUND');
   if (target.status !== 'active')
     throw new ConflictError('This print is already voided.', 'PRINT_NOT_ACTIVE');
-  const done = await checkRate(ctx, pass, caller.limit);
+  await spend(ctx, pass, caller.limit);
   await writeVoid(ctx, caller.writer, pass.id, cause, target.id);
-  await done();
   return (await repo.printById(ctx.env.DB, pass.id, target.id)) ?? target;
 }

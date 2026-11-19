@@ -1,3 +1,42 @@
+-- A holder acts by bearer link (`link:`), holding one purpose. authority_grants is empty between batches,
+-- so it is rebuilt for its CHECKs (0097 is the base, 0106 the deny trigger).
+DROP TABLE authority_grants;
+CREATE TABLE authority_grants (
+  id TEXT PRIMARY KEY,
+  scope TEXT NOT NULL CHECK (scope IN ('org', 'org_mode', 'platform')),
+  org_id TEXT,
+  mode TEXT,
+  principal TEXT NOT NULL,
+  purpose TEXT NOT NULL,
+  target_id TEXT,
+  denied TEXT,
+  created_at INTEGER NOT NULL,
+  leak_guard TEXT NOT NULL REFERENCES authority_grant_leaks(id) DEFERRABLE INITIALLY DEFERRED,
+  CHECK ((scope = 'platform' AND org_id IS NULL AND mode IS NULL)
+      OR (scope = 'org' AND org_id IS NOT NULL AND mode IS NULL)
+      OR (scope = 'org_mode' AND org_id IS NOT NULL AND mode IN ('live', 'test'))),
+  CHECK (purpose GLOB scope || '.*'),
+  CHECK (leak_guard = id),
+  CHECK (purpose NOT GLOB '*.connection.*' OR IFNULL(mode, '') = 'live'),
+  CHECK (principal NOT GLOB 'system:*' OR purpose GLOB '*.job.*'),
+  CHECK (principal NOT GLOB 'holder:*' OR purpose IN ('org_mode.pass.holder_remove', 'org_mode.pass.holder_attach', 'org_mode.nfc.tag.holder_lost')),
+  CHECK (principal NOT GLOB 'device:*' OR purpose = 'org_mode.pass.personalize'),
+  CHECK (principal NOT GLOB 'link:*' OR purpose = 'org_mode.pass.holder_print'),
+  CHECK (principal GLOB 'holder:*' OR principal GLOB 'device:*' OR principal GLOB 'link:*'
+    OR purpose NOT IN ('org_mode.pass.holder_remove', 'org_mode.pass.holder_attach', 'org_mode.pass.personalize', 'org_mode.nfc.tag.holder_lost', 'org_mode.pass.holder_print'))
+);
+CREATE INDEX authority_grants_leak_guard ON authority_grants(leak_guard);
+CREATE TRIGGER authority_grants_deny BEFORE INSERT ON authority_grants WHEN NEW.denied IS NOT NULL
+BEGIN SELECT CASE NEW.denied
+  WHEN 'org' THEN RAISE(ABORT, 'authority_denied:org') WHEN 'actor' THEN RAISE(ABORT, 'authority_denied:actor')
+  WHEN 'staff' THEN RAISE(ABORT, 'authority_denied:staff')
+  WHEN 'config' THEN RAISE(ABORT, 'authority_denied:config') WHEN 'lineage' THEN RAISE(ABORT, 'authority_denied:lineage')
+  WHEN 'stale' THEN RAISE(ABORT, 'authority_denied:stale') WHEN 'release' THEN RAISE(ABORT, 'authority_denied:release')
+  WHEN 'retention' THEN RAISE(ABORT, 'authority_denied:retention') WHEN 'proof' THEN RAISE(ABORT, 'authority_denied:proof')
+  ELSE RAISE(ABORT, 'authority_denied:other') END; END;
+CREATE TRIGGER authority_grants_immutable BEFORE UPDATE ON authority_grants
+BEGIN SELECT RAISE(ABORT, 'authority grant is immutable'); END;
+
 -- Printed tickets (paper channel). One active print per pass; a reprint voids the earlier one. The code is
 -- never stored: print_code_hash is a keyed HMAC, roster_hash the offline roster's unkeyed 128-bit hash
 -- (the code has 128 bits of entropy, so the short hash does not reveal it).

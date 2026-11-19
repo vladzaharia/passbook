@@ -165,6 +165,11 @@ describe('prints: holder', () => {
     expect(HOLDER_PRINTS_PER_HOUR).toBe(3);
     const limited = await holder(token, '/reprint');
     expect(limited.status).toBe(429);
+    const audit = await rows(
+      "SELECT actor_type, actor_id FROM audit_log WHERE action = 'pass.print_void' AND target_id = ?",
+      pass.id,
+    );
+    expect(audit[0]).toEqual({ actor_type: 'system', actor_id: `link:${pass.id}` });
     expect((await rows('SELECT 1 FROM pass_prints WHERE pass_id = ?', pass.id)).length).toBe(2);
   });
 
@@ -186,9 +191,15 @@ describe('prints: holder', () => {
   });
 
   it('needs paper on for the pass', async () => {
-    const { kit, holder, tokenOf } = await setup();
+    const { kit, api, holder, tokenOf, withPaper } = await setup();
     const pass = await kit.datedPass({}, 'h@example.com');
     const res = await holder(await tokenOf(pass));
     expect(res.status).toBe(409);
+    // An existing print's code is not returned once paper is off either.
+    const on = await withPaper('h2@example.com');
+    const token = await tokenOf(on);
+    expect((await holder(token)).status).toBe(200);
+    await api('PUT', `/passes/${on.id}/channels`, { channels: { paper: 'off' } });
+    expect((await holder(token)).status).toBe(409);
   });
 });

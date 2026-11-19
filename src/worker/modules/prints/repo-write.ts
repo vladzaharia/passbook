@@ -48,7 +48,7 @@ export const linkWriter = (pass: {
   },
   checks: [],
   orgId: pass.orgId,
-  actor: { type: 'system', id: null },
+  actor: { type: 'system', id: `link:${pass.id}` },
   by: 'holder',
 });
 
