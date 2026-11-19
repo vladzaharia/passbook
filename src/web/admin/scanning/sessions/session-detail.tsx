@@ -206,7 +206,7 @@ export function SessionDetail({
           )}
         </section>
         {canManage ? <SessionTonight sessionId={s.id} /> : null}
-        <SessionActivity items={s.activity} />
+        <SessionActivity items={s.activity} timeZone={s.timeZone} />
       </TwoPane>
       {canManage && dialog === 'rules' ? (
         <SessionRulesDialog session={s} onClose={() => setDialog(undefined)} />

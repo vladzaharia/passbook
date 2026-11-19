@@ -24,8 +24,14 @@ describe('scan activity wording', () => {
     expect(whereText({ ...scanner })).toBe('Tablet');
     expect(whereText({ ...scanner, scannerName: null })).toBe('Scanner');
     expect(whereText(admin)).toBe('Admin scan');
-    expect(whoText({ ...scanner, staffName: 'Mara' })).toBe('Mara');
-    expect(whoText({ ...scanner, staffName: null })).toBe('Not signed in');
-    expect(whoText({ ...admin, staffName: null })).toBe('Admin');
+    expect(whoText({ ...scanner, staffName: 'Mara', staffId: 'st1' })).toBe('Mara');
+    // A withheld name says "Staff"; only a row with a scanner and no staff says nobody signed in.
+    expect(whoText({ ...scanner, staffName: null, staffId: 'st1' })).toBe('Staff');
+    expect(whoText({ ...scanner, staffName: null, staffId: null })).toBe('Not signed in');
+    expect(whoText({ ...scanner, scannerId: null, staffName: null, staffId: null })).toBe('—');
+    expect(whoText({ ...admin, staffName: null, staffId: null })).toBe('Admin');
+    expect(
+      whoText({ ...scanner, actor: { type: 'user', id: 'u' }, staffName: null, staffId: null }),
+    ).toBe('Admin');
   });
 });

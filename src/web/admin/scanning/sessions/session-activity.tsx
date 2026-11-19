@@ -3,11 +3,15 @@ import type { SessionActivitySchema } from '@/shared/contracts/scanning-sessions
 import { formatTime } from '@/web/lib/format.ts';
 import { Card, CardBody, CardHeader, StatusPill } from '@/web/ui/index.ts';
 import { scanStatusKey } from '../scans/outcome-copy.ts';
+import { zoneName } from './zone-name.ts';
 
-export function SessionActivity({ items }: z.infer<typeof SessionActivitySchema>) {
+export function SessionActivity({
+  items,
+  timeZone,
+}: z.infer<typeof SessionActivitySchema> & { timeZone?: string | undefined }) {
   return (
     <Card>
-      <CardHeader title="Recent session activity" />
+      <CardHeader title={`Recent session activity, ${zoneName(timeZone ?? null)}`} />
       <CardBody>
         {!items.length ? (
           <p className="text-sm text-fg-muted">Check-ins from every device will appear here.</p>
@@ -23,7 +27,8 @@ export function SessionActivity({ items }: z.infer<typeof SessionActivitySchema>
                     {row.title ?? 'Unknown pass'}
                   </p>
                   <p className="text-xs text-fg-muted">
-                    {row.deviceName} · {formatTime(row.at)}
+                    {row.deviceName} · {formatTime(row.at, timeZone)}
+                    {row.direction === 'out' && row.outcome === 'ok' ? ' · Check out' : ''}
                   </p>
                 </div>
                 <StatusPill status={scanStatusKey(row.outcome)} />

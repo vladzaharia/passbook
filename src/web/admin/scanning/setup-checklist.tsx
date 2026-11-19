@@ -63,9 +63,12 @@ export function SetupChecklist({ onNew }: { onNew?: () => void }) {
   const counts: SetupCounts = {
     sessions: sessions.data.pages.flatMap((p) => p.items).filter((s) => s.orgId === orgId).length,
     zones: zones.data.items.length,
-    paired: scanners.data.pages
-      .flatMap((p) => p.items)
-      .filter((s) => s.orgId === orgId && s.status === 'paired').length,
+    // Only the first pages are loaded: more pages with none paired yet still means devices exist.
+    paired:
+      scanners.data.pages
+        .flatMap((p) => p.items)
+        .filter((s) => s.orgId === orgId && s.status === 'paired').length +
+      (scanners.hasNextPage ? 1 : 0),
     staff: staff.data.items.length,
   };
   const steps = setupSteps(counts, onNew);

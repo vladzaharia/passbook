@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { ScanSummarySchema } from '@/shared/contracts/scan-session.ts';
-import { formatTime } from '@/web/lib/format.ts';
 import { installDomShims } from '@/web/lib/test-utils.tsx';
-import { SessionTonight, zoneName } from './session-tonight.tsx';
+import { hourLabel, SessionTonight } from './session-tonight.tsx';
+import { zoneName } from './zone-name.ts';
 
 installDomShims();
 afterEach(() => vi.unstubAllGlobals());
@@ -53,15 +53,21 @@ describe('SessionTonight', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('names the session zone and labels both hours of a fall-back change', () => {
+  it('names the session zone and tells the two hours of a fall-back change apart', () => {
     expect(zoneName('America/New_York')).toBe('New York time');
     expect(zoneName('UTC')).toBe('UTC');
     expect(zoneName(null)).toBe('your time');
+    expect(zoneName('Etc/GMT+5')).toBe('GMT-5 time');
     // New York ends DST on 2026-11-01: 01:00 happens at 05:00Z (EDT) and again at 06:00Z (EST).
     const first = Date.UTC(2026, 10, 1, 5);
     const second = Date.UTC(2026, 10, 1, 6);
-    expect(formatTime(first, 'America/New_York')).toBe(formatTime(second, 'America/New_York'));
-    expect(formatTime(first, 'America/New_York')).toMatch(/^1:00\s?AM$/);
+    const hours = [{ start: first }, { start: second }];
+    expect(hourLabel(first, 'America/New_York', hours)).toMatch(/^1:00\s?AM EDT$/);
+    expect(hourLabel(second, 'America/New_York', hours)).toMatch(/^1:00\s?AM EST$/);
+    // An ordinary hour stays bare.
+    expect(hourLabel(Date.UTC(2026, 10, 1, 8), 'America/New_York', [{ start: first }])).toMatch(
+      /^3:00\s?AM$/,
+    );
   });
 
   it('renders nothing below Manager', async () => {

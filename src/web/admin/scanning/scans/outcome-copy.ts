@@ -22,8 +22,8 @@ export const methodLabel = (method: string) => METHODS[method] ?? method;
 /** The action's label, else the reason in plain words; never a raw code. */
 export function actionText(row: Pick<ScanRecordDto, 'actionLabel' | 'reason'>): string {
   if (row.actionLabel) return row.actionLabel;
-  if (!row.reason) return '-';
-  return (SCAN_REASON_COPY[row.reason] as { headline: string } | undefined)?.headline ?? '-';
+  if (!row.reason) return '—';
+  return (SCAN_REASON_COPY[row.reason] as { headline: string } | undefined)?.headline ?? '—';
 }
 
 type Source = Pick<ScanRecordDto, 'scannerName' | 'scannerId' | 'actor'>;
@@ -34,7 +34,10 @@ export function whereText(row: Source): string {
   return row.scannerId || row.actor.type === 'scanner' ? 'Scanner' : 'Admin scan';
 }
 
-export function whoText(row: Source & Pick<ScanRecordDto, 'staffName'>): string {
+/** Never claims nobody signed in unless the row says a scanner took it with no staff on it. */
+export function whoText(row: Source & Pick<ScanRecordDto, 'staffName' | 'staffId'>): string {
+  if (row.actor.type === 'user') return 'Admin';
   if (row.staffName) return row.staffName;
-  return row.scannerId || row.actor.type === 'scanner' ? 'Not signed in' : 'Admin';
+  if (row.staffId) return 'Staff';
+  return row.scannerId ? 'Not signed in' : '—';
 }

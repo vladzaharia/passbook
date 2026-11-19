@@ -87,7 +87,7 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
       cell: ({ row }) => (
         <span className="block whitespace-normal break-words">
           {row.original.passTitle ??
-            (row.original.reason === 'not_found' ? 'No pass matched' : 'Pass details unavailable')}
+            (row.original.reason === 'not_found' ? '—' : 'Pass details unavailable')}
         </span>
       ),
     },

@@ -5,13 +5,18 @@ import { isApiError } from '@/web/lib/errors.ts';
 import { formatCount, formatTime } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { Card, CardBody, CardHeader, ErrorState } from '@/web/ui/index.ts';
+import { zoneAbbr, zoneName } from './zone-name.ts';
 
-/** "America/New_York" as "New York time"; UTC stays "UTC"; no zone is the viewer's own. */
-export function zoneName(zone: string | null): string {
-  if (!zone) return 'your time';
-  if (zone === 'UTC' || zone === 'Etc/UTC') return 'UTC';
-  const city = zone.split('/').pop() ?? zone;
-  return `${city.replaceAll('_', ' ')} time`;
+/** Both hours of a clock change read the same, so those carry the zone's short name. */
+export function hourLabel(
+  start: number,
+  zone: string | null,
+  all: readonly { start: number }[],
+): string {
+  const text = formatTime(start, zone ?? undefined);
+  if (!zone) return text;
+  const twin = all.some((h) => h.start !== start && formatTime(h.start, zone) === text);
+  return twin ? `${text} ${zoneAbbr(start, zone)}` : text;
 }
 
 function List({
@@ -80,7 +85,7 @@ export function SessionTonight({ sessionId }: { sessionId: string }) {
               title={`By hour, ${zoneName(s.timeZone)}`}
               rows={s.byHour.map((h) => ({
                 key: String(h.start),
-                label: formatTime(h.start, s.timeZone ?? undefined),
+                label: hourLabel(h.start, s.timeZone, s.byHour),
                 value: formatCount(h.count),
               }))}
             />
