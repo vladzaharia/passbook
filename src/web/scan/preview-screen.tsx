@@ -1,13 +1,15 @@
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import type { ScanCard } from '../../shared/contracts/scan.ts';
-import type { ScanBranding } from '../../shared/contracts/scan-session.ts';
+import type { ScanBranding, ScanSession } from '../../shared/contracts/scan-session.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
+import type { ScanApi } from './api/scan-api.ts';
 import { ScanAppView } from './app.tsx';
 import { initialState } from './machine/initial-state.ts';
 import { moodOf, viewOf } from './machine/present.ts';
 import type { ScanStore } from './machine/store.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { ScanStoreContext } from './machine/use-scan-machine.ts';
+import { OperatorPanel } from './operator/operator-panel.tsx';
 import type { ScanRuntime } from './platform/runtime.ts';
 import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { ResultCard } from './result/result-card.tsx';
@@ -15,7 +17,7 @@ import { DoorDock } from './ui/door-dock.tsx';
 import type { StripEntry } from './ui/last-scan-strip.tsx';
 import './visual-gallery.css';
 
-const BRANDING: ScanBranding = {
+const DEMO_BRANDING: ScanBranding = {
   accent: '#0f766e',
   logo: { sha: 'a'.repeat(64), w: 480, h: 150 },
 };
@@ -45,8 +47,56 @@ export interface ScanPreviewScreenProps {
   phase?: 'up' | 'rising';
   orgName?: string;
   scannerName?: string;
-  sidebar?: ReactNode;
+  /** The org's accent and logo, as the scanner's session carries them. */
+  branding?: ScanBranding | null;
+  /** Where the logo is served for this viewer; the scanner's own URL when absent. */
+  logoUrl?: string | null;
   onPass?: (card: ScanCard | null) => void;
+}
+
+function OperatorSidebar({
+  outcome,
+  orgName,
+  runtime,
+}: {
+  outcome: ScanOutcome;
+  orgName: string;
+  runtime: ScanRuntime;
+}) {
+  const [api] = useState(
+    () =>
+      ({
+        activity: async () => ({
+          items: [
+            {
+              id: '01900000-0000-7000-8000-000000000002',
+              at: Date.now(),
+              deviceId: '01900000-0000-7000-8000-000000000001',
+              deviceName: 'West entrance',
+              passId: '01900000-0000-7000-8000-000000000001',
+              title: `${outcome.display?.identity.holder ?? 'Pass'} · accepted`,
+              outcome: 'ok',
+              direction: 'in',
+            },
+          ],
+        }),
+        lookup: async () => ({ items: [], more: false }),
+      }) as unknown as ScanApi,
+  );
+  const [session] = useState(
+    () =>
+      ({
+        principal: 'admin',
+        state: 'ready',
+        scanner: {
+          orgName,
+          settings: { lookup: true, flow: 'auto', roleWithoutSignIn: 'door' },
+        },
+        staff: null,
+        staffList: null,
+      }) as unknown as ScanSession,
+  );
+  return <OperatorPanel api={api} runtime={runtime} session={session} />;
 }
 
 /**
@@ -60,7 +110,8 @@ export function ScanPreviewScreen({
   phase = 'up',
   orgName = 'Northwind Live',
   scannerName = 'West entrance',
-  sidebar,
+  branding = DEMO_BRANDING,
+  logoUrl,
   onPass,
 }: ScanPreviewScreenProps) {
   const store = useStaticStore();
@@ -77,15 +128,19 @@ export function ScanPreviewScreen({
       <ScanAppView
         screen={{ s: 'loop' }}
         surface={surface}
-        branding={BRANDING}
+        branding={branding}
         capsule={{
           name: scannerName,
           orgName,
-          logoUrl: scanBrandLogoUrl(BRANDING),
+          logoUrl: logoUrl !== undefined ? logoUrl : scanBrandLogoUrl(branding),
           state: 'scanning',
         }}
         camera={<div className="scan-visual-camera" />}
-        sidebar={sidebar}
+        sidebar={
+          surface === 'operator' ? (
+            <OperatorSidebar outcome={outcome} orgName={orgName} runtime={runtime} />
+          ) : null
+        }
         buddy={
           <Buddy scene="scan" size="xl-scan" mood={mood === 'neutral' ? 'flat' : mood} immediate />
         }

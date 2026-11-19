@@ -5,12 +5,6 @@ import type { ScanApi } from './api/scan-api.ts';
 import { sessionFixture } from './boot/session.test-support.ts';
 import { CustomerDisplayPage } from './customer-display.tsx';
 import { LiveScreen } from './live/live-screen.tsx';
-import { initialState } from './machine/initial-state.ts';
-import { viewOf } from './machine/present.ts';
-import type { ScanStore } from './machine/store.ts';
-import { ScanStoreContext } from './machine/use-scan-machine.ts';
-import { OperatorPanel } from './operator/operator-panel.tsx';
-import type { ScanRuntime } from './platform/runtime.ts';
 import { ScanPreviewScreen } from './preview-screen.tsx';
 import { type PassInspection, PassInspector } from './result/pass-inspector.tsx';
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
@@ -54,55 +48,6 @@ function sessionFor(surface: string): ScanSession {
     ...base,
     scanner: scanner && surface === 'customer' ? { ...scanner, deviceRole: 'customer' } : scanner,
   };
-}
-
-function useVisualStore() {
-  const [store] = useState(() => {
-    const state = initialState(Date.now());
-    const snapshot = { state, view: viewOf(state), now: Date.now() };
-    return {
-      getSnapshot: () => snapshot,
-      subscribe: () => () => undefined,
-      dispatch: () => undefined,
-      checkIn: () => undefined,
-      configure: () => true,
-      retryUnsure: () => undefined,
-      dispose: () => undefined,
-    } as ScanStore;
-  });
-  return store;
-}
-
-function OperatorVisual({ session, name }: { session: ScanSession; name: string }) {
-  const store = useVisualStore();
-  const [runtime] = useState(
-    () => ({ store, emit: () => null, checkIn: () => undefined }) as unknown as ScanRuntime,
-  );
-  const [api] = useState(
-    () =>
-      ({
-        activity: async () => ({
-          items: [
-            {
-              id: ID,
-              at: Date.now(),
-              deviceId: ID,
-              deviceName: 'West entrance',
-              passId: ID,
-              title: `${name} · accepted`,
-              outcome: 'ok',
-              direction: 'in',
-            },
-          ],
-        }),
-        lookup: async () => ({ items: [], more: false }),
-      }) as unknown as ScanApi,
-  );
-  return (
-    <ScanStoreContext.Provider value={store}>
-      <OperatorPanel api={api} runtime={runtime} session={session} />
-    </ScanStoreContext.Provider>
-  );
 }
 
 function LiveVisual({ session, status }: { session: ScanSession; status: string }) {
@@ -152,12 +97,10 @@ function DuoVisual({ status }: { status: string }) {
 function ScanResultVisual({
   surface,
   selected,
-  session,
   phase,
 }: {
   surface: string;
   selected: (typeof SCAN_VISUAL_CASES)[number];
-  session: ScanSession;
   phase: 'up' | 'rising';
 }) {
   const [inspection, setInspection] = useState<PassInspection | null>(null);
@@ -168,9 +111,6 @@ function ScanResultVisual({
         outcome={selected.outcome}
         surface={surface === 'operator' ? 'operator' : 'phone'}
         phase={phase}
-        sidebar={
-          surface === 'operator' ? <OperatorVisual session={session} name={selected.name} /> : null
-        }
         onPass={(card) => {
           if (card) setInspection({ card });
         }}
@@ -203,5 +143,5 @@ export function ScanVisualGallery() {
     );
   const session = sessionFor(surface);
   if (surface === 'customer') return <LiveVisual session={session} status={status} />;
-  return <ScanResultVisual surface={surface} selected={selected} session={session} phase={phase} />;
+  return <ScanResultVisual surface={surface} selected={selected} phase={phase} />;
 }

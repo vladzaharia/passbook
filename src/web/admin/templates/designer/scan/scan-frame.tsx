@@ -11,6 +11,7 @@ export const FRAME_SIZES = {
   phone: { width: 390, height: 844 },
   ipad: { width: 820, height: 1180 },
   desk: { width: 1180, height: 760 },
+  operator: { width: 1366, height: 768 },
 } as const satisfies Record<string, FrameSize>;
 
 const SHELL =

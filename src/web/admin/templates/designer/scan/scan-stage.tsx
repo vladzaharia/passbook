@@ -12,6 +12,7 @@ import { type FRAME_SIZES, ScanFrame } from './scan-frame.tsx';
 import { ScanOverlay } from './scan-overlay.tsx';
 import { previewOutcome } from './scan-preview-outcome.ts';
 import { safePreviewText } from './scan-preview-policy.ts';
+import { useOrgLook } from './scan-stage-brand.ts';
 import { StageDiagnostics } from './scan-stage-diagnostics.tsx';
 import { useStageFocus } from './scan-stage-focus.ts';
 import { useStagePreview } from './scan-stage-model.ts';
@@ -96,6 +97,7 @@ export function ScanStage({
     onScreenChange,
     setTabId,
   });
+  const look = useOrgLook(orgId);
   const onLayout = useCallback(
     (frameDoc: Document, scale: number) =>
       setLayout((prev) =>
@@ -178,6 +180,7 @@ export function ScanStage({
               { value: 'phone', label: 'Phone' },
               { value: 'ipad', label: 'iPad' },
               { value: 'desk', label: 'Landscape' },
+              { value: 'operator', label: 'Operator' },
             ] as const
           }
           value={device}
@@ -281,7 +284,13 @@ export function ScanStage({
               ) : null
             }
           >
-            <ScanPreviewScreen outcome={outcome} />
+            <ScanPreviewScreen
+              outcome={outcome}
+              surface={device === 'operator' ? 'operator' : 'phone'}
+              {...(look
+                ? { orgName: look.orgName, branding: look.branding, logoUrl: look.logoUrl }
+                : {})}
+            />
           </ScanFrame>
         ) : (
           <p className="sp-error" role="alert">
