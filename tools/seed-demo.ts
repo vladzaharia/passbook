@@ -9,6 +9,7 @@ import { join, resolve } from 'node:path';
 import { zipSync } from 'fflate';
 import { assertLocal, discPng, Session } from './lib/demo-client.ts';
 import { demoPlans, emailOf, PORTAL } from './lib/demo-data.ts';
+import { seedExtras } from './lib/demo-extras.ts';
 import { releaseTemplates } from './lib/demo-releases.ts';
 import { DEMO_OWNER, tenancyCommand } from './lib/demo-tenancy.ts';
 
@@ -94,7 +95,7 @@ const coupon = await fromBlueprint('coupon', northwind, 'Northwind Coupon');
 const crew = await fromBlueprint('generic', harbor, 'Harbor Crew');
 await fromBlueprint('generic', northwind, 'Northwind Member');
 
-function variantZip(name: string): Uint8Array {
+function variantZip(name: string, joinable = false): Uint8Array {
   const dir = resolve(root, 'templates/starter-generic');
   const files: Record<string, Uint8Array> = {};
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -112,6 +113,10 @@ function variantZip(name: string): Uint8Array {
       manifest.bindings = (manifest.bindings ?? []).filter(
         (b: { to: { pointer?: string } }) => !b.to.pointer?.startsWith('/semantics'),
       );
+      // A join link needs a barcode that carries only the scan code, so its alt text names no input.
+      if (joinable)
+        for (const b of manifest.bindings)
+          if (b.to.barcode === '*' && b.to.prop === 'altText') b.value = 'Member code';
       bytes = Buffer.from(JSON.stringify(manifest, null, 2));
     }
     files[entry.name] = bytes;
@@ -122,6 +127,8 @@ const upload = (query: string, zip: Uint8Array) =>
   owner.send('POST', `/api/v1/templates/uploads?${query}`, zip, {
     'content-type': 'application/zip',
   });
+if (!byName('Harbor Join Badge'))
+  await upload(`orgId=${harbor}&name=Harbor%20Join%20Badge`, variantZip('Harbor Join Badge', true));
 if (!byName('Harbor Crew Badge')) {
   await upload(`orgId=${harbor}&name=Harbor%20Crew%20Badge`, variantZip('Harbor Crew Badge'));
   await upload(
@@ -306,6 +313,8 @@ for (const { revoke, ...key } of KEYS) {
 // One pass email for the delivery log (and a rendered email under the local mail directory).
 const waiting = (await owner.all(`/api/v1/passes?orgId=${henrys}&holderState=waiting`))[0];
 if (waiting) await owner.send('POST', `/api/v1/passes/${waiting.id}/resend-email`, {});
+
+await seedExtras(owner, { northwind, harbor, henrys, member, crew }, base);
 
 console.log(
   `Seeded ${base}: ${orgs.length} orgs, ${created} new passes, ${signedIn} portal users signed in.`,
