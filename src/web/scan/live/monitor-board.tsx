@@ -8,7 +8,7 @@ import {
   TriangleAlert,
   Undo2,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
@@ -84,6 +84,18 @@ export function MonitorBoard({
   onWhy?: (scanId: string, note: OverrideNote) => void;
 }) {
   const resolved = resolvedOf(rows, letInDone);
+  // A new let-in brings its Why? chips mid-screen, clear of the Undo toast at the bottom.
+  const lastDone = useRef(letInDone?.size ?? 0);
+  useEffect(() => {
+    const size = letInDone?.size ?? 0;
+    if (size > lastDone.current && letInDone) {
+      const newest = [...letInDone.entries()].sort((a, b) => b[1].at - a[1].at)[0];
+      document
+        .querySelector(`[data-scan="${newest?.[0]}"]`)
+        ?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+    }
+    lastDone.current = size;
+  }, [letInDone]);
   const counts = countsOf(places, rows);
   const hero = heroOf(counts);
   const trend = trendOf(rows, now);
@@ -150,7 +162,7 @@ export function MonitorBoard({
                 const Icon =
                   row.kind === 'ok' && row.direction === 'out' ? LogOut : ROW_ICON[row.kind];
                 return (
-                  <li key={row.id} data-kind={row.kind}>
+                  <li key={row.id} data-kind={row.kind} data-scan={row.scanId}>
                     <span className="mon-avatar">
                       {row.photoUrl ? (
                         <img src={row.photoUrl} alt={row.holder ?? 'Member'} />
