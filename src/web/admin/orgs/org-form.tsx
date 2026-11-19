@@ -21,7 +21,7 @@ import {
   useSavedToast,
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
-import { useIdentityOptions } from '../identities/queries.ts';
+import { useIdentityOptions } from '../wallet-accounts/apple/queries.ts';
 import { HEX } from './branding.ts';
 import { ColorField } from './color-field.tsx';
 import { PassBrandingCard, type PassColorsDraft } from './pass-branding.tsx';

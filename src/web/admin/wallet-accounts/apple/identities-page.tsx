@@ -16,7 +16,7 @@ import {
   RowLink,
   StatusPill,
 } from '@/web/ui/index.ts';
-import { useOrgNames } from '../orgs/queries.ts';
+import { useOrgNames } from '../../orgs/queries.ts';
 import { ATTENTION_COPY, expiryPhrase, identityAttention } from './attention.ts';
 import { ApnsPill, ExpiryPill } from './expiry.tsx';
 import { useIdentityPages } from './queries.ts';

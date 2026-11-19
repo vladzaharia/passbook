@@ -2,14 +2,20 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 import type { Mode } from '@/shared/contracts/common.ts';
 import {
   PlatformWalletEnrolmentListSchema,
+  type ResolveWalletMigration,
   type SaveWalletCredential,
   type WalletCredential,
+  WalletCredentialCheckQueuedSchema,
+  WalletCredentialCheckResultSchema,
   WalletCredentialListSchema,
   WalletCredentialSchema,
   type WalletEnrolment,
   WalletEnrolmentHoldResultSchema,
   WalletEnrolmentListSchema,
   WalletEnrolmentSchema,
+  WalletMigrationQueuedSchema,
+  WalletMigrationReportSchema,
+  WalletMigrationResolvedSchema,
   type WalletProvider,
 } from '@/shared/contracts/wallet-providers.ts';
 import { api, listQuery } from '@/web/lib/api.ts';
@@ -130,5 +136,60 @@ export function useWalletActions() {
           {},
         ),
       ),
+  };
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Queues a check, then polls its result (about every 1.5 s, up to a minute). */
+export function useCheckCredential() {
+  const client = useQueryClient();
+  return async (target: CredentialTarget, credential: WalletCredential) => {
+    const base =
+      target.kind === 'platform'
+        ? `/api/v1/platform/wallet-credentials/${credential.id}`
+        : `${orgBase(target.orgId)}/wallet-credentials/${credential.id}`;
+    const queued = await api.post(`${base}/check`, WalletCredentialCheckQueuedSchema);
+    for (let i = 0; i < 40; i++) {
+      await sleep(1500);
+      const result = await api.get(
+        `${base}/checks/${queued.checkId}`,
+        WalletCredentialCheckResultSchema,
+      );
+      if (result.status !== 'pending') {
+        await client.invalidateQueries({ queryKey: KEY });
+        return result;
+      }
+    }
+    return { status: 'pending' as const, code: null, checkedAt: null, checkId: queued.checkId };
+  };
+}
+
+const MIGRATE = '/api/v1/platform/wallet-credentials/migrate';
+
+/** The pending and refused legacy accounts, one page after another. */
+export function useMigrationReport() {
+  return useInfiniteQuery(
+    listQuery({
+      queryKey: [...KEY, 'migration'],
+      initialPageParam: undefined as string | undefined,
+      queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
+        api.get(MIGRATE, WalletMigrationReportSchema, { query: { after: pageParam }, signal }),
+      getNextPageParam: (last: { next: string | null }) => last.next ?? undefined,
+    }),
+  );
+}
+
+export function useMigrationActions() {
+  const client = useQueryClient();
+  const done = async <T>(result: Promise<T>) => {
+    const value = await result;
+    await client.invalidateQueries({ queryKey: KEY });
+    return value;
+  };
+  return {
+    run: () => done(api.post(MIGRATE, WalletMigrationQueuedSchema)),
+    resolve: (body: ResolveWalletMigration) =>
+      done(api.post(`${MIGRATE}/resolve`, WalletMigrationResolvedSchema, body)),
   };
 }

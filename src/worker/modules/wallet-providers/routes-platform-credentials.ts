@@ -194,6 +194,13 @@ register(
         c.req.valid('query').cursor,
       ),
     ),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'get',
     path: '/wallet-credentials/migrate',
     summary: 'Report the legacy wallet accounts waiting for a credential source',
     query: WalletMigrationReportQuerySchema,

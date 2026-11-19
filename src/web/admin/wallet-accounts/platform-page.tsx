@@ -1,5 +1,6 @@
 import { PageHeader, Tabs, TabsContent, TabsList, TabsTrigger } from '@/web/ui/index.ts';
-import { IdentitiesPanel } from '../identities/identities-page.tsx';
+import { IdentitiesPanel } from './apple/identities-page.tsx';
+import { MigrationSection } from './migration-section.tsx';
 import { ProviderTab } from './provider-tab.tsx';
 
 /** Platform › Wallet accounts: one tab per wallet. Platform pages ignore the mode switch. */
@@ -12,6 +13,7 @@ export function PlatformWalletAccountsPage() {
           <TabsTrigger value="apple">Apple</TabsTrigger>
           <TabsTrigger value="google">Google</TabsTrigger>
           <TabsTrigger value="samsung">Samsung</TabsTrigger>
+          <TabsTrigger value="migration">Migration</TabsTrigger>
         </TabsList>
         <TabsContent value="apple">
           <IdentitiesPanel />
@@ -21,6 +23,9 @@ export function PlatformWalletAccountsPage() {
         </TabsContent>
         <TabsContent value="samsung">
           <ProviderTab provider="samsung" />
+        </TabsContent>
+        <TabsContent value="migration">
+          <MigrationSection />
         </TabsContent>
       </Tabs>
     </>

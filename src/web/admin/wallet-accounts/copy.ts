@@ -47,7 +47,7 @@ export function safeError(error: unknown): string {
     if (error.code === 'WALLET_IDENTITY_IMMUTABLE')
       return 'The Google issuer, or Samsung partner and card, cannot change. Enter the original ones.';
     if (error.code === 'WALLET_ACCOUNT_INSTANCES_ACTIVE')
-      return 'Retire the linked wallet passes first.';
+      return 'It still has live wallet passes. Retire them first.';
     if (error.status === 409 || error.status === 412)
       return 'This changed meanwhile. Reload and try again.';
     if (error.status === 400 || error.status === 422)
@@ -56,3 +56,28 @@ export function safeError(error: unknown): string {
   }
   return 'Could not complete the request. Try again.';
 }
+
+/** Plain words for a check's stable code. */
+export const CHECK_WORDS: Record<string, string> = {
+  auth_failed: 'The provider refused the credentials.',
+  card_not_active: 'The card is not active.',
+  card_not_found: 'The card was not found.',
+  cert_expired: 'The certificate has expired.',
+  cert_expiring: 'The certificate expires within 30 days.',
+  credential_unreadable: 'The saved credentials cannot be read. Rotate them.',
+  invalid_credentials: 'The credentials are not valid.',
+  issuer_mismatch: 'The issuer does not match the credentials.',
+  issuer_not_found: 'The issuer was not found.',
+  provider_error: 'The provider returned an error. Try again.',
+  unreachable: 'Could not reach the provider. Try again.',
+};
+export const checkWords = (code: string | null) =>
+  (code && CHECK_WORDS[code]) || 'The check did not pass.';
+export const CHECK_WAIT = 'Wait a minute before checking again.';
+
+export const MIGRATION_REASON: Record<string, string> = {
+  identity_shared: 'Shares its provider identity with another organization.',
+  org_credential_exists: 'An own credential with this identity already exists.',
+  unreadable: 'The saved credentials cannot be read.',
+  unproven_claim: 'Claims an identity PassBook cannot prove.',
+};

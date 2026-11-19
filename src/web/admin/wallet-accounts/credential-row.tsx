@@ -1,14 +1,15 @@
 import { KeyRound } from 'lucide-react';
 import { useState } from 'react';
 import type { WalletCredential, WalletProvider } from '@/shared/contracts/wallet-providers.ts';
-import { revokeWalletCredentialConfirm } from '@/web/lib/confirms.ts';
+import { revokeWalletCredentialConfirm } from '@/web/lib/confirms-wallet.ts';
+import { ApiError } from '@/web/lib/errors.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { Button, ConfirmDialog, StatusPill, toast } from '@/web/ui/index.ts';
 import { checkFresh } from './check.ts';
-import { COPY, PROVIDER_NAME, safeError } from './copy.ts';
+import { CHECK_WAIT, COPY, checkWords, PROVIDER_NAME, safeError } from './copy.ts';
 import { CredentialDialog } from './credential-dialog.tsx';
-import { type CredentialTarget, useWalletActions } from './queries.ts';
+import { type CredentialTarget, useCheckCredential, useWalletActions } from './queries.ts';
 
 /** The check state a credential shows: the DTO's verifiedAt, never a secret. */
 export function CheckPill({
@@ -49,6 +50,26 @@ export function CredentialRow({
 }) {
   const actions = useWalletActions();
   const sessionMode = useMode();
+  const runCheck = useCheckCredential();
+  const [checking, setChecking] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+  async function check(c: WalletCredential) {
+    setChecking(true);
+    setFailed(null);
+    try {
+      const result = await runCheck(target, c);
+      if (result.status === 'ok') toast.success('Check passed');
+      else if (result.status === 'failed') setFailed(checkWords(result.code));
+      else toast.info('The check is still running. Reload in a moment.');
+    } catch (cause) {
+      toast.error(
+        cause instanceof ApiError && cause.status === 429 ? CHECK_WAIT : safeError(cause),
+        'Could not check',
+      );
+    } finally {
+      setChecking(false);
+    }
+  }
   const mode = target.kind === 'platform' ? target.mode : sessionMode;
   const [open, setOpen] = useState(false);
   const [revoking, setRevoking] = useState(false);
@@ -66,10 +87,25 @@ export function CredentialRow({
           ) : (
             <p className="text-fg-muted">No credentials</p>
           )}
+          {failed ? (
+            <p role="alert" className="mt-1 text-danger">
+              Check failed. {failed}
+            </p>
+          ) : null}
         </div>
       </div>
       {canManage ? (
         <div className="flex flex-wrap gap-2">
+          {credential ? (
+            <Button
+              size="sm"
+              variant="outline"
+              loading={checking}
+              onClick={() => void check(credential)}
+            >
+              Check
+            </Button>
+          ) : null}
           <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
             {credential ? COPY.rotate : COPY.addCredentials}
           </Button>

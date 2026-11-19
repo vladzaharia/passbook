@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Card, CardBody, CardHeader, ErrorState, SkeletonRows } from '@/web/ui/index.ts';
-import { ApnsPill, ExpiryPill } from '../identities/expiry.tsx';
-import { useOrgIdentities } from '../identities/queries.ts';
+import { ApnsPill, ExpiryPill } from './apple/expiry.tsx';
+import { useOrgIdentities } from './apple/queries.ts';
 
 /** The organization's own Apple identity, read-only here: PassBook's platform identity signs otherwise. */
 export function OrgAppleCard({ orgId }: { orgId: string }) {

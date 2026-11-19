@@ -183,16 +183,6 @@ export function revokeKeyConfirm(name: string): ConfirmCopy {
   };
 }
 
-/** Revoking a wallet credential: its organizations turn Off, and an own account can be replaced. */
-export function revokeWalletCredentialConfirm(name: string): ConfirmCopy {
-  return {
-    title: `Revoke ${name} credentials?`,
-    confirmLabel: 'Revoke',
-    description: `Organizations using them turn Off. ${CANNOT_UNDO}`,
-    typed: false,
-  };
-}
-
 /** Revoking a member's access or a pending invitation; `self` is your own membership. */
 export function revokeAccessConfirm(
   kind: 'memberships' | 'invitations',
