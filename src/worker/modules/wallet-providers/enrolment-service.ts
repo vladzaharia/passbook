@@ -11,6 +11,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
 import { enrolmentView } from './enrolment-read.ts';
+import { newEnrolmentKeyColumns } from './enrolment-source-key.ts';
 import { credentialById, findActiveCredential } from './repo-credentials.ts';
 import {
   commitEnrolmentStep,
@@ -116,6 +117,11 @@ export async function setEnrolmentSource(
   );
   if (!source?.current_version_id) throw prerequisite(['source']);
   const accountId = row?.id ?? ctx.ids.id();
+  // A new-model enrolment gets its own key with its first source; a row with a legacy envelope keeps that key.
+  const ownKey =
+    row?.has_hmac || row?.credential_id
+      ? {}
+      : await newEnrolmentKeyColumns(ctx, { id: accountId, orgId, mode, provider });
   return orgStep(ctx, auth, orgId, provider, 'org_mode.wallet.enrolment_source', (w) => ({
     accountId,
     isNew: row === null,
@@ -129,7 +135,12 @@ export async function setEnrolmentSource(
       actor: { type: 'user', id: w.userId },
     },
     // A switch turns the enrolment Off in the same update.
-    set: { credential_source_id: source.id, identity_hash: source.identity_hash, enabled_at: null },
+    set: {
+      credential_source_id: source.id,
+      identity_hash: source.identity_hash,
+      enabled_at: null,
+      ...ownKey,
+    },
   }));
 }
 

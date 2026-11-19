@@ -55,6 +55,9 @@ const SELECT: Record<PlaceTable, string> = {
       c.mode || ':' || c.provider AS x4
     FROM wallet_credential_versions t JOIN wallet_credentials c ON c.id = t.credential_id
     WHERE t.id > ? AND t.kek_version < ? ORDER BY t.id LIMIT ?`,
+  wallet_provider_accounts: `SELECT t.id AS pk, t.hmac_kek_version AS kek_version, t.hmac_wrapped_dek AS wrapped_dek,
+      t.org_id AS x1, t.mode AS x2, t.provider AS x3, NULL AS x4
+    FROM wallet_provider_accounts t WHERE t.id > ? AND t.hmac_kek_version < ? ORDER BY t.id LIMIT ?`,
 };
 
 export function selectEnvelopes(
@@ -197,6 +200,13 @@ const CAS: Record<PlaceTable, (db: D1Database, m: Move) => D1PreparedStatement> 
       db,
       `UPDATE wallet_credential_versions SET kek_version = ?, wrapped_dek = ?
        WHERE id = ? AND kek_version = ? AND wrapped_dek = ? RETURNING id`,
+      params(m),
+    ),
+  wallet_provider_accounts: (db, m) =>
+    stmt(
+      db,
+      `UPDATE wallet_provider_accounts SET hmac_kek_version = ?, hmac_wrapped_dek = ?
+       WHERE id = ? AND hmac_kek_version = ? AND hmac_wrapped_dek = ? RETURNING id`,
       params(m),
     ),
 };

@@ -1,5 +1,5 @@
 import { all } from '../../platform/db.ts';
-import type { PlaceTable } from './rewrap-tables.ts';
+import { kekColumn, type PlaceTable } from './rewrap-tables.ts';
 
 const CAPTURE_OLDER = `(t.html GLOB 'enc1:*' AND CAST(substr(t.html, 6, instr(t.html, '.') - 6) AS INTEGER) < ?)
   OR (t.text GLOB 'enc1:*' AND CAST(substr(t.text, 6, instr(t.text, '.') - 6) AS INTEGER) < ?)`;
@@ -16,7 +16,9 @@ export async function hasOlderEnvelope(
           current,
           current,
         ])
-      : await all(db, `SELECT 1 AS x FROM ${table} WHERE kek_version < ? LIMIT 1`, [current]);
+      : await all(db, `SELECT 1 AS x FROM ${table} WHERE ${kekColumn(table)} < ? LIMIT 1`, [
+          current,
+        ]);
   return row.length > 0;
 }
 
@@ -38,7 +40,7 @@ export async function countOlderEnvelopes(
       )
     : all<{ v: number; n: number }>(
         db,
-        `SELECT kek_version AS v, count(*) AS n FROM ${table} WHERE kek_version < ? GROUP BY kek_version`,
+        `SELECT ${kekColumn(table)} AS v, count(*) AS n FROM ${table} WHERE ${kekColumn(table)} < ? GROUP BY ${kekColumn(table)}`,
         [current],
       );
 }

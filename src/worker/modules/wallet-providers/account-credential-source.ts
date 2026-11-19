@@ -8,7 +8,11 @@ import { credentialAad, decryptSecretText, loadKekRing } from '../../platform/cr
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
-import { corrupt, type StoredCredentials } from './account-credential-material.ts';
+import {
+  corrupt,
+  type KeyOnlyAccount,
+  type StoredCredentials,
+} from './account-credential-material.ts';
 import {
   type EnrolmentRef,
   findCurrentSourceVersion,
@@ -118,12 +122,27 @@ export async function openSourceVersion(
   };
 }
 
-function merge(stored: StoredCredentials, source: OpenedVersion): StoredCredentials {
+function merge(
+  stored: StoredCredentials | KeyOnlyAccount,
+  source: OpenedVersion,
+): StoredCredentials {
   if (stored.provider === 'google' && source.provider === 'google')
-    return { ...stored, credentials: source.credentials };
+    return {
+      version: 1,
+      provider: 'google',
+      credentials: source.credentials,
+      objectIdHmacKey: stored.objectIdHmacKey,
+      credentialVersionId: source.versionId,
+    };
   if (stored.provider === 'samsung' && source.provider === 'samsung')
-    return { ...stored, credentials: source.credentials };
+    return { version: 1, provider: 'samsung', credentials: source.credentials };
   throw corrupt();
+}
+
+/** An envelope with no secret of its own (own key only) is not a credential without a source. */
+function full(stored: StoredCredentials | KeyOnlyAccount): StoredCredentials {
+  if (stored.credentials === null) throw corrupt();
+  return stored;
 }
 
 export const enrolmentOf = (row: {
@@ -148,18 +167,18 @@ export type SourcePin =
 export async function applyEnrolmentSource(
   ctx: ServiceContext,
   owner: EnrolmentRef,
-  stored: StoredCredentials,
+  stored: StoredCredentials | KeyOnlyAccount,
   pin: SourcePin,
 ): Promise<StoredCredentials> {
   const enrolment = await findEnrolmentSource(ctx.env.DB, owner);
   if (!enrolment) throw corrupt();
   if ('versionId' in pin) {
-    if (pin.versionId === null) return stored;
+    if (pin.versionId === null) return full(stored);
     const [row] = await findPinnedVersions(ctx.env.DB, owner, pin.versionId, false);
     if (!row) throw corrupt();
     return merge(stored, await openSourceVersion(ctx, owner, row));
   }
-  if (!enrolment.source_id) return stored;
+  if (!enrolment.source_id) return full(stored);
   const row = await findCurrentSourceVersion(ctx.env.DB, owner);
   if (!row || row.credential_id !== enrolment.source_id) throw corrupt();
   const opened = await openSourceVersion(ctx, owner, row);
@@ -172,7 +191,7 @@ export async function applyEnrolmentSource(
 export async function historicalSources(
   ctx: ServiceContext,
   owner: EnrolmentRef,
-  stored: StoredCredentials,
+  stored: StoredCredentials | KeyOnlyAccount,
   versionId: string,
 ): Promise<StoredCredentials[]> {
   const rows = await findPinnedVersions(ctx.env.DB, owner, versionId, true);

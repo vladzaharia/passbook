@@ -17,7 +17,8 @@ export type PlaceTable =
   | 'bundle_token_seals'
   | 'join_link_seals'
   | 'webhook_endpoint_secrets'
-  | 'wallet_credential_versions';
+  | 'wallet_credential_versions'
+  | 'wallet_provider_accounts';
 
 /** What a select returns: the key, the envelope's KEK and wrapped DEK, and up to four AAD inputs. */
 export interface Raw {
@@ -108,7 +109,21 @@ export const PLACES: readonly Place[] = [
     table: 'wallet_credential_versions',
     aad: (r) => credentialAad(r.pk, text(r.x1), `wallet-credential:${r.x2}:${r.x3}:${r.x4}`),
   },
+  {
+    // The enrolment's own HMAC key (hmac_* columns): x1 org, x2 mode, x3 provider. The account id is the
+    // envelope id, so the envelope cannot be moved to another account, org, mode or provider.
+    table: 'wallet_provider_accounts',
+    aad: (r) => credentialAad(r.pk, text(r.x1), accountHmacKind(r.pk, String(r.x2), String(r.x3))),
+  },
 ];
+
+/** The AAD kind of an enrolment's HMAC envelope; the writer and the opener use it too. */
+export const accountHmacKind = (accountId: string, mode: string, provider: string): string =>
+  `wallet-account-hmac:${accountId}:${mode}:${provider}`;
+
+/** The KEK version column of a place: the account table keeps its envelope in `hmac_*` columns. */
+export const kekColumn = (table: string): string =>
+  table === 'wallet_provider_accounts' ? 'hmac_kek_version' : 'kek_version';
 
 /** Captured test emails keep their envelope packed in the body (sandbox/captured-body.ts). */
 export const CAPTURE_TABLE = 'captured_emails';

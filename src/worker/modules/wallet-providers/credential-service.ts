@@ -18,6 +18,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
 import { snapshotWalletCredentialContext } from './account-credential-material.ts';
+import { credentialIdentityHash } from './account-credential-source.ts';
 import { validateGoogleAccount } from './google-credentials.ts';
 import {
   type CredentialRow,
@@ -127,7 +128,7 @@ async function save(
   const current = await findActiveCredential(ctx.env.DB, scope.orgId, scope.mode, data.provider);
   if ((current?.revision ?? 0) !== data.expectedRevision) throw changed();
   const identity = await identityOf(data);
-  const identityHash = await sha256Hex(identity.id);
+  const identityHash = await credentialIdentityHash(data);
   if (current && current.identity_hash !== identityHash)
     throw new ConflictError('The provider identity cannot change.', 'WALLET_IDENTITY_IMMUTABLE');
   const previous = await cardMapOf(ctx.env.DB, current?.current_version_id ?? null);

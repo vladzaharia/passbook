@@ -8,7 +8,7 @@
 
 -- A new-model enrolment has no legacy credential: revision 0 and no credential_id, and it can still be revoked.
 -- The 0037 CHECK refused revoked_at there, so the table is rebuilt with `(revision = 0) = (credential_id IS NULL)`;
--- a legacy row (revision > 0) still needs its credential_id. Nothing else changes: columns, keys, the 0037 and
+-- a legacy row (revision > 0) still needs its credential_id. The rebuild also adds the HMAC envelope columns and their trigger (A1). Nothing else changes: columns, keys, the 0037 and
 -- 0043 triggers (recreated as they were) and every row. Children point at the id, so their checks are deferred
 -- until the rows are back. tools/wallet-accounts-rebuild.test.ts diffs the schema across this block.
 -- rebuild:begin
@@ -25,9 +25,15 @@ CREATE TABLE wallet_provider_accounts (
   revoked_at INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
+  hmac_kek_version INTEGER CHECK (hmac_kek_version IS NULL OR hmac_kek_version > 0),
+  hmac_iv BLOB,
+  hmac_wrapped_dek BLOB,
+  hmac_ciphertext BLOB,
   UNIQUE (org_id, mode, provider),
   UNIQUE (id, org_id, mode, provider),
-  CHECK ((revision = 0) = (credential_id IS NULL))
+  CHECK ((revision = 0) = (credential_id IS NULL)),
+  CHECK ((hmac_kek_version IS NULL) = (hmac_iv IS NULL) AND (hmac_kek_version IS NULL) = (hmac_wrapped_dek IS NULL)
+    AND (hmac_kek_version IS NULL) = (hmac_ciphertext IS NULL))
 );
 INSERT INTO wallet_provider_accounts (id, org_id, mode, provider, revision, credential_id, revoked_at, created_at, updated_at)
   SELECT id, org_id, mode, provider, revision, credential_id, revoked_at, created_at, updated_at
@@ -69,6 +75,15 @@ BEGIN
   SELECT id, 1 FROM wallet_provider_instances WHERE account_id = NEW.id
   ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1, next_attempt_at = 0;
 END;
+-- The enrolment's own HMAC key (Google object ids), enveloped with AAD on account id, org, mode and provider.
+-- Set once (NULL to a value, or copied from the v1 envelope by the migration); afterwards only a KEK rewrap
+-- (kek_version up, wrapped_dek new) may touch it.
+CREATE TRIGGER wallet_provider_accounts_hmac_immutable
+BEFORE UPDATE OF hmac_kek_version, hmac_iv, hmac_wrapped_dek, hmac_ciphertext ON wallet_provider_accounts
+WHEN OLD.hmac_ciphertext IS NOT NULL AND NOT (NEW.hmac_kek_version > OLD.hmac_kek_version
+  AND NEW.hmac_wrapped_dek IS NOT OLD.hmac_wrapped_dek AND NEW.hmac_iv IS OLD.hmac_iv
+  AND NEW.hmac_ciphertext IS OLD.hmac_ciphertext)
+BEGIN SELECT RAISE(ABORT, 'immutable wallet account hmac key'); END;
 -- rebuild:end
 
 CREATE TABLE wallet_credentials (

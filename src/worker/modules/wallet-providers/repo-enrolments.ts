@@ -20,6 +20,8 @@ export interface EnrolmentRow {
   platform_hold_at: number | null;
   platform_hold_reason: string | null;
   revoked_at: number | null;
+  /** 1 when the enrolment already has its own HMAC key. */
+  has_hmac: number;
 }
 
 export const ENROLMENT_TABLES = ['wallet_provider_accounts', 'wallet_enrolment_events'];
@@ -33,7 +35,8 @@ export function findEnrolment(
   return first<EnrolmentRow>(
     db,
     `SELECT id, org_id, mode, provider, credential_id, credential_source_id, identity_hash, enabled_at,
-      enrolment_revision, platform_hold_at, platform_hold_reason, revoked_at
+      enrolment_revision, platform_hold_at, platform_hold_reason, revoked_at,
+      hmac_ciphertext IS NOT NULL AS has_hmac
      FROM wallet_provider_accounts WHERE org_id = ? AND mode = ? AND provider = ?`,
     [orgId, mode, provider],
   );
@@ -220,7 +223,8 @@ export function enrolmentsOf(db: D1Database, orgId: string, mode: Mode): Promise
   return all<EnrolmentRow>(
     db,
     `SELECT id, org_id, mode, provider, credential_id, credential_source_id, identity_hash, enabled_at,
-      enrolment_revision, platform_hold_at, platform_hold_reason, revoked_at
+      enrolment_revision, platform_hold_at, platform_hold_reason, revoked_at,
+      hmac_ciphertext IS NOT NULL AS has_hmac
      FROM wallet_provider_accounts WHERE org_id = ? AND mode = ?`,
     [orgId, mode],
   );

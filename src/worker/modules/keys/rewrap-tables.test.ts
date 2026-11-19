@@ -18,7 +18,8 @@ describe('the envelope registry', () => {
     for (const { name } of tables) {
       const columns = await all<{ name: string }>(db, `PRAGMA table_info("${name}")`);
       const names = new Set(columns.map((c) => c.name));
-      if (FOUR.every((c) => names.has(c))) found.push(name);
+      const four = FOUR.map((c) => (name === 'wallet_provider_accounts' ? `hmac_${c}` : c));
+      if (four.every((c) => names.has(c))) found.push(name);
     }
     // A new table with an envelope fails here until it has an entry (and an AAD) in rewrap-tables.ts.
     expect(found.sort()).toEqual(PLACES.map((p) => p.table).sort());
@@ -139,6 +140,14 @@ const SITES: Record<string, { calls: Record<string, number>; tables: string[] | 
   'modules/webhooks/secrets.ts': {
     calls: { encryptSecret: 1 },
     tables: ['webhook_endpoint_secrets'],
+  },
+  'modules/wallet-providers/credential-service.ts': {
+    calls: { encryptSecret: 1 },
+    tables: ['wallet_credential_versions'],
+  },
+  'modules/wallet-providers/enrolment-source-key.ts': {
+    calls: { encryptSecret: 1 },
+    tables: ['wallet_provider_accounts'],
   },
   'modules/wallet-providers/account-service.ts': {
     calls: { encryptSecret: 1 },

@@ -1,5 +1,6 @@
-// 0112 rebuilds wallet_provider_accounts to relax one CHECK. Everything else must come through unchanged: the
-// schema (tables, indexes, triggers, views) differs only in that CHECK, and rows, children and FKs survive.
+// 0112 rebuilds wallet_provider_accounts to relax one CHECK and add the HMAC envelope columns. Everything else
+// must come through unchanged: the schema (tables, indexes, triggers, views) differs only in that CHECK, the four
+// columns with their CHECK, and the immutability trigger; rows, children and FKs survive.
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -9,6 +10,14 @@ const migrations = resolve(import.meta.dirname, '../migrations');
 const OLD_CHECK = `CHECK ((revision = 0 AND credential_id IS NULL AND revoked_at IS NULL)
     OR (revision > 0 AND credential_id IS NOT NULL))`;
 const NEW_CHECK = 'CHECK ((revision = 0) = (credential_id IS NULL))';
+const HMAC_COLUMNS = `  hmac_kek_version INTEGER CHECK (hmac_kek_version IS NULL OR hmac_kek_version > 0),
+  hmac_iv BLOB,
+  hmac_wrapped_dek BLOB,
+  hmac_ciphertext BLOB,
+`;
+const HMAC_CHECK = `
+  CHECK ((hmac_kek_version IS NULL) = (hmac_iv IS NULL) AND (hmac_kek_version IS NULL) = (hmac_wrapped_dek IS NULL)
+    AND (hmac_kek_version IS NULL) = (hmac_ciphertext IS NULL))`;
 
 const names = readdirSync(migrations)
   .filter((n) => n.endsWith('.sql'))
@@ -58,7 +67,7 @@ function seed(db: DatabaseSync) {
 }
 
 describe('0112 rebuild of wallet_provider_accounts', () => {
-  it('changes only the CHECK: every table, index, trigger and view is otherwise identical', () => {
+  it('changes only the CHECK, the HMAC columns and one trigger: all else is identical', () => {
     expect(rebuild).toContain('DROP TABLE wallet_provider_accounts');
     const db = migrated();
     const before = dump(db);
@@ -66,13 +75,18 @@ describe('0112 rebuild of wallet_provider_accounts', () => {
     db.exec(rebuild);
     db.exec('COMMIT');
     const after = dump(db);
-    expect(after.length).toBe(before.length);
+    expect(after.length).toBe(before.length + 1);
     const changed = after.filter((row) => !before.includes(row));
-    expect(changed).toHaveLength(1);
-    expect(changed[0]).toContain('CREATE TABLE wallet_provider_accounts');
+    expect(changed).toHaveLength(2);
+    const table = changed.find((row) => row.startsWith('table|wallet_provider_accounts|'));
+    const trigger = changed.find((row) => row.startsWith('trigger|'));
+    expect(trigger).toContain('wallet_provider_accounts_hmac_immutable');
     const was = before.find((row) => row.startsWith('table|wallet_provider_accounts|'));
     expect(was).toContain(OLD_CHECK);
-    expect(changed[0]).toBe(was?.replace(OLD_CHECK, NEW_CHECK));
+    const expected = was
+      ?.replace(OLD_CHECK, `${NEW_CHECK},${HMAC_CHECK}`)
+      .replace(/(\n {2}updated_at INTEGER NOT NULL,\n)/, `$1${HMAC_COLUMNS}`);
+    expect(table).toBe(expected);
     expect(before.filter((row) => !after.includes(row))).toEqual([was]);
   });
 
@@ -93,7 +107,14 @@ describe('0112 rebuild of wallet_provider_accounts', () => {
     db.exec(rebuild);
     expect(db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
     db.exec('COMMIT');
-    expect(rows()).toEqual(before);
+    // Every row keeps its values; the new HMAC columns start empty.
+    const empty = {
+      hmac_kek_version: null,
+      hmac_iv: null,
+      hmac_wrapped_dek: null,
+      hmac_ciphertext: null,
+    };
+    expect(rows()).toEqual(before.map((row) => ({ ...row, ...empty })));
     expect(children()).toEqual(kids);
     expect(db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
     const insert = (

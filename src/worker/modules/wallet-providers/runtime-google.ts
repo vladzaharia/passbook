@@ -126,7 +126,11 @@ async function withGoogleRest<T>(
   ctx = snapshotWalletCredentialContext(ctx);
   if (typeof onProviderResponse !== 'function') throw new WalletRuntimeError('provider_failure');
   const scope = copyRuntimeScope(inputScope);
-  const { account, hmacKey } = await runtimeGoogleAccount(ctx, scope, retirement);
+  const { account, hmacKey, credentialVersionId } = await runtimeGoogleAccount(
+    ctx,
+    scope,
+    retirement,
+  );
   const call = runtimeExecution(
     ctx,
     scope,
@@ -139,7 +143,11 @@ async function withGoogleRest<T>(
     const token = await getGoogleAccessToken(account, {
       issuedAt: Math.floor(ctx.clock.now() / 1000),
       fetcher: call.fetcher,
-      cacheKey: { accountId: scope.accountId, revision: scope.accountRevision },
+      cacheKey: {
+        accountId: scope.accountId,
+        revision: scope.accountRevision,
+        credentialVersionId,
+      },
     });
     return operation(
       {

@@ -12,10 +12,15 @@ export interface GoogleAccessToken {
   cached?: true;
 }
 
-/** Identifies the credentials a token was minted from; a new revision never reuses an old token. */
+/**
+ * Identifies the credentials a token was minted from. A new revision or a new credential version never
+ * reuses an old token: a rotation of a sourced enrolment moves the version, not the revision.
+ */
 export interface GoogleTokenCacheKey {
   accountId: string;
   revision: number;
+  /** The source credential version; omitted or null for a legacy envelope's own secret. */
+  credentialVersionId?: string | null;
 }
 
 export interface GoogleTokenOptions {
@@ -27,6 +32,7 @@ export interface GoogleTokenOptions {
 
 interface CachedToken extends GoogleAccessToken {
   revision: number;
+  credentialVersionId: string | null;
   reuseUntil: number;
 }
 
@@ -55,7 +61,12 @@ export async function getGoogleAccessToken(
   const cacheKey = options.cacheKey;
   if (cacheKey) {
     const cached = tokenCache.get(cacheKey.accountId);
-    if (cached && cached.revision !== cacheKey.revision) tokenCache.delete(cacheKey.accountId);
+    if (
+      cached &&
+      (cached.revision !== cacheKey.revision ||
+        cached.credentialVersionId !== (cacheKey.credentialVersionId ?? null))
+    )
+      tokenCache.delete(cacheKey.accountId);
     else if (cached && issuedAt < cached.reuseUntil)
       return { accessToken: cached.accessToken, expiresAt: cached.expiresAt, cached: true };
   }
@@ -112,6 +123,7 @@ export async function getGoogleAccessToken(
     tokenCache.set(cacheKey.accountId, {
       ...minted,
       revision: cacheKey.revision,
+      credentialVersionId: cacheKey.credentialVersionId ?? null,
       reuseUntil: issuedAt + Math.floor(token.expires_in * REUSE_FRACTION),
     });
   }

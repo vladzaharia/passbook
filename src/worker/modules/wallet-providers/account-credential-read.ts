@@ -10,7 +10,7 @@ import {
   assertCredentialKeyset,
   corrupt,
   credentialSnapshot,
-  decryptAccount,
+  openAccount,
   snapshotWalletCredentialContext,
   type WalletProviderCredentialSnapshot,
 } from './account-credential-material.ts';
@@ -64,13 +64,13 @@ export async function readConfiguredWalletProviderCredentials(
   if (
     row.id !== pinned.accountId ||
     row.revision !== pinned.accountRevision ||
-    !row.credential_id ||
+    (!row.credential_id && !row.hmac_ciphertext) ||
     row.revoked_at !== null
   ) {
     await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     return null;
   }
-  const stored = await applyEnrolmentSource(ctx, enrolmentOf(row), await decryptAccount(ctx, row), {
+  const stored = await applyEnrolmentSource(ctx, enrolmentOf(row), await openAccount(ctx, row), {
     current: true,
     activeOnly: true,
   });
@@ -117,14 +117,14 @@ export async function readGoogleCallbackVerification(
   if (
     row.id !== pinned.accountId ||
     row.revision !== pinned.accountRevision ||
-    !row.credential_id ||
+    (!row.credential_id && !row.hmac_ciphertext) ||
     row.revoked_at !== null
   ) {
     await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     return null;
   }
   // A callback is verified for the enrolment's own source issuer, revoked or not: callbacks outlive it.
-  const stored = await applyEnrolmentSource(ctx, enrolmentOf(row), await decryptAccount(ctx, row), {
+  const stored = await applyEnrolmentSource(ctx, enrolmentOf(row), await openAccount(ctx, row), {
     current: true,
     activeOnly: false,
   });
@@ -164,7 +164,7 @@ export async function readWalletProviderRetirementCredentials(
   await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
   const row = await findRetirementAccount(ctx.env.DB, pinned, ctx.clock.now());
   const stored = row
-    ? await applyEnrolmentSource(ctx, enrolmentOf(row), await decryptAccount(ctx, row), {
+    ? await applyEnrolmentSource(ctx, enrolmentOf(row), await openAccount(ctx, row), {
         versionId: await findOperationPin(ctx.env.DB, pinned.instanceId, {
           operationId: pinned.operationId,
         }),
@@ -202,7 +202,7 @@ export async function readSamsungPromotedRefreshCredentials(
   await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
   const row = await findSamsungPromotedRefreshAccount(ctx.env.DB, pinned, ctx.clock.now());
   const stored = row
-    ? await applyEnrolmentSource(ctx, enrolmentOf(row), await decryptAccount(ctx, row), {
+    ? await applyEnrolmentSource(ctx, enrolmentOf(row), await openAccount(ctx, row), {
         versionId: await findOperationPin(ctx.env.DB, pinned.instanceId, {
           version: pinned.operationVersion,
         }),
