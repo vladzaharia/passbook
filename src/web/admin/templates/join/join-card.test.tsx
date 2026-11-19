@@ -158,7 +158,7 @@ describe('join card: a link', () => {
       ),
     );
     await card();
-    expect(screen.getByRole('combobox', { name: /Name: Fills First/ })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /Name: Saved in First/ })).toBeInTheDocument();
   });
 });
 

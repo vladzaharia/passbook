@@ -158,6 +158,14 @@ body {
   }
 }
 
+/* On a phone the form leads and the card follows: the first screen asks for the name, it does not
+   fill with a card. */
+@media (max-width: 55.99rem) {
+  .jn-side {
+    order: -1;
+  }
+}
+
 /* The submit moment (join.js sets data-sending on .jn): the middle pass rises out of the buddy,
    the card takes the light and the button waits. transform-free for the pass (`translate`), so the
    art's own part animation underneath keeps its transform. Reduced motion skips all of it. */

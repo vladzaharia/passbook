@@ -250,6 +250,7 @@ export function FieldsTab({
       ) : null}
       <BudgetNote budget={pass.pushBudget} show={notify && dirty && !locked} />
       <SchemaForm
+        collapseEmpty
         schema={schema}
         value={draft}
         onChange={setDraft}

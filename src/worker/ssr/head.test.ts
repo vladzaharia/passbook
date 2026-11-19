@@ -21,7 +21,7 @@ describe('auth and error page heads', () => {
   const confirm = confirmPage('n', { token: 't'.repeat(20), email: 'ada@example.com' });
 
   it.each([
-    ['confirm', confirm, 'Sign in'],
+    ['confirm', confirm, 'Confirm sign-in'],
     ['expired', expiredPage('n'), 'Link expired'],
     ['404', renderErrorPage({ status: 404, nonce: 'n' }), 'Page not found'],
   ])('%s: noindex, the app manifest, a generic preview and the title pattern', (_, html, title) => {
