@@ -168,7 +168,7 @@ async function shoot(
           await page.waitForTimeout(300);
           text = `${text}\n${await visible()}`;
         }
-        writeFileSync(resolve(o.out, file.replace(/\.png$/, '.txt')), text);
+        writeFileSync(resolve(o.out, file.replace(/\.png$/, '.txt')), redact(text));
       }
     } catch (error) {
       note = `capture failed: ${(error as Error).message.split('\n')[0]}`;

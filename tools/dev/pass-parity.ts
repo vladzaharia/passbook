@@ -284,7 +284,9 @@ async function main() {
   } finally {
     await sim.shutdown();
     for (const [org, key] of keys)
-      await api.del(`/api/v1/api-keys/${key.id}?orgId=${org}`).catch(() => undefined);
+      await api
+        .del(`/api/v1/api-keys/${key.id}?orgId=${org}`)
+        .catch((e: Error) => console.warn(`api key ${key.id} not deleted (${org}): ${e.message}`));
   }
   writeFileSync(
     resolve(out, 'index.html'),
