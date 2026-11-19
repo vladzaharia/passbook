@@ -40,5 +40,18 @@ export const CHANNEL_COPY = {
   holderNotice: 'Your {channel} copy no longer works. Open {link}.',
   /** `{channel}` is a label; `{n}` a pass count. */
   turnsOff: 'Turns off {channel} for {n} passes.',
+  card: 'Channels',
+  copiesKeep: 'Copies keep working until New code.',
+  /** `{n}` is a count. */
+  clears: 'Clears {n} pass overrides.',
+  clearsOne: 'Clears 1 pass override.',
+  turnsOffOne: 'Turns off {channel} for 1 pass.',
+  noChange: 'No passes change.',
+  saved: 'Channels saved',
+  turnOffTitle: 'Turn off {channel}?',
+  turnOffPass: 'New copies stop. Copies keep working until New code.',
+  turnOffPassPaper: 'The active print is voided.',
+  bulkTitle: 'Channels',
+  bulkNotify: 'Email holders when a copy stops working',
   turnsOffReplace: 'Turns off {channel} for {n} passes and issues new codes.',
 } as const;

@@ -8,6 +8,7 @@
  * An act that removes only the item itself takes a plain confirm, an API key included: revoking
  * a leaked key must stay one click away.
  */
+import { CHANNEL_COPY } from '@/shared/copy/channels.ts';
 import { PRINT_COPY } from '@/shared/copy/print.ts';
 
 export interface ConfirmCopy {
@@ -294,6 +295,16 @@ export function voidPrintConfirm(): ConfirmCopy {
     title: PRINT_COPY.voidConfirmTitle,
     confirmLabel: PRINT_COPY.void,
     description: PRINT_COPY.voidConfirmBody,
+    typed: false,
+  };
+}
+
+/** One pass's channel off: no new copies, and the ones out there keep working until New code. */
+export function channelOffConfirm(channel: string, paper = false): ConfirmCopy {
+  return {
+    title: CHANNEL_COPY.turnOffTitle.replace('{channel}', channel),
+    confirmLabel: 'Turn off',
+    description: paper ? CHANNEL_COPY.turnOffPassPaper : CHANNEL_COPY.turnOffPass,
     typed: false,
   };
 }

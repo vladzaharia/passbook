@@ -37,7 +37,16 @@ function openPrintPage(passId: string, win: Window | null) {
  * Print, Reprint and Void print for one pass. Shown when the paper channel is on for the pass or a
  * print exists; changes need passes:operate and a pass in the current mode (`readOnly`).
  */
-export function PrintCard({ pass, readOnly }: { pass: PassDetailDto; readOnly: boolean }) {
+export function PrintCard({
+  pass,
+  readOnly,
+  bare = false,
+}: {
+  pass: PassDetailDto;
+  readOnly: boolean;
+  /** Inside the Channels card: no card of its own. */
+  bare?: boolean;
+}) {
   const channels = usePassPaper(pass.id);
   const prints = usePassPrints(pass.id);
   const actions = usePrintActions(pass.id);
@@ -63,77 +72,78 @@ export function PrintCard({ pass, readOnly }: { pass: PassDetailDto; readOnly: b
   const printFromButton = () =>
     void print(false).catch((error) => toast.error(error, PRINT_COPY.couldNotPrint));
 
-  return (
-    <Card>
-      <CardHeader title={PRINT_COPY.card} />
-      <CardBody>
-        {prints.isError ? (
-          <ErrorState inline error={prints.error} onRetry={() => void prints.refetch()} />
-        ) : channels.isError ? (
-          <ErrorState inline error={channels.error} onRetry={() => void channels.refetch()} />
-        ) : (
-          <div className="flex flex-col gap-4">
-            {paper && !paper.on && paper.reason ? (
-              <Callout tone="info">{channelReason('paper', paper.reason)}</Callout>
-            ) : null}
-            {active ? (
-              <ListRows label={PRINT_COPY.card}>
-                <ListRow
-                  leading={<Printer aria-hidden />}
-                  title={PRINT_COPY.printed(active.generation)}
-                  pills={<StatusPill status="active" />}
-                  meta={formatDateTime(active.createdAt)}
-                />
-              </ListRows>
-            ) : (
-              <EmptyState
-                inline
-                art="stub"
-                title={PRINT_COPY.cardEmpty}
-                action={
-                  canPrint ? (
-                    <Button
-                      variant="outline"
-                      iconStart={<Printer aria-hidden />}
-                      loading={actions.mint.isPending}
-                      onClick={printFromButton}
-                    >
-                      {PRINT_COPY.print}
-                    </Button>
-                  ) : undefined
-                }
+  const body = (
+    <>
+      {prints.isError ? (
+        <ErrorState inline error={prints.error} onRetry={() => void prints.refetch()} />
+      ) : channels.isError ? (
+        <ErrorState inline error={channels.error} onRetry={() => void channels.refetch()} />
+      ) : (
+        <div className="flex flex-col gap-4">
+          {paper && !paper.on && paper.reason ? (
+            <Callout tone="info">{channelReason('paper', paper.reason)}</Callout>
+          ) : null}
+          {active ? (
+            <ListRows label={PRINT_COPY.card}>
+              <ListRow
+                leading={<Printer aria-hidden />}
+                title={PRINT_COPY.printed(active.generation)}
+                pills={<StatusPill status="active" />}
+                meta={formatDateTime(active.createdAt)}
               />
-            )}
-            {active && !readOnly ? (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  iconStart={<Printer aria-hidden />}
-                  disabled={!canPrint}
-                  onClick={printFromButton}
-                >
-                  {PRINT_COPY.print}
-                </Button>
-                <Button
-                  variant="outline"
-                  iconStart={<RotateCcw aria-hidden />}
-                  disabled={!canPrint}
-                  onClick={() => setAsk('reprint')}
-                >
-                  {PRINT_COPY.reprint}
-                </Button>
-                <Button
-                  variant="outline"
-                  iconStart={<Ban aria-hidden />}
-                  onClick={() => setAsk('void')}
-                >
-                  {PRINT_COPY.void}
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        )}
-      </CardBody>
+            </ListRows>
+          ) : (
+            <EmptyState
+              inline
+              art="stub"
+              title={PRINT_COPY.cardEmpty}
+              action={
+                canPrint ? (
+                  <Button
+                    variant="outline"
+                    iconStart={<Printer aria-hidden />}
+                    loading={actions.mint.isPending}
+                    onClick={printFromButton}
+                  >
+                    {PRINT_COPY.print}
+                  </Button>
+                ) : undefined
+              }
+            />
+          )}
+          {active && !readOnly ? (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                iconStart={<Printer aria-hidden />}
+                disabled={!canPrint}
+                onClick={printFromButton}
+              >
+                {PRINT_COPY.print}
+              </Button>
+              <Button
+                variant="outline"
+                iconStart={<RotateCcw aria-hidden />}
+                disabled={!canPrint}
+                onClick={() => setAsk('reprint')}
+              >
+                {PRINT_COPY.reprint}
+              </Button>
+              <Button
+                variant="outline"
+                iconStart={<Ban aria-hidden />}
+                onClick={() => setAsk('void')}
+              >
+                {PRINT_COPY.void}
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </>
+  );
+  const dialogs = (
+    <>
       <ConfirmDialog
         open={ask === 'reprint'}
         onOpenChange={(open) => !open && setAsk(null)}
@@ -151,6 +161,20 @@ export function PrintCard({ pass, readOnly }: { pass: PassDetailDto; readOnly: b
           toast.success(PRINT_COPY.voided);
         }}
       />
+    </>
+  );
+  if (bare)
+    return (
+      <div className="flex flex-col gap-4">
+        {body}
+        {dialogs}
+      </div>
+    );
+  return (
+    <Card>
+      <CardHeader title={PRINT_COPY.card} />
+      <CardBody>{body}</CardBody>
+      {dialogs}
     </Card>
   );
 }
