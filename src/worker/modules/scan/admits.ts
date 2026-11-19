@@ -73,13 +73,26 @@ export function matchesEvent(actor: ScanActor, pass: Pass): boolean {
   return actor.event ? eventAcceptsPass(actor, actor.event, pass) : true;
 }
 
+/** The mixed scope an actor has or was narrowed from; null for a single-shape scope. */
+export function admitsIdentity(actor: ScanActor): ScanActor['admittedFrom'] | null {
+  if (actor.admittedFrom) return actor.admittedFrom;
+  if (!actor.events) return null;
+  return {
+    templateIds: [...actor.templateIds].sort(),
+    eventIds: actor.events.map((s) => s.event.id).sort(),
+    timeZone: actor.timeZone,
+  };
+}
+
 /** One entry of a mixed scope, as a single-shape actor. Spread keeps the captured epochs. */
 function narrowed(actor: ScanActor, entry: EventScope | 'templates'): ScanActor {
+  const admittedFrom = admitsIdentity(actor) ?? undefined;
   const { events: _events, entryTemplateIds, ...single } = actor;
   return entry === 'templates'
-    ? { ...single, event: null, templateIds: [...(entryTemplateIds ?? [])] }
+    ? { ...single, admittedFrom, event: null, templateIds: [...(entryTemplateIds ?? [])] }
     : {
         ...single,
+        admittedFrom,
         event: entry.event,
         templateIds: [...entry.templateIds],
         timeZone: entry.event.timeZone,

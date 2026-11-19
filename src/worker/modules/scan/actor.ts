@@ -118,6 +118,8 @@ export interface ScanActor {
   events?: EventScope[];
   /** A mixed scope's template entries: zones, plans and hours apply to passes admitted through them. */
   entryTemplateIds?: string[];
+  /** Set once narrowed: the mixed scope's identity, so asset grants match the device's own actor. */
+  admittedFrom?: { templateIds: string[]; eventIds: string[]; timeZone: string };
   /** An admin requested the whole event rather than an explicit template subset. */
   adminEventTemplates?: boolean;
   /** The configured scanner scope is invalid or conflicts with its workspace. */

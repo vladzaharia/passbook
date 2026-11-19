@@ -143,6 +143,30 @@ describe('admits: which entry admits a pass', () => {
   });
 });
 
+describe('admits: grants made under the narrowed entry', () => {
+  it('serves the card assets of an event-admitted pass to the device that read it', async () => {
+    const tpl = await template('Asset event');
+    const event = await kit.event({ templateIds: [tpl] });
+    await run(kit.env.DB, "UPDATE scan_events SET time_zone='Europe/Berlin' WHERE id=?", [
+      event.id,
+    ]);
+    const d = await mixed({ templateIds: [await template('Asset entry')], eventIds: [event.id] });
+    const read = await out(
+      await kit.post(d.headers, '/resolve', {
+        idempotencyKey: key(),
+        input: codeOf(await kit.scanPass(tpl)),
+        clientTs: kit.clock.now(),
+      }),
+    );
+    const view = read.card?.passView;
+    if (!view) throw new Error('Missing card');
+    const icon = `${view.assetBaseUrl}icon.png?g=${encodeURIComponent(view.assetGrant)}`;
+    const served = await kit.get(d.headers, icon.replace('/api/v1/scan', ''));
+    expect(served.status).toBe(200);
+    await served.body?.cancel();
+  });
+});
+
 describe('admits: scope fences', () => {
   it('still reads a session stored in the legacy one-event form, and the migration rewrites it', async () => {
     const tpl = await template('Legacy');
