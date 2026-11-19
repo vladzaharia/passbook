@@ -17,6 +17,7 @@ import {
   unregisterDevice,
   updatedSerials,
 } from './service.ts';
+import { appleVariant } from './variant.ts';
 
 const device = z.object({ deviceId: z.string(), passTypeId: z.string() });
 const serial = device.extend({ serial: z.string() });
@@ -124,7 +125,8 @@ register(
       p.serial,
       c.req.header('authorization'),
     );
-    const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
+    const variant = await appleVariant(ctx, pass);
+    const response = await servePassFile(c.env.BUCKET, pass, c.req.raw, {}, variant ?? undefined);
     try {
       await assertAppleCredential(ctx, pass);
     } catch (error) {

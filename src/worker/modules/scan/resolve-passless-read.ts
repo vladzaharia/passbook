@@ -1,5 +1,6 @@
 import type { ScanCodeInput } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { printCodeRef } from '../prints/codes.ts';
 import { type CredentialTombstoneSnapshot, scanCredentialKeys } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { grantReadMiss } from './misses.ts';
@@ -38,6 +39,7 @@ export async function inputMatch(
         barcodeHash: keys.barcodeHash,
         lookupHash: keys.lookupHash,
         serial: input.method === 'manual' ? keys.clean : null,
+        printRef: await printCodeRef(ctx.env, actor.orgId, actor.mode, keys.clean),
       }
     : null;
 }

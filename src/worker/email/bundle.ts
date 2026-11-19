@@ -23,11 +23,11 @@ export interface BundleEmailInput {
   supportUrl?: string | null;
   /** The bundle page. */
   pageUrl: string;
-  /** `/b/:token/passes.pkpasses`. */
-  addAllUrl: string;
+  /** `/b/:token/passes.pkpasses`; null when Apple is off for every addable pass. */
+  addAllUrl: string | null;
   badgeUrl: string;
-  /** One row each; a voided pass has no link. */
-  passes: { title: string; addUrl: string | null; detail?: string | null }[];
+  /** One row each; a voided pass has no link, `off` marks a live one Apple is off for. */
+  passes: { title: string; addUrl: string | null; off?: boolean; detail?: string | null }[];
   iconUrl?: string | null;
   senderName?: string | null;
   /** The org's own From name (already checked): shown as "<fromName> via <sender>". */
@@ -51,7 +51,7 @@ const row = (p: BundleEmailInput['passes'][number]) => {
   return `<tr><td class="e-strong e-line" valign="middle" style="padding:12px 12px 12px 0;${edge};${type('sm')};font-weight:500;color:${c.strong};word-break:break-word">${escapeHtml(p.title)}${detail}</td><td class="e-line" align="right" valign="middle" style="padding:0;${edge};${type('sm')};white-space:nowrap">${
     p.addUrl
       ? `<a class="e-link" href="${escapeHtml(p.addUrl)}" style="${link}">Add</a>`
-      : `<span class="e-muted" style="display:inline-block;padding:12px 0 12px 12px;color:${c.muted}">Voided</span>`
+      : `<span class="e-muted" style="display:inline-block;padding:12px 0 12px 12px;color:${c.muted}">${p.off ? '' : 'Voided'}</span>`
   }</td></tr>`;
 };
 
@@ -60,8 +60,13 @@ export function renderBundleEmail(input: BundleEmailInput): RenderedEmail {
   const footer = supportFooter(safeMail(input.supportEmail), safeUrl(input.supportUrl));
   const subject = `Your ${input.orgName} passes`;
   const { width, height } = EMAIL_BADGE;
-  const badge = `<a href="${escapeHtml(input.addAllUrl)}" style="display:block;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="${APPLE_BADGE_ALT}" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`;
-  const actions = stackHtml(badge, badgeButtonHtml(input.pageUrl, OPEN_LABEL));
+  const badge = input.addAllUrl
+    ? `<a href="${escapeHtml(input.addAllUrl)}" style="display:block;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="${APPLE_BADGE_ALT}" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`
+    : null;
+  const open = badgeButtonHtml(input.pageUrl, OPEN_LABEL);
+  const actions = badge
+    ? stackHtml(badge, open)
+    : `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 4px;border-collapse:collapse"><tr><td style="padding:0">${open}</td></tr></table>`;
   const rows = input.passes.map(row).join('');
   const addLine = input.passes.length === 1 ? HOLDER_COPY.emailAddLine : HOLDER_COPY.emailAddLines;
   const text = [
@@ -71,12 +76,12 @@ export function renderBundleEmail(input: BundleEmailInput): RenderedEmail {
     '',
     ...input.passes.map(
       (p) =>
-        `${p.title}${p.detail ? ` (${p.detail})` : ''}${p.addUrl ? `: ${p.addUrl}` : ' (voided)'}`,
+        `${p.title}${p.detail ? ` (${p.detail})` : ''}${p.addUrl ? `: ${p.addUrl}` : p.off ? '' : ' (voided)'}`,
     ),
     '',
-    `Add all to Apple Wallet: ${input.addAllUrl}`,
+    ...(input.addAllUrl ? [`Add all to Apple Wallet: ${input.addAllUrl}`] : []),
     `${OPEN_LABEL}: ${input.pageUrl}`,
-    addLine,
+    ...(input.addAllUrl ? [addLine] : []),
     '',
     PRIVATE_LINE,
     ...footer.text,
@@ -88,7 +93,7 @@ ${muted('0 0 16px', `${escapeHtml(input.bundleName)} · ${HOLDER_COPY.count(inpu
 ${input.mode === 'test' ? testNoteHtml(HOLDER_COPY.testNote('bundle')) : ''}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border-collapse:collapse">${rows}</table>
 ${actions}
-${muted('0 0 24px', escapeHtml(addLine))}
+${input.addAllUrl ? muted('0 0 24px', escapeHtml(addLine)) : ''}
 <p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${PRIVATE_LINE}</p>
 ${footer.html}`;
   const buddyBase = safeUrl(input.buddyBase);

@@ -136,6 +136,19 @@ describe('merge across a schema gap', () => {
     ]);
     expect(m(missing.merged).wallets.schema).toBe(1);
   });
+  it('paper is a version site: its own upgrader lifts the older side', () => {
+    const b = base;
+    const o = edit(b, (d) => (m(d).paper.barcode = 'code128'));
+    const t = edit(b, (d) => (m(d).paper.schema = 2));
+    const reg: Upgraders = { paper: { 1: step((x) => x) } };
+    const r = mergePackages(b, o, t, { upgraders: reg });
+    expect(r.status).toBe('clean');
+    expect(m(r.merged).paper).toMatchObject({ schema: 2, barcode: 'code128' });
+    const missing = mergePackages(b, o, t);
+    expect(missing.conflicts.map((c) => [c.id, c.kind])).toEqual([
+      ['paper:schema', 'schema_upgrade_missing'],
+    ]);
+  });
   it('scan.display.v bumps with their upgrader', () => {
     const reg: Upgraders = { 'scan.display': { 1: (x) => x } };
     const t = edit(base, (d) => (m(d).scan.display.v = 2));
@@ -169,6 +182,7 @@ describe('manifest rule coverage', () => {
     stamps: 'rule',
     counters: 'rule',
     wallets: 'rule',
+    paper: 'rule',
   } satisfies Record<keyof TemplateManifest, string>;
   it('every manifest key has a rule or sits on the explicit atomic, ours or dropped lists', () => {
     for (const [key, how] of Object.entries(KEYS))

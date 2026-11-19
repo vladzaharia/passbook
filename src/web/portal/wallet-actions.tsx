@@ -39,7 +39,9 @@ export function publicUrlOf(
   downloadUrl: string | null,
   origin = window.location.origin,
 ): string | null {
-  const m = downloadUrl ? /^(.*\/p\/[^/?#]+)\/pass\.pkpass(?:[?#].*)?$/.exec(downloadUrl) : null;
+  const m = downloadUrl
+    ? /^(.*\/p\/[^/?#]+?)(?:\/pass\.pkpass)?(?:[?#].*)?$/.exec(downloadUrl)
+    : null;
   if (!m?.[1]) return null;
   return new URL(m[1], origin).toString();
 }

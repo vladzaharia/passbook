@@ -57,6 +57,9 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   tag_lost: { headline: 'Tag reported lost', sub: 'Keep it and call security.' },
   tag_not_allowed: { headline: 'Tag not accepted', sub: "This tag isn't accepted here." },
   tag_invalid: { headline: "Tag couldn't be checked", sub: 'Try again or use the card.' },
+  channel_off: { headline: '{channel} turned off', sub: 'Use another copy or check ID.' },
+  print_replaced: { headline: 'Reprinted', sub: 'Newer copy printed {date}. Check ID.' },
+  print_voided: { headline: 'Printed copy voided', sub: 'Voided {date}. Ask for a new ticket.' },
   already_done: { headline: 'Already {done}', sub: '{ago} at {scanner}. Check ID.' },
   cooldown: { headline: 'Just done', sub: '{action} at {time}. Next in {wait}.' },
   not_yet_valid: { headline: 'Not open yet', sub: 'Opens {day} {time}.' },
@@ -105,6 +108,9 @@ export const SCAN_DISPLAY_COPY = {
   cutOnThisScreen: 'Cut on this screen',
 } as const;
 
+/** The flag of a typed number a door must check: it picks the typed-number line. */
+export const TYPED_NUMBER_FLAG = 'Typed number';
+
 /** Refusal sub-lines for a reason whose plan has nothing to say. They never ride a grant. */
 export const SCAN_REASON_VARIANTS = {
   outside_hours: { noHours: '{plan} has no hours this week. Ask a manager.' },
@@ -118,6 +124,7 @@ export const SCAN_REASON_VARIANTS = {
   not_yet_valid: { noWhen: 'Not open yet. Try again later.' },
   capacity_full: { noPlace: 'Full', noCapacity: '{in} in.', noCount: 'At capacity.' },
   ended: { noPlace: 'Ended' },
+  check_required: { typedNumber: 'Check ID.' },
 } as const;
 
 /** In/out lines that replace a reason's default when the place is a zone or the state is known. */

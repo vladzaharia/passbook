@@ -1,0 +1,68 @@
+import type { PaperDesign } from '../../../passkit/template/paper.ts';
+import type { PaperContent } from '../../../passkit/template/paper-content.ts';
+import { NotFoundError } from '../../platform/errors.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { passChannels } from '../channels/service.ts';
+import type { Pass } from '../passes/repo-map.ts';
+import { getOrg } from '../passes/repo-read-issuance.ts';
+import { assertPassSnapshot, capturePassSnapshot } from '../public/snapshot.ts';
+import { printCodeOf } from './codes.ts';
+import { paperTicket } from './paper.ts';
+import * as repo from './repo.ts';
+
+export type PrintAudience = 'holder' | 'staff';
+
+export type PrintPageModel = { orgName: string; mode: Pass['mode'] } & (
+  | { state: 'unavailable' }
+  | { state: 'empty' }
+  | {
+      state: 'ready';
+      design: PaperDesign;
+      content: PaperContent;
+      /** The print code. It goes into the page's markup and nowhere else. */
+      code: string;
+      generation: number;
+    }
+);
+
+/**
+ * What the print page shows for a pass: the active print's ticket, nothing yet (the holder makes it
+ * with a POST) or "unavailable" when paper is off for the pass or, for a holder, staff-only. A GET
+ * never mints. The snapshot fence drops the page when the link or credential moved under it.
+ */
+export async function printPageModel(
+  ctx: ServiceContext,
+  pass: Pass,
+  audience: PrintAudience,
+): Promise<PrintPageModel> {
+  if (pass.status !== 'active' || pass.removedAt !== null || pass.deletedAt !== null)
+    throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+  const snapshot = audience === 'holder' ? await capturePassSnapshot(ctx, pass) : null;
+  const [channels, org, ticket] = await Promise.all([
+    passChannels(ctx, pass),
+    getOrg(ctx.env.DB, pass.orgId),
+    paperTicket(ctx, pass),
+  ]);
+  const base = { orgName: org?.name ?? '', mode: pass.mode };
+  let model: PrintPageModel = { ...base, state: 'unavailable' };
+  if (channels.effective.paper.on && ticket && (audience === 'staff' || ticket.design.holder)) {
+    const print = await repo.activePrint(ctx.env.DB, pass.id);
+    model = print
+      ? {
+          ...base,
+          state: 'ready',
+          design: ticket.design,
+          content: ticket.content,
+          generation: print.generation,
+          code: await printCodeOf(ctx.env, {
+            id: print.id,
+            passId: pass.id,
+            orgId: pass.orgId,
+            mode: pass.mode,
+          }),
+        }
+      : { ...base, state: 'empty' };
+  }
+  if (snapshot) await assertPassSnapshot(ctx, snapshot);
+  return model;
+}

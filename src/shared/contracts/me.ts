@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { EffectiveChannelsSchema } from './channels.ts';
 import { IdSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { WalletProviderIssuanceSchema, WalletProviderSchema } from './wallet-providers.ts';
 
@@ -44,12 +45,18 @@ export const MyPassSchema = z.object({
   refreshRequestedAt: TimestampSchema.nullable(),
   /** Null when the link cannot be shown (a stored link that must be rotated). */
   downloadUrl: z.string().nullable(),
+  /** The holder's /p page: the link behind the QR and More, whatever the channels offer. */
+  pageUrl: z.string().nullable().optional(),
   /** Native alternatives, independently of the Apple registration in inWallet. */
   walletOffers: z.array(WalletOfferSchema),
   /** The release gate per native wallet; a disabled one is not offered. */
   walletIssuance: z.partialRecord(WalletProviderSchema, WalletProviderIssuanceSchema).default({}),
   /** Server-checked eligibility for showing this pass's barcode. */
   presentationEligible: z.boolean().optional(),
+  /** What each delivery channel offers this holder: the one gate (modules/channels/gate.ts). */
+  channels: EffectiveChannelsSchema.optional(),
+  /** Paper is on and the template lets the holder print. */
+  holderPrint: z.boolean().optional(),
   passJson: z.record(z.string(), z.unknown()),
   assetBaseUrl: z.string().nullable(),
   /** Image files the pass can load: template files plus per-pass overrides. */

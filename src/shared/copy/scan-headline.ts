@@ -14,6 +14,7 @@ export interface HeadlineFacts {
   place?: string | null;
   flag?: string | null;
   input?: string | null;
+  channel?: string | null;
 }
 
 /** The values a reason headline names; the result screen's line values start from these. */
@@ -27,6 +28,7 @@ export function headlineValues(f: HeadlineFacts): Record<string, string> {
     place: f.place ?? '',
     flag: f.flag ?? 'Check required',
     input: f.input ?? 'This value',
+    channel: f.channel ?? 'This copy',
   };
 }
 

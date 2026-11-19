@@ -1,4 +1,6 @@
+import { Ban } from 'lucide-react';
 import type { ReactNode } from 'react';
+import type { EffectiveChannels } from '../../shared/contracts/channels.ts';
 import type { WalletOffer } from '../../shared/contracts/me.ts';
 import type {
   WalletProvider,
@@ -9,7 +11,9 @@ import { addLine, type DeviceInfo } from '../../shared/device.ts';
 import { walletChoices } from '../../shared/wallet-choice.ts';
 import { AppleWalletBadge } from '../ui/apple-wallet-badge.tsx';
 import { BuddyArt } from '../ui/art/buddy-art.tsx';
+import { Callout } from '../ui/callout.tsx';
 import { AddBlock } from './add/add-block.tsx';
+import { OUTLINE_ACTION_CLASS } from './add/added.tsx';
 import { type AddAreaProps, addMode } from './add/area.ts';
 import type { RenderBuddy } from './add/scan.tsx';
 import { Help, type HolderSupport, Notice, SendAgain } from './holder-parts.tsx';
@@ -42,6 +46,10 @@ export interface HolderPassViewProps {
   support?: HolderSupport | null;
   /** An Apple device registration was reported (the portal knows; /p does not). */
   inWallet?: boolean;
+  /** What each channel offers this holder; absent means every channel is on. */
+  channels?: EffectiveChannels | undefined;
+  /** The print page, when paper is on and the template lets the holder print. */
+  printHref?: string | undefined;
   /** Under the add block: the portal's Details card. */
   details?: ReactNode;
   /** As the download starts: the card dips towards the badge. */
@@ -68,8 +76,9 @@ export function HolderPassView(props: HolderPassViewProps) {
   const { state, device, publicUrl, support } = props;
   const mode = addMode(state, device, props.inWallet ?? false, publicUrl);
   const buddy = props.buddy ?? ssrBuddy;
+  const appleOn = props.channels?.apple.on ?? true;
   const area: AddAreaProps | null =
-    mode === 'off'
+    mode === 'off' || !appleOn
       ? null
       : {
           mode,
@@ -83,6 +92,15 @@ export function HolderPassView(props: HolderPassViewProps) {
           // Apple's guidance accompanies the badge on every device.
           line: addLine(device),
         };
+  const choices = walletChoices({
+    device,
+    apple: area !== null,
+    browserHref: state === 'active' ? props.barcodeHref : undefined,
+    offers: state === 'active' ? props.walletOffers : [],
+    ...(props.issuance ? { issuance: props.issuance } : {}),
+  });
+  const printable = state === 'active' && props.printHref;
+  const nothing = state === 'active' && choices.length === 0 && !printable;
   const help =
     state !== 'voided' && !support?.platform && (support?.email || support?.url) ? support : null;
   // On the iPhone the badge's card leads, so it is on the first screen; the pass follows it.
@@ -116,15 +134,25 @@ export function HolderPassView(props: HolderPassViewProps) {
         )}
         {state === 'active' || area ? (
           <WalletChoices
-            choices={walletChoices({
-              device,
-              apple: area !== null,
-              browserHref: state === 'active' ? props.barcodeHref : undefined,
-              offers: state === 'active' ? props.walletOffers : [],
-              ...(props.issuance ? { issuance: props.issuance } : {}),
-            })}
+            choices={choices}
             apple={area ? <AddBlock {...area} buddy={buddy} /> : null}
           />
+        ) : null}
+        {printable ? (
+          <section className="wl-presentation" aria-label={HOLDER_COPY.printTitle}>
+            <h2>{HOLDER_COPY.printTitle}</h2>
+            <p>{HOLDER_COPY.printLine}</p>
+            <a className={OUTLINE_ACTION_CLASS} href={props.printHref}>
+              {HOLDER_COPY.print}
+            </a>
+          </section>
+        ) : null}
+        {nothing ? (
+          <div role="status">
+            <Callout tone="info" icon={Ban}>
+              {HOLDER_COPY.noTicket(props.orgName)}
+            </Callout>
+          </div>
         ) : null}
         {state === 'active' && props.resend ? (
           <SendAgain action={props.resend.action} again={props.resend.again} />

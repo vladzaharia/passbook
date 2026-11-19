@@ -5,6 +5,7 @@ import {
 } from '../scan/repo-scan-retention.ts';
 import type { PreparedScanRetentionDelete } from '../scan/scan-retention-proof.ts';
 import { providerRetirementCompleteSql } from '../wallet-providers/repo-sync-retention.ts';
+import { voidedKey } from './file.ts';
 import { matchesCredentialRefKeyset } from './repo-credential-keyset.ts';
 import { assetsFromResult, listAssetsStmt } from './repo-history-assets.ts';
 import { mapPass, type Pass } from './repo-map.ts';
@@ -51,20 +52,22 @@ export async function deletePassRows(
   if (!(await matchesCredentialRefKeyset(db, credentialKeysetCommitment)))
     return { deleted: false, objectKeys: [], deviceIds: [] };
   const [versionRows, assetRows, deviceRows, photoRow] = await batch(db, [
-    stmt(db, 'SELECT object_key FROM pass_versions WHERE pass_id = ? AND object_key IS NOT NULL', [
-      pass.id,
-    ]),
+    stmt(db, 'SELECT object_key, version FROM pass_versions WHERE pass_id = ?', [pass.id]),
     listAssetsStmt(db, pass.id),
     stmt(db, 'SELECT device_id, identity_id FROM registrations WHERE pass_id = ?', [pass.id]),
     memberPhotoStmt(db, pass.orgId, pass.id),
   ]);
-  const versions = (versionRows?.results ?? []) as { object_key: string | null }[];
+  const versions = (versionRows?.results ?? []) as { object_key: string | null; version: number }[];
   const assets = assetsFromResult(assetRows);
   const devices = (deviceRows?.results ?? []) as { device_id: string; identity_id: string }[];
   const photo = memberPhotoFromResult(photoRow);
   const keys = new Set<string>([pass.objectKey]);
   if (photo) keys.add(photo.r2_key);
-  for (const v of versions) if (v.object_key) keys.add(v.object_key);
+  keys.add(voidedKey(pass.id, pass.version));
+  for (const v of versions) {
+    if (v.object_key) keys.add(v.object_key);
+    keys.add(voidedKey(pass.id, v.version));
+  }
   for (const a of assets) keys.add(a.r2Key);
   const results = await batch(db, [
     stageScanRetentionDeleteStmt(db, pass.id, retention),

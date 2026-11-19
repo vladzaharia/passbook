@@ -12,6 +12,8 @@ export type PassCause =
   | 'resign';
 
 export interface Pass {
+  /** Set by the scanner's candidate read: the channel inputs the pass was evaluated with. */
+  channelEpoch?: string;
   id: string;
   orgId: string;
   identityId: string;

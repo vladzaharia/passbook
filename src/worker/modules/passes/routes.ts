@@ -16,7 +16,9 @@ import { methodScope, modeOf } from '../../platform/auth.ts';
 import { defaultBodyLimit } from '../../platform/body-limit.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { registerPassChannelRoutes } from '../channels/routes.ts';
 import { registerEventRoutes } from '../events/routes.ts';
+import { registerPassPrintRoutes } from '../prints/routes.ts';
 import { bindPassConnection } from './connection-bind.ts';
 import { diffVersions, getPassDetail, getVersionDetail } from './detail.ts';
 import {
@@ -311,5 +313,7 @@ registerCheckInRoutes(passesRoutes);
 registerStampsRoutes(passesRoutes);
 registerTermRoutes(passesRoutes);
 registerBulkRoutes(passesRoutes);
+registerPassChannelRoutes(passesRoutes);
+registerPassPrintRoutes(passesRoutes);
 registerEventRoutes(passesRoutes);
 registerRemoveRoutes(passesRoutes);

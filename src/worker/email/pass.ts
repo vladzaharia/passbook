@@ -27,7 +27,10 @@ export interface PassEmailInput {
   supportEmail?: string | null;
   supportUrl?: string | null;
   lang?: string;
-  downloadUrl: string;
+  /** The .pkpass link; null while Apple is off for this pass (no badge, no attachment). */
+  downloadUrl: string | null;
+  /** The print page, when paper is on and the template lets the holder print. */
+  printUrl?: string | null;
   /** The public pass page. */
   manageUrl: string;
   /** Apple's black badge PNG (absolute URL), drawn in the EMAIL_BADGE box. */
@@ -74,6 +77,7 @@ export interface RenderedEmail {
 export const ADD_LINE = HOLDER_COPY.emailAddLine;
 const PRIVATE_LINE = 'Keep this email private. Its links open your pass.';
 const OPEN_LABEL = 'Open your pass';
+const PRINT_LABEL = 'Print ticket';
 
 type EmailWalletOffer = Pick<WalletOffer, 'provider' | 'href'>;
 
@@ -130,8 +134,24 @@ function passBlock(input: PassEmailInput, fields: PassSummary['fields']): string
  */
 function actionsHtml(input: PassEmailInput): string {
   const { width, height } = EMAIL_BADGE;
-  const badge = `<a href="${escapeHtml(input.downloadUrl)}" style="display:block;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="${APPLE_BADGE_ALT}" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`;
-  return stackHtml(badge, badgeButtonHtml(input.manageUrl, OPEN_LABEL));
+  const badge = input.downloadUrl
+    ? `<a href="${escapeHtml(input.downloadUrl)}" style="display:block;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="${APPLE_BADGE_ALT}" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`
+    : null;
+  const print = safeUrl(input.printUrl);
+  const items = [
+    ...(badge ? [badge] : []),
+    badgeButtonHtml(input.manageUrl, OPEN_LABEL),
+    ...(print ? [badgeButtonHtml(print, PRINT_LABEL)] : []),
+  ];
+  const [first, second] = items;
+  if (badge && items.length === 2 && first && second) return stackHtml(first, second);
+  const rows = items
+    .map(
+      (item, i) =>
+        `<tr><td style="padding:${i < items.length - 1 ? '0 0 12px' : '0'}">${item}</td></tr>`,
+    )
+    .join('');
+  return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 ${badge ? 4 : 24}px;border-collapse:collapse">${rows}</table>`;
 }
 
 /** Only render capability links for the same pass as the Apple and public-page links. */
@@ -165,6 +185,7 @@ function walletActionsHtml(base: string, offers: readonly EmailWalletOffer[]): s
 export function renderPassEmail(input: PassEmailInput): RenderedEmail {
   const footer = supportFooter(safeMail(input.supportEmail), safeUrl(input.supportUrl));
   const wallets = emailWalletOffers(input);
+  const printUrl = safeUrl(input.printUrl);
   const subject = input.subject?.trim() || `Your ${input.orgName} pass`;
   const joinLine = input.joined ? JOIN_COPY.mailLine.replace('{org}', input.orgName) : null;
   const fields = (input.summary?.fields ?? [])
@@ -176,9 +197,10 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
     ...(input.passTitle ? ['', input.passTitle] : []),
     ...fields.map((f) => `${f.label ? `${f.label}: ` : ''}${f.value}`),
     '',
-    `${APPLE_BADGE_ALT}: ${input.downloadUrl}`,
+    ...(input.downloadUrl ? [`${APPLE_BADGE_ALT}: ${input.downloadUrl}`] : []),
     `${OPEN_LABEL}: ${input.manageUrl}`,
-    ADD_LINE,
+    ...(printUrl ? [`${PRINT_LABEL}: ${printUrl}`] : []),
+    ...(input.downloadUrl ? [ADD_LINE] : []),
     ...(wallets?.offers.length
       ? [
           '',
@@ -199,7 +221,7 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
 ${input.mode === 'test' ? testNoteHtml(HOLDER_COPY.testNote('pass')) : ''}
 ${passBlock(input, fields)}
 ${actionsHtml(input)}
-${muted('0 0 24px', ADD_LINE)}
+${input.downloadUrl ? muted('0 0 24px', ADD_LINE) : ''}
 ${wallets ? walletActionsHtml(wallets.base, wallets.offers) : ''}
 ${input.attached ? muted('0 0 16px', 'The pass is also attached.') : ''}
 ${joinLine ? muted('0 0 16px', escapeHtml(joinLine)) : ''}

@@ -76,7 +76,7 @@ export function PassHeader({ pass, view, state = 'active' }: PassHeaderProps) {
               help={!off}
               passTitle={holderPassName(pass, authed?.user)}
               inWallet={pass.inWallet}
-              publicUrl={off ? null : publicUrlOf(pass.downloadUrl)}
+              publicUrl={off ? null : publicUrlOf(pass.pageUrl ?? pass.downloadUrl)}
               onRemoved={() => void navigate({ to: '/', replace: true })}
             />
           </>

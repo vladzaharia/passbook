@@ -12,6 +12,7 @@ const PURPOSE = {
   session: 'org_mode.pass.holder_remove',
   verified_email: 'org_mode.pass.holder_attach',
   device: 'org_mode.pass.personalize',
+  link: 'org_mode.pass.holder_print',
 } as const;
 
 const holder = (passId: string, proof: HolderProof): Principal => ({

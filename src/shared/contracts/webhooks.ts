@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ChannelSchema, ChannelSourceSchema } from './channels.ts';
 import {
   IdSchema,
   ModeSchema,
@@ -21,6 +22,9 @@ export const WEBHOOK_EVENT_TYPES = [
   'pass.scanned',
   'pass.scan_refused',
   'pass.scan_undone',
+  'pass.channels_changed',
+  'pass.printed',
+  'pass.print_voided',
   'push.failed',
   'email.failed',
   'webhook.test',
@@ -108,6 +112,19 @@ export const WEBHOOK_DATA_SCHEMAS = {
     scannerId: Str.nullable().optional(),
     staffId: Str.nullable().optional(),
   }),
+  'pass.channels_changed': z.object({
+    channel: ChannelSchema,
+    from: z.enum(['on', 'off']),
+    to: z.enum(['on', 'off']),
+    source: ChannelSourceSchema,
+  }),
+  'pass.printed': z.object({
+    printId: Str,
+    generation: Version,
+    /** Earlier prints this one voided. */
+    voided: Version.optional(),
+  }),
+  'pass.print_voided': z.object({ printId: Str, cause: Str.nullable().optional() }),
   'push.failed': z.object({
     version: Version.optional(),
     status: z.number().int().optional(),
@@ -150,6 +167,9 @@ export const WebhookEventSchema = z.discriminatedUnion('type', [
   envelope('pass.scanned', P),
   envelope('pass.scan_refused', P),
   envelope('pass.scan_undone', P),
+  envelope('pass.channels_changed', P),
+  envelope('pass.printed', P),
+  envelope('pass.print_voided', P),
   envelope('push.failed', P),
   envelope('email.failed', P),
   envelope('webhook.test', z.null()),

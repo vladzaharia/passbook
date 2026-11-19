@@ -211,3 +211,31 @@ describe('nfc, stamps, wallets', () => {
     expect(man(r).wallets.samsung).toEqual({ omit: ['z'] });
   });
 });
+
+describe('paper', () => {
+  it('merges size, barcode and fields per key, fields as a set', () => {
+    const r = run(
+      (d) => {
+        m(d).paper.fields.push('tier');
+      },
+      (d) => {
+        m(d).paper.size = 'letter';
+        m(d).paper.fields.push('pts');
+      },
+    );
+    expect(ids(r)).toEqual([]);
+    expect(man(r).paper).toMatchObject({ size: 'letter', barcode: 'qr' });
+    expect(man(r).paper.fields).toEqual(['name', 'tier', 'pts']);
+  });
+  it('conflicts when both sides change the same key', () => {
+    const r = run(
+      (d) => {
+        m(d).paper.size = 'half';
+      },
+      (d) => {
+        m(d).paper.size = 'cr80';
+      },
+    );
+    expect(ids(r)).toEqual(['paper:size']);
+  });
+});

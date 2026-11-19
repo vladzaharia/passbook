@@ -3,6 +3,7 @@ import { BARCODE_FORMATS } from '../../../shared/pass-view/barcode.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { channelGate } from '../channels/gate.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getOrg } from '../passes/repo-read-issuance.ts';
@@ -82,6 +83,7 @@ function barcodeOf(json: PassJson, scanCode: string | null): PresentationBarcode
 
 /** Resolve the current stored credential; possession of this model never authorizes a scan. */
 export async function presentationForPass(ctx: ServiceContext, pass: Pass) {
+  await channelGate(ctx, pass, 'mobile');
   const snapshot = await capturePassSnapshot(ctx, pass);
   const [raw, org] = await Promise.all([
     passJsonAtVersion(ctx.env.DB, pass.id, pass.version),

@@ -5,6 +5,7 @@ import { revealToken } from '../../platform/capability-token.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
+import { type HolderChannels, holderChannels } from '../channels/gate.ts';
 import { orgBranding } from '../delivery/repo.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { replacedBy } from '../passes/assets.ts';
@@ -69,6 +70,8 @@ export interface PublicPageModel {
   assets: Record<string, string>;
   /** Set while the org has the pass removed from Wallet, with its note. */
   removal: { message: string | null } | null;
+  /** What each channel offers this holder (the one gate). */
+  channels: HolderChannels;
 }
 
 export interface PassImage {
@@ -128,14 +131,15 @@ export async function passImages(ctx: ServiceContext, pass: Pass): Promise<PassI
 export async function pageModel(ctx: ServiceContext, pass: Pass): Promise<PublicPageModel> {
   const raw = await passJsonAtVersion(ctx.env.DB, pass.id, pass.version);
   if (!raw) throw new NotFoundError('The pass has no stored version.', 'PASS_VERSION_MISSING');
-  const [images, org, removal] = await Promise.all([
+  const [images, org, removal, channels] = await Promise.all([
     passImages(ctx, pass),
     getOrg(ctx.env.DB, pass.orgId),
     pass.removedAt !== null ? getRemoval(ctx.env.DB, pass.id) : null,
+    holderChannels(ctx, pass),
   ]);
   const assets = Object.fromEntries(images.map((i) => [i.name, i.path]));
   const passJson = parseStoredPassJson(raw);
-  if (!canPresent(pass, passJson, ctx.clock.now())) {
+  if (!channels.effective.mobile.on || !canPresent(pass, passJson, ctx.clock.now())) {
     delete passJson.barcode;
     delete passJson.barcodes;
   }
@@ -144,6 +148,7 @@ export async function pageModel(ctx: ServiceContext, pass: Pass): Promise<Public
     assets,
     orgName: org?.name ?? '',
     removal: pass.removedAt !== null ? { message: removal?.message?.trim() || null } : null,
+    channels,
   };
 }
 

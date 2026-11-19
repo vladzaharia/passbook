@@ -17,6 +17,7 @@ export function passFixture(over: Partial<MyPass> = {}): MyPass {
     lastRefreshedAt: null,
     refreshRequestedAt: null,
     downloadUrl: '/p/abcdefghijklmnopqrst/pass.pkpass',
+    pageUrl: '/p/abcdefghijklmnopqrst',
     walletOffers: [],
     walletIssuance: {},
     passJson: {

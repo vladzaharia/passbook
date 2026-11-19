@@ -47,6 +47,12 @@ export const HOLDER_COPY = {
   browserTitle: 'Show a barcode in your browser',
   browserLine: 'For readers that scan a screen.',
   showBarcode: 'Show barcode',
+  /** The paper channel: a link to the print page. */
+  printTitle: 'Print your ticket',
+  printLine: 'For entry on paper.',
+  print: 'Print',
+  /** Every channel is off for this pass. */
+  noTicket: (org: string) => `No ticket available. Contact ${org || 'the organizer'}.`,
   /** The barcode page: one line for the reader, then the offline copy (this device only). */
   presentLine: 'Show this to the reader.',
   presentUnavailable: 'Barcode unavailable',

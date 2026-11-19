@@ -2,6 +2,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { prepareScanRetentionDelete } from '../scan/scan-retention-proof.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { requireCredentialRefKeyset } from './credential-keyset.ts';
+import { voidedKey } from './file.ts';
 import { deleteIdempotencyBefore, markPurged, versionsToPurge } from './repo.ts';
 import {
   blockedDeletedPasses,
@@ -24,7 +25,10 @@ async function purge(ctx: ServiceContext): Promise<number> {
   for (let round = 0; round < MAX_PURGE_ROUNDS; round++) {
     const rows = await versionsToPurge(ctx.env.DB, keep, PURGE_BATCH);
     if (rows.length === 0) break;
-    const keys = rows.flatMap((r) => (r.objectKey ? [r.objectKey] : []));
+    const keys = rows.flatMap((r) => [
+      ...(r.objectKey ? [r.objectKey] : []),
+      voidedKey(r.passId, r.version),
+    ]);
     await deleteObjects(ctx.env.BUCKET, keys);
     await markPurged(ctx.env.DB, rows, ctx.clock.now());
     total += rows.length;

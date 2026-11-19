@@ -255,6 +255,42 @@ export const doors: Record<
     tagRead: true,
     unknown: true,
   },
+  'door-channel-off': {
+    outcome: {
+      ...grant(),
+      kind: 'refused',
+      reason: 'channel_off',
+      channel: 'apple',
+      display: null,
+      card: null,
+      access: null,
+      occupancy: null,
+    } as ScanOutcome,
+    tagRead: false,
+  },
+  'door-nfc-off': {
+    outcome: {
+      ...grant(),
+      kind: 'refused',
+      reason: 'channel_off',
+      channel: 'nfc',
+      display: null,
+      card: null,
+      access: null,
+      occupancy: null,
+    } as ScanOutcome,
+    tagRead: true,
+  },
+  'door-typed-number': {
+    outcome: {
+      ...grant({ display: fixtureDisplay('heads_up') }),
+      kind: 'heads_up',
+      reason: 'check_required',
+      flags: ['Typed number'],
+      overridable: false,
+    } as ScanOutcome,
+    tagRead: false,
+  },
   'door-add-tag': { outcome: grant({ display, tag: undefined }), tagRead: false, add: true },
   'door-offline': {
     outcome: {

@@ -7,6 +7,7 @@ import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { channelOn } from '../channels/gate.ts';
 import { finishSent } from '../delivery/email-finish.ts';
 import { orgFromName } from '../delivery/email-from.ts';
 import { recordEmailOutcome, uncertainEmail } from '../delivery/email-outcome.ts';
@@ -111,6 +112,9 @@ export async function deliverBundleEmail(
     bundleImages(images, firstToken, bundleToken, first.id),
     base,
   );
+  const appleOn = await Promise.all(passes.map((pass) => channelOn(ctx, pass, 'apple')));
+  const addable = (pass: (typeof passes)[number]) =>
+    pass.status === 'active' && pass.removedAt === null;
   const details = await passDetails(ctx, passes);
   const email = renderBundleEmail({
     orgName: org?.name ?? 'PassBook',
@@ -118,15 +122,15 @@ export async function deliverBundleEmail(
     supportEmail: support.email,
     supportUrl: support.url,
     pageUrl: page,
-    addAllUrl: `${page}/passes.pkpasses`,
+    addAllUrl: passes.some((pass, i) => addable(pass) && appleOn[i])
+      ? `${page}/passes.pkpasses`
+      : null,
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
     passes: passes.map((pass, i) => ({
       title: pass.displayTitle ?? pass.serial,
       detail: details[i] ?? null,
-      addUrl:
-        pass.status === 'active' && pass.removedAt === null
-          ? `${page}/${pass.id}/pass.pkpass`
-          : null,
+      addUrl: addable(pass) && appleOn[i] ? `${page}/${pass.id}/pass.pkpass` : null,
+      ...(addable(pass) && !appleOn[i] ? { off: true } : {}),
     })),
     iconUrl,
     senderName: platform['email.senderName'],
