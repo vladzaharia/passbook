@@ -48,7 +48,7 @@ export function eventAcceptsPass(
  * The entry of a mixed scope that admits the pass: an event that takes it (the one open now, then
  * the earliest close), else the template entries. Null when none does.
  */
-export function admittingEntry(
+function admittingEntry(
   actor: ScanActor,
   pass: Pass,
   now: number,

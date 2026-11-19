@@ -30,7 +30,7 @@ export const ScannerAcceptsSchema = z.union([
   z.object({ templateIds: z.array(IdSchema).min(1).max(100) }),
 ]);
 /** Pass types and events in any mix, at least one. A session stores this form. */
-export const AdmitsListsSchema = z
+const AdmitsListsSchema = z
   .strictObject({
     templateIds: z.array(IdSchema).max(100),
     eventIds: z.array(IdSchema).max(10),
