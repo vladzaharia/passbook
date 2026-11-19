@@ -63,6 +63,7 @@ function MatchForm({
           onChange={setRows}
           targets={targets}
           pinned={PINNED}
+          simple
           sources={sourcesOf(imp)}
           sourceNoun={C.match.column}
           errors={shown ? result.errors : {}}

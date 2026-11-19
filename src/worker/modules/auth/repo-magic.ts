@@ -103,13 +103,26 @@ export const peekLink = (db: Db, tokenHash: string, now: number) =>
     [tokenHash, now, now],
   );
 
-/** The stored next of any link, live, used or expired. */
-/** A link's purpose and next, live or not. */
+/** A link's purpose, address, next and fate, live or not: its dead-link page says which. */
 export const linkTrace = (db: Db, tokenHash: string) =>
-  first<{ redirect_path: string | null; purpose: MagicPurpose }>(
+  first<{
+    redirect_path: string | null;
+    purpose: MagicPurpose;
+    email: string;
+    consumed_at: number | null;
+    invitation_id: string | null;
+  }>(
     db,
-    'SELECT redirect_path, purpose FROM magic_links WHERE token_hash = ?',
+    'SELECT redirect_path, purpose, email, consumed_at, invitation_id FROM magic_links WHERE token_hash = ?',
     [tokenHash],
+  );
+
+/** The org and roles a pending invitation offers: the confirm page names them. */
+export const invitationOffer = (db: Db, invitationId: string) =>
+  first<{ name: string; roles: string }>(
+    db,
+    `SELECT o.name, i.roles FROM org_invitations i JOIN orgs o ON o.id = i.org_id WHERE i.id = ?`,
+    [invitationId],
   );
 
 export const consumeLink = (db: Db, tokenHash: string, now: number) =>

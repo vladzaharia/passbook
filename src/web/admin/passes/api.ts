@@ -34,6 +34,8 @@ export interface PassFilters {
   orgId?: string | undefined;
   templateId?: string | undefined;
   connectionId?: string | undefined;
+  /** Created or updated by this import. */
+  importId?: string | undefined;
   status?: z.infer<typeof PassListStatusSchema> | undefined;
   holderState?: 'unassigned' | 'waiting' | 'owned' | undefined;
   onDevice?: 'true' | 'false' | undefined;

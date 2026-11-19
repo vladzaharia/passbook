@@ -99,7 +99,7 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
       <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col">
           <Label htmlFor={id} className="mb-2">
-            Code
+            Or enter the 6-digit code
           </Label>
           <CodeField
             id={id}
@@ -133,7 +133,7 @@ export function CodeFace({ email, sentAt, request, scene, codeRef, onBack }: Cod
         <div className="-mx-3 flex flex-wrap items-center justify-between gap-x-2">
           <Button
             variant="ghost"
-            className="px-3"
+            className="px-3 disabled:text-fg-muted disabled:opacity-100"
             disabled={left > 0 || request.phase !== 'idle'}
             loading={request.phase !== 'idle'}
             // The envelope flies once the new code is on its way; the countdown says it went.

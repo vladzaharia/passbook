@@ -1,3 +1,10 @@
+const commitLabel = (create: number, update: number) =>
+  create > 0 && update > 0
+    ? `Create ${create} and update ${update}`
+    : create > 0
+      ? `Create ${create}`
+      : `Update ${update}`;
+
 /** Words of the pass import screens. */
 export const IMPORT_COPY = {
   title: 'Import passes',
@@ -8,7 +15,11 @@ export const IMPORT_COPY = {
   fileTab: 'File',
   pasteTab: 'Paste',
   linkTab: 'Sheet link',
-  dropLabel: 'Drop a .csv file or choose one',
+  dropLead: 'Drop a .csv file or',
+  dropChoose: 'choose one',
+  chooseTemplate: 'Choose a template',
+  needInput: 'Choose a template and a file.',
+  sample: 'Download sample CSV',
   pasteLabel: 'Rows',
   pastePlaceholder: 'Name,Email,Id\nMaya,maya@example.com,A1',
   linkLabel: 'Link',
@@ -35,9 +46,9 @@ export const IMPORT_COPY = {
     byExternalId: 'External ID',
     byEmail: 'Email',
     byNone: "Don't match",
-    keepManual: 'Keep values edited in the admin',
+    keepManual: "Don't overwrite edits made in the console",
     keepManualHelp: 'Off: the file overwrites them.',
-    save: 'Save for this template',
+    save: 'Remember this mapping',
     needExternalId: 'Map an External ID column to match on it.',
     needEmail: 'Map a Holder email column to match on it.',
     submit: 'Check',
@@ -77,6 +88,15 @@ export const IMPORT_COPY = {
     sync: 'Keep this sheet in sync',
     failedRows: 'Failed rows',
     clean: 'All rows done.',
+    viewPasses: 'View passes',
+    summary: (done: number, skipped: number) =>
+      `${done} ${done === 1 ? 'row' : 'rows'} done${skipped > 0 ? `, ${skipped} skipped` : ''}.`,
+    skippedRows: 'Skipped rows',
+    notEmailedHelp: 'Created without an email. Nothing has been sent yet.',
+    emailRestTitle: 'Email the rest?',
+    emailRestBody: (n: number) =>
+      `Sends the pass email to ${n} ${n === 1 ? 'holder' : 'holders'} created by this import that have not had one.`,
+    emailRestConfirm: 'Send',
     startAgain: 'Import another',
     removeTitle: 'Remove created passes?',
     removeConfirm: 'Remove',
@@ -101,12 +121,19 @@ export const IMPORT_COPY = {
     emailable > budget
       ? `The first ${budget} get an email. The rest are listed after the import.`
       : `You can send ${budget} more pass emails today.`,
-  commitLabel: (create: number, update: number) =>
-    create > 0 && update > 0
-      ? `Create ${create} and update ${update}`
-      : create > 0
-        ? `Create ${create}`
-        : `Update ${update}`,
+  commitButton: (c: { create: number; update: number; errors: number }) => {
+    const n = (k: number) => `${k} ${k === 1 ? 'pass' : 'passes'}`;
+    const main =
+      c.create > 0 && c.update > 0
+        ? `Create ${c.create} and update ${c.update}`
+        : c.create > 0
+          ? `Create ${n(c.create)}`
+          : `Update ${n(c.update)}`;
+    return c.errors > 0
+      ? `${main} (skip ${c.errors} ${c.errors === 1 ? 'error' : 'errors'})`
+      : main;
+  },
+  commitLabel,
   progressText: (done: number, total: number) => `${done} of ${total}`,
   removed: (n: number) => `${n} ${n === 1 ? 'pass' : 'passes'} removed`,
   skipped: (n: number) => `${n} kept: edited or scanned since the import`,

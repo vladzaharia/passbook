@@ -204,7 +204,7 @@ export function renderJoinPage(page: JoinPage, nonce: string, theme?: PageTheme)
           .replace('{org}', page.orgName)
           .replace('{email}', page.email),
       ),
-      body: `<a class="btn outline" href="">${escapeHtml(JOIN_COPY.page.checkEmail.another)}</a>`,
+      body: `<p class="lede">${escapeHtml(JOIN_COPY.page.checkEmail.hint)}</p><a class="btn outline" href="">${escapeHtml(JOIN_COPY.page.checkEmail.another)}</a>`,
     });
   }
   const title = JOIN_COPY.page.title.replace('{org}', page.orgName);

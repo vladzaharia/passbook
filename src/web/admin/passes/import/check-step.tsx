@@ -68,7 +68,7 @@ export function CheckStep({
         <div className="flex flex-wrap gap-2">
           {canOperate ? (
             <Button disabled={stale || nothing} onClick={() => setOpen(true)}>
-              {C.check.commit}
+              {C.commitButton(counts)}
             </Button>
           ) : null}
           {canOperate ? (

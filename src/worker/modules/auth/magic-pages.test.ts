@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { fixtures, makeUser } from '../../../../test/helpers/index.ts';
+import { fixtures, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import { first, run } from '../../platform/db.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 import { fakeLimiter, harness, type Jar, type SentMail, type TestHarness } from './test-support.ts';
@@ -122,7 +123,7 @@ describe('confirm page', () => {
     for (const res of [await page(`/auth/magic?t=${token}`), await consumeForm({ token })]) {
       expect(res.status).toBe(400);
       const html = await res.text();
-      expect(html).toMatch(/<h1[^>]*>Link expired<\/h1>/);
+      expect(html).toMatch(/<h1[^>]*>Link already used<\/h1>/);
       expect(hrefs(html)).toContain(loginNext('/passes/9'));
     }
     const unknown = await (await page(`/auth/magic?t=${'u'.repeat(43)}`)).text();
@@ -199,5 +200,82 @@ describe('add-email verification', () => {
     const html = await res.text();
     expect(html).toMatch(/<h1[^>]*>Sign in first<\/h1>/);
     expect(hrefs(html)).toContain(loginNext(`/auth/magic?t=${token}`));
+  });
+});
+
+describe('dead links', () => {
+  it('words used and expired apart, each with a resend to the masked address', async () => {
+    const email = (await makeUser(fixtures(h.env))).primaryEmail;
+    await requestLink(email);
+    const used = tokenOf(h.mail[0]);
+    await consumeForm({ token: used });
+    await requestLink(email);
+    const stale = tokenOf(h.mail[1]);
+    h.clock.advance(16 * 60_000);
+    const usedHtml = await (await page(`/auth/magic?t=${used}`)).text();
+    const staleHtml = await (await page(`/auth/magic?t=${stale}`)).text();
+    expect(usedHtml).toMatch(/<h1[^>]*>Link already used<\/h1>/);
+    expect(usedHtml).toContain('Open PassBook');
+    expect(staleHtml).toMatch(/<h1[^>]*>Link expired<\/h1>/);
+    expect(staleHtml).not.toContain('Open PassBook');
+    for (const html of [usedHtml, staleHtml]) {
+      expect(html).toContain('action="/auth/magic/resend"');
+      expect(html).toContain('Email me a new link');
+      expect(html).not.toContain(email);
+    }
+  });
+
+  it('resend mails the link address a new link and answers the same for a stranger', async () => {
+    const email = (await makeUser(fixtures(h.env))).primaryEmail;
+    await requestLink(email);
+    const token = tokenOf(h.mail[0]);
+    h.clock.advance(16 * 60_000);
+    const before = h.mail.length;
+    const res = await h.call('/auth/magic/resend', {
+      method: 'POST',
+      body: new URLSearchParams({ token }),
+      headers: { ...FORM, ...HTML },
+    });
+    const html = await res.text();
+    expect(res.status).toBe(200);
+    expect(html).toMatch(/<h1[^>]*>Check your email<\/h1>/);
+    expect(h.mail.length).toBe(before + 1);
+    expect(h.mail.at(-1)?.to).toBe(email);
+    const stranger = await h.call('/auth/magic/resend', {
+      method: 'POST',
+      body: new URLSearchParams({ token: 'z'.repeat(43) }),
+      headers: { ...FORM, ...HTML },
+    });
+    const plain = (x: string) => x.replace(/nonce="[^"]*"/g, '');
+    expect(plain(await stranger.text())).toBe(plain(html));
+    expect(h.mail.length).toBe(before + 1);
+  });
+
+  it('an invitation link names the org and role, and is not offered a resend', async () => {
+    const org = await makeOrg(fixtures(h.env));
+    const email = addr();
+    const now = h.clock.now();
+    await run(
+      h.env.DB,
+      `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at)
+       VALUES ('inv-pg', ?, ?, '["org_admin"]', ?, ?, ?)`,
+      [org.id, email, await sha256Hex('inv'), now, now + 86_400_000],
+    );
+    const token = 'i'.repeat(43);
+    await run(
+      h.env.DB,
+      `INSERT INTO magic_links (token_hash, email, purpose, redirect_path, invitation_id, created_at, expires_at)
+       VALUES (?, ?, 'sign_in', '/account', 'inv-pg', ?, ?)`,
+      [await sha256Hex(token), email, now, now + 86_400_000],
+    );
+    const html = await (await page(`/auth/magic?t=${token}`)).text();
+    expect(html).toContain(`Join ${org.name}`);
+    expect(html).toContain('an organization admin');
+    expect(html).toContain('Accept and sign in');
+    expect(html).not.toContain('tied to your email');
+    await run(h.env.DB, "UPDATE magic_links SET expires_at = 0 WHERE invitation_id = 'inv-pg'");
+    const dead = await (await page(`/auth/magic?t=${token}`)).text();
+    expect(dead).toMatch(/<h1[^>]*>Invitation expired<\/h1>/);
+    expect(dead).not.toContain('/auth/magic/resend');
   });
 });

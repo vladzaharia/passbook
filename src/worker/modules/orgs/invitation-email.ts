@@ -1,3 +1,4 @@
+import { inviteLine } from '../../../shared/copy/invite.ts';
 import { safeUrl } from '../../email/safe.ts';
 import {
   buttonHtml,
@@ -16,6 +17,9 @@ export interface InvitationEmailInput {
   acceptLink?: string;
   /** PUBLIC_BASE_URL without the trailing slash. */
   base: string;
+  roles: readonly string[];
+  /** The inviter's name, when they have one. */
+  inviter?: string | null;
 }
 
 /** The invitation on the shared email shell; names the organization, never the token elsewhere. */
@@ -23,14 +27,17 @@ export function invitationEmail(input: InvitationEmailInput) {
   const subject = `Join ${input.orgName} on PassBook`;
   const expiry = 'Expires in seven days. Ignore this email if you did not expect it.';
   const alt = Boolean(input.acceptLink);
-  const body = `${titleHtml(`Join<br><span style="overflow-wrap:anywhere;word-break:break-word">${escapeHtml(input.orgName)}</span>`, '0 0 24px')}
+  const line = inviteLine(input.orgName, input.roles, input.inviter);
+  const body = `${titleHtml(`Join<br><span style="overflow-wrap:anywhere;word-break:break-word">${escapeHtml(input.orgName)}</span>`, '0 0 8px')}
+<p class="e-text" style="margin:0 0 24px;${type('sm')};color:${c.text}">${escapeHtml(line)}</p>
 ${buttonHtml(input.link, 'Accept invitation', true)}
-${alt ? `<p class="e-muted" style="margin:0 0 16px;${type('xs')};color:${c.muted}">Already have a PassBook account? <a href="${escapeHtml(input.acceptLink ?? '')}">Accept here</a>.</p>\n` : ''}<p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${expiry}</p>`;
+${alt ? `<p class="e-muted" style="margin:0 0 16px;${type('xs')};color:${c.muted}">Already have a PassBook account? <a class="e-link" href="${escapeHtml(input.acceptLink ?? '')}" style="color:${c.accent};text-decoration:underline">Accept here</a>.</p>\n` : ''}<p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${expiry}</p>`;
   const images = safeUrl(input.base) !== null;
   return {
     subject,
     text: [
       subject,
+      line,
       `Accept invitation: ${input.link}`,
       ...(alt ? [`Already have a PassBook account? Accept here: ${input.acceptLink}`] : []),
       expiry,

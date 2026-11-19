@@ -74,6 +74,7 @@ export async function issueMagicLink(
     purpose: input.purpose,
     link: `${base}/auth/magic?t=${token}`,
     base,
+    to: input.email,
     code: code ?? undefined,
     expiresMinutes: MAGIC_TTL_MS / 60_000,
     ...(input.requester ? { requester: input.requester } : {}),
@@ -158,52 +159,6 @@ export async function processVerifyRequest(
   } catch (error) {
     ctx.log.error('auth.magic_send_failed', { error });
   }
-}
-
-export interface PeekedLink {
-  email: string;
-  purpose: repo.MagicPurpose;
-  /** verify_email: the account that asked, and its primary email. */
-  userId: string | null;
-  requester: string | null;
-  /** A plain sign-in link: refused while email sign-in is off. */
-  needsEmailSignIn: boolean;
-  next: string | null;
-}
-
-export async function peekMagicLink(
-  ctx: ServiceContext,
-  token: string,
-): Promise<PeekedLink | null> {
-  const link = await repo.peekLink(ctx.env.DB, await sha256Hex(token), ctx.clock.now());
-  if (!link) return null;
-  const requester =
-    link.purpose === 'verify_email' && link.user_id
-      ? await repo.primaryEmailOf(ctx.env.DB, link.user_id)
-      : null;
-  return {
-    email: link.email,
-    purpose: link.purpose,
-    userId: link.user_id,
-    requester,
-    needsEmailSignIn: link.purpose === 'sign_in' && !link.pending_identity,
-    next: link.redirect_path,
-  };
-}
-
-export interface LinkTrace {
-  next: string | null;
-  purpose: repo.MagicPurpose;
-}
-
-/** What a link, live or not, was for and where it meant to return: its expired page says so. */
-export async function magicLinkTrace(
-  ctx: ServiceContext,
-  token: string,
-): Promise<LinkTrace | null> {
-  if (token.length < 16 || token.length > 256) return null;
-  const row = await repo.linkTrace(ctx.env.DB, await sha256Hex(token));
-  return row ? { next: row.redirect_path, purpose: row.purpose } : null;
 }
 
 export async function isEmailSignInEnabled(ctx: ServiceContext): Promise<boolean> {

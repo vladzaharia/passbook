@@ -586,7 +586,9 @@ describe('get started', () => {
     const steps = within(list).getAllByRole('listitem');
     expect(
       steps.map((step) =>
-        step.textContent?.replace(/\(done\)|Blueprints|Review|New pass|Send email|^\d/g, '').trim(),
+        step.textContent
+          ?.replace(/\(done\)|Blueprints|Review|New pass|Send email|Needs step \d|^\d/g, '')
+          .trim(),
       ),
     ).toEqual(['Use a blueprint', 'Approve it', 'Issue a pass', 'Add it to your phone']);
     expect(steps[0]).toHaveTextContent('(done)');
@@ -595,10 +597,9 @@ describe('get started', () => {
       'href',
       '/admin/templates',
     );
-    expect(within(list).getByRole('link', { name: 'New pass' })).toHaveAttribute(
-      'href',
-      '/admin/passes/new',
-    );
+    // Steps after the open one wait: no link, and they say which step they need.
+    expect(within(list).queryByRole('link', { name: 'New pass' })).toBeNull();
+    expect(within(list).getAllByRole('button', { name: 'Needs step 2' })).toHaveLength(2);
     expect(screen.queryByRole('img', { name: /Issued/ })).not.toBeInTheDocument();
     // Before the first pass the checklist leads: no zero tiles, no range.
     expect(screen.queryByRole('combobox', { name: 'Range' })).not.toBeInTheDocument();

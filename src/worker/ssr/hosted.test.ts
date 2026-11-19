@@ -187,10 +187,22 @@ describe('hosted auth pages', () => {
   });
 
   it('words a dead link by its purpose: an add-email link leads to Account', () => {
-    const signIn = expiredPage(NONCE, { next: '/passes/1', purpose: 'sign_in' });
+    const signIn = expiredPage(NONCE, {
+      next: '/passes/1',
+      purpose: 'sign_in',
+      state: 'expired',
+      invited: false,
+      email: 'a@b.co',
+    });
     expect(signIn).toContain('Request a new one to sign in.');
     expect(outline(signIn)).toEqual([['/login?next=%2Fpasses%2F1', 'Back to sign in']]);
-    const verify = expiredPage(NONCE, { next: null, purpose: 'verify_email' });
+    const verify = expiredPage(NONCE, {
+      next: null,
+      purpose: 'verify_email',
+      state: 'expired',
+      invited: false,
+      email: 'a@b.co',
+    });
     expect(verify).toMatch(/<h1>Link expired<\/h1>/);
     expect(verify).toContain('Add the email again in Account.');
     expect(verify).not.toContain('sign in');

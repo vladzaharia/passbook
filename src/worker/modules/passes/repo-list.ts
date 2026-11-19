@@ -12,6 +12,8 @@ export interface PassListFilter {
   /** Any of these templates. */
   templateIds?: string[];
   connectionId?: string;
+  /** Passes a pass import (of the same organization) created or updated. */
+  importId?: string;
   /** `voided` leaves out removed passes; `removed` is those alone. */
   status?: PassStatus | 'removed';
   holderEmail?: string;
@@ -53,6 +55,12 @@ export function passFilterSql(filter: PassListFilter): {
   if (filter.templateIds?.length)
     add(`template_id IN (${filter.templateIds.map(() => '?').join(', ')})`, ...filter.templateIds);
   if (filter.connectionId) add('connection_id = ?', filter.connectionId);
+  if (filter.importId)
+    add(
+      `EXISTS (SELECT 1 FROM pass_import_rows r JOIN pass_imports i ON i.id = r.import_id
+        WHERE r.pass_id = passes.id AND r.import_id = ? AND i.org_id = passes.org_id)`,
+      filter.importId,
+    );
   if (filter.status === 'removed') where.push('removed_at IS NOT NULL');
   else if (filter.status) {
     add('status = ?', filter.status);

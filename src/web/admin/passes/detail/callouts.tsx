@@ -60,7 +60,7 @@ const IMAGE_CODES = /^(IMAGE_|THUMBNAIL_|PLATFORM_BRANDING|UNUSED_IMAGE|MISSING_
 
 /** This pass's own warnings, collapsed: one line each, linking to the tab that fixes it. */
 export function PassWarnings({ pass }: { pass: PassDetailDto }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const list = pass.warnings.filter((w) => w.severity !== 'info');
   if (list.length === 0) return null;
   return (

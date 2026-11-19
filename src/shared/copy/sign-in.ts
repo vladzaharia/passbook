@@ -104,13 +104,37 @@ export const AUTH_PAGE_COPY = {
   token: 'Token',
   signingOut: 'Signing out',
   continue: 'Continue',
+  confirmSignIn: 'Confirm sign-in',
+  emailNewLink: 'Email me a new link',
+  openPassBook: 'Open PassBook',
+  checkEmail: 'Check your email',
+  breakglassLede: 'Emergency access for platform admins. Use is logged.',
 } as const;
 
-/** A dead link, by what it was for: an add-email link is no way to sign in. */
+/**
+ * A dead link, by what it was for and how it died. A sign-in link can be resent to the address it
+ * was for; an invitation's cannot (a fresh sign-in would not join the org), so it points to the admin.
+ */
 export const EXPIRED_LINK_COPY = {
   sign_in: {
     title: LINK_EXPIRED,
     message: 'Request a new one to sign in.',
+    action: AUTH_PAGE_COPY.backToSignIn,
+  },
+  used: {
+    title: 'Link already used',
+    message:
+      'Each link works once. If you are signed in, open PassBook. Otherwise request a new one.',
+    action: AUTH_PAGE_COPY.backToSignIn,
+  },
+  invitation: {
+    title: 'Invitation expired',
+    message: 'Ask the organization admin to send a new invitation.',
+    action: AUTH_PAGE_COPY.backToSignIn,
+  },
+  invitation_used: {
+    title: 'Invitation already used',
+    message: 'If you are signed in, open PassBook. Otherwise sign in with this address.',
     action: AUTH_PAGE_COPY.backToSignIn,
   },
   verify_email: {
@@ -118,6 +142,12 @@ export const EXPIRED_LINK_COPY = {
     message: 'Add the email again in Account.',
     action: 'Go to Account',
   },
+} as const;
+
+/** After "Email me a new link": the same answer for every address. */
+export const RESENT_COPY = {
+  title: AUTH_PAGE_COPY.checkEmail,
+  message: 'If a new link can be sent, it is on its way. It works for 15 minutes.',
 } as const;
 
 export function isSignInErrorCode(code: string): code is SignInErrorCode {

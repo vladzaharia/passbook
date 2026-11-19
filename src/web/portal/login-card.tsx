@@ -1,6 +1,6 @@
 import { Lock } from 'lucide-react';
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
-import { SIGN_IN_FOOTER, SIGN_IN_SENT } from '@/shared/copy/sign-in.ts';
+import { AUTH_PAGE_COPY, SIGN_IN_FOOTER, SIGN_IN_SENT } from '@/shared/copy/sign-in.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
 import { Callout, Skeleton } from '../ui/index.ts';
 import { CodeFace } from './login-code-face.tsx';
@@ -10,6 +10,10 @@ import { Turnstile } from './turnstile.tsx';
 import { useFaceHeight } from './use-face-height.ts';
 import { useMagicRequest } from './use-magic-request.ts';
 import './login-card.css';
+
+/** An address that wraps after "@" and dots, never mid-label. */
+const breakable = (email: string) =>
+  email.split(/(?<=[@.])/).flatMap((part, i) => (i ? [<wbr key={i} />, part] : [part]));
 
 /** One face of the hosted card: body, then the footer split off by a divider. */
 function Face({
@@ -153,10 +157,10 @@ export function LoginCard({ next, notice, methods, front, scene }: LoginCardProp
           side="code"
           faceRef={sizing.code}
           hidden={face !== 'code'}
-          title="Enter the code"
+          title={AUTH_PAGE_COPY.checkEmail}
           lede={
             <>
-              <span className="font-medium text-fg-strong">{sent?.email ?? ''}</span>
+              <span className="font-medium text-fg-strong">{breakable(sent?.email ?? '')}</span>
               <br />
               {SIGN_IN_SENT}
             </>

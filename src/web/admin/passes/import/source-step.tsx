@@ -20,6 +20,7 @@ import {
 } from '../../../ui/index.ts';
 import { rememberImportLink } from '../../connections/import-handoff.ts';
 import { useCreateImport, useImportTemplates } from './api.ts';
+import { SampleCsv } from './sample-csv.tsx';
 
 type Kind = 'file' | 'paste' | 'link';
 const KINDS = [
@@ -115,6 +116,7 @@ export function SourceStep({ orgId }: { orgId: string }) {
                 value={chosen}
                 onValueChange={setTemplateId}
                 disabled={items.length === 0}
+                placeholder={C.chooseTemplate}
                 options={items.map((t) => ({ value: t.templateId, label: t.name }))}
               />
             )}
@@ -131,7 +133,16 @@ export function SourceStep({ orgId }: { orgId: string }) {
         />
         {kind === 'file' ? (
           <div className="flex flex-col gap-2">
-            <FileDrop label={C.dropLabel} art="mapping" invalid={Boolean(problem)} onFiles={take} />
+            <FileDrop
+              label={
+                <>
+                  {C.dropLead} <span className="text-accent-fg underline">{C.dropChoose}</span>
+                </>
+              }
+              art="mapping"
+              invalid={Boolean(problem)}
+              onFiles={take}
+            />
             {file ? <p className="text-sm text-fg-muted">{file.name}</p> : null}
           </div>
         ) : kind === 'paste' ? (
@@ -167,9 +178,13 @@ export function SourceStep({ orgId }: { orgId: string }) {
         ) : null}
         {create.isError ? <Callout tone="danger">{errorMessage(create.error)}</Callout> : null}
         <div>
-          <Button disabled={!chosen || !source} loading={create.isPending} onClick={start}>
-            {create.isPending ? C.starting : C.start}
-          </Button>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Button disabled={!chosen || !source} loading={create.isPending} onClick={start}>
+              {create.isPending ? C.starting : C.start}
+            </Button>
+            {!chosen || !source ? <p className="text-sm text-fg-muted">{C.needInput}</p> : null}
+            {chosen ? <SampleCsv templateId={chosen} orgId={orgId} /> : null}
+          </div>
         </div>
       </CardBody>
     </Card>

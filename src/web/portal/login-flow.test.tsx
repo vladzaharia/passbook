@@ -33,7 +33,7 @@ async function requestLink(user: ReturnType<typeof userEvent.setup>, email = 'sa
   await waitFor(() => expect(callbacks.callback).toBeDefined());
   token('tok-1');
   await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
-  return screen.findByRole('heading', { name: 'Enter the code' });
+  return screen.findByRole('heading', { name: 'Check your email' });
 }
 
 describe('magic link', () => {
@@ -64,8 +64,8 @@ describe('magic link', () => {
       `sam@example.com${SIGN_IN_SENT}`,
     );
     expect(container.querySelector('[data-side="email"]')).toHaveAttribute('inert');
-    expect(screen.queryByRole('link', { name: 'Sign in with your account' })).toBeNull();
-    const code = screen.getByLabelText('Code');
+    expect(screen.queryByRole('link', { name: 'Sign in with Polaris ID' })).toBeNull();
+    const code = screen.getByLabelText('Or enter the 6-digit code');
     expect(code).toHaveAttribute('autocomplete', 'one-time-code');
     await waitFor(() => expect(document.activeElement).toBe(code));
     expect(container.querySelector('.wl-login-scene')).toHaveAttribute('data-beat', 'sent');
@@ -162,7 +162,7 @@ describe('magic link', () => {
     expect(await screen.findByRole('button', { name: 'Checking…' })).toBeDisabled();
     expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/auth/magic'))).toBe(false);
     token('tok-late');
-    expect(await screen.findByRole('heading', { name: 'Enter the code' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Check your email' })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
@@ -223,11 +223,14 @@ describe('magic link', () => {
       },
     });
     await requestLink(user);
-    await user.type(screen.getByLabelText('Code'), '000000');
+    await user.type(screen.getByLabelText('Or enter the 6-digit code'), '000000');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
     const error = await screen.findByText('That code is wrong or expired.');
     expect(error.textContent).not.toMatch(/link/i);
-    expect(screen.getByLabelText('Code')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Or enter the 6-digit code')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
     // A slip: one shake and a flat face, not sad (B4b); no hourglass, no drooping pass.
     expect(container.querySelector('.wl-login-pocket[data-shake]')).not.toBeNull();
     expect(container.querySelector('[data-part="w"]')).toHaveAttribute('data-mood', 'flat');
@@ -236,7 +239,7 @@ describe('magic link', () => {
     expect(container.querySelector('[data-art="wallet"]')).toHaveAttribute('data-state', 'login');
     expect(goTo).not.toHaveBeenCalled();
     // Another try cheers it up.
-    await user.type(screen.getByLabelText('Code'), '{Backspace}');
+    await user.type(screen.getByLabelText('Or enter the 6-digit code'), '{Backspace}');
     expect(container.querySelector('[data-part="w"]')).not.toHaveAttribute('data-mood');
   });
 
@@ -252,7 +255,7 @@ describe('magic link', () => {
       },
     });
     await requestLink(user);
-    await user.type(screen.getByLabelText('Code'), '000000');
+    await user.type(screen.getByLabelText('Or enter the 6-digit code'), '000000');
     const clock = vi.spyOn(Date, 'now').mockReturnValue(now + 16 * 60_000);
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
     await screen.findByText('That code is wrong or expired.');
@@ -268,13 +271,13 @@ describe('magic link', () => {
     const user = userEvent.setup();
     await renderApp('/login', { session: 'anon', handlers: { '/auth/magic/request': sent } });
     await requestLink(user);
-    await user.type(screen.getByLabelText('Code'), '12ab34');
+    await user.type(screen.getByLabelText('Or enter the 6-digit code'), '12ab34');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText('Enter the 6-digit code.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Use a different email' }));
     const email = await screen.findByLabelText('Email');
     await waitFor(() => expect(document.activeElement).toBe(email));
-    expect(screen.getByRole('link', { name: 'Sign in with your account' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Sign in with Polaris ID' })).toBeVisible();
     // The posted card comes back to the pocket.
     expect(document.querySelector('.wl-login-scene')).toHaveAttribute('data-beat', 'back');
   });
