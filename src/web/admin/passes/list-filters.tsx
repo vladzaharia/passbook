@@ -67,7 +67,7 @@ export function PassListFilters({
       defaultValue: ANY,
       options: [
         { value: ANY, label: 'Any' },
-        { value: 'owned', label: 'Claimed' },
+        { value: 'owned', label: 'Holder signed in' },
         { value: 'waiting', label: 'Not claimed' },
         { value: 'unassigned', label: 'No holder' },
       ],

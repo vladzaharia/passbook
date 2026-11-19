@@ -1,7 +1,9 @@
 import type { ScanCodeInput } from '../../../shared/contracts/scan.ts';
+import { TYPED_NUMBER_FLAG } from '../../../shared/copy/scan.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
+import { paperOff, printRefusal } from '../prints/door.ts';
 import { accessStop, isGuestPass, joinReads, planAccessReads } from './access.ts';
 import { planAdmission } from './admission.ts';
 import {
@@ -26,6 +28,7 @@ import {
   findCandidates,
   matchesEvent,
 } from './resolve-candidates.ts';
+import { channelVerdict } from './resolve-channels.ts';
 import { stop, type Waive, windowStop } from './resolve-policy.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { candidateTakesTag } from './tag-assurance.ts';
@@ -139,10 +142,26 @@ async function evaluateObserved(
   const one = matched[0];
   if (!one) return stop('refused', 'wrong_event');
   if (matched.length > 1) return stop('refused', 'ambiguous');
+  // How the code matched is the door's, not part of the stored snapshot's.
+  const matchedBy = one.matchedBy;
+  delete one.matchedBy;
   // The release read at commit may differ from the one the tag was chosen on.
   if (actor.tag && !candidateTakesTag(ctx, one)) return stop('refused', 'tag_not_allowed');
   if (one.orgRevision == null || one.templateRevision == null || !hasScanPolicy(one))
     return stop('refused', 'not_found', { stale: true });
+  const printed = printRefusal(one);
+  if (printed)
+    return candidateWallet(one)
+      ? stop('refused', printed.reason, { ...candidateAudit(one), at: printed.at })
+      : stop('refused', 'not_found', { stale: true });
+  if (await paperOff(ctx, one))
+    return candidateWallet(one)
+      ? stop('refused', 'channel_off', {
+          ...candidateAudit(one),
+          at: null,
+          channel: 'paper',
+        })
+      : stop('refused', 'not_found', { stale: true });
   const found = await foundOf(ctx, one, actor);
   if (!found) {
     const json = candidateWallet(one);
@@ -168,6 +187,9 @@ async function evaluateObserved(
     found,
     connectionGeneration: found.connectionGeneration,
   };
+  const channel = await channelVerdict(ctx, one, input, matchedBy);
+  if (channel?.kind === 'off')
+    return stop('refused', 'channel_off', { ...candidateAudit(one), channel: channel.channel });
   const configured =
     options.admits?.(found) !== false &&
     (Object.keys(found.checkInRules ?? {}).length > 0 ||
@@ -244,12 +266,16 @@ async function evaluateObserved(
   const held = exiting || found.access ? null : windowStop(actor, found, now, waive);
   if (held) return held;
   const flagged = activeFlags(found).filter((flag) => flag.stop);
-  if (flagged.length > 0 && !waive.confirmed && !zoneExit)
+  const typed = channel?.kind === 'typed';
+  if ((flagged.length > 0 || typed) && !waive.confirmed && !zoneExit)
     return stop('heads_up', 'check_required', {
       ...known,
-      flags: activeFlags(found, actor)
-        .filter((flag) => flag.stop)
-        .map((flag) => flag.label),
+      flags: [
+        ...(typed ? [TYPED_NUMBER_FLAG] : []),
+        ...activeFlags(found, actor)
+          .filter((flag) => flag.stop)
+          .map((flag) => flag.label),
+      ],
     });
   return { stop: false, found };
 }

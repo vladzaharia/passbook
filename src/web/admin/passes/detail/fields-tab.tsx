@@ -17,7 +17,6 @@ import {
 } from '../../../ui/index.ts';
 import { useConnection } from '../../connections/api.ts';
 import { canMutatePass, passKeys, passMutationPrincipal } from '../api.ts';
-import type { PassActionRunner } from '../pass-actions.tsx';
 import {
   cleanValues,
   type FormValues,
@@ -53,7 +52,6 @@ export function FieldsTab({
   schema,
   manifest,
   onDraft,
-  runner,
   readOnly,
 }: {
   pass: Pass;
@@ -61,8 +59,6 @@ export function FieldsTab({
   manifest?: unknown;
   /** Unsaved values (debounced 300 ms) for the live preview; null when clean. */
   onDraft?: (draft: FormValues | null) => void;
-  /** Restore for a removed pass; the header's runs the same action. */
-  runner?: PassActionRunner;
   readOnly: boolean;
 }) {
   const qc = useQueryClient();
@@ -206,24 +202,7 @@ export function FieldsTab({
       className="flex flex-col gap-6 pb-16"
     >
       {removed ? (
-        <Callout
-          tone="warning"
-          actions={
-            runner ? (
-              <Button
-                size="sm"
-                variant="outline"
-                loading={runner.pending.restore}
-                disabled={readOnly}
-                onClick={() => runner.run('restore')}
-              >
-                Restore
-              </Button>
-            ) : null
-          }
-        >
-          Removed from Wallet. Restore to edit.
-        </Callout>
+        <Callout tone="warning">Removed from Wallet. Restore to edit.</Callout>
       ) : voided ? (
         <Callout tone="info">Unvoid to edit.</Callout>
       ) : conflict ? (

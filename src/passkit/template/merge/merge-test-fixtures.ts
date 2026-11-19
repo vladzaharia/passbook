@@ -110,6 +110,7 @@ export function baseDoc(): PackageDoc {
         tilt: true,
       },
       wallets: { schema: 1, required: [], google: { omit: ['a'], images: {} } },
+      paper: { schema: 1, size: 'a4', barcode: 'qr', fields: ['name'] },
     } as never,
     files: {
       'icon@2x.png': { sha1: sha('icon2') },

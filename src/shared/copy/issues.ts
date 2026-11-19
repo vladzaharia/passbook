@@ -151,6 +151,16 @@ export const ISSUE_WORDS: Record<WarningCode, Words> = {
   MISSING_IMAGE: 'Poster passes need artwork.',
   NFC: 'Poster event tickets expect NFC authentication.',
   NFC_STYLE: 'NFC works on store card and event ticket passes.',
+  PAPER_FIELD: named(
+    'A paper field is not on the pass.',
+    ['name'],
+    (p) => `Paper lists ${p.name}, which is not on the pass.`,
+  ),
+  PAPER_INPUT: named(
+    'A paper field names an input the template does not have.',
+    ['name'],
+    (p) => `Paper uses ${p.name}, which is not an input of this template.`,
+  ),
   PASS_SIZE: named(
     'The pass package is large and may be slow to download.',
     ['size'],

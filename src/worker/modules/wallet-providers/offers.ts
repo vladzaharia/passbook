@@ -1,7 +1,9 @@
+import type { EffectiveChannels } from '../../../shared/contracts/channels.ts';
 import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { recordCopy } from '../channels/gate.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { passForToken } from '../public/service.ts';
 import { ensureSamsungFetchRef } from './callbacks-ref.ts';
@@ -43,6 +45,7 @@ const notFound = () =>
 export async function listWalletOffers(
   ctx: ServiceContext,
   passId: string,
+  channels?: EffectiveChannels,
 ): Promise<WalletOffer[]> {
   if (!walletProviderEnabled('google') && !walletProviderEnabled('samsung')) return [];
   ctx = captureOfferContext(ctx);
@@ -59,7 +62,7 @@ export async function listWalletOffers(
   );
   const candidates: { eligible: EligibleWalletProvider; offer: WalletOffer }[] = [];
   for (const provider of ['google', 'samsung'] as const) {
-    const eligible = await eligibleWalletProvider(ctx, snapshot, provider);
+    const eligible = await eligibleWalletProvider(ctx, snapshot, provider, channels);
     if (!eligible) continue;
     const instance = await getWalletInstance(ctx.env.DB, {
       orgId: snapshot.pass.orgId,
@@ -205,6 +208,7 @@ export async function issueWalletOffer(
     )
       throw notFound();
     delivered = true;
+    await recordCopy(ctx, pass, provider);
     return location;
   } catch (error) {
     if (fenceLost || (error instanceof WalletRuntimeError && error.code === 'account_unavailable'))

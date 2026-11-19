@@ -1,6 +1,7 @@
 import type { GoogleValidatedAccount } from './google-credentials.ts';
 import { GoogleWalletError, googleFetch, googleHttpError } from './google-errors.ts';
 import {
+  type DerivedGoogleId,
   type GoogleClassScope,
   type GoogleObjectScope,
   googleClassId,
@@ -32,7 +33,7 @@ export interface GoogleWalletRestContext {
 const MAX_KNOWN_RESOURCES = 4096;
 const knownResources = new Set<string>();
 
-function remember(resource: Resource, id: string): void {
+function remember(resource: Resource, id: DerivedGoogleId): void {
   const key = `${resource}/${id}`;
   knownResources.delete(key);
   if (knownResources.size >= MAX_KNOWN_RESOURCES) {
@@ -50,10 +51,13 @@ async function request(
   ctx: GoogleWalletRestContext,
   resource: Resource,
   method: 'GET' | 'POST' | 'PATCH',
-  id?: string,
+  id?: DerivedGoogleId,
   body?: Record<string, unknown>,
 ): Promise<Response> {
   if (!isGoogleBearerToken(ctx.accessToken)) throw new GoogleWalletError('invalid_input', 'rest');
+  // An id outside the source issuer's namespace is another issuer's resource, whatever its brand.
+  if (id && !id.startsWith(`${ctx.account.issuerId}.`))
+    throw new GoogleWalletError('invalid_input', 'rest');
   const operation = `${resource} ${method}`;
   const response = await googleFetch(
     ctx.fetcher ?? globalThis.fetch,
@@ -85,8 +89,8 @@ async function request(
 async function verifyIdentity(
   ctx: GoogleWalletRestContext,
   resource: Resource,
-  id: string,
-  classId?: string,
+  id: DerivedGoogleId,
+  classId?: DerivedGoogleId,
 ): Promise<void> {
   const response = await request(ctx, resource, 'GET', id);
   let value: unknown;
@@ -111,9 +115,9 @@ async function verifyIdentity(
 async function upsert(
   ctx: GoogleWalletRestContext,
   resource: Resource,
-  id: string,
+  id: DerivedGoogleId,
   projection: Record<string, unknown>,
-  classId?: string,
+  classId?: DerivedGoogleId,
 ): Promise<GoogleUpsertResult> {
   if (knownResources.has(`${resource}/${id}`)) {
     try {

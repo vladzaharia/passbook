@@ -25,9 +25,9 @@ import { TestRibbon } from './test-ribbon.tsx';
 export const BUNDLE_COPY = {
   addAll: 'Add all to Apple Wallet',
   count: HOLDER_COPY.count,
-  /** "3 passes · 1 voided" under the title. */
-  summary: (n: number, off: number) =>
-    `${n} ${n === 1 ? 'pass' : 'passes'}${off ? ` · ${off} voided` : ''}`,
+  /** "3 passes · 1 voided · 1 removed" under the title. */
+  summary: (n: number, voided: number, removed = 0) =>
+    `${n} ${n === 1 ? 'pass' : 'passes'}${voided ? ` · ${voided} voided` : ''}${removed ? ` · ${removed} removed` : ''}`,
   qrAlt: (name: string) => `QR code for ${name}`,
   preview: 'Open these passes.',
 } as const;
@@ -36,12 +36,14 @@ export interface BundlePageItem {
   id: string;
   view: PassView;
   title: string;
+  /** "Tier: Plus": tells same-titled passes apart. */
+  detail?: string | null;
   /** Voided passes and removed ones cannot be added. */
   state: 'active' | 'voided' | 'removed';
-  /** `/b/:token/:passId/pass.pkpass`. */
-  downloadHref: string;
-  /** `/b/:token/:passId/barcode`: the browser barcode, shown on Android. */
-  barcodeHref: string;
+  /** `/b/:token/:passId/pass.pkpass`; null while Apple is off for the pass. */
+  downloadHref: string | null;
+  /** `/b/:token/:passId/barcode`: the browser barcode, shown on Android; absent while mobile is off. */
+  barcodeHref?: string | undefined;
 }
 
 export interface BundlePageProps {
@@ -74,12 +76,35 @@ function OffBadge({ state }: { state: 'voided' | 'removed' }) {
   );
 }
 
+/** Under a voided pass: what it means and who to ask; a removed one needs no next step. */
+function OffNote({
+  state,
+  orgName,
+  support,
+}: {
+  state: 'voided' | 'removed';
+  orgName: string;
+  support?: HolderSupport | undefined;
+}) {
+  if (state === 'removed') return null;
+  const own = support && !support.platform ? support : null;
+  const href = own?.email ? `mailto:${own.email}` : own?.url;
+  return (
+    <p className="bd-note">
+      {HOLDER_COPY.voidedShort}{' '}
+      {href ? <a href={href}>{HOLDER_COPY.contact(orgName)}</a> : HOLDER_COPY.askForNew(orgName)}
+    </p>
+  );
+}
+
 function BundleBody(props: BundlePageProps) {
   const { items, device, support } = props;
   const addable = items.filter((i) => i.state === 'active');
-  const off = items.length - addable.length;
+  const voided = items.filter((i) => i.state === 'voided').length;
+  const removed = items.filter((i) => i.state === 'removed').length;
   const android = isAndroid(device.device);
-  const mode = addable.length > 0 ? addMode('active', device, false, props.publicUrl) : 'off';
+  const apple = addable.filter((i) => i.downloadHref);
+  const mode = apple.length > 0 ? addMode('active', device, false, props.publicUrl) : 'off';
   const area: AddAreaProps | null =
     mode === 'off'
       ? null
@@ -91,7 +116,7 @@ function BundleBody(props: BundlePageProps) {
           badge: (
             <AppleWalletBadge
               href={props.addAllHref}
-              label={BUNDLE_COPY.count(addable.length)}
+              label={BUNDLE_COPY.count(apple.length)}
               className="p-0"
             />
           ),
@@ -104,7 +129,7 @@ function BundleBody(props: BundlePageProps) {
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <HolderHeading
           heading={{ title: props.name, org: '', kind: null }}
-          meta={<span>{BUNDLE_COPY.summary(items.length, off)}</span>}
+          meta={<span>{BUNDLE_COPY.summary(items.length, voided, removed)}</span>}
           actions={<PortalLink href="/" />}
         />
         <div className="bd-top">
@@ -115,9 +140,15 @@ function BundleBody(props: BundlePageProps) {
               <h2 id="bd-add">{BUNDLE_COPY.addAll}</h2>
               <AddBlock {...area} buddy={(p) => <BuddyArt {...p} playOnLoad />} />
             </section>
-          ) : (
-            <Notice state="voided" orgName={props.orgName} support={support} many />
-          )}
+          ) : addable.length === 0 ? (
+            <Notice
+              state={voided === 0 ? 'removed' : 'voided'}
+              orgName={props.orgName}
+              support={support}
+              many={voided === 0 || removed === 0}
+              mixed={voided > 0 && removed > 0}
+            />
+          ) : null}
         </div>
         <ul className="bd-list" aria-label={BUNDLE_COPY.count(items.length)}>
           {items.map((item, i) => (
@@ -133,11 +164,15 @@ function BundleBody(props: BundlePageProps) {
               />
               <p className="bd-name" id={`bd-n-${item.id}`}>
                 {item.title}
+                {item.detail ? <span className="bd-detail">{item.detail}</span> : null}
               </p>
               <div className="bd-way">
                 {item.state !== 'active' ? (
-                  <OffBadge state={item.state} />
-                ) : android ? (
+                  <>
+                    <OffBadge state={item.state} />
+                    <OffNote state={item.state} orgName={props.orgName} support={support} />
+                  </>
+                ) : (android || !item.downloadHref) && item.barcodeHref ? (
                   <a
                     className={OUTLINE_ACTION_CLASS}
                     href={item.barcodeHref}
@@ -145,13 +180,13 @@ function BundleBody(props: BundlePageProps) {
                   >
                     {HOLDER_COPY.showBarcode}
                   </a>
-                ) : (
+                ) : item.downloadHref && !android ? (
                   <AppleWalletBadge
                     href={item.downloadHref}
                     describedBy={`bd-n-${item.id}`}
                     className="p-0"
                   />
-                )}
+                ) : null}
               </div>
             </li>
           ))}

@@ -14,9 +14,13 @@ export interface GoogleObjectScope extends GoogleClassScope {
   credentialGeneration: number;
 }
 
+declare const derivedGoogleId: unique symbol;
+/** An id this module derived from an enrolment's HMAC key; outbound Google calls take no other string. */
+export type DerivedGoogleId = string & { readonly [derivedGoogleId]: true };
+
 export interface GoogleWalletIds {
-  classId: string;
-  objectId: string;
+  classId: DerivedGoogleId;
+  objectId: DerivedGoogleId;
 }
 
 async function idKey(
@@ -49,10 +53,10 @@ async function derive(
   issuerId: string,
   kind: 'class' | 'object',
   values: (string | number)[],
-) {
+): Promise<DerivedGoogleId> {
   const message = JSON.stringify(['passbook-google-wallet-v1', issuerId, kind, ...values]);
   const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message));
-  return `${issuerId}.${kind === 'class' ? 'c' : 'o'}_${googleBase64Url(new Uint8Array(mac))}`;
+  return `${issuerId}.${kind === 'class' ? 'c' : 'o'}_${googleBase64Url(new Uint8Array(mac))}` as DerivedGoogleId;
 }
 
 /** The HMAC secret must remain stable when Google service-account keys rotate. */
@@ -60,7 +64,7 @@ export async function googleClassId(
   issuerId: string,
   secret: Uint8Array,
   scope: GoogleClassScope,
-): Promise<string> {
+): Promise<DerivedGoogleId> {
   const key = await idKey(issuerId, secret, scope);
   return derive(key, issuerId, 'class', [scope.tenantId, scope.releaseId]);
 }

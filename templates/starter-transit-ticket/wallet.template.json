@@ -2,6 +2,11 @@
   "schema": 1,
   "name": "Transit ticket",
   "description": "Boat, bus or train, with party and vehicle.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",

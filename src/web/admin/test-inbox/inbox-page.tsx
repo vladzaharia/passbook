@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { FlaskConical, Package, Plus } from 'lucide-react';
+import { ChevronRight, FlaskConical, Package, Plus } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { ENTITY } from '../../lib/entities.ts';
 import { setMode, useMode } from '../../lib/mode.ts';
@@ -159,9 +159,11 @@ export function InboxPage({
                         {m.subject}
                       </RowLink>
                     }
+                    trailing={<ChevronRight aria-hidden className="size-4 text-fg-subtle" />}
                     meta={
                       <>
-                        To {m.to} · {orgName(m.orgId)} · <RelTime at={m.createdAt} now={now} />
+                        {m.kind === 'bundle' ? 'Bundle' : 'Pass'} · To {m.to} · {orgName(m.orgId)} ·{' '}
+                        <RelTime at={m.createdAt} now={now} />
                       </>
                     }
                   />

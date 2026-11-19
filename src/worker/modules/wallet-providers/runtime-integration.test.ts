@@ -373,7 +373,7 @@ describe('existing provider instance runtime', () => {
       db,
       {
         method: 'first',
-        sql: /FROM wallet_provider_accounts a JOIN wallet_provider_credentials c/,
+        sql: /FROM wallet_provider_accounts a (LEFT )?JOIN wallet_provider_credentials c/,
         when: 'before',
       },
       async () => {

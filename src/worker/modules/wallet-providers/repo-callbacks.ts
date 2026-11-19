@@ -82,8 +82,8 @@ export async function putSamsungFetchRef(
       db,
       `INSERT INTO wallet_samsung_fetch_refs
       (id, ref_hash, instance_id, created_at, last_offered_at, initial_expires_at,
-       kek_version, iv, wrapped_dek, ciphertext, credential_keyset_commitment)
-      SELECT ?, ?, i.id, ?, ?, ?, ?, ?, ?, ?, i.credential_keyset_commitment FROM wallet_provider_instances i
+       kek_version, iv, wrapped_dek, ciphertext, credential_keyset_commitment, credential_version_id)
+      SELECT ?, ?, i.id, ?, ?, ?, ?, ?, ?, ?, i.credential_keyset_commitment, op.credential_version_id FROM wallet_provider_instances i
       JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id
         AND op.instance_id = i.id AND op.version = i.desired_version
       CROSS JOIN (SELECT ? AS now) clock

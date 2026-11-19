@@ -124,8 +124,9 @@ const PART_TENANT_BIND =
 const UPDATED_AT_PREDICATE = /\bWHERE\b[^;`]*?\bupdated_at\s*=\s*\?/is;
 /** The number of reviewed raw-write files. Removing one lowers it; a new entry fails until a design decision raises it. */
 // 31: outbound webhooks add repo-delivery-state.ts and repo-retention.ts (design-webhooks.md section 11.3);
-// the trust pack adds retention/repo-receipts.ts and retention/repo-sweep.ts.
-export const RAW_WRITE_ALLOWLIST_LIMIT = 31;
+// the trust pack adds retention/repo-receipts.ts and retention/repo-sweep.ts;
+// 32: delivery channels add channels/repo.ts, the insert-once copy evidence (design-channels.md N3).
+export const RAW_WRITE_ALLOWLIST_LIMIT = 32;
 const REPLACE = /\bOR\s+REPLACE\b|\bREPLACE\s+INTO\b/i;
 
 const TENANT_TABLES = new Set([
@@ -194,12 +195,32 @@ export function untenantedChecks(source: string): string[] {
   return [...out];
 }
 
-const skipFile = (rel: string) =>
+const WALLET_MODULE = 'src/worker/modules/wallet-providers/';
+const notProduction = (rel: string) =>
   !/\.tsx?$/.test(rel) ||
   /\.test\.tsx?$/.test(rel) ||
   /(?:fixtures?|test-kit|test-support|test-helpers?|testing)[a-z0-9-]*\.tsx?$/.test(rel) ||
-  rel.startsWith('src/worker/modules/wallet-providers/') ||
   !rel.startsWith('src/worker/');
+const skipFile = (rel: string) => notProduction(rel) || rel.startsWith(WALLET_MODULE);
+
+/**
+ * The provider track is exempt from this lint (it writes its wallet_* tables raw), except for the guarded
+ * ones: the credential, version, event and check tables and the enrolment events (0112). A write to one of
+ * them from the module is a raw-guarded-write like any other, so the check job's grant is the only way in.
+ */
+const WALLET_GUARDED = new Set(Object.keys(GUARDED_TABLES).filter((t) => t.startsWith('wallet_')));
+function scanWalletModule(rel: string, text: string): Finding[] {
+  const pinned = [...(RAW_WRITE_ALLOWLIST[rel]?.writes ?? [])];
+  const found: Finding[] = [];
+  for (const id of rawWriteStatements(text)) {
+    const table = id.slice(0, id.indexOf(':'));
+    if (!WALLET_GUARDED.has(table)) continue;
+    const at = pinned.indexOf(id);
+    if (at !== -1) pinned.splice(at, 1);
+    else found.push({ rule: 'raw-guarded-write', file: rel, detail: `raw write to ${table}` });
+  }
+  return found;
+}
 
 const isAuthorityFile = (rel: string) =>
   /^src\/worker\/platform\/(?:authority|job-authority)[a-z-]*\.ts$/.test(rel);
@@ -319,6 +340,7 @@ export function scanFile(
   owners: Owners,
   files?: ReadonlyMap<string, string>,
 ): Finding[] {
+  if (rel.startsWith(WALLET_MODULE) && !notProduction(rel)) return scanWalletModule(rel, text);
   if (skipFile(rel)) return [];
   const found: Finding[] = [];
   const add = (rule: Rule, detail: string) => found.push({ rule, file: rel, detail });

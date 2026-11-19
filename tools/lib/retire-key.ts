@@ -1,5 +1,9 @@
 import { retireProblems, rootsInUse } from '../../src/worker/modules/keys/retire.ts';
-import { CAPTURE_TABLE, ENVELOPE_TABLES } from '../../src/worker/modules/keys/rewrap-tables.ts';
+import {
+  CAPTURE_TABLE,
+  ENVELOPE_TABLES,
+  kekColumn,
+} from '../../src/worker/modules/keys/rewrap-tables.ts';
 import { EVIDENCE_ROOT, parseKekVersion } from '../../src/worker/platform/mac-key-config.ts';
 import { secretNames } from './deploy-plan.ts';
 
@@ -128,7 +132,7 @@ function check(n: number, deps: RetireDeps): string[] {
   const counts = ENVELOPE_TABLES.map((table) =>
     table === CAPTURE_TABLE
       ? `SELECT '${table}' AS t, count(*) AS n FROM ${table} WHERE html GLOB 'enc1:${n}.*' OR text GLOB 'enc1:${n}.*'`
-      : `SELECT '${table}' AS t, count(*) AS n FROM ${table} WHERE kek_version = ${n}`,
+      : `SELECT '${table}' AS t, count(*) AS n FROM ${table} WHERE ${kekColumn(table)} = ${n}`,
   ).join(' UNION ALL ');
   const rows = rowsOf(deps.query(counts));
   const seen = new Set(rows.map((r) => String(r.t)));

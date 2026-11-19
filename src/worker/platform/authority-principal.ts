@@ -43,7 +43,9 @@ export type HolderProof =
       serial: string;
       authToken: string;
       credentialGeneration: number;
-    };
+    }
+  /** The bearer link (`/p/{token}`): the stored token at its link and credential generation. */
+  | { via: 'link'; downloadToken: string; linkGeneration: number; credentialGeneration: number };
 
 /** Who acts. Ids come from the authenticated principal, never from the request body. */
 export type Principal =
@@ -94,7 +96,9 @@ export function principalLabel(p: Principal): string {
     case 'scanner':
       return `scanner:${p.scannerId}`;
     case 'holder':
-      return p.proof.via === 'device' ? `device:${p.passId}` : `holder:${p.proof.userId}`;
+      return p.proof.via === 'device' || p.proof.via === 'link'
+        ? `${p.proof.via}:${p.passId}`
+        : `holder:${p.proof.userId}`;
     case 'join':
       return `join:${p.linkId}`;
     case 'platform':
@@ -133,6 +137,10 @@ function holderProof(proof: HolderProof, now: number, b: Binds): string {
       return `p.identity_id = ${b.bind(proof.identityId)} AND p.serial = ${b.bind(proof.serial)}
         AND p.auth_token = ${b.bind(proof.authToken)} AND p.credential_generation = ${b.bind(proof.credentialGeneration)}
         AND p.status = 'active'`;
+    case 'link':
+      return `p.download_token = ${b.bind(proof.downloadToken)} AND p.link_generation = ${b.bind(proof.linkGeneration)}
+        AND p.credential_generation = ${b.bind(proof.credentialGeneration)} AND p.status = 'active' AND p.removed_at IS NULL
+        AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = p.id AND t.state = 'pending')`;
   }
 }
 
