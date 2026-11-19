@@ -45,7 +45,10 @@ describe('Assign tag dialog', () => {
     expect(
       await screen.findByRole('dialog', { name: TAG_COPY.dialog.title }),
     ).toHaveAccessibleDescription('To Maya Okafor');
-    expect(screen.getByRole('radio', { name: /All of Maya Okafor's passes/ })).toBeChecked();
+    // Checked state lands a tick after the dialog under coverage; wait for it, not the node.
+    await waitFor(() =>
+      expect(screen.getByRole('radio', { name: /All of Maya Okafor's passes/ })).toBeChecked(),
+    );
     expect(screen.getByRole('radio', { name: /This pass/ })).not.toBeChecked();
     expect(await screen.findByRole('radio', { name: /Front desk iPad/ })).toBeChecked();
     expect(screen.getByRole('radio', { name: /Lobby kiosk/ })).toBeDisabled();
@@ -60,7 +63,7 @@ describe('Assign tag dialog', () => {
     const person = await screen.findByRole('radio', { name: /All of Maya Okafor's passes/ });
     expect(person).toBeDisabled();
     expect(screen.getByText(TAG_COPY.noAccount)).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /This pass/ })).toBeChecked();
+    await waitFor(() => expect(screen.getByRole('radio', { name: /This pass/ })).toBeChecked());
   });
 
   it('sends the request, waits for the tap, then shows the result with Undo', async () => {
