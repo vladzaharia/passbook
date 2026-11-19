@@ -5,16 +5,27 @@ import { revokeWalletCredentialConfirm } from '@/web/lib/confirms.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { Button, ConfirmDialog, StatusPill, toast } from '@/web/ui/index.ts';
+import { checkFresh } from './check.ts';
 import { COPY, PROVIDER_NAME, safeError } from './copy.ts';
 import { CredentialDialog } from './credential-dialog.tsx';
 import { type CredentialTarget, useWalletActions } from './queries.ts';
 
 /** The check state a credential shows: the DTO's verifiedAt, never a secret. */
-export function CheckPill({ credential }: { credential: WalletCredential }) {
-  return credential.verifiedAt === null ? (
-    <StatusPill status="not_checked" />
-  ) : (
+export function CheckPill({
+  credential,
+  fresh,
+}: {
+  credential: WalletCredential;
+  /** The server's freshness for the enrolment's source, when this is that credential. */
+  fresh?: boolean;
+}) {
+  if (credential.verifiedAt === null) return <StatusPill status="not_checked" />;
+  return checkFresh(credential.verifiedAt, Date.now(), fresh) ? (
     <StatusPill status="verified">Checked {formatDateTime(credential.verifiedAt)}</StatusPill>
+  ) : (
+    <StatusPill status="not_checked" tone="warning">
+      Last checked {formatDateTime(credential.verifiedAt)}
+    </StatusPill>
   );
 }
 
@@ -25,6 +36,7 @@ export function CredentialRow({
   credential,
   canManage,
   label,
+  fresh,
 }: {
   target: CredentialTarget;
   provider: WalletProvider;
@@ -32,6 +44,8 @@ export function CredentialRow({
   canManage: boolean;
   /** Names the slot when a page lists several (Live, Test). */
   label?: string;
+  /** The server's check freshness, when this credential is an enrolment's source. */
+  fresh?: boolean;
 }) {
   const actions = useWalletActions();
   const sessionMode = useMode();
@@ -47,7 +61,7 @@ export function CredentialRow({
           {credential ? (
             <p className="flex flex-wrap items-center gap-2 text-fg-muted">
               <span className="font-mono text-xs">…{credential.identityHint}</span>
-              <CheckPill credential={credential} />
+              <CheckPill credential={credential} fresh={fresh} />
             </p>
           ) : (
             <p className="text-fg-muted">No credentials</p>

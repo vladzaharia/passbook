@@ -139,6 +139,47 @@ describe('organization wallet accounts', () => {
     expect(within(samsung).getByText('Account check: Needed')).toBeInTheDocument();
   });
 
+  it('never shows a green check on a credential whose gate says Needed', async () => {
+    await renderApp('/admin/o/o1/wallet-accounts', {
+      memberships: [member(MANAGE)],
+      handlers: orgHandlers(
+        [
+          enrolment({
+            state: 'on',
+            source: 'org',
+            prerequisites: { check: false, roundTrip: null },
+          }),
+          enrolment({ provider: 'samsung' }),
+        ],
+        [credential({ verifiedAt: 1_700_000_000_000 })],
+      ),
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    expect(within(google).getByText(/^Last checked/)).toBeInTheDocument();
+    expect(within(google).queryByText(/^Checked /)).toBeNull();
+    expect(within(google).getByText('Account check: Needed')).toBeInTheDocument();
+  });
+
+  it('shows a green check when the gate passes', async () => {
+    await renderApp('/admin/o/o1/wallet-accounts', {
+      memberships: [member(MANAGE)],
+      handlers: orgHandlers(
+        [
+          enrolment({
+            state: 'off',
+            source: 'org',
+            prerequisites: { check: true, roundTrip: null },
+          }),
+          enrolment({ provider: 'samsung' }),
+        ],
+        [credential({ verifiedAt: 1_700_000_000_000 })],
+      ),
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    expect(within(google).getByText(/^Checked /)).toBeInTheDocument();
+    expect(within(google).getByText('Account check: Passed')).toBeInTheDocument();
+  });
+
   it('turns it on with the enrolment revision', async () => {
     const user = userEvent.setup();
     const bodies: unknown[] = [];

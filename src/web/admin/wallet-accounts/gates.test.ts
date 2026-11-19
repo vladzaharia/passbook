@@ -36,3 +36,14 @@ describe('enrolment gates', () => {
     ).toEqual(['Passed', 'Needed']);
   });
 });
+
+describe('check freshness', () => {
+  const day = 24 * 60 * 60 * 1000;
+  it('is one rule: the server answer wins, else 24 hours', async () => {
+    const { checkFresh } = await import('./check.ts');
+    expect(checkFresh(1000, 1000 + day)).toBe(true);
+    expect(checkFresh(1000, 1001 + day)).toBe(false);
+    expect(checkFresh(null, 0)).toBe(false);
+    expect(checkFresh(1000, 1000, false)).toBe(false);
+  });
+});
