@@ -6,6 +6,14 @@ import { formatCount, formatTime } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { Card, CardBody, CardHeader, ErrorState } from '@/web/ui/index.ts';
 
+/** "America/New_York" as "New York time"; UTC stays "UTC"; no zone is the viewer's own. */
+export function zoneName(zone: string | null): string {
+  if (!zone) return 'your time';
+  if (zone === 'UTC' || zone === 'Etc/UTC') return 'UTC';
+  const city = zone.split('/').pop() ?? zone;
+  return `${city.replaceAll('_', ' ')} time`;
+}
+
 function List({
   title,
   rows,
@@ -69,7 +77,7 @@ export function SessionTonight({ sessionId }: { sessionId: string }) {
               ))}
             </dl>
             <List
-              title={`By hour, ${s.timeZone ?? 'local time'}`}
+              title={`By hour, ${zoneName(s.timeZone)}`}
               rows={s.byHour.map((h) => ({
                 key: String(h.start),
                 label: formatTime(h.start, s.timeZone ?? undefined),

@@ -3,8 +3,9 @@ import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { ScanSummarySchema } from '@/shared/contracts/scan-session.ts';
+import { formatTime } from '@/web/lib/format.ts';
 import { installDomShims } from '@/web/lib/test-utils.tsx';
-import { SessionTonight } from './session-tonight.tsx';
+import { SessionTonight, zoneName } from './session-tonight.tsx';
 
 installDomShims();
 afterEach(() => vi.unstubAllGlobals());
@@ -50,6 +51,17 @@ describe('SessionTonight', () => {
     expect(await screen.findByRole('region', { name: 'By staff' })).toHaveTextContent('Sam');
     expect(screen.getByRole('region', { name: 'Overrides' })).toHaveTextContent('Alex');
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('names the session zone and labels both hours of a fall-back change', () => {
+    expect(zoneName('America/New_York')).toBe('New York time');
+    expect(zoneName('UTC')).toBe('UTC');
+    expect(zoneName(null)).toBe('your time');
+    // New York ends DST on 2026-11-01: 01:00 happens at 05:00Z (EDT) and again at 06:00Z (EST).
+    const first = Date.UTC(2026, 10, 1, 5);
+    const second = Date.UTC(2026, 10, 1, 6);
+    expect(formatTime(first, 'America/New_York')).toBe(formatTime(second, 'America/New_York'));
+    expect(formatTime(first, 'America/New_York')).toMatch(/^1:00\s?AM$/);
   });
 
   it('renders nothing below Manager', async () => {
