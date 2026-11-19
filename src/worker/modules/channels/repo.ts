@@ -61,8 +61,6 @@ export async function getPolicy(
   return { channels, revision: r.revision };
 }
 
-const lit = (v: string) => `'${v.replace(/'/g, "''")}'`;
-
 /** The version the org's release of this template serves in this mode (Apple head), if any. */
 export async function releasedVersion(
   db: D1Database,
@@ -70,14 +68,18 @@ export async function releasedVersion(
   orgId: string,
   mode: Mode,
 ): Promise<string | null> {
+  const select = effectiveReleaseIdSql({
+    templateIdSql: 's.template_id',
+    orgIdSql: 's.org_id',
+    modeSql: 's.mode',
+    providerSql: 's.provider',
+  });
   const r = await first<{ version: string }>(
     db,
-    `SELECT r.version FROM template_releases r WHERE r.id = (${effectiveReleaseIdSql({
-      templateIdSql: lit(templateId),
-      orgIdSql: lit(orgId),
-      modeSql: lit(mode),
-      providerSql: "'apple'",
-    })})`,
+    `SELECT r.version FROM template_releases r
+     WHERE r.id = (SELECT (${select}) FROM
+       (SELECT ? AS template_id, ? AS org_id, ? AS mode, ? AS provider) s)`,
+    [templateId, orgId, mode, 'apple'],
   );
   return r?.version ?? null;
 }
