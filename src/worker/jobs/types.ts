@@ -73,6 +73,8 @@ export const JobSchema = z.discriminatedUnion('kind', [
     chunk: z.number().int().nonnegative().optional(),
   }),
   /** A platform admin's hold on a suspended org's wallet enrolment: a job grant writes it. */
+  /** One legacy wallet account onto its credential source, under the migrate job grant. */
+  z.object({ kind: z.literal('wallet.credential_migrate'), accountId: z.string().min(1) }),
   z.object({
     kind: z.literal('wallet.enrolment_hold'),
     orgId: z.string().min(1),
@@ -80,6 +82,12 @@ export const JobSchema = z.discriminatedUnion('kind', [
     provider: z.enum(['google', 'samsung']),
     reason: z.string().min(1).max(500),
     userId: z.string().min(1),
+  }),
+  /** A credential's health check: the provider probe and its server-clock row. `checkId` names the result. */
+  z.object({
+    kind: z.literal('wallet.credential_check'),
+    credentialId: z.string().min(1).max(64),
+    checkId: z.string().min(1).max(80),
   }),
   /** Apple flipped for a pass: republish (force) so devices fetch the voided or live copy. */
   z.object({
@@ -101,6 +109,13 @@ export const JobSchema = z.discriminatedUnion('kind', [
     passId: z.string().min(1),
     /** The idempotency key and rotation actor id: `channel_bulk:{requestId}`. */
     key: z.string().min(1),
+  }),
+  /** One combined PDF of staff prints (bulk Print). The prints already exist; the job only renders. */
+  z.object({
+    kind: z.literal('prints.bulk'),
+    orgId: z.string().min(1),
+    jobId: z.string().min(1),
+    passIds: z.array(z.string().min(1)).min(1).max(50),
   }),
   z.object({
     kind: z.literal('template.fork_update'),

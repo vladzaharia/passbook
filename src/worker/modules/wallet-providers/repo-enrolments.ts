@@ -137,12 +137,14 @@ export interface EnrolmentStep {
     checkId?: string;
     roundTrip?: RoundTrip;
     reason?: string;
-    actor: { type: 'user' | 'platform'; id: string };
+    actor: { type: 'user' | 'platform' | 'system'; id: string | null };
     /** The stamp `enabled_at`, `revoked_at` or `platform_hold_at` repeats; within 5 s of the database clock. */
     createdAt?: number;
   };
   /** The account columns this step moves, a fixed set chosen by the caller (never a request value). */
   set: Record<string, SqlValue>;
+  /** More statements for the same batch, after the account update (the migration's audit and credential revoke). */
+  after?: (g: Grant) => void;
 }
 
 /** The event and the account update of one enrolment step, in the grant's batch. Throws the mapped refusal. */
@@ -212,6 +214,7 @@ export async function commitEnrolmentStep(
       ],
     ),
   );
+  step.after?.(g);
   try {
     await g.commit();
   } catch (error) {

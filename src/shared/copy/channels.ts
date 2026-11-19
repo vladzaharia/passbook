@@ -34,12 +34,41 @@ export const CHANNEL_REASON_COPY: Record<ChannelReason, string> = {
 export const channelReason = (channel: Channel, reason: ChannelReason): string =>
   CHANNEL_REASON_COPY[reason].replace('{channel}', CHANNEL_LABEL[channel]);
 
+/** The reason without the channel label, for a row that already shows it: "Organization not enrolled". */
+export const channelReasonText = (reason: ChannelReason): string => {
+  const text = CHANNEL_REASON_COPY[reason].replace('{channel}: ', '');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
+
+/** Only these can leave copies behind; a block of them never retires or replaces copies. */
+const LEAVES_COPIES = new Set<ChannelReason>(['blocked', 'not_enrolled', 'tags_off']);
+
+/** A limit above the template, as a row's second line. */
+export const channelBlocked = (reason: ChannelReason): string =>
+  LEAVES_COPIES.has(reason)
+    ? `${channelReasonText(reason)}. ${CHANNEL_COPY.copiesStay}`
+    : channelReasonText(reason);
+
 export const CHANNEL_COPY = {
+  copiesStay: 'Copies stay as they are.',
   useTemplate: 'Use template',
   nothingOn: 'No channel is on. This pass cannot be used.',
   holderNotice: 'Your {channel} copy no longer works. Open {link}.',
   /** `{channel}` is a label; `{n}` a pass count. */
   turnsOff: 'Turns off {channel} for {n} passes.',
+  card: 'Channels',
+  copiesKeep: 'Copies keep working until New code.',
+  /** `{n}` is a count. */
+  clears: 'Clears {n} pass overrides.',
+  clearsOne: 'Clears 1 pass override.',
+  turnsOffOne: 'Turns off {channel} for 1 pass.',
+  noChange: 'No passes change.',
+  saved: 'Channels saved',
+  turnOffTitle: 'Turn off {channel}?',
+  turnOffPass: 'New copies stop. Copies keep working until New code.',
+  turnOffPassPaper: 'The active print is voided.',
+  bulkTitle: 'Channels',
+  bulkNotify: 'Email holders when a copy stops working',
   turnsOffReplace: 'Turns off {channel} for {n} passes and issues new codes.',
   /** `{name}` is the event or session; `{time}` when it closes. */
   replaceWindowOpen: "Codes can't change while {name} is open. Try after {time}.",

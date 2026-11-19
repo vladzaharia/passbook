@@ -3,6 +3,7 @@ import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ErrorState, SkeletonKeyValue, TabsContent } from '../../../ui/index.ts';
 import { AccessCard } from './access-card.tsx';
+import { ChannelsCard } from './channels-card.tsx';
 import { CheckInCard } from './check-in-card.tsx';
 import { ConnectionTab } from './connection-tab.tsx';
 import { DeliveryTab } from './delivery-tab.tsx';
@@ -13,7 +14,6 @@ import { HolderTab } from './holder-tab.tsx';
 import { ImagesTab } from './images-tab.tsx';
 import { ActivityTab } from './info-tabs.tsx';
 import { MemberPhotoCard } from './member-photo-card.tsx';
-import { PrintCard } from './print-card.tsx';
 import { StampsCard } from './stamps-card.tsx';
 import { SyncTab } from './sync-tab.tsx';
 import { TagsCard } from './tags-card.tsx';
@@ -69,7 +69,7 @@ export function PassTabs({
       <TabsContent value="holder" className="flex flex-col gap-4">
         <HolderTab pass={pass} readOnly={readOnly} />
         <MemberPhotoCard pass={pass} readOnly={readOnly} />
-        <PrintCard pass={pass} readOnly={readOnly} />
+        <ChannelsCard pass={pass} readOnly={readOnly} />
         <TagsCard pass={pass} readOnly={readOnly} />
         <CheckInCard pass={pass} readOnly={readOnly} />
       </TabsContent>

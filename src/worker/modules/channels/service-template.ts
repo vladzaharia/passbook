@@ -46,6 +46,7 @@ export async function putTemplateChannels(
     revision: number;
     dryRun: boolean;
     replaceCodes: boolean;
+    expectedCleared?: number | undefined;
   },
 ): Promise<PutTemplateResponse> {
   const { inputs, policy, revision } = await loadTemplate(ctx, template, mode);
@@ -112,6 +113,12 @@ export async function putTemplateChannels(
         : 0;
     impact.push({ channel, passes, rotated, clearedOverrides });
   }
+  const clearedTotal = impact.reduce((n, i) => n + i.clearedOverrides, 0);
+  if (!body.dryRun && body.expectedCleared !== undefined && body.expectedCleared !== clearedTotal)
+    throw new ConflictError(
+      `This now clears ${clearedTotal} pass overrides, not ${body.expectedCleared}. Review and save again.`,
+      'TEMPLATE_CHANNELS_IMPACT_CHANGED',
+    );
   // The pending run's channels stay: one run replaces what every save joined to it asked for.
   const joined =
     !body.dryRun && changed.length > 0
@@ -129,7 +136,7 @@ export async function putTemplateChannels(
       {
         mode,
         channels: Object.fromEntries(changed.map((c) => [c, body.channels[c]])),
-        cleared: impact.reduce((n, i) => n + i.clearedOverrides, 0),
+        cleared: clearedTotal,
       },
       body.revision,
       {

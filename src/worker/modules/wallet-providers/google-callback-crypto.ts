@@ -170,11 +170,11 @@ export function clearGoogleCallbackKeyCache(): void {
 async function fetchRootKeys(now: () => number): Promise<RootKeyCache> {
   let data: Record<string, unknown>;
   try {
-    // Always the pinned URL. Redirects are forbidden, and neither the request nor its headers
+    // Always the pinned URL. Redirects are not followed (a 3xx fails the read), and neither the request nor its headers
     // can supply a verification key or URL.
     const response = await fetch(GOOGLE_CALLBACK_KEYS_URL, {
       method: 'GET',
-      redirect: 'error',
+      redirect: 'manual',
       signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) throw new Error();

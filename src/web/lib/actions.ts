@@ -116,6 +116,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass.rotate_link': a('Pass link rotated', I.rotate, 'info'),
   'pass.channels_change': a('Pass channels changed', I.edit, 'info'),
   'pass.print': a('Ticket printed', I.edit, 'info'),
+  'pass.print_bulk': a('Tickets printed in bulk', I.edit, 'info'),
   'pass.print_void': a('Printed ticket voided', I.delete, 'warning'),
   'pass.stamps.add': a('Stamp added', ENTITY.pass.icon, 'info'),
   'pass.stamps.redeem': a('Reward redeemed', Star, 'success'),
@@ -252,6 +253,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'wallet_provider.enrolment_release': a('Wallet provider released', ShieldCheck, 'info'),
   'wallet_provider.enrolment_revoke': a('Wallet provider revoked', ShieldX, 'warning'),
   'wallet_provider.enrolment_source': a('Wallet provider credential changed', I.edit, 'info'),
+  'wallet_provider.migration_resolve': a('Wallet account migration resolved', I.edit, 'info'),
 };
 
 export const humanize = (code: string) => {

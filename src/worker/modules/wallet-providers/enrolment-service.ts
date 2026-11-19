@@ -116,6 +116,10 @@ export async function setEnrolmentSource(
     provider,
   );
   if (!source?.current_version_id) throw prerequisite(['source']);
+  // A migrated row keeps its identity until PE3 pins candidates to it: the migration resolves a collision with the
+  // same identity only, so a switch to another issuer fails closed.
+  if (row?.credential_id && row.identity_hash !== source.identity_hash)
+    throw new ConflictError('The provider identity cannot change.', 'WALLET_IDENTITY_IMMUTABLE');
   const accountId = row?.id ?? ctx.ids.id();
   // A new-model Google enrolment gets its own key with its first source; a row with a legacy envelope keeps that key.
   const ownKey =

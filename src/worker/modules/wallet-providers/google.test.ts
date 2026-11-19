@@ -258,7 +258,7 @@ describe('Google OAuth service-account exchange', () => {
     const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
       expect(String(input)).toBe('https://oauth2.googleapis.com/token');
       expect(init?.method).toBe('POST');
-      expect(init?.redirect).toBe('error');
+      expect(init?.redirect).toBe('manual');
       expect(new Headers(init?.headers).get('content-type')).toBe(
         'application/x-www-form-urlencoded',
       );

@@ -19,12 +19,15 @@ import {
   useBottomBar,
 } from '../../ui/index.ts';
 import { passKeys, useBulkPassAction } from './api.ts';
+import { BulkChannelsDialog } from './bulk-channels-dialog.tsx';
+import { BulkPrintAction } from './bulk-print.tsx';
 import { BundleDialog } from './bundle-dialog.tsx';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
 import { fingerprint, newKey } from './format.ts';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+const CHANNELS_LIMIT = 100;
 const SHARE_HINT = `Up to ${BUNDLE_MAX_PASSES} passes of one organization.`;
 
 /**
@@ -53,6 +56,7 @@ export function SelectionBar({
   const queryClient = useQueryClient();
   const [ask, setAsk] = useState<'void' | 'send_email' | 'remove' | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [channels, setChannels] = useState(false);
   const emailKey = useRef<{ fp: string; key: string }>({ fp: '', key: newKey() });
   const barRef = useBottomBar<HTMLElement>();
   const compact = useMediaQuery(BELOW_LG);
@@ -61,6 +65,7 @@ export function SelectionBar({
   const changeable = picked.filter((p) => p.removedAt === null).length;
   const emailable = picked.filter((p) => p.holderEmail !== null).length;
   const operable = Boolean(canOperate && orgId && picked.every((p) => p.orgId === orgId));
+  const canChannel = operable && changeable > 0 && n <= CHANNELS_LIMIT;
   const canShare = n <= BUNDLE_MAX_PASSES && bundleOrgId !== null;
   if (n === 0) return null;
 
@@ -143,6 +148,10 @@ export function SelectionBar({
         </span>
         {compact ? (
           <MoreMenu>
+            <DropdownMenuItem disabled={!canChannel} onSelect={() => setChannels(true)}>
+              <ACTION_ICON.channels aria-hidden />
+              Channels…
+            </DropdownMenuItem>
             <DropdownMenuItem
               disabled={!operable || changeable === 0}
               onSelect={() => setAsk('void')}
@@ -157,6 +166,7 @@ export function SelectionBar({
               <ACTION_ICON.removeFromWallet aria-hidden />
               Remove from Wallet
             </DropdownMenuItem>
+            <BulkPrintAction ids={ids} orgId={orgId} disabled={!operable} as="menu" />
             <DropdownMenuItem onSelect={onExport}>
               <ACTION_ICON.download aria-hidden />
               Export CSV
@@ -164,6 +174,14 @@ export function SelectionBar({
           </MoreMenu>
         ) : (
           <>
+            <Button
+              variant="outline"
+              disabled={!canChannel}
+              iconStart={<ACTION_ICON.channels aria-hidden />}
+              onClick={() => setChannels(true)}
+            >
+              Channels…
+            </Button>
             <Button
               variant="outline"
               disabled={!operable || changeable === 0}
@@ -180,6 +198,7 @@ export function SelectionBar({
             >
               Remove from Wallet
             </Button>
+            <BulkPrintAction ids={ids} orgId={orgId} disabled={!operable} as="button" />
             <Button
               variant="outline"
               iconStart={<ACTION_ICON.download aria-hidden />}
@@ -196,6 +215,15 @@ export function SelectionBar({
           onOpenChange={setSharing}
           orgId={bundleOrgId}
           passIds={ids}
+          onDone={onClear}
+        />
+      ) : null}
+      {orgId ? (
+        <BulkChannelsDialog
+          open={canChannel && channels}
+          onOpenChange={setChannels}
+          orgId={orgId}
+          ids={ids}
           onDone={onClear}
         />
       ) : null}

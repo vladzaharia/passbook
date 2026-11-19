@@ -25,6 +25,7 @@ import { checkChannelApply } from './checks-channels.ts';
 import { checkKek, checkTerminalFailures } from './checks-health.ts';
 import { identityComponent } from './checks-identity.ts';
 import { checkKeys } from './checks-keys.ts';
+import { checkWalletCredentials } from './checks-wallet.ts';
 import { checkCron } from './cron-check.ts';
 import { recentWorkflowRuns } from './repo.ts';
 import { checkBreakglass, checkRateLimits, checkTurnstile } from './security-checks.ts';
@@ -103,6 +104,7 @@ export async function getStatus(ctx: ServiceContext, deps: StatusDeps = {}): Pro
     checkKeys(ctx),
     checkTerminalFailures(ctx),
     checkChannelApply(ctx),
+    checkWalletCredentials(ctx),
   ]);
   const components: Component[] = parts
     .flat()

@@ -9,6 +9,7 @@ import { svc } from '../passes/http.ts';
 import { passForToken } from '../public/service.ts';
 import { printPageModel } from './page.ts';
 import { assertHolderMayPrint } from './paper.ts';
+import { PDF_HEADERS, ticketPdf } from './pdf-service.ts';
 import { linkWriter } from './repo-write.ts';
 import { HOLDER_PRINTS_PER_HOUR, mintPrint, voidPrint } from './service.ts';
 
@@ -49,6 +50,7 @@ holderPrintRoutes.get('/:token/print', async (c) => {
       model,
       audience: 'holder',
       backHref: `/p/${token}`,
+      pdfHref: `/p/${token}/print/pdf`,
       nonce: c.var.nonce,
       ...(theme ? { theme } : {}),
     });
@@ -77,4 +79,11 @@ holderPrintRoutes.post('/:token/print/reprint', async (c) => {
 holderPrintRoutes.post('/:token/print/void', async (c) => {
   const call = await holderCall(c);
   return c.json(await voidPrint(call.ctx, call.caller, call.pass, 'holder'), 200, noStore);
+});
+
+/** The PDF of the holder's active print. A rotated link or a transfer is a 404 before anything is read. */
+holderPrintRoutes.get('/:token/print/pdf', async (c) => {
+  const ctx = svc(c);
+  const pass = await passForToken(ctx, c.req.param('token') ?? '');
+  return new Response(await ticketPdf(ctx, pass, 'holder'), { headers: PDF_HEADERS });
 });

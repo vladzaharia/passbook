@@ -41,6 +41,8 @@ export interface SchemaFormProps {
   hiddenKeys?: ReadonlySet<string> | undefined;
   /** Max bytes for image widgets (stored as data URIs). */
   maxImageBytes?: number;
+  /** An existing pass: sections with nothing set and nothing required fold to a "Show" row. */
+  collapseEmpty?: boolean;
 }
 
 /**
@@ -60,6 +62,7 @@ export function SchemaForm({
   onResetField,
   hiddenKeys,
   maxImageBytes = 256 * 1024,
+  collapseEmpty = false,
 }: SchemaFormProps) {
   const groups = useMemo(
     () =>
@@ -69,6 +72,25 @@ export function SchemaForm({
     [schema, hiddenKeys],
   );
   const inCard = useInCard();
+  // Decided once, from the pass as it opened: a section does not fold away under the typing.
+  const [foldedAtStart] = useState<ReadonlySet<string>>(() =>
+    collapseEmpty
+      ? new Set(
+          groups
+            .filter((g) =>
+              g.fields.every(
+                (f) =>
+                  !f.required &&
+                  (value[f.key] === undefined ||
+                    value[f.key] === '' ||
+                    (Array.isArray(value[f.key]) && (value[f.key] as unknown[]).length === 0)),
+              ),
+            )
+            .map((g) => g.name),
+        )
+      : new Set(),
+  );
+  const [shown, setShown] = useState<ReadonlySet<string>>(new Set());
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
   // A template's time zone input sets the zone its date-times are read and written in.
   const zoneKey = groups.flatMap((g) => g.fields).find((f) => f.widget === 'timezone')?.key;
@@ -116,6 +138,23 @@ export function SchemaForm({
           group.fields.some((f) => access.hidden.has(f.key))
         )
           return null;
+        if (foldedAtStart.has(group.name) && !shown.has(group.name) && group.name)
+          return (
+            <Card key={group.name} role="region" aria-label={group.name}>
+              <CardHeader
+                title={group.name}
+                actions={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShown((s) => new Set(s).add(group.name))}
+                  >
+                    Show
+                  </Button>
+                }
+              />
+            </Card>
+          );
         const only = visible.length === 1 && pairs.length === 0 ? visible[0]?.label : undefined;
         const title = group.name || 'Details';
         const grid = (

@@ -45,7 +45,7 @@ describe('passSummary', () => {
     expect(s.colors.background).toBe('rgb(40, 30, 120)');
   });
 
-  it('leads with the header date and start time on tickets and boarding passes', () => {
+  it('leads with the header fields, as the card draws them', () => {
     const header = [
       { key: 'date', label: 'Date', value: '2026-11-16T18:00:00Z', dateStyle: 'PKDateStyleMedium' },
     ];
@@ -81,7 +81,8 @@ describe('passSummary', () => {
       },
       ctx,
     );
-    expect(store.fields.map((f) => f.label)).toEqual(['Balance', 'Date']);
+    // Every style lists them as the card draws them: header first.
+    expect(store.fields.map((f) => f.label)).toEqual(['Date', 'Balance']);
   });
 });
 
@@ -518,6 +519,16 @@ describe('pass email: notice', () => {
     );
     expect(render().text).toContain('Your pass is ready');
     expect(render().html).not.toContain('Open your ticket before you arrive.');
+  });
+});
+
+describe('pass email: one noun for a joined card', () => {
+  it('titles a joined card email "card", and any other pass "pass"', () => {
+    const joined = render({ joined: true });
+    expect(joined.subject).toBe('Your Harbor Lights Festival card');
+    expect(joined.text).toContain('Your card is ready');
+    expect(joined.html).toContain('Your card is ready');
+    expect(render().text).toContain('Your pass is ready');
   });
 });
 

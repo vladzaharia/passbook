@@ -80,7 +80,7 @@ describe('Google Wallet class REST operations', () => {
     expect(calls[0]).toMatchObject({
       url: `${base}/genericClass`,
       method: 'POST',
-      redirect: 'error',
+      redirect: 'manual',
       body: { id: ids.classId, enableSmartTap: false },
     });
     expect(calls[0]?.headers.get('authorization')).toBe('Bearer ya29.secret-token');

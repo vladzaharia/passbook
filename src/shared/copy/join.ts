@@ -6,9 +6,9 @@ export const JOIN_COPY = {
     title: 'Join link',
     open: 'Open to everyone',
     openHelp: 'People can get a card without staff.',
-    askFor: 'Ask for',
+    askFor: 'Ask visitors for',
     name: 'Name',
-    fills: 'Fills {label}',
+    fills: 'Saved in {label}',
     email: 'Email',
     emailHelp: 'Same email, same card.',
     generated: '{label} is made for each card.',
@@ -42,6 +42,8 @@ export const JOIN_COPY = {
   sign: {
     title: 'Get your card',
     scan: 'Scan with your camera.',
+    lineLabel: 'Extra line',
+    linePlaceholder: 'Free. One card each.',
     print: 'Print',
     crumb: 'Print sign',
     none: 'No join link yet.',
@@ -74,6 +76,9 @@ export const JOIN_COPY = {
     /** Unknown, rotated and expired links look alike on purpose; the first sentence is the heading. */
     expired: 'This link does not work. Ask staff for a new one.',
   },
+  /** The pass email of a joined card says "card", as the page and the sign do. */
+  mailTitle: 'Your card is ready',
+  mailSubject: '{org} card',
   mailLine: "You asked for this card at {org}. Didn't? Ignore this email.",
   errors: {
     JOIN_LINK_CHANGED: 'This link changed. Reload and try again.',

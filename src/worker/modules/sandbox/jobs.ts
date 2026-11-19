@@ -1,6 +1,7 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { deleteObjects, deletePassRows } from '../passes/repo-ops-retention.ts';
+import { dropPrintPdfs } from '../prints/pdf-drop.ts';
 import { prepareScanRetentionDelete } from '../scan/scan-retention-proof.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import {
@@ -55,7 +56,10 @@ export async function purgeTestPasses(ctx: ServiceContext, before: number): Prom
         lifecycleGeneration: pass.lifecycleGeneration,
       });
       await deleteObjects(ctx.env.BUCKET, removed.objectKeys);
-      if (removed.deleted) total += 1;
+      if (removed.deleted) {
+        await dropPrintPdfs(ctx, pass);
+        total += 1;
+      }
     }
     if (passes.length < PASS_BATCH) break;
     const last = passes[passes.length - 1];

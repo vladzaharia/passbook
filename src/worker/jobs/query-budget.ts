@@ -25,6 +25,9 @@ export function estimateQueries(job: Job): number {
     // so a CPU kill cannot retry pushes and emails with it.
     case 'template.fork_update':
       return QUEUE_QUERY_BUDGET;
+    case 'prints.bulk':
+      // Per pass: the pass, its channels, org, template and print reads.
+      return 10 + 10 * job.passIds.length;
     case 'message_rule.check':
       return 14;
     default:
