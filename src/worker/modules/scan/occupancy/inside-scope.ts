@@ -1,6 +1,6 @@
 // The places Who's in covers: what a session checks, or what a console zone or event holds.
 import type { ScanActor } from '../guard.ts';
-import { watchZoneRoots } from '../repo-watch-cover.ts';
+import { watchedOrgEvents, watchZoneRoots } from '../repo-watch-cover.ts';
 import { orgZoneRows, sessionZoneIds } from '../repo-zones.ts';
 import { eventPlaceRead } from './repo-inside.ts';
 import { runReads } from './repo-reads.ts';
@@ -85,6 +85,16 @@ export async function sessionInsideScope(db: D1Database, actor: ScanActor): Prom
       capacity: event.capacity,
       maxStayMs: null,
     });
+  if (actor.watchCover?.allOrg)
+    for (const e of await watchedOrgEvents(db, actor.orgId, actor.mode))
+      if (e.id !== event?.id)
+        scope.places.push({
+          place: eventPlace(e.id),
+          name: e.name,
+          parentName: null,
+          capacity: e.capacity,
+          maxStayMs: null,
+        });
   const watched = actor.watchCover?.eventId;
   if (watched && watched !== event?.id) {
     const [res] = await runReads(db, [eventPlaceRead(actor.orgId, actor.mode, watched)]);

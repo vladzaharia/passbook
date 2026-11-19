@@ -107,3 +107,12 @@ export async function watchZoneRoots(
   for (const id of sessions) for (const z of await sessionZoneIds(db, actor.orgId, id)) ids.add(z);
   return [...ids];
 }
+
+/** Events of the org and mode that track entries and exits: what an `allOrg` watch covers. */
+export const watchedOrgEvents = (db: D1Database, orgId: string, mode: Mode) =>
+  all<{ id: string; name: string; capacity: number | null }>(
+    db,
+    `SELECT id, name, capacity FROM scan_events
+     WHERE org_id = ? AND mode = ? AND reentry = 1 AND archived_at IS NULL ORDER BY opens_at DESC, id LIMIT 64`,
+    [orgId, mode],
+  );

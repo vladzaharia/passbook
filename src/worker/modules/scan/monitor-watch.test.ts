@@ -19,6 +19,7 @@ beforeAll(async () => {
 });
 
 interface Watch {
+  allOrg?: boolean;
   scannerIds?: string[];
   sessionIds?: string[];
   zoneIds?: string[];
@@ -144,17 +145,11 @@ describe('standalone monitor: Let in is watch-scoped', () => {
     expect((await overrideAs((await standalone({ eventId: ev })).headers, r.hold)).status).toBe(
       422,
     );
-    if (row?.zone_id)
-      expect(
-        (
-          await overrideAs(
-            (
-              await standalone({ zoneIds: [(await plainZone()).id] })
-            ).headers,
-            r.hold,
-          )
-        ).status,
-      ).toBe(422);
+    expect(row?.zone_id).toBe(r.gym);
+    expect(
+      (await overrideAs((await standalone({ zoneIds: [(await plainZone()).id] })).headers, r.hold))
+        .status,
+    ).toBe(422);
     const watcher = await standalone({ sessionIds: [r.door.sessionId] });
     expect((await overrideAs(watcher.headers, r.hold)).status).toBe(200);
   });
@@ -172,5 +167,34 @@ describe('standalone monitor: Let in is watch-scoped', () => {
     expect((await overrideAs(fm.headers, r.hold)).status).not.toBe(200);
     const tm = await standalone({ scannerIds: [r.door.scanner.id] }, { mode: 'test' });
     expect((await overrideAs(tm.headers, r.hold)).status).toBe(422);
+  });
+});
+
+describe('standalone monitor: zone and allOrg watches', () => {
+  it('refuses a Let in for a scan outside the watched zones, allows one inside them', async () => {
+    const tpl = await accessTemplate();
+    const gym = await trackedZone({ occupancy: 'enforce' });
+    const door = await makeDoor([tpl], [gym]);
+    const pass = await kit.scanPass(tpl, { plan: 'gold' });
+    await scanAt(door, pass);
+    kit.clock.advance(5 * MINUTE);
+    const hold = (await scanAt(door, pass)).scanId as string;
+    const elsewhere = await standalone({ zoneIds: [(await plainZone()).id] });
+    expect((await overrideAs(elsewhere.headers, hold)).status).toBe(422);
+    const watcher = await standalone({ zoneIds: [gym] });
+    expect((await overrideAs(watcher.headers, hold)).status).toBe(200);
+  });
+
+  it('covers every event of its own org and mode, and nothing of another org', async () => {
+    const tpl = await kit.scanTemplate('Gym', DISPLAY_TPL as never);
+    const ev = await eventRow();
+    const p = await personInside(tpl, 'At Gala', [`event:${ev}`]);
+    const m = await standalone({ allOrg: true });
+    expect((await inside(m.headers)).items.map((i) => i.holder)).toContain('At Gala');
+    expect((await markOut(m.headers, p.id, `event:${ev}`)).status).toBe(200);
+    const foreign = await makeOrg(kit.fx);
+    const fm = await standalone({ allOrg: true }, { orgId: foreign.id });
+    const p2 = await personInside(tpl, 'Second Gala', [`event:${ev}`]);
+    expect((await markOut(fm.headers, p2.id, `event:${ev}`)).status).not.toBe(200);
   });
 });
