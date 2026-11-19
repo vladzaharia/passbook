@@ -274,6 +274,8 @@ describe('createScanApi', () => {
         'lookup',
         'markOut',
         'openNow',
+        'override',
+        'overrideNote',
         'pair',
         'pairPreview',
         'recent',
