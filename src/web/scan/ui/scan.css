@@ -34,7 +34,7 @@
 
   --scan-dock-h: 174px;
   --scan-card-top: 84px;
-  --scan-card-bottom: calc(var(--scan-dock-h) + 166px);
+  --scan-card-bottom: calc(var(--scan-dock-h) + 140px);
   --scan-card-w: 342px;
 }
 @media (prefers-color-scheme: light) {
@@ -76,6 +76,12 @@
     --scan-card-top: 108px;
     --scan-card-bottom: calc(var(--scan-dock-h) + 188px);
     --scan-card-w: 980px;
+  }
+}
+/* A landscape tablet is short: the small buddy, as on a phone. */
+@media (min-width: 1024px) and (max-height: 900px) {
+  :root {
+    --scan-card-bottom: calc(var(--scan-dock-h) + 184px);
   }
 }
 @media (max-height: 650px) {

@@ -204,21 +204,21 @@
 .scan-shell:has(.scan-result[data-kind="ready"]) > .scan-buddy-seat {
   opacity: 0;
 }
-/* A phone's seat is smaller: the art scales from the dock edge. */
-@media (max-width: 639px) {
-  .scan-buddy-seat {
-    width: 128px;
-    height: 96px;
-  }
-  .scan-buddy-seat > * {
-    transform: scale(0.667);
-    transform-origin: 50% 100%;
-  }
-}
 @media (min-width: 1024px) {
   .scan-buddy-seat {
     width: 256px;
     height: 192px;
+  }
+}
+/* A phone's seat is smaller: the art scales from the dock edge. */
+@media (max-width: 639px), (min-width: 1024px) and (max-height: 900px) {
+  .scan-shell:not([data-surface="duo"]) .scan-buddy-seat {
+    width: 106px;
+    height: 80px;
+  }
+  .scan-shell:not([data-surface="duo"]) .scan-buddy-seat > * {
+    transform: scale(0.55);
+    transform-origin: 50% 100%;
   }
 }
 
@@ -270,11 +270,13 @@
 }
 
 /* A sheet or dialog is open: the buddy steps back instead of showing half behind it. */
-body:has([role="dialog"][data-state="open"]) .scan-buddy-seat {
+body:has([role="dialog"][data-state="open"])
+  .scan-shell:not([data-surface="duo"])
+  .scan-buddy-seat {
   opacity: 0;
 }
 @media (max-height: 650px) {
-  .scan-buddy-seat {
+  .scan-shell:not([data-surface="duo"]) .scan-buddy-seat {
     display: none;
   }
 }

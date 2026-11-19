@@ -127,3 +127,17 @@ describe('a hold changes nothing', () => {
     expect(screen.getAllByText(display.identity.holder as string)).toHaveLength(1);
   });
 });
+
+describe('a refusal changes nothing', () => {
+  it('shows no stamp gain, panel or staff note', () => {
+    const display = fixtureDisplay('heads_up');
+    render(
+      <ResultCard
+        outcome={fixtureOutcome('refused', 'voided', { card: fixtureCard(), display })}
+      />,
+    );
+    expect(document.querySelector('.sd-progress')).toBeNull();
+    expect(screen.queryByText('Coffee card', { selector: '.sd-panel-title' })).toBeNull();
+    expect(screen.queryByText('Check ID.')).toBeNull();
+  });
+});
