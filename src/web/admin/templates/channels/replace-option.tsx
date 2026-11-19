@@ -18,7 +18,7 @@ export function windowRefusal(windows: readonly ChannelWindow[]): string | undef
     : CHANNEL_COPY.replaceWindowOpenNoEnd.replace('{name}', w.name);
 }
 
-function warnings(windows: readonly ChannelWindow[]): string[] {
+export function windowWarnings(windows: readonly ChannelWindow[]): string[] {
   return windows
     .filter((w) => !(w.open && w.scheduled))
     .map((w) =>
@@ -66,7 +66,7 @@ export function ReplaceOption({
         <>
           {note ? <p className="text-xs text-fg-muted">{CHANNEL_COPY.replaceNote}</p> : null}
           {refusal ? <Callout tone="danger">{refusal}</Callout> : null}
-          {warnings(windows).map((line) => (
+          {windowWarnings(windows).map((line) => (
             <Callout key={line} tone="warning">
               {line}
             </Callout>

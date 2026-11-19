@@ -80,6 +80,16 @@ export const CHANNEL_COPY = {
   /** `{name}` is the event or session; `{time}` when it opens. */
   replaceWindowSoon: '{name} opens {time}. Holders may get a new code just before.',
   replaceWindowNoHours: '{name} has no hours, so it may be in use.',
+  /** `{name}` is the event or session; `{time}` when it ends. */
+  runWaiting: 'Waiting for {name} to end',
+  runWaitingUntil: 'Waiting for {name} to end, {time}',
+  bulkWait: 'New codes wait until {name} ends.',
+  bulkWaitUntil: 'New codes wait until {name} ends, {time}.',
+  /** `{n}` is a pass count. */
+  bulkUnsupported: '{n} passes turn off without a new code: their barcode is not the scan code.',
+  bulkUnsupportedOne: '1 pass turns off without a new code: its barcode is not the scan code.',
+  bulkAllOff: '{n} passes keep no digital channel on, so they get no new code.',
+  bulkAllOffOne: '1 pass keeps no digital channel on, so it gets no new code.',
   runsTitle: 'Recent changes',
   runDropped: 'Replaced by a later save',
   runPassesOne: '1 pass changed',

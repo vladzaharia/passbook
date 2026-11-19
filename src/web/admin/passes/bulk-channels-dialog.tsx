@@ -12,7 +12,8 @@ import {
   SegmentedControl,
   toast,
 } from '../../ui/index.ts';
-import { useBulkPassChannels } from './channels-api.ts';
+import { BulkPreview } from './bulk-channels-preview.tsx';
+import { useBulkChannelsPreview, useBulkPassChannels } from './channels-api.ts';
 
 type Action = 'on' | 'off' | 'reset';
 const ACTIONS = [
@@ -56,6 +57,17 @@ export function BulkChannelsDialog({
   };
   /** New codes only follow turning a digital channel off. */
   const canReplace = action === 'off' && picked.some(isDigital);
+  const preview = useBulkChannelsPreview(
+    {
+      action,
+      channels: picked,
+      ids,
+      notify: false,
+      ...(canReplace && replace ? { replaceCodes: true } : {}),
+      orgId,
+    },
+    open && action === 'off' && picked.length > 0,
+  );
   async function apply() {
     try {
       const result = await bulk.mutateAsync({
@@ -130,6 +142,9 @@ export function BulkChannelsDialog({
               checked={notify}
               onCheckedChange={(v) => setNotify(v === true)}
             />
+          ) : null}
+          {action === 'off' && picked.length > 0 && preview.data?.preview ? (
+            <BulkPreview preview={preview.data.preview} replace={canReplace && replace} />
           ) : null}
           {canReplace ? (
             <div className="flex flex-col gap-1">

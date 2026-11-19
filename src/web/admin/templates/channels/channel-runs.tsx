@@ -17,6 +17,15 @@ function problem(r: ChannelApplyRunDto): string | null {
   return r.state === 'failed' ? CHANNEL_COPY.runFailed : null;
 }
 
+function waiting(r: ChannelApplyRunDto): string | null {
+  if (!r.waiting) return null;
+  return r.waiting.until
+    ? CHANNEL_COPY.runWaitingUntil
+        .replace('{name}', r.waiting.name)
+        .replace('{time}', formatDateTime(r.waiting.until))
+    : CHANNEL_COPY.runWaiting.replace('{name}', r.waiting.name);
+}
+
 function summary(r: ChannelApplyRunDto): string {
   const changed = r.counts.changed ?? 0;
   const rotated = r.counts.rotated ?? 0;
@@ -54,6 +63,7 @@ export function ChannelRuns({ templateId, orgId }: { templateId: string; orgId: 
                 </div>
                 <div className="min-w-0 text-sm">
                   {r.state === 'dropped' ? null : <p className="text-fg-strong">{summary(r)}</p>}
+                  {waiting(r) ? <p className="text-xs text-info">{waiting(r)}</p> : null}
                   {issue ? (
                     <p
                       className={

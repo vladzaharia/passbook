@@ -141,4 +141,68 @@ describe('replace codes: bulk', () => {
     expect((await bulk('off')).status).toBe(200);
     expect(jobs(t, 'channel.replace_code')).toHaveLength(1);
   });
+
+  it('dry run previews per-channel counts and windows, and writes nothing', async () => {
+    const t = await passKit();
+    const before = await scanCode(t);
+    const now = t.kit.clock.now();
+    await makeScanEvent(t.kit.fx, {
+      orgId: t.orgId,
+      templateIds: [t.templateId],
+      opensAt: now - 60_000,
+      closesAt: now + 3_600_000,
+    });
+    const res = await t.kit.send('POST', '/passes/bulk/channels', {
+      orgId: t.orgId,
+      ids: [t.ids[0]],
+      action: 'off',
+      channels: ['apple'],
+      replaceCodes: true,
+      dryRun: true,
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      done: number;
+      preview: {
+        impact: unknown[];
+        unsupported: number;
+        allOff: number;
+        windows: { open: boolean }[];
+      };
+    };
+    expect(body.done).toBe(0);
+    expect(body.preview.impact).toEqual([{ channel: 'apple', passes: 1, rotated: 1 }]);
+    expect(body.preview).toMatchObject({ unsupported: 0, allOff: 0 });
+    expect(body.preview.windows).toMatchObject([{ open: true }]);
+    expect(await scanCode(t)).toBe(before);
+    expect(jobs(t, 'channel.replace_code')).toHaveLength(0);
+    // Without the box the same dry run owes no code.
+    const plain = await t.kit.send('POST', '/passes/bulk/channels', {
+      orgId: t.orgId,
+      ids: [t.ids[0]],
+      action: 'off',
+      channels: ['apple'],
+      dryRun: true,
+    });
+    expect(((await plain.json()) as { preview: { impact: unknown[] } }).preview.impact).toEqual([
+      { channel: 'apple', passes: 1, rotated: 0 },
+    ]);
+  });
+
+  it('dry run counts passes whose barcode is not the scan code as unsupported', async () => {
+    const t = await passKit({ scan: false });
+    const res = await t.kit.send('POST', '/passes/bulk/channels', {
+      orgId: t.orgId,
+      ids: [t.ids[0]],
+      action: 'off',
+      channels: ['apple'],
+      replaceCodes: true,
+      dryRun: true,
+    });
+    const { preview } = (await res.json()) as {
+      preview: { impact: { rotated: number }[]; unsupported: number };
+    };
+    expect(preview.unsupported).toBe(1);
+    expect(preview.impact[0]?.rotated).toBe(0);
+  });
 });

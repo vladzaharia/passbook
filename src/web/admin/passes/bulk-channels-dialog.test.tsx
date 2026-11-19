@@ -7,6 +7,10 @@ import { BulkChannelsDialog } from './bulk-channels-dialog.tsx';
 
 afterEach(() => vi.restoreAllMocks());
 
+/** The applying POSTs; the dry-run previews are not changes. */
+const applies = (m: Parameters<typeof calls>[0]) =>
+  calls(m, 'POST', '/bulk/channels').filter(([, init]) => !JSON.parse(String(init?.body)).dryRun);
+
 it('sends the action, the ticked channels and no holder email by default', async () => {
   const onDone = vi.fn();
   const { fetchMock } = renderTags(
@@ -20,10 +24,10 @@ it('sends the action, the ticked channels and no holder email by default', async
   const ask = await screen.findByRole('alertdialog');
   expect(ask).toHaveTextContent('Turn off Apple Wallet for 2 passes?');
   expect(ask).toHaveTextContent('Copies keep working until New code.');
-  expect(calls(fetchMock, 'POST', '/bulk/channels')).toHaveLength(0);
+  expect(applies(fetchMock)).toHaveLength(0);
   await userEvent.click(within(ask).getByRole('button', { name: 'Turn off' }));
   await waitFor(() => expect(onDone).toHaveBeenCalled());
-  const [, init] = calls(fetchMock, 'POST', '/bulk/channels')[0] ?? [];
+  const [, init] = applies(fetchMock)[0] ?? [];
   expect(JSON.parse(String(init?.body))).toEqual({
     action: 'off',
     channels: ['apple'],
@@ -53,7 +57,7 @@ it('Use template applies at once, without a confirm', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
   await waitFor(() => expect(onDone).toHaveBeenCalled());
   expect(screen.queryByRole('alertdialog')).toBeNull();
-  const [, init] = calls(fetchMock, 'POST', '/bulk/channels')[0] ?? [];
+  const [, init] = applies(fetchMock)[0] ?? [];
   expect(JSON.parse(String(init?.body))).toMatchObject({
     action: 'reset',
     channels: ['paper'],
@@ -75,7 +79,54 @@ it('adds replaceCodes only when asked, for a digital channel turned off', async 
   const ask = await screen.findByRole('alertdialog');
   expect(ask).toHaveTextContent('Holders get a new code. Printed tickets keep working.');
   await userEvent.click(within(ask).getByRole('button', { name: 'Turn off' }));
-  await waitFor(() => expect(calls(fetchMock, 'POST', '/bulk/channels')).toHaveLength(1));
-  const [, init] = calls(fetchMock, 'POST', '/bulk/channels')[0] ?? [];
+  await waitFor(() => expect(applies(fetchMock)).toHaveLength(1));
+  const [, init] = applies(fetchMock)[0] ?? [];
   expect(JSON.parse(String(init?.body))).toMatchObject({ replaceCodes: true });
+});
+
+it('previews counts and windows before applying, and applies nothing', async () => {
+  const { fetchMock } = renderTags(
+    <BulkChannelsDialog
+      open
+      onOpenChange={() => {}}
+      orgId="o1"
+      ids={['a', 'b']}
+      onDone={() => {}}
+    />,
+    {
+      '/api/v1/passes/bulk/channels': () =>
+        json({
+          done: 0,
+          skipped: [],
+          preview: {
+            impact: [{ channel: 'apple', passes: 2, rotated: 1 }],
+            unsupported: 1,
+            allOff: 0,
+            windows: [
+              {
+                kind: 'event',
+                id: 'e1',
+                name: 'Gala',
+                opensAt: 1_800_000_000_000,
+                closesAt: 1_800_003_600_000,
+                open: true,
+                scheduled: true,
+              },
+            ],
+          },
+        }),
+    },
+  );
+  await userEvent.click(await screen.findByRole('checkbox', { name: 'Apple Wallet' }));
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Also issue new codes' }));
+  expect(
+    await screen.findByText(/Turns off Apple Wallet for 1 pass and issues a new code/),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/1 pass turns off without a new code/)).toBeInTheDocument();
+  expect(screen.getByText(/New codes wait until Gala ends/)).toBeInTheDocument();
+  const bodies = calls(fetchMock, 'POST', '/bulk/channels').map(([, init]) =>
+    JSON.parse(String(init?.body)),
+  );
+  expect(bodies.at(-1)).toMatchObject({ dryRun: true, replaceCodes: true, channels: ['apple'] });
+  expect(bodies.every((b) => b.dryRun === true)).toBe(true);
 });

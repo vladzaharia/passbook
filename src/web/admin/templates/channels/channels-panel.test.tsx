@@ -226,18 +226,20 @@ describe('Template channels', () => {
       finishedAt: null,
       counts: { changed: 7, rotated: 7 },
       errorCode,
+      waiting: null as { name: string; until: number | null } | null,
     });
     renderTags(
       <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />,
       handlers(0, 0, {
         runs: [
-          run('r1', 'running'),
+          { ...run('r1', 'running'), waiting: { name: 'Gala', until: 1_800_003_600_000 } },
           run('r2', 'done', 'REPLACE_PRINCIPAL_REVOKED'),
           run('r3', 'failed'),
         ],
       }),
     );
     expect(await screen.findByText('Running')).toBeInTheDocument();
+    expect(screen.getByText('Waiting for Gala to end, Jan 15, 2027, 1:00 AM')).toBeInTheDocument();
     expect(screen.getAllByText('7 passes changed · 7 new codes')).toHaveLength(3);
     expect(
       screen.getByText('Codes were not replaced: you no longer can publish.'),

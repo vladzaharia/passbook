@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import {
   BulkPassChannelsResponseSchema,
@@ -37,5 +37,26 @@ export function useBulkPassChannels() {
     mutationFn: (body: BulkBody) =>
       api.post('/api/v1/passes/bulk/channels', BulkPassChannelsResponseSchema, body),
     onSuccess: () => client.invalidateQueries({ queryKey: passKeys.all }),
+  });
+}
+
+/** What a bulk change would do, asked again whenever the choice changes. Writes nothing. */
+export function useBulkChannelsPreview(body: BulkBody, enabled: boolean) {
+  return useQuery({
+    queryKey: ['admin', 'passes', 'bulk-channels-preview', body] as const,
+    queryFn: ({ signal }) =>
+      api.post(
+        '/api/v1/passes/bulk/channels',
+        BulkPassChannelsResponseSchema,
+        {
+          ...body,
+          dryRun: true,
+        },
+        { signal },
+      ),
+    enabled,
+    placeholderData: keepPreviousData,
+    staleTime: 0,
+    gcTime: 0,
   });
 }

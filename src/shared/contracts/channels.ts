@@ -114,11 +114,31 @@ export const BulkPassChannelsSchema = z.object({
   notify: z.boolean().default(false),
   /** Also issue new scan codes ("Turn off and replace codes"). Off by default: turning off never rotates. */
   replaceCodes: z.boolean().default(false),
+  /** Answer with what applying would do and change nothing. */
+  dryRun: z.boolean().default(false),
   orgId: OrgIdSchema.optional(),
+});
+/** What a bulk change would do: passes turned off and new codes owed per channel, and what holds them. */
+export const BulkChannelsPreviewSchema = z.object({
+  impact: z.array(
+    z.object({
+      channel: ChannelSchema,
+      passes: z.number().int().nonnegative(),
+      rotated: z.number().int().nonnegative(),
+    }),
+  ),
+  /** Passes whose barcode is not the scan code: they turn off without a new code. */
+  unsupported: z.number().int().nonnegative(),
+  /** Passes where no digital channel would stay on: no new code. */
+  allOff: z.number().int().nonnegative(),
+  /** Events and sessions open or opening within 48 hours for the passes' templates. New codes wait for open ones. */
+  windows: z.array(ChannelWindowSchema),
 });
 export const BulkPassChannelsResponseSchema = z.object({
   done: z.number().int(),
   skipped: z.array(z.object({ id: IdSchema, code: z.string() })),
+  /** Only on a dry run. */
+  preview: BulkChannelsPreviewSchema.optional(),
 });
 
 /** What saving would change, for "Turns off Apple for 412 passes and issues new codes." */
@@ -174,6 +194,8 @@ export const ChannelApplyRunSchema = z.object({
   finishedAt: TimestampSchema.nullable(),
   counts: z.record(z.string(), z.number()),
   errorCode: z.string().nullable(),
+  /** A running run that replaces codes and is held by an open event or session: its name and end (null when unknown). */
+  waiting: z.object({ name: z.string(), until: TimestampSchema.nullable() }).nullable(),
 });
 export type ChannelApplyRunDto = z.infer<typeof ChannelApplyRunSchema>;
 
