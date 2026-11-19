@@ -1,6 +1,26 @@
 import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 
+/** The scans that were let in: the staff name by scan id ('' when the feed has not said who yet). */
+export interface LetIn {
+  who: string;
+  /** The override's own scan id: the note and Undo name it. */
+  id: string | null;
+  at: number;
+  note: string | null;
+}
+
+export function resolvedOf(
+  rows: ScanLiveRow[],
+  mine: ReadonlyMap<string, LetIn> = new Map(),
+): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const [id, done] of mine) out.set(id, done.who);
+  for (const row of rows)
+    if (row.overrideOf && row.kind === 'ok') out.set(row.overrideOf, row.resolvedBy?.staff ?? '');
+  return out;
+}
+
 export const TREND_MS = 15 * 60_000;
 
 /** A lower revision never replaces a higher one. */

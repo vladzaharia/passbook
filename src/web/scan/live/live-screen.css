@@ -101,3 +101,18 @@
 .scan-live-status[data-connected="true"]::before {
   background: var(--pk-success);
 }
+.scan-live-staff {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--pk-text-default);
+  font-weight: 600;
+}
+.scan-live-header > button:not(.scan-live-brand) {
+  min-height: clamp(36px, 2.8vw, 72px);
+  padding-inline: clamp(12px, 1.2vw, 32px);
+  font-size: clamp(14px, 1.2vw, 30px);
+}
+.scan-live-staff {
+  font-size: clamp(14px, 1.2vw, 30px);
+}

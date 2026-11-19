@@ -8,7 +8,13 @@ import { CustomerStage } from '../customer-stage.tsx';
 import type { StageTone } from '../customer-tone.ts';
 import { ScanOrgLogo, scanBrandLogoUrl, scanBrandStyle } from '../platform/scan-branding.tsx';
 import './live-screen.css';
+import { Toaster, toast } from '../../ui/toaster.tsx';
+import type { ScanApi } from '../api/scan-api.ts';
+import { useMonitorBeat } from './monitor-beat.ts';
 import { MonitorBoard } from './monitor-board.tsx';
+import { deskActing, type OverrideNote, StaffControl, useLetIn } from './monitor-desk.tsx';
+import { MonitorInside } from './monitor-inside.tsx';
+import type { LetIn } from './monitor-model.ts';
 import { useLiveFeed } from './use-live-feed.ts';
 
 function stageTone(row: ScanLiveRow | undefined): StageTone {
@@ -35,23 +41,70 @@ const CUSTOMER_HOLD_MS: Record<ScanLiveRow['kind'], number> = {
   undo: 2_400,
 };
 const SETUP_HOLD_MS = 900;
+/** Hooks run for every monitor; without an API there is nothing to call and the buttons never show. */
+const NO_API = {} as ScanApi;
 const SETUP_SHOW_MS = 12_000;
 
 export function LiveScreen({
   session,
   refetch,
+  api,
 }: {
   session: ScanSession;
   refetch: () => Promise<void>;
+  /** The device API: Desk actions need it. Without one the monitor only reads. */
+  api?: ScanApi;
 }) {
   const { rows, places, welcome, connected, now, setNow } = useLiveFeed(session, refetch);
   const [replay, setReplay] = useState(0);
   const [setup, setSetup] = useState(false);
   const [setupFocused, setSetupFocused] = useState(false);
+  const [letInDone, setLetInDone] = useState<ReadonlyMap<string, LetIn>>(new Map());
+  const [own, setOwn] = useState(0);
   const refresh = useRef<HTMLButtonElement>(null);
   const lastRow = useRef<string | null>(null);
   const hold = useRef<ReturnType<typeof setTimeout>>(undefined);
   const customer = session.scanner?.deviceRole === 'customer';
+  const beat = useMonitorBeat(rows, own);
+  const acting = Boolean(api) && !customer && deskActing(session);
+  const onLetIn = (row: ScanLiveRow, id: string | null) => {
+    if (row.scanId)
+      setLetInDone((done) =>
+        new Map(done).set(row.scanId ?? '', {
+          who: session.staff?.name ?? '',
+          id,
+          at: Date.now(),
+          note: null,
+        }),
+      );
+    setOwn((n) => n + 1);
+  };
+  const undone = (row: ScanLiveRow) => {
+    if (row.scanId)
+      setLetInDone((done) => {
+        const next = new Map(done);
+        next.delete(row.scanId ?? '');
+        return next;
+      });
+  };
+  const desk = useLetIn(api ?? NO_API, onLetIn, undone);
+  const noting = useRef(new Set<string>());
+  const why = (scanId: string, note: OverrideNote) => {
+    const id = letInDone.get(scanId)?.id;
+    if (!id || !api || noting.current.has(scanId)) return;
+    noting.current.add(scanId);
+    void api
+      .overrideNote(id, note)
+      .then(() =>
+        setLetInDone((done) => {
+          const held = done.get(scanId);
+          return held ? new Map(done).set(scanId, { ...held, note }) : done;
+        }),
+      )
+      .catch((error: unknown) => toast.error(error, 'Could not save the reason'))
+      .finally(() => noting.current.delete(scanId));
+  };
+
   const branding = session.branding ?? null;
   const logoUrl = scanBrandLogoUrl(branding, session);
   const orgName = session.scanner?.orgName ?? '';
@@ -148,6 +201,7 @@ export function LiveScreen({
             Refresh setup
           </Button>
         ) : null}
+        {api ? <StaffControl session={session} api={api} refetch={refetch} /> : null}
         <span role="status" className="sr-only">
           {setup ? 'Setup options shown' : ''}
         </span>
@@ -155,7 +209,29 @@ export function LiveScreen({
           {connected ? 'Live' : 'Reconnecting…'}
         </span>
       </header>
-      <MonitorBoard rows={recent} places={places} now={now} timeZone={session.scanner?.timeZone} />
+      <MonitorBoard
+        rows={recent}
+        places={places}
+        now={now}
+        timeZone={session.scanner?.timeZone}
+        beat={beat}
+        letInDone={letInDone}
+        onWhy={why}
+        {...(acting && api
+          ? {
+              onLetIn: desk.letIn,
+              inside: (
+                <MonitorInside api={api} online={connected} onMarked={() => setOwn((n) => n + 1)} />
+              ),
+            }
+          : {})}
+      />
+      {acting ? (
+        <>
+          <Toaster />
+          {desk.sheet}
+        </>
+      ) : null}
     </main>
   );
 }

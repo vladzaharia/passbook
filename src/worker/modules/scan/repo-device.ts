@@ -176,7 +176,8 @@ export async function bindStaff(
       'scanners',
       {
         id: scanner.id,
-        device_role: 'scan',
+        // A monitor signs a person in only with Desk actions on (staff-session.ts).
+        device_role: inList(['scan', 'monitor']),
         kind: inList(['device', 'display']),
         revoked_at: null,
       },

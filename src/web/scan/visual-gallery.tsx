@@ -10,6 +10,7 @@ import { type PassInspection, PassInspector } from './result/pass-inspector.tsx'
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
 import { ClosedVisual } from './visual-closed.tsx';
+import { MONITOR_DESK_CASES, MonitorDeskVisual } from './visual-monitor-desk.tsx';
 import { TAG_SCENARIOS, TagVisual } from './visual-tags.tsx';
 import './visual-gallery.css';
 
@@ -187,6 +188,10 @@ export function ScanVisualGallery() {
   const status = params.get('status') ?? 'accepted';
   const phase = params.get('phase') === 'rising' ? 'rising' : 'up';
   if (surface === 'closed') return <ClosedVisual who={params.get('who') ?? 'manager'} />;
+  if (surface === 'monitor' && params.has('desk'))
+    return (
+      <MonitorDeskVisual mode={MONITOR_DESK_CASES.find((c) => c === params.get('desk')) ?? 'off'} />
+    );
   if (surface === 'monitor')
     return (
       <MonitorVisual

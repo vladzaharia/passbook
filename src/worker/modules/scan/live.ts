@@ -13,6 +13,7 @@ import { pinKeyset } from './keyset-pin.ts';
 import type { LiveAttachment } from './live-auth.ts';
 import type { LiveRingRow } from './live-ring.ts';
 import { photoPolicyForResolved, scannerCandidateAllowed } from './member-photo.ts';
+import { isOverridable } from './outcome.ts';
 import { scanIdentity } from './projection-privacy.ts';
 import { CREDENTIAL_REF_PREFIX } from './repo-credential-tombstones.ts';
 import type { Candidate } from './repo-lookup.ts';
@@ -201,7 +202,7 @@ export async function liveRingRow(
   /** The full keyed refs of the credential the scan presented. */
   credentialRefs: readonly string[] = [],
   /** The checked zones and their ancestors, and the doc-named customer body, when the scan has them. */
-  extra: Pick<LiveRingRow, 'zoneIds' | 'customer'> = {},
+  extra: Pick<LiveRingRow, 'zoneIds' | 'customer' | 'overridable'> = {},
 ): Promise<LiveRingRow | null> {
   const detail = candidate ? await passDetail(ctx, source, candidate, await pinKeyset(ctx)) : null;
   if (candidate && !detail) return null;
@@ -222,6 +223,7 @@ export async function liveRingRow(
     eventId: source.event?.id ?? null,
     zoneIds: extra.zoneIds ?? [],
     customer: detail ? (extra.customer ?? null) : null,
+    ...(extra.overridable ? { overridable: true } : {}),
   };
 }
 
@@ -278,6 +280,13 @@ export function publishScan(
         evaluatedSnapshot,
         out.scanId,
         credentialContext?.credentialTombstoneRefs ?? [],
+        {
+          overridable:
+            !undo &&
+            out.scanId !== null &&
+            (out.kind === 'heads_up' || out.kind === 'refused') &&
+            isOverridable(out.reason),
+        },
       );
       // An evaluated pass that cannot be shown is withheld, not published as a refusal.
       if (!entry) return;

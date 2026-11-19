@@ -235,3 +235,49 @@
   color: var(--pk-text-muted);
   font-size: clamp(18px, 1.6vw, 36px);
 }
+.mon-main {
+  display: grid;
+  gap: clamp(16px, 2vw, 40px);
+  align-items: start;
+}
+.mon-main[data-inside] {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+}
+@media (max-width: 900px) {
+  .mon-main[data-inside] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.mon-inside {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: clamp(16px, 1.4vw, 32px);
+  background: var(--pk-surface-raised);
+}
+.mon-main[data-inside] .mon-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.mon-row-resolved {
+  color: var(--pk-success);
+  font-size: 0.8em;
+  font-weight: 600;
+}
+.mon-letin {
+  flex: none;
+}
+.mon-letin {
+  min-height: clamp(36px, 2.8vw, 72px);
+  padding-inline: clamp(12px, 1.2vw, 32px);
+  font-size: clamp(14px, 1.2vw, 30px);
+}
+.mon-letin svg {
+  width: 1.2em;
+  height: 1.2em;
+}
+/* Wall screens: the shared Who's in keeps its desk sizes, so it scales as one piece. */
+@media (min-width: 1600px) {
+  .mon-inside {
+    zoom: 1.4;
+  }
+}

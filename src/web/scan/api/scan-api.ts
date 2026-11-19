@@ -21,6 +21,10 @@ import {
   type ScanResolveRequestSchema,
   type ScanUndoRequestSchema,
 } from '../../../shared/contracts/scan.ts';
+import type {
+  ScanOverrideNoteSchema,
+  ScanOverrideRequestSchema,
+} from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanRoleChange } from '../../../shared/contracts/scan-role.ts';
 import {
   type ScanBatchRequestSchema,
@@ -241,17 +245,9 @@ export function createScanApi(deps: ScanApiDeps) {
     batch: (body: z.infer<typeof ScanBatchRequestSchema>, call?: Call) =>
       request('POST', '/batch', ScanBatchResultSchema, body, call),
     inside: (query: InsideQuery, call?: Call) => {
-      const q = new URLSearchParams();
-      for (const [key, value] of Object.entries(query))
-        if (value !== undefined) q.set(key, String(value));
-      const qs = q.toString();
-      return request(
-        'GET',
-        qs ? `/live/inside?${qs}` : '/live/inside',
-        InsideListSchema,
-        undefined,
-        call,
-      );
+      const entries = Object.entries(query).filter(([, v]) => v !== undefined);
+      const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();
+      return request('GET', `/live/inside${qs && `?${qs}`}`, InsideListSchema, undefined, call);
     },
     tagInspect: (body: { tag: TagRead }, call?: Call) =>
       request('POST', '/tags/inspect', ScanTagInspectResponseSchema, body, call),
@@ -273,6 +269,10 @@ export function createScanApi(deps: ScanApiDeps) {
       request('POST', `/tag-enrollments/${encodeURIComponent(id)}/decline`, null, {}, call),
     openNow: (body: z.infer<typeof ScanSessionOpenNowSchema>, call?: Call) =>
       request('POST', '/session/open-now', ScanSessionOpenedSchema, body, call),
+    override: (body: z.infer<typeof ScanOverrideRequestSchema>, call?: Call) =>
+      request('POST', '/overrides', ScanOutcomeSchema, body, call),
+    overrideNote: (id: string, note: z.infer<typeof ScanOverrideNoteSchema>) =>
+      request('POST', `/overrides/${encodeURIComponent(id)}/note`, null, { note }),
     markOut: (body: MarkOutRequest, call?: Call) =>
       request('POST', '/mark-out', MarkOutResultSchema, body, call),
   };
