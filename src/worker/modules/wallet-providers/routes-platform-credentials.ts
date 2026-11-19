@@ -3,17 +3,23 @@ import { IdSchema } from '../../../shared/contracts/common.ts';
 import {
   HoldWalletEnrolmentSchema,
   PlatformWalletEnrolmentParamsSchema,
+  ResolveWalletMigrationSchema,
   RevokeWalletCredentialSchema,
   SavePlatformWalletCredentialSchema,
   WalletCredentialListSchema,
   WalletCredentialSchema,
   WalletEnrolmentHoldResultSchema,
+  WalletMigrationQueuedSchema,
+  WalletMigrationReportSchema,
+  WalletMigrationResolvedSchema,
 } from '../../../shared/contracts/wallet-providers.ts';
 import { requireAdmin } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf } from '../passes/http.ts';
+import { migrationReport, queueMigration } from './credential-migrate.ts';
+import { resolveMigration } from './credential-migrate-resolve.ts';
 import {
   listPlatformCredentials,
   revokePlatformCredential,
@@ -119,4 +125,42 @@ register(
     c.json({
       status: await releaseEnrolment(serviceContext(c), sessionOf(c), c.req.valid('param')),
     }),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'get',
+    path: '/wallet-credentials/migrate',
+    summary: 'Report the legacy wallet accounts waiting for a credential source',
+    response: WalletMigrationReportSchema,
+  },
+  async (c) => c.json(await migrationReport(serviceContext(c), sessionOf(c))),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'post',
+    path: '/wallet-credentials/migrate',
+    summary: 'Queue the migration of legacy wallet accounts onto credential sources',
+    response: WalletMigrationQueuedSchema,
+  },
+  async (c) => c.json({ queued: await queueMigration(serviceContext(c), sessionOf(c)) }),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'post',
+    path: '/wallet-credentials/migrate/resolve',
+    summary:
+      'Resolve a refused legacy wallet account: assign the platform credential, merge or retire',
+    body: ResolveWalletMigrationSchema,
+    response: WalletMigrationResolvedSchema,
+  },
+  async (c) => c.json(await resolveMigration(serviceContext(c), sessionOf(c), c.req.valid('json'))),
 );

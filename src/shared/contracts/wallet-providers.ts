@@ -180,3 +180,37 @@ export const WalletEnrolmentHoldResultSchema = z.strictObject({
   // `queued` when the org is suspended: a job writes the hold.
   status: z.enum(['held', 'released', 'queued']),
 });
+
+/** An account on the legacy envelope waiting for a source. Provider ids never appear; `identityShared` names the others. */
+export const WalletMigrationItemSchema = z.strictObject({
+  accountId: IdSchema,
+  orgId: IdSchema,
+  mode: ModeSchema,
+  provider: WalletProviderSchema,
+  state: z.enum(['ready', 'refused']),
+  reason: z.enum(['identity_shared', 'org_credential_exists', 'unreadable']).nullable(),
+  identityShared: z.array(WalletProviderScopeSchema),
+});
+
+export const WalletMigrationReportSchema = z.strictObject({
+  /** Accounts with no source yet and not retired; the gate clears at 0. */
+  pending: z.number().int().nonnegative(),
+  migrated: z.number().int().nonnegative(),
+  items: z.array(WalletMigrationItemSchema),
+  more: z.boolean(),
+});
+export type WalletMigrationReport = z.infer<typeof WalletMigrationReportSchema>;
+
+export const WalletMigrationQueuedSchema = z.strictObject({
+  queued: z.number().int().nonnegative(),
+});
+
+export const ResolveWalletMigrationSchema = WalletProviderScopeSchema.extend({
+  action: z.enum(['assign_platform', 'merge', 'retire']),
+});
+export type ResolveWalletMigration = z.infer<typeof ResolveWalletMigrationSchema>;
+
+export const WalletMigrationResolvedSchema = z.strictObject({
+  /** Accounts the action moved: one, or every colliding account for a merge. */
+  accounts: z.number().int().nonnegative(),
+});

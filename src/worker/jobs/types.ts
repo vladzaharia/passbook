@@ -71,6 +71,8 @@ export const JobSchema = z.discriminatedUnion('kind', [
     chunk: z.number().int().nonnegative().optional(),
   }),
   /** A platform admin's hold on a suspended org's wallet enrolment: a job grant writes it. */
+  /** One legacy wallet account onto its credential source, under the migrate job grant. */
+  z.object({ kind: z.literal('wallet.credential_migrate'), accountId: z.string().min(1) }),
   z.object({
     kind: z.literal('wallet.enrolment_hold'),
     orgId: z.string().min(1),

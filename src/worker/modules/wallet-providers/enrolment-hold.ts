@@ -24,7 +24,10 @@ export interface HoldScope {
   provider: Provider;
 }
 
-function adminOf(auth: SessionAuth, scope: HoldScope): Extract<Principal, { kind: 'platform' }> {
+export function adminOf(
+  auth: SessionAuth,
+  scope: HoldScope,
+): Extract<Principal, { kind: 'platform' }> {
   if (auth?.kind !== 'session') throw new ForbiddenError();
   const session = auth;
   if (!session.roles.includes('admin')) throw new ForbiddenError('Admin access is required.');
