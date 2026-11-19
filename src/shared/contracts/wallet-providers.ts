@@ -180,3 +180,26 @@ export const WalletEnrolmentHoldResultSchema = z.strictObject({
   // `queued` when the org is suspended: a job writes the hold.
   status: z.enum(['held', 'released', 'queued']),
 });
+
+/** A check runs as a job: the request returns the id its result is read under. */
+export const WalletCredentialCheckQueuedSchema = z.strictObject({
+  checkId: IdSchema,
+  status: z.literal('queued'),
+});
+export type WalletCredentialCheckQueued = z.infer<typeof WalletCredentialCheckQueuedSchema>;
+
+export const WalletCredentialCheckResultSchema = z.strictObject({
+  checkId: IdSchema,
+  status: z.enum(['pending', 'ok', 'failed']),
+  code: z.string().nullable(),
+  checkedAt: TimestampSchema.nullable(),
+});
+export type WalletCredentialCheckResult = z.infer<typeof WalletCredentialCheckResultSchema>;
+
+export const WalletCredentialCheckParamsSchema = WalletCredentialParamsSchema.extend({
+  checkId: IdSchema,
+});
+export const PlatformWalletCredentialCheckParamsSchema = z.strictObject({
+  id: IdSchema,
+  checkId: IdSchema,
+});

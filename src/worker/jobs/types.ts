@@ -79,6 +79,12 @@ export const JobSchema = z.discriminatedUnion('kind', [
     reason: z.string().min(1).max(500),
     userId: z.string().min(1),
   }),
+  /** A credential's health check: the provider probe and its server-clock row. `checkId` names the result. */
+  z.object({
+    kind: z.literal('wallet.credential_check'),
+    credentialId: z.string().min(1).max(64),
+    checkId: z.string().min(1).max(80),
+  }),
   /** Apple flipped for a pass: republish (force) so devices fetch the voided or live copy. */
   z.object({
     kind: z.literal('channel.apple_bump'),
