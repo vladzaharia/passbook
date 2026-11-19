@@ -8,6 +8,8 @@
  * An act that removes only the item itself takes a plain confirm, an API key included: revoking
  * a leaked key must stay one click away.
  */
+import { PRINT_COPY } from '@/shared/copy/print.ts';
+
 export interface ConfirmCopy {
   title: string;
   confirmLabel: string;
@@ -272,6 +274,26 @@ export function reportTagLostConfirm(name: string, org: string, allPasses: boole
     title: `Report ${name} lost?`,
     confirmLabel: 'Report lost',
     description: `It stops opening doors${allPasses ? ' on all your passes' : ''} now. Ask ${org} to restore it or replace it.`,
+    typed: false,
+  };
+}
+
+/** A reprint replaces the earlier print: its code stops working at every scanner. */
+export function reprintConfirm(): ConfirmCopy {
+  return {
+    title: PRINT_COPY.reprintConfirmTitle,
+    confirmLabel: PRINT_COPY.reprint,
+    description: PRINT_COPY.reprintConfirmBody,
+    typed: false,
+  };
+}
+
+/** Voiding a print ends its code; printing again makes a new one. */
+export function voidPrintConfirm(): ConfirmCopy {
+  return {
+    title: PRINT_COPY.voidConfirmTitle,
+    confirmLabel: PRINT_COPY.void,
+    description: PRINT_COPY.voidConfirmBody,
     typed: false,
   };
 }

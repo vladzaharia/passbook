@@ -16,6 +16,7 @@ import { emailManifestIssues } from './email.ts';
 import { checkExpr, conditionInputs, evaluate, exprReferences, isEmpty } from './expr.ts';
 import { isRecord, scanSchema } from './manifest-schema.ts';
 import { messagingIssues } from './messaging.ts';
+import { paperManifestIssues } from './paper.ts';
 import { BINDING_STYLE_GROUPS, isAllowedPointer } from './pointer.ts';
 import { validateRequires } from './requires.ts';
 import { reservedInputIssues, unknownPassValues } from './reserved.ts';
@@ -206,6 +207,7 @@ export function validateManifest(
   issues.push(...stampsIssues(manifest, options.passJson, options.assetNames));
   issues.push(...countersIssues(manifest, options.passJson, options.assetNames));
   issues.push(...walletsManifestIssues(manifest, options));
+  issues.push(...paperManifestIssues(manifest, options));
 
   if (manifest.previewOnlyAssets && options.assetNames) {
     for (const name of manifest.previewOnlyAssets)
