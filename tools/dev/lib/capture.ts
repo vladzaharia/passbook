@@ -8,11 +8,12 @@ import {
   fillPath,
   type Role,
   type Route,
+  SIZES,
   shotName,
   type Theme,
-  VIEWPORTS,
   type ViewportName,
 } from './routes.ts';
+import { GALLERY_LOGO, touchOptions } from './touch.ts';
 
 export type Shot = {
   route: string;
@@ -32,6 +33,8 @@ type Options = {
   out: string;
   stateDir: string;
   viewports: ViewportName[];
+  /** `--viewports` was given: a route's own viewport list is narrowed to it. */
+  narrow?: boolean;
   themes: Theme[];
   values: Record<string, string | undefined>;
 };
@@ -73,9 +76,11 @@ async function shoot(
   theme: Theme,
   routes: Route[],
 ): Promise<Shot[]> {
+  const touch = routes.some((r) => r.device === 'touch');
   const context = await browser.newContext({
-    viewport: VIEWPORTS[viewport],
+    viewport: SIZES[viewport],
     ...DEVICES[viewport],
+    ...(touch ? touchOptions(viewport) : {}),
     colorScheme: theme,
     reducedMotion: 'reduce',
     ...(role === 'anon' ? {} : { storageState: statePath(o.stateDir, role) }),
@@ -106,6 +111,13 @@ async function shoot(
       continue;
     }
     const page = await context.newPage();
+    const filter = route.filterOrg ? o.values[route.filterOrg] : undefined;
+    if (filter && role !== 'anon' && role !== 'holder')
+      await page.addInitScript((id) => localStorage.setItem('wallet-org-filter', id), filter);
+    if (path.includes('visual=1'))
+      await page.route('**/api/v1/scan/branding/logo*', (r) =>
+        r.fulfill({ status: 200, contentType: 'image/svg+xml', body: GALLERY_LOGO }),
+      );
     const { consoleErrors, failedRequests } = listen(page);
     const file = shotName(route.name, viewport, theme);
     let status: number | null = null;
@@ -125,6 +137,16 @@ async function shoot(
         .catch(() => {
           note = [note, 'skeleton still showing'].filter(Boolean).join('; ');
         });
+      if (route.click) {
+        await page
+          .locator(route.click)
+          .first()
+          .click({ timeout: 10_000 })
+          .catch(() => {
+            note = `click ${route.click} not found`;
+          });
+        await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+      }
       if (status !== null && status >= 400) note = `HTTP ${status}`;
       await page.screenshot({ path: resolve(o.out, file), fullPage: true });
     } catch (error) {
@@ -145,16 +167,31 @@ async function shoot(
   return shots;
 }
 
+/** Whether `route` is shot at `viewport`: its own list (narrowed by --viewports) or the requested ones. */
+const wants = (o: Options, route: Route, viewport: ViewportName): boolean =>
+  route.viewports
+    ? route.viewports.includes(viewport) && (!o.narrow || o.viewports.includes(viewport))
+    : o.viewports.includes(viewport);
+
 export async function capture(o: Options, routes: Route[]): Promise<Shot[]> {
   mkdirSync(o.out, { recursive: true });
   const browser = await chromium.launch();
   const shots: Shot[] = [];
   try {
+    const names = new Set<ViewportName>([
+      ...o.viewports,
+      ...routes.flatMap((r) => r.viewports ?? []),
+    ]);
     for (const theme of o.themes) {
-      for (const viewport of o.viewports) {
-        for (const role of new Set(routes.map((r) => r.role))) {
-          const mine = routes.filter((r) => r.role === role);
-          shots.push(...(await shoot(browser, o, role, viewport, theme, mine)));
+      for (const viewport of names) {
+        const here = routes.filter((r) => wants(o, r, viewport));
+        for (const role of new Set(here.map((r) => r.role))) {
+          // A touch route and a desktop route need different contexts, so they run apart.
+          for (const device of [undefined, 'touch'] as const) {
+            const mine = here.filter((r) => r.role === role && r.device === device);
+            if (mine.length > 0)
+              shots.push(...(await shoot(browser, o, role, viewport, theme, mine)));
+          }
         }
       }
     }

@@ -93,6 +93,12 @@ export async function seedExtras(owner: Session, ids: Ids, base: string): Promis
     );
     if (found) {
       eventId = found.id;
+      // Re-entry makes the event a counted place: the desk scanner then offers Who's in.
+      if (!found.reentry)
+        await owner.send('PATCH', `/api/v1/scan-events/${found.id}`, {
+          reentry: true,
+          capacity: 500,
+        });
       return 'exists';
     }
     const made = await owner.send('POST', '/api/v1/scan-events', {
@@ -102,6 +108,8 @@ export async function seedExtras(owner: Session, ids: Ids, base: string): Promis
       opensAt: Date.now() - 3_600_000,
       closesAt: Date.now() + 5 * 3_600_000,
       timeZone: 'UTC',
+      reentry: true,
+      capacity: 500,
     });
     eventId = made.id;
     return 'created';
@@ -129,6 +137,7 @@ export async function seedExtras(owner: Session, ids: Ids, base: string): Promis
     return 'created and paired';
   });
 
+  let frontDoorId: string | undefined;
   await step('scanning session', async () => {
     const found = (await inOrg('/api/v1/scanning-sessions', northwind)).find(
       (s) => s.name === 'Front door',
@@ -141,11 +150,72 @@ export async function seedExtras(owner: Session, ids: Ids, base: string): Promis
         timeZone: 'UTC',
         accepts: { templateIds: [member] },
       }));
+    frontDoorId = session.id;
     if (found) return 'exists';
     const device = await owner.send('POST', `/api/v1/scanning-sessions/${session.id}/devices`, {
       name: 'Tablet',
     });
     return `created, hours unset, pending pairing code ${device.pairing ? 'issued' : 'none'}`;
+  });
+
+  // Staff, a counted place, hours and a monitor: what the scanner and its admin pages show beyond a bare session.
+  await step('scan staff', async () => {
+    const have = (await inOrg('/api/v1/scan-staff', northwind)).map((m) => m.name);
+    for (const [name, role] of [
+      ['Mara Lopez', 'manager'],
+      ['Dev Desk', 'desk'],
+    ] as const)
+      if (!have.includes(name))
+        await owner.send('POST', '/api/v1/scan-staff', { orgId: northwind, name, role });
+    return 'Mara Lopez (manager), Dev Desk (desk); PINs are shown once, reset one to use it';
+  });
+
+  await step('scan zone', async () => {
+    if (!frontDoorId) throw new Error('no session');
+    const found = (await inOrg('/api/v1/scan-zones', northwind)).find((z) => z.key === 'gym');
+    const zone =
+      found ??
+      (await owner.send('POST', '/api/v1/scan-zones', {
+        orgId: northwind,
+        key: 'gym',
+        name: 'Gym floor',
+        occupancy: 'track',
+        capacity: 60,
+      }));
+    await owner.send('PATCH', `/api/v1/scanning-sessions/${frontDoorId}`, { zoneIds: [zone.id] });
+    return 'Gym floor, tracked to 60, checked at Front door';
+  });
+
+  await step('session with hours', async () => {
+    const found = (await inOrg('/api/v1/scanning-sessions', northwind)).some(
+      (s) => s.name === 'Evening classes',
+    );
+    if (found) return 'exists';
+    const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+    await owner.send('POST', '/api/v1/scanning-sessions', {
+      orgId: northwind,
+      name: 'Evening classes',
+      timeZone: 'UTC',
+      accepts: { templateIds: [member] },
+      hours: Object.fromEntries(days.map((d) => [d, ['18:00-22:00']])),
+    });
+    return 'created, open 18:00-22:00';
+  });
+
+  await step('monitor', async () => {
+    const found = (await inOrg('/api/v1/scan-setups', northwind)).some(
+      (s) => s.name === 'Lobby monitor',
+    );
+    if (found) return 'exists';
+    await owner.send('POST', '/api/v1/scan-setups', {
+      orgId: northwind,
+      name: 'Lobby monitor',
+      kind: 'device',
+      deviceRole: 'monitor',
+      timeZone: 'UTC',
+      watch: { allOrg: true },
+    });
+    return 'created, watches the org';
   });
 
   await step('bundle', async () => {
