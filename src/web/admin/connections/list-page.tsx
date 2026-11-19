@@ -109,7 +109,8 @@ export function ConnectionsListPage({
         id: 'health',
         header: 'Health',
         cell: ({ row }) => {
-          const line = healthLine(row.original, now);
+          // The Last success column already says when it synced.
+          const line = healthLine(row.original, now, { omitSynced: true });
           return (
             <div className="flex min-w-0 max-w-64 flex-col items-start gap-0.5">
               <HealthPill health={row.original.enabled ? row.original.health : 'disabled'} />
@@ -142,7 +143,7 @@ export function ConnectionsListPage({
       {
         id: 'last',
         header: 'Last success',
-        meta: { nowrap: true, hideBelow: 'lg', stackHidden: true },
+        meta: { nowrap: true, hideBelow: 'lg' },
         cell: ({ row }) => formatDateTime(row.original.lastSuccessAt, '—'),
       },
     ];
@@ -180,7 +181,7 @@ export function ConnectionsListPage({
       >
         <TabsList aria-label="Connections">
           <TabsTrigger value="sources">Sources</TabsTrigger>
-          <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+          <TabsTrigger value="webhooks">Webhook endpoints</TabsTrigger>
         </TabsList>
         <TabsContent value="webhooks">
           <WebhooksTab />

@@ -45,7 +45,7 @@ describe('holder help copy', () => {
           "Sent a few already. Try again in an hour.",
         ],
         "ended": [
-          "This pass was voided on 3 November 2026.",
+          "This pass was voided on 3 November 2026. It no longer works.",
           "This pass expired on 3 November 2026.",
         ],
         "lost": [
@@ -58,6 +58,17 @@ describe('holder help copy', () => {
 });
 
 describe('the pass page', () => {
+  it('says "removed" plainly when the pass was never in a Wallet', () => {
+    view({ state: 'removed', inWallet: false });
+    expect(screen.getByRole('status')).toHaveTextContent(HOLDER_COPY.removedPlain);
+    expect(screen.getByRole('status')).not.toHaveTextContent('Expired passes');
+  });
+
+  it('names Expired passes when Wallet reported the pass, or when it is not known', () => {
+    view({ state: 'removed', inWallet: true });
+    expect(screen.getByRole('status')).toHaveTextContent(HOLDER_COPY.removed);
+  });
+
   it('posts Send it again to the pass link and says when it was sent', async () => {
     const { container } = view({ resend: { action: '/p/t/resend', again: 'sent' } });
     const button = screen.getByRole('button', { name: HOLDER_COPY.emailPassAgain });

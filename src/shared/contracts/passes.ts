@@ -167,6 +167,8 @@ export const PassListQuerySchema = z.object({
   orgId: IdSchema.transform((value) => (value === 'null' ? null : value)).optional(),
   templateId: IdSchema.optional(),
   connectionId: IdSchema.optional(),
+  /** Passes a pass import created or updated. */
+  importId: IdSchema.optional(),
   status: PassListStatusSchema.optional(),
   holderEmail: z.string().max(254).optional(),
   holderState: z.enum(['unassigned', 'waiting', 'owned']).optional(),

@@ -26,8 +26,8 @@ export interface BundleEmailInput {
   /** `/b/:token/passes.pkpasses`; null when Apple is off for every addable pass. */
   addAllUrl: string | null;
   badgeUrl: string;
-  /** One row each; a voided pass has no link, and `off` marks a live one Apple is off for. */
-  passes: { title: string; addUrl: string | null; off?: boolean }[];
+  /** One row each; a voided pass has no link, `off` marks a live one Apple is off for. */
+  passes: { title: string; addUrl: string | null; off?: boolean; detail?: string | null }[];
   iconUrl?: string | null;
   senderName?: string | null;
   /** The org's own From name (already checked): shown as "<fromName> via <sender>". */
@@ -44,8 +44,11 @@ const PRIVATE_LINE = 'Keep this email private. Its links open your passes.';
 /** A 44 px row: the link carries the padding, so the whole line is its hit area. */
 const row = (p: BundleEmailInput['passes'][number]) => {
   const edge = `border-top:1px solid ${c.line}`;
-  const link = `display:inline-block;padding:12px 0 12px 12px;color:${c.accent};text-decoration:underline`;
-  return `<tr><td class="e-strong e-line" valign="middle" style="padding:12px 12px 12px 0;${edge};${type('sm')};font-weight:500;color:${c.strong};word-break:break-word">${escapeHtml(p.title)}</td><td class="e-line" align="right" valign="middle" style="padding:0;${edge};${type('sm')};white-space:nowrap">${
+  const link = `display:inline-block;padding:11px 16px;border:1px solid ${c.accent};border-radius:8px;color:${c.accent};text-decoration:none;font-weight:500`;
+  const detail = p.detail
+    ? `<br><span class="e-muted" style="font-weight:400;color:${c.muted}">${escapeHtml(p.detail)}</span>`
+    : '';
+  return `<tr><td class="e-strong e-line" valign="middle" style="padding:12px 12px 12px 0;${edge};${type('sm')};font-weight:500;color:${c.strong};word-break:break-word">${escapeHtml(p.title)}${detail}</td><td class="e-line" align="right" valign="middle" style="padding:0;${edge};${type('sm')};white-space:nowrap">${
     p.addUrl
       ? `<a class="e-link" href="${escapeHtml(p.addUrl)}" style="${link}">Add</a>`
       : `<span class="e-muted" style="display:inline-block;padding:12px 0 12px 12px;color:${c.muted}">${p.off ? '' : 'Voided'}</span>`
@@ -65,18 +68,20 @@ export function renderBundleEmail(input: BundleEmailInput): RenderedEmail {
     ? stackHtml(badge, open)
     : `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 4px;border-collapse:collapse"><tr><td style="padding:0">${open}</td></tr></table>`;
   const rows = input.passes.map(row).join('');
+  const addLine = input.passes.length === 1 ? HOLDER_COPY.emailAddLine : HOLDER_COPY.emailAddLines;
   const text = [
     TITLE,
     `${input.bundleName} · ${HOLDER_COPY.count(input.passes.length)}`,
     ...(input.mode === 'test' ? [HOLDER_COPY.testNote('bundle')] : []),
     '',
     ...input.passes.map(
-      (p) => `${p.title}${p.addUrl ? `: ${p.addUrl}` : p.off ? '' : ' (voided)'}`,
+      (p) =>
+        `${p.title}${p.detail ? ` (${p.detail})` : ''}${p.addUrl ? `: ${p.addUrl}` : p.off ? '' : ' (voided)'}`,
     ),
     '',
     ...(input.addAllUrl ? [`Add all to Apple Wallet: ${input.addAllUrl}`] : []),
     `${OPEN_LABEL}: ${input.pageUrl}`,
-    ...(input.addAllUrl ? [HOLDER_COPY.emailAddLine] : []),
+    ...(input.addAllUrl ? [addLine] : []),
     '',
     PRIVATE_LINE,
     ...footer.text,
@@ -88,7 +93,7 @@ ${muted('0 0 16px', `${escapeHtml(input.bundleName)} · ${HOLDER_COPY.count(inpu
 ${input.mode === 'test' ? testNoteHtml(HOLDER_COPY.testNote('bundle')) : ''}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border-collapse:collapse">${rows}</table>
 ${actions}
-${input.addAllUrl ? muted('0 0 24px', escapeHtml(HOLDER_COPY.emailAddLine)) : ''}
+${input.addAllUrl ? muted('0 0 24px', escapeHtml(addLine)) : ''}
 <p class="e-muted" style="margin:0;${type('xs')};color:${c.muted}">${PRIVATE_LINE}</p>
 ${footer.html}`;
   const buddyBase = safeUrl(input.buddyBase);

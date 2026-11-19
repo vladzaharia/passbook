@@ -115,6 +115,13 @@ export function invitationOrgName(db: D1Database, hash: string) {
     [hash],
   );
 }
+/** The name a person gave, or null: an invitation names its sender only by that, never an address. */
+export async function userName(db: D1Database, userId: string): Promise<string | null> {
+  const row = await first<{ name: string | null }>(db, 'SELECT name FROM users WHERE id = ?', [
+    userId,
+  ]);
+  return row?.name?.trim() || null;
+}
 export function orgName(db: D1Database, orgId: string) {
   return first<{ name: string }>(db, 'SELECT name FROM orgs WHERE id = ?', [orgId]);
 }

@@ -997,7 +997,7 @@ describe('org detail', () => {
     const user = userEvent.setup();
     await user.type(await screen.findByLabelText(/^Administrator email/), 'first@example.test');
     await user.click(screen.getByRole('button', { name: 'Invite organization admin' }));
-    expect(await screen.findByText('Administrator invitation sent.')).toBeInTheDocument();
+    expect(await screen.findByText(/^Invitation sent to /)).toBeInTheDocument();
     expect(body).toEqual({ email: 'first@example.test', roles: ['org_admin'] });
     expect(container).not.toHaveTextContent(secret);
     expect(
@@ -1082,7 +1082,7 @@ describe('org detail', () => {
       expect(queryClient.getQueryState(['org-access', 'o1', 'invitations'])?.isInvalidated).toBe(
         false,
       );
-      expect(screen.queryByText('Administrator invitation sent.')).toBeNull();
+      expect(screen.queryByText(/^Invitation sent to /)).toBeNull();
       expect(screen.queryByText('Private server detail.')).toBeNull();
       expect(screen.getByLabelText(/^Administrator email/)).toHaveValue('');
       invalidate.mockRestore();
@@ -1103,7 +1103,7 @@ describe('org detail', () => {
     await user.click(screen.getByRole('button', { name: 'Invite organization admin' }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(email).toHaveValue('first@example.test');
-    expect(screen.queryByText('Administrator invitation sent.')).toBeNull();
+    expect(screen.queryByText(/^Invitation sent to /)).toBeNull();
   });
 
   it('does not allow bootstrap invitations while an organization is suspended', async () => {

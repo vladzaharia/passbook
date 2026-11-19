@@ -24,6 +24,7 @@ import { captureEmail } from '../sandbox/capture.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { bundleImages } from './assets.ts';
 import { BundleEmailIntentSchema, bundleEmailSnapshot, matchesBundle } from './email-binding.ts';
+import { passDetails } from './email-detail.ts';
 import { bundleChecks } from './repo-delivery-fence.ts';
 
 /**
@@ -114,6 +115,7 @@ export async function deliverBundleEmail(
   const appleOn = await Promise.all(passes.map((pass) => channelOn(ctx, pass, 'apple')));
   const addable = (pass: (typeof passes)[number]) =>
     pass.status === 'active' && pass.removedAt === null;
+  const details = await passDetails(ctx, passes);
   const email = renderBundleEmail({
     orgName: org?.name ?? 'PassBook',
     bundleName: bundle.name,
@@ -126,6 +128,7 @@ export async function deliverBundleEmail(
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
     passes: passes.map((pass, i) => ({
       title: pass.displayTitle ?? pass.serial,
+      detail: details[i] ?? null,
       addUrl: addable(pass) && appleOn[i] ? `${page}/${pass.id}/pass.pkpass` : null,
       ...(addable(pass) && !appleOn[i] ? { off: true } : {}),
     })),

@@ -152,9 +152,10 @@
   display: none;
 }
 /* Voided or expired: it sits on the notice, sad. */
+/* The buddy has its own row above the notice, clear of the notice's edge. */
 .wl-add-seat {
   position: relative;
-  margin-top: 2.75rem;
+  margin-top: 3.5rem;
 }
 
 /* It watches the badge while it is pointed at or focused: down and left on the badge's card, down

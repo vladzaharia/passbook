@@ -2,7 +2,6 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ErrorState, SkeletonKeyValue, TabsContent } from '../../../ui/index.ts';
-import type { PassActionRunner } from '../pass-actions.tsx';
 import { AccessCard } from './access-card.tsx';
 import { CheckInCard } from './check-in-card.tsx';
 import { ConnectionTab } from './connection-tab.tsx';
@@ -31,7 +30,6 @@ export function PassTabs({
   picked,
   onPick,
   onDraft,
-  runner,
   readOnly,
 }: {
   pass: PassDetailDto;
@@ -40,7 +38,6 @@ export function PassTabs({
   picked: number | undefined;
   onPick: (version: number | undefined) => void;
   onDraft: (draft: Record<string, unknown> | null) => void;
-  runner: PassActionRunner;
   readOnly: boolean;
 }) {
   return (
@@ -63,7 +60,6 @@ export function PassTabs({
             schema={template.data.inputSchema}
             manifest={template.data.manifest}
             onDraft={onDraft}
-            runner={runner}
             readOnly={readOnly}
           />
         ) : (

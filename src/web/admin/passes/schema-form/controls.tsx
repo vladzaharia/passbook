@@ -73,7 +73,15 @@ export function Control({
           aria-describedby={control['aria-describedby'] as string | undefined}
           aria-invalid={control['aria-invalid'] === true}
           disabled={disabled}
-          value={text === '' ? (field.required || field.hasDefault ? undefined : NONE) : text}
+          value={
+            text === ''
+              ? field.hasDefault
+                ? String(field.schema.default)
+                : field.required
+                  ? undefined
+                  : NONE
+              : text
+          }
           onValueChange={(v) => {
             onValue(v === NONE ? undefined : coerceOption(field, v));
             onBlur();
@@ -92,6 +100,7 @@ export function Control({
           {...common}
           type="number"
           inputMode="decimal"
+          {...(field.hasDefault ? { placeholder: String(field.schema.default) } : {})}
           value={text}
           onChange={(e) => onValue(e.target.value === '' ? undefined : Number(e.target.value))}
         />

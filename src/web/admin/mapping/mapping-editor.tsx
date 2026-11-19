@@ -1,15 +1,7 @@
 import { ArrowRight, Plus, Trash2, WandSparkles } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { cn } from '../../lib/cn.ts';
-import {
-  Button,
-  Callout,
-  Combobox,
-  EmptyState,
-  IconButton,
-  Select,
-  Textarea,
-} from '../../ui/index.ts';
+import { Button, Callout, EmptyState, IconButton, Select, Textarea } from '../../ui/index.ts';
 import {
   autoMap,
   blankRow,
@@ -22,6 +14,7 @@ import {
   TRANSFORMS,
   type TransformKind,
 } from './mapping.ts';
+import { SourceBox } from './source-box.tsx';
 
 export interface MappingEditorProps {
   rows: MappingRow[];
@@ -36,11 +29,15 @@ export interface MappingEditorProps {
   sourceNoun?: string;
   /** Fixed targets shown first, one row each; they cannot be re-targeted or removed. */
   pinned?: readonly TargetField[];
+  /** Keeps transforms behind "Transforms" until a row uses one (a file import has little need). */
+  simple?: boolean;
 }
 
 const NONE = '__none__';
 const GRID =
   '@[36rem]:grid-cols-[minmax(0,1fr)_1rem_minmax(0,1fr)_8.5rem_minmax(0,7rem)_2rem] @[36rem]:items-center';
+const GRID_SIMPLE =
+  '@[36rem]:grid-cols-[minmax(0,1fr)_1rem_minmax(0,1fr)_minmax(0,7rem)_2rem] @[36rem]:items-center';
 
 /** Below 36rem each control gets a visible caption; the wide grid has one header row instead. */
 function Stacked({ caption, children }: { caption: string; children: ReactNode }) {
@@ -54,57 +51,6 @@ function Stacked({ caption, children }: { caption: string; children: ReactNode }
   );
 }
 
-function SourceBox({
-  row,
-  sources,
-  noun,
-  disabled,
-  invalid,
-  onPick,
-}: {
-  row: MappingRow;
-  sources: readonly SourceField[];
-  noun: string;
-  disabled?: boolean | undefined;
-  invalid?: boolean;
-  onPick: (pointer: string) => void;
-}) {
-  const [query, setQuery] = useState('');
-  const q = query.trim();
-  const known = sources.map((s) => ({ value: s.pointer, label: s.label ?? s.pointer }));
-  const pool = [
-    ...known,
-    ...(row.from && !known.some((k) => k.value === row.from)
-      ? [{ value: row.from, label: row.from }]
-      : []),
-  ];
-  const custom =
-    q.startsWith('/') && !pool.some((p) => p.value === q) ? [{ value: q, label: q }] : [];
-  const needle = q.toLowerCase();
-  const options = [
-    ...custom,
-    ...pool.filter(
-      (p) => !q || p.label.toLowerCase().includes(needle) || p.value.toLowerCase().includes(needle),
-    ),
-  ];
-  const labelled = sources.some((s) => s.label !== undefined);
-  return (
-    <Combobox
-      aria-label={noun}
-      aria-invalid={invalid}
-      className={labelled ? 'text-sm' : 'font-mono text-xs'}
-      disabled={disabled}
-      value={row.from || undefined}
-      placeholder={labelled ? 'Choose a column' : '/field'}
-      searchPlaceholder={labelled ? noun : `${noun} or /pointer`}
-      emptyText={labelled ? 'No match' : 'Type a /pointer'}
-      onSearch={setQuery}
-      onValueChange={onPick}
-      options={options}
-    />
-  );
-}
-
 /** Source field → template field, with a transform and the live sample value per row. */
 export function MappingEditor({
   rows,
@@ -115,7 +61,12 @@ export function MappingEditor({
   disabled,
   sourceNoun = 'Source field',
   pinned = [],
+  simple = false,
 }: MappingEditorProps) {
+  const [transforms, setTransforms] = useState(
+    () => !simple || rows.some((r) => r.kind !== 'none'),
+  );
+  const grid = transforms ? GRID : GRID_SIMPLE;
   const patch = (id: string, next: Partial<MappingRow>) =>
     onChange(rows.map((r) => (r.id === id ? { ...r, ...next } : r)));
   const mapped = new Set(rows.filter((r) => r.from.trim()).map((r) => r.input.trim()));
@@ -145,13 +96,13 @@ export function MappingEditor({
             aria-hidden
             className={cn(
               'hidden gap-x-3 border-b border-border pb-2 text-xs font-medium text-fg-muted @[36rem]:grid',
-              GRID,
+              grid,
             )}
           >
             <span>{sourceNoun}</span>
             <span />
             <span>Template field</span>
-            <span>Transform</span>
+            {transforms ? <span>Transform</span> : null}
             <span>Sample value</span>
             <span />
           </div>
@@ -171,8 +122,7 @@ export function MappingEditor({
                   aria-label={summary}
                   className="grid grid-cols-1 gap-x-3 gap-y-2 py-3 last:pb-0 @[36rem]:grid-cols-1"
                 >
-                  <p className="truncate text-xs text-fg-muted @[36rem]:hidden">{summary}</p>
-                  <div className={cn('grid gap-x-3 gap-y-2', GRID)}>
+                  <div className={cn('grid gap-x-3 gap-y-2', grid)}>
                     <Stacked caption={sourceNoun}>
                       <SourceBox
                         row={row}
@@ -212,15 +162,19 @@ export function MappingEditor({
                         />
                       )}
                     </Stacked>
-                    <Stacked caption="Transform">
-                      <Select
-                        aria-label="Transform"
-                        disabled={disabled}
-                        value={row.kind}
-                        onValueChange={(v) => patch(row.id, { kind: v as TransformKind | 'none' })}
-                        options={TRANSFORMS.map((t) => ({ value: t.value, label: t.label }))}
-                      />
-                    </Stacked>
+                    {transforms ? (
+                      <Stacked caption="Transform">
+                        <Select
+                          aria-label="Transform"
+                          disabled={disabled}
+                          value={row.kind}
+                          onValueChange={(v) =>
+                            patch(row.id, { kind: v as TransformKind | 'none' })
+                          }
+                          options={TRANSFORMS.map((t) => ({ value: t.value, label: t.label }))}
+                        />
+                      </Stacked>
+                    ) : null}
                     {/* Stacked, the sample and Remove share one trailing row. */}
                     <div className="flex min-w-0 items-center justify-between gap-2 @[36rem]:contents">
                       <output
@@ -275,6 +229,11 @@ export function MappingEditor({
         >
           Add mapping
         </Button>
+        {simple && !transforms ? (
+          <Button variant="ghost" size="sm" onClick={() => setTransforms(true)}>
+            Transforms
+          </Button>
+        ) : null}
         <Button
           variant="ghost"
           size="sm"
@@ -290,6 +249,16 @@ export function MappingEditor({
 }
 
 /** Template input fields as mapping targets. */
+/** A field with no label shows its key: "guestsLeft" reads as "Guests left". */
+export function humanizeKey(key: string): string {
+  const words = key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_.-]+/g, ' ')
+    .trim()
+    .toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export function targetsOf(
   fields: readonly {
     key: string;
@@ -300,7 +269,7 @@ export function targetsOf(
 ): TargetField[] {
   return fields.map((f) => ({
     key: f.key,
-    label: f.label,
+    label: f.label === f.key ? humanizeKey(f.key) : f.label,
     required: f.required,
     values: f.options?.map((o) => o.value),
   }));

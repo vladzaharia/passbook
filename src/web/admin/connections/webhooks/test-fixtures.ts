@@ -28,6 +28,8 @@ export function endpoint(over: Partial<WebhookEndpointDto> = {}): WebhookEndpoin
     lastSuccessAt: NOW - HOUR,
     lastFailureAt: null,
     lastStatus: 200,
+    secretCreatedAt: NOW - 24 * HOUR,
+    previousSecretExpiresAt: null,
     createdAt: NOW - 24 * HOUR,
     ...over,
   };
@@ -157,7 +159,8 @@ export function hooks(
       return json({ queued: 1 });
     },
     '/api/v1/webhook-endpoints/we1/replay': (url, init) => {
-      log(url, init);
+      // The dialog's count is a dry run of the same request: not a replay, so not recorded.
+      if (!JSON.parse(String(init?.body)).dryRun) log(url, init);
       return json({ queued: 42 });
     },
     '/api/v1/webhook-endpoints/we1/secret': (url, init) => {

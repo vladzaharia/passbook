@@ -5,38 +5,31 @@ import { type CSSProperties, type ReactNode, useState } from 'react';
 import type { MyPassListSchema } from '../../shared/contracts/me.ts';
 import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
-import { addLine, canAddToWallet } from '../../shared/device.ts';
-import { cn } from '../lib/cn.ts';
+import { addLine } from '../../shared/device.ts';
 import { useArrival } from '../lib/motion.ts';
-import { useSession } from '../lib/session.ts';
-import { PassCardStage } from '../pass-card/index.tsx';
 import {
   AppleWalletBadge,
   Buddy,
   type BuddyScene,
   Button,
-  Card,
   EmptyState,
   ErrorState,
   LoadMore,
   PageHeader,
   Skeleton,
-  StatusPill,
   type WalletMood,
 } from '../ui/index.ts';
-import { ModePill } from '../ui/layout/mode-pill.tsx';
 import { myPassesQuery } from './api.ts';
 import { browserDevice } from './device.ts';
-import { holderPassName, type MyPass, toView } from './pass-view.ts';
-import { isPendingRefresh } from './refresh.ts';
-import { RefreshIconButton, useRefresh } from './refresh-button.tsx';
+import { PassTile } from './pass-tile.tsx';
+import type { MyPass } from './pass-view.ts';
 import { useRemovalStatus } from './removal-status.ts';
-import { AddLine, PassMoreMenu, publicUrlOf, ShowQrButton } from './wallet-actions.tsx';
+import { AddLine } from './wallet-actions.tsx';
 import './portal.css';
 
 // The buddy's room over the first tile (32 px and the 24 px gap above), skeleton included.
-const GRID =
-  'wl-buddy-room [--wl-buddy-room:2rem] grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
+const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
+const GRID_ROOM = `wl-buddy-room [--wl-buddy-room:2rem] ${GRID}`;
 
 /**
  * What the list's buddy acts out (motion-and-expression.md, The buddy). Passes to add: it aims at
@@ -59,105 +52,6 @@ function ListBuddy({ passes }: { passes: readonly MyPass[] }) {
   const { mood, scene } = listAct(passes);
   return (
     <Buddy key={scene} size="sm" at="start" mood={mood} scene={scene} className="wl-list-buddy" />
-  );
-}
-
-/** A reported Apple registration: the badge gives way to this pill. */
-export function InWalletPill() {
-  return <StatusPill status="in_wallet">{HOLDER_COPY.inWalletPill}</StatusPill>;
-}
-
-/**
- * Three rows of the list's grid (subgrid): the card, then title and org, then the actions, so a
- * row of tiles lines them up however their actions wrap. The actions beside the badge are
- * badge-sized outline buttons.
- */
-function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?: ReactNode }) {
-  const { authed } = useSession();
-  const refresh = useRefresh(pass.id, pass);
-  // The holder's own name is no title on their own page: the pass kind leads instead.
-  const name = holderPassName(pass, authed?.user);
-  const publicUrl = publicUrlOf(pass.pageUrl ?? pass.downloadUrl);
-  const removed = pass.removedAt !== null;
-  const voided = pass.status === 'voided' || removed;
-  // Where the badge cannot add, Show QR leads; elsewhere off the phone it waits in More.
-  const [qr] = useState(() => !canAddToWallet(browserDevice().device));
-  const [dip, setDip] = useState(0);
-  const link = { to: '/passes/$passId', params: { passId: pass.id } } as const;
-  return (
-    // The tile's corner is the 18 px card radius: the pass inside draws ~14 px, never more.
-    <Card className="row-span-3 grid grid-rows-subgrid gap-y-3 rounded-xl p-4">
-      {buddy}
-      {/* The card is a second way into the pass; the title link is the one in the tab order. */}
-      <Link {...link} tabIndex={-1} aria-hidden className="mb-1 flex items-center">
-        <PassCardStage
-          view={toView(pass)}
-          mint={voided ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
-          settle={pass.status}
-          dip={dip}
-          enter={dealt}
-          dim={voided}
-          removed={removed}
-          syncing={isPendingRefresh(pass, Date.now())}
-          transitionName={`pass-${pass.id}`}
-        />
-      </Link>
-      <div className={cn('contents', dealt && 'wl-tile-chrome')}>
-        <div className="min-w-0">
-          <div className="flex min-h-6 items-center justify-between gap-2">
-            <h2 className="min-w-0 text-sm font-semibold text-fg-strong">
-              {/* A block link truncates on its own box, so the 44 px touch padding is not clipped. */}
-              <Link
-                {...link}
-                className="block truncate rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus pointer-coarse:-my-3 pointer-coarse:py-3"
-              >
-                {name}
-              </Link>
-            </h2>
-            <span className="flex shrink-0 items-center gap-1.5">
-              <ModePill mode={pass.mode} />
-              {voided ? (
-                <StatusPill status={removed ? 'removed' : 'voided'} />
-              ) : pass.inWallet ? (
-                <InWalletPill />
-              ) : (
-                <StatusPill status="active" />
-              )}
-            </span>
-          </div>
-          <p className="truncate text-xs text-fg-muted">{pass.orgName}</p>
-        </div>
-        {/* As tall as the badge with its clear space (52, 56 on touch), badge or not. */}
-        <div className="@container flex min-h-13 flex-wrap content-end items-center justify-between gap-2 pointer-coarse:min-h-14">
-          <div className="flex flex-wrap items-center gap-2">
-            <Button asChild variant="outline">
-              <Link {...link}>View pass</Link>
-            </Button>
-            {voided || pass.inWallet || !qr || !publicUrl ? null : (
-              <ShowQrButton passTitle={name} url={publicUrl} />
-            )}
-            {voided ||
-            pass.inWallet ||
-            !pass.downloadUrl ||
-            pass.channels?.apple.on === false ? null : (
-              <AppleWalletBadge href={pass.downloadUrl} onClick={() => setDip((n) => n + 1)} />
-            )}
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            {voided ? null : (
-              <RefreshIconButton refresh={refresh} className="@max-[24rem]:hidden" />
-            )}
-            <PassMoreMenu
-              passId={pass.id}
-              passTitle={name}
-              publicUrl={voided ? null : publicUrl}
-              inWallet={pass.inWallet}
-              {...(voided ? {} : { refresh })}
-            />
-          </div>
-        </div>
-      </div>
-    </Card>
   );
 }
 
@@ -187,6 +81,35 @@ function AddAllLinks({ bundle }: { bundle: NonNullable<BundleInfo> }) {
   );
 }
 
+function PassGrid({
+  passes,
+  dealt,
+  lead,
+}: {
+  passes: readonly MyPass[];
+  dealt: boolean;
+  /** The first tile carries the list's buddy. */
+  lead: boolean;
+}) {
+  return (
+    <ul className={lead ? GRID_ROOM : GRID}>
+      {passes.map((pass, i) => (
+        <li
+          key={pass.id}
+          className="row-span-3 grid min-w-0 grid-rows-subgrid"
+          style={{ '--i': i } as CSSProperties}
+        >
+          <PassTile
+            pass={pass}
+            dealt={dealt}
+            buddy={lead && i === 0 ? <ListBuddy passes={passes} /> : undefined}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function MyPassesPage() {
   const query = useInfiniteQuery(myPassesQuery);
   const passes = query.data?.pages.flatMap((p) => p.items) ?? [];
@@ -195,6 +118,8 @@ export function MyPassesPage() {
   const pendingRemovals = pending?.length ?? 0;
   const reissueRequired = query.data?.pages[0]?.reissueRequired ?? [];
   const dealt = useArrival(query.isPending);
+  const live = passes.filter(isLive);
+  const off = passes.filter((p) => !isLive(p));
   const bundle = query.data?.pages[0]?.bundle ?? null;
   const addable = bundle?.count ?? 0;
   const [device] = useState(browserDevice);
@@ -204,7 +129,7 @@ export function MyPassesPage() {
     body = (
       // A flex box like the list's, so the grid's margin adds to the header's instead of collapsing.
       <div className="flex flex-col">
-        <div className={GRID} aria-busy="true">
+        <div className={GRID_ROOM} aria-busy="true">
           <Skeleton className="h-[34rem]" />
           <Skeleton className="h-[34rem] max-sm:hidden" />
           <Skeleton className="h-[34rem] max-lg:hidden" />
@@ -246,22 +171,18 @@ export function MyPassesPage() {
             <AddLine />
           </section>
         ) : null}
-        <div>
-          <ul className={GRID}>
-            {passes.map((pass, i) => (
-              <li
-                key={pass.id}
-                className="row-span-3 grid min-w-0 grid-rows-subgrid"
-                style={{ '--i': i } as CSSProperties}
-              >
-                <PassTile
-                  pass={pass}
-                  dealt={dealt}
-                  buddy={i === 0 ? <ListBuddy passes={passes} /> : undefined}
-                />
-              </li>
-            ))}
-          </ul>
+        <div className="flex flex-col gap-8">
+          <PassGrid passes={live} dealt={dealt} lead />
+          {off.length > 0 ? (
+            <section aria-labelledby="ended-title" className="flex flex-col gap-4">
+              {live.length > 0 ? (
+                <h2 id="ended-title" className="text-sm font-semibold text-fg-strong">
+                  {HOLDER_COPY.endedTitle}
+                </h2>
+              ) : null}
+              <PassGrid passes={off} dealt={dealt} lead={live.length === 0} />
+            </section>
+          ) : null}
           <LoadMore query={query} />
         </div>
       </div>

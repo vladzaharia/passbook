@@ -58,6 +58,15 @@ export function inputMessage(
   label: string,
   schema: Record<string, unknown> | undefined,
 ): string {
+  const text = describeInput(issue, label, schema);
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function describeInput(
+  issue: { keyword: string; message: string },
+  label: string,
+  schema: Record<string, unknown> | undefined,
+): string {
   const s = schema ?? {};
   const num = (k: string) => (typeof s[k] === 'number' ? (s[k] as number) : null);
   switch (issue.keyword) {
@@ -90,8 +99,10 @@ export function inputMessage(
     case 'maxItems':
       return `${label} allows at most ${num('maxItems')} items.`;
     case 'enum': {
-      const values = Array.isArray(s.enum) ? s.enum.map(String).slice(0, 8).join(', ') : '';
-      return values ? `${label} must be one of: ${values}.` : `${label} is not valid.`;
+      const values = Array.isArray(s.enum) ? s.enum.map(String).slice(0, 8) : [];
+      const last = values.pop();
+      if (last === undefined) return `${label} is not valid.`;
+      return `${label} must be ${values.length ? `${values.join(', ')} or ` : ''}${last}.`;
     }
     case 'format':
       return `${label} is not in the right format.`;

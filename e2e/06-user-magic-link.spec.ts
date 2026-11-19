@@ -18,7 +18,7 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
     await page.goto('/login');
     await page.getByLabel('Email').fill(email);
     await page.getByRole('button', { name: 'Email me a sign-in link' }).click();
-    await expect(page.getByRole('heading', { name: 'Enter the code' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
     return nextSignInMail(before);
   }
 
@@ -34,7 +34,7 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
   // Link is single use.
   await page.context().clearCookies();
   await page.goto(mail.link);
-  await expect(page.getByRole('heading', { name: 'Link expired' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Link already used' })).toBeVisible();
 
   // Force refresh: pending, then done.
   const again = await requestLink();
@@ -69,9 +69,9 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
   await page.goto('/login');
   await page.getByLabel('Email').fill(email);
   await page.getByRole('button', { name: 'Email me a sign-in link' }).click();
-  await expect(page.getByRole('heading', { name: 'Enter the code' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
   const second = await nextSignInMail(before);
-  await page.getByLabel('Code', { exact: true }).fill(second.code as string);
+  await page.getByLabel('Or enter the 6-digit code').fill(second.code as string);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await page.waitForURL((u) => u.pathname === '/');
   // The removed pass does not come back.

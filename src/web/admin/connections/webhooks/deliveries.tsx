@@ -1,7 +1,7 @@
 import { RotateCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
-import type { WebhookDeliverySchema } from '@/shared/contracts/webhooks.ts';
+import type { WebhookDeliverySchema, WebhookEndpointStatus } from '@/shared/contracts/webhooks.ts';
 import { entityLabel } from '../../../lib/entity-label.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import type { DataColumnDef } from '../../../ui/data-table-meta.ts';
@@ -29,8 +29,24 @@ const FILTERS = [
   { value: 'pending', label: 'Pending' },
 ] as const;
 
+/** Why a delivery is still pending, as the pill's hover text. */
+function stateHint(d: Delivery, endpointStatus: WebhookEndpointStatus): string | undefined {
+  if (d.state !== 'pending') return undefined;
+  if (endpointStatus === 'paused') return 'Paused: not sent until the endpoint resumes';
+  if (endpointStatus === 'disabled') return 'Disabled: not sent until the endpoint resumes';
+  return d.attempts === 0 ? 'Waiting to be sent' : `Retrying at ${formatDateTime(d.nextAt)}`;
+}
+
 /** The endpoint's deliveries, newest first. A row opens its attempts and payload. */
-export function Deliveries({ endpointId, canManage }: { endpointId: string; canManage: boolean }) {
+export function Deliveries({
+  endpointId,
+  canManage,
+  endpointStatus,
+}: {
+  endpointId: string;
+  canManage: boolean;
+  endpointStatus: WebhookEndpointStatus;
+}) {
   const [filter, setFilter] = useState<DeliveryFilter>('all');
   const [open, setOpen] = useState<string>();
   const list = useDeliveries(endpointId, filter);
@@ -69,6 +85,7 @@ export function Deliveries({ endpointId, canManage }: { endpointId: string; canM
         <RowLink
           to="/admin/passes/$passId"
           params={{ passId: d.passId }}
+          title={d.externalId ?? undefined}
           className="text-xs font-normal"
         >
           {entityLabel(d.externalId, 'Open pass')}
@@ -79,7 +96,9 @@ export function Deliveries({ endpointId, canManage }: { endpointId: string; canM
       id: 'state',
       header: 'Status',
       cell: ({ row: { original: d } }) => (
-        <StatusPill status={DELIVERY_STATUS[d.state]}>{DELIVERY_STATE_LABEL[d.state]}</StatusPill>
+        <span title={stateHint(d, endpointStatus)}>
+          <StatusPill status={DELIVERY_STATUS[d.state]}>{DELIVERY_STATE_LABEL[d.state]}</StatusPill>
+        </span>
       ),
     },
     {
@@ -108,22 +127,31 @@ export function Deliveries({ endpointId, canManage }: { endpointId: string; canM
             header: 'Replay',
             meta: { nowrap: true },
             cell: ({ row: { original: d } }: { row: { original: Delivery } }) => (
-              <IconButton
-                label={`Replay ${EVENT_LABEL[d.type]} delivery`}
-                size="sm"
-                disabled={d.state === 'pending' || replaying === d.eventId}
-                icon={<RotateCw aria-hidden />}
-                onClick={() => replay(d.eventId)}
-              />
+              <span
+                title={d.state === 'pending' ? 'Pending deliveries cannot be replayed' : undefined}
+              >
+                <IconButton
+                  label={`Replay ${EVENT_LABEL[d.type]} delivery`}
+                  size="sm"
+                  disabled={d.state === 'pending' || replaying === d.eventId}
+                  icon={<RotateCw aria-hidden />}
+                  onClick={() => replay(d.eventId)}
+                />
+              </span>
             ),
           },
         ]
       : []),
     {
       id: 'time',
-      header: 'Time',
+      header: 'Last attempt',
       meta: { nowrap: true, stackHidden: true },
-      cell: ({ row: { original: d } }) => formatDateTime(d.lastAttemptAt ?? d.nextAt),
+      cell: ({ row: { original: d } }) =>
+        d.lastAttemptAt === null ? (
+          <span className="text-fg-muted">Not sent</span>
+        ) : (
+          formatDateTime(d.lastAttemptAt)
+        ),
     },
   ];
   return (
@@ -172,6 +200,7 @@ export function Deliveries({ endpointId, canManage }: { endpointId: string; canM
         endpointId={endpointId}
         eventId={open}
         canManage={canManage}
+        endpointStatus={endpointStatus}
         onClose={() => setOpen(undefined)}
       />
     </div>

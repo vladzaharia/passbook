@@ -23,6 +23,7 @@ import { ModePill } from '../../ui/layout/mode-pill.tsx';
 import { useBroadcastPages } from './api.ts';
 import { countsLine, KIND_LABEL, STATE_FILTERS, whenLine } from './labels.ts';
 import { BroadcastProgress } from './progress.tsx';
+import { RulesSection } from './rules-section.tsx';
 
 const ALL = 'all';
 
@@ -198,6 +199,7 @@ function ScopedMessagesPage({
           }
         />
       )}
+      <RulesSection orgId={orgId} />
     </>
   );
 }

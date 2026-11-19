@@ -128,6 +128,7 @@ export function HolderPassView(props: HolderPassViewProps) {
               support={support}
               message={props.removalMessage}
               endedOn={props.endedOn}
+              inWallet={props.inWallet}
             />
           </div>
         )}

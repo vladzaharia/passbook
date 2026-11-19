@@ -4,6 +4,7 @@ import { errorMessage, isApiError } from '../../lib/errors.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
+  Callout,
   ErrorState,
   PageHeader,
   SkeletonKeyValue,
@@ -23,11 +24,11 @@ import { takeConnectionPrefill, wizardStart } from './import-handoff.ts';
 import { type Lifecycle, LifecycleFields, lifecycleError } from './lifecycle-fields.tsx';
 import { TemplateSelect } from './template-select.tsx';
 import { TestModeNote } from './test-mode-note.tsx';
-import type { TestOutcome } from './test-result.tsx';
 import { useConnectionCreation } from './use-connection-creation.ts';
 import { useWizardConfig } from './wizard-config.ts';
 import { ReviewStep, WizardAside } from './wizard-review.tsx';
 import { type ConfigDraft, ConfigStep, ConnectorStep } from './wizard-steps.tsx';
+import { useTestOutcome, WizardTest } from './wizard-test.tsx';
 
 const STEPS = [
   { id: 'connector', title: 'Connector' },
@@ -62,23 +63,13 @@ export function CreateConnectionWizard() {
   const [step, setStep] = useState(start.step);
   const [type, setType] = useState<string | undefined>(start.type);
   const [draft, setDraft] = useState<ConfigDraft>(start.draft);
-  const [tested, setTested] = useState<{
-    outcome: TestOutcome;
-    orgId: string;
-    scope: typeof scopeToken;
-    type: string;
-    config: ConfigDraft['config'];
-    secrets: ConfigDraft['secrets'];
-  }>();
-  const test =
-    tested !== undefined &&
-    tested.orgId === orgId &&
-    tested.scope === scopeToken &&
-    tested.type === type &&
-    tested.config === draft.config &&
-    tested.secrets === draft.secrets
-      ? tested.outcome
-      : undefined;
+  const [test, onTested] = useTestOutcome({
+    orgId,
+    scope: scopeToken,
+    current: currentScope,
+    type,
+    draft,
+  });
   const [rows, setRows] = useState<MappingRow[]>(start.rows);
   const [life, setLife] = useState<Lifecycle>(start.life);
   const [showErrors, setShowErrors] = useState(false);
@@ -118,7 +109,6 @@ export function CreateConnectionWizard() {
     : [];
   const defaultMinutes = info ? Math.round(info.defaults.intervalSeconds / 60) : undefined;
 
-  // Start from the first mode the connector supports.
   useEffect(() => {
     const caps = info?.capabilities;
     if (!caps) return;
@@ -153,7 +143,8 @@ export function CreateConnectionWizard() {
   const currentCreate = create.variables?.scope === scopeToken;
   const serverFields = currentCreate && isApiError(create.error) ? create.error.fields : {};
   const crumbs = [{ label: 'Connections', to: '/admin/connections' }, { label: 'New' }];
-  const blockCreate = life.autoCreate && (!life.defaultTemplateId || rows.length === 0);
+  const noMappings = rows.length === 0;
+  const blockCreate = life.autoCreate && (!life.defaultTemplateId || noMappings);
 
   /** False keeps the step: the Wizard focuses the first error and announces the count. */
   function next(): boolean {
@@ -200,12 +191,14 @@ export function CreateConnectionWizard() {
         steps={STEPS}
         current={step}
         onStep={setStep}
-        aside={<WizardAside connector={info} sample={sample} />}
+        aside={<WizardAside connector={info} sample={sample} step={step} />}
         asideLabel="Connector"
         onCancel={() => void navigate({ to: '/admin/connections' })}
         onBack={step > 0 ? () => setStep(step - 1) : undefined}
         onNext={next}
-        nextLabel={step === STEPS.length - 1 ? 'Create' : 'Next'}
+        nextLabel={
+          step < STEPS.length - 1 ? 'Next' : noMappings ? 'Create without mappings' : 'Create'
+        }
         nextHint="Pick a connector."
         nextDisabled={(step === 0 && !type) || (step === STEPS.length - 1 && blockCreate)}
         busy={currentCreate && create.isPending}
@@ -219,7 +212,6 @@ export function CreateConnectionWizard() {
               if (t === type) return;
               setType(t);
               setDraft((d) => ({ ...d, config: {}, secrets: {} }));
-              setTested(undefined);
             }}
             onCommit={next}
             orgs={orgId ? null : orgList}
@@ -245,17 +237,7 @@ export function CreateConnectionWizard() {
                 secrets: prefixed(serverFields, 'secrets.'),
               }}
               test={test}
-              onTest={(outcome) => {
-                if (currentScope.current !== scopeToken) return;
-                setTested({
-                  outcome,
-                  orgId,
-                  scope: scopeToken,
-                  type: info.type,
-                  config: draft.config,
-                  secrets: draft.secrets,
-                });
-              }}
+              onTest={onTested}
             />
           ) : connector.isError ? (
             <ErrorState inline error={connector.error} onRetry={() => void connector.refetch()} />
@@ -271,6 +253,21 @@ export function CreateConnectionWizard() {
               disabled={!templateOrg}
               onChange={(defaultTemplateId) => setLife({ ...life, defaultTemplateId })}
             />
+            {info && orgId ? (
+              <WizardTest
+                connector={info}
+                orgId={orgId}
+                config={draft.config}
+                secrets={draft.secrets}
+                test={test}
+                onTest={onTested}
+              />
+            ) : null}
+            {noMappings ? (
+              <Callout tone="warning" title="Nothing mapped yet">
+                Passes are not created or updated until you map fields to the template.
+              </Callout>
+            ) : null}
             <MappingEditor
               rows={rows}
               onChange={setRows}

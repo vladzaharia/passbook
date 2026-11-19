@@ -1,5 +1,5 @@
 import { Upload } from 'lucide-react';
-import { type DragEvent, useId, useRef, useState } from 'react';
+import { type DragEvent, type ReactNode, useId, useRef, useState } from 'react';
 import { cn } from '../lib/cn.ts';
 import { type ArtName, EntityArt } from './art/index.ts';
 
@@ -9,7 +9,7 @@ export interface FileDropProps {
   accept?: string;
   multiple?: boolean;
   maxBytes?: number;
-  label?: string;
+  label?: ReactNode;
   disabled?: boolean;
   /** The entity's art (sm) in place of the upload glyph: certificate, template. */
   art?: ArtName;

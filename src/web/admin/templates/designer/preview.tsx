@@ -92,6 +92,7 @@ export function DesignerPreview({
           <Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />
         )}
       </div>
+      <p className="text-center text-xs text-fg-muted">Sample values. Each pass shows its own.</p>
       <div className="flex flex-wrap items-center justify-center gap-2">
         <PassSideToggle value={face} onChange={setFace} />
         {view?.layouts.ios27.approximate ? (

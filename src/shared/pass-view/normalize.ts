@@ -3,6 +3,7 @@ import { resolveColors } from './color.ts';
 import { safeLocale } from './format.ts';
 import { resolveImages } from './images.ts';
 import { buildLayout, chooseStyle } from './layout.ts';
+import { withStatusWord } from './status-field.ts';
 import { localize } from './strings.ts';
 import type { LayoutView, PassTarget, PassView } from './types.ts';
 import { upcomingEvents } from './upcoming.ts';
@@ -19,12 +20,19 @@ export interface NormalizeOptions {
   target?: PassTarget;
   /** IANA zone for dates; defaults to the runtime's. */
   timeZone?: string;
+  /** The holder's state word ("Removed") when the record is ahead of the pass file. */
+  stateWord?: string;
 }
 
 const text = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v));
 
-export function normalize(pass: PassJson, options: NormalizeOptions): PassView {
+export function normalize(source: PassJson, options: NormalizeOptions): PassView {
   const now = options.now ?? new Date();
+  const ended = validityOf(source, now).status;
+  const pass = withStatusWord(
+    source,
+    options.stateWord ?? (ended === 'voided' ? 'Voided' : ended === 'expired' ? 'Expired' : null),
+  );
   const { locale, bad } = safeLocale(options.locale);
   const warnings = new Set<string>(bad ? ['locale.invalid'] : []);
   const ctx = {

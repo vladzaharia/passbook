@@ -399,7 +399,7 @@ describe('confirm page and token', () => {
     expect(body.amr).toBe('magic_link');
     const again = await consumeForm(token, new Map());
     expect(again.status).toBe(400);
-    expect(await again.text()).toContain('Link expired');
+    expect(await again.text()).toContain('Link already used');
   });
 
   it('consumes atomically: parallel posts yield one session', async () => {

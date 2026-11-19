@@ -101,6 +101,7 @@ register(
         mode: modeOf(auth),
         ...(q.templateId ? { templateId: q.templateId } : {}),
         ...(q.connectionId ? { connectionId: q.connectionId } : {}),
+        ...(q.importId ? { importId: q.importId } : {}),
         ...(q.status ? { status: q.status } : {}),
         ...(holderEmail ? { holderEmail } : {}),
         ...(q.holderState ? { holderState: q.holderState } : {}),

@@ -118,6 +118,11 @@ const columns: DataColumnDef<Run, never>[] = [
   },
 ];
 
+const LEGEND: readonly Run['outcome'][] = ['changed', 'unchanged', 'error'];
+const LEGEND_HINT: Partial<Record<Run['outcome'], string>> = {
+  unchanged: 'Ran, nothing to update',
+};
+
 /** The last 20 runs as bars, oldest first: green changed, grey unchanged, red failed. */
 function RunStrip({ runs }: { runs: readonly Run[] }) {
   const last = [...runs.slice(0, 20)].reverse();
@@ -141,6 +146,17 @@ function RunStrip({ runs }: { runs: readonly Run[] }) {
           </li>
         ))}
       </ol>
+      <ul aria-label="Legend" className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-fg-muted">
+        {LEGEND.map((o) => (
+          <li key={o} className="inline-flex items-center gap-1.5" title={LEGEND_HINT[o]}>
+            <span aria-hidden className={cn('size-2.5 rounded-sm', OUTCOME[o].bar)} />
+            {OUTCOME[o].label}
+            {LEGEND_HINT[o] ? (
+              <span className="text-fg-subtle">{`, ${LEGEND_HINT[o]?.toLowerCase()}`}</span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -155,6 +171,8 @@ function useBecameSet(value: unknown): boolean {
   }, [value, fired]);
   return fired;
 }
+
+const RUNS_SHOWN = 5;
 
 export function HealthPanel({
   connection: c,
@@ -174,6 +192,7 @@ export function HealthPanel({
   onWebhookTab?: (() => void) | undefined;
 }) {
   const now = Date.now();
+  const [allRuns, setAllRuns] = useState(false);
   const failing = c.consecutiveFailures > 0;
   const breaker = c.breakerOpenUntil !== null && c.breakerOpenUntil > now;
   const firstSync = useBecameSet(c.lastSuccessAt);
@@ -258,7 +277,7 @@ export function HealthPanel({
                 ),
               },
               {
-                label: 'Latency p50 / p95',
+                label: 'Latency, typical / slow',
                 value:
                   c.metrics.p50Ms === null
                     ? null
@@ -281,9 +300,16 @@ export function HealthPanel({
           caption="Connection runs"
           bare
           columns={columns}
-          data={c.runs.slice(0, 20)}
+          data={c.runs.slice(0, allRuns ? 20 : RUNS_SHOWN)}
           getRowId={(r) => r.id}
           empty={<EmptyState inline art="runs" title="No runs yet" />}
+          footer={
+            c.runs.length > RUNS_SHOWN ? (
+              <Button variant="link" onClick={() => setAllRuns((v) => !v)}>
+                {allRuns ? 'Show fewer' : `Show all ${Math.min(20, c.runs.length)}`}
+              </Button>
+            ) : undefined
+          }
         />
       </Card>
     </div>

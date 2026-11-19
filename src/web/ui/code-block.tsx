@@ -7,6 +7,8 @@ export interface CodeBlockProps {
   label?: string;
   className?: string;
   maxHeight?: string;
+  /** Long lines wrap inside the block instead of scrolling sideways. */
+  wrap?: boolean;
 }
 
 function Frame({
@@ -14,6 +16,7 @@ function Frame({
   label = 'Code',
   className,
   maxHeight = 'max-h-96',
+  wrap,
   children,
 }: CodeBlockProps & { children: ReactNode }) {
   return (
@@ -28,7 +31,12 @@ function Frame({
         aria-label={label}
         className={cn('overflow-auto', maxHeight)}
       >
-        <pre className="p-3 pr-10 font-mono text-xs text-fg">
+        <pre
+          className={cn(
+            'p-3 pr-10 font-mono text-xs text-fg',
+            wrap && 'whitespace-pre-wrap [overflow-wrap:anywhere]',
+          )}
+        >
           <code>{children}</code>
         </pre>
       </section>
@@ -83,7 +91,7 @@ export function JsonViewer({
 }: { value: unknown } & Omit<CodeBlockProps, 'code'>) {
   const code = JSON.stringify(value, null, 2) ?? 'undefined';
   return (
-    <Frame code={code} label={label} {...rest}>
+    <Frame code={code} label={label} wrap {...rest}>
       {tintJson(code)}
     </Frame>
   );

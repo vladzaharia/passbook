@@ -28,6 +28,22 @@ const list = (...items: ReturnType<typeof passFixture>[]) => {
 };
 
 describe('my passes', () => {
+  it('groups voided and removed passes under the live ones', async () => {
+    await renderApp('/', {
+      handlers: {
+        '/api/v1/me/passes': () =>
+          list(
+            passFixture({ id: 'a', title: 'Live' }),
+            passFixture({ id: 'b', title: 'Gone', status: 'voided' }),
+          ),
+      },
+    });
+    const ended = await screen.findByRole('heading', { name: HOLDER_COPY.endedTitle });
+    const group = ended.closest('section') as HTMLElement;
+    expect(within(group).getByRole('link', { name: 'Gone' })).toBeInTheDocument();
+    expect(within(group).queryByRole('link', { name: 'Live' })).toBeNull();
+  });
+
   it('renders cards with org, wallet link and no a11y violations', async () => {
     const { container } = await renderApp('/', {
       handlers: { '/api/v1/me/passes': () => list(passFixture()) },

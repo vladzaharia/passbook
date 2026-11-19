@@ -25,9 +25,9 @@ import { TestRibbon } from './test-ribbon.tsx';
 export const BUNDLE_COPY = {
   addAll: 'Add all to Apple Wallet',
   count: HOLDER_COPY.count,
-  /** "3 passes · 1 voided" under the title. */
-  summary: (n: number, off: number) =>
-    `${n} ${n === 1 ? 'pass' : 'passes'}${off ? ` · ${off} voided` : ''}`,
+  /** "3 passes · 1 voided · 1 removed" under the title. */
+  summary: (n: number, voided: number, removed = 0) =>
+    `${n} ${n === 1 ? 'pass' : 'passes'}${voided ? ` · ${voided} voided` : ''}${removed ? ` · ${removed} removed` : ''}`,
   qrAlt: (name: string) => `QR code for ${name}`,
   preview: 'Open these passes.',
 } as const;
@@ -36,6 +36,8 @@ export interface BundlePageItem {
   id: string;
   view: PassView;
   title: string;
+  /** "Tier: Plus": tells same-titled passes apart. */
+  detail?: string | null;
   /** Voided passes and removed ones cannot be added. */
   state: 'active' | 'voided' | 'removed';
   /** `/b/:token/:passId/pass.pkpass`; null while Apple is off for the pass. */
@@ -74,10 +76,32 @@ function OffBadge({ state }: { state: 'voided' | 'removed' }) {
   );
 }
 
+/** Under a voided pass: what it means and who to ask; a removed one needs no next step. */
+function OffNote({
+  state,
+  orgName,
+  support,
+}: {
+  state: 'voided' | 'removed';
+  orgName: string;
+  support?: HolderSupport | undefined;
+}) {
+  if (state === 'removed') return null;
+  const own = support && !support.platform ? support : null;
+  const href = own?.email ? `mailto:${own.email}` : own?.url;
+  return (
+    <p className="bd-note">
+      {HOLDER_COPY.voidedShort}{' '}
+      {href ? <a href={href}>{HOLDER_COPY.contact(orgName)}</a> : HOLDER_COPY.askForNew(orgName)}
+    </p>
+  );
+}
+
 function BundleBody(props: BundlePageProps) {
   const { items, device, support } = props;
   const addable = items.filter((i) => i.state === 'active');
-  const off = items.length - addable.length;
+  const voided = items.filter((i) => i.state === 'voided').length;
+  const removed = items.filter((i) => i.state === 'removed').length;
   const android = isAndroid(device.device);
   const apple = addable.filter((i) => i.downloadHref);
   const mode = apple.length > 0 ? addMode('active', device, false, props.publicUrl) : 'off';
@@ -105,7 +129,7 @@ function BundleBody(props: BundlePageProps) {
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <HolderHeading
           heading={{ title: props.name, org: '', kind: null }}
-          meta={<span>{BUNDLE_COPY.summary(items.length, off)}</span>}
+          meta={<span>{BUNDLE_COPY.summary(items.length, voided, removed)}</span>}
           actions={<PortalLink href="/" />}
         />
         <div className="bd-top">
@@ -117,7 +141,13 @@ function BundleBody(props: BundlePageProps) {
               <AddBlock {...area} buddy={(p) => <BuddyArt {...p} playOnLoad />} />
             </section>
           ) : addable.length === 0 ? (
-            <Notice state="voided" orgName={props.orgName} support={support} many />
+            <Notice
+              state={voided === 0 ? 'removed' : 'voided'}
+              orgName={props.orgName}
+              support={support}
+              many={voided === 0 || removed === 0}
+              mixed={voided > 0 && removed > 0}
+            />
           ) : null}
         </div>
         <ul className="bd-list" aria-label={BUNDLE_COPY.count(items.length)}>
@@ -134,10 +164,14 @@ function BundleBody(props: BundlePageProps) {
               />
               <p className="bd-name" id={`bd-n-${item.id}`}>
                 {item.title}
+                {item.detail ? <span className="bd-detail">{item.detail}</span> : null}
               </p>
               <div className="bd-way">
                 {item.state !== 'active' ? (
-                  <OffBadge state={item.state} />
+                  <>
+                    <OffBadge state={item.state} />
+                    <OffNote state={item.state} orgName={props.orgName} support={support} />
+                  </>
                 ) : (android || !item.downloadHref) && item.barcodeHref ? (
                   <a
                     className={OUTLINE_ACTION_CLASS}
