@@ -14,6 +14,7 @@ import { HolderTab } from './holder-tab.tsx';
 import { ImagesTab } from './images-tab.tsx';
 import { ActivityTab } from './info-tabs.tsx';
 import { MemberPhotoCard } from './member-photo-card.tsx';
+import { PrintCard } from './print-card.tsx';
 import { StampsCard } from './stamps-card.tsx';
 import { SyncTab } from './sync-tab.tsx';
 import { TagsCard } from './tags-card.tsx';
@@ -72,6 +73,7 @@ export function PassTabs({
       <TabsContent value="holder" className="flex flex-col gap-4">
         <HolderTab pass={pass} readOnly={readOnly} />
         <MemberPhotoCard pass={pass} readOnly={readOnly} />
+        <PrintCard pass={pass} readOnly={readOnly} />
         <TagsCard pass={pass} readOnly={readOnly} />
         <CheckInCard pass={pass} readOnly={readOnly} />
       </TabsContent>

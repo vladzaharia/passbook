@@ -31,7 +31,6 @@ import { Issues } from './issues.tsx';
 import { DesignerLayout } from './layout.tsx';
 import { type DesignDoc, findField, type Selection } from './model.ts';
 import { Outline } from './outline.tsx';
-import { DesignerPreview } from './preview.tsx';
 import {
   canRedo,
   canUndo,
@@ -43,6 +42,7 @@ import {
 import { useSaveFlow } from './save-flow.ts';
 import { SavedCallout } from './saved-callout.tsx';
 import { ScanMode } from './scan/scan-mode.tsx';
+import { DesignerStage } from './stage.tsx';
 import { useStampsPreview } from './stamp-preview.ts';
 import { useDesignerIssues } from './use-designer-issues.ts';
 import { useDraftPersistence } from './use-draft-persistence.ts';
@@ -281,7 +281,10 @@ export function Designer({
             readOnly={Boolean(readOnly)}
             structure={<Outline />}
             preview={
-              <DesignerPreview
+              <DesignerStage
+                manifest={state.doc.manifest}
+                templateId={create ? undefined : templateId}
+                orgId={selectedOrg}
                 passJson={readOnly ? readOnly.passJson : (check.lastBuilt ?? null)}
                 assets={state.doc.assets}
                 assetBase={base_}
