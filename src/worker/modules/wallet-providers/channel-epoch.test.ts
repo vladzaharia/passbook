@@ -28,7 +28,7 @@ async function reference(kind: 'class' | 'object', values: (string | number)[]) 
 
 describe('Google object ids by channel epoch', () => {
   it('keeps epoch 1 ids as originally derived and appends the epoch from 2', async () => {
-    const ids = (channelEpoch?: number) =>
+    const ids = (channelEpoch = 1) =>
       googleObjectIds('33880000000223344', secret, {
         ...scope,
         credentialGeneration: 3,

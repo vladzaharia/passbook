@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { setupSamsungChannelOff } from './channel-off-test-fixtures.ts';
 import { getWalletInstance, getWalletOperation } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
+import { drainWalletProviderSync } from './sync.ts';
 
 const setup = setupSamsungChannelOff;
 
@@ -109,5 +110,25 @@ describe('Samsung and Google channel_off retirement', () => {
     expect(await t.instance()).toMatchObject({ lifecycle: 'revoking' });
     await t.insertInstance(await t.successorInput());
     expect(await t.instanceCount()).toBe(1);
+  });
+
+  it('clears the dirty row of a settled channel_off copy instead of deferring it forever', async () => {
+    const t = await setup();
+    await t.marker(t.kit.clock.now());
+    await reconcileWalletInstance(t.kit.ctx, await t.instance());
+    await t.settleRevoke();
+    expect(await t.instance()).toMatchObject({ lifecycle: 'revoked' });
+    await run(
+      t.db,
+      `INSERT INTO wallet_provider_instance_dirty(instance_id, generation) VALUES (?, 1)
+      ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1, next_attempt_at = 0`,
+      [(await t.instance()).id],
+    );
+    await drainWalletProviderSync(t.kit.ctx);
+    expect(
+      await all(t.db, 'SELECT 1 FROM wallet_provider_instance_dirty WHERE instance_id = ?', [
+        (await t.instance()).id,
+      ]),
+    ).toEqual([]);
   });
 });

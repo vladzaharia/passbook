@@ -562,6 +562,7 @@ describe('wallet provider accounts', () => {
       passId: f.ids.id(),
       identityProjectionReleaseId: f.ids.id(),
       credentialGeneration: 1,
+      channelEpoch: 1,
       credentialKeysetCommitment: await ensureCredentialRefKeyset(env.DB, env),
     };
     const ctx = createServiceContext(env, { clock });

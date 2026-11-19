@@ -164,8 +164,8 @@ export async function readWalletProviderRetirementCredentials(
     (pinned.provider === 'google' &&
       (!Number.isSafeInteger(pinned.credentialGeneration) ||
         pinned.credentialGeneration < 1 ||
-        (pinned.channelEpoch !== undefined &&
-          (!Number.isSafeInteger(pinned.channelEpoch) || pinned.channelEpoch < 1)))) ||
+        !Number.isSafeInteger(pinned.channelEpoch) ||
+        pinned.channelEpoch < 1)) ||
     (pinned.provider === 'samsung' && !/^[0-9a-f]{64}$/.test(pinned.refHash))
   )
     throw new ValidationError();

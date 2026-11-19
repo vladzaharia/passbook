@@ -19,7 +19,7 @@ export interface GoogleCallbackBinding extends GoogleCallbackAccountScope {
   passId: string;
   releaseId: string;
   credentialGeneration: number;
-  channelEpoch?: number;
+  channelEpoch: number;
 }
 
 export interface GoogleCallbackBindingInput {
@@ -29,7 +29,7 @@ export interface GoogleCallbackBindingInput {
   releaseId: string;
   /** The immutable generation of the instance, not the pass's current generation. */
   credentialGeneration: number;
-  channelEpoch?: number;
+  channelEpoch: number;
   operationVersion: number;
 }
 
@@ -66,7 +66,7 @@ function googleBindingProof(scope: WalletRuntimeScope, input: GoogleCallbackBind
     scope.accountId,
     input.releaseId,
     input.credentialGeneration,
-    input.channelEpoch ?? 1,
+    input.channelEpoch,
     input.operationVersion,
     scope.accountRevision,
     scope.credentialKeysetCommitment,
@@ -213,7 +213,7 @@ function googleReceiptProof(binding: GoogleCallbackBinding, input: GoogleCallbac
     binding.passId,
     binding.releaseId,
     binding.credentialGeneration,
-    binding.channelEpoch ?? 1,
+    binding.channelEpoch,
     binding.orgId,
     binding.mode,
     binding.accountId,

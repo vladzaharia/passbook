@@ -25,7 +25,7 @@ export type WalletProviderRetirementProof = {
       identityProjectionReleaseId: string;
       credentialGeneration: number;
       /** Absent means 1; the SQL target fails closed for a successor. */
-      channelEpoch?: number;
+      channelEpoch: number;
     }
   | { provider: 'samsung'; refHash: string }
 );
@@ -139,7 +139,7 @@ export function findRetirementAccount(
           proof.passId,
           proof.identityProjectionReleaseId,
           proof.credentialGeneration,
-          proof.channelEpoch ?? 1,
+          proof.channelEpoch,
         ]
       : [proof.refHash];
   // The claim is necessarily a revoke. Omitting the unreachable upsert branch keeps

@@ -37,14 +37,14 @@ interface GoogleRuntimeClassInput {
 interface GoogleRuntimeObjectInput extends GoogleRuntimeClassInput {
   passId: string;
   credentialGeneration: number;
-  channelEpoch?: number;
+  channelEpoch: number;
 }
 
 interface GoogleRuntimeObjectIdentity {
   releaseId: string;
   passId: string;
   credentialGeneration: number;
-  channelEpoch?: number;
+  channelEpoch: number;
   assertCurrent?: () => Promise<void>;
 }
 
@@ -277,7 +277,7 @@ export async function inactivateGoogleRuntimeObject(
     releaseId,
     passId,
     credentialGeneration,
-    channelEpoch = 1,
+    channelEpoch,
     retirement: claim,
     assertCurrent,
     onProviderResponse,

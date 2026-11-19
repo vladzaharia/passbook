@@ -19,6 +19,10 @@ const SLOT_READS: Record<string, string> = {
   'repo-callbacks.ts': 'by reference hash and instance id',
   'repo-google-callback.ts': 'by instance id; the binding carries the instance epoch',
   'repo-status.ts': 'latest epoch of the generation (MAX(channel_epoch) subselect)',
+  'repo-instance-proof.ts':
+    'proof by instance alias: compares generations of one row against the pass, never selects a slot',
+  'repo-sync-retention.ts':
+    'retention by generation: deletes every settled row older than the pass generation',
   'repo-instance-slot-sql.ts':
     'the insert guard: older epochs must be settled channel-off predecessors',
   'repo-instance-retirement-staging.ts':
@@ -28,11 +32,13 @@ const SLOT_READS: Record<string, string> = {
 describe('wallet provider instance slot reads', () => {
   const dir = join(import.meta.dirname, '../src/worker/modules/wallet-providers');
   it('keeps the list of credential_generation joins closed', () => {
-    const pattern =
-      /(\bi|current_instance|actual|old|previous|prior|slot|pred)\.credential_generation\s*(=|!=|<|>|<=|>=)\s*(\?|p\.|pass\.|i\.|op\.)|(p|pass)\.credential_generation = i\.credential_generation/;
+    const pattern = /\b\w+\.credential_generation\s*(=|!=|<|>|<=|>=)/;
     const found = readdirSync(dir)
-      .filter((name) => /^repo-.*\.ts$/.test(name) && !/test|fixtures/.test(name))
-      .filter((name) => pattern.test(readFileSync(join(dir, name), 'utf8')))
+      .filter((name) => /\.ts$/.test(name) && !/test|fixtures/.test(name))
+      .filter((name) => {
+        const text = readFileSync(join(dir, name), 'utf8');
+        return text.includes('wallet_provider_instances') && pattern.test(text);
+      })
       .sort();
     expect(found).toEqual(Object.keys(SLOT_READS).sort());
   });

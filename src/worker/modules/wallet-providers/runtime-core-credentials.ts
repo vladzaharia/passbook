@@ -44,7 +44,7 @@ export type RetirementTarget =
       identityProjectionReleaseId: string;
       credentialGeneration: number;
       /** Absent means 1; the SQL target fails closed for a successor. */
-      channelEpoch?: number;
+      channelEpoch: number;
     }
   | { provider: 'samsung'; refHash: string };
 
