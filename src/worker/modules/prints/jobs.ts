@@ -3,7 +3,7 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type PrintSheet, renderPrintSheets } from '../../ssr/print-sheets.tsx';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { readBulkStatus, writeBulkStatus } from './bulk-status.ts';
+import { readStoredBulk, writeBulkStatus } from './bulk-status.ts';
 import { printPageModel } from './page.ts';
 import { fallbackPdf } from './pdf-fallback.ts';
 import { renderPdf } from './pdf-render.ts';
@@ -11,42 +11,67 @@ import { bulkKey, putPdf } from './pdf-store.ts';
 
 /**
  * Renders the combined PDF of a bulk Print: one browser launch for the whole selection. A busy
- * browser throws, and the queue retries with backoff; a pass whose print ended meanwhile is left out.
+ * browser throws, and the queue retries with backoff; a pass whose print ended meanwhile is left
+ * out and counted as skipped (a PDF made before such a void is removed by the drop hooks and sweep).
  */
 export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceContext) {
   const bucket = ctx.env.BUCKET;
-  const known = await readBulkStatus(bucket, job.orgId, job.jobId, ctx.clock.now());
-  if (known && known.state !== 'pending') return;
+  const stored = await readStoredBulk(bucket, job.orgId, job.jobId);
+  if (stored?.state !== 'pending') return;
   const sheets: PrintSheet[] = [];
+  let skipped = 0;
+  const skip = (passId: string, code: string) => {
+    skipped++;
+    ctx.log.warn('prints.bulk_pass_skipped', {
+      code: 'PRINT_BULK_PASS_SKIPPED',
+      reason: code,
+      passId,
+    });
+  };
   for (const passId of job.passIds) {
     const pass = await getPass(ctx.env.DB, passId, job.orgId);
-    if (!pass) continue;
+    if (!pass) {
+      skip(passId, 'PASS_NOT_FOUND');
+      continue;
+    }
     try {
       const model = await printPageModel(ctx, pass, 'staff');
       if (model.state === 'ready')
         sheets.push({ design: model.design, content: model.content, code: model.code });
+      else skip(passId, `PRINT_${model.state.toUpperCase()}`);
     } catch (error) {
       if (!(error instanceof AppError) || error.status >= 500) throw error;
+      skip(passId, error.code);
     }
   }
-  const at = ctx.clock.now();
+  const done = { ...stored, skipped };
   if (sheets.length === 0) {
-    await writeBulkStatus(bucket, job.orgId, job.jobId, { state: 'failed', count: 0, at });
+    await writeBulkStatus(bucket, job.orgId, job.jobId, {
+      ...done,
+      state: 'failed',
+      count: 0,
+      at: ctx.clock.now(),
+    });
     return;
   }
+  let lossy = false;
   const { bytes, engine } = await renderPdf(ctx, {
     html: renderPrintSheets(sheets),
     fallback: () =>
-      fallbackPdf(sheets, () =>
-        ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' }),
-      ),
+      fallbackPdf(sheets, () => {
+        lossy = true;
+        ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' });
+      }),
     whenBusy: 'retry',
   });
   await putPdf(bucket, bulkKey(job.orgId, job.jobId, 'pdf'), bytes, { engine });
   await writeBulkStatus(bucket, job.orgId, job.jobId, {
+    ...done,
     state: 'ready',
     count: sheets.length,
+    engine,
+    lossy,
     at: ctx.clock.now(),
   });
-  ctx.log.info('prints.bulk_done', { orgId: job.orgId, count: sheets.length, engine });
+  ctx.log.info('prints.bulk_done', { orgId: job.orgId, count: sheets.length, skipped, engine });
 }

@@ -47,7 +47,7 @@ async function whenReady(
     }
     if (status.state === 'ready') {
       toast.dismiss(preparing);
-      toast.action(PRINT_COPY.bulkReady(plural(status.count || count)), {
+      toast.action(PRINT_COPY.bulkReady(plural(status.count || count), status.lossy), {
         label: PRINT_COPY.bulkDownload,
         onClick: () =>
           void savePdf(orgId, jobId).catch((e: unknown) =>

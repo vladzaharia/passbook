@@ -4,6 +4,7 @@ import { PRINT_BULK_MAX } from '../../../shared/contracts/prints.ts';
 import { all } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { handlePrintsBulk } from './jobs.ts';
+import { dropPrintPdfs } from './pdf-drop.ts';
 import { bulkKey } from './pdf-store.ts';
 import { FORBIDDEN, pdfKit, pdfText } from './pdf-test-fixtures.ts';
 
@@ -45,13 +46,19 @@ describe('bulk print', () => {
 
     const status = () =>
       api('GET', `/passes/bulk-print/${started.jobId}?orgId=${kit.org.id}`).then((r) => r.json());
-    expect(await status()).toEqual({ state: 'pending', count: 2 });
+    expect(await status()).toEqual({ state: 'pending', count: 2, skipped: 0, lossy: false });
     expect(
       (await api('GET', `/passes/bulk-print/${started.jobId}/pdf?orgId=${kit.org.id}`)).status,
     ).toBe(404);
 
     await handlePrintsBulk(job as never, jobCtxOf(kit));
-    expect(await status()).toEqual({ state: 'ready', count: 2 });
+    expect(await status()).toEqual({
+      state: 'ready',
+      count: 2,
+      skipped: 0,
+      lossy: false,
+      engine: 'fallback',
+    });
     const pdf = await api('GET', `/passes/bulk-print/${started.jobId}/pdf?orgId=${kit.org.id}`);
     expect(pdf.headers.get('content-type')).toBe('application/pdf');
     expect(pdf.headers.get('cache-control')).toBe('private, no-store');
@@ -127,5 +134,82 @@ describe('bulk print', () => {
     expect(
       await kit.env.BUCKET.head(bulkKey(kit.org.id, jobs()[0]?.jobId ?? '', 'pdf')),
     ).not.toBeNull();
+  });
+});
+
+describe('bulk PDF access and deletion', () => {
+  async function ready() {
+    const k = await setup();
+    const pass = await k.printPass();
+    const started = (await (await k.start([pass.id])).json()) as Started;
+    await handlePrintsBulk(k.jobs()[0] as never, jobCtxOf(k.kit));
+    const path = `/passes/bulk-print/${started.jobId}/pdf?orgId=${k.kit.org.id}`;
+    return { ...k, pass, started, path };
+  }
+
+  it('serves only the requesting user, in the org and mode, for 24 hours', async () => {
+    const { kit, api, path, started } = await ready();
+    expect((await api('GET', path)).status).toBe(200);
+    const testMode = await api('GET', path, undefined, {
+      ...kit.auth.admin(),
+      'x-passbook-mode': 'test',
+    });
+    expect(testMode.status).toBe(404);
+    const key = bulkKey(kit.org.id, started.jobId, 'json');
+    const stored = (await (await kit.env.BUCKET.get(key))?.json()) as Record<string, unknown>;
+    await kit.env.BUCKET.put(key, JSON.stringify({ ...stored, userId: 'someone-else' }));
+    expect((await api('GET', path)).status).toBe(404);
+    await kit.env.BUCKET.put(
+      key,
+      JSON.stringify({ ...stored, at: jobCtxOf(kit).clock.now() - 25 * 3_600_000 }),
+    );
+    expect((await api('GET', path)).status).toBe(404);
+  });
+
+  it('is gone once a print of the pass is voided', async () => {
+    const { kit, api, pass, path, started } = await ready();
+    const [print] = await all<{ id: string }>(
+      kit.env.DB,
+      'SELECT id FROM pass_prints WHERE pass_id = ?',
+      [pass.id],
+    );
+    expect((await api('POST', `/passes/${pass.id}/prints/${print?.id}/void`)).status).toBe(200);
+    expect((await api('GET', path)).status).toBe(404);
+    expect(await kit.env.BUCKET.head(bulkKey(kit.org.id, started.jobId, 'pdf'))).toBeNull();
+  });
+
+  it('is gone once the pass is purged', async () => {
+    const { kit, api, pass, path } = await ready();
+    expect((await api('GET', path)).status).toBe(200);
+    await dropPrintPdfs(jobCtxOf(kit), { orgId: kit.org.id, id: pass.id });
+    expect((await api('GET', path)).status).toBe(404);
+  });
+});
+
+describe('bulk job outcomes', () => {
+  it('logs and counts a pass whose print ended before the render', async () => {
+    const { kit, api, printPass, start, jobs } = await setup();
+    const a = await printPass();
+    const b = await printPass('b@example.com');
+    const started = (await (await start([a.id, b.id])).json()) as Started;
+    const [print] = await all<{ id: string }>(
+      kit.env.DB,
+      'SELECT id FROM pass_prints WHERE pass_id = ?',
+      [b.id],
+    );
+    const voided = await api('POST', `/passes/${b.id}/prints/${print?.id}/void`);
+    expect(voided.status).toBe(200);
+    const logged: { code?: string }[] = [];
+    const sink = (_e: string, d?: { code?: string }) => void logged.push(d ?? {});
+    const base = jobCtxOf(kit);
+    await handlePrintsBulk(jobs()[0] as never, {
+      ...base,
+      log: { debug: sink, info: sink, warn: sink, error: sink } as never,
+    });
+    expect(logged.map((l) => l.code)).toContain('PRINT_BULK_PASS_SKIPPED');
+    const status = await (
+      await api('GET', `/passes/bulk-print/${started.jobId}?orgId=${kit.org.id}`)
+    ).json();
+    expect(status).toMatchObject({ state: 'ready', count: 1, skipped: 1 });
   });
 });

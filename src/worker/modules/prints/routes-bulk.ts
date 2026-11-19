@@ -5,9 +5,8 @@ import {
   BulkPrintStartedSchema,
   BulkPrintStatusSchema,
 } from '../../../shared/contracts/index.ts';
-import { AppError, NotFoundError } from '../../platform/errors.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
-import { recordAudit } from '../audit/service.ts';
 import {
   actorFor,
   assertOrg,
@@ -17,13 +16,8 @@ import {
   svc,
   tenantAuthorityOf,
 } from '../passes/http.ts';
-import type { Pass } from '../passes/repo-map.ts';
-import { getPass } from '../passes/repo-read-pass.ts';
-import { readBulkStatus, writeBulkStatus } from './bulk-status.ts';
+import { bulkPrintPdf, bulkPrintStatus, startBulkPrint } from './bulk-service.ts';
 import { PDF_HEADERS } from './pdf-service.ts';
-import { bulkKey } from './pdf-store.ts';
-import { adminWriter } from './repo-write.ts';
-import { ADMIN_PRINTS_PER_HOUR, mintPrint } from './service.ts';
 
 type Router = ReturnType<typeof createRouter>;
 
@@ -47,58 +41,22 @@ export function registerBulkPrintRoutes(passesRoutes: Router): void {
       const body = c.req.valid('json');
       assertOrg(c, body.orgId);
       const ctx = svc(c);
-      const authority = await tenantAuthorityOf(ctx, authOf(c), body.orgId, 'passes:operate');
+      const auth = authOf(c);
+      if (auth.kind !== 'session') throw new ForbiddenError();
+      const authority = await tenantAuthorityOf(ctx, auth, body.orgId, 'passes:operate');
       const scope = { ...passScopeOf(c), orgId: authority.orgId };
-      const ids = [...new Set(body.ids)];
-      const rows = await Promise.all(ids.map((id) => getPass(ctx.env.DB, id, scope)));
-      const passes = rows.filter((p): p is Pass => p !== null);
-      if (passes.length !== ids.length)
-        throw new NotFoundError('Some passes were not found.', 'PASS_NOT_FOUND');
-      const caller = {
-        writer: adminWriter(authority, actorFor(c)),
-        limit: ADMIN_PRINTS_PER_HOUR,
-      };
-      const printed: string[] = [];
-      const skipped: { id: string; code: string }[] = [];
-      for (const pass of passes) {
-        if (pass.mode !== scope.mode) {
-          skipped.push({ id: pass.id, code: 'MODE_MISMATCH' });
-          continue;
-        }
-        try {
-          await mintPrint(ctx, caller, pass, false);
-          printed.push(pass.id);
-        } catch (error) {
-          if (!(error instanceof AppError) || error.status >= 500) throw error;
-          skipped.push({ id: pass.id, code: error.code });
-        }
-      }
-      if (printed.length === 0) return c.json({ jobId: '', count: 0, skipped }, 202);
-      const jobId = ctx.ids.token(16);
-      await writeBulkStatus(ctx.env.BUCKET, authority.orgId, jobId, {
-        state: 'pending',
-        count: printed.length,
-        at: ctx.clock.now(),
-      });
-      await ctx.env.JOBS.send({
-        kind: 'prints.bulk',
-        orgId: authority.orgId,
-        jobId,
-        passIds: printed,
-      });
-      const actor = actorFor(c);
-      await recordAudit(ctx, {
-        orgId: authority.orgId,
-        actorType: actor.type,
-        actorId: actor.id,
-        action: 'pass.print_bulk',
-        targetType: 'org',
-        targetId: authority.orgId,
-        detail: { count: printed.length, skipped: skipped.length },
-      });
-      return c.json({ jobId, count: printed.length, skipped }, 202);
+      const caller = { authority, userId: auth.userId, mode: scope.mode, actor: actorFor(c) };
+      return c.json(await startBulkPrint(ctx, caller, scope, body.ids), 202);
     },
   );
+
+  const whoOf = async (c: Parameters<typeof svc>[0], orgId: string) => {
+    assertOrg(c, orgId);
+    const auth = authOf(c);
+    if (auth.kind !== 'session') throw new ForbiddenError();
+    await tenantAuthorityOf(svc(c), auth, orgId, 'passes:operate');
+    return { orgId, userId: auth.userId, mode: passScopeOf(c).mode };
+  };
 
   register(
     passesRoutes,
@@ -112,13 +70,9 @@ export function registerBulkPrintRoutes(passesRoutes: Router): void {
       response: BulkPrintStatusSchema,
     },
     async (c) => {
-      const ctx = svc(c);
       const { jobId } = c.req.valid('param');
-      const { orgId } = c.req.valid('query');
-      assertOrg(c, orgId);
-      await tenantAuthorityOf(ctx, authOf(c), orgId, 'passes:operate');
-      const status = await readBulkStatus(ctx.env.BUCKET, orgId, jobId, ctx.clock.now());
-      if (!status) throw new NotFoundError('Print job not found.', 'PRINT_JOB_NOT_FOUND');
+      const who = await whoOf(c, c.req.valid('query').orgId);
+      const status = await bulkPrintStatus(svc(c), who, jobId);
       return c.json(status, 200, { 'cache-control': 'private, no-store' });
     },
   );
@@ -134,15 +88,9 @@ export function registerBulkPrintRoutes(passesRoutes: Router): void {
       query: BulkPrintQuerySchema,
     },
     async (c) => {
-      const ctx = svc(c);
       const { jobId } = c.req.valid('param');
-      const { orgId } = c.req.valid('query');
-      assertOrg(c, orgId);
-      await tenantAuthorityOf(ctx, authOf(c), orgId, 'passes:operate');
-      const status = await readBulkStatus(ctx.env.BUCKET, orgId, jobId, ctx.clock.now());
-      const object =
-        status?.state === 'ready' ? await ctx.env.BUCKET.get(bulkKey(orgId, jobId, 'pdf')) : null;
-      if (!object) throw new NotFoundError('Print job not found.', 'PRINT_JOB_NOT_FOUND');
+      const who = await whoOf(c, c.req.valid('query').orgId);
+      const object = await bulkPrintPdf(svc(c), who, jobId);
       return new Response(object.body, {
         headers: { ...PDF_HEADERS, 'content-disposition': 'attachment; filename="tickets.pdf"' },
       });

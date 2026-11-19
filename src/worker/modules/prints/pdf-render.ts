@@ -6,20 +6,53 @@ import type { PdfEngine } from './pdf-store.ts';
 const MINUTE = 60_000;
 /** New browser launches per minute across the platform: well under Browser Run's paid rate (3 a second). */
 export const BROWSER_LAUNCHES_PER_MINUTE = 20;
-/** Browser Run gets this long to launch and print before the fallback draws the ticket. */
-const BROWSER_TIMEOUT_MS = 25_000;
+/** The whole browser job (launch, load, print, close) gets this long before the fallback draws the ticket. */
+const BROWSER_TOTAL_MS = 40_000;
+const BROWSER_LOAD_MS = 20_000;
+/** A kept-alive session that outlives a crashed Worker is billed until this passes. */
+const KEEP_ALIVE_MS = 10_000;
 
-/** Prints the document with Browser Run (@cloudflare/puppeteer): A4, Letter or half per `@page`, backgrounds on. */
-export async function browserPdf(binding: Env['BROWSER'], html: string): Promise<Uint8Array> {
+/** A Browser Run launch refused for rate or concurrency; a bulk job retries these instead of falling back. */
+const LIMIT = /\b429\b|rate.?limit|too many|limit exceeded/i;
+
+/**
+ * Prints the document with Browser Run (@cloudflare/puppeteer): A4, Letter or half per `@page`,
+ * backgrounds on. The page is a sealed document: no script, no network. `onCloseError` hears a failed
+ * close, which never discards a PDF already made.
+ */
+export async function browserPdf(
+  binding: Env['BROWSER'],
+  html: string,
+  onCloseError: (error: unknown) => void = () => {},
+  totalMs = BROWSER_TOTAL_MS,
+): Promise<Uint8Array> {
   const { default: puppeteer } = await import('@cloudflare/puppeteer');
-  const browser = await puppeteer.launch(binding as never, { keep_alive: 60_000 });
-  try {
+  let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const work = (async () => {
+    browser = await puppeteer.launch(binding as never, { keep_alive: KEEP_ALIVE_MS });
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'load', timeout: BROWSER_TIMEOUT_MS });
+    await page.setJavaScriptEnabled(false);
+    await page.setRequestInterception(true);
+    page.on('request', (request) => void request.abort());
+    await page.setContent(html, { waitUntil: 'load', timeout: BROWSER_LOAD_MS });
     await page.emulateMediaType('print');
     return new Uint8Array(await page.pdf({ printBackground: true, preferCSSPageSize: true }));
+  })();
+  const limit = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Browser Run timed out')), totalMs);
+  });
+  // A race loser must not become an unhandled rejection.
+  work.catch(() => {});
+  try {
+    return await Promise.race([work, limit]);
   } finally {
-    await browser.close();
+    clearTimeout(timer);
+    try {
+      await browser?.close();
+    } catch (error) {
+      onCloseError(error);
+    }
   }
 }
 
@@ -54,8 +87,16 @@ export async function renderPdf(
     if (busy) ctx.log.warn('prints.pdf_fallback', { code: 'PRINT_PDF_RATE_LIMITED' });
     else
       try {
-        return { bytes: await browser(binding, job.html), engine: 'browser' };
+        const bytes = await browser(binding, job.html, (error) =>
+          ctx.log.warn('prints.pdf_close_failed', { code: 'PRINT_PDF_CLOSE_FAILED', error }),
+        );
+        return { bytes, engine: 'browser' };
       } catch (error) {
+        if (job.whenBusy === 'retry' && LIMIT.test(String((error as Error)?.message)))
+          throw new UnavailableError(
+            'PDF rendering is busy. Try again shortly.',
+            'PRINT_PDF_THROTTLED',
+          );
         ctx.log.error('prints.pdf_fallback', { code: 'PRINT_PDF_BROWSER_FAILED', error });
       }
   } else ctx.log.info('prints.pdf_fallback', { code: 'PRINT_PDF_NO_BROWSER' });

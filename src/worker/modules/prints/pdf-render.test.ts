@@ -63,6 +63,23 @@ describe('renderPdf', () => {
     expect(logs.map((l) => l.code)).toContain('PRINT_PDF_NO_BROWSER');
   });
 
+  it('retries a bulk job when Browser Run refuses the launch for a limit, and falls back on other errors', async () => {
+    const { ctx, calls, job } = await setup(true);
+    const limited = async () => {
+      throw new Error('Unable to create new browser: code: 429: Too many requests');
+    };
+    await expect(renderPdf(ctx, job('retry'), limited)).rejects.toMatchObject({
+      code: 'PRINT_PDF_THROTTLED',
+    });
+    expect(calls.fallback).toBe(0);
+    const broken = async () => {
+      throw new Error('boom');
+    };
+    expect((await renderPdf(ctx, job('retry'), broken)).engine).toBe('fallback');
+    // A single ticket never waits: a limit falls back.
+    expect((await renderPdf(ctx, job('fallback'), limited)).engine).toBe('fallback');
+  });
+
   it('throttles launches per minute: a single ticket falls back, a bulk job asks to retry', async () => {
     const { ctx, logs, calls, job, browser } = await setup(true);
     // Earlier tests of the file share the minute's counter, so run until the limit bites.

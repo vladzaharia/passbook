@@ -50,3 +50,26 @@ export async function deletePassPdfs(bucket: R2Bucket, orgId: string, passId: st
     cursor = page.truncated ? page.cursor : undefined;
   } while (cursor);
 }
+
+const MARKER = 'bulk-';
+/** A one-line object under the pass's prefix naming a bulk job that holds the pass, so a drop can find it. */
+export const bulkMarkerKey = (orgId: string, passId: string, jobId: string): string =>
+  `prints/${orgId}/${passId}/${MARKER}${jobId}`;
+
+/**
+ * Deletes every bulk PDF that holds this pass, found by its markers. The status stays (a job still
+ * pending renders without the pass and counts it skipped; a ready one answers 404 for the file).
+ */
+export async function deleteBulkOfPass(bucket: R2Bucket, orgId: string, passId: string) {
+  const prefix = `prints/${orgId}/${passId}/${MARKER}`;
+  let cursor: string | undefined;
+  do {
+    const page = await bucket.list({ prefix, ...(cursor ? { cursor } : {}) });
+    const keys = page.objects.flatMap((o) => {
+      const jobId = o.key.slice(prefix.length);
+      return [o.key, bulkKey(orgId, jobId, 'pdf')];
+    });
+    if (keys.length > 0) await bucket.delete(keys);
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+}

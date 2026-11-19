@@ -1,22 +1,20 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { BULK_TTL_MS } from './bulk-status.ts';
 import { activePrintIds } from './repo.ts';
 
-const DAY = 86_400_000;
 const PAGES = 20;
 const IN_LIMIT = 90;
-/** A bulk PDF and its status stay this long for the download. */
-const BULK_KEEP_MS = 7 * DAY;
 /** Where the next run starts: outside `prints/`, so the sweep never lists it. */
 const CURSOR_KEY = 'sweep/prints-cursor';
 const KEY = /^prints\/[^/]+\/([^/]+)\/([^/]+)\.pdf$/;
 
 /**
  * Daily: deletes PDFs whose print is no longer active (a void, holder change, New code or a purge
- * the inline hooks missed) and bulk PDFs after a week. Reads at most PAGES x 1,000 keys a run and keeps its list cursor in R2, so the next run continues.
+ * the inline hooks missed) and bulk PDFs after their 24 h. Reads at most PAGES x 1,000 keys a run and keeps its list cursor in R2, so the next run continues.
  */
 export async function sweepPrintPdfs(ctx: ServiceContext, pages = PAGES): Promise<void> {
   const bucket = ctx.env.BUCKET;
-  const before = ctx.clock.now() - BULK_KEEP_MS;
+  const before = ctx.clock.now() - BULK_TTL_MS;
   const stale: string[] = [];
   const perPrint: { key: string; printId: string }[] = [];
   let cursor = (await (await bucket.get(CURSOR_KEY))?.text()) || undefined;
