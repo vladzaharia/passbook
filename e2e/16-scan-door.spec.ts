@@ -132,8 +132,19 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
       for (const width of [320, 390, 820, 1180]) {
         await page.setViewportSize({ width, height: width === 1180 ? 820 : 844 });
         const box = await page.getByTestId('scan-result').boundingBox();
-        expect(box?.y).toBeGreaterThanOrEqual(width >= 1024 ? 108 : 117);
-        expect(Math.round((box?.y ?? 0) + (box?.height ?? 0))).toBe(width >= 1024 ? 530 : 560);
+        const seat = await page.locator('.scan-buddy-seat').boundingBox();
+        const height = width === 1180 ? 820 : 844;
+        // Card zone (ui/scan.css): top token, and a bottom that clears the buddy's seat.
+        const top = width < 640 ? 84 : width >= 1024 ? 108 : 117;
+        const limit = height - (width >= 1024 ? 312 : 314);
+        const bottom = Math.round((box?.y ?? 0) + (box?.height ?? 0));
+        expect(box?.y).toBeGreaterThanOrEqual(top);
+        expect(bottom).toBeLessThanOrEqual(limit);
+        // The card rests on the zone's bottom, except on a portrait tablet, where it centres.
+        if (width >= 640 && width < 1024) {
+          expect(Math.abs((box?.y ?? 0) - top - (limit - bottom))).toBeLessThanOrEqual(1);
+        } else expect(bottom).toBe(limit);
+        expect(seat?.y).toBeGreaterThanOrEqual(bottom);
         const accessibility = await new AxeBuilder({ page })
           .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
           .analyze();

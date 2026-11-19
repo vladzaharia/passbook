@@ -4,7 +4,7 @@ import type { ScanBranding } from '../../shared/contracts/scan-session.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
 import { ScanAppView } from './app.tsx';
 import { initialState } from './machine/initial-state.ts';
-import { viewOf } from './machine/present.ts';
+import { moodOf, viewOf } from './machine/present.ts';
 import type { ScanStore } from './machine/store.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { ScanStoreContext } from './machine/use-scan-machine.ts';
@@ -71,7 +71,7 @@ export function ScanPreviewScreen({
         camera: { hasTorch: () => false, toggleTorch: async () => false },
       }) as unknown as ScanRuntime,
   );
-  const mood = outcome.kind === 'ok' ? 'happy' : outcome.kind === 'heads_up' ? 'curious' : 'sad';
+  const mood = moodOf(outcome.kind);
   return (
     <ScanStoreContext.Provider value={store}>
       <ScanAppView
@@ -86,7 +86,9 @@ export function ScanPreviewScreen({
         }}
         camera={<div className="scan-visual-camera" />}
         sidebar={sidebar}
-        buddy={<Buddy scene="scan" size="xl-scan" mood={mood} immediate />}
+        buddy={
+          <Buddy scene="scan" size="xl-scan" mood={mood === 'neutral' ? 'flat' : mood} immediate />
+        }
         strip={STRIP}
         dockRow={
           <DoorDock
