@@ -64,7 +64,7 @@ export function PresentationCode({
         <svg
           viewBox={drawing.viewBox}
           role="img"
-          aria-label={`${name} barcode`}
+          aria-label={`${name} presentation barcode`}
           preserveAspectRatio="xMidYMid meet"
           shapeRendering="crispEdges"
         >

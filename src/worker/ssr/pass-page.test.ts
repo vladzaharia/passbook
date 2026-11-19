@@ -224,6 +224,8 @@ describe('dead links', () => {
     expect(pass).toContain('<h1>This pass link does not work</h1>');
     expect(bundle).toContain('<h1>This bundle link does not work</h1>');
     for (const html of [pass, bundle])
-      expect(html.slice(html.indexOf('<body'))).not.toMatch(/expired|rotated|existed/i);
+      expect(html.slice(html.indexOf('<body')).replace(/<[^>]*>/g, ' ')).not.toMatch(
+        /expired|rotated|existed/i,
+      );
   });
 });

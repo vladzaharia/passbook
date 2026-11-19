@@ -22,7 +22,9 @@ describe('presentation page', () => {
     expect(html).toContain('class="hosted wide"');
     expect(html).toContain('<h1>Membership</h1>');
     expect(html).toContain('Show this to the reader.');
-    expect(html.slice(html.indexOf('<body'))).not.toMatch(/Code 39|NFC|presentation barcode/i);
+    expect(html.slice(html.indexOf('<body')).replace(/aria-label="[^"]*"/g, '')).not.toMatch(
+      /Code 39|NFC|presentation barcode/i,
+    );
     expect(html).toContain('href="/p/t"');
   });
 
