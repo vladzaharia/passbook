@@ -502,6 +502,10 @@ endpoints. Set the platform setting `events.feed` to `"off"` to skip it without 
 while it is off are never journaled, so webhook endpoints miss them and `GET /events` pollers see a silent
 gap; turning it back on does not backfill.
 
+### Printed ticket PDFs
+
+PDFs render with Browser Run (the `BROWSER` binding in `wrangler.jsonc`; needs the Workers Paid plan). Without it, or when it fails or is busy (20 launches a minute), the Worker draws a plainer pdf-lib copy and logs `PRINT_PDF_NO_BROWSER`, `PRINT_PDF_BROWSER_FAILED` or `PRINT_PDF_RATE_LIMITED`. PDFs are cached in R2 under `prints/{orgId}/{passId}/{printId}.pdf`, with bulk files under `prints/{orgId}/bulk/`. The daily `prints.pdf_sweep` deletes PDFs of ended prints and bulk files after 7 days.
+
 ## Runtime decisions
 
 - **workerd versions**: `npm run test:worker` runs on the pool's miniflare (workerd 1.20260815), dev and prod on the root wrangler (1.20261012). The pool pins its own copy until a release catches up. The Dependabot `cloudflare` group tracks it; when one ships, align versions and drop the `overrides` entries in `package.json`. Stay on vitest 4 until the pool supports 5.
