@@ -1,6 +1,6 @@
 import type { BroadcastDto } from '@/shared/contracts/broadcasts.ts';
-import { entityLabel } from '../../lib/entity-label.ts';
 import { ENTITY } from '../../lib/entities.ts';
+import { entityLabel } from '../../lib/entity-label.ts';
 import {
   Badge,
   Card,

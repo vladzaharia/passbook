@@ -1,8 +1,8 @@
-import { entityLabel } from '../../../lib/entity-label.ts';
 import { RotateCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { WebhookDeliverySchema } from '@/shared/contracts/webhooks.ts';
+import { entityLabel } from '../../../lib/entity-label.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import type { DataColumnDef } from '../../../ui/data-table-meta.ts';
 import {

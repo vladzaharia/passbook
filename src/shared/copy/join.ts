@@ -44,8 +44,8 @@ export const JOIN_COPY = {
     scan: 'Scan with your camera.',
     print: 'Print',
     crumb: 'Print sign',
-    none: 'No join link yet. Turn it on from the template.',
-    back: 'Back to template',
+    none: 'No join link yet.',
+    back: 'Turn on join link',
   },
   page: {
     title: 'Get your {org} card',

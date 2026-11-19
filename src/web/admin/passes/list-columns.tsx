@@ -3,7 +3,7 @@ import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { formatDay } from '../../lib/format.ts';
 import type { Swatch } from '../../lib/swatches.ts';
-import { Checkbox, RowLink, StatusIcon } from '../../ui/index.ts';
+import { Checkbox, RowLink, StatusIcon, StatusPill } from '../../ui/index.ts';
 import { ModePill } from '../../ui/layout/mode-pill.tsx';
 import { PassRowMenu } from './row-menu.tsx';
 
@@ -94,6 +94,7 @@ function TitleCell({ pass: p }: { pass: PassSummaryDto }) {
         {nameOf(p)}
       </RowLink>
       <ModePill mode={p.mode} compact />
+      {p.status === 'voided' ? <StatusPill status="voided" /> : null}
       {p.removedAt !== null ? <StatusIcon status="removed" /> : null}
       {o.showSubtitles && p.subtitle ? (
         <span className="min-w-12 truncate text-sm text-fg-muted">{p.subtitle}</span>
