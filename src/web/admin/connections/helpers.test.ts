@@ -33,6 +33,12 @@ describe('health text', () => {
     ).toBe('Synced 4:03 AM');
   });
 
+  it('leaves the synced line to the Last success column when asked', () => {
+    const healthy = c({ consecutiveFailures: 0, lastSuccessAt: NOW, nextRunAt: null });
+    expect(healthLine(healthy, NOW)).toBe('Synced 4:03 AM');
+    expect(healthLine(healthy, NOW, { omitSynced: true })).toBeNull();
+  });
+
   it('flags a run that is more than a minute late', () => {
     expect(overdue(c({ nextRunAt: NOW - 120_000 }), NOW)).toBe(true);
     expect(overdue(c({ nextRunAt: NOW + 1 }), NOW)).toBe(false);

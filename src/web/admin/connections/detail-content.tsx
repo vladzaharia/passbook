@@ -231,7 +231,7 @@ export function ConnectionDetail({
             <TabsTrigger value="health">Health</TabsTrigger>
             <TabsTrigger value="mapping">Mapping</TabsTrigger>
             <TabsTrigger value="config">Configuration</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="settings">Lifecycle</TabsTrigger>
             {showWebhook ? <TabsTrigger value="webhook">Webhook</TabsTrigger> : null}
           </TabsList>
           <TabsContent value="health">

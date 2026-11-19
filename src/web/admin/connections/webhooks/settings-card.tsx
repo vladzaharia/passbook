@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { WebhookEndpointDto } from '@/shared/contracts/webhooks.ts';
 import { isApiError } from '../../../lib/errors.ts';
 import {
+  Button,
   Card,
   CardBody,
   CardHeader,
@@ -31,6 +32,10 @@ export function SettingsCard({
   const guard = useUnsavedChangesGuard(dirty);
   const found = checkForm(form);
   const check = useFormErrors(found);
+  // Open beside the main column on wide screens; folded on a phone so health and deliveries lead.
+  const [shown, setShown] = useState(() => !window.matchMedia?.('(max-width: 1279px)').matches);
+  const open = shown || dirty;
+  const bodyId = useId();
 
   async function save() {
     try {
@@ -51,8 +56,22 @@ export function SettingsCard({
 
   return (
     <Card>
-      <CardHeader title="Settings" />
-      <CardBody>
+      <CardHeader
+        title="Settings"
+        actions={
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-expanded={open}
+            aria-controls={bodyId}
+            disabled={dirty}
+            onClick={() => setShown(!open)}
+          >
+            {open ? 'Hide' : 'Show'}
+          </Button>
+        }
+      />
+      <CardBody id={bodyId} hidden={!open}>
         <Form
           id="webhook-settings"
           {...check.form}

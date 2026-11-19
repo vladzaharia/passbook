@@ -13,6 +13,7 @@ import {
   type Theme,
   type ViewportName,
 } from './routes.ts';
+import { settledShot } from './settle.ts';
 import { GALLERY_LOGO, touchOptions } from './touch.ts';
 
 export type Shot = {
@@ -150,7 +151,7 @@ async function shoot(
         await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
       }
       if (status !== null && status >= 400) note = `HTTP ${status}`;
-      await page.screenshot({ path: resolve(o.out, file), fullPage: true });
+      await settledShot(page, resolve(o.out, file));
       if (o.text) {
         // biome-ignore lint/performance/useDomNodeTextContent: visible text only
         const visible = () => page.evaluate(() => document.body.innerText);

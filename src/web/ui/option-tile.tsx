@@ -81,7 +81,7 @@ export function OptionTile({
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate text-sm font-medium text-fg-strong">{label}</span>
         {description ? (
-          <span className="line-clamp-2 text-xs text-fg-muted">{description}</span>
+          <span className="line-clamp-3 text-xs text-fg-muted">{description}</span>
         ) : null}
       </span>
     </label>

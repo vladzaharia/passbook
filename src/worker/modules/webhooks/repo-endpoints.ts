@@ -25,6 +25,9 @@ export interface EndpointRow {
   lastFailureAt: number | null;
   /** HTTP status of the newest attempted delivery; null for none or no response. */
   lastStatus: number | null;
+  /** When the current signing secret was made, and until when a rotated one still signs. */
+  secretCreatedAt: number | null;
+  previousSecretExpiresAt: number | null;
   createdBy: string | null;
   createdAt: number;
   updatedAt: number;
@@ -46,6 +49,8 @@ interface Raw {
   last_success_at: number | null;
   last_failure_at: number | null;
   last_status?: number | null;
+  secret_created_at?: number | null;
+  previous_secret_expires_at?: number | null;
   created_by: string | null;
   created_at: number;
   updated_at: number;
@@ -58,7 +63,11 @@ const COLUMNS = `id, org_id, mode, url, description, event_types, template_ids, 
 /** Newest attempted delivery by the primary key (endpoint_id, event_seq): no scan of the backlog. */
 const WITH_STATUS = `${COLUMNS}, (SELECT d.last_status FROM webhook_deliveries d
   WHERE d.endpoint_id = webhook_endpoints.id AND d.last_attempt_at IS NOT NULL
-  ORDER BY d.event_seq DESC LIMIT 1) AS last_status`;
+  ORDER BY d.event_seq DESC LIMIT 1) AS last_status,
+  (SELECT s.created_at FROM webhook_endpoint_secrets s
+    WHERE s.endpoint_id = webhook_endpoints.id AND s.expires_at IS NULL) AS secret_created_at,
+  (SELECT MAX(s.expires_at) FROM webhook_endpoint_secrets s
+    WHERE s.endpoint_id = webhook_endpoints.id) AS previous_secret_expires_at`;
 
 function endpointOf(r: Raw): EndpointRow {
   return {
@@ -77,6 +86,8 @@ function endpointOf(r: Raw): EndpointRow {
     lastSuccessAt: r.last_success_at,
     lastFailureAt: r.last_failure_at,
     lastStatus: r.last_status ?? null,
+    secretCreatedAt: r.secret_created_at ?? null,
+    previousSecretExpiresAt: r.previous_secret_expires_at ?? null,
     createdBy: r.created_by,
     createdAt: r.created_at,
     updatedAt: r.updated_at,

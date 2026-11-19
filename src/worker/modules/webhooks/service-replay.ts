@@ -204,6 +204,8 @@ export async function replayRange(
       'REPLAY_TOO_LARGE',
     );
 
+  if (input.dryRun) return { queued: existing + seqs.length };
+
   // One a minute per org and mode, counted from the committed audit row of the first chunk: a first
   // chunk that fails writes none, so it does not spend the minute.
   if (
