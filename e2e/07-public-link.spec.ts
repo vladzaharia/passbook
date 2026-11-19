@@ -45,7 +45,7 @@ test('public link works without sign-in and dies when rotated', async ({ browser
   expect(stale.status()).toBe(404);
   expect((await anon.request.get(href as string)).status()).toBe(404);
   await page.goto(publicPath);
-  await expect(page.getByRole('heading', { name: 'Link expired' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'This pass link does not work' })).toBeVisible();
 
   // The new link serves the pass.
   const fresh = await admin.get(`/api/v1/passes/${pass.id}`);

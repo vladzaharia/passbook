@@ -130,7 +130,12 @@ export function EmailList({
             rowId={item.email}
             isNew={fresh.has(item.email)}
             leading={<Mail aria-hidden />}
-            title={item.email}
+            title={
+              <span className="whitespace-normal break-words">
+                {item.email.split('@')[0]}@<wbr />
+                {item.email.split('@').slice(1).join('@')}
+              </span>
+            }
             pills={
               <>
                 {item.primary ? <StatusPill status="primary" /> : null}

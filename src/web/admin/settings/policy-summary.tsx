@@ -24,11 +24,7 @@ export function PolicySummary({
   };
   const trust = value('oidc.trustEmail');
   const proof =
-    trust === true
-      ? 'Verified Polaris ID email claims trusted'
-      : trust === false
-        ? 'Additional email proof required for matching accounts'
-        : 'Unavailable';
+    trust === true ? 'Trust Polaris ID emails' : trust === false ? 'Proof required' : 'Unavailable';
   const rows = [
     ['Email proof', proof],
     ['Refresh cooldown', number('refresh.userCooldownSeconds', 'seconds per pass')],

@@ -69,7 +69,7 @@ export function UserDetailPage({ userId }: { userId: string }) {
       <PageHeader
         title={name}
         breadcrumbs={crumbs}
-        description={user.primaryEmail ?? undefined}
+        description={user.name ? (user.primaryEmail ?? undefined) : undefined}
         avatar={<EntityAvatar kind="user" id={user.id} name={name} size={40} />}
         meta={
           <>

@@ -25,10 +25,13 @@ export function ActionButton({
   entry,
   onOpen,
   className,
+  wrap,
 }: {
   entry: AuditEntry;
   onOpen: () => void;
   className?: string;
+  /** Let a long label wrap instead of truncating (table cells). */
+  wrap?: boolean;
 }) {
   const a = actionOf(entry.action);
   return (
@@ -45,7 +48,7 @@ export function ActionButton({
       )}
     >
       <a.icon aria-hidden className={cn('size-4 shrink-0', TONE_TEXT[a.tone])} />
-      <span className="truncate">{a.label}</span>
+      <span className={wrap ? undefined : 'truncate'}>{a.label}</span>
     </button>
   );
 }
@@ -80,12 +83,9 @@ export function AuditRows({
             onClick={() => onOpen(r.id)}
             className="flex min-w-0 cursor-pointer flex-col gap-1 px-4 py-3 active:bg-state-hover-tint"
           >
-            <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <div className="flex min-w-0 flex-col gap-0.5">
               <ActionButton entry={r} onOpen={() => onOpen(r.id)} />
-              <time
-                dateTime={new Date(r.at).toISOString()}
-                className="shrink-0 text-xs whitespace-nowrap text-fg-muted"
-              >
+              <time dateTime={new Date(r.at).toISOString()} className="pl-6 text-xs text-fg-muted">
                 {formatDateTime(r.at)}
               </time>
             </div>

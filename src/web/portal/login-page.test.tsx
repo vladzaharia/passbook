@@ -22,14 +22,14 @@ afterEach(() => {
 describe('login page', () => {
   it('links Polaris ID with the next path', async () => {
     const { container } = await renderApp('/login?next=%2Fpasses%2Fp1', { session: 'anon' });
-    const link = await screen.findByRole('link', { name: 'Sign in with Polaris ID' });
+    const link = await screen.findByRole('link', { name: 'Sign in with your account' });
     expect(link).toHaveAttribute('href', '/auth/oidc/start?next=%2Fpasses%2Fp1');
     expect((await axe(container)).violations).toEqual([]);
   });
 
   it('drops an unsafe next, leaving the landing to the server', async () => {
     await renderApp('/login?next=https%3A%2F%2Fevil.test', { session: 'anon' });
-    const link = await screen.findByRole('link', { name: 'Sign in with Polaris ID' });
+    const link = await screen.findByRole('link', { name: 'Sign in with your account' });
     expect(link).toHaveAttribute('href', '/auth/oidc/start');
   });
 
@@ -43,7 +43,7 @@ describe('login page', () => {
     });
     expect(await screen.findByLabelText('Email')).toBeInTheDocument();
     expect(screen.queryByText(/secure sign-in link/)).toBeNull();
-    expect(screen.queryByRole('link', { name: 'Sign in with Polaris ID' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Sign in with your account' })).toBeNull();
   });
 
   it('says so when no method is enabled', async () => {
@@ -65,7 +65,7 @@ describe('login page', () => {
     expect(screen.getByText('Your session ended. Sign in again.')).toBeVisible();
     expect(screen.queryByRole('alert')).toBeNull();
     expect(container.querySelector('.wl-login-scene')).not.toHaveAttribute('data-sad');
-    expect(screen.getByRole('link', { name: 'Sign in with Polaris ID' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Sign in with your account' })).toHaveAttribute(
       'href',
       '/auth/oidc/start?next=%2Faccount',
     );
@@ -138,10 +138,8 @@ describe('login page', () => {
       el.className.includes('bg-accent'),
     );
     expect(primaries.map((el) => el.textContent)).toEqual(['Email me a sign-in link']);
-    expect(screen.getByRole('link', { name: 'Sign in with Polaris ID' })).toHaveClass('border');
-    expect(
-      within(front).getByText('Signing in shows the passes sent to your email.'),
-    ).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Sign in with your account' })).toHaveClass('border');
+    expect(within(front).getByText('Your passes are tied to your email.')).toBeVisible();
   });
 
   it('draws the hosted shell: wordmark, the wallet scene, no badge and no theme toggle', async () => {

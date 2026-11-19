@@ -1,8 +1,9 @@
 import { Copy, Plus } from 'lucide-react';
 import { useState } from 'react';
 import type { AccessDay, WeeklyHours } from '@/passkit/types.ts';
-import { cn } from '../../../../lib/cn.ts';
-import { Button, CheckboxField } from '../../../../ui/index.ts';
+import { cn } from '../../lib/cn.ts';
+import { Button } from '../button.tsx';
+import { CheckboxField } from '../checkbox.tsx';
 import {
   copyDay,
   copyTargets,
@@ -17,6 +18,7 @@ import {
   weekProblems,
 } from './hours.ts';
 import { SpanEditor } from './span-editor.tsx';
+import './week-grid.css';
 
 export interface WeekGridProps {
   /** Names the grid for assistive tech: "Off-peak hours". */
@@ -44,7 +46,7 @@ export function WeekGrid({ label, hours, onChange, errors, within, mergeKey }: W
   const replace = (day: AccessDay, spans: readonly string[], merge?: string) =>
     onChange(setDay(hours, day, spans), merge);
   return (
-    <table aria-label={`${label} hours`} className="ac-grid block w-full [&>tbody+tbody]:mt-1.5">
+    <table aria-label={`${label} hours`} className="wk-grid block w-full [&>tbody+tbody]:mt-1.5">
       {DAYS.map((day) => {
         const spans = hours?.[day] ?? [];
         const closed = spans.length === 0;
@@ -56,7 +58,7 @@ export function WeekGrid({ label, hours, onChange, errors, within, mergeKey }: W
             key={day}
             data-closed={closed || undefined}
             data-invalid={problem ? true : undefined}
-            className="ac-day block rounded-md border border-border bg-surface-raised px-2 py-1.5"
+            className="wk-day block rounded-md border border-border bg-surface-raised px-2 py-1.5"
           >
             <tr className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
               <th
@@ -84,7 +86,7 @@ export function WeekGrid({ label, hours, onChange, errors, within, mergeKey }: W
                         aria-expanded={editing === at}
                         data-out={out || undefined}
                         className={cn(
-                          'ac-span inline-flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-sm pointer-coarse:min-h-11',
+                          'wk-span inline-flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-sm pointer-coarse:min-h-11',
                           'border-border-strong bg-surface-sunken text-fg-strong hover:border-fg-muted',
                           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
                           editing === at && 'border-accent bg-accent-subtle',

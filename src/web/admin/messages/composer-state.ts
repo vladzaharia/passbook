@@ -131,3 +131,9 @@ export function stateOfBroadcast(b: BroadcastDto): ComposerState {
   }
   return { ...base, fields: Object.keys(b.patch), values: b.patch as FormValues };
 }
+
+/** Why Send and Save draft are off, in a few words. */
+export function blockedReason(state: ComposerState): string {
+  if (state.templateIds.length === 0) return 'Choose a template first.';
+  return state.kind === 'message' ? 'Write a message first.' : 'Choose what changes first.';
+}

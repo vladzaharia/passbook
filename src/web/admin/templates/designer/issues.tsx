@@ -1,5 +1,6 @@
 import { CircleAlert, CircleCheck, TriangleAlert } from 'lucide-react';
 import type { ValidationIssue } from '@/passkit/types.ts';
+import { issueWords } from '@/shared/copy/issues.ts';
 import { useDesigner } from './context.tsx';
 import { contrastWarnings } from './contrast.ts';
 import { type Selection, sectionLabel } from './model.ts';
@@ -37,7 +38,7 @@ export function Issues({
       .map((i, n) => ({
         id: `${i.code}:${i.path ?? ''}:${n}`,
         severity: i.severity as 'error' | 'warning',
-        message: i.message,
+        message: issueWords(i),
         target: issueTarget(i, doc),
         managed: platformManaged(i),
       })),

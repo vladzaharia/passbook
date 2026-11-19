@@ -35,7 +35,7 @@ export const JOIN_COPY = {
   },
   readiness: {
     no_release: 'Release this template in {mode} to turn on the join link.',
-    barcode_input: 'The barcode uses {label}. Switch it to the generated code in the designer.',
+    barcode_input: 'The barcode shows {label}. Use a generated code in the designer.',
     input_needed: '{label} has no default. Give it one in the designer.',
     archived: 'This template is archived.',
   },
@@ -44,8 +44,8 @@ export const JOIN_COPY = {
     scan: 'Scan with your camera.',
     print: 'Print',
     crumb: 'Print sign',
-    none: 'No join link yet. Turn it on from the template.',
-    back: 'Back to template',
+    none: 'No join link yet.',
+    back: 'Turn on join link',
   },
   page: {
     title: 'Get your {org} card',
@@ -70,7 +70,8 @@ export const JOIN_COPY = {
     tooManyTries: 'Too many tries. Wait a minute and try again.',
     dailyLimit: 'No more cards today. Ask staff.',
     closed: 'Not taking new cards right now. Ask staff.',
-    expired: 'Link expired. Ask staff for a new one.',
+    /** Unknown, rotated and expired links look alike on purpose; the first sentence is the heading. */
+    expired: 'This link does not work. Ask staff for a new one.',
   },
   mailLine: "You asked for this card at {org}. Didn't? Ignore this email.",
   errors: {

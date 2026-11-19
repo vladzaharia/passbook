@@ -1,8 +1,10 @@
 import { Laptop, type LucideIcon, Smartphone, Tablet } from 'lucide-react';
 
+const FALLBACK_LABEL = 'Web browser';
+
 /** Short device label from a user agent; the raw string is not useful in a list. */
 export function deviceLabel(ua: string | null): string {
-  if (!ua) return 'Unknown device';
+  if (!ua) return FALLBACK_LABEL;
   const os = /iPhone|iPad/.test(ua)
     ? 'iOS'
     : /Android/.test(ua)
@@ -23,7 +25,7 @@ export function deviceLabel(ua: string | null): string {
         : /Safari\//.test(ua)
           ? 'Safari'
           : null;
-  return [browser, os].filter(Boolean).join(' on ') || 'Unknown device';
+  return [browser, os].filter(Boolean).join(' on ') || FALLBACK_LABEL;
 }
 
 export type DeviceKind = 'phone' | 'tablet' | 'computer';

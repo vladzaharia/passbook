@@ -16,7 +16,6 @@ import {
   EmptyState,
   MoreMenu,
   PageHeader,
-  StatusPill,
   TwoPane,
   toast,
 } from '@/web/ui/index.ts';
@@ -28,6 +27,13 @@ import { DeviceSheet } from './device-sheet.tsx';
 import { SessionActivity } from './session-activity.tsx';
 import { SessionPairDialog, SessionRevokeDialog } from './session-device-dialogs.tsx';
 import { SessionRulesDialog } from './session-dialog.tsx';
+import {
+  HoursBanner,
+  type HoursDialog,
+  HoursDialogs,
+  HoursMenuItems,
+} from './session-hours-actions.tsx';
+import { SessionStatePill } from './session-state.tsx';
 import { SessionSummary } from './session-summary.tsx';
 import { SessionTonight } from './session-tonight.tsx';
 
@@ -45,7 +51,7 @@ export function SessionDetail({
   onDuplicate: (session: ScanningSession) => void;
 }) {
   const update = useUpdateSession(s.id);
-  const [dialog, setDialog] = useState<'rules' | 'add' | 'end' | undefined>(
+  const [dialog, setDialog] = useState<'rules' | 'add' | 'end' | HoursDialog | undefined>(
     canManage && addDevice ? 'add' : undefined,
   );
   const navigate = useNavigate();
@@ -80,12 +86,7 @@ export function SessionDetail({
         description={s.orgName}
         meta={
           <>
-            <StatusPill
-              status={s.status}
-              tone={active ? 'success' : s.status === 'paused' ? 'warning' : 'neutral'}
-            >
-              {active ? 'Running' : s.status === 'paused' ? 'Paused' : 'Ended'}
-            </StatusPill>
+            <SessionStatePill session={s} />
             <ModePill mode={s.mode} />
             <span>
               {s.onlineCount} online · {s.deviceCount} devices · {s.today} scans today
@@ -123,6 +124,7 @@ export function SessionDetail({
                   <Copy aria-hidden />
                   Duplicate session
                 </DropdownMenuItem>
+                <HoursMenuItems session={s} onDialog={setDialog} />
                 {s.status !== 'ended' ? (
                   <DropdownMenuItem destructive onSelect={() => setDialog('end')}>
                     <Square aria-hidden />
@@ -152,6 +154,7 @@ export function SessionDetail({
           ) : null}
         </div>
       ) : null}
+      <HoursBanner session={s} canManage={canManage} onDialog={setDialog} />
       <TwoPane
         aside={
           <SessionSummary session={s} onEdit={canManage ? () => setDialog('rules') : undefined} />
@@ -209,6 +212,13 @@ export function SessionDetail({
       </TwoPane>
       {canManage && dialog === 'rules' ? (
         <SessionRulesDialog session={s} onClose={() => setDialog(undefined)} />
+      ) : null}
+      {canManage ? (
+        <HoursDialogs
+          session={s}
+          dialog={dialog === 'hold-open' || dialog === 'hold-close' ? dialog : undefined}
+          onClose={() => setDialog(undefined)}
+        />
       ) : null}
       {canManage && dialog === 'add' ? (
         <AddDeviceDialog session={s} onClose={() => setDialog(undefined)} />

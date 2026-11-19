@@ -1,7 +1,9 @@
 import { Pencil } from 'lucide-react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
+import { zoneLabel } from '@/web/lib/timezones.ts';
 import { Button, Card, CardBody, CardHeader } from '@/web/ui/index.ts';
 import { sessionAccepts, sessionRuleLabel } from './draft.ts';
+import { hoursSummary } from './session-hours.ts';
 
 export function SessionSummary({
   session,
@@ -18,8 +20,9 @@ export function SessionSummary({
       'Access without staff PIN',
       session.settings.roleWithoutSignIn === 'desk' ? 'Desk staff' : 'Check-in staff',
     ],
-    ['Time zone', session.timeZone],
+    ['Time zone', zoneLabel(session.timeZone)],
   ];
+  const hours = hoursSummary(session.hours);
   const defaults = [
     ['On scan', session.settings.flow === 'auto' ? 'Automatic check-in' : 'Review'],
     ['Reader', session.settings.reader === 'none' ? 'Camera' : 'Hardware scanner'],
@@ -47,6 +50,12 @@ export function SessionSummary({
                 <dd className="font-medium text-fg-strong">{value}</dd>
               </div>
             ))}
+            <div className="grid gap-1 text-sm">
+              <dt className="text-fg-muted">Hours</dt>
+              <dd className="grid gap-0.5 font-medium text-fg-strong">
+                {hours.length ? hours.map((line) => <span key={line}>{line}</span>) : 'Always open'}
+              </dd>
+            </div>
           </dl>
           <p className="mt-3 text-xs text-fg-muted">
             Staff PINs apply only to paired, staff-operated scanners. Bearer-token terminals always

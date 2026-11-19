@@ -123,7 +123,9 @@ export function resolveStyles(pass: PassJson, error: Report, warn: Report): Set<
   }
   for (const scheme of schemes as string[]) {
     if (!(PREFERRED_STYLE_SCHEMES as readonly string[]).includes(scheme))
-      warn('PREFERRED_SCHEMES', `Unknown style scheme ${scheme}.`, 'preferredStyleSchemes');
+      warn('PREFERRED_SCHEMES', `Unknown style scheme ${scheme}.`, 'preferredStyleSchemes', {
+        name: scheme,
+      });
   }
   if (schemes.includes('posterEventTicket')) {
     if (!present.includes('eventTicket'))
@@ -238,7 +240,7 @@ function checkKey(ctx: ValidationContext, key: string, value: unknown, spec: Key
       const url = parseUrl(value);
       if (!url) error('URL', `${key} must be a valid URL.`, path);
       else if (url.protocol === 'http:')
-        warn('URL_SCHEME', `${key} must be https outside developer mode.`, path);
+        warn('URL_SCHEME', `${key} must be https outside developer mode.`, path, { name: key });
       else if (url.protocol !== 'https:') error('URL', `${key} must be https.`, path);
       break;
     }

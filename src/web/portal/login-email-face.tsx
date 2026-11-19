@@ -24,20 +24,20 @@ export interface EmailFaceProps {
   onSent: (email: string) => void;
 }
 
-/** Polaris ID, outline; a foil sweep runs along its border on fine-pointer hover. */
-function PolarisButton({ next, primary }: { next: string | null; primary: boolean }) {
+/** The identity provider, outline; a foil sweep runs along its border on fine-pointer hover. */
+function AccountButton({ next, primary }: { next: string | null; primary: boolean }) {
   const href = next ? `/auth/oidc/start?next=${encodeURIComponent(next)}` : '/auth/oidc/start';
   return (
     <Button asChild variant={primary ? 'primary' : 'outline'} className="wl-sweep w-full">
       <a href={href}>
         <span aria-hidden className="wl-sweep-ring" />
-        Sign in with Polaris ID
+        Sign in with your account
       </a>
     </Button>
   );
 }
 
-/** Front face: email first, Polaris ID under "or". */
+/** Front face: email first, the account button under "or". */
 export function EmailFace({
   oidc,
   magic,
@@ -84,7 +84,7 @@ export function EmailFace({
   const callout = error ?? (request.challengeFailed ? { message: CHALLENGE_FAILED } : null);
   const busy = request.phase !== 'idle';
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-1 flex-col justify-center gap-6">
       {callout ? (
         <Callout tone="danger" title={callout.title}>
           {callout.message}
@@ -139,7 +139,7 @@ export function EmailFace({
           <span className="h-px flex-1 bg-border" />
         </div>
       ) : null}
-      {oidc ? <PolarisButton next={next} primary={!magic} /> : null}
+      {oidc ? <AccountButton next={next} primary={!magic} /> : null}
     </div>
   );
 }

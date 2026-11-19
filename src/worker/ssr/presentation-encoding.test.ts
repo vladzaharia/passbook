@@ -46,6 +46,7 @@ describe('presentation barcode character encoding', () => {
       const html = renderToStaticMarkup(
         createElement(PresentationCode, {
           barcode: { bcid, format, message, encoding, square },
+          orgName: 'Gym',
         }),
       );
       const expected = toSvg({
