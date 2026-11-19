@@ -10,15 +10,21 @@ import { api } from '../../lib/api.ts';
 import { passKeys } from './api.ts';
 
 type PassChange = z.input<typeof PutPassChannelsSchema>['channels'];
+interface PassChannelsChange {
+  channels: PassChange;
+  /** Also issue a new scan code ("Turn off and replace codes"). */
+  replaceCodes?: boolean;
+}
 type BulkBody = z.input<typeof BulkPassChannelsSchema>;
 
 /** Override channels for one pass; `null` returns a channel to its template. */
 export function usePutPassChannels(passId: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (channels: PassChange) =>
+    mutationFn: ({ channels, replaceCodes }: PassChannelsChange) =>
       api.put(`/api/v1/passes/${encodeURIComponent(passId)}/channels`, PassChannelsResponseSchema, {
         channels,
+        ...(replaceCodes ? { replaceCodes: true } : {}),
       }),
     onSuccess: () => client.invalidateQueries({ queryKey: passKeys.all }),
   });

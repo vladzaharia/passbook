@@ -32,9 +32,13 @@ const effective = (over: Record<string, unknown> = {}) => ({
   nfc: on,
   ...over,
 });
-const handlers = (eff: Record<string, unknown>, overrides = {}) => ({
+const handlers = (
+  eff: Record<string, unknown>,
+  overrides = {},
+  replace: Record<string, unknown> = { supported: false, windows: [] },
+) => ({
   '/api/v1/passes/p1/channels': (_u: URL, init?: RequestInit) =>
-    json({ effective: eff, overrides: init?.method === 'PUT' ? {} : overrides }),
+    json({ effective: eff, overrides: init?.method === 'PUT' ? {} : overrides, replace }),
   '/api/v1/passes/p1/prints': () => json({ prints: [] }),
 });
 const row = (name: string) => screen.getByRole('switch', { name }).closest('li') as HTMLElement;
@@ -60,12 +64,59 @@ describe('Channels card', () => {
       handlers(effective()),
     );
     await userEvent.click(await screen.findByRole('switch', { name: 'Apple Wallet' }));
-    const dialog = await screen.findByRole('alertdialog');
+    const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText(CHANNEL_COPY.turnOffPass)).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Turn off' }));
     await waitFor(() => expect(calls(fetchMock, 'PUT', '/channels')).toHaveLength(1));
     const [, init] = calls(fetchMock, 'PUT', '/channels')[0] ?? [];
     expect(JSON.parse(String(init?.body))).toEqual({ channels: { apple: 'off' } });
+  });
+
+  it('offers new codes only when the barcode allows it, and sends replaceCodes', async () => {
+    const { fetchMock } = renderTags(
+      <ChannelsCard pass={pass()} readOnly={false} />,
+      handlers(effective(), {}, { supported: true, windows: [] }),
+    );
+    await userEvent.click(await screen.findByRole('switch', { name: 'Apple Wallet' }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: CHANNEL_COPY.replaceBox }));
+    expect(dialog).toHaveTextContent(CHANNEL_COPY.replaceNote);
+    expect(dialog).not.toHaveTextContent(CHANNEL_COPY.turnOffPass);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Turn off' }));
+    await waitFor(() => expect(calls(fetchMock, 'PUT', '/channels')).toHaveLength(1));
+    const [, init] = calls(fetchMock, 'PUT', '/channels')[0] ?? [];
+    expect(JSON.parse(String(init?.body))).toEqual({
+      channels: { apple: 'off' },
+      replaceCodes: true,
+    });
+  });
+
+  it('says why codes cannot be replaced, and never offers it for Paper', async () => {
+    renderTags(<ChannelsCard pass={pass()} readOnly={false} />, handlers(effective()));
+    await userEvent.click(await screen.findByRole('switch', { name: 'Apple Wallet' }));
+    expect(await screen.findByText(CHANNEL_COPY.replaceUnsupported)).toBeInTheDocument();
+  });
+
+  it('refuses inside an open window and warns about one opening soon', async () => {
+    const win = (over: Record<string, unknown>) => ({
+      kind: 'event',
+      id: 'e',
+      name: 'Gala',
+      opensAt: 1_800_000_000_000,
+      closesAt: 1_800_003_600_000,
+      open: false,
+      scheduled: true,
+      ...over,
+    });
+    renderTags(
+      <ChannelsCard pass={pass()} readOnly={false} />,
+      handlers(effective(), {}, { supported: true, windows: [win({ open: true })] }),
+    );
+    await userEvent.click(await screen.findByRole('switch', { name: 'Apple Wallet' }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: CHANNEL_COPY.replaceBox }));
+    expect(dialog).toHaveTextContent("Codes can't change while Gala is open.");
+    expect(within(dialog).getByRole('button', { name: 'Turn off' })).toBeDisabled();
   });
 
   it('turns a channel on without asking, and Use template drops an override', async () => {

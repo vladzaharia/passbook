@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import {
+  ChannelApplyRunsResponseSchema,
   PutTemplateChannelsResponseSchema,
   type PutTemplateChannelsSchema,
   TemplateChannelsResponseSchema,
@@ -37,5 +38,21 @@ export function usePutTemplateChannels(templateId: string, orgId: string) {
       body.dryRun
         ? undefined
         : client.invalidateQueries({ queryKey: ['admin', 'templates', 'channels'] }),
+  });
+}
+
+const ACTIVE = new Set(['pending', 'running']);
+
+/** The latest runs that applied saved changes; polls while one is pending or running. */
+export function useChannelRuns(templateId: string, orgId: string) {
+  const mode = useMode();
+  return useQuery({
+    queryKey: ['admin', 'templates', 'channels', 'runs', templateId, orgId, mode] as const,
+    queryFn: ({ signal }) =>
+      api.get(`${path(templateId)}/runs`, ChannelApplyRunsResponseSchema, {
+        query: { orgId },
+        signal,
+      }),
+    refetchInterval: (q) => (q.state.data?.some((r) => ACTIVE.has(r.state)) ? 5000 : false),
   });
 }

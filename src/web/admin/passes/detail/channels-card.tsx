@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { nothingOn } from '@/shared/channels.ts';
+import { isDigital, nothingOn } from '@/shared/channels.ts';
 import {
   CHANNELS,
   type Channel,
@@ -22,13 +22,14 @@ import {
   Card,
   CardBody,
   CardHeader,
-  ConfirmDialog,
   ErrorState,
   SkeletonRows,
   StatusPill,
   Switch,
   toast,
 } from '../../../ui/index.ts';
+import { ReplaceOption, windowRefusal } from '../../templates/channels/replace-option.tsx';
+import { ReviewDialog } from '../../templates/channels/review-dialog.tsx';
 import { usePutPassChannels } from '../channels-api.ts';
 import { usePassChannels } from '../print-api.ts';
 import { PrintCard } from './print-card.tsx';
@@ -110,11 +111,12 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
   const query = usePassChannels(pass.id);
   const put = usePutPassChannels(pass.id);
   const [ask, setAsk] = useState<Channel | null>(null);
+  const [replace, setReplace] = useState(false);
   const voided = pass.status === 'voided' || pass.removedAt != null;
   const disabled = readOnly || voided;
 
-  const save = (channels: Parameters<typeof put.mutate>[0]) =>
-    put.mutateAsync(channels).then(
+  const save = (channels: Parameters<typeof put.mutate>[0]['channels'], replaceCodes = false) =>
+    put.mutateAsync({ channels, replaceCodes }).then(
       () => {
         toast.success(CHANNEL_COPY.saved);
       },
@@ -125,8 +127,13 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
   const data: PassChannelsDto | undefined = query.data;
   const toggle = (channel: Channel, on: boolean) => {
     if (on) return void save({ [channel]: 'on' as const });
+    setReplace(false);
     setAsk(channel);
   };
+  /** Turning this off leaves no digital channel on: there is no code to send the holder to. */
+  const allOff = (off: Channel) =>
+    !CHANNELS.some((c) => c !== off && isDigital(c) && data?.effective[c].on);
+  const replaceInfo = data?.replace;
 
   return (
     <Card>
@@ -160,12 +167,31 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
         )}
       </CardBody>
       {ask ? (
-        <ConfirmDialog
+        <ReviewDialog
           open
           onOpenChange={(open) => !open && setAsk(null)}
-          {...channelOffConfirm(CHANNEL_LABEL[ask], ask === 'paper')}
-          onConfirm={() => save({ [ask]: 'off' })}
-        />
+          title={channelOffConfirm(CHANNEL_LABEL[ask], ask === 'paper').title}
+          confirmLabel="Turn off"
+          disabled={
+            replace && !allOff(ask) && windowRefusal(replaceInfo?.windows ?? []) !== undefined
+          }
+          lines={
+            replace && !allOff(ask)
+              ? []
+              : [channelOffConfirm(CHANNEL_LABEL[ask], ask === 'paper').description as string]
+          }
+          onConfirm={() => save({ [ask]: 'off' }, replace && !allOff(ask))}
+        >
+          {replaceInfo && isDigital(ask) ? (
+            <ReplaceOption
+              supported={replaceInfo.supported}
+              allOff={allOff(ask)}
+              windows={replaceInfo.windows}
+              checked={replace}
+              onChange={setReplace}
+            />
+          ) : null}
+        </ReviewDialog>
       ) : null}
     </Card>
   );

@@ -60,3 +60,22 @@ it('Use template applies at once, without a confirm', async () => {
     notify: false,
   });
 });
+
+it('adds replaceCodes only when asked, for a digital channel turned off', async () => {
+  const { fetchMock } = renderTags(
+    <BulkChannelsDialog open onOpenChange={() => {}} orgId="o1" ids={['a']} onDone={() => {}} />,
+    { '/api/v1/passes/bulk/channels': () => json({ done: 1, skipped: [] }) },
+  );
+  expect(screen.queryByRole('checkbox', { name: 'Also issue new codes' })).toBeNull();
+  await userEvent.click(await screen.findByRole('checkbox', { name: 'Paper' }));
+  expect(screen.queryByRole('checkbox', { name: 'Also issue new codes' })).toBeNull();
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Apple Wallet' }));
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Also issue new codes' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  const ask = await screen.findByRole('alertdialog');
+  expect(ask).toHaveTextContent('Holders get a new code. Printed tickets keep working.');
+  await userEvent.click(within(ask).getByRole('button', { name: 'Turn off' }));
+  await waitFor(() => expect(calls(fetchMock, 'POST', '/bulk/channels')).toHaveLength(1));
+  const [, init] = calls(fetchMock, 'POST', '/bulk/channels')[0] ?? [];
+  expect(JSON.parse(String(init?.body))).toMatchObject({ replaceCodes: true });
+});

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { isDigital } from '@/shared/channels.ts';
 import { CHANNELS, type Channel } from '@/shared/contracts/channels.ts';
 import { CHANNEL_COPY, CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { bulkChannelsOffConfirm } from '../../lib/confirms.ts';
@@ -43,6 +44,7 @@ export function BulkChannelsDialog({
   const [action, setAction] = useState<Action>('off');
   const [picked, setPicked] = useState<Channel[]>([]);
   const [notify, setNotify] = useState(false);
+  const [replace, setReplace] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
   const close = () => {
@@ -50,7 +52,10 @@ export function BulkChannelsDialog({
     setAction('off');
     setPicked([]);
     setNotify(false);
+    setReplace(false);
   };
+  /** New codes only follow turning a digital channel off. */
+  const canReplace = action === 'off' && picked.some(isDigital);
   async function apply() {
     try {
       const result = await bulk.mutateAsync({
@@ -58,10 +63,13 @@ export function BulkChannelsDialog({
         channels: picked,
         ids,
         notify: action === 'off' && notify,
+        ...(canReplace && replace ? { replaceCodes: true } : {}),
         orgId,
       });
       const skipped = result.skipped.length ? `, ${result.skipped.length} skipped` : '';
-      toast.success(`${plural(result.done)} updated${skipped}`);
+      toast.success(
+        `${plural(result.done)} updated${skipped}${canReplace && replace ? `. ${CHANNEL_COPY.bulkReplaced}` : ''}`,
+      );
       close();
       onDone();
     } catch (error) {
@@ -123,6 +131,20 @@ export function BulkChannelsDialog({
               onCheckedChange={(v) => setNotify(v === true)}
             />
           ) : null}
+          {canReplace ? (
+            <div className="flex flex-col gap-1">
+              <CheckboxField
+                label={CHANNEL_COPY.replaceBox}
+                checked={replace}
+                onCheckedChange={(v) => setReplace(v === true)}
+              />
+              {replace ? (
+                <p className="text-xs text-fg-muted">
+                  {CHANNEL_COPY.replaceNote} {CHANNEL_COPY.bulkReplaced}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </DialogContent>
       <ConfirmDialog
@@ -132,6 +154,7 @@ export function BulkChannelsDialog({
           picked.map((c) => CHANNEL_LABEL[c]),
           ids.length,
         )}
+        {...(canReplace && replace ? { description: CHANNEL_COPY.replaceNote } : {})}
         onConfirm={apply}
       />
     </Dialog>

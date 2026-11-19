@@ -17,15 +17,39 @@ const effective = {
 const impact = (passes: number, cleared = 0) => [
   { channel: 'apple', passes, rotated: 0, clearedOverrides: cleared },
 ];
-const handlers = (passes: number, cleared = 0) => ({
+const win = (over: Record<string, unknown> = {}) => ({
+  kind: 'event',
+  id: 'e1',
+  name: 'Gala',
+  opensAt: 1_800_000_000_000,
+  closesAt: 1_800_003_600_000,
+  open: false,
+  scheduled: true,
+  ...over,
+});
+const handlers = (
+  passes: number,
+  cleared = 0,
+  extra: { supported?: boolean; windows?: unknown[]; runs?: unknown[] } = {},
+) => ({
+  '/api/v1/templates/t1/channels/runs': () => json(extra.runs ?? []),
   '/api/v1/templates/t1/channels': (_u: URL, init?: RequestInit) =>
     init?.method === 'PUT'
       ? json({
           channels: null,
           revision: 1,
           effective,
-          impact: impact(passes, cleared),
+          impact: [
+            {
+              channel: 'apple',
+              passes,
+              rotated: JSON.parse(String(init.body)).replaceCodes ? passes - 2 : 0,
+              clearedOverrides: cleared,
+            },
+          ],
           workflowInstanceId: null,
+          replaceSupported: extra.supported ?? false,
+          windows: extra.windows ?? [],
         })
       : json({ channels: null, revision: 0, effective }),
 });
@@ -74,7 +98,7 @@ describe('Template channels', () => {
     await screen.findByRole('radiogroup', { name: 'Apple Wallet' });
     await choose('Apple Wallet', 'Off');
     await userEvent.click(await screen.findByRole('button', { name: 'Save' }));
-    const dialog = await screen.findByRole('alertdialog');
+    const dialog = await screen.findByRole('dialog');
     expect(dialog).toHaveTextContent('Turns off Apple Wallet for 412 passes.');
     expect(dialog).toHaveTextContent('Copies keep working until New code.');
     expect(bodies(fetchMock)).toHaveLength(1);
@@ -94,7 +118,7 @@ describe('Template channels', () => {
     await screen.findByRole('radiogroup', { name: 'Apple Wallet' });
     await choose('Apple Wallet', 'Never');
     await userEvent.click(await screen.findByRole('button', { name: 'Save' }));
-    expect(await screen.findByRole('alertdialog')).toHaveTextContent('Clears 37 pass overrides.');
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Clears 37 pass overrides.');
   });
 
   it('is read-only without templates:publish', async () => {
@@ -121,6 +145,8 @@ describe('Template channels', () => {
             effective,
             impact: impact(0, dryCleared),
             workflowInstanceId: null,
+            replaceSupported: false,
+            windows: [],
           });
         puts += 1;
         dryCleared = 5;
@@ -139,10 +165,83 @@ describe('Template channels', () => {
     await screen.findByRole('radiogroup', { name: 'Apple Wallet' });
     await choose('Apple Wallet', 'Never');
     await userEvent.click(await screen.findByRole('button', { name: 'Save' }));
-    const dialog = await screen.findByRole('alertdialog');
+    const dialog = await screen.findByRole('dialog');
     expect(dialog).toHaveTextContent('Clears 3 pass overrides.');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(dialog).toHaveTextContent('Clears 5 pass overrides.'));
     expect(puts).toBe(1);
+  });
+
+  const openReplace = async (extra: Parameters<typeof handlers>[2]) => {
+    const view = renderTags(
+      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />,
+      handlers(412, 0, extra),
+    );
+    await screen.findByRole('radiogroup', { name: 'Apple Wallet' });
+    await choose('Apple Wallet', 'Off');
+    await userEvent.click(await screen.findByRole('button', { name: 'Save' }));
+    return { ...view, dialog: await screen.findByRole('dialog') };
+  };
+
+  it('offers new codes with the per-channel count, then saves with replaceCodes', async () => {
+    const { fetchMock, dialog } = await openReplace({ supported: true });
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Also issue new codes' }));
+    await waitFor(() =>
+      expect(dialog).toHaveTextContent(
+        'Turns off Apple Wallet for 410 passes and issues new codes.',
+      ),
+    );
+    expect(dialog).toHaveTextContent('Holders get a new code. Printed tickets keep working.');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(bodies(fetchMock)).toHaveLength(3));
+    expect(bodies(fetchMock)[1]).toMatchObject({ dryRun: true, replaceCodes: true });
+    expect(bodies(fetchMock)[2]).toMatchObject({ replaceCodes: true, expectedCleared: 0 });
+  });
+
+  it('says why codes cannot be replaced when the barcode is not the scan code', async () => {
+    const { dialog } = await openReplace({ supported: false });
+    expect(dialog).toHaveTextContent(
+      "This template's barcode is not its scan code, so codes can't be replaced.",
+    );
+    expect(within(dialog).queryByRole('checkbox')).toBeNull();
+  });
+
+  it('refuses inside an open window and warns about one opening soon', async () => {
+    const { dialog } = await openReplace({
+      supported: true,
+      windows: [win({ open: true, name: 'Gala' }), win({ id: 'e2', name: 'Expo', open: false })],
+    });
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Also issue new codes' }));
+    await waitFor(() => expect(dialog).toHaveTextContent("Codes can't change while Gala is open."));
+    expect(dialog).toHaveTextContent('Expo opens');
+    expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  it('shows the state of recent runs and why codes were not replaced', async () => {
+    const run = (id: string, state: string, errorCode: string | null = null) => ({
+      id,
+      state,
+      dueAt: 1_800_000_000_000,
+      startedAt: null,
+      finishedAt: null,
+      counts: { changed: 7, rotated: 7 },
+      errorCode,
+    });
+    renderTags(
+      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />,
+      handlers(0, 0, {
+        runs: [
+          run('r1', 'running'),
+          run('r2', 'done', 'REPLACE_PRINCIPAL_REVOKED'),
+          run('r3', 'failed'),
+        ],
+      }),
+    );
+    expect(await screen.findByText('Running')).toBeInTheDocument();
+    expect(screen.getAllByText('7 passes changed · 7 new codes')).toHaveLength(3);
+    expect(
+      screen.getByText('Codes were not replaced: you no longer can publish.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Failed')).toBeInTheDocument();
   });
 });
