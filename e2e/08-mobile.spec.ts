@@ -62,9 +62,12 @@ for (const theme of ['dark', 'light'] as const) {
       test('home', async ({ page }, testInfo) => {
         await page.goto('/');
         await expect(page.getByRole('link', { name: adminPassTitle, exact: true })).toBeVisible();
-        // The tile hides the Refresh icon at this width: Refresh is the first More menu item.
+        // The tile hides the Refresh icon at this width: Refresh is the first More menu item. An
+        // earlier spec may have refreshed this pass, so it can read "Refreshing" or "Refresh in Ns".
         await page.getByRole('button', { name: 'More actions' }).first().click();
-        await expect(page.getByRole('menuitem', { name: 'Refresh', exact: true })).toBeVisible();
+        await expect(
+          page.getByRole('menuitem', { name: /^(Refresh|Refreshing|Refresh in \d+s)$/ }),
+        ).toBeVisible();
         await page.keyboard.press('Escape');
         await expectNoHorizontalScroll(page);
         expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(
