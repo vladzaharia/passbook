@@ -22,7 +22,7 @@ import {
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { refused, seedOrg } from './repo-wallet-credentials-test-fixtures.ts';
 import { enrolment, setSource } from './repo-wallet-enrolments-test-fixtures.ts';
-import { type GoogleOrg, googleOrg } from './shared-issuer-isolation-fixtures.ts';
+import { type GoogleOrg, googleOrg } from './shared-issuer-isolation-test-fixtures.ts';
 
 let keys: CallbackSigningKeys;
 beforeAll(async () => {
