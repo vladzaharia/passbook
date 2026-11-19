@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useUnsaved } from '../settings/drafts.ts';
-import { type Draft, ORG_FIELDS, parseField } from '../settings/fields.ts';
+import { type Draft, parseField } from '../settings/fields.ts';
+import { ORG_FIELDS } from '../settings/fields-org.ts';
 
 /** The email as a phone shows it, where most holders read it; wider up to its 480 px column. */
 const PHONE = 390;

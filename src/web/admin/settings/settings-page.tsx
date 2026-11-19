@@ -7,7 +7,7 @@ import {
   KeyValue,
   PageHeader,
 } from '@/web/ui/index.ts';
-import { PLATFORM_FIELDS } from './fields.ts';
+import { PLATFORM_FIELDS } from './fields-platform.ts';
 import { MagicLinkImpact } from './magic-link-impact.tsx';
 import { useSettings } from './queries.ts';
 import { type SaveGuard, SettingsForm } from './settings-form.tsx';

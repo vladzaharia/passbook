@@ -28,9 +28,19 @@ import {
 type Entries = z.infer<typeof SettingsListSchema>['items'];
 
 /** Server value if set, else the server default, else empty. */
-function currentValues(entries: Entries): Record<string, unknown> {
+function currentValues(
+  entries: Entries,
+  fields: readonly SettingField[],
+  platform: boolean,
+): Record<string, unknown> {
+  const kinds = new Map(fields.map((f) => [f.key, f.kind]));
   const out: Record<string, unknown> = {};
-  for (const e of entries) out[e.key] = e.value ?? e.default;
+  // An org input is empty until the org sets its own value; the default shows as the placeholder.
+  for (const e of entries)
+    out[e.key] =
+      !platform && e.source === 'default' && kinds.get(e.key) !== 'boolean'
+        ? undefined
+        : (e.value ?? e.default);
   return out;
 }
 
@@ -56,8 +66,9 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
   const save = useSaveSettings(scope);
   const platform = scope === 'platform';
   const initial = useMemo(
-    () => (query.data ? toDraft(fields, currentValues(query.data.items)) : undefined),
-    [query.data, fields],
+    () =>
+      query.data ? toDraft(fields, currentValues(query.data.items, fields, platform)) : undefined,
+    [query.data, fields, platform],
   );
   const [edits, setEdits] = useState<Draft>({});
   const [resets, setResets] = useState<ReadonlySet<string>>(new Set());
@@ -169,14 +180,20 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
   const reset = (field: SettingField) => {
     const entry = entries.find((item) => item.key === field.key);
     if (!entry || entry.default === undefined) return;
-    if (entry.updatedAt === null) {
+    const stored = platform ? entry.updatedAt !== null : entry.source === 'org';
+    if (!stored) {
       setEdits(({ [field.key]: _discarded, ...rest }) => rest);
     } else {
-      setEdits((prev) => ({ ...prev, ...toDraft([field], { [field.key]: entry.default }) }));
+      // An org's unset number or text shows empty, with the default as its placeholder.
+      const unset =
+        platform || field.kind === 'boolean'
+          ? toDraft([field], { [field.key]: entry.default })
+          : { [field.key]: '' };
+      setEdits((prev) => ({ ...prev, ...unset }));
     }
     setResets((prev) => {
       const next = new Set(prev);
-      if (entry.updatedAt === null) next.delete(field.key);
+      if (!stored) next.delete(field.key);
       else next.add(field.key);
       return next;
     });

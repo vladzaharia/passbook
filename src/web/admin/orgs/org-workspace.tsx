@@ -10,29 +10,20 @@ import {
   CardBody,
   CardHeader,
   detailError,
-  EntityAvatar,
-  ErrorState,
   KeyValue,
   PageHeader,
   SaveBarGroup,
   SkeletonDetail,
-  SkeletonRows,
   TwoPane,
 } from '@/web/ui/index.ts';
-import { ORG_FIELDS } from '../settings/fields.ts';
-import { useSettings } from '../settings/queries.ts';
-import { ReplyToStatus } from '../settings/reply-to-status.tsx';
-import { SettingsForm } from '../settings/settings-form.tsx';
+import { OrgSettingsSections } from '../settings/org-settings-page.tsx';
 import { AccessCard } from './org-access.tsx';
 import { CountsCard, OrgChecklist, OverviewCard, SigningCard } from './org-aside.tsx';
 import { OrgForm } from './org-form.tsx';
 import { OrgStatus } from './orgs-page.tsx';
-import { PassEmailPreview } from './pass-email-preview.tsx';
 import { useOrgWorkspace } from './queries.ts';
 import { WalletAccountsPanel } from './wallet-accounts.tsx';
 
-const SUPPORT_FIELDS = ORG_FIELDS.filter((f) => f.key.startsWith('support.'));
-const EMAIL_FIELDS = ORG_FIELDS.filter((f) => f.key.startsWith('email.'));
 type Workspace = z.infer<typeof OrgSummarySchema>;
 
 function ReadOnlyBranding({ org }: { org: Workspace }) {
@@ -52,36 +43,6 @@ function ReadOnlyBranding({ org }: { org: Workspace }) {
             { label: 'Logo includes name', value: org.branding.logoHasName ? 'Yes' : 'No' },
           ]}
         />
-      </CardBody>
-    </Card>
-  );
-}
-
-function ReadOnlySettings({ orgId }: { orgId: string }) {
-  const query = useSettings(`org:${orgId}`);
-  const value = (key: string) => {
-    const entry = query.data?.items.find((item) => item.key === key);
-    const current = entry?.value ?? entry?.default;
-    if (typeof current === 'boolean') return current ? 'On' : 'Off';
-    return current == null || current === '' ? 'Not set' : String(current);
-  };
-  return (
-    <Card>
-      <CardHeader title="Pass email and support" />
-      <CardBody>
-        {query.isPending ? (
-          <SkeletonRows rows={3} label="Loading settings" />
-        ) : query.isError ? (
-          <ErrorState subject="settings" error={query.error} onRetry={() => query.refetch()} />
-        ) : (
-          <KeyValue
-            items={[
-              { label: 'Buddy in pass emails', value: value('email.buddy') },
-              { label: 'Support email', value: value('support.email') },
-              { label: 'Support URL', value: value('support.url') },
-            ]}
-          />
-        )}
       </CardBody>
     </Card>
   );
@@ -108,13 +69,10 @@ export function OrgWorkspacePage({
     membership.capabilities.includes('templates:author') &&
     membership.capabilities.includes('passes:operate') &&
     membership.capabilities.includes('integrations:manage');
-  const crumbs = isAdmin
-    ? [{ label: 'Organizations', to: '/admin/orgs' }, { label: query.data?.name ?? 'Organization' }]
-    : [{ label: 'Account', to: '/admin/account' }, { label: query.data?.name ?? 'Organization' }];
   if (query.isPending) {
     return (
       <>
-        <PageHeader title="Organization workspace" breadcrumbs={crumbs} />
+        <PageHeader title="Settings" />
         <SkeletonDetail label="Loading organization" />
       </>
     );
@@ -128,24 +86,14 @@ export function OrgWorkspacePage({
     return detailError(query, {
       entity: 'org',
       to: isAdmin ? '/admin/orgs' : '/admin/account',
-      header: <PageHeader title="Organization workspace" breadcrumbs={crumbs} />,
+      header: <PageHeader title="Settings" />,
     });
   }
   const org = query.data;
   return (
     <SaveBarGroup>
       <PageHeader
-        title={org.name}
-        breadcrumbs={crumbs}
-        avatar={
-          <EntityAvatar
-            kind="org"
-            id={org.id}
-            name={org.name}
-            accent={org.branding.accent}
-            size={40}
-          />
-        }
+        title="Settings"
         meta={
           <>
             <OrgStatus status={org.status} />
@@ -155,7 +103,7 @@ export function OrgWorkspacePage({
         actions={
           isAdmin ? (
             <Button asChild variant="outline">
-              <Link to="/admin/orgs/$orgId" params={{ orgId: org.id }} search={{ view: undefined }}>
+              <Link to="/admin/platform/orgs/$orgId" params={{ orgId: org.id }}>
                 Platform provisioning
               </Link>
             </Button>
@@ -210,50 +158,16 @@ export function OrgWorkspacePage({
         <WalletAccountsPanel orgId={selectedOrgId} />
         {canUseChecklist ? <OrgChecklist org={org} /> : null}
         {canManage ? (
-          <>
-            <OrgForm key={org.id} org={org} canChooseIdentity={isAdmin} />
-            <Card>
-              <CardHeader title="Pass email" />
-              <CardBody className="flex flex-col gap-4">
-                <SettingsForm
-                  scope={`org:${org.id}`}
-                  fields={EMAIL_FIELDS}
-                  aside={
-                    canPreviewTemplates
-                      ? (draft) => (
-                          <PassEmailPreview
-                            orgId={org.id}
-                            buddy={draft['email.buddy'] === true}
-                            version={org.updatedAt}
-                          />
-                        )
-                      : undefined
-                  }
-                />
-                {!canPreviewTemplates ? (
-                  <p className="text-sm text-fg-muted">
-                    The email preview requires template read access.
-                  </p>
-                ) : null}
-              </CardBody>
-            </Card>
-            <Card>
-              <CardHeader title="Support contacts" />
-              <CardBody className="flex flex-col gap-4">
-                <p className="text-sm text-fg-muted">
-                  These contacts appear in the pass email preview.
-                </p>
-                <SettingsForm scope={`org:${org.id}`} fields={SUPPORT_FIELDS} />
-                <ReplyToStatus orgId={org.id} />
-              </CardBody>
-            </Card>
-          </>
+          <OrgForm org={org} canChooseIdentity={isAdmin} />
         ) : (
-          <>
-            <ReadOnlyBranding org={org} />
-            <ReadOnlySettings orgId={org.id} />
-          </>
+          <ReadOnlyBranding org={org} />
         )}
+        <OrgSettingsSections
+          orgId={org.id}
+          version={org.updatedAt}
+          canManage={canManage}
+          canPreviewTemplates={canPreviewTemplates}
+        />
         {canManageMembers ? <AccessCard key={org.id} org={org} /> : null}
       </TwoPane>
     </SaveBarGroup>

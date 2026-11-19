@@ -11,6 +11,12 @@ export interface SettingRowProps {
   flat: boolean;
   help?: string;
   meta?: ReactNode;
+  /** Org scope: the effective default shown in an empty input. */
+  placeholder?: string;
+  /** A platform kill switch is off: the control does nothing. */
+  disabled?: boolean;
+  /** Org scope: the reset reads "Use default". */
+  inherits?: boolean;
   onReset?: () => void;
   onChange: (v: string | boolean) => void;
 }
@@ -26,13 +32,21 @@ function Control({
   id,
   describedBy,
   invalid,
+  placeholder,
+  disabled,
   onChange,
-}: Omit<SettingRowProps, 'error' | 'flat'> & {
+}: Omit<SettingRowProps, 'error' | 'flat' | 'inherits'> & {
   id: string;
   describedBy: string | undefined;
   invalid: boolean;
 }) {
-  const aria = { id, 'aria-describedby': describedBy, 'aria-invalid': invalid || undefined };
+  const aria = {
+    id,
+    'aria-describedby': describedBy,
+    'aria-invalid': invalid || undefined,
+    placeholder,
+    disabled,
+  };
   if (field.kind === 'int') {
     const text = String(value).trim();
     return (
@@ -81,6 +95,9 @@ export function SettingRow({
   flat,
   help: helpText,
   meta,
+  placeholder,
+  disabled,
+  inherits,
   onReset,
   onChange,
 }: SettingRowProps) {
@@ -96,9 +113,11 @@ export function SettingRow({
             variant="ghost"
             size="sm"
             onClick={onReset}
-            aria-label={`Reset ${field.label} to default`}
+            aria-label={
+              inherits ? `Use default for ${field.label}` : `Reset ${field.label} to default`
+            }
           >
-            Reset to default
+            {inherits ? 'Use default' : 'Reset to default'}
           </Button>
         ) : null}
       </div>
@@ -110,6 +129,7 @@ export function SettingRow({
           label={field.label}
           help={description}
           checked={value === true}
+          disabled={disabled}
           onCheckedChange={(c) => onChange(c)}
           {...(error ? { 'aria-invalid': true, 'aria-describedby': `${id}-error` } : {})}
         />
@@ -142,6 +162,8 @@ export function SettingRow({
         id={id}
         describedBy={errorId ?? helpId}
         invalid={Boolean(error)}
+        placeholder={placeholder}
+        disabled={disabled}
         onChange={onChange}
       />
       {error ? (

@@ -15,6 +15,6 @@ export const Route = createFileRoute('/admin/o/$orgId/settings/')({
       return <DetailNotFound entity="org" to="/admin" back="Overview" heading />;
     }
     if (resource !== 'ready' || !membership) return <SkeletonDetail label="Loading organization" />;
-    return <OrgWorkspacePage orgId={orgId} membership={membership} isAdmin={isAdmin} />;
+    return <OrgWorkspacePage key={orgId} orgId={orgId} membership={membership} isAdmin={isAdmin} />;
   },
 });

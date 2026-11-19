@@ -78,6 +78,7 @@ describe('Tags card', () => {
               value: { enabled: false },
               updatedAt: null,
               updatedBy: null,
+              source: 'org',
             },
           ],
         }),

@@ -404,7 +404,7 @@ describe('org detail', () => {
       session: 'admin',
       handlers: handlers(),
     });
-    await screen.findByRole('heading', { name: 'Acme Gym', level: 1 });
+    await screen.findByRole('heading', { name: 'Settings', level: 1 });
     await waitFor(() => {
       const accounts = fetchMock.mock.calls
         .map(([url]) => new URL(String(url), 'http://localhost'))
@@ -493,7 +493,7 @@ describe('org detail', () => {
       ).toBe(false);
       await act(async () => resolveMemberships());
       expect(
-        await screen.findByRole('heading', { name: 'Acme Gym', level: 1 }),
+        await screen.findByRole('heading', { name: 'Organization details' }),
       ).toBeInTheDocument();
       expect(router.state.location.pathname).toBe('/admin/o/o1/settings');
     },
@@ -550,7 +550,7 @@ describe('org detail', () => {
           handlers: { ...handlers(), '/api/v1/orgs/o1/workspace': () => json(summary()) },
         });
         expect(
-          await screen.findByRole('heading', { name: 'Acme Gym', level: 1 }),
+          await screen.findByRole('heading', { name: 'Settings', level: 1 }),
         ).toBeInTheDocument();
         expect(router.state.location.pathname).toBe('/admin/o/o1/settings');
         await waitFor(() => expect(localStorage.getItem('passbook-admin-scope')).toBe('org:o1'));
@@ -608,12 +608,13 @@ describe('org detail', () => {
                 value: 'desk@acme.test',
                 updatedAt: null,
                 updatedBy: null,
+                source: 'org',
               },
             ],
           }),
       },
     });
-    expect(await screen.findByRole('heading', { name: 'Acme Gym', level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument();
     expect(await screen.findByText('desk@acme.test')).toBeInTheDocument();
     expect(
       fetchMock.mock.calls.some(([url]) => {
@@ -673,8 +674,7 @@ describe('org detail', () => {
       memberships: [membershipFixture('o1', { orgName: 'Acme Gym' })],
       handlers: handlers(),
     });
-    expect(await screen.findByRole('heading', { level: 1, name: 'Acme Gym' })).toBeInTheDocument();
-    const passes = screen.getByRole('link', { name: '12 passes in Acme Gym' });
+    const passes = await screen.findByRole('link', { name: '12 passes in Acme Gym' });
     // The link carries the org as the list scope.
     expect(passes).toHaveAttribute('href', '/admin/passes?orgId=o1');
     expect(screen.getByRole('link', { name: '3 API keys in Acme Gym' })).toBeInTheDocument();
@@ -1455,6 +1455,7 @@ describe('org detail', () => {
           default: false,
           updatedAt: null,
           updatedBy: null,
+          source: 'org',
         },
       ],
     });
@@ -1507,6 +1508,7 @@ describe('org detail', () => {
       default: key === 'email.buddy' ? false : null,
       updatedAt: null,
       updatedBy: null,
+      source: 'org',
     });
     await renderApp('/admin/orgs/o1', {
       session: 'admin',
