@@ -9,6 +9,7 @@ import {
   Radio,
   ScanLine,
 } from 'lucide-react';
+import { useState } from 'react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
@@ -26,6 +27,7 @@ import {
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { useScanningSessions, useUpdateSession } from './api.ts';
 import { sessionAccepts, sessionRuleLabel } from './draft.ts';
+import { type HoursDialog, HoursDialogs, HoursMenuItems } from './session-hours-actions.tsx';
 import { SessionStatePill, sessionState } from './session-state.tsx';
 
 export function SessionsTab({
@@ -114,15 +116,7 @@ export function SessionsTab({
                 </h2>
                 <p className="mt-1 truncate text-xs text-fg-muted">{s.orgName}</p>
               </div>
-              {canManage ? (
-                <MoreMenu>
-                  {s.status !== 'active' ? <ResumeItem session={s} /> : null}
-                  <DropdownMenuItem onSelect={() => onDuplicate(s)}>
-                    <Copy aria-hidden />
-                    Duplicate session
-                  </DropdownMenuItem>
-                </MoreMenu>
-              ) : null}
+              {canManage ? <CardMenu session={s} onDuplicate={onDuplicate} /> : null}
             </div>
             <CardBody className="grid gap-4">
               <div className="flex flex-wrap items-center gap-2">
@@ -160,6 +154,28 @@ export function SessionsTab({
         </Button>
       ) : null}
     </div>
+  );
+}
+function CardMenu({
+  session: s,
+  onDuplicate,
+}: {
+  session: ScanningSession;
+  onDuplicate: (s: ScanningSession) => void;
+}) {
+  const [dialog, setDialog] = useState<HoursDialog>();
+  return (
+    <>
+      <MoreMenu>
+        {s.status !== 'active' ? <ResumeItem session={s} /> : null}
+        <HoursMenuItems session={s} onDialog={setDialog} />
+        <DropdownMenuItem onSelect={() => onDuplicate(s)}>
+          <Copy aria-hidden />
+          Duplicate session
+        </DropdownMenuItem>
+      </MoreMenu>
+      <HoursDialogs session={s} dialog={dialog} onClose={() => setDialog(undefined)} />
+    </>
   );
 }
 function ResumeItem({ session: s }: { session: ScanningSession }) {

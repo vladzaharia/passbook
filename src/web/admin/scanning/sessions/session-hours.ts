@@ -1,12 +1,7 @@
 import { parseSpan } from '@/passkit/template/access/hours.ts';
 import type { WeeklyHours } from '@/passkit/types.ts';
 import type { SessionHours } from '@/shared/contracts/scanning-sessions.ts';
-import {
-  DAY_SHORT,
-  DAYS,
-  spanProblem,
-  weekProblems,
-} from '../../templates/designer/access/hours.ts';
+import { DAY_SHORT, DAYS, spanProblem, weekProblems } from '@/web/ui/week-grid/hours.ts';
 
 /** A starting week for the switch: weekdays, working hours. */
 export const DEFAULT_HOURS: WeeklyHours = {

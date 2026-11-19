@@ -1,5 +1,4 @@
-import { Callout, SwitchRow } from '@/web/ui/index.ts';
-import { WeekGrid } from '../../templates/designer/access/week-grid.tsx';
+import { Callout, SwitchRow, WeekGrid } from '@/web/ui/index.ts';
 import type { SessionDraft } from './draft.ts';
 import { DEFAULT_HOURS, hoursProblem } from './session-hours.ts';
 
