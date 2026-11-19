@@ -33,10 +33,17 @@ const listeners = new Set<() => void>();
 
 /** Providers call this after first paint, so the Radix chunk stays out of the initial load. */
 export function loadTooltips(): Promise<void> {
-  loading ??= import('./tooltip-impl.tsx').then((m) => {
-    impl = m.TooltipImpl;
-    for (const l of listeners) l();
-  });
+  loading ??= import('./tooltip-impl.tsx').then(
+    (m) => {
+      impl = m.TooltipImpl;
+      for (const l of listeners) l();
+    },
+    () => {
+      // A chunk that fails to load (offline, a deploy mid-session) leaves tooltips plain; every
+      // control keeps its aria-label. The next call retries.
+      loading = null;
+    },
+  );
   return loading;
 }
 
