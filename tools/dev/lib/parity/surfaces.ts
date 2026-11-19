@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { chromium } from '@playwright/test';
 import { statePath } from '../auth.ts';
 import { capture, type Shot } from '../capture.ts';
-import { type Route, shotName, type Theme, VIEWPORTS, type ViewportName } from '../routes.ts';
+import { type Route, SIZES, shotName, type Theme, type ViewportName } from '../routes.ts';
 import type { Api } from './issue.ts';
 
 export const SHOT_VIEWPORTS: ViewportName[] = ['mobile', 'desktop'];
@@ -107,7 +107,7 @@ export async function captureEmail(
     for (const theme of SHOT_THEMES) {
       for (const viewport of SHOT_VIEWPORTS) {
         const context = await browser.newContext({
-          viewport: VIEWPORTS[viewport],
+          viewport: SIZES[viewport],
           colorScheme: theme,
         });
         const page = await context.newPage();
@@ -154,7 +154,7 @@ export async function captureScan(
     for (const theme of SHOT_THEMES) {
       const viewport: ViewportName = 'desktop';
       const context = await browser.newContext({
-        viewport: VIEWPORTS[viewport],
+        viewport: SIZES[viewport],
         colorScheme: theme,
         reducedMotion: 'reduce',
         storageState: statePath(stateDir, 'org'),

@@ -76,11 +76,7 @@ async function main() {
         base,
         out,
         stateDir,
-        viewports: list<ViewportName>(
-          arg('--viewports'),
-          Object.keys(VIEWPORTS) as ViewportName[],
-          'viewport',
-        ),
+        viewports: list<ViewportName>(arg('--viewports'), DEFAULT_VIEWPORTS, 'viewport'),
         themes: list<Theme>(arg('--themes'), ['light', 'dark'], 'theme'),
       });
       const shots = steps.reduce((n, s) => n + Object.keys(s.files).length, 0);
