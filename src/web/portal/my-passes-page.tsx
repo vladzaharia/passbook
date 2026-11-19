@@ -86,7 +86,7 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
   const link = { to: '/passes/$passId', params: { passId: pass.id } } as const;
   return (
     // The tile's corner is the 18 px card radius: the pass inside draws ~14 px, never more.
-    <Card className="row-span-3 grid grid-rows-subgrid gap-y-3 @container rounded-xl p-4">
+    <Card className="row-span-3 grid grid-rows-subgrid gap-y-3 rounded-xl p-4">
       {buddy}
       {/* The card is a second way into the pass; the title link is the one in the tab order. */}
       <Link {...link} tabIndex={-1} aria-hidden className="mb-1 flex items-center">
@@ -128,7 +128,7 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
           <p className="truncate text-xs text-fg-muted">{pass.orgName}</p>
         </div>
         {/* As tall as the badge with its clear space (52, 56 on touch), badge or not. */}
-        <div className="flex min-h-13 flex-wrap content-end items-center justify-between gap-2 pointer-coarse:min-h-14">
+        <div className="@container flex min-h-13 flex-wrap content-end items-center justify-between gap-2 pointer-coarse:min-h-14">
           <div className="flex flex-wrap items-center gap-2">
             <Button asChild variant="outline">
               <Link {...link}>View pass</Link>

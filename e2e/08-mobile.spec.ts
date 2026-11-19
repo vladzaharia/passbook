@@ -62,7 +62,10 @@ for (const theme of ['dark', 'light'] as const) {
       test('home', async ({ page }, testInfo) => {
         await page.goto('/');
         await expect(page.getByRole('link', { name: adminPassTitle, exact: true })).toBeVisible();
-        await expect(page.getByRole('button', { name: 'Refresh' }).first()).toBeVisible();
+        // The tile hides the Refresh icon at this width: Refresh is the first More menu item.
+        await page.getByRole('button', { name: 'More actions' }).first().click();
+        await expect(page.getByRole('menuitem', { name: 'Refresh', exact: true })).toBeVisible();
+        await page.keyboard.press('Escape');
         await expectNoHorizontalScroll(page);
         expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(
           theme === 'dark',
