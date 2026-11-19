@@ -1,4 +1,4 @@
-import type { IdentityDto } from '../../../shared/contracts/identities.ts';
+import type { IdentityDto, OrgIdentityDto } from '../../../shared/contracts/identities.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { certDetails } from './cert.ts';
 import { apnsBindingPresent } from './db-resolver.ts';
@@ -99,4 +99,42 @@ async function dtoOf(ctx: ServiceContext, row: IdentityRow, keys: TeamKeys): Pro
     isDefault: row.is_default === 1,
     createdAt: row.created_at,
   };
+}
+
+/** A member's view of an identity of their organization; reads no team-wide push key data beyond whether one exists. */
+export async function toOrgDtos(
+  ctx: ServiceContext,
+  rows: readonly IdentityRow[],
+): Promise<OrgIdentityDto[]> {
+  const teams = [...new Set(rows.map((r) => r.team_identifier).filter((t) => t !== ''))];
+  const withKey = new Set((await listPushKeyMeta(ctx.env.DB, teams)).map((m) => m.team_identifier));
+  return Promise.all(
+    rows.map(async (row) => {
+      let subject: string | null = null;
+      let serial: string | null = null;
+      if (row.cert_pem) {
+        try {
+          const details = await certDetails(row.cert_pem);
+          subject = details.subject;
+          serial = details.serial;
+        } catch (error) {
+          ctx.log.warn('identity.cert_unreadable', { identityId: row.id, error });
+        }
+      }
+      return {
+        id: row.id,
+        label: row.label,
+        passTypeIdentifier: row.pass_type_identifier,
+        teamIdentifier: row.team_identifier,
+        certSubject: subject,
+        certSerial: serial,
+        notBefore: row.not_before,
+        notAfter: row.not_after,
+        daysRemaining: daysRemaining(row.not_after, ctx.clock.now()),
+        apnsAvailable:
+          pushMethodOf(ctx.env, row.apns_binding, withKey.has(row.team_identifier)) !== 'none',
+        apnsHealth: row.apns_health,
+      };
+    }),
+  );
 }

@@ -536,11 +536,11 @@ describe('organization Members and Wallet accounts', () => {
     expect(canAccessAdminPath('/admin/o/o1/members', false, member(['members:manage']))).toBe(true);
     expect(canAccessAdminPath('/admin/o/o1/members', false, member(['org:read']))).toBe(false);
   });
-  it('opens Wallet accounts only with integrations:read', () => {
-    expect(
-      canAccessAdminPath('/admin/o/o1/wallet-accounts', false, member(['integrations:read'])),
-    ).toBe(true);
+  it('opens Wallet accounts with org:read, as the server does', () => {
     expect(canAccessAdminPath('/admin/o/o1/wallet-accounts', false, member(['org:read']))).toBe(
+      true,
+    );
+    expect(canAccessAdminPath('/admin/o/o1/wallet-accounts', false, member(['passes:read']))).toBe(
       false,
     );
   });

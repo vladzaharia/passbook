@@ -4,6 +4,7 @@ import {
   ApnsProbeResultSchema,
   IdentityListSchema,
   IdentitySchema,
+  OrgIdentityListSchema,
   type PushKeyInputSchema,
   type RotateIdentitySchema,
   type UpdateIdentitySchema,
@@ -36,7 +37,7 @@ export function useOrgIdentities(orgId: string) {
   return useQuery({
     queryKey: [...KEY, 'org', orgId],
     queryFn: ({ signal }) =>
-      api.get('/api/v1/identities', IdentityListSchema, { query: { orgId, limit: 50 }, signal }),
+      api.get('/api/v1/identities', OrgIdentityListSchema, { query: { orgId, limit: 50 }, signal }),
   });
 }
 

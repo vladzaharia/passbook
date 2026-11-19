@@ -6,6 +6,7 @@ import {
   IdentitySchema,
   IdParamSchema,
   OkSchema,
+  OrgIdentityListSchema,
   PushKeyInputSchema,
   RotateIdentitySchema,
   UpdateIdentitySchema,
@@ -25,6 +26,7 @@ import {
   deleteIdentity,
   getIdentity,
   listIdentities,
+  listOrgIdentities,
   rotateIdentity,
   updateIdentity,
   uploadIdentity,
@@ -51,17 +53,19 @@ register(
     path: '/',
     summary: 'List Apple identities',
     query: IdentityListQuerySchema,
-    response: IdentityListSchema,
+    response: IdentityListSchema.or(OrgIdentityListSchema),
   },
   async (c) => {
     const ctx = serviceContext(c);
     const query = c.req.valid('query');
     const auth = c.var.auth;
-    // A platform admin reads any organization; a member reads only an organization they belong to.
+    // A platform admin reads the full record of any organization's identities. A member reads only
+    // their own organization's, in the narrower member view.
     if (query.orgId && !(auth?.kind === 'session' && auth.roles.includes('admin'))) {
       if (auth?.kind !== 'session') throw new UnauthenticatedError();
       const authority = await tenantAuthorityOf(ctx, auth, query.orgId, 'org:read');
       if (authority.kind !== 'session') throw new ForbiddenError();
+      return c.json(await listOrgIdentities(ctx, { ...query, orgId: query.orgId }));
     }
     return c.json(await listIdentities(ctx, query));
   },

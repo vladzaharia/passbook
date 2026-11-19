@@ -4,6 +4,7 @@ import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type Fixtures,
   fixtures,
+  makeApiKey,
   makeEnv,
   makeOrg,
   makeSession,
@@ -14,6 +15,7 @@ import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 
 let appEnv: AppEnv;
@@ -70,7 +72,11 @@ beforeEach(async () => {
   await insertIdentity('scope-a', orgA);
   await insertIdentity('scope-b', orgB);
   app = createApp({
-    stores: { ...denyAllStores, sessions: createSessionStore(appEnv, fx.clock) },
+    stores: {
+      ...denyAllStores,
+      sessions: createSessionStore(appEnv, fx.clock),
+      apiKeys: createApiKeyStore(appEnv, fx.clock),
+    },
     clock: fx.clock,
   });
 });
@@ -114,5 +120,37 @@ describe('identities org read authority', () => {
     expect(await ids(await list('', admin.headers))).toEqual(
       expect.arrayContaining(['scope-platform', 'scope-a', 'scope-b']),
     );
+  });
+
+  it('gives a member only the member view, with no binding, push key or team-wide counts', async () => {
+    const body = (await (await list(`?orgId=${orgA}`, member.headers)).json()) as {
+      items: Record<string, unknown>[];
+    };
+    expect(Object.keys(body.items[0] ?? {}).sort()).toEqual([
+      'apnsAvailable',
+      'apnsHealth',
+      'certSerial',
+      'certSubject',
+      'daysRemaining',
+      'id',
+      'label',
+      'notAfter',
+      'notBefore',
+      'passTypeIdentifier',
+      'teamIdentifier',
+    ]);
+    const admin_ = (await (await list(`?orgId=${orgA}`, admin.headers)).json()) as {
+      items: Record<string, unknown>[];
+    };
+    expect(admin_.items[0]).toHaveProperty('pushKey');
+    expect(admin_.items[0]).toHaveProperty('apnsBinding');
+  });
+
+  it('refuses API keys, scoped or not, on the organization read', async () => {
+    for (const orgId of [orgA, null]) {
+      const key = await makeApiKey(fx, { orgId, scopes: ['passes:read', 'templates:read'] });
+      const res = await list(`?orgId=${orgA}`, key.headers);
+      expect([401, 403]).toContain(res.status);
+    }
   });
 });
