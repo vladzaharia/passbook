@@ -163,10 +163,10 @@ export async function putSamsungTombstone(
       `${retirementCtes}
       INSERT INTO wallet_samsung_tombstones
       (ref_hash, org_id, mode, account_id, account_revision, candidate_id, release_id,
-       provider_identity_hash, retired_at, credential_keyset_commitment)
+       provider_identity_hash, retired_at, credential_keyset_commitment, credential_version_id)
       SELECT ref.ref_hash, retirement.org_id, retirement.mode, retirement.account_id,
         retirement.account_revision, retirement.candidate_id, retirement.release_id,
-        retirement.provider_identity_hash, ?, retirement.credential_keyset_commitment
+        retirement.provider_identity_hash, ?, retirement.credential_keyset_commitment, ref.credential_version_id
       FROM retirement_scope retirement
       JOIN wallet_samsung_fetch_refs ref ON ref.instance_id = retirement.instance_id
       WHERE (ref.retired_at IS NULL OR ref.promoted_at IS NOT NULL OR NOT EXISTS (
@@ -184,7 +184,7 @@ export async function putSamsungTombstone(
         SELECT ref.ref_hash, retirement.org_id, retirement.mode, retirement.account_id,
           historical.account_revision, historical_candidate.id AS candidate_id,
           historical_release.id AS release_id, historical_candidate.provider_identity_hash,
-          retirement.credential_keyset_commitment
+          retirement.credential_keyset_commitment, ref.credential_version_id
         FROM retirement_scope retirement
         JOIN wallet_samsung_fetch_refs ref
           ON ref.instance_id = retirement.instance_id AND ref.promoted_at IS NOT NULL
@@ -239,9 +239,9 @@ export async function putSamsungTombstone(
       )
       INSERT INTO wallet_samsung_tombstones
       (ref_hash, org_id, mode, account_id, account_revision, candidate_id, release_id,
-       provider_identity_hash, retired_at, credential_keyset_commitment)
+       provider_identity_hash, retired_at, credential_keyset_commitment, credential_version_id)
       SELECT ref_hash, org_id, mode, account_id, account_revision, candidate_id, release_id,
-        provider_identity_hash, ?, credential_keyset_commitment
+        provider_identity_hash, ?, credential_keyset_commitment, credential_version_id
       FROM historical_publications WHERE 1
       ON CONFLICT(ref_hash, account_revision) DO NOTHING`,
       [...values, now],

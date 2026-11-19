@@ -6,6 +6,7 @@ import { handleHolderMail } from '../modules/me/jobs.ts';
 import { handleMessageRuleCheck } from '../modules/message-rules/jobs.ts';
 import { handleRetentionNotice } from '../modules/retention/jobs.ts';
 import { handleForkUpdate } from '../modules/templates/fork-updates-job.ts';
+import { handleEnrolmentHold } from '../modules/wallet-providers/enrolment-hold-job.ts';
 import { handleWebhookDeliver } from '../modules/webhooks/jobs.ts';
 import type { ServiceContext } from '../platform/service-context.ts';
 import type { Job, JobKind, JobOf } from './types.ts';
@@ -24,6 +25,7 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'connection.webhook': handleConnectionWebhook,
   'webhook.deliver': handleWebhookDeliver,
   'template.fork_update': handleForkUpdate,
+  'wallet.enrolment_hold': handleEnrolmentHold,
   'channel.apple_bump': handleAppleBump,
 };
 
@@ -49,6 +51,8 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'webhook.deliver':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'template.fork_update':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'wallet.enrolment_hold':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'channel.apple_bump':
       return JOB_HANDLERS[job.kind](job, ctx);

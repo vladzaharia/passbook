@@ -80,6 +80,30 @@ describe('authority-scope', () => {
       ).toContain('raw-guarded-write');
   });
 
+  it('flags a raw write to a credential check, from the wallet module too: only the check job writes one', () => {
+    for (const rel of [`${MOD}/x/repo.ts`, `${MOD}/wallet-providers/repo-accounts.ts`])
+      for (const text of [
+        'run(db, "INSERT INTO wallet_credential_checks (id, ok) VALUES (?, 1)")',
+        'run(db, "INSERT OR IGNORE INTO wallet_credential_checks (id, ok) VALUES (?, 1)")',
+        'run(db, "DELETE FROM wallet_credential_checks WHERE id = ?")',
+        'run(db, "UPDATE wallet_credential_checks SET ok = 1 WHERE id = ?")',
+        'run(db, "INSERT INTO wallet_credentials (id) VALUES (?)")',
+        'run(db, "UPDATE wallet_enrolment_events SET kind = ? WHERE id = ?")',
+      ])
+        expect(
+          scanFile(rel, text, owners).map((f) => f.rule),
+          text,
+        ).toEqual(['raw-guarded-write']);
+    // The account row stays outside the deny list: it is written by include parts and the wallet repo.
+    expect(
+      scanFile(
+        `${MOD}/x/repo.ts`,
+        'run(db, "UPDATE wallet_provider_accounts SET enabled_at = ?")',
+        owners,
+      ),
+    ).toEqual([]);
+  });
+
   it('flags raw writes to guarded tables but not stamps, reads, tests or authority.ts', () => {
     const file = `${MOD}/x/repo.ts`;
     const rules = (text: string, rel = file) => scanFile(rel, text, owners).map((f) => f.rule);
