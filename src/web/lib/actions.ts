@@ -241,6 +241,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
     'warning',
   ),
   'wallet_provider.enrolment_release': a('Wallet provider released', ShieldCheck, 'info'),
+  'wallet_provider.enrolment_revoke': a('Wallet provider revoked', ShieldX, 'warning'),
   'wallet_provider.enrolment_source': a('Wallet provider credential changed', I.edit, 'info'),
 };
 

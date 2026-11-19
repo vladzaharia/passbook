@@ -27,6 +27,7 @@ import {
   insertEnrolmentEvent,
   receiptSeeder,
   release,
+  revokeEnrolment,
   setSource,
   updateEnrolment,
 } from './repo-wallet-enrolments-test-fixtures.ts';
@@ -782,6 +783,65 @@ describe('the enrolment step', () => {
     await rotate(c);
     const none = await all(db(), 'SELECT 1 FROM wallet_provider_instance_dirty');
     expect(none).toEqual([]);
+  });
+});
+
+describe('revoking a new-model enrolment', () => {
+  it('revokes an Off enrolment with no legacy credential, with its event, and enable is refused after', async () => {
+    const { org } = await seedOrg();
+    const a = await enrolment(org.id, 'test');
+    const c = await credential({ scope: 'platform', mode: 'test' });
+    await setSource(a, c);
+    await enable(a, c);
+    await refused(revokeEnrolment(a), /revoke needs it off/);
+    await disable(a);
+    await revokeEnrolment(a);
+    const row = await first<{
+      revoked: number | null;
+      credential: string | null;
+      revision: number;
+    }>(
+      db(),
+      'SELECT revoked_at AS revoked, credential_id AS credential, revision FROM wallet_provider_accounts WHERE id = ?',
+      [a.id],
+    );
+    expect(row?.revoked).not.toBeNull();
+    expect(row).toMatchObject({ credential: null, revision: 0 });
+    await refused(enable(a, c), /needs an active source/);
+    const audit = await all<{ action: string }>(
+      db(),
+      "SELECT action FROM audit_log WHERE target_id = ? AND action = 'wallet_provider.enrolment_revoke'",
+      [a.id],
+    );
+    expect(audit).toHaveLength(1);
+  });
+
+  it('needs its revoke event at the next revision, and cannot be undone', async () => {
+    const { org } = await seedOrg();
+    const a = await enrolment(org.id, 'test');
+    const at = Date.now();
+    await refused(
+      run(db(), 'UPDATE wallet_provider_accounts SET revoked_at = ? WHERE id = ?', [at, a.id]),
+      /revoke needs its event/,
+    );
+    await refused(updateEnrolment(a, { revoked_at: at }), /revoke needs its event/);
+    await insertEnrolmentEvent(a, { kind: 'revoke', createdAt: at, revision: 2 });
+    await refused(updateEnrolment(a, { revoked_at: at }, 2), /revoke needs its event/);
+    await revokeEnrolment(a);
+    await refused(updateEnrolment(a, { revoked_at: null }), /revoke needs its event/);
+  });
+
+  it('a legacy row without its credential_id is still refused, and revision 0 still means none', async () => {
+    const { org } = await seedOrg();
+    const insert = (revision: number, credential: string | null) =>
+      run(
+        db(),
+        `INSERT INTO wallet_provider_accounts (id, org_id, mode, provider, revision, credential_id, created_at, updated_at)
+         VALUES (?, ?, 'live', 'google', ?, ?, 1, 1)`,
+        [uid(), org.id, revision, credential],
+      );
+    await refused(insert(1, null), /CHECK constraint failed/);
+    await refused(insert(0, 'legacy-credential'), /CHECK constraint failed/);
   });
 });
 

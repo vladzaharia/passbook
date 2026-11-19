@@ -46,7 +46,7 @@ export const enrolmentRevision = async (a: { id: string }) =>
   )?.r ?? 0;
 
 export interface EnrolmentEvent {
-  kind: 'source' | 'enable' | 'disable' | 'hold' | 'release';
+  kind: 'source' | 'enable' | 'disable' | 'hold' | 'release' | 'revoke';
   credentialId?: string | null;
   checkId?: string | null;
   roundTrip?: { kind: 'google_save' | 'samsung_added'; id: string };
@@ -154,6 +154,12 @@ export function hold(a: Acct, reason = 'abuse'): Promise<void> {
     { kind: 'hold', reason, createdAt: at },
     { enabled_at: null, platform_hold_at: at, platform_hold_reason: reason },
   );
+}
+
+/** Revokes a new-model enrolment: a revoke event, and revoked_at stamped with its created_at. */
+export function revokeEnrolment(a: Acct): Promise<void> {
+  const at = Date.now();
+  return step(a, { kind: 'revoke', createdAt: at }, { revoked_at: at });
 }
 
 export const release = (a: Acct) =>

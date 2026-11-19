@@ -6,6 +6,71 @@
 -- Exception to the 0037 header: identity_hash (unkeyed SHA-256) with identity_hint (last 4 characters) is
 -- effectively plaintext on purpose: it is how a shared issuer is detected.
 
+-- A new-model enrolment has no legacy credential: revision 0 and no credential_id, and it can still be revoked.
+-- The 0037 CHECK refused revoked_at there, so the table is rebuilt with `(revision = 0) = (credential_id IS NULL)`;
+-- a legacy row (revision > 0) still needs its credential_id. Nothing else changes: columns, keys, the 0037 and
+-- 0043 triggers (recreated as they were) and every row. Children point at the id, so their checks are deferred
+-- until the rows are back. tools/wallet-accounts-rebuild.test.ts diffs the schema across this block.
+-- rebuild:begin
+PRAGMA defer_foreign_keys = ON;
+CREATE TABLE _keep_wallet_provider_accounts AS SELECT * FROM wallet_provider_accounts;
+DROP TABLE wallet_provider_accounts;
+CREATE TABLE wallet_provider_accounts (
+  id TEXT PRIMARY KEY,
+  org_id TEXT NOT NULL REFERENCES orgs(id),
+  mode TEXT NOT NULL CHECK (mode IN ('live', 'test')),
+  provider TEXT NOT NULL CHECK (provider IN ('google', 'samsung')),
+  revision INTEGER NOT NULL DEFAULT 0 CHECK (typeof(revision) = 'integer' AND revision >= 0),
+  credential_id TEXT,
+  revoked_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  UNIQUE (org_id, mode, provider),
+  UNIQUE (id, org_id, mode, provider),
+  CHECK ((revision = 0) = (credential_id IS NULL))
+);
+INSERT INTO wallet_provider_accounts (id, org_id, mode, provider, revision, credential_id, revoked_at, created_at, updated_at)
+  SELECT id, org_id, mode, provider, revision, credential_id, revoked_at, created_at, updated_at
+  FROM _keep_wallet_provider_accounts;
+DROP TABLE _keep_wallet_provider_accounts;
+CREATE TRIGGER wallet_provider_accounts_no_delete BEFORE DELETE ON wallet_provider_accounts
+BEGIN SELECT RAISE(ABORT, 'immutable wallet provider account'); END;
+CREATE TRIGGER wallet_provider_accounts_transition BEFORE UPDATE ON wallet_provider_accounts
+WHEN NEW.id IS NOT OLD.id OR NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD.mode
+  OR NEW.provider IS NOT OLD.provider OR NEW.created_at IS NOT OLD.created_at
+  OR NEW.revision != OLD.revision + 1
+  OR NOT EXISTS (
+    SELECT 1 FROM wallet_provider_account_events e
+    JOIN wallet_provider_credentials c ON c.id = e.credential_id
+      AND c.account_id = NEW.id AND c.org_id = NEW.org_id
+      AND c.mode = NEW.mode AND c.provider = NEW.provider
+    WHERE e.account_id = NEW.id AND e.org_id = NEW.org_id AND e.mode = NEW.mode
+      AND e.provider = NEW.provider AND e.revision = NEW.revision
+      AND e.credential_id = NEW.credential_id AND e.created_at = NEW.updated_at
+      AND ((e.kind = 'configure' AND NEW.credential_id IS NOT OLD.credential_id AND NEW.revoked_at IS NULL)
+        OR (e.kind = 'revoke' AND OLD.credential_id IS NOT NULL AND OLD.revoked_at IS NULL
+            AND NEW.credential_id = OLD.credential_id
+            AND NEW.revoked_at IS NOT NULL AND NOT EXISTS (
+              SELECT 1 FROM wallet_provider_instances i WHERE i.account_id = OLD.id AND i.lifecycle != 'retired')))
+  )
+BEGIN SELECT RAISE(ABORT, 'invalid wallet provider account transition'); END;
+CREATE TRIGGER wallet_provider_accounts_audit AFTER UPDATE ON wallet_provider_accounts
+BEGIN
+  INSERT INTO audit_log (at, org_id, actor_type, actor_id, action, target_type, target_id, request_id, ip_prefix, detail)
+  SELECT e.created_at, e.org_id, 'user', e.actor_id, 'wallet_provider.account_' || e.kind,
+    'wallet_provider_account', e.account_id, e.request_id, NULL,
+    json_object('mode', e.mode, 'provider', e.provider, 'revision', e.revision)
+  FROM wallet_provider_account_events e WHERE e.account_id = NEW.id AND e.revision = NEW.revision;
+END;
+CREATE TRIGGER wallet_provider_dirty_account AFTER UPDATE OF revision ON wallet_provider_accounts
+WHEN OLD.revision IS NOT NEW.revision
+BEGIN
+  INSERT INTO wallet_provider_instance_dirty(instance_id, generation)
+  SELECT id, 1 FROM wallet_provider_instances WHERE account_id = NEW.id
+  ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1, next_attempt_at = 0;
+END;
+-- rebuild:end
+
 CREATE TABLE wallet_credentials (
   id TEXT PRIMARY KEY,
   scope TEXT NOT NULL CHECK (scope IN ('platform', 'org')),
@@ -94,7 +159,7 @@ CREATE TABLE wallet_enrolment_events (
   mode TEXT NOT NULL,
   provider TEXT NOT NULL,
   enrolment_revision INTEGER NOT NULL CHECK (typeof(enrolment_revision) = 'integer' AND enrolment_revision > 0),
-  kind TEXT NOT NULL CHECK (kind IN ('source', 'enable', 'disable', 'hold', 'release')),
+  kind TEXT NOT NULL CHECK (kind IN ('source', 'enable', 'disable', 'hold', 'release', 'revoke')),
   credential_id TEXT REFERENCES wallet_credentials(id),
   check_id TEXT REFERENCES wallet_credential_checks(id),
   round_trip_kind TEXT CHECK (round_trip_kind IN ('google_save', 'samsung_added')),
@@ -256,11 +321,17 @@ BEGIN
 END;
 
 -- Narrow the 0037 triggers: they fired on every column, so the enrolment columns could not move. The
--- configure and revoke transitions are unchanged, and a revoke needs the enrolment Off.
+-- configure and revoke transitions are unchanged, and a revoke needs the enrolment Off. A new-model
+-- enrolment (no legacy credential_id) is revoked by a revoke event instead, checked by
+-- wallet_enrolments_revoke_* below.
 DROP TRIGGER wallet_provider_accounts_transition;
 CREATE TRIGGER wallet_provider_accounts_transition
 BEFORE UPDATE OF id, org_id, mode, provider, created_at, revision, credential_id, revoked_at ON wallet_provider_accounts
-WHEN NEW.id IS NOT OLD.id OR NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD.mode
+WHEN NOT (OLD.credential_id IS NULL AND NEW.credential_id IS NULL AND NEW.revision = OLD.revision
+    AND NEW.id IS OLD.id AND NEW.org_id IS OLD.org_id AND NEW.mode IS OLD.mode
+    AND NEW.provider IS OLD.provider AND NEW.created_at IS OLD.created_at
+    AND OLD.revoked_at IS NULL AND NEW.revoked_at IS NOT NULL)
+  AND (NEW.id IS NOT OLD.id OR NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD.mode
   OR NEW.provider IS NOT OLD.provider OR NEW.created_at IS NOT OLD.created_at
   OR NEW.revision != OLD.revision + 1
   OR NOT EXISTS (
@@ -277,7 +348,7 @@ WHEN NEW.id IS NOT OLD.id OR NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD
             AND NEW.revoked_at IS NOT NULL AND OLD.enabled_at IS NULL AND NEW.enabled_at IS NULL
             AND NOT EXISTS (
               SELECT 1 FROM wallet_provider_instances i WHERE i.account_id = OLD.id AND i.lifecycle != 'retired')))
-  )
+  ))
 BEGIN SELECT RAISE(ABORT, 'invalid wallet provider account transition'); END;
 
 DROP TRIGGER wallet_provider_accounts_audit;
@@ -310,8 +381,9 @@ WHEN (NEW.credential_source_id IS NOT OLD.credential_source_id OR NEW.identity_h
     WHERE e.account_id = NEW.id AND e.enrolment_revision = NEW.enrolment_revision
       AND (NEW.enrolment_revision = OLD.enrolment_revision + 1
         OR (e.kind = 'disable' AND e.reason = 'source_revoked'))
+      AND (NEW.revoked_at IS OLD.revoked_at OR e.kind = 'revoke')
       AND ((e.kind = 'source' AND e.credential_id = NEW.credential_source_id
-          AND NEW.credential_source_id IS NOT OLD.credential_source_id AND NEW.enabled_at IS NULL
+          AND NEW.credential_source_id IS NOT OLD.credential_source_id AND NEW.enabled_at IS NULL AND OLD.revoked_at IS NULL
           AND NEW.platform_hold_at IS OLD.platform_hold_at
           AND NEW.platform_hold_reason IS OLD.platform_hold_reason)
         OR (e.kind = 'enable' AND OLD.enabled_at IS NULL AND NEW.enabled_at = e.created_at
@@ -327,8 +399,30 @@ WHEN (NEW.credential_source_id IS NOT OLD.credential_source_id OR NEW.identity_h
           AND NEW.credential_source_id IS OLD.credential_source_id AND NEW.identity_hash IS OLD.identity_hash)
         OR (e.kind = 'release' AND OLD.platform_hold_at IS NOT NULL AND NEW.platform_hold_at IS NULL
           AND NEW.platform_hold_reason IS NULL AND NEW.enabled_at IS OLD.enabled_at
-          AND NEW.credential_source_id IS OLD.credential_source_id AND NEW.identity_hash IS OLD.identity_hash))))
+          AND NEW.credential_source_id IS OLD.credential_source_id AND NEW.identity_hash IS OLD.identity_hash)
+        OR (e.kind = 'revoke' AND OLD.revoked_at IS NULL AND NEW.revoked_at = e.created_at
+          AND OLD.enabled_at IS NULL AND NEW.enabled_at IS NULL
+          AND NEW.credential_source_id IS OLD.credential_source_id AND NEW.identity_hash IS OLD.identity_hash
+          AND NEW.platform_hold_at IS OLD.platform_hold_at
+          AND NEW.platform_hold_reason IS OLD.platform_hold_reason))))
 BEGIN SELECT RAISE(ABORT, 'wallet enrolment change needs its event'); END;
+
+-- Revoking a new-model enrolment (no legacy credential_id; the legacy row keeps its own transition above):
+-- a revoke event at the next revision stamps revoked_at, the enrolment is Off, and no instance is unretired.
+CREATE TRIGGER wallet_enrolments_revoke_event BEFORE UPDATE OF revoked_at ON wallet_provider_accounts
+WHEN OLD.credential_id IS NULL AND NEW.revoked_at IS NOT OLD.revoked_at AND NOT (
+  OLD.revoked_at IS NULL AND NEW.enrolment_revision = OLD.enrolment_revision + 1 AND EXISTS (
+    SELECT 1 FROM wallet_enrolment_events e WHERE e.account_id = NEW.id
+      AND e.enrolment_revision = NEW.enrolment_revision AND e.kind = 'revoke' AND e.created_at = NEW.revoked_at))
+BEGIN SELECT RAISE(ABORT, 'wallet enrolment revoke needs its event'); END;
+CREATE TRIGGER wallet_enrolments_revoke_off BEFORE UPDATE OF revoked_at ON wallet_provider_accounts
+WHEN OLD.credential_id IS NULL AND NEW.revoked_at IS NOT OLD.revoked_at
+  AND (OLD.enabled_at IS NOT NULL OR NEW.enabled_at IS NOT NULL)
+BEGIN SELECT RAISE(ABORT, 'wallet enrolment revoke needs it off'); END;
+CREATE TRIGGER wallet_enrolments_revoke_in_use BEFORE UPDATE OF revoked_at ON wallet_provider_accounts
+WHEN OLD.credential_id IS NULL AND NEW.revoked_at IS NOT OLD.revoked_at AND EXISTS (
+  SELECT 1 FROM wallet_provider_instances i WHERE i.account_id = OLD.id AND i.lifecycle != 'retired')
+BEGIN SELECT RAISE(ABORT, 'wallet enrolment is in use'); END;
 
 -- Source guard: an active credential of the same mode and provider, the platform's or this org's own,
 -- with its identity; a switch turns the enrolment Off; an identity change needs no unretired instances.

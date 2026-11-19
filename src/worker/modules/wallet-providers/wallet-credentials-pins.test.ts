@@ -14,7 +14,12 @@ import {
   seedOrg,
   uid,
 } from './repo-wallet-credentials-test-fixtures.ts';
-import { type Acct, setSource } from './repo-wallet-enrolments-test-fixtures.ts';
+import {
+  type Acct,
+  enrolment,
+  revokeEnrolment,
+  setSource,
+} from './repo-wallet-enrolments-test-fixtures.ts';
 
 beforeAll(() => {
   setWalletProvidersEnabledForTest(true);
@@ -87,6 +92,20 @@ describe('an unretired instance', () => {
     await revokeCredential(own.id);
     const different = await credential({ orgId: a.orgId, provider: 'samsung' });
     await refused(setSource(a, different), /identity change needs retired instances/);
+  });
+});
+
+describe('a new-model enrolment', () => {
+  it('cannot be revoked while an instance on it is unretired', async () => {
+    const { a, instanceId } = await seed();
+    const fresh = await enrolment(a.orgId, 'test', 'samsung');
+    await withoutTrigger(db(), 'wallet_provider_instances_binding_immutable', () =>
+      run(db(), 'UPDATE wallet_provider_instances SET account_id = ? WHERE id = ?', [
+        fresh.id,
+        instanceId,
+      ]),
+    );
+    await refused(revokeEnrolment(fresh), /enrolment is in use/);
   });
 });
 
