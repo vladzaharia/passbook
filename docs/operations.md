@@ -513,6 +513,10 @@ endpoints. Set the platform setting `events.feed` to `"off"` to skip it without 
 while it is off are never journaled, so webhook endpoints miss them and `GET /events` pollers see a silent
 gap; turning it back on does not backfill.
 
+### Printed ticket PDFs
+
+PDFs are drawn in the Worker with pdf-lib (Latin-1 text; other characters are folded or become "?", logged once per PDF as `PRINT_PDF_TEXT_LOSSY`). They are cached in R2 under `prints/{orgId}/{passId}/{printId}.pdf`, with bulk files under `prints/{orgId}/bulk/`. The daily `prints.pdf_sweep` deletes PDFs of ended prints and bulk files after 24 h.
+
 ## Runtime decisions
 
 - **workerd versions**: `npm run test:worker` runs on the pool's miniflare (workerd 1.20260815), dev and prod on the root wrangler (1.20261012). The pool pins its own copy until a release catches up. The Dependabot `cloudflare` group tracks it; when one ships, align versions and drop the `overrides` entries in `package.json`. Stay on vitest 4 until the pool supports 5.

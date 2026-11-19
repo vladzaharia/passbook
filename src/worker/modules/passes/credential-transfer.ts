@@ -5,6 +5,7 @@ import { classifyD1Error } from '../../platform/db.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { dispatchSafely } from '../delivery/issuance-intent.ts';
+import { dropPrintPdfs } from '../prints/pdf-drop.ts';
 import { ensureCredentialRefKeyset } from './credential-keyset.ts';
 import { assertCredentialTransferActor } from './credential-transfer-authority.ts';
 import {
@@ -322,6 +323,7 @@ export async function finishCredentialTransfer(
     if (!current) throw new NotFoundError('Transfer not found.', 'PASS_TRANSFER_NOT_FOUND');
     return { transferId, state: current.state };
   }
+  await dropPrintPdfs(ctx, source.pass);
   ctx.waitUntil(dispatchSafely(ctx, { passId: transfer.pass_id }));
   return { transferId, state: 'completed' };
 }

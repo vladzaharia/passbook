@@ -13,14 +13,18 @@ import { PRINT_HEADERS, renderPrintPage } from '../../ssr/print-page.tsx';
 import { actorFor, authOf, passScopeOf, svc } from '../passes/http.ts';
 import { tenantPassForRead, tenantPassForWrite } from '../passes/pass-access.ts';
 import { printPageModel } from './page.ts';
+import { PDF_HEADERS, ticketPdf } from './pdf-service.ts';
 import * as repo from './repo.ts';
 import { adminWriter } from './repo-write.ts';
+import { registerBulkPrintRoutes } from './routes-bulk.ts';
 import { ADMIN_PRINTS_PER_HOUR, mintPrint, voidPrint } from './service.ts';
 
 type Router = ReturnType<typeof createRouter>;
 
 /** /api/v1/passes/{id}/prints: staff and keys with passes:operate or passes:write. */
 export function registerPassPrintRoutes(passesRoutes: Router): void {
+  registerBulkPrintRoutes(passesRoutes);
+
   register(
     passesRoutes,
     'passes',
@@ -95,6 +99,7 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
           model,
           audience: 'staff',
           nonce: c.var.nonce,
+          pdfHref: `/api/v1/passes/${encodeURIComponent(pass.id)}/print/pdf`,
           ...(theme ? { theme } : {}),
         });
         return new Response(html, { headers: PRINT_HEADERS });
@@ -109,6 +114,23 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
         });
         return new Response(html, { status: error.status, headers: PRINT_HEADERS });
       }
+    },
+  );
+
+  register(
+    passesRoutes,
+    'passes',
+    {
+      method: 'get',
+      path: '/{id}/print/pdf',
+      summary: 'The PDF of the active print, for staff',
+      params: IdParamSchema,
+    },
+    async (c) => {
+      const ctx = svc(c);
+      const { id } = c.req.valid('param');
+      const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      return new Response(await ticketPdf(ctx, pass, 'staff'), { headers: PDF_HEADERS });
     },
   );
 }

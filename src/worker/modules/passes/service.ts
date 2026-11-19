@@ -4,6 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
 import { recordPassEvent } from '../events/record.ts';
+import { dropPrintPdfs } from '../prints/pdf-drop.ts';
 import { ensureCredentialRefKeyset } from './credential-keyset.ts';
 import { currentSummary, detailOf, toSummary } from './detail.ts';
 import { assertExternalIdFree, externalIdUpdateGuard } from './external-id.ts';
@@ -238,6 +239,8 @@ async function setStatus(
     ...(authority ? { authority } : {}),
     mutate: () => ({ status }),
   });
+  // A void ends the pass's prints (a trigger), so their PDFs, single and bulk, go too.
+  if (status === 'voided') await dropPrintPdfs(ctx, result.pass);
   await recordAudit(ctx, {
     orgId: result.pass.orgId,
     actorType: actor.type,

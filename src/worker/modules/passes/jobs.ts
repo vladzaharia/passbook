@@ -1,4 +1,5 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { dropPrintPdfs } from '../prints/pdf-drop.ts';
 import { prepareScanRetentionDelete } from '../scan/scan-retention-proof.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { requireCredentialRefKeyset } from './credential-keyset.ts';
@@ -53,7 +54,10 @@ async function purgeDeletedPasses(
       const retention = await prepareScanRetentionDelete(ctx.env, pass);
       const removed = await deletePassRows(ctx.env.DB, pass, retention, credentialKeysetCommitment);
       await deleteObjects(ctx.env.BUCKET, removed.objectKeys);
-      if (removed.deleted) total += 1;
+      if (removed.deleted) {
+        await dropPrintPdfs(ctx, pass);
+        total += 1;
+      }
     }
     if (passes.length < DELETE_BATCH) break;
   }

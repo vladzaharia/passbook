@@ -94,6 +94,13 @@ export const JobSchema = z.discriminatedUnion('kind', [
     /** The pass version read after the channel change committed: a later publish already covers it. */
     version: z.number().int().positive(),
   }),
+  /** One combined PDF of staff prints (bulk Print). The prints already exist; the job only renders. */
+  z.object({
+    kind: z.literal('prints.bulk'),
+    orgId: z.string().min(1),
+    jobId: z.string().min(1),
+    passIds: z.array(z.string().min(1)).min(1).max(50),
+  }),
   z.object({
     kind: z.literal('template.fork_update'),
     updateId: z.string().min(1),
