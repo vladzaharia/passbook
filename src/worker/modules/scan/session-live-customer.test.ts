@@ -77,4 +77,15 @@ describe('session customer settings', () => {
     expect(body?.customer).toMatchObject({ greet: null, chips: [], panel: null, lines: [] });
     expect(JSON.stringify(body)).not.toContain('Private name');
   });
+
+  it('never sends a name, pass, photo or staff to a customer screen, even for a named visible pass', async () => {
+    const { kit } = fixtures;
+    const session = await customerIn('Named', { greet: true });
+    const named = await session.entry({ holder: 'Alex Member', kind: 'ok' });
+    const body = await liveRowFor(kit.ctx, session.recipient, named);
+    expect(body?.customer).toMatchObject({ greet: null, chips: [], panel: null, lines: [] });
+    for (const key of ['holder', 'passId', 'photoUrl', 'presented', 'occupancy', 'resolvedBy'])
+      expect(body).not.toHaveProperty(key);
+    expect(JSON.stringify(body)).not.toContain('Alex');
+  });
 });

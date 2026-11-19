@@ -1,8 +1,9 @@
 import {
   ArrowDownRight,
   ArrowUpRight,
-  Check,
   CircleX,
+  LogIn,
+  LogOut,
   TriangleAlert,
   Undo2,
   Users,
@@ -15,7 +16,7 @@ import { countsOf, type Fill, heroOf, type Trend, trendOf } from './monitor-mode
 import './monitor-board.css';
 
 const ROW_ICON = {
-  ok: Check,
+  ok: LogIn,
   heads_up: TriangleAlert,
   refused: CircleX,
   ready: Users,
@@ -66,7 +67,9 @@ export function MonitorBoard({
     <div className="mon-board">
       <section aria-label="Inside now" className="mon-hero" data-fill={hero?.fill ?? 'open'}>
         <div className="mon-hero-main">
-          <p className="mon-label">{hero?.name ? `Inside ${hero.name}` : 'Inside now'}</p>
+          <p className="mon-label">
+            {hero ? (hero.name ? `Inside ${hero.name}` : 'Inside now') : 'Checked in, last 15 min'}
+          </p>
           <p className="mon-count" data-testid="monitor-count">
             {hero ? hero.count : trend.entered}
             {hero?.capacity ? <span className="mon-cap"> / {hero.capacity}</span> : null}
@@ -81,7 +84,6 @@ export function MonitorBoard({
               <TriangleAlert aria-hidden /> {word}
             </p>
           ) : null}
-          {hero ? null : <p className="mon-label">checked in, last 15 min</p>}
           <Trendline trend={trend} />
         </div>
         <div className="mon-buddy" aria-hidden>
@@ -106,7 +108,8 @@ export function MonitorBoard({
         {rows.length ? (
           <ol>
             {rows.slice(0, 8).map((row) => {
-              const Icon = ROW_ICON[row.kind];
+              const Icon =
+                row.kind === 'ok' && row.direction === 'out' ? LogOut : ROW_ICON[row.kind];
               return (
                 <li key={row.id} data-kind={row.kind}>
                   <span className="mon-row-icon" aria-hidden>

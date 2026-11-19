@@ -47,6 +47,8 @@ export function LiveScreen({
   const { rows, places, welcome, connected, now, setNow } = useLiveFeed(session, refetch);
   const [replay, setReplay] = useState(0);
   const [setup, setSetup] = useState(false);
+  const [setupFocused, setSetupFocused] = useState(false);
+  const refresh = useRef<HTMLButtonElement>(null);
   const lastRow = useRef<string | null>(null);
   const hold = useRef<ReturnType<typeof setTimeout>>(undefined);
   const customer = session.scanner?.deviceRole === 'customer';
@@ -75,9 +77,12 @@ export function LiveScreen({
     setReplay((n) => n + 1);
   }, [latestId]);
   useEffect(() => {
-    if (!setup) return;
+    if (!setup || setupFocused) return;
     const timer = setTimeout(() => setSetup(false), SETUP_SHOW_MS);
     return () => clearTimeout(timer);
+  }, [setup, setupFocused]);
+  useEffect(() => {
+    if (setup) refresh.current?.focus();
   }, [setup]);
   useEffect(() => () => clearTimeout(hold.current), []);
 
@@ -89,7 +94,6 @@ export function LiveScreen({
         brandName={orgName || 'PassBook'}
         logoUrl={logoUrl}
         title={view ? view.band.headline : latest ? latest.label : (welcome ?? undefined)}
-        eyebrow={view?.greet ?? undefined}
         hint={view?.band.sub ?? undefined}
         notice={connected ? null : CUSTOMER_COPY.reconnecting}
         style={scanBrandStyle(branding)}
@@ -108,11 +112,13 @@ export function LiveScreen({
           type="button"
           className="scan-live-brand"
           aria-label="Setup options"
-          onPointerDown={() => {
+          onPointerDown={(event) => {
+            if (event.button !== 0) return;
             hold.current = setTimeout(() => setSetup(true), SETUP_HOLD_MS);
           }}
           onPointerUp={() => clearTimeout(hold.current)}
           onPointerLeave={() => clearTimeout(hold.current)}
+          onPointerCancel={() => clearTimeout(hold.current)}
           onClick={(event) => {
             if (event.detail === 0) setSetup(true);
           }}
@@ -131,10 +137,19 @@ export function LiveScreen({
           </span>
         </button>
         {setup ? (
-          <Button variant="outline" onClick={() => void refetch()}>
+          <Button
+            ref={refresh}
+            variant="outline"
+            onFocus={() => setSetupFocused(true)}
+            onBlur={() => setSetupFocused(false)}
+            onClick={() => void refetch()}
+          >
             Refresh setup
           </Button>
         ) : null}
+        <span role="status" className="sr-only">
+          {setup ? 'Setup options shown' : ''}
+        </span>
         <span role="status" className="scan-live-status" data-connected={connected}>
           {connected ? 'Live' : 'Reconnecting…'}
         </span>

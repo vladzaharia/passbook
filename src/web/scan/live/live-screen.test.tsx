@@ -177,7 +177,7 @@ describe('customer live screen Buddy', () => {
       at: Date.now(),
       where: 'Front',
       band: { headline: "You're in", sub: null },
-      greet: 'Hi, Sam',
+      greet: null,
       chips: [],
       panel: null,
       lines: [],
@@ -186,7 +186,7 @@ describe('customer live screen Buddy', () => {
     };
     act(() => LiveSocket.instances[0]?.publish({ ...row('ok', `${ID.slice(0, -1)}9`), customer }));
     expect(container.querySelector('h1')).toHaveTextContent("You're in");
-    expect(container).toHaveTextContent('Hi, Sam');
+    expect(container).not.toHaveTextContent('Hi, Sam');
   });
 });
 
@@ -201,6 +201,8 @@ describe('monitor setup access', () => {
     fireEvent.pointerDown(brand);
     act(() => vi.advanceTimersByTime(950));
     expect(getByRole('button', { name: 'Refresh setup' })).toBeVisible();
+    // Focus holds it open for a keyboard user; it hides 12 s after focus leaves.
+    fireEvent.blur(getByRole('button', { name: 'Refresh setup' }));
     act(() => vi.advanceTimersByTime(12_100));
     expect(queryByRole('button', { name: 'Refresh setup' })).toBeNull();
     fireEvent.click(brand, { detail: 0 });

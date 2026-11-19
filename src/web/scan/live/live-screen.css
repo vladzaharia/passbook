@@ -37,6 +37,11 @@
   user-select: none;
   -webkit-touch-callout: none;
 }
+.scan-live-brand:focus-visible {
+  outline: 3px solid var(--signal);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
 .scan-live-brand-icon {
   display: grid;
   flex: none;
@@ -44,7 +49,7 @@
   width: clamp(48px, 4vw, 88px);
   aspect-ratio: 1;
   border: 1px solid color-mix(in oklab, var(--signal) 30%, var(--pk-border-subtle));
-  border-radius: 28%;
+  border-radius: 14px;
   background: color-mix(in oklab, var(--signal) 10%, var(--pk-surface-raised));
   color: var(--pk-accent-fg);
 }

@@ -83,7 +83,7 @@ describe('administrator session display authorization', () => {
     expect(await liveRecipient(kit.ctx, refreshed)).toBeNull();
   });
 
-  it('preserves managed-admin scope on monitor photos and rejects a revoked admin session', async () => {
+  it('gives a managed-admin monitor public rows only and rejects a revoked admin session', async () => {
     const { kit, authority, parent, child, row, withSourceProof } = fixtures;
     const session = await parent('Admin monitor photo session');
     const source = await child(session.id, 'Photo source');
@@ -111,11 +111,7 @@ describe('administrator session display authorization', () => {
     const auth = await makeSession(kit.fx, { userId: 'admin-1', roles: ['admin'] });
     const sessionAuth = await createSessionStore(kit.env, kit.clock).resolve(auth.cookieValue);
     if (!sessionAuth) throw new Error('Missing admin session.');
-    const { attachment, tenantAuthority } = await managedScreenAttachment(
-      kit,
-      sessionAuth,
-      device.id,
-    );
+    const { attachment } = await managedScreenAttachment(kit, sessionAuth, device.id);
     const recipient = await liveRecipient(kit.ctx, attachment);
     if (!recipient) throw new Error('Missing admin monitor recipient.');
     const template = await kit.scanTemplate('Admin monitor photo', {
@@ -139,34 +135,15 @@ describe('administrator session display authorization', () => {
       }),
     ).toBe(true);
     const projection = await liveRowFor(kit.ctx, recipient, entry);
-    if (!projection?.photoUrl) throw new Error('Missing admin monitor photo.');
-    const url = new URL(projection.photoUrl, 'https://wallet.test');
-    expect([...url.searchParams.keys()].sort()).toEqual(['event', 'orgId', 'setupId', 'timeZone']);
-    expect(url.searchParams.get('event')).toBe(entry.row.id);
-    expect(url.toString()).not.toContain(attachment.admin!.sessionId);
-    expect(url.toString()).not.toContain(tenantAuthority.membershipId);
+    // A monitor is a wall screen: outcome, direction, place and time only.
+    expect(projection).not.toHaveProperty('photoUrl');
+    expect(projection).not.toHaveProperty('holder');
+    expect(projection).not.toHaveProperty('passId');
     expect(JSON.stringify(projection)).not.toMatch(
       /sourceProof|platformSessionId|passSnapshot|linkGeneration|identityRevision/,
     );
-    expect(url.searchParams.get('orgId')).toBe(kit.org.id);
-    expect(url.searchParams.get('setupId')).toBe(device.id);
-    expect(url.searchParams.get('timeZone')).toBe('UTC');
-    const app = createApp({
-      stores: {
-        ...denyAllStores,
-        sessions: createSessionStore(kit.env, kit.clock),
-        scanners: createScannerStore(kit.env, kit.clock),
-      },
-      clock: kit.clock,
-    });
-    expect((await app.request(url.toString(), { headers: auth.headers }, kit.env)).status).toBe(
-      200,
-    );
     await revokeSession(kit.env.DB, attachment.admin!.sessionId, kit.clock.now());
     expect(await liveRecipient(kit.ctx, attachment)).toBeNull();
-    expect((await app.request(url.toString(), { headers: auth.headers }, kit.env)).status).toBe(
-      401,
-    );
   });
 
   it('retains an unbound admin event and template scope in ordinary member-photo URLs', async () => {

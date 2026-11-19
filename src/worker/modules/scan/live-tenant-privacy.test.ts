@@ -83,14 +83,10 @@ describe('live tenant privacy and delivery', () => {
     const recipient = await liveRecipient(kit.ctx, screen.attachment);
     if (!recipient) throw new Error('Missing live recipient.');
     const projection = await liveRowFor(kit.ctx, recipient, photoEntry);
-    if (!projection?.photoUrl) throw new Error('Missing live photo URL.');
-    const url = new URL(projection.photoUrl, ORIGIN);
-    expect(url.searchParams.get('event')).toBe(photoEntry.row.id);
-    expect(url.toString().includes(scannerSecret)).toBe(false);
-    expect(url.toString().includes(screen.session.csrf)).toBe(false);
-    expect(url.toString().includes(scannerProof)).toBe(false);
-    expect(url.toString().includes(screen.authority.sessionCsrfProof)).toBe(false);
-    expect(url.toString()).not.toContain(screen.resolved.sessionId);
+    if (!projection) throw new Error('Missing live projection.');
+    expect(projection).not.toHaveProperty('photoUrl');
+    expect(projection).not.toHaveProperty('holder');
+    expect(projection).not.toHaveProperty('passId');
     expect(JSON.stringify(projection).includes(scannerSecret)).toBe(false);
     expect(JSON.stringify(projection).includes(screen.session.csrf)).toBe(false);
     expect(JSON.stringify(projection).includes(scannerProof)).toBe(false);
@@ -144,8 +140,8 @@ describe('live tenant privacy and delivery', () => {
     expect(
       before.rows.length === 1 &&
         before.rows[0]?.scannerId === source.device.id &&
-        before.rows[0].holder === null &&
-        before.rows[0].passId === null,
+        !('holder' in before.rows[0]) &&
+        !('passId' in before.rows[0]),
     ).toBe(true);
     const response = await upgrade(screen.attachment);
     expect(response.status).toBe(101);

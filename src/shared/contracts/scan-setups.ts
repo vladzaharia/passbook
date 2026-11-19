@@ -85,9 +85,33 @@ export const ScanLiveRowSchema = z.object({
   customer: ScanCustomerViewSchema.nullable().optional(),
 });
 export type ScanLiveRow = z.infer<typeof ScanLiveRowSchema>;
+/** A customer screen's body: the band only. No greeting, chips, panel or lines: they can carry the holder. */
+export const ScanPublicCustomerViewSchema = ScanCustomerViewSchema.extend({
+  greet: z.null(),
+  chips: z.array(z.never()).max(0),
+  panel: z.null(),
+  lines: z.array(z.never()).max(0),
+});
+/**
+ * What a monitor or customer screen is sent: outcome, direction, place and time. The personal
+ * fields (holder, pass id, photo, staff, per-person occupancy) are not in the shape, so the strict
+ * schema rejects a row that carries one.
+ */
+export const ScanPublicLiveRowSchema = z.strictObject({
+  id: IdSchema,
+  at: TimestampSchema,
+  scannerId: IdSchema,
+  scannerName: z.string(),
+  kind: z.enum(['ok', 'heads_up', 'refused', 'ready', 'undo']),
+  direction: z.enum(['in', 'out']).nullable(),
+  label: z.string(),
+  replaces: z.string().min(1).max(64).nullable().optional(),
+  customer: ScanPublicCustomerViewSchema.nullable().optional(),
+});
+export type ScanPublicLiveRow = z.infer<typeof ScanPublicLiveRowSchema>;
 export const ScanLiveSnapshotSchema = z.object({
   cursor: z.string().nullable(),
-  rows: z.array(ScanLiveRowSchema).max(100),
+  rows: z.array(z.union([ScanLiveRowSchema, ScanPublicLiveRowSchema])).max(100),
   /** A customer screen's session welcome line, for the idle screen. */
   welcome: z.string().max(40).optional(),
   places: z.array(ScanPlaceRevSchema).max(64).optional(),
