@@ -271,13 +271,15 @@ const REPORT_PAGE = 100;
 export async function migrationReport(
   ctx: ServiceContext,
   auth: SessionAuth,
+  after = '',
 ): Promise<WalletMigrationReport> {
   adminOnly(auth);
   ctx = snapshotWalletCredentialContext(ctx);
   const counts = await countAccounts(ctx.env.DB);
-  const page = await pendingAccounts(ctx.env.DB, '', REPORT_PAGE);
+  const page = await pendingAccounts(ctx.env.DB, after, REPORT_PAGE + 1);
+  const next = page.length > REPORT_PAGE ? (page[REPORT_PAGE - 1]?.id ?? null) : null;
   const items: WalletMigrationReport['items'] = [];
-  for (const a of page) {
+  for (const a of page.slice(0, REPORT_PAGE)) {
     const base = { accountId: a.id, orgId: a.org_id, mode: a.mode, provider: a.provider };
     const row = await findPending(ctx.env.DB, a.id);
     let plan: Plan | null = null;
@@ -299,5 +301,5 @@ export async function migrationReport(
           : { ...base, state: 'ready', reason: null, identityShared: [] },
     );
   }
-  return { ...counts, items, more: counts.pending > page.length };
+  return { ...counts, items, next };
 }

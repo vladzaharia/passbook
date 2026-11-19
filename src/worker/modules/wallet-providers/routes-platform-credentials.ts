@@ -10,6 +10,7 @@ import {
   WalletCredentialSchema,
   WalletEnrolmentHoldResultSchema,
   WalletMigrationQueuedSchema,
+  WalletMigrationReportQuerySchema,
   WalletMigrationReportSchema,
   WalletMigrationResolvedSchema,
 } from '../../../shared/contracts/wallet-providers.ts';
@@ -134,9 +135,11 @@ register(
     method: 'get',
     path: '/wallet-credentials/migrate',
     summary: 'Report the legacy wallet accounts waiting for a credential source',
+    query: WalletMigrationReportQuerySchema,
     response: WalletMigrationReportSchema,
   },
-  async (c) => c.json(await migrationReport(serviceContext(c), sessionOf(c))),
+  async (c) =>
+    c.json(await migrationReport(serviceContext(c), sessionOf(c), c.req.valid('query').after)),
 );
 
 register(

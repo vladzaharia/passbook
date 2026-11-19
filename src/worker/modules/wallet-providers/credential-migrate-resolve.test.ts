@@ -13,6 +13,7 @@ import {
   stateOf,
 } from './credential-migrate-test-fixtures.ts';
 import { savePlatformCredential } from './credential-service.ts';
+import { googleOrg } from './shared-issuer-isolation-test-fixtures.ts';
 import { type Kit, kit } from './wallet-wa1b-test-fixtures.ts';
 
 let k: Kit;
@@ -167,5 +168,24 @@ describe('retire (live Samsung)', () => {
     await expect(resolveMigration(k.ctx, admin.auth, input(g, 'retire'))).rejects.toMatchObject({
       code: 'WALLET_ACCOUNT_CONFLICT',
     });
+  });
+});
+
+describe('retire with a live instance', () => {
+  it('is refused while an instance is unretired', async () => {
+    const admin = await k.admin();
+    const o = await googleOrg(env.DB);
+    const acct = {
+      id: o.account.id,
+      orgId: o.orgId,
+      mode: 'live' as const,
+      provider: 'google' as const,
+      hmacKey: null,
+    };
+    await expect(resolveMigration(k.ctx, admin.auth, input(acct, 'retire'))).rejects.toMatchObject({
+      code: 'WALLET_ACCOUNT_INSTANCES_ACTIVE',
+    });
+    expect((await stateOf(acct.id)).revoked_at).toBeNull();
+    expect((await stateOf(acct.id)).revision).toBe(o.account.revision);
   });
 });

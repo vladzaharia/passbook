@@ -197,8 +197,11 @@ export const WalletMigrationReportSchema = z.strictObject({
   pending: z.number().int().nonnegative(),
   migrated: z.number().int().nonnegative(),
   items: z.array(WalletMigrationItemSchema),
-  more: z.boolean(),
+  /** Pass as `after` for the next page; null on the last. */
+  next: IdSchema.nullable(),
 });
+
+export const WalletMigrationReportQuerySchema = z.strictObject({ after: IdSchema.optional() });
 export type WalletMigrationReport = z.infer<typeof WalletMigrationReportSchema>;
 
 export const WalletMigrationQueuedSchema = z.strictObject({
