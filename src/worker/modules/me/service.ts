@@ -114,7 +114,7 @@ async function toPass(
   // Never attach a replacement bearer capability to an older owned row.
   const walletOffers: MyPassDto['walletOffers'] = [];
   if (presentationEligible && plainToken !== null) {
-    for (const { provider, href } of await listWalletOffers(ctx, row.id)) {
+    for (const { provider, href } of await listWalletOffers(ctx, row.id, channels)) {
       if (href === `/p/${plainToken}/wallet/${provider}`) {
         // Provider credentials and short-lived offer tokens stay server-side.
         walletOffers.push({ provider, href, installation: 'unknown' });

@@ -100,6 +100,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   };
   const org = await getOrg(db, pass.orgId);
   const base = baseUrl(ctx.env);
+  const channels = await holderChannels(ctx, pass);
   const manifests = new Map<string, string | null>();
   const [platform, orgSettings, branding, artifact, images, walletOffers] = await Promise.all([
     getPlatformSettings(ctx),
@@ -112,7 +113,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       return [];
     }),
     // Provider errors may contain credentials: log a stable code and the error class, not the cause.
-    listWalletOffers(ctx, pass.id).catch((error: unknown) => {
+    listWalletOffers(ctx, pass.id, channels.effective).catch((error: unknown) => {
       ctx.log.warn('email.wallet_offers_failed', {
         outboxId: row.id,
         code: 'WALLET_OFFERS_FAILED',
@@ -135,7 +136,6 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'DELIVERY_STALE');
     return;
   }
-  const channels = await holderChannels(ctx, pass);
   const attachApple = attach && channels.effective.apple.on;
   const { iconUrl, logo } = passEmailImages(images, base);
   const support = emailSupport(ctx.env, orgSettings, branding);

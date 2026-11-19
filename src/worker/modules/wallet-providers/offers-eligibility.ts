@@ -1,3 +1,4 @@
+import type { EffectiveChannels } from '../../../shared/contracts/channels.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { channelOn } from '../channels/gate.ts';
@@ -207,13 +208,15 @@ export async function eligibleWalletProvider(
   ctx: ServiceContext,
   snapshot: OfferPassSnapshot,
   provider: NativeProvider,
+  /** The caller's channel reading, when it has one: the gate is then not loaded again. */
+  channels?: EffectiveChannels,
 ): Promise<EligibleWalletProvider | null> {
   ctx = captureOfferContext(ctx);
   if (!walletProviderEnabled(provider)) return null;
   const pass = snapshot.pass;
   if (!pass.releaseId) return null;
   // The one channel gate: platform, org, template and pass levels, and the design's capability.
-  if (!(await channelOn(ctx, pass, provider))) return null;
+  if (!(channels ? channels[provider].on : await channelOn(ctx, pass, provider))) return null;
   const policy = projectionPolicy(provider);
   const approved = await getApprovedProjection(
     ctx,

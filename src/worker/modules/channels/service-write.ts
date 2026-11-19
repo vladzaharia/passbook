@@ -17,6 +17,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordPassEvents } from '../events/record.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import type { Pass } from '../passes/repo-map.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
 import type { Actor } from '../passes/service.ts';
 import * as repo from './repo.ts';
 import { writePassChannels, writeTemplatePolicy } from './repo-write.ts';
@@ -116,8 +117,15 @@ export async function putPassChannels(
   await bump(ctx.env.DB, key, window);
   // A flip, or a row newer than the pass (an earlier bump was lost), queues the republish.
   const pending = (rows.setAt.apple ?? 0) > pass.modifiedAt;
-  if (before.apple.on !== after.apple.on || pending)
-    await ctx.env.JOBS.send({ kind: 'channel.apple_bump', passId: pass.id });
+  if (before.apple.on !== after.apple.on || pending) {
+    // Read after the commit: any publish from here on covers the change, so the job may skip.
+    const current = await getPass(ctx.env.DB, pass.id);
+    await ctx.env.JOBS.send({
+      kind: 'channel.apple_bump',
+      passId: pass.id,
+      version: current?.version ?? pass.version,
+    });
+  }
   await recordPassEvents(
     ctx,
     changes.map((data) => ({

@@ -137,7 +137,7 @@ register(
       const page = `/p/${token}`;
       // Resolve only links to this bearer under the same snapshot as the page and its assets.
       const walletOffers = canPresent(pass, model.passJson, svcCtx.clock.now())
-        ? (await listWalletOffers(svcCtx, pass.id))
+        ? (await listWalletOffers(svcCtx, pass.id, model.channels.effective))
             .filter(({ provider, href }) => href === `${page}/wallet/${provider}`)
             .map(({ provider, href }) => ({ provider, href, installation: 'unknown' as const }))
         : [];

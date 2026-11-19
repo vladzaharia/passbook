@@ -71,7 +71,12 @@ export const JobSchema = z.discriminatedUnion('kind', [
     chunk: z.number().int().nonnegative().optional(),
   }),
   /** Apple flipped for a pass: republish (force) so devices fetch the voided or live copy. */
-  z.object({ kind: z.literal('channel.apple_bump'), passId: z.string().min(1) }),
+  z.object({
+    kind: z.literal('channel.apple_bump'),
+    passId: z.string().min(1),
+    /** The pass version read after the channel change committed: a later publish already covers it. */
+    version: z.number().int().positive(),
+  }),
   z.object({
     kind: z.literal('template.fork_update'),
     updateId: z.string().min(1),

@@ -1,3 +1,4 @@
+import type { EffectiveChannels } from '../../../shared/contracts/channels.ts';
 import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { NotFoundError } from '../../platform/errors.ts';
@@ -44,6 +45,7 @@ const notFound = () =>
 export async function listWalletOffers(
   ctx: ServiceContext,
   passId: string,
+  channels?: EffectiveChannels,
 ): Promise<WalletOffer[]> {
   if (!walletProviderEnabled('google') && !walletProviderEnabled('samsung')) return [];
   ctx = captureOfferContext(ctx);
@@ -60,7 +62,7 @@ export async function listWalletOffers(
   );
   const candidates: { eligible: EligibleWalletProvider; offer: WalletOffer }[] = [];
   for (const provider of ['google', 'samsung'] as const) {
-    const eligible = await eligibleWalletProvider(ctx, snapshot, provider);
+    const eligible = await eligibleWalletProvider(ctx, snapshot, provider, channels);
     if (!eligible) continue;
     const instance = await getWalletInstance(ctx.env.DB, {
       orgId: snapshot.pass.orgId,

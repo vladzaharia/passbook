@@ -281,6 +281,23 @@ describe('Apple voided variant', () => {
     ).toBeNull();
   });
 
+  it('skips the bump job when a publish already followed the change', async () => {
+    const { kit, pass, drain } = await setup();
+    kit.clock.advance(1000);
+    await kit.send('PUT', `/passes/${pass.id}/channels`, { channels: { apple: 'off' } });
+    const queued = kit.queue.sent.length;
+    expect(queued).toBe(1);
+    await publishPass(jobCtxOf(kit), {
+      passId: pass.id,
+      cause: 'admin',
+      actor: { type: 'system', id: null },
+      force: true,
+    });
+    const after = (await getPass(kit.env.DB, pass.id))?.version;
+    await drain();
+    expect((await getPass(kit.env.DB, pass.id))?.version).toBe(after);
+  });
+
   it('refuses personalization while Apple is off', async () => {
     const { kit, pass, put } = await setup();
     await put({ apple: 'off' });

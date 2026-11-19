@@ -2,7 +2,6 @@ import type { JobOf } from '../../jobs/types.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import * as repo from './repo.ts';
 
 /**
  * Republishes (force) a pass whose Apple state flipped, so the version moves, the push goes out
@@ -16,12 +15,12 @@ export async function handleAppleBump(
 ): Promise<void> {
   const pass = await getPass(ctx.env.DB, job.passId);
   if (!pass || pass.removedAt !== null || pass.status !== 'active') return;
-  const { setAt } = await repo.getPassChannelRows(ctx.env.DB, pass.id);
-  if ((setAt.apple ?? 0) <= pass.modifiedAt) return;
+  // A publish after the change committed moved the version past the message's: nothing to do.
+  if (pass.version > job.version) return;
   await publishPass(ctx, {
     passId: pass.id,
-    cause: 'admin',
-    actor: { type: 'system', id: null },
+    cause: 'resign',
+    actor: { type: 'system', id: `channel.apple_bump:${pass.id}:${job.version}` },
     force: true,
     notify: false,
   });
