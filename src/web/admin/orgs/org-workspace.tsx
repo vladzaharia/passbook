@@ -16,6 +16,7 @@ import {
   SkeletonDetail,
 } from '@/web/ui/index.ts';
 import { OrgSettingsSections } from '../settings/org-settings-page.tsx';
+import { OrgFacts } from './org-facts.tsx';
 import { OrgForm } from './org-form.tsx';
 import { OrgStatus } from './orgs-page.tsx';
 import { useOrgWorkspace } from './queries.ts';
@@ -118,6 +119,7 @@ export function OrgWorkspacePage({
             Suspended: passes do not update and its API keys do not work.
           </Callout>
         ) : null}
+        <OrgFacts org={org} />
         {canManage ? (
           <OrgForm org={org} canChooseIdentity={isAdmin} />
         ) : (

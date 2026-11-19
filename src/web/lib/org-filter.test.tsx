@@ -398,9 +398,7 @@ describe('organization settings links', () => {
         '/api/v1/orgs/o1/invitations': () => json({ items: [] }),
       },
     });
-    expect(
-      await screen.findByRole('heading', { name: 'Northwind Climbing', level: 1 }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Organization' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/admin/o/o1/settings');
     expect(router.state.location.search).not.toHaveProperty('orgId');
   });

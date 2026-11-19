@@ -330,6 +330,12 @@ describe('orgs list', () => {
   });
 });
 
+/** The org's own narrow identity list (`?orgId=`) is allowed; the platform list is not. */
+const platformIdentityCalls = (calls: unknown[][]) =>
+  calls.some(
+    ([url]) => String(url).startsWith('/api/v1/identities') && !String(url).includes('orgId='),
+  );
+
 describe('org detail', () => {
   const renderApp = (path: string, options: RenderAppOptions = {}) =>
     renderBaseApp(`${path}${path.includes('?') ? '&' : '?'}view=workspace`, {
@@ -625,11 +631,11 @@ describe('org detail', () => {
     for (const path of [
       '/api/v1/orgs/o1/memberships',
       '/api/v1/orgs/o1/invitations',
-      '/api/v1/identities',
       '/api/v1/templates',
     ]) {
       expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith(path))).toBe(false);
     }
+    expect(platformIdentityCalls(fetchMock.mock.calls)).toBe(false);
   });
 
   it('lets an org manager edit branding without platform identity access or membership management', async () => {
@@ -650,9 +656,7 @@ describe('org detail', () => {
     expect(screen.queryByLabelText('Signing identity')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'People & service access' })).toBeNull();
     expect(screen.queryByTitle('Sample pass email')).toBeNull();
-    expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/identities'))).toBe(
-      false,
-    );
+    expect(platformIdentityCalls(fetchMock.mock.calls)).toBe(false);
     const user = userEvent.setup();
     await user.type(name, ' updated');
     await user.click(screen.getByRole('button', { name: 'Save' }));

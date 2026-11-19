@@ -1,7 +1,6 @@
 import type { z } from 'zod';
 import { OrgSettingsSchema, PlatformSettingsSchema } from '../../../shared/contracts/settings.ts';
 import { checkFromName } from '../../../shared/email-from-name.ts';
-import { DATA_CLASSES, RETENTION_CLASSES } from '../../../shared/privacy/data-classes.ts';
 import type { Actor } from '../../platform/context.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -9,6 +8,7 @@ import { auditActor, recordAudit } from '../audit/service.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
 import { planRetentionChange } from '../retention/changes.ts';
 import { enqueueShortenNotices } from '../retention/notify.ts';
+import { inherit, platformGateIssue, type SettingEntry } from './inherit.ts';
 import { orgIdOfScope, registryFor } from './registry.ts';
 import { isPlatformAddress } from './reply-to-domain.ts';
 import {
@@ -22,8 +22,8 @@ import {
   writeScope,
 } from './repo.ts';
 
+export type { SettingEntry } from './inherit.ts';
 export { platformSettingsStmt } from './repo.ts';
-
 export type PlatformSettings = z.infer<typeof PlatformSettingsSchema>;
 export type OrgSettings = z.infer<typeof OrgSettingsSchema>;
 
@@ -109,18 +109,6 @@ export async function getOrgSettings(ctx: ServiceContext, orgId: string): Promis
   return OrgSettingsSchema.parse(await readScope(ctx, `org:${orgId}`));
 }
 
-export interface SettingEntry {
-  scope: string;
-  key: string;
-  value: unknown;
-  default?: unknown;
-  source: 'org' | 'default';
-  ceiling?: number;
-  blockedByPlatform?: boolean;
-  updatedAt: number | null;
-  updatedBy: string | null;
-}
-
 async function assertScope(ctx: ServiceContext, scope: string): Promise<void> {
   const orgId = orgIdOfScope(scope);
   if (orgId && !(await orgIsReadable(ctx.env.DB, orgId)))
@@ -145,40 +133,6 @@ async function listStored(ctx: ServiceContext, scope: string): Promise<SettingEn
       updatedAt: row?.updated_at ?? null,
       updatedBy: row?.updated_by ?? null,
     };
-  });
-}
-
-const clamp = (n: number, max: number) => Math.min(n, max);
-
-/** Org entries read through the platform: defaults come from it and values stop at its ceilings. */
-function inherit(entries: SettingEntry[], platform: PlatformSettings): SettingEntry[] {
-  const retention = new Map(
-    RETENTION_CLASSES.map((cls) => [DATA_CLASSES[cls].key as string, DATA_CLASSES[cls]]),
-  );
-  return entries.map((entry) => {
-    const cls = retention.get(entry.key);
-    if (cls) {
-      const ceiling = platform[cls.maxKey];
-      const fallback = clamp(Math.max(platform[cls.key], cls.floor), ceiling);
-      const value =
-        entry.source === 'org' && typeof entry.value === 'number'
-          ? clamp(Math.max(entry.value, cls.floor), ceiling)
-          : fallback;
-      return { ...entry, value, default: fallback, ceiling };
-    }
-    if (entry.key === 'email.orgCapPerDay') {
-      const ceiling = platform['email.orgCapPerDayMax'];
-      const fallback = clamp(entry.default as number, ceiling);
-      return {
-        ...entry,
-        value: entry.source === 'org' ? clamp(entry.value as number, ceiling) : fallback,
-        default: fallback,
-        ceiling,
-      };
-    }
-    if (entry.key === 'nfc.tags' && !platform['nfc.enabled'])
-      return { ...entry, blockedByPlatform: true };
-    return entry;
   });
 }
 
@@ -240,13 +194,8 @@ export async function updateSettings(
     }
   }
   if (issues.length) throw new ValidationError('Invalid settings.', issues, 'INVALID_SETTING');
-  const tags = upserts['nfc.tags'] as { enabled?: boolean } | undefined;
-  if (orgId !== null && tags?.enabled === true && !(await getPlatformSettings(ctx))['nfc.enabled'])
-    throw new ValidationError(
-      'Invalid settings.',
-      [{ path: 'nfc.tags', message: 'NFC is off for all organizations.', code: 'NFC_OFF' }],
-      'NFC_OFF',
-    );
+  const gated = orgId === null ? null : platformGateIssue(await getPlatformSettings(ctx), upserts);
+  if (gated) throw new ValidationError('Invalid settings.', [gated], gated.code);
   // Bounds against the platform maximum, and the floors that delay a shortening (retention keys only).
   const retention = await planRetentionChange(ctx, scope, upserts, deletes);
   const [first] = retention.issues;

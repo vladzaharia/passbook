@@ -1,6 +1,4 @@
 import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react';
-import type { z } from 'zod';
-import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
 import { isApiError } from '@/web/lib/errors.ts';
 import { handleStaleSave } from '@/web/lib/stale-save.ts';
 import {
@@ -18,39 +16,13 @@ import {
 } from '@/web/ui/index.ts';
 import { publishUnsaved } from './drafts.ts';
 import { changedValues, type Draft, type SettingField, toDraft } from './fields.ts';
+import { currentValues, type SaveGuard } from './form-values.ts';
 import { useSaveSettings, useSettings } from './queries.ts';
 import {
   BASIC_KEYS,
   SettingsFormContent,
   SettingsReviewSummary,
 } from './settings-form-content.tsx';
-
-type Entries = z.infer<typeof SettingsListSchema>['items'];
-
-/** Server value if set, else the server default, else empty. */
-function currentValues(
-  entries: Entries,
-  fields: readonly SettingField[],
-  platform: boolean,
-): Record<string, unknown> {
-  const kinds = new Map(fields.map((f) => [f.key, f.kind]));
-  const out: Record<string, unknown> = {};
-  // An org input is empty until the org sets its own value; the default shows as the placeholder.
-  for (const e of entries)
-    out[e.key] =
-      !platform && e.source === 'default' && kinds.get(e.key) !== 'boolean'
-        ? undefined
-        : (e.value ?? e.default);
-  return out;
-}
-
-/** A change that needs a danger confirm first; Cancel puts `key` back. */
-export interface SaveGuard {
-  key: string;
-  title: string;
-  description: ReactNode;
-  confirmLabel: string;
-}
 
 export interface SettingsFormProps {
   scope: string;

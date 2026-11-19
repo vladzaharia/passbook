@@ -167,4 +167,21 @@ describe('settings source and ceiling', () => {
     await call('PUT', '', { values: { 'nfc.enabled': true } });
     expect((await put(scope, { 'nfc.tags': { enabled: true } })).status).toBe(200);
   });
+
+  it('refuses an org email cap above the platform maximum on write', async () => {
+    const scope = await orgScope();
+    await call('PUT', '', { values: { 'email.orgCapPerDayMax': 100 } });
+    const res = await put(scope, { 'email.orgCapPerDay': 101 });
+    expect(res.status).toBe(422);
+    expect(JSON.stringify(await res.json())).toContain('Up to 100.');
+    expect((await read(scope))('email.orgCapPerDay')).toMatchObject({ source: 'default' });
+    expect((await put(scope, { 'email.orgCapPerDay': 100 })).status).toBe(200);
+  });
+
+  it('refuses an org principal reading platform scope, new fields included', async () => {
+    await orgScope();
+    const res = await call('GET', '?scope=platform', undefined, member.headers);
+    expect(res.status).toBe(403);
+    expect(JSON.stringify(await res.json())).not.toContain('retention.scansMaxDays');
+  });
 });

@@ -1349,6 +1349,7 @@ describe('org email settings (PS-23)', () => {
 
   it('accepts the bounds and resets to the defaults', async () => {
     const { org, scope } = await orgScope();
+    await call('PUT', '', { values: { 'email.orgCapPerDayMax': 5000 } });
     const read = async () => {
       clearSettingsCache(env.DB);
       const s = await getOrgSettings(createServiceContext(appEnv), org.id);

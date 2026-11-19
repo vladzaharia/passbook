@@ -112,4 +112,39 @@ describe('org settings inheritance', () => {
     expect(screen.queryByLabelText('Refresh cooldown')).toBeNull();
     expect(screen.queryByLabelText('Magic-link sign-in')).toBeNull();
   });
+
+  it('shows created, id and the signing identity with a link to Wallet accounts', async () => {
+    await renderApp('/admin/o/o1/settings', {
+      session: 'admin',
+      memberships: [membershipFixture('o1')],
+      handlers: {
+        '/api/v1/orgs/o1': () => json(org),
+        '/api/v1/orgs/o1/workspace': () => json(org),
+        '/api/v1/identities': () =>
+          json({
+            items: [
+              {
+                id: 'i1',
+                label: 'Acme signer',
+                passTypeIdentifier: 'pass.acme',
+                teamIdentifier: 'T',
+                certSubject: null,
+                certSerial: null,
+                notBefore: null,
+                notAfter: Date.UTC(2027, 5, 1),
+                daysRemaining: 200,
+                apnsAvailable: true,
+                apnsHealth: 'healthy',
+              },
+            ],
+            nextCursor: null,
+          }),
+        '/api/v1/settings': () => json({ items: [] }),
+      },
+    });
+    const link = await screen.findByRole('link', { name: /Acme signer, expires/ });
+    expect(link).toHaveAttribute('href', '/admin/o/o1/wallet-accounts');
+    expect(screen.getAllByText('o1').length).toBeGreaterThan(0);
+    expect(screen.getByText('Created')).toBeInTheDocument();
+  });
 });
