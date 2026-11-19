@@ -313,11 +313,13 @@ describe('dead links', () => {
     await run(h.env.DB, "UPDATE org_invitations SET accepted_at = 1 WHERE id = 'inv-acc'");
     const accepted = await (await page(`/auth/magic?t=${token}`)).text();
     expect(accepted).toMatch(/<h1[^>]*>Invitation already used<\/h1>/);
+    expect(accepted).toContain('Open PassBook');
     const other = 'r'.repeat(43);
     await invitedLink(other, addr(), 'inv-rev');
     await run(h.env.DB, "UPDATE org_invitations SET revoked_at = 1 WHERE id = 'inv-rev'");
     const revoked = await (await page(`/auth/magic?t=${other}`)).text();
     expect(revoked).toMatch(/<h1[^>]*>Invitation expired<\/h1>/);
+    expect(revoked).not.toContain('Open PassBook');
   });
 });
 

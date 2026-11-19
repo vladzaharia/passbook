@@ -102,12 +102,15 @@ export function verifyPage(
 }
 
 /** Which dead-link copy a link gets: what it was for, and whether it was used or ran out. */
+/** Used, or an invitation accepted through another link: either way the link's work is done. */
+const linkUsed = (link: LinkTrace | null) =>
+  link?.state === 'used' || link?.invitation === 'accepted';
+
 function deadCopy(link: LinkTrace | null) {
   if (link?.purpose === 'verify_email') return EXPIRED_LINK_COPY.verify_email;
   if (link?.invited) {
     if (link.invitation === 'pending') return EXPIRED_LINK_COPY.invitation_pending;
-    const used = link.state === 'used' || link.invitation === 'accepted';
-    return EXPIRED_LINK_COPY[used ? 'invitation_used' : 'invitation'];
+    return EXPIRED_LINK_COPY[linkUsed(link) ? 'invitation_used' : 'invitation'];
   }
   return EXPIRED_LINK_COPY[link?.state === 'used' ? 'used' : 'sign_in'];
 }
@@ -132,7 +135,7 @@ export function expiredPage(
       ? `<p class="lede">New link to <b>${escapeHtml(maskEmail(link.email))}</b>.</p>${postButton('/auth/magic/resend', COPY.emailNewLink, { token })}`
       : '';
   const home =
-    link?.state === 'used' && !verify && !pending
+    linkUsed(link) && !verify && !pending
       ? actionHtml({ label: COPY.openPassBook, href: '/' })
       : '';
   const back = actionHtml(
