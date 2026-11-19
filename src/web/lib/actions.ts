@@ -111,6 +111,8 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass.join_lookup_replaced': a('Lookup number replaced', I.rotate, 'info'),
   'pass.rotate_link': a('Pass link rotated', I.rotate, 'info'),
   'pass.channels_change': a('Pass channels changed', I.edit, 'info'),
+  'pass.print': a('Ticket printed', I.edit, 'info'),
+  'pass.print_void': a('Printed ticket voided', I.delete, 'warning'),
   'pass.stamps.add': a('Stamp added', ENTITY.pass.icon, 'info'),
   'pass.stamps.redeem': a('Reward redeemed', Star, 'success'),
   'pass.term.renew': a('Term renewed', I.restore, 'success'),

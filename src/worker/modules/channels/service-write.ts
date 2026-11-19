@@ -19,6 +19,8 @@ import type { TenantPassWrite } from '../passes/http.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import type { Actor } from '../passes/service.ts';
+import { activePrint } from '../prints/repo.ts';
+import { adminWriter, writeVoid } from '../prints/repo-write.ts';
 import * as repo from './repo.ts';
 import { writePassChannels, writeTemplatePolicy } from './repo-write.ts';
 import { loadPass, loadTemplate, passChannels } from './service.ts';
@@ -114,6 +116,8 @@ export async function putPassChannels(
     })),
     audits,
   );
+  if (actions.some((a) => a.kind === 'void_prints') && (await activePrint(ctx.env.DB, pass.id)))
+    await writeVoid(ctx, adminWriter(authority, actor), pass.id, 'channel_off');
   await bump(ctx.env.DB, key, window);
   // A flip, or a row newer than the pass (an earlier bump was lost), queues the republish.
   const pending = (rows.setAt.apple ?? 0) > pass.modifiedAt;
@@ -191,12 +195,12 @@ export async function putTemplateChannels(
     throw new ConflictError('The channels changed. Reload and retry.', 'TEMPLATE_CHANNELS_CHANGED');
   const merged = { ...policy, ...body.channels };
   const changed = (Object.keys(body.channels) as Channel[]).filter(
-    (c) => (policy?.[c] ?? templateDefault(c, inputs.scanTags)) !== body.channels[c],
+    (c) => (policy?.[c] ?? templateDefault(c)) !== body.channels[c],
   );
   const impact = [];
   const cleared: Channel[] = [];
   for (const channel of changed) {
-    const prev = policy?.[channel] ?? templateDefault(channel, inputs.scanTags);
+    const prev = policy?.[channel] ?? templateDefault(channel);
     const next = body.channels[channel] as TemplateChannelState;
     const blocked = !effectiveChannels({ ...inputs, template: { ...policy, [channel]: 'on' } })[
       channel

@@ -13,14 +13,13 @@ const base: ChannelInputs = {
   org: {},
   capability: {},
   template: null,
-  scanTags: false,
   pass: {},
   retired: {},
 };
 const eff = (over: Partial<ChannelInputs> = {}) => effectiveChannels({ ...base, ...over });
 
 describe('effectiveChannels precedence', () => {
-  it('defaults: digital on, paper off, nfc on only with scan.tags', () => {
+  it('defaults: digital on, paper off, nfc on', () => {
     const e = eff();
     expect(['mobile', 'apple', 'google', 'samsung'].map((c) => e[c as 'apple'].on)).toEqual([
       true,
@@ -29,9 +28,8 @@ describe('effectiveChannels precedence', () => {
       true,
     ]);
     expect(e.paper).toEqual({ on: false, source: 'template', reason: 'template_off' });
-    expect(e.nfc.on).toBe(false);
-    expect(eff({ scanTags: true }).nfc.on).toBe(true);
-    expect(templateDefault('nfc', true)).toBe('on');
+    expect(e.nfc.on).toBe(true);
+    expect(templateDefault('nfc')).toBe('on');
   });
 
   it('the first failing level is the reason: platform, org, capability, never, pass, template', () => {

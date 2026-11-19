@@ -15,6 +15,7 @@ const PURPOSE = {
   session: 'org_mode.pass.holder_remove',
   verified_email: 'org_mode.pass.holder_attach',
   device: 'org_mode.pass.personalize',
+  link: 'org_mode.pass.holder_print',
 } as const;
 
 const holder = (passId: string, proof: HolderProof): Principal => ({
@@ -237,6 +238,19 @@ describe('holder principal (27)', () => {
         [x.s.org.id],
       ),
     ).rejects.toThrow(/CHECK/);
+    const bad = (id: string, principal: string, purpose: string) =>
+      run(
+        db,
+        `INSERT INTO authority_grants (id, scope, org_id, mode, principal, purpose, created_at, leak_guard) VALUES ('${id}', 'org_mode', ?, 'live', '${principal}', '${purpose}', 1, '${id}')`,
+        [x.s.org.id],
+      );
+    // A link principal holds the print purpose only, and no other principal holds it.
+    await expect(bad('hc-3', 'link:p', 'org_mode.pass.publish')).rejects.toThrow(/CHECK/);
+    await expect(bad('hc-4', 'link:p', 'org_mode.pass.holder_attach')).rejects.toThrow(/CHECK/);
+    await expect(bad('hc-5', 'holder:u', 'org_mode.pass.holder_print')).rejects.toThrow(/CHECK/);
+    await expect(bad('hc-6', 'membership:m', 'org_mode.pass.holder_print')).rejects.toThrow(
+      /CHECK/,
+    );
     await run(db, 'DELETE FROM authority_grants');
   });
 });

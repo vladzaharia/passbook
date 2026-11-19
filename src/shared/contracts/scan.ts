@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ChannelSchema } from './channels.ts';
 import { CheckInPolicySchema, CheckInStateSchema, SetupDirectionSchema } from './check-in.ts';
 import { IdSchema, JsonSchema, ModeSchema, TimestampSchema } from './common.ts';
 import { ScannerTagsSettingsSchema, ScanTagSchema, TagReadSchema } from './nfc-tags.ts';
@@ -291,6 +292,8 @@ export const ScanOutcomeSchema = z.object({
   cooldownRemainingMs: z.number().int().nullable(),
   value: ScanValueSchema.nullable(),
   flags: z.array(z.string()),
+  /** The channel a `channel_off` refusal names. */
+  channel: ChannelSchema.nullable().optional(),
   /** A Manager PIN can unlock this heads-up. */
   overridable: z.boolean(),
   /** The org has active managers. */

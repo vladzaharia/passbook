@@ -61,8 +61,6 @@ export async function getPolicy(
   return { channels, revision: r.revision };
 }
 
-const lit = (v: string) => `'${v.replace(/'/g, "''")}'`;
-
 /** The version the org's release of this template serves in this mode (Apple head), if any. */
 export async function releasedVersion(
   db: D1Database,
@@ -70,14 +68,18 @@ export async function releasedVersion(
   orgId: string,
   mode: Mode,
 ): Promise<string | null> {
+  const select = effectiveReleaseIdSql({
+    templateIdSql: 's.template_id',
+    orgIdSql: 's.org_id',
+    modeSql: 's.mode',
+    providerSql: 's.provider',
+  });
   const r = await first<{ version: string }>(
     db,
-    `SELECT r.version FROM template_releases r WHERE r.id = (${effectiveReleaseIdSql({
-      templateIdSql: lit(templateId),
-      orgIdSql: lit(orgId),
-      modeSql: lit(mode),
-      providerSql: "'apple'",
-    })})`,
+    `SELECT r.version FROM template_releases r
+     WHERE r.id = (SELECT (${select}) FROM
+       (SELECT ? AS template_id, ? AS org_id, ? AS mode, ? AS provider) s)`,
+    [templateId, orgId, mode, 'apple'],
   );
   return r?.version ?? null;
 }
@@ -151,25 +153,23 @@ export async function getPassChannelRowsMany(
 export interface Capability {
   google: boolean;
   samsung: boolean;
-  scanTags: boolean;
   /** The manifest's paper block allows a holder print (absent: it does). */
   paperHolder: boolean;
 }
 
-/** What a template version can serve: a wallets block per provider (type absent or not off) and scan.tags. */
+/** What a template version can serve: a wallets block per provider (type absent or not off) per provider. */
 export async function capabilityOf(
   db: D1Database,
   templateId: string,
   version: string | null,
 ): Promise<Capability> {
   const r = version
-    ? await first<{ g: string | null; s: string | null; t: string | null; h: number | null }>(
+    ? await first<{ g: string | null; s: string | null; h: number | null }>(
         db,
         `SELECT CASE WHEN json_type(manifest, '$.wallets.google') = 'object'
              THEN COALESCE(json_extract(manifest, '$.wallets.google.type'), 'on') END AS g,
            CASE WHEN json_type(manifest, '$.wallets.samsung') = 'object'
              THEN COALESCE(json_extract(manifest, '$.wallets.samsung.type'), 'on') END AS s,
-           json_type(manifest, '$.scan.tags') AS t,
            json_extract(manifest, '$.paper.holder') AS h
          FROM template_versions WHERE template_id = ? AND version = ?`,
         [templateId, version],
@@ -178,7 +178,6 @@ export async function capabilityOf(
   return {
     google: !!r?.g && r.g !== 'off',
     samsung: !!r?.s && r.s !== 'off',
-    scanTags: r?.t === 'object',
     paperHolder: r?.h !== 0,
   };
 }
@@ -219,5 +218,30 @@ export async function insertCopy(
     `INSERT OR IGNORE INTO pass_channel_copies (pass_id, org_id, mode, channel, copy_at)
      VALUES (?, ?, ?, ?, ?)`,
     [pass.id, pass.orgId, pass.mode, channel, at],
+  );
+}
+
+/** Whether a New code was issued for the pass at or after `since`. */
+export async function rotatedSince(
+  db: D1Database,
+  orgId: string,
+  passId: string,
+  since: number,
+): Promise<boolean> {
+  const r = await first(
+    db,
+    'SELECT 1 AS hit FROM scan_code_rotations WHERE org_id = ? AND pass_id = ? AND rotated_at >= ? LIMIT 1',
+    [orgId, passId, since],
+  );
+  return r !== null;
+}
+
+/** Whether the pass has any print, active or past. */
+export async function hasPrint(db: D1Database, orgId: string, passId: string): Promise<boolean> {
+  return (
+    (await first(db, 'SELECT 1 AS hit FROM pass_prints WHERE org_id = ? AND pass_id = ? LIMIT 1', [
+      orgId,
+      passId,
+    ])) !== null
   );
 }

@@ -24,8 +24,6 @@ export interface ChannelInputs {
   capability: Per<ChannelReason>;
   /** The stored template policy; null or absent channels use the defaults. */
   template: Per<TemplateChannelState> | null;
-  /** Linked NFC defaults on only when the template carries scan.tags. */
-  scanTags: boolean;
   /** Pass overrides; absent follows the template. */
   pass: Per<PassChannelState>;
   /** When a plain Turn off retired the pass's copies. */
@@ -34,10 +32,8 @@ export interface ChannelInputs {
   retiredCause?: Per<'pass' | 'template'>;
 }
 
-export function templateDefault(channel: Channel, scanTags: boolean): TemplateChannelState {
-  if (channel === 'paper') return 'off';
-  if (channel === 'nfc') return scanTags ? 'on' : 'off';
-  return 'on';
+export function templateDefault(channel: Channel): TemplateChannelState {
+  return channel === 'paper' ? 'off' : 'on';
 }
 
 /**
@@ -74,7 +70,7 @@ function statusOf(i: ChannelInputs, c: Channel): EffectiveChannels[Channel] {
   if (org) return off('org', org);
   const capability = i.capability[c];
   if (capability) return off('template', capability);
-  const state = i.template?.[c] ?? templateDefault(c, i.scanTags);
+  const state = i.template?.[c] ?? templateDefault(c);
   if (state === 'never') return off('template', 'never');
   const override = i.pass[c];
   if (override === 'on') return { on: true, source: 'pass' };

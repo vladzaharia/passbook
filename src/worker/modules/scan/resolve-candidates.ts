@@ -4,6 +4,7 @@ import { type SqlValue, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import type { Pass } from '../passes/repo-map.ts';
+import { printCodeRef } from '../prints/codes.ts';
 import {
   type CredentialTombstoneSnapshot,
   captureCredentialTombstoneSnapshot,
@@ -21,6 +22,7 @@ import {
   byBarcodeHashStmt,
   byIdStmt,
   byLookupHashStmt,
+  byPrintHashStmt,
   byScanCodeStmt,
   bySerialStmt,
   type Candidate,
@@ -73,6 +75,7 @@ export async function planCandidateReads(
       refs.credentialKeysetCommitment,
     ),
   ];
+  const matchKinds: NonNullable<Candidate['matchedBy']>[] = [];
   let capacityInput: CandidateMatchInput | null = null;
   if ('passId' in input) {
     stmts.push(byIdStmt(db, actor.orgId, input.passId));
@@ -87,16 +90,29 @@ export async function planCandidateReads(
       refs,
     );
     if (clean) {
+      const printRef = await printCodeRef(ctx.env, actor.orgId, actor.mode, clean);
       capacityInput = {
         scanCode,
         barcodeHash,
         lookupHash,
         serial: input.method === 'manual' ? clean : null,
+        printRef,
       };
-      if (scanCode) stmts.push(byScanCodeStmt(db, actor.orgId, scanCode, actor.mode));
+      if (scanCode) {
+        stmts.push(byScanCodeStmt(db, actor.orgId, scanCode, actor.mode));
+        matchKinds.push('scan_code');
+      }
       stmts.push(byBarcodeHashStmt(db, actor.orgId, barcodeHash, actor.mode));
       stmts.push(byLookupHashStmt(db, actor.orgId, lookupHash, actor.mode));
-      if (input.method === 'manual') stmts.push(bySerialStmt(db, actor.orgId, clean, actor.mode));
+      matchKinds.push('barcode', 'lookup');
+      if (input.method === 'manual') {
+        stmts.push(bySerialStmt(db, actor.orgId, clean, actor.mode));
+        matchKinds.push('serial');
+      }
+      if (printRef) {
+        stmts.push(byPrintHashStmt(db, actor.orgId, printRef, actor.mode));
+        matchKinds.push('print');
+      }
     }
   }
   const now = ctx.clock.now();
@@ -118,7 +134,8 @@ export async function planCandidateReads(
       const clearIndex = initialize ? 1 : 0;
       if (!results[clearIndex]?.results?.length) return null;
       let otherMode: Candidate[] = [];
-      for (const result of results.slice(clearIndex + 1)) {
+      for (const [i, result] of results.slice(clearIndex + 1).entries()) {
+        const matchedBy = matchKinds[i];
         const hit = candidatesOf(result);
         if (
           hit.some(
@@ -127,8 +144,9 @@ export async function planCandidateReads(
         )
           return null;
         const current = hit.filter((candidate) => candidate.pass.mode === actor.mode);
-        if (current.length) return current.map((candidate) => Object.assign(candidate, refs));
-        if (!otherMode.length) otherMode = hit;
+        if (current.length)
+          return current.map((candidate) => Object.assign(candidate, refs, { matchedBy }));
+        if (!otherMode.length) otherMode = hit.map((c) => Object.assign(c, { matchedBy }));
       }
       return otherMode.map((candidate) => Object.assign(candidate, refs));
     },

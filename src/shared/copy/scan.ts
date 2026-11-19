@@ -108,6 +108,9 @@ export const SCAN_DISPLAY_COPY = {
   cutOnThisScreen: 'Cut on this screen',
 } as const;
 
+/** The flag of a typed number a door must check: it picks the typed-number line. */
+export const TYPED_NUMBER_FLAG = 'Typed number';
+
 /** Refusal sub-lines for a reason whose plan has nothing to say. They never ride a grant. */
 export const SCAN_REASON_VARIANTS = {
   outside_hours: { noHours: '{plan} has no hours this week. Ask a manager.' },
@@ -121,6 +124,7 @@ export const SCAN_REASON_VARIANTS = {
   not_yet_valid: { noWhen: 'Not open yet. Try again later.' },
   capacity_full: { noPlace: 'Full', noCapacity: '{in} in.', noCount: 'At capacity.' },
   ended: { noPlace: 'Ended' },
+  check_required: { typedNumber: 'Check ID.' },
 } as const;
 
 /** In/out lines that replace a reason's default when the place is a zone or the state is known. */

@@ -42,6 +42,11 @@ export type Raw = PassDbRow &
     active_template_version: string | null;
     display_template_version: string | null;
     check_in_rules: string | null;
+    channel_rules?: number;
+    channel_epoch?: string;
+    print_status?: string | null;
+    print_voided_at?: number | null;
+    print_void_cause?: string | null;
   } & PhotoProjection;
 
 const NO_CREDENTIAL_REFS: readonly string[] = Object.freeze([]);
@@ -55,7 +60,10 @@ export function toCandidate(r: Raw): Candidate | null {
   )
     return null;
   return {
-    pass: mapPass(r),
+    pass: {
+      ...mapPass(r),
+      ...(r.channel_epoch === undefined ? {} : { channelEpoch: r.channel_epoch }),
+    },
     passPersonalizationSnapshot: r.personalization,
     fieldSourcesSnapshot: r.field_sources,
     templateSnapshot: liveTemplateSnapshotFromRow(r),
@@ -92,5 +100,15 @@ export function toCandidate(r: Raw): Candidate | null {
     displayTemplateVersion: r.display_template_version,
     checkInRules: CheckInPolicySchema.parse(JSON.parse(r.check_in_rules ?? '{}')),
     hasPhoto: r.asset_photo_version !== null,
+    ...(r.channel_rules === undefined ? {} : { channelRules: r.channel_rules !== 0 }),
+    ...(r.print_status
+      ? {
+          print: {
+            status: r.print_status,
+            voidedAt: r.print_voided_at ?? null,
+            cause: r.print_void_cause ?? null,
+          },
+        }
+      : {}),
   };
 }

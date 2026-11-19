@@ -1,6 +1,10 @@
 import { type Check, rowIs } from '../../platform/authority-checks.ts';
 import type { Pass } from '../passes/repo-map.ts';
-import { noPendingTransferCheck, passTemplateUsableCheck } from './repo-scan-checks.ts';
+import {
+  channelEpochChecks,
+  noPendingTransferCheck,
+  passTemplateUsableCheck,
+} from './repo-scan-checks.ts';
 
 /** The scanned credential column and the value the preflight matched it by (one, by input kind). */
 export type ScanCredentialColumn = 'scan_code' | 'barcode_hash' | 'lookup_hash';
@@ -15,6 +19,7 @@ export interface ScanPassFacts {
     | 'lifecycleGeneration'
     | 'templateId'
     | 'testDataQuarantined'
+    | 'channelEpoch'
   >;
   credential: Partial<Record<ScanCredentialColumn, string>>;
 }
@@ -46,5 +51,6 @@ export function scanPassChecks(passId: string, facts: ScanPassFacts): Check[] {
     ),
     noPendingTransferCheck(passId),
     passTemplateUsableCheck(passId),
+    ...channelEpochChecks(passId, pass.channelEpoch),
   ];
 }
