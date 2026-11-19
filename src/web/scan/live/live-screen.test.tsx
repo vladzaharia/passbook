@@ -177,7 +177,7 @@ describe('customer live screen Buddy', () => {
       at: Date.now(),
       where: 'Front',
       band: { headline: "You're in", sub: null },
-      greet: null,
+      greet: 'Hi, Sam',
       chips: [],
       panel: null,
       lines: [],
@@ -186,7 +186,7 @@ describe('customer live screen Buddy', () => {
     };
     act(() => LiveSocket.instances[0]?.publish({ ...row('ok', `${ID.slice(0, -1)}9`), customer }));
     expect(container.querySelector('h1')).toHaveTextContent("You're in");
-    expect(container).not.toHaveTextContent('Hi, Sam');
+    expect(container).toHaveTextContent('Hi, Sam');
   });
 });
 

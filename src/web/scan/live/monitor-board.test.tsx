@@ -52,22 +52,27 @@ describe('monitor model', () => {
 });
 
 describe('monitor board', () => {
-  it('leads with the count and capacity, then direction and time, never names', () => {
-    const { container } = render(
+  it('shows the count and capacity in a header above the staff list', () => {
+    render(
       <MonitorBoard
-        rows={[row('1'), row('2', { holder: 'Member M-006', label: 'Checked in' })]}
+        rows={[
+          row('1', { photoUrl: '/p.png' }),
+          row('2', { holder: null, label: 'Not accepted', kind: 'refused' }),
+        ]}
         places={[place(1, 92)]}
         now={NOW}
       />,
     );
     expect(screen.getByTestId('monitor-count')).toHaveTextContent('92 / 100');
     expect(screen.getByText('Almost full')).toBeVisible();
-    expect(container.textContent).not.toMatch(/Sam|Rivera|M-006|Guest/);
-    expect(screen.getAllByText('In').length).toBe(2);
+    expect(screen.getByText('Sam Rivera')).toBeVisible();
+    expect(screen.getByRole('img', { name: 'Sam Rivera' })).toHaveAttribute('src', '/p.png');
     expect(screen.queryByRole('button', { name: /refresh setup/i })).toBeNull();
   });
-  it('shows full with a word, not colour alone', () => {
-    render(<MonitorBoard rows={[]} places={[place(1, 100)]} now={NOW} />);
+  it('labels the count when there are no places, and shows full with a word', () => {
+    const { rerender } = render(<MonitorBoard rows={[row('1')]} places={[]} now={NOW} />);
+    expect(screen.getByText('Checked in, last 15 min')).toBeVisible();
+    rerender(<MonitorBoard rows={[]} places={[place(1, 100)]} now={NOW} />);
     expect(screen.getByText('Full')).toBeVisible();
     expect(screen.getByText('Ready for the first scan')).toBeVisible();
   });

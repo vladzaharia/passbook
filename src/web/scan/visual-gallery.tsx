@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
+import type { ScanLiveRow } from '../../shared/contracts/scan-setups.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
 import type { ScanApi } from './api/scan-api.ts';
 import { ScanAppView } from './app.tsx';
@@ -45,17 +46,11 @@ class VisualSocket {
     this.readyState = 3;
     this.onclose?.({ code: 1000 });
   }
-  publish(row: unknown) {
-    this.onmessage?.({ data: JSON.stringify({ cursor: (row as { id: string }).id, rows: [row] }) });
+  publish(row: ScanLiveRow) {
+    this.onmessage?.({ data: JSON.stringify({ cursor: row.id, rows: [row] }) });
   }
-  snapshot(rows: unknown[], places: unknown[]) {
-    this.onmessage?.({
-      data: JSON.stringify({
-        cursor: (rows[0] as { id?: string } | undefined)?.id ?? null,
-        rows,
-        places,
-      }),
-    });
+  snapshot(rows: ScanLiveRow[], places: unknown[]) {
+    this.onmessage?.({ data: JSON.stringify({ cursor: rows[0]?.id ?? null, rows, places }) });
   }
 }
 
@@ -126,15 +121,35 @@ function LiveVisual({ session, status }: { session: ScanSession; status: string 
   useEffect(() => {
     if (!installed) return;
     const id = `${ID.slice(0, -1)}2`;
-    // As the server sends a customer screen: outcome and time, nothing about the person.
-    const row = {
+    const row: ScanLiveRow = {
       id,
       at: Date.now(),
       scannerId: ID,
-      scannerName: '',
+      scannerName: 'West entrance',
+      passId: ID,
+      holder: 'Private pass holder',
+      photoUrl: null,
       kind: status === 'refused' ? 'refused' : 'ok',
       direction: 'in',
       label: status === 'refused' ? 'Not accepted' : 'Checked in',
+      presented: true,
+      customer: {
+        v: 1 as const,
+        screen: status === 'refused' ? ('see_desk' as const) : ('ok' as const),
+        ref: id,
+        at: Date.now(),
+        where: '',
+        band:
+          status === 'refused'
+            ? { headline: 'Please see the desk', sub: null }
+            : { headline: "You're in", sub: null },
+        greet: status === 'refused' ? null : 'Hi, Sam',
+        chips: [],
+        panel: null,
+        lines: [],
+        milestone: null,
+        test: false,
+      },
     };
     const timer = window.setTimeout(() => VisualSocket.instances.at(-1)?.publish(row), 40);
     return () => window.clearTimeout(timer);
@@ -150,15 +165,19 @@ function MonitorVisual({ count, capacity }: { count: number; capacity: number | 
     return sessionFor('monitor');
   });
   useEffect(() => {
-    // As the server sends a monitor: no holder, pass id, photo or staff.
-    const rows = [0, 1, 2, 3, 4].map((i) => ({
+    const names = ['Sam Rivera', 'Member M-006', 'Ana Costa', 'Lee Park', 'Mo Haddad'];
+    const rows: ScanLiveRow[] = names.map((holder, i) => ({
       id: `${ID.slice(0, -2)}${10 + i}`,
       at: Date.now() - i * 70_000,
       scannerId: ID,
       scannerName: 'West entrance',
+      passId: ID,
+      holder,
+      photoUrl: null,
       kind: i === 3 ? 'refused' : 'ok',
       direction: i === 1 ? 'out' : 'in',
       label: i === 3 ? 'Not accepted' : i === 1 ? 'Checked out' : 'Checked in',
+      presented: true,
     }));
     const places = [
       { place: 'zone:main', name: 'Main hall', inNow: count, capacity, rev: 1 },

@@ -1,10 +1,7 @@
 import { renderCustomerView } from '../../../passkit/template/scan-display/customer.ts';
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
-import {
-  type ScanLiveRow,
-  ScanPublicCustomerViewSchema,
-  type ScanPublicLiveRow,
-} from '../../../shared/contracts/scan-setups.ts';
+import { ScanCustomerViewSchema } from '../../../shared/contracts/scan-customer.ts';
+import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { LiveRecipient } from './live-auth.ts';
 import { type LiveRingRow, livePhotoUrl, redactedRow } from './live-ring.ts';
@@ -46,34 +43,26 @@ function monitorExtras(row: ScanLiveRow, role: ScanRole | null): Partial<ScanLiv
   };
 }
 
-/** The public shape of a row: outcome, direction, place name and time. Never a person. */
-export function publicRow(row: ScanLiveRow, customer: boolean): ScanPublicLiveRow {
-  const { id, at, scannerId, kind, direction, label } = redactedRow(row, customer);
-  return {
-    id,
-    at,
-    scannerId,
-    scannerName: customer ? '' : row.scannerName,
-    kind,
-    direction,
-    label,
-  };
-}
-
 /**
- * The body a customer screen draws: the band only. Never a name, chip, panel, line, reason, staff,
- * photo, pass id, count or other holder; the screen cannot correlate people.
+ * The body a customer screen draws. A system view: the band, then the first name on ok and ready when
+ * the pass is still visible and the session greets. The doc-named chips and panel ride only a visible
+ * pass. No reason, staff, photo, pass id, count or other holder.
  */
-function customerRow(recipient: LiveRecipient, entry: LiveRingRow): ScanPublicLiveRow | null {
+function customerRow(
+  recipient: LiveRecipient,
+  entry: LiveRingRow,
+  visible: boolean,
+): ScanLiveRow | null {
   const { row } = entry;
   const settings = recipient.customer;
-  const base = publicRow(row, true);
+  const base = redactedRow(row, true);
   if (row.kind === 'undo') return base;
   if (row.kind === 'ready' && settings.showReady === false) return null;
   const screen = row.kind === 'ok' ? 'ok' : row.kind === 'ready' ? 'ready' : 'see_desk';
+  const named = visible && screen !== 'see_desk' && row.holder ? row.holder : null;
   const view = renderCustomerView(
-    null,
-    {},
+    named ? { v: 1, header: {}, holder: '{{pass.title}}' } : null,
+    named ? { pass: { title: named, templateName: '' } } : {},
     {
       screen,
       ref: row.id,
@@ -83,24 +72,22 @@ function customerRow(recipient: LiveRecipient, entry: LiveRingRow): ScanPublicLi
       locale: 'en',
       timeZone: recipient.actor.timeZone,
       now: row.at,
-      greet: false,
+      ...(settings.greet === undefined ? {} : { greet: settings.greet }),
       ...(settings.refusedLine === undefined ? {} : { refusedLine: settings.refusedLine }),
       direction: row.direction,
       event: entry.eventId !== null && entry.eventId !== undefined,
     },
   );
-  const checked = ScanPublicCustomerViewSchema.safeParse({
+  const extras = visible && entry.customer && screen !== 'see_desk' ? entry.customer : null;
+  const checked = ScanCustomerViewSchema.safeParse({
     ...view,
-    greet: null,
-    chips: [],
-    panel: null,
-    lines: [],
+    ...extras,
     ...(settings.welcome ? { welcome: settings.welcome } : {}),
   });
   return {
     ...base,
     ...(row.replaces ? { replaces: row.replaces } : {}),
-    ...(checked.success ? { customer: checked.data } : {}),
+    customer: checked.success ? checked.data : view,
   };
 }
 
@@ -146,9 +133,8 @@ export async function liveRowsFor(
   ctx: ServiceContext,
   recipient: LiveRecipient,
   inputs: readonly LiveRingRow[],
-): Promise<(ScanLiveRow | ScanPublicLiveRow)[]> {
+): Promise<ScanLiveRow[]> {
   const actor = recipient.actor;
-  const monitor = actor.scanner?.deviceRole === 'monitor';
   const customer = actor.scanner?.deviceRole === 'customer';
   const start = ctx.clock.now();
   const entries = inputs.filter(
@@ -167,7 +153,7 @@ export async function liveRowsFor(
   if (!result.success) return [];
   const flags = new Map(result.results.map((r) => [r.i, r]));
   const now = ctx.clock.now();
-  const out: (ScanLiveRow | ScanPublicLiveRow)[] = [];
+  const out: ScanLiveRow[] = [];
   entries.forEach((entry, i) => {
     const flag = flags.get(i);
     if (!flag || (customer && now - entry.row.at > CUSTOMER_WINDOW_MS)) return;
@@ -178,12 +164,8 @@ export async function liveRowsFor(
       flag.pass_ok > 0 &&
       (entry.validUntil === null || now <= entry.validUntil);
     if (customer) {
-      const body = customerRow(recipient, entry);
+      const body = customerRow(recipient, entry, live);
       if (body) out.push(body);
-      return;
-    }
-    if (monitor) {
-      out.push(publicRow(entry.row, false));
       return;
     }
     const role = actor.role ?? (flag.staff_ok === 1 ? entry.sourceRole : null);
@@ -201,6 +183,6 @@ export async function liveRowFor(
   ctx: ServiceContext,
   recipient: LiveRecipient,
   input: LiveRingRow,
-): Promise<ScanLiveRow | ScanPublicLiveRow | null> {
+): Promise<ScanLiveRow | null> {
   return (await liveRowsFor(ctx, recipient, [input]))[0] ?? null;
 }

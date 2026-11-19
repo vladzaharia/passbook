@@ -41,17 +41,22 @@ describe('session display authorization', () => {
         }),
       ).toBe(true);
     }
-    const monitorRows = (await hub.snapshot(monitor, undefined, kit.clock.now())).rows;
-    expect(monitorRows).toMatchObject([{ scannerId: sourceA.id }]);
-    expect(monitorRows[0]).not.toHaveProperty('holder');
-    expect(monitorRows[0]).not.toHaveProperty('passId');
+    expect((await hub.snapshot(monitor, undefined, kit.clock.now())).rows).toMatchObject([
+      { scannerId: sourceA.id, holder: null, passId: null },
+    ]);
     expect((await hub.snapshot(monitor, undefined, kit.clock.now())).rows).toHaveLength(1);
     const recipient = await liveRecipient(kit.ctx, customer);
     if (!recipient) throw new Error('Missing customer recipient.');
-    const shown = await liveRowFor(kit.ctx, recipient, await withSourceProof(row(sourceA.id)));
-    expect(shown).toMatchObject({ scannerId: sourceA.id, scannerName: '', label: 'Checked in' });
-    for (const key of ['holder', 'passId', 'photoUrl', 'presented', 'occupancy', 'resolvedBy'])
-      expect(shown).not.toHaveProperty(key);
+    expect(
+      await liveRowFor(kit.ctx, recipient, await withSourceProof(row(sourceA.id))),
+    ).toMatchObject({
+      scannerId: sourceA.id,
+      holder: null,
+      passId: null,
+      photoUrl: null,
+      scannerName: '',
+      label: 'Checked in',
+    });
     expect(await liveRowFor(kit.ctx, recipient, await withSourceProof(row(sourceB.id)))).toBeNull();
     expect((await hub.snapshot(customer, undefined, kit.clock.now())).rows).toEqual([]);
   });

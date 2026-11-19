@@ -1,19 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
-import {
-  ScanLiveMessageSchema,
-  type ScanLiveRow,
-  type ScanPublicLiveRow,
-} from '../../../shared/contracts/scan-setups.ts';
+import { ScanLiveMessageSchema, type ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { mergePlaces } from './monitor-model.ts';
-
-/** Monitor and customer rows arrive without personal fields; the screens carry them as empty. */
-function fullRow(row: ScanLiveRow | ScanPublicLiveRow): ScanLiveRow {
-  return 'passId' in row
-    ? row
-    : { ...row, passId: null, holder: null, photoUrl: null, presented: true };
-}
 
 /** The live socket (polling while it is down): recent rows, counts, a welcome line. */
 export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) {
@@ -53,15 +42,14 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
       const snapshot = parsed.data;
       cursor = snapshot.cursor;
       if (snapshot.welcome !== undefined) setWelcome(snapshot.welcome);
-      const incoming = snapshot.rows.map(fullRow);
       setPlaces((previous) =>
         mergePlaces(
           mergePlaces(previous, snapshot.places),
-          incoming.flatMap((row) => row.places ?? []),
+          snapshot.rows.flatMap((row) => row.places ?? []),
         ),
       );
       setRows((previous) => {
-        const merged = new Map([...previous, ...incoming].map((row) => [row.id, row]));
+        const merged = new Map([...previous, ...snapshot.rows].map((row) => [row.id, row]));
         return [...merged.values()]
           .sort((a, b) => b.at - a.at || b.id.localeCompare(a.id))
           .slice(0, 100);

@@ -94,6 +94,7 @@ export function LiveScreen({
         brandName={orgName || 'PassBook'}
         logoUrl={logoUrl}
         title={view ? view.band.headline : latest ? latest.label : (welcome ?? undefined)}
+        eyebrow={view?.greet ?? undefined}
         hint={view?.band.sub ?? undefined}
         notice={connected ? null : CUSTOMER_COPY.reconnecting}
         style={scanBrandStyle(branding)}

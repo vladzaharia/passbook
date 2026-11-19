@@ -4,33 +4,25 @@ import {
   CircleX,
   LogIn,
   LogOut,
+  ScanLine,
   TriangleAlert,
   Undo2,
-  Users,
 } from 'lucide-react';
 import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { formatTime } from '../../lib/format.ts';
 import { Buddy } from '../../ui/art/index.ts';
-import { countsOf, type Fill, heroOf, type Trend, trendOf } from './monitor-model.ts';
 import './monitor-board.css';
+import { countsOf, type Fill, heroOf, type Trend, trendOf } from './monitor-model.ts';
 
 const ROW_ICON = {
   ok: LogIn,
   heads_up: TriangleAlert,
   refused: CircleX,
-  ready: Users,
+  ready: ScanLine,
   undo: Undo2,
 };
 const FILL_WORD: Record<Fill, string | null> = { open: null, busy: 'Almost full', full: 'Full' };
-
-/** A wall screen is public: direction and outcome only, never who. */
-export function rowWord(row: ScanLiveRow): string {
-  if (row.kind === 'ok') return row.direction === 'out' ? 'Out' : 'In';
-  if (row.kind === 'refused') return 'Not accepted';
-  if (row.kind === 'undo') return 'Undone';
-  return 'Check needed';
-}
 
 function Trendline({ trend }: { trend: Trend }) {
   return (
@@ -46,7 +38,7 @@ function Trendline({ trend }: { trend: Trend }) {
   );
 }
 
-/** The wall screen: how many are inside first, then the latest scans by first name. */
+/** The staff monitor: a compact occupancy header, then who just scanned, as the server allows. */
 export function MonitorBoard({
   rows,
   places,
@@ -65,8 +57,8 @@ export function MonitorBoard({
   const word = hero ? FILL_WORD[hero.fill] : null;
   return (
     <div className="mon-board">
-      <section aria-label="Inside now" className="mon-hero" data-fill={hero?.fill ?? 'open'}>
-        <div className="mon-hero-main">
+      <section aria-label="Inside now" className="mon-head" data-fill={hero?.fill ?? 'open'}>
+        <div className="mon-head-count">
           <p className="mon-label">
             {hero ? (hero.name ? `Inside ${hero.name}` : 'Inside now') : 'Checked in, last 15 min'}
           </p>
@@ -74,50 +66,61 @@ export function MonitorBoard({
             {hero ? hero.count : trend.entered}
             {hero?.capacity ? <span className="mon-cap"> / {hero.capacity}</span> : null}
           </p>
-          {hero?.ratio !== null && hero ? (
+        </div>
+        <div className="mon-head-side">
+          {hero && hero.ratio !== null ? (
             <div className="mon-meter" aria-hidden>
-              <span style={{ width: `${Math.min(100, Math.round((hero.ratio ?? 0) * 100))}%` }} />
+              <span style={{ width: `${Math.min(100, Math.round(hero.ratio * 100))}%` }} />
             </div>
           ) : null}
-          {word ? (
-            <p className="mon-fill-word">
-              <TriangleAlert aria-hidden /> {word}
-            </p>
-          ) : null}
-          <Trendline trend={trend} />
-        </div>
-        <div className="mon-buddy" aria-hidden>
-          <Buddy scene={hero?.fill === 'full' ? 'sorry' : 'peek'} size="lg" mood="happy" />
-        </div>
-        {others.length ? (
-          <ul className="mon-places">
+          <div className="mon-head-facts">
+            {word ? (
+              <p className="mon-fill-word">
+                <TriangleAlert aria-hidden /> {word}
+              </p>
+            ) : null}
+            <Trendline trend={trend} />
             {others.map((p) => (
-              <li key={p.place}>
-                <span>{p.name}</span>
+              <p key={p.place} className="mon-place">
+                {p.name}{' '}
                 <b>
                   {p.inNow}
                   {p.capacity ? ` / ${p.capacity}` : ''}
                 </b>
-              </li>
+              </p>
             ))}
-          </ul>
-        ) : null}
+          </div>
+        </div>
+        <div className="mon-buddy" aria-hidden>
+          <Buddy scene={hero?.fill === 'full' ? 'sorry' : 'peek'} size="lg" mood="happy" />
+        </div>
       </section>
       <section aria-label="Recent scans" className="mon-recent">
         <h2>Recent scans</h2>
         {rows.length ? (
-          <ol>
-            {rows.slice(0, 8).map((row) => {
+          <ol className="mon-grid">
+            {rows.map((row) => {
               const Icon =
                 row.kind === 'ok' && row.direction === 'out' ? LogOut : ROW_ICON[row.kind];
               return (
                 <li key={row.id} data-kind={row.kind}>
+                  <span className="mon-avatar">
+                    {row.photoUrl ? (
+                      <img src={row.photoUrl} alt={row.holder ?? 'Member'} />
+                    ) : (
+                      <ScanLine aria-hidden />
+                    )}
+                  </span>
+                  <span className="mon-row-body">
+                    <span className="mon-row-name">{row.holder ?? row.label}</span>
+                    {row.holder ? <span className="mon-row-what">{row.label}</span> : null}
+                    <span className="mon-row-meta">
+                      {row.scannerName} · {formatTime(row.at, timeZone)}
+                    </span>
+                  </span>
                   <span className="mon-row-icon" aria-hidden>
                     <Icon />
                   </span>
-                  <span className="mon-row-name">{rowWord(row)}</span>
-                  <span className="mon-row-what">{row.scannerName}</span>
-                  <time>{formatTime(row.at, timeZone)}</time>
                 </li>
               );
             })}
