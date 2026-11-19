@@ -26,6 +26,7 @@ import {
 import { onWalletPassRetired } from './lifecycle.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { setSource } from './repo-wallet-enrolments-test-fixtures.ts';
+import { samsungCardMap } from './samsung-cards.ts';
 
 beforeAll(() => {
   setWalletProvidersEnabledForTest(true);
@@ -35,6 +36,61 @@ const keyOf = async (identity: { privateKey: string }) =>
   (await importPKCS8(identity.privateKey, 'RS256')) as CryptoKey;
 
 describe('Samsung tombstone and credential versions', () => {
+  it('an issued ref of type X verifies with type X card, never type Y card', async () => {
+    const t = await setupSamsungCallbacks();
+    const db = t.kit.env.DB;
+    const credentials = { ...t.samsung, cardIds: { loyalty: 'cardL', ticket: 'cardT' } };
+    const cards = JSON.stringify(await samsungCardMap(credentials));
+    const acct = {
+      id: t.operation.accountId,
+      orgId: t.kit.org.id,
+      mode: 'live' as const,
+      provider: 'samsung' as const,
+    };
+    const own = await realCredential(
+      t.kit.env,
+      { orgId: acct.orgId, provider: 'samsung' },
+      { provider: 'samsung', credentials },
+      cards,
+    );
+    await setSource(acct, own);
+    await withoutTrigger(db, 'wallet_samsung_ref_credential_version_immutable', () =>
+      run(db, 'UPDATE wallet_samsung_fetch_refs SET credential_version_id = ? WHERE id = ?', [
+        own.currentId,
+        t.referenceId,
+      ]),
+    );
+    const revision = (
+      await first<{ revision: number }>(
+        db,
+        'SELECT revision FROM wallet_provider_accounts WHERE id = ?',
+        [acct.id],
+      )
+    )?.revision;
+    const cardOf = async (type: string) => {
+      await withoutTrigger(db, 'wallet_provider_instances_card_type_immutable', () =>
+        run(db, 'UPDATE wallet_provider_instances SET card_type = ? WHERE id = ?', [
+          type,
+          t.operation.instanceId,
+        ]),
+      );
+      return (
+        await readSamsungIssuedRefVerification(t.kit.ctx, {
+          orgId: acct.orgId,
+          mode: acct.mode,
+          accountId: acct.id,
+          accountRevision: revision ?? 0,
+          refHash: await sha256Hex(t.refId),
+          credentialKeysetCommitment: t.credentialKeysetCommitment,
+        })
+      )?.cardId;
+    };
+    expect(await cardOf('loyalty')).toBe('cardL');
+    expect(await cardOf('ticket')).toBe('cardT');
+    // A type without its own card gets the default card, not another type's.
+    expect(await cardOf('coupon')).toBe(t.samsung.cardId);
+  });
+
   it('an issued ref is followed only by later versions of its own card', async () => {
     const t = await setupSamsungCallbacks();
     const db = t.kit.env.DB;

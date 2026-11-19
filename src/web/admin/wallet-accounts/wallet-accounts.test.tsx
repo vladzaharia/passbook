@@ -236,6 +236,48 @@ describe('organization wallet accounts', () => {
     expect(saved[0]).toMatchObject({ provider: 'google', expectedRevision: 0 });
     expect(document.body.textContent).not.toContain('U0VDUkVUX0tFWQ');
   });
+
+  it('sends optional per-type Samsung cards beside the default card', async () => {
+    const user = userEvent.setup();
+    const saved: Record<string, unknown>[] = [];
+    await renderApp('/admin/o/o1/wallet-accounts', {
+      memberships: [member(MANAGE)],
+      handlers: {
+        ...orgHandlers(),
+        '/api/v1/orgs/o1/wallet-credentials': (_u, init) => {
+          if (init?.method === 'PUT') {
+            saved.push(JSON.parse(String(init.body)));
+            return json(credential({ provider: 'samsung' }));
+          }
+          return json({ items: [] });
+        },
+      },
+    });
+    const samsung = await screen.findByRole('region', { name: 'Samsung Wallet' });
+    await user.click(within(samsung).getByRole('button', { name: 'Add credentials' }));
+    const dialog = await screen.findByRole('dialog');
+    const cert = '-----BEGIN CERTIFICATE-----\nQUJD\n-----END CERTIFICATE-----';
+    await user.type(within(dialog).getByLabelText(/Partner ID/), 'partner1');
+    await user.type(within(dialog).getByLabelText(/Certificate ID/), 'AB12');
+    await user.type(within(dialog).getByLabelText(/Default card ID/), 'cardG');
+    await user.type(within(dialog).getByLabelText(/Card for ticket/), 'cardT');
+    await user.click(within(dialog).getByLabelText(/Partner private key/));
+    await user.paste(KEY);
+    await user.click(within(dialog).getByLabelText(/Partner certificate/));
+    await user.paste(cert);
+    await user.click(within(dialog).getByLabelText(/Samsung certificate/));
+    await user.paste(cert);
+    await user.type(within(dialog).getByLabelText(/Card for coupon/), 'bad id');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(saved).toHaveLength(0);
+    await user.clear(within(dialog).getByLabelText(/Card for coupon/));
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(saved).toHaveLength(1));
+    expect(saved[0]).toMatchObject({
+      provider: 'samsung',
+      credentials: { cardId: 'cardG', cardIds: { ticket: 'cardT' } },
+    });
+  });
 });
 
 describe('platform wallet accounts', () => {
