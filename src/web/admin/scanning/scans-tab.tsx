@@ -9,6 +9,13 @@ import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { Button, DataTable, EmptyState, ErrorState, LoadMore, StatusPill } from '@/web/ui/index.ts';
 import { ScanFilters } from './scans/filters.tsx';
+import {
+  actionText,
+  methodLabel,
+  scanStatusKey,
+  whereText,
+  whoText,
+} from './scans/outcome-copy.ts';
 import { ScanDetail } from './scans/scan-detail.tsx';
 import type { ScanningSearch } from './search.ts';
 
@@ -83,21 +90,25 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
       accessorKey: 'outcome',
       header: 'Result',
       cell: ({ row }) => (
-        <StatusPill status={row.original.undoneAt ? 'undone' : row.original.outcome} />
+        <StatusPill status={scanStatusKey(row.original.outcome, row.original.undoneAt)} />
       ),
     },
     {
       accessorKey: 'actionLabel',
-      header: 'What',
-      cell: ({ row }) => row.original.actionLabel ?? row.original.reason,
+      header: 'Action',
+      cell: ({ row }) => actionText(row.original),
     },
     {
       accessorKey: 'scannerName',
       header: 'Where',
-      cell: ({ row }) => row.original.scannerName ?? 'Admin console',
+      cell: ({ row }) => whereText(row.original),
     },
-    { accessorKey: 'staffName', header: 'Who' },
-    { accessorKey: 'method', header: 'How' },
+    { accessorKey: 'staffName', header: 'Who', cell: ({ row }) => whoText(row.original) },
+    {
+      accessorKey: 'method',
+      header: 'Method',
+      cell: ({ row }) => methodLabel(row.original.method),
+    },
   ];
   if (!allowed || !orgId) {
     return (

@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import type { SessionActivitySchema } from '@/shared/contracts/scanning-sessions.ts';
 import { formatTime } from '@/web/lib/format.ts';
 import { Card, CardBody, CardHeader, StatusPill } from '@/web/ui/index.ts';
+import { scanStatusKey } from '../scans/outcome-copy.ts';
 
 export function SessionActivity({ items }: z.infer<typeof SessionActivitySchema>) {
   return (
@@ -25,24 +26,7 @@ export function SessionActivity({ items }: z.infer<typeof SessionActivitySchema>
                     {row.deviceName} · {formatTime(row.at)}
                   </p>
                 </div>
-                <StatusPill
-                  status={row.outcome}
-                  tone={
-                    row.outcome === 'ok'
-                      ? 'success'
-                      : row.outcome === 'refused'
-                        ? 'danger'
-                        : 'neutral'
-                  }
-                >
-                  {row.outcome === 'ok'
-                    ? row.direction === 'out'
-                      ? 'Checked out'
-                      : 'Checked in'
-                    : row.outcome === 'undone'
-                      ? 'Undone'
-                      : 'Not accepted'}
-                </StatusPill>
+                <StatusPill status={scanStatusKey(row.outcome)} />
               </li>
             ))}
           </ul>

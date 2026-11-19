@@ -6,7 +6,7 @@ import { ScanStaffSchema } from '@/shared/contracts/scanners.ts';
 import { api } from '@/web/lib/api.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
 import { isApiError } from '@/web/lib/errors.ts';
-import { formatCount, formatDay } from '@/web/lib/format.ts';
+import { formatCount } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
@@ -155,7 +155,7 @@ function OrganizationStaff({ orgId, canManage }: { orgId: string; canManage: boo
             Locked on a scanner
           </StatusPill>
         ) : (
-          <span className="text-fg-muted">Set {formatDay(row.original.pinSetAt)}</span>
+          <span className="text-fg-muted">Set</span>
         ),
     },
     {
@@ -176,7 +176,7 @@ function OrganizationStaff({ orgId, canManage }: { orgId: string; canManage: boo
     {
       id: 'lastScan',
       header: 'Last scan',
-      meta: { hideBelow: 'lg' },
+      meta: { hideBelow: 'md' },
       cell: ({ row }) => {
         const last = row.original.lastScan;
         return last ? (
@@ -203,9 +203,8 @@ function OrganizationStaff({ orgId, canManage }: { orgId: string; canManage: boo
         <div>
           <p className="text-sm font-semibold text-fg-strong">Scanning staff</p>
           <p className="mt-1 text-sm text-fg-muted">
-            Staff are shared by Live and Test. Activity shows {mode === 'test' ? 'Test' : 'Live'}{' '}
-            mode. Successful today excludes undone scans and starts at each scanner&apos;s local
-            midnight; removed scanners use UTC.
+            Shared by Live and Test. Counts show {mode === 'test' ? 'Test' : 'Live'} scans since
+            each scanner's local midnight, not undone. undone.
           </p>
         </div>
         {canManage && !staff.isPending && !staff.isError && (rows.length > 0 || q) ? (

@@ -93,11 +93,12 @@ export function sessionReady(d: ScannerDraft) {
     (d.accepts === 'all' || (d.accepts === 'event' ? !!d.eventId : !!d.templateIds.length))
   );
 }
-export function sessionAccepts(s: ScanningSession) {
+export function sessionAccepts(s: ScanningSession, eventName?: string) {
+  const n = s.accepts && 'templateIds' in s.accepts ? s.accepts.templateIds.length : 0;
   return s.accepts && 'eventId' in s.accepts
-    ? 'Event admission'
+    ? (eventName ?? 'Event admission')
     : s.accepts
-      ? `${s.accepts.templateIds.length} pass templates`
+      ? `${n} pass ${n === 1 ? 'template' : 'templates'}`
       : s.settings.acceptAllTemplates
         ? 'All passes'
         : 'No passes assigned';

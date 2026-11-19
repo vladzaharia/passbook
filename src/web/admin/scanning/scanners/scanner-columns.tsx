@@ -86,8 +86,10 @@ export function scannerColumns(
     {
       header: 'Accepts',
       id: 'accepts',
-      meta: { nowrap: true },
+      meta: { nowrap: true, hideBelow: 'lg' },
       cell: ({ row }) => {
+        if (row.original.deviceRole === 'customer' || row.original.deviceRole === 'monitor')
+          return <span className="text-fg-muted">—</span>;
         const accepts = row.original.accepts;
         const name = accepts && 'eventId' in accepts ? eventName(accepts.eventId) : undefined;
         return acceptsText(row.original, name);
@@ -96,19 +98,15 @@ export function scannerColumns(
     {
       header: 'Staff',
       id: 'staff',
-      meta: { hideBelow: 'xl', stackHidden: true, nowrap: true },
+      meta: { hideBelow: 'lg', stackHidden: true, nowrap: true },
       cell: ({ row }) =>
         row.original.staff?.name ??
-        (row.original.settings.staffSignIn ? (
-          '—'
-        ) : (
-          <span className="text-fg-muted">Sign-in off</span>
-        )),
+        (row.original.settings.staffSignIn ? '—' : <span className="text-fg-muted">No PIN</span>),
     },
     {
       header: 'Today',
       id: 'today',
-      meta: { hideBelow: 'lg', numeric: true },
+      meta: { hideBelow: 'md', numeric: true },
       cell: ({ row }) => (
         <span className={row.original.today === 0 ? 'text-fg-muted' : undefined}>
           {row.original.today}
@@ -118,7 +116,7 @@ export function scannerColumns(
     {
       header: 'Last seen',
       id: 'seen',
-      meta: { hideBelow: 'lg', nowrap: true },
+      meta: { hideBelow: 'md', nowrap: true },
       cell: ({ row }) =>
         row.original.lastSeenAt === null ? (
           <span className="text-fg-muted">Never</span>

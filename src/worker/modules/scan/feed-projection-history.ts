@@ -33,8 +33,13 @@ export function projectScanRecord(
   const reason = ScanReasonSchema.safeParse(row.reason);
   const action = authorized ? history.action(row.actionId, row.actionKind) : null;
   const title = authorized && history.titleVisible(currentTitle) ? currentTitle : null;
-  const scannerName =
-    authorized && history.scannerNameVisible(row.scannerName) ? row.scannerName : null;
+  // A passless refusal has no event-time pass policy to fence, so the console shows who recorded it.
+  const passless = row.policyAvailable && row.passId === null && actor.role !== null;
+  const scannerName = passless
+    ? row.scannerName
+    : authorized && history.scannerNameVisible(row.scannerName)
+      ? row.scannerName
+      : null;
   return {
     id: row.id,
     at: row.at,
@@ -53,7 +58,7 @@ export function projectScanRecord(
     scannerId: row.policyAvailable ? row.scannerId : null,
     scannerName,
     staffId: row.policyAvailable ? row.staffId : null,
-    staffName: verified ? row.staffName : null,
+    staffName: verified || passless ? row.staffName : null,
     apiKeyId: verified ? row.apiKeyId : null,
     approvedBy: verified ? row.approvedBy : null,
     method: row.method,

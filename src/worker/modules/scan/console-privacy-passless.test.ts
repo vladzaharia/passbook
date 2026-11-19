@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { type ScanOutcome, ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
 import { normalizeLookup } from '../../../shared/scan-lookup.ts';
-import { run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import {
   app,
@@ -163,14 +163,19 @@ describe('scan console and feed privacy', () => {
       const keyFeed = await page('', apiKey);
       expect(keyFeed.items.map((item) => item.id)).toEqual([ambiguous.scanId, outcome.scanId]);
       const eventId = state === 'active' ? event.id : null;
+      const scannerName = (
+        await first<{ name: string }>(kit.env.DB, 'SELECT name FROM scanners WHERE id = ?', [
+          scanner.id,
+        ])
+      )?.name;
       for (const item of history.items)
         expect(item).toMatchObject({
           eventId,
           actor: { type: 'scanner', id: scanner.id },
           scannerId: scanner.id,
-          scannerName: null,
+          scannerName: scannerName,
           staffId: staff.id,
-          staffName: null,
+          staffName: staff.name,
         });
       for (const item of keyFeed.items) {
         expect(item).toMatchObject({ eventId, scannerId: scanner.id, scannerName: null });
@@ -181,9 +186,9 @@ describe('scan console and feed privacy', () => {
           eventId,
           actor: { type: 'scanner', id: scanner.id },
           scannerId: scanner.id,
-          scannerName: null,
+          scannerName: scannerName,
           staffId: staff.id,
-          staffName: null,
+          staffName: staff.name,
         });
       const filteredIds = state === 'active' ? [ambiguous.scanId, outcome.scanId] : [];
       expect(
