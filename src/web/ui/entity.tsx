@@ -81,9 +81,11 @@ export function EntityAvatar({ kind, id, name, accent, size = 24, className }: E
       )}
     >
       <span
-        data-initials={initialsOf(name).slice(0, size === 24 ? 1 : 2)}
+        data-initials={initialsOf(name).slice(0, 1)}
         style={
-          (own ? { background: own, color: onColor(own) } : undefined) as CSSProperties | undefined
+          (own
+            ? { background: own, color: onColor(own) }
+            : { background: `oklch(0.42 0.08 ${hueOf(id)})` }) as CSSProperties
         }
         className="inline-flex size-full select-none items-center justify-center rounded-[5px] bg-(--wl-org-fallback) font-semibold text-white after:content-[attr(data-initials)]"
       />
@@ -118,25 +120,19 @@ export function EntityIcon({
 export interface EntityChipProps {
   kind: EntityKind;
   id: string;
-  /** Without a name the chip reads "<Label> <short id>" in mono. */
+  /** Without a name the chip reads the kind alone ("User"), never a slice of the id. */
   name?: string | null;
   to?: string;
   className?: string;
 }
 
 /** Icon plus name, linked when `to` is set: actors and targets in audit and timelines. */
-export function EntityChip({ kind, id, name, to, className }: EntityChipProps) {
+export function EntityChip({ kind, name, to, className }: EntityChipProps) {
   const { icon: Icon, label } = ENTITY[kind];
   const body = (
     <>
       <Icon aria-hidden className="size-3.5 shrink-0 text-fg-muted" />
-      {name ? (
-        <span className="truncate">{name}</span>
-      ) : (
-        <span className="truncate">
-          {label} <span className="font-mono text-xs text-fg-muted">{id.slice(-6)}</span>
-        </span>
-      )}
+      {name ? <span className="truncate">{name}</span> : <span className="truncate">{label}</span>}
     </>
   );
   const classes = cn('inline-flex max-w-full min-w-0 items-center gap-1 align-bottom', className);

@@ -79,7 +79,7 @@ export function EntryDrawer({
             />
             <TechnicalDetails
               items={[
-                { label: 'Event ID', value: entry.id },
+                { label: 'Event ID', value: entry.id, copy: true },
                 { label: 'Request', value: entry.requestId },
               ]}
             />

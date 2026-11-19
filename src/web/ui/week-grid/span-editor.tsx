@@ -1,8 +1,11 @@
 import { Trash2 } from 'lucide-react';
 import { useId } from 'react';
 import type { AccessDay } from '@/passkit/types.ts';
-import { cn } from '../../../../lib/cn.ts';
-import { Button, CheckboxField, CONTROL, CONTROL_HEIGHT, Label } from '../../../../ui/index.ts';
+import { cn } from '../../lib/cn.ts';
+import { Button } from '../button.tsx';
+import { CheckboxField } from '../checkbox.tsx';
+import { CONTROL, CONTROL_HEIGHT } from '../input.tsx';
+import { Label } from '../label.tsx';
 import { DAY_NAME, joinSpan, spanParts, spanProblem, spanText } from './hours.ts';
 
 /** A clock field shows midnight at the end of a span as 00:00; the span keeps "24:00". */
@@ -35,7 +38,7 @@ export function SpanEditor({
   const error = problem ?? (clash ? `Overlaps ${spanText(clash)}.` : null);
   const field = cn(CONTROL, CONTROL_HEIGHT, 'w-full tabular-nums');
   return (
-    <fieldset className="ac-editor mt-2 grid min-w-0 gap-3 rounded-md border border-border bg-surface-sunken p-3">
+    <fieldset className="wk-editor mt-2 grid min-w-0 gap-3 rounded-md border border-border bg-surface-sunken p-3">
       <legend className="sr-only">{DAY_NAME[day]} hours</legend>
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col">

@@ -42,8 +42,13 @@ test('magic link: sign in, see the linked pass, refresh, remove, and 6-digit cod
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL((u) => u.pathname === '/');
   const tile = page.getByRole('listitem').filter({ hasText: holder });
-  await tile.getByRole('button', { name: 'Refresh' }).click();
-  await expect(tile.getByRole('button', { name: /Refreshing|Refresh in \d+s/ })).toBeVisible();
+  // A tile this narrow hides the Refresh icon: Refresh lives in the More menu.
+  await expect(tile.getByRole('button', { name: 'Refresh' })).toBeHidden();
+  await tile.getByRole('button', { name: 'More actions' }).click();
+  await page.getByRole('menuitem', { name: 'Refresh', exact: true }).click();
+  await tile.getByRole('button', { name: 'More actions' }).click();
+  await expect(page.getByRole('menuitem', { name: /Refreshing|Refresh in \d+s/ })).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(page.getByText('Pass updated')).toBeVisible({ timeout: 30_000 });
   const mine = await page.evaluate(async () => (await fetch('/api/v1/me/passes')).json());
   const row = mine.items.find((p: { id: string }) => p.id === pass.id);

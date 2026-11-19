@@ -69,6 +69,22 @@ describe('pass page add block', () => {
     expect(buddies()).toHaveLength(1);
   });
 
+  it('a phone-width window leads with the badge: no QR to scan, no second copy of the details', async () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation(
+      (q) =>
+        ({
+          matches: q.includes('max-width'),
+          media: q,
+          addEventListener: () => {},
+          removeEventListener: () => {},
+        }) as unknown as MediaQueryList,
+    );
+    const { container } = await open(MAC);
+    expect(document.querySelector(`img[alt="${QR}"]`)).toBeNull();
+    expect(container.querySelector('.wl-holder')).toHaveAttribute('data-lead', 'add');
+    expect(screen.queryByRole('radio', { name: 'Details' })).toBeNull();
+  });
+
   it('iPhone in an app’s web view: the card says to open Safari', async () => {
     await open(IN_APP);
     const add = screen.getByRole('region', { name: HOLDER_COPY.addTitle });

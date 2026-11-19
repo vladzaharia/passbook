@@ -9,6 +9,7 @@ import {
   EMAIL_LIGHT as c,
   emailShell,
   escapeHtml,
+  stackHtml,
   supportFooter,
   testNoteHtml,
   titleHtml,
@@ -39,7 +40,6 @@ export interface BundleEmailInput {
 const TITLE = 'Your passes';
 const OPEN_LABEL = 'Open your passes';
 const PRIVATE_LINE = 'Keep this email private. Its links open your passes.';
-const GAP = 12;
 
 /** A 44 px row: the link carries the padding, so the whole line is its hit area. */
 const row = (p: BundleEmailInput['passes'][number]) => {
@@ -58,9 +58,7 @@ export function renderBundleEmail(input: BundleEmailInput): RenderedEmail {
   const subject = `Your ${input.orgName} passes`;
   const { width, height } = EMAIL_BADGE;
   const badge = `<a href="${escapeHtml(input.addAllUrl)}" style="display:block;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="${APPLE_BADGE_ALT}" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`;
-  const item = (inner: string, right: string) =>
-    `<div style="display:inline-block;vertical-align:top;width:${width}px;margin:0 ${right} ${GAP}px 0">${inner}</div>`;
-  const actions = `<div style="margin:0 0 4px;font-size:0;line-height:0">${item(badge, `${GAP}px`)}${item(badgeButtonHtml(input.pageUrl, OPEN_LABEL), '0')}</div>`;
+  const actions = stackHtml(badge, badgeButtonHtml(input.pageUrl, OPEN_LABEL));
   const rows = input.passes.map(row).join('');
   const text = [
     TITLE,

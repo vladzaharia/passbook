@@ -2,6 +2,7 @@ import { Copy, KeyRound } from 'lucide-react';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { copyText } from '@/web/lib/clipboard.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
+import { entityLabel } from '@/web/lib/entity-label.ts';
 import { formatDay } from '@/web/lib/format.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { MetaLink, RowActions, StatusPill } from '@/web/ui/index.ts';
@@ -11,7 +12,6 @@ import { type ApiKey, keyState, SCOPE_LABEL } from './queries.ts';
 const STATE_TONE = { active: 'success', expired: 'warning', revoked: 'neutral' } as const;
 
 export interface KeyColumnsOptions {
-  orgName: (id: string | null) => string;
   /** Revoked on this page: the glyph plays its undo turn. */
   justRevoked: ReadonlySet<string>;
   now: number;
@@ -22,10 +22,9 @@ export interface KeyColumnsOptions {
 /** What the list shows of a key: `wlt_` and the prefix, the start of every secret it issues. */
 export const keyPrefix = (k: Pick<ApiKey, 'prefix'>) => `wlt_${k.prefix}`;
 
-/** Name (no detail page: plain strong text), mode, org, scopes, created by, last used, status, actions. */
+/** Name (no detail page: plain strong text), mode, scopes, created by, last used, status, actions. */
 
 export function keyColumns({
-  orgName,
   justRevoked,
   now,
   canRevoke,
@@ -67,18 +66,12 @@ export function keyColumns({
         ),
     },
     {
-      header: 'Organization',
-      id: 'org',
-      meta: { nowrap: true },
-      cell: ({ row }) => orgName(row.original.orgId),
-    },
-    {
       header: 'Scopes',
       id: 'scopes',
       cell: ({ row }) => {
         const scopes = row.original.scopes.map((s) => SCOPE_LABEL[s] ?? s).join(', ');
         return (
-          <span className="block max-w-64 whitespace-normal break-words text-fg">{scopes}</span>
+          <span className="block max-w-56 whitespace-normal break-words text-fg">{scopes}</span>
         );
       },
     },
@@ -98,7 +91,7 @@ export function keyColumns({
                 icon={ENTITY.user.icon}
                 className="min-h-0 max-w-full text-xs [&_svg]:size-3.5"
               >
-                <span className="truncate">{createdByName ?? `User ${createdBy.slice(-6)}`}</span>
+                <span className="truncate">{entityLabel(createdByName, 'User')}</span>
               </MetaLink>
             ) : null}
           </span>
@@ -108,7 +101,7 @@ export function keyColumns({
     {
       header: 'Expiry',
       id: 'expiry',
-      meta: { nowrap: true },
+      meta: { nowrap: true, hideBelow: 'xl' },
       cell: ({ row }) => formatDay(row.original.expiresAt, 'Never'),
     },
     {

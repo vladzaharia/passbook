@@ -19,6 +19,7 @@ import { validateRequiredSemantics, validateSemantics } from './schema/validate-
 import { resolveStyles, validateTopLevel } from './schema/validate-top.ts';
 import { validateUpcoming } from './schema/validate-upcoming.ts';
 import type {
+  IssueParams,
   PassIdentity,
   PassJson,
   PassStyle,
@@ -46,14 +47,21 @@ export function validatePass(
   options: ValidatePassOptions = {},
 ): ValidationReport {
   const issues: ValidationIssue[] = [];
-  const error = (code: string, message: string, path?: string) =>
-    issues.push({ severity: 'error', code, message, ...(path ? { path } : {}) });
-  const warn = (code: string, message: string, path?: string) =>
+  const error = (code: string, message: string, path?: string, params?: IssueParams) =>
+    issues.push({
+      severity: 'error',
+      code,
+      message,
+      ...(path ? { path } : {}),
+      ...(params ? { params } : {}),
+    });
+  const warn = (code: string, message: string, path?: string, params?: IssueParams) =>
     issues.push({
       severity: options.strict ? 'error' : 'warning',
       code,
       message,
       ...(path ? { path } : {}),
+      ...(params ? { params } : {}),
     });
 
   const info = (code: string, message: string, path?: string) =>

@@ -11,6 +11,8 @@ export function BootCard({
   children,
   testId,
   titleRef,
+  mood = 'happy',
+  still,
 }: {
   title: ReactNode;
   line?: ReactNode;
@@ -18,6 +20,9 @@ export function BootCard({
   children?: ReactNode;
   testId?: string;
   titleRef?: React.Ref<HTMLHeadingElement>;
+  /** The mascot's face: flat and still is at rest. */
+  mood?: 'happy' | 'flat';
+  still?: boolean;
 }) {
   return (
     <section
@@ -32,7 +37,7 @@ export function BootCard({
         </span>
         <div className="scan-boot-mascot" aria-hidden>
           <Suspense fallback={null}>
-            <Buddy scene="peek" size="lg" mood="happy" />
+            <Buddy scene="peek" size="lg" mood={mood} still={still} />
           </Suspense>
         </div>
         <h1 id="scan-card-title" ref={titleRef} tabIndex={-1} className="scan-card-title">

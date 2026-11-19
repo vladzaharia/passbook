@@ -19,11 +19,7 @@ import {
 import { renderBundlePage } from '../../ssr/bundle-page.tsx';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage } from '../../ssr/pass-page.tsx';
-import {
-  PRESENTATION_HEADERS,
-  renderPresentationNotFound,
-  renderPresentationPage,
-} from '../../ssr/presentation-page.tsx';
+import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
 import { servePassFile } from '../passes/file.ts';
 import { svc } from '../passes/http.ts';
 import { presentationForPass } from '../public/presentation.ts';
@@ -130,7 +126,7 @@ register(
       return new Response(html, { headers: PAGE_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404)
-        return new Response(renderNotFoundPage(nonce, theme), {
+        return new Response(renderNotFoundPage(nonce, theme, { what: 'bundle' }), {
           status: 404,
           headers: PAGE_HEADERS,
         });
@@ -227,10 +223,13 @@ register(
       return new Response(html, { headers: PRESENTATION_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404) {
-        return new Response(renderPresentationNotFound(c.var.nonce, theme), {
-          status: 404,
-          headers: PRESENTATION_HEADERS,
-        });
+        return new Response(
+          renderNotFoundPage(c.var.nonce, theme, { what: 'bundle', replay: false }),
+          {
+            status: 404,
+            headers: PRESENTATION_HEADERS,
+          },
+        );
       }
       throw error;
     }

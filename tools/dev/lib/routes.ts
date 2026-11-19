@@ -10,6 +10,21 @@ export const VIEWPORTS = {
   mobile: { width: 390, height: 844 },
 } as const;
 export type ViewportName = keyof typeof VIEWPORTS;
+
+const IPHONE_UA =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
+const IPAD_UA =
+  'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
+
+/** Phone and tablet are emulated as real devices (UA, touch), so device-led layouts show. */
+export const DEVICES: Record<
+  ViewportName,
+  { userAgent?: string; isMobile?: boolean; hasTouch?: boolean }
+> = {
+  desktop: {},
+  tablet: { userAgent: IPAD_UA, isMobile: true, hasTouch: true },
+  mobile: { userAgent: IPHONE_UA, isMobile: true, hasTouch: true },
+};
 export type Theme = 'light' | 'dark';
 
 const ROLES: readonly string[] = ['platform', 'org', 'holder', 'anon'];

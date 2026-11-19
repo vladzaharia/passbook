@@ -43,7 +43,8 @@ function checkSize(ctx: ValidationContext, image: ParsedImage): void {
   if (width === undefined || height === undefined) return;
   const verdict = checkImageSize(name, slot, scale, width, height);
   if (verdict.level === 'error') ctx.error('IMAGE_SIZE', verdict.message, name);
-  else if (verdict.level === 'warning') ctx.warn('IMAGE_SIZE', verdict.message, name);
+  else if (verdict.level === 'warning')
+    ctx.warn('IMAGE_SIZE', verdict.message, name, { name, detail: verdict.message });
 }
 
 function slotUsed(
@@ -86,8 +87,12 @@ export function validateImages(ctx: ValidationContext, assets: ValidatableAsset[
   for (const asset of assets) {
     if (known.has(asset.name) || OTHER_FILES.test(asset.name)) continue;
     const parsed = parseImageName(asset.name);
-    if (parsed) warn('UNKNOWN_IMAGE', `${parsed.slot} is not a pass image.`, asset.name);
-    else warn('ASSET_NAME', 'Unexpected file in the pass package.', asset.name);
+    if (parsed)
+      warn('UNKNOWN_IMAGE', `${parsed.slot} is not a pass image.`, asset.name, {
+        name: parsed.slot,
+      });
+    else
+      warn('ASSET_NAME', 'Unexpected file in the pass package.', asset.name, { name: asset.name });
   }
 
   const topLevel = images.filter((i) => !i.locale);
@@ -132,14 +137,19 @@ export function validateImages(ctx: ValidationContext, assets: ValidatableAsset[
   );
   for (const locale of allLocales)
     if (!LOCALE_DIR.test(locale))
-      warn('LOCALE_NAME', `${locale}.lproj is not a language code.`, `${locale}.lproj`);
+      warn('LOCALE_NAME', `${locale}.lproj is not a language code.`, `${locale}.lproj`, {
+        name: `${locale}.lproj`,
+      });
   for (const [slot, locales] of bySlot) {
     const signatures = new Set([...locales.values()].map(signature));
     if (signatures.size > 1)
       error('LOCALIZED_IMAGES', `Locales ship different resolutions of ${slot}.`, slot);
     const missing = [...allLocales].filter((l) => !locales.has(l));
     if (missing.length)
-      warn('LOCALIZED_IMAGES', `${slot} is not localized for ${missing.join(', ')}.`, slot);
+      warn('LOCALIZED_IMAGES', `${slot} is not localized for ${missing.join(', ')}.`, slot, {
+        name: slot,
+        locales: missing.join(', '),
+      });
     if (topLevel.some((i) => i.slot === slot))
       warn('LOCALIZED_IMAGES', `A top-level ${slot} overrides the localized ones.`, slot);
   }

@@ -49,6 +49,11 @@ const PROVISIONING_COUNTS = [
   },
 ] as const;
 
+/** The first-admin invite only fits an org with no members yet. */
+export function showBootstrap(org: Pick<ProvisionedOrg, 'counts'>): boolean {
+  return (org.counts.members ?? 0) === 0;
+}
+
 export function ProvisioningCounts({ org }: { org: ProvisionedOrg }) {
   const mode = useMode();
   // Only a member can open the org's lists; any other scope is Forbidden.
@@ -60,16 +65,15 @@ export function ProvisioningCounts({ org }: { org: ProvisionedOrg }) {
     <Card>
       <CardHeader title="Provisioned resources" />
       <CardBody>
-        <p className="mb-3 text-xs text-fg-muted">
-          Passes: {mode === 'test' ? 'Test' : 'Live'} mode. Other counts are not mode-filtered. A +
-          indicates a lower bound.
-        </p>
+        {org.countsCapped ? (
+          <p className="mb-3 text-xs text-fg-muted">+ means at least that many.</p>
+        ) : null}
         <KeyValue
           items={PROVISIONING_COUNTS.map(({ key, label, singular, plural, to }) => {
             const value = org.counts[key];
             const capped = org.countsCapped && value >= 100_000;
             return {
-              label,
+              label: key === 'passes' ? `Passes (${mode === 'test' ? 'Test' : 'Live'})` : label,
               value: member ? (
                 <Link
                   to={to}
@@ -126,7 +130,7 @@ export function BootstrapOrgAdmin({ orgId, active }: { orgId: string; active: bo
 
   return (
     <Card>
-      <CardHeader title="Platform provisioning: first organization administrator" />
+      <CardHeader title="Invite first admin" />
       <CardBody className="flex flex-col gap-4">
         {!active ? (
           <p className="text-sm text-fg-muted">
@@ -141,6 +145,7 @@ export function BootstrapOrgAdmin({ orgId, active }: { orgId: string; active: bo
                 type="text"
                 inputMode="email"
                 autoComplete="email"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
               />

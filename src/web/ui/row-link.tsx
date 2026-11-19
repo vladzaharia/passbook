@@ -58,9 +58,7 @@ function CountAnchor({
   icon?: LucideIcon;
 }) {
   if (count === 0) {
-    return (
-      <span className={cn('text-fg-muted tabular-nums', className)}>{noun ? 'None' : '0'}</span>
-    );
+    return <span className={cn('text-fg-muted tabular-nums', className)}>0</span>;
   }
   return (
     <a ref={ref} className={cn(COUNT_LINK, className)} {...props}>

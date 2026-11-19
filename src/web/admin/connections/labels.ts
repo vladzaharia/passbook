@@ -37,3 +37,11 @@ export const HEALTH_FILTERS = [
   ['disabled', 'Disabled'],
   ['unknown', 'Unknown'],
 ] as const;
+
+/** "Connector · Mode", without repeating a word the connector's name already says. */
+export function sourceLine(connector: string, mode: string): string {
+  const label = modeLabel(mode);
+  return connector.toLowerCase().includes(label.toLowerCase())
+    ? connector
+    : `${connector} · ${label}`;
+}

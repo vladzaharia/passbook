@@ -1,8 +1,15 @@
-import { type DeviceInfo, passDevice } from '../../shared/device.ts';
+import { canAddToWallet, type DeviceInfo, passDevice } from '../../shared/device.ts';
 
-/** This browser under the shared device rule (shared/device.ts): its touch points tell an iPad. */
-export const browserDevice = (): DeviceInfo =>
-  passDevice(navigator.userAgent, navigator.maxTouchPoints);
+/**
+ * This browser under the shared device rule (shared/device.ts): its touch points tell an iPad. A
+ * phone-width window that can add to Wallet is the phone itself: it leads with the badge, never a
+ * QR it cannot scan.
+ */
+export function browserDevice(): DeviceInfo {
+  const info = passDevice(navigator.userAgent, navigator.maxTouchPoints);
+  const narrow = window.matchMedia?.('(max-width: 639.98px)').matches === true;
+  return narrow && canAddToWallet(info.device) ? { ...info, device: 'iphone' } : info;
+}
 
 /**
  * Installed to the home screen: a link in the email opens Safari, not this app, so the code

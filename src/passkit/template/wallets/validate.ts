@@ -1,6 +1,12 @@
 /** `walletsManifestIssues`: shape first (zod), then expressions, field keys and art files. */
 import type { z } from 'zod';
-import type { Expr, PassJson, TemplateManifest, ValidationIssue } from '../../types.ts';
+import type {
+  Expr,
+  IssueParams,
+  PassJson,
+  TemplateManifest,
+  ValidationIssue,
+} from '../../types.ts';
 import { checkExpr, exprReferences } from '../expr.ts';
 import { BINDING_STYLE_GROUPS } from '../pointer.ts';
 import { WALLET_ART, WALLET_TARGETS, WalletsManifestSchema } from './schema.ts';
@@ -71,8 +77,9 @@ export function walletsManifestIssues(
 
   const issues: ValidationIssue[] = [];
   const add =
-    (severity: ValidationIssue['severity']) => (code: string, message: string, path: string) =>
-      issues.push({ severity, code, message, path });
+    (severity: ValidationIssue['severity']) =>
+    (code: string, message: string, path: string, params?: IssueParams) =>
+      issues.push({ severity, code, message, path, ...(params ? { params } : {}) });
   const error = add('error');
   const warn = add('warning');
   const wallets = parsed.data;
@@ -88,7 +95,8 @@ export function walletsManifestIssues(
     }
     const refs = exprReferences(value);
     for (const name of refs.inputs)
-      if (!Object.hasOwn(properties, name)) warn('WALLETS_INPUT', `Unknown input "${name}".`, path);
+      if (!Object.hasOwn(properties, name))
+        warn('WALLETS_INPUT', `Unknown input "${name}".`, path, { name });
     for (const name of refs.lookups)
       if (!lookups.has(name)) error('WALLETS_LOOKUP', `Unknown lookup table "${name}".`, path);
   };
@@ -98,7 +106,9 @@ export function walletsManifestIssues(
     if (source === false || source === undefined) continue;
     if ('value' in source) checkExprAt(source.value, `${path}.value`);
     else if (options.passJson && !fields.has(source.field))
-      warn('WALLETS_ROLE_FIELD', `No field with key "${source.field}".`, `${path}.field`);
+      warn('WALLETS_ROLE_FIELD', `No field with key "${source.field}".`, `${path}.field`, {
+        name: source.field,
+      });
   }
   if (wallets.google?.classKey !== undefined)
     checkExprAt(wallets.google.classKey, 'wallets.google.classKey');
@@ -116,6 +126,8 @@ export function walletsManifestIssues(
   }
   for (const file of options.assetNames ?? [])
     if (file.startsWith('wallets/') && !referenced.has(file))
-      warn('WALLETS_ART_UNUSED', `${file} is not used by any wallets.*.images entry.`, file);
+      warn('WALLETS_ART_UNUSED', `${file} is not used by any wallets.*.images entry.`, file, {
+        name: file,
+      });
   return issues;
 }

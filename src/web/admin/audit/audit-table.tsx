@@ -58,7 +58,8 @@ export function AuditTable({
           <ActionButton
             entry={row.original}
             onOpen={() => openRef.current(row.original.id)}
-            className={NARROW}
+            wrap
+            className="min-w-40"
           />
         ),
       },
@@ -97,7 +98,7 @@ export function AuditTable({
       {
         header: 'Time',
         id: 'at',
-        meta: { numeric: true },
+        meta: { numeric: true, nowrap: true },
         cell: ({ row }) => (
           <time
             dateTime={new Date(row.original.at).toISOString()}
@@ -130,13 +131,7 @@ export function AuditTable({
     <Card>
       <CardHeader
         title="Recent events"
-        actions={
-          log.isPlaceholderData ? (
-            <Badge>Updating</Badge>
-          ) : rows.length > 0 ? (
-            <Badge>{rows.length} loaded</Badge>
-          ) : null
-        }
+        actions={log.isPlaceholderData ? <Badge>Updating</Badge> : null}
       />
       {log.isError && rows.length === 0 ? (
         <ErrorState

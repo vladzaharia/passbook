@@ -1,5 +1,5 @@
 import * as Primitive from '@radix-ui/react-dropdown-menu';
-import type { ComponentProps } from 'react';
+import { type ComponentProps, type PointerEvent, useRef } from 'react';
 import { cn } from '../lib/cn.ts';
 
 export const DropdownMenu = Primitive.Root;
@@ -33,14 +33,34 @@ export function DropdownMenuContent({
 const ITEM =
   'flex min-h-8 cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-fg outline-hidden max-sm:min-h-11 pointer-coarse:min-h-11 data-disabled:opacity-50 data-highlighted:bg-state-hover-tint data-highlighted:text-fg-strong [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-fg-muted';
 
+/**
+ * The menu opens on pointer down, so on a phone's bottom action sheet an item can land under the
+ * finger and the same tap's pointer up would activate it. Items ignore a pointer up this soon
+ * after they mount.
+ */
+const OPENING_GESTURE_MS = 350;
+
+function useIgnoreOpeningGesture() {
+  const mountedAt = useRef(performance.now());
+  return (event: PointerEvent) => {
+    if (performance.now() - mountedAt.current < OPENING_GESTURE_MS) event.preventDefault();
+  };
+}
+
 export function DropdownMenuItem({
   className,
   destructive,
+  onPointerUp,
   ...props
 }: ComponentProps<typeof Primitive.Item> & { destructive?: boolean }) {
+  const ignoreOpening = useIgnoreOpeningGesture();
   return (
     <Primitive.Item
       className={cn(ITEM, destructive && 'text-danger [&_svg]:text-danger', className)}
+      onPointerUp={(e) => {
+        onPointerUp?.(e);
+        ignoreOpening(e);
+      }}
       {...props}
     />
   );
@@ -49,10 +69,19 @@ export function DropdownMenuItem({
 export function DropdownMenuRadioItem({
   className,
   children,
+  onPointerUp,
   ...props
 }: ComponentProps<typeof Primitive.RadioItem>) {
+  const ignoreOpening = useIgnoreOpeningGesture();
   return (
-    <Primitive.RadioItem className={cn(ITEM, 'pl-7 relative', className)} {...props}>
+    <Primitive.RadioItem
+      className={cn(ITEM, 'pl-7 relative', className)}
+      onPointerUp={(e) => {
+        onPointerUp?.(e);
+        ignoreOpening(e);
+      }}
+      {...props}
+    >
       <Primitive.ItemIndicator className="absolute left-2 size-2 rounded-full bg-accent" />
       {children}
     </Primitive.RadioItem>

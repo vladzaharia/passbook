@@ -8,8 +8,9 @@ import { PassCardStage } from '../../web/pass-card/index.tsx';
 import { BuddyArt } from '../../web/ui/art/buddy-art.tsx';
 import hello from '../../web/ui/art/scenes/hello.css?raw';
 import { TestStrip } from '../../web/ui/layout/test-strip.tsx';
+import { GO_TO_MY_PASSES } from './error-page.tsx';
 import { documentStart, type PageTheme } from './head.ts';
-import { type HostedArt, hostedPage, REPLAY_SCRIPT } from './hosted.ts';
+import { actionHtml, type HostedArt, hostedPage, REPLAY_SCRIPT } from './hosted.ts';
 import joinCss from './join-page.css?raw';
 import { OrgBar } from './org-bar.tsx';
 import { PAGE_CSS } from './pass-page.tsx';
@@ -180,13 +181,16 @@ function JoinForm(page: Extract<JoinPage, { kind: 'form' }>) {
 export function renderJoinPage(page: JoinPage, nonce: string, theme?: PageTheme): string {
   if (page.kind === 'refused') {
     const r = REFUSALS[page.reason];
+    // The first sentence heads the card; the rest is the one line under it.
+    const [first = r.line, ...rest] = r.line.split('. ');
+    const lede = rest.join('. ');
     return hostedPage({
       nonce,
       theme,
-      title: r.line.split('. ')[0] ?? r.line,
+      title: first.replace(/\.$/, ''),
       art: r.art,
-      lede: escapeHtml(r.line),
-      body: '',
+      ...(lede ? { lede: escapeHtml(lede) } : {}),
+      body: page.reason === 'expired' ? actionHtml(GO_TO_MY_PASSES) : '',
     });
   }
   if (page.kind === 'check_email') {

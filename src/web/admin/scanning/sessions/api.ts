@@ -8,6 +8,7 @@ import {
   ScanningDeviceSchema,
   ScanningSessionDetailSchema,
   ScanningSessionListSchema,
+  type SessionHoldRequestSchema,
   type UpdateScanningDeviceSchema,
   type UpdateScanningSessionSchema,
 } from '@/shared/contracts/scanning-sessions.ts';
@@ -65,6 +66,15 @@ export function useUpdateSession(id: string) {
   return useMutation({
     mutationFn: (body: z.input<typeof UpdateScanningSessionSchema>) =>
       api.patch(`/api/v1/scanning-sessions/${id}`, ScanningSessionDetailSchema, body),
+    onSuccess: refresh,
+  });
+}
+/** Close now, Open now or Back to hours. */
+export function useHoldSession(id: string) {
+  const refresh = useRefreshSessions();
+  return useMutation({
+    mutationFn: (body: z.input<typeof SessionHoldRequestSchema>) =>
+      api.post(`/api/v1/scanning-sessions/${id}/hold`, ScanningSessionDetailSchema, body),
     onSuccess: refresh,
   });
 }

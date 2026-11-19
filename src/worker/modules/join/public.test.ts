@@ -307,7 +307,7 @@ describe('POST /j/:token: the device cookie', () => {
     // Other fields from the same device: the device limit, no card.
     const other = await t.post(l, { name: 'Robin' }, { jar });
     expect(other.status).toBe(429);
-    expect(await other.text()).toContain('This phone already got a card today.');
+    expect(await other.text()).toContain('Ask staff.');
     // Past ten minutes even the same fields are the device limit; past 24 hours the device may join again.
     t.kit.clock.advance(11 * 60_000);
     expect((await t.post(l, { name: 'Sam' }, { jar })).status).toBe(429);
@@ -344,7 +344,7 @@ describe('POST /j/:token: the device cookie', () => {
 });
 
 describe('POST /j/:token: link states', () => {
-  it('answers a rotated and an unknown token with Link expired (404), charged to the miss counter', async () => {
+  it('answers a rotated and an unknown token with the dead-link page (404), charged to the miss counter', async () => {
     const l = await t.link({ askEmail: false });
     const old = { ...l };
     // A rotation: a new token for the same row (the trigger raises the generation).
@@ -363,11 +363,11 @@ describe('POST /j/:token: link states', () => {
     const before = await passCount();
     for (const res of [await t.post(old), await t.get(old)]) {
       expect(res.status).toBe(404);
-      expect(await res.text()).toContain('Link expired');
+      expect(await res.text()).toContain('This link does not work');
     }
     const unknown = await t.post({ ...l, token: 'A'.repeat(22) });
     expect(unknown.status).toBe(404);
-    expect(await unknown.text()).toContain('Link expired');
+    expect(await unknown.text()).toContain('This link does not work');
     expect((await t.post({ ...l, token: 'short' })).status).toBe(404);
     expect(await passCount()).toBe(before);
     // The 404s are counted against the network prefix.

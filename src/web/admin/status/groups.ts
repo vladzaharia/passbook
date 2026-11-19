@@ -152,7 +152,7 @@ export function summaryLine(c: Component): string | null {
   if (c.detail) return c.detail;
   switch (c.kind) {
     case 'queue':
-      return `${num(d.backlog) ?? 0} queued, ${num(d.dlq) ?? 0} dead-lettered`;
+      return `${num(d.backlog) ?? 0} queued, ${num(d.dlq) ?? 0} failed`;
     case 'connection':
       return num(d.total) === null ? null : plural(num(d.total) ?? 0, 'connection');
     case 'workflow':

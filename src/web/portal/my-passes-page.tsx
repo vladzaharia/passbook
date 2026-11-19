@@ -8,6 +8,7 @@ import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { addLine, canAddToWallet } from '../../shared/device.ts';
 import { cn } from '../lib/cn.ts';
 import { useArrival } from '../lib/motion.ts';
+import { useSession } from '../lib/session.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
 import {
   AppleWalletBadge,
@@ -26,9 +27,9 @@ import {
 import { ModePill } from '../ui/layout/mode-pill.tsx';
 import { myPassesQuery } from './api.ts';
 import { browserDevice } from './device.ts';
-import { type MyPass, passName, toView } from './pass-view.ts';
+import { holderPassName, type MyPass, toView } from './pass-view.ts';
 import { isPendingRefresh } from './refresh.ts';
-import { RefreshButton } from './refresh-button.tsx';
+import { RefreshIconButton, useRefresh } from './refresh-button.tsx';
 import { useRemovalStatus } from './removal-status.ts';
 import { AddLine, PassMoreMenu, publicUrlOf, ShowQrButton } from './wallet-actions.tsx';
 import './portal.css';
@@ -72,7 +73,10 @@ export function InWalletPill() {
  * badge-sized outline buttons.
  */
 function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?: ReactNode }) {
-  const name = passName(pass);
+  const { authed } = useSession();
+  const refresh = useRefresh(pass.id, pass);
+  // The holder's own name is no title on their own page: the pass kind leads instead.
+  const name = holderPassName(pass, authed?.user);
   const publicUrl = publicUrlOf(pass.downloadUrl);
   const removed = pass.removedAt !== null;
   const voided = pass.status === 'voided' || removed;
@@ -124,7 +128,7 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
           <p className="truncate text-xs text-fg-muted">{pass.orgName}</p>
         </div>
         {/* As tall as the badge with its clear space (52, 56 on touch), badge or not. */}
-        <div className="flex min-h-13 flex-wrap content-end items-center justify-between gap-2 pointer-coarse:min-h-14">
+        <div className="@container flex min-h-13 flex-wrap content-end items-center justify-between gap-2 pointer-coarse:min-h-14">
           <div className="flex flex-wrap items-center gap-2">
             <Button asChild variant="outline">
               <Link {...link}>View pass</Link>
@@ -137,12 +141,15 @@ function PassTile({ pass, dealt, buddy }: { pass: MyPass; dealt: boolean; buddy?
             )}
           </div>
           <div className="ml-auto flex items-center gap-2">
-            {voided ? null : <RefreshButton passId={pass.id} pass={pass} compact />}
+            {voided ? null : (
+              <RefreshIconButton refresh={refresh} className="@max-[24rem]:hidden" />
+            )}
             <PassMoreMenu
               passId={pass.id}
               passTitle={name}
               publicUrl={voided ? null : publicUrl}
               inWallet={pass.inWallet}
+              {...(voided ? {} : { refresh })}
             />
           </div>
         </div>
@@ -224,7 +231,7 @@ export function MyPassesPage() {
       <div className="wl-passes flex flex-col gap-6">
         {bundle && (addable > 1 || addLine(device)) ? (
           <section
-            className="wl-bundle flex flex-col gap-3 rounded-2xl border border-border bg-surface-raised p-5 sm:p-6"
+            className="wl-bundle flex flex-col gap-3 sm:self-start rounded-2xl border border-border bg-surface-raised p-5 sm:p-6"
             aria-labelledby="bundle-title"
           >
             <div>
