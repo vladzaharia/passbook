@@ -2,6 +2,11 @@
   "schema": 1,
   "name": "Henry’s · Blue Entrance",
   "description": "Member card with lock-screen suggestions at the member’s clubs.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
   "org": {
     "slug": "henrys",
     "name": "Henry’s Gymnasium"

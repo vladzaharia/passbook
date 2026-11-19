@@ -1,0 +1,206 @@
+import { IdSchema } from '../../../shared/contracts/common.ts';
+import {
+  type WalletProviderScope,
+  WalletProviderScopeSchema,
+} from '../../../shared/contracts/wallet-providers.ts';
+import { UnavailableError, ValidationError } from '../../platform/errors.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import {
+  assertCredentialKeyset,
+  corrupt,
+  decryptAccount,
+  type StoredCredentials,
+  snapshotWalletCredentialContext,
+} from './account-credential-material.ts';
+import {
+  applyEnrolmentSource,
+  enrolmentOf,
+  historicalSources,
+} from './account-credential-source.ts';
+import { providerIdentityHash } from './projection-contract.ts';
+import { findSamsungTombstoneCredential } from './repo-accounts.ts';
+import { findSamsungIssuedRefCredential } from './repo-accounts-issued.ts';
+
+/** Public verification material only, usable solely for a retired Samsung reference callback. */
+export interface SamsungVerificationMaterial {
+  accountId: string;
+  accountRevision: number;
+  partnerId: string;
+  certificateId: string;
+  cardId: string;
+  samsungCertificatePem: string;
+}
+
+/** `later`: the same credential's later versions, tried in order after a certificate rotation. */
+export interface SamsungTombstoneVerification extends SamsungVerificationMaterial {
+  later: SamsungVerificationMaterial[];
+}
+
+type Samsung = Extract<StoredCredentials, { provider: 'samsung' }>;
+
+const material = (
+  accountId: string,
+  accountRevision: number,
+  stored: Samsung,
+): SamsungVerificationMaterial => ({
+  accountId,
+  accountRevision,
+  partnerId: stored.credentials.partnerId,
+  certificateId: stored.credentials.certificateId,
+  cardId: stored.credentials.cardId,
+  samsungCertificatePem: stored.credentials.samsungCertificatePem,
+});
+
+const isSamsung = (stored: StoredCredentials): stored is Samsung => stored.provider === 'samsung';
+
+/** The legacy envelope for an unpinned row, else the pinned version and the later versions of its credential. */
+async function candidates(
+  ctx: ServiceContext,
+  row: Parameters<typeof enrolmentOf>[0] & { pin_version_id: string | null },
+  stored: StoredCredentials,
+): Promise<Samsung[]> {
+  const all = row.pin_version_id
+    ? await historicalSources(ctx, enrolmentOf(row), stored, row.pin_version_id)
+    : [stored];
+  if (!all.every(isSamsung)) throw corrupt();
+  return all;
+}
+
+/** Resolve one immutable provider-verified historical pin only through its exact tombstone. */
+export async function readSamsungTombstoneVerification(
+  ctx: ServiceContext,
+  input: {
+    orgId: string;
+    mode: WalletProviderScope['mode'];
+    accountId: string;
+    accountRevision: number;
+    refHash: string;
+    credentialKeysetCommitment: string;
+  },
+): Promise<SamsungTombstoneVerification | null> {
+  ctx = snapshotWalletCredentialContext(ctx);
+  const pinned = { ...input };
+  if (
+    !WalletProviderScopeSchema.safeParse({
+      orgId: pinned.orgId,
+      mode: pinned.mode,
+      provider: 'samsung',
+    }).success ||
+    !IdSchema.safeParse(pinned.accountId).success ||
+    !Number.isSafeInteger(pinned.accountRevision) ||
+    pinned.accountRevision <= 0 ||
+    !/^[0-9a-f]{64}$/.test(pinned.refHash) ||
+    typeof pinned.credentialKeysetCommitment !== 'string' ||
+    !/^[0-9a-f]{64}$/.test(pinned.credentialKeysetCommitment)
+  )
+    throw new ValidationError();
+  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  const row = await findSamsungTombstoneCredential(ctx.env.DB, pinned);
+  const stored = row ? await decryptAccount(ctx, row) : null;
+  const found = row && stored ? await candidates(ctx, row, stored) : [];
+  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  const [first, ...later] = found;
+  if (!row || !first) return null;
+  // The tombstone's identity binds the pinned version; a later version of another card is not its successor.
+  if ((await providerIdentityHash(first)) !== row.provider_identity_hash) throw corrupt();
+  const successors: SamsungVerificationMaterial[] = [];
+  for (const next of later)
+    if ((await providerIdentityHash(next)) === row.provider_identity_hash)
+      successors.push(material(row.id, row.revision, next));
+  return { ...material(row.id, row.revision, first), later: successors };
+}
+
+export interface SamsungIssuedVerification extends SamsungVerificationMaterial {
+  /**
+   * True only when this credential is the account's current one (or equals it in partner,
+   * certificate id and Samsung certificate) and the account is not revoked. An older credential may
+   * authenticate a callback so it is answered; it may not write state.
+   */
+  writable: boolean;
+  later: (SamsungVerificationMaterial & { writable: boolean })[];
+}
+
+const sameCertificate = (a: Samsung, b: Samsung) =>
+  a.credentials.partnerId === b.credentials.partnerId &&
+  a.credentials.certificateId === b.credentials.certificateId &&
+  a.credentials.samsungCertificatePem === b.credentials.samsungCertificatePem;
+
+/** Public verification material for a callback on an issued ref, from a revision it has operated under. */
+export async function readSamsungIssuedRefVerification(
+  ctx: ServiceContext,
+  input: {
+    orgId: string;
+    mode: WalletProviderScope['mode'];
+    accountId: string;
+    accountRevision: number;
+    refHash: string;
+    credentialKeysetCommitment: string;
+  },
+): Promise<SamsungIssuedVerification | null> {
+  ctx = snapshotWalletCredentialContext(ctx);
+  const pinned = { ...input };
+  if (
+    !WalletProviderScopeSchema.safeParse({
+      orgId: pinned.orgId,
+      mode: pinned.mode,
+      provider: 'samsung',
+    }).success ||
+    !IdSchema.safeParse(pinned.accountId).success ||
+    !Number.isSafeInteger(pinned.accountRevision) ||
+    pinned.accountRevision <= 0 ||
+    !/^[0-9a-f]{64}$/.test(pinned.refHash) ||
+    !/^[0-9a-f]{64}$/.test(pinned.credentialKeysetCommitment)
+  )
+    throw new ValidationError();
+  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  const row = await findSamsungIssuedRefCredential(ctx.env.DB, { ...pinned, operated: true });
+  const stored = row ? await decryptAccount(ctx, row) : null;
+  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  if (!row || !stored) return null;
+  if (stored.provider !== 'samsung') throw corrupt();
+  const found = await candidates(ctx, row, stored);
+  let writable: (candidate: Samsung) => Promise<boolean> = async () => false;
+  if (row.account_revoked_at === null) {
+    if (row.pin_version_id) {
+      // A pinned credential may write only while it equals the source the enrolment has now.
+      const current = await applyEnrolmentSource(ctx, enrolmentOf(row), stored, {
+        current: true,
+        activeOnly: true,
+      }).catch((error: unknown) => {
+        if (!(error instanceof UnavailableError)) throw error;
+        ctx.log.info('wallet.issued_ref_not_writable', { code: error.code });
+        return null;
+      });
+      writable = async (candidate) =>
+        current !== null && isSamsung(current) && sameCertificate(current, candidate);
+    } else if (row.current_revision === row.revision) writable = async () => true;
+    else {
+      const currentRow = await findSamsungIssuedRefCredential(ctx.env.DB, {
+        ...pinned,
+        accountRevision: row.current_revision,
+        operated: false,
+      });
+      const current = currentRow ? await decryptAccount(ctx, currentRow) : null;
+      writable = async (candidate) =>
+        current !== null && isSamsung(current) && sameCertificate(current, candidate);
+      await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+    }
+  }
+  const [first, ...laterAll] = found;
+  if (!first) return null;
+  // Only a later version of the same card follows a pinned one (as in the tombstone reader).
+  const firstIdentity = await providerIdentityHash(first);
+  const later: Samsung[] = [];
+  for (const next of laterAll)
+    if ((await providerIdentityHash(next)) === firstIdentity) later.push(next);
+  return {
+    ...material(row.id, row.revision, first),
+    writable: await writable(first),
+    later: await Promise.all(
+      later.map(async (next) => ({
+        ...material(row.id, row.revision, next),
+        writable: await writable(next),
+      })),
+    ),
+  };
+}

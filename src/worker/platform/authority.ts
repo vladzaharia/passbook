@@ -38,6 +38,7 @@ import {
   WRITE_PARAM_BUDGET,
   type WriteOptions,
 } from './authority-statements.ts';
+import { RESTRICTED_TABLES } from './authority-tables.ts';
 import { buildUpsert, type UpsertOptions } from './authority-upsert.ts';
 import { exactStmt, type SqlValue } from './db.ts';
 import { authorityDenied, type DenyReason } from './errors.ts';
@@ -98,6 +99,12 @@ export class Grant {
 
   /** A write outside the grant's `tables` is a programming error. */
   #allow(table: string): string {
+    const only = RESTRICTED_TABLES[table.toLowerCase()];
+    if (only && !only.includes(this.purpose))
+      throw new AuthorityError(
+        'GRANT_TABLE_NOT_ALLOWED',
+        `${table} is written only by ${only.join(' or ')}.`,
+      );
     if (this.#tables && !this.#tables.has(table.toLowerCase()))
       throw new AuthorityError(
         'GRANT_TABLE_NOT_ALLOWED',

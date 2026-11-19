@@ -55,7 +55,28 @@ export interface AccountRow {
   iv: number[] | Uint8Array | ArrayBuffer | null;
   wrapped_dek: number[] | Uint8Array | ArrayBuffer | null;
   ciphertext: number[] | Uint8Array | ArrayBuffer | null;
+  /** The credential version a reference or tombstone was made under; NULL is a legacy envelope. */
+  pin_version_id?: string | null;
+  /** The enrolment's own HMAC envelope; NULL on a legacy row. */
+  hmac_kek_version?: number | null;
+  hmac_iv?: number[] | Uint8Array | ArrayBuffer | null;
+  hmac_wrapped_dek?: number[] | Uint8Array | ArrayBuffer | null;
+  hmac_ciphertext?: number[] | Uint8Array | ArrayBuffer | null;
+  /** New-model state the issuance read checks. */
+  enabled_at?: number | null;
+  platform_hold_at?: number | null;
 }
+
+/**
+ * The fence revision: a legacy row's `revision`, an enrolment without a legacy envelope its
+ * `enrolment_revision`. Both columns and the own-key envelope, for the account selects below.
+ */
+const REVISION_EXPR =
+  'CASE WHEN a.credential_id IS NULL THEN a.enrolment_revision ELSE a.revision END';
+const OWN_KEY = 'a.hmac_kek_version, a.hmac_iv, a.hmac_wrapped_dek, a.hmac_ciphertext';
+/** An account the runtime can open: a legacy envelope or its own key. */
+const OPENABLE =
+  '(a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL OR a.credential_source_id IS NOT NULL)';
 
 /** Account and its current envelope are selected in one database snapshot. */
 export function findAccount(
@@ -83,8 +104,9 @@ export function findAccountWithCredentialKeyset(
 ): Promise<AccountRow | null> {
   return first(
     db,
-    `SELECT a.id, a.org_id, a.mode, a.provider, a.revision,
-      a.credential_id, a.revoked_at, a.updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext
+    `SELECT a.id, a.org_id, a.mode, a.provider, ${REVISION_EXPR} AS revision,
+      a.credential_id, a.revoked_at, a.updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext,
+      ${OWN_KEY}, a.enabled_at, a.platform_hold_at
     FROM wallet_provider_accounts a
     LEFT JOIN wallet_provider_credentials c ON c.id = a.credential_id
       AND c.account_id = a.id AND c.org_id = a.org_id AND c.mode = a.mode AND c.provider = a.provider
@@ -118,17 +140,17 @@ export function findRetirementAccount(
   return first(
     db,
     `WITH clock(now_ms) AS (SELECT ?)
-    SELECT a.id, a.org_id, a.mode, a.provider, a.revision, a.credential_id,
-      a.revoked_at, a.updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext
-    FROM wallet_provider_accounts a JOIN wallet_provider_credentials c
+    SELECT a.id, a.org_id, a.mode, a.provider, ${REVISION_EXPR} AS revision, a.credential_id,
+      a.revoked_at, a.updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext, ${OWN_KEY}
+    FROM wallet_provider_accounts a LEFT JOIN wallet_provider_credentials c
       ON c.id = a.credential_id AND c.account_id = a.id AND c.org_id = a.org_id
       AND c.mode = a.mode AND c.provider = a.provider
     JOIN wallet_provider_instances i ON i.account_id = a.id AND i.org_id = a.org_id
       AND i.mode = a.mode AND i.provider = a.provider
     JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id AND op.instance_id = i.id
     CROSS JOIN clock
-    WHERE (a.org_id = ? AND a.mode = ? AND a.provider = ? AND a.id = ? AND a.revision = ?
-      AND a.credential_id IS NOT NULL AND a.revoked_at IS NULL)
+    WHERE (a.org_id = ? AND a.mode = ? AND a.provider = ? AND a.id = ? AND ${REVISION_EXPR} = ?
+      AND ${OPENABLE} AND a.revoked_at IS NULL)
       AND (i.id = ? AND i.lifecycle = 'revoking'
         AND op.id = ? AND op.version = ? AND op.kind = 'revoke' AND op.state = 'claimed')
       AND (op.claim_hash = ? AND op.claim_expires_at > clock.now_ms AND op.projection_release_id = ?
@@ -167,9 +189,9 @@ export function findSamsungPromotedRefreshAccount(
   return first(
     db,
     `WITH clock(now_ms) AS (SELECT ?)
-    SELECT a.id, a.org_id, a.mode, a.provider, a.revision, a.credential_id,
-      a.revoked_at, a.updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext
-    FROM wallet_provider_accounts a JOIN wallet_provider_credentials c
+    SELECT a.id, a.org_id, a.mode, a.provider, ${REVISION_EXPR} AS revision, a.credential_id,
+      a.revoked_at, a.updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext, ${OWN_KEY}
+    FROM wallet_provider_accounts a LEFT JOIN wallet_provider_credentials c
       ON c.id = a.credential_id AND c.account_id = a.id AND c.org_id = a.org_id
       AND c.mode = a.mode AND c.provider = a.provider
     JOIN wallet_provider_instances i ON i.account_id = a.id AND i.org_id = a.org_id
@@ -179,8 +201,8 @@ export function findSamsungPromotedRefreshAccount(
       AND ${proof.window ? samsungInitialWindowSql : 'r.promoted_at IS NOT NULL'} AND r.retired_at IS NULL
       AND r.credential_keyset_commitment = i.credential_keyset_commitment
     CROSS JOIN clock
-    WHERE a.org_id = ? AND a.mode = ? AND a.provider = 'samsung' AND a.id = ? AND a.revision = ?
-      AND a.credential_id IS NOT NULL AND a.revoked_at IS NULL AND i.id = ? AND i.lifecycle = 'active'
+    WHERE a.org_id = ? AND a.mode = ? AND a.provider = 'samsung' AND a.id = ? AND ${REVISION_EXPR} = ?
+      AND ${OPENABLE} AND a.revoked_at IS NULL AND i.id = ? AND i.lifecycle = 'active'
       AND op.kind = 'upsert' AND op.state IN ('pending', 'retry', 'claimed', 'succeeded')
       AND op.version = ? AND op.projection_release_id = ?
       AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = op.credential_keyset_commitment
@@ -213,13 +235,15 @@ export function findSamsungTombstoneCredential(
     refHash: string;
     credentialKeysetCommitment: string;
   },
-): Promise<(AccountRow & { provider_identity_hash: string }) | null> {
+): Promise<
+  (AccountRow & { provider_identity_hash: string; pin_version_id: string | null }) | null
+> {
   return first(
     db,
     `SELECT a.id, a.org_id, a.mode, a.provider, t.account_revision AS revision,
       e.credential_id, NULL AS revoked_at,
       e.created_at AS updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext,
-      t.provider_identity_hash
+      t.provider_identity_hash, t.credential_version_id AS pin_version_id
     FROM wallet_samsung_tombstones t
     JOIN wallet_provider_accounts a ON a.id = t.account_id AND a.org_id = t.org_id
       AND a.mode = t.mode AND a.provider = 'samsung'

@@ -39,10 +39,11 @@ export function findGoogleCallbackAccount(
 ): Promise<GoogleCallbackAccountScope | null> {
   return first(
     db,
-    `SELECT id AS accountId, org_id AS orgId, mode, revision AS accountRevision,
+    `SELECT id AS accountId, org_id AS orgId, mode,
+      CASE WHEN credential_id IS NULL THEN enrolment_revision ELSE revision END AS accountRevision,
       ? AS credentialKeysetCommitment
     FROM wallet_provider_accounts WHERE id = ? AND provider = 'google' AND revoked_at IS NULL
-      AND credential_id IS NOT NULL AND ${credentialRefKeysetSql}`,
+      AND (credential_id IS NOT NULL OR hmac_ciphertext IS NOT NULL) AND ${credentialRefKeysetSql}`,
     [credentialKeysetCommitment, accountId, credentialKeysetCommitment],
   );
 }

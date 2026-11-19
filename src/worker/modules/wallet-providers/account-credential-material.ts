@@ -13,6 +13,7 @@ import {
 import { UnavailableError } from '../../platform/errors.ts';
 import { fromBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { accountHmacKind } from '../keys/rewrap-tables.ts';
 import {
   captureCredentialKeyEnv,
   requireCredentialRefKeyset,
@@ -27,6 +28,8 @@ export type WalletProviderCredentialSnapshot = { credentialKeysetCommitment: str
       provider: 'google';
       credentials: GoogleWalletCredentials;
       objectIdHmacKey: Uint8Array;
+      /** The source version the secret came from; NULL for a legacy envelope's own secret. */
+      credentialVersionId: string | null;
     }
   | {
       accountId: string;
@@ -42,8 +45,14 @@ export type StoredCredentials =
       provider: 'google';
       credentials: GoogleWalletCredentials;
       objectIdHmacKey: string;
+      credentialVersionId?: string;
     }
   | { version: 1; provider: 'samsung'; credentials: SamsungWalletCredentials };
+
+/** An enrolment with its own key and no legacy envelope: the provider secret comes from its source alone. */
+export type KeyOnlyAccount =
+  | { version: 1; provider: 'google'; credentials: null; objectIdHmacKey: string }
+  | { version: 1; provider: 'samsung'; credentials: null };
 
 export const corrupt = () =>
   new UnavailableError(
@@ -131,6 +140,50 @@ export async function decryptAccount(
   }
 }
 
+const HMAC_KEY = /^[A-Za-z0-9_-]{43}$/;
+
+/** The enrolment's own HMAC key, or null when the row has none yet (a legacy row). */
+async function decryptOwnKey(ctx: ServiceContext, row: AccountRow): Promise<string | null> {
+  if (row.hmac_ciphertext === null || row.hmac_ciphertext === undefined) return null;
+  if (row.hmac_kek_version == null) throw corrupt();
+  try {
+    const key = await decryptSecretText(
+      await loadKekRing(ctx.env),
+      {
+        kekVersion: row.hmac_kek_version,
+        iv: bytes(row.hmac_iv ?? null),
+        wrappedDek: bytes(row.hmac_wrapped_dek ?? null),
+        ciphertext: bytes(row.hmac_ciphertext),
+      },
+      credentialAad(row.id, row.org_id, accountHmacKind(row.id, row.mode, row.provider)),
+    );
+    if (!HMAC_KEY.test(key) || fromBase64Url(key).length !== 32) throw corrupt();
+    return key;
+  } catch {
+    throw corrupt();
+  }
+}
+
+/**
+ * What the runtime reads: the enrolment's own key first, then the legacy envelope. A row with no legacy
+ * envelope must have its own key. Samsung has no key; its own-key column is ignored.
+ */
+export async function openAccount(
+  ctx: ServiceContext,
+  row: AccountRow,
+): Promise<StoredCredentials | KeyOnlyAccount> {
+  const own = row.provider === 'google' ? await decryptOwnKey(ctx, row) : null;
+  if (row.kek_version === null) {
+    if (row.provider === 'samsung') return { version: 1, provider: 'samsung', credentials: null };
+    if (own === null) throw corrupt();
+    return { version: 1, provider: 'google', credentials: null, objectIdHmacKey: own };
+  }
+  const legacy = await decryptAccount(ctx, row);
+  return own !== null && legacy.provider === 'google'
+    ? { ...legacy, objectIdHmacKey: own }
+    : legacy;
+}
+
 export function credentialSnapshot(
   row: AccountRow,
   stored: StoredCredentials,
@@ -144,6 +197,7 @@ export function credentialSnapshot(
       provider: 'google',
       credentials: stored.credentials,
       objectIdHmacKey: fromBase64Url(stored.objectIdHmacKey),
+      credentialVersionId: stored.credentialVersionId ?? null,
     };
   return {
     accountId: row.id,

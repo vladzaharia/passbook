@@ -236,6 +236,20 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'user.email_verified': a('Email verified', MailCheck, 'success'),
   'user.enable': a('User enabled', UserCheck, 'success'),
   'user.sessions_revoke': a('Sessions revoked', I.signOut, 'warning'),
+  'wallet_provider.credential_create': a('Wallet credential added', Lock, 'success'),
+  'wallet_provider.credential_revoke': a('Wallet credential revoked', ShieldX, 'warning'),
+  'wallet_provider.credential_rotate': a('Wallet credential rotated', I.rotate, 'info'),
+  'wallet_provider.credential_verify': a('Wallet credential verified', BadgeCheck, 'success'),
+  'wallet_provider.enrolment_disable': a('Wallet provider turned off', Pause, 'warning'),
+  'wallet_provider.enrolment_enable': a('Wallet provider turned on', Play, 'success'),
+  'wallet_provider.enrolment_hold': a(
+    'Wallet provider held by the platform',
+    ShieldAlert,
+    'warning',
+  ),
+  'wallet_provider.enrolment_release': a('Wallet provider released', ShieldCheck, 'info'),
+  'wallet_provider.enrolment_revoke': a('Wallet provider revoked', ShieldX, 'warning'),
+  'wallet_provider.enrolment_source': a('Wallet provider credential changed', I.edit, 'info'),
 };
 
 export const humanize = (code: string) => {

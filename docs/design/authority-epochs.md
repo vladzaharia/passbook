@@ -584,9 +584,10 @@ Raw writes to these tables are banned outside `platform/authority.ts`:
 - **Connections:** `connections`, `connection_runs`, `connection_webhook_retention`, `connection_webhook_items`.
 - **Scan:** `scans`, `scan_gates`, `scan_presence`, `scan_staff`, `scan_events`, `scan_event_templates`, `scanners`, `scanning_sessions`, `scanning_devices`, `scan_zones`, `scanning_session_zones`, `scan_place_revs`.
 - **Ledger:** `pass_events`.
+- **Wallet credentials (0112):** `wallet_credentials` (a platform row has a null org), `wallet_credential_versions`, `wallet_credential_events`, `wallet_credential_checks` (only `platform.job.wallet.credential_check` writes it: `RESTRICTED_TABLES`) and `wallet_enrolment_events`. The enrolment row, `wallet_provider_accounts`, is written by `include` parts under `org_mode.wallet.enrolment_*`.
 
 **Allowlist:**
-- `wallet_*` tables (provider track);
+- the other `wallet_*` tables (provider track), which `authority-scope` does not scan, except the guarded ones above;
 - session idle slide and `last_seen_*` updates;
 - counters;
 - test fixtures.
