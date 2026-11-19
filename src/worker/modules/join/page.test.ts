@@ -55,8 +55,40 @@ describe('GET /j/:token: the join page', () => {
     expect(html).toContain(`<style nonce="${nonce}">`);
     expect(csp).toContain('https://challenges.cloudflare.com');
     expect(html).toContain('<script src="/join.js" defer></script>');
-    expect(res.headers.get('referrer-policy')).toBe('no-referrer');
+    expect(res.headers.get('referrer-policy')).toBe('strict-origin');
+    expect(html).toContain('<meta name="referrer" content="strict-origin">');
     expect(res.headers.get('cache-control')).toContain('no-store');
+  });
+
+  it('lets the form post carry its origin, and keeps the token out of every Referer', async () => {
+    const l = await t.link({ askEmail: false });
+    const res = await open(l);
+    const html = await res.text();
+    const policies = [
+      res.headers.get('referrer-policy'),
+      /<meta name="referrer" content="([^"]+)"/.exec(html)?.[1],
+    ];
+    // Fetch spec: a POST from a no-referrer page carries `Origin: null`; any other policy sends the origin.
+    for (const policy of policies) expect(policy).not.toBe('no-referrer');
+    // Neither policy sends a path, so the token in the URL never leaves the page.
+    for (const policy of policies) expect(policy).toBe('strict-origin');
+    const post = (origin: string) =>
+      t.app.request(
+        `${BASE}/j/${l.token}`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/x-www-form-urlencoded',
+            'cf-connecting-ip': '203.0.113.7',
+            origin,
+          },
+          body: 'name=Sam&cf-turnstile-response=tok',
+        },
+        t.kit.env,
+      );
+    expect((await post(BASE)).status).toBe(303);
+    // The origin check still refuses what a no-referrer page would have sent.
+    expect((await post('null')).status).toBe(403);
   });
 
   it('hands the public site key to the script only when one is set', async () => {

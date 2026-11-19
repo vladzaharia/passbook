@@ -20,6 +20,7 @@ import {
   transferPayloadAad,
   unchangedCredential,
 } from './credential-transfer-build.ts';
+import { joinAttachContent } from './credential-transfer-join.ts';
 import { getPassForWrite } from './pass-access.ts';
 import { validConnectionPassContext } from './repo.ts';
 import { startTransferBatch } from './repo-credential-transfer.ts';
@@ -121,12 +122,19 @@ export async function startCredentialTransfer(
           authority.connection.retainedReleaseProof.version !== release.version)))
   )
     throw conflict();
-  const content =
+  const transferId = ctx.ids.id();
+  const { content } = await joinAttachContent(
+    ctx,
+    transferId,
+    source,
+    release.version,
     connectionContent ??
-    captureContent({
-      personalization: source.pass.personalization,
-      fieldSources: source.pass.fieldSources,
-    });
+      captureContent({
+        personalization: source.pass.personalization,
+        fieldSources: source.pass.fieldSources,
+      }),
+    target.ownerUserId,
+  );
   const build = await buildTransfer(ctx, source, release, content);
   const credentialKeysetCommitment = await ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
   const [old, targetRefs] = await Promise.all([
@@ -158,7 +166,6 @@ export async function startCredentialTransfer(
     ctx.ids.token(),
   );
   if (token.mac === source.pass.downloadToken) throw conflict();
-  const transferId = ctx.ids.id();
   const proof =
     authority.kind === 'connection'
       ? authority.connection
@@ -252,7 +259,14 @@ export async function finishCredentialTransfer(
   // The finish rebuilds against the release head and the connection as they are now; an approval or a
   // connection edit while the transfer is pending moves neither the binding nor the write (F11/F15).
   const release = await approvedForTransfer(ctx, source);
-  const content = await transferContent(ctx, transfer, source);
+  const { content, replaced } = await joinAttachContent(
+    ctx,
+    transfer.id,
+    source,
+    release.version,
+    await transferContent(ctx, transfer, source),
+    transfer.target_owner_user_id,
+  );
   const credentialKeysetCommitment = await ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
   const build = await buildTransfer(ctx, source, release, content);
   const targetRefs = await newCredentialRefs(ctx, source, build);
@@ -283,6 +297,7 @@ export async function finishCredentialTransfer(
       objectSize: build.artifact.bytes.length,
       contentHash: build.artifact.contentHash,
       content: build.content,
+      lookupReplaced: replaced,
       credentialKeysetCommitment,
       passJson: JSON.stringify(build.artifact.passJson),
       title: build.artifact.title,

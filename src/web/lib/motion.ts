@@ -140,16 +140,7 @@ export function useLasting(pending: boolean, ms = 150): boolean {
   return on;
 }
 
-/** Counts renders where `value` changed after mount: a key that replays a one-shot animation. */
-export function useChangeCount(value: unknown): number {
-  const prev = useRef(value);
-  const count = useRef(0);
-  if (!Object.is(prev.current, value)) {
-    prev.current = value;
-    count.current += 1;
-  }
-  return count.current;
-}
+export { useChangeCount } from './change-count.ts';
 
 /**
  * The number to show while counting to `value`: from 0 on mount, from the shown number on change,

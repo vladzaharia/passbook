@@ -12,7 +12,9 @@ export async function stubTurnstile(page: Page) {
       body: `window.turnstile = {
         render(el, options) { setTimeout(() => options.callback('XXXX.DUMMY.TOKEN.XXXX'), 0); return 'w1'; },
         reset() {}, remove() {},
-      };`,
+      };
+      // The join page asks the API script to call back once it has loaded.
+      if (typeof window.__joinTurnstile === 'function') window.__joinTurnstile();`,
     }),
   );
 }

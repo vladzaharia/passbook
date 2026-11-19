@@ -212,6 +212,7 @@ export const JOIN_TABLES: readonly string[] = [
   'pass_token_seals',
   'pass_auth_seals',
   'join_issues',
+  'join_marks',
 ];
 
 /**

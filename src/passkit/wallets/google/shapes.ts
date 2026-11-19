@@ -61,7 +61,16 @@ const objectCommon = {
   state: z.enum(['ACTIVE', 'INACTIVE']),
   barcode: z
     .strictObject({
-      type: z.enum(['QR_CODE', 'PDF_417', 'AZTEC', 'CODE_128']),
+      type: z.enum([
+        'QR_CODE',
+        'PDF_417',
+        'AZTEC',
+        'CODE_128',
+        'CODE_39',
+        'CODABAR',
+        'EAN_13',
+        'ITF_14',
+      ]),
       renderEncoding: z.literal('UTF_8'),
       value: z.string().min(1),
       alternateText: z.string().optional(),

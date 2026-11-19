@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import type { TestTemplate } from '../../../../test/helpers/index.ts';
 import { makeJoinLink } from '../../../../test/helpers/join.ts';
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
@@ -27,8 +28,8 @@ export const turnstile = {
 
 export type Link = Awaited<ReturnType<typeof makeJoinLink>>;
 
-export interface PublicKit {
-  kit: Kit;
+export interface PublicKit<K extends Kit = Kit> {
+  kit: K;
   app: ReturnType<typeof createApp>;
   /** A link of the kit's org on the kit's template; replaces the one an earlier test left. */
   link(options?: {
@@ -54,9 +55,12 @@ export interface PublicKit {
 }
 
 /** A kit with a join-ready template, Turnstile stubbed and the join rate limits wide open. */
-export async function publicKit(): Promise<PublicKit> {
-  const kit = await setupKit({
-    template: (id) => joinTemplate(id),
+export async function publicKit<K extends Kit = Kit>(
+  template: (id: string) => TestTemplate = (id) => joinTemplate(id),
+  setup: (options: Parameters<typeof setupKit>[0]) => Promise<K> = setupKit as never,
+): Promise<PublicKit<K>> {
+  const kit = await setup({
+    template,
     env: {
       // Not the always-pass secret: the hostname and action checks run.
       TURNSTILE_SECRET: 'test-secret',
