@@ -22,18 +22,21 @@ export function mayOverrideScan(actor: ScanActor, target: OverrideTarget): boole
   if (actor.scanner?.deviceRole !== 'monitor') return false;
   return (
     (!!actor.scanningSession && target.sessionId === actor.scanningSession.id) ||
-    watchCovers(actor.watchCover, target)
+    (!!actor.overrideScope && watchCovers(actor.watchCover, target))
   );
 }
 
 /** The same rule in SQL over `scans q`: own scans, a monitor's own session, an admin's session-less scans. */
-export function overrideScopeSql(actor: ScanActor): {
+export function overrideScopeSql(
+  actor: ScanActor,
+  viaWatch: boolean,
+): {
   sql: string;
   params: (string | number | null)[];
 } {
   const monitor = actor.scanner?.deviceRole === 'monitor';
   const session = monitor ? (actor.scanningSession?.id ?? null) : null;
-  const watch = watchCoversSql(monitor ? actor.watchCover : null);
+  const watch = watchCoversSql(monitor && viaWatch ? actor.watchCover : null);
   return {
     sql: `(q.actor_key = ? OR (? = 1 AND q.session_id IS NULL) OR (? IS NOT NULL AND q.session_id = ?) OR ${watch.sql})`,
     params: [

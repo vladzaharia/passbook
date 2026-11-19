@@ -131,6 +131,8 @@ export interface ScanActor {
   apiKeyOrgRevision?: number;
   /** A monitor's watch, loaded per request (SA D28); absent for any other device. */
   watchCover?: WatchCover | null;
+  /** A monitor's Let in of another door's refusal checks in at that scan's session and event (SA 20.9); set only by `overrideScan`. */
+  overrideScope?: { sessionId: string | null; eventId: string | null; templateId: string | null };
   scanningSession?: { id: string; status: 'active' | 'paused' | 'ended'; updatedAt: number };
   platformSessionId?: string;
   /** Keyed proof of the scanner credential's original CSRF secret. */
@@ -280,3 +282,7 @@ export function withRole(actor: ScanActor, staff: BoundStaff | null): ScanActor 
       });
   return actor;
 }
+
+/** The session a check-in evaluates and records at: the refused scan's for a monitor's Let in, else the actor's own. */
+export const scopeSessionId = (a: ScanActor): string | null =>
+  a.overrideScope ? a.overrideScope.sessionId : (a.scanningSession?.id ?? null);

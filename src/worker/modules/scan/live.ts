@@ -82,6 +82,8 @@ export function liveAttachment(
   const epochs = scanEpochsOf(actor);
   if (!epochs) throw epochsMissing();
   const capturedActor = cloneObservedScanActor(actor);
+  // A watch edit must not outlive the socket's token: the cover is re-read on each request.
+  delete capturedActor.watchCover;
   // A device socket outlives staff sign-in and sign-out: it is bound to the device, not to a person.
   if (as === 'device') {
     capturedActor.staff = null;

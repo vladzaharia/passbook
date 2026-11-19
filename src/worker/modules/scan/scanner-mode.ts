@@ -12,7 +12,14 @@ import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts
 import { addScannerMode } from './repo-scanners.ts';
 import { addDeviceModeSync, scanningDeviceRow } from './repo-scanning-devices.ts';
 import { scanningSessionForDevice } from './repo-scanning-sessions.ts';
-import { adminSetupId, setupMeta, watchedScanners, watchOf } from './repo-setups.ts';
+import {
+  adminSetupId,
+  setupMeta,
+  watchedEvent,
+  watchedScanners,
+  watchedSessions,
+  watchOf,
+} from './repo-setups.ts';
 import { nameTaken } from './scanner-name.ts';
 import { loadScanner, scannerView } from './scanner-views.ts';
 import { SCANNER_CODES } from './scanners.ts';
@@ -48,11 +55,14 @@ export async function changeMode(
     row.deviceRole !== 'scan' &&
     watch &&
     !watch.allOrg &&
-    (await watchedScanners(db, row.orgId, input.mode, watch.scannerIds)).length !==
-      new Set(watch.scannerIds).size
+    ((await watchedScanners(db, row.orgId, input.mode, watch.scannerIds)).length !==
+      new Set(watch.scannerIds).size ||
+      (await watchedSessions(db, row.orgId, input.mode, watch.sessionIds ?? [])).length !==
+        new Set(watch.sessionIds ?? []).size ||
+      (!!watch.eventId && !(await watchedEvent(db, row.orgId, input.mode, watch.eventId))))
   )
     throw new ValidationError(
-      'Move the watched scanners to that mode first.',
+      'Move the watched scanners, sessions and event to that mode first.',
       [],
       'SCANNER_WATCH_MODE',
     );

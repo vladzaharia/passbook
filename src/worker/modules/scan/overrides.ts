@@ -18,14 +18,58 @@ import { isOverridable } from './outcome.ts';
 import { setOverrideNote } from './override-note.ts';
 import { OVERRIDE_WINDOW_MS, resolvedTarget } from './override-scope.ts';
 import { overrideEvidenceForTargetStmt } from './repo-act-override.ts';
+import { eventEpochStmt } from './repo-authority-capture.ts';
 import { assertUnderOverrideCap, countOverride } from './repo-override-cap.ts';
 import { overrideTakenStmt } from './repo-override-note.ts';
 import { toScan } from './repo-scan-map.ts';
+import { readValidEventScope } from './repo-scope.ts';
 import { overridePolicyKind, scanPolicy } from './rules.ts';
+import { scanEpochsOf, setScanEpochs } from './scan-epochs.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 
 export type OverrideRequest = z.infer<typeof ScanOverrideRequestSchema>;
 export type OverrideNoteRequest = z.infer<typeof ScanOverrideNoteRequestSchema>;
+
+/**
+ * A monitor lets in another door's refusal at that door's session, event and zones, never its own
+ * (SA 20.9): the actor stays the monitor, for audit and policy.
+ */
+async function scopedToTarget(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  target: ReturnType<typeof toScan>,
+): Promise<ScanActor> {
+  if (actor.scanner?.deviceRole !== 'monitor' || target.actorKey === actor.actorKey) return actor;
+  const sessionId = target.sessionId ?? null;
+  const eventId = target.eventId ?? null;
+  // The pass and action are the target's, so its template is accepted for this one let-in.
+  const scoped: ScanActor = {
+    ...actor,
+    overrideScope: { sessionId, eventId, templateId: target.templateId },
+  };
+  if (eventId === (actor.event?.id ?? null)) return scoped;
+  const pinned = eventId
+    ? await readValidEventScope(ctx.env.DB, actor.orgId, actor.mode, eventId)
+    : null;
+  if (eventId && !pinned) throw invalid();
+  const withEvent: ScanActor = {
+    ...scoped,
+    event: pinned?.event ?? null,
+    templateIds: pinned?.templateIds ?? actor.templateIds,
+  };
+  const epochs = scanEpochsOf(actor);
+  if (pinned && epochs) {
+    const row = await eventEpochStmt(ctx.env.DB, pinned.event.id, actor.orgId, actor.mode).first<{
+      config_epoch: number;
+    }>();
+    if (!row) throw invalid();
+    setScanEpochs(withEvent, {
+      ...epochs,
+      events: { ...epochs.events, [pinned.event.id]: row.config_epoch },
+    });
+  }
+  return withEvent;
+}
 
 const invalid = () =>
   new ValidationError('That scan cannot be let through.', [], 'SCAN_OVERRIDE_INVALID');
@@ -44,6 +88,7 @@ export async function overrideScan(
     actor,
     req.overrideOf,
     now - OVERRIDE_WINDOW_MS,
+    true,
   ).first<
     Parameters<typeof toScan>[0] & {
       taken: number;
@@ -87,7 +132,7 @@ export async function overrideScan(
     ...(req.approval ? { approval: req.approval } : {}),
     ...(req.scope ? { scope: req.scope } : {}),
   };
-  const result = await act(ctx, actor, request);
+  const result = await act(ctx, await scopedToTarget(ctx, actor, target), request);
   const { outcome } = result;
   if (outcome.kind !== 'ok') {
     // Lost the gate to another override: say who beat it, not that the scan is invalid.
