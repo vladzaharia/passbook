@@ -167,12 +167,15 @@ test('paired customer and legacy desk views follow real check-ins, exits and rev
     const scanner = await paired(browser, source.pairing.code, true);
     const exitScanner = await paired(browser, exit.pairing.code, true);
     contexts.push(customer.context, desk.context, scanner.context, exitScanner.context);
-    await expect(customer.page.getByTestId('scan-live')).toHaveAttribute('data-view', 'customer');
+    await expect(customer.page.getByTestId('duo-customer-display')).toHaveAttribute(
+      'data-status',
+      'ready',
+    );
     await expect(desk.page.getByTestId('scan-live')).toHaveAttribute('data-view', 'monitor');
     await expect(desk.page.getByTestId('scan-start')).toHaveCount(0);
     await expect(desk.page.getByRole('button', { name: 'Look up', exact: true })).toHaveCount(0);
     await expect(desk.page.getByRole('button', { name: 'Check in', exact: true })).toHaveCount(0);
-    await expect(desk.page.getByRole('status')).toHaveText('Live');
+    await expect(desk.page.getByRole('status').filter({ hasText: 'Live' })).toHaveText('Live');
     await scanner.page.getByTestId('scan-start').click();
     await exitScanner.page.getByTestId('scan-start').click();
     await scanner.page.getByRole('button', { name: 'Menu', exact: true }).click();
@@ -183,7 +186,7 @@ test('paired customer and legacy desk views follow real check-ins, exits and rev
     await expect(
       customer.page.getByRole('heading', { name: 'Checked in', exact: true }),
     ).toBeVisible();
-    await expect(customer.page.getByTestId('scan-live')).not.toContainText(holder);
+    await expect(customer.page.getByTestId('duo-customer-display')).not.toContainText(holder);
     await expect(desk.page.getByTestId('scan-live')).toContainText(holder);
     await expect(desk.page.getByRole('img', { name: holder, exact: true })).toBeVisible();
     await expect
@@ -193,7 +196,7 @@ test('paired customer and legacy desk views follow real check-ins, exits and rev
           .evaluate((el: HTMLImageElement) => el.naturalWidth),
       )
       .toBe(270);
-    await expect(customer.page.getByTestId('scan-live').locator('img')).toHaveCount(0);
+    await expect(customer.page.getByTestId('duo-customer-display').locator('img')).toHaveCount(0);
     await expect(scanner.page.getByTestId('scan-result').locator('img')).toBeVisible();
     await nativeRead(exitScanner.page, memberId);
     await expect(exitScanner.page.getByTestId('scan-result')).toContainText('Checked out');
