@@ -84,7 +84,7 @@ export function SourceStatus({
       {noOrg ? <p className="sp-help">Real-pass preview needs an organization.</p> : null}
       {lookFailed ? (
         <p className="sp-help">
-          Organization logo and colour unavailable. Showing neutral branding.
+          Couldn't load the organization's logo and color. Showing neutral branding.
         </p>
       ) : null}
     </>
