@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import type { ScanLiveRow } from '../../shared/contracts/scan-setups.ts';
-import { Buddy } from '../ui/art/buddy.tsx';
 import type { ScanApi } from './api/scan-api.ts';
-import { ScanAppView } from './app.tsx';
 import { sessionFixture } from './boot/session.test-support.ts';
 import { CustomerDisplayPage } from './customer-display.tsx';
 import { LiveScreen } from './live/live-screen.tsx';
@@ -13,10 +11,8 @@ import type { ScanStore } from './machine/store.ts';
 import { ScanStoreContext } from './machine/use-scan-machine.ts';
 import { OperatorPanel } from './operator/operator-panel.tsx';
 import type { ScanRuntime } from './platform/runtime.ts';
-import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
+import { ScanPreviewScreen } from './preview-screen.tsx';
 import { type PassInspection, PassInspector } from './result/pass-inspector.tsx';
-import { ResultCard } from './result/result-card.tsx';
-import { DoorDock } from './ui/door-dock.tsx';
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
 import { TAG_SCENARIOS, TagVisual } from './visual-tags.tsx';
@@ -165,69 +161,24 @@ function ScanResultVisual({
   phase: 'up' | 'rising';
 }) {
   const [inspection, setInspection] = useState<PassInspection | null>(null);
-  const store = useVisualStore();
   const [api] = useState(() => ({ resolve: async () => selected.outcome }) as unknown as ScanApi);
-  const [runtime] = useState(
-    () =>
-      ({
-        store,
-        camera: { hasTorch: () => false, toggleTorch: async () => false },
-      }) as unknown as ScanRuntime,
-  );
-  const logoUrl = scanBrandLogoUrl(BRANDING, session);
   return (
-    <ScanStoreContext.Provider value={store}>
-      <ScanAppView
-        screen={{ s: 'loop' }}
+    <>
+      <ScanPreviewScreen
+        outcome={selected.outcome}
         surface={surface === 'operator' ? 'operator' : 'phone'}
-        branding={BRANDING}
-        capsule={{
-          name: 'West entrance',
-          orgName: 'Northwind Live',
-          logoUrl,
-          state: 'scanning',
-        }}
-        camera={<div className="scan-visual-camera" />}
+        phase={phase}
         sidebar={
           surface === 'operator' ? <OperatorVisual session={session} name={selected.name} /> : null
         }
-        buddy={
-          <Buddy
-            scene="scan"
-            size="xl-scan"
-            mood={
-              selected.outcome.kind === 'ok'
-                ? 'happy'
-                : selected.outcome.kind === 'heads_up'
-                  ? 'curious'
-                  : 'sad'
-            }
-            immediate
-          />
-        }
-        strip={{ kind: 'ok', title: 'Taylor Chen', meta: '6:42 PM', undoable: true }}
-        dockRow={
-          <DoorDock
-            outcome={selected.outcome}
-            runtime={runtime}
-            open={() => undefined}
-            onError={() => undefined}
-          />
-        }
-        card={
-          <ResultCard
-            outcome={selected.outcome}
-            phase={phase}
-            onPass={(card) => {
-              if (card) setInspection({ card });
-            }}
-          />
-        }
+        onPass={(card) => {
+          if (card) setInspection({ card });
+        }}
       />
       {inspection ? (
         <PassInspector inspection={inspection} api={api} onClose={() => setInspection(null)} />
       ) : null}
-    </ScanStoreContext.Provider>
+    </>
   );
 }
 

@@ -2,6 +2,7 @@ import {
   actionGoals,
   type ScanDisplayScope,
 } from '../../../passkit/template/scan-display/index.ts';
+import { passFieldFormats } from '../../../passkit/template/scan-display/scope.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { accessScopeOf } from './access.ts';
@@ -45,10 +46,12 @@ export function scopeOf(
     ...(manifest.stamps ? { stamps: manifest.stamps } : {}),
     ...(manifest.counters ? { counters: manifest.counters, inputs: manifest.inputs } : {}),
   });
+  const fields = visibleFields(found, actor);
   const access = safe(accessScopeOf(found, actor, input.access ?? null));
   return {
     inputs: safe(projectScanInputs(found, actor)) ?? {},
-    fields: visibleFields(found, actor),
+    fields,
+    fieldFormats: passFieldFormats(passJson, Object.keys(fields)),
     pass: {
       title: safe(names.title) ?? '',
       subtitle: safe(names.subtitle) ?? null,

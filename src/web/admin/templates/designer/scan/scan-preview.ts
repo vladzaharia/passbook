@@ -15,9 +15,13 @@ import {
 } from '@/passkit/template/scan-display/render.ts';
 import { sampleScope } from '@/passkit/template/scan-display/sample.ts';
 import type { ScanDisplayDoc } from '@/passkit/template/scan-display/schema.ts';
-import { hiddenFieldKeys, inputVisibleTo } from '@/passkit/template/scan-display/scope.ts';
+import {
+  hiddenFieldKeys,
+  inputVisibleTo,
+  passFieldFormats,
+} from '@/passkit/template/scan-display/scope.ts';
 import type { ScanDisplayScope } from '@/passkit/template/scan-display/text.ts';
-import type { Json, ScanAction, ScanRole, TemplateManifest } from '@/passkit/types.ts';
+import type { Json, PassJson, ScanAction, ScanRole, TemplateManifest } from '@/passkit/types.ts';
 import type { ScanDisplay, ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
 import { DEFAULT_SCAN_ACTION, scanOf } from '@/shared/scan-defaults.ts';
 import type { DesignDoc } from '../model.ts';
@@ -109,6 +113,7 @@ export function syntheticScope(
     }
   }
   scope.fields = fields;
+  scope.fieldFormats = passFieldFormats(doc.passJson as PassJson, Object.keys(fields));
   scope.previewRestricted = policy.restricted;
   return (clean(scope as Json, policy.deniedKeys) ?? {}) as ScanDisplayScope;
 }

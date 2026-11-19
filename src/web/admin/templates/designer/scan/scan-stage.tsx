@@ -1,23 +1,23 @@
 import { LockKeyhole } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ScanDisplayDoc } from '@/passkit/template/scan-display/schema.ts';
+import { roleAtLeast } from '@/passkit/template/scan-display/scope.ts';
 import type { Json, ScanRole } from '@/passkit/types.ts';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
-import { SegmentedControl, Select } from '@/web/ui/index.ts';
-import type { DesignDoc } from '../model.ts';
+import { ScanPreviewScreen } from '@/web/scan/preview-screen.tsx';
+import { CheckboxField, SegmentedControl, Select } from '@/web/ui/index.ts';
+import { type DesignDoc, styleOf } from '../model.ts';
+import { type FRAME_SIZES, ScanFrame } from './scan-frame.tsx';
+import { ScanOverlay } from './scan-overlay.tsx';
+import { previewOutcome } from './scan-preview-outcome.ts';
+import { safePreviewText } from './scan-preview-policy.ts';
 import { StageDiagnostics } from './scan-stage-diagnostics.tsx';
 import { useStageFocus } from './scan-stage-focus.ts';
 import { useStagePreview } from './scan-stage-model.ts';
 import { RealPassPicker } from './scan-stage-pass.tsx';
-import { PreviewCard } from './scan-stage-preview-card.tsx';
-import type { HitState } from './scan-stage-preview-hit.tsx';
 import { SampleInputs, useRealPreview } from './scan-stage-samples.tsx';
 import type { ScanStageAction } from './scan-stage-types.ts';
-import '@/web/scan/display/display.css';
-import '@/web/scan/display/display-rows.css';
-import '@/web/scan/result/result.css';
-import '@/web/scan/result/identity.css';
 import './scan-stage-controls.css';
 import './scan-stage.css';
 
@@ -52,7 +52,10 @@ export function ScanStage({
 }: ScanStageProps) {
   const [role, setRole] = useState<ScanRole>('door');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [device, setDevice] = useState<'phone' | 'ipad'>('phone');
+  const [device, setDevice] = useState<keyof typeof FRAME_SIZES>('phone');
+  const [marks, setMarks] = useState(true);
+  const [showLocked, setShowLocked] = useState(false);
+  const [layout, setLayout] = useState<{ doc: Document; scale: number } | null>(null);
   const [source, setSource] = useState<'synthetic' | 'real'>('synthetic');
   const [passId, setPassId] = useState<string | null>(null);
   const [request, setRequest] = useState(0);
@@ -93,7 +96,33 @@ export function ScanStage({
     onScreenChange,
     setTabId,
   });
-  const hit: HitState = { selected, active: focusId, onSelect, onFocus: setFocusId, phone };
+  const onLayout = useCallback(
+    (frameDoc: Document, scale: number) =>
+      setLayout((prev) =>
+        prev?.doc === frameDoc && prev.scale === scale ? prev : { doc: frameDoc, scale },
+      ),
+    [],
+  );
+  const outcome = useMemo(
+    () =>
+      rendered
+        ? previewOutcome({
+            rendered,
+            tab,
+            actions,
+            role,
+            template: {
+              name: String(doc.manifest.name ?? 'Template'),
+              style: styleOf(doc.passJson),
+            },
+            passJson: doc.passJson,
+            now,
+          })
+        : null,
+    [rendered, tab, actions, role, doc, now],
+  );
+  const restricted =
+    tab.screen === 'ready' ? actions.filter((action) => !roleAtLeast(role, action.minRole)) : [];
   return (
     <section className="sp-stage" aria-label="Scan screen preview controls">
       <div className="sp-tabs" role="tablist" aria-label="Preview outcome" onKeyDown={onTabsKey}>
@@ -148,11 +177,27 @@ export function ScanStage({
             [
               { value: 'phone', label: 'Phone' },
               { value: 'ipad', label: 'iPad' },
+              { value: 'desk', label: 'Desk' },
             ] as const
           }
           value={device}
           onValueChange={setDevice}
         />
+        {phone ? null : (
+          <>
+            <CheckboxField
+              label="Edit marks"
+              checked={marks}
+              onCheckedChange={(on) => setMarks(on === true)}
+            />
+            <CheckboxField
+              label="Locked areas"
+              checked={showLocked}
+              disabled={!marks}
+              onCheckedChange={(on) => setShowLocked(on === true)}
+            />
+          </>
+        )}
       </div>
       <div className="sp-sample-controls">
         <Select
@@ -217,25 +262,65 @@ export function ScanStage({
         aria-label={`Scan screen preview, ${tab.label}`}
         onKeyDown={onCanvasKey}
       >
-        <div className="sp-device" data-device={device} data-theme={theme}>
-          <div className="sp-device-notch" aria-hidden />
-          {rendered ? (
-            <PreviewCard
-              rendered={rendered}
-              tab={tab}
-              actions={actions}
-              hit={hit}
-              hiddenPanels={hiddenPanels}
-              role={role}
-            />
-          ) : (
-            <p className="sp-error" role="alert">
-              {invalidDisplay
-                ? 'The authored scan screen is invalid. Correct or replace it before previewing.'
-                : 'This scan screen cannot be previewed until its invalid fields are corrected.'}
-            </p>
-          )}
-        </div>
+        {rendered && outcome ? (
+          <ScanFrame
+            device={device}
+            theme={theme}
+            label={`Scanner screen, ${tab.label}`}
+            onLayout={onLayout}
+            overlay={
+              marks && !phone ? (
+                <ScanOverlay
+                  doc={layout?.doc ?? null}
+                  scale={layout?.scale ?? 1}
+                  rendered={rendered}
+                  contentKey={`${tab.id}:${role}:${device}:${theme}:${usingReal}`}
+                  showLocked={showLocked}
+                  state={{ selected, active: focusId, onSelect, onFocus: setFocusId }}
+                />
+              ) : null
+            }
+          >
+            <ScanPreviewScreen outcome={outcome} />
+          </ScanFrame>
+        ) : (
+          <p className="sp-error" role="alert">
+            {invalidDisplay
+              ? 'The authored scan screen is invalid. Correct or replace it before previewing.'
+              : 'This scan screen cannot be previewed until its invalid fields are corrected.'}
+          </p>
+        )}
+        {hiddenPanels.length > 0 && !phone ? (
+          <div className="sp-hidden">
+            {hiddenPanels.map((panel) => {
+              const name =
+                typeof panel.title === 'string' && safePreviewText(panel.title)
+                  ? panel.title
+                  : 'Panel';
+              return (
+                <button
+                  key={panel.id}
+                  type="button"
+                  className="sp-hidden-panel"
+                  aria-label={`${name}, hidden for this sample`}
+                  onClick={() => onSelect(panel.id)}
+                >
+                  {name} · Hidden for this sample
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        {restricted.length > 0 ? (
+          <p className="sp-help">
+            {restricted
+              .map(
+                (action) =>
+                  `${safePreviewText(action.label) ? action.label : 'Action'} · ${action.minRole === 'manager' ? 'Manager' : 'Desk'} required`,
+              )
+              .join('. ')}
+          </p>
+        ) : null}
       </fieldset>
       <StageDiagnostics fit={fit} cuts={cuts} phone={phone} onSelect={onSelect} />
     </section>
