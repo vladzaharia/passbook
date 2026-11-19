@@ -11,11 +11,11 @@ import { type DesignDoc, styleOf } from '../model.ts';
 import { type FRAME_SIZES, ScanFrame } from './scan-frame.tsx';
 import { ScanOverlay } from './scan-overlay.tsx';
 import { previewOutcome } from './scan-preview-outcome.ts';
-import { safePreviewText } from './scan-preview-policy.ts';
 import { useOrgLook } from './scan-stage-brand.ts';
 import { StageDiagnostics } from './scan-stage-diagnostics.tsx';
 import { useStageFocus } from './scan-stage-focus.ts';
 import { useStagePreview } from './scan-stage-model.ts';
+import { StageNotes } from './scan-stage-notes.tsx';
 import { RealPassPicker } from './scan-stage-pass.tsx';
 import { SampleInputs, useRealPreview } from './scan-stage-samples.tsx';
 import type { ScanStageAction } from './scan-stage-types.ts';
@@ -299,36 +299,11 @@ export function ScanStage({
               : 'This scan screen cannot be previewed until its invalid fields are corrected.'}
           </p>
         )}
-        {hiddenPanels.length > 0 && !phone ? (
-          <div className="sp-hidden">
-            {hiddenPanels.map((panel) => {
-              const name =
-                typeof panel.title === 'string' && safePreviewText(panel.title)
-                  ? panel.title
-                  : 'Panel';
-              return (
-                <button
-                  key={panel.id}
-                  type="button"
-                  className="sp-hidden-panel"
-                  aria-label={`${name}, hidden for this sample`}
-                  onClick={() => onSelect(panel.id)}
-                >
-                  {name} · Hidden for this sample
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-        {restricted.length > 0 ? (
-          <div className="sp-help">
-            {restricted.map((action) => (
-              <p key={action.id}>
-                {`${safePreviewText(action.label) ? action.label : 'Action'} · ${action.minRole === 'manager' ? 'Manager' : 'Desk'} required`}
-              </p>
-            ))}
-          </div>
-        ) : null}
+        <StageNotes
+          hiddenPanels={phone ? [] : hiddenPanels}
+          restricted={restricted}
+          onSelect={onSelect}
+        />
       </fieldset>
       <StageDiagnostics fit={fit} cuts={cuts} phone={phone} onSelect={onSelect} />
     </section>
