@@ -64,7 +64,10 @@ for (const theme of ['dark', 'light'] as const) {
         await expect(page.getByRole('link', { name: adminPassTitle, exact: true })).toBeVisible();
         // The tile hides the Refresh icon at this width: Refresh is the first More menu item. An
         // earlier spec may have refreshed this pass, so it can read "Refreshing" or "Refresh in Ns".
-        await page.getByRole('button', { name: 'More actions' }).first().click();
+        const tile = page
+          .getByRole('listitem')
+          .filter({ has: page.getByRole('link', { name: adminPassTitle, exact: true }) });
+        await tile.getByRole('button', { name: 'More actions' }).click();
         await expect(
           page.getByRole('menuitem', { name: /^(Refresh|Refreshing|Refresh in \d+s)$/ }),
         ).toBeVisible();
