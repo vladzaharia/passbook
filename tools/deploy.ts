@@ -1,6 +1,6 @@
 // Guarded production deploy. Dry run unless --apply.
 //   node tools/deploy.ts --check   check wrangler.jsonc only; add --secrets to also check required secret names
-//   npm run deploy:check -- <flags>  same
+//   npm run deploy:check -- <flags>  same; --require-wallet-migrated also queries the remote D1 (also checked before serving)
 //   npm run deploy                   print the plan
 //   npm run deploy -- --apply        run every check, upload a Worker version, bookmark D1, migrate,
 //                                    promote the version
@@ -45,6 +45,7 @@ import {
 } from './lib/deploy-plan.ts';
 import { readJsonc } from './lib/jsonc.ts';
 import { parseBookmark, predeployProblems } from './lib/predeploy.ts';
+import { unmigratedWalletAccounts, walletMigrationRefusal } from './lib/wallet-migrate-gate.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const args = (() => {
@@ -103,6 +104,7 @@ const checkSecrets = () => {
 };
 if (args.has('--check')) {
   if (args.has('--secrets')) checkSecrets();
+  requireWalletMigrated();
   console.log('wrangler.jsonc is ready to deploy.');
   process.exit(0);
 }
@@ -219,7 +221,27 @@ async function waitForBakedSync(): Promise<void> {
   console.log('Baked sync done: every live pass has a release head.');
 }
 
+/** PE3: serve only when no wallet account lacks a credential source (`--require-wallet-migrated`). */
+function requireWalletMigrated(): void {
+  if (!args.has('--require-wallet-migrated')) return;
+  const block = runbookSql(
+    readFileSync(resolve(root, 'docs/operations.md'), 'utf8'),
+    'wallet-migration-gate',
+  );
+  if (!block) throw new Error('docs/operations.md has no wallet-migration-gate query.');
+  const refusal = walletMigrationRefusal(
+    unmigratedWalletAccounts(
+      wrangler('d1', 'execute', database, '--remote', '--json', '--command', singleSelect(block)),
+    ),
+  );
+  if (refusal) {
+    console.error(refusal);
+    process.exit(1);
+  }
+}
+
 if (stage === 'promote') {
+  requireWalletMigrated();
   const saved = first || !existsSync(versionFile) ? null : readFileSync(versionFile, 'utf8').trim();
   if (!first && !saved) throw new Error('No saved version id. Run --migrate-only first.');
   promote(saved);
@@ -267,6 +289,7 @@ const versionId = uploadAndMigrate({
 if (stage === 'migrate')
   console.log('Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.');
 else {
+  requireWalletMigrated();
   promote(versionId);
   await waitForBakedSync();
 }

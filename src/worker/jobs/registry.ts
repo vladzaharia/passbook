@@ -7,6 +7,8 @@ import { handleMessageRuleCheck } from '../modules/message-rules/jobs.ts';
 import { handlePrintsBulk } from '../modules/prints/jobs.ts';
 import { handleRetentionNotice } from '../modules/retention/jobs.ts';
 import { handleForkUpdate } from '../modules/templates/fork-updates-job.ts';
+import { handleCredentialCheck } from '../modules/wallet-providers/account-check-job.ts';
+import { handleCredentialMigrate } from '../modules/wallet-providers/credential-migrate-job.ts';
 import { handleEnrolmentHold } from '../modules/wallet-providers/enrolment-hold-job.ts';
 import { handleWebhookDeliver } from '../modules/webhooks/jobs.ts';
 import type { ServiceContext } from '../platform/service-context.ts';
@@ -27,6 +29,8 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'webhook.deliver': handleWebhookDeliver,
   'template.fork_update': handleForkUpdate,
   'wallet.enrolment_hold': handleEnrolmentHold,
+  'wallet.credential_migrate': handleCredentialMigrate,
+  'wallet.credential_check': handleCredentialCheck,
   'channel.apple_bump': handleAppleBump,
   'prints.bulk': handlePrintsBulk,
 };
@@ -55,6 +59,10 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'template.fork_update':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'wallet.enrolment_hold':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'wallet.credential_migrate':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'wallet.credential_check':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'channel.apple_bump':
       return JOB_HANDLERS[job.kind](job, ctx);

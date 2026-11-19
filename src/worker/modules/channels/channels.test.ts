@@ -399,6 +399,34 @@ describe('review fixes', () => {
     expect(left[0]?.override).toBe('on');
   });
 
+  it('refuses a save whose cleared-override count drifted since the dry run', async () => {
+    const { pass, other, call, rows } = await setup();
+    const t = pass.templateId;
+    await call('PUT', `/passes/${pass.id}/channels`, { channels: { apple: 'on' } });
+    const dry = (await (
+      await call('PUT', `/templates/${t}/channels`, { channels: { apple: 'never' }, dryRun: true })
+    ).json()) as { impact: { clearedOverrides: number }[] };
+    expect(dry.impact[0]?.clearedOverrides).toBe(1);
+    // Another admin overrides a second pass after the dry run.
+    await call('PUT', `/passes/${other.id}/channels`, { channels: { apple: 'on' } });
+    const res = await call('PUT', `/templates/${t}/channels`, {
+      channels: { apple: 'never' },
+      expectedCleared: 1,
+    });
+    expect(res.status).toBe(409);
+    expect(((await res.json()) as { code: string }).code).toBe('TEMPLATE_CHANNELS_IMPACT_CHANGED');
+    const left = await rows(
+      "SELECT override FROM pass_channels WHERE channel = 'apple' AND override IS NOT NULL AND template_id = ?",
+      t,
+    );
+    expect(left).toHaveLength(2);
+    const ok = await call('PUT', `/templates/${t}/channels`, {
+      channels: { apple: 'never' },
+      expectedCleared: 2,
+    });
+    expect(ok.status).toBe(200);
+  });
+
   it('never in test mode keeps live overrides (L9)', async () => {
     const { kit, pass, call, rows } = await setup();
     await call('PUT', `/passes/${pass.id}/channels`, { channels: { apple: 'on' } });

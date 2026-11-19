@@ -71,6 +71,8 @@ export const JobSchema = z.discriminatedUnion('kind', [
     chunk: z.number().int().nonnegative().optional(),
   }),
   /** A platform admin's hold on a suspended org's wallet enrolment: a job grant writes it. */
+  /** One legacy wallet account onto its credential source, under the migrate job grant. */
+  z.object({ kind: z.literal('wallet.credential_migrate'), accountId: z.string().min(1) }),
   z.object({
     kind: z.literal('wallet.enrolment_hold'),
     orgId: z.string().min(1),
@@ -78,6 +80,12 @@ export const JobSchema = z.discriminatedUnion('kind', [
     provider: z.enum(['google', 'samsung']),
     reason: z.string().min(1).max(500),
     userId: z.string().min(1),
+  }),
+  /** A credential's health check: the provider probe and its server-clock row. `checkId` names the result. */
+  z.object({
+    kind: z.literal('wallet.credential_check'),
+    credentialId: z.string().min(1).max(64),
+    checkId: z.string().min(1).max(80),
   }),
   /** Apple flipped for a pass: republish (force) so devices fetch the voided or live copy. */
   z.object({

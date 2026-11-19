@@ -2,18 +2,29 @@ import { z } from 'zod';
 import { IdSchema } from '../../../shared/contracts/common.ts';
 import {
   HoldWalletEnrolmentSchema,
+  PlatformWalletCredentialCheckParamsSchema,
   PlatformWalletEnrolmentParamsSchema,
+  ResolveWalletMigrationSchema,
   RevokeWalletCredentialSchema,
   SavePlatformWalletCredentialSchema,
+  WalletCredentialCheckQueuedSchema,
+  WalletCredentialCheckResultSchema,
   WalletCredentialListSchema,
   WalletCredentialSchema,
   WalletEnrolmentHoldResultSchema,
+  WalletMigrationQueuedSchema,
+  WalletMigrationReportQuerySchema,
+  WalletMigrationReportSchema,
+  WalletMigrationResolvedSchema,
 } from '../../../shared/contracts/wallet-providers.ts';
 import { requireAdmin } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf } from '../passes/http.ts';
+import { readCredentialCheck, requestCredentialCheck } from './account-check-request.ts';
+import { migrationReport, queueMigration } from './credential-migrate.ts';
+import { resolveMigration } from './credential-migrate-resolve.ts';
 import {
   listPlatformCredentials,
   revokePlatformCredential,
@@ -88,6 +99,45 @@ register(
   'wallet platform',
   {
     method: 'post',
+    path: '/wallet-credentials/{id}/check',
+    summary: 'Check a platform wallet credential with its provider',
+    params: z.strictObject({ id: IdSchema }),
+    response: WalletCredentialCheckQueuedSchema,
+  },
+  async (c) =>
+    c.json(
+      await requestCredentialCheck(
+        serviceContext(c),
+        sessionOf(c),
+        { orgId: null },
+        c.req.valid('param').id,
+      ),
+    ),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'get',
+    path: '/wallet-credentials/{id}/checks/{checkId}',
+    summary: 'Read the result of a platform wallet credential check',
+    params: PlatformWalletCredentialCheckParamsSchema,
+    response: WalletCredentialCheckResultSchema,
+  },
+  async (c) => {
+    const { id, checkId } = c.req.valid('param');
+    return c.json(
+      await readCredentialCheck(serviceContext(c), sessionOf(c), { orgId: null }, id, checkId),
+    );
+  },
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'post',
     path: '/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/hold',
     summary: 'Hold a wallet provider enrolment',
     params: PlatformWalletEnrolmentParamsSchema,
@@ -119,4 +169,44 @@ register(
     c.json({
       status: await releaseEnrolment(serviceContext(c), sessionOf(c), c.req.valid('param')),
     }),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'get',
+    path: '/wallet-credentials/migrate',
+    summary: 'Report the legacy wallet accounts waiting for a credential source',
+    query: WalletMigrationReportQuerySchema,
+    response: WalletMigrationReportSchema,
+  },
+  async (c) =>
+    c.json(await migrationReport(serviceContext(c), sessionOf(c), c.req.valid('query').after)),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'post',
+    path: '/wallet-credentials/migrate',
+    summary: 'Queue the migration of legacy wallet accounts onto credential sources',
+    response: WalletMigrationQueuedSchema,
+  },
+  async (c) => c.json({ queued: await queueMigration(serviceContext(c), sessionOf(c)) }),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'post',
+    path: '/wallet-credentials/migrate/resolve',
+    summary:
+      'Resolve a refused legacy wallet account: assign the platform credential, merge or retire',
+    body: ResolveWalletMigrationSchema,
+    response: WalletMigrationResolvedSchema,
+  },
+  async (c) => c.json(await resolveMigration(serviceContext(c), sessionOf(c), c.req.valid('json'))),
 );

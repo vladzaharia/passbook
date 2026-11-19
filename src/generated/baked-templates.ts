@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "3ba4e2e98b0c82570e5306e75c93a9edc6dd23b0";
+export const BAKED_BUILD_HASH = "b983708cddc8b59fd83256326511737b6f5705db";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -5334,7 +5334,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-generic",
     "slug": "starter-generic",
-    "version": "02f13ee46e3abb20",
+    "version": "c98402a323770f70",
     "name": "Membership",
     "description": "Tier, term and status, with a renew link.",
     "org": null,
@@ -5428,6 +5428,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "wifiPassword": {
             "type": "string",
             "x-label": "Wi-Fi password",
+            "x-widget": "password",
             "x-group": "Wi-Fi",
             "x-order": 90,
             "maxLength": 63
@@ -5495,8 +5496,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "maximum": 99,
             "x-label": "Guests left",
             "x-group": "Membership",
-            "x-order": 26,
-            "default": 0
+            "x-order": 26
           },
           "renewURL": {
             "type": "string",
@@ -6016,7 +6016,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3062501488,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/02f13ee46e3abb20/en.lproj/pass.strings"
+          "path": "/templates/starter-generic/c98402a323770f70/en.lproj/pass.strings"
         }
       },
       {
@@ -6030,7 +6030,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/02f13ee46e3abb20/icon@2x.png"
+          "path": "/templates/starter-generic/c98402a323770f70/icon@2x.png"
         }
       },
       {
@@ -6044,7 +6044,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/02f13ee46e3abb20/icon@3x.png"
+          "path": "/templates/starter-generic/c98402a323770f70/icon@3x.png"
         }
       },
       {
@@ -6058,7 +6058,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/02f13ee46e3abb20/logo@2x.png"
+          "path": "/templates/starter-generic/c98402a323770f70/logo@2x.png"
         }
       },
       {
@@ -6072,7 +6072,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/02f13ee46e3abb20/logo@3x.png"
+          "path": "/templates/starter-generic/c98402a323770f70/logo@3x.png"
         }
       },
       {
@@ -6086,7 +6086,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/02f13ee46e3abb20/thumbnail@2x.png"
+          "path": "/templates/starter-generic/c98402a323770f70/thumbnail@2x.png"
         }
       },
       {
@@ -6100,7 +6100,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-generic/02f13ee46e3abb20/thumbnail@3x.png"
+          "path": "/templates/starter-generic/c98402a323770f70/thumbnail@3x.png"
         }
       }
     ],

@@ -167,7 +167,7 @@ describe('pass capability affordances', () => {
     expect(await screen.findByText('Blocked member')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Allow again' })).toBeDisabled();
-    expect(await screen.findByLabelText('Member photo')).toBeDisabled();
+    expect(await screen.findByLabelText('Choose a photo')).toBeDisabled();
     expect(await screen.findByRole('button', { name: 'Use template defaults' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Save rules' })).toBeDisabled();
   });
@@ -178,7 +178,7 @@ describe('pass capability affordances', () => {
     await screen.findByRole('button', { name: 'Change' });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Change' })).toBeEnabled());
     expect(screen.getByRole('button', { name: 'Allow again' })).toBeEnabled();
-    await waitFor(() => expect(screen.getByLabelText('Member photo')).toBeEnabled());
+    await waitFor(() => expect(screen.getByLabelText('Choose a photo')).toBeEnabled());
     expect(await screen.findByRole('button', { name: 'Use template defaults' })).toBeEnabled();
   });
 
@@ -244,7 +244,7 @@ describe('pass capability affordances', () => {
     const convert = vi.spyOn(memberPhotoFile, 'memberPhotoPng').mockReturnValue(prepared.promise);
     const user = userEvent.setup();
     const { queryClient, fetchMock } = await open('/admin/passes/p1?tab=holder', true);
-    const photo = await screen.findByLabelText('Member photo');
+    const photo = await screen.findByLabelText('Choose a photo');
     await waitFor(() => expect(photo).toBeEnabled());
     await user.upload(photo, new File(['image'], 'member.png', { type: 'image/png' }));
     expect(convert).toHaveBeenCalledOnce();

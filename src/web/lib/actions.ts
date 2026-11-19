@@ -250,6 +250,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'wallet_provider.enrolment_release': a('Wallet provider released', ShieldCheck, 'info'),
   'wallet_provider.enrolment_revoke': a('Wallet provider revoked', ShieldX, 'warning'),
   'wallet_provider.enrolment_source': a('Wallet provider credential changed', I.edit, 'info'),
+  'wallet_provider.migration_resolve': a('Wallet account migration resolved', I.edit, 'info'),
 };
 
 export const humanize = (code: string) => {

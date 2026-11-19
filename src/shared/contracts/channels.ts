@@ -124,6 +124,8 @@ export const PutTemplateChannelsSchema = z.object({
   dryRun: z.boolean().default(false),
   /** Also issue new scan codes ("Turn off and replace codes"). Off by default: turning off never rotates. */
   replaceCodes: z.boolean().default(false),
+  /** The cleared-override count the dry run showed; a save that would clear another number is refused (409). */
+  expectedCleared: z.number().int().nonnegative().optional(),
   orgId: OrgIdSchema.optional(),
 });
 export const PutTemplateChannelsResponseSchema = TemplateChannelsResponseSchema.extend({
