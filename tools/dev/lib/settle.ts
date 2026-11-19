@@ -17,7 +17,10 @@ export function noFiniteAnimationRunning(): boolean {
 
 /** Waits for animations to finish, then one frame, so a capture never catches a half-faded sheet. */
 export async function settle(page: Page, timeout = 5_000): Promise<void> {
-  await page.waitForFunction(noFiniteAnimationRunning, undefined, { timeout }).catch(() => {});
+  // A sheet that never settles is still worth a capture: note it and shoot anyway.
+  await page
+    .waitForFunction(noFiniteAnimationRunning, undefined, { timeout })
+    .catch((e: unknown) => console.warn(`settle: still animating after ${timeout} ms`, e));
   await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => done(null))));
 }
 

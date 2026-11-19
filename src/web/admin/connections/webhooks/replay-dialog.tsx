@@ -62,13 +62,13 @@ export function ReplayDialog({
     onOpenChange(o);
   };
 
+  // Replays the window the preview counted, so "Replay N" is what gets queued.
   async function submit() {
-    const end = Date.now();
     setError(undefined);
     try {
       const { queued } = await replayRange.mutateAsync({
-        from: end - ms,
-        to: end,
+        from: to - ms,
+        to,
         include,
         ...(missing ? { missing: true } : {}),
       });
