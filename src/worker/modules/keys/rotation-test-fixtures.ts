@@ -202,9 +202,9 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
   });
 
   const googleReceiptId = id();
-  const instance = await first<{ account_id: string; mode: string }>(
+  const instance = await first<{ account_id: string; mode: string; provider: string }>(
     db,
-    'SELECT account_id, mode FROM wallet_provider_instances WHERE id = ?',
+    'SELECT account_id, mode, provider FROM wallet_provider_instances WHERE id = ?',
     [t.operation.instanceId],
   );
   const googleKind = `google-callback|${instance?.mode}|${t.operation.instanceId}`;
@@ -241,8 +241,10 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
     orgId: org,
     accountId: String(instance?.account_id),
     mode: `${instance?.mode}`,
+    provider: `${instance?.provider}`,
   };
   plain.push(await seedAccountHmac(db, { ...account, seal }));
+
   const captureId = id();
   await run(
     db,

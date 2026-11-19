@@ -59,10 +59,11 @@ export async function seedAccountHmac(
     orgId: string;
     accountId: string;
     mode: string;
+    provider: string;
     seal: (rowId: string, orgId: string, kind: string, text: string) => Promise<Envelope>;
   },
 ) {
-  const kind = accountHmacKind(c.accountId, c.mode, 'google');
+  const kind = accountHmacKind(c.accountId, c.mode, c.provider);
   const text = 'hmac-body';
   const sealed = await c.seal(c.accountId, c.orgId, kind, text);
   await run(

@@ -172,12 +172,14 @@ export async function openAccount(
   ctx: ServiceContext,
   row: AccountRow,
 ): Promise<StoredCredentials | KeyOnlyAccount> {
-  const own = await decryptOwnKey(ctx, row);
+  const own = row.provider === 'google' ? await decryptOwnKey(ctx, row) : null;
   if (row.kek_version === null) {
+    if (row.provider === 'samsung') {
+      if (row.hmac_ciphertext == null) throw corrupt();
+      return { version: 1, provider: 'samsung', credentials: null };
+    }
     if (own === null) throw corrupt();
-    return row.provider === 'google'
-      ? { version: 1, provider: 'google', credentials: null, objectIdHmacKey: own }
-      : { version: 1, provider: 'samsung', credentials: null };
+    return { version: 1, provider: 'google', credentials: null, objectIdHmacKey: own };
   }
   const legacy = await decryptAccount(ctx, row);
   return own !== null && legacy.provider === 'google'
