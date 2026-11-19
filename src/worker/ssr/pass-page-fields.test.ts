@@ -18,7 +18,7 @@ const RAW: Record<string, string> = {
 const starter = (name: string): Record<string, unknown> & PassJson =>
   JSON.parse(RAW[name] as string) as PassJson;
 
-function detailsOf(passJson: PassJson): string {
+function detailsOf(passJson: PassJson, timeZone?: string): string {
   const view = normalize(passJson, {
     assets,
     now: new Date('2026-10-31T12:00:00Z'),
@@ -27,6 +27,8 @@ function detailsOf(passJson: PassJson): string {
   const html = renderPassPage({
     view,
     passJson,
+    ...(timeZone ? { timeZone } : {}),
+    now: new Date('2026-10-31T12:00:00Z'),
     nonce: 'n',
     orgName: 'Org',
     orgLabel: 'Org',
@@ -86,6 +88,26 @@ describe('/p lists every front field of the pass', () => {
     const block = passJson.boardingPass as { auxiliaryFields: unknown[] };
     block.auxiliaryFields.push({ key: 'expires', label: 'Expires', value: 'Never' });
     expect(detailsOf(passJson).match(/Expires/g)).toHaveLength(1);
+  });
+
+  it('names the zone of Expires when the visitor zone is unknown, in the pass own offset', () => {
+    const passJson = {
+      ...starter('starter-boarding-pass'),
+      expirationDate: '2030-06-01T16:30:00-04:00',
+    };
+    expect(detailsOf(passJson)).toMatch(/Expires\s+Jun 1, 2030, 4:30 PM GMT-4/);
+    const utc = { ...passJson, expirationDate: '2030-06-01T16:30:00Z' };
+    expect(detailsOf(utc)).toMatch(/Expires\s+Jun 1, 2030, 4:30 PM UTC/);
+  });
+
+  it('shows Expires in the visitor zone without a zone name when it is known', () => {
+    const passJson = {
+      ...starter('starter-boarding-pass'),
+      expirationDate: '2030-06-01T16:30:00-04:00',
+    };
+    expect(detailsOf(passJson, 'America/Los_Angeles')).toMatch(
+      /Expires\s+Jun 1, 2030, 1:30 PM(?! GMT| UTC)/,
+    );
   });
 
   it('a pass without an expiry has no Expires row', () => {

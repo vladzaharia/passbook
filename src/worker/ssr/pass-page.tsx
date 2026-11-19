@@ -55,6 +55,8 @@ export interface PassPageProps {
   view: PassView;
   /** The issued pass.json: the details list names every front field. */
   passJson: Record<string, unknown>;
+  /** The request clock. */
+  now: Date;
   /** The visitor's zone, for dates in the details. */
   timeZone?: string;
   nonce: string;
@@ -148,6 +150,7 @@ function PassBody(props: PassPageProps) {
               view={view}
               active={active}
               locale={view.locale}
+              now={props.now}
               {...(props.timeZone ? { timeZone: props.timeZone } : {})}
             />
           }

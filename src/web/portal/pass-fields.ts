@@ -38,14 +38,32 @@ function humanizeKey(key: string): string {
 }
 
 /**
+ * "Nov 21, 2030, 11:30 AM". In the visitor's zone when it is known; otherwise in the zone the
+ * pass's own timestamp carries (its offset, or UTC for Z), with the zone named so nobody reads it
+ * as local time.
+ */
+function expiryText(iso: string, locale: string, visitorZone?: string): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return '';
+  const own = /([+-]\d{2}:\d{2})$/.exec(iso)?.[1] ?? 'UTC';
+  return new Intl.DateTimeFormat(locale, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: visitorZone ?? own,
+    ...(visitorZone ? {} : { timeZoneName: 'short' as const }),
+  }).format(at);
+}
+
+/**
  * The front fields as label/value rows, values formatted by each field's date or number style.
  * Two fields sharing a label ("Member" for the ID and the name) read by their keys instead.
  */
 export function fieldRows(
   passJson: Record<string, unknown>,
-  locale = navigator.language,
-  now = new Date(),
-  timeZone?: string,
+  { locale, now, timeZone }: { locale: string; now: Date; timeZone?: string },
 ): { id: string; label: string; value: string }[] {
   const style = STYLES.find((s) => passJson[s] && typeof passJson[s] === 'object');
   if (!style) return [];
@@ -69,8 +87,7 @@ export function fieldRows(
   // A pass that already lists its own Expires field says it once.
   const listed = rows.some((r) => /expir/i.test(`${r.id} ${r.label}`));
   if (typeof expires === 'string' && expires && !listed) {
-    const spec = { dateStyle: 'PKDateStyleMedium', timeStyle: 'PKDateStyleShort' };
-    const text = formatValue(expires, spec, ctx).text;
+    const text = expiryText(expires, locale, timeZone);
     if (text) rows.push({ id: 'expirationDate', label: 'Expires', value: text });
   }
   const count = new Map<string, number>();

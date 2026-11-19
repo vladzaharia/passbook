@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { Upcoming } from '../pass-card/back.tsx';
 import { Card, CardBody, CardHeader } from '../ui/card-base.tsx';
@@ -14,27 +15,30 @@ export function PassDetails({
   view,
   active,
   locale,
+  now,
   timeZone,
+  status = <StatusBadge status="active" />,
 }: {
   passJson: Record<string, unknown>;
   view: PassView;
   active: boolean;
-  locale?: string;
+  locale: string;
+  /** The caller's clock: the server's request clock, the portal's own. */
+  now: Date;
+  /** The visitor's zone; unknown on the server without one, then Expires names its zone. */
   timeZone?: string;
+  /** The Status chip: the portal passes StatusPill (change ring), /p the plain badge. */
+  status?: ReactNode;
 }) {
   // The badge says the state; a pass field also labelled Status would say it twice.
-  const rows = fieldRows(passJson, locale, new Date(), timeZone).filter(
+  const rows = fieldRows(passJson, { locale, now, ...(timeZone ? { timeZone } : {}) }).filter(
     (r) => !(active && r.label.toLowerCase() === 'status'),
   );
   return (
     <Card>
       <CardHeader title="Details" />
       <CardBody className="flex flex-col gap-4">
-        <KeyValue
-          items={
-            active ? [{ label: 'Status', value: <StatusBadge status="active" /> }, ...rows] : rows
-          }
-        />
+        <KeyValue items={active ? [{ label: 'Status', value: status }, ...rows] : rows} />
         {view.upcoming.length ? (
           <div className="pc-flat">
             <Upcoming events={view.upcoming} />

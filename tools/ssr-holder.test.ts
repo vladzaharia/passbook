@@ -42,6 +42,7 @@ const page = (over: Record<string, unknown> = {}) =>
   renderPassPage({
     view: view(),
     passJson: { ...fixtures.generic },
+    now: new Date('2026-10-31T12:00:00Z'),
     nonce: 'n0nce',
     orgName: 'Gym',
     orgLabel: 'Gym',
