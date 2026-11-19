@@ -91,6 +91,7 @@ interface SourceRow extends PassDbRow {
   removal_published_generation: number | null;
   lookup_hash: string | null;
   lookup_input: string | null;
+  joined: number;
   prior_pass_json: string | null;
   identity_revision: number | null;
   assets_snapshot: string;
@@ -106,6 +107,8 @@ export interface TransferPass {
   removalPublishedGeneration: number | null;
   lookupHash: string | null;
   lookupInput: string | null;
+  /** Made from a public join link: its address was typed into a form nobody verified. */
+  joined: boolean;
   priorPassJson: string | null;
   rawPersonalization: string;
   rawFieldSources: string;
@@ -129,6 +132,7 @@ export async function readTransferPass(
     `SELECT p.*,
     (SELECT json_extract(tv.manifest, '$.scan.lookup.input') FROM template_versions tv
       WHERE tv.template_id = p.template_id AND tv.version = p.template_version) AS lookup_input,
+    EXISTS (SELECT 1 FROM join_issues j WHERE j.pass_id = p.id) AS joined,
     (SELECT v.pass_json FROM pass_versions v WHERE v.pass_id = p.id AND v.pass_json IS NOT NULL
       ORDER BY v.version DESC LIMIT 1) AS prior_pass_json,
     (SELECT si.revision FROM signing_identities si WHERE si.id = p.identity_id
@@ -148,6 +152,7 @@ export async function readTransferPass(
     removalPublishedGeneration: row.removal_published_generation,
     lookupHash: row.lookup_hash,
     lookupInput: row.lookup_input,
+    joined: row.joined === 1,
     priorPassJson: row.prior_pass_json,
     rawPersonalization: row.personalization,
     rawFieldSources: row.field_sources,

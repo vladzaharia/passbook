@@ -11,7 +11,7 @@ import { stubTurnstile } from './helpers/turnstile.ts';
 
 /**
  * starter-generic as an upload that can take public sign-ups: the barcode carries only the scan code.
- * With `lookup` it keeps its desk lookup (the credential cannot rotate on attach); without, it drops it.
+ * With `lookup` it keeps its desk lookup (generated for a joiner, replaced on attach); without, it drops it.
  */
 function joinableZip(name: string, lookup: boolean): Buffer {
   const dir = 'templates/starter-generic';
@@ -73,7 +73,7 @@ async function joinLinkPath(admin: Api, orgId: string, name: string, lookup: boo
   return new URL(put.link.url, BASE).pathname;
 }
 
-/** A visitor submits the join form in Chromium; the token stays out of Referer and the POST names its origin. */
+/** A visitor submits the join form in Chromium; the token stays out of Referer and the POST names its origin. Returns the card path. */
 async function submitJoin(browser: Browser, joinPath: string, email: string) {
   const visitor = await browser.newContext();
   const page = await visitor.newPage();
@@ -88,7 +88,9 @@ async function submitJoin(browser: Browser, joinPath: string, email: string) {
   expect((await post).headers().origin).toBe(BASE);
   await page.waitForURL((u) => u.pathname.startsWith('/p/'));
   await expect(page.getByText('Ada').first()).toBeVisible();
+  const cardPath = new URL(page.url()).pathname;
   await visitor.close();
+  return cardPath;
 }
 
 test('a join form submits in Chromium, and the card is in My passes after sign-in', async ({
@@ -113,7 +115,7 @@ test('a join form submits in Chromium, and the card is in My passes after sign-i
   }
 });
 
-test('a joined card whose credential cannot change is not attached; the owner is told to ask for a new copy', async ({
+test('a joined card on a lookup template is in My passes after sign-in, and the joiner link stops', async ({
   browser,
 }) => {
   const admin = await apiAs('admin');
@@ -121,14 +123,16 @@ test('a joined card whose credential cannot change is not attached; the owner is
   const email = `${uid('joiner')}@example.test`;
   try {
     const joinPath = await joinLinkPath(admin, readSeed().org.id, name, true);
-    await submitJoin(browser, joinPath, email);
+    const cardPath = await submitJoin(browser, joinPath, email);
     const holder = await browser.newContext();
     const portal = await holder.newPage();
     await signInHolder(portal, email);
-    await expect(portal.getByRole('heading', { name: HOLDER_COPY.reissueTitle })).toBeVisible({
+    await expect(portal.getByRole('link', { name: 'Ada', exact: true })).toBeVisible({
       timeout: 15_000,
     });
-    await expect(portal.getByRole('link', { name: 'Ada', exact: true })).toHaveCount(0);
+    await expect(portal.getByRole('heading', { name: HOLDER_COPY.reissueTitle })).toHaveCount(0);
+    // The link the joiner holds opens nothing: the credentials rotated with the attach.
+    expect((await holder.request.get(cardPath)).status()).toBe(404);
     await holder.close();
   } finally {
     await admin.dispose();

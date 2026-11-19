@@ -93,7 +93,8 @@ export async function runAttachHookA(
     } catch (error) {
       if (!(error instanceof CredentialTransferReissueRequired && error.unchanged)) throw error;
       // A joined card's holder may be a stranger who typed this address: linking it as it is would
-      // leave their link and code working on a card in the owner's account. It needs a new copy.
+      // leave their link and code working on a card in the owner's account. The transfer rotates a
+      // generated lookup value (joinAttachContent); one it cannot rotate needs a new copy.
       if (await isJoinedPass(ctx.env.DB, passId)) throw error;
       // The credential cannot change, so the verified owner is linked to the pass as it is.
       return (await linkVerifiedAttach(ctx, authority, error.unchanged))
