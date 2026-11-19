@@ -485,7 +485,7 @@ describe('keys.rewrap', () => {
     const quiet = jobOf(counted.env, kit.f);
     await rewrapEnvelopes(quiet.ctx);
     expect(codes(quiet.lines)).toEqual([]);
-    expect(counted.count()).toBe(2 + 17 + 1);
+    expect(counted.count()).toBe(2 + 18 + 1);
     expect(((await readSystemValue(db, DONE)) as { at: number }).at).toBe(kit.f.clock.now());
   });
 

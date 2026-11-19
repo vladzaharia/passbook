@@ -16,7 +16,8 @@ export type PlaceTable =
   | 'pass_auth_seals'
   | 'bundle_token_seals'
   | 'join_link_seals'
-  | 'webhook_endpoint_secrets';
+  | 'webhook_endpoint_secrets'
+  | 'wallet_credential_versions';
 
 /** What a select returns: the key, the envelope's KEK and wrapped DEK, and up to four AAD inputs. */
 export interface Raw {
@@ -100,6 +101,12 @@ export const PLACES: readonly Place[] = [
     // x1 org, x2 endpoint, x3 mode: webhooks/secrets.ts secretAad.
     table: 'webhook_endpoint_secrets',
     aad: (r) => credentialAad(r.pk, text(r.x1), `webhook_endpoint:${r.x2}:${r.x3}`),
+  },
+  {
+    // x1 the credential's org (null for a platform credential), x2 its id, x3 scope, x4 `mode:provider`:
+    // the AAD comes from the referencing credential row, never from the version.
+    table: 'wallet_credential_versions',
+    aad: (r) => credentialAad(r.pk, text(r.x1), `wallet-credential:${r.x2}:${r.x3}:${r.x4}`),
   },
 ];
 

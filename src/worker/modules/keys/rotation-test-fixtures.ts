@@ -10,6 +10,7 @@ import {
   recordWalletOperationOutcome,
 } from '../wallet-providers/instance.ts';
 import { personalizeThroughRoute } from './personalize-test-fixtures.ts';
+import { seedWalletCredentialVersion } from './repo-rotation-wallet-test-fixtures.ts';
 import { CAPTURE_TABLE, ENVELOPE_TABLES } from './rewrap-tables.ts';
 
 export type Samsung = Awaited<ReturnType<typeof setupSamsungCallbacks>>;
@@ -230,6 +231,8 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
     kind: googleKind,
     text: 'google-body',
   });
+
+  plain.push(await seedWalletCredentialVersion(db, { orgId: org, now, id, seal }));
 
   const captureId = id();
   await run(
