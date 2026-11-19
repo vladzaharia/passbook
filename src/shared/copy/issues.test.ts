@@ -2,7 +2,63 @@ import { describe, expect, it } from 'vitest';
 import { WARNING_CODES } from '@/passkit/warning-codes.ts';
 import { ISSUE_WORDS, issueWords } from './issues.ts';
 
+/** The params each validator supplies; the sentence must name every value. */
+const SUPPLIED: Record<string, string[]> = {
+  ACCESS_ZONE_UNKNOWN: ['name'],
+  ASSET_NAME: ['name'],
+  BARCODE_DATA: ['detail'],
+  BARCODE_NO_FALLBACK: ['name'],
+  BEHAVIOR_VERSION: ['name', 'found', 'wanted'],
+  BINDING_TARGET: ['name'],
+  COLOR_CONTRAST: ['name', 'ratio', 'min'],
+  COND_INPUT: ['name'],
+  COUNTER_NO_USE: ['name'],
+  DISPLAY_SEARCH: ['name'],
+  EXPR_INPUT: ['name'],
+  EXPR_PASS: ['name'],
+  FEATURED_ACTION_TYPE: ['name'],
+  FIELD_COUNT: ['name', 'max'],
+  FIELD_DATE_KEYS: ['name'],
+  FIELD_LENGTH: ['name', 'length', 'limit'],
+  FIELD_NOT_SHOWN: ['name'],
+  IMAGE_BYTES: ['name', 'size'],
+  IMAGE_SIZE: ['name', 'detail'],
+  LOCALE_NAME: ['name'],
+  LOCALIZED_IMAGES: ['name', 'locales'],
+  LOGO_TEXT_PLATFORM: ['name'],
+  PASS_SIZE: ['size'],
+  PLACEHOLDER_URL: ['name'],
+  PREFERRED_SCHEMES: ['name'],
+  PREVIEW_ASSET: ['name'],
+  SCAN_DISPLAY_CUT: ['screen'],
+  SCAN_DISPLAY_IMAGE: ['source'],
+  SCAN_DISPLAY_PATH: ['kind', 'name'],
+  SCAN_DISPLAY_ROLE_CONDITION: ['name'],
+  SCAN_DISPLAY_SHADOWED: ['name'],
+  SCAN_DISPLAY_VARIANT_UNREACHABLE: ['name'],
+  SEMANTICS_REQUIRED: ['name', 'missing'],
+  STAMPS_ART_SMALL: ['name', 'size'],
+  STAMPS_CONTRAST: ['ratio'],
+  STAMPS_MAX_LOW: ['max', 'wanted'],
+  STRINGS_DUPLICATE: ['name'],
+  UNKNOWN_IMAGE: ['name'],
+  UNKNOWN_KEY: ['name'],
+  UNKNOWN_SEMANTIC_TAG: ['name'],
+  URL_SCHEME: ['name'],
+  WALLETS_ART_UNUSED: ['name'],
+  WALLETS_INPUT: ['name'],
+  WALLETS_ROLE_FIELD: ['name'],
+};
+
 describe('issueWords', () => {
+  it('names every param a validator supplies', () => {
+    for (const [code, keys] of Object.entries(SUPPLIED)) {
+      const params = Object.fromEntries(keys.map((k) => [k, `V-${k}`]));
+      const words = issueWords({ code, message: 'RAW VALIDATOR TEXT', params });
+      for (const k of keys) expect(words, `${code} ${k}`).toContain(`V-${k}`);
+    }
+  });
+
   it('has admin words for every warning code', () => {
     expect(Object.keys(ISSUE_WORDS).sort()).toEqual([...WARNING_CODES].sort());
     for (const code of WARNING_CODES) {

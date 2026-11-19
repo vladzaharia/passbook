@@ -1,4 +1,4 @@
-import type { TemplateManifest, ValidationIssue } from '../../types.ts';
+import type { IssueParams, TemplateManifest, ValidationIssue } from '../../types.ts';
 import { isDateTime, isRecord, propertiesOf, type Rec, typeOf } from '../scan-actions.ts';
 import { DAYS, parseSpan } from './hours.ts';
 
@@ -16,6 +16,7 @@ type Add = (
   message: string,
   path: string,
   severity?: ValidationIssue['severity'],
+  params?: IssueParams,
 ) => void;
 
 /** Checks one `WeeklyHours` value; true when it is sound. */
@@ -156,7 +157,9 @@ function planIssues(
       if (zone !== '*' && !ZONE_KEY.test(zone))
         add('ACCESS_ZONE_KEY', 'A zone key is a-z, 0-9 and -, or *.', `${gp}.zone`);
       else if (zones && zone !== '*' && !zones.has(zone))
-        add('ACCESS_ZONE_UNKNOWN', `No zone has the key ${zone}.`, `${gp}.zone`, 'warning');
+        add('ACCESS_ZONE_UNKNOWN', `No zone has the key ${zone}.`, `${gp}.zone`, 'warning', {
+          name: zone,
+        });
     } else if (!(isRecord(zone) && typeof zone.input === 'string'))
       add('ACCESS_SHAPE', 'zone is a key, * or { input }.', `${gp}.zone`);
     if (g.hours !== undefined) hoursIssues(g.hours, `${gp}.hours`, add);
@@ -172,8 +175,8 @@ export function accessIssues(
   const access = isRecord(scan) ? scan.access : undefined;
   if (access === undefined) return [];
   const issues: ValidationIssue[] = [];
-  const add: Add = (code, message, path, severity = 'error') =>
-    issues.push({ severity, code, message, path });
+  const add: Add = (code, message, path, severity = 'error', params) =>
+    issues.push({ severity, code, message, path, ...(params ? { params } : {}) });
   if (!isRecord(access)) {
     add('ACCESS_SHAPE', 'access must be an object.', 'scan.access');
     return issues;

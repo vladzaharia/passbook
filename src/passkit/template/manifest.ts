@@ -4,6 +4,7 @@ import type {
   Binding,
   Condition,
   Expr,
+  IssueParams,
   Json,
   PassJson,
   Personalization,
@@ -46,8 +47,16 @@ export function validateManifest(
   options: ValidateManifestOptions = {},
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  const add = (severity: 'error' | 'warning') => (code: string, message: string, path?: string) =>
-    issues.push({ severity, code, message, ...(path ? { path } : {}) });
+  const add =
+    (severity: 'error' | 'warning') =>
+    (code: string, message: string, path?: string, params?: IssueParams) =>
+      issues.push({
+        severity,
+        code,
+        message,
+        ...(path ? { path } : {}),
+        ...(params ? { params } : {}),
+      });
   const error = add('error');
   const warn = add('warning');
 
@@ -88,17 +97,17 @@ export function validateManifest(
       return;
     }
     for (const name of unknownPassValues(typeof expr === 'string' ? expr : '', manifest))
-      warn('EXPR_PASS', `Unknown pass value "${name}".`, path);
+      warn('EXPR_PASS', `Unknown pass value "${name}".`, path, { name });
     const refs = exprReferences(expr);
     for (const name of refs.inputs)
-      if (!inputNames.has(name)) warn('EXPR_INPUT', `Unknown input "${name}".`, path);
+      if (!inputNames.has(name)) warn('EXPR_INPUT', `Unknown input "${name}".`, path, { name });
     for (const name of refs.lookups)
       if (!lookupTables.has(name)) error('EXPR_LOOKUP', `Unknown lookup table "${name}".`, path);
   };
   const checkCondition = (condition: Condition | undefined, path: string) => {
     if (!condition) return;
     for (const name of conditionInputs(condition))
-      if (!inputNames.has(name)) warn('COND_INPUT', `Unknown input "${name}".`, path);
+      if (!inputNames.has(name)) warn('COND_INPUT', `Unknown input "${name}".`, path, { name });
   };
 
   const fieldKeys = new Set<string>();
@@ -132,10 +141,13 @@ export function validateManifest(
       const keys = Array.isArray(to.field) ? (to.field as string[]) : [String(to.field)];
       if (options.passJson)
         for (const key of keys)
-          if (!fieldKeys.has(key)) warn('BINDING_TARGET', `No field with key "${key}".`, path);
+          if (!fieldKeys.has(key))
+            warn('BINDING_TARGET', `No field with key "${key}".`, path, { name: key });
     } else if ('action' in to) {
       if (options.passJson && !actionIds.has(String(to.action)))
-        warn('BINDING_TARGET', `No featured action "${String(to.action)}".`, path);
+        warn('BINDING_TARGET', `No featured action "${String(to.action)}".`, path, {
+          name: String(to.action),
+        });
     } else if ('barcode' in to) {
       if (to.barcode !== '*' && !Number.isInteger(to.barcode))
         error('BINDING_TARGET', 'barcode must be an index or "*".', path);
@@ -159,7 +171,7 @@ export function validateManifest(
     checkExprRefs(display.status, 'display/status');
     for (const name of display.search ?? [])
       if (!inputNames.has(name))
-        warn('DISPLAY_SEARCH', `Unknown input "${name}".`, 'display/search');
+        warn('DISPLAY_SEARCH', `Unknown input "${name}".`, 'display/search', { name });
   }
 
   for (const [i, use] of (manifest.behaviors ?? []).entries()) {
@@ -175,6 +187,7 @@ export function validateManifest(
         'BEHAVIOR_VERSION',
         `${use.use} is version ${plugin.version}, template wants ${use.version}.`,
         path,
+        { name: use.use, found: String(plugin.version), wanted: String(use.version) },
       );
     const result = new Validator(plugin.configSchema as never, '2020-12', false).validate(
       use.config,
@@ -201,6 +214,7 @@ export function validateManifest(
           'PREVIEW_ASSET',
           `previewOnlyAssets lists missing file "${name}".`,
           'previewOnlyAssets',
+          { name },
         );
   }
   return issues;
