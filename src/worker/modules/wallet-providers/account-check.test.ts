@@ -33,9 +33,9 @@ beforeAll(async () => {
 
 function stubProviders() {
   mock = createMockWallets();
-  // workerd's Request refuses redirect 'error', which the provider clients pass; the mock needs none.
+  // Builds the Request from the client's exact init: workerd throws on redirect 'error'.
   vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) =>
-    mock.handle(new Request(input, { ...init, redirect: 'manual' })),
+    mock.handle(new Request(input, init)),
   );
 }
 afterEach(() => vi.unstubAllGlobals());
@@ -176,6 +176,25 @@ describe('google check', () => {
     );
     expect(await check(credentialId)).toMatchObject({ ok: 0, code: 'credential_unreadable' });
     expect(mock.requests).toHaveLength(0);
+  });
+});
+
+describe('redirects', () => {
+  it('are never followed or accepted: a 3xx is a provider error', async () => {
+    stubProviders();
+    const calls: (string | undefined)[] = [];
+    const inner = globalThis.fetch;
+    vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push(init?.redirect);
+      if (String(input).endsWith('/token'))
+        return Promise.resolve(
+          new Response(null, { status: 302, headers: { location: 'https://evil.test/' } }),
+        );
+      return inner(input, init);
+    });
+    const { id } = await platformCred('google', 'test');
+    expect(await check(id)).toMatchObject({ ok: 0, code: 'provider_error' });
+    expect(calls).toEqual(['manual']);
   });
 });
 
@@ -375,6 +394,23 @@ describe('check request', () => {
       (await requestCredentialCheck(ctx, platform.admin.auth, { orgId: null }, platform.id)).status,
     ).toBe('queued');
     expect(sent).toHaveLength(2);
+  });
+});
+
+describe('check rate limit', () => {
+  it('allows 10 requests per credential per hour, then 429', async () => {
+    const platform = await platformCred('google', 'live', k.google('314159265'));
+    const sent: unknown[] = [];
+    const ctx = {
+      ...k.ctx,
+      env: { ...k.env, JOBS: { send: async (j: unknown) => void sent.push(j) } },
+    } as unknown as typeof k.ctx;
+    for (let i = 0; i < 10; i++)
+      await requestCredentialCheck(ctx, platform.admin.auth, { orgId: null }, platform.id);
+    await expect(
+      requestCredentialCheck(ctx, platform.admin.auth, { orgId: null }, platform.id),
+    ).rejects.toMatchObject({ status: 429, code: 'RATE_LIMITED' });
+    expect(sent).toHaveLength(10);
   });
 });
 

@@ -3,11 +3,19 @@ import type {
   WalletCredentialCheckResult,
 } from '../../../shared/contracts/wallet-providers.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
-import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
+import { bump } from '../../platform/counters.ts';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  RateLimitedError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { findCheck } from './repo-credential-checks.ts';
 import { findCredential } from './repo-credentials.ts';
+
+const CHECKS_PER_HOUR = 10;
 
 type Scope = { orgId: string } | { orgId: null };
 
@@ -44,6 +52,10 @@ export async function requestCredentialCheck(
   const row = await scoped(ctx, auth, scope, id, true);
   if (row.revoked_at !== null || row.current_version_id === null)
     throw new ConflictError('The wallet credential cannot be checked.', 'WALLET_ACCOUNT_CONFLICT');
+  const hour = 3_600_000;
+  const windowStart = Math.floor(ctx.clock.now() / hour) * hour;
+  if ((await bump(ctx.env.DB, `walletcheck:${row.id}`, windowStart)) > CHECKS_PER_HOUR)
+    throw new RateLimitedError();
   const checkId = ctx.ids.id();
   await ctx.env.JOBS.send({ kind: 'wallet.credential_check', credentialId: row.id, checkId });
   return { checkId, status: 'queued' };
