@@ -69,17 +69,17 @@ describe('customer live screen Buddy', () => {
       scanner: base.scanner ? { ...base.scanner, deviceRole: 'customer' as const } : null,
     };
     const { container } = render(<LiveScreen session={session} refetch={vi.fn(async () => {})} />);
-    const hero = container.querySelector('.scan-live-welcome');
+    const hero = container.querySelector('[data-testid="duo-customer-display"]');
     const art = hero?.querySelector('[data-buddy]');
     const socket = LiveSocket.instances[0];
 
-    expect(hero).toHaveAttribute('data-kind', 'ready');
+    expect(hero).toHaveAttribute('data-status', 'ready');
     expect(art).toHaveAttribute('data-scene', 'wave');
     expect(art?.querySelector('.wl-art')).toHaveAttribute('data-size', 'xl-scan');
     expect(socket).toBeDefined();
 
     act(() => socket?.publish(row('ok', `${ID.slice(0, -1)}2`)));
-    expect(hero).toHaveAttribute('data-kind', 'ok');
+    expect(hero).toHaveAttribute('data-status', 'accepted');
     expect(art).toHaveAttribute('data-scene', 'cheer');
     expect(art).toHaveAttribute('data-run');
     const checkout = {
@@ -89,10 +89,10 @@ describe('customer live screen Buddy', () => {
     };
     act(() => socket?.publish(checkout));
     expect(art).toHaveAttribute('data-scene', 'wave');
-    expect(hero?.querySelector('h2')).toHaveTextContent('Checked out');
+    expect(hero?.querySelector('h1')).toHaveTextContent('Checked out');
 
     act(() => socket?.publish(row('refused', `${ID.slice(0, -1)}5`)));
-    expect(hero).toHaveAttribute('data-kind', 'refused');
+    expect(hero).toHaveAttribute('data-status', 'rejected');
     expect(art).toHaveAttribute('data-scene', 'sorry');
     expect(art).toHaveAttribute('data-run');
   });
@@ -105,15 +105,15 @@ describe('customer live screen Buddy', () => {
     };
     const { container } = render(<LiveScreen session={session} refetch={vi.fn(async () => {})} />);
     const socket = LiveSocket.instances[0];
-    const hero = container.querySelector('.scan-live-welcome');
+    const hero = container.querySelector('[data-testid="duo-customer-display"]');
     const buddy = hero?.querySelector('[data-buddy]');
 
     act(() => socket?.publish(row('ok', `${ID.slice(0, -1)}4`)));
-    expect(hero).toHaveAttribute('data-kind', 'ok');
+    expect(hero).toHaveAttribute('data-status', 'accepted');
     expect(buddy).toHaveAttribute('data-scene', 'cheer');
 
     act(() => vi.advanceTimersByTime(4_001));
-    expect(hero).toHaveAttribute('data-kind', 'ready');
+    expect(hero).toHaveAttribute('data-status', 'ready');
     expect(buddy).toHaveAttribute('data-scene', 'wave');
   });
 
@@ -129,17 +129,17 @@ describe('customer live screen Buddy', () => {
       scanner: base.scanner ? { ...base.scanner, deviceRole: 'customer' as const } : null,
     };
     const { container } = render(<LiveScreen session={session} refetch={vi.fn(async () => {})} />);
-    const page = container.querySelector<HTMLElement>('[data-testid="scan-live"]');
-    const logo = container.querySelector<HTMLImageElement>('.scan-live-logo');
+    const page = container.querySelector<HTMLElement>('[data-testid="duo-customer-display"]');
+    const logo = container.querySelector<HTMLImageElement>('.cstage-brand-logo');
 
     expect(page?.style.getPropertyValue('--scan-org-accent')).toBe('#0f766e');
     expect(logo?.src).toContain(`/api/v1/scan/branding/logo?v=${'a'.repeat(64)}`);
-    expect(logo?.alt).toBe('Henry logo');
+    expect(logo?.alt).toBe('Organization logo');
     expect(container.textContent).not.toContain('Private pass holder');
 
     if (!logo) throw new Error('Expected the configured organization logo.');
     fireEvent.error(logo);
-    expect(container.querySelector('.scan-live-brand-icon svg')).toBeInTheDocument();
+    expect(container.querySelector('.cstage-brand-mark span')).toBeInTheDocument();
   });
 
   it('shows the session welcome when idle, the fixed copy otherwise', () => {
@@ -150,13 +150,13 @@ describe('customer live screen Buddy', () => {
       scanner: base.scanner ? { ...base.scanner, deviceRole: 'customer' as const } : null,
     };
     const { container } = render(<LiveScreen session={session} refetch={vi.fn(async () => {})} />);
-    expect(container.querySelector('h2')).toHaveTextContent('Hold up your pass');
+    expect(container.querySelector('h1')).toHaveTextContent('Hold up your pass');
     act(() => LiveSocket.instances.at(-1)?.snapshot('Scan to enter'));
-    expect(container.querySelector('h2')).toHaveTextContent('Scan to enter');
+    expect(container.querySelector('h1')).toHaveTextContent('Scan to enter');
     act(() => LiveSocket.instances.at(-1)?.close());
     act(() => vi.advanceTimersByTime(2000));
     act(() => LiveSocket.instances.at(-1)?.snapshot());
-    expect(container.querySelector('h2')).toHaveTextContent('Hold up your pass');
+    expect(container.querySelector('h1')).toHaveTextContent('Hold up your pass');
     vi.useRealTimers();
   });
 
@@ -169,7 +169,7 @@ describe('customer live screen Buddy', () => {
     const { container } = render(<LiveScreen session={session} refetch={vi.fn(async () => {})} />);
     expect(container.textContent).not.toContain('Customer display');
     expect(container.textContent).not.toContain(base.scanner?.name ?? 'no-name');
-    expect(container.querySelector('h2')).toHaveTextContent('Hold up your pass');
+    expect(container.querySelector('h1')).toHaveTextContent('Hold up your pass');
     const customer = {
       v: 1 as const,
       screen: 'ok' as const,
@@ -185,7 +185,25 @@ describe('customer live screen Buddy', () => {
       test: false,
     };
     act(() => LiveSocket.instances[0]?.publish({ ...row('ok', `${ID.slice(0, -1)}9`), customer }));
-    expect(container.querySelector('h2')).toHaveTextContent("You're in");
+    expect(container.querySelector('h1')).toHaveTextContent("You're in");
     expect(container).toHaveTextContent('Hi, Sam');
+  });
+});
+
+describe('monitor setup access', () => {
+  it('hides Refresh setup until staff hold the name or press Enter on it', () => {
+    vi.useFakeTimers();
+    const { getByRole, queryByRole } = render(
+      <LiveScreen session={sessionFixture()} refetch={vi.fn(async () => {})} />,
+    );
+    expect(queryByRole('button', { name: 'Refresh setup' })).toBeNull();
+    const brand = getByRole('button', { name: 'Setup options' });
+    fireEvent.pointerDown(brand);
+    act(() => vi.advanceTimersByTime(950));
+    expect(getByRole('button', { name: 'Refresh setup' })).toBeVisible();
+    act(() => vi.advanceTimersByTime(12_100));
+    expect(queryByRole('button', { name: 'Refresh setup' })).toBeNull();
+    fireEvent.click(brand, { detail: 0 });
+    expect(getByRole('button', { name: 'Refresh setup' })).toBeVisible();
   });
 });

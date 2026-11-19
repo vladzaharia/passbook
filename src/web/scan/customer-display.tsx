@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
-import { CustomerBuddy, type CustomerBuddyStatus } from './live/customer-buddy.tsx';
-import { ScanOrgLogo, scanBrandStyle } from './platform/scan-branding.tsx';
-import './customer-display.css';
+import { CustomerStage } from './customer-stage.tsx';
+import { toneOfStatus } from './customer-tone.ts';
+import { scanBrandStyle } from './platform/scan-branding.tsx';
 
 const DisplayStatus = z.enum(['ready', 'checking', 'accepted', 'checkedOut', 'rejected', 'failed']);
 const DisplayBranding = z.strictObject({
@@ -33,30 +33,6 @@ interface CustomerDisplayBridge {
 declare global {
   interface Window {
     PassBookCustomerDisplay?: CustomerDisplayBridge;
-  }
-}
-
-function buddyStatus(status: NativeStatus): CustomerBuddyStatus {
-  if (status === 'accepted') return 'accepted';
-  if (status === 'checkedOut') return 'checkedOut';
-  if (status === 'checking') return 'checking';
-  if (status === 'rejected' || status === 'failed') return 'needsStaff';
-  return 'ready';
-}
-
-function message(status: NativeStatus) {
-  switch (status) {
-    case 'checking':
-      return { eyebrow: 'Checking', title: 'Checking pass', hint: 'Please wait.' };
-    case 'accepted':
-      return { eyebrow: 'Entry recorded', title: "You're checked in", hint: '' };
-    case 'checkedOut':
-      return { eyebrow: 'Exit recorded', title: "You're checked out", hint: '' };
-    case 'rejected':
-    case 'failed':
-      return { eyebrow: 'Staff assistance', title: 'Please see staff', hint: '' };
-    default:
-      return { eyebrow: 'Ready to scan', title: 'Ready', hint: 'Hold up your pass.' };
   }
 }
 
@@ -97,45 +73,17 @@ export function CustomerDisplayPage() {
     };
   }, []);
 
-  const copy = message(display.status);
   const brandName = display.branding?.name ?? 'PassBook';
   const logoUrl = display.branding?.logoSha
     ? `/api/v1/scan/branding/logo?v=${display.branding.logoSha}`
     : null;
-  const brandStyle = scanBrandStyle({
-    accent: display.branding?.accent ?? null,
-    logo: null,
-  });
   return (
-    <main
-      className="duo-customer-display"
-      data-testid="duo-customer-display"
-      style={brandStyle}
-      data-status={display.status}
-    >
-      <section aria-live="polite" className="duo-customer-display-copy">
-        <header className="duo-customer-brand">
-          <span className="duo-customer-brand-mark">
-            <ScanOrgLogo
-              className="duo-customer-brand-logo"
-              src={logoUrl}
-              name=""
-              fallback={<span aria-hidden>{brandName.charAt(0) || 'P'}</span>}
-            />
-          </span>
-          <p>{brandName}</p>
-        </header>
-        <p className="duo-customer-display-eyebrow">{copy.eyebrow}</p>
-        <h1>{copy.title}</h1>
-        {copy.hint ? <p className="duo-customer-display-hint">{copy.hint}</p> : null}
-      </section>
-      <div aria-hidden="true" className="duo-customer-buddy">
-        <CustomerBuddy
-          className="duo-customer-buddy-art"
-          status={buddyStatus(display.status)}
-          replay={display.revision}
-        />
-      </div>
-    </main>
+    <CustomerStage
+      tone={toneOfStatus(display.status)}
+      replay={display.revision}
+      brandName={brandName}
+      logoUrl={logoUrl}
+      style={scanBrandStyle({ accent: display.branding?.accent ?? null, logo: null })}
+    />
   );
 }
