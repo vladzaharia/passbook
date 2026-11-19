@@ -209,7 +209,9 @@ async function snapshot(
       });
     }
     const cardType =
-      provider === 'samsung' ? await releaseCardType(ctx.env.DB, scope.providerReleaseId) : null;
+      provider === 'samsung'
+        ? await releaseCardType(ctx.env.DB, scope.orgId, scope.providerReleaseId)
+        : null;
     if (
       !account ||
       account.provider !== provider ||
@@ -275,7 +277,7 @@ export async function runtimeSamsungAccount(
   scope = copyRuntimeScope(scope);
   const value = await snapshot(ctx, scope, 'samsung', purpose);
   try {
-    const cardType = await releaseCardType(ctx.env.DB, scope.providerReleaseId);
+    const cardType = await releaseCardType(ctx.env.DB, scope.orgId, scope.providerReleaseId);
     const account = await validateSamsungCredentials(
       value.credentials,
       ctx.clock.now(),

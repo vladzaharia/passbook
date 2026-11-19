@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import {
+  SAMSUNG_CARD_TYPES,
   type SaveWalletCredential,
   SaveWalletCredentialSchema,
   type WalletProvider,
@@ -8,8 +9,8 @@ import { FormField, Input, Textarea } from '@/web/ui/index.ts';
 
 const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/wallet_object.issuer';
 
-/** Samsung card types an org can hold a card for beside the default card. */
-const CARD_TYPES = ['loyalty', 'ticket', 'coupon', 'boardingpass'] as const;
+/** The card types a Samsung projection supports: a card row for each beside the default card. */
+const CARD_TYPES = SAMSUNG_CARD_TYPES;
 const CARD_ID = /^[A-Za-z0-9_-]{1,32}$/;
 
 type FieldName =

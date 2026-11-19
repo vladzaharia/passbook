@@ -184,6 +184,32 @@ describe('org credentials', () => {
     });
   });
 
+  it('refuses generic as a per-type card on create and rotate, and keeps the default card in the map', async () => {
+    const org = await k.org();
+    const { auth } = await k.member(org.id);
+    const save = (expectedRevision: number, cardIds: Record<string, string>) =>
+      saveOrgCredential(k.ctx, auth, org.id, {
+        provider: 'samsung',
+        expectedRevision,
+        credentials: { ...k.samsung(), cardIds },
+      });
+    await expect(save(0, { generic: 'cardX' })).rejects.toMatchObject({
+      code: 'WALLET_CREDENTIALS_INVALID',
+    });
+    const row = await save(0, { ticket: 'cardT' });
+    await expect(save(1, { generic: 'cardX' })).rejects.toMatchObject({
+      code: 'WALLET_CREDENTIALS_INVALID',
+    });
+    const cur = await first<{ current_version_id: string }>(
+      env.DB,
+      'SELECT current_version_id FROM wallet_credentials WHERE id = ?',
+      [row.id],
+    );
+    expect((await cardMapOf(env.DB, cur?.current_version_id ?? null)).generic).toBe(
+      await sha256Hex(k.samsung().cardId),
+    );
+  });
+
   it('an org takes no identity the platform holds', async () => {
     const admin = await k.admin();
     const org = await k.org();

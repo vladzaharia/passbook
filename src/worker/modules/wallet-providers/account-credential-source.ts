@@ -103,16 +103,21 @@ export async function openSourceVersion(
   if (identityHash !== row.version_identity || identityHash !== row.credential_identity)
     throw corrupt();
   if (source.provider === 'samsung') {
-    // The version's card map is the card allow-list: every card the secret names must be in it.
+    // The version's card map is the card allow-list: each card the secret names must equal the map's entry for its type.
     let cards: unknown;
     try {
       cards = JSON.parse(row.card_map);
     } catch {
       throw corrupt();
     }
-    const allowed = cards && typeof cards === 'object' ? Object.values(cards) : [];
-    for (const [, hash] of Object.entries(await samsungCardMap(source.credentials)))
-      if (!allowed.includes(hash)) throw corrupt();
+    const stored = (cards && typeof cards === 'object' ? cards : {}) as Record<string, unknown>;
+    let wanted: Record<string, string>;
+    try {
+      wanted = await samsungCardMap(source.credentials);
+    } catch {
+      throw corrupt();
+    }
+    for (const [type, hash] of Object.entries(wanted)) if (stored[type] !== hash) throw corrupt();
   }
   return {
     ...source,

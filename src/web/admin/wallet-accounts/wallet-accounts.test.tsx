@@ -260,22 +260,22 @@ describe('organization wallet accounts', () => {
     await user.type(within(dialog).getByLabelText(/Partner ID/), 'partner1');
     await user.type(within(dialog).getByLabelText(/Certificate ID/), 'AB12');
     await user.type(within(dialog).getByLabelText(/Default card ID/), 'cardG');
-    await user.type(within(dialog).getByLabelText(/Card for ticket/), 'cardT');
     await user.click(within(dialog).getByLabelText(/Partner private key/));
     await user.paste(KEY);
     await user.click(within(dialog).getByLabelText(/Partner certificate/));
     await user.paste(cert);
     await user.click(within(dialog).getByLabelText(/Samsung certificate/));
     await user.paste(cert);
-    await user.type(within(dialog).getByLabelText(/Card for coupon/), 'bad id');
+    await user.type(within(dialog).getByLabelText(/Card for loyalty/), 'bad id');
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     expect(saved).toHaveLength(0);
-    await user.clear(within(dialog).getByLabelText(/Card for coupon/));
+    await user.clear(within(dialog).getByLabelText(/Card for loyalty/));
+    await user.type(within(dialog).getByLabelText(/Card for loyalty/), 'cardT');
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(saved).toHaveLength(1));
     expect(saved[0]).toMatchObject({
       provider: 'samsung',
-      credentials: { cardId: 'cardG', cardIds: { ticket: 'cardT' } },
+      credentials: { cardId: 'cardG', cardIds: { loyalty: 'cardT' } },
     });
   });
 });

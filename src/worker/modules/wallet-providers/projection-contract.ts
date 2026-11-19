@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SAMSUNG_CARD_TYPES } from '../../../shared/contracts/wallet-providers.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { DEFAULT_CARD_TYPE, samsungCardId } from './samsung-cards.ts';
@@ -60,7 +61,7 @@ export const GoogleProjectionSchema = z.strictObject({
 export const SamsungProjectionSchema = z.strictObject({
   ...common,
   provider: z.literal('samsung'),
-  cardType: z.literal('loyalty'),
+  cardType: z.enum(SAMSUNG_CARD_TYPES),
   cardSubType: z.literal('others'),
   countryCode: z.string().regex(/^[A-Z]{2}$/),
   appLinkLogo: HttpsUrlSchema,

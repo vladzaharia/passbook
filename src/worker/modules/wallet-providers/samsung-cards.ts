@@ -20,6 +20,8 @@ export function samsungCardEntries(credentials: CardCredentials): [string, strin
 export async function samsungCardMap(
   credentials: CardCredentials,
 ): Promise<Record<string, string>> {
+  if (credentials.cardIds && Object.hasOwn(credentials.cardIds, DEFAULT_CARD_TYPE))
+    throw new Error('The default card type cannot be a per-type card.');
   const entries = await Promise.all(
     samsungCardEntries(credentials).map(async ([type, id]) => [type, await sha256Hex(id)] as const),
   );

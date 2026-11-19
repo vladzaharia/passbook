@@ -25,6 +25,7 @@ import {
 } from './instance.ts';
 import { onWalletPassRetired } from './lifecycle.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
+import { releaseCardType } from './repo-card-type.ts';
 import { setSource } from './repo-wallet-enrolments-test-fixtures.ts';
 import { samsungCardMap } from './samsung-cards.ts';
 
@@ -36,6 +37,65 @@ const keyOf = async (identity: { privateKey: string }) =>
   (await importPKCS8(identity.privateKey, 'RS256')) as CryptoKey;
 
 describe('Samsung tombstone and credential versions', () => {
+  it('refuses a secret that maps a type to another type card', async () => {
+    const t = await setupSamsungCallbacks();
+    const db = t.kit.env.DB;
+    const credentials = { ...t.samsung, cardIds: { ticket: 'cardC' } };
+    // The map lists both cards, so membership would pass; ticket's entry is not cardC's hash.
+    const cards = JSON.stringify({
+      generic: await sha256Hex(t.samsung.cardId),
+      ticket: await sha256Hex('cardT'),
+      coupon: await sha256Hex('cardC'),
+    });
+    const acct = {
+      id: t.operation.accountId,
+      orgId: t.kit.org.id,
+      mode: 'live' as const,
+      provider: 'samsung' as const,
+    };
+    const own = await realCredential(
+      t.kit.env,
+      { orgId: acct.orgId, provider: 'samsung' },
+      { provider: 'samsung', credentials },
+      cards,
+    );
+    await setSource(acct, own);
+    await withoutTrigger(db, 'wallet_samsung_ref_credential_version_immutable', () =>
+      run(db, 'UPDATE wallet_samsung_fetch_refs SET credential_version_id = ? WHERE id = ?', [
+        own.currentId,
+        t.referenceId,
+      ]),
+    );
+    const revision = (
+      await first<{ revision: number }>(
+        db,
+        'SELECT revision FROM wallet_provider_accounts WHERE id = ?',
+        [acct.id],
+      )
+    )?.revision;
+    await expect(
+      readSamsungIssuedRefVerification(t.kit.ctx, {
+        orgId: acct.orgId,
+        mode: acct.mode,
+        accountId: acct.id,
+        accountRevision: revision ?? 0,
+        refHash: await sha256Hex(t.refId),
+        credentialKeysetCommitment: t.credentialKeysetCommitment,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('reads a release card type only inside its own org', async () => {
+    const t = await setupSamsungCallbacks();
+    const inst = await first<{ release: string }>(
+      t.kit.env.DB,
+      'SELECT identity_projection_release_id AS release FROM wallet_provider_instances WHERE id = ?',
+      [t.operation.instanceId],
+    );
+    expect(await releaseCardType(t.kit.env.DB, t.kit.org.id, inst?.release ?? '')).toBe('loyalty');
+    expect(await releaseCardType(t.kit.env.DB, 'other-org', inst?.release ?? '')).toBeNull();
+  });
+
   it('an issued ref of type X verifies with type X card, never type Y card', async () => {
     const t = await setupSamsungCallbacks();
     const db = t.kit.env.DB;
@@ -140,15 +200,21 @@ describe('Samsung tombstone and credential versions', () => {
       cards,
     );
     expect((await read())?.later).toHaveLength(1);
-    // A later version naming another card does not.
+    // A later version whose card for the ref's type differs does not.
+    await run(db, 'UPDATE wallet_provider_instances SET card_type = ? WHERE id = ?', [
+      'loyalty',
+      t.operation.instanceId,
+    ]);
+    const base = await samsungSecret(t.samsung.partnerId, t.samsung.cardId, rotated);
+    if (base.provider !== 'samsung') throw new Error('fixture');
     await addRealVersion(
       t.kit.env,
       own,
-      await samsungSecret(t.samsung.partnerId, 'other-card', rotated),
-      JSON.stringify({
-        ...JSON.parse(cards),
-        coupon: await sha256Hex('other-card'),
-      }),
+      {
+        ...base,
+        credentials: { ...base.credentials, cardIds: { loyalty: 'other-card' } },
+      },
+      JSON.stringify({ ...JSON.parse(cards), loyalty: await sha256Hex('other-card') }),
     );
     expect((await read())?.later).toHaveLength(1);
   });
