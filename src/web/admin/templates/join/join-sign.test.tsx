@@ -63,7 +63,7 @@ afterEach(() => {
 
 describe('print sign', () => {
   it('says what to do and shows the short link', async () => {
-    mount(<JoinSign orgId="org-1" orgName="Dos Olas" url={URL_OK} />);
+    mount(<JoinSign orgId="org-1" orgName="Dos Olas" url={URL_OK} hasLogo={false} />);
     expect(await screen.findByRole('heading', { name: JOIN_COPY.sign.title })).toBeInTheDocument();
     expect(screen.getByText(JOIN_COPY.sign.scan)).toBeInTheDocument();
     expect(screen.getByText('Dos Olas')).toBeInTheDocument();
@@ -74,8 +74,22 @@ describe('print sign', () => {
     expect(document.querySelector('[data-buddy]')).toBeNull();
   });
 
+  it('requests the org logo only when the org has one', async () => {
+    const none = mount(<JoinSign orgId="org-1" orgName="Dos Olas" url={URL_OK} hasLogo={false} />);
+    expect(await screen.findByText('DO')).toBeInTheDocument();
+    expect(none.container.querySelector('.jl-logo img')).toBeNull();
+    none.unmount();
+    const some = mount(<JoinSign orgId="org-1" orgName="Dos Olas" url={URL_OK} hasLogo />);
+    await waitFor(() =>
+      expect(some.container.querySelector('.jl-logo img')).toHaveAttribute(
+        'src',
+        '/api/v1/orgs/org-1/branding/logo',
+      ),
+    );
+  });
+
   it('draws a QR that decodes to the link', async () => {
-    mount(<JoinSign orgId="org-1" orgName="Dos Olas" url={URL_OK} />);
+    mount(<JoinSign orgId="org-1" orgName="Dos Olas" url={URL_OK} hasLogo={false} />);
     const img = await screen.findByRole('img', { name: `QR code for ${URL_OK}` });
     const image = raster(img.getAttribute('src') ?? '');
     const [found] = await readBarcodes(image, { formats: ['QRCode'], tryHarder: true });
@@ -93,7 +107,9 @@ describe('print sign', () => {
   it('has no violations in either theme', async () => {
     for (const theme of ['light', 'dark']) {
       document.documentElement.dataset.theme = theme;
-      const view = mount(<JoinSign orgId="org-1" orgName="Dos Olas" url={URL_OK} />);
+      const view = mount(
+        <JoinSign orgId="org-1" orgName="Dos Olas" url={URL_OK} hasLogo={false} />,
+      );
       await screen.findByRole('img', { name: /QR code for/ });
       await waitFor(async () => expect((await axe(view.container)).violations).toEqual([]));
       view.unmount();
