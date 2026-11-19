@@ -174,12 +174,12 @@ export async function putTemplateChannels(
     throw new ConflictError('The channels changed. Reload and retry.', 'TEMPLATE_CHANNELS_CHANGED');
   const merged = { ...policy, ...body.channels };
   const changed = (Object.keys(body.channels) as Channel[]).filter(
-    (c) => (policy?.[c] ?? templateDefault(c, inputs.scanTags)) !== body.channels[c],
+    (c) => (policy?.[c] ?? templateDefault(c)) !== body.channels[c],
   );
   const impact = [];
   const cleared: Channel[] = [];
   for (const channel of changed) {
-    const prev = policy?.[channel] ?? templateDefault(channel, inputs.scanTags);
+    const prev = policy?.[channel] ?? templateDefault(channel);
     const next = body.channels[channel] as TemplateChannelState;
     const blocked = !effectiveChannels({ ...inputs, template: { ...policy, [channel]: 'on' } })[
       channel

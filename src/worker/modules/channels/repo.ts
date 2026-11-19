@@ -114,23 +114,21 @@ export async function getPassChannelRows(db: D1Database, passId: string): Promis
 export interface Capability {
   google: boolean;
   samsung: boolean;
-  scanTags: boolean;
 }
 
-/** What a template version can serve: a wallets block per provider (type absent or not off) and scan.tags. */
+/** What a template version can serve: a wallets block per provider (type absent or not off) per provider. */
 export async function capabilityOf(
   db: D1Database,
   templateId: string,
   version: string | null,
 ): Promise<Capability> {
   const r = version
-    ? await first<{ g: string | null; s: string | null; t: string | null }>(
+    ? await first<{ g: string | null; s: string | null }>(
         db,
         `SELECT CASE WHEN json_type(manifest, '$.wallets.google') = 'object'
              THEN COALESCE(json_extract(manifest, '$.wallets.google.type'), 'on') END AS g,
            CASE WHEN json_type(manifest, '$.wallets.samsung') = 'object'
-             THEN COALESCE(json_extract(manifest, '$.wallets.samsung.type'), 'on') END AS s,
-           json_type(manifest, '$.scan.tags') AS t
+             THEN COALESCE(json_extract(manifest, '$.wallets.samsung.type'), 'on') END AS s
          FROM template_versions WHERE template_id = ? AND version = ?`,
         [templateId, version],
       )
@@ -138,7 +136,6 @@ export async function capabilityOf(
   return {
     google: !!r?.g && r.g !== 'off',
     samsung: !!r?.s && r.s !== 'off',
-    scanTags: r?.t === 'object',
   };
 }
 

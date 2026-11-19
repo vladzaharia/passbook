@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { act, CHECK_IN, kit, out, setupActionFixture, tpl } from './act-test-fixtures.ts';
+import { beforeBatch } from './batch-interceptor-test-support.ts';
 import { barcodeHashOfCode, cleanCode } from './codes.ts';
 import {
   actTag,
@@ -214,5 +215,40 @@ describe('linked NFC', () => {
       card: null,
     });
     expect(all(kit.env.DB, 'SELECT 1 FROM scans WHERE pass_id = ?', [pass.id])).toBeTruthy();
+  });
+});
+
+describe('the commit fence', () => {
+  it('refuses a check-in when a channel is turned off between read and commit', async () => {
+    const s = await door();
+    const pass = await kit.scanPass(tpl);
+    const { result, fired } = await beforeBatch(
+      kit.env,
+      /INSERT INTO scan_gates/,
+      () => allDigitalOff(pass),
+      () => act(s.headers, codeOf(pass), { actionId: CHECK_IN.id }),
+    );
+    expect(fired).toBe(true);
+    expect(await out(result)).not.toMatchObject({ kind: 'ok' });
+    const again = await out(await act(s.headers, codeOf(pass), { actionId: CHECK_IN.id }));
+    expect(again).toMatchObject({ kind: 'refused', reason: 'channel_off' });
+  });
+});
+
+describe('desk lookup', () => {
+  it('marks a pass whose digital channels are all off', async () => {
+    const s = await kit.scanner({
+      templateIds: [tpl],
+      settings: { lookup: true, roleWithoutSignIn: 'desk' },
+    });
+    const off = await kit.scanPass(tpl);
+    const on = await kit.scanPass(tpl);
+    await allDigitalOff(off);
+    const rows = async (pass: Pass) => {
+      const res = await kit.post(s.headers, '/lookup', { q: pass.serial });
+      return ((await res.json()) as { items: { passId: string; channelsOff?: boolean }[] }).items;
+    };
+    expect((await rows(off)).find((r) => r.passId === off.id)?.channelsOff).toBe(true);
+    expect((await rows(on)).find((r) => r.passId === on.id)?.channelsOff).toBeUndefined();
   });
 });

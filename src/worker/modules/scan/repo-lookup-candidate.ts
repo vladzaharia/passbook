@@ -43,6 +43,7 @@ export type Raw = PassDbRow &
     display_template_version: string | null;
     check_in_rules: string | null;
     channel_rules?: number;
+    channel_epoch?: string;
   } & PhotoProjection;
 
 const NO_CREDENTIAL_REFS: readonly string[] = Object.freeze([]);
@@ -56,7 +57,10 @@ export function toCandidate(r: Raw): Candidate | null {
   )
     return null;
   return {
-    pass: mapPass(r),
+    pass: {
+      ...mapPass(r),
+      ...(r.channel_epoch === undefined ? {} : { channelEpoch: r.channel_epoch }),
+    },
     passPersonalizationSnapshot: r.personalization,
     fieldSourcesSnapshot: r.field_sources,
     templateSnapshot: liveTemplateSnapshotFromRow(r),

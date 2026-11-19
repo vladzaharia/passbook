@@ -42,9 +42,9 @@ export function LookupResults({
               <span className="block text-xs text-fg-muted">{row.maskedEmail}</span>
             ) : null}
           </span>
-          {row.status !== 'active' || row.doorState === 'in' ? (
+          {row.status !== 'active' || row.doorState === 'in' || row.channelsOff ? (
             <span className="scan-lookup-status">
-              {row.status !== 'active' ? row.status : 'In'}
+              {row.status !== 'active' ? row.status : row.channelsOff ? 'Off' : 'In'}
             </span>
           ) : null}
           <ChevronRight size={16} aria-hidden />

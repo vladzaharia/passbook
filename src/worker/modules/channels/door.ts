@@ -28,8 +28,6 @@ interface PassRef {
 export async function doorChannels(ctx: ServiceContext, pass: PassRef): Promise<DoorChannels> {
   const { inputs } = await loadPass(ctx, pass);
   const effective = effectiveChannels(inputs);
-  // Tags work today on templates without scan.tags: only an explicit off (policy, pass, org) refuses.
-  const nfcOn = effectiveChannels({ ...inputs, scanTags: true }).nfc.on;
   const digital = DIGITAL_CHANNELS.map((channel) => ({
     channel,
     retiredAt: effective[channel].retiredAt,
@@ -42,7 +40,7 @@ export async function doorChannels(ctx: ServiceContext, pass: PassRef): Promise<
   const rotated =
     retired.length > 0 && (await rotatedSince(ctx.env.DB, pass.id, Math.min(...retired)));
   return {
-    nfcOn,
+    nfcOn: effective.nfc.on,
     digitalOff: digital.every((d) => !d.on),
     named: (latest ?? digital[0])?.channel ?? 'mobile',
     rotatedAfterRetire: rotated,

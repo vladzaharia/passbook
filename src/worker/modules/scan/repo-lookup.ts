@@ -111,6 +111,16 @@ export function hasScanPolicy(candidate: Candidate): boolean {
   );
 }
 
+/**
+ * What the door reads of a pass's channels, as one comparable text: the pass's rows and revisions, its
+ * template's policy revision. An org block is not here (its setting cannot be read in a grant). An action commits only while it is unchanged.
+ */
+export const channelEpochSql = (org: string, mode: string): string => `(
+  COALESCE((SELECT COUNT(*) || ':' || SUM(pc.revision) FROM pass_channels pc WHERE pc.pass_id=p.id), '')
+  || '/' || COALESCE((SELECT tp.revision FROM template_channel_policies tp
+    WHERE tp.org_id=${org} AND tp.mode=${mode} AND tp.template_id=p.template_id), 0)
+  )`;
+
 const PROJECTION = `SELECT p.*, snapshot.pass_json AS pass_json,
     snapshot.version AS wallet_version, snapshot.personalization AS version_personalization,
     snapshot.template_version AS wallet_template_version,
@@ -124,6 +134,7 @@ const PROJECTION = `SELECT p.*, snapshot.pass_json AS pass_json,
         WHERE tp.org_id=p.org_id AND tp.mode=p.mode AND tp.template_id=p.template_id)
       OR EXISTS(SELECT 1 FROM settings cs WHERE cs.scope='org:'||p.org_id
         AND cs.key='channels.blocked' AND cs.value NOT IN ('[]','null'))) AS channel_rules,
+    ${channelEpochSql('p.org_id', 'p.mode')} AS channel_epoch,
     (SELECT rules FROM pass_check_in c WHERE c.org_id=p.org_id AND c.pass_id=p.id) AS check_in_rules,
     photo.version AS asset_photo_version, photo.r2_key AS asset_photo_key,
     photo.sha1 AS asset_photo_sha1, photo.include_in_pass AS asset_photo_included,
