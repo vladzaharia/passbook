@@ -55,6 +55,14 @@ async function joinToken(ctx: Ctx): Promise<string | undefined> {
   return undefined;
 }
 
+/** The row named `name` in an org-scoped list, searching every org. */
+const named = (path: string, name: string) => (c: Ctx) =>
+  firstInOrgs(c, path, (r) => (r.name === name ? id(r) : undefined));
+
+async function orgBySlug(ctx: Ctx, slug: string): Promise<string | undefined> {
+  return id((await list(await ctx.platform(), '/api/v1/orgs')).find((o) => o.slug === slug));
+}
+
 const SOURCES: Record<string, (ctx: Ctx) => Promise<string | undefined>> = {
   orgId: (c) => firstInOrgs(c, '/api/v1/passes', (r) => String(r.orgId)),
   passId: (c) => firstInOrgs(c, '/api/v1/passes'),
@@ -69,6 +77,12 @@ const SOURCES: Record<string, (ctx: Ctx) => Promise<string | undefined>> = {
     id((await list(await c.platform(), '/api/v1/templates?blueprint=true&limit=1'))[0]),
   connectionId: (c) => firstInOrgs(c, '/api/v1/connections'),
   endpointId: (c) => firstInOrgs(c, '/api/v1/webhook-endpoints'),
+  northwindId: (c) => orgBySlug(c, 'northwind'),
+  harborId: (c) => orgBySlug(c, 'harbor-lights'),
+  frontDoorId: named('/api/v1/scanning-sessions', 'Front door'),
+  eveningSessionId: named('/api/v1/scanning-sessions', 'Evening classes'),
+  memberTemplateId: named('/api/v1/templates', 'Northwind Member'),
+  monitorId: named('/api/v1/scan-setups', 'Lobby monitor'),
   sessionId: (c) => firstInOrgs(c, '/api/v1/scanning-sessions'),
   eventId: (c) => firstInOrgs(c, '/api/v1/scan-events'),
   scannerId: (c) => firstInOrgs(c, '/api/v1/scanners'),
