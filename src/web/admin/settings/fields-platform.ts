@@ -110,6 +110,19 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     unit: 'days',
     schema: P['sandbox.purgeDays'],
   },
+  ...RETENTION_CLASSES.filter((cls) => cls !== 'scans' && cls !== 'events').map(
+    (cls): SettingField => ({
+      key: DATA_CLASSES[cls].key,
+      group: 'Retention',
+      label: `${DATA_CLASSES[cls].label} retention`,
+      kind: 'int',
+      suffix: 'days',
+      help: `Used by organizations without their own. ${DATA_CLASSES[cls].floor} to ${DATA_CLASSES[cls].ceiling} days.`,
+      range: [DATA_CLASSES[cls].floor, DATA_CLASSES[cls].ceiling],
+      unit: 'days',
+      schema: P[DATA_CLASSES[cls].key],
+    }),
+  ),
   {
     key: 'scan.undoWindowMinutes',
     group: 'Scanner safeguards',
@@ -175,19 +188,6 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     help: 'Off until Apple approves the pass type. Off turns NFC tags off for every organization.',
     schema: P['nfc.enabled'],
   },
-  ...RETENTION_CLASSES.filter((cls) => cls !== 'scans' && cls !== 'events').map(
-    (cls): SettingField => ({
-      key: DATA_CLASSES[cls].key,
-      group: 'Retention',
-      label: `${DATA_CLASSES[cls].label} retention`,
-      kind: 'int',
-      suffix: 'days',
-      help: `Used by organizations without their own. ${DATA_CLASSES[cls].floor} to ${DATA_CLASSES[cls].ceiling} days.`,
-      range: [DATA_CLASSES[cls].floor, DATA_CLASSES[cls].ceiling],
-      unit: 'days',
-      schema: P[DATA_CLASSES[cls].key],
-    }),
-  ),
   ...RETENTION_CLASSES.map(
     (cls): SettingField => ({
       key: DATA_CLASSES[cls].maxKey,

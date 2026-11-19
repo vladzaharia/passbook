@@ -6,7 +6,9 @@ import { useSettings } from './queries.ts';
 import { ReplyToStatus } from './reply-to-status.tsx';
 import { SettingsForm } from './settings-form.tsx';
 
-const inGroup = (group: string) => ORG_FIELDS.filter((f) => f.group === group);
+/** The card is the section: rows render without their own heading. */
+const inGroup = (group: string) =>
+  ORG_FIELDS.filter((f) => f.group === group).map(({ group: _group, ...field }) => field);
 const PASS_EMAIL = inGroup('Pass email');
 const EMAIL_LIMITS = inGroup('Email limits');
 const SUPPORT = inGroup('Support');
