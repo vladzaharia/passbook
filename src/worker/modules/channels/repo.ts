@@ -99,10 +99,6 @@ export const emptyRows = (): PassChannelRows => ({
   copies: [],
 });
 
-export async function getPassChannelRows(db: D1Database, passId: string): Promise<PassChannelRows> {
-  return (await getPassChannelRowsMany(db, [passId])).get(passId) ?? emptyRows();
-}
-
 /** Channel rows and copy evidence for many passes, two queries per 90 ids. */
 export async function getPassChannelRowsMany(
   db: D1Database,
