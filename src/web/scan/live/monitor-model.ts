@@ -72,11 +72,3 @@ export function heroOf(counts: ScanPlaceRev[]): Hero | null {
   const fill: Fill = ratio === null ? 'open' : ratio >= 1 ? 'full' : ratio >= 0.9 ? 'busy' : 'open';
   return { name: first.name, count: first.inNow, capacity: first.capacity, fill, ratio };
 }
-
-/** A wall screen shows first names only and never an id or code. */
-export function publicName(holder: string | null | undefined): string {
-  const first = holder?.trim().split(/\s+/)[0];
-  if (!first) return 'Guest';
-  if (/\d/.test(holder ?? '')) return 'Guest';
-  return first;
-}

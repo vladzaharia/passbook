@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { MonitorBoard } from './monitor-board.tsx';
-import { heroOf, mergePlaces, publicName, trendOf } from './monitor-model.ts';
+import { heroOf, mergePlaces, trendOf } from './monitor-model.ts';
 
 const NOW = 1_800_000_000_000;
 function row(id: string, over: Partial<ScanLiveRow> = {}): ScanLiveRow {
@@ -49,16 +49,11 @@ describe('monitor model', () => {
     expect(heroOf([place(1, 100)])?.fill).toBe('full');
     expect(heroOf([place(1, 500, null)])?.fill).toBe('open');
   });
-  it('never returns an id as a name', () => {
-    expect(publicName('Sam Rivera')).toBe('Sam');
-    expect(publicName('Member M-006')).toBe('Guest');
-    expect(publicName(null)).toBe('Guest');
-  });
 });
 
 describe('monitor board', () => {
-  it('leads with the count and capacity, then first names', () => {
-    render(
+  it('leads with the count and capacity, then direction and time, never names', () => {
+    const { container } = render(
       <MonitorBoard
         rows={[row('1'), row('2', { holder: 'Member M-006', label: 'Checked in' })]}
         places={[place(1, 92)]}
@@ -67,8 +62,8 @@ describe('monitor board', () => {
     );
     expect(screen.getByTestId('monitor-count')).toHaveTextContent('92 / 100');
     expect(screen.getByText('Almost full')).toBeVisible();
-    expect(screen.getByText('Sam')).toBeVisible();
-    expect(screen.queryByText(/M-006/)).toBeNull();
+    expect(container.textContent).not.toMatch(/Sam|Rivera|M-006|Guest/);
+    expect(screen.getAllByText('In').length).toBe(2);
     expect(screen.queryByRole('button', { name: /refresh setup/i })).toBeNull();
   });
   it('shows full with a word, not colour alone', () => {

@@ -111,8 +111,11 @@
   font-weight: 500;
 }
 .mon-buddy {
-  align-self: center;
-  width: clamp(120px, 17vw, 380px);
+  position: absolute;
+  right: clamp(16px, 3vw, 72px);
+  bottom: clamp(16px, 3vw, 72px);
+  width: clamp(110px, 15vw, 340px);
+  pointer-events: none;
 }
 .mon-buddy .wl-buddy {
   position: relative;

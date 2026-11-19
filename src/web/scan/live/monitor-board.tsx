@@ -11,7 +11,7 @@ import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { formatTime } from '../../lib/format.ts';
 import { Buddy } from '../../ui/art/index.ts';
-import { countsOf, type Fill, heroOf, publicName, type Trend, trendOf } from './monitor-model.ts';
+import { countsOf, type Fill, heroOf, type Trend, trendOf } from './monitor-model.ts';
 import './monitor-board.css';
 
 const ROW_ICON = {
@@ -22,6 +22,14 @@ const ROW_ICON = {
   undo: Undo2,
 };
 const FILL_WORD: Record<Fill, string | null> = { open: null, busy: 'Almost full', full: 'Full' };
+
+/** A wall screen is public: direction and outcome only, never who. */
+export function rowWord(row: ScanLiveRow): string {
+  if (row.kind === 'ok') return row.direction === 'out' ? 'Out' : 'In';
+  if (row.kind === 'refused') return 'Not accepted';
+  if (row.kind === 'undo') return 'Undone';
+  return 'Check needed';
+}
 
 function Trendline({ trend }: { trend: Trend }) {
   return (
@@ -104,14 +112,8 @@ export function MonitorBoard({
                   <span className="mon-row-icon" aria-hidden>
                     <Icon />
                   </span>
-                  <span className="mon-row-name">{publicName(row.holder)}</span>
-                  <span className="mon-row-what">
-                    {row.kind === 'ok'
-                      ? row.label
-                      : row.kind === 'refused'
-                        ? 'Not accepted'
-                        : row.label}
-                  </span>
+                  <span className="mon-row-name">{rowWord(row)}</span>
+                  <span className="mon-row-what">{row.scannerName}</span>
                   <time>{formatTime(row.at, timeZone)}</time>
                 </li>
               );
