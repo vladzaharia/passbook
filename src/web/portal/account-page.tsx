@@ -39,9 +39,9 @@ export function AccountPage({ focusAdd = false, verified, onVerifiedShown }: Acc
     onVerifiedShown?.();
   }, [verified, onVerifiedShown]);
   return (
-    <div className="max-w-5xl">
+    <div className="max-w-3xl">
       <PageHeader title="Account" />
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <div className="grid items-start gap-6">
         {authed ? (
           <Card>
             <CardHeader title="Profile and sign-in" />
@@ -59,7 +59,7 @@ export function AccountPage({ focusAdd = false, verified, onVerifiedShown }: Acc
                       {authed.user.name}
                     </p>
                   ) : null}
-                  <p className="truncate text-sm text-fg-muted">
+                  <p className="text-sm break-words text-fg-muted">
                     {authed.user.primaryEmail ?? NO_EMAIL_LABEL}
                   </p>
                 </div>

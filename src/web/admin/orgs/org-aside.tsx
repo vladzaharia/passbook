@@ -37,7 +37,7 @@ function useFirstArrival(id: string): boolean {
   return first;
 }
 
-const TILES: { kind: EntityKind; key: keyof Org['counts']; to: string }[] = [
+const TILES: { kind: EntityKind; key: Exclude<keyof Org['counts'], 'members'>; to: string }[] = [
   { kind: 'pass', key: 'passes', to: '/admin/passes' },
   { kind: 'template', key: 'templates', to: '/admin/templates' },
   { kind: 'connection', key: 'connections', to: '/admin/connections' },

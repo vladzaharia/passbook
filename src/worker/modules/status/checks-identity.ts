@@ -36,15 +36,16 @@ export function identityComponent(
     if (bindingNamed) lower('degraded', `APNs binding ${row.apns_binding} is missing.`);
     else lower('configured', 'Push unavailable: no APNs binding or push key.');
   } else if (row.apns_health === 'failing') lower('failing', 'APNs is failing.');
-  else if (row.apns_health === 'unknown') lower('configured', 'APNs not verified.');
+  else if (row.apns_health === 'unknown') lower('configured', 'Push not checked yet.');
   return {
     id: `identity:${row.id}`,
     kind: 'identity',
-    label: `${row.label} (${row.pass_type_identifier})`,
+    label: row.label,
     state,
     detail: notes.join(' ') || null,
     data: {
       source: row.source,
+      passTypeIdentifier: row.pass_type_identifier,
       daysRemaining: days,
       apnsBinding: row.apns_binding,
       bindingPresent,

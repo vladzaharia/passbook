@@ -118,8 +118,8 @@ describe('identities list', () => {
     expect(screen.getAllByText('Not set up').length).toBeGreaterThan(0);
     expect(screen.getByText('Healthy')).toBeInTheDocument();
     expect(screen.getByText('Failing')).toBeInTheDocument();
-    expect(screen.getByText(/Old: a loaded certificate has expired/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Review' })).toHaveAttribute(
+    expect(screen.getByText(/Old: certificate has expired/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open identity' })).toHaveAttribute(
       'href',
       '/admin/identities/i3',
     );
@@ -138,7 +138,7 @@ describe('identities list', () => {
       },
     });
     expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Review' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Open identity' })).toBeNull();
   });
 
   it('flags a certificate whose validity period has not begun', async () => {
@@ -152,11 +152,11 @@ describe('identities list', () => {
           }),
       },
     });
-    expect(await screen.findByRole('link', { name: 'Review' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Open identity' })).toHaveAttribute(
       'href',
       '/admin/identities/i1',
     );
-    expect(screen.getByText(/a loaded certificate is not yet valid/)).toBeInTheDocument();
+    expect(screen.getByText(/certificate is not yet valid/)).toBeInTheDocument();
   });
 
   it('updates the certificate review from later loaded pages', async () => {
@@ -174,9 +174,9 @@ describe('identities list', () => {
     });
     const ui = userEvent.setup();
     expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Review' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Open identity' })).toBeNull();
     await ui.click(await screen.findByRole('button', { name: 'Load more' }));
-    expect(await screen.findByRole('link', { name: 'Review' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Open identity' })).toHaveAttribute(
       'href',
       '/admin/identities/i2',
     );

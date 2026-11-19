@@ -19,7 +19,7 @@ import {
   StatusPill,
 } from '@/web/ui/index.ts';
 import { useOrgNames } from '../orgs/queries.ts';
-import { ATTENTION_COPY, identityAttention } from './attention.ts';
+import { ATTENTION_COPY, expiryPhrase, identityAttention } from './attention.ts';
 import { ApnsPill, ExpiryPill } from './expiry.tsx';
 import { useIdentityPages } from './queries.ts';
 import { UploadIdentityDialog } from './upload-dialog.tsx';
@@ -105,19 +105,25 @@ export function IdentitiesPage() {
       {attention ? (
         <Callout
           className="mb-6"
-          tone="warning"
-          title={`${attention.identity.label}: a loaded certificate ${ATTENTION_COPY[attention.reason]}`}
+          tone={attention.tone}
+          title={`${attention.identity.label}: certificate ${
+            attention.reason === 'expiring' && attention.days !== null
+              ? expiryPhrase(attention.days)
+              : ATTENTION_COPY[attention.reason]
+          }`}
           actions={
             <Button asChild size="sm" variant="outline">
               <Link
                 to="/admin/identities/$identityId"
                 params={{ identityId: attention.identity.id }}
               >
-                Review
+                Open identity
               </Link>
             </Button>
           }
-        />
+        >
+          {attention.count > 1 ? `${attention.count - 1} more need a look.` : null}
+        </Callout>
       ) : null}
       <h2 className="mb-3 text-base font-semibold text-fg-strong">Identities</h2>
       {list.isError && rows.length === 0 ? (

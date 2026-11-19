@@ -107,9 +107,7 @@ describe('users list', () => {
     expect(await screen.findByRole('heading', { name: 'Platform accounts' })).toBeInTheDocument();
     expect(screen.getByText(/Roles are from the last sign-in/)).toBeInTheDocument();
     // The columns render once the list has loaded.
-    expect(
-      await screen.findByRole('columnheader', { name: 'Roles at last sign-in' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('columnheader', { name: 'Roles' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /manage membership/i })).toBeNull();
 
     await ui.type(screen.getByRole('searchbox', { name: 'Search accounts' }), 'ada');
@@ -377,7 +375,7 @@ describe('user detail', () => {
       },
     });
     expect(await screen.findByText('No emails')).toBeInTheDocument();
-    expect(screen.getByLabelText('Send verification link')).toBeInTheDocument();
+    expect(screen.getByLabelText('Add email')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Polaris ID/ })).toBeNull();
   });
 
@@ -391,7 +389,7 @@ describe('user detail', () => {
       },
     });
     const ui = userEvent.setup();
-    const field = await screen.findByLabelText('Send verification link');
+    const field = await screen.findByLabelText('Add email');
     await ui.type(field, 'x@example.com');
     await ui.click(screen.getByRole('button', { name: 'Add' }));
     expect(await screen.findByText('Email belongs to another user.')).toBeInTheDocument();

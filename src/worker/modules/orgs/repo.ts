@@ -21,6 +21,7 @@ export interface OrgCounts {
   templates: number;
   connections: number;
   apiKeys: number;
+  members: number;
 }
 
 const COLUMNS =
@@ -88,7 +89,8 @@ export async function countsFor(
          ${capped('passes', ' AND mode = ?')} AS passes,
          ${capped('templates', " AND status != 'deleted'")} AS templates,
          ${capped('connections', '')} AS connections,
-         ${capped('api_keys', ' AND revoked_at IS NULL')} AS apiKeys
+         ${capped('api_keys', ' AND revoked_at IS NULL')} AS apiKeys,
+         ${capped('org_memberships', ' AND revoked_at IS NULL')} AS members
        FROM orgs o WHERE o.id IN (${placeholders(ids.length)})`,
       [mode, ...ids],
     );

@@ -115,7 +115,7 @@ describe('orgs api', () => {
       slug: 'acme',
       status: 'active',
       createdAt: expect.any(Number),
-      counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0 },
+      counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 0 },
       countsCapped: false,
     });
     expect(provisioningBody).not.toHaveProperty('branding');
@@ -137,7 +137,7 @@ describe('orgs api', () => {
     expect(got).toMatchObject({
       slug: 'acme',
       branding: { accent: '#112233' },
-      counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0 },
+      counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 2 },
       countsCapped: false,
     });
 
@@ -247,7 +247,7 @@ describe('orgs api', () => {
       slug: a.slug,
       status: 'active',
       createdAt: expect.any(Number),
-      counts: { passes: 0, templates: 0, connections: 0, apiKeys: 2 },
+      counts: { passes: 0, templates: 0, connections: 0, apiKeys: 2, members: 0 },
       countsCapped: false,
     });
     for (const field of ['branding', 'support', 'supportEmail', 'supportUrl', 'defaultIdentityId'])

@@ -17,8 +17,6 @@ interface RefDef {
   name?: (id: string | null) => string;
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 const REFS: Record<string, RefDef> = {
   pass: { label: 'Pass', kind: 'pass', to: (id) => `/admin/passes/${id}` },
   template: { label: 'Template', kind: 'template', to: (id) => `/admin/templates/${id}` },
@@ -57,8 +55,7 @@ export interface Ref {
 function refOf(type: string, id: string | null, label: string | null | undefined): Ref {
   const def = REFS[type] ?? { label: humanize(type) };
   const icon = def.icon ?? (def.kind ? ENTITY[def.kind].icon : ENTITY.audit.icon);
-  const name =
-    label ?? def.name?.(id) ?? (id && UUID.test(id) ? `${def.label} ${id.slice(-6)}` : def.label);
+  const name = label ?? def.name?.(id) ?? def.label;
   return {
     kind: def.kind,
     icon,

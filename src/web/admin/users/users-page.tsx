@@ -55,7 +55,7 @@ const COLUMNS: DataColumnDef<UserRow, never>[] = [
     cell: ({ row }) => <StatusPill status={row.original.status} />,
   },
   {
-    header: 'Roles at last sign-in',
+    header: 'Roles',
     id: 'roles',
     cell: ({ row }) =>
       row.original.lastRoles.length ? (
@@ -75,11 +75,11 @@ const COLUMNS: DataColumnDef<UserRow, never>[] = [
     cell: ({ row }) => methodsLabel(row.original.signInMethods),
   },
   {
-    header: 'Owned passes',
+    header: 'Passes',
     id: 'passes',
     meta: { numeric: true },
     cell: ({ row }) => (
-      <div className="flex flex-col items-end gap-1">
+      <div className="flex flex-col items-start gap-1 md:items-end">
         <span className="tabular-nums">{formatCount(row.original.passCount)}</span>
         {row.original.primaryEmail ? (
           <MetaLink

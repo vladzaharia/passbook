@@ -63,7 +63,7 @@ export function EmailsCard({ user, self }: { user: UserDetail; self: boolean }) 
       <CardHeader title="Emails" />
       <CardBody>
         <EmailList
-          addLabel="Send verification link"
+          addLabel="Add email"
           items={user.emails.map((e) => ({
             email: e.email,
             primary: e.email === user.primaryEmail,

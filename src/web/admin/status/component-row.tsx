@@ -21,7 +21,16 @@ const OPEN_SLOT = cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'max-sm:p
  * Icon, label and one line; then the pill, "Open" to the page that owns it, and a disclosure for
  * the technical data.
  */
-export function ComponentRow({ component: c, items }: { component: Component; items: DataItem[] }) {
+export function ComponentRow({
+  component: c,
+  items,
+  checkedAt,
+}: {
+  component: Component;
+  items: DataItem[];
+  /** The page's check time; a row shows its own only when it differs. */
+  checkedAt?: number;
+}) {
   const id = useId();
   const [open, setOpen] = useState(false);
   const line = summaryLine(c);
@@ -40,18 +49,20 @@ export function ComponentRow({ component: c, items }: { component: Component; it
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium break-words text-fg-strong">{label}</p>
           {line ? <p className="text-xs text-fg-muted">{line}</p> : null}
-          <p className="text-xs text-fg-muted">
-            {c.checkedAt > 0 ? (
-              <>
-                Checked{' '}
-                <time dateTime={new Date(c.checkedAt).toISOString()}>
-                  {formatDateTime(c.checkedAt)}
-                </time>
-              </>
-            ) : (
-              'Check time unknown'
-            )}
-          </p>
+          {c.checkedAt === checkedAt ? null : (
+            <p className="text-xs text-fg-muted">
+              {c.checkedAt > 0 ? (
+                <>
+                  Checked{' '}
+                  <time dateTime={new Date(c.checkedAt).toISOString()}>
+                    {formatDateTime(c.checkedAt)}
+                  </time>
+                </>
+              ) : (
+                'Check time unknown'
+              )}
+            </p>
+          )}
         </div>
         <StatusPill status={pillStatus(c)} className="shrink-0" />
         <div className="flex shrink-0 items-center">
