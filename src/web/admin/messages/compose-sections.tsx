@@ -206,3 +206,20 @@ export function WhenSection({
     </div>
   );
 }
+
+/** Text message or field change; switching clears what the other kind chose. */
+export function KindControl({ state, onChange }: { state: ComposerState; onChange: Patch }) {
+  return (
+    <SegmentedControl
+      label="Type"
+      options={[
+        { value: 'message', label: 'Text message' },
+        { value: 'change', label: 'Field change' },
+      ]}
+      value={state.kind}
+      onValueChange={(kind) =>
+        onChange({ kind, templateIds: [], fields: [], values: {}, clearing: false })
+      }
+    />
+  );
+}

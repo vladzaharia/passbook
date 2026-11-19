@@ -103,7 +103,8 @@ export function scanDisplayIssues(
         .filter((a) => ['add', 'take', 'set'].includes(a.kind) && a.input)
         .map((a) => a.input as string),
     ),
-    push: (severity, code, path, message) => issues.push(issueOf(severity, code, path, message)),
+    push: (severity, code, path, message, params) =>
+      issues.push(issueOf(severity, code, path, message, params)),
   };
   const slots = walkDoc(doc);
   checkIds(ctx);

@@ -198,9 +198,11 @@ export function DataTable<T extends RowData>({
                     <div className="min-w-0 truncate text-sm">{render(titleCol.id)}</div>
                     {lines.map((c) => (
                       <div key={c.id} className="flex min-w-0 items-baseline gap-2 text-xs">
-                        <span className="w-20 shrink-0 text-fg-muted">
-                          {c.columnDef.header as string}
-                        </span>
+                        {metaOf(c).stackNoLabel ? null : (
+                          <span className="w-20 shrink-0 text-fg-muted">
+                            {c.columnDef.header as string}
+                          </span>
+                        )}
                         <span className="min-w-0 truncate text-fg">{render(c.id)}</span>
                       </div>
                     ))}

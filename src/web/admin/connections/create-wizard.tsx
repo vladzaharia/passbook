@@ -206,6 +206,7 @@ export function CreateConnectionWizard() {
         onBack={step > 0 ? () => setStep(step - 1) : undefined}
         onNext={next}
         nextLabel={step === STEPS.length - 1 ? 'Create' : 'Next'}
+        nextHint="Pick a connector."
         nextDisabled={(step === 0 && !type) || (step === STEPS.length - 1 && blockCreate)}
         busy={currentCreate && create.isPending}
       >

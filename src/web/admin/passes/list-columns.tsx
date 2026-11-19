@@ -132,7 +132,7 @@ export function passColumns(showOrg: boolean): DataColumnDef<PassSummaryDto, nev
       id: 'holder',
       header: 'Holder',
       // From xl, emails up to about 34 characters show in full.
-      meta: { nowrap: 'wide' },
+      meta: { nowrap: 'wide', stackNoLabel: true },
       cell: ({ row }) => (
         <span className="flex min-w-0 items-center gap-2">
           <StatusIcon status={row.original.holderState} />

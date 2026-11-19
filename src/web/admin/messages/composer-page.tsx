@@ -18,7 +18,6 @@ import {
   ErrorState,
   Form,
   PageHeader,
-  SegmentedControl,
   SkeletonDetail,
   TwoPane,
   toast,
@@ -31,8 +30,15 @@ import { useTemplates } from '../templates/api.ts';
 import { broadcastQuery, useAudienceCount } from './api.ts';
 import { AudienceSection, useTemplateDetails } from './audience.tsx';
 import { ComposePreview } from './compose-preview.tsx';
-import { ChangeSection, MessageSection, WhenSection } from './compose-sections.tsx';
-import { atMs, type ComposerState, INITIAL, stateOfBroadcast, targetOf } from './composer-state.ts';
+import { ChangeSection, KindControl, MessageSection, WhenSection } from './compose-sections.tsx';
+import {
+  atMs,
+  blockedReason,
+  type ComposerState,
+  INITIAL,
+  stateOfBroadcast,
+  targetOf,
+} from './composer-state.ts';
 import { useComposerSubmit } from './composer-submit.ts';
 import { useAudienceEventName } from './event-name.ts';
 import { SendConfirm } from './send-confirm.tsx';
@@ -180,8 +186,8 @@ function ComposerForm({
       !state.scanEventId
     ) &&
     (state.kind === 'message' ? state.clearing || Boolean(text) : state.fields.length > 0);
+  const blocked = canDraft ? undefined : blockedReason(state);
   const quiet = !state.notify || state.clearing;
-  const title = draft ? 'Edit draft' : state.kind === 'message' ? 'New message' : 'New change';
   const preview = org ? (
     <ComposePreview
       org={{ id: org.id, name: org.name, accent: org.branding.accent ?? null }}
@@ -194,7 +200,7 @@ function ComposerForm({
   return (
     <>
       <PageHeader
-        title={title}
+        title={draft ? 'Edit draft' : `New ${state.kind}`}
         breadcrumbs={[
           { label: 'Messages', to: '/admin/messages' },
           { label: draft ? 'Edit' : 'New' },
@@ -226,17 +232,7 @@ function ComposerForm({
           <Card>
             <CardHeader title="Content" />
             <CardBody className="flex flex-col gap-4">
-              <SegmentedControl
-                label="Type"
-                options={[
-                  { value: 'message', label: 'Text message' },
-                  { value: 'change', label: 'Field change' },
-                ]}
-                value={state.kind}
-                onValueChange={(next) =>
-                  change({ kind: next, templateIds: [], fields: [], values: {}, clearing: false })
-                }
-              />
+              <KindControl state={state} onChange={change} />
               {state.kind === 'message' ? (
                 <MessageSection state={state} onChange={change} error={checks.errors.message} />
               ) : (
@@ -257,7 +253,12 @@ function ComposerForm({
             </CardBody>
           </Card>
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="submit" loading={pending && !ask} disabled={!canDraft}>
+            <Button
+              type="submit"
+              loading={pending && !ask}
+              disabled={!canDraft}
+              aria-describedby={blocked ? 'compose-blocked' : undefined}
+            >
               {state.when === 'later' ? 'Schedule' : 'Send now'}
             </Button>
             <Button
@@ -265,6 +266,7 @@ function ComposerForm({
               variant="outline"
               loading={pending && !ask}
               disabled={!canDraft}
+              aria-describedby={blocked ? 'compose-blocked' : undefined}
               onClick={() =>
                 void submit('draft').catch((e: unknown) => toast.error(e, 'Could not save'))
               }
@@ -278,6 +280,11 @@ function ComposerForm({
             >
               Cancel
             </Button>
+            {blocked ? (
+              <p id="compose-blocked" className="w-full text-xs text-fg-muted">
+                {blocked}
+              </p>
+            ) : null}
           </div>
         </Form>
       </TwoPane>
