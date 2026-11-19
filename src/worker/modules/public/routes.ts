@@ -16,11 +16,7 @@ import {
 } from '../../platform/rate-limit.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
-import {
-  PRESENTATION_HEADERS,
-  renderPresentationNotFound,
-  renderPresentationPage,
-} from '../../ssr/presentation-page.tsx';
+import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
 import { recordPassEvent } from '../events/record.ts';
 import { voidedAt } from '../events/repo-voided.ts';
 import { servePassFile } from '../passes/file.ts';
@@ -232,7 +228,7 @@ register(
       return new Response(html, { headers: PRESENTATION_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404) {
-        return new Response(renderPresentationNotFound(c.var.nonce, theme), {
+        return new Response(renderNotFoundPage(c.var.nonce, theme), {
           status: 404,
           headers: PRESENTATION_HEADERS,
         });

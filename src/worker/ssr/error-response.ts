@@ -45,7 +45,7 @@ async function detailOf(res: Response): Promise<string | undefined> {
 
 /**
  * Swaps a problem+json response for the hosted HTML page when a browser asked for the route.
- * Status and Retry-After carry over; a dead pass link gets the "Link expired" card. A refused
+ * Status and Retry-After carry over; a dead pass link gets the dead-link card. A refused
  * form post cannot be retried by reloading, so its way back is the sign-in page or My passes.
  */
 export async function asBrowserPage(c: Context<AppBindings>, res: Response): Promise<Response> {

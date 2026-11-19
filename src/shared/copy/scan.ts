@@ -196,9 +196,10 @@ export const SCAN_COPY = {
   },
   boot: {
     pairTitle: 'Pair this device',
-    pairLine: 'Scan the code in Scanning, or type it.',
+    pairLine: 'Type the code from Admin, Scanning. Or scan its QR with your camera.',
     pairLabel: 'Pairing code',
-    pairFooter: 'Admins make codes in Scanning.',
+    pairFooter: 'No code? Ask an admin.',
+    adminAs: 'Signed in as {who}',
     codeInvalid: 'Code not valid. Ask for a new one.',
     tooManyTries: 'Too many tries. Wait a minute and try again.',
     offline: "No connection. Pair when you're back online.",

@@ -41,23 +41,25 @@ export const HOLDER_COPY = {
   browserTitle: 'Show a barcode in your browser',
   browserLine: 'For readers that scan a screen.',
   showBarcode: 'Show barcode',
-  /** The barcode page's offline copy (saved by the browser, this device only). */
+  /** The barcode page: one line for the reader, then the offline copy (this device only). */
+  presentLine: 'Show this to the reader.',
+  presentUnavailable: 'Barcode unavailable',
+  presentUnavailableLine: (org: string) => `Ask ${org || 'the organization'} for help.`,
+  backToPass: 'Back to pass',
   saveOffline: 'Save for offline',
   savedOffline: 'Saved on this device',
   removeSaved: 'Remove from this device',
-  saveOfflineLine: 'Shows this barcode without signal. The door still checks the pass.',
+  saveOfflineLine: 'Works without signal. Staff still verify it.',
   connectToRefresh: 'Connect to refresh this pass.',
   saveOfflineFailed: 'Could not save. Try again.',
   /** The pass email, under the Apple badge: it reads the same on any phone. */
   emailAddLine: 'Open this email on your phone to add the pass to your wallet.',
   /** The pass page's link preview when native wallets are offered too. */
   previewWallets: 'Add it to your wallet.',
-  /** What a wallet is, said once on the pass page and in the pass email. */
-  walletApple: 'Apple Wallet is the app on your iPhone that keeps cards and tickets.',
-  /** Android holders: no brand they do not use. */
-  walletGeneric: 'A wallet is the app on your phone that keeps cards and tickets.',
   /** Mail the pass again: the pass page, My passes and the sign-in code. */
   sendAgain: 'Send it again',
+  /** The same, on the pass page: it says what is sent. */
+  emailPassAgain: 'Email me this pass again',
   sendAgainSent: 'Sent. Check your email.',
   sendAgainWait: 'Sent a few already. Try again in an hour.',
   /** My passes: new code and link; old copies stop at the door. */
@@ -86,7 +88,11 @@ export const HOLDER_COPY = {
   /** /p link previews. */
   previewActive: 'Open your pass.',
   previewRemoved: 'This pass was removed from Wallet.',
-  /** An unknown, rotated or expired /p link; its way on is My passes (STATE_COPY.goToMyPasses). */
-  deadLinkTitle: 'Link expired',
-  deadLinkLine: 'Sign in to see your passes.',
+  /**
+   * An unknown, rotated or expired /p or /b link. The server cannot say which (that would tell a
+   * guesser a token once existed), so the words name the thing and what to do. Its way on is My
+   * passes (STATE_COPY.goToMyPasses).
+   */
+  deadLinkTitle: (what: 'pass' | 'bundle') => `This ${what} link does not work`,
+  deadLinkLine: 'It may have been replaced. Ask the organization for a new one.',
 } as const;

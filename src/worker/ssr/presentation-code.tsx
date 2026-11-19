@@ -1,3 +1,4 @@
+import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { toSvg } from '../../shared/pass-view/barcode-svg.ts';
 import { type BarcodeDrawing, parseBarcodeSvg } from '../../web/pass-card/barcode.tsx';
 import type { PresentationBarcode } from '../modules/public/presentation.ts';
@@ -22,7 +23,13 @@ const NAMES: Record<string, string> = {
 };
 
 /** A dedicated, high-contrast drawing; the pass-card drawing remains a preview. */
-export function PresentationCode({ barcode }: { barcode: PresentationBarcode | null }) {
+export function PresentationCode({
+  barcode,
+  orgName,
+}: {
+  barcode: PresentationBarcode | null;
+  orgName: string;
+}) {
   const text = barcode ? encodePresentationText(barcode.message, barcode.encoding) : null;
   let drawing: BarcodeDrawing | undefined;
   if (barcode && text !== null) {
@@ -44,8 +51,9 @@ export function PresentationCode({ barcode }: { barcode: PresentationBarcode | n
   if (!barcode || !drawing) {
     return (
       <div className="presentation-unavailable" role="status">
-        <h2>Barcode unavailable</h2>
-        <p>Contact the organization that issued this pass for help.</p>
+        <p>
+          <b>{HOLDER_COPY.presentUnavailable}.</b> {HOLDER_COPY.presentUnavailableLine(orgName)}
+        </p>
       </div>
     );
   }
@@ -56,7 +64,7 @@ export function PresentationCode({ barcode }: { barcode: PresentationBarcode | n
         <svg
           viewBox={drawing.viewBox}
           role="img"
-          aria-label={`${name} presentation barcode`}
+          aria-label={`${name} barcode`}
           preserveAspectRatio="xMidYMid meet"
           shapeRendering="crispEdges"
         >
@@ -74,7 +82,6 @@ export function PresentationCode({ barcode }: { barcode: PresentationBarcode | n
           ))}
         </svg>
       </div>
-      <figcaption>{name} presentation barcode · Show this to the reader when requested.</figcaption>
     </figure>
   );
 }

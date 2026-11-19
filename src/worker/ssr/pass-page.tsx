@@ -175,13 +175,18 @@ export function renderPassPage(props: PassPageProps): string {
 
 /**
  * An unknown, rotated or expired link: the hosted card with one way on, outline as every way back
- * on the hosted pages: My passes (sign-in first when needed).
+ * on the hosted pages: My passes (sign-in first when needed). It names the thing (pass or bundle)
+ * but never says which of the three it was, so it tells a guesser nothing.
  */
-export function renderNotFoundPage(nonce: string, theme?: PageTheme): string {
+export function renderNotFoundPage(
+  nonce: string,
+  theme?: PageTheme,
+  what: 'pass' | 'bundle' = 'pass',
+): string {
   return hostedPage({
     nonce,
     theme,
-    title: HOLDER_COPY.deadLinkTitle,
+    title: HOLDER_COPY.deadLinkTitle(what),
     art: 'expired',
     lede: escapeHtml(HOLDER_COPY.deadLinkLine),
     body: actionHtml(GO_TO_MY_PASSES),

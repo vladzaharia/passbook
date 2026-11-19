@@ -11,7 +11,6 @@ import { HolderPassView, type HolderPassViewProps } from './holder-pass-view.tsx
 afterEach(() => vi.unstubAllGlobals());
 
 const iphone: DeviceInfo = { device: 'iphone', inApp: false };
-const android: DeviceInfo = { device: 'android', inApp: false };
 
 const view = (over: Partial<HolderPassViewProps> = {}) =>
   render(
@@ -33,19 +32,8 @@ const view = (over: Partial<HolderPassViewProps> = {}) =>
   );
 
 describe('holder help copy', () => {
-  it('explains Apple Wallet once, and a wallet generally on Android', () => {
-    const first = view();
-    expect(screen.getAllByText(HOLDER_COPY.walletApple)).toHaveLength(1);
-    first.unmount();
-    view({ device: android });
-    expect(screen.getByText(HOLDER_COPY.walletGeneric)).toBeInTheDocument();
-    expect(screen.queryByText(HOLDER_COPY.walletApple)).toBeNull();
-  });
-
   it('matches the copy snapshot', () => {
     expect({
-      apple: HOLDER_COPY.walletApple,
-      generic: HOLDER_COPY.walletGeneric,
       again: [HOLDER_COPY.sendAgain, HOLDER_COPY.sendAgainSent, HOLDER_COPY.sendAgainWait],
       lost: [HOLDER_COPY.lostPhone, HOLDER_COPY.lostPhoneDone],
       ended: [HOLDER_COPY.voidedOn('3 November 2026'), HOLDER_COPY.expiredOn('3 November 2026')],
@@ -56,12 +44,10 @@ describe('holder help copy', () => {
           "Sent. Check your email.",
           "Sent a few already. Try again in an hour.",
         ],
-        "apple": "Apple Wallet is the app on your iPhone that keeps cards and tickets.",
         "ended": [
           "This pass was voided on 3 November 2026.",
           "This pass expired on 3 November 2026.",
         ],
-        "generic": "A wallet is the app on your phone that keeps cards and tickets.",
         "lost": [
           "I lost my phone",
           "Done. The old copies stop working and your other devices are signed out. Check your email for the new pass.",
@@ -74,7 +60,7 @@ describe('holder help copy', () => {
 describe('the pass page', () => {
   it('posts Send it again to the pass link and says when it was sent', async () => {
     const { container } = view({ resend: { action: '/p/t/resend', again: 'sent' } });
-    const button = screen.getByRole('button', { name: HOLDER_COPY.sendAgain });
+    const button = screen.getByRole('button', { name: HOLDER_COPY.emailPassAgain });
     expect(button.closest('form')).toHaveAttribute('action', '/p/t/resend');
     expect(button.closest('form')).toHaveAttribute('method', 'post');
     expect(screen.getByRole('status')).toHaveTextContent(HOLDER_COPY.sendAgainSent);
@@ -92,7 +78,7 @@ describe('the pass page', () => {
       'href',
       'mailto:help@gym.test',
     );
-    expect(screen.queryByRole('button', { name: HOLDER_COPY.sendAgain })).toBeNull();
+    expect(screen.queryByRole('button', { name: HOLDER_COPY.emailPassAgain })).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
 });

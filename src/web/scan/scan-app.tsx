@@ -225,6 +225,7 @@ function ScanBoot() {
       error={error}
       busy={busy}
       onAdmin={canManage ? () => setAdminStart(true) : undefined}
+      adminWho={platform?.user.name ?? platform?.user.primaryEmail}
     />
   );
   return <ScanShell branding={session.session?.branding} cardMode="boot" card={card} />;

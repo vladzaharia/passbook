@@ -70,7 +70,8 @@ export const JOIN_COPY = {
     tooManyTries: 'Too many tries. Wait a minute and try again.',
     dailyLimit: 'No more cards today. Ask staff.',
     closed: 'Not taking new cards right now. Ask staff.',
-    expired: 'Link expired. Ask staff for a new one.',
+    /** Unknown, rotated and expired links look alike on purpose; the first sentence is the heading. */
+    expired: 'This link does not work. Ask staff for a new one.',
   },
   mailLine: "You asked for this card at {org}. Didn't? Ignore this email.",
   errors: {
