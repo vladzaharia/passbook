@@ -1,5 +1,5 @@
 /** The parts every Google type carries the same way: barcode, colour, dates, locations, void state. */
-import type { BarcodeKind } from '../types.ts';
+import type { BarcodeKind, ViewBarcode } from '../types.ts';
 import type { Ctx } from './ctx.ts';
 import { BARCODE_MESSAGE, MAX_LOCATIONS, TEXT } from './limits.ts';
 import type {
@@ -16,6 +16,29 @@ const BARCODE_TYPES: Partial<Record<BarcodeKind, GoogleBarcode['type']>> = {
   pdf417: 'PDF_417',
   aztec: 'AZTEC',
   code128: 'CODE_128',
+  code39: 'CODE_39',
+  codabar: 'CODABAR',
+  ean13: 'EAN_13',
+};
+function ean13Valid(m: string): boolean {
+  if (/^\d{12}$/u.test(m)) return true;
+  if (!/^\d{13}$/u.test(m)) return false;
+  const sum = [...m.slice(0, 12)].reduce((n, d, i) => n + Number(d) * (i % 2 === 0 ? 1 : 3), 0);
+  return (10 - (sum % 10)) % 10 === Number(m[12]);
+}
+
+/** A message the type cannot encode would give a code that does not scan, so it is not sent. */
+const VALID: Partial<Record<BarcodeKind, (m: string) => boolean>> = {
+  code39: (m) => /^[0-9A-Z\-. $/+%]+$/u.test(m),
+  codabar: (m) => /^[A-D]?[0-9\-$:/.+]+[A-D]?$/u.test(m),
+  ean13: ean13Valid,
+  i2of5: (m) => /^\d{14}$/u.test(m),
+};
+
+/** Interleaved 2 of 5 is only offered as ITF-14, which is exactly 14 digits. */
+const typeOf = (b: ViewBarcode): GoogleBarcode['type'] | undefined => {
+  if (b.kind === 'other' || VALID[b.kind]?.(b.message) === false) return undefined;
+  return b.kind === 'i2of5' ? 'ITF_14' : BARCODE_TYPES[b.kind];
 };
 const NON_ASCII = /\P{ASCII}/u;
 
@@ -26,21 +49,25 @@ const NON_ASCII = /\P{ASCII}/u;
 export function barcodeOf(ctx: Ctx): GoogleBarcode | undefined {
   const { barcodes, validity } = ctx.view;
   if (barcodes.length === 0 || validity.voided) return undefined;
-  const chosen = barcodes.findIndex((b) => b.kind !== 'other' && BARCODE_TYPES[b.kind]);
+  const chosen = barcodes.findIndex((b) => b.kind !== 'other' && typeOf(b));
   for (const [i, b] of barcodes.entries()) {
     if (i === chosen || (chosen >= 0 && i > chosen)) break;
     ctx.note(
       b.kind === 'other' ? 'barcode.format' : `barcode.format.${b.kind}`,
       `barcodes.${i}`,
       'omitted',
-      `${b.format.replace(/^PKBarcodeFormat/u, '')} is not offered by Google Wallet.`,
+      b.kind !== 'other' && (BARCODE_TYPES[b.kind] || b.kind === 'i2of5')
+        ? `The ${b.format.replace(/^PKBarcodeFormat/u, '')} message cannot be encoded as sent: not offered.`
+        : `${b.format.replace(/^PKBarcodeFormat/u, '')} is not offered by Google Wallet.`,
     );
   }
   const barcode = barcodes[chosen];
   if (!barcode || barcode.kind === 'other') return undefined;
   const path = `barcodes.${chosen}`;
   if (ctx.left('barcode.format', path)) return undefined;
-  const type = BARCODE_TYPES[barcode.kind] as GoogleBarcode['type'];
+  const type = typeOf(barcode) as GoogleBarcode['type'];
+  if (barcode.kind === 'i2of5')
+    ctx.note('barcode.format.i2of5', path, 'difference', 'Sent as ITF-14 (14 digits).');
   const value = ctx.identity(path, barcode.message, BARCODE_MESSAGE);
   if (NON_ASCII.test(value) && !/^utf-?8$/iu.test(barcode.encoding))
     ctx.note(
@@ -59,8 +86,19 @@ export function barcodeOf(ctx: Ctx): GoogleBarcode | undefined {
 export function backgroundColor(ctx: Ctx): string | undefined {
   const { colors } = ctx.view;
   if (colors.foreground)
-    ctx.note('colors.foreground', '', 'difference', 'Google picks the text colour.');
-  if (colors.label) ctx.note('colors.label', '', 'difference', 'Google picks the label colour.');
+    ctx.note(
+      'colors.foreground',
+      '',
+      'difference',
+      'Google Wallet has no text colour field: it picks one.',
+    );
+  if (colors.label)
+    ctx.note(
+      'colors.label',
+      '',
+      'difference',
+      'Google Wallet has no label colour field: it picks one.',
+    );
   if (!colors.background || ctx.left('colors.background')) return undefined;
   return colors.background;
 }

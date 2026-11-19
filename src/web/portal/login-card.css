@@ -1,13 +1,18 @@
-/* Hosted sign-in card: two faces in one grid cell (one height, no shift); the flipper turns. */
+/* Hosted sign-in card: the flipper is as tall as the active face (use-face-height.ts); the far
+   face is out of flow, so it never adds empty space. */
 .wl-login-card {
   perspective: 1600px;
 }
 .wl-login-flipper {
-  display: grid;
+  position: relative;
   transform-style: preserve-3d;
 }
+.wl-login-flipper[data-face="email"] > [data-side="code"],
+.wl-login-flipper[data-face="code"] > [data-side="email"] {
+  position: absolute;
+  inset: 0 0 auto;
+}
 .wl-login-face {
-  grid-area: 1 / 1;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   /* WebKit only hides a back face that has its own 3D transform. */
@@ -31,6 +36,11 @@
   }
   .wl-login-flipper[data-face="code"] {
     --wl-flip-wait: 120ms;
+  }
+  .wl-login-flipper[data-turning] {
+    transition:
+      transform var(--wl-dur-flip) var(--wl-ease-spring) var(--wl-flip-wait),
+      height var(--wl-dur-flip) var(--wl-ease-move) var(--wl-flip-wait);
   }
   .wl-login-face {
     transition: visibility 0s;

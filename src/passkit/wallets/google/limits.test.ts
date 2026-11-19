@@ -46,26 +46,78 @@ describe('limits', () => {
 });
 
 describe('counts', () => {
-  it('shows 10 text modules and reports each field left out', async () => {
+  it('shows 10 text modules and folds the rest into the last, reporting each', async () => {
     const r = await compile('starter-generic', 'generic', (v) => {
       v.fields = Array.from({ length: 13 }, (_, i) => field(i));
     });
-    expect(object(r).textModulesData).toHaveLength(10);
-    const left = r.items.filter((i) => i.support === 'omitted' && i.capability === 'field.back');
-    expect(left.map((i) => i.path)).toEqual(['backFields.x10', 'backFields.x11', 'backFields.x12']);
-    expect(left[0]?.message).toBe('Google shows 10 text modules.');
+    const modules = object(r).textModulesData;
+    expect(modules).toHaveLength(10);
+    expect(modules[9].body).toContain('value 9');
+    expect(modules[9].body).toContain(
+      '\nLabel 10: value 10\nLabel 11: value 11\nLabel 12: value 12',
+    );
+    expect(r.items.some((i) => i.support === 'omitted' && i.capability === 'field.back')).toBe(
+      false,
+    );
+    const moved = r.items.filter(
+      (i) => i.support === 'difference' && i.capability === 'field.back',
+    );
+    expect(moved.map((i) => i.path)).toEqual([
+      'backFields.x10',
+      'backFields.x11',
+      'backFields.x12',
+    ]);
+    expect(moved[0]?.message).toBe('Google shows 10 text modules: carried as a line of "Label 9".');
   });
 
-  it('shows 10 links and reports the rest', async () => {
+  it('folds the translations of overflow fields into the last module too', async () => {
+    const r = await compile('starter-generic', 'generic', (v) => {
+      v.fields = Array.from({ length: 11 }, (_, i) => field(i));
+      v.localization = {
+        fr: {
+          'Label 9': 'Etiquette 9',
+          'Label 10': 'Etiquette 10',
+          'value 9': 'valeur 9',
+          'value 10': 'valeur 10',
+        },
+      };
+    });
+    const last = object(r).textModulesData[9];
+    expect(last.body).toBe('value 9\nLabel 10: value 10');
+    expect(last.localizedBody.translatedValues).toEqual([
+      { language: 'fr', value: 'valeur 9\nEtiquette 10: valeur 10' },
+    ]);
+  });
+
+  it('folds links past 10 into the last text module and reports each', async () => {
     const r = await compile('starter-generic', 'generic', (v) => {
       v.fields = Array.from({ length: 12 }, (_, i) =>
         field(i, { links: [{ kind: 'web', url: `https://example.com/${i}` }] }),
       );
     });
     expect(object(r).linksModuleData.uris).toHaveLength(10);
+    expect(object(r).textModulesData[9].body).toContain('https://example.com/10');
     expect(
-      r.items.filter((i) => i.capability === 'field.link' && i.support === 'omitted'),
+      r.items.filter((i) => i.capability === 'field.link' && i.support === 'difference'),
     ).toHaveLength(2);
+    expect(r.items.some((i) => i.capability === 'field.link' && i.support === 'omitted')).toBe(
+      false,
+    );
+  });
+
+  it('carries links past 10 in a new text module when there is none to fold into', async () => {
+    const r = await compile('starter-generic', 'generic', (v) => {
+      v.fields = [];
+      v.roles = {};
+      v.links.urls = Object.fromEntries(
+        Array.from({ length: 11 }, (_, i) => [`l${i}`, `https://example.com/${i}`]),
+      );
+    });
+    expect(object(r).linksModuleData.uris).toHaveLength(10);
+    expect(JSON.stringify(object(r).textModulesData)).toContain('https://example.com/10');
+    expect(r.items.some((i) => i.capability === 'field.link' && i.support === 'omitted')).toBe(
+      false,
+    );
   });
 
   const points = (n: number) =>
