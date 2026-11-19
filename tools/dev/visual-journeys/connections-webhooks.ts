@@ -112,9 +112,7 @@ export const connectionsWebhooks: Journey = {
         return page(
           'org',
           `/admin/connections/webhooks/${env.vars.endpointId}?orgId=${env.orgId}`,
-          {
-            waitFor: 'table, [role=grid]',
-          },
+          {},
         );
       },
     },

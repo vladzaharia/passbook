@@ -55,7 +55,10 @@ export const messages: Journey = {
           orgId: env.orgId,
           kind: 'message',
           name: `Journey ${env.stamp}`,
-          target: { templateIds: [env.vars.templateId], q: `JRN-MSG-${env.stamp}` },
+          target: {
+            templateIds: [env.vars.templateId],
+            match: [{ input: 'memberId', values: [`JRN-MSG-${env.stamp}`] }],
+          },
           patch: { message: MESSAGE },
           notify: true,
           send: 'now',
