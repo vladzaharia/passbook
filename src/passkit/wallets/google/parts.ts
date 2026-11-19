@@ -16,6 +16,7 @@ const BARCODE_TYPES: Partial<Record<BarcodeKind, GoogleBarcode['type']>> = {
   pdf417: 'PDF_417',
   aztec: 'AZTEC',
   code128: 'CODE_128',
+  code39: 'CODE_39',
 };
 const NON_ASCII = /\P{ASCII}/u;
 
@@ -59,8 +60,19 @@ export function barcodeOf(ctx: Ctx): GoogleBarcode | undefined {
 export function backgroundColor(ctx: Ctx): string | undefined {
   const { colors } = ctx.view;
   if (colors.foreground)
-    ctx.note('colors.foreground', '', 'difference', 'Google picks the text colour.');
-  if (colors.label) ctx.note('colors.label', '', 'difference', 'Google picks the label colour.');
+    ctx.note(
+      'colors.foreground',
+      '',
+      'difference',
+      'Google Wallet has no text colour field: it picks one.',
+    );
+  if (colors.label)
+    ctx.note(
+      'colors.label',
+      '',
+      'difference',
+      'Google Wallet has no label colour field: it picks one.',
+    );
   if (!colors.background || ctx.left('colors.background')) return undefined;
   return colors.background;
 }

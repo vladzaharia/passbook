@@ -46,14 +46,28 @@ describe('limits', () => {
 });
 
 describe('counts', () => {
-  it('shows 10 text modules and reports each field left out', async () => {
+  it('shows 10 text modules and folds the rest into the last, reporting each', async () => {
     const r = await compile('starter-generic', 'generic', (v) => {
       v.fields = Array.from({ length: 13 }, (_, i) => field(i));
     });
-    expect(object(r).textModulesData).toHaveLength(10);
-    const left = r.items.filter((i) => i.support === 'omitted' && i.capability === 'field.back');
-    expect(left.map((i) => i.path)).toEqual(['backFields.x10', 'backFields.x11', 'backFields.x12']);
-    expect(left[0]?.message).toBe('Google shows 10 text modules.');
+    const modules = object(r).textModulesData;
+    expect(modules).toHaveLength(10);
+    expect(modules[9].body).toContain('value 9');
+    expect(modules[9].body).toContain(
+      '\nLabel 10: value 10\nLabel 11: value 11\nLabel 12: value 12',
+    );
+    expect(r.items.some((i) => i.support === 'omitted' && i.capability === 'field.back')).toBe(
+      false,
+    );
+    const moved = r.items.filter(
+      (i) => i.support === 'difference' && i.capability === 'field.back',
+    );
+    expect(moved.map((i) => i.path)).toEqual([
+      'backFields.x10',
+      'backFields.x11',
+      'backFields.x12',
+    ]);
+    expect(moved[0]?.message).toBe('Google shows 10 text modules: carried as a line of "Label 9".');
   });
 
   it('shows 10 links and reports the rest', async () => {

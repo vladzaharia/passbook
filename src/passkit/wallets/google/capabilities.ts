@@ -58,7 +58,7 @@ export const NATIVE_ROLES: Record<GoogleType, readonly WalletRole[]> = {
   ],
 };
 
-const FORMATS = new Set(['qr', 'pdf417', 'aztec', 'code128']);
+const FORMATS = new Set(['qr', 'pdf417', 'aztec', 'code128', 'code39']);
 const BEST: Partial<Record<CapabilityId, Support>> = {
   'image.personal': 'omitted',
   'colors.foreground': 'difference',

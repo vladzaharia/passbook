@@ -22,7 +22,7 @@ as a labelled line), `difference` (carried, looks different), `omitted` (left ou
 | `barcode.format.pdf417` | native | native | native | native | native | native | native | native |
 | `barcode.format.aztec` | native | native | native | native | native | native | native | native |
 | `barcode.format.code128` | native | native | native | native | native | native | native | native |
-| `barcode.format.code39` | omitted | omitted | omitted | omitted | omitted | native | native | native |
+| `barcode.format.code39` | native | native | native | native | native | native | native | native |
 | `barcode.format.codabar` | omitted | omitted | omitted | omitted | omitted | native | native | native |
 | `barcode.format.ean13` | omitted | omitted | omitted | omitted | omitted | native | native | native |
 | `barcode.format.i2of5` | omitted | omitted | omitted | omitted | omitted | native | native | native |

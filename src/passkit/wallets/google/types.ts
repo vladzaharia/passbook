@@ -39,7 +39,7 @@ export interface GoogleImageModule {
   mainImage: GoogleImage;
 }
 export interface GoogleBarcode {
-  type: 'QR_CODE' | 'PDF_417' | 'AZTEC' | 'CODE_128';
+  type: 'QR_CODE' | 'PDF_417' | 'AZTEC' | 'CODE_128' | 'CODE_39';
   renderEncoding: 'UTF_8';
   value: string;
   alternateText?: string;

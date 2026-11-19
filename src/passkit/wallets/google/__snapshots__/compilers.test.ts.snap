@@ -13,12 +13,6 @@ exports[`Google compilers over every starter and baked template > henrys-blue: t
       "support": "difference",
     },
     {
-      "capability": "barcode.format.code39",
-      "message": "Code39 is not offered by Google Wallet.",
-      "path": "barcodes.0",
-      "support": "omitted",
-    },
-    {
       "capability": "field.header",
       "message": "Carried as a text module.",
       "path": "headerFields.memberId",
@@ -80,85 +74,85 @@ exports[`Google compilers over every starter and baked template > henrys-blue: t
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.phone",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.support",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.website",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.terms",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.status-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.message-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.portal-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.directions-capitol-hill-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.phone-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.support-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.website-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.terms-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -167,7 +161,7 @@ exports[`Google compilers over every starter and baked template > henrys-blue: t
     "barcode": {
       "alternateText": "DEMO0001",
       "renderEncoding": "UTF_8",
-      "type": "CODE_128",
+      "type": "CODE_39",
       "value": "DEMO0001",
     },
     "cardTitle": {
@@ -293,7 +287,19 @@ exports[`Google compilers over every starter and baked template > henrys-blue: t
         "id": "backFields.portal",
       },
       {
-        "body": "1617 Boylston Ave, Seattle, WA 98122",
+        "body": "1617 Boylston Ave, Seattle, WA 98122
+Contact the gym: (206) 644-7797
+Member support: epicexperience@henrysgymnasium.com
+Henry’s Gymnasium: https://henrysgymnasium.com/
+About this pass: Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership.
+Membership status: Active
+From Henry’s: Welcome to Henry’s.
+Manage your membership: https://henrysgymnasium.thememberspot.com/
+Capitol Hill: 1617 Boylston Ave, Seattle, WA 98122
+Contact the gym: (206) 644-7797
+Member support: epicexperience@henrysgymnasium.com
+Henry’s Gymnasium: https://henrysgymnasium.com/
+About this pass: Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership.",
         "header": "Capitol Hill",
         "id": "backFields.directions-capitol-hill",
       },
@@ -328,12 +334,6 @@ exports[`Google compilers over every starter and baked template > henrys-blue: w
       "support": "difference",
     },
     {
-      "capability": "barcode.format.code39",
-      "message": "Code39 is not offered by Google Wallet.",
-      "path": "barcodes.0",
-      "support": "omitted",
-    },
-    {
       "capability": "field.header",
       "message": "Carried as a text module.",
       "path": "headerFields.memberId",
@@ -395,85 +395,85 @@ exports[`Google compilers over every starter and baked template > henrys-blue: w
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.phone",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.support",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.website",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.terms",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.status-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.message-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.portal-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.directions-capitol-hill-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.phone-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.support-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.website-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.terms-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -482,7 +482,7 @@ exports[`Google compilers over every starter and baked template > henrys-blue: w
     "barcode": {
       "alternateText": "DEMO0001",
       "renderEncoding": "UTF_8",
-      "type": "CODE_128",
+      "type": "CODE_39",
       "value": "DEMO0001",
     },
     "cardTitle": {
@@ -597,7 +597,19 @@ exports[`Google compilers over every starter and baked template > henrys-blue: w
         "id": "backFields.portal",
       },
       {
-        "body": "1617 Boylston Ave, Seattle, WA 98122",
+        "body": "1617 Boylston Ave, Seattle, WA 98122
+Contact the gym: (206) 644-7797
+Member support: epicexperience@henrysgymnasium.com
+Henry’s Gymnasium: https://henrysgymnasium.com/
+About this pass: Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership.
+Membership status: Active
+From Henry’s: Welcome to Henry’s.
+Manage your membership: https://henrysgymnasium.thememberspot.com/
+Capitol Hill: 1617 Boylston Ave, Seattle, WA 98122
+Contact the gym: (206) 644-7797
+Member support: epicexperience@henrysgymnasium.com
+Henry’s Gymnasium: https://henrysgymnasium.com/
+About this pass: Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership.",
         "header": "Capitol Hill",
         "id": "backFields.directions-capitol-hill",
       },
@@ -618,12 +630,6 @@ exports[`Google compilers over every starter and baked template > henrys-copper:
       "message": "Google shows no text at a location.",
       "path": "locations",
       "support": "difference",
-    },
-    {
-      "capability": "barcode.format.code39",
-      "message": "Code39 is not offered by Google Wallet.",
-      "path": "barcodes.0",
-      "support": "omitted",
     },
     {
       "capability": "field.header",
@@ -687,85 +693,85 @@ exports[`Google compilers over every starter and baked template > henrys-copper:
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.phone",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.support",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.website",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.terms",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.status-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.message-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.portal-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.directions-capitol-hill-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.phone-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.support-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.website-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.terms-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -774,7 +780,7 @@ exports[`Google compilers over every starter and baked template > henrys-copper:
     "barcode": {
       "alternateText": "DEMO0001",
       "renderEncoding": "UTF_8",
-      "type": "CODE_128",
+      "type": "CODE_39",
       "value": "DEMO0001",
     },
     "cardTitle": {
@@ -900,7 +906,19 @@ exports[`Google compilers over every starter and baked template > henrys-copper:
         "id": "backFields.portal",
       },
       {
-        "body": "1617 Boylston Ave, Seattle, WA 98122",
+        "body": "1617 Boylston Ave, Seattle, WA 98122
+Contact the gym: (206) 644-7797
+Member support: epicexperience@henrysgymnasium.com
+Henry’s Gymnasium: https://henrysgymnasium.com/
+About this pass: Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership.
+Membership status: Active
+From Henry’s: Welcome to Henry’s.
+Manage your membership: https://henrysgymnasium.thememberspot.com/
+Capitol Hill: 1617 Boylston Ave, Seattle, WA 98122
+Contact the gym: (206) 644-7797
+Member support: epicexperience@henrysgymnasium.com
+Henry’s Gymnasium: https://henrysgymnasium.com/
+About this pass: Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership.",
         "header": "Capitol Hill",
         "id": "backFields.directions-capitol-hill",
       },
@@ -933,12 +951,6 @@ exports[`Google compilers over every starter and baked template > henrys-copper:
       "message": "Google shows no text at a location.",
       "path": "locations",
       "support": "difference",
-    },
-    {
-      "capability": "barcode.format.code39",
-      "message": "Code39 is not offered by Google Wallet.",
-      "path": "barcodes.0",
-      "support": "omitted",
     },
     {
       "capability": "field.header",
@@ -1002,85 +1014,85 @@ exports[`Google compilers over every starter and baked template > henrys-copper:
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.phone",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.support",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.website",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.terms",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.status-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.message-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.portal-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.directions-capitol-hill-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.phone-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.support-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.website-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "field.back",
-      "message": "Google shows 10 text modules.",
+      "message": "Google shows 10 text modules: carried as a line of "Capitol Hill".",
       "path": "backFields.terms-poster",
-      "support": "omitted",
+      "support": "difference",
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -1089,7 +1101,7 @@ exports[`Google compilers over every starter and baked template > henrys-copper:
     "barcode": {
       "alternateText": "DEMO0001",
       "renderEncoding": "UTF_8",
-      "type": "CODE_128",
+      "type": "CODE_39",
       "value": "DEMO0001",
     },
     "cardTitle": {
@@ -1204,7 +1216,19 @@ exports[`Google compilers over every starter and baked template > henrys-copper:
         "id": "backFields.portal",
       },
       {
-        "body": "1617 Boylston Ave, Seattle, WA 98122",
+        "body": "1617 Boylston Ave, Seattle, WA 98122
+Contact the gym: (206) 644-7797
+Member support: epicexperience@henrysgymnasium.com
+Henry’s Gymnasium: https://henrysgymnasium.com/
+About this pass: Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership.
+Membership status: Active
+From Henry’s: Welcome to Henry’s.
+Manage your membership: https://henrysgymnasium.thememberspot.com/
+Capitol Hill: 1617 Boylston Ave, Seattle, WA 98122
+Contact the gym: (206) 644-7797
+Member support: epicexperience@henrysgymnasium.com
+Henry’s Gymnasium: https://henrysgymnasium.com/
+About this pass: Present the barcode at check-in. Access is set by the gym’s membership system; this pass does not grant or extend membership.",
         "header": "Capitol Hill",
         "id": "backFields.directions-capitol-hill",
       },
@@ -1252,13 +1276,13 @@ exports[`Google compilers over every starter and baked template > starter-access
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -1395,13 +1419,13 @@ exports[`Google compilers over every starter and baked template > starter-access
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -1540,13 +1564,13 @@ exports[`Google compilers over every starter and baked template > starter-boardi
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -1742,13 +1766,13 @@ exports[`Google compilers over every starter and baked template > starter-boardi
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -1880,13 +1904,13 @@ exports[`Google compilers over every starter and baked template > starter-bookin
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -2042,13 +2066,13 @@ exports[`Google compilers over every starter and baked template > starter-bookin
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -2158,13 +2182,13 @@ exports[`Google compilers over every starter and baked template > starter-coupon
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -2302,13 +2326,13 @@ exports[`Google compilers over every starter and baked template > starter-coupon
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -2405,13 +2429,13 @@ exports[`Google compilers over every starter and baked template > starter-coupon
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -2581,13 +2605,13 @@ exports[`Google compilers over every starter and baked template > starter-event-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -2782,13 +2806,13 @@ exports[`Google compilers over every starter and baked template > starter-event-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -3057,13 +3081,13 @@ exports[`Google compilers over every starter and baked template > starter-event-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -3168,13 +3192,13 @@ exports[`Google compilers over every starter and baked template > starter-generi
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -3306,13 +3330,13 @@ exports[`Google compilers over every starter and baked template > starter-generi
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -3379,12 +3403,6 @@ exports[`Google compilers over every starter and baked template > starter-id-car
   },
   "items": [
     {
-      "capability": "barcode.format.code39",
-      "message": "Code39 is not offered by Google Wallet.",
-      "path": "barcodes.0",
-      "support": "omitted",
-    },
-    {
       "capability": "image.thumbnail",
       "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
       "path": "images.thumbnail",
@@ -3422,13 +3440,13 @@ exports[`Google compilers over every starter and baked template > starter-id-car
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -3437,7 +3455,7 @@ exports[`Google compilers over every starter and baked template > starter-id-car
     "barcode": {
       "alternateText": "290014",
       "renderEncoding": "UTF_8",
-      "type": "QR_CODE",
+      "type": "CODE_39",
       "value": "290014",
     },
     "cardTitle": {
@@ -3534,12 +3552,6 @@ exports[`Google compilers over every starter and baked template > starter-id-car
       "support": "difference",
     },
     {
-      "capability": "barcode.format.code39",
-      "message": "Code39 is not offered by Google Wallet.",
-      "path": "barcodes.0",
-      "support": "omitted",
-    },
-    {
       "capability": "image.thumbnail",
       "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
       "path": "images.thumbnail",
@@ -3577,13 +3589,13 @@ exports[`Google compilers over every starter and baked template > starter-id-car
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -3592,7 +3604,7 @@ exports[`Google compilers over every starter and baked template > starter-id-car
     "barcode": {
       "alternateText": "290014",
       "renderEncoding": "UTF_8",
-      "type": "QR_CODE",
+      "type": "CODE_39",
       "value": "290014",
     },
     "cardTitle": {
@@ -3686,13 +3698,13 @@ exports[`Google compilers over every starter and baked template > starter-pack: 
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -3841,13 +3853,13 @@ exports[`Google compilers over every starter and baked template > starter-pack: 
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -3955,13 +3967,13 @@ exports[`Google compilers over every starter and baked template > starter-pack: 
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -4051,13 +4063,13 @@ exports[`Google compilers over every starter and baked template > starter-permit
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -4216,13 +4228,13 @@ exports[`Google compilers over every starter and baked template > starter-permit
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -4353,13 +4365,13 @@ exports[`Google compilers over every starter and baked template > starter-pickup
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -4519,13 +4531,13 @@ exports[`Google compilers over every starter and baked template > starter-pickup
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -4651,13 +4663,13 @@ exports[`Google compilers over every starter and baked template > starter-poster
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -4821,13 +4833,13 @@ exports[`Google compilers over every starter and baked template > starter-poster
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -4982,13 +4994,13 @@ exports[`Google compilers over every starter and baked template > starter-stamp-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -5067,13 +5079,13 @@ exports[`Google compilers over every starter and baked template > starter-stamp-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -5225,13 +5237,13 @@ exports[`Google compilers over every starter and baked template > starter-stamp-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -5321,13 +5333,13 @@ exports[`Google compilers over every starter and baked template > starter-stamp-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -5463,13 +5475,13 @@ exports[`Google compilers over every starter and baked template > starter-store-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -5542,13 +5554,13 @@ exports[`Google compilers over every starter and baked template > starter-store-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -5689,13 +5701,13 @@ exports[`Google compilers over every starter and baked template > starter-store-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -5784,13 +5796,13 @@ exports[`Google compilers over every starter and baked template > starter-store-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -5965,13 +5977,13 @@ exports[`Google compilers over every starter and baked template > starter-timed-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -6079,13 +6091,13 @@ exports[`Google compilers over every starter and baked template > starter-timed-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -6283,13 +6295,13 @@ exports[`Google compilers over every starter and baked template > starter-timed-
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -6415,13 +6427,13 @@ exports[`Google compilers over every starter and baked template > starter-transi
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
@@ -6616,13 +6628,13 @@ exports[`Google compilers over every starter and baked template > starter-transi
     },
     {
       "capability": "colors.foreground",
-      "message": "Google picks the text colour.",
+      "message": "Google Wallet has no text colour field: it picks one.",
       "path": "",
       "support": "difference",
     },
     {
       "capability": "colors.label",
-      "message": "Google picks the label colour.",
+      "message": "Google Wallet has no label colour field: it picks one.",
       "path": "",
       "support": "difference",
     },

@@ -26,7 +26,13 @@ const compile = async (
 const object = (r: { objectBody?: unknown }) => r.objectBody as Record<string, any>;
 
 describe('barcodes', () => {
-  const TYPES = { qr: 'QR_CODE', pdf417: 'PDF_417', aztec: 'AZTEC', code128: 'CODE_128' } as const;
+  const TYPES = {
+    qr: 'QR_CODE',
+    pdf417: 'PDF_417',
+    aztec: 'AZTEC',
+    code128: 'CODE_128',
+    code39: 'CODE_39',
+  } as const;
   for (const [kind, type] of Object.entries(TYPES))
     it(`${kind} is ${type}, message and alt text unchanged`, async () => {
       const r = await compile('starter-generic', 'generic', (v) => {
@@ -49,7 +55,7 @@ describe('barcodes', () => {
   it('takes the first format Google renders and reports the ones before it', async () => {
     const r = await compile('starter-generic', 'generic', (v) => {
       v.barcodes = [
-        barcode('code39'),
+        barcode('codabar'),
         barcode('ean13'),
         barcode('pdf417', 'P-1', 'utf-8'),
         barcode('qr', 'Q-1'),
@@ -67,7 +73,7 @@ describe('barcodes', () => {
     const view = await googleView('starter-generic', {
       wallets: { required: ['barcode.format'] },
       patch: (v) => {
-        v.barcodes = [barcode('code39')];
+        v.barcodes = [barcode('codabar')];
       },
     });
     expect(object(googleCompiler.compile(view, OPTIONS)).barcode).toBeUndefined();
@@ -80,7 +86,7 @@ describe('barcodes', () => {
     });
     expect(report.status.kind).toBe('blocked');
     expect(report.items[0]).toMatchObject({
-      capability: 'barcode.format.code39',
+      capability: 'barcode.format.codabar',
       severity: 'blocked',
     });
   });
