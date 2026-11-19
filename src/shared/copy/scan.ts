@@ -232,8 +232,8 @@ export const SCAN_COPY = {
   /** The mode a device scans in. */
   mode: { door: 'Door', desk: 'Desk', manager: 'Manager', operator: 'Operator' },
   offline: {
-    strip: 'Offline. Scans are saved and sync later.',
-    saved: '{n} saved',
+    strip: 'Offline. Reconnect to check scans.',
+    saved: '{n} waiting to sync',
   },
   sessionPaused: { line: 'Paused by a manager. Ask them to resume.', check: 'Check again' },
   sessionEnded: { title: 'Session ended', line: 'Ask a manager to open a new session.' },

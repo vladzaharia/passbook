@@ -3,7 +3,7 @@ export const SCAN_TAG_COPY = {
   menu: { assign: 'Assign tag', locked: 'Desk and up', offline: 'Needs a connection' },
   /** Offline scanners never read tags (online only in v1). */
   needsConnection: 'Tag needs a connection',
-  needsConnectionSub: 'Use the pass QR or look the person up.',
+  needsConnectionSub: 'Scan the pass QR instead.',
   chip: { assigning: 'Assigning tag', request: 'Open tag request', requestFor: 'Tag for {name}' },
   step: { tag: 'Tag', pass: 'Pass' },
   tag: {

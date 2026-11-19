@@ -19,5 +19,5 @@ export function canReload(
   path: string,
   call: { signal?: AbortSignal },
 ): boolean {
-  return Boolean(deps.refreshConfig) && !call.signal?.aborted && !path.startsWith('/session');
+  return Boolean(deps.refreshConfig) && !call.signal?.aborted && path.split('?')[0] !== '/session';
 }

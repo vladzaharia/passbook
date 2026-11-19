@@ -26,7 +26,7 @@ import type { Announcement } from './ui/live-announcer.tsx';
 import { modeLabel } from './ui/mode-label.ts';
 import { type CameraChoice, ScanMenu } from './ui/scan-menu.tsx';
 import { ScanOverlays, type ScanPanel } from './ui/scan-overlays.tsx';
-import { dockStrip } from './ui/strip-of.ts';
+import { dockStrip, savedCount } from './ui/strip-of.ts';
 import { useAccessUi } from './ui/use-access-ui.tsx';
 import './buddy/beats.css';
 
@@ -212,7 +212,7 @@ export function ScanLoop({
             <>
               <TestChip mode={scanner?.mode ?? getMode()} />
               {readerUsable ? <ReaderChip state={s.focused ? 'ready' : 'paused'} /> : null}
-              {!s.online ? <SyncChip state={{ kind: 'offline', queued: s.queue.pending }} /> : null}
+              {!s.online ? <SyncChip state={{ kind: 'offline', queued: savedCount(s) }} /> : null}
               {access.chips}
               {tags.chip}
             </>
