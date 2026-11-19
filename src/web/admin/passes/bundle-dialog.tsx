@@ -55,12 +55,24 @@ function Result({ bundle, emailRequested }: { bundle: BundleDto; emailRequested:
           ) : null}
         </Callout>
       ) : null}
+      {bundle.passes[0] ? (
+        <p className="text-sm">
+          <Link
+            to="/admin/passes/$passId"
+            params={{ passId: bundle.passes[0].id }}
+            search={{ tab: 'delivery' }}
+            className="font-medium text-accent-fg underline-offset-4 hover:underline"
+          >
+            See this bundle on its first pass
+          </Link>
+        </p>
+      ) : null}
       <Scan
         url={url}
         label={`QR code for ${bundle.name}`}
         buddy={emailRequested ? undefined : (p) => <Buddy {...p} />}
       >
-        <div className="flex min-w-0 items-center gap-2 rounded-md border border-border bg-surface-sunken py-1 pr-1 pl-3">
+        <div className="flex w-full min-w-0 max-w-full items-center gap-2 rounded-md border border-border bg-surface-sunken py-1 pr-1 pl-3">
           <span
             data-autofocus
             tabIndex={-1}

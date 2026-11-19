@@ -148,7 +148,7 @@ function PassBody(props: PassPageProps) {
             <PassDetails
               passJson={props.passJson}
               view={view}
-              active={active}
+              state={state}
               locale={view.locale}
               now={props.now}
               {...(props.timeZone ? { timeZone: props.timeZone } : {})}
@@ -181,7 +181,7 @@ export function renderPassPage(props: PassPageProps): string {
   const line = props.removal
     ? HOLDER_COPY.previewRemoved
     : voided
-      ? HOLDER_COPY.voided
+      ? HOLDER_COPY.previewVoided
       : active
         ? props.walletOffers.length > 0
           ? HOLDER_COPY.previewWallets

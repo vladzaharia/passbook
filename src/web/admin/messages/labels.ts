@@ -73,7 +73,7 @@ export const SCOPE_CHANGED = 'Your organization or permissions changed. Review a
 
 /** Who holds a pass, as the audience filter and the details name it. */
 export const HOLDER_LABEL = {
-  owned: 'Claimed',
+  owned: 'Holder signed in',
   waiting: 'Not claimed',
   unassigned: 'No holder',
 } as const;

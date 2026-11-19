@@ -23,8 +23,10 @@ export async function warningsFor(ctx: ServiceContext, pass: Pass, passJson: Pas
     const warn = (issues: Issue[]) => issues.filter((i) => i.severity !== 'error');
     const shared = warn(validatePass(template.passJson, template.assets, identity).issues);
     const known = new Set(shared.map(issueKey));
+    // webServiceURL is the platform's own address (http or localhost on a dev server): no author can fix it.
+    const platformOwn = (i: Issue) => Boolean(i.path?.endsWith('webServiceURL'));
     const own = warn(validatePass(passJson, template.assets, identity).issues).filter(
-      (i) => !known.has(issueKey(i)),
+      (i) => !known.has(issueKey(i)) && !platformOwn(i),
     );
     const [org, overrides] = await Promise.all([
       getOrg(ctx.env.DB, pass.orgId),

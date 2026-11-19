@@ -91,7 +91,7 @@ export function Counts({ b, outcome }: { b: BroadcastDto; outcome: ItemOutcome |
               />
               <Stat
                 id={b.id}
-                label="Silent (daily limit)"
+                label="Not sent as alert (daily limit)"
                 value={c.overBudget}
                 hint={c.overBudget ? 'Updated without a notification' : ''}
               />
