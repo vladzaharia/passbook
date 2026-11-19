@@ -47,6 +47,7 @@ async function enrol(mode: Mode) {
     source: 'org',
     expectedRevision: 0,
   });
+  if (!view.accountId) throw new Error('Missing enrolment.');
   return { org, m, accountId: view.accountId, issuer };
 }
 

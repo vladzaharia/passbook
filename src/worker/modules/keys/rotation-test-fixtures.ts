@@ -11,7 +11,7 @@ import {
 } from '../wallet-providers/instance.ts';
 import { personalizeThroughRoute } from './personalize-test-fixtures.ts';
 import { seedWalletCredentialVersion } from './repo-rotation-wallet-test-fixtures.ts';
-import { CAPTURE_TABLE, ENVELOPE_TABLES, kekColumn } from './rewrap-tables.ts';
+import { accountHmacKind, CAPTURE_TABLE, ENVELOPE_TABLES, kekColumn } from './rewrap-tables.ts';
 
 export type Samsung = Awaited<ReturnType<typeof setupSamsungCallbacks>>;
 
@@ -233,6 +233,23 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
   });
 
   plain.push(await seedWalletCredentialVersion(db, { orgId: org, now, id, seal }));
+
+  // The enrolment's own HMAC key: the account the Google instance belongs to.
+  const hmacKind = accountHmacKind(String(instance?.account_id), String(instance?.mode), 'google');
+  const hmac = await seal(String(instance?.account_id), org, hmacKind, 'hmac-body');
+  await run(
+    db,
+    `UPDATE wallet_provider_accounts
+     SET hmac_kek_version = ?, hmac_iv = ?, hmac_wrapped_dek = ?, hmac_ciphertext = ? WHERE id = ?`,
+    [hmac.kekVersion, hmac.iv, hmac.wrappedDek, hmac.ciphertext, instance?.account_id ?? null],
+  );
+  plain.push({
+    table: 'wallet_provider_accounts',
+    id: String(instance?.account_id),
+    org,
+    kind: hmacKind,
+    text: 'hmac-body',
+  });
 
   const captureId = id();
   await run(
