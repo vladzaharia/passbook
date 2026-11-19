@@ -21,12 +21,21 @@ describe('add endpoint', () => {
     await user.type(url, 'https://hooks.example.com/passbook');
     await user.tab();
     await waitFor(() =>
-      expect(calls.some((c) => c.method === 'POST' && c.search === '?validate=1')).toBe(true),
+      expect(
+        calls.some(
+          (c) =>
+            c.method === 'POST' &&
+            c.search === '?validate=1' &&
+            (c.body as { orgId?: string }).orgId === 'org1',
+        ),
+      ).toBe(true),
     );
     await user.click(screen.getByRole('button', { name: 'Add endpoint' }));
     expect(await screen.findByRole('heading', { name: 'Signing secret' })).toBeVisible();
     const post = calls.find((c) => c.method === 'POST' && c.search === '');
+    // The session names the organization in the body; without it the API answers 400.
     expect(post?.body).toMatchObject({
+      orgId: 'org1',
       url: 'https://hooks.example.com/passbook',
       eventTypes: ['pass.issued', 'pass.installed', 'pass.uninstalled', 'pass.scanned'],
       templateIds: null,
@@ -180,7 +189,9 @@ describe('endpoint actions', () => {
     await waitFor(() =>
       expect(sent(calls, 'DELETE', '/api/v1/webhook-endpoints/we1')).toHaveLength(1),
     );
-    expect(await screen.findByRole('tab', { name: 'Webhooks', selected: true })).toBeVisible();
+    expect(
+      await screen.findByRole('tab', { name: 'Webhook endpoints', selected: true }),
+    ).toBeVisible();
   });
 
   it('sends a test event and reports a delivery', async () => {

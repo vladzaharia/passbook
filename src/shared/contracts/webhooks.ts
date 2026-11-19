@@ -178,6 +178,10 @@ export const WebhookEndpointSchema = z.object({
   lastFailureAt: TimestampSchema.nullable(),
   /** HTTP status of the newest attempted delivery; null when none yet or no response. */
   lastStatus: z.number().int().nullable(),
+  /** The signing secret itself is never returned after creation or rotation. */
+  secretCreatedAt: TimestampSchema.nullable(),
+  /** A rotated secret that still signs until this time; null when none was rotated. */
+  previousSecretExpiresAt: TimestampSchema.nullable(),
   createdAt: TimestampSchema,
 });
 export type WebhookEndpointDto = z.infer<typeof WebhookEndpointSchema>;
@@ -204,6 +208,9 @@ export const UpdateWebhookEndpointSchema = z.object({
   status: z.enum(['active', 'paused']).optional(),
   apiVersion: WebhookApiVersionSchema.optional(),
 });
+
+/** Sent on every request; the delivery sheet shows it. */
+export const WEBHOOK_USER_AGENT = 'PassBook-Webhooks/1.0';
 
 export const WebhookSecretSchema = z.object({ secret: z.string() });
 export const WebhookEndpointListSchema = z.object({ items: z.array(WebhookEndpointSchema) });
@@ -264,6 +271,8 @@ export const WebhookReplaySchema = z
     include: z.enum(['failed', 'failed_and_cancelled', 'all']).default('failed'),
     /** Also create deliveries for feed events the endpoint never had. */
     missing: z.boolean().optional(),
+    /** Count what would be sent and change nothing. */
+    dryRun: z.boolean().optional(),
   })
   .refine((r) => r.from <= r.to, { message: 'from must not be after to', path: ['from'] });
 export const WebhookReplayResultSchema = z.object({ queued: z.number().int().nonnegative() });

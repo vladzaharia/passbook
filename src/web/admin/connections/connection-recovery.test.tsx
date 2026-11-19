@@ -162,7 +162,7 @@ describe('connection recovery', () => {
     });
     await user.click(await screen.findByRole('button', { name: 'Test' }));
     expect(await screen.findByText('Test passed')).toBeInTheDocument();
-    await user.click(screen.getByRole('tab', { name: 'Settings' }));
+    await user.click(screen.getByRole('tab', { name: 'Lifecycle' }));
     const name = await screen.findByRole('textbox', { name: /Name/ });
     await user.clear(name);
     await user.type(name, 'Renamed');

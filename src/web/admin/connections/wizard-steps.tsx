@@ -1,15 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { z } from 'zod';
-import {
-  type ConnectorInfoSchema,
-  TestConfigResponseSchema,
-} from '@/shared/contracts/connections.ts';
-import { ACTION_ICON } from '../../lib/action-icons.ts';
-import { api } from '../../lib/api.ts';
+import type { ConnectorInfoSchema } from '@/shared/contracts/connections.ts';
 import { connectorIcon } from '../../lib/entities.ts';
 import {
-  Button,
   Card,
   CardBody,
   FormField,
@@ -19,10 +12,11 @@ import {
   Select,
   SkeletonRows,
 } from '../../ui/index.ts';
-import { cleanValues, type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
-import { authOptions, flattenSchema, nestValues, WIZARD_HIDDEN } from './config-schema.ts';
+import { type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
+import { authOptions, flattenSchema, WIZARD_HIDDEN } from './config-schema.ts';
 import { secretSchema } from './secret-schema.ts';
-import { type TestOutcome, TestResult } from './test-result.tsx';
+import type { TestOutcome } from './test-result.tsx';
+import { WizardTest } from './wizard-test.tsx';
 
 type Connector = z.infer<typeof ConnectorInfoSchema>;
 
@@ -181,19 +175,6 @@ export function ConfigStep({
     () => WIZARD_HIDDEN(flattenSchema(secretsFlat), authType),
     [secretsFlat, authType],
   );
-  const run = useMutation({
-    mutationFn: () =>
-      api.post('/api/v1/connections/test-config', TestConfigResponseSchema, {
-        orgId,
-        connectorType: connector.type,
-        config: nestValues(cleanValues(draft.config)),
-        secrets: Object.fromEntries(
-          Object.entries(cleanValues(draft.secrets))
-            .filter(([k]) => !hiddenSecrets.has(k))
-            .map(([k, v]) => [k, String(v)]),
-        ),
-      }),
-  });
   const set = (patch: Partial<ConfigDraft>) => onChange({ ...draft, ...patch });
 
   // One card for the step, like Review: the schema's groups take headings inside it.
@@ -257,23 +238,14 @@ export function ConfigStep({
           />
         ) : null}
         <div className="flex flex-col gap-3 border-t border-border pt-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant="outline"
-              iconStart={<ACTION_ICON.test aria-hidden />}
-              busy="pulse"
-              loading={run.isPending}
-              onClick={() =>
-                run.mutateAsync().then(
-                  (r) => onTest({ kind: 'result', result: r, at: Date.now() }),
-                  (error: unknown) => onTest({ kind: 'error', error, at: Date.now() }),
-                )
-              }
-            >
-              Test
-            </Button>
-            <TestResult outcome={test} />
-          </div>
+          <WizardTest
+            connector={connector}
+            orgId={orgId}
+            config={draft.config}
+            secrets={draft.secrets}
+            test={test}
+            onTest={onTest}
+          />
           {test?.kind === 'result' && test.result.sample?.length ? (
             <ul aria-label="Fields in the first record" className="flex flex-wrap gap-1.5">
               {test.result.sample.map((f) => (

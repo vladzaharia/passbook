@@ -73,7 +73,9 @@ describe('webhooks tab', () => {
     const calls: Calls[] = [];
     await open('/admin/connections', calls);
     expect(await screen.findByRole('tab', { name: 'Sources', selected: true })).toBeVisible();
-    await waitFor(() => expect(screen.getByRole('tab', { name: 'Webhooks' })).toBeVisible());
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Webhook endpoints' })).toBeVisible(),
+    );
   });
 });
 
