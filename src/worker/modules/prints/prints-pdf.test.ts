@@ -29,7 +29,7 @@ describe('staff PDF', () => {
     expect(page).toContain('Download PDF');
     const key = pdfKey(kit.org.id, pass.id, print.id);
     const stored = await kit.env.BUCKET.head(key);
-    expect(stored?.customMetadata).toMatchObject({ engine: 'fallback' });
+    expect(stored?.customMetadata).toMatchObject({ passVersion: String(pass.version) });
   });
 
   it('hits the cache while the pass version is the same, and redraws when it moved', async () => {
@@ -40,7 +40,7 @@ describe('staff PDF', () => {
     const key = pdfKey(kit.org.id, pass.id, print.id);
     const put = (version: number) =>
       kit.env.BUCKET.put(key, 'cached copy', {
-        customMetadata: { engine: 'browser', passVersion: String(version) },
+        customMetadata: { passVersion: String(version) },
       });
     await put(pass.version);
     expect(await (await staffPdf(pass.id)).text()).toBe('cached copy');

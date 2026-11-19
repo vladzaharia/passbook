@@ -1,12 +1,19 @@
 import { PDFDocument, type PDFFont, type PDFPage, rgb, StandardFonts } from 'pdf-lib';
-import { PAPER_SPECS } from '../../../passkit/template/paper.ts';
+import { PAPER_SPECS, type PaperDesign } from '../../../passkit/template/paper.ts';
+import type { PaperContent } from '../../../passkit/template/paper-content.ts';
 import { groupPrintCode, PRINT_COPY } from '../../../shared/copy/print.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
 import { drawPaperCode } from '../../../web/paper/drawing.ts';
-import type { PrintSheet } from '../../ssr/print-sheets.tsx';
 
 const PT = 72 / 25.4;
 const INK = rgb(0, 0, 0);
+
+/** One ticket of a PDF: its design, words and the print code. */
+export interface PrintSheet {
+  design: PaperDesign;
+  content: PaperContent;
+  code: string;
+}
 
 interface Fonts {
   text: PDFFont;
@@ -214,8 +221,8 @@ function drawSheet(page: PDFPage, sheet: PrintSheet, f: Fonts): void {
 }
 
 /**
- * The tickets without a browser: the same words and the same bwip-js code, drawn by hand on pages
- * of the design's size. Plainer than the Browser Run copy (Latin-1 text, no wallpaper) but it scans.
+ * The tickets as a PDF: the print page's words and its bwip-js code, drawn with pdf-lib on pages of
+ * the design's size. Latin-1 text only (other characters are folded or become "?"); it scans.
  */
 export async function fallbackPdf(
   sheets: readonly PrintSheet[],

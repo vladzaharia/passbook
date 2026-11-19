@@ -58,7 +58,7 @@ describe('bulk print', () => {
       count: 2,
       skipped: 0,
       lossy: false,
-      engine: 'fallback',
+      engine: 'pdf-lib',
     });
     const pdf = await api('GET', `/passes/bulk-print/${started.jobId}/pdf?orgId=${kit.org.id}`);
     expect(pdf.headers.get('content-type')).toBe('application/pdf');
@@ -116,25 +116,6 @@ describe('bulk print', () => {
     const started = (await (await start([off.id])).json()) as Started;
     expect(started).toMatchObject({ jobId: '', count: 0 });
     expect(jobs()).toHaveLength(0);
-  });
-
-  it('leaves a busy browser to the queue: the job throws for a retry and renders on the next try', async () => {
-    const { kit, printPass, start, jobs } = await setup();
-    const pass = await printPass();
-    await start([pass.id]);
-    const base = jobCtxOf(kit);
-    const busy = { ...base, env: { ...base.env, BROWSER: {} as never } };
-    const { BROWSER_LAUNCHES_PER_MINUTE } = await import('./pdf-render.ts');
-    const { bump } = await import('../../platform/counters.ts');
-    const now = base.clock.now();
-    await bump(kit.env.DB, 'prints:browser', now - (now % 60_000), BROWSER_LAUNCHES_PER_MINUTE + 1);
-    await expect(handlePrintsBulk(jobs()[0] as never, busy)).rejects.toMatchObject({
-      code: 'PRINT_PDF_THROTTLED',
-    });
-    await handlePrintsBulk(jobs()[0] as never, base);
-    expect(
-      await kit.env.BUCKET.head(bulkKey(kit.org.id, jobs()[0]?.jobId ?? '', 'pdf')),
-    ).not.toBeNull();
   });
 });
 

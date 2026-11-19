@@ -4,13 +4,7 @@ import type { Job } from '../jobs/types.ts';
 export interface AppEnv
   extends Omit<
     Env,
-    | 'APNS'
-    | 'BREAKGLASS_TOKEN_SHA256'
-    | 'BROWSER'
-    | 'JOBS'
-    | 'JOBS_DLQ'
-    | 'WEBHOOK_JOBS'
-    | 'OIDC_CLIENT_SECRET'
+    'APNS' | 'BREAKGLASS_TOKEN_SHA256' | 'JOBS' | 'JOBS_DLQ' | 'WEBHOOK_JOBS' | 'OIDC_CLIENT_SECRET'
   > {
   /** The generated type is Queue<unknown>; producers are checked against `Job`. */
   JOBS: Queue<Job>;
@@ -22,8 +16,6 @@ export interface AppEnv
    * Omit keeps a generated required `APNS` (mtls_certificates uncommented) from clashing.
    */
   APNS?: Fetcher;
-  /** Browser Run, for printed-ticket PDFs. Unbound (tests, a Worker without the binding) means the pdf-lib fallback. */
-  BROWSER?: Env['BROWSER'];
   /** Only for a registered Pocket ID client; a CIMD client id (oidc-cimd.ts) has no secret. */
   OIDC_CLIENT_SECRET?: string;
   /** SHA-256 of the break-glass token. Unset turns the route off. */

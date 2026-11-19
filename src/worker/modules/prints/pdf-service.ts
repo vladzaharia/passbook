@@ -1,10 +1,8 @@
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { renderPrintSheets } from '../../ssr/print-sheets.tsx';
 import type { Pass } from '../passes/repo-map.ts';
 import { type PrintAudience, printPageModel } from './page.ts';
 import { fallbackPdf } from './pdf-fallback.ts';
-import { renderPdf } from './pdf-render.ts';
 import { cachedPdf, pdfKey, putPdf } from './pdf-store.ts';
 
 export const PDF_HEADERS = {
@@ -29,20 +27,12 @@ export async function ticketPdf(
   const model = await printPageModel(ctx, pass, audience);
   if (model.state !== 'ready') throw new NotFoundError('No active print.', 'PRINT_NOT_FOUND');
   const key = pdfKey(pass.orgId, pass.id, model.printId);
-  const hit = await cachedPdf(ctx.env.BUCKET, key, pass.version, {
-    browserBound: Boolean(ctx.env.BROWSER),
-    now: ctx.clock.now(),
-  });
+  const hit = await cachedPdf(ctx.env.BUCKET, key, pass.version);
   if (hit) return hit.body;
-  const sheets = [{ design: model.design, content: model.content, code: model.code }];
-  const { bytes, engine } = await renderPdf(ctx, {
-    html: renderPrintSheets(sheets),
-    fallback: () =>
-      fallbackPdf(sheets, () =>
-        ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' }),
-      ),
-    whenBusy: 'fallback',
-  });
-  await putPdf(ctx.env.BUCKET, key, bytes, { passVersion: pass.version, engine });
+  const bytes = await fallbackPdf(
+    [{ design: model.design, content: model.content, code: model.code }],
+    () => ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' }),
+  );
+  await putPdf(ctx.env.BUCKET, key, bytes, { passVersion: pass.version });
   return bytes;
 }

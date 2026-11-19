@@ -58,8 +58,8 @@ export const BulkPrintStatusSchema = z.object({
   count: z.number().int(),
   /** Passes left out because their print ended or they could not be read. */
   skipped: z.number().int(),
-  engine: z.enum(['browser', 'fallback']).optional(),
-  /** The pdf-lib copy replaced characters it cannot draw. */
+  engine: z.enum(['pdf-lib']).optional(),
+  /** The PDF replaced characters it cannot draw. */
   lossy: z.boolean(),
 });
 export type BulkPrintStatus = z.infer<typeof BulkPrintStatusSchema>;

@@ -42,7 +42,6 @@
   },
   "dependencies": {
     "@cfworker/json-schema": "4.1.4",
-    "@cloudflare/puppeteer": "1.4.0",
     "@hono/zod-openapi": "1.6.3",
     "@polaris-key/brand": "0.10.0",
     "@radix-ui/react-checkbox": "1.4.1",

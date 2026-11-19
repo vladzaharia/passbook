@@ -1,18 +1,15 @@
 import type { JobOf } from '../../jobs/types.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { type PrintSheet, renderPrintSheets } from '../../ssr/print-sheets.tsx';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { readStoredBulk, writeBulkStatus } from './bulk-status.ts';
 import { printPageModel } from './page.ts';
-import { fallbackPdf } from './pdf-fallback.ts';
-import { renderPdf } from './pdf-render.ts';
+import { fallbackPdf, type PrintSheet } from './pdf-fallback.ts';
 import { bulkKey, putPdf } from './pdf-store.ts';
 
 /**
- * Renders the combined PDF of a bulk Print: one browser launch for the whole selection. A busy
- * browser throws, and the queue retries with backoff; a pass whose print ended meanwhile is left
- * out and counted as skipped (a PDF made before such a void is removed by the drop hooks and sweep).
+ * Renders the combined PDF of a bulk Print, one page per ticket. A pass whose print ended
+ * meanwhile is left out and counted as skipped (a PDF made before such a void is removed by the drop hooks and sweep).
  */
 export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceContext) {
   const bucket = ctx.env.BUCKET;
@@ -55,23 +52,18 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
     return;
   }
   let lossy = false;
-  const { bytes, engine } = await renderPdf(ctx, {
-    html: renderPrintSheets(sheets),
-    fallback: () =>
-      fallbackPdf(sheets, () => {
-        lossy = true;
-        ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' });
-      }),
-    whenBusy: 'retry',
+  const bytes = await fallbackPdf(sheets, () => {
+    lossy = true;
+    ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' });
   });
-  await putPdf(bucket, bulkKey(job.orgId, job.jobId, 'pdf'), bytes, { engine });
+  await putPdf(bucket, bulkKey(job.orgId, job.jobId, 'pdf'), bytes);
   await writeBulkStatus(bucket, job.orgId, job.jobId, {
     ...done,
     state: 'ready',
     count: sheets.length,
-    engine,
+    engine: 'pdf-lib',
     lossy,
     at: ctx.clock.now(),
   });
-  ctx.log.info('prints.bulk_done', { orgId: job.orgId, count: sheets.length, skipped, engine });
+  ctx.log.info('prints.bulk_done', { orgId: job.orgId, count: sheets.length, skipped });
 }

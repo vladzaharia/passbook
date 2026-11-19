@@ -12,7 +12,7 @@ vi.mock('./pdf-fallback.ts', () => ({
 }));
 
 describe('bulk status engine and lossy text', () => {
-  it('records the engine and that the fallback replaced characters', async () => {
+  it('records the engine and that the PDF replaced characters', async () => {
     const { kit, api, printPass } = await pdfKit();
     const pass = await printPass();
     const res = await api('POST', '/passes/bulk-print', { ids: [pass.id], orgId: kit.org.id });
@@ -20,6 +20,6 @@ describe('bulk status engine and lossy text', () => {
     const sent = (kit.queue.sent as { kind: string }[]).find((m) => m.kind === 'prints.bulk');
     await handlePrintsBulk(sent as never, jobCtxOf(kit));
     const status = await api('GET', `/passes/bulk-print/${started.jobId}?orgId=${kit.org.id}`);
-    expect(await status.json()).toMatchObject({ state: 'ready', engine: 'fallback', lossy: true });
+    expect(await status.json()).toMatchObject({ state: 'ready', engine: 'pdf-lib', lossy: true });
   });
 });

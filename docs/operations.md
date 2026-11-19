@@ -504,7 +504,7 @@ gap; turning it back on does not backfill.
 
 ### Printed ticket PDFs
 
-PDFs render with Browser Run (the `BROWSER` binding in `wrangler.jsonc`; needs the Workers Paid plan). Without it, or when it fails or is busy (20 launches a minute), the Worker draws a plainer pdf-lib copy and logs `PRINT_PDF_NO_BROWSER`, `PRINT_PDF_BROWSER_FAILED` or `PRINT_PDF_RATE_LIMITED`. PDFs are cached in R2 under `prints/{orgId}/{passId}/{printId}.pdf`, with bulk files under `prints/{orgId}/bulk/`. The daily `prints.pdf_sweep` deletes PDFs of ended prints and bulk files after 7 days.
+PDFs are drawn in the Worker with pdf-lib (Latin-1 text; other characters are folded or become "?", logged once per PDF as `PRINT_PDF_TEXT_LOSSY`). They are cached in R2 under `prints/{orgId}/{passId}/{printId}.pdf`, with bulk files under `prints/{orgId}/bulk/`. The daily `prints.pdf_sweep` deletes PDFs of ended prints and bulk files after 24 h.
 
 ## Runtime decisions
 
