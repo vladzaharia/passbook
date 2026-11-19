@@ -50,6 +50,9 @@ class VisualSocket {
   publish(row: ScanLiveRow) {
     this.onmessage?.({ data: JSON.stringify({ cursor: row.id, rows: [row] }) });
   }
+  snapshot(rows: ScanLiveRow[], places: unknown[]) {
+    this.onmessage?.({ data: JSON.stringify({ cursor: rows[0]?.id ?? null, rows, places }) });
+  }
 }
 
 function sessionFor(surface: string): ScanSession {
@@ -131,10 +134,62 @@ function LiveVisual({ session, status }: { session: ScanSession; status: string 
       direction: 'in',
       label: status === 'refused' ? 'Not accepted' : 'Checked in',
       presented: true,
+      customer: {
+        v: 1 as const,
+        screen: status === 'refused' ? ('see_desk' as const) : ('ok' as const),
+        ref: id,
+        at: Date.now(),
+        where: '',
+        band:
+          status === 'refused'
+            ? { headline: 'Please see the desk', sub: null }
+            : { headline: "You're in", sub: null },
+        greet: status === 'refused' ? null : 'Hi, Sam',
+        chips: [],
+        panel: null,
+        lines: [],
+        milestone: null,
+        test: false,
+      },
     };
     const timer = window.setTimeout(() => VisualSocket.instances.at(-1)?.publish(row), 40);
     return () => window.clearTimeout(timer);
   }, [installed, status]);
+  return <LiveScreen session={session} refetch={async () => undefined} />;
+}
+
+/** The wall monitor with a busy hall: `count` and `capacity` come from the URL. */
+function MonitorVisual({ count, capacity }: { count: number; capacity: number | null }) {
+  const [session] = useState(() => {
+    VisualSocket.instances = [];
+    window.WebSocket = VisualSocket as unknown as typeof WebSocket;
+    return sessionFor('monitor');
+  });
+  useEffect(() => {
+    const names = ['Sam Rivera', 'Member M-006', 'Ana Costa', 'Lee Park', 'Mo Haddad'];
+    const rows: ScanLiveRow[] = names.map((holder, i) => ({
+      id: `${ID.slice(0, -2)}${10 + i}`,
+      at: Date.now() - i * 70_000,
+      scannerId: ID,
+      scannerName: 'West entrance',
+      passId: ID,
+      holder,
+      photoUrl: null,
+      kind: i === 3 ? 'refused' : 'ok',
+      direction: i === 1 ? 'out' : 'in',
+      label: i === 3 ? 'Not accepted' : i === 1 ? 'Checked out' : 'Checked in',
+      presented: true,
+    }));
+    const places = [
+      { place: 'zone:main', name: 'Main hall', inNow: count, capacity, rev: 1 },
+      { place: 'zone:wall', name: 'Climbing wall', inNow: 12, capacity: 30, rev: 1 },
+    ];
+    const timer = window.setTimeout(
+      () => VisualSocket.instances.at(-1)?.snapshot(rows, places),
+      40,
+    );
+    return () => window.clearTimeout(timer);
+  }, [count, capacity]);
   return <LiveScreen session={session} refetch={async () => undefined} />;
 }
 
@@ -232,6 +287,13 @@ export function ScanVisualGallery() {
   const status = params.get('status') ?? 'accepted';
   const phase = params.get('phase') === 'rising' ? 'rising' : 'up';
   if (surface === 'closed') return <ClosedVisual who={params.get('who') ?? 'manager'} />;
+  if (surface === 'monitor')
+    return (
+      <MonitorVisual
+        count={Number(params.get('count') ?? 42)}
+        capacity={params.get('capacity') === 'none' ? null : Number(params.get('capacity') ?? 120)}
+      />
+    );
   if (surface === 'duo') return <DuoVisual status={status} />;
   if (surface === 'access')
     return (
