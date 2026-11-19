@@ -2,9 +2,12 @@ import { z } from 'zod';
 import { IdSchema } from '../../../shared/contracts/common.ts';
 import {
   HoldWalletEnrolmentSchema,
+  PlatformWalletCredentialCheckParamsSchema,
   PlatformWalletEnrolmentParamsSchema,
   RevokeWalletCredentialSchema,
   SavePlatformWalletCredentialSchema,
+  WalletCredentialCheckQueuedSchema,
+  WalletCredentialCheckResultSchema,
   WalletCredentialListSchema,
   WalletCredentialSchema,
   WalletEnrolmentHoldResultSchema,
@@ -14,6 +17,7 @@ import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf } from '../passes/http.ts';
+import { readCredentialCheck, requestCredentialCheck } from './account-check-request.ts';
 import {
   listPlatformCredentials,
   revokePlatformCredential,
@@ -81,6 +85,45 @@ register(
         c.req.valid('json'),
       ),
     ),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'post',
+    path: '/wallet-credentials/{id}/check',
+    summary: 'Check a platform wallet credential with its provider',
+    params: z.strictObject({ id: IdSchema }),
+    response: WalletCredentialCheckQueuedSchema,
+  },
+  async (c) =>
+    c.json(
+      await requestCredentialCheck(
+        serviceContext(c),
+        sessionOf(c),
+        { orgId: null },
+        c.req.valid('param').id,
+      ),
+    ),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'get',
+    path: '/wallet-credentials/{id}/checks/{checkId}',
+    summary: 'Read the result of a platform wallet credential check',
+    params: PlatformWalletCredentialCheckParamsSchema,
+    response: WalletCredentialCheckResultSchema,
+  },
+  async (c) => {
+    const { id, checkId } = c.req.valid('param');
+    return c.json(
+      await readCredentialCheck(serviceContext(c), sessionOf(c), { orgId: null }, id, checkId),
+    );
+  },
 );
 
 register(

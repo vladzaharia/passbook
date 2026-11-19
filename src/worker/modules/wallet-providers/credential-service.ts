@@ -17,6 +17,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
+import { enqueueVersionCheck } from './account-check.ts';
 import { snapshotWalletCredentialContext } from './account-credential-material.ts';
 import { credentialIdentityHash } from './account-credential-source.ts';
 import { validateGoogleAccount } from './google-credentials.ts';
@@ -155,6 +156,7 @@ async function save(
     cardMap: { ...previous, ...identity.cards },
     envelope,
   });
+  await enqueueVersionCheck(ctx, credentialId, versionId);
   const saved = await findCredential(ctx.env.DB, credentialId, scope.orgId);
   if (!saved) throw changed();
   return saved;

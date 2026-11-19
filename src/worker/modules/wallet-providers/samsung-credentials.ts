@@ -57,7 +57,7 @@ function pemDer(pem: string, label: 'PRIVATE KEY' | 'CERTIFICATE'): ArrayBuffer 
 
 async function certificate(
   pem: string,
-  now: number,
+  now: number | null,
 ): Promise<{
   publicKey: CryptoKey;
   notBefore: number;
@@ -73,8 +73,7 @@ async function certificate(
     if (
       !Number.isFinite(notBefore) ||
       !Number.isFinite(notAfter) ||
-      now < notBefore ||
-      now >= notAfter
+      (now !== null && (now < notBefore || now >= notAfter))
     )
       throw new SamsungCredentialError();
     const publicKey = await crypto.subtle.importKey(
@@ -182,6 +181,20 @@ export async function validateSamsungCredentials(
   } catch {
     throw new SamsungCredentialError();
   }
+}
+
+/** The window both certificates share, expired or not: the health check tells expiry from a bad certificate. */
+export async function samsungCredentialWindow(
+  input: SamsungPartnerCredentials,
+): Promise<{ validFrom: number; validUntil: number }> {
+  const [partner, samsung] = await Promise.all([
+    certificate(input.partnerCertificatePem, null),
+    certificate(input.samsungCertificatePem, null),
+  ]);
+  return {
+    validFrom: Math.max(partner.notBefore, samsung.notBefore),
+    validUntil: Math.min(partner.notAfter, samsung.notAfter),
+  };
 }
 
 export function assertSamsungCredentialsCurrent(

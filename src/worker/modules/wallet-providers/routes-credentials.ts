@@ -3,6 +3,9 @@ import { IdSchema } from '../../../shared/contracts/common.ts';
 import {
   RevokeWalletCredentialSchema,
   SaveWalletCredentialSchema,
+  WalletCredentialCheckParamsSchema,
+  WalletCredentialCheckQueuedSchema,
+  WalletCredentialCheckResultSchema,
   WalletCredentialListQuerySchema,
   WalletCredentialListSchema,
   WalletCredentialParamsSchema,
@@ -12,6 +15,7 @@ import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSession } from '../passes/http.ts';
+import { readCredentialCheck, requestCredentialCheck } from './account-check-request.ts';
 import {
   listOrgCredentials,
   revokeOrgCredential,
@@ -92,6 +96,40 @@ register(
     const { orgId, id } = c.req.valid('param');
     return c.json(
       await revokeOrgCredential(serviceContext(c), sessionOf(c), orgId, id, c.req.valid('json')),
+    );
+  },
+);
+
+register(
+  walletCredentialRoutes,
+  'wallet credentials',
+  {
+    method: 'post',
+    path: '/{orgId}/wallet-credentials/{id}/check',
+    summary: 'Check an organization wallet credential with its provider',
+    params: WalletCredentialParamsSchema,
+    response: WalletCredentialCheckQueuedSchema,
+  },
+  async (c) => {
+    const { orgId, id } = c.req.valid('param');
+    return c.json(await requestCredentialCheck(serviceContext(c), sessionOf(c), { orgId }, id));
+  },
+);
+
+register(
+  walletCredentialRoutes,
+  'wallet credentials',
+  {
+    method: 'get',
+    path: '/{orgId}/wallet-credentials/{id}/checks/{checkId}',
+    summary: 'Read the result of a wallet credential check',
+    params: WalletCredentialCheckParamsSchema,
+    response: WalletCredentialCheckResultSchema,
+  },
+  async (c) => {
+    const { orgId, id, checkId } = c.req.valid('param');
+    return c.json(
+      await readCredentialCheck(serviceContext(c), sessionOf(c), { orgId }, id, checkId),
     );
   },
 );
