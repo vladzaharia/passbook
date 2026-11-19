@@ -67,7 +67,10 @@ export function UploadIdentityDialog({
       const created = await upload.mutateAsync(body);
       close();
       markCreated(`identity:${created.id}`);
-      void navigate({ to: '/admin/identities/$identityId', params: { identityId: created.id } });
+      void navigate({
+        to: '/admin/platform/wallet-accounts/$identityId',
+        params: { identityId: created.id },
+      });
     } catch (cause) {
       if (isApiError(cause) && Object.keys(cause.fields).length > 0) setServer(cause.fields);
       setFormError(errorMessage(cause));

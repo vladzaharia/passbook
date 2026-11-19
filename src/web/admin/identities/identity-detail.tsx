@@ -43,7 +43,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
   const [rotating, setRotating] = useState(false);
   const [pushKeyOpen, setPushKeyOpen] = useState(false);
   const crumbs = [
-    { label: 'Apple identities', to: '/admin/identities' },
+    { label: 'Wallet accounts', to: '/admin/platform/wallet-accounts' },
     { label: query.data?.label ?? 'Identity' },
   ];
 
@@ -58,7 +58,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
   if (query.isError) {
     return detailError(query, {
       entity: 'identity',
-      to: '/admin/identities',
+      to: '/admin/platform/wallet-accounts',
       header: <PageHeader title="Identity" breadcrumbs={crumbs} />,
     });
   }
@@ -211,7 +211,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
         onConfirm={async () => {
           await remove.mutateAsync();
           toast.success('Identity deleted');
-          await navigate({ to: '/admin/identities', replace: true });
+          await navigate({ to: '/admin/platform/wallet-accounts', replace: true });
         }}
       />
     </>

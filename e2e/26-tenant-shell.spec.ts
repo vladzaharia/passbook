@@ -130,7 +130,7 @@ test.describe('platform administrator', () => {
       ['/admin/orgs', 'Organizations'],
       ['/admin/settings', 'Platform settings'],
       ['/admin/status', 'System status'],
-      ['/admin/identities', 'Apple identities'],
+      ['/admin/identities', 'Wallet accounts'],
       ['/admin/api-keys', 'API keys'],
     ] as const) {
       await page.goto(path);

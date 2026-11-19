@@ -1,8 +1,9 @@
+import { createMiddleware } from 'hono/factory';
 import {
   ApnsProbeResultSchema,
+  IdentityListQuerySchema,
   IdentityListSchema,
   IdentitySchema,
-  IdentityListQuerySchema,
   IdParamSchema,
   OkSchema,
   PushKeyInputSchema,
@@ -10,7 +11,6 @@ import {
   UpdateIdentitySchema,
   UploadIdentitySchema,
 } from '../../../shared/contracts/index.ts';
-import { createMiddleware } from 'hono/factory';
 import { requireAdmin } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';

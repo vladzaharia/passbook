@@ -399,21 +399,15 @@ describe('org detail', () => {
     ).toBe(false);
   });
 
-  it('mounts wallet accounts for the selected tenant workspace only', async () => {
+  it('leaves wallet accounts to their own page', async () => {
     const { fetchMock } = await renderApp('/admin/orgs/o1', {
       session: 'admin',
       handlers: handlers(),
     });
     await screen.findByRole('heading', { name: 'Acme Gym', level: 1 });
-    await waitFor(() => {
-      const accounts = fetchMock.mock.calls
-        .map(([url]) => new URL(String(url), 'http://localhost'))
-        .filter((url) => url.pathname === '/api/v1/wallet-providers/accounts');
-      expect(new Set(accounts.map((url) => url.searchParams.get('provider')))).toEqual(
-        new Set(['google', 'samsung']),
-      );
-      expect(accounts.every((url) => url.searchParams.get('orgId') === 'o1')).toBe(true);
-    });
+    expect(
+      fetchMock.mock.calls.some(([url]) => String(url).includes('/wallet-providers/accounts')),
+    ).toBe(false);
   });
 
   it('does not treat a member visiting the bare platform route as workspace access', async () => {

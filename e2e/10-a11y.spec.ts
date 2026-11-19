@@ -58,7 +58,7 @@ test.describe('admin', () => {
     ['audit', () => '/admin/audit', /Audit/],
     ['users', () => '/admin/users', /Users/],
     ['orgs', () => '/admin/orgs', /organization/i],
-    ['identities', () => '/admin/identities', /Apple identities/],
+    ['wallet accounts', () => '/admin/platform/wallet-accounts', /Wallet accounts/],
     ['api keys', () => '/admin/api-keys', /API keys/],
   ];
   for (const scheme of ['light', 'dark'] as const) {

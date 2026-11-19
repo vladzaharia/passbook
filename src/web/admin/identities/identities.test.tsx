@@ -121,7 +121,7 @@ describe('identities list', () => {
     expect(screen.getByText(/Old: certificate has expired/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open identity' })).toHaveAttribute(
       'href',
-      '/admin/identities/i3',
+      '/admin/platform/wallet-accounts/i3',
     );
     expect((await axe(container)).violations).toEqual([]);
   });
@@ -180,7 +180,7 @@ describe('identities list', () => {
     });
     expect(await screen.findByRole('link', { name: 'Open identity' })).toHaveAttribute(
       'href',
-      '/admin/identities/i1',
+      '/admin/platform/wallet-accounts/i1',
     );
     expect(screen.getByText(/certificate is not yet valid/)).toBeInTheDocument();
   });
@@ -204,7 +204,7 @@ describe('identities list', () => {
     await ui.click(await screen.findByRole('button', { name: 'Load more' }));
     expect(await screen.findByRole('link', { name: 'Open identity' })).toHaveAttribute(
       'href',
-      '/admin/identities/i2',
+      '/admin/platform/wallet-accounts/i2',
     );
   });
 
@@ -274,7 +274,7 @@ describe('identities list', () => {
 
 describe('identity detail', () => {
   it('shows APNs instructions when the binding is missing', async () => {
-    const { container } = await renderApp('/admin/identities/i1', {
+    const { container } = await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities/i1': () =>
@@ -306,7 +306,7 @@ describe('identity detail', () => {
   it('adds a push key from a .p8 file and fills the key ID from its name', async () => {
     let body: Record<string, unknown> | undefined;
     const none = identity({ apnsAvailable: false, apnsBinding: null, pushMethod: 'none' });
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities/i1/push-key': (_u, init) => {
@@ -345,7 +345,7 @@ describe('identity detail', () => {
         dependentCount: 2,
       },
     });
-    const { container } = await renderApp('/admin/identities/i1', {
+    const { container } = await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities/i1/push-key': (_u, init) => {
@@ -377,7 +377,7 @@ describe('identity detail', () => {
         dependentCount: 1,
       },
     });
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: { '/api/v1/identities/i1': () => json(bound) },
     });
@@ -390,7 +390,7 @@ describe('identity detail', () => {
 
   it('saves edits with a null binding when cleared', async () => {
     let body: unknown;
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities/i1': (_u, init) => {
@@ -421,7 +421,7 @@ describe('identity detail', () => {
 
   it('omits the binding when saving an env identity', async () => {
     let body: Record<string, unknown> | undefined;
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities/i1': (_u, init) => {
@@ -446,7 +446,7 @@ describe('identity detail', () => {
 
   it('deletes after confirmation and replaces the page in history', async () => {
     let deleted = false;
-    const { router } = await renderApp('/admin/identities/i1', {
+    const { router } = await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities': () => json({ items: [], nextCursor: null }),
@@ -509,7 +509,7 @@ describe('identity detail', () => {
 
   it('links a newly uploaded organization identity to the authorized workspace', async () => {
     markCreated('identity:i1');
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       memberships: [membershipFixture('o1')],
       handlers: {
@@ -525,7 +525,7 @@ describe('identity detail', () => {
 
   it('does not offer tenant identity configuration without organization management', async () => {
     markCreated('identity:i1');
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       memberships: [membershipFixture('o1', { roles: ['read_only'], capabilities: ['org:read'] })],
       handlers: {
@@ -541,7 +541,7 @@ describe('identity detail', () => {
 
   it('re-signs all passes of the identity after confirmation', async () => {
     let body: unknown;
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities/i1': () => json(identity({ passCount: 45 })),
@@ -569,7 +569,7 @@ describe('identity detail', () => {
     ],
   ])('checks APNs and shows the result inline', async (reply, line) => {
     let calls = 0;
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities/i1/apns-check': () => {
@@ -588,7 +588,7 @@ describe('identity detail', () => {
   });
 
   it('shows the error when the check fails', async () => {
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities/i1/apns-check': () =>
@@ -602,7 +602,7 @@ describe('identity detail', () => {
   });
 
   it('shows when the recorded certificate is not yet valid', async () => {
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities/i1': () => json(identity({ notBefore: Date.now() + DAY })),
@@ -613,7 +613,7 @@ describe('identity detail', () => {
   });
 
   it('shows unknown expiry without offering replacement for an environment identity', async () => {
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities/i1': () =>
@@ -628,7 +628,7 @@ describe('identity detail', () => {
     const certificate = '-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----';
     const privateKey = '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----';
     let attempts = 0;
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities/i1': () => json(identity({ notAfter: Date.now() - DAY })),
@@ -659,7 +659,7 @@ describe('identity detail', () => {
 
   it('rotates the certificate from PEM input', async () => {
     let body: unknown;
-    await renderApp('/admin/identities/i1', {
+    await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
         '/api/v1/identities/i1': () => json(identity()),
@@ -699,7 +699,7 @@ describe('identity detail', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Identity' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to Apple identities' })).toHaveAttribute(
       'href',
-      '/admin/identities',
+      '/admin/platform/wallet-accounts',
     );
   });
 });

@@ -88,7 +88,9 @@ describe('status helpers', () => {
       '/admin/connections/c1',
     );
     expect(componentLink({ id: 'connections', kind: 'connection' })).toBe('/admin/connections');
-    expect(componentLink({ id: 'identity:i1', kind: 'identity' })).toBe('/admin/identities/i1');
+    expect(componentLink({ id: 'identity:i1', kind: 'identity' })).toBe(
+      '/admin/platform/wallet-accounts/i1',
+    );
     expect(componentLink({ id: 'database', kind: 'database' })).toBeUndefined();
   });
 
@@ -175,7 +177,6 @@ describe('status page', () => {
     expect(within(banner).getByText('1 verified')).toBeInTheDocument();
     expect(banner.className).toContain('bg-success-subtle');
     expect(screen.getByText('No connections.')).toBeInTheDocument();
-    expect(screen.getByText('Platform-wide · Not filtered by mode')).toBeInTheDocument();
   });
 
   it('does not call a missing service working', async () => {

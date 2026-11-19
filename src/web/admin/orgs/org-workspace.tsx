@@ -23,13 +23,11 @@ import { ORG_FIELDS } from '../settings/fields.ts';
 import { useSettings } from '../settings/queries.ts';
 import { ReplyToStatus } from '../settings/reply-to-status.tsx';
 import { SettingsForm } from '../settings/settings-form.tsx';
-import { AccessCard } from './org-access.tsx';
 import { CountsCard, OrgChecklist, OverviewCard, SigningCard } from './org-aside.tsx';
 import { OrgForm } from './org-form.tsx';
 import { OrgStatus } from './orgs-page.tsx';
 import { PassEmailPreview } from './pass-email-preview.tsx';
 import { useOrgWorkspace } from './queries.ts';
-import { WalletAccountsPanel } from './wallet-accounts.tsx';
 
 const SUPPORT_FIELDS = ORG_FIELDS.filter((f) => f.key.startsWith('support.'));
 const EMAIL_FIELDS = ORG_FIELDS.filter((f) => f.key.startsWith('email.'));
@@ -98,9 +96,7 @@ export function OrgWorkspacePage({
   isAdmin: boolean;
 }) {
   const query = useOrgWorkspace(orgId);
-  const selectedOrgId = membership.orgId;
   const canManage = membership.capabilities.includes('org:manage');
-  const canManageMembers = membership.capabilities.includes('members:manage');
   const canPreviewTemplates = membership.capabilities.includes('templates:read');
   const canUseChecklist =
     canManage &&
@@ -207,7 +203,6 @@ export function OrgWorkspacePage({
             </CardBody>
           </Card>
         )}
-        <WalletAccountsPanel orgId={selectedOrgId} />
         {canUseChecklist ? <OrgChecklist org={org} /> : null}
         {canManage ? (
           <>
@@ -254,7 +249,6 @@ export function OrgWorkspacePage({
             <ReadOnlySettings orgId={org.id} />
           </>
         )}
-        {canManageMembers ? <AccessCard key={org.id} org={org} /> : null}
       </TwoPane>
     </SaveBarGroup>
   );

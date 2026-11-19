@@ -31,6 +31,15 @@ export function useIdentityPages() {
   );
 }
 
+/** An organization's own Apple identities; readable by a member with org:read. */
+export function useOrgIdentities(orgId: string) {
+  return useQuery({
+    queryKey: [...KEY, 'org', orgId],
+    queryFn: ({ signal }) =>
+      api.get('/api/v1/identities', IdentityListSchema, { query: { orgId, limit: 50 }, signal }),
+  });
+}
+
 /** Pickers (an org's signing identity): up to 200. */
 export function useIdentityOptions(enabled = true) {
   return useQuery({

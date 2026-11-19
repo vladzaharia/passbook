@@ -529,3 +529,19 @@ describe('path helpers', () => {
     expect(isPublicPath('/scan')).toBe(false);
   });
 });
+
+describe('organization Members and Wallet accounts', () => {
+  const member = (capabilities: OrgCapability[]) => membershipFixture('o1', { capabilities });
+  it('opens Members only with members:manage', () => {
+    expect(canAccessAdminPath('/admin/o/o1/members', false, member(['members:manage']))).toBe(true);
+    expect(canAccessAdminPath('/admin/o/o1/members', false, member(['org:read']))).toBe(false);
+  });
+  it('opens Wallet accounts only with integrations:read', () => {
+    expect(
+      canAccessAdminPath('/admin/o/o1/wallet-accounts', false, member(['integrations:read'])),
+    ).toBe(true);
+    expect(canAccessAdminPath('/admin/o/o1/wallet-accounts', false, member(['org:read']))).toBe(
+      false,
+    );
+  });
+});
