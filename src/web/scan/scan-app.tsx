@@ -133,7 +133,7 @@ function ScanBoot() {
     if (session.session.scanner?.deviceRole !== 'scan' && session.session.scanner !== null)
       return (
         <>
-          <LiveScreen session={session.session} refetch={session.refetch} />
+          <LiveScreen session={session.session} refetch={session.refetch} api={api} />
           {session.session.scanner?.kind === 'device' &&
           session.session.scanner.deviceRole === 'customer' ? (
             <Suspense fallback={null}>

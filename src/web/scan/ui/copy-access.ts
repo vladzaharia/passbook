@@ -21,6 +21,7 @@ export const ACCESS_COPY = {
     empty: '{place} is empty.',
     markedOut: '{name} marked as out',
     alreadyOut: '{name} is already out',
+    letInDone: '{name} let in',
     needsConnection: 'Needs a connection',
     asOf: 'As of {time}',
     signIn: "Sign in to see who's in",

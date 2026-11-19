@@ -8,12 +8,18 @@ import {
   TriangleAlert,
   Undo2,
 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
+import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { formatTime } from '../../lib/format.ts';
 import { Buddy } from '../../ui/art/index.ts';
+import '../buddy/beats.css';
+import { fill } from '../ui/copy.ts';
 import './monitor-board.css';
-import { countsOf, type Fill, heroOf, type Trend, trendOf } from './monitor-model.ts';
+import type { MonitorBeat } from './monitor-beat.ts';
+import { LetInButton } from './monitor-desk.tsx';
+import { countsOf, type Fill, heroOf, resolvedOf, type Trend, trendOf } from './monitor-model.ts';
 
 const ROW_ICON = {
   ok: LogIn,
@@ -44,12 +50,23 @@ export function MonitorBoard({
   places,
   now,
   timeZone,
+  beat,
+  inside,
+  onLetIn,
+  letInDone,
 }: {
   rows: ScanLiveRow[];
   places: ScanPlaceRev[];
   now: number;
   timeZone?: string;
+  beat?: MonitorBeat;
+  /** The staff inside list; with it the recent scans become the side column. */
+  inside?: ReactNode;
+  onLetIn?: (row: ScanLiveRow) => void;
+  /** Scans this monitor let in itself, before the feed says so. */
+  letInDone?: ReadonlyMap<string, string>;
 }) {
+  const resolved = resolvedOf(rows, letInDone);
   const counts = countsOf(places, rows);
   const hero = heroOf(counts);
   const trend = trendOf(rows, now);
@@ -92,43 +109,69 @@ export function MonitorBoard({
           </div>
         </div>
         <div className="mon-buddy" aria-hidden>
-          <Buddy scene={hero?.fill === 'full' ? 'sorry' : 'peek'} size="lg" mood="happy" />
+          {beat?.beat ? (
+            <Buddy
+              key={beat.key}
+              scene="scan"
+              size="lg"
+              mood={beat.beat === 'shake' ? 'sad' : 'happy'}
+              beat={beat.beat}
+              immediate
+            />
+          ) : (
+            <Buddy scene={hero?.fill === 'full' ? 'sorry' : 'peek'} size="lg" mood="happy" />
+          )}
         </div>
       </section>
-      <section aria-label="Recent scans" className="mon-recent">
-        <h2>Recent scans</h2>
-        {rows.length ? (
-          <ol className="mon-grid">
-            {rows.map((row) => {
-              const Icon =
-                row.kind === 'ok' && row.direction === 'out' ? LogOut : ROW_ICON[row.kind];
-              return (
-                <li key={row.id} data-kind={row.kind}>
-                  <span className="mon-avatar">
-                    {row.photoUrl ? (
-                      <img src={row.photoUrl} alt={row.holder ?? 'Member'} />
-                    ) : (
-                      <ScanLine aria-hidden />
-                    )}
-                  </span>
-                  <span className="mon-row-body">
-                    <span className="mon-row-name">{row.holder ?? row.label}</span>
-                    {row.holder ? <span className="mon-row-what">{row.label}</span> : null}
-                    <span className="mon-row-meta">
-                      {row.scannerName} · {formatTime(row.at, timeZone)}
+      <div className="mon-main" data-inside={inside ? '' : undefined}>
+        {inside}
+        <section aria-label="Recent scans" className="mon-recent">
+          <h2>Recent scans</h2>
+          {rows.length ? (
+            <ol className="mon-grid">
+              {rows.map((row) => {
+                const Icon =
+                  row.kind === 'ok' && row.direction === 'out' ? LogOut : ROW_ICON[row.kind];
+                return (
+                  <li key={row.id} data-kind={row.kind}>
+                    <span className="mon-avatar">
+                      {row.photoUrl ? (
+                        <img src={row.photoUrl} alt={row.holder ?? 'Member'} />
+                      ) : (
+                        <ScanLine aria-hidden />
+                      )}
                     </span>
-                  </span>
-                  <span className="mon-row-icon" aria-hidden>
-                    <Icon />
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-        ) : (
-          <p className="mon-empty">Ready for the first scan</p>
-        )}
-      </section>
+                    <span className="mon-row-body">
+                      <span className="mon-row-name">{row.holder ?? row.label}</span>
+                      {row.holder ? <span className="mon-row-what">{row.label}</span> : null}
+                      <span className="mon-row-meta">
+                        {row.scannerName} · {formatTime(row.at, timeZone)}
+                      </span>
+                      {row.scanId && resolved.has(row.scanId) ? (
+                        <span className="mon-row-resolved">
+                          {resolved.get(row.scanId)
+                            ? fill(SCAN_COPY.verdict.resolvedBy, {
+                                staff: resolved.get(row.scanId) ?? '',
+                              })
+                            : 'Resolved'}
+                        </span>
+                      ) : null}
+                    </span>
+                    {row.scanId && onLetIn && !resolved.has(row.scanId) ? (
+                      <LetInButton row={row} onLetIn={() => onLetIn(row)} />
+                    ) : null}
+                    <span className="mon-row-icon" aria-hidden>
+                      <Icon />
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <p className="mon-empty">Ready for the first scan</p>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

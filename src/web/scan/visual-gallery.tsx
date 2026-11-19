@@ -19,6 +19,7 @@ import { ResultCard } from './result/result-card.tsx';
 import { DoorDock } from './ui/door-dock.tsx';
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
+import { MONITOR_DESK_CASES, MonitorDeskVisual } from './visual-monitor-desk.tsx';
 import { TAG_SCENARIOS, TagVisual } from './visual-tags.tsx';
 import './visual-gallery.css';
 
@@ -281,6 +282,10 @@ export function ScanVisualGallery() {
   if (!selected) return null;
   const status = params.get('status') ?? 'accepted';
   const phase = params.get('phase') === 'rising' ? 'rising' : 'up';
+  if (surface === 'monitor' && params.has('desk'))
+    return (
+      <MonitorDeskVisual mode={MONITOR_DESK_CASES.find((c) => c === params.get('desk')) ?? 'off'} />
+    );
   if (surface === 'monitor')
     return (
       <MonitorVisual
