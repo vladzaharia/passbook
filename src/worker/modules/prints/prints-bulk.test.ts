@@ -3,6 +3,7 @@ import { makeOrg } from '../../../../test/helpers/index.ts';
 import { PRINT_BULK_MAX } from '../../../shared/contracts/prints.ts';
 import { all } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { voidPass } from '../passes/service.ts';
 import { handlePrintsBulk } from './jobs.ts';
 import { dropPrintPdfs } from './pdf-drop.ts';
 import { bulkKey } from './pdf-store.ts';
@@ -176,6 +177,13 @@ describe('bulk PDF access and deletion', () => {
     expect((await api('POST', `/passes/${pass.id}/prints/${print?.id}/void`)).status).toBe(200);
     expect((await api('GET', path)).status).toBe(404);
     expect(await kit.env.BUCKET.head(bulkKey(kit.org.id, started.jobId, 'pdf'))).toBeNull();
+  });
+
+  it('is gone once the pass is voided', async () => {
+    const { kit, api, pass, path } = await ready();
+    expect((await api('GET', path)).status).toBe(200);
+    await voidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
+    expect((await api('GET', path)).status).toBe(404);
   });
 
   it('is gone once the pass is purged', async () => {

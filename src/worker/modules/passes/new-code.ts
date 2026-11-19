@@ -1,6 +1,7 @@
 import { bump, read } from '../../platform/counters.ts';
 import { ConflictError, RateLimitedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { dropPrintPdfs } from '../prints/pdf-drop.ts';
 import type { TenantPassWrite } from './http.ts';
 import { getPassForWrite } from './pass-access.ts';
 import { publishPass } from './publish.ts';
@@ -46,4 +47,6 @@ export async function newPassCode(
       ),
   });
   await bump(ctx.env.DB, key, window);
+  // The rotation ended the pass's prints; their PDFs go with them.
+  await dropPrintPdfs(ctx, pass);
 }

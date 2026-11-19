@@ -89,6 +89,15 @@ describe('staff PDF', () => {
     expect((await staffPdf(pass.id)).status).toBe(404);
   });
 
+  it('deletes the PDF when the pass is voided', async () => {
+    const { kit, printPass, mint, staffPdf } = await pdfKit();
+    const pass = await printPass();
+    const print = await mint(pass.id);
+    await staffPdf(pass.id);
+    await voidPass(jobCtxOf(kit), { type: 'user', id: 'admin-1' }, pass.id, null);
+    expect(await kit.env.BUCKET.head(pdfKey(kit.org.id, pass.id, print.id))).toBeNull();
+  });
+
   it('deletes the replaced print PDF on reprint and keeps the new one', async () => {
     const { kit, printPass, mint, staffPdf } = await pdfKit();
     const pass = await printPass();
