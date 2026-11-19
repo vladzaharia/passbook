@@ -126,7 +126,7 @@ register(
       return new Response(html, { headers: PAGE_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404)
-        return new Response(renderNotFoundPage(nonce, theme, 'bundle'), {
+        return new Response(renderNotFoundPage(nonce, theme, { what: 'bundle' }), {
           status: 404,
           headers: PAGE_HEADERS,
         });
@@ -223,7 +223,7 @@ register(
       return new Response(html, { headers: PRESENTATION_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404) {
-        return new Response(renderNotFoundPage(c.var.nonce, theme), {
+        return new Response(renderNotFoundPage(c.var.nonce, theme, { replay: false }), {
           status: 404,
           headers: PRESENTATION_HEADERS,
         });

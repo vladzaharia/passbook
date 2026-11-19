@@ -220,7 +220,7 @@ describe('/p renders the portal HolderPassView', () => {
 describe('dead links', () => {
   it('names the pass or the bundle and never claims an expiry', () => {
     const pass = renderNotFoundPage('n');
-    const bundle = renderNotFoundPage('n', undefined, 'bundle');
+    const bundle = renderNotFoundPage('n', undefined, { what: 'bundle' });
     expect(pass).toContain('<h1>This pass link does not work</h1>');
     expect(bundle).toContain('<h1>This bundle link does not work</h1>');
     for (const html of [pass, bundle])

@@ -181,7 +181,7 @@ export function renderPassPage(props: PassPageProps): string {
 export function renderNotFoundPage(
   nonce: string,
   theme?: PageTheme,
-  what: 'pass' | 'bundle' = 'pass',
+  { what = 'pass', replay = true }: { what?: 'pass' | 'bundle'; replay?: boolean } = {},
 ): string {
   return hostedPage({
     nonce,
@@ -190,5 +190,6 @@ export function renderNotFoundPage(
     art: 'expired',
     lede: escapeHtml(HOLDER_COPY.deadLinkLine),
     body: actionHtml(GO_TO_MY_PASSES),
+    replay,
   });
 }
