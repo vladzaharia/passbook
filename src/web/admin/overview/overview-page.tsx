@@ -93,7 +93,7 @@ function GovernanceSummary({
       <Card>
         <CardBody className="flex h-full flex-col items-start gap-2">
           <h2 className="text-sm font-semibold text-fg-strong">
-            Organizations · {filtered ? 'filtered · ' : ''}all modes
+            Organizations{filtered ? ' · filtered' : ''}
           </h2>
           <p className="text-2xl font-semibold text-fg-strong tabular-nums">
             {organizations === undefined ? (
@@ -186,8 +186,9 @@ export function OverviewPage({
     <>
       <PageHeader
         title="Overview"
-        breadcrumbs={[{ label: 'Platform', to: '/admin' }, { label: 'Overview' }]}
-        meta={`Metrics: ${organizationName ?? 'All organizations'} · ${mode === 'test' ? 'Test' : 'Live'} mode`}
+        breadcrumbs={[{ label: 'Platform', to: '/admin/platform' }, { label: 'Overview' }]}
+        // Platform pages ignore mode (lib/mode.ts): no mode words here.
+        meta={`Metrics: ${organizationName ?? 'All organizations'}`}
         actions={firstRun ? undefined : picker}
       />
       <div className="flex flex-col gap-6">

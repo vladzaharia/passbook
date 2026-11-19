@@ -1,11 +1,11 @@
 import * as PopoverPrimitive from '@radix-ui/react-popover';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { Command } from 'cmdk';
 import { Building2, Check, ChevronsUpDown, Globe, RefreshCw } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
-import { platformPath } from '../../lib/scope.ts';
+import { orgPath, platformPath } from '../../lib/scope.ts';
 import { useSession } from '../../lib/session.ts';
 import { Button } from '../button.tsx';
 import { EntityAvatar } from '../entity.tsx';
@@ -94,7 +94,21 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
       Could not load organization access.
     </span>
   ) : null;
-  // One reachable scope: a label, not a menu.
+  // One reachable scope: a label, not a menu; from outside it, a link into it.
+  const only = !isAdmin && memberships.length === 1 ? memberships[0] : undefined;
+  if (only && !name) {
+    return (
+      <Link
+        to={orgPath(only.orgId)}
+        onClick={onNavigate}
+        className="flex h-9 min-w-0 items-center gap-2 rounded-md text-sm font-medium text-fg-strong hover:underline"
+      >
+        {failed}
+        <EntityAvatar kind="org" id={only.orgId} name={only.orgName} />
+        <span className="truncate">{only.orgName}</span>
+      </Link>
+    );
+  }
   if ((isAdmin ? 1 : 0) + memberships.length <= 1 && name) {
     return (
       <p className="flex h-9 min-w-0 items-center gap-2 text-sm font-medium text-fg-strong">

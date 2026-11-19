@@ -31,7 +31,7 @@ export function RecentActivity({ orgId }: { orgId: string | undefined }) {
       log={log}
       orgLabel={orgName}
       auditSearch={{ filterOrgId: orgId }}
-      note={`Administrative activity · ${orgId ? 'selected organization · ' : ''}not filtered by mode`}
+      note={`Administrative activity${orgId ? ' · selected organization' : ''}`}
     />
   );
 }

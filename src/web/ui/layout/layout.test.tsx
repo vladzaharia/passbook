@@ -113,6 +113,17 @@ describe('route guards in the app', () => {
     await waitFor(() => expect(screen.queryByRole('switch', { name: 'Test mode' })).toBeNull());
   });
 
+  it('labels a single organization as a link into it, not a menu, from a platform page', async () => {
+    await renderApp('/admin/platform/status', {
+      session: 'user',
+      memberships: [membershipFixture('o1', { orgName: 'Henrys' })],
+    });
+    expect(await screen.findByText('Platform pages need a platform admin.')).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /^Scope:/ })).toBeNull();
+    const links = screen.getAllByRole('link', { name: 'Henrys' });
+    expect(links[0]).toHaveAttribute('href', '/admin/o/o1');
+  });
+
   it('never shows Platform to a member without platform rights', async () => {
     const user = userEvent.setup();
     await renderApp('/admin/platform/users', {

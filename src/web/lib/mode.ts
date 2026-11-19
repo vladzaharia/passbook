@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { MODE_HEADER, type Mode } from '@/shared/contracts/common.ts';
+import { currentPath } from './current-path.ts';
+import { parseAdminPath } from './scope.ts';
 
 /** Per browser: Test mode stays on across reloads and tabs until it is turned off. */
 export const MODE_KEY = 'passbook-mode';
@@ -16,7 +18,10 @@ function stored(): Mode {
 let current: Mode = stored();
 const listeners = new Set<(mode: Mode) => void>();
 
-export const getMode = (): Mode => current;
+/** Platform pages ignore mode: they read and show Live whatever the browser's choice. */
+const onPlatform = () => parseAdminPath(currentPath() ?? '').scope?.kind === 'platform';
+
+export const getMode = (): Mode => (onPlatform() ? 'live' : current);
 
 function apply(next: Mode): void {
   if (next === current) return;
@@ -53,7 +58,7 @@ export function useMode(): Mode {
 
 /** The header every admin API request carries while Test mode is on. */
 export function modeHeaders(): Record<string, string> {
-  return current === 'test' ? { [MODE_HEADER]: 'test' } : {};
+  return getMode() === 'test' ? { [MODE_HEADER]: 'test' } : {};
 }
 
 /** Test seam: back to live without touching storage listeners. */

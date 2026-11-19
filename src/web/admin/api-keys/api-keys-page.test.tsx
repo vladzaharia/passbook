@@ -321,14 +321,16 @@ describe('api keys page', () => {
     try {
       let body: Record<string, unknown> = {};
       let sentMode: string | null = null;
-      await renderApp('/admin/api-keys', {
+      // Organization keys follow the console's mode; platform pages ignore mode.
+      await renderApp('/admin/o/o1/api-keys', {
         session: 'admin',
+        memberships: [membershipFixture('o1', { orgName: 'North' })],
         handlers: {
           '/api/v1/api-keys': (_u, init) => {
             if (init?.method === 'POST') {
               body = JSON.parse(String(init.body));
               sentMode = new Headers(init.headers).get('x-passbook-mode');
-              return json({ ...key({ mode: 'test' }), secret: 'wlt_abc123_S' }, 201);
+              return json({ ...key({ mode: 'test', orgId: 'o1' }), secret: 'wlt_abc123_S' }, 201);
             }
             return page([]);
           },
@@ -346,15 +348,48 @@ describe('api keys page', () => {
       await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
       await user.click(within(dialog).getByRole('button', { name: 'Create' }));
       await user.click(
-        within(
-          await screen.findByRole('alertdialog', { name: 'Create a platform-wide key?' }),
-        ).getByRole('button', { name: 'Create key' }),
+        within(await screen.findByRole('alertdialog', { name: 'Review service key' })).getByRole(
+          'button',
+          { name: 'Create key' },
+        ),
       );
       await waitFor(() => expect(body.mode).toBe('test'));
       expect(sentMode).toBe('test');
     } finally {
       resetModeForTests();
       vi.unstubAllGlobals();
+    }
+  });
+
+  it('creates platform keys in Live mode even while the browser is in Test mode', async () => {
+    setMode('test');
+    try {
+      let sentMode: string | null = 'unset';
+      await renderApp('/admin/platform/api-keys', {
+        session: 'admin',
+        handlers: {
+          '/api/v1/api-keys': (_u, init) => {
+            if (init?.method !== 'POST') return page([]);
+            sentMode = new Headers(init.headers).get('x-passbook-mode');
+            return json({ ...key(), secret: 'wlt_abc123_S' }, 201);
+          },
+        },
+      });
+      const user = userEvent.setup();
+      await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
+      const dialog = await screen.findByRole('dialog');
+      await user.type(within(dialog).getByLabelText(/Name/), 'P');
+      await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
+      await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+      await user.click(
+        within(
+          await screen.findByRole('alertdialog', { name: 'Create a platform-wide key?' }),
+        ).getByRole('button', { name: 'Create key' }),
+      );
+      await waitFor(() => expect(sentMode).not.toBe('unset'));
+      expect(sentMode).not.toBe('test');
+    } finally {
+      resetModeForTests();
     }
   });
 

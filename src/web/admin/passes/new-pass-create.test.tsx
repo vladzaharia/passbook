@@ -68,7 +68,7 @@ async function openReview(options: {
     const choice = options.selection ? options.selection(url) : eligibleTemplate();
     return json({ items: choice ? [choice] : [], nextCursor: null });
   };
-  const app = await renderApp('/admin/passes/new', {
+  const app = await renderApp(`/admin/o/${ORG.id}/passes/new`, {
     session: 'admin',
     memberships: options.memberships ?? [henry],
     handlers: {

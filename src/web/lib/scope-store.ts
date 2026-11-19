@@ -1,3 +1,4 @@
+import { useMemo, useSyncExternalStore } from 'react';
 import { type AdminScope, parseScopeKey, scopeKey } from './scope.ts';
 
 // The last scope opened. It answers /admin and legacy links that name no scope; it never
@@ -22,6 +23,8 @@ export function readRemembered(): AdminScope | undefined {
   );
 }
 
+const listeners = new Set<() => void>();
+
 export function remember(scope: AdminScope | undefined): void {
   try {
     if (scope) localStorage.setItem(KEY, scopeKey(scope));
@@ -30,6 +33,28 @@ export function remember(scope: AdminScope | undefined): void {
   } catch {
     // See read().
   }
+  for (const listener of listeners) listener();
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  // Another tab opening a scope changes what this tab remembers too.
+  window.addEventListener('storage', listener);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener('storage', listener);
+  };
+}
+
+/** The remembered scope, kept current when this or another tab opens one. */
+export function useRememberedScope(): AdminScope | undefined {
+  const raw = useSyncExternalStore(
+    subscribe,
+    () => `${read(KEY) ?? ''}|${read(LEGACY_KEY) ?? ''}`,
+    () => '|',
+  );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: raw is the storage snapshot.
+  return useMemo(() => readRemembered(), [raw]);
 }
 
 // This tab's open scope, for legacy in-app links: storage is shared by every tab.

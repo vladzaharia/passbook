@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Route, test } from '@playwright/test';
 import type { OrgMembership } from '../src/shared/contracts/org-membership.ts';
 import type { SessionResponse } from '../src/shared/contracts/session.ts';
 import { apiAs, createPass, requireActiveTemplateRelease, uid } from './helpers/api.ts';
@@ -240,14 +240,20 @@ test.describe('platform administrator', () => {
         page.getByRole('heading', { name: 'You do not have access', level: 1 }),
       ).toBeVisible();
       expect(requests).not.toContain('/api/v1/passes');
-      // A remembered organization the principal left is never reopened.
+      // A remembered organization the principal left is never reopened. With no other
+      // organization (isolated from the shared database's grants) the chooser has none to offer.
+      const isolate = (route: Route) => route.fulfill({ json: { items: [] } });
+      await page.route('**/api/v1/orgs/memberships/me', isolate);
       await page.evaluate(({ key, id }) => localStorage.setItem(key, `org:${id}`), {
         key: SCOPE,
         id: org.id,
       });
+      requests.length = 0;
       await page.goto('/admin/passes');
-      await expect.poll(() => new URL(page.url()).pathname).not.toBe('/admin/passes');
-      expect(new URL(page.url()).pathname).not.toContain(encodeURIComponent(org.id));
+      await expect(page.getByRole('heading', { name: 'No organizations', level: 1 })).toBeVisible();
+      expect(new URL(page.url()).pathname).toBe('/admin');
+      expect(requests).not.toContain('/api/v1/passes');
+      await page.unroute('**/api/v1/orgs/memberships/me', isolate);
 
       await page.goto(
         `/admin/orgs/${encodeURIComponent(org.id)}?view=workspace&orgId=${encodeURIComponent(org.id)}`,

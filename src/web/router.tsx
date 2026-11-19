@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { createRouter, type RouterHistory } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
-import { trackCurrentPath } from './lib/legacy-admin.ts';
+import { trackCurrentPath } from './lib/current-path.ts';
 import { viewTransitionOption } from './lib/motion.ts';
 import { guardOfflineChunks } from './lib/offline-routes.ts';
 import { parseSearch, stringifySearch } from './lib/search-codec.ts';

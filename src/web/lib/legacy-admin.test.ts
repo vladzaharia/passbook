@@ -120,8 +120,25 @@ describe('legacy admin URLs', () => {
     expect(go('/admin', {}, two)).toEqual({ to: '/admin', search: {} });
   });
 
+  it.each([
+    '/admin/passes/new',
+    '/admin/passes/import',
+    '/admin/templates/new',
+    '/admin/templates/upload',
+    '/admin/connections/new',
+    '/admin/connections/webhooks/new',
+    '/admin/messages/new',
+  ])('asks which organization a creation page %s is for', (path) => {
+    expect(legacyAdminTarget(path, {}, two)).toEqual({
+      to: '/admin',
+      search: { next: path.slice('/admin'.length) },
+    });
+  });
+
   it('opens a detail in any organization; the page then moves to its owner', () => {
     expect(go('/admin/passes/p1', {}, two).to).toBe('/admin/o/o1/passes/p1');
+    expect(go('/admin/passes/import/i1', {}, two)).toMatchObject({ findOwner: true });
+    expect(go('/admin/templates/t1/design', {}, two)).toMatchObject({ findOwner: true });
   });
 
   it('lets a platform admin return to the scope they had open', () => {

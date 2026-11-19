@@ -183,7 +183,7 @@ describe('orgs list', () => {
     expect(count.parentElement).toHaveTextContent('100,000+');
   });
 
-  it('labels the mode used for pass counts without narrowing the directory', async () => {
+  it('reads the directory in Live mode whatever the browser chose, without narrowing it', async () => {
     setMode('test');
     try {
       const { fetchMock } = await renderApp('/admin/orgs?orgId=o2', {
@@ -195,7 +195,8 @@ describe('orgs list', () => {
         String(url).includes('/api/v1/orgs?limit=50'),
       );
       expect(String(listRequest?.[0])).not.toContain('orgId=');
-      expect(new Headers(listRequest?.[1]?.headers).get('x-passbook-mode')).toBe('test');
+      // Platform pages ignore mode.
+      expect(new Headers(listRequest?.[1]?.headers).get('x-passbook-mode')).toBeNull();
     } finally {
       resetModeForTests();
     }

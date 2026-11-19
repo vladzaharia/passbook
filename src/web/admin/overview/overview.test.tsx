@@ -2,6 +2,7 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import { MODE_HEADER } from '@/shared/contracts/common.ts';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import {
   json,
@@ -95,8 +96,8 @@ describe('overview page', () => {
       'href',
       '/admin/identities',
     );
-    expect(screen.getByText('Metrics: All organizations · Live mode')).toBeInTheDocument();
-    expect(screen.getByText('Administrative activity · not filtered by mode')).toBeInTheDocument();
+    expect(screen.getByText('Metrics: All organizations')).toBeInTheDocument();
+    expect(screen.getByText('Administrative activity')).toBeInTheDocument();
     expect(await screen.findAllByText('Ada · Platform')).toHaveLength(2);
     expect(within(totals).getByText('1,200')).toBeInTheDocument();
     expect(within(totals).getByRole('link', { name: /^Passes\s+1,200$/ })).toHaveAttribute(
@@ -291,7 +292,7 @@ describe('overview page', () => {
         },
       },
     });
-    expect(await screen.findByText('Metrics: All organizations · Live mode')).toBeInTheDocument();
+    expect(await screen.findByText('Metrics: All organizations')).toBeInTheDocument();
     expect(await screen.findByRole('list', { name: 'Totals' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: /Pass voided/ })).toBeInTheDocument();
     const activityHeader = screen.getByRole('heading', { name: 'Recent activity' }).parentElement!;
@@ -368,10 +369,10 @@ describe('overview page', () => {
         },
       },
     });
-    expect(await screen.findByText('Metrics: South · Live mode')).toBeInTheDocument();
+    expect(await screen.findByText('Metrics: South')).toBeInTheDocument();
     const directories = await screen.findByRole('region', { name: 'Platform directories' });
     expect(
-      within(directories).getByRole('heading', { name: 'Organizations · filtered · all modes' }),
+      within(directories).getByRole('heading', { name: 'Organizations · filtered' }),
     ).toBeInTheDocument();
     expect(await within(directories).findByText('1')).toBeInTheDocument();
     expect(
@@ -417,7 +418,7 @@ describe('overview page', () => {
       },
     });
     expect(
-      await screen.findByText('Metrics: Numeric organization · Live mode'),
+      await screen.findByText('Metrics: Numeric organization'),
     ).toBeInTheDocument();
     await screen.findByRole('list', { name: 'Totals' });
     expect(requests[0]?.searchParams.get('orgId')).toBe(id);
@@ -527,7 +528,7 @@ describe('overview page', () => {
         ),
       ).toBe(true),
     );
-    expect(screen.getByText('Metrics: All organizations · Live mode')).toBeInTheDocument();
+    expect(screen.getByText('Metrics: All organizations')).toBeInTheDocument();
   });
 });
 
@@ -548,33 +549,31 @@ describe('get started', () => {
       totals: { ...overview().totals, passes: 0, activePasses: 0, holders: 0, pushFailures: 0 },
     });
 
-  it('keeps Test metrics visible when only the Live setup checklist is empty', async () => {
+  it('ignores the browser’s Test mode: platform requests and words are Live', async () => {
     setMode('test');
+    const modes: (string | null)[] = [];
     await renderApp('/admin', {
       session: 'admin',
       handlers: {
         ...ok,
-        '/api/v1/metrics/platform/overview': () =>
-          json(
+        '/api/v1/metrics/platform/overview': (_url, init) => {
+          modes.push(new Headers(init?.headers).get(MODE_HEADER));
+          return json(
             overview({
               setup: { ...empty, orgs: 1, assignedTemplates: 1 },
-              totals: {
-                ...overview().totals,
-                passes: 42,
-                activePasses: 40,
-                voidedPasses: 2,
-                holders: 30,
-              },
+              totals: { ...overview().totals, passes: 42, activePasses: 40, voidedPasses: 2 },
             }),
-          ),
+          );
+        },
       },
     });
     const totals = await screen.findByRole('list', { name: 'Totals' });
     expect(within(totals).getByText('42')).toBeInTheDocument();
-    expect(screen.getByText('Metrics: All organizations · Test mode')).toBeInTheDocument();
-    expect(
-      screen.getByText('Platform setup · Live passes and emails across all organizations'),
-    ).toBeInTheDocument();
+    expect(modes.length).toBeGreaterThan(0);
+    expect(modes.every((mode) => mode === null)).toBe(true);
+    expect(screen.getByText('Metrics: All organizations')).toBeInTheDocument();
+    expect(screen.queryByText(/Test mode/)).toBeNull();
+    expect(screen.queryByRole('switch', { name: 'Test mode' })).toBeNull();
   });
 
   it('replaces the charts with four steps that check themselves', async () => {

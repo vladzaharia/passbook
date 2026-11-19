@@ -3,6 +3,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { notFound, redirect } from '@tanstack/react-router';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
+import { currentPath } from './current-path.ts';
 import { canAccessAdminPath } from './guards.ts';
 import {
   type AdminScope,
@@ -17,6 +18,8 @@ import { isAdmin, membershipsQuery, sessionQuery } from './session.ts';
 
 const TENANT =
   /^\/admin\/(passes|templates|blueprints|connections|messages|scanning|test-inbox)(\/|$)/;
+const NOT_A_RESOURCE =
+  /^\/(passes\/(new|import)|templates\/(new|upload)|connections\/(new|webhooks\/new)|messages\/new)$/;
 const PLATFORM_ONLY = /^\/admin\/(orgs|users|status)(\/|$)/;
 
 export interface LegacyContext {
@@ -44,8 +47,9 @@ function plan(path: string, search: Record<string, unknown>): Plan | undefined {
   const tenant = TENANT.exec(path);
   if (tenant) {
     const rest = path.slice('/admin'.length);
-    // A detail page finds its owner and moves there itself (useResourceOrg).
-    const detail = rest.split('/').length > 2;
+    // A detail page names a resource and moves to its owner itself (useResourceOrg). Lists,
+    // creation and import pages name none: with several organizations, the user picks one.
+    const detail = rest.split('/').length > 2 && !NOT_A_RESOURCE.test(rest);
     return { kind: 'org', rest, detail };
   }
   const org = /^\/admin\/orgs\/([^/]+)$/.exec(path);
@@ -175,13 +179,6 @@ export async function redirectLegacy({
 
 /** Legacy routes accept any search: links still pass their old parameters, which carry over. */
 export const legacySearch = (raw: Record<string, unknown>): Record<string, unknown> => raw;
-
-let currentPath: () => string | undefined = () => undefined;
-
-/** router.tsx hands over the router's location, for links built by legacy routes. */
-export function trackCurrentPath(read: () => string): void {
-  currentPath = read;
-}
 
 /**
  * Links to an old URL from inside an organization carry it as ?orgId=, as the console did

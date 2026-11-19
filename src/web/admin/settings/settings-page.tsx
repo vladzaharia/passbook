@@ -1,6 +1,5 @@
 import {
   Badge,
-  Callout,
   Card,
   CardBody,
   CardHeader,
@@ -58,12 +57,8 @@ export function SettingsPage() {
       <PageHeader
         title="Platform settings"
         breadcrumbs={[{ label: 'Platform' }, { label: 'Settings' }]}
-        meta="Platform policy · All organizations · Live and Test"
       />
       <div className="flex flex-col gap-6">
-        <Callout tone="info" title="Shared across Live and Test">
-          Test mode does not isolate global settings.
-        </Callout>
         <SettingsForm scope="platform" fields={PLATFORM_FIELDS} guard={guardMagicLink} />
         <OidcSection />
       </div>
