@@ -22,6 +22,8 @@ export type SessionDraft = ScannerDraft & {
   /** Open only at set hours, in the time zone above. */
   hoursOn: boolean;
   hours?: WeeklyHours;
+  /** Events a mixed session admits beside its templates; this editor does not show them, so it sends them back. */
+  keptEventIds?: string[];
 };
 
 export const emptySessionDraft = (): SessionDraft => ({
@@ -48,6 +50,7 @@ export function sessionDraft(s: ScanningSession): SessionDraft {
             : 'templates',
     eventId: s.accepts && 'eventId' in s.accepts ? s.accepts.eventId : '',
     templateIds: s.accepts && 'templateIds' in s.accepts ? s.accepts.templateIds : [],
+    ...(s.accepts && 'eventIds' in s.accepts ? { keptEventIds: s.accepts.eventIds } : {}),
     flow: s.settings.flow,
     reader: s.settings.reader === 'barcode' ? 'barcode' : 'none',
     lookup: s.settings.lookup,
@@ -73,7 +76,10 @@ export const sessionBody = (d: SessionDraft) => ({
   orgId: d.orgId,
   timeZone: d.timeZone,
   hours: hoursBody(d.hoursOn, d.hours),
-  accepts: acceptsOf(d),
+  accepts:
+    d.accepts === 'templates' && d.keptEventIds?.length
+      ? { templateIds: d.templateIds, eventIds: d.keptEventIds }
+      : acceptsOf(d),
   settings: {
     ...settingsOf(d),
     ...(d.deskActions || d.deskActionsSaved ? { deskActions: d.deskActions } : {}),
@@ -100,15 +106,17 @@ export function sessionReady(d: SessionDraft) {
     !hoursProblem(d.hoursOn, d.hours) &&
     !!d.name.trim() &&
     !!d.orgId &&
-    (d.accepts === 'all' || (d.accepts === 'event' ? !!d.eventId : !!d.templateIds.length))
+    (d.accepts === 'all' ||
+      (d.accepts === 'event' ? !!d.eventId : !!(d.templateIds.length || d.keptEventIds?.length)))
   );
 }
 export function sessionAccepts(s: ScanningSession, eventName?: string) {
   const n = s.accepts && 'templateIds' in s.accepts ? s.accepts.templateIds.length : 0;
+  const events = s.accepts && 'eventIds' in s.accepts ? s.accepts.eventIds.length : 0;
   return s.accepts && 'eventId' in s.accepts
     ? (eventName ?? 'Event admission')
     : s.accepts
-      ? `${n} pass ${n === 1 ? 'template' : 'templates'}`
+      ? `${n} pass ${n === 1 ? 'template' : 'templates'}${events ? `, ${events} ${events === 1 ? 'event' : 'events'}` : ''}`
       : s.settings.acceptAllTemplates
         ? 'All passes'
         : 'No passes assigned';

@@ -46,6 +46,30 @@ export const sessionAcceptsTemplateCheck = (sessionId: string, templateId: strin
     [sessionId, templateId],
   );
 
+/** A mixed session admits the template through a template entry or one of its live events. */
+export const sessionAdmitsTemplateCheck = (sessionId: string, templateId: string): Check =>
+  tenantCheck(
+    'config',
+    `EXISTS (SELECT 1 FROM scanning_sessions ss WHERE ss.id = ? AND ss.org_id = {org}
+      AND ss.mode = {mode} AND (
+      EXISTS (SELECT 1 FROM json_each(ss.accepts, '$.templateIds') j WHERE j.value = ?)
+      OR EXISTS (SELECT 1 FROM json_each(ss.accepts, '$.eventIds') je
+        JOIN scan_events e ON e.id = je.value AND e.org_id = {org} AND e.mode = {mode}
+          AND e.archived_at IS NULL
+        JOIN scan_event_templates et ON et.event_id = e.id AND et.template_id = ?)))`,
+    [sessionId, templateId, templateId],
+  );
+
+/** A mixed scope's events are all live at the epochs the guard captured; one bind for all of them. */
+export const eventsAtEpochsCheck = (epochs: readonly [string, number][]): Check =>
+  tenantCheck(
+    'config',
+    `NOT EXISTS (SELECT 1 FROM json_each(?) x WHERE NOT EXISTS (SELECT 1 FROM scan_events e
+      WHERE e.id = json_extract(x.value, '$[0]') AND e.config_epoch = json_extract(x.value, '$[1]')
+        AND e.org_id = {org} AND e.mode = {mode} AND e.archived_at IS NULL))`,
+    [JSON.stringify(epochs)],
+  );
+
 export const scannerTemplateCheck = (scannerId: string, templateId: string): Check =>
   rawCheck(
     'config',

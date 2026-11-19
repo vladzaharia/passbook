@@ -3,7 +3,9 @@ import { IdSchema } from '../../../shared/contracts/common.ts';
 import {
   HoldWalletEnrolmentSchema,
   PlatformWalletCredentialCheckParamsSchema,
+  PlatformWalletEnrolmentListSchema,
   PlatformWalletEnrolmentParamsSchema,
+  PlatformWalletEnrolmentQuerySchema,
   ResolveWalletMigrationSchema,
   RevokeWalletCredentialSchema,
   SavePlatformWalletCredentialSchema,
@@ -31,6 +33,7 @@ import {
   savePlatformCredential,
 } from './credential-service.ts';
 import { holdEnrolment, releaseEnrolment } from './enrolment-hold.ts';
+import { listPlatformEnrolments } from './enrolment-platform-read.ts';
 
 /** Mount at /api/v1/platform. Platform admins only; the pages show Live and Test together, so the mode is named. */
 export const walletPlatformRoutes = createRouter();
@@ -169,6 +172,28 @@ register(
     c.json({
       status: await releaseEnrolment(serviceContext(c), sessionOf(c), c.req.valid('param')),
     }),
+);
+
+register(
+  walletPlatformRoutes,
+  'wallet platform',
+  {
+    method: 'get',
+    path: '/wallet-enrolments',
+    summary: 'List every organization enrolment of a wallet provider',
+    query: PlatformWalletEnrolmentQuerySchema,
+    response: PlatformWalletEnrolmentListSchema,
+  },
+  async (c) =>
+    c.json(
+      await listPlatformEnrolments(
+        serviceContext(c),
+        sessionOf(c),
+        c.req.valid('query').provider,
+        c.req.valid('query').limit,
+        c.req.valid('query').cursor,
+      ),
+    ),
 );
 
 register(

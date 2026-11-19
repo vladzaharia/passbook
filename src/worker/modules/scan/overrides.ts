@@ -59,8 +59,10 @@ async function scopedToTarget(
     targetEpoch = session.config_epoch;
   }
   // The pass and action are the target's, so its template is accepted for this one let-in.
+  // The target door's entry replaces the monitor's own mixed scope.
+  const { events: _events, entryTemplateIds: _entries, ...single } = actor;
   const scoped: ScanActor = {
-    ...actor,
+    ...single,
     overrideScope: { sessionId, eventId, templateId: target.templateId },
   };
   const base = scanEpochsOf(actor);

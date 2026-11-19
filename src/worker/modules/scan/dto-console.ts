@@ -95,6 +95,7 @@ export function scannerDto(row: ConsoleScannerRow, now: number, today: number): 
     kind: row.kind,
     deviceRole: row.deviceRole,
     name: row.name,
+    // The scanner row's own scope; `scanner-views.ts` shows a session device its session's admits.
     accepts: row.eventId
       ? { eventId: row.eventId }
       : row.templateIds.length > 0

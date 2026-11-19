@@ -12,6 +12,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantScanRole } from './actor.ts';
+import { admitsJson } from './admits.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { kickScreen } from './live.ts';
 import {
@@ -46,7 +47,12 @@ import {
 } from './scanning-session-dto.ts';
 import { scanningSessionActivity } from './session-activity.ts';
 import { addHoursAudit, newTiming, timingPatch } from './session-hours-write.ts';
-import { assertNoZonesLeft, eventOfAccepts, sessionZoneChecks } from './session-zones.ts';
+import {
+  assertNoZonesLeft,
+  eventOfAccepts,
+  eventOnly,
+  sessionZoneChecks,
+} from './session-zones.ts';
 
 export { startAdminSetup } from './scanning-session-admin-setup.ts';
 
@@ -126,7 +132,7 @@ export async function createScanningSession(
   if (settings.checkIn?.eventId)
     await checkAccepts(ctx, input.orgId, mode, { eventId: settings.checkIn.eventId });
   const zoneIds = input.zoneIds ?? [];
-  const zoneChecks = await sessionZoneChecks(ctx, input.orgId, zoneIds, accepts?.eventId);
+  const zoneChecks = await sessionZoneChecks(ctx, input.orgId, zoneIds, eventOnly(accepts));
   const now = ctx.clock.now();
   const id = ctx.ids.id();
   const g = adminGrant(
@@ -136,7 +142,7 @@ export async function createScanningSession(
     authority,
     input.orgId,
     [
-      ...eventsOpen([accepts?.eventId, settings.checkIn?.eventId]),
+      ...eventsOpen([...(accepts?.eventIds ?? []), settings.checkIn?.eventId]),
       ...templatesUsable(accepts?.templateIds ?? []),
       ...zoneChecks,
     ],
@@ -149,7 +155,7 @@ export async function createScanningSession(
       id,
       name: input.name,
       status: 'active',
-      accepts: input.accepts ? JSON.stringify(input.accepts) : null,
+      accepts: accepts ? admitsJson(accepts.admits) : null,
       settings: JSON.stringify(settings),
       time_zone: input.timeZone,
       ...newTiming(input.timeZone, input.hours ?? null, now),
@@ -223,15 +229,10 @@ export async function updateScanningSession(
     name: input.name ?? row.name,
     status: input.status ?? row.status,
     time_zone: input.timeZone ?? row.time_zone,
-    accepts:
-      input.accepts === undefined
-        ? row.accepts
-        : input.accepts === null
-          ? null
-          : JSON.stringify(input.accepts),
+    accepts: accepted === undefined ? row.accepts : accepted && admitsJson(accepted.admits),
     settings: settings ? JSON.stringify(settings) : row.settings,
   };
-  const eventId = accepted === undefined ? eventOfAccepts(row.accepts) : accepted?.eventId;
+  const eventId = accepted === undefined ? eventOfAccepts(row.accepts) : eventOnly(accepted);
   const zoneChecks = await sessionZoneChecks(ctx, row.org_id, input.zoneIds ?? [], eventId, id);
   if (eventId && input.zoneIds === undefined && accepted !== undefined)
     await assertNoZonesLeft(ctx, row.org_id, id);
@@ -249,7 +250,7 @@ export async function updateScanningSession(
         ? []
         : [rowIs('scanning_sessions', id, { updated_at: input.revision }, 'stale')]),
       sessionDevicesAre(id, devices),
-      ...eventsOpen([accepted?.eventId, input.settings?.checkIn?.eventId]),
+      ...eventsOpen([...(accepted?.eventIds ?? []), input.settings?.checkIn?.eventId]),
       ...scopeTemplatesUsable(accepted?.templateIds ?? [], attached),
       ...zoneChecks,
     ],

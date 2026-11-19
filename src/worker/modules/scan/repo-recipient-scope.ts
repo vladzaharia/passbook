@@ -28,6 +28,18 @@ export function actorPassScopeSql(
       parts.push(`EXISTS (SELECT 1 FROM scan_event_templates sc_et
         WHERE sc_et.event_id = ? AND sc_et.template_id = ${alias}.template_id)`);
       params.push(actor.event.id);
+    } else if (actor.events && actor.scanningSession) {
+      // A mixed session: a template entry, or a live event of it whose filter takes the pass.
+      parts.push(`EXISTS (SELECT 1 FROM scanning_sessions sc_ss WHERE sc_ss.id = ? AND (
+        EXISTS (SELECT 1 FROM json_each(sc_ss.accepts, '$.templateIds') sc_j
+          WHERE sc_j.value = ${alias}.template_id)
+        OR EXISTS (SELECT 1 FROM json_each(sc_ss.accepts, '$.eventIds') sc_je
+          JOIN scan_events sc_e ON sc_e.id = sc_je.value AND sc_e.org_id = sc_ss.org_id
+            AND sc_e.mode = sc_ss.mode AND sc_e.archived_at IS NULL
+          JOIN scan_event_templates sc_et ON sc_et.event_id = sc_e.id
+            AND sc_et.template_id = ${alias}.template_id
+          WHERE ${eventMatchSql('sc_e', alias)})))`);
+      params.push(actor.scanningSession.id);
     } else if (actor.scanningSession) {
       parts.push(`EXISTS (SELECT 1 FROM scanning_sessions sc_ss, json_each(sc_ss.accepts, '$.templateIds') sc_j
         WHERE sc_ss.id = ? AND sc_j.value = ${alias}.template_id)`);

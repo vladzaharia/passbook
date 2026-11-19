@@ -1,17 +1,18 @@
-import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { ScannerSettingsSchema } from '../../../shared/contracts/index.ts';
 import {
-  type CreateScannerSchema,
-  ScannerAcceptsSchema,
-  ScannerSettingsSchema,
-} from '../../../shared/contracts/index.ts';
+  ADMITS_TEMPLATE_CAP,
+  type Admits,
+  type AdmitsInput,
+  admitsOf,
+} from '../../../shared/contracts/scanners.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { storedAdmits } from './admits.ts';
 import { countScopedTemplates } from './repo-event-templates.ts';
 import { eventModeOf } from './repo-scanners.ts';
-import { countOrgTemplates, readValidEventScope } from './repo-scope.ts';
-
-type Accepts = z.infer<typeof CreateScannerSchema>['accepts'];
+import { countOrgTemplates } from './repo-scope.ts';
+import { readValidEventScopes } from './repo-scope-events.ts';
 
 const modeMismatch = () =>
   new ValidationError(
@@ -20,28 +21,38 @@ const modeMismatch = () =>
     'SCAN_MODE_MISMATCH',
   );
 
+/** Checked admits, and the single-shape part a scanner row stores. */
+export interface CheckedAdmits {
+  admits: Admits;
+  /** A scanner row's event: the one event of an event-only scope, else null. */
+  eventId: string | null;
+  /** The template entries; a scanner row stores these. */
+  templateIds: string[];
+  eventIds: string[];
+}
+
 /**
- * Event and template scopes require approved releases in this organization and mode. A template
+ * Events and templates require approved releases in this organization and mode. A template
  * already `attached` to the scope may be archived (it keeps scanning); a newly added one must be active.
  */
 export async function checkAccepts(
   ctx: ServiceContext,
   orgId: string,
   mode: Mode,
-  accepts: Accepts,
+  accepts: AdmitsInput,
   attached: readonly string[] = [],
-) {
+): Promise<CheckedAdmits> {
   const db = ctx.env.DB;
-  if ('eventId' in accepts) {
-    const event = await eventModeOf(db, orgId, accepts.eventId);
+  const admits = admitsOf(accepts);
+  const { templateIds, eventIds } = admits;
+  for (const id of eventIds) {
+    const event = await eventModeOf(db, orgId, id);
     if (!event || event.archived_at !== null)
       throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
     if (event.mode !== mode) throw modeMismatch();
-    if (!(await readValidEventScope(db, orgId, mode, accepts.eventId)))
-      throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
-    return { eventId: accepts.eventId, templateIds: [] as string[] };
   }
-  const templateIds = [...new Set(accepts.templateIds)];
+  const events = await readValidEventScopes(db, orgId, mode, eventIds);
+  if (!events) throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
   if ((await countOrgTemplates(db, orgId, mode, templateIds)) !== templateIds.length)
     throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
   const added = templateIds.filter((id) => !attached.includes(id));
@@ -51,19 +62,22 @@ export async function checkAccepts(
       [{ path: 'accepts.templateIds', message: 'Choose active templates.' }],
       'TEMPLATE_ARCHIVED',
     );
-  return { eventId: null, templateIds };
+  const named = new Set([...templateIds, ...events.flatMap((e) => e.templateIds)]);
+  if (named.size > ADMITS_TEMPLATE_CAP)
+    throw new ValidationError(
+      `Admit at most ${ADMITS_TEMPLATE_CAP} pass types, counting each event's.`,
+      [{ path: 'accepts', message: 'Remove a pass type or an event.' }],
+      'ADMITS_TOO_MANY',
+    );
+  const [only] = eventIds;
+  const eventId = only !== undefined && eventIds.length === 1 && !templateIds.length ? only : null;
+  return { admits, eventId, templateIds, eventIds };
 }
 
-/** The template IDs a stored `accepts` names; none for an event, every template or an unreadable value. */
+/** The template entries a stored `accepts` names; none for an event, every template or an unreadable value. */
 export function acceptedTemplateIds(raw: string | null): string[] {
-  if (raw === null) return [];
-  try {
-    const parsed = ScannerAcceptsSchema.safeParse(JSON.parse(raw));
-    return parsed.success && 'templateIds' in parsed.data ? parsed.data.templateIds : [];
-  } catch {
-    // An unreadable stored scope attaches nothing: every requested template counts as new.
-    return [];
-  }
+  // An unreadable stored scope attaches nothing: every requested template counts as new.
+  return storedAdmits(raw)?.templateIds ?? [];
 }
 
 export function requireScannerSettings(raw: string) {

@@ -4,6 +4,7 @@ import type { ScanActor } from './actor.ts';
 import { eventMatch } from './repo-event-match.ts';
 import { type MissWindow, missWindow } from './repo-miss-authority.ts';
 import { refsClear } from './repo-read-fences.ts';
+import type { ScanEventRow } from './repo-scope.ts';
 import { walletSnapshotPredicateSql } from './repo-wallet-snapshot.ts';
 
 export interface SearchRow {
@@ -73,28 +74,69 @@ const tenantTerms = (actor: ScanActor, tenant: Tenant) =>
         modeParams: [actor.mode] as SqlValue[],
       };
 
+/** An event's pass filter over a `passes` alias: '' when it takes every pass, null when it is invalid. */
+function eventFilter(event: ScanEventRow, alias: string): Fragment | null {
+  const match = eventMatch(event.matchInput, event.matchValues);
+  if (!match) return null;
+  if (match.input === null) return { sql: '', params: [] };
+  return {
+    sql: `EXISTS (
+        SELECT 1 FROM json_each(CASE WHEN json_valid(${alias}.personalization) THEN ${alias}.personalization ELSE '{}' END) input
+        JOIN json_each(?) allowed
+          ON allowed.type='text' AND CAST(input.value AS TEXT)=allowed.value
+        WHERE input.key=? AND input.type IN ('text','integer','real','true','false')
+      )`,
+    params: [JSON.stringify(match.values), match.input],
+  };
+}
+
+const inTemplates = (alias: string, ids: readonly string[]): Fragment => ({
+  sql: `${alias}.template_id IN (SELECT value FROM json_each(?) WHERE type='text')`,
+  params: [JSON.stringify(ids)],
+});
+
+/** A mixed scope: a template entry, or an event's templates and filter. Null: nothing. */
+function mixedScopeParts(
+  actor: ScanActor,
+  alias: string,
+): { parts: string[]; params: SqlValue[] } | null {
+  const any: Fragment[] = [];
+  if (actor.entryTemplateIds?.length) any.push(inTemplates(alias, actor.entryTemplateIds));
+  for (const { event, templateIds } of actor.events ?? []) {
+    const filter = eventFilter(event, alias);
+    const scope = inTemplates(alias, templateIds);
+    if (filter)
+      any.push({
+        sql: filter.sql ? `(${scope.sql} AND ${filter.sql})` : scope.sql,
+        params: [...scope.params, ...filter.params],
+      });
+  }
+  if (any.length === 0) return null;
+  return {
+    parts: [`(${any.map((f) => f.sql).join(' OR ')})`],
+    params: any.flatMap((f) => f.params),
+  };
+}
+
 /** The actor's template and event scope over a `passes` alias: what a search may return. Null: nothing. */
 function actorScopeParts(
   actor: ScanActor,
   alias: string,
 ): { parts: string[]; params: SqlValue[] } | null {
+  if (actor.events) return mixedScopeParts(actor, alias);
   const parts: string[] = [];
   const params: SqlValue[] = [];
   if (actor.templateIds.length) {
-    parts.push(`${alias}.template_id IN (SELECT value FROM json_each(?) WHERE type='text')`);
-    params.push(JSON.stringify(actor.templateIds));
+    const scope = inTemplates(alias, actor.templateIds);
+    parts.push(scope.sql);
+    params.push(...scope.params);
   }
   if (actor.event) {
-    const match = eventMatch(actor.event.matchInput, actor.event.matchValues);
-    if (!match) return null;
-    if (match.input !== null) {
-      parts.push(`EXISTS (
-        SELECT 1 FROM json_each(CASE WHEN json_valid(${alias}.personalization) THEN ${alias}.personalization ELSE '{}' END) input
-        JOIN json_each(?) allowed
-          ON allowed.type='text' AND CAST(input.value AS TEXT)=allowed.value
-        WHERE input.key=? AND input.type IN ('text','integer','real','true','false')
-      )`);
-      params.push(JSON.stringify(match.values), match.input);
+    const filter = eventFilter(actor.event, alias);
+    if (!filter) return null;
+    if (filter.sql) {
+      parts.push(filter.sql);
+      params.push(...filter.params);
     }
   }
   return { parts, params };

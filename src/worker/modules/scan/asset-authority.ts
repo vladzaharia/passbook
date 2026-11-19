@@ -3,6 +3,7 @@ import { toBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import type { ScanActor } from './actor.ts';
+import { admitsIdentity } from './admits.ts';
 import type { AssetSessionSnapshot } from './asset-types.ts';
 import { matchesEvent } from './resolve-candidates.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
@@ -23,6 +24,8 @@ async function actorScope(
   const staff = actor.staff;
   // Epochs, not timestamps: a rename moves `updated_at` but no authority (authority-epochs.md).
   const epochs = scanEpochsOf(actor);
+  // A grant minted under a scan's narrowed entry verifies against the device's mixed scope.
+  const mixed = admitsIdentity(actor);
   const adminEventTemplates = 'adminEventTemplates' in actor && actor.adminEventTemplates === true;
   const tenant = actor.tenantAuthority ?? null;
   const platformId = actor.platformSessionId ?? null;
@@ -49,10 +52,10 @@ async function actorScope(
     actor.actor.id,
     actor.role,
     actor.terminal,
-    actor.timeZone,
+    mixed ? mixed.timeZone : actor.timeZone,
     adminEventTemplates,
     platformIdProof,
-    [...actor.templateIds].sort(),
+    mixed ? mixed.templateIds : [...actor.templateIds].sort(),
     tenant && [
       tenant.orgId,
       // Despite the name, the org's `access_revision` (`tenantAuthorityOf`): a rename keeps it.
@@ -90,12 +93,14 @@ async function actorScope(
       scanner.staffSince,
     ],
     staff && [staff.id, staff.role, epochs?.staff?.id === staff.id ? epochs.staff.auth : null],
-    actor.event && [
-      actor.event.id,
-      actor.event.orgId,
-      actor.event.mode,
-      epochs?.events[actor.event.id] ?? null,
-    ],
+    mixed
+      ? mixed.eventIds.map((id) => [id, epochs?.events[id] ?? null])
+      : actor.event && [
+          actor.event.id,
+          actor.event.orgId,
+          actor.event.mode,
+          epochs?.events[actor.event.id] ?? null,
+        ],
     actor.scanningSession && [
       actor.scanningSession.id,
       actor.scanningSession.status,

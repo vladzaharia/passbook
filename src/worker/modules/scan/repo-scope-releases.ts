@@ -1,4 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { ADMITS_TEMPLATE_CAP } from '../../../shared/contracts/scanners.ts';
 import { stmt } from '../../platform/db.ts';
 import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
 import type { ReleaseScopeSql } from '../templates/repo-releases.ts';
@@ -82,7 +83,7 @@ export function captureTemplateStampsStmt(
   templateIds: readonly string[],
 ): D1PreparedStatement | null {
   if (
-    templateIds.length > 20 ||
+    templateIds.length > ADMITS_TEMPLATE_CAP ||
     new Set(templateIds).size !== templateIds.length ||
     templateIds.some((id) => typeof id !== 'string' || !id || id.length > 64)
   )
@@ -125,7 +126,7 @@ export function templateStampsFromResult(
   result: D1Result | undefined,
 ): TemplateStamps | null {
   if (
-    templateIds.length > 20 ||
+    templateIds.length > ADMITS_TEMPLATE_CAP ||
     new Set(templateIds).size !== templateIds.length ||
     templateIds.some((id) => typeof id !== 'string' || !id || id.length > 64) ||
     !result
@@ -237,7 +238,11 @@ function stampsValid(
   releases: readonly SessionReleaseStamp[],
   legacy: readonly SessionLegacyStamp[],
 ): boolean {
-  if (!Array.isArray(releases) || !Array.isArray(legacy) || releases.length + legacy.length > 20)
+  if (
+    !Array.isArray(releases) ||
+    !Array.isArray(legacy) ||
+    releases.length + legacy.length > ADMITS_TEMPLATE_CAP
+  )
     return false;
   if (
     releases.length &&

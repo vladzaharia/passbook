@@ -13,6 +13,7 @@ import {
   ValidationError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { admitsJson } from './admits.ts';
 import {
   checkTemplates,
   checkWindow,
@@ -293,7 +294,12 @@ export async function assignScanners(
   if (ids.length > 0) {
     addEventAssign(g, id, ids, now);
     for (const scannerId of ids)
-      addScannerPatchSessionSync(g, scannerId, { accepts: JSON.stringify({ eventId: id }) }, now);
+      addScannerPatchSessionSync(
+        g,
+        scannerId,
+        { accepts: admitsJson({ templateIds: [], eventIds: [id] }) },
+        now,
+      );
     g.add(
       audited(g, ctx, {
         orgId: row.orgId,

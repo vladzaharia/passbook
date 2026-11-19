@@ -30,7 +30,7 @@ export const ScanAdminScopeSchema = z.object({
   setupId: IdSchema.optional(),
   orgId: IdSchema,
   eventId: IdSchema.optional(),
-  templateIds: z.array(IdSchema).max(20).optional(),
+  templateIds: z.array(IdSchema).max(100).optional(),
   timeZone: TimeZoneSchema,
 });
 /** A Manager's PIN for one action. `staffId` is optional: a PIN alone is matched against the org's managers. */

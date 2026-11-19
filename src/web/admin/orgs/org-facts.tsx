@@ -3,7 +3,7 @@ import type { z } from 'zod';
 import type { OrgSummarySchema } from '@/shared/contracts/orgs.ts';
 import { formatDateTime, formatDay } from '@/web/lib/format.ts';
 import { Card, CardBody, CardHeader, KeyValue } from '@/web/ui/index.ts';
-import { useOrgIdentities } from '../identities/queries.ts';
+import { useOrgIdentities } from '../wallet-accounts/apple/queries.ts';
 
 /** Read-only facts: when it was created, its id, and what signs its passes. */
 export function OrgFacts({ org }: { org: z.infer<typeof OrgSummarySchema> }) {

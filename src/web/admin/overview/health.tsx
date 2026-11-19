@@ -11,12 +11,12 @@ import {
   StatusPill,
 } from '@/web/ui/index.ts';
 import { formatDateTime } from '../../lib/format.ts';
-import { ATTENTION_COPY, identityAttention } from '../identities/attention.ts';
-import { useIdentityOptions } from '../identities/queries.ts';
 import { componentLink, headline, pillStatus, problems, summaryLine } from '../status/groups.ts';
 import { COMPONENT_ICON } from '../status/icons.ts';
 import { breakdown, OVERALL_TONE, overallTone } from '../status/overall.ts';
 import { useStatus } from '../status/queries.ts';
+import { ATTENTION_COPY, identityAttention } from '../wallet-accounts/apple/attention.ts';
+import { useIdentityOptions } from '../wallet-accounts/apple/queries.ts';
 import './overview.css';
 
 /** Checks across all organizations stay separate from the overview's organization and mode filters. */

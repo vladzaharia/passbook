@@ -175,7 +175,8 @@ export function registerScanningAuthorityReleases() {
     const templateId = await kit.scanTemplate('Oversized device scope', { actions: [CHECK_IN] });
     const pass = await kit.scanPass(templateId);
     const { session, device, headers } = await sessionWithDevice({ templateIds: [templateId] });
-    for (let i = 0; i < 20; i++) {
+    // One past the Admits cap of 100 template entries a scanner row may carry.
+    for (let i = 0; i < 100; i++) {
       const extra = await kit.scanTemplate(`Extra scope ${i}`, { actions: [CHECK_IN] });
       await run(kit.env.DB, 'INSERT INTO scanner_templates(scanner_id,template_id) VALUES(?,?)', [
         device.id,
@@ -192,5 +193,5 @@ export function registerScanningAuthorityReleases() {
     expect(await detail.json()).toMatchObject({
       devices: [{ id: device.id, settings: { acceptAllTemplates: false } }],
     });
-  });
+  }, 180_000);
 }

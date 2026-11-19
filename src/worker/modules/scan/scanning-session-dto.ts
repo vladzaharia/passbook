@@ -1,6 +1,10 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { type ScannerSettings, ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
-import { ScannerAcceptsSchema } from '../../../shared/contracts/scanners.ts';
+import {
+  ADMITS_TEMPLATE_CAP,
+  type AdmitsInput,
+  admitsWire,
+} from '../../../shared/contracts/scanners.ts';
 import type { SessionCustomerSettings as SessionCustomer } from '../../../shared/contracts/scanning-sessions.ts';
 import {
   ScanDeviceCapabilitiesSchema,
@@ -13,6 +17,7 @@ import type { SessionAuth } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
+import { storedAdmits } from './admits.ts';
 import { localDayStart } from './counts.ts';
 import { parseSettings } from './dto-console.ts';
 import { captureConsoleFeed } from './feed-console-page.ts';
@@ -23,10 +28,12 @@ import type { ScanningDeviceRow } from './repo-scanning-devices.ts';
 import { type ScanningSessionRow, scanningSessionStats } from './repo-scanning-sessions.ts';
 import {
   countOrgTemplates,
+  type EventScope,
   readScannerScope,
   readValidEventScope,
   type ScanEventRow,
 } from './repo-scope.ts';
+import { readValidEventScopes } from './repo-scope-events.ts';
 import { activeHold, sessionWindow, storedHours } from './session-hours.ts';
 
 /**
@@ -73,11 +80,14 @@ export async function captureConsoleSessionCountAuthority(
   };
 }
 
-type SessionAccepts = { eventId: string } | { templateIds: string[] } | null;
 type ResolvedSessionScope = {
-  accepts: SessionAccepts;
+  /** The session's admits as the DTO shows them. */
+  accepts: AdmitsInput | null;
   event: ScanEventRow | null;
   templateIds: string[];
+  /** Only on a mixed scope; see `ScanActor.events`. */
+  events?: EventScope[];
+  entryTemplateIds?: string[];
   restricted: boolean;
   valid: boolean;
 };
@@ -94,35 +104,40 @@ export async function resolveSessionScope(
     restricted: true,
     valid: false,
   };
-  if (row.accepts === null)
+  const admits = storedAdmits(row.accepts);
+  if (admits === null)
     return { accepts: null, event: null, templateIds: [], restricted: false, valid: true };
-  let raw: unknown;
-  try {
-    raw = JSON.parse(row.accepts);
-  } catch {
-    return invalid;
-  }
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw) || Object.keys(raw).length !== 1)
-    return invalid;
-  const parsed = ScannerAcceptsSchema.safeParse(raw);
-  if (!parsed.success) return invalid;
-  if ('eventId' in parsed.data) {
-    const scope = await readValidEventScope(ctx.env.DB, row.org_id, row.mode, parsed.data.eventId);
-    if (!scope) return invalid;
-    return {
-      accepts: { eventId: scope.event.id },
-      event: scope.event,
-      templateIds: scope.templateIds,
-      restricted: true,
-      valid: true,
-    };
-  }
-  const templateIds = [...new Set(parsed.data.templateIds)];
+  if (!admits) return invalid;
+  const db = ctx.env.DB;
+  const entries = admits.templateIds;
   if (
-    (await countOrgTemplates(ctx.env.DB, row.org_id, row.mode, templateIds)) !== templateIds.length
+    entries.length > 0 &&
+    (await countOrgTemplates(db, row.org_id, row.mode, entries)) !== entries.length
   )
     return invalid;
-  return { accepts: { templateIds }, event: null, templateIds, restricted: true, valid: true };
+  const accepts = admitsWire(admits);
+  const [only] = admits.eventIds;
+  if (only !== undefined && admits.eventIds.length === 1 && entries.length === 0) {
+    const scope = await readValidEventScope(db, row.org_id, row.mode, only);
+    if (!scope) return invalid;
+    const { event, templateIds } = scope;
+    return { accepts, event, templateIds, restricted: true, valid: true };
+  }
+  if (admits.eventIds.length === 0)
+    return { accepts, event: null, templateIds: entries, restricted: true, valid: true };
+  const events = await readValidEventScopes(db, row.org_id, row.mode, admits.eventIds);
+  if (!events) return invalid;
+  const templateIds = [...new Set([...entries, ...events.flatMap((e) => e.templateIds)])];
+  if (templateIds.length > ADMITS_TEMPLATE_CAP) return invalid;
+  return {
+    accepts,
+    event: null,
+    templateIds,
+    events,
+    entryTemplateIds: entries,
+    restricted: true,
+    valid: true,
+  };
 }
 
 /** A stale device-side restriction must not become an unrestricted session. */

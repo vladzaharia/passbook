@@ -24,10 +24,46 @@ const JsonValue = z.any();
 export const ScannerKindSchema = z.enum(['device', 'terminal', 'display']);
 /** What the device does now: scan, face a customer, or watch scans. A display never scans. */
 export const DeviceRoleSchema = z.enum(['scan', 'customer', 'monitor']);
+/** What a scanner row takes: one event or a list of templates. */
 export const ScannerAcceptsSchema = z.union([
   z.object({ eventId: IdSchema }),
-  z.object({ templateIds: z.array(IdSchema).min(1).max(20) }),
+  z.object({ templateIds: z.array(IdSchema).min(1).max(100) }),
 ]);
+/** Pass types and events in any mix, at least one. A session stores a mix in this form. */
+const AdmitsListsSchema = z
+  .object({
+    templateIds: z.array(IdSchema).max(100),
+    eventIds: z.array(IdSchema).max(10),
+  })
+  .refine((a) => a.templateIds.length + a.eventIds.length > 0, {
+    message: 'Choose a pass type or an event.',
+  });
+/**
+ * What a session admits; null elsewhere admits any pass type. Also parses the older one-shape form.
+ * Unknown keys are stripped, as before; a body naming both lists is always read as the mix.
+ */
+export const AdmitsSchema = z.union([AdmitsListsSchema, ...ScannerAcceptsSchema.options]);
+export type AdmitsInput = z.infer<typeof AdmitsSchema>;
+/** Template entries and events' templates together name at most this many. */
+export const ADMITS_TEMPLATE_CAP = 100;
+export type Admits = { templateIds: string[]; eventIds: string[] };
+
+/** Either form as the stored lists, without repeats. */
+export const admitsOf = (value: AdmitsInput): Admits => ({
+  templateIds: 'templateIds' in value ? [...new Set(value.templateIds)] : [],
+  eventIds:
+    'eventIds' in value ? [...new Set(value.eventIds)] : 'eventId' in value ? [value.eventId] : [],
+});
+
+/** The older one-shape form when the lists fit it, so single-shape readers keep working. */
+export function admitsWire(admits: Admits): AdmitsInput {
+  const [only] = admits.eventIds;
+  if (only !== undefined && admits.eventIds.length === 1 && admits.templateIds.length === 0)
+    return { eventId: only };
+  if (admits.eventIds.length === 0 && admits.templateIds.length > 0)
+    return { templateIds: admits.templateIds };
+  return admits;
+}
 export const ScannerSchema = z.object({
   id: IdSchema,
   orgId: IdSchema,
@@ -35,8 +71,8 @@ export const ScannerSchema = z.object({
   kind: ScannerKindSchema,
   deviceRole: DeviceRoleSchema,
   name: z.string(),
-  /** Null only for kind `display`. */
-  accepts: ScannerAcceptsSchema.nullable(),
+  /** A session device shows its session's admits (events and templates). Null: a display, every template (`acceptAllTemplates`) or nothing. */
+  accepts: AdmitsSchema.nullable(),
   settings: ScannerSettingsSchema,
   timeZone: z.string(),
   status: z.enum(['not_paired', 'paired', 'revoked']),
