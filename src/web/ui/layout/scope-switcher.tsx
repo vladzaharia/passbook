@@ -89,10 +89,16 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
     onNavigate?.();
     run();
   };
+  const failed = isError ? (
+    <span role="alert" className="sr-only">
+      Could not load organization access.
+    </span>
+  ) : null;
   // One reachable scope: a label, not a menu.
   if ((isAdmin ? 1 : 0) + memberships.length <= 1 && name) {
     return (
       <p className="flex h-9 min-w-0 items-center gap-2 text-sm font-medium text-fg-strong">
+        {failed}
         {icon}
         <span className="truncate">{name}</span>
       </p>
@@ -100,11 +106,7 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
   }
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
-      {isError ? (
-        <span role="alert" className="sr-only">
-          Could not load organization access.
-        </span>
-      ) : null}
+      {failed}
       <PopoverPrimitive.Trigger
         role="combobox"
         aria-expanded={open}

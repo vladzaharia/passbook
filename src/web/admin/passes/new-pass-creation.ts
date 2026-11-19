@@ -128,9 +128,8 @@ export function useNewPassCreation({
       canReadCreatedPass
     )
       void navigate({
-        to: '/admin/passes/$passId',
-        params: { passId: created.id },
-        search: { orgId: created.orgId },
+        to: '/admin/o/$orgId/passes/$passId',
+        params: { orgId: created.orgId, passId: created.id },
         replace: true,
       });
   }, [created, principalId, sessionReady, grantsReady, canReadCreatedPass, navigate]);

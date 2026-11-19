@@ -28,6 +28,11 @@ export function useOrgScope() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const searchStr = useRouterState({ select: (state) => state.location.searchStr });
+  // An old link that named no organization landed here: treat it as unscoped until the
+  // resource's owner is verified (pages then revalidate rather than trust a cache).
+  const bareLink = useRouterState({
+    select: (state) => (state.location.state as { findOwner?: unknown }).findOwner === true,
+  });
   const scope = useMemo(() => parseAdminPath(pathname).scope, [pathname]);
   const pathOrgId = scope?.kind === 'org' ? scope.orgId : undefined;
   const query = useMemberships();
@@ -101,8 +106,8 @@ export function useOrgScope() {
     switchScope,
     memberships,
     membership,
-    /** The page is inside an organization scope. */
-    hasExplicitOrg: pathOrgId !== undefined,
+    /** The URL names the organization (not an old link that named none). */
+    hasExplicitOrg: pathOrgId !== undefined && !bareLink,
     requestedOrgId: pathOrgId,
     // The URL's choice is useful for comparing scopes, but is never a grant.
     requestedSelection: pathOrgId,

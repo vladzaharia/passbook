@@ -74,7 +74,7 @@ it('mounts shared-template releases with the selected membership and current mod
   await waitFor(() => expect(screen.getByTestId('release-panel')).toHaveTextContent('org1:test'));
   // The page's own organization choice: the same template in Harbor.
   await act(async () => {
-    await router.navigate({ href: '/admin/o/org2/templates/tpl1' });
+    await router.navigate({ href: '/admin/o/org2/templates/tpl1?tab=versions' });
   });
   await waitFor(() => expect(screen.getByTestId('release-panel')).toHaveTextContent('org2:test'));
   expect(releasePanel).toHaveBeenLastCalledWith(

@@ -30,7 +30,7 @@ describe('RouteAnnouncer', () => {
     await waitFor(() => expect(settings).toHaveFocus());
     const focus = vi.spyOn(HTMLElement.prototype, 'focus');
     act(() => router.history.back());
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform'));
     const overview = screen.getByRole('heading', { level: 1 });
     await waitFor(() =>
       expect(screen.getByRole('status', { name: '' })).toHaveTextContent(

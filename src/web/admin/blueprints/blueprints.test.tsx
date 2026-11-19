@@ -138,7 +138,9 @@ describe('Blueprints', () => {
       handlers: detailHandlers(),
     });
     expect(await screen.findByRole('button', { name: 'Use blueprint' })).toBeInTheDocument();
-    expect(decodeURIComponent(router.state.location.pathname)).toBe(`/admin/blueprints/${ID}`);
+    expect(decodeURIComponent(router.state.location.pathname)).toBe(
+      `/admin/o/${ORG.id}/blueprints/${ID}`,
+    );
   });
 });
 
