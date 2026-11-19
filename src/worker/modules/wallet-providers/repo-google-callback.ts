@@ -31,6 +31,10 @@ export interface GoogleCallbackBindingInput {
   operationVersion: number;
 }
 
+/** The fence revision: a legacy row's `revision`, a new-model enrolment's `enrolment_revision`. */
+const ACCOUNT_REVISION =
+  'CASE WHEN a.credential_id IS NULL THEN a.enrolment_revision ELSE a.revision END';
+
 /** The path selects one account; receipt admission does not require outbound publishing approval. */
 export function findGoogleCallbackAccount(
   db: D1Database,
@@ -151,7 +155,7 @@ export async function findGoogleCallbackBinding(
     db,
     `SELECT i.id AS instanceId, i.pass_id AS passId,
       i.identity_projection_release_id AS releaseId, i.credential_generation AS credentialGeneration,
-      a.id AS accountId, a.org_id AS orgId, a.mode, a.revision AS accountRevision,
+      a.id AS accountId, a.org_id AS orgId, a.mode, ${ACCOUNT_REVISION} AS accountRevision,
       CASE WHEN i.credential_keyset_commitment = b.credential_keyset_commitment
         THEN b.credential_keyset_commitment END AS credentialKeysetCommitment
     FROM wallet_google_callback_bindings b
@@ -160,7 +164,8 @@ export async function findGoogleCallbackBinding(
       AND a.mode = i.mode AND a.provider = i.provider
     WHERE b.account_id = ? AND b.class_id_hash = ? AND b.object_id_hash = ?
       AND i.org_id = ? AND i.mode = ? AND i.provider = 'google'
-      AND a.revision = ? AND a.revoked_at IS NULL AND a.credential_id IS NOT NULL
+      AND ${ACCOUNT_REVISION} = ? AND a.revoked_at IS NULL
+      AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
       AND ${credentialRefKeysetSql}`,
     [
       scope.accountId,
@@ -200,7 +205,8 @@ function googleReceiptProof(binding: GoogleCallbackBinding, input: GoogleCallbac
       AND a.mode = i.mode AND a.provider = i.provider`;
   const guard = `i.id = ? AND i.pass_id = ? AND i.identity_projection_release_id = ?
       AND i.credential_generation = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'google' AND a.id = ?
-      AND a.revision = ? AND a.revoked_at IS NULL AND a.credential_id IS NOT NULL
+      AND ${ACCOUNT_REVISION} = ? AND a.revoked_at IS NULL
+      AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
       AND b.class_id_hash = ? AND b.object_id_hash = ?
       AND i.credential_keyset_commitment = ? AND b.credential_keyset_commitment = ?
       AND ${credentialRefKeysetSql} AND ? > ?`;
