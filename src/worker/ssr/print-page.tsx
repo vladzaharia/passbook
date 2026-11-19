@@ -1,4 +1,4 @@
-import { Ban, Printer, RotateCcw } from 'lucide-react';
+import { Ban, Download, Printer, RotateCcw } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PRINT_COPY } from '../../shared/copy/print.ts';
 import { toSvg } from '../../shared/pass-view/barcode-svg.ts';
@@ -26,7 +26,7 @@ const PAGE_CSS = `${RIBBON_CSS}
 .hosted.wide{max-width:40rem}
 .pp-stage{display:flex;flex-direction:column;gap:1rem}
 .pp-actions{display:flex;flex-wrap:wrap;gap:.5rem}
-.pp-actions .btn{width:auto;flex:1 1 9rem}
+.pp-actions .btn{width:auto;flex:1 1 7.5rem}
 .pp-confirm{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:0;padding:.75rem 1rem;border:1px solid var(--pk-border-strong);border-radius:var(--pk-radius-md);background:var(--pk-surface-sunken)}
 .pp-confirm p{flex:1 1 12rem;margin:0}
 .pp-confirm .btn{width:auto}
@@ -73,6 +73,8 @@ export interface PrintPageProps {
   audience: PrintAudience;
   /** The holder's way back to the pass page. */
   backHref?: string;
+  /** The PDF of the active print. */
+  pdfHref?: string;
   nonce: string;
   theme?: PageTheme;
 }
@@ -117,6 +119,11 @@ export function renderPrintPage(props: PrintPageProps): string {
     );
     const actions = [
       button('print', PRINT_COPY.print, Printer, true),
+      ...(props.pdfHref
+        ? [
+            `<a class="btn outline" href="${escapeHtml(props.pdfHref)}" download>${iconHtml(Download)}${escapeHtml(PRINT_COPY.download)}</a>`,
+          ]
+        : []),
       ...(holder
         ? [button('reprint', PRINT_COPY.reprint, RotateCcw), button('void', PRINT_COPY.void, Ban)]
         : []),

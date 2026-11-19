@@ -36,3 +36,28 @@ export type MintedPrint = z.infer<typeof MintedPrintSchema>;
 export const PassPrintsResponseSchema = z.object({ prints: z.array(PassPrintSchema) });
 
 export const PrintParamSchema = z.object({ id: IdSchema, printId: IdSchema });
+
+/** Passes one bulk Print takes: each is minted in the request, and one PDF carries them all. */
+export const PRINT_BULK_MAX = 50;
+
+export const BulkPrintSchema = z.object({
+  ids: z.array(IdSchema).min(1).max(PRINT_BULK_MAX),
+  orgId: IdSchema,
+});
+
+export const BulkPrintStartedSchema = z.object({
+  jobId: z.string(),
+  /** Tickets in the PDF. */
+  count: z.number().int(),
+  skipped: z.array(z.object({ id: IdSchema, code: z.string() })),
+});
+export type BulkPrintStarted = z.infer<typeof BulkPrintStartedSchema>;
+
+export const BulkPrintStatusSchema = z.object({
+  state: z.enum(['pending', 'ready', 'failed']),
+  count: z.number().int(),
+});
+export type BulkPrintStatus = z.infer<typeof BulkPrintStatusSchema>;
+
+export const BulkPrintParamSchema = z.object({ jobId: z.string().regex(/^[A-Za-z0-9_-]{16,64}$/) });
+export const BulkPrintQuerySchema = z.object({ orgId: IdSchema });

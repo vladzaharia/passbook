@@ -22,6 +22,7 @@ export type PrintPageModel = { orgName: string; mode: Pass['mode'] } & (
       /** The print code. It goes into the page's markup and nowhere else. */
       code: string;
       generation: number;
+      printId: string;
     }
 );
 
@@ -54,6 +55,7 @@ export async function printPageModel(
           design: ticket.design,
           content: ticket.content,
           generation: print.generation,
+          printId: print.id,
           code: await printCodeOf(ctx.env, {
             id: print.id,
             passId: pass.id,

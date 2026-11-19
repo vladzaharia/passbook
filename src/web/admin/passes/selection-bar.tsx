@@ -19,6 +19,7 @@ import {
   useBottomBar,
 } from '../../ui/index.ts';
 import { passKeys, useBulkPassAction } from './api.ts';
+import { BulkPrintAction } from './bulk-print.tsx';
 import { BundleDialog } from './bundle-dialog.tsx';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
 import { fingerprint, newKey } from './format.ts';
@@ -157,6 +158,7 @@ export function SelectionBar({
               <ACTION_ICON.removeFromWallet aria-hidden />
               Remove from Wallet
             </DropdownMenuItem>
+            <BulkPrintAction ids={ids} orgId={orgId} disabled={!operable} as="menu" />
             <DropdownMenuItem onSelect={onExport}>
               <ACTION_ICON.download aria-hidden />
               Export CSV
@@ -180,6 +182,7 @@ export function SelectionBar({
             >
               Remove from Wallet
             </Button>
+            <BulkPrintAction ids={ids} orgId={orgId} disabled={!operable} as="button" />
             <Button
               variant="outline"
               iconStart={<ACTION_ICON.download aria-hidden />}

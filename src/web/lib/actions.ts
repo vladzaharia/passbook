@@ -114,6 +114,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass.rotate_link': a('Pass link rotated', I.rotate, 'info'),
   'pass.channels_change': a('Pass channels changed', I.edit, 'info'),
   'pass.print': a('Ticket printed', I.edit, 'info'),
+  'pass.print_bulk': a('Tickets printed in bulk', I.edit, 'info'),
   'pass.print_void': a('Printed ticket voided', I.delete, 'warning'),
   'pass.stamps.add': a('Stamp added', ENTITY.pass.icon, 'info'),
   'pass.stamps.redeem': a('Reward redeemed', Star, 'success'),

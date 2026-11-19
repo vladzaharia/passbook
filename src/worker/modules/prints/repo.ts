@@ -82,3 +82,14 @@ export async function manifestOf(
     ? (parsed as Record<string, unknown>)
     : null;
 }
+
+/** Which of these prints are active; `ids` holds at most 90. */
+export async function activePrintIds(db: D1Database, ids: string[]): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+  const rows = await all<{ id: string }>(
+    db,
+    `SELECT id FROM pass_prints WHERE status = 'active' AND id IN (${ids.map(() => '?').join(',')})`,
+    ids,
+  );
+  return new Set(rows.map((r) => r.id));
+}

@@ -4,6 +4,7 @@ import { handleEmailSend, handlePushDeliver } from '../modules/delivery/jobs.ts'
 import { handleJoinResend } from '../modules/join/jobs.ts';
 import { handleHolderMail } from '../modules/me/jobs.ts';
 import { handleMessageRuleCheck } from '../modules/message-rules/jobs.ts';
+import { handlePrintsBulk } from '../modules/prints/jobs.ts';
 import { handleRetentionNotice } from '../modules/retention/jobs.ts';
 import { handleForkUpdate } from '../modules/templates/fork-updates-job.ts';
 import { handleWebhookDeliver } from '../modules/webhooks/jobs.ts';
@@ -25,6 +26,7 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'webhook.deliver': handleWebhookDeliver,
   'template.fork_update': handleForkUpdate,
   'channel.apple_bump': handleAppleBump,
+  'prints.bulk': handlePrintsBulk,
 };
 
 /** Narrows per kind through a switch, so no cast is needed at the dispatch site. */
@@ -51,6 +53,8 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'template.fork_update':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'channel.apple_bump':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'prints.bulk':
       return JOB_HANDLERS[job.kind](job, ctx);
   }
 }

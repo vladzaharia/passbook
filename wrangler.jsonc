@@ -82,6 +82,9 @@
   ],
   "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "wallet-passes" }],
 
+  // Browser Run renders printed tickets to PDF (modules/prints/pdf-*.ts). Unbound or failing, they fall back to pdf-lib.
+  "browser": { "binding": "BROWSER" },
+
   "queues": {
     "producers": [
       { "binding": "JOBS", "queue": "wallet-jobs" },

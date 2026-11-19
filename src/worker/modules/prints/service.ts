@@ -6,6 +6,7 @@ import { passChannels } from '../channels/service.ts';
 import { recordPassEvents } from '../events/record.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { printCodeOf, printCodeRef, printRosterHash } from './codes.ts';
+import { dropPrintPdfs } from './pdf-drop.ts';
 import * as repo from './repo.ts';
 import { type PrintWriter, writeMint, writeVoid } from './repo-write.ts';
 
@@ -65,6 +66,7 @@ export async function mintPrint(
     { id, codeHash, rosterHash: await printRosterHash(code), generation },
     replace,
   );
+  if (existing && voided > 0) await dropPrintPdfs(ctx, pass, existing.id);
   await recordPassEvents(ctx, [
     {
       orgId: pass.orgId,
@@ -96,5 +98,6 @@ export async function voidPrint(
     throw new ConflictError('This print is already voided.', 'PRINT_NOT_ACTIVE');
   await spend(ctx, pass, caller.limit);
   await writeVoid(ctx, caller.writer, pass.id, cause, target.id);
+  await dropPrintPdfs(ctx, pass, target.id);
   return (await repo.printById(ctx.env.DB, pass.id, target.id)) ?? target;
 }

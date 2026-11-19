@@ -4,6 +4,7 @@ export const PRINT_COPY = {
   staffTitle: 'Print ticket',
   lede: 'Print at actual size on white paper.',
   print: 'Print',
+  download: 'Download PDF',
   make: 'Make my ticket',
   reprint: 'Reprint',
   void: 'Void print',
@@ -35,6 +36,15 @@ export const PRINT_COPY = {
   voidConfirmBody: 'Its code stops working at the door. You can print again.',
   reprintConfirmTitle: 'Reprint ticket?',
   reprintConfirmBody: 'The earlier print stops working at the door.',
+  /** Bulk Print on the passes list. */
+  bulkNone: 'Nothing to print. Printing is off for these passes.',
+  bulkPreparing: (tickets: string, skipped: number) =>
+    skipped > 0 ? `Preparing ${tickets}. ${skipped} skipped.` : `Preparing ${tickets}.`,
+  bulkReady: (tickets: string) => `${tickets} ready`,
+  bulkDownload: 'Download',
+  bulkFailed: 'The PDF could not be made. Try again.',
+  bulkSlow: 'The PDF is taking long. Try again shortly.',
+  bulkCap: (n: number) => `Up to ${n} passes.`,
   /** Designer tab. */
   tab: 'Paper',
   sizeLabel: 'Paper size',

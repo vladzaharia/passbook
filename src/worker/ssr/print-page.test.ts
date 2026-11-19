@@ -20,6 +20,7 @@ const ready = (d: PaperDesign): PrintPageModel => ({
   state: 'ready',
   orgName: 'Northwind Hall',
   mode: 'live',
+  printId: 'print-1',
   design: d,
   content: content(d),
   code: CODE,
