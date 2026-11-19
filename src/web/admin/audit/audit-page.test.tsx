@@ -101,9 +101,8 @@ describe('audit page', () => {
     });
     const link = await screen.findByRole('link', { name: 'Organization settings' });
     const url = new URL(link.getAttribute('href') ?? '', 'https://wallet.test');
-    expect(url.pathname).toBe('/admin/orgs/o1');
-    expect(url.searchParams.get('view')).toBe('workspace');
-    expect(url.searchParams.get('orgId')).toBe('o1');
+    expect(url.pathname).toBe('/admin/o/o1/settings');
+    expect(url.search).toBe('');
   });
 
   it('does not reuse a previous principal’s platform audit rows', async () => {

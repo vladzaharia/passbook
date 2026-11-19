@@ -65,8 +65,9 @@ export function UseBlueprintDialog({
     if (!input) return;
     onOpenChange(false);
     void navigate({
-      to: '/admin/templates/new',
-      search: { blueprint: blueprint.id, orgId: input.orgId, name: input.name },
+      to: '/admin/o/$orgId/templates/new',
+      params: { orgId: input.orgId },
+      search: { blueprint: blueprint.id, name: input.name },
     });
   }
 
@@ -99,9 +100,8 @@ export function UseBlueprintDialog({
       markCreated(`template:${made.id}`, 'fromBlueprint');
       onOpenChange(false);
       void navigate({
-        to: '/admin/templates/$templateId',
-        params: { templateId: made.id },
-        search: { orgId: input.orgId },
+        to: '/admin/o/$orgId/templates/$templateId',
+        params: { orgId: input.orgId, templateId: made.id },
       });
     } catch (cause) {
       setError({ form: errorMessage(cause) });

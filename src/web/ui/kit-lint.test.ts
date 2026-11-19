@@ -87,4 +87,13 @@ describe('kit lint', () => {
       expect(text, path).not.toMatch(/(^|[\s'"`:])read-only:/);
     }
   });
+
+  it('names the org scope in the path, not a search param, and never says Platform-wide', () => {
+    // The scope gates strip a legacy ?orgId= with a middleware that only types it.
+    const gates = new Set(['routes/admin/platform/route.tsx', 'routes/admin/o/$orgId/route.tsx']);
+    for (const { path, text } of files) {
+      if (!gates.has(path)) expect(text, path).not.toMatch(/\bsearch:[^\n]*\borgId\b/);
+      expect(text, path).not.toMatch(/Platform-wide/);
+    }
+  });
 });

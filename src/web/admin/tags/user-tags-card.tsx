@@ -31,7 +31,7 @@ interface UserPass {
 
 /**
  * Tags on the user page: the ones that work with all of the person's passes, then the ones on a
- * single pass. Platform-wide, so each row says which organization it belongs to.
+ * single pass. Across all organizations, so each row says which organization it belongs to.
  */
 export function UserTagsCard({
   userId,

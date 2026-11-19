@@ -57,14 +57,12 @@ export function DuplicateDialog({
       void navigate(
         to === 'design'
           ? {
-              to: '/admin/templates/$templateId/design',
-              params: { templateId: copy.id },
-              search: { orgId: copy.orgId ?? orgId },
+              to: '/admin/o/$orgId/templates/$templateId/design',
+              params: { orgId: copy.orgId ?? orgId, templateId: copy.id },
             }
           : {
-              to: '/admin/templates/$templateId',
-              params: { templateId: copy.id },
-              search: { orgId: copy.orgId ?? orgId },
+              to: '/admin/o/$orgId/templates/$templateId',
+              params: { orgId: copy.orgId ?? orgId, templateId: copy.id },
             },
       );
     } catch (cause) {
@@ -158,9 +156,8 @@ export function OrgDialog({
       const updated = await actions.assignOrg.mutateAsync(value === ALL ? null : value);
       if (updated.orgId && updated.orgId !== scope.orgId) {
         void navigate({
-          to: '/admin/templates/$templateId',
-          params: { templateId: updated.id },
-          search: { orgId: updated.orgId },
+          to: '/admin/o/$orgId/templates/$templateId',
+          params: { orgId: updated.orgId, templateId: updated.id },
           replace: true,
         });
       }
