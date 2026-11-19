@@ -14,6 +14,7 @@ import type { TenantPassWrite } from '../passes/http.ts';
 import { scanTenantSession } from './repo-actor.ts';
 import type { ScannerRow } from './repo-device.ts';
 import type { ScanEventRow, ScannerAssignmentSnapshot } from './repo-scope.ts';
+import type { WatchCover } from './repo-watch-cover.ts';
 import { effectiveRole } from './rules.ts';
 import type { ResolvedScope } from './scope.ts';
 import type { BoundStaff } from './staff-binding.ts';
@@ -128,6 +129,8 @@ export interface ScanActor {
   apiKeyId?: string;
   /** The org's `access_revision` when the key was admitted; a change refuses the commit. */
   apiKeyOrgRevision?: number;
+  /** A monitor's watch, loaded per request (SA D28); absent for any other device. */
+  watchCover?: WatchCover | null;
   scanningSession?: { id: string; status: 'active' | 'paused' | 'ended'; updatedAt: number };
   platformSessionId?: string;
   /** Keyed proof of the scanner credential's original CSRF secret. */
