@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { all, first, run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { act, CHECK_IN, kit, out, setupActionFixture, tpl } from './act-test-fixtures.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
