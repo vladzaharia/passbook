@@ -3,12 +3,11 @@ import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import type { AccessGrant, AccessPlan, ValidationIssue } from '@/passkit/types.ts';
 import { ZoneKeySchema } from '@/shared/contracts/scan-access.ts';
-import { Button, Combobox, IconButton, Input, SwitchRow } from '../../../../ui/index.ts';
+import { Button, Combobox, IconButton, Input, SwitchRow, WeekGrid } from '../../../../ui/index.ts';
 import type { ScanningSearch } from '../../../scanning/search.ts';
 import { useZones } from '../../../scanning/zones-query.ts';
 import { useDesigner } from '../context.tsx';
 import { dayErrors } from './issues.ts';
-import { WeekGrid } from './week-grid.tsx';
 
 const ALL = '*';
 const isAll = (g: AccessGrant) => g.zone === ALL;

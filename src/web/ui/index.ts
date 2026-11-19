@@ -67,4 +67,5 @@ export * from './toaster.tsx';
 export * from './tooltip.tsx';
 export * from './two-pane.tsx';
 export * from './typed-confirm-dialog.tsx';
+export * from './week-grid/week-grid.tsx';
 export * from './wizard.tsx';

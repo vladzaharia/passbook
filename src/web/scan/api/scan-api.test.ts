@@ -262,6 +262,7 @@ describe('createScanApi', () => {
         'inside',
         'lookup',
         'markOut',
+        'openNow',
         'pair',
         'pairPreview',
         'recent',

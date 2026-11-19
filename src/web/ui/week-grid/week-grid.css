@@ -1,0 +1,36 @@
+/* The week grid: a table for reading order and row headers; each day lays out as a card (display set on the elements). Motion only where it says something. */
+.wk-day {
+  transition:
+    border-color var(--wl-dur-hover, 120ms) var(--wl-ease-move, ease),
+    background-color var(--wl-dur-hover, 120ms) var(--wl-ease-move, ease);
+}
+.wk-day[data-invalid] {
+  border-color: var(--pk-danger-border, var(--pk-danger));
+  background: var(--pk-danger-subtle, var(--pk-surface-raised));
+}
+.wk-day[data-closed] {
+  background: var(--pk-surface-sunken);
+}
+.wk-span[data-out] {
+  opacity: 0.7;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wk-editor {
+    animation: wk-open 180ms var(--wl-ease-out, ease-out) both;
+  }
+  .wk-span {
+    animation: wk-pop 220ms var(--wl-ease-spring, ease-out) both;
+  }
+}
+@keyframes wk-open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes wk-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
