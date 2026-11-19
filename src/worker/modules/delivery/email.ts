@@ -10,6 +10,7 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
 import { deliverBundleEmail } from '../bundles/deliver.ts';
+import { holderChannels } from '../channels/gate.ts';
 import { isJoinCard } from '../join/repo-issues.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
@@ -134,6 +135,8 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'DELIVERY_STALE');
     return;
   }
+  const channels = await holderChannels(ctx, pass);
+  const attachApple = attach && channels.effective.apple.on;
   const { iconUrl, logo } = passEmailImages(images, base);
   const support = emailSupport(ctx.env, orgSettings, branding);
   const fromName = orgFromName(ctx, orgSettings['email.fromName'], platform['email.senderName']);
@@ -155,12 +158,13 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       `Your ${orgName} pass`,
     ),
     fromName,
-    downloadUrl: `${base}/p/${plainToken}/pass.pkpass`,
+    downloadUrl: channels.effective.apple.on ? `${base}/p/${plainToken}/pass.pkpass` : null,
+    printUrl: channels.holderPrint ? `${base}/p/${plainToken}/print` : null,
     manageUrl: `${base}/p/${plainToken}`,
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
     publicBaseUrl: base,
     walletOffers,
-    attached: attach,
+    attached: attachApple,
     passTitle:
       pass.displayTitle ?? (typeof passJson.description === 'string' ? passJson.description : null),
     summary: passSummary(passJson, { now: new Date(now) }),
@@ -183,7 +187,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       passId: pass.id,
       to,
       email,
-      attached: attach,
+      attached: attachApple,
     });
     return;
   }
@@ -193,11 +197,11 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     mode: pass.mode,
     templateId: pass.templateId,
     identityId: pass.identityId,
-    attached: attach,
+    attached: attachApple,
   };
   let attachments: { filename: string; type: string; content: Uint8Array }[] | undefined;
   try {
-    if (attach) {
+    if (attachApple) {
       const object = await ctx.env.BUCKET.get(pass.objectKey);
       if (!object) throw new PermanentEmailError('Pass object is missing.');
       attachments = [

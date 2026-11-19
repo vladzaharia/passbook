@@ -1,5 +1,6 @@
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { channelOn } from '../channels/gate.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
@@ -211,6 +212,8 @@ export async function eligibleWalletProvider(
   if (!walletProviderEnabled(provider)) return null;
   const pass = snapshot.pass;
   if (!pass.releaseId) return null;
+  // The one channel gate: platform, org, template and pass levels, and the design's capability.
+  if (!(await channelOn(ctx, pass, provider))) return null;
   const policy = projectionPolicy(provider);
   const approved = await getApprovedProjection(
     ctx,

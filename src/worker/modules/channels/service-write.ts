@@ -12,10 +12,11 @@ import {
 } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { bump, read } from '../../platform/counters.ts';
-import { ConflictError, RateLimitedError } from '../../platform/errors.ts';
+import { AppError, ConflictError, RateLimitedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordPassEvents } from '../events/record.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
+import { publishPass } from '../passes/publish.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import type { Actor } from '../passes/service.ts';
 import * as repo from './repo.ts';
@@ -93,6 +94,7 @@ export async function putPassChannels(
     audits,
   );
   await bump(ctx.env.DB, key, window);
+  if (before.apple.on !== after.apple.on) await bumpForApple(ctx, actor, authority, pass);
   await recordPassEvents(
     ctx,
     audits.map((data) => ({
@@ -105,6 +107,38 @@ export async function putPassChannels(
     })),
   );
   return passChannels(ctx, pass);
+}
+
+/**
+ * Apple flipped for this pass: republish (force) so the version moves, `passesUpdatedSince` and
+ * Last-Modified follow and the push goes out (N4). The device then fetches the voided variant, or
+ * the live pass again (modules/apple/variant.ts). A failure is logged: a repeat PUT changes nothing.
+ */
+async function bumpForApple(
+  ctx: ServiceContext,
+  actor: Actor,
+  authority: TenantPassWrite,
+  pass: Pass,
+): Promise<void> {
+  if (pass.removedAt !== null || pass.status !== 'active') return;
+  try {
+    await publishPass(ctx, {
+      passId: pass.id,
+      cause: actor.type === 'api_key' ? 'api' : 'admin',
+      actor,
+      authority,
+      force: true,
+      notify: false,
+    });
+  } catch (error) {
+    if (!(error instanceof AppError)) throw error;
+    ctx.log.error('channels.apple_bump_failed', {
+      code: 'CHANNEL_APPLE_BUMP',
+      orgId: pass.orgId,
+      passId: pass.id,
+      cause: error.code,
+    });
+  }
 }
 
 /** Many passes, one org and mode: on or off sets the override, reset clears it. */

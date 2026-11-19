@@ -1,6 +1,7 @@
 import { revealToken } from '../../platform/capability-token.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { channelOn } from '../channels/gate.ts';
 import { recordPassEvents } from '../events/record.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { packagePassObjects } from '../passes/package-objects.ts';
@@ -146,10 +147,12 @@ export async function addablePass(
 /** The `.pkpasses` body of the bundle's addable passes; voided and removed ones are left out. */
 export async function bundleArchive(ctx: ServiceContext, bundle: BundleRow) {
   const snapshot = await bundleEmailSnapshot(ctx.env.DB, bundle.id);
-  const passes =
+  const live =
     snapshot && snapshot.bundle.token === bundle.token
       ? snapshot.passes.filter((pass) => pass.status === 'active' && pass.removedAt === null)
       : [];
+  const apple = await Promise.all(live.map((pass) => channelOn(ctx, pass, 'apple')));
+  const passes = live.filter((_, i) => apple[i]);
   if (passes.length === 0) throw new NotFoundError('No passes to add.', 'BUNDLE_EMPTY');
   await assertBundleMembers(ctx, bundle, passes);
   const body = packagePassObjects(

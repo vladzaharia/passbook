@@ -2,7 +2,13 @@ import { PackageLimitError, packagePasses } from '../../../passkit/index.ts';
 import { MY_PASSES_BUNDLE_SIZE } from '../../../shared/contracts/me.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { type BundleRow, bundlePassIsCurrent, listBundleIds, listBundlePasses } from './repo.ts';
+import { channelOn } from '../channels/gate.ts';
+import {
+  type BundleRow,
+  bundlePassIsCurrent,
+  listBundleCandidates,
+  listBundlePasses,
+} from './repo.ts';
 
 /** Each object is checked again after its R2 read, before the archive emits its bytes. */
 function packageMyPasses(ctx: ServiceContext, userId: string, rows: readonly BundleRow[]) {
@@ -33,6 +39,29 @@ function packageMyPasses(ctx: ServiceContext, userId: string, rows: readonly Bun
   }
 }
 
+const toGate = (
+  p: Pick<BundleRow, 'id' | 'org_id' | 'mode' | 'template_id' | 'template_version'>,
+) => ({
+  id: p.id,
+  orgId: p.org_id,
+  mode: p.mode,
+  templateId: p.template_id,
+  templateVersion: p.template_version,
+});
+
+/** Only passes whose Apple channel is on are bundled; the gate is the same as the single download. */
+async function appleOn<
+  T extends Pick<BundleRow, 'id' | 'org_id' | 'mode' | 'template_id' | 'template_version'>,
+>(ctx: ServiceContext, rows: readonly T[]): Promise<T[]> {
+  const on = await Promise.all(rows.map((p) => channelOn(ctx, toGate(p), 'apple')));
+  return rows.filter((_, i) => on[i]);
+}
+
+const appleIds = async (
+  ctx: ServiceContext,
+  rows: Parameters<typeof appleOn>[1],
+): Promise<string[]> => (await appleOn(ctx, rows)).map((p) => p.id);
+
 const TOKEN_ID = /^[A-Za-z0-9-]{1,64}$/;
 
 /**
@@ -41,7 +70,7 @@ const TOKEN_ID = /^[A-Za-z0-9-]{1,64}$/;
  * only leave their own part and no other pass moves into or out of a part.
  */
 export async function bundleSnapshot(ctx: ServiceContext, userId: string) {
-  const ids = await listBundleIds(ctx.env.DB, userId);
+  const ids = await appleIds(ctx, await listBundleCandidates(ctx.env.DB, userId));
   const starts = ids.filter((_, index) => index % MY_PASSES_BUNDLE_SIZE === 0);
   if (ids.length === 0) return null;
   return { token: starts.join(','), count: ids.length, parts: starts.length };
@@ -66,11 +95,14 @@ export async function myPassesBundle(
   const starts = token ? partsOf(token) : [];
   const first = starts[part - 1];
   if (first === undefined) throw new NotFoundError('No passes to bundle.', 'BUNDLE_EMPTY');
-  const rows = await listBundlePasses(
-    ctx.env.DB,
-    userId,
-    { first, after: starts[part] ?? null },
-    MY_PASSES_BUNDLE_SIZE,
+  const rows = await appleOn(
+    ctx,
+    await listBundlePasses(
+      ctx.env.DB,
+      userId,
+      { first, after: starts[part] ?? null },
+      MY_PASSES_BUNDLE_SIZE,
+    ),
   );
   if (rows.length === 0) throw new NotFoundError('No passes to bundle.', 'BUNDLE_EMPTY');
   return { body: packageMyPasses(ctx, userId, rows), parts: starts.length };

@@ -86,6 +86,8 @@ function Detail({
   const { authed } = useSession();
   const title = holderPassName(pass, authed?.user);
   const stale = state === 'voided' || state === 'removed';
+  const publicUrl = publicUrlOf(pass.downloadUrl);
+  const printUrl = pass.holderPrint && publicUrl ? `${publicUrl}/print` : undefined;
   return (
     <HolderPassView
       pass={
@@ -106,16 +108,20 @@ function Detail({
       state={state}
       removalMessage={pass.removalMessage}
       device={device}
-      downloadHref={pass.downloadUrl}
+      downloadHref={pass.channels?.apple.on === false ? null : pass.downloadUrl}
+      channels={pass.channels}
+      printHref={printUrl}
       walletOffers={pass.presentationEligible === true ? pass.walletOffers : []}
       issuance={pass.walletIssuance}
       barcodeHref={
         // On the phone that adds, the badge leads and the card carries the code.
-        pass.presentationEligible === true && device.device !== 'iphone'
+        pass.presentationEligible === true &&
+        pass.channels?.mobile.on !== false &&
+        device.device !== 'iphone'
           ? `/api/v1/me/passes/${encodeURIComponent(pass.id)}/barcode`
           : undefined
       }
-      publicUrl={publicUrlOf(pass.downloadUrl)}
+      publicUrl={publicUrl}
       support={pass.support}
       endedOn={
         state === 'voided' || state === 'expired'
@@ -135,7 +141,9 @@ function Detail({
       rise={dealt}
       details={
         <div className="flex flex-col gap-6">
-          {state === 'active' ? <TagsCard tags={pass.tags} orgName={pass.orgName} /> : null}
+          {state === 'active' && pass.channels?.nfc.on !== false ? (
+            <TagsCard tags={pass.tags} orgName={pass.orgName} />
+          ) : null}
           <DetailsCard pass={pass} view={view} state={state} title={title} />
         </div>
       }

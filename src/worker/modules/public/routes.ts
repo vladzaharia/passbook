@@ -17,6 +17,7 @@ import {
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
+import { channelGate, recordCopy } from '../channels/gate.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { voidedAt } from '../events/repo-voided.ts';
 import { servePassFile } from '../passes/file.ts';
@@ -154,8 +155,10 @@ register(
         orgName: view.organizationName || model.orgName,
         orgLabel: model.orgName,
         passTitle: pass.displayTitle ?? view.description ?? model.orgName,
-        downloadHref: `${page}/pass.pkpass`,
-        barcodeHref: `${page}/barcode`,
+        downloadHref: model.channels.effective.apple.on ? `${page}/pass.pkpass` : null,
+        barcodeHref: model.channels.effective.mobile.on ? `${page}/barcode` : undefined,
+        channels: model.channels.effective,
+        ...(model.channels.holderPrint ? { printHref: `${page}/print` } : {}),
         walletOffers,
         issuance: walletIssuanceByProvider(),
         // The add QR opens this page on the phone, where the badge adds the pass.
@@ -225,6 +228,7 @@ register(
         theme,
       });
       await assertPassSnapshot(ctx, snapshot);
+      ctx.waitUntil(recordCopy(ctx, pass, 'mobile'));
       return new Response(html, { headers: PRESENTATION_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404) {
@@ -250,6 +254,7 @@ register(
   async (c) => {
     const ctx = svc(c);
     const pass = await passForToken(ctx, c.req.valid('param').token);
+    await channelGate(ctx, pass, 'apple');
     const snapshot = await capturePassSnapshot(ctx, pass);
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
     try {
@@ -259,6 +264,7 @@ register(
       throw error;
     }
     if (response.status === 200) {
+      await recordCopy(ctx, pass, 'apple');
       writeEvent(c.env, {
         event: 'pass.downloaded',
         orgId: pass.orgId,

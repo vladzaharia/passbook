@@ -20,7 +20,14 @@ export function passFileName(pass: Pick<Pass, 'orgSlug' | 'displayTitle' | 'seri
   return `${parts.join('-') || 'pass'}.pkpass`;
 }
 
-const etagOf = (pass: Pass) => `"${pass.objectSha256 ?? `v${pass.version}`}"`;
+/** A built variant of the pass's file (the voided Apple copy) served in place of the stored object. */
+export interface PassFileVariant {
+  objectKey: string;
+  name: string;
+}
+
+const etagOf = (pass: Pass, variant?: PassFileVariant) =>
+  `"${pass.objectSha256 ?? `v${pass.version}`}${variant ? `-${variant.name}` : ''}"`;
 
 function matchesEtag(header: string, etag: string): boolean {
   if (header.trim() === '*') return true;
@@ -37,8 +44,9 @@ export async function servePassFile(
   pass: Pass,
   request: Request,
   extraHeaders: Record<string, string> = {},
+  variant?: PassFileVariant,
 ): Promise<Response> {
-  const etag = etagOf(pass);
+  const etag = etagOf(pass, variant);
   const modifiedSeconds = Math.floor(pass.modifiedAt / 1000);
   const headers = new Headers({
     'content-type': PKPASS_CONTENT_TYPE,
@@ -55,7 +63,7 @@ export async function servePassFile(
     ? matchesEtag(noneMatch, etag)
     : !pass.modifiedCollision && Number.isFinite(sinceMs) && modifiedSeconds * 1000 <= sinceMs;
   if (notModified) return new Response(null, { status: 304, headers });
-  const object = await bucket.get(pass.objectKey);
+  const object = await bucket.get(variant?.objectKey ?? pass.objectKey);
   if (!object) throw new NotFoundError('The pass file is missing.', 'PASS_FILE_MISSING');
   headers.set('content-length', String(object.size));
   headers.set('content-disposition', `attachment; filename="${passFileName(pass)}"`);

@@ -42,6 +42,8 @@ function capabilityReasons(cap: repo.Capability): Per<ChannelReason> {
 export interface LoadedPass {
   inputs: ChannelInputs;
   rows: repo.PassChannelRows;
+  /** The pinned version's paper block allows a holder print. */
+  paperHolder: boolean;
 }
 
 /** The pass's inputs: capability from its pinned version, policy from its template, its own rows. */
@@ -57,6 +59,7 @@ export async function loadPass(
   ]);
   return {
     rows,
+    paperHolder: cap.paperHolder,
     inputs: {
       ...lv,
       capability: capabilityReasons(cap),

@@ -6,6 +6,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError, ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { holderChannels } from '../channels/gate.ts';
 import { voidedAt } from '../events/repo-voided.ts';
 import { removePassFromUser } from '../holders/service-remove.ts';
 import { assetNamesOf } from '../passes/detail.ts';
@@ -80,6 +81,13 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow, tags: MyTag[]): 
   });
   const base = plainToken === null ? null : `${baseUrl(ctx.env)}/p/${plainToken}`;
   const passJson = parsePassJson(ctx, row);
+  const { effective: channels, holderPrint } = await holderChannels(ctx, {
+    id: row.id,
+    orgId: row.org_id,
+    mode: row.mode,
+    templateId: row.template_id,
+    templateVersion: row.template_version,
+  });
   const presentationEligible =
     row.org_status === 'active' &&
     canPresent(
@@ -92,7 +100,7 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow, tags: MyTag[]): 
       { voided: passJson.voided, expirationDate: passJson.expirationDate },
       ctx.clock.now(),
     );
-  if (!presentationEligible) {
+  if (!presentationEligible || !channels.mobile.on) {
     delete passJson.barcode;
     delete passJson.barcodes;
   }
@@ -129,6 +137,8 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow, tags: MyTag[]): 
     refreshRequestedAt: row.refresh_requested_at,
     downloadUrl: base === null ? null : `${base}/pass.pkpass`,
     presentationEligible,
+    channels,
+    holderPrint,
     walletOffers,
     walletIssuance: walletIssuanceByProvider(),
     passJson,

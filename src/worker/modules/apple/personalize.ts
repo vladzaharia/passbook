@@ -5,6 +5,7 @@ import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto
 import { BadRequestError, ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { channelOn } from '../channels/gate.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { depsOf } from '../passes/deps.ts';
 import { publishPass } from '../passes/publish.ts';
@@ -92,6 +93,8 @@ export async function personalize(
   )
     throw unavailable();
   if (!(await personalizationCredentialCurrent(db, pass))) throw unavailable();
+  // A pass Apple is off for gets no new personalization; the voided copy has nothing to personalize.
+  if (!(await channelOn(ctx, pass, 'apple'))) throw unavailable();
   const deps = depsOf(ctx.env);
   const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
   const required = await requiredFields(deps.registry, template);

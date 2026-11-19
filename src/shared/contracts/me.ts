@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { EffectiveChannelsSchema } from './channels.ts';
 import { IdSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { WalletProviderIssuanceSchema, WalletProviderSchema } from './wallet-providers.ts';
 
@@ -50,6 +51,10 @@ export const MyPassSchema = z.object({
   walletIssuance: z.partialRecord(WalletProviderSchema, WalletProviderIssuanceSchema).default({}),
   /** Server-checked eligibility for showing this pass's barcode. */
   presentationEligible: z.boolean().optional(),
+  /** What each delivery channel offers this holder: the one gate (modules/channels/gate.ts). */
+  channels: EffectiveChannelsSchema.optional(),
+  /** Paper is on and the template lets the holder print. */
+  holderPrint: z.boolean().optional(),
   passJson: z.record(z.string(), z.unknown()),
   assetBaseUrl: z.string().nullable(),
   /** Image files the pass can load: template files plus per-pass overrides. */

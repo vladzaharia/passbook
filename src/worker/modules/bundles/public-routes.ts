@@ -20,6 +20,7 @@ import { renderBundlePage } from '../../ssr/bundle-page.tsx';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage } from '../../ssr/pass-page.tsx';
 import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
+import { channelGate } from '../channels/gate.ts';
 import { servePassFile } from '../passes/file.ts';
 import { svc } from '../passes/http.ts';
 import { presentationForPass } from '../public/presentation.ts';
@@ -92,8 +93,12 @@ register(
               : pass.status === 'voided' || view.voided
                 ? ('voided' as const)
                 : ('active' as const),
-          downloadHref: `/b/${token}/${pass.id}/pass.pkpass`,
-          barcodeHref: `/b/${token}/${pass.id}/barcode`,
+          downloadHref: model.channels.effective.apple.on
+            ? `/b/${token}/${pass.id}/pass.pkpass`
+            : null,
+          barcodeHref: model.channels.effective.mobile.on
+            ? `/b/${token}/${pass.id}/barcode`
+            : undefined,
         };
       });
       const org = members[0]?.model.orgName ?? '';
@@ -180,6 +185,7 @@ register(
     const p = c.req.valid('param');
     const bundle = await bundleForToken(ctx, p.token);
     const pass = await addablePass(ctx, bundle, p.passId);
+    await channelGate(ctx, pass, 'apple');
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
     try {
       await assertBundleMember(ctx, bundle, pass);

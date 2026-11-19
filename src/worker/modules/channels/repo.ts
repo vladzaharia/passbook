@@ -5,7 +5,7 @@ import {
   type TemplateChannelState,
 } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 
 export interface TemplateRef {
   id: string;
@@ -80,6 +80,8 @@ export interface Capability {
   google: boolean;
   samsung: boolean;
   scanTags: boolean;
+  /** The manifest's paper block allows a holder print (absent: it does). */
+  paperHolder: boolean;
 }
 
 /** What a template version can serve: a wallets block per provider (type not off) and scan.tags. */
@@ -89,11 +91,12 @@ export async function capabilityOf(
   version: string | null,
 ): Promise<Capability> {
   const r = version
-    ? await first<{ g: string | null; s: string | null; t: string | null }>(
+    ? await first<{ g: string | null; s: string | null; t: string | null; h: number | null }>(
         db,
         `SELECT json_extract(manifest, '$.wallets.google.type') AS g,
            json_extract(manifest, '$.wallets.samsung.type') AS s,
-           json_type(manifest, '$.scan.tags') AS t
+           json_type(manifest, '$.scan.tags') AS t,
+           json_extract(manifest, '$.paper.holder') AS h
          FROM template_versions WHERE template_id = ? AND version = ?`,
         [templateId, version],
       )
@@ -102,6 +105,7 @@ export async function capabilityOf(
     google: !!r?.g && r.g !== 'off',
     samsung: !!r?.s && r.s !== 'off',
     scanTags: r?.t === 'object',
+    paperHolder: r?.h !== 0,
   };
 }
 
@@ -127,4 +131,19 @@ export async function overrideGroups(
     [channel, orgId, mode, templateId],
   );
   return rows.map((r) => ({ override: r.override, passes: r.n }));
+}
+
+/** Copy evidence: insert-once, so a later delivery never moves the first one. */
+export async function insertCopy(
+  db: D1Database,
+  pass: { id: string; orgId: string; mode: Mode },
+  channel: Channel,
+  at: number,
+): Promise<void> {
+  await run(
+    db,
+    `INSERT OR IGNORE INTO pass_channel_copies (pass_id, org_id, mode, channel, copy_at)
+     VALUES (?, ?, ?, ?, ?)`,
+    [pass.id, pass.orgId, pass.mode, channel, at],
+  );
 }

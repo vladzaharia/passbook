@@ -2,6 +2,7 @@ import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { recordCopy } from '../channels/gate.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { passForToken } from '../public/service.ts';
 import { ensureSamsungFetchRef } from './callbacks-ref.ts';
@@ -140,6 +141,7 @@ export async function issueWalletOffer(
     authority: { kind: 'download', token: pass.downloadToken },
   });
   if (!created) throw notFound();
+  await recordCopy(ctx, pass, provider);
   const { operation, ref, expiresAt } = created;
   let delivered = false;
   let fenceLost = false;
