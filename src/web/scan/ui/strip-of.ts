@@ -1,7 +1,8 @@
 import { SCAN_COPY, scanLine } from '../../../shared/copy/scan.ts';
 import { formatTime } from '../../lib/format.ts';
 import type { ResolvedOutcome } from '../machine/access-events.ts';
-import type { Recent } from '../machine/types.ts';
+import { savedCount } from '../machine/derive.ts';
+import type { Recent, ScanState } from '../machine/types.ts';
 import { verdictLine } from '../machine/verdict-lines.ts';
 import type { StripEntry } from './last-scan-strip.tsx';
 
@@ -33,3 +34,21 @@ export function stripOf(
     undoable,
   };
 }
+
+/** The dock strip: the newest scan, or while offline what still works and what is saved. */
+export function dockStrip(
+  s: Pick<ScanState, 'online' | 'queue' | 'unsure'>,
+  last: Recent | undefined,
+  undoable: boolean,
+  now: number,
+): StripEntry | null {
+  if (s.online) return stripOf(last, undoable, now);
+  const n = savedCount(s);
+  return {
+    kind: 'system',
+    title: SCAN_COPY.offline.strip,
+    meta: n > 0 ? scanLine(SCAN_COPY.offline.saved, { n }) : '',
+  };
+}
+
+export { savedCount };

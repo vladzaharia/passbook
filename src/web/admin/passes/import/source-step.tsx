@@ -87,9 +87,8 @@ export function SourceStep({ orgId }: { orgId: string }) {
         onSuccess: (imp) => {
           if (source.kind === 'url') rememberImportLink(imp.id, source.url);
           void navigate({
-            to: '/admin/passes/import/$importId',
-            params: { importId: imp.id },
-            search: { orgId },
+            to: '/admin/o/$orgId/passes/import/$importId',
+            params: { orgId, importId: imp.id },
           });
         },
       },

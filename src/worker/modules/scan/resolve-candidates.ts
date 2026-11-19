@@ -145,10 +145,12 @@ export async function findCandidates(
 }
 
 export const accepts = (actor: ScanActor, pass: Pass) =>
-  actor.templateIds.length === 0
-    ? (actor.principal === 'admin' && actor.scanner === null) ||
-      actor.settings.acceptAllTemplates === true
-    : actor.templateIds.includes(pass.templateId);
+  actor.overrideScope?.templateId
+    ? actor.overrideScope.templateId === pass.templateId
+    : actor.templateIds.length === 0
+      ? (actor.principal === 'admin' && actor.scanner === null) ||
+        actor.settings.acceptAllTemplates === true
+      : actor.templateIds.includes(pass.templateId);
 
 export function matchesEvent(actor: ScanActor, pass: Pass): boolean {
   return actor.event ? eventAcceptsPass(actor, actor.event, pass) : true;

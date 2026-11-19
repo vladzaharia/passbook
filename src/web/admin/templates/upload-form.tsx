@@ -6,6 +6,7 @@ import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { errorMessage, isApiError } from '../../lib/errors.ts';
 import { markMinted } from '../../lib/motion.ts';
+import { orgPath } from '../../lib/scope.ts';
 import {
   Buddy,
   Button,
@@ -127,9 +128,8 @@ export function UploadForm({
     markCreated(`template:${landedId}`, version ? 'version' : 'imported');
     if (s?.version) markCreated(`template:${landedId}:version`, s.version);
     void navigate({
-      to: '/admin/templates/$templateId',
-      params: { templateId: landedId },
-      search: { orgId: selectedScope },
+      to: '/admin/o/$orgId/templates/$templateId',
+      params: { orgId: selectedScope, templateId: landedId },
       replace: true,
     });
   }, [landedId]);
@@ -274,7 +274,7 @@ export function UploadForm({
       <PageHeader
         title={title}
         breadcrumbs={[
-          { label: 'Templates', to: '/admin/templates', search: { orgId: selectedScope } },
+          { label: 'Templates', to: orgPath(selectedScope, '/templates') },
           { label: version ? 'New version' : 'Upload' },
         ]}
         actions={

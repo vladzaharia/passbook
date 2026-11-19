@@ -168,8 +168,10 @@ describe('Scanner page', () => {
       '/admin/scanning',
     );
     expect(screen.getByText('Online')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Scans' }).getAttribute('href')).toContain('tab=scans');
-    expect(screen.getByRole('link', { name: 'Scans' }).getAttribute('href')).toContain(
+    expect(screen.getByRole('link', { name: 'View scans' }).getAttribute('href')).toContain(
+      'tab=scans',
+    );
+    expect(screen.getByRole('link', { name: 'View scans' }).getAttribute('href')).toContain(
       'scannerId=s1',
     );
     expect(screen.getByRole('button', { name: 'Pair again' })).toBeInTheDocument();

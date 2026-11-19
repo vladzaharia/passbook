@@ -9,6 +9,7 @@ import type { AccessManifest, AccessPlan, Json } from '../../../passkit/types.ts
 import type { ScanAccess } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { FoundAccess } from './access-types.ts';
+import { scopeSessionId } from './actor.ts';
 import type { ScanActor } from './guard.ts';
 import { type PlaceRow, zoneRowsStmt } from './occupancy/repo-reads.ts';
 import type { OccZone } from './occupancy/rules.ts';
@@ -68,7 +69,7 @@ export function planAccessReads(
   found: Found,
 ): AccessReads | null {
   if (!accessManifestOf(found) || actor.event) return null;
-  const session = actor.scanningSession?.id ?? null;
+  const session = scopeSessionId(actor);
   const stmts = [
     orgZonesStmt(ctx.env.DB, actor.orgId),
     ...(session ? [sessionZonesStmt(ctx.env.DB, actor.orgId, session)] : []),
@@ -200,7 +201,7 @@ export function accessStop(
       gateBefore: loaded.gate,
       visitAt: loaded.visitAt,
       zoneId: d.access.zone?.id ?? null,
-      sessionId: actor.scanningSession?.id ?? null,
+      sessionId: scopeSessionId(actor),
       limit: d.visitLimit,
       gapMs: (manifest.rules?.visitGapMinutes ?? DEFAULT_GAP_MINUTES) * MINUTE,
       waitMs:

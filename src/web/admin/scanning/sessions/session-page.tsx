@@ -45,10 +45,10 @@ export function ScanningSessionPage({
           onClose={() => setDuplicate(undefined)}
           onCreated={(id) => {
             setDuplicate(undefined);
+            if (!scope.orgId) return;
             void navigate({
-              to: '/admin/scanning/sessions/$sessionId',
-              params: { sessionId: id },
-              search: { orgId: scope.orgId },
+              to: '/admin/o/$orgId/scanning/sessions/$sessionId',
+              params: { orgId: scope.orgId, sessionId: id },
             });
           }}
         />

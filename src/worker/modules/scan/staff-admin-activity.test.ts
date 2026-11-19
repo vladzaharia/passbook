@@ -210,7 +210,7 @@ describe('mode-specific staff activity and device PIN locks', () => {
 
     expect((await list()).find((staff) => staff.id === person.id)).toMatchObject({
       today: 4,
-      lastScan: { at: now - 10_000, scannerName: 'Scanner' },
+      lastScan: { at: now - 10_000, scannerName: expect.stringMatching(/^Scanner \S+/) },
     });
     expect((await list(orgId, 'test')).find((staff) => staff.id === person.id)).toMatchObject({
       today: 0,

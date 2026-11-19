@@ -15,16 +15,13 @@ const FLAG_TEXT = {
   pass_ended: ACCESS_COPY.inside.passEnded,
 };
 
-/** `Floor 3 · in HQ · 7:58 AM · 4 h 12 min`. */
+/** `Floor 3, HQ · In since 7:58 AM · 4 h 12 min`. */
 export function metaOf(row: InsideRow, now: number): string {
   return [
-    row.zone.name,
-    row.zone.parent ? `in ${row.zone.parent}` : null,
-    formatTime(row.since),
+    [row.zone.name, row.zone.parent].filter(Boolean).join(', '),
+    `In since ${formatTime(row.since)}`,
     stayText(Math.max(0, now - row.since)),
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  ].join(' · ');
 }
 
 /**
@@ -105,13 +102,14 @@ export function MarkOutButton({
     <Button
       variant="ghost"
       size="sm"
+      className="scan-in-mark"
       disabled={disabled}
       title={disabled ? ACCESS_COPY.inside.needsConnection : undefined}
       aria-label={`${SCAN_COPY.actions.markAsOut}: ${name}`}
       iconStart={<LogOut aria-hidden />}
       onClick={() => onMark(row)}
     >
-      {SCAN_COPY.actions.markAsOut}
+      <span className="scan-in-mark-label">{SCAN_COPY.actions.markAsOut}</span>
     </Button>
   );
 }

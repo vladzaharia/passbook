@@ -48,7 +48,7 @@ describe("Who's in", () => {
     expect(items).toHaveLength(3);
     // rows(3): the oldest (n=2) leads.
     expect(items[0]).toHaveTextContent(String(insideRow(2).holder));
-    expect(items[0]).toHaveTextContent('Floor 3 · in HQ');
+    expect(items[0]).toHaveTextContent('Floor 3, HQ · In since');
     expect(items[0]).toHaveTextContent(/1 h \d+ min|\d+ min/);
     expect(items[0]).toHaveTextContent('Out by');
   });

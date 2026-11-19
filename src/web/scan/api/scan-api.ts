@@ -16,12 +16,15 @@ import {
 } from '../../../shared/contracts/nfc-tags.ts';
 import {
   type ScanActRequestSchema,
-  type ScanAdminScopeSchema,
   ScanCountsSchema,
   ScanOutcomeSchema,
   type ScanResolveRequestSchema,
   type ScanUndoRequestSchema,
 } from '../../../shared/contracts/scan.ts';
+import type {
+  ScanOverrideNoteSchema,
+  ScanOverrideRequestSchema,
+} from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanRoleChange } from '../../../shared/contracts/scan-role.ts';
 import {
   type ScanBatchRequestSchema,
@@ -51,46 +54,20 @@ import {
   type MarkOutRequest,
   MarkOutResultSchema,
 } from '../inside/inside-types.ts';
-import { ScanApiError } from './errors.ts';
-import { problemOf } from './problem.ts';
+import { canReload, ScanApiError } from './errors.ts';
+import {
+  type AdminScope,
+  type Call,
+  problemOf,
+  retryAfterMs,
+  type ScanApiDeps,
+  scopeQuery,
+} from './scan-api-support.ts';
 
 export { ScanApiError } from './errors.ts';
+export type { ScanApiDeps } from './scan-api-support.ts';
 
 const BASE = '/api/v1/scan';
-
-export interface ScanApiDeps {
-  fetch?: typeof fetch;
-  /** The scan session's CSRF secret, read per write. Undefined for a bearer or before the session. */
-  csrf: () => string | undefined;
-  scope?: () => AdminScope | undefined;
-  /** Waits before the one retry of a 409. */
-  sleep?: (ms: number) => Promise<void>;
-  /** Refetches the scan session and its configuration (a 409 `SCAN_CONFIG_CHANGED` or `SCAN_STAFF_CHANGED`). */
-  refreshConfig?: () => Promise<void>;
-}
-
-type AdminScope = z.infer<typeof ScanAdminScopeSchema>;
-type Call = { signal?: AbortSignal };
-
-function retryAfterMs(res: Response): number | undefined {
-  const raw = res.headers.get('retry-after');
-  if (raw === null) return undefined;
-  const seconds = Number(raw);
-  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
-  const at = Date.parse(raw);
-  return Number.isNaN(at) ? undefined : Math.max(0, at - Date.now());
-}
-
-/** An admin names the org (and event, templates) on a GET as a query. */
-export function scopeQuery(scope: AdminScope | undefined): string {
-  if (!scope) return '';
-  const q = new URLSearchParams({ orgId: scope.orgId });
-  if (scope.eventId) q.set('eventId', scope.eventId);
-  if (scope.setupId) q.set('setupId', scope.setupId);
-  if (scope.templateIds?.length) q.set('templateIds', scope.templateIds.join(','));
-  q.set('timeZone', scope.timeZone);
-  return `?${q.toString()}`;
-}
 
 export function createScanApi(deps: ScanApiDeps) {
   const doFetch = deps.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
@@ -174,8 +151,8 @@ export function createScanApi(deps: ScanApiDeps) {
       }
       // The door's configuration moved under this request: reload it and send the same key once more.
       // Never an unpair: only a 401 means the credential is gone.
-      else if (code === 'SCAN_CONFIG_CHANGED' && deps.refreshConfig && !call.signal?.aborted) {
-        await deps.refreshConfig();
+      else if (code === 'SCAN_CONFIG_CHANGED' && canReload(deps, path, call)) {
+        await deps.refreshConfig?.();
         attempt = await once(method, path, body, call);
       }
       // The signed-in staff member changed (role, PIN or access): drop the sign-in so the PIN prompt shows.
@@ -268,17 +245,9 @@ export function createScanApi(deps: ScanApiDeps) {
     batch: (body: z.infer<typeof ScanBatchRequestSchema>, call?: Call) =>
       request('POST', '/batch', ScanBatchResultSchema, body, call),
     inside: (query: InsideQuery, call?: Call) => {
-      const q = new URLSearchParams();
-      for (const [key, value] of Object.entries(query))
-        if (value !== undefined) q.set(key, String(value));
-      const qs = q.toString();
-      return request(
-        'GET',
-        qs ? `/live/inside?${qs}` : '/live/inside',
-        InsideListSchema,
-        undefined,
-        call,
-      );
+      const entries = Object.entries(query).filter(([, v]) => v !== undefined);
+      const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString();
+      return request('GET', `/live/inside${qs && `?${qs}`}`, InsideListSchema, undefined, call);
     },
     tagInspect: (body: { tag: TagRead }, call?: Call) =>
       request('POST', '/tags/inspect', ScanTagInspectResponseSchema, body, call),
@@ -300,6 +269,10 @@ export function createScanApi(deps: ScanApiDeps) {
       request('POST', `/tag-enrollments/${encodeURIComponent(id)}/decline`, null, {}, call),
     openNow: (body: z.infer<typeof ScanSessionOpenNowSchema>, call?: Call) =>
       request('POST', '/session/open-now', ScanSessionOpenedSchema, body, call),
+    override: (body: z.infer<typeof ScanOverrideRequestSchema>, call?: Call) =>
+      request('POST', '/overrides', ScanOutcomeSchema, body, call),
+    overrideNote: (id: string, note: z.infer<typeof ScanOverrideNoteSchema>) =>
+      request('POST', `/overrides/${encodeURIComponent(id)}/note`, null, { note }),
     markOut: (body: MarkOutRequest, call?: Call) =>
       request('POST', '/mark-out', MarkOutResultSchema, body, call),
   };

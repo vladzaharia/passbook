@@ -248,7 +248,7 @@ describe('designer', () => {
     const breadcrumb = screen.getByRole('navigation', { name: 'Breadcrumb' });
     expect(within(breadcrumb).getByRole('link', { name: 'Copper card' })).toHaveAttribute(
       'href',
-      '/admin/templates/tpl1?orgId=org2',
+      '/admin/o/org2/templates/tpl1',
     );
   });
 

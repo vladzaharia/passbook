@@ -1,4 +1,5 @@
 // Screenshots every (route, viewport, theme) and records console errors, failed requests, status.
+
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { type Browser, chromium } from '@playwright/test';
@@ -13,6 +14,7 @@ import {
   VIEWPORTS,
   type ViewportName,
 } from './routes.ts';
+import { settledShot } from './settle.ts';
 
 export type Shot = {
   route: string;
@@ -117,7 +119,7 @@ async function shoot(
           note = [note, 'skeleton still showing'].filter(Boolean).join('; ');
         });
       if (status !== null && status >= 400) note = `HTTP ${status}`;
-      await page.screenshot({ path: resolve(o.out, file), fullPage: true });
+      await settledShot(page, resolve(o.out, file));
     } catch (error) {
       note = `capture failed: ${(error as Error).message.split('\n')[0]}`;
     }

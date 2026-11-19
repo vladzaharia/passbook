@@ -34,6 +34,7 @@ export interface ScanAppViewProps {
     name: string;
     staff?: string | null;
     state: CapsuleState;
+    mode?: string;
     chips?: ReactNode;
     menu?: ReactNode;
     onTitle?: () => void;
@@ -149,6 +150,7 @@ export function ScanAppView({
             orgName={capsule.orgName ?? ''}
             staff={capsule.staff ?? null}
             state={capsule.state}
+            {...(capsule.mode ? { mode: capsule.mode } : {})}
             chips={capsule.chips}
             menu={capsule.menu}
             {...(capsule.onTitle ? { onTitle: capsule.onTitle } : {})}

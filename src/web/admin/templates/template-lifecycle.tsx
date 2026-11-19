@@ -100,7 +100,12 @@ export function useTemplateLifecycle(t: Template, canPublish: boolean) {
           onConfirm={async () => {
             await actions.remove.mutateAsync();
             toast.success('Template deleted');
-            void navigate({ to: '/admin/templates', search: { orgId }, replace: true });
+            if (orgId)
+              void navigate({
+                to: '/admin/o/$orgId/templates',
+                params: { orgId },
+                replace: true,
+              });
           }}
         />
       </>
