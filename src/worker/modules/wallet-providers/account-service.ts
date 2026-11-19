@@ -26,7 +26,6 @@ import {
   snapshotWalletCredentialContext,
 } from './account-credential-material.ts';
 import { validateGoogleAccount } from './google-credentials.ts';
-import { isNewModelAccount } from './repo-enrolments.ts';
 import { walletProviderIssuance } from './provider-policy.ts';
 import {
   type AccountRow,
@@ -36,6 +35,7 @@ import {
   saveAccountConfiguration,
   transitionAccount,
 } from './repo-accounts.ts';
+import { isNewModelAccount } from './repo-enrolments.ts';
 import { validateSamsungCredentials } from './samsung-credentials.ts';
 
 export type { WalletProviderCredentialSnapshot } from './account-credential-material.ts';
