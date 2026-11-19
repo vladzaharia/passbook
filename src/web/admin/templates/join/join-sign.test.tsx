@@ -75,7 +75,15 @@ describe('print sign', () => {
   });
 
   it('prints the extra line the admin typed', async () => {
-    mount(<JoinSign orgId="org-1" orgName="Dos Olas" url={URL_OK} hasLogo={false} line="Free. One card each." />);
+    mount(
+      <JoinSign
+        orgId="org-1"
+        orgName="Dos Olas"
+        url={URL_OK}
+        hasLogo={false}
+        line="Free. One card each."
+      />,
+    );
     expect(await screen.findByText('Free. One card each.')).toBeInTheDocument();
   });
 

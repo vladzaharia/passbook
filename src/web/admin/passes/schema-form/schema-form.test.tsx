@@ -308,7 +308,9 @@ describe('SchemaForm: empty sections on an existing pass', () => {
   };
   it('folds a section with nothing set, shows it on request, and masks a password', async () => {
     const user = userEvent.setup();
-    render(<SchemaForm schema={folded} value={{ name: 'Ana' }} onChange={() => {}} collapseEmpty />);
+    render(
+      <SchemaForm schema={folded} value={{ name: 'Ana' }} onChange={() => {}} collapseEmpty />,
+    );
     expect(screen.getByLabelText(/Name/)).toBeTruthy();
     expect(screen.queryByLabelText('Wi-Fi password')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Show' }));
