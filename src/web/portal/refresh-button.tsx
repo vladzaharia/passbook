@@ -6,20 +6,11 @@ import { myPassesKey, requestRefresh } from './api.ts';
 import { type RefreshFields, refreshPhase } from './refresh.ts';
 
 /**
- * Refresh in the pass page's header, or beside a tile's badge (compact). While pending the foil
+ * State of a pass's refresh. While pending the foil
  * rail runs under the card; when the pass lands the card mints, "Pass updated" toasts and the
  * button's `done` changes.
  */
-export function RefreshButton({
-  passId,
-  pass,
-  compact = false,
-}: {
-  passId: string;
-  pass: RefreshFields;
-  /** Tiles: a badge-sized outline icon button; the label (and countdown) is its name and tooltip. */
-  compact?: boolean;
-}) {
+export function useRefresh(passId: string, pass: RefreshFields) {
   const client = useQueryClient();
   const [localRequestedAt, setLocal] = useState<number | null>(null);
   const [cooldownMs, setCooldownMs] = useState<number | undefined>(undefined);
@@ -63,19 +54,37 @@ export function RefreshButton({
         : 'Refresh';
 
   const pending = phase === 'pending' || mutation.isPending;
-  if (compact) {
-    return (
-      <IconButton
-        label={label}
-        variant="outline"
-        size="badge"
-        aria-busy={pending || undefined}
-        disabled={pending || phase === 'cooldown'}
-        icon={<RefreshCw aria-hidden className={pending ? 'wl-spin wl-essential' : undefined} />}
-        onClick={() => mutation.mutate()}
-      />
-    );
-  }
+  return { phase, label, pending, updated, request: () => mutation.mutate() };
+}
+
+export type Refresh = ReturnType<typeof useRefresh>;
+
+/** The icon button beside a tile's badge: the label (and countdown) is its name and tooltip. */
+export function RefreshIconButton({
+  refresh,
+  className,
+}: {
+  refresh: Refresh;
+  className?: string;
+}) {
+  const { phase, label, pending } = refresh;
+  return (
+    <IconButton
+      label={label}
+      variant="outline"
+      size="badge"
+      {...(className ? { className } : {})}
+      aria-busy={pending || undefined}
+      disabled={pending || phase === 'cooldown'}
+      icon={<RefreshCw aria-hidden className={pending ? 'wl-spin wl-essential' : undefined} />}
+      onClick={refresh.request}
+    />
+  );
+}
+
+/** Refresh in the pass page's header (the tile's is RefreshIconButton). */
+export function RefreshButton({ passId, pass }: { passId: string; pass: RefreshFields }) {
+  const { phase, label, pending, updated, request } = useRefresh(passId, pass);
   return (
     <Button
       variant="outline"
@@ -84,7 +93,7 @@ export function RefreshButton({
       busy="spin"
       done={updated || undefined}
       disabled={phase === 'cooldown'}
-      onClick={() => mutation.mutate()}
+      onClick={request}
       title={phase === 'pending' ? 'Wallet may take a minute to update' : undefined}
     >
       {/* Pending keeps the word, so the button holds its width; the spin and aria-busy say it. */}
