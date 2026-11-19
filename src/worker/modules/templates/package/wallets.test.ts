@@ -21,7 +21,7 @@ const starter = (() => {
   if (!found) throw new Error('starter-store-card is not baked');
   return found;
 })();
-const { blueprint: _blueprint, ...starterManifest } = starter.manifest;
+const { blueprint: _blueprint, wallets: _wallets, ...starterManifest } = starter.manifest;
 
 const art = () => ({
   'wallets/google/logo.png': makePng(660, 660),

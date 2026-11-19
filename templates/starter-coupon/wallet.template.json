@@ -2,6 +2,11 @@
   "schema": 1,
   "name": "Coupon",
   "description": "A single-use offer with an expiry.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",
