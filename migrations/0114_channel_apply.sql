@@ -727,7 +727,7 @@ CREATE UNIQUE INDEX channel_apply_runs_running ON channel_apply_runs(org_id, mod
 CREATE INDEX channel_apply_runs_due ON channel_apply_runs(due_at) WHERE state IN ('pending', 'running');
 CREATE INDEX channel_apply_runs_template ON channel_apply_runs(template_id);
 CREATE TRIGGER channel_apply_runs_tenant BEFORE INSERT ON channel_apply_runs
-WHEN NOT EXISTS (SELECT 1 FROM templates t WHERE t.id = NEW.template_id AND t.org_id = NEW.org_id)
+WHEN NOT EXISTS (SELECT 1 FROM templates t WHERE t.id = NEW.template_id AND (t.org_id = NEW.org_id OR t.org_id IS NULL))
 BEGIN SELECT RAISE(ABORT, 'channel apply run tenant mismatch'); END;
 CREATE TRIGGER channel_apply_runs_insert BEFORE INSERT ON channel_apply_runs
 WHEN NEW.state != 'pending'
