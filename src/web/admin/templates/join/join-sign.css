@@ -111,7 +111,19 @@
     }
   }
 }
+/* The line field is for the screen; it never prints. */
+.jl-edit {
+  max-width: 22.5rem;
+  margin: 0 auto 1rem;
+}
+.jl-paper .jl-line {
+  font-weight: 600;
+  color: #1c3550;
+}
 @media print {
+  .jl-edit {
+    display: none;
+  }
   body * {
     visibility: hidden;
   }

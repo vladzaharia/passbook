@@ -116,13 +116,13 @@ describe('stored passes keep rebuilding', () => {
     expect(fresh.boardingPass?.transitType).toBe('PKTransitTypeAir');
   });
 
-  it('a Membership with no guests or status builds: no free guests, active', async () => {
+  it('a Membership with no guests or status builds: no guests row, active', async () => {
     const rest = { ...(await SAMPLE('starter-generic')) };
     for (const key of ['points', 'status', 'guests']) delete rest[key];
     const pass = (await buildBaked('starter-generic', material, rest)).passJson;
     expect(pass.voided).toBe(false);
     const fields = Object.values(pass.generic ?? {}).flat() as { key: string; value: unknown }[];
-    expect(fields.find((f) => f.key === 'guests')?.value).toBe(0);
+    expect(fields.find((f) => f.key === 'guests')).toBeUndefined();
     expect(fields.find((f) => f.key === 'status')?.value).toBe('Active');
   });
 

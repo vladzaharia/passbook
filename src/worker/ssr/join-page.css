@@ -153,8 +153,17 @@ body {
     margin-inline: auto;
   }
   .jn-host {
+    width: 100%;
     max-width: 30rem;
     margin-inline: auto;
+  }
+}
+
+/* On a phone the form leads and the card follows: the first screen asks for the name, it does not
+   fill with a card. */
+@media (max-width: 55.99rem) {
+  .jn-side {
+    order: -1;
   }
 }
 

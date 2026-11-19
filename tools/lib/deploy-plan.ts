@@ -50,6 +50,7 @@ const FLAGS = [
   'first',
   'migrate-only',
   'promote',
+  'require-wallet-migrated',
 ] as const;
 
 /**

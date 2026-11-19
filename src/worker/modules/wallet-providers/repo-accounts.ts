@@ -85,7 +85,7 @@ export function findAccount(
 ): Promise<AccountRow | null> {
   return first<AccountRow>(
     db,
-    `SELECT a.id, a.org_id, a.mode, a.provider, a.revision,
+    `SELECT a.id, a.org_id, a.mode, a.provider, ${REVISION_EXPR} AS revision,
       a.credential_id, a.revoked_at, a.updated_at,
       c.kek_version, c.iv, c.wrapped_dek, c.ciphertext
     FROM wallet_provider_accounts a

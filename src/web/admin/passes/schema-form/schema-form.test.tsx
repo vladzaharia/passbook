@@ -290,3 +290,38 @@ describe('SchemaForm', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 });
+
+describe('SchemaForm: empty sections on an existing pass', () => {
+  const folded = {
+    type: 'object',
+    required: ['name'],
+    properties: {
+      name: { type: 'string', 'x-label': 'Name', 'x-group': 'Member', 'x-order': 1 },
+      wifiPassword: {
+        type: 'string',
+        'x-label': 'Wi-Fi password',
+        'x-widget': 'password',
+        'x-group': 'Wi-Fi',
+        'x-order': 2,
+      },
+    },
+  };
+  it('folds a section with nothing set, shows it on request, and masks a password', async () => {
+    const user = userEvent.setup();
+    render(
+      <SchemaForm schema={folded} value={{ name: 'Ana' }} onChange={() => {}} collapseEmpty />,
+    );
+    expect(screen.getByLabelText(/Name/)).toBeTruthy();
+    expect(screen.queryByLabelText('Wi-Fi password')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Show' }));
+    expect(screen.getByLabelText('Wi-Fi password')).toHaveAttribute('type', 'password');
+    await user.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(screen.getByLabelText('Wi-Fi password')).toHaveAttribute('type', 'text');
+    await user.click(screen.getByRole('button', { name: 'Hide password' }));
+    expect(screen.getByLabelText('Wi-Fi password')).toHaveAttribute('type', 'password');
+  });
+  it('keeps every section when not collapsing', () => {
+    render(<SchemaForm schema={folded} value={{ name: 'Ana' }} onChange={() => {}} />);
+    expect(screen.getByLabelText('Wi-Fi password')).toBeTruthy();
+  });
+});
