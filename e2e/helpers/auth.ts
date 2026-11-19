@@ -47,7 +47,10 @@ export async function startOidcAs(page: Page, role: Role, next = '/') {
 
 export async function signInAs(page: Page, role: Role, next = '/') {
   await startOidcAs(page, role, next);
-  await page.waitForURL((u) => u.origin === e2eOrigin && u.pathname === next);
+  // /admin opens a scope (/admin/platform or /admin/o/<org>) rather than staying put.
+  const landed = (path: string) =>
+    path === next || (next === '/admin' && /^\/admin\/(platform|o\/[^/]+)(\/|$)/.test(path));
+  await page.waitForURL((u) => u.origin === e2eOrigin && landed(u.pathname));
 }
 
 export async function saveState(page: Page, role: Role) {
