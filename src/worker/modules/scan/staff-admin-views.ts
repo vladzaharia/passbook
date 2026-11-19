@@ -4,6 +4,7 @@ import { ConflictError, UnauthenticatedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { captureConsoleFeed, consoleReadAuthority } from './feed-console-page.ts';
 import type { ConsoleAuthority } from './feed-projection.ts';
+import { isDonePasslessRow } from './feed-projection-history.ts';
 import { toHistoryRow } from './history-row.ts';
 import {
   createHistoryEvidenceCache,
@@ -62,9 +63,11 @@ export async function staffViews(
     hasMore: raws.filter((raw) => raw.m_id !== null).length > page.limit,
     items: rows.flatMap((raw) => {
       const name = raw.scanner_name;
+      const valid = raw.id !== null && name && scannerNameSchema.safeParse(name).data === name;
+      const passless = scanned.some((row) => row.id === raw.id && isDonePasslessRow(row));
       const shown =
-        raw.id !== null && name && scannerNameSchema.safeParse(name).data === name
-          ? evidence.get(raw.id)?.policy?.scannerNameVisible(name)
+        valid && raw.id !== null
+          ? passless || evidence.get(raw.id)?.policy?.scannerNameVisible(name)
           : false;
       const item = staffItem(raw, shown ? name : null);
       return item ? [item] : [];

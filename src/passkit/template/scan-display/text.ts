@@ -1,4 +1,5 @@
 /** Bindings and texts (DM 1.8, 3.1, 3.4): `{{path|filter}}`, strict missing values, plurals. Pure. */
+import { type FormatSpec, formatValue } from '../../../shared/pass-view/format.ts';
 import type { Json } from '../../types.ts';
 import { applyFilter, countText, FILTERS, type FormatCtx, plain, toNumber } from './format.ts';
 import type { ScanText } from './schema.ts';
@@ -129,13 +130,30 @@ export function isEmptyValue(value: Json | undefined): boolean {
   );
 }
 
+/** A bare `{{fields.key}}` shows the field as the pass does: its dates, money and numbers formatted. */
+function shown(ctx: EvalCtx, path: string, value: Json | undefined): Json | undefined {
+  const formats = ctx.scope.fieldFormats;
+  if (value === undefined || !formats || typeof formats !== 'object' || Array.isArray(formats))
+    return value;
+  const split = splitPath(path);
+  const key = split?.root === 'fields' && split.rest.length === 1 ? split.rest[0] : undefined;
+  const spec = key === undefined ? undefined : (formats as Record<string, Json>)[key];
+  if (!spec || typeof spec !== 'object' || Array.isArray(spec)) return value;
+  const text = formatValue(value, spec as FormatSpec, {
+    locale: ctx.locale,
+    now: new Date(ctx.now),
+    timeZone: ctx.timeZone,
+  }).text;
+  return text === '' ? value : text;
+}
+
 /** A lone `{{path}}` keeps its type; anything else is a string. Any empty binding gives undefined. */
 export function evalExpr(source: string, ctx: EvalCtx, hash?: string): Json | undefined {
   const { parts } = parseParts(source);
   if (!parts) return undefined;
   const only = parts[0];
   if (parts.length === 1 && only?.path && !only.filter) {
-    const value = resolve(ctx.scope, only.path);
+    const value = shown(ctx, only.path, resolve(ctx.scope, only.path));
     if (isEmptyValue(value) || (typeof value === 'string' && value.includes('{{')))
       return undefined;
     return value;
@@ -148,7 +166,9 @@ export function evalExpr(source: string, ctx: EvalCtx, hash?: string): Json | un
     }
     if (!part.path) continue;
     const value = resolve(ctx.scope, part.path);
-    const text = part.filter ? applyFilter(part.filter, value, ctx) : plain(value);
+    const text = part.filter
+      ? applyFilter(part.filter, value, ctx)
+      : plain(shown(ctx, part.path, value));
     if (text === '') return undefined;
     out += text;
   }

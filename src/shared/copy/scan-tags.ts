@@ -3,7 +3,8 @@ export const SCAN_TAG_COPY = {
   menu: { assign: 'Assign tag', locked: 'Desk and up', offline: 'Needs a connection' },
   /** Offline scanners never read tags (online only in v1). */
   needsConnection: 'Tag needs a connection',
-  chip: { assigning: 'Assigning tag', request: 'Tag request', requestFor: 'Tag for {name}' },
+  needsConnectionSub: 'Scan the pass QR instead.',
+  chip: { assigning: 'Assigning tag', request: 'Open tag request', requestFor: 'Tag for {name}' },
   step: { tag: 'Tag', pass: 'Pass' },
   tag: {
     hold: 'Hold the tag near the phone',
@@ -12,14 +13,15 @@ export const SCAN_TAG_COPY = {
     usb: 'Tap the tag on the reader',
     usbSub: 'The reader types its ID here.',
     readButton: 'Read tag',
-    allowNfc: 'Allow NFC',
+    allowNfc: 'Turn on tag reading',
+    read: 'Tag read',
     cancelled: 'Cancelled. Tap Read tag to try again.',
     noRead: 'No tag read. Tap Read tag to try again.',
     isPass: "That's a pass. Tap the tag first.",
   },
   pass: {
-    scan: 'Scan their pass',
-    scanReader: 'Scan their pass or hold their iPhone near the reader',
+    scan: 'Scan the pass QR',
+    scanReader: 'Scan the pass QR or tap their iPhone on the reader',
     isTag: "That's a tag. Scan their pass.",
     cantAssign: "Can't assign a tag to a {voided} pass.",
   },
@@ -27,13 +29,13 @@ export const SCAN_TAG_COPY = {
   lendingTo: 'Lending to {name}',
   confirm: {
     name: 'Name',
-    namePlaceholder: 'Blue fob',
+    namePlaceholder: 'Name, optional',
     forms: ['Card', 'Fob', 'Sticker', 'Wristband'],
     moveOwn: [
       'It works with {pass} now. Assigning moves it.',
       "It works with all of {name}'s passes now. Assigning changes that.",
     ],
-    moveOther: "It works with {holder}'s {pass} now. Assigning moves it to {name}.",
+    moveOther: "It works with {holder}'s {pass} now. A manager can move it to {name}.",
     basic: 'Basic tags can be copied.',
     assign: 'Assign',
     move: 'Move tag',
@@ -64,12 +66,17 @@ export const SCAN_TAG_COPY = {
     adminCancelled: 'Cancelled in the console',
     requestTimedOut: 'Tag request timed out',
   },
-  dock: { assignAnother: 'Assign another', tryAnother: 'Try another tag' },
+  dock: {
+    assignAnother: 'Assign another',
+    tryAnother: 'Try another tag',
+    startAgain: 'Start again',
+    tryAgain: 'Try again',
+  },
   /** What the assign flow says when the tag cannot be used. */
   err: {
     alreadyHere: { headline: 'Already on this pass', sub: 'Assigned {date} by {staff}.' },
     lost: { headline: 'Tag reported lost', sub: 'Reported {date}. An admin can restore it.' },
-    secureNeeded: { headline: 'Secure tag needed', sub: "{org} doesn't take basic tags." },
+    secureNeeded: { headline: 'Secure tag needed', sub: '{org} needs a secure tag. Ask an admin.' },
     secureNeededDoor: { headline: 'Secure tag needed', sub: "Basic tags don't open {zone}." },
     failedCheck: { headline: 'Tag failed its check', sub: 'It may be a copy. Use another tag.' },
     unreadable: { headline: "Can't read this tag", sub: 'Try another tag.' },
@@ -79,7 +86,12 @@ export const SCAN_TAG_COPY = {
       sub: "It can't be assigned. Try another tag.",
     },
     notAssigned: { headline: 'Not assigned', sub: 'No connection. Try again.' },
-    tooMany: { headline: 'Too many tries', sub: 'Try again in {seconds} s.' },
+    tooMany: {
+      headline: 'Too many tries',
+      sub: 'Try again in {seconds} s.',
+      ready: 'You can try again.',
+    },
+    holderChanged: { headline: 'Pass reassigned', sub: 'Look the pass up again.' },
   },
   approval: 'Approves: assign a tag to {name}.',
   /** A tag read at a door or desk. */

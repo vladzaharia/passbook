@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { Button } from '../../ui/button.tsx';
 import { Callout } from '../../ui/callout.tsx';
@@ -11,8 +12,11 @@ export function FlipSheet({
   api,
   refetch,
   onClose,
+  mode,
 }: {
   open: boolean;
+  /** The mode this device is in now. */
+  mode: string;
   api: ScanApi;
   refetch: () => Promise<void>;
   onClose: () => void;
@@ -32,9 +36,11 @@ export function FlipSheet({
   }
   return (
     <Sheet open={open} onOpenChange={(value) => !value && !busy && onClose()}>
-      <SheetContent title="Show to customer?" className="scan-detail-sheet">
+      <SheetContent title={SCAN_COPY.changeMode.title} className="scan-detail-sheet">
         <div className="flex flex-col gap-4 p-5">
-          <p className="text-sm text-fg-muted">Scanning stops until staff switch back.</p>
+          <p className="text-sm text-fg">{SCAN_COPY.changeMode.current.replace('{mode}', mode)}</p>
+          <p className="text-sm text-fg-muted">{SCAN_COPY.changeMode.adminNote}</p>
+          <p className="text-sm text-fg-muted">{SCAN_COPY.changeMode.customerSub}</p>
           {error ? <Callout tone="danger">{error}</Callout> : null}
           <Button loading={busy} onClick={() => void flip()}>
             Show to customer

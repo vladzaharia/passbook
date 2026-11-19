@@ -191,10 +191,9 @@ const NEUTRAL: Presentation = {
   announcement: null,
 };
 
-function mood(state: ScanState): BuddyView['mood'] {
-  const l = state.loop;
-  if (l.s !== 'verdict') return 'neutral';
-  switch (l.outcome.kind) {
+/** The buddy's face for a verdict: it backs the colour and the word. */
+export function moodOf(kind: ScanOutcome['kind']): BuddyView['mood'] {
+  switch (kind) {
     case 'ok':
       return 'happy';
     case 'heads_up':
@@ -205,6 +204,11 @@ function mood(state: ScanState): BuddyView['mood'] {
     default:
       return 'neutral';
   }
+}
+
+function mood(state: ScanState): BuddyView['mood'] {
+  const l = state.loop;
+  return l.s === 'verdict' ? moodOf(l.outcome.kind) : 'neutral';
 }
 
 function pose(state: ScanState): ScanBuddyView['pose'] {

@@ -187,6 +187,28 @@ proven original commitment stay unavailable until a separately reviewed recovery
 Configure and deploy the integration before using any endpoints; no production credentials are
 supplied by this project.
 
+### Fake Google and Samsung wallets
+
+`test/mock-wallets` stands in for both providers, with in-memory state, a request log and failure
+injection. Dev and e2e only.
+
+    WALLET_MOCKS=1 npm run dev   # also starts the fake on :5175 (MOCK_WALLETS_PORT)
+    node test/mock-wallets/server.ts 5175   # or run it alone; point WALLET_MOCK_PROVIDERS_URL at it
+
+- Google: `/token`, `/walletobjects/v1/{genericClass,genericObject,issuer}`, and `/gp/v/save/<jwt>`
+  (open it to record a save). Samsung: `/partner/v1/card/template/<cardId>` and
+  `/<cc2>/wltex/cards/<cardId>/{updates,cancels}`. Signatures are not verified.
+- Inspect: `curl localhost:5175/__mock/state` and `/__mock/requests`; clear with `POST /__mock/reset`.
+- Fail a call: `curl -XPOST localhost:5175/__mock/inject -d '{"status":429,"match":"POST /token","times":2,"retryAfterSeconds":5}'`.
+  `match` is a regex over `METHOD /path`; any status from 200 to 599.
+- Worker tests call `createMockWallets().handle(request)` from a stubbed `fetch` (`failNext`,
+  `setSamsungTemplate`); see `test/mock-wallets/mock-wallets.test.ts`.
+- The Worker redirects provider calls only when `WALLET_MOCK_PROVIDERS_URL` and `PUBLIC_BASE_URL`
+  are both plain-http loopback (`wallet-providers/mock-endpoint.ts`). Never set it in
+  `wrangler.jsonc` or a deployed secret; a test fails if it appears there.
+- Google and Samsung issuance is still off (`provider-policy.ts`), so an issued pass cannot reach a
+  save link yet. e2e `32-mock-wallets` covers the provider calls and the save link directly.
+
 ## Domains
 
 `vars.PUBLIC_BASE_URL` (`https://passbook.mobile`) is the only origin the app serves; pass

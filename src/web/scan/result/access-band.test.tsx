@@ -23,10 +23,10 @@ describe('the access band', () => {
     expect(screen.getByTestId('scan-dir-pill')).toHaveTextContent('In');
     expect(band()).toHaveTextContent('Gym · until');
   });
-  it('keeps the person as the title when the display has one, and Access granted above it', () => {
+  it('keeps Access granted as the headline with the person under it', () => {
     render(<ResultCard outcome={grant({ display: fixtureDisplay('ok') })} />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Anna Popescu');
-    expect(band()).toHaveTextContent('Access granted');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Access granted');
+    expect(band()).toHaveTextContent('Anna Popescu');
   });
   it('says Tapped out with the pill, the zone and the stay', () => {
     render(<ResultCard outcome={exit({ display: null })} />);

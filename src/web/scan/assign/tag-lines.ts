@@ -7,7 +7,11 @@ import type { ScanTag } from './types.ts';
 
 /** `tagRead`: the scan that made this outcome was a tag. */
 export function tagReasonLine(o: ScanOutcome, tagRead: boolean): Line | null {
-  if (o.reason === TAG_OFFLINE) return { headline: SCAN_TAG_COPY.needsConnection, sub: '' };
+  if (o.reason === TAG_OFFLINE)
+    return {
+      headline: SCAN_TAG_COPY.needsConnection,
+      sub: SCAN_TAG_COPY.needsConnectionSub,
+    };
   if (tagRead && o.kind === 'refused' && o.reason === 'not_found')
     return { ...SCAN_TAG_COPY.door.unknownTag };
   return null;

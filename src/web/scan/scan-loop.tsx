@@ -1,7 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
-import { errorMessage } from '../lib/errors.ts';
-import { formatTime } from '../lib/format.ts';
 import { getMode } from '../lib/mode.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
 import { Button } from '../ui/button.tsx';
@@ -9,6 +7,8 @@ import type { ScanApi } from './api/scan-api.ts';
 import { ScanAppView } from './app.tsx';
 import { useTagUi } from './assign/use-tag-ui.tsx';
 import { needsSessionRefetch } from './boot/use-scan-session.ts';
+import { LoopMenu } from './loop-menu.tsx';
+import { loopScreen } from './loop-screen.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { useScanMachine } from './machine/use-scan-machine.ts';
 import type { ScanRuntime } from './platform/runtime.ts';
@@ -23,9 +23,10 @@ import { CameraLayer } from './ui/camera-layer.tsx';
 import { ReaderChip, SyncChip, TestChip } from './ui/chips.tsx';
 import { DoorDock } from './ui/door-dock.tsx';
 import type { Announcement } from './ui/live-announcer.tsx';
-import { type CameraChoice, ScanMenu } from './ui/scan-menu.tsx';
+import { modeLabel } from './ui/mode-label.ts';
+import type { CameraChoice } from './ui/scan-menu.tsx';
 import { ScanOverlays, type ScanPanel } from './ui/scan-overlays.tsx';
-import { stripOf } from './ui/strip-of.ts';
+import { dockStrip, savedCount } from './ui/strip-of.ts';
 import { useAccessUi } from './ui/use-access-ui.tsx';
 import './buddy/beats.css';
 
@@ -125,36 +126,9 @@ export function ScanLoop({
   const tags = useTagUi({ runtime, session, api, state: s, result, open, dispatch });
   const lastUndo = last?.scanId && last.undoable && (last.outcome.undoUntil ?? 0) > now;
   const menu = (
-    <ScanMenu
-      sound={s.prefs.sound}
-      onSound={(value) => dispatch({ type: 'prefs', prefs: { sound: value } })}
-      holdResults={s.prefs.holdResults}
-      onHoldResults={(value) => dispatch({ type: 'prefs', prefs: { holdResults: value } })}
-      camera={cameraChoice}
-      cameraAvailable={!operator || duoLayout}
-      canSwitchStaff={Boolean(session.staff)}
-      onSwitchStaff={() =>
-        void api.staffSignOut().then(refetch, (error) => setCameraError(errorMessage(error)))
-      }
-      flip={scanner?.kind === 'device' ? { api, refetch } : undefined}
-      hasWide={runtime.camera.hasWide()}
-      onCamera={(choice) => {
-        setCameraChoice(choice);
-        runtime.camera.choose(choice);
-      }}
-      tags={tags.menu}
-      hasReader={readerUsable}
-      cameraOff={s.camera === 'disabled'}
-      onCameraOff={(off) => {
-        if (off) runtime.camera.stop();
-        dispatch({ type: 'camera', status: off ? 'disabled' : 'off' });
-        if (!off && s.started) runtime.camera.start();
-      }}
-      onReaderTips={() => showPanel('tips')}
-      onShift={() => showPanel('shift')}
-      onEndShift={() => showPanel('end')}
-      leave={session.principal === 'admin' ? 'stop-admin' : 'unpair'}
-      onLeave={leave}
+    <LoopMenu
+      {...{ s, session, api, runtime, tags, dispatch, refetch, leave, operator, duoLayout }}
+      {...{ readerUsable, cameraChoice, setCameraChoice, setCameraError, showPanel }}
     />
   );
   return (
@@ -170,33 +144,13 @@ export function ScanLoop({
             </Suspense>
           ) : null
         }
-        screen={
-          !s.started
-            ? {
-                s: 'start',
-                scannerName: scanner?.name ?? 'Scan as admin',
-                orgName: scanner?.orgName ?? session.admin?.orgs[0]?.name ?? '',
-                mode: scanner?.mode ?? getMode(),
-                state:
-                  session.state === 'not_open' || session.state === 'closed'
-                    ? session.state
-                    : 'ready',
-                templates: session.templates.map((t) => t.name),
-                event: session.event
-                  ? {
-                      name: session.event.name,
-                      when: `${formatTime(session.event.opensAt)}–${formatTime(session.event.closesAt)}`,
-                      note: session.event.note,
-                    }
-                  : null,
-              }
-            : { s: 'loop' }
-        }
+        screen={loopScreen(session, s.started)}
         capsule={{
           logoUrl,
           orgName: scanner?.orgName ?? session.admin?.orgs[0]?.name ?? '',
           name: scanner?.name ?? 'Scan as admin',
           staff: session.staff?.name,
+          mode: modeLabel(session),
           state: !s.online
             ? 'offline'
             : l.s === 'checking' || l.s === 'applying'
@@ -210,7 +164,7 @@ export function ScanLoop({
             <>
               <TestChip mode={scanner?.mode ?? getMode()} />
               {readerUsable ? <ReaderChip state={s.focused ? 'ready' : 'paused'} /> : null}
-              {!s.online ? <SyncChip state={{ kind: 'offline', queued: 0 }} /> : null}
+              {!s.online ? <SyncChip state={{ kind: 'offline', queued: savedCount(s) }} /> : null}
               {access.chips}
               {tags.chip}
             </>
@@ -287,7 +241,7 @@ export function ScanLoop({
             />
           )
         }
-        strip={tags.strip ?? stripOf(last, Boolean(lastUndo), now)}
+        strip={tags.strip ?? dockStrip(s, last, Boolean(lastUndo), now)}
         announcement={announcement}
         on={{
           start: () => {

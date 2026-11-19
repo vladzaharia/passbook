@@ -71,7 +71,7 @@ export function DeviceSheet({
                       ? 'Offline'
                       : 'Needs pairing'}
               </Badge>
-              <Badge>{device.signIn === 'admin' ? 'Administrator sign-in' : 'Paired device'}</Badge>
+              {device.signIn === 'admin' ? <Badge>Administrator sign-in</Badge> : null}
             </div>
             {device.capabilities ? (
               <div className="grid gap-2 text-sm">
@@ -182,7 +182,7 @@ export function DeviceSheet({
               )}
             </fieldset>
             {canManage ? (
-              <div className="sticky bottom-0 grid gap-3 border-t border-border bg-surface-raised py-4">
+              <div className="sticky bottom-0 grid gap-2 border-t border-border bg-surface-raised py-4">
                 <Button
                   loading={save.isPending}
                   disabled={!dirty || !name.trim() || changed || device.revoked}
@@ -190,16 +190,28 @@ export function DeviceSheet({
                 >
                   Save device
                 </Button>
-                {device.signIn === 'paired' && !device.revoked ? (
-                  <Button variant="outline" iconStart={<QrCode aria-hidden />} onClick={onPair}>
-                    {device.paired ? 'Pair again' : 'Pair device'}
-                  </Button>
+                {!dirty && !device.revoked ? (
+                  <p className="text-center text-xs text-fg-muted">
+                    Change a setting to save. Overrides inherit from the session.
+                  </p>
                 ) : null}
-                {!device.revoked ? (
-                  <Button variant="ghost" className="text-danger" onClick={onRevoke}>
-                    Revoke device
-                  </Button>
-                ) : null}
+                <div className="grid grid-cols-2 gap-3">
+                  {device.signIn === 'paired' && !device.revoked ? (
+                    <Button variant="outline" iconStart={<QrCode aria-hidden />} onClick={onPair}>
+                      {device.paired ? 'Pair again' : 'Pair device'}
+                    </Button>
+                  ) : null}
+                  {!device.revoked ? (
+                    <Button
+                      variant="ghost"
+                      className="text-danger"
+                      aria-label="Revoke device"
+                      onClick={onRevoke}
+                    >
+                      Revoke
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             ) : null}
           </div>

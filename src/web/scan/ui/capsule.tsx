@@ -24,7 +24,10 @@ export function Capsule({
   onTitle,
   logoUrl,
   orgName = '',
+  mode,
 }: {
+  /** The device's mode, shown beside the state. */
+  mode?: string;
   name: string;
   staff?: string | null;
   state: CapsuleState;
@@ -44,6 +47,7 @@ export function Capsule({
         </span>
         <span className="scan-capsule-state" data-state={state}>
           <span className="scan-dot" />
+          {mode ? `${mode} · ` : ''}
           {STATE_TEXT[state]}
         </span>
       </button>
