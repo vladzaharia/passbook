@@ -11,7 +11,7 @@ import {
 } from './occupancy/whos-in-test-fixtures.ts';
 import { scanAt, trackedZone } from './occupancy-scan-test-fixtures.ts';
 import { overrideAs, signIn } from './overrides-test-fixtures.ts';
-import { key } from './test-kit.ts';
+import { codeOf, key } from './test-kit.ts';
 
 beforeAll(async () => {
   await setupActionFixture();
@@ -278,5 +278,48 @@ describe("a monitor's Let in checks in at the refused scan's place", () => {
     expect(refused).toMatchObject({ kind: 'refused', reason: 'voided' });
     const monitor = await standalone({ scannerIds: [r.door.scanner.id] });
     expect((await overrideAs(monitor.headers, refused.scanId)).status).toBe(422);
+  });
+
+  it("checks a once-per-event card in at the refused scan's event for a sessionless monitor", async () => {
+    const templateId = await kit.scanTemplate('Event once', {
+      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in', repeat: 'once' }],
+    });
+    const event = await kit.event({ templateIds: [templateId] });
+    await run(kit.env.DB, 'UPDATE scan_events SET reentry = 1 WHERE id = ?', [event.id]);
+    const door = await kit.scanner({ eventId: event.id });
+    const pass = await kit.scanPass(templateId);
+    const scan = async () =>
+      (await (
+        await kit.post(door.headers, '/actions', {
+          input: codeOf(pass),
+          idempotencyKey: key(),
+          clientTs: kit.clock.now(),
+          actionId: 'check_in',
+        })
+      ).json()) as { kind: string; reason: string | null; scanId: string | null };
+    expect((await scan()).kind).toBe('ok');
+    const hold = await scan();
+    expect(hold).toMatchObject({ kind: 'heads_up', reason: 'already_done' });
+    const monitor = await standalone({ eventId: event.id });
+    const res = await overrideAs(monitor.headers, hold.scanId);
+    expect(res.status).toBe(200);
+    const { scanId } = (await res.json()) as { scanId: string };
+    const [row] = await all<{ event_id: string | null; outcome: string; override_of: string }>(
+      kit.env.DB,
+      'SELECT event_id, outcome, override_of, reason FROM scans WHERE id = ?',
+      [scanId],
+    );
+    expect(row).toEqual({
+      event_id: event.id,
+      outcome: 'ok',
+      override_of: hold.scanId,
+      reason: null,
+    });
+    const gates = await all<{ scope: string }>(
+      kit.env.DB,
+      'SELECT scope FROM scan_gates WHERE pass_id = ?',
+      [pass.id],
+    );
+    expect(gates).toEqual([{ scope: `event:${event.id}` }]);
   });
 });

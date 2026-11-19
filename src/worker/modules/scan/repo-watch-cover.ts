@@ -2,7 +2,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ScanWatchSchema } from '../../../shared/contracts/scan-setups.ts';
 import { all, first } from '../../platform/db.ts';
-import { orgZoneRows, sessionZoneIds } from './repo-zones.ts';
+import { orgZoneRows } from './repo-zones.ts';
 
 /** Ids only: org and mode bind every read that uses them. Zones are the watched subtrees. */
 export interface WatchCover {
@@ -40,7 +40,7 @@ export async function loadWatchCover(
   const parsed = ScanWatchSchema.safeParse(JSON.parse(row.watch));
   if (!parsed.success) return null;
   const w = parsed.data;
-  const zones = await orgZoneRows(db, actor.orgId);
+  const zones = w.zoneIds?.length ? await orgZoneRows(db, actor.orgId) : [];
   const below = (id: string): string[] => [
     id,
     ...zones.filter((z) => z.parentId === id).flatMap((z) => below(z.id)),
@@ -94,17 +94,25 @@ export async function watchZoneRoots(
 ): Promise<string[]> {
   if (cover.allOrg)
     return (await orgZoneRows(db, actor.orgId)).filter((z) => z.parentId === null).map((z) => z.id);
-  const viaScanners = cover.scannerIds.length
-    ? await all<{ session_id: string }>(
-        db,
-        `SELECT session_id FROM scanning_devices WHERE org_id = ? AND mode = ?
-         AND scanner_id IN (SELECT value FROM json_each(?))`,
-        [actor.orgId, actor.mode, JSON.stringify(cover.scannerIds)],
-      )
-    : [];
-  const sessions = new Set([...cover.sessionIds, ...viaScanners.map((r) => r.session_id)]);
   const ids = new Set(cover.zoneIds);
-  for (const id of sessions) for (const z of await sessionZoneIds(db, actor.orgId, id)) ids.add(z);
+  if (!cover.scannerIds.length && !cover.sessionIds.length) return [...ids];
+  // One read for every watched session and every watched scanner's session.
+  const rows = await all<{ zone_id: string }>(
+    db,
+    `SELECT l.zone_id FROM scanning_session_zones l
+     JOIN scanning_sessions s ON s.id = l.session_id AND s.org_id = ?
+     WHERE l.session_id IN (SELECT value FROM json_each(?))
+        OR l.session_id IN (SELECT d.session_id FROM scanning_devices d WHERE d.org_id = ? AND d.mode = ?
+             AND d.scanner_id IN (SELECT value FROM json_each(?)))`,
+    [
+      actor.orgId,
+      JSON.stringify(cover.sessionIds),
+      actor.orgId,
+      actor.mode,
+      JSON.stringify(cover.scannerIds),
+    ],
+  );
+  for (const r of rows) ids.add(r.zone_id);
   return [...ids];
 }
 

@@ -18,11 +18,13 @@ import { isOverridable } from './outcome.ts';
 import { setOverrideNote } from './override-note.ts';
 import { OVERRIDE_WINDOW_MS, resolvedTarget } from './override-scope.ts';
 import { overrideEvidenceForTargetStmt } from './repo-act-override.ts';
+import { eventEpochStmt } from './repo-authority-capture.ts';
 import { assertUnderOverrideCap, countOverride } from './repo-override-cap.ts';
 import { overrideTakenStmt } from './repo-override-note.ts';
 import { toScan } from './repo-scan-map.ts';
 import { readValidEventScope } from './repo-scope.ts';
 import { overridePolicyKind, scanPolicy } from './rules.ts';
+import { scanEpochsOf, setScanEpochs } from './scan-epochs.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 
 export type OverrideRequest = z.infer<typeof ScanOverrideRequestSchema>;
@@ -50,7 +52,23 @@ async function scopedToTarget(
     ? await readValidEventScope(ctx.env.DB, actor.orgId, actor.mode, eventId)
     : null;
   if (eventId && !pinned) throw invalid();
-  return { ...scoped, event: pinned?.event ?? null };
+  const withEvent: ScanActor = {
+    ...scoped,
+    event: pinned?.event ?? null,
+    templateIds: pinned?.templateIds ?? actor.templateIds,
+  };
+  const epochs = scanEpochsOf(actor);
+  if (pinned && epochs) {
+    const row = await eventEpochStmt(ctx.env.DB, pinned.event.id, actor.orgId, actor.mode).first<{
+      config_epoch: number;
+    }>();
+    if (!row) throw invalid();
+    setScanEpochs(withEvent, {
+      ...epochs,
+      events: { ...epochs.events, [pinned.event.id]: row.config_epoch },
+    });
+  }
+  return withEvent;
 }
 
 const invalid = () =>
