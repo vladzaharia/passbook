@@ -129,12 +129,24 @@ export function grantInsert(
 
 const PURPOSE = /^(org_mode|org|platform)\.[a-z0-9_]+(\.[a-z0-9_]+)+$/;
 
+/** org_mode purposes only a platform admin (naming the org and mode) holds: no org principal, key or job. */
+const PLATFORM_ADMIN_PURPOSES: readonly string[] = [
+  'org_mode.wallet.enrolment_hold',
+  'org_mode.wallet.enrolment_release',
+  'org_mode.wallet.migration_resolve',
+];
+
 /** The scope a purpose names, checked against the principal that may hold it. */
 export function scopeOf(input: GrantInput): GrantScope {
   const match = PURPOSE.exec(input.purpose);
   if (!match) throw new AuthorityError('GRANT_BAD_PURPOSE', `Bad grant purpose: ${input.purpose}`);
   const scope = match[1] as GrantScope;
   const p = input.principal;
+  if (PLATFORM_ADMIN_PURPOSES.includes(input.purpose) && p.kind !== 'platform')
+    throw new AuthorityError(
+      'GRANT_BAD_PRINCIPAL',
+      `${input.purpose} is held by a platform admin only.`,
+    );
   if (
     scope === 'platform' &&
     (p.kind === 'membership' || p.kind === 'scanner' || p.kind === 'join')

@@ -272,6 +272,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     writes: [
       'captured_emails:511fe05ea909',
       'connection_webhook_retention:84821c1d359b',
+      'wallet_credential_versions:7751be830869',
       'webhook_endpoint_secrets:b1f2bc9c7907',
     ],
   },

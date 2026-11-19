@@ -141,6 +141,22 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   retention_receipt_anchors: { org: 'org_id' },
   data_requests: { org: 'org_id' },
   data_request_passes: { org: null, edges: [edge('request_id', 'data_requests')] },
+  // Wallet provider credentials (0112). A platform-scope row has a null org_id, as a platform api_keys row: an
+  // org grant never matches it. Versions, events and checks hang off the credential and take its tenant.
+  wallet_credentials: { org: 'org_id', mode: 'mode' },
+  wallet_credential_versions: { org: null, edges: [edge('credential_id', 'wallet_credentials')] },
+  wallet_credential_events: { org: null, edges: [edge('credential_id', 'wallet_credentials')] },
+  wallet_credential_checks: { org: null, edges: [edge('credential_id', 'wallet_credentials')] },
+  // An enrolment's events (the account row itself is written by `include` parts, tied to {org} and {mode}).
+  wallet_enrolment_events: { org: 'org_id', mode: 'mode' },
+};
+
+/**
+ * Guarded tables only the listed purposes may write, whatever the principal or the grant's `tables`. The
+ * credential check job is the one writer of a check: no org_mode or platform.wallet.* grant inserts one.
+ */
+export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
+  wallet_credential_checks: ['platform.job.wallet.credential_check'],
 };
 
 /** Tables only the triggers and `authority.ts` may write; raw SQL on them is a lint failure. */
