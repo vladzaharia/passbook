@@ -198,3 +198,85 @@ describe('standalone monitor: zone and allOrg watches', () => {
     expect((await markOut(fm.headers, p2.id, `event:${ev}`)).status).not.toBe(200);
   });
 });
+
+describe("a monitor's Let in checks in at the refused scan's place", () => {
+  async function lobbyHold() {
+    const tpl = await accessTemplate();
+    const lobby = await trackedZone({ occupancy: 'enforce' });
+    const vip = await trackedZone({ occupancy: 'enforce' });
+    const door = await makeDoor([tpl], [lobby]);
+    const pass = await kit.scanPass(tpl, { plan: 'gold' });
+    await scanAt(door, pass);
+    kit.clock.advance(5 * MINUTE);
+    const hold = await scanAt(door, pass);
+    expect(hold).toMatchObject({ kind: 'heads_up', reason: 'still_inside' });
+    return { tpl, lobby, vip, door, pass, hold: hold.scanId as string };
+  }
+  const presence = (passId: string, zone: string) =>
+    all<{ state: string }>(
+      kit.env.DB,
+      'SELECT state FROM scan_presence WHERE pass_id = ? AND scope = ?',
+      [passId, `zone:${zone}`],
+    );
+  const rowOf = async (scanId: string) =>
+    (
+      await all<{ zone_id: string | null; session_id: string | null; actor_key: string }>(
+        kit.env.DB,
+        'SELECT zone_id, session_id, actor_key FROM scans WHERE id = ?',
+        [scanId],
+      )
+    )[0];
+
+  it("checks in at the lobby, not the monitor's own zone", async () => {
+    const r = await lobbyHold();
+    const other = await makeDoor([r.tpl], [r.vip]);
+    await run(
+      kit.env.DB,
+      "UPDATE scanning_sessions SET settings = json_set(settings, '$.deskActions', json('true'), '$.staffSignIn', json('true'), '$.letInAgain', 'anyone') WHERE id = ?",
+      [other.sessionId],
+    );
+    const monitor = await kit.scanner({ templateIds: [r.tpl], deviceRole: 'monitor' });
+    await run(
+      kit.env.DB,
+      `INSERT INTO scanning_devices (scanner_id,session_id,org_id,mode,surface,effective_surface,overrides)
+       SELECT id,?,org_id,mode,'desk','desk','{}' FROM scanners WHERE id=?`,
+      [other.sessionId, monitor.id],
+    );
+    await run(
+      kit.env.DB,
+      `INSERT INTO scanner_setups (scanner_id, org_id, mode, watch)
+       SELECT id, org_id, mode, ? FROM scanners WHERE id = ?`,
+      [JSON.stringify({ scannerIds: [r.door.scanner.id], allOrg: false }), monitor.id],
+    );
+    await signIn(monitor.id, (await kit.staff('desk')).id);
+    const res = await overrideAs(monitor.headers, r.hold);
+    expect(res.status).toBe(200);
+    const { scanId } = (await res.json()) as { scanId: string };
+    expect(await rowOf(scanId)).toEqual({
+      zone_id: r.lobby,
+      session_id: r.door.sessionId,
+      actor_key: `s:${monitor.id}`,
+    });
+    expect((await presence(r.pass.id, r.lobby))[0]?.state).toBe('in');
+    expect(await presence(r.pass.id, r.vip)).toEqual([]);
+  });
+
+  it("records the refused scan's zone and session for a sessionless monitor", async () => {
+    const r = await lobbyHold();
+    const monitor = await standalone({ scannerIds: [r.door.scanner.id] });
+    const res = await overrideAs(monitor.headers, r.hold);
+    expect(res.status).toBe(200);
+    const { scanId } = (await res.json()) as { scanId: string };
+    expect(await rowOf(scanId)).toMatchObject({ zone_id: r.lobby, session_id: r.door.sessionId });
+    expect((await presence(r.pass.id, r.lobby))[0]?.state).toBe('in');
+  });
+
+  it('does not waive another rule: a closed-hours hold stays refused', async () => {
+    const r = await lobbyHold();
+    await run(kit.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [r.pass.id]);
+    const refused = await scanAt(r.door, r.pass);
+    expect(refused).toMatchObject({ kind: 'refused', reason: 'voided' });
+    const monitor = await standalone({ scannerIds: [r.door.scanner.id] });
+    expect((await overrideAs(monitor.headers, refused.scanId)).status).toBe(422);
+  });
+});

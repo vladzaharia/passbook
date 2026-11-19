@@ -108,11 +108,17 @@ export async function watchZoneRoots(
   return [...ids];
 }
 
-/** Events of the org and mode that track entries and exits: what an `allOrg` watch covers. */
-export const watchedOrgEvents = (db: D1Database, orgId: string, mode: Mode) =>
+/** Events of the org and mode that track entries and exits: what an `allOrg` watch covers. `limit` pages a list; membership reads one id. */
+export const watchedOrgEvents = (
+  db: D1Database,
+  orgId: string,
+  mode: Mode,
+  o: { id?: string; limit?: number } = {},
+) =>
   all<{ id: string; name: string; capacity: number | null }>(
     db,
     `SELECT id, name, capacity FROM scan_events
-     WHERE org_id = ? AND mode = ? AND reentry = 1 AND archived_at IS NULL ORDER BY opens_at DESC, id LIMIT 64`,
-    [orgId, mode],
+     WHERE org_id = ? AND mode = ? AND reentry = 1 AND archived_at IS NULL AND (? IS NULL OR id = ?)
+     ORDER BY opens_at DESC, id LIMIT ?`,
+    [orgId, mode, o.id ?? null, o.id ?? null, o.limit ?? 64],
   );
