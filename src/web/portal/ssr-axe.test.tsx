@@ -13,6 +13,7 @@ const view = (over: Record<string, unknown> = {}) =>
 const html = (over: Partial<PassPageProps> = {}) =>
   renderPassPage({
     view: view(),
+    passJson: { ...fixtures.generic },
     nonce: 'n0nce',
     orgName: 'Gym',
     orgLabel: 'Gym',

@@ -3,23 +3,12 @@ import { useMemo, useState } from 'react';
 import type { MyPassListSchema } from '@/shared/contracts/me.ts';
 import { endedOn } from '@/shared/ended-on.ts';
 import type { PassView } from '@/shared/pass-view/index.ts';
-import { Upcoming } from '../pass-card/back.tsx';
 import { PassCardStage } from '../pass-card/index.tsx';
-import {
-  Buddy,
-  Card,
-  CardBody,
-  CardHeader,
-  detailError,
-  KeyValue,
-  PassSideToggle,
-  Skeleton,
-  StatusPill,
-} from '../ui/index.ts';
+import { Buddy, detailError, PassSideToggle, Skeleton } from '../ui/index.ts';
 import { myPassesKey, myPassQuery } from './api.ts';
 import { browserDevice } from './device.ts';
 import { HolderPassView } from './holder-pass-view.tsx';
-import { fieldRows } from './pass-fields.ts';
+import { PassDetails } from './pass-details.tsx';
 import { PassHeader } from './pass-header.tsx';
 import { type HolderState, holderState, type MyPass, passName, toView } from './pass-view.ts';
 import { isPendingRefresh } from './refresh.ts';
@@ -33,30 +22,6 @@ type Page = typeof MyPassListSchema._output;
 function fromList(client: ReturnType<typeof useQueryClient>, id: string): MyPass | undefined {
   const list = client.getQueryData<InfiniteData<Page>>(myPassesKey);
   return list?.pages.flatMap((p) => p.items).find((p) => p.id === id);
-}
-
-/** The pass's fields, then its upcoming events. The header's pill carries the state. */
-function DetailsCard({ pass, view, state }: { pass: MyPass; view: PassView; state: HolderState }) {
-  const rows = fieldRows(pass.passJson);
-  return (
-    <Card>
-      <CardHeader title="Details" />
-      <CardBody className="flex flex-col gap-4">
-        <KeyValue
-          items={
-            state === 'active'
-              ? [{ label: 'Status', value: <StatusPill status="active" /> }, ...rows]
-              : rows
-          }
-        />
-        {view.upcoming.length ? (
-          <div className="pc-flat">
-            <Upcoming events={view.upcoming} />
-          </div>
-        ) : null}
-      </CardBody>
-    </Card>
-  );
 }
 
 function Detail({
@@ -126,7 +91,7 @@ function Detail({
       details={
         <div className="flex flex-col gap-6">
           {state === 'active' ? <TagsCard tags={pass.tags} orgName={pass.orgName} /> : null}
-          <DetailsCard pass={pass} view={view} state={state} />
+          <PassDetails passJson={pass.passJson} view={view} active={state === 'active'} />
         </div>
       }
       buddy={(props) => <Buddy {...props} />}

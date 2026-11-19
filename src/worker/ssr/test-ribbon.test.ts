@@ -16,6 +16,7 @@ const view = normalize(fixtures.generic, {
 const pass = (mode?: 'live' | 'test') =>
   renderPassPage({
     view,
+    passJson: { ...fixtures.generic },
     nonce: 'n',
     orgName: 'Gym',
     orgLabel: 'Gym',

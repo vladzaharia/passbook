@@ -153,6 +153,8 @@ register(
       });
       const html = renderPassPage({
         view,
+        passJson: model.passJson,
+        ...(zoneOf(c) ? { timeZone: zoneOf(c) as string } : {}),
         nonce,
         theme,
         orgName: view.organizationName || model.orgName,

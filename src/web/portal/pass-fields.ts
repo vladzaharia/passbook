@@ -45,10 +45,12 @@ export function fieldRows(
   passJson: Record<string, unknown>,
   locale = navigator.language,
   now = new Date(),
+  timeZone?: string,
 ): { id: string; label: string; value: string }[] {
   const style = STYLES.find((s) => passJson[s] && typeof passJson[s] === 'object');
   if (!style) return [];
   const block = passJson[style] as Record<string, unknown>;
+  const ctx = { locale, now, ...(timeZone ? { timeZone } : {}) };
   const rows: { id: string; label: string; value: string }[] = [];
   for (const group of GROUPS) {
     const list = block[group];
@@ -58,10 +60,18 @@ export function fieldRows(
       const spec = f as Record<string, unknown>;
       const { label, key, value } = spec;
       if (value === undefined || value === null || typeof value === 'object') continue;
-      const text = formatValue(value as Json, spec, { locale, now }).text;
+      const text = formatValue(value as Json, spec, ctx).text;
       const id = String(key ?? label ?? rows.length);
       rows.push({ id, label: sentenceCase(String(label ?? key ?? '')), value: text });
     }
+  }
+  const expires = passJson.expirationDate;
+  // A pass that already lists its own Expires field says it once.
+  const listed = rows.some((r) => /expir/i.test(`${r.id} ${r.label}`));
+  if (typeof expires === 'string' && expires && !listed) {
+    const spec = { dateStyle: 'PKDateStyleMedium', timeStyle: 'PKDateStyleShort' };
+    const text = formatValue(expires, spec, ctx).text;
+    if (text) rows.push({ id: 'expirationDate', label: 'Expires', value: text });
   }
   const count = new Map<string, number>();
   for (const r of rows) count.set(r.label, (count.get(r.label) ?? 0) + 1);

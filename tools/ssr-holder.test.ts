@@ -41,6 +41,7 @@ const view = (over: Record<string, unknown> = {}) =>
 const page = (over: Record<string, unknown> = {}) =>
   renderPassPage({
     view: view(),
+    passJson: { ...fixtures.generic },
     nonce: 'n0nce',
     orgName: 'Gym',
     orgLabel: 'Gym',
@@ -102,7 +103,9 @@ describe('generated /p CSS (tools/build-ssr-holder.ts)', () => {
     for (const html of PAGES) {
       const body = html.slice(html.indexOf('<body>'));
       const classes = new Set(
-        [...body.matchAll(/class="([^"]*)"/g)].flatMap((m) => (m[1] ?? '').split(' ')),
+        [...body.matchAll(/class="([^"]*)"/g)].flatMap((m) =>
+          (m[1] ?? '').replaceAll('&amp;', '&').split(' '),
+        ),
       );
       for (const cls of classes) {
         if (!cls || cls.startsWith('lucide') || HOOKS.has(cls)) continue;

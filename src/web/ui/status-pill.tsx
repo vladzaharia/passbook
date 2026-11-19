@@ -3,10 +3,10 @@ import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
 import { COARSE_ONLY, useMediaQuery } from '../lib/media.ts';
 import { useChangeCount } from '../lib/motion.ts';
-import { humanizeStatus, type StatusKey, statusOf, TONE_ICON, type Tone } from '../lib/status.ts';
-import { Badge } from './badge.tsx';
+import type { StatusKey, Tone } from '../lib/status.ts';
 import { TOUCH_HIT } from './button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from './popover.tsx';
+import { resolveStatus, StatusBadge } from './status-badge.tsx';
 import { Tooltip } from './tooltip.tsx';
 
 export interface StatusPillProps {
@@ -28,29 +28,19 @@ const TONE_TEXT: Record<Tone, string> = {
   info: 'text-info',
 };
 
-function resolve(status: string, tone?: Tone, icon?: LucideIcon) {
-  const entry = statusOf(status);
-  const t = tone ?? entry?.tone ?? 'neutral';
-  return {
-    entry,
-    tone: t,
-    Icon: icon ?? entry?.icon ?? TONE_ICON[t],
-    label: entry?.label ?? humanizeStatus(status),
-    // Running and processing spin while they last, also under reduced motion: they carry state.
-    spin: entry?.spin ? 'wl-spin wl-essential' : undefined,
-  };
-}
-
 /** Icon plus text, never colour alone. */
 export function StatusPill({ status, tone, icon, children, className }: StatusPillProps) {
-  const s = resolve(status, tone, icon);
   const changed = useChangeCount(status);
   return (
-    <Badge tone={s.tone} className={cn('relative', className)}>
-      <s.Icon aria-hidden className={s.spin} />
-      {children ?? s.label}
-      {changed ? <span key={changed} aria-hidden className="wl-ring" /> : null}
-    </Badge>
+    <StatusBadge
+      status={status}
+      {...(tone ? { tone } : {})}
+      {...(icon ? { icon } : {})}
+      {...(className ? { className } : {})}
+      after={changed ? <span key={changed} aria-hidden className="wl-ring" /> : null}
+    >
+      {children}
+    </StatusBadge>
   );
 }
 
@@ -59,7 +49,7 @@ export function StatusPill({ status, tone, icon, children, className }: StatusPi
  * no hover, so there a tap opens the same sentence (44 px hit area around the 16 px icon).
  */
 export function StatusIcon({ status, tone, icon, className }: Omit<StatusPillProps, 'children'>) {
-  const s = resolve(status, tone, icon);
+  const s = resolveStatus(status, tone, icon);
   const text = s.entry?.hint ? `${s.label}. ${s.entry.hint}` : s.label;
   const touch = useMediaQuery(COARSE_ONLY);
   const trigger = (
