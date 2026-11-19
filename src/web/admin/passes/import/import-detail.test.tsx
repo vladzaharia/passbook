@@ -235,7 +235,9 @@ describe('check', () => {
     });
     await user.click(await screen.findByRole('button', { name: 'Discard' }));
     await waitFor(() => expect(deletes).toEqual(['imp1']));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes/import'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/import$/),
+    );
   });
 });
 

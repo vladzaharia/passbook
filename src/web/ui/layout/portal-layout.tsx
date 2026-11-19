@@ -1,12 +1,6 @@
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { cn } from '../../lib/cn.ts';
-import {
-  adminEntryPath,
-  entryOrgId,
-  isActivePath,
-  isOrgScoped,
-  PORTAL_NAV,
-} from '../../lib/nav.ts';
+import { isActivePath, PORTAL_NAV } from '../../lib/nav.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useSession } from '../../lib/session.ts';
 import { ActiveIndicator } from '../active-indicator.tsx';
@@ -23,28 +17,17 @@ function PortalNav({ platformAdmin }: { platformAdmin: boolean }) {
   const scope = useOrgScope();
   const ready = !scope.isLoading && !scope.isError;
   const memberships = ready ? scope.memberships : [];
-  const membership = ready ? scope.membership : undefined;
-  const consolePath = adminEntryPath(platformAdmin, membership, memberships);
   const canEnter = platformAdmin || memberships.length > 0;
   return (
     <nav aria-label="Main" className="relative mr-auto flex min-w-0 gap-1 overflow-x-auto sm:ml-2">
       <ActiveIndicator />
       {PORTAL_NAV.filter((item) => canEnter || !item.admin).map((item) => {
-        const to = item.admin ? consolePath : item.to;
+        const { to } = item;
         const active = isActivePath(pathname, to);
         return (
           <Link
             key={item.to}
             to={to}
-            search={
-              item.admin
-                ? {
-                    orgId: isOrgScoped(to, platformAdmin)
-                      ? entryOrgId(membership, memberships)
-                      : undefined,
-                  }
-                : undefined
-            }
             activeOptions={{ exact: item.to === '/' }}
             aria-current={active ? 'page' : undefined}
             className={cn(

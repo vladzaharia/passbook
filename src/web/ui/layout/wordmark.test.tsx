@@ -25,7 +25,7 @@ describe('every wordmark wears the face', () => {
   it('in the admin sidebar and the nav sheet, which never says hello', async () => {
     await renderApp('/admin', { session: 'admin' });
     const [sidebar] = await screen.findAllByRole('link', { name: 'PassBook' });
-    expect(sidebar).toHaveAttribute('href', '/admin');
+    expect(sidebar).toHaveAttribute('href', '/admin/platform');
     expectFace(sidebar as HTMLElement);
     await userEvent.click(screen.getByRole('button', { name: 'Menu' }));
     const sheet = await screen.findByRole('dialog');

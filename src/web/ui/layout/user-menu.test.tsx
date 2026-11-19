@@ -88,7 +88,8 @@ describe('account menu', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/account'));
     expect(await screen.findByRole('heading', { name: 'Account', level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Admin' })).toBeInTheDocument();
-    expect(screen.queryByRole('combobox', { name: /^Organization filter/ })).toBeNull();
+    // Account sits outside a scope: the switcher offers one to open.
+    expect(screen.getByRole('combobox', { name: 'Scope: Choose an organization' })).toBeVisible();
     const again = await openMenu(user);
     expect(within(again).getByRole('menuitem', { name: 'Account' })).toHaveAttribute(
       'aria-current',

@@ -1,6 +1,4 @@
 import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react';
-import type { z } from 'zod';
-import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
 import { isApiError } from '@/web/lib/errors.ts';
 import { handleStaleSave } from '@/web/lib/stale-save.ts';
 import {
@@ -18,29 +16,13 @@ import {
 } from '@/web/ui/index.ts';
 import { publishUnsaved } from './drafts.ts';
 import { changedValues, type Draft, type SettingField, toDraft } from './fields.ts';
+import { currentValues, type SaveGuard } from './form-values.ts';
 import { useSaveSettings, useSettings } from './queries.ts';
 import {
   BASIC_KEYS,
   SettingsFormContent,
   SettingsReviewSummary,
 } from './settings-form-content.tsx';
-
-type Entries = z.infer<typeof SettingsListSchema>['items'];
-
-/** Server value if set, else the server default, else empty. */
-function currentValues(entries: Entries): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const e of entries) out[e.key] = e.value ?? e.default;
-  return out;
-}
-
-/** A change that needs a danger confirm first; Cancel puts `key` back. */
-export interface SaveGuard {
-  key: string;
-  title: string;
-  description: ReactNode;
-  confirmLabel: string;
-}
 
 export interface SettingsFormProps {
   scope: string;
@@ -56,8 +38,9 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
   const save = useSaveSettings(scope);
   const platform = scope === 'platform';
   const initial = useMemo(
-    () => (query.data ? toDraft(fields, currentValues(query.data.items)) : undefined),
-    [query.data, fields],
+    () =>
+      query.data ? toDraft(fields, currentValues(query.data.items, fields, platform)) : undefined,
+    [query.data, fields, platform],
   );
   const [edits, setEdits] = useState<Draft>({});
   const [resets, setResets] = useState<ReadonlySet<string>>(new Set());
@@ -169,14 +152,20 @@ export function SettingsForm({ scope, fields, guard, aside }: SettingsFormProps)
   const reset = (field: SettingField) => {
     const entry = entries.find((item) => item.key === field.key);
     if (!entry || entry.default === undefined) return;
-    if (entry.updatedAt === null) {
+    const stored = platform ? entry.updatedAt !== null : entry.source === 'org';
+    if (!stored) {
       setEdits(({ [field.key]: _discarded, ...rest }) => rest);
     } else {
-      setEdits((prev) => ({ ...prev, ...toDraft([field], { [field.key]: entry.default }) }));
+      // An org's unset number or text shows empty, with the default as its placeholder.
+      const unset =
+        platform || field.kind === 'boolean'
+          ? toDraft([field], { [field.key]: entry.default })
+          : { [field.key]: '' };
+      setEdits((prev) => ({ ...prev, ...unset }));
     }
     setResets((prev) => {
       const next = new Set(prev);
-      if (entry.updatedAt === null) next.delete(field.key);
+      if (!stored) next.delete(field.key);
       else next.add(field.key);
       return next;
     });

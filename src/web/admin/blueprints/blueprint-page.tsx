@@ -67,7 +67,12 @@ export function BlueprintDetailPage({
   // A template reached by a blueprint link belongs on its own page.
   if (!query.data.blueprint)
     return (
-      <Navigate to="/admin/templates/$templateId" params={{ templateId: blueprintId }} replace />
+      <Navigate
+        from="/admin/o/$orgId"
+        to="/admin/o/$orgId/templates/$templateId"
+        params={{ templateId: blueprintId }}
+        replace
+      />
     );
   return <Loaded blueprint={query.data} tab={tab ?? 'overview'} />;
 }

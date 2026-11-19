@@ -15,7 +15,7 @@ import { orgIsReadable } from '../orgs/repo.ts';
 import { certDetails, invalid, validateIdentityMaterial } from './cert.ts';
 import { checkIdentityById } from './check.ts';
 import { clearIdentityKeyCache } from './db-resolver.ts';
-import { toDto, toDtos } from './dto.ts';
+import { toDto, toDtos, toOrgDtos } from './dto.ts';
 import { intermediatePem, PLATFORM_IDENTITY_ID } from './env-identity.ts';
 import { readPkcs12 } from './pkcs12.ts';
 import { clearPushKeyCache } from './push-key-store.ts';
@@ -47,12 +47,25 @@ async function requireRow(ctx: ServiceContext, id: string): Promise<IdentityRow>
 
 export async function listIdentities(
   ctx: ServiceContext,
-  query: { cursor?: string | undefined; limit: number },
+  query: { cursor?: string | undefined; limit: number; orgId?: string | undefined },
 ): Promise<{ items: IdentityDto[]; nextCursor: string | null }> {
-  const rows = await pageIdentityRows(ctx.env.DB, query.cursor, query.limit + 1);
+  const rows = await pageIdentityRows(ctx.env.DB, query.cursor, query.limit + 1, query.orgId);
   const page = rows.slice(0, query.limit);
   return {
     items: await toDtos(ctx, page),
+    nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
+  };
+}
+
+/** An organization's own identities in the member view (see OrgIdentitySchema). */
+export async function listOrgIdentities(
+  ctx: ServiceContext,
+  query: { cursor?: string | undefined; limit: number; orgId: string },
+) {
+  const rows = await pageIdentityRows(ctx.env.DB, query.cursor, query.limit + 1, query.orgId);
+  const page = rows.slice(0, query.limit);
+  return {
+    items: await toOrgDtos(ctx, page),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
   };
 }

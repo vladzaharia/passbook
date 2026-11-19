@@ -92,12 +92,23 @@ export function SettingsFormContent({
                 resets.has(field.key) ? 'Reset pending' : changedField ? 'Not saved' : null,
               ].filter(Boolean)
             : [];
-        const source = parts.length > 0 ? parts.join(' · ') : undefined;
-        const canReset =
-          platform &&
-          entry?.default !== undefined &&
-          !resets.has(field.key) &&
-          (entry.updatedAt !== null || changedField);
+        const ceiling = !platform && entry?.ceiling !== undefined ? entry.ceiling : undefined;
+        const unset = !platform && entry?.source === 'default' && entry.default != null;
+        const orgParts = [
+          ceiling === undefined ? null : `Up to ${ceiling}${field.unit ? ` ${field.unit}` : ''}`,
+          unset && !changedField ? 'Default' : null,
+          entry?.blockedByPlatform ? 'Off for all organizations.' : null,
+        ].filter(Boolean);
+        const all = [...parts, ...orgParts];
+        const source = all.length > 0 ? all.join(' · ') : undefined;
+        const canReset = platform
+          ? entry?.default !== undefined &&
+            !resets.has(field.key) &&
+            (entry.updatedAt !== null || changedField)
+          : entry?.default != null &&
+            !entry.blockedByPlatform &&
+            !resets.has(field.key) &&
+            (entry.source === 'org' || changedField);
         return (
           <SettingRow
             key={field.key}
@@ -107,6 +118,13 @@ export function SettingsFormContent({
             error={errors[field.key]}
             help={magicHelp}
             meta={source}
+            inherits={!platform}
+            placeholder={
+              !platform && field.kind !== 'boolean' && entry?.default != null
+                ? String(entry.default)
+                : undefined
+            }
+            disabled={entry?.blockedByPlatform}
             onReset={canReset ? () => reset(field) : undefined}
             onChange={(v) => edit(field.key, v)}
           />
@@ -191,7 +209,7 @@ export function SettingsReviewSummary({
   });
   return (
     <span className="block">
-      <span className="block">Platform-wide · All organizations · Live and Test</span>
+      <span className="block">All organizations · Live and Test</span>
       <span className="mt-3 block max-h-48 space-y-1 overflow-y-auto">
         {reviewFields.map((field) => {
           const entry = entries.find((item) => item.key === field.key);

@@ -1,8 +1,5 @@
-import { useRouterState } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { isOrgScoped } from '../lib/nav.ts';
 import { useOrgScope } from '../lib/org-filter.tsx';
-import { useSession } from '../lib/session.ts';
 import { Button } from './button.tsx';
 
 /** The slice of a TanStack useInfiniteQuery result that cursor paging needs. */
@@ -31,13 +28,8 @@ export interface LoadMoreProps {
 }
 
 function ScopeName() {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const scope = useOrgScope();
-  const platformAdmin = useSession().isAdmin;
-  const name =
-    isOrgScoped(pathname, platformAdmin) && !scope.isLoading && !scope.isError
-      ? scope.membership?.orgName
-      : undefined;
+  const name = !scope.isLoading && !scope.isError ? scope.membership?.orgName : undefined;
   return name ? <> in {name}</> : null;
 }
 

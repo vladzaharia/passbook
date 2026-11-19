@@ -7,10 +7,11 @@ import {
   KeyValue,
   PageHeader,
 } from '@/web/ui/index.ts';
-import { PLATFORM_FIELDS } from './fields.ts';
+import { PLATFORM_FIELDS } from './fields-platform.ts';
+import type { SaveGuard } from './form-values.ts';
 import { MagicLinkImpact } from './magic-link-impact.tsx';
 import { useSettings } from './queries.ts';
-import { type SaveGuard, SettingsForm } from './settings-form.tsx';
+import { SettingsForm } from './settings-form.tsx';
 
 /** Turning magic links off locks out everyone without Polaris ID: confirm with the count. */
 function guardMagicLink(values: Record<string, unknown>): SaveGuard | null {
@@ -57,7 +58,6 @@ export function SettingsPage() {
       <PageHeader
         title="Platform settings"
         breadcrumbs={[{ label: 'Platform' }, { label: 'Settings' }]}
-        meta="Platform policy · All organizations · Live and Test"
       />
       <div className="flex flex-col gap-6">
         <SettingsForm scope="platform" fields={PLATFORM_FIELDS} guard={guardMagicLink} />

@@ -23,6 +23,7 @@ import {
 import { LineChart } from './chart.tsx';
 import { GetStarted, setupDone, useGetStartedDismissed } from './get-started.tsx';
 import { RANGE_LABEL } from './kpis.tsx';
+import { OrgCounts } from './org-overview-counts.tsx';
 import { useOrgActivity, useOrgSetup } from './org-overview-queries.ts';
 import { TemplateBreakdown } from './org-overview-templates.tsx';
 import { NotAddedCard, OrgTiles } from './org-overview-tiles.tsx';
@@ -144,6 +145,7 @@ export function OrgOverviewPage({
         actions={empty ? undefined : picker}
       />
       <div className="flex flex-col gap-6">
+        {orgId ? <OrgCounts orgId={orgId} caps={caps} /> : null}
         {activity.isPending ? (
           <OrgSkeleton />
         ) : activity.isError || !data ? (

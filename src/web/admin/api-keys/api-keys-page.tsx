@@ -1,19 +1,16 @@
 import { ChevronDown, Plus } from 'lucide-react';
-import { type ReactNode, useEffect, useId, useMemo, useState } from 'react';
-import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
+import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/web/lib/cn.ts';
 import { revokeKeyConfirm } from '@/web/lib/confirms.ts';
 import { formatDay } from '@/web/lib/format.ts';
-import { useOrgScope } from '@/web/lib/org-filter.tsx';
+import { useAdminScope, useOrgScope } from '@/web/lib/org-filter.tsx';
 import { useMemberships, useSession } from '@/web/lib/session.ts';
 import {
   Button,
-  Combobox,
   ConfirmDialog,
   DataTable,
   EmptyState,
   ErrorState,
-  Label,
   LoadMore,
   PageHeader,
   SkeletonRows,
@@ -29,90 +26,41 @@ export { keyState } from './queries.ts';
 const flat = (q: { data?: { pages: { items: ApiKey[] }[] } | undefined }) =>
   q.data?.pages.flatMap((p) => p.items) ?? [];
 
-function KeyContextPicker({
-  memberships,
-  value,
-  platformAdmin,
-  onChange,
-}: {
-  memberships: readonly OrgMembership[];
-  value: string | null | undefined;
-  platformAdmin: boolean;
-  onChange: (orgId: string | undefined) => void;
-}) {
-  const id = useId();
-  const options = [
-    ...(platformAdmin ? [{ value: 'platform', label: 'Platform-wide keys' }] : []),
-    ...memberships.map((m) => ({ value: `org:${m.orgId}`, label: m.orgName })),
-  ];
-  if (options.length < 2 && value !== undefined) return null;
-  if (options.length === 0) return null;
-  return (
-    <div className="mb-6 flex max-w-md flex-col gap-2 text-left">
-      <Label htmlFor={id}>Key context</Label>
-      <Combobox
-        id={id}
-        value={value === null ? 'platform' : value === undefined ? undefined : `org:${value}`}
-        options={options}
-        placeholder="Choose key context"
-        searchPlaceholder="Find a key context"
-        onValueChange={(next) => {
-          if (next === 'platform') onChange(undefined);
-          else {
-            const membership = memberships.find((m) => `org:${m.orgId}` === next);
-            if (membership) onChange(membership.orgId);
-          }
-        }}
-      />
-    </div>
-  );
-}
-
 export function ApiKeysPage({
-  onOrgChange,
   createRequested,
   onCreateRequestHandled,
 }: {
-  onOrgChange: (orgId: string | undefined) => void;
   createRequested: boolean;
   onCreateRequestHandled: () => void;
 }) {
   const scope = useOrgScope();
   const session = useSession();
   const grants = useMemberships();
-  // A member manages their organization's keys; only a platform admin also sees the platform's.
+  const adminScope = useAdminScope();
+  // The URL's scope: platform keys for an admin, or this organization's keys for a member.
   const principal = session.isError ? undefined : session.authed?.user.id;
-  const platform = Boolean(session.isAdmin && principal && !scope.hasExplicitOrg);
+  const platform = Boolean(session.isAdmin && principal && adminScope?.kind === 'platform');
   const needsMembership = !platform;
   const loading =
     session.isLoading ||
     session.isFetching ||
     (needsMembership && (scope.isLoading || grants.isFetching));
   const failed = needsMembership && scope.isError;
-  const memberships =
-    grants.isFetching || scope.isError
-      ? []
-      : scope.memberships.filter(
-          (m) => m.userId === principal && m.capabilities.includes('integrations:read'),
+  const membership =
+    grants.isFetching || scope.isError || !scope.hasExplicitOrg
+      ? undefined
+      : scope.memberships.find(
+          (m) =>
+            m.userId === principal &&
+            m.orgId === scope.requestedOrgId &&
+            m.capabilities.includes('integrations:read'),
         );
-  const membership = scope.hasExplicitOrg
-    ? memberships.find((m) => m.orgId === scope.requestedOrgId)
-    : undefined;
   const canRead = Boolean(principal && (platform || membership));
   const canManage = Boolean(
     principal &&
       (platform || (canRead && membership?.capabilities.includes('integrations:manage'))),
   );
   const orgId = platform ? null : membership?.orgId;
-  const picker = (
-    <KeyContextPicker
-      memberships={memberships}
-      value={canRead ? orgId : undefined}
-      platformAdmin={session.isAdmin}
-      onChange={onOrgChange}
-    />
-  );
-
   useEffect(() => {
     if (createRequested && !loading && !failed && !canManage) onCreateRequestHandled();
   }, [createRequested, loading, failed, canManage, onCreateRequestHandled]);
@@ -123,25 +71,15 @@ export function ApiKeysPage({
   if (failed)
     return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
   if (!principal || !canRead || orgId === undefined) {
-    const choosing = !scope.hasExplicitOrg && !membership;
-    return (
-      <EmptyState
-        heading
-        art={choosing ? 'building' : 'lock'}
-        title={choosing ? 'Choose an organization' : 'You do not have access'}
-        description="Choose a key context you can access."
-        action={picker}
-      />
-    );
+    return <EmptyState heading art="lock" title="You do not have access" />;
   }
   return (
     <ScopedApiKeys
       key={JSON.stringify([principal, orgId, canManage])}
       principal={principal}
       orgId={orgId}
-      orgName={membership?.orgName ?? 'Platform-wide'}
+      orgName={membership?.orgName ?? 'Platform'}
       canManage={canManage}
-      picker={picker}
       createRequested={createRequested}
       onCreateRequestHandled={onCreateRequestHandled}
     />
@@ -153,7 +91,6 @@ function ScopedApiKeys({
   orgId,
   orgName,
   canManage,
-  picker,
   createRequested,
   onCreateRequestHandled,
 }: {
@@ -161,7 +98,6 @@ function ScopedApiKeys({
   orgId: string | null;
   orgName: string;
   canManage: boolean;
-  picker: ReactNode;
   createRequested: boolean;
   onCreateRequestHandled: () => void;
 }) {
@@ -211,14 +147,9 @@ function ScopedApiKeys({
     <>
       <PageHeader
         title="API keys"
-        breadcrumbs={[
-          { label: orgId === null ? 'Platform' : 'Organization' },
-          { label: 'API keys' },
-        ]}
-        meta={`${orgName} · All modes`}
+        meta={orgId === null ? undefined : 'All modes'}
         actions={create(empty ? 'outline' : 'primary')}
       />
-      {picker}
       {live.isError && liveRows.length === 0 ? (
         <ErrorState error={live.error} onRetry={() => live.refetch()} />
       ) : (

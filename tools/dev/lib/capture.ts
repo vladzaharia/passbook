@@ -57,10 +57,13 @@ async function shoot(
     ...(role === 'anon' ? {} : { storageState: statePath(o.stateDir, role) }),
   });
   await context.addCookies([{ name: 'wallet-theme', value: theme, url: o.base }]);
-  // The console asks for an org until one is chosen; pick the same one the placeholders use.
+  // Links without a scope open the remembered one: the same org the placeholders use.
   const orgId = o.values.orgId;
   if (orgId && role !== 'anon' && role !== 'holder') {
-    await context.addInitScript((id) => localStorage.setItem('wallet-org-filter', id), orgId);
+    await context.addInitScript(
+      (id) => localStorage.setItem('passbook-admin-scope', `org:${id}`),
+      orgId,
+    );
   }
   const shots: Shot[] = [];
   for (const route of routes) {

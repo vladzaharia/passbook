@@ -36,8 +36,7 @@ afterEach(() => {
 });
 
 describe('new pass organization selection', () => {
-  it('requires an explicit operable membership and scopes both lists', async () => {
-    const user = userEvent.setup();
+  it('opens in the operable membership and scopes both lists', async () => {
     const passRequests: URL[] = [];
     const templateRequests: URL[] = [];
     const { router } = await renderApp('/admin/passes/new', {
@@ -55,15 +54,8 @@ describe('new pass organization selection', () => {
         '/api/v1/templates/previews': previewsHandler,
       },
     });
-    const henryChoice = await screen.findByRole('radio', { name: /Henry's/ });
-    expect(henryChoice).not.toBeChecked();
-    expect(passRequests).toHaveLength(0);
-    expect(templateRequests).toHaveLength(0);
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(await screen.findByText('Choose an organization.')).toBeInTheDocument();
-
-    await user.click(henryChoice);
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: ORG.id }));
+    // The wizard opens in the only organization that can issue, on the template step.
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
     await waitFor(() => expect(passRequests.length).toBeGreaterThan(0));
     await waitFor(() => expect(templateRequests.length).toBeGreaterThan(0));
     expect(passRequests.every((url) => url.searchParams.get('orgId') === ORG.id)).toBe(true);
@@ -76,12 +68,11 @@ describe('new pass organization selection', () => {
           url.searchParams.get('provider') === 'apple',
       ),
     ).toBe(true);
-    await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByRole('radio', { name: /Copper card/ })).toBeInTheDocument();
   });
 
-  it('offers only organizations where passes can be issued', async () => {
-    await renderApp('/admin/passes/new', {
+  it('opens only in an organization where passes can be issued', async () => {
+    const { router } = await renderApp('/admin/passes/new', {
       session: 'admin',
       memberships: [
         henry,
@@ -91,8 +82,9 @@ describe('new pass organization selection', () => {
         }),
       ],
     });
-    expect(await screen.findByRole('radio', { name: /Henry's/ })).not.toBeChecked();
-    expect(screen.queryByRole('radio', { name: /Read only/ })).toBeNull();
+    // A legacy link picks the one organization where the wizard opens.
+    expect(await screen.findByRole('heading', { name: 'New pass', level: 1 })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`/admin/o/${ORG.id}/passes/new`);
   });
 
   it('rejects an unauthorized organization and template in the URL without resource requests', async () => {
@@ -407,15 +399,13 @@ describe('new pass details step', () => {
         '/api/v1/passes': () => json({ items: [], nextCursor: null }),
       },
     });
-    await user.click(await screen.findByRole('radio', { name: /Henry's/ }));
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: ORG.id }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
     await waitFor(() =>
       expect(
         queryClient.getQueryState(['admin', 'templates', 'eligible', ORG.id, 'live', 'apple', 'u1'])
           ?.status,
       ).toBe('success'),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
     await user.click(screen.getByRole('button', { name: 'Next' }));
@@ -624,15 +614,13 @@ describe('new pass template step', () => {
         '/api/v1/passes': () => json({ items: [], nextCursor: null }),
       },
     });
-    await user.click(await screen.findByRole('radio', { name: /Henry's/ }));
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: ORG.id }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
     await waitFor(() =>
       expect(
         queryClient.getQueryState(['admin', 'templates', 'eligible', ORG.id, 'live', 'apple', 'u1'])
           ?.status,
       ).toBe('success'),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
     return user;
   }
 

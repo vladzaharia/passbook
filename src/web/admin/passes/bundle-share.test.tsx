@@ -348,7 +348,7 @@ describe('Share as bundle', () => {
     await user.click(await screen.findByRole('checkbox', { name: 'Select Pass 1' }));
     await waitFor(() => expect(previewOrgs).toContain('org1'));
     expect(screen.queryByRole('checkbox', { name: 'Select Pass 2' })).toBeNull();
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     await user.click(await screen.findByRole('option', { name: 'Second' }));
     await waitFor(() => expect(seen).toContain('org2'));
     await waitFor(() =>

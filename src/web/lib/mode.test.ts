@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApiClient } from './api.ts';
+import { trackCurrentPath } from './current-path.ts';
 import {
   getMode,
   MODE_KEY,
@@ -108,5 +109,19 @@ describe('switching mode', () => {
     setMode('live');
     await Promise.resolve();
     expect(client.getQueryData(['passes', 'list'])).toBeUndefined();
+  });
+});
+
+describe('platform pages', () => {
+  afterEach(() => trackCurrentPath(() => '/'));
+
+  it('read Live and send no mode header, whatever the browser chose', () => {
+    setMode('test');
+    trackCurrentPath(() => '/admin/platform/status');
+    expect(getMode()).toBe('live');
+    expect(modeHeaders()).toEqual({});
+    trackCurrentPath(() => '/admin/o/o1/passes');
+    expect(getMode()).toBe('test');
+    expect(Object.keys(modeHeaders())).toHaveLength(1);
   });
 });

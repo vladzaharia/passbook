@@ -5,13 +5,13 @@ test('admin signs in through Pocket ID and lands on the admin overview', async (
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/login\?next=%2Fadmin/);
   await startOidcAs(page, 'admin', '/admin');
-  await page.waitForURL('**/admin');
+  await page.waitForURL('**/admin/platform');
   await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
 });
 
 test('a user-group account without memberships cannot open /admin', async ({ page }) => {
-  await signInAs(page, 'user', '/');
-  // The e2e database is rebuilt every run (tools/e2e-server.ts), so the user starts with no grants.
+  // Its own account: other specs grant the shared user memberships while this one runs.
+  await signInAs(page, 'loner', '/');
   const memberships = await page.evaluate(async () =>
     (await fetch('/api/v1/orgs/memberships/me')).json(),
   );

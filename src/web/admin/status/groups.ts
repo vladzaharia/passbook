@@ -129,7 +129,7 @@ export function componentLink(c: Pick<Component, 'id' | 'kind'>): string | undef
   const [, id] = /^[a-z]+:(.+)$/.exec(c.id) ?? [];
   if (c.kind === 'connection') return id ? `/admin/connections/${id}` : '/admin/connections';
   if (c.kind === 'identity')
-    return id && id !== 'platform' ? `/admin/identities/${id}` : '/admin/identities';
+    return `/admin/platform/wallet-accounts${id && id !== 'platform' ? `/${id}` : ''}`;
   if (c.kind === 'oidc') return '/admin/settings';
   return undefined;
 }

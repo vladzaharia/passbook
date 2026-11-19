@@ -1,5 +1,4 @@
 import type { ZodType } from 'zod';
-import { OrgSettingsSchema, PlatformSettingsSchema } from '@/shared/contracts/settings.ts';
 
 export type FieldKind = 'boolean' | 'text' | 'int' | 'color';
 
@@ -18,195 +17,10 @@ export interface SettingField {
   unit?: string;
   /** Optional org settings may be cleared; platform settings always hold a value. */
   optional?: boolean;
+  /** The stored value is `{ enabled }` rather than a bare boolean. */
+  wrapped?: boolean;
   schema: ZodType;
 }
-
-const P = PlatformSettingsSchema.shape;
-const O = OrgSettingsSchema.shape;
-
-export const PLATFORM_FIELDS: readonly SettingField[] = [
-  {
-    key: 'auth.magicLinkEnabled',
-    group: 'Access and sign-in',
-    label: 'Magic-link sign-in',
-    kind: 'boolean',
-    schema: P['auth.magicLinkEnabled'],
-  },
-  {
-    key: 'email.senderName',
-    group: 'Email',
-    label: 'Email sender name',
-    kind: 'text',
-    help: 'Platform sender name for future messages.',
-    schema: P['email.senderName'],
-  },
-  {
-    key: 'email.orgCapPerDayMax',
-    group: 'Email',
-    label: 'Daily email limit ceiling',
-    kind: 'int',
-    help: 'The most one organization may set for its daily pass emails. 10 to 5000.',
-    range: [10, 5000],
-    schema: P['email.orgCapPerDayMax'],
-  },
-  {
-    key: 'oidc.trustEmail',
-    group: 'Identity trust',
-    label: 'Trust Polaris ID emails',
-    kind: 'boolean',
-    help: 'Off requires additional email proof when a new sign-in matches an existing email. A provider claim must still be verified.',
-    schema: P['oidc.trustEmail'],
-  },
-  {
-    key: 'refresh.userCooldownSeconds',
-    group: 'Pass updates',
-    label: 'Refresh cooldown',
-    kind: 'int',
-    suffix: 's',
-    help: 'Per pass. 5 to 3600 seconds.',
-    range: [5, 3600],
-    unit: 'seconds',
-    schema: P['refresh.userCooldownSeconds'],
-  },
-  {
-    key: 'push.budgetPerDay',
-    group: 'Pass updates',
-    label: 'Notifications per pass per day',
-    kind: 'int',
-    help: 'Per rolling 24 hours. Updates past this arrive silently. 0 to 50.',
-    range: [0, 50],
-    schema: P['push.budgetPerDay'],
-  },
-  {
-    key: 'retention.passVersionsKeep',
-    group: 'Retention',
-    label: 'Pass versions kept',
-    kind: 'int',
-    help: 'Historical versions in addition to the current version. 1 to 50.',
-    range: [1, 50],
-    schema: P['retention.passVersionsKeep'],
-  },
-  {
-    key: 'retention.auditDays',
-    group: 'Retention',
-    label: 'Audit retention',
-    kind: 'int',
-    suffix: 'days',
-    help: 'Audit records older than this may be deleted by the retention job. 365 to 3650 days.',
-    range: [365, 3650],
-    unit: 'days',
-    schema: P['retention.auditDays'],
-  },
-  {
-    key: 'retention.eventsDays',
-    group: 'Retention',
-    label: 'Sync log retention',
-    kind: 'int',
-    suffix: 'days',
-    help: 'Pass events shown in the Sync log. Older records may be deleted. 7 to 3650 days.',
-    range: [7, 3650],
-    unit: 'days',
-    schema: P['retention.eventsDays'],
-  },
-  {
-    key: 'retention.scansDays',
-    group: 'Retention',
-    label: 'Scan retention',
-    kind: 'int',
-    suffix: 'days',
-    help: 'Live scans older than this may be deleted. 30 to 3650 days.',
-    range: [30, 3650],
-    unit: 'days',
-    schema: P['retention.scansDays'],
-  },
-  {
-    key: 'sandbox.purgeDays',
-    group: 'Retention',
-    label: 'Test data retention',
-    kind: 'int',
-    suffix: 'days',
-    help: 'Test passes, bundles, messages and emails older than this may be deleted. 1 to 365 days.',
-    range: [1, 365],
-    unit: 'days',
-    schema: P['sandbox.purgeDays'],
-  },
-  {
-    key: 'scan.undoWindowMinutes',
-    group: 'Scanner safeguards',
-    label: 'Scan undo window',
-    kind: 'int',
-    suffix: 'min',
-    help: 'How long a scanner can undo its own scan. 1 to 60 minutes.',
-    range: [1, 60],
-    unit: 'minutes',
-    schema: P['scan.undoWindowMinutes'],
-  },
-  {
-    key: 'scan.lookupsPerHour',
-    group: 'Scanner safeguards',
-    label: 'People lookups per hour',
-    kind: 'int',
-    help: 'Name and email lookups per scanner per hour. 20 to 2000.',
-    range: [20, 2000],
-    schema: P['scan.lookupsPerHour'],
-  },
-];
-
-export const ORG_FIELDS: readonly SettingField[] = [
-  {
-    key: 'branding.accent',
-    label: 'Accent color',
-    kind: 'color',
-    optional: true,
-    schema: O['branding.accent'],
-  },
-  {
-    key: 'support.email',
-    label: 'Support email',
-    kind: 'text',
-    optional: true,
-    help: 'Shown to holders. A new address must be confirmed before replies go to it.',
-    schema: O['support.email'],
-  },
-  {
-    key: 'support.url',
-    label: 'Support URL',
-    kind: 'text',
-    optional: true,
-    schema: O['support.url'],
-  },
-  {
-    key: 'email.fromName',
-    label: 'Email From name',
-    kind: 'text',
-    optional: true,
-    help: 'Shown as "Name via PassBook". Replies go to the confirmed support email. Empty: the organization name.',
-    schema: O['email.fromName'],
-  },
-  {
-    key: 'email.recipientCapPerHour',
-    label: 'Emails per recipient per hour',
-    kind: 'int',
-    help: '1 to 20.',
-    range: [1, 20],
-    schema: O['email.recipientCapPerHour'],
-  },
-  {
-    key: 'email.orgCapPerDay',
-    label: 'Emails per day',
-    kind: 'int',
-    help: 'Pass emails for this organization, up to the platform ceiling. 10 to 5000.',
-    range: [10, 5000],
-    schema: O['email.orgCapPerDay'],
-  },
-  {
-    key: 'email.buddy',
-    label: 'Buddy in pass emails',
-    kind: 'boolean',
-    help: "The PassBook buddy sits beside the organization's name.",
-    schema: O['email.buddy'],
-  },
-];
 
 /** Draft strings hold what the inputs show; null clears an optional org setting. */
 export type Draft = Record<string, string | boolean>;
@@ -215,7 +29,13 @@ export function toDraft(fields: readonly SettingField[], values: Record<string, 
   const draft: Draft = {};
   for (const f of fields) {
     const v = values[f.key];
-    draft[f.key] = f.kind === 'boolean' ? v === true : v == null ? '' : String(v);
+    draft[f.key] =
+      f.kind === 'boolean'
+        ? v === true ||
+          (typeof v === 'object' && v !== null && 'enabled' in v && v.enabled === true)
+        : v == null
+          ? ''
+          : String(v);
   }
   return draft;
 }
@@ -224,7 +44,7 @@ export function parseField(
   f: SettingField,
   raw: string | boolean,
 ): { value?: unknown; error?: string } {
-  if (f.kind === 'boolean') return { value: raw === true };
+  if (f.kind === 'boolean') return { value: f.wrapped ? { enabled: raw === true } : raw === true };
   const text = String(raw).trim();
   if (text === '') {
     return f.optional ? { value: null } : { error: 'Required.' };
