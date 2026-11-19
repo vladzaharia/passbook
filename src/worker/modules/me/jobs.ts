@@ -5,6 +5,13 @@ import { dispatchSafely, enqueuePassEmail } from '../delivery/issuance-intent.ts
 import { hasPendingIssuanceTransfer } from '../delivery/repo-issuance-recovery.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 
+const MAIL_ACTION = {
+  resend: 'holder.resend',
+  lost_phone: 'holder.lost_phone_mail',
+  codes_replaced: 'holder.codes_replaced_mail',
+  channel_off: 'holder.channel_off_mail',
+} as const;
+
 /**
  * Mails a holder their own pass, to the email it was issued to. The request already checked
  * ownership; it is checked again here, and the delivery caps apply as for any pass email.
@@ -31,11 +38,14 @@ export async function handleHolderMail(
       to: pass.holderEmail,
       attach: false,
       expected: pass,
+      ...(job.reason === 'codes_replaced' || job.reason === 'channel_off'
+        ? { notice: { reason: job.reason, ...(job.channels ? { channels: job.channels } : {}) } }
+        : {}),
       auditEntry: {
         orgId: pass.orgId,
         actorType: job.userId === null ? 'system' : 'user',
         actorId: job.userId,
-        action: job.reason === 'resend' ? 'holder.resend' : 'holder.lost_phone_mail',
+        action: MAIL_ACTION[job.reason],
         targetType: 'pass',
         targetId: pass.id,
       },

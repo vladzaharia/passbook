@@ -61,7 +61,7 @@ describe('channel apply: save', () => {
         dueAt: expect.any(Number),
         startedAt: null,
         finishedAt: null,
-        counts: { changed: 0, flips: 0, stale: 0 },
+        counts: { changed: 0, flips: 0, stale: 0, rotated: 0, unsupported: 0 },
         errorCode: null,
       },
     ]);
@@ -85,7 +85,7 @@ describe('channel apply: workflow', () => {
     expect(await t.runOf(id)).toMatchObject({
       state: 'done',
       to_channels: '{"apple":"off"}',
-      counts: '{"changed":3,"flips":3,"stale":0}',
+      counts: '{"changed":3,"flips":3,"stale":0,"rotated":0,"unsupported":0}',
       cursor: t.ids.toSorted().at(-1),
     });
     expect(await t.retired('apple')).toHaveLength(3);
@@ -111,7 +111,9 @@ describe('channel apply: workflow', () => {
     };
     await t.work(id).done;
     expect(await t.feed()).toBe(before + 2);
-    expect(await t.runOf(id)).toMatchObject({ counts: '{"changed":2,"flips":2,"stale":0}' });
+    expect(await t.runOf(id)).toMatchObject({
+      counts: '{"changed":2,"flips":2,"stale":0,"rotated":0,"unsupported":0}',
+    });
     expect(t.bumpsQueued()).toBe(bumps + 2);
   });
 
@@ -156,7 +158,7 @@ describe('channel apply: workflow', () => {
     expect(await t.retired('apple')).toHaveLength(0);
     expect(await t.runOf(b)).toMatchObject({
       to_channels: '{"apple":"on"}',
-      counts: '{"changed":3,"flips":3,"stale":0}',
+      counts: '{"changed":3,"flips":3,"stale":0,"rotated":0,"unsupported":0}',
     });
   });
 
@@ -233,7 +235,9 @@ describe('channel apply: paper', () => {
     );
     const before = await t.feed();
     expect(await t.work(off).done).toEqual({ state: 'done' });
-    expect(await t.runOf(off)).toMatchObject({ counts: '{"changed":1,"flips":1,"stale":0}' });
+    expect(await t.runOf(off)).toMatchObject({
+      counts: '{"changed":1,"flips":1,"stale":0,"rotated":0,"unsupported":0}',
+    });
     expect(
       await t.count(
         "SELECT COUNT(*) AS n FROM pass_prints WHERE id = 'pr1' AND status = 'voided' AND void_cause = 'channel_off'",

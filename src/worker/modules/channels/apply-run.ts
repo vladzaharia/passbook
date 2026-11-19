@@ -4,9 +4,11 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { journal } from './apply-journal.ts';
 import { getPolicy, type Policy } from './repo.ts';
-import { writeDrop, writeFail, writeFinish, writeStart } from './repo-apply-write.ts';
+import { writeDrop, writeFail, writeFinish, writeStart, writeTouch } from './repo-apply-write.ts';
+import { mayPublish } from './repo-replace.ts';
 import type { ApplyRun } from './repo-runs.ts';
-import { getRun, priorRun, runningRun } from './repo-runs.ts';
+import { getRun, priorRun, REPLACE_PRINCIPAL_REVOKED, rotating, runningRun } from './repo-runs.ts';
+import { blockingWindow, openWindows, windowsCloseAt } from './windows.ts';
 
 export type StartResult =
   | 'started'
@@ -21,6 +23,9 @@ export type StartResult =
 export const STALLED_AFTER_MS = 10 * 60_000;
 export const PREDECESSOR_STALLED = 'CHANNEL_APPLY_PREDECESSOR_STALLED';
 export const ORG_INACTIVE = 'CHANNEL_APPLY_ORG_INACTIVE';
+export const WINDOW_TIMEOUT = 'CHANNEL_REPLACE_WINDOW_TIMEOUT';
+/** A sleeping run wakes this often to show life: status reads a silent run as stalled after 10 minutes. */
+export const GATE_ROUND_MS = 5 * 60_000;
 export const isOrgRefusal = (error: unknown): boolean =>
   error instanceof AppError && error.code === 'ORG_ACCESS_CHANGED';
 
@@ -79,7 +84,20 @@ export async function startOne(ctx: ServiceContext, runId: string): Promise<Star
       });
       return 'dropped';
     }
-    if (await writeStart(ctx, run, to, stored?.revision ?? 0)) return 'started';
+    // The requester must still hold templates:publish to replace codes; without it the run goes on
+    // without the replacement.
+    const lapsed =
+      run.replace.length > 0 && !(await mayPublish(ctx.env.DB, run.orgId, run.requestedBy));
+    if (
+      await writeStart(
+        ctx,
+        run,
+        to,
+        stored?.revision ?? 0,
+        lapsed ? REPLACE_PRINCIPAL_REVOKED : null,
+      )
+    )
+      return 'started';
   } catch (error) {
     if (isOrgRefusal(error)) return 'inactive';
     throw error;
@@ -88,6 +106,31 @@ export async function startOne(ctx: ServiceContext, runId: string): Promise<Star
   if (!ahead) return 'moved';
   // The run ahead may be long (a big template); it counts as gone only when it stops making progress.
   return ctx.clock.now() - ahead.updatedAt > STALLED_AFTER_MS ? 'stalled' : 'blocked';
+}
+
+/** Whether the started run replaces codes (the requester kept the right): only then do pages wait for windows. */
+export async function isRotating(ctx: ServiceContext, runId: string): Promise<boolean> {
+  const run = await getRun(ctx.env.DB, runId);
+  return run !== null && rotating(run);
+}
+
+/**
+ * Before a page of a run that replaces codes: while an event or scanning session that admits the
+ * template is open, returns when to look again (at most one round away, after touching the run so it
+ * does not read as stalled). Null when pages may go on.
+ */
+export async function gateOne(
+  ctx: ServiceContext,
+  runId: string,
+): Promise<{ until: number | null }> {
+  const run = await getRun(ctx.env.DB, runId);
+  if (run?.state !== 'running' || !rotating(run)) return { until: null };
+  const now = ctx.clock.now();
+  const windows = await openWindows(ctx, run.orgId, run.mode, run.templateId, now, 1);
+  if (!blockingWindow(windows)) return { until: null };
+  await writeTouch(ctx, run);
+  ctx.log.info('channels.apply.window_wait', { runId, orgId: run.orgId });
+  return { until: Math.min(windowsCloseAt(windows, now + GATE_ROUND_MS), now + GATE_ROUND_MS) };
 }
 
 /** Ends a running run as done, audited once. Returns the state the run is in. */

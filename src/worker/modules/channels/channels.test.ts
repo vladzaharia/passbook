@@ -231,13 +231,14 @@ describe('channel routes', () => {
     expect(last).toBe(429);
   });
 
-  it('refuses replace codes until the workflow exists', async () => {
+  it('refuses replace codes on a template whose barcode is not the scan code', async () => {
     const { pass, call } = await setup();
     const res = await call('PUT', `/templates/${pass.templateId}/channels`, {
       channels: { apple: 'off' },
       replaceCodes: true,
     });
     expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ code: 'NEW_CODE_UNSUPPORTED' });
   });
 });
 

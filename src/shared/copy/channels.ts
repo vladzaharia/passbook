@@ -41,4 +41,12 @@ export const CHANNEL_COPY = {
   /** `{channel}` is a label; `{n}` a pass count. */
   turnsOff: 'Turns off {channel} for {n} passes.',
   turnsOffReplace: 'Turns off {channel} for {n} passes and issues new codes.',
+  /** `{name}` is the event or session; `{time}` when it closes. */
+  replaceWindowOpen: "Codes can't change while {name} is open. Try after {time}.",
+  replaceWindowOpenNoEnd: "Codes can't change while {name} is open. Try again when it closes.",
+  replaceAllOff: 'Keep one digital channel on to replace codes.',
+  replaceUnsupported: "This template's barcode is not its scan code, so codes can't be replaced.",
+  /** The holder is told when codes are replaced: email subject and heading, hosted page note. */
+  codesReplacedTitle: 'Your code changed',
+  codesReplaced: 'Open your ticket before you arrive.',
 } as const;

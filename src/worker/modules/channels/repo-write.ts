@@ -98,6 +98,8 @@ export interface ApplyRequest {
   /** The stored policy before this save. */
   from: Partial<Record<Channel, TemplateChannelState>>;
   dueAt: number;
+  /** The channels whose codes this run replaces: the pending run's, plus this save's. */
+  replace: Channel[];
 }
 
 /** Saves a template's policy; a `never` also clears that channel's pass overrides (N1). */
@@ -144,7 +146,7 @@ export async function writeTemplatePolicy(
   // from the policy before this save.
   const now = ctx.clock.now();
   g.update('channel_apply_runs', {
-    set: { due_at: apply.dueAt, updated_at: now },
+    set: { due_at: apply.dueAt, replace_channels: JSON.stringify(apply.replace), updated_at: now },
     where: { template_id: templateId, state: 'pending' },
   });
   g.insertSelect(
@@ -155,6 +157,7 @@ export async function writeTemplatePolicy(
       'state',
       'from_channels',
       'from_revision',
+      'replace_channels',
       'requested_by',
       'due_at',
       'created_at',
@@ -166,6 +169,7 @@ export async function writeTemplatePolicy(
       'pending',
       JSON.stringify(apply.from),
       revision,
+      JSON.stringify(apply.replace),
       by,
       apply.dueAt,
       now,

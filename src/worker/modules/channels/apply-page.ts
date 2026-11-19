@@ -6,6 +6,7 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import { type Cost, msToNextMinute, PageBudget, spend } from './apply-budget.ts';
 import { journal } from './apply-journal.ts';
 import { effectiveFrom, isOrgRefusal, ORG_INACTIVE } from './apply-run.ts';
+import { noticeHolder, rotateCode } from './replace.ts';
 import {
   type ApplyEvent,
   channelRevisions,
@@ -14,8 +15,9 @@ import {
   type PagePass,
   passPage,
 } from './repo-apply.ts';
-import { type PassApply, writeCursor, writePassApply } from './repo-apply-write.ts';
-import { type ApplyCounts, type ApplyRun, getRun } from './repo-runs.ts';
+import { type PassApply, writeCursor, writeNotice, writePassApply } from './repo-apply-write.ts';
+import { unnoticed } from './repo-replace.ts';
+import { type ApplyCounts, type ApplyRun, getRun, rotating } from './repo-runs.ts';
 import { type LoadedPass, loadMany } from './service.ts';
 
 export interface PageResult {
@@ -33,6 +35,8 @@ interface Plan {
   write: Omit<PassApply, 'pass' | 'revisions' | 'counts'> | null;
   cost: Cost;
   appleChanged: boolean;
+  /** The pass owes a new code (some of its copies stopped working and the run replaces codes). */
+  rotate: boolean;
 }
 
 /** What the run's policy change does to one pass, from the pass's live inputs. */
@@ -43,6 +47,7 @@ function plan(run: ApplyRun, loaded: LoadedPass, now: number, inherited: boolean
   const actions = channelTransition(before, after, {
     copies: new Set(rows.copies),
     retired: new Set(Object.keys(rows.retired) as Channel[]),
+    ...(rotating(run) ? { replaceCodes: new Set(run.replace) } : {}),
   });
   const flips: ApplyEvent[] = CHANNELS.filter((c) => before[c].on !== after[c].on).map(
     (channel) => ({
@@ -76,8 +81,14 @@ function plan(run: ApplyRun, loaded: LoadedPass, now: number, inherited: boolean
       appleChanged = true;
     }
   }
-  // The Apple republish also refreshes an active Google object (N4).
-  if (appleChanged && rows.copies.includes('google') && after.google.on) add('google');
+  // A new code republishes the pass: one push, shared with an Apple bump.
+  const rotate = actions.some((a) => a.kind === 'rotate_codes');
+  if (rotate) {
+    cost.rotations = 1;
+    if (!appleChanged) add('apple');
+  }
+  // The republish also refreshes an active Google object (N4).
+  if ((appleChanged || rotate) && rows.copies.includes('google') && after.google.on) add('google');
   const voidPrints = actions.some((a) => a.kind === 'void_prints');
   // A run that inherited a failed run's start may find passes that run already handled: only a channel
   // whose marker (or print) changes here is news.
@@ -86,8 +97,9 @@ function plan(run: ApplyRun, loaded: LoadedPass, now: number, inherited: boolean
         (e) => marks.some((m) => m.channel === e.channel) || (voidPrints && e.channel === 'paper'),
       )
     : flips;
-  const empty = events.length === 0 && marks.length === 0 && !voidPrints;
-  return { write: empty ? null : { rows: marks, events, voidPrints }, cost, appleChanged };
+  // A pass owed only a new code still gets its mark: it carries the notice and makes a retry safe.
+  const empty = events.length === 0 && marks.length === 0 && !voidPrints && !rotate;
+  return { write: empty ? null : { rows: marks, events, voidPrints }, cost, appleChanged, rotate };
 }
 
 /** Queues the republish that carries an Apple flip; the job skips when a publish got there first. */
@@ -97,21 +109,54 @@ async function queueAppleBump(ctx: ServiceContext, passId: string): Promise<void
   await ctx.env.JOBS.send({ kind: 'channel.apple_bump', passId, version: current.version });
 }
 
-/** A pass this run already marked (a retried page): only the republish a lost message left. */
+/** What a new code did for a pass: the totals it adds. */
+type Rotated = Pick<ApplyCounts, 'rotated' | 'unsupported'>;
+
+/**
+ * Issues the pass's new code (once per run: a retry finds the mark) and tells the holder once. A
+ * barcode that is not the scan code is counted and skipped.
+ */
+async function rotate(
+  ctx: ServiceContext,
+  run: ApplyRun,
+  passId: string,
+  notify: boolean,
+): Promise<Rotated> {
+  const result = await rotateCode(ctx, passId, `channel_apply:${run.id}`);
+  if (result === 'unsupported') return { rotated: 0, unsupported: 1 };
+  if (result === 'inactive') return { rotated: 0, unsupported: 0 };
+  if (notify) {
+    await noticeHolder(ctx, passId);
+    await writeNotice(ctx, run, passId);
+  }
+  return { rotated: result === 'rotated' ? 1 : 0, unsupported: 0 };
+}
+
+/**
+ * A pass this run already marked (a retried page): only the republish a lost message left, and the
+ * new code or notice a crash left undone.
+ */
 async function finishMarked(
   ctx: ServiceContext,
+  run: ApplyRun,
+  inherited: boolean,
   pass: PagePass,
   loaded: LoadedPass | undefined,
   events: ApplyEvent[],
-): Promise<void> {
-  if (!events.some((e) => e.channel === 'apple')) return;
-  const current = await getPass(ctx.env.DB, pass.id);
-  if (current && (loaded?.rows.setAt.apple ?? 0) > current.modifiedAt)
-    await ctx.env.JOBS.send({
-      kind: 'channel.apple_bump',
-      passId: pass.id,
-      version: current.version,
-    });
+  owesNotice: boolean,
+): Promise<Rotated> {
+  if (events.some((e) => e.channel === 'apple')) {
+    const current = await getPass(ctx.env.DB, pass.id);
+    if (current && (loaded?.rows.setAt.apple ?? 0) > current.modifiedAt)
+      await ctx.env.JOBS.send({
+        kind: 'channel.apple_bump',
+        passId: pass.id,
+        version: current.version,
+      });
+  }
+  if (!loaded || !plan(run, loaded, ctx.clock.now(), inherited).rotate)
+    return { rotated: 0, unsupported: 0 };
+  return rotate(ctx, run, pass.id, owesNotice);
 }
 
 async function page(ctx: ServiceContext, run: ApplyRun, inherited: boolean): Promise<PageResult> {
@@ -120,11 +165,12 @@ async function page(ctx: ServiceContext, run: ApplyRun, inherited: boolean): Pro
   const passes = await passPage(db, run);
   if (passes.length === 0) return { done: true };
   const ids = passes.map((p) => p.id);
-  const [loaded, marks, revisions, budget] = await Promise.all([
+  const [loaded, marks, revisions, budget, owing] = await Promise.all([
     loadMany(ctx, passes),
     marksOf(db, run.id, ids),
     channelRevisions(db, ids),
     PageBudget.open(db, ctx.clock.now()),
+    unnoticed(db, run.id, ids),
   ]);
   let counts: ApplyCounts = { ...run.counts };
   let cursor: string | null = null;
@@ -135,7 +181,20 @@ async function page(ctx: ServiceContext, run: ApplyRun, inherited: boolean): Pro
   for (const pass of passes) {
     const marked = marks.get(pass.id);
     if (marked) {
-      await finishMarked(ctx, pass, loaded.get(pass.id), marked);
+      const r = await finishMarked(
+        ctx,
+        run,
+        inherited,
+        pass,
+        loaded.get(pass.id),
+        marked,
+        owing.has(pass.id),
+      );
+      counts = {
+        ...counts,
+        rotated: counts.rotated + r.rotated,
+        unsupported: counts.unsupported + r.unsupported,
+      };
       cursor = pass.id;
       continue;
     }
@@ -156,7 +215,7 @@ async function page(ctx: ServiceContext, run: ApplyRun, inherited: boolean): Pro
       }
       const next: ApplyCounts = {
         ...counts,
-        changed: counts.changed + 1,
+        changed: counts.changed + (p.write.rows.length > 0 || p.write.events.length > 0 ? 1 : 0),
         flips: counts.flips + p.write.events.length,
       };
       try {
@@ -173,6 +232,14 @@ async function page(ctx: ServiceContext, run: ApplyRun, inherited: boolean): Pro
       spent = true;
       await spend(db, ctx.clock.now(), p.cost);
       if (p.appleChanged) await queueAppleBump(ctx, pass.id);
+      if (p.rotate) {
+        const r = await rotate(ctx, run, pass.id, true);
+        counts = {
+          ...counts,
+          rotated: counts.rotated + r.rotated,
+          unsupported: counts.unsupported + r.unsupported,
+        };
+      }
       done = true;
     }
     if (stopped) break;

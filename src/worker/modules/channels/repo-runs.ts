@@ -10,7 +10,16 @@ export interface ApplyCounts {
   changed: number;
   flips: number;
   stale: number;
+  /** New codes issued, and passes whose barcode is not the scan code (skipped). */
+  rotated: number;
+  unsupported: number;
 }
+
+export const REPLACE_PRINCIPAL_REVOKED = 'REPLACE_PRINCIPAL_REVOKED';
+
+/** Whether the run still replaces codes: it asked to, and its requester kept the right at the start. */
+export const rotating = (run: Pick<ApplyRun, 'replace' | 'errorCode'>): boolean =>
+  run.replace.length > 0 && run.errorCode !== REPLACE_PRINCIPAL_REVOKED;
 
 export interface ApplyRun {
   id: string;
@@ -72,7 +81,14 @@ const map = (r: RunRow): ApplyRun => ({
   dueAt: r.due_at,
   updatedAt: r.updated_at,
   cursor: r.cursor,
-  counts: { changed: 0, flips: 0, stale: 0, ...(JSON.parse(r.counts) as Partial<ApplyCounts>) },
+  counts: {
+    changed: 0,
+    flips: 0,
+    stale: 0,
+    rotated: 0,
+    unsupported: 0,
+    ...(JSON.parse(r.counts) as Partial<ApplyCounts>),
+  },
   errorCode: r.error_code,
   startedAt: r.started_at,
   finishedAt: r.finished_at,

@@ -52,6 +52,7 @@ export async function writeStart(
   run: ApplyRun,
   to: Policy,
   revision: number,
+  errorCode: string | null = null,
 ): Promise<boolean> {
   const g = runGrant(ctx, run, 'start', ['channel_apply_runs']);
   const now = ctx.clock.now();
@@ -62,6 +63,7 @@ export async function writeStart(
       to_revision: revision,
       started_at: now,
       updated_at: now,
+      ...(errorCode ? { error_code: errorCode } : {}),
     },
     where: { id: run.id, state: 'pending' },
     returning: ['id'],
@@ -134,6 +136,30 @@ export async function writeCursor(
     set: { cursor, counts: JSON.stringify(counts), updated_at: ctx.clock.now() },
     where: { id: run.id, state: 'running' },
     require: 'one',
+  });
+  await g.commit();
+}
+
+/** A run that sleeps through a window still shows life: status reads a silent run as stalled. */
+export async function writeTouch(ctx: ServiceContext, run: ApplyRun): Promise<void> {
+  const g = runGrant(ctx, run, 'touch', ['channel_apply_runs']);
+  g.update('channel_apply_runs', {
+    set: { updated_at: ctx.clock.now() },
+    where: { id: run.id, state: 'running' },
+  });
+  await g.commit();
+}
+
+/** The holder was told once: NULL to a time, never moved again. */
+export async function writeNotice(
+  ctx: ServiceContext,
+  run: ApplyRun,
+  passId: string,
+): Promise<void> {
+  const g = runGrant(ctx, run, 'notice', ['channel_apply_marks']);
+  g.joined('channel_apply_marks', {
+    where: { run_id: run.id, pass_id: passId, notice_at: null },
+    set: { notice_at: ctx.clock.now() },
   });
   await g.commit();
 }

@@ -93,7 +93,9 @@ describe('channel apply: crash safety', () => {
       );
     expect(await applyChannelPage(ctx, id)).toEqual({ done: true });
     stale.mockImplementation(real as typeof repoApply.channelRevisions);
-    expect((await t.runOf(id))?.counts).toBe('{"changed":0,"flips":0,"stale":2}');
+    expect((await t.runOf(id))?.counts).toBe(
+      '{"changed":0,"flips":0,"stale":2,"rotated":0,"unsupported":0}',
+    );
     expect(await t.retired('apple')).toHaveLength(0);
     expect(await t.audits('pass.channels_change')).toBe(0);
   });

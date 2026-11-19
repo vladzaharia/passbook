@@ -1,5 +1,5 @@
 import { handleCapabilityChange } from '../modules/channels/capability.ts';
-import { handleAppleBump } from '../modules/channels/jobs.ts';
+import { handleAppleBump, handleReplaceCode } from '../modules/channels/jobs.ts';
 import { handleConnectionWebhook, handlePassRefresh } from '../modules/connections/jobs.ts';
 import { handleEmailSend, handlePushDeliver } from '../modules/delivery/jobs.ts';
 import { handleJoinResend } from '../modules/join/jobs.ts';
@@ -29,6 +29,7 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'wallet.enrolment_hold': handleEnrolmentHold,
   'channel.apple_bump': handleAppleBump,
   'channel.capability': handleCapabilityChange,
+  'channel.replace_code': handleReplaceCode,
 };
 
 /** Narrows per kind through a switch, so no cast is needed at the dispatch site. */
@@ -59,6 +60,8 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'channel.apple_bump':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'channel.capability':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'channel.replace_code':
       return JOB_HANDLERS[job.kind](job, ctx);
   }
 }

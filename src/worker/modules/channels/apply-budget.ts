@@ -2,7 +2,9 @@ import { bump, read } from '../../platform/counters.ts';
 
 export const PROVIDERS = ['apple', 'google', 'samsung'] as const;
 export type Provider = (typeof PROVIDERS)[number];
-export type Cost = Partial<Record<Provider, number>>;
+export type Cost = Partial<Record<Provider, number>> & { rotations?: number };
+/** New codes one page may issue: each republishes the pass and pushes it. */
+export const ROTATIONS_PER_PAGE = 25;
 
 /** Provider calls one page may start. */
 export const PAGE_CAP: Record<Provider, number> = { apple: 100, google: 50, samsung: 50 };
@@ -22,6 +24,7 @@ const key = (p: Provider, minute: number) => `channels:budget:${p}:${minute}`;
 export class PageBudget {
   private readonly left: Record<Provider, number>;
   private readonly minuteLeft: Record<Provider, number>;
+  private rotationsLeft = ROTATIONS_PER_PAGE;
 
   private constructor(left: Record<Provider, number>, minuteLeft: Record<Provider, number>) {
     this.left = left;
@@ -44,6 +47,7 @@ export class PageBudget {
       if (n > this.minuteLeft[p]) return 'minute';
     }
     for (const p of PROVIDERS) if ((cost[p] ?? 0) > this.left[p]) return 'page';
+    if ((cost.rotations ?? 0) > this.rotationsLeft) return 'page';
     return null;
   }
 
@@ -52,6 +56,7 @@ export class PageBudget {
       this.left[p] -= cost[p] ?? 0;
       this.minuteLeft[p] -= cost[p] ?? 0;
     }
+    this.rotationsLeft -= cost.rotations ?? 0;
   }
 }
 

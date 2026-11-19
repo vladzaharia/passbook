@@ -494,6 +494,33 @@ describe('pass email: join line', () => {
   });
 });
 
+describe('pass email: notice', () => {
+  const notice = {
+    subject: 'Your code changed',
+    title: 'Your code changed',
+    line: 'Open your ticket before you arrive.',
+  };
+
+  it('leads with the heading and line, uses its subject, and keeps the pass and its link', () => {
+    const e = render({ notice, subject: 'Template subject' });
+    expect(e.subject).toBe('Your code changed');
+    expect(e.text.split('\n')[0]).toBe('Your code changed');
+    expect(e.text).toContain('Open your ticket before you arrive.');
+    expect(e.text).toContain('Open your pass: https://w.test/p/t');
+    expect(e.text).not.toContain('Your pass is ready');
+    expect(e.html).toContain('Open your ticket before you arrive.');
+    expect(e.html.indexOf('Your code changed')).toBeLessThan(e.html.indexOf('Harbor Lights 2026'));
+  });
+
+  it('escapes the line and leaves every other email as it was', () => {
+    expect(render({ notice: { ...notice, line: '<b>x</b>' } }).html).toContain(
+      '&lt;b&gt;x&lt;/b&gt;',
+    );
+    expect(render().text).toContain('Your pass is ready');
+    expect(render().html).not.toContain('Open your ticket before you arrive.');
+  });
+});
+
 describe('From name keeps the platform attribution', () => {
   it.each([[''], ['   '], [null], [undefined]])('with sender name %j', (senderName) => {
     expect(render({ senderName }).fromName).toBe('Harbor Lights Festival via PassBook');

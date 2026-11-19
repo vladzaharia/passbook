@@ -27,7 +27,8 @@ import { assertWritableMode } from '../passes/scope.ts';
 import * as repo from './repo.ts';
 import { registerChannelRunRoutes } from './runs-routes.ts';
 import { passChannels, templateChannels } from './service.ts';
-import { bulkPassChannels, putPassChannels, putTemplateChannels } from './service-write.ts';
+import { putTemplateChannels } from './service-template.ts';
+import { bulkPassChannels, putPassChannels } from './service-write.ts';
 
 type Router = ReturnType<typeof createRouter>;
 type Ctx = Parameters<typeof authOf>[0];

@@ -4,9 +4,12 @@ import {
   dueOf,
   failRun,
   finishRun,
+  gateOne,
+  isRotating,
   ORG_INACTIVE,
   PREDECESSOR_STALLED,
   startOne,
+  WINDOW_TIMEOUT,
 } from '../modules/channels/apply-run.ts';
 import type { Clock } from '../platform/clock.ts';
 import type { AppEnv } from '../platform/env.ts';
@@ -19,6 +22,8 @@ export interface ChannelApplyParams {
 /** Saves that may push the start back. A run behind another waits as long as the run ahead makes progress. */
 const MAX_DEBOUNCE = 50;
 const MAX_PAGES = 2000;
+/** Gate rounds of five minutes: a window open longer than two days fails the run. */
+const MAX_GATE_ROUNDS = 576;
 const PAGE_RETRY = { retries: { limit: 3, delay: '10 seconds', backoff: 'exponential' } } as const;
 
 type StepLike = Pick<WorkflowStep, 'do' | 'sleep' | 'sleepUntil'>;
@@ -64,8 +69,20 @@ export async function runChannelApply(
       blocked++;
       if (started === 'blocked') await step.sleep(`blocked-${n}`, '5 minutes');
     }
+    let gates = 0;
+    const replacing = await step.do('rotating', () => isRotating(ctx, runId));
     for (let n = 0; ; n++) {
       if (n >= MAX_PAGES) throw new Error('channel apply ran out of pages');
+      // A window that opens mid-run pauses the pages until it closes.
+      while (replacing) {
+        const gate = await step.do(`gate-${n}-${gates}`, () => gateOne(ctx, runId));
+        if (gate.until === null) break;
+        if (++gates > MAX_GATE_ROUNDS) {
+          await step.do('fail', () => failRun(ctx, runId, WINDOW_TIMEOUT));
+          return { state: 'failed' };
+        }
+        await step.sleepUntil(`window-${n}-${gates}`, new Date(gate.until));
+      }
       const page = await step.do(`page-${n}`, PAGE_RETRY, () => applyChannelPage(ctx, runId));
       if (page.failed) {
         const code = page.failed;

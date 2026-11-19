@@ -53,9 +53,36 @@ describe('channel contracts', () => {
     expect(body.replaceCodes).toBe(false);
     expect(PutPassChannelsSchema.safeParse({ channels: {} }).success).toBe(false);
     expect(PutPassChannelsSchema.safeParse({ channels: { fax: 'on' } }).success).toBe(false);
+    const replace = {
+      supported: true,
+      windows: [
+        {
+          kind: 'event',
+          id: 'e1',
+          name: 'Gala',
+          opensAt: 1,
+          closesAt: 2,
+          open: false,
+          scheduled: true,
+        },
+        {
+          kind: 'session',
+          id: 's1',
+          name: 'Door',
+          opensAt: null,
+          closesAt: null,
+          open: false,
+          scheduled: false,
+        },
+      ],
+    };
+    expect(
+      PassChannelsResponseSchema.safeParse({ effective, overrides: { paper: 'on' }, replace })
+        .success,
+    ).toBe(true);
     expect(
       PassChannelsResponseSchema.safeParse({ effective, overrides: { paper: 'on' } }).success,
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('bulk: notify defaults off, ids bounded', () => {

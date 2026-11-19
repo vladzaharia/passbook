@@ -1,4 +1,5 @@
-import { makeOrg } from '../../../../test/helpers/index.ts';
+import { makeOrg, persistTemplate } from '../../../../test/helpers/index.ts';
+import type { PassJson } from '../../../passkit/types.ts';
 import type { Channel } from '../../../shared/contracts/channels.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { runChannelApply } from '../../workflows/channel-apply.ts';
@@ -7,6 +8,7 @@ import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { ruleKit } from '../message-rules/test-kit.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { createPassRow } from '../passes/create.ts';
+import { TINY_PNG } from '../passes/pass-test-fixtures.ts';
 import type { Pass } from '../passes/repo.ts';
 import { handleAppleBump } from './jobs.ts';
 
@@ -47,7 +49,51 @@ export function stepper(
   return { step, s };
 }
 
-export async function applyKit(passCount = 3) {
+/** A template whose barcode is the scan code (so codes can be replaced), and a maker of its passes. */
+async function scanPassMaker(kit: Awaited<ReturnType<typeof ruleKit>>) {
+  const base = await kit.registry.resolve(kit.dated.id);
+  const resolved = kit.registry.add({
+    id: `tpl-scan-${kit.fx.ids.token(4)}`,
+    version: 'v1',
+    manifest: {
+      ...base.manifest,
+      name: 'Scan template',
+      bindings: [
+        ...base.manifest.bindings,
+        { to: { barcode: 0, prop: 'message' }, value: '{{pass.scanCode}}' },
+      ],
+    },
+    passJson: {
+      ...base.passJson,
+      barcodes: [{ format: 'PKBarcodeFormatQR', message: 'x', messageEncoding: 'utf-8' }],
+    } as PassJson,
+    assets: { 'icon.png': TINY_PNG },
+  });
+  await persistTemplate(kit.fx, resolved, { registry: kit.registry });
+  const release = await approveAppleRelease(kit, {
+    templateId: resolved.id,
+    version: resolved.version,
+    orgId: kit.org.id,
+    mode: 'live',
+  });
+  return (holderEmail: string | null = null) =>
+    createPassRow(jobCtxOf(kit), {
+      orgId: kit.org.id,
+      templateId: resolved.id,
+      templateVersion: release.version,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
+      input: { memberName: 'Alex' },
+      holderEmail,
+      source: 'manual',
+      mode: 'live',
+      execution: { kind: 'system' },
+      actor: { type: 'system', id: null },
+    });
+}
+
+/** `scan`: the passes use a template whose barcode is the scan code. */
+export async function applyKit(passCount = 3, opts: { scan?: boolean; holders?: boolean } = {}) {
   const kit = await ruleKit();
   const created: { id: string; params: unknown }[] = [];
   const instanceStatus = new Map<string, string>();
@@ -63,12 +109,18 @@ export async function applyKit(passCount = 3) {
       },
     },
   });
-  const first_ = await kit.datedPass();
+  const maker = opts.scan
+    ? await scanPassMaker(kit)
+    : (email: string | null) => kit.datedPass({}, email ?? undefined);
+  let made = 0;
+  const makePass = (email: string | null = null) =>
+    maker(email ?? (opts.holders ? `holder${++made}@example.com` : null));
+  const first_ = await makePass();
   const templateId = first_.templateId;
   const orgId = kit.org.id;
   const db = kit.env.DB;
   const passes: Pass[] = [first_];
-  for (let i = 1; i < passCount; i++) passes.push(await kit.datedPass());
+  for (let i = 1; i < passCount; i++) passes.push(await makePass());
   // Pass rows are stamped with the clock: later channel rows must read as newer.
   kit.clock.advance(1000);
 
@@ -200,6 +252,7 @@ export async function applyKit(passCount = 3) {
   const exec = (sql: string, ...p: (string | number)[]) => run(db, sql, p);
   return {
     kit,
+    makePass,
     created,
     instanceStatus,
     otherOrg,
@@ -224,3 +277,5 @@ export async function applyKit(passCount = 3) {
     revision,
   };
 }
+
+export type ApplyKit = Awaited<ReturnType<typeof applyKit>>;

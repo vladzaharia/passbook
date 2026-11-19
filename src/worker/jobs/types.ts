@@ -22,7 +22,9 @@ export const JobSchema = z.discriminatedUnion('kind', [
     passId: z.string(),
     /** The signed-in owner; null when the holder used the pass link. */
     userId: z.string().nullable(),
-    reason: z.enum(['resend', 'lost_phone']),
+    reason: z.enum(['resend', 'lost_phone', 'codes_replaced', 'channel_off']),
+    /** channel_off: the digital channels whose copies stopped working, for the mail's line. */
+    channels: z.array(z.enum(['mobile', 'apple', 'google', 'samsung'])).optional(),
   }),
   /** Tells an org's admins that a retention class shortens. One job per org and class. */
   z.object({
@@ -92,6 +94,13 @@ export const JobSchema = z.discriminatedUnion('kind', [
     passId: z.string().min(1),
     /** The template version the pass was on before the publish. */
     previousVersion: z.string().min(1),
+  }),
+  /** A bulk "turn off and replace codes": the pass gets a new scan code once its windows are closed. */
+  z.object({
+    kind: z.literal('channel.replace_code'),
+    passId: z.string().min(1),
+    /** The idempotency key and rotation actor id: `channel_bulk:{requestId}`. */
+    key: z.string().min(1),
   }),
   z.object({
     kind: z.literal('template.fork_update'),

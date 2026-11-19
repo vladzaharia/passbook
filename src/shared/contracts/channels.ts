@@ -55,11 +55,33 @@ export const PassChannelOverridesSchema = z.partialRecord(ChannelSchema, PassCha
 
 export const ChannelsQuerySchema = z.object({ orgId: OrgIdSchema.optional() });
 
+/** An event or scanning session that admits a template: codes cannot change while it is open. */
+export const ChannelWindowSchema = z.object({
+  kind: z.enum(['event', 'session']),
+  id: IdSchema,
+  name: z.string(),
+  /** Event: its start. Session with hours: the next open. Null for a session with no hours. */
+  opensAt: TimestampSchema.nullable(),
+  /** Null when no end is known. */
+  closesAt: TimestampSchema.nullable(),
+  /** Open now: a save that replaces codes is refused. */
+  open: z.boolean(),
+  /** False for a session with no hours (24/7): it warns, never blocks. */
+  scheduled: z.boolean(),
+});
+export type ChannelWindow = z.infer<typeof ChannelWindowSchema>;
+
+/** Why "Turn off and replace codes" is not offered: the barcode is not the scan code, or no digital channel stays on. */
+export const ChannelReplaceBlockSchema = z.enum(['barcode_not_scan_code', 'all_digital_off']);
+export type ChannelReplaceBlock = z.infer<typeof ChannelReplaceBlockSchema>;
+
 /** GET /api/v1/passes/{id}/channels */
 export const PassChannelsResponseSchema = z.object({
   effective: EffectiveChannelsSchema,
   /** Per-pass overrides only; a channel absent here follows its template. */
   overrides: PassChannelOverridesSchema,
+  /** "Turn off and replace codes": whether this pass's barcode allows it, and the windows within 48 hours. */
+  replace: z.object({ supported: z.boolean(), windows: z.array(ChannelWindowSchema) }),
 });
 export type PassChannelsDto = z.infer<typeof PassChannelsResponseSchema>;
 
@@ -130,6 +152,10 @@ export const PutTemplateChannelsResponseSchema = TemplateChannelsResponseSchema.
   impact: z.array(ChannelImpactSchema),
   /** The channel-apply run, when the save started one. */
   workflowInstanceId: z.string().nullable(),
+  /** Whether the released version's barcode is the scan code (so codes can be replaced). */
+  replaceSupported: z.boolean(),
+  /** Windows open or opening within 48 hours; a dry run shows them as a warning. */
+  windows: z.array(ChannelWindowSchema),
 });
 
 export const ChannelApplyRunSchema = z.object({

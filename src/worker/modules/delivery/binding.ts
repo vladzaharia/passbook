@@ -73,12 +73,21 @@ export const PassEmailIntentSchema = z.object({
   issuanceId: z.string().optional(),
   /** Queued for a join link's address: the mail says why it was sent. */
   joined: z.boolean().optional(),
+  /** Queued because a channel's copies stopped working or codes were replaced: the mail says so. */
+  notice: z
+    .object({
+      reason: z.enum(['codes_replaced', 'channel_off']),
+      channels: z.array(z.enum(['mobile', 'apple', 'google', 'samsung'])).optional(),
+    })
+    .optional(),
   /** Who queued it; checked again when the mail goes out. Always written; absent only on rows queued before the cutover. */
   actor: DeliveryActorSchema.optional(),
   /** The second authority of a two-authority request. */
   also: DeliveryActorSchema.optional(),
   pass: PassDeliveryBindingSchema,
 });
+
+export type PassEmailNotice = NonNullable<z.infer<typeof PassEmailIntentSchema>['notice']>;
 
 export async function bindPass(pass: ExpectedPassDelivery): Promise<PassDeliveryBinding> {
   return {

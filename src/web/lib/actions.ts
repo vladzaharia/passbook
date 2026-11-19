@@ -74,6 +74,8 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'holder.attach_reissue_required': a('Holder attachment requires reissue', UserX, 'warning'),
   'holder.clear_block': a('Holder block cleared', ShieldCheck, 'info'),
   'holder.reassign': a('Holder reassignment requested', ArrowRightLeft, 'info'),
+  'holder.channel_off_mail': a('Holder told a copy stopped working', I.sendEmail, 'info'),
+  'holder.codes_replaced_mail': a('Holder told the code changed', I.sendEmail, 'info'),
   'holder.lost_phone': a('Holder replaced a lost phone', UserX, 'warning'),
   'holder.lost_phone_mail': a('New pass emailed after a lost phone', I.sendEmail, 'info'),
   'holder.remove': a('Holder removal requested', UserMinus, 'warning'),
