@@ -6,6 +6,7 @@ import { readStoredBulk, writeBulkStatus } from './bulk-status.ts';
 import { printPageModel } from './page.ts';
 import { fallbackPdf, type PrintSheet } from './pdf-fallback.ts';
 import { bulkKey, putPdf } from './pdf-store.ts';
+import { activePrintIds } from './repo.ts';
 
 /**
  * Renders the combined PDF of a bulk Print, one page per ticket. A pass whose print ended
@@ -16,6 +17,7 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
   const stored = await readStoredBulk(bucket, job.orgId, job.jobId);
   if (stored?.state !== 'pending') return;
   const sheets: PrintSheet[] = [];
+  const printIds: string[] = [];
   let skipped = 0;
   const skip = (passId: string, code: string) => {
     skipped++;
@@ -33,9 +35,10 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
     }
     try {
       const model = await printPageModel(ctx, pass, 'staff');
-      if (model.state === 'ready')
+      if (model.state === 'ready') {
         sheets.push({ design: model.design, content: model.content, code: model.code });
-      else skip(passId, `PRINT_${model.state.toUpperCase()}`);
+        printIds.push(model.printId);
+      } else skip(passId, `PRINT_${model.state.toUpperCase()}`);
     } catch (error) {
       if (!(error instanceof AppError) || error.status >= 500) throw error;
       skip(passId, error.code);
@@ -56,7 +59,21 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
     lossy = true;
     ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' });
   });
-  await putPdf(bucket, bulkKey(job.orgId, job.jobId, 'pdf'), bytes);
+  const key = bulkKey(job.orgId, job.jobId, 'pdf');
+  await putPdf(bucket, key, bytes);
+  // A print voided while this rendered must not leave its code in a PDF the drop hooks never saw.
+  const active = await activePrintIds(ctx.env.DB, printIds);
+  if (printIds.some((id) => !active.has(id))) {
+    await bucket.delete(key);
+    ctx.log.warn('prints.bulk_voided_mid_render', { code: 'PRINT_BULK_VOIDED_MID_RENDER' });
+    await writeBulkStatus(bucket, job.orgId, job.jobId, {
+      ...done,
+      state: 'failed',
+      count: 0,
+      at: ctx.clock.now(),
+    });
+    return;
+  }
   await writeBulkStatus(bucket, job.orgId, job.jobId, {
     ...done,
     state: 'ready',

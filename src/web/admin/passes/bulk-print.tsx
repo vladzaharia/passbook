@@ -36,6 +36,7 @@ async function whenReady(
   jobId: string,
   count: number,
   preparing: string | number,
+  startSkipped: number,
 ): Promise<void> {
   const path = `/api/v1/passes/bulk-print/${encodeURIComponent(jobId)}`;
   for (let i = 0; i < POLL_TRIES; i++) {
@@ -47,13 +48,20 @@ async function whenReady(
     }
     if (status.state === 'ready') {
       toast.dismiss(preparing);
-      toast.action(PRINT_COPY.bulkReady(plural(status.count || count), status.lossy), {
-        label: PRINT_COPY.bulkDownload,
-        onClick: () =>
-          void savePdf(orgId, jobId).catch((e: unknown) =>
-            toast.error(e, PRINT_COPY.couldNotPrint),
-          ),
-      });
+      toast.action(
+        PRINT_COPY.bulkReady(
+          plural(status.count || count),
+          status.lossy,
+          startSkipped + status.skipped,
+        ),
+        {
+          label: PRINT_COPY.bulkDownload,
+          onClick: () =>
+            void savePdf(orgId, jobId).catch((e: unknown) =>
+              toast.error(e, PRINT_COPY.couldNotPrint),
+            ),
+        },
+      );
       return;
     }
   }
@@ -93,7 +101,7 @@ export function BulkPrintAction({
       }
       const left = started.skipped.length;
       const preparing = toast.info(PRINT_COPY.bulkPreparing(plural(started.count), left));
-      void whenReady(orgId, started.jobId, started.count, preparing).catch((e: unknown) =>
+      void whenReady(orgId, started.jobId, started.count, preparing, left).catch((e: unknown) =>
         toast.error(e, PRINT_COPY.couldNotPrint),
       );
     } catch (error) {

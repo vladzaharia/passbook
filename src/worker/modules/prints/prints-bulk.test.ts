@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { PRINT_BULK_MAX } from '../../../shared/contracts/prints.ts';
-import { all } from '../../platform/db.ts';
+import { all, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { voidPass } from '../passes/service.ts';
 import { handlePrintsBulk } from './jobs.ts';
@@ -200,5 +200,43 @@ describe('bulk job outcomes', () => {
       await api('GET', `/passes/bulk-print/${started.jobId}?orgId=${kit.org.id}`)
     ).json();
     expect(status).toMatchObject({ state: 'ready', count: 1, skipped: 1 });
+  });
+});
+
+describe('bulk job race', () => {
+  it('deletes the PDF and fails the job when a print is voided while it renders', async () => {
+    const { kit, api, printPass, start, jobs } = await setup();
+    const a = await printPass();
+    const started = (await (await start([a.id])).json()) as Started;
+    const [print] = await all<{ id: string }>(
+      kit.env.DB,
+      'SELECT id FROM pass_prints WHERE pass_id = ?',
+      [a.id],
+    );
+    // The void lands after the job has read the print, as the PDF is being stored.
+    const base = jobCtxOf(kit);
+    const bucket = kit.env.BUCKET;
+    const racing = {
+      ...bucket,
+      get: bucket.get.bind(bucket),
+      head: bucket.head.bind(bucket),
+      delete: bucket.delete.bind(bucket),
+      put: async (key: string, value: never, options?: never) => {
+        const out = await bucket.put(key, value, options);
+        if (key.endsWith('.pdf'))
+          await run(
+            kit.env.DB,
+            "UPDATE pass_prints SET status = 'voided', voided_at = 1, void_cause = 'manual' WHERE id = ?",
+            [print?.id ?? ''],
+          );
+        return out;
+      },
+    } as unknown as R2Bucket;
+    await handlePrintsBulk(jobs()[0] as never, { ...base, env: { ...base.env, BUCKET: racing } });
+    expect(await bucket.head(bulkKey(kit.org.id, started.jobId, 'pdf'))).toBeNull();
+    const status = await (
+      await api('GET', `/passes/bulk-print/${started.jobId}?orgId=${kit.org.id}`)
+    ).json();
+    expect(status).toMatchObject({ state: 'failed', count: 0 });
   });
 });
