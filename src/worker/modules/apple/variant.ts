@@ -1,14 +1,16 @@
 import { unzipSync } from 'fflate';
 import { packagePassBytes, signPass } from '../../../passkit/index.ts';
+import { effectiveChannels } from '../../../shared/channels.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { holderChannels } from '../channels/gate.ts';
+import { loadPass } from '../channels/service.ts';
 import { depsOf } from '../passes/deps.ts';
-import type { PassFileVariant } from '../passes/file.ts';
+import { type PassFileVariant, voidedKey } from '../passes/file.ts';
 import { applyRemoval } from '../passes/remove-build.ts';
 import type { Pass } from '../passes/repo.ts';
 
-const RESERVED = new Set(['pass.json', 'manifest.json', 'signature']);
+// personalization.json is dropped: the voided copy has nothing to personalize.
+const RESERVED = new Set(['pass.json', 'manifest.json', 'signature', 'personalization.json']);
 const decoder = new TextDecoder();
 
 /**
@@ -20,9 +22,11 @@ export async function appleVariant(
   ctx: ServiceContext,
   pass: Pass,
 ): Promise<PassFileVariant | null> {
-  const { effective } = await holderChannels(ctx, pass);
-  const apple = effective.apple;
-  if (apple.on || (apple.source !== 'pass' && apple.source !== 'template')) return null;
+  // Only the pass and template levels decide: a kill switch (org, platform) never un-voids a copy
+  // that was retired before it, nor retires a live one.
+  const { inputs } = await loadPass(ctx, pass);
+  const lower = effectiveChannels({ ...inputs, platform: {}, org: {} });
+  if (lower.apple.on) return null;
   return voidedVariant(ctx, pass);
 }
 
@@ -32,7 +36,7 @@ export async function appleVariant(
  */
 export async function voidedVariant(ctx: ServiceContext, pass: Pass): Promise<PassFileVariant> {
   const variant = {
-    objectKey: `passes/${pass.id}/v${pass.version}-voided.pkpass`,
+    objectKey: voidedKey(pass.id, pass.version),
     name: 'voided',
   };
   const bucket = ctx.env.BUCKET;

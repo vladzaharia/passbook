@@ -1,8 +1,11 @@
 import { unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { deviceToken, linkToken, rememberAuthToken } from '../../../../test/helpers/index.ts';
+import { runJob } from '../../jobs/registry.ts';
 import { first, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { ruleKit } from '../message-rules/test-kit.ts';
+import { publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { clearSettingsCache } from '../settings/service.ts';
 
@@ -13,8 +16,16 @@ const MAC = { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Saf
 async function setup() {
   const kit = await ruleKit();
   const pass = await rememberAuthToken(kit.env, await kit.datedPass());
-  const put = (channels: Record<string, string | null>, id = pass.id) =>
-    kit.send('PUT', `/passes/${id}/channels`, { channels });
+  /** Runs the queued jobs, as the queue consumer would. */
+  const drain = async () => {
+    for (const job of kit.queue.sent.splice(0)) await runJob(job as never, jobCtxOf(kit));
+  };
+  const put = async (channels: Record<string, string | null>, id = pass.id) => {
+    kit.clock.advance(1000);
+    const res = await kit.send('PUT', `/passes/${id}/channels`, { channels });
+    await drain();
+    return res;
+  };
   const get = (path: string, headers: Record<string, string> = MAC) =>
     kit.app.request(`${ORIGIN}${path}`, { headers }, kit.env);
   const page = async () => `/p/${await linkToken(kit.env, pass)}`;
@@ -35,7 +46,7 @@ async function setup() {
     ).results
       .map((r) => r.channel)
       .sort();
-  return { kit, pass, put, get, page, text, setting, copies };
+  return { kit, pass, drain, put, get, page, text, setting, copies };
 }
 
 describe('channel gate on /p', () => {
@@ -216,6 +227,37 @@ describe('Apple voided variant', () => {
     await setting(`org:${kit.org.id}`, 'channels.blocked', ['apple']);
     const json = await passJsonOf(await fetchPass(kit, pass, auth));
     expect(json.voided).toBeUndefined();
+  });
+
+  it('keeps a retired copy voided when an org block lands on top and the pass is bumped again', async () => {
+    const { kit, pass, put, setting } = await setup();
+    const auth = deviceToken(pass);
+    await put({ apple: 'off' });
+    await setting(`org:${kit.org.id}`, 'channels.blocked', ['apple']);
+    // Any later publish bumps the version; the device then fetches the copy.
+    await publishPass(jobCtxOf(kit), {
+      passId: pass.id,
+      cause: 'admin',
+      actor: { type: 'system', id: null },
+      force: true,
+    });
+    const json = await passJsonOf(await fetchPass(kit, pass, auth));
+    expect(json.voided).toBe(true);
+  });
+
+  it('re-queues a lost bump on the next PUT and the job is idempotent', async () => {
+    const { kit, pass, put, drain } = await setup();
+    kit.clock.advance(1000);
+    await kit.send('PUT', `/passes/${pass.id}/channels`, { channels: { apple: 'off' } });
+    kit.queue.sent.splice(0); // the message is lost
+    const before = (await getPass(kit.env.DB, pass.id))?.version;
+    await kit.send('PUT', `/passes/${pass.id}/channels`, { channels: { apple: 'off' } });
+    expect(kit.queue.sent).toHaveLength(1);
+    await drain();
+    const after = (await getPass(kit.env.DB, pass.id))?.version;
+    expect(after).toBe((before ?? 0) + 1);
+    await put({ apple: 'off' });
+    expect((await getPass(kit.env.DB, pass.id))?.version).toBe(after);
   });
 
   it('refuses personalization while Apple is off', async () => {

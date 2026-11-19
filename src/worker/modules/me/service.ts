@@ -6,7 +6,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError, ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { holderChannels } from '../channels/gate.ts';
+import { type HolderChannels, holderChannels, holderChannelsMany } from '../channels/gate.ts';
 import { voidedAt } from '../events/repo-voided.ts';
 import { removePassFromUser } from '../holders/service-remove.ts';
 import { assetNamesOf } from '../passes/detail.ts';
@@ -67,7 +67,20 @@ function parsePassJson(ctx: ServiceContext, row: repo.MyPassRow): Record<string,
   }
 }
 
-async function toPass(ctx: ServiceContext, row: repo.MyPassRow, tags: MyTag[]): Promise<MyPassDto> {
+const gateKey = (row: repo.MyPassRow) => ({
+  id: row.id,
+  orgId: row.org_id,
+  mode: row.mode,
+  templateId: row.template_id,
+  templateVersion: row.template_version,
+});
+
+async function toPass(
+  ctx: ServiceContext,
+  row: repo.MyPassRow,
+  tags: MyTag[],
+  known?: HolderChannels,
+): Promise<MyPassDto> {
   // A stored link that cannot be shown (logged by the reveal) lists without links: rotate it.
   const plainToken = await revealToken(
     ctx.env,
@@ -81,13 +94,7 @@ async function toPass(ctx: ServiceContext, row: repo.MyPassRow, tags: MyTag[]): 
   });
   const base = plainToken === null ? null : `${baseUrl(ctx.env)}/p/${plainToken}`;
   const passJson = parsePassJson(ctx, row);
-  const { effective: channels, holderPrint } = await holderChannels(ctx, {
-    id: row.id,
-    orgId: row.org_id,
-    mode: row.mode,
-    templateId: row.template_id,
-    templateVersion: row.template_version,
-  });
+  const { effective: channels, holderPrint } = known ?? (await holderChannels(ctx, gateKey(row)));
   const presentationEligible =
     row.org_status === 'active' &&
     canPresent(
@@ -157,7 +164,9 @@ export async function listMyPasses(
   const rows = await repo.listMyPasses(ctx.env.DB, userId, query.cursor, query.limit);
   const page = rows.slice(0, query.limit);
   const tags = await tagsByPass(ctx.env.DB, userId, page, ctx.clock.now());
-  const build = (row: repo.MyPassRow) => toPass(ctx, row, tags.get(row.id) ?? []);
+  const known = await holderChannelsMany(ctx, page.map(gateKey));
+  const build = (row: repo.MyPassRow) =>
+    toPass(ctx, row, tags.get(row.id) ?? [], known.get(row.id));
   const built = await Promise.all(page.map(build));
   const snapshot = await repo.portfolioSnapshot(
     ctx.env.DB,

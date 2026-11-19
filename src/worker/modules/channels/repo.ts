@@ -5,7 +5,7 @@ import {
   type TemplateChannelState,
 } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, first, run } from '../../platform/db.ts';
+import { all, chunk, first, placeholders, run } from '../../platform/db.ts';
 import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
 
 export interface TemplateRef {
@@ -86,33 +86,69 @@ export interface PassChannelRows {
   overrides: Partial<Record<Channel, PassChannelState>>;
   retired: Partial<Record<Channel, number>>;
   retiredCause: Partial<Record<Channel, 'pass' | 'template'>>;
+  /** When each channel row last changed (a pending Apple bump compares it with the pass's modifiedAt). */
+  setAt: Partial<Record<Channel, number>>;
   copies: Channel[];
 }
 
+export const emptyRows = (): PassChannelRows => ({
+  overrides: {},
+  retired: {},
+  retiredCause: {},
+  setAt: {},
+  copies: [],
+});
+
 export async function getPassChannelRows(db: D1Database, passId: string): Promise<PassChannelRows> {
-  const [rows, copies] = await Promise.all([
-    all<{
-      channel: string;
-      override: PassChannelState | null;
-      retired_at: number | null;
-      retired_cause: 'pass' | 'template' | null;
-    }>(
-      db,
-      'SELECT channel, override, retired_at, retired_cause FROM pass_channels WHERE pass_id = ?',
-      [passId],
-    ),
-    all<{ channel: string }>(db, 'SELECT channel FROM pass_channel_copies WHERE pass_id = ?', [
-      passId,
-    ]),
-  ]);
-  const out: PassChannelRows = { overrides: {}, retired: {}, retiredCause: {}, copies: [] };
-  for (const r of rows) {
-    if (!isChannel(r.channel)) continue;
-    if (r.override) out.overrides[r.channel] = r.override;
-    if (r.retired_at !== null) out.retired[r.channel] = r.retired_at;
-    if (r.retired_cause) out.retiredCause[r.channel] = r.retired_cause;
+  return (await getPassChannelRowsMany(db, [passId])).get(passId) ?? emptyRows();
+}
+
+/** Channel rows and copy evidence for many passes, two queries per 90 ids. */
+export async function getPassChannelRowsMany(
+  db: D1Database,
+  passIds: readonly string[],
+): Promise<Map<string, PassChannelRows>> {
+  const out = new Map<string, PassChannelRows>();
+  for (const ids of chunk([...new Set(passIds)])) {
+    const marks = placeholders(ids.length);
+    const [rows, copies] = await Promise.all([
+      all<{
+        pass_id: string;
+        channel: string;
+        override: PassChannelState | null;
+        retired_at: number | null;
+        retired_cause: 'pass' | 'template' | null;
+        set_at: number;
+      }>(
+        db,
+        `SELECT pass_id, channel, override, retired_at, retired_cause, set_at FROM pass_channels
+         WHERE pass_id IN (${marks})`,
+        ids,
+      ),
+      all<{ pass_id: string; channel: string }>(
+        db,
+        `SELECT pass_id, channel FROM pass_channel_copies WHERE pass_id IN (${marks})`,
+        ids,
+      ),
+    ]);
+    const of = (id: string) => {
+      let r = out.get(id);
+      if (!r) {
+        r = emptyRows();
+        out.set(id, r);
+      }
+      return r;
+    };
+    for (const r of rows) {
+      if (!isChannel(r.channel)) continue;
+      const o = of(r.pass_id);
+      if (r.override) o.overrides[r.channel] = r.override;
+      if (r.retired_at !== null) o.retired[r.channel] = r.retired_at;
+      o.setAt[r.channel] = r.set_at;
+      if (r.retired_cause) o.retiredCause[r.channel] = r.retired_cause;
+    }
+    for (const r of copies) if (isChannel(r.channel)) of(r.pass_id).copies.push(r.channel);
   }
-  for (const r of copies) if (isChannel(r.channel)) out.copies.push(r.channel);
   return out;
 }
 

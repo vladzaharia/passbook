@@ -70,6 +70,8 @@ export const JobSchema = z.discriminatedUnion('kind', [
     // Position of this chunk in its event; part of the chunk's identity. Absent means 0.
     chunk: z.number().int().nonnegative().optional(),
   }),
+  /** Apple flipped for a pass: republish (force) so devices fetch the voided or live copy. */
+  z.object({ kind: z.literal('channel.apple_bump'), passId: z.string().min(1) }),
   z.object({
     kind: z.literal('template.fork_update'),
     updateId: z.string().min(1),

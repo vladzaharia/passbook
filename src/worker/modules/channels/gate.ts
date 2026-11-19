@@ -4,7 +4,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import * as repo from './repo.ts';
-import { loadPass } from './service.ts';
+import { loadMany, loadPass } from './service.ts';
 
 /** What the gate needs of a pass: the pass's own channel rows and its pinned template version. */
 export interface GatePass {
@@ -26,6 +26,20 @@ export async function holderChannels(ctx: ServiceContext, pass: GatePass): Promi
   const { inputs, paperHolder } = await loadPass(ctx, pass);
   const effective = effectiveChannels(inputs);
   return { effective, holderPrint: effective.paper.on && paperHolder };
+}
+
+/** The same reading for many passes at once (lists, bundles): batched reads, one entry per pass. */
+export async function holderChannelsMany(
+  ctx: ServiceContext,
+  passes: readonly GatePass[],
+): Promise<Map<string, HolderChannels>> {
+  const loaded = await loadMany(ctx, passes);
+  return new Map(
+    [...loaded].map(([id, { inputs, paperHolder }]) => {
+      const effective = effectiveChannels(inputs);
+      return [id, { effective, holderPrint: effective.paper.on && paperHolder }];
+    }),
+  );
 }
 
 export async function channelOn(
@@ -52,5 +66,10 @@ export async function recordCopy(
   pass: GatePass,
   channel: Channel,
 ): Promise<void> {
-  await repo.insertCopy(ctx.env.DB, pass, channel, ctx.clock.now());
+  try {
+    await repo.insertCopy(ctx.env.DB, pass, channel, ctx.clock.now());
+  } catch (error) {
+    // Evidence is best effort: a failure must not fail the delivery it describes.
+    ctx.log.error('channels.copy_failed', { code: 'CHANNEL_COPY_RECORD', passId: pass.id, error });
+  }
 }

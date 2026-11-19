@@ -46,32 +46,75 @@ export interface LoadedPass {
   paperHolder: boolean;
 }
 
-/** The pass's inputs: capability from its pinned version, policy from its template, its own rows. */
-export async function loadPass(
+type PassKey = {
+  id: string;
+  orgId: string;
+  mode: Mode;
+  templateId: string;
+  templateVersion: string;
+};
+
+/**
+ * Inputs for many passes: one rows query for all of them, and levels, policy and capability read
+ * once per org, template and version however many passes share them.
+ */
+export async function loadMany(
   ctx: ServiceContext,
-  pass: { id: string; orgId: string; mode: Mode; templateId: string; templateVersion: string },
-): Promise<LoadedPass> {
-  const [lv, policy, cap, rows] = await Promise.all([
-    levels(ctx, pass.orgId),
-    repo
-      .getPolicy(ctx.env.DB, pass.orgId, pass.mode, pass.templateId)
-      .then((r) => r?.channels ?? null),
-    repo.capabilityOf(ctx.env.DB, pass.templateId, pass.templateVersion),
-    repo.getPassChannelRows(ctx.env.DB, pass.id),
-  ]);
-  return {
-    rows,
-    paperHolder: cap.paperHolder,
-    inputs: {
-      ...lv,
-      capability: capabilityReasons(cap),
-      template: policy,
-      scanTags: cap.scanTags,
-      pass: rows.overrides,
-      retired: rows.retired,
-      retiredCause: rows.retiredCause,
-    },
+  passes: readonly PassKey[],
+): Promise<Map<string, LoadedPass>> {
+  const memo = <T>(cache: Map<string, Promise<T>>, key: string, make: () => Promise<T>) => {
+    let hit = cache.get(key);
+    if (!hit) {
+      hit = make();
+      cache.set(key, hit);
+    }
+    return hit;
   };
+  const lv = new Map<string, ReturnType<typeof levels>>();
+  const pol = new Map<string, Promise<repo.Policy | null>>();
+  const cap = new Map<string, Promise<repo.Capability>>();
+  const allRows = await repo.getPassChannelRowsMany(
+    ctx.env.DB,
+    passes.map((p) => p.id),
+  );
+  const out = new Map<string, LoadedPass>();
+  await Promise.all(
+    passes.map(async (pass) => {
+      const [levelsOf, policy, capability] = await Promise.all([
+        memo(lv, pass.orgId, () => levels(ctx, pass.orgId)),
+        memo(pol, `${pass.orgId}:${pass.mode}:${pass.templateId}`, () =>
+          repo
+            .getPolicy(ctx.env.DB, pass.orgId, pass.mode, pass.templateId)
+            .then((r) => r?.channels ?? null),
+        ),
+        memo(cap, `${pass.templateId}:${pass.templateVersion}`, () =>
+          repo.capabilityOf(ctx.env.DB, pass.templateId, pass.templateVersion),
+        ),
+      ]);
+      const rows = allRows.get(pass.id) ?? repo.emptyRows();
+      out.set(pass.id, {
+        rows,
+        paperHolder: capability.paperHolder,
+        inputs: {
+          ...levelsOf,
+          capability: capabilityReasons(capability),
+          template: policy,
+          scanTags: capability.scanTags,
+          pass: rows.overrides,
+          retired: rows.retired,
+          retiredCause: rows.retiredCause,
+        },
+      });
+    }),
+  );
+  return out;
+}
+
+/** The pass's inputs: capability from its pinned version, policy from its template, its own rows. */
+export async function loadPass(ctx: ServiceContext, pass: PassKey): Promise<LoadedPass> {
+  const loaded = (await loadMany(ctx, [pass])).get(pass.id);
+  if (!loaded) throw new Error('unreachable: loadMany returns every pass');
+  return loaded;
 }
 
 export async function passChannels(

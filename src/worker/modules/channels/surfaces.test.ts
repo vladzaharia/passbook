@@ -16,8 +16,9 @@ const SOURCES = Object.fromEntries(
     ]),
 );
 const ARTIFACT =
-  /servePassFile\(|\/pass\.pkpass|passes\.pkpasses|BUCKET\.get\([^)]*(?:objectKey|object_key)|packagePassObjects\(|packagePasses\(|listWalletOffers\(|issueWalletOffer\(/;
-const GATE = /channelGate\(|channelOn\(|holderChannels\(|appleVariant\(|eligibleWalletProvider\(/;
+  /servePassFile\(|\/pass\.pkpass|passes\.pkpasses|BUCKET\.get\([^)]*(?:objectKey|object_key)|packagePassObjects\(|packagePasses\(|listWalletOffers\(|issueWalletOffer\(/i;
+const GATE =
+  /channelGate\(|channelOn\(|holderChannels\(|holderChannelsMany\(|appleVariant\(|eligibleWalletProvider\(/;
 
 /** Every file that hands a .pkpass or a wallet offer to a holder goes through the one gate (M11). */
 const GATED = [
@@ -39,6 +40,7 @@ const EXEMPT: Record<string, string> = {
   'ssr/bundle-page.tsx': 'renders links the route handler decides',
   'email/bundle.ts': 'renders links the delivery decides',
   'modules/me/routes.ts': 'the .pkpasses route; its body is me/bundle.ts',
+  'modules/apple/variant.ts': 'builds the voided copy; apple/routes.ts decides when',
   'modules/passes/file.ts': 'the shared file server; callers gate',
   'modules/passes/package-objects.ts': 'the shared archive writer; callers gate',
   'modules/passes/detail.ts': 'admin links (passes:operate)',
@@ -60,5 +62,20 @@ describe('channel gate coverage', () => {
 
   it.each(GATED)('%s uses the gate', (file) => {
     expect(SOURCES[file]).toMatch(GATE);
+  });
+});
+
+/** In the route files, each handler that serves an artifact names its own gate (or a gated helper). */
+const ROUTE_GATE = /channelGate\(|appleVariant\(|bundleArchive\(/;
+describe('channel gate per route', () => {
+  it.each([
+    'modules/apple/routes.ts',
+    'modules/public/routes.ts',
+    'modules/bundles/public-routes.ts',
+  ])('%s', (file) => {
+    const handlers = (SOURCES[file] ?? '').split(/\bregister\(/).slice(1);
+    const serving = handlers.filter((h) => ARTIFACT.test(h) && !/path: '\/\{token\}'/.test(h));
+    expect(serving.length).toBeGreaterThan(0);
+    for (const h of serving) expect(h).toMatch(ROUTE_GATE);
   });
 });

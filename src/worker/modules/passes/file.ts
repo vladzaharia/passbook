@@ -20,6 +20,10 @@ export function passFileName(pass: Pick<Pass, 'orgSlug' | 'displayTitle' | 'seri
   return `${parts.join('-') || 'pass'}.pkpass`;
 }
 
+/** Where the voided Apple variant of a version is cached; every purge of the version deletes it too. */
+export const voidedKey = (passId: string, version: number) =>
+  `passes/${passId}/v${version}-voided.pkpass`;
+
 /** A built variant of the pass's file (the voided Apple copy) served in place of the stored object. */
 export interface PassFileVariant {
   objectKey: string;

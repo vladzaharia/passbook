@@ -141,7 +141,6 @@ export async function issueWalletOffer(
     authority: { kind: 'download', token: pass.downloadToken },
   });
   if (!created) throw notFound();
-  await recordCopy(ctx, pass, provider);
   const { operation, ref, expiresAt } = created;
   let delivered = false;
   let fenceLost = false;
@@ -207,6 +206,7 @@ export async function issueWalletOffer(
     )
       throw notFound();
     delivered = true;
+    await recordCopy(ctx, pass, provider);
     return location;
   } catch (error) {
     if (fenceLost || (error instanceof WalletRuntimeError && error.code === 'account_unavailable'))

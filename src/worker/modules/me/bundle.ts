@@ -2,7 +2,7 @@ import { PackageLimitError, packagePasses } from '../../../passkit/index.ts';
 import { MY_PASSES_BUNDLE_SIZE } from '../../../shared/contracts/me.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { channelOn } from '../channels/gate.ts';
+import { holderChannelsMany, recordCopy } from '../channels/gate.ts';
 import {
   type BundleRow,
   bundlePassIsCurrent,
@@ -53,8 +53,8 @@ const toGate = (
 async function appleOn<
   T extends Pick<BundleRow, 'id' | 'org_id' | 'mode' | 'template_id' | 'template_version'>,
 >(ctx: ServiceContext, rows: readonly T[]): Promise<T[]> {
-  const on = await Promise.all(rows.map((p) => channelOn(ctx, toGate(p), 'apple')));
-  return rows.filter((_, i) => on[i]);
+  const many = await holderChannelsMany(ctx, rows.map(toGate));
+  return rows.filter((p) => many.get(p.id)?.effective.apple.on);
 }
 
 const appleIds = async (
@@ -105,5 +105,6 @@ export async function myPassesBundle(
     ),
   );
   if (rows.length === 0) throw new NotFoundError('No passes to bundle.', 'BUNDLE_EMPTY');
+  for (const row of rows) await recordCopy(ctx, toGate(row), 'apple');
   return { body: packageMyPasses(ctx, userId, rows), parts: starts.length };
 }

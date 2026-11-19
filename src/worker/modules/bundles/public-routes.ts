@@ -20,7 +20,7 @@ import { renderBundlePage } from '../../ssr/bundle-page.tsx';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage } from '../../ssr/pass-page.tsx';
 import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
-import { channelGate } from '../channels/gate.ts';
+import { channelGate, recordCopy } from '../channels/gate.ts';
 import { servePassFile } from '../passes/file.ts';
 import { svc } from '../passes/http.ts';
 import { presentationForPass } from '../public/presentation.ts';
@@ -156,6 +156,7 @@ register(
     try {
       await recordBundleEvents(ctx, bundle, 'bundle.downloaded', archive.passIds);
       await assertBundleMembers(ctx, bundle, archive.passes);
+      for (const pass of archive.passes) await recordCopy(ctx, pass, 'apple');
     } catch (error) {
       await archive.body.cancel();
       throw error;
@@ -189,8 +190,10 @@ register(
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
     try {
       await assertBundleMember(ctx, bundle, pass);
-      if (response.status === 200)
+      if (response.status === 200) {
         await recordBundleEvents(ctx, bundle, 'bundle.downloaded', [pass.id]);
+        await recordCopy(ctx, pass, 'apple');
+      }
       await assertBundleMember(ctx, bundle, pass);
     } catch (error) {
       await response.body?.cancel();
@@ -226,6 +229,7 @@ register(
         theme,
       });
       await assertBundleMember(ctx, bundle, pass);
+      ctx.waitUntil(recordCopy(ctx, pass, 'mobile'));
       return new Response(html, { headers: PRESENTATION_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404) {

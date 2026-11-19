@@ -10,7 +10,7 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
 import { deliverBundleEmail } from '../bundles/deliver.ts';
-import { holderChannels } from '../channels/gate.ts';
+import { holderChannels, recordCopy } from '../channels/gate.ts';
 import { isJoinCard } from '../join/repo-issues.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
@@ -260,6 +260,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     return;
   }
   await finishSent(ctx, row, lease, messageId);
+  if (attachApple) await recordCopy(ctx, pass, 'apple');
   await recordEmailOutcome(ctx, row, target, 'ok');
 }
 

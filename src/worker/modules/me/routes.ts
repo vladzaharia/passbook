@@ -26,6 +26,7 @@ import { serviceContext } from '../../platform/service-context.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
 import { clearSessionCookie } from '../auth/cookies.ts';
+import { recordCopy } from '../channels/gate.ts';
 import { assertPassSnapshot } from '../public/snapshot.ts';
 import { myPassesBundle } from './bundle.ts';
 import { assertOwnerPass, presentationForOwner } from './presentation.ts';
@@ -119,6 +120,7 @@ register(
     });
     await assertPassSnapshot(ctx, snapshot);
     await assertOwnerPass(ctx, currentUserId(c), snapshot.pass);
+    ctx.waitUntil(recordCopy(ctx, snapshot.pass, 'mobile'));
     return new Response(html, { headers: PRESENTATION_HEADERS });
   },
 );
