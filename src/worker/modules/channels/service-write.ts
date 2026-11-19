@@ -73,12 +73,28 @@ export async function putPassChannels(
       delete retired[a.channel];
     }
   }
-  const audits = CHANNELS.filter((c) => before[c].on !== after[c].on).map((channel) => ({
+  const changes = CHANNELS.filter((c) => before[c].on !== after[c].on).map((channel) => ({
     channel,
     from: before[channel].on ? 'on' : 'off',
     to: after[channel].on ? 'on' : 'off',
     source: after[channel].source,
   }));
+  // Audit every override change too (a pin against later template changes); journal effective ones only.
+  const audits: Record<string, unknown>[] = CHANNELS.flatMap((channel) => {
+    const was = inputs.pass[channel] ?? null;
+    const now = overrides[channel] ?? null;
+    const effective = changes.find((c) => c.channel === channel);
+    if (!effective && was === now) return [];
+    return [
+      {
+        channel,
+        from: before[channel].on ? 'on' : 'off',
+        to: after[channel].on ? 'on' : 'off',
+        source: after[channel].source,
+        ...(was === now ? {} : { override: { from: was, to: now } }),
+      },
+    ];
+  });
   await writePassChannels(
     ctx,
     authority,
@@ -95,7 +111,7 @@ export async function putPassChannels(
   await bump(ctx.env.DB, key, window);
   await recordPassEvents(
     ctx,
-    audits.map((data) => ({
+    changes.map((data) => ({
       orgId: pass.orgId,
       passId: pass.id,
       mode: pass.mode,
@@ -147,12 +163,15 @@ export async function putTemplateChannels(
   mode: Mode,
   body: {
     channels: Partial<Record<Channel, TemplateChannelState>>;
+    revision: number;
     dryRun: boolean;
     replaceCodes: boolean;
   },
 ): Promise<PutTemplateResponse> {
   if (body.replaceCodes) throw replaceUnavailable();
-  const { inputs, policy } = await loadTemplate(ctx, template, mode);
+  const { inputs, policy, revision } = await loadTemplate(ctx, template, mode);
+  if (!body.dryRun && body.revision !== revision)
+    throw new ConflictError('The channels changed. Reload and retry.', 'TEMPLATE_CHANNELS_CHANGED');
   const merged = { ...policy, ...body.channels };
   const changed = (Object.keys(body.channels) as Channel[]).filter(
     (c) => (policy?.[c] ?? templateDefault(c, inputs.scanTags)) !== body.channels[c],
@@ -194,11 +213,14 @@ export async function putTemplateChannels(
         channels: Object.fromEntries(changed.map((c) => [c, body.channels[c]])),
         cleared: impact.reduce((n, i) => n + i.clearedOverrides, 0),
       },
+      body.revision,
     );
   const saved = body.dryRun ? policy : merged;
   const view = await loadTemplate(ctx, template, mode, saved ?? undefined);
+  const wrote = !body.dryRun && changed.length > 0;
   return {
     channels: saved,
+    revision: wrote ? revision + 1 : revision,
     effective: effectiveChannels(view.inputs),
     impact,
     workflowInstanceId: null,

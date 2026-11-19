@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { makeOrg } from '../../../../test/helpers/index.ts';
+import { makeOrg, makePass } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { ruleKit } from '../message-rules/test-kit.ts';
 import { clearSettingsCache } from '../settings/service.ts';
+import { releasedVersion } from './repo.ts';
 
 const json = { 'content-type': 'application/json' };
 
@@ -10,13 +11,19 @@ async function setup() {
   const kit = await ruleKit();
   const pass = await kit.datedPass();
   const other = await kit.datedPass();
-  /** Template routes name the org: the test templates are shared (baked). */
-  const call = (method: string, path: string, body?: unknown, headers = kit.auth.admin()) => {
+  /** Template routes name the org (the test templates are shared) and, on PUT, the revision read. */
+  const call = async (method: string, path: string, body?: unknown, headers = kit.auth.admin()) => {
     const shared = /^\/templates\/[^/?]+\/channels/.test(path);
     const url =
       shared && method === 'GET' && !path.includes('?') ? `${path}?orgId=${kit.org.id}` : path;
-    const withOrg =
+    let withOrg =
       shared && body && typeof body === 'object' ? { orgId: kit.org.id, ...body } : body;
+    if (shared && method === 'PUT' && withOrg && !('revision' in (withOrg as object))) {
+      const view = (await (await call('GET', path, undefined, headers)).json()) as {
+        revision?: number;
+      };
+      withOrg = { revision: view.revision ?? 0, ...(withOrg as object) };
+    }
     return kit.api(url, {
       method,
       headers: { ...headers, ...json },
@@ -71,7 +78,7 @@ describe('channel routes', () => {
       "SELECT detail FROM audit_log WHERE action = 'pass.channels_change' AND target_id = ?",
       pass.id,
     );
-    expect(JSON.parse(audit[0]?.detail as string)).toEqual({
+    expect(JSON.parse(audit[0]?.detail as string)).toMatchObject({
       channel: 'apple',
       from: 'on',
       to: 'off',
@@ -352,5 +359,148 @@ describe('channel permissions and isolation', () => {
         [pass.templateId],
       ),
     ).rejects.toThrow();
+  });
+});
+
+describe('review fixes', () => {
+  it('refuses a stale template revision (M5) and bumps it on save', async () => {
+    const { pass, call } = await setup();
+    const t = pass.templateId;
+    const first = (await (
+      await call('PUT', `/templates/${t}/channels`, { channels: { apple: 'off' }, revision: 0 })
+    ).json()) as { revision: number };
+    expect(first.revision).toBe(1);
+    const stale = await call('PUT', `/templates/${t}/channels`, {
+      channels: { google: 'off' },
+      revision: 0,
+    });
+    expect(stale.status).toBe(409);
+    const fresh = (await (
+      await call('PUT', `/templates/${t}/channels`, { channels: { google: 'off' }, revision: 1 })
+    ).json()) as { revision: number; channels: object };
+    expect(fresh.revision).toBe(2);
+    expect(fresh.channels).toEqual({ apple: 'off', google: 'off' });
+  });
+
+  it('a grant-level stale revision also aborts the clearing of overrides (M5)', async () => {
+    const { pass, call, rows } = await setup();
+    const t = pass.templateId;
+    await call('PUT', `/passes/${pass.id}/channels`, { channels: { apple: 'on' } });
+    await call('PUT', `/templates/${t}/channels`, { channels: { samsung: 'off' }, revision: 0 });
+    const res = await call('PUT', `/templates/${t}/channels`, {
+      channels: { apple: 'never' },
+      revision: 0,
+    });
+    expect(res.status).toBe(409);
+    const left = await rows(
+      "SELECT override FROM pass_channels WHERE pass_id = ? AND channel = 'apple'",
+      pass.id,
+    );
+    expect(left[0]?.override).toBe('on');
+  });
+
+  it('never in test mode keeps live overrides (L9)', async () => {
+    const { kit, pass, call, rows } = await setup();
+    await call('PUT', `/passes/${pass.id}/channels`, { channels: { apple: 'on' } });
+    const res = await call(
+      'PUT',
+      `/templates/${pass.templateId}/channels`,
+      { channels: { apple: 'never' } },
+      kit.auth.admin({ mode: 'test' }),
+    );
+    expect(res.status).toBe(200);
+    const live = await rows(
+      "SELECT override, revision FROM pass_channels WHERE pass_id = ? AND channel = 'apple'",
+      pass.id,
+    );
+    expect(live[0]?.override).toBe('on');
+  });
+
+  it('never bumps pass_channels.revision and audits override-only changes (L1, L2)', async () => {
+    const { pass, call, rows } = await setup();
+    await call('PUT', `/passes/${pass.id}/channels`, { channels: { apple: 'on' } });
+    const audit = await rows(
+      "SELECT detail FROM audit_log WHERE action = 'pass.channels_change' AND target_id = ?",
+      pass.id,
+    );
+    expect(JSON.parse(audit[0]?.detail as string)).toMatchObject({
+      channel: 'apple',
+      override: { from: null, to: 'on' },
+    });
+    const before = await rows(
+      "SELECT revision FROM pass_channels WHERE pass_id = ? AND channel = 'apple'",
+      pass.id,
+    );
+    await call('PUT', `/templates/${pass.templateId}/channels`, { channels: { apple: 'never' } });
+    const after = await rows(
+      "SELECT revision, override FROM pass_channels WHERE pass_id = ? AND channel = 'apple'",
+      pass.id,
+    );
+    expect(after[0]?.override).toBeNull();
+    expect(Number(after[0]?.revision)).toBeGreaterThan(Number(before[0]?.revision));
+  });
+
+  it('bulk across orgs is not found (L9)', async () => {
+    const { kit, pass, call } = await setup();
+    const org2 = await makeOrg(kit.fx);
+    const foreign = await makePass(kit.fx, {
+      orgId: org2.id,
+      template: await kit.registry.resolve(kit.dated.id),
+    });
+    const res = await call('POST', '/passes/bulk/channels', {
+      action: 'off',
+      channels: ['apple'],
+      ids: [pass.id, foreign.id],
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('only baked or shared active platform templates are visible (M2)', async () => {
+    const { kit, call, rows } = await setup();
+    const insert = (id: string, org: string | null, extra: string) =>
+      run(
+        kit.env.DB,
+        `INSERT INTO templates (id, org_id, slug, name, origin, status, created_at, updated_at${extra ? ', ' + extra.split('=')[0] : ''})
+         VALUES (?, ?, ?, 'T', ?, 'active', 1, 1${extra ? ', ' + extra.split('=')[1] : ''})`,
+        [id, org, id, id.startsWith('up') ? 'uploaded' : 'baked'],
+      );
+    await insert('up-private', null, '');
+    await insert('up-shared', null, 'shared=1');
+    await insert('bp-one', null, 'blueprint=1');
+    const view = (id: string) => call('GET', `/templates/${id}/channels`);
+    expect((await view('up-private')).status).toBe(404);
+    expect((await view('bp-one')).status).toBe(404);
+    expect((await view('up-shared')).status).toBe(200);
+    await expect(
+      run(
+        kit.env.DB,
+        "INSERT INTO template_channel_policies (org_id, mode, template_id, channels, updated_by, updated_at) VALUES (?, 'live', 'up-private', '{}', 'u', 1)",
+        [kit.org.id],
+      ),
+    ).rejects.toThrow();
+    expect(
+      await rows('SELECT 1 FROM template_channel_policies WHERE template_id = ?', 'up-private'),
+    ).toEqual([]);
+  });
+
+  it('another org gets not found for an org-owned template (L6)', async () => {
+    const { kit, call } = await setup();
+    const org2 = await makeOrg(kit.fx);
+    await run(
+      kit.env.DB,
+      "INSERT INTO templates (id, org_id, slug, name, origin, status, created_at, updated_at) VALUES ('own-t', ?, 'own-t', 'T', 'uploaded', 'active', 1, 1)",
+      [org2.id],
+    );
+    const key = await kit.auth.apiKey({ orgId: kit.org.id, scopes: ['templates:read'] });
+    expect((await call('GET', '/templates/own-t/channels', undefined, key)).status).toBe(404);
+    expect(
+      (await call('GET', '/templates/own-t/channels', undefined, kit.auth.admin())).status,
+    ).toBe(404);
+  });
+
+  it('reads capability from the org release (M3)', async () => {
+    const { kit, pass } = await setup();
+    const version = await releasedVersion(kit.env.DB, pass.templateId, pass.orgId, 'live');
+    expect(version).toBe(pass.templateVersion);
   });
 });
