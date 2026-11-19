@@ -105,13 +105,14 @@ export function MarkOutButton({
     <Button
       variant="ghost"
       size="sm"
+      className="scan-in-mark"
       disabled={disabled}
       title={disabled ? ACCESS_COPY.inside.needsConnection : undefined}
       aria-label={`${SCAN_COPY.actions.markAsOut}: ${name}`}
       iconStart={<LogOut aria-hidden />}
       onClick={() => onMark(row)}
     >
-      {SCAN_COPY.actions.markAsOut}
+      <span className="scan-in-mark-label">{SCAN_COPY.actions.markAsOut}</span>
     </Button>
   );
 }

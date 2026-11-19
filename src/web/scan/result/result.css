@@ -121,6 +121,14 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* A body taller than the card shows a fade where it continues. */
+  background:
+    linear-gradient(var(--scan-card) 30%, transparent) 0 0 / 100% 24px no-repeat local,
+    linear-gradient(transparent, var(--scan-card) 70%) 0 100% / 100% 24px no-repeat local,
+    radial-gradient(farthest-side at 50% 0, rgb(0 0 0 / 0.16), transparent) 0 0 / 100% 10px
+    no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgb(0 0 0 / 0.16), transparent) 0 100% / 100% 10px
+    no-repeat scroll;
   padding: 14px 12px 12px;
   display: flex;
   flex-direction: column;
@@ -245,5 +253,12 @@
   .scan-result-band {
     width: min(260px, 42%);
     min-height: 0;
+  }
+}
+
+/* The pass sheet fills a phone: the verdict waits behind it instead of showing through the slide. */
+@media (max-width: 639px) {
+  body:has(.scan-detail-sheet) .scan-result {
+    visibility: hidden;
   }
 }

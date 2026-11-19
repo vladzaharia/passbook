@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Buddy } from '../ui/art/buddy.tsx';
 import { ScanAppView } from './app.tsx';
-import { fakeInsideApi, insideRow, rows } from './inside/inside-fake.test-support.ts';
+import { fakeInsideApi, insideRow } from './inside/inside-fake.test-support.ts';
 import { InsideSheet } from './inside/inside-sheet.tsx';
 import { useInside } from './inside/use-inside.ts';
 import type { ResolvedOutcome } from './machine/access-events.ts';
@@ -43,7 +43,8 @@ function InsideScenario({ scenario }: { scenario: AccessScenario }) {
         : [
             insideRow(0, { flags: ['long_stay'] }),
             insideRow(1, { host: 'Ana R.' }),
-            ...rows(4).slice(2),
+            insideRow(2),
+            insideRow(3),
           ],
     ),
   );
