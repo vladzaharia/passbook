@@ -200,7 +200,9 @@ describe('cursors', () => {
       [pa.id],
     );
     const seqA = seqs[0]?.seq ?? 0;
-    expect(ra.json.nextCursor).not.toContain(String(seqA));
+    // Opaque: 16 random-looking bytes, never the sequence itself (a substring check would be flaky).
+    expect(ra.json.nextCursor).not.toBe(String(seqA));
+    expect(ra.json.nextCursor).not.toMatch(new RegExp(`^ev2\\.0*${seqA}$`));
     expect(ra.json.nextCursor).toMatch(/^ev2\.[A-Za-z0-9_-]{22}$/);
     expect(ra.json.nextCursor).not.toBe(rb.json.nextCursor);
     // Round trip: the cursor of the last item leaves nothing after it.
