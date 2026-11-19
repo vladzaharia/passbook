@@ -105,6 +105,21 @@ describe('counts', () => {
     );
   });
 
+  it('carries links past 10 in a new text module when there is none to fold into', async () => {
+    const r = await compile('starter-generic', 'generic', (v) => {
+      v.fields = [];
+      v.roles = {};
+      v.links.urls = Object.fromEntries(
+        Array.from({ length: 11 }, (_, i) => [`l${i}`, `https://example.com/${i}`]),
+      );
+    });
+    expect(object(r).linksModuleData.uris).toHaveLength(10);
+    expect(JSON.stringify(object(r).textModulesData)).toContain('https://example.com/10');
+    expect(r.items.some((i) => i.capability === 'field.link' && i.support === 'omitted')).toBe(
+      false,
+    );
+  });
+
   const points = (n: number) =>
     Array.from({ length: n }, (_, i) => ({ latitude: 40 + i / 100, longitude: -70 }));
 

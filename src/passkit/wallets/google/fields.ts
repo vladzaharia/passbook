@@ -116,7 +116,16 @@ class Modules {
   fold(capability: CapabilityId, path: string, label: string | undefined, body: string): void {
     const { ctx, tail } = this;
     const last = this.text[this.text.length - 1];
-    if (!last || !tail) return;
+    if (!last || !tail) {
+      this.add(`overflow.${path}`, label, body, path);
+      ctx.note(
+        capability,
+        path,
+        'difference',
+        `Google shows ${MAX_URIS} links: carried as a text module.`,
+      );
+      return;
+    }
     const line = (l: string | undefined, b: string) => `\n${l ? `${l}: ` : ''}${b}`;
     if (ctx.translate) {
       const bodies = new Map(ctx.translations(body, TEXT.body).map((t) => [t.language, t.value]));

@@ -31,7 +31,6 @@ describe('barcodes', () => {
     pdf417: 'PDF_417',
     aztec: 'AZTEC',
     code128: 'CODE_128',
-    code39: 'CODE_39',
   } as const;
   for (const [kind, type] of Object.entries(TYPES))
     it(`${kind} is ${type}, message and alt text unchanged`, async () => {
@@ -89,6 +88,35 @@ describe('barcodes', () => {
       capability: 'barcode.format.i2of5',
       severity: 'blocked',
     });
+  });
+});
+
+describe('barcodes: messages the type cannot encode', () => {
+  const sent = async (kind: ViewBarcode['kind'], message: string) => {
+    const r = await compile('starter-generic', 'generic', (v) => {
+      v.barcodes = [barcode(kind, message)];
+    });
+    return { barcode: object(r).barcode, items: r.items };
+  };
+  it('sends valid EAN-13 (12 digits, or 13 with check digit), Code 39 and Codabar', async () => {
+    expect((await sent('ean13', '4006381333931')).barcode.type).toBe('EAN_13');
+    expect((await sent('ean13', '400638133393')).barcode.type).toBe('EAN_13');
+    expect((await sent('code39', 'AB-12 $')).barcode.type).toBe('CODE_39');
+    expect((await sent('codabar', 'A1234-5B')).barcode.type).toBe('CODABAR');
+  });
+  it('omits and reports an invalid message', async () => {
+    for (const [kind, message] of [
+      ['ean13', '4006381333932'],
+      ['ean13', '12345'],
+      ['code39', 'abc'],
+      ['codabar', 'A12x4B'],
+    ] as const) {
+      const r = await sent(kind, message);
+      expect(r.barcode, `${kind} ${message}`).toBeUndefined();
+      expect(r.items).toContainEqual(
+        expect.objectContaining({ capability: `barcode.format.${kind}`, support: 'omitted' }),
+      );
+    }
   });
 });
 
