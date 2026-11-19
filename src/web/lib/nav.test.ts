@@ -45,7 +45,7 @@ describe('admin navigation per scope', () => {
       ['Overview'],
       ['Passes'],
       ['Test inbox'],
-      ['Settings'],
+      ['Wallet accounts', 'Settings'],
     ]);
     const scanner = membershipFixture('o1', { capabilities: ['scanning:read'] });
     expect(firstAllowedPath(org, false, scanner)).toBe('/admin/o/o1/scanning');
