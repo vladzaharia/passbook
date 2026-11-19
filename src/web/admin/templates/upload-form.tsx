@@ -175,7 +175,7 @@ export function UploadForm({
 
   const left =
     finished && !sent ? (
-      <Card className="mt-18">
+      <Card className="mt-20">
         <Buddy mood="happy" scene="cheer" />
         <CardHeader
           title={

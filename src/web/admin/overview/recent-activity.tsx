@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
 import { actionOf } from '@/web/lib/actions.ts';
 import { cn } from '@/web/lib/cn.ts';
+import { entityLabel } from '@/web/lib/entity-label.ts';
 import {
   Button,
   Card,
@@ -93,9 +94,8 @@ function RecentCard({
             {items.slice(0, 6).map((e) => {
               const action = actionOf(e.action);
               const target = targetRef(e);
-              const actor =
-                e.actorLabel ??
-                e.actorId ??
+              const actor = entityLabel(
+                e.actorLabel,
                 {
                   user: 'User',
                   api_key: 'API key',
@@ -103,7 +103,8 @@ function RecentCard({
                   connection: 'Connection',
                   device: 'Device',
                   scanner: 'Scanner',
-                }[e.actorType];
+                }[e.actorType] ?? 'Someone',
+              );
               const link = target?.to
                 ? { to: target.to }
                 : { to: '/admin/audit', search: { entry: e.id, ...auditSearch } };

@@ -1,4 +1,5 @@
 import type { BroadcastDto } from '@/shared/contracts/broadcasts.ts';
+import { entityLabel } from '../../lib/entity-label.ts';
 import { ENTITY } from '../../lib/entities.ts';
 import {
   Badge,
@@ -25,8 +26,7 @@ const OUTCOME_FILTERS = [
 const OUTCOME_TONE = { updated: 'success', unchanged: 'neutral', failed: 'danger' } as const;
 
 function ItemRow({ item }: { item: BroadcastItem }) {
-  const short = 'Unnamed pass';
-  const name = item.holderEmail ?? item.title ?? short;
+  const name = item.holderEmail ?? entityLabel(item.title, 'Pass');
   return (
     <ListRow
       rowId={item.passId}

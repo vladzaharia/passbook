@@ -164,7 +164,7 @@ describe('entity art', () => {
     expect(buddy?.querySelector('[data-part="w"]')).toHaveAttribute('data-seat');
     expect(buddy?.querySelector('.wl-buddy-prop [data-art="unplugged"]')).not.toBeNull();
     // The perch and the one-beat moods live in the kit CSS.
-    expect(css).toMatch(/\.wl-buddy \{[^}]*translate: -50% -91\.67%/);
+    expect(css).toMatch(/\.wl-buddy \{[^}]*translate: -50% -100%/);
     expect(css).toMatch(/\.wl-art\[data-still\] :is\(\[data-body\], \[data-fan\]\)/);
   });
 

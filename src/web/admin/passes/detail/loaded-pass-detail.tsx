@@ -2,12 +2,16 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
+import { entityLabel } from '../../../lib/entity-label.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import { useLasting, useMintedOnArrival } from '../../../lib/motion.ts';
 import { sessionQuery } from '../../../lib/session.ts';
 import {
   Badge,
   Buddy,
+  Card,
+  CardBody,
+  CardHeader,
   Celebrate,
   KeyValue,
   PageHeader,
@@ -15,6 +19,7 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  TechnicalDetails,
   toast,
 } from '../../../ui/index.ts';
 import { ModePill } from '../../../ui/layout/mode-pill.tsx';
@@ -143,7 +148,7 @@ export function LoadedPassDetail({
   return (
     <>
       <PageHeader
-        title={p.title ?? p.serial}
+        title={entityLabel(p.title, 'Pass')}
         breadcrumbs={crumbs}
         meta={
           <>
@@ -157,17 +162,24 @@ export function LoadedPassDetail({
         }
         actions={<HeaderActionsView runner={runner} />}
       />
-      <details className="mb-6 min-w-0 rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm">
-        <summary className="cursor-pointer font-medium text-fg-strong">Pass context</summary>
-        <div className="pt-3">
+      <Card className="mb-6 min-w-0">
+        <CardHeader title="Pass context" />
+        <CardBody className="grid gap-3">
           <KeyValue
             items={[
-              { label: 'Serial number', value: p.serial, mono: true },
-              { label: 'Template revision', value: p.templateVersion, mono: true },
+              ...(template.data ? [{ label: 'Template', value: template.data.name }] : []),
+              { label: 'Last updated', value: formatDateTime(p.modifiedAt) },
             ]}
           />
-        </div>
-      </details>
+          <TechnicalDetails
+            items={[
+              { label: 'Version', value: `v${p.version}` },
+              { label: 'Serial number', value: p.serial, copy: true },
+              { label: 'Template revision', value: p.templateVersion, copy: true },
+            ]}
+          />
+        </CardBody>
+      </Card>
       <div className="mb-6 flex flex-col gap-3 empty:hidden">
         {p.reissueRequired ? <ReissueRequiredCallout pass={p} canOperate={!readOnly} /> : null}
         {foreign ? <ModeMismatchCallout pass={p} /> : null}
@@ -210,7 +222,7 @@ export function LoadedPassDetail({
         <PassWarnings pass={p} />
       </div>
       <PreviewLayout
-        title={p.title ?? p.serial}
+        title={entityLabel(p.title, 'Pass')}
         stage={stage}
         still={
           <PassPreview
@@ -227,8 +239,6 @@ export function LoadedPassDetail({
             items={[
               { label: 'Holder', value: p.holderEmail },
               { label: 'Devices', value: devices(p.deviceCount) },
-              ...(template.data ? [{ label: 'Template', value: template.data.name }] : []),
-              { label: 'Last updated', value: formatDateTime(p.modifiedAt) },
             ]}
           />
         }

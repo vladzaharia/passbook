@@ -1,3 +1,4 @@
+import { entityLabel } from '../../../lib/entity-label.ts';
 import { RotateCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
@@ -70,7 +71,7 @@ export function Deliveries({ endpointId, canManage }: { endpointId: string; canM
           params={{ passId: d.passId }}
           className="text-xs font-normal"
         >
-          {d.externalId ?? 'Open pass'}
+          {entityLabel(d.externalId, 'Open pass')}
         </RowLink>
       ),
     },
