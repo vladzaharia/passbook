@@ -144,14 +144,14 @@ function actionsHtml(input: PassEmailInput): string {
     ...(print ? [badgeButtonHtml(print, PRINT_LABEL)] : []),
   ];
   const [first, second] = items;
-  if (items.length === 2 && first && second) return stackHtml(first, second);
+  if (badge && items.length === 2 && first && second) return stackHtml(first, second);
   const rows = items
     .map(
       (item, i) =>
         `<tr><td style="padding:${i < items.length - 1 ? '0 0 12px' : '0'}">${item}</td></tr>`,
     )
     .join('');
-  return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 4px;border-collapse:collapse">${rows}</table>`;
+  return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 ${badge ? 4 : 24}px;border-collapse:collapse">${rows}</table>`;
 }
 
 /** Only render capability links for the same pass as the Apple and public-page links. */
