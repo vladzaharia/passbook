@@ -4,12 +4,13 @@ import { TINY_PNG } from '../passes/pass-test-fixtures.ts';
 
 /**
  * A join-ready test template (primary barcode is the scan code), or one whose barcode reads `memberName`.
- * With `lookup`, a required `cardNumber` input is the desk lookup, so a join generates its value.
+ * With `lookup`, a required `cardNumber` input is the desk lookup, so a join generates its value; with
+ * 'default' it has a fixed default instead (an org-assigned value), so nothing is generated.
  */
 export function joinTemplate(
   id: string,
   barcode = '{{pass.scanCode}}',
-  lookup = false,
+  lookup: boolean | 'default' = false,
 ): TestTemplate {
   const { resolved } = makeTemplate({ id });
   const registry = new InMemoryTemplateRegistry();
@@ -23,10 +24,14 @@ export function joinTemplate(
         ? {
             inputs: {
               type: 'object',
-              required: ['memberName', 'cardNumber'],
+              required: lookup === 'default' ? ['memberName'] : ['memberName', 'cardNumber'],
               properties: {
                 memberName: { type: 'string', minLength: 1 },
-                cardNumber: { type: 'string', minLength: 1 },
+                cardNumber: {
+                  type: 'string',
+                  minLength: 1,
+                  ...(lookup === 'default' ? { default: '0000000001' } : {}),
+                },
               },
             },
             sample: { memberName: 'Alex Morgan', cardNumber: '0000000001' },

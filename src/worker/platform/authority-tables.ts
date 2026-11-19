@@ -104,6 +104,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   join_links: { org: 'org_id', mode: 'mode' },
   // The ledger a join grant appends to with its pass. Its triggers hold org, mode and generation to the link.
   join_issues: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
+  // The permanent mark of a card a join link made: inserted with the ledger row, never changed or deleted.
+  join_marks: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   // Its triggers write passes.image_generation, so a part could reach a pass of another tenant.
   member_photos: { org: 'org_id', pass: 'pass_id' },
   nfc_tags: { org: 'org_id', mode: 'mode', conflict: ['org_id', 'mode', 'tag_ref'] },

@@ -58,6 +58,35 @@ export function formatTime(ms: number, timeZone?: string): string {
   return formatter.format(ms);
 }
 
+const EXPIRY = new Map<string, Intl.DateTimeFormat>();
+
+/**
+ * "Nov 21, 2030, 11:30 AM" for a pass's expiry (ISO string; '' when it is not a date). In
+ * `timeZone` when it is known; otherwise in the zone the timestamp itself carries (its offset, or
+ * UTC for Z), with that zone named so nobody reads it as local time. No DOM: /p renders it.
+ */
+export function formatExpiry(iso: string, timeZone?: string): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return '';
+  const zone = timeZone ?? /([+-]\d{2}:\d{2})$/.exec(iso)?.[1] ?? 'UTC';
+  const named = timeZone === undefined;
+  const key = `${zone}|${named}`;
+  let formatter = EXPIRY.get(key);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(LOCALE, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: zone,
+      ...(named ? { timeZoneName: 'short' as const } : {}),
+    });
+    EXPIRY.set(key, formatter);
+  }
+  return formatter.format(at);
+}
+
 /** Oct 31, 6 PM: a bucket an hour wide or more. */
 export function formatShortDateHour(ms: number): string {
   return `${SHORT.format(ms)}, ${HOUR.format(ms)}`;

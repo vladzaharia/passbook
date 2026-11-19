@@ -4,6 +4,7 @@ import { issueToken, sealPart } from '../../platform/capability-token.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
+import type { AuditEntry } from '../audit/types.ts';
 import { grantTransferFinish } from '../delivery/repo-issuance.ts';
 import { CONFLICT_CODES, transferGrant } from './credential-transfer-grant.ts';
 import { transferAssetRetirement } from './repo-credential-transfer-assets.ts';
@@ -42,6 +43,8 @@ export interface FinishTransferInput {
   contentHash: string;
   credentialKeysetCommitment: string;
   content: ConnectionTransferContent;
+  /** A joined card's generated lookup value was replaced with the credentials. */
+  lookupReplaced: boolean;
   passJson: string;
   title: string | null;
   subtitle: string | null;
@@ -218,6 +221,16 @@ export async function finishTransferBatch(
       targetType: 'pass',
       targetId: p.id,
       detail: { via: 'email', userId: target.ownerUserId },
+    });
+  if (i.lookupReplaced)
+    grantedAudit(g, ctx, {
+      orgId: p.orgId,
+      actorType: t.requested_by_type as AuditEntry['actorType'],
+      actorId: t.requested_by_id,
+      action: 'pass.join_lookup_replaced',
+      targetType: 'pass',
+      targetId: p.id,
+      detail: { transferId: t.id },
     });
   grantedAudit(g, ctx, {
     orgId: p.orgId,

@@ -24,6 +24,7 @@ import { HolderHeading } from '../../web/portal/holder-heading.tsx';
 import { PortalLink } from '../../web/portal/holder-parts.tsx';
 import holderPassCss from '../../web/portal/holder-pass.css?raw';
 import { HolderPassView, type HolderSupport } from '../../web/portal/holder-pass-view.tsx';
+import { PassDetails } from '../../web/portal/pass-details.tsx';
 import artBase from '../../web/ui/art/art.css?raw';
 import artWallet from '../../web/ui/art/art-wallet.css?raw';
 import common from '../../web/ui/art/scenes/common.css?raw';
@@ -52,6 +53,12 @@ body{padding:0}
 
 export interface PassPageProps {
   view: PassView;
+  /** The issued pass.json: the details list names every front field. */
+  passJson: Record<string, unknown>;
+  /** The request clock. */
+  now: Date;
+  /** The visitor's zone, for dates in the details. */
+  timeZone?: string;
   nonce: string;
   /** The visitor's theme choice (requestTheme); undefined follows the OS. */
   theme?: PageTheme;
@@ -137,6 +144,16 @@ function PassBody(props: PassPageProps) {
           support={props.support}
           endedOn={props.endedOn ?? null}
           {...(props.resend ? { resend: props.resend } : {})}
+          details={
+            <PassDetails
+              passJson={props.passJson}
+              view={view}
+              active={active}
+              locale={view.locale}
+              now={props.now}
+              {...(props.timeZone ? { timeZone: props.timeZone } : {})}
+            />
+          }
           rise
         />
       </main>
