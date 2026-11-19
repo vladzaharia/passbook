@@ -51,7 +51,9 @@ export async function loadPass(
 ): Promise<LoadedPass> {
   const [lv, policy, cap, rows] = await Promise.all([
     levels(ctx, pass.orgId),
-    repo.getPolicy(ctx.env.DB, pass.orgId, pass.mode, pass.templateId),
+    repo
+      .getPolicy(ctx.env.DB, pass.orgId, pass.mode, pass.templateId)
+      .then((r) => r?.channels ?? null),
     repo.capabilityOf(ctx.env.DB, pass.templateId, pass.templateVersion),
     repo.getPassChannelRows(ctx.env.DB, pass.id),
   ]);
@@ -76,21 +78,23 @@ export async function passChannels(
   return { effective: effectiveChannels(inputs), overrides: inputs.pass };
 }
 
-/** The template's own view: platform, org and capability of its active version, before any pass override. */
+/** The template's own view: platform, org and capability of the org's released version, before any pass override. */
 export async function loadTemplate(
   ctx: ServiceContext,
   template: repo.TemplateRef,
   mode: Mode,
   policyOverride?: repo.Policy,
-): Promise<{ inputs: ChannelInputs; policy: repo.Policy | null }> {
-  const [lv, stored, cap] = await Promise.all([
+): Promise<{ inputs: ChannelInputs; policy: repo.Policy | null; revision: number }> {
+  const [lv, stored, version] = await Promise.all([
     levels(ctx, template.orgId),
     repo.getPolicy(ctx.env.DB, template.orgId, mode, template.id),
-    repo.capabilityOf(ctx.env.DB, template.id, template.activeVersion),
+    repo.releasedVersion(ctx.env.DB, template.id, template.orgId, mode),
   ]);
-  const policy = policyOverride ?? stored;
+  const cap = await repo.capabilityOf(ctx.env.DB, template.id, version ?? template.activeVersion);
+  const policy = policyOverride ?? stored?.channels ?? null;
   return {
-    policy: stored,
+    policy: stored?.channels ?? null,
+    revision: stored?.revision ?? 0,
     inputs: {
       ...lv,
       capability: capabilityReasons(cap),
@@ -107,6 +111,6 @@ export async function templateChannels(
   template: repo.TemplateRef,
   mode: Mode,
 ): Promise<TemplateChannelsDto> {
-  const { inputs, policy } = await loadTemplate(ctx, template, mode);
-  return { channels: policy, effective: effectiveChannels(inputs) };
+  const { inputs, policy, revision } = await loadTemplate(ctx, template, mode);
+  return { channels: policy, revision, effective: effectiveChannels(inputs) };
 }

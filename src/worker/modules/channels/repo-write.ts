@@ -4,6 +4,7 @@ import type {
   TemplateChannelState,
 } from '../../../shared/contracts/channels.ts';
 import { grant } from '../../platform/authority.ts';
+import { exists, notExists } from '../../platform/authority-cond.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
@@ -88,6 +89,7 @@ export async function writeTemplatePolicy(
   channels: Partial<Record<Channel, TemplateChannelState>>,
   cleared: Channel[],
   detail: Record<string, unknown>,
+  revision: number,
 ): Promise<void> {
   const g = grant(ctx, {
     purpose: 'org_mode.channels.policy',
@@ -95,7 +97,15 @@ export async function writeTemplatePolicy(
     target: templateId,
     tables: ['template_channel_policies', 'pass_channels'],
     checks: capabilityChecks(authority),
+    codes: { stale: 'TEMPLATE_CHANNELS_CHANGED' },
   });
+  // The policy is still the revision the editor read (0: none yet).
+  g.assert(
+    'stale',
+    revision === 0
+      ? [notExists('template_channel_policies', { template_id: templateId })]
+      : [exists('template_channel_policies', { template_id: templateId, revision })],
+  );
   g.upsert(
     'template_channel_policies',
     ['template_id', 'channels', 'updated_by', 'updated_at'],
@@ -104,7 +114,8 @@ export async function writeTemplatePolicy(
   );
   for (const channel of cleared)
     g.update('pass_channels', {
-      set: { override: null },
+      set: { override: null, set_by: by, set_at: ctx.clock.now() },
+      inc: ['revision'],
       where: { template_id: templateId, channel },
     });
   g.audit(

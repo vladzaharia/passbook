@@ -50,8 +50,9 @@ export function effectiveChannels(i: ChannelInputs): EffectiveChannels {
   return out;
 }
 
+/** retiredAt marks an off channel only: an on channel is never retired. */
 function withRetired(s: EffectiveChannels[Channel], at: number | undefined) {
-  return at === undefined ? s : { ...s, retiredAt: at };
+  return at === undefined || s.on ? s : { ...s, retiredAt: at };
 }
 
 function off(source: ChannelSource, reason: ChannelReason): EffectiveChannels[Channel] {
@@ -111,18 +112,21 @@ export function channelTransition(
   const copies = opts.copies ?? new Set<Channel>();
   const retired = opts.retired ?? new Set<Channel>();
   const turnedOff: Channel[] = [];
+  const kill = (e: EffectiveChannels[Channel]) => e.source === 'org' || e.source === 'platform';
   for (const c of CHANNELS) {
-    const was = before[c].on;
     const now = after[c].on;
-    if (was && !now) {
-      const killSwitch = after[c].source === 'org' || after[c].source === 'platform';
-      if (killSwitch) continue;
-      if (c === 'paper') actions.push({ kind: 'void_prints' });
-      else actions.push({ kind: 'retire', channel: c });
-      if (isDigital(c) && copies.has(c)) turnedOff.push(c);
-    } else if (!was && now && retired.has(c)) {
-      actions.push({ kind: 'restore', channel: c, warn: copies.has(c) });
+    if (now) {
+      if (retired.has(c)) actions.push({ kind: 'restore', channel: c, warn: copies.has(c) });
+      continue;
     }
+    // Retire when a pass or template level turns it off: from on, or (with copy evidence) when a kill
+    // switch lifts onto a lower-level off. A kill switch itself never retires.
+    const wasLive = before[c].on || (kill(before[c]) && copies.has(c));
+    const lowered = !kill(after[c]) && wasLive && !retired.has(c);
+    if (!lowered) continue;
+    if (c === 'paper') actions.push({ kind: 'void_prints' });
+    else actions.push({ kind: 'retire', channel: c });
+    if (isDigital(c) && copies.has(c)) turnedOff.push(c);
   }
   if (opts.replaceCodes && turnedOff.length > 0 && anyDigitalOn(after))
     actions.push({ kind: 'rotate_codes', channels: turnedOff });

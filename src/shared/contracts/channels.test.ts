@@ -42,7 +42,9 @@ describe('channel contracts', () => {
   it('allows never only on a template', () => {
     expect(TemplateChannelStateSchema.safeParse('never').success).toBe(true);
     expect(PutPassChannelsSchema.safeParse({ channels: { apple: 'never' } }).success).toBe(false);
-    expect(PutTemplateChannelsSchema.parse({ channels: { paper: 'never' } }).dryRun).toBe(false);
+    expect(
+      PutTemplateChannelsSchema.parse({ channels: { paper: 'never' }, revision: 0 }).dryRun,
+    ).toBe(false);
   });
 
   it('accepts overrides, null resets and rejects empty or unknown channels', () => {

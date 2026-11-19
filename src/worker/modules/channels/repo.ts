@@ -6,6 +6,7 @@ import {
 } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, first } from '../../platform/db.ts';
+import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
 
 export interface TemplateRef {
   id: string;
@@ -14,14 +15,19 @@ export interface TemplateRef {
   activeVersion: string | null;
 }
 
-/** A template and its owner: null for a shared (baked) template, which any org may set a policy for. */
+/**
+ * A template and its owner: null for a baked or shared platform template, which any org may set a
+ * policy for. Staged uploads, blueprints and inactive platform templates are not found.
+ */
 export async function templateOwner(
   db: D1Database,
   id: string,
 ): Promise<{ id: string; ownerOrgId: string | null; activeVersion: string | null } | null> {
   const r = await first<{ id: string; org_id: string | null; active_version: string | null }>(
     db,
-    'SELECT id, org_id, active_version FROM templates WHERE id = ?',
+    `SELECT id, org_id, active_version FROM templates WHERE id = ?
+       AND (org_id IS NOT NULL
+         OR ((origin = 'baked' OR shared = 1) AND blueprint = 0 AND status = 'active'))`,
     [id],
   );
   return r ? { id: r.id, ownerOrgId: r.org_id, activeVersion: r.active_version } : null;
@@ -31,22 +37,49 @@ const isChannel = (v: unknown): v is Channel => (CHANNELS as readonly unknown[])
 
 export type Policy = Partial<Record<Channel, TemplateChannelState>>;
 
+export interface PolicyRow {
+  channels: Policy;
+  revision: number;
+}
+
 export async function getPolicy(
   db: D1Database,
   orgId: string,
   mode: Mode,
   templateId: string,
-): Promise<Policy | null> {
-  const r = await first<{ channels: string }>(
+): Promise<PolicyRow | null> {
+  const r = await first<{ channels: string; revision: number }>(
     db,
-    'SELECT channels FROM template_channel_policies WHERE org_id = ? AND mode = ? AND template_id = ?',
+    `SELECT channels, revision FROM template_channel_policies
+     WHERE org_id = ? AND mode = ? AND template_id = ?`,
     [orgId, mode, templateId],
   );
   if (!r) return null;
-  const out: Policy = {};
+  const channels: Policy = {};
   for (const [k, v] of Object.entries(JSON.parse(r.channels) as Record<string, unknown>))
-    if (isChannel(k) && (v === 'on' || v === 'off' || v === 'never')) out[k] = v;
-  return out;
+    if (isChannel(k) && (v === 'on' || v === 'off' || v === 'never')) channels[k] = v;
+  return { channels, revision: r.revision };
+}
+
+const lit = (v: string) => `'${v.replace(/'/g, "''")}'`;
+
+/** The version the org's release of this template serves in this mode (Apple head), if any. */
+export async function releasedVersion(
+  db: D1Database,
+  templateId: string,
+  orgId: string,
+  mode: Mode,
+): Promise<string | null> {
+  const r = await first<{ version: string }>(
+    db,
+    `SELECT r.version FROM template_releases r WHERE r.id = (${effectiveReleaseIdSql({
+      templateIdSql: lit(templateId),
+      orgIdSql: lit(orgId),
+      modeSql: lit(mode),
+      providerSql: "'apple'",
+    })})`,
+  );
+  return r?.version ?? null;
 }
 
 export interface PassChannelRows {
@@ -82,7 +115,7 @@ export interface Capability {
   scanTags: boolean;
 }
 
-/** What a template version can serve: a wallets block per provider (type not off) and scan.tags. */
+/** What a template version can serve: a wallets block per provider (type absent or not off) and scan.tags. */
 export async function capabilityOf(
   db: D1Database,
   templateId: string,
@@ -91,8 +124,10 @@ export async function capabilityOf(
   const r = version
     ? await first<{ g: string | null; s: string | null; t: string | null }>(
         db,
-        `SELECT json_extract(manifest, '$.wallets.google.type') AS g,
-           json_extract(manifest, '$.wallets.samsung.type') AS s,
+        `SELECT CASE WHEN json_type(manifest, '$.wallets.google') = 'object'
+             THEN COALESCE(json_extract(manifest, '$.wallets.google.type'), 'on') END AS g,
+           CASE WHEN json_type(manifest, '$.wallets.samsung') = 'object'
+             THEN COALESCE(json_extract(manifest, '$.wallets.samsung.type'), 'on') END AS s,
            json_type(manifest, '$.scan.tags') AS t
          FROM template_versions WHERE template_id = ? AND version = ?`,
         [templateId, version],

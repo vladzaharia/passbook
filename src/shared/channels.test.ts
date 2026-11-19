@@ -78,7 +78,9 @@ describe('effectiveChannels precedence', () => {
   });
 
   it('reports retiredAt and nothingOn', () => {
-    expect(eff({ retired: { apple: 5 } }).apple.retiredAt).toBe(5);
+    expect(eff({ pass: { apple: 'off' }, retired: { apple: 5 } }).apple.retiredAt).toBe(5);
+    // An on channel never reads retired.
+    expect(eff({ retired: { apple: 5 } }).apple).toEqual({ on: true, source: 'template' });
     const off = { mobile: 'x', apple: 'x', google: 'x', samsung: 'x', paper: 'x', nfc: 'x' };
     const e = eff({ org: Object.fromEntries(Object.keys(off).map((k) => [k, 'blocked'])) });
     expect(nothingOn(e)).toBe(true);
@@ -142,5 +144,40 @@ describe('channelTransition', () => {
         copies: new Set(['apple']),
       }),
     ).toEqual([{ kind: 'restore', channel: 'apple', warn: true }]);
+  });
+
+  it('block, then template off, then unblock retires with copy evidence', () => {
+    const blocked = on({ org: { apple: 'blocked' } });
+    const lifted = on({ template: { apple: 'off' } });
+    expect(channelTransition(on(), blocked, { copies: new Set(['apple']) })).toEqual([]);
+    expect(
+      channelTransition(blocked, on({ org: { apple: 'blocked' }, template: { apple: 'off' } }), {
+        copies: new Set(['apple']),
+      }),
+    ).toEqual([]);
+    expect(channelTransition(blocked, lifted, { copies: new Set(['apple']) })).toEqual([
+      { kind: 'retire', channel: 'apple' },
+    ]);
+    // Without a copy there is nothing to retire; already retired stays as is.
+    expect(channelTransition(blocked, lifted)).toEqual([]);
+    expect(
+      channelTransition(blocked, lifted, {
+        copies: new Set(['apple']),
+        retired: new Set(['apple']),
+      }),
+    ).toEqual([]);
+  });
+
+  it('block, pass reset while blocked, then unblock restores a retired channel', () => {
+    const blocked = on({
+      org: { apple: 'blocked' },
+      pass: { apple: 'off' },
+      retired: { apple: 3 },
+    });
+    const after = on({ retired: { apple: 3 } });
+    expect(after.apple).toEqual({ on: true, source: 'template' });
+    expect(channelTransition(blocked, after, { retired: new Set(['apple']) })).toEqual([
+      { kind: 'restore', channel: 'apple', warn: false },
+    ]);
   });
 });
