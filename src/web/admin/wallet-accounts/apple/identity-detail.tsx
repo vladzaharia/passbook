@@ -20,8 +20,8 @@ import {
   TwoPane,
   toast,
 } from '@/web/ui/index.ts';
-import { useOrgNames } from '../orgs/queries.ts';
-import { CreatedCallout, useCreated } from '../passes/created.tsx';
+import { useOrgNames } from '../../orgs/queries.ts';
+import { CreatedCallout, useCreated } from '../../passes/created.tsx';
 import { attentionTone, expiryPhrase } from './attention.ts';
 import { remainingDays, WARN_DAYS } from './expiry.tsx';
 import { CertificateCard, OverviewCard, SettingsCard } from './identity-cards.tsx';

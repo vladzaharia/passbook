@@ -12,8 +12,8 @@ import {
   Select,
   useFormErrors,
 } from '@/web/ui/index.ts';
-import { useOrgList } from '../orgs/queries.ts';
-import { markCreated } from '../passes/created.tsx';
+import { useOrgList } from '../../orgs/queries.ts';
+import { markCreated } from '../../passes/created.tsx';
 import { CertificateFields } from './certificate-fields.tsx';
 import { useUploadIdentity } from './queries.ts';
 import {

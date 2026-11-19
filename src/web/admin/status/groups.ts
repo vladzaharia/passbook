@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { ComponentStatusSchema } from '@/shared/contracts/status.ts';
 import { formatDateTime } from '../../lib/format.ts';
-import { PUSH_METHOD_LABEL } from '../identities/apns-check.tsx';
+import { PUSH_METHOD_LABEL } from '../wallet-accounts/apple/apns-check.tsx';
 
 export type Component = z.infer<typeof ComponentStatusSchema>;
 export type State = Component['state'];

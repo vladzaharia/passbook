@@ -1,10 +1,10 @@
 import { type FormEvent, useState } from 'react';
 import {
-  type ConfigureWalletProviderAccount,
-  ConfigureWalletProviderAccountSchema,
-  type WalletProviderScope,
+  type SaveWalletCredential,
+  SaveWalletCredentialSchema,
+  type WalletProvider,
 } from '@/shared/contracts/wallet-providers.ts';
-import { Button, FormField, Input, Textarea } from '@/web/ui/index.ts';
+import { FormField, Input, Textarea } from '@/web/ui/index.ts';
 
 const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/wallet_object.issuer';
 
@@ -103,23 +103,23 @@ function validPem(value: string, label: 'PRIVATE KEY' | 'CERTIFICATE'): boolean 
   );
 }
 
+export const CREDENTIAL_FORM_ID = 'wallet-credentials';
+
 /** The form is deliberately uncontrolled: credential values never enter React or query state. */
-export function WalletAccountCredentialsForm({
-  scope,
+export function WalletCredentialFields({
+  provider,
   revision,
   rotating,
   busy,
   onSave,
-  onCancel,
 }: {
-  scope: WalletProviderScope;
+  provider: WalletProvider;
   revision: number;
   rotating: boolean;
   busy: boolean;
-  onSave: (request: ConfigureWalletProviderAccount) => Promise<void>;
-  onCancel: () => void;
+  onSave: (request: SaveWalletCredential) => Promise<void>;
 }) {
-  const fields = scope.provider === 'google' ? googleFields : samsungFields;
+  const fields = provider === 'google' ? googleFields : samsungFields;
   const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [formError, setFormError] = useState('');
 
@@ -145,7 +145,7 @@ export function WalletAccountCredentialsForm({
       }
     }
     const credentials =
-      scope.provider === 'google'
+      provider === 'google'
         ? {
             issuerId: values.issuerId,
             serviceAccountEmail: values.serviceAccountEmail,
@@ -160,8 +160,8 @@ export function WalletAccountCredentialsForm({
             partnerCertificatePem: values.partnerCertificatePem,
             samsungCertificatePem: values.samsungCertificatePem,
           };
-    const request = ConfigureWalletProviderAccountSchema.safeParse({
-      ...scope,
+    const request = SaveWalletCredentialSchema.safeParse({
+      provider,
       expectedRevision: revision,
       credentials,
     });
@@ -183,17 +183,16 @@ export function WalletAccountCredentialsForm({
 
   return (
     <form
-      className="flex flex-col gap-3 border-t border-border pt-4"
+      id={CREDENTIAL_FORM_ID}
+      className="flex flex-col gap-4 overflow-y-auto"
       onSubmit={submit}
       noValidate
       autoComplete="off"
     >
-      <h4 className="text-sm font-semibold text-fg-strong">
-        {rotating ? 'Replace credentials' : 'Configure account'}
-      </h4>
       <p className="text-sm text-fg-muted">
-        All fields are required. Saved credentials cannot be retrieved. Private keys are cleared on
-        save. An existing Google issuer, or Samsung partner and card, cannot be changed.
+        {rotating
+          ? 'All fields are required. The issuer, or partner and card, stay the same.'
+          : 'All fields are required. Saved credentials cannot be read back.'}
       </p>
       {fields.map((field) => (
         <FormField
@@ -231,14 +230,6 @@ export function WalletAccountCredentialsForm({
           {formError}
         </p>
       ) : null}
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" size="sm" loading={busy}>
-          {rotating ? 'Save replacement credentials' : 'Save credentials'}
-        </Button>
-        <Button variant="outline" size="sm" disabled={busy} onClick={onCancel}>
-          Cancel
-        </Button>
-      </div>
     </form>
   );
 }

@@ -181,6 +181,29 @@ export const WalletEnrolmentHoldResultSchema = z.strictObject({
   status: z.enum(['held', 'released', 'queued']),
 });
 
+/** A platform admin sees every org's enrolment of a provider, Live and Test together. */
+export const PlatformWalletEnrolmentSchema = z.strictObject({
+  orgId: IdSchema,
+  orgName: z.string(),
+  mode: ModeSchema,
+  provider: WalletProviderSchema,
+  source: WalletEnrolmentSourceSchema.nullable(),
+  state: z.enum(['off', 'on', 'held', 'revoked']),
+  hold: z.strictObject({ at: TimestampSchema, reason: z.string() }).nullable(),
+  updatedAt: TimestampSchema,
+});
+export type PlatformWalletEnrolment = z.infer<typeof PlatformWalletEnrolmentSchema>;
+
+export const PlatformWalletEnrolmentListSchema = z.strictObject({
+  items: z.array(PlatformWalletEnrolmentSchema),
+  nextCursor: z.string().nullable(),
+});
+export const PlatformWalletEnrolmentQuerySchema = z.strictObject({
+  provider: WalletProviderSchema,
+  cursor: z.string().max(512).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+export type PlatformWalletEnrolmentList = z.infer<typeof PlatformWalletEnrolmentListSchema>;
 /** An account on the legacy envelope waiting for a source. Provider ids never appear; `identityShared` names the others. */
 export const WalletMigrationItemSchema = z.strictObject({
   accountId: IdSchema,

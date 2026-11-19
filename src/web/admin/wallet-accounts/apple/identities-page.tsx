@@ -13,11 +13,10 @@ import {
   EmptyState,
   ErrorState,
   LoadMore,
-  PageHeader,
   RowLink,
   StatusPill,
 } from '@/web/ui/index.ts';
-import { useOrgNames } from '../orgs/queries.ts';
+import { useOrgNames } from '../../orgs/queries.ts';
 import { ATTENTION_COPY, expiryPhrase, identityAttention } from './attention.ts';
 import { ApnsPill, ExpiryPill } from './expiry.tsx';
 import { useIdentityPages } from './queries.ts';
@@ -26,7 +25,8 @@ import { UploadIdentityDialog } from './upload-dialog.tsx';
 type Identity = z.infer<typeof IdentitySchema>;
 const Icon = ENTITY.identity.icon;
 
-export function IdentitiesPage() {
+/** The Apple tab of Platform › Wallet accounts. */
+export function IdentitiesPanel() {
   const list = useIdentityPages();
   const orgName = useOrgNames();
   const [uploading, setUploading] = useState(false);
@@ -91,7 +91,6 @@ export function IdentitiesPage() {
   }, [orgName]);
   return (
     <>
-      <PageHeader title="Wallet accounts" actions={upload(empty ? 'outline' : 'primary')} />
       {attention ? (
         <Callout
           className="mb-6"
@@ -115,7 +114,10 @@ export function IdentitiesPage() {
           {attention.count > 1 ? `${attention.count - 1} more need a look.` : null}
         </Callout>
       ) : null}
-      <h2 className="mb-3 text-base font-semibold text-fg-strong">Apple identities</h2>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-base font-semibold text-fg-strong">Apple identities</h2>
+        {upload(empty ? 'outline' : 'primary')}
+      </div>
       {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
       ) : (

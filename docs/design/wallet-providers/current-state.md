@@ -59,7 +59,7 @@ Status key: **E2E** = works end to end; **GATED** = implemented and tested, but 
 
 | Journey | Google | Samsung |
 | --- | --- | --- |
-| Account setup and credential storage | **E2E** (admin API and UI). `account-service.ts:154`, `routes-accounts.ts`, `src/web/admin/orgs/wallet-accounts*.tsx`, `wallet-provider-account.tsx`. Envelope-encrypted, revision CAS. Validation is local only. The UI warns that configured accounts cannot issue. | **E2E**, same files. Samsung adds a tombstone-verification credential read (`account-credential-read.ts`) and a country hint. |
+| Account setup and credential storage | **E2E** (admin API and UI). `account-service.ts:154`, `routes-accounts.ts`, `src/web/admin/wallet-accounts/`. Envelope-encrypted, revision CAS. Validation is local only. The UI warns that configured accounts cannot issue. | **E2E**, same files. Samsung adds a tombstone-verification credential read (`account-credential-read.ts`) and a country hint. |
 | Projection authoring and review | **HALF**. API only: create and approve through `projection-service.ts:85,169` via the template release routes. No admin UI in `src/web/admin/templates`. Candidates can be approved but never published (switch 5). `getApprovedProjection` returns null. | **GATED**. API only, no UI. Create, approve, probe (`/verify`) and publish all work. Evidence expires in 5 minutes and lives inside durable-queue predicates. The probe ignores `mode` and requires `testingModeOff = 'Y'`, so test and sandbox projections can never verify (`samsung-template.ts:186`, `repo-samsung-verification.ts:39`). |
 | Issuance (save link or data link) | **GATED** (switches 1-4). Even if open: the first tap 404s, because `offers.ts:162` demands a `succeeded` operation right after creating a `pending` one. Save JWT: `google-offer.ts`, `runtime-google.ts:87`. | **GATED** (switches 1-3). Data-fetch link: `samsung.ts:42`, `callbacks-ref.ts`. Even if open: refs are never promoted, so every card-data fetch is rejected (`callbacks-samsung.ts:53`). |
 | Delivery in email and the holder portal (wallet choice, badges) | **HALF**. Plumbing is complete: email `src/worker/modules/delivery/email.ts:104` and `src/worker/email/pass.ts:69`; SSR `src/worker/modules/public/routes.ts:92`; portal `src/worker/modules/me/service.ts:70`, `src/web/portal/holder-pass-view.tsx:131`. Badge is `public/icons/wallet-providers/google/add-to-google-wallet.svg`. Gmail and Outlook do not render SVG. Offers list is always empty (switch 1). | **HALF**. Same plumbing. Badge is PNG (`public/icons/wallet-providers/samsung/add-to-samsung-wallet.png`). No wallet choice UI beyond a flat list of links. Offers list is always empty. |
@@ -116,8 +116,8 @@ Sources: audit units wallet-providers-1 and -2, other units' wallet findings, sy
 ### Outside the module
 
 25. Google email badge is SVG (`src/worker/email/pass.ts:69`). Medium.
-26. Admin copy leaks engineering status (`src/web/admin/passes/detail/wallet-provider-status.tsx:144`) and stacks disclaimers (`src/web/admin/orgs/wallet-provider-account.tsx:150`). Low and medium.
-27. Wallet account forms unmount on focus (`src/web/admin/orgs/wallet-accounts.tsx:39`). Medium (audit synthesis, Web).
+26. Admin copy leaks engineering status (`src/web/admin/passes/detail/wallet-provider-status.tsx:144`) and stacks disclaimers (removed with the org wallet form; the page is `src/web/admin/wallet-accounts/`). Low and medium.
+27. Wallet account forms unmount on focus (`src/web/admin/wallet-accounts/` (replaced the old form)). Medium (audit synthesis, Web).
 28. `docs/design/platform-architecture.md:23` still lists Google Wallet as a non-goal. Medium.
 29. Tests seed `ManualClock` from the wall clock (`kek-continuity.test.ts:72`, `projection.test.ts:139`, `account-service.test.ts:51`, `lifecycle.test.ts:78`). Low.
 
@@ -126,7 +126,7 @@ Owner decision pending (W2-10): (a) quarantine behind one policy gate that repor
 ## 4. Reuse, rework, delete
 
 **Reusable as-is**
-- Account store: `account-service.ts`, `account-credential-*.ts`, `repo-account*.ts`, the 0037 account tables and triggers, `routes-accounts.ts`, and the admin UI `src/web/admin/orgs/wallet-accounts*.tsx` (after the focus fix).
+- Account store: `account-service.ts`, `account-credential-*.ts`, `repo-account*.ts`, the 0037 account tables and triggers, `routes-accounts.ts`, and the admin UI `src/web/admin/wallet-accounts/` (after the focus fix).
 - Provider adapters: `google-{oauth,rest,offer,ids,errors,projection,credentials}.ts`, `samsung-{token,token-inbound,token-errors,credentials}.ts`, `samsung.ts` (after timeouts, `now` and request-id injection), and `google-callback-crypto.ts` (after adding a cache).
 - Projection schemas and rendering: `projection-contract.ts`, `render-projection.ts`, `projection-source.ts`.
 - Dirty-trigger approach: the `wallet_provider_dirty_*` triggers and `lifecycle*.ts` scheduling.

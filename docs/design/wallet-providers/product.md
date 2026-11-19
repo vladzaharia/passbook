@@ -13,7 +13,7 @@ Target UX: `docs/audits/2026-11-07/mockups/` (customer-portal, other-surfaces, a
 
 | Area | State |
 | --- | --- |
-| Accounts | Per org, per mode, per provider (`wallet_provider_accounts`, `0037`). Encrypted credentials; configure/revoke API; admin UI under org (`src/web/admin/orgs/wallet-accounts*.tsx`). Readiness is `absent/configured/revoked`; `externalApprovalVerified` is hard `false`. |
+| Accounts | Per org, per mode, per provider (`wallet_provider_accounts`, `0037`). Encrypted credentials; configure/revoke API; admin UI: Platform and Organization Wallet accounts (`src/web/admin/wallet-accounts/`). Readiness is `absent/configured/revoked`; `externalApprovalVerified` is hard `false`. |
 | Projection | `projection-contract.ts`: Google generic (text, QR, reviewed artwork); Samsung `loyalty/others` (text, QR, artwork, app link). Title + up to 9 fields. Bound into releases (`0038`). |
 | Issuance | **Denied for both.** `instance-policy.ts` `walletIssuancePermitted` returns false. The release panel says "Native wallet offers remain unavailable until provider requirements are verified." |
 | Offers | `GET /p/{token}/wallet/{provider}`, Samsung click-time offer, offers in portal (`holder-pass-view.tsx`) and pass email. Excluded on transfer-pending, removed, quarantined and stale keyset. |

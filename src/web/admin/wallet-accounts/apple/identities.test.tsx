@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, membershipFixture, problem, renderApp } from '@/web/lib/test-utils.tsx';
-import { markCreated } from '../passes/created.tsx';
+import { markCreated } from '../../passes/created.tsx';
 import { remainingDays } from './expiry.tsx';
 import { type UploadDraft, validateUpload } from './upload-input.ts';
 
