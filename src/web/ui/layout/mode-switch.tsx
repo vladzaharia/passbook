@@ -17,7 +17,7 @@ export function ModeSwitch() {
         on ? 'text-warning' : 'text-fg-muted',
       )}
     >
-      <FlaskConical aria-hidden className="hidden size-4 shrink-0 sm:block" />
+      <FlaskConical aria-hidden className="size-4 shrink-0" />
       {/* The visible words are the switch's name; the band and the state say which mode is on. */}
       <span id={label} className="whitespace-nowrap max-sm:sr-only">
         Test mode

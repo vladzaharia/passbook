@@ -25,6 +25,7 @@ export function ReadOnlyNotice({
       <Callout
         className="mb-4"
         tone="info"
+        actionsAside
         actions={
           canDuplicate ? (
             <Button
@@ -74,6 +75,7 @@ function BlueprintNotice({ template: t }: { template: Template }) {
       <Callout
         className="mb-4"
         tone="info"
+        actionsAside
         actions={
           <Button
             size="sm"

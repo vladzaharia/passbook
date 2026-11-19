@@ -38,7 +38,11 @@ export function TestResult({ outcome, className }: { outcome?: TestOutcome; clas
   return (
     <span
       role="status"
-      className={cn('inline-flex min-h-6 min-w-0 items-center gap-2 text-sm', className)}
+      className={cn(
+        'inline-flex min-w-0 items-center gap-2 text-sm',
+        outcome ? 'min-h-6' : 'sr-only',
+        className,
+      )}
     >
       {outcome ? (
         <>

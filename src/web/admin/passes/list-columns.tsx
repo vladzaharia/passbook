@@ -176,7 +176,7 @@ export function passColumns(showOrg: boolean): DataColumnDef<PassSummaryDto, nev
     {
       id: 'updated',
       header: 'Updated',
-      meta: { nowrap: true },
+      meta: { nowrap: true, stackHidden: true },
       cell: ({ row }) => (
         <span className="text-fg-muted">{formatDay(row.original.modifiedAt)}</span>
       ),
