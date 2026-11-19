@@ -72,7 +72,7 @@ describe('sectionLabel and isActivePath', () => {
     expect(isActivePath('/admin/o/o1/passes', '/admin/o/o1')).toBe(false);
     expect(isActivePath('/admin/o/o1/passes/p1', '/admin/o/o1/passes')).toBe(true);
     expect(isActivePath('/admin/platform/users', '/admin/platform')).toBe(false);
-    expect(isActivePath('/admin/o/o1/passes', '/admin')).toBe(true);
-    expect(isActivePath('/admin/account', '/admin')).toBe(false);
+    expect(isActivePath('/admin', '/admin')).toBe(true);
+    expect(isActivePath('/admin/o/o1/passes', '/admin')).toBe(false);
   });
 });

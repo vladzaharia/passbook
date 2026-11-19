@@ -122,8 +122,8 @@ export const PORTAL_NAV: readonly PortalNavItem[] = [
 export function isActivePath(pathname: string, to: string): boolean {
   if (to === '/') return pathname === '/' || pathname.startsWith('/passes/');
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
-  // The console link covers the whole console but Account; a scope's overview only itself.
-  if (to === '/admin') return isAdminPath(path) && path !== '/admin/account';
+  // The console root and a scope's overview match only themselves.
+  if (to === '/admin') return path === to;
   const { scope, rest } = parseAdminPath(to);
   if (scope && rest === '') return path === to;
   return path === to || path.startsWith(`${to}/`);
