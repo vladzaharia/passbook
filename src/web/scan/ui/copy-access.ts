@@ -31,6 +31,7 @@ export const ACCESS_COPY = {
     outBy: 'Out by {time}',
     showMore: 'Show more',
     failed: "Couldn't load the list.",
+    offline: 'Offline. The list needs a connection.',
     markFailed: "Couldn't mark {name} as out. Try again.",
     allPlaces: 'All',
     inCount: '{n} in',

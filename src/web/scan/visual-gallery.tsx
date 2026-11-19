@@ -8,7 +8,7 @@ import { sessionFixture } from './boot/session.test-support.ts';
 import { CustomerDisplayPage } from './customer-display.tsx';
 import { LiveScreen } from './live/live-screen.tsx';
 import { initialState } from './machine/initial-state.ts';
-import { viewOf } from './machine/present.ts';
+import { moodOf, viewOf } from './machine/present.ts';
 import type { ScanStore } from './machine/store.ts';
 import { ScanStoreContext } from './machine/use-scan-machine.ts';
 import { OperatorPanel } from './operator/operator-panel.tsx';
@@ -154,6 +154,8 @@ function DuoVisual({ status }: { status: string }) {
   });
   return <CustomerDisplayPage />;
 }
+const flat = <T extends string>(mood: T) =>
+  (mood === 'neutral' ? 'flat' : mood) as Exclude<T, 'neutral'> | 'flat';
 function ScanResultVisual({
   surface,
   selected,
@@ -192,7 +194,9 @@ function ScanResultVisual({
         sidebar={
           surface === 'operator' ? <OperatorVisual session={session} name={selected.name} /> : null
         }
-        buddy={<Buddy scene="scan" size="xl-scan" mood="happy" immediate />}
+        buddy={
+          <Buddy scene="scan" size="xl-scan" mood={flat(moodOf(selected.outcome.kind))} immediate />
+        }
         strip={{ kind: 'ok', title: 'Taylor Chen', meta: '6:42 PM', undoable: true }}
         dockRow={
           <DoorDock

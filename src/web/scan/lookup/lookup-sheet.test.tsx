@@ -68,7 +68,7 @@ function setup(allowPeople = true) {
 }
 
 async function search(user: ReturnType<typeof userEvent.setup>, value = 'Anna') {
-  const field = screen.getByRole('textbox', { name: 'Name, email, code or ID' });
+  const field = screen.getByRole('textbox', { name: 'Name, email or code' });
   await user.type(field, value);
   return field;
 }
@@ -162,7 +162,7 @@ describe('lookup review and keyboard navigation', () => {
 
   it('submits an entered code through the scan path when people lookup is disabled', async () => {
     const { user, resolve, onCheckIn, onCode } = setup(false);
-    await user.type(screen.getByRole('textbox', { name: 'Code or ID' }), '0001234');
+    await user.type(screen.getByRole('textbox', { name: 'Code' }), '0001234');
     await user.click(screen.getByRole('button', { name: 'Find pass' }));
     expect(onCode).toHaveBeenCalledExactlyOnceWith('0001234');
     expect(resolve).not.toHaveBeenCalled();

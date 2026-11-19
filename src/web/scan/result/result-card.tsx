@@ -96,19 +96,24 @@ export function ResultCard({
     o.action?.id !== 'undo' &&
     o.checkIn?.direction !== 'out' &&
     pill !== 'out';
-  const title = noExit
-    ? 'Check-out not allowed'
-    : noReentry
-      ? 'No re-entry'
-      : custom
-        ? d?.header.title
-        : systemTitle;
+  const title = noExit ? 'Check-out not allowed' : noReentry ? 'No re-entry' : systemTitle;
+  // The verdict word is always the headline; a template's own line sits under it.
+  const customLine = custom && !noExit && !noReentry ? d?.header.title : null;
+  const nameInBand = custom && Boolean(d) && d?.header.title === d?.identity.holder;
   const CustomGlyph = ok && d?.header.icon ? scanIcon(d.header.icon) : null;
   const layout = custom ? 'custom' : o.kind === 'ok' || o.kind === 'heads_up' ? 'row' : 'stack';
+  // A refusal or a hold (gym full, already in) changed nothing: no stamp, balance or staff note
+  // for a grant, so the card cannot read as granted.
+  const denied =
+    o.kind === 'refused' || (o.kind === 'heads_up' && (Boolean(held) || Boolean(o.occupancy)));
   const notes = [
-    o.kind === 'refused' ? d?.notes.refused : d?.notes.staff,
-    o.kind === 'refused' || o.kind === 'heads_up' ? eventNote : null,
-  ].filter(Boolean);
+    ...new Set(
+      [
+        o.kind === 'refused' ? d?.notes.refused : denied ? null : d?.notes.staff,
+        o.kind === 'refused' || o.kind === 'heads_up' ? eventNote : null,
+      ].filter(Boolean),
+    ),
+  ];
   useLayoutEffect(() => {
     const el = root.current;
     if (!el || phase !== 'rising' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -156,12 +161,12 @@ export function ResultCard({
             ) : (
               <VerdictGlyph kind={o.kind} />
             )}
-            {custom ? <p className="scan-verdict-eyebrow">{systemTitle}</p> : null}
           </div>
           <div className="scan-verdict-text">
             <h1 id="scan-result-heading" tabIndex={-1}>
               {title}
             </h1>
+            {customLine ? <p className="scan-verdict-custom">{customLine}</p> : null}
             {noExit ? (
               <p>{SCAN_COPY.verdict.noExitSub}</p>
             ) : noReentry ? (
@@ -196,6 +201,8 @@ export function ResultCard({
           <IdentityRow
             outcome={o}
             display={d}
+            hideName={nameInBand}
+            compact={denied}
             onPass={() => {
               onPass?.(o.card);
             }}
@@ -207,7 +214,7 @@ export function ResultCard({
               refused={o.kind === 'refused'}
             />
           ) : null}
-          {d && o.kind !== 'refused' && !desk?.picker ? <DisplayPanels display={d} /> : null}
+          {d && !denied && !desk?.picker ? <DisplayPanels display={d} /> : null}
           {notes.length ? (
             <div className="scan-result-notes">
               <Info size={18} aria-hidden />

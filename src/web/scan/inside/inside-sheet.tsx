@@ -96,7 +96,16 @@ export function InsideSheet({
             </p>
           ) : null}
           <div className="scan-in-body" aria-busy={state.loading}>
-            {state.loading && state.rows.length === 0 && !state.error ? (
+            {!online && state.rows.length === 0 ? (
+              <EmptyState
+                inline
+                art="plugs"
+                title={ACCESS_COPY.inside.offline}
+                action={
+                  <Button onClick={() => void inside.retry()}>{SCAN_COPY.actions.tryAgain}</Button>
+                }
+              />
+            ) : state.loading && state.rows.length === 0 && !state.error ? (
               <SkeletonRows rows={5} />
             ) : state.error && state.rows.length === 0 ? (
               <EmptyState
