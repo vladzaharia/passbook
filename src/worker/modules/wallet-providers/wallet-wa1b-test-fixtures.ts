@@ -14,7 +14,7 @@ import type {
   SamsungWalletCredentials,
 } from '../../../shared/contracts/wallet-providers.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
-import { systemClock } from '../../platform/clock.ts';
+import { ManualClock, systemClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
@@ -25,7 +25,13 @@ const kek = btoa(String.fromCharCode(...new Uint8Array(32).fill(7)));
 
 export async function kit() {
   const e = await makeEnv({ KEK_V1: kek, PUBLIC_BASE_URL: 'https://wallet.test' });
-  const f = fixtures(e, systemClock);
+  /** Fixtures want a ManualClock; the 0112 triggers read the real one, so this one follows it. */
+  class RealClock extends ManualClock {
+    override now() {
+      return Date.now();
+    }
+  }
+  const f = fixtures(e, new RealClock());
   const identity = await createFixtureIdentity();
   const ctx = createServiceContext(e, { clock: systemClock });
 

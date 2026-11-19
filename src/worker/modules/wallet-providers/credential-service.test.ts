@@ -11,7 +11,7 @@ import {
   savePlatformCredential,
 } from './credential-service.ts';
 import { type CredentialWriter, revokeCredential } from './repo-credentials.ts';
-import { type Kit, kit } from './wallet-wa1b-test-kit.ts';
+import { type Kit, kit } from './wallet-wa1b-test-fixtures.ts';
 
 let k: Kit;
 beforeAll(async () => {

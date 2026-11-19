@@ -19,7 +19,7 @@ import {
   revokePlatformCredential,
   savePlatformCredential,
 } from './credential-service.ts';
-import { holdEnrolment, releaseEnrolment } from './enrolment-service.ts';
+import { holdEnrolment, releaseEnrolment } from './enrolment-hold.ts';
 
 /** Mount at /api/v1/platform. Platform admins only; the pages show Live and Test together, so the mode is named. */
 export const walletPlatformRoutes = createRouter();

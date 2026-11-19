@@ -11,10 +11,10 @@ import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSession } from '../passes/http.ts';
+import { listEnrolments } from './enrolment-read.ts';
 import {
   disableEnrolment,
   enableEnrolment,
-  listEnrolments,
   revokeEnrolment,
   setEnrolmentSource,
 } from './enrolment-service.ts';

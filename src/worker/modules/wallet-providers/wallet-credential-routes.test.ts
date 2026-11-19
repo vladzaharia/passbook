@@ -5,7 +5,7 @@ import { createApp } from '../../app.ts';
 import { systemClock } from '../../platform/clock.ts';
 import { first } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
-import { type Kit, kit } from './wallet-wa1b-test-kit.ts';
+import { type Kit, kit } from './wallet-wa1b-test-fixtures.ts';
 
 let k: Kit;
 let app: ReturnType<typeof createApp>;

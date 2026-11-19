@@ -4,20 +4,18 @@ import { grant } from '../../platform/authority.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createJobContext } from '../../platform/service-context.ts';
 import { saveOrgCredential, savePlatformCredential } from './credential-service.ts';
+import { holdEnrolment, releaseEnrolment, runEnrolmentHold } from './enrolment-hold.ts';
+import { listEnrolments } from './enrolment-read.ts';
 import {
   disableEnrolment,
   enableEnrolment,
-  holdEnrolment,
-  listEnrolments,
-  releaseEnrolment,
   revokeEnrolment,
-  runEnrolmentHold,
   setEnrolmentSource,
 } from './enrolment-service.ts';
 import { commitEnrolmentStep, ENROLMENT_TABLES } from './repo-enrolments.ts';
 import { addCheck } from './repo-wallet-credentials-test-fixtures.ts';
 import { insertEnrolmentEvent } from './repo-wallet-enrolments-test-fixtures.ts';
-import { type Kit, kit } from './wallet-wa1b-test-kit.ts';
+import { type Kit, kit } from './wallet-wa1b-test-fixtures.ts';
 
 let k: Kit;
 let platformId = '';
