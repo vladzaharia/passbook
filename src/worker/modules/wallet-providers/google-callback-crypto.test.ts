@@ -58,7 +58,7 @@ describe('Google ECv2SigningOnly callback signatures', () => {
     });
     expect(fetcher).toHaveBeenCalledWith(GOOGLE_CALLBACK_KEYS_URL, {
       method: 'GET',
-      redirect: 'error',
+      redirect: 'manual',
       signal: expect.any(AbortSignal),
     });
   });
@@ -109,7 +109,7 @@ describe('Google ECv2SigningOnly callback signatures', () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher).toHaveBeenCalledWith(GOOGLE_CALLBACK_KEYS_URL, {
       method: 'GET',
-      redirect: 'error',
+      redirect: 'manual',
       signal: expect.any(AbortSignal),
     });
   });

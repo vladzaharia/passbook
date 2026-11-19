@@ -2,6 +2,11 @@
   "schema": 1,
   "name": "Membership",
   "description": "Tier, term and status, with a renew link.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",
@@ -79,6 +84,7 @@
       "wifiPassword": {
         "type": "string",
         "x-label": "Wi-Fi password",
+        "x-widget": "password",
         "x-group": "Wi-Fi",
         "x-order": 90,
         "maxLength": 63
@@ -146,8 +152,7 @@
         "maximum": 99,
         "x-label": "Guests left",
         "x-group": "Membership",
-        "x-order": 26,
-        "default": 0
+        "x-order": 26
       },
       "renewURL": {
         "type": "string",

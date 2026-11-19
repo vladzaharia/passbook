@@ -2,6 +2,11 @@
   "schema": 1,
   "name": "Access card",
   "description": "Door access by plan and zone, with a photo for ID checks.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",

@@ -1,7 +1,7 @@
 import { bindPass } from '../../../passkit/template/bindings.ts';
 import { applyDefaults } from '../../../passkit/template/manifest.ts';
 import type { Personalization } from '../../../passkit/types.ts';
-import { normalize, type PassView } from '../../../shared/pass-view/index.ts';
+import { type LayoutView, normalize, type PassView } from '../../../shared/pass-view/index.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
@@ -15,6 +15,28 @@ const IMAGE = /^[A-Za-z0-9_@.-]{1,100}\.png$/;
 const SLOT = /^([a-zA-Z]+)(?:@[23]x)?\.png$/;
 /** Placeholder for each input the card makes for itself; the preview never shows it. */
 const GENERATED = '0000000000';
+
+const filled = <T extends { text: string }>(fields: T[]) =>
+  fields.filter((f) => f.text.trim() !== '');
+
+function layoutFilled(layout: LayoutView): LayoutView {
+  return {
+    ...layout,
+    header: filled(layout.header),
+    primary: filled(layout.primary),
+    secondary: filled(layout.secondary),
+    auxiliary: layout.auxiliary.map(filled),
+    footer: filled(layout.footer),
+  };
+}
+
+/** Nothing is typed yet: a field with no value (the holder's name) would read as broken, so it is left out. */
+export function hideEmpty(view: PassView): PassView {
+  const layouts = { ...view.layouts };
+  for (const target of Object.keys(layouts) as (keyof typeof layouts)[])
+    layouts[target] = layoutFilled(layouts[target]);
+  return { ...view, layout: layoutFilled(view.layout), layouts };
+}
 
 /** Where the page loads a preview image from: only an open link serves them. */
 export const previewPath = (token: string, name: string, version: string) =>
@@ -53,12 +75,13 @@ export async function joinPreview(
     assets[a.name] = previewPath(token, a.name, a.sha1 || template.version);
   }
   for (const f of files) assets[f.name] = previewPath(token, f.name, f.version);
-  return normalize(pass, {
+  const card = normalize(pass, {
     assets,
     locale: view.locale,
     timeZone: view.timeZone,
     now: new Date(ctx.clock.now()),
   });
+  return hideEmpty(card);
 }
 
 export interface PreviewImage {

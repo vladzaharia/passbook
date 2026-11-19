@@ -153,6 +153,9 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     pass: 'pass_id',
     conflict: ['pass_id', 'channel'],
   },
+  // Channel apply (0114): one run per template save window; marks are its per-pass evidence and take the run's tenant.
+  channel_apply_runs: { org: 'org_id', mode: 'mode' },
+  channel_apply_marks: { org: null, edges: [edge('run_id', 'channel_apply_runs')] },
   // Printed tickets (0110): minted and voided through grants; the triggers void them with the pass.
   pass_prints: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   data_requests: { org: 'org_id' },

@@ -7,7 +7,8 @@ test.use({ storageState: 'e2e/.auth/admin.json' });
 test('second editor gets 412, keeps the draft, and can merge', async ({ browser }) => {
   const api = await apiAs('admin');
   const orgId = readSeed().org.id;
-  const pass = await createPass(api, orgId, { holder: 'Conflict Original' });
+  // Guests set, so its section is not folded on the existing pass.
+  const pass = await createPass(api, orgId, { holder: 'Conflict Original', input: { guests: 2 } });
   const url = `/admin/passes/${pass.id}?orgId=${encodeURIComponent(orgId)}`;
 
   const ctxA = await browser.newContext({ storageState: 'e2e/.auth/admin.json' });

@@ -186,13 +186,18 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
   const footer = supportFooter(safeMail(input.supportEmail), safeUrl(input.supportUrl));
   const wallets = emailWalletOffers(input);
   const printUrl = safeUrl(input.printUrl);
-  const subject = input.subject?.trim() || `Your ${input.orgName} pass`;
+  const subject =
+    input.subject?.trim() ||
+    (input.joined
+      ? `Your ${JOIN_COPY.mailSubject.replace('{org}', input.orgName)}`
+      : `Your ${input.orgName} pass`);
+  const ready = input.joined ? JOIN_COPY.mailTitle : HOLDER_COPY.passReady;
   const joinLine = input.joined ? JOIN_COPY.mailLine.replace('{org}', input.orgName) : null;
   const fields = (input.summary?.fields ?? [])
     .filter((f) => f.value !== input.passTitle)
     .slice(0, 3);
   const text = [
-    HOLDER_COPY.passReady,
+    ready,
     ...(input.mode === 'test' ? [HOLDER_COPY.testNote('pass')] : []),
     ...(input.passTitle ? ['', input.passTitle] : []),
     ...fields.map((f) => `${f.label ? `${f.label}: ` : ''}${f.value}`),
@@ -217,7 +222,7 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
   ].join('\n');
   const muted = (margin: string, line: string) =>
     `<p class="e-muted" style="margin:${margin};${type('sm')};color:${c.muted}">${line}</p>`;
-  const body = `${titleHtml(HOLDER_COPY.passReady, '0 0 16px')}
+  const body = `${titleHtml(ready, '0 0 16px')}
 ${input.mode === 'test' ? testNoteHtml(HOLDER_COPY.testNote('pass')) : ''}
 ${passBlock(input, fields)}
 ${actionsHtml(input)}

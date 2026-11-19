@@ -12,6 +12,8 @@ import {
   DetailNotFound,
   detailError,
   EmptyState,
+  FormField,
+  Input,
   PageHeader,
   Skeleton,
 } from '../../../ui/index.ts';
@@ -46,11 +48,14 @@ export function JoinSign({
   orgName,
   url,
   hasLogo,
+  line = '',
 }: {
   orgId: string;
   orgName: string;
   url: string;
   hasLogo: boolean;
+  /** One line the admin adds under "Scan with your camera". */
+  line?: string;
 }) {
   const qr = useJoinQr(url);
   return (
@@ -70,12 +75,38 @@ export function JoinSign({
       </div>
       <h2>{JOIN_COPY.sign.title}</h2>
       <p>{JOIN_COPY.sign.scan}</p>
-      <code>{url.replace(/^https?:\/\//, '')}</code>
+      {line.trim() ? <p className="jl-line">{line.trim()}</p> : null}
     </section>
   );
 }
 
+const LINE_KEY = 'wallet-join-sign-line';
+
+/** The sign's extra line, kept per template in this browser: it prints, it is not data. */
+function useSignLine(templateId: string): [string, (next: string) => void] {
+  const key = `${LINE_KEY}:${templateId}`;
+  const [line, set] = useState(() => {
+    try {
+      return localStorage.getItem(key) ?? '';
+    } catch {
+      return '';
+    }
+  });
+  return [
+    line,
+    (next) => {
+      set(next);
+      try {
+        localStorage.setItem(key, next);
+      } catch {
+        // Storage blocked: the line stays for this page.
+      }
+    },
+  ];
+}
+
 export function JoinSignPage({ templateId }: { templateId: string }) {
+  const [line, setLine] = useSignLine(templateId);
   const scope = useOrgScope();
   const mode = useMode();
   const template = useTemplate(templateId, scope.orgId);
@@ -150,11 +181,25 @@ export function JoinSignPage({ templateId }: { templateId: string }) {
           </Button>
         }
       />
+      <div className="jl-edit">
+        <FormField label={JOIN_COPY.sign.lineLabel}>
+          {(c) => (
+            <Input
+              {...c}
+              value={line}
+              maxLength={80}
+              placeholder={JOIN_COPY.sign.linePlaceholder}
+              onChange={(e) => setLine(e.target.value)}
+            />
+          )}
+        </FormField>
+      </div>
       <JoinSign
         orgId={scope.orgId}
         orgName={orgName}
         url={url}
         hasLogo={Boolean(org.data?.branding.logo)}
+        line={line}
       />
     </>
   );

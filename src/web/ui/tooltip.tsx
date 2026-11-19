@@ -1,8 +1,21 @@
-import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-import type { ReactElement, ReactNode } from 'react';
-import { cn } from '../lib/cn.ts';
+import {
+  type ComponentType,
+  createContext,
+  type ReactElement,
+  type ReactNode,
+  useContext,
+  useState,
+} from 'react';
 
-export const TooltipProvider = TooltipPrimitive.Provider;
+export interface TooltipConfig {
+  delayDuration?: number;
+}
+
+const ConfigContext = createContext<TooltipConfig>({});
+
+export function TooltipProvider({ children, ...config }: TooltipConfig & { children: ReactNode }) {
+  return <ConfigContext.Provider value={config}>{children}</ConfigContext.Provider>;
+}
 
 export interface TooltipProps {
   content: ReactNode;
@@ -11,23 +24,42 @@ export interface TooltipProps {
   className?: string;
 }
 
-export function Tooltip({ content, children, side = 'top', className }: TooltipProps) {
+type Impl = ComponentType<TooltipProps & { config: TooltipConfig }>;
+
+let impl: Impl | null = null;
+let loading: Promise<void> | null = null;
+
+/**
+ * Providers call this after first paint, so the Radix chunk stays out of the initial load. The
+ * scanner never calls it (it uses no tooltips); its controls would stay plain.
+ */
+export function loadTooltips(): Promise<void> {
+  loading ??= import('./tooltip-impl.tsx').then(
+    (m) => {
+      impl = m.TooltipImpl;
+    },
+    () => {
+      // chunk-reload.ts reloads a stale deploy; offline, tooltips stay plain for this page load
+      // and every control keeps its aria-label.
+      loading = null;
+    },
+  );
+  return loading;
+}
+
+/**
+ * The implementation is fixed when a tooltip mounts: swapping it in later would remount the child
+ * (lost focus, a menu closing under the click). A control that mounted before the chunk arrived
+ * stays plain until it remounts; its aria-label still names it.
+ */
+export function Tooltip({ content, children, side, className }: TooltipProps) {
+  const [Loaded] = useState(() => impl);
+  const config = useContext(ConfigContext);
   if (content === null || content === undefined || content === '') return children;
+  if (!Loaded) return children;
   return (
-    <TooltipPrimitive.Root>
-      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
-      <TooltipPrimitive.Portal>
-        <TooltipPrimitive.Content
-          side={side}
-          sideOffset={6}
-          className={cn(
-            'wl-tip z-50 max-w-xs rounded-md border border-border bg-surface-overlay px-2 py-1 text-xs text-fg-strong shadow-elevation-2',
-            className,
-          )}
-        >
-          {content}
-        </TooltipPrimitive.Content>
-      </TooltipPrimitive.Portal>
-    </TooltipPrimitive.Root>
+    <Loaded content={content} side={side} className={className} config={config}>
+      {children}
+    </Loaded>
   );
 }

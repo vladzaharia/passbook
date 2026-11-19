@@ -204,3 +204,64 @@ export const PlatformWalletEnrolmentQuerySchema = z.strictObject({
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
 export type PlatformWalletEnrolmentList = z.infer<typeof PlatformWalletEnrolmentListSchema>;
+/** An account on the legacy envelope waiting for a source. Provider ids never appear; `identityShared` names the others. */
+export const WalletMigrationItemSchema = z.strictObject({
+  accountId: IdSchema,
+  orgId: IdSchema,
+  mode: ModeSchema,
+  provider: WalletProviderSchema,
+  state: z.enum(['ready', 'refused']),
+  reason: z
+    .enum(['identity_shared', 'org_credential_exists', 'unreadable', 'unproven_claim'])
+    .nullable(),
+  identityShared: z.array(WalletProviderScopeSchema),
+});
+
+export const WalletMigrationReportSchema = z.strictObject({
+  /** Accounts with no source yet and not retired; the gate clears at 0. */
+  pending: z.number().int().nonnegative(),
+  migrated: z.number().int().nonnegative(),
+  items: z.array(WalletMigrationItemSchema),
+  /** Pass as `after` for the next page; null on the last. */
+  next: IdSchema.nullable(),
+});
+
+export const WalletMigrationReportQuerySchema = z.strictObject({ after: IdSchema.optional() });
+export type WalletMigrationReport = z.infer<typeof WalletMigrationReportSchema>;
+
+export const WalletMigrationQueuedSchema = z.strictObject({
+  queued: z.number().int().nonnegative(),
+});
+
+export const ResolveWalletMigrationSchema = WalletProviderScopeSchema.extend({
+  action: z.enum(['assign_platform', 'merge', 'retire']),
+});
+export type ResolveWalletMigration = z.infer<typeof ResolveWalletMigrationSchema>;
+
+export const WalletMigrationResolvedSchema = z.strictObject({
+  /** Accounts the action moved: one, or every colliding account for a merge. */
+  accounts: z.number().int().nonnegative(),
+});
+
+/** A check runs as a job: the request returns the id its result is read under. */
+export const WalletCredentialCheckQueuedSchema = z.strictObject({
+  checkId: IdSchema,
+  status: z.literal('queued'),
+});
+export type WalletCredentialCheckQueued = z.infer<typeof WalletCredentialCheckQueuedSchema>;
+
+export const WalletCredentialCheckResultSchema = z.strictObject({
+  checkId: IdSchema,
+  status: z.enum(['pending', 'ok', 'failed']),
+  code: z.string().nullable(),
+  checkedAt: TimestampSchema.nullable(),
+});
+export type WalletCredentialCheckResult = z.infer<typeof WalletCredentialCheckResultSchema>;
+
+export const WalletCredentialCheckParamsSchema = WalletCredentialParamsSchema.extend({
+  checkId: IdSchema,
+});
+export const PlatformWalletCredentialCheckParamsSchema = z.strictObject({
+  id: IdSchema,
+  checkId: IdSchema,
+});
