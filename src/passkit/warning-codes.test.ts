@@ -21,7 +21,7 @@ function sourceCodes(): Set<string> {
     const prefix = relative(root, file).includes('scan-display') ? 'SCAN_DISPLAY_' : '';
     for (const m of text.matchAll(/\bwarn\(\s*['"`]([A-Z0-9_]+)['"`]/g)) found.add(prefix + m[1]);
     for (const m of text.matchAll(/'warning',\s*['"]([A-Z0-9_]+)['"]/g)) found.add(prefix + m[1]);
-    for (const m of text.matchAll(/add\(\s*['"]([A-Z0-9_]+)['"][^;]*?'warning'\s*\)/g))
+    for (const m of text.matchAll(/add\(\s*['"]([A-Z0-9_]+)['"][^;]*?'warning'\s*[,)]/g))
       found.add(prefix + m[1]);
   }
   return found;

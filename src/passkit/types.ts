@@ -68,13 +68,16 @@ export interface SigningMaterial {
   intermediate: string;
 }
 
+/** Template-authored names and numbers an issue's message mentions. Never personal data. */
+export type IssueParams = Record<string, string>;
+
 export interface ValidationIssue {
   severity: 'error' | 'warning' | 'info';
   code: string;
   message: string;
   path?: string;
   /** Values the message names, for words that do not parse it (scan display issues). */
-  params?: Record<string, string>;
+  params?: IssueParams;
 }
 
 export interface ValidationReport {

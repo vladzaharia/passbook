@@ -3,6 +3,7 @@ import { isGoal, maxStamps, type StampScope, stampScope } from '../stamps/rules.
 import type {
   Binding,
   Condition,
+  IssueParams,
   Json,
   PassJson,
   Personalization,
@@ -64,8 +65,8 @@ export function stampsIssues(
   const issues: ValidationIssue[] = [];
   const add =
     (severity: 'error' | 'warning') =>
-    (code: string, message: string, path = 'stamps') =>
-      issues.push({ severity, code, message, path });
+    (code: string, message: string, path = 'stamps', params?: IssueParams) =>
+      issues.push({ severity, code, message, path, ...(params ? { params } : {}) });
   const error = add('error');
   const warn = add('warning');
   if (!isRecord(block)) {
@@ -97,6 +98,7 @@ export function stampsIssues(
       'STAMPS_MAX_LOW',
       `The stamps input stops at ${input.maximum}; ${maxStamps(goal)} holds a full card plus the carry-over.`,
       'stamps/input',
+      { max: String(input.maximum), wanted: String(maxStamps(goal)) },
     );
 
   const art = isRecord(block.art) ? block.art : {};
