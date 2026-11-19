@@ -1,7 +1,8 @@
 import { flexRender, type RowData, useTable } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { type CSSProperties, Fragment, type ReactNode } from 'react';
+import { type CSSProperties, Fragment, type ReactNode, useLayoutEffect, useState } from 'react';
 import { cn } from '../lib/cn.ts';
+import { useContainerWidth } from '../lib/container-width.ts';
 import { BELOW_MD, useMediaQuery } from '../lib/media.ts';
 import { useArrivalMode, useInsertHighlight } from '../lib/motion.ts';
 import { CARD_SURFACE } from './card.tsx';
@@ -38,7 +39,7 @@ export interface DataTableProps<T extends RowData> {
   /** Inside a card: no border or radius of its own. */
   bare?: boolean;
   /**
-   * Below md, render rows as stacked blocks (first column is the title, other columns become label
+   * Below md (or in a column under 640 px), render rows as stacked blocks (first column is the title, other columns become label
    * and value lines). Turn off for wide record tables that scroll instead.
    */
   stack?: boolean;
@@ -68,7 +69,11 @@ export function DataTable<T extends RowData>({
   bare,
   stack = true,
 }: DataTableProps<T>) {
-  const narrow = useMediaQuery(BELOW_MD) && stack;
+  // Stacked on a phone, and wherever the table's columns do not fit the column the page leaves
+  // (tablet beside the sidebar): `natural` is the width the table wanted when it last overflowed.
+  const [boxWidth, boxRef] = useContainerWidth();
+  const [natural, setNatural] = useState(0);
+  const narrow = (useMediaQuery(BELOW_MD) || (boxWidth > 0 && boxWidth < natural)) && stack;
   const table = useTable({
     features: dataTableFeatures,
     data: data as T[],
@@ -77,6 +82,10 @@ export function DataTable<T extends RowData>({
   });
   const rows = table.getRowModel().rows;
   const { ref: scrollRef, fade, measure } = useEdgeFade();
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (el && el.scrollWidth > el.clientWidth + 1) setNatural(el.scrollWidth);
+  });
   const virtualizer = useVirtualizer({
     count: virtualHeight ? rows.length : 0,
     getScrollElement: () => scrollRef.current,
@@ -136,7 +145,7 @@ export function DataTable<T extends RowData>({
   return (
     <>
       {toolbar}
-      <div aria-busy={busy || undefined} className={cn('relative min-w-0', className)}>
+      <div ref={boxRef} aria-busy={busy || undefined} className={cn('relative min-w-0', className)}>
         <LoadingRail show={busy} />
         {narrow && titleCol ? (
           <ul

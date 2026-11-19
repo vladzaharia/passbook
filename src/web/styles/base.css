@@ -30,6 +30,13 @@
   [tabindex="-1"]:focus {
     outline: none;
   }
+  /* A heading may be an email or a long name: it breaks at the gutter, never runs past it. */
+  h1,
+  h2,
+  h3 {
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+  }
   button,
   [role="button"],
   summary {

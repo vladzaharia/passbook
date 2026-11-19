@@ -40,9 +40,9 @@ describe('buddy scale', () => {
 });
 
 describe('buddy seat', () => {
-  it('sits its base on the border line, 1 px by default, or the border the host names', () => {
+  it('sits its feet on the border line, 1 px by default, or the border the host names', () => {
     expect(wallet).toMatch(
-      /\.wl-buddy \{ position: absolute; top: calc\(-1 \* var\(--wl-seat-border, 1px\)\); left: 50%; translate: -50% -91\.67%;/,
+      /\.wl-buddy \{ position: absolute; top: calc\(-1 \* var\(--wl-seat-border, 1px\)\); left: 50%; translate: -50% -100%;/,
     );
     const upload = readFileSync(join(process.cwd(), 'src/web/admin/templates/upload.css'), 'utf8');
     expect(upload).toMatch(/\.wl-drop \{\s*--wl-seat-border: 2px;/);
@@ -73,7 +73,7 @@ describe('buddy seat', () => {
     expect(centre).not.toHaveAttribute('data-at');
     expect(start).toHaveAttribute('data-at', 'start');
     expect(end).toHaveAttribute('data-at', 'end');
-    expect(wallet).toContain('.wl-buddy[data-at] { translate: 0 -91.67%; }');
+    expect(wallet).toContain('.wl-buddy[data-at] { translate: 0 -100%; }');
     expect(wallet).toContain(
       '.wl-buddy[data-at="end"] { left: auto; right: var(--wl-buddy-inset, 12px); }',
     );

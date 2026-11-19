@@ -18,7 +18,7 @@
   --wl-seat-border: 1.5px;
   position: relative;
   width: fit-content;
-  margin-top: 4.125rem;
+  margin-top: 4.5rem;
   padding: 1.125rem;
   border: 1.5px solid var(--pk-border-strong);
   border-radius: var(--pk-radius-xl);

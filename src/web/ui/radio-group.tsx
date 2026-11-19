@@ -18,6 +18,18 @@ export interface RadioGroupProps {
   className?: string;
 }
 
+/**
+ * Drawn, not the browser's: dark mode's native unchecked radio fills grey and reads half checked.
+ * Empty ring when off, accent ring with a centre dot when on; the box stays native for keys and forms.
+ */
+const RADIO = cn(
+  'mt-0.5 size-4 shrink-0 appearance-none rounded-full border border-border-strong bg-surface-raised wl-colors',
+  'checked:border-state-checked-edge checked:bg-state-checked-fill checked:shadow-[inset_0_0_0_3px_var(--pk-surface-raised)]',
+  'hover:not-disabled:not-checked:border-fg-muted',
+  'disabled:cursor-not-allowed disabled:opacity-50',
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+);
+
 /** Native radios: arrow-key navigation and form semantics come from the browser. */
 export function RadioGroup({
   legend,
@@ -48,7 +60,7 @@ export function RadioGroup({
                 checked={value === o.value}
                 disabled={o.disabled}
                 onChange={() => onValueChange(o.value)}
-                className="mt-0.5 size-4 shrink-0 accent-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                className={RADIO}
               />
               <label
                 htmlFor={id}
