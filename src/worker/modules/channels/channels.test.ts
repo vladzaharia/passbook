@@ -460,8 +460,8 @@ describe('review fixes', () => {
     const insert = (id: string, org: string | null, extra: string) =>
       run(
         kit.env.DB,
-        `INSERT INTO templates (id, org_id, slug, name, origin, status, created_at, updated_at${extra ? ', ' + extra.split('=')[0] : ''})
-         VALUES (?, ?, ?, 'T', ?, 'active', 1, 1${extra ? ', ' + extra.split('=')[1] : ''})`,
+        `INSERT INTO templates (id, org_id, slug, name, origin, status, created_at, updated_at${extra ? `, ${extra.split('=')[0]}` : ''})
+         VALUES (?, ?, ?, 'T', ?, 'active', 1, 1${extra ? `, ${extra.split('=')[1]}` : ''})`,
         [id, org, id, id.startsWith('up') ? 'uploaded' : 'baked'],
       );
     await insert('up-private', null, '');

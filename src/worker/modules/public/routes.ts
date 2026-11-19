@@ -1,7 +1,6 @@
 import { PublicAssetParamSchema, PublicTokenParamSchema } from '../../../shared/contracts/index.ts';
 import { passDevice } from '../../../shared/device.ts';
 import { endedOn } from '../../../shared/ended-on.ts';
-import { PASS_SW_SOURCE } from '../../../shared/pass-offline.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
@@ -27,6 +26,7 @@ import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
 import { canPresent, presentationForPass } from './presentation.ts';
 import { resendRoutes } from './routes-resend.ts';
+import { swRoutes } from './routes-sw.ts';
 import {
   isTokenShape,
   openPublicAsset,
@@ -38,19 +38,8 @@ import { assertPassSnapshot, capturePassSnapshot } from './snapshot.ts';
 
 /** /p: bearer-link pass page and download. No sign-in. */
 export const publicRoutes = createRouter();
-// The barcode page's offline worker, scope-limited by its registration to one token's page. It is
-// registered first, so the /:token limits below never see it.
-publicRoutes.get(
-  '/sw.js',
-  () =>
-    new Response(PASS_SW_SOURCE, {
-      headers: {
-        'content-type': 'text/javascript; charset=utf-8',
-        'cache-control': 'no-cache',
-        'x-content-type-options': 'nosniff',
-      },
-    }),
-);
+// Registered first, so the /:token limits below never see /sw.js.
+publicRoutes.route('/', swRoutes);
 // Mail proxies fetch every emailed pass's images from a few IPs, so valid assets are limited per
 // token and network prefix only. Random tokens each get a fresh per-token bucket, so a prefix's
 // misses are counted and, past a threshold, refused before any lookup.
