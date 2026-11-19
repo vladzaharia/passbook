@@ -60,7 +60,7 @@ function TemplateDetailResource({ templateId, search }: { templateId: string; se
     template.refetch,
   ]);
   const crumbs = [
-    { label: 'Templates', to: orgPath(scope.orgId ?? '', '/templates') },
+    { label: 'Templates', to: scope.orgId ? orgPath(scope.orgId, '/templates') : undefined },
     { label: 'Template' },
   ];
   if (!scope.isLoading && !canFetch) {
@@ -129,7 +129,7 @@ function TemplateDetailResource({ templateId, search }: { templateId: string; se
       template={template.data}
       tab={search.tab ?? 'overview'}
       crumbs={[
-        { label: 'Templates', to: orgPath(scope.orgId, '/templates') },
+        { label: 'Templates', to: scope.orgId ? orgPath(scope.orgId, '/templates') : undefined },
         { label: template.data.name },
       ]}
     />

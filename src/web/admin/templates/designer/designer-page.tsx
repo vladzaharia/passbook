@@ -93,7 +93,7 @@ function TemplateDesignerResource({ templateId }: { templateId: string }) {
     template.refetch,
   ]);
   const crumbs = [
-    { label: 'Templates', to: orgPath(scope.orgId ?? '', '/templates') },
+    { label: 'Templates', to: scope.orgId ? orgPath(scope.orgId, '/templates') : undefined },
     { label: 'Template' },
     { label: 'Design' },
   ];
@@ -153,10 +153,10 @@ function TemplateDesignerResource({ templateId }: { templateId: string }) {
       key={`${scope.orgId}:${template.data.id}`}
       template={template.data}
       crumbs={[
-        { label: 'Templates', to: orgPath(scope.orgId, '/templates') },
+        { label: 'Templates', to: scope.orgId ? orgPath(scope.orgId, '/templates') : undefined },
         {
           label: template.data.name,
-          to: orgPath(scope.orgId, `/templates/${templateId}`),
+          to: scope.orgId ? orgPath(scope.orgId, `/templates/${templateId}`) : undefined,
         },
         { label: 'Design' },
       ]}

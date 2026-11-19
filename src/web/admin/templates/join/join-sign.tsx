@@ -86,10 +86,12 @@ export function JoinSignPage({ templateId }: { templateId: string }) {
   );
   const org = useOrgWorkspace(scope.orgId ?? '', Boolean(scope.orgId));
   const crumbs = [
-    { label: 'Templates', to: orgPath(scope.orgId ?? '', '/templates') },
+    { label: 'Templates', to: scope.orgId ? orgPath(scope.orgId, '/templates') : undefined },
     {
       label: template.data?.name ?? 'Template',
-      to: orgPath(scope.orgId ?? '', `/templates/${encodeURIComponent(templateId)}`),
+      to: scope.orgId
+        ? orgPath(scope.orgId, `/templates/${encodeURIComponent(templateId)}`)
+        : undefined,
     },
     { label: JOIN_COPY.sign.crumb },
   ];

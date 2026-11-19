@@ -76,9 +76,10 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
           onClose={() => setCreatingSession(undefined)}
           onCreated={(sessionId) => {
             setCreatingSession(undefined);
+            if (!scope.orgId) return;
             void navigate({
               to: '/admin/o/$orgId/scanning/sessions/$sessionId',
-              params: { orgId: scope.orgId ?? '', sessionId },
+              params: { orgId: scope.orgId, sessionId },
               search: { addDevice: '1' },
             });
           }}

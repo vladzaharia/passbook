@@ -29,8 +29,8 @@ export function DesignerHeader({
               { label: 'New template' },
             ]
           : [
-              { label: 'Templates', to: orgPath(orgId ?? '', '/templates') },
-              { label: name, to: orgPath(orgId ?? '', `/templates/${templateId}`) },
+              { label: 'Templates', to: orgId ? orgPath(orgId, '/templates') : undefined },
+              { label: name, to: orgId ? orgPath(orgId, `/templates/${templateId}`) : undefined },
               { label: 'Design' },
             ]
       }
