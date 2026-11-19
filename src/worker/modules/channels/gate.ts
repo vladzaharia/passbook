@@ -23,6 +23,29 @@ export interface HolderChannels {
 
 /** The one reading of what a holder may be offered; SSR, portal, email and the API all use it. */
 export async function holderChannels(ctx: ServiceContext, pass: GatePass): Promise<HolderChannels> {
+  // One load per pass and request: the page, its offers and the gate all ask. Keyed on the shared
+  // D1 binding (offer contexts copy env) and the request id, so only the latest request is kept.
+  const rid = ctx.requestId;
+  if (!rid) return read(ctx, pass);
+  let slot = perRequest.get(ctx.env.DB);
+  if (slot?.rid !== rid) {
+    slot = { rid, passes: new Map() };
+    perRequest.set(ctx.env.DB, slot);
+  }
+  let hit = slot.passes.get(pass.id);
+  if (!hit) {
+    hit = read(ctx, pass);
+    slot.passes.set(pass.id, hit);
+  }
+  return hit;
+}
+
+const perRequest = new WeakMap<
+  D1Database,
+  { rid: string; passes: Map<string, Promise<HolderChannels>> }
+>();
+
+async function read(ctx: ServiceContext, pass: GatePass): Promise<HolderChannels> {
   const { inputs, paperHolder } = await loadPass(ctx, pass);
   const effective = effectiveChannels(inputs);
   return { effective, holderPrint: effective.paper.on && paperHolder };

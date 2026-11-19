@@ -28,6 +28,8 @@ export const voidedKey = (passId: string, version: number) =>
 export interface PassFileVariant {
   objectKey: string;
   name: string;
+  /** Builds the object; runs only when bytes are served, never for a 304. */
+  ensure?: () => Promise<void>;
 }
 
 const etagOf = (pass: Pass, variant?: PassFileVariant) =>
@@ -67,6 +69,7 @@ export async function servePassFile(
     ? matchesEtag(noneMatch, etag)
     : !pass.modifiedCollision && Number.isFinite(sinceMs) && modifiedSeconds * 1000 <= sinceMs;
   if (notModified) return new Response(null, { status: 304, headers });
+  await variant?.ensure?.();
   const object = await bucket.get(variant?.objectKey ?? pass.objectKey);
   if (!object) throw new NotFoundError('The pass file is missing.', 'PASS_FILE_MISSING');
   headers.set('content-length', String(object.size));

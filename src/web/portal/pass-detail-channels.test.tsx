@@ -38,6 +38,16 @@ describe('pass detail by channel', () => {
     expect(screen.getByRole('link', { name: 'Show barcode' })).toBeVisible();
   });
 
+  it('keeps the page link and drops the badge when the download is null', async () => {
+    await open({
+      channels: channels({ apple: off }),
+      downloadUrl: null,
+      pageUrl: '/p/abcdefghijklmnopqrst',
+    });
+    expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Show barcode' })).toBeVisible();
+  });
+
   it('drops the barcode link while mobile is off', async () => {
     await open({ channels: channels({ mobile: off }) });
     expect(screen.queryByRole('link', { name: 'Show barcode' })).toBeNull();

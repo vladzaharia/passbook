@@ -45,6 +45,8 @@ export const MyPassSchema = z.object({
   refreshRequestedAt: TimestampSchema.nullable(),
   /** Null when the link cannot be shown (a stored link that must be rotated). */
   downloadUrl: z.string().nullable(),
+  /** The holder's /p page: the link behind the QR and More, whatever the channels offer. */
+  pageUrl: z.string().nullable().optional(),
   /** Native alternatives, independently of the Apple registration in inWallet. */
   walletOffers: z.array(WalletOfferSchema),
   /** The release gate per native wallet; a disabled one is not offered. */

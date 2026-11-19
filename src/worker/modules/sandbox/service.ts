@@ -14,7 +14,7 @@ import {
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
-import { channelGate, recordCopy } from '../channels/gate.ts';
+import { channelOn, recordCopy } from '../channels/gate.ts';
 import type { MailAttachment, Mailer } from '../delivery/mailer.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getPlatformSettings } from '../settings/service.ts';
@@ -146,17 +146,18 @@ export async function sendCapturedToMe(
     fromName = (await getPlatformSettings(ctx))['email.senderName'];
     if (ref.attached === 1) {
       if (snapshot.kind !== 'pass') throw new Error('Invalid captured attachment.');
-      // Apple may have been turned off since the capture: the forward must not attach a copy.
-      await channelGate(ctx, snapshot.pass, 'apple');
-      const object = await ctx.env.BUCKET.get(snapshot.pass.objectKey);
-      if (!object) throw new Error('Captured attachment is missing.');
-      attachments = [
-        {
-          filename: 'pass.pkpass',
-          type: 'application/vnd.apple.pkpass',
-          content: new Uint8Array(await object.arrayBuffer()),
-        },
-      ];
+      // Apple may have been turned off since the capture: the message goes without the copy.
+      if (await channelOn(ctx, snapshot.pass, 'apple')) {
+        const object = await ctx.env.BUCKET.get(snapshot.pass.objectKey);
+        if (!object) throw new Error('Captured attachment is missing.');
+        attachments = [
+          {
+            filename: 'pass.pkpass',
+            type: 'application/vnd.apple.pkpass',
+            content: new Uint8Array(await object.arrayBuffer()),
+          },
+        ];
+      }
     }
     // Check the exact intent, members, grant and verified address at the provider boundary.
     const content = await readForwardContent(

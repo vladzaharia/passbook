@@ -27,7 +27,13 @@ export async function appleVariant(
   const { inputs } = await loadPass(ctx, pass);
   const lower = effectiveChannels({ ...inputs, platform: {}, org: {} });
   if (lower.apple.on) return null;
-  return voidedVariant(ctx, pass);
+  return {
+    objectKey: voidedKey(pass.id, pass.version),
+    name: 'voided',
+    ensure: async () => {
+      await voidedVariant(ctx, pass);
+    },
+  };
 }
 
 /**

@@ -86,7 +86,7 @@ function Detail({
   const { authed } = useSession();
   const title = holderPassName(pass, authed?.user);
   const stale = state === 'voided' || state === 'removed';
-  const publicUrl = publicUrlOf(pass.downloadUrl);
+  const publicUrl = publicUrlOf(pass.pageUrl ?? pass.downloadUrl);
   const printUrl = pass.holderPrint && publicUrl ? `${publicUrl}/print` : undefined;
   return (
     <HolderPassView
@@ -108,7 +108,7 @@ function Detail({
       state={state}
       removalMessage={pass.removalMessage}
       device={device}
-      downloadHref={pass.channels?.apple.on === false ? null : pass.downloadUrl}
+      downloadHref={pass.downloadUrl}
       channels={pass.channels}
       printHref={printUrl}
       walletOffers={pass.presentationEligible === true ? pass.walletOffers : []}

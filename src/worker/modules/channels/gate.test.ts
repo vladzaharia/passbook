@@ -260,6 +260,27 @@ describe('Apple voided variant', () => {
     expect((await getPass(kit.env.DB, pass.id))?.version).toBe(after);
   });
 
+  it('answers 304 for the voided copy without building it', async () => {
+    const { kit, pass, put } = await setup();
+    const auth = deviceToken(pass);
+    await put({ apple: 'off' });
+    const now = await getPass(kit.env.DB, pass.id);
+    const res = await kit.app.request(
+      `${ORIGIN}/wallet/v1/passes/${TYPE}/${pass.serial}`,
+      {
+        headers: {
+          authorization: `ApplePass ${auth}`,
+          'if-none-match': `"${now?.objectSha256}-voided"`,
+        },
+      },
+      kit.env,
+    );
+    expect(res.status).toBe(304);
+    expect(
+      await kit.env.BUCKET.head(`passes/${pass.id}/v${now?.version}-voided.pkpass`),
+    ).toBeNull();
+  });
+
   it('refuses personalization while Apple is off', async () => {
     const { kit, pass, put } = await setup();
     await put({ apple: 'off' });

@@ -254,6 +254,8 @@ register(
   async (c) => {
     const ctx = svc(c);
     const pass = await passForToken(ctx, c.req.valid('param').token);
+    // Gate before the snapshot: a flip landing between them serves one live copy, and the version
+    // bump it causes trips the snapshot check below.
     await channelGate(ctx, pass, 'apple');
     const snapshot = await capturePassSnapshot(ctx, pass);
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
