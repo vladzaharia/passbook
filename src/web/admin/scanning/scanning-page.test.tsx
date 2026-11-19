@@ -103,7 +103,7 @@ describe('Scanning page', () => {
         false,
       );
       const user = userEvent.setup();
-      await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+      await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
       await user.click(await screen.findByRole('option', { name: 'Northwind' }));
       expect(await screen.findByText('No scans yet')).toBeInTheDocument();
       expect(seen).toContain('o1');

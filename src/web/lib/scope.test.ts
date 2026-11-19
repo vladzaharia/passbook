@@ -78,6 +78,19 @@ describe('switchTarget', () => {
     );
   });
 
+  it('keeps a creation page, so the pass wizard can change its organization', () => {
+    expect(switchTarget('/admin/o/o1/passes/new', { kind: 'org', orgId: 'o2' }, all)).toBe(
+      '/admin/o/o2/passes/new',
+    );
+    expect(
+      switchTarget(
+        '/admin/o/o1/passes/new',
+        { kind: 'org', orgId: 'o2' },
+        (p) => !p.endsWith('/new'),
+      ),
+    ).toBe('/admin/o/o2/passes');
+  });
+
   it('keeps sections both scopes have when moving to and from the platform', () => {
     for (const section of ['', '/audit', '/api-keys', '/settings']) {
       expect(switchTarget(`/admin/o/o1${section}`, PLATFORM, all)).toBe(

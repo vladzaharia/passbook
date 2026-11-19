@@ -102,7 +102,7 @@ describe('passes list', () => {
     expect(seen.at(-1)?.searchParams.get('orgId')).toBe(ORG.id);
 
     await user.click(screen.getByRole('button', { name: 'Clear' }));
-    await waitFor(() => expect(router.state.location.search).toEqual({ orgId: ORG.id }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
   });
 
   it('does not expose rows from another organization in a scoped response', async () => {
@@ -429,7 +429,7 @@ describe('new pass wizard', () => {
       ),
     ).toBe(false);
     await user.click(organization);
-    await waitFor(() => expect(router.state.location.search.orgId).toBe(ORG.id));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
     await waitFor(() =>
       expect(
         queryClient.getQueryState(['admin', 'templates', 'eligible', ORG.id, 'live', 'apple', 'u1'])
@@ -535,7 +535,9 @@ describe('new pass wizard', () => {
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes/p9'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/p9$/),
+    );
     // The pass's page replaces the wizard and says what happened, with what to do next.
     expect(router.history.length).toBe(entries);
     expect(await screen.findByText(/Pass created.*email requested/i)).toBeInTheDocument();

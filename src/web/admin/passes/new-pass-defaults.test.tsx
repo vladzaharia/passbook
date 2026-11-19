@@ -63,7 +63,7 @@ describe('new pass organization selection', () => {
     expect(await screen.findByText('Choose an organization.')).toBeInTheDocument();
 
     await user.click(henryChoice);
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: ORG.id }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
     await waitFor(() => expect(passRequests.length).toBeGreaterThan(0));
     await waitFor(() => expect(templateRequests.length).toBeGreaterThan(0));
     expect(passRequests.every((url) => url.searchParams.get('orgId') === ORG.id)).toBe(true);
@@ -408,7 +408,7 @@ describe('new pass details step', () => {
       },
     });
     await user.click(await screen.findByRole('radio', { name: /Henry's/ }));
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: ORG.id }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
     await waitFor(() =>
       expect(
         queryClient.getQueryState(['admin', 'templates', 'eligible', ORG.id, 'live', 'apple', 'u1'])
@@ -625,7 +625,7 @@ describe('new pass template step', () => {
       },
     });
     await user.click(await screen.findByRole('radio', { name: /Henry's/ }));
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: ORG.id }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
     await waitFor(() =>
       expect(
         queryClient.getQueryState(['admin', 'templates', 'eligible', ORG.id, 'live', 'apple', 'u1'])

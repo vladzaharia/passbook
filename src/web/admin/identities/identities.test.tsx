@@ -440,7 +440,7 @@ describe('identity detail', () => {
       within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Delete' }),
     );
     await waitFor(() => expect(deleted).toBe(true));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/identities'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform/wallet-accounts'));
     expect(router.history.length).toBe(1);
   });
 
@@ -466,7 +466,7 @@ describe('identity detail', () => {
     await ui.click(within(dialog).getByLabelText('Private key (PEM)'));
     await ui.paste('-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----');
     await ui.click(within(dialog).getByRole('button', { name: 'Upload' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/identities/i9'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform/wallet-accounts/i9'));
     expect(await screen.findByText('Identity uploaded')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Use in an organization' })).toHaveAttribute(
       'href',

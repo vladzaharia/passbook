@@ -6,6 +6,7 @@ import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
 import { PaletteContext } from '../../lib/palette.ts';
 import { scopePath } from '../../lib/scope.ts';
 import { ScopeCrumbContext } from '../../lib/scope-context.ts';
+import { useSession } from '../../lib/session.ts';
 import { Button } from '../button.tsx';
 import { IconButton } from '../icon-button.tsx';
 import { Sheet, SheetContent } from '../sheet.tsx';
@@ -29,7 +30,9 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
   const home = scope ? scopePath(scope) : '/admin';
   const org = scope?.kind === 'org';
   const { membership } = useOrgScope();
-  const scopeName = scope?.kind === 'platform' ? 'Platform' : membership?.orgName;
+  const { isAdmin } = useSession();
+  const scopeName =
+    scope?.kind === 'platform' ? (isAdmin ? 'Platform' : undefined) : membership?.orgName;
   const crumb = useMemo(
     () => (scopeName ? { label: scopeName, to: home } : undefined),
     [scopeName, home],

@@ -58,6 +58,8 @@ export function sectionOf(rest: string): string {
   return /^\/[^/]+/.exec(rest)?.[0] ?? '';
 }
 
+const CREATE = /^\/[a-z-]+\/(new|upload)$/;
+
 /** Sections both scopes have, mapped to their counterpart (Members ↔ Users). */
 const COUNTERPART: Record<string, string> = {
   '': '',
@@ -87,7 +89,9 @@ export function switchTarget(
       : section in COUNTERPART
         ? COUNTERPART[section]
         : undefined;
-  const candidates = [kept, ''].filter((s): s is string => s !== undefined);
+  // Creation pages (the pass wizard choosing its organization) stay put; details do not.
+  const creating = scope?.kind === target.kind && CREATE.test(rest) ? rest : undefined;
+  const candidates = [creating, kept, ''].filter((s): s is string => s !== undefined);
   for (const candidate of candidates) {
     const path = scopePath(target, candidate);
     if (allowed(path)) return path;

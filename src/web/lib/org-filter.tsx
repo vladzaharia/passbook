@@ -124,6 +124,11 @@ export function useResourceOrg(
   const scope = useOrgScope();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const searchStr = useRouterState({ select: (state) => state.location.searchStr });
+  // Only an old link that named no organization may move to the owner; a URL that names one
+  // and disagrees with the resource shows not found.
+  const findOwner = useRouterState({
+    select: (state) => (state.location.state as { findOwner?: unknown }).findOwner === true,
+  });
   const { authed, isAdmin } = useSession();
   const userId = authed?.user.id;
   const client = useQueryClient();
@@ -177,7 +182,8 @@ export function useResourceOrg(
       canAccessAdminPath(targetPath, isAdmin, fresh) &&
       canAccessAdminPath(targetPath, isAdmin, current),
   );
-  const moving = allowed && target !== scope.requestedOrgId;
+  const conflict = target !== scope.requestedOrgId;
+  const moving = allowed && conflict && findOwner;
 
   useEffect(() => {
     if (moving && targetPath) void navigate({ href: `${targetPath}${searchStr}`, replace: true });
@@ -187,6 +193,6 @@ export function useResourceOrg(
   if (scope.isError || (resourceOrgId === null && !allowShared)) return 'not-found';
   if (shared && !target) return scope.hasExplicitOrg ? 'not-found' : 'choose-org';
   if (!checked) return 'pending';
-  if (!allowed) return 'not-found';
+  if (!allowed || (conflict && !moving)) return 'not-found';
   return moving ? 'pending' : 'ready';
 }

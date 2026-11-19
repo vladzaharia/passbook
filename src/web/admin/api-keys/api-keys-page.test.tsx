@@ -84,7 +84,7 @@ describe('api keys page', () => {
       removeItem: () => {},
     });
     const seen: string[] = [];
-    const { router } = await renderApp('/admin/api-keys', {
+    const { router } = await renderApp('/admin/platform/api-keys', {
       session: 'admin',
       memberships: [membershipFixture('o1')],
       handlers: {
@@ -206,7 +206,7 @@ describe('api keys page', () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole('link', { name: 'Review API keys' }));
     await waitFor(() => expect(router.state.location.pathname).toMatch(/\/admin\/api-keys\/?$/));
-    expect(router.state.location.search.orgId).toBe('o1');
+    expect(router.state.location.pathname.split('/')[3]).toBe('o1');
     await waitFor(() => expect(seen.at(-1)).toBe('o1'));
     expect(await screen.findByText('North · All modes')).toBeInTheDocument();
     await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
@@ -244,7 +244,7 @@ describe('api keys page', () => {
     const user = userEvent.setup();
     const dialog = await screen.findByRole('dialog', { name: 'New API key' });
     await waitFor(() => expect(router.state.location.search.new).toBeUndefined());
-    expect(router.state.location.search.orgId).toBe('o1');
+    expect(router.state.location.pathname.split('/')[3]).toBe('o1');
     await waitFor(() => expect(seen.at(-1)).toBe('o1'));
     expect(await screen.findByText('North · All modes')).toBeInTheDocument();
     expect(within(dialog).getByText('North')).toBeInTheDocument();

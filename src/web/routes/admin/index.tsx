@@ -1,12 +1,13 @@
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute, Link, redirect } from '@tanstack/react-router';
 import { z } from 'zod';
 import { canAccessAdminPath } from '../../lib/guards.ts';
-import { legacyAdminTarget } from '../../lib/legacy-admin.ts';
+import { carryOrgScope, legacyAdminTarget } from '../../lib/legacy-admin.ts';
 import { firstAllowedPath } from '../../lib/nav.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
-import { orgPath, parseAdminPath } from '../../lib/scope.ts';
+import { orgPath, parseAdminPath, platformPath } from '../../lib/scope.ts';
 import { readRemembered, readTabScope } from '../../lib/scope-store.ts';
-import { isAdmin, membershipsQuery, sessionQuery } from '../../lib/session.ts';
+import { isAdmin, membershipsQuery, sessionQuery, useSession } from '../../lib/session.ts';
+import { Button } from '../../ui/button.tsx';
 import { Card, CardBody } from '../../ui/card.tsx';
 import { EmptyState } from '../../ui/empty-state.tsx';
 import { EntityAvatar } from '../../ui/entity.tsx';
@@ -30,12 +31,27 @@ const searchSchema = z.object({
 function ScopeChooser() {
   const { next } = Route.useSearch();
   const scope = useOrgScope();
+  const { isAdmin } = useSession();
   if (scope.isLoading) return <SkeletonRows label="Loading organizations" />;
   if (scope.isError) {
     return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
   }
   if (scope.memberships.length === 0) {
-    return <EmptyState heading art="building" title="No organizations" />;
+    return (
+      <EmptyState
+        heading
+        art="building"
+        title="No organizations"
+        description="This page belongs to an organization you are not a member of."
+        action={
+          isAdmin ? (
+            <Button variant="outline" asChild>
+              <Link to={platformPath('/orgs')}>Go to Organizations</Link>
+            </Button>
+          ) : undefined
+        }
+      />
+    );
   }
   return (
     <>
@@ -65,11 +81,25 @@ function ScopeChooser() {
 
 export const Route = createFileRoute('/admin/')({
   validateSearch: searchSchema,
+  // An Overview link from inside an organization opens that organization's overview.
+  search: carryOrgScope,
   // The remembered scope if still reachable, else the platform for admins, else the only
   // organization, else the chooser. Old /admin?orgId= links open that organization.
   beforeLoad: async ({ context, location }) => {
     const session = await context.queryClient.ensureQueryData(sessionQuery);
     const userId = session.authenticated ? session.user.id : undefined;
+    const raw0 = (location.search ?? {}) as Record<string, unknown>;
+    const last = readTabScope() ?? readRemembered();
+    // A platform admin headed for the platform does not wait for organization grants.
+    if (
+      isAdmin(session) &&
+      raw0.orgId === undefined &&
+      raw0.next === undefined &&
+      last?.kind !== 'org'
+    ) {
+      const { orgId: _o, filterOrgId, ...kept } = raw0;
+      throw redirect({ to: platformPath(), search: { ...kept, filterOrgId }, replace: true });
+    }
     const grants = await context.queryClient.ensureQueryData(membershipsQuery);
     const memberships = grants.items.filter((m) => m.userId === userId && m.revokedAt === null);
     const raw = (location.search ?? {}) as Record<string, unknown>;

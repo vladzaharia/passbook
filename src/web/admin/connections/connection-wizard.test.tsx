@@ -135,13 +135,13 @@ describe('create connection wizard', () => {
         },
       },
     });
-    await user.click(await screen.findByRole('combobox', { name: /^Organization filter/ }));
+    await user.click(await screen.findByRole('combobox', { name: /^Scope:/ }));
     const orgOption = await screen.findByRole('option', { name: ORG.name });
     expect(router.state.location.search).not.toMatchObject({ orgId: ORG.id });
     expect(screen.queryByText('Fetch records from a JSON API.')).toBeNull();
     expect(catalogRequests).toEqual([]);
     await user.click(orgOption);
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: ORG.id }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
     expect(await screen.findByText('Fetch records from a JSON API.')).toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'Organization' })).toBeNull();
     expect(screen.queryByText('http-json')).toBeNull();
@@ -189,8 +189,10 @@ describe('create connection wizard', () => {
     await next(user);
     expect(screen.getByText('Copper card')).toBeInTheDocument();
     await next(user);
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/connections/c9'));
-    expect(router.state.location.search).toMatchObject({ orgId: ORG.id });
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/connections\/c9$/),
+    );
+    expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id);
     expect(posts[0]).toMatchObject({
       orgId: 'org1',
       connectorType: 'http-json',
@@ -501,7 +503,7 @@ describe('create connection wizard', () => {
         await reply.promise;
       });
       await waitFor(() => expect(queryClient.isMutating()).toBe(0));
-      expect(router.state.location.pathname).toBe('/admin/connections/new');
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/connections\/new$/);
       expect(screen.queryByText('Signing secret')).not.toBeInTheDocument();
       expect(screen.queryByText('Private creation error.')).not.toBeInTheDocument();
       await act(async () => {
@@ -513,7 +515,7 @@ describe('create connection wizard', () => {
       });
       expect(screen.queryByText('Signing secret')).not.toBeInTheDocument();
       expect(screen.queryByText('Private creation error.')).not.toBeInTheDocument();
-      expect(router.state.location.pathname).toBe('/admin/connections/new');
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/connections\/new$/);
     },
   );
 
@@ -541,8 +543,10 @@ describe('create connection wizard', () => {
     expect(screen.getByText(/x-wallet-signature/)).toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: 'I saved the secret' }));
     await user.click(done);
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/connections/c9'));
-    expect(router.state.location.search).toMatchObject({ orgId: ORG.id });
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/connections\/c9$/),
+    );
+    expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id);
     // The connection's page replaces the wizard and leads with its next steps.
     expect(router.history.length).toBe(entries);
     expect(await screen.findByText('Connection created')).toBeInTheDocument();

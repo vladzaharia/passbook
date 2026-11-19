@@ -178,7 +178,7 @@ describe('audit page', () => {
 
   it('defaults to all organizations even with a remembered tenant selection', async () => {
     vi.stubGlobal('localStorage', memoryStorage({ 'wallet-org-filter': 'o-north' }));
-    const { fetchMock, router } = await renderApp('/admin/audit', {
+    const { fetchMock, router } = await renderApp('/admin/platform/audit', {
       session: 'admin',
       memberships: [membershipFixture('o-north')],
       handlers: { '/api/v1/audit/platform': page([entry(1, { orgId: 'o-north' })]) },
@@ -361,7 +361,8 @@ describe('audit page', () => {
     expect(connections).not.toHaveBeenCalled();
   });
 
-  it('shows tenant resource pickers only for the matching selected membership', async () => {
+  // Platform scope has no organization to search in; P3 gives the pickers the filter's own.
+  it('offers ID entry rather than tenant pickers in the platform log', async () => {
     vi.stubGlobal('localStorage', memoryStorage({ 'wallet-org-filter': 'o1' }));
     const connections = vi.fn((_url: URL, _init: RequestInit | undefined) =>
       json({ items: [], nextCursor: null }),
@@ -377,12 +378,10 @@ describe('audit page', () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Filters (1)' }));
     const popover = await screen.findByRole('dialog');
-    expect(await within(popover).findByRole('combobox', { name: /^Pass/ })).toBeInTheDocument();
-    expect(within(popover).getByRole('combobox', { name: /^Connection/ })).toBeInTheDocument();
-    await waitFor(() => expect(connections).toHaveBeenCalled());
-    expect(connections.mock.calls.every(([url]) => url.searchParams.get('orgId') === 'o1')).toBe(
-      true,
-    );
+    expect(within(popover).getByRole('button', { name: 'Enter pass ID' })).toBeInTheDocument();
+    expect(within(popover).queryByRole('combobox', { name: /^Pass/ })).toBeNull();
+    expect(within(popover).queryByRole('combobox', { name: /^Connection/ })).toBeNull();
+    expect(connections).not.toHaveBeenCalled();
   });
 
   it('offers safe filters and a date range without assuming tenant access', async () => {

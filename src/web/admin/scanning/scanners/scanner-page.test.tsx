@@ -47,7 +47,7 @@ describe('Scanner page', () => {
       expect(
         await screen.findByRole('heading', { name: 'Harbor scanner', level: 1 }),
       ).toBeInTheDocument();
-      await waitFor(() => expect(router.state.location.search.orgId).toBe('o2'));
+      await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o2'));
       await waitFor(() => expect(seen).toContain('o2'));
       expect(seen.every((id) => id === 'o2')).toBe(true);
     } finally {
@@ -415,7 +415,7 @@ describe('Scanner page', () => {
     expect(screen.queryByText('Safari on iPhone')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Pair again' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/^Name/)).not.toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/admin/scanning/scanners/s1');
+    expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/scanning\/scanners\/s1$/);
     expect(unexpected).toEqual([]);
   });
 

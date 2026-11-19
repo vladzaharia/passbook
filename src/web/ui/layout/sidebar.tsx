@@ -3,6 +3,7 @@ import { Fragment } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { adminNavGroups, isActivePath } from '../../lib/nav.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
+import { readRemembered, readTabScope } from '../../lib/scope-store.ts';
 import { useSession } from '../../lib/session.ts';
 import { ActiveIndicator } from '../active-indicator.tsx';
 
@@ -10,8 +11,13 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { isAdmin } = useSession();
   const scope = useOrgScope();
-  const membership = scope.isLoading || scope.isError ? undefined : scope.membership;
-  const groups = adminNavGroups(useAdminScope(), isAdmin, membership);
+  const ready = !scope.isLoading && !scope.isError;
+  // Account and the chooser sit outside a scope: they show the one this tab last had open.
+  const shown = useAdminScope() ?? readTabScope() ?? readRemembered();
+  const membership = ready
+    ? scope.memberships.find((m) => shown?.kind === 'org' && m.orgId === shown.orgId)
+    : undefined;
+  const groups = adminNavGroups(shown, isAdmin, membership);
   return (
     <nav aria-label="Admin" className="relative flex flex-col gap-0.5 p-2">
       <ActiveIndicator />

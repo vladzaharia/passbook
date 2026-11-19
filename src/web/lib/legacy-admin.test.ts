@@ -75,6 +75,15 @@ describe('legacy admin URLs', () => {
     });
   });
 
+  it('opens only the directory record for a workspace link naming two organizations', () => {
+    expect(go('/admin/orgs/o1', { view: 'workspace', orgId: 'o2' }, admin).to).toBe(
+      '/admin/platform/orgs/o1',
+    );
+    expect(go('/admin/orgs/o1', { view: 'workspace', orgId: ['o1', 'o2'] }, admin).to).toBe(
+      '/admin/platform/orgs/o1',
+    );
+  });
+
   it('sends an organization admin to their own settings, never a refusal', () => {
     expect(go('/admin/settings')).toEqual({ to: '/admin/o/o1/settings', search: {} });
   });
@@ -124,6 +133,15 @@ describe('legacy admin URLs', () => {
     expect(go('/admin/settings', {}, { ...admin, tab: { kind: 'org', orgId: 'o1' } }).to).toBe(
       '/admin/platform/settings',
     );
+  });
+
+  it('opens the platform log and overview for their organization filter', () => {
+    const ctx = { ...admin, tab: { kind: 'org', orgId: 'o1' } } as const;
+    expect(go('/admin/audit', { filterOrgId: 'o2' }, ctx)).toEqual({
+      to: '/admin/platform/audit',
+      search: { filterOrgId: 'o2' },
+    });
+    expect(go('/admin', { filterOrgId: 'o2' }, ctx).to).toBe('/admin/platform');
   });
 
   it('sends a platform admin without memberships to the platform, and ignores other paths', () => {

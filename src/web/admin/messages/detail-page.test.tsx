@@ -73,8 +73,10 @@ describe('Message detail', () => {
       },
     });
     expect(await screen.findByRole('heading', { name: 'Harbor message' })).toBeInTheDocument();
-    await waitFor(() => expect(router.state.location.search.orgId).toBe(otherMembership.orgId));
-    expect(localStorage.getItem('wallet-org-filter')).toBe(otherMembership.orgId);
+    await waitFor(() =>
+      expect(router.state.location.pathname.split('/')[3]).toBe(otherMembership.orgId),
+    );
+    expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${otherMembership.orgId}`);
     expect(requests).toBeGreaterThan(0);
     expect(
       screen.getByText('Organization', { selector: 'dt' }).nextElementSibling,
@@ -124,7 +126,7 @@ describe('Message detail', () => {
       expect(screen.queryByText('Cached message')).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Send' })).not.toBeInTheDocument();
       expect(new URLSearchParams(router.state.location.searchStr).has('orgId')).toBe(false);
-      expect(localStorage.getItem('wallet-org-filter')).toBe(messageOrg.id);
+      expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${messageOrg.id}`);
       expect(templateScopes).toHaveLength(initialTemplates);
 
       await act(async () => {
@@ -144,13 +146,15 @@ describe('Message detail', () => {
       });
       if (outcome === 'moved') {
         expect(await screen.findByRole('heading', { name: 'Moved message' })).toBeInTheDocument();
-        await waitFor(() => expect(router.state.location.search.orgId).toBe(otherMembership.orgId));
-        expect(localStorage.getItem('wallet-org-filter')).toBe(otherMembership.orgId);
+        await waitFor(() =>
+          expect(router.state.location.pathname.split('/')[3]).toBe(otherMembership.orgId),
+        );
+        expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${otherMembership.orgId}`);
         await waitFor(() => expect(templateScopes).toContain(otherMembership.orgId));
       } else {
         expect(await screen.findByText('Message not found')).toBeInTheDocument();
         expect(new URLSearchParams(router.state.location.searchStr).has('orgId')).toBe(false);
-        expect(localStorage.getItem('wallet-org-filter')).toBe(messageOrg.id);
+        expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${messageOrg.id}`);
         expect(screen.queryByText('Cached message')).not.toBeInTheDocument();
       }
     },
@@ -470,7 +474,9 @@ describe('Message detail', () => {
     expect(within(dialog).getByRole('button', { name: 'Keep it' })).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Cancel message' }));
     await waitFor(() => expect(cancelled).toEqual(['/api/v1/broadcasts/b1/cancel']));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/messages'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/messages$/),
+    );
   });
 
   it('calls a scheduled change off with "change" wording', async () => {
@@ -520,7 +526,9 @@ describe('Message detail', () => {
     ).toBeInTheDocument();
     await userEvent.setup().click(screen.getByRole('button', { name: 'Send again' }));
     await waitFor(() => expect(retried).toEqual(['/api/v1/broadcasts/b1/retry']));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/messages/b2'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/messages\/b2$/),
+    );
   });
 
   it.each(['scope', 'capability'] as const)(

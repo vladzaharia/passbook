@@ -5,7 +5,7 @@ test('admin signs in through Pocket ID and lands on the admin overview', async (
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/login\?next=%2Fadmin/);
   await startOidcAs(page, 'admin', '/admin');
-  await page.waitForURL('**/admin');
+  await page.waitForURL('**/admin/platform');
   await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
 });
 

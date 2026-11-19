@@ -54,7 +54,7 @@ describe('Event detail organization scope', () => {
       expect(
         await screen.findByRole('heading', { name: 'Harbor admission', level: 1 }),
       ).toBeInTheDocument();
-      await waitFor(() => expect(router.state.location.search.orgId).toBe('o2'));
+      await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o2'));
       await waitFor(() => expect(seen).toContain('o2'));
       expect(seen.every((id) => id === 'o2')).toBe(true);
     } finally {

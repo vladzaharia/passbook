@@ -16,10 +16,8 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   const name = `E2E Demo ${uid('c')}`;
   const domain = `${uid('d')}.example.test`;
 
-  await page.goto('/admin/connections/new');
-  await page.getByRole('combobox', { name: /^Organization filter/ }).click();
-  await page.getByRole('option', { name: seed.org.name }).click();
-  await expect.poll(() => new URL(page.url()).searchParams.get('orgId')).toBe(seed.org.id);
+  const inOrg = `/admin/o/${encodeURIComponent(seed.org.id)}`;
+  await page.goto(`${inOrg}/connections/new`);
   await page.getByText('Demo', { exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
@@ -49,9 +47,8 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   await page.getByRole('checkbox', { name: 'Create passes for new records' }).check();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Create', exact: true }).click();
-  await page.waitForURL((url) => /^\/admin\/connections\/[0-9a-f-]+$/.test(url.pathname));
+  await page.waitForURL((url) => url.pathname.startsWith(`${inOrg}/connections/`));
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
-  expect(new URL(page.url()).searchParams.get('orgId')).toBe(seed.org.id);
   const connectionId = new URL(page.url()).pathname.split('/').pop() as string;
 
   // The Created callout repeats Test and Sync now beside the page's own; both run the same action.

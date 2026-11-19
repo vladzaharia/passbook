@@ -272,8 +272,8 @@ describe('pass detail: loading', () => {
       expect(
         await screen.findByRole('heading', { level: 1, name: 'Second organization pass' }),
       ).toBeInTheDocument();
-      await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: 'org2' }));
-      expect(localStorage.getItem('wallet-org-filter')).toBe('org2');
+      await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
+      expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${'org2'}`);
     } finally {
       localStorage.removeItem('wallet-org-filter');
     }
@@ -305,7 +305,7 @@ describe('pass detail: loading', () => {
           }),
         });
         expect(await screen.findByRole('heading', { name: 'Cached pass title' })).toBeVisible();
-        await waitFor(() => expect(localStorage.getItem('wallet-org-filter')).toBe(ORG.id));
+        await waitFor(() => expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${ORG.id}`));
         await act(async () => {
           await router.navigate({
             to: '/admin/passes/$passId',
@@ -318,7 +318,7 @@ describe('pass detail: loading', () => {
         expect(screen.queryByText('Cached pass title')).toBeNull();
         expect(screen.queryByRole('button', { name: 'More' })).toBeNull();
         expect(new URLSearchParams(router.state.location.searchStr).has('orgId')).toBe(false);
-        expect(localStorage.getItem('wallet-org-filter')).toBe(ORG.id);
+        expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${ORG.id}`);
         expect(
           fetchMock.mock.calls.some(
             ([input]) => new URL(String(input), 'http://localhost').pathname === '/api/v1/bundles',
@@ -337,10 +337,8 @@ describe('pass detail: loading', () => {
         });
         if (outcome === 'moved') {
           expect(await screen.findByRole('heading', { name: 'Moved pass title' })).toBeVisible();
-          await waitFor(() =>
-            expect(router.state.location.search).toMatchObject({ orgId: 'org2' }),
-          );
-          expect(localStorage.getItem('wallet-org-filter')).toBe('org2');
+          await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
+          expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${'org2'}`);
         } else {
           if (outcome === 'forbidden') {
             expect(
@@ -350,7 +348,7 @@ describe('pass detail: loading', () => {
             expect(await screen.findByText('Pass not found')).toBeVisible();
           }
           expect(new URLSearchParams(router.state.location.searchStr).has('orgId')).toBe(false);
-          expect(localStorage.getItem('wallet-org-filter')).toBe(ORG.id);
+          expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${ORG.id}`);
           expect(screen.queryByText('Cached pass title')).toBeNull();
         }
       } finally {
@@ -444,7 +442,7 @@ describe('pass detail: loading', () => {
     expect(await screen.findByText('Private travel bundle')).toBeInTheDocument();
     expect(server.calls.filter((c) => c.path === '/api/v1/bundles')).toHaveLength(1);
 
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     await user.click(await screen.findByRole('option', { name: 'Second' }));
     expect(await screen.findByText('Pass not found')).toBeInTheDocument();
     expect(screen.queryByText('Private member')).toBeNull();
@@ -1389,7 +1387,9 @@ describe('pass detail: header actions', () => {
     await user.type(within(dialog).getByLabelText('Type Sam Jones to confirm'), ' sam jones ');
     expect(confirm).toBeEnabled();
     await user.click(confirm);
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes$/),
+    );
     expect(server.calls.some((c) => c.method === 'DELETE')).toBe(true);
     // The deleted page leaves history: Back does not land on its not found.
     expect(router.history.length).toBe(entries);

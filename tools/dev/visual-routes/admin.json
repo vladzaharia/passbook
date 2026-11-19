@@ -2,7 +2,7 @@
   {
     "role": "org",
     "path": "/admin",
-    "name": "admin-overview"
+    "name": "admin-entry"
   },
   {
     "role": "platform",
@@ -11,192 +11,397 @@
   },
   {
     "role": "org",
-    "path": "/admin/api-keys",
+    "path": "/admin/o/{orgId}",
+    "name": "admin-overview"
+  },
+  {
+    "role": "org",
+    "path": "/admin/o/{orgId}/api-keys",
     "name": "admin-api-keys"
   },
   {
     "role": "org",
-    "path": "/admin/audit",
+    "path": "/admin/o/{orgId}/audit",
     "name": "admin-audit"
   },
   {
     "role": "org",
-    "path": "/admin/blueprints",
+    "path": "/admin/o/{orgId}/blueprints",
     "name": "admin-blueprints"
   },
   {
     "role": "org",
-    "path": "/admin/blueprints/{blueprintId}",
+    "path": "/admin/o/{orgId}/blueprints/{blueprintId}",
     "name": "admin-blueprint-detail"
   },
   {
     "role": "org",
-    "path": "/admin/connections",
+    "path": "/admin/o/{orgId}/connections",
     "name": "admin-connections"
   },
   {
     "role": "org",
-    "path": "/admin/connections/{connectionId}",
+    "path": "/admin/o/{orgId}/connections/{connectionId}",
     "name": "admin-connection-detail"
   },
   {
     "role": "org",
-    "path": "/admin/connections/new",
+    "path": "/admin/o/{orgId}/connections/new",
     "name": "admin-connection-new"
   },
   {
     "role": "org",
-    "path": "/admin/connections/webhooks/{endpointId}",
+    "path": "/admin/o/{orgId}/connections/webhooks/{endpointId}",
     "name": "admin-webhook-detail"
   },
   {
     "role": "org",
-    "path": "/admin/connections/webhooks/new",
+    "path": "/admin/o/{orgId}/connections/webhooks/new",
     "name": "admin-webhook-new"
   },
   {
-    "role": "platform",
-    "path": "/admin/identities",
-    "name": "admin-identities"
-  },
-  {
-    "role": "platform",
-    "path": "/admin/identities/{identityId}",
-    "name": "admin-identity-detail"
-  },
-  {
     "role": "org",
-    "path": "/admin/messages",
+    "path": "/admin/o/{orgId}/messages",
     "name": "admin-messages"
   },
   {
     "role": "org",
-    "path": "/admin/messages/{broadcastId}",
+    "path": "/admin/o/{orgId}/messages/{broadcastId}",
     "name": "admin-message-detail"
   },
   {
     "role": "org",
-    "path": "/admin/messages/new",
+    "path": "/admin/o/{orgId}/messages/new",
     "name": "admin-message-new"
   },
   {
-    "role": "platform",
-    "path": "/admin/orgs",
-    "name": "admin-orgs"
-  },
-  {
-    "role": "platform",
-    "path": "/admin/orgs/{orgId}",
-    "name": "admin-org-detail"
-  },
-  {
     "role": "org",
-    "path": "/admin/passes",
+    "path": "/admin/o/{orgId}/passes",
     "name": "admin-passes"
   },
   {
     "role": "org",
-    "path": "/admin/passes/{passId}",
+    "path": "/admin/o/{orgId}/passes/{passId}",
     "name": "admin-pass-detail"
   },
   {
     "role": "org",
-    "path": "/admin/passes/new",
+    "path": "/admin/o/{orgId}/passes/new",
     "name": "admin-pass-new"
   },
   {
     "role": "org",
-    "path": "/admin/passes/import",
+    "path": "/admin/o/{orgId}/passes/import",
     "name": "admin-pass-import"
   },
   {
     "role": "org",
-    "path": "/admin/passes/import/{importId}",
+    "path": "/admin/o/{orgId}/passes/import/{importId}",
     "name": "admin-pass-import-detail"
   },
   {
     "role": "org",
-    "path": "/admin/scanning",
+    "path": "/admin/o/{orgId}/scanning",
     "name": "admin-scanning"
   },
   {
     "role": "org",
-    "path": "/admin/scanning/events/{eventId}",
+    "path": "/admin/o/{orgId}/scanning/events/{eventId}",
     "name": "admin-scan-event"
   },
   {
     "role": "org",
-    "path": "/admin/scanning/scanners/{scannerId}",
+    "path": "/admin/o/{orgId}/scanning/scanners/{scannerId}",
     "name": "admin-scanner"
   },
   {
     "role": "org",
-    "path": "/admin/scanning/sessions/{sessionId}",
+    "path": "/admin/o/{orgId}/scanning/sessions/{sessionId}",
     "name": "admin-scan-session"
   },
   {
     "role": "org",
-    "path": "/admin/settings",
+    "path": "/admin/o/{orgId}/settings",
     "name": "admin-settings"
   },
   {
-    "role": "platform",
-    "path": "/admin/settings",
-    "name": "admin-settings-platform"
-  },
-  {
-    "role": "platform",
-    "path": "/admin/status",
-    "name": "admin-status"
-  },
-  {
     "role": "org",
-    "path": "/admin/templates",
+    "path": "/admin/o/{orgId}/templates",
     "name": "admin-templates"
   },
   {
     "role": "org",
-    "path": "/admin/templates/{templateId}",
+    "path": "/admin/o/{orgId}/templates/{templateId}",
     "name": "admin-template-detail"
   },
   {
     "role": "org",
-    "path": "/admin/templates/{templateId}/design",
+    "path": "/admin/o/{orgId}/templates/{templateId}/design",
     "name": "admin-template-design"
   },
   {
     "role": "org",
-    "path": "/admin/templates/{templateId}/join-sign",
+    "path": "/admin/o/{orgId}/templates/{templateId}/join-sign",
     "name": "admin-template-join-sign"
   },
   {
     "role": "org",
-    "path": "/admin/templates/new",
+    "path": "/admin/o/{orgId}/templates/new",
     "name": "admin-template-new"
   },
   {
     "role": "org",
-    "path": "/admin/templates/upload",
+    "path": "/admin/o/{orgId}/templates/upload",
     "name": "admin-template-upload"
   },
   {
     "role": "org",
-    "path": "/admin/test-inbox",
+    "path": "/admin/o/{orgId}/test-inbox",
     "name": "admin-test-inbox"
   },
   {
-    "role": "org",
-    "path": "/admin/users",
-    "name": "admin-users-org"
+    "role": "platform",
+    "path": "/admin/platform",
+    "name": "admin-platform-overview"
   },
   {
     "role": "platform",
-    "path": "/admin/users",
+    "path": "/admin/platform/orgs",
+    "name": "admin-orgs"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/orgs/{orgId}",
+    "name": "admin-org-detail"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/users",
     "name": "admin-users"
   },
   {
     "role": "platform",
-    "path": "/admin/users/{userId}",
+    "path": "/admin/platform/users/{userId}",
     "name": "admin-user-detail"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/status",
+    "name": "admin-status"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/audit",
+    "name": "admin-platform-audit"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/wallet-accounts",
+    "name": "admin-identities"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/wallet-accounts/{identityId}",
+    "name": "admin-identity-detail"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/api-keys",
+    "name": "admin-platform-api-keys"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/settings",
+    "name": "admin-settings-platform"
+  },
+  {
+    "role": "org",
+    "path": "/admin/platform/users",
+    "name": "admin-platform-denied"
+  },
+  {
+    "role": "org",
+    "path": "/admin/api-keys",
+    "name": "legacy-api-keys"
+  },
+  {
+    "role": "org",
+    "path": "/admin/audit",
+    "name": "legacy-audit"
+  },
+  {
+    "role": "org",
+    "path": "/admin/blueprints",
+    "name": "legacy-blueprints"
+  },
+  {
+    "role": "org",
+    "path": "/admin/blueprints/{blueprintId}",
+    "name": "legacy-blueprint-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections",
+    "name": "legacy-connections"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections/{connectionId}",
+    "name": "legacy-connection-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections/new",
+    "name": "legacy-connection-new"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections/webhooks/{endpointId}",
+    "name": "legacy-webhook-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/connections/webhooks/new",
+    "name": "legacy-webhook-new"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/identities",
+    "name": "legacy-identities"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/identities/{identityId}",
+    "name": "legacy-identity-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/messages",
+    "name": "legacy-messages"
+  },
+  {
+    "role": "org",
+    "path": "/admin/messages/{broadcastId}",
+    "name": "legacy-message-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/messages/new",
+    "name": "legacy-message-new"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/orgs",
+    "name": "legacy-orgs"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/orgs/{orgId}",
+    "name": "legacy-org-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/passes",
+    "name": "legacy-passes"
+  },
+  {
+    "role": "org",
+    "path": "/admin/passes/{passId}",
+    "name": "legacy-pass-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/passes/new",
+    "name": "legacy-pass-new"
+  },
+  {
+    "role": "org",
+    "path": "/admin/passes/import",
+    "name": "legacy-pass-import"
+  },
+  {
+    "role": "org",
+    "path": "/admin/passes/import/{importId}",
+    "name": "legacy-pass-import-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning",
+    "name": "legacy-scanning"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/events/{eventId}",
+    "name": "legacy-scan-event"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/scanners/{scannerId}",
+    "name": "legacy-scanner"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/sessions/{sessionId}",
+    "name": "legacy-scan-session"
+  },
+  {
+    "role": "org",
+    "path": "/admin/settings",
+    "name": "legacy-settings"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/settings",
+    "name": "legacy-settings-platform"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/status",
+    "name": "legacy-status"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates",
+    "name": "legacy-templates"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{templateId}",
+    "name": "legacy-template-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{templateId}/design",
+    "name": "legacy-template-design"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{templateId}/join-sign",
+    "name": "legacy-template-join-sign"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/new",
+    "name": "legacy-template-new"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/upload",
+    "name": "legacy-template-upload"
+  },
+  {
+    "role": "org",
+    "path": "/admin/test-inbox",
+    "name": "legacy-test-inbox"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/users",
+    "name": "legacy-users"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/users/{userId}",
+    "name": "legacy-user-detail"
   }
 ]

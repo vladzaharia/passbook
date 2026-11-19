@@ -4,7 +4,14 @@ import type { QueryClient } from '@tanstack/react-query';
 import { notFound, redirect } from '@tanstack/react-router';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
 import { canAccessAdminPath } from './guards.ts';
-import { type AdminScope, orgPath, PLATFORM, platformPath, scopePath } from './scope.ts';
+import {
+  type AdminScope,
+  orgPath,
+  PLATFORM,
+  parseAdminPath,
+  platformPath,
+  scopePath,
+} from './scope.ts';
 import { readRemembered, readTabScope } from './scope-store.ts';
 import { isAdmin, membershipsQuery, sessionQuery } from './session.ts';
 
@@ -24,6 +31,8 @@ export interface LegacyContext {
 export interface LegacyTarget {
   to: string;
   search: Record<string, unknown>;
+  /** A detail link that named no organization: the page may move to the resource's owner. */
+  findOwner?: true;
 }
 
 type Plan =
@@ -41,15 +50,15 @@ function plan(path: string, search: Record<string, unknown>): Plan | undefined {
   }
   const org = /^\/admin\/orgs\/([^/]+)$/.exec(path);
   if (org?.[1] && (search.view === 'workspace' || search.confirmReplyTo !== undefined)) {
+    let orgId: string;
     try {
-      return {
-        kind: 'org',
-        rest: '/settings',
-        orgId: decodeURIComponent(org[1]),
-        detail: false,
-      };
+      orgId = decodeURIComponent(org[1]);
     } catch {
       return undefined;
+    }
+    // A workspace link whose ?orgId= names another organization opens neither: only the record.
+    if (search.orgId === undefined || search.orgId === orgId) {
+      return { kind: 'org', rest: '/settings', orgId, detail: false };
     }
   }
   if (PLATFORM_ONLY.test(path)) return { kind: 'platform', rest: path.slice('/admin'.length) };
@@ -58,7 +67,9 @@ function plan(path: string, search: Record<string, unknown>): Plan | undefined {
   if (path === '/admin/settings')
     return { kind: 'either', rest: '/settings', preferPlatform: true };
   if (path === '/admin' || path === '/admin/audit' || path === '/admin/api-keys') {
-    return { kind: 'either', rest: path.slice('/admin'.length), preferPlatform: false };
+    // filterOrgId is the platform overview's and log's own filter.
+    const preferPlatform = search.filterOrgId !== undefined;
+    return { kind: 'either', rest: path.slice('/admin'.length), preferPlatform };
   }
   return undefined;
 }
@@ -117,8 +128,12 @@ export function legacyAdminTarget(
   ) {
     return { to: scopePath(PLATFORM, step.rest), search: kept };
   }
-  const orgId = explicit ?? rememberedOrg(ctx, step.rest, step.kind === 'org' && step.detail);
-  if (orgId) return { to: orgPath(orgId, step.rest), search: kept };
+  const detail = step.kind === 'org' && step.detail;
+  const orgId = explicit ?? rememberedOrg(ctx, step.rest, detail);
+  if (orgId) {
+    const to = orgPath(orgId, step.rest);
+    return detail && !explicit ? { to, search: kept, findOwner: true } : { to, search: kept };
+  }
   if (step.kind === 'either' && ctx.platformAdmin)
     return { to: platformPath(step.rest), search: kept };
   return { to: '/admin', search: step.rest ? { next: step.rest } : {} };
@@ -134,20 +149,55 @@ export async function redirectLegacy({
 }): Promise<never> {
   const session = await context.queryClient.ensureQueryData(sessionQuery);
   const userId = session.authenticated ? session.user.id : undefined;
-  const grants = await context.queryClient.ensureQueryData(membershipsQuery);
-  const target = legacyAdminTarget(
-    location.pathname,
-    (location.search ?? {}) as Record<string, unknown>,
-    {
-      platformAdmin: isAdmin(session),
-      memberships: grants.items.filter((m) => m.userId === userId && m.revokedAt === null),
-      tab: readTabScope(),
-      remembered: readRemembered(),
-    },
-  );
+  const search = (location.search ?? {}) as Record<string, unknown>;
+  // Platform pages open without waiting for (or failing on) organization grants.
+  const platformOnly = plan(location.pathname.replace(/\/+$/, ''), search)?.kind === 'platform';
+  const grants = platformOnly
+    ? { items: [] }
+    : await context.queryClient.ensureQueryData(membershipsQuery);
+  const target = legacyAdminTarget(location.pathname, search, {
+    platformAdmin: isAdmin(session),
+    memberships: grants.items.filter((m) => m.userId === userId && m.revokedAt === null),
+    tab: readTabScope(),
+    remembered: readRemembered(),
+  });
   if (!target) throw notFound();
-  throw redirect({ to: target.to, search: target.search, replace: true });
+  throw redirect({
+    to: target.to,
+    search: target.search,
+    replace: true,
+    ...(target.findOwner ? { state: (prev) => ({ ...prev, findOwner: true }) } : {}),
+  });
 }
 
 /** Legacy routes accept any search: links still pass their old parameters, which carry over. */
 export const legacySearch = (raw: Record<string, unknown>): Record<string, unknown> => raw;
+
+let currentPath: () => string | undefined = () => undefined;
+
+/** router.tsx hands over the router's location, for links built by legacy routes. */
+export function trackCurrentPath(read: () => string): void {
+  currentPath = read;
+}
+
+/**
+ * Links to an old URL from inside an organization carry it as ?orgId=, as the console did
+ * before, so the href (and a new tab) opens the same organization.
+ */
+export const carryOrgScope = {
+  middlewares: [
+    ({
+      search,
+      next,
+    }: {
+      search: Record<string, unknown>;
+      next: (search: Record<string, unknown>) => Record<string, unknown>;
+    }) => {
+      const result = next(search);
+      // A link that sets orgId, even to undefined, chose its scope itself.
+      if ('orgId' in result) return result;
+      const scope = parseAdminPath(currentPath() ?? '').scope;
+      return scope?.kind === 'org' ? { ...result, orgId: scope.orgId } : result;
+    },
+  ],
+};

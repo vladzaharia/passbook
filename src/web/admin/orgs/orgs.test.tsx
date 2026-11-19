@@ -250,7 +250,7 @@ describe('orgs list', () => {
     expect(within(dialog).getByLabelText(/Slug/)).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Create' })).toBeInTheDocument();
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/admin/orgs');
+      expect(router.state.location.pathname).toBe('/admin/platform/orgs');
       expect(router.state.location.search).toMatchObject({ q: 'acme' });
       expect(router.state.location.search).not.toHaveProperty('new');
     });
@@ -301,7 +301,7 @@ describe('orgs list', () => {
     expect(within(dialog).getByLabelText(/Slug/)).not.toHaveAttribute('aria-invalid');
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
     await waitFor(() => expect(body).toEqual({ name: 'Acme Gym', slug: 'acme-gym' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/orgs/o2'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform/orgs/o2'));
     // The new org says so once, with the next steps; no toast.
     expect(await screen.findByText('Organization created')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add branding' })).toBeNull();
@@ -445,7 +445,6 @@ describe('org detail', () => {
   it.each(['admin', 'user'] as const)(
     'validates %s resource membership before canonicalizing an unscoped workspace link',
     async (session) => {
-      localStorage.removeItem('wallet-org-filter');
       let resolveMemberships!: () => void;
       const pending = new Promise<void>((resolve) => {
         resolveMemberships = resolve;
@@ -477,7 +476,7 @@ describe('org detail', () => {
       expect(
         await screen.findByRole('heading', { name: 'Acme Gym', level: 1 }),
       ).toBeInTheDocument();
-      expect(router.state.location.search).toMatchObject({ view: 'workspace', orgId: 'o1' });
+      expect(router.state.location.pathname).toBe('/admin/o/o1/settings');
     },
   );
 
@@ -522,7 +521,7 @@ describe('org detail', () => {
   it.each(['o1', 'o2'])(
     'canonicalizes the requested workspace rather than trusting remembered %s scope',
     async (remembered) => {
-      localStorage.setItem('wallet-org-filter', remembered);
+      localStorage.setItem('passbook-admin-scope', `org:${remembered}`);
       try {
         const { fetchMock, router } = await renderBaseApp('/admin/orgs/o1?view=workspace', {
           session: 'user',
@@ -532,28 +531,28 @@ describe('org detail', () => {
         expect(
           await screen.findByRole('heading', { name: 'Acme Gym', level: 1 }),
         ).toBeInTheDocument();
-        expect(router.state.location.search).toMatchObject({ view: 'workspace', orgId: 'o1' });
-        await waitFor(() => expect(localStorage.getItem('wallet-org-filter')).toBe('o1'));
+        expect(router.state.location.pathname).toBe('/admin/o/o1/settings');
+        await waitFor(() => expect(localStorage.getItem('passbook-admin-scope')).toBe('org:o1'));
         expect(
           fetchMock.mock.calls.some(([url]) => String(url).includes('/orgs/o1/workspace')),
         ).toBe(true);
       } finally {
-        localStorage.removeItem('wallet-org-filter');
+        localStorage.removeItem('passbook-admin-scope');
       }
     },
   );
 
   it.each(['orgId=o2', 'orgId=o1&orgId=o2'])(
-    'rejects conflicting or duplicate explicit workspace scopes (%s)',
+    'opens only the directory record for conflicting or duplicate workspace scopes (%s)',
     async (query) => {
-      localStorage.setItem('wallet-org-filter', 'o1');
+      localStorage.setItem('passbook-admin-scope', 'org:o1');
       try {
         const { fetchMock } = await renderBaseApp(`/admin/orgs/o1?view=workspace&${query}`, {
           session: 'admin',
           memberships: [membershipFixture('o1'), membershipFixture('o2')],
           handlers: handlers(),
         });
-        expect(await screen.findByText('Organization not found')).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: 'Acme Gym' })).toBeInTheDocument();
         expect(
           fetchMock.mock.calls.some(
             ([url]) =>
@@ -562,7 +561,7 @@ describe('org detail', () => {
           ),
         ).toBe(false);
       } finally {
-        localStorage.removeItem('wallet-org-filter');
+        localStorage.removeItem('passbook-admin-scope');
       }
     },
   );
@@ -998,7 +997,9 @@ describe('org detail', () => {
       handlers: { ...handlers(), '/api/v1/passes': () => json({ items: [], nextCursor: null }) },
     });
     await userEvent.setup().click(await screen.findByRole('link', { name: /12 passes/ }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes$/),
+    );
     await waitFor(() =>
       expect(
         fetchMock.mock.calls.some((c) => /\/api\/v1\/passes\?.*orgId=o1/.test(String(c[0]))),
@@ -1585,7 +1586,7 @@ describe('org detail', () => {
     await ui.type(within(dialog).getByLabelText('Type acme to confirm'), 'acme');
     await ui.click(confirm);
     await waitFor(() => expect(deleted).toBe(true));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/orgs'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform/orgs'));
     expect(router.history.length).toBe(1);
   });
 

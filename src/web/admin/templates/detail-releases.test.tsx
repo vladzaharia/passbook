@@ -74,7 +74,7 @@ it('mounts shared-template releases with the selected membership and current mod
   );
   act(() => setMode('test'));
   await waitFor(() => expect(screen.getByTestId('release-panel')).toHaveTextContent('org1:test'));
-  await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+  await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
   await user.click(await screen.findByRole('option', { name: 'Harbor' }));
   await waitFor(() => expect(screen.getByTestId('release-panel')).toHaveTextContent('org2:test'));
   expect(releasePanel).toHaveBeenLastCalledWith(

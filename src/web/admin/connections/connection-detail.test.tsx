@@ -339,7 +339,9 @@ describe('connection detail', () => {
       'memberspot sync',
     );
     await user.click(confirm);
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/connections'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/connections$/),
+    );
     expect(calls).toEqual(['DELETE']);
     // Back does not land on the deleted connection.
     expect(router.history.length).toBe(entries);
@@ -362,10 +364,8 @@ describe('connection detail', () => {
       });
 
       expect(await screen.findByRole('heading', { name: 'MemberSpot sync' })).toBeVisible();
-      await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: ORG.id }));
-      expect(screen.getByRole('combobox', { name: /^Organization filter/ })).toHaveTextContent(
-        ORG.name,
-      );
+      await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
+      expect(screen.getByRole('combobox', { name: /^Scope:/ })).toHaveTextContent(ORG.name);
       expect(screen.getByRole('button', { name: 'Test' })).toBeVisible();
     } finally {
       localStorage.removeItem('wallet-org-filter');
@@ -441,7 +441,7 @@ describe('connection detail', () => {
         },
       ),
     });
-    await screen.findByRole('combobox', { name: /^Organization filter/ });
+    await screen.findByRole('combobox', { name: /^Scope:/ });
     act(() => {
       queryClient.setQueryData(
         connectionKeys.detail('c1'),
@@ -498,7 +498,7 @@ describe('connection detail', () => {
             },
           ),
         });
-        await screen.findByRole('combobox', { name: /^Organization filter/ });
+        await screen.findByRole('combobox', { name: /^Scope:/ });
         act(() => {
           queryClient.setQueryData(
             connectionKeys.detail('c1'),
@@ -532,9 +532,7 @@ describe('connection detail', () => {
           expect(dependentRequests).toBe(0);
         } else {
           expect(await screen.findByRole('heading', { name: 'Fresh connection' })).toBeVisible();
-          await waitFor(() =>
-            expect(router.state.location.search).toMatchObject({ orgId: 'org2' }),
-          );
+          await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
         }
         expect(screen.queryByText('Cached private connection')).not.toBeInTheDocument();
       } finally {
@@ -610,7 +608,7 @@ describe('connection detail', () => {
 
   it('clears connection details and session test results when the organization changes', async () => {
     const user = userEvent.setup();
-    await renderApp('/admin/connections/c1', {
+    const { router } = await renderApp('/admin/connections/c1', {
       session: 'admin',
       memberships: [
         membership,
@@ -632,8 +630,13 @@ describe('connection detail', () => {
     await user.click(screen.getByRole('button', { name: 'Test' }));
     expect(await screen.findByText('Private test result. 120 ms.')).toBeVisible();
 
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-    await user.click(await screen.findByRole('option', { name: 'Second' }));
+    await act(async () => {
+      await router.navigate({
+        to: '/admin/connections/$connectionId',
+        params: { connectionId: 'c1' },
+        search: { orgId: 'org2' },
+      });
+    });
     expect(await screen.findByText('Connection not found')).toBeVisible();
     expect(screen.queryByText('MemberSpot sync')).not.toBeInTheDocument();
     await waitFor(() => expect(document.title).not.toContain('MemberSpot sync'));
@@ -642,8 +645,13 @@ describe('connection detail', () => {
     expect(screen.queryByRole('button', { name: 'Test' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Sync now' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-    await user.click(await screen.findByRole('option', { name: ORG.name }));
+    await act(async () => {
+      await router.navigate({
+        to: '/admin/connections/$connectionId',
+        params: { connectionId: 'c1' },
+        search: { orgId: ORG.id },
+      });
+    });
     expect(await screen.findByRole('heading', { name: 'MemberSpot sync' })).toBeVisible();
     expect(screen.queryByText('Private test result. 120 ms.')).not.toBeInTheDocument();
   });
@@ -678,7 +686,6 @@ describe('connection detail', () => {
   });
 
   it('discards a connection response that arrives after switching organizations', async () => {
-    const user = userEvent.setup();
     const deferred = Promise as PromiseConstructor & {
       withResolvers<T>(): { promise: Promise<T>; resolve: (value: T) => void };
     };
@@ -704,9 +711,14 @@ describe('connection detail', () => {
 
     expect(await screen.findByText('Loading connection')).toBeInTheDocument();
     await waitFor(() => expect(requested).toBe(true));
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-    await user.click(await screen.findByRole('option', { name: 'Second' }));
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: 'org2' }));
+    await act(async () => {
+      await router.navigate({
+        to: '/admin/connections/$connectionId',
+        params: { connectionId: 'c1' },
+        search: { orgId: 'org2' },
+      });
+    });
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
     reply.resolve(json(connectionDetail()));
 
     expect(await screen.findByText('Connection not found')).toBeVisible();

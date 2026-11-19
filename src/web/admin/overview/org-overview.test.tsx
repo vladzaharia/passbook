@@ -147,7 +147,9 @@ describe('organization overview', () => {
       ],
       handlers: { '/api/v1/templates': () => json({ items: [], nextCursor: null }) },
     });
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/templates'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/templates$/),
+    );
     expect(calls(fetchMock).filter((u) => u.includes('/metrics/'))).toEqual([]);
   });
 

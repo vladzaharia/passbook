@@ -74,7 +74,10 @@ export function PageHeader({
   useDocumentTitle(title);
   // Detail pages lead with the console scope: Northwind › Templates › Spring.
   const root = useScopeCrumb();
-  const crumbs = breadcrumbs?.length && root ? [root, ...breadcrumbs] : breadcrumbs;
+  const crumbs =
+    breadcrumbs?.length && root && breadcrumbs[0]?.label !== root.label
+      ? [root, ...breadcrumbs]
+      : breadcrumbs;
   return (
     <header className={cn('mb-6 flex min-w-0 flex-col gap-3', className)}>
       {crumbs?.length ? <Breadcrumbs items={crumbs} /> : null}

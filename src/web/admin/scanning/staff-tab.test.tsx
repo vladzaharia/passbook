@@ -79,7 +79,7 @@ describe('Scanning staff', () => {
     ).toBe(false);
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     expect(screen.queryByRole('option', { name: 'Directory only' })).not.toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'All organizations' })).not.toBeInTheDocument();
     await user.click(await screen.findByRole('option', { name: 'Northwind' }));

@@ -76,7 +76,8 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
       </Button>
     );
   }
-  const platform = scope?.kind === 'platform';
+  // Platform is a scope only for platform admins; anyone else is offered their organizations.
+  const platform = scope?.kind === 'platform' && isAdmin;
   const name = platform ? 'Platform' : (membership?.orgName ?? undefined);
   const icon = platform ? (
     <PlatformMark />

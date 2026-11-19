@@ -439,7 +439,7 @@ describe('organization people and service access', () => {
       }),
     });
     const user = userEvent.setup();
-    const picker = await screen.findByRole('combobox', { name: /^Organization filter/ });
+    const picker = await screen.findByRole('combobox', { name: /^Scope:/ });
     await waitFor(() => expect(picker).toHaveTextContent(org.name));
     const requestsBeforeRevoke = membershipRequests;
 
@@ -453,11 +453,11 @@ describe('organization people and service access', () => {
       expect(queryClient.getQueryData(['org-memberships', 'me'])).toEqual({ items: [other] });
     });
     await waitFor(() =>
-      expect(screen.getByRole('combobox', { name: /^Organization filter/ })).toHaveTextContent(
+      expect(screen.getByRole('combobox', { name: /^Scope:/ })).toHaveTextContent(
         'Choose an organization',
       ),
     );
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     expect(screen.queryByRole('option', { name: org.name })).toBeNull();
     expect(await screen.findByRole('option', { name: 'Other organization' })).toBeInTheDocument();
   });

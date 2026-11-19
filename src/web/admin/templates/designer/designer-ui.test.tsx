@@ -220,7 +220,7 @@ describe('designer', () => {
       resolve(json(movedCard));
     });
     expect(await screen.findByRole('navigation', { name: 'Structure' })).toBeInTheDocument();
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: 'org2' }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
     expect(screen.queryByText('Former card')).toBeNull();
   });
 
@@ -236,7 +236,7 @@ describe('designer', () => {
       handlers: s.handlers,
     });
     expect(await screen.findByRole('navigation', { name: 'Structure' })).toBeInTheDocument();
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: 'org2' }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
     const versionUrl = fetchMock.mock.calls
       .map(([url]) => new URL(String(url), 'http://localhost'))
       .find((url) => url.pathname === `/api/v1/templates/tpl1/versions/${VERSION}`);
@@ -275,7 +275,7 @@ describe('designer', () => {
     ).toBeInTheDocument();
     expect(requested.every((orgId) => orgId === null)).toBe(true);
     expect(screen.queryByRole('navigation', { name: 'Structure' })).toBeNull();
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
     expect(
       await screen.findByText(/Only platform administrators can change shared templates/),
@@ -401,7 +401,7 @@ describe('designer', () => {
       handlers: s.handlers,
     });
     await screen.findByRole('navigation', { name: 'Structure' });
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
     expect(await screen.findByText('Template not found')).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Structure' })).toBeNull();

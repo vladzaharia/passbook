@@ -271,7 +271,7 @@ describe('overview page', () => {
     const nextRange = deferred.withResolvers<Response>();
     const metricsRequests: URL[] = [];
     const auditRequests: URL[] = [];
-    const { router } = await renderApp('/admin?range=30d', {
+    const { router } = await renderApp('/admin/platform?range=30d', {
       session: 'admin',
       memberships: [membershipFixture('o1')],
       handlers: {
@@ -303,7 +303,7 @@ describe('overview page', () => {
       'href',
       '/admin/audit?entry=2',
     );
-    expect(storage.getItem('wallet-org-filter')).toBe('o1');
+    await waitFor(() => expect(storage.getItem('passbook-admin-scope')).toBe('platform'));
     expect(metricsRequests[0]?.searchParams.has('orgId')).toBe(false);
     expect(auditRequests[0]?.searchParams.has('orgId')).toBe(false);
     const user = userEvent.setup();
@@ -340,7 +340,7 @@ describe('overview page', () => {
     await waitFor(() =>
       expect(metricsRequests.some((url) => url.searchParams.get('orgId') === 'o2')).toBe(true),
     );
-    expect(storage.getItem('wallet-org-filter')).toBe('o1');
+    expect(storage.getItem('passbook-admin-scope')).toBe('platform');
   });
 
   it('honors a platform organization deep link without membership and scopes activity links', async () => {

@@ -144,7 +144,7 @@ describe('session dialog organization authority', () => {
     expect(writes).toEqual([]);
 
     await chooseOrg(dialog, 'Northwind');
-    await waitFor(() => expect(router.state.location.search.orgId).toBe('o1'));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o1'));
     await user.type(await within(dialog).findByRole('textbox', { name: 'Session name' }), 'Entry');
     await user.click(within(dialog).getByRole('button', { name: 'Create session' }));
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith('created'));
@@ -189,10 +189,10 @@ describe('session dialog organization authority', () => {
     const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
     expect(organization(dialog)).toHaveTextContent('Select');
     expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeDisabled();
-    expect(router.state.location.search.orgId).toBe('not-a-membership');
+    expect(router.state.location.pathname.split('/')[3]).toBe('not-a-membership');
     expect(writes).toEqual([]);
     await chooseOrg(dialog, 'Northwind');
-    await waitFor(() => expect(router.state.location.search.orgId).toBe('o1'));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o1'));
     expect(
       await within(dialog).findByRole('textbox', { name: 'Session name' }),
     ).toBeInTheDocument();
@@ -217,7 +217,7 @@ describe('session dialog organization authority', () => {
     expect(organization(dialog)).toHaveTextContent('Select');
     expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeDisabled();
     await chooseOrg(dialog, 'Harbor');
-    await waitFor(() => expect(router.state.location.search.orgId).toBe('o2'));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o2'));
     expect(
       await within(dialog).findByRole('textbox', { name: 'Session name' }),
     ).toBeInTheDocument();
@@ -297,7 +297,7 @@ describe('session dialog organization authority', () => {
     const user = userEvent.setup();
     const dialog = await screen.findByRole('dialog', { name: 'Duplicate session' });
     await chooseOrg(dialog, 'Harbor');
-    await waitFor(() => expect(router.state.location.search.orgId).toBe('o2'));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o2'));
     await waitFor(() => expect(organization(dialog)).toHaveTextContent('Harbor'));
     expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeDisabled();
     await user.click(within(dialog).getByRole('radio', { name: 'All passes' }));
@@ -340,7 +340,7 @@ describe('session dialog organization authority', () => {
     expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeEnabled();
 
     await chooseOrg(dialog, 'Harbor');
-    await waitFor(() => expect(router.state.location.search.orgId).toBe('o2'));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o2'));
     const harborTicket = await within(dialog).findByRole('checkbox', { name: 'Harbor ticket' });
     expect(within(dialog).queryByRole('checkbox', { name: 'Gala ticket' })).not.toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeDisabled();
@@ -451,7 +451,7 @@ describe('session dialog organization authority', () => {
     expect(within(dialog).queryByRole('textbox', { name: 'Session name' })).not.toBeInTheDocument();
     expect(writes).toEqual([]);
     await chooseOrg(dialog, 'Northwind');
-    await waitFor(() => expect(router.state.location.search.orgId).toBe('o1'));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o1'));
     expect(await within(dialog).findByRole('textbox', { name: 'Session name' })).toHaveValue(
       'Entry',
     );

@@ -5,14 +5,13 @@ import { apiAs, createPass, requireActiveTemplateRelease, uid } from './helpers/
 import { templateFromBlueprint } from './helpers/releases.ts';
 import { addOrgMember, createOrgWithRoles, readSeed } from './helpers/seed.ts';
 
-const ORG_FILTER = 'wallet-org-filter';
+const SCOPE = 'passbook-admin-scope';
+const inOrg = (id: string, rest = '') => `/admin/o/${encodeURIComponent(id)}${rest}`;
 
 test.describe('platform administrator', () => {
   test.use({ storageState: 'e2e/.auth/admin.json' });
 
-  test('a single membership still needs a choice; only a validated choice is restored', async ({
-    page,
-  }) => {
+  test('a single membership opens directly; a forged choice never does', async ({ page }) => {
     const org = readSeed().org;
     const api = await apiAs('admin');
     try {
@@ -34,28 +33,23 @@ test.describe('platform administrator', () => {
       });
     });
     await page.goto('/admin');
-    await page.evaluate((key) => localStorage.removeItem(key), ORG_FILTER);
+    await page.evaluate((key) => localStorage.removeItem(key), SCOPE);
     const passRequests: URL[] = [];
     page.on('request', (request) => {
       const url = new URL(request.url());
       if (request.method() === 'GET' && url.pathname === '/api/v1/passes') passRequests.push(url);
     });
 
+    // An old link without an organization opens the only one, and the path names it.
     await page.goto('/admin/passes');
-    await expect(
-      page.getByRole('heading', { name: 'Choose an organization', level: 1 }),
-    ).toBeVisible();
-    expect(new URL(page.url()).searchParams.has('orgId')).toBe(false);
-    expect(await page.evaluate((key) => localStorage.getItem(key), ORG_FILTER)).toBeNull();
-    expect(passRequests).toEqual([]);
-
-    await page.getByRole('combobox', { name: 'Organization filter' }).click();
-    await page.getByRole('option', { name: org.name, exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Passes', level: 1 })).toBeVisible();
-    await expect.poll(() => new URL(page.url()).searchParams.get('orgId')).toBe(org.id);
+    await expect.poll(() => new URL(page.url()).pathname).toBe(inOrg(org.id, '/passes'));
+    expect(new URL(page.url()).searchParams.has('orgId')).toBe(false);
     await expect.poll(() => passRequests.length).toBeGreaterThan(0);
     expect(passRequests.every((url) => url.searchParams.get('orgId') === org.id)).toBe(true);
-    expect(await page.evaluate((key) => localStorage.getItem(key), ORG_FILTER)).toBe(org.id);
+    await expect
+      .poll(() => page.evaluate((key) => localStorage.getItem(key), SCOPE))
+      .toBe(`org:${org.id}`);
 
     const restoredList = page.waitForResponse((response) => {
       const url = new URL(response.url());
@@ -66,8 +60,7 @@ test.describe('platform administrator', () => {
         url.searchParams.get('status') === 'active'
       );
     });
-    await page.goto('/admin/passes?status=active');
-    await expect.poll(() => new URL(page.url()).searchParams.get('orgId')).toBe(org.id);
+    await page.goto(`${inOrg(org.id, '/passes')}?status=active`);
     expect(new URL(page.url()).searchParams.get('status')).toBe('active');
     await expect(page.getByRole('heading', { name: 'Passes', level: 1 })).toBeVisible();
     expect((await restoredList).status()).toBe(200);
@@ -78,21 +71,13 @@ test.describe('platform administrator', () => {
       page.getByRole('heading', { name: 'You do not have access', level: 1 }),
     ).toBeVisible();
     expect(passRequests.slice(beforeForgedUrl)).toEqual([]);
-    await expect
-      .poll(() => page.evaluate((key) => localStorage.getItem(key), ORG_FILTER))
-      .toBeNull();
+    expect(new URL(page.url()).pathname).toBe(inOrg('not-a-membership', '/passes'));
 
-    await page.evaluate((key) => localStorage.setItem(key, 'not-a-membership'), ORG_FILTER);
-    const beforeForgedStorage = passRequests.length;
+    // A forged remembered scope is ignored: the only real membership opens.
+    await page.evaluate((key) => localStorage.setItem(key, 'org:not-a-membership'), SCOPE);
     await page.goto('/admin/passes');
-    await expect(
-      page.getByRole('heading', { name: 'Choose an organization', level: 1 }),
-    ).toBeVisible();
-    await expect
-      .poll(() => page.evaluate((key) => localStorage.getItem(key), ORG_FILTER))
-      .toBeNull();
-    expect(new URL(page.url()).searchParams.has('orgId')).toBe(false);
-    expect(passRequests.slice(beforeForgedStorage)).toEqual([]);
+    await expect(page.getByRole('heading', { name: 'Passes', level: 1 })).toBeVisible();
+    await expect.poll(() => new URL(page.url()).pathname).toBe(inOrg(org.id, '/passes'));
   });
 
   test('platform directories remain available without tenant grants, but a selection grants nothing', async ({
@@ -133,7 +118,7 @@ test.describe('platform administrator', () => {
       'Organizations',
       'Settings',
       'Status',
-      'Apple identities',
+      'Wallet accounts',
       'API keys',
     ]) {
       await expect(nav.getByRole('link', { name, exact: true })).toBeVisible();
@@ -152,8 +137,8 @@ test.describe('platform administrator', () => {
       await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible();
     }
 
-    await page.evaluate(({ key, id }) => localStorage.setItem(key, id), {
-      key: ORG_FILTER,
+    await page.evaluate(({ key, id }) => localStorage.setItem(key, `org:${id}`), {
+      key: SCOPE,
       id: org.id,
     });
     await page.goto(`/admin/passes?orgId=${encodeURIComponent(org.id)}`);
@@ -223,8 +208,7 @@ test.describe('platform administrator', () => {
       expect(requests).not.toContain(`${orgPath}/workspace`);
       await page.getByRole('link', { name: 'Open workspace' }).first().click();
       await expect(page.getByRole('link', { name: 'Platform provisioning' })).toBeVisible();
-      expect(new URL(page.url()).searchParams.get('view')).toBe('workspace');
-      expect(new URL(page.url()).searchParams.get('orgId')).toBe(org.id);
+      await expect.poll(() => new URL(page.url()).pathname).toBe(inOrg(org.id, '/settings'));
       expect(requests).toContain(`${orgPath}/workspace`);
 
       const passList = page.waitForResponse((response) => {
@@ -256,19 +240,14 @@ test.describe('platform administrator', () => {
         page.getByRole('heading', { name: 'You do not have access', level: 1 }),
       ).toBeVisible();
       expect(requests).not.toContain('/api/v1/passes');
-      await page.evaluate(({ key, id }) => localStorage.setItem(key, id), {
-        key: ORG_FILTER,
+      // A remembered organization the principal left is never reopened.
+      await page.evaluate(({ key, id }) => localStorage.setItem(key, `org:${id}`), {
+        key: SCOPE,
         id: org.id,
       });
       await page.goto('/admin/passes');
-      await expect(
-        page.getByRole('heading', { name: 'Choose an organization', level: 1 }),
-      ).toBeVisible();
-      await expect
-        .poll(() => page.evaluate((key) => localStorage.getItem(key), ORG_FILTER))
-        .toBeNull();
-      expect(new URL(page.url()).searchParams.has('orgId')).toBe(false);
-      expect(requests).not.toContain('/api/v1/passes');
+      await expect.poll(() => new URL(page.url()).pathname).not.toBe('/admin/passes');
+      expect(new URL(page.url()).pathname).not.toContain(encodeURIComponent(org.id));
 
       await page.goto(
         `/admin/orgs/${encodeURIComponent(org.id)}?view=workspace&orgId=${encodeURIComponent(org.id)}`,

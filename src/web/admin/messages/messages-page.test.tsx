@@ -47,7 +47,7 @@ describe('Message capabilities', () => {
     ).toBeInTheDocument();
     expect(scopes).toEqual([]);
     const user = userEvent.setup();
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     await user.click(await screen.findByRole('option', { name: 'Northwind' }));
     await waitFor(() => expect(scopes).toContain('o1'));
     expect(scopes).not.toContain(null);

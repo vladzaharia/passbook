@@ -12,7 +12,7 @@ describe('RouteAnnouncer', () => {
     const user = userEvent.setup();
     const { router } = await renderApp('/admin', { session: 'admin' });
     await user.click(await screen.findByRole('link', { name: 'Settings' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/settings'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform/settings'));
     const heading = screen.getByRole('heading', { level: 1 });
     await waitFor(() => expect(heading).toHaveFocus());
     const title = heading.textContent ?? '';
@@ -25,7 +25,7 @@ describe('RouteAnnouncer', () => {
     const user = userEvent.setup();
     const { router } = await renderApp('/admin', { session: 'admin' });
     await user.click(await screen.findByRole('link', { name: 'Settings' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/settings'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform/settings'));
     const settings = screen.getByRole('heading', { level: 1 });
     await waitFor(() => expect(settings).toHaveFocus());
     const focus = vi.spyOn(HTMLElement.prototype, 'focus');
@@ -40,7 +40,7 @@ describe('RouteAnnouncer', () => {
     expect(overview).not.toHaveFocus();
     expect(focus.mock.contexts).not.toContain(overview);
     act(() => router.history.forward());
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/settings'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform/settings'));
     const returned = screen.getByRole('heading', { level: 1 });
     await waitFor(() =>
       expect(screen.getByRole('status', { name: '' })).toHaveTextContent(
