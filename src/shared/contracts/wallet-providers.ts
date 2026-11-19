@@ -78,3 +78,105 @@ export const WalletProviderReadinessSchema = z.strictObject({
   updatedAt: TimestampSchema.nullable(),
 });
 export type WalletProviderReadiness = z.infer<typeof WalletProviderReadinessSchema>;
+
+const saveMember = <P extends 'google' | 'samsung', C extends z.ZodType>(
+  provider: P,
+  credentials: C,
+) => z.strictObject({ provider: z.literal(provider), expectedRevision: revision, credentials });
+
+/** Create or rotate the credential of the session mode. Secrets are request-only. */
+export const SaveWalletCredentialSchema = z.discriminatedUnion('provider', [
+  saveMember('google', GoogleWalletCredentialsSchema),
+  saveMember('samsung', SamsungWalletCredentialsSchema),
+]);
+export type SaveWalletCredential = z.infer<typeof SaveWalletCredentialSchema>;
+
+/** A platform admin names the mode: the platform pages show Live and Test together. */
+export const SavePlatformWalletCredentialSchema = z.discriminatedUnion('provider', [
+  saveMember('google', GoogleWalletCredentialsSchema).extend({ mode: ModeSchema }),
+  saveMember('samsung', SamsungWalletCredentialsSchema).extend({ mode: ModeSchema }),
+]);
+export type SavePlatformWalletCredential = z.infer<typeof SavePlatformWalletCredentialSchema>;
+
+export const RevokeWalletCredentialSchema = z.strictObject({ expectedRevision: revision });
+export type RevokeWalletCredential = z.infer<typeof RevokeWalletCredentialSchema>;
+
+/** What a credential shows: identity hint only (the last 4 characters), never a secret. */
+export const WalletCredentialSchema = z.strictObject({
+  id: IdSchema,
+  scope: z.enum(['platform', 'org']),
+  orgId: IdSchema.nullable(),
+  mode: ModeSchema,
+  provider: WalletProviderSchema,
+  identityHint: z.string(),
+  revision,
+  verifiedAt: TimestampSchema.nullable(),
+  revokedAt: TimestampSchema.nullable(),
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema,
+});
+export type WalletCredential = z.infer<typeof WalletCredentialSchema>;
+
+export const WalletCredentialListSchema = z.strictObject({
+  items: z.array(WalletCredentialSchema),
+});
+export type WalletCredentialList = z.infer<typeof WalletCredentialListSchema>;
+
+export const WalletCredentialListQuerySchema = z.strictObject({
+  provider: WalletProviderSchema.optional(),
+});
+
+export const WalletCredentialParamsSchema = z.strictObject({ orgId: IdSchema, id: IdSchema });
+export const WalletEnrolmentParamsSchema = z.strictObject({
+  orgId: IdSchema,
+  provider: WalletProviderSchema,
+});
+export const PlatformWalletEnrolmentParamsSchema = z.strictObject({
+  orgId: IdSchema,
+  mode: ModeSchema,
+  provider: WalletProviderSchema,
+});
+
+export const WalletEnrolmentSourceSchema = z.enum(['platform', 'org']);
+
+/** `held` is the platform's hold; `off` and `on` are the org's own switch. */
+export const WalletEnrolmentSchema = z.strictObject({
+  mode: ModeSchema,
+  provider: WalletProviderSchema,
+  accountId: IdSchema.nullable(),
+  source: WalletEnrolmentSourceSchema.nullable(),
+  platformAvailable: z.boolean(),
+  state: z.enum(['absent', 'off', 'on', 'held', 'revoked']),
+  enrolmentRevision: revision,
+  prerequisites: z.strictObject({
+    check: z.boolean(),
+    /** Null in Test mode, which needs no round trip. */
+    roundTrip: z.boolean().nullable(),
+  }),
+  hold: z.strictObject({ at: TimestampSchema, reason: z.string() }).nullable(),
+  issuance: WalletProviderIssuanceSchema,
+});
+export type WalletEnrolment = z.infer<typeof WalletEnrolmentSchema>;
+
+export const WalletEnrolmentListSchema = z.strictObject({ items: z.array(WalletEnrolmentSchema) });
+export type WalletEnrolmentList = z.infer<typeof WalletEnrolmentListSchema>;
+
+export const SetWalletEnrolmentSourceSchema = z.strictObject({
+  source: WalletEnrolmentSourceSchema,
+  expectedRevision: revision,
+});
+export type SetWalletEnrolmentSource = z.infer<typeof SetWalletEnrolmentSourceSchema>;
+
+/** Enable, disable and revoke act on the enrolment revision the caller read. */
+export const WalletEnrolmentActionSchema = z.strictObject({ expectedRevision: revision });
+export type WalletEnrolmentAction = z.infer<typeof WalletEnrolmentActionSchema>;
+
+export const HoldWalletEnrolmentSchema = z.strictObject({
+  reason: z.string().trim().min(1).max(500),
+});
+export type HoldWalletEnrolment = z.infer<typeof HoldWalletEnrolmentSchema>;
+
+export const WalletEnrolmentHoldResultSchema = z.strictObject({
+  // `queued` when the org is suspended: a job writes the hold.
+  status: z.enum(['held', 'released', 'queued']),
+});

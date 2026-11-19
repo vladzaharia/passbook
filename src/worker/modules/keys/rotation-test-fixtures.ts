@@ -10,7 +10,11 @@ import {
   recordWalletOperationOutcome,
 } from '../wallet-providers/instance.ts';
 import { personalizeThroughRoute } from './personalize-test-fixtures.ts';
-import { CAPTURE_TABLE, ENVELOPE_TABLES } from './rewrap-tables.ts';
+import {
+  seedAccountHmac,
+  seedWalletCredentialVersion,
+} from './repo-rotation-wallet-test-fixtures.ts';
+import { CAPTURE_TABLE, ENVELOPE_TABLES, kekColumn } from './rewrap-tables.ts';
 
 export type Samsung = Awaited<ReturnType<typeof setupSamsungCallbacks>>;
 
@@ -198,9 +202,9 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
   });
 
   const googleReceiptId = id();
-  const instance = await first<{ account_id: string; mode: string }>(
+  const instance = await first<{ account_id: string; mode: string; provider: string }>(
     db,
-    'SELECT account_id, mode FROM wallet_provider_instances WHERE id = ?',
+    'SELECT account_id, mode, provider FROM wallet_provider_instances WHERE id = ?',
     [t.operation.instanceId],
   );
   const googleKind = `google-callback|${instance?.mode}|${t.operation.instanceId}`;
@@ -230,6 +234,16 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
     kind: googleKind,
     text: 'google-body',
   });
+
+  plain.push(await seedWalletCredentialVersion(db, { orgId: org, now, id, seal }));
+
+  const account = {
+    orgId: org,
+    accountId: String(instance?.account_id),
+    mode: `${instance?.mode}`,
+    provider: `${instance?.provider}`,
+  };
+  plain.push(await seedAccountHmac(db, { ...account, seal }));
 
   const captureId = id();
   await run(
@@ -277,7 +291,7 @@ export async function rowsOnKek(db: D1Database, version: number): Promise<Record
           )
         : await first<{ n: number }>(
             db,
-            `SELECT count(*) AS n FROM ${table} WHERE kek_version = ?`,
+            `SELECT count(*) AS n FROM ${table} WHERE ${kekColumn(table)} = ?`,
             [version],
           );
     out[table] = row?.n ?? 0;

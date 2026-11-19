@@ -70,6 +70,15 @@ export const JobSchema = z.discriminatedUnion('kind', [
     // Position of this chunk in its event; part of the chunk's identity. Absent means 0.
     chunk: z.number().int().nonnegative().optional(),
   }),
+  /** A platform admin's hold on a suspended org's wallet enrolment: a job grant writes it. */
+  z.object({
+    kind: z.literal('wallet.enrolment_hold'),
+    orgId: z.string().min(1),
+    mode: ModeSchema,
+    provider: z.enum(['google', 'samsung']),
+    reason: z.string().min(1).max(500),
+    userId: z.string().min(1),
+  }),
   /** Apple flipped for a pass: republish (force) so devices fetch the voided or live copy. */
   z.object({
     kind: z.literal('channel.apple_bump'),

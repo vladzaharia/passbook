@@ -7,6 +7,7 @@ export type IssuedCredentialRow = AccountRow & {
   /** The account's current revision and whether the account is revoked, beside the row's own revision. */
   current_revision: number;
   account_revoked_at: number | null;
+  pin_version_id: string | null;
 };
 
 /**
@@ -31,7 +32,8 @@ export function findSamsungIssuedRefCredential(
     db,
     `SELECT a.id, a.org_id, a.mode, a.provider, e.revision, e.credential_id,
       a.revision AS current_revision, a.revoked_at AS account_revoked_at,
-      NULL AS revoked_at, e.created_at AS updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext
+      NULL AS revoked_at, e.created_at AS updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext,
+      r.credential_version_id AS pin_version_id
     FROM wallet_samsung_fetch_refs r
     JOIN wallet_provider_instances i ON i.id = r.instance_id
     JOIN wallet_provider_accounts a ON a.id = i.account_id AND a.org_id = i.org_id

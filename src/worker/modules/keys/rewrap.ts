@@ -4,13 +4,12 @@ import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 import { recordKeyRing, recordMacRoots } from './mac-root-check.ts';
 import {
   type CaptureMove,
-  countOlderEnvelopes,
-  hasOlderEnvelope,
   type Move,
   moveRows,
   selectCaptures,
   selectEnvelopes,
 } from './repo-rewrap.ts';
+import { countOlderEnvelopes, hasOlderEnvelope } from './repo-rewrap-older.ts';
 import { type Plan, planCaptures, planPlace } from './rewrap-plan.ts';
 import { PLACES, stampOf } from './rewrap-tables.ts';
 
