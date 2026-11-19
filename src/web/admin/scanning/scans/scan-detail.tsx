@@ -18,6 +18,7 @@ import {
   StatusPill,
   TechnicalDetails,
 } from '@/web/ui/index.ts';
+import { actionText, methodLabel, scanStatusKey, whereText, whoText } from './outcome-copy.ts';
 
 export function ScanDetail({
   row,
@@ -56,11 +57,11 @@ export function ScanDetail({
         <SheetContent title="Scan" className="sm:w-[440px]">
           <div className="flex flex-col gap-5 p-5">
             <h2 className="text-lg font-semibold">{row.passTitle ?? 'Pass details unavailable'}</h2>
-            <StatusPill status={row.undoneAt ? 'undone' : row.outcome} />
+            <StatusPill status={scanStatusKey(row.outcome, row.undoneAt)} />
             <KeyValue
               items={[
                 { label: 'Time', value: formatDateTime(row.at) },
-                { label: 'What', value: row.actionLabel ?? row.reason },
+                { label: 'Action', value: actionText(row) },
                 {
                   label: 'Pass',
                   value: row.passId ? (
@@ -76,11 +77,11 @@ export function ScanDetail({
                 },
                 { label: 'Template', value: row.templateName },
                 { label: 'Event', value: row.eventName },
-                { label: 'Scanner', value: row.scannerName ?? 'Admin console' },
-                { label: 'Staff', value: row.staffName },
+                { label: 'Where', value: whereText(row) },
+                { label: 'Who', value: whoText(row) },
                 { label: 'API key', value: row.apiKeyId },
                 { label: 'Approved by', value: row.approvedBy },
-                { label: 'How', value: row.method },
+                { label: 'Method', value: methodLabel(row.method) },
                 { label: 'Amount', value: row.amount },
                 {
                   label: 'Before → after',

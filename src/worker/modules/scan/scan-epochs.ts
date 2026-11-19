@@ -5,6 +5,8 @@ export interface ScanAuthorityEpochs {
   scanner?: { id: string; credential: number; config: number };
   staff?: { id: string; auth: number };
   session?: { id: string; config: number };
+  /** The refusing door's session a monitor's Let in checks in at (not the actor's own). */
+  targetSession?: { id: string; config: number };
   events: Record<string, number>;
 }
 

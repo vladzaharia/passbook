@@ -50,7 +50,7 @@ export const VISUAL_PASS_JSON: Record<string, PassJson> = {
       primaryFields: [{ key: 'name', label: 'Name', value: 'Alexandria Morgan' }],
       secondaryFields: [{ key: 'organization', label: 'Organization', value: 'Northwind Arts' }],
       backFields: [
-        { key: 'member', label: 'Member ID', value: 'NW-2048-771' },
+        { key: 'member', label: 'Member number', value: 'NW-2048-771' },
         { key: 'issued', label: 'Issued by', value: 'Northwind Arts Council' },
       ],
     },
@@ -60,7 +60,7 @@ export const VISUAL_PASS_JSON: Record<string, PassJson> = {
     storeCard: {
       headerFields: [{ key: 'level', label: 'Level', value: 'Founders' }],
       primaryFields: [{ key: 'plan', label: 'Membership', value: 'Annual' }],
-      secondaryFields: [{ key: 'member', label: 'Member ID', value: 'NW-309' }],
+      secondaryFields: [{ key: 'member', label: 'Member number', value: 'NW-309' }],
       auxiliaryFields: [{ key: 'expires', label: 'Expires', value: 'Mar 2027' }],
       backFields: [
         { key: 'benefits', label: 'Benefits', value: 'Entry to member events and workshops.' },
@@ -85,7 +85,7 @@ export const VISUAL_PASS_JSON: Record<string, PassJson> = {
     storeCard: {
       headerFields: [{ key: 'balance', label: 'Balance', value: '$30.50' }],
       primaryFields: [{ key: 'wallet', label: 'Wallet', value: 'Campus credit' }],
-      secondaryFields: [{ key: 'member', label: 'Member ID', value: 'NW-042' }],
+      secondaryFields: [{ key: 'member', label: 'Member number', value: 'NW-042' }],
       backFields: [
         {
           key: 'transactions',

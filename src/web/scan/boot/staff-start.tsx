@@ -13,6 +13,15 @@ import { BootCard } from '../ui/boot-card.tsx';
 
 type Person = NonNullable<ScanSession['staffList']>[number];
 
+/** "1 tries left" reads wrong, and a lockout needs a next step. */
+export const pinMessage = (text: string) =>
+  text
+    .replace(/\b1 tries left/, '1 try left')
+    .replace(
+      /(Wrong PIN|Too many wrong PINs)\. Try again later\.$/,
+      '$1. Wait a few minutes, or ask a manager.',
+    );
+
 export function StaffStart({
   session,
   api,
@@ -57,7 +66,7 @@ export function StaffStart({
       await api.staffSignIn({ staffId, pin });
       await refetch();
     } catch (cause) {
-      setError(errorMessage(cause));
+      setError(pinMessage(errorMessage(cause)));
       setPin('');
     } finally {
       setBusy(false);

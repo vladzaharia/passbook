@@ -90,7 +90,7 @@ test('one field supports hidden IDs, independent QR data, people review and HID 
     await page.keyboard.press('Escape');
     const open = async () => {
       await page.getByRole('button', { name: 'Look up', exact: true }).click();
-      return page.getByRole('textbox', { name: 'Name, email, code or ID' });
+      return page.getByRole('textbox', { name: 'Name, email or code' });
     };
     // A typed ID follows auto flow, even though the QR encodes another value.
     let field = await open();

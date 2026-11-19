@@ -16,6 +16,32 @@ beforeAll(async () => {
   fixtures = await sessionLiveFixtures();
 });
 
+describe('monitor rows and the scan id', () => {
+  it('never carry a scan id to a monitor with no signed-in person', async () => {
+    const { kit, parent, child, pairedAttachment, row, withSourceProof } = fixtures;
+    const session = await parent('Let-in session');
+    const monitor = await pairedAttachment(session.id, 'Let-in desk', 'desk');
+    const source = await child(session.id, 'Let-in scanner');
+    const paired = await kit.post({ origin: 'https://wallet.test' }, '/pair', {
+      code: source.pairing?.code,
+    });
+    expect(paired.status).toBe(200);
+    const hub = clockedHub(kit.ctx, kit.clock, kit.org.id, 'live');
+    const entry = await withSourceProof(row(source.id));
+    expect(
+      await hub.publish({
+        orgId: kit.org.id,
+        mode: 'live',
+        now: kit.clock.now(),
+        row: { ...entry, scanId: 'scan-1', overridable: true },
+      }),
+    ).toBe(true);
+    const rows = (await hub.snapshot(monitor, undefined, kit.clock.now())).rows;
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).not.toHaveProperty('scanId');
+  });
+});
+
 describe('session display authorization', () => {
   it('follows new devices in its own session and excludes another session', async () => {
     const { kit, parent, child, pairedAttachment, row, withSourceProof } = fixtures;

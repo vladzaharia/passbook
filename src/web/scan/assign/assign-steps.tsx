@@ -12,7 +12,7 @@ const STEPS = [
 export function StepHeader({ a }: { a: AssignState }) {
   // A known pass skips step 2: the header is just the tag step.
   const known = a.source === 'card' || a.source === 'request';
-  const order = a.step === 'tag' || a.step === 'error' ? 0 : a.step === 'pass' ? 1 : 2;
+  const order = a.step === 'tag' || a.step === 'error' ? 0 : a.step === 'done' ? 2 : 1;
   const steps = known ? STEPS.slice(0, 1) : STEPS;
   return (
     <ol className="scan-assign-steps" aria-label="Steps">

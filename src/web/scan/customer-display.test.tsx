@@ -25,7 +25,7 @@ describe('Duo customer display', () => {
 
     expect(screenPage).toHaveAttribute('data-status', 'ready');
     expect(buddy).toHaveAttribute('data-scene', 'wave');
-    expect(screen.getByRole('heading', { name: 'Ready' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Hold up your pass' })).toBeVisible();
 
     await act(async () => {
       bridge.onmessage?.({ data: JSON.stringify({ status: 'checking', revision: 1 }) });
@@ -92,6 +92,6 @@ describe('Duo customer display', () => {
         }),
       });
     });
-    expect(screen.getByRole('heading', { name: 'Ready' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Hold up your pass' })).toBeVisible();
   });
 });

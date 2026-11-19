@@ -134,7 +134,7 @@ function ScannerDetail({ scanner: s, canManage }: { scanner: ScannerSetup; canMa
               search={{ tab: 'scans', scannerId: s.id }}
               icon={ScanQrCode}
             >
-              Scans
+              View scans
             </MetaLink>
           </>
         }

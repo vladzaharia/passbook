@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { testCond } from './condition.ts';
 import { ctxOf, NOW, scopeOf } from './test-kit.ts';
-import { evalExpr, evalText, parseParts, resolve } from './text.ts';
+import { evalExpr, evalString, evalText, parseParts, resolve } from './text.ts';
 
 const DAY = 86_400_000;
 
@@ -91,5 +91,22 @@ describe('conditions', () => {
     expect(testCond({ all: [vip, { not: gold }] }, ctx)).toBe(true);
     expect(testCond({ any: [gold, { path: 'history.visits.total', gte: 3 }] }, ctx)).toBe(true);
     expect(testCond({ all: [vip, gold] }, ctx)).toBe(false);
+  });
+});
+
+describe('formatted fields', () => {
+  const scope = {
+    fields: { bal: 25, since: '2026-01-01T00:00:00Z', plain: 'A12' },
+    fieldFormats: {
+      bal: { currencyCode: 'USD' },
+      since: { dateStyle: 'PKDateStyleMedium' },
+    },
+  };
+  const ctx = { scope, locale: 'en', timeZone: 'UTC', now: Date.UTC(2026, 5, 1) };
+  it('shows a field as the pass does, and leaves the raw value to conditions', () => {
+    expect(evalString('{{fields.bal}}', ctx)).toBe('$25.00');
+    expect(evalString('Due {{fields.since}}', ctx)).toBe('Due Jan 1, 2026');
+    expect(evalString('{{fields.plain}}', ctx)).toBe('A12');
+    expect(resolve(scope, 'fields.bal')).toBe(25);
   });
 });

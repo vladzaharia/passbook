@@ -41,6 +41,8 @@ export interface ScanSessionHook {
   pairCode: string | null;
   /** The block panel behind a `blocked` phase. */
   block: 'revoked' | 'suspended' | 'signed_out' | null;
+  /** The session read keeps answering "configuration changed": the scanning session ended. */
+  ended: boolean;
   pair(code: string): Promise<void>;
   refetch(): Promise<void>;
 }
@@ -126,6 +128,8 @@ export function useScanSession(
     session: phase === 'ready' ? session : null,
     pairCode,
     block,
+    ended:
+      phase === 'error' && isApiError(query.error) && query.error.code === 'SCAN_CONFIG_CHANGED',
     pair,
     refetch: again,
   };

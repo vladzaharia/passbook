@@ -23,26 +23,28 @@ export function SetupFields({ draft, onChange, errors }: SetupFieldsProps) {
       ) ?? [];
   return (
     <>
-      <FormField
-        label="Legacy device role"
-        help={
-          draft.deviceRole === 'monitor'
-            ? 'This standalone monitor is read-only unless Desk actions is on.'
-            : 'New devices use session layouts: Scanner, Operator or Customer display.'
-        }
-      >
-        {() => (
-          <div className="flex min-h-9 items-center">
-            <Badge>
-              {draft.deviceRole === 'scan'
-                ? 'Scanner'
-                : draft.deviceRole === 'monitor'
-                  ? 'Desk monitor'
-                  : 'Customer display'}
-            </Badge>
-          </div>
-        )}
-      </FormField>
+      {draft.deviceRole !== 'scan' ? (
+        <FormField
+          label="Legacy device role"
+          help={
+            draft.deviceRole === 'monitor'
+              ? 'This standalone monitor is read-only unless Desk actions is on.'
+              : 'Add new devices from a session.'
+          }
+        >
+          {() => (
+            <div className="flex min-h-9 items-center">
+              <Badge>
+                {draft.deviceRole === 'scan'
+                  ? 'Scanner'
+                  : draft.deviceRole === 'monitor'
+                    ? 'Desk monitor'
+                    : 'Customer display'}
+              </Badge>
+            </div>
+          )}
+        </FormField>
+      ) : null}
       {draft.deviceRole !== 'scan' ? (
         <WatchFields draft={draft} onChange={onChange} error={errors.watch} />
       ) : null}

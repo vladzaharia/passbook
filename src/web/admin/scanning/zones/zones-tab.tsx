@@ -76,9 +76,7 @@ function OrgZones({ orgId, canManage }: { orgId: string; canManage: boolean }) {
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-fg-muted">
-              Shared by Live and Test. Sessions pick the zones they check.
-            </p>
+            <p className="text-sm text-fg-muted">Zones are used in sessions and in test mode.</p>
             {canManage ? (
               <Button iconStart={<Plus aria-hidden />} onClick={create}>
                 New zone

@@ -173,6 +173,18 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
         ),
       );
   }
+  const target = epochs.targetSession;
+  if (actor.overrideScope?.sessionId && actor.overrideScope.sessionId !== session?.id) {
+    if (target?.id !== actor.overrideScope.sessionId) throw epochsMissing();
+    checks.push(
+      rowIs(
+        'scanning_sessions',
+        target.id,
+        { config_epoch: target.config, status: 'active' },
+        'config',
+      ),
+    );
+  }
   if (actor.event) {
     const epoch = epochs.events[actor.event.id];
     if (epoch === undefined) throw epochsMissing();

@@ -16,9 +16,13 @@ export const decodeActive = (s: ScanState, visible: boolean): boolean =>
   s.loop.s !== 'paused' &&
   (s.overlay === null || s.overlay === 'camera');
 
+/** Scans saved on the device and not yet confirmed: queued plus unsure still retrying. */
+export const savedCount = (s: Pick<ScanState, 'queue' | 'unsure'>) =>
+  s.queue.pending + s.unsure.filter((u) => u.state === 'retrying').length;
+
 /** The pending badge: unsure plus queued, amber after 10 minutes. */
 export const pendingBadge = (s: ScanState, now: number) => ({
-  n: s.queue.pending + s.unsure.filter((u) => u.state === 'retrying').length,
+  n: savedCount(s),
   late: s.queue.oldestAt !== null && now - s.queue.oldestAt > 600_000,
 });
 

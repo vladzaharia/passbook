@@ -8,7 +8,7 @@ import { AssignDock } from './assign/assign-dock.tsx';
 import { AssignChip } from './enroll/request-chip.tsx';
 import { RequestStrip } from './enroll/request-strip.tsx';
 import { initialState } from './machine/initial-state.ts';
-import { presentOutcome, viewOf } from './machine/present.ts';
+import { moodOf, presentOutcome, viewOf } from './machine/present.ts';
 import type { ScanStore } from './machine/store.ts';
 import { ScanStoreContext } from './machine/use-scan-machine.ts';
 import { ResultCard } from './result/result-card.tsx';
@@ -77,6 +77,9 @@ export function TagVisual({ scenario }: { scenario: TagScenario }) {
     : door
       ? presentOutcome(door.outcome, 'door', { holdResults: false }).tint
       : 'none';
+  const kindFace = door ? moodOf(door.outcome.kind) : null;
+  const face =
+    kindFace && kindFace !== 'neutral' ? kindFace : a?.step === 'done' ? 'happy' : 'flat';
   return (
     <ScanStoreContext.Provider value={store}>
       <ScanAppView
@@ -87,7 +90,7 @@ export function TagVisual({ scenario }: { scenario: TagScenario }) {
           <Buddy
             scene="scan"
             size="xl-scan"
-            mood={a?.step === 'done' ? 'happy' : 'flat'}
+            mood={face}
             pose={a ? (a.step === 'pass' ? 'aim' : 'pair') : 'rest'}
             immediate
           />
