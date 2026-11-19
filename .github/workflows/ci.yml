@@ -48,6 +48,8 @@ jobs:
       options: --ipc=host
       env:
         HOME: /root
+        # In the container localhost resolves to ::1 first, so Vite bound only IPv6 and the seed fetch to 127.0.0.1 was refused.
+        NODE_OPTIONS: --dns-result-order=ipv4first
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -77,6 +79,8 @@ jobs:
       options: --ipc=host
       env:
         HOME: /root
+        # In the container localhost resolves to ::1 first, so Vite bound only IPv6 and the seed fetch to 127.0.0.1 was refused.
+        NODE_OPTIONS: --dns-result-order=ipv4first
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
