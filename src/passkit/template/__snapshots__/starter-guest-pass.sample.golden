@@ -1,0 +1,75 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(181,64,0)",
+  "barcodes": [
+    {
+      "altText": "GUEST-0001",
+      "format": "PKBarcodeFormatQR",
+      "message": "SNAPSHOT-SCAN-CODE",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Guest pass",
+  "foregroundColor": "rgb(255,255,255)",
+  "formatVersion": 1,
+  "generic": {
+    "auxiliaryFields": [
+      {
+        "key": "member",
+        "label": "Pass ID",
+        "value": "GUEST-0001"
+      }
+    ],
+    "backFields": [
+      {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
+        "key": "guestOf",
+        "label": "Guest of",
+        "value": "Alex Morgan"
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Good for one visit. It's for you only."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "headerFields": [
+      {
+        "key": "plan",
+        "label": "Pass",
+        "value": "Guest"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Jordan Lee"
+      }
+    ],
+    "secondaryFields": []
+  },
+  "labelColor": "rgb(255,238,221)",
+  "logoText": "Organization",
+  "organizationName": "PassBook",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}

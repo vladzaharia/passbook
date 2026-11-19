@@ -1,0 +1,261 @@
+{
+  "schema": 1,
+  "name": "Day pass",
+  "description": "One day of entry, ending at midnight. Unlimited visits until then.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "memberName",
+      "memberId"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "memberName": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Pass",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "memberId": {
+        "type": "string",
+        "x-label": "Pass ID",
+        "x-group": "Pass",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "status": {
+        "type": "string",
+        "x-label": "Status",
+        "x-group": "Status",
+        "x-order": 30,
+        "enum": [
+          "Active",
+          "Suspended"
+        ],
+        "default": "Active",
+        "x-widget": "select"
+      },
+      "plan": {
+        "type": "string",
+        "x-label": "Plan",
+        "x-group": "Pass",
+        "enum": [
+          "day"
+        ],
+        "default": "day",
+        "x-widget": "select",
+        "x-enumLabels": {
+          "day": "Day pass"
+        },
+        "x-order": 40
+      },
+      "validFrom": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Valid on",
+        "x-group": "Pass",
+        "x-order": 50,
+        "x-widget": "datetime",
+        "x-noneLabel": "Today"
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 60,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 70,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      }
+    }
+  },
+  "sample": {
+    "memberName": "Sam Reed",
+    "memberId": "DAY-0001",
+    "plan": "day",
+    "status": "Active"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{memberName}}"
+    },
+    {
+      "to": {
+        "field": "member"
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{memberId}}"
+    }
+  ],
+  "display": {
+    "icon": "ticket",
+    "group": "get-in",
+    "aliases": [
+      "day pass",
+      "day",
+      "drop-in",
+      "visitor",
+      "one day"
+    ],
+    "title": "{{memberName}}",
+    "subtitle": "Day pass · {{memberId}}",
+    "status": "{{status}}",
+    "search": [
+      "memberName",
+      "memberId"
+    ]
+  },
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "enter",
+        "label": "Let in",
+        "kind": "check_in",
+        "repeat": "always",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "memberId"
+    },
+    "access": {
+      "input": {
+        "plan": "plan",
+        "from": "validFrom"
+      },
+      "plans": [
+        {
+          "id": "day",
+          "label": "Day pass",
+          "kind": "guest",
+          "days": 1,
+          "zones": [
+            {
+              "zone": "*"
+            }
+          ]
+        }
+      ],
+      "suspend": {
+        "input": "status",
+        "equals": [
+          "Suspended"
+        ]
+      },
+      "rules": {
+        "visitGapMinutes": 120,
+        "reentryMinutes": null
+      }
+    },
+    "display": {
+      "v": 1,
+      "holder": "{{memberName}}",
+      "header": {
+        "chips": [
+          {
+            "id": "c_plan",
+            "text": "{{access.plan}}",
+            "tone": "teal",
+            "icon": "clock"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": "p_visits",
+          "preset": {
+            "id": "membership",
+            "v": 1
+          },
+          "title": "Visits",
+          "icon": "door-open",
+          "on": [
+            "ready",
+            "ok"
+          ],
+          "rows": [
+            {
+              "id": "r_day",
+              "type": "columns",
+              "items": [
+                {
+                  "id": "i_until",
+                  "label": "Until",
+                  "value": "{{access.until|time}}"
+                },
+                {
+                  "id": "i_last",
+                  "label": "Last visit",
+                  "value": "{{history.lastVisit.at|ago}}"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Ask at the front desk."
+      },
+      "customer": {
+        "chips": [
+          "c_plan"
+        ],
+        "panel": null
+      }
+    }
+  }
+}

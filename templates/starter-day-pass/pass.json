@@ -1,0 +1,75 @@
+{
+  "formatVersion": 1,
+  "description": "Day pass",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(3,82,142)",
+  "foregroundColor": "rgb(255,255,255)",
+  "labelColor": "rgb(191,228,251)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "DAY-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "DAY-0001"
+    }
+  ],
+  "generic": {
+    "headerFields": [
+      {
+        "key": "plan",
+        "label": "Pass",
+        "value": "Day pass"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Alex Morgan"
+      }
+    ],
+    "secondaryFields": [],
+    "auxiliaryFields": [
+      {
+        "key": "member",
+        "label": "Pass ID",
+        "value": "DAY-0001"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "hours",
+        "label": "Hours",
+        "value": "Until midnight on the day of the pass."
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Good for one day, any number of entries. It's for you only."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

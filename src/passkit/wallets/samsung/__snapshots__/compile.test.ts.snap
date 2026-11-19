@@ -8,9 +8,12 @@ exports[`fidelity report > gives every template a status, none blocked 1`] = `
   "starter-boarding-pass": "loyalty: Ready with omissions (2)",
   "starter-booking": "loyalty: Ready with omissions (3)",
   "starter-coupon": "coupon: Ready with omissions (1)",
+  "starter-day-pass": "loyalty: Ready with omissions (3)",
   "starter-event-ticket": "ticket: Ready with omissions (3)",
   "starter-generic": "loyalty: Ready with omissions (3)",
+  "starter-guest-pass": "loyalty: Ready with omissions (3)",
   "starter-id-card": "loyalty: Ready with omissions (3)",
+  "starter-monthly-pass": "loyalty: Ready with omissions (3)",
   "starter-pack": "coupon: Ready with omissions (2)",
   "starter-permit": "loyalty: Ready with omissions (3)",
   "starter-pickup": "loyalty: Ready with omissions (3)",
@@ -345,6 +348,48 @@ Terms: One use per customer. Not combinable with other offers.",
 }
 `;
 
+exports[`samsung compiler over every starter and baked template > starter-day-pass 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#03528e",
+      "fontColor": "#ffffff",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Pass: Day pass
+Pass ID: DAY-0001
+Hours: Until midnight on the day of the pass.
+Terms: Good for one day, any number of entries. It's for you only.",
+      "providerName": "PassBook",
+      "title": "Sam Reed",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "field.header | text | headerFields.plan",
+    "field.auxiliary | text | auxiliaryFields.member",
+    "field.back | text | backFields.hours",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
 exports[`samsung compiler over every starter and baked template > starter-event-ticket 1`] = `
 {
   "card": {
@@ -459,6 +504,48 @@ Terms: Present the barcode when asked.",
 }
 `;
 
+exports[`samsung compiler over every starter and baked template > starter-guest-pass 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#b54000",
+      "fontColor": "#ffffff",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Pass: Guest
+Pass ID: GUEST-0001
+Guest of: Alex Morgan
+Terms: Good for one visit. It's for you only.",
+      "providerName": "PassBook",
+      "title": "Jordan Lee",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "field.header | text | headerFields.plan",
+    "field.auxiliary | text | auxiliaryFields.member",
+    "field.back | text | backFields.guestOf",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
 exports[`samsung compiler over every starter and baked template > starter-id-card 1`] = `
 {
   "card": {
@@ -495,6 +582,54 @@ Terms: Carry this card. It is yours only.",
     "field.secondary | text | secondaryFields.number",
     "field.secondary | text | secondaryFields.unit",
     "field.auxiliary | text | auxiliaryFields.until",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-monthly-pass 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#1d3aba",
+      "endDate": "1893456000000",
+      "fontColor": "#ffffff",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Pass: Monthly
+Paid through: 2030-01-01
+Member: MEMBER-0001
+Guests left: 2
+Hours: Any time, every day.
+Terms: Show this pass at the door. It's for you only.",
+      "providerName": "PassBook",
+      "title": "Alex Morgan",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.until",
+    "field.header | text | headerFields.plan",
+    "field.secondary | text | secondaryFields.until",
+    "field.auxiliary | text | auxiliaryFields.member",
+    "field.auxiliary | text | auxiliaryFields.guests",
+    "field.back | text | backFields.hours",
     "field.back | text | backFields.terms",
     "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",

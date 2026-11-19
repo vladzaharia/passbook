@@ -1,0 +1,289 @@
+{
+  "schema": 1,
+  "name": "Guest pass",
+  "description": "One visit for a guest, ending at midnight. No member needs to be there.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "memberName",
+      "memberId"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "memberName": {
+        "type": "string",
+        "x-label": "Guest",
+        "x-group": "Guest",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "memberId": {
+        "type": "string",
+        "x-label": "Pass ID",
+        "x-group": "Guest",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "status": {
+        "type": "string",
+        "x-label": "Status",
+        "x-group": "Status",
+        "x-order": 30,
+        "enum": [
+          "Active",
+          "Suspended"
+        ],
+        "default": "Active",
+        "x-widget": "select"
+      },
+      "plan": {
+        "type": "string",
+        "x-label": "Plan",
+        "x-group": "Pass",
+        "enum": [
+          "guest"
+        ],
+        "default": "guest",
+        "x-widget": "select",
+        "x-enumLabels": {
+          "guest": "Guest"
+        },
+        "x-order": 40
+      },
+      "sponsor": {
+        "type": "string",
+        "x-label": "Guest of",
+        "x-group": "Guest",
+        "x-order": 50,
+        "maxLength": 80,
+        "x-scan": "desk"
+      },
+      "validFrom": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Valid on",
+        "x-group": "Guest",
+        "x-order": 60,
+        "x-widget": "datetime",
+        "x-noneLabel": "Today"
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 70,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 80,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      }
+    }
+  },
+  "sample": {
+    "memberName": "Jordan Lee",
+    "memberId": "GUEST-0001",
+    "plan": "guest",
+    "status": "Active",
+    "sponsor": "Alex Morgan"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{memberName}}"
+    },
+    {
+      "to": {
+        "field": "member"
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "field": "guestOf"
+      },
+      "value": "{{sponsor}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{memberId}}"
+    }
+  ],
+  "display": {
+    "icon": "ticket",
+    "group": "get-in",
+    "aliases": [
+      "guest",
+      "visitor",
+      "friend",
+      "one visit"
+    ],
+    "title": "{{memberName}}",
+    "subtitle": "Guest · {{memberId}}",
+    "status": "{{status}}",
+    "search": [
+      "memberName",
+      "memberId"
+    ]
+  },
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "enter",
+        "label": "Let in",
+        "kind": "check_in",
+        "repeat": "always",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "memberId"
+    },
+    "access": {
+      "input": {
+        "plan": "plan",
+        "from": "validFrom",
+        "sponsor": "sponsor"
+      },
+      "plans": [
+        {
+          "id": "guest",
+          "label": "Guest",
+          "kind": "guest",
+          "days": 1,
+          "visits": 1,
+          "zones": [
+            {
+              "zone": "*"
+            }
+          ]
+        }
+      ],
+      "suspend": {
+        "input": "status",
+        "equals": [
+          "Suspended"
+        ]
+      },
+      "rules": {
+        "visitGapMinutes": 120,
+        "reentryMinutes": null
+      }
+    },
+    "display": {
+      "v": 1,
+      "holder": "{{memberName}}",
+      "photo": {
+        "minRole": "door"
+      },
+      "header": {
+        "chips": [
+          {
+            "id": "c_plan",
+            "text": "{{access.plan}}",
+            "tone": "gold",
+            "icon": "ticket"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": "p_visits",
+          "preset": {
+            "id": "membership",
+            "v": 1
+          },
+          "title": "Visits",
+          "icon": "door-open",
+          "on": [
+            "ready",
+            "ok"
+          ],
+          "rows": [
+            {
+              "id": "r_guest",
+              "type": "columns",
+              "items": [
+                {
+                  "id": "i_left",
+                  "label": "Visits left",
+                  "value": "{{access.visits.left}} of {{access.visits.limit}}"
+                },
+                {
+                  "id": "i_until",
+                  "label": "Until",
+                  "value": "{{access.until|time}}"
+                }
+              ]
+            },
+            {
+              "id": "r_sponsor",
+              "type": "field",
+              "label": "Guest of",
+              "value": "{{inputs.sponsor}}",
+              "whenEmpty": "hide",
+              "minRole": "desk"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Ask at the front desk."
+      },
+      "customer": {
+        "chips": [
+          "c_plan"
+        ],
+        "panel": null
+      }
+    }
+  }
+}
