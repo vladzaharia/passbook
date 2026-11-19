@@ -196,5 +196,11 @@ export type PlatformWalletEnrolment = z.infer<typeof PlatformWalletEnrolmentSche
 
 export const PlatformWalletEnrolmentListSchema = z.strictObject({
   items: z.array(PlatformWalletEnrolmentSchema),
+  nextCursor: z.string().nullable(),
+});
+export const PlatformWalletEnrolmentQuerySchema = z.strictObject({
+  provider: WalletProviderSchema,
+  cursor: z.string().max(512).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
 });
 export type PlatformWalletEnrolmentList = z.infer<typeof PlatformWalletEnrolmentListSchema>;

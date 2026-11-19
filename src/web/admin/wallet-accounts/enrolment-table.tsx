@@ -5,7 +5,15 @@ import type {
   WalletProvider,
 } from '@/shared/contracts/wallet-providers.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
-import { Button, DataTable, EmptyState, ErrorState, StatusPill, toast } from '@/web/ui/index.ts';
+import {
+  Button,
+  DataTable,
+  EmptyState,
+  ErrorState,
+  LoadMore,
+  StatusPill,
+  toast,
+} from '@/web/ui/index.ts';
 import { COPY, safeError } from './copy.ts';
 import { HoldDialog } from './hold-dialog.tsx';
 import { usePlatformEnrolments, useWalletActions } from './queries.ts';
@@ -116,16 +124,19 @@ export function EnrolmentTable({ provider }: { provider: WalletProvider }) {
       },
     },
   ];
-  if (list.isError) return <ErrorState error={list.error} onRetry={() => list.refetch()} />;
+  const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
+  if (list.isError && rows.length === 0)
+    return <ErrorState error={list.error} onRetry={() => list.refetch()} />;
   return (
     <>
       <DataTable
         caption="Organization enrolments"
         loading={list.isPending}
-        fetching={list.isFetching && !list.isPending}
-        data={list.data?.items ?? []}
+        fetching={list.isFetching && !list.isPending && !list.isFetchingNextPage}
+        data={rows}
         getRowId={(e) => `${e.orgId}:${e.mode}`}
         empty={<EmptyState art="wallet" title={COPY.empty} />}
+        footer={<LoadMore query={list} shown={rows.length} noun={['enrolment', 'enrolments']} />}
         columns={columns}
       />
       <HoldDialog enrolment={holding} onClose={() => setHolding(undefined)} />

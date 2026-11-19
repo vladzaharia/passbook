@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Mode } from '@/shared/contracts/common.ts';
 import {
   PlatformWalletEnrolmentListSchema,
@@ -12,7 +12,7 @@ import {
   WalletEnrolmentSchema,
   type WalletProvider,
 } from '@/shared/contracts/wallet-providers.ts';
-import { api } from '@/web/lib/api.ts';
+import { api, listQuery } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
 
 const KEY = ['wallet-accounts'] as const;
@@ -47,14 +47,18 @@ export function usePlatformCredentials() {
 }
 
 export function usePlatformEnrolments(provider: WalletProvider) {
-  return useQuery({
-    queryKey: [...KEY, 'platform-enrolments', provider],
-    queryFn: ({ signal }) =>
-      api.get('/api/v1/platform/wallet-enrolments', PlatformWalletEnrolmentListSchema, {
-        query: { provider },
-        signal,
-      }),
-  });
+  return useInfiniteQuery(
+    listQuery({
+      queryKey: [...KEY, 'platform-enrolments', provider],
+      initialPageParam: undefined as string | undefined,
+      queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
+        api.get('/api/v1/platform/wallet-enrolments', PlatformWalletEnrolmentListSchema, {
+          query: { provider, cursor: pageParam, limit: 50 },
+          signal,
+        }),
+      getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
+    }),
+  );
 }
 
 export type CredentialTarget = { kind: 'platform'; mode: Mode } | { kind: 'org'; orgId: string };

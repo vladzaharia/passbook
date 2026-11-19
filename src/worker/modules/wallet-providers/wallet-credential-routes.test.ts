@@ -144,6 +144,56 @@ describe('wallet credential and enrolment routes', () => {
     });
   });
 
+  it('pages the platform enrolment list by keyset and hides deleted orgs', async () => {
+    const admin = await k.admin();
+    const adminH = await headers(admin.user.id, ['admin', 'user']);
+    await call(adminH, 'PUT', '/api/v1/platform/wallet-credentials', {
+      mode: 'test',
+      provider: 'google',
+      expectedRevision: 0,
+      credentials: k.google('555000444'),
+    });
+    const ids: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      const org = await k.org();
+      const m = await k.member(org.id);
+      await call(
+        await headers(m.user.id, ['user']),
+        'PUT',
+        `/api/v1/orgs/${org.id}/wallet-enrolments/google`,
+        {
+          source: 'platform',
+          expectedRevision: 0,
+        },
+      );
+      ids.push(org.id);
+    }
+    await run(env.DB, "UPDATE orgs SET status = 'deleted' WHERE id = ?", [ids[2] as string]);
+    type Page = { items: { orgId: string; mode: string }[]; nextCursor: string | null };
+    const seen: string[] = [];
+    let cursor = '';
+    for (let guard = 0; guard < 200; guard++) {
+      const res = await call(
+        adminH,
+        'GET',
+        `/api/v1/platform/wallet-enrolments?provider=google&limit=1${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`,
+      );
+      const page = (await res.json()) as Page;
+      expect(page.items.length).toBeLessThanOrEqual(1);
+      seen.push(...page.items.map((i) => i.orgId));
+      if (!page.nextCursor) break;
+      cursor = page.nextCursor;
+    }
+    expect(seen).toContain(ids[0]);
+    expect(seen).toContain(ids[1]);
+    expect(seen).not.toContain(ids[2]);
+    expect(new Set(seen).size).toBe(seen.length);
+    expect(
+      (await call(adminH, 'GET', '/api/v1/platform/wallet-enrolments?provider=google&cursor=%25'))
+        .status,
+    ).toBe(422);
+  });
+
   it('scopes by org and mode: cross-org 404, non-member 403, Live apart from Test, suspended org 403', async () => {
     const orgA = await k.org();
     const orgB = await k.org();

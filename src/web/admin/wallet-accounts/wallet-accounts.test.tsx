@@ -18,7 +18,10 @@ beforeEach(() => {
 });
 afterEach(() => resetModeForTests());
 
-function orgHandlers(enrolments = [enrolment(), enrolment({ provider: 'samsung' })], creds = []) {
+function orgHandlers(
+  enrolments = [enrolment(), enrolment({ provider: 'samsung' })],
+  creds: ReturnType<typeof credential>[] = [],
+) {
   return {
     '/api/v1/identities': () => json({ items: [], nextCursor: null }),
     '/api/v1/orgs/o1/wallet-enrolments': () => json({ items: enrolments }),
@@ -107,6 +110,35 @@ describe('organization wallet accounts', () => {
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes('wallet-'))).toBe(false);
   });
 
+  it('freezes a revoked enrolment and hides blockers while it is On', async () => {
+    await renderApp('/admin/o/o1/wallet-accounts', {
+      memberships: [member(MANAGE)],
+      handlers: orgHandlers(
+        [
+          enrolment({
+            state: 'revoked',
+            source: 'org',
+            prerequisites: { check: true, roundTrip: null },
+          }),
+          enrolment({
+            provider: 'samsung',
+            state: 'on',
+            source: 'org',
+            prerequisites: { check: false, roundTrip: null },
+          }),
+        ],
+        [credential({ provider: 'google' })],
+      ),
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    expect(within(google).getByRole('switch')).toBeDisabled();
+    for (const radio of within(google).getAllByRole('radio')) expect(radio).toBeDisabled();
+    const samsung = screen.getByRole('region', { name: 'Samsung Wallet' });
+    expect(within(samsung).getByRole('switch')).toBeEnabled();
+    expect(within(samsung).queryByText('The account check has not passed.')).toBeNull();
+    expect(within(samsung).getByText('Account check: Needed')).toBeInTheDocument();
+  });
+
   it('turns it on with the enrolment revision', async () => {
     const user = userEvent.setup();
     const bodies: unknown[] = [];
@@ -181,7 +213,7 @@ describe('platform wallet accounts', () => {
     '/api/v1/identities': () => json({ items: [], nextCursor: null }),
     '/api/v1/platform/wallet-credentials': () =>
       json({ items: [credential({ scope: 'platform', orgId: null, mode: 'live' })] }),
-    '/api/v1/platform/wallet-enrolments': () => json({ items }),
+    '/api/v1/platform/wallet-enrolments': () => json({ items, nextCursor: null }),
   });
 
   it('lists credentials per mode and every organization, with hold and release', async () => {
@@ -215,6 +247,31 @@ describe('platform wallet accounts', () => {
     await user.type(within(dialog).getByLabelText(/Reason/), 'abuse');
     await user.click(within(dialog).getByRole('button', { name: 'Hold' }));
     await waitFor(() => expect(calls).toContain('hold {"reason":"abuse"}'));
+  });
+
+  it('loads more enrolments with the cursor', async () => {
+    const user = userEvent.setup();
+    const cursors: (string | null)[] = [];
+    await renderApp('/admin/platform/wallet-accounts', {
+      session: 'admin',
+      handlers: {
+        ...handlers(),
+        '/api/v1/platform/wallet-enrolments': (url) => {
+          const cursor = url.searchParams.get('cursor');
+          cursors.push(cursor);
+          return json(
+            cursor
+              ? { items: [platformEnrolment({ orgId: 'o9', orgName: 'Zeta' })], nextCursor: null }
+              : { items: [platformEnrolment()], nextCursor: 'c1' },
+          );
+        },
+      },
+    });
+    await user.click(await screen.findByRole('tab', { name: 'Google' }));
+    await user.click(await screen.findByRole('button', { name: /load more/i }));
+    expect(await screen.findByText('Zeta')).toBeInTheDocument();
+    expect(cursors).toEqual([null, 'c1']);
+    expect(screen.getByText('North')).toBeInTheDocument();
   });
 
   it('keeps the Apple identities on the first tab', async () => {

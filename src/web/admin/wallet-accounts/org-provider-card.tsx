@@ -59,6 +59,7 @@ export function OrgProviderCard({
   const name = PROVIDER_NAME[e.provider];
   const blocker = blockerOf(e);
   const on = e.state === 'on';
+  const revoked = e.state === 'revoked';
 
   async function run(work: () => Promise<unknown>, done?: string) {
     setBusy(true);
@@ -112,10 +113,10 @@ export function OrgProviderCard({
           <p className="text-sm font-medium text-fg-strong">Account</p>
           <SegmentedControl
             label={`${name} account`}
-            options={sources}
+            options={sources.map((o) => (revoked ? { ...o, disabled: true } : o))}
             value={e.source ?? ('' as Source)}
             onValueChange={(next) => {
-              if (!canManage || busy || next === e.source) return;
+              if (!canManage || busy || revoked || next === e.source) return;
               void run(
                 () => actions.setSource(orgId, e, next),
                 on ? COPY.sourceSwitchedOff : undefined,
@@ -139,10 +140,14 @@ export function OrgProviderCard({
             help={
               e.state === 'held'
                 ? undefined
-                : (blocker ?? (e.issuance.state === 'disabled' ? COPY.notReleased : undefined))
+                : on
+                  ? e.issuance.state === 'disabled'
+                    ? COPY.notReleased
+                    : undefined
+                  : (blocker ?? (e.issuance.state === 'disabled' ? COPY.notReleased : undefined))
             }
             checked={on}
-            disabled={!canManage || busy || (!on && blocker !== null)}
+            disabled={!canManage || busy || revoked || (!on && blocker !== null)}
             onCheckedChange={(next) =>
               void run(() => actions.act(orgId, e, next ? 'enable' : 'disable'))
             }

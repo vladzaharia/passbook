@@ -59,9 +59,11 @@ export function OrgWalletAccountsPage() {
     <>
       <PageHeader title="Wallet accounts" />
       <div className="grid items-start gap-6 lg:grid-cols-2">
-        <div className="lg:col-span-2">
-          <OrgAppleCard orgId={membership.orgId} />
-        </div>
+        {caps.includes('org:read') ? (
+          <div className="lg:col-span-2">
+            <OrgAppleCard orgId={membership.orgId} />
+          </div>
+        ) : null}
         {caps.includes('integrations:read') ? (
           <Providers orgId={membership.orgId} canManage={caps.includes('integrations:manage')} />
         ) : (

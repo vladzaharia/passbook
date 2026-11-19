@@ -4,12 +4,12 @@ import {
   HoldWalletEnrolmentSchema,
   PlatformWalletEnrolmentListSchema,
   PlatformWalletEnrolmentParamsSchema,
+  PlatformWalletEnrolmentQuerySchema,
   RevokeWalletCredentialSchema,
   SavePlatformWalletCredentialSchema,
   WalletCredentialListSchema,
   WalletCredentialSchema,
   WalletEnrolmentHoldResultSchema,
-  WalletProviderSchema,
 } from '../../../shared/contracts/wallet-providers.ts';
 import { requireAdmin } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
@@ -131,11 +131,17 @@ register(
     method: 'get',
     path: '/wallet-enrolments',
     summary: 'List every organization enrolment of a wallet provider',
-    query: z.strictObject({ provider: WalletProviderSchema }),
+    query: PlatformWalletEnrolmentQuerySchema,
     response: PlatformWalletEnrolmentListSchema,
   },
   async (c) =>
     c.json(
-      await listPlatformEnrolments(serviceContext(c), sessionOf(c), c.req.valid('query').provider),
+      await listPlatformEnrolments(
+        serviceContext(c),
+        sessionOf(c),
+        c.req.valid('query').provider,
+        c.req.valid('query').limit,
+        c.req.valid('query').cursor,
+      ),
     ),
 );
