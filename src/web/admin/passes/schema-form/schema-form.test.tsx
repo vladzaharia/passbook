@@ -315,6 +315,10 @@ describe('SchemaForm: empty sections on an existing pass', () => {
     expect(screen.queryByLabelText('Wi-Fi password')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Show' }));
     expect(screen.getByLabelText('Wi-Fi password')).toHaveAttribute('type', 'password');
+    await user.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(screen.getByLabelText('Wi-Fi password')).toHaveAttribute('type', 'text');
+    await user.click(screen.getByRole('button', { name: 'Hide password' }));
+    expect(screen.getByLabelText('Wi-Fi password')).toHaveAttribute('type', 'password');
   });
   it('keeps every section when not collapsing', () => {
     render(<SchemaForm schema={folded} value={{ name: 'Ana' }} onChange={() => {}} />);
