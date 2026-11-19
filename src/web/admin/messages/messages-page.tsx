@@ -140,7 +140,6 @@ function ScopedMessagesPage({
 
   const filtered = Boolean(search.state);
   const clear = () => onSearch({ state: undefined });
-  const empty = !list.isPending && rows.length === 0 && !filtered;
   const create = (variant: 'primary' | 'outline') =>
     canCreate ? (
       <Button asChild variant={variant} iconStart={<Plus aria-hidden />}>
@@ -150,7 +149,7 @@ function ScopedMessagesPage({
 
   return (
     <>
-      <PageHeader title="Messages" actions={create(empty ? 'outline' : 'primary')} />
+      <PageHeader title="Messages" actions={create('primary')} />
       {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => void list.refetch()} />
       ) : (
@@ -183,7 +182,11 @@ function ScopedMessagesPage({
           }
           emptyFiltered={<FilteredEmpty entity="broadcast" onClear={clear} />}
           empty={
-            <EmptyState art={ENTITY.broadcast.art} title="No messages" action={create('primary')} />
+            <EmptyState
+              art={ENTITY.broadcast.art}
+              title="No messages"
+              description="Send a note to pass holders' wallets."
+            />
           }
           footer={
             <LoadMore

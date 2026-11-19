@@ -107,7 +107,7 @@ export async function listOrgs(
 }
 
 function summarize(row: OrgRow, counts?: Summary['counts']): Summary {
-  const c = counts ?? { passes: 0, templates: 0, connections: 0, apiKeys: 0 };
+  const c = counts ?? { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 0 };
   return { ...toDto(row), counts: c, countsCapped: Object.values(c).some((n) => n >= COUNT_CAP) };
 }
 

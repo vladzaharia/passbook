@@ -110,6 +110,7 @@ export function PassListFilters({
   ];
   return (
     <FilterBar
+      maxInline={5}
       search={{ value: q, onChange: setQ, placeholder: 'Search passes' }}
       filters={filters}
       onClear={() => {

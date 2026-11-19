@@ -82,7 +82,7 @@ export function SendAgain({
     <div className="flex flex-col gap-2">
       <form method="post" action={action}>
         <button type="submit" className={`${LINK} inline-flex min-h-11 items-center text-sm`}>
-          {HOLDER_COPY.sendAgain}
+          {HOLDER_COPY.emailPassAgain}
         </button>
       </form>
       {again ? (
@@ -91,15 +91,6 @@ export function SendAgain({
         </p>
       ) : null}
     </div>
-  );
-}
-
-/** What a wallet is, once on the page: Apple's name on Apple devices, none where it is not theirs. */
-export function WalletExplain({ android }: { android: boolean }) {
-  return (
-    <p className="text-sm text-fg-muted">
-      {android ? HOLDER_COPY.walletGeneric : HOLDER_COPY.walletApple}
-    </p>
   );
 }
 

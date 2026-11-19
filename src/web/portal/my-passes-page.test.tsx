@@ -65,6 +65,9 @@ describe('my passes', () => {
       // The card, title and org, actions: subgrid rows, so a row of tiles aligns them.
       expect(li).toHaveClass('row-span-3', 'grid-rows-subgrid');
       expect(li.firstElementChild).toHaveClass('row-span-3', 'grid-rows-subgrid', 'rounded-xl');
+      // A size container on a subgrid tile collapses its rows (the badge overlaps the title):
+      // the container is the actions row.
+      expect(li.firstElementChild).not.toHaveClass('@container');
     }
     const icons = [
       ...screen.getAllByRole('button', { name: 'More actions' }),

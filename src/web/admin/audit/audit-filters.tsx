@@ -117,7 +117,11 @@ export function AuditFilters({ search, onSearch, names }: AuditFiltersProps) {
   const extra = [search.actorId, search.targetId ?? search.targetType, search.filterOrgId].filter(
     Boolean,
   ).length;
-  const any = Object.values(search).some((v) => v !== undefined);
+  // The org console always scopes to its own org; that alone is not a filter.
+  const any = Object.entries(search).some(
+    ([key, v]) =>
+      v !== undefined && !(key === 'orgId' || (key === 'filterOrgId' && v === scope.orgId)),
+  );
   const target = (type: string) => (id: string) => patch({ targetType: type, targetId: id });
   const actions =
     search.action && !ACTION_OPTIONS.some((option) => option.value === search.action)

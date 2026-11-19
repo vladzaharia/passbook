@@ -222,7 +222,7 @@ button.dz-issue:hover {
 }
 
 [data-readonly] {
-  opacity: 0.6;
+  opacity: 0.92;
 }
 
 /* Stamps: the goal pops when it changes; the slider is the kit's accent. */

@@ -64,12 +64,12 @@ function deferredResponse() {
 
 describe('deviceLabel', () => {
   it('summarises user agents', () => {
-    expect(deviceLabel(null)).toBe('Unknown device');
+    expect(deviceLabel(null)).toBe('Web browser');
     expect(deviceLabel('Mozilla/5.0 (Windows NT 10) Chrome/120 Safari/537')).toBe(
       'Chrome on Windows',
     );
     expect(deviceLabel('Mozilla/5.0 (Windows NT 10) Edg/120 Chrome/120')).toBe('Edge on Windows');
-    expect(deviceLabel('curl/8')).toBe('Unknown device');
+    expect(deviceLabel('curl/8')).toBe('Web browser');
   });
 });
 

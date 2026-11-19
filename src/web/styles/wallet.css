@@ -22,7 +22,7 @@
   --pk-info-border: #3b82f6;
   /* Editable fields: sunken in dark, raised in light. Disabled and read-only ones lift to the
      surface in dark and sink in light: never the editable fill. */
-  --wl-field: var(--pk-surface-sunken);
+  --wl-field: var(--pk-surface-raised);
   --wl-field-disabled: transparent;
   --wl-field-readonly: transparent;
   /* Placeholders hint a format at about 3.8:1, well under the value's contrast. */

@@ -209,7 +209,9 @@ export function validateSemantics(ctx: ValidationContext, semantics: unknown, pa
     if (key === '_id') continue;
     const kind = semanticKind(key);
     if (!kind) {
-      ctx.warn('UNKNOWN_SEMANTIC_TAG', `Unknown semantic tag ${key}.`, `${path}.${key}`);
+      ctx.warn('UNKNOWN_SEMANTIC_TAG', `Unknown semantic tag ${key}.`, `${path}.${key}`, {
+        name: key,
+      });
       continue;
     }
     KIND_CHECKS[kind](value, `${path}.${key}`, ctx.error, ctx.warn);
@@ -280,7 +282,10 @@ export function validateRequiredSemantics(ctx: ValidationContext): void {
   const report = (label: string, keys: string[]) => {
     const absent = missing(keys);
     if (absent.length)
-      ctx.warn('SEMANTICS_REQUIRED', `${label} layout needs ${absent.join(', ')}.`, 'semantics');
+      ctx.warn('SEMANTICS_REQUIRED', `${label} layout needs ${absent.join(', ')}.`, 'semantics', {
+        name: label,
+        missing: absent.join(', '),
+      });
   };
   if (ctx.styles.has('PET')) {
     report('Poster event ticket', PET_REQUIRED);

@@ -80,6 +80,7 @@ export function PassWarnings({ pass }: { pass: PassDetailDto }) {
           />
         </button>
       }
+      {...(open || !list[0] ? {} : { children: list[0].message })}
       items={
         open
           ? list.map((w) => (

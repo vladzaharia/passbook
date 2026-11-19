@@ -217,7 +217,7 @@ describe('status page', () => {
     );
     expect(screen.getByText('Polaris ID')).toBeInTheDocument();
     const platform = screen.getByRole('list', { name: 'Platform' });
-    expect(within(platform).getByText('2 queued, 1 dead-lettered')).toBeInTheDocument();
+    expect(within(platform).getByText('2 queued, 1 failed')).toBeInTheDocument();
     expect(within(platform).queryByText('Backlog')).toBeNull();
     const toggle = within(platform).getByRole('button', { name: 'Job queue details' });
     await userEvent.setup().click(toggle);
@@ -323,7 +323,10 @@ describe('status page', () => {
           }),
       },
     });
-    expect(await screen.findByText('apns_failed')).toBeInTheDocument();
+    expect(await screen.findByText('The run failed. Try again.')).toHaveAttribute(
+      'title',
+      'apns_failed',
+    );
     expect(screen.getByText('The run failed. Try again.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Bulk reissue' })).toHaveAttribute(
       'href',

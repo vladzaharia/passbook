@@ -1,7 +1,7 @@
-import type { PassIdentity, PassJson } from '../types.ts';
+import type { IssueParams, PassIdentity, PassJson } from '../types.ts';
 import type { StyleTag } from './constants.ts';
 
-export type Report = (code: string, message: string, path?: string) => void;
+export type Report = (code: string, message: string, path?: string, params?: IssueParams) => void;
 
 export interface ValidationContext {
   pass: PassJson;
@@ -96,7 +96,7 @@ export function checkUrlValue(
     return;
   }
   if (!['https:', 'tel:', 'mailto:'].includes(url.protocol))
-    ctx.warn('URL_SCHEME', `${key} should use https.`, path);
+    ctx.warn('URL_SCHEME', `${key} should use https.`, path, { name: key });
 }
 
 export function hasStyle(ctx: ValidationContext, ...tags: StyleTag[]): boolean {

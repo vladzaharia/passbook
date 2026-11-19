@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { type Browser, chromium } from '@playwright/test';
 import { statePath } from './auth.ts';
 import {
+  DEVICES,
   fillPath,
   type Role,
   type Route,
@@ -50,6 +51,7 @@ async function shoot(
 ): Promise<Shot[]> {
   const context = await browser.newContext({
     viewport: VIEWPORTS[viewport],
+    ...DEVICES[viewport],
     colorScheme: theme,
     reducedMotion: 'reduce',
     ...(role === 'anon' ? {} : { storageState: statePath(o.stateDir, role) }),

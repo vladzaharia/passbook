@@ -160,7 +160,7 @@ export function OrgsPage({
   return (
     <>
       <PageHeader
-        title="Organization directory"
+        title="Organizations"
         breadcrumbs={[{ label: 'Platform', to: '/admin' }, { label: 'Organizations' }]}
         actions={create(empty ? 'outline' : 'primary')}
       />

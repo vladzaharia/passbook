@@ -81,10 +81,18 @@ export function SettingsFormContent({
                 ? 'After saving, holders without Polaris ID will not be able to sign in.'
                 : 'Email-link sign-in is off. Holders need Polaris ID.'
             : undefined;
-        const source =
+        const differs = entry?.default !== undefined && entry.value !== entry.default;
+        const parts =
           entry && platform
-            ? `${entry.updatedAt === null ? 'Platform default' : 'Saved platform setting'} · Effective: ${displayValue(field, entry.value)}${entry.default === undefined ? '' : ` · Default: ${displayValue(field, entry.default)}`}${entry.updatedAt === null ? '' : ` · Changed ${formatDay(entry.updatedAt)}${entry.updatedBy ? ` by ${entry.updatedBy}` : ''}`}${resets.has(field.key) ? ' · Reset pending' : changedField ? ' · Draft not applied' : ''}`
-            : undefined;
+            ? [
+                entry.updatedAt === null
+                  ? null
+                  : `Changed ${formatDay(entry.updatedAt)}${entry.updatedBy ? ` by ${entry.updatedBy}` : ''}`,
+                differs ? `Default: ${displayValue(field, entry.default)}` : null,
+                resets.has(field.key) ? 'Reset pending' : changedField ? 'Not saved' : null,
+              ].filter(Boolean)
+            : [];
+        const source = parts.length > 0 ? parts.join(' · ') : undefined;
         const canReset =
           platform &&
           entry?.default !== undefined &&

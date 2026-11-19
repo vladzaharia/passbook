@@ -54,7 +54,10 @@ export function validateFieldCounts(
     Array.isArray(dict[group]) ? (dict[group] as unknown[]) : [];
   for (const [group, max] of Object.entries(LIMITS[style]) as [FieldGroup, number][]) {
     if (count(group).length > max)
-      ctx.warn('FIELD_COUNT', `${group} has more than ${max} fields.`, `${style}.${group}`);
+      ctx.warn('FIELD_COUNT', `${group} has more than ${max} fields.`, `${style}.${group}`, {
+        name: group,
+        max: String(max),
+      });
   }
   if (style === 'eventTicket') {
     const aux = count('auxiliaryFields');
@@ -65,6 +68,7 @@ export function validateFieldCounts(
           'FIELD_COUNT',
           `auxiliaryFields row ${row} has more than 4 fields.`,
           `${style}.auxiliaryFields`,
+          { name: `auxiliaryFields row ${row}`, max: '4' },
         );
     }
   }
@@ -89,6 +93,7 @@ export function validateFieldCounts(
           'FIELD_NOT_SHOWN',
           `${group} are not shown on poster generic passes.`,
           `${style}.${group}`,
+          { name: group },
         );
   }
 }
@@ -167,7 +172,10 @@ export function validateField(
           'Date values need ISO 8601 with hours, minutes and a time zone.',
           `${path}.value`,
         );
-      else warn('FIELD_DATE_KEYS', `${dateKeys.join(', ')} only apply to date values.`, path);
+      else
+        warn('FIELD_DATE_KEYS', `${dateKeys.join(', ')} only apply to date values.`, path, {
+          name: dateKeys.join(', '),
+        });
     }
     if ((field.dateStyle === undefined) !== (field.timeStyle === undefined))
       warn('FIELD_DATE_STYLE', 'Set both dateStyle and timeStyle, or neither.', path);

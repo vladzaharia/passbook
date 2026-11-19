@@ -46,7 +46,7 @@ function chipHtml(code: string, lead: boolean): string {
   // Centred, the left padding gains the letter-spacing the last digit trails.
   const look = lead
     ? 'display:block;padding:14px 16px 14px 24px;text-align:center'
-    : 'display:inline-block;padding:10px 16px';
+    : 'display:block;padding:10px 12px 10px 18px;text-align:center';
   const size = lead
     ? 'font-size:32px;line-height:40px;font-weight:600;letter-spacing:8px'
     : 'font-size:24px;line-height:28px;font-weight:600;letter-spacing:6px';

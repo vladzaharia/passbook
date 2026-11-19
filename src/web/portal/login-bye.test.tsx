@@ -81,7 +81,7 @@ describe('sign out to switch', () => {
     sessionStorage.setItem(MARK, String(Date.now()));
     sessionStorage.setItem(NEXT_MARK, '/admin/users');
     await renderApp('/login', { session: 'anon' });
-    expect(await screen.findByRole('link', { name: 'Sign in with Polaris ID' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Sign in with your account' })).toHaveAttribute(
       'href',
       '/auth/oidc/start?next=%2Fadmin%2Fusers',
     );

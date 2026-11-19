@@ -118,12 +118,38 @@ describe('identities list', () => {
     expect(screen.getAllByText('Not set up').length).toBeGreaterThan(0);
     expect(screen.getByText('Healthy')).toBeInTheDocument();
     expect(screen.getByText('Failing')).toBeInTheDocument();
-    expect(screen.getByText(/Old: a loaded certificate has expired/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Review' })).toHaveAttribute(
+    expect(screen.getByText(/Old: certificate has expired/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open identity' })).toHaveAttribute(
       'href',
       '/admin/identities/i3',
     );
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it.each([
+    [0.5, 'Edge: certificate expires today', 'alert'],
+    [30.5, 'Edge: certificate expires in 30 days', undefined],
+  ])('banners a certificate with %s days left', async (days, title, role) => {
+    await renderApp('/admin/identities', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities': () =>
+          json({
+            items: [
+              identity({
+                id: 'e1',
+                label: 'Edge',
+                notAfter: Date.now() + days * DAY,
+                daysRemaining: Math.floor(days),
+              }),
+            ],
+            nextCursor: null,
+          }),
+      },
+    });
+    const banner = (await screen.findByText(title)).closest('div[class*="rounded-lg"]');
+    // Red (role alert) through 7 days; amber (no alert role) from 8 to 30.
+    expect(banner?.getAttribute('role') ?? undefined).toBe(role);
   });
 
   it('does not invent a certificate warning or readiness when expiry is unknown', async () => {
@@ -138,7 +164,7 @@ describe('identities list', () => {
       },
     });
     expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Review' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Open identity' })).toBeNull();
   });
 
   it('flags a certificate whose validity period has not begun', async () => {
@@ -152,11 +178,11 @@ describe('identities list', () => {
           }),
       },
     });
-    expect(await screen.findByRole('link', { name: 'Review' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Open identity' })).toHaveAttribute(
       'href',
       '/admin/identities/i1',
     );
-    expect(screen.getByText(/a loaded certificate is not yet valid/)).toBeInTheDocument();
+    expect(screen.getByText(/certificate is not yet valid/)).toBeInTheDocument();
   });
 
   it('updates the certificate review from later loaded pages', async () => {
@@ -174,9 +200,9 @@ describe('identities list', () => {
     });
     const ui = userEvent.setup();
     expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Review' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Open identity' })).toBeNull();
     await ui.click(await screen.findByRole('button', { name: 'Load more' }));
-    expect(await screen.findByRole('link', { name: 'Review' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Open identity' })).toHaveAttribute(
       'href',
       '/admin/identities/i2',
     );
@@ -378,7 +404,7 @@ describe('identity detail', () => {
     });
     const ui = userEvent.setup();
     const label = await screen.findByLabelText(/Label/);
-    expect(screen.getByText(/Current default. Select another identity/)).toBeInTheDocument();
+    expect(screen.getByText(/Select another identity to change it/)).toBeInTheDocument();
     await ui.clear(label);
     await ui.type(label, 'Renamed');
     await ui.clear(screen.getByLabelText('APNs binding'));
@@ -410,7 +436,8 @@ describe('identity detail', () => {
     const ui = userEvent.setup();
     expect(screen.queryByLabelText('APNs binding')).not.toBeInTheDocument();
     expect(await screen.findByText('Set in the environment')).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: 'Default identity' })).toBeDisabled();
+    expect(screen.queryByRole('switch', { name: 'Default identity' })).toBeNull();
+    expect(screen.getByText('Default identity')).toBeInTheDocument();
     await ui.click(screen.getByRole('switch', { name: 'NFC' }));
     await ui.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(body).toBeDefined());

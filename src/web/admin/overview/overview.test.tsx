@@ -96,8 +96,8 @@ describe('overview page', () => {
       '/admin/identities',
     );
     expect(screen.getByText('Metrics: All organizations · Live mode')).toBeInTheDocument();
-    expect(screen.getByText('Administrative activity · not filtered by mode')).toBeInTheDocument();
-    expect(await screen.findAllByText('Ada · Platform')).toHaveLength(2);
+    expect(screen.getByText('All modes')).toBeInTheDocument();
+    expect(await screen.findAllByText(/Ada · Platform$/)).toHaveLength(2);
     expect(within(totals).getByText('1,200')).toBeInTheDocument();
     expect(within(totals).getByRole('link', { name: /^Passes\s+1,200$/ })).toHaveAttribute(
       'href',
@@ -119,7 +119,7 @@ describe('overview page', () => {
     expect(
       within(screen.getByRole('list', { name: 'Needs attention' })).getAllByRole('listitem'),
     ).toHaveLength(1);
-    expect(await screen.findByRole('link', { name: /Pass voided\s*Clara Rossi/ })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /Pass voided/ })).toHaveAttribute(
       'href',
       '/admin/passes/p1',
     );

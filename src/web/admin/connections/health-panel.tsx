@@ -193,7 +193,7 @@ export function HealthPanel({
               {waiting ? 'Waiting for the first webhook. ' : healthSentence(c, now, since)}
               {waiting && onWebhookTab ? (
                 <Button variant="link" onClick={onWebhookTab}>
-                  Open Webhook
+                  Open webhook setup
                 </Button>
               ) : null}
             </p>

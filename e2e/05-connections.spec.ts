@@ -80,8 +80,17 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   // The run shows in the runs list and health reads healthy.
   await expect(async () => {
     await page.reload();
+    // The runs table stacks into a list when its column is narrow (beside the sidebar).
+    const run = /Sync now.*Changed.*3 seen, 3 changed/i;
     await expect(
-      page.getByRole('row', { name: /Sync now.*Changed.*3 seen, 3 changed/i }),
+      page
+        .getByRole('row', { name: run })
+        .or(
+          page
+            .getByRole('list', { name: 'Connection runs' })
+            .getByRole('listitem')
+            .filter({ hasText: run }),
+        ),
     ).toBeVisible({
       timeout: 2_000,
     });
