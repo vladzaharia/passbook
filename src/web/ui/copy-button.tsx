@@ -5,6 +5,8 @@ import { IconButton } from './icon-button.tsx';
 /** The check holds this long, like Button's done state. */
 const RESET_MS = 1500;
 
+type Clipboarded = { clipboard: { writeText(value: string): Promise<void> } };
+
 export interface CopyButtonProps {
   value: string;
   label?: string;
@@ -18,7 +20,8 @@ export function CopyButton({ value, label = 'Copy', className }: CopyButtonProps
 
   async function copy() {
     try {
-      await navigator.clipboard.writeText(value);
+      // Typed locally: key-value.tsx renders on the Worker (/p), whose lib has no Clipboard.
+      await (navigator as unknown as Clipboarded).clipboard.writeText(value);
       setState('copied');
     } catch {
       // Clipboard needs a secure context and permission; tell the user instead of failing silently.
