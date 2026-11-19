@@ -518,8 +518,8 @@ describe('first pass for an organization', () => {
     await waitFor(() => expect(posts).toHaveLength(1));
     await act(async () => {
       await router.navigate({
-        to: '/admin/passes/new',
-        search: { orgId: 'org2' },
+        to: '/admin/o/$orgId/passes/new',
+        params: { orgId: 'org2' },
         ignoreBlocker: true,
       });
     });
@@ -1095,8 +1095,8 @@ describe('first pass for an organization', () => {
     await waitFor(() => expect(posts).toBe(1));
     await act(async () => {
       await router.navigate({
-        to: '/admin/passes/new',
-        search: { orgId: 'org2' },
+        to: '/admin/o/$orgId/passes/new',
+        params: { orgId: 'org2' },
         ignoreBlocker: true,
       });
     });
@@ -1212,8 +1212,8 @@ describe('organization authority while issuing', () => {
     await waitFor(() => expect(posts).toBe(1));
     await act(async () => {
       await router.navigate({
-        to: '/admin/passes/new',
-        search: { orgId: 'org2' },
+        to: '/admin/o/$orgId/passes/new',
+        params: { orgId: 'org2' },
         ignoreBlocker: true,
       });
     });
@@ -1305,8 +1305,8 @@ describe('organization authority while issuing', () => {
     });
     await act(async () => {
       await router.navigate({
-        to: '/admin/passes/new',
-        search: { orgId: 'org2' },
+        to: '/admin/o/$orgId/passes/new',
+        params: { orgId: 'org2' },
         ignoreBlocker: true,
       });
     });
