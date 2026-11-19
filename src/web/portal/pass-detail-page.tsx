@@ -4,6 +4,7 @@ import type { MyPassListSchema } from '@/shared/contracts/me.ts';
 import { endedOn } from '@/shared/ended-on.ts';
 import type { PassView } from '@/shared/pass-view/index.ts';
 import { useSession } from '../lib/session.ts';
+import { localZone } from '../lib/timezones.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
 import { Buddy, detailError, Skeleton } from '../ui/index.ts';
 import { myPassesKey, myPassQuery } from './api.ts';
@@ -98,7 +99,7 @@ function Detail({
             title={title}
             locale={navigator.language}
             now={new Date()}
-            timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
+            timeZone={localZone()}
           />
         </div>
       }
