@@ -46,6 +46,26 @@ describe('Template channels', () => {
     expect(within(group('Paper')).getByRole('radio', { name: 'Off' })).toBeEnabled();
   });
 
+  it('says a platform or organization block leaves copies alone', async () => {
+    renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />, {
+      '/api/v1/templates/t1/channels': () =>
+        json({
+          channels: null,
+          revision: 0,
+          effective: {
+            ...effective,
+            paper: { on: false, source: 'platform', reason: 'printing_off' },
+          },
+        }),
+    });
+    expect(
+      await screen.findByText(
+        'Paper: printing off for all organizations. Copies stay as they are.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Google Wallet: no design for this template')).toBeInTheDocument();
+  });
+
   it('shows the effect before saving, then saves with the revision', async () => {
     const { fetchMock } = renderTags(
       <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />,

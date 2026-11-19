@@ -1,4 +1,4 @@
-import type { Channel, ChannelReason } from '../contracts/channels.ts';
+import type { Channel, ChannelReason, ChannelSource } from '../contracts/channels.ts';
 
 export const CHANNEL_LABEL: Record<Channel, string> = {
   mobile: 'Mobile',
@@ -34,7 +34,18 @@ export const CHANNEL_REASON_COPY: Record<ChannelReason, string> = {
 export const channelReason = (channel: Channel, reason: ChannelReason): string =>
   CHANNEL_REASON_COPY[reason].replace('{channel}', CHANNEL_LABEL[channel]);
 
+/** An organization or platform block never retires or replaces copies; say so with the reason. */
+export const channelBlocked = (
+  channel: Channel,
+  reason: ChannelReason,
+  source: ChannelSource,
+): string =>
+  source === 'org' || source === 'platform'
+    ? `${channelReason(channel, reason)}. ${CHANNEL_COPY.copiesStay}`
+    : channelReason(channel, reason);
+
 export const CHANNEL_COPY = {
+  copiesStay: 'Copies stay as they are.',
   useTemplate: 'Use template',
   nothingOn: 'No channel is on. This pass cannot be used.',
   holderNotice: 'Your {channel} copy no longer works. Open {link}.',

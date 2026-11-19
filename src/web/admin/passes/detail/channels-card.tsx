@@ -11,7 +11,7 @@ import {
   CHANNEL_COPY,
   CHANNEL_LABEL,
   CHANNEL_SOURCE_LABEL,
-  channelReason,
+  channelBlocked,
 } from '@/shared/copy/channels.ts';
 import { channelOffConfirm } from '../../../lib/confirms.ts';
 import { formatDay } from '../../../lib/format.ts';
@@ -57,7 +57,7 @@ function Row({
   const blocked = !status.on && !canSwitch(status);
   const meta =
     blocked && status.reason
-      ? channelReason(channel, status.reason)
+      ? channelBlocked(channel, status.reason, status.source)
       : [
           `${status.on ? 'On' : 'Off'} · ${CHANNEL_SOURCE_LABEL[status.source]}`,
           status.retiredAt ? `Retired ${formatDay(status.retiredAt)}` : null,

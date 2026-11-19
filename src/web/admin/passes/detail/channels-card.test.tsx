@@ -46,7 +46,9 @@ describe('Channels card', () => {
     renderTags(<ChannelsCard pass={pass()} readOnly={false} />, handlers(effective()));
     await screen.findByRole('switch', { name: 'Apple Wallet' });
     expect(row('Apple Wallet')).toHaveTextContent('On · Template');
-    expect(row('Google Wallet')).toHaveTextContent('Google Wallet: organization not enrolled');
+    expect(row('Google Wallet')).toHaveTextContent(
+      'Google Wallet: organization not enrolled. Copies stay as they are.',
+    );
     expect(screen.getByRole('switch', { name: 'Google Wallet' })).toBeDisabled();
     expect(screen.getByRole('switch', { name: 'Paper' })).toBeEnabled();
     expect(screen.queryByText(CHANNEL_COPY.nothingOn)).toBeNull();

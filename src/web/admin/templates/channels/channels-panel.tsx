@@ -5,7 +5,7 @@ import {
   CHANNEL_COPY,
   CHANNEL_LABEL,
   CHANNEL_STATE_LABEL,
-  channelReason,
+  channelBlocked,
 } from '@/shared/copy/channels.ts';
 import {
   Card,
@@ -100,7 +100,9 @@ export function TemplateChannelsPanel({
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-fg-strong">{CHANNEL_LABEL[c]}</p>
                   {blocked && status.reason ? (
-                    <p className="text-xs text-fg-muted">{channelReason(c, status.reason)}</p>
+                    <p className="text-xs text-fg-muted">
+                      {channelBlocked(c, status.reason, status.source)}
+                    </p>
                   ) : null}
                 </div>
                 <SegmentedControl
