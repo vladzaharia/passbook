@@ -22,12 +22,12 @@ export const HOSTED_CSS = `${THEME_CSS}
 ${WORDMARK_CSS}
 ${ART_CSS}
 ${HOSTED_ART_CSS}
-.hosted{display:flex;flex-direction:column;width:100%;max-width:24rem;margin:0 auto;padding:2rem 0 2.5rem}
+.hosted{display:flex;flex-direction:column;justify-content:center;min-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));width:100%;max-width:24rem;margin:0 auto;padding:2rem 0 2.5rem}
 .band{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;padding-inline:calc(1px + 1.5rem) calc(1.5rem - 19px)}
 .brand{display:flex;align-items:center;height:72px}
 .band .mark{gap:.625rem;font-size:1.25rem;line-height:1.75rem;letter-spacing:-.015em}
 .band .mark>svg{width:1.5rem;height:1.5rem}
-.scene{position:relative;z-index:2;flex:none;width:128px;height:96px;margin-bottom:0;pointer-events:none}
+.scene{position:relative;z-index:2;flex:none;width:128px;height:96px;margin-bottom:3px;pointer-events:none}
 .scene .wl-art{width:128px;height:96px}
 .scene>[data-replay]{display:block}
 .hosted.wide{max-width:32rem}
@@ -44,7 +44,7 @@ input:not([type="hidden"]){display:block}
 .foot{display:flex;align-items:flex-start;gap:.5rem;margin:0;padding:1rem 1.25rem;border-top:1px solid var(--pk-border-subtle);font-size:.875rem;line-height:1.25rem;color:var(--pk-text-muted)}
 .foot svg{flex:none;width:1rem;height:1rem;margin-top:.125rem}
 @media(min-width:40rem){.hosted{padding-top:3.5rem}.body{padding:1.5rem}.foot{padding:1rem 1.5rem}}
-@media(max-width:39.99rem){.band{padding-inline:calc(1px + 1.25rem) calc(1.25rem - 17px)}.brand{height:63px}.scene{margin-bottom:0}.scene,.scene .wl-art{width:112px;height:84px}}`;
+@media(max-width:39.99rem){.band{padding-inline:calc(1px + 1.25rem) calc(1.25rem - 17px)}.brand{height:63px}.scene{margin-bottom:3px}.scene,.scene .wl-art{width:112px;height:84px}}`;
 
 export type { HostedArt };
 

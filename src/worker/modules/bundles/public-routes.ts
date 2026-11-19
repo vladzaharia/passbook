@@ -223,10 +223,13 @@ register(
       return new Response(html, { headers: PRESENTATION_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404) {
-        return new Response(renderNotFoundPage(c.var.nonce, theme, { replay: false }), {
-          status: 404,
-          headers: PRESENTATION_HEADERS,
-        });
+        return new Response(
+          renderNotFoundPage(c.var.nonce, theme, { what: 'bundle', replay: false }),
+          {
+            status: 404,
+            headers: PRESENTATION_HEADERS,
+          },
+        );
       }
       throw error;
     }

@@ -196,7 +196,7 @@ export const SCAN_COPY = {
   },
   boot: {
     pairTitle: 'Pair this device',
-    pairLine: 'Type the code from Admin, Scanning. Or scan its QR with your camera.',
+    pairLine: 'Enter the code from Admin > Scanning, or scan its QR with your camera.',
     pairLabel: 'Pairing code',
     pairFooter: 'No code? Ask an admin.',
     adminAs: 'Signed in as {who}',
