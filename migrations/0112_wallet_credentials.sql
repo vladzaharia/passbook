@@ -86,7 +86,8 @@ CREATE TABLE wallet_credentials (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
   CHECK ((scope = 'platform') = (org_id IS NULL)),
-  CHECK ((revision = 0) = (current_version_id IS NULL)),
+  CHECK (revision > 0 OR current_version_id IS NULL),
+  CHECK (current_version_id IS NOT NULL OR revision = 0 OR revoked_at IS NOT NULL),
   FOREIGN KEY (current_version_id, id) REFERENCES wallet_credential_versions(id, credential_id)
 );
 CREATE INDEX wallet_credentials_org ON wallet_credentials(org_id);
@@ -233,6 +234,53 @@ CREATE TRIGGER wallet_enrolment_events_server_time BEFORE INSERT ON wallet_enrol
 WHEN ABS(NEW.created_at - CAST(unixepoch('subsec') * 1000 AS INTEGER)) > 5000
 BEGIN SELECT RAISE(ABORT, 'wallet enrolment event needs the server clock'); END;
 
+-- Who may write what is the database's rule too, not only the builder's: the grant row of the writing
+-- batch exists while its statements run, so an event kind needs a grant of its org and mode with a
+-- matching purpose. Hold and release are the platform's (a platform admin, or the hold job on a suspended
+-- org); a source comes from the source, migration or migrate-job purposes; an enable only from the
+-- enable purpose, and only while the org is active.
+CREATE TRIGGER authority_grants_wallet_platform_only BEFORE INSERT ON authority_grants
+WHEN NEW.purpose IN ('org_mode.wallet.enrolment_hold', 'org_mode.wallet.enrolment_release',
+    'org_mode.wallet.migration_resolve') AND NEW.principal NOT GLOB 'platform:*'
+BEGIN SELECT RAISE(ABORT, 'wallet platform purposes are held by a platform admin'); END;
+CREATE TRIGGER wallet_enrolment_events_platform_kinds BEFORE INSERT ON wallet_enrolment_events
+WHEN NEW.kind IN ('hold', 'release') AND NOT EXISTS (
+  SELECT 1 FROM authority_grants g WHERE g.org_id = NEW.org_id AND g.mode = NEW.mode
+    AND ((NEW.kind = 'hold' AND g.purpose = 'org_mode.wallet.enrolment_hold' AND g.principal GLOB 'platform:*')
+      OR (NEW.kind = 'hold' AND g.purpose = 'org_mode.job.wallet.enrolment_hold' AND g.principal GLOB 'system:*')
+      OR (NEW.kind = 'release' AND g.purpose = 'org_mode.wallet.enrolment_release'
+        AND g.principal GLOB 'platform:*')))
+BEGIN SELECT RAISE(ABORT, 'wallet hold and release are the platform''s'); END;
+CREATE TRIGGER wallet_enrolment_events_purpose BEFORE INSERT ON wallet_enrolment_events
+WHEN NEW.kind IN ('source', 'enable') AND NOT EXISTS (
+  SELECT 1 FROM authority_grants g WHERE g.org_id = NEW.org_id AND g.mode = NEW.mode
+    AND ((NEW.kind = 'source' AND g.purpose IN ('org_mode.wallet.enrolment_source',
+        'org_mode.wallet.migration_resolve', 'org_mode.job.wallet.credential_migrate'))
+      OR (NEW.kind = 'enable' AND g.purpose = 'org_mode.wallet.enrolment_enable')))
+BEGIN SELECT RAISE(ABORT, 'wallet enrolment event does not match its grant'); END;
+CREATE TRIGGER wallet_enrolment_events_enable_active BEFORE INSERT ON wallet_enrolment_events
+WHEN NEW.kind = 'enable' AND NOT EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.status = 'active')
+BEGIN SELECT RAISE(ABORT, 'wallet enrolment enable needs an active org'); END;
+CREATE TRIGGER wallet_credential_checks_job_only BEFORE INSERT ON wallet_credential_checks
+WHEN NOT EXISTS (SELECT 1 FROM authority_grants g WHERE g.purpose = 'platform.job.wallet.credential_check'
+  AND g.principal GLOB 'system:*')
+BEGIN SELECT RAISE(ABORT, 'wallet credential checks are written by the check job'); END;
+
+-- An event takes the account's next revision. Only a hold and a source_revoked disable may skip a gap, so
+-- an unused event another writer left at the next revision cannot freeze the enrolment. A source or enable
+-- names a platform credential or one of the same org's, not revoked.
+CREATE TRIGGER wallet_enrolment_events_step BEFORE INSERT ON wallet_enrolment_events
+WHEN NOT EXISTS (SELECT 1 FROM wallet_provider_accounts a WHERE a.id = NEW.account_id
+  AND (NEW.enrolment_revision = a.enrolment_revision + 1
+    OR (NEW.enrolment_revision > a.enrolment_revision
+      AND (NEW.kind = 'hold' OR (NEW.kind = 'disable' AND NEW.reason = 'source_revoked')))))
+BEGIN SELECT RAISE(ABORT, 'wallet enrolment event needs the next revision'); END;
+CREATE TRIGGER wallet_enrolment_events_credential BEFORE INSERT ON wallet_enrolment_events
+WHEN NEW.kind IN ('source', 'enable') AND NOT EXISTS (
+  SELECT 1 FROM wallet_credentials c WHERE c.id = NEW.credential_id AND c.revoked_at IS NULL
+    AND (c.scope = 'platform' OR c.org_id = NEW.org_id))
+BEGIN SELECT RAISE(ABORT, 'wallet enrolment event needs an available credential'); END;
+
 -- Credential rules. It is inserted with no version; the first version is set by an UPDATE like every
 -- rotation, so one guard covers both.
 CREATE TRIGGER wallet_credentials_insert BEFORE INSERT ON wallet_credentials
@@ -365,6 +413,7 @@ END;
 CREATE TRIGGER wallet_enrolments_insert BEFORE INSERT ON wallet_provider_accounts
 WHEN NEW.credential_source_id IS NOT NULL OR NEW.identity_hash IS NOT NULL OR NEW.enabled_at IS NOT NULL
   OR NEW.enrolment_revision != 0 OR NEW.platform_hold_at IS NOT NULL OR NEW.platform_hold_reason IS NOT NULL
+  OR NEW.revoked_at IS NOT NULL
 BEGIN SELECT RAISE(ABORT, 'wallet enrolment starts without a source'); END;
 
 -- Every change of source, identity, state or hold is one enrolment_revision step with its event. Only a
@@ -380,7 +429,7 @@ WHEN (NEW.credential_source_id IS NOT OLD.credential_source_id OR NEW.identity_h
     SELECT 1 FROM wallet_enrolment_events e
     WHERE e.account_id = NEW.id AND e.enrolment_revision = NEW.enrolment_revision
       AND (NEW.enrolment_revision = OLD.enrolment_revision + 1
-        OR (e.kind = 'disable' AND e.reason = 'source_revoked'))
+        OR e.kind = 'hold' OR (e.kind = 'disable' AND e.reason = 'source_revoked'))
       AND (NEW.revoked_at IS OLD.revoked_at OR e.kind = 'revoke')
       AND ((e.kind = 'source' AND e.credential_id = NEW.credential_source_id
           AND NEW.credential_source_id IS NOT OLD.credential_source_id AND NEW.enabled_at IS NULL AND OLD.revoked_at IS NULL
@@ -531,8 +580,8 @@ WHEN NEW.credential_version_id IS NOT (SELECT r.credential_version_id FROM walle
   WHERE r.ref_hash = NEW.ref_hash)
 BEGIN SELECT RAISE(ABORT, 'wallet tombstone copies the pin of its reference'); END;
 CREATE TRIGGER wallet_provider_operation_credential_version_immutable
-BEFORE UPDATE OF credential_version_id ON wallet_provider_instance_operations
-WHEN NEW.credential_version_id IS NOT OLD.credential_version_id
+BEFORE UPDATE OF credential_version_id, instance_id ON wallet_provider_instance_operations
+WHEN NEW.credential_version_id IS NOT OLD.credential_version_id OR NEW.instance_id IS NOT OLD.instance_id
 BEGIN SELECT RAISE(ABORT, 'wallet credential pin is immutable'); END;
 CREATE TRIGGER wallet_samsung_ref_credential_version_immutable
 BEFORE UPDATE OF credential_version_id ON wallet_samsung_fetch_refs

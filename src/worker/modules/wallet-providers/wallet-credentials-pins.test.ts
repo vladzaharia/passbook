@@ -152,6 +152,21 @@ describe('credential_version_id pins', () => {
     );
   });
 
+  it('an operation cannot move to another instance and take its pin along', async () => {
+    const { a, instanceId } = await seed();
+    const own = await credential({ orgId: a.orgId, provider: 'samsung' });
+    await setSource(a, own);
+    await insertOp(instanceId, own.versionId);
+    await refused(
+      run(
+        db(),
+        'UPDATE wallet_provider_instance_operations SET instance_id = ? WHERE credential_version_id = ?',
+        [uid(), own.versionId],
+      ),
+      /pin is immutable/,
+    );
+  });
+
   it('a tombstone copies the pin of its reference', async () => {
     const { a, instanceId, release } = await seed();
     const own = await credential({ orgId: a.orgId, provider: 'samsung' });

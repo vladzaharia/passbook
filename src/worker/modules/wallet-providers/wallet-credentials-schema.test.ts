@@ -2,12 +2,14 @@
 // keeps every other valid, so the message names the trigger that fired. Storage lasts for the whole file and
 // the rows are never deleted: every case seeds its own org, and a platform credential replaces the last.
 import { describe, expect, it } from 'vitest';
-import { all, first, run } from '../../platform/db.ts';
+import { withoutTrigger } from '../../../../test/helpers/index.ts';
+import { all, first, run, stmt } from '../../platform/db.ts';
 import {
   addCheck,
   credential,
   credentialRevision,
   db,
+  granted,
   ident,
   insertCredential,
   insertCredentialEvent,
@@ -23,6 +25,7 @@ import {
   disable,
   enable,
   enrolment,
+  grantFor,
   hold,
   insertEnrolmentEvent,
   receiptSeeder,
@@ -406,7 +409,10 @@ describe('enrolment source', () => {
     const platform = await credential({ scope: 'platform' });
     const mine = await credential({ orgId: a.org.id, mode: 'test' });
     const live = await enrolment(a.org.id);
-    await refused(setSource(live, theirs), /source is unavailable/);
+    // The event trigger refuses this first (wallet-credentials-review.test.ts); the account's own guard is proven with it off.
+    await withoutTrigger(db(), 'wallet_enrolment_events_credential', () =>
+      refused(setSource(live, theirs), /source is unavailable/),
+    );
     await setSource(live, platform);
     await setSource(await enrolment(a.org.id, 'test'), mine);
   });
@@ -420,7 +426,9 @@ describe('enrolment source', () => {
     await refused(setSource(a, wrongProvider), /source is unavailable/);
     const gone = await credential({ scope: 'platform' });
     await revokeCredential(gone.id, 'platform');
-    await refused(setSource(a, gone), /source is unavailable/);
+    await withoutTrigger(db(), 'wallet_enrolment_events_credential', () =>
+      refused(setSource(a, gone), /source is unavailable/),
+    );
     const good = await credential({ scope: 'platform' });
     await insertEnrolmentEvent(a, { kind: 'source', credentialId: good.id });
     await refused(
@@ -523,12 +531,14 @@ describe('enable', () => {
       /fresh credential check/,
     );
     await refused(
-      run(
-        db(),
-        `INSERT INTO wallet_enrolment_events (id, account_id, org_id, mode, provider, enrolment_revision, kind, credential_id, actor_type, actor_id)
+      granted(grantFor(a, 'enable') ?? { purpose: '', principal: '' }, [
+        stmt(
+          db(),
+          `INSERT INTO wallet_enrolment_events (id, account_id, org_id, mode, provider, enrolment_revision, kind, credential_id, actor_type, actor_id)
         SELECT ?, id, org_id, mode, provider, enrolment_revision + 1, 'enable', credential_source_id, 'user', 'u' FROM wallet_provider_accounts WHERE id = ?`,
-        [uid(), a.id],
-      ),
+          [uid(), a.id],
+        ),
+      ]),
       /CHECK constraint failed/,
     );
     await enable(a, c);
@@ -576,7 +586,9 @@ describe('enable', () => {
     await refused(enable(a, c), /needs an active source|fresh credential check/);
     await setSource(a, c);
     await revokeCredential(c.id);
-    await refused(enable(a, c), /needs an active source/);
+    await withoutTrigger(db(), 'wallet_enrolment_events_credential', () =>
+      refused(enable(a, c), /needs an active source/),
+    );
   });
 
   it('a Live enable needs a Test round trip received after the Test source event', async () => {
@@ -825,7 +837,9 @@ describe('revoking a new-model enrolment', () => {
       /revoke needs its event/,
     );
     await refused(updateEnrolment(a, { revoked_at: at }), /revoke needs its event/);
-    await insertEnrolmentEvent(a, { kind: 'revoke', createdAt: at, revision: 2 });
+    await withoutTrigger(db(), 'wallet_enrolment_events_step', () =>
+      insertEnrolmentEvent(a, { kind: 'revoke', createdAt: at, revision: 2 }),
+    );
     await refused(updateEnrolment(a, { revoked_at: at }, 2), /revoke needs its event/);
     await revokeEnrolment(a);
     await refused(updateEnrolment(a, { revoked_at: null }), /revoke needs its event/);

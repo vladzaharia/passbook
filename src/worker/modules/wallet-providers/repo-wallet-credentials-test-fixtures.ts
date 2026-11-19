@@ -199,6 +199,38 @@ export async function rotate(c: Cred, cardMap = '{}'): Promise<string> {
   return versionId;
 }
 
+export interface GrantRow {
+  purpose: string;
+  principal: string;
+  orgId?: string | null;
+  mode?: Mode | null;
+}
+
+/**
+ * The statements as one writer commits them: the grant row of the batch, the writes, then the release.
+ * The 0112 triggers read that row, so a raw write that names no grant is refused.
+ */
+export function granted(g: GrantRow, statements: D1PreparedStatement[]): Promise<unknown> {
+  const id = uid();
+  const scope = g.purpose.split('.')[0];
+  return batch(db(), [
+    stmt(
+      db(),
+      `INSERT INTO authority_grants (id, scope, org_id, mode, principal, purpose, target_id, denied, created_at, leak_guard)
+       VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, 1, ?)`,
+      [id, scope ?? 'org_mode', g.orgId ?? null, g.mode ?? null, g.principal, g.purpose, id],
+    ),
+    ...statements,
+    stmt(db(), 'DELETE FROM authority_grants WHERE id = ?', [id]),
+  ]);
+}
+
+/** Only the check job writes a check. */
+export const CHECK_JOB: GrantRow = {
+  purpose: 'platform.job.wallet.credential_check',
+  principal: 'system:wallet-credential-check',
+};
+
 export async function addCheck(
   credentialId: string,
   versionId: string,
@@ -206,18 +238,19 @@ export async function addCheck(
   checkedAt?: number,
 ): Promise<string> {
   const id = uid();
-  if (checkedAt === undefined)
-    await run(
-      db(),
-      'INSERT INTO wallet_credential_checks (id, credential_id, version_id, ok) VALUES (?, ?, ?, ?)',
-      [id, credentialId, versionId, ok],
-    );
-  else
-    await run(
-      db(),
-      'INSERT INTO wallet_credential_checks (id, credential_id, version_id, ok, checked_at) VALUES (?, ?, ?, ?, ?)',
-      [id, credentialId, versionId, ok, checkedAt],
-    );
+  const check =
+    checkedAt === undefined
+      ? stmt(
+          db(),
+          'INSERT INTO wallet_credential_checks (id, credential_id, version_id, ok) VALUES (?, ?, ?, ?)',
+          [id, credentialId, versionId, ok],
+        )
+      : stmt(
+          db(),
+          'INSERT INTO wallet_credential_checks (id, credential_id, version_id, ok, checked_at) VALUES (?, ?, ?, ?, ?)',
+          [id, credentialId, versionId, ok, checkedAt],
+        );
+  await granted(CHECK_JOB, [check]);
   return id;
 }
 
