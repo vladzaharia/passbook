@@ -70,16 +70,39 @@ describe('counts', () => {
     expect(moved[0]?.message).toBe('Google shows 10 text modules: carried as a line of "Label 9".');
   });
 
-  it('shows 10 links and reports the rest', async () => {
+  it('folds the translations of overflow fields into the last module too', async () => {
+    const r = await compile('starter-generic', 'generic', (v) => {
+      v.fields = Array.from({ length: 11 }, (_, i) => field(i));
+      v.localization = {
+        fr: {
+          'Label 9': 'Etiquette 9',
+          'Label 10': 'Etiquette 10',
+          'value 9': 'valeur 9',
+          'value 10': 'valeur 10',
+        },
+      };
+    });
+    const last = object(r).textModulesData[9];
+    expect(last.body).toBe('value 9\nLabel 10: value 10');
+    expect(last.localizedBody.translatedValues).toEqual([
+      { language: 'fr', value: 'valeur 9\nEtiquette 10: valeur 10' },
+    ]);
+  });
+
+  it('folds links past 10 into the last text module and reports each', async () => {
     const r = await compile('starter-generic', 'generic', (v) => {
       v.fields = Array.from({ length: 12 }, (_, i) =>
         field(i, { links: [{ kind: 'web', url: `https://example.com/${i}` }] }),
       );
     });
     expect(object(r).linksModuleData.uris).toHaveLength(10);
+    expect(object(r).textModulesData[9].body).toContain('https://example.com/10');
     expect(
-      r.items.filter((i) => i.capability === 'field.link' && i.support === 'omitted'),
+      r.items.filter((i) => i.capability === 'field.link' && i.support === 'difference'),
     ).toHaveLength(2);
+    expect(r.items.some((i) => i.capability === 'field.link' && i.support === 'omitted')).toBe(
+      false,
+    );
   });
 
   const points = (n: number) =>

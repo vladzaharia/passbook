@@ -55,8 +55,8 @@ describe('barcodes', () => {
   it('takes the first format Google renders and reports the ones before it', async () => {
     const r = await compile('starter-generic', 'generic', (v) => {
       v.barcodes = [
-        barcode('codabar'),
-        barcode('ean13'),
+        barcode('i2of5', 'ABC'),
+        barcode('i2of5', '12'),
         barcode('pdf417', 'P-1', 'utf-8'),
         barcode('qr', 'Q-1'),
       ];
@@ -73,7 +73,7 @@ describe('barcodes', () => {
     const view = await googleView('starter-generic', {
       wallets: { required: ['barcode.format'] },
       patch: (v) => {
-        v.barcodes = [barcode('codabar')];
+        v.barcodes = [barcode('i2of5', 'ABC')];
       },
     });
     expect(object(googleCompiler.compile(view, OPTIONS)).barcode).toBeUndefined();
@@ -86,9 +86,21 @@ describe('barcodes', () => {
     });
     expect(report.status.kind).toBe('blocked');
     expect(report.items[0]).toMatchObject({
-      capability: 'barcode.format.codabar',
+      capability: 'barcode.format.i2of5',
       severity: 'blocked',
     });
+  });
+});
+
+describe('barcodes: interleaved 2 of 5', () => {
+  it('goes out as ITF-14 for 14 digits and says so', async () => {
+    const r = await compile('starter-generic', 'generic', (v) => {
+      v.barcodes = [barcode('i2of5', '12345678901231')];
+    });
+    expect(object(r).barcode.type).toBe('ITF_14');
+    expect(r.items).toContainEqual(
+      expect.objectContaining({ capability: 'barcode.format.i2of5', support: 'difference' }),
+    );
   });
 });
 

@@ -23,9 +23,9 @@ as a labelled line), `difference` (carried, looks different), `omitted` (left ou
 | `barcode.format.aztec` | native | native | native | native | native | native | native | native |
 | `barcode.format.code128` | native | native | native | native | native | native | native | native |
 | `barcode.format.code39` | native | native | native | native | native | native | native | native |
-| `barcode.format.codabar` | omitted | omitted | omitted | omitted | omitted | native | native | native |
-| `barcode.format.ean13` | omitted | omitted | omitted | omitted | omitted | native | native | native |
-| `barcode.format.i2of5` | omitted | omitted | omitted | omitted | omitted | native | native | native |
+| `barcode.format.codabar` | native | native | native | native | native | native | native | native |
+| `barcode.format.ean13` | native | native | native | native | native | native | native | native |
+| `barcode.format.i2of5` | difference | difference | difference | difference | difference | native | native | native |
 | `barcode.altText` | native | native | native | native | native | native | native | native |
 | `colors.background` | native | native | native | native | native | native | native | native |
 | `colors.foreground` | difference | difference | difference | difference | difference | native | native | native |

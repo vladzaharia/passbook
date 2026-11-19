@@ -1,9 +1,10 @@
 /**
  * Everything that has no native slot goes into labelled text modules in Apple's front-to-back
  * order (architecture 3.3 step 2), with links in the links module. Google shows 10 modules: past
- * that the rest are folded into the last one as labelled lines. Links past 10 are omitted.
+ * that the rest are folded into the last one as labelled lines. Links past 10 are folded the same way.
  */
 
+import { fitText } from '../text.ts';
 import {
   type CapabilityId,
   type ViewField,
@@ -78,7 +79,7 @@ class Modules {
   readonly uris: GoogleLinkUri[] = [];
   readonly emitted = new Set<string>();
   /** The last module's full body and path, so overflow can be appended to it. */
-  private tail: { raw: string; path: string } | undefined;
+  private tail: { raw: string; path: string; langs: Map<string, string> } | undefined;
 
   private readonly ctx: Ctx;
 
@@ -101,18 +102,45 @@ class Modules {
       if (localizedHeader) module.localizedHeader = localizedHeader;
     }
     this.text.push(module);
-    this.tail = { raw: body, path };
+    this.tail = {
+      raw: body,
+      path,
+      langs: new Map(
+        (module.localizedBody?.translatedValues ?? []).map((t) => [t.language, t.value]),
+      ),
+    };
     return module;
   }
 
   /** Google shows 10 modules: the rest become labelled lines of the last one, and the report says so. */
   fold(capability: CapabilityId, path: string, label: string | undefined, body: string): void {
+    const { ctx, tail } = this;
     const last = this.text[this.text.length - 1];
-    if (!last || !this.tail) return;
-    this.tail.raw += `\n${label ? `${label}: ` : ''}${body}`;
-    last.body = this.ctx.display(this.tail.path, this.tail.raw, TEXT.long);
-    delete last.localizedBody;
-    this.ctx.note(
+    if (!last || !tail) return;
+    const line = (l: string | undefined, b: string) => `\n${l ? `${l}: ` : ''}${b}`;
+    if (ctx.translate) {
+      const bodies = new Map(ctx.translations(body, TEXT.body).map((t) => [t.language, t.value]));
+      const labels = new Map(
+        (label ? ctx.translations(label, TEXT.title) : []).map((t) => [t.language, t.value]),
+      );
+      for (const language of new Set([...tail.langs.keys(), ...bodies.keys(), ...labels.keys()]))
+        tail.langs.set(
+          language,
+          (tail.langs.get(language) ?? tail.raw) +
+            line(labels.get(language) ?? label, bodies.get(language) ?? body),
+        );
+    }
+    tail.raw += line(label, body);
+    last.body = ctx.display(tail.path, tail.raw, TEXT.long);
+    if (tail.langs.size > 0)
+      last.localizedBody = {
+        defaultValue: { language: DEFAULT_LANGUAGE, value: last.body },
+        translatedValues: [...tail.langs].map(([language, value]) => ({
+          language,
+          value: fitText(value, TEXT.long, 'display').text,
+        })),
+      };
+    ctx.note(
       capability,
       path,
       'difference',
@@ -123,7 +151,7 @@ class Modules {
   link(link: ViewLink, description: string, path: string): void {
     if (this.uris.some((u) => u.uri === link.url)) return;
     if (this.uris.length >= MAX_URIS) {
-      this.ctx.note('field.link', path, 'omitted', `Google shows ${MAX_URIS} links.`);
+      this.fold('field.link', path, link.text ?? description, link.url);
       return;
     }
     this.uris.push({

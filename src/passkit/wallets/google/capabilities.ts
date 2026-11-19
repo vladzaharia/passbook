@@ -58,7 +58,7 @@ export const NATIVE_ROLES: Record<GoogleType, readonly WalletRole[]> = {
   ],
 };
 
-const FORMATS = new Set(['qr', 'pdf417', 'aztec', 'code128', 'code39']);
+const FORMATS = new Set(['qr', 'pdf417', 'aztec', 'code128', 'code39', 'codabar', 'ean13']);
 const BEST: Partial<Record<CapabilityId, Support>> = {
   'image.personal': 'omitted',
   'colors.foreground': 'difference',
@@ -77,6 +77,7 @@ function supportOf(type: GoogleType, id: CapabilityId): Support {
   if (best) return best;
   if (id.startsWith('role.'))
     return NATIVE_ROLES[type].includes(id.slice(5) as WalletRole) ? 'native' : 'text';
+  if (id === 'barcode.format.i2of5') return 'difference';
   if (id.startsWith('barcode.format.'))
     return FORMATS.has(id.slice('barcode.format.'.length)) ? 'native' : 'omitted';
   if (VIEW_GROUPS.some((g) => id === `field.${g}`)) return 'text';

@@ -95,7 +95,7 @@ describe.each(TYPES)('Google %s: items match the body', (type) => {
 
         // Barcode: the first format Google renders, message unchanged; the skipped ones are reported.
         const chosen = view.barcodes.findIndex((b) =>
-          ['qr', 'pdf417', 'aztec', 'code128', 'code39'].includes(b.kind),
+          ['qr', 'pdf417', 'aztec', 'code128', 'code39', 'codabar', 'ean13'].includes(b.kind),
         );
         const barcode = object.barcode as { value: string; alternateText?: string } | undefined;
         if (view.validity.voided || chosen < 0) expect(barcode).toBeUndefined();
@@ -139,7 +139,9 @@ describe.each(TYPES)('Google %s: items match the body', (type) => {
   it('declares every capability id', () => {
     expect(Object.keys(declared).length).toBeGreaterThan(70);
     expect(declared['barcode.format.code39']).toBe('native');
-    expect(declared['barcode.format.codabar']).toBe('omitted');
+    expect(declared['barcode.format.codabar']).toBe('native');
+    expect(declared['barcode.format.ean13']).toBe('native');
+    expect(declared['barcode.format.i2of5']).toBe('difference');
     expect(declared.nfc).toBe('unsupported');
   });
 });

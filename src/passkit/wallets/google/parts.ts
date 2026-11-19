@@ -1,5 +1,5 @@
 /** The parts every Google type carries the same way: barcode, colour, dates, locations, void state. */
-import type { BarcodeKind } from '../types.ts';
+import type { BarcodeKind, ViewBarcode } from '../types.ts';
 import type { Ctx } from './ctx.ts';
 import { BARCODE_MESSAGE, MAX_LOCATIONS, TEXT } from './limits.ts';
 import type {
@@ -17,7 +17,18 @@ const BARCODE_TYPES: Partial<Record<BarcodeKind, GoogleBarcode['type']>> = {
   aztec: 'AZTEC',
   code128: 'CODE_128',
   code39: 'CODE_39',
+  codabar: 'CODABAR',
+  ean13: 'EAN_13',
 };
+/** Interleaved 2 of 5 is only offered as ITF-14, which is exactly 14 digits. */
+const typeOf = (b: ViewBarcode): GoogleBarcode['type'] | undefined =>
+  b.kind === 'i2of5'
+    ? /^\d{14}$/u.test(b.message)
+      ? 'ITF_14'
+      : undefined
+    : b.kind === 'other'
+      ? undefined
+      : BARCODE_TYPES[b.kind];
 const NON_ASCII = /\P{ASCII}/u;
 
 /**
@@ -27,7 +38,7 @@ const NON_ASCII = /\P{ASCII}/u;
 export function barcodeOf(ctx: Ctx): GoogleBarcode | undefined {
   const { barcodes, validity } = ctx.view;
   if (barcodes.length === 0 || validity.voided) return undefined;
-  const chosen = barcodes.findIndex((b) => b.kind !== 'other' && BARCODE_TYPES[b.kind]);
+  const chosen = barcodes.findIndex((b) => b.kind !== 'other' && typeOf(b));
   for (const [i, b] of barcodes.entries()) {
     if (i === chosen || (chosen >= 0 && i > chosen)) break;
     ctx.note(
@@ -41,7 +52,9 @@ export function barcodeOf(ctx: Ctx): GoogleBarcode | undefined {
   if (!barcode || barcode.kind === 'other') return undefined;
   const path = `barcodes.${chosen}`;
   if (ctx.left('barcode.format', path)) return undefined;
-  const type = BARCODE_TYPES[barcode.kind] as GoogleBarcode['type'];
+  const type = typeOf(barcode) as GoogleBarcode['type'];
+  if (barcode.kind === 'i2of5')
+    ctx.note('barcode.format.i2of5', path, 'difference', 'Sent as ITF-14 (14 digits).');
   const value = ctx.identity(path, barcode.message, BARCODE_MESSAGE);
   if (NON_ASCII.test(value) && !/^utf-?8$/iu.test(barcode.encoding))
     ctx.note(
