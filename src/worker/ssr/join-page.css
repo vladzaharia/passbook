@@ -153,6 +153,7 @@ body {
     margin-inline: auto;
   }
   .jn-host {
+    width: 100%;
     max-width: 30rem;
     margin-inline: auto;
   }
