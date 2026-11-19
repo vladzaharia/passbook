@@ -140,6 +140,15 @@ describe('paper content derivation', () => {
       design: { ...DERIVED_PAPER, derived: false, fields: ['a', 'b', 'c'] },
     });
     expect(out.extras).toEqual([{ label: 'C', text: 'ok' }]);
+    // The barcode message is not the scan code, but a field equals it.
+    const other = paperContent({
+      passJson: pass,
+      manifest: EVENT_MANIFEST,
+      personalization: {},
+      scanCode: 'ok',
+      design: { ...DERIVED_PAPER, derived: false, fields: ['a', 'b', 'c'] },
+    });
+    expect(other.extras).toEqual([]);
   });
 
   it('takes terms from the design and drops a scan-code expression', () => {

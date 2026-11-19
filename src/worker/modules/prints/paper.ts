@@ -36,6 +36,7 @@ export async function paperTicket(
     passJson,
     manifest: (manifest ?? {}) as Pick<TemplateManifest, 'wallets' | 'inputs' | 'lookups' | 'scan'>,
     personalization: pass.personalization,
+    scanCode: pass.scanCode,
     design,
   });
   return { design, content };

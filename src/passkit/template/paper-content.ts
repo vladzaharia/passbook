@@ -33,6 +33,8 @@ export interface PaperContentInput {
   design: PaperDesign;
   /** The holder's name when the pass has one; never an email address. */
   holderName?: string | null;
+  /** The pass's own scan code: a field equal to it is never printed. */
+  scanCode?: string | null;
 }
 
 const text = (v: RoleValue | undefined): string | undefined => {
@@ -119,6 +121,7 @@ export function paperContent(input: PaperContentInput): PaperContent {
   const credentials = new Set<string>(
     [
       passJson.serialNumber,
+      input.scanCode,
       ...[...(passJson.barcodes ?? []), ...(passJson.barcode ? [passJson.barcode] : [])].flatMap(
         (b) => [b.message, b.altText],
       ),
