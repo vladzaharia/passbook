@@ -88,6 +88,7 @@ export async function holdEnrolment(
   const principal = adminOf(auth, scope);
   const row = await heldRow(ctx, scope, false);
   const status = await orgStatus(ctx.env.DB, scope.orgId);
+  if (status === null || status === 'deleted') throw new NotFoundError();
   if (status === 'suspended') {
     await ctx.env.JOBS.send({
       kind: 'wallet.enrolment_hold',
@@ -118,6 +119,8 @@ export async function releaseEnrolment(
 ): Promise<'released'> {
   const principal = adminOf(auth, scope);
   const row = await heldRow(ctx, scope, true);
+  const status = await orgStatus(ctx.env.DB, scope.orgId);
+  if (status === null || status === 'deleted') throw new NotFoundError();
   const g = grant(ctx, {
     purpose: 'org_mode.wallet.enrolment_release',
     principal,

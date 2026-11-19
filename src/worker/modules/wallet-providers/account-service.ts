@@ -155,6 +155,7 @@ async function failedWrite(
 ): Promise<never> {
   if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
     throw new ForbiddenError();
+  if (await isNewModelAccount(ctx.env.DB, scope.orgId, scope.mode, scope.provider)) throw moved();
   await assertCredentialKeyset(ctx, credentialKeysetCommitment);
   const row = await findAccount(ctx.env.DB, scope);
   if (row) await currentAccount(ctx, scope, row.id, credentialKeysetCommitment);
@@ -289,6 +290,7 @@ export async function revokeWalletProviderAccount(
   ) {
     if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
       throw new ForbiddenError();
+    if (await isNewModelAccount(ctx.env.DB, scope.orgId, scope.mode, scope.provider)) throw moved();
     await assertCredentialKeyset(ctx, credentialKeysetCommitment);
     const current = await findAccount(ctx.env.DB, scope);
     if (current) await currentAccount(ctx, scope, current.id, credentialKeysetCommitment);
