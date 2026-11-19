@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import { OrgSettingsSchema, PlatformSettingsSchema } from '../../../shared/contracts/settings.ts';
 import { checkFromName } from '../../../shared/email-from-name.ts';
+import { DATA_CLASSES, RETENTION_CLASSES } from '../../../shared/privacy/data-classes.ts';
 import type { Actor } from '../../platform/context.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -113,6 +114,9 @@ export interface SettingEntry {
   key: string;
   value: unknown;
   default?: unknown;
+  source: 'org' | 'default';
+  ceiling?: number;
+  blockedByPlatform?: boolean;
   updatedAt: number | null;
   updatedBy: string | null;
 }
@@ -123,7 +127,8 @@ async function assertScope(ctx: ServiceContext, scope: string): Promise<void> {
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
 }
 
-export async function listSettings(ctx: ServiceContext, scope: string): Promise<SettingEntry[]> {
+/** Stored values over registry defaults; no platform inheritance applied. */
+async function listStored(ctx: ServiceContext, scope: string): Promise<SettingEntry[]> {
   await assertScope(ctx, scope);
   const stored = new Map((await readScopeRows(ctx.env.DB, scope)).map((row) => [row.key, row]));
   const registry = registryFor(scope);
@@ -136,10 +141,51 @@ export async function listSettings(ctx: ServiceContext, scope: string): Promise<
       key: def.key,
       value: has ? validated[def.key] : (def.default ?? null),
       ...(def.default !== undefined ? { default: def.default } : {}),
+      source: has ? 'org' : 'default',
       updatedAt: row?.updated_at ?? null,
       updatedBy: row?.updated_by ?? null,
     };
   });
+}
+
+const clamp = (n: number, max: number) => Math.min(n, max);
+
+/** Org entries read through the platform: defaults come from it and values stop at its ceilings. */
+function inherit(entries: SettingEntry[], platform: PlatformSettings): SettingEntry[] {
+  const retention = new Map(
+    RETENTION_CLASSES.map((cls) => [DATA_CLASSES[cls].key as string, DATA_CLASSES[cls]]),
+  );
+  return entries.map((entry) => {
+    const cls = retention.get(entry.key);
+    if (cls) {
+      const ceiling = platform[cls.maxKey];
+      const fallback = clamp(Math.max(platform[cls.key], cls.floor), ceiling);
+      const value =
+        entry.source === 'org' && typeof entry.value === 'number'
+          ? clamp(Math.max(entry.value, cls.floor), ceiling)
+          : fallback;
+      return { ...entry, value, default: fallback, ceiling };
+    }
+    if (entry.key === 'email.orgCapPerDay') {
+      const ceiling = platform['email.orgCapPerDayMax'];
+      const fallback = clamp(entry.default as number, ceiling);
+      return {
+        ...entry,
+        value: entry.source === 'org' ? clamp(entry.value as number, ceiling) : fallback,
+        default: fallback,
+        ceiling,
+      };
+    }
+    if (entry.key === 'nfc.tags' && !platform['nfc.enabled'])
+      return { ...entry, blockedByPlatform: true };
+    return entry;
+  });
+}
+
+export async function listSettings(ctx: ServiceContext, scope: string): Promise<SettingEntry[]> {
+  const entries = await listStored(ctx, scope);
+  const orgId = orgIdOfScope(scope);
+  return orgId === null ? entries : inherit(entries, await getPlatformSettings(ctx));
 }
 
 /** The schema checks the name against "PassBook"; this also checks the platform's current sender name. */
@@ -204,7 +250,7 @@ export async function updateSettings(
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   // The client's revision is the one its form was loaded with: older than the stored one is a 409.
   const revision = input.configRevision ?? current;
-  const before = await listSettings(ctx, scope);
+  const before = await listStored(ctx, scope);
   const written = await writeScope(
     ctx,
     scope,
@@ -219,11 +265,11 @@ export async function updateSettings(
   );
   if (!written) throw new ForbiddenError();
   clearSettingsCache(ctx.env.DB);
-  const after = await listSettings(ctx, scope);
+  const stored = await listStored(ctx, scope);
 
   const prior = new Map(before.map((e) => [e.key, e.value]));
   const changes: Record<string, { from: unknown; to: unknown }> = {};
-  for (const entry of after) {
+  for (const entry of stored) {
     if (JSON.stringify(prior.get(entry.key)) !== JSON.stringify(entry.value))
       changes[entry.key] = { from: prior.get(entry.key) ?? null, to: entry.value };
   }
@@ -248,7 +294,7 @@ export async function updateSettings(
       },
     });
   await enqueueShortenNotices(ctx, retention.notices);
-  return after;
+  return listSettings(ctx, scope);
 }
 
 /** The org's `config_revision` for an org scope, to send back with a save; absent for the platform. */
