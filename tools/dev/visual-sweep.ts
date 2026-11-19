@@ -9,12 +9,13 @@ import { capture } from './lib/capture.ts';
 import { captureEmails } from './lib/emails.ts';
 import { resolvePlaceholders } from './lib/resolve.ts';
 import {
+  ALL_VIEWPORTS,
+  DEFAULT_VIEWPORTS,
   filterRoutes,
   loadRoutes,
   placeholdersOf,
   type Role,
   type Theme,
-  VIEWPORTS,
   type ViewportName,
 } from './lib/routes.ts';
 
@@ -48,11 +49,10 @@ async function main() {
     throw new Error('--out must be inside .wrangler/ (screenshots show signed-in data).');
   }
   const stateDir = resolve(root, '.wrangler/visual-sweep/state');
-  const viewports = list<ViewportName>(
-    arg('--viewports'),
-    Object.keys(VIEWPORTS) as ViewportName[],
-    'viewport',
-  );
+  const narrow = Boolean(arg('--viewports'));
+  const viewports: ViewportName[] = narrow
+    ? list(arg('--viewports'), ALL_VIEWPORTS, 'viewport')
+    : [...DEFAULT_VIEWPORTS];
   const themes = list<Theme>(arg('--themes'), ['light', 'dark'], 'theme');
 
   const routes = filterRoutes(
@@ -66,7 +66,10 @@ async function main() {
   };
   // Sign in (or reuse saved state) once for every role a route needs.
   for (const role of new Set(routes.map((r) => r.role))) if (role !== 'anon') await ctx(role);
-  const needed = ['orgId', ...routes.flatMap((r) => placeholdersOf(r.path))];
+  const needed = [
+    'orgId',
+    ...routes.flatMap((r) => [...placeholdersOf(r.path), ...(r.filterOrg ? [r.filterOrg] : [])]),
+  ];
   const values = await resolvePlaceholders(
     { platform: () => ctx('platform'), org: () => ctx('org'), holder: () => ctx('holder') },
     needed,
@@ -75,7 +78,7 @@ async function main() {
   mkdirSync(out, { recursive: true });
   const shots =
     routes.length > 0
-      ? await capture({ base, out, stateDir, viewports, themes, values }, routes)
+      ? await capture({ base, out, stateDir, viewports, narrow, themes, values }, routes)
       : [];
   if (flag('--emails'))
     shots.push(

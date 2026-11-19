@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { chromium } from '@playwright/test';
 import type { Shot } from './capture.ts';
-import { shotName, type Theme, VIEWPORTS, type ViewportName } from './routes.ts';
+import { SIZES, shotName, type Theme, type ViewportName } from './routes.ts';
 
 type Mail = { kind: string; html: string; mtime: number };
 
@@ -46,7 +46,7 @@ export async function captureEmails(o: {
     for (const theme of o.themes) {
       for (const viewport of o.viewports) {
         const context = await browser.newContext({
-          viewport: VIEWPORTS[viewport],
+          viewport: SIZES[viewport],
           colorScheme: theme,
         });
         for (const mail of mails) {
