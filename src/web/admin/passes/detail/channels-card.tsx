@@ -76,21 +76,18 @@ function Row({
             {CHANNEL_STATE_LABEL[state]}
           </StatusPill>
         </p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-fg-muted">
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-fg-muted">
           {meta}
           {overridden ? (
-            <>
-              <span aria-hidden>·</span>
-              <Button
-                variant="link"
-                size="sm"
-                className="text-xs"
-                disabled={disabled || busy}
-                onClick={onReset}
-              >
-                {CHANNEL_COPY.useTemplate}
-              </Button>
-            </>
+            <Button
+              variant="link"
+              size="sm"
+              className="text-xs"
+              disabled={disabled || busy}
+              onClick={onReset}
+            >
+              {CHANNEL_COPY.useTemplate}
+            </Button>
           ) : null}
         </p>
       </div>
