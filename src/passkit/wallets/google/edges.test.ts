@@ -26,7 +26,12 @@ const compile = async (
 const object = (r: { objectBody?: unknown }) => r.objectBody as Record<string, any>;
 
 describe('barcodes', () => {
-  const TYPES = { qr: 'QR_CODE', pdf417: 'PDF_417', aztec: 'AZTEC', code128: 'CODE_128' } as const;
+  const TYPES = {
+    qr: 'QR_CODE',
+    pdf417: 'PDF_417',
+    aztec: 'AZTEC',
+    code128: 'CODE_128',
+  } as const;
   for (const [kind, type] of Object.entries(TYPES))
     it(`${kind} is ${type}, message and alt text unchanged`, async () => {
       const r = await compile('starter-generic', 'generic', (v) => {
@@ -49,8 +54,8 @@ describe('barcodes', () => {
   it('takes the first format Google renders and reports the ones before it', async () => {
     const r = await compile('starter-generic', 'generic', (v) => {
       v.barcodes = [
-        barcode('code39'),
-        barcode('ean13'),
+        barcode('i2of5', 'ABC'),
+        barcode('i2of5', '12'),
         barcode('pdf417', 'P-1', 'utf-8'),
         barcode('qr', 'Q-1'),
       ];
@@ -67,7 +72,7 @@ describe('barcodes', () => {
     const view = await googleView('starter-generic', {
       wallets: { required: ['barcode.format'] },
       patch: (v) => {
-        v.barcodes = [barcode('code39')];
+        v.barcodes = [barcode('i2of5', 'ABC')];
       },
     });
     expect(object(googleCompiler.compile(view, OPTIONS)).barcode).toBeUndefined();
@@ -80,9 +85,50 @@ describe('barcodes', () => {
     });
     expect(report.status.kind).toBe('blocked');
     expect(report.items[0]).toMatchObject({
-      capability: 'barcode.format.code39',
+      capability: 'barcode.format.i2of5',
       severity: 'blocked',
     });
+  });
+});
+
+describe('barcodes: messages the type cannot encode', () => {
+  const sent = async (kind: ViewBarcode['kind'], message: string) => {
+    const r = await compile('starter-generic', 'generic', (v) => {
+      v.barcodes = [barcode(kind, message)];
+    });
+    return { barcode: object(r).barcode, items: r.items };
+  };
+  it('sends valid EAN-13 (12 digits, or 13 with check digit), Code 39 and Codabar', async () => {
+    expect((await sent('ean13', '4006381333931')).barcode.type).toBe('EAN_13');
+    expect((await sent('ean13', '400638133393')).barcode.type).toBe('EAN_13');
+    expect((await sent('code39', 'AB-12 $')).barcode.type).toBe('CODE_39');
+    expect((await sent('codabar', 'A1234-5B')).barcode.type).toBe('CODABAR');
+  });
+  it('omits and reports an invalid message', async () => {
+    for (const [kind, message] of [
+      ['ean13', '4006381333932'],
+      ['ean13', '12345'],
+      ['code39', 'abc'],
+      ['codabar', 'A12x4B'],
+    ] as const) {
+      const r = await sent(kind, message);
+      expect(r.barcode, `${kind} ${message}`).toBeUndefined();
+      expect(r.items).toContainEqual(
+        expect.objectContaining({ capability: `barcode.format.${kind}`, support: 'omitted' }),
+      );
+    }
+  });
+});
+
+describe('barcodes: interleaved 2 of 5', () => {
+  it('goes out as ITF-14 for 14 digits and says so', async () => {
+    const r = await compile('starter-generic', 'generic', (v) => {
+      v.barcodes = [barcode('i2of5', '12345678901231')];
+    });
+    expect(object(r).barcode.type).toBe('ITF_14');
+    expect(r.items).toContainEqual(
+      expect.objectContaining({ capability: 'barcode.format.i2of5', support: 'difference' }),
+    );
   });
 });
 

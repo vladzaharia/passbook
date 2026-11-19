@@ -1,10 +1,17 @@
 /**
  * Everything that has no native slot goes into labelled text modules in Apple's front-to-back
- * order (architecture 3.3 step 2), with links in the links module. At most 10 modules and 10
- * links are carried; the rest are reported as omitted.
+ * order (architecture 3.3 step 2), with links in the links module. Google shows 10 modules: past
+ * that the rest are folded into the last one as labelled lines. Links past 10 are folded the same way.
  */
 
-import { type ViewField, type ViewLink, WALLET_ROLES, type WalletRole } from '../types.ts';
+import { fitText } from '../text.ts';
+import {
+  type CapabilityId,
+  type ViewField,
+  type ViewLink,
+  WALLET_ROLES,
+  type WalletRole,
+} from '../types.ts';
 import type { Ctx } from './ctx.ts';
 import { DEFAULT_LANGUAGE, MAX_MODULES, MAX_URIS, TEXT } from './limits.ts';
 import type {
@@ -71,6 +78,8 @@ class Modules {
   readonly text: GoogleTextModule[] = [];
   readonly uris: GoogleLinkUri[] = [];
   readonly emitted = new Set<string>();
+  /** The last module's full body and path, so overflow can be appended to it. */
+  private tail: { raw: string; path: string; langs: Map<string, string> } | undefined;
 
   private readonly ctx: Ctx;
 
@@ -93,13 +102,65 @@ class Modules {
       if (localizedHeader) module.localizedHeader = localizedHeader;
     }
     this.text.push(module);
+    this.tail = {
+      raw: body,
+      path,
+      langs: new Map(
+        (module.localizedBody?.translatedValues ?? []).map((t) => [t.language, t.value]),
+      ),
+    };
     return module;
+  }
+
+  /** Google shows 10 modules: the rest become labelled lines of the last one, and the report says so. */
+  fold(capability: CapabilityId, path: string, label: string | undefined, body: string): void {
+    const { ctx, tail } = this;
+    const last = this.text[this.text.length - 1];
+    if (!last || !tail) {
+      this.add(`overflow.${path}`, label, body, path);
+      ctx.note(
+        capability,
+        path,
+        'difference',
+        `Google shows ${MAX_URIS} links: carried as a text module.`,
+      );
+      return;
+    }
+    const line = (l: string | undefined, b: string) => `\n${l ? `${l}: ` : ''}${b}`;
+    if (ctx.translate) {
+      const bodies = new Map(ctx.translations(body, TEXT.body).map((t) => [t.language, t.value]));
+      const labels = new Map(
+        (label ? ctx.translations(label, TEXT.title) : []).map((t) => [t.language, t.value]),
+      );
+      for (const language of new Set([...tail.langs.keys(), ...bodies.keys(), ...labels.keys()]))
+        tail.langs.set(
+          language,
+          (tail.langs.get(language) ?? tail.raw) +
+            line(labels.get(language) ?? label, bodies.get(language) ?? body),
+        );
+    }
+    tail.raw += line(label, body);
+    last.body = ctx.display(tail.path, tail.raw, TEXT.long);
+    if (tail.langs.size > 0)
+      last.localizedBody = {
+        defaultValue: { language: DEFAULT_LANGUAGE, value: last.body },
+        translatedValues: [...tail.langs].map(([language, value]) => ({
+          language,
+          value: fitText(value, TEXT.long, 'display').text,
+        })),
+      };
+    ctx.note(
+      capability,
+      path,
+      'difference',
+      `Google shows ${MAX_MODULES} text modules: carried as a line of "${last.header ?? last.id}".`,
+    );
   }
 
   link(link: ViewLink, description: string, path: string): void {
     if (this.uris.some((u) => u.uri === link.url)) return;
     if (this.uris.length >= MAX_URIS) {
-      this.ctx.note('field.link', path, 'omitted', `Google shows ${MAX_URIS} links.`);
+      this.fold('field.link', path, link.text ?? description, link.url);
       return;
     }
     this.uris.push({
@@ -116,7 +177,7 @@ function fieldModules(ctx: Ctx, m: Modules): void {
     const capability = `field.${f.group}` as const;
     if (ctx.left(capability, f.path)) continue;
     if (m.full()) {
-      ctx.note(capability, f.path, 'omitted', `Google shows ${MAX_MODULES} text modules.`);
+      m.fold(capability, f.path, f.label, bodyOf(f));
       for (const link of f.links) m.link(link, f.label ?? f.text, f.path);
       continue;
     }
@@ -156,7 +217,7 @@ function roleModules(ctx: Ctx, m: Modules): void {
       continue;
     }
     if (m.full()) {
-      ctx.note(`role.${role}`, '', 'omitted', `Google shows ${MAX_MODULES} text modules.`);
+      m.fold(`role.${role}`, '', value.label ?? ROLE_LABEL[role], body);
       continue;
     }
     m.add(`role.${role}`, value.label ?? ROLE_LABEL[role], body, `role.${role}`);
@@ -173,7 +234,8 @@ function upcoming(ctx: Ctx, m: Modules, options: ModuleOptions): void {
   }
   if (ctx.left('upcoming.multi', 'events')) return;
   if (m.full()) {
-    ctx.note('upcoming.multi', 'events', 'omitted', `Google shows ${MAX_MODULES} text modules.`);
+    const lines = events.map((e) => (e.date ? `${e.name}: ${e.date}` : e.name));
+    m.fold('upcoming.multi', 'events', 'Upcoming', lines.join('\n'));
     return;
   }
   const lines = events.map((e) => (e.date ? `${e.name}: ${e.date}` : e.name));

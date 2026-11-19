@@ -82,5 +82,12 @@ export function setColors(run: Run): void {
   };
   put('bgColor', 'colors.background', background);
   put('fontColor', 'colors.foreground', foreground);
-  if (label) note(run, 'colors.label', '', 'difference', 'Samsung picks the label colors.');
+  if (label)
+    note(
+      run,
+      'colors.label',
+      '',
+      'difference',
+      'Samsung has no label colour field (fontColor is dark or light only): it picks them.',
+    );
 }
