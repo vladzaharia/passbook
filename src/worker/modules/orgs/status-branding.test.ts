@@ -141,7 +141,7 @@ describe('org status', () => {
       name: org.name,
       slug: org.slug,
       createdAt: expect.any(Number),
-      counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0 },
+      counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 0 },
       countsCapped: false,
     };
     const off = await call('POST', `/${org.id}/status`, { status: 'suspended' });

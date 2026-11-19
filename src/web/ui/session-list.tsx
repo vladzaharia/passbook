@@ -1,6 +1,6 @@
 import { ACTION_ICON } from '../lib/action-icons.ts';
 import { deviceIcon, deviceLabel } from '../lib/device.ts';
-import { formatDateTime } from '../lib/format.ts';
+import { formatLastActive } from '../lib/format.ts';
 import { useInsertHighlight } from '../lib/motion.ts';
 import { Button } from './button.tsx';
 import { ListRow, ListRows } from './list-row.tsx';
@@ -26,24 +26,19 @@ export interface SessionListProps {
 }
 
 /**
- * Signed-in devices (portal and admin): device icon, "Chrome on macOS", last active and signed in.
+ * Signed-in devices (portal and admin): device icon, "Chrome on macOS", one short last-active line.
  * The This device pill sits exactly where Revoke sits on the other rows. Callers drop a revoked
  * row inside removeWithTransition (lib/motion.ts) so it leaves with a transition.
  */
 export function SessionList({ items, onRevoke, revoking, className }: SessionListProps) {
   const fresh = useInsertHighlight(items.map((s) => s.id));
+  const now = Date.now();
   return (
     <ListRows label="Sessions" className={className}>
       {items.map((s) => {
         const Icon = deviceIcon(s.userAgent);
         const label = deviceLabel(s.userAgent);
-        const meta = [
-          `Last active ${formatDateTime(s.lastSeenAt)}`,
-          `Signed in ${formatDateTime(s.createdAt)}`,
-          s.method,
-        ]
-          .filter(Boolean)
-          .join(' · ');
+        const meta = [formatLastActive(s.lastSeenAt, now), s.method].filter(Boolean).join(' · ');
         return (
           <ListRow
             key={s.id}
@@ -59,6 +54,7 @@ export function SessionList({ items, onRevoke, revoking, className }: SessionLis
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="text-danger"
                   loading={revoking === s.id}
                   iconStart={<ACTION_ICON.signOut aria-hidden />}
                   aria-label={`Revoke ${label}`}

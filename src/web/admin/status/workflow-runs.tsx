@@ -92,13 +92,9 @@ export function WorkflowRuns({ orgName }: { orgName: (id: string | null) => stri
               id: 'error',
               cell: ({ row }) =>
                 row.original.errorCode ? (
-                  // One line, so error rows keep the table's row height.
-                  <div className="flex min-w-0 items-baseline gap-2">
-                    <span>{workflowErrorMessage(row.original.kind, row.original.errorCode)}</span>
-                    <code className="font-mono text-xs text-fg-muted">
-                      {row.original.errorCode}
-                    </code>
-                  </div>
+                  <span title={row.original.errorCode} className="min-w-48 whitespace-normal">
+                    {workflowErrorMessage(row.original.kind, row.original.errorCode)}
+                  </span>
                 ) : (
                   <span className="text-fg-subtle">—</span>
                 ),

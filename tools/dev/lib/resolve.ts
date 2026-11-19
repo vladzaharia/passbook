@@ -43,10 +43,12 @@ async function joinToken(ctx: Ctx): Promise<string | undefined> {
   const org = await ctx.org();
   const orgs = await list(await ctx.platform(), '/api/v1/orgs');
   for (const o of orgs) {
-    for (const t of (await list(org, `/api/v1/templates?limit=20&orgId=${o.id}`)).slice(0, 8)) {
-      const res = await org.get(`/api/v1/join-links/${encodeURIComponent(String(t.id))}`);
+    for (const t of await list(org, `/api/v1/templates?limit=50&orgId=${o.id}`)) {
+      const res = await org.get(
+        `/api/v1/join-links/${encodeURIComponent(String(t.id))}?orgId=${o.id}`,
+      );
       if (!res.ok()) continue;
-      const url = last(((await res.json()) as Json).url);
+      const url = last((((await res.json()) as Json).link as Json | null)?.url);
       if (url) return url;
     }
   }

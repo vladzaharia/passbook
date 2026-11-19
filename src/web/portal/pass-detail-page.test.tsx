@@ -142,9 +142,8 @@ describe('pass detail', () => {
     expect(screen.queryByRole('link', { name: 'Add to Samsung Wallet' })).toBeNull();
   });
 
-  it('shows the card, the badge, a details card without buttons, and flips', async () => {
+  it('shows the card, the badge and a details card without buttons', async () => {
     onMac();
-    const user = userEvent.setup();
     const { container } = await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
     });
@@ -171,11 +170,8 @@ describe('pass detail', () => {
     expect(within(details).getByText('Active')).toBeInTheDocument();
     expect(within(details).getAllByText('Sam Smith').length).toBeGreaterThan(0);
 
-    await user.click(screen.getByRole('radio', { name: 'Details' }));
-    expect(screen.getByRole('radio', { name: 'Details' })).toBeChecked();
-    // The far face leaves the tab order and accessibility tree.
-    expect(container.querySelector('.pc-face[data-side="front"]')).toHaveAttribute('inert');
-    expect(container.querySelector('.pc-face[data-side="back"]')).not.toHaveAttribute('inert');
+    // The Details card below is the one place for the fields: no Front / Details control.
+    expect(screen.queryByRole('radio', { name: 'Details' })).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -377,7 +373,7 @@ describe('pass detail', () => {
     await screen.findByRole('heading', { name: 'Membership', level: 1 });
     await waitFor(() => expect(document.title).toBe('Henrys membership · PassBook'));
     const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' });
-    expect(within(crumbs).getByText('Henrys membership')).toHaveAttribute('aria-current', 'page');
+    expect(within(crumbs).getByText('Gym membership')).toHaveAttribute('aria-current', 'page');
   });
 
   it('removes from More and returns to the list', async () => {

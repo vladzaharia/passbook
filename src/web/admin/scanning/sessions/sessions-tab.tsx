@@ -9,6 +9,7 @@ import {
   Radio,
   ScanLine,
 } from 'lucide-react';
+import { useState } from 'react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
@@ -21,20 +22,19 @@ import {
   ErrorState,
   MoreMenu,
   Skeleton,
-  StatusPill,
   toast,
 } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { useScanningSessions, useUpdateSession } from './api.ts';
 import { sessionAccepts, sessionRuleLabel } from './draft.ts';
+import { type HoursDialog, HoursDialogs, HoursMenuItems } from './session-hours-actions.tsx';
+import { SessionStatePill, sessionState } from './session-state.tsx';
 
 export function SessionsTab({
   canManage,
-  onNew,
   onDuplicate,
 }: {
   canManage: boolean;
-  onNew: () => void;
   onDuplicate: (s: ScanningSession) => void;
 }) {
   const { orgId } = useOrgScope();
@@ -81,7 +81,6 @@ export function SessionsTab({
           art="scanner"
           title="No scanning sessions"
           description="Create a session to share admission rules across devices."
-          action={canManage ? <Button onClick={onNew}>New scanning session</Button> : undefined}
         />
       </div>
     );
@@ -90,7 +89,7 @@ export function SessionsTab({
       <div className="flex flex-wrap gap-2 text-sm text-fg-muted">
         <Badge>
           <Radio aria-hidden />
-          {items.filter((s) => s.status === 'active').length} running
+          {items.filter((s) => sessionState(s) === 'running').length} running
         </Badge>
         <Badge>
           <MonitorSmartphone aria-hidden />
@@ -114,30 +113,11 @@ export function SessionsTab({
                 </h2>
                 <p className="mt-1 truncate text-xs text-fg-muted">{s.orgName}</p>
               </div>
-              {canManage ? (
-                <MoreMenu>
-                  {s.status !== 'active' ? <ResumeItem session={s} /> : null}
-                  <DropdownMenuItem onSelect={() => onDuplicate(s)}>
-                    <Copy aria-hidden />
-                    Duplicate session
-                  </DropdownMenuItem>
-                </MoreMenu>
-              ) : null}
+              {canManage ? <CardMenu session={s} onDuplicate={onDuplicate} /> : null}
             </div>
             <CardBody className="grid gap-4">
               <div className="flex flex-wrap items-center gap-2">
-                <StatusPill
-                  status={s.status}
-                  tone={
-                    s.status === 'active'
-                      ? 'success'
-                      : s.status === 'paused'
-                        ? 'warning'
-                        : 'neutral'
-                  }
-                >
-                  {s.status === 'active' ? 'Running' : s.status === 'paused' ? 'Paused' : 'Ended'}
-                </StatusPill>
+                <SessionStatePill session={s} />
                 <ModePill mode={s.mode} />
               </div>
               <div className="grid grid-cols-3 gap-3">
@@ -171,6 +151,28 @@ export function SessionsTab({
         </Button>
       ) : null}
     </div>
+  );
+}
+function CardMenu({
+  session: s,
+  onDuplicate,
+}: {
+  session: ScanningSession;
+  onDuplicate: (s: ScanningSession) => void;
+}) {
+  const [dialog, setDialog] = useState<HoursDialog>();
+  return (
+    <>
+      <MoreMenu>
+        {s.status !== 'active' ? <ResumeItem session={s} /> : null}
+        <HoursMenuItems session={s} onDialog={setDialog} />
+        <DropdownMenuItem onSelect={() => onDuplicate(s)}>
+          <Copy aria-hidden />
+          Duplicate session
+        </DropdownMenuItem>
+      </MoreMenu>
+      <HoursDialogs session={s} dialog={dialog} onClose={() => setDialog(undefined)} />
+    </>
   );
 }
 function ResumeItem({ session: s }: { session: ScanningSession }) {

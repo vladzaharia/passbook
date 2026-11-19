@@ -181,7 +181,9 @@ export function WizardAside({
       ) : (
         <div data-art-host="" className="my-auto flex flex-col items-center gap-2 text-center">
           <EntityArt name={ENTITY.connection.art} size="sm" />
-          <p className="text-xs text-fg-muted">Test shows a sample record here.</p>
+          <p className="text-xs text-fg-muted">
+            {connector ? 'Test shows a sample record here.' : 'Pick a connector.'}
+          </p>
         </div>
       )}
     </div>

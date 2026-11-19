@@ -33,10 +33,10 @@ body {
   margin-top: 1.5rem;
   align-items: start;
 }
-/* 11/12 of the buddy's height stays free above the card's edge (art-wallet.css). */
+/* The buddy's height stays free above the card's edge (art-wallet.css). */
 .jn-host {
   position: relative;
-  margin-top: 4.125rem;
+  margin-top: 4.5rem;
   --wl-buddy-inset: 1.5rem;
   --wl-seat-border: 1px;
 }
@@ -135,7 +135,7 @@ body {
     margin-top: 2rem;
   }
   .jn-host {
-    margin-top: 4.125rem;
+    margin-top: 4.5rem;
   }
   .jn-stage {
     padding: 2.5rem 2rem;
@@ -144,7 +144,7 @@ body {
     max-width: 20rem;
   }
   .jn-side {
-    margin-top: 4.125rem;
+    margin-top: 4.5rem;
   }
 }
 @media (min-width: 40rem) and (max-width: 55.99rem) {

@@ -27,7 +27,7 @@ import {
 import { useConnectionPages, useConnectorNames } from './api.ts';
 import { HealthPill } from './health.tsx';
 import { healthLine } from './health-text.ts';
-import { HEALTH_FILTERS, modeLabel } from './labels.ts';
+import { HEALTH_FILTERS, sourceLine } from './labels.ts';
 import { showLive, TestModeNote } from './test-mode-note.tsx';
 import { AddEndpointButton, WebhooksTab } from './webhooks/webhooks-tab.tsx';
 
@@ -100,7 +100,7 @@ export function ConnectionsListPage({
           return (
             <span className="inline-flex items-center gap-2">
               <Icon aria-hidden className="size-4 shrink-0 text-fg-muted" />
-              {connectorName(row.original.connectorType)} · {modeLabel(row.original.mode)}
+              {sourceLine(connectorName(row.original.connectorType), row.original.mode)}
             </span>
           );
         },

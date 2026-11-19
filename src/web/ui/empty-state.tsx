@@ -102,7 +102,7 @@ export function EmptyState({
         'relative flex flex-col items-center text-center',
         inline
           ? 'gap-1.5 px-4 py-6'
-          : 'mt-18 gap-2 rounded-lg border border-dashed border-border-strong px-6 pt-8 pb-10',
+          : 'mt-20 gap-2 rounded-lg border border-dashed border-border-strong px-6 pt-8 pb-10',
         // The search walk spans a share of the box's width.
         !inline && scene === 'search' && '[container-type:inline-size]',
         className,

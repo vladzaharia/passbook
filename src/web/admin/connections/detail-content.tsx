@@ -34,7 +34,7 @@ import { ConfigTab } from './config-tab.tsx';
 import { MappingTab, SettingsTab } from './detail-tabs.tsx';
 import { HealthPill } from './health.tsx';
 import { HealthPanel } from './health-panel.tsx';
-import { modeLabel } from './labels.ts';
+import { sourceLine } from './labels.ts';
 import type { ConnectionDetailSearch } from './search.ts';
 import { showLive, TestModeNote } from './test-mode-note.tsx';
 import { type TestOutcome, TestResult } from './test-result.tsx';
@@ -104,7 +104,7 @@ export function ConnectionDetail({
             <HealthPill health={c.enabled ? c.health : 'disabled'} />
             <span className="inline-flex items-center gap-1.5">
               <Icon aria-hidden className="size-4" />
-              {connectorName(c.connectorType)} · {modeLabel(c.mode)}
+              {sourceLine(connectorName(c.connectorType), c.mode)}
             </span>
             <TestResult outcome={test} className="max-lg:w-full lg:max-w-md" />
           </>

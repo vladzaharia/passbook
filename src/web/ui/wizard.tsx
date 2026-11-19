@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode, useEffect, useRef } from 'react';
+import { type CSSProperties, type ReactNode, useEffect, useId, useRef } from 'react';
 import { cn } from '../lib/cn.ts';
 import { useMediaQuery } from '../lib/media.ts';
 import { prefersReducedMotion, useChangeCount } from '../lib/motion.ts';
@@ -39,6 +39,8 @@ export interface WizardProps {
   nextLabel?: string;
   /** Next or Create cannot run yet (the step explains why). */
   nextDisabled?: boolean;
+  /** Why Next is off, in a few words; shown beside it while it is disabled. */
+  nextHint?: string;
   busy?: boolean;
   children: ReactNode;
 }
@@ -138,11 +140,13 @@ export function WizardBar({
   formId,
   nextLabel = 'Next',
   nextDisabled,
+  nextHint,
   busy,
 }: Pick<
   WizardProps,
-  'onCancel' | 'onBack' | 'onNext' | 'formId' | 'nextLabel' | 'nextDisabled' | 'busy'
+  'onCancel' | 'onBack' | 'onNext' | 'formId' | 'nextLabel' | 'nextDisabled' | 'nextHint' | 'busy'
 >) {
+  const hintId = useId();
   return (
     <section
       aria-label="Wizard actions"
@@ -154,7 +158,12 @@ export function WizardBar({
         <Button variant="ghost" disabled={busy} onClick={onCancel}>
           Cancel
         </Button>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {nextDisabled && nextHint ? (
+            <span id={hintId} className="text-xs text-fg-muted">
+              {nextHint}
+            </span>
+          ) : null}
           {onBack ? (
             <Button variant="outline" disabled={busy} onClick={onBack}>
               Back
@@ -165,6 +174,7 @@ export function WizardBar({
             form={formId}
             loading={busy}
             disabled={nextDisabled}
+            aria-describedby={nextDisabled && nextHint ? hintId : undefined}
             onClick={formId ? undefined : onNext}
           >
             {nextLabel}

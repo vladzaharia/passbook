@@ -69,7 +69,7 @@ export function TemplateDetailHeader({
               iconStart={<ACTION_ICON.create aria-hidden />}
             >
               <Link to="/admin/passes/new" search={newPass} aria-label="New pass">
-                New<span className="max-md:sr-only"> pass</span>
+                New pass
               </Link>
             </Button>
           )}

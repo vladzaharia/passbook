@@ -332,8 +332,8 @@ describe('GET /p/:token', () => {
     const res = await get(`/p/${'y'.repeat(43)}`);
     expect(res.headers.get('content-type')).toContain('text/html');
     const body = await res.text();
-    expect(body).toContain('<h1>Link expired</h1>');
-    expect(body).toContain('Sign in to see your passes.');
+    expect(body).toContain('<h1>This pass link does not work</h1>');
+    expect(body).toContain('Ask the organization for a new one.');
     expect(body).toContain('class="card" data-state="expired"');
     // The way on is outline, as on every hosted page: My passes, through sign-in when needed.
     expect(body).toMatch(
@@ -526,7 +526,7 @@ describe('POST /p/:token/resend', () => {
     expect(cross.status).toBe(403);
     expect(sent).toHaveLength(1);
     const page = await (await app.request(`${ORIGIN}/p/${token}?again=sent`, {}, env)).text();
-    expect(page).toContain('Send it again');
+    expect(page).toContain('Email me this pass again');
     expect(page).toContain('Sent. Check your email.');
   });
 

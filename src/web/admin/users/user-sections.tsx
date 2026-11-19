@@ -63,7 +63,7 @@ export function EmailsCard({ user, self }: { user: UserDetail; self: boolean }) 
       <CardHeader title="Emails" />
       <CardBody>
         <EmailList
-          addLabel="Send verification link"
+          addLabel="Add email"
           items={user.emails.map((e) => ({
             email: e.email,
             primary: e.email === user.primaryEmail,
@@ -243,7 +243,7 @@ export function AccountCard({ user }: { user: UserDetail }) {
             { label: 'Last sign-in', value: formatDateTime(user.lastLoginAt, '—') },
           ]}
         />
-        <TechnicalDetails className="mt-3" items={[{ label: 'ID', value: user.id }]} />
+        <TechnicalDetails className="mt-3" items={[{ label: 'ID', value: user.id, copy: true }]} />
         <div className="mt-3">
           {user.primaryEmail ? (
             <Button asChild variant="outline" size="sm">

@@ -44,7 +44,7 @@ export function validateFeaturedActions(ctx: ValidationContext): void {
     }
     for (const key of Object.keys(action))
       if (!['identifier', 'type', 'url', 'placeIdentifier', '_id'].includes(key))
-        warn('UNKNOWN_KEY', `Unknown key ${key}.`, `${path}.${key}`);
+        warn('UNKNOWN_KEY', `Unknown key ${key}.`, `${path}.${key}`, { name: key });
     if (
       typeof action.identifier !== 'string' ||
       action.identifier === '' ||
@@ -57,7 +57,9 @@ export function validateFeaturedActions(ctx: ValidationContext): void {
       return;
     }
     if (!ACTION_TYPES.includes(action.type))
-      warn('FEATURED_ACTION_TYPE', `Unknown featured action type ${action.type}.`, `${path}.type`);
+      warn('FEATURED_ACTION_TYPE', `Unknown featured action type ${action.type}.`, `${path}.type`, {
+        name: String(action.type),
+      });
     if (action.type === 'place') {
       // A place action with a url is shown as broken on iOS 27.
       if (typeof action.placeIdentifier !== 'string' || !PLACE_ID.test(action.placeIdentifier))
@@ -113,7 +115,7 @@ export function validateNfc(ctx: ValidationContext): void {
   }
   for (const key of Object.keys(nfc))
     if (!['message', 'encryptionPublicKey', 'requiresAuthentication', '_id'].includes(key))
-      warn('UNKNOWN_KEY', `Unknown key ${key}.`, `nfc.${key}`);
+      warn('UNKNOWN_KEY', `Unknown key ${key}.`, `nfc.${key}`, { name: key });
   if (typeof nfc.message !== 'string' || nfc.message === '')
     error('NFC', 'nfc.message is required.', 'nfc.message');
   else if (utf8Length(nfc.message) > MAX_NFC_MESSAGE_BYTES)
