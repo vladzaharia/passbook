@@ -2,132 +2,114 @@ import { Inbox, LayoutDashboard, type LucideIcon, Settings } from 'lucide-react'
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
 import { ENTITY, type EntityKind } from './entities.ts';
 import { canAccessAdminPath, isAdminPath } from './guards.ts';
+import { type AdminScope, parseAdminPath, scopePath, sectionOf } from './scope.ts';
 
-export interface NavItem {
+export interface NavSection {
   label: string;
-  to: string;
+  /** The path inside the scope: '' for the overview, '/passes'. */
+  section: string;
   icon: LucideIcon;
   /** The entity the page lists; its icon and art come from ENTITY. */
   entity?: EntityKind;
-  /** The selected organization is carried in this page's URL. */
-  orgScoped: boolean;
-  /** A tenant workspace needs both its view and its matching organization in the URL. */
-  search?: { view: 'workspace'; orgId: string };
   /** Extra search terms for the command palette. */
   keywords?: string[];
 }
 
+export interface NavItem extends NavSection {
+  /** The full path in the current scope. */
+  to: string;
+}
+
 const page = (
   label: string,
-  to: string,
+  section: string,
   entity: EntityKind,
-  orgScoped: boolean,
   keywords?: string[],
-): NavItem => ({ label, to, icon: ENTITY[entity].icon, entity, orgScoped, keywords });
+): NavSection => ({ label, section, icon: ENTITY[entity].icon, entity, keywords });
 
-/** Admin IA: groups separated by hairlines, in sidebar order. */
-export const ADMIN_NAV_GROUPS: readonly (readonly NavItem[])[] = [
-  [{ label: 'Overview', to: '/admin', icon: LayoutDashboard, orgScoped: false }],
+const overview: NavSection = { label: 'Overview', section: '', icon: LayoutDashboard };
+const settings: NavSection = { label: 'Settings', section: '/settings', icon: Settings };
+const audit = page('Audit log', '/audit', 'audit');
+const apiKeys = page('API keys', '/api-keys', 'apiKey');
+
+/** An organization's console, in sidebar order; groups are separated by hairlines. */
+export const ORG_NAV: readonly (readonly NavSection[])[] = [
+  [overview],
   [
-    page('Passes', '/admin/passes', 'pass', true),
-    page('Templates', '/admin/templates', 'template', true),
-    page('Blueprints', '/admin/blueprints', 'blueprint', false, ['starter', 'blueprint']),
-    page('Connections', '/admin/connections', 'connection', true),
+    page('Passes', '/passes', 'pass'),
+    page('Templates', '/templates', 'template'),
+    page('Blueprints', '/blueprints', 'blueprint', ['starter', 'blueprint']),
+    page('Connections', '/connections', 'connection'),
   ],
   [
-    page('Messages', '/admin/messages', 'broadcast', true),
-    page('Scanning', '/admin/scanning', 'scanner', true, [
-      'scanners',
-      'staff',
-      'events',
-      'check in',
-      'nfc',
-    ]),
+    page('Messages', '/messages', 'broadcast'),
+    page('Scanning', '/scanning', 'scanner', ['scanners', 'staff', 'events', 'check in', 'nfc']),
     {
       label: 'Test inbox',
-      to: '/admin/test-inbox',
+      section: '/test-inbox',
       icon: Inbox,
-      orgScoped: true,
       keywords: ['sandbox', 'emails'],
     },
   ],
   [
-    page('Users', '/admin/users', 'user', false),
-    page('Organizations', '/admin/orgs', 'org', false, ['tenants']),
-  ],
-  [
-    page('Status', '/admin/status', 'status', false, ['health']),
-    page('Audit log', '/admin/audit', 'audit', false),
-  ],
-  [
-    page('Apple identities', '/admin/identities', 'identity', false, ['certificates']),
-    page('API keys', '/admin/api-keys', 'apiKey', false),
-    { label: 'Settings', to: '/admin/settings', icon: Settings, orgScoped: false },
+    page('Members', '/members', 'user', ['people', 'invitations', 'access']),
+    page('Wallet accounts', '/wallet-accounts', 'identity', ['apple', 'google', 'samsung']),
+    apiKeys,
+    audit,
+    { ...settings, keywords: ['organization', 'branding'] },
   ],
 ];
 
-export const ADMIN_NAV: readonly NavItem[] = ADMIN_NAV_GROUPS.flat();
+/** The platform console. */
+export const PLATFORM_NAV: readonly (readonly NavSection[])[] = [
+  [overview],
+  [page('Organizations', '/orgs', 'org', ['tenants']), page('Users', '/users', 'user')],
+  [page('Status', '/status', 'status', ['health']), audit],
+  [
+    page('Wallet accounts', '/wallet-accounts', 'identity', [
+      'apple',
+      'identities',
+      'certificates',
+    ]),
+    apiKeys,
+    settings,
+  ],
+];
 
-/** Pages that show the platform to an admin and the selected organization to a member. */
-const MEMBER_SCOPED = ['/admin', '/admin/audit', '/admin/api-keys'];
-
-/** The directory is platform-only; members manage only their selected organization. */
-export function adminNavGroups(platformAdmin: boolean, membership?: OrgMembership): NavItem[][] {
-  return ADMIN_NAV_GROUPS.map((group) => {
-    const items = group
-      .filter((item) => canAccessAdminPath(item.to, platformAdmin, membership))
-      .map((item) =>
-        !platformAdmin && MEMBER_SCOPED.includes(item.to) ? { ...item, orgScoped: true } : item,
-      );
-    if (!platformAdmin && membership && group.some((item) => item.to === '/admin/orgs')) {
-      const to = `/admin/orgs/${encodeURIComponent(membership.orgId)}`;
-      if (canAccessAdminPath(to, false, membership, 'workspace')) {
-        items.push({
-          ...page('Organization', to, 'org', false, ['members', 'team']),
-          search: { view: 'workspace', orgId: membership.orgId },
-        });
-      }
-    }
-    return items;
-  }).filter((group) => group.length > 0);
-}
-
-/** A member can enter the console without selecting an organization implicitly. */
-export function adminEntryPath(
+/** The scope's sections the principal may open, with full paths. */
+export function adminNavGroups(
+  scope: AdminScope | undefined,
   platformAdmin: boolean,
   membership?: OrgMembership,
-  memberships: readonly OrgMembership[] = [],
-): string {
-  if (platformAdmin) return '/admin';
-  const candidates = membership ? [membership] : memberships;
-  return (
-    [
-      '/admin',
-      '/admin/passes',
-      '/admin/templates',
-      '/admin/connections',
-      '/admin/scanning',
-      '/admin/messages',
-      '/admin/test-inbox',
-    ].find((path) => candidates.some((candidate) => canAccessAdminPath(path, false, candidate))) ??
-    '/admin/account'
-  );
+): NavItem[][] {
+  if (!scope) return [];
+  const groups = scope.kind === 'platform' ? PLATFORM_NAV : ORG_NAV;
+  return groups
+    .map((group) =>
+      group
+        .map((item) => ({ ...item, to: scopePath(scope, item.section) }))
+        .filter((item) => canAccessAdminPath(item.to, platformAdmin, membership)),
+    )
+    .filter((group) => group.length > 0);
+}
+
+/** The first page a scope opens for this principal, if any. */
+export function firstAllowedPath(
+  scope: AdminScope,
+  platformAdmin: boolean,
+  membership?: OrgMembership,
+): string | undefined {
+  return adminNavGroups(scope, platformAdmin, membership).flat()[0]?.to;
 }
 
 /** The console section a path belongs to ("Templates"), for words about what it needs. */
 export function sectionLabel(pathname: string): string | undefined {
-  if (pathname.replace(/\/+$/, '') === '/admin') return 'Overview';
-  return ADMIN_NAV.filter((item) => item.to !== '/admin' && isActivePath(pathname, item.to)).sort(
-    (a, b) => b.to.length - a.to.length,
-  )[0]?.label;
-}
-
-/** The organization an Admin link carries: the selection, or the only one the member has. */
-export function entryOrgId(
-  membership: OrgMembership | undefined,
-  memberships: readonly OrgMembership[],
-): string | undefined {
-  return (membership ?? (memberships.length === 1 ? memberships[0] : undefined))?.orgId;
+  const { scope, rest } = parseAdminPath(pathname);
+  if (!scope) return undefined;
+  const section = sectionOf(rest);
+  return (scope.kind === 'platform' ? PLATFORM_NAV : ORG_NAV)
+    .flat()
+    .find((item) => item.section === section)?.label;
 }
 
 export interface PortalNavItem {
@@ -145,17 +127,12 @@ export const PORTAL_NAV: readonly PortalNavItem[] = [
 
 export function isActivePath(pathname: string, to: string): boolean {
   if (to === '/') return pathname === '/' || pathname.startsWith('/passes/');
-  if (to === '/admin') return pathname === to;
-  return pathname === to || pathname.startsWith(`${to}/`);
-}
-
-/** Whether a page carries a tenant workspace selection in its URL. */
-export function isOrgScoped(pathname: string, platformAdmin = true): boolean {
-  if (!platformAdmin && MEMBER_SCOPED.some((to) => isActivePath(pathname, to))) return true;
-  const item = [...ADMIN_NAV]
-    .sort((x, y) => y.to.length - x.to.length)
-    .find((i) => isActivePath(pathname, i.to));
-  return item?.orgScoped ?? false;
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+  // The console root and a scope's overview match only themselves.
+  if (to === '/admin') return path === to;
+  const { scope, rest } = parseAdminPath(to);
+  if (scope && rest === '') return path === to;
+  return path === to || path.startsWith(`${to}/`);
 }
 
 /** Account opens inside the shell it was opened from: the console keeps its sidebar. */

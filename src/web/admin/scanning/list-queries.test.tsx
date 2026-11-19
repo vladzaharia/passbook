@@ -123,18 +123,21 @@ function setup({
     );
   }
   const root = createRootRoute({ component: Outlet });
+  // The organization is in the path, as in the console; the bare path has none.
   const scanning = createRoute({
     getParentRoute: () => root,
+    path: '/admin/o/$orgId/scanning',
+    component: Probe,
+  });
+  const unscoped = createRoute({
+    getParentRoute: () => root,
     path: '/admin/scanning',
-    validateSearch: (search: Record<string, unknown>) => ({
-      orgId: typeof search.orgId === 'string' ? search.orgId : undefined,
-    }),
     component: Probe,
   });
   const router = createRouter({
-    routeTree: root.addChildren([scanning]),
+    routeTree: root.addChildren([scanning, unscoped]),
     history: createMemoryHistory({
-      initialEntries: [selected ? `/admin/scanning?orgId=${selected}` : '/admin/scanning'],
+      initialEntries: [selected ? `/admin/o/${selected}/scanning` : '/admin/scanning'],
     }),
   });
   render(
@@ -212,7 +215,7 @@ describe('Scanning list organization scope', () => {
     expect(await screen.findByText('Front door')).toBeInTheDocument();
     expect(await screen.findByText('Membership desk')).toBeInTheDocument();
     await act(async () => {
-      await router.navigate({ to: '/admin/scanning', search: { orgId: 'o2' } });
+      await router.navigate({ href: '/admin/o/o2/scanning' });
     });
     await waitFor(() => {
       expect(scannerRequests).toContain('o2');

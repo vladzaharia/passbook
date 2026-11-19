@@ -33,7 +33,7 @@ describe('session administration', () => {
       expect(
         await screen.findByRole('heading', { name: 'Harbor desk', level: 1 }),
       ).toBeInTheDocument();
-      await waitFor(() => expect(router.state.location.search.orgId).toBe('o2'));
+      await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o2'));
     } finally {
       if (previous === null) localStorage.removeItem('wallet-org-filter');
       else localStorage.setItem('wallet-org-filter', previous);

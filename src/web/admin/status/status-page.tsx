@@ -31,11 +31,7 @@ export function StatusPage() {
     });
   return (
     <>
-      <PageHeader
-        title="System status"
-        breadcrumbs={[{ label: 'Platform', to: '/admin' }, { label: 'Status' }]}
-        meta="Platform-wide · Not filtered by mode"
-      />
+      <PageHeader title="System status" />
       {status.isPending ? (
         <SkeletonRows label="Loading status" />
       ) : status.isError || !data ? (

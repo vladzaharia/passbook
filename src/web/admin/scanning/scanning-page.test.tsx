@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
-import { ADMIN_NAV, ADMIN_NAV_GROUPS, isOrgScoped } from '@/web/lib/nav.ts';
+import { ORG_NAV, PLATFORM_NAV } from '@/web/lib/nav.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 import { ScanLink } from './scan-link.tsx';
 import { managedSession } from './sessions/test-fixtures.ts';
@@ -62,13 +62,12 @@ const handlers = {
 };
 
 describe('Scanning nav and entities', () => {
-  it('puts Scanning in the Messages group, scoped to the org', () => {
-    const item = ADMIN_NAV.find((i) => i.to === '/admin/scanning');
-    expect(item).toMatchObject({ label: 'Scanning', orgScoped: true, entity: 'scanner' });
-    const group = ADMIN_NAV_GROUPS.find((g) => g.some((i) => i.to === '/admin/scanning'));
+  it('puts Scanning in the Messages group, inside the organization', () => {
+    const item = ORG_NAV.flat().find((i) => i.section === '/scanning');
+    expect(item).toMatchObject({ label: 'Scanning', entity: 'scanner' });
+    const group = ORG_NAV.find((g) => g.some((i) => i.section === '/scanning'));
     expect(group?.map((i) => i.label)).toEqual(['Messages', 'Scanning', 'Test inbox']);
-    expect(isOrgScoped('/admin/scanning')).toBe(true);
-    expect(isOrgScoped('/admin/scanning/scanners/s1')).toBe(true);
+    expect(PLATFORM_NAV.flat().some((i) => i.section === '/scanning')).toBe(false);
   });
 
   it('names the scanning entities and gives "Event" to the occasion', () => {
@@ -80,7 +79,7 @@ describe('Scanning nav and entities', () => {
 });
 
 describe('Scanning page', () => {
-  it('does not request scan history until an authorized organization is selected', async () => {
+  it('requests scan history only for the organization in the URL', async () => {
     const previous = localStorage.getItem('wallet-org-filter');
     localStorage.removeItem('wallet-org-filter');
     try {
@@ -96,17 +95,13 @@ describe('Scanning page', () => {
           },
         },
       });
-      expect(
-        await screen.findByRole('heading', { name: 'Choose an organization', level: 1 }),
-      ).toBeInTheDocument();
-      expect(seen).toEqual([]);
-      expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/scans?'))).toBe(
-        false,
-      );
-      const user = userEvent.setup();
-      await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-      await user.click(await screen.findByRole('option', { name: 'Northwind' }));
+      // The only organization opens; history is read in it and nowhere else.
       expect(await screen.findByText('No scans yet')).toBeInTheDocument();
+      expect(
+        fetchMock.mock.calls.every(
+          ([url]) => !String(url).startsWith('/api/v1/scans?') || String(url).includes('orgId=o1'),
+        ),
+      ).toBe(true);
       expect(seen).toContain('o1');
       expect(seen.every((id) => id === 'o1')).toBe(true);
     } finally {
@@ -265,8 +260,8 @@ describe('Scanning page', () => {
       tab: 'events',
       scannerId: 's1',
       outcome: 'refused',
-      orgId: 'o1',
     });
+    expect(router.state.location.pathname).toBe('/admin/o/o1/scanning');
   });
 
   it('leaves the default tab out of the URL', async () => {

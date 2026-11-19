@@ -23,7 +23,7 @@ function ScopedWalletAccounts({ orgId, mode }: { orgId: string; mode: Mode }) {
   const canManage = membership?.capabilities.includes('integrations:manage') === true;
   return (
     <Card>
-      <CardHeader title="Wallet accounts" />
+      <CardHeader title="Google and Samsung" />
       <CardBody className="flex flex-col gap-4">
         <p className="text-sm text-fg-muted">
           Google and Samsung accounts are separate for each organization and mode. You are viewing{' '}

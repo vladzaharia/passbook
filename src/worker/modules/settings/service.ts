@@ -8,6 +8,7 @@ import { auditActor, recordAudit } from '../audit/service.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
 import { planRetentionChange } from '../retention/changes.ts';
 import { enqueueShortenNotices } from '../retention/notify.ts';
+import { inherit, platformGateIssue, type SettingEntry } from './inherit.ts';
 import { orgIdOfScope, registryFor } from './registry.ts';
 import { isPlatformAddress } from './reply-to-domain.ts';
 import {
@@ -21,8 +22,8 @@ import {
   writeScope,
 } from './repo.ts';
 
+export type { SettingEntry } from './inherit.ts';
 export { platformSettingsStmt } from './repo.ts';
-
 export type PlatformSettings = z.infer<typeof PlatformSettingsSchema>;
 export type OrgSettings = z.infer<typeof OrgSettingsSchema>;
 
@@ -108,22 +109,14 @@ export async function getOrgSettings(ctx: ServiceContext, orgId: string): Promis
   return OrgSettingsSchema.parse(await readScope(ctx, `org:${orgId}`));
 }
 
-export interface SettingEntry {
-  scope: string;
-  key: string;
-  value: unknown;
-  default?: unknown;
-  updatedAt: number | null;
-  updatedBy: string | null;
-}
-
 async function assertScope(ctx: ServiceContext, scope: string): Promise<void> {
   const orgId = orgIdOfScope(scope);
   if (orgId && !(await orgIsReadable(ctx.env.DB, orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
 }
 
-export async function listSettings(ctx: ServiceContext, scope: string): Promise<SettingEntry[]> {
+/** Stored values over registry defaults; no platform inheritance applied. */
+async function listStored(ctx: ServiceContext, scope: string): Promise<SettingEntry[]> {
   await assertScope(ctx, scope);
   const stored = new Map((await readScopeRows(ctx.env.DB, scope)).map((row) => [row.key, row]));
   const registry = registryFor(scope);
@@ -136,10 +129,17 @@ export async function listSettings(ctx: ServiceContext, scope: string): Promise<
       key: def.key,
       value: has ? validated[def.key] : (def.default ?? null),
       ...(def.default !== undefined ? { default: def.default } : {}),
+      source: has ? 'org' : 'default',
       updatedAt: row?.updated_at ?? null,
       updatedBy: row?.updated_by ?? null,
     };
   });
+}
+
+export async function listSettings(ctx: ServiceContext, scope: string): Promise<SettingEntry[]> {
+  const entries = await listStored(ctx, scope);
+  const orgId = orgIdOfScope(scope);
+  return orgId === null ? entries : inherit(entries, await getPlatformSettings(ctx));
 }
 
 /** The schema checks the name against "PassBook"; this also checks the platform's current sender name. */
@@ -194,6 +194,8 @@ export async function updateSettings(
     }
   }
   if (issues.length) throw new ValidationError('Invalid settings.', issues, 'INVALID_SETTING');
+  const gated = orgId === null ? null : platformGateIssue(await getPlatformSettings(ctx), upserts);
+  if (gated) throw new ValidationError('Invalid settings.', [gated], gated.code);
   // Bounds against the platform maximum, and the floors that delay a shortening (retention keys only).
   const retention = await planRetentionChange(ctx, scope, upserts, deletes);
   const [first] = retention.issues;
@@ -204,7 +206,7 @@ export async function updateSettings(
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   // The client's revision is the one its form was loaded with: older than the stored one is a 409.
   const revision = input.configRevision ?? current;
-  const before = await listSettings(ctx, scope);
+  const before = await listStored(ctx, scope);
   const written = await writeScope(
     ctx,
     scope,
@@ -219,11 +221,11 @@ export async function updateSettings(
   );
   if (!written) throw new ForbiddenError();
   clearSettingsCache(ctx.env.DB);
-  const after = await listSettings(ctx, scope);
+  const stored = await listStored(ctx, scope);
 
   const prior = new Map(before.map((e) => [e.key, e.value]));
   const changes: Record<string, { from: unknown; to: unknown }> = {};
-  for (const entry of after) {
+  for (const entry of stored) {
     if (JSON.stringify(prior.get(entry.key)) !== JSON.stringify(entry.value))
       changes[entry.key] = { from: prior.get(entry.key) ?? null, to: entry.value };
   }
@@ -248,7 +250,7 @@ export async function updateSettings(
       },
     });
   await enqueueShortenNotices(ctx, retention.notices);
-  return after;
+  return listSettings(ctx, scope);
 }
 
 /** The org's `config_revision` for an org scope, to send back with a save; absent for the platform. */

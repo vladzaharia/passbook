@@ -29,7 +29,7 @@ test('import a sheet: fix the error file, commit, re-import as unchanged, remove
     await page.getByRole('option', { name: template.name }).click();
     await upload(csv);
     await page.getByRole('button', { name: 'Check file' }).click();
-    await expect(page).toHaveURL(/\/admin\/passes\/import\/[^/?]+/);
+    await expect(page).toHaveURL(/\/admin\/o\/[^/]+\/passes\/import\/[^/?]+/);
   };
 
   // 1. A file with a bad row: map the columns, check, and download the error file.

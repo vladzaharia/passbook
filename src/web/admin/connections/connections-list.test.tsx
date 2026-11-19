@@ -55,7 +55,7 @@ describe('connections list', () => {
     expect(await screen.findByRole('link', { name: 'First connection' })).toBeVisible();
     await waitFor(() => expect(catalogScopes).toContain(ORG.id));
 
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     await user.click(await screen.findByRole('option', { name: 'Second' }));
     expect(await screen.findByRole('link', { name: 'Second connection' })).toBeVisible();
     expect(await screen.findByText('Second catalog · Poll')).toBeVisible();

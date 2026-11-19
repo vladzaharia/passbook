@@ -50,7 +50,9 @@ describe('import page', () => {
       templateId: 'tpl1',
       source: { kind: 'file', name: 'people.csv', csv: 'Name,Id\nMaya,A1' },
     });
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes/import/imp1'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/import\/imp1$/),
+    );
   });
 
   it('refuses a spreadsheet file with guidance and posts nothing', async () => {

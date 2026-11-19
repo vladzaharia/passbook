@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { clearPreviewBatches } from '../../lib/preview-batch.ts';
+import { withOrg } from '../../lib/scope.ts';
 import { json, membershipFixture, problem, renderApp } from '../../lib/test-utils.tsx';
 import { markCreated } from '../passes/created.tsx';
 import {
@@ -151,9 +152,9 @@ describe('templates list', () => {
     expect(
       await screen.findByRole('link', { name: 'First organization card' }),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     await user.click(await screen.findByRole('option', { name: 'Second' }));
-    await waitFor(() => expect(router.state.location.search.orgId).toBe('org2'));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
     await waitFor(() => expect(requested).toContain('org2'));
     await waitFor(() =>
       expect(
@@ -307,6 +308,10 @@ describe('template detail', () => {
       });
       await screen.findByRole('heading', { name: 'Former card' });
       moved = true;
+      // A bare old link, opened from outside the organization.
+      await act(async () => {
+        await router.navigate({ to: '/admin/account' });
+      });
       await act(async () => {
         await router.navigate({
           to: '/admin/templates/$templateId',
@@ -331,7 +336,7 @@ describe('template detail', () => {
         expect(router.state.location.search).not.toHaveProperty('orgId');
       } else {
         expect(await screen.findByRole('heading', { name: 'Moved card' })).toBeInTheDocument();
-        await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: 'org2' }));
+        await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
       }
       expect(screen.queryByText('Former card')).toBeNull();
     },
@@ -350,42 +355,28 @@ describe('template detail', () => {
       },
     });
     expect(await screen.findByRole('heading', { name: 'Harbor card' })).toBeInTheDocument();
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: 'org2' }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
     const href = screen.getByRole('link', { name: 'New pass' }).getAttribute('href') ?? '';
     expect(new URL(href, 'http://localhost').searchParams.get('orgId')).toBe('org2');
   });
 
-  it('requires a selection before showing a shared template', async () => {
-    localStorage.removeItem('wallet-org-filter');
-    const user = userEvent.setup();
-    let previews = 0;
-    await renderApp('/admin/templates/tpl1', {
+  it('opens a shared template from a bare link in an organization it can be read in', async () => {
+    const { router } = await renderApp('/admin/templates/tpl1', {
       session: 'admin',
       memberships: bothOrgs.memberships,
       handlers: {
         '/api/v1/templates/tpl1': () =>
           json(templateDetail({ orgId: null, orgName: null, name: 'Shared card' })),
-        '/api/v1/templates/previews': (url) => {
-          previews += 1;
-          return previewsHandler(url);
-        },
+        '/api/v1/templates/previews': previewsHandler,
       },
     });
-    expect(
-      await screen.findByRole('heading', { name: 'Choose an organization' }),
-    ).toBeInTheDocument();
-    expect(screen.queryByText('Shared card')).toBeNull();
-    expect(previews).toBe(0);
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-    await user.click(await screen.findByRole('option', { name: 'Harbor' }));
     expect(await screen.findByRole('heading', { name: 'Shared card' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toMatch(/^\/admin\/o\/org[12]\/templates\/tpl1$/);
   });
 
-  it('asks for a new explicit choice after a bare shared read is forbidden', async () => {
-    localStorage.setItem('wallet-org-filter', ORG.id);
-    const user = userEvent.setup();
+  it('reads a shared template in the organization of the URL only', async () => {
     const requested: (string | null)[] = [];
-    const { router } = await renderApp('/admin/templates/tpl1', {
+    await renderApp('/admin/o/org2/templates/tpl1', {
       session: 'user',
       memberships: bothOrgs.memberships,
       handlers: {
@@ -399,15 +390,7 @@ describe('template detail', () => {
         '/api/v1/templates/previews': previewsHandler,
       },
     });
-    expect(
-      await screen.findByRole('heading', { name: 'Choose an organization' }),
-    ).toBeInTheDocument();
-    expect(requested.every((orgId) => orgId === null)).toBe(true);
-    expect(screen.queryByText('Shared card')).toBeNull();
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-    await user.click(await screen.findByRole('option', { name: 'Harbor' }));
     expect(await screen.findByRole('heading', { name: 'Shared card' })).toBeInTheDocument();
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: 'org2' }));
     expect(requested).toContain('org2');
     expect(requested).not.toContain(ORG.id);
   });
@@ -489,8 +472,7 @@ describe('template detail', () => {
   });
 
   it('unmounts the current template when the selected organization changes', async () => {
-    const user = userEvent.setup();
-    await renderApp('/admin/templates/tpl1', {
+    const { router } = await renderApp('/admin/templates/tpl1', {
       session: 'admin',
       ...bothOrgs,
       handlers: {
@@ -500,8 +482,11 @@ describe('template detail', () => {
       },
     });
     expect(await screen.findByRole('heading', { name: 'Copper card' })).toBeInTheDocument();
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-    await user.click(await screen.findByRole('option', { name: 'Harbor' }));
+    // The page's own organization choice: the same page in Harbor.
+    await act(async () => {
+      const { pathname, searchStr } = router.state.location;
+      await router.navigate({ href: `${withOrg(pathname, 'org2')}${searchStr}` });
+    });
     expect(await screen.findByText('Template not found')).toBeInTheDocument();
     expect(screen.queryByText('Copper card')).toBeNull();
     expect(screen.queryByRole('tab', { name: 'Versions' })).toBeNull();
@@ -509,8 +494,7 @@ describe('template detail', () => {
   });
 
   it('keeps a shared template available and scopes its new-pass link after a switch', async () => {
-    const user = userEvent.setup();
-    await renderApp('/admin/templates/tpl1', {
+    const { router } = await renderApp('/admin/templates/tpl1', {
       session: 'admin',
       ...bothOrgs,
       handlers: {
@@ -521,8 +505,11 @@ describe('template detail', () => {
       },
     });
     await screen.findByRole('heading', { name: 'Shared card' });
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-    await user.click(await screen.findByRole('option', { name: 'Harbor' }));
+    // The page's own organization choice: the same page in Harbor.
+    await act(async () => {
+      const { pathname, searchStr } = router.state.location;
+      await router.navigate({ href: `${withOrg(pathname, 'org2')}${searchStr}` });
+    });
     await waitFor(() => {
       const href = screen.getByRole('link', { name: 'New pass' }).getAttribute('href') ?? '';
       expect(new URL(href, 'http://localhost').searchParams.get('orgId')).toBe('org2');
@@ -702,7 +689,7 @@ describe('template detail', () => {
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
     await user.click(within(dialog).getByRole('button', { name: 'Duplicate' }));
     expect(await screen.findByRole('heading', { name: 'Harbor copy' })).toBeInTheDocument();
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: 'org2' }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
     expect(bodies).toEqual([{ orgId: 'org2', name: 'Copper card copy' }]);
   });
 
@@ -807,7 +794,7 @@ describe('template detail', () => {
     expect(screen.queryByRole('option', { name: 'Reviewer' })).toBeNull();
     await user.click(screen.getByRole('option', { name: 'Harbor' }));
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: 'org2' }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
     const link = await screen.findByRole('link', { name: 'New pass' });
     const href = link.getAttribute('href') ?? '';
     expect(new URL(href, 'http://localhost').searchParams.get('orgId')).toBe('org2');
@@ -1070,23 +1057,15 @@ describe('template upload', () => {
     importPolling.ms = previous;
   });
 
-  it('requires an explicit organization even with a single membership', async () => {
-    try {
-      localStorage.removeItem('wallet-org-filter');
-    } catch {
-      // Storage is unavailable in this runtime.
-    }
-    const { fetchMock } = await renderApp('/admin/templates/upload', {
+  it('opens uploads in the only organization', async () => {
+    const { router } = await renderApp('/admin/templates/upload', {
       session: 'admin',
       memberships: orgAccess.memberships,
     });
-    expect(
-      await screen.findByRole('heading', { name: 'Choose an organization' }),
-    ).toBeInTheDocument();
-    expect(document.querySelector('input[type=file]')).toBeNull();
-    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/templates/uploads'))).toBe(
-      false,
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(`/admin/o/${ORG.id}/templates/upload`),
     );
+    await waitFor(() => expect(document.querySelector('input[type=file]')).not.toBeNull());
   });
 
   it('does not offer uploads to a selected membership without template authoring', async () => {
@@ -1143,7 +1122,7 @@ describe('template upload', () => {
 
   it('unmounts an existing-version form and its file on an organization switch', async () => {
     const user = userEvent.setup();
-    await renderApp('/admin/templates/upload?templateId=tpl1', {
+    const { router } = await renderApp('/admin/templates/upload?templateId=tpl1', {
       session: 'admin',
       ...bothOrgs,
       handlers: { '/api/v1/templates/tpl1': () => json(templateDetail()) },
@@ -1152,8 +1131,11 @@ describe('template upload', () => {
     const input = document.querySelector('input[type=file]') as HTMLInputElement;
     await user.upload(input, new File(['zip'], 'card.zip', { type: 'application/zip' }));
     expect(screen.getByRole('button', { name: 'Upload version' })).toBeEnabled();
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-    await user.click(await screen.findByRole('option', { name: 'Harbor' }));
+    // The page's own organization choice: the same page in Harbor.
+    await act(async () => {
+      const { pathname, searchStr } = router.state.location;
+      await router.navigate({ href: `${withOrg(pathname, 'org2')}${searchStr}` });
+    });
     expect(await screen.findByText('Template not found')).toBeInTheDocument();
     expect(screen.queryByText('Copper card')).toBeNull();
     expect(document.querySelector('input[type=file]')).toBeNull();
@@ -1184,7 +1166,7 @@ describe('template upload', () => {
     expect(screen.queryByRole('option', { name: 'Reviewer' })).toBeNull();
     expect(screen.queryByRole('option', { name: 'All organizations' })).toBeNull();
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: 'org2' }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
     expect(screen.getByRole('combobox', { name: 'Organization' })).toHaveTextContent('Harbor');
     expect(screen.getByRole('button', { name: 'Upload' })).toBeDisabled();
     input = document.querySelector('input[type=file]') as HTMLInputElement;
@@ -1308,9 +1290,8 @@ describe('template upload', () => {
   });
 
   it('stops polling a reopened upload when the selected organization changes', async () => {
-    const user = userEvent.setup();
     const seen: (string | null)[] = [];
-    await renderApp('/admin/templates/upload?upload=up1', {
+    const { router } = await renderApp('/admin/templates/upload?upload=up1', {
       session: 'admin',
       ...bothOrgs,
       handlers: {
@@ -1329,8 +1310,11 @@ describe('template upload', () => {
       },
     });
     expect(await screen.findByText('Checking files and images')).toBeInTheDocument();
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-    await user.click(await screen.findByRole('option', { name: 'Harbor' }));
+    // The page's own organization choice: the same page in Harbor.
+    await act(async () => {
+      const { pathname, searchStr } = router.state.location;
+      await router.navigate({ href: `${withOrg(pathname, 'org2')}${searchStr}` });
+    });
     expect(await screen.findByRole('button', { name: 'Upload' })).toBeDisabled();
     expect(screen.queryByText('Checking files and images')).toBeNull();
     expect(seen.length).toBeGreaterThan(0);
@@ -1400,7 +1384,7 @@ describe('template upload', () => {
     expect(await screen.findByText('Checking files and images')).toBeInTheDocument();
     // Done: the template's page replaces the upload and says what happened.
     expect(await screen.findByText('Template imported')).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/admin/templates/tpl7');
+    expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/templates\/tpl7$/);
     expect(router.history.length).toBe(entries);
     expect(screen.getByRole('heading', { level: 1, name: 'Card' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Upload another' })).toHaveAttribute(

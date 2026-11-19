@@ -14,13 +14,7 @@ import { cn } from '../../lib/cn.ts';
 import { personLabel } from '../../lib/format.ts';
 import { isAdminPath } from '../../lib/guards.ts';
 import { useChangeCount } from '../../lib/motion.ts';
-import {
-  accountPath,
-  adminEntryPath,
-  entryOrgId,
-  isActivePath,
-  isOrgScoped,
-} from '../../lib/nav.ts';
+import { accountPath, isActivePath } from '../../lib/nav.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { type AuthedSession, signOut } from '../../lib/session.ts';
 import { THEME_OPTIONS, type ThemePref, useTheme } from '../../lib/theme.tsx';
@@ -93,21 +87,15 @@ function FaceItem({
   icon: Icon,
   label,
   current,
-  orgId,
 }: {
   to: string;
   icon: LucideIcon;
   label: string;
   current: boolean;
-  orgId?: string | undefined;
 }) {
   return (
     <DropdownMenuItem asChild>
-      <Link
-        to={to}
-        search={isAdminPath(to) ? { orgId } : undefined}
-        aria-current={current ? 'page' : undefined}
-      >
+      <Link to={to} aria-current={current ? 'page' : undefined}>
         <Icon aria-hidden />
         {label}
         {current ? <Check aria-hidden className="ml-auto text-accent-fg!" /> : null}
@@ -129,8 +117,6 @@ export function SignedInUserMenu({
   const scope = useOrgScope();
   const ready = !scope.isLoading && !scope.isError;
   const memberships = ready ? scope.memberships : [];
-  const membership = ready ? scope.membership : undefined;
-  const consolePath = adminEntryPath(platformAdmin, membership, memberships);
   const { user } = authed;
   const face = faceOf(pathname);
   return (
@@ -157,17 +143,7 @@ export function SignedInUserMenu({
           current={face === 'account'}
         />
         {platformAdmin || memberships.length > 0 ? (
-          <FaceItem
-            to={consolePath}
-            orgId={
-              isOrgScoped(consolePath, platformAdmin)
-                ? entryOrgId(membership, memberships)
-                : undefined
-            }
-            icon={LayoutDashboard}
-            label="Admin"
-            current={face === 'admin'}
-          />
+          <FaceItem to="/admin" icon={LayoutDashboard} label="Admin" current={face === 'admin'} />
         ) : null}
         {scope.isError ? (
           <DropdownMenuItem onSelect={() => void scope.refetch()}>

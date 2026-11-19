@@ -13,7 +13,6 @@ import {
   sessionFixture,
 } from '@/web/lib/test-utils.tsx';
 import { toast } from '@/web/ui/index.ts';
-import { overview } from '../overview/overview-fixtures.ts';
 import { templateSummary } from '../passes/test-fixtures.ts';
 import { orgPatch, orgToDraft, validateOrg } from './org-form.tsx';
 import { slugify } from './orgs-page.tsx';
@@ -183,7 +182,7 @@ describe('orgs list', () => {
     expect(count.parentElement).toHaveTextContent('100,000+');
   });
 
-  it('labels the mode used for pass counts without narrowing the directory', async () => {
+  it('reads the directory in Live mode whatever the browser chose, without narrowing it', async () => {
     setMode('test');
     try {
       const { fetchMock } = await renderApp('/admin/orgs?orgId=o2', {
@@ -195,7 +194,8 @@ describe('orgs list', () => {
         String(url).includes('/api/v1/orgs?limit=50'),
       );
       expect(String(listRequest?.[0])).not.toContain('orgId=');
-      expect(new Headers(listRequest?.[1]?.headers).get('x-passbook-mode')).toBe('test');
+      // Platform pages ignore mode.
+      expect(new Headers(listRequest?.[1]?.headers).get('x-passbook-mode')).toBeNull();
     } finally {
       resetModeForTests();
     }
@@ -250,7 +250,7 @@ describe('orgs list', () => {
     expect(within(dialog).getByLabelText(/Slug/)).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Create' })).toBeInTheDocument();
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/admin/orgs');
+      expect(router.state.location.pathname).toBe('/admin/platform/orgs');
       expect(router.state.location.search).toMatchObject({ q: 'acme' });
       expect(router.state.location.search).not.toHaveProperty('new');
     });
@@ -301,7 +301,7 @@ describe('orgs list', () => {
     expect(within(dialog).getByLabelText(/Slug/)).not.toHaveAttribute('aria-invalid');
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
     await waitFor(() => expect(body).toEqual({ name: 'Acme Gym', slug: 'acme-gym' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/orgs/o2'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform/orgs/o2'));
     // The new org says so once, with the next steps; no toast.
     expect(await screen.findByText('Organization created')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add branding' })).toBeNull();
@@ -329,6 +329,12 @@ describe('orgs list', () => {
     expect(within(dialog).getByText('Slug already in use.')).toBeInTheDocument();
   });
 });
+
+/** The org's own narrow identity list (`?orgId=`) is allowed; the platform list is not. */
+const platformIdentityCalls = (calls: unknown[][]) =>
+  calls.some(
+    ([url]) => String(url).startsWith('/api/v1/identities') && !String(url).includes('orgId='),
+  );
 
 describe('org detail', () => {
   const renderApp = (path: string, options: RenderAppOptions = {}) =>
@@ -398,21 +404,15 @@ describe('org detail', () => {
     ).toBe(false);
   });
 
-  it('mounts wallet accounts for the selected tenant workspace only', async () => {
+  it('leaves wallet accounts to their own page', async () => {
     const { fetchMock } = await renderApp('/admin/orgs/o1', {
       session: 'admin',
       handlers: handlers(),
     });
-    await screen.findByRole('heading', { name: 'Acme Gym', level: 1 });
-    await waitFor(() => {
-      const accounts = fetchMock.mock.calls
-        .map(([url]) => new URL(String(url), 'http://localhost'))
-        .filter((url) => url.pathname === '/api/v1/wallet-providers/accounts');
-      expect(new Set(accounts.map((url) => url.searchParams.get('provider')))).toEqual(
-        new Set(['google', 'samsung']),
-      );
-      expect(accounts.every((url) => url.searchParams.get('orgId') === 'o1')).toBe(true);
-    });
+    await screen.findByRole('heading', { name: 'Organization details' });
+    expect(
+      fetchMock.mock.calls.some(([url]) => String(url).includes('/wallet-providers/accounts')),
+    ).toBe(false);
   });
 
   it('does not treat a member visiting the bare platform route as workspace access', async () => {
@@ -463,7 +463,6 @@ describe('org detail', () => {
   it.each(['admin', 'user'] as const)(
     'validates %s resource membership before canonicalizing an unscoped workspace link',
     async (session) => {
-      localStorage.removeItem('wallet-org-filter');
       let resolveMemberships!: () => void;
       const pending = new Promise<void>((resolve) => {
         resolveMemberships = resolve;
@@ -493,9 +492,9 @@ describe('org detail', () => {
       ).toBe(false);
       await act(async () => resolveMemberships());
       expect(
-        await screen.findByRole('heading', { name: 'Acme Gym', level: 1 }),
+        await screen.findByRole('heading', { name: 'Organization details' }),
       ).toBeInTheDocument();
-      expect(router.state.location.search).toMatchObject({ view: 'workspace', orgId: 'o1' });
+      expect(router.state.location.pathname).toBe('/admin/o/o1/settings');
     },
   );
 
@@ -527,7 +526,9 @@ describe('org detail', () => {
       ),
     ).toBe(false);
     await act(async () => resolveMemberships());
-    expect(await screen.findByText('Organization not found')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /You do not have access|Organization not found/ }),
+    ).toBeInTheDocument();
     expect(
       fetchMock.mock.calls.some(
         ([url]) =>
@@ -540,7 +541,7 @@ describe('org detail', () => {
   it.each(['o1', 'o2'])(
     'canonicalizes the requested workspace rather than trusting remembered %s scope',
     async (remembered) => {
-      localStorage.setItem('wallet-org-filter', remembered);
+      localStorage.setItem('passbook-admin-scope', `org:${remembered}`);
       try {
         const { fetchMock, router } = await renderBaseApp('/admin/orgs/o1?view=workspace', {
           session: 'user',
@@ -548,30 +549,30 @@ describe('org detail', () => {
           handlers: { ...handlers(), '/api/v1/orgs/o1/workspace': () => json(summary()) },
         });
         expect(
-          await screen.findByRole('heading', { name: 'Acme Gym', level: 1 }),
+          await screen.findByRole('heading', { name: 'Settings', level: 1 }),
         ).toBeInTheDocument();
-        expect(router.state.location.search).toMatchObject({ view: 'workspace', orgId: 'o1' });
-        await waitFor(() => expect(localStorage.getItem('wallet-org-filter')).toBe('o1'));
+        expect(router.state.location.pathname).toBe('/admin/o/o1/settings');
+        await waitFor(() => expect(localStorage.getItem('passbook-admin-scope')).toBe('org:o1'));
         expect(
           fetchMock.mock.calls.some(([url]) => String(url).includes('/orgs/o1/workspace')),
         ).toBe(true);
       } finally {
-        localStorage.removeItem('wallet-org-filter');
+        localStorage.removeItem('passbook-admin-scope');
       }
     },
   );
 
   it.each(['orgId=o2', 'orgId=o1&orgId=o2'])(
-    'rejects conflicting or duplicate explicit workspace scopes (%s)',
+    'opens only the directory record for conflicting or duplicate workspace scopes (%s)',
     async (query) => {
-      localStorage.setItem('wallet-org-filter', 'o1');
+      localStorage.setItem('passbook-admin-scope', 'org:o1');
       try {
         const { fetchMock } = await renderBaseApp(`/admin/orgs/o1?view=workspace&${query}`, {
           session: 'admin',
           memberships: [membershipFixture('o1'), membershipFixture('o2')],
           handlers: handlers(),
         });
-        expect(await screen.findByText('Organization not found')).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: 'Acme Gym' })).toBeInTheDocument();
         expect(
           fetchMock.mock.calls.some(
             ([url]) =>
@@ -580,7 +581,7 @@ describe('org detail', () => {
           ),
         ).toBe(false);
       } finally {
-        localStorage.removeItem('wallet-org-filter');
+        localStorage.removeItem('passbook-admin-scope');
       }
     },
   );
@@ -606,12 +607,13 @@ describe('org detail', () => {
                 value: 'desk@acme.test',
                 updatedAt: null,
                 updatedBy: null,
+                source: 'org',
               },
             ],
           }),
       },
     });
-    expect(await screen.findByRole('heading', { name: 'Acme Gym', level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument();
     expect(await screen.findByText('desk@acme.test')).toBeInTheDocument();
     expect(
       fetchMock.mock.calls.some(([url]) => {
@@ -629,11 +631,11 @@ describe('org detail', () => {
     for (const path of [
       '/api/v1/orgs/o1/memberships',
       '/api/v1/orgs/o1/invitations',
-      '/api/v1/identities',
       '/api/v1/templates',
     ]) {
       expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith(path))).toBe(false);
     }
+    expect(platformIdentityCalls(fetchMock.mock.calls)).toBe(false);
   });
 
   it('lets an org manager edit branding without platform identity access or membership management', async () => {
@@ -651,13 +653,10 @@ describe('org detail', () => {
       },
     });
     const name = await screen.findByLabelText(/^Name/);
-    expect(screen.getByText('saved-identity')).toBeInTheDocument();
     expect(screen.queryByLabelText('Signing identity')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'People & service access' })).toBeNull();
     expect(screen.queryByTitle('Sample pass email')).toBeNull();
-    expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/identities'))).toBe(
-      false,
-    );
+    expect(platformIdentityCalls(fetchMock.mock.calls)).toBe(false);
     const user = userEvent.setup();
     await user.type(name, ' updated');
     await user.click(screen.getByRole('button', { name: 'Save' }));
@@ -671,16 +670,11 @@ describe('org detail', () => {
       memberships: [membershipFixture('o1', { orgName: 'Acme Gym' })],
       handlers: handlers(),
     });
-    expect(await screen.findByRole('heading', { level: 1, name: 'Acme Gym' })).toBeInTheDocument();
-    const passes = screen.getByRole('link', { name: '12 passes in Acme Gym' });
-    // The link carries the org as the list scope.
-    expect(passes).toHaveAttribute('href', '/admin/passes?orgId=o1');
-    expect(screen.getByRole('link', { name: '3 API keys in Acme Gym' })).toBeInTheDocument();
+    await screen.findByLabelText('Accent colour');
     expect(screen.queryByRole('button', { name: /^View / })).toBeNull();
     expect(screen.queryByLabelText('Status')).toBeNull();
     expect(screen.getByLabelText('Accent colour')).toHaveValue('#0f766e');
     expect(screen.getByRole('heading', { name: 'Pass branding' })).toBeInTheDocument();
-    expect(screen.queryByText('Get started')).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -820,7 +814,9 @@ describe('org detail', () => {
       memberships,
       handlers: handlers(),
     });
-    expect(await screen.findByText('Organization not found')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /You do not have access|Organization not found/ }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Pass branding' })).toBeNull();
     expect(
       fetchMock.mock.calls.some(
@@ -935,7 +931,7 @@ describe('org detail', () => {
     expect(previews).toEqual([{ orgId: 'o1', ids: expected }]);
   });
 
-  it('shows saved signing evidence and offers only usable identities', async () => {
+  it('offers only usable identities', async () => {
     let org = summary();
     let saved: unknown;
     await renderApp('/admin/orgs/o1', {
@@ -961,120 +957,12 @@ describe('org detail', () => {
       },
     });
     const ui = userEvent.setup();
-    const link = await screen.findByRole('link', { name: 'Platform signer' });
-    expect(link).toHaveAttribute('href', '/admin/identities/platform');
-    expect(screen.getByText('5 days left')).toBeInTheDocument();
-    expect(screen.getByText(/Existing passes keep their signer/)).toBeInTheDocument();
-    expect(
-      screen.queryByText(
-        /Google Wallet and Samsung Wallet account setup and readiness are not available here/,
-      ),
-    ).toBeNull();
-    await ui.click(screen.getByLabelText('Signing identity'));
+    await ui.click(await screen.findByLabelText('Signing identity'));
     const options = screen.getByRole('listbox');
     expect(within(options).queryByRole('option', { name: 'Other signer' })).toBeNull();
     await ui.click(within(options).getByRole('option', { name: 'Acme signer' }));
     await ui.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(saved).toMatchObject({ defaultIdentityId: 'own' }));
-  });
-
-  it('keeps the saved signer and other edits while identity loading is retried', async () => {
-    let fail = true;
-    await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      handlers: {
-        ...handlers(),
-        '/api/v1/orgs/o1': () => json(summary({ defaultIdentityId: 'own' })),
-        '/api/v1/identities': () =>
-          fail
-            ? problem(500, 'identity_error', 'Identities unavailable.')
-            : json({
-                items: [identity({ id: 'own', orgId: 'o1', label: 'Acme signer' })],
-                nextCursor: null,
-              }),
-      },
-    });
-    const ui = userEvent.setup();
-    expect(await screen.findByText(/Identity options could not be loaded/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Signing identity')).toHaveTextContent(
-      'Saved identity (details unavailable)',
-    );
-    await ui.type(screen.getByLabelText(/^Name/), ' draft');
-    fail = false;
-    await ui.click(screen.getByRole('button', { name: 'Retry identities' }));
-    expect(await screen.findByRole('link', { name: 'Acme signer' })).toHaveAttribute(
-      'href',
-      '/admin/identities/own',
-    );
-    expect(screen.getByLabelText(/^Name/)).toHaveValue('Acme Gym draft');
-    expect(screen.getByLabelText('Signing identity')).toHaveTextContent('Acme signer');
-  });
-
-  it('scopes the list when a count is opened', async () => {
-    const { router, fetchMock } = await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      handlers: { ...handlers(), '/api/v1/passes': () => json({ items: [], nextCursor: null }) },
-    });
-    await userEvent.setup().click(await screen.findByRole('link', { name: /12 passes/ }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes'));
-    await waitFor(() =>
-      expect(
-        fetchMock.mock.calls.some((c) => /\/api\/v1\/passes\?.*orgId=o1/.test(String(c[0]))),
-      ).toBe(true),
-    );
-  });
-
-  const orgSetup = (setup: Record<string, unknown>) => ({
-    '/api/v1/metrics/overview': () => json(overview({ setup: { ...overview().setup, ...setup } })),
-  });
-  const newOrg = { counts: { passes: 0, templates: 1, connections: 0, apiKeys: 0 } };
-
-  it('shows the first-run checklist for a new org, with the template step checked', async () => {
-    await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      handlers: {
-        ...handlers(),
-        ...orgSetup({
-          assignedTemplates: 1,
-          approvedTemplates: 0,
-          passes: 0,
-          walletPasses: 0,
-          latestPassId: null,
-        }),
-        '/api/v1/orgs/o1': () => json(summary(newOrg)),
-      },
-    });
-    const list = await screen.findByRole('region', { name: 'Get started' });
-    expect(
-      within(list)
-        .getAllByRole('listitem')
-        .map((step) => step.textContent),
-    ).toEqual([
-      expect.stringContaining('Use a blueprint'),
-      expect.stringContaining('Approve it'),
-      expect.stringContaining('Issue a pass'),
-      expect.stringContaining('Add it to your phone'),
-    ]);
-    expect(within(list).getAllByText('(done)', { exact: false })).toHaveLength(1);
-    expect(within(list).getByRole('link', { name: 'Review' })).toBeInTheDocument();
-  });
-
-  it('drops the org checklist once a pass is in a Wallet', async () => {
-    let asked = false;
-    await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      handlers: {
-        ...handlers(),
-        '/api/v1/metrics/overview': () => {
-          asked = true;
-          return json(overview({ setup: { ...overview().setup, walletPasses: 3 } }));
-        },
-        '/api/v1/orgs/o1': () => json(summary(newOrg)),
-      },
-    });
-    await waitFor(() => expect(asked).toBe(true));
-    await screen.findByRole('heading', { name: 'In this organization' });
-    expect(screen.queryByRole('region', { name: 'Get started' })).toBeNull();
   });
 
   it('lets a platform admin invite an initial org admin without fetching the workspace or people lists', async () => {
@@ -1449,6 +1337,7 @@ describe('org detail', () => {
           default: false,
           updatedAt: null,
           updatedBy: null,
+          source: 'org',
         },
       ],
     });
@@ -1501,6 +1390,7 @@ describe('org detail', () => {
       default: key === 'email.buddy' ? false : null,
       updatedAt: null,
       updatedBy: null,
+      source: 'org',
     });
     await renderApp('/admin/orgs/o1', {
       session: 'admin',
@@ -1603,7 +1493,7 @@ describe('org detail', () => {
     await ui.type(within(dialog).getByLabelText('Type acme to confirm'), 'acme');
     await ui.click(confirm);
     await waitFor(() => expect(deleted).toBe(true));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/orgs'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform/orgs'));
     expect(router.history.length).toBe(1);
   });
 

@@ -45,7 +45,7 @@ export function Health() {
                 </p>
               </div>
               <Button asChild>
-                <Link to="/admin/identities">Review identities</Link>
+                <Link to="/admin/platform/wallet-accounts">Review wallet accounts</Link>
               </Button>
             </div>
           ) : null}
@@ -76,7 +76,7 @@ export function Health() {
                   </p>
                 </div>
                 <Button asChild variant="outline" size="sm">
-                  <Link to="/admin/status">View status</Link>
+                  <Link to="/admin/platform/status">View status</Link>
                 </Button>
               </div>
               {bad.length > 0 ? (
@@ -90,7 +90,7 @@ export function Health() {
                         leading={<Icon aria-hidden />}
                         title={
                           <Link
-                            to={componentLink(c) ?? '/admin/status'}
+                            to={componentLink(c) ?? '/admin/platform/status'}
                             className="rounded-sm after:absolute after:inset-0 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                           >
                             {c.id === 'connections' ? 'All connections' : c.label}

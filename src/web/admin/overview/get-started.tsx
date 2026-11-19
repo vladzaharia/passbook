@@ -167,7 +167,7 @@ export function GetStarted({
         <p className="mb-3 text-xs text-fg-muted">
           {organization
             ? `Organization setup · Live passes and emails for ${organization}`
-            : 'Platform setup · Live passes and emails across all organizations'}
+            : 'Platform setup'}
         </p>
         <Checklist
           title="Get started"

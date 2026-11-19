@@ -46,14 +46,10 @@ export function AuditPage({
     <>
       <PageHeader
         title="Audit log"
-        breadcrumbs={[{ label: 'Overview', to: '/admin' }, { label: 'Audit log' }]}
         meta={
-          <>
-            <Badge>Platform administrator</Badge>
-            <Badge className="max-w-full break-words whitespace-normal">
-              Organization filter: {orgId ? (orgName(orgId) ?? orgId) : 'All organizations'}
-            </Badge>
-          </>
+          <Badge className="max-w-full break-words whitespace-normal">
+            Organization filter: {orgId ? (orgName(orgId) ?? orgId) : 'All organizations'}
+          </Badge>
         }
       />
       <Card className="mb-6">

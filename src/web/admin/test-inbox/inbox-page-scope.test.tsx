@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { setMode } from '@/web/lib/mode.ts';
 import { json, renderApp, sessionFixture } from '@/web/lib/test-utils.tsx';
+import { withOrg } from '../../lib/scope.ts';
 import {
   deferredResponse,
   detail,
@@ -21,31 +22,36 @@ setupInboxTest();
 /** The open preview is modal, so the top bar is out of reach: change scope the way the bar does. */
 async function switchOrg(router: Awaited<ReturnType<typeof renderApp>>['router'], orgId: string) {
   await act(async () => {
-    await router.navigate({
-      to: '.',
-      search: (prev: Record<string, unknown>) => ({ ...prev, orgId }),
-      replace: true,
-    });
+    // The same page in another organization, as the page's own org choice does.
+    const { pathname, searchStr } = router.state.location;
+    await router.navigate({ href: `${withOrg(pathname, orgId)}${searchStr}`, replace: true });
   });
 }
 
 describe('Test inbox', () => {
-  it('does not request a list, detail or send without a selected organization', async () => {
+  it('requests the list and detail only for the organization in the URL', async () => {
     setMode('test');
-    const { fetchMock } = await renderApp('/admin/test-inbox?email=e1', {
+    const { fetchMock, router } = await renderApp('/admin/test-inbox?email=e1', {
       session: 'admin',
       memberships: [operator],
       handlers,
     });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o1/test-inbox'));
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([url]) =>
+          new URL(String(url), 'http://localhost').pathname.startsWith('/api/v1/test-inbox'),
+        ),
+      ).toBe(true),
+    );
     expect(
-      await screen.findByRole('heading', { name: 'Choose an organization' }),
-    ).toBeInTheDocument();
-    expect(
-      fetchMock.mock.calls.some(([url]) =>
-        new URL(String(url), 'http://localhost').pathname.startsWith('/api/v1/test-inbox'),
-      ),
-    ).toBe(false);
-    expect(screen.queryByTitle('Email preview')).not.toBeInTheDocument();
+      fetchMock.mock.calls.every(([u]) => {
+        const url = new URL(String(u), 'http://localhost');
+        return (
+          !url.pathname.startsWith('/api/v1/test-inbox') || url.searchParams.get('orgId') === 'o1'
+        );
+      }),
+    ).toBe(true);
   });
 
   it('closes the preview and hides old rows immediately when the organization changes', async () => {

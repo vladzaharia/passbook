@@ -102,7 +102,7 @@ describe('passes list', () => {
     expect(seen.at(-1)?.searchParams.get('orgId')).toBe(ORG.id);
 
     await user.click(screen.getByRole('button', { name: 'Clear' }));
-    await waitFor(() => expect(router.state.location.search).toEqual({ orgId: ORG.id }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
   });
 
   it('does not expose rows from another organization in a scoped response', async () => {
@@ -408,35 +408,33 @@ describe('new pass wizard', () => {
     });
   }
 
-  it('requires an explicit organization even when only one membership is available', async () => {
+  it('opens the only membership and scopes its requests', async () => {
     const stored = new Map<string, string>();
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => stored.get(key) ?? null,
       setItem: (key: string, value: string) => void stored.set(key, value),
       removeItem: (key: string) => void stored.delete(key),
     });
-    const user = userEvent.setup();
     const { router, fetchMock, queryClient } = await renderApp('/admin/passes/new', {
       session: 'admin',
       memberships: orgScope.memberships,
       handlers: wizardHandlers(() => json({}), []),
     });
-    const organization = await screen.findByRole('radio', { name: /Henry's/ });
-    expect(organization).not.toBeChecked();
+    // The only organization opens; the wizard starts at its templates.
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
     expect(
-      fetchMock.mock.calls.some(([url]) =>
-        /^\/api\/v1\/(?:templates\/eligible|passes)(?:\?|$)/.test(String(url)),
+      fetchMock.mock.calls.every(
+        ([url]) =>
+          !/^\/api\/v1\/(?:templates\/eligible|passes)(?:\?|$)/.test(String(url)) ||
+          String(url).includes(`orgId=${ORG.id}`),
       ),
-    ).toBe(false);
-    await user.click(organization);
-    await waitFor(() => expect(router.state.location.search.orgId).toBe(ORG.id));
+    ).toBe(true);
     await waitFor(() =>
       expect(
         queryClient.getQueryState(['admin', 'templates', 'eligible', ORG.id, 'live', 'apple', 'u1'])
           ?.status,
       ).toBe('success'),
     );
-    await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByRole('radio', { name: /Copper card/ })).toBeInTheDocument();
   });
 
@@ -535,7 +533,9 @@ describe('new pass wizard', () => {
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes/p9'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/p9$/),
+    );
     // The pass's page replaces the wizard and says what happened, with what to do next.
     expect(router.history.length).toBe(entries);
     expect(await screen.findByText(/Pass created.*email requested/i)).toBeInTheDocument();

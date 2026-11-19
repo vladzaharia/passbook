@@ -81,8 +81,9 @@ test('uploads a template variant, sees it done in the list, then deletes it', as
   await page.getByRole('button', { name: 'More' }).click();
   await page.getByRole('menuitem', { name: 'Delete' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
-  await expect.poll(() => new URL(page.url()).pathname).toBe('/admin/templates');
-  expect(new URL(page.url()).searchParams.get('orgId')).toBe(seed.org.id);
+  await expect
+    .poll(() => new URL(page.url()).pathname)
+    .toBe(`/admin/o/${encodeURIComponent(seed.org.id)}/templates`);
   await expect(page.getByRole('link', { name })).toHaveCount(0);
 });
 
@@ -95,7 +96,7 @@ test('a blueprint is locked, opens as a blueprint, and the API refuses to delete
   );
   await expect
     .poll(() => decodeURIComponent(new URL(page.url()).pathname))
-    .toBe('/admin/blueprints/baked:starter-generic');
+    .toBe(`/admin/o/${seed.org.id}/blueprints/baked:starter-generic`);
   await expect(page.getByText('Blueprint', { exact: true }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Use blueprint' })).toBeVisible();

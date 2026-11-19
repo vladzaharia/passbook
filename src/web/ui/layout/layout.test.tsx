@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { orgActivity } from '../../admin/overview/overview-fixtures.ts';
-import { ADMIN_NAV } from '../../lib/nav.ts';
+import { ORG_NAV } from '../../lib/nav.ts';
 import { membershipsQuery, sessionQuery } from '../../lib/session.ts';
 import { json, membershipFixture, renderApp, sessionFixture } from '../../lib/test-utils.tsx';
 
@@ -69,20 +69,20 @@ describe('route guards in the app', () => {
       ],
       handlers: { '/api/v1/scan-sessions': () => json({ items: [], nextCursor: null }) },
     });
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/scanning'));
-    expect(router.state.location.search).toMatchObject({ orgId: 'o1' });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o1/scanning'));
+    expect(router.state.location.search).not.toHaveProperty('orgId');
     expect(screen.queryByRole('heading', { name: 'You do not have access' })).toBeNull();
   });
 
   it('keeps platform pages available to an admin with no memberships', async () => {
-    await renderApp('/admin/users', { session: 'admin', memberships: [] });
+    const { router } = await renderApp('/admin/users', { session: 'admin', memberships: [] });
     expect(await screen.findByRole('heading', { name: 'Users', level: 1 })).toBeInTheDocument();
     const nav = screen.getByRole('navigation', { name: 'Admin' });
     for (const name of [
       'Users',
       'Organizations',
       'Status',
-      'Apple identities',
+      'Wallet accounts',
       'API keys',
       'Settings',
     ]) {
@@ -90,7 +90,61 @@ describe('route guards in the app', () => {
     }
     expect(within(nav).queryByRole('link', { name: 'Passes' })).toBeNull();
     expect(within(nav).queryByRole('link', { name: 'Templates' })).toBeNull();
-    expect(screen.queryByRole('combobox', { name: /^Organization filter/ })).toBeNull();
+    expect(router.state.location.pathname).toBe('/admin/platform/users');
+    // One reachable scope: a label, not a menu; and no Test mode outside an organization.
+    expect(screen.queryByRole('combobox', { name: /^Scope:/ })).toBeNull();
+    expect(screen.queryByRole('switch', { name: 'Test mode' })).toBeNull();
+  });
+
+  it('shows the Test mode switch only inside an organization', async () => {
+    const { router } = await renderApp('/admin/passes', {
+      session: 'admin',
+      memberships: [membershipFixture('o1')],
+      selectedOrg: 'o1',
+      handlers: { '/api/v1/passes': () => json({ items: [], nextCursor: null }) },
+    });
+    await screen.findByRole('heading', { name: 'Passes', level: 1 });
+    expect(screen.getByRole('switch', { name: 'Test mode' })).toBeInTheDocument();
+    await act(async () => {
+      await router.navigate({ to: '/admin/platform/status' });
+    });
+    await waitFor(() => expect(screen.queryByRole('switch', { name: 'Test mode' })).toBeNull());
+  });
+
+  it('labels a single organization as a link into it, not a menu, from a platform page', async () => {
+    await renderApp('/admin/platform/status', {
+      session: 'user',
+      memberships: [membershipFixture('o1', { orgName: 'Henrys' })],
+    });
+    expect(await screen.findByText('Platform pages need a platform admin.')).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /^Scope:/ })).toBeNull();
+    const links = screen.getAllByRole('link', { name: 'Henrys' });
+    expect(links[0]).toHaveAttribute('href', '/admin/o/o1');
+  });
+
+  it('never shows Platform to a member without platform rights', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/platform/users', {
+      session: 'user',
+      memberships: [
+        membershipFixture('o1', { orgName: 'Henrys' }),
+        membershipFixture('o2', { orgName: 'Harbor' }),
+      ],
+      handlers: { '/api/v1/users': () => json({ items: [], nextCursor: null }) },
+    });
+    expect(await screen.findByText('Platform pages need a platform admin.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Go to Henrys' })).toHaveAttribute(
+      'href',
+      '/admin/o/o1',
+    );
+    expect(screen.queryByRole('navigation', { name: 'Admin' })).not.toBeNull();
+    expect(
+      within(screen.getByRole('navigation', { name: 'Admin' })).queryAllByRole('link'),
+    ).toEqual([]);
+    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
+    expect(await screen.findByRole('option', { name: 'Harbor' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Platform' })).toBeNull();
+    expect(screen.queryByRole('option', { name: 'All organizations' })).toBeNull();
   });
 
   it('keeps API keys available to a platform admin without membership', async () => {
@@ -106,8 +160,8 @@ describe('route guards in the app', () => {
   });
 
   it('does not label platform key counts with a remembered tenant selection', async () => {
-    localStorage.setItem('wallet-org-filter', 'o1');
-    await renderApp('/admin/api-keys', {
+    localStorage.setItem('passbook-admin-scope', 'org:o1');
+    await renderApp('/admin/platform/api-keys', {
       session: 'admin',
       memberships: [membershipFixture('o1', { orgName: 'Henrys' })],
       handlers: {
@@ -133,8 +187,6 @@ describe('route guards in the app', () => {
           }),
       },
     });
-    const filter = await screen.findByRole('combobox', { name: /^Organization filter/ });
-    await waitFor(() => expect(filter).toHaveTextContent('Henrys'));
     expect(await screen.findByText('1 API key')).toBeInTheDocument();
     expect(screen.queryByText(/in Henrys/)).toBeNull();
   });
@@ -244,7 +296,7 @@ describe('route guards in the app', () => {
     expect(screen.getByText('o1: your role does not include Templates.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Go to Overview' })).toHaveAttribute(
       'href',
-      '/admin?orgId=o1',
+      '/admin/o/o1',
     );
     expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/templates'))).toBe(
       false,
@@ -324,7 +376,7 @@ describe('route guards in the app', () => {
   ] as const)(
     'denies the pass wizard for an explicit %s organization ID',
     async (_label, query) => {
-      localStorage.setItem('wallet-org-filter', 'o1');
+      localStorage.setItem('passbook-admin-scope', 'org:o1');
       const { router, fetchMock } = await renderApp(`/admin/passes/new?${query}`, {
         session: 'user',
         memberships: [
@@ -342,9 +394,9 @@ describe('route guards in the app', () => {
       expect(
         await screen.findByRole('heading', { name: 'You do not have access', level: 1 }),
       ).toBeInTheDocument();
-      await waitFor(() => expect(localStorage.getItem('wallet-org-filter')).toBeNull());
+      // An explicit organization never falls back to the remembered one.
+      expect(router.state.location.pathname).not.toBe('/admin/o/o1/passes/new');
       expect(screen.queryByRole('heading', { name: 'New pass', level: 1 })).toBeNull();
-      expect(router.state.location.search.orgId).not.toBe('o1');
       for (const path of ['/api/v1/orgs', '/api/v1/passes', '/api/v1/templates']) {
         expect(
           fetchMock.mock.calls.some(
@@ -355,8 +407,8 @@ describe('route guards in the app', () => {
     },
   );
 
-  it('opens the pass wizard without automatically choosing an organization', async () => {
-    const { router, fetchMock } = await renderApp('/admin/passes/new', {
+  it('opens the pass wizard in the only organization', async () => {
+    const { router } = await renderApp('/admin/passes/new', {
       session: 'user',
       memberships: [
         membershipFixture('o1', {
@@ -366,15 +418,8 @@ describe('route guards in the app', () => {
       ],
     });
     expect(await screen.findByRole('heading', { name: 'New pass', level: 1 })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/o/o1/passes/new');
     expect(router.state.location.search).not.toHaveProperty('orgId');
-    expect(localStorage.getItem('wallet-org-filter')).toBeNull();
-    for (const path of ['/api/v1/passes', '/api/v1/templates']) {
-      expect(
-        fetchMock.mock.calls.some(
-          ([url]) => new URL(String(url), 'http://localhost').pathname === path,
-        ),
-      ).toBe(false);
-    }
   });
 
   it('lets a plain user into the portal and hides the Admin link', async () => {
@@ -411,17 +456,16 @@ describe('route guards in the app', () => {
       handlers: { '/api/v1/metrics/activity': () => json(orgActivity()) },
     });
     const nav = await screen.findByRole('navigation', { name: 'Main' });
-    // The choice is the only one there is, and it stays explicit in the URL.
     expect(await within(nav).findByRole('link', { name: 'Admin' })).toHaveAttribute(
       'href',
-      '/admin?orgId=o1',
+      '/admin',
     );
     await user.click(screen.getByRole('button', { name: 'Account menu' }));
     const admin = await screen.findByRole('menuitem', { name: 'Admin' });
-    expect(admin).toHaveAttribute('href', '/admin?orgId=o1');
+    expect(admin).toHaveAttribute('href', '/admin');
     await user.click(admin);
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin'));
-    expect(router.state.location.search).toMatchObject({ orgId: 'o1' });
+    // The only organization there is opens, and the URL names it.
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o1'));
     expect(await screen.findByRole('heading', { name: 'Overview', level: 1 })).toBeInTheDocument();
     expect(
       fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/metrics/activity')),
@@ -507,7 +551,7 @@ describe('admin layout', () => {
     await screen.findByRole('heading', { name: 'Passes', level: 1 });
     const nav = await screen.findByRole('navigation', { name: 'Admin' });
     const links = within(nav).getAllByRole('link');
-    expect(links.map((l) => l.textContent)).toEqual(ADMIN_NAV.map((i) => i.label));
+    expect(links.map((l) => l.textContent)).toEqual(ORG_NAV.flat().map((i) => i.label));
     expect(within(nav).getByRole('link', { name: 'Passes' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -551,17 +595,19 @@ describe('admin layout', () => {
     expect(screen.queryByRole('option', { name: 'New pass' })).toBeNull();
 
     await user.keyboard('{Escape}');
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     await user.click(await screen.findByRole('option', { name: 'o2' }));
+    // The switch keeps the section.
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o2/passes'));
     const templates = await within(nav).findByRole('link', { name: 'Templates' });
     expect(within(nav).queryByRole('link', { name: 'Users' })).toBeNull();
     await user.click(templates);
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/templates'));
-    expect(router.state.location.search).toMatchObject({ orgId: 'o2' });
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o2/templates'));
+    expect(router.state.location.search).not.toHaveProperty('orgId');
     expect(await screen.findByRole('heading', { name: 'Templates', level: 1 })).toBeInTheDocument();
   });
 
-  it('links a member to the explicitly scoped organization workspace', async () => {
+  it('links a member to their organization settings', async () => {
     const user = userEvent.setup();
     const { router } = await renderApp('/admin/passes', {
       session: 'user',
@@ -571,17 +617,13 @@ describe('admin layout', () => {
     });
     await screen.findByRole('heading', { name: 'Passes', level: 1 });
     const nav = screen.getByRole('navigation', { name: 'Admin' });
-    const organization = within(nav).getByRole('link', { name: 'Organization' });
-    const href = new URL(organization.getAttribute('href')!, 'http://localhost');
-    expect(href.pathname).toBe('/admin/orgs/o1');
-    expect(href.searchParams.get('view')).toBe('workspace');
-    expect(href.searchParams.get('orgId')).toBe('o1');
-    await user.click(organization);
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/orgs/o1'));
-    expect(router.state.location.search).toMatchObject({ view: 'workspace', orgId: 'o1' });
+    const settings = within(nav).getByRole('link', { name: 'Settings' });
+    expect(settings).toHaveAttribute('href', '/admin/o/o1/settings');
+    await user.click(settings);
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o1/settings'));
   });
 
-  it('uses the workspace view for the member organization palette entry', async () => {
+  it('finds the organization settings from the palette', async () => {
     const user = userEvent.setup();
     const { router } = await renderApp('/admin/passes', {
       session: 'user',
@@ -592,10 +634,9 @@ describe('admin layout', () => {
     await screen.findByRole('heading', { name: 'Passes', level: 1 });
     await user.keyboard('{Control>}k{/Control}');
     const input = await screen.findByRole('combobox', { name: 'Search' });
-    await user.type(input, 'Organization');
-    await user.click(screen.getByRole('option', { name: 'Organization' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/orgs/o1'));
-    expect(router.state.location.search).toMatchObject({ view: 'workspace', orgId: 'o1' });
+    await user.type(input, 'branding');
+    await user.click(screen.getByRole('option', { name: 'Settings' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o1/settings'));
   });
 
   it('collapses the nav into a sheet via the menu button', async () => {
@@ -616,7 +657,7 @@ describe('admin layout', () => {
     const input = await screen.findByRole('combobox', { name: 'Search' });
     await user.type(input, 'settings');
     await user.keyboard('{Enter}');
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/settings'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform/settings'));
   });
 
   it('returns focus to what had it when the palette closes', async () => {
@@ -741,7 +782,7 @@ describe('admin layout', () => {
     expect(seen.at(-1)).toContain('q=ada');
     expect(screen.queryByText('No results')).toBeNull();
     await user.click(option);
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes/p1'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o1/passes/p1'));
   });
 
   it('moves focus to the new page heading and announces it on navigation', async () => {
@@ -764,7 +805,7 @@ describe('admin layout', () => {
     expect(screen.getByRole('main')).toHaveFocus();
   });
 
-  it('lists only memberships in the scope switcher and writes the choice to the URL', async () => {
+  it('lists Platform and the memberships in the scope switcher and opens the choice', async () => {
     const user = userEvent.setup();
     const { router } = await renderApp('/admin/passes', {
       session: 'admin',
@@ -795,18 +836,22 @@ describe('admin layout', () => {
           }),
       },
     });
-    const filter = await screen.findByRole('combobox', { name: /^Organization filter/ });
-    expect(filter).toHaveAccessibleDescription(
-      'Filters supported views; it does not change your access.',
-    );
-    await waitFor(() => expect(filter).toHaveTextContent('Henrys'));
-    await user.click(filter);
-    expect(screen.queryByRole('option', { name: 'Directory only' })).toBeNull();
-    expect(screen.queryByRole('option', { name: 'Retired' })).toBeNull();
-    expect(screen.queryByRole('option', { name: 'All organizations' })).toBeNull();
+    const scope = await screen.findByRole('combobox', { name: 'Scope: Henrys' });
+    await user.click(scope);
+    expect((await screen.findAllByRole('option')).map((option) => option.textContent)).toEqual([
+      'Platform',
+      'Henrys',
+      'Harbor',
+      'All organizations',
+    ]);
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
-    await waitFor(() => expect(filter).toHaveTextContent('Harbor'));
-    await waitFor(() => expect(router.state.location.search).toEqual({ orgId: 'o2' }));
-    expect(localStorage.getItem('wallet-org-filter')).toBe('o2');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o2/passes'));
+    expect(router.state.location.search).toEqual({});
+    expect(screen.getByRole('combobox', { name: 'Scope: Harbor' })).toBeInTheDocument();
+    await waitFor(() => expect(localStorage.getItem('passbook-admin-scope')).toBe('org:o2'));
+    // The platform scope keeps no organization: a page both have keeps its section.
+    await user.click(screen.getByRole('combobox', { name: 'Scope: Harbor' }));
+    await user.click(await screen.findByRole('option', { name: 'Platform' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform'));
   });
 });

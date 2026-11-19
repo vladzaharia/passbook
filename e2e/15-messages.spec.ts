@@ -21,7 +21,7 @@ test('a message sent now to one template reaches the pass back', async ({ page }
   const dialog = page.getByRole('alertdialog', { name: 'Send to 1 pass?' });
   await dialog.getByRole('button', { name: 'Send', exact: true }).click();
 
-  await page.waitForURL((u) => /^\/admin\/messages\/[0-9a-f-]+$/.test(u.pathname));
+  await page.waitForURL((u) => /^\/admin\/o\/[^/]+\/messages\/[0-9a-f-]+$/.test(u.pathname));
   const id = new URL(page.url()).pathname.split('/').pop() ?? '';
   await expect
     .poll(async () => (await admin.get(`/api/v1/broadcasts/${id}`)).state, { timeout: 30_000 })

@@ -169,7 +169,7 @@ export function renderInApp(node: ReactElement) {
   const route = createRootRoute({ component: () => node });
   const router = createRouter({
     routeTree: route,
-    history: createMemoryHistory({ initialEntries: ['/admin/templates?orgId=org1'] }),
+    history: createMemoryHistory({ initialEntries: ['/admin/o/org1/templates'] }),
   });
   return render(
     createElement(QueryClientProvider, { client }, createElement(RouterProvider, { router })),
