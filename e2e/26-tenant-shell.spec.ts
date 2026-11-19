@@ -337,8 +337,9 @@ test.describe('organization member', () => {
       await page.goto(
         `/admin/orgs/${encodeURIComponent(org.id)}?view=workspace&orgId=${encodeURIComponent(org.id)}`,
       );
-      await expect(page.getByRole('heading', { name: org.name, level: 1 })).toBeVisible();
-      expect(requests).toContain(`/api/v1/orgs/${org.id}/workspace`);
+      // Settings is a section page: the h1 is "Settings"; the scope names the org.
+      await expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible();
+      await expect.poll(() => requests.includes(`/api/v1/orgs/${org.id}/workspace`)).toBe(true);
 
       requests.length = 0;
       await page.goto(`/admin/orgs/${encodeURIComponent(org.id)}`);
