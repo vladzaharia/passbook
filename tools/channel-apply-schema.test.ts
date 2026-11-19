@@ -52,7 +52,9 @@ describe('channel_apply_runs', () => {
       for (const [i, other] of others.entries()) run(runSql({ id: `'x${i}'`, ...other }));
       run(toRunning());
       run(runSql({ id: "'r2'" }));
-      run(runSql({ id: "'r3'", state: "'done'", to_channels: "'{}'", to_revision: '1' }));
+      run(runSql({ id: "'r3'", org_id: "'o2'", template_id: "'t-o2'", mode: "'test'" }));
+      run(toRunning('r3'));
+      run(upd("state = 'done'", 'r3'));
       expect(() => run(toRunning('r2'))).toThrow(/UNIQUE/);
     });
   });
@@ -63,8 +65,9 @@ describe('channel_apply_runs', () => {
       expect(() => run(runSql({ org_id: "'o2'" }))).toThrow(/tenant mismatch/);
       expect(() => run(runSql({ from_channels: "'{'" }))).toThrow(/CHECK/);
       expect(() => run(runSql({ to_channels: "'{}'" }))).toThrow(/CHECK/);
-      expect(() => run(runSql({ state: "'running'" }))).toThrow(/CHECK/);
-      expect(() => run(runSql({ state: "'bogus'" }))).toThrow(/CHECK/);
+      expect(() => run(runSql({ state: "'running'" }))).toThrow(/start pending/);
+      expect(() => run(runSql({ state: "'done'" }))).toThrow(/start pending/);
+      expect(() => run(runSql({ state: "'bogus'" }))).toThrow(/start pending|CHECK/);
     });
   });
 
@@ -122,6 +125,37 @@ describe('channel_apply_runs', () => {
       ])
         expect(() => run(upd(set))).toThrow(/key is immutable/);
     });
+  });
+});
+
+describe('channel_apply_runs lifecycle rules', () => {
+  it('joins saves into replace_channels only while pending', () => {
+    rolledBack(db, () => {
+      run(runSql());
+      run(upd('replace_channels = \'["google"]\', due_at = 200'));
+      run(toRunning());
+      expect(() => run(upd('replace_channels = \'["samsung"]\''))).toThrow(
+        /invalid channel apply run/,
+      );
+    });
+  });
+
+  it('freezes a finished run', () => {
+    for (const final of ['done', 'failed']) {
+      rolledBack(db, () => {
+        run(runSql());
+        run(toRunning());
+        run(upd(`state = '${final}', finished_at = 3, counts = '{"n":1}'`));
+        for (const set of [
+          'counts = \'{"n":2}\'',
+          "cursor = 'p'",
+          "error_code = 'X'",
+          'finished_at = 4',
+          'updated_at = 9',
+        ])
+          expect(() => run(upd(set)), set).toThrow(/invalid channel apply run transition/);
+      });
+    }
   });
 });
 

@@ -149,6 +149,26 @@ export function epochWorld(): DatabaseSync {
       seedInstances(db, org, pass);
     }
     db.exec(`INSERT INTO credential_ref_keyset (id, commitment) VALUES (1, '${H('7')}')`);
+    // Reviewed releases (approved, bound to the enrolment's revision) that a successor may point at.
+    for (const [org, provider, acc] of [
+      ['o1', 'google', 'ag-o1'],
+      ['o1', 'samsung', 'as-o1'],
+      ['o2', 'google', 'ag-o2'],
+    ] as const) {
+      const id = `${provider[0]}${org}`;
+      db.exec(
+        `UPDATE wallet_provider_accounts SET revision = 1, credential_id = 'cred-${id}' WHERE id = '${acc}'`,
+      );
+      db.exec(
+        `INSERT INTO template_candidates (id, template_id, org_id, mode, provider, version, candidate_hash, content_hash, adapter_revision, adapter_capabilities, audience_policy_revision, author_id, created_at, provider_account_id, provider_account_revision) VALUES ('c-${id}', 't-${org}', '${org}', 'live', '${provider}', 'v1', '${H('a')}', '${H('b')}', 1, '[]', 1, 'u', 1, '${acc}', 1)`,
+      );
+      db.exec(
+        `INSERT INTO template_approvals (id, candidate_id, candidate_hash, reviewer_id, created_at) VALUES ('ap-${id}', 'c-${id}', '${H('a')}', 'v', 1)`,
+      );
+      db.exec(
+        `INSERT INTO template_releases (id, template_id, org_id, mode, provider, generation, version, candidate_hash, content_hash, adapter_revision, adapter_capabilities, audience_policy_revision, source, action, candidate_id, approval_id, created_by, created_at) VALUES ('ra-${id}', 't-${org}', '${org}', 'live', '${provider}', 2, 'v1', '${H('a')}', '${H('b')}', 1, '[]', 1, 'approved', 'release', 'c-${id}', 'ap-${id}', 'v', 1)`,
+      );
+    }
   });
   return db;
 }
@@ -194,7 +214,7 @@ export function successorSql(over: Record<string, string> = {}): string {
     mode: "'live'",
     provider: "'google'",
     account_id: "'ag-o1'",
-    identity_projection_release_id: "'r-o1'",
+    identity_projection_release_id: "'ra-go1'",
     credential_generation: '1',
     channel_epoch: '2',
     lifecycle: "'active'",

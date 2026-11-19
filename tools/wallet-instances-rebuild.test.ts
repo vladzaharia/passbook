@@ -36,6 +36,7 @@ const ADDED = [
   'table|channel_apply_runs|',
   'trigger|channel_apply_marks_once|',
   'trigger|channel_apply_marks_tenant|',
+  'trigger|channel_apply_runs_insert|',
   'trigger|channel_apply_runs_key|',
   'trigger|channel_apply_runs_state|',
   'trigger|channel_apply_runs_tenant|',
@@ -177,10 +178,13 @@ describe('0114 rebuild of wallet_provider_instances', () => {
       db.exec("UPDATE wallet_provider_instances SET channel_epoch = 2 WHERE id = 'ig-o1'"),
     ).toThrow(/identity is immutable/);
     // One row per (pass, provider, generation, epoch).
+    // Triggers off, so only the key can refuse it.
     expect(() =>
-      db.exec(
-        "INSERT INTO wallet_provider_instances (id, pass_id, org_id, mode, provider, credential_generation, lifecycle, desired_version, created_at, updated_at) VALUES ('dup', 'p1', 'o1', 'live', 'google', 1, 'blocked', 0, 1, 1)",
+      withoutTriggers(db, () =>
+        db.exec(
+          "INSERT INTO wallet_provider_instances (id, pass_id, org_id, mode, provider, credential_generation, lifecycle, desired_version, created_at, updated_at) VALUES ('dup', 'p1', 'o1', 'live', 'google', 1, 'blocked', 0, 1, 1)",
+        ),
       ),
-    ).toThrow();
+    ).toThrow(/UNIQUE/);
   });
 });

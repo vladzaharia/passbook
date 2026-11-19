@@ -650,8 +650,18 @@ WHEN NEW.channel_epoch > 1 AND (
     AND keyset.commitment = NEW.credential_keyset_commitment)
   OR NOT EXISTS (SELECT 1 FROM passes p WHERE p.id = NEW.pass_id AND p.org_id = NEW.org_id AND p.mode = NEW.mode
     AND p.credential_generation = NEW.credential_generation)
-  OR NOT EXISTS (SELECT 1 FROM wallet_provider_accounts a WHERE a.id = NEW.account_id AND a.org_id = NEW.org_id
-    AND a.mode = NEW.mode AND a.provider = NEW.provider AND a.revoked_at IS NULL)
+  OR EXISTS (SELECT 1 FROM pass_credential_transfers pending WHERE pending.pass_id = NEW.pass_id
+    AND pending.state = 'pending')
+  OR NOT EXISTS (
+    SELECT 1 FROM wallet_provider_accounts a
+    JOIN template_releases r ON r.id = NEW.identity_projection_release_id
+      AND r.org_id = NEW.org_id AND r.mode = NEW.mode AND r.provider = NEW.provider AND r.source = 'approved'
+    JOIN template_candidates c ON c.id = r.candidate_id AND c.provider_account_id = a.id
+      AND c.provider_account_revision = a.revision
+    WHERE a.id = NEW.account_id AND a.org_id = NEW.org_id AND a.mode = NEW.mode
+      AND a.provider = NEW.provider AND a.credential_id IS NOT NULL AND a.revoked_at IS NULL
+      AND (a.credential_source_id IS NULL OR (a.enabled_at IS NOT NULL AND a.platform_hold_at IS NULL))
+  )
   OR NOT EXISTS (
     SELECT 1 FROM wallet_provider_instances pred
     WHERE pred.pass_id = NEW.pass_id AND pred.provider = NEW.provider
@@ -719,16 +729,20 @@ CREATE INDEX channel_apply_runs_template ON channel_apply_runs(template_id);
 CREATE TRIGGER channel_apply_runs_tenant BEFORE INSERT ON channel_apply_runs
 WHEN NOT EXISTS (SELECT 1 FROM templates t WHERE t.id = NEW.template_id AND t.org_id = NEW.org_id)
 BEGIN SELECT RAISE(ABORT, 'channel apply run tenant mismatch'); END;
+CREATE TRIGGER channel_apply_runs_insert BEFORE INSERT ON channel_apply_runs
+WHEN NEW.state != 'pending'
+BEGIN SELECT RAISE(ABORT, 'channel apply run must start pending'); END;
 CREATE TRIGGER channel_apply_runs_key BEFORE UPDATE ON channel_apply_runs
 WHEN NEW.id IS NOT OLD.id OR NEW.org_id IS NOT OLD.org_id OR NEW.mode IS NOT OLD.mode
   OR NEW.template_id IS NOT OLD.template_id OR NEW.from_channels IS NOT OLD.from_channels
   OR NEW.from_revision IS NOT OLD.from_revision OR NEW.requested_by IS NOT OLD.requested_by
 BEGIN SELECT RAISE(ABORT, 'channel apply run key is immutable'); END;
 CREATE TRIGGER channel_apply_runs_state BEFORE UPDATE ON channel_apply_runs
-WHEN (NEW.state IS NOT OLD.state AND NOT (
+WHEN OLD.state IN ('done', 'dropped', 'failed')
+  OR (NEW.replace_channels IS NOT OLD.replace_channels AND OLD.state != 'pending')
+  OR (NEW.state IS NOT OLD.state AND NOT (
     (OLD.state = 'pending' AND NEW.state IN ('running', 'dropped', 'failed'))
     OR (OLD.state = 'running' AND NEW.state IN ('done', 'failed'))))
-  OR (OLD.state IN ('done', 'dropped', 'failed') AND NEW.state IS NOT OLD.state)
   OR ((NEW.to_channels IS NOT OLD.to_channels OR NEW.to_revision IS NOT OLD.to_revision)
     AND NOT (OLD.state = 'pending' AND NEW.state = 'running'))
 BEGIN SELECT RAISE(ABORT, 'invalid channel apply run transition'); END;

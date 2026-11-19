@@ -135,7 +135,18 @@ describe('the provider slot', () => {
 
 describe('successor', () => {
   const ok = () => settleGooglePredecessor(db);
+  // An enrolment fed by a platform credential: it must be On and not held.
+  const sourced = (set: string) =>
+    `PRAGMA defer_foreign_keys = ON; INSERT OR IGNORE INTO wallet_credentials (id, scope, mode, provider, identity_hash, identity_hint, created_at, updated_at) VALUES ('cs', 'platform', 'live', 'google', '${'a'.repeat(64)}', 'abcd', 1, 1); UPDATE wallet_provider_accounts SET credential_source_id = 'cs', ${set} WHERE id = 'ag-o1'`;
   const busyOp = `INSERT INTO wallet_provider_instance_operations (id, instance_id, version, kind, request_hash, pass_version, pass_revision, pass_credential_generation, lifecycle_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision, policy_revision, state, created_at) VALUES ('op-busy', 'ig-o1', 3, 'revoke', '${'a'.repeat(64)}', 1, 0, 1, 0, 'r-o1', 'r-o1', 1, 1, 1, 'pending', 8)`;
+
+  it('accepts an enrolment that is On and not held', () => {
+    rolledBack(db, () => {
+      ok();
+      raw(sourced('enabled_at = 5, platform_hold_at = NULL'));
+      run(successorSql());
+    });
+  });
 
   it('is born active next to a settled channel_off predecessor', () => {
     rolledBack(db, () => {
@@ -154,6 +165,26 @@ describe('successor', () => {
   const refused: [string, () => void, Record<string, string>?][] = [
     ['an epoch gap', () => {}, { channel_epoch: '3' }],
     ['a lifecycle other than active', () => {}, { lifecycle: "'revoking'" }],
+    ['a release of another org', () => {}, { identity_projection_release_id: "'ra-go2'" }],
+    ['a release of another provider', () => {}, { identity_projection_release_id: "'ra-so1'" }],
+    ['a system release (not reviewed)', () => {}, { identity_projection_release_id: "'r-o1'" }],
+    [
+      'an enrolment revision the release was not reviewed for',
+      () => raw("UPDATE wallet_provider_accounts SET revision = 2 WHERE id = 'ag-o1'"),
+    ],
+    [
+      'a revoked enrolment',
+      () => raw("UPDATE wallet_provider_accounts SET revoked_at = 9 WHERE id = 'ag-o1'"),
+    ],
+    ['an enrolment that is not On', () => raw(sourced('enabled_at = NULL'))],
+    ['an enrolment on platform hold', () => raw(sourced('enabled_at = 5, platform_hold_at = 6'))],
+    [
+      'a pending credential transfer',
+      () =>
+        raw(
+          `INSERT INTO pass_credential_transfers (id, pass_id, org_id, mode, state, source_generation, source_version, source_revision, source_row_version, source_lifecycle_generation, source_link_generation, target_holder_email, target_owner_user_id, requested_by_type, requested_at) SELECT 'tr1', id, org_id, mode, 'pending', credential_generation, version, revision, row_version, lifecycle_generation, link_generation + 1, 'n@example.test', NULL, 'system', 9 FROM passes WHERE id = 'p1'`,
+        ),
+    ],
     ['a retirement request', () => {}, { retirement_requested_at: '7' }],
     [
       'a stale keyset commitment',
