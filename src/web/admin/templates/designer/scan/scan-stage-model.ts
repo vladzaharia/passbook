@@ -6,15 +6,13 @@ import type { ScanDisplay, ScanDisplayScreen } from '@/shared/contracts/scan-dis
 import { localZone } from '@/web/lib/timezones.ts';
 import { type DesignDoc, isRecord, styleOf } from '../model.ts';
 import {
-  cutRows,
   displayForPreview,
-  type PreviewFit,
   previewActions,
-  previewFit,
   safeRealScope,
   scopeForOutcome,
   syntheticScope,
 } from './scan-preview.ts';
+import { cutRows, type PreviewFit, previewFit } from './scan-preview-fit.ts';
 import { hasUnsafeRenderedText, previewManifest, safePreviewText } from './scan-preview-policy.ts';
 import type { PreviewTab } from './scan-stage-types.ts';
 

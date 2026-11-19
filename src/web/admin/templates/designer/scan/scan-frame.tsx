@@ -125,3 +125,14 @@ export function ScanFrame({
     </div>
   );
 }
+
+/** The frame's document and scale as state, with a callback stable enough for `onLayout`. */
+export function useFrameLayout() {
+  const [layout, setLayout] = useState<{ doc: Document; scale: number } | null>(null);
+  const onLayout = useCallback(
+    (doc: Document, scale: number) =>
+      setLayout((prev) => (prev?.doc === doc && prev.scale === scale ? prev : { doc, scale })),
+    [],
+  );
+  return [layout, onLayout] as const;
+}

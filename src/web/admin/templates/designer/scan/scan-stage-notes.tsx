@@ -47,3 +47,46 @@ export function StageNotes({
     </>
   );
 }
+
+export function SourceStatus({
+  usingReal,
+  wantsReal,
+  passId,
+  realStatus,
+  restricted,
+  noOrg,
+  lookFailed,
+}: {
+  usingReal: boolean;
+  wantsReal: boolean;
+  passId: string | null;
+  realStatus: 'idle' | 'loading' | 'error';
+  restricted: boolean;
+  noOrg: boolean;
+  lookFailed: boolean;
+}) {
+  return (
+    <>
+      <p className="sp-source" role="status">
+        {usingReal
+          ? 'Real pass · filtered for the selected role'
+          : wantsReal && passId && realStatus !== 'error'
+            ? 'Loading real pass · showing a synthetic sample'
+            : wantsReal && realStatus === 'error'
+              ? 'Real pass unavailable · showing a synthetic sample'
+              : 'Synthetic sample · not a real pass'}
+      </p>
+      {restricted ? (
+        <p className="sp-help">
+          Some synthetic inputs and lookups are omitted to protect restricted data.
+        </p>
+      ) : null}
+      {noOrg ? <p className="sp-help">Real-pass preview needs an organization.</p> : null}
+      {lookFailed ? (
+        <p className="sp-help">
+          Organization logo and colour unavailable. Showing neutral branding.
+        </p>
+      ) : null}
+    </>
+  );
+}

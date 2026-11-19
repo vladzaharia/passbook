@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import type { PreviewFit } from './scan-preview.ts';
+import type { PreviewFit } from './scan-preview-fit.ts';
 import { safePreviewText } from './scan-preview-policy.ts';
 
 export function StageDiagnostics({

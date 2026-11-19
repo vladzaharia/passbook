@@ -1,8 +1,8 @@
+import { passFieldFormats } from '../../../passkit/template/scan-display/field-formats.ts';
 import {
   actionGoals,
   type ScanDisplayScope,
 } from '../../../passkit/template/scan-display/index.ts';
-import { passFieldFormats } from '../../../passkit/template/scan-display/scope.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { accessScopeOf } from './access.ts';

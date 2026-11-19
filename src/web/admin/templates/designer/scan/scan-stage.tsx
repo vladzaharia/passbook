@@ -1,5 +1,5 @@
 import { LockKeyhole } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ScanDisplayDoc } from '@/passkit/template/scan-display/schema.ts';
 import { roleAtLeast } from '@/passkit/template/scan-display/scope.ts';
 import type { Json, ScanRole } from '@/passkit/types.ts';
@@ -8,14 +8,14 @@ import type { ScanDisplayScreen } from '@/shared/contracts/scan-display.ts';
 import { ScanPreviewScreen } from '@/web/scan/preview-screen.tsx';
 import { CheckboxField, SegmentedControl, Select } from '@/web/ui/index.ts';
 import { type DesignDoc, styleOf } from '../model.ts';
-import { type FRAME_SIZES, ScanFrame } from './scan-frame.tsx';
+import { type FRAME_SIZES, ScanFrame, useFrameLayout } from './scan-frame.tsx';
 import { ScanOverlay } from './scan-overlay.tsx';
 import { previewOutcome } from './scan-preview-outcome.ts';
 import { useOrgLook } from './scan-stage-brand.ts';
 import { StageDiagnostics } from './scan-stage-diagnostics.tsx';
 import { useStageFocus } from './scan-stage-focus.ts';
 import { useStagePreview } from './scan-stage-model.ts';
-import { StageNotes } from './scan-stage-notes.tsx';
+import { SourceStatus, StageNotes } from './scan-stage-notes.tsx';
 import { RealPassPicker } from './scan-stage-pass.tsx';
 import { SampleInputs, useRealPreview } from './scan-stage-samples.tsx';
 import type { ScanStageAction } from './scan-stage-types.ts';
@@ -56,7 +56,7 @@ export function ScanStage({
   const [device, setDevice] = useState<keyof typeof FRAME_SIZES>('phone');
   const [marks, setMarks] = useState(true);
   const [showLocked, setShowLocked] = useState(false);
-  const [layout, setLayout] = useState<{ doc: Document; scale: number } | null>(null);
+  const [layout, onLayout] = useFrameLayout();
   const [source, setSource] = useState<'synthetic' | 'real'>('synthetic');
   const [passId, setPassId] = useState<string | null>(null);
   const [request, setRequest] = useState(0);
@@ -97,14 +97,7 @@ export function ScanStage({
     onScreenChange,
     setTabId,
   });
-  const look = useOrgLook(orgId);
-  const onLayout = useCallback(
-    (frameDoc: Document, scale: number) =>
-      setLayout((prev) =>
-        prev?.doc === frameDoc && prev.scale === scale ? prev : { doc: frameDoc, scale },
-      ),
-    [],
-  );
+  const { look, failed } = useOrgLook(orgId);
   const outcome = useMemo(
     () =>
       rendered
@@ -232,21 +225,15 @@ export function ScanStage({
           />
         ) : null}
       </div>
-      <p className="sp-source" role="status">
-        {usingReal
-          ? 'Real pass · filtered for the selected role'
-          : source === 'real' && orgId && passId && real.status !== 'error'
-            ? 'Loading real pass · showing a synthetic sample'
-            : source === 'real' && orgId && real.status === 'error'
-              ? 'Real pass unavailable · showing a synthetic sample'
-              : 'Synthetic sample · not a real pass'}
-      </p>
-      {!usingReal && synthetic?.previewRestricted === true ? (
-        <p className="sp-help">
-          Some synthetic inputs and lookups are omitted to protect restricted data.
-        </p>
-      ) : null}
-      {!orgId ? <p className="sp-help">Real-pass preview needs an organization.</p> : null}
+      <SourceStatus
+        usingReal={usingReal}
+        wantsReal={source === 'real' && orgId !== null}
+        passId={passId}
+        realStatus={real.status}
+        restricted={!usingReal && synthetic?.previewRestricted === true}
+        noOrg={!orgId}
+        lookFailed={failed}
+      />
       {source === 'synthetic' && !phone ? (
         <details className="sp-sample-editor">
           <summary>Edit synthetic sample inputs</summary>
@@ -287,9 +274,9 @@ export function ScanStage({
             <ScanPreviewScreen
               outcome={outcome}
               surface={device === 'operator' ? 'operator' : 'phone'}
-              {...(look
-                ? { orgName: look.orgName, branding: look.branding, logoUrl: look.logoUrl }
-                : {})}
+              orgName={look.orgName}
+              branding={look.branding}
+              logoUrl={look.logoUrl}
             />
           </ScanFrame>
         ) : (

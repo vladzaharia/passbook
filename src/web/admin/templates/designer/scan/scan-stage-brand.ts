@@ -10,11 +10,23 @@ export interface OrgLook {
   logoUrl: string | null;
 }
 
-/** The org's name, accent and logo: what the scanner's session carries for the same org. */
-export function useOrgLook(orgId: string | null): OrgLook | null {
-  const [look, setLook] = useState<OrgLook | null>(null);
+/** What the preview wears until the org's own look is known, or when it has none: no brand. */
+export const NEUTRAL_LOOK: OrgLook = {
+  orgName: 'Organization',
+  branding: { accent: null, logo: null },
+  logoUrl: null,
+};
+
+/**
+ * The org's name, accent and logo: what the scanner's session carries for the same org. While it
+ * loads, or if it cannot be read (`failed`), the preview shows neutral branding.
+ */
+export function useOrgLook(orgId: string | null): { look: OrgLook; failed: boolean } {
+  const [look, setLook] = useState<OrgLook>(NEUTRAL_LOOK);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
-    setLook(null);
+    setLook(NEUTRAL_LOOK);
+    setFailed(false);
     if (!orgId) return;
     const controller = new AbortController();
     void api
@@ -30,9 +42,11 @@ export function useOrgLook(orgId: string | null): OrgLook | null {
             logoUrl: logo ? brandingUrl(orgId, 'logo', logo.sha) : null,
           });
         },
-        () => undefined,
+        () => {
+          if (!controller.signal.aborted) setFailed(true);
+        },
       );
     return () => controller.abort();
   }, [orgId]);
-  return look;
+  return { look, failed };
 }
