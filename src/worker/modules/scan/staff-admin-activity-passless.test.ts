@@ -58,11 +58,16 @@ describe('mode-specific staff activity and device PIN locks', () => {
       if (!session) throw new Error('Missing session');
       const authority = await tenantAuthorityOf(kit.ctx, session, kit.org.id, 'scanning:read');
       if (authority.kind !== 'session') throw new Error('Expected session authority');
+      const scannerName = (
+        await first<{ name: string }>(kit.env.DB, 'SELECT name FROM scanners WHERE id = ?', [
+          scanner.id,
+        ])
+      )?.name;
       const latest = async () =>
         (await listStaff(kit.ctx, session, authority, kit.org.id, 'live')).items.find(
           (item) => item.id === person.id,
         )?.lastScan ?? null;
-      expect(await latest()).toEqual({ at: recorded.at, scannerName: 'Scanner' });
+      expect(await latest()).toEqual({ at: recorded.at, scannerName });
 
       const other = await makeOrg(kit.fx);
       await run(kit.env.DB, 'UPDATE scan_events SET org_id = ? WHERE id = ?', [other.id, event.id]);
@@ -72,9 +77,9 @@ describe('mode-specific staff activity and device PIN locks', () => {
         kit.clock.now(),
         event.id,
       ]);
-      expect(await latest()).toEqual({ at: recorded.at, scannerName: 'Scanner' });
+      expect(await latest()).toEqual({ at: recorded.at, scannerName });
       await run(kit.env.DB, 'DELETE FROM scan_events WHERE id = ?', [event.id]);
-      expect(await latest()).toEqual({ at: recorded.at, scannerName: 'Scanner' });
+      expect(await latest()).toEqual({ at: recorded.at, scannerName });
     },
   );
 });

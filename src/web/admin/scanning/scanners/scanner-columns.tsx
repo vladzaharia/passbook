@@ -18,7 +18,7 @@ export const deviceLine = (s: ScannerDto): string =>
     : s.deviceRole === 'customer'
       ? 'Customer display'
       : s.deviceRole === 'monitor'
-        ? 'Desk display'
+        ? 'Desk monitor'
         : s.kind === 'terminal'
           ? 'Till · token'
           : (s.pairedLabel ?? 'Not paired');

@@ -18,6 +18,11 @@ export function effectValue(
   return history && !history.valueSafe(value) ? null : value;
 }
 
+/** A completed refusal with no pass: nothing event-time to fence, so a console may name who recorded it. */
+export function isDonePasslessRow(row: HistoryRow): boolean {
+  return row.passlessProofCandidate && row.raw.scan_state === 'done' && row.passId === null;
+}
+
 /** Project only after the row's provenance and the viewer's current policy have been checked. */
 export function projectScanRecord(
   row: HistoryRow,
@@ -36,8 +41,7 @@ export function projectScanRecord(
   // A passless refusal has no pass or event-time policy to fence, so the console shows who recorded
   // it, by current name: a renamed scanner shows its new name on old rows, unlike pass-bearing rows.
   // The same audience (scanning:read) already lists scanners and staff by name.
-  const passless =
-    row.passlessProofCandidate && row.policyAvailable && row.passId === null && actor.role !== null;
+  const passless = row.policyAvailable && isDonePasslessRow(row) && actor.role !== null;
   const scannerName = passless
     ? row.scannerName
     : authorized && history.scannerNameVisible(row.scannerName)

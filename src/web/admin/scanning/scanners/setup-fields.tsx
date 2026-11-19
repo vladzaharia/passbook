@@ -38,7 +38,7 @@ export function SetupFields({ draft, onChange, errors }: SetupFieldsProps) {
                 {draft.deviceRole === 'scan'
                   ? 'Scanner'
                   : draft.deviceRole === 'monitor'
-                    ? 'Desk display'
+                    ? 'Desk monitor'
                     : 'Customer display'}
               </Badge>
             </div>

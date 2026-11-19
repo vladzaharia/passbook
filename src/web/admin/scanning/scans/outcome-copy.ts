@@ -20,9 +20,12 @@ const METHODS: Record<string, string> = {
 export const methodLabel = (method: string) => METHODS[method] ?? method;
 
 /** The action's label, else the reason in plain words; never a raw code. */
-export function actionText(row: Pick<ScanRecordDto, 'actionLabel' | 'reason'>): string {
+export function actionText(
+  row: Pick<ScanRecordDto, 'actionLabel' | 'reason'> & Partial<Pick<ScanRecordDto, 'passId'>>,
+): string {
   if (row.actionLabel) return row.actionLabel;
-  if (!row.reason) return '—';
+  // The Pass cell already says "No pass matched".
+  if (!row.reason || (row.reason === 'not_found' && row.passId === null)) return '—';
   return (SCAN_REASON_COPY[row.reason] as { headline: string } | undefined)?.headline ?? '—';
 }
 

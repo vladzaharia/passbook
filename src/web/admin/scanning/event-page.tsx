@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import {
   type ScanEventDto,
@@ -105,6 +105,15 @@ function EventDetail({
     membership?.capabilities.includes('templates:read') &&
       membership.capabilities.includes('templates:author'),
   );
+  // Live before opensAt reads Upcoming, and flips at opensAt without a reload.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const wait = event.opensAt - Date.now();
+    if (wait <= 0) return;
+    const timer = window.setTimeout(() => setNow(Date.now()), Math.min(wait, 2 ** 31 - 1));
+    return () => window.clearTimeout(timer);
+  }, [event.opensAt]);
+  const upcoming = event.status === 'live' && event.opensAt > now;
   const [dialog, setDialog] = useState<'edit' | 'assign' | 'archive' | null>(null);
   const templates = useOrgTemplates(event.orgId);
   const scanners = useQuery({
@@ -142,11 +151,7 @@ function EventDetail({
         meta={
           event ? (
             <>
-              <StatusPill
-                status={
-                  event.status === 'live' && event.opensAt > Date.now() ? 'upcoming' : event.status
-                }
-              />
+              <StatusPill status={upcoming ? 'upcoming' : event.status} />
               <span>
                 {formatEventTime(event.opensAt, event.timeZone)} –{' '}
                 {formatEventTime(event.closesAt, event.timeZone)}

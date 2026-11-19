@@ -17,6 +17,7 @@ describe('scan activity wording', () => {
   });
   it('writes reasons and methods in plain words', () => {
     expect(actionText({ actionLabel: null, reason: 'not_found' })).toBe('Not found');
+    expect(actionText({ actionLabel: null, reason: 'not_found', passId: null })).toBe('—');
     expect(actionText({ actionLabel: 'Check in', reason: null })).toBe('Check in');
     expect(methodLabel('wedge')).toBe('Scanner gun');
   });

@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { z } from 'zod';
+import { ScannerSetupListSchema } from '@/shared/contracts/scan-setups.ts';
 import { api } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { Button, Card, CardBody, Checklist, type ChecklistStep } from '@/web/ui/index.ts';
-import { useScannerPages } from './queries.ts';
 import { type ScanningSearch, type ScanningTab, withTab } from './search.ts';
 import { useScanningSessions } from './sessions/api.ts';
 import { useZones } from './zones-query.ts';
@@ -52,23 +52,27 @@ export function SetupChecklist({ onNew }: { onNew?: () => void }) {
   const mode = useMode();
   const sessions = useScanningSessions(orgId);
   const zones = useZones();
-  const scanners = useScannerPages(orgId, false);
+  // Ask the API for one paired scanner, so a paired device on a later page still counts.
+  const paired = useQuery({
+    queryKey: ['admin', 'scanning', 'scanners', 'paired', orgId, mode],
+    enabled: Boolean(orgId),
+    queryFn: ({ signal }) =>
+      api.get('/api/v1/scan-setups', ScannerSetupListSchema, {
+        query: { orgId, status: 'paired', limit: 1 },
+        signal,
+      }),
+  });
   const staff = useQuery({
     queryKey: ['admin', 'scanning', 'staff', orgId, mode, 'setup'],
     enabled: Boolean(orgId),
     queryFn: ({ signal }) =>
       api.get('/api/v1/scan-staff', StaffCountSchema, { query: { orgId, limit: 1 }, signal }),
   });
-  if (!sessions.data || !zones.data || !scanners.data || !staff.data) return null;
+  if (!sessions.data || !zones.data || !paired.data || !staff.data) return null;
   const counts: SetupCounts = {
     sessions: sessions.data.pages.flatMap((p) => p.items).filter((s) => s.orgId === orgId).length,
     zones: zones.data.items.length,
-    // Only the first pages are loaded: more pages with none paired yet still means devices exist.
-    paired:
-      scanners.data.pages
-        .flatMap((p) => p.items)
-        .filter((s) => s.orgId === orgId && s.status === 'paired').length +
-      (scanners.hasNextPage ? 1 : 0),
+    paired: paired.data.items.filter((x) => x.orgId === orgId).length,
     staff: staff.data.items.length,
   };
   const steps = setupSteps(counts, onNew);
