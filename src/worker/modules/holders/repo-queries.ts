@@ -82,6 +82,15 @@ export async function userVerifiedEmail(
   return row !== null;
 }
 
+/** A card made from a public join link: its address was typed into a form nobody verified. */
+export async function isJoinedPass(db: D1Database, passId: string): Promise<boolean> {
+  return (
+    (await first<{ ok: number }>(db, 'SELECT 1 AS ok FROM join_issues WHERE pass_id = ?', [
+      passId,
+    ])) !== null
+  );
+}
+
 /** Candidates for the verified-email hook; each is transferred under its own source fence. */
 export async function waitingPassIds(
   db: D1Database,
