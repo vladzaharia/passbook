@@ -38,8 +38,8 @@ export function usePassView(
         assets: assetMap(assetBaseUrl, assetNames),
         ...(removed ? { stateWord: 'Removed' } : {}),
       });
-      // A removed pass is stored voided, but Wallet files it under Expired passes: the card says so.
-      return removed ? { ...view, invalid: 'expired' } : view;
+      // A removed pass is stored voided: no stamp, as on the holder's pages; the card is greyed and reads Removed.
+      return removed ? { ...view, invalid: null } : view;
     } catch {
       // A malformed pass.json must not take the page down; callers show the fallback line.
       return null;

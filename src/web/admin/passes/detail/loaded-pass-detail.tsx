@@ -47,7 +47,34 @@ import { PassTabs } from './pass-tabs.tsx';
 import { useStageMotion } from './stage-state.ts';
 
 const devices = (n: number) =>
-  n === 0 ? 'Not on a device yet' : `On ${n} ${n === 1 ? 'device' : 'devices'}`;
+  n === 0 ? 'Not in a Wallet yet' : `On ${n} ${n === 1 ? 'device' : 'devices'}`;
+
+/** What last went out: the newest email and the newest published version, one line each. */
+function lastSent(p: PassDetailDto): string[] {
+  const email = p.deliveries
+    .filter((d) => d.kind === 'email')
+    .reduce<(typeof p.deliveries)[number] | null>(
+      (a, d) => (!a || d.createdAt > a.createdAt ? d : a),
+      null,
+    );
+  const published = p.versions.reduce<(typeof p.versions)[number] | null>(
+    (a, v) => (!a || v.createdAt > a.createdAt ? v : a),
+    null,
+  );
+  const mail = !email
+    ? null
+    : email.state === 'sent'
+      ? `Emailed ${formatDateTime(email.finishedAt ?? email.createdAt)}`
+      : email.state === 'failed'
+        ? 'Email failed'
+        : 'Email sending';
+  return [
+    ...(mail ? [mail] : []),
+    ...(published && p.version > 1
+      ? [`Published v${published.version} ${formatDateTime(published.createdAt)}`]
+      : []),
+  ];
+}
 
 export function LoadedPassDetail({
   pass: p,
@@ -158,6 +185,9 @@ export function LoadedPassDetail({
             <StatusPill status={p.holderState} />
             <span className="tabular-nums">v{p.version}</span>
             <span>{devices(p.deviceCount)}</span>
+            {lastSent(p).map((line) => (
+              <span key={line}>{line}</span>
+            ))}
           </>
         }
         actions={<HeaderActionsView runner={runner} />}

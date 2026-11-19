@@ -55,6 +55,18 @@ function Result({ bundle, emailRequested }: { bundle: BundleDto; emailRequested:
           ) : null}
         </Callout>
       ) : null}
+      {bundle.passes[0] ? (
+        <p className="text-sm">
+          <Link
+            to="/admin/passes/$passId"
+            params={{ passId: bundle.passes[0].id }}
+            search={{ tab: 'delivery' }}
+            className="font-medium text-accent-fg underline-offset-4 hover:underline"
+          >
+            See this bundle on its first pass
+          </Link>
+        </p>
+      ) : null}
       <Scan
         url={url}
         label={`QR code for ${bundle.name}`}
