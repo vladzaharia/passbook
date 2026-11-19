@@ -46,8 +46,8 @@
     --scan-wash-system: rgb(51 65 85 / 0.56);
     --scan-ring-glow: 55%;
     --scan-card: #ffffff;
-    --scan-glass: rgb(255 255 255 / 0.84);
-    --scan-glass-solid: rgb(255 255 255 / 0.92);
+    --scan-glass: rgb(255 255 255 / 0.97);
+    --scan-glass-solid: #ffffff;
     --scan-accent-on: #ffffff;
   }
 }
@@ -59,8 +59,8 @@
   --scan-wash-system: rgb(51 65 85 / 0.56);
   --scan-ring-glow: 55%;
   --scan-card: #ffffff;
-  --scan-glass-solid: rgb(255 255 255 / 0.92);
-  --scan-glass: rgb(255 255 255 / 0.84);
+  --scan-glass-solid: #ffffff;
+  --scan-glass: rgb(255 255 255 / 0.97);
   --scan-accent-on: #ffffff;
 }
 @media (min-width: 640px) {
@@ -99,6 +99,8 @@
   }
 }
 
+/* Light theme: the viewfinder stays dark, the chrome on it (capsule, dock) is solid white. A translucent
+   white over black read as muddy grey, so the glass is near opaque. */
 /* The shell: layers in BF z-order. */
 .scan-shell {
   position: fixed;
@@ -261,4 +263,14 @@
   .scan-card-layer[data-mode="result"] {
     align-items: center;
   }
+}
+
+/* Dark: muted text one step lighter so captions stay 4.5:1 over the gradients. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .scan-shell {
+    --sd-muted: #a9b1c4;
+  }
+}
+:root[data-theme="dark"] .scan-shell {
+  --sd-muted: #a9b1c4;
 }

@@ -1,6 +1,5 @@
 /** The words of an assign error or banner, filled with what the card knows. */
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
-import { TAG_ERROR_COPY } from '../../../shared/copy/tags.ts';
 import { formatShortDate } from '../../lib/format.ts';
 import type { AssignBanner, AssignError } from '../machine/assign-state.ts';
 import { fill } from '../ui/copy.ts';
@@ -12,7 +11,7 @@ export interface Line {
 }
 
 /** The sub of an `already_here` error leaves out a missing date or staff name. */
-export function errorLine(e: AssignError, ctx: { org: string }): Line {
+export function errorLine(e: AssignError, ctx: { org: string; wait?: number | null }): Line {
   const c = SCAN_TAG_COPY.err;
   switch (e.kind) {
     case 'already_here':
@@ -21,7 +20,7 @@ export function errorLine(e: AssignError, ctx: { org: string }): Line {
         sub: e.at
           ? fill(c.alreadyHere.sub, {
               date: formatShortDate(e.at),
-              staff: e.by ?? 'staff',
+              staff: (e.by ?? 'staff').replace(/\.$/, ''),
             }).replace(/ by staff\.$/, '.')
           : '',
       };
@@ -46,10 +45,13 @@ export function errorLine(e: AssignError, ctx: { org: string }): Line {
     case 'too_many':
       return {
         headline: c.tooMany.headline,
-        sub: fill(c.tooMany.sub, { seconds: e.seconds ?? 10 }),
+        sub:
+          ctx.wait === 0
+            ? c.tooMany.ready
+            : fill(c.tooMany.sub, { seconds: ctx.wait ?? e.seconds ?? 10 }),
       };
     case 'holder_changed':
-      return { headline: c.notAssigned.headline, sub: TAG_ERROR_COPY.TAG_HOLDER_CHANGED };
+      return { ...c.holderChanged };
     case 'needs_connection':
       return { headline: SCAN_TAG_COPY.needsConnection, sub: '' };
     case 'off':

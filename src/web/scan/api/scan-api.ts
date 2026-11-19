@@ -16,7 +16,6 @@ import {
 } from '../../../shared/contracts/nfc-tags.ts';
 import {
   type ScanActRequestSchema,
-  type ScanAdminScopeSchema,
   ScanCountsSchema,
   ScanOutcomeSchema,
   type ScanResolveRequestSchema,
@@ -51,46 +50,20 @@ import {
   type MarkOutRequest,
   MarkOutResultSchema,
 } from '../inside/inside-types.ts';
-import { ScanApiError } from './errors.ts';
-import { problemOf } from './problem.ts';
+import { canReload, ScanApiError } from './errors.ts';
+import {
+  type AdminScope,
+  type Call,
+  problemOf,
+  retryAfterMs,
+  type ScanApiDeps,
+  scopeQuery,
+} from './scan-api-support.ts';
 
 export { ScanApiError } from './errors.ts';
+export type { ScanApiDeps } from './scan-api-support.ts';
 
 const BASE = '/api/v1/scan';
-
-export interface ScanApiDeps {
-  fetch?: typeof fetch;
-  /** The scan session's CSRF secret, read per write. Undefined for a bearer or before the session. */
-  csrf: () => string | undefined;
-  scope?: () => AdminScope | undefined;
-  /** Waits before the one retry of a 409. */
-  sleep?: (ms: number) => Promise<void>;
-  /** Refetches the scan session and its configuration (a 409 `SCAN_CONFIG_CHANGED` or `SCAN_STAFF_CHANGED`). */
-  refreshConfig?: () => Promise<void>;
-}
-
-type AdminScope = z.infer<typeof ScanAdminScopeSchema>;
-type Call = { signal?: AbortSignal };
-
-function retryAfterMs(res: Response): number | undefined {
-  const raw = res.headers.get('retry-after');
-  if (raw === null) return undefined;
-  const seconds = Number(raw);
-  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
-  const at = Date.parse(raw);
-  return Number.isNaN(at) ? undefined : Math.max(0, at - Date.now());
-}
-
-/** An admin names the org (and event, templates) on a GET as a query. */
-export function scopeQuery(scope: AdminScope | undefined): string {
-  if (!scope) return '';
-  const q = new URLSearchParams({ orgId: scope.orgId });
-  if (scope.eventId) q.set('eventId', scope.eventId);
-  if (scope.setupId) q.set('setupId', scope.setupId);
-  if (scope.templateIds?.length) q.set('templateIds', scope.templateIds.join(','));
-  q.set('timeZone', scope.timeZone);
-  return `?${q.toString()}`;
-}
 
 export function createScanApi(deps: ScanApiDeps) {
   const doFetch = deps.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
@@ -174,8 +147,8 @@ export function createScanApi(deps: ScanApiDeps) {
       }
       // The door's configuration moved under this request: reload it and send the same key once more.
       // Never an unpair: only a 401 means the credential is gone.
-      else if (code === 'SCAN_CONFIG_CHANGED' && deps.refreshConfig && !call.signal?.aborted) {
-        await deps.refreshConfig();
+      else if (code === 'SCAN_CONFIG_CHANGED' && canReload(deps, path, call)) {
+        await deps.refreshConfig?.();
         attempt = await once(method, path, body, call);
       }
       // The signed-in staff member changed (role, PIN or access): drop the sign-in so the PIN prompt shows.
