@@ -22,6 +22,15 @@ export const liveActorSchema = z.strictObject({
   templateIds: z.array(IdSchema),
   adminEventTemplates: z.boolean().optional(),
   invalidScannerScope: z.boolean().optional(),
+  watchCover: z
+    .strictObject({
+      allOrg: z.boolean(),
+      scannerIds: z.array(IdSchema),
+      sessionIds: z.array(IdSchema),
+      eventId: IdSchema.nullable(),
+      zoneIds: z.array(IdSchema),
+    })
+    .optional(),
   scannerAssignment: z
     .strictObject({
       scannerId: IdSchema,
