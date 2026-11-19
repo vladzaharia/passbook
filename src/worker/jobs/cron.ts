@@ -28,6 +28,7 @@ import { recordCronRun } from '../modules/status/cron.ts';
 import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
 import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
+import { enqueueCredentialChecks } from '../modules/wallet-providers/account-check.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
 import { dailyWebhooks, sweepWebhooks } from '../modules/webhooks/jobs.ts';
 import { sweepLeakedGrants } from '../platform/authority.ts';
@@ -84,6 +85,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'apple.retention', run: dailyApple },
     { name: 'identities.expiry', run: dailyIdentities },
     { name: 'identities.apns_probe', run: dailyApnsProbe },
+    { name: 'wallet.credential_checks', run: enqueueCredentialChecks },
     { name: 'scan.retention', run: dailyScans },
     { name: 'join.retention', run: dailyJoin },
     { name: 'orgs.branding_gc', run: sweepBrandingGc },
