@@ -147,7 +147,7 @@ function ScopedApiKeys({
     <>
       <PageHeader
         title="API keys"
-        meta={orgId === null ? 'All modes' : `${orgName} · All modes`}
+        meta={orgId === null ? undefined : 'All modes'}
         actions={create(empty ? 'outline' : 'primary')}
       />
       {live.isError && liveRows.length === 0 ? (
