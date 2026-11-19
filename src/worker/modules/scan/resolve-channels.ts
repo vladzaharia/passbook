@@ -11,7 +11,7 @@ export type ChannelVerdict = { kind: 'off'; channel: Channel } | { kind: 'typed'
  * is the code family: a scan code or barcode (or any non-typed read) is refused when every digital
  * channel is off. A typed number (a manual entry matching the lookup or serial alone, or a desk pick
  * by name) is only checked: on an all-off pass, and on a pass that had a New code after a retirement
- * or has a print, so a plain Turn off never makes every scan a heads-up.
+ * or has a print, by any read method, so a plain Turn off never makes every scan a heads-up.
  */
 export async function channelVerdict(
   ctx: ServiceContext,
@@ -23,12 +23,12 @@ export async function channelVerdict(
   const picked = input.method === 'manual' && 'passId' in input;
   if ((!nfc && !picked && !matchedBy) || matchedBy === 'print' || one.channelRules === false)
     return null;
-  const typed =
-    picked || (input.method === 'manual' && (matchedBy === 'lookup' || matchedBy === 'serial'));
-  const door = await doorChannels(ctx, one.pass, typed);
+  const lookup = matchedBy === 'lookup' || matchedBy === 'serial';
+  const typed = picked || (input.method === 'manual' && lookup);
+  const door = await doorChannels(ctx, one.pass, lookup || picked);
   if (nfc) return door.nfcOn ? null : { kind: 'off', channel: 'nfc' };
   if (door.digitalOff) return typed ? { kind: 'typed' } : { kind: 'off', channel: door.named };
-  return typed && !picked && (door.rotatedAfterRetire || door.printed) ? { kind: 'typed' } : null;
+  return lookup && (door.rotatedAfterRetire || door.printed) ? { kind: 'typed' } : null;
 }
 
 /**

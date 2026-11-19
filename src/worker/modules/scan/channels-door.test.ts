@@ -305,3 +305,27 @@ describe('typed numbers: reads that are not typed, and desk picks', () => {
     expect(o.kind).toBe('ready');
   });
 });
+
+describe('lookup matches by any read method', () => {
+  it('a camera read of a rotated pass lookup is checked', async () => {
+    const s = await door();
+    const { pass, memberNo } = await numbered(false);
+    await channel(pass, 'apple', { override: 'off', retiredAt: 5 });
+    await rotate(pass, 6);
+    const { out: o } = await resolve(s.headers, { code: memberNo, method: 'camera' });
+    expect(o).toMatchObject({
+      kind: 'heads_up',
+      reason: 'check_required',
+      flags: ['Typed number'],
+    });
+  });
+
+  it("a camera read of a rotated pass barcode (Henry's) is not", async () => {
+    const s = await door();
+    const { pass, memberNo } = await numbered(true);
+    await channel(pass, 'apple', { override: 'off', retiredAt: 5 });
+    await rotate(pass, 6);
+    const { out: o } = await resolve(s.headers, { code: memberNo, method: 'camera' });
+    expect(o.kind).toBe('ready');
+  });
+});
