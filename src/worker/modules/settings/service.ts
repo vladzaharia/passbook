@@ -240,6 +240,13 @@ export async function updateSettings(
     }
   }
   if (issues.length) throw new ValidationError('Invalid settings.', issues, 'INVALID_SETTING');
+  const tags = upserts['nfc.tags'] as { enabled?: boolean } | undefined;
+  if (orgId !== null && tags?.enabled === true && !(await getPlatformSettings(ctx))['nfc.enabled'])
+    throw new ValidationError(
+      'Invalid settings.',
+      [{ path: 'nfc.tags', message: 'NFC is off for all organizations.', code: 'NFC_OFF' }],
+      'NFC_OFF',
+    );
   // Bounds against the platform maximum, and the floors that delay a shortening (retention keys only).
   const retention = await planRetentionChange(ctx, scope, upserts, deletes);
   const [first] = retention.issues;

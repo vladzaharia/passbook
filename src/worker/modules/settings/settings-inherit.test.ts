@@ -157,4 +157,14 @@ describe('settings source and ceiling', () => {
     expect(get('scan.undoWindowMinutes')).toMatchObject({ source: 'default', value: 10 });
     expect(get('scan.undoWindowMinutes').ceiling).toBeUndefined();
   });
+
+  it('refuses enabling org NFC tags while the platform switch is off, allows it once on', async () => {
+    const scope = await orgScope();
+    const res = await put(scope, { 'nfc.tags': { enabled: true } });
+    expect(res.status).toBe(422);
+    expect(JSON.stringify(await res.json())).toContain('NFC_OFF');
+    expect((await put(scope, { 'nfc.tags': { enabled: false } })).status).toBe(200);
+    await call('PUT', '', { values: { 'nfc.enabled': true } });
+    expect((await put(scope, { 'nfc.tags': { enabled: true } })).status).toBe(200);
+  });
 });
