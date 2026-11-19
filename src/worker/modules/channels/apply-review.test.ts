@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { all } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import * as events from '../events/record.ts';
 import { applyChannelPage } from './apply-page.ts';
@@ -239,4 +240,32 @@ describe('channel apply: review fixes', () => {
       });
     },
   );
+
+  it('an inherited start records events only for channels that change on the pass', async () => {
+    const t = await applyKit(2);
+    const ctx = jobCtxOf(t.kit);
+    const a = await idOf(t.saved({ apple: 'off' }));
+    t.kit.clock.advance(10 * 60_000);
+    await startOne(ctx, a);
+    await applyChannelPage(ctx, a);
+    // The failed run reached only the first pass.
+    const [reached, missed] = [...t.ids].sort();
+    await t.exec(
+      'DELETE FROM channel_apply_marks WHERE run_id = ? AND pass_id = ?',
+      a,
+      missed ?? '',
+    );
+    await t.exec("DELETE FROM pass_channels WHERE pass_id = ? AND channel = 'apple'", missed ?? '');
+    await failRun(ctx, a, 'CHANNEL_APPLY_FAILED');
+    const b = await idOf(t.saved({ google: 'off' }));
+    expect(await t.work(b).done).toEqual({ state: 'done' });
+    const eventsOf = (pass: string | undefined) =>
+      all<{ channel: string }>(
+        t.db,
+        "SELECT json_extract(data, '$.channel') AS channel FROM pass_events WHERE kind = 'pass.channels_changed' AND json_extract(data, '$.runId') = ? AND pass_id = ?",
+        [b, pass ?? ''],
+      );
+    expect((await eventsOf(reached)).map((e) => e.channel)).toEqual([]);
+    expect((await eventsOf(missed)).map((e) => e.channel)).toEqual(['apple']);
+  });
 });

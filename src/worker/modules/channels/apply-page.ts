@@ -36,7 +36,7 @@ interface Plan {
 }
 
 /** What the run's policy change does to one pass, from the pass's live inputs. */
-function plan(run: ApplyRun, loaded: LoadedPass, now: number): Plan {
+function plan(run: ApplyRun, loaded: LoadedPass, now: number, inherited: boolean): Plan {
   const { inputs, rows } = loaded;
   const before = effectiveChannels({ ...inputs, template: run.from });
   const after = effectiveChannels({ ...inputs, template: run.to });
@@ -44,7 +44,7 @@ function plan(run: ApplyRun, loaded: LoadedPass, now: number): Plan {
     copies: new Set(rows.copies),
     retired: new Set(Object.keys(rows.retired) as Channel[]),
   });
-  const events: ApplyEvent[] = CHANNELS.filter((c) => before[c].on !== after[c].on).map(
+  const flips: ApplyEvent[] = CHANNELS.filter((c) => before[c].on !== after[c].on).map(
     (channel) => ({
       channel,
       from: before[channel].on ? 'on' : 'off',
@@ -79,6 +79,13 @@ function plan(run: ApplyRun, loaded: LoadedPass, now: number): Plan {
   // The Apple republish also refreshes an active Google object (N4).
   if (appleChanged && rows.copies.includes('google') && after.google.on) add('google');
   const voidPrints = actions.some((a) => a.kind === 'void_prints');
+  // A run that inherited a failed run's start may find passes that run already handled: only a channel
+  // whose marker (or print) changes here is news.
+  const events = inherited
+    ? flips.filter(
+        (e) => marks.some((m) => m.channel === e.channel) || (voidPrints && e.channel === 'paper'),
+      )
+    : flips;
   const empty = events.length === 0 && marks.length === 0 && !voidPrints;
   return { write: empty ? null : { rows: marks, events, voidPrints }, cost, appleChanged };
 }
@@ -107,7 +114,7 @@ async function finishMarked(
     });
 }
 
-async function page(ctx: ServiceContext, run: ApplyRun): Promise<PageResult> {
+async function page(ctx: ServiceContext, run: ApplyRun, inherited: boolean): Promise<PageResult> {
   const db = ctx.env.DB;
   await journal(ctx, run);
   const passes = await passPage(db, run);
@@ -136,7 +143,7 @@ async function page(ctx: ServiceContext, run: ApplyRun): Promise<PageResult> {
     let seen = revisions.get(pass.id) ?? {};
     let done = false;
     for (let attempt = 0; attempt < 2 && !done && state; attempt++) {
-      const p = plan(run, state, ctx.clock.now());
+      const p = plan(run, state, ctx.clock.now(), inherited);
       if (!p.write) {
         done = true;
         break;
@@ -184,7 +191,8 @@ export async function applyChannelPage(ctx: ServiceContext, runId: string): Prom
   const run = await getRun(ctx.env.DB, runId);
   if (run?.state !== 'running' || !run.to) return { done: true };
   try {
-    return await page(ctx, { ...run, from: (await effectiveFrom(ctx, run)).from });
+    const begin = await effectiveFrom(ctx, run);
+    return await page(ctx, { ...run, from: begin.from }, begin.viaFailed);
   } catch (error) {
     if (isOrgRefusal(error)) return { done: true, failed: ORG_INACTIVE };
     throw error;
