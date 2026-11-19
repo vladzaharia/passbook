@@ -143,8 +143,16 @@ export async function writeJournaled(
   ctx: ServiceContext,
   run: ApplyRun,
   passIds: string[],
+  closing = false,
 ): Promise<void> {
-  const g = runGrant(ctx, run, 'journal', ['channel_apply_marks']);
+  // A run that is ending as failed still journals, even for a suspended org.
+  const g = runGrant(
+    ctx,
+    run,
+    closing ? 'journal_close' : 'journal',
+    ['channel_apply_marks'],
+    closing ? { inactiveOk: true } : {},
+  );
   g.joined('channel_apply_marks', {
     where: { run_id: run.id, journaled_at: null, pass_id: inList(passIds) },
     set: { journaled_at: ctx.clock.now() },

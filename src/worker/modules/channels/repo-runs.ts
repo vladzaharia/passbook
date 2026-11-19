@@ -161,3 +161,15 @@ export async function latestRun(
 ): Promise<ApplyRun | null> {
   return (await listRuns(db, orgId, mode, templateId, 1))[0] ?? null;
 }
+
+/** The run before this one for the template and mode, ignoring dropped runs (they applied nothing). */
+export async function priorRun(db: D1Database, run: ApplyRun): Promise<ApplyRun | null> {
+  const r = await first<RunRow>(
+    db,
+    `SELECT ${COLUMNS} FROM channel_apply_runs
+     WHERE org_id = ? AND mode = ? AND template_id = ? AND id < ? AND state != 'dropped'
+     ORDER BY id DESC LIMIT 1`,
+    [run.orgId, run.mode, run.templateId, run.id],
+  );
+  return r ? map(r) : null;
+}

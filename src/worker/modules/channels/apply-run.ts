@@ -5,7 +5,8 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { journal } from './apply-journal.ts';
 import { getPolicy, type Policy } from './repo.ts';
 import { writeDrop, writeFail, writeFinish, writeStart } from './repo-apply-write.ts';
-import { getRun, runningRun } from './repo-runs.ts';
+import type { ApplyRun } from './repo-runs.ts';
+import { getRun, priorRun, runningRun } from './repo-runs.ts';
 
 export type StartResult =
   | 'started'
@@ -25,6 +26,27 @@ export const isOrgRefusal = (error: unknown): boolean =>
 
 const same = (a: Policy, b: Policy): boolean =>
   CHANNELS.every((c) => (a[c] ?? templateDefault(c)) === (b[c] ?? templateDefault(c)));
+
+/**
+ * Where the run's change really begins. A run whose predecessor failed also owes the failed run's
+ * range (it was applied in part), so it begins where that run began, and is never dropped as a no-op.
+ */
+export async function effectiveFrom(
+  ctx: ServiceContext,
+  run: ApplyRun,
+): Promise<{ from: Policy; viaFailed: boolean }> {
+  let from = run.from;
+  let viaFailed = false;
+  let cur = run;
+  for (let hops = 0; hops < 20; hops++) {
+    const prior = await priorRun(ctx.env.DB, cur);
+    if (prior?.state !== 'failed') break;
+    from = prior.from;
+    viaFailed = true;
+    cur = prior;
+  }
+  return { from, viaFailed };
+}
 
 /** The debounce state of a run: whether it still waits, when it is due, and the time the answer was read. */
 export async function dueOf(
@@ -46,8 +68,9 @@ export async function startOne(ctx: ServiceContext, runId: string): Promise<Star
   if (run.state !== 'pending') return 'skipped';
   const stored = await getPolicy(ctx.env.DB, run.orgId, run.mode, run.templateId);
   const to = stored?.channels ?? {};
+  const begin = await effectiveFrom(ctx, run);
   try {
-    if (same(run.from, to)) {
+    if (!begin.viaFailed && same(begin.from, to)) {
       await writeDrop(ctx, run);
       ctx.log.info('channels.apply.dropped', {
         runId,
@@ -81,7 +104,7 @@ export async function failRun(ctx: ServiceContext, runId: string, code: string):
   const run = await getRun(ctx.env.DB, runId);
   if (!run || (run.state !== 'pending' && run.state !== 'running')) return;
   // Marks already written still owe their events to the journal.
-  if (run.state === 'running') await journal(ctx, run);
+  if (run.state === 'running') await journal(ctx, run, true);
   await writeFail(ctx, run, code);
   ctx.log.error('channels.apply.failed', { runId, orgId: run.orgId, code });
 }

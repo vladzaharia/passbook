@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import * as events from '../events/record.ts';
 import { applyChannelPage } from './apply-page.ts';
 import { failRun, finishRun, startOne } from './apply-run.ts';
 import { sweepChannelApply } from './apply-start.ts';
@@ -9,6 +10,11 @@ import * as write from './repo-apply-write.ts';
 vi.mock('./repo-apply-write.ts', async (original) => {
   const real = await original<typeof import('./repo-apply-write.ts')>();
   return { ...real, writeJournaled: vi.fn(real.writeJournaled) };
+});
+
+vi.mock('../events/record.ts', async (original) => {
+  const real = await original<typeof import('../events/record.ts')>();
+  return { ...real, recordPassEvents: vi.fn(real.recordPassEvents) };
 });
 
 const idOf = async (p: Promise<{ workflowInstanceId: string | null }>) =>
@@ -146,11 +152,78 @@ describe('channel apply: review fixes', () => {
     const ctx = jobCtxOf(t.kit);
     const id = await idOf(t.saved({ apple: 'off' }));
     await startOne(ctx, id);
-    vi.mocked(write.writeJournaled).mockRejectedValueOnce(new Error('crash'));
+    // The page crashes before anything reaches the ledger.
+    vi.mocked(events.recordPassEvents).mockRejectedValueOnce(new Error('crash'));
     await expect(applyChannelPage(ctx, id)).rejects.toThrow('crash');
+    expect(await t.feed()).toBe(0);
     await failRun(ctx, id, 'CHANNEL_APPLY_FAILED');
     expect(await t.feed()).toBe(2);
     expect(await t.runOf(id)).toMatchObject({ state: 'failed' });
+  });
+
+  it('fails and journals a run whose org was suspended mid-page', async () => {
+    const t = await applyKit(2);
+    const ctx = jobCtxOf(t.kit);
+    const id = await idOf(t.saved({ apple: 'off' }));
+    await startOne(ctx, id);
+    vi.mocked(events.recordPassEvents).mockRejectedValueOnce(new Error('crash'));
+    await expect(applyChannelPage(ctx, id)).rejects.toThrow('crash');
+    await t.exec("UPDATE orgs SET status = 'suspended' WHERE id = ?", t.orgId);
+    await failRun(ctx, id, 'CHANNEL_APPLY_ORG_INACTIVE');
+    expect(await t.runOf(id)).toMatchObject({ state: 'failed' });
+    expect(
+      await t.count(
+        "SELECT COUNT(*) AS n FROM pass_events WHERE kind = 'pass.channels_changed' AND json_extract(data, '$.runId') = ?",
+        id,
+      ),
+    ).toBe(2);
+    expect(
+      await t.count(
+        'SELECT COUNT(*) AS n FROM channel_apply_marks WHERE run_id = ? AND journaled_at IS NULL',
+        id,
+      ),
+    ).toBe(0);
+  });
+
+  it('waits past 300 rounds while the run ahead makes progress', async () => {
+    const t = await applyKit(1);
+    const ctx = jobCtxOf(t.kit);
+    const a = await idOf(t.saved({ apple: 'off' }));
+    t.kit.clock.advance(10 * 60_000);
+    await startOne(ctx, a);
+    const b = await idOf(t.saved({ apple: 'on' }));
+    let rounds = 0;
+    const w = t.work(b, {
+      onSleep: async (name) => {
+        if (!name.startsWith('blocked')) return;
+        rounds++;
+        await t.exec(
+          'UPDATE channel_apply_runs SET updated_at = ? WHERE id = ?',
+          t.kit.clock.now(),
+          a,
+        );
+        if (rounds === 320) await finishRun(ctx, a);
+      },
+    });
+    expect(await w.done).toEqual({ state: 'done' });
+    expect(rounds).toBe(320);
+  });
+
+  it('a run that fails with its successor pending hands the failed range to the successor', async () => {
+    const t = await applyKit(2);
+    const ctx = jobCtxOf(t.kit);
+    const a = await idOf(t.saved({ apple: 'off' }));
+    t.kit.clock.advance(10 * 60_000);
+    await startOne(ctx, a);
+    await applyChannelPage(ctx, a);
+    expect(await t.retired('apple')).toHaveLength(2);
+    // The save back to on opens a pending run whose raw from is the failed run's to.
+    const b = await idOf(t.saved({ apple: 'on' }));
+    expect(await t.runOf(b)).toMatchObject({ from_channels: '{"apple":"off"}' });
+    await failRun(ctx, a, 'CHANNEL_APPLY_FAILED');
+    // Not a no-op revert: the passes the failed run retired come back.
+    expect(await t.work(b).done).toEqual({ state: 'done' });
+    expect(await t.retired('apple')).toHaveLength(0);
   });
 
   it.each([3, 4])(

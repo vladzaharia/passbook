@@ -5,7 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { type Cost, msToNextMinute, PageBudget, spend } from './apply-budget.ts';
 import { journal } from './apply-journal.ts';
-import { isOrgRefusal, ORG_INACTIVE } from './apply-run.ts';
+import { effectiveFrom, isOrgRefusal, ORG_INACTIVE } from './apply-run.ts';
 import {
   type ApplyEvent,
   channelRevisions,
@@ -184,7 +184,7 @@ export async function applyChannelPage(ctx: ServiceContext, runId: string): Prom
   const run = await getRun(ctx.env.DB, runId);
   if (run?.state !== 'running' || !run.to) return { done: true };
   try {
-    return await page(ctx, run);
+    return await page(ctx, { ...run, from: (await effectiveFrom(ctx, run)).from });
   } catch (error) {
     if (isOrgRefusal(error)) return { done: true, failed: ORG_INACTIVE };
     throw error;

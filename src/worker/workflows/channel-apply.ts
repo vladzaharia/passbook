@@ -16,9 +16,8 @@ export interface ChannelApplyParams {
   runId: string;
 }
 
-/** Saves that may push the start back, and rounds (5 minutes each) spent waiting for an earlier run of the template that still makes progress. */
+/** Saves that may push the start back. A run behind another waits as long as the run ahead makes progress. */
 const MAX_DEBOUNCE = 50;
-const MAX_BLOCKED = 300;
 const MAX_PAGES = 2000;
 const PAGE_RETRY = { retries: { limit: 3, delay: '10 seconds', backoff: 'exponential' } } as const;
 
@@ -62,7 +61,7 @@ export async function runChannelApply(
         return { state: 'failed' };
       }
       if (started === 'started') break;
-      if (++blocked > MAX_BLOCKED) throw new Error('channel apply never started');
+      blocked++;
       if (started === 'blocked') await step.sleep(`blocked-${n}`, '5 minutes');
     }
     for (let n = 0; ; n++) {

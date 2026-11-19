@@ -10,7 +10,7 @@ const ACTOR = { type: 'system', id: 'channel-apply' } as const;
  * Sends the events of marks not yet journaled to the ledger, then marks them. A crash between the two
  * leaves the marks open; the replay skips the events already recorded, so none is written twice.
  */
-export async function journal(ctx: ServiceContext, run: ApplyRun): Promise<void> {
+export async function journal(ctx: ServiceContext, run: ApplyRun, closing = false): Promise<void> {
   const pending = await unjournaled(ctx.env.DB, run.id);
   if (pending.length === 0) return;
   const done = await recordedEvents(
@@ -37,5 +37,6 @@ export async function journal(ctx: ServiceContext, run: ApplyRun): Promise<void>
     ctx,
     run,
     pending.map((m) => m.passId),
+    closing,
   );
 }
