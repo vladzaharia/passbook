@@ -22,6 +22,7 @@ import {
 } from '@/web/ui/index.ts';
 import { useOrgNames } from '../orgs/queries.ts';
 import { CreatedCallout, useCreated } from '../passes/created.tsx';
+import { attentionTone, expiryPhrase } from './attention.ts';
 import { remainingDays, WARN_DAYS } from './expiry.tsx';
 import { CertificateCard, OverviewCard, SettingsCard } from './identity-cards.tsx';
 import { PushCard } from './push-card.tsx';
@@ -83,8 +84,9 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
       : days === null
         ? 'Certificate expiry is unknown'
         : days <= WARN_DAYS
-          ? 'Certificate renewal needs review'
+          ? `${identity.label}: certificate ${expiryPhrase(days)}`
           : null;
+  const lifecycleTone = attentionTone(days, notYetValid);
   return (
     <>
       <PageHeader
@@ -132,7 +134,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
       {lifecycleTitle ? (
         <Callout
           className="mb-6"
-          tone={expired || notYetValid ? 'danger' : 'warning'}
+          tone={lifecycleTone}
           title={lifecycleTitle}
           actions={
             uploaded ? (

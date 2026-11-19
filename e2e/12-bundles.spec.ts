@@ -37,7 +37,7 @@ test('bundle link serves its passes without sign-in and dies when rotated', asyn
   expect((await anon.request.get(path)).status()).toBe(404);
   expect((await anon.request.get(`${path}/passes.pkpasses`)).status()).toBe(404);
   await page.goto(path);
-  await expect(page.getByRole('heading', { name: 'Link expired' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'This bundle link does not work' })).toBeVisible();
 
   await anon.close();
   await admin.dispose();

@@ -58,7 +58,7 @@ export function MessageSection({
         </FormField>
       )}
       <CheckboxField
-        label="Clear the current message"
+        label="Only clear the current message"
         checked={state.clearing}
         onCheckedChange={(on) => onChange({ clearing: on === true, clear: 'never' })}
       />
@@ -70,7 +70,7 @@ export function MessageSection({
             checked={state.notify}
             onCheckedChange={(notify) => onChange({ notify })}
           />
-          <FormField label="Remove the message">
+          <FormField label="Expires">
             {(control) => (
               <Select
                 {...control}
@@ -204,5 +204,22 @@ export function WhenSection({
         <p className="text-xs text-fg-muted">Pick a date and time.</p>
       ) : null}
     </div>
+  );
+}
+
+/** Text message or field change; switching clears what the other kind chose. */
+export function KindControl({ state, onChange }: { state: ComposerState; onChange: Patch }) {
+  return (
+    <SegmentedControl
+      label="Type"
+      options={[
+        { value: 'message', label: 'Text message' },
+        { value: 'change', label: 'Field change' },
+      ]}
+      value={state.kind}
+      onValueChange={(kind) =>
+        onChange({ kind, templateIds: [], fields: [], values: {}, clearing: false })
+      }
+    />
   );
 }

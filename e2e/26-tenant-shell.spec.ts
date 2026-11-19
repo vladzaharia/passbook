@@ -126,8 +126,8 @@ test.describe('platform administrator', () => {
     await expect(nav.getByRole('link', { name: 'Passes', exact: true })).toHaveCount(0);
 
     for (const [path, heading] of [
-      ['/admin/users', 'Platform accounts'],
-      ['/admin/orgs', 'Organization directory'],
+      ['/admin/users', 'Users'],
+      ['/admin/orgs', 'Organizations'],
       ['/admin/settings', 'Platform settings'],
       ['/admin/status', 'System status'],
       ['/admin/identities', 'Apple identities'],

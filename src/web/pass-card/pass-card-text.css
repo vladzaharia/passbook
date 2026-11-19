@@ -29,6 +29,8 @@
   font-size: calc(var(--u) * 20);
 }
 .pc-poster-meta {
+  display: flex;
+  flex-direction: column;
   margin: calc(var(--u) * 4) 0 0;
   font-size: calc(var(--u) * 13);
   opacity: 0.85;

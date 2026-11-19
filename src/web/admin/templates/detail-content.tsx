@@ -11,7 +11,6 @@ import {
   Button,
   Card,
   CardBody,
-  CountLink,
   type Crumb,
   EmptyState,
   ErrorState,
@@ -92,14 +91,6 @@ export function TemplateDetailContent({
   const [duplicate, setDuplicate] = useState(false);
   const baked = t.origin === 'baked';
   const archived = t.status === 'archived';
-  const passCount = (
-    <CountLink
-      count={t.passCount}
-      noun={['pass', 'passes']}
-      to="/admin/passes"
-      search={{ templateId: t.id, orgId: scope.orgId }}
-    />
-  );
   // Hashes stay in the Versions tab; versions show by number. The live version and the newest
   // inactive one are separate things, and an upload names the version it just made.
   const labelOf = (hash: string | null | undefined) => {
@@ -163,10 +154,6 @@ export function TemplateDetailContent({
               {draftLabel}
             </p>
           ) : null}
-          <p className="text-sm text-fg-muted">
-            {t.orgId ? `Organization: ${t.orgName ?? t.orgId}.` : 'Shared across organizations.'}{' '}
-            Template changes are not isolated by the Test view.
-          </p>
           <div className="flex flex-wrap gap-2">
             {canEdit && !baked && !archived ? (
               <Button asChild>
@@ -213,11 +200,6 @@ export function TemplateDetailContent({
         summary={
           <KeyValue
             items={[
-              {
-                label: 'Organization',
-                value: t.orgId ? (t.orgName ?? t.orgId) : 'All organizations',
-              },
-              { label: 'Passes', value: passCount },
               { label: 'Active version', value: activeLabel },
               { label: 'Latest draft', value: draftLabel },
             ]}

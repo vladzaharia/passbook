@@ -42,10 +42,10 @@ describe('browser error pages', () => {
     expect(json.headers.get('content-type')).toBe('application/problem+json');
   });
 
-  it('shows Link expired for a dead pass download link', async () => {
+  it('names the pass, not an expiry, for a dead pass download link', async () => {
     const res = await call('/p/rotatedrotatedrotated0/pass.pkpass');
     expect(res.status).toBe(404);
-    expect(await res.text()).toMatch(/<h1[^>]*>Link expired<\/h1>/);
+    expect(await res.text()).toMatch(/<h1[^>]*>This pass link does not work<\/h1>/);
   });
 
   it('pages every refused browser form post, with a way back to sign-in', async () => {

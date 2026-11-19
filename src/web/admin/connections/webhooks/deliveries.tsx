@@ -2,6 +2,7 @@ import { RotateCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { WebhookDeliverySchema } from '@/shared/contracts/webhooks.ts';
+import { entityLabel } from '../../../lib/entity-label.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import type { DataColumnDef } from '../../../ui/data-table-meta.ts';
 import {
@@ -27,8 +28,6 @@ const FILTERS = [
   { value: 'failed', label: 'Failed' },
   { value: 'pending', label: 'Pending' },
 ] as const;
-
-const shortId = (id: string) => id.slice(0, 8);
 
 /** The endpoint's deliveries, newest first. A row opens its attempts and payload. */
 export function Deliveries({ endpointId, canManage }: { endpointId: string; canManage: boolean }) {
@@ -70,9 +69,9 @@ export function Deliveries({ endpointId, canManage }: { endpointId: string; canM
         <RowLink
           to="/admin/passes/$passId"
           params={{ passId: d.passId }}
-          className="font-mono text-xs font-normal"
+          className="text-xs font-normal"
         >
-          {d.externalId ?? shortId(d.passId)}
+          {entityLabel(d.externalId, 'Open pass')}
         </RowLink>
       ),
     },

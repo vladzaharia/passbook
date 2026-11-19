@@ -18,4 +18,10 @@ describe('PairView', () => {
     render(<PairView onPair={vi.fn()} />);
     expect(screen.getByRole('button', { name: 'Pair' })).toBeDisabled();
   });
+
+  it('says whose account Scan as Admin uses', () => {
+    render(<PairView onPair={vi.fn()} onAdmin={vi.fn()} adminWho="Ana" />);
+    expect(screen.getByText('Signed in as Ana')).toBeInTheDocument();
+    expect(screen.queryByText(/Admins make codes/)).toBeNull();
+  });
 });

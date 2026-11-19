@@ -58,12 +58,14 @@ function checkContrast(ctx: ValidationContext, assets: ValidatableAsset[]): void
       'COLOR_CONTRAST',
       `Text contrast is ${shownRatio(ratio(bg, fg))}:1; use at least ${CONTRAST_MIN.text}:1.`,
       'foregroundColor',
+      { name: 'Text', ratio: shownRatio(ratio(bg, fg)), min: String(CONTRAST_MIN.text) },
     );
   if (bg !== undefined && label !== undefined && ratio(bg, label) < CONTRAST_MIN.label)
     ctx.warn(
       'COLOR_CONTRAST',
       `Label contrast is ${shownRatio(ratio(bg, label))}:1; use at least ${CONTRAST_MIN.label}:1.`,
       'labelColor',
+      { name: 'Label', ratio: shownRatio(ratio(bg, label)), min: String(CONTRAST_MIN.label) },
     );
   if (assets.some((a) => /^(?:[^/]+\.lproj\/)?(background|artwork)(@[23]x)?\.png$/.test(a.name)))
     (ctx.info ?? ctx.warn)(
@@ -91,6 +93,11 @@ function checkLengths(ctx: ValidationContext): void {
         'FIELD_LENGTH',
         `${String(field.label ?? field.key)} has ${field.value.length} characters; about ${limit} fit.`,
         `${path}.value`,
+        {
+          name: String(field.label ?? field.key),
+          length: String(field.value.length),
+          limit: String(limit),
+        },
       );
   }
 }
@@ -104,7 +111,9 @@ function checkPlaceholderUrls(ctx: ValidationContext): void {
     if (typeof value === 'string') {
       for (const match of value.matchAll(/https?:\/\/([^/\s"'<>:]+)/gi))
         if (match[1] && PLACEHOLDER_HOST.test(match[1]))
-          ctx.warn('PLACEHOLDER_URL', `${match[1]} is a placeholder address.`, path);
+          ctx.warn('PLACEHOLDER_URL', `${match[1]} is a placeholder address.`, path, {
+            name: String(match[1]),
+          });
     } else if (Array.isArray(value)) {
       for (const [i, v] of value.entries()) walk(v, `${path}[${i}]`);
     } else if (isObject(value))
@@ -148,7 +157,9 @@ function checkPlatformName(ctx: ValidationContext): void {
   for (const key of ['logoText', 'eventLogoText', 'description'] as const) {
     const value = ctx.pass[key];
     if (typeof value === 'string' && /\bwallet\b/i.test(value))
-      ctx.warn('LOGO_TEXT_PLATFORM', `${key} names the platform; use the organization.`, key);
+      ctx.warn('LOGO_TEXT_PLATFORM', `${key} names the platform; use the organization.`, key, {
+        name: key,
+      });
   }
 }
 
@@ -163,10 +174,16 @@ function checkSizes(ctx: ValidationContext, assets: ValidatableAsset[]): void {
         'IMAGE_BYTES',
         `${a.name} is ${Math.round(a.size / KB)} KB; keep images under 200 KB.`,
         a.name,
+        { name: a.name, size: String(Math.round(a.size / KB)) },
       );
   }
   if (assets.some((a) => a.size !== undefined) && total > 400 * KB)
-    ctx.warn('PASS_SIZE', `The pass is ${Math.round(total / KB)} KB; keep it under 400 KB.`);
+    ctx.warn(
+      'PASS_SIZE',
+      `The pass is ${Math.round(total / KB)} KB; keep it under 400 KB.`,
+      undefined,
+      { size: String(Math.round(total / KB)) },
+    );
 }
 
 const PLACE_KEYS = /venue|airport|departure|arrival|location/i;

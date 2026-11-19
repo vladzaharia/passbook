@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { entityLabel } from '../../../lib/entity-label.ts';
 import { useOrgScope, useResourceOrg } from '../../../lib/org-filter.tsx';
 import { DetailNotFound, detailError, PageHeader, SkeletonDetail } from '../../../ui/index.ts';
 import { usePass } from '../api.ts';
@@ -45,7 +46,7 @@ function PassDetailContent({
     { label: 'Passes', to: '/admin/passes' },
     {
       label:
-        !pass.isError && matchesScope && pass.data ? (pass.data.title ?? pass.data.serial) : 'Pass',
+        !pass.isError && matchesScope && pass.data ? entityLabel(pass.data.title, 'Pass') : 'Pass',
     },
   ];
   if (checked && pass.isError) {

@@ -36,7 +36,7 @@ function checkBarcode(ctx: ValidationContext, value: unknown, path: string, lega
     error('BARCODE', 'altText must be a string.', `${path}.altText`);
   const rule = DATA_RULES[format];
   if (rule && value.message !== '' && !rule[0].test(value.message))
-    warn('BARCODE_DATA', `${rule[1]}.`, `${path}.message`);
+    warn('BARCODE_DATA', `${rule[1]}.`, `${path}.message`, { detail: rule[1] });
 }
 
 export function validateBarcodes(ctx: ValidationContext): void {
@@ -65,6 +65,7 @@ export function validateBarcodes(ctx: ValidationContext): void {
         'BARCODE_NO_FALLBACK',
         `${format.replace('PKBarcodeFormat', '')} needs a QR, PDF417, Aztec or Code 128 entry after it for iOS 26 and earlier.`,
         `barcodes.${i}`,
+        { name: format.replace('PKBarcodeFormat', '') },
       );
   });
 }

@@ -356,6 +356,24 @@ describe('org detail', () => {
     ...extra,
   });
 
+  it('hides the first-admin invite once the org has members', async () => {
+    await renderBaseApp('/admin/orgs/o1', {
+      session: 'admin',
+      memberships: [],
+      handlers: {
+        '/api/v1/orgs/o1': () =>
+          json(
+            provisioning({
+              counts: { passes: 1, templates: 0, connections: 0, apiKeys: 0, members: 2 },
+            }),
+          ),
+      },
+    });
+    expect(await screen.findByRole('heading', { name: 'Acme Gym', level: 1 })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Invite organization admin' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Lifecycle' })).toBeNull();
+  });
+
   it('keeps an unassociated platform administrator in provisioning, without tenant actions', async () => {
     const { fetchMock } = await renderBaseApp('/admin/orgs/o1', {
       session: 'admin',
@@ -367,7 +385,7 @@ describe('org detail', () => {
     expect(screen.getByRole('button', { name: 'Invite organization admin' })).toBeInTheDocument();
     expect(
       screen.getByRole('heading', {
-        name: 'Platform provisioning: first organization administrator',
+        name: 'Invite first admin',
       }),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText('Accent colour')).toBeNull();

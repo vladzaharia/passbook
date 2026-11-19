@@ -2,6 +2,7 @@ import { GOAL_MAX, GOAL_MIN } from '../stamps/layout.ts';
 import { counterScope, isGoal } from '../stamps/rules.ts';
 import type {
   CounterManifest,
+  IssueParams,
   Json,
   PassJson,
   Personalization,
@@ -132,8 +133,8 @@ export function countersIssues(
   const issues: ValidationIssue[] = [];
   const add =
     (severity: 'error' | 'warning') =>
-    (code: string, message: string, path = 'counters') =>
-      issues.push({ severity, code, message, path });
+    (code: string, message: string, path = 'counters', params?: IssueParams) =>
+      issues.push({ severity, code, message, path, ...(params ? { params } : {}) });
   const error = add('error');
   const warn = add('warning');
   if (!isRecord(block)) {
@@ -254,6 +255,8 @@ export function countersIssues(
   });
   for (const input of byInput.keys())
     if (!used.has(input))
-      warn('COUNTER_NO_USE', `If a scanner uses "${input}", add a take action.`, 'scan.actions');
+      warn('COUNTER_NO_USE', `If a scanner uses "${input}", add a take action.`, 'scan.actions', {
+        name: input,
+      });
   return issues;
 }

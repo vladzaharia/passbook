@@ -175,7 +175,7 @@
   height: 1px;
   background: var(--pk-border-subtle);
 }
-@media (min-width: 720px) {
+@media (min-width: 900px) {
   .scan-layer.scan-card-layer[data-mode="boot"] .scan-boot-card:has(.scan-boot-body:not(:empty)) {
     display: grid;
     grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);

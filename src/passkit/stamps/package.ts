@@ -1,4 +1,4 @@
-import type { StampsManifest, ValidationIssue } from '../types.ts';
+import type { IssueParams, StampsManifest, ValidationIssue } from '../types.ts';
 import type { StampArt } from './compose.ts';
 import { STRIP } from './layout.ts';
 import { decodePng, type Rgba } from './png.ts';
@@ -75,8 +75,8 @@ export function renderStampFiles(
   const issues: ValidationIssue[] = [];
   const fail = (code: string, message: string, path: string) =>
     issues.push({ severity: 'error', code, message, path });
-  const warn = (code: string, message: string, path: string) =>
-    issues.push({ severity: 'warning', code, message, path });
+  const warn = (code: string, message: string, path: string, params?: IssueParams) =>
+    issues.push({ severity: 'warning', code, message, path, ...(params ? { params } : {}) });
 
   const decoded = new Map<string, Rgba>();
   const load = (name: string | undefined, required: boolean): Rgba | undefined => {
@@ -91,7 +91,10 @@ export function renderStampFiles(
       if (img.width !== img.height || img.width < ART_MIN || img.width > ART_MAX)
         fail('STAMPS_ART_SIZE', `${name} must be a square PNG, ${ART_MIN} to ${ART_MAX} px.`, name);
       else if (img.width < ART_SMALL)
-        warn('STAMPS_ART_SMALL', `${name} is under ${ART_SMALL} px; stamps may look soft.`, name);
+        warn('STAMPS_ART_SMALL', `${name} is under ${ART_SMALL} px; stamps may look soft.`, name, {
+          name,
+          size: String(ART_SMALL),
+        });
       decoded.set(name, img);
       return img;
     } catch (error) {
@@ -136,6 +139,7 @@ export function renderStampFiles(
       'STAMPS_CONTRAST',
       `Filled stamps are hard to see on the strip (${contrastRatio(bg, fg).toFixed(1)}:1).`,
       block.art.filled,
+      { ratio: contrastRatio(bg, fg).toFixed(1) },
     );
 
   const art: StampArt = {

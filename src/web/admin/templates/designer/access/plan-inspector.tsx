@@ -1,12 +1,11 @@
 import { Clock, Infinity as InfinityIcon, Ticket } from 'lucide-react';
 import type { AccessPlan, ValidationIssue } from '@/passkit/types.ts';
-import { FormField, NumberField, OptionTile, SwitchRow } from '../../../../ui/index.ts';
+import { FormField, NumberField, OptionTile, SwitchRow, WeekGrid } from '../../../../ui/index.ts';
 import { useDesigner } from '../context.tsx';
 import { TextEdit } from '../controls.tsx';
 import { dayErrors } from './issues.ts';
 import { LABEL_MAX } from './model.ts';
 import type { PlanPatch } from './ops.ts';
-import { WeekGrid } from './week-grid.tsx';
 import { ZoneGrants } from './zone-grants.tsx';
 
 const KINDS = [

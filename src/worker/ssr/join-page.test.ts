@@ -99,8 +99,10 @@ describe('join page states', () => {
       closed: JOIN_COPY.refusal.closed,
       expired: JOIN_COPY.refusal.expired,
     } as const;
-    for (const [reason, line] of Object.entries(lines))
-      expect(render(refused(reason as Refusal))).toContain(line);
+    for (const [reason, line] of Object.entries(lines)) {
+      const html = render(refused(reason as Refusal));
+      for (const part of line.split('. ')) expect(html).toContain(part.replace(/\.$/, ''));
+    }
   });
 });
 

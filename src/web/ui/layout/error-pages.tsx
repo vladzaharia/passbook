@@ -1,6 +1,7 @@
 import { type ErrorComponentProps, Link, useRouter, useRouterState } from '@tanstack/react-router';
 import { LayoutDashboard, LogIn, Search, WalletCards } from 'lucide-react';
 import { useEffect } from 'react';
+import { AUTH_PAGE_COPY } from '@/shared/copy/sign-in.ts';
 import { STATE_COPY } from '@/shared/copy/states.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { isAdminPath } from '../../lib/guards.ts';
@@ -106,6 +107,8 @@ export function ScopeRefusal({
 export function NotFoundPage() {
   const inAdmin = useInAdmin();
   const palette = usePalette();
+  const { session } = useSession();
+  const signedOut = session !== undefined && !session.authenticated;
   return (
     <EmptyState
       heading
@@ -127,6 +130,13 @@ export function NotFoundPage() {
               </Link>
             </Button>
           </div>
+        ) : session === undefined ? null : signedOut ? (
+          <Button variant="outline" asChild>
+            <Link to="/login">
+              <LogIn aria-hidden />
+              {AUTH_PAGE_COPY.signIn}
+            </Link>
+          </Button>
         ) : (
           <ToMyPasses />
         )

@@ -45,7 +45,9 @@ export function validateLocalization(
       continue;
     }
     for (const key of result.duplicates)
-      warn('STRINGS_DUPLICATE', `Key "${key}" is defined more than once.`, asset.name);
+      warn('STRINGS_DUPLICATE', `Key "${key}" is defined more than once.`, asset.name, {
+        name: key,
+      });
     parsed.set(asset.name, result);
   }
   if (parsed.size < 2) return;

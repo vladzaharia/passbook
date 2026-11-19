@@ -35,7 +35,8 @@ export function OrgAuditPage({
   const log = useTenantAuditLog(allowed, filters);
   const rows = log.data?.pages.flatMap((p) => p.items) ?? [];
   const selected = entry === undefined ? undefined : rows.find((r) => r.id === entry);
-  const filtered = Object.values(filters).some((v) => v !== undefined);
+  // The route also carries the org scope (`orgId`); that is not a filter.
+  const filtered = Object.entries(filters).some(([key, v]) => v !== undefined && key !== 'orgId');
   const patch = (next: AuditSearch) => onSearch({ ...filters, ...next });
   if (!allowed) {
     return (

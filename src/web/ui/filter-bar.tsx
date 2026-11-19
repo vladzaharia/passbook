@@ -38,6 +38,8 @@ export interface FilterBarProps {
   filters: readonly FilterDef[];
   onClear: () => void;
   className?: string;
+  /** Filters shown inline at wide widths; the rest go in "Filters". Default: all. */
+  maxInline?: number;
 }
 
 function FilterSelect({ f, className }: { f: FilterDef; className?: string }) {
@@ -58,11 +60,12 @@ function FilterSelect({ f, className }: { f: FilterDef; className?: string }) {
  * 1280 the first two filters stay inline and the rest go in "Filters (n)"; below 640 search takes
  * the row and filters sit in two columns. A truly empty list hides it (DataTable toolbar).
  */
-export function FilterBar({ search, filters, onClear, className }: FilterBarProps) {
+export function FilterBar({ search, filters, onClear, className, maxInline }: FilterBarProps) {
   const id = useId();
   const compact = useMediaQuery(BELOW_XL);
-  const inline = compact ? filters.slice(0, 2) : filters;
-  const more = compact ? filters.slice(2) : [];
+  const cap = compact ? 2 : (maxInline ?? filters.length);
+  const inline = filters.slice(0, cap);
+  const more = filters.slice(cap);
   const setCount = filters.filter((f) => f.value !== f.defaultValue).length;
   const moreSet = more.filter((f) => f.value !== f.defaultValue).length;
   const searching = Boolean(search?.value.trim());

@@ -1,6 +1,6 @@
 import { createRootRouteWithContext, Outlet, useRouterState } from '@tanstack/react-router';
 import { Fragment, type ReactNode } from 'react';
-import { isAdminPath, isPublicPath, requireSession } from '../lib/guards.ts';
+import { isAdminPath, isKnownPortalPath, isPublicPath, requireSession } from '../lib/guards.ts';
 import { RouteAnnouncer, SkipLink } from '../lib/route-focus.tsx';
 import type { RouterContext } from '../lib/router-context.ts';
 import { useSession } from '../lib/session.ts';
@@ -40,6 +40,8 @@ function RootComponent() {
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async ({ context, location }) => {
     if (isAdminPath(location.pathname) || isPublicPath(location.pathname)) return;
+    // Unknown URLs fall through to the 404 page, which offers Sign in when signed out.
+    if (!isKnownPortalPath(location.pathname)) return;
     await requireSession(context.queryClient, location.href);
   },
   component: RootComponent,

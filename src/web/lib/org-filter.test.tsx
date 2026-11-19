@@ -169,7 +169,7 @@ describe('organization scope', () => {
         '/api/v1/metrics/overview': () => json({}),
       },
     });
-    await screen.findByRole('heading', { name: 'Platform accounts', level: 1 });
+    await screen.findByRole('heading', { name: 'Users', level: 1 });
     expect(router.state.location.pathname).toBe('/admin/platform/users');
     await waitFor(() => expect(localStorage.getItem(KEY)).toBe('platform'));
     const nav = screen.getByRole('navigation', { name: 'Admin' });

@@ -23,6 +23,7 @@ export function StatusPage() {
   const orgs = useOrgList();
   const orgName = (id: string | null) => orgs.data?.items.find((o) => o.id === id)?.name;
   const data = status.data;
+  const checkedAt = Math.max(0, ...(data?.components.map((c) => c.checkedAt) ?? []));
   const onRecheck = () =>
     recheck.mutate(undefined, {
       onSuccess: () => setChecks((n) => n + 1),
@@ -43,7 +44,7 @@ export function StatusPage() {
         <div className="flex flex-col gap-6">
           <Summary
             components={data.components}
-            checkedAt={Math.max(0, ...data.components.map((c) => c.checkedAt))}
+            checkedAt={checkedAt}
             checks={checks}
             rechecking={recheck.isPending}
             onRecheck={onRecheck}
@@ -83,6 +84,7 @@ export function StatusPage() {
                                 <ComponentRow
                                   key={c.id}
                                   component={c}
+                                  checkedAt={checkedAt}
                                   items={c.data ? dataItems(c.data, orgName) : []}
                                 />
                               ))}

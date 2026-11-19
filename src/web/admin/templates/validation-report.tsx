@@ -2,6 +2,7 @@ import { CheckCircle2, Circle } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import type { z } from 'zod';
 import type { ValidationReportSchema } from '@/shared/contracts/templates.ts';
+import { issueWords } from '@/shared/copy/issues.ts';
 import { cn } from '../../lib/cn.ts';
 import { Callout, type CalloutTone } from '../../ui/index.ts';
 import './upload.css';
@@ -17,7 +18,7 @@ const GROUPS: { severity: Issue['severity']; tone: CalloutTone; one: string; man
 
 const line = (i: Issue) => (
   <>
-    {i.message}
+    {issueWords(i)}
     {i.path ? <span className="ml-1.5 font-mono text-xs text-fg-muted">{i.path}</span> : null}
   </>
 );
@@ -66,13 +67,17 @@ export function PackageChecklist({ files }: { files: string[] | undefined }) {
     <ul className="flex flex-col gap-2 text-sm">
       {CHECKS.map((c) => {
         const ok = files ? c.test(files) : false;
-        const Icon = ok ? CheckCircle2 : Circle;
         return (
           <li key={c.label} className="flex items-center gap-2">
-            <Icon
-              aria-hidden
-              className={cn('size-4 shrink-0', ok ? 'text-success' : 'text-fg-subtle')}
-            />
+            {ok ? (
+              <CheckCircle2 aria-hidden className="size-4 shrink-0 text-success" />
+            ) : files ? (
+              <Circle aria-hidden className="size-4 shrink-0 text-fg-subtle" />
+            ) : (
+              <span aria-hidden className="flex size-4 shrink-0 items-center justify-center">
+                <span className="size-1 rounded-full bg-fg-subtle" />
+              </span>
+            )}
             <span className={ok ? 'text-fg' : 'text-fg-muted'}>{c.label}</span>
             <span className="sr-only">{files ? (ok ? 'found' : 'missing') : ''}</span>
           </li>

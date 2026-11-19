@@ -49,6 +49,8 @@ export const OrgSummarySchema = OrgSchema.extend({
     templates: z.number().int(),
     connections: z.number().int(),
     apiKeys: z.number().int(),
+    /** Active members; absent from older payloads. */
+    members: z.number().int().optional(),
   }),
   /** Counts stop at 100000 so a large org never costs a scan. */
   countsCapped: z.boolean(),

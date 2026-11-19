@@ -229,7 +229,7 @@ describe('Scanning page', () => {
     expect(await screen.findByRole('heading', { name: 'Scanning', level: 1 })).toBeInTheDocument();
     expect(await screen.findByText('No scanning sessions')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Sessions' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getAllByRole('button', { name: 'New scanning session' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'New scanning session' })).toHaveLength(1);
     expect((await axe(container)).violations).toEqual([]);
   });
 

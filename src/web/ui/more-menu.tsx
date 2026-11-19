@@ -9,7 +9,7 @@ export function MoreMenu({ children }: { children: ReactNode }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" iconStart={<MoreHorizontal aria-hidden />}>
-          <span className="max-sm:sr-only">More</span>
+          <span>More</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">{children}</DropdownMenuContent>

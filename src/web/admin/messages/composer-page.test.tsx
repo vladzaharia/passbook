@@ -85,6 +85,17 @@ describe('Message composer', () => {
     expect(requests).not.toContain('unscoped');
   });
 
+  it('keeps Send and Save draft off until there is a template and a message', async () => {
+    setup('/admin/messages/new?orgId=org1');
+    const user = userEvent.setup();
+    const send = await screen.findByRole('button', { name: 'Send now' });
+    expect(send).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+    await writeMessage(user);
+    expect(send).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Save draft' })).toBeEnabled();
+  });
+
   it('does not hydrate or query a draft while its organization is unknown or mismatched', async () => {
     const requests: string[] = [];
     const deferred = Promise as PromiseConstructor & {
