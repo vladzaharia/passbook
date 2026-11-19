@@ -165,7 +165,7 @@ export function PrintCard({
   );
   if (bare)
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 border-t border-border pt-4">
         {body}
         {dialogs}
       </div>

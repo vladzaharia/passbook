@@ -95,7 +95,7 @@ export function TemplateChannelsPanel({
             return (
               <li
                 key={c}
-                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3"
+                className="flex flex-col items-start gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-fg-strong">{CHANNEL_LABEL[c]}</p>

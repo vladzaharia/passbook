@@ -139,9 +139,7 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
                 />
               ))}
             </ul>
-            <div className="border-t border-border pt-4">
-              <PrintCard pass={pass} readOnly={readOnly} bare />
-            </div>
+            <PrintCard pass={pass} readOnly={readOnly} bare />
           </div>
         )}
       </CardBody>
