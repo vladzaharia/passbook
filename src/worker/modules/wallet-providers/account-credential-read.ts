@@ -28,7 +28,6 @@ import {
 export {
   readSamsungIssuedRefVerification,
   readSamsungTombstoneVerification,
-  type SamsungIssuedVerification,
   type SamsungTombstoneVerification,
 } from './account-credential-historical.ts';
 
