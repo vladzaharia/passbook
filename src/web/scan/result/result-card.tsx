@@ -96,13 +96,9 @@ export function ResultCard({
     o.action?.id !== 'undo' &&
     o.checkIn?.direction !== 'out' &&
     pill !== 'out';
-  const title = noExit
-    ? 'Check-out not allowed'
-    : noReentry
-      ? 'No re-entry'
-      : custom
-        ? d?.header.title
-        : systemTitle;
+  const title = noExit ? 'Check-out not allowed' : noReentry ? 'No re-entry' : systemTitle;
+  // The verdict word is always the headline; a template's own line sits under it.
+  const customLine = custom && !noExit && !noReentry ? d?.header.title : null;
   const nameInBand = custom && Boolean(d) && d?.header.title === d?.identity.holder;
   const CustomGlyph = ok && d?.header.icon ? scanIcon(d.header.icon) : null;
   const layout = custom ? 'custom' : o.kind === 'ok' || o.kind === 'heads_up' ? 'row' : 'stack';
@@ -165,12 +161,12 @@ export function ResultCard({
             ) : (
               <VerdictGlyph kind={o.kind} />
             )}
-            {custom ? <p className="scan-verdict-eyebrow">{systemTitle}</p> : null}
           </div>
           <div className="scan-verdict-text">
             <h1 id="scan-result-heading" tabIndex={-1}>
               {title}
             </h1>
+            {customLine ? <p className="scan-verdict-custom">{customLine}</p> : null}
             {noExit ? (
               <p>{SCAN_COPY.verdict.noExitSub}</p>
             ) : noReentry ? (

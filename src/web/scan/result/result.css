@@ -73,6 +73,8 @@
 }
 .scan-result-band[data-layout="custom"] h1 {
   margin-top: 10px;
+  font-size: 36px;
+  line-height: 40px;
 }
 .scan-result-band p {
   margin: 6px 0 0;
@@ -80,11 +82,13 @@
   line-height: 22px;
   font-weight: 500;
 }
-.scan-result-band .scan-verdict-eyebrow {
-  margin: 0;
-  font-size: 20px;
-  line-height: 24px;
-  font-weight: 600;
+.scan-result-band .scan-verdict-custom {
+  margin: 6px 0 0;
+  font-size: 26px;
+  line-height: 30px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
 }
 .scan-custom-glyph {
   display: grid;
@@ -194,9 +198,9 @@
     width: 90px;
     height: 80px;
   }
-  .scan-result-band .scan-verdict-eyebrow {
-    font-size: 24px;
-    line-height: 30px;
+  .scan-result-band .scan-verdict-custom {
+    font-size: 32px;
+    line-height: 38px;
   }
   .scan-result-body {
     flex: 1;
@@ -241,6 +245,10 @@
     font-size: 32px;
     margin-top: 6px;
     line-height: 32px;
+  }
+  .scan-result-band .scan-verdict-custom {
+    font-size: 22px;
+    line-height: 26px;
   }
 }
 

@@ -38,7 +38,8 @@ describe('the scanner result interface', () => {
       display: fixtureDisplay('ok'),
     });
     render(<ResultCard outcome={outcome} />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Anna Popescu');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Checked in|Add stamp/);
+    expect(screen.getByTestId('scan-verdict')).toHaveTextContent('Anna Popescu');
     expect(screen.getByText('Gold member').closest('.scan-identity')).not.toBeNull();
     expect(screen.getByTestId('scan-verdict')).toHaveTextContent('Add stamp');
     expect(screen.getByRole('button', { name: 'View pass' })).toBeVisible();

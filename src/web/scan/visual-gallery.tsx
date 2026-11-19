@@ -191,7 +191,20 @@ function ScanResultVisual({
         sidebar={
           surface === 'operator' ? <OperatorVisual session={session} name={selected.name} /> : null
         }
-        buddy={<Buddy scene="scan" size="xl-scan" mood="happy" immediate />}
+        buddy={
+          <Buddy
+            scene="scan"
+            size="xl-scan"
+            mood={
+              selected.outcome.kind === 'ok'
+                ? 'happy'
+                : selected.outcome.kind === 'heads_up'
+                  ? 'curious'
+                  : 'sad'
+            }
+            immediate
+          />
+        }
         strip={{ kind: 'ok', title: 'Taylor Chen', meta: '6:42 PM', undoable: true }}
         dockRow={
           <DoorDock

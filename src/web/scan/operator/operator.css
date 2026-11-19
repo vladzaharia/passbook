@@ -158,3 +158,13 @@
 .scan-shell[data-surface="operator"]:not(:has(.scan-result)) > .scan-buddy-seat {
   display: none;
 }
+
+/* Beside the desk the buddy sits under the form, never over the card. */
+@media (min-width: 900px) {
+  .scan-shell[data-surface="operator"] > .scan-buddy-seat {
+    inset-inline: max(20px, calc((100vw - 1120px) / 2)) auto;
+    margin-inline: 0;
+    /* The buddy sits on the seat's top edge: a short seat keeps it low, clear of the form. */
+    height: 24px;
+  }
+}

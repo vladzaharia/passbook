@@ -88,7 +88,14 @@ export function AccessVisual({ scenario }: { scenario: AccessScenario }) {
           ),
         }}
         camera={<div className="scan-visual-camera" />}
-        buddy={<Buddy scene="scan" size="xl-scan" mood="happy" immediate />}
+        buddy={
+          <Buddy
+            scene="scan"
+            size="xl-scan"
+            mood={outcome?.kind === 'ok' ? 'happy' : 'curious'}
+            immediate
+          />
+        }
         strip={{ kind: 'ok', title: 'Maya Okafor', meta: 'In · Gym · 6:41 PM', undoable: true }}
         dockRow={
           <DoorThumbRow

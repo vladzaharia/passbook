@@ -199,9 +199,21 @@
     transition: opacity 100ms ease-out;
   }
 }
-/* The buddy's fly-in ends at the result; clear the settled fields. */
-.scan-shell:has(.scan-result[data-phase="up"]) > .scan-buddy-seat {
+/* A verdict keeps the buddy: its face and pose back the colour. The card stops above the seat.
+   A desk card (actions) needs the room, so the buddy leaves. */
+.scan-shell:has(.scan-result[data-kind="ready"]) > .scan-buddy-seat {
   opacity: 0;
+}
+/* A phone's seat is smaller: the art scales from the dock edge. */
+@media (max-width: 639px) {
+  .scan-buddy-seat {
+    width: 128px;
+    height: 96px;
+  }
+  .scan-buddy-seat > * {
+    transform: scale(0.667);
+    transform-origin: 50% 100%;
+  }
 }
 @media (min-width: 1024px) {
   .scan-buddy-seat {
@@ -255,4 +267,14 @@
   gap: 6px;
   font-size: 15px;
   line-height: 20px;
+}
+
+/* A sheet or dialog is open: the buddy steps back instead of showing half behind it. */
+body:has([role="dialog"][data-state="open"]) .scan-buddy-seat {
+  opacity: 0;
+}
+@media (max-height: 650px) {
+  .scan-buddy-seat {
+    display: none;
+  }
 }
