@@ -62,6 +62,9 @@ export interface AccountRow {
   hmac_iv?: number[] | Uint8Array | ArrayBuffer | null;
   hmac_wrapped_dek?: number[] | Uint8Array | ArrayBuffer | null;
   hmac_ciphertext?: number[] | Uint8Array | ArrayBuffer | null;
+  /** New-model state the issuance read checks. */
+  enabled_at?: number | null;
+  platform_hold_at?: number | null;
 }
 
 /**
@@ -72,7 +75,8 @@ const REVISION_EXPR =
   'CASE WHEN a.credential_id IS NULL THEN a.enrolment_revision ELSE a.revision END';
 const OWN_KEY = 'a.hmac_kek_version, a.hmac_iv, a.hmac_wrapped_dek, a.hmac_ciphertext';
 /** An account the runtime can open: a legacy envelope or its own key. */
-const OPENABLE = '(a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)';
+const OPENABLE =
+  '(a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL OR a.credential_source_id IS NOT NULL)';
 
 /** Account and its current envelope are selected in one database snapshot. */
 export function findAccount(
@@ -102,7 +106,7 @@ export function findAccountWithCredentialKeyset(
     db,
     `SELECT a.id, a.org_id, a.mode, a.provider, ${REVISION_EXPR} AS revision,
       a.credential_id, a.revoked_at, a.updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext,
-      ${OWN_KEY}
+      ${OWN_KEY}, a.enabled_at, a.platform_hold_at
     FROM wallet_provider_accounts a
     LEFT JOIN wallet_provider_credentials c ON c.id = a.credential_id
       AND c.account_id = a.id AND c.org_id = a.org_id AND c.mode = a.mode AND c.provider = a.provider

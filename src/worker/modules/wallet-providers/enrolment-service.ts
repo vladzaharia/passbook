@@ -117,9 +117,9 @@ export async function setEnrolmentSource(
   );
   if (!source?.current_version_id) throw prerequisite(['source']);
   const accountId = row?.id ?? ctx.ids.id();
-  // A new-model enrolment gets its own key with its first source; a row with a legacy envelope keeps that key.
+  // A new-model Google enrolment gets its own key with its first source; a row with a legacy envelope keeps that key.
   const ownKey =
-    row?.has_hmac || row?.credential_id
+    provider !== 'google' || row?.has_hmac || row?.credential_id
       ? {}
       : await newEnrolmentKeyColumns(ctx, { id: accountId, orgId, mode, provider });
   return orgStep(ctx, auth, orgId, provider, 'org_mode.wallet.enrolment_source', (w) => ({

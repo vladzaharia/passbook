@@ -5,6 +5,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { withoutTrigger } from '../../../../test/helpers/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import { first, run } from '../../platform/db.ts';
+import { sha256Hex } from '../../platform/ids.ts';
+import { readSamsungIssuedRefVerification } from './account-credential-historical.ts';
 import {
   addRealVersion,
   cardMapOf,
@@ -33,6 +35,68 @@ const keyOf = async (identity: { privateKey: string }) =>
   (await importPKCS8(identity.privateKey, 'RS256')) as CryptoKey;
 
 describe('Samsung tombstone and credential versions', () => {
+  it('an issued ref is followed only by later versions of its own card', async () => {
+    const t = await setupSamsungCallbacks();
+    const db = t.kit.env.DB;
+    const cards = await cardMapOf(t.samsung.cardId);
+    const acct = {
+      id: t.operation.accountId,
+      orgId: t.kit.org.id,
+      mode: 'live' as const,
+      provider: 'samsung' as const,
+    };
+    const own = await realCredential(
+      t.kit.env,
+      { orgId: acct.orgId, provider: 'samsung' },
+      { provider: 'samsung', credentials: t.samsung },
+      cards,
+    );
+    await setSource(acct, own);
+    await withoutTrigger(db, 'wallet_samsung_ref_credential_version_immutable', () =>
+      run(db, 'UPDATE wallet_samsung_fetch_refs SET credential_version_id = ? WHERE id = ?', [
+        own.currentId,
+        t.referenceId,
+      ]),
+    );
+    const revision = (
+      await first<{ revision: number }>(
+        db,
+        'SELECT revision FROM wallet_provider_accounts WHERE id = ?',
+        [acct.id],
+      )
+    )?.revision;
+    const read = async () =>
+      readSamsungIssuedRefVerification(t.kit.ctx, {
+        orgId: acct.orgId,
+        mode: acct.mode,
+        accountId: acct.id,
+        accountRevision: revision ?? 0,
+        refHash: await sha256Hex(t.refId),
+        credentialKeysetCommitment: t.credentialKeysetCommitment,
+      });
+    expect((await read())?.later).toHaveLength(0);
+    // A later version of the same card (a certificate rotation) follows the ref.
+    const rotated = await createFixtureIdentity(undefined, { now: new Date(t.kit.clock.now()) });
+    await addRealVersion(
+      t.kit.env,
+      own,
+      await samsungSecret(t.samsung.partnerId, t.samsung.cardId, rotated),
+      cards,
+    );
+    expect((await read())?.later).toHaveLength(1);
+    // A later version naming another card does not.
+    await addRealVersion(
+      t.kit.env,
+      own,
+      await samsungSecret(t.samsung.partnerId, 'other-card', rotated),
+      JSON.stringify({
+        ...JSON.parse(cards),
+        coupon: await sha256Hex('other-card'),
+      }),
+    );
+    expect((await read())?.later).toHaveLength(1);
+  });
+
   it('verifies after a certificate rotation and after a source switch, never with an unrelated version', async () => {
     const t = await setupSamsungCallbacks();
     const db = t.kit.env.DB;

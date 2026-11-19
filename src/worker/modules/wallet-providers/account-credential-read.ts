@@ -64,9 +64,14 @@ export async function readConfiguredWalletProviderCredentials(
   if (
     row.id !== pinned.accountId ||
     row.revision !== pinned.accountRevision ||
-    (!row.credential_id && !row.hmac_ciphertext) ||
+    (!row.credential_id && !row.hmac_ciphertext && row.provider !== 'samsung') ||
     row.revoked_at !== null
   ) {
+    await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+    return null;
+  }
+  // A new-model enrolment issues only while On and not held by the platform; a legacy row is unchanged.
+  if (!row.credential_id && (row.enabled_at == null || row.platform_hold_at != null)) {
     await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     return null;
   }
@@ -117,7 +122,7 @@ export async function readGoogleCallbackVerification(
   if (
     row.id !== pinned.accountId ||
     row.revision !== pinned.accountRevision ||
-    (!row.credential_id && !row.hmac_ciphertext) ||
+    (!row.credential_id && !row.hmac_ciphertext && row.provider !== 'samsung') ||
     row.revoked_at !== null
   ) {
     await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);

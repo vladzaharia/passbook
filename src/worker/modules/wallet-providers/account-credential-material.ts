@@ -174,10 +174,7 @@ export async function openAccount(
 ): Promise<StoredCredentials | KeyOnlyAccount> {
   const own = row.provider === 'google' ? await decryptOwnKey(ctx, row) : null;
   if (row.kek_version === null) {
-    if (row.provider === 'samsung') {
-      if (row.hmac_ciphertext == null) throw corrupt();
-      return { version: 1, provider: 'samsung', credentials: null };
-    }
+    if (row.provider === 'samsung') return { version: 1, provider: 'samsung', credentials: null };
     if (own === null) throw corrupt();
     return { version: 1, provider: 'google', credentials: null, objectIdHmacKey: own };
   }

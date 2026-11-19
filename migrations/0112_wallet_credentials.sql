@@ -84,6 +84,14 @@ WHEN OLD.hmac_ciphertext IS NOT NULL AND NOT (NEW.hmac_kek_version > OLD.hmac_ke
   AND NEW.hmac_wrapped_dek IS NOT OLD.hmac_wrapped_dek AND NEW.hmac_iv IS OLD.hmac_iv
   AND NEW.hmac_ciphertext IS OLD.hmac_ciphertext)
 BEGIN SELECT RAISE(ABORT, 'immutable wallet account hmac key'); END;
+-- A key may be set on a row that already has a legacy envelope only by the migration (it copies the v1 key);
+-- a fresh key there would change the Google object ids.
+CREATE TRIGGER wallet_provider_accounts_hmac_fresh
+BEFORE UPDATE OF hmac_ciphertext ON wallet_provider_accounts
+WHEN OLD.hmac_ciphertext IS NULL AND NEW.hmac_ciphertext IS NOT NULL AND OLD.credential_id IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM authority_grants g WHERE g.org_id = OLD.org_id AND g.mode = OLD.mode
+    AND g.purpose IN ('org_mode.job.wallet.credential_migrate', 'org_mode.wallet.migration_resolve'))
+BEGIN SELECT RAISE(ABORT, 'wallet account key needs an enrolment without a legacy envelope'); END;
 -- rebuild:end
 
 CREATE TABLE wallet_credentials (

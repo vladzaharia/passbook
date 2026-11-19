@@ -1,6 +1,6 @@
 // 0112 rebuilds wallet_provider_accounts to relax one CHECK and add the HMAC envelope columns. Everything else
 // must come through unchanged: the schema (tables, indexes, triggers, views) differs only in that CHECK, the four
-// columns with their CHECK, and the immutability trigger; rows, children and FKs survive.
+// columns with their CHECK, and the two HMAC triggers; rows, children and FKs survive.
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -67,7 +67,7 @@ function seed(db: DatabaseSync) {
 }
 
 describe('0112 rebuild of wallet_provider_accounts', () => {
-  it('changes only the CHECK, the HMAC columns and one trigger: all else is identical', () => {
+  it('changes only the CHECK, the HMAC columns and two triggers: all else is identical', () => {
     expect(rebuild).toContain('DROP TABLE wallet_provider_accounts');
     const db = migrated();
     const before = dump(db);
@@ -75,12 +75,17 @@ describe('0112 rebuild of wallet_provider_accounts', () => {
     db.exec(rebuild);
     db.exec('COMMIT');
     const after = dump(db);
-    expect(after.length).toBe(before.length + 1);
+    expect(after.length).toBe(before.length + 2);
     const changed = after.filter((row) => !before.includes(row));
-    expect(changed).toHaveLength(2);
+    expect(changed).toHaveLength(3);
     const table = changed.find((row) => row.startsWith('table|wallet_provider_accounts|'));
-    const trigger = changed.find((row) => row.startsWith('trigger|'));
-    expect(trigger).toContain('wallet_provider_accounts_hmac_immutable');
+    const triggers = changed
+      .filter((row) => row.startsWith('trigger|'))
+      .map((row) => row.split('|')[1]);
+    expect(triggers.sort()).toEqual([
+      'wallet_provider_accounts_hmac_fresh',
+      'wallet_provider_accounts_hmac_immutable',
+    ]);
     const was = before.find((row) => row.startsWith('table|wallet_provider_accounts|'));
     expect(was).toContain(OLD_CHECK);
     const expected = was

@@ -1,3 +1,4 @@
+import { withoutTrigger } from '../../../../test/helpers/index.ts';
 import type { Envelope } from '../../platform/crypto.ts';
 import { run } from '../../platform/db.ts';
 import { accountHmacKind } from './rewrap-tables.ts';
@@ -66,11 +67,13 @@ export async function seedAccountHmac(
   const kind = accountHmacKind(c.accountId, c.mode, c.provider);
   const text = 'hmac-body';
   const sealed = await c.seal(c.accountId, c.orgId, kind, text);
-  await run(
-    db,
-    `UPDATE wallet_provider_accounts
+  await withoutTrigger(db, 'wallet_provider_accounts_hmac_fresh', () =>
+    run(
+      db,
+      `UPDATE wallet_provider_accounts
      SET hmac_kek_version = ?, hmac_iv = ?, hmac_wrapped_dek = ?, hmac_ciphertext = ? WHERE id = ?`,
-    [sealed.kekVersion, sealed.iv, sealed.wrappedDek, sealed.ciphertext, c.accountId],
+      [sealed.kekVersion, sealed.iv, sealed.wrappedDek, sealed.ciphertext, c.accountId],
+    ),
   );
   return { table: 'wallet_provider_accounts', id: c.accountId, org: c.orgId, kind, text };
 }

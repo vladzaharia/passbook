@@ -33,7 +33,7 @@ export function mapWalletWriteError(error: unknown): unknown {
   if (/must keep the credential identity|identity is immutable|card map is append-only/.test(text))
     return conflict('The provider identity cannot change.', 'WALLET_IDENTITY_IMMUTABLE');
   if (
-    /needs the next revision|invalid wallet (credential|enrolment)|needs its event|source is unavailable|available credential|needs an active org|revoke needs it off|switch turns it off|identity follows its source/.test(
+    /needs the next revision|invalid wallet (credential|enrolment)|needs its event|source is unavailable|available credential|needs an active org|revoke needs it off|switch turns it off|identity follows its source|needs an enrolment without a legacy envelope/.test(
       text,
     ) ||
     classifyD1Error(error) !== null

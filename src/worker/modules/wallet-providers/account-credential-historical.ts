@@ -186,8 +186,13 @@ export async function readSamsungIssuedRefVerification(
       await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     }
   }
-  const [first, ...later] = found;
+  const [first, ...laterAll] = found;
   if (!first) return null;
+  // Only a later version of the same card follows a pinned one (as in the tombstone reader).
+  const firstIdentity = await providerIdentityHash(first);
+  const later: Samsung[] = [];
+  for (const next of laterAll)
+    if ((await providerIdentityHash(next)) === firstIdentity) later.push(next);
   return {
     ...material(row.id, row.revision, first),
     writable: await writable(first),

@@ -1,6 +1,7 @@
 // A1: the enrolment's HMAC key has its own home on the account row, written with the first source event.
 import { env } from 'cloudflare:workers';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { withoutTrigger } from '../../../../test/helpers/index.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { first, run } from '../../platform/db.ts';
 import { fromBase64Url } from '../../platform/ids.ts';
@@ -9,10 +10,16 @@ import { moveRows, selectEnvelopes } from '../keys/repo-rewrap.ts';
 import { planPlace } from '../keys/rewrap-plan.ts';
 import { accountHmacKind, PLACES } from '../keys/rewrap-tables.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { readGoogleCallbackVerification } from './account-service.ts';
+import {
+  readConfiguredWalletProviderCredentials,
+  readGoogleCallbackVerification,
+} from './account-service.ts';
 import { saveOrgCredential, savePlatformCredential } from './credential-service.ts';
-import { setEnrolmentSource } from './enrolment-service.ts';
+import { holdEnrolment } from './enrolment-hold.ts';
+import { enableEnrolment, setEnrolmentSource } from './enrolment-service.ts';
 import { googleObjectIds } from './google-ids.ts';
+import { findGoogleCallbackAccount } from './repo-google-callback.ts';
+import { addCheck } from './repo-wallet-credentials-test-fixtures.ts';
 import { googleOrg } from './shared-issuer-isolation-test-fixtures.ts';
 import { type Kit, kit, type Mode } from './wallet-wa1b-test-fixtures.ts';
 
@@ -206,10 +213,13 @@ describe('the enrolment own key', () => {
       key,
       credentialAad(o.account.id, o.orgId, accountHmacKind(o.account.id, 'live', 'google')),
     );
-    await run(
-      o.kit.env.DB,
-      `UPDATE wallet_provider_accounts SET hmac_kek_version = ?, hmac_iv = ?, hmac_wrapped_dek = ?, hmac_ciphertext = ? WHERE id = ?`,
-      [envelope.kekVersion, envelope.iv, envelope.wrappedDek, envelope.ciphertext, o.account.id],
+    // Only the migration may copy a key onto a legacy row; the fixture stands in for it.
+    await withoutTrigger(o.kit.env.DB, 'wallet_provider_accounts_hmac_fresh', () =>
+      run(
+        o.kit.env.DB,
+        `UPDATE wallet_provider_accounts SET hmac_kek_version = ?, hmac_iv = ?, hmac_wrapped_dek = ?, hmac_ciphertext = ? WHERE id = ?`,
+        [envelope.kekVersion, envelope.iv, envelope.wrappedDek, envelope.ciphertext, o.account.id],
+      ),
     );
     const after = await readGoogleCallbackVerification(o.kit.ctx, {
       orgId: o.orgId,
@@ -220,5 +230,100 @@ describe('the enrolment own key', () => {
     });
     expect(after?.objectIdHmacKey).toEqual(fromBase64Url(key));
     expect(after?.issuerId).toBe(legacy?.issuerId);
+  });
+
+  it('refuses a fresh key on a row that has a legacy envelope', async () => {
+    const o = await googleOrg(env.DB);
+    await expect(
+      run(
+        env.DB,
+        'UPDATE wallet_provider_accounts SET hmac_kek_version = 1, hmac_iv = ?, hmac_wrapped_dek = ?, hmac_ciphertext = ? WHERE id = ?',
+        [new Uint8Array(12), new Uint8Array(60), new Uint8Array(48), o.account.id],
+      ),
+    ).rejects.toThrow(/without a legacy envelope/);
+    expect((await row(o.account.id))?.hmac_ciphertext).toBeNull();
+  });
+
+  it('gives only Google enrolments a key', async () => {
+    const org = await k.org();
+    const m = await k.member(org.id, 'test');
+    await saveOrgCredential(k.ctx, m.auth, org.id, {
+      provider: 'samsung',
+      expectedRevision: 0,
+      credentials: k.samsung(),
+    });
+    const view = await setEnrolmentSource(k.ctx, m.auth, org.id, 'samsung', {
+      source: 'org',
+      expectedRevision: 0,
+    });
+    expect((await row(view.accountId ?? ''))?.hmac_ciphertext).toBeNull();
+    expect((await row((await enrol('test')).accountId))?.hmac_ciphertext).not.toBeNull();
+  });
+
+  it('a new-model enrolment issues only while On and not held; a legacy row is unchanged', async () => {
+    const org = await k.org();
+    const m = await k.member(org.id, 'test');
+    const admin = await k.admin('test');
+    const platform = await first<{ revision: number }>(
+      env.DB,
+      "SELECT revision FROM wallet_credentials WHERE scope = 'platform' AND mode = 'test' AND provider = 'google' AND revoked_at IS NULL",
+    );
+    const saved = await savePlatformCredential(k.ctx, admin.auth, {
+      mode: 'test',
+      provider: 'google',
+      expectedRevision: platform?.revision ?? 0,
+      credentials: k.google('777000222'),
+    });
+    const view = await setEnrolmentSource(k.ctx, m.auth, org.id, 'google', {
+      source: 'platform',
+      expectedRevision: 0,
+    });
+    const accountId = view.accountId ?? '';
+    const read = async () =>
+      readConfiguredWalletProviderCredentials(
+        k.ctx,
+        { orgId: org.id, mode: 'test', provider: 'google' },
+        {
+          accountId,
+          accountRevision:
+            (
+              await first<{ r: number }>(
+                env.DB,
+                'SELECT enrolment_revision AS r FROM wallet_provider_accounts WHERE id = ?',
+                [accountId],
+              )
+            )?.r ?? 0,
+          credentialKeysetCommitment: keyset,
+        },
+      );
+    expect(await read()).toBeNull();
+    const version = await first<{ v: string }>(
+      env.DB,
+      'SELECT current_version_id AS v FROM wallet_credentials WHERE id = ?',
+      [saved.id],
+    );
+    await addCheck(saved.id, version?.v ?? '');
+    await enableEnrolment(k.ctx, m.auth, org.id, 'google', { expectedRevision: 1 });
+    expect(await read()).toMatchObject({ provider: 'google', accountId });
+    const scope = { orgId: org.id, mode: 'test' as const, provider: 'google' as const };
+    await holdEnrolment(k.ctx, admin.auth, scope, 'abuse');
+    expect(await read()).toBeNull();
+  });
+
+  it('the callback handler admits a new-model enrolment: its account scope resolves and verifies', async () => {
+    const e = await enrol('test');
+    const scope = await findGoogleCallbackAccount(env.DB, e.accountId, keyset);
+    expect(scope).toMatchObject({ accountId: e.accountId, orgId: e.org.id, mode: 'test' });
+    expect(scope?.accountRevision).toBe(1);
+    if (!scope) throw new Error('scope');
+    expect((await readGoogleCallbackVerification(k.ctx, scope))?.issuerId).toBe(e.issuer);
+    // A row with neither a legacy envelope nor a key is still not a callback target.
+    const bare = await k.org();
+    await run(
+      env.DB,
+      "INSERT INTO wallet_provider_accounts (id, org_id, mode, provider, created_at, updated_at) VALUES ('bare-acct', ?, 'test', 'google', 1, 1)",
+      [bare.id],
+    );
+    expect(await findGoogleCallbackAccount(env.DB, 'bare-acct', keyset)).toBeNull();
   });
 });
