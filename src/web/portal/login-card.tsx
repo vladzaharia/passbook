@@ -81,9 +81,10 @@ export interface LoginCardProps {
 }
 
 /**
- * The hosted sign-in card. The flipper is sized to the active face (the far face is out of
- * flow) and its height eases with the turn; sending the link posts the top card and flips this one (640 ms spring) to the code face, the far face
- * inert. Under reduced motion the faces crossfade.
+ * The hosted sign-in card. The flipper is as tall as the active face (the far face is out of
+ * flow) and its height eases with the turn. Sending the link posts the top card and flips this
+ * one (640 ms spring) to the code face, the far face inert. Under reduced motion the faces
+ * crossfade.
  */
 export function LoginCard({ next, notice, methods, front, scene }: LoginCardProps) {
   const request = useMagicRequest(next);

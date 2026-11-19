@@ -1,4 +1,5 @@
 import { act, render } from '@testing-library/react';
+import { useLayoutEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useFaceHeight } from './use-face-height.ts';
 
@@ -13,8 +14,14 @@ class FakeRO {
   disconnect() {}
 }
 
+const renders: Array<[number | undefined, boolean]> = [];
+
 function Probe({ face }: { face: 'email' | 'code' }) {
   const s = useFaceHeight(face);
+  // Committed values only: the discarded render before a render-time setState is not a commit.
+  useLayoutEffect(() => {
+    renders.push([s.height, s.turning]);
+  });
   return (
     <div data-testid="flipper" data-turning={s.turning || undefined} data-h={s.height ?? ''}>
       <section ref={s.email} data-side="email" />
@@ -28,6 +35,7 @@ const reduced = (on: boolean) =>
 
 beforeEach(() => {
   observers = [];
+  renders.length = 0;
   vi.stubGlobal('ResizeObserver', FakeRO);
   vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (
     this: HTMLElement,
@@ -61,6 +69,7 @@ describe('useFaceHeight', () => {
     const { getByTestId, rerender } = render(<Probe face="email" />);
     rerender(<Probe face="code" />);
     expect(getByTestId('flipper').dataset.turning).toBe('true');
+    expect(renders.find(([h]) => h === 420)?.[1]).toBe(true);
     act(() => vi.advanceTimersByTime(900));
     expect(getByTestId('flipper').dataset.turning).toBeUndefined();
   });

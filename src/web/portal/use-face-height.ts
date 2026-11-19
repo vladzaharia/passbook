@@ -3,6 +3,13 @@ import { prefersReducedMotion } from '../lib/motion.ts';
 
 type Side = 'email' | 'code';
 
+/** The flip's duration (--wl-dur-flip) plus its 120 ms wait; matches login-card.css. */
+function flipMs(): number {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue('--wl-dur-flip');
+  const ms = Number.parseFloat(raw);
+  return (Number.isFinite(ms) ? ms : 640) + 120;
+}
+
 /**
  * Sizes the flipper to the active face. Each face is measured (ResizeObserver) while the far face
  * stays out of flow, so a tall code face never leaves empty space under the email face. `turning`
@@ -13,7 +20,7 @@ export function useFaceHeight(face: Side) {
   const code = useRef<HTMLElement | null>(null);
   const [heights, setHeights] = useState<Partial<Record<Side, number>>>({});
   const [turning, setTurning] = useState(false);
-  const last = useRef(face);
+  const [last, setLast] = useState(face);
 
   useLayoutEffect(() => {
     if (typeof ResizeObserver === 'undefined') return;
@@ -31,14 +38,17 @@ export function useFaceHeight(face: Side) {
     return () => ro.disconnect();
   }, []);
 
+  // Set while rendering, so the flag lands in the same commit as the new height.
+  if (last !== face) {
+    setLast(face);
+    if (!prefersReducedMotion()) setTurning(true);
+  }
+
   useEffect(() => {
-    if (last.current === face) return;
-    last.current = face;
-    if (prefersReducedMotion()) return;
-    setTurning(true);
-    const t = setTimeout(() => setTurning(false), 800);
+    if (!turning) return;
+    const t = setTimeout(() => setTurning(false), flipMs() + 80);
     return () => clearTimeout(t);
-  }, [face]);
+  }, [turning]);
 
   return { email, code, height: heights[face], turning };
 }
