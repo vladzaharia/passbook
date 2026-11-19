@@ -144,3 +144,21 @@ export function useEndpointActions(id: string) {
     }),
   };
 }
+
+/** How many deliveries a replay would send: the same call with `dryRun`, nothing written. */
+export function useReplayPreview(id: string, input: ReplayInput, enabled: boolean) {
+  const mode = useMode();
+  return useQuery({
+    queryKey: ['admin', 'webhooks', 'replay-preview', id, mode, input] as const,
+    queryFn: ({ signal }) =>
+      api.post(
+        `${BASE}/${id}/replay`,
+        WebhookReplayResultSchema,
+        { ...input, dryRun: true },
+        { signal },
+      ),
+    enabled,
+    staleTime: 10_000,
+    retry: false,
+  });
+}

@@ -160,3 +160,18 @@ describe('REPLAY_NOT_QUEUED', () => {
     await expectProblem(await s.replay({ from: 0, to: 4e12 }), 429, 'RATE_LIMITED');
   });
 });
+
+describe('dryRun', () => {
+  it('counts what would be sent, changes nothing and keeps the minute free', async () => {
+    const s = await scene(1);
+    vi.mocked(repo.countReplayable).mockResolvedValue(7);
+    const window = { from: 0, to: 4e12, include: 'all' };
+    expect((await s.replay({ ...window, dryRun: true })).json).toEqual({ queued: 7 });
+    expect((await s.replay({ ...window, dryRun: true })).json).toEqual({ queued: 7 });
+    expect(await auditOf(api.rig.db, 'webhook.replay')).toHaveLength(0);
+    expect(repo.backfillDeliveries).not.toHaveBeenCalled();
+    // Over the cap it still refuses, so the preview warns before the real call would.
+    vi.mocked(repo.countReplayable).mockResolvedValue(10_001);
+    await expectProblem(await s.replay({ ...window, dryRun: true }), 422, 'REPLAY_TOO_LARGE');
+  });
+});

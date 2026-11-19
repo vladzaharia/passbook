@@ -148,9 +148,12 @@ export function ReviewStep({
 export function WizardAside({
   connector,
   sample,
+  step,
 }: {
   connector: Connector | undefined;
   sample: readonly SourceField[];
+  /** The wizard's step: the empty sample hint belongs to Configuration and Mapping only. */
+  step: number;
 }) {
   const Icon = connectorIcon(connector?.type ?? '');
   return (
@@ -182,7 +185,13 @@ export function WizardAside({
         <div data-art-host="" className="my-auto flex flex-col items-center gap-2 text-center">
           <EntityArt name={ENTITY.connection.art} size="sm" />
           <p className="text-xs text-fg-muted">
-            {connector ? 'Test shows a sample record here.' : 'Pick a connector.'}
+            {!connector
+              ? 'Pick a connector.'
+              : step === 1
+                ? 'Test shows a sample record here.'
+                : step === 2
+                  ? 'Run Test on Configuration to load a sample.'
+                  : null}
           </p>
         </div>
       )}

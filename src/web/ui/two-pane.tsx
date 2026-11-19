@@ -9,6 +9,8 @@ export interface TwoPaneProps {
   asideFrom?: 'lg' | 'xl';
   /** The aside sticks below the top bar while the main column scrolls. */
   stickyAside?: boolean;
+  /** Stacked, the aside comes before the main column (health and actions first on a phone). */
+  asideFirst?: boolean;
   /** The aside's landmark name; the shell's sidebar is another complementary landmark. */
   asideLabel?: string;
   className?: string;
@@ -20,6 +22,7 @@ export function TwoPane({
   aside,
   asideFrom = 'xl',
   stickyAside,
+  asideFirst,
   asideLabel = 'Summary',
   className,
 }: TwoPaneProps) {
@@ -38,6 +41,7 @@ export function TwoPane({
         aria-label={asideLabel}
         className={cn(
           'flex min-w-0 flex-col gap-6',
+          asideFirst && (asideFrom === 'lg' ? 'max-lg:order-first' : 'max-xl:order-first'),
           stickyAside &&
             (asideFrom === 'lg'
               ? 'lg:sticky lg:top-[calc(5rem+env(safe-area-inset-top))] lg:self-start'

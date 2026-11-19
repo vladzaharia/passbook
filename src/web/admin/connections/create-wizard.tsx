@@ -4,6 +4,7 @@ import { errorMessage, isApiError } from '../../lib/errors.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useOrgOptions } from '../../lib/search.ts';
 import {
+  Callout,
   ErrorState,
   PageHeader,
   SkeletonKeyValue,
@@ -118,7 +119,6 @@ export function CreateConnectionWizard() {
     : [];
   const defaultMinutes = info ? Math.round(info.defaults.intervalSeconds / 60) : undefined;
 
-  // Start from the first mode the connector supports.
   useEffect(() => {
     const caps = info?.capabilities;
     if (!caps) return;
@@ -153,7 +153,8 @@ export function CreateConnectionWizard() {
   const currentCreate = create.variables?.scope === scopeToken;
   const serverFields = currentCreate && isApiError(create.error) ? create.error.fields : {};
   const crumbs = [{ label: 'Connections', to: '/admin/connections' }, { label: 'New' }];
-  const blockCreate = life.autoCreate && (!life.defaultTemplateId || rows.length === 0);
+  const noMappings = rows.length === 0;
+  const blockCreate = life.autoCreate && (!life.defaultTemplateId || noMappings);
 
   /** False keeps the step: the Wizard focuses the first error and announces the count. */
   function next(): boolean {
@@ -200,12 +201,14 @@ export function CreateConnectionWizard() {
         steps={STEPS}
         current={step}
         onStep={setStep}
-        aside={<WizardAside connector={info} sample={sample} />}
+        aside={<WizardAside connector={info} sample={sample} step={step} />}
         asideLabel="Connector"
         onCancel={() => void navigate({ to: '/admin/connections' })}
         onBack={step > 0 ? () => setStep(step - 1) : undefined}
         onNext={next}
-        nextLabel={step === STEPS.length - 1 ? 'Create' : 'Next'}
+        nextLabel={
+          step < STEPS.length - 1 ? 'Next' : noMappings ? 'Create without mappings' : 'Create'
+        }
         nextHint="Pick a connector."
         nextDisabled={(step === 0 && !type) || (step === STEPS.length - 1 && blockCreate)}
         busy={currentCreate && create.isPending}
@@ -271,6 +274,11 @@ export function CreateConnectionWizard() {
               disabled={!templateOrg}
               onChange={(defaultTemplateId) => setLife({ ...life, defaultTemplateId })}
             />
+            {noMappings ? (
+              <Callout tone="warning" title="Nothing mapped yet">
+                Passes are not created or updated until you map fields to the template.
+              </Callout>
+            ) : null}
             <MappingEditor
               rows={rows}
               onChange={setRows}

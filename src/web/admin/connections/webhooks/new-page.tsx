@@ -9,7 +9,6 @@ import {
   Card,
   CardBody,
   CardHeader,
-  CodeBlock,
   EmptyState,
   Form,
   PageHeader,
@@ -22,8 +21,8 @@ import { EndpointFields } from './endpoint-fields.tsx';
 import { FocusOnMount } from './focus-on-mount.tsx';
 import { checkForm, draftOf, emptyForm, type FormState } from './form-state.ts';
 import { endpointHost } from './health.ts';
-import { VERIFY_SNIPPET } from './snippet.ts';
 import { TestSend } from './test-send.tsx';
+import { VerifyGuide } from './verify-guide.tsx';
 
 const crumbs = [
   { label: 'Connections', to: '/admin/connections', search: { tab: 'webhooks' } },
@@ -84,7 +83,7 @@ export function NewWebhookPage() {
                   })
                 }
               >
-                <CodeBlock code={VERIFY_SNIPPET} label="Verify snippet" maxHeight="max-h-56" />
+                <VerifyGuide />
                 <TestSend endpointId={id} host={endpointHost(created.endpoint)} canManage />
               </SecretReveal>
             </FocusOnMount>
@@ -111,7 +110,7 @@ export function NewWebhookPage() {
     if (found.url || found.eventTypes || found.templateIds) return;
     setChecking(true);
     try {
-      await validateEndpoint(draftOf(form));
+      await validateEndpoint({ ...draftOf(form), orgId });
       setServerUrl(undefined);
     } catch (error) {
       setServerUrl(urlProblem(error));
@@ -123,7 +122,7 @@ export function NewWebhookPage() {
   async function save() {
     try {
       setSaving(true);
-      setCreated(await create(draftOf(form)));
+      setCreated(await create({ ...draftOf(form), orgId }));
       check.reset();
       return 'saved' as const;
     } catch (error) {
@@ -152,6 +151,8 @@ export function NewWebhookPage() {
               errors={{ ...check.errors, ...(serverUrl ? { url: serverUrl } : {}) }}
               disabled={!canManage}
               orgId={orgId}
+              urlHelp="https only. A signing secret is shown once after you add this."
+              eventsHelp="Recommended events are selected. Change them any time."
               checking={checking}
               onUrlBlur={() => void dryRun()}
             />
