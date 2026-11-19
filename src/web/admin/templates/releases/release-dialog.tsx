@@ -132,7 +132,7 @@ export function ReleaseDialog({
           ) : null}
           <TechnicalDetails
             items={[
-              { label: rollback ? 'Target release ID' : 'Candidate ID', value: id },
+              { label: rollback ? 'Target release ID' : 'Candidate ID', value: id, copy: true },
               { label: 'Version hash', value: version },
               { label: 'Candidate hash', value: hash },
               { label: 'Expected generation', value: operation.generation },

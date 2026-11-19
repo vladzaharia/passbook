@@ -121,7 +121,7 @@ export function UploadDrop({
     onFile(f);
   };
   return (
-    <div className={cn('flex flex-col gap-1', !compact && 'mt-18')}>
+    <div className={cn('flex flex-col gap-1', !compact && 'mt-20')}>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: the button inside is the control */}
       <div
         ref={zone}

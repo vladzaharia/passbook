@@ -23,9 +23,9 @@ describe('sign-in band', () => {
     // less the space between the pocket's ink and the art's edge (20 px; 17 px under 640).
     expect(bandMetrics(spa, '\\.wl-login-band', '\\.wl-login-brand')).toEqual([
       'calc(1px+1.5rem)calc(1.5rem-19px)',
-      '56px',
+      '72px',
       'calc(1px+1.25rem)calc(1.25rem-17px)',
-      '49px',
+      '63px',
     ]);
   });
 
@@ -42,9 +42,9 @@ describe('sign-in band', () => {
       bandMetrics(spa, '\\.wl-login-band', '\\.wl-login-brand'),
     );
     expect(spa).toMatch(
-      /\.wl-login-scene\{[^}]*flex:none;width:128px;height:96px;margin-bottom:-8px;/,
+      /\.wl-login-scene\{[^}]*flex:none;width:128px;height:96px;margin-bottom:0;/,
     );
-    expect(ssr).toMatch(/\.scene\{[^}]*flex:none;width:128px;height:96px;margin-bottom:-8px;/);
+    expect(ssr).toMatch(/\.scene\{[^}]*flex:none;width:128px;height:96px;margin-bottom:0;/);
   });
 
   it('sizes the worker wordmark like the lg Wordmark: 20 px, a 24 px mark, 10 px apart', () => {

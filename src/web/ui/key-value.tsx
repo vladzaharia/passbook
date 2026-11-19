@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
+import { CopyButton } from './copy-button.tsx';
 
 export interface KeyValueItem {
   /** Stable key when labels can repeat (pass fields). */
@@ -7,6 +8,8 @@ export interface KeyValueItem {
   label: string;
   value: ReactNode;
   mono?: boolean;
+  /** TechnicalDetails: an id an admin may paste into a ticket gets a Copy ID button. */
+  copy?: boolean;
 }
 
 /**
@@ -52,7 +55,19 @@ export function TechnicalDetails({
       </summary>
       <KeyValue
         className="pt-3"
-        items={items.map((item) => ({ ...item, mono: item.mono ?? true }))}
+        items={items.map((item) => ({
+          ...item,
+          mono: item.mono ?? true,
+          value:
+            item.copy && typeof item.value === 'string' ? (
+              <span className="flex min-w-0 items-center gap-1">
+                <span className="min-w-0 break-all">{item.value}</span>
+                <CopyButton value={item.value} label="Copy ID" />
+              </span>
+            ) : (
+              item.value
+            ),
+        }))}
       />
     </details>
   );

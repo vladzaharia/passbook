@@ -118,25 +118,19 @@ export function EntityIcon({
 export interface EntityChipProps {
   kind: EntityKind;
   id: string;
-  /** Without a name the chip reads "<Label> <short id>" in mono. */
+  /** Without a name the chip reads the kind alone ("User"), never a slice of the id. */
   name?: string | null;
   to?: string;
   className?: string;
 }
 
 /** Icon plus name, linked when `to` is set: actors and targets in audit and timelines. */
-export function EntityChip({ kind, id, name, to, className }: EntityChipProps) {
+export function EntityChip({ kind, name, to, className }: EntityChipProps) {
   const { icon: Icon, label } = ENTITY[kind];
   const body = (
     <>
       <Icon aria-hidden className="size-3.5 shrink-0 text-fg-muted" />
-      {name ? (
-        <span className="truncate">{name}</span>
-      ) : (
-        <span className="truncate">
-          {label} <span className="font-mono text-xs text-fg-muted">{id.slice(-6)}</span>
-        </span>
-      )}
+      {name ? <span className="truncate">{name}</span> : <span className="truncate">{label}</span>}
     </>
   );
   const classes = cn('inline-flex max-w-full min-w-0 items-center gap-1 align-bottom', className);

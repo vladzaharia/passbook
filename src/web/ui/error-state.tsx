@@ -82,7 +82,7 @@ export function ErrorState({
     <div
       className={cn(
         'relative flex flex-col items-center gap-4 rounded-lg border border-border bg-surface-raised p-4 text-center shadow-[var(--wl-edge),var(--pk-elevation-1)]',
-        inline ? 'sm:flex-row sm:text-left' : 'mt-18 pt-8',
+        inline ? 'sm:flex-row sm:text-left' : 'mt-20 pt-8',
         className,
       )}
     >
