@@ -7,7 +7,6 @@ import { ENTITY } from '@/web/lib/entities.ts';
 import { formatCount } from '@/web/lib/format.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import {
-  Badge,
   Button,
   Callout,
   DataTable,
@@ -56,7 +55,7 @@ export function IdentitiesPage() {
             <div className="min-w-0">
               <span className="flex min-w-0 items-center gap-2">
                 <RowLink
-                  to="/admin/identities/$identityId"
+                  to="/admin/platform/wallet-accounts/$identityId"
                   params={{ identityId: row.original.id }}
                 >
                   {row.original.label}
@@ -92,16 +91,7 @@ export function IdentitiesPage() {
   }, [orgName]);
   return (
     <>
-      <PageHeader
-        title="Apple identities"
-        meta={
-          <>
-            <Badge>Platform-wide</Badge>
-            <span>All modes</span>
-          </>
-        }
-        actions={upload(empty ? 'outline' : 'primary')}
-      />
+      <PageHeader title="Wallet accounts" actions={upload(empty ? 'outline' : 'primary')} />
       {attention ? (
         <Callout
           className="mb-6"
@@ -114,7 +104,7 @@ export function IdentitiesPage() {
           actions={
             <Button asChild size="sm" variant="outline">
               <Link
-                to="/admin/identities/$identityId"
+                to="/admin/platform/wallet-accounts/$identityId"
                 params={{ identityId: attention.identity.id }}
               >
                 Open identity
@@ -125,7 +115,7 @@ export function IdentitiesPage() {
           {attention.count > 1 ? `${attention.count - 1} more need a look.` : null}
         </Callout>
       ) : null}
-      <h2 className="mb-3 text-base font-semibold text-fg-strong">Identities</h2>
+      <h2 className="mb-3 text-base font-semibold text-fg-strong">Apple identities</h2>
       {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
       ) : (

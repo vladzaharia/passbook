@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 import { expect, type Page } from '@playwright/test';
 import { e2eOrigin } from '../../tools/lib/e2e-ports.ts';
 
-export type Role = 'admin' | 'user' | 'reviewer' | 'nobody';
+export type Role = 'admin' | 'user' | 'reviewer' | 'nobody' | 'loner';
 
 /** Mock Pocket ID subjects (see test/mock-oidc/server.ts). */
 const SUBJECT: Record<Role, string> = {
@@ -11,6 +11,7 @@ const SUBJECT: Record<Role, string> = {
   user: 'e2e-user',
   reviewer: 'e2e-reviewer',
   nobody: 'e2e-nobody',
+  loner: 'e2e-loner',
 };
 
 export const stateFile = (role: Role) => `e2e/.auth/${role}.json`;
@@ -47,7 +48,10 @@ export async function startOidcAs(page: Page, role: Role, next = '/') {
 
 export async function signInAs(page: Page, role: Role, next = '/') {
   await startOidcAs(page, role, next);
-  await page.waitForURL((u) => u.origin === e2eOrigin && u.pathname === next);
+  // /admin opens a scope (/admin/platform or /admin/o/<org>) rather than staying put.
+  const landed = (path: string) =>
+    path === next || (next === '/admin' && /^\/admin\/(platform|o\/[^/]+)(\/|$)/.test(path));
+  await page.waitForURL((u) => u.origin === e2eOrigin && landed(u.pathname));
 }
 
 export async function saveState(page: Page, role: Role) {

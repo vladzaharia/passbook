@@ -3,6 +3,7 @@ import { useRouter } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import type { BroadcastDto } from '@/shared/contracts/broadcasts.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
+import { parseAdminPath } from '../../lib/scope.ts';
 import { membershipsQuery, sessionQuery } from '../../lib/session.ts';
 import { toast } from '../../ui/index.ts';
 import { useBroadcastActions } from './api.ts';
@@ -64,7 +65,7 @@ export function useComposerSubmit(
       return false;
 
     const location = router.state.location;
-    if (location.pathname.replace(/\/+$/, '') !== '/admin/messages/new') return false;
+    if (parseAdminPath(location.pathname).rest !== '/messages/new') return false;
     if (draft && location.search.from !== draft.id) return false;
     return currentScope.current.requestedSelection === orgId;
   };

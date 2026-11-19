@@ -38,7 +38,9 @@ test("admin creates a Henry's pass with the wizard and downloads a valid .pkpass
     .getByText(/^Henry/)
     .first()
     .click();
-  await expect.poll(() => new URL(page.url()).searchParams.get('orgId')).toBe(orgId);
+  await expect
+    .poll(() => new URL(page.url()).pathname)
+    .toBe(`/admin/o/${encodeURIComponent(orgId)}/passes/new`);
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByText('Blue Entrance', { exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
@@ -76,8 +78,8 @@ test("admin creates a Henry's pass with the wizard and downloads a valid .pkpass
     templateVersion: release.version,
   });
 
-  await page.waitForURL((url) => /^\/admin\/passes\/[0-9a-f-]+$/.test(url.pathname));
-  expect(new URL(page.url()).searchParams.get('orgId')).toBe(orgId);
+  await page.waitForURL((url) => /^\/admin\/o\/[^/]+\/passes\/[0-9a-f-]+$/.test(url.pathname));
+  expect(new URL(page.url()).pathname).toContain(`/admin/o/${encodeURIComponent(orgId)}/`);
   await expect(page.getByRole('heading', { level: 1 })).toContainText(memberName);
   // Front and back faces are both rendered by PassCard.
   await expect(page.locator('main').getByText(memberName).first()).toBeVisible();

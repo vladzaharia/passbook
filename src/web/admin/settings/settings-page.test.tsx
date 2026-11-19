@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
-import { changedValues, ORG_FIELDS, PLATFORM_FIELDS, parseField, toDraft } from './fields.ts';
+import { changedValues, parseField, toDraft } from './fields.ts';
+import { ORG_FIELDS } from './fields-org.ts';
+import { PLATFORM_FIELDS } from './fields-platform.ts';
 
 const entries = (over: Record<string, unknown> = {}, saved: string[] = []) => {
   const defaults: Record<string, unknown> = {
@@ -28,6 +30,7 @@ const entries = (over: Record<string, unknown> = {}, saved: string[] = []) => {
       default: value,
       updatedAt: saved.includes(key) ? 1_700_000_000_000 : null,
       updatedBy: saved.includes(key) ? 'u1' : null,
+      source: saved.includes(key) ? 'org' : 'default',
     })),
     oidc: { issuer: 'https://id.plrs.im', adminGroup: 'wallet-admins', userGroup: null },
   };
@@ -69,6 +72,20 @@ describe('settings page', () => {
     expect(screen.getByRole('heading', { name: /Polaris ID/ })).toBeInTheDocument();
     expect(await screen.findByText('wallet-admins')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('shows only platform settings, with join, NFC and retention bounds under Advanced', async () => {
+    await renderApp('/admin/settings', {
+      session: 'admin',
+      handlers: { '/api/v1/settings': () => json(entries()) },
+    });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('radio', { name: 'Advanced' }));
+    expect(screen.getByRole('heading', { name: 'Join links' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'NFC' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Scans maximum')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Support email')).toBeNull();
+    expect(screen.queryByLabelText('Buddy in pass emails')).toBeNull();
   });
 
   it('links to the configured issuer', async () => {

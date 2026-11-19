@@ -13,7 +13,7 @@ import {
   ENTITY_KINDS,
   type EntityKind,
 } from './entities.ts';
-import { ADMIN_NAV } from './nav.ts';
+import { ORG_NAV, PLATFORM_NAV } from './nav.ts';
 
 const WEB = join(process.cwd(), 'src/web');
 const sources = (dir: string): string[] =>
@@ -43,7 +43,7 @@ const GROUP: Partial<Record<EntityKind, keyof typeof PALETTE_GROUPS>> = {
 describe('entity registry', () => {
   it.each(ENTITY_KINDS)('%s resolves everywhere to its registry glyph and art', (kind) => {
     const entity = ENTITY[kind];
-    for (const item of ADMIN_NAV.filter((i) => i.entity === kind)) {
+    for (const item of [...ORG_NAV, ...PLATFORM_NAV].flat().filter((i) => i.entity === kind)) {
       expect(item.icon).toBe(entity.icon);
     }
     const group = GROUP[kind];

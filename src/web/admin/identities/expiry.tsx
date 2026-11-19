@@ -13,7 +13,13 @@ export function remainingDays(identity: Pick<Identity, 'notAfter' | 'daysRemaini
   return identity.notAfter === null ? identity.daysRemaining : daysUntil(identity.notAfter, now);
 }
 
-export function ExpiryPill({ identity, now }: { identity: Identity; now: number }) {
+export function ExpiryPill({
+  identity,
+  now,
+}: {
+  identity: Pick<Identity, 'notAfter' | 'daysRemaining'>;
+  now: number;
+}) {
   const days = remainingDays(identity, now);
   if (days === null) return <span className="text-fg-muted">Unknown</span>;
   const status =
@@ -40,7 +46,11 @@ export function ExpiryPill({ identity, now }: { identity: Identity; now: number 
   );
 }
 
-export function ApnsPill({ identity }: { identity: Identity }) {
+export function ApnsPill({
+  identity,
+}: {
+  identity: Pick<Identity, 'apnsAvailable' | 'apnsHealth'>;
+}) {
   if (!identity.apnsAvailable) return <StatusPill status="not_configured">Not set up</StatusPill>;
   if (identity.apnsHealth === 'healthy') return <StatusPill status="verified">Healthy</StatusPill>;
   if (identity.apnsHealth === 'failing') return <StatusPill status="failing">Failing</StatusPill>;

@@ -9,8 +9,6 @@ import {
   canAccessAdminPath,
   isAdminPath,
   isPublicPath,
-  isTenantAdminPath,
-  isTenantResourceDetail,
   requireAdminConsole,
   requireSession,
 } from './guards.ts';
@@ -377,82 +375,64 @@ describe('canAccessAdminPath', () => {
       'scanning:read',
     ],
   });
+  const o = (rest = '') => `/admin/o/org-a${rest}`;
 
-  it('keeps platform pages available to admins without memberships, but not to members', () => {
-    for (const path of [
-      '/admin/users',
-      '/admin/users/u1',
-      '/admin/orgs',
-      '/admin/status',
-      '/admin/identities/i1',
-      '/admin/settings',
-    ]) {
+  it('keeps platform pages to platform admins, with or without memberships', () => {
+    for (const rest of ['', '/users', '/users/u1', '/orgs', '/orgs/o1', '/status', '/audit']) {
+      const path = `/admin/platform${rest}`;
       expect(canAccessAdminPath(path, true), path).toBe(true);
       expect(canAccessAdminPath(path, false, member), path).toBe(false);
     }
+    for (const rest of ['/wallet-accounts/i1', '/api-keys', '/settings']) {
+      expect(canAccessAdminPath(`/admin/platform${rest}`, true)).toBe(true);
+    }
     expect(canAccessAdminPath('/admin/account', false)).toBe(true);
+    expect(canAccessAdminPath('/admin', false)).toBe(true);
   });
 
-  it('gives admins the platform pages and members their organization overview, log and keys', () => {
-    for (const path of ['/admin', '/admin/', '/admin/audit', '/admin/api-keys/key-a']) {
-      expect(canAccessAdminPath(path, true), path).toBe(true);
-      expect(canAccessAdminPath(path, false, member), path).toBe(true);
-      expect(canAccessAdminPath(path, false), path).toBe(false);
+  it('opens an organization only with an active membership in that organization', () => {
+    for (const rest of ['', '/', '/audit', '/api-keys', '/settings', '/passes']) {
+      expect(canAccessAdminPath(o(rest), false, member), rest).toBe(true);
+      // Platform status is not a membership.
+      expect(canAccessAdminPath(o(rest), true), rest).toBe(false);
+      expect(canAccessAdminPath(o(rest), true, membershipFixture('org-b')), rest).toBe(false);
       expect(
-        canAccessAdminPath(path, false, membershipFixture('org-a', { revokedAt: 1 })),
-        path,
+        canAccessAdminPath(o(rest), false, membershipFixture('org-a', { revokedAt: 1 })),
+        rest,
       ).toBe(false);
-      expect(isTenantAdminPath(path), path).toBe(true);
     }
   });
 
-  it('gates the overview, the audit log and API keys on their own capabilities', () => {
+  it('gates the overview, the audit log, API keys and settings on their own capabilities', () => {
     const only = (...capabilities: OrgCapability[]) => membershipFixture('org-a', { capabilities });
-    const allowed = (path: string, m: OrgMembership) => canAccessAdminPath(path, false, m);
-    expect(allowed('/admin', only('org:read', 'passes:read'))).toBe(true);
-    expect(allowed('/admin', only('org:read'))).toBe(false);
-    expect(allowed('/admin', only('passes:read'))).toBe(false);
-    expect(allowed('/admin/audit', only('audit:read'))).toBe(true);
-    expect(allowed('/admin/audit', only('org:read', 'passes:read', 'integrations:manage'))).toBe(
-      false,
-    );
-    expect(allowed('/admin/api-keys', only('integrations:read'))).toBe(true);
-    expect(allowed('/admin/api-keys', only('org:read', 'passes:read', 'audit:read'))).toBe(false);
-  });
-
-  it('does not give an admin tenant capabilities without an active membership', () => {
-    for (const path of [
-      '/admin/passes',
-      '/admin/passes/new',
-      '/admin/templates',
-      '/admin/connections',
-      '/admin/scanning',
-      '/admin/messages',
-      '/admin/test-inbox',
-    ]) {
-      expect(canAccessAdminPath(path, true), path).toBe(false);
-      expect(
-        canAccessAdminPath(path, true, membershipFixture('org-a', { revokedAt: 123 })),
-        path,
-      ).toBe(false);
-    }
+    const allowed = (rest: string, m: OrgMembership) => canAccessAdminPath(o(rest), false, m);
+    expect(allowed('', only('org:read', 'passes:read'))).toBe(true);
+    expect(allowed('', only('org:read'))).toBe(false);
+    expect(allowed('', only('passes:read'))).toBe(false);
+    expect(allowed('/audit', only('audit:read'))).toBe(true);
+    expect(allowed('/audit', only('org:read', 'passes:read', 'integrations:manage'))).toBe(false);
+    expect(allowed('/api-keys', only('integrations:read'))).toBe(true);
+    expect(allowed('/api-keys', only('org:read', 'passes:read', 'audit:read'))).toBe(false);
+    expect(allowed('/settings', only('org:read'))).toBe(true);
+    expect(allowed('/settings', only('members:manage'))).toBe(false);
+    expect(allowed('/blueprints', only('templates:read'))).toBe(true);
+    expect(allowed('/blueprints', only('passes:read'))).toBe(false);
   });
 
   it.each([
-    ['/admin/passes', 'passes:read'],
-    ['/admin/passes/p1', 'passes:read'],
-    ['/admin/passes/new', 'passes:operate'],
-    ['/admin/connections', 'integrations:read'],
-    ['/admin/connections/c1', 'integrations:read'],
-    ['/admin/connections/new', 'integrations:manage'],
-    ['/admin/scanning', 'scanning:read'],
-    ['/admin/scanning/events/e1', 'scanning:read'],
-  ] as const)('requires the selected membership capability for %s', (path, capability) => {
+    ['/passes', 'passes:read'],
+    ['/passes/p1', 'passes:read'],
+    ['/passes/new', 'passes:operate'],
+    ['/connections', 'integrations:read'],
+    ['/connections/c1', 'integrations:read'],
+    ['/connections/new', 'integrations:manage'],
+    ['/scanning', 'scanning:read'],
+    ['/scanning/events/e1', 'scanning:read'],
+  ] as const)('requires the membership capability for %s', (rest, capability) => {
     const authorized = membershipFixture('org-a', { capabilities: [capability] });
     const denied = membershipFixture('org-a', { capabilities: [] });
-    expect(isTenantAdminPath(path)).toBe(true);
-    expect(canAccessAdminPath(path, false, authorized)).toBe(true);
-    expect(canAccessAdminPath(path, true, denied)).toBe(false);
+    expect(canAccessAdminPath(o(rest), false, authorized)).toBe(true);
+    expect(canAccessAdminPath(o(rest), true, denied)).toBe(false);
   });
 
   it('allows template management roles, not pass operators who can only read templates', () => {
@@ -473,15 +453,14 @@ describe('canAccessAdminPath', () => {
       capabilities: ['templates:read', 'templates:publish'],
     });
     const authorWithoutRead = membershipFixture('org-a', { capabilities: ['templates:author'] });
-    for (const path of ['/admin/templates', '/admin/templates/t1']) {
-      expect(isTenantAdminPath(path)).toBe(true);
+    for (const path of [o('/templates'), o('/templates/t1')]) {
       expect(canAccessAdminPath(path, false, operator), path).toBe(false);
       expect(canAccessAdminPath(path, true, operator), path).toBe(false);
       for (const manager of [author, reviewer, publisher]) {
         expect(canAccessAdminPath(path, false, manager), path).toBe(true);
       }
     }
-    for (const path of ['/admin/templates/upload', '/admin/templates/t1/design']) {
+    for (const path of [o('/templates/upload'), o('/templates/new'), o('/templates/t1/design')]) {
       expect(canAccessAdminPath(path, false, author), path).toBe(true);
       expect(canAccessAdminPath(path, false, reviewer), path).toBe(false);
       expect(canAccessAdminPath(path, false, publisher), path).toBe(false);
@@ -490,122 +469,79 @@ describe('canAccessAdminPath', () => {
   });
 
   it('requires write capabilities for create and authoring routes', () => {
-    for (const path of [
-      '/admin/passes/new',
-      '/admin/templates/upload',
-      '/admin/templates/t1/design',
-      '/admin/connections/new',
+    for (const rest of [
+      '/passes/new',
+      '/templates/upload',
+      '/templates/t1/design',
+      '/connections/new',
     ]) {
-      expect(canAccessAdminPath(path, false, reader), path).toBe(false);
-      expect(canAccessAdminPath(path, false, member), path).toBe(true);
+      expect(canAccessAdminPath(o(rest), false, reader), rest).toBe(false);
+      expect(canAccessAdminPath(o(rest), false, member), rest).toBe(true);
     }
   });
 
-  it('separates platform org details from matching tenant workspaces', () => {
-    const orgReader = membershipFixture('org a', { capabilities: ['org:read'] });
-    const noOrgRead = membershipFixture('org a', { capabilities: ['members:manage'] });
-    const revoked = membershipFixture('org a', { capabilities: ['org:read'], revokedAt: 123 });
-    const path = '/admin/orgs/org%20a';
-    expect(isTenantAdminPath(path)).toBe(false);
-    expect(isTenantAdminPath(path, 'workspace')).toBe(true);
-    expect(canAccessAdminPath(path, true)).toBe(true);
-    expect(canAccessAdminPath(path, false, orgReader)).toBe(false);
-    for (const admin of [false, true]) {
-      expect(canAccessAdminPath(path, admin, orgReader, 'workspace')).toBe(true);
-      expect(canAccessAdminPath(path, admin, noOrgRead, 'workspace')).toBe(false);
-      expect(canAccessAdminPath(path, admin, revoked, 'workspace')).toBe(false);
-      expect(canAccessAdminPath(path, admin, undefined, 'workspace')).toBe(false);
-      expect(canAccessAdminPath('/admin/orgs/another', admin, orgReader, 'workspace')).toBe(false);
-      expect(
-        canAccessAdminPath(
-          '/admin/orgs/north%2Fwest',
-          admin,
-          membershipFixture('north/west', { capabilities: ['org:read'] }),
-          'workspace',
-        ),
-      ).toBe(true);
-      expect(
-        canAccessAdminPath(
-          '/admin/orgs/north%252Fwest',
-          admin,
-          membershipFixture('north/west', { capabilities: ['org:read'] }),
-          'workspace',
-        ),
-      ).toBe(false);
-    }
-    expect(canAccessAdminPath('/admin/orgs/%E0%A4%A', true)).toBe(false);
+  it('decodes the organization id from the path exactly once', () => {
+    const slashed = membershipFixture('north/west', { capabilities: ['org:read'] });
+    expect(canAccessAdminPath('/admin/o/north%2Fwest/settings', false, slashed)).toBe(true);
+    expect(canAccessAdminPath('/admin/o/north%252Fwest/settings', false, slashed)).toBe(false);
+    expect(canAccessAdminPath('/admin/o/%E0%A4%A/settings', true, member)).toBe(false);
   });
 
   it('requires message capabilities rather than platform or pass authority', () => {
     const messageReader = membershipFixture('org-a', { capabilities: ['messages:read'] });
     const messageManager = membershipFixture('org-a', { capabilities: ['messages:manage'] });
     for (const admin of [false, true]) {
-      for (const path of ['/admin/messages', '/admin/messages/m1']) {
-        expect(canAccessAdminPath(path, admin, messageReader), path).toBe(true);
-        expect(canAccessAdminPath(path, admin, reader), path).toBe(false);
-        expect(canAccessAdminPath(path, admin), path).toBe(false);
+      for (const rest of ['/messages', '/messages/m1']) {
+        expect(canAccessAdminPath(o(rest), admin, messageReader), rest).toBe(true);
+        expect(canAccessAdminPath(o(rest), admin, reader), rest).toBe(false);
+        expect(canAccessAdminPath(o(rest), admin), rest).toBe(false);
       }
-      expect(canAccessAdminPath('/admin/messages/new', admin, messageReader)).toBe(false);
-      expect(canAccessAdminPath('/admin/messages/new', admin, messageManager)).toBe(true);
+      expect(canAccessAdminPath(o('/messages/new'), admin, messageReader)).toBe(false);
+      expect(canAccessAdminPath(o('/messages/new'), admin, messageManager)).toBe(true);
     }
   });
 
   it('requires tenant pass read access for the test inbox', () => {
     for (const admin of [false, true]) {
-      expect(canAccessAdminPath('/admin/test-inbox', admin, reader)).toBe(true);
-      expect(canAccessAdminPath('/admin/test-inbox', admin)).toBe(false);
+      expect(canAccessAdminPath(o('/test-inbox'), admin, reader)).toBe(true);
+      expect(canAccessAdminPath(o('/test-inbox'), admin)).toBe(false);
     }
   });
 
-  it('does not accept lookalike or unknown paths', () => {
+  it('does not accept lookalike, legacy or unknown paths', () => {
     expect(canAccessAdminPath('/administrator', true, member)).toBe(false);
-    expect(canAccessAdminPath('/admin/passes-extra', true, member)).toBe(false);
-    expect(canAccessAdminPath('/admin/unknown', true, member)).toBe(false);
+    expect(canAccessAdminPath(o('/passes-extra'), true, member)).toBe(false);
+    expect(canAccessAdminPath(o('/unknown'), true, member)).toBe(false);
+    expect(canAccessAdminPath('/admin/passes', true, member)).toBe(false);
+    expect(canAccessAdminPath('/admin/users', true)).toBe(false);
+    expect(canAccessAdminPath('/admin/platformx', true)).toBe(false);
   });
 });
 
 describe('path helpers', () => {
   it('recognises admin and public paths exactly', () => {
     expect(isAdminPath('/admin')).toBe(true);
-    expect(isAdminPath('/admin/passes')).toBe(true);
+    expect(isAdminPath('/admin/o/o1/passes')).toBe(true);
     expect(isAdminPath('/administrator')).toBe(false);
     expect(isPublicPath('/login')).toBe(true);
     expect(isPublicPath('/login/x')).toBe(false);
     // /scan is its own document now; the SPA guard no longer lets it through.
     expect(isPublicPath('/scan')).toBe(false);
   });
+});
 
-  it('recognises tenant resource details without treating creation pages as deep links', () => {
-    expect(isTenantResourceDetail('/admin/orgs/org-a')).toBe(false);
-    expect(isTenantResourceDetail('/admin/orgs/org-a', 'workspace')).toBe(true);
-    expect(isTenantResourceDetail('/admin/orgs/north%2Fwest', 'workspace')).toBe(true);
-    for (const path of [
-      '/admin/passes/p1',
-      '/admin/connections/c1/',
-      '/admin/templates/t1',
-      '/admin/templates/t1/design',
-      '/admin/scanning/events/e1',
-      '/admin/scanning/scanners/s1',
-      '/admin/scanning/sessions/session1',
-      '/admin/messages/m1',
-    ]) {
-      expect(isTenantResourceDetail(path), path).toBe(true);
-    }
-    for (const path of [
-      '/admin/passes',
-      '/admin/passes/new',
-      '/admin/connections',
-      '/admin/connections/new',
-      '/admin/templates',
-      '/admin/templates/upload',
-      '/admin/scanning',
-      '/admin/scanning/events',
-      '/admin/messages',
-      '/admin/messages/new',
-      '/admin/test-inbox',
-      '/admin/orgs',
-    ]) {
-      expect(isTenantResourceDetail(path), path).toBe(false);
-    }
+describe('organization Members and Wallet accounts', () => {
+  const member = (capabilities: OrgCapability[]) => membershipFixture('o1', { capabilities });
+  it('opens Members only with members:manage', () => {
+    expect(canAccessAdminPath('/admin/o/o1/members', false, member(['members:manage']))).toBe(true);
+    expect(canAccessAdminPath('/admin/o/o1/members', false, member(['org:read']))).toBe(false);
+  });
+  it('opens Wallet accounts with org:read, as the server does', () => {
+    expect(canAccessAdminPath('/admin/o/o1/wallet-accounts', false, member(['org:read']))).toBe(
+      true,
+    );
+    expect(canAccessAdminPath('/admin/o/o1/wallet-accounts', false, member(['passes:read']))).toBe(
+      false,
+    );
   });
 });

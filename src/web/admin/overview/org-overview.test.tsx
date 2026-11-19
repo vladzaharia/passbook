@@ -80,6 +80,38 @@ describe('organization overview', () => {
     expect(await screen.findByRole('list', { name: 'Recent activity' })).toBeInTheDocument();
   });
 
+  it('shows the organization counts as links to their lists', async () => {
+    await renderApp('/admin', {
+      session: 'user',
+      memberships: [member([...READER, 'templates:read', 'integrations:read'])],
+      selectedOrg: 'o1',
+      handlers: {
+        ...handlers(),
+        '/api/v1/orgs/o1/workspace': () =>
+          json({
+            id: 'o1',
+            slug: 'northwind',
+            name: 'Northwind',
+            status: 'active',
+            defaultIdentityId: null,
+            branding: {},
+            createdAt: 1,
+            updatedAt: 1,
+            counts: { passes: 5, templates: 2, connections: 1, apiKeys: 3 },
+            countsCapped: false,
+          }),
+      },
+    });
+    expect(await screen.findByRole('link', { name: /^2\s*templates/i })).toHaveAttribute(
+      'href',
+      '/admin/o/o1/templates',
+    );
+    expect(screen.getByRole('link', { name: /^3\s*API keys/i })).toHaveAttribute(
+      'href',
+      '/admin/o/o1/api-keys',
+    );
+  });
+
   it('asks for the selected range', async () => {
     const user = userEvent.setup();
     const { fetchMock } = await renderApp('/admin?range=30d', {
@@ -147,7 +179,9 @@ describe('organization overview', () => {
       ],
       handlers: { '/api/v1/templates': () => json({ items: [], nextCursor: null }) },
     });
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/templates'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/templates$/),
+    );
     expect(calls(fetchMock).filter((u) => u.includes('/metrics/'))).toEqual([]);
   });
 

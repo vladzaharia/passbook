@@ -272,8 +272,8 @@ describe('pass detail: loading', () => {
       expect(
         await screen.findByRole('heading', { level: 1, name: 'Second organization pass' }),
       ).toBeInTheDocument();
-      await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: 'org2' }));
-      expect(localStorage.getItem('wallet-org-filter')).toBe('org2');
+      await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
+      expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${'org2'}`);
     } finally {
       localStorage.removeItem('wallet-org-filter');
     }
@@ -305,7 +305,13 @@ describe('pass detail: loading', () => {
           }),
         });
         expect(await screen.findByRole('heading', { name: 'Cached pass title' })).toBeVisible();
-        await waitFor(() => expect(localStorage.getItem('wallet-org-filter')).toBe(ORG.id));
+        await waitFor(() =>
+          expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${ORG.id}`),
+        );
+        // A bare old link, opened from outside the organization.
+        await act(async () => {
+          await router.navigate({ to: '/admin/account' });
+        });
         await act(async () => {
           await router.navigate({
             to: '/admin/passes/$passId',
@@ -318,7 +324,7 @@ describe('pass detail: loading', () => {
         expect(screen.queryByText('Cached pass title')).toBeNull();
         expect(screen.queryByRole('button', { name: 'More' })).toBeNull();
         expect(new URLSearchParams(router.state.location.searchStr).has('orgId')).toBe(false);
-        expect(localStorage.getItem('wallet-org-filter')).toBe(ORG.id);
+        expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${ORG.id}`);
         expect(
           fetchMock.mock.calls.some(
             ([input]) => new URL(String(input), 'http://localhost').pathname === '/api/v1/bundles',
@@ -337,10 +343,8 @@ describe('pass detail: loading', () => {
         });
         if (outcome === 'moved') {
           expect(await screen.findByRole('heading', { name: 'Moved pass title' })).toBeVisible();
-          await waitFor(() =>
-            expect(router.state.location.search).toMatchObject({ orgId: 'org2' }),
-          );
-          expect(localStorage.getItem('wallet-org-filter')).toBe('org2');
+          await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
+          expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${'org2'}`);
         } else {
           if (outcome === 'forbidden') {
             expect(
@@ -350,7 +354,7 @@ describe('pass detail: loading', () => {
             expect(await screen.findByText('Pass not found')).toBeVisible();
           }
           expect(new URLSearchParams(router.state.location.searchStr).has('orgId')).toBe(false);
-          expect(localStorage.getItem('wallet-org-filter')).toBe(ORG.id);
+          expect(localStorage.getItem('passbook-admin-scope')).toBe(`org:${ORG.id}`);
           expect(screen.queryByText('Cached pass title')).toBeNull();
         }
       } finally {
@@ -428,9 +432,8 @@ describe('pass detail: loading', () => {
   });
 
   it('unmounts pass and bundle data when the selected organization changes', async () => {
-    const user = userEvent.setup();
     const server = newServer({ title: 'Private member', serial: 'SECRET-001' });
-    await renderApp('/admin/passes/p1?tab=delivery', {
+    const { router } = await renderApp('/admin/passes/p1?tab=delivery', {
       session: 'admin',
       memberships: [
         ...orgScope.memberships,
@@ -444,8 +447,14 @@ describe('pass detail: loading', () => {
     expect(await screen.findByText('Private travel bundle')).toBeInTheDocument();
     expect(server.calls.filter((c) => c.path === '/api/v1/bundles')).toHaveLength(1);
 
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-    await user.click(await screen.findByRole('option', { name: 'Second' }));
+    // The same pass in another organization's URL: it is not there.
+    await act(async () => {
+      await router.navigate({
+        to: '/admin/o/$orgId/passes/$passId',
+        params: { orgId: 'org2', passId: 'p1' },
+        search: { tab: 'delivery' },
+      });
+    });
     expect(await screen.findByText('Pass not found')).toBeInTheDocument();
     expect(screen.queryByText('Private member')).toBeNull();
     expect(screen.queryByText('SECRET-001')).toBeNull();
@@ -1389,7 +1398,9 @@ describe('pass detail: header actions', () => {
     await user.type(within(dialog).getByLabelText('Type Sam Jones to confirm'), ' sam jones ');
     expect(confirm).toBeEnabled();
     await user.click(confirm);
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes$/),
+    );
     expect(server.calls.some((c) => c.method === 'DELETE')).toBe(true);
     // The deleted page leaves history: Back does not land on its not found.
     expect(router.history.length).toBe(entries);

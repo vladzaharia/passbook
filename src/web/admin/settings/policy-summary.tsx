@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
 import { Button, Card, CardBody, CardHeader } from '@/web/ui/index.ts';
-import { PLATFORM_FIELDS } from './fields.ts';
+import { PLATFORM_FIELDS } from './fields-platform.ts';
 
 type Entries = z.infer<typeof SettingsListSchema>['items'];
 

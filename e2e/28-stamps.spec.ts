@@ -54,13 +54,13 @@ test('a template made from the Stamp card counts stamps, alerts once and serves 
   await page.getByRole('option', { name: seed.org.name }).click();
   await dialog.getByRole('textbox', { name: /^Name/ }).fill(name);
   await dialog.getByRole('button', { name: 'Open designer' }).click();
-  await page.waitForURL((u) => u.pathname === '/admin/templates/new');
+  await page.waitForURL((u) => u.pathname.endsWith('/templates/new'));
   await expect(page.getByRole('region', { name: 'Issues' }).getByRole('status')).toHaveText(
     /to review|None/,
     { timeout: 30_000 },
   );
   await page.getByRole('button', { name: 'Create template' }).click();
-  await page.waitForURL((u) => /^\/admin\/templates\/[0-9a-f-]+$/.test(u.pathname));
+  await page.waitForURL((u) => /^\/admin\/o\/[^/]+\/templates\/[0-9a-f-]+$/.test(u.pathname));
   const templateId = new URL(page.url()).pathname.split('/').pop() as string;
 
   const api = await apiAs('admin');

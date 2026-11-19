@@ -138,7 +138,9 @@ describe('Blueprints', () => {
       handlers: detailHandlers(),
     });
     expect(await screen.findByRole('button', { name: 'Use blueprint' })).toBeInTheDocument();
-    expect(decodeURIComponent(router.state.location.pathname)).toBe(`/admin/blueprints/${ID}`);
+    expect(decodeURIComponent(router.state.location.pathname)).toBe(
+      `/admin/o/${ORG.id}/blueprints/${ID}`,
+    );
   });
 });
 
@@ -213,7 +215,7 @@ describe('Use blueprint', () => {
     // The designer route loads its own chunk, then the draft replaces the skeleton.
     expect(await screen.findByText('Not saved', {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Design Gym balance' })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/admin/templates/new');
+    expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/templates\/new$/);
     expect(screen.getByText('From Balance card')).toBeInTheDocument();
     await waitFor(() => expect(checks.length).toBeGreaterThan(0));
     expect(checks[0]).toMatchObject({ orgId: ORG.id, name: 'Gym balance' });
@@ -222,7 +224,9 @@ describe('Use blueprint', () => {
     expect(bodies[0]).toMatchObject({ orgId: ORG.id, name: 'Gym balance' });
     expect('blueprint' in (bodies[0]?.version.manifest ?? {})).toBe(false);
     expect(bodies[0]?.version.manifest.name).toBe('Gym balance');
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/templates/made1'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/templates\/made1$/),
+    );
     expect(
       await screen.findByText(/Template created · Version 1, from the Balance card blueprint/),
     ).toBeInTheDocument();

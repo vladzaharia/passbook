@@ -162,7 +162,7 @@ test('author proposes, reviewer approves, publisher releases, then a pass is iss
       releaseGeneration: release.generation,
     });
     const pass = (await response.json()) as PassDetailDto;
-    await authorPage.waitForURL((u) => /^\/admin\/passes\/[0-9a-f-]+$/.test(u.pathname));
+    await authorPage.waitForURL((u) => /^\/admin\/o\/[^/]+\/passes\/[0-9a-f-]+$/.test(u.pathname));
     await expect(authorPage.getByRole('heading', { level: 1 })).toContainText(holder);
     await expect(authorPage.getByText('Active', { exact: true }).first()).toBeVisible();
     const issued = await author.get<PassDetailDto>(`/api/v1/passes/${encodeURIComponent(pass.id)}`);

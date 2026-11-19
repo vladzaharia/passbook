@@ -1,19 +1,23 @@
 import { useRouter, useRouterState } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
+import { useScopeCrumb } from './scope-context.ts';
 
 export const MAIN_ID = 'main';
 
 /** The tab title for a page: "<page> · PassBook". The announcer reads it when a page has no h1. */
 export function useDocumentTitle(title: string): void {
+  const scope = useScopeCrumb()?.label;
   useEffect(() => {
     const previous = document.title;
-    const mine = `${title} · PassBook`;
+    // "Settings · Northwind · PassBook": the console scope sits between page and product.
+    const mine =
+      scope && scope !== title ? `${title} · ${scope} · PassBook` : `${title} · PassBook`;
     document.title = mine;
     return () => {
       // A page that mounted after this one keeps its own title.
       if (document.title === mine) document.title = previous;
     };
-  }, [title]);
+  }, [title, scope]);
 }
 
 /** History moves that restore a page (Back, Forward, Go) rather than open a new one. */

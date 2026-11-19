@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, pageOf, TimestampSchema } from './common.ts';
+import { IdSchema, PageQuerySchema, pageOf, TimestampSchema } from './common.ts';
 import { VasKeySchema } from './nfc.ts';
 
 /** How pushes reach Apple: the identity's mTLS certificate binding, the team's .p8 key, or neither. */
@@ -49,6 +49,26 @@ export const IdentitySchema = z.object({
 export type IdentityDto = z.infer<typeof IdentitySchema>;
 /** Oldest first (the platform identity leads); `cursor` is the last id of the previous page. */
 export const IdentityListSchema = pageOf(IdentitySchema);
+
+/** What an organization's member sees of its own identity: no binding name, push key or team-wide counts. */
+export const OrgIdentitySchema = z.object({
+  id: IdSchema,
+  label: z.string(),
+  passTypeIdentifier: z.string(),
+  teamIdentifier: z.string(),
+  certSubject: z.string().nullable(),
+  certSerial: z.string().nullable(),
+  notBefore: TimestampSchema.nullable(),
+  notAfter: TimestampSchema.nullable(),
+  daysRemaining: z.number().int().nullable(),
+  apnsAvailable: z.boolean(),
+  apnsHealth: z.enum(['unknown', 'healthy', 'failing']),
+});
+export type OrgIdentityDto = z.infer<typeof OrgIdentitySchema>;
+export const OrgIdentityListSchema = pageOf(OrgIdentitySchema);
+
+/** With `orgId`, only that organization's own identities; readable by a member with org:read. */
+export const IdentityListQuerySchema = PageQuerySchema.extend({ orgId: IdSchema.optional() });
 
 export const UploadIdentitySchema = z.object({
   orgId: IdSchema.nullable().optional(),

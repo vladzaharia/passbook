@@ -96,7 +96,12 @@ function TemplateDetailResource({ templateId, search }: { templateId: string; se
   // A blueprint has its own page.
   if (template.data?.blueprint)
     return (
-      <Navigate to="/admin/blueprints/$blueprintId" params={{ blueprintId: templateId }} replace />
+      <Navigate
+        from="/admin/o/$orgId"
+        to="/admin/o/$orgId/blueprints/$blueprintId"
+        params={{ blueprintId: templateId }}
+        replace
+      />
     );
   if (resourceScope === 'pending' || !template.data)
     return (

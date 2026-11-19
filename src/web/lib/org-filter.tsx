@@ -1,56 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type OrgMembership, OrgMembershipListSchema } from '@/shared/contracts/org-membership.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { api } from './api.ts';
-import { canAccessAdminPath, isTenantResourceDetail } from './guards.ts';
-import { isOrgScoped } from './nav.ts';
-import { readRaw, readStored, store, subscribe } from './org-filter-store.ts';
-import { clearOrgPreviewBatches } from './preview-batch.ts';
-import { orgScopeSearchSchema } from './route-search.ts';
+import { canAccessAdminPath } from './guards.ts';
+import { firstAllowedPath } from './nav.ts';
+import { type AdminScope, PLATFORM, parseAdminPath, switchTarget, withOrg } from './scope.ts';
 import { membershipsQuery, sessionQuery, useMemberships, useSession } from './session.ts';
 
 const NO_MEMBERSHIPS: OrgMembership[] = [];
-const WORKSPACES = ['/admin/passes', '/admin/templates', '/admin/connections', '/admin/scanning'];
-
-function orgDetailId(pathname: string): string | undefined {
-  const segment = /^\/admin\/orgs\/([^/]+)\/?$/.exec(pathname)?.[1];
-  if (!segment) return undefined;
-  try {
-    return decodeURIComponent(segment);
-  } catch {
-    return undefined;
-  }
-}
-
-function useScopeLocation() {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const search = useRouterState({ select: (state) => state.location.search });
-  const searchStr = useRouterState({ select: (state) => state.location.searchStr });
-  const values = new URLSearchParams(searchStr).getAll('orgId');
-  const parsed = search.orgId;
-  // Router JSON-decodes scalar IDs; reject objects and arrays, including duplicate parameters.
-  const candidate =
-    typeof parsed === 'string'
-      ? parsed
-      : parsed == null || typeof parsed === 'number' || typeof parsed === 'boolean'
-        ? values[0]
-        : undefined;
-  const fromUrl =
-    values.length === 1 ? orgScopeSearchSchema.parse({ orgId: candidate }).orgId : undefined;
-  const detailId = orgDetailId(pathname);
-  const platformAdmin = useSession().isAdmin;
-  const workspace = Boolean(detailId && search.view === 'workspace');
-  return {
-    pathname,
-    scoped: detailId ? workspace : isOrgScoped(pathname, platformAdmin),
-    fromUrl,
-    hasExplicitOrg: values.length > 0,
-    detailId,
-    workspace,
-  };
-}
 
 function activeMemberships(items: OrgMembership[] | undefined, userId: string | undefined) {
   return userId
@@ -58,75 +17,24 @@ function activeMemberships(items: OrgMembership[] | undefined, userId: string | 
     : NO_MEMBERSHIPS;
 }
 
-/** Keep a validated workspace choice in the URL; an explicit invalid URL never uses storage. */
-export function useOrgScopeUrl(): void {
-  const navigate = useNavigate();
-  const { pathname, scoped, fromUrl, hasExplicitOrg, workspace } = useScopeLocation();
-  const remembered = useSyncExternalStore(subscribe, readStored, () => undefined);
-  const query = useMemberships();
-  const session = useSession();
-  const userId = session.authed?.user.id;
-  const scope = useOrgScope();
-  const { memberships, orgId: selected } = scope;
-  const unavailable = scope.isError || scope.isLoading;
-  const previous = useRef<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (previous.current && previous.current !== selected) clearOrgPreviewBatches(previous.current);
-    previous.current = selected;
-  }, [selected]);
-
-  useEffect(() => {
-    if (!userId || !query.data || unavailable) return;
-    const allowed = (id: string) => memberships.some((m) => m.orgId === id);
-    if (scoped && hasExplicitOrg) {
-      if (!fromUrl || !allowed(fromUrl)) {
-        store(undefined);
-      } else if (!isTenantResourceDetail(pathname, workspace ? 'workspace' : undefined)) {
-        // Resource details remember their owner only after useResourceOrg verifies it.
-        store(fromUrl);
-      }
-      return;
-    }
-    const raw = readRaw();
-    if (raw !== undefined && (!remembered || !allowed(remembered))) {
-      store(undefined);
-      return;
-    }
-    // By-ID resources, including workspaces, adopt their actual owner after fresh verification.
-    if (
-      !remembered ||
-      !scoped ||
-      isTenantResourceDetail(pathname, workspace ? 'workspace' : undefined)
-    )
-      return;
-    void navigate({
-      to: '.',
-      search: (prev: Record<string, unknown>) => ({ ...prev, orgId: remembered }),
-      replace: true,
-      resetScroll: false,
-      ignoreBlocker: true,
-    });
-  }, [
-    pathname,
-    scoped,
-    fromUrl,
-    hasExplicitOrg,
-    workspace,
-    memberships,
-    navigate,
-    query.data,
-    unavailable,
-    remembered,
-    userId,
-  ]);
+/** The scope the URL names: /admin/platform/... or /admin/o/$orgId/.... */
+export function useAdminScope(): AdminScope | undefined {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  return useMemo(() => parseAdminPath(pathname).scope, [pathname]);
 }
 
-/** An organization choice is not a grant: only the current principal's active membership counts. */
+/** The organization in the URL is not a grant: only the principal's active membership counts. */
 export function useOrgScope() {
   const navigate = useNavigate();
-  const { scoped, fromUrl, hasExplicitOrg, detailId, workspace } = useScopeLocation();
-  const remembered = useSyncExternalStore(subscribe, readStored, () => undefined);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const searchStr = useRouterState({ select: (state) => state.location.searchStr });
+  // An old link that named no organization landed here: treat it as unscoped until the
+  // resource's owner is verified (pages then revalidate rather than trust a cache).
+  const bareLink = useRouterState({
+    select: (state) => (state.location.state as { findOwner?: unknown }).findOwner === true,
+  });
+  const scope = useMemo(() => parseAdminPath(pathname).scope, [pathname]);
+  const pathOrgId = scope?.kind === 'org' ? scope.orgId : undefined;
   const query = useMemberships();
   const session = useSession();
   const { authed, isAdmin } = session;
@@ -151,63 +59,58 @@ export function useOrgScope() {
     () => (unavailable ? NO_MEMBERSHIPS : activeMemberships(query.data?.items, userId)),
     [query.data, unavailable, userId],
   );
-  const requested = scoped && hasExplicitOrg ? fromUrl : remembered;
-  const membership = memberships.find(
-    (m) => m.orgId === requested && (!workspace || fromUrl === detailId),
+  const membership = memberships.find((m) => m.orgId === pathOrgId);
+  /** The scope switcher: another organization (or the platform) at the matching section. */
+  const switchScope = useCallback(
+    (next: string | undefined) => {
+      if (next === undefined) {
+        if (!isAdmin) return;
+        void navigate({
+          to: switchTarget(pathname, PLATFORM, (path) => canAccessAdminPath(path, true)),
+        });
+        return;
+      }
+      const selected = memberships.find((m) => m.orgId === next);
+      if (!selected) return;
+      const target: AdminScope = { kind: 'org', orgId: next };
+      void navigate({
+        to: switchTarget(
+          pathname,
+          target,
+          (path) => canAccessAdminPath(path, isAdmin, selected),
+          firstAllowedPath(target, isAdmin, selected),
+        ),
+      });
+    },
+    [isAdmin, memberships, navigate, pathname],
   );
-  const orgId = membership?.orgId;
+  /**
+   * A page's own organization choice (a wizard or dialog creating elsewhere): the same page in
+   * that organization, with its search, when the membership opens it; else as the switcher.
+   */
   const setOrgId = useCallback(
     (next: string | undefined) => {
       const selected = next ? memberships.find((m) => m.orgId === next) : undefined;
-      if (next && !selected) return;
-      if (orgId && orgId !== next) clearOrgPreviewBatches(orgId);
-      store(next);
-      if (workspace && detailId) {
-        if (
-          selected &&
-          canAccessAdminPath(
-            `/admin/orgs/${encodeURIComponent(selected.orgId)}`,
-            isAdmin,
-            selected,
-            'workspace',
-          )
-        ) {
-          void navigate({
-            to: '/admin/orgs/$orgId',
-            params: { orgId: selected.orgId },
-            search: { view: 'workspace', orgId: selected.orgId },
-          });
-        } else {
-          const target =
-            selected && WORKSPACES.find((path) => canAccessAdminPath(path, isAdmin, selected));
-          if (target && selected) {
-            void navigate({ to: target, search: { orgId: selected.orgId } });
-          } else if (isAdmin) {
-            void navigate({ to: '/admin/orgs/$orgId', params: { orgId: detailId } });
-          } else {
-            void navigate({ to: '/admin/account' });
-          }
-        }
+      const same = next ? withOrg(pathname, next) : undefined;
+      if (selected && same && canAccessAdminPath(same, isAdmin, selected)) {
+        void navigate({ href: `${same}${searchStr}`, replace: true });
         return;
       }
-      if (!scoped) return;
-      void navigate({
-        to: '.',
-        search: (prev: Record<string, unknown>) => ({ ...prev, orgId: next }),
-        replace: true,
-      });
+      switchScope(next);
     },
-    [detailId, isAdmin, memberships, navigate, orgId, scoped, workspace],
+    [isAdmin, memberships, navigate, pathname, searchStr, switchScope],
   );
   return {
-    orgId,
+    orgId: membership?.orgId,
     setOrgId,
+    switchScope,
     memberships,
     membership,
-    hasExplicitOrg,
-    requestedOrgId: fromUrl,
-    // The URL/storage choice is useful for comparing scopes, but is never a grant.
-    requestedSelection: requested,
+    /** The URL names the organization (not an old link that named none). */
+    hasExplicitOrg: pathOrgId !== undefined && !bareLink,
+    requestedOrgId: pathOrgId,
+    // The URL's choice is useful for comparing scopes, but is never a grant.
+    requestedSelection: pathOrgId,
     isLoading: !failed && unavailable,
     /** Grants or session are being refreshed or are stale; what they say is still usable. */
     isRefreshing:
@@ -233,22 +136,30 @@ export function useFreshOrgScope() {
 
 type ResourceValidation = { key: string; items?: OrgMembership[] };
 
-/** Verify a resource's actual owner with fresh grants before adopting it into the URL. */
+/**
+ * Verify a resource's actual owner with fresh grants. A resource of another organization the
+ * principal may open moves the page there (same path, that organization); otherwise not found.
+ */
 export function useResourceOrg(
   resourceOrgId: string | null | undefined,
   allowShared = false,
 ): 'pending' | 'ready' | 'not-found' | 'choose-org' {
   const scope = useOrgScope();
-  const { pathname, workspace } = useScopeLocation();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const searchStr = useRouterState({ select: (state) => state.location.searchStr });
+  // Only an old link that named no organization may move to the owner; a URL that names one
+  // and disagrees with the resource shows not found.
+  const findOwner = useRouterState({
+    select: (state) => (state.location.state as { findOwner?: unknown }).findOwner === true,
+  });
   const { authed, isAdmin } = useSession();
   const userId = authed?.user.id;
   const client = useQueryClient();
+  const navigate = useNavigate();
   const shared = resourceOrgId === null && allowShared;
   const target = shared ? scope.orgId : (resourceOrgId ?? undefined);
-  const key = JSON.stringify([
-    [userId, pathname, workspace, resourceOrgId, target],
-    [scope.hasExplicitOrg, scope.requestedOrgId],
-  ]);
+  const targetPath = target ? withOrg(pathname, target) : undefined;
+  const key = JSON.stringify([userId, pathname, resourceOrgId, target]);
   const [validation, setValidation] = useState<ResourceValidation>();
 
   useEffect(() => {
@@ -287,28 +198,24 @@ export function useResourceOrg(
     (m) => m.orgId === target && m.userId === userId && m.revokedAt === null,
   );
   const current = scope.memberships.find((m) => m.orgId === target);
-  const view = workspace ? 'workspace' : undefined;
   const allowed = Boolean(
-    target &&
+    targetPath &&
       fresh &&
       current &&
-      canAccessAdminPath(pathname, isAdmin, fresh, view) &&
-      canAccessAdminPath(pathname, isAdmin, current, view),
+      canAccessAdminPath(targetPath, isAdmin, fresh) &&
+      canAccessAdminPath(targetPath, isAdmin, current),
   );
-  const conflict =
-    scope.hasExplicitOrg && (!scope.requestedOrgId || scope.requestedOrgId !== target);
+  const conflict = target !== scope.requestedOrgId;
+  const moving = allowed && conflict && findOwner;
 
   useEffect(() => {
-    if (!allowed || conflict || !target) return;
-    if (!scope.hasExplicitOrg) scope.setOrgId(target);
-    else if (scope.orgId === target) store(target);
-  }, [allowed, conflict, scope.hasExplicitOrg, scope.orgId, scope.setOrgId, target]);
+    if (moving && targetPath) void navigate({ href: `${targetPath}${searchStr}`, replace: true });
+  }, [moving, navigate, searchStr, targetPath]);
 
   if (scope.isLoading || resourceOrgId === undefined) return 'pending';
-  if (scope.isError || (resourceOrgId === null && !allowShared) || conflict) return 'not-found';
-  if (shared && !target && !scope.hasExplicitOrg) return 'choose-org';
+  if (scope.isError || (resourceOrgId === null && !allowShared)) return 'not-found';
+  if (shared && !target) return scope.hasExplicitOrg ? 'not-found' : 'choose-org';
   if (!checked) return 'pending';
-  if (!allowed) return 'not-found';
-  if (!scope.hasExplicitOrg || scope.orgId !== target) return 'pending';
-  return 'ready';
+  if (!allowed || (conflict && !moving)) return 'not-found';
+  return moving ? 'pending' : 'ready';
 }

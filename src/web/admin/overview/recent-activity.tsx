@@ -32,7 +32,8 @@ export function RecentActivity({ orgId }: { orgId: string | undefined }) {
       log={log}
       orgLabel={orgName}
       auditSearch={{ filterOrgId: orgId }}
-      note="All modes"
+      // Platform pages carry no mode words; the organization page's log spans both modes.
+      note={orgId ? 'Selected organization' : undefined}
     />
   );
 }
@@ -52,7 +53,7 @@ function RecentCard({
   log: ReturnType<typeof useTenantAuditLog>;
   orgLabel: (id: string | null) => string;
   auditSearch: { filterOrgId?: string | undefined };
-  note: string;
+  note?: string | undefined;
 }) {
   const items = log.data?.pages[0]?.items ?? [];
   const now = useNow();
@@ -69,7 +70,7 @@ function RecentCard({
         }
       />
       <CardBody className="flex flex-1 flex-col">
-        <p className="mb-3 text-xs text-fg-muted">{note}</p>
+        {note ? <p className="mb-3 text-xs text-fg-muted">{note}</p> : null}
         {log.isPending ? (
           <SkeletonRows rows={6} label="Loading activity" />
         ) : log.isError ? (
