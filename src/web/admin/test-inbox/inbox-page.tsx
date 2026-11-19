@@ -85,7 +85,7 @@ export function InboxPage({
         title="Test inbox"
         description={
           <>
-            Test emails are captured here instead of being sent to their intended recipients.
+            Test emails land here, not in recipients' inboxes.
             {canOperate ? ' You can send a copy to your verified account email.' : ''}
             {session.isAdmin && !session.isError && !session.isFetching ? (
               <PlatformRetention />

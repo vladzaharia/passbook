@@ -58,7 +58,7 @@ export function MessageSection({
         </FormField>
       )}
       <CheckboxField
-        label="Clear the current message"
+        label="Only clear the current message"
         checked={state.clearing}
         onCheckedChange={(on) => onChange({ clearing: on === true, clear: 'never' })}
       />
@@ -70,7 +70,7 @@ export function MessageSection({
             checked={state.notify}
             onCheckedChange={(notify) => onChange({ notify })}
           />
-          <FormField label="Remove the message">
+          <FormField label="Expires">
             {(control) => (
               <Select
                 {...control}

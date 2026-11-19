@@ -8,9 +8,6 @@ import { sessionQuery } from '../../../lib/session.ts';
 import {
   Badge,
   Buddy,
-  Card,
-  CardBody,
-  CardHeader,
   Celebrate,
   KeyValue,
   PageHeader,
@@ -160,19 +157,17 @@ export function LoadedPassDetail({
         }
         actions={<HeaderActionsView runner={runner} />}
       />
-      <Card className="mb-6 min-w-0">
-        <CardHeader title="Pass context" />
-        <CardBody className="grid gap-3">
+      <details className="mb-6 min-w-0 rounded-lg border border-border bg-surface-raised px-4 py-3 text-sm">
+        <summary className="cursor-pointer font-medium text-fg-strong">Pass context</summary>
+        <div className="pt-3">
           <KeyValue
             items={[
-              { label: 'Serial number', value: p.serial },
-              ...(template.data ? [{ label: 'Template', value: template.data.name }] : []),
-              { label: 'Template revision', value: p.templateVersion },
-              { label: 'Last updated', value: formatDateTime(p.modifiedAt) },
+              { label: 'Serial number', value: p.serial, mono: true },
+              { label: 'Template revision', value: p.templateVersion, mono: true },
             ]}
           />
-        </CardBody>
-      </Card>
+        </div>
+      </details>
       <div className="mb-6 flex flex-col gap-3 empty:hidden">
         {p.reissueRequired ? <ReissueRequiredCallout pass={p} canOperate={!readOnly} /> : null}
         {foreign ? <ModeMismatchCallout pass={p} /> : null}
@@ -231,9 +226,9 @@ export function LoadedPassDetail({
           <KeyValue
             items={[
               { label: 'Holder', value: p.holderEmail },
-              { label: 'Status', value: <StatusPill status={removed ? 'removed' : p.status} /> },
               { label: 'Devices', value: devices(p.deviceCount) },
-              { label: 'Version', value: `v${p.version}` },
+              ...(template.data ? [{ label: 'Template', value: template.data.name }] : []),
+              { label: 'Last updated', value: formatDateTime(p.modifiedAt) },
             ]}
           />
         }

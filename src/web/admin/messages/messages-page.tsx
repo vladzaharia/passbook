@@ -183,7 +183,12 @@ function ScopedMessagesPage({
           }
           emptyFiltered={<FilteredEmpty entity="broadcast" onClear={clear} />}
           empty={
-            <EmptyState art={ENTITY.broadcast.art} title="No messages" action={create('primary')} />
+            <EmptyState
+              art={ENTITY.broadcast.art}
+              title="No messages"
+              description="Send a note to pass holders' wallets."
+              action={create('primary')}
+            />
           }
           footer={
             <LoadMore

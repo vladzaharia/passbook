@@ -133,7 +133,7 @@ export function AudienceSection({
             <Input
               {...control}
               value={state.q}
-              placeholder="Name, ID or email"
+              placeholder="Name or email"
               maxLength={200}
               onChange={(e) => onChange({ q: e.target.value })}
             />

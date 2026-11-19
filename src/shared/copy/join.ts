@@ -35,7 +35,7 @@ export const JOIN_COPY = {
   },
   readiness: {
     no_release: 'Release this template in {mode} to turn on the join link.',
-    barcode_input: 'The barcode uses {label}. Switch it to the generated code in the designer.',
+    barcode_input: 'The barcode shows {label}. Use a generated code in the designer.',
     input_needed: '{label} has no default. Give it one in the designer.',
     archived: 'This template is archived.',
   },

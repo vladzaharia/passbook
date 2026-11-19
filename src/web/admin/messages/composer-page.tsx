@@ -208,21 +208,6 @@ function ComposerForm({
           className="flex min-w-0 flex-col gap-6"
         >
           <Card>
-            <CardBody className="flex flex-col gap-4">
-              <SegmentedControl
-                label="Type"
-                options={[
-                  { value: 'message', label: 'Message' },
-                  { value: 'change', label: 'Change' },
-                ]}
-                value={state.kind}
-                onValueChange={(next) =>
-                  change({ kind: next, templateIds: [], fields: [], values: {}, clearing: false })
-                }
-              />
-            </CardBody>
-          </Card>
-          <Card>
             <CardHeader title="Audience & scan filters" />
             <CardBody>
               <AudienceSection
@@ -239,8 +224,19 @@ function ComposerForm({
             </CardBody>
           </Card>
           <Card>
-            <CardHeader title={state.kind === 'message' ? 'Message' : 'Changes'} />
-            <CardBody>
+            <CardHeader title="Content" />
+            <CardBody className="flex flex-col gap-4">
+              <SegmentedControl
+                label="Type"
+                options={[
+                  { value: 'message', label: 'Text message' },
+                  { value: 'change', label: 'Field change' },
+                ]}
+                value={state.kind}
+                onValueChange={(next) =>
+                  change({ kind: next, templateIds: [], fields: [], values: {}, clearing: false })
+                }
+              />
               {state.kind === 'message' ? (
                 <MessageSection state={state} onChange={change} error={checks.errors.message} />
               ) : (
@@ -261,7 +257,7 @@ function ComposerForm({
             </CardBody>
           </Card>
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="submit" loading={pending && !ask}>
+            <Button type="submit" loading={pending && !ask} disabled={!canDraft}>
               {state.when === 'later' ? 'Schedule' : 'Send now'}
             </Button>
             <Button

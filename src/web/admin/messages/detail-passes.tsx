@@ -25,7 +25,7 @@ const OUTCOME_FILTERS = [
 const OUTCOME_TONE = { updated: 'success', unchanged: 'neutral', failed: 'danger' } as const;
 
 function ItemRow({ item }: { item: BroadcastItem }) {
-  const short = `Pass ${item.passId.slice(-6)}`;
+  const short = 'Unnamed pass';
   const name = item.holderEmail ?? item.title ?? short;
   return (
     <ListRow
@@ -36,12 +36,12 @@ function ItemRow({ item }: { item: BroadcastItem }) {
           to="/admin/passes/$passId"
           params={{ passId: item.passId }}
           search={{ tab: 'sync' }}
-          aria-label={`Sync log of ${name === short ? short : `${name}, ${short}`}`}
+          aria-label={`Sync log of ${name}`}
         >
           {name}
         </RowLink>
       }
-      meta={name === short ? undefined : item.holderEmail ? (item.title ?? short) : short}
+      meta={item.holderEmail ? item.title : undefined}
       trailing={
         <span className="flex items-center gap-1.5">
           {item.silent ? <Badge>Silent</Badge> : null}
