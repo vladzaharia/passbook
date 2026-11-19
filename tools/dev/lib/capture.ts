@@ -1,5 +1,5 @@
 // Screenshots every (route, viewport, theme) and records console errors, failed requests, status.
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { type Browser, chromium, type Page } from '@playwright/test';
 import { statePath } from './auth.ts';
@@ -37,6 +37,8 @@ type Options = {
   narrow?: boolean;
   themes: Theme[];
   values: Record<string, string | undefined>;
+  /** Also write each page's visible text next to its screenshot (`<name>.txt`). */
+  text?: boolean;
 };
 
 /** Index entries never carry pass, bundle or join capability tokens. */
@@ -149,6 +151,24 @@ async function shoot(
       }
       if (status !== null && status >= 400) note = `HTTP ${status}`;
       await page.screenshot({ path: resolve(o.out, file), fullPage: true });
+      if (o.text) {
+        // biome-ignore lint/performance/useDomNodeTextContent: visible text only
+        const visible = () => page.evaluate(() => document.body.innerText);
+        let text = await visible();
+        // The card's back (Details) is a tab: open it and keep both texts.
+        const back = page.getByText('Details', { exact: true }).first();
+        if (
+          (await back.count()) > 0 &&
+          (await back.click({ timeout: 2_000 }).then(
+            () => true,
+            () => false,
+          ))
+        ) {
+          await page.waitForTimeout(300);
+          text = `${text}\n${await visible()}`;
+        }
+        writeFileSync(resolve(o.out, file.replace(/\.png$/, '.txt')), text);
+      }
     } catch (error) {
       note = `capture failed: ${(error as Error).message.split('\n')[0]}`;
     }

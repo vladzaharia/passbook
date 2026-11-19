@@ -7,6 +7,7 @@
     "tools/*.ts",
     "tools/dev/visual-sweep.ts",
     "tools/dev/visual-scan-devices.ts",
+    "tools/dev/pass-parity.ts",
     "e2e/**/*.ts",
     "test/**/*.ts",
     "*.config.ts"
