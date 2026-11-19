@@ -1,6 +1,6 @@
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
-import { ScannerAcceptsSchema } from '../../../shared/contracts/scanners.ts';
 import type { SqlValue } from '../../platform/db.ts';
+import { storedAdmits } from './admits.ts';
 import { scanLedgerScopeSql } from './repo-feed-scope.ts';
 import type { HistorySelector } from './repo-history-rows.ts';
 import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
@@ -20,32 +20,26 @@ function activityScope(row: ScanningSessionRow): Predicate | null {
   }
   const parsedSettings = ScannerSettingsSchema.safeParse(settings);
   if (!parsedSettings.success) return null;
-  if (row.accepts === null)
+  const admits = storedAdmits(row.accepts);
+  if (admits === null)
     return { sql: parsedSettings.data.acceptAllTemplates ? '1' : '0', params: [] };
-  let raw: unknown;
-  try {
-    raw = JSON.parse(row.accepts);
-  } catch {
-    return null;
+  if (!admits) return null;
+  const parts: string[] = [];
+  const params: SqlValue[] = [];
+  if (admits.templateIds.length) {
+    parts.push('s.template_id IN (SELECT value FROM json_each(?))');
+    params.push(JSON.stringify(admits.templateIds));
   }
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw) || Object.keys(raw).length !== 1)
-    return null;
-  const parsed = ScannerAcceptsSchema.safeParse(raw);
-  if (!parsed.success) return null;
-  if ('eventId' in parsed.data)
-    return {
-      // The `+` keeps the planner on the devices' scans, not the whole event's.
-      sql: `+s.event_id=? AND EXISTS (
+  for (const eventId of admits.eventIds) {
+    // The `+` keeps the planner on the devices' scans, not the whole event's.
+    parts.push(`+s.event_id=? AND EXISTS (
       SELECT 1 FROM scan_events event_scope WHERE event_scope.id=s.event_id
         AND event_scope.org_id=s.org_id AND event_scope.mode=s.mode AND event_scope.archived_at IS NULL)
       AND ((s.pass_id IS NULL AND s.template_id IS NULL) OR EXISTS (SELECT 1 FROM scan_event_templates et
-        WHERE et.event_id=s.event_id AND et.template_id=s.template_id))`,
-      params: [parsed.data.eventId],
-    };
-  return {
-    sql: 's.template_id IN (SELECT value FROM json_each(?))',
-    params: [JSON.stringify([...new Set(parsed.data.templateIds)])],
-  };
+        WHERE et.event_id=s.event_id AND et.template_id=s.template_id))`);
+    params.push(eventId);
+  }
+  return { sql: parts.map((part) => `(${part})`).join(' OR '), params };
 }
 
 /** The ledger scans of the session's paired devices inside its scope, newest first. */

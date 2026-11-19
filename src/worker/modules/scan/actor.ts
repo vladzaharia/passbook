@@ -13,7 +13,7 @@ import { rolesGranting } from '../orgs/access.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { scanTenantSession } from './repo-actor.ts';
 import type { ScannerRow } from './repo-device.ts';
-import type { ScanEventRow, ScannerAssignmentSnapshot } from './repo-scope.ts';
+import type { EventScope, ScanEventRow, ScannerAssignmentSnapshot } from './repo-scope.ts';
 import type { WatchCover } from './repo-watch-cover.ts';
 import { effectiveRole } from './rules.ts';
 import type { ResolvedScope } from './scope.ts';
@@ -109,7 +109,15 @@ export interface ScanActor {
   actor: { type: 'scanner' | 'user'; id: string };
   scanner: ScannerRow | null;
   event: ScanEventRow | null;
+  /** Every template the scope admits; a mixed scope's union of entries and events. */
   templateIds: string[];
+  /**
+   * Only on a mixed scope (several events, or events and templates): each event with its templates.
+   * `event` is null until a scan narrows the actor to one entry (`admits.ts`), which drops both fields.
+   */
+  events?: EventScope[];
+  /** A mixed scope's template entries: zones, plans and hours apply to passes admitted through them. */
+  entryTemplateIds?: string[];
   /** An admin requested the whole event rather than an explicit template subset. */
   adminEventTemplates?: boolean;
   /** The configured scanner scope is invalid or conflicts with its workspace. */
@@ -247,6 +255,8 @@ export function denyInvalidScannerScope(actor: ScanActor): void {
   if (!actor.invalidScannerScope) return;
   actor.event = null;
   actor.templateIds = [];
+  delete actor.events;
+  delete actor.entryTemplateIds;
   actor.settings = { ...actor.settings, acceptAllTemplates: false };
   if (actor.scanner) actor.timeZone = actor.scanner.timeZone;
 }

@@ -1,6 +1,6 @@
 import { IdSchema, type Mode } from '../../../shared/contracts/common.ts';
 import { TimeZoneSchema } from '../../../shared/contracts/scan.ts';
-import { first, placeholders, stmt } from '../../platform/db.ts';
+import { first, stmt } from '../../platform/db.ts';
 import { usableScanTemplateSql } from './repo-scope-releases.ts';
 import { type ScanStaffRow, type StaffRaw, staffStatement, toStaff } from './repo-staff.ts';
 
@@ -24,7 +24,7 @@ export interface ScanEventRow {
   archivedAt: number | null;
 }
 
-interface Raw {
+export interface Raw {
   id: string;
   org_id: string;
   mode: Mode;
@@ -42,7 +42,7 @@ interface Raw {
   archived_at: number | null;
 }
 
-const EVENT_SQL = `SELECT id, org_id, mode, name, match_input, match_values, opens_at, closes_at, time_zone,
+export const EVENT_SQL = `SELECT id, org_id, mode, name, match_input, match_values, opens_at, closes_at, time_zone,
             capacity, reentry, hard_limit, note, updated_at, archived_at
      FROM scan_events WHERE id = ? AND org_id = ?`;
 
@@ -71,7 +71,7 @@ export async function getEvent(db: Db, orgId: string, id: string): Promise<ScanE
 }
 
 /** Every configured template must have an approved head or an eligible pinned legacy pass. */
-const EVENT_SCOPE_TEMPLATES_SQL = `SELECT et.template_id,t.id AS scoped_template_id,
+export const EVENT_SCOPE_TEMPLATES_SQL = `SELECT et.template_id,t.id AS scoped_template_id,
      t.org_id AS scoped_org_id,t.status AS scoped_status,
      CASE WHEN ${usableScanTemplateSql({
        templateIdSql: 't.id',
@@ -119,16 +119,16 @@ function validEventMatch(event: ScanEventRow): boolean {
   }
 }
 
-type ScopedTemplate = {
+export type ScopedTemplate = {
   template_id: string;
   scoped_template_id: string | null;
   scoped_org_id: string | null;
   scoped_status: string | null;
   live_template_id: string | null;
 };
-type EventScope = { event: ScanEventRow; templateIds: string[] };
+export type EventScope = { event: ScanEventRow; templateIds: string[] };
 
-function eventScopeOf(
+export function eventScopeOf(
   mode: Mode,
   raw: Raw | undefined,
   templates: ScopedTemplate[],
@@ -221,9 +221,10 @@ function scannerScopeOf(
     };
   }
   const hasEvent = scanner.eventId !== null;
+  // A scanner row carries a session's template entries, up to the Admits cap.
   const invalidTemplates =
     !hasEvent &&
-    (templates.length > 20 ||
+    (templates.length > 100 ||
       templates.some(
         (row) =>
           row.live_template_id === null ||
@@ -232,7 +233,7 @@ function scannerScopeOf(
       ));
   const invalidAssignment =
     !hasEvent &&
-    (templates.length > 20 ||
+    (templates.length > 100 ||
       templates.some(
         (row) =>
           row.scoped_template_id === null ||
@@ -316,14 +317,14 @@ export async function countOrgTemplates(
     db,
     `SELECT COUNT(*) AS n FROM templates t CROSS JOIN (SELECT ? AS org_id, ? AS mode) scope
      WHERE (t.org_id=scope.org_id OR t.org_id IS NULL) AND t.status != 'deleted'
-       AND t.id IN (${placeholders(ids.length)})
+       AND t.id IN (SELECT value FROM json_each(?))
        AND ${usableScanTemplateSql({
          templateIdSql: 't.id',
          orgIdSql: 'scope.org_id',
          modeSql: 'scope.mode',
          providerSql: "'apple'",
        })}`,
-    [orgId, mode, ...ids],
+    [orgId, mode, JSON.stringify(ids)],
   );
   return row?.n ?? 0;
 }

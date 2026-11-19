@@ -17,6 +17,7 @@ import {
 import { overrideEvidenceStmt, StaleScanAuthority } from './act-override.ts';
 import { passRaced, ScanAttemptRaced, staleActorRefusal } from './act-stale-refusal.ts';
 import { recordTagStop } from './act-tag-stop.ts';
+import { narrowForCandidates } from './admits.ts';
 import {
   type CredentialTombstoneSnapshot,
   captureCredentialTombstoneSnapshot,
@@ -31,7 +32,7 @@ import { replayScanByKeyStmt, replayScanFromResult } from './repo-act-authority.
 import { credentialTombstonesClearStmt } from './repo-credential-tombstones.ts';
 import { scanAuthorizedStmt, scanReadAuthority } from './repo-read-authority.ts';
 import { approverStatement } from './repo-staff.ts';
-import { planCandidateReads } from './resolve-candidates.ts';
+import { findCandidates, planCandidateReads } from './resolve-candidates.ts';
 import { afterReads, capturingContext } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
@@ -96,6 +97,11 @@ export async function act(
     const undoWindow = decodePlatformSettings(initial[1])['scan.undoWindowMinutes'];
     actor = { ...actor, credentialKeysetCommitment: captured.credentialKeysetCommitment };
     if (!credentialInputValid(req.input, captured)) return unknownOutcome(captured);
+    // A mixed scope claims, replays and admits under the one entry that admits the pass.
+    if (actor.events) {
+      const found = await findCandidates(ctx, actor, req.input, captured);
+      actor = narrowForCandidates(actor, found, ctx.clock.now());
+    }
     const previous = replayScanFromResult(initial[0]);
     if (previous)
       return await replayOrReopenClaim(ctx, actor, req, hash, captured, undoWindow, {

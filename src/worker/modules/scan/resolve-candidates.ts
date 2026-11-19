@@ -17,7 +17,6 @@ import {
   credentialTombstonesClearStmt,
   validCredentialKeysetCommitment,
 } from './repo-credential-tombstones.ts';
-import { eventMatch } from './repo-event-match.ts';
 import {
   byBarcodeHashStmt,
   byIdStmt,
@@ -170,29 +169,7 @@ export const accepts = (actor: ScanActor, pass: Pass) =>
         actor.settings.acceptAllTemplates === true
       : actor.templateIds.includes(pass.templateId);
 
-export function matchesEvent(actor: ScanActor, pass: Pass): boolean {
-  return actor.event ? eventAcceptsPass(actor, actor.event, pass) : true;
-}
-
-/** An event takes a pass by its org, mode, archive state and pass filter. */
-export function eventAcceptsPass(
-  actor: Pick<ScanActor, 'orgId' | 'mode'>,
-  event: NonNullable<ScanActor['event']>,
-  pass: Pass,
-): boolean {
-  if (event.orgId !== actor.orgId || event.mode !== actor.mode || event.archivedAt !== null)
-    return false;
-  const match = eventMatch(event.matchInput, event.matchValues);
-  if (!match) return false;
-  if (match.input === null) return true;
-  if (!Object.hasOwn(pass.personalization, match.input)) return false;
-  const value = pass.personalization[match.input];
-  if (typeof value === 'boolean') return match.values.includes(value ? '1' : '0');
-  return (
-    (typeof value === 'string' || (typeof value === 'number' && Number.isFinite(value))) &&
-    match.values.includes(String(value))
-  );
-}
+export { eventAcceptsPass, matchesEvent } from './admits.ts';
 
 /** Only credentials observed without a pending transfer can authorize a scan. */
 export function candidateCredentialSnapshotValid(candidate: Candidate): boolean {

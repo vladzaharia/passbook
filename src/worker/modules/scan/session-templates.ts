@@ -3,6 +3,7 @@ import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type { PassJson } from '../../../passkit/types.ts';
 import type { CodeFormatSchema } from '../../../shared/contracts/scan.ts';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
+import { ADMITS_TEMPLATE_CAP } from '../../../shared/contracts/scanners.ts';
 import { scanOf } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isNotFound, resolveTemplate } from '../passes/builder.ts';
@@ -108,7 +109,7 @@ export async function templatesOf(
   ctx: ServiceContext,
   actor: ScanActor,
 ): Promise<ScopedTemplates | null> {
-  if (actor.templateIds.length > 20) return null;
+  if (actor.templateIds.length > ADMITS_TEMPLATE_CAP) return null;
   const templateIds = actor.templateIds;
   const captured = await captureTemplateStamps(ctx.env.DB, actor.orgId, actor.mode, templateIds);
   if (!captured) return null;

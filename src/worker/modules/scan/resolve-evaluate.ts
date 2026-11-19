@@ -142,6 +142,8 @@ async function evaluateObserved(
   const one = matched[0];
   if (!one) return stop('refused', 'wrong_event');
   if (matched.length > 1) return stop('refused', 'ambiguous');
+  // A mixed scope is narrowed to the admitting entry before evaluation (`admits.ts`): never admit through it.
+  if (actor.events) return stop('refused', 'not_found', { stale: true });
   // How the code matched is the door's, not part of the stored snapshot's.
   const matchedBy = one.matchedBy;
   delete one.matchedBy;

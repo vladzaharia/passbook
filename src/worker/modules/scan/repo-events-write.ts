@@ -266,8 +266,9 @@ export async function eventDependents(
     ),
     stmt(
       db,
-      "SELECT id, settings FROM scanning_sessions WHERE json_extract(accepts, '$.eventId') = ? AND org_id = ? AND mode = ? ORDER BY id",
-      [eventId, orgId, mode],
+      `SELECT id, settings FROM scanning_sessions WHERE org_id = ? AND mode = ?
+        AND EXISTS (SELECT 1 FROM json_each(accepts, '$.eventIds') j WHERE j.value = ?) ORDER BY id`,
+      [orgId, mode, eventId],
     ),
   ]);
   return {

@@ -39,7 +39,13 @@ export async function captureScanEpochs(
   };
   if (staff && scanner) add('staff', staffEpochStmt(db, staff.id, actor.orgId));
   if (session) add('session', sessionEpochStmt(db, session.id, actor.orgId, actor.mode));
-  if (event) add('event', eventEpochStmt(db, event.id, actor.orgId, actor.mode));
+  // A mixed scope's events are captured with it: a scan narrows to one of them later.
+  const scoped = [
+    ...(event ? [{ event, templateIds: actor.templateIds }] : []),
+    ...(actor.events ?? []),
+  ];
+  for (const [i, s] of scoped.entries())
+    add(`event${i}`, eventEpochStmt(db, s.event.id, actor.orgId, actor.mode));
   const results = reads.length ? await db.batch(reads) : [];
   const row = <T>(key: string): T | undefined =>
     results[at[key] ?? -1]?.results?.[0] as T | undefined;
@@ -89,37 +95,37 @@ export async function captureScanEpochs(
       throw configChanged();
     epochs.session = { id: session.id, config: ss.config_epoch };
   }
-  const ev = row<{
-    match_input: string | null;
-    match_values: string | null;
-    opens_at: number;
-    closes_at: number;
-    time_zone: string;
-    capacity: number | null;
-    reentry: number;
-    archived_at: number | null;
-    config_epoch: number;
-    tpl: string;
-  }>('event');
-  if (event) {
+  for (const [i, { event: e, templateIds }] of scoped.entries()) {
+    const ev = row<{
+      match_input: string | null;
+      match_values: string | null;
+      opens_at: number;
+      closes_at: number;
+      time_zone: string;
+      capacity: number | null;
+      reentry: number;
+      archived_at: number | null;
+      config_epoch: number;
+      tpl: string;
+    }>(`event${i}`);
     // The template set bumps the event's epoch, so the actor's scope must still be that set.
     const sameTemplates =
-      !(scanner || actor.adminEventTemplates) ||
-      ev?.tpl === JSON.stringify([...actor.templateIds].sort());
+      !(scanner || actor.adminEventTemplates || actor.events) ||
+      ev?.tpl === JSON.stringify([...templateIds].sort());
     if (
       !sameTemplates ||
       !ev ||
       ev.archived_at !== null ||
-      ev.match_input !== event.matchInput ||
-      ev.match_values !== event.matchValues ||
-      ev.opens_at !== event.opensAt ||
-      ev.closes_at !== event.closesAt ||
-      ev.time_zone !== event.timeZone ||
-      ev.capacity !== event.capacity ||
-      (ev.reentry === 1) !== event.reentry
+      ev.match_input !== e.matchInput ||
+      ev.match_values !== e.matchValues ||
+      ev.opens_at !== e.opensAt ||
+      ev.closes_at !== e.closesAt ||
+      ev.time_zone !== e.timeZone ||
+      ev.capacity !== e.capacity ||
+      (ev.reentry === 1) !== e.reentry
     )
       throw configChanged();
-    epochs.events[event.id] = ev.config_epoch;
+    epochs.events[e.id] = ev.config_epoch;
   }
   setScanEpochs(actor, epochs);
 }

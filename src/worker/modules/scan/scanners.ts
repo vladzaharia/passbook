@@ -9,6 +9,7 @@ import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
+import { admitsJson } from './admits.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { assertStandaloneSession } from './legacy-session.ts';
 import { kickScreen } from './live.ts';
@@ -175,15 +176,7 @@ export async function updateScanner(
       {
         ...(input.name === undefined ? {} : { name: input.name }),
         ...(parentSettings ? { settings: JSON.stringify(parentSettings) } : {}),
-        ...(accepts
-          ? {
-              accepts: JSON.stringify(
-                accepts.eventId
-                  ? { eventId: accepts.eventId }
-                  : { templateIds: accepts.templateIds },
-              ),
-            }
-          : {}),
+        ...(accepts ? { accepts: admitsJson(accepts.admits) } : {}),
       },
       now,
     );
