@@ -19,7 +19,11 @@ export function until(ms: number, now: number): string {
 }
 
 /** The muted line under a list row's health pill: "1 failure · retries at 4:03 AM". */
-export function healthLine(c: Connection, now: number): string | null {
+export function healthLine(
+  c: Connection,
+  now: number,
+  opts: { omitSynced?: boolean } = {},
+): string | null {
   if (!c.enabled) return null;
   if (c.breakerOpenUntil && c.breakerOpenUntil > now)
     return `Paused after repeated failures · until ${clock(c.breakerOpenUntil, now)}`;
@@ -27,7 +31,7 @@ export function healthLine(c: Connection, now: number): string | null {
     const next = c.nextRunAt && c.nextRunAt > now ? ` · retries at ${clock(c.nextRunAt, now)}` : '';
     return `${failures(c.consecutiveFailures)}${next}`;
   }
-  if (c.lastSuccessAt) return `Synced ${clock(c.lastSuccessAt, now)}`;
+  if (c.lastSuccessAt && !opts.omitSynced) return `Synced ${clock(c.lastSuccessAt, now)}`;
   return null;
 }
 

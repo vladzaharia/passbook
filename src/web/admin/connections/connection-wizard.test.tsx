@@ -106,7 +106,8 @@ function wizard(
 }
 
 type User = ReturnType<typeof userEvent.setup>;
-const next = (user: User) => user.click(screen.getByRole('button', { name: /^(Next|Create)$/ }));
+const next = (user: User) =>
+  user.click(screen.getByRole('button', { name: /^(Next|Create( without mappings)?)$/ }));
 
 async function toConfig(user: User, connector = /HTTP JSON/) {
   await user.click(await screen.findByRole('radio', { name: connector }));
@@ -449,7 +450,26 @@ describe('create connection wizard', () => {
     await next(user);
     expect(await screen.findByText('No mappings')).toBeInTheDocument();
     expect(screen.getByText(/Passes cannot be created without mappings/)).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Create' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Create/ })).toBeDisabled();
+  });
+
+  it('warns on Mapping that nothing is mapped, and labels Create to match', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/connections/new', {
+      session: 'admin',
+      memberships: [membership],
+      selectedOrg: ORG.id,
+      handlers: wizard([]),
+    });
+    await toConfig(user, /Webhook push/);
+    await user.type(await screen.findByLabelText(/^Name/), 'Hooked');
+    await next(user);
+    expect(await screen.findByText('Nothing mapped yet')).toBeVisible();
+    // The same Test as on Configuration, so a sample can be loaded here.
+    expect(screen.getByRole('button', { name: 'Test' })).toBeVisible();
+    await next(user);
+    await next(user);
+    expect(await screen.findByRole('button', { name: 'Create without mappings' })).toBeEnabled();
   });
 
   it.each(['completed', 'failed'])(
