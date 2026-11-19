@@ -1,6 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import {
   OrgInvitationListSchema,
@@ -30,7 +28,7 @@ export function AccessCard({ org }: { org: { id: string; name: string } }) {
   const path = `/api/v1/orgs/${encodeURIComponent(org.id)}`;
   const key = ['org-access', org.id];
   const client = useQueryClient();
-  const { isAdmin, authed } = useSession();
+  const { authed } = useSession();
   const members = useQuery({
     queryKey: [...key, 'memberships'],
     queryFn: ({ signal }) => api.get(`${path}/memberships`, OrgMemberListSchema, { signal }),
@@ -88,7 +86,7 @@ export function AccessCard({ org }: { org: { id: string; name: string } }) {
 
   return (
     <Card>
-      <CardHeader title="People & service access" />
+      <CardHeader title="Members and invitations" />
       <CardBody className="flex flex-col gap-5">
         <section aria-labelledby="org-members-heading" className="flex flex-col gap-3">
           <h3 id="org-members-heading" className="text-sm font-semibold text-fg-strong">
@@ -207,17 +205,6 @@ export function AccessCard({ org }: { org: { id: string; name: string } }) {
           )}
           <InviteForm pending={invite.isPending} onInvite={sendInvite} />
         </section>
-        {isAdmin ? (
-          <div className="flex flex-col gap-3 border-t border-border pt-3">
-            <div>
-              <Button asChild variant="outline" size="sm" iconEnd={<ChevronRight aria-hidden />}>
-                <Link to="/admin/api-keys" search={{ orgId: org.id, new: undefined }}>
-                  Review API keys
-                </Link>
-              </Button>
-            </div>
-          </div>
-        ) : null}
         <ConfirmDialog
           open={revoking !== null}
           onOpenChange={(open) => !open && setRevoking(null)}

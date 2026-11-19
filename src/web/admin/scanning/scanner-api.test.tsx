@@ -60,7 +60,7 @@ describe('useScanEvents organization scope', () => {
     expect(screen.queryByText(/Foreign event/)).not.toBeInTheDocument();
     expect(requests).toEqual(['o1']);
     await act(async () => {
-      await router.navigate({ to: '/admin/scanning', search: { orgId: 'o2' } });
+      await router.navigate({ href: '/admin/o/o2/scanning' });
     });
     await waitFor(() => expect(screen.getByTestId('events')).toHaveTextContent('No data'));
     expect(screen.queryByText('Northwind event')).not.toBeInTheDocument();
@@ -113,7 +113,7 @@ describe('useOrgTemplates organization scope', () => {
     // Templates and blueprints: a scanner may hold either.
     expect(requests).toEqual(['o1', 'o1']);
     await act(async () => {
-      await router.navigate({ to: '/admin/scanning', search: { orgId: 'o2' } });
+      await router.navigate({ href: '/admin/o/o2/scanning' });
     });
     await waitFor(() => expect(screen.getByTestId('events')).toHaveTextContent('No data'));
     expect(screen.queryByText(/Gala ticket/)).not.toBeInTheDocument();

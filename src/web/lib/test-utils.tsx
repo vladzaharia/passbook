@@ -6,6 +6,7 @@ import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { createAppRouter } from '../router.tsx';
 import { AppProviders } from './providers.tsx';
 import { createQueryClient } from './query-client.ts';
+import { resetTabScope } from './scope-store.ts';
 
 class ResizeObserverStub {
   observe() {}
@@ -115,6 +116,8 @@ export interface RenderAppOptions {
 }
 
 export async function renderApp(path: string, options: RenderAppOptions = {}) {
+  // A fresh tab: no scope open yet (storage is the test's own business).
+  resetTabScope();
   const kind = options.session ?? 'user';
   const fetchMock = stubFetch({
     '/api/v1/session': () => json(sessionFixture(kind)),

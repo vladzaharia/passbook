@@ -134,10 +134,10 @@ describe('API key platform and membership authority', () => {
     expect(seen.every((orgId) => orgId === 'o1')).toBe(true);
   });
 
-  it('revokes in the selected membership and can return to platform-wide keys', async () => {
+  it("revokes in the scope's organization and never lists platform or other keys", async () => {
     const reads: (string | null)[] = [];
     let revokeOrg: string | null | undefined;
-    const { router } = await renderApp('/admin/api-keys?orgId=o1', {
+    await renderApp('/admin/api-keys?orgId=o1', {
       session: 'admin',
       memberships: [manager],
       handlers: {
@@ -165,12 +165,8 @@ describe('API key platform and membership authority', () => {
       within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Revoke' }),
     );
     await waitFor(() => expect(revokeOrg).toBe('o1'));
-    await user.click(screen.getByRole('combobox', { name: 'Key context' }));
-    await user.click(await screen.findByRole('option', { name: 'Platform-wide keys' }));
-    await waitFor(() => expect(router.state.location.search.orgId).toBeUndefined());
-    expect(await screen.findByText('Platform key')).toBeInTheDocument();
     expect(reads).toContain('o1');
-    expect(reads).toContain('null');
+    expect(reads).not.toContain('null');
     expect(reads).not.toContain('o2');
   });
 

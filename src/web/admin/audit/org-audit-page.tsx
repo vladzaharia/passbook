@@ -1,16 +1,7 @@
 import { X } from 'lucide-react';
 import { useId } from 'react';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
-import {
-  Badge,
-  Button,
-  Card,
-  CardBody,
-  Combobox,
-  EmptyState,
-  Label,
-  PageHeader,
-} from '@/web/ui/index.ts';
+import { Button, Card, CardBody, Combobox, EmptyState, Label, PageHeader } from '@/web/ui/index.ts';
 import { ACTION_OPTIONS } from './audit-filters.tsx';
 import type { AuditSearch } from './audit-search.ts';
 import { AuditTable } from './audit-table.tsx';
@@ -54,11 +45,7 @@ export function OrgAuditPage({
       : ACTION_OPTIONS;
   return (
     <>
-      <PageHeader
-        title="Audit log"
-        breadcrumbs={[{ label: 'Overview', to: '/admin' }, { label: 'Audit log' }]}
-        meta={<Badge>{membership?.orgName}</Badge>}
-      />
+      <PageHeader title="Audit log" />
       <Card className="mb-6">
         <CardBody>
           <search aria-label="Filters" className="grid gap-3 sm:grid-cols-2">

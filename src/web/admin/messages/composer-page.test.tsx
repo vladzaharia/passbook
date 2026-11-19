@@ -66,9 +66,9 @@ async function writeMessage(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('Message composer', () => {
-  it('requires an explicit choice even with a single authorized organization', async () => {
+  it('opens the only authorized organization and reads its templates', async () => {
     const requests: string[] = [];
-    await renderApp('/admin/messages/new', {
+    const { router } = await renderApp('/admin/messages/new', {
       session: 'admin',
       memberships: [membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug })],
       handlers: {
@@ -79,17 +79,10 @@ describe('Message composer', () => {
         '/api/v1/templates/tpl1': () => json(MESSAGING),
       },
     });
-    expect(
-      await screen.findByRole('heading', { name: 'Choose an organization' }),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Send now' })).not.toBeInTheDocument();
-    expect(requests).toEqual([]);
-
-    const user = userEvent.setup();
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-    await user.click(await screen.findByRole('option', { name: ORG.name }));
     expect(await screen.findByRole('heading', { name: 'New message' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`/admin/o/${ORG.id}/messages/new`);
     await waitFor(() => expect(requests).toContain(ORG.id));
+    expect(requests).not.toContain('unscoped');
   });
 
   it('keeps Send and Save draft off until there is a template and a message', async () => {
@@ -360,8 +353,8 @@ describe('Message composer', () => {
       await create.promise;
     });
     await waitFor(() => expect(queryClient.isMutating()).toBe(0));
-    expect(router.state.location.pathname).toBe('/admin/messages');
-    expect(router.state.location.search.orgId).toBe('org2');
+    expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/messages$/);
+    expect(router.state.location.pathname.split('/')[3]).toBe('org2');
   });
 
   it('clears a new composer after discarding changes and switching organizations', async () => {
@@ -390,11 +383,11 @@ describe('Message composer', () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole('checkbox', { name: 'Copper card' }));
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Private first message');
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
+    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
     const discard = await screen.findByRole('alertdialog', { name: 'Discard unsaved changes?' });
     await user.click(within(discard).getByRole('button', { name: 'Discard' }));
-    await waitFor(() => expect(router.state.location.search.orgId).toBe('org2'));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
     expect(await screen.findByRole('checkbox', { name: 'Harbor card' })).not.toBeChecked();
     expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('');
     expect(screen.queryByDisplayValue('Private first message')).not.toBeInTheDocument();

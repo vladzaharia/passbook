@@ -7,7 +7,6 @@ import { ENTITY } from '@/web/lib/entities.ts';
 import { formatCount, formatDateTime } from '@/web/lib/format.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import {
-  Badge,
   DataTable,
   EmptyState,
   EntityAvatar,
@@ -133,16 +132,7 @@ export function UsersPage({
 
   return (
     <>
-      <PageHeader
-        title="Users"
-        description="Roles are from the last sign-in."
-        meta={
-          <>
-            <Badge>Platform-wide</Badge>
-            <span>All modes</span>
-          </>
-        }
-      />
+      <PageHeader title="Users" description="Roles are from the last sign-in." />
       {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
       ) : (

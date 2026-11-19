@@ -50,7 +50,7 @@ test('Use blueprint: designer draft, Create template, release, then a pass', asy
   await dialog.getByRole('textbox', { name: /^Name/ }).fill(name);
   await dialog.getByRole('button', { name: 'Open designer' }).click();
 
-  await page.waitForURL((u) => u.pathname === '/admin/templates/new');
+  await page.waitForURL((u) => u.pathname.endsWith('/templates/new'));
   await expect(page.getByRole('heading', { level: 1, name: `Design ${name}` })).toBeVisible();
   await expect(page.getByText('Not saved', { exact: true })).toBeVisible();
   // Create template waits for a clean check, like Save version.
@@ -59,7 +59,7 @@ test('Use blueprint: designer draft, Create template, release, then a pass', asy
     { timeout: 30_000 },
   );
   await page.getByRole('button', { name: 'Create template' }).click();
-  await page.waitForURL((u) => /^\/admin\/templates\/[0-9a-f-]+$/.test(u.pathname));
+  await page.waitForURL((u) => /^\/admin\/o\/[^/]+\/templates\/[0-9a-f-]+$/.test(u.pathname));
   await expect(
     page.getByText(/Template created · Version 1, from the Balance card blueprint/),
   ).toBeVisible();

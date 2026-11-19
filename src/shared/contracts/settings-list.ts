@@ -6,7 +6,14 @@ export const SettingEntrySchema = z.object({
   scope: SettingScopeSchema,
   key: z.string(),
   value: JsonSchema,
+  /** Org scope: what applies when the org sets none (the platform default, within its ceiling). */
   default: JsonSchema.optional(),
+  /** `org`: this scope stores a value. `default`: none stored; `value` is the effective default. */
+  source: z.enum(['org', 'default']),
+  /** Org scope: the most the platform allows. `value` is already clamped to it. */
+  ceiling: z.number().int().optional(),
+  /** The platform kill switch for this setting is off: the control does nothing until it is on. */
+  blockedByPlatform: z.boolean().optional(),
   updatedAt: z.number().int().nullable(),
   updatedBy: z.string().nullable(),
 });

@@ -26,6 +26,11 @@ const EXPIRY = [
   { value: 'never', label: 'Never' },
 ];
 
+const MODES = [
+  { value: 'live', label: 'Live' },
+  { value: 'test', label: 'Test' },
+];
+
 export interface CreateKeyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -47,7 +52,8 @@ export function CreateKeyDialog({
   const [terminalIds, setTerminalIds] = useState<string[]>([]);
   const scansWrite = scopes.includes('scans:write');
   const [expiry, setExpiry] = useState('90');
-  // The server gives a key the mode the console is in, so the dialog shows it and offers no choice.
+  // An organization key takes the console's mode, shown without a choice. Platform pages ignore
+  // mode, so a platform key's mode is chosen here.
   const [keyMode, setKeyMode] = useState<Mode>(getMode);
   const [server, setServer] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
@@ -117,7 +123,7 @@ export function CreateKeyDialog({
             created={created}
             organization={
               created.orgId === null
-                ? 'Platform-wide'
+                ? 'Platform'
                 : created.orgId === orgId
                   ? orgName
                   : created.orgId
@@ -181,15 +187,28 @@ export function CreateKeyDialog({
               {(p) => <Select {...p} value={expiry} onValueChange={setExpiry} options={EXPIRY} />}
             </FormField>
           </div>
-          <div>
-            <p className="text-sm font-medium text-fg">Mode</p>
-            <p className="mt-2 text-sm text-fg-strong">{keyMode === 'test' ? 'Test' : 'Live'}</p>
-            <p className="mt-1 text-xs text-fg-muted">
-              {keyMode === 'test'
-                ? 'Test passes. Their emails stay in the Test inbox. Switch the console to Live for a Live key.'
-                : 'Real passes and real emails. Switch the console to Test for a Test key.'}
-            </p>
-          </div>
+          {orgId === null ? (
+            <FormField label="Mode" error={errors.mode}>
+              {(p) => (
+                <Select
+                  {...p}
+                  value={keyMode}
+                  onValueChange={(next) => setKeyMode(next === 'test' ? 'test' : 'live')}
+                  options={MODES}
+                />
+              )}
+            </FormField>
+          ) : (
+            <div>
+              <p className="text-sm font-medium text-fg">Mode</p>
+              <p className="mt-2 text-sm text-fg-strong">{keyMode === 'test' ? 'Test' : 'Live'}</p>
+              <p className="mt-1 text-xs text-fg-muted">
+                {keyMode === 'test'
+                  ? 'Test passes. Their emails stay in the Test inbox. Switch the console to Live for a Live key.'
+                  : 'Real passes and real emails. Switch the console to Test for a Test key.'}
+              </p>
+            </div>
+          )}
           <ScopeRows
             value={scopes}
             onChange={setScopes}
@@ -210,7 +229,7 @@ export function CreateKeyDialog({
       <ConfirmDialog
         open={reviewKey}
         onOpenChange={setReviewKey}
-        title={orgId === null ? 'Create a platform-wide key?' : 'Review service key'}
+        title={orgId === null ? 'Create a platform key?' : 'Review service key'}
         description={
           <span className="block">
             <span className="block">

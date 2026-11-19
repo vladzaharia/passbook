@@ -74,11 +74,11 @@ test('unsaved changes block navigation until confirmed', async ({ page }) => {
   const dialog = page.getByRole('alertdialog', { name: 'Discard unsaved changes?' });
   await expect(dialog).toBeVisible();
   await dialog.getByRole('button', { name: 'Keep editing' }).click();
-  await expect(page).toHaveURL(new RegExp(`/admin/passes/${pass.id}`));
+  await expect(page).toHaveURL(new RegExp(`/admin/o/[^/]+/passes/${pass.id}`));
   await expect(page.getByLabel('Name')).toHaveValue('Guard Edited');
 
   await page.getByRole('link', { name: 'Passes', exact: true }).first().click();
   await dialog.getByRole('button', { name: 'Discard' }).click();
-  await expect(page).toHaveURL(/\/admin\/passes(\?.*)?$/);
+  await expect(page).toHaveURL(/\/admin\/o\/[^/]+\/passes(\?.*)?$/);
   await api.dispose();
 });

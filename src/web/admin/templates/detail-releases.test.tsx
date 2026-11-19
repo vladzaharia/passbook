@@ -1,5 +1,4 @@
 import { act, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { resetModeForTests, setMode } from '../../lib/mode.ts';
 import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
@@ -48,8 +47,7 @@ it('does not mount release actions for a template from another selected organiza
 });
 
 it('mounts shared-template releases with the selected membership and current mode', async () => {
-  const user = userEvent.setup();
-  await renderApp('/admin/templates/tpl1?tab=versions', {
+  const { router } = await renderApp('/admin/templates/tpl1?tab=versions', {
     session: 'admin',
     memberships: [first, second],
     selectedOrg: ORG.id,
@@ -74,8 +72,10 @@ it('mounts shared-template releases with the selected membership and current mod
   );
   act(() => setMode('test'));
   await waitFor(() => expect(screen.getByTestId('release-panel')).toHaveTextContent('org1:test'));
-  await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-  await user.click(await screen.findByRole('option', { name: 'Harbor' }));
+  // The page's own organization choice: the same template in Harbor.
+  await act(async () => {
+    await router.navigate({ href: '/admin/o/org2/templates/tpl1?tab=versions' });
+  });
   await waitFor(() => expect(screen.getByTestId('release-panel')).toHaveTextContent('org2:test'));
   expect(releasePanel).toHaveBeenLastCalledWith(
     expect.objectContaining({

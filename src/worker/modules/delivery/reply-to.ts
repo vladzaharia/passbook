@@ -39,7 +39,7 @@ async function sendLink(ctx: ServiceContext, orgId: string, address: string): Pr
   const email = renderReplyToConfirm({
     orgName: org?.name ?? 'An organization',
     address,
-    link: `${baseUrl(ctx.env)}/admin/orgs/${orgId}?confirmReplyTo=${token}`,
+    link: `${baseUrl(ctx.env)}/admin/o/${encodeURIComponent(orgId)}/settings?confirmReplyTo=${token}`,
   });
   try {
     await depsOf(ctx.env).mailer.send({ to: address, ...email, fromName: 'PassBook' });

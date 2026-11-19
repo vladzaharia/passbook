@@ -1,14 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { BlueprintDetailPage } from '../../../admin/blueprints/blueprint-page.tsx';
-import { blueprintSearchSchema } from '../../../admin/templates/search.ts';
-
-function BlueprintRoute() {
-  const { blueprintId } = Route.useParams();
-  const { tab } = Route.useSearch();
-  return <BlueprintDetailPage blueprintId={blueprintId} tab={tab} />;
-}
+import { carryOrgScope, legacySearch, redirectLegacy } from '../../../lib/legacy-admin.ts';
 
 export const Route = createFileRoute('/admin/blueprints/$blueprintId')({
-  validateSearch: blueprintSearchSchema,
-  component: BlueprintRoute,
+  validateSearch: legacySearch,
+  search: carryOrgScope,
+  beforeLoad: redirectLegacy,
 });

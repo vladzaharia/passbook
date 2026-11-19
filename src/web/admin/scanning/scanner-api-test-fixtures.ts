@@ -233,17 +233,20 @@ export function setup(
     );
   }
   const root = createRootRoute({ component: Outlet });
+  // The organization is in the path, as in the console; the bare path has none.
   const scanning = createRoute({
     getParentRoute: () => root,
+    path: '/admin/o/$orgId/scanning',
+    component: Probe,
+  });
+  const unscoped = createRoute({
+    getParentRoute: () => root,
     path: '/admin/scanning',
-    validateSearch: (search: Record<string, unknown>) => ({
-      orgId: typeof search.orgId === 'string' ? search.orgId : undefined,
-    }),
     component: Probe,
   });
   const router = createRouter({
-    routeTree: root.addChildren([scanning]),
-    history: createMemoryHistory({ initialEntries: ['/admin/scanning?orgId=o1'] }),
+    routeTree: root.addChildren([scanning, unscoped]),
+    history: createMemoryHistory({ initialEntries: ['/admin/o/o1/scanning'] }),
   });
   render(createElement(AppProviders, { queryClient }, createElement(RouterProvider, { router })));
   return { router, requests, queryClient, eligibleRequests, detailRequests, testMode, liveMode };

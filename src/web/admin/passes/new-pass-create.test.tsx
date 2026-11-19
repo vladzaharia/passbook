@@ -68,7 +68,7 @@ async function openReview(options: {
     const choice = options.selection ? options.selection(url) : eligibleTemplate();
     return json({ items: choice ? [choice] : [], nextCursor: null });
   };
-  const app = await renderApp('/admin/passes/new', {
+  const app = await renderApp(`/admin/o/${ORG.id}/passes/new`, {
     session: 'admin',
     memberships: options.memberships ?? [henry],
     handlers: {
@@ -98,8 +98,7 @@ async function openReview(options: {
       '/api/v1/passes/p9': () => options.passDetail?.() ?? json(passDetail({ id: 'p9' })),
     },
   });
-  await user.click(await screen.findByRole('radio', { name: /Henry's/ }));
-  await waitFor(() => expect(app.router.state.location.search).toMatchObject({ orgId: ORG.id }));
+  await waitFor(() => expect(app.router.state.location.pathname.split('/')[3]).toBe(ORG.id));
   await waitFor(() =>
     expect(
       app.queryClient.getQueryState([
@@ -113,7 +112,6 @@ async function openReview(options: {
       ])?.status,
     ).toBe('success'),
   );
-  await user.click(screen.getByRole('button', { name: 'Next' }));
   await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
   await user.click(screen.getByRole('button', { name: 'Next' }));
@@ -520,8 +518,8 @@ describe('first pass for an organization', () => {
     await waitFor(() => expect(posts).toHaveLength(1));
     await act(async () => {
       await router.navigate({
-        to: '/admin/passes/new',
-        search: { orgId: 'org2' },
+        to: '/admin/o/$orgId/passes/new',
+        params: { orgId: 'org2' },
         ignoreBlocker: true,
       });
     });
@@ -542,8 +540,10 @@ describe('first pass for an organization', () => {
     await waitFor(() =>
       expect(marked).toHaveBeenCalledWith('pass:p9', { sent: true, first: true }),
     );
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes/p9'));
-    expect(router.state.location.search).toMatchObject({ orgId: ORG.id });
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/p9$/),
+    );
+    expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id);
     await waitFor(() => expect(detailRequests).toBeGreaterThan(0));
     expect(queryClient.getQueryData(['admin', 'passes', 'detail', 'p9'])).toBeUndefined();
     expect(getMode()).toBe('test');
@@ -886,10 +886,12 @@ describe('first pass for an organization', () => {
     await act(async () => sessionReply.resolve(json(sessionFixture('admin'))));
     await waitFor(() => expect(membershipReloaded).toBe(true));
     expect(marked).not.toHaveBeenCalled();
-    expect(router.state.location.pathname).toBe('/admin/passes/new');
+    expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/new$/);
     await act(async () => membershipReply.resolve(json({ items: [henry] })));
     await waitFor(() => expect(marked).toHaveBeenCalledWith('pass:p9', expect.anything()));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/passes/p9'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/p9$/),
+    );
   });
 
   it('retains a pending release conflict until fresh grants allow revalidation', async () => {
@@ -967,13 +969,13 @@ describe('first pass for an organization', () => {
     });
     await waitFor(() => expect(membershipReloaded).toBe(true));
     await act(async () => postReply.resolve(json(passDetail({ id: 'p9' }), 201)));
-    expect(router.state.location.pathname).toBe('/admin/passes/new');
+    expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/new$/);
     await act(async () => membershipReply.resolve(json({ items: [] })));
     expect(
       await screen.findByRole('heading', { name: 'You do not have access' }),
     ).toBeInTheDocument();
     await waitFor(() => expect(queryClient.isMutating()).toBe(0));
-    expect(router.state.location.pathname).toBe('/admin/passes/new');
+    expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/new$/);
     expect(screen.queryByText('ann@example.com')).toBeNull();
   });
 
@@ -1019,7 +1021,7 @@ describe('first pass for an organization', () => {
       });
       await waitFor(() => expect(queryClient.isMutating()).toBe(0));
       expect(queryClient.getQueryData(['admin', 'passes', 'detail', 'p9'])).toBeUndefined();
-      expect(router.state.location.pathname).toBe('/admin/passes/new');
+      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/new$/);
       expect(marked).not.toHaveBeenCalled();
       expect(minted).not.toHaveBeenCalled();
       expect(releaseReads).toBe(readsBeforeCompletion);
@@ -1070,7 +1072,7 @@ describe('first pass for an organization', () => {
     await act(async () => resolveList(json({ items: [], nextCursor: null })));
     await waitFor(() => expect(queryClient.isMutating()).toBe(0));
     expect(queryClient.getQueryData(['admin', 'passes', 'detail', 'p9'])).toBeUndefined();
-    expect(router.state.location.pathname).toBe('/admin/passes/new');
+    expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/new$/);
     expect(marked).not.toHaveBeenCalled();
     expect(minted).not.toHaveBeenCalled();
   });
@@ -1093,8 +1095,8 @@ describe('first pass for an organization', () => {
     await waitFor(() => expect(posts).toBe(1));
     await act(async () => {
       await router.navigate({
-        to: '/admin/passes/new',
-        search: { orgId: 'org2' },
+        to: '/admin/o/$orgId/passes/new',
+        params: { orgId: 'org2' },
         ignoreBlocker: true,
       });
     });
@@ -1110,7 +1112,7 @@ describe('first pass for an organization', () => {
       });
     });
     await act(async () => resolvePost(json(passDetail({ id: 'p9' }), 201)));
-    expect(router.state.location.pathname).toBe('/admin/passes/new');
+    expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/new$/);
     expect(screen.queryByText('ann@example.com')).toBeNull();
     expect(queryClient.getQueryData(['admin', 'passes', 'detail', 'p9'])).toBeUndefined();
   });
@@ -1210,8 +1212,8 @@ describe('organization authority while issuing', () => {
     await waitFor(() => expect(posts).toBe(1));
     await act(async () => {
       await router.navigate({
-        to: '/admin/passes/new',
-        search: { orgId: 'org2' },
+        to: '/admin/o/$orgId/passes/new',
+        params: { orgId: 'org2' },
         ignoreBlocker: true,
       });
     });
@@ -1254,7 +1256,7 @@ describe('organization authority while issuing', () => {
     });
     await user.click(screen.getByRole('button', { name: 'Edit organization' }));
     await user.click(await screen.findByRole('radio', { name: /Other/ }));
-    await waitFor(() => expect(router.state.location.search).toMatchObject({ orgId: 'org2' }));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('org2'));
     await waitFor(() =>
       expect(
         queryClient.getQueryState(['admin', 'templates', 'eligible', 'org2', 'live', 'apple', 'u1'])
@@ -1303,8 +1305,8 @@ describe('organization authority while issuing', () => {
     });
     await act(async () => {
       await router.navigate({
-        to: '/admin/passes/new',
-        search: { orgId: 'org2' },
+        to: '/admin/o/$orgId/passes/new',
+        params: { orgId: 'org2' },
         ignoreBlocker: true,
       });
     });

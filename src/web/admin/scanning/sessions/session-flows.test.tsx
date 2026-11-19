@@ -112,7 +112,7 @@ describe('session configuration flows', () => {
     await user.click(await within(dialog).findByRole('checkbox', { name: 'Gala ticket' }));
     await user.click(within(dialog).getByRole('combobox', { name: 'Organization' }));
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
-    await waitFor(() => expect(router.state.location.search.orgId).toBe('o2'));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o2'));
     expect(screen.getByRole('dialog', { name: 'New scanning session' })).toBeInTheDocument();
     expect(within(dialog).getByRole('textbox', { name: 'Session name' })).toHaveValue('Entry');
     expect(within(dialog).queryByRole('checkbox', { name: 'Gala ticket' })).not.toBeInTheDocument();
@@ -142,7 +142,7 @@ describe('session configuration flows', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Duplicate session' });
     await user.click(within(dialog).getByRole('combobox', { name: 'Organization' }));
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
-    await waitFor(() => expect(router.state.location.search.orgId).toBe('o2'));
+    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o2'));
     expect(await within(dialog).findByRole('textbox', { name: 'Session name' })).toHaveValue(
       'Membership desk copy',
     );

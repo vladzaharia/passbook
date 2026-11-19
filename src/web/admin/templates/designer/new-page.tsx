@@ -34,7 +34,8 @@ export function NewTemplatePage({
   blueprintId: string | undefined;
   name: string | undefined;
 }) {
-  if (!blueprintId || !name?.trim()) return <Navigate to="/admin/blueprints" replace />;
+  if (!blueprintId || !name?.trim())
+    return <Navigate from="/admin/o/$orgId" to="/admin/o/$orgId/blueprints" replace />;
   return <NewFromBlueprint blueprintId={blueprintId} name={name.trim()} />;
 }
 
@@ -69,7 +70,12 @@ function NewFromBlueprint({ blueprintId, name }: { blueprintId: string; name: st
   if (failed) return detailError(failed, { entity: 'blueprint', to: '/admin/blueprints', header });
   if (blueprint.data && !blueprint.data.blueprint)
     return (
-      <Navigate to="/admin/templates/$templateId" params={{ templateId: blueprintId }} replace />
+      <Navigate
+        from="/admin/o/$orgId"
+        to="/admin/o/$orgId/templates/$templateId"
+        params={{ templateId: blueprintId }}
+        replace
+      />
     );
   if (!blueprint.data || !base || !version.data || !orgId || !membership) {
     return (

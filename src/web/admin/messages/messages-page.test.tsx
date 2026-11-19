@@ -1,5 +1,4 @@
 import { act, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
@@ -30,9 +29,9 @@ const modeOf = (calls: unknown[][], path: string) => {
 const orgAccess = { memberships: [membershipFixture('o1')], selectedOrg: 'o1' };
 
 describe('Message capabilities', () => {
-  it('does not request the list until an authorized organization is selected', async () => {
+  it('requests the list only for the organization in the URL', async () => {
     const scopes: (string | null)[] = [];
-    await renderApp('/admin/messages', {
+    const { router } = await renderApp('/admin/messages', {
       session: 'admin',
       memberships: [membershipFixture('o1', { orgName: 'Northwind' })],
       handlers: {
@@ -42,13 +41,7 @@ describe('Message capabilities', () => {
         },
       },
     });
-    expect(
-      await screen.findByRole('heading', { name: 'Choose an organization' }),
-    ).toBeInTheDocument();
-    expect(scopes).toEqual([]);
-    const user = userEvent.setup();
-    await user.click(screen.getByRole('combobox', { name: /^Organization filter/ }));
-    await user.click(await screen.findByRole('option', { name: 'Northwind' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o1/messages'));
     await waitFor(() => expect(scopes).toContain('o1'));
     expect(scopes).not.toContain(null);
   });

@@ -118,8 +118,9 @@ describe('scan history cursor pagination', () => {
     clock.mockReturnValue(now + 3_600_000);
     await act(async () => {
       await router.navigate({
-        to: '/admin/scanning',
-        search: { orgId: 'o1', tab: 'scans', range: '30d' },
+        to: '/admin/o/$orgId/scanning',
+        params: { orgId: 'o1' },
+        search: { tab: 'scans', range: '30d' },
       });
     });
     await waitFor(() =>
@@ -133,8 +134,9 @@ describe('scan history cursor pagination', () => {
     clock.mockReturnValue(now + 7_200_000);
     await act(async () => {
       await router.navigate({
-        to: '/admin/scanning',
-        search: { orgId: 'o1', tab: 'scans', range: '30d', q: 'Bob' },
+        to: '/admin/o/$orgId/scanning',
+        params: { orgId: 'o1' },
+        search: { tab: 'scans', range: '30d', q: 'Bob' },
       });
     });
     await waitFor(() =>

@@ -33,6 +33,13 @@ oidc.addUser({
   name: 'E2E Template Reviewer',
   groups: ['wallet-users'],
 });
+// Never granted a membership by any spec, so "no memberships" holds whatever else runs.
+oidc.addUser({
+  sub: 'e2e-loner',
+  email: 'loner@example.test',
+  name: 'E2E Loner',
+  groups: ['wallet-users'],
+});
 oidc.addUser({ sub: 'e2e-nobody', email: 'nobody@example.test', name: 'No Groups', groups: [] });
 
 createServer(async (req, res) => {

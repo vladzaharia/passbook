@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { RefreshCw, Search } from 'lucide-react';
+import { Globe, RefreshCw, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PlatformOrgListSchema } from '@/web/admin/orgs/queries.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
@@ -8,8 +8,9 @@ import { api } from '../../lib/api.ts';
 import { connectorIcon, ENTITY } from '../../lib/entities.ts';
 import { personLabel } from '../../lib/format.ts';
 import { canAccessAdminPath } from '../../lib/guards.ts';
-import { adminNavGroups, isOrgScoped } from '../../lib/nav.ts';
-import { useOrgScope } from '../../lib/org-filter.tsx';
+import { adminNavGroups } from '../../lib/nav.ts';
+import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
+import { orgPath, platformPath } from '../../lib/scope.ts';
 import {
   matchesWords,
   PALETTE_LIMIT,
@@ -50,21 +51,25 @@ export function AdminPalette({
 }) {
   const navigate = useNavigate();
   const scope = useOrgScope();
+  const adminScope = useAdminScope();
   const { isAdmin, isFetching: sessionFetching, isError: sessionError, authed } = useSession();
   const platformReady = isAdmin && !sessionFetching && !sessionError;
   const ready = !scope.isLoading && !scope.isError;
   const memberships = ready ? scope.memberships : [];
   const membership = ready ? scope.membership : undefined;
   const orgId = membership?.orgId;
-  const { setOrgId } = scope;
+  const { switchScope } = scope;
   const { setPref } = useTheme();
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<'all' | 'orgs'>('all');
   const term = useDebounced(open ? query.trim() : '', 200);
   const searching = open && mode === 'all';
-  const canPasses = canAccessAdminPath('/admin/passes', isAdmin, membership);
-  const canTemplates = canAccessAdminPath('/admin/templates', isAdmin, membership);
-  const canConnections = canAccessAdminPath('/admin/connections', isAdmin, membership);
+  // Tenant searches cover the organization the page is in, never the platform.
+  const inOrg = (rest: string) =>
+    Boolean(orgId && canAccessAdminPath(orgPath(orgId, rest), isAdmin, membership));
+  const canPasses = inOrg('/passes');
+  const canTemplates = inOrg('/templates');
+  const canConnections = inOrg('/connections');
   const passes = useRecentPassSearch(searching && canPasses ? term : '', orgId);
   const passItems =
     searching && canPasses && orgId
@@ -88,16 +93,10 @@ export function AdminPalette({
     enabled: searching && platformReady && term.length >= 2,
     staleTime: 15_000,
   });
-  const nav = adminNavGroups(platformReady, membership).flat();
+  const nav = adminNavGroups(adminScope, platformReady, membership).flat();
   const orgName = new Map(memberships.map((item) => [item.orgId, item.orgName]));
-  const go = (to: string, search?: Record<string, string>) => () =>
-    void navigate({
-      to,
-      search: {
-        ...search,
-        orgId: search?.orgId ?? (isOrgScoped(to, platformReady) ? orgId : undefined),
-      },
-    });
+  const go = (to: string, search?: Record<string, string>) => () => void navigate({ to, search });
+  const here = (rest: string) => (orgId ? orgPath(orgId, rest) : rest);
 
   useEffect(() => {
     if (!open) {
@@ -133,29 +132,35 @@ export function AdminPalette({
           onSelect: () => void scope.refetch(),
         },
       ]
-    : memberships.map((item) => ({
-        id: `org:${item.orgId}`,
-        label: item.orgName,
-        icon: ENTITY.org.icon,
-        hint: item.orgId === orgId ? 'Current' : undefined,
-        onSelect: () => setOrgId(item.orgId),
-      }));
+    : [
+        ...(platformReady
+          ? [
+              {
+                id: 'scope:platform',
+                label: 'Platform',
+                icon: Globe,
+                hint: adminScope?.kind === 'platform' ? 'Current' : undefined,
+                onSelect: () => switchScope(undefined),
+              },
+            ]
+          : []),
+        ...memberships.map((item) => ({
+          id: `org:${item.orgId}`,
+          label: item.orgName,
+          icon: ENTITY.org.icon,
+          hint: item.orgId === orgId ? 'Current' : undefined,
+          onSelect: () => switchScope(item.orgId),
+        })),
+      ];
   const orgResults: { id: string; name: string }[] = platformReady
     ? (directory.data?.items ?? []).map(({ id, name }) => ({ id, name }))
-    : !isAdmin &&
-        membership &&
-        canAccessAdminPath(
-          `/admin/orgs/${encodeURIComponent(membership.orgId)}`,
-          false,
-          membership,
-          'workspace',
-        )
+    : !isAdmin && membership && inOrg('/settings')
       ? [{ id: membership.orgId, name: membership.orgName }]
       : [];
 
   const groups: CommandGroup[] =
     mode === 'orgs'
-      ? [{ heading: 'Switch organization', icon: ENTITY.org.icon, items: local(orgGroup) }]
+      ? [{ heading: 'Switch scope', icon: ENTITY.org.icon, items: local(orgGroup) }]
       : [
           {
             heading: 'Pages',
@@ -164,7 +169,7 @@ export function AdminPalette({
                 id: item.to,
                 label: item.label,
                 icon: item.icon,
-                onSelect: go(item.to, item.search),
+                onSelect: go(item.to),
               })),
               (i) => nav.find((n) => n.to === i.id)?.keywords ?? [],
             ),
@@ -180,7 +185,7 @@ export function AdminPalette({
                     hint: [orgName.get(p.orgId), p.holderEmail ?? p.serial]
                       .filter(Boolean)
                       .join(', '),
-                    onSelect: go(`/admin/passes/${p.id}`),
+                    onSelect: go(here(`/passes/${encodeURIComponent(p.id)}`)),
                   }))
                 : [],
           },
@@ -191,7 +196,7 @@ export function AdminPalette({
               label: t.name,
               icon: ENTITY.template.icon,
               hint: t.orgName ?? undefined,
-              onSelect: go(`/admin/templates/${t.id}`),
+              onSelect: go(here(`/templates/${encodeURIComponent(t.id)}`)),
             })),
           },
           {
@@ -203,7 +208,7 @@ export function AdminPalette({
               label: c.name,
               icon: connectorIcon(c.connectorType),
               hint: orgName.get(c.orgId),
-              onSelect: go(`/admin/connections/${c.id}`),
+              onSelect: go(here(`/connections/${encodeURIComponent(c.id)}`)),
             })),
           },
           {
@@ -215,7 +220,7 @@ export function AdminPalette({
                     label: personLabel(u),
                     icon: ENTITY.user.icon,
                     hint: u.name ? (u.primaryEmail ?? undefined) : undefined,
-                    onSelect: go(`/admin/users/${u.id}`),
+                    onSelect: go(platformPath(`/users/${encodeURIComponent(u.id)}`)),
                   }))
                 : [],
           },
@@ -226,8 +231,9 @@ export function AdminPalette({
               label: o.name,
               icon: ENTITY.org.icon,
               onSelect: go(
-                `/admin/orgs/${encodeURIComponent(o.id)}`,
-                isAdmin ? undefined : { view: 'workspace', orgId: o.id },
+                platformReady
+                  ? platformPath(`/orgs/${encodeURIComponent(o.id)}`)
+                  : orgPath(o.id, '/settings'),
               ),
             })),
           },
@@ -258,7 +264,7 @@ export function AdminPalette({
     id: 'search-passes',
     label: `Search passes for "${q}"`,
     icon: Search,
-    onSelect: go('/admin/passes', { q }),
+    onSelect: go(here('/passes'), { q }),
   };
 
   return (
