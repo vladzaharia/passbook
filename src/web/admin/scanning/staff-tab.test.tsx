@@ -123,7 +123,7 @@ describe('Scanning staff', () => {
     expect(within(joRow as HTMLElement).getByText('Disabled')).toBeInTheDocument();
     expect(within(joRow as HTMLElement).getByText('Never')).toBeInTheDocument();
     expect(within(joRow as HTMLElement).queryByText(/Locked/)).not.toBeInTheDocument();
-    expect(screen.getByText(/Staff are shared by Live and Test/)).toHaveTextContent('Live mode');
+    expect(screen.getByText(/Shared by Live and Test/)).toHaveTextContent('Live scans');
     expect(
       within(table).getByRole('columnheader', { name: 'Successful today' }),
     ).toBeInTheDocument();
@@ -133,7 +133,7 @@ describe('Scanning staff', () => {
       ),
     ).toBeInTheDocument();
     expect(within(samRow as HTMLElement).queryByRole('link')).not.toBeInTheDocument();
-    expect(screen.getByText(/Successful today excludes undone scans/)).toHaveTextContent(
+    expect(screen.getByText(/Shared by Live and Test/)).toHaveTextContent(
       "each scanner's local midnight",
     );
     expect(

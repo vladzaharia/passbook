@@ -315,17 +315,9 @@ describe('session administration', () => {
           onEdit={vi.fn()}
         />,
       );
-      expect(screen.getByText('Paired scanner staff PIN').parentElement).toHaveTextContent(pin);
-      expect(screen.getByText('Access without staff PIN').parentElement).toHaveTextContent(access);
-      const explanation = screen.getByText(
-        /Staff PINs apply only to paired, staff-operated scanners/i,
-      );
-      expect(explanation).toHaveTextContent(
-        'Bearer-token terminals always use the access level without a staff PIN',
-      );
-      expect(explanation).toHaveTextContent(
-        'Admin-as-scanner sessions use the signed-in administrator’s Manager permissions',
-      );
+      expect(screen.getByText('Staff PIN').parentElement).toHaveTextContent(pin);
+      expect(screen.getByText('Without a PIN').parentElement).toHaveTextContent(access);
+      expect(screen.queryByText(/Staff PINs apply/i)).not.toBeInTheDocument();
     },
   );
   it('allows the operator layout on a phone and protects unsaved device settings', async () => {

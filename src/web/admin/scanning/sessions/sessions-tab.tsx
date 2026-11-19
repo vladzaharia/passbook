@@ -1,14 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import {
-  Activity,
-  ArrowUpRight,
-  Copy,
-  ListChecks,
-  MonitorSmartphone,
-  Play,
-  Radio,
-  ScanLine,
-} from 'lucide-react';
+import { ArrowUpRight, Copy, MonitorSmartphone, Play, Radio, ScanLine } from 'lucide-react';
 import { useState } from 'react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
@@ -25,6 +16,8 @@ import {
   toast,
 } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
+import { useScanEvents } from '../scanner-api.ts';
+import { SetupChecklist } from '../setup-checklist.tsx';
 import { useScanningSessions, useUpdateSession } from './api.ts';
 import { sessionAccepts, sessionRuleLabel } from './draft.ts';
 import { type HoursDialog, HoursDialogs, HoursMenuItems } from './session-hours-actions.tsx';
@@ -39,6 +32,9 @@ export function SessionsTab({
 }) {
   const { orgId } = useOrgScope();
   const query = useScanningSessions(orgId);
+  const events = useScanEvents(orgId, Boolean(orgId));
+  const eventName = (id: string) =>
+    events.data?.items.find((e) => e.orgId === orgId && e.id === id)?.name;
   const items = query.data?.pages.flatMap((p) => p.items).filter((s) => s.orgId === orgId) ?? [];
   if (query.isError) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
   if (query.isPending)
@@ -52,31 +48,7 @@ export function SessionsTab({
   if (!items.length)
     return (
       <div>
-        <div className="grid gap-4 rounded-lg border border-border bg-surface-raised p-4 sm:grid-cols-3">
-          {[
-            {
-              icon: ListChecks,
-              title: '1. Set shared rules',
-              detail: 'Choose passes and admission.',
-            },
-            {
-              icon: MonitorSmartphone,
-              title: '2. Add devices',
-              detail: 'Pair scanners and displays.',
-            },
-            { icon: Activity, title: '3. Follow activity', detail: 'See check-ins in one place.' },
-          ].map(({ icon: Icon, title, detail }) => (
-            <div key={title} className="flex min-w-0 items-start gap-3">
-              <span className="rounded-md bg-surface-sunken p-2">
-                <Icon className="size-4 text-fg-muted" aria-hidden />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-fg-strong">{title}</p>
-                <p className="mt-1 text-xs text-fg-muted">{detail}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <SetupChecklist onNew={canManage ? onNew : undefined} />
         <EmptyState
           art="scanner"
           title="No scanning sessions"
@@ -84,8 +56,10 @@ export function SessionsTab({
         />
       </div>
     );
+  const online = items.reduce((n, s) => n + s.onlineCount, 0);
   return (
     <div className="grid gap-6">
+      <SetupChecklist onNew={canManage ? onNew : undefined} />
       <div className="flex flex-wrap gap-2 text-sm text-fg-muted">
         <Badge>
           <Radio aria-hidden />
@@ -93,7 +67,7 @@ export function SessionsTab({
         </Badge>
         <Badge>
           <MonitorSmartphone aria-hidden />
-          {items.reduce((n, s) => n + s.onlineCount, 0)} devices online
+          {online} {online === 1 ? 'device' : 'devices'} online
         </Badge>
       </div>
       <div className="grid min-w-0 gap-4 md:grid-cols-2 2xl:grid-cols-3">
@@ -126,10 +100,14 @@ export function SessionsTab({
                 <Metric value={s.onlineCount} label="Online" />
               </div>
               <p className="text-sm text-fg-muted">
-                {sessionAccepts(s)} · {sessionRuleLabel(s)}
+                {sessionAccepts(
+                  s,
+                  s.accepts && 'eventId' in s.accepts ? eventName(s.accepts.eventId) : undefined,
+                )}{' '}
+                · {sessionRuleLabel(s)}
               </p>
               {canManage ? (
-                <Button asChild variant="outline" iconStart={<ScanLine aria-hidden />}>
+                <Button asChild variant="ghost" size="sm" iconStart={<ScanLine aria-hidden />}>
                   <a
                     href={`/scan?admin=1&orgId=${encodeURIComponent(s.orgId)}&sessionId=${encodeURIComponent(s.id)}`}
                   >

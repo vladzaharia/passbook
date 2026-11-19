@@ -27,7 +27,7 @@ function Occupancy({ zone }: { zone: ScanZone }) {
   if (zone.occupancy === 'off') return <span className="text-fg-muted">—</span>;
   return (
     <Badge tone={zone.occupancy === 'enforce' ? 'accent' : 'neutral'}>
-      {zone.occupancy === 'enforce' ? 'Tap out required' : 'Counts'}
+      {zone.occupancy === 'enforce' ? 'Tap out required' : 'Tracks headcount'}
     </Badge>
   );
 }
@@ -137,14 +137,12 @@ export function ZoneTreeList({
                 {archived ? <Badge>Archived</Badge> : null}
               </div>
               <p className="line-clamp-2 text-xs text-fg-muted">
-                <span className="font-mono">{zone.key}</span>
-                {' · '}
                 {count(zone.sessions, 'session')}
                 {clock ? ` · ${clockLabel(clock)}` : ''}
                 {zone.plans.length ? ` · ${planNames(zone)}` : ''}
                 {zone.occupancy === 'off' ? null : (
                   <span className="@[40rem]:hidden">
-                    {zone.occupancy === 'enforce' ? ' · Tap out required' : ' · Counts'}
+                    {zone.occupancy === 'enforce' ? ' · Tap out required' : ' · Tracks headcount'}
                     {zone.inNow === null ? '' : ` · ${zone.inNow} inside`}
                   </span>
                 )}
