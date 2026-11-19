@@ -159,3 +159,30 @@ button.scan-tag-flag {
     }
   }
 }
+
+/* Tablet: the assign card scales up, and a text-only refusal centres a larger tag in its right half. */
+@media (min-width: 640px) {
+  .scan-assign .scan-assign-headline {
+    font-size: 30px;
+    line-height: 36px;
+  }
+  .scan-assign .scan-assign-sub,
+  .scan-assign .scan-assign-from {
+    font-size: 18px;
+    line-height: 24px;
+  }
+  .scan-assign-art .scan-tag-art {
+    width: 150px;
+    height: auto;
+  }
+}
+@media (min-width: 1024px) {
+  .scan-assign[data-step="error"] .scan-assign-body {
+    display: grid;
+    place-items: center;
+    flex: 1;
+  }
+  .scan-assign[data-step="error"] .scan-assign-art .scan-tag-art {
+    width: 220px;
+  }
+}

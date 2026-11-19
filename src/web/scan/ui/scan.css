@@ -264,3 +264,13 @@
     align-items: center;
   }
 }
+
+/* Dark: muted text one step lighter so captions stay 4.5:1 over the gradients. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .scan-shell {
+    --sd-muted: #a9b1c4;
+  }
+}
+:root[data-theme="dark"] .scan-shell {
+  --sd-muted: #a9b1c4;
+}

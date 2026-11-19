@@ -43,7 +43,7 @@ export const READER_TIPS = [
 ] as const;
 
 const CHECK_ITEM =
-  'relative flex min-h-8 cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-fg outline-hidden max-sm:min-h-11 pointer-coarse:min-h-11 data-highlighted:bg-state-hover-tint data-highlighted:text-fg-strong [&_svg]:size-4 [&_svg]:shrink-0';
+  'relative flex min-h-11 cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-base text-fg outline-hidden max-sm:min-h-11 pointer-coarse:min-h-11 data-highlighted:bg-state-hover-tint data-highlighted:text-fg-strong [&_svg]:size-4 [&_svg]:shrink-0';
 
 function CheckItem({
   icon,
@@ -114,7 +114,10 @@ export function ScanMenu(p: ScanMenuProps) {
         <DropdownMenuTrigger asChild>
           <MenuTrigger />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="z-[60] min-w-64">
+        <DropdownMenuContent
+          align="end"
+          className="z-[60] min-w-72 [&_[role=menuitem]]:min-h-11 [&_[role=menuitem]]:text-base"
+        >
           <DropdownMenuItem onSelect={p.onShift}>
             <Activity aria-hidden />
             This shift
@@ -190,6 +193,7 @@ export function ScanMenu(p: ScanMenuProps) {
             <Timer aria-hidden />
             {SCAN_COPY.actions.endShift}
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem destructive onSelect={p.onLeave}>
             {p.leave === 'unpair' ? <Unplug aria-hidden /> : <LogOut aria-hidden />}
             {p.leave === 'unpair' ? 'Unpair this device' : 'Stop scanning as admin'}

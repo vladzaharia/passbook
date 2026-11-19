@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react';
+import { CircleAlert, Loader2 } from 'lucide-react';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import type { AssignState } from '../machine/assign-state.ts';
 import { VerdictGlyph } from '../result/verdict-glyph.tsx';
@@ -148,6 +148,7 @@ function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: Assi
       ) : null}
       {a.banner ? (
         <div className="scan-assign-banner" role="alert" data-testid="scan-assign-banner">
+          <CircleAlert aria-hidden size={18} />
           <b>{bannerLine(a.banner).headline}</b>
           {bannerLine(a.banner).sub}
         </div>

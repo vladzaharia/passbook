@@ -18,7 +18,7 @@
   color: var(--sd-accent);
 }
 .scan-assign-step[data-state="done"] {
-  color: var(--sd-body);
+  color: var(--sd-accent);
 }
 .scan-assign-step-n {
   display: grid;
@@ -35,9 +35,9 @@
   color: var(--scan-accent-on);
 }
 .scan-assign-step[data-state="done"] .scan-assign-step-n {
-  background: var(--sd-body);
+  background: var(--sd-accent);
   border-color: transparent;
-  color: var(--scan-card);
+  color: var(--scan-accent-on);
 }
 .scan-assign-step-line {
   flex: none;
@@ -62,8 +62,13 @@
   color: var(--sd-strong);
   text-wrap: balance;
 }
-.scan-assign-sub,
 .scan-assign-from {
+  margin: 0;
+  text-align: start;
+  font: 400 15px / 20px var(--pk-font-sans);
+  color: var(--sd-muted);
+}
+.scan-assign-sub {
   margin: 0;
   text-align: center;
   font: 400 15px / 20px var(--pk-font-sans);
@@ -87,12 +92,21 @@
 .scan-assign-banner {
   display: flex;
   flex-direction: column;
+  position: relative;
   gap: 2px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: color-mix(in oklab, var(--scan-refused) 82%, transparent);
+  background: var(--scan-refused);
   color: var(--scan-refused-on);
   font: 400 14px / 18px var(--pk-font-sans);
+}
+.scan-assign-banner > svg {
+  position: absolute;
+  inset-inline-start: 12px;
+  inset-block-start: 11px;
+}
+.scan-assign-banner {
+  padding-inline-start: 38px;
 }
 .scan-assign-banner b {
   font-weight: 600;

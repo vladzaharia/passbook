@@ -3,7 +3,8 @@ export const SCAN_TAG_COPY = {
   menu: { assign: 'Assign tag', locked: 'Desk and up', offline: 'Needs a connection' },
   /** Offline scanners never read tags (online only in v1). */
   needsConnection: 'Tag needs a connection',
-  chip: { assigning: 'Assigning tag', request: 'Tag request', requestFor: 'Tag for {name}' },
+  needsConnectionSub: 'Use the pass QR or look the person up.',
+  chip: { assigning: 'Assigning tag', request: 'Open tag request', requestFor: 'Tag for {name}' },
   step: { tag: 'Tag', pass: 'Pass' },
   tag: {
     hold: 'Hold the tag near the phone',
@@ -28,13 +29,13 @@ export const SCAN_TAG_COPY = {
   lendingTo: 'Lending to {name}',
   confirm: {
     name: 'Name',
-    namePlaceholder: 'Blue fob',
+    namePlaceholder: 'Name, optional',
     forms: ['Card', 'Fob', 'Sticker', 'Wristband'],
     moveOwn: [
       'It works with {pass} now. Assigning moves it.',
       "It works with all of {name}'s passes now. Assigning changes that.",
     ],
-    moveOther: "It works with {holder}'s {pass} now. Assigning moves it to {name}.",
+    moveOther: "It works with {holder}'s {pass} now. A manager can move it to {name}.",
     basic: 'Basic tags can be copied.',
     assign: 'Assign',
     move: 'Move tag',
