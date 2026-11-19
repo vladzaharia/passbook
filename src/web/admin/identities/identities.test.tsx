@@ -378,7 +378,7 @@ describe('identity detail', () => {
     });
     const ui = userEvent.setup();
     const label = await screen.findByLabelText(/Label/);
-    expect(screen.getByText(/Current default. Select another identity/)).toBeInTheDocument();
+    expect(screen.getByText(/Select another identity to change it/)).toBeInTheDocument();
     await ui.clear(label);
     await ui.type(label, 'Renamed');
     await ui.clear(screen.getByLabelText('APNs binding'));
@@ -410,7 +410,8 @@ describe('identity detail', () => {
     const ui = userEvent.setup();
     expect(screen.queryByLabelText('APNs binding')).not.toBeInTheDocument();
     expect(await screen.findByText('Set in the environment')).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: 'Default identity' })).toBeDisabled();
+    expect(screen.queryByRole('switch', { name: 'Default identity' })).toBeNull();
+    expect(screen.getByText('Default identity')).toBeInTheDocument();
     await ui.click(screen.getByRole('switch', { name: 'NFC' }));
     await ui.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(body).toBeDefined());

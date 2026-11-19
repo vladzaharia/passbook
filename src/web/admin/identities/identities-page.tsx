@@ -73,7 +73,7 @@ export function IdentitiesPage() {
       {
         header: 'Owner',
         id: 'org',
-        meta: { nowrap: true, hideBelow: 'lg' },
+        meta: { nowrap: true, hideBelow: 'md' },
         cell: ({ row }) => orgName(row.original.orgId),
       },
       {
@@ -85,7 +85,7 @@ export function IdentitiesPage() {
       {
         header: 'Passes',
         id: 'passes',
-        meta: { numeric: true, hideBelow: 'lg', stackHidden: true },
+        meta: { numeric: true, hideBelow: 'md' },
         cell: ({ row }) => formatCount(row.original.passCount),
       },
     ];

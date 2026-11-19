@@ -13,6 +13,7 @@ import {
   Input,
   KeyValue,
   SaveBar,
+  StatusPill,
   SwitchRow,
   TechnicalDetails,
   Tooltip,
@@ -144,21 +145,35 @@ export function SettingsCard({ identity }: { identity: Identity }) {
               checked={draft.nfc}
               onCheckedChange={(c) => edit({ nfc: c })}
             />
-            <Locked locked={env}>
-              <SwitchRow
-                label="Default identity"
-                help={
-                  env
-                    ? 'Set in the environment'
-                    : identity.isDefault
-                      ? 'Current default. Select another identity to change it; existing passes keep their identity.'
-                      : 'Fallback for eligible organizations without their own identity. Changing it does not migrate existing passes.'
-                }
-                checked={draft.isDefault}
-                disabled={env || identity.isDefault}
-                onCheckedChange={(c) => edit({ isDefault: c })}
-              />
-            </Locked>
+            {identity.isDefault ? (
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-fg-strong">Default identity</p>
+                  <p className="mt-0.5 text-xs text-fg-muted">
+                    {env
+                      ? 'Set in the environment'
+                      : 'Select another identity to change it; existing passes keep their identity.'}
+                  </p>
+                </div>
+                <StatusPill status="default" />
+              </div>
+            ) : (
+              <Locked locked={env}>
+                <SwitchRow
+                  label="Default identity"
+                  help={
+                    env
+                      ? 'Set in the environment'
+                      : identity.isDefault
+                        ? 'Current default. Select another identity to change it; existing passes keep their identity.'
+                        : 'Fallback for eligible organizations without their own identity. Changing it does not migrate existing passes.'
+                  }
+                  checked={draft.isDefault}
+                  disabled={env}
+                  onCheckedChange={(c) => edit({ isDefault: c })}
+                />
+              </Locked>
+            )}
           </div>
         </Form>
       </CardBody>

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { z } from 'zod';
 import type { UserSummarySchema } from '@/shared/contracts/users.ts';
+import { cn } from '@/web/lib/cn.ts';
 import { useDebouncedCommit } from '@/web/lib/debounce.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { formatCount, formatDateTime } from '@/web/lib/format.ts';
@@ -35,7 +36,12 @@ const COLUMNS: DataColumnDef<UserRow, never>[] = [
       const u = row.original;
       const name = personLabel(u);
       return (
-        <div className="flex min-h-10 min-w-0 items-center gap-3">
+        <div
+          className={cn(
+            'flex min-h-10 min-w-0 items-center gap-3',
+            u.status === 'disabled' && 'opacity-60',
+          )}
+        >
           <EntityAvatar kind="user" id={u.id} name={name} />
           <div className="min-w-0">
             <RowLink to="/admin/users/$userId" params={{ userId: u.id }}>

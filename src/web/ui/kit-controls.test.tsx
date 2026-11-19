@@ -131,7 +131,10 @@ describe('entity identity', () => {
     );
     expect(container.querySelector('[data-initials="AL"]')).not.toBeNull();
     expect(container.querySelector('.size-8 svg.size-4')).not.toBeNull();
-    expect(screen.getByText('ff0001')).toHaveClass('font-mono');
+    // Without a name the chip reads the kind alone, never a slice of the id.
+    const chip = screen.getByText('Template');
+    expect(chip.textContent).toBe('Template');
+    expect(container.textContent).not.toContain('ff0001');
   });
 });
 
