@@ -165,7 +165,7 @@ const issuers = new Map<string, { secret: string; id: string }>();
 async function issuer(org: string) {
   if (!issuers.has(org)) {
     const key = await owner.send('POST', '/api/v1/api-keys', {
-      name: `Seed ${org.slice(-8)}`,
+      name: 'Demo issuer',
       orgId: org,
       scopes: ['passes:read', 'passes:write'],
       // Revoked at the end of the run; the expiry covers a run that crashes first.

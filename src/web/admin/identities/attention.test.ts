@@ -31,6 +31,14 @@ describe('attention severity', () => {
     expect(identityAttention([cert(90)], NOW)).toBeUndefined();
   });
 
+  it('banners at 0 and 30 days but not 31', () => {
+    const zero = identityAttention([cert(0)], NOW);
+    expect(zero).toMatchObject({ reason: 'expiring', tone: 'danger', days: 0 });
+    const thirty = identityAttention([cert(30)], NOW);
+    expect(thirty).toMatchObject({ reason: 'expiring', tone: 'warning', days: 30 });
+    expect(identityAttention([cert(31)], NOW)).toBeUndefined();
+  });
+
   it('phrases the time left', () => {
     expect(expiryPhrase(1)).toBe('expires in 1 day');
     expect(expiryPhrase(0)).toBe('expires today');

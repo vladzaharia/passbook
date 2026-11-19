@@ -126,6 +126,32 @@ describe('identities list', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
+  it.each([
+    [0.5, 'Edge: certificate expires today', 'alert'],
+    [30.5, 'Edge: certificate expires in 30 days', undefined],
+  ])('banners a certificate with %s days left', async (days, title, role) => {
+    await renderApp('/admin/identities', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/identities': () =>
+          json({
+            items: [
+              identity({
+                id: 'e1',
+                label: 'Edge',
+                notAfter: Date.now() + days * DAY,
+                daysRemaining: Math.floor(days),
+              }),
+            ],
+            nextCursor: null,
+          }),
+      },
+    });
+    const banner = (await screen.findByText(title)).closest('div[class*="rounded-lg"]');
+    // Red (role alert) through 7 days; amber (no alert role) from 8 to 30.
+    expect(banner?.getAttribute('role') ?? undefined).toBe(role);
+  });
+
   it('does not invent a certificate warning or readiness when expiry is unknown', async () => {
     await renderApp('/admin/identities', {
       session: 'admin',
