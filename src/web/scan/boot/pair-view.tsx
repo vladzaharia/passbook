@@ -1,6 +1,6 @@
 import { Lock, ScanLine, ShieldCheck } from 'lucide-react';
 import { type FormEvent, type Ref, useId, useState } from 'react';
-import { SCAN_COPY } from '../../../shared/copy/scan.ts';
+import { SCAN_COPY, scanLine } from '../../../shared/copy/scan.ts';
 import { Button } from '../../ui/button.tsx';
 import { Callout } from '../../ui/callout.tsx';
 import { CodeField } from '../../ui/code-field.tsx';
@@ -18,6 +18,7 @@ export function PairView({
   busy,
   inputRef,
   onAdmin,
+  adminWho,
   initialCode = '',
 }: {
   onPair: (code: string) => void;
@@ -27,6 +28,8 @@ export function PairView({
   busy?: boolean;
   inputRef?: Ref<HTMLInputElement>;
   onAdmin?: () => void;
+  /** Who the admin scan would use: their name or email. */
+  adminWho?: string | null | undefined;
   /** A code whose preview failed (a link, refused or offline), so Pair can be pressed again. */
   initialCode?: string;
 }) {
@@ -78,6 +81,9 @@ export function PairView({
           <Button variant="outline" iconStart={<ShieldCheck aria-hidden />} onClick={onAdmin}>
             Scan as Admin
           </Button>
+          {adminWho ? (
+            <p className="scan-card-line text-center">{scanLine(b.adminAs, { who: adminWho })}</p>
+          ) : null}
         </div>
       ) : null}
       <p className="scan-card-line scan-pair-footer">

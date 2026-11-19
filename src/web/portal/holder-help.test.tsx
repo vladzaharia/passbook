@@ -32,14 +32,8 @@ const view = (over: Partial<HolderPassViewProps> = {}) =>
   );
 
 describe('holder help copy', () => {
-  it('leaves out the wallet explainer', () => {
-    view();
-    expect(screen.queryByText(HOLDER_COPY.walletApple)).toBeNull();
-  });
-
   it('matches the copy snapshot', () => {
     expect({
-      apple: HOLDER_COPY.walletApple,
       again: [HOLDER_COPY.sendAgain, HOLDER_COPY.sendAgainSent, HOLDER_COPY.sendAgainWait],
       lost: [HOLDER_COPY.lostPhone, HOLDER_COPY.lostPhoneDone],
       ended: [HOLDER_COPY.voidedOn('3 November 2026'), HOLDER_COPY.expiredOn('3 November 2026')],
@@ -50,7 +44,6 @@ describe('holder help copy', () => {
           "Sent. Check your email.",
           "Sent a few already. Try again in an hour.",
         ],
-        "apple": "Apple Wallet is the app on your iPhone that keeps cards and tickets.",
         "ended": [
           "This pass was voided on 3 November 2026.",
           "This pass expired on 3 November 2026.",
@@ -67,7 +60,7 @@ describe('holder help copy', () => {
 describe('the pass page', () => {
   it('posts Send it again to the pass link and says when it was sent', async () => {
     const { container } = view({ resend: { action: '/p/t/resend', again: 'sent' } });
-    const button = screen.getByRole('button', { name: HOLDER_COPY.sendAgain });
+    const button = screen.getByRole('button', { name: HOLDER_COPY.emailPassAgain });
     expect(button.closest('form')).toHaveAttribute('action', '/p/t/resend');
     expect(button.closest('form')).toHaveAttribute('method', 'post');
     expect(screen.getByRole('status')).toHaveTextContent(HOLDER_COPY.sendAgainSent);
@@ -85,7 +78,7 @@ describe('the pass page', () => {
       'href',
       'mailto:help@gym.test',
     );
-    expect(screen.queryByRole('button', { name: HOLDER_COPY.sendAgain })).toBeNull();
+    expect(screen.queryByRole('button', { name: HOLDER_COPY.emailPassAgain })).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
 });

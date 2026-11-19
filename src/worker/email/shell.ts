@@ -120,6 +120,10 @@ export function badgeButtonHtml(href: string, label: string) {
   return `<table role="presentation" width="${width}" cellspacing="0" cellpadding="0" style="width:${width}px;border-collapse:separate"><tr><td class="e-block" align="center" height="${inner}" style="height:${inner}px;padding:0;border:1px solid ${c.lineStrong};border-radius:${r}px"><a class="e-block" href="${escapeHtml(href)}" style="display:block;color:${c.text};font-family:${FONT};font-size:${T.text.sm.size}px;line-height:${inner}px;mso-line-height-rule:exactly;font-weight:${T.weight.medium};text-align:center;text-decoration:none;border-radius:${r}px">${escapeHtml(label)}</a></td></tr></table>`;
 }
 
+/** Two blocks one above the other, 12 px apart, left on the text edge. */
+export const stackHtml = (first: string, second: string) =>
+  `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 4px;border-collapse:collapse"><tr><td style="padding:0 0 12px">${first}</td></tr><tr><td style="padding:0">${second}</td></tr></table>`;
+
 export interface ShellInput {
   lang: string;
   title: string;

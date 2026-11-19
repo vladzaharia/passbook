@@ -114,7 +114,7 @@ describe('code first (asked from the installed app)', () => {
     expect(verify({ prefer: 'code' })).toEqual(verify());
     expect(signIn({ prefer: 'code', code: undefined })).toEqual(signIn({ code: undefined }));
     const chip = chipStyle(signIn().html);
-    expect(chip).toContain('display:inline-block');
+    expect(chip).toContain('display:block');
     expect(chip).toContain('font-size:24px;line-height:28px');
   });
 

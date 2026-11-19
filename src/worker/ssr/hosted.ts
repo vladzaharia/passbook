@@ -22,7 +22,7 @@ export const HOSTED_CSS = `${THEME_CSS}
 ${WORDMARK_CSS}
 ${ART_CSS}
 ${HOSTED_ART_CSS}
-.hosted{display:flex;flex-direction:column;width:100%;max-width:24rem;margin:0 auto;padding:2rem 0 2.5rem}
+.hosted{display:flex;flex-direction:column;justify-content:center;min-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));width:100%;max-width:24rem;margin:0 auto;padding:2rem 0 2.5rem}
 .band{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;padding-inline:calc(1px + 1.5rem) calc(1.5rem - 19px)}
 .brand{display:flex;align-items:center;height:72px}
 .band .mark{gap:.625rem;font-size:1.25rem;line-height:1.75rem;letter-spacing:-.015em}
@@ -30,6 +30,7 @@ ${HOSTED_ART_CSS}
 .scene{position:relative;z-index:2;flex:none;width:128px;height:96px;margin-bottom:0;pointer-events:none}
 .scene .wl-art{width:128px;height:96px}
 .scene>[data-replay]{display:block}
+.hosted.wide{max-width:32rem}
 .card{position:relative;z-index:1;display:flex;flex-direction:column;width:100%;overflow:hidden;border:1px solid var(--pk-border-subtle);border-radius:var(--pk-radius-xl);background:var(--pk-surface-raised);box-shadow:var(--pk-elevation-1)}
 .card::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:var(--wl-foil)}
 .body{display:flex;flex-direction:column;gap:1.5rem;padding:1.25rem}
@@ -63,6 +64,15 @@ export interface HostedPageInput {
   body: string;
   /** The lock line under the card body (sign-in pages). */
   footer?: boolean;
+  /** A wider card (32 rem) for a page that shows a code; the rest of the shell is the same. */
+  wide?: boolean;
+  /** Sheets for this page's own body, after the shell's, and markup after the card (scripts). */
+  css?: string;
+  /** Extra head markup (the barcode page's referrer policy) and markup after the card. */
+  head?: string;
+  after?: string;
+  /** False leaves out the replay script (a page that must carry no script of its own). */
+  replay?: boolean;
   /** Moves on to this URL at once (meta refresh), as a page rather than a redirect. */
   refresh?: string;
 }
@@ -102,5 +112,5 @@ export function hostedPage(input: HostedPageInput): string {
   const refresh = input.refresh
     ? `<meta http-equiv="refresh" content="0;url=${escapeHtml(input.refresh)}">`
     : '';
-  return `${documentStart(input.theme)}${appPageHead(input.title)}${refresh}<title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}</style></head><body><main class="hosted"><div class="band"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main>${REPLAY_SCRIPT}</body></html>`;
+  return `${documentStart(input.theme)}${appPageHead(input.title)}${refresh}<title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}${input.css ?? ''}</style>${input.head ?? ''}</head><body><main class="hosted${input.wide ? ' wide' : ''}"><div class="band"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main>${input.replay === false ? '' : REPLAY_SCRIPT}${input.after ?? ''}</body></html>`;
 }

@@ -15,6 +15,7 @@ import {
   escapeHtml,
   RADIUS,
   scalable,
+  stackHtml,
   supportFooter,
   testNoteHtml,
   titleHtml,
@@ -78,8 +79,6 @@ type EmailWalletOffer = Pick<WalletOffer, 'provider' | 'href'>;
 
 /** Wallet's logo box is 160×50 pt; the email draws the logo at most this tall. */
 const LOGO = { width: 160, height: 36 };
-/** Between the badge and its button, side by side or stacked: more than its 0.1 × height. */
-const GAP = 12;
 const CARD = parseColor(c.card) ?? { r: 255, g: 255, b: 255 };
 
 /** The logo row, as the pass's header: the logo, then logoText unless the logo has the name. */
@@ -126,20 +125,13 @@ function passBlock(input: PassEmailInput, fields: PassSummary['fields']): string
 }
 
 /**
- * The badge and its button: one box, side by side where the column fits both, else stacked, left
- * on the card's text edge. Inline blocks wrap without media queries (Gmail). Word-rendered Outlook
- * has no inline blocks and drops div margins, so it gets a fixed row instead: two 143 px cells and
- * a 12 px one between them.
+ * The badge, then its button, stacked on the card's text edge: the badge adds, the button only
+ * opens, so they are never a side-by-side pair. A table row each, so every client keeps the gap.
  */
 function actionsHtml(input: PassEmailInput): string {
   const { width, height } = EMAIL_BADGE;
-  const notMso = (html: string) => `<!--[if !mso]><!-->${html}<!--<![endif]-->`;
-  const mso = (html: string) => `<!--[if mso]>${html}<![endif]-->`;
-  const cell = `<td width="${width}" valign="top" style="width:${width}px;padding:0 0 ${GAP}px">`;
-  const item = (inner: string, right: string) =>
-    `${notMso(`<div style="display:inline-block;vertical-align:top;width:${width}px;margin:0 ${right} ${GAP}px 0">`)}${inner}${notMso('</div>')}`;
   const badge = `<a href="${escapeHtml(input.downloadUrl)}" style="display:block;text-decoration:none"><img src="${escapeHtml(input.badgeUrl)}" alt="${APPLE_BADGE_ALT}" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px;border:0"></a>`;
-  return `<div style="margin:0 0 4px;font-size:0;line-height:0">${mso(`<table role="presentation" cellspacing="0" cellpadding="0"><tr>${cell}`)}${item(badge, `${GAP}px`)}${mso(`</td><td width="${GAP}" style="width:${GAP}px;font-size:0;line-height:0">&nbsp;</td>${cell}`)}${item(badgeButtonHtml(input.manageUrl, OPEN_LABEL), '0')}${mso('</td></tr></table>')}</div>`;
+  return stackHtml(badge, badgeButtonHtml(input.manageUrl, OPEN_LABEL));
 }
 
 /** Only render capability links for the same pass as the Apple and public-page links. */
@@ -187,7 +179,6 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
     `${APPLE_BADGE_ALT}: ${input.downloadUrl}`,
     `${OPEN_LABEL}: ${input.manageUrl}`,
     ADD_LINE,
-    HOLDER_COPY.walletApple,
     ...(wallets?.offers.length
       ? [
           '',
@@ -208,8 +199,7 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
 ${input.mode === 'test' ? testNoteHtml(HOLDER_COPY.testNote('pass')) : ''}
 ${passBlock(input, fields)}
 ${actionsHtml(input)}
-${muted('0 0 8px', ADD_LINE)}
-${muted('0 0 24px', HOLDER_COPY.walletApple)}
+${muted('0 0 24px', ADD_LINE)}
 ${wallets ? walletActionsHtml(wallets.base, wallets.offers) : ''}
 ${input.attached ? muted('0 0 16px', 'The pass is also attached.') : ''}
 ${joinLine ? muted('0 0 16px', escapeHtml(joinLine)) : ''}
