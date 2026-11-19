@@ -59,7 +59,7 @@
   }
 }
 
-/* Polaris ID: one foil sweep along the border per fine-pointer hover. */
+/* Account button: one foil sweep along the border per fine-pointer hover. */
 .wl-sweep-ring {
   position: absolute;
   inset: -1px;

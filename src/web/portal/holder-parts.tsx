@@ -94,15 +94,6 @@ export function SendAgain({
   );
 }
 
-/** What a wallet is, once on the page: Apple's name on Apple devices, none where it is not theirs. */
-export function WalletExplain({ android }: { android: boolean }) {
-  return (
-    <p className="text-sm text-fg-muted">
-      {android ? HOLDER_COPY.walletGeneric : HOLDER_COPY.walletApple}
-    </p>
-  );
-}
-
 /** The org's support contacts while the pass is live (the voided note carries its own). */
 export function Help({ support }: { support: HolderSupport }) {
   return (

@@ -5,14 +5,14 @@ import type {
   WalletProviderIssuance,
 } from '../../shared/contracts/wallet-providers.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
-import { addLine, type DeviceInfo, isAndroid } from '../../shared/device.ts';
+import { addLine, type DeviceInfo } from '../../shared/device.ts';
 import { walletChoices } from '../../shared/wallet-choice.ts';
 import { AppleWalletBadge } from '../ui/apple-wallet-badge.tsx';
 import { BuddyArt } from '../ui/art/buddy-art.tsx';
 import { AddBlock } from './add/add-block.tsx';
 import { type AddAreaProps, addMode } from './add/area.ts';
 import type { RenderBuddy } from './add/scan.tsx';
-import { Help, type HolderSupport, Notice, SendAgain, WalletExplain } from './holder-parts.tsx';
+import { Help, type HolderSupport, Notice, SendAgain } from './holder-parts.tsx';
 import { WalletChoices } from './wallet-choice.tsx';
 import './holder-pass.css';
 
@@ -125,7 +125,6 @@ export function HolderPassView(props: HolderPassViewProps) {
             apple={area ? <AddBlock {...area} buddy={buddy} /> : null}
           />
         ) : null}
-        {state === 'active' ? <WalletExplain android={isAndroid(device.device)} /> : null}
         {state === 'active' && props.resend ? (
           <SendAgain action={props.resend.action} again={props.resend.again} />
         ) : null}

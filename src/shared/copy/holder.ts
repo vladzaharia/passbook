@@ -1,7 +1,7 @@
 /** Lines a pass holder reads on the sign-in page, the pass pages and the pass email. */
 export const HOLDER_COPY = {
   /** Under the sign-in card. */
-  signInFooter: 'Signing in shows the passes sent to your email.',
+  signInFooter: 'Your passes are tied to your email.',
   /** The pass email's title (and its preview in the console). */
   passReady: 'Your pass is ready',
   /** Where this device cannot add to Apple Wallet. */
@@ -52,10 +52,8 @@ export const HOLDER_COPY = {
   emailAddLine: 'Open this email on your phone to add the pass to your wallet.',
   /** The pass page's link preview when native wallets are offered too. */
   previewWallets: 'Add it to your wallet.',
-  /** What a wallet is, said once on the pass page and in the pass email. */
+  /** What a wallet is, said once in the pass email. */
   walletApple: 'Apple Wallet is the app on your iPhone that keeps cards and tickets.',
-  /** Android holders: no brand they do not use. */
-  walletGeneric: 'A wallet is the app on your phone that keeps cards and tickets.',
   /** Mail the pass again: the pass page, My passes and the sign-in code. */
   sendAgain: 'Send it again',
   sendAgainSent: 'Sent. Check your email.',
