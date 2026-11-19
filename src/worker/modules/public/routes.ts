@@ -1,8 +1,8 @@
 import { PublicAssetParamSchema, PublicTokenParamSchema } from '../../../shared/contracts/index.ts';
 import { passDevice } from '../../../shared/device.ts';
-import { endedOn } from '../../../shared/ended-on.ts';
 import { PASS_SW_SOURCE } from '../../../shared/pass-offline.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
+import { formatEndedOn } from '../../../web/lib/format.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -74,16 +74,14 @@ function endedFor(
   pass: { status: string; modifiedAt: number },
   voidedAt: number | null,
   passJson: { expirationDate?: unknown },
-  lang: string,
   zone: string | undefined,
 ): string | null {
   const state =
     pass.status === 'voided' || view.voided ? 'voided' : view.expired ? 'expired' : null;
   return state
-    ? endedOn(
+    ? formatEndedOn(
         state,
         { modifiedAt: pass.modifiedAt, voidedAt, expirationDate: passJson.expirationDate },
-        lang,
         zone,
       )
     : null;
@@ -146,6 +144,11 @@ register(
         locale: lang,
         now: new Date(svcCtx.clock.now()),
         timeZone: zoneOf(c) ?? 'UTC',
+        ...(model.removal
+          ? { stateWord: 'Removed' }
+          : pass.status === 'voided'
+            ? { stateWord: 'Voided' }
+            : {}),
       });
       const html = renderPassPage({
         view,
@@ -174,7 +177,6 @@ register(
           pass,
           pass.status === 'voided' ? await voidedAt(svcCtx.env.DB, pass.orgId, pass.id) : null,
           model.passJson,
-          lang,
           zoneOf(c),
         ),
         ...(pass.holderEmail && !model.removal

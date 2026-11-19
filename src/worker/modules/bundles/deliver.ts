@@ -23,6 +23,7 @@ import { captureEmail } from '../sandbox/capture.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { bundleImages } from './assets.ts';
 import { BundleEmailIntentSchema, bundleEmailSnapshot, matchesBundle } from './email-binding.ts';
+import { passDetails } from './email-detail.ts';
 import { bundleChecks } from './repo-delivery-fence.ts';
 
 /**
@@ -110,6 +111,7 @@ export async function deliverBundleEmail(
     bundleImages(images, firstToken, bundleToken, first.id),
     base,
   );
+  const details = await passDetails(ctx, passes);
   const email = renderBundleEmail({
     orgName: org?.name ?? 'PassBook',
     bundleName: bundle.name,
@@ -118,8 +120,9 @@ export async function deliverBundleEmail(
     pageUrl: page,
     addAllUrl: `${page}/passes.pkpasses`,
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
-    passes: passes.map((pass) => ({
+    passes: passes.map((pass, i) => ({
       title: pass.displayTitle ?? pass.serial,
+      detail: details[i] ?? null,
       addUrl:
         pass.status === 'active' && pass.removedAt === null
           ? `${page}/${pass.id}/pass.pkpass`

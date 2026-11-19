@@ -5,7 +5,7 @@ import {
   PublicBundlePassParamSchema,
 } from '../../../shared/contracts/bundles.ts';
 import { passDevice } from '../../../shared/device.ts';
-import { normalize } from '../../../shared/pass-view/index.ts';
+import { distinguishingLine, normalize } from '../../../shared/pass-view/index.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { ipRatePrefix } from '../../platform/ip.ts';
@@ -81,11 +81,18 @@ register(
           locale: lang,
           now,
           timeZone: zone,
+          ...(pass.removedAt !== null
+            ? { stateWord: 'Removed' }
+            : pass.status === 'voided'
+              ? { stateWord: 'Voided' }
+              : {}),
         });
+        const title = pass.displayTitle ?? view.description ?? model.orgName;
         return {
           id: pass.id,
           view,
-          title: pass.displayTitle ?? view.description ?? model.orgName,
+          title,
+          detail: distinguishingLine(model.passJson, title),
           state:
             pass.removedAt !== null
               ? ('removed' as const)

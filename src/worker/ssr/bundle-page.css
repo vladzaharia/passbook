@@ -90,6 +90,21 @@
     grid-area: way;
   }
 }
+.bd-detail {
+  display: block;
+  font-weight: 400;
+  color: var(--pk-text-muted);
+}
+.bd-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--pk-text-muted);
+}
+.bd-note a {
+  color: var(--pk-accent-fg);
+  font-weight: 500;
+}
 .bd-help {
   margin-top: 2rem;
 }

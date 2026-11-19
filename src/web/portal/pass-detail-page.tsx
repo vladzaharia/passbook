@@ -1,8 +1,8 @@
 import { type InfiniteData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import type { MyPassListSchema } from '@/shared/contracts/me.ts';
-import { endedOn } from '@/shared/ended-on.ts';
 import type { PassView } from '@/shared/pass-view/index.ts';
+import { formatEndedOn } from '../lib/format.ts';
 import { useSession } from '../lib/session.ts';
 import { localZone } from '../lib/timezones.ts';
 import { PassCardStage } from '../pass-card/index.tsx';
@@ -75,14 +75,14 @@ function Detail({
       support={pass.support}
       endedOn={
         state === 'voided' || state === 'expired'
-          ? endedOn(
+          ? formatEndedOn(
               state,
               {
                 modifiedAt: pass.modifiedAt,
                 voidedAt: pass.voidedAt,
                 expirationDate: pass.passJson.expirationDate,
               },
-              navigator.language,
+              localZone(),
             )
           : null
       }
@@ -95,7 +95,7 @@ function Detail({
           <PassDetails
             passJson={pass.passJson}
             view={view}
-            active={state === 'active'}
+            state={state}
             title={title}
             locale={navigator.language}
             now={new Date()}

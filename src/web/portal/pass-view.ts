@@ -14,6 +14,11 @@ export function assetUrls(base: string | null, names?: readonly string[]): Recor
 export function toView(pass: MyPass): PassView {
   return normalize(pass.passJson as unknown as PassJson, {
     assets: assetUrls(pass.assetBaseUrl, pass.assetNames),
+    ...(pass.removedAt !== null
+      ? { stateWord: 'Removed' }
+      : pass.status === 'voided'
+        ? { stateWord: 'Voided' }
+        : {}),
   });
 }
 

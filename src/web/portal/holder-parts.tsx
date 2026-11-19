@@ -20,6 +20,7 @@ export function Notice({
   message,
   many,
   endedOn,
+  inWallet,
 }: {
   state: 'active' | 'voided' | 'expired' | 'removed';
   orgName: string;
@@ -30,6 +31,8 @@ export function Notice({
   many?: boolean;
   /** When it stopped working, already formatted. */
   endedOn?: string | null | undefined;
+  /** Known not to be in a Wallet (the portal knows; /p does not): no Wallet jargon then. */
+  inWallet?: boolean | undefined;
 }) {
   if (state === 'active') return null;
   const voided = state === 'voided';
@@ -46,7 +49,9 @@ export function Notice({
               ? HOLDER_COPY.voidedOn(endedOn)
               : HOLDER_COPY.voided
           : state === 'removed'
-            ? HOLDER_COPY.removed
+            ? inWallet === false
+              ? HOLDER_COPY.removedPlain
+              : HOLDER_COPY.removed
             : endedOn
               ? HOLDER_COPY.expiredOn(endedOn)
               : HOLDER_COPY.expired}

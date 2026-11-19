@@ -48,7 +48,7 @@ describe('renderBundleEmail', () => {
     expect(cells).toHaveLength(4);
     for (const cell of cells) expect(cell).toContain('e-line');
     expect(html).toContain('.e-link{color:');
-    expect(html).toMatch(/class="e-link"[^>]*padding:12px 0 12px 12px/);
+    expect(html).toMatch(/class="e-link"[^>]*padding:11px 16px;border:1px solid/);
   });
 
   it('counts the passes beside the name and shares the support footer', () => {
@@ -66,5 +66,18 @@ describe('renderBundleEmail', () => {
     expect(test.html).toContain('class="e-test"');
     expect(test.html).toContain('Test bundle. It is not real and will be deleted.');
     expect(test.text).toContain('Test bundle. It is not real and will be deleted.');
+  });
+
+  it('tells same-titled passes apart and says passes, not pass', () => {
+    const email = render({
+      passes: [
+        { title: 'Maya', addUrl: 'https://w.test/b/t/p1/pass.pkpass', detail: 'Tier: Plus' },
+        { title: 'Maya', addUrl: 'https://w.test/b/t/p2/pass.pkpass', detail: 'Tier: Pro <b>' },
+      ],
+    });
+    expect(email.html).toContain('Tier: Plus');
+    expect(email.html).toContain('Tier: Pro &lt;b&gt;');
+    expect(email.text).toContain('Maya (Tier: Plus): https://w.test/b/t/p1/pass.pkpass');
+    expect(email.text).toContain('add the passes to your wallet');
   });
 });
