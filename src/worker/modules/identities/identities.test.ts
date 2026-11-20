@@ -252,8 +252,6 @@ describe('identity authority revision', () => {
     const org = await makeOrg(fixtures(base));
     const row = await first<{
       org_id: string | null;
-      pass_type_identifier: string;
-      team_identifier: string;
       credential_id: string;
       cert_pem: string;
       cert_sha256: string;
@@ -262,7 +260,7 @@ describe('identity authority revision', () => {
       env_material_sha256: string | null;
     }>(
       env.DB,
-      `SELECT org_id, pass_type_identifier, team_identifier, credential_id, cert_pem,
+      `SELECT org_id, credential_id, cert_pem,
               cert_sha256, not_before, not_after, env_material_sha256
        FROM signing_identities WHERE id = ?`,
       [dto.id],
@@ -274,11 +272,15 @@ describe('identity authority revision', () => {
     );
     if (!row || !otherRow) throw new Error('Missing identity fixture');
 
+    // The pass type and team are immutable: installed passes key on them.
+    for (const column of ['pass_type_identifier', 'team_identifier'])
+      await expect(
+        run(env.DB, `UPDATE signing_identities SET ${column} = 'changed' WHERE id = ?`, [dto.id]),
+      ).rejects.toThrow(/IDENTITY_PTI_IMMUTABLE/);
+
     let previous = await identityRevision(dto.id);
     const changes: Array<[string, string | number | null, string | number | null]> = [
       ['org_id', org.id, row.org_id],
-      ['pass_type_identifier', `${row.pass_type_identifier}.changed`, row.pass_type_identifier],
-      ['team_identifier', `${row.team_identifier}X`, row.team_identifier],
       ['credential_id', otherRow.credential_id, row.credential_id],
       ['cert_pem', `${row.cert_pem}\n`, row.cert_pem],
       ['cert_sha256', `${row.cert_sha256}00`, row.cert_sha256],
