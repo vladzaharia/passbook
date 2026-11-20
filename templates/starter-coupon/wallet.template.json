@@ -4,8 +4,16 @@
   "description": "A single-use offer with an expiry.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png"
+      }
+    },
     "samsung": {}
+  },
+  "channels": {
+    "paper": "on",
+    "nfc": "off"
   },
   "blueprint": true,
   "inputs": {
@@ -306,5 +314,11 @@
         "refused": "One per customer."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "half",
+    "barcode": "code128",
+    "kind": "coupon"
   }
 }

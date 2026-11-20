@@ -58,6 +58,8 @@ export interface PublishOptions {
   connectionContext?: ConnectionPassContext;
   expectedHolder?: Pick<Pass, 'holderEmail' | 'ownerUserId'>;
   connectionState?: ConnectionStateWrite;
+  /** The org-lifecycle purge voids the passes of a closed org: its job grant may act on a closed org. */
+  closedOk?: true;
   /** Publish even when the built pass is identical (re-sign). */
   force?: boolean;
   /** Set false to dispatch pushes later in one go (bulk jobs). Default true. */

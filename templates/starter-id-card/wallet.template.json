@@ -4,8 +4,17 @@
   "description": "Photo, name, number and a scannable code.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png",
+        "thumbnail": "wallets/google/thumbnail.png"
+      }
+    },
     "samsung": {}
+  },
+  "channels": {
+    "paper": "off",
+    "nfc": "on"
   },
   "blueprint": true,
   "inputs": {
@@ -276,5 +285,12 @@
         "refused": "Send them to the office."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "cr80",
+    "barcode": "qr",
+    "kind": "membership",
+    "ink": "mono"
   }
 }

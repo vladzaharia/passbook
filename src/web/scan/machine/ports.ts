@@ -67,6 +67,8 @@ export interface ScanDeps {
   chip(chip: 'just_now' | 'already_open' | { same: string }): void;
   celebrate(): void;
   unsure: UnsureStorePort;
+  /** Offline check-in: decides a read with no connection and answers with an `offline` event. Absent: Stop. */
+  offline?: { decide(key: string, input: ScanInput, unverified: boolean): void };
   /** The scanner the unsure rows belong to; null for an admin. */
   scannerId(): string | null;
   /** Per-request fields: the device's local midnight, and an admin's scope. */

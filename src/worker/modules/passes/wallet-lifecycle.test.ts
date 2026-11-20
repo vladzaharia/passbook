@@ -82,7 +82,6 @@ describe('pass provider lifecycle', () => {
         passVersion: before.passVersion,
         passRevision: before.passRevision,
         passCredentialGeneration: before.credentialGeneration,
-        credentialKeysetCommitment: before.credentialKeysetCommitment,
         lifecycleGeneration: before.lifecycleGeneration,
       }),
     ).toMatchObject({ stale: true, scheduled: 0 });
@@ -259,7 +258,6 @@ describe('pass provider lifecycle', () => {
       provider: 'google' as const,
       instanceId: t.instanceId,
       version: 1,
-      credentialKeysetCommitment: t.scope.credentialKeysetCommitment,
     };
     expect(
       await completeWalletOperation(jobCtxOf(t.kit), {

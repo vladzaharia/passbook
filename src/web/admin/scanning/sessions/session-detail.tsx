@@ -20,6 +20,7 @@ import {
   toast,
 } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
+import { CreatedCallout, useCreated } from '../../passes/created.tsx';
 import { AddDeviceDialog } from './add-device-dialog.tsx';
 import { useUpdateSession } from './api.ts';
 import { DeviceCard } from './device-card.tsx';
@@ -51,6 +52,7 @@ export function SessionDetail({
   onDuplicate: (session: ScanningSession) => void;
 }) {
   const update = useUpdateSession(s.id);
+  const setupNote = useCreated<string>(`scan-setup:${s.id}`);
   const [dialog, setDialog] = useState<'rules' | 'add' | 'end' | HoursDialog | undefined>(
     canManage && addDevice ? 'add' : undefined,
   );
@@ -155,6 +157,11 @@ export function SessionDetail({
           ) : null}
         </div>
       ) : null}
+      {setupNote.shown && setupNote.mark ? (
+        <div className="mb-6">
+          <CreatedCallout title={setupNote.mark} onDismiss={setupNote.dismiss} />
+        </div>
+      ) : null}
       <HoursBanner session={s} canManage={canManage} onDialog={setDialog} />
       <TwoPane
         aside={
@@ -222,7 +229,12 @@ export function SessionDetail({
         />
       ) : null}
       {canManage && dialog === 'add' ? (
-        <AddDeviceDialog session={s} onClose={() => setDialog(undefined)} />
+        <AddDeviceDialog
+          session={s}
+          setup={setupNote.mark !== undefined}
+          deviceNames={s.devices.map((d) => d.name)}
+          onClose={() => setDialog(undefined)}
+        />
       ) : null}
       {canManage && dialog === 'end' ? (
         <ConfirmDialog

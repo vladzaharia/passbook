@@ -2,13 +2,15 @@ import {
   anyDigitalOn,
   type ChannelInputs,
   DIGITAL_CHANNELS,
+  defaultOf,
   effectiveChannels,
 } from '../../../shared/channels.ts';
-import type {
-  Channel,
-  ChannelReason,
-  PassChannelsDto,
-  TemplateChannelsDto,
+import {
+  CHANNELS,
+  type Channel,
+  type ChannelReason,
+  type PassChannelsDto,
+  type TemplateChannelsDto,
 } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { CHANNEL_COPY } from '../../../shared/copy/channels.ts';
@@ -34,6 +36,7 @@ async function levels(
   ]);
   const platform: Per<ChannelReason> = {};
   if (!platformSettings['print.enabled']) platform.paper = 'printing_off';
+  if (!platformSettings['nfc.tagsEnabled']) platform.nfc = 'tags_off';
   const blocked: Per<ChannelReason> = {};
   for (const p of ['google', 'samsung'] as const) {
     const reason = await walletProviderDisabledReason(ctx.env.DB, p, orgId, mode);
@@ -112,6 +115,7 @@ export async function loadMany(
           ...levelsOf,
           capability: capabilityReasons(capability),
           template: policy,
+          defaults: capability.defaults,
           pass: rows.overrides,
           retired: rows.retired,
           retiredCause: rows.retiredCause,
@@ -189,11 +193,17 @@ export async function loadTemplate(
       ...lv,
       capability: capabilityReasons(cap),
       template: policy,
+      defaults: cap.defaults,
       pass: {},
       retired: {},
     },
   };
 }
+
+export const channelDefaults = (inputs: ChannelInputs): TemplateChannelsDto['defaults'] =>
+  Object.fromEntries(
+    CHANNELS.map((c) => [c, defaultOf(inputs, c)]),
+  ) as TemplateChannelsDto['defaults'];
 
 export async function templateChannels(
   ctx: ServiceContext,
@@ -201,7 +211,12 @@ export async function templateChannels(
   mode: Mode,
 ): Promise<TemplateChannelsDto> {
   const { inputs, policy, revision } = await loadTemplate(ctx, template, mode);
-  return { channels: policy, revision, effective: effectiveChannels(inputs) };
+  return {
+    channels: policy,
+    revision,
+    effective: effectiveChannels(inputs),
+    defaults: channelDefaults(inputs),
+  };
 }
 
 const NOTICE_DAYS = 14;

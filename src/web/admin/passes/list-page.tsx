@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Plus, Upload } from 'lucide-react';
+import { ImagePlus, Plus, Upload } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { formatDay } from '../../lib/format.ts';
@@ -164,6 +164,9 @@ export function PassesListPage({
       <Button asChild variant="outline" iconStart={<Upload aria-hidden />}>
         <Link to="/admin/passes/import">Import</Link>
       </Button>
+      <Button asChild variant="outline" iconStart={<ImagePlus aria-hidden />}>
+        <Link to="/admin/passes/photos">Photos</Link>
+      </Button>
       <Button asChild variant={variant} iconStart={<Plus aria-hidden />}>
         <Link to="/admin/passes/new">New pass</Link>
       </Button>
@@ -201,7 +204,13 @@ export function PassesListPage({
               <EmptyState
                 art="passes"
                 title="No passes yet"
-                action={canOperate ? create('primary') : undefined}
+                action={
+                  canOperate ? (
+                    <div className="flex flex-wrap justify-center gap-2 max-sm:flex-col max-sm:[&>*]:w-full">
+                      {create('primary')}
+                    </div>
+                  ) : undefined
+                }
               />
             }
             emptyFiltered={<FilteredEmpty entity="pass" onClear={() => onSearch(CLEARED)} />}

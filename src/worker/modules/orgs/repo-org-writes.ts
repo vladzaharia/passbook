@@ -1,6 +1,8 @@
+import type { EntitlementPreset } from '../../../shared/contracts/entitlements.ts';
 import { grant } from '../../platform/authority.ts';
 import { epochIs } from '../../platform/authority-checks.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
+import { addOrgEntitlements } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
@@ -22,9 +24,16 @@ async function writeOrg(
   configRevision: number,
   columns: Record<string, string | null>,
   now: number,
-  authority: OrgWriteAuthority,
+  authority: OrgWriteAuthority | TenantPassWrite,
 ): Promise<OrgRow | null> {
-  if (authority.orgId !== id || authority.capability !== 'org:manage') return null;
+  if (authority.orgId !== id) return null;
+  // A key may only write through the brand kit's own scope; a session needs org:manage.
+  if (
+    authority.kind === 'session'
+      ? authority.capability !== 'org:manage'
+      : authority.scope !== 'brand:manage'
+  )
+    return null;
   const g = grant(ctx, {
     purpose: 'org.org.update',
     principal: tenantPrincipal(authority),
@@ -72,6 +81,17 @@ export function saveOrgBranding(
   return writeOrg(ctx, before.id, before.config_revision, { branding }, now, authority);
 }
 
+/** The brand kit's write: a session with `org:manage` or a key with `brand:manage`. */
+export function saveOrgBrandKit(
+  ctx: ServiceContext,
+  before: OrgRow,
+  branding: string,
+  now: number,
+  authority: TenantPassWrite,
+): Promise<OrgRow | null> {
+  return writeOrg(ctx, before.id, before.config_revision, { branding }, now, authority);
+}
+
 /** A platform admin's live session: the principal of org create, status and delete. */
 export interface OrgAdmin {
   userId: string;
@@ -81,11 +101,15 @@ export interface OrgAdmin {
 const adminPrincipal = (admin: OrgAdmin) =>
   ({ kind: 'platform', userId: admin.userId, sessionIdHash: admin.sessionId }) as const;
 
-/** `platform.org.create`: commits only while the admin session is live. */
+/**
+ * `platform.org.create`: commits only while the admin session is live. The org and its entitlements row
+ * (its preset, design-multi-tenancy.md section 2.2) are one batch: an org never exists without one.
+ */
 export async function insertOrgAsAdmin(
   ctx: ServiceContext,
   row: Omit<OrgRow, 'config_revision'>,
   admin: OrgAdmin,
+  preset: EntitlementPreset,
 ): Promise<void> {
   const g = grant(ctx, {
     purpose: 'platform.org.create',
@@ -106,6 +130,7 @@ export async function insertOrgAsAdmin(
       row.updated_at,
     ],
   );
+  addOrgEntitlements(g, row.id, preset, row.updated_at);
   await g.commit();
 }
 

@@ -64,6 +64,7 @@ export async function commitPublishArtifact(
       connectionState: options.connectionState,
       authority: options.authority,
       holder: options.holder,
+      ...(options.closedOk ? { closedOk: true as const } : {}),
       commit: options.commit,
       extraChecks: options.extraChecks,
       clock: ctx.clock,

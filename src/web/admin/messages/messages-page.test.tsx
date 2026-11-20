@@ -127,7 +127,7 @@ describe('Message capabilities', () => {
         },
       });
       expect(
-        await screen.findByText(empty ? 'No messages' : 'Doors open late'),
+        await screen.findByText(empty ? 'No messages yet' : 'Doors open late'),
       ).toBeInTheDocument();
       expect(screen.queryByRole('link', { name: 'New message' })).not.toBeInTheDocument();
     },

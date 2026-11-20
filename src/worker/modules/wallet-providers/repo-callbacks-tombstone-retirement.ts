@@ -7,7 +7,6 @@ export interface SamsungRetirementScope {
   mode: Mode;
   instanceId: string;
   operationVersion: number;
-  credentialKeysetCommitment: string;
 }
 
 const retirementJoins = `FROM wallet_provider_instances i
@@ -154,8 +153,6 @@ export async function putSamsungTombstone(
     scope.mode,
     scope.operationVersion,
     identityHash,
-    scope.credentialKeysetCommitment,
-    scope.credentialKeysetCommitment,
   ] as const;
   const results = await batch(db, [
     stmt(

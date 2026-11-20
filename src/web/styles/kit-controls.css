@@ -264,3 +264,39 @@
 [data-instant] {
   transition: none !important;
 }
+
+/* Dependent settings: closed is display none after the collapse, so the parent's flex gap goes too. */
+.wl-dependent {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--wl-dur-enter) var(--wl-ease-out),
+    opacity var(--wl-dur-enter) var(--wl-ease-out),
+    display var(--wl-dur-enter) allow-discrete;
+}
+.wl-dependent:not([data-open]) {
+  display: none;
+}
+.wl-dependent[data-open] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+@starting-style {
+  .wl-dependent[data-open] {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+.wl-dependent > .wl-dependent-body {
+  min-height: 0;
+  overflow: hidden;
+  /* Room for focus rings inside the clip. */
+  margin: -0.25rem;
+  padding: 0.25rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-dependent {
+    transition: none;
+  }
+}

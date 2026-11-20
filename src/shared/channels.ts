@@ -24,12 +24,19 @@ export interface ChannelInputs {
   capability: Per<ChannelReason>;
   /** The stored template policy; null or absent channels use the defaults. */
   template: Per<TemplateChannelState> | null;
+  /** The pinned version's manifest defaults; they stand where the policy is silent. */
+  defaults?: Per<'on' | 'off'>;
   /** Pass overrides; absent follows the template. */
   pass: Per<PassChannelState>;
   /** When a plain Turn off retired the pass's copies. */
   retired: Per<number>;
   /** The level that turned the channel off when it was retired. */
   retiredCause?: Per<'pass' | 'template'>;
+}
+
+/** A channel's default for a template: its manifest's, else the global one. */
+export function defaultOf(i: Pick<ChannelInputs, 'defaults'>, channel: Channel): 'on' | 'off' {
+  return i.defaults?.[channel] ?? (templateDefault(channel) as 'on' | 'off');
 }
 
 export function templateDefault(channel: Channel): TemplateChannelState {
@@ -70,7 +77,7 @@ function statusOf(i: ChannelInputs, c: Channel): EffectiveChannels[Channel] {
   if (org) return off('org', org);
   const capability = i.capability[c];
   if (capability) return off('template', capability);
-  const state = i.template?.[c] ?? templateDefault(c);
+  const state = i.template?.[c] ?? i.defaults?.[c] ?? templateDefault(c);
   if (state === 'never') return off('template', 'never');
   const override = i.pass[c];
   if (override === 'on') return { on: true, source: 'pass' };

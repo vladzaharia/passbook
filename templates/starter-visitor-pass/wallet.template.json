@@ -1,0 +1,395 @@
+{
+  "schema": 1,
+  "name": "Visitor pass",
+  "description": "One day for a visitor, with their host. Ends at the time you set.",
+  "wallets": {
+    "schema": 1,
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png",
+        "thumbnail": "wallets/google/thumbnail.png"
+      }
+    },
+    "samsung": {}
+  },
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "memberName",
+      "memberId",
+      "validFrom",
+      "validUntil"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "memberName": {
+        "type": "string",
+        "x-label": "Visitor",
+        "x-group": "Visitor",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "memberId": {
+        "type": "string",
+        "x-label": "Pass ID",
+        "x-group": "Visitor",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "company": {
+        "type": "string",
+        "x-label": "Company",
+        "x-group": "Visitor",
+        "x-order": 30,
+        "maxLength": 80
+      },
+      "sponsor": {
+        "type": "string",
+        "x-label": "Host",
+        "x-group": "Visit",
+        "x-order": 40,
+        "maxLength": 80,
+        "x-scan": "desk"
+      },
+      "hostEmail": {
+        "type": "string",
+        "format": "email",
+        "maxLength": 120,
+        "x-label": "Host email",
+        "x-group": "Visit",
+        "x-order": 50
+      },
+      "validFrom": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Arrives",
+        "x-group": "Visit",
+        "x-order": 60,
+        "x-widget": "datetime"
+      },
+      "validUntil": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Until",
+        "x-group": "Visit",
+        "x-order": 70,
+        "x-widget": "datetime"
+      },
+      "where": {
+        "type": "string",
+        "x-label": "Where to go",
+        "x-group": "Visit",
+        "x-order": 80,
+        "maxLength": 80
+      },
+      "checkId": {
+        "type": "boolean",
+        "x-label": "Check ID",
+        "x-group": "Visit",
+        "x-order": 90,
+        "default": false,
+        "x-help": "The scanner flags the pass."
+      },
+      "status": {
+        "type": "string",
+        "x-label": "Status",
+        "x-group": "Visit",
+        "x-order": 100,
+        "enum": [
+          "Active",
+          "Suspended"
+        ],
+        "default": "Active",
+        "x-widget": "select"
+      },
+      "plan": {
+        "type": "string",
+        "x-label": "Plan",
+        "x-group": "Visit",
+        "x-order": 110,
+        "enum": [
+          "visitor"
+        ],
+        "default": "visitor",
+        "x-widget": "select",
+        "x-enumLabels": {
+          "visitor": "Visitor"
+        }
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 900,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 901,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      }
+    }
+  },
+  "sample": {
+    "memberName": "Leo Brandt",
+    "memberId": "VIS-0001",
+    "company": "Acme Ltd",
+    "sponsor": "Priya Shah",
+    "hostEmail": "priya@example.com",
+    "validFrom": "2030-11-18T09:30:00-08:00",
+    "validUntil": "2030-11-18T17:00:00-08:00",
+    "where": "Floor 3, Oslo",
+    "checkId": false,
+    "status": "Active",
+    "plan": "visitor"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "arrives"
+      },
+      "value": "{{validFrom}}"
+    },
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{memberName}}"
+    },
+    {
+      "to": {
+        "field": "company"
+      },
+      "value": "{{company}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "host"
+      },
+      "value": "{{sponsor}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "where"
+      },
+      "value": "{{where}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "until"
+      },
+      "value": "{{validUntil}}"
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{validUntil}}"
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{memberId}}"
+    }
+  ],
+  "display": {
+    "icon": "door-open",
+    "group": "get-in",
+    "aliases": [
+      "visitor",
+      "guest",
+      "contractor",
+      "reception",
+      "one day"
+    ],
+    "title": "{{memberName}}",
+    "subtitle": "Visitor \u00b7 {{company}}",
+    "status": "{{status}}",
+    "search": [
+      "memberName",
+      "company",
+      "sponsor"
+    ]
+  },
+  "behaviors": [
+    {
+      "use": "relevance-window",
+      "version": 1,
+      "config": {
+        "start": "validFrom",
+        "end": "validUntil",
+        "leadMinutes": 60
+      }
+    }
+  ],
+  "channels": {
+    "paper": "on",
+    "nfc": "on"
+  },
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "enter",
+        "label": "Check in",
+        "kind": "check_in",
+        "repeat": "always",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "memberId"
+    },
+    "flags": [
+      {
+        "input": "checkId",
+        "label": "Check ID"
+      }
+    ],
+    "access": {
+      "input": {
+        "plan": "plan",
+        "from": "validFrom",
+        "until": "validUntil",
+        "sponsor": "sponsor"
+      },
+      "plans": [
+        {
+          "id": "visitor",
+          "label": "Visitor",
+          "kind": "guest",
+          "days": 1,
+          "zones": [
+            {
+              "zone": "*"
+            }
+          ]
+        }
+      ],
+      "suspend": {
+        "input": "status",
+        "equals": [
+          "Suspended"
+        ]
+      },
+      "rules": {
+        "visitGapMinutes": 120,
+        "reentryMinutes": null
+      }
+    },
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.memberName}}",
+      "photo": {
+        "minRole": "door"
+      },
+      "header": {
+        "chips": [
+          {
+            "id": "c_plan",
+            "text": "{{access.plan}}",
+            "tone": "gold",
+            "icon": "ticket"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": "p_visit",
+          "preset": {
+            "id": "membership",
+            "v": 1
+          },
+          "title": "Visit",
+          "icon": "door-open",
+          "on": [
+            "ready",
+            "ok"
+          ],
+          "rows": [
+            {
+              "id": "r_until",
+              "type": "columns",
+              "items": [
+                {
+                  "id": "i_company",
+                  "label": "Company",
+                  "value": "{{inputs.company}}"
+                },
+                {
+                  "id": "i_until",
+                  "label": "Until",
+                  "value": "{{access.until|time}}"
+                }
+              ]
+            },
+            {
+              "id": "r_host",
+              "type": "field",
+              "label": "Host",
+              "value": "{{inputs.sponsor}}",
+              "whenEmpty": "hide",
+              "minRole": "desk"
+            },
+            {
+              "id": "r_where",
+              "type": "field",
+              "label": "Go to",
+              "value": "{{inputs.where}}",
+              "whenEmpty": "hide"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Send them to reception."
+      },
+      "customer": {
+        "chips": [
+          "c_plan"
+        ],
+        "panel": null
+      }
+    }
+  }
+}

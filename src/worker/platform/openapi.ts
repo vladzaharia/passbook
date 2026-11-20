@@ -3,8 +3,12 @@ import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import type { Context, MiddlewareHandler } from 'hono';
 import type { ZodType, z } from 'zod';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
+import { scopeExercises } from './api-scopes.ts';
+import { authorityUnproven, type RouteAuth, requireCaller } from './auth.ts';
 import { defaultBodyLimit } from './body-limit.ts';
 import type { AppBindings } from './context.ts';
+import { AppError } from './errors.ts';
+import { operationSecurity, scopesForMethod } from './openapi-security.ts';
 
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
@@ -20,6 +24,34 @@ export interface RouteSpec {
   /** JSON success body. Omit for redirects, HTML and binary responses. */
   response?: ZodType;
   status?: 200 | 201 | 202 | 204 | 302;
+  /**
+   * Who may call: a session or a key with a scope, humans only, or platform admins only. When set,
+   * `register` installs the guard (`requireCaller`) and writes the document's `security`. A route
+   * without it relies on a router-level guard (to be migrated).
+   */
+  auth?: RouteAuth;
+  /**
+   * The route is open to anyone on purpose (health, holder links, provider callbacks): it takes no
+   * `auth`, and route-inventory.test.ts counts it as decided. Authority, if any, is the route's own.
+   */
+  public?: true;
+}
+
+const publicHandlers = new WeakSet<object>();
+export const isPublicHandler = (handler: object): boolean => publicHandlers.has(handler);
+
+/** A `capability` on a scope declaration must be one every scope the route's method accepts exercises. */
+function checkDeclaration(spec: RouteSpec): void {
+  if (spec.public && spec.auth)
+    throw new Error(`${spec.method.toUpperCase()} ${spec.path}: public and auth are exclusive`);
+  const auth = spec.auth;
+  if (!auth || !('scope' in auth) || !auth.capability) return;
+  for (const scope of scopesForMethod(auth.scope, spec.method)) {
+    if (!scopeExercises(scope, auth.capability))
+      throw new Error(
+        `${spec.method.toUpperCase()} ${spec.path}: scope ${scope} does not exercise ${auth.capability}`,
+      );
+  }
 }
 
 /**
@@ -69,7 +101,11 @@ export function register<S extends RouteSpec>(
   handler: (c: RouteContext<S>) => Response | Promise<Response>,
 ): void {
   const status = spec.status ?? 200;
+  checkDeclaration(spec);
   const config = {
+    ...(spec.auth
+      ? { middleware: requireCaller(spec.auth), ...operationSecurity(spec.auth, spec.method) }
+      : {}),
     method: spec.method,
     path: spec.path,
     summary: spec.summary,
@@ -93,7 +129,11 @@ export function register<S extends RouteSpec>(
     },
   } as unknown as RouteConfig;
   const checked = async (c: RouteContext<S>) => {
+    const principal = c.var.auth;
     const response = await handler(c);
+    // A declared capability must have been proven by the handler: fail closed, not just in tests.
+    if (response.status < 400 && authorityUnproven(principal))
+      throw new AppError('AUTHORITY_UNPROVEN', 500, 'Authority was not verified.');
     const schema = spec.response;
     if (checkResponses && schema && response.status === status) {
       const parsed = schema.safeParse(await response.clone().json());
@@ -104,6 +144,7 @@ export function register<S extends RouteSpec>(
     }
     return response;
   };
+  if (spec.public) publicHandlers.add(checked);
   router.openapi(createRoute(config), checked as never);
 }
 

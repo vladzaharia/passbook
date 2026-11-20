@@ -9,8 +9,8 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { methodScope, modeOf } from '../../platform/auth.ts';
 import { ValidationError } from '../../platform/errors.ts';
+import { idempotencyKeyHeader } from '../../platform/idempotency.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
-import { idempotencyKeyOf } from '../delivery/idempotent-send.ts';
 import {
   actorFor,
   assertOrg,
@@ -117,15 +117,16 @@ register(
     response: OkSchema,
   },
   async (c) => {
-    await sendBundleEmail(
+    const { replayed } = await sendBundleEmail(
       svc(c),
       actorFor(c),
       c.req.valid('param').id,
       c.req.valid('json'),
       passScopeOf(c),
       { kind: 'tenant', auth: authOf(c) },
-      idempotencyKeyOf(c.req.header('idempotency-key')),
+      idempotencyKeyHeader(c.req.header('idempotency-key')),
     );
+    if (replayed) c.header('Idempotent-Replayed', 'true');
     return c.json({ ok: true as const }, 202);
   },
 );

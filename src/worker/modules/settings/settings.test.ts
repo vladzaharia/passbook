@@ -27,6 +27,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore, hashSessionCookie } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
+import { walletProviderEnabled } from '../wallet-providers/provider-policy.ts';
 import { writeScope } from './repo.ts';
 import {
   clearSettingsCache,
@@ -182,6 +183,7 @@ async function atSettingsCommit<T>(
 type List = {
   items: { key: string; value: unknown; default?: unknown }[];
   oidc?: { issuer: string; adminGroup: string | null; userGroup: string | null };
+  released?: { google: boolean; samsung: boolean };
 };
 
 beforeAll(async () => {
@@ -246,6 +248,10 @@ describe('settings api', () => {
       issuer: appEnv.OIDC_ISSUER,
       adminGroup: appEnv.OIDC_ADMIN_GROUP || null,
       userGroup: appEnv.OIDC_USER_GROUP || null,
+    });
+    expect(body.released).toEqual({
+      google: walletProviderEnabled('google'),
+      samsung: walletProviderEnabled('samsung'),
     });
   });
 

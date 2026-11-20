@@ -1,6 +1,8 @@
+import { OrgBrandingSchema } from '../../../shared/contracts/orgs.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { brandingKey } from '../orgs/branding-files.ts';
+import { scanLogoOf } from '../orgs/brand.ts';
+import { brandingKey, webLogoKey } from '../orgs/branding-files.ts';
 import { readBranding } from '../passes/branding.ts';
 import type { ScanActor } from './actor.ts';
 import { SESSION_READ, scanReadAuthority } from './repo-read-authority.ts';
@@ -24,11 +26,19 @@ export async function openScanBrandingLogo(
   const row = await orgBrandingForActorStmt(db, auth).first<{ branding: string | null }>();
   if (!row) throw await staleScanRead(ctx, actor);
   const stored = row.branding;
-  const logo = readBranding(stored ? JSON.parse(stored) : {}).images.find(
-    (image) => image.slot === 'logo',
-  );
-  if (!logo) throw missing();
-  const image = await ctx.env.BUCKET.get(brandingKey(actor.orgId, 'logo', 3, logo.storageVersion));
+  const parsed = stored ? JSON.parse(stored) : {};
+  const web = OrgBrandingSchema.safeParse(parsed);
+  const chosen = web.success ? scanLogoOf(web.data) : null;
+  const logo = readBranding(parsed).images.find((image) => image.slot === 'logo');
+  // The web logo is content-addressed; the pass logo is a versioned @3x.
+  const key =
+    chosen?.slot === 'web'
+      ? webLogoKey(actor.orgId, chosen.image.sha)
+      : logo
+        ? brandingKey(actor.orgId, 'logo', 3, logo.storageVersion)
+        : null;
+  if (!key) throw missing();
+  const image = await ctx.env.BUCKET.get(key);
   if (!image) throw missing();
   const headers = {
     'content-type': 'image/png',

@@ -11,7 +11,7 @@ describe('admin navigation per scope', () => {
     expect(labels(adminNavGroups(org, false, membershipFixture('o1')))).toEqual([
       ['Overview'],
       ['Passes', 'Templates', 'Blueprints', 'Connections'],
-      ['Messages', 'Scanning', 'Test inbox'],
+      ['Messages', 'Scanning', 'Visitors', 'Test inbox'],
       ['Members', 'Wallet accounts', 'API keys', 'Audit log', 'Retention', 'Settings'],
     ]);
     expect(adminNavGroups(org, false, membershipFixture('o1'))[1]?.[0]?.to).toBe(
@@ -44,7 +44,7 @@ describe('admin navigation per scope', () => {
     expect(labels(adminNavGroups(org, false, reader))).toEqual([
       ['Overview'],
       ['Passes'],
-      ['Test inbox'],
+      ['Visitors', 'Test inbox'],
       ['Wallet accounts', 'Retention', 'Settings'],
     ]);
     const scanner = membershipFixture('o1', { capabilities: ['scanning:read'] });

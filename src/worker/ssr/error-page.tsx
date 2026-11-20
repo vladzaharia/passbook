@@ -4,6 +4,7 @@
  * weight are the SPA's (shared/copy/states.ts, ui/layout/error-pages.tsx, ui/error-state.tsx).
  */
 import { ArrowLeft, RefreshCw, WalletCards } from 'lucide-react';
+import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import { AUTH_PAGE_COPY } from '../../shared/copy/sign-in.ts';
 import { STATE_COPY, waitLine } from '../../shared/copy/states.ts';
 import type { PageTheme } from './head.ts';
@@ -22,6 +23,8 @@ export interface ErrorPageInput {
   action?: PageAction;
   /** Seconds from a 429's Retry-After header. */
   retryAfter?: number | null;
+  /** The org the failed page belonged to, when the caller knows it: its shell leads. */
+  brand?: OrgBrand;
 }
 
 /** Not found and forbidden lead home, as the app's pages do. */
@@ -81,6 +84,7 @@ export function renderErrorPage(input: ErrorPageInput): string {
   return hostedPage({
     nonce: input.nonce,
     theme: input.theme,
+    ...(input.brand ? { brand: input.brand } : {}),
     title: input.title ?? d.title,
     art: d.art,
     ...(line ? { lede: escapeHtml(line) } : {}),

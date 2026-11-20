@@ -27,7 +27,6 @@ import {
   type Kit,
   lookup,
   pinsOf,
-  proof,
   request,
   S,
   setup,
@@ -96,7 +95,7 @@ describe('system-authored provider candidates (CW7b)', () => {
     expect(items[0]).toMatchObject({ authorId: SYSTEM_AUTHOR });
     expect(items[0]?.projection).toMatchObject({ approvedOmissions: [] });
     expect(items[0]?.approvals.map((a) => a.reviewerId)).toEqual([SYSTEM_REVIEWER]);
-    const active = await getApprovedProjection(kit.ctx, lookup(kit), await proof());
+    const active = await getApprovedProjection(kit.ctx, lookup(kit));
     expect(active?.release).toMatchObject({ createdBy: SYSTEM_REVIEWER, generation: 1 });
     expect(await audit(kit)).toEqual([
       { action: 'template.system_candidate', actor_type: 'system', actor_id: SYSTEM_AUTHOR },
@@ -196,7 +195,6 @@ describe('system-authored provider candidates (CW7b)', () => {
       candidate,
       systemAuthority('reviewer', kit.orgId, 'live'),
       now,
-      await proof(),
     );
     await expect(statement.run()).rejects.toThrow();
     expect((await candidates(kit)).items[0]?.approvals).toEqual([]);
@@ -224,7 +222,7 @@ describe('Q21 after a system release', () => {
     items: [...result.items, item],
   });
   const approved = async (kit: Kit) => {
-    const current = await getApprovedProjection(kit.ctx, lookup(kit), await proof());
+    const current = await getApprovedProjection(kit.ctx, lookup(kit));
     if (!current) throw new Error('No active release.');
     return current;
   };
@@ -342,7 +340,7 @@ describe('resuming and edge cases of the system job', () => {
         approvals: await count(kit, 'template_approvals'),
         releases: await count(kit, 'template_releases'),
       }).toEqual({ candidates: 1, approvals: 1, releases: 1 });
-      const active = await getApprovedProjection(kit.ctx, lookup(kit), await proof());
+      const active = await getApprovedProjection(kit.ctx, lookup(kit));
       expect(active?.release.createdBy).toBe(SYSTEM_REVIEWER);
     },
   );

@@ -1,11 +1,11 @@
 import * as PopoverPrimitive from '@radix-ui/react-popover';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { Command } from 'cmdk';
-import { Building2, Check, ChevronsUpDown, Globe, RefreshCw } from 'lucide-react';
+import { Check, ChevronsUpDown, Globe, RefreshCw } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
-import { orgPath, platformPath } from '../../lib/scope.ts';
+import { orgPath } from '../../lib/scope.ts';
 import { useSession } from '../../lib/session.ts';
 import { Button } from '../button.tsx';
 import { EntityAvatar } from '../entity.tsx';
@@ -55,7 +55,6 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
   const scope = useAdminScope();
   const { isAdmin } = useSession();
   const { memberships, membership, switchScope, isLoading, isError, refetch } = useOrgScope();
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   if (isLoading) {
     return (
@@ -176,16 +175,6 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
                       onSelect={choose(() => switchScope(m.orgId))}
                     />
                   ))}
-                </Command.Group>
-              ) : null}
-              {isAdmin ? (
-                <Command.Group className={GROUP}>
-                  <Item
-                    current={false}
-                    icon={<Building2 aria-hidden className="size-4 text-fg-muted" />}
-                    label="All organizations"
-                    onSelect={choose(() => void navigate({ to: platformPath('/orgs') }))}
-                  />
                 </Command.Group>
               ) : null}
               {isError ? (

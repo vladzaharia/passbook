@@ -21,12 +21,20 @@ import { messageRulesRoutes } from './modules/message-rules/routes.ts';
 import { metricsRoutes } from './modules/metrics/routes.ts';
 import { nfcRoutes } from './modules/nfc/routes.ts';
 import { tagPageRoutes } from './modules/nfc/tag-page.ts';
+import {
+  orgClosedRoutes,
+  orgExportDownloadRoutes,
+  orgLifecycleRoutes,
+} from './modules/org-lifecycle/routes.ts';
+import { brandAssetRoutes } from './modules/orgs/brand-assets.ts';
+import { brandRoutes } from './modules/orgs/brand-routes.ts';
 import { orgsRoutes } from './modules/orgs/routes.ts';
 import { passesRoutes } from './modules/passes/routes.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
 import { retentionPlatformRoutes, retentionRoutes } from './modules/retention/routes.ts';
 import { sandboxRoutes } from './modules/sandbox/routes.ts';
+import { rollCallRoutes } from './modules/scan/roll-call/routes-api.ts';
 import { scanRoutes } from './modules/scan/routes.ts';
 import { scanDisplayRoutes } from './modules/scan/routes-display.ts';
 import { scanEventsRoutes } from './modules/scan/routes-events.ts';
@@ -36,12 +44,14 @@ import { scannersRoutes } from './modules/scan/routes-scanners.ts';
 import { scanningSessionsRoutes } from './modules/scan/routes-scanning-sessions.ts';
 import { scansRoutes } from './modules/scan/routes-scans.ts';
 import { scanSetupsRoutes } from './modules/scan/routes-setups.ts';
+import { scanShellSwRoutes } from './modules/scan/routes-shell-sw.ts';
 import { scanStaffRoutes } from './modules/scan/routes-staff.ts';
 import { scanZonesRoutes } from './modules/scan/routes-zones.ts';
 import { settingsRoutes } from './modules/settings/routes.ts';
 import { statusRoutes } from './modules/status/routes.ts';
 import { templatesRoutes } from './modules/templates/routes.ts';
 import { usersRoutes } from './modules/users/routes.ts';
+import { offboardRoutes, visitorsRoutes } from './modules/visitors/routes.ts';
 import { walletProviderAccountRoutes } from './modules/wallet-providers/routes-accounts.ts';
 import { walletImageRoutes } from './modules/wallet-providers/routes-assets.ts';
 import { samsungCallbackRoutes } from './modules/wallet-providers/routes-callbacks.ts';
@@ -135,11 +145,15 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/session', sessionRoutes);
   app.route('/api/v1/me', meRoutes);
   app.route('/api/v1/orgs', orgsRoutes);
+  app.route('/api/v1/brand', brandRoutes);
   app.route('/api/v1/orgs', walletCredentialRoutes);
   app.route('/api/v1/orgs', walletEnrolmentRoutes);
   app.route('/api/v1/orgs', retentionRoutes);
+  app.route('/api/v1/orgs', orgLifecycleRoutes);
+  app.route('/api/v1/org-exports', orgExportDownloadRoutes);
   app.route('/api/v1/platform', walletPlatformRoutes);
   app.route('/api/v1/platform', retentionPlatformRoutes);
+  app.route('/api/v1/platform', orgClosedRoutes);
   app.route('/api/v1/templates', templatesRoutes);
   app.route('/api/v1/passes', passesRoutes);
   app.route('/api/v1/pass-imports', passImportRoutes);
@@ -149,6 +163,8 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/broadcasts', broadcastsRoutes);
   app.route('/api/v1/message-rules', messageRulesRoutes);
   app.route('/api/v1/holders', holdersRoutes);
+  app.route('/api/v1/visitors', visitorsRoutes);
+  app.route('/api/v1/offboard', offboardRoutes);
   app.route('/api/v1/delivery', deliveryRoutes);
   app.route('/api/v1/connections', connectionsRoutes);
   app.route('/api/v1/connectors', connectorsRoutes);
@@ -174,14 +190,17 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/scan-staff', scanStaffRoutes);
   app.route('/api/v1/scan-zones', scanZonesRoutes);
   app.route('/api/v1/scans', scansRoutes);
+  app.route('/api/v1/roll-calls', rollCallRoutes);
   app.route('/api/v1/scan-display', scanDisplayRoutes);
   app.route('/api/v1/nfc', nfcRoutes);
   app.route('/t', tagPageRoutes);
   app.route('/wallet/v1/google', googleCallbackRoutes);
   app.route('/wallet/v1/samsung', samsungCallbackRoutes);
   app.route('/wallet/v1', appleRoutes);
+  app.route('/scan', scanShellSwRoutes);
   app.route('/p', walletOfferRoutes);
   app.route('/w/i', walletImageRoutes);
+  app.route('/brand', brandAssetRoutes);
   app.route('/p', publicRoutes);
   app.route('/b', bundlePublicRoutes);
   app.route('/j', joinPublicRoutes);

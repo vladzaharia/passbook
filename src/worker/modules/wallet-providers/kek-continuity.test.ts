@@ -111,12 +111,11 @@ async function googleSnapshot(
   orgId: string,
   accountId: string,
   accountRevision: number,
-  credentialKeysetCommitment: string,
 ) {
   const snapshot = await readConfiguredWalletProviderCredentials(
     ctx,
     { orgId, mode: 'live', provider: 'google' },
-    { accountId, accountRevision, credentialKeysetCommitment },
+    { accountId, accountRevision },
   );
   if (snapshot?.provider !== 'google') throw new Error('Missing Google credential snapshot');
   return snapshot;
@@ -133,7 +132,6 @@ async function historicalSamsung(promoted = true) {
   const passSnapshot = await readWalletPassSnapshot(db, {
     ...scope,
     passId: pass.id,
-    credentialKeysetCommitment,
   });
   if (!account || !passSnapshot?.issuingReleaseId)
     throw new Error('Missing historical account or pass');
@@ -284,10 +282,7 @@ describe('provider identity continuity across KEK rotation', () => {
       { clock: f.clock },
     );
     const scope = { orgId: f.orgId, mode: 'live' as const, provider: 'google' as const };
-    const credentialKeysetCommitment = await ensureCredentialRefKeyset(
-      initialCtx.env.DB,
-      initialCtx.env,
-    );
+    await ensureCredentialRefKeyset(initialCtx.env.DB, initialCtx.env);
     const account = await configureWalletProviderAccount(initialCtx, f.auth, {
       ...scope,
       expectedRevision: 0,
@@ -297,13 +292,7 @@ describe('provider identity continuity across KEK rotation', () => {
     const beforeRow = await findAccount(f.env.DB, scope);
     if (!beforeRow?.credential_id) throw new Error('Missing initial envelope');
     expect(beforeRow.kek_version).toBe(1);
-    const before = await googleSnapshot(
-      initialCtx,
-      f.orgId,
-      account.accountId,
-      account.revision,
-      credentialKeysetCommitment,
-    );
+    const before = await googleSnapshot(initialCtx, f.orgId, account.accountId, account.revision);
     expect(before.objectIdHmacKey).toHaveLength(32);
 
     // The same KEK does not deterministically recreate the identity for another account.
@@ -325,7 +314,6 @@ describe('provider identity continuity across KEK rotation', () => {
       other.orgId,
       otherAccount.accountId,
       otherAccount.revision,
-      credentialKeysetCommitment,
     );
     expect(otherSnapshot.objectIdHmacKey).not.toEqual(before.objectIdHmacKey);
 
@@ -423,7 +411,6 @@ describe('provider identity continuity across KEK rotation', () => {
       readConfiguredWalletProviderCredentials(retiredV1Ctx, scope, {
         accountId: account.accountId,
         accountRevision: rotated.revision,
-        credentialKeysetCommitment,
       }),
     ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
     await expect(
@@ -431,7 +418,6 @@ describe('provider identity continuity across KEK rotation', () => {
         ...scope,
         accountId: account.accountId,
         accountRevision: rotated.revision,
-        credentialKeysetCommitment,
       }),
     ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
     await expect(
@@ -442,13 +428,7 @@ describe('provider identity continuity across KEK rotation', () => {
       }),
     ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
     expect(await findAccount(f.env.DB, scope)).toEqual(rotatedRow);
-    const after = await googleSnapshot(
-      rolloverCtx,
-      f.orgId,
-      account.accountId,
-      rotated.revision,
-      credentialKeysetCommitment,
-    );
+    const after = await googleSnapshot(rolloverCtx, f.orgId, account.accountId, rotated.revision);
     expect(after.objectIdHmacKey).toEqual(before.objectIdHmacKey);
     expect(
       await googleObjectIds(after.credentials.issuerId, after.objectIdHmacKey, idScope),
@@ -457,7 +437,6 @@ describe('provider identity continuity across KEK rotation', () => {
       ...scope,
       accountId: account.accountId,
       accountRevision: rotated.revision,
-      credentialKeysetCommitment,
     });
     expect(callback?.objectIdHmacKey).toEqual(before.objectIdHmacKey);
   }, 30_000);
@@ -484,13 +463,7 @@ describe('provider identity continuity across KEK rotation', () => {
       accountRevision: account.revision,
       credentialKeysetCommitment,
     };
-    const before = await googleSnapshot(
-      initialCtx,
-      f.orgId,
-      account.accountId,
-      account.revision,
-      credentialKeysetCommitment,
-    );
+    const before = await googleSnapshot(initialCtx, f.orgId, account.accountId, account.revision);
     const beforeRow = await findAccount(f.env.DB, scope);
     if (!beforeRow?.credential_id) throw new Error('Missing Google envelope');
     expect(beforeRow.kek_version).toBe(1);
@@ -545,15 +518,8 @@ describe('provider identity continuity across KEK rotation', () => {
       ),
     ).toEqual(beforeEvents);
     expect(
-      (
-        await googleSnapshot(
-          initialCtx,
-          f.orgId,
-          account.accountId,
-          account.revision,
-          credentialKeysetCommitment,
-        )
-      ).objectIdHmacKey,
+      (await googleSnapshot(initialCtx, f.orgId, account.accountId, account.revision))
+        .objectIdHmacKey,
     ).toEqual(before.objectIdHmacKey);
   }, 30_000);
 
@@ -842,7 +808,6 @@ describe('provider identity continuity across KEK rotation', () => {
         provider: 'samsung',
         instanceId,
         version: 2,
-        credentialKeysetCommitment: commitment,
         claimHandle: f.claimHandle,
         now: kit.clock.now(),
         result: { kind: 'success', httpStatus: 200 },

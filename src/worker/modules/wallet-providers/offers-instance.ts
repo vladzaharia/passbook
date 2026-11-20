@@ -20,7 +20,6 @@ export async function instanceMatches(
     instance.orgId !== pass.orgId ||
     instance.mode !== pass.mode ||
     instance.credentialGeneration !== eligible.snapshot.credentialGeneration ||
-    instance.credentialKeysetCommitment !== eligible.snapshot.credentialKeysetCommitment ||
     instance.provider !== eligible.approved.projection.provider ||
     instance.retirementRequestedAt !== null
   )
@@ -36,9 +35,7 @@ export async function instanceMatches(
     return false;
   const originReleaseId = instance.identityProjectionReleaseId;
   if (!originReleaseId) return false;
-  const origin = await getProjectionRetirementMetadata(ctx.env.DB, originReleaseId, {
-    credentialKeysetCommitment: eligible.snapshot.credentialKeysetCommitment,
-  });
+  const origin = await getProjectionRetirementMetadata(ctx.env.DB, originReleaseId);
   return (
     !!origin &&
     origin.orgId === pass.orgId &&

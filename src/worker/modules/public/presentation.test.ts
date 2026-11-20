@@ -223,6 +223,7 @@ describe('presentation barcode', () => {
     const pass = await passWith({ json: primaryJson });
     expect(await presentationForPass(ctx, pass)).toEqual({
       orgName: 'Cedar Gate',
+      brand: expect.objectContaining({ name: 'Cedar Gate', mark: 'full' }),
       passTitle: 'Guest admission',
       mode: 'live',
       expiresAt: null,

@@ -6,13 +6,11 @@ import { snapshotWalletCredentialContext } from './account-service.ts';
 import type {
   WalletClaimRef,
   WalletClaimResult,
-  WalletCredentialKeysetProof,
   WalletOperationRef,
   WalletOperationState,
   WalletProviderResult,
   WalletReasonCode,
 } from './instance-types.ts';
-import { isCredentialKeysetCommitment as validCommitment } from './instance-types.ts';
 import { getOperation } from './repo-instance.ts';
 import {
   claimOperation,
@@ -49,27 +47,17 @@ export async function claimWalletOperation(
   db: D1Database,
   p: WalletClaimRef,
 ): Promise<WalletClaimResult> {
-  if (
-    !validCommitment(p.credentialKeysetCommitment) ||
-    !validHandle(p.claimHandle) ||
-    !validTime(p.now)
-  )
-    return 'not_claimable';
+  if (!validHandle(p.claimHandle) || !validTime(p.now)) return 'not_claimable';
   return claimOperation(db, { ...p, hash: await walletClaimHash(p.claimHandle) });
 }
 export async function walletOperationFresh(
   db: D1Database,
-  p: WalletOperationRef &
-    WalletCredentialKeysetProof & {
-      now: number;
-      claimHandle?: string;
-    },
+  p: WalletOperationRef & {
+    now: number;
+    claimHandle?: string;
+  },
 ): Promise<boolean> {
-  if (
-    !validCommitment(p.credentialKeysetCommitment) ||
-    !validTime(p.now) ||
-    (p.claimHandle !== undefined && !validHandle(p.claimHandle))
-  )
+  if (!validTime(p.now) || (p.claimHandle !== undefined && !validHandle(p.claimHandle)))
     return false;
   return operationFresh(db, {
     ...p,
@@ -80,35 +68,20 @@ export async function markWalletClaimUncertain(
   db: D1Database,
   p: WalletClaimRef,
 ): Promise<boolean> {
-  return validCommitment(p.credentialKeysetCommitment) &&
-    validHandle(p.claimHandle) &&
-    validTime(p.now)
+  return validHandle(p.claimHandle) && validTime(p.now)
     ? markUncertain(db, { ...p, hash: await walletClaimHash(p.claimHandle) })
     : false;
 }
 /** Only after independently confirming the old transport is no longer in flight. */
 export async function settleWalletClaim(
   db: D1Database,
-  p: WalletOperationRef & WalletCredentialKeysetProof & { now: number },
+  p: WalletOperationRef & { now: number },
 ): Promise<boolean> {
-  return validCommitment(p.credentialKeysetCommitment) && validTime(p.now)
-    ? settleClaim(db, p)
-    : false;
+  return validTime(p.now) ? settleClaim(db, p) : false;
 }
-export function expireWalletClaims(
-  db: D1Database,
-  now: number,
-  limit: number,
-  credentialKeysetCommitment: string,
-): Promise<number> {
-  if (!validCommitment(credentialKeysetCommitment) || !validTime(now) || !Number.isFinite(limit))
-    return Promise.resolve(0);
-  return expireClaims(
-    db,
-    now,
-    Math.max(1, Math.min(100, Math.trunc(limit))),
-    credentialKeysetCommitment,
-  );
+export function expireWalletClaims(db: D1Database, now: number, limit: number): Promise<number> {
+  if (!validTime(now) || !Number.isFinite(limit)) return Promise.resolve(0);
+  return expireClaims(db, now, Math.max(1, Math.min(100, Math.trunc(limit))));
 }
 
 /** Only status/reason enter columns; an optional bounded raw body is encrypted with org/event AAD. */
@@ -122,7 +95,6 @@ export async function completeWalletOperation(
   p = { ...p };
   const result = p.result;
   if (
-    !validCommitment(p.credentialKeysetCommitment) ||
     !validHandle(p.claimHandle) ||
     !validTime(p.now) ||
     !validStatus(result.httpStatus) ||
@@ -140,11 +112,9 @@ export async function completeWalletOperation(
       (result.httpStatus !== undefined || result.rawBody !== undefined))
   )
     return null;
-  if ((await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== p.credentialKeysetCommitment)
-    return null;
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const op = await getOperation(ctx.env.DB, p);
-  if (!op || op.credentialKeysetCommitment !== p.credentialKeysetCommitment || op.attempts < 1)
-    return null;
+  if (!op || op.attempts < 1) return null;
   let raw: { id: string; eventHash: string; payloadHash: string; envelope: Envelope } | undefined;
   if (result.rawBody !== undefined) {
     const id = ctx.ids.id();
@@ -159,8 +129,6 @@ export async function completeWalletOperation(
       ),
     };
   }
-  if ((await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== p.credentialKeysetCommitment)
-    return null;
   return finishOperation(ctx.env.DB, {
     ...p,
     hash: await walletClaimHash(p.claimHandle),
@@ -185,7 +153,6 @@ export async function recordWalletOperationOutcome(
   ctx = snapshotWalletCredentialContext(ctx);
   p = { ...p };
   if (
-    !validCommitment(p.credentialKeysetCommitment) ||
     !validHandle(p.claimHandle) ||
     !validTime(p.now) ||
     typeof p.eventKey !== 'string' ||
@@ -200,19 +167,15 @@ export async function recordWalletOperationOutcome(
     !validStatus(p.httpStatus)
   )
     return 'stale';
-  if ((await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== p.credentialKeysetCommitment)
-    return 'stale';
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const op = await getOperation(ctx.env.DB, p);
-  if (!op || op.credentialKeysetCommitment !== p.credentialKeysetCommitment || op.attempts < 1)
-    return 'stale';
+  if (!op || op.attempts < 1) return 'stale';
   const id = ctx.ids.id();
   const envelope = await encryptSecret(
     await loadKekRing(ctx.env),
     p.body,
     credentialAad(id, p.orgId, 'wallet.provider.outcome'),
   );
-  if ((await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== p.credentialKeysetCommitment)
-    return 'stale';
   return insertOutcome(ctx.env.DB, {
     ...p,
     id,

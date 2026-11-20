@@ -59,14 +59,9 @@ export async function listHoldRows(db: D1Database, orgId: string): Promise<HoldR
   return rows.map(toRow);
 }
 
-export async function orgHasActiveHold(db: D1Database, orgId: string): Promise<boolean> {
-  return (
-    (await first(
-      db,
-      'SELECT 1 AS x FROM retention_holds WHERE org_id = ? AND released_at IS NULL LIMIT 1',
-      [orgId],
-    )) !== null
-  );
+/** Any status, closed included. */
+export async function orgExists(db: D1Database, orgId: string): Promise<boolean> {
+  return (await first(db, 'SELECT 1 AS x FROM orgs WHERE id = ?', [orgId])) !== null;
 }
 
 export async function passHeld(db: D1Database, orgId: string, passId: string): Promise<boolean> {

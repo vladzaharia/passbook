@@ -665,10 +665,10 @@ describe('sandbox native wallet retention', () => {
     });
   });
 
-  it('does not stage stale keyset, revision, transfer, link or forwarding-reserved snapshots', async () => {
+  it('does not stage stale revision, transfer, link or forwarding-reserved snapshots', async () => {
     const kit = await setupKit({ db: await testDatabase(), template: makeProviderTestTemplate });
     const before = kit.clock.now() - DAY;
-    for (const mutation of ['revision', 'link', 'transfer', 'lifecycle', 'keyset'] as const) {
+    for (const mutation of ['revision', 'link', 'transfer', 'lifecycle'] as const) {
       const row = await pass(kit, 'test', before - 1);
       const instance = await native(kit, row, 'test', 'samsung');
       const selected = (await expiredTestPasses(kit.env.DB, before, 100)).find(
@@ -682,7 +682,7 @@ describe('sandbox native wallet retention', () => {
           now: kit.clock.now(),
           targetHolderEmail: 'next@example.test',
         });
-      } else if (mutation !== 'keyset') {
+      } else {
         const column =
           mutation === 'revision'
             ? 'revision'
@@ -700,11 +700,7 @@ describe('sandbox native wallet retention', () => {
         'SELECT generation, next_attempt_at FROM wallet_provider_instance_dirty WHERE instance_id = ?',
         [instance.id],
       );
-      const keyset =
-        mutation === 'keyset'
-          ? (instance.credentialKeysetCommitment === 'f'.repeat(64) ? 'e' : 'f').repeat(64)
-          : instance.credentialKeysetCommitment;
-      await stageExpiredTestPassRetirement(kit.env.DB, selected, before, kit.clock.now(), keyset);
+      await stageExpiredTestPassRetirement(kit.env.DB, selected, before, kit.clock.now());
       expect(await requestState(kit, instance)).toEqual(state);
       expect(
         await first(
@@ -726,7 +722,6 @@ describe('sandbox native wallet retention', () => {
       { ...livePass, providerRetirementNeeded: true, providerRetirementComplete: false },
       before,
       kit.clock.now(),
-      liveInstance.credentialKeysetCommitment,
     );
     expect(await requestState(kit, liveInstance)).toMatchObject({ retirement_requested_at: null });
     expect(
@@ -777,13 +772,7 @@ describe('sandbox native wallet retention', () => {
         kit.clock.now() + 600_000,
       ],
     );
-    await stageExpiredTestPassRetirement(
-      kit.env.DB,
-      selected,
-      before,
-      kit.clock.now(),
-      instance.credentialKeysetCommitment,
-    );
+    await stageExpiredTestPassRetirement(kit.env.DB, selected, before, kit.clock.now());
     expect(await requestState(kit, instance)).toMatchObject({ retirement_requested_at: null });
     expect(
       await first(
@@ -834,15 +823,6 @@ describe('sandbox native wallet retention', () => {
       "UPDATE wallet_provider_instance_operations SET state = 'failed' WHERE id = ?",
       [busy],
     );
-    const wrongKeyset = (instance.credentialKeysetCommitment === 'f'.repeat(64) ? 'e' : 'f').repeat(
-      64,
-    );
-    expect(
-      await retireWalletInstance(kit.env.DB, {
-        ...retirement(kit, instance),
-        credentialKeysetCommitment: wrongKeyset,
-      }),
-    ).toBe(false);
     expect(await retireWalletInstance(kit.env.DB, retirement(kit, instance))).toBe(true);
     expect(await purgeTestPasses(kit.ctx, before)).toBe(1);
     expect(await first(kit.env.DB, 'SELECT id FROM passes WHERE id = ?', [row.id])).toBeNull();
@@ -936,7 +916,7 @@ describe('sandbox native wallet retention', () => {
   });
 
   it('does not purge or close blocked placeholders during a pending credential transfer', async () => {
-    const { kit, row, instance } = await samsungFixture();
+    const { kit, row } = await samsungFixture();
     const before = kit.clock.now() - DAY;
     await editFixedColumns(kit.env.DB, 'passes', 'UPDATE passes SET created_at = ? WHERE id = ?', [
       before - 1,
@@ -956,13 +936,7 @@ describe('sandbox native wallet retention', () => {
       { kind: 'tenant-holder', expected },
     );
     expect(result.state).toBe('pending');
-    await stageExpiredTestPassRetirement(
-      kit.env.DB,
-      selected,
-      before,
-      kit.clock.now(),
-      instance.credentialKeysetCommitment,
-    );
+    await stageExpiredTestPassRetirement(kit.env.DB, selected, before, kit.clock.now());
     expect(
       (await expiredTestPasses(kit.env.DB, before, 100)).some((item) => item.id === row.id),
     ).toBe(false);

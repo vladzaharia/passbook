@@ -75,6 +75,8 @@ describe('registry', () => {
       'stripe-subscriptions',
       'stripe-payments',
       'calcom-bookings',
+      'woocommerce-orders',
+      'tickettailor-tickets',
     ]);
     for (const r of Object.values(RECIPES)) {
       expect(r.holderEmailField).toMatch(/^\//);

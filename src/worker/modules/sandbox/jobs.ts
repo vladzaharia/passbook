@@ -42,13 +42,7 @@ export async function purgeTestPasses(ctx: ServiceContext, before: number): Prom
     });
     for (const pass of passes) {
       if (pass.providerRetirementNeeded)
-        await stageExpiredTestPassRetirement(
-          ctx.env.DB,
-          pass,
-          before,
-          ctx.clock.now(),
-          credentialKeysetCommitment,
-        );
+        await stageExpiredTestPassRetirement(ctx.env.DB, pass, before, ctx.clock.now());
       if (!pass.providerRetirementComplete) continue;
       const prepared = await prepareScanRetentionDelete(ctx.env, pass);
       const removed = await deletePassRows(ctx.env.DB, pass, prepared, credentialKeysetCommitment, {

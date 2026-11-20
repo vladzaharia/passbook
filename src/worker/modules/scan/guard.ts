@@ -289,7 +289,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
     if (
       actor.scanningSession &&
       c.req.method === 'POST' &&
-      !/\/(device|mark-out|unpair|open-now)$/.test(c.req.path)
+      !/\/(device|mark-out|unpair|open-now|batch)$/.test(c.req.path)
     ) {
       if (actor.scanningSession.status !== 'active')
         throw new ForbiddenError(

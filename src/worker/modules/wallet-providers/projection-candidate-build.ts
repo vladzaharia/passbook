@@ -8,7 +8,6 @@ import {
   getWalletProviderReadiness,
   readConfiguredWalletProviderCredentials,
 } from './account-service.ts';
-import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import {
   type NativeProjection,
   type ProjectionV2,
@@ -55,7 +54,7 @@ export async function buildProjectionCandidate(
   ctx: ServiceContext,
   scope: ProjectionScope,
   input: { sourceReleaseId: string; version: string; projection: unknown; authorId: string },
-  proof: WalletCredentialKeysetProof,
+  credentialKeysetCommitment: string,
 ): Promise<ProjectionCandidate> {
   const named = parseProjectionInput(input.projection);
   if (named.provider !== scope.provider) throw new ValidationError();
@@ -78,18 +77,12 @@ export async function buildProjectionCandidate(
   const account = await readConfiguredWalletProviderCredentials(ctx, accountScope, {
     accountId: readiness.accountId,
     accountRevision: readiness.revision,
-    ...proof,
   });
-  if (
-    !account ||
-    account.provider !== scope.provider ||
-    account.credentialKeysetCommitment !== proof.credentialKeysetCommitment
-  )
-    throw changed();
+  if (!account || account.provider !== scope.provider) throw changed();
   const policy = projectionPolicy(scope.provider);
   const candidate: ProjectionCandidate = {
     ...scope,
-    ...proof,
+    credentialKeysetCommitment,
     id: ctx.ids.id(),
     version: input.version,
     contentHash: source.release.contentHash,

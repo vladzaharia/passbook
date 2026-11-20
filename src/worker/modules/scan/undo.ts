@@ -1,3 +1,4 @@
+import type { Grant } from '../../platform/authority.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -11,6 +12,7 @@ import { localDay } from './counts.ts';
 import { policyActor } from './dto.ts';
 import type { ConsoleUndo } from './feed.ts';
 import { refuseKeyApproval } from './guard-api-key.ts';
+import { isDeskMarkOut, undoDeskMarkOut } from './occupancy/undo-mark-out.ts';
 import { undoWindowMinutes } from './outcome.ts';
 import { scanByKey } from './repo-scans.ts';
 import { commitUndo, UNDO_CODES } from './repo-undo.ts';
@@ -37,6 +39,7 @@ export async function undo(
   scanId: string,
   req: UndoRequest,
   maxAgeMs?: number,
+  extra?: (g: Grant) => void,
 ): Promise<ScanEvaluation> {
   refuseKeyApproval(actor, req);
   if (req.approval && !req.approval.staffId && actor.settings.staffSignIn)
@@ -51,7 +54,7 @@ export async function undo(
   );
   if (read.existing) return replayUndo(ctx, actor, scanId, read.existing);
   try {
-    return await run(ctx, actor, scanId, read, req, maxAgeMs);
+    return await run(ctx, actor, scanId, read, req, maxAgeMs, extra);
   } catch (caught) {
     // A scanner refused as `actor` re-pairs only when its credential is lost.
     const error = await scannerRefusal(ctx, actor, caught);
@@ -74,6 +77,7 @@ async function run(
   read: Awaited<ReturnType<typeof readUndo>>,
   req: UndoRequest,
   maxAgeMs?: number,
+  extra?: (g: Grant) => void,
 ): Promise<ScanEvaluation> {
   // A mixed scope undoes under the entry the scan ran under.
   const scoped = read.target
@@ -81,6 +85,8 @@ async function run(
     : actor;
   if (!scoped) throw notFound();
   actor = scoped;
+  if (read.target && (await isDeskMarkOut(ctx, read.target)))
+    return undoDeskMarkOut(ctx, actor, read.target, read.group, req, maxAgeMs, extra);
   const plan = await planUndo(actor, read);
   const { target } = plan;
   const now = ctx.clock.now();
@@ -200,6 +206,7 @@ export const consoleUndo: ConsoleUndo = async (ctx, session, input) => {
     input.scanId,
     { idempotencyKey: input.idempotencyKey },
     input.maxAgeMs,
+    input.extra,
   );
   return result.outcome;
 };

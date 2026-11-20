@@ -8,6 +8,25 @@ import {
   TimestampSchema,
 } from './common.ts';
 
+/**
+ * The scopes a key may be minted with: those some route accepts today. A scope joins this list in
+ * the change that makes a route accept it, so no key holds authority nobody reviewed.
+ */
+export const MINTABLE_SCOPES = [
+  'passes:read',
+  'passes:write',
+  'holders:write',
+  'templates:read',
+  'messages:write',
+  'scans:read',
+  'scans:write',
+  'connections:read',
+  'connections:write',
+  'webhooks:manage',
+  'brand:manage',
+] as const satisfies readonly z.infer<typeof ApiScopeSchema>[];
+export const MintableScopeSchema = z.enum(MINTABLE_SCOPES);
+
 export const ApiKeySchema = z.object({
   id: IdSchema,
   orgId: IdSchema.nullable(),
@@ -41,7 +60,7 @@ export const ApiKeyListSchema = pageOf(ApiKeySchema).extend({
 export const CreateApiKeySchema = z.object({
   orgId: IdSchema.nullable(),
   name: z.string().min(1).max(120),
-  scopes: z.array(ApiScopeSchema).min(1),
+  scopes: z.array(MintableScopeSchema).min(1),
   /** The terminals a `scans:write` key acts as, fixed for the key's life: at least one with that scope, none without. */
   terminalIds: z.array(IdSchema).max(20).optional(),
   mode: ModeSchema.default('live'),

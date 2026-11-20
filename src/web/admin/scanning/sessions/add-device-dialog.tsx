@@ -1,37 +1,75 @@
 import { useState } from 'react';
 import type { ScanningDevice, ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
-import { errorMessage } from '@/web/lib/errors.ts';
+import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import { Button, Callout, Dialog, DialogContent, FormField, Input } from '@/web/ui/index.ts';
 import { type Pairing, PairingFace } from '../pairing-face.tsx';
 import { useAddSessionDevice } from './api.ts';
 import { SurfacePicker } from './surface-picker.tsx';
 
+/** `base`, else `base 2`, `base 3`... cut to the 40 characters a device name takes. */
+export function freeName(base: string, taken: readonly string[]): string {
+  const used = new Set(taken.map((n) => n.toLowerCase()));
+  for (let n = 1; ; n++) {
+    const suffix = n === 1 ? '' : ` ${n}`;
+    const name = `${base.slice(0, 40 - suffix.length).trimEnd()}${suffix}`;
+    if (!used.has(name.toLowerCase())) return name;
+  }
+}
+
 export function AddDeviceDialog({
   session,
   onClose,
+  setup = false,
+  deviceNames = [],
 }: {
   session: ScanningSession;
   onClose: () => void;
+  /** Opened right after Scan passes: the first scanner, named and ready to pair. */
+  setup?: boolean;
+  /** Names taken in this session: the first scanner name is a free one. */
+  deviceNames?: string[];
 }) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(() =>
+    setup ? freeName(`${session.name} scanner`, deviceNames) : '',
+  );
+  // A name the dialog picked, not typed: another session's scanner may hold it, so try the next.
+  const [auto, setAuto] = useState(setup);
   const [surface, setSurface] = useState<ScanningDevice['surface']>('auto');
   const [error, setError] = useState('');
   const [made, setMade] = useState<{ id: string; name: string; pairing: Pairing | null }>();
   const add = useAddSessionDevice(session.id);
   async function submit() {
     setError('');
-    try {
-      setMade(await add.mutateAsync({ name: name.trim(), surface }));
-    } catch (cause) {
-      setError(errorMessage(cause));
+    const tried = [...deviceNames];
+    let next = name.trim();
+    for (let attempt = 0; ; attempt++) {
+      try {
+        setMade(await add.mutateAsync({ name: next, surface }));
+        return;
+      } catch (cause) {
+        if (auto && attempt < 20 && isApiError(cause) && cause.code === 'SCANNER_NAME_TAKEN') {
+          tried.push(next);
+          next = freeName(`${session.name} scanner`, tried);
+          setName(next);
+          continue;
+        }
+        setError(errorMessage(cause));
+        return;
+      }
     }
   }
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()} dirty={!made && !!name}>
+    <Dialog open onOpenChange={(open) => !open && onClose()} dirty={!made && !!name && !setup}>
       <DialogContent
-        title={made ? `Pair ${made.name}` : 'Add device'}
+        title={made ? `Pair ${made.name}` : setup ? 'Pair a scanner' : 'Add device'}
         size="lg"
-        description={made ? undefined : `Add a scanner, operator or display to ${session.name}.`}
+        description={
+          made
+            ? undefined
+            : setup
+              ? `Name the device that will scan at ${session.name}.`
+              : `Add a scanner, operator or display to ${session.name}.`
+        }
         footer={
           made ? undefined : (
             <>
@@ -59,7 +97,10 @@ export function AddDeviceDialog({
                 <Input
                   {...p}
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setAuto(false);
+                    setName(e.target.value);
+                  }}
                   placeholder="Front desk iPad"
                   maxLength={40}
                   autoComplete="off"

@@ -49,7 +49,7 @@ export const BulkPrintStartedSchema = z.object({
   jobId: z.string(),
   /** Tickets in the PDF. */
   count: z.number().int(),
-  skipped: z.array(z.object({ id: IdSchema, code: z.string() })),
+  skipped: z.array(z.object({ id: IdSchema, code: z.string(), reason: z.string().optional() })),
 });
 export type BulkPrintStarted = z.infer<typeof BulkPrintStartedSchema>;
 

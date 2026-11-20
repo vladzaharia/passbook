@@ -39,9 +39,25 @@ export function RecentActivity({ orgId }: { orgId: string | undefined }) {
 }
 
 /** A member's view: their organization's log, which needs `audit:read`. */
-export function OrgRecentActivity({ orgId }: { orgId: string; orgName?: string }) {
+export function OrgRecentActivity({
+  orgId,
+  hideEmpty = false,
+}: {
+  orgId: string;
+  orgName?: string;
+  /** The page already says it is empty: no second empty card. */
+  hideEmpty?: boolean;
+}) {
   const log = useTenantAuditLog(orgId, { excludeAction: 'auth.' }, 6, 0);
-  return <RecentCard log={log} orgLabel={() => ''} auditSearch={{}} note="All modes" />;
+  return (
+    <RecentCard
+      log={log}
+      orgLabel={() => ''}
+      auditSearch={{}}
+      note="All modes"
+      hideEmpty={hideEmpty}
+    />
+  );
 }
 
 function RecentCard({
@@ -49,14 +65,17 @@ function RecentCard({
   orgLabel: orgName,
   auditSearch,
   note,
+  hideEmpty = false,
 }: {
   log: ReturnType<typeof useTenantAuditLog>;
   orgLabel: (id: string | null) => string;
   auditSearch: { filterOrgId?: string | undefined };
   note?: string | undefined;
+  hideEmpty?: boolean;
 }) {
   const items = log.data?.pages[0]?.items ?? [];
   const now = useNow();
+  if (hideEmpty && !log.isPending && !log.isError && items.length === 0) return null;
   return (
     <Card className="flex h-full flex-col">
       <CardHeader

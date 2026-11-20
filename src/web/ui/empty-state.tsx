@@ -56,8 +56,8 @@ function sceneFor(art: ArtName, filtered: boolean): BuddyScene {
 }
 
 /**
- * Not inline, the buddy sits on the box's top edge with the entity's art beside it; inline keeps
- * the entity art alone, so a view never shows more than one buddy.
+ * Not inline, the buddy stands inside the box above the title with the entity's art beside it;
+ * inline keeps the entity art alone, so a view never shows more than one buddy.
  */
 export function EmptyState({
   art,
@@ -102,7 +102,7 @@ export function EmptyState({
         'relative flex flex-col items-center text-center',
         inline
           ? 'gap-1.5 px-4 py-6'
-          : 'mt-20 gap-2 rounded-lg border border-dashed border-border-strong px-6 pt-8 pb-10',
+          : 'gap-2 rounded-lg border border-dashed border-border-strong px-6 py-10',
         // The search walk spans a share of the box's width.
         !inline && scene === 'search' && '[container-type:inline-size]',
         className,
@@ -111,14 +111,17 @@ export function EmptyState({
       {inline ? (
         <div className="relative mb-1">{picture}</div>
       ) : (
-        <Buddy
-          mood={state ? 'sad' : (mood ?? (heading ? 'sad' : 'curious'))}
-          still={still}
-          scene={scene}
-          {...(art === 'wallet'
-            ? { state: artState ?? 'empty' }
-            : { prop: <span className="relative block">{picture}</span> })}
-        />
+        // The buddy stands on a zero-height floor under its own height, inside the box.
+        <div aria-hidden className="relative mt-[4.5rem] mb-1 h-0 w-full">
+          <Buddy
+            mood={state ? 'sad' : (mood ?? (heading ? 'sad' : 'curious'))}
+            still={still}
+            scene={scene}
+            {...(art === 'wallet'
+              ? { state: artState ?? 'empty' }
+              : { prop: <span className="relative block">{picture}</span> })}
+          />
+        </div>
       )}
       <Title
         tabIndex={heading ? -1 : undefined}

@@ -10,6 +10,8 @@ export type ClientScanReason =
   | 'server'
   | 'rate_limited'
   | 'saved_offline'
+  | 'offline_decide'
+  | 'not_listed'
   | 'add_link';
 
 export interface ScanLine {
@@ -57,6 +59,10 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   tag_lost: { headline: 'Tag reported lost', sub: 'Keep it and call security.' },
   tag_not_allowed: { headline: 'Tag not accepted', sub: "This tag isn't accepted here." },
   tag_invalid: { headline: "Tag couldn't be checked", sub: 'Try again or use the card.' },
+  tag_expired: {
+    headline: 'Tag assignment ended',
+    sub: 'Assign it again at the desk.',
+  },
   channel_off: { headline: '{channel} turned off', sub: 'Use another copy or check ID.' },
   print_replaced: { headline: 'Reprinted', sub: 'Newer copy printed {date}. Check ID.' },
   print_voided: { headline: 'Printed copy voided', sub: 'Voided {date}. Ask for a new ticket.' },
@@ -82,6 +88,11 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   server: { headline: 'Something went wrong', sub: 'Scan again.' },
   rate_limited: { headline: 'Too many scans', sub: 'Try again in {seconds} s.' },
   saved_offline: { headline: '{action}', sub: 'Saved offline' },
+  offline_decide: {
+    headline: 'No connection',
+    sub: 'Check it by eye. Tap {action} to save it for later.',
+  },
+  not_listed: { headline: 'Not found', sub: 'Not on the offline list from {time}.' },
   add_link: { headline: 'Add-to-Wallet link', sub: 'Ask them to open the pass in Wallet.' },
 };
 
@@ -252,6 +263,7 @@ export const SCAN_COPY = {
   mode: { door: 'Door', desk: 'Desk', manager: 'Manager', operator: 'Operator' },
   offline: {
     strip: 'Offline. Reconnect to check scans.',
+    stripSaving: 'Offline. Saving scans.',
     saved: '{n} waiting to sync',
   },
   sessionPaused: { line: 'Paused by a manager. Ask them to resume.', check: 'Check again' },

@@ -4,8 +4,17 @@
   "description": "Tier, term and status, with a renew link.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png",
+        "thumbnail": "wallets/google/thumbnail.png"
+      }
+    },
     "samsung": {}
+  },
+  "channels": {
+    "paper": "off",
+    "nfc": "off"
   },
   "blueprint": true,
   "inputs": {

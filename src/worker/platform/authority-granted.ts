@@ -273,6 +273,7 @@ export function jobPrincipal(j: {
   mode: Mode | undefined;
   orgAccessRevision: number | undefined;
   inactiveOk?: true | undefined;
+  closedOk?: true | undefined;
 }): Principal {
   return {
     kind: 'system',
@@ -281,5 +282,6 @@ export function jobPrincipal(j: {
     ...(j.mode === undefined ? {} : { mode: j.mode }),
     ...(j.orgAccessRevision === undefined ? {} : { orgAccessRevision: j.orgAccessRevision }),
     ...(j.inactiveOk ? { inactiveOk: true as const } : {}),
+    ...(j.closedOk ? { closedOk: true as const } : {}),
   };
 }

@@ -469,6 +469,40 @@ exports[`fidelityReport over every starter and baked template > starter-coupon 1
 }
 `;
 
+exports[`fidelityReport over every starter and baked template > starter-credential 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "group": "door",
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "group": "look",
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
 exports[`fidelityReport over every starter and baked template > starter-day-pass 1`] = `
 {
   "compilerRevision": 1,
@@ -614,6 +648,40 @@ exports[`fidelityReport over every starter and baked template > starter-guest-pa
 }
 `;
 
+exports[`fidelityReport over every starter and baked template > starter-hotel-stay 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "group": "door",
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "group": "look",
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
 exports[`fidelityReport over every starter and baked template > starter-id-card 1`] = `
 {
   "compilerRevision": 1,
@@ -689,6 +757,49 @@ exports[`fidelityReport over every starter and baked template > starter-monthly-
   },
   "target": "samsung",
   "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-multi-day-pass 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "7ace0828852f72de6b6c9f339c1e5640d7004aef3dfcf179ef3479b122907b5e",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "group": "door",
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "group": "look",
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "upcoming.multi",
+      "chosen": false,
+      "group": "look",
+      "message": "Only the next event.",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "ticket",
 }
 `;
 
@@ -838,6 +949,40 @@ exports[`fidelityReport over every starter and baked template > starter-poster-g
 }
 `;
 
+exports[`fidelityReport over every starter and baked template > starter-staff-badge 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "group": "door",
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "group": "look",
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
 exports[`fidelityReport over every starter and baked template > starter-stamp-card 1`] = `
 {
   "compilerRevision": 1,
@@ -950,6 +1095,40 @@ exports[`fidelityReport over every starter and baked template > starter-timed-ti
 `;
 
 exports[`fidelityReport over every starter and baked template > starter-transit-ticket 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "group": "door",
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "group": "look",
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-visitor-pass 1`] = `
 {
   "compilerRevision": 1,
   "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",

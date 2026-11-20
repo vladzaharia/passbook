@@ -2,6 +2,7 @@ import type { JobOf } from '../../jobs/types.ts';
 import { batch } from '../../platform/db.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { getVersion } from '../templates/repo.ts';
 import { releaseAuditStmt } from '../templates/repo-release-audit.ts';
 import { type ApprovalRow, getLatestRelease } from '../templates/repo-releases.ts';
@@ -10,7 +11,6 @@ import { publishableSchema } from './projection-contract.ts';
 import { computeProjectionPins, unreleasable } from './projection-pins.ts';
 import { publish } from './projection-release-service.ts';
 import {
-  captureProjectionProof,
   failedWrite,
   pinProjectionContext,
   scopedCandidate,
@@ -55,9 +55,9 @@ export async function runSystemProjection(
   const { orgId, mode, provider, templateId } = job;
   if (!publishableSchema(provider, 2)) return skipped(ctx, job, 'provider not open');
   const scope: ProjectionScope = { orgId, mode, provider, templateId };
-  const proof = await captureProjectionProof(ctx);
+  const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const db = ctx.env.DB;
-  const earlier = (await selectProjectionCandidates(db, scope, proof)).find(
+  const earlier = (await selectProjectionCandidates(db, scope)).find(
     (c) => isSystemAuthored(c) && c.sourceReleaseId === job.sourceReleaseId,
   );
   const reviewer = systemAuthority('reviewer', orgId, mode);
@@ -78,7 +78,7 @@ export async function runSystemProjection(
         projection: { schema: 2, provider, approvedOmissions: pins.approvedOmissions },
         authorId: SYSTEM_AUTHOR,
       },
-      proof,
+      credentialKeysetCommitment,
     ).catch((error: unknown) => {
       if (!(error instanceof ConflictError)) throw error;
       skipped(ctx, job, error.code);
@@ -87,7 +87,7 @@ export async function runSystemProjection(
     if (!candidate) return;
     const created = candidate;
     const made = await batch(db, [
-      insertProjectionCandidateStmt(db, created, author, ctx.clock.now(), proof),
+      insertProjectionCandidateStmt(db, created, author, ctx.clock.now()),
       audit(ctx, created, 'candidate', created.id, 'template.system_candidate', SYSTEM_AUTHOR),
     ]);
     if (!made[0]?.meta.changes) return failedWrite(ctx, author);
@@ -99,12 +99,12 @@ export async function runSystemProjection(
 
   let checked: ProjectionCandidate;
   try {
-    checked = await scopedCandidate(ctx, scope, candidate.id, candidate.candidateHash, proof);
+    checked = await scopedCandidate(ctx, scope, candidate.id, candidate.candidateHash);
   } catch (error) {
     if (!(error instanceof ConflictError)) throw error;
     return skipped(ctx, job, error.code);
   }
-  const have = (await selectProjectionApprovals(db, scope, proof)).find(
+  const have = (await selectProjectionApprovals(db, scope)).find(
     (a) => a.candidateId === checked.id && a.reviewerId === SYSTEM_REVIEWER,
   );
   const approval: ApprovalRow = have ?? {
@@ -117,22 +117,12 @@ export async function runSystemProjection(
   };
   if (!have) {
     const approved = await batch(db, [
-      insertProjectionApprovalStmt(db, approval, checked, reviewer, ctx.clock.now(), proof),
+      insertProjectionApprovalStmt(db, approval, checked, reviewer, ctx.clock.now()),
       audit(ctx, checked, 'approval', approval.id, 'template.system_approve', SYSTEM_REVIEWER),
     ]);
     if (!approved[0]?.meta.changes) return failedWrite(ctx, reviewer);
   }
-  await publish(
-    ctx,
-    reviewer,
-    scope,
-    checked,
-    approval,
-    head?.generation ?? 0,
-    'release',
-    null,
-    proof,
-  );
+  await publish(ctx, reviewer, scope, checked, approval, head?.generation ?? 0, 'release', null);
 }
 
 const audit = (

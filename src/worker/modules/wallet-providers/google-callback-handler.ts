@@ -34,19 +34,6 @@ const unavailable = () =>
     'GOOGLE_CALLBACK_UNAVAILABLE',
   );
 
-async function assertCallbackKeyset(
-  ctx: ServiceContext,
-  credentialKeyEnv: object,
-  credentialKeysetCommitment: string,
-): Promise<void> {
-  if (
-    (await requireCredentialRefKeyset(ctx.env.DB, credentialKeyEnv)) !==
-      credentialKeysetCommitment ||
-    (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== credentialKeysetCommitment
-  )
-    throw unavailable();
-}
-
 async function nonceHash(secret: Uint8Array, accountId: string, nonce: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     'raw',
@@ -67,10 +54,8 @@ export async function handleGoogleCallback(
   request: Request,
   accountId: string,
 ): Promise<void> {
-  let credentialKeysetCommitment: string | undefined;
-  let credentialKeyEnv: Readonly<Record<string, string>> | undefined;
   try {
-    credentialKeyEnv = captureCredentialKeyEnv(ctx.env);
+    const credentialKeyEnv = captureCredentialKeyEnv(ctx.env);
     const pinnedCtx: ServiceContext = {
       ...ctx,
       env: Object.freeze({ ...ctx.env, ...credentialKeyEnv }),
@@ -94,13 +79,8 @@ export async function handleGoogleCallback(
       });
       return;
     }
-    credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, credentialKeyEnv);
-    await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
-    const scope = await findGoogleCallbackAccount(
-      ctx.env.DB,
-      accountId,
-      credentialKeysetCommitment,
-    );
+    await requireCredentialRefKeyset(ctx.env.DB, credentialKeyEnv);
+    const scope = await findGoogleCallbackAccount(ctx.env.DB, accountId);
     if (!scope) throw rejected();
     // Released per mode: Test may be on before Live. Nothing is decrypted for an unreleased mode.
     if (walletProviderReleaseReason('google', scope.mode)) {
@@ -112,7 +92,6 @@ export async function handleGoogleCallback(
       return;
     }
     const account = await readGoogleCallbackVerification(pinnedCtx, scope);
-    await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
     if (!account) throw rejected();
     const event = await verifyGoogleCallback(raw, account.issuerId, () => ctx.clock.now());
     const [classIdHash, objectIdHash] = await Promise.all([
@@ -135,7 +114,6 @@ export async function handleGoogleCallback(
       throw rejected();
     const now = ctx.clock.now();
     if (event.validUntil <= now) throw rejected();
-    await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
     const receiptId = ctx.ids.id();
     const envelope = await encryptSecret(
       await loadKekRing(credentialKeyEnv),
@@ -159,7 +137,6 @@ export async function handleGoogleCallback(
       envelope,
     };
     if (!(await putGoogleCallbackReceipt(ctx.env.DB, binding, receipt))) {
-      await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
       // A changed or legacy binding proof is unavailable rather than an invalid signature.
       const current = await findGoogleCallbackBinding(ctx.env.DB, scope, classIdHash, objectIdHash);
       // Google redelivers on timeouts: the stored receipt already answers this exact message.
@@ -167,7 +144,6 @@ export async function handleGoogleCallback(
         current?.instanceId === binding.instanceId &&
         (await isGoogleCallbackRedelivery(ctx.env.DB, current, receipt))
       ) {
-        await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
         ctx.log.info('wallet.google_callback_redelivered', {
           code: 'GOOGLE_CALLBACK_REDELIVERED',
           eventType: event.eventType,
@@ -176,29 +152,19 @@ export async function handleGoogleCallback(
       }
       throw rejected();
     }
-    await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
     if (
       !(await isGoogleCallbackReceiptCurrent(ctx.env.DB, binding, {
         ...receipt,
         now: ctx.clock.now(),
       }))
     ) {
-      await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
       await findGoogleCallbackBinding(ctx.env.DB, scope, classIdHash, objectIdHash);
       throw rejected();
     }
   } catch (error) {
     if (error instanceof PayloadTooLargeError) throw error;
-    if (error instanceof GoogleCallbackInvalid || error instanceof UnauthenticatedError) {
-      if (credentialKeysetCommitment !== undefined && credentialKeyEnv !== undefined) {
-        try {
-          await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
-        } catch {
-          throw unavailable();
-        }
-      }
+    if (error instanceof GoogleCallbackInvalid || error instanceof UnauthenticatedError)
       throw rejected();
-    }
     // Network/crypto/storage exceptions can carry provider material; replace them before they reach logging.
     // The provider keyset, credential store, or local crypto may be temporarily unavailable.
     ctx.log.warn('wallet.google_callback_unavailable', { code: 'GOOGLE_CALLBACK_UNAVAILABLE' });

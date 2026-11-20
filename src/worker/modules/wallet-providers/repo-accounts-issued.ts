@@ -1,7 +1,7 @@
 import type { WalletProviderScope } from '../../../shared/contracts/wallet-providers.ts';
 import { first } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type { AccountRow } from './repo-accounts.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 
 export type IssuedCredentialRow = AccountRow & {
   /** The account's current revision and whether the account is revoked, beside the row's own revision. */
@@ -25,7 +25,6 @@ export function findSamsungIssuedRefCredential(
     accountId: string;
     accountRevision: number;
     refHash: string;
-    credentialKeysetCommitment: string;
     operated: boolean;
   },
 ): Promise<IssuedCredentialRow | null> {
@@ -44,7 +43,7 @@ export function findSamsungIssuedRefCredential(
     JOIN wallet_provider_credentials c ON c.id = e.credential_id AND c.account_id = a.id
       AND c.org_id = a.org_id AND c.mode = a.mode AND c.provider = a.provider
     WHERE r.ref_hash = ? AND i.org_id = ? AND i.mode = ? AND i.account_id = ?
-      AND r.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+      AND r.credential_keyset_commitment = ${pinnedKeysetSql}
       AND (? = 0 OR EXISTS (SELECT 1 FROM wallet_provider_instance_operations o
         WHERE o.instance_id = i.id AND o.account_revision = e.revision))`,
     [
@@ -53,8 +52,6 @@ export function findSamsungIssuedRefCredential(
       input.orgId,
       input.mode,
       input.accountId,
-      input.credentialKeysetCommitment,
-      input.credentialKeysetCommitment,
       input.operated ? 1 : 0,
     ],
   );

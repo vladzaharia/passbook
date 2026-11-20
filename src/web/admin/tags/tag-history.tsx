@@ -18,6 +18,9 @@ const CAUSE: Record<NonNullable<TagBinding['endCause']>, string> = {
   visitor_out: 'Visitor checked out',
   pass_ended: 'The pass ended',
   tag_retired: 'The tag was retired',
+  channel_off: 'NFC was turned off for the pass',
+  expired: 'The assignment ended',
+  type_changed: 'The tag type changed',
 };
 
 const EVENT = {

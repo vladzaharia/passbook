@@ -1,15 +1,14 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { templateAuthorityPredicate } from '../templates/repo-authority.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
-import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import { projectionPolicy } from './projection-contract.ts';
 import {
   type ProjectionAuthority,
   versionAuthorIndependentSql,
 } from './projection-system-authority.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import type { ProjectionCandidate } from './repo-projection-store.ts';
 import { samsungProjectionEvidencePredicateSql } from './repo-samsung-verification.ts';
 
@@ -55,7 +54,6 @@ export function insertProjectionCandidateStmt(
   c: ProjectionCandidate,
   authority: ProjectionAuthority,
   now: number,
-  proof: WalletCredentialKeysetProof,
 ): D1PreparedStatement {
   const auth = guard(authority, 'templates:author', 'source_scope.org_id', c.mode, now);
   const policy = projectionPolicy(c.provider);
@@ -64,8 +62,9 @@ export function insertProjectionCandidateStmt(
     `INSERT INTO template_candidates (id, template_id, org_id, mode, provider, version,
     candidate_hash, content_hash, adapter_revision, adapter_capabilities, audience_policy_revision,
     author_id, version_author_id, created_at, source_release_id, source_release_generation, source_release_hash,
-    provider_account_id, provider_account_revision, provider_identity_hash, projection_json, credential_keyset_commitment)
-    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    provider_account_id, provider_account_revision, provider_identity_hash, projection_json, credential_keyset_commitment,
+    provider_account_epoch)
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, account.authority_epoch
     FROM (SELECT ? AS org_id) source_scope
     JOIN template_provider_apple_sources source ON source.id = ? AND source.template_id = ?
       AND source.mode = ? AND source.version = ? AND source.generation = ? AND source.candidate_hash = ?
@@ -76,8 +75,8 @@ export function insertProjectionCandidateStmt(
       AND account.mode = ? AND account.provider = ? AND account.revision = ?
       AND account.credential_id IS NOT NULL
       AND account.revoked_at IS NULL
-    WHERE ? = ? AND ? = ? AND ? = ? AND ? = ? AND ? = ?
-      AND (${credentialRefKeysetSql}) AND (${auth.sql})`,
+    WHERE ? = ? AND ? = ? AND ? = ? AND ? = ? AND ? = ${pinnedKeysetSql}
+      AND (${auth.sql})`,
     [
       c.id,
       c.templateId,
@@ -123,8 +122,6 @@ export function insertProjectionCandidateStmt(
       c.audiencePolicyRevision,
       policy.audiencePolicyRevision,
       c.credentialKeysetCommitment,
-      proof?.credentialKeysetCommitment,
-      proof?.credentialKeysetCommitment,
       ...auth.params,
     ],
   );
@@ -136,7 +133,6 @@ export function insertProjectionApprovalStmt(
   c: ProjectionCandidate,
   authority: ProjectionAuthority,
   now: number,
-  proof: WalletCredentialKeysetProof,
 ): D1PreparedStatement {
   const auth = guard(authority, 'templates:review', 'c.org_id', c.mode, now);
   const policy = projectionPolicy(c.provider);
@@ -148,8 +144,8 @@ export function insertProjectionApprovalStmt(
     WHERE c.id = ? AND c.org_id = ? AND c.mode = ? AND c.provider = ? AND c.candidate_hash = ?
       AND c.author_id != ? AND ${versionAuthorIndependentSql('c', '?')}
       AND ? = ? AND c.adapter_revision = ? AND c.adapter_capabilities = ? AND c.audience_policy_revision = ?
-      AND c.credential_keyset_commitment = ?
-      AND (${currentSourceAndAccount('c')}) AND (${credentialRefKeysetSql}) AND (${auth.sql})`,
+      AND c.credential_keyset_commitment = ${pinnedKeysetSql}
+      AND (${currentSourceAndAccount('c')}) AND (${auth.sql})`,
     [
       a.id,
       a.reviewerId,
@@ -166,8 +162,6 @@ export function insertProjectionApprovalStmt(
       policy.adapterRevision,
       JSON.stringify(policy.adapterCapabilities),
       policy.audiencePolicyRevision,
-      proof?.credentialKeysetCommitment,
-      proof?.credentialKeysetCommitment,
       ...auth.params,
     ],
   );
@@ -175,7 +169,7 @@ export function insertProjectionApprovalStmt(
 
 export function insertProjectionReleaseStmt(
   db: D1Database,
-  input: WalletCredentialKeysetProof & {
+  input: {
     id: string;
     candidate: ProjectionCandidate;
     approval: ApprovalRow;
@@ -203,10 +197,10 @@ export function insertProjectionReleaseStmt(
     FROM template_candidates c JOIN template_approvals a ON a.candidate_id = c.id AND a.candidate_hash = c.candidate_hash
     CROSS JOIN (SELECT ? AS now_ms) proof_clock
     WHERE c.id = ? AND a.id = ? AND c.org_id = ? AND c.mode = ? AND c.provider = ? AND c.candidate_hash = ?
-      AND c.credential_keyset_commitment = ? AND a.credential_keyset_commitment = c.credential_keyset_commitment
+      AND c.credential_keyset_commitment = ${pinnedKeysetSql} AND a.credential_keyset_commitment = c.credential_keyset_commitment
       AND a.reviewer_id != c.author_id AND ${versionAuthorIndependentSql('c', 'a.reviewer_id')}
       AND c.adapter_revision = ? AND c.adapter_capabilities = ? AND c.audience_policy_revision = ?
-      AND (c.provider = 'google' OR (${samsungProjectionEvidencePredicateSql('c', 'proof_clock.now_ms', '?')}))
+      AND (c.provider = 'google' OR (${samsungProjectionEvidencePredicateSql('c', 'proof_clock.now_ms')}))
       AND json_extract(c.projection_json, '$.schema') = CASE c.provider WHEN 'google' THEN 2 ELSE 1 END
       AND (${currentSourceAndAccount('c')}) AND (${auth.sql})
       AND COALESCE((SELECT MAX(r.generation) FROM template_releases r WHERE ${same}), 0) = ?
@@ -230,11 +224,9 @@ export function insertProjectionReleaseStmt(
       c.mode,
       c.provider,
       c.candidateHash,
-      input.credentialKeysetCommitment,
       policy.adapterRevision,
       JSON.stringify(policy.adapterCapabilities),
       policy.audiencePolicyRevision,
-      input.credentialKeysetCommitment,
       ...auth.params,
       input.expectedGeneration,
       input.expectedReleaseId,

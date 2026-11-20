@@ -1,0 +1,84 @@
+{
+  "formatVersion": 1,
+  "description": "Staff badge",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(226,232,238)",
+  "foregroundColor": "rgb(20,24,28)",
+  "labelColor": "rgb(0,118,108)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "SCAN-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "E-1042"
+    }
+  ],
+  "generic": {
+    "headerFields": [
+      {
+        "key": "plan",
+        "label": "Type",
+        "value": "Staff"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Priya Shah"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "team",
+        "label": "Team",
+        "value": "Platform"
+      },
+      {
+        "key": "until",
+        "label": "Valid until",
+        "value": "2030-01-01T00:00:00Z",
+        "dateStyle": "PKDateStyleMedium",
+        "timeStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "member",
+        "label": "Employee",
+        "value": "E-1042"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "For entry checks and attendance. It does not open doors."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

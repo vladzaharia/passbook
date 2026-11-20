@@ -47,7 +47,7 @@ export function imageSizeError(slot: 'logo' | 'icon', w: number, h: number): str
   return w <= 480 && h <= 150 ? undefined : `The logo is ${w}x${h}px; use at most 480x150px.`;
 }
 
-function toBase64(bytes: Uint8Array): string {
+export function toBase64(bytes: Uint8Array): string {
   let s = '';
   for (let i = 0; i < bytes.length; i += 0x8000)
     s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));

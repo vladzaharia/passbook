@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { type CSSProperties, type ReactNode, useId } from 'react';
+import { NO_RELEASE_COPY } from '@/shared/copy/new-pass.ts';
 import { cn } from '../../lib/cn.ts';
 import { ENTITY } from '../../lib/entities.ts';
 import { useMediaQuery } from '../../lib/media.ts';
@@ -245,7 +246,7 @@ export function TemplateStep({
         </fieldset>
       ))}
       <p className="text-sm text-fg-muted">
-        Need another design?{' '}
+        {NO_RELEASE_COPY.onlyReleased} Need another design?{' '}
         <Link to="/admin/blueprints" className="text-accent-fg underline-offset-2 hover:underline">
           Browse blueprints
         </Link>

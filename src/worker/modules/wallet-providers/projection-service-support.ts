@@ -13,7 +13,6 @@ import {
   ValidationError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { assertTemplateAuthority } from '../templates/access.ts';
 import { candidateHash } from '../templates/release-content.ts';
 import { getVersion } from '../templates/repo.ts';
@@ -24,7 +23,6 @@ import {
   snapshotWalletCredentialContext,
   type WalletProviderCredentialSnapshot,
 } from './account-service.ts';
-import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import {
   type NativeProjection,
   type NativeProvider,
@@ -60,7 +58,7 @@ export interface ApprovedProjectionScope {
   adapterRevision?: number;
   audiencePolicyRevision?: number;
 }
-export interface ApprovedProjection extends WalletCredentialKeysetProof {
+export interface ApprovedProjection {
   release: TemplateRelease & {
     sourceReleaseId: string;
     sourceReleaseGeneration: number;
@@ -91,27 +89,6 @@ const missing = () =>
 export function pinProjectionContext(ctx: ServiceContext): ServiceContext {
   const pinned = snapshotWalletCredentialContext(ctx);
   return { ...pinned, env: Object.freeze(pinned.env) };
-}
-export async function captureProjectionProof(
-  ctx: ServiceContext,
-): Promise<WalletCredentialKeysetProof> {
-  return Object.freeze({
-    credentialKeysetCommitment: await requireCredentialRefKeyset(ctx.env.DB, ctx.env),
-  });
-}
-export async function requireProjectionProof(
-  ctx: ServiceContext,
-  proof: WalletCredentialKeysetProof,
-): Promise<void> {
-  if (
-    typeof proof?.credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(proof.credentialKeysetCommitment) ||
-    (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== proof.credentialKeysetCommitment
-  )
-    throw new UnavailableError(
-      'Credential references are unavailable.',
-      'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-    );
 }
 
 export function nativeScope(templateId: string, scope: TemplateReleaseScope): ProjectionScope {
@@ -187,11 +164,9 @@ export function sameScope(candidate: ProjectionCandidate, scope: ProjectionScope
 export async function verifiedCandidate(
   ctx: ServiceContext,
   candidate: ProjectionCandidate,
-  proof: WalletCredentialKeysetProof,
 ): Promise<boolean> {
   const policy = projectionPolicy(candidate.provider);
   if (
-    candidate.credentialKeysetCommitment !== proof.credentialKeysetCommitment ||
     candidate.adapterRevision !== policy.adapterRevision ||
     candidate.audiencePolicyRevision !== policy.audiencePolicyRevision ||
     JSON.stringify(candidate.adapterCapabilities) !== JSON.stringify(policy.adapterCapabilities) ||
@@ -222,7 +197,7 @@ export async function verifiedCandidate(
         mode: candidate.mode,
         provider: candidate.provider,
       },
-      { accountId: candidate.accountId, accountRevision: candidate.accountRevision, ...proof },
+      { accountId: candidate.accountId, accountRevision: candidate.accountRevision },
     );
   } catch (error) {
     if (error instanceof UnavailableError) return false;
@@ -233,7 +208,6 @@ export async function verifiedCandidate(
     account.provider !== candidate.provider ||
     account.accountId !== candidate.accountId ||
     account.revision !== candidate.accountRevision ||
-    account.credentialKeysetCommitment !== proof.credentialKeysetCommitment ||
     (await providerIdentityHash(
       account,
       candidate.projection.schema === 1 && candidate.projection.provider === 'samsung'
@@ -308,14 +282,13 @@ export async function scopedCandidate(
   scope: ProjectionScope,
   id: string,
   hash: string,
-  proof: WalletCredentialKeysetProof,
   rule: PinRule = 'exact',
 ): Promise<ProjectionCandidate> {
   const candidate = await getProjectionCandidate(ctx.env.DB, id);
   if (!candidate || !sameScope(candidate, scope)) throw missing();
   if (
     candidate.candidateHash !== hash ||
-    !(await verifiedCandidate(ctx, candidate, proof)) ||
+    !(await verifiedCandidate(ctx, candidate)) ||
     !(await currentPins(ctx, candidate, rule))
   )
     throw changed();

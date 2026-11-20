@@ -42,21 +42,15 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
   await purgeExpiredGoogleCallbackReplays(db, ctx.clock.now());
   // Nothing queued means nothing to pin: a fresh deployment has no keyset until its first pass.
   if (!(await walletSyncHasWork(db, ctx.clock.now()))) return;
-  let credentialKeysetCommitment: string;
   try {
-    credentialKeysetCommitment = await requireCredentialRefKeyset(db, ctx.env);
+    await requireCredentialRefKeyset(db, ctx.env);
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
     ctx.log.error('wallet.sync_keyset_unavailable', { code: error.code });
     return;
   }
-  await expireWalletClaims(db, ctx.clock.now(), BATCH_SIZE, credentialKeysetCommitment);
-  const dirty = await listDirtyWalletInstances(
-    db,
-    ctx.clock.now(),
-    BATCH_SIZE,
-    credentialKeysetCommitment,
-  );
+  await expireWalletClaims(db, ctx.clock.now(), BATCH_SIZE);
+  const dirty = await listDirtyWalletInstances(db, ctx.clock.now(), BATCH_SIZE);
   for (const item of dirty) {
     try {
       const instance = await getWalletInstanceById(db, item);
@@ -64,13 +58,7 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
         await ackDirtyWalletInstance(db, item);
         continue;
       }
-      const result = await reconcileWalletInstance(
-        ctx,
-        instance,
-        undefined,
-        false,
-        item.credentialKeysetCommitment,
-      );
+      const result = await reconcileWalletInstance(ctx, instance, undefined, false);
       if (result === 'scheduled' || result === 'unchanged') await ackDirtyWalletInstance(db, item);
       else if (instance.lifecycle === 'revoked' && instance.retirementCause === 'channel_off')
         // A settled channel-off copy has nothing left to schedule; a successor is a different row.
@@ -96,12 +84,7 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
       ctx.log.warn('wallet.sync_dirty_failed', { code: 'WALLET_SYNC_DIRTY' });
     }
   }
-  const due = await listDueWalletOperations(
-    db,
-    ctx.clock.now(),
-    BATCH_SIZE,
-    credentialKeysetCommitment,
-  );
+  const due = await listDueWalletOperations(db, ctx.clock.now(), BATCH_SIZE);
   for (const operation of due) {
     try {
       const result = await runWalletProviderOperation(ctx, operation);
@@ -112,12 +95,7 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
       ctx.log.warn('wallet.sync_operation_failed', { code: 'WALLET_SYNC_OPERATION' });
     }
   }
-  const retirements = await listWalletRetirementsReady(
-    db,
-    ctx.clock.now(),
-    BATCH_SIZE,
-    credentialKeysetCommitment,
-  );
+  const retirements = await listWalletRetirementsReady(db, ctx.clock.now(), BATCH_SIZE);
   for (const retirement of retirements) {
     try {
       if (!(await finishWalletProviderRetirement(ctx, retirement)))

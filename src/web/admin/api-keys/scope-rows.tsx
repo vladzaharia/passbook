@@ -1,8 +1,8 @@
-import { ApiScopeSchema } from '@/shared/contracts/common.ts';
+import { MINTABLE_SCOPES } from '@/shared/contracts/api-keys.ts';
 import { Checkbox, Label } from '@/web/ui/index.ts';
 import { SCOPE_LABEL, useTerminals } from './queries.ts';
 
-export const SCOPES = ApiScopeSchema.options;
+export const SCOPES = MINTABLE_SCOPES;
 
 export function ScopeRows({
   value,

@@ -1,4 +1,5 @@
 import { credentialAad } from '../../platform/crypto.ts';
+import { tagKeyKind, versionKind } from '../nfc/keyset-seal.ts';
 
 export type PlaceTable =
   | 'credentials'
@@ -18,7 +19,9 @@ export type PlaceTable =
   | 'join_link_seals'
   | 'webhook_endpoint_secrets'
   | 'wallet_credential_versions'
-  | 'wallet_provider_accounts';
+  | 'wallet_provider_accounts'
+  | 'nfc_tag_keys'
+  | 'nfc_tag_sun';
 
 /** What a select returns: the key, the envelope's KEK and wrapped DEK, and up to four AAD inputs. */
 export interface Raw {
@@ -114,6 +117,17 @@ export const PLACES: readonly Place[] = [
     // envelope id, so the envelope cannot be moved to another account, org, mode or provider.
     table: 'wallet_provider_accounts',
     aad: (r) => credentialAad(r.pk, text(r.x1), accountHmacKind(r.pk, String(r.x2), String(r.x3))),
+  },
+  {
+    // Secure tag keys (nfc/keyset-seal.ts). x1 org, x2 mode, x3 keyset, x4 version; the row id is the AAD id.
+    table: 'nfc_tag_keys',
+    aad: (r) =>
+      credentialAad(r.pk, text(r.x1), versionKind(String(r.x2), String(r.x3), String(r.x4))),
+  },
+  {
+    // A supplier's per-tag file key: x1 org, x2 mode, x3 keyset; the tag id is the AAD id.
+    table: 'nfc_tag_sun',
+    aad: (r) => credentialAad(r.pk, text(r.x1), tagKeyKind(String(r.x2), String(r.x3))),
   },
 ];
 

@@ -6,6 +6,7 @@ import type {
 import type { AuthContext } from '../../platform/auth.ts';
 import { batch } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { authorizeTemplateWrite } from '../templates/access.ts';
 import { releaseAuditStmt } from '../templates/repo-release-audit.ts';
 import {
@@ -14,16 +15,13 @@ import {
   getLatestRelease,
   getRelease,
 } from '../templates/repo-releases.ts';
-import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import { publishableSchema } from './projection-contract.ts';
 import {
-  captureProjectionProof,
   changed,
   failedWrite,
   nativeScope,
   pinProjectionContext,
   releaseDto,
-  requireProjectionProof,
   schemaRefused,
   scopedCandidate,
   scopedTemplate,
@@ -46,7 +44,6 @@ export async function publish(
   expectedGeneration: number,
   action: 'release' | 'rollback',
   targetReleaseId: string | null,
-  proof: WalletCredentialKeysetProof,
 ): Promise<TemplateRelease> {
   if (
     approval.candidateId !== candidate.id ||
@@ -62,7 +59,7 @@ export async function publish(
     throw schemaRefused(candidate.provider);
   if (
     candidate.provider === 'samsung' &&
-    !(await ensureSamsungProjectionEvidence(ctx, candidate.id, candidate.candidateHash, proof))
+    !(await ensureSamsungProjectionEvidence(ctx, candidate.id, candidate.candidateHash))
   )
     throw changed();
   await storeReleaseArt(ctx, candidate, action === 'rollback' ? 'carry' : 'exact');
@@ -78,7 +75,6 @@ export async function publish(
       action,
       targetReleaseId,
       now: ctx.clock.now(),
-      ...proof,
     }),
     releaseAuditStmt(
       db,
@@ -108,7 +104,6 @@ export async function publish(
   if (!results[0]?.meta.changes) return failedWrite(ctx, authority);
   const row = await getRelease(db, id);
   if (!row) throw new Error('Committed wallet projection release was not found.');
-  await requireProjectionProof(ctx, proof);
   return releaseDto(row, candidate);
 }
 export async function publishProjectionRelease(
@@ -121,8 +116,8 @@ export async function publishProjectionRelease(
   await scopedTemplate(ctx, auth, templateId, body);
   const scope = nativeScope(templateId, body);
   const authority = await authorizeTemplateWrite(ctx, auth, scope.orgId, 'templates:publish');
-  const proof = await captureProjectionProof(ctx);
-  const candidate = await scopedCandidate(ctx, scope, body.candidateId, body.candidateHash, proof);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  const candidate = await scopedCandidate(ctx, scope, body.candidateId, body.candidateHash);
   const approval = await getApproval(ctx.env.DB, body.approvalId);
   if (!approval) throw changed();
   return publish(
@@ -134,7 +129,6 @@ export async function publishProjectionRelease(
     body.expectedGeneration,
     'release',
     null,
-    proof,
   );
 }
 export async function rollbackProjectionRelease(
@@ -147,7 +141,7 @@ export async function rollbackProjectionRelease(
   await scopedTemplate(ctx, auth, templateId, body);
   const scope = nativeScope(templateId, body);
   const authority = await authorizeTemplateWrite(ctx, auth, scope.orgId, 'templates:publish');
-  const proof = await captureProjectionProof(ctx);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const target = await getRelease(ctx.env.DB, body.releaseId);
   if (
     !target ||
@@ -167,7 +161,6 @@ export async function rollbackProjectionRelease(
     scope,
     target.candidateId,
     body.candidateHash,
-    proof,
     'carry',
   );
   const approval = await getApproval(ctx.env.DB, target.approvalId);
@@ -181,6 +174,5 @@ export async function rollbackProjectionRelease(
     body.expectedGeneration,
     'rollback',
     target.id,
-    proof,
   );
 }

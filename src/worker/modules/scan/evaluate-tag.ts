@@ -1,7 +1,8 @@
 import type { ScanTag, TagRead } from '../../../shared/contracts/nfc-tags.ts';
 import type { ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { readableUid, tagRef } from '../nfc/tag-ref.ts';
+import { assuranceOfSystem, recogniseTag } from '../nfc/systems/registry.ts';
+import { UID_SYSTEM } from '../nfc/systems/uid.ts';
 import { isGuestPass } from './access.ts';
 import type { ScanActor, ScanTagAuthority } from './actor.ts';
 import { narrowToPass } from './admits.ts';
@@ -22,16 +23,19 @@ import {
 import { accepts, matchesEvent } from './resolve-candidates.ts';
 import { dropNfcOff } from './resolve-channels.ts';
 import { evaluate } from './resolve-evaluate.ts';
-import { candidateTakesTag, TAG_ASSURANCE } from './tag-assurance.ts';
+import { candidateTakesTag } from './tag-assurance.ts';
 import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
 
 /** At most this many of a user's passes are evaluated for one tag read (design §3.5). */
 const EVALUATED = 4;
 
-/** Step 1: a fixed UID is a tag; a read with only NDEF text is a pass code on today's path. */
-export function tagReadOf(read: TagRead): { uid: string } | { code: string } | null {
-  const uid = readableUid(read);
-  if (uid) return { uid };
+/** Step 1: a fixed UID is a tag; a SUN URL is a Secure tag (refused until its plugin); other NDEF text is a pass code. */
+export function tagReadOf(
+  read: TagRead,
+): { uid: string } | { sun: true } | { code: string } | null {
+  const found = recogniseTag(read);
+  if (found?.system === 'uid') return { uid: found.uid };
+  if (found?.system === 'sun') return { sun: true };
   if (read.ndef) return { code: read.ndef.value };
   return null;
 }
@@ -64,8 +68,8 @@ export async function planTagReads(
   const db = ctx.env.DB;
   const other = actor.mode === 'live' ? 'test' : 'live';
   const [own, otherRef] = await Promise.all([
-    tagRef(ctx.env, actor.orgId, actor.mode, uid),
-    tagRef(ctx.env, actor.orgId, other, uid),
+    UID_SYSTEM.identify(ctx.env, actor.orgId, actor.mode, uid),
+    UID_SYSTEM.identify(ctx.env, actor.orgId, other, uid),
   ]);
   const sessionId = actor.scanningSession?.id;
   const stmts = [
@@ -92,7 +96,7 @@ export async function planTagReads(
         return { stop: 'not_found', unknown: true };
       }
       const tagId = tag.id;
-      if (tag.kind !== 'uid') return { stop: 'tag_invalid', tagId };
+      if (tag.system !== 'uid') return { stop: 'tag_invalid', tagId };
       if (tag.status !== 'active') {
         ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: 'TAG_RETIRED' });
         return { stop: 'not_found', tagId };
@@ -178,7 +182,7 @@ export async function chooseTagPass(
     };
     const desk = actor.role === 'desk' || actor.role === 'manager';
     const view: ScanTag | null = desk
-      ? { hint: tag.hint, assurance: TAG_ASSURANCE, scope: tag.binding.scope }
+      ? { hint: tag.hint, assurance: assuranceOfSystem(tag.system), scope: tag.binding.scope }
       : null;
     if (view && tag.binding.scope === 'user') {
       view.count = all.length;

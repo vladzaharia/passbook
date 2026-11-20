@@ -277,7 +277,7 @@ describe('access: events, tenants and ready', () => {
 });
 
 describe('access: round trips', () => {
-  it('a door check-in stays within 5 trips after the guard, winner and loser', async () => {
+  it('a door check-in stays within 6 trips after the guard, winner and loser', async () => {
     const tpl = await accessTemplate();
     const zone = await makeZone('trips-room');
     const d = await makeDoor([tpl], [zone]);
@@ -297,7 +297,8 @@ describe('access: round trips', () => {
     const base = await trips(() => kit.post(d.headers, '/actions', {}));
     const winner = (await trips(() => grantOf(d.headers, pass))) - base;
     const again = (await trips(() => grantOf(d.headers, pass))) - base;
-    expect(winner).toBeLessThanOrEqual(5);
-    expect(again).toBeLessThanOrEqual(5);
+    // 5, plus the visitor host-notice lookup that runs in waitUntil after the response (visitors/arrival.ts).
+    expect(winner).toBeLessThanOrEqual(6);
+    expect(again).toBeLessThanOrEqual(6);
   });
 });

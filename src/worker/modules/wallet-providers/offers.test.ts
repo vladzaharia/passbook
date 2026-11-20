@@ -42,24 +42,16 @@ async function expectNoCapabilities(db: D1Database) {
   }
 }
 
-async function approvedSamsung(
-  ctx: ServiceContext,
-  pass: Pass,
-  credentialKeysetCommitment: string,
-) {
+async function approvedSamsung(ctx: ServiceContext, pass: Pass) {
   if (!pass.releaseId) throw new Error('Missing approved Apple source in fixture.');
-  return getApprovedProjection(
-    ctx,
-    {
-      orgId: pass.orgId,
-      mode: pass.mode,
-      provider: 'samsung',
-      templateId: pass.templateId,
-      templateVersion: pass.templateVersion,
-      appleReleaseId: pass.releaseId,
-    },
-    { credentialKeysetCommitment },
-  );
+  return getApprovedProjection(ctx, {
+    orgId: pass.orgId,
+    mode: pass.mode,
+    provider: 'samsung',
+    templateId: pass.templateId,
+    templateVersion: pass.templateVersion,
+    appleReleaseId: pass.releaseId,
+  });
 }
 
 describe('native wallet availability', () => {
@@ -125,10 +117,10 @@ describe('native wallet availability', () => {
 
   it('does not mistake a reviewed, ACTIVE production card for recipient-market eligibility', async () => {
     const f = await setupWalletOfferKit();
-    const approved = await approvedSamsung(f.kit.ctx, f.pass, f.credentialKeysetCommitment);
+    const approved = await approvedSamsung(f.kit.ctx, f.pass);
     expect(approved?.release.id).toBe(f.samsungRelease?.id);
     expect(approved?.projection.provider).toBe('samsung');
-    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id, f.credentialKeysetCommitment);
+    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id);
     expect(snapshot).not.toBeNull();
     if (!snapshot) throw new Error('Missing active pass fixture.');
     expect(await eligibleWalletProvider(f.kit.ctx, snapshot, 'samsung')).toBeNull();
@@ -159,9 +151,7 @@ describe('native wallet availability', () => {
       'UPDATE passes SET removed_at = NULL, test_data_quarantined = 1 WHERE id = ?',
     ]) {
       await run(f.kit.env.DB, statement, [f.pass.id]);
-      expect(
-        await offerPassSnapshot(f.kit.ctx, f.pass.id, f.credentialKeysetCommitment),
-      ).toBeNull();
+      expect(await offerPassSnapshot(f.kit.ctx, f.pass.id)).toBeNull();
       expect(await listWalletOffers(f.kit.ctx, f.pass.id)).toEqual([]);
       await unavailable(issueWalletOffer(f.kit.ctx, f.pass.downloadToken, 'samsung'));
     }
@@ -176,7 +166,7 @@ describe('native wallet availability', () => {
       '$.expirationDate', '2020-01-01T00:00:00Z') WHERE pass_id = ?`,
       [f.pass.id],
     );
-    expect(await offerPassSnapshot(f.kit.ctx, f.pass.id, f.credentialKeysetCommitment)).toBeNull();
+    expect(await offerPassSnapshot(f.kit.ctx, f.pass.id)).toBeNull();
     expect(await listWalletOffers(f.kit.ctx, f.pass.id)).toEqual([]);
     await unavailable(issueWalletOffer(f.kit.ctx, f.pass.downloadToken, 'samsung'));
     await run(
@@ -191,9 +181,9 @@ describe('native wallet availability', () => {
 
   it('does not fall back to an earlier Apple source or a rotated pass capability', async () => {
     const f = await setupWalletOfferKit();
-    expect(await approvedSamsung(f.kit.ctx, f.pass, f.credentialKeysetCommitment)).not.toBeNull();
+    expect(await approvedSamsung(f.kit.ctx, f.pass)).not.toBeNull();
     await approveAppleRelease(f.kit);
-    expect(await approvedSamsung(f.kit.ctx, f.pass, f.credentialKeysetCommitment)).toBeNull();
+    expect(await approvedSamsung(f.kit.ctx, f.pass)).toBeNull();
     await rotateLink(f.kit.ctx, { type: 'system', id: null }, f.pass.id, null);
     await unavailable(issueWalletOffer(f.kit.ctx, f.pass.downloadToken, 'samsung'));
     const current = await getPass(f.kit.env.DB, f.pass.id);
@@ -207,13 +197,12 @@ describe('native wallet availability', () => {
       samsung: 'configured',
       holderEmail: 'first-holder@example.test',
     });
-    const before = await offerPassSnapshot(f.kit.ctx, f.pass.id, f.credentialKeysetCommitment);
+    const before = await offerPassSnapshot(f.kit.ctx, f.pass.id);
     if (!before) throw new Error('Missing first holder snapshot');
     await rotateLink(f.kit.ctx, { type: 'system', id: null }, f.pass.id, null);
-    expect(
-      (await offerPassSnapshot(f.kit.ctx, f.pass.id, f.credentialKeysetCommitment))
-        ?.credentialGeneration,
-    ).toBe(before.credentialGeneration);
+    expect((await offerPassSnapshot(f.kit.ctx, f.pass.id))?.credentialGeneration).toBe(
+      before.credentialGeneration,
+    );
     await reassignHolder(
       jobCtxOf(f.kit),
       { type: 'system', id: null },
@@ -227,7 +216,7 @@ describe('native wallet availability', () => {
       'SELECT state FROM pass_credential_transfers WHERE pass_id = ? ORDER BY target_generation DESC LIMIT 1',
       [f.pass.id],
     );
-    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id, f.credentialKeysetCommitment);
+    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id);
     if (transfer?.state === 'pending') expect(snapshot).toBeNull();
     else {
       expect(transfer?.state).toBe('completed');

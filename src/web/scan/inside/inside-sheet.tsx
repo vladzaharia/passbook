@@ -14,6 +14,7 @@ export function InsideSheet({
   trailing,
   header,
   footer,
+  body,
 }: {
   open: boolean;
   onClose: () => void;
@@ -23,6 +24,8 @@ export function InsideSheet({
   trailing?: (row: InsideRow) => ReactNode;
   header?: ReactNode;
   footer?: ReactNode;
+  /** Replaces the list: the roll call takes the whole sheet while one is open. */
+  body?: ReactNode;
 }) {
   return (
     <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
@@ -31,15 +34,17 @@ export function InsideSheet({
         className="scan-inside-sheet"
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <InsidePanel
-          active={open}
-          inside={inside}
-          online={online}
-          onOpenRow={onOpenRow}
-          trailing={trailing}
-          header={header}
-          footer={footer}
-        />
+        {body ?? (
+          <InsidePanel
+            active={open}
+            inside={inside}
+            online={online}
+            onOpenRow={onOpenRow}
+            trailing={trailing}
+            header={header}
+            footer={footer}
+          />
+        )}
       </SheetContent>
     </Sheet>
   );

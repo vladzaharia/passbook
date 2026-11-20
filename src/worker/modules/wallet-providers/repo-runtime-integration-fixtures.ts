@@ -1,5 +1,4 @@
 import { batch, first, run, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 
 export function readHistoricalCredentialGeneration(db: D1Database, passId: string) {
   return first<{ credentialGeneration: number }>(
@@ -42,13 +41,12 @@ export function insertHistoricalGoogleRelease(
         AND a.candidate_hash = c.candidate_hash AND a.credential_keyset_commitment = c.credential_keyset_commitment
       WHERE c.id = ? AND a.id = ? AND c.provider = 'google' AND a.reviewer_id != c.author_id
         AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id)
-        AND c.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}`,
+        AND c.credential_keyset_commitment = ?`,
       [
         input.releaseId,
         input.now,
         input.candidateId,
         input.approvalId,
-        input.credentialKeysetCommitment,
         input.credentialKeysetCommitment,
       ],
     ),

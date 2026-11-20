@@ -44,7 +44,7 @@ export async function bindTag(
     tag = { id: kit.fx.ids.id() };
     await run(
       kit.env.DB,
-      `INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES (?, ?, ?, ?, 'uid', ?, ?)`,
+      `INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES (?, ?, ?, ?, 'uid', ?, ?)`,
       [tag.id, pass.orgId, mode, ref, hint, now],
     );
   }

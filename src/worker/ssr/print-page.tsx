@@ -1,16 +1,24 @@
 import { Ban, Download, Printer, RotateCcw } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import holderCss from '../../generated/ssr-holder.css?raw';
+import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import { PRINT_COPY } from '../../shared/copy/print.ts';
 import { toSvg } from '../../shared/pass-view/barcode-svg.ts';
 import { PAPER_CSS, pageRule } from '../../web/paper/css.ts';
 import { drawPaperCode } from '../../web/paper/drawing.ts';
 import { PaperTicket } from '../../web/paper/ticket.tsx';
+import { BuddyArt } from '../../web/ui/art/buddy-art.tsx';
+import { ART_CSS } from '../../web/ui/art/css.ts';
+import inspectCss from '../../web/ui/art/scenes/inspect.css?raw';
 import type { PrintAudience, PrintPageModel } from '../modules/prints/page.ts';
-import type { PageTheme } from './head.ts';
+import { documentStart, type PageTheme } from './head.ts';
 import { actionHtml, hostedPage } from './hosted.ts';
+import { HOSTED_ART_CSS, stateArtHtml } from './hosted-art.tsx';
 import { iconHtml } from './icon.ts';
+import { OrgBar, OrgMark } from './org-bar.tsx';
+import { brandCss, ORG_SHELL_CSS } from './org-brand-css.ts';
 import { RIBBON_CSS, TestRibbon } from './test-ribbon.tsx';
-import { escapeHtml } from './theme.ts';
+import { escapeHtml, THEME_CSS } from './theme.ts';
 
 /** The code is in the page, so it is private and never cached or sent on in a referrer. */
 export const PRINT_HEADERS = {
@@ -21,7 +29,7 @@ export const PRINT_HEADERS = {
   'x-robots-tag': 'noindex, nofollow',
 };
 
-/** Screen: the sheet on the hosted card. Print: the sheet alone, at its true size. */
+/** Screen: the sheet under its actions. Print: the sheet alone, at its true size. */
 const PAGE_CSS = `${RIBBON_CSS}
 .hosted.wide{max-width:40rem}
 .pp-stage{display:flex;flex-direction:column;gap:1rem}
@@ -35,13 +43,32 @@ const PAGE_CSS = `${RIBBON_CSS}
 .pp-empty p,.pp-unavailable p{margin:0}
 ${PAPER_CSS}`;
 
+/** The org's page: its bar, then the ticket. No PassBook band; the footer line on the sheet is the only mention. */
+const HOLDER_CSS = `${THEME_CSS}${holderCss}
+${ART_CSS}
+${HOSTED_ART_CSS}
+${inspectCss}
+${PAGE_CSS}
+body{padding:0}
+.pp-main{width:100%;max-width:64rem;margin:0 auto;padding:1.5rem max(var(--wl-gutter,1rem),env(safe-area-inset-left)) max(2rem,env(safe-area-inset-bottom))}
+.pp-head h1{margin:0;font-size:var(--pk-font-size-2xl);line-height:var(--pk-line-height-2xl);font-weight:var(--pk-font-weight-semibold);letter-spacing:var(--pk-tracking-tight);color:var(--pk-text-strong)}
+.pp-main .pp-stage{margin-top:1rem}
+.pp-main .pp-stage,.pp-main .pp-head,.pp-main .pp-unavailable,.pp-main .pp-back{max-width:40rem}
+.pp-lede{margin:.25rem 0 0;font-size:.875rem;line-height:1.25rem;color:var(--pk-text-muted)}
+.pp-scene{position:relative;width:128px;height:96px;margin:0 0 1rem;pointer-events:none}
+.pp-scene .wl-art{width:128px;height:96px}
+.pp-scene>[data-replay]{display:block}
+.pp-scene-pair{width:214px}
+.pp-back{display:flex;margin-top:.5rem}`;
+
 const PRINT_ONLY_CSS = `@media print{
 html,body{background:#fff}
 body{min-height:0;padding:0}
-.band,.body>div:first-child,.body>a.btn,.pp-actions,.pp-confirm,.pp-error,.pp-empty,.pp-ribbon,.card::before{display:none!important}
+.band,.body>div:first-child,.body>a.btn,.pp-noprint,.pp-head,.pp-actions,.pp-confirm,.pp-error,.pp-empty,.pp-ribbon,.pp-scene,.pp-back,.card::before{display:none!important}
 .hosted,.hosted.wide{display:block;max-width:none;min-height:0;padding:0}
 .card{display:block;overflow:visible;border:0;border-radius:0;background:#fff;box-shadow:none}
 .body{display:block;padding:0}
+.pp-main{display:block;max-width:none;margin:0;padding:0}
 }`;
 
 const SCRIPT = (nonce: string) => `<script nonce="${nonce}">(()=>{
@@ -75,76 +102,140 @@ export interface PrintPageProps {
   backHref?: string;
   /** The PDF of the active print. */
   pdfHref?: string;
+  /** Where the template's images are served (ends in `/`): `/p/{token}/assets/` for a holder. */
+  assetBase?: string;
   nonce: string;
   theme?: PageTheme;
+  /** The org's brand kit (`orgBrandOf`): its logo leads the bar, its accent colours the page, its mark sets the foot. */
+  brand?: OrgBrand;
 }
 
-/** The print page. The code appears only in the sheet's barcode geometry and its typed line. */
+const HEAD =
+  '<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">';
+
+type Ready = Extract<PrintPageModel, { state: 'ready' }>;
+
+/** The sheet, drawn with the print's own number and time and the template's images. */
+function sheetHtml(props: PrintPageProps, model: Ready) {
+  const { assetBase } = props;
+  const url = (name: string | undefined) =>
+    assetBase && name ? `${assetBase}${encodeURIComponent(name)}` : undefined;
+  return renderToStaticMarkup(
+    <PaperTicket
+      content={model.content}
+      design={model.design}
+      code={model.code}
+      drawing={drawPaperCode(toSvg, model.design.barcode, model.code)}
+      mode={model.mode}
+      issued={{ generation: model.generation, at: new Date(model.printedAt).toISOString() }}
+      assets={{ logo: url(model.files.logo), art: url(model.files.art) }}
+    />,
+  );
+}
+
+/** Print first, then the PDF; a holder can also reprint or void. All before the sheet in reading order. */
+function actionsHtml(props: PrintPageProps) {
+  const holder = props.audience === 'holder';
+  const actions = [
+    button('print', PRINT_COPY.print, Printer, true),
+    ...(props.pdfHref
+      ? [
+          `<a class="btn outline" href="${escapeHtml(props.pdfHref)}" download>${iconHtml(Download)}${escapeHtml(PRINT_COPY.download)}</a>`,
+        ]
+      : []),
+    ...(holder
+      ? [button('reprint', PRINT_COPY.reprint, RotateCcw), button('void', PRINT_COPY.void, Ban)]
+      : []),
+  ].join('');
+  return `<div class="pp-actions">${actions}</div>${
+    holder
+      ? `${confirm('reprint', PRINT_COPY.confirmReprint, '/reprint')}${confirm('void', PRINT_COPY.confirmVoid, '/void')}`
+      : ''
+  }<p class="pp-error callout" role="alert" data-error hidden></p>`;
+}
+
+/** The body under the title: the two states and the ready sheet, for both audiences. */
+function stateBody(props: PrintPageProps): { body: string; sheet: boolean } {
+  const { model } = props;
+  const holder = props.audience === 'holder';
+  const back = props.backHref
+    ? `<div class="pp-back">${actionHtml({ label: PRINT_COPY.back, href: props.backHref })}</div>`
+    : '';
+  if (model.state === 'unavailable')
+    return {
+      sheet: false,
+      body: `<div class="pp-unavailable" role="status"><p>${escapeHtml(PRINT_COPY.unavailableLine(model.orgName))}</p></div>${back}`,
+    };
+  if (model.state === 'empty')
+    return {
+      sheet: false,
+      body: `<div class="pp-empty pp-stage"><p>${escapeHtml(holder ? PRINT_COPY.noPrint : PRINT_COPY.noPrintStaff)}</p>${
+        holder
+          ? `<div class="pp-actions">${button('make', PRINT_COPY.make, Printer, true)}</div>`
+          : ''
+      }<p class="pp-error callout" role="alert" data-error hidden></p></div>${back}`,
+    };
+  return {
+    sheet: true,
+    body: `<div class="pp-stage">${actionsHtml(props)}${sheetHtml(props, model)}</div>${back}`,
+  };
+}
+
+/** The holder's page: the org's bar, the title, the lede and actions, then the sheet. */
+function holderPage(props: PrintPageProps): string {
+  const { model } = props;
+  const { body, sheet } = stateBody(props);
+  const heading = model.state === 'unavailable' ? PRINT_COPY.unavailable : PRINT_COPY.title;
+  // The buddy shows only in a state: looking over an empty page, tugging at a locked one.
+  const art =
+    model.state === 'unavailable'
+      ? stateArtHtml('no-access')
+      : model.state === 'empty'
+        ? renderToStaticMarkup(<BuddyArt mood="curious" scene="inspect" size="xl" playOnLoad />)
+        : '';
+  const bar = renderToStaticMarkup(
+    <div className="pp-noprint">
+      <OrgBar orgName={model.orgName} brand={props.brand} />
+      <div className="pp-ribbon">
+        <TestRibbon mode={model.mode} what="pass" />
+      </div>
+    </div>,
+  );
+  const page = model.state === 'ready' ? pageRule(model.design.size) : '';
+  const mark = renderToStaticMarkup(
+    <div className="pp-noprint">
+      <OrgMark brand={props.brand} />
+    </div>,
+  );
+  const lede = sheet ? `<p class="pp-lede">${escapeHtml(PRINT_COPY.lede)}</p>` : '';
+  const pair = model.state === 'unavailable' ? ' pp-scene-pair' : '';
+  const scene = art ? `<div class="scene pp-scene${pair}" aria-hidden="true">${art}</div>` : '';
+  return `${documentStart(props.theme)}${HEAD}<title>${escapeHtml(heading)}</title><style nonce="${props.nonce}">${HOLDER_CSS}\n${ORG_SHELL_CSS}\n${page}\n${PRINT_ONLY_CSS}${brandCss(props.brand)}</style></head><body><div class="[--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">${bar}<main class="pp-main">${scene}<div class="pp-head"><h1>${escapeHtml(heading)}</h1>${lede}</div>${body}</main>${mark}</div>${SCRIPT(props.nonce)}</body></html>`;
+}
+
+/**
+ * The print page. A holder gets the org's bar and the ticket; staff keep the hosted PassBook shell.
+ * The code appears only in the sheet's barcode geometry and its typed line.
+ */
 export function renderPrintPage(props: PrintPageProps): string {
-  const { model, audience } = props;
-  const holder = audience === 'holder';
+  const { model } = props;
+  if (props.audience === 'holder') return holderPage(props);
   const strip = renderToStaticMarkup(<TestRibbon mode={model.mode} what="pass" />);
   const ribbon = strip ? `<div class="pp-ribbon">${strip}</div>` : '';
-  const back = props.backHref ? actionHtml({ label: PRINT_COPY.back, href: props.backHref }) : '';
-  const title = holder ? PRINT_COPY.title : PRINT_COPY.staffTitle;
-  if (model.state === 'unavailable') {
-    return hostedPage({
-      nonce: props.nonce,
-      ...(props.theme ? { theme: props.theme } : {}),
-      title: PRINT_COPY.unavailable,
-      art: 'no-access',
-      css: PAGE_CSS,
-      replay: false,
-      head: '<meta name="referrer" content="no-referrer">',
-      body: `${ribbon}<div class="pp-unavailable" role="status"><p>${escapeHtml(PRINT_COPY.unavailableLine(model.orgName))}</p></div>${back}`,
-    });
-  }
-  let body: string;
-  let page = '';
-  if (model.state === 'empty') {
-    body = `${ribbon}<div class="pp-empty pp-stage"><p>${escapeHtml(holder ? PRINT_COPY.noPrint : PRINT_COPY.noPrintStaff)}</p>${
-      holder
-        ? `<div class="pp-actions">${button('make', PRINT_COPY.make, Printer, true)}</div>`
-        : ''
-    }<p class="pp-error callout" role="alert" data-error hidden></p></div>${back}`;
-  } else {
-    const drawing = drawPaperCode(toSvg, model.design.barcode, model.code);
-    const sheet = renderToStaticMarkup(
-      <PaperTicket
-        content={model.content}
-        design={model.design}
-        code={model.code}
-        drawing={drawing}
-      />,
-    );
-    const actions = [
-      button('print', PRINT_COPY.print, Printer, true),
-      ...(props.pdfHref
-        ? [
-            `<a class="btn outline" href="${escapeHtml(props.pdfHref)}" download>${iconHtml(Download)}${escapeHtml(PRINT_COPY.download)}</a>`,
-          ]
-        : []),
-      ...(holder
-        ? [button('reprint', PRINT_COPY.reprint, RotateCcw), button('void', PRINT_COPY.void, Ban)]
-        : []),
-    ].join('');
-    body = `${ribbon}<div class="pp-stage">${sheet}<div class="pp-actions">${actions}</div>${
-      holder
-        ? `${confirm('reprint', PRINT_COPY.confirmReprint, '/reprint')}${confirm('void', PRINT_COPY.confirmVoid, '/void')}`
-        : ''
-    }<p class="pp-error callout" role="alert" data-error hidden></p></div>${back}`;
-    page = pageRule(model.design.size);
-  }
+  const { body, sheet } = stateBody(props);
+  const page = model.state === 'ready' ? pageRule(model.design.size) : '';
   return hostedPage({
     nonce: props.nonce,
     ...(props.theme ? { theme: props.theme } : {}),
-    title,
-    art: 'login',
-    ...(model.state === 'ready' ? { lede: escapeHtml(PRINT_COPY.lede) } : {}),
+    ...(props.brand ? { brand: props.brand } : {}),
+    title: model.state === 'unavailable' ? PRINT_COPY.unavailable : PRINT_COPY.staffTitle,
+    art: model.state === 'unavailable' ? 'no-access' : 'login',
+    ...(sheet ? { lede: escapeHtml(PRINT_COPY.lede) } : {}),
     wide: true,
+    ...(model.state === 'unavailable' ? { replay: false } : {}),
     css: `${PAGE_CSS}\n${page}\n${PRINT_ONLY_CSS}`,
-    head: '<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">',
-    body,
+    head: HEAD,
+    body: `${ribbon}${body}`,
     after: SCRIPT(props.nonce),
   });
 }

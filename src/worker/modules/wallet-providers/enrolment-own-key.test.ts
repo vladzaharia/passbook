@@ -24,10 +24,9 @@ import { googleOrg } from './shared-issuer-isolation-test-fixtures.ts';
 import { type Kit, kit, type Mode } from './wallet-wa1b-test-fixtures.ts';
 
 let k: Kit;
-let keyset = '';
 beforeAll(async () => {
   k = await kit();
-  keyset = await ensureCredentialRefKeyset(env.DB, k.env);
+  await ensureCredentialRefKeyset(env.DB, k.env);
 }, 30_000);
 
 const ids = (issuer: string, key: Uint8Array, orgId: string, mode: Mode) =>
@@ -69,7 +68,6 @@ const verify = (
     mode,
     accountId: e.accountId,
     accountRevision: 1,
-    credentialKeysetCommitment: keyset,
   });
 
 const row = (accountId: string) =>
@@ -200,12 +198,12 @@ describe('the enrolment own key', () => {
 
   it('a legacy row still resolves from its envelope, and prefers the own key once copied', async () => {
     const o = await googleOrg(env.DB);
+    await ensureCredentialRefKeyset(o.kit.env.DB, o.kit.env);
     const legacy = await readGoogleCallbackVerification(o.kit.ctx, {
       orgId: o.orgId,
       mode: 'live',
       accountId: o.account.id,
       accountRevision: o.account.revision,
-      credentialKeysetCommitment: await ensureCredentialRefKeyset(o.kit.env.DB, o.kit.env),
     });
     expect(legacy?.objectIdHmacKey).toHaveLength(32);
     const key = 'A'.repeat(43);
@@ -222,12 +220,12 @@ describe('the enrolment own key', () => {
         [envelope.kekVersion, envelope.iv, envelope.wrappedDek, envelope.ciphertext, o.account.id],
       ),
     );
+    await ensureCredentialRefKeyset(o.kit.env.DB, o.kit.env);
     const after = await readGoogleCallbackVerification(o.kit.ctx, {
       orgId: o.orgId,
       mode: 'live',
       accountId: o.account.id,
       accountRevision: o.account.revision,
-      credentialKeysetCommitment: await ensureCredentialRefKeyset(o.kit.env.DB, o.kit.env),
     });
     expect(after?.objectIdHmacKey).toEqual(fromBase64Url(key));
     expect(after?.issuerId).toBe(legacy?.issuerId);
@@ -294,7 +292,6 @@ describe('the enrolment own key', () => {
                 [accountId],
               )
             )?.r ?? 0,
-          credentialKeysetCommitment: keyset,
         },
       );
     expect(await read()).toBeNull();
@@ -313,7 +310,7 @@ describe('the enrolment own key', () => {
 
   it('the callback handler admits a new-model enrolment: its account scope resolves and verifies', async () => {
     const e = await enrol('test');
-    const scope = await findGoogleCallbackAccount(env.DB, e.accountId, keyset);
+    const scope = await findGoogleCallbackAccount(env.DB, e.accountId);
     expect(scope).toMatchObject({ accountId: e.accountId, orgId: e.org.id, mode: 'test' });
     expect(scope?.accountRevision).toBe(1);
     if (!scope) throw new Error('scope');
@@ -325,6 +322,6 @@ describe('the enrolment own key', () => {
       "INSERT INTO wallet_provider_accounts (id, org_id, mode, provider, created_at, updated_at) VALUES ('bare-acct', ?, 'test', 'google', 1, 1)",
       [bare.id],
     );
-    expect(await findGoogleCallbackAccount(env.DB, 'bare-acct', keyset)).toBeNull();
+    expect(await findGoogleCallbackAccount(env.DB, 'bare-acct')).toBeNull();
   });
 });

@@ -1,5 +1,4 @@
 import { batch, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import {
   type SamsungFetchSnapshot,
   samsungPassJsonCurrentSql,
@@ -55,11 +54,7 @@ export async function claimSamsungFetch(
 ): Promise<boolean> {
   if (!validClaim(claim)) return false;
   const results = await batch(db, [
-    stmt(
-      db,
-      `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ? AND ${credentialRefKeysetSql}`,
-      [claim.now, snapshot.credentialKeysetCommitment],
-    ),
+    stmt(db, `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ?`, [claim.now]),
     claimStatement(db, snapshot, claim, rawPassJson),
     stmt(
       db,
@@ -97,11 +92,7 @@ export async function claimSamsungReceipt(
     await instancePass(db, snapshot.instanceId),
   );
   const results = await batch(db, [
-    stmt(
-      db,
-      `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ? AND ${credentialRefKeysetSql}`,
-      [claim.now, snapshot.credentialKeysetCommitment],
-    ),
+    stmt(db, `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ?`, [claim.now]),
     receiptInsert as D1PreparedStatement,
     claimStatement(db, snapshot, claim, rawPassJson),
     ...effects,

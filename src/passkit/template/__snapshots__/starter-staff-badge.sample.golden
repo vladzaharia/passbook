@@ -1,0 +1,76 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(226,232,238)",
+  "barcodes": [
+    {
+      "altText": "E-1042",
+      "format": "PKBarcodeFormatQR",
+      "message": "SNAPSHOT-SCAN-CODE",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Staff badge",
+  "foregroundColor": "rgb(20,24,28)",
+  "formatVersion": 1,
+  "generic": {
+    "auxiliaryFields": [
+      {
+        "key": "member",
+        "label": "Employee",
+        "value": "E-1042"
+      }
+    ],
+    "backFields": [
+      {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "For entry checks and attendance. It does not open doors."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "headerFields": [
+      {
+        "key": "plan",
+        "label": "Type",
+        "value": "Staff"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Priya Shah"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "team",
+        "label": "Team",
+        "value": "Platform"
+      }
+    ]
+  },
+  "labelColor": "rgb(0,118,108)",
+  "logoText": "Organization",
+  "organizationName": "PassBook",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}

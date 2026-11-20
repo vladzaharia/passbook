@@ -1,6 +1,7 @@
 Bundled Rubik font binaries: Copyright (c) 2015 by Hubert & Fischer. Hebrew characters (c) 2016 by Meir Sadan. SIL Open Font License 1.1 (OFL.txt). ttf/Rubik-Variable.ttf is Rubik[wght].ttf 2.300 from github.com/google/fonts, unchanged; the WOFF2 files are subsets of it.
 Bundled JetBrains Mono font binaries: Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono). SIL Open Font License 1.1 (OFL-JetBrainsMono.txt). ttf/JetBrainsMono-Variable.ttf is JetBrainsMono[wght].ttf 2.211 from github.com/google/fonts, unchanged; the WOFF2 files are subsets of it limited to wght 400-600.
 ttf/Rubik-Variable-kit.ttf and ttf/JetBrainsMono-Variable-kit.ttf (the Apple kit's bundled copies) are Modified Versions of those two files: wght limited to 400-600 and subset to Latin (scripts/subset-fonts.sh); Rubik's default face is renamed Regular. No Reserved Font Name is declared.
+public/fonts/pdf/*.ttf (the printed ticket PDF's fonts, tools/build-pdf-fonts.sh) are static instances of Rubik-Variable.ttf (wght 400, 500, 600, 700) and JetBrainsMono-Variable.ttf (wght 700), subset to Latin, Latin extended, Cyrillic and punctuation: Modified Versions under the same licenses, no Reserved Font Name; the license texts ship beside them.
 
 
 Copyright 2015 The Rubik Project Authors (https://github.com/googlefonts/rubik)

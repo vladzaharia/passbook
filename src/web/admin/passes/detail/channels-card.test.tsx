@@ -55,11 +55,14 @@ describe('Channels card', () => {
   it('shows state, source and why a channel cannot be switched', async () => {
     renderTags(<ChannelsCard pass={pass()} readOnly={false} />, handlers(effective()));
     await screen.findByRole('switch', { name: 'Apple Wallet' });
-    expect(row('Apple Wallet')).toHaveTextContent('OnTemplate');
-    expect(row('Google Wallet')).toHaveTextContent(
-      'Organization not enrolled. Copies stay as they are.',
-    );
-    expect(screen.getByRole('switch', { name: 'Google Wallet' })).toBeDisabled();
+    expect(row('Apple Wallet')).toHaveTextContent('On');
+    expect(row('Apple Wallet')).not.toHaveTextContent('Template');
+    expect(screen.queryByRole('switch', { name: 'Google Wallet' })).toBeNull();
+    expect(
+      screen.getByLabelText(
+        'Not available. Waiting for Google account. Copies stay as they are. Change it in Wallet accounts.',
+      ),
+    ).toHaveTextContent('Not available');
     expect(screen.getByRole('switch', { name: 'Paper' })).toBeEnabled();
     expect(screen.queryByText(CHANNEL_COPY.nothingOn)).toBeNull();
   });
@@ -151,7 +154,7 @@ describe('Channels card', () => {
     await userEvent.click(screen.getByRole('switch', { name: 'Apple Wallet' }));
     await waitFor(() => expect(calls(fetchMock, 'PUT', '/channels')).toHaveLength(1));
     await userEvent.click(
-      within(row('Paper')).getByRole('button', { name: CHANNEL_COPY.useTemplate }),
+      within(row('Paper')).getByRole('button', { name: CHANNEL_COPY.templateDefault }),
     );
     await waitFor(() => expect(calls(fetchMock, 'PUT', '/channels')).toHaveLength(2));
     const [, init] = calls(fetchMock, 'PUT', '/channels')[1] ?? [];
@@ -172,7 +175,6 @@ describe('Channels card', () => {
       }),
     );
     expect(await screen.findByText(CHANNEL_COPY.nothingOn)).toBeInTheDocument();
-    expect(row('Apple Wallet')).toHaveTextContent('Retired');
   });
 
   it('is read-only in the other mode', async () => {

@@ -217,7 +217,6 @@ describe('provider pass status read', () => {
       orgId: f.kit.org.id,
       mode: 'live' as const,
       provider: 'samsung' as const,
-      credentialKeysetCommitment: f.operation.credentialKeysetCommitment,
       claimHandle: newWalletClaimHandle(),
       now: f.kit.clock.now(),
     };
@@ -350,7 +349,6 @@ describe('provider pass status read', () => {
       orgId: f.pass.orgId,
       mode: f.pass.mode,
       provider: 'samsung' as const,
-      credentialKeysetCommitment: f.operation.credentialKeysetCommitment,
     };
     const old = await getWalletInstanceById(f.kit.env.DB, oldScope);
     if (!old) throw new Error('Missing old instance');
@@ -493,14 +491,13 @@ describe('provider pass status read', () => {
     await unavailable(await requestWithKeyChange(true));
   });
 
-  it('refuses a mismatched keyset and binds the captured keyset to the final authorized status read', async () => {
+  it('refuses a mismatched keyset pin at entry', async () => {
     const f = await setupSamsungCallbacks({
       holderEmail: 'private-holder@example.test',
       db: kit.env.DB,
     });
     const db = f.kit.env.DB;
     const member = await eventMember(f.kit, f.kit.org.id);
-    const revoked = await eventMember(f.kit, f.kit.org.id);
     const outsider = await makeUser(f.kit.fx);
     const outsiderSession = await makeSession(f.kit.fx, {
       userId: outsider.id,
@@ -559,99 +556,6 @@ describe('provider pass status read', () => {
       commitment: credentialKeysetCommitment,
     });
 
-    // Model a changed persistent sentinel after preflight; the production trigger forbids this.
-    const guard = await first<{ sql: string }>(
-      db,
-      "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'credential_ref_keyset_no_update'",
-    );
-    if (!guard?.sql) throw new Error('Missing credential keyset update guard');
-    await run(db, 'DROP TRIGGER credential_ref_keyset_no_update');
-    try {
-      const changed = await atStatusRead(
-        f.kit,
-        async (real) => {
-          await run(real, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [
-            replacement,
-          ]);
-        },
-        (env) => call(f.kit, f.pass.id, member.session.headers, env),
-      );
-      const raw = await unavailable(changed);
-      for (const secret of [
-        f.pass.id,
-        f.operation.instanceId,
-        f.refId,
-        'private-holder@example.test',
-      ])
-        expect(raw).not.toContain(secret);
-      expect(await first(db, 'SELECT commitment FROM credential_ref_keyset WHERE id = 1')).toEqual({
-        commitment: replacement,
-      });
-
-      await run(db, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [
-        credentialKeysetCommitment,
-      ]);
-      const revokedAndChanged = await atStatusRead(
-        f.kit,
-        async (real) => {
-          await run(real, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [
-            replacement,
-          ]);
-          await run(real, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
-            f.kit.clock.now(),
-            revoked.membership,
-          ]);
-        },
-        (env) => call(f.kit, f.pass.id, revoked.session.headers, env),
-      );
-      await expectProblem(revokedAndChanged, 404, 'PASS_NOT_FOUND');
-    } finally {
-      try {
-        await run(db, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [
-          credentialKeysetCommitment,
-        ]);
-      } finally {
-        await run(db, guard.sql);
-      }
-    }
-    const deleteGuard = await first<{ sql: string }>(
-      db,
-      "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'credential_ref_keyset_no_delete'",
-    );
-    const insertGuard = await first<{ sql: string }>(
-      db,
-      "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'credential_ref_keyset_insert_guard'",
-    );
-    if (!deleteGuard?.sql || !insertGuard?.sql) throw new Error('Missing credential keyset guards');
-    await run(db, 'DROP TRIGGER credential_ref_keyset_no_delete');
-    try {
-      const missing = await atStatusRead(
-        f.kit,
-        async (real) => {
-          await run(real, 'DELETE FROM credential_ref_keyset WHERE id = 1');
-        },
-        (env) => call(f.kit, f.pass.id, member.session.headers, env),
-      );
-      await unavailable(missing);
-      expect(
-        await first(db, 'SELECT commitment FROM credential_ref_keyset WHERE id = 1'),
-      ).toBeNull();
-    } finally {
-      try {
-        await run(db, 'DROP TRIGGER credential_ref_keyset_insert_guard');
-        try {
-          await run(
-            db,
-            'INSERT OR IGNORE INTO credential_ref_keyset (id, commitment) VALUES (1, ?)',
-            [credentialKeysetCommitment],
-          );
-        } finally {
-          await run(db, insertGuard.sql);
-        }
-      } finally {
-        await run(db, deleteGuard.sql);
-      }
-    }
     expect(await read(await call(f.kit, f.pass.id, member.session.headers))).toEqual(baseline);
   });
 

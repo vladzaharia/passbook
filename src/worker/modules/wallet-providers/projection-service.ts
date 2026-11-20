@@ -10,17 +10,16 @@ import type { AuthContext } from '../../platform/auth.ts';
 import { batch } from '../../platform/db.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { authorizeTemplateWrite } from '../templates/access.ts';
 import { releaseAuditStmt } from '../templates/repo-release-audit.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
 import { buildProjectionCandidate } from './projection-candidate-build.ts';
 import {
   candidateDto,
-  captureProjectionProof,
   failedWrite,
   nativeScope,
   pinProjectionContext,
-  requireProjectionProof,
   scopedCandidate,
   scopedTemplate,
 } from './projection-service-support.ts';
@@ -51,11 +50,11 @@ export async function listProjectionCandidates(
 ): Promise<TemplateCandidateList> {
   ctx = pinProjectionContext(ctx);
   await scopedTemplate(ctx, auth, templateId, scope);
-  const proof = await captureProjectionProof(ctx);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const native = nativeScope(templateId, scope);
   const [candidates, approvals] = await Promise.all([
-    selectProjectionCandidates(ctx.env.DB, native, proof),
-    selectProjectionApprovals(ctx.env.DB, native, proof),
+    selectProjectionCandidates(ctx.env.DB, native),
+    selectProjectionApprovals(ctx.env.DB, native),
   ]);
   const approvalsByCandidate = new Map<string, ApprovalRow[]>();
   for (const approval of approvals) {
@@ -66,7 +65,6 @@ export async function listProjectionCandidates(
   const items = candidates.map((candidate) =>
     candidateDto(candidate, approvalsByCandidate.get(candidate.id) ?? []),
   );
-  await requireProjectionProof(ctx, proof);
   return { items };
 }
 
@@ -80,7 +78,7 @@ export async function createProjectionCandidate(
   await scopedTemplate(ctx, auth, templateId, body);
   const scope = nativeScope(templateId, body);
   const authority = await authorizeTemplateWrite(ctx, auth, scope.orgId, 'templates:author');
-  const proof = await captureProjectionProof(ctx);
+  const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   if (!body.sourceReleaseId || !body.version) throw new ValidationError();
   const candidate = await buildProjectionCandidate(
     ctx,
@@ -91,11 +89,11 @@ export async function createProjectionCandidate(
       projection: body.projection,
       authorId: authority.userId,
     },
-    proof,
+    credentialKeysetCommitment,
   );
   const db = ctx.env.DB;
   const results = await batch(db, [
-    insertProjectionCandidateStmt(db, candidate, authority, ctx.clock.now(), proof),
+    insertProjectionCandidateStmt(db, candidate, authority, ctx.clock.now()),
     releaseAuditStmt(
       db,
       ctx,
@@ -129,8 +127,8 @@ export async function approveProjectionCandidate(
   await scopedTemplate(ctx, auth, templateId, body);
   const scope = nativeScope(templateId, body);
   const authority = await authorizeTemplateWrite(ctx, auth, scope.orgId, 'templates:review');
-  const proof = await captureProjectionProof(ctx);
-  const candidate = await scopedCandidate(ctx, scope, candidateId, body.candidateHash, proof);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  const candidate = await scopedCandidate(ctx, scope, candidateId, body.candidateHash);
   if (
     authority.userId === candidate.authorId ||
     (authority.userId === candidate.versionAuthorId && !isSystemAuthored(candidate))
@@ -146,7 +144,7 @@ export async function approveProjectionCandidate(
   };
   const db = ctx.env.DB;
   const results = await batch(db, [
-    insertProjectionApprovalStmt(db, approval, candidate, authority, ctx.clock.now(), proof),
+    insertProjectionApprovalStmt(db, approval, candidate, authority, ctx.clock.now()),
     releaseAuditStmt(
       db,
       ctx,

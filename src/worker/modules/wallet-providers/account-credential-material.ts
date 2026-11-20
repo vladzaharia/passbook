@@ -14,14 +14,12 @@ import { UnavailableError } from '../../platform/errors.ts';
 import { fromBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { accountHmacKind } from '../keys/rewrap-tables.ts';
-import {
-  captureCredentialKeyEnv,
-  requireCredentialRefKeyset,
-} from '../passes/credential-keyset.ts';
+import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
+import { providerIdentityHash } from './projection-contract.ts';
 import type { AccountRow } from './repo-accounts.ts';
 
 /** Server-only material. Never serialize this value into an API response, audit record or log. */
-export type WalletProviderCredentialSnapshot = { credentialKeysetCommitment: string } & (
+export type WalletProviderCredentialSnapshot =
   | {
       accountId: string;
       revision: number;
@@ -36,8 +34,7 @@ export type WalletProviderCredentialSnapshot = { credentialKeysetCommitment: str
       revision: number;
       provider: 'samsung';
       credentials: SamsungWalletCredentials;
-    }
-);
+    };
 
 export type StoredCredentials =
   | {
@@ -54,6 +51,13 @@ export type KeyOnlyAccount =
   | { version: 1; provider: 'google'; credentials: null; objectIdHmacKey: string }
   | { version: 1; provider: 'samsung'; credentials: null };
 
+/**
+ * The identity stored with a legacy credential and compared by the account epoch: Google's issuer,
+ * Samsung's partner and default card. It is what configure already refuses to change.
+ */
+export const storedIdentityHash = (stored: StoredCredentials): Promise<string> =>
+  providerIdentityHash(stored);
+
 export const corrupt = () =>
   new UnavailableError(
     'Wallet provider credentials are unavailable.',
@@ -68,14 +72,6 @@ export function snapshotWalletCredentialContext(ctx: ServiceContext): ServiceCon
     if (isKeyEnvName(name)) delete (env as unknown as Record<string, unknown>)[name];
   }
   return { ...ctx, env: { ...env, ...keyEnv } };
-}
-
-export async function assertCredentialKeyset(
-  ctx: ServiceContext,
-  credentialKeysetCommitment: string,
-): Promise<void> {
-  if ((await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== credentialKeysetCommitment)
-    throw corrupt();
 }
 
 function aad(
@@ -187,13 +183,11 @@ export async function openAccount(
 export function credentialSnapshot(
   row: AccountRow,
   stored: StoredCredentials,
-  credentialKeysetCommitment: string,
 ): WalletProviderCredentialSnapshot {
   if (stored.provider === 'google')
     return {
       accountId: row.id,
       revision: row.revision,
-      credentialKeysetCommitment,
       provider: 'google',
       credentials: stored.credentials,
       objectIdHmacKey: fromBase64Url(stored.objectIdHmacKey),
@@ -202,7 +196,6 @@ export function credentialSnapshot(
   return {
     accountId: row.id,
     revision: row.revision,
-    credentialKeysetCommitment,
     provider: 'samsung',
     credentials: stored.credentials,
   };

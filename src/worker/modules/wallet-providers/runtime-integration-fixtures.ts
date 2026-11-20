@@ -84,7 +84,6 @@ export async function runtimeGoogleLegacyFixture(options: { db?: D1Database } = 
     orgId: pass.orgId,
     mode: pass.mode,
     passId: pass.id,
-    credentialKeysetCommitment,
   });
   const account = await readHistoricalGoogleAccount(kit.env.DB, pass.orgId, pass.mode);
   if (!snapshot?.issuingReleaseId || !account) throw new Error('Missing historical Google fixture');
@@ -93,7 +92,6 @@ export async function runtimeGoogleLegacyFixture(options: { db?: D1Database } = 
     mode: pass.mode,
     accountId: account.id,
     accountRevision: account.revision,
-    credentialKeysetCommitment,
   });
   if (!verification) throw new Error('Missing Google verification fixture');
   const generation = await readHistoricalCredentialGeneration(kit.env.DB, pass.id);
@@ -108,7 +106,6 @@ export async function runtimeGoogleLegacyFixture(options: { db?: D1Database } = 
     mode: pass.mode,
     accountId: account.id,
     accountRevision: account.revision,
-    credentialKeysetCommitment,
     providerIdentityHash: await providerIdentityHash({ provider: 'google', credentials: google }),
     providerReleaseId: releaseId,
   };
@@ -124,7 +121,7 @@ export async function runtimeGoogleLegacyFixture(options: { db?: D1Database } = 
     mode: pass.mode,
     provider: 'google',
     credentialGeneration: generation.credentialGeneration,
-    credentialKeysetCommitment: scope.credentialKeysetCommitment,
+    credentialKeysetCommitment,
     accountId: account.id,
     releaseId,
     operationId,
@@ -144,7 +141,7 @@ export async function runtimeGoogleLegacyFixture(options: { db?: D1Database } = 
     accountRevision: scope.accountRevision,
     adapterRevision: policy.adapterRevision,
     policyRevision: policy.audiencePolicyRevision,
-    credentialKeysetCommitment: scope.credentialKeysetCommitment,
+    credentialKeysetCommitment,
     claimHash: await walletClaimHash(claimHandle),
     now,
   });

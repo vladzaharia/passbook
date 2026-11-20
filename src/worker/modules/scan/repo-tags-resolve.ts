@@ -12,7 +12,7 @@ const TAG_CANDIDATES_READ = 8;
 /** The tag row and its active binding, in the actor's org and mode. */
 export interface TagState {
   id: string;
-  kind: string;
+  system: string;
   status: string;
   hint: string;
   lostAt: number | null;
@@ -50,7 +50,7 @@ function tagPassIds(orgId: string, mode: Mode, ref: string): { sql: string; para
 export const tagStateStmt = (db: D1Database, orgId: string, mode: Mode, ref: string) =>
   stmt(
     db,
-    `SELECT t.id, t.kind, t.status, t.hint, t.lost_at, b.id AS binding_id, b.scope, b.pass_id, b.user_id,
+    `SELECT t.id, t.system, t.status, t.hint, t.lost_at, b.id AS binding_id, b.scope, b.pass_id, b.user_id,
       (SELECT u.status FROM users u WHERE u.id = b.user_id) AS user_status
     FROM nfc_tags t LEFT JOIN tag_bindings b ON b.tag_id = t.id AND b.ended_at IS NULL
     WHERE t.org_id = ? AND t.mode = ? AND t.tag_ref = ?`,
@@ -66,9 +66,14 @@ export const otherModeTagStmt = (db: D1Database, orgId: string, mode: Mode, ref:
     [orgId, mode, ref],
   );
 
-/** The org switch `nfc.tags`; absent means off. */
+/** The org switch `nfc.tags` and the platform switch `nfc.tagsEnabled`; an absent row means on. */
 export const tagsSwitchStmt = (db: D1Database, orgId: string) =>
-  stmt(db, "SELECT value FROM settings WHERE scope = ? AND key = 'nfc.tags'", [`org:${orgId}`]);
+  stmt(
+    db,
+    `SELECT key, value FROM settings
+     WHERE (scope = ? AND key = 'nfc.tags') OR (scope = 'platform' AND key = 'nfc.tagsEnabled')`,
+    [`org:${orgId}`],
+  );
 
 /** Full candidate rows for the tag's passes: active before voided or removed, then oldest. */
 export const tagCandidatesStmt = (db: D1Database, orgId: string, mode: Mode, ref: string) =>
@@ -109,7 +114,7 @@ export const overriddenPassStmt = (db: D1Database, orgId: string, mode: Mode, sc
 
 interface RawTag {
   id: string;
-  kind: string;
+  system: string;
   status: string;
   hint: string;
   lost_at: number | null;
@@ -125,7 +130,7 @@ export function tagStateOf(result: D1Result | undefined): TagState | null {
   if (!row) return null;
   return {
     id: row.id,
-    kind: row.kind,
+    system: row.system,
     status: row.status,
     hint: row.hint,
     lostAt: row.lost_at,
@@ -143,13 +148,17 @@ export function tagStateOf(result: D1Result | undefined): TagState | null {
 }
 
 export function tagsOn(result: D1Result | undefined): boolean {
-  const value = (result?.results?.[0] as { value?: unknown } | undefined)?.value;
-  if (typeof value !== 'string') return false;
-  try {
-    return (JSON.parse(value) as { enabled?: unknown }).enabled === true;
-  } catch {
-    return false;
+  for (const row of (result?.results ?? []) as { key: string; value: unknown }[]) {
+    if (typeof row.value !== 'string') return false;
+    try {
+      const v = JSON.parse(row.value) as unknown;
+      const on = row.key === 'nfc.tags' ? (v as { enabled?: unknown } | null)?.enabled : v;
+      if (on !== true) return false;
+    } catch {
+      return false;
+    }
   }
+  return true;
 }
 
 export const passIdsOf = (result: D1Result | undefined): Set<string> =>

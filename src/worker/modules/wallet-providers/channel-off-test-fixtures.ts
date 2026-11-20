@@ -75,7 +75,6 @@ export async function setupSamsungChannelOff() {
       mode: scope.mode,
       instanceId: claim.instanceId,
       operationVersion: claim.version,
-      credentialKeysetCommitment,
     });
     expect(await retireWalletInstance(db, { ...claim, now: f.kit.clock.now() })).toBe(true);
     return claim;

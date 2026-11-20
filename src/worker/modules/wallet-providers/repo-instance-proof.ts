@@ -35,9 +35,7 @@ export function walletInstanceProofSql(
         });
   // The generation-fence view retains the settled retirement, keyset and tombstone checks.
   // Separate the correlated proofs to bound D1 depth within the caller's statement snapshot.
-  return `((${op}.credential_keyset_commitment = ${i}.credential_keyset_commitment
-    AND EXISTS (SELECT 1 FROM credential_ref_keyset keyset WHERE keyset.id = 1
-      AND keyset.commitment = ${op}.credential_keyset_commitment))
+  return `(${op}.credential_keyset_commitment = ${i}.credential_keyset_commitment
     AND EXISTS (WITH pass_scope AS (
       SELECT p.id, p.template_id, p.template_version, p.release_id, p.credential_generation,
         p.status, p.deleted_at, p.removed_at, p.test_data_quarantined,

@@ -2,7 +2,7 @@
 export const PRINT_COPY = {
   title: 'Print your ticket',
   staffTitle: 'Print ticket',
-  lede: 'Print at actual size on white paper.',
+  lede: 'Print at actual size (100 %) on white paper.',
   print: 'Print',
   download: 'Download PDF',
   make: 'Make my ticket',
@@ -38,10 +38,12 @@ export const PRINT_COPY = {
   reprintConfirmBody: 'The earlier print stops working at the door.',
   /** Bulk Print on the passes list. */
   bulkNone: 'Nothing to print. Printing is off for these passes.',
-  bulkPreparing: (tickets: string, skipped: number) =>
-    skipped > 0 ? `Preparing ${tickets}. ${skipped} skipped.` : `Preparing ${tickets}.`,
-  bulkReady: (tickets: string, lossy: boolean, skipped = 0) =>
-    `${tickets} ready${skipped > 0 ? `, ${skipped} skipped` : ''}${lossy ? '. Some names could not be shown.' : ''}`,
+  bulkPreparing: (tickets: string, skipped: number, why = '') =>
+    skipped > 0
+      ? `Preparing ${tickets}. ${skipped} skipped${why ? `: ${why}` : ''}.`
+      : `Preparing ${tickets}.`,
+  bulkReady: (tickets: string, lossy: boolean, skipped = 0, why = '') =>
+    `${tickets} ready${skipped > 0 ? `, ${skipped} skipped${why ? `: ${why}` : ''}` : ''}${lossy ? '. Some names could not be shown.' : ''}`,
   bulkDownload: 'Download',
   bulkFailed: 'The PDF could not be made. Try again.',
   bulkSlow: 'The PDF is taking long. Try again shortly.',
@@ -53,7 +55,60 @@ export const PRINT_COPY = {
   derived: 'Layout from the ticket fields.',
   staffOnly: 'Staff print only.',
   editLayout: 'Edit layout',
+  kindLabel: 'Layout',
+  kindAuto: 'Auto',
+  kinds: {
+    admission: 'Admission',
+    membership: 'Membership',
+    permit: 'Permit',
+    coupon: 'Coupon',
+    pickup: 'Pickup',
+  },
+  inkLabel: 'Ink',
+  inkColour: 'Colour',
+  inkMono: 'Mono',
+  inkMonoNote: 'Printed mono: the pass colours are too light for black and white.',
+  buddyLabel: 'PassBook buddy',
+  buddyHelp: 'Small, beside Issued with PassBook.',
+  foldLabel: 'Fold marks',
+  bringLabel: 'Bring',
+  bringHelp: 'Extra lines, separated by semicolons.',
+  greyscale: 'Greyscale preview',
   useDerived: 'Use derived layout',
+} as const;
+
+/** What a printed ticket says besides the facts. `oneTicket` says the print and the phone are one. */
+export const PAPER_COPY = {
+  before: 'Before you go',
+  beforePickup: 'Your order',
+  oneTicket: (noun: string) =>
+    noun === 'ticket'
+      ? [
+          'One ticket',
+          'This print and your phone ticket are the same ticket. Either one gets you in once.',
+        ]
+      : [`One ${noun}`, `This print and your phone ${noun} are the same ${noun}. Use either one.`],
+  reprints: ['Reprints', 'A reprint cancels this copy. Only the newest print works.'],
+  atDoor: ['At the door', 'Keep the code flat and unmarked. Staff can type the ticket code.'],
+  folding: ['Folding', 'Fold on the marks, in half and in half again. The code stays outside.'],
+  bringDefault: (noun: string) => `This page or your phone ${noun}`,
+  bringId: (name: string) => `Photo ID in the name ${name}`,
+  zoneNote: (abbr: string, name?: string) =>
+    name ? `Times are ${name} (${abbr}).` : `Times are in ${abbr}.`,
+  issued: (n: number, when: string) => `Print ${n} · Issued ${when}`,
+  issuedWith: 'Issued with',
+  testStrip: 'TEST TICKET · NOT VALID FOR ENTRY',
+  testMark: 'TEST · NOT VALID',
+  permitHow: 'Place face up on the dashboard, readable through the windscreen.',
+  fold: 'Fold',
+  codeLabel: {
+    admission: 'Ticket code',
+    day: 'Pass code',
+    membership: 'Card code',
+    permit: 'Permit code',
+    coupon: 'Coupon code',
+    pickup: 'Slip code',
+  },
 } as const;
 
 /** The print code in groups, easier to read and to type. */

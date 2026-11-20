@@ -5,7 +5,7 @@ import type { Counts, ScanOutcome } from './types.ts';
 export const EMPTY_COUNTS: Counts = { today: 0, event: null, asOf: 0, configRev: 0 };
 
 export function localOutcome(
-  kind: 'system' | 'refused' | 'queued',
+  kind: 'system' | 'refused' | 'queued' | 'heads_up',
   reason: NonNullable<ScanOutcome['reason']>,
   counts: Counts | null,
   extra: Partial<ScanOutcome> = {},

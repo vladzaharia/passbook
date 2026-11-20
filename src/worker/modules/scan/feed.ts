@@ -1,6 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScanOutcome, ScanRecordDto } from '../../../shared/contracts/index.ts';
 import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
+import type { Grant } from '../../platform/authority.ts';
 import { bump, read } from '../../platform/counters.ts';
 import {
   ForbiddenError,
@@ -51,6 +52,8 @@ export interface ConsoleUndoInput {
   mode: Mode;
   idempotencyKey: string;
   maxAgeMs: number;
+  /** Added to the undo's own grant (a roll call's mark commits with the exit it takes back). */
+  extra?: (g: Grant) => void;
 }
 
 /** SV.6's undo service, run as an admin. */

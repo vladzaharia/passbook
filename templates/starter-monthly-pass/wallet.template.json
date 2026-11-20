@@ -7,6 +7,10 @@
     "google": {},
     "samsung": {}
   },
+  "channels": {
+    "paper": "off",
+    "nfc": "on"
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",
@@ -319,5 +323,11 @@
         "panel": null
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "a4",
+    "barcode": "qr",
+    "kind": "membership"
   }
 }

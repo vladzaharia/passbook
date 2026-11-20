@@ -15,11 +15,13 @@ import { markOut } from './occupancy/mark-out.ts';
 import { withParentHint } from './occupancy/parent-hint.ts';
 import { setOverrideNote } from './override-note.ts';
 import { overrideScan } from './overrides.ts';
+import { registerDeviceRollCallRoutes } from './roll-call/routes-device.ts';
 import { capturingContext } from './scan-capture.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 
 /** Occupancy actions on the device API: a Desk-actions monitor may call them too. */
 export function registerScanOccupancyRoutes(scanRoutes: OpenAPIHono<AppBindings>): void {
+  registerDeviceRollCallRoutes(scanRoutes);
   // Overrides need a signed-in person (no `staffOptional`) and, on a monitor, Desk actions on.
   const actor = requireScanActor({ capability: 'passes:operate', screenActions: true });
   for (const path of ['/mark-out', '/overrides', '/overrides/*']) scanRoutes.use(path, actor);

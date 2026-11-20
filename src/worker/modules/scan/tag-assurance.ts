@@ -1,6 +1,7 @@
 import type { TemplateManifest } from '../../../passkit/types.ts';
 import type { ScanTag } from '../../../shared/contracts/nfc-tags.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { UID_SYSTEM } from '../nfc/systems/uid.ts';
 import type { ScanActor } from './actor.ts';
 import { type Candidate, candidatesByScopes } from './repo-lookup.ts';
 import { ownerPassIds } from './repo-tags-bind.ts';
@@ -12,9 +13,6 @@ type Assurance = ScanTag['assurance'];
 const RANK: Record<Assurance, number> = { basic: 0, secure: 1 };
 const MAX_SKIPPED = 8;
 
-/** Only Basic (UID) tags exist today; Secure (SUN) tags come with their own read path. */
-export const TAG_ASSURANCE: Assurance = 'basic';
-
 /** The weakest tag a template accepts: `basic` unless it asks for more. */
 const templateMinAssurance = (manifest: TemplateManifest): Assurance =>
   manifest.scan?.tags?.min ?? 'basic';
@@ -25,7 +23,7 @@ const meetsAssurance = (tag: Assurance, min: Assurance): boolean => RANK[tag] >=
 export function tagFit(
   ctx: ServiceContext,
   c: Candidate,
-  tag: Assurance = TAG_ASSURANCE,
+  tag: Assurance = UID_SYSTEM.assurance,
 ): 'ok' | 'low' | 'unreadable' {
   const templates = resolveCandidateReadTemplates(c);
   if (!templates) {

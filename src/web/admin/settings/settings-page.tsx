@@ -7,6 +7,7 @@ import {
   KeyValue,
   PageHeader,
 } from '@/web/ui/index.ts';
+import { PlatformChannelsCards } from '../channels/settings-channels.tsx';
 import { PLATFORM_FIELDS } from './fields-platform.ts';
 import type { SaveGuard } from './form-values.ts';
 import { MagicLinkImpact } from './magic-link-impact.tsx';
@@ -61,6 +62,7 @@ export function SettingsPage() {
       />
       <div className="flex flex-col gap-6">
         <SettingsForm scope="platform" fields={PLATFORM_FIELDS} guard={guardMagicLink} />
+        <PlatformChannelsCards />
         <OidcSection />
       </div>
     </>

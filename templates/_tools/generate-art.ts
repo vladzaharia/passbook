@@ -13,6 +13,10 @@ import {
   bookingThumb, idThumb, packStrip, permitThumb, pickupThumb, timedStrip, transitFooter,
 } from './painters-blueprints.ts';
 import { hex } from './math.ts';
+import {
+  CREDENTIAL, HOTEL, MULTI, STAFF, VISITOR,
+  credentialThumb, hotelThumb, multiArt, multiBackground, multiThumb, staffThumb, visitorThumb,
+} from './painters-blueprints2.ts';
 import { eventArt, eventBackground, eventThumb, posterArt } from './painters-scenes.ts';
 import { type Painter, png } from './png.ts';
 
@@ -111,6 +115,35 @@ export const BLUEPRINTS: Record<string, Slot[]> = {
     { file: 'logo', w: 50, h: 50, paint: logo(WHITE) },
     { file: 'thumbnail', w: 90, h: 90, paint: accessThumb },
   ],
+  'starter-multi-day-pass': [
+    { file: 'icon', w: 38, h: 38, paint: icon(MULTI.bg, MULTI.fg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(MULTI.fg) },
+    { file: 'primaryLogo', w: 30, h: 30, paint: logo(MULTI.fg) },
+    { file: 'secondaryLogo', w: 12, h: 12, paint: logo(MULTI.fg) },
+    { file: 'artwork', w: 358, h: 448, paint: multiArt },
+    { file: 'background', w: 343, h: 503, paint: multiBackground },
+    { file: 'thumbnail', w: 90, h: 90, paint: multiThumb },
+  ],
+  'starter-hotel-stay': [
+    { file: 'icon', w: 38, h: 38, paint: icon(HOTEL.bg, HOTEL.fg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(HOTEL.fg) },
+    { file: 'thumbnail', w: 90, h: 90, paint: hotelThumb },
+  ],
+  'starter-credential': [
+    { file: 'icon', w: 38, h: 38, paint: icon(CREDENTIAL.bg, CREDENTIAL.fg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(CREDENTIAL.fg) },
+    { file: 'thumbnail', w: 90, h: 90, paint: credentialThumb },
+  ],
+  'starter-staff-badge': [
+    { file: 'icon', w: 38, h: 38, paint: icon(STAFF.bg, STAFF.fg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(STAFF.fg) },
+    { file: 'thumbnail', w: 90, h: 90, paint: staffThumb },
+  ],
+  'starter-visitor-pass': [
+    { file: 'icon', w: 38, h: 38, paint: icon(VISITOR.bg, VISITOR.fg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(VISITOR.fg) },
+    { file: 'thumbnail', w: 90, h: 90, paint: visitorThumb },
+  ],
   'starter-id-card': [
     { file: 'icon', w: 38, h: 38, paint: icon(ID.bg, ID.fg) },
     { file: 'logo', w: 50, h: 50, paint: logo(ID.fg) },
@@ -123,6 +156,19 @@ const STALE = ['', '@2x', '@3x'].flatMap((x) =>
     (f) => `${f}${x}.png`,
   ),
 );
+
+/** The Google logo (660 px) and thumbnail (1860 px, the hero) are the Apple painters rendered larger. */
+const GOOGLE = new Set(['starter-multi-day-pass', 'starter-hotel-stay', 'starter-credential', 'starter-staff-badge', 'starter-visitor-pass']);
+function googleArt(dir: string, slots: Slot[]): void {
+  const target = join(dir, 'wallets', 'google');
+  mkdirSync(target, { recursive: true });
+  const big = (slot: Slot, px: number, file: string) =>
+    writeFileSync(join(target, file), png(px, px, 1, (x, y) => slot.paint((x * slot.w) / px, (y * slot.h) / px, slot.w, slot.h, px / slot.w)));
+  const logoSlot = slots.find((s) => s.file === 'logo') as Slot;
+  big(logoSlot, 660, 'logo.png');
+  const hero = slots.find((s) => s.file === 'thumbnail');
+  if (hero) big(hero, 1860, 'thumbnail.png');
+}
 
 const out = process.argv[2] ?? join(import.meta.dirname, '..');
 const only = process.argv[3];
@@ -138,4 +184,5 @@ for (const [slug, slots] of Object.entries(BLUEPRINTS)) {
       writeFileSync(file, png(slot.w, slot.h, scale, slot.paint));
     }
   console.log(slug, slots.length * 2, 'files');
+  if (GOOGLE.has(slug)) googleArt(dir, slots);
 }

@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { OffboardRequestSchema, SignOutRequestSchema } from './access-business.ts';
 import {
+  AdminBindTagSchema,
+  CreateSpareTagsSchema,
+  CreateTagTypeSchema,
+  UpdateTagTypeSchema,
+} from './nfc-tag-admin.ts';
+import {
   CreateTagKeysetSchema,
   ScanTagBindRequestSchema,
   TAG_ERROR_CODES,
+  TagEndCauseSchema,
   TagReadSchema,
+  TagSchema,
 } from './nfc-tags.ts';
 import {
   SCAN_HEADS_UP_REASONS,
@@ -200,5 +208,126 @@ describe('access business', () => {
 
   it('signs out with a tag state', () => {
     expect(SignOutRequestSchema.parse({ idempotencyKey: key, passId: 'p' }).tag).toBe('none');
+  });
+});
+
+describe('tag systems and types', () => {
+  const oldTag = {
+    id: 't1',
+    mode: 'live',
+    kind: 'uid',
+    assurance: 'basic',
+    hint: '3FA1',
+    label: null,
+    pool: false,
+    status: 'active',
+    state: 'spare',
+    createdAt: 1,
+    lastSeenAt: null,
+    keysetId: null,
+    binding: null,
+  };
+
+  it('a tag from before systems and types still parses', () => {
+    expect(TagSchema.safeParse(oldTag).success).toBe(true);
+    const next = {
+      ...oldTag,
+      system: 'uid',
+      type: { id: 'ty1', name: 'Wristband', use: 'member' },
+    };
+    expect(TagSchema.safeParse(next).success).toBe(true);
+    expect(TagSchema.safeParse({ ...next, system: 'nfc' }).success).toBe(false);
+    expect(
+      TagSchema.safeParse({ ...next, type: { id: 'ty1', name: 'x', use: 'asset' } }).success,
+    ).toBe(false);
+  });
+
+  it('ends a binding for the new causes', () => {
+    for (const c of ['channel_off', 'expired', 'type_changed', 'visitor_out'])
+      expect(TagEndCauseSchema.safeParse(c).success).toBe(true);
+  });
+
+  it('a type takes the design defaults, and a Secure type cannot be typed', () => {
+    expect(CreateTagTypeSchema.parse({ name: 'Member wristband', use: 'member' })).toEqual({
+      name: 'Member wristband',
+      system: 'uid',
+      use: 'member',
+      scopes: 'both',
+      perPass: 1,
+      bindingDays: null,
+      confirm: 'none',
+      typed: true,
+      templateIds: [],
+    });
+    expect(
+      CreateTagTypeSchema.safeParse({ name: 'Badge', use: 'staff', system: 'sun' }).success,
+    ).toBe(false);
+    expect(
+      CreateTagTypeSchema.safeParse({ name: 'Badge', use: 'staff', system: 'sun', typed: false })
+        .success,
+    ).toBe(true);
+    expect(CreateTagTypeSchema.safeParse({ name: 'x', use: 'member', perPass: 5 }).success).toBe(
+      false,
+    );
+    expect(
+      CreateTagTypeSchema.safeParse({ name: 'x', use: 'member', bindingDays: 0 }).success,
+    ).toBe(false);
+  });
+
+  it('an update needs the version and never changes the system', () => {
+    expect(UpdateTagTypeSchema.safeParse({ name: 'x' }).success).toBe(false);
+    expect(UpdateTagTypeSchema.safeParse({ version: 1, name: 'x' }).success).toBe(true);
+    expect(UpdateTagTypeSchema.safeParse({ version: 1, system: 'sun' }).success).toBe(false);
+  });
+
+  it('an admin binds a spare by id or a typed ID, and adds spares in bulk', () => {
+    expect(AdminBindTagSchema.safeParse({ tagId: 't1', binding: 'pass' }).success).toBe(true);
+    expect(
+      AdminBindTagSchema.safeParse({ uid: '04 A1 B2 C3', format: 'reversed', binding: 'user' })
+        .success,
+    ).toBe(true);
+    expect(AdminBindTagSchema.safeParse({ tagId: 't1', uid: 'AA', binding: 'pass' }).success).toBe(
+      false,
+    );
+    expect(
+      AdminBindTagSchema.safeParse({ uid: 'AA', format: 'octal', binding: 'pass' }).success,
+    ).toBe(false);
+    expect(CreateSpareTagsSchema.safeParse({ ids: ['04A1B2C3'] }).success).toBe(true);
+    expect(CreateSpareTagsSchema.safeParse({ ids: [] }).success).toBe(false);
+    expect(
+      CreateSpareTagsSchema.safeParse({ ids: Array.from({ length: 201 }, (_, i) => `${i}`) })
+        .success,
+    ).toBe(false);
+  });
+
+  it('a session names at most 12 types and a Basic-tag confirm', () => {
+    const base = {
+      flow: 'auto',
+      defaultActionId: null,
+      roleWithoutSignIn: 'door',
+      staffSignIn: false,
+      letInAgain: 'never',
+      reader: 'nfc',
+      lookup: true,
+      offline: false,
+      dailyAmount: null,
+    };
+    const tags = (t: object) => ScanningSessionSettingsSchema.safeParse({ ...base, tags: t });
+    expect(tags({ types: ['standard', 'ty1'], confirmBasic: 'staff' }).success).toBe(true);
+    expect(tags({ confirmBasic: 'everyone' }).success).toBe(false);
+    expect(tags({ types: Array.from({ length: 13 }, (_, i) => `t${i}`) }).success).toBe(false);
+  });
+
+  it('a scan outcome tag carries the system and type name, and tag_expired is a refusal', () => {
+    expect(
+      ScanOutcomeSchema.shape.tag.safeParse({
+        hint: '3FA1',
+        assurance: 'basic',
+        scope: 'pass',
+        system: 'uid',
+        typeName: 'Visitor tag',
+      }).success,
+    ).toBe(true);
+    expect(SCAN_REFUSED_REASONS).toContain('tag_expired');
   });
 });

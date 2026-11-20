@@ -13,7 +13,7 @@ import { publishPass } from './publish.ts';
 import { tenantPassAuthorityValid } from './repo-authority.ts';
 import type { ImageMutationResult } from './repo-history-image.ts';
 import { type MemberPhotoRow, replaceMemberPhoto } from './repo-member-photo.ts';
-import { replaceMemberPhotoGranted } from './repo-member-photo-grant.ts';
+import { type GrantedWriter, replaceMemberPhotoGranted } from './repo-member-photo-grant.ts';
 import type { ScopeArg } from './scope.ts';
 import type { Actor } from './service.ts';
 
@@ -41,6 +41,7 @@ export async function saveMemberPhoto(
   previous: MemberPhotoRow | null,
   next: MemberPhotoRow | null,
   authority?: TenantPassWrite,
+  writer?: GrantedWriter,
 ) {
   const { pass } = initial;
   const uploaded = next && next.r2_key !== previous?.r2_key ? next : null;
@@ -51,15 +52,24 @@ export async function saveMemberPhoto(
       imageGeneration: initial.imageGeneration,
       ...(uploaded ? { uploadKey: uploaded.r2_key } : {}),
     };
-    staged = authority
-      ? await replaceMemberPhotoGranted(ctx, next, previous?.version ?? null, {
-          ...guard,
-          authority,
-        })
-      : await replaceMemberPhoto(ctx.env.DB, pass.orgId, pass.id, next, previous?.version ?? null, {
-          ...guard,
-          now: ctx.clock.now(),
-        });
+    staged =
+      authority || writer
+        ? await replaceMemberPhotoGranted(ctx, next, previous?.version ?? null, {
+            ...guard,
+            ...(authority ? { authority } : {}),
+            ...(writer ? { writer } : {}),
+          })
+        : await replaceMemberPhoto(
+            ctx.env.DB,
+            pass.orgId,
+            pass.id,
+            next,
+            previous?.version ?? null,
+            {
+              ...guard,
+              now: ctx.clock.now(),
+            },
+          );
   } catch (error) {
     // The response may have been lost after commit. A unique next version identifies our write.
     if (next && !previous) {

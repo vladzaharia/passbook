@@ -5,8 +5,8 @@ import {
 } from '../../../shared/contracts/wallet-providers.ts';
 import { UnavailableError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import {
-  assertCredentialKeyset,
   corrupt,
   decryptAccount,
   type StoredCredentials,
@@ -77,7 +77,6 @@ export async function readSamsungTombstoneVerification(
     accountId: string;
     accountRevision: number;
     refHash: string;
-    credentialKeysetCommitment: string;
   },
 ): Promise<SamsungTombstoneVerification | null> {
   ctx = snapshotWalletCredentialContext(ctx);
@@ -91,16 +90,13 @@ export async function readSamsungTombstoneVerification(
     !IdSchema.safeParse(pinned.accountId).success ||
     !Number.isSafeInteger(pinned.accountRevision) ||
     pinned.accountRevision <= 0 ||
-    !/^[0-9a-f]{64}$/.test(pinned.refHash) ||
-    typeof pinned.credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(pinned.credentialKeysetCommitment)
+    !/^[0-9a-f]{64}$/.test(pinned.refHash)
   )
     throw new ValidationError();
-  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const row = await findSamsungTombstoneCredential(ctx.env.DB, pinned);
   const stored = row ? await decryptAccount(ctx, row) : null;
   const found = row && stored ? await candidates(ctx, row, stored) : [];
-  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
   const [first, ...later] = found;
   if (!row || !first) return null;
   // The tombstone's identity binds the pinned version; a later version of another card is not its successor.
@@ -141,7 +137,6 @@ export async function readSamsungIssuedRefVerification(
     accountId: string;
     accountRevision: number;
     refHash: string;
-    credentialKeysetCommitment: string;
   },
 ): Promise<SamsungIssuedVerification | null> {
   ctx = snapshotWalletCredentialContext(ctx);
@@ -155,14 +150,12 @@ export async function readSamsungIssuedRefVerification(
     !IdSchema.safeParse(pinned.accountId).success ||
     !Number.isSafeInteger(pinned.accountRevision) ||
     pinned.accountRevision <= 0 ||
-    !/^[0-9a-f]{64}$/.test(pinned.refHash) ||
-    !/^[0-9a-f]{64}$/.test(pinned.credentialKeysetCommitment)
+    !/^[0-9a-f]{64}$/.test(pinned.refHash)
   )
     throw new ValidationError();
-  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const row = await findSamsungIssuedRefCredential(ctx.env.DB, { ...pinned, operated: true });
   const stored = row ? await decryptAccount(ctx, row) : null;
-  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
   if (!row || !stored) return null;
   if (stored.provider !== 'samsung') throw corrupt();
   const found = await candidates(ctx, row, stored);
@@ -190,7 +183,6 @@ export async function readSamsungIssuedRefVerification(
       const current = currentRow ? await decryptAccount(ctx, currentRow) : null;
       writable = async (candidate) =>
         current !== null && isSamsung(current) && sameCertificate(current, candidate);
-      await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     }
   }
   const [first, ...laterAll] = found;

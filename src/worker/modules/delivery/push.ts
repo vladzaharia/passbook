@@ -3,7 +3,7 @@ import { writeEvent } from '../../platform/analytics.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { PassEventInput } from '../events/record.ts';
-import { isOrgActive } from '../orgs/active.ts';
+import { isOrgServingPass } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import type { ApnsResult } from './apns.ts';
@@ -158,7 +158,7 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
     outboxId: row.id,
     lease,
   };
-  if (!(await isOrgActive(ctx, pass.orgId))) {
+  if (!(await isOrgServingPass(ctx, pass.id))) {
     await finishOutbox(db, row.id, lease, 'cancelled', now, 'ORG_INACTIVE');
     return;
   }

@@ -17,7 +17,6 @@ import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
-import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { basicPackage, makePng, passJson, zipOf } from '../templates/package/fixtures.ts';
 import { approveCandidate, createCandidate, publishRelease } from '../templates/releases.ts';
 import { getVersion } from '../templates/repo.ts';
@@ -202,9 +201,6 @@ export const lookup = (kit: Kit) => ({
   templateId: kit.templateId,
   templateVersion: kit.version,
   appleReleaseId: kit.sourceId,
-});
-export const proof = async () => ({
-  credentialKeysetCommitment: await requireCredentialRefKeyset(S.env.DB, S.env),
 });
 
 /** A sharing omission, as a compiler update that loses something would report. */

@@ -193,6 +193,7 @@ describe('tags at the door', () => {
 /** Copy that the scanner does not show in v1, or that is picked by a dynamic key. */
 const NOT_YET = new Set([
   'lendingTo',
+  'door.basicTag',
   'ok.lent',
   'ok.lentSub',
   'tag.cancelled',

@@ -122,11 +122,16 @@ export function TemplateCreatedCallout({
   how,
   versionLabel,
   onDismiss,
+  onScanPasses,
+  scanPending = false,
 }: {
   template: Template;
   how: TemplateCreated;
   versionLabel: string | null;
   onDismiss: () => void;
+  /** The last step of Use blueprint, once the template can scan. */
+  onScanPasses?: (() => void) | undefined;
+  scanPending?: boolean;
 }) {
   const { orgId } = useOrgScope();
   const what =
@@ -144,11 +149,18 @@ export function TemplateCreatedCallout({
       onDismiss={onDismiss}
       actions={
         how === 'fromBlueprint' ? (
-          <Button size="sm" variant="outline" asChild>
-            <Link to="." search={{ tab: 'versions', orgId }}>
-              Review release
-            </Link>
-          </Button>
+          <>
+            <Button size="sm" variant="outline" asChild>
+              <Link to="." search={{ tab: 'versions', orgId }}>
+                Review release
+              </Link>
+            </Button>
+            {onScanPasses ? (
+              <Button size="sm" variant="outline" loading={scanPending} onClick={onScanPasses}>
+                Scan passes
+              </Button>
+            ) : null}
+          </>
         ) : how === 'duplicated' ? (
           <Button
             size="sm"

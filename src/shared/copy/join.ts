@@ -21,6 +21,7 @@ export const JOIN_COPY = {
     rotate: 'Make a new link',
     testNote: 'Test link. Its cards are not real.',
     askAdmin: 'Ask an org admin.',
+    needsCode: 'Join links need a generated barcode.',
   },
   rotateConfirm: {
     title: 'Make a new link?',

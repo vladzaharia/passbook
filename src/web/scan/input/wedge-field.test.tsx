@@ -56,6 +56,8 @@ describe('guard: scan fields', () => {
     const root = join(import.meta.dirname, '..');
     const offenders = sources(root)
       .filter((file) => !file.endsWith(join('input', 'wedge-field.tsx')))
+      // A hidden file picker, not a text field.
+      .filter((file) => !file.endsWith(join('result', 'add-photo.tsx')))
       .filter((file) => /<(input|textarea|Input|Textarea)[\s/>]/.test(readFileSync(file, 'utf8')))
       .map((file) => file.slice(root.length + 1));
     expect(offenders).toEqual([]);

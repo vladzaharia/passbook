@@ -8,7 +8,7 @@ export const SYSTEM_REVIEWER = 'system:wallet-projection:auto';
 
 /**
  * The authority of `wallet.projection_system`, the only caller. It carries no session: the org must be
- * active, and the database decides the rest (the triggers of 0119 let `SYSTEM_REVIEWER` approve only
+ * active, and the database decides the rest (the triggers of 0141 let `SYSTEM_REVIEWER` approve only
  * a system candidate whose report has no holder or door item).
  */
 export interface SystemAuthority {

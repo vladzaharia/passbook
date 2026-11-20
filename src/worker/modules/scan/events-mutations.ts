@@ -60,6 +60,8 @@ export async function createEvent(
   mode: Mode,
   input: z.infer<typeof CreateScanEventSchema>,
   authority: EventAuthority,
+  /** Scan passes: one live event per key. A second insert fails on the unique index. */
+  setupKey?: string,
 ) {
   if (authority.orgId !== input.orgId || authority.mode !== mode) throw new ForbiddenError();
   if (input.hardLimit && input.capacity == null)
@@ -86,6 +88,7 @@ export async function createEvent(
     reentry: input.reentry ?? false,
     hardLimit: input.hardLimit ?? false,
     note: input.note ?? null,
+    ...(setupKey ? { setupKey } : {}),
   };
   const now = ctx.clock.now();
   const g = adminGrant(

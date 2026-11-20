@@ -1,6 +1,14 @@
 import { RULE_COPY, ruleSummary } from '@/shared/copy/message-rules.ts';
 import { localZone, zoneOptions } from '../../lib/timezones.ts';
-import { Combobox, FormField, Input, NumberField, Select, SwitchRow } from '../../ui/index.ts';
+import {
+  Combobox,
+  DependentSettings,
+  FormField,
+  Input,
+  NumberField,
+  Select,
+  SwitchRow,
+} from '../../ui/index.ts';
 import type { FieldDef } from '../passes/schema-form/index.ts';
 import { keyLabel, LAST_SCAN, type RuleField, type RuleState } from './rule-state.ts';
 
@@ -122,7 +130,7 @@ export function RuleWhen({
           onCheckedChange={(yearly) => onChange({ yearly })}
         />
       )}
-      {state.unit === 'day' ? (
+      <DependentSettings open={state.unit === 'day'}>
         <div className="grid gap-3 sm:grid-cols-2">
           <FormField label="Send at" error={errors.sendAt}>
             {(c) => (
@@ -146,7 +154,7 @@ export function RuleWhen({
             )}
           </FormField>
         </div>
-      ) : null}
+      </DependentSettings>
       {summary ? <p className="text-sm text-fg-muted">{summary}</p> : null}
     </div>
   );

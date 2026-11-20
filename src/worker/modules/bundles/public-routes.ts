@@ -23,6 +23,7 @@ import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage } from '../../ssr/pass-page.tsx';
 import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
 import { channelGate, recordCopy } from '../channels/gate.ts';
+import { orgBrandOf } from '../orgs/brand.ts';
 import { servePassFile } from '../passes/file.ts';
 import { svc } from '../passes/http.ts';
 import { presentationForPass } from '../public/presentation.ts';
@@ -121,6 +122,7 @@ register(
         theme,
         orgName: items[0]?.view.organizationName || org,
         orgLabel: org,
+        brand: await orgBrandOf(ctx, bundle.org_id),
         name: bundle.name,
         mode: bundle.mode,
         items,

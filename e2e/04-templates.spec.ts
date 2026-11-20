@@ -20,6 +20,8 @@ function variantZip(name: string): Buffer {
       manifest.name = name;
       // Only built-in packages are blueprints.
       manifest.blueprint = undefined;
+      // The zip copies top-level files only, so the art the wallets block names is not in it.
+      manifest.wallets = undefined;
       // Uploads are untrusted: baked-only schema keywords and /semantics bindings are rejected.
       manifest.inputs.properties.website.pattern = undefined;
       manifest.inputs.dependentRequired = undefined;

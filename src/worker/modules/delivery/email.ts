@@ -1,5 +1,6 @@
 import { renderEmailSubject } from '../../../passkit/template/email.ts';
 import { EMAIL_BADGE } from '../../../shared/email-art.ts';
+import { emailBrandOf } from '../../email/brand.ts';
 import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderPassEmail } from '../../email/pass.ts';
 import { passEmailImages } from '../../email/pass-images.ts';
@@ -13,6 +14,7 @@ import { deliverBundleEmail } from '../bundles/deliver.ts';
 import { holderChannels, recordCopy } from '../channels/gate.ts';
 import { isJoinCard } from '../join/repo-issues.ts';
 import { isOrgActive } from '../orgs/active.ts';
+import { orgBrandOf } from '../orgs/brand.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
 import { getOrg } from '../passes/repo-read-issuance.ts';
@@ -178,6 +180,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     joined: intent.joined === true || (await isJoinCard(db, pass.id)),
     ...(intent.notice ? { notice: holderNoticeCopy(intent.notice) } : {}),
     buddyBase: orgSettings['email.buddy'] ? base : null,
+    brand: emailBrandOf(ctx.env, await orgBrandOf(ctx, pass.orgId)),
   });
   if (pass.mode === 'test') {
     if (!(await stillCurrent())) return;

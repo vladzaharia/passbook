@@ -232,6 +232,15 @@ describe('scanIssues', () => {
       expect(only({ actions: [CHECK_IN], lookup: { input } })).toEqual([]);
   });
 
+  it('SCAN_LOOKUP_PUBLIC', () => {
+    for (const bad of ['yes', 1, null])
+      expect(only({ actions: [CHECK_IN], lookup: { input: 'memberId', public: bad } })).toContain(
+        'error:SCAN_LOOKUP_PUBLIC',
+      );
+    for (const ok of [true, false])
+      expect(only({ actions: [CHECK_IN], lookup: { input: 'memberId', public: ok } })).toEqual([]);
+  });
+
   it('SCAN_FLAGS', () => {
     const flag = { input: 'status', label: 'Banned' };
     const bad = [
@@ -374,6 +383,19 @@ describe('scan.tags', () => {
     expect(only({ ...act({}), tags: { min: 'basic' } })).toEqual([]);
     expect(only({ ...act({}), tags: {} })).toEqual([]);
     expect(only(act({}))).toEqual([]);
+  });
+
+  it('takes uses, each of member, staff or visitor once', () => {
+    expect(only({ ...act({}), tags: { uses: ['member'] } })).toEqual([]);
+    expect(only({ ...act({}), tags: { min: 'secure', uses: ['staff', 'visitor'] } })).toEqual([]);
+    for (const uses of [
+      [],
+      ['asset'],
+      ['member', 'member'],
+      'member',
+      ['member', 'staff', 'visitor', 'x'],
+    ])
+      expect(only({ ...act({}), tags: { uses } })).toEqual(['error:SCAN_TAGS']);
   });
 
   it('refuses another value or key', () => {

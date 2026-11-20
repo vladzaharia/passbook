@@ -1,6 +1,6 @@
 import { evaluate } from '@/passkit/template/expr.ts';
 import { defaultScanDisplay } from '@/passkit/template/scan-display/defaults.ts';
-import { passFieldFormats } from '@/passkit/template/scan-display/field-formats.ts';
+import { inputLabels, passFieldFormats } from '@/passkit/template/scan-display/field-formats.ts';
 import { isPrivateName } from '@/passkit/template/scan-display/privacy.ts';
 import { sampleScope } from '@/passkit/template/scan-display/sample.ts';
 import type { ScanDisplayDoc } from '@/passkit/template/scan-display/schema.ts';
@@ -98,6 +98,7 @@ export function syntheticScope(
     }
   }
   scope.fields = fields;
+  scope.inputLabels = inputLabels(safeManifest.inputs, Object.keys(inputs));
   scope.fieldFormats = passFieldFormats(doc.passJson as PassJson, Object.keys(fields));
   scope.previewRestricted = policy.restricted;
   return (clean(scope as Json, policy.deniedKeys) ?? {}) as ScanDisplayScope;

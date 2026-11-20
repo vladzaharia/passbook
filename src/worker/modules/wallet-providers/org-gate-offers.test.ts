@@ -82,9 +82,7 @@ describe('per-org provider gate', () => {
     restore = setWalletProvidersEnabledForTest(true);
     const undo = [setCompiledRuntimeForTest(true), setRuntimeAccountCheckForTest(async () => {})];
     try {
-      expect(
-        await offerPassSnapshot(kit.ctx, f.pass.id, f.credentialKeysetCommitment),
-      ).not.toBeNull();
+      expect(await offerPassSnapshot(kit.ctx, f.pass.id)).not.toBeNull();
       const before = await listWalletOffers(kit.ctx, f.pass.id);
       expect(before.map((o) => o.provider)).toEqual(['google']);
       kit.clock.set(Date.now());

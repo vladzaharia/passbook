@@ -25,7 +25,6 @@ import {
 import { channelOffSuccessor, instanceMatches } from './offers-instance.ts';
 import { type NativeProvider, projectionPolicy } from './projection-contract.ts';
 import { assertWalletProviderEnabled, walletProviderEnabled } from './provider-policy.ts';
-import { walletOfferKeysetCurrent } from './repo-offers.ts';
 import {
   createGoogleRuntimeOffer,
   createSamsungRuntimeOffer,
@@ -49,8 +48,7 @@ export async function listWalletOffers(
 ): Promise<WalletOffer[]> {
   if (!walletProviderEnabled('google') && !walletProviderEnabled('samsung')) return [];
   ctx = captureOfferContext(ctx);
-  const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
-  const snapshot = await offerPassSnapshot(ctx, passId, credentialKeysetCommitment);
+  const snapshot = await offerPassSnapshot(ctx, passId);
   if (!snapshot) return [];
   const { pass: offered } = snapshot;
   const plainToken = await revealToken(
@@ -87,12 +85,6 @@ export async function listWalletOffers(
   const result: WalletOffer[] = [];
   for (const candidate of candidates)
     if (await offerStillCurrent(ctx, candidate.eligible)) result.push(candidate.offer);
-  if (
-    result.length &&
-    ((await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== credentialKeysetCommitment ||
-      !(await walletOfferKeysetCurrent(ctx.env.DB, credentialKeysetCommitment)))
-  )
-    return [];
   return result;
 }
 
@@ -105,9 +97,8 @@ export async function issueWalletOffer(
   if (provider !== 'google' && provider !== 'samsung') throw notFound();
   assertWalletProviderEnabled(provider);
   ctx = captureOfferContext(ctx);
-  const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const pass = await passForToken(ctx, token);
-  const snapshot = await offerPassSnapshot(ctx, pass, credentialKeysetCommitment);
+  const snapshot = await offerPassSnapshot(ctx, pass);
   if (!snapshot) throw notFound();
   const eligible = await eligibleWalletProvider(ctx, snapshot, provider);
   if (!eligible) throw notFound();
@@ -131,7 +122,6 @@ export async function issueWalletOffer(
     passRevision: pass.revision,
     lifecycleGeneration: snapshot.lifecycleGeneration,
     passCredentialGeneration: snapshot.credentialGeneration,
-    credentialKeysetCommitment: snapshot.credentialKeysetCommitment,
     issuingReleaseId: pass.releaseId,
     projectionReleaseId: eligible.approved.release.id,
     accountId: eligible.runtimeScope.accountId,
@@ -164,7 +154,6 @@ export async function issueWalletOffer(
       instance.id !== operation.instanceId ||
       instance.identityProjectionReleaseId !== operation.identityProjectionReleaseId ||
       operation.credentialGeneration !== snapshot.credentialGeneration ||
-      operation.credentialKeysetCommitment !== snapshot.credentialKeysetCommitment ||
       !(await instanceMatches(ctx, eligible, instance))
     )
       throw notFound();
@@ -232,22 +221,13 @@ export async function redeemSamsungOffer(ctx: ServiceContext, ref: string): Prom
   assertWalletProviderEnabled('samsung');
   if (!/^[A-Za-z0-9_-]{43}$/.test(ref)) throw notFound();
   ctx = captureOfferContext(ctx);
-  const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
-  const binding = await consumeWalletOfferRef(
-    ctx.env.DB,
-    ref,
-    ctx.clock.now(),
-    credentialKeysetCommitment,
-  );
-  if (
-    binding?.provider !== 'samsung' ||
-    binding.credentialKeysetCommitment !== credentialKeysetCommitment
-  )
-    throw notFound();
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  const binding = await consumeWalletOfferRef(ctx.env.DB, ref, ctx.clock.now());
+  if (binding?.provider !== 'samsung') throw notFound();
   let delivered = false;
   let fenceLost = false;
   try {
-    const snapshot = await offerPassSnapshot(ctx, binding.passId, credentialKeysetCommitment);
+    const snapshot = await offerPassSnapshot(ctx, binding.passId);
     if (
       !snapshot ||
       snapshot.pass.orgId !== binding.orgId ||
@@ -275,15 +255,10 @@ export async function redeemSamsungOffer(ctx: ServiceContext, ref: string): Prom
       orgId: binding.orgId,
       mode: binding.mode,
       instanceId: binding.instanceId,
-      credentialKeysetCommitment: snapshot.credentialKeysetCommitment,
       operationVersion: binding.version,
       expiresAt: binding.expiresAt,
     });
-    if (
-      !refId ||
-      (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== credentialKeysetCommitment
-    )
-      throw notFound();
+    if (!refId) throw notFound();
     const fence = { ref, instanceId: binding.instanceId, version: binding.version, consumed: true };
     const assertCurrent = async () => {
       if (
