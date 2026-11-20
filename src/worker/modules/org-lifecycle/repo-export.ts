@@ -70,6 +70,10 @@ export const EXPORT_ENTITIES: readonly ExportEntity[] = [
     'scans',
     'id, mode, pass_id, template_id, scanner_id, event_id, actor_type, actor_id, staff_id, method, state, outcome, reason, action_kind, direction, amount, at, zone_id, session_id',
   ),
+  inOrg(
+    'pass_notes',
+    'id, mode, pass_id, body, author_name, author_staff_id, scanner_id, created_at',
+  ),
   inOrg('pass_events', 'id, mode, pass_id, kind, device, actor_type, actor_id, data, at'),
   inOrg(
     'audit_log',

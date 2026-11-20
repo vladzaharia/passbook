@@ -35,7 +35,7 @@ export const DATA_CLASSES: Readonly<Record<RetentionClass, DataClass>> = {
     key: 'retention.scansDays',
     maxKey: 'retention.scansMaxDays',
     label: 'Scans',
-    holds: 'Time, place, result and staff of each scan',
+    holds: 'Time, place, result and staff of each scan, and staff notes on a pass',
     floor: 30,
     platformDefault: 396,
     platformMax: 1095,

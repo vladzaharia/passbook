@@ -23,6 +23,7 @@ export const PASSES_AT = 'passes';
 export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   { table: 'revisions', where: passesOf },
   { table: 'pass_transfer_asset_recoveries', where: passesOf },
+  inOrg('pass_notes'),
   { ...inOrg('scans'), slices: true },
   inOrg('scan_events'),
   inOrg('scan_place_revs'),

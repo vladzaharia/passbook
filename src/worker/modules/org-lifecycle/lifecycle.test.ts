@@ -163,6 +163,7 @@ describe('export', () => {
     ).toEqual([...a.passes].sort());
     expect(rows('passes').find((p) => p.holder_email)?.holder_email).toBe(a.holderEmail);
     expect(rows('org').map((o) => o.id)).toEqual([a.orgId]);
+    expect(rows('pass_notes').map((n) => n.body)).toEqual(['note-exp-a']);
     const members = (orgId: string) =>
       all<{ user_id: string }>(kit.env.DB, 'SELECT user_id FROM org_memberships WHERE org_id = ?', [
         orgId,

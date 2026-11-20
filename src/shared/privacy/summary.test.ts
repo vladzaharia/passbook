@@ -28,7 +28,7 @@ describe('privacy summary', () => {
     const text = md();
     expect(text).toContain('# Data processing summary: Acme | Gym');
     expect(text).toContain(
-      '| Scans: Time, place, result and staff of each scan | 396 days | Deleted | platform |',
+      '| Scans: Time, place, result and staff of each scan, and staff notes on a pass | 396 days | Deleted | platform |',
     );
     expect(text).toContain(
       '| Visitor passes: Visitor passes, after the visit ends | 90 days | Pass deleted | platform |',
