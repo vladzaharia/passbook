@@ -8,6 +8,7 @@ import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { nullLogger } from '../../platform/log.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { checkIdentityById, runDailyIdentityChecks } from './check.ts';
 import { clearIdentityKeyCache } from './db-resolver.ts';
@@ -632,18 +633,20 @@ describe('db identity resolver', () => {
     const b = await makeOrg(fx);
     const dto = (await (await upload(f, { orgId: a.id })).json()) as Dto;
     const resolver = createIdentityResolver(appEnv);
-    expect((await resolver.forOrg(a.id, dto.id)).id).toBe(dto.id);
-    await expect(resolver.forOrg(b.id, dto.id)).rejects.toMatchObject({
+    expect((await resolver.forOrg(a.id, dto.id, Date.now())).id).toBe(dto.id);
+    await expect(resolver.forOrg(b.id, dto.id, Date.now())).rejects.toMatchObject({
       code: 'IDENTITY_NOT_FOUND',
     });
     // Storage lasts for the whole file; an earlier case may have left a global default.
     await run(env.DB, 'UPDATE signing_identities SET is_default = 0 WHERE is_default = 1');
-    expect((await resolver.forOrg(b.id)).id).toBe('platform');
+    expect((await resolver.forOrg(b.id, undefined, Date.now())).id).toBe('platform');
 
     await run(env.DB, 'UPDATE orgs SET default_identity_id = ? WHERE id = ?', [dto.id, a.id]);
-    expect((await resolver.forOrg(a.id)).id).toBe(dto.id);
+    expect((await resolver.forOrg(a.id, undefined, Date.now())).id).toBe(dto.id);
     await run(env.DB, 'UPDATE orgs SET default_identity_id = ? WHERE id = ?', [dto.id, b.id]);
-    await expect(resolver.forOrg(b.id)).rejects.toMatchObject({ code: 'IDENTITY_NOT_FOUND' });
+    await expect(resolver.forOrg(b.id, undefined, Date.now())).rejects.toMatchObject({
+      code: 'IDENTITY_NOT_FOUND',
+    });
   });
 
   it('reports the apns binding only when the deployment has it', async () => {
@@ -683,9 +686,9 @@ describe('identity update and delete', () => {
     });
 
     const resolver = createIdentityResolver(appEnv);
-    expect((await resolver.forOrg('any-org')).id).toBe(b.id);
+    expect((await resolver.forOrg('any-org', undefined, Date.now())).id).toBe(b.id);
 
-    await ensurePlatformIdentity(base, 1);
+    await ensurePlatformIdentity(base, 1, nullLogger);
     await expectProblem(await call('DELETE', '/platform'), 409, 'IDENTITY_PROTECTED');
     expect((await call('PATCH', '/platform', { apnsBinding: 'APNS' })).status).toBe(422);
     await expectProblem(await call('PATCH', '/missing', { label: 'x' }), 404, 'IDENTITY_NOT_FOUND');

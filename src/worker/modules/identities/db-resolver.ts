@@ -1,6 +1,6 @@
 import { credentialAad, decryptSecretText, loadKekRing } from '../../platform/crypto.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { AppError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
+import { AppError, ConflictError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
 import {
   type IdentityResolver,
   intermediatePem,
@@ -85,6 +85,19 @@ export async function resolveRow(env: AppEnv, row: IdentityRow): Promise<Resolve
   };
 }
 
+/** New passes only: an identity that stopped issuing or whose certificate ended signs nothing new. */
+async function assertIssuable(env: AppEnv, id: string, now: number): Promise<void> {
+  const row = await getIdentityRow(env.DB, id);
+  if (!row) return;
+  if (row.issuing === 0)
+    throw new ConflictError('This signing identity no longer issues passes.', 'IDENTITY_RETIRED');
+  if (row.not_after !== null && row.not_after <= now)
+    throw new ConflictError(
+      'The signing certificate has expired. Renew it before issuing passes.',
+      'IDENTITY_EXPIRED',
+    );
+}
+
 export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
   const platform = async () => {
     const row = await getIdentityRow(env.DB, PLATFORM_IDENTITY_ID);
@@ -102,18 +115,24 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
     platform,
     byId,
     byRow: (row) => resolveRow(env, row),
-    async forOrg(orgId, identityId) {
+    async forOrg(orgId, identityId, now) {
       const explicit = identityId ?? (await orgDefaultIdentityId(env.DB, orgId));
       if (explicit) {
         const identity = await byId(explicit);
         // An org may use its own identities and global ones, never another org's.
         if (identity.orgId !== null && identity.orgId !== orgId) throw notFound();
+        await assertIssuable(env, identity.id, now);
         return identity;
       }
       const fallback = await getDefaultRow(env.DB);
-      if (fallback && (fallback.org_id === null || fallback.org_id === orgId))
-        return resolveRow(env, fallback);
-      return platform();
+      if (fallback && (fallback.org_id === null || fallback.org_id === orgId)) {
+        const identity = await resolveRow(env, fallback);
+        await assertIssuable(env, identity.id, now);
+        return identity;
+      }
+      const identity = await platform();
+      await assertIssuable(env, identity.id, now);
+      return identity;
     },
   };
 }

@@ -89,17 +89,18 @@ export async function createPassRowWithRelease(
       ? { ...p.input, [issueInput]: new Date(ctx.clock.now()).toISOString() }
       : p.input;
   await assertAccessInput(ctx, p.orgId, template, input);
-  const identity = await depsOf(ctx.env).identities.forOrg(p.orgId, p.identityId);
-  if (identity.id === PLATFORM_IDENTITY_ID) await ensurePlatformIdentity(ctx.env, ctx.clock.now());
+  const identity = await depsOf(ctx.env).identities.forOrg(p.orgId, p.identityId, ctx.clock.now());
+  if (identity.id === PLATFORM_IDENTITY_ID)
+    await ensurePlatformIdentity(ctx.env, ctx.clock.now(), ctx.log);
 
   const id = p.reservedPassId ?? p.passId ?? ctx.ids.id();
   const mode = p.mode;
   const scanCode = newScanCode(ctx);
   // A personalizable pass is addressed by serial in Apple's personalize flow, so the caller never picks it.
-  // Serials are unique per identity: on the shared platform identity they are server-generated, so
+  // Serials are unique per identity: on an identity shared by orgs they are server-generated, so
   // one org cannot probe or squat another's.
   const personalizable = template.assets.some((a) => a.name === 'personalization.json');
-  const ownIdentity = identity.id !== PLATFORM_IDENTITY_ID;
+  const ownIdentity = identity.orgId !== null;
   const serial = personalizable || !ownIdentity ? ctx.ids.id() : (p.serial ?? ctx.ids.id());
   const authToken = await issueToken(ctx.env, 'apple-auth', id, p.orgId, ctx.ids.token());
   const downloadToken = await issueToken(ctx.env, 'pass', id, p.orgId, ctx.ids.token());

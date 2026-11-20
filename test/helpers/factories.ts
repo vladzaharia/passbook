@@ -12,6 +12,7 @@ import { first, run } from '../../src/worker/platform/db.ts';
 import type { AppEnv } from '../../src/worker/platform/env.ts';
 import { ConflictError } from '../../src/worker/platform/errors.ts';
 import { createIds, type Ids, sha256Hex } from '../../src/worker/platform/ids.ts';
+import { nullLogger } from '../../src/worker/platform/log.ts';
 import { createServiceContext } from '../../src/worker/platform/service-context.ts';
 import { fixtureToken } from './tokens.ts';
 import { withoutTrigger } from './triggers.ts';
@@ -310,7 +311,7 @@ export async function makePass(
     persist?: boolean;
   },
 ): Promise<PassRow> {
-  await ensurePlatformIdentity(f.env, f.clock.now());
+  await ensurePlatformIdentity(f.env, f.clock.now(), nullLogger);
   if (options.persist !== false)
     await persistTemplate(
       f,
