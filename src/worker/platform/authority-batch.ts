@@ -26,8 +26,9 @@ async function refusalOf(grants: BatchGrant[], error: unknown): Promise<unknown>
   let hit: LimitHit | null = null;
   if (authorityDenial(error) === 'limit') for (const g of grants) hit ??= await g.limitHit();
   const translated = grants.reduce((e, g) => g.translate(e), error);
-  return hit && translated instanceof AppError
-    ? new FeatureLimitError(hit, translated.code)
+  // A path with its own code for the refusal (a public join link) keeps it and tells nothing of the plan.
+  return hit && translated instanceof AppError && translated.code === 'FEATURE_LIMIT_REACHED'
+    ? new FeatureLimitError(hit)
     : translated;
 }
 

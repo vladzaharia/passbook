@@ -5,7 +5,7 @@ import {
   limitSuite,
   makeEnv,
   makeOrg,
-  refusedWhen,
+  type Refused,
   setLimit,
 } from '../../../../test/helpers/index.ts';
 import { ManualClock } from '../../platform/clock.ts';
@@ -36,18 +36,26 @@ const manifest = (name: string) => ({
   display: { title: '{{name}}' },
 });
 
-/** A new template through the upload import: the persist stage is where the grant commits. */
-const make = () =>
-  refusedWhen(async () => {
-    const name = `Pass design ${++n}`;
-    const imported = await importZip(env, clock, {
-      orgId,
-      zip: zipOf(basicPackage({ 'wallet.template.json': JSON.stringify(manifest(name)) })),
-      name,
-    });
-    if (imported.result === null)
-      throw new Error(`The import stopped at ${imported.stages.at(-1)}`);
+/**
+ * A new template through the upload import: the persist stage is where the grant commits. A refused
+ * import is rejected like any other (the upload records the code and the sentence), never retried.
+ */
+const make = async (): Promise<Refused | null> => {
+  const name = `Pass design ${++n}`;
+  const imported = await importZip(env, clock, {
+    orgId,
+    zip: zipOf(basicPackage({ 'wallet.template.json': JSON.stringify(manifest(name)) })),
+    name,
   });
+  if (imported.result !== null) return null;
+  const row = await first<{ error: string | null; report: string }>(
+    env.DB,
+    'SELECT error, report FROM template_imports WHERE upload_id = ?',
+    [imported.p.uploadId],
+  );
+  const issues = (JSON.parse(row?.report ?? '{}') as { issues?: { message: string }[] }).issues;
+  return { status: 403, code: row?.error ?? 'none', detail: issues?.[0]?.message ?? '' };
+};
 
 /** Templates of the org that are not deleted: what the limit counts. */
 const held = async () =>
@@ -59,19 +67,22 @@ const held = async () =>
     )
   )?.n ?? 0;
 
-limitSuite('templates', async () => ({
-  db: env.DB,
-  orgId,
-  key: 'templates',
-  create: make,
-  count: held,
-}));
+limitSuite(
+  'templates',
+  async () => ({ db: env.DB, orgId, key: 'templates', create: make, count: held }),
+  // The upload records the code and the sentence, not the structured fields.
+  { plain: true },
+);
 
 describe('template limits', () => {
   it('a deleted template frees its slot', async () => {
     const before = await held();
     await setLimit(env.DB, orgId, 'templates', before);
-    expect((await make())?.code).toBe('FEATURE_LIMIT_REACHED');
+    const refused = await make();
+    expect(refused?.code).toBe('FEATURE_LIMIT_REACHED');
+    expect(refused?.detail).toBe(
+      `Templates limit reached (${before} of ${before}), ask PassBook for more.`,
+    );
     const row = await first<{ id: string }>(
       env.DB,
       "SELECT id FROM templates WHERE org_id = ? AND status = 'active' LIMIT 1",

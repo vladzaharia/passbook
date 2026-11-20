@@ -81,6 +81,15 @@ limitSuite(
 );
 
 describe('join limits', () => {
+  it('the refusal a visitor can reach carries no limit, count or feature', async () => {
+    await setLimit(kit.env.DB, kit.org.id, 'join.perDay', 0);
+    const refused = await join();
+    expect(refused?.code).toBe('JOIN_LIMIT');
+    expect(refused?.feature).toBeUndefined();
+    expect(refused?.limit).toBeUndefined();
+    expect(refused?.used).toBeUndefined();
+  });
+
   it('the pre-check reads the plan, and a limit of 0 turns the link off', async () => {
     const row = {
       id: link.id,

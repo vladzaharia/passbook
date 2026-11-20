@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { run } from '../../src/worker/platform/db.ts';
 
 /** What an over-limit create answers: the problem the API sends. */
@@ -79,8 +79,11 @@ export function limitSuite(
     let k: LimitKind;
     const cap = (value: number | null) => setLimit(k.db, k.orgId, k.key, value);
 
-    it('a legacy org (no limit) creates freely', async () => {
+    beforeAll(async () => {
       k = await setup();
+    });
+
+    it('a legacy org (no limit) creates freely', async () => {
       const before = await k.count();
       for (let i = 0; i < 3; i++) expect(await k.create()).toBeNull();
       expect(await k.count()).toBe(before + 3);

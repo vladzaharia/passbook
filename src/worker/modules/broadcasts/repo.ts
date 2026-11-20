@@ -117,7 +117,7 @@ export function insertAuthorizedBroadcastStmt(
   now: number,
 ): D1PreparedStatement {
   const guard = broadcastAuthority(authority, now, b.kind === 'change');
-  const plan = planGate(b.ruleId, b.orgId, b.now);
+  const plan = planGate(b.ruleId, b.orgId, b.mode, b.now);
   const tenant = [b.orgId, authority.orgId, b.mode, authority.mode];
   return stmt(
     db,

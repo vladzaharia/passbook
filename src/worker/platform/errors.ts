@@ -60,8 +60,12 @@ export class UnauthenticatedError extends AppError {
   }
 }
 export class ForbiddenError extends AppError {
-  constructor(message = 'You do not have access.', code = 'FORBIDDEN') {
-    super(code, 403, message);
+  constructor(
+    message = 'You do not have access.',
+    code = 'FORBIDDEN',
+    options: AppErrorOptions = {},
+  ) {
+    super(code, 403, message, options);
   }
 }
 export class NotFoundError extends AppError {
@@ -140,10 +144,13 @@ export interface LimitHit {
   used: number;
 }
 
-/** 403 `FEATURE_LIMIT_REACHED`: a create at the organization's cap; the problem carries the key, cap and count. */
-export class FeatureLimitError extends AppError {
-  constructor({ key, limit, used }: LimitHit, code = 'FEATURE_LIMIT_REACHED') {
-    super(code, 403, limitRefusal(key, limit, used), { feature: key, limit, used });
+/**
+ * 403 `FEATURE_LIMIT_REACHED`: a create at the organization's cap; the problem carries the key, cap and
+ * count. A `ForbiddenError`, so callers that treat a refused write as a rejection keep doing so.
+ */
+export class FeatureLimitError extends ForbiddenError {
+  constructor({ key, limit, used }: LimitHit) {
+    super(limitRefusal(key, limit, used), 'FEATURE_LIMIT_REACHED', { feature: key, limit, used });
   }
 }
 

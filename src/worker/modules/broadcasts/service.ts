@@ -85,7 +85,7 @@ export async function insertBroadcast(
       now,
     ),
   ]);
-  if ((inserted?.meta.changes ?? 0) !== 1) throw await insertRefusal(ctx, body.orgId, now);
+  if ((inserted?.meta.changes ?? 0) !== 1) throw await insertRefusal(ctx, body.orgId, mode, now);
   await recordAudit(ctx, {
     orgId: body.orgId,
     actorType: actor.type,
@@ -100,9 +100,14 @@ export async function insertBroadcast(
 }
 
 /** A refused insert is the plan's daily cap when the org has used it, otherwise the lost authority. */
-async function insertRefusal(ctx: ServiceContext, orgId: string, now: number): Promise<Error> {
+async function insertRefusal(
+  ctx: ServiceContext,
+  orgId: string,
+  mode: Mode,
+  now: number,
+): Promise<Error> {
   const limit = (await entitlementsOf(ctx, orgId))['messages.perDay'];
-  const used = await manualBroadcastsToday(ctx.env.DB, orgId, now);
+  const used = await manualBroadcastsToday(ctx.env.DB, orgId, mode, now);
   return typeof limit === 'number' && used >= limit
     ? new FeatureLimitError({ key: 'messages.perDay', limit, used })
     : new ForbiddenError();

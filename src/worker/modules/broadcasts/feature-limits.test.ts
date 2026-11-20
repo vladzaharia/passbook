@@ -65,12 +65,12 @@ const create = () =>
     kit.env,
   );
 
-/** Manual broadcasts made in the last day, cancelled ones aside: what the limit counts. */
+/** Live manual broadcasts made in the last day, cancelled ones aside: what the limit counts. */
 const held = async () =>
   (
     await first<{ n: number }>(
       kit.env.DB,
-      `SELECT COUNT(*) AS n FROM broadcasts WHERE org_id = ? AND rule_id IS NULL
+      `SELECT COUNT(*) AS n FROM broadcasts WHERE org_id = ? AND mode = 'live' AND rule_id IS NULL
         AND parent_id IS NULL AND state <> 'cancelled' AND created_at > ?`,
       [kit.org.id, kit.clock.now() - DAY],
     )
@@ -85,6 +85,21 @@ limitSuite('broadcasts per day', async () => ({
 }));
 
 describe('broadcast limits', () => {
+  it('test-mode broadcasts do not use up the live allowance', async () => {
+    const live = await held();
+    await setLimit(kit.env.DB, kit.org.id, 'messages.perDay', live + 1);
+    for (let i = 0; i < 3; i++)
+      await run(
+        kit.env.DB,
+        `INSERT INTO broadcasts (id, org_id, mode, kind, name, state, target, patch, created_at)
+         VALUES (?, ?, 'test', 'message', 'Test', 'draft', '{}', '{}', ?)`,
+        [`test-mode-${i}`, kit.org.id, kit.clock.now()],
+      );
+    expect(await held()).toBe(live);
+    expect(await refusedBy(await create())).toBeNull();
+    expect((await refusedBy(await create()))?.code).toBe('FEATURE_LIMIT_REACHED');
+  });
+
   it('the day rolls: yesterday is not counted, and a cancelled draft frees its slot', async () => {
     const before = await held();
     await setLimit(kit.env.DB, kit.org.id, 'messages.perDay', before);

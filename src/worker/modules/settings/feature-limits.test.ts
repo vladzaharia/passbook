@@ -25,7 +25,10 @@ describe('the plan clamps the org email cap', () => {
   it('leaves the platform maximum when the plan has no cap, and keeps the stored value', () => {
     const max = platform['email.orgCapPerDayMax'];
     expect(read(entry(300), { 'email.perDay': null })).toMatchObject({ value: 300, ceiling: max });
-    expect(read(entry(300), {})).toMatchObject({ value: 300, ceiling: max });
+  });
+
+  it('allows none when the plan value is missing, as the send path does', () => {
+    expect(read(entry(300), {})).toMatchObject({ value: 0, ceiling: 0 });
   });
 
   it('refuses an org write above the plan, and one at the plan passes', () => {
