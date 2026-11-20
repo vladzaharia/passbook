@@ -76,6 +76,9 @@ const SOURCES: Record<string, (ctx: Ctx) => Promise<string | undefined>> = {
   blueprintId: async (c) =>
     id((await list(await c.platform(), '/api/v1/templates?blueprint=true&limit=1'))[0]),
   connectionId: (c) => firstInOrgs(c, '/api/v1/connections'),
+  keyId: (c) => firstInOrgs(c, '/api/v1/api-keys'),
+  platformKeyId: async (c) =>
+    id((await list(await c.platform(), '/api/v1/api-keys?orgId=null&limit=1'))[0]),
   endpointId: (c) => firstInOrgs(c, '/api/v1/webhook-endpoints'),
   northwindId: (c) => orgBySlug(c, 'northwind'),
   harborId: (c) => orgBySlug(c, 'harbor-lights'),

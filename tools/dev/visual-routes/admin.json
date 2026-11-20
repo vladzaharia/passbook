@@ -21,6 +21,11 @@
   },
   {
     "role": "org",
+    "path": "/admin/o/{orgId}/api-keys/{keyId}",
+    "name": "admin-api-key-detail"
+  },
+  {
+    "role": "org",
     "path": "/admin/o/{orgId}/audit",
     "name": "admin-audit"
   },
@@ -228,6 +233,11 @@
     "role": "platform",
     "path": "/admin/platform/api-keys",
     "name": "admin-platform-api-keys"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/api-keys/{platformKeyId}",
+    "name": "admin-platform-api-key-detail"
   },
   {
     "role": "platform",
