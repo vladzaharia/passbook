@@ -6,6 +6,8 @@ export interface AdmissionPlan {
   state: CheckInState;
   rules: CheckInPolicy[];
   scope: string;
+  /** The zone whose midnight ends a day pass. */
+  zone: string;
   event: ScanEventRow | null;
   tracked: boolean;
   previousScanId: string | null;

@@ -54,11 +54,15 @@ export async function getPolicy(
      WHERE org_id = ? AND mode = ? AND template_id = ?`,
     [orgId, mode, templateId],
   );
-  if (!r) return null;
+  return r ? { channels: parsePolicy(r.channels), revision: r.revision } : null;
+}
+
+/** A stored policy; unknown channels and states are dropped. */
+export function parsePolicy(text: string): Policy {
   const channels: Policy = {};
-  for (const [k, v] of Object.entries(JSON.parse(r.channels) as Record<string, unknown>))
+  for (const [k, v] of Object.entries(JSON.parse(text) as Record<string, unknown>))
     if (isChannel(k) && (v === 'on' || v === 'off' || v === 'never')) channels[k] = v;
-  return { channels, revision: r.revision };
+  return channels;
 }
 
 /** The version the org's release of this template serves in this mode (Apple head), if any. */

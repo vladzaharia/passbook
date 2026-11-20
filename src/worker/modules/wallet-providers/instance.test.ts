@@ -439,7 +439,7 @@ describe('native wallet instance lifecycle', () => {
     ).toEqual([]);
   });
 
-  it('pins the Google retirement target predicate to the exact instance generation', async () => {
+  it('pins the Google retirement target predicate to the exact instance generation and epoch', async () => {
     // The predicate is provider-independent; use a real Samsung instance rather than fabricate
     // Google publishing approval to exercise its D1 generation and identity bindings.
     const f = await fixture();
@@ -450,6 +450,7 @@ describe('native wallet instance lifecycle', () => {
       op.passId,
       op.identityProjectionReleaseId,
       op.credentialGeneration,
+      op.channelEpoch,
     ] as const;
     expect(await first(f.kit.env.DB, sql, values)).toEqual({ ok: 1 });
     expect(
@@ -458,6 +459,17 @@ describe('native wallet instance lifecycle', () => {
         op.passId,
         op.identityProjectionReleaseId,
         op.credentialGeneration + 1,
+        op.channelEpoch,
+      ]),
+    ).toBeNull();
+    // A successor shares pass, release and generation with its predecessor; only the epoch tells them apart.
+    expect(
+      await first(f.kit.env.DB, sql, [
+        op.instanceId,
+        op.passId,
+        op.identityProjectionReleaseId,
+        op.credentialGeneration,
+        op.channelEpoch + 1,
       ]),
     ).toBeNull();
     expect(
@@ -466,6 +478,7 @@ describe('native wallet instance lifecycle', () => {
         op.passId,
         f.apple.id,
         op.credentialGeneration,
+        op.channelEpoch,
       ]),
     ).toBeNull();
   });

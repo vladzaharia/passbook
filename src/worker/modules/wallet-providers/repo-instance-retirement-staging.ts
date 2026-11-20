@@ -196,3 +196,57 @@ export async function retireUnissuedPlaceholder(
   );
   return row !== null;
 }
+
+/**
+ * Stage the retirement of a copy whose channel was turned off. Only the pass's retired marker authorizes
+ * it (the 0114 trigger agrees), only at the pass's own generation, and the cause is written with the
+ * request so it cannot be set later.
+ */
+export async function requestChannelOffRetirement(
+  db: D1Database,
+  p: WalletOperationRef &
+    WalletCredentialKeysetProof & {
+      now: number;
+      credentialGeneration: number;
+      passCredentialGeneration: number;
+    },
+): Promise<boolean> {
+  if (!isCredentialKeysetCommitment(p.credentialKeysetCommitment)) return false;
+  const results = await batch(db, [
+    stmt(
+      db,
+      `UPDATE wallet_provider_instances AS i SET retirement_requested_at = ?, retirement_cause = 'channel_off',
+        updated_at = ? WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ?
+        AND i.credential_generation = ? AND i.retirement_requested_at IS NULL
+        AND i.lifecycle IN ('active', 'revoking', 'revoked')
+        AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+        AND ${desiredOperationKeysetSql('i')} AND ${retirementProjectionSql('i')}
+        AND EXISTS (SELECT 1 FROM passes p WHERE p.id = i.pass_id AND p.org_id = i.org_id AND p.mode = i.mode
+          AND p.credential_generation = i.credential_generation AND p.credential_generation = ?)
+        AND EXISTS (SELECT 1 FROM pass_channels c WHERE c.pass_id = i.pass_id AND c.org_id = i.org_id
+          AND c.mode = i.mode AND c.channel = i.provider AND c.retired_at IS NOT NULL)
+        RETURNING id`,
+      [
+        p.now,
+        p.now,
+        p.instanceId,
+        p.orgId,
+        p.mode,
+        p.provider,
+        p.credentialGeneration,
+        p.credentialKeysetCommitment,
+        p.credentialKeysetCommitment,
+        p.passCredentialGeneration,
+      ],
+    ),
+    stmt(
+      db,
+      `INSERT INTO wallet_provider_instance_dirty(instance_id, generation)
+      SELECT i.id, 1 FROM wallet_provider_instances i WHERE i.id = ? AND i.org_id = ? AND i.mode = ?
+        AND i.provider = ? AND i.retirement_cause = 'channel_off' AND i.retirement_requested_at = ?
+      ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1, next_attempt_at = 0`,
+      [p.instanceId, p.orgId, p.mode, p.provider, p.now],
+    ),
+  ]);
+  return results[0]?.results.length === 1;
+}

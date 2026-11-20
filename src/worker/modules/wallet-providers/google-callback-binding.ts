@@ -69,6 +69,7 @@ export async function registerGoogleCallbackBinding(
       releaseId: capturedInput.releaseId,
       passId: capturedInput.passId,
       credentialGeneration: capturedInput.credentialGeneration,
+      channelEpoch: capturedInput.channelEpoch,
     });
     await assertBindingKeyset(ctx, credentialKeyEnv, capturedScope);
     if (

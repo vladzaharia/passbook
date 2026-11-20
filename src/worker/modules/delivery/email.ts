@@ -31,6 +31,7 @@ import {
   recordEmailOutcome,
   uncertainEmail,
 } from './email-outcome.ts';
+import { holderNoticeCopy } from './notice-copy.ts';
 import { claimOrSettle } from './push.ts';
 import { replyToFor } from './reply-to.ts';
 import { orgBranding } from './repo.ts';
@@ -175,6 +176,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     senderName: platform['email.senderName'],
     mode: pass.mode,
     joined: intent.joined === true || (await isJoinCard(db, pass.id)),
+    ...(intent.notice ? { notice: holderNoticeCopy(intent.notice) } : {}),
     buddyBase: orgSettings['email.buddy'] ? base : null,
   });
   if (pass.mode === 'test') {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CHANNEL_COPY } from '../../shared/copy/channels.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { assets, fixtures } from '../../shared/pass-view/fixtures/index.ts';
 import { normalize } from '../../shared/pass-view/index.ts';
@@ -41,6 +42,17 @@ describe('/p renders the portal HolderPassView', () => {
       expect(html).toContain('src="/apple/badge/en/black.svg"');
       expect(html).not.toContain('<source');
     }
+  });
+
+  it('says the code changed above the add block, only when a notice is given', () => {
+    const html = page({ notice: CHANNEL_COPY.codesReplaced });
+    expect(html).toContain(CHANNEL_COPY.codesReplacedTitle);
+    expect(html).toContain(CHANNEL_COPY.codesReplaced);
+    expect(html).toMatch(/role="status"[^>]*>[\s\S]*Your code changed/);
+    expect(page()).not.toContain(CHANNEL_COPY.codesReplaced);
+    expect(page({ notice: CHANNEL_COPY.codesReplaced, voided: true })).not.toContain(
+      CHANNEL_COPY.codesReplaced,
+    );
   });
 
   it('dips the card in CSS when the badge is pressed (no script)', () => {

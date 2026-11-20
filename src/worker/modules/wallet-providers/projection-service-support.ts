@@ -233,7 +233,12 @@ export async function verifiedCandidate(
     account.accountId !== candidate.accountId ||
     account.revision !== candidate.accountRevision ||
     account.credentialKeysetCommitment !== proof.credentialKeysetCommitment ||
-    (await providerIdentityHash(account)) !== candidate.providerIdentityHash
+    (await providerIdentityHash(
+      account,
+      candidate.projection.schema === 1 && candidate.projection.provider === 'samsung'
+        ? candidate.projection.cardType
+        : undefined,
+    )) !== candidate.providerIdentityHash
   )
     return false;
   if (candidate.projection.schema === 2)

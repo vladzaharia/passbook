@@ -8,6 +8,7 @@ import { tagReasonLine } from '../assign/tag-lines.ts';
 import { DisplayPanels } from '../display/display-panels.tsx';
 import { scanIcon } from '../display/icons.ts';
 import { accessLines, directionPill } from '../machine/access-view.ts';
+import { admitLine } from '../machine/admit-line.ts';
 import type { Draft, PinNote, ScanOutcome } from '../machine/types.ts';
 import { verdictLine } from '../machine/verdict-lines.ts';
 import { ApprovalSheet } from './approval-sheet.tsx';
@@ -75,6 +76,7 @@ export function ResultCard({
     tagReasonLine(o, tagRead) ??
     verdictLine(o, clock ?? Date.now(), { desk: desk?.approvals === 'desk' });
   const held = accessLines(o, now);
+  const admit = admitLine(o);
   const pill = directionPill(o);
   const systemTitle =
     o.action?.id === 'undo'
@@ -179,6 +181,11 @@ export function ResultCard({
                   </span>
                 ) : null}
                 {held ? held.sub : (line?.sub ?? null)}
+              </p>
+            ) : null}
+            {admit ? (
+              <p className="scan-admit" data-testid="scan-admit">
+                {admit}
               </p>
             ) : null}
           </div>

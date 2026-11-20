@@ -49,7 +49,7 @@ export async function samsungSecret(
 }
 
 export const cardMapOf = async (cardId: string) =>
-  JSON.stringify({ loyalty: await sha256Hex(cardId) });
+  JSON.stringify({ generic: await sha256Hex(cardId) });
 
 /** Appends a version holding `secret` with a rotate event and moves the pointer; the version id comes back. */
 export async function addRealVersion(

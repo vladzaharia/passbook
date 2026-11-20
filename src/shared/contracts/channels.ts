@@ -30,6 +30,11 @@ export const CHANNEL_REASONS = [
 export const ChannelReasonSchema = z.enum(CHANNEL_REASONS);
 export type ChannelReason = z.infer<typeof ChannelReasonSchema>;
 
+/** Why a provider offer is withheld while its channel is on, after a channel-off retirement. */
+export const OFFER_HOLDS = ['provider_retiring', 'provider_epoch_limit'] as const;
+export const OfferHoldSchema = z.enum(OFFER_HOLDS);
+export type OfferHold = z.infer<typeof OfferHoldSchema>;
+
 export const ChannelStatusSchema = z.object({
   on: z.boolean(),
   source: ChannelSourceSchema,
@@ -55,11 +60,33 @@ export const PassChannelOverridesSchema = z.partialRecord(ChannelSchema, PassCha
 
 export const ChannelsQuerySchema = z.object({ orgId: OrgIdSchema.optional() });
 
+/** An event or scanning session that admits a template: codes cannot change while it is open. */
+export const ChannelWindowSchema = z.object({
+  kind: z.enum(['event', 'session']),
+  id: IdSchema,
+  name: z.string(),
+  /** Event: its start. Session with hours: the next open. Null for a session with no hours. */
+  opensAt: TimestampSchema.nullable(),
+  /** Null when no end is known. */
+  closesAt: TimestampSchema.nullable(),
+  /** Open now: a save that replaces codes is refused. */
+  open: z.boolean(),
+  /** False for a session with no hours (24/7): it warns, never blocks. */
+  scheduled: z.boolean(),
+});
+export type ChannelWindow = z.infer<typeof ChannelWindowSchema>;
+
+/** Why "Turn off and replace codes" is not offered: the barcode is not the scan code, or no digital channel stays on. */
+export const ChannelReplaceBlockSchema = z.enum(['barcode_not_scan_code', 'all_digital_off']);
+export type ChannelReplaceBlock = z.infer<typeof ChannelReplaceBlockSchema>;
+
 /** GET /api/v1/passes/{id}/channels */
 export const PassChannelsResponseSchema = z.object({
   effective: EffectiveChannelsSchema,
   /** Per-pass overrides only; a channel absent here follows its template. */
   overrides: PassChannelOverridesSchema,
+  /** "Turn off and replace codes": whether this pass's barcode allows it, and the windows within 48 hours. */
+  replace: z.object({ supported: z.boolean(), windows: z.array(ChannelWindowSchema) }),
 });
 export type PassChannelsDto = z.infer<typeof PassChannelsResponseSchema>;
 
@@ -132,4 +159,23 @@ export const PutTemplateChannelsResponseSchema = TemplateChannelsResponseSchema.
   impact: z.array(ChannelImpactSchema),
   /** The channel-apply run, when the save started one. */
   workflowInstanceId: z.string().nullable(),
+  /** Whether the released version's barcode is the scan code (so codes can be replaced). */
+  replaceSupported: z.boolean(),
+  /** Windows open or opening within 48 hours; a dry run shows them as a warning. */
+  windows: z.array(ChannelWindowSchema),
 });
+
+export const ChannelApplyRunSchema = z.object({
+  id: IdSchema,
+  state: z.enum(['pending', 'running', 'done', 'dropped', 'failed']),
+  /** When a pending run starts: pushed back by each save, ten minutes after the last. */
+  dueAt: TimestampSchema,
+  startedAt: TimestampSchema.nullable(),
+  finishedAt: TimestampSchema.nullable(),
+  counts: z.record(z.string(), z.number()),
+  errorCode: z.string().nullable(),
+});
+export type ChannelApplyRunDto = z.infer<typeof ChannelApplyRunSchema>;
+
+/** GET /api/v1/templates/{id}/channels/runs: the latest ten runs, newest first. */
+export const ChannelApplyRunsResponseSchema = z.array(ChannelApplyRunSchema);

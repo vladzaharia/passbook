@@ -1,3 +1,4 @@
+import type { ScanCheckIn } from '../passkit/template/scan-check-in.ts';
 import type {
   ScanAction,
   ScanActionKind,
@@ -51,14 +52,25 @@ export const DEFAULT_SCAN_ACTION: ScanAction = {
   kind: 'check_in',
 };
 
+const CHECK_IN_REPEAT: Record<NonNullable<ScanCheckIn['mode']>, ScanRepeat> = {
+  single: 'once',
+  daily: 'daily',
+  unlimited: 'always',
+};
+
 function resolveAction(
   action: ScanAction,
   access: boolean,
   stamps?: { input: string; goal: number },
+  mode?: ScanCheckIn['mode'],
 ): ResolvedScanAction {
   // An access template lets a member in on every visit: no once, no daily, no already_done.
+  // The pass type's own check-in mode sits between the action's repeat and the kind's default.
   const repeat =
-    access && action.kind === 'check_in' ? 'always' : (action.repeat ?? REPEAT[action.kind]);
+    access && action.kind === 'check_in'
+      ? 'always'
+      : (action.repeat ??
+        (action.kind === 'check_in' && mode ? CHECK_IN_REPEAT[mode] : REPEAT[action.kind]));
   const resolved: ResolvedScanAction = {
     ...action,
     repeat,
@@ -86,7 +98,9 @@ export function scanOf(
   const stamps = manifest?.stamps;
   return {
     ...scan,
-    actions: scan.actions.map((a) => resolveAction(a, scan.access !== undefined, stamps)),
+    actions: scan.actions.map((a) =>
+      resolveAction(a, scan.access !== undefined, stamps, scan.checkIn?.mode),
+    ),
   };
 }
 
