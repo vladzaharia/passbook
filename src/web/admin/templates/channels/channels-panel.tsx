@@ -1,6 +1,12 @@
-import { useState } from 'react';
-import { templateDefault } from '@/shared/channels.ts';
-import { CHANNELS, type Channel, type TemplateChannelState } from '@/shared/contracts/channels.ts';
+import { useRef, useState } from 'react';
+import type { z } from 'zod';
+import { isDigital, templateDefault } from '@/shared/channels.ts';
+import {
+  CHANNELS,
+  type Channel,
+  type PutTemplateChannelsResponseSchema,
+  type TemplateChannelState,
+} from '@/shared/contracts/channels.ts';
 import {
   CHANNEL_COPY,
   CHANNEL_LABEL,
@@ -11,7 +17,6 @@ import { isApiError } from '../../../lib/errors.ts';
 import {
   Card,
   CardBody,
-  ConfirmDialog,
   ErrorState,
   SaveBar,
   type SaveResult,
@@ -20,9 +25,20 @@ import {
   toast,
 } from '../../../ui/index.ts';
 import { usePutTemplateChannels, useTemplateChannels } from './api.ts';
+import { ChannelRuns } from './channel-runs.tsx';
 import { impactLines } from './impact.ts';
+import { ReplaceOption } from './replace-option.tsx';
+import { ReviewDialog } from './review-dialog.tsx';
 
 type Draft = Partial<Record<Channel, TemplateChannelState>>;
+type Dry = z.infer<typeof PutTemplateChannelsResponseSchema>;
+/** The dry run the review shows, with whether new codes are asked for. */
+interface Review {
+  dry: Dry;
+  replace: boolean;
+  /** True while the dry run for a changed tick is on its way. */
+  loading: boolean;
+}
 
 const OPTIONS = (['on', 'off', 'never'] as const).map((value) => ({
   value,
@@ -47,8 +63,10 @@ export function TemplateChannelsPanel({
 }) {
   const query = useTemplateChannels(templateId, orgId);
   const put = usePutTemplateChannels(templateId, orgId);
+  /** The newest dry run; an older answer that lands late is dropped. */
+  const latest = useRef(0);
   const [edits, setEdits] = useState<Draft>({});
-  const [review, setReview] = useState<{ lines: string[]; cleared: number } | null>(null);
+  const [review, setReview] = useState<Review | null>(null);
   const data = query.data;
   if (query.isPending) return <SkeletonRows rows={6} label="Loading channels" />;
   if (query.isError || !data)
@@ -57,36 +75,50 @@ export function TemplateChannelsPanel({
   const stored = (c: Channel): TemplateChannelState => data.channels?.[c] ?? templateDefault(c);
   const value = (c: Channel) => edits[c] ?? stored(c);
   const changed = CHANNELS.filter((c) => value(c) !== stored(c));
-  const body = () => ({
+  const body = (replace = false) => ({
     channels: Object.fromEntries(changed.map((c) => [c, value(c)])),
     revision: data.revision,
+    ...(replace ? { replaceCodes: true } : {}),
   });
+  /** Turning a digital channel off or never: the one change that can issue new codes. */
+  const turnsOff = changed.some((c) => isDigital(c) && value(c) !== 'on');
   const discard = () => setEdits({});
 
-  const dryRun = () => put.mutateAsync({ ...body(), dryRun: true });
-  const clearedOf = (dry: Awaited<ReturnType<typeof dryRun>>) =>
-    dry.impact.reduce((n, i) => n + i.clearedOverrides, 0);
+  const dryRun = (replace = false) => put.mutateAsync({ ...body(replace), dryRun: true });
+  const clearedOf = (dry: Dry) => dry.impact.reduce((n, i) => n + i.clearedOverrides, 0);
 
   async function save(): Promise<SaveResult | undefined> {
     try {
       const dry = await dryRun();
       if (dry.impact.every((i) => i.passes === 0 && i.clearedOverrides === 0))
         await commit(clearedOf(dry));
-      else setReview({ lines: impactLines(dry.impact), cleared: clearedOf(dry) });
+      else setReview({ dry, replace: false, loading: false });
       return undefined;
     } catch (error) {
       toast.error(error, 'Could not save channels.');
       return 'failed';
     }
   }
-  /** Sends the cleared-override count the user saw; if it moved, shows the new numbers and stops. */
-  async function commit(cleared: number) {
+  /** Ticking re-asks the server with the box on, so the counts and windows are the ones saved. */
+  async function tick(replace: boolean) {
+    const mine = ++latest.current;
+    setReview((r) => (r ? { ...r, replace, loading: true } : r));
     try {
-      await put.mutateAsync({ ...body(), expectedCleared: cleared });
+      const dry = await dryRun(replace);
+      if (mine === latest.current) setReview({ dry, replace, loading: false });
+    } catch (error) {
+      if (mine !== latest.current) return;
+      toast.error(error, 'Could not check channels.');
+      setReview((r) => (r ? { ...r, replace: !replace, loading: false } : r));
+    }
+  }
+  /** Sends the cleared-override count the user saw; if it moved, shows the new numbers and stops. */
+  async function commit(cleared: number, replace = false) {
+    try {
+      await put.mutateAsync({ ...body(replace), expectedCleared: cleared });
     } catch (error) {
       if (isApiError(error) && error.code === 'TEMPLATE_CHANNELS_IMPACT_CHANGED') {
-        const dry = await dryRun();
-        setReview({ lines: impactLines(dry.impact), cleared: clearedOf(dry) });
+        setReview({ dry: await dryRun(replace), replace, loading: false });
       }
       void query.refetch();
       throw error;
@@ -95,67 +127,81 @@ export function TemplateChannelsPanel({
     toast.success(CHANNEL_COPY.saved);
   }
 
+  const replacing = Boolean(review?.replace) && !review?.dry.allOff;
+  const refused = replacing && Boolean(review?.dry.blocked);
+
   return (
-    <Card>
-      <CardBody>
-        <ul className="divide-y divide-border">
-          {CHANNELS.map((c) => {
-            const status = data.effective[c];
-            const blocked = !status.on && status.reason !== undefined && !OWN.has(status.reason);
-            return (
-              <li
-                key={c}
-                className="flex flex-col items-start gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-fg-strong">{CHANNEL_LABEL[c]}</p>
-                  {blocked && status.reason ? (
-                    <p className="text-xs text-fg-muted">{channelBlocked(status.reason)}</p>
-                  ) : null}
-                </div>
-                <SegmentedControl
-                  label={CHANNEL_LABEL[c]}
-                  options={OPTIONS.map((o) => ({
-                    ...o,
-                    disabled: blocked || !canPublish,
-                  }))}
-                  value={value(c)}
-                  onValueChange={(v) =>
-                    setEdits((e) => {
-                      const next = { ...e, [c]: v };
-                      if (v === stored(c)) delete next[c];
-                      return next;
-                    })
-                  }
-                />
-              </li>
-            );
-          })}
-        </ul>
-      </CardBody>
-      {canPublish ? (
-        <SaveBar
-          dirty={changed.length > 0}
-          saving={put.isPending}
-          paused={put.isPaused}
-          onSave={save}
-          onDiscard={discard}
-        />
-      ) : null}
-      <ConfirmDialog
-        open={review !== null}
-        onOpenChange={(open) => !open && setReview(null)}
-        title="Save channels?"
-        confirmLabel="Save"
-        description={
-          <ul className="flex flex-col gap-1">
-            {review?.lines.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
+    <div className="flex flex-col gap-4">
+      <Card>
+        <CardBody>
+          <ul className="divide-y divide-border">
+            {CHANNELS.map((c) => {
+              const status = data.effective[c];
+              const blocked = !status.on && status.reason !== undefined && !OWN.has(status.reason);
+              return (
+                <li
+                  key={c}
+                  className="flex flex-col items-start gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-fg-strong">{CHANNEL_LABEL[c]}</p>
+                    {blocked && status.reason ? (
+                      <p className="text-xs text-fg-muted">{channelBlocked(status.reason)}</p>
+                    ) : null}
+                  </div>
+                  <SegmentedControl
+                    label={CHANNEL_LABEL[c]}
+                    options={OPTIONS.map((o) => ({
+                      ...o,
+                      disabled: blocked || !canPublish,
+                    }))}
+                    value={value(c)}
+                    onValueChange={(v) =>
+                      setEdits((e) => {
+                        const next = { ...e, [c]: v };
+                        if (v === stored(c)) delete next[c];
+                        return next;
+                      })
+                    }
+                  />
+                </li>
+              );
+            })}
           </ul>
-        }
-        onConfirm={() => commit(review?.cleared ?? 0)}
-      />
-    </Card>
+        </CardBody>
+        {canPublish ? (
+          <SaveBar
+            dirty={changed.length > 0}
+            saving={put.isPending}
+            paused={put.isPaused}
+            onSave={save}
+            onDiscard={discard}
+          />
+        ) : null}
+        <ReviewDialog
+          open={review !== null}
+          onOpenChange={(open) => !open && setReview(null)}
+          title="Save channels?"
+          confirmLabel="Save"
+          disabled={review?.loading || refused}
+          lines={review ? impactLines(review.dry.impact, replacing) : []}
+          onConfirm={() => commit(review ? clearedOf(review.dry) : 0, replacing)}
+        >
+          {review && turnsOff ? (
+            <ReplaceOption
+              supported={review.dry.replaceSupported}
+              allOff={review.dry.allOff}
+              blocked={review.dry.blocked}
+              loading={review.loading}
+              windows={review.dry.windows}
+              checked={review.replace}
+              note={false}
+              onChange={(v) => void tick(v)}
+            />
+          ) : null}
+        </ReviewDialog>
+      </Card>
+      <ChannelRuns templateId={templateId} orgId={orgId} />
+    </div>
   );
 }

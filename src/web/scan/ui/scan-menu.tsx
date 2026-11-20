@@ -25,6 +25,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  useIgnoreOpeningGesture,
 } from '../../ui/dropdown-menu.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { MenuTrigger } from './capsule.tsx';
@@ -56,11 +57,13 @@ function CheckItem({
   onCheckedChange: (v: boolean) => void;
   children: ReactNode;
 }) {
+  const ignoreOpening = useIgnoreOpeningGesture();
   return (
     <Primitive.CheckboxItem
       checked={checked}
       onCheckedChange={onCheckedChange}
       onSelect={(e) => e.preventDefault()}
+      onPointerUp={ignoreOpening}
       className={CHECK_ITEM}
     >
       <span className="text-fg-muted">{icon}</span>

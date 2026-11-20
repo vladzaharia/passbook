@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { PKPASSES_CONTENT_TYPE } from '../../../passkit/index.ts';
 import {
   PublicBundleAssetParamSchema,
@@ -38,6 +39,7 @@ import {
   fenceBundleStream,
   recordBundleEvents,
 } from './public-service.ts';
+import { bundleWalletHref, bundleWalletLocation, bundleWalletProviders } from './wallet-links.ts';
 
 /** /b: bearer-link bundle page, its .pkpasses and per-pass files. No sign-in. */
 export const bundlePublicRoutes = createRouter();
@@ -56,6 +58,7 @@ bundlePublicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/passes.pkpasses', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/:passId/pass.pkpass', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/:passId/barcode', rateLimit('RL_PUBLIC'));
+bundlePublicRoutes.use('/:token/:passId/wallet/:provider', rateLimit('RL_PUBLIC'));
 
 register(
   bundlePublicRoutes,
@@ -77,7 +80,10 @@ register(
       const lang = langOf(c.req.header('accept-language'));
       const zone = zoneOf(c) ?? 'UTC';
       const now = new Date(ctx.clock.now());
-      const items = members.map(({ pass, model }) => {
+      const wallets = await Promise.all(
+        members.map(({ pass }) => bundleWalletProviders(ctx, pass)),
+      );
+      const items = members.map(({ pass, model }, index) => {
         const view = normalize(model.passJson, {
           assets: model.assets,
           locale: lang,
@@ -103,6 +109,10 @@ register(
           barcodeHref: model.channels.effective.mobile.on
             ? `/b/${token}/${pass.id}/barcode`
             : undefined,
+          walletOffers: (wallets[index] ?? []).map((provider) => ({
+            provider,
+            href: bundleWalletHref(token, pass.id, provider),
+          })),
         };
       });
       const org = members[0]?.model.orgName ?? '';
@@ -206,6 +216,32 @@ register(
     return response.body
       ? new Response(fenceBundleStream(ctx, bundle, [pass], response.body, false), response)
       : response;
+  },
+);
+
+register(
+  bundlePublicRoutes,
+  'public',
+  {
+    method: 'get',
+    path: '/{token}/{passId}/wallet/{provider}',
+    summary: 'Add one pass of the bundle to a native wallet',
+    params: PublicBundlePassParamSchema.extend({ provider: z.enum(['google', 'samsung']) }),
+    status: 302,
+  },
+  async (c) => {
+    const p = c.req.valid('param');
+    const bundle = await bundleForToken(svc(c), p.token);
+    const location = await bundleWalletLocation(svc(c), bundle, p.passId, p.provider);
+    return new Response(null, {
+      status: 302,
+      headers: {
+        'cache-control': 'private, no-store',
+        'referrer-policy': 'no-referrer',
+        'x-robots-tag': 'noindex, nofollow',
+        location,
+      },
+    });
   },
 );
 

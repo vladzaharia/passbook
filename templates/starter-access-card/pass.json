@@ -47,6 +47,11 @@
         "key": "member",
         "label": "Member",
         "value": "MEMBER-0001"
+      },
+      {
+        "key": "guests",
+        "label": "Guests left",
+        "value": 0
       }
     ],
     "backFields": [

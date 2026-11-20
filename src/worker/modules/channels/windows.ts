@@ -113,3 +113,18 @@ export function windowsCloseAt(windows: readonly ChannelWindow[], fallback: numb
   const open = windows.filter((w) => w.open && w.scheduled);
   return open.reduce((at, w) => Math.max(at, w.closesAt ?? fallback), 0);
 }
+
+/**
+ * What the dialogs show: the open scheduled window that holds new codes (null when none) and the
+ * rest (opening soon, or a session with no hours) as warnings. The one place that decides it.
+ */
+export function splitWindows(windows: readonly ChannelWindow[]): {
+  blocked: { name: string; closesAt: number | null } | null;
+  windows: ChannelWindow[];
+} {
+  const hold = blockingWindow(windows);
+  return {
+    blocked: hold ? { name: hold.name, closesAt: hold.closesAt } : null,
+    windows: windows.filter((w) => !(w.open && w.scheduled)),
+  };
+}

@@ -1,6 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { EventKind } from '../../../shared/contracts/events.ts';
-import { all, first, run, stmt } from '../../platform/db.ts';
+import { all, first, run, type SqlValue, stmt } from '../../platform/db.ts';
 
 export interface EventRow {
   id: string;
@@ -20,12 +20,17 @@ export interface EventRow {
  * caller can name the mismatch. A `live` event needs a live pass; a `test` event (a sandbox capture)
  * may sit on a pass of either mode.
  */
-export function insertEventStmt(db: D1Database, row: EventRow): D1PreparedStatement {
+export function insertEventStmt(
+  db: D1Database,
+  row: EventRow,
+  /** An extra condition on the insert, e.g. that the receipt it reports was stored. */
+  guard?: { sql: string; params: SqlValue[] },
+): D1PreparedStatement {
   return stmt(
     db,
     `INSERT INTO pass_events (id, org_id, pass_id, mode, kind, device, actor_type, actor_id, data, at)
      SELECT ?, p.org_id, p.id, ?, ?, ?, ?, ?, ?, ? FROM passes p
-     WHERE p.id = ? AND p.org_id = ? AND (p.mode = ? OR ? = 'test')`,
+     WHERE p.id = ? AND p.org_id = ? AND (p.mode = ? OR ? = 'test')${guard ? ` AND ${guard.sql}` : ''}`,
     [
       row.id,
       row.mode,
@@ -39,6 +44,7 @@ export function insertEventStmt(db: D1Database, row: EventRow): D1PreparedStatem
       row.org_id,
       row.mode,
       row.mode,
+      ...(guard?.params ?? []),
     ],
   );
 }

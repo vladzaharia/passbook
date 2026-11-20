@@ -154,6 +154,34 @@ describe('replace codes: run', () => {
     expect((await t.runOf(id))?.updated_at).toBe(t.kit.clock.now());
   });
 
+  it('the runs list says which window a replace run waits for, until it closes', async () => {
+    const t = await replaceKit([['apple']]);
+    const id = await replaceSave(t, { apple: 'off' });
+    t.kit.clock.advance(11 * MINUTE);
+    const ctx = jobCtxOf(t.kit);
+    await startOne(ctx, id);
+    const list = async () =>
+      (await (
+        await t.kit.api(`/templates/${t.templateId}/channels/runs?orgId=${t.orgId}`, {
+          headers: t.kit.auth.admin(),
+        })
+      ).json()) as { state: string; waiting: { name: string; until: number | null } | null }[];
+    expect((await list())[0]).toMatchObject({ state: 'running', waiting: null });
+    const now = t.kit.clock.now();
+    await makeScanEvent(t.kit.fx, {
+      orgId: t.orgId,
+      templateIds: [t.templateId],
+      opensAt: now - MINUTE,
+      closesAt: now + 30 * MINUTE,
+    });
+    expect((await list())[0]).toMatchObject({
+      state: 'running',
+      waiting: { name: 'Event', until: now + 30 * MINUTE },
+    });
+    t.kit.clock.advance(31 * MINUTE);
+    expect((await list())[0]?.waiting).toBeNull();
+  });
+
   it('a run without replace never waits for a window', async () => {
     const t = await replaceKit([['apple']]);
     await makeScanEvent(t.kit.fx, { orgId: t.orgId, templateIds: [t.templateId] });

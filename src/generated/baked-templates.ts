@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "b983708cddc8b59fd83256326511737b6f5705db";
+export const BAKED_BUILD_HASH = "cbb8f945bdcde482f8ccd4a5e93001de10b1e28f";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -1494,7 +1494,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-access-card",
     "slug": "starter-access-card",
-    "version": "45ac9f7c379bbbbb",
+    "version": "e87dae6adff9a6e6",
     "name": "Access card",
     "description": "Door access by plan and zone, with a photo for ID checks.",
     "org": null,
@@ -1632,6 +1632,15 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "x-order": 110,
             "maxLength": 256,
             "x-widget": "textarea"
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99,
+            "x-label": "Guests left",
+            "x-group": "Guest",
+            "x-order": 85,
+            "x-help": "Taken by Guest in at the door."
           }
         }
       },
@@ -1712,6 +1721,13 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         },
         {
           "to": {
+            "field": "guests"
+          },
+          "value": "{{guests}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
             "field": "note"
           },
           "value": "{{note}}",
@@ -1764,6 +1780,22 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "id": "enter",
             "label": "Let in",
             "kind": "check_in"
+          },
+          {
+            "id": "guest_in",
+            "label": "Guest in",
+            "kind": "take",
+            "input": "guests",
+            "amount": {
+              "max": 10,
+              "presets": [
+                1,
+                2,
+                3
+              ]
+            },
+            "repeat": "always",
+            "minRole": "door"
           }
         ],
         "lookup": {
@@ -2039,6 +2071,11 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "key": "member",
             "label": "Member",
             "value": "MEMBER-0001"
+          },
+          {
+            "key": "guests",
+            "label": "Guests left",
+            "value": 0
           }
         ],
         "backFields": [
@@ -2087,12 +2124,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "slot": "strings",
         "scale": 1,
         "locale": "en",
-        "size": 294,
-        "sha1": "2524bdaa8f07408169334fad07185f8a26bd5b50",
-        "crc32": 480473760,
+        "size": 325,
+        "sha1": "cdffa92928f85d58136fd04c26639e548a7023c3",
+        "crc32": 3317106332,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/en.lproj/pass.strings"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/en.lproj/pass.strings"
         }
       },
       {
@@ -2106,7 +2143,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/icon@2x.png"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/icon@2x.png"
         }
       },
       {
@@ -2120,7 +2157,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/icon@3x.png"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/icon@3x.png"
         }
       },
       {
@@ -2134,7 +2171,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/logo@2x.png"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/logo@2x.png"
         }
       },
       {
@@ -2148,7 +2185,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/logo@3x.png"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/logo@3x.png"
         }
       },
       {
@@ -2162,7 +2199,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/thumbnail@2x.png"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/thumbnail@2x.png"
         }
       },
       {
@@ -2176,7 +2213,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-access-card/45ac9f7c379bbbbb/thumbnail@3x.png"
+          "path": "/templates/starter-access-card/e87dae6adff9a6e6/thumbnail@3x.png"
         }
       }
     ],
@@ -4295,6 +4332,457 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     }
   },
   {
+    "id": "baked:starter-day-pass",
+    "slug": "starter-day-pass",
+    "version": "b223188e78a4ed0e",
+    "name": "Day pass",
+    "description": "One day of entry, ending at midnight. Unlimited visits until then.",
+    "org": null,
+    "blueprint": true,
+    "styles": [
+      "generic"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Day pass",
+      "description": "One day of entry, ending at midnight. Unlimited visits until then.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
+      "blueprint": true,
+      "inputs": {
+        "type": "object",
+        "required": [
+          "memberName",
+          "memberId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "memberName": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Pass",
+            "x-order": 10,
+            "minLength": 1,
+            "maxLength": 80,
+            "x-search": true
+          },
+          "memberId": {
+            "type": "string",
+            "x-label": "Pass ID",
+            "x-group": "Pass",
+            "x-order": 20,
+            "minLength": 1,
+            "maxLength": 64,
+            "x-search": true
+          },
+          "status": {
+            "type": "string",
+            "x-label": "Status",
+            "x-group": "Status",
+            "x-order": 30,
+            "enum": [
+              "Active",
+              "Suspended"
+            ],
+            "default": "Active",
+            "x-widget": "select"
+          },
+          "plan": {
+            "type": "string",
+            "x-label": "Plan",
+            "x-group": "Pass",
+            "enum": [
+              "day"
+            ],
+            "default": "day",
+            "x-widget": "select",
+            "x-enumLabels": {
+              "day": "Day pass"
+            },
+            "x-order": 40
+          },
+          "message": {
+            "type": "string",
+            "x-label": "Message",
+            "x-group": "Message",
+            "x-order": 50,
+            "maxLength": 256,
+            "x-widget": "textarea",
+            "x-help": "Shown on the back."
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 60,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          }
+        }
+      },
+      "sample": {
+        "memberName": "Sam Reed",
+        "memberId": "DAY-0001",
+        "status": "Active",
+        "plan": "day"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{memberName}}"
+        },
+        {
+          "to": {
+            "field": "member"
+          },
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "field": "message"
+          },
+          "value": "{{message}}"
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{pass.scanCode}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{memberId}}"
+        }
+      ],
+      "display": {
+        "icon": "ticket",
+        "group": "get-in",
+        "aliases": [
+          "day pass",
+          "day",
+          "drop-in",
+          "visitor",
+          "one day"
+        ],
+        "title": "{{memberName}}",
+        "subtitle": "Day pass · {{memberId}}",
+        "status": "{{status}}",
+        "search": [
+          "memberName",
+          "memberId"
+        ]
+      },
+      "messaging": {
+        "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "enter",
+            "label": "Let in",
+            "kind": "check_in",
+            "repeat": "always",
+            "minRole": "door"
+          }
+        ],
+        "lookup": {
+          "input": "memberId"
+        },
+        "display": {
+          "v": 1,
+          "holder": "{{memberName}}",
+          "header": {
+            "chips": [
+              {
+                "id": "c_plan",
+                "text": "Day pass",
+                "tone": "teal",
+                "icon": "clock"
+              }
+            ]
+          },
+          "panels": [
+            {
+              "id": "p_visits",
+              "preset": {
+                "id": "membership",
+                "v": 1
+              },
+              "title": "Visits",
+              "icon": "door-open",
+              "on": [
+                "ready",
+                "ok"
+              ],
+              "rows": [
+                {
+                  "id": "r_day",
+                  "type": "columns",
+                  "items": [
+                    {
+                      "id": "i_first",
+                      "label": "Today",
+                      "value": {
+                        "count": "{{history.visits.today}}",
+                        "one": "# visit",
+                        "other": "# visits",
+                        "zero": "First visit"
+                      }
+                    },
+                    {
+                      "id": "i_last",
+                      "label": "Last visit",
+                      "value": "{{history.lastVisit.at|ago}}"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Ask at the front desk."
+          },
+          "customer": {
+            "chips": [
+              "c_plan"
+            ],
+            "panel": null
+          }
+        },
+        "checkIn": {
+          "mode": "unlimited",
+          "days": 1,
+          "durationFrom": "first_scan"
+        },
+        "access": {
+          "input": {
+            "plan": "plan"
+          },
+          "plans": [
+            {
+              "id": "day",
+              "label": "Day pass",
+              "kind": "always",
+              "zones": [
+                {
+                  "zone": "*"
+                }
+              ]
+            }
+          ],
+          "suspend": {
+            "input": "status",
+            "equals": [
+              "Suspended"
+            ]
+          },
+          "rules": {
+            "visitGapMinutes": 120,
+            "reentryMinutes": null
+          }
+        }
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Day pass",
+      "organizationName": "Organization",
+      "backgroundColor": "rgb(3,82,142)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(191,228,251)",
+      "logoText": "Organization",
+      "sharingProhibited": true,
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "DAY-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "DAY-0001"
+        }
+      ],
+      "generic": {
+        "headerFields": [
+          {
+            "key": "plan",
+            "label": "Pass",
+            "value": "Day pass"
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "holder",
+            "label": "Name",
+            "value": "Alex Morgan"
+          }
+        ],
+        "secondaryFields": [],
+        "auxiliaryFields": [
+          {
+            "key": "member",
+            "label": "Pass ID",
+            "value": "DAY-0001"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "message",
+            "label": "Message",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "note",
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "hours",
+            "label": "Hours",
+            "value": "Until midnight on the day of the first visit."
+          },
+          {
+            "key": "terms",
+            "label": "Terms",
+            "value": "Good for one day, any number of entries. It's for you only."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 204,
+        "sha1": "ae4ca8fdf18a360be7c7498ef8a5a86320a997f1",
+        "crc32": 2019410701,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/en.lproj/pass.strings"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 951,
+        "sha1": "d2b6c90c2276be9a06f4e344940c69737d7b8fa7",
+        "crc32": 1003223891,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 1437,
+        "sha1": "e2fcbfec992cc5df9df405cb15b33993163db424",
+        "crc32": 2913434211,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
+        "width": 100,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
+        "width": 150,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/logo@3x.png"
+        }
+      },
+      {
+        "name": "thumbnail@2x.png",
+        "slot": "thumbnail",
+        "scale": 2,
+        "size": 9592,
+        "sha1": "f041eeef4284a251b381ae312ea51afbd11a59cf",
+        "crc32": 449455583,
+        "width": 180,
+        "height": 180,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/thumbnail@2x.png"
+        }
+      },
+      {
+        "name": "thumbnail@3x.png",
+        "slot": "thumbnail",
+        "scale": 3,
+        "size": 14846,
+        "sha1": "daa4bcc8e83fd8f3eaef39d01484d968cdbe5ab9",
+        "crc32": 2030415217,
+        "width": 270,
+        "height": 270,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/thumbnail@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
     "id": "baked:starter-event-ticket",
     "slug": "starter-event-ticket",
     "version": "a2351ade3c8a3fb2",
@@ -6121,6 +6609,486 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     }
   },
   {
+    "id": "baked:starter-guest-pass",
+    "slug": "starter-guest-pass",
+    "version": "596e54ad5c3e15ca",
+    "name": "Guest pass",
+    "description": "One visit for a guest, ending at midnight. No member needs to be there.",
+    "org": null,
+    "blueprint": true,
+    "styles": [
+      "generic"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Guest pass",
+      "description": "One visit for a guest, ending at midnight. No member needs to be there.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
+      "blueprint": true,
+      "inputs": {
+        "type": "object",
+        "required": [
+          "memberName",
+          "memberId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "memberName": {
+            "type": "string",
+            "x-label": "Guest",
+            "x-group": "Guest",
+            "x-order": 10,
+            "minLength": 1,
+            "maxLength": 80,
+            "x-search": true
+          },
+          "memberId": {
+            "type": "string",
+            "x-label": "Pass ID",
+            "x-group": "Guest",
+            "x-order": 20,
+            "minLength": 1,
+            "maxLength": 64,
+            "x-search": true
+          },
+          "status": {
+            "type": "string",
+            "x-label": "Status",
+            "x-group": "Status",
+            "x-order": 30,
+            "enum": [
+              "Active",
+              "Suspended"
+            ],
+            "default": "Active",
+            "x-widget": "select"
+          },
+          "plan": {
+            "type": "string",
+            "x-label": "Plan",
+            "x-group": "Pass",
+            "enum": [
+              "guest"
+            ],
+            "default": "guest",
+            "x-widget": "select",
+            "x-enumLabels": {
+              "guest": "Guest"
+            },
+            "x-order": 40
+          },
+          "sponsor": {
+            "type": "string",
+            "x-label": "Guest of",
+            "x-group": "Guest",
+            "x-order": 50,
+            "maxLength": 80,
+            "x-scan": "desk"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Valid on",
+            "x-group": "Guest",
+            "x-order": 60,
+            "x-widget": "datetime",
+            "x-noneLabel": "Today"
+          },
+          "message": {
+            "type": "string",
+            "x-label": "Message",
+            "x-group": "Message",
+            "x-order": 70,
+            "maxLength": 256,
+            "x-widget": "textarea",
+            "x-help": "Shown on the back."
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 80,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          }
+        }
+      },
+      "sample": {
+        "memberName": "Jordan Lee",
+        "memberId": "GUEST-0001",
+        "plan": "guest",
+        "status": "Active",
+        "sponsor": "Alex Morgan"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{memberName}}"
+        },
+        {
+          "to": {
+            "field": "member"
+          },
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "field": "guestOf"
+          },
+          "value": "{{sponsor}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "message"
+          },
+          "value": "{{message}}"
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{pass.scanCode}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{memberId}}"
+        }
+      ],
+      "display": {
+        "icon": "ticket",
+        "group": "get-in",
+        "aliases": [
+          "guest",
+          "visitor",
+          "friend",
+          "one visit"
+        ],
+        "title": "{{memberName}}",
+        "subtitle": "Guest · {{memberId}}",
+        "status": "{{status}}",
+        "search": [
+          "memberName",
+          "memberId"
+        ]
+      },
+      "messaging": {
+        "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "enter",
+            "label": "Let in",
+            "kind": "check_in",
+            "repeat": "always",
+            "minRole": "door"
+          }
+        ],
+        "lookup": {
+          "input": "memberId"
+        },
+        "access": {
+          "input": {
+            "plan": "plan",
+            "from": "validFrom",
+            "sponsor": "sponsor"
+          },
+          "plans": [
+            {
+              "id": "guest",
+              "label": "Guest",
+              "kind": "guest",
+              "days": 1,
+              "visits": 1,
+              "zones": [
+                {
+                  "zone": "*"
+                }
+              ]
+            }
+          ],
+          "suspend": {
+            "input": "status",
+            "equals": [
+              "Suspended"
+            ]
+          },
+          "rules": {
+            "visitGapMinutes": 120,
+            "reentryMinutes": null
+          }
+        },
+        "display": {
+          "v": 1,
+          "holder": "{{memberName}}",
+          "photo": {
+            "minRole": "door"
+          },
+          "header": {
+            "chips": [
+              {
+                "id": "c_plan",
+                "text": "{{access.plan}}",
+                "tone": "gold",
+                "icon": "ticket"
+              }
+            ]
+          },
+          "panels": [
+            {
+              "id": "p_visits",
+              "preset": {
+                "id": "membership",
+                "v": 1
+              },
+              "title": "Visits",
+              "icon": "door-open",
+              "on": [
+                "ready",
+                "ok"
+              ],
+              "rows": [
+                {
+                  "id": "r_guest",
+                  "type": "columns",
+                  "items": [
+                    {
+                      "id": "i_left",
+                      "label": "Visits left",
+                      "value": "{{access.visits.left}} of {{access.visits.limit}}"
+                    },
+                    {
+                      "id": "i_until",
+                      "label": "Until",
+                      "value": "{{access.until|time}}"
+                    }
+                  ]
+                },
+                {
+                  "id": "r_sponsor",
+                  "type": "field",
+                  "label": "Guest of",
+                  "value": "{{inputs.sponsor}}",
+                  "whenEmpty": "hide",
+                  "minRole": "desk"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Ask at the front desk."
+          },
+          "customer": {
+            "chips": [
+              "c_plan"
+            ],
+            "panel": null
+          }
+        }
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Guest pass",
+      "organizationName": "Organization",
+      "backgroundColor": "rgb(181,64,0)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(255,238,221)",
+      "logoText": "Organization",
+      "sharingProhibited": true,
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "GUEST-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "GUEST-0001"
+        }
+      ],
+      "generic": {
+        "headerFields": [
+          {
+            "key": "plan",
+            "label": "Pass",
+            "value": "Guest"
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "holder",
+            "label": "Name",
+            "value": "Alex Morgan"
+          }
+        ],
+        "secondaryFields": [],
+        "auxiliaryFields": [
+          {
+            "key": "member",
+            "label": "Pass ID",
+            "value": "GUEST-0001"
+          }
+        ],
+        "backFields": [
+          {
+            "key": "message",
+            "label": "Message",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "note",
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "guestOf",
+            "label": "Guest of",
+            "value": ""
+          },
+          {
+            "key": "terms",
+            "label": "Terms",
+            "value": "Good for one visit. It's for you only."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 210,
+        "sha1": "504cec43e497cd0e68bf2eed30c8163ec968348c",
+        "crc32": 3091586447,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-guest-pass/596e54ad5c3e15ca/en.lproj/pass.strings"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 948,
+        "sha1": "29b05db0089ddb4cf635051ae9ebe0b80f9a7f07",
+        "crc32": 3821632184,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-guest-pass/596e54ad5c3e15ca/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 1439,
+        "sha1": "ac895c99a84c56c451315d272e01e6913a14056a",
+        "crc32": 1844118592,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-guest-pass/596e54ad5c3e15ca/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
+        "width": 100,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-guest-pass/596e54ad5c3e15ca/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
+        "width": 150,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-guest-pass/596e54ad5c3e15ca/logo@3x.png"
+        }
+      },
+      {
+        "name": "thumbnail@2x.png",
+        "slot": "thumbnail",
+        "scale": 2,
+        "size": 9592,
+        "sha1": "f041eeef4284a251b381ae312ea51afbd11a59cf",
+        "crc32": 449455583,
+        "width": 180,
+        "height": 180,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-guest-pass/596e54ad5c3e15ca/thumbnail@2x.png"
+        }
+      },
+      {
+        "name": "thumbnail@3x.png",
+        "slot": "thumbnail",
+        "scale": 3,
+        "size": 14846,
+        "sha1": "daa4bcc8e83fd8f3eaef39d01484d968cdbe5ab9",
+        "crc32": 2030415217,
+        "width": 270,
+        "height": 270,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-guest-pass/596e54ad5c3e15ca/thumbnail@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
     "id": "baked:starter-id-card",
     "slug": "starter-id-card",
     "version": "1bc28943cc4f89c3",
@@ -6603,6 +7571,535 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "source": {
           "kind": "static",
           "path": "/templates/starter-id-card/1bc28943cc4f89c3/thumbnail@3x.png"
+        }
+      }
+    ],
+    "extras": [],
+    "report": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  {
+    "id": "baked:starter-monthly-pass",
+    "slug": "starter-monthly-pass",
+    "version": "d0cf587fda0d92f4",
+    "name": "Monthly pass",
+    "description": "Daily entry until the paid-through date, with guests you can let in.",
+    "org": null,
+    "blueprint": true,
+    "styles": [
+      "generic"
+    ],
+    "manifest": {
+      "schema": 1,
+      "name": "Monthly pass",
+      "description": "Daily entry until the paid-through date, with guests you can let in.",
+      "wallets": {
+        "schema": 1,
+        "google": {},
+        "samsung": {}
+      },
+      "blueprint": true,
+      "inputs": {
+        "type": "object",
+        "required": [
+          "memberName",
+          "memberId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "memberName": {
+            "type": "string",
+            "x-label": "Name",
+            "x-group": "Member",
+            "x-order": 10,
+            "minLength": 1,
+            "maxLength": 80,
+            "x-search": true
+          },
+          "memberId": {
+            "type": "string",
+            "x-label": "Member ID",
+            "x-group": "Member",
+            "x-order": 20,
+            "minLength": 1,
+            "maxLength": 64,
+            "x-search": true
+          },
+          "status": {
+            "type": "string",
+            "x-label": "Status",
+            "x-group": "Status",
+            "x-order": 30,
+            "enum": [
+              "Active",
+              "Suspended"
+            ],
+            "default": "Active",
+            "x-widget": "select"
+          },
+          "plan": {
+            "type": "string",
+            "x-label": "Plan",
+            "x-group": "Pass",
+            "enum": [
+              "member"
+            ],
+            "default": "member",
+            "x-widget": "select",
+            "x-enumLabels": {
+              "member": "Monthly"
+            },
+            "x-order": 40
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time",
+            "x-label": "Paid through",
+            "x-group": "Pass",
+            "x-order": 50,
+            "x-widget": "datetime",
+            "x-noneLabel": "No end"
+          },
+          "guests": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99,
+            "default": 2,
+            "x-label": "Guests left",
+            "x-group": "Pass",
+            "x-order": 60
+          },
+          "message": {
+            "type": "string",
+            "x-label": "Message",
+            "x-group": "Message",
+            "x-order": 70,
+            "maxLength": 256,
+            "x-widget": "textarea",
+            "x-help": "Shown on the back."
+          },
+          "note": {
+            "type": "string",
+            "x-label": "Note",
+            "x-group": "Message",
+            "x-order": 80,
+            "maxLength": 256,
+            "x-widget": "textarea"
+          }
+        }
+      },
+      "sample": {
+        "memberName": "Alex Morgan",
+        "memberId": "MEMBER-0001",
+        "plan": "member",
+        "status": "Active",
+        "guests": 2,
+        "validUntil": "2030-01-01T00:00:00Z"
+      },
+      "bindings": [
+        {
+          "to": {
+            "field": "holder"
+          },
+          "value": "{{memberName}}"
+        },
+        {
+          "to": {
+            "field": "member"
+          },
+          "value": "{{memberId}}"
+        },
+        {
+          "to": {
+            "field": "until"
+          },
+          "value": "{{validUntil}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "pointer": "/expirationDate"
+          },
+          "value": "{{validUntil}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "guests"
+          },
+          "value": "{{guests}}",
+          "omitIfEmpty": true
+        },
+        {
+          "to": {
+            "field": "message"
+          },
+          "value": "{{message}}"
+        },
+        {
+          "to": {
+            "field": "note"
+          },
+          "value": "{{note}}",
+          "remove": {
+            "input": "note",
+            "empty": true
+          }
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "message"
+          },
+          "value": "{{pass.scanCode}}"
+        },
+        {
+          "to": {
+            "barcode": "*",
+            "prop": "altText"
+          },
+          "value": "{{memberId}}"
+        }
+      ],
+      "display": {
+        "icon": "key",
+        "group": "get-in",
+        "aliases": [
+          "monthly",
+          "membership",
+          "gym",
+          "studio",
+          "subscription"
+        ],
+        "title": "{{memberName}}",
+        "subtitle": "Monthly · {{memberId}}",
+        "status": "{{status}}",
+        "search": [
+          "memberName",
+          "memberId"
+        ]
+      },
+      "messaging": {
+        "input": "message"
+      },
+      "scan": {
+        "actions": [
+          {
+            "id": "enter",
+            "label": "Let in",
+            "kind": "check_in",
+            "repeat": "daily",
+            "minRole": "door"
+          },
+          {
+            "id": "guest_in",
+            "label": "Guest in",
+            "kind": "take",
+            "input": "guests",
+            "amount": {
+              "max": 10,
+              "presets": [
+                1,
+                2,
+                3
+              ]
+            },
+            "repeat": "always",
+            "minRole": "door"
+          }
+        ],
+        "lookup": {
+          "input": "memberId"
+        },
+        "access": {
+          "input": {
+            "plan": "plan",
+            "until": "validUntil"
+          },
+          "plans": [
+            {
+              "id": "member",
+              "label": "Monthly",
+              "kind": "always",
+              "zones": [
+                {
+                  "zone": "*"
+                }
+              ]
+            }
+          ],
+          "suspend": {
+            "input": "status",
+            "equals": [
+              "Suspended"
+            ]
+          },
+          "rules": {
+            "visitGapMinutes": 120,
+            "reentryMinutes": null
+          }
+        },
+        "display": {
+          "v": 1,
+          "holder": "{{memberName}}",
+          "photo": {
+            "minRole": "door"
+          },
+          "header": {
+            "chips": [
+              {
+                "id": "c_plan",
+                "text": "{{access.plan}}",
+                "tone": "violet",
+                "icon": "infinity"
+              }
+            ]
+          },
+          "panels": [
+            {
+              "id": "p_visits",
+              "preset": {
+                "id": "membership",
+                "v": 1
+              },
+              "title": "Visits",
+              "icon": "door-open",
+              "on": [
+                "ready",
+                "ok"
+              ],
+              "rows": [
+                {
+                  "id": "r_member",
+                  "type": "columns",
+                  "items": [
+                    {
+                      "id": "i_month",
+                      "label": "This month",
+                      "value": {
+                        "count": "{{history.visits.month}}",
+                        "one": "# visit",
+                        "other": "# visits",
+                        "zero": "First visit"
+                      }
+                    },
+                    {
+                      "id": "i_last",
+                      "label": "Last visit",
+                      "value": "{{history.lastVisit.at|ago}}"
+                    }
+                  ]
+                },
+                {
+                  "id": "r_guests",
+                  "type": "field",
+                  "label": "Guests left",
+                  "value": "{{inputs.guests}}",
+                  "whenEmpty": "hide"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "refused": "Ask at the front desk."
+          },
+          "customer": {
+            "chips": [
+              "c_plan"
+            ],
+            "panel": null
+          }
+        }
+      }
+    },
+    "passJson": {
+      "formatVersion": 1,
+      "description": "Monthly pass",
+      "organizationName": "Organization",
+      "backgroundColor": "rgb(29,58,186)",
+      "foregroundColor": "rgb(255,255,255)",
+      "labelColor": "rgb(207,224,255)",
+      "logoText": "Organization",
+      "sharingProhibited": true,
+      "expirationDate": "2030-01-01T00:00:00Z",
+      "barcodes": [
+        {
+          "format": "PKBarcodeFormatQR",
+          "message": "MEMBER-0001",
+          "messageEncoding": "iso-8859-1",
+          "altText": "MEMBER-0001"
+        }
+      ],
+      "generic": {
+        "headerFields": [
+          {
+            "key": "plan",
+            "label": "Pass",
+            "value": "Monthly"
+          }
+        ],
+        "primaryFields": [
+          {
+            "key": "holder",
+            "label": "Name",
+            "value": "Alex Morgan"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "until",
+            "label": "Paid through",
+            "value": "2030-01-01T00:00:00Z",
+            "dateStyle": "PKDateStyleMedium",
+            "timeStyle": "PKDateStyleNone",
+            "ignoresTimeZone": true
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "member",
+            "label": "Member",
+            "value": "MEMBER-0001"
+          },
+          {
+            "key": "guests",
+            "label": "Guests left",
+            "value": 2
+          }
+        ],
+        "backFields": [
+          {
+            "key": "message",
+            "label": "Message",
+            "value": "",
+            "changeMessage": "%@"
+          },
+          {
+            "key": "note",
+            "label": "Note",
+            "value": ""
+          },
+          {
+            "key": "hours",
+            "label": "Hours",
+            "value": "Any time, every day."
+          },
+          {
+            "key": "terms",
+            "label": "Terms",
+            "value": "Show this pass at the door. It's for you only."
+          },
+          {
+            "key": "contact",
+            "label": "Contact",
+            "value": ""
+          },
+          {
+            "key": "pass-service",
+            "label": "Pass service",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "assets": [
+      {
+        "name": "en.lproj/pass.strings",
+        "slot": "strings",
+        "scale": 1,
+        "locale": "en",
+        "size": 266,
+        "sha1": "a623ca83fca156841636ede9ee55ca85989c5e8b",
+        "crc32": 637786401,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-monthly-pass/d0cf587fda0d92f4/en.lproj/pass.strings"
+        }
+      },
+      {
+        "name": "icon@2x.png",
+        "slot": "icon",
+        "scale": 2,
+        "size": 962,
+        "sha1": "4cc5c57c0962e5004aa2c97db3418e7a4177cc9d",
+        "crc32": 1200429835,
+        "width": 76,
+        "height": 76,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-monthly-pass/d0cf587fda0d92f4/icon@2x.png"
+        }
+      },
+      {
+        "name": "icon@3x.png",
+        "slot": "icon",
+        "scale": 3,
+        "size": 1427,
+        "sha1": "aa32cc94bf55f84453f60d2d8fefe06e0d7b5e2d",
+        "crc32": 3001490920,
+        "width": 114,
+        "height": 114,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-monthly-pass/d0cf587fda0d92f4/icon@3x.png"
+        }
+      },
+      {
+        "name": "logo@2x.png",
+        "slot": "logo",
+        "scale": 2,
+        "size": 1035,
+        "sha1": "5dd6733802c305eba3746a644b85dcb9d8110c6e",
+        "crc32": 1636103204,
+        "width": 100,
+        "height": 100,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-monthly-pass/d0cf587fda0d92f4/logo@2x.png"
+        }
+      },
+      {
+        "name": "logo@3x.png",
+        "slot": "logo",
+        "scale": 3,
+        "size": 1680,
+        "sha1": "77e8316fc92c6e30ea2c1e5e3b8cb9737bf82927",
+        "crc32": 765615860,
+        "width": 150,
+        "height": 150,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-monthly-pass/d0cf587fda0d92f4/logo@3x.png"
+        }
+      },
+      {
+        "name": "thumbnail@2x.png",
+        "slot": "thumbnail",
+        "scale": 2,
+        "size": 9592,
+        "sha1": "f041eeef4284a251b381ae312ea51afbd11a59cf",
+        "crc32": 449455583,
+        "width": 180,
+        "height": 180,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-monthly-pass/d0cf587fda0d92f4/thumbnail@2x.png"
+        }
+      },
+      {
+        "name": "thumbnail@3x.png",
+        "slot": "thumbnail",
+        "scale": 3,
+        "size": 14846,
+        "sha1": "daa4bcc8e83fd8f3eaef39d01484d968cdbe5ab9",
+        "crc32": 2030415217,
+        "width": 270,
+        "height": 270,
+        "source": {
+          "kind": "static",
+          "path": "/templates/starter-monthly-pass/d0cf587fda0d92f4/thumbnail@3x.png"
         }
       }
     ],

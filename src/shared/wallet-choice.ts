@@ -27,17 +27,20 @@ export interface WalletChoiceInput {
 /** Display names and badge art of the native providers (the pass page, the portal, the email). */
 export const NATIVE_WALLET_BADGES: Record<
   WalletProvider,
-  { label: string; path: string; width: number; height: number }
+  { label: string; path: string; emailPath: string; width: number; height: number }
 > = {
   google: {
     label: 'Add to Google Wallet',
     path: '/icons/wallet-providers/google/add-to-google-wallet.svg',
+    /** Gmail and Outlook do not draw SVG: email links the PNG of the same official artwork (3x). */
+    emailPath: '/icons/wallet-providers/google/add-to-google-wallet.png',
     width: 283,
     height: 50,
   },
   samsung: {
     label: 'Add to Samsung Wallet',
     path: '/icons/wallet-providers/samsung/add-to-samsung-wallet.png',
+    emailPath: '/icons/wallet-providers/samsung/add-to-samsung-wallet.png',
     width: 242,
     height: 50,
   },
