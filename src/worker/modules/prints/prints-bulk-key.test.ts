@@ -62,7 +62,7 @@ describe('bulk print with an API key', () => {
       read,
     );
     expect(start.status).toBe(403);
-    expect(await start.json()).toMatchObject({ code: 'MISSING_SCOPE' });
+    expect(start.status).toBe(404);
     const none = await keyOf(['templates:read']);
     const status = await api('GET', `/passes/bulk-print/x?orgId=${kit.org.id}`, undefined, none);
     expect(status.status).toBe(403);
@@ -92,5 +92,35 @@ describe('bulk print with an API key', () => {
       foreign,
     );
     expect(status.status).toBe(404);
+  });
+
+  it('keeps a test-mode key off live passes and live jobs', async () => {
+    const { kit, api, printPass, keyOf } = await setup();
+    const pass = await printPass();
+    const live = await keyOf(['passes:write', 'passes:read']);
+    const { jobId } = (await (
+      await api('POST', '/passes/bulk-print', { ids: [pass.id], orgId: kit.org.id }, live)
+    ).json()) as Started;
+    const testKey = (
+      await makeTenantTestApiKey(kit.fx, {
+        orgId: kit.org.id,
+        scopes: ['passes:write', 'passes:read'],
+        mode: 'test',
+      })
+    ).headers;
+    const start = await api(
+      'POST',
+      '/passes/bulk-print',
+      { ids: [pass.id], orgId: kit.org.id },
+      testKey,
+    );
+    expect(start.status).toBe(404);
+    const peek = await api(
+      'GET',
+      `/passes/bulk-print/${jobId}?orgId=${kit.org.id}`,
+      undefined,
+      testKey,
+    );
+    expect(peek.status).toBe(404);
   });
 });

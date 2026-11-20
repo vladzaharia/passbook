@@ -3,7 +3,7 @@ import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { PassDetailSchema, PassListSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run as runSql } from '../../platform/db.ts';
 import { activeRelease, type TemplateRelease } from '../templates/releases.ts';
 import { approveAppleRelease } from './apple-release-test-fixtures.ts';
 import { ICON_PNG, type Kit, setupKit } from './pass-test-fixtures.ts';
@@ -373,6 +373,10 @@ describe('refresh, email and bulk reissue', () => {
     expect(readOnly.status).toBe(403);
     expect(await readOnly.json()).toMatchObject({ code: 'MISSING_SCOPE' });
     expect((await api('/passes/bulk-reissue', await withKey(['passes:write']))).status).toBe(202);
+    await runSql(
+      kit.env.DB,
+      "UPDATE workflow_runs SET status = 'complete' WHERE kind = 'bulk_reissue'",
+    );
     const res = await api(
       '/passes/bulk-reissue',
       json(auth.admin(), { orgId: kit.org.id, templateId: kit.template.id }),

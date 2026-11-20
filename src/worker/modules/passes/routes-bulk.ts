@@ -4,12 +4,18 @@ import {
   BulkReissueResponseSchema,
   BulkReissueSchema,
 } from '../../../shared/contracts/index.ts';
-import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { idempotencyKeyOf, sendOnce } from '../delivery/idempotent-send.ts';
 import { startBulkReissue } from './bulk.ts';
 import { bulkPassAction, selectBulkPasses } from './bulk-actions.ts';
 import { actorFor, assertOrg, authOf, passScopeOf, svc, tenantAuthorityOf } from './http.ts';
+import { activeBulkRun } from './repo-bulk-runs.ts';
 import { getPass } from './repo-read-pass.ts';
 
 /** Many-pass actions: void, email or remove a selection, and template-wide reissues. */
@@ -113,6 +119,17 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
         !orgId && auth.kind === 'session'
           ? { userId: auth.userId, sessionId: auth.sessionId }
           : undefined;
+      // One rebuild per org and target at a time over HTTP: a key in a loop must not fill the workflow queue.
+      const active = orgId
+        ? await activeBulkRun(
+            ctx.env.DB,
+            orgId,
+            body.templateId ?? body.identityId ?? orgId,
+            ctx.clock.now(),
+          )
+        : null;
+      if (active)
+        throw new ConflictError(`A rebuild is already running: ${active}.`, 'BULK_RUN_ACTIVE');
       const workflowInstanceId = await startBulkReissue(
         ctx,
         actorFor(c),
