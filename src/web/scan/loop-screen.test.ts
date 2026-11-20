@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { capsuleStateOf, tintDismisses } from './loop-screen.ts';
+import { capsuleStateOf, tintDismisses } from './loop-screen.tsx';
 import { fixtureOutcome } from './machine/fixture-data.test-support.ts';
 
 describe('capsuleStateOf', () => {

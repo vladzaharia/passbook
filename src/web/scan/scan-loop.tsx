@@ -179,9 +179,7 @@ export function ScanLoop({
       surface={duoLayout ? 'duo' : operator ? 'operator' : 'phone'}
       layout={nativeCapabilities?.layout}
       sidebar={
-        operatorPane ? (
-          <LazyOperatorPanel api={api} runtime={runtime} session={session} />
-        ) : null
+        operatorPane ? <LazyOperatorPanel api={api} runtime={runtime} session={session} /> : null
       }
       screen={loopScreen(session, s.started)}
       capsule={{
