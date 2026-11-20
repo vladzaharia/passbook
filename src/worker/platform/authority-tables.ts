@@ -186,7 +186,11 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
 export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
   wallet_credential_checks: ['platform.job.wallet.credential_check'],
   // The org cannot write its own entitlements: no org or org_mode purpose is listed, whatever its tables.
-  org_entitlements: ['platform.org.create', 'platform.org.entitlements_set'],
+  org_entitlements: [
+    'platform.org.create',
+    'platform.job.template_sync',
+    'platform.org.entitlements_set',
+  ],
   org_entitlement_overrides: ['platform.org.entitlements_set'],
   entitlement_preset_meta: ['platform.entitlement_preset.update'],
   entitlement_presets: ['platform.entitlement_preset.update'],

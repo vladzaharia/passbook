@@ -2,6 +2,7 @@ import type { Grant } from '../../platform/authority.ts';
 import { tenantSql } from '../../platform/authority-cond.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
 import { readPart, writePart } from '../../platform/authority-include.ts';
+import { addOrgEntitlements } from '../../platform/entitlements.ts';
 import type { NewVersion } from './repo.ts';
 import { versionStatementSql } from './repo.ts';
 import { adoptionUnchanged } from './repo-grant-checks.ts';
@@ -40,13 +41,14 @@ const TEMPLATE_COLUMNS = [
   'updated_at',
 ];
 
-/** Creates a baked org on first sight (the caller read that the slug was free). */
+/** Creates a baked org (and its `legacy` entitlements row) on first sight (the caller read that the slug was free). */
 export function addBakedOrg(g: Grant, o: { id: string; slug: string; name: string; now: number }) {
   g.insertSelect(
     'orgs',
     ['id', 'slug', 'name', 'created_at', 'updated_at'],
     [o.id, o.slug, o.name, o.now, o.now],
   );
+  addOrgEntitlements(g, o.id, 'legacy', o.now);
 }
 
 /** The adoption marker moves only from the value this build read; the hash follows it. */

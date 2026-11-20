@@ -4,15 +4,31 @@
 import {
   ENTITLEMENT_KEYS,
   type EntitlementKey,
+  type EntitlementPreset,
   type EntitlementValue,
   entitledValue,
   parseEntitlementValue,
 } from '../../shared/contracts/entitlements.ts';
+import type { Grant } from './authority.ts';
 import { authorityDenied } from './errors.ts';
 import { entitlementRows } from './repo-entitlements.ts';
 import type { ServiceContext } from './service-context.ts';
 
 export { entitled, withinLimit } from './authority-entitled.ts';
+
+/**
+ * The entitlements row of a new org, in the same batch as the org insert. Every path that inserts an org
+ * calls this (a test enumerates them): an org without a row fails closed everywhere. Baked and platform-owned
+ * orgs are `legacy`; a platform admin picks the preset of a created org.
+ */
+export function addOrgEntitlements(
+  g: Grant,
+  orgId: string,
+  preset: EntitlementPreset,
+  now: number,
+): void {
+  g.insertSelect('org_entitlements', ['org_id', 'preset', 'updated_at'], [orgId, preset, now]);
+}
 
 /** The org's resolved values; a key absent here is not entitled. */
 export type Entitlements = Partial<Record<EntitlementKey, EntitlementValue>>;

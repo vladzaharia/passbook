@@ -142,6 +142,8 @@ describe('storage and seed', () => {
       run(db, "UPDATE org_entitlements SET preset = 'ghost' WHERE org_id = ?", [s.org.id]),
     ).rejects.toThrow(/FOREIGN KEY/);
     await expect(override(s.org.id, 'api', 'not json')).rejects.toThrow(/CHECK/);
+    // Stored text is canonical JSON, so SQL and JS read the same value.
+    await expect(override(s.org.id, 'api', '"full" ')).rejects.toThrow(/CHECK/);
   });
 });
 

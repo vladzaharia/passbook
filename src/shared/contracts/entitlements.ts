@@ -133,10 +133,13 @@ export function levelsAtLeast(key: EntitlementKey, min: string): string[] {
   return at < 0 ? [] : def.levels.slice(at);
 }
 
-/** The list entries that match `item` (`type` or `type/recipe`): `*`, the item, and `type/*`. */
-export function listMatches(item: string): string[] {
+/**
+ * The list entries that match `item` (`type` or `type/recipe`): `*`, the item, and `type/*`. A block-list
+ * also matches the bare `type`, so blocking a type blocks its recipes.
+ */
+export function listMatches(item: string, blockList = false): string[] {
   const type = item.split('/')[0] ?? item;
-  return ['*', item, `${type}/*`];
+  return ['*', item, `${type}/*`, ...(blockList ? [type] : [])];
 }
 
 /** Whether `used` more fits under a limit value. `null` has no cap; anything not a count denies. */
@@ -161,8 +164,8 @@ export function entitledValue(
     case 'level':
       return want !== undefined && levelsAtLeast(key, want).includes(value as string);
     case 'list': {
-      if (want === undefined) return false;
-      const hit = listMatches(want).some((m) => (value as string[]).includes(m));
+      if (want === undefined || want.includes('*')) return false;
+      const hit = listMatches(want, def.block).some((m) => (value as string[]).includes(m));
       return def.block ? !hit : hit;
     }
     case 'limit':

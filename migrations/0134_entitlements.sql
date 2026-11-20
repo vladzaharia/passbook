@@ -14,7 +14,7 @@ CREATE TABLE entitlement_preset_meta (
 CREATE TABLE entitlement_presets (
   preset TEXT NOT NULL REFERENCES entitlement_preset_meta (preset) ON DELETE CASCADE,
   key TEXT NOT NULL,
-  value TEXT NOT NULL CHECK (json_valid(value)),
+  value TEXT NOT NULL CHECK (json_valid(value) AND value = json(value)),
   PRIMARY KEY (preset, key)
 );
 
@@ -31,7 +31,7 @@ CREATE INDEX org_entitlements_preset ON org_entitlements (preset);
 CREATE TABLE org_entitlement_overrides (
   org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
   key TEXT NOT NULL,
-  value TEXT NOT NULL CHECK (json_valid(value)),
+  value TEXT NOT NULL CHECK (json_valid(value) AND value = json(value)),
   note TEXT CHECK (note IS NULL OR length(note) <= 200),
   expires_at INTEGER,
   updated_at INTEGER NOT NULL,

@@ -4,6 +4,7 @@
  */
 export const TEMPLATE_SYNC_TABLES = [
   'orgs',
+  'org_entitlements',
   'settings',
   'templates',
   'template_versions',

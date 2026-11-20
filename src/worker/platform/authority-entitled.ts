@@ -38,11 +38,12 @@ const lookup = (b: Binds, key: EntitlementKey, expr: (v: string) => string): str
  */
 export function entitled(key: EntitlementKey, want?: string): Check {
   const def = entitlementDef(key);
-  const items = want === undefined ? [] : listMatches(want);
+  const items = want === undefined ? [] : listMatches(want, def.kind === 'list' && def.block);
   const levels = want === undefined ? [] : levelsAtLeast(key, want);
   if (def.kind === 'level' && levels.length === 0)
     throw bad(`entitled(${key}) needs a level of ${def.levels.join(', ')}.`);
-  if (def.kind === 'list' && want === undefined) throw bad(`entitled(${key}) needs an item.`);
+  if (def.kind === 'list' && (want === undefined || want.includes('*')))
+    throw bad(`entitled(${key}) needs an item, not a pattern.`);
   return {
     reason: 'entitlement',
     ok: (b, scope) => {

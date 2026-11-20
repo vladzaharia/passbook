@@ -2,6 +2,7 @@ import type { EntitlementPreset } from '../../../shared/contracts/entitlements.t
 import { grant } from '../../platform/authority.ts';
 import { epochIs } from '../../platform/authority-checks.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
+import { addOrgEntitlements } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
@@ -111,11 +112,7 @@ export async function insertOrgAsAdmin(
       row.updated_at,
     ],
   );
-  g.insertSelect(
-    'org_entitlements',
-    ['org_id', 'preset', 'updated_at'],
-    [row.id, preset, row.updated_at],
-  );
+  addOrgEntitlements(g, row.id, preset, row.updated_at);
   await g.commit();
 }
 

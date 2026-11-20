@@ -101,6 +101,12 @@ describe('entitlement registry', () => {
     expect(entitledValue('connectors', ['*'])).toBe(false);
   });
 
+  it('a block-list on a type also blocks its recipes, and a pattern is never an item', () => {
+    expect(entitledValue('templates.stylesBlocked', ['shopify'], 'shopify/orders')).toBe(false);
+    expect(entitledValue('templates.stylesBlocked', [], '*')).toBe(false);
+    expect(entitledValue('connectors', ['*'], 'a/*')).toBe(false);
+  });
+
   it('a block-list refuses what it names', () => {
     expect(entitledValue('templates.stylesBlocked', ['boardingPass'], 'boardingPass')).toBe(false);
     expect(entitledValue('templates.stylesBlocked', ['boardingPass'], 'coupon')).toBe(true);
