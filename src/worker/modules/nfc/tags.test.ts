@@ -219,7 +219,7 @@ describe('user scope', () => {
     const { ref, hint } = await tagRef(f.kit.env, t.org.id, 'live', f.nextUid());
     await run(
       f.kit.env.DB,
-      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES ('raw-1', ?, 'live', ?, 'uid', ?, 1)",
+      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES ('raw-1', ?, 'live', ?, 'uid', ?, 1)",
       [t.org.id, ref, hint],
     );
     const insert = (user: string, pass: string) =>
@@ -242,7 +242,7 @@ describe('user scope', () => {
     const { ref, hint } = await tagRef(f.kit.env, a.org.id, 'live', f.nextUid());
     await run(
       f.kit.env.DB,
-      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES ('raw-2', ?, 'live', ?, 'uid', ?, 1)",
+      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES ('raw-2', ?, 'live', ?, 'uid', ?, 1)",
       [a.org.id, ref, hint],
     );
     const insert = (pass: string) =>
@@ -258,15 +258,15 @@ describe('user scope', () => {
     await expect(insert((await f.pass(a.org.id)).id)).rejects.toThrow(/tag_retired/);
   });
 
-  it('refuses a sun tag until a later package opens it', async () => {
+  it('refuses a sun tag until its system is enabled', async () => {
     const t = await f.org();
     const { ref, hint } = await tagRef(f.kit.env, t.org.id, 'live', f.nextUid());
     await expect(
       run(
         f.kit.env.DB,
-        "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES ('raw-3', ?, 'live', ?, 'sun', ?, 1)",
+        "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES ('raw-3', ?, 'live', ?, 'sun', ?, 1)",
         [t.org.id, ref, hint],
       ),
-    ).rejects.toThrow(/tag_kind_unsupported/);
+    ).rejects.toThrow(/tag_system_disabled/);
   });
 });

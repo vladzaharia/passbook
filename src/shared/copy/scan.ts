@@ -57,6 +57,10 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   tag_lost: { headline: 'Tag reported lost', sub: 'Keep it and call security.' },
   tag_not_allowed: { headline: 'Tag not accepted', sub: "This tag isn't accepted here." },
   tag_invalid: { headline: "Tag couldn't be checked", sub: 'Try again or use the card.' },
+  tag_expired: {
+    headline: 'Tag assignment ended',
+    sub: 'Assign it again at the desk.',
+  },
   channel_off: { headline: '{channel} turned off', sub: 'Use another copy or check ID.' },
   print_replaced: { headline: 'Reprinted', sub: 'Newer copy printed {date}. Check ID.' },
   print_voided: { headline: 'Printed copy voided', sub: 'Voided {date}. Ask for a new ticket.' },

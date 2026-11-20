@@ -376,6 +376,19 @@ describe('scan.tags', () => {
     expect(only(act({}))).toEqual([]);
   });
 
+  it('takes uses, each of member, staff or visitor once', () => {
+    expect(only({ ...act({}), tags: { uses: ['member'] } })).toEqual([]);
+    expect(only({ ...act({}), tags: { min: 'secure', uses: ['staff', 'visitor'] } })).toEqual([]);
+    for (const uses of [
+      [],
+      ['asset'],
+      ['member', 'member'],
+      'member',
+      ['member', 'staff', 'visitor', 'x'],
+    ])
+      expect(only({ ...act({}), tags: { uses } })).toEqual(['error:SCAN_TAGS']);
+  });
+
   it('refuses another value or key', () => {
     expect(only({ ...act({}), tags: { min: 'strong' } })).toEqual(['error:SCAN_TAGS']);
     expect(only({ ...act({}), tags: { max: 'basic' } })).toEqual(['error:SCAN_TAGS']);

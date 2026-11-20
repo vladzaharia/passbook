@@ -1312,20 +1312,20 @@ describe('0086_nfc_tags migration', () => {
     const ref = 'a'.repeat(64);
     await run(
       env.DB,
-      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES ('t-mig', ?, 'live', ?, 'uid', 'AAAA', 1)",
+      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES ('t-mig', ?, 'live', ?, 'uid', 'AAAA', 1)",
       [org.id, ref],
     );
     await expect(
       run(
         env.DB,
-        "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES ('t-dup', ?, 'live', ?, 'uid', 'AAAA', 1)",
+        "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES ('t-dup', ?, 'live', ?, 'uid', 'AAAA', 1)",
         [org.id, ref],
       ),
     ).rejects.toThrow(/UNIQUE/);
     await expect(
       run(
         env.DB,
-        "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES ('t-hint', ?, 'live', ?, 'uid', 'BBBB', 1)",
+        "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES ('t-hint', ?, 'live', ?, 'uid', 'BBBB', 1)",
         [org.id, 'c'.repeat(64)],
       ),
     ).rejects.toThrow(/CHECK/);
@@ -1343,7 +1343,7 @@ describe('0086_nfc_tags migration', () => {
     const bare = await makeOrg(f);
     await run(
       env.DB,
-      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES ('t-bare', ?, 'test', ?, 'uid', 'DDDD', 1)",
+      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES ('t-bare', ?, 'test', ?, 'uid', 'DDDD', 1)",
       [bare.id, 'd'.repeat(64)],
     );
     await run(env.DB, 'DELETE FROM orgs WHERE id = ?', [bare.id]);
@@ -1497,7 +1497,7 @@ describe('0095_tag_enrollments migration', () => {
     const bid = `b-${f.ids.token(4)}`;
     await run(
       env.DB,
-      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at) VALUES (?, ?, 'live', ?, 'uid', ?, 1)",
+      "INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES (?, ?, 'live', ?, 'uid', ?, 1)",
       [tagId, org.id, ref, ref.slice(0, 4).toUpperCase()],
     );
     await insert(eid);

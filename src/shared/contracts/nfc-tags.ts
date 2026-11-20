@@ -35,7 +35,19 @@ export const TagReadSchema = z
 export type TagRead = z.infer<typeof TagReadSchema>;
 
 export const TagAssuranceSchema = z.enum(['basic', 'secure']);
-export const TagKindSchema = z.enum(['uid', 'sun']);
+/** How a tag proves itself: `uid` is Basic, `sun` is Secure. */
+export const TagSystemSchema = z.enum(['uid', 'sun']);
+/** One release alias of `TagSystemSchema`; `Tag.kind` equals `Tag.system`. */
+export const TagKindSchema = TagSystemSchema;
+/** What a tag type is for. Templates name uses, never an org's type ids. */
+export const TagUseSchema = z.enum(['member', 'staff', 'visitor']);
+export type TagUse = z.infer<typeof TagUseSchema>;
+/** A session or an admin names a type by id, or `standard` for a tag with no type. */
+export const TagTypeKeySchema = z.union([IdSchema, z.literal('standard')]);
+/** What an admin may type a tag ID as: as shown, byte-reversed, or a decimal number. */
+export const TagIdFormatSchema = z.enum(['hex', 'reversed', 'decimal']);
+/** The second factor a Basic tag needs at a door: nothing, a staff check or a Manager PIN. */
+export const TagConfirmSchema = z.enum(['none', 'staff', 'manager']);
 export const TagScopeSchema = z.enum(['pass', 'user']);
 export const TagSourceKindSchema = z.enum(['scanner', 'remote', 'admin']);
 export const TagStatusSchema = z.enum(['active', 'retired']);
@@ -55,6 +67,9 @@ export const TagEndCauseSchema = z.enum([
   'visitor_out',
   'pass_ended',
   'tag_retired',
+  'channel_off',
+  'expired',
+  'type_changed',
 ]);
 /** Who may assign tags on a scanner. */
 export const TagAssignRoleSchema = z.enum(['desk', 'manager', 'never']);
@@ -64,6 +79,12 @@ export const TagLevelSchema = z.enum(['off', 'basic', 'secure']);
 export const ScannerTagsSettingsSchema = z.object({
   assign: TagAssignRoleSchema.default('desk'),
   assignAll: TagAssignRoleSchema.default('manager'),
+});
+/** The session's tag rules: the level, the types a door takes (`standard` is a tag with no type) and what a Basic tag needs. */
+export const SessionTagRulesSchema = ScannerTagsSettingsSchema.extend({
+  level: TagLevelSchema.optional(),
+  types: z.array(TagTypeKeySchema).max(12).optional(),
+  confirmBasic: TagConfirmSchema.optional(),
 });
 
 /**
@@ -81,6 +102,9 @@ export const ScanTagPassSchema = z.object({
 export const ScanTagSchema = z.object({
   hint: z.string().regex(/^[0-9A-F]{4}$/),
   assurance: TagAssuranceSchema,
+  system: TagSystemSchema.optional(),
+  /** The tag's type name; absent for Standard. */
+  typeName: z.string().max(40).optional(),
   scope: TagScopeSchema,
   /** A user binding: how many of the holder's passes it read ("1 of {name}'s 3 passes"). */
   count: z.number().int().min(0).max(8).optional(),
@@ -109,6 +133,10 @@ export const TAG_ERROR_CODES = [
   'TAG_PASS_VOIDED',
   'TAG_PASS_REMOVED',
   'TAG_PASS_EXPIRED',
+  'TAG_TYPE_MISMATCH',
+  'TAG_TYPE_LIMIT',
+  'TAG_USE_MISMATCH',
+  'TAG_SECURE_NEEDS_TAP',
 ] as const;
 export const TagErrorCodeSchema = z.enum(TAG_ERROR_CODES);
 
@@ -127,17 +155,26 @@ export const TagBindingSchema = z.object({
   boundAt: TimestampSchema,
   boundByName: z.string().nullable(),
   scannerName: z.string().nullable(),
+  /** When the assignment ends by itself (the type's `binding_days`); null: it does not. */
+  expiresAt: TimestampSchema.nullable().optional(),
   endedAt: TimestampSchema.nullable(),
   endCause: TagEndCauseSchema.nullable(),
 });
 export type TagBinding = z.infer<typeof TagBindingSchema>;
 
+/** The type a tag has, as a list shows it. Absent: Standard. */
+export const TagTypeRefSchema = z.object({ id: IdSchema, name: z.string(), use: TagUseSchema });
+
 export const TagSchema = z.object({
   id: IdSchema,
   mode: ModeSchema,
+  /** The same as `system`, for one more release. */
   kind: TagKindSchema,
+  /** The server always sends `system`, `type` and `expiresAt`; they are optional so an older response still parses. */
+  system: TagSystemSchema.optional(),
+  type: TagTypeRefSchema.nullable().optional(),
   assurance: TagAssuranceSchema,
-  /** The last two UID bytes, 4 hex digits. The UID is never stored. */
+  /** The first four hex digits of the tag reference, never part of the UID. */
   hint: z.string().regex(/^[0-9A-F]{4}$/),
   label: z.string().nullable(),
   pool: z.boolean(),

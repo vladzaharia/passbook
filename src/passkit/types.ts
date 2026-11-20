@@ -232,8 +232,8 @@ export interface ScanManifest {
   display?: ScanDisplayDoc;
   /** An Access card: plans and zones decide the verdict. Every check-in repeats. */
   access?: AccessManifest;
-  /** The weakest tag that may be bound to or admit on this pass. Absent means `basic`. */
-  tags?: { min?: 'basic' | 'secure' };
+  /** The weakest tag that may be bound to or admit on this pass (absent: `basic`), and the uses it takes (absent: any). */
+  tags?: { min?: 'basic' | 'secure'; uses?: ('member' | 'staff' | 'visitor')[] };
   checkIn?: ScanCheckIn;
 }
 

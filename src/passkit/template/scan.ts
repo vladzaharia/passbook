@@ -102,10 +102,23 @@ export function scanIssues(manifest: TemplateManifest): ValidationIssue[] {
   }
   if (scan.tags !== undefined) {
     const tags = scan.tags;
-    if (!isRecord(tags) || Object.keys(tags).some((k) => k !== 'min'))
-      error('SCAN_TAGS', 'tags needs only min.', 'scan.tags');
-    else if (tags.min !== undefined && tags.min !== 'basic' && tags.min !== 'secure')
-      error('SCAN_TAGS', 'tags.min must be basic or secure.', 'scan.tags.min');
+    if (!isRecord(tags) || Object.keys(tags).some((k) => k !== 'min' && k !== 'uses'))
+      error('SCAN_TAGS', 'tags needs only min and uses.', 'scan.tags');
+    else {
+      if (tags.min !== undefined && tags.min !== 'basic' && tags.min !== 'secure')
+        error('SCAN_TAGS', 'tags.min must be basic or secure.', 'scan.tags.min');
+      if (
+        tags.uses !== undefined &&
+        !(
+          Array.isArray(tags.uses) &&
+          tags.uses.length > 0 &&
+          tags.uses.length <= 3 &&
+          new Set(tags.uses).size === tags.uses.length &&
+          tags.uses.every((u) => u === 'member' || u === 'staff' || u === 'visitor')
+        )
+      )
+        error('SCAN_TAGS', 'tags.uses lists member, staff or visitor once each.', 'scan.tags.uses');
+    }
   }
   if (scan.checkIn !== undefined) checkInIssues(scan.checkIn, error);
   return issues;
