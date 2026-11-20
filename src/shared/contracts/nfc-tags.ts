@@ -284,7 +284,7 @@ export const TagKeysetSchema = z.object({
   createdAt: TimestampSchema,
   disabledAt: TimestampSchema.nullable(),
 });
-const KeyHexSchema = z.string().regex(/^[0-9a-fA-F]{32}$/, 'A key is 32 hex digits.');
+export const KeyHexSchema = z.string().regex(/^[0-9a-fA-F]{32}$/, 'A key is 32 hex digits.');
 const keysetName = { name: PlainLineSchema(40), diversify: z.boolean().default(true) };
 /** Entered keys, or `generate: true` (recommended). */
 export const CreateTagKeysetSchema = z.union([
