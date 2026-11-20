@@ -49,4 +49,13 @@ it('refuses to delete a template a tag type names, with its own error, and keeps
   expect(await first(db, 'SELECT status FROM templates WHERE id = ?', [templateId])).toEqual({
     status: 'active',
   });
+  // An archived type is skipped by the early check; the foreign key still refuses the hard delete.
+  await run(db, 'UPDATE nfc_tag_types SET archived_at = 2, version = 2 WHERE id = ?', [typeId]);
+  const again = await app.request(
+    `https://wallet.test/api/v1/templates/${templateId}`,
+    { method: 'DELETE', headers },
+    f.kit.env,
+  );
+  expect(again.status).toBe(409);
+  expect(((await again.json()) as { code: string }).code).toBe('TEMPLATE_IN_TAG_TYPE');
 });

@@ -27,6 +27,7 @@ import {
   insertTagType,
   setTypeTemplates,
   systemEnabled,
+  tagTypeNamesTemplate,
   updateTagType,
 } from './repo-tag-types.ts';
 
@@ -234,4 +235,20 @@ export async function archiveTagType(
   const result = await getTagType(ctx.env.DB, orgId, id);
   if (!result) throw tagTypeNotFound();
   return result;
+}
+
+/**
+ * Refuses removing a template that a tag type names (0128 keeps such a template). `live` skips archived
+ * types, which the foreign key still guards on a hard delete.
+ */
+export async function assertTemplateFreeOfTagTypes(
+  ctx: ServiceContext,
+  templateId: string,
+  live: boolean,
+): Promise<void> {
+  if (await tagTypeNamesTemplate(ctx.env.DB, templateId, live))
+    throw new ConflictError(
+      'A tag type uses this template. Remove it from the type first.',
+      'TEMPLATE_IN_TAG_TYPE',
+    );
 }

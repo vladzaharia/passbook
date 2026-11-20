@@ -120,6 +120,23 @@ describe('tag type CRUD', () => {
     ).toBe(422);
   });
 
+  it('pages the list by cursor', async () => {
+    const { org, admin } = await setup();
+    for (const name of ['A', 'B', 'C'])
+      await call(admin, 'POST', `?orgId=${org.id}`, { name, use: 'member' });
+    const first = (await (await call(admin, 'GET', `?orgId=${org.id}&limit=2`)).json()) as {
+      items: TagType[];
+      nextCursor: string | null;
+    };
+    expect(first.items).toHaveLength(2);
+    const next = (await (
+      await call(admin, 'GET', `?orgId=${org.id}&limit=2&cursor=${first.nextCursor}`)
+    ).json()) as { items: TagType[]; nextCursor: string | null };
+    expect(next.items).toHaveLength(1);
+    expect([...first.items, ...next.items].map((t) => t.name).sort()).toEqual(['A', 'B', 'C']);
+    expect(next.nextCursor).toBeNull();
+  });
+
   it('refuses to update a sun type until the SUN plugin lands', async () => {
     const { org, admin } = await setup();
     const id = f.kit.fx.ids.id();

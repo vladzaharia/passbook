@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { IdParamSchema, IdSchema } from '../../../shared/contracts/common.ts';
 import {
   CreateTagTypeSchema,
+  TagTypeListQuerySchema,
   TagTypeListSchema,
   TagTypeSchema,
   UpdateTagTypeSchema,
@@ -37,14 +38,15 @@ export function registerTagTypeRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void
       auth: { scope: 'scans:read', capability: 'scanning:read' },
       path: '/tag-types',
       summary: 'Tag types of an organization',
-      query: OrgQuerySchema,
+      query: TagTypeListQuerySchema,
       response: TagTypeListSchema,
     },
     async (c) => {
       const ctx = serviceContext(c);
-      const orgId = webhookOrg(c.var.auth, c.req.valid('query').orgId);
+      const { orgId: asked, ...page } = c.req.valid('query');
+      const orgId = webhookOrg(c.var.auth, asked);
       await tagTypeAccess(ctx, c.var.auth, orgId, 'scanning:read');
-      return c.json({ items: await listTagTypes(ctx.env.DB, orgId) });
+      return c.json(await listTagTypes(ctx.env.DB, orgId, page));
     },
   );
 

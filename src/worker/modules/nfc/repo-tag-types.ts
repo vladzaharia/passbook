@@ -46,27 +46,37 @@ function view(r: Raw, templateIds: string[]): TagType {
   };
 }
 
-/** Every type of the org, active first. */
-export async function listTagTypes(db: Db, orgId: string): Promise<TagType[]> {
-  const [rows, links] = await Promise.all([
-    all<Raw>(
-      db,
-      `${SELECT} WHERE y.org_id = ? ORDER BY y.archived_at IS NOT NULL, y.name, y.id LIMIT 200`,
-      [orgId],
-    ),
-    all<{ type_id: string; template_id: string }>(
-      db,
-      `SELECT tt.type_id, tt.template_id FROM nfc_tag_type_templates tt
-       JOIN nfc_tag_types y ON y.id = tt.type_id WHERE y.org_id = ? ORDER BY tt.template_id`,
-      [orgId],
-    ),
-  ]);
-  return rows.map((r) =>
-    view(
-      r,
-      links.filter((l) => l.type_id === r.id).map((l) => l.template_id),
-    ),
+/** One page of the org's types, oldest first (ids are time-ordered). */
+export async function listTagTypes(
+  db: Db,
+  orgId: string,
+  page: { cursor?: string | undefined; limit: number },
+): Promise<{ items: TagType[]; nextCursor: string | null }> {
+  const rows = await all<Raw>(
+    db,
+    `${SELECT} WHERE y.org_id = ? AND y.id > ? ORDER BY y.id LIMIT ?`,
+    [orgId, page.cursor ?? '', page.limit + 1],
   );
+  const more = rows.length > page.limit;
+  const slice = rows.slice(0, page.limit);
+  const links =
+    slice.length === 0
+      ? []
+      : await all<{ type_id: string; template_id: string }>(
+          db,
+          `SELECT type_id, template_id FROM nfc_tag_type_templates
+           WHERE type_id IN (${slice.map(() => '?').join(', ')}) ORDER BY template_id`,
+          slice.map((r) => r.id),
+        );
+  return {
+    items: slice.map((r) =>
+      view(
+        r,
+        links.filter((l) => l.type_id === r.id).map((l) => l.template_id),
+      ),
+    ),
+    nextCursor: more ? (slice[slice.length - 1]?.id ?? null) : null,
+  };
 }
 
 /** By id, fenced by the org: another org's type reads as absent. */
@@ -121,12 +131,17 @@ export async function systemEnabled(db: Db, system: string): Promise<boolean> {
   );
 }
 
-/** Whether a tag type names the template (0128 refuses deleting such a template). */
-export async function tagTypeNamesTemplate(db: Db, templateId: string): Promise<boolean> {
+/** Whether a tag type names the template; `live` counts types that are not archived. */
+export async function tagTypeNamesTemplate(
+  db: Db,
+  templateId: string,
+  live: boolean,
+): Promise<boolean> {
   return (
     (await first<{ one: number }>(
       db,
-      'SELECT 1 AS one FROM nfc_tag_type_templates WHERE template_id = ? LIMIT 1',
+      `SELECT 1 AS one FROM nfc_tag_type_templates tt JOIN nfc_tag_types y ON y.id = tt.type_id
+       WHERE tt.template_id = ?${live ? ' AND y.archived_at IS NULL' : ''} LIMIT 1`,
       [templateId],
     )) !== null
   );
