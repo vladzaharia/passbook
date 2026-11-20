@@ -34,7 +34,11 @@ const effective = (over: Record<string, unknown> = {}) => ({
 });
 const handlers = (eff: Record<string, unknown>, overrides = {}) => ({
   '/api/v1/passes/p1/channels': (_u: URL, init?: RequestInit) =>
-    json({ effective: eff, overrides: init?.method === 'PUT' ? {} : overrides }),
+    json({
+      effective: eff,
+      overrides: init?.method === 'PUT' ? {} : overrides,
+      replace: { supported: true, windows: [] },
+    }),
   '/api/v1/passes/p1/prints': () => json({ prints: [] }),
 });
 const row = (name: string) => screen.getByRole('switch', { name }).closest('li') as HTMLElement;

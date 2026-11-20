@@ -112,6 +112,7 @@ async function fixture(options: { legacyBinding?: boolean } = {}): Promise<Callb
       releaseId,
       passId: f.pass.id,
       credentialGeneration,
+      channelEpoch: 1,
     },
   );
   const now = f.kit.clock.now();
@@ -464,6 +465,7 @@ describe('Google Wallet callbacks', () => {
       releaseId: f.releaseId,
       passId: f.f.pass.id,
       credentialGeneration: f.credentialGeneration + 1,
+      channelEpoch: 1,
     });
     expect(replacement.classId).toBe(f.classId);
     expect(replacement.objectId).not.toBe(f.objectId);
@@ -508,6 +510,7 @@ describe('Google Wallet callbacks', () => {
       releaseId: f.releaseId,
       passId: f.f.pass.id,
       credentialGeneration: f.credentialGeneration + 1,
+      channelEpoch: 1,
     });
     await run(
       f.f.kit.env.DB,
@@ -947,6 +950,7 @@ describe('Google Wallet callbacks', () => {
       releaseId: f.releaseId,
       operationVersion: 1,
       credentialGeneration: f.credentialGeneration,
+      channelEpoch: 1,
     };
     await expect(googleCallbackClassProjection(f.f.kit.ctx, scope, binding)).rejects.toMatchObject({
       code: 'account_unavailable',
@@ -1080,6 +1084,7 @@ describe('Google Wallet callbacks', () => {
       passId: f.f.pass.id,
       releaseId: f.releaseId,
       credentialGeneration: f.credentialGeneration,
+      channelEpoch: 1,
       accountId: f.account.id,
       orgId: f.f.pass.orgId,
       mode: 'live' as const,
