@@ -1,10 +1,11 @@
 import os
-import httpx
 
-res = httpx.post(
-    "https://passbook.mobile/api/v1/webhook-endpoints",
-    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}"},
-    json={
+from passbook import PassBook
+
+pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
+
+result = pb.webhook_endpoints.create(
+    {
         "url": "https://hooks.example.com/passbook",
         "description": "Order system",
         "eventTypes": [
@@ -13,5 +14,4 @@ res = httpx.post(
         ],
     },
 )
-res.raise_for_status()
-print(res.json())
+print(result)

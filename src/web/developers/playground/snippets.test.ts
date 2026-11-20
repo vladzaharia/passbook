@@ -8,7 +8,11 @@ describe('playground snippets', () => {
   it('writes POST /passes in four languages, with the key from the environment', () => {
     expect(all.map((s) => s.lang)).toEqual(['ts', 'curl', 'py', 'go']);
     for (const s of all) {
-      expect(s.code).toContain(s.lang === 'ts' ? 'pb.passes.create' : '/passes');
+      expect(s.code).toContain(
+        { ts: 'pb.passes.create', curl: '/passes', py: 'pb.passes.create', go: 'pb.Passes.Create' }[
+          s.lang
+        ],
+      );
       expect(s.code).toContain('baked:starter-store-card');
       expect(s.code).toContain('PASSBOOK_KEY');
       expect(s.code).not.toMatch(/pb[a-z]*_(test|live)_/);

@@ -1,23 +1,23 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
+
+	passbook "github.com/vladzaharia/passbook/sdk/go"
 )
 
 func main() {
-	req, err := http.NewRequest("GET", "https://passbook.mobile/api/v1/connections/summary", nil)
+	ctx := context.Background()
+	pb, err := passbook.NewClient(os.Getenv("PASSBOOK_KEY"))
 	if err != nil {
 		panic(err)
 	}
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("PASSBOOK_KEY"))
-	res, err := http.DefaultClient.Do(req)
+
+	result, err := pb.Connections.RetrieveSummary(ctx)
 	if err != nil {
 		panic(err)
 	}
-	defer res.Body.Close()
-	out, _ := io.ReadAll(res.Body)
-	fmt.Println(res.Status, string(out))
+	fmt.Printf("%+v\n", result)
 }
