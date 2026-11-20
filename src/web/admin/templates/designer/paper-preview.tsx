@@ -87,6 +87,7 @@ export function PaperPreview({
   assets = [],
   assetBase = '',
   onEdit,
+  testBand,
 }: {
   passJson: Record<string, unknown> | null | undefined;
   manifest: Record<string, unknown>;
@@ -97,6 +98,8 @@ export function PaperPreview({
   orgId?: string | undefined;
   /** Writes the block; absent when the draft is read-only. */
   onEdit?: ((patch: PaperPatch) => void) | undefined;
+  /** A sandbox pass: the TEST PREVIEW band on every page. */
+  testBand?: boolean | undefined;
 }) {
   const inlineCss = usePaperCss();
   const channels = useTemplatePaper(templateId, orgId);
@@ -105,7 +108,8 @@ export function PaperPreview({
   const [grey, setGrey] = useState(false);
   const design = useMemo<PaperDesign>(() => ({ ...saved, size: picked }), [saved, picked]);
   const drawing = useDrawing(design);
-  const paper = channels.data?.effective.paper;
+  // A sandbox pass previews every channel, so the organization's paper entitlement does not hide it.
+  const paper = testBand ? undefined : channels.data?.effective.paper;
   // Off for the template is a default a pass can override; the others are not.
   const blocked = paper && !paper.on && paper.reason !== 'template_off' ? paper.reason : undefined;
   const content = useMemo(() => {
@@ -170,6 +174,7 @@ export function PaperPreview({
                 code={SAMPLE_CODE}
                 drawing={drawing}
                 assets={files}
+                testBand={testBand}
               />
             ) : passJson && content === null ? (
               <p role="alert" className="text-sm text-danger">

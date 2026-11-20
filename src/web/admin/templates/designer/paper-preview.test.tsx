@@ -6,6 +6,7 @@ import { toSvg } from '@/shared/pass-view/barcode-svg.ts';
 import { json } from '@/web/lib/test-utils.tsx';
 import { setBarcodeEngine } from '../../../pass-card/barcode-engine.ts';
 import { renderTags } from '../../tags/test-fixtures.tsx';
+import { PaperPreview } from './paper-preview.tsx';
 import { DesignerStage } from './stage.tsx';
 
 vi.mock('./preview.tsx', () => ({ DesignerPreview: () => <div data-testid="wallet-card" /> }));
@@ -84,6 +85,30 @@ describe('designer Paper tab', () => {
     ).toBeInTheDocument();
     expect(container.querySelector('.pp-sheet')).toBeNull();
     expect(screen.queryByRole('radiogroup', { name: 'Paper size' })).toBeNull();
+  });
+
+  it('shows a sandbox pass on paper with its TEST band, whatever the organization has off', async () => {
+    const { container } = renderTags(
+      <PaperPreview
+        passJson={EVENT_PASS as unknown as Record<string, unknown>}
+        manifest={{ ...EVENT_MANIFEST, paper: { schema: 1, size: 'a4', barcode: 'qr' } }}
+        templateId="t1"
+        orgId="o1"
+        testBand
+      />,
+      {
+        '/api/v1/templates/t1/channels': channels({
+          on: false,
+          source: 'org',
+          reason: 'printing_off',
+        }),
+      },
+    );
+    await waitFor(() => expect(container.querySelector('.pp-sheet')).not.toBeNull());
+    expect(container.querySelector('.pp-fit > .test-band')).toHaveTextContent(
+      'TEST PREVIEW · NOT INSTALLABLE',
+    );
+    expect(screen.queryByText(/printing off/)).toBeNull();
   });
 
   it('says when the layout is derived or staff-only', async () => {

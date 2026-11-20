@@ -1,4 +1,5 @@
 import { PAPER_SPECS, type PaperSize } from '../../passkit/template/paper.ts';
+import bandCss from '../pass-card/test-band.css?raw';
 import { FULL_CSS, HALF_FULL_CSS } from './css-full.ts';
 import { SMALL_CSS } from './css-small.ts';
 
@@ -12,7 +13,7 @@ const mm = (n: number) => `calc(var(--mm) * ${n})`;
  * scales as one piece; in print it is 1mm and the sheet is its true size. Paper never goes dark:
  * these are print tokens, not theme tokens.
  */
-const BASE_CSS = `.pp-fit{container-type:inline-size;width:100%;aspect-ratio:var(--w)/var(--h)}
+const BASE_CSS = `.pp-fit{position:relative;container-type:inline-size;width:100%;aspect-ratio:var(--w)/var(--h)}
 .pp-fit+.pp-fit{margin-top:12px}
 .pp-sheet{--mm:calc(100cqw / var(--w));--ink:#000;--text:#14171F;--muted:#4A5163;--rule:#9CA3B1;--hair:#C9CED8;--wash:#F1F3F7;position:relative;display:block;box-sizing:border-box;width:100%;height:100%;overflow:hidden;background:#fff;color:var(--text);font-family:var(--pk-font-sans,Rubik,system-ui,sans-serif);font-size:${pt(9)};line-height:1.3;font-variant-numeric:tabular-nums;border-radius:${mm(1.5)};box-shadow:0 0 0 1px rgb(0 0 0/.14),0 8px 24px rgb(0 0 0/.18)}
 .pp-sheet *{box-sizing:border-box;margin:0;padding:0}
@@ -47,7 +48,7 @@ const BASE_CSS = `.pp-fit{container-type:inline-size;width:100%;aspect-ratio:var
 .pp-sheet{--mm:1mm;border-radius:0;box-shadow:none;print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }`;
 
-export const PAPER_CSS = `${BASE_CSS}\n${FULL_CSS}\n${HALF_FULL_CSS}\n${SMALL_CSS}`;
+export const PAPER_CSS = `${BASE_CSS}\n${FULL_CSS}\n${HALF_FULL_CSS}\n${SMALL_CSS}\n${bandCss}`;
 
 /** `@page` for one size; the sheet fills the page, so the margin is 0. */
 export function pageRule(size: PaperSize): string {

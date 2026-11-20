@@ -9,9 +9,12 @@ import type { WalletPreviews } from './use-wallet-previews.ts';
 export function WalletChannel({
   target,
   previews,
+  testBand,
 }: {
   target: 'google' | 'samsung';
   previews: WalletPreviews;
+  /** A sandbox pass: the TEST PREVIEW band on the card. */
+  testBand?: boolean | undefined;
 }) {
   const wallet = walletName(target);
   if (previews.state === 'loading')
@@ -34,13 +37,17 @@ export function WalletChannel({
   const card =
     target === 'samsung' ? (
       compiled.cardData ? (
-        <SamsungCard data={compiled.cardData as Parameters<typeof SamsungCard>[0]['data']} />
+        <SamsungCard
+          data={compiled.cardData as Parameters<typeof SamsungCard>[0]['data']}
+          testBand={testBand}
+        />
       ) : null
     ) : compiled.objectBody ? (
       <GoogleCard
         type={compiled.type}
         classBody={compiled.classBody}
         objectBody={compiled.objectBody}
+        testBand={testBand}
       />
     ) : null;
   return (
