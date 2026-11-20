@@ -1,3 +1,4 @@
+import { readViewedAt } from '../quickstart/viewed.ts';
 import type { Sandbox } from './session.ts';
 
 export interface Created {
@@ -17,7 +18,7 @@ export async function createSandbox(csrf: string, turnstileToken: string): Promi
       'content-type': 'application/json',
       'x-csrf-token': csrf,
     },
-    body: JSON.stringify({ turnstileToken }),
+    body: JSON.stringify({ turnstileToken, viewedAt: readViewedAt() }),
   });
   const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {

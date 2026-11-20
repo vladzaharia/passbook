@@ -11,7 +11,7 @@ import { MethodPill } from '../ui/method-pill.tsx';
 export const SIGN_IN = '/login?next=%2Fdevelopers';
 export type NavKey = (typeof DEV_COPY.nav)[number]['key'];
 
-const NAV_PATH: Record<NavKey, string> = {
+export const NAV_PATH: Record<NavKey, string> = {
   quickstart: PATHS.quickstart,
   guides: PATHS.guides,
   reference: PATHS.reference,

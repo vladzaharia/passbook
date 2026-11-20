@@ -207,17 +207,3 @@ export function WebhooksView({ site }: { site: Site }) {
     </div>
   );
 }
-
-export function SlotView({ which }: { which: 'quickstart' }) {
-  const s = DEV_COPY.slots[which];
-  return (
-    <>
-      <Head title={s.title} line={s.line} />
-      <p className="mt8">
-        <a className="btn outline" href={PATHS.reference}>
-          {DEV_COPY.home.reference}
-        </a>
-      </p>
-    </>
-  );
-}

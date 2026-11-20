@@ -7,6 +7,7 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DEV_COPY } from '../../shared/copy/developers.ts';
 import { LOGS_COPY, STATUS_COPY } from '../../shared/copy/developers-ops.ts';
+import { QS_COPY } from '../../shared/copy/developers-quickstart.ts';
 import { DEVELOPERS_INDEXABLE, PATHS, twin } from '../../shared/developers.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import { HEAD_HTML } from '../../worker/ssr/head.ts';
@@ -29,12 +30,12 @@ import {
   ErrorsIndex,
   ProtocolsView,
   ReferenceIndex,
-  SlotView,
   WebhooksView,
 } from './pages/more.tsx';
 import { ResourceView } from './pages/resource.tsx';
 import { StatusView } from './pages/status.tsx';
 import { PlaygroundPage } from './playground/page.tsx';
+import { QuickstartSide, QuickstartView } from './quickstart/page.tsx';
 
 interface Doc {
   url: string;
@@ -244,10 +245,11 @@ export function renderSite(
   out.push({ file: PATHS.logsOps, body: JSON.stringify(opIndex(site)) });
   page(
     PATHS.quickstart,
-    DEV_COPY.slots.quickstart.title,
-    DEV_COPY.slots.quickstart.line,
+    QS_COPY.title,
+    QS_COPY.lede,
     'quickstart',
-    <SlotView which="quickstart" />,
+    <QuickstartView />,
+    <QuickstartSide />,
   );
   const guides = guideInputs.docs.map(({ doc }) => resolveGuide(doc, site, guideInputs.examples));
   page(

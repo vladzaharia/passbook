@@ -18,6 +18,7 @@ import { asBrowserPage } from '../../ssr/error-response.ts';
 import { publicStatus } from '../status/public.ts';
 import { cachedPublic } from '../status/public-cache.ts';
 import { statusHtml } from '../status/public-page.tsx';
+import { developerBeaconRoutes } from './beacon.ts';
 
 type Manifest = Record<string, { asset: string; type: string }>;
 
@@ -31,6 +32,8 @@ async function manifestOf(assets: Fetcher, origin: string): Promise<Manifest> {
 }
 
 export const developerPortalRoutes = new Hono<AppBindings>();
+// The one write the portal makes: a funnel step. Ahead of the catch-all, which only reads files.
+developerPortalRoutes.route('/', developerBeaconRoutes);
 
 /** Longest body the miss endpoint reads: `{"term":"…"}` for a term of at most 60 characters. */
 const MISS_BODY_BYTES = 1024;
@@ -99,7 +102,9 @@ developerPortalRoutes.get('/*', async (c) => {
   if (entry.type.startsWith('text/html')) {
     headers.set(
       'content-security-policy',
-      developersContentSecurityPolicy({ turnstile: key === PATHS.console }),
+      developersContentSecurityPolicy({
+        turnstile: key === PATHS.console || key === PATHS.quickstart,
+      }),
     );
   }
   if (key === PATHS.status) {
