@@ -31,6 +31,8 @@ export const RecipeIdSchema = z.enum([
   'stripe-subscriptions',
   'stripe-payments',
   'calcom-bookings',
+  'woocommerce-orders',
+  'tickettailor-tickets',
 ]);
 export type RecipeId = z.infer<typeof RecipeIdSchema>;
 

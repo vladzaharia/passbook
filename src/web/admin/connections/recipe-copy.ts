@@ -37,6 +37,16 @@ export const RECIPE_COPY: Record<
     secretHelp: 'Paste the signing secret below into Cal.com: Settings, Developer, Webhooks.',
     topics: ['BOOKING_CREATED', 'BOOKING_RESCHEDULED', 'BOOKING_CANCELLED'],
   },
+  'woocommerce-orders': {
+    line: 'Order or line item to pass. Voids when cancelled or refunded.',
+    secretHelp: 'The secret you set in WooCommerce: Settings, Advanced, Webhooks.',
+    topics: ['order.created', 'order.updated'],
+  },
+  'tickettailor-tickets': {
+    line: 'Issued ticket to pass. Voids when voided or refunded.',
+    secretHelp: 'From Ticket Tailor: Settings, Integrations, Webhooks, signing secret.',
+    topics: ['ISSUED_TICKET.CREATED', 'ISSUED_TICKET.UPDATED'],
+  },
 };
 
 export const recipeLine = (id: RecipeId) => (id === 'custom' ? CUSTOM_LINE : RECIPE_COPY[id].line);
@@ -58,6 +68,7 @@ export function recipeHidden(recipe: RecipeId | undefined, offered: boolean): Se
   const hidden = new Set(['recipe']);
   if (recipe && recipe !== 'custom') for (const k of CUSTOM_ONLY) hidden.add(k);
   if (!recipe?.startsWith('stripe-')) hidden.add('acceptTestEvents');
+  if (recipe !== 'woocommerce-orders') hidden.add('passPer');
   return hidden;
 }
 

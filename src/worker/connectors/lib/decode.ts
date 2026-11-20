@@ -42,6 +42,15 @@ export function parseStripeSignature(h: string): { t: number; v1: Bytes[] } | nu
   return t === null || v1.length === 0 ? null : { t: Number(t), v1 };
 }
 
+/** Ticket Tailor's `timestamp=<unix seconds>,signature=<hex>`; the timestamp stays text, as it is signed. */
+export function parseTicketTailorSignature(
+  h: string,
+): { timestamp: string; signature: Bytes } | null {
+  const m = /^timestamp=([1-9]\d{8,11}),signature=([0-9a-f]{64})$/.exec(h);
+  const signature = m?.[2] ? decodeHex32(m[2]) : null;
+  return m?.[1] && signature ? { timestamp: m[1], signature } : null;
+}
+
 /** The decoded body only ever comes after the MAC: invalid UTF-8 is a bad payload, not bad auth. */
 export function decodeUtf8Strict(bytes: Uint8Array): string {
   try {
