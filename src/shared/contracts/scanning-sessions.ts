@@ -114,8 +114,23 @@ const DateKeySchema = z.string().refine((v) => {
   return /^\d{4}-\d{2}-\d{2}$/.test(v) && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
 }, 'Use a date like 2026-12-25.');
 /** Dated exceptions, in the session's zone: no spans is closed all day, else that date's own hours. */
+const minutesOf = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+/** Sorted by start, none overlapping (an end at or before its start runs past midnight). */
+function orderedSpans(spans: string[]): boolean {
+  let prevEnd = -1;
+  for (const s of spans) {
+    const start = minutesOf(s);
+    const end = minutesOf(s.slice(6));
+    if (start < prevEnd) return false;
+    prevEnd = end <= start ? end + 1440 : end;
+  }
+  return true;
+}
 export const SessionDatesSchema = z
-  .record(DateKeySchema, z.array(HoursSpanSchema).max(4))
+  .record(
+    DateKeySchema,
+    z.array(HoursSpanSchema).max(4).refine(orderedSpans, 'Sort spans by start; none overlap.'),
+  )
   .refine((dates) => Object.keys(dates).length <= 60, 'At most 60 closed dates.');
 const DaySpans = z.array(HoursSpanSchema).min(1).max(4).optional();
 /** When an active session scans, by the session's own clock. At least one span, none empty. */
@@ -165,6 +180,8 @@ export const ScanningSessionSchema = z.object({
   timeZone: TimeZoneSchema,
   /** Absent from servers that predate session hours; null: always open. */
   hours: SessionHoursSchema.nullable().optional(),
+  /** The stored schedule no longer parses, so the session stays closed until it is saved again. */
+  hoursInvalid: z.literal(true).optional(),
   /** The hold in force, if any. */
   hold: SessionHoldSchema.nullable().optional(),
   window: SessionWindowSchema.optional(),

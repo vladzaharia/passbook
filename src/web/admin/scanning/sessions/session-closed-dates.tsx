@@ -1,24 +1,32 @@
 import { Plus, X } from 'lucide-react';
 import { useId, useState } from 'react';
 import { cn } from '@/web/lib/cn.ts';
-import { formatCalendarDate } from '@/web/lib/format.ts';
+import { formatCalendarDate, todayKey } from '@/web/lib/format.ts';
 import { Button, IconButton, Label } from '@/web/ui/index.ts';
 import { CONTROL, CONTROL_HEIGHT } from '@/web/ui/input.tsx';
 import { spanText } from '@/web/ui/week-grid/hours.ts';
 
+const MAX_DATES = 60;
+
 /** Closed dates, or special hours for a date, by the session's own calendar. */
 export function ClosedDates({
   dates,
+  timeZone,
   onChange,
 }: {
   dates: Record<string, string[]> | undefined;
+  timeZone: string;
   onChange: (dates: Record<string, string[]>) => void;
 }) {
   const id = useId();
   const [date, setDate] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const sorted = Object.entries(dates ?? {}).sort(([a], [b]) => a.localeCompare(b));
+  const today = todayKey(timeZone);
+  // Past dates stay in the draft; the server drops them on save.
+  const sorted = Object.entries(dates ?? {})
+    .filter(([key]) => key >= today)
+    .sort(([a], [b]) => a.localeCompare(b));
   const partial = (from === '') !== (to === '');
   const same = from !== '' && from === to;
   const problem = partial
@@ -26,8 +34,12 @@ export function ClosedDates({
     : same
       ? 'End must differ from start.'
       : null;
+  const exists = date in (dates ?? {});
+  const full = !exists && Object.keys(dates ?? {}).length >= MAX_DATES;
+  const past = date !== '' && date < today;
+  const blocked = !date || Boolean(problem) || full || past;
   const add = () => {
-    if (!date || problem) return;
+    if (blocked) return;
     onChange({ ...dates, [date]: from && to ? [`${from}-${to}`] : [] });
     setDate('');
     setFrom('');
@@ -36,7 +48,7 @@ export function ClosedDates({
   const field = cn(CONTROL, CONTROL_HEIGHT, 'tabular-nums');
   return (
     <fieldset className="grid min-w-0 gap-2">
-      <legend className="mb-2 text-sm font-medium text-fg-strong">Closed dates</legend>
+      <legend className="mb-2 text-sm font-medium text-fg-strong">Dates</legend>
       {sorted.length > 0 ? (
         <ul className="grid gap-1">
           {sorted.map(([key, spans]) => (
@@ -73,6 +85,7 @@ export function ClosedDates({
             id={`${id}-date`}
             type="date"
             className={field}
+            min={today}
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
@@ -109,13 +122,22 @@ export function ClosedDates({
           variant="outline"
           className="col-span-2 sm:col-span-1"
           iconStart={<Plus aria-hidden />}
-          disabled={!date || Boolean(problem)}
+          disabled={blocked}
           onClick={add}
         >
-          Add
+          {exists ? 'Update' : 'Add'}
         </Button>
       </div>
-      <p className="text-xs text-fg-muted">{problem ?? 'No times closes the date all day.'}</p>
+      <p className="text-xs text-fg-muted">
+        {problem ??
+          (full
+            ? `At most ${MAX_DATES} dates.`
+            : past
+              ? 'Pick today or later.'
+              : exists
+                ? 'This date is listed. Update replaces it.'
+                : 'Closed days and special hours. No times closes the date all day.')}
+      </p>
     </fieldset>
   );
 }

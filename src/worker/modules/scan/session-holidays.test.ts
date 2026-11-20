@@ -77,10 +77,25 @@ describe('dated exceptions', () => {
     expect(nextEdgeAt(r, at(2026, 11, 18, 9))).toBe(at(2026, 11, 18, 10));
   });
 
-  it('prunes dates before today in the session zone and keeps today on', () => {
-    const hours = { wed: ['08:00-22:00'], dates: { '2026-11-17': [], '2026-11-18': [] } };
-    expect(pruneDates(hours, 'UTC', at(2026, 11, 18, 9)).dates).toEqual({ '2026-11-18': [] });
-    expect(pruneDates(hours, 'Pacific/Auckland', at(2026, 11, 18, 12)).dates).toBeUndefined();
+  it('prunes dates before yesterday in the session zone and keeps yesterday', () => {
+    const hours = {
+      wed: ['08:00-22:00'],
+      dates: { '2026-11-16': [], '2026-11-17': ['18:00-02:00'], '2026-11-18': [] },
+    };
+    expect(pruneDates(hours, 'UTC', at(2026, 11, 18, 9)).dates).toEqual({
+      '2026-11-17': ['18:00-02:00'],
+      '2026-11-18': [],
+    });
+    // Auckland is already on the 19th, so only the 18th and later stay.
+    expect(pruneDates(hours, 'Pacific/Auckland', at(2026, 11, 18, 12)).dates).toEqual({
+      '2026-11-18': [],
+    });
+  });
+
+  it('an overnight span on yesterday still covers the start of today', () => {
+    const r = row({ wed: ['08:00-22:00'], dates: { '2026-11-17': ['18:00-02:00'] } });
+    expect(sessionWindow(r, at(2026, 11, 18, 1)).open).toBe(true);
+    expect(sessionWindow(r, at(2026, 11, 18, 2)).open).toBe(false);
   });
 });
 

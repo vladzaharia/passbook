@@ -58,6 +58,22 @@ export function formatCalendarDate(key: string): string {
   return CALENDAR_DATE.format(Date.UTC(y, m - 1, d));
 }
 
+/** Today's `YYYY-MM-DD` on the calendar of a time zone. */
+export function todayKey(timeZone: string, now: number = Date.now()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+}
+
+/** The `YYYY-MM-DD` key a day before another. */
+export function dayBefore(key: string): string {
+  const [y = 0, m = 1, d = 1] = key.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d - 1)).toISOString().slice(0, 10);
+}
+
 /** Oct 31: axes, ranges, "Updated Oct 31". */
 export function formatShortDate(ms: number): string {
   return SHORT.format(ms);

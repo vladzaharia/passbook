@@ -35,7 +35,11 @@ export function SessionHoursFields({
             mergeKey="session-hours"
             onChange={(hours) => set({ hours })}
           />
-          <ClosedDates dates={draft.dates} onChange={(dates) => set({ dates })} />
+          <ClosedDates
+            dates={draft.dates}
+            timeZone={draft.timeZone}
+            onChange={(dates) => set({ dates })}
+          />
           {problem ? <Callout tone="warning">{problem}</Callout> : null}
         </>
       ) : null}

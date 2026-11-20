@@ -78,7 +78,7 @@ export const sessionBody = (d: SessionDraft) => ({
   name: d.name.trim(),
   orgId: d.orgId,
   timeZone: d.timeZone,
-  hours: hoursBody(d.hoursOn, d.hours, d.dates),
+  hours: hoursBody(d.hoursOn, d.hours, d.dates, d.timeZone),
   accepts:
     d.accepts === 'templates' && d.keptEventIds?.length
       ? { templateIds: d.templateIds, eventIds: d.keptEventIds }

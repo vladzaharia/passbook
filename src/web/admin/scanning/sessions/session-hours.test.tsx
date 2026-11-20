@@ -1,7 +1,9 @@
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { emptySessionDraft, sessionBody, sessionDraft, sessionReady } from './draft.ts';
 import { DEFAULT_HOURS, hoursBody, hoursProblem, hoursSummary } from './session-hours.ts';
 import { sessionState, sessionWindowLine } from './session-state.tsx';
+import { SessionSummary } from './session-summary.tsx';
 import { managedSession } from './test-fixtures.ts';
 
 describe('hours editor validation', () => {
@@ -84,5 +86,18 @@ describe('closed dates in the body', () => {
     expect(draft.dates).toEqual(dates);
     expect(draft.hours).toEqual(DEFAULT_HOURS);
     expect(sessionBody(draft).hours).toEqual({ ...DEFAULT_HOURS, dates });
+  });
+
+  it('drops dates before yesterday from the body, as the server does', () => {
+    const dates = { '2020-01-01': [], '2099-12-25': [] };
+    expect(hoursBody(true, DEFAULT_HOURS, dates, 'UTC')).toEqual({
+      ...DEFAULT_HOURS,
+      dates: { '2099-12-25': [] },
+    });
+  });
+
+  it('says the hours could not be read', () => {
+    render(<SessionSummary session={{ ...managedSession, hours: null, hoursInvalid: true }} />);
+    expect(screen.getByText('Hours could not be read. Edit and save them again.')).toBeTruthy();
   });
 });

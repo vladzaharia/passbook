@@ -1,6 +1,7 @@
 import { hoursText } from '@/passkit/template/access/scope.ts';
 import type { WeeklyHours } from '@/passkit/types.ts';
 import type { SessionHours } from '@/shared/contracts/scanning-sessions.ts';
+import { dayBefore, todayKey } from '@/web/lib/format.ts';
 import { DAYS, spanProblem, weekProblems } from '@/web/ui/week-grid/hours.ts';
 
 /** A starting week for the switch: weekdays, working hours. */
@@ -29,10 +30,14 @@ export const hoursBody = (
   on: boolean,
   hours: WeeklyHours | undefined,
   dates?: Record<string, string[]>,
-): SessionHours | null =>
-  on && hours && !hoursProblem(on, hours)
-    ? { ...hours, ...(dates && Object.keys(dates).length > 0 ? { dates } : {}) }
-    : null;
+  timeZone?: string,
+): SessionHours | null => {
+  if (!on || !hours || hoursProblem(on, hours)) return null;
+  // Yesterday still counts (an overnight span); anything older is dropped, as the server does.
+  const earliest = timeZone ? dayBefore(todayKey(timeZone)) : '';
+  const live = Object.entries(dates ?? {}).filter(([key]) => key >= earliest);
+  return { ...hours, ...(live.length > 0 ? { dates: Object.fromEntries(live) } : {}) };
+};
 
 /** The weekly part of stored hours, for the week grid. */
 export const weekOf = ({ dates: _dates, ...week }: SessionHours): WeeklyHours => week;

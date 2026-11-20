@@ -14,7 +14,7 @@ import {
   type SessionWindow,
 } from '../../../shared/contracts/scanning-sessions.ts';
 
-import { ForbiddenError } from '../../platform/errors.ts';
+import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 
 const HOUR = 3_600_000;
 export const HOLD_MAX_MS = 24 * HOUR;
@@ -46,14 +46,32 @@ function parse<T>(
 export const storedHours = (raw: string | null | undefined): SessionHours | null | 'invalid' =>
   parse(raw, SessionHoursSchema);
 
-/** Drops exceptions dated before today in the session's zone; they can no longer matter. */
+const DAY_MS = 86_400_000;
+/** Yesterday's key still counts: an overnight span on it covers the start of today. */
+function earliestKey(timeZone: string, now: number): string {
+  const w = wall(now, timeZone);
+  const d = new Date(Date.UTC(w.y, w.m - 1, w.d - 1));
+  return dateKey(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+}
+
+/** Drops exceptions dated before yesterday in the session's zone; they can no longer matter. */
 export function pruneDates(hours: SessionHours, timeZone: string, now: number): SessionHours {
   if (!hours.dates) return hours;
-  const w = wall(now, timeZone);
-  const today = dateKey(w.y, w.m, w.d);
-  const kept = Object.entries(hours.dates).filter(([key]) => key >= today);
+  const earliest = earliestKey(timeZone, now);
+  const kept = Object.entries(hours.dates).filter(([key]) => key >= earliest);
   const { dates: _old, ...rest } = hours;
   return kept.length > 0 ? { ...rest, dates: Object.fromEntries(kept) } : rest;
+}
+
+/** Refuses exceptions outside yesterday to two years ahead, in the session's zone. */
+export function assertDatesInRange(hours: SessionHours, timeZone: string, now: number): void {
+  const earliest = earliestKey(timeZone, now);
+  const latest = earliestKey(timeZone, now + 732 * DAY_MS);
+  const bad = Object.keys(hours.dates ?? {}).find((key) => key < earliest || key > latest);
+  if (bad)
+    throw new ValidationError('Closed dates run from today to two years ahead.', [
+      { path: `hours.dates.${bad}`, message: 'Pick a date from today to two years ahead.' },
+    ]);
 }
 
 /** The hold in force at `now`; one past its end is as good as none. */
