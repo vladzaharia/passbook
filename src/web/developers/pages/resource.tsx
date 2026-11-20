@@ -84,7 +84,7 @@ function ErrorsTable({ op, known }: { op: OpView; known: Set<string> }) {
 }
 
 /** The right pane: the request as a ticket stub, a signed-out run slot, then the response. */
-function Rail({ op, site, slot }: { op: OpView; site: Site; slot: string }) {
+function Rail({ op, site, slot, slug }: { op: OpView; site: Site; slot: string; slug: string }) {
   const samples = samplesFor(op, site.baseUrl);
   const ok = op.returns;
   return (
@@ -92,8 +92,9 @@ function Rail({ op, site, slot }: { op: OpView; site: Site; slot: string }) {
       <div className="row g3 rail-h">
         <h3 className="h2">{DEV_COPY.reference.tryIt}</h3>
         <span className="pill info mono">test</span>
+        <span className="push" data-budget />
       </div>
-      <div id={slot} data-island="run" data-op={op.operationId} className="try">
+      <div id={slot} data-island="run" data-op={op.operationId} data-slug={slug} className="try">
         <Ticket
           stub={<SampleTabs id={`s-${op.anchor}`} samples={samples} />}
           body={
@@ -120,7 +121,17 @@ function Rail({ op, site, slot }: { op: OpView; site: Site; slot: string }) {
   );
 }
 
-function Operation({ op, site, known }: { op: OpView; site: Site; known: Set<string> }) {
+function Operation({
+  op,
+  site,
+  known,
+  slug,
+}: {
+  op: OpView;
+  site: Site;
+  known: Set<string>;
+  slug: string;
+}) {
   const groups = WHERE_ORDER.map((w) => ({
     w,
     fields: op.fields.filter((f) => f.where === w),
@@ -175,7 +186,7 @@ function Operation({ op, site, known }: { op: OpView; site: Site; known: Set<str
         ) : null}
         <ErrorsTable op={op} known={known} />
       </div>
-      <Rail op={op} site={site} slot={`try-${op.anchor}`} />
+      <Rail op={op} site={site} slot={`try-${op.anchor}`} slug={slug} />
     </section>
   );
 }
@@ -222,7 +233,7 @@ export function ResourceView({ page, site }: { page: ResourcePage; site: Site })
         return (
           <div key={op.anchor}>
             {heading ? <h2 className="sub-h">{heading}</h2> : null}
-            <Operation op={op} site={site} known={known} />
+            <Operation op={op} site={site} known={known} slug={page.slug} />
           </div>
         );
       })}

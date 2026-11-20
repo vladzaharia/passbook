@@ -1,3 +1,5 @@
+import type { RunOp } from '../console/types.ts';
+
 /** The slice of OpenAPI the portal reads, and the view models it builds. Build-time only. */
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type Dict = Record<string, unknown>;
@@ -77,6 +79,8 @@ export interface OpView {
   deprecated: boolean;
   /** The sub-resource heading this op sits under (`versions` for `passes.versions`). */
   sub: string | null;
+  /** What the console island needs to run it. */
+  run: RunOp;
 }
 
 export interface ConsoleOp {

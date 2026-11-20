@@ -9,9 +9,11 @@ import { DEV_COPY } from '../../shared/copy/developers.ts';
 import { DEVELOPERS_INDEXABLE, PATHS, twin } from '../../shared/developers.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import { HEAD_HTML } from '../../worker/ssr/head.ts';
+import { runFile, runFileUrl, runIndex } from './console/run-spec.ts';
 import { operations } from './model/dates.ts';
 import { homeMarkdown, llmsTxt, pageMarkdown, pagePath } from './model/markdown.ts';
 import type { OutFile, Site } from './model/types.ts';
+import { ConsoleView } from './pages/console.tsx';
 import { HomeView } from './pages/home.tsx';
 import { type NavKey, Shell, SideNav } from './pages/layout.tsx';
 import {
@@ -184,6 +186,19 @@ export function renderSite(site: Site, origin: string, assets: string): OutFile[
     undefined,
     <ChangelogView site={site} />,
   );
+  page(PATHS.console, DEV_COPY.console.title, DEV_COPY.console.line, 'reference', <ConsoleView />);
+  // What the Run island reads: per page the operations it can run, and one index for the console.
+  for (const p of site.pages)
+    out.push({
+      file: runFileUrl(p.slug),
+      body: JSON.stringify(
+        runFile(
+          site.baseUrl || origin,
+          p.ops.map((o) => o.run),
+        ),
+      ),
+    });
+  out.push({ file: runFileUrl('index'), body: JSON.stringify(runIndex(site)) });
   for (const which of ['quickstart', 'playground', 'guides'] as const)
     page(
       PATHS[which],

@@ -1,3 +1,4 @@
+import { runOp } from '../console/run-spec.ts';
 import { GROUP_ORDER, groupOf, labelOf, slugOf } from './resources.ts';
 import { bodyFields, paramFields, refName, resolve } from './schema.ts';
 import {
@@ -110,7 +111,7 @@ function view(
   const summary = op.summary ?? op.operationId;
   const scopes = [...new Set((op.security ?? []).flatMap((s) => s.apiKey ?? []))];
   const idempotent = /Idempotency-Key/.test(summary);
-  return {
+  const base: Omit<OpView, 'run'> = {
     anchor: sub ? `${sub}-${sdk.method}` : sdk.method,
     operationId: op.operationId,
     method,
@@ -137,6 +138,7 @@ function view(
     deprecated: op.deprecated === true,
     sub,
   };
+  return { ...base, run: runOp(doc, base, op, method) };
 }
 
 function webhookEvents(doc: RawDoc): WebhookEvent[] {

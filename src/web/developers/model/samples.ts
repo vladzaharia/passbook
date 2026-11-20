@@ -16,7 +16,7 @@ const target = (op: OpView, base: string) => `${base}${op.path.replace(/\{(\w+)\
 const json = (v: Json) => JSON.stringify(v, null, 2);
 
 /** A TypeScript literal for a JSON value: bare keys, single quotes. */
-function tsValue(v: Json, pad = ''): string {
+export function tsValue(v: Json, pad = ''): string {
   if (v === null || typeof v !== 'object')
     return typeof v === 'string' ? `'${v.replaceAll("'", "\\'")}'` : String(v);
   const inner = `${pad}  `;
@@ -63,7 +63,7 @@ function ts(op: OpView, base: string): string {
 }
 
 /** A Python literal for a JSON value. */
-function pyValue(v: Json, pad = ''): string {
+export function pyValue(v: Json, pad = ''): string {
   if (v === null) return 'None';
   if (typeof v === 'boolean') return v ? 'True' : 'False';
   if (typeof v !== 'object') return JSON.stringify(v);
