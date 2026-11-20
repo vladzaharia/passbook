@@ -13,11 +13,13 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { verifyTurnstile } from '../auth/turnstile.ts';
+import { developerLogRoutes } from './routes-logs.ts';
 import { closeOwnSandbox, createSandbox, getSandbox } from './service.ts';
 import { mintTryToken, revokeTryTokens } from './try-token.ts';
 
 export const developerRoutes = createRouter();
 developerRoutes.use('*', limitBody(8 * 1024));
+developerRoutes.route('/', developerLogRoutes);
 
 register(
   developerRoutes,

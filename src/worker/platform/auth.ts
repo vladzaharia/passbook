@@ -56,6 +56,8 @@ export interface ApiKeyAuth {
   limited?: true;
   /** Presented as a developer try token (`pbtry_`), not the key's secret. */
   via?: 'try';
+  /** The key's org is a developer org (the sandbox); absent for every other org. */
+  orgKind?: 'developer';
 }
 
 export const SCANNER_COOKIE = '__Host-wallet_scan';

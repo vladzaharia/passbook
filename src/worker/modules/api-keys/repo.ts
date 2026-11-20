@@ -220,12 +220,13 @@ export const getKey = (db: Db, id: string, orgId: string | null) =>
  */
 export type ResolvedKeyRow = ApiKeyRow & {
   org_status: string | null;
+  org_kind: string | null;
   member_roles: string | null;
   parent: string | null;
 };
 
 /** The columns of a `ResolvedKeyRow`, over `api_keys k` and `orgs o`: also read by the try-token resolver. */
-export const RESOLVED_KEY_COLUMNS = `k.*, o.status AS org_status,
+export const RESOLVED_KEY_COLUMNS = `k.*, o.status AS org_status, o.kind AS org_kind,
        (SELECT m.roles FROM org_memberships m JOIN users u ON u.id = m.user_id
         WHERE m.id = k.membership_id AND m.org_id = k.org_id AND m.revoked_at IS NULL
           AND u.status = 'active') AS member_roles,

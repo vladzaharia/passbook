@@ -1,5 +1,29 @@
 [
   {
+    "key": "GET /api/v1/developer/logs new operation",
+    "class": "additive",
+    "operationId": "developer.getLogs",
+    "op": "GET /api/v1/developer/logs",
+    "change": "new operation",
+    "note": "List your sandbox Test calls from the last 7 days."
+  },
+  {
+    "key": "GET /api/v1/developer/logs/{id} new operation",
+    "class": "additive",
+    "operationId": "developer.getLog",
+    "op": "GET /api/v1/developer/logs/{id}",
+    "change": "new operation",
+    "note": "Read one logged Test call; bodies are kept for 24 hours."
+  },
+  {
+    "key": "GET /api/v1/developer/rail new operation",
+    "class": "additive",
+    "operationId": "developer.getRail",
+    "op": "GET /api/v1/developer/rail",
+    "change": "new operation",
+    "note": "Your sandbox key, its scopes and tier, and the calls of the last hour."
+  },
+  {
     "key": "GET /api/v1/webhook-endpoints/{id} 200.target: field added",
     "class": "additive",
     "operationId": "webhooks.getWebhookEndpointsById",

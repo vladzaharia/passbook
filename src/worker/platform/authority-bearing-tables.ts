@@ -15,6 +15,8 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'message_rule_fires',
   'vas_keys',
   'pass_check_in',
+  'request_log',
+  'request_log_budget',
   'scanner_setups',
   'template_release_reissues',
   'workflow_release_snapshots',

@@ -27183,6 +27183,588 @@
         ]
       }
     },
+    "/api/v1/developer/logs": {
+      "get": {
+        "summary": "The request log of your sandbox: metadata for 7 days",
+        "operationId": "developer.getLogs",
+        "tags": [
+          "developer"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "keyId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[1-5]xx|[1-5]\\d\\d)$"
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9_]{2,64}$"
+            },
+            "required": false,
+            "name": "code",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": false,
+            "name": "path",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE"
+              ]
+            },
+            "required": false,
+            "name": "method",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "requestId": {
+                            "type": "string"
+                          },
+                          "at": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "method": {
+                            "type": "string"
+                          },
+                          "route": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "path": {
+                            "type": "string"
+                          },
+                          "query": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "status": {
+                            "type": "integer"
+                          },
+                          "code": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "durationMs": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "keyId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "mode": {
+                            "type": "string",
+                            "enum": [
+                              "live",
+                              "test"
+                            ]
+                          },
+                          "via": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "try"
+                            ]
+                          },
+                          "hasBodies": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "requestId",
+                          "at",
+                          "method",
+                          "route",
+                          "path",
+                          "query",
+                          "status",
+                          "code",
+                          "durationMs",
+                          "keyId",
+                          "mode",
+                          "via",
+                          "hasBodies"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "capped": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "hour",
+                        "total",
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor",
+                    "capped"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.requestLogs",
+          "method": "list",
+          "sdk": false,
+          "reason": "Developer portal request log: a signed-in person in a browser, not an integration."
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-codes": [
+          "FORBIDDEN",
+          "INVALID_API_KEY",
+          "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/developer/logs/{id}": {
+      "get": {
+        "summary": "One request of your sandbox, with its redacted bodies for 24 hours",
+        "operationId": "developer.getLog",
+        "tags": [
+          "developer"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "method": {
+                      "type": "string"
+                    },
+                    "route": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "code": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "durationMs": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "keyId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "live",
+                        "test"
+                      ]
+                    },
+                    "via": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "try"
+                      ]
+                    },
+                    "hasBodies": {
+                      "type": "boolean"
+                    },
+                    "requestBody": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "responseBody": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "bodiesExpireAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "requestId",
+                    "at",
+                    "method",
+                    "route",
+                    "path",
+                    "query",
+                    "status",
+                    "code",
+                    "durationMs",
+                    "keyId",
+                    "mode",
+                    "via",
+                    "hasBodies",
+                    "requestBody",
+                    "responseBody",
+                    "bodiesExpireAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.requestLogs",
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "Developer portal request log: a signed-in person in a browser, not an integration."
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-codes": [
+          "FORBIDDEN",
+          "INVALID_API_KEY",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/developer/rail": {
+      "get": {
+        "summary": "Your API: the sandbox key, its scopes and tier, and the calls of the last hour",
+        "operationId": "developer.getRail",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "live",
+                        "test"
+                      ]
+                    },
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "passes:read",
+                          "passes:write",
+                          "holders:write",
+                          "templates:read",
+                          "messages:write",
+                          "scans:read",
+                          "scans:write",
+                          "connections:read",
+                          "connections:write",
+                          "webhooks:manage",
+                          "templates:write",
+                          "templates:review",
+                          "templates:publish",
+                          "messages:read",
+                          "scanning:write",
+                          "nfc:read",
+                          "nfc:write",
+                          "wallet:read",
+                          "wallet:write",
+                          "api-keys:write",
+                          "org:read",
+                          "org:write",
+                          "members:read",
+                          "members:write",
+                          "audit:read",
+                          "platform:orgs",
+                          "platform:users",
+                          "platform:identities",
+                          "platform:wallet",
+                          "platform:settings",
+                          "platform:status",
+                          "platform:templates",
+                          "platform:audit",
+                          "brand:manage"
+                        ]
+                      }
+                    },
+                    "tier": {
+                      "type": "string",
+                      "enum": [
+                        "standard",
+                        "high",
+                        "bulk"
+                      ]
+                    },
+                    "limitPerMinute": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0
+                    },
+                    "callsLastHour": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "key": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "prefix": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "prefix"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "mode",
+                    "scopes",
+                    "tier",
+                    "limitPerMinute",
+                    "callsLastHour",
+                    "key"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.rail",
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "Developer portal rail: a signed-in person in a browser, not an integration."
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-codes": [
+          "FORBIDDEN",
+          "INVALID_API_KEY",
+          "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND"
+        ]
+      }
+    },
     "/api/v1/developer/sandbox": {
       "post": {
         "security": [
@@ -27353,7 +27935,9 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "INVALID_API_KEY",
           "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
@@ -27470,7 +28054,9 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "INVALID_API_KEY",
           "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
@@ -27571,7 +28157,9 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "INVALID_API_KEY",
           "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
@@ -27638,7 +28226,9 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "INVALID_API_KEY",
           "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
@@ -27701,7 +28291,9 @@
         },
         "x-codes": [
           "FORBIDDEN",
+          "INVALID_API_KEY",
           "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",

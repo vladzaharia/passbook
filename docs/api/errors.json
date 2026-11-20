@@ -1527,6 +1527,7 @@
       ],
       "modules": [
         "api-keys",
+        "developer",
         "platform",
         "scan"
       ]
@@ -2678,6 +2679,15 @@
       ],
       "modules": [
         "delivery"
+      ]
+    },
+    {
+      "code": "REQUEST_LOG_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "developer"
       ]
     },
     {

@@ -6,6 +6,7 @@
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DEV_COPY } from '../../shared/copy/developers.ts';
+import { LOGS_COPY, STATUS_COPY } from '../../shared/copy/developers-ops.ts';
 import { DEVELOPERS_INDEXABLE, PATHS, twin } from '../../shared/developers.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import { HEAD_HTML } from '../../worker/ssr/head.ts';
@@ -18,6 +19,7 @@ import { ChangelogView } from './pages/changelog.tsx';
 import { ConsoleView } from './pages/console.tsx';
 import { HomeView } from './pages/home.tsx';
 import { type NavKey, Shell, SideNav } from './pages/layout.tsx';
+import { LogsView } from './pages/logs.tsx';
 import {
   ErrorEntryView,
   ErrorsIndex,
@@ -27,6 +29,7 @@ import {
   WebhooksView,
 } from './pages/more.tsx';
 import { ResourceView } from './pages/resource.tsx';
+import { StatusView } from './pages/status.tsx';
 import { PlaygroundPage } from './playground/page.tsx';
 
 interface Doc {
@@ -58,6 +61,14 @@ function document(doc: Doc, origin: string, assets: string): string {
 }
 
 const html = (node: ReactElement) => renderToStaticMarkup(node);
+
+/** `METHOD /api/v1/path/{id}` to operationId, for the request log's "Open in builder" (the console takes an operation id). */
+const opIndex = (site: Site): Record<string, string> =>
+  Object.fromEntries(
+    site.pages.flatMap((p) =>
+      p.ops.map((o) => [`${o.method.toUpperCase()} ${o.path}`, o.operationId]),
+    ),
+  );
 
 /** `/developers/reference/passes` is `developers/reference/passes.html`; a directory page is `index.html`. */
 const fileOf = (url: string, dir: boolean) => (dir ? `${url}/index.html` : `${url}.html`);
@@ -219,6 +230,9 @@ export function renderSite(site: Site, origin: string, assets: string): OutFile[
       ),
     });
   out.push({ file: runFileUrl('index'), body: JSON.stringify(runIndex(site)) });
+  page(PATHS.logs, LOGS_COPY.title, LOGS_COPY.lede, 'logs', <LogsView />);
+  page(PATHS.status, STATUS_COPY.title, STATUS_COPY.lede, undefined, <StatusView />);
+  out.push({ file: PATHS.logsOps, body: JSON.stringify(opIndex(site)) });
   for (const which of ['quickstart', 'guides'] as const)
     page(
       PATHS[which],

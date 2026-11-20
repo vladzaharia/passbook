@@ -16,6 +16,8 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
     const { mountOrgChip } = await import('../console/org-chip.ts');
     return { mount: mountOrgChip };
   },
+  logs: async () => (await import('../logs/entry.ts')).logsIsland,
+  'api-rail': async () => (await import('../logs/entry.ts')).railIsland,
 };
 
 export function mountIslands(root: ParentNode = document): void {
