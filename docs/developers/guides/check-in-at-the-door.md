@@ -5,9 +5,7 @@ line: Scan and admit
 status: ready
 ops: passes.getPassesById
 ---
-A till reads a pass's code and admits the holder. This guide sets the pass's check-in rules, then walks the till calls. Your sandbox answers them with test passes: no scanner is needed.
-
-You need a pass: make one with [issue on purchase](/developers/guides/issue-on-purchase).
+A till reads a pass's code and admits the holder. This guide sets the pass's check-in rules and shows the till calls. You need a pass: make one with [issue on purchase](/developers/guides/issue-on-purchase).
 
 ## Set the rules
 
@@ -15,18 +13,24 @@ You need a pass: make one with [issue on purchase](/developers/guides/issue-on-p
 
 {{run check-in-rules}}
 
-## Read a code and admit
+Read them back with [the rules](console:passes.getPassesByIdCheckIn).
 
-A till key names its device in `x-passbook-device` on every call; without it the answer is `422 DEVICE_REQUIRED`. `scan/resolve` shows what a code would do and records nothing. Use your pass's own scan code from its detail.
+## Find the code
+
+A till reads the code the pass's barcode carries. It is `passJson.barcodes[0].message` in the pass detail; the QR on the pass encodes it.
+
+## Call the till
+
+A till call needs a key bound to a terminal, and names the terminal in `x-passbook-device`. Terminals belong to Scanning in an organization: a sandbox has none. Its key gets `422 DEVICE_REQUIRED` without the header and `404 TERMINAL_NOT_FOUND` with one. Run these with a till key from your organization.
 
 {{show door-check-in}}
 
-Then `scan/actions` with `actionId: "auto"` applies the pass's check-in rule. Every call takes its own `idempotencyKey`, so a retry from a flaky connection is safe.
+`scan/resolve` shows what a code would do and records nothing. `scan/actions` with `actionId: "auto"` applies the pass's check-in rule. Every call takes its own `idempotencyKey`, so a retry from a flaky connection is safe.
 
 ## Undo a scan
 
-`POST /scan/scans/{scanId}/undo` reverses an admit made by mistake. See the [terminal reference](/developers/reference/terminal).
+`POST /scan/scans/{scanId}/undo` reverses an admit made by mistake, inside the undo window and only for scans the same key made. See the [terminal reference](/developers/reference/terminal).
 
 ## Result
 
-The resolve and action answers carry the outcome and the pass as the till would show it. The pass's activity list records each scan.
+The rules read back as you set them. Open the pass's `downloadUrl`: the test preview shows the pass the till would read.

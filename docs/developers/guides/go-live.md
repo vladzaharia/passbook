@@ -46,4 +46,4 @@ The new `secret` is shown once.
 
 ## Result
 
-`GET /api-keys/me` on your sandbox shows `mode: test`. The same call with your Live key shows `mode: live`, your scopes and your organization. That is the switch.
+`GET /api-keys/me` on your sandbox shows `mode: test`. The same call with your Live key shows `mode: live`, your scopes and your organization.

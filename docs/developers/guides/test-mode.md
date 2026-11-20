@@ -35,4 +35,4 @@ There is no reset call. Void and delete the passes you no longer want, or close 
 
 ## Result
 
-The inbox holds your message and the pass has a preview page. That is the whole path from call to result, with nothing issued.
+The inbox holds your message and the pass has a preview page. Nothing was issued.

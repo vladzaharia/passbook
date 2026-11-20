@@ -68,4 +68,4 @@ Void, email or remove passes by id.
 
 ## Result
 
-Read the import for its counts, then [list the passes](console:passes.getPasses). Each has a `downloadUrl` to its test preview. The `results.csv` and `errors.csv` downloads list what each row did.
+Read the import: `state` is `committing` while it runs and `done` after, with the counts. Then [list the passes](console:passes.getPasses); each has a `downloadUrl` to its test preview. When it is done, `results.csv` and `errors.csv` list what each row did.
