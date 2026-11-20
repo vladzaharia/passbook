@@ -32,7 +32,8 @@ import {
   type MagicOutcome,
   processSignInRequest,
 } from './magic-service.ts';
-import { homeFor, safeNext } from './next.ts';
+import { landingFor } from './landing.ts';
+import { safeNext } from './next.ts';
 import { confirmPage, expiredPage, signInErrorPage, signInToConfirm, verifyPage } from './pages.ts';
 import { resolveSession } from './sessions.ts';
 import { verifyTurnstile } from './turnstile.ts';
@@ -162,13 +163,18 @@ async function consumeErrorPage(
 }
 
 /** Where the browser goes once a link or code is consumed. */
-function targetOf(outcome: MagicOutcome): string {
+async function targetOf(c: Context<AppBindings>, outcome: MagicOutcome): Promise<string> {
   if (outcome.kind === 'verified') return `/account?verified=${encodeURIComponent(outcome.email)}`;
   if (outcome.kind === 'linked') {
     const next = safeNext(outcome.next);
     return next ? `/auth/oidc/start?next=${encodeURIComponent(next)}` : '/auth/oidc/start';
   }
-  return homeFor(outcome.result.roles, outcome.next);
+  return landingFor(
+    serviceContext(c),
+    outcome.result.userId,
+    outcome.result.roles,
+    outcome.next,
+  );
 }
 
 /** POST /auth/magic/consume. Forms get a redirect or an error page; JSON gets JSON. */
@@ -192,6 +198,6 @@ export async function consumeMagic(c: Context<AppBindings>) {
   }
   if (outcome.kind === 'linked') clearCookie(c, MAGIC_COOKIE);
   // ?verified= tells /account which address was just added (the portal confirms it).
-  const target = targetOf(outcome);
+  const target = await targetOf(c, outcome);
   return isForm ? c.redirect(target, 303) : c.json({ ok: true as const, next: target });
 }

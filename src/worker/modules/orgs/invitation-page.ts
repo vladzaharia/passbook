@@ -11,7 +11,7 @@ export function invitationPage(nonce: string, theme?: PageTheme): Response {
 <p id="message" role="status" aria-live="polite" class="lede"></p>
 <p id="login" class="lede" hidden><a href="/login" target="_blank" rel="noopener noreferrer">Sign in in a new tab</a>, then return here.</p>
 <button type="button" class="btn" id="accept">Accept invitation</button>
-<a id="done" class="btn" href="/account" hidden>Go to your account</a>
+<a id="done" class="btn" href="/admin" hidden>Open admin</a>
 </div>
 <script nonce="${nonce}">
   const token = location.hash.slice(1);

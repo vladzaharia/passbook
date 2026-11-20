@@ -18,7 +18,8 @@ import {
   setSessionCookie,
 } from './cookies.ts';
 import { MAGIC_TTL_MS } from './magic-service.ts';
-import { homeFor, safeNext } from './next.ts';
+import { landingFor } from './landing.ts';
+import { safeNext } from './next.ts';
 import { OIDC_SCOPE, oidcRedirectUri, usesCimd } from './oidc-cimd.ts';
 import {
   authorizationUrl,
@@ -170,7 +171,7 @@ export async function callbackOidc(c: Context<AppBindings>) {
       },
     );
     setSessionCookie(c, result.session.cookieValue, result.session.maxAgeSeconds);
-    return c.redirect(homeFor(result.roles, next), 302);
+    return c.redirect(await landingFor(ctx, result.userId, result.roles, next), 302);
   } catch (cause) {
     if (!(cause instanceof AppError) || !isSignInErrorCode(cause.code)) throw cause;
     ctx.log.info('auth.oidc_refused', { code: cause.code });
