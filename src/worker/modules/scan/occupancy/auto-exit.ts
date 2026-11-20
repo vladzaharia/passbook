@@ -53,9 +53,8 @@ export async function exitGrant(
   const eventId = row.scope.startsWith('event:') ? row.scope.slice(6) : null;
   const effect = await markOutEffect(
     ctx.env.DB,
-    { id: scanId, passId: row.pass_id, templateId: row.template_id, place: row.scope },
+    { id: scanId, passId: row.pass_id, place: row.scope },
     row.org_id,
-    row.mode,
   );
   const event: EventRow = {
     id: ctx.ids.ordered(now),

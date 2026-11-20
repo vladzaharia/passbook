@@ -149,7 +149,7 @@ export async function markOut(
     ledger,
     scanRow,
     { kind: 'device', purpose: 'org_mode.scan.check_in' },
-    await markOutEffect(db, scanRow, actor.orgId, actor.mode),
+    await markOutEffect(db, scanRow, actor.orgId),
   );
   const g = scanWriteGrant(ctx, actor, {
     purpose: 'org_mode.scan.check_in',

@@ -71,7 +71,7 @@ describe('mark-out keeps the pass in the event totals', () => {
       'SELECT gate_snapshot, presence_snapshot FROM scan_retention_proofs WHERE scan_id = ?',
       [scan?.id ?? ''],
     );
-    expect(JSON.parse(proof?.gate_snapshot ?? 'null')).toMatchObject({ kind: 'check_in' });
+    expect(proof?.gate_snapshot).toBeNull();
     expect(JSON.parse(proof?.presence_snapshot ?? 'null')).toMatchObject({
       state: 'out',
       lastScanId: scan?.id,
@@ -170,7 +170,7 @@ describe('mark-out keeps the pass in the event totals', () => {
         'SELECT gate_snapshot IS NOT NULL AS g, presence_snapshot IS NOT NULL AS p FROM scan_retention_proofs WHERE scan_id = ?',
         [scan?.id ?? ''],
       ),
-    ).toEqual({ g: 1, p: 1 });
+    ).toEqual({ g: 0, p: 1 });
     expect(await verifyStored(db(), kit().env, scan?.id ?? '')).toBe(true);
     // Live, before any deletion: the exit carries the event now, so the pass counts as arrived, not inside.
     expect(await eventTotalsStmt(db(), kit().org.id, 'live', a.event.id).first()).toEqual({
@@ -255,12 +255,18 @@ describe('mark-out keeps the pass in the event totals', () => {
 
   it('keeps a pass whose exit followed an undo-restored entry', async () => {
     const { a, undoId } = await exitAfterUndo();
-    const exit = await first<{ gate_snapshot: string | null }>(
+    const entry = await first<{ id: string }>(
       db(),
-      "SELECT gate_snapshot FROM scan_retention_proofs r JOIN scans s ON s.id = r.scan_id WHERE s.pass_id = ? AND s.out_cause = 'desk'",
+      "SELECT id FROM scans WHERE pass_id = ? AND action_kind = 'check_in' AND direction = 'in'",
       [a.pass.id],
     );
-    expect(JSON.parse(exit?.gate_snapshot ?? 'null')).toMatchObject({ lastScanId: undoId });
+    const exit = await first<{ presence_snapshot: string | null }>(
+      db(),
+      "SELECT presence_snapshot FROM scan_retention_proofs r JOIN scans s ON s.id = r.scan_id WHERE s.pass_id = ? AND s.out_cause = 'desk'",
+      [a.pass.id],
+    );
+    expect(JSON.parse(exit?.presence_snapshot ?? 'null')).toMatchObject({ prevScanId: entry?.id });
+    expect(undoId).not.toBe(entry?.id);
     await deletePass(db(), kit().env, { id: a.pass.id, orgId: kit().org.id, mode: 'live' });
     expect(await total(a.event.id)).toBe(1);
     expect(await total(a.event.id, true)).toBe(0);
@@ -280,15 +286,48 @@ describe('mark-out keeps the pass in the event totals', () => {
     }
   }
 
-  it('does not keep an exit through an undo proof written without snapshots', async () => {
+  it('keeps the exit after an undo-restored entry even when the undo proof has no snapshots', async () => {
     const { a, undoId } = await exitAfterUndo();
     await edit(
       'UPDATE scan_retention_proofs SET gate_snapshot = NULL, presence_snapshot = NULL WHERE scan_id = ?',
       [undoId],
     );
     await deletePass(db(), kit().env, { id: a.pass.id, orgId: kit().org.id, mode: 'live' });
-    expect(await total(a.event.id)).toBe(0);
+    expect(await total(a.event.id)).toBe(1);
   });
+
+  /** Another event of the same template moves the pass's shared (empty-scope) gate. */
+  async function otherEvent(a: Awaited<ReturnType<typeof arrived>>, template: string) {
+    const event = await kit().event({ templateIds: [template] });
+    const scanner = await kit().scanner({
+      eventId: event.id,
+      settings: { roleWithoutSignIn: 'desk' },
+    });
+    const res = await kit().post(scanner.headers, '/actions', {
+      input: codeOf(a.pass),
+      actionId: 'check_in',
+      clientTs: kit().clock.now(),
+      idempotencyKey: key(),
+    });
+    expect(((await res.json()) as { kind: string }).kind).toBe('ok');
+    return event;
+  }
+
+  it.each(['before', 'after'])(
+    'keeps the pass when another event moves a shared gate %s the exit',
+    async (when) => {
+      const shared = await kit().scanTemplate(`Shared ${when}`, {
+        actions: [{ ...CHECK_IN, repeat: 'always' }],
+      });
+      const a = await arrived({ template: shared });
+      if (when === 'before') await otherEvent(a, shared);
+      expect((await markOut(a.event.id, a.pass.id, a.place)).status).toBe(204);
+      if (when === 'after') await otherEvent(a, shared);
+      await deletePass(db(), kit().env, { id: a.pass.id, orgId: kit().org.id, mode: 'live' });
+      expect(await total(a.event.id)).toBe(1);
+      expect(await total(a.event.id, true)).toBe(0);
+    },
+  );
 
   it('does not keep an exit through an invalidated check-in proof', async () => {
     const a = await arrived();

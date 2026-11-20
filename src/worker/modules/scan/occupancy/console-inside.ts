@@ -175,7 +175,7 @@ export async function consoleMarkOut(
     ledger,
     scanRow,
     { kind: 'console', purpose: 'org_mode.scan.mark_out' },
-    await markOutEffect(ctx.env.DB, scanRow, orgId, mode),
+    await markOutEffect(ctx.env.DB, scanRow, orgId),
   );
   const g = grant(ctx, {
     purpose: 'org_mode.scan.mark_out',

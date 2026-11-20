@@ -76,9 +76,8 @@ export function markOutScan(g: Grant, s: MarkOutScan, when: GrantCond[]): Grante
   );
 }
 
-/** What an exit at an event place leaves, for the proof that follows the pass past its deletion. */
+/** The presence row an exit at an event place writes, for the proof that follows the pass past its deletion. */
 export interface MarkOutEffect {
-  gateAfter: Record<string, string | number | null>;
   presenceAfter: Record<string, string | number | null>;
 }
 
@@ -91,15 +90,11 @@ interface Held {
   lastScanId: string;
 }
 
-/**
- * The check-in gate (unchanged by an exit) and the presence row the exit writes, from the rows the desk
- * read. Null unless the place is an event and the gate's last scan has a ledger row naming its action.
- */
+/** The presence row the exit writes, from the row the desk read. Null unless the place is an event with a row. */
 export async function markOutEffect(
   db: D1Database,
-  s: Pick<MarkOutScan, 'id' | 'passId' | 'templateId' | 'place'>,
+  s: Pick<MarkOutScan, 'id' | 'passId' | 'place'>,
   orgId: string,
-  mode: string,
 ): Promise<MarkOutEffect | null> {
   if (!s.place.startsWith('event:')) return null;
   const held = await first<Held>(
@@ -109,26 +104,7 @@ export async function markOutEffect(
     [orgId, s.passId, s.place],
   );
   if (!held) return null;
-  // The newest check-in gate of the pass: after an undo it is the undo row's, which names the action
-  // in its signed post-undo gate.
-  const gate = await first<Record<string, string | number | null>>(
-    db,
-    `SELECT g.scope, g.kind, g.state, g.count, g.first_at AS firstAt, g.last_at AS lastAt,
-       g.last_scan_id AS lastScanId, g.prev_state AS prevState, g.prev_last_at AS prevLastAt,
-       g.prev_scan_id AS prevScanId,
-       (SELECT COALESCE(json_extract(e.data, '$.actionIdRef'), json_extract(e.data, '$.postUndoGate.actionIdRef'))
-         FROM pass_events e WHERE e.pass_id = g.pass_id AND e.org_id = g.org_id AND e.mode = g.mode
-         AND (CASE WHEN json_valid(e.data) THEN json_extract(e.data, '$.scanId') END) = g.last_scan_id
-         LIMIT 1) AS actionIdRef
-     FROM scan_gates g WHERE g.pass_id = ? AND g.org_id = ? AND g.mode = ? AND g.template_id = ?
-       AND g.kind = 'check_in' AND g.state IN ('in', 'out')
-       AND (g.scope = ? OR g.scope = '' OR g.scope GLOB 'day:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]')
-     ORDER BY g.last_at DESC, g.last_scan_id DESC LIMIT 1`,
-    [s.passId, orgId, mode, s.templateId, s.place],
-  );
-  if (!gate?.actionIdRef) return null;
   return {
-    gateAfter: { passId: s.passId, orgId, mode, templateId: s.templateId, ...gate },
     presenceAfter: {
       passId: s.passId,
       orgId,
