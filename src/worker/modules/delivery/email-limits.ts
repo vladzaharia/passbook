@@ -1,4 +1,6 @@
+import type { EntitlementValue } from '../../../shared/contracts/entitlements.ts';
 import { EMAIL_LIMIT_COPY } from '../../../shared/copy/email.ts';
+import { entitlementsOf } from '../../platform/entitlements.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
@@ -12,15 +14,27 @@ const HOUR = 3_600_000;
 export const PLATFORM_RECIPIENT_HOURLY_CAP = 10;
 const MAX_DEFER_HOURS = 24;
 
-/** The org's caps from its settings (3 per hour, 500 per day by default); the day cap is clamped to the platform's. */
+/** The plan's `email.perDay` as a count: `null` has no cap; a missing or invalid value allows none. */
+const planCap = (value: EntitlementValue | undefined): number =>
+  value === null ? Number.POSITIVE_INFINITY : typeof value === 'number' ? value : 0;
+
+/**
+ * The org's caps from its settings (3 per hour, 500 per day by default); the day cap is clamped to the
+ * platform's and to the plan's `email.perDay`. The queue grant re-reads the plan's cap at commit.
+ */
 export async function emailCaps(ctx: ServiceContext, orgId: string) {
-  const [settings, platform] = await Promise.all([
+  const [settings, platform, plan] = await Promise.all([
     getOrgSettings(ctx, orgId),
     getPlatformSettings(ctx),
+    entitlementsOf(ctx, orgId),
   ]);
   return {
     recipientCap: settings['email.recipientCapPerHour'],
-    orgCap: Math.min(settings['email.orgCapPerDay'], platform['email.orgCapPerDayMax']),
+    orgCap: Math.min(
+      settings['email.orgCapPerDay'],
+      platform['email.orgCapPerDayMax'],
+      planCap(plan['email.perDay']),
+    ),
   };
 }
 

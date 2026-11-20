@@ -24,6 +24,13 @@ export interface SettingEntry {
 
 const clamp = (n: number, max: number) => Math.min(n, max);
 
+/** The platform's daily email maximum, lowered to the plan's `email.perDay` when that is a count. */
+function emailCeiling(platform: PlatformSettings, entitlements: Entitlements): number {
+  const plan = entitlements['email.perDay'];
+  const max = platform['email.orgCapPerDayMax'];
+  return typeof plan === 'number' ? Math.min(max, plan) : max;
+}
+
 /** NFC tags need the plan's `nfc` at least Basic. */
 const nfcIncluded = (entitlements: Entitlements) => entitledValue('nfc', entitlements.nfc, 'basic');
 
@@ -51,7 +58,7 @@ export function inherit(
       return { ...entry, value, default: fallback, ceiling };
     }
     if (entry.key === 'email.orgCapPerDay') {
-      const ceiling = platform['email.orgCapPerDayMax'];
+      const ceiling = emailCeiling(platform, entitlements);
       const fallback = clamp(entry.default as number, ceiling);
       return {
         ...entry,
@@ -87,6 +94,7 @@ export function planGateIssue(
 export function platformGateIssue(
   platform: PlatformSettings,
   upserts: Record<string, unknown>,
+  entitlements?: Entitlements,
 ): { path: string; message: string; code: string } | null {
   const tags = upserts['nfc.tags'] as { enabled?: boolean } | undefined;
   if (tags?.enabled === true && !platform['nfc.tagsEnabled'])
@@ -96,7 +104,9 @@ export function platformGateIssue(
       code: 'NFC_OFF',
     };
   const cap = upserts['email.orgCapPerDay'];
-  const max = platform['email.orgCapPerDayMax'];
+  const max = entitlements
+    ? emailCeiling(platform, entitlements)
+    : platform['email.orgCapPerDayMax'];
   if (typeof cap === 'number' && cap > max)
     return { path: 'email.orgCapPerDay', message: `Up to ${max}.`, code: 'ORG_CAP_ABOVE_MAX' };
   return null;

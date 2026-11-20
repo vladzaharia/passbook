@@ -10,6 +10,8 @@ export const JOIN_CODES = {
   org: 'ORG_ACCESS_CHANGED',
   actor: 'JOIN_LINK_CLOSED',
   config: 'JOIN_LIMIT',
+  // The plan's card or pass cap: the visitor sees the same daily-limit answer, never the org's plan.
+  limit: 'JOIN_LIMIT',
   lineage: 'JOIN_DUPLICATE',
   release: 'JOIN_NOT_READY',
   stale: 'CREATE_STALE',

@@ -218,6 +218,8 @@ Branch on `code`, not `detail`. Quote `requestId` when asking for help.
 
 Delivery features follow the plan too: Google and Samsung Wallet (`wallet.google`, `wallet.samsung`), `print` and `nfc` (Basic to bind tags, Secure to create keysets). A channel the plan lacks reads `{ "on": false, "source": "platform", "reason": "not_included" }`, creating a print, binding a tag or turning `nfc.tags` on answers `FEATURE_NOT_INCLUDED`, and the settings entry for `nfc.tags` carries `blockedByPlan`. A downgrade only pauses: passes, copies, prints and tag bindings stay, and an upgrade turns them back on.
 
+`FEATURE_LIMIT_REACHED` (403) carries `feature`, `limit` and `used`: a create would pass the organization's cap for that feature. It covers live and test passes, templates, members (pending invitations count), API keys, scanner devices, webhook endpoints, connections, broadcasts a day and join cards a day (a join visitor sees only the daily-limit answer). A downgrade never removes anything: what exists stays, only new creates are refused, and a removed or revoked item frees its slot. An import or sync that reaches the pass limit stops creating: an import reports the rest as `skipped` (`progress.skipped`, row code `FEATURE_LIMIT_REACHED`) and still applies its updates. Emails a day (`email.perDay`) lower the organization's own daily email cap and answer `EMAIL_RATE_LIMITED`.
+
 ## Approved template releases
 
 `GET /api/v1/templates/eligible?orgId=<org>&mode=live&provider=apple` returns a bounded page

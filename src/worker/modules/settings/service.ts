@@ -203,7 +203,14 @@ export async function updateSettings(
     }
   }
   if (issues.length) throw new ValidationError('Invalid settings.', issues, 'INVALID_SETTING');
-  const gated = orgId === null ? null : platformGateIssue(await getPlatformSettings(ctx), upserts);
+  const gated =
+    orgId === null
+      ? null
+      : platformGateIssue(
+          await getPlatformSettings(ctx),
+          upserts,
+          await entitlementsOf(ctx, orgId),
+        );
   if (gated) throw new ValidationError('Invalid settings.', [gated], gated.code);
   // The plan comes after the platform: a write the plan blocks is a 403 naming the feature, not a field error.
   const planned = orgId === null ? null : planGateIssue(await entitlementsOf(ctx, orgId), upserts);

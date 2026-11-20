@@ -1,5 +1,6 @@
 import type { Check } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
+import { withinLimit } from '../../platform/entitlements.ts';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -41,6 +42,14 @@ export function joinChecks(input: JoinCheckInput): Check[] {
       [now - DAY, input.orgDailyCap],
     ),
   ];
+  // The plan's cap on cards a day, over the same rolling window as the platform's.
+  checks.push(
+    withinLimit(
+      'join.perDay',
+      'SELECT COUNT(*) FROM join_issues ji WHERE ji.org_id = {org} AND ji.mode = {mode} AND ji.created_at > ?',
+      [now - DAY],
+    ),
+  );
   // An address is taken only when the link asks for one.
   if (input.holderEmail !== null)
     checks.push(
