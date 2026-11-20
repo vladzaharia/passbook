@@ -14,6 +14,8 @@ export const SettingEntrySchema = z.object({
   ceiling: z.number().int().optional(),
   /** The platform kill switch for this setting is off: the control does nothing until it is on. */
   blockedByPlatform: z.boolean().optional(),
+  /** The organization's plan does not include the feature: the control does nothing until PassBook turns it on. */
+  blockedByPlan: z.boolean().optional(),
   updatedAt: z.number().int().nullable(),
   updatedBy: z.string().nullable(),
 });

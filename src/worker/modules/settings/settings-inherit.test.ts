@@ -27,6 +27,7 @@ type Entry = {
   source: 'org' | 'default';
   ceiling?: number;
   blockedByPlatform?: boolean;
+  blockedByPlan?: boolean;
 };
 let appEnv: AppEnv;
 let fx: Fixtures;
@@ -187,5 +188,52 @@ describe('settings source and ceiling', () => {
     const res = await call('GET', '?scope=platform', undefined, member.headers);
     expect(res.status).toBe(403);
     expect(JSON.stringify(await res.json())).not.toContain('retention.scansMaxDays');
+  });
+});
+
+describe('settings and the plan', () => {
+  const plan = (scope: string, preset: string) =>
+    run(env.DB, 'UPDATE org_entitlements SET preset = ? WHERE org_id = ?', [
+      preset,
+      scope.slice(4),
+    ]);
+
+  it('leaves a legacy org as it was: nfc.tags is not blocked and can be turned on', async () => {
+    const scope = await orgScope();
+    expect((await read(scope))('nfc.tags').blockedByPlan).toBeUndefined();
+    expect((await put(scope, { 'nfc.tags': { enabled: true } })).status).toBe(200);
+  });
+
+  it('flags nfc.tags blockedByPlan while the plan has nfc off, apart from the platform flag', async () => {
+    const scope = await orgScope();
+    await plan(scope, 'trial');
+    expect((await read(scope))('nfc.tags')).toMatchObject({ blockedByPlan: true });
+    expect((await read(scope))('nfc.tags').blockedByPlatform).toBeUndefined();
+    await call('PUT', '', { values: { 'nfc.tagsEnabled': false } });
+    expect((await read(scope))('nfc.tags')).toMatchObject({
+      blockedByPlan: true,
+      blockedByPlatform: true,
+    });
+    await plan(scope, 'standard');
+    expect((await read(scope))('nfc.tags').blockedByPlan).toBeUndefined();
+  });
+
+  it('refuses turning nfc.tags on with FEATURE_NOT_INCLUDED, writes nothing, and allows turning it off', async () => {
+    const scope = await orgScope();
+    await plan(scope, 'trial');
+    const res = await put(scope, { 'nfc.tags': { enabled: true } });
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ code: 'FEATURE_NOT_INCLUDED', feature: 'nfc' });
+    expect((await read(scope))('nfc.tags')).toMatchObject({ source: 'default' });
+    expect((await put(scope, { 'nfc.tags': { enabled: false } })).status).toBe(200);
+    expect((await put(scope, { 'email.orgCapPerDay': 100 })).status).toBe(200);
+  });
+
+  it('allows the write again once the plan includes nfc', async () => {
+    const scope = await orgScope();
+    await plan(scope, 'trial');
+    expect((await put(scope, { 'nfc.tags': { enabled: true } })).status).toBe(403);
+    await plan(scope, 'standard');
+    expect((await put(scope, { 'nfc.tags': { enabled: true } })).status).toBe(200);
   });
 });

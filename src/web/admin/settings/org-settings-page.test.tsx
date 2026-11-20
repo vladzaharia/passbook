@@ -22,6 +22,7 @@ interface Row {
   default?: unknown;
   ceiling?: number;
   blockedByPlatform?: boolean;
+  blockedByPlan?: boolean;
 }
 const item = (key: string, row: Row) => ({
   scope: 'org:o1',
@@ -109,6 +110,18 @@ describe('org settings inheritance', () => {
     ).toHaveTextContent('Disabled');
     expect(screen.queryByRole('switch', { name: 'Linked NFC allowed' })).toBeNull();
     expect(screen.queryByText('Off for this organization')).toBeNull();
+  });
+
+  it('locks the NFC tag switch while the plan does not include NFC, with the reason in the tooltip', async () => {
+    await setup({
+      'nfc.tags': { value: { enabled: true }, default: { enabled: true }, blockedByPlan: true },
+    });
+    expect(
+      await screen.findByLabelText(
+        'Not available. Not included for this organization. Ask PassBook to turn it on. Copies stay as they are.',
+      ),
+    ).toHaveTextContent('Not available');
+    expect(screen.queryByRole('switch', { name: 'Linked NFC allowed' })).toBeNull();
   });
 
   it('leaves the NFC tag switch usable when the platform switch is on', async () => {
