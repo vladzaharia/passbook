@@ -17,7 +17,7 @@
   },
   "apple.deleteWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial": {
     "resource": "apple.registrations",
-    "method": "del",
+    "method": "delete",
     "sdk": false,
     "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
   },
@@ -135,7 +135,7 @@
   },
   "brand.deleteBrandWebLogo": {
     "resource": "brand.webLogo",
-    "method": "del"
+    "method": "delete"
   },
   "brand.getBrand": {
     "resource": "brand",
@@ -183,11 +183,11 @@
   },
   "broadcasts.postBroadcastsPreview": {
     "resource": "broadcasts",
-    "method": "preview"
+    "method": "countRecipients"
   },
   "bundles.deleteBundlesById": {
     "resource": "bundles",
-    "method": "del"
+    "method": "delete"
   },
   "bundles.getBundles": {
     "resource": "bundles",
@@ -211,7 +211,7 @@
   },
   "connections.deleteConnectionsById": {
     "resource": "connections",
-    "method": "del"
+    "method": "delete"
   },
   "connections.deleteConnectionsByIdWebhookSecretPrevious": {
     "resource": "connections",
@@ -342,39 +342,39 @@
     "method": "unassign"
   },
   "identities.deleteIdentitiesById": {
-    "resource": "platform.identities",
-    "method": "del"
+    "resource": "identities",
+    "method": "delete"
   },
   "identities.deleteIdentitiesByIdPushKey": {
-    "resource": "platform.identities.pushKey",
-    "method": "del"
+    "resource": "identities.pushKey",
+    "method": "delete"
   },
   "identities.getIdentities": {
     "resource": "identities",
     "method": "list"
   },
   "identities.getIdentitiesById": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "retrieve"
   },
   "identities.patchIdentitiesById": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "update"
   },
   "identities.postIdentities": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "create"
   },
   "identities.postIdentitiesByIdApnsCheck": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "checkApns"
   },
   "identities.postIdentitiesByIdRotate": {
-    "resource": "platform.identities",
+    "resource": "identities",
     "method": "rotate"
   },
   "identities.putIdentitiesByIdPushKey": {
-    "resource": "platform.identities.pushKey",
+    "resource": "identities.pushKey",
     "method": "upload"
   },
   "join-links.getJoinLinksByTemplateId": {
@@ -409,13 +409,13 @@
   },
   "me.deleteMeEmailsByEmail": {
     "resource": "me.emails",
-    "method": "del",
+    "method": "delete",
     "sdk": false,
     "reason": "Acts on the signed-in person's own account; needs a person's session."
   },
   "me.deleteMePassesById": {
     "resource": "me.passes",
-    "method": "del",
+    "method": "detach",
     "sdk": false,
     "reason": "Acts on the signed-in person's own account; needs a person's session."
   },
@@ -511,7 +511,7 @@
   },
   "message-rules.deleteMessageRulesById": {
     "resource": "messageRules",
-    "method": "del"
+    "method": "delete"
   },
   "message-rules.getMessageRules": {
     "resource": "messageRules",
@@ -539,7 +539,7 @@
   },
   "message-rules.postMessageRulesPreview": {
     "resource": "messageRules",
-    "method": "preview"
+    "method": "countDue"
   },
   "message-rules.putMessageRulesById": {
     "resource": "messageRules",
@@ -579,7 +579,7 @@
   },
   "nfc-tags.deleteNfcBindingsByBindingId": {
     "resource": "nfc.bindings",
-    "method": "del"
+    "method": "delete"
   },
   "nfc-tags.deleteNfcPassesByPassIdEnrollmentsById": {
     "resource": "nfc.enrollments",
@@ -747,11 +747,11 @@
   },
   "orgs.deleteOrgsById": {
     "resource": "platform.orgs",
-    "method": "del"
+    "method": "delete"
   },
   "orgs.deleteOrgsByIdBrandingBySlot": {
     "resource": "brand.passImages",
-    "method": "del"
+    "method": "delete"
   },
   "orgs.getOrgs": {
     "resource": "platform.orgs",
@@ -791,7 +791,7 @@
   },
   "pass-imports.deletePassImportsById": {
     "resource": "passImports",
-    "method": "del"
+    "method": "delete"
   },
   "pass-imports.getPassImports": {
     "resource": "passImports",
@@ -835,15 +835,15 @@
   },
   "passes.deletePassesById": {
     "resource": "passes",
-    "method": "del"
+    "method": "delete"
   },
   "passes.deletePassesByIdAssetsByName": {
     "resource": "passes.assets",
-    "method": "del"
+    "method": "delete"
   },
   "passes.deletePassesByIdMemberPhoto": {
     "resource": "passes.memberPhoto",
-    "method": "del"
+    "method": "delete"
   },
   "passes.getPasses": {
     "resource": "passes",
@@ -882,7 +882,7 @@
     "method": "diff"
   },
   "passes.getPassesByIdEvents": {
-    "resource": "passes.events",
+    "resource": "passes.activity",
     "method": "list"
   },
   "passes.getPassesByIdMemberPhoto": {
@@ -1342,8 +1342,8 @@
     "reason": "Scanner device protocol; needs a paired scanner session."
   },
   "scan.getScanScans": {
-    "resource": "terminal",
-    "method": "listScans",
+    "resource": "terminal.scans",
+    "method": "list",
     "sdk": false,
     "reason": "Scanner device protocol; needs a paired scanner session."
   },
@@ -1470,7 +1470,7 @@
     "reason": "Scanner device protocol; needs a paired scanner session."
   },
   "scan.postScanScansByScanIdUndo": {
-    "resource": "terminal",
+    "resource": "terminal.scans",
     "method": "undo"
   },
   "scan.postScanSessionOpenNow": {
@@ -1689,7 +1689,7 @@
   },
   "templates.deleteTemplatesById": {
     "resource": "templates",
-    "method": "del"
+    "method": "delete"
   },
   "templates.getTemplates": {
     "resource": "templates",
@@ -1825,7 +1825,7 @@
   },
   "users.deleteUsersByIdEmailsByEmail": {
     "resource": "platform.users.emails",
-    "method": "del"
+    "method": "delete"
   },
   "users.deleteUsersByIdSessionsBySessionId": {
     "resource": "platform.users.sessions",
@@ -1900,23 +1900,23 @@
     "method": "upsert"
   },
   "wallet-enrolments.getOrgsByOrgIdWalletEnrolments": {
-    "resource": "walletEnrolments",
+    "resource": "walletEnrollments",
     "method": "list"
   },
   "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderDisable": {
-    "resource": "walletEnrolments",
+    "resource": "walletEnrollments",
     "method": "disable"
   },
   "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderEnable": {
-    "resource": "walletEnrolments",
+    "resource": "walletEnrollments",
     "method": "enable"
   },
   "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderRevoke": {
-    "resource": "walletEnrolments",
+    "resource": "walletEnrollments",
     "method": "revoke"
   },
   "wallet-enrolments.putOrgsByOrgIdWalletEnrolmentsByProvider": {
-    "resource": "walletEnrolments",
+    "resource": "walletEnrollments",
     "method": "update"
   },
   "wallet-platform.getPlatformWalletCredentials": {
@@ -1932,15 +1932,15 @@
     "method": "retrieveMigration"
   },
   "wallet-platform.getPlatformWalletEnrolments": {
-    "resource": "platform.walletEnrolments",
+    "resource": "platform.walletEnrollments",
     "method": "list"
   },
   "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderHold": {
-    "resource": "platform.orgs.walletEnrolments",
+    "resource": "platform.orgs.walletEnrollments",
     "method": "hold"
   },
   "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderRelease": {
-    "resource": "platform.orgs.walletEnrolments",
+    "resource": "platform.orgs.walletEnrollments",
     "method": "release"
   },
   "wallet-platform.postPlatformWalletCredentialsByIdCheck": {
@@ -1969,7 +1969,7 @@
   },
   "wallet-providers.getWalletProvidersPassesById": {
     "resource": "passes",
-    "method": "retrieveWalletStatus"
+    "method": "retrieveProviderStatus"
   },
   "wallet-providers.postWalletProvidersAccountsRevoke": {
     "resource": "walletProviderAccounts",
@@ -1985,7 +1985,7 @@
   },
   "webhooks.deleteWebhookEndpointsById": {
     "resource": "webhookEndpoints",
-    "method": "del"
+    "method": "delete"
   },
   "webhooks.getWebhookEndpoints": {
     "resource": "webhookEndpoints",
