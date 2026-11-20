@@ -120,7 +120,8 @@ export function ScanFilters({
             onValueChange={(value) => set({ templateId: value === 'all' ? undefined : value })}
             options={[
               { value: 'all', label: 'All pass types' },
-              ...(types.data?.items.map((t) => ({ value: t.id, label: t.name })) ?? []),
+              ...(types.data?.items.map((t) => ({ value: t.id, label: t.name })) ??
+                (search.templateId ? [{ value: search.templateId, label: 'Loading…' }] : [])),
             ]}
           />
         )}
