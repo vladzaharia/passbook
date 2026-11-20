@@ -66,7 +66,7 @@ only, so `RateLimit-Remaining` is sent on 429 alone. Other limits (login, scanne
 | Header | Where | Meaning |
 |---|---|---|
 | `Authorization: Bearer <key>` | all key routes | the API key |
-| `Idempotency-Key` | pass create, resend | 1 to 200 characters; a retry returns the first result |
+| `Idempotency-Key` | pass create, resend | 1 to 200 characters; a retry returns the first result; the same key with another request is 422 `IDEMPOTENCY_KEY_REUSED`, a repeat while the first runs is 409 `IDEMPOTENCY_IN_PROGRESS` |
 | `If-Match: <version>` | pass update | optimistic concurrency; stale is `412 VERSION_CONFLICT` |
 | `x-passbook-mode` | console sessions | `test` selects Test mode; keys use their own mode |
 
