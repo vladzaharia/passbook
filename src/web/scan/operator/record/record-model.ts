@@ -9,11 +9,12 @@ import type { ScanChip } from '../../../../shared/contracts/scan-display.ts';
 import type { ScanSession } from '../../../../shared/contracts/scan-session.ts';
 import { SCAN_COPY, scanLine } from '../../../../shared/copy/scan.ts';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
-import { formatTime } from '../../../lib/format.ts';
+import { formatDay, formatWeekdayTime } from '../../../lib/format.ts';
 import { accessLines, directionPill, holdVerbs } from '../../machine/access-view.ts';
 import type { ScanOutcome } from '../../machine/types.ts';
 import { verdictLine } from '../../machine/verdict-lines.ts';
 import { canAddPhoto } from '../../result/add-photo.tsx';
+import { sessionTime } from '../../ui/session-time.ts';
 
 const R = OPERATOR_COPY.record;
 
@@ -117,7 +118,7 @@ export function presenceOf(o: ScanOutcome, timeZone?: string): Presence | null {
   if (!known) return door ? { state: 'none', line: null } : null;
   const since = occ?.since ?? (known === 'in' ? (entered ?? o.at) : null);
   const parts = [
-    since ? scanLine(R.since, { time: formatTime(since, timeZone) }) : null,
+    since ? scanLine(R.since, { time: sessionTime(since, timeZone) }) : null,
     occ?.place.name ?? null,
   ].filter(Boolean);
   return { state: known, line: parts.length ? parts.join(' · ') : null };
@@ -183,6 +184,8 @@ export type Run =
   | { t: 'turn'; direction: 'in' | 'out' }
   | { t: 'ask' }
   | { t: 'mark-out' }
+  | { t: 'show-pass'; passId: string }
+  | { t: 'look-up'; q: string }
   | { t: 'photo' };
 
 export interface Act {
@@ -193,7 +196,17 @@ export interface Act {
   key?: 'Enter' | 'O' | 'P';
   /** Kept in its place with a lock: a role cannot, a Manager's PIN can. */
   lock?: 'role' | 'approval' | 'max';
-  icon: 'check' | 'family' | 'out' | 'shield' | 'photo' | 'value' | 'again' | 'tap';
+  icon:
+    | 'check'
+    | 'family'
+    | 'out'
+    | 'shield'
+    | 'photo'
+    | 'value'
+    | 'again'
+    | 'tap'
+    | 'pass'
+    | 'search';
 }
 
 export interface Actions {
@@ -208,6 +221,9 @@ export interface ActionFacts {
   /** Opened from a list: card actions that are not a check-in open the desk panel first. */
   source: Source;
   rights: Rights;
+  /** The pass this record is of, and its holder's name: what Open pass and Look up use. */
+  passId: string | null;
+  name: string | null;
   /** The record has no photo and this device may add one. */
   addPhoto: boolean;
   /** Mark out is on offer: the person is inside a place here. */
@@ -277,12 +293,91 @@ export function actionsOf(o: ScanOutcome, f: ActionFacts): Actions {
       run: { t: 'group' },
     };
   }
+  const denied = o.kind === 'refused' || o.kind === 'heads_up';
+  if (denied) {
+    const open: Act | null = f.passId
+      ? {
+          id: 'show-pass',
+          label: R.openPass,
+          icon: 'pass',
+          run: { t: 'show-pass', passId: f.passId },
+        }
+      : null;
+    if (open && !primary) primary = open;
+    else if (open) acts.unshift(open);
+    acts.splice(open && primary !== open ? 1 : 0, 0, {
+      id: 'look-up',
+      label: R.lookUp,
+      icon: 'search',
+      run: { t: 'look-up', q: f.name ?? '' },
+    });
+    reason ??= nextStepOf(o);
+  }
   if (f.markOut && f.rights.markOut)
     acts.push({ id: 'out', label: R.markOut, icon: 'out', key: 'O', run: { t: 'mark-out' } });
   if (f.addPhoto)
     acts.push({ id: 'photo', label: R.photo, icon: 'photo', key: 'P', run: { t: 'photo' } });
   if (primary) primary = { ...primary, key: 'Enter' };
   return { primary, others: acts.slice(0, 3), reason, viewOnly: false };
+}
+
+/** What the operator does next after a refusal or a hold: from the reason, never a dead end. */
+export function nextStepOf(o: ScanOutcome): string {
+  if (o.reason === 'needs_approval') return R.needsManager;
+  const next = R.next as Record<string, string>;
+  return (o.reason && next[o.reason]) || R.next.other;
+}
+
+export interface Fact {
+  label: string;
+  value: string;
+}
+
+/** Why, in the pass's own terms: plan, visits used, validity, when it opens, the last time in. */
+export function factsOf(o: ScanOutcome, timeZone?: string): Fact[] {
+  const a = o.access ?? o.card?.access ?? null;
+  const out: Fact[] = [];
+  const F = R.facts;
+  if (a?.plan) out.push({ label: F.plan, value: a.plan.label });
+  if (a?.visits)
+    out.push({
+      label: F.visits,
+      value: scanLine(a.visits.limit == null ? R.visitsOpen : R.visitsUsed, {
+        used: a.visits.used,
+        limit: a.visits.limit ?? 0,
+      }),
+    });
+  const until = o.card?.validUntil ?? o.checkIn?.validUntil ?? null;
+  if (until) out.push({ label: F.until, value: formatDay(until) });
+  if (a?.nextOpenAt)
+    out.push({ label: F.opens, value: formatWeekdayTime(a.nextOpenAt, a.timeZone) });
+  if (o.previous)
+    out.push({
+      label: F.last,
+      value: [sessionTime(o.previous.at, timeZone), o.previous.scannerName]
+        .filter(Boolean)
+        .join(' · '),
+    });
+  return out.slice(0, 4);
+}
+
+export interface BundleMember {
+  initials: string;
+  checkedIn: boolean;
+  refusedReason?: string;
+}
+
+/** The bundle's members when the server sends them (`members`), else null: the counts alone then. */
+export function membersOf(bundle: unknown): BundleMember[] | null {
+  const m = (bundle as { members?: unknown } | null)?.members;
+  if (!Array.isArray(m) || m.length === 0) return null;
+  return m
+    .filter((x): x is BundleMember => typeof x?.initials === 'string')
+    .map((x) => ({
+      initials: x.initials,
+      checkedIn: Boolean(x.checkedIn),
+      ...(x.refusedReason ? { refusedReason: String(x.refusedReason) } : {}),
+    }));
 }
 
 /** The place a Mark out names: where the pass is counted as inside, else nothing. */

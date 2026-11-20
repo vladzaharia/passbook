@@ -2,9 +2,11 @@ import {
   Camera,
   Check,
   Eye,
+  IdCard,
   Lock,
   LogOut,
   RotateCcw,
+  Search,
   ShieldCheck,
   Sparkles,
   Users,
@@ -25,6 +27,8 @@ const ICON: Record<Act['icon'], ReactNode> = {
   value: <Sparkles aria-hidden />,
   again: <RotateCcw aria-hidden />,
   tap: <Zap aria-hidden />,
+  pass: <IdCard aria-hidden />,
+  search: <Search aria-hidden />,
 };
 const KEY = { Enter: '↵', O: 'O', P: 'P' } as const;
 

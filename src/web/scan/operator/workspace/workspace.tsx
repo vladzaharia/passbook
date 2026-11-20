@@ -18,6 +18,7 @@ import { searching } from '../operator-model.ts';
 import { passIdOf, type RecordContext, RecordPass, RecordScan } from '../record/record.tsx';
 import { useOperator } from '../use-operator.ts';
 import { CommandField, Kbd, type Readiness } from './command-field.tsx';
+import { focusSearch } from './focus.ts';
 import { HelpSheet, shortcutsFor } from './help-sheet.tsx';
 import { hintsOf } from './hints.ts';
 import { IdleView } from './idle-view.tsx';
@@ -58,7 +59,7 @@ export interface WorkspaceProps {
 export function OperatorWorkspace(props: WorkspaceProps) {
   const { api, runtime, session, counts } = props;
   const op = useOperator({ api, runtime, session });
-  const { dispatch: machine, now } = useScanMachine();
+  const { dispatch: machine, now, view: scanView } = useScanMachine();
   const { state, ui, results } = op;
   const view = ui.view;
   const isSearching = searching(ui);
@@ -137,6 +138,17 @@ export function OperatorWorkspace(props: WorkspaceProps) {
     keys: op.recordKeys,
     machine,
     release: () => op.send({ t: 'close' }),
+    buddy: result ? scanView.buddy : null,
+    showPass: (passId) => {
+      machine({ type: 'dismiss' });
+      op.open(passId, 'open');
+    },
+    lookUp: (q) => {
+      machine({ type: 'dismiss' });
+      op.send({ t: 'close' });
+      op.setQuery(q);
+      requestAnimationFrame(() => focusSearch(false));
+    },
     undo:
       op.undoable && result?.scanId && result.scanId === state.recent[0]?.scanId
         ? () => op.undo(result.scanId ?? '')

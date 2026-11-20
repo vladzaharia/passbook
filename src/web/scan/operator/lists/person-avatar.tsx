@@ -35,12 +35,15 @@ export function PersonAvatar({
   tone,
   unknown = false,
   size,
+  initials,
 }: {
   name: string;
   photoUrl?: string | null | undefined;
   tone?: Tone | undefined;
   unknown?: boolean;
   size?: 'sm' | 'lg';
+  /** Shown instead of the name's initials: a member known only by them. */
+  initials?: string;
 }) {
   const style = { '--h': hueOf(name) } as CSSProperties;
   return (
@@ -51,7 +54,13 @@ export function PersonAvatar({
       style={style}
       aria-hidden
     >
-      {unknown ? <QrCode /> : photoUrl ? <img src={photoUrl} alt="" /> : initialsOf(name)}
+      {unknown ? (
+        <QrCode />
+      ) : photoUrl ? (
+        <img src={photoUrl} alt="" />
+      ) : (
+        (initials ?? initialsOf(name))
+      )}
       {tone ? <VerdictDisc tone={tone} /> : null}
     </span>
   );

@@ -38,6 +38,9 @@ const ctx = (over: Partial<RecordContext> = {}): RecordContext => ({
   machine: vi.fn(),
   undo: null,
   release: vi.fn(),
+  buddy: null,
+  showPass: vi.fn(),
+  lookUp: vi.fn(),
   ...over,
 });
 const bundle = { id: 'b', name: 'Okafor family', size: 3, checkedIn: 1 };

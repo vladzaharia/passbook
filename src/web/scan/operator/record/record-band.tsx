@@ -1,7 +1,7 @@
 import { CircleCheck, Eye, Info, OctagonX, TriangleAlert, Undo2 } from 'lucide-react';
 import { SCAN_COPY } from '../../../../shared/copy/scan.ts';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
-import { formatTime } from '../../../lib/format.ts';
+import { sessionTime } from '../../ui/session-time.ts';
 import { Kbd } from '../workspace/command-field.tsx';
 import type { Band } from './record-model.ts';
 
@@ -52,7 +52,7 @@ export function RecordBand({
       </p>
       {band.at || where ? (
         <span className="op-band-when">
-          {[where, band.at ? formatTime(band.at, timeZone) : null].filter(Boolean).join(' · ')}
+          {[where, band.at ? sessionTime(band.at, timeZone) : null].filter(Boolean).join(' · ')}
         </span>
       ) : null}
       {undo ? (

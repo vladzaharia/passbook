@@ -16,6 +16,8 @@ const desk: Rights = { role: 'desk', photo: true, markOut: true };
 const facts = (over: Partial<ActionFacts> = {}): ActionFacts => ({
   source: 'scan',
   rights: desk,
+  passId: 'p1',
+  name: 'Maya Okafor',
   addPhoto: false,
   markOut: false,
   ...over,

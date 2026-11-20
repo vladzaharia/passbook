@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../../../shared/contracts/scan-session.ts';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
 import { Callout } from '../../../ui/callout.tsx';
 import type { ScanApi } from '../../api/scan-api.ts';
 import type { MachineEvent } from '../../machine/access-events.ts';
+import type { ScanBuddyView } from '../../machine/present.ts';
 import type { Loop, ScanOutcome } from '../../machine/types.ts';
 import type { ScanRuntime } from '../../platform/runtime.ts';
 import type { Command } from '../keys.ts';
@@ -12,6 +13,7 @@ import { type PinDesk, PinDialog } from './pin-dialog.tsx';
 import { RecordActions } from './record-actions.tsx';
 import { RecordBand } from './record-band.tsx';
 import { type PickerDesk, RecordBody } from './record-body.tsx';
+import { RecordBuddy } from './record-buddy.tsx';
 import { PhotoSlot, RecordIdentity } from './record-identity.tsx';
 import {
   type Act,
@@ -27,6 +29,7 @@ import {
 } from './record-model.ts';
 import { useMarkOut } from './use-mark-out.ts';
 import { useResolved } from './use-resolved.ts';
+import { useRunAct } from './use-run-act.ts';
 import './record.css';
 import './record-band.css';
 import './record-body.css';
@@ -57,6 +60,11 @@ export interface RecordContext {
   undo: (() => void) | null;
   /** Leave the list's record before the machine takes over. */
   release: () => void;
+  /** This device's buddy for the answer on screen; null when there is none. */
+  buddy: ScanBuddyView | null;
+  /** Open the person's own record, or search for them by name, ending the scan card first. */
+  showPass: (passId: string) => void;
+  lookUp: (q: string) => void;
 }
 
 type Desk = PinDesk & PickerDesk;
@@ -88,6 +96,8 @@ function RecordView({
   const actions = actionsOf(o, {
     source,
     rights,
+    passId,
+    name: who?.name ?? null,
     addPhoto,
     markOut: mayAct && place !== null && !exited,
   });
@@ -109,37 +119,18 @@ function RecordView({
   }, [note]);
   const asking = pin && o.reason === 'needs_approval' && Boolean(desk);
 
-  const run = useCallback(
-    (act: Act) => {
-      const r = act.run;
-      switch (r.t) {
-        case 'pick':
-          return machine({ type: 'pick', actionId: r.actionId });
-        case 'group':
-          return machine({ type: 'group' });
-        case 'override':
-          return machine({ type: 'override', actionId: r.actionId });
-        case 'turn':
-          return machine({ type: 'turn', direction: r.direction });
-        case 'ask':
-          return setPin(true);
-        case 'photo':
-          return photoInput.current?.click();
-        case 'mark-out':
-          return place ? void mark.markOut(place) : undefined;
-        case 'check-in':
-          if (o.card) {
-            ctx.release();
-            runtime.checkIn(o.card, r.actionId);
-          }
-          return;
-        case 'open':
-          ctx.release();
-          return runtime.emit({ method: 'manual', passId: r.passId });
-      }
-    },
-    [machine, runtime, ctx, o.card, place, mark],
-  );
+  const run = useRunAct({
+    machine,
+    runtime,
+    release: ctx.release,
+    showPass: ctx.showPass,
+    lookUp: ctx.lookUp,
+    outcome: o,
+    place,
+    markOut: mark.markOut,
+    ask: () => setPin(true),
+    photo: photoInput,
+  });
   const keys = ctx.keys;
   useEffect(() => {
     const byKey = (key: Act['key']) =>
@@ -166,54 +157,57 @@ function RecordView({
   const scan = source === 'scan';
   const held = band && o.kind !== 'ok' ? [band.title, band.sub].filter(Boolean).join(' · ') : null;
   return (
-    <article
-      className="op-rec"
-      data-tone={band?.tone}
-      data-kind={o.kind}
-      data-source={source}
-      data-testid={scan ? 'scan-result' : 'op-record'}
-      aria-busy={false}
-    >
-      {band ? (
-        <RecordBand
-          band={band}
-          where={scan && band.tone !== 'preview' ? (session.scanner?.name ?? null) : null}
-          timeZone={ctx.timeZone}
-          undo={scan ? ctx.undo : null}
-          kind={o.kind}
-          reason={o.reason}
-        />
-      ) : null}
-      {who ? (
-        <RecordIdentity
-          who={who}
-          presence={exited && presence ? { state: 'out', line: null } : presence}
-          photo={
-            addPhoto && !actions.viewOnly && passId ? (
-              <PhotoSlot api={api} passId={passId} slot={photoInput} />
-            ) : null
-          }
-        />
-      ) : null}
-      <RecordActions actions={actions} busy={mark.busy} onRun={run} />
-      <RecordBody
-        outcome={o}
-        desk={desk}
-        orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}
-        timeZone={ctx.timeZone}
-        eventNote={session.event?.note}
-      />
-      {desk ? (
-        <PinDialog
-          open={asking}
-          onOpenChange={setPin}
+    <div className="op-rec-wrap">
+      <RecordBuddy view={scan ? ctx.buddy : null} id={passId ?? o.scanId ?? ''} />
+      <article
+        className="op-rec"
+        data-tone={band?.tone}
+        data-kind={o.kind}
+        data-source={source}
+        data-testid={scan ? 'scan-result' : 'op-record'}
+        aria-busy={false}
+      >
+        {band ? (
+          <RecordBand
+            band={band}
+            where={scan && band.tone !== 'preview' ? (session.scanner?.name ?? null) : null}
+            timeZone={ctx.timeZone}
+            undo={scan ? ctx.undo : null}
+            kind={o.kind}
+            reason={o.reason}
+          />
+        ) : null}
+        {who ? (
+          <RecordIdentity
+            who={who}
+            presence={exited && presence ? { state: 'out', line: null } : presence}
+            photo={
+              addPhoto && !actions.viewOnly && passId ? (
+                <PhotoSlot api={api} passId={passId} slot={photoInput} />
+              ) : null
+            }
+          />
+        ) : null}
+        <RecordActions actions={actions} busy={mark.busy} onRun={run} />
+        <RecordBody
+          outcome={o}
           desk={desk}
-          name={who?.name ?? ''}
-          held={held}
-          action={o.action?.label}
+          orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}
+          timeZone={ctx.timeZone}
+          eventNote={session.event?.note}
         />
-      ) : null}
-    </article>
+        {desk ? (
+          <PinDialog
+            open={asking}
+            onOpenChange={setPin}
+            desk={desk}
+            name={who?.name ?? ''}
+            held={held}
+            action={o.action?.label}
+          />
+        ) : null}
+      </article>
+    </div>
   );
 }
 

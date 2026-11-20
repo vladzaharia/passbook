@@ -4,7 +4,7 @@ import { DisplayPanels } from '../../display/display-panels.tsx';
 import type { Draft, ScanOutcome } from '../../machine/types.ts';
 import { ValuePicker } from '../../result/value-picker.tsx';
 import { FamilyBlock } from './family-block.tsx';
-import { displayOf } from './record-model.ts';
+import { displayOf, type Fact, factsOf } from './record-model.ts';
 
 const PassPreview = lazy(() =>
   import('../../result/pass-preview.tsx').then((m) => ({ default: m.PassPreview })),
@@ -35,6 +35,20 @@ function notesOf(o: ScanOutcome, eventNote: string | null | undefined): string[]
   ];
 }
 
+/** Why a refusal or a hold, in the pass's own terms: the template shows nothing on a refused screen. */
+function Facts({ facts }: { facts: Fact[] }) {
+  return (
+    <dl className="op-facts" data-testid="op-facts">
+      {facts.map((f) => (
+        <div key={f.label}>
+          <dt>{f.label}</dt>
+          <dd>{f.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 /** The pass: its desk display as tiles, the value picker when one is open, and the family beside it. */
 export function RecordBody({
   outcome: o,
@@ -52,8 +66,9 @@ export function RecordBody({
   const d = displayOf(o);
   const denied = deniedOf(o);
   const notes = notesOf(o, eventNote);
+  const facts = denied ? factsOf(o, timeZone) : [];
   const picker = o.kind === 'ready' && o.card && desk?.picker ? desk.picker : null;
-  const left = picker || (d && !denied && !o.group) || notes.length > 0;
+  const left = picker || (d && !denied && !o.group) || notes.length > 0 || facts.length > 0;
   const right = Boolean(o.bundle ?? o.card?.bundle ?? o.group) || Boolean(o.card?.passView);
   if (!left && !right) return null;
   return (
@@ -71,6 +86,8 @@ export function RecordBody({
             />
           ) : d && !denied && !o.group ? (
             <DisplayPanels display={d} />
+          ) : facts.length ? (
+            <Facts facts={facts} />
           ) : null}
           {notes.length ? (
             <div className="op-note">
