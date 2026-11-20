@@ -29,7 +29,8 @@ export async function eventTemplate(
         venueName: text,
         venueRegion: text,
         venueTimeZone: text,
-        upcomingEvents: { type: 'array', items: { type: 'object' } },
+        slotKey: text,
+        upcomingEvents: { type: 'array', items: {} },
       },
     },
     // The preview values a starter ships: they must never become events or hours.

@@ -266,6 +266,8 @@ export async function updateScanningSession(
     {
       ...(input.name === undefined ? {} : { name: input.name }),
       ...(input.status === undefined ? {} : { status: input.status }),
+      // An ended session lets go of its template, so ending then reopening cannot clash with a newer one.
+      ...(input.status === 'ended' ? { setup_template_id: null } : {}),
       ...(input.timeZone === undefined ? {} : { time_zone: input.timeZone }),
       ...(accepted === undefined ? {} : { accepts: next.accepts }),
       ...(settings ? { settings: next.settings } : {}),

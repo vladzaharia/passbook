@@ -11,12 +11,20 @@ const eventsOf = (names: string[]) =>
 /** The one line the session page opens with. */
 export function scanSetupSummary(r: TemplateScanSetup): string {
   const made = r.events.map((e) => e.name);
+  const fresh = r.events.filter((e) => e.created).map((e) => e.name);
+  const more = r.truncated ? ' More events are coming up; the soonest are here.' : '';
   if (!r.created)
-    return made.length > 0
-      ? `Added ${eventsOf(made)} to session ${r.session.name}. Edit anything here.`
-      : `${r.session.name} already scans these passes. Edit anything here.`;
+    return `${
+      made.length > 0
+        ? `Added ${eventsOf(made)} to session ${r.session.name}.`
+        : `${r.session.name} already scans these passes.`
+    }${more} Edit anything here.`;
   if (made.length > 0)
-    return `Created ${eventsOf(made)} and session ${r.session.name}. Edit anything here.`;
+    return `${
+      fresh.length === made.length
+        ? `Created ${eventsOf(made)} and session ${r.session.name}.`
+        : `Created session ${r.session.name} with ${eventsOf(made)}.`
+    }${more} Edit anything here.`;
   return r.noEvents
     ? `Created session ${r.session.name}. No event yet: no passes with an upcoming event are issued. Edit anything here.`
     : `Created session ${r.session.name}. Edit anything here.`;

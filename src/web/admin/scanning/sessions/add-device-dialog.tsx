@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ScanningDevice, ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
-import { errorMessage } from '@/web/lib/errors.ts';
+import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import { Button, Callout, Dialog, DialogContent, FormField, Input } from '@/web/ui/index.ts';
 import { type Pairing, PairingFace } from '../pairing-face.tsx';
 import { useAddSessionDevice } from './api.ts';
@@ -32,16 +32,30 @@ export function AddDeviceDialog({
   const [name, setName] = useState(() =>
     setup ? freeName(`${session.name} scanner`, deviceNames) : '',
   );
+  // A name the dialog picked, not typed: another session's scanner may hold it, so try the next.
+  const [auto, setAuto] = useState(setup);
   const [surface, setSurface] = useState<ScanningDevice['surface']>('auto');
   const [error, setError] = useState('');
   const [made, setMade] = useState<{ id: string; name: string; pairing: Pairing | null }>();
   const add = useAddSessionDevice(session.id);
   async function submit() {
     setError('');
-    try {
-      setMade(await add.mutateAsync({ name: name.trim(), surface }));
-    } catch (cause) {
-      setError(errorMessage(cause));
+    const tried = [...deviceNames];
+    let next = name.trim();
+    for (let attempt = 0; ; attempt++) {
+      try {
+        setMade(await add.mutateAsync({ name: next, surface }));
+        return;
+      } catch (cause) {
+        if (auto && attempt < 20 && isApiError(cause) && cause.code === 'SCANNER_NAME_TAKEN') {
+          tried.push(next);
+          next = freeName(`${session.name} scanner`, tried);
+          setName(next);
+          continue;
+        }
+        setError(errorMessage(cause));
+        return;
+      }
     }
   }
   return (
@@ -83,7 +97,10 @@ export function AddDeviceDialog({
                 <Input
                   {...p}
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setAuto(false);
+                    setName(e.target.value);
+                  }}
                   placeholder="Front desk iPad"
                   maxLength={40}
                   autoComplete="off"

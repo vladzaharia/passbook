@@ -7,7 +7,8 @@ import type {
 } from '../../../shared/contracts/scan-template-setup.ts';
 import { CreateScanningSessionSchema } from '../../../shared/contracts/scanning-sessions.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { classifyD1Error } from '../../platform/db.ts';
+import { AppError, ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
@@ -20,6 +21,7 @@ import {
   ownEventValues,
   sessionScanningTemplate,
   setupEvent,
+  setupSession,
 } from './repo-template-setup.ts';
 import { captureConsoleSessionCountAuthority } from './scanning-session-dto.ts';
 import {
@@ -39,11 +41,13 @@ import {
 type Input = z.infer<typeof TemplateScanSetupBodySchema>;
 type Made = TemplateScanSetup['events'][number];
 
+const DAY = 86_400_000;
+
 /**
  * Scan passes for one template: a live session that admits the template and the upcoming events
- * its issued passes name. Idempotent and safe to repeat: a live session (active or paused) that
- * already scans the template is reused and only gains events it lacks. One session per template
- * is held by a unique index, so two calls at once end with one session and one set of events.
+ * its issued passes name. Idempotent and safe to repeat: the live session (active or paused) that
+ * already scans the template is reused, and only gains the events it lacks. One session per
+ * template is held by a unique index, so two calls at once end with one session.
  */
 export async function setupTemplateScan(
   ctx: ServiceContext,
@@ -57,16 +61,24 @@ export async function setupTemplateScan(
   const authority = await tenantAuthorityOf(ctx, auth, orgId, 'scanning:manage');
   const template = await loadTemplate(ctx, orgId, templateId);
   const source = eventSource(template.manifest);
-  const values = [
-    ...(source.own ? await ownEventValues(db, orgId, mode, templateId, source.own) : []),
-    ...(source.list ? await listedEventValues(db, orgId, mode, templateId, source.list) : []),
-  ];
-  const planned = planEvents(templateId, source, values, ctx.clock.now());
+  const now = ctx.clock.now();
+  const [own, listed] = await Promise.all([
+    source.own
+      ? ownEventValues(db, orgId, mode, templateId, source.own, now - 2 * DAY)
+      : { values: [], more: false },
+    source.list
+      ? listedEventValues(db, orgId, mode, templateId, source.list, now - 2 * DAY)
+      : { values: [], more: false },
+  ]);
+  const plan = planEvents(templateId, source, [...own.values, ...listed.values], now);
+  const planned = plan.events;
+  const truncated = plan.more || own.more || listed.more;
   const eventStyle = source.own !== null || source.list !== null;
   const timeZone = input.timeZone ?? planned.find((e) => e.timeZone)?.timeZone ?? 'UTC';
   const read = await tenantAuthorityOf(ctx, auth, orgId, 'scanning:read');
   const countAuthority = await captureConsoleSessionCountAuthority(ctx, auth, read);
 
+  const eventAuthority = async () => captureEventAuthority(ctx, auth, authority);
   const ensureEvent = async (e: PlannedEvent): Promise<Made | null> => {
     const found = await setupEvent(db, orgId, mode, e.key);
     if (found) return { id: found.id, name: e.name, created: false };
@@ -78,7 +90,7 @@ export async function setupTemplateScan(
       closesAt: e.closesAt,
       timeZone: e.timeZone ?? timeZone,
       note: e.venue,
-      match: e.matchInput ? { input: e.matchInput, values: [e.name] } : null,
+      match: e.match ? { input: e.match.input, values: [e.match.value] } : null,
     });
     if (!body.success) {
       ctx.log.warn('scan.template_setup.event_skipped', { orgId, code: 'EVENT_INVALID' });
@@ -90,7 +102,7 @@ export async function setupTemplateScan(
         auth.userId,
         mode,
         body.data,
-        await captureEventAuthority(ctx, auth, authority),
+        await eventAuthority(),
         e.key,
       );
       return { id: made.id, name: made.name, created: true };
@@ -101,44 +113,100 @@ export async function setupTemplateScan(
       return { id: winner.id, name: e.name, created: false };
     }
   };
-
-  const addToExisting = async (sessionId: string): Promise<TemplateScanSetup> => {
-    const row = await loadScanningSession(ctx, sessionId, mode, orgId);
-    const admits = storedAdmits(row.accepts) ?? { templateIds: [], eventIds: [] };
-    const ids = new Set(admits.eventIds);
-    const added: Made[] = [];
-    for (const e of planned) {
-      if (ids.size + added.length >= MAX_EVENTS) break;
-      const known = await setupEvent(db, orgId, mode, e.key);
-      if (known && ids.has(known.id)) continue;
-      const made = await ensureEvent(e);
-      if (made && !ids.has(made.id)) added.push(made);
+  /** Archive what this call made and nothing holds, so no stray event is left. */
+  const discard = async (events: readonly Made[]) => {
+    for (const e of events.filter((made) => made.created)) {
+      try {
+        await archiveEvent(ctx, auth.userId, e.id, await eventAuthority());
+      } catch (cleanup) {
+        ctx.log.error('scan.template_setup.cleanup_failed', {
+          orgId,
+          code: 'SETUP_CLEANUP_FAILED',
+          error: cleanup,
+        });
+      }
     }
-    if (added.length > 0)
-      await updateScanningSession(
-        ctx,
-        auth.userId,
-        sessionId,
-        {
-          accepts: {
-            templateIds: admits.templateIds,
-            eventIds: [...ids, ...added.map((e) => e.id)],
-          },
-        },
-        authority,
-        countAuthority,
-      );
-    return {
+  };
+  const findSession = async () =>
+    (await setupSession(db, orgId, mode, templateId)) ??
+    (await sessionScanningTemplate(db, orgId, mode, templateId));
+
+  const addToExisting = async (
+    sessionId: string,
+    made: Made[] = [],
+  ): Promise<TemplateScanSetup> => {
+    let row = await loadScanningSession(ctx, sessionId, mode, orgId);
+    const unchanged = (): TemplateScanSetup => ({
       session: { id: row.id, name: row.name },
       created: false,
-      events: added,
-      noEvents: eventStyle && ids.size + added.length === 0,
-    };
+      events: [],
+      noEvents: false,
+      truncated,
+    });
+    // A session that admits every pass type, or one whose scope no longer reads, is left as it is.
+    if (!storedAdmits(row.accepts)) return unchanged();
+    const room = MAX_EVENTS - (storedAdmits(row.accepts)?.eventIds.length ?? 0);
+    for (const e of planned) {
+      if (made.length >= room) break;
+      const known = await setupEvent(db, orgId, mode, e.key);
+      if (known && storedAdmits(row.accepts)?.eventIds.includes(known.id)) continue;
+      const event = await ensureEvent(e);
+      if (event) made.push(event);
+    }
+    // Merge into what the session admits now; a concurrent edit costs one retry.
+    for (let attempt = 0; ; attempt++) {
+      const admits = storedAdmits(row.accepts);
+      if (!admits) return unchanged();
+      const have = new Set(admits.eventIds);
+      const attach = made.filter((e) => !have.has(e.id)).slice(0, MAX_EVENTS - have.size);
+      // The setup session keeps the template: an edit that dropped it is undone.
+      const templateIds =
+        row.setup_template_id === templateId && !admits.templateIds.includes(templateId)
+          ? [...admits.templateIds, templateId]
+          : admits.templateIds;
+      if (attach.length === 0 && templateIds === admits.templateIds)
+        return {
+          session: { id: row.id, name: row.name },
+          created: false,
+          events: [],
+          noEvents: eventStyle && have.size === 0,
+          truncated,
+        };
+      try {
+        await updateScanningSession(
+          ctx,
+          auth.userId,
+          sessionId,
+          { accepts: { templateIds, eventIds: [...have, ...attach.map((e) => e.id)] } },
+          authority,
+          countAuthority,
+        );
+        return {
+          session: { id: row.id, name: row.name },
+          created: false,
+          events: attach,
+          noEvents: eventStyle && have.size + attach.length === 0,
+          truncated,
+        };
+      } catch (error) {
+        if (
+          attempt === 0 &&
+          error instanceof AppError &&
+          error.code === 'SCANNING_SESSION_CHANGED'
+        ) {
+          row = await loadScanningSession(ctx, sessionId, mode, orgId);
+          continue;
+        }
+        await discard(made);
+        throw error;
+      }
+    }
   };
 
-  const existing = await sessionScanningTemplate(db, orgId, mode, templateId);
+  const existing = await findSession();
   if (existing) return addToExisting(existing.id);
 
+  // No session yet: its events come first, since the session admits them.
   const events: Made[] = [];
   for (const e of planned) {
     const made = await ensureEvent(e);
@@ -170,30 +238,20 @@ export async function setupTemplateScan(
       created: true,
       events,
       noEvents: eventStyle && events.length === 0,
+      truncated,
     };
   } catch (error) {
-    const winner = await sessionScanningTemplate(db, orgId, mode, templateId);
+    const winner = await findSession();
     if (winner) {
       ctx.log.info('scan.template_setup.raced', { orgId, code: 'SETUP_RACED' });
-      return addToExisting(winner.id);
+      return addToExisting(winner.id, events);
     }
-    // Nothing holds these events now: archive what this call made so none is left stray.
-    for (const e of events.filter((made) => made.created)) {
-      try {
-        await archiveEvent(
-          ctx,
-          auth.userId,
-          e.id,
-          await captureEventAuthority(ctx, auth, authority),
-        );
-      } catch (cleanup) {
-        ctx.log.error('scan.template_setup.cleanup_failed', {
-          orgId,
-          code: 'SETUP_CLEANUP_FAILED',
-          error: cleanup,
-        });
-      }
-    }
+    await discard(events);
+    if (classifyD1Error(error)?.kind === 'unique')
+      throw new ConflictError(
+        'Another session already scans this template. Reload and try again.',
+        'SCAN_SETUP_CONFLICT',
+      );
     throw error;
   }
 }

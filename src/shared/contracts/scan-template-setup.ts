@@ -16,5 +16,7 @@ export const TemplateScanSetupSchema = z.object({
   events: z.array(z.object({ id: IdSchema, name: z.string(), created: z.boolean() })).max(10),
   /** The template names its event on each pass, and no pass has an upcoming one yet. */
   noEvents: z.boolean(),
+  /** More upcoming events exist than the session takes, or than were read: the soonest were used. */
+  truncated: z.boolean(),
 });
 export type TemplateScanSetup = z.infer<typeof TemplateScanSetupSchema>;

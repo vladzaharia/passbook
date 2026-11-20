@@ -36,26 +36,49 @@ export const setupEvent = (db: D1Database, orgId: string, mode: Mode, key: strin
     [orgId, mode, key],
   );
 
+/** The live session Scan passes made for the template, whatever it admits now. */
+export const setupSession = (db: D1Database, orgId: string, mode: Mode, templateId: string) =>
+  first<{ id: string }>(
+    db,
+    `SELECT id FROM scanning_sessions
+     WHERE org_id = ? AND mode = ? AND setup_template_id = ? AND status <> 'ended'`,
+    [orgId, mode, templateId],
+  );
+
 const LIVE = `p.org_id = ? AND p.mode = ? AND p.template_id = ? AND p.status = 'active'
   AND p.deleted_at IS NULL AND p.removed_at IS NULL AND p.test_data_quarantined = 0`;
-const MAX_ROWS = 500;
+/** Rows read per source; one more than this means there were more. */
+export const MAX_ROWS = 500;
 const path = (input: string | null) => (input ? `$.${input}` : null);
+const iso = (ms: number) => new Date(ms).toISOString();
 
-/** The distinct events the template's issued, unvoided passes name in their own inputs. */
+export interface EventRows {
+  values: EventValues[];
+  /** More rows matched than were read. */
+  more: boolean;
+}
+
+/**
+ * The distinct events the template's issued, unvoided passes name in their own inputs, soonest
+ * first. `since` leaves out events that started long before (the plan drops ended ones exactly).
+ */
 export async function ownEventValues(
   db: D1Database,
   orgId: string,
   mode: Mode,
   templateId: string,
   own: NonNullable<EventSource['own']>,
-): Promise<EventValues[]> {
+  since: number,
+): Promise<EventRows> {
   const rows = await all<Record<string, string | null>>(
     db,
     `SELECT DISTINCT json_extract(p.personalization, ?) AS name, json_extract(p.personalization, ?) AS startsAt,
        json_extract(p.personalization, ?) AS endsAt, json_extract(p.personalization, ?) AS doorsAt,
        json_extract(p.personalization, ?) AS venueName, json_extract(p.personalization, ?) AS venueRegion,
-       json_extract(p.personalization, ?) AS timeZone
-     FROM passes p WHERE ${LIVE} LIMIT ${MAX_ROWS}`,
+       json_extract(p.personalization, ?) AS timeZone, json_extract(p.personalization, ?) AS slot,
+       julianday(json_extract(p.personalization, ?)) AS startJ
+     FROM passes p WHERE ${LIVE} AND startJ >= julianday(?)
+     ORDER BY startJ, name LIMIT ${MAX_ROWS + 1}`,
     [
       path(own.name),
       path(own.start),
@@ -64,35 +87,41 @@ export async function ownEventValues(
       path(own.venueName),
       path(own.venueRegion),
       path(own.zone),
+      path(own.slot),
+      path(own.start),
       orgId,
       mode,
       templateId,
+      iso(since),
     ],
   );
-  return rows.map((row) => ({ ...row, own: true }));
+  return {
+    values: rows.slice(0, MAX_ROWS).map((row) => ({ ...row, own: true })),
+    more: rows.length > MAX_ROWS,
+  };
 }
 
-/** The distinct entries of the upcoming-events list on those passes. */
+/** The distinct object entries of the upcoming-events list on those passes, soonest first. */
 export async function listedEventValues(
   db: D1Database,
   orgId: string,
   mode: Mode,
   templateId: string,
   list: string,
-): Promise<EventValues[]> {
+  since: number,
+): Promise<EventRows> {
   const rows = await all<{ item: string }>(
     db,
-    `SELECT DISTINCT j.value AS item
+    `SELECT DISTINCT j.value AS item, julianday(json_extract(j.value, '$.startsAt')) AS startJ
      FROM passes p, json_each(CASE WHEN json_type(p.personalization, ?) = 'array'
        THEN json_extract(p.personalization, ?) ELSE '[]' END) j
-     WHERE ${LIVE} LIMIT ${MAX_ROWS}`,
-    [path(list), path(list), orgId, mode, templateId],
+     WHERE ${LIVE} AND j.type = 'object' AND startJ >= julianday(?)
+     ORDER BY startJ, item LIMIT ${MAX_ROWS + 1}`,
+    [path(list), path(list), orgId, mode, templateId, iso(since)],
   );
-  // json_each yields valid JSON text; only an object is an event.
-  return rows.flatMap(({ item }) => {
-    const value = JSON.parse(item) as unknown;
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
-      ? [value as EventValues]
-      : [];
-  });
+  // Only object entries are read, so every value is JSON text of an object.
+  return {
+    values: rows.slice(0, MAX_ROWS).map(({ item }) => JSON.parse(item) as EventValues),
+    more: rows.length > MAX_ROWS,
+  };
 }

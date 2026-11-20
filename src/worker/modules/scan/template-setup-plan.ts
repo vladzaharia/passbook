@@ -21,6 +21,8 @@ export interface EventSource {
     venueName: string | null;
     venueRegion: string | null;
     zone: string | null;
+    /** A per-slot input (a timed ticket's `slotKey`): matches one slot's passes exactly. */
+    slot: string | null;
   } | null;
   /** The upcoming-events list input. */
   list: string | null;
@@ -36,8 +38,8 @@ export interface PlannedEvent {
   closesAt: number;
   timeZone: string | null;
   venue: string | null;
-  /** The pass input whose value is the event's name: the event counts only passes that name it. */
-  matchInput: string | null;
+  /** The pass input and value that tell this event's passes from the template's others, if one does. */
+  match: { input: string; value: string } | null;
 }
 
 /** An event's values as a pass holds them: its own inputs, or one entry of its upcoming-events list. */
@@ -49,6 +51,7 @@ export interface EventValues {
   venueName?: Json;
   venueRegion?: Json;
   timeZone?: Json;
+  slot?: Json;
   /** Read from the pass's own inputs (not a list entry), so the name input can match passes. */
   own?: boolean;
 }
@@ -101,6 +104,7 @@ export function eventSource(manifest: TemplateManifest): EventSource {
             venueName: pick('venueName'),
             venueRegion: pick('venueRegion'),
             zone: pick('venueTimeZone'),
+            slot: pick('slotKey'),
           }
         : null,
     list: pick(listConfig?.input),
@@ -116,15 +120,17 @@ const instant = (v: Json | undefined): number | undefined => {
 
 /**
  * Upcoming or running events from what issued passes hold: distinct by start and name, soonest
- * first, at most `MAX_EVENTS`. Past events are never planned.
+ * first, at most `MAX_EVENTS` (`more`: others were left out). Past events are never planned.
  */
 export function planEvents(
   templateId: string,
   source: EventSource,
   values: readonly EventValues[],
   now: number,
-): PlannedEvent[] {
-  const seen = new Map<string, PlannedEvent>();
+): { events: PlannedEvent[]; more: boolean } {
+  const seen = new Map<string, PlannedEvent & { raw: string | null }>();
+  // A name that several starts share (slots of one show) cannot tell their passes apart.
+  const starts = new Map<string, Set<number>>();
   for (const v of values) {
     const name = plainText(v.name, 80);
     const start = instant(v.startsAt);
@@ -141,6 +147,8 @@ export function planEvents(
       (end !== undefined && end > start ? end : start + FALLBACK_MINUTES * MINUTE) +
       source.late * MINUTE;
     if (closesAt < now) continue;
+    const slot = v.own && source.own?.slot ? plainText(v.slot, 120) : null;
+    starts.set(name, (starts.get(name) ?? new Set()).add(start));
     seen.set(key, {
       key,
       name,
@@ -148,10 +156,20 @@ export function planEvents(
       closesAt,
       timeZone: zone.success ? zone.data : null,
       venue: plainText(venue, 140),
-      matchInput: v.own && source.own && v.name === name ? source.own.name : null,
+      match: slot && source.own?.slot ? { input: source.own.slot, value: slot } : null,
+      raw: v.own && v.name === name ? name : null,
     });
   }
-  return [...seen.values()].sort((a, b) => a.opensAt - b.opensAt).slice(0, MAX_EVENTS);
+  const all = [...seen.values()].sort((a, b) => a.opensAt - b.opensAt);
+  const events = all.slice(0, MAX_EVENTS).map(({ raw, ...e }) => ({
+    ...e,
+    match:
+      e.match ??
+      (raw !== null && source.own && (starts.get(raw)?.size ?? 0) === 1
+        ? { input: source.own.name, value: raw }
+        : null),
+  }));
+  return { events, more: all.length > MAX_EVENTS };
 }
 
 /** The pass type's own check-in rules, as the session's default for it. */

@@ -46,6 +46,7 @@ describe('eventSource', () => {
         doors: 'doorsAt',
         venueName: 'venueName',
         venueRegion: null,
+        slot: null,
         zone: null,
       },
       list: 'upcoming',
@@ -73,7 +74,7 @@ describe('planEvents', () => {
   const at = (h: number) => new Date(NOW + h * HOUR).toISOString();
 
   it('plans each distinct event once, soonest first, from doors to the end plus the late minutes', () => {
-    const plan = planEvents(
+    const { events: plan } = planEvents(
       't1',
       source,
       [
@@ -84,14 +85,19 @@ describe('planEvents', () => {
       ],
       NOW,
     );
-    expect(plan.map((e) => [e.name, e.opensAt, e.closesAt, e.matchInput])).toEqual([
-      ['A', NOW + HOUR, NOW + 4 * HOUR + 10 * 60_000, 'eventName'],
-      ['B', NOW + 48 * HOUR - 30 * 60_000, NOW + 50 * HOUR + 10 * 60_000, 'eventName'],
+    expect(plan.map((e) => [e.name, e.opensAt, e.closesAt, e.match])).toEqual([
+      ['A', NOW + HOUR, NOW + 4 * HOUR + 10 * 60_000, { input: 'eventName', value: 'A' }],
+      [
+        'B',
+        NOW + 48 * HOUR - 30 * 60_000,
+        NOW + 50 * HOUR + 10 * 60_000,
+        { input: 'eventName', value: 'B' },
+      ],
     ]);
   });
 
   it('drops past events and rows with no name or date, and never matches a list entry', () => {
-    const plan = planEvents(
+    const { events: plan } = planEvents(
       't1',
       source,
       [
@@ -103,20 +109,43 @@ describe('planEvents', () => {
       ],
       NOW,
     );
-    expect(plan.map((e) => [e.name, e.matchInput])).toEqual([
+    expect(plan.map((e) => [e.name, e.match])).toEqual([
       ['Running', null],
       ['Listed', null],
     ]);
   });
 
   it('cleans the name and keeps a name it changed out of the match', () => {
-    const [e] = planEvents('t1', source, [{ name: 'Gala\n‮txt', startsAt: at(3), own: true }], NOW);
-    expect(e).toMatchObject({ name: 'Gala txt', matchInput: null });
+    const [e] = planEvents(
+      't1',
+      source,
+      [{ name: 'Gala\n‮txt', startsAt: at(3), own: true }],
+      NOW,
+    ).events;
+    expect(e).toMatchObject({ name: 'Gala txt', match: null });
   });
 
-  it('plans at most ten events', () => {
+  it('plans at most ten events and says there were more', () => {
     const many = Array.from({ length: 14 }, (_, i) => ({ name: `N${i}`, startsAt: at(i + 1) }));
-    expect(planEvents('t1', source, many, NOW)).toHaveLength(10);
+    const plan = planEvents('t1', source, many, NOW);
+    expect(plan.events).toHaveLength(10);
+    expect(plan.more).toBe(true);
+    expect(planEvents('t1', source, many.slice(0, 3), NOW).more).toBe(false);
+  });
+
+  it('tells slots of one show apart by the slot input, and never by a name several slots share', () => {
+    const timed = eventSource(manifest({ props: ['eventName', 'startsAt', 'slotKey'] }));
+    const slots = [
+      { name: 'Ocean Light', startsAt: at(2), slot: 'ocean-0900', own: true },
+      { name: 'Ocean Light', startsAt: at(5), slot: 'ocean-1200', own: true },
+    ];
+    expect(planEvents('t1', timed, slots, NOW).events.map((e) => e.match)).toEqual([
+      { input: 'slotKey', value: 'ocean-0900' },
+      { input: 'slotKey', value: 'ocean-1200' },
+    ]);
+    const noSlot = eventSource(manifest({ props: ['eventName', 'startsAt'] }));
+    const repeats = slots.map(({ slot: _slot, ...v }) => v);
+    expect(planEvents('t1', noSlot, repeats, NOW).events.map((e) => e.match)).toEqual([null, null]);
   });
 });
 

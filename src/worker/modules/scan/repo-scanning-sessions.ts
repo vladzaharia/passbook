@@ -117,7 +117,15 @@ export function addScanningSessionUpdate(
   patch: Partial<
     Pick<
       ScanningSessionRow,
-      'name' | 'status' | 'accepts' | 'settings' | 'time_zone' | 'hours' | 'hold' | 'hours_next_at'
+      | 'name'
+      | 'status'
+      | 'accepts'
+      | 'settings'
+      | 'time_zone'
+      | 'hours'
+      | 'hold'
+      | 'hours_next_at'
+      | 'setup_template_id'
     >
   >,
   now: number,
