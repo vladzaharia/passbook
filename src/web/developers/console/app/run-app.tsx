@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { PATHS } from '../../../../shared/developers.ts';
 import { Ticket } from '../../ui/ticket.tsx';
 import { loadFile, loadIndex } from '../data.ts';
+import { type Prefill, parseHash } from '../prefill.ts';
 import type { Sandbox, Session } from '../session.ts';
 import { retain } from '../token.ts';
 import type { RunIndex, RunIndexItem, RunOp } from '../types.ts';
@@ -74,6 +75,7 @@ function Ready({
   slug,
   opId,
   codes,
+  prefill,
 }: {
   sandbox: Sandbox;
   csrf: string;
@@ -81,6 +83,7 @@ function Ready({
   slug?: string | undefined;
   opId?: string | undefined;
   codes: ReadonlySet<string>;
+  prefill?: Prefill | undefined;
 }) {
   const loaded = useOp(slug, opId);
   useEffect(() => retain(csrf), [csrf]);
@@ -96,29 +99,29 @@ function Ready({
       templateId={sandbox.templateId}
       codes={codes}
       mode={mode}
+      prefill={prefill}
     />
   );
 }
 
-function fromHash(index: RunIndex): RunIndexItem | null {
-  let id = '';
-  try {
-    id = decodeURIComponent(location.hash.slice(1));
-  } catch {
-    // A malformed escape in the hash: start from the first operation.
-  }
-  for (const g of index.groups) for (const i of g.items) if (i.id === id) return i;
-  return index.groups[0]?.items[0] ?? null;
+function fromHash(index: RunIndex): { item: RunIndexItem | null; prefill: Prefill | null } {
+  const { id, prefill } = parseHash(location.hash);
+  for (const g of index.groups)
+    for (const i of g.items) if (i.id === id) return { item: i, prefill };
+  return { item: index.groups[0]?.items[0] ?? null, prefill: null };
 }
 
 /** The full-page console: a picker beside the console for the chosen operation. */
 function ConsolePage({ sandbox, csrf }: { sandbox: Sandbox; csrf: string }) {
   const [index, setIndex] = useState<RunIndex | null>(null);
   const [item, setItem] = useState<RunIndexItem | null>(null);
+  const [prefill, setPrefill] = useState<Prefill | null>(null);
   useEffect(() => {
     void loadIndex().then((i) => {
+      const start = fromHash(i);
       setIndex(i);
-      setItem(fromHash(i));
+      setItem(start.item);
+      setPrefill(start.prefill);
     });
   }, []);
   const codes = useMemo(() => new Set(index?.codes ?? []), [index]);
@@ -130,6 +133,7 @@ function ConsolePage({ sandbox, csrf }: { sandbox: Sandbox; csrf: string }) {
         current={item?.id ?? null}
         onPick={(i) => {
           setItem(i);
+          setPrefill(null);
           history.replaceState(null, '', `#${encodeURIComponent(i.id)}`);
         }}
       />
@@ -149,6 +153,7 @@ function ConsolePage({ sandbox, csrf }: { sandbox: Sandbox; csrf: string }) {
               slug={item.slug}
               opId={item.id}
               codes={codes}
+              prefill={prefill}
             />
           </>
         ) : null}
