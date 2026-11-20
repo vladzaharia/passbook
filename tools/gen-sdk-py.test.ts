@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { drift, generate, manifest, OUT, owns } from './gen-sdk-py.ts';
 import { Models } from './lib/sdk-model.ts';
-import { pyType } from './lib/sdk-py-emit.ts';
+import { pyType, resourcesFile, resourceTree, type PyOp } from './lib/sdk-py-emit.ts';
 import type { OpenApiDoc, SdkNames } from './lib/sdk-ts-ops.ts';
 
 const root = resolve(import.meta.dirname, '..');
@@ -44,7 +44,25 @@ describe('pyType', () => {
     );
     expect(ty({})).toBe('_Any');
   });
+  it('opens string enums on the response side only when asked', () => {
+    const open = (s: object) => pyType(models.lower(s, 'T'), '', true);
+    expect(open({ enum: ['a', 'b'] })).toBe('_Literal["a", "b"] | str');
+    expect(open({ type: 'array', items: { enum: ['a'] } })).toBe('_List[_Literal["a"] | str]');
+  });
   it('rejects an unknown type rather than guessing', () => {
     expect(() => ty({ type: 'bytes' })).toThrow(/Unsupported/);
+  });
+});
+
+describe('the Python resources', () => {
+  it('refuses a method and a child resource with the same name', () => {
+    const op = (resource: string[], method: string) =>
+      ({
+        op: { resource, method, http: 'GET', path: '/x', schemas: { path: [], query: [] } },
+        path: [],
+        query: [],
+      }) as unknown as PyOp;
+    const tree = resourceTree([op(['passes'], 'events'), op(['passes', 'events'], 'list')]);
+    expect(() => resourcesFile(tree)).toThrow(/same name|name of a method/);
   });
 });

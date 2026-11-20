@@ -226,3 +226,19 @@ def test_backoff_grows_and_is_capped():
     assert backoff(0, 0.5, 1.0) == 0.5
     assert backoff(1, 0.5, 1.0) == 1.0
     assert backoff(20, 0.5, 0.0) == 4.0
+
+
+def test_an_unknown_enum_value_in_a_response_still_parses(make_client):
+    pb = make_client(lambda r: httpx.Response(201, json={**PASS, "status": "quarantined"}))
+    out = pb.passes.create({"templateId": "t1", "input": {}})
+    assert out.status == "quarantined"
+
+
+def test_header_names_are_case_insensitive(make_client):
+    seen = []
+    pb = make_client(lambda r: (seen.append(r), httpx.Response(201, json=PASS))[1])
+    pb.passes.create(
+        {"templateId": "t1", "input": {}}, headers={"Idempotency-Key": "mine", "Authorization": "Bearer evil"}
+    )
+    assert seen[0].headers.get_list("idempotency-key") == ["mine"]
+    assert seen[0].headers.get_list("authorization") == ["Bearer pb_test_key"]

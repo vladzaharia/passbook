@@ -17,7 +17,11 @@ const OPTION_NAMES = new Set(['headers', 'idempotency_key', 'max_retries', 'time
 const lit = (v: string | number | boolean | null): string =>
   v === null ? 'None' : typeof v === 'boolean' ? (v ? 'True' : 'False') : JSON.stringify(v);
 
-export function pyType(ty: Ty, prefix = ''): string {
+/**
+ * The Python type of a Ty. With `open`, string enums also take any `str`: a newer API must not break
+ * an older SDK.
+ */
+export function pyType(ty: Ty, prefix = '', open = false): string {
   switch (ty.k) {
     case 'str':
       return 'str';
@@ -34,17 +38,19 @@ export function pyType(ty: Ty, prefix = ''): string {
     case 'ref':
       return `${prefix}${ty.name}`;
     case 'lit':
-      return `_Literal[${ty.values.map(lit).join(', ')}]`;
+      return `_Literal[${ty.values.map(lit).join(', ')}]${open && ty.values.every((v) => v === null || typeof v === 'string') ? ' | str' : ''}`;
     case 'list':
-      return `_List[${pyType(ty.of, prefix)}]`;
+      return `_List[${pyType(ty.of, prefix, open)}]`;
     case 'map':
-      return `_Dict[str, ${pyType(ty.of, prefix)}]`;
+      return `_Dict[str, ${pyType(ty.of, prefix, open)}]`;
     case 'tuple':
       if (ty.rest)
-        return ty.of.length === 0 ? `_Tuple[${pyType(ty.rest, prefix)}, ...]` : '_Tuple[_Any, ...]';
-      return `_Tuple[${ty.of.map((t) => pyType(t, prefix)).join(', ')}]`;
+        return ty.of.length === 0
+          ? `_Tuple[${pyType(ty.rest, prefix, open)}, ...]`
+          : '_Tuple[_Any, ...]';
+      return `_Tuple[${ty.of.map((t) => pyType(t, prefix, open)).join(', ')}]`;
     case 'union':
-      return ty.of.map((t) => pyType(t, prefix)).join(' | ');
+      return ty.of.map((t) => pyType(t, prefix, open)).join(' | ');
   }
 }
 
@@ -70,7 +76,9 @@ function classText(decl: Extract<Decl, { kind: 'object' }>): string {
   const taken = new Set<string>();
   const lines = decl.fields.map((f) => {
     const { name, alias } = attribute(f.json, taken);
-    const type = pyType(f.ty) + (f.required || nullable(f.ty) ? '' : ' | None');
+    // A one-value `type` is the discriminator of an event; it stays strict so an unknown event falls through.
+    const discriminator = f.json === 'type' && f.ty.k === 'lit' && f.ty.values.length === 1;
+    const type = pyType(f.ty, '', !discriminator) + (f.required || nullable(f.ty) ? '' : ' | None');
     const optional = !f.required;
     if (alias) {
       const args = [...(optional ? ['default=None'] : []), `alias=${JSON.stringify(f.json)}`];
@@ -101,22 +109,44 @@ function orderedAliases(aliases: Array<Extract<Decl, { kind: 'alias' }>>): typeo
   return out;
 }
 
+/** What verify_webhook returns when an event is newer than this SDK: any object, with the usual fields if present. */
+const UNKNOWN_EVENT = `class UnknownWebhookEvent(_Model):
+    \"\"\"An event this SDK has no type for; the fields it does not name are kept as attributes.\"\"\"
+
+    id: str | None = None
+    type: str | None = None
+    apiVersion: str | None = None
+    createdAt: int | None = None
+    orgId: str | None = None
+    mode: str | None = None
+    data: _Dict[str, _Any] | None = None
+`;
+
+/** The webhook event union ends in UnknownWebhookEvent, tried last, so a newer event still parses. */
+function aliasType(a: Extract<Decl, { kind: 'alias' }>): string {
+  const text = pyType(a.ty, '', true);
+  return a.name === 'WebhookEvent'
+    ? `_Annotated[${text} | UnknownWebhookEvent, _Field(union_mode="left_to_right")]`
+    : text;
+}
+
 export function modelsFile(models: Models): string {
   const decls = [...models.decls.values()].sort((a, b) => (a.name < b.name ? -1 : 1));
   const objects = decls.filter((d): d is Extract<Decl, { kind: 'object' }> => d.kind === 'object');
   const aliases = orderedAliases(
     decls.filter((d): d is Extract<Decl, { kind: 'alias' }> => d.kind === 'alias'),
   );
-  const names = decls.map((d) => d.name).sort();
+  const names = [...decls.map((d) => d.name), 'UnknownWebhookEvent'].sort();
   return [
     HEADER,
     'from __future__ import annotations\n',
-    'from typing import Any as _Any, Dict as _Dict, List as _List, Literal as _Literal, Tuple as _Tuple\n',
+    'from typing import Annotated as _Annotated, Any as _Any, Dict as _Dict, List as _List, Literal as _Literal, Tuple as _Tuple\n',
     'from pydantic import Field as _Field\n',
     'from .._model import Model as _Model\n',
     `__all__ = [\n${names.map((n) => `    ${JSON.stringify(n)},`).join('\n')}\n]\n`,
     ...objects.map(classText),
-    ...aliases.map((a) => `${a.name} = ${pyType(a.ty)}\n`),
+    UNKNOWN_EVENT,
+    ...aliases.map((a) => `${a.name} = ${aliasType(a)}\n`),
   ].join('\n');
 }
 
@@ -256,6 +286,10 @@ function methodText(p: PyOp): string {
 
 function classBody(node: Node): string {
   const children = [...node.children.entries()];
+  const methodNames = new Set(node.ops.map((p) => attr(p.op.method)));
+  for (const [name] of children)
+    if (methodNames.has(attr(name)))
+      throw new Error(`${className(node.path)}: child resource ${name} has the name of a method`);
   const inits = children.map(
     ([name, child]) => `        self.${attr(name)} = ${className(child.path)}(core)\n`,
   );

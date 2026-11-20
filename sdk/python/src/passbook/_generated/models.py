@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any as _Any, Dict as _Dict, List as _List, Literal as _Literal, Tuple as _Tuple
+from typing import Annotated as _Annotated, Any as _Any, Dict as _Dict, List as _List, Literal as _Literal, Tuple as _Tuple
 
 from pydantic import Field as _Field
 
@@ -959,6 +959,7 @@ __all__ = [
     "TerminalScansUndoResult",
     "TestEmailsListResult",
     "TestEmailsRetrieveResult",
+    "UnknownWebhookEvent",
     "VisitorsCancelResult",
     "VisitorsCheckOutResult",
     "VisitorsCreateBody",
@@ -1045,7 +1046,7 @@ class ApiKeyActivityRecentItem(_Model):
     id: int
     at: int
     action: str
-    outcome: _Literal["allowed", "denied"]
+    outcome: _Literal["allowed", "denied"] | str
     targetType: str | None
     targetId: str | None
     ipPrefix: str | None
@@ -1067,13 +1068,13 @@ class ApiKeyCurrent(_Model):
     orgId: str | None
     name: str
     prefix: str
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"]]
-    mode: _Literal["live", "test"] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    mode: _Literal["live", "test"] | str | None = None
     createdAt: int
     lastUsedAt: int | None
     expiresAt: int | None
-    kind: _Literal["service", "personal", "platform"] | None = None
-    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"]] | None = None
+    kind: _Literal["service", "personal", "platform"] | str | None = None
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     retireAt: int | None = None
 
 class ApiKeyDetail(_Model):
@@ -1082,21 +1083,21 @@ class ApiKeyDetail(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"]]
-    mode: _Literal["live", "test"] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
     createdAt: int
     lastUsedAt: int | None
     expiresAt: int | None
     revokedAt: int | None
-    kind: _Literal["service", "personal", "platform"] | None = None
-    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"]] | None = None
+    kind: _Literal["service", "personal", "platform"] | str | None = None
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     retireAt: int | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
-    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"]] | None = None
-    rateTier: _Literal["standard", "high", "bulk", None] = None
+    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"] | str] | None = None
+    rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
     lastIpPrefix: str | None
@@ -1110,21 +1111,21 @@ class ApiKeyMinted(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"]]
-    mode: _Literal["live", "test"] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
     createdAt: int
     lastUsedAt: int | None
     expiresAt: int | None
     revokedAt: int | None
-    kind: _Literal["service", "personal", "platform"] | None = None
-    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"]] | None = None
+    kind: _Literal["service", "personal", "platform"] | str | None = None
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     retireAt: int | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
-    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"]] | None = None
-    rateTier: _Literal["standard", "high", "bulk", None] = None
+    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"] | str] | None = None
+    rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
     secret: str | None = None
@@ -1142,21 +1143,21 @@ class ApiKeyRotationKey1(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"]]
-    mode: _Literal["live", "test"] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
     createdAt: int
     lastUsedAt: int | None
     expiresAt: int | None
     revokedAt: int | None
-    kind: _Literal["service", "personal", "platform"] | None = None
-    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"]] | None = None
+    kind: _Literal["service", "personal", "platform"] | str | None = None
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     retireAt: int | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
-    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"]] | None = None
-    rateTier: _Literal["standard", "high", "bulk", None] = None
+    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"] | str] | None = None
+    rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
     secret: str
@@ -1167,21 +1168,21 @@ class ApiKeyRotationKey2(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"]]
-    mode: _Literal["live", "test"] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
     createdAt: int
     lastUsedAt: int | None
     expiresAt: int | None
     revokedAt: int | None
-    kind: _Literal["service", "personal", "platform"] | None = None
-    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"]] | None = None
+    kind: _Literal["service", "personal", "platform"] | str | None = None
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     retireAt: int | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
-    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"]] | None = None
-    rateTier: _Literal["standard", "high", "bulk", None] = None
+    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"] | str] | None = None
+    rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
 
@@ -1191,35 +1192,35 @@ class ApiKeyRotationPrevious(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"]]
-    mode: _Literal["live", "test"] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
     createdAt: int
     lastUsedAt: int | None
     expiresAt: int | None
     revokedAt: int | None
-    kind: _Literal["service", "personal", "platform"] | None = None
-    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"]] | None = None
+    kind: _Literal["service", "personal", "platform"] | str | None = None
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     retireAt: int | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
-    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"]] | None = None
-    rateTier: _Literal["standard", "high", "bulk", None] = None
+    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"] | str] | None = None
+    rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
 
 class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
-    kind: _Literal["service", "personal", "platform"] | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "scanning:write", "api-keys:write"]] | None = None
-    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"]] | None = None
+    kind: _Literal["service", "personal", "platform"] | str | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "scanning:write", "api-keys:write"] | str] | None = None
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
-    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"]] | None = None
+    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"] | str] | None = None
     terminalIds: _List[str] | None = None
-    mode: _Literal["live", "test"] | None = None
+    mode: _Literal["live", "test"] | str | None = None
     expiresAt: int | None = None
 
 class ApiKeysListItem(_Model):
@@ -1228,21 +1229,21 @@ class ApiKeysListItem(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"]]
-    mode: _Literal["live", "test"] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
     createdAt: int
     lastUsedAt: int | None
     expiresAt: int | None
     revokedAt: int | None
-    kind: _Literal["service", "personal", "platform"] | None = None
-    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"]] | None = None
+    kind: _Literal["service", "personal", "platform"] | str | None = None
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     retireAt: int | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
-    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"]] | None = None
-    rateTier: _Literal["standard", "high", "bulk", None] = None
+    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"] | str] | None = None
+    rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
 
@@ -1257,21 +1258,21 @@ class ApiKeysListResultItemsItem(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"]]
-    mode: _Literal["live", "test"] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
     createdAt: int
     lastUsedAt: int | None
     expiresAt: int | None
     revokedAt: int | None
-    kind: _Literal["service", "personal", "platform"] | None = None
-    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"]] | None = None
+    kind: _Literal["service", "personal", "platform"] | str | None = None
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     retireAt: int | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
-    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"]] | None = None
-    rateTier: _Literal["standard", "high", "bulk", None] = None
+    passStyles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"] | str] | None = None
+    rateTier: _Literal["standard", "high", "bulk", None] | str = None
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
 
@@ -1339,14 +1340,14 @@ class BrandRetrieveResult(_Model):
     webLogo: _Dict[str, _Any] | None
     supportEmail: str | None
     supportUrl: str | None
-    mark: _Literal["full", "small", "none"]
-    markChosen: _Literal["full", "small", "none"]
-    markAllowed: _List[_Literal["full", "small", "none"]]
+    mark: _Literal["full", "small", "none"] | str
+    markChosen: _Literal["full", "small", "none"] | str
+    markAllowed: _List[_Literal["full", "small", "none"] | str]
     configRevision: int
 
 class BrandUpdateParams(_Model):
     accent: str | None = None
-    mark: _Literal["full", "small", "none"] | None = None
+    mark: _Literal["full", "small", "none"] | str | None = None
     configRevision: int | None = None
 
 class BrandWebLogoUploadParams(_Model):
@@ -1356,10 +1357,10 @@ class BrandWebLogoUploadParams(_Model):
 class BroadcastsCancelResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["message", "change"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["message", "change"] | str
     name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"]
+    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
     target: BroadcastsCancelResultTarget
     patch: _Dict[str, _Any]
     notify: bool
@@ -1384,7 +1385,7 @@ class BroadcastsCancelResultCounts(_Model):
 class BroadcastsCancelResultTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsCancelResultTargetScan1 | BroadcastsCancelResultTargetScan2 | None = None
     match: _List[BroadcastsCancelResultTargetMatchItem1 | BroadcastsCancelResultTargetMatchItem2 | BroadcastsCancelResultTargetMatchItem3] | None = None
@@ -1418,7 +1419,7 @@ class BroadcastsCountRecipientsParams(_Model):
 class BroadcastsCountRecipientsParamsTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsCountRecipientsParamsTargetScan1 | BroadcastsCountRecipientsParamsTargetScan2 | None = None
     match: _List[BroadcastsCountRecipientsParamsTargetMatchItem1 | BroadcastsCountRecipientsParamsTargetMatchItem2 | BroadcastsCountRecipientsParamsTargetMatchItem3] | None = None
@@ -1453,19 +1454,19 @@ class BroadcastsCountRecipientsResult(_Model):
 
 class BroadcastsCreateParams(_Model):
     orgId: str
-    kind: _Literal["message", "change"]
+    kind: _Literal["message", "change"] | str
     name: str | None = None
     target: BroadcastsCreateParamsTarget
     patch: _Dict[str, _Any]
     notify: bool | None = None
-    send: _Literal["draft", "now", "schedule"] | None = None
+    send: _Literal["draft", "now", "schedule"] | str | None = None
     at: int | None = None
     clearAfter: int | None = None
 
 class BroadcastsCreateParamsTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsCreateParamsTargetScan1 | BroadcastsCreateParamsTargetScan2 | None = None
     match: _List[BroadcastsCreateParamsTargetMatchItem1 | BroadcastsCreateParamsTargetMatchItem2 | BroadcastsCreateParamsTargetMatchItem3] | None = None
@@ -1495,10 +1496,10 @@ class BroadcastsCreateParamsTargetScan2(_Model):
 class BroadcastsCreateResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["message", "change"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["message", "change"] | str
     name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"]
+    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
     target: BroadcastsCreateResultTarget
     patch: _Dict[str, _Any]
     notify: bool
@@ -1523,7 +1524,7 @@ class BroadcastsCreateResultCounts(_Model):
 class BroadcastsCreateResultTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsCreateResultTargetScan1 | BroadcastsCreateResultTargetScan2 | None = None
     match: _List[BroadcastsCreateResultTargetMatchItem1 | BroadcastsCreateResultTargetMatchItem2 | BroadcastsCreateResultTargetMatchItem3] | None = None
@@ -1553,10 +1554,10 @@ class BroadcastsCreateResultTargetScan2(_Model):
 class BroadcastsListItem(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["message", "change"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["message", "change"] | str
     name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"]
+    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
     target: BroadcastsListItemTarget
     patch: _Dict[str, _Any]
     notify: bool
@@ -1581,7 +1582,7 @@ class BroadcastsListItemCounts(_Model):
 class BroadcastsListItemTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsListItemTargetScan1 | BroadcastsListItemTargetScan2 | None = None
     match: _List[BroadcastsListItemTargetMatchItem1 | BroadcastsListItemTargetMatchItem2 | BroadcastsListItemTargetMatchItem3] | None = None
@@ -1615,10 +1616,10 @@ class BroadcastsListResult(_Model):
 class BroadcastsListResultItemsItem(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["message", "change"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["message", "change"] | str
     name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"]
+    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
     target: BroadcastsListResultItemsItemTarget
     patch: _Dict[str, _Any]
     notify: bool
@@ -1643,7 +1644,7 @@ class BroadcastsListResultItemsItemCounts(_Model):
 class BroadcastsListResultItemsItemTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsListResultItemsItemTargetScan1 | BroadcastsListResultItemsItemTargetScan2 | None = None
     match: _List[BroadcastsListResultItemsItemTargetMatchItem1 | BroadcastsListResultItemsItemTargetMatchItem2 | BroadcastsListResultItemsItemTargetMatchItem3] | None = None
@@ -1674,7 +1675,7 @@ class BroadcastsRecipientsListItem(_Model):
     passId: str
     title: str | None
     holderEmail: str | None
-    outcome: _Literal["updated", "unchanged", "failed"]
+    outcome: _Literal["updated", "unchanged", "failed"] | str
     silent: bool
 
 class BroadcastsRecipientsListResult(_Model):
@@ -1685,16 +1686,16 @@ class BroadcastsRecipientsListResultItemsItem(_Model):
     passId: str
     title: str | None
     holderEmail: str | None
-    outcome: _Literal["updated", "unchanged", "failed"]
+    outcome: _Literal["updated", "unchanged", "failed"] | str
     silent: bool
 
 class BroadcastsRetrieveResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["message", "change"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["message", "change"] | str
     name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"]
+    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
     target: BroadcastsRetrieveResultTarget
     patch: _Dict[str, _Any]
     notify: bool
@@ -1719,7 +1720,7 @@ class BroadcastsRetrieveResultCounts(_Model):
 class BroadcastsRetrieveResultTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsRetrieveResultTargetScan1 | BroadcastsRetrieveResultTargetScan2 | None = None
     match: _List[BroadcastsRetrieveResultTargetMatchItem1 | BroadcastsRetrieveResultTargetMatchItem2 | BroadcastsRetrieveResultTargetMatchItem3] | None = None
@@ -1749,10 +1750,10 @@ class BroadcastsRetrieveResultTargetScan2(_Model):
 class BroadcastsRetryResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["message", "change"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["message", "change"] | str
     name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"]
+    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
     target: BroadcastsRetryResultTarget
     patch: _Dict[str, _Any]
     notify: bool
@@ -1777,7 +1778,7 @@ class BroadcastsRetryResultCounts(_Model):
 class BroadcastsRetryResultTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsRetryResultTargetScan1 | BroadcastsRetryResultTargetScan2 | None = None
     match: _List[BroadcastsRetryResultTargetMatchItem1 | BroadcastsRetryResultTargetMatchItem2 | BroadcastsRetryResultTargetMatchItem3] | None = None
@@ -1810,10 +1811,10 @@ class BroadcastsSendParams(_Model):
 class BroadcastsSendResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["message", "change"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["message", "change"] | str
     name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"]
+    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
     target: BroadcastsSendResultTarget
     patch: _Dict[str, _Any]
     notify: bool
@@ -1838,7 +1839,7 @@ class BroadcastsSendResultCounts(_Model):
 class BroadcastsSendResultTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsSendResultTargetScan1 | BroadcastsSendResultTargetScan2 | None = None
     match: _List[BroadcastsSendResultTargetMatchItem1 | BroadcastsSendResultTargetMatchItem2 | BroadcastsSendResultTargetMatchItem3] | None = None
@@ -1867,19 +1868,19 @@ class BroadcastsSendResultTargetScan2(_Model):
 
 class BroadcastsUpdateParams(_Model):
     orgId: str
-    kind: _Literal["message", "change"]
+    kind: _Literal["message", "change"] | str
     name: str | None = None
     target: BroadcastsUpdateParamsTarget
     patch: _Dict[str, _Any]
     notify: bool | None = None
-    send: _Literal["draft", "now", "schedule"] | None = None
+    send: _Literal["draft", "now", "schedule"] | str | None = None
     at: int | None = None
     clearAfter: int | None = None
 
 class BroadcastsUpdateParamsTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsUpdateParamsTargetScan1 | BroadcastsUpdateParamsTargetScan2 | None = None
     match: _List[BroadcastsUpdateParamsTargetMatchItem1 | BroadcastsUpdateParamsTargetMatchItem2 | BroadcastsUpdateParamsTargetMatchItem3] | None = None
@@ -1909,10 +1910,10 @@ class BroadcastsUpdateParamsTargetScan2(_Model):
 class BroadcastsUpdateResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["message", "change"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["message", "change"] | str
     name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"]
+    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
     target: BroadcastsUpdateResultTarget
     patch: _Dict[str, _Any]
     notify: bool
@@ -1937,7 +1938,7 @@ class BroadcastsUpdateResultCounts(_Model):
 class BroadcastsUpdateResultTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsUpdateResultTargetScan1 | BroadcastsUpdateResultTargetScan2 | None = None
     match: _List[BroadcastsUpdateResultTargetMatchItem1 | BroadcastsUpdateResultTargetMatchItem2 | BroadcastsUpdateResultTargetMatchItem3] | None = None
@@ -1974,7 +1975,7 @@ class BundlesCreateParams(_Model):
 class BundlesCreateResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
     url: str | None
     holderEmail: str | None
@@ -1985,7 +1986,7 @@ class BundlesCreateResult(_Model):
 class BundlesCreateResultPassesItem(_Model):
     id: str
     title: str
-    status: _Literal["active", "voided"]
+    status: _Literal["active", "voided"] | str
     removedAt: int | None = None
 
 class BundlesDeleteResult(_Model):
@@ -1994,7 +1995,7 @@ class BundlesDeleteResult(_Model):
 class BundlesListItem(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
     url: str | None
     holderEmail: str | None
@@ -2005,7 +2006,7 @@ class BundlesListItem(_Model):
 class BundlesListItemPassesItem(_Model):
     id: str
     title: str
-    status: _Literal["active", "voided"]
+    status: _Literal["active", "voided"] | str
     removedAt: int | None = None
 
 class BundlesListResult(_Model):
@@ -2015,7 +2016,7 @@ class BundlesListResult(_Model):
 class BundlesListResultItemsItem(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
     url: str | None
     holderEmail: str | None
@@ -2026,13 +2027,13 @@ class BundlesListResultItemsItem(_Model):
 class BundlesListResultItemsItemPassesItem(_Model):
     id: str
     title: str
-    status: _Literal["active", "voided"]
+    status: _Literal["active", "voided"] | str
     removedAt: int | None = None
 
 class BundlesRetrieveResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
     url: str | None
     holderEmail: str | None
@@ -2043,13 +2044,13 @@ class BundlesRetrieveResult(_Model):
 class BundlesRetrieveResultPassesItem(_Model):
     id: str
     title: str
-    status: _Literal["active", "voided"]
+    status: _Literal["active", "voided"] | str
     removedAt: int | None = None
 
 class BundlesRotateLinkResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
     url: str | None
     holderEmail: str | None
@@ -2060,7 +2061,7 @@ class BundlesRotateLinkResult(_Model):
 class BundlesRotateLinkResultPassesItem(_Model):
     id: str
     title: str
-    status: _Literal["active", "voided"]
+    status: _Literal["active", "voided"] | str
     removedAt: int | None = None
 
 class BundlesSendEmailParams(_Model):
@@ -2079,7 +2080,7 @@ class CaptureSecret(_Model):
 class CapturedEmail(_Model):
     id: str
     orgId: str
-    kind: _Literal["pass", "bundle"]
+    kind: _Literal["pass", "bundle"] | str
     passId: str | None
     bundleId: str | None
     to: str
@@ -2090,7 +2091,7 @@ class CapturedEmail(_Model):
 class CapturedEmailDetail(_Model):
     id: str
     orgId: str
-    kind: _Literal["pass", "bundle"]
+    kind: _Literal["pass", "bundle"] | str
     passId: str | None
     bundleId: str | None
     to: str
@@ -2099,7 +2100,7 @@ class CapturedEmailDetail(_Model):
     createdAt: int
     html: str
     text: str
-    forwarding: _Literal["none", "sending", "sent", "failed", "unknown"]
+    forwarding: _Literal["none", "sending", "sent", "failed", "unknown"] | str
 
 class CapturedEmailPage(_Model):
     items: _List[CapturedEmail]
@@ -2117,9 +2118,9 @@ class ConnectionsCreateParams(_Model):
     holderEmailField: str | None = None
     autoCreate: bool | None = None
     autoEmail: bool | None = None
-    onMissing: _Literal["keep", "flag", "void"] | None = None
+    onMissing: _Literal["keep", "flag", "void"] | str | None = None
     voidWhen: _List[ConnectionsCreateParamsVoidWhenItem] | None = None
-    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | None = None
+    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str | None = None
     intervalSeconds: int | None = None
     maxConcurrency: int | None = None
     requestsPerMinute: int | None = None
@@ -2129,12 +2130,12 @@ class ConnectionsCreateParamsMappingValue(_Model):
     transform: ConnectionsCreateParamsMappingValueTransform | None = None
 
 class ConnectionsCreateParamsMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsCreateParamsVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
-    op: _Literal["in", "present"]
+    op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
 class ConnectionsCreateResult(_Model):
@@ -2151,15 +2152,15 @@ class ConnectionsCreateResult(_Model):
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
-    onMissing: _Literal["keep", "flag", "void"]
+    onMissing: _Literal["keep", "flag", "void"] | str
     voidWhen: _List[ConnectionsCreateResultVoidWhenItem]
     webhookPrevUntil: int | None
-    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"]
+    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"]
+    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -2177,12 +2178,12 @@ class ConnectionsCreateResultMappingValue(_Model):
     transform: ConnectionsCreateResultMappingValueTransform | None = None
 
 class ConnectionsCreateResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsCreateResultVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
-    op: _Literal["in", "present"]
+    op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
 class ConnectionsDeleteResult(_Model):
@@ -2202,15 +2203,15 @@ class ConnectionsListItem(_Model):
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
-    onMissing: _Literal["keep", "flag", "void"]
+    onMissing: _Literal["keep", "flag", "void"] | str
     voidWhen: _List[ConnectionsListItemVoidWhenItem]
     webhookPrevUntil: int | None
-    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"]
+    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"]
+    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -2228,12 +2229,12 @@ class ConnectionsListItemMappingValue(_Model):
     transform: ConnectionsListItemMappingValueTransform | None = None
 
 class ConnectionsListItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsListItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
-    op: _Literal["in", "present"]
+    op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
 class ConnectionsListResult(_Model):
@@ -2254,15 +2255,15 @@ class ConnectionsListResultItemsItem(_Model):
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
-    onMissing: _Literal["keep", "flag", "void"]
+    onMissing: _Literal["keep", "flag", "void"] | str
     voidWhen: _List[ConnectionsListResultItemsItemVoidWhenItem]
     webhookPrevUntil: int | None
-    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"]
+    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"]
+    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -2280,12 +2281,12 @@ class ConnectionsListResultItemsItemMappingValue(_Model):
     transform: ConnectionsListResultItemsItemMappingValueTransform | None = None
 
 class ConnectionsListResultItemsItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsListResultItemsItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
-    op: _Literal["in", "present"]
+    op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
 class ConnectionsRetrieveResult(_Model):
@@ -2302,15 +2303,15 @@ class ConnectionsRetrieveResult(_Model):
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
-    onMissing: _Literal["keep", "flag", "void"]
+    onMissing: _Literal["keep", "flag", "void"] | str
     voidWhen: _List[ConnectionsRetrieveResultVoidWhenItem]
     webhookPrevUntil: int | None
-    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"]
+    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"]
+    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -2329,7 +2330,7 @@ class ConnectionsRetrieveResultMappingValue(_Model):
     transform: ConnectionsRetrieveResultMappingValueTransform | None = None
 
 class ConnectionsRetrieveResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsRetrieveResultMetrics(_Model):
@@ -2340,10 +2341,10 @@ class ConnectionsRetrieveResultMetrics(_Model):
 
 class ConnectionsRetrieveResultRunsItem(_Model):
     id: str
-    trigger: _Literal["schedule", "webhook", "admin", "user", "test", "backfill"]
+    trigger: _Literal["schedule", "webhook", "admin", "user", "test", "backfill"] | str
     startedAt: int
     finishedAt: int | None
-    outcome: _Literal["running", "unchanged", "changed", "error", "skipped"]
+    outcome: _Literal["running", "unchanged", "changed", "error", "skipped"] | str
     recordsSeen: int | None
     passesChanged: int | None
     errorCode: str | None
@@ -2353,7 +2354,7 @@ class ConnectionsRetrieveResultRunsItem(_Model):
 
 class ConnectionsRetrieveResultVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
-    op: _Literal["in", "present"]
+    op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
 class ConnectionsRetrieveSummaryResult(_Model):
@@ -2365,7 +2366,7 @@ class ConnectionsRetrieveSummaryResultAttentionItem(_Model):
     id: str
     orgId: str
     name: str
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"]
+    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
     lastErrorCode: str | None
     lastErrorAt: int | None
 
@@ -2383,15 +2384,15 @@ class ConnectionsRevokePreviousWebhookSecretResult(_Model):
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
-    onMissing: _Literal["keep", "flag", "void"]
+    onMissing: _Literal["keep", "flag", "void"] | str
     voidWhen: _List[ConnectionsRevokePreviousWebhookSecretResultVoidWhenItem]
     webhookPrevUntil: int | None
-    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"]
+    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"]
+    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -2408,12 +2409,12 @@ class ConnectionsRevokePreviousWebhookSecretResultMappingValue(_Model):
     transform: ConnectionsRevokePreviousWebhookSecretResultMappingValueTransform | None = None
 
 class ConnectionsRevokePreviousWebhookSecretResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsRevokePreviousWebhookSecretResultVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
-    op: _Literal["in", "present"]
+    op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
 class ConnectionsRotateWebhookSecretResult(_Model):
@@ -2430,15 +2431,15 @@ class ConnectionsRotateWebhookSecretResult(_Model):
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
-    onMissing: _Literal["keep", "flag", "void"]
+    onMissing: _Literal["keep", "flag", "void"] | str
     voidWhen: _List[ConnectionsRotateWebhookSecretResultVoidWhenItem]
     webhookPrevUntil: int | None
-    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"]
+    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"]
+    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -2456,20 +2457,20 @@ class ConnectionsRotateWebhookSecretResultMappingValue(_Model):
     transform: ConnectionsRotateWebhookSecretResultMappingValueTransform | None = None
 
 class ConnectionsRotateWebhookSecretResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsRotateWebhookSecretResultVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
-    op: _Literal["in", "present"]
+    op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
 class ConnectionsRunsListItem(_Model):
     id: str
-    trigger: _Literal["schedule", "webhook", "admin", "user", "test", "backfill"]
+    trigger: _Literal["schedule", "webhook", "admin", "user", "test", "backfill"] | str
     startedAt: int
     finishedAt: int | None
-    outcome: _Literal["running", "unchanged", "changed", "error", "skipped"]
+    outcome: _Literal["running", "unchanged", "changed", "error", "skipped"] | str
     recordsSeen: int | None
     passesChanged: int | None
     errorCode: str | None
@@ -2483,10 +2484,10 @@ class ConnectionsRunsListResult(_Model):
 
 class ConnectionsRunsListResultItemsItem(_Model):
     id: str
-    trigger: _Literal["schedule", "webhook", "admin", "user", "test", "backfill"]
+    trigger: _Literal["schedule", "webhook", "admin", "user", "test", "backfill"] | str
     startedAt: int
     finishedAt: int | None
-    outcome: _Literal["running", "unchanged", "changed", "error", "skipped"]
+    outcome: _Literal["running", "unchanged", "changed", "error", "skipped"] | str
     recordsSeen: int | None
     passesChanged: int | None
     errorCode: str | None
@@ -2536,9 +2537,9 @@ class ConnectionsUpdateParams(_Model):
     holderEmailField: str | None = None
     autoCreate: bool | None = None
     autoEmail: bool | None = None
-    onMissing: _Literal["keep", "flag", "void"] | None = None
+    onMissing: _Literal["keep", "flag", "void"] | str | None = None
     voidWhen: _List[ConnectionsUpdateParamsVoidWhenItem] | None = None
-    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | None = None
+    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str | None = None
     intervalSeconds: int | None = None
     maxConcurrency: int | None = None
     requestsPerMinute: int | None = None
@@ -2550,12 +2551,12 @@ class ConnectionsUpdateParamsMappingValue(_Model):
     transform: ConnectionsUpdateParamsMappingValueTransform | None = None
 
 class ConnectionsUpdateParamsMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsUpdateParamsVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
-    op: _Literal["in", "present"]
+    op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
 class ConnectionsUpdateResult(_Model):
@@ -2572,15 +2573,15 @@ class ConnectionsUpdateResult(_Model):
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
-    onMissing: _Literal["keep", "flag", "void"]
+    onMissing: _Literal["keep", "flag", "void"] | str
     voidWhen: _List[ConnectionsUpdateResultVoidWhenItem]
     webhookPrevUntil: int | None
-    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"]
+    mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
     maxConcurrency: int | None
     requestsPerMinute: int | None
     enabled: bool
-    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"]
+    health: _Literal["unknown", "healthy", "degraded", "failing", "paused", "disabled"] | str
     consecutiveFailures: int
     breakerOpenUntil: int | None
     nextRunAt: int | None
@@ -2598,20 +2599,20 @@ class ConnectionsUpdateResultMappingValue(_Model):
     transform: ConnectionsUpdateResultMappingValueTransform | None = None
 
 class ConnectionsUpdateResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsUpdateResultVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
-    op: _Literal["in", "present"]
+    op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
 class ConnectionsWebhookFailuresListItem(_Model):
     id: str
     eventRef: str
     generation: int
-    connectionMode: _Literal["webhook", "hybrid", "unknown"]
-    state: _Literal["pending", "failed", "blocked", "resolved", "ignored"]
+    connectionMode: _Literal["webhook", "hybrid", "unknown"] | str
+    state: _Literal["pending", "failed", "blocked", "resolved", "ignored"] | str
     errorCode: str | None
     uncertainItems: int
     receivedAt: float
@@ -2625,8 +2626,8 @@ class ConnectionsWebhookFailuresListResultItemsItem(_Model):
     id: str
     eventRef: str
     generation: int
-    connectionMode: _Literal["webhook", "hybrid", "unknown"]
-    state: _Literal["pending", "failed", "blocked", "resolved", "ignored"]
+    connectionMode: _Literal["webhook", "hybrid", "unknown"] | str
+    state: _Literal["pending", "failed", "blocked", "resolved", "ignored"] | str
     errorCode: str | None
     uncertainItems: int
     receivedAt: float
@@ -2638,7 +2639,7 @@ class ConnectionsWebhookFailuresReplayResult(_Model):
 class ConnectionsWebhookFailuresResolveResult(_Model):
     ok: _Literal[True]
     resolved: int
-    state: _Literal["failed", "blocked", "resolved"]
+    state: _Literal["failed", "blocked", "resolved"] | str
 
 class ConnectorsListItem(_Model):
     type: str
@@ -2666,11 +2667,11 @@ class ConnectorsListItemDefaults(_Model):
     timeoutMs: int
 
 class ConnectorsListItemOutputFieldsValue(_Model):
-    type: _Literal["string", "number", "boolean", "date"]
+    type: _Literal["string", "number", "boolean", "date"] | str
     description: str | None = None
 
 class ConnectorsListItemRecipesItem(_Model):
-    id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"]
+    id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
     pasteSecret: bool
     outputFields: _Dict[str, ConnectorsListItemRecipesItemOutputFieldsValue]
@@ -2683,16 +2684,16 @@ class ConnectorsListItemRecipesItemMappingValue(_Model):
     transform: ConnectorsListItemRecipesItemMappingValueTransform | None = None
 
 class ConnectorsListItemRecipesItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectorsListItemRecipesItemOutputFieldsValue(_Model):
-    type: _Literal["string", "number", "boolean", "date"]
+    type: _Literal["string", "number", "boolean", "date"] | str
     description: str | None = None
 
 class ConnectorsListItemRecipesItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
-    op: _Literal["in", "present"]
+    op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
 class ConnectorsListResult(_Model):
@@ -2725,11 +2726,11 @@ class ConnectorsListResultItemsItemDefaults(_Model):
     timeoutMs: int
 
 class ConnectorsListResultItemsItemOutputFieldsValue(_Model):
-    type: _Literal["string", "number", "boolean", "date"]
+    type: _Literal["string", "number", "boolean", "date"] | str
     description: str | None = None
 
 class ConnectorsListResultItemsItemRecipesItem(_Model):
-    id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"]
+    id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
     pasteSecret: bool
     outputFields: _Dict[str, ConnectorsListResultItemsItemRecipesItemOutputFieldsValue]
@@ -2742,16 +2743,16 @@ class ConnectorsListResultItemsItemRecipesItemMappingValue(_Model):
     transform: ConnectorsListResultItemsItemRecipesItemMappingValueTransform | None = None
 
 class ConnectorsListResultItemsItemRecipesItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectorsListResultItemsItemRecipesItemOutputFieldsValue(_Model):
-    type: _Literal["string", "number", "boolean", "date"]
+    type: _Literal["string", "number", "boolean", "date"] | str
     description: str | None = None
 
 class ConnectorsListResultItemsItemRecipesItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
-    op: _Literal["in", "present"]
+    op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
 class ConnectorsRetrieveResult(_Model):
@@ -2780,11 +2781,11 @@ class ConnectorsRetrieveResultDefaults(_Model):
     timeoutMs: int
 
 class ConnectorsRetrieveResultOutputFieldsValue(_Model):
-    type: _Literal["string", "number", "boolean", "date"]
+    type: _Literal["string", "number", "boolean", "date"] | str
     description: str | None = None
 
 class ConnectorsRetrieveResultRecipesItem(_Model):
-    id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"]
+    id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
     pasteSecret: bool
     outputFields: _Dict[str, ConnectorsRetrieveResultRecipesItemOutputFieldsValue]
@@ -2797,29 +2798,29 @@ class ConnectorsRetrieveResultRecipesItemMappingValue(_Model):
     transform: ConnectorsRetrieveResultRecipesItemMappingValueTransform | None = None
 
 class ConnectorsRetrieveResultRecipesItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectorsRetrieveResultRecipesItemOutputFieldsValue(_Model):
-    type: _Literal["string", "number", "boolean", "date"]
+    type: _Literal["string", "number", "boolean", "date"] | str
     description: str | None = None
 
 class ConnectorsRetrieveResultRecipesItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
-    op: _Literal["in", "present"]
+    op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
 class CreatedScanner(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["device", "terminal", "display"]
-    deviceRole: _Literal["scan", "customer", "monitor"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["device", "terminal", "display"] | str
+    deviceRole: _Literal["scan", "customer", "monitor"] | str
     name: str
     accepts: CreatedScannerAccepts1 | CreatedScannerAccepts2 | CreatedScannerAccepts3 | None
     settings: ScannerSettings
     timeZone: str
-    status: _Literal["not_paired", "paired", "revoked"]
+    status: _Literal["not_paired", "paired", "revoked"] | str
     online: bool
     pairedAt: int | None
     pairedLabel: str | None
@@ -2844,8 +2845,8 @@ class CreatedScanningDevice(_Model):
     id: str
     sessionId: str
     name: str
-    surface: _Literal["auto", "phone", "operator", "desk", "customer"]
-    effectiveSurface: _Literal["phone", "operator", "desk", "customer"]
+    surface: _Literal["auto", "phone", "operator", "desk", "customer"] | str
+    effectiveSurface: _Literal["phone", "operator", "desk", "customer"] | str
     overrides: CreatedScanningDeviceOverrides
     settings: ScannerSettings
     capabilities: ScanDeviceCapabilities
@@ -2855,14 +2856,14 @@ class CreatedScanningDevice(_Model):
     revoked: bool
     lastSeenAt: int | None
     updatedAt: int
-    signIn: _Literal["paired", "admin"]
+    signIn: _Literal["paired", "admin"] | str
     adminName: str | None
     pairing: _Dict[str, _Any] | None
 
 class CreatedScanningDeviceOverrides(_Model):
-    flow: _Literal["auto", "choose"] | None = None
-    reader: _Literal["none", "barcode", "nfc"] | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    flow: _Literal["auto", "choose"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
 
@@ -2871,8 +2872,8 @@ class DeliveriesListResult(_Model):
 
 class DeliveriesListResultItemsItem(_Model):
     id: str
-    kind: _Literal["push", "email"]
-    state: _Literal["pending", "enqueued", "processing", "sent", "partial", "failed", "cancelled"]
+    kind: _Literal["push", "email"] | str
+    state: _Literal["pending", "enqueued", "processing", "sent", "partial", "failed", "cancelled"] | str
     attempts: int
     errorCode: str | None
     createdAt: int
@@ -2881,10 +2882,10 @@ class DeliveriesListResultItemsItem(_Model):
 class EmailFailedEvent(_Model):
     id: str
     type: _Literal["email.failed"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: EmailFailedEventData
     sample: _Literal[True] | None = None
@@ -2903,7 +2904,7 @@ class HoldersAssignParams(_Model):
 
 class HoldersAssignResult(_Model):
     passId: str
-    state: _Literal["unassigned", "waiting", "owned"]
+    state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
     ownerUserId: str | None
     ownerName: str | None
@@ -2925,7 +2926,7 @@ class HoldersBulkAssignResult(_Model):
 
 class HoldersBulkAssignResultItemsItem(_Model):
     passId: str
-    state: _Literal["unassigned", "waiting", "owned"]
+    state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
     ownerUserId: str | None
     ownerName: str | None
@@ -2943,7 +2944,7 @@ class HoldersClearBlockResult(_Model):
 
 class HoldersListItem(_Model):
     passId: str
-    state: _Literal["unassigned", "waiting", "owned"]
+    state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
     ownerUserId: str | None
     ownerName: str | None
@@ -2958,7 +2959,7 @@ class HoldersListResult(_Model):
 
 class HoldersListResultItemsItem(_Model):
     passId: str
-    state: _Literal["unassigned", "waiting", "owned"]
+    state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
     ownerUserId: str | None
     ownerName: str | None
@@ -2970,8 +2971,8 @@ class HoldersListResultItemsItem(_Model):
 class HoldersOffboardParams(_Model):
     holderEmail: str | None = None
     externalId: str | None = None
-    passes: _Literal["void", "remove"] | None = None
-    tags: _Literal["spare", "lost"] | None = None
+    passes: _Literal["void", "remove"] | str | None = None
+    tags: _Literal["spare", "lost"] | str | None = None
     dryRun: bool | None = None
 
 class HoldersOffboardResult(_Model):
@@ -2986,7 +2987,7 @@ class HoldersReassignParams(_Model):
 
 class HoldersReassignResult(_Model):
     passId: str
-    state: _Literal["unassigned", "waiting", "owned"]
+    state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
     ownerUserId: str | None
     ownerName: str | None
@@ -2997,7 +2998,7 @@ class HoldersReassignResult(_Model):
 
 class HoldersRetrieveResult(_Model):
     passId: str
-    state: _Literal["unassigned", "waiting", "owned"]
+    state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
     ownerUserId: str | None
     ownerName: str | None
@@ -3011,7 +3012,7 @@ class HoldersUnassignParams(_Model):
 
 class HoldersUnassignResult(_Model):
     passId: str
-    state: _Literal["unassigned", "waiting", "owned"]
+    state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
     ownerUserId: str | None
     ownerName: str | None
@@ -3047,7 +3048,7 @@ class IdentitiesUpdateParams(_Model):
 
 class InvitationsCreateParams(_Model):
     email: str
-    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"]]
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
 
 class JoinLinksUpsertParams(_Model):
     enabled: bool | None = None
@@ -3076,11 +3077,11 @@ class MessageRulesCountDueParams(_Model):
     ruleId: str | None = None
 
 class MessageRulesCountDueParamsAnchor1(_Model):
-    kind: _Literal["input"]
+    kind: _Literal["input"] | str
     input: str
 
 class MessageRulesCountDueParamsAnchor2(_Model):
-    kind: _Literal["lastScan"]
+    kind: _Literal["lastScan"] | str
 
 class MessageRulesCountDueParamsMatchItem1(_Model):
     input: str
@@ -3099,8 +3100,8 @@ class MessageRulesCountDueParamsMatchItem3(_Model):
 
 class MessageRulesCountDueParamsOffset(_Model):
     amount: int
-    unit: _Literal["day", "hour"]
-    when: _Literal["before", "after"]
+    unit: _Literal["day", "hour"] | str
+    when: _Literal["before", "after"] | str
 
 class MessageRulesCountDueResult(_Model):
     days: _List[MessageRulesCountDueResultDaysItem]
@@ -3126,11 +3127,11 @@ class MessageRulesCreateParams(_Model):
     on: bool | None = None
 
 class MessageRulesCreateParamsAnchor1(_Model):
-    kind: _Literal["input"]
+    kind: _Literal["input"] | str
     input: str
 
 class MessageRulesCreateParamsAnchor2(_Model):
-    kind: _Literal["lastScan"]
+    kind: _Literal["lastScan"] | str
 
 class MessageRulesCreateParamsMatchItem1(_Model):
     input: str
@@ -3149,13 +3150,13 @@ class MessageRulesCreateParamsMatchItem3(_Model):
 
 class MessageRulesCreateParamsOffset(_Model):
     amount: int
-    unit: _Literal["day", "hour"]
-    when: _Literal["before", "after"]
+    unit: _Literal["day", "hour"] | str
+    when: _Literal["before", "after"] | str
 
 class MessageRulesCreateResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
     templateIds: _List[str]
     match: _List[MessageRulesCreateResultMatchItem1 | MessageRulesCreateResultMatchItem2 | MessageRulesCreateResultMatchItem3] | None = None
@@ -3167,8 +3168,8 @@ class MessageRulesCreateResult(_Model):
     message: str
     clearAfter: int | None
     on: bool | None = None
-    state: _Literal["on", "paused"]
-    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None]
+    state: _Literal["on", "paused"] | str
+    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
     nextCheckAt: int | None
     sent: int
     skipped: int
@@ -3177,11 +3178,11 @@ class MessageRulesCreateResult(_Model):
     version: int
 
 class MessageRulesCreateResultAnchor1(_Model):
-    kind: _Literal["input"]
+    kind: _Literal["input"] | str
     input: str
 
 class MessageRulesCreateResultAnchor2(_Model):
-    kind: _Literal["lastScan"]
+    kind: _Literal["lastScan"] | str
 
 class MessageRulesCreateResultMatchItem1(_Model):
     input: str
@@ -3200,8 +3201,8 @@ class MessageRulesCreateResultMatchItem3(_Model):
 
 class MessageRulesCreateResultOffset(_Model):
     amount: int
-    unit: _Literal["day", "hour"]
-    when: _Literal["before", "after"]
+    unit: _Literal["day", "hour"] | str
+    when: _Literal["before", "after"] | str
 
 class MessageRulesDeleteResult(_Model):
     ok: _Literal[True]
@@ -3209,7 +3210,7 @@ class MessageRulesDeleteResult(_Model):
 class MessageRulesListItem(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
     templateIds: _List[str]
     match: _List[MessageRulesListItemMatchItem1 | MessageRulesListItemMatchItem2 | MessageRulesListItemMatchItem3] | None = None
@@ -3221,8 +3222,8 @@ class MessageRulesListItem(_Model):
     message: str
     clearAfter: int | None
     on: bool | None = None
-    state: _Literal["on", "paused"]
-    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None]
+    state: _Literal["on", "paused"] | str
+    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
     nextCheckAt: int | None
     sent: int
     skipped: int
@@ -3231,11 +3232,11 @@ class MessageRulesListItem(_Model):
     version: int
 
 class MessageRulesListItemAnchor1(_Model):
-    kind: _Literal["input"]
+    kind: _Literal["input"] | str
     input: str
 
 class MessageRulesListItemAnchor2(_Model):
-    kind: _Literal["lastScan"]
+    kind: _Literal["lastScan"] | str
 
 class MessageRulesListItemMatchItem1(_Model):
     input: str
@@ -3254,8 +3255,8 @@ class MessageRulesListItemMatchItem3(_Model):
 
 class MessageRulesListItemOffset(_Model):
     amount: int
-    unit: _Literal["day", "hour"]
-    when: _Literal["before", "after"]
+    unit: _Literal["day", "hour"] | str
+    when: _Literal["before", "after"] | str
 
 class MessageRulesListResult(_Model):
     items: _List[MessageRulesListResultItemsItem]
@@ -3264,7 +3265,7 @@ class MessageRulesListResult(_Model):
 class MessageRulesListResultItemsItem(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
     templateIds: _List[str]
     match: _List[MessageRulesListResultItemsItemMatchItem1 | MessageRulesListResultItemsItemMatchItem2 | MessageRulesListResultItemsItemMatchItem3] | None = None
@@ -3276,8 +3277,8 @@ class MessageRulesListResultItemsItem(_Model):
     message: str
     clearAfter: int | None
     on: bool | None = None
-    state: _Literal["on", "paused"]
-    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None]
+    state: _Literal["on", "paused"] | str
+    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
     nextCheckAt: int | None
     sent: int
     skipped: int
@@ -3286,11 +3287,11 @@ class MessageRulesListResultItemsItem(_Model):
     version: int
 
 class MessageRulesListResultItemsItemAnchor1(_Model):
-    kind: _Literal["input"]
+    kind: _Literal["input"] | str
     input: str
 
 class MessageRulesListResultItemsItemAnchor2(_Model):
-    kind: _Literal["lastScan"]
+    kind: _Literal["lastScan"] | str
 
 class MessageRulesListResultItemsItemMatchItem1(_Model):
     input: str
@@ -3309,13 +3310,13 @@ class MessageRulesListResultItemsItemMatchItem3(_Model):
 
 class MessageRulesListResultItemsItemOffset(_Model):
     amount: int
-    unit: _Literal["day", "hour"]
-    when: _Literal["before", "after"]
+    unit: _Literal["day", "hour"] | str
+    when: _Literal["before", "after"] | str
 
 class MessageRulesPauseResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
     templateIds: _List[str]
     match: _List[MessageRulesPauseResultMatchItem1 | MessageRulesPauseResultMatchItem2 | MessageRulesPauseResultMatchItem3] | None = None
@@ -3327,8 +3328,8 @@ class MessageRulesPauseResult(_Model):
     message: str
     clearAfter: int | None
     on: bool | None = None
-    state: _Literal["on", "paused"]
-    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None]
+    state: _Literal["on", "paused"] | str
+    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
     nextCheckAt: int | None
     sent: int
     skipped: int
@@ -3337,11 +3338,11 @@ class MessageRulesPauseResult(_Model):
     version: int
 
 class MessageRulesPauseResultAnchor1(_Model):
-    kind: _Literal["input"]
+    kind: _Literal["input"] | str
     input: str
 
 class MessageRulesPauseResultAnchor2(_Model):
-    kind: _Literal["lastScan"]
+    kind: _Literal["lastScan"] | str
 
 class MessageRulesPauseResultMatchItem1(_Model):
     input: str
@@ -3360,13 +3361,13 @@ class MessageRulesPauseResultMatchItem3(_Model):
 
 class MessageRulesPauseResultOffset(_Model):
     amount: int
-    unit: _Literal["day", "hour"]
-    when: _Literal["before", "after"]
+    unit: _Literal["day", "hour"] | str
+    when: _Literal["before", "after"] | str
 
 class MessageRulesRetrieveResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
     templateIds: _List[str]
     match: _List[MessageRulesRetrieveResultMatchItem1 | MessageRulesRetrieveResultMatchItem2 | MessageRulesRetrieveResultMatchItem3] | None = None
@@ -3378,8 +3379,8 @@ class MessageRulesRetrieveResult(_Model):
     message: str
     clearAfter: int | None
     on: bool | None = None
-    state: _Literal["on", "paused"]
-    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None]
+    state: _Literal["on", "paused"] | str
+    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
     nextCheckAt: int | None
     sent: int
     skipped: int
@@ -3388,11 +3389,11 @@ class MessageRulesRetrieveResult(_Model):
     version: int
 
 class MessageRulesRetrieveResultAnchor1(_Model):
-    kind: _Literal["input"]
+    kind: _Literal["input"] | str
     input: str
 
 class MessageRulesRetrieveResultAnchor2(_Model):
-    kind: _Literal["lastScan"]
+    kind: _Literal["lastScan"] | str
 
 class MessageRulesRetrieveResultMatchItem1(_Model):
     input: str
@@ -3411,16 +3412,16 @@ class MessageRulesRetrieveResultMatchItem3(_Model):
 
 class MessageRulesRetrieveResultOffset(_Model):
     amount: int
-    unit: _Literal["day", "hour"]
-    when: _Literal["before", "after"]
+    unit: _Literal["day", "hour"] | str
+    when: _Literal["before", "after"] | str
 
 class MessageRulesRunsListItem(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["message", "change"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["message", "change"] | str
     name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"]
+    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
     target: MessageRulesRunsListItemTarget
     patch: _Dict[str, _Any]
     notify: bool
@@ -3445,7 +3446,7 @@ class MessageRulesRunsListItemCounts(_Model):
 class MessageRulesRunsListItemTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: MessageRulesRunsListItemTargetScan1 | MessageRulesRunsListItemTargetScan2 | None = None
     match: _List[MessageRulesRunsListItemTargetMatchItem1 | MessageRulesRunsListItemTargetMatchItem2 | MessageRulesRunsListItemTargetMatchItem3] | None = None
@@ -3479,10 +3480,10 @@ class MessageRulesRunsListResult(_Model):
 class MessageRulesRunsListResultItemsItem(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["message", "change"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["message", "change"] | str
     name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"]
+    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
     target: MessageRulesRunsListResultItemsItemTarget
     patch: _Dict[str, _Any]
     notify: bool
@@ -3507,7 +3508,7 @@ class MessageRulesRunsListResultItemsItemCounts(_Model):
 class MessageRulesRunsListResultItemsItemTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: MessageRulesRunsListResultItemsItemTargetScan1 | MessageRulesRunsListResultItemsItemTargetScan2 | None = None
     match: _List[MessageRulesRunsListResultItemsItemTargetMatchItem1 | MessageRulesRunsListResultItemsItemTargetMatchItem2 | MessageRulesRunsListResultItemsItemTargetMatchItem3] | None = None
@@ -3540,10 +3541,10 @@ class MessageRulesSendTestParams(_Model):
 class MessageRulesSendTestResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["message", "change"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["message", "change"] | str
     name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"]
+    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
     target: MessageRulesSendTestResultTarget
     patch: _Dict[str, _Any]
     notify: bool
@@ -3568,7 +3569,7 @@ class MessageRulesSendTestResultCounts(_Model):
 class MessageRulesSendTestResultTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: MessageRulesSendTestResultTargetScan1 | MessageRulesSendTestResultTargetScan2 | None = None
     match: _List[MessageRulesSendTestResultTargetMatchItem1 | MessageRulesSendTestResultTargetMatchItem2 | MessageRulesSendTestResultTargetMatchItem3] | None = None
@@ -3611,11 +3612,11 @@ class MessageRulesUpdateParams(_Model):
     version: int
 
 class MessageRulesUpdateParamsAnchor1(_Model):
-    kind: _Literal["input"]
+    kind: _Literal["input"] | str
     input: str
 
 class MessageRulesUpdateParamsAnchor2(_Model):
-    kind: _Literal["lastScan"]
+    kind: _Literal["lastScan"] | str
 
 class MessageRulesUpdateParamsMatchItem1(_Model):
     input: str
@@ -3634,13 +3635,13 @@ class MessageRulesUpdateParamsMatchItem3(_Model):
 
 class MessageRulesUpdateParamsOffset(_Model):
     amount: int
-    unit: _Literal["day", "hour"]
-    when: _Literal["before", "after"]
+    unit: _Literal["day", "hour"] | str
+    when: _Literal["before", "after"] | str
 
 class MessageRulesUpdateResult(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
     templateIds: _List[str]
     match: _List[MessageRulesUpdateResultMatchItem1 | MessageRulesUpdateResultMatchItem2 | MessageRulesUpdateResultMatchItem3] | None = None
@@ -3652,8 +3653,8 @@ class MessageRulesUpdateResult(_Model):
     message: str
     clearAfter: int | None
     on: bool | None = None
-    state: _Literal["on", "paused"]
-    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None]
+    state: _Literal["on", "paused"] | str
+    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
     nextCheckAt: int | None
     sent: int
     skipped: int
@@ -3662,11 +3663,11 @@ class MessageRulesUpdateResult(_Model):
     version: int
 
 class MessageRulesUpdateResultAnchor1(_Model):
-    kind: _Literal["input"]
+    kind: _Literal["input"] | str
     input: str
 
 class MessageRulesUpdateResultAnchor2(_Model):
-    kind: _Literal["lastScan"]
+    kind: _Literal["lastScan"] | str
 
 class MessageRulesUpdateResultMatchItem1(_Model):
     input: str
@@ -3685,11 +3686,11 @@ class MessageRulesUpdateResultMatchItem3(_Model):
 
 class MessageRulesUpdateResultOffset(_Model):
     amount: int
-    unit: _Literal["day", "hour"]
-    when: _Literal["before", "after"]
+    unit: _Literal["day", "hour"] | str
+    when: _Literal["before", "after"] | str
 
 class NativeScannerCapabilities(_Model):
-    platform: _Literal["ios", "android"]
+    platform: _Literal["ios", "android"] | str
     appVersion: str
     camera: NativeScannerCapabilitiesCamera
     keyboard: NativeScannerCapabilitiesKeyboard
@@ -3702,7 +3703,7 @@ class NativeScannerCapabilities(_Model):
 
 class NativeScannerCapabilitiesCamera(_Model):
     available: bool
-    permission: _Literal["unknown", "prompt", "granted", "denied", "restricted", "unavailable"]
+    permission: _Literal["unknown", "prompt", "granted", "denied", "restricted", "unavailable"] | str
 
 class NativeScannerCapabilitiesCustomerDisplay(_Model):
     supported: bool
@@ -3710,7 +3711,7 @@ class NativeScannerCapabilitiesCustomerDisplay(_Model):
     active: bool
 
 class NativeScannerCapabilitiesExternalReader(_Model):
-    mode: _Literal["keyboard", "unknown"]
+    mode: _Literal["keyboard", "unknown"] | str
     connected: bool | None
 
 class NativeScannerCapabilitiesKeyboard(_Model):
@@ -3719,28 +3720,28 @@ class NativeScannerCapabilitiesKeyboard(_Model):
     connectionObservable: bool
 
 class NativeScannerCapabilitiesLayout(_Model):
-    posture: _Literal["unknown", "folded", "unfolded", "half-folded"]
+    posture: _Literal["unknown", "folded", "unfolded", "half-folded"] | str
     division: _Dict[str, _Any] | None
 
 class NativeScannerCapabilitiesNfc(_Model):
     available: bool
     reading: bool
     continuous: bool | None = None
-    formats: _List[_Literal["ndef", "wallet-vas", "tag-uid", "tag-sun"]]
+    formats: _List[_Literal["ndef", "wallet-vas", "tag-uid", "tag-sun"] | str]
 
 class NativeScannerCapabilitiesVas(_Model):
     deviceSupported: bool
     available: bool
-    reader: _Literal["proximityReader", "android-native", "none"]
+    reader: _Literal["proximityReader", "android-native", "none"] | str
     reason: str
 
 class NfcBindingsUpdateParams(_Model):
-    binding: _Literal["pass", "user"]
+    binding: _Literal["pass", "user"] | str
     passId: str | None = None
 
 class NfcEnrollmentsCreateParams(_Model):
     scannerId: str
-    binding: _Literal["pass", "user"] | None = None
+    binding: _Literal["pass", "user"] | str | None = None
 
 class NfcKeysetsCreateParams1(_Model):
     name: str
@@ -3780,13 +3781,13 @@ class NfcTagTypesArchiveParams(_Model):
 
 class NfcTagTypesArchiveResult(_Model):
     id: str
-    system: _Literal["uid", "sun"]
+    system: _Literal["uid", "sun"] | str
     name: str
-    use: _Literal["member", "staff", "visitor"]
-    scopes: _Literal["pass", "user", "both"] | None = None
+    use: _Literal["member", "staff", "visitor"] | str
+    scopes: _Literal["pass", "user", "both"] | str | None = None
     perPass: int | None = None
     bindingDays: int | None = None
-    confirm: _Literal["none", "staff", "manager"] | None = None
+    confirm: _Literal["none", "staff", "manager"] | str | None = None
     typed: bool | None = None
     templateIds: _List[str] | None = None
     version: int
@@ -3797,24 +3798,24 @@ class NfcTagTypesArchiveResult(_Model):
 
 class NfcTagTypesCreateParams(_Model):
     name: str
-    use: _Literal["member", "staff", "visitor"]
-    scopes: _Literal["pass", "user", "both"] | None = None
+    use: _Literal["member", "staff", "visitor"] | str
+    scopes: _Literal["pass", "user", "both"] | str | None = None
     perPass: int | None = None
     bindingDays: int | None = None
-    confirm: _Literal["none", "staff", "manager"] | None = None
+    confirm: _Literal["none", "staff", "manager"] | str | None = None
     typed: bool | None = None
     templateIds: _List[str] | None = None
-    system: _Literal["uid", "sun"] | None = None
+    system: _Literal["uid", "sun"] | str | None = None
 
 class NfcTagTypesCreateResult(_Model):
     id: str
-    system: _Literal["uid", "sun"]
+    system: _Literal["uid", "sun"] | str
     name: str
-    use: _Literal["member", "staff", "visitor"]
-    scopes: _Literal["pass", "user", "both"] | None = None
+    use: _Literal["member", "staff", "visitor"] | str
+    scopes: _Literal["pass", "user", "both"] | str | None = None
     perPass: int | None = None
     bindingDays: int | None = None
-    confirm: _Literal["none", "staff", "manager"] | None = None
+    confirm: _Literal["none", "staff", "manager"] | str | None = None
     typed: bool | None = None
     templateIds: _List[str] | None = None
     version: int
@@ -3825,13 +3826,13 @@ class NfcTagTypesCreateResult(_Model):
 
 class NfcTagTypesListItem(_Model):
     id: str
-    system: _Literal["uid", "sun"]
+    system: _Literal["uid", "sun"] | str
     name: str
-    use: _Literal["member", "staff", "visitor"]
-    scopes: _Literal["pass", "user", "both"] | None = None
+    use: _Literal["member", "staff", "visitor"] | str
+    scopes: _Literal["pass", "user", "both"] | str | None = None
     perPass: int | None = None
     bindingDays: int | None = None
-    confirm: _Literal["none", "staff", "manager"] | None = None
+    confirm: _Literal["none", "staff", "manager"] | str | None = None
     typed: bool | None = None
     templateIds: _List[str] | None = None
     version: int
@@ -3846,13 +3847,13 @@ class NfcTagTypesListResult(_Model):
 
 class NfcTagTypesListResultItemsItem(_Model):
     id: str
-    system: _Literal["uid", "sun"]
+    system: _Literal["uid", "sun"] | str
     name: str
-    use: _Literal["member", "staff", "visitor"]
-    scopes: _Literal["pass", "user", "both"] | None = None
+    use: _Literal["member", "staff", "visitor"] | str
+    scopes: _Literal["pass", "user", "both"] | str | None = None
     perPass: int | None = None
     bindingDays: int | None = None
-    confirm: _Literal["none", "staff", "manager"] | None = None
+    confirm: _Literal["none", "staff", "manager"] | str | None = None
     typed: bool | None = None
     templateIds: _List[str] | None = None
     version: int
@@ -3864,23 +3865,23 @@ class NfcTagTypesListResultItemsItem(_Model):
 class NfcTagTypesUpdateParams(_Model):
     version: int
     name: str | None = None
-    use: _Literal["member", "staff", "visitor"] | None = None
-    scopes: _Literal["pass", "user", "both"] | None = None
+    use: _Literal["member", "staff", "visitor"] | str | None = None
+    scopes: _Literal["pass", "user", "both"] | str | None = None
     perPass: int | None = None
     bindingDays: int | None = None
-    confirm: _Literal["none", "staff", "manager"] | None = None
+    confirm: _Literal["none", "staff", "manager"] | str | None = None
     typed: bool | None = None
     templateIds: _List[str] | None = None
 
 class NfcTagTypesUpdateResult(_Model):
     id: str
-    system: _Literal["uid", "sun"]
+    system: _Literal["uid", "sun"] | str
     name: str
-    use: _Literal["member", "staff", "visitor"]
-    scopes: _Literal["pass", "user", "both"] | None = None
+    use: _Literal["member", "staff", "visitor"] | str
+    scopes: _Literal["pass", "user", "both"] | str | None = None
     perPass: int | None = None
     bindingDays: int | None = None
-    confirm: _Literal["none", "staff", "manager"] | None = None
+    confirm: _Literal["none", "staff", "manager"] | str | None = None
     typed: bool | None = None
     templateIds: _List[str] | None = None
     version: int
@@ -3891,7 +3892,7 @@ class NfcTagTypesUpdateResult(_Model):
 
 class NfcTagsRebindParams(_Model):
     tagId: str
-    binding: _Literal["pass", "user"]
+    binding: _Literal["pass", "user"] | str
 
 class NfcTagsUpdateParams(_Model):
     label: str | None = None
@@ -3901,7 +3902,7 @@ class Org(_Model):
     id: str
     slug: str
     name: str
-    status: _Literal["active", "suspended", "deleted"]
+    status: _Literal["active", "suspended", "deleted"] | str
     defaultIdentityId: str | None
     branding: OrgBranding
     createdAt: int
@@ -3917,7 +3918,7 @@ class OrgBranding(_Model):
     logo: OrgBrandingLogo | None = None
     icon: OrgBrandingIcon | None = None
     web: OrgBrandingWeb | None = None
-    mark: _Literal["full", "small", "none"] | None = None
+    mark: _Literal["full", "small", "none"] | str | None = None
     logoHasName: bool | None = None
 
 class OrgBrandingIcon(_Model):
@@ -3944,7 +3945,7 @@ class OrgSummary(_Model):
     id: str
     slug: str
     name: str
-    status: _Literal["active", "suspended", "deleted"]
+    status: _Literal["active", "suspended", "deleted"] | str
     defaultIdentityId: str | None
     branding: OrgBranding
     createdAt: int
@@ -3971,34 +3972,34 @@ class OrgsEntitlementsRetrieveResult(_Model):
     items: _List[OrgsEntitlementsRetrieveResultItemsItem]
 
 class OrgsEntitlementsRetrieveResultItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own"]
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own"] | str
     value: float | str | _List[str] | None
-    source: _Literal["preset", "override"]
+    source: _Literal["preset", "override"] | str
 
 class OrgsUpdateParams(_Model):
     slug: str | None = None
     name: str | None = None
     defaultIdentityId: str | None = None
     branding: OrgBranding | None = None
-    status: _Literal["active", "suspended"] | None = None
+    status: _Literal["active", "suspended"] | str | None = None
     configRevision: int | None = None
 
 class PassChannelsChangedEvent(_Model):
     id: str
     type: _Literal["pass.channels_changed"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassChannelsChangedEventData
     sample: _Literal[True] | None = None
 
 class PassChannelsChangedEventData(_Model):
-    channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc"]
-    from_: _Literal["on", "off"] = _Field(alias="from")
-    to: _Literal["on", "off"]
-    source: _Literal["pass", "template", "org", "platform"]
+    channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str
+    from_: _Literal["on", "off"] | str = _Field(alias="from")
+    to: _Literal["on", "off"] | str
+    source: _Literal["pass", "template", "org", "platform"] | str
 
 class PassDetail(_Model):
     id: str
@@ -4010,14 +4011,14 @@ class PassDetail(_Model):
     title: str | None
     subtitle: str | None
     externalId: str | None
-    status: _Literal["active", "voided"]
-    mode: _Literal["live", "test"] | None = None
+    status: _Literal["active", "voided"] | str
+    mode: _Literal["live", "test"] | str | None = None
     version: int
     connectionId: str | None
     externalRef: str | None = None
     syncErrorCode: str | None
     holderEmail: str | None
-    holderState: _Literal["unassigned", "waiting", "owned"]
+    holderState: _Literal["unassigned", "waiting", "owned"] | str
     ownerUserId: str | None
     deviceCount: int | None = None
     removedAt: int | None = None
@@ -4029,7 +4030,7 @@ class PassDetail(_Model):
     ownerName: str | None
     ownerEmail: str | None
     personalization: _Dict[str, _Any]
-    fieldSources: _Dict[str, _Literal["manual", "connection", "import"]]
+    fieldSources: _Dict[str, _Literal["manual", "connection", "import"] | str]
     passJson: _Dict[str, _Any]
     assetBaseUrl: str
     assetNames: _List[str]
@@ -4063,58 +4064,58 @@ class PassDetailChannels(_Model):
 
 class PassDetailChannelsApple(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassDetailChannelsGoogle(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassDetailChannelsMobile(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassDetailChannelsNfc(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassDetailChannelsPaper(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassDetailChannelsSamsung(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassDetailDeliveriesItem(_Model):
     id: str
-    kind: _Literal["push", "email"]
-    state: _Literal["pending", "enqueued", "processing", "sent", "partial", "failed", "cancelled"]
+    kind: _Literal["push", "email"] | str
+    state: _Literal["pending", "enqueued", "processing", "sent", "partial", "failed", "cancelled"] | str
     attempts: int
     errorCode: str | None
     createdAt: int
     finishedAt: int | None
 
 class PassDetailEmail(_Model):
-    outcome: _Literal["queued", "deferred", "limited_org", "limited_recipient", "cancelled", "none"]
-    cap: _Literal["org", "recipient"] | None = None
+    outcome: _Literal["queued", "deferred", "limited_org", "limited_recipient", "cancelled", "none"] | str
+    cap: _Literal["org", "recipient"] | str | None = None
 
 class PassDetailPushBudget(_Model):
     used: int
@@ -4122,14 +4123,14 @@ class PassDetailPushBudget(_Model):
     resetsAt: int | None
 
 class PassDetailTemplateWarningsItem(_Model):
-    severity: _Literal["error", "warning", "info"]
+    severity: _Literal["error", "warning", "info"] | str
     code: str
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
 
 class PassDetailWarningsItem(_Model):
-    severity: _Literal["error", "warning", "info"]
+    severity: _Literal["error", "warning", "info"] | str
     code: str
     message: str
     path: str | None = None
@@ -4148,7 +4149,7 @@ class PassImportsCheckParamsPlan(_Model):
     mapping: _Dict[str, PassImportsCheckParamsPlanMappingValue]
     holderEmail: _Dict[str, _Any] | None
     externalId: _Dict[str, _Any] | None
-    match: _Literal["externalId", "email", "none"]
+    match: _Literal["externalId", "email", "none"] | str
     keepManual: bool | None = None
     save: bool | None = None
 
@@ -4157,15 +4158,15 @@ class PassImportsCheckParamsPlanMappingValue(_Model):
     transform: PassImportsCheckParamsPlanMappingValueTransform | None = None
 
 class PassImportsCheckParamsPlanMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class PassImportsCheckResult(_Model):
     id: str
     templateId: str
     templateVersion: str | None
-    mode: _Literal["live", "test"]
-    state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"]
+    mode: _Literal["live", "test"] | str
+    state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"] | str
     source: PassImportsCheckResultSource
     columns: _List[PassImportsCheckResultColumnsItem]
     plan: _Dict[str, _Any] | None
@@ -4192,7 +4193,7 @@ class PassImportsCheckResultColumnsItem(_Model):
 
 class PassImportsCheckResultPreviewsItem(_Model):
     row: int
-    action: _Literal["create", "update"]
+    action: _Literal["create", "update"] | str
     input: _Dict[str, _Any]
 
 class PassImportsCheckResultProblemTotals(_Model):
@@ -4205,10 +4206,10 @@ class PassImportsCheckResultProblemsItem(_Model):
     field: str | None
     code: str
     message: str
-    severity: _Literal["error", "warning"]
+    severity: _Literal["error", "warning"] | str
 
 class PassImportsCheckResultSource(_Model):
-    kind: _Literal["file", "url"]
+    kind: _Literal["file", "url"] | str
     name: str
 
 class PassImportsCommitParams(_Model):
@@ -4219,8 +4220,8 @@ class PassImportsCommitResult(_Model):
     id: str
     templateId: str
     templateVersion: str | None
-    mode: _Literal["live", "test"]
-    state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"]
+    mode: _Literal["live", "test"] | str
+    state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"] | str
     source: PassImportsCommitResultSource
     columns: _List[PassImportsCommitResultColumnsItem]
     plan: _Dict[str, _Any] | None
@@ -4247,7 +4248,7 @@ class PassImportsCommitResultColumnsItem(_Model):
 
 class PassImportsCommitResultPreviewsItem(_Model):
     row: int
-    action: _Literal["create", "update"]
+    action: _Literal["create", "update"] | str
     input: _Dict[str, _Any]
 
 class PassImportsCommitResultProblemTotals(_Model):
@@ -4260,10 +4261,10 @@ class PassImportsCommitResultProblemsItem(_Model):
     field: str | None
     code: str
     message: str
-    severity: _Literal["error", "warning"]
+    severity: _Literal["error", "warning"] | str
 
 class PassImportsCommitResultSource(_Model):
-    kind: _Literal["file", "url"]
+    kind: _Literal["file", "url"] | str
     name: str
 
 class PassImportsCreateParams(_Model):
@@ -4275,7 +4276,7 @@ class PassImportsCreateParamsPlan(_Model):
     mapping: _Dict[str, PassImportsCreateParamsPlanMappingValue]
     holderEmail: _Dict[str, _Any] | None
     externalId: _Dict[str, _Any] | None
-    match: _Literal["externalId", "email", "none"]
+    match: _Literal["externalId", "email", "none"] | str
     keepManual: bool | None = None
     save: bool | None = None
 
@@ -4284,24 +4285,24 @@ class PassImportsCreateParamsPlanMappingValue(_Model):
     transform: PassImportsCreateParamsPlanMappingValueTransform | None = None
 
 class PassImportsCreateParamsPlanMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"]
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
     options: _Dict[str, _Any] | None = None
 
 class PassImportsCreateParamsSource1(_Model):
-    kind: _Literal["file"]
+    kind: _Literal["file"] | str
     name: str
     csv: str
 
 class PassImportsCreateParamsSource2(_Model):
-    kind: _Literal["url"]
+    kind: _Literal["url"] | str
     url: str
 
 class PassImportsCreateResult(_Model):
     id: str
     templateId: str
     templateVersion: str | None
-    mode: _Literal["live", "test"]
-    state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"]
+    mode: _Literal["live", "test"] | str
+    state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"] | str
     source: PassImportsCreateResultSource
     columns: _List[PassImportsCreateResultColumnsItem]
     plan: _Dict[str, _Any] | None
@@ -4328,7 +4329,7 @@ class PassImportsCreateResultColumnsItem(_Model):
 
 class PassImportsCreateResultPreviewsItem(_Model):
     row: int
-    action: _Literal["create", "update"]
+    action: _Literal["create", "update"] | str
     input: _Dict[str, _Any]
 
 class PassImportsCreateResultProblemTotals(_Model):
@@ -4341,10 +4342,10 @@ class PassImportsCreateResultProblemsItem(_Model):
     field: str | None
     code: str
     message: str
-    severity: _Literal["error", "warning"]
+    severity: _Literal["error", "warning"] | str
 
 class PassImportsCreateResultSource(_Model):
-    kind: _Literal["file", "url"]
+    kind: _Literal["file", "url"] | str
     name: str
 
 class PassImportsDeleteResult(_Model):
@@ -4354,8 +4355,8 @@ class PassImportsListItem(_Model):
     id: str
     templateId: str
     templateVersion: str | None
-    mode: _Literal["live", "test"]
-    state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"]
+    mode: _Literal["live", "test"] | str
+    state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"] | str
     source: PassImportsListItemSource
     columns: _List[PassImportsListItemColumnsItem]
     plan: _Dict[str, _Any] | None
@@ -4382,7 +4383,7 @@ class PassImportsListItemColumnsItem(_Model):
 
 class PassImportsListItemPreviewsItem(_Model):
     row: int
-    action: _Literal["create", "update"]
+    action: _Literal["create", "update"] | str
     input: _Dict[str, _Any]
 
 class PassImportsListItemProblemTotals(_Model):
@@ -4395,10 +4396,10 @@ class PassImportsListItemProblemsItem(_Model):
     field: str | None
     code: str
     message: str
-    severity: _Literal["error", "warning"]
+    severity: _Literal["error", "warning"] | str
 
 class PassImportsListItemSource(_Model):
-    kind: _Literal["file", "url"]
+    kind: _Literal["file", "url"] | str
     name: str
 
 class PassImportsListResult(_Model):
@@ -4409,8 +4410,8 @@ class PassImportsListResultItemsItem(_Model):
     id: str
     templateId: str
     templateVersion: str | None
-    mode: _Literal["live", "test"]
-    state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"]
+    mode: _Literal["live", "test"] | str
+    state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"] | str
     source: PassImportsListResultItemsItemSource
     columns: _List[PassImportsListResultItemsItemColumnsItem]
     plan: _Dict[str, _Any] | None
@@ -4437,7 +4438,7 @@ class PassImportsListResultItemsItemColumnsItem(_Model):
 
 class PassImportsListResultItemsItemPreviewsItem(_Model):
     row: int
-    action: _Literal["create", "update"]
+    action: _Literal["create", "update"] | str
     input: _Dict[str, _Any]
 
 class PassImportsListResultItemsItemProblemTotals(_Model):
@@ -4450,10 +4451,10 @@ class PassImportsListResultItemsItemProblemsItem(_Model):
     field: str | None
     code: str
     message: str
-    severity: _Literal["error", "warning"]
+    severity: _Literal["error", "warning"] | str
 
 class PassImportsListResultItemsItemSource(_Model):
-    kind: _Literal["file", "url"]
+    kind: _Literal["file", "url"] | str
     name: str
 
 class PassImportsRemoveCreatedParams(_Model):
@@ -4463,8 +4464,8 @@ class PassImportsRetrieveResult(_Model):
     id: str
     templateId: str
     templateVersion: str | None
-    mode: _Literal["live", "test"]
-    state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"]
+    mode: _Literal["live", "test"] | str
+    state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"] | str
     source: PassImportsRetrieveResultSource
     columns: _List[PassImportsRetrieveResultColumnsItem]
     plan: _Dict[str, _Any] | None
@@ -4491,7 +4492,7 @@ class PassImportsRetrieveResultColumnsItem(_Model):
 
 class PassImportsRetrieveResultPreviewsItem(_Model):
     row: int
-    action: _Literal["create", "update"]
+    action: _Literal["create", "update"] | str
     input: _Dict[str, _Any]
 
 class PassImportsRetrieveResultProblemTotals(_Model):
@@ -4504,17 +4505,17 @@ class PassImportsRetrieveResultProblemsItem(_Model):
     field: str | None
     code: str
     message: str
-    severity: _Literal["error", "warning"]
+    severity: _Literal["error", "warning"] | str
 
 class PassImportsRetrieveResultSource(_Model):
-    kind: _Literal["file", "url"]
+    kind: _Literal["file", "url"] | str
     name: str
 
 class PassImportsRowsListItem(_Model):
     row: int
-    action: _Literal["create", "update", "unchanged", "error"]
-    state: _Literal["planned", "done", "failed", "skipped"]
-    result: _Literal["created", "updated", "unchanged", None]
+    action: _Literal["create", "update", "unchanged", "error"] | str
+    state: _Literal["planned", "done", "failed", "skipped"] | str
+    result: _Literal["created", "updated", "unchanged", None] | str
     passId: str | None
     externalId: str | None
     code: str | None
@@ -4527,9 +4528,9 @@ class PassImportsRowsListResult(_Model):
 
 class PassImportsRowsListResultItemsItem(_Model):
     row: int
-    action: _Literal["create", "update", "unchanged", "error"]
-    state: _Literal["planned", "done", "failed", "skipped"]
-    result: _Literal["created", "updated", "unchanged", None]
+    action: _Literal["create", "update", "unchanged", "error"] | str
+    state: _Literal["planned", "done", "failed", "skipped"] | str
+    result: _Literal["created", "updated", "unchanged", None] | str
     passId: str | None
     externalId: str | None
     code: str | None
@@ -4547,16 +4548,16 @@ class PassImportsSendEmailsResult(_Model):
 class PassInstalledEvent(_Model):
     id: str
     type: _Literal["pass.installed"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassInstalledEventData
     sample: _Literal[True] | None = None
 
 class PassInstalledEventData(_Model):
-    wallet: _Literal["apple"]
+    wallet: _Literal["apple"] | str
     device: str | None
     deviceCount: int
     firstDevice: bool
@@ -4564,10 +4565,10 @@ class PassInstalledEventData(_Model):
 class PassIssuedEvent(_Model):
     id: str
     type: _Literal["pass.issued"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassIssuedEventData
     sample: _Literal[True] | None = None
@@ -4583,10 +4584,10 @@ class PassPage(_Model):
 class PassPrintVoidedEvent(_Model):
     id: str
     type: _Literal["pass.print_voided"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassPrintVoidedEventData
     sample: _Literal[True] | None = None
@@ -4598,10 +4599,10 @@ class PassPrintVoidedEventData(_Model):
 class PassPrintedEvent(_Model):
     id: str
     type: _Literal["pass.printed"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassPrintedEventData
     sample: _Literal[True] | None = None
@@ -4614,10 +4615,10 @@ class PassPrintedEventData(_Model):
 class PassRemovedEvent(_Model):
     id: str
     type: _Literal["pass.removed"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassRemovedEventData
     sample: _Literal[True] | None = None
@@ -4629,10 +4630,10 @@ class PassRemovedEventData(_Model):
 class PassRestoredEvent(_Model):
     id: str
     type: _Literal["pass.restored"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassRestoredEventData
     sample: _Literal[True] | None = None
@@ -4643,10 +4644,10 @@ class PassRestoredEventData(_Model):
 class PassScanRefusedEvent(_Model):
     id: str
     type: _Literal["pass.scan_refused"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassScanRefusedEventData
     sample: _Literal[True] | None = None
@@ -4662,10 +4663,10 @@ class PassScanRefusedEventData(_Model):
 class PassScanUndoneEvent(_Model):
     id: str
     type: _Literal["pass.scan_undone"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassScanUndoneEventData
     sample: _Literal[True] | None = None
@@ -4678,10 +4679,10 @@ class PassScanUndoneEventData(_Model):
 class PassScannedEvent(_Model):
     id: str
     type: _Literal["pass.scanned"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassScannedEventData
     sample: _Literal[True] | None = None
@@ -4689,8 +4690,8 @@ class PassScannedEvent(_Model):
 class PassScannedEventData(_Model):
     scanId: str | None = None
     action: str | None = None
-    outcome: _Literal["ok", "heads_up"]
-    direction: _Literal["in", "out"] | None = None
+    outcome: _Literal["ok", "heads_up"] | str
+    direction: _Literal["in", "out"] | str | None = None
     method: str | None = None
     scannerId: str | None = None
     staffId: str | None = None
@@ -4709,14 +4710,14 @@ class PassSummary(_Model):
     title: str | None
     subtitle: str | None
     externalId: str | None
-    status: _Literal["active", "voided"]
-    mode: _Literal["live", "test"] | None = None
+    status: _Literal["active", "voided"] | str
+    mode: _Literal["live", "test"] | str | None = None
     version: int
     connectionId: str | None
     externalRef: str | None = None
     syncErrorCode: str | None
     holderEmail: str | None
-    holderState: _Literal["unassigned", "waiting", "owned"]
+    holderState: _Literal["unassigned", "waiting", "owned"] | str
     ownerUserId: str | None
     deviceCount: int | None = None
     removedAt: int | None = None
@@ -4726,28 +4727,28 @@ class PassSummary(_Model):
 class PassUninstalledEvent(_Model):
     id: str
     type: _Literal["pass.uninstalled"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassUninstalledEventData
     sample: _Literal[True] | None = None
 
 class PassUninstalledEventData(_Model):
-    wallet: _Literal["apple"]
+    wallet: _Literal["apple"] | str
     device: str | None
     deviceCount: int
     lastDevice: bool
-    cause: _Literal["wallet", "push_gone"]
+    cause: _Literal["wallet", "push_gone"] | str
 
 class PassUnvoidedEvent(_Model):
     id: str
     type: _Literal["pass.unvoided"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassUnvoidedEventData
     sample: _Literal[True] | None = None
@@ -4758,10 +4759,10 @@ class PassUnvoidedEventData(_Model):
 class PassUpdatedEvent(_Model):
     id: str
     type: _Literal["pass.updated"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassUpdatedEventData
     sample: _Literal[True] | None = None
@@ -4775,8 +4776,8 @@ class PassUpdatedEventData(_Model):
 class PassVersion(_Model):
     version: int
     templateVersion: str
-    cause: _Literal["create", "admin", "api", "connection", "user_refresh", "template_upgrade", "resign"]
-    source: _Literal["scan", "broadcast", "schedule", "remove", "restore", "designer", None] = None
+    cause: _Literal["create", "admin", "api", "connection", "user_refresh", "template_upgrade", "resign"] | str
+    source: _Literal["scan", "broadcast", "schedule", "remove", "restore", "designer", None] | str = None
     actorType: str | None
     actorId: str | None
     createdAt: int
@@ -4785,10 +4786,10 @@ class PassVersion(_Model):
 class PassVoidedEvent(_Model):
     id: str
     type: _Literal["pass.voided"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PassVoidedEventData
     sample: _Literal[True] | None = None
@@ -4799,10 +4800,10 @@ class PassVoidedEventData(_Model):
 class PassesActivityListItem(_Model):
     id: str
     passId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.link_rotated", "pass.channels_changed", "pass.printed", "pass.print_voided", "email.queued", "email.sent", "email.failed", "email.captured", "page.opened", "pass.downloaded", "bundle.opened", "bundle.downloaded", "device.registered", "device.unregistered", "device.fetched", "device.log", "wallet.saved", "wallet.removed", "push.queued", "push.sent", "push.failed", "scan.checked_in", "scan.redeemed", "scan.adjusted", "scan.rejected", "scan.checked_out", "scan.heads_up", "scan.undone", "message.applied", "schedule.applied"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.link_rotated", "pass.channels_changed", "pass.printed", "pass.print_voided", "email.queued", "email.sent", "email.failed", "email.captured", "page.opened", "pass.downloaded", "bundle.opened", "bundle.downloaded", "device.registered", "device.unregistered", "device.fetched", "device.log", "wallet.saved", "wallet.removed", "push.queued", "push.sent", "push.failed", "scan.checked_in", "scan.redeemed", "scan.adjusted", "scan.rejected", "scan.checked_out", "scan.heads_up", "scan.undone", "message.applied", "schedule.applied"] | str
     device: str | None
-    actorType: _Literal["user", "api_key", "system", "connection", "device", "holder", "scanner", None]
+    actorType: _Literal["user", "api_key", "system", "connection", "device", "holder", "scanner", None] | str
     actorId: str | None
     data: _Dict[str, _Any]
     at: int
@@ -4814,10 +4815,10 @@ class PassesActivityListResult(_Model):
 class PassesActivityListResultItemsItem(_Model):
     id: str
     passId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.link_rotated", "pass.channels_changed", "pass.printed", "pass.print_voided", "email.queued", "email.sent", "email.failed", "email.captured", "page.opened", "pass.downloaded", "bundle.opened", "bundle.downloaded", "device.registered", "device.unregistered", "device.fetched", "device.log", "wallet.saved", "wallet.removed", "push.queued", "push.sent", "push.failed", "scan.checked_in", "scan.redeemed", "scan.adjusted", "scan.rejected", "scan.checked_out", "scan.heads_up", "scan.undone", "message.applied", "schedule.applied"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.link_rotated", "pass.channels_changed", "pass.printed", "pass.print_voided", "email.queued", "email.sent", "email.failed", "email.captured", "page.opened", "pass.downloaded", "bundle.opened", "bundle.downloaded", "device.registered", "device.unregistered", "device.fetched", "device.log", "wallet.saved", "wallet.removed", "push.queued", "push.sent", "push.failed", "scan.checked_in", "scan.redeemed", "scan.adjusted", "scan.rejected", "scan.checked_out", "scan.heads_up", "scan.undone", "message.applied", "schedule.applied"] | str
     device: str | None
-    actorType: _Literal["user", "api_key", "system", "connection", "device", "holder", "scanner", None]
+    actorType: _Literal["user", "api_key", "system", "connection", "device", "holder", "scanner", None] | str
     actorId: str | None
     data: _Dict[str, _Any]
     at: int
@@ -4854,7 +4855,7 @@ class PassesAssetsUploadResult(_Model):
     createdAt: int
 
 class PassesBulkApplyParams(_Model):
-    action: _Literal["void", "send_email", "remove"]
+    action: _Literal["void", "send_email", "remove"] | str
     message: str | None = None
     ids: _List[str]
     orgId: str | None = None
@@ -4871,15 +4872,15 @@ class PassesBulkReissueParams(_Model):
     templateId: str | None = None
     version: str | None = None
     orgId: str | None = None
-    cause: _Literal["template_upgrade", "resign"] | None = None
+    cause: _Literal["template_upgrade", "resign"] | str | None = None
     identityId: str | None = None
 
 class PassesBulkReissueResult(_Model):
     workflowInstanceId: str
 
 class PassesBulkUpdateChannelsParams(_Model):
-    action: _Literal["on", "off", "reset"]
-    channels: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"]]
+    action: _Literal["on", "off", "reset"] | str
+    channels: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str]
     ids: _List[str]
     notify: bool | None = None
     replaceCodes: bool | None = None
@@ -4899,12 +4900,12 @@ class PassesBulkUpdateChannelsResultPreview(_Model):
     windows: _List[PassesBulkUpdateChannelsResultPreviewWindowsItem]
 
 class PassesBulkUpdateChannelsResultPreviewImpactItem(_Model):
-    channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc"]
+    channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str
     passes: int
     rotated: int
 
 class PassesBulkUpdateChannelsResultPreviewWindowsItem(_Model):
-    kind: _Literal["event", "session"]
+    kind: _Literal["event", "session"] | str
     id: str
     name: str
     opensAt: int | None
@@ -4931,63 +4932,63 @@ class PassesChannelsRetrieveResultEffective(_Model):
 
 class PassesChannelsRetrieveResultEffectiveApple(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassesChannelsRetrieveResultEffectiveGoogle(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassesChannelsRetrieveResultEffectiveMobile(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassesChannelsRetrieveResultEffectiveNfc(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassesChannelsRetrieveResultEffectivePaper(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassesChannelsRetrieveResultEffectiveSamsung(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassesChannelsRetrieveResultOverrides(_Model):
-    mobile: _Literal["on", "off"] | None = None
-    apple: _Literal["on", "off"] | None = None
-    google: _Literal["on", "off"] | None = None
-    samsung: _Literal["on", "off"] | None = None
-    paper: _Literal["on", "off"] | None = None
-    nfc: _Literal["on", "off"] | None = None
+    mobile: _Literal["on", "off"] | str | None = None
+    apple: _Literal["on", "off"] | str | None = None
+    google: _Literal["on", "off"] | str | None = None
+    samsung: _Literal["on", "off"] | str | None = None
+    paper: _Literal["on", "off"] | str | None = None
+    nfc: _Literal["on", "off"] | str | None = None
 
 class PassesChannelsRetrieveResultReplace(_Model):
     supported: bool
     windows: _List[PassesChannelsRetrieveResultReplaceWindowsItem]
     owed: bool
     blocked: _Dict[str, _Any] | None
-    lastDigital: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"]]
+    lastDigital: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str]
 
 class PassesChannelsRetrieveResultReplaceWindowsItem(_Model):
-    kind: _Literal["event", "session"]
+    kind: _Literal["event", "session"] | str
     id: str
     name: str
     opensAt: int | None
@@ -5002,12 +5003,12 @@ class PassesChannelsUpdateParams(_Model):
     orgId: str | None = None
 
 class PassesChannelsUpdateParamsChannels(_Model):
-    mobile: _Literal["on", "off", None] = None
-    apple: _Literal["on", "off", None] = None
-    google: _Literal["on", "off", None] = None
-    samsung: _Literal["on", "off", None] = None
-    paper: _Literal["on", "off", None] = None
-    nfc: _Literal["on", "off", None] = None
+    mobile: _Literal["on", "off", None] | str = None
+    apple: _Literal["on", "off", None] | str = None
+    google: _Literal["on", "off", None] | str = None
+    samsung: _Literal["on", "off", None] | str = None
+    paper: _Literal["on", "off", None] | str = None
+    nfc: _Literal["on", "off", None] | str = None
 
 class PassesChannelsUpdateResult(_Model):
     effective: PassesChannelsUpdateResultEffective
@@ -5024,63 +5025,63 @@ class PassesChannelsUpdateResultEffective(_Model):
 
 class PassesChannelsUpdateResultEffectiveApple(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassesChannelsUpdateResultEffectiveGoogle(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassesChannelsUpdateResultEffectiveMobile(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassesChannelsUpdateResultEffectiveNfc(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassesChannelsUpdateResultEffectivePaper(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassesChannelsUpdateResultEffectiveSamsung(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassesChannelsUpdateResultOverrides(_Model):
-    mobile: _Literal["on", "off"] | None = None
-    apple: _Literal["on", "off"] | None = None
-    google: _Literal["on", "off"] | None = None
-    samsung: _Literal["on", "off"] | None = None
-    paper: _Literal["on", "off"] | None = None
-    nfc: _Literal["on", "off"] | None = None
+    mobile: _Literal["on", "off"] | str | None = None
+    apple: _Literal["on", "off"] | str | None = None
+    google: _Literal["on", "off"] | str | None = None
+    samsung: _Literal["on", "off"] | str | None = None
+    paper: _Literal["on", "off"] | str | None = None
+    nfc: _Literal["on", "off"] | str | None = None
 
 class PassesChannelsUpdateResultReplace(_Model):
     supported: bool
     windows: _List[PassesChannelsUpdateResultReplaceWindowsItem]
     owed: bool
     blocked: _Dict[str, _Any] | None
-    lastDigital: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"]]
+    lastDigital: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str]
 
 class PassesChannelsUpdateResultReplaceWindowsItem(_Model):
-    kind: _Literal["event", "session"]
+    kind: _Literal["event", "session"] | str
     id: str
     name: str
     opensAt: int | None
@@ -5097,42 +5098,42 @@ class PassesCheckInRulesRetrieveResult(_Model):
     updatedAt: int | None
 
 class PassesCheckInRulesRetrieveResultDefaults(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class PassesCheckInRulesRetrieveResultEffective(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class PassesCheckInRulesRetrieveResultRules(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class PassesCheckInRulesUpdateParams(_Model):
     rules: PassesCheckInRulesUpdateParamsRules
 
 class PassesCheckInRulesUpdateParamsRules(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class PassesCheckInRulesUpdateResult(_Model):
@@ -5144,30 +5145,30 @@ class PassesCheckInRulesUpdateResult(_Model):
     updatedAt: int | None
 
 class PassesCheckInRulesUpdateResultDefaults(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class PassesCheckInRulesUpdateResultEffective(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class PassesCheckInRulesUpdateResultRules(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class PassesConnectionUpdateParams(_Model):
@@ -5178,7 +5179,7 @@ class PassesConnectionUpdateParams(_Model):
 class PassesCreateParams(_Model):
     orgId: str | None = None
     templateId: str
-    mode: _Literal["live", "test"] | None = None
+    mode: _Literal["live", "test"] | str | None = None
     templateVersion: str | None = None
     releaseId: str | None = None
     releaseGeneration: int | None = None
@@ -5201,12 +5202,12 @@ class PassesDevicesListResult(_Model):
 
 class PassesDevicesListResultDevicesItem(_Model):
     device: str
-    status: _Literal["current", "waiting", "push_failing", "removed", "unknown"]
+    status: _Literal["current", "waiting", "push_failing", "removed", "unknown"] | str
     registeredAt: int | None
     unregisteredAt: int | None
     lastFetch: _Dict[str, _Any] | None
     lastPush: _Dict[str, _Any] | None
-    removal: _Literal["pending", "fetched", "deleted", None]
+    removal: _Literal["pending", "fetched", "deleted", None] | str
 
 class PassesMatchPhotosParams(_Model):
     orgId: str | None = None
@@ -5218,7 +5219,7 @@ class PassesMatchPhotosResult(_Model):
 class PassesMatchPhotosResultMatchesItem(_Model):
     key: str
     passId: str | None
-    state: _Literal["matched", "none", "ambiguous"]
+    state: _Literal["matched", "none", "ambiguous"] | str
 
 class PassesMemberPhotoDeleteResult(_Model):
     passId: str
@@ -5263,7 +5264,7 @@ class PassesPrintsCreateResult(_Model):
     id: str
     passId: str
     generation: int
-    status: _Literal["active", "voided", "used"]
+    status: _Literal["active", "voided", "used"] | str
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -5276,7 +5277,7 @@ class PassesPrintsListResultPrintsItem(_Model):
     id: str
     passId: str
     generation: int
-    status: _Literal["active", "voided", "used"]
+    status: _Literal["active", "voided", "used"] | str
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -5285,7 +5286,7 @@ class PassesPrintsVoidResult(_Model):
     id: str
     passId: str
     generation: int
-    status: _Literal["active", "voided", "used"]
+    status: _Literal["active", "voided", "used"] | str
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -5305,43 +5306,43 @@ class PassesRetrieveProviderStatusResult(_Model):
     providers: _Tuple[PassesRetrieveProviderStatusResultProviders1, PassesRetrieveProviderStatusResultProviders2]
 
 class PassesRetrieveProviderStatusResultProviders1(_Model):
-    provider: _Literal["google"]
-    lifecycle: _Literal["absent", "blocked", "ready", "active", "revoking", "revoked", "retired"]
+    provider: _Literal["google"] | str
+    lifecycle: _Literal["absent", "blocked", "ready", "active", "revoking", "revoked", "retired"] | str
     desiredOperation: _Dict[str, _Any] | None
     priorGenerationRetirementPending: bool
-    installation: _Literal["unknown"]
+    installation: _Literal["unknown"] | str
     reported: PassesRetrieveProviderStatusResultProviders1Reported | None = None
     issuance: PassesRetrieveProviderStatusResultProviders1Issuance1 | PassesRetrieveProviderStatusResultProviders1Issuance2
 
 class PassesRetrieveProviderStatusResultProviders1Issuance1(_Model):
-    state: _Literal["disabled"]
-    reason: _Literal["not_released"]
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
 
 class PassesRetrieveProviderStatusResultProviders1Issuance2(_Model):
-    state: _Literal["enabled"]
+    state: _Literal["enabled"] | str
 
 class PassesRetrieveProviderStatusResultProviders1Reported(_Model):
-    event: _Literal["saved", "removed"]
+    event: _Literal["saved", "removed"] | str
     at: int
 
 class PassesRetrieveProviderStatusResultProviders2(_Model):
-    provider: _Literal["samsung"]
-    lifecycle: _Literal["absent", "blocked", "ready", "active", "revoking", "revoked", "retired"]
+    provider: _Literal["samsung"] | str
+    lifecycle: _Literal["absent", "blocked", "ready", "active", "revoking", "revoked", "retired"] | str
     desiredOperation: _Dict[str, _Any] | None
     priorGenerationRetirementPending: bool
-    installation: _Literal["unknown"]
+    installation: _Literal["unknown"] | str
     reported: PassesRetrieveProviderStatusResultProviders2Reported | None = None
     issuance: PassesRetrieveProviderStatusResultProviders2Issuance1 | PassesRetrieveProviderStatusResultProviders2Issuance2
 
 class PassesRetrieveProviderStatusResultProviders2Issuance1(_Model):
-    state: _Literal["disabled"]
-    reason: _Literal["not_released"]
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
 
 class PassesRetrieveProviderStatusResultProviders2Issuance2(_Model):
-    state: _Literal["enabled"]
+    state: _Literal["enabled"] | str
 
 class PassesRetrieveProviderStatusResultProviders2Reported(_Model):
-    event: _Literal["saved", "removed"]
+    event: _Literal["saved", "removed"] | str
     at: int
 
 class PassesRotateCodeResult(_Model):
@@ -5359,11 +5360,11 @@ class PassesSendEmailResult(_Model):
     ok: _Literal[True]
 
 class PassesStampsApplyParams1(_Model):
-    action: _Literal["add"]
+    action: _Literal["add"] | str
     count: int | None = None
 
 class PassesStampsApplyParams2(_Model):
-    action: _Literal["redeem"]
+    action: _Literal["redeem"] | str
 
 class PassesUpdateParams(_Model):
     input: _Dict[str, _Any] | None = None
@@ -5385,7 +5386,7 @@ class PlatformOrgsCreateParams(_Model):
     name: str
     defaultIdentityId: str | None = None
     branding: OrgBranding | None = None
-    preset: _Literal["legacy", "trial", "standard"] | None = None
+    preset: _Literal["legacy", "trial", "standard"] | str | None = None
 
 class PlatformOrgsEntitlementsUpdateParams(_Model):
     expectedRevision: int
@@ -5402,7 +5403,7 @@ class PlatformOrgsLegalHoldsCreateParams(_Model):
     reason: str
 
 class PlatformOrgsSetStatusParams(_Model):
-    status: _Literal["active", "suspended"]
+    status: _Literal["active", "suspended"] | str
 
 class PlatformOrgsWalletEnrollmentsHoldParams(_Model):
     reason: str
@@ -5417,34 +5418,34 @@ class PlatformUsersEmailsCreateParams(_Model):
     email: str
 
 class PlatformUsersUpdateParams(_Model):
-    status: _Literal["active", "disabled"]
+    status: _Literal["active", "disabled"] | str
 
 class PlatformWalletCredentialsResolveMigrationParams(_Model):
     orgId: str
-    mode: _Literal["live", "test"]
-    provider: _Literal["google", "samsung"]
-    action: _Literal["assign_platform", "merge", "retire"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    action: _Literal["assign_platform", "merge", "retire"] | str
 
 class PlatformWalletCredentialsRevokeParams(_Model):
     expectedRevision: int
 
 class PlatformWalletCredentialsUpsertParams1(_Model):
-    provider: _Literal["google"]
+    provider: _Literal["google"] | str
     expectedRevision: int
     credentials: PlatformWalletCredentialsUpsertParams1Credentials
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
 
 class PlatformWalletCredentialsUpsertParams1Credentials(_Model):
     issuerId: str
     serviceAccountEmail: str
     privateKeyPem: str
-    scopes: _List[_Literal["https://www.googleapis.com/auth/wallet_object.issuer"]]
+    scopes: _List[_Literal["https://www.googleapis.com/auth/wallet_object.issuer"] | str]
 
 class PlatformWalletCredentialsUpsertParams2(_Model):
-    provider: _Literal["samsung"]
+    provider: _Literal["samsung"] | str
     expectedRevision: int
     credentials: PlatformWalletCredentialsUpsertParams2Credentials
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
 
 class PlatformWalletCredentialsUpsertParams2Credentials(_Model):
     partnerId: str
@@ -5470,10 +5471,10 @@ class PrintJobsCreateResultSkippedItem(_Model):
     reason: str | None = None
 
 class PrintJobsRetrieveResult(_Model):
-    state: _Literal["pending", "ready", "failed"]
+    state: _Literal["pending", "ready", "failed"] | str
     count: int
     skipped: int
-    engine: _Literal["pdf-lib"] | None = None
+    engine: _Literal["pdf-lib"] | str | None = None
     lossy: bool
 
 class Problem(_Model):
@@ -5496,10 +5497,10 @@ class ProblemIssuesItem(_Model):
 class PushFailedEvent(_Model):
     id: str
     type: _Literal["push.failed"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: WebhookPassRef = _Field(alias="pass")
     data: PushFailedEventData
     sample: _Literal[True] | None = None
@@ -5540,8 +5541,8 @@ class RollCallsCreateResultPeopleItem(_Model):
     place: str
     placeName: str
     since: int
-    basis: _Literal["in_now", "tapped_in"]
-    presence: _Literal["in", "left", "lapsed"]
+    basis: _Literal["in_now", "tapped_in"] | str
+    presence: _Literal["in", "left", "lapsed"] | str
     late: bool
     mark: _Dict[str, _Any] | None
     notConfirmedOut: bool
@@ -5576,8 +5577,8 @@ class RollCallsEndResultPeopleItem(_Model):
     place: str
     placeName: str
     since: int
-    basis: _Literal["in_now", "tapped_in"]
-    presence: _Literal["in", "left", "lapsed"]
+    basis: _Literal["in_now", "tapped_in"] | str
+    presence: _Literal["in", "left", "lapsed"] | str
     late: bool
     mark: _Dict[str, _Any] | None
     notConfirmedOut: bool
@@ -5588,7 +5589,7 @@ class RollCallsMarkParams(_Model):
 class RollCallsMarkParamsMarksItem(_Model):
     rollCallId: str
     passId: str
-    status: _Literal["present", "out", "none"]
+    status: _Literal["present", "out", "none"] | str
     at: int | None = None
 
 class RollCallsMarkResult(_Model):
@@ -5622,8 +5623,8 @@ class RollCallsMarkResultPeopleItem(_Model):
     place: str
     placeName: str
     since: int
-    basis: _Literal["in_now", "tapped_in"]
-    presence: _Literal["in", "left", "lapsed"]
+    basis: _Literal["in_now", "tapped_in"] | str
+    presence: _Literal["in", "left", "lapsed"] | str
     late: bool
     mark: _Dict[str, _Any] | None
     notConfirmedOut: bool
@@ -5631,7 +5632,7 @@ class RollCallsMarkResultPeopleItem(_Model):
 class RollCallsMarkResultResultsItem(_Model):
     rollCallId: str
     passId: str
-    status: _Literal["applied", "refused"]
+    status: _Literal["applied", "refused"] | str
     code: str | None = None
 
 class RollCallsRetrieveOpenResult(_Model):
@@ -5667,8 +5668,8 @@ class RollCallsRetrieveResultPeopleItem(_Model):
     place: str
     placeName: str
     since: int
-    basis: _Literal["in_now", "tapped_in"]
-    presence: _Literal["in", "left", "lapsed"]
+    basis: _Literal["in_now", "tapped_in"] | str
+    presence: _Literal["in", "left", "lapsed"] | str
     late: bool
     mark: _Dict[str, _Any] | None
     notConfirmedOut: bool
@@ -5688,15 +5689,15 @@ class ScanBranding(_Model):
 class ScanCardAction(_Model):
     id: str
     label: str
-    kind: _Literal["check_in", "add", "take", "set", "use_up"]
+    kind: _Literal["check_in", "add", "take", "set", "use_up"] | str
     available: bool
-    lock: _Literal["role", "approval", "max", None]
-    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None]
+    lock: _Literal["role", "approval", "max", None] | str
+    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None] | str
     amount: ScanCardActionAmount1 | ScanCardActionAmount2 | None
     confirm: bool
     confirmAbove: float | None
     cooldownRemainingMs: int | None
-    armable: _Literal["sticky", "once", None]
+    armable: _Literal["sticky", "once", None] | str
     rewardLabel: str | None
     input: ScanCardActionInput | None = None
 
@@ -5709,7 +5710,7 @@ class ScanCardActionAmount2(_Model):
     default: float | None
 
 class ScanCardActionInput(_Model):
-    type: _Literal["string", "number", "integer", "boolean"]
+    type: _Literal["string", "number", "integer", "boolean"] | str
     label: str
     min: float | None = None
     max: float | None = None
@@ -5733,7 +5734,7 @@ class ScanCountsByTypeItem(_Model):
 class ScanEvent(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
     templateIds: _List[str]
     match: _Dict[str, _Any] | None
@@ -5744,7 +5745,7 @@ class ScanEvent(_Model):
     reentry: bool
     hardLimit: bool | None = None
     note: str | None
-    status: _Literal["upcoming", "live", "ended", "archived"]
+    status: _Literal["upcoming", "live", "ended", "archived"] | str
     arrived: int
     expected: int
     scanners: int
@@ -5790,13 +5791,13 @@ class ScanFeedRow(_Model):
     templateId: str | None
     eventId: str | None
     actionId: str | None
-    kind: _Literal["check_in", "add", "take", "set", "use_up", "undo", None]
-    outcome: _Literal["ok", "heads_up", "refused"]
-    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None]
+    kind: _Literal["check_in", "add", "take", "set", "use_up", "undo", None] | str
+    outcome: _Literal["ok", "heads_up", "refused"] | str
+    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None] | str
     amount: float | None
     before: _Any | None = None
     after: _Any | None = None
-    method: _Literal["camera", "wedge", "nfc", "manual", "auto"]
+    method: _Literal["camera", "wedge", "nfc", "manual", "auto"] | str
     scannerId: str | None
     scannerName: str | None
     undoneAt: int | None
@@ -5806,18 +5807,18 @@ class ScanLookupRow(_Model):
     title: str
     subtitle: str | None
     templateName: str
-    status: _Literal["active", "voided", "expired", "removed"]
+    status: _Literal["active", "voided", "expired", "removed"] | str
     maskedEmail: str | None
     photoUrl: str | None
-    doorState: _Literal["in", "out", None]
+    doorState: _Literal["in", "out", None] | str
     lastScanAt: int | None
     channelsOff: bool | None = None
 
 class ScanOutcome(_Model):
     checkIn: ScanOutcomeCheckIn | None = None
     scanId: str | None
-    kind: _Literal["ok", "heads_up", "refused", "ready"]
-    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None]
+    kind: _Literal["ok", "heads_up", "refused", "ready"] | str
+    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None] | str
     replay: bool
     action: _Dict[str, _Any] | None
     card: ScanCard
@@ -5828,14 +5829,14 @@ class ScanOutcome(_Model):
     cooldownRemainingMs: int | None
     value: _Dict[str, _Any] | None
     flags: _List[str]
-    channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc", None] = None
+    channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc", None] | str = None
     overridable: bool
     approvals: bool
     group: _Dict[str, _Any] | None
     bundle: _Dict[str, _Any] | None = None
     inBundle: bool | None = None
     counts: ScanCounts
-    milestone: _Literal["count", "all_in", "reward", None]
+    milestone: _Literal["count", "all_in", "reward", None] | str
     undoUntil: int | None
     access: _Dict[str, _Any] | None = None
     admit: _Dict[str, _Any] | None = None
@@ -5844,8 +5845,8 @@ class ScanOutcome(_Model):
     display: _Dict[str, _Any] | None
 
 class ScanOutcomeCheckIn(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"]
-    direction: _Literal["in", "out"]
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str
+    direction: _Literal["in", "out"] | str
     inside: bool
     enteredAt: int | None
     firstAt: int | None
@@ -5858,8 +5859,8 @@ class ScanRecent(_Model):
 class ScanRecentItemsItem(_Model):
     scanId: str
     at: int
-    outcome: _Literal["ok", "heads_up", "refused"]
-    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None]
+    outcome: _Literal["ok", "heads_up", "refused"] | str
+    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None] | str
     actionLabel: str
     title: str | None
     value: _Dict[str, _Any] | None
@@ -5868,12 +5869,12 @@ class ScanRecentItemsItem(_Model):
 class ScanRecord(_Model):
     id: str
     at: int
-    outcome: _Literal["ok", "heads_up", "refused"]
-    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None]
-    kind: _Literal["check_in", "add", "take", "set", "use_up", "undo", None]
+    outcome: _Literal["ok", "heads_up", "refused"] | str
+    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None] | str
+    kind: _Literal["check_in", "add", "take", "set", "use_up", "undo", None] | str
     actionId: str | None
     actionLabel: str | None
-    direction: _Literal["in", "out", None]
+    direction: _Literal["in", "out", None] | str
     passId: str | None
     passTitle: str | None
     templateId: str | None
@@ -5886,7 +5887,7 @@ class ScanRecord(_Model):
     staffName: str | None
     apiKeyId: str | None = None
     approvedBy: str | None
-    method: _Literal["camera", "wedge", "nfc", "manual", "auto"]
+    method: _Literal["camera", "wedge", "nfc", "manual", "auto"] | str
     amount: float | None
     before: _Any | None = None
     after: _Any | None = None
@@ -5900,7 +5901,7 @@ class ScanRecord(_Model):
     undoes: str | None
 
 class ScanRecordActor(_Model):
-    type: _Literal["scanner", "user"]
+    type: _Literal["scanner", "user"] | str
     id: str
 
 class ScanRoster(_Model):
@@ -5912,20 +5913,20 @@ class ScanRoster(_Model):
 
 class ScanRosterEntriesItem(_Model):
     h: str
-    status: _Literal["active", "voided", "removed"]
-    state: _Literal["in", "out", None]
+    status: _Literal["active", "voided", "removed"] | str
+    state: _Literal["in", "out", None] | str
     day: bool | None = None
 
 class ScanSession(_Model):
     workspace: ScanWorkspace | None = None
-    principal: _Literal["scanner", "admin"]
-    state: _Literal["ready", "staff_required", "not_open", "closed", "unassigned"]
+    principal: _Literal["scanner", "admin"] | str
+    state: _Literal["ready", "staff_required", "not_open", "closed", "unassigned"] | str
     branding: ScanBranding | None = None
     scanner: _Dict[str, _Any] | None
     admin: _Dict[str, _Any] | None
     event: _Dict[str, _Any] | None
     templates: _List[ScanSessionTemplatesItem]
-    formats: _List[_Literal["qr", "pdf417", "aztec", "code128", "code39", "codabar", "ean13", "itf"]]
+    formats: _List[_Literal["qr", "pdf417", "aztec", "code128", "code39", "codabar", "ean13", "itf"] | str]
     staff: _Dict[str, _Any] | None
     staffList: _List[ScanSessionStaffListItem] | None
     staffTruncated: bool | None = None
@@ -5937,25 +5938,25 @@ class ScanSession(_Model):
 class ScanSessionStaffListItem(_Model):
     id: str
     name: str
-    role: _Literal["door", "desk", "manager"]
+    role: _Literal["door", "desk", "manager"] | str
 
 class ScanSessionTemplatesItem(_Model):
     id: str
     name: str
     style: str
-    formats: _List[_Literal["qr", "pdf417", "aztec", "code128", "code39", "codabar", "ean13", "itf"]]
+    formats: _List[_Literal["qr", "pdf417", "aztec", "code128", "code39", "codabar", "ean13", "itf"] | str]
     actions: _List[ScanSessionTemplatesItemActionsItem]
 
 class ScanSessionTemplatesItemActionsItem(_Model):
     id: str
     label: str
-    kind: _Literal["check_in", "add", "take", "set", "use_up"]
+    kind: _Literal["check_in", "add", "take", "set", "use_up"] | str
 
 class ScanSetupsCreateParams(_Model):
     orgId: str
     name: str
-    kind: _Literal["device", "terminal", "display"] | None = None
-    deviceRole: _Literal["scan", "customer", "monitor"] | None = None
+    kind: _Literal["device", "terminal", "display"] | str | None = None
+    deviceRole: _Literal["scan", "customer", "monitor"] | str | None = None
     accepts: ScanSetupsCreateParamsAccepts1 | ScanSetupsCreateParamsAccepts2 | None = None
     settings: ScanSetupsCreateParamsSettings | None = None
     timeZone: str
@@ -5970,43 +5971,43 @@ class ScanSetupsCreateParamsAccepts2(_Model):
 
 class ScanSetupsCreateParamsSettings(_Model):
     checkIn: ScanSetupsCreateParamsSettingsCheckIn | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     showPhoto: bool | None = None
     acceptAllTemplates: bool | None = None
-    flow: _Literal["auto", "choose"] | None = None
+    flow: _Literal["auto", "choose"] | str | None = None
     defaultActionId: str | None = None
-    roleWithoutSignIn: _Literal["door", "desk"] | None = None
+    roleWithoutSignIn: _Literal["door", "desk"] | str | None = None
     staffSignIn: bool | None = None
-    letInAgain: _Literal["anyone", "manager", "never"] | None = None
-    reader: _Literal["none", "barcode", "nfc"] | None = None
+    letInAgain: _Literal["anyone", "manager", "never"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
     lookup: bool | None = None
     offline: bool | None = None
-    whenOffline: _Literal["stop", "decide", "list"] | None = None
+    whenOffline: _Literal["stop", "decide", "list"] | str | None = None
     dailyAmount: int | None = None
     deskActions: bool | None = None
     hardLimit: bool | None = None
-    approvals: _Literal["managers", "desk"] | None = None
+    approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanSetupsCreateParamsSettingsTags | None = None
 
 class ScanSetupsCreateParamsSettingsCheckIn(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class ScanSetupsCreateParamsSettingsTags(_Model):
-    assign: _Literal["desk", "manager", "never"] | None = None
-    assignAll: _Literal["desk", "manager", "never"] | None = None
-    level: _Literal["off", "basic", "secure"] | None = None
-    types: _List[str | _Literal["standard"]] | None = None
-    confirmBasic: _Literal["none", "staff", "manager"] | None = None
+    assign: _Literal["desk", "manager", "never"] | str | None = None
+    assignAll: _Literal["desk", "manager", "never"] | str | None = None
+    level: _Literal["off", "basic", "secure"] | str | None = None
+    types: _List[str | _Literal["standard"] | str] | None = None
+    confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
 class ScanSetupsUpdateParams(_Model):
     name: str | None = None
-    deviceRole: _Literal["scan", "customer", "monitor"] | None = None
+    deviceRole: _Literal["scan", "customer", "monitor"] | str | None = None
     accepts: ScanSetupsUpdateParamsAccepts1 | ScanSetupsUpdateParamsAccepts2 | None = None
     settings: ScanSetupsUpdateParamsSettings | None = None
     watch: _Dict[str, _Any] | None = None
@@ -6019,45 +6020,45 @@ class ScanSetupsUpdateParamsAccepts2(_Model):
 
 class ScanSetupsUpdateParamsSettings(_Model):
     checkIn: ScanSetupsUpdateParamsSettingsCheckIn | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     showPhoto: bool | None = None
     acceptAllTemplates: bool | None = None
-    flow: _Literal["auto", "choose"] | None = None
+    flow: _Literal["auto", "choose"] | str | None = None
     defaultActionId: str | None = None
-    roleWithoutSignIn: _Literal["door", "desk"] | None = None
+    roleWithoutSignIn: _Literal["door", "desk"] | str | None = None
     staffSignIn: bool | None = None
-    letInAgain: _Literal["anyone", "manager", "never"] | None = None
-    reader: _Literal["none", "barcode", "nfc"] | None = None
+    letInAgain: _Literal["anyone", "manager", "never"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
     lookup: bool | None = None
     offline: bool | None = None
-    whenOffline: _Literal["stop", "decide", "list"] | None = None
+    whenOffline: _Literal["stop", "decide", "list"] | str | None = None
     dailyAmount: int | None = None
     deskActions: bool | None = None
     hardLimit: bool | None = None
-    approvals: _Literal["managers", "desk"] | None = None
+    approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanSetupsUpdateParamsSettingsTags | None = None
 
 class ScanSetupsUpdateParamsSettingsCheckIn(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class ScanSetupsUpdateParamsSettingsTags(_Model):
-    assign: _Literal["desk", "manager", "never"] | None = None
-    assignAll: _Literal["desk", "manager", "never"] | None = None
-    level: _Literal["off", "basic", "secure"] | None = None
-    types: _List[str | _Literal["standard"]] | None = None
-    confirmBasic: _Literal["none", "staff", "manager"] | None = None
+    assign: _Literal["desk", "manager", "never"] | str | None = None
+    assignAll: _Literal["desk", "manager", "never"] | str | None = None
+    level: _Literal["off", "basic", "secure"] | str | None = None
+    types: _List[str | _Literal["standard"] | str] | None = None
+    confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
 class ScanStaff(_Model):
     id: str
     orgId: str
     name: str
-    role: _Literal["door", "desk", "manager"]
+    role: _Literal["door", "desk", "manager"] | str
     pinSetAt: int
     locked: bool
     disabledAt: int | None
@@ -6067,11 +6068,11 @@ class ScanStaff(_Model):
 class ScanStaffCreateParams(_Model):
     orgId: str
     name: str
-    role: _Literal["door", "desk", "manager"]
+    role: _Literal["door", "desk", "manager"] | str
 
 class ScanStaffUpdateParams(_Model):
     name: str | None = None
-    role: _Literal["door", "desk", "manager"] | None = None
+    role: _Literal["door", "desk", "manager"] | str | None = None
     disabled: bool | None = None
 
 class ScanSummary(_Model):
@@ -6085,7 +6086,7 @@ class ScanSummary(_Model):
     byAction: _List[ScanSummaryByActionItem]
     firstAt: int | None
     lastAt: int | None
-    scope: _Literal["device", "session"] | None = None
+    scope: _Literal["device", "session"] | str | None = None
     timeZone: str | None = None
     byHour: _List[ScanSummaryByHourItem] | None = None
     byValue: _List[ScanSummaryByValueItem] | None = None
@@ -6123,7 +6124,7 @@ class ScanSummaryByTypeItem(_Model):
     count: int
 
 class ScanSummaryByValueItem(_Model):
-    kind: _Literal["add", "take", "set", "use_up"]
+    kind: _Literal["add", "take", "set", "use_up"] | str
     count: int
     amount: float
 
@@ -6139,7 +6140,7 @@ class ScanSummaryOverridesLatestItem(_Model):
     reason: str | None
 
 class ScanZonesCreateParams(_Model):
-    occupancy: _Literal["off", "track", "enforce"] | None = None
+    occupancy: _Literal["off", "track", "enforce"] | str | None = None
     capacity: int | None = None
     maxStayMinutes: int | None = None
     hardLimit: bool | None = None
@@ -6156,7 +6157,7 @@ class ScanZonesMarkOutParams(_Model):
     place: str
 
 class ScanZonesUpdateParams(_Model):
-    occupancy: _Literal["off", "track", "enforce"] | None = None
+    occupancy: _Literal["off", "track", "enforce"] | str | None = None
     capacity: int | None = None
     maxStayMinutes: int | None = None
     hardLimit: bool | None = None
@@ -6170,14 +6171,14 @@ class ScanZonesUpdateParams(_Model):
 class Scanner(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
-    kind: _Literal["device", "terminal", "display"]
-    deviceRole: _Literal["scan", "customer", "monitor"]
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["device", "terminal", "display"] | str
+    deviceRole: _Literal["scan", "customer", "monitor"] | str
     name: str
     accepts: ScannerAccepts1 | ScannerAccepts2 | ScannerAccepts3 | None
     settings: ScannerSettings
     timeZone: str
-    status: _Literal["not_paired", "paired", "revoked"]
+    status: _Literal["not_paired", "paired", "revoked"] | str
     online: bool
     pairedAt: int | None
     pairedLabel: str | None
@@ -6199,44 +6200,44 @@ class ScannerAccepts3(_Model):
 
 class ScannerSettings(_Model):
     checkIn: ScannerSettingsCheckIn | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     showPhoto: bool | None = None
     acceptAllTemplates: bool | None = None
-    flow: _Literal["auto", "choose"]
+    flow: _Literal["auto", "choose"] | str
     defaultActionId: str | None
-    roleWithoutSignIn: _Literal["door", "desk"]
+    roleWithoutSignIn: _Literal["door", "desk"] | str
     staffSignIn: bool
-    letInAgain: _Literal["anyone", "manager", "never"]
-    reader: _Literal["none", "barcode", "nfc"]
+    letInAgain: _Literal["anyone", "manager", "never"] | str
+    reader: _Literal["none", "barcode", "nfc"] | str
     lookup: bool
     offline: bool
-    whenOffline: _Literal["stop", "decide", "list"] | None = None
+    whenOffline: _Literal["stop", "decide", "list"] | str | None = None
     dailyAmount: int | None
     deskActions: bool | None = None
     hardLimit: bool | None = None
-    approvals: _Literal["managers", "desk"] | None = None
+    approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScannerSettingsTags | None = None
 
 class ScannerSettingsCheckIn(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class ScannerSettingsTags(_Model):
-    assign: _Literal["desk", "manager", "never"] | None = None
-    assignAll: _Literal["desk", "manager", "never"] | None = None
-    level: _Literal["off", "basic", "secure"] | None = None
-    types: _List[str | _Literal["standard"]] | None = None
-    confirmBasic: _Literal["none", "staff", "manager"] | None = None
+    assign: _Literal["desk", "manager", "never"] | str | None = None
+    assignAll: _Literal["desk", "manager", "never"] | str | None = None
+    level: _Literal["off", "basic", "secure"] | str | None = None
+    types: _List[str | _Literal["standard"] | str] | None = None
+    confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
 class ScannersCreateParams(_Model):
     orgId: str
     name: str
-    kind: _Literal["device", "terminal"]
+    kind: _Literal["device", "terminal"] | str
     accepts: ScannersCreateParamsAccepts1 | ScannersCreateParamsAccepts2
     settings: ScannersCreateParamsSettings | None = None
     timeZone: str
@@ -6249,42 +6250,42 @@ class ScannersCreateParamsAccepts2(_Model):
 
 class ScannersCreateParamsSettings(_Model):
     checkIn: ScannersCreateParamsSettingsCheckIn | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     showPhoto: bool | None = None
     acceptAllTemplates: bool | None = None
-    flow: _Literal["auto", "choose"] | None = None
+    flow: _Literal["auto", "choose"] | str | None = None
     defaultActionId: str | None = None
-    roleWithoutSignIn: _Literal["door", "desk"] | None = None
+    roleWithoutSignIn: _Literal["door", "desk"] | str | None = None
     staffSignIn: bool | None = None
-    letInAgain: _Literal["anyone", "manager", "never"] | None = None
-    reader: _Literal["none", "barcode", "nfc"] | None = None
+    letInAgain: _Literal["anyone", "manager", "never"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
     lookup: bool | None = None
     offline: bool | None = None
-    whenOffline: _Literal["stop", "decide", "list"] | None = None
+    whenOffline: _Literal["stop", "decide", "list"] | str | None = None
     dailyAmount: int | None = None
     deskActions: bool | None = None
     hardLimit: bool | None = None
-    approvals: _Literal["managers", "desk"] | None = None
+    approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScannersCreateParamsSettingsTags | None = None
 
 class ScannersCreateParamsSettingsCheckIn(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class ScannersCreateParamsSettingsTags(_Model):
-    assign: _Literal["desk", "manager", "never"] | None = None
-    assignAll: _Literal["desk", "manager", "never"] | None = None
-    level: _Literal["off", "basic", "secure"] | None = None
-    types: _List[str | _Literal["standard"]] | None = None
-    confirmBasic: _Literal["none", "staff", "manager"] | None = None
+    assign: _Literal["desk", "manager", "never"] | str | None = None
+    assignAll: _Literal["desk", "manager", "never"] | str | None = None
+    level: _Literal["off", "basic", "secure"] | str | None = None
+    types: _List[str | _Literal["standard"] | str] | None = None
+    confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
 class ScannersSetModeParams(_Model):
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     detachEvent: bool | None = None
 
 class ScannersUpdateParams(_Model):
@@ -6300,46 +6301,46 @@ class ScannersUpdateParamsAccepts2(_Model):
 
 class ScannersUpdateParamsSettings(_Model):
     checkIn: ScannersUpdateParamsSettingsCheckIn | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     showPhoto: bool | None = None
     acceptAllTemplates: bool | None = None
-    flow: _Literal["auto", "choose"] | None = None
+    flow: _Literal["auto", "choose"] | str | None = None
     defaultActionId: str | None = None
-    roleWithoutSignIn: _Literal["door", "desk"] | None = None
+    roleWithoutSignIn: _Literal["door", "desk"] | str | None = None
     staffSignIn: bool | None = None
-    letInAgain: _Literal["anyone", "manager", "never"] | None = None
-    reader: _Literal["none", "barcode", "nfc"] | None = None
+    letInAgain: _Literal["anyone", "manager", "never"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
     lookup: bool | None = None
     offline: bool | None = None
-    whenOffline: _Literal["stop", "decide", "list"] | None = None
+    whenOffline: _Literal["stop", "decide", "list"] | str | None = None
     dailyAmount: int | None = None
     deskActions: bool | None = None
     hardLimit: bool | None = None
-    approvals: _Literal["managers", "desk"] | None = None
+    approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScannersUpdateParamsSettingsTags | None = None
 
 class ScannersUpdateParamsSettingsCheckIn(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class ScannersUpdateParamsSettingsTags(_Model):
-    assign: _Literal["desk", "manager", "never"] | None = None
-    assignAll: _Literal["desk", "manager", "never"] | None = None
-    level: _Literal["off", "basic", "secure"] | None = None
-    types: _List[str | _Literal["standard"]] | None = None
-    confirmBasic: _Literal["none", "staff", "manager"] | None = None
+    assign: _Literal["desk", "manager", "never"] | str | None = None
+    assignAll: _Literal["desk", "manager", "never"] | str | None = None
+    level: _Literal["off", "basic", "secure"] | str | None = None
+    types: _List[str | _Literal["standard"] | str] | None = None
+    confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
 class ScanningDevice(_Model):
     id: str
     sessionId: str
     name: str
-    surface: _Literal["auto", "phone", "operator", "desk", "customer"]
-    effectiveSurface: _Literal["phone", "operator", "desk", "customer"]
+    surface: _Literal["auto", "phone", "operator", "desk", "customer"] | str
+    effectiveSurface: _Literal["phone", "operator", "desk", "customer"] | str
     overrides: ScanningDeviceOverrides
     settings: ScannerSettings
     capabilities: ScanDeviceCapabilities
@@ -6349,13 +6350,13 @@ class ScanningDevice(_Model):
     revoked: bool
     lastSeenAt: int | None
     updatedAt: int
-    signIn: _Literal["paired", "admin"]
+    signIn: _Literal["paired", "admin"] | str
     adminName: str | None
 
 class ScanningDeviceOverrides(_Model):
-    flow: _Literal["auto", "choose"] | None = None
-    reader: _Literal["none", "barcode", "nfc"] | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    flow: _Literal["auto", "choose"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
 
@@ -6363,9 +6364,9 @@ class ScanningSession(_Model):
     id: str
     orgId: str
     orgName: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
-    status: _Literal["active", "paused", "ended"]
+    status: _Literal["active", "paused", "ended"] | str
     accepts: ScanningSessionAccepts1 | ScanningSessionAccepts2 | ScanningSessionAccepts3 | None
     settings: ScanningSessionSettings
     zoneIds: _List[str] | None = None
@@ -6394,9 +6395,9 @@ class ScanningSessionDetail(_Model):
     id: str
     orgId: str
     orgName: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     name: str
-    status: _Literal["active", "paused", "ended"]
+    status: _Literal["active", "paused", "ended"] | str
     accepts: ScanningSessionDetailAccepts1 | ScanningSessionDetailAccepts2 | ScanningSessionDetailAccepts3 | None
     settings: ScanningSessionDetailSettings
     zoneIds: _List[str] | None = None
@@ -6430,43 +6431,43 @@ class ScanningSessionDetailActivityItem(_Model):
     deviceName: str
     passId: str | None
     title: str | None
-    outcome: _Literal["ok", "heads_up", "refused", "undone"]
-    direction: _Literal["in", "out", None]
+    outcome: _Literal["ok", "heads_up", "refused", "undone"] | str
+    direction: _Literal["in", "out", None] | str
     scanId: str | None = None
-    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None] = None
+    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None] | str = None
     staff: str | None = None
-    method: _Literal["camera", "wedge", "nfc", "manual", "auto", None] = None
+    method: _Literal["camera", "wedge", "nfc", "manual", "auto", None] | str = None
     undoable: bool | None = None
     groupSize: int | None = None
 
 class ScanningSessionDetailSettings(_Model):
     checkIn: ScanningSessionDetailSettingsCheckIn | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     showPhoto: bool | None = None
     acceptAllTemplates: bool | None = None
-    flow: _Literal["auto", "choose"]
+    flow: _Literal["auto", "choose"] | str
     defaultActionId: str | None
-    roleWithoutSignIn: _Literal["door", "desk"]
+    roleWithoutSignIn: _Literal["door", "desk"] | str
     staffSignIn: bool
-    letInAgain: _Literal["anyone", "manager", "never"]
-    reader: _Literal["none", "barcode", "nfc"]
+    letInAgain: _Literal["anyone", "manager", "never"] | str
+    reader: _Literal["none", "barcode", "nfc"] | str
     lookup: bool
     offline: bool
-    whenOffline: _Literal["stop", "decide", "list"] | None = None
+    whenOffline: _Literal["stop", "decide", "list"] | str | None = None
     dailyAmount: int | None
     deskActions: bool | None = None
     hardLimit: bool | None = None
-    approvals: _Literal["managers", "desk"] | None = None
+    approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanningSessionDetailSettingsTags | None = None
     customer: ScanningSessionDetailSettingsCustomer | None = None
 
 class ScanningSessionDetailSettingsCheckIn(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class ScanningSessionDetailSettingsCustomer(_Model):
@@ -6477,46 +6478,46 @@ class ScanningSessionDetailSettingsCustomer(_Model):
     showDraft: bool | None = None
 
 class ScanningSessionDetailSettingsTags(_Model):
-    assign: _Literal["desk", "manager", "never"] | None = None
-    assignAll: _Literal["desk", "manager", "never"] | None = None
-    level: _Literal["off", "basic", "secure"] | None = None
-    types: _List[str | _Literal["standard"]] | None = None
-    confirmBasic: _Literal["none", "staff", "manager"] | None = None
+    assign: _Literal["desk", "manager", "never"] | str | None = None
+    assignAll: _Literal["desk", "manager", "never"] | str | None = None
+    level: _Literal["off", "basic", "secure"] | str | None = None
+    types: _List[str | _Literal["standard"] | str] | None = None
+    confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
 class ScanningSessionDetailWindow(_Model):
     open: bool
-    by: _Literal["always", "hours", "hold"]
+    by: _Literal["always", "hours", "hold"] | str
     opensAt: int | None
     closesAt: int | None
 
 class ScanningSessionSettings(_Model):
     checkIn: ScanningSessionSettingsCheckIn | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     showPhoto: bool | None = None
     acceptAllTemplates: bool | None = None
-    flow: _Literal["auto", "choose"]
+    flow: _Literal["auto", "choose"] | str
     defaultActionId: str | None
-    roleWithoutSignIn: _Literal["door", "desk"]
+    roleWithoutSignIn: _Literal["door", "desk"] | str
     staffSignIn: bool
-    letInAgain: _Literal["anyone", "manager", "never"]
-    reader: _Literal["none", "barcode", "nfc"]
+    letInAgain: _Literal["anyone", "manager", "never"] | str
+    reader: _Literal["none", "barcode", "nfc"] | str
     lookup: bool
     offline: bool
-    whenOffline: _Literal["stop", "decide", "list"] | None = None
+    whenOffline: _Literal["stop", "decide", "list"] | str | None = None
     dailyAmount: int | None
     deskActions: bool | None = None
     hardLimit: bool | None = None
-    approvals: _Literal["managers", "desk"] | None = None
+    approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanningSessionSettingsTags | None = None
     customer: ScanningSessionSettingsCustomer | None = None
 
 class ScanningSessionSettingsCheckIn(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class ScanningSessionSettingsCustomer(_Model):
@@ -6527,15 +6528,15 @@ class ScanningSessionSettingsCustomer(_Model):
     showDraft: bool | None = None
 
 class ScanningSessionSettingsTags(_Model):
-    assign: _Literal["desk", "manager", "never"] | None = None
-    assignAll: _Literal["desk", "manager", "never"] | None = None
-    level: _Literal["off", "basic", "secure"] | None = None
-    types: _List[str | _Literal["standard"]] | None = None
-    confirmBasic: _Literal["none", "staff", "manager"] | None = None
+    assign: _Literal["desk", "manager", "never"] | str | None = None
+    assignAll: _Literal["desk", "manager", "never"] | str | None = None
+    level: _Literal["off", "basic", "secure"] | str | None = None
+    types: _List[str | _Literal["standard"] | str] | None = None
+    confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
 class ScanningSessionWindow(_Model):
     open: bool
-    by: _Literal["always", "hours", "hold"]
+    by: _Literal["always", "hours", "hold"] | str
     opensAt: int | None
     closesAt: int | None
 
@@ -6560,32 +6561,32 @@ class ScanningSessionsCreateParamsAccepts3(_Model):
 
 class ScanningSessionsCreateParamsSettings(_Model):
     checkIn: ScanningSessionsCreateParamsSettingsCheckIn | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     showPhoto: bool | None = None
     acceptAllTemplates: bool | None = None
-    flow: _Literal["auto", "choose"] | None = None
+    flow: _Literal["auto", "choose"] | str | None = None
     defaultActionId: str | None = None
-    roleWithoutSignIn: _Literal["door", "desk"] | None = None
+    roleWithoutSignIn: _Literal["door", "desk"] | str | None = None
     staffSignIn: bool | None = None
-    letInAgain: _Literal["anyone", "manager", "never"] | None = None
-    reader: _Literal["none", "barcode", "nfc"] | None = None
+    letInAgain: _Literal["anyone", "manager", "never"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
     lookup: bool | None = None
     offline: bool | None = None
-    whenOffline: _Literal["stop", "decide", "list"] | None = None
+    whenOffline: _Literal["stop", "decide", "list"] | str | None = None
     dailyAmount: int | None = None
     deskActions: bool | None = None
     hardLimit: bool | None = None
-    approvals: _Literal["managers", "desk"] | None = None
+    approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanningSessionsCreateParamsSettingsTags | None = None
     customer: ScanningSessionsCreateParamsSettingsCustomer | None = None
 
 class ScanningSessionsCreateParamsSettingsCheckIn(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class ScanningSessionsCreateParamsSettingsCustomer(_Model):
@@ -6596,48 +6597,48 @@ class ScanningSessionsCreateParamsSettingsCustomer(_Model):
     showDraft: bool | None = None
 
 class ScanningSessionsCreateParamsSettingsTags(_Model):
-    assign: _Literal["desk", "manager", "never"] | None = None
-    assignAll: _Literal["desk", "manager", "never"] | None = None
-    level: _Literal["off", "basic", "secure"] | None = None
-    types: _List[str | _Literal["standard"]] | None = None
-    confirmBasic: _Literal["none", "staff", "manager"] | None = None
+    assign: _Literal["desk", "manager", "never"] | str | None = None
+    assignAll: _Literal["desk", "manager", "never"] | str | None = None
+    level: _Literal["off", "basic", "secure"] | str | None = None
+    types: _List[str | _Literal["standard"] | str] | None = None
+    confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
 class ScanningSessionsDevicesCreateParams(_Model):
     name: str
-    surface: _Literal["auto", "phone", "operator", "desk", "customer"] | None = None
+    surface: _Literal["auto", "phone", "operator", "desk", "customer"] | str | None = None
     overrides: ScanningSessionsDevicesCreateParamsOverrides | None = None
 
 class ScanningSessionsDevicesCreateParamsOverrides(_Model):
-    flow: _Literal["auto", "choose"] | None = None
-    reader: _Literal["none", "barcode", "nfc"] | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    flow: _Literal["auto", "choose"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
 
 class ScanningSessionsDevicesUpdateParams(_Model):
     name: str | None = None
-    surface: _Literal["auto", "phone", "operator", "desk", "customer"] | None = None
+    surface: _Literal["auto", "phone", "operator", "desk", "customer"] | str | None = None
     overrides: ScanningSessionsDevicesUpdateParamsOverrides | None = None
     revision: int | None = None
 
 class ScanningSessionsDevicesUpdateParamsOverrides(_Model):
-    flow: _Literal["auto", "choose"] | None = None
-    reader: _Literal["none", "barcode", "nfc"] | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    flow: _Literal["auto", "choose"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
 
 class ScanningSessionsOverrideHoursParams1(_Model):
-    action: _Literal["close"]
+    action: _Literal["close"] | str
     revision: int | None = None
 
 class ScanningSessionsOverrideHoursParams2(_Model):
-    action: _Literal["open"]
+    action: _Literal["open"] | str
     until: int | None = None
     revision: int | None = None
 
 class ScanningSessionsOverrideHoursParams3(_Model):
-    action: _Literal["clear"]
+    action: _Literal["clear"] | str
     revision: int | None = None
 
 class ScanningSessionsUpdateParams(_Model):
@@ -6647,7 +6648,7 @@ class ScanningSessionsUpdateParams(_Model):
     settings: ScanningSessionsUpdateParamsSettings | None = None
     zoneIds: _List[str] | None = None
     hours: _Dict[str, _Any] | None = None
-    status: _Literal["active", "paused", "ended"] | None = None
+    status: _Literal["active", "paused", "ended"] | str | None = None
     revision: int | None = None
 
 class ScanningSessionsUpdateParamsAccepts1(_Model):
@@ -6662,32 +6663,32 @@ class ScanningSessionsUpdateParamsAccepts3(_Model):
 
 class ScanningSessionsUpdateParamsSettings(_Model):
     checkIn: ScanningSessionsUpdateParamsSettingsCheckIn | None = None
-    direction: _Literal["in", "out", "both"] | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
     showPhoto: bool | None = None
     acceptAllTemplates: bool | None = None
-    flow: _Literal["auto", "choose"] | None = None
+    flow: _Literal["auto", "choose"] | str | None = None
     defaultActionId: str | None = None
-    roleWithoutSignIn: _Literal["door", "desk"] | None = None
+    roleWithoutSignIn: _Literal["door", "desk"] | str | None = None
     staffSignIn: bool | None = None
-    letInAgain: _Literal["anyone", "manager", "never"] | None = None
-    reader: _Literal["none", "barcode", "nfc"] | None = None
+    letInAgain: _Literal["anyone", "manager", "never"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
     lookup: bool | None = None
     offline: bool | None = None
-    whenOffline: _Literal["stop", "decide", "list"] | None = None
+    whenOffline: _Literal["stop", "decide", "list"] | str | None = None
     dailyAmount: int | None = None
     deskActions: bool | None = None
     hardLimit: bool | None = None
-    approvals: _Literal["managers", "desk"] | None = None
+    approvals: _Literal["managers", "desk"] | str | None = None
     tags: ScanningSessionsUpdateParamsSettingsTags | None = None
     customer: ScanningSessionsUpdateParamsSettingsCustomer | None = None
 
 class ScanningSessionsUpdateParamsSettingsCheckIn(_Model):
-    mode: _Literal["single", "daily", "unlimited", "in_out"] | None = None
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
     validUntil: int | None = None
     durationMinutes: int | None = None
-    durationFrom: _Literal["first_scan", "issued"] | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
 class ScanningSessionsUpdateParamsSettingsCustomer(_Model):
@@ -6698,11 +6699,11 @@ class ScanningSessionsUpdateParamsSettingsCustomer(_Model):
     showDraft: bool | None = None
 
 class ScanningSessionsUpdateParamsSettingsTags(_Model):
-    assign: _Literal["desk", "manager", "never"] | None = None
-    assignAll: _Literal["desk", "manager", "never"] | None = None
-    level: _Literal["off", "basic", "secure"] | None = None
-    types: _List[str | _Literal["standard"]] | None = None
-    confirmBasic: _Literal["none", "staff", "manager"] | None = None
+    assign: _Literal["desk", "manager", "never"] | str | None = None
+    assignAll: _Literal["desk", "manager", "never"] | str | None = None
+    level: _Literal["off", "basic", "secure"] | str | None = None
+    types: _List[str | _Literal["standard"] | str] | None = None
+    confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
 class ScansListResult1(_Model):
     items: _List[ScanRecord]
@@ -6725,12 +6726,12 @@ class SessionActivityItemsItem(_Model):
     deviceName: str
     passId: str | None
     title: str | None
-    outcome: _Literal["ok", "heads_up", "refused", "undone"]
-    direction: _Literal["in", "out", None]
+    outcome: _Literal["ok", "heads_up", "refused", "undone"] | str
+    direction: _Literal["in", "out", None] | str
     scanId: str | None = None
-    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None] = None
+    reason: _Literal["not_found", "code_replaced", "ambiguous", "test_pass", "live_pass", "not_accepted", "wrong_event", "removed", "voided", "expired", "no_balance", "card_full", "managed_elsewhere", "limit_reached", "zone_not_included", "outside_hours", "guest_expired", "guest_visits_used", "suspended", "tag_lost", "tag_not_allowed", "tag_invalid", "tag_expired", "channel_off", "print_replaced", "print_voided", "already_done", "cooldown", "not_yet_valid", "ended", "capacity_full", "check_required", "needs_approval", "stale", "in_progress", "still_inside", "not_inside", "choose", None] | str = None
     staff: str | None = None
-    method: _Literal["camera", "wedge", "nfc", "manual", "auto", None] = None
+    method: _Literal["camera", "wedge", "nfc", "manual", "auto", None] | str = None
     undoable: bool | None = None
     groupSize: int | None = None
 
@@ -6742,7 +6743,7 @@ class SettingsReplyToResendConfirmationParams(_Model):
     orgId: str
 
 class SettingsUpdateParams(_Model):
-    scope: _Literal["platform"] | str | None = None
+    scope: _Literal["platform"] | str | str | None = None
     values: _Dict[str, _Any]
     configRevision: int | None = None
 
@@ -6753,10 +6754,10 @@ class TemplateDetail(_Model):
     slug: str
     name: str
     description: str | None
-    origin: _Literal["baked", "uploaded"]
-    status: _Literal["active", "archived", "deleted"]
+    origin: _Literal["baked", "uploaded"] | str
+    status: _Literal["active", "archived", "deleted"] | str
     activeVersion: str | None
-    styles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"]]
+    styles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"] | str]
     blueprint: bool | None = None
     shared: bool | None = None
     icon: str | None = None
@@ -6800,7 +6801,7 @@ class TemplateDetailVersionsItemReport(_Model):
     issues: _List[TemplateDetailVersionsItemReportIssuesItem]
 
 class TemplateDetailVersionsItemReportIssuesItem(_Model):
-    severity: _Literal["error", "warning", "info"]
+    severity: _Literal["error", "warning", "info"] | str
     code: str
     message: str
     path: str | None = None
@@ -6809,7 +6810,7 @@ class TemplateDetailVersionsItemReportIssuesItem(_Model):
 class TemplateImportsListItem(_Model):
     uploadId: str
     name: str | None
-    status: _Literal["queued", "running", "complete", "errored", "terminated"]
+    status: _Literal["queued", "running", "complete", "errored", "terminated"] | str
     templateId: str | None
     version: str | None
     error: str | None
@@ -6823,7 +6824,7 @@ class TemplateImportsListResult(_Model):
 class TemplateImportsListResultItemsItem(_Model):
     uploadId: str
     name: str | None
-    status: _Literal["queued", "running", "complete", "errored", "terminated"]
+    status: _Literal["queued", "running", "complete", "errored", "terminated"] | str
     templateId: str | None
     version: str | None
     error: str | None
@@ -6832,7 +6833,7 @@ class TemplateImportsListResultItemsItem(_Model):
 
 class TemplateImportsRetrieveResult(_Model):
     uploadId: str
-    status: _Literal["queued", "running", "complete", "errored", "terminated"]
+    status: _Literal["queued", "running", "complete", "errored", "terminated"] | str
     step: str | None
     templateId: str | None
     version: str | None
@@ -6850,10 +6851,10 @@ class TemplateSummary(_Model):
     slug: str
     name: str
     description: str | None
-    origin: _Literal["baked", "uploaded"]
-    status: _Literal["active", "archived", "deleted"]
+    origin: _Literal["baked", "uploaded"] | str
+    status: _Literal["active", "archived", "deleted"] | str
     activeVersion: str | None
-    styles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"]]
+    styles: _List[_Literal["generic", "posterGeneric", "storeCard", "coupon", "eventTicket", "boardingPass"] | str]
     blueprint: bool | None = None
     shared: bool | None = None
     icon: str | None = None
@@ -6866,8 +6867,8 @@ class TemplateSummary(_Model):
 
 class TemplatesCandidatesApproveParams(_Model):
     orgId: str
-    mode: _Literal["live", "test"]
-    provider: _Literal["apple", "google", "samsung"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["apple", "google", "samsung"] | str
     candidateHash: str
     alone: bool | None = None
 
@@ -6877,13 +6878,13 @@ class TemplatesCandidatesApproveResult(_Model):
     candidateHash: str
     reviewerId: str
     reviewerName: str | None = None
-    kind: _Literal["peer", "sole", "test"] | None = None
+    kind: _Literal["peer", "sole", "test"] | str | None = None
     createdAt: int
 
 class TemplatesCandidatesCreateParams(_Model):
     orgId: str
-    mode: _Literal["live", "test"]
-    provider: _Literal["apple", "google", "samsung"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["apple", "google", "samsung"] | str
     version: str
     sourceReleaseId: str | None = None
     projection: _Any | None = None
@@ -6892,8 +6893,8 @@ class TemplatesCandidatesCreateResult(_Model):
     id: str
     templateId: str
     orgId: str
-    mode: _Literal["live", "test"]
-    provider: _Literal["apple", "google", "samsung"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["apple", "google", "samsung"] | str
     version: str
     contentHash: str
     candidateHash: str
@@ -6920,15 +6921,15 @@ class TemplatesCandidatesCreateResultApprovalsItem(_Model):
     candidateHash: str
     reviewerId: str
     reviewerName: str | None = None
-    kind: _Literal["peer", "sole", "test"] | None = None
+    kind: _Literal["peer", "sole", "test"] | str | None = None
     createdAt: int
 
 class TemplatesCandidatesListItem(_Model):
     id: str
     templateId: str
     orgId: str
-    mode: _Literal["live", "test"]
-    provider: _Literal["apple", "google", "samsung"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["apple", "google", "samsung"] | str
     version: str
     contentHash: str
     candidateHash: str
@@ -6955,7 +6956,7 @@ class TemplatesCandidatesListItemApprovalsItem(_Model):
     candidateHash: str
     reviewerId: str
     reviewerName: str | None = None
-    kind: _Literal["peer", "sole", "test"] | None = None
+    kind: _Literal["peer", "sole", "test"] | str | None = None
     createdAt: int
 
 class TemplatesCandidatesListResult(_Model):
@@ -6966,8 +6967,8 @@ class TemplatesCandidatesListResultItemsItem(_Model):
     id: str
     templateId: str
     orgId: str
-    mode: _Literal["live", "test"]
-    provider: _Literal["apple", "google", "samsung"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["apple", "google", "samsung"] | str
     version: str
     contentHash: str
     candidateHash: str
@@ -6994,18 +6995,18 @@ class TemplatesCandidatesListResultItemsItemApprovalsItem(_Model):
     candidateHash: str
     reviewerId: str
     reviewerName: str | None = None
-    kind: _Literal["peer", "sole", "test"] | None = None
+    kind: _Literal["peer", "sole", "test"] | str | None = None
     createdAt: int
 
 class TemplatesCandidatesPromoteParams(_Model):
     orgId: str
-    mode: _Literal["live"]
-    provider: _Literal["apple"]
+    mode: _Literal["live"] | str
+    provider: _Literal["apple"] | str
     version: str
 
 class TemplatesChannelsListRunsResultItem(_Model):
     id: str
-    state: _Literal["pending", "running", "done", "dropped", "failed"]
+    state: _Literal["pending", "running", "done", "dropped", "failed"] | str
     dueAt: int
     startedAt: int | None
     finishedAt: int | None
@@ -7020,12 +7021,12 @@ class TemplatesChannelsRetrieveResult(_Model):
     defaults: TemplatesChannelsRetrieveResultDefaults
 
 class TemplatesChannelsRetrieveResultDefaults(_Model):
-    mobile: _Literal["on", "off"] | None = None
-    apple: _Literal["on", "off"] | None = None
-    google: _Literal["on", "off"] | None = None
-    samsung: _Literal["on", "off"] | None = None
-    paper: _Literal["on", "off"] | None = None
-    nfc: _Literal["on", "off"] | None = None
+    mobile: _Literal["on", "off"] | str | None = None
+    apple: _Literal["on", "off"] | str | None = None
+    google: _Literal["on", "off"] | str | None = None
+    samsung: _Literal["on", "off"] | str | None = None
+    paper: _Literal["on", "off"] | str | None = None
+    nfc: _Literal["on", "off"] | str | None = None
 
 class TemplatesChannelsRetrieveResultEffective(_Model):
     mobile: TemplatesChannelsRetrieveResultEffectiveMobile | None = None
@@ -7037,45 +7038,45 @@ class TemplatesChannelsRetrieveResultEffective(_Model):
 
 class TemplatesChannelsRetrieveResultEffectiveApple(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class TemplatesChannelsRetrieveResultEffectiveGoogle(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class TemplatesChannelsRetrieveResultEffectiveMobile(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class TemplatesChannelsRetrieveResultEffectiveNfc(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class TemplatesChannelsRetrieveResultEffectivePaper(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class TemplatesChannelsRetrieveResultEffectiveSamsung(_Model):
     on: bool
-    source: _Literal["pass", "template", "org", "platform"]
-    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | None = None
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
-    retiredCause: _Literal["pass", "template"] | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class TemplatesChannelsUpdateParams(_Model):
     channels: TemplatesChannelsUpdateParamsChannels
@@ -7086,12 +7087,12 @@ class TemplatesChannelsUpdateParams(_Model):
     orgId: str | None = None
 
 class TemplatesChannelsUpdateParamsChannels(_Model):
-    mobile: _Literal["on", "off", "never"] | None = None
-    apple: _Literal["on", "off", "never"] | None = None
-    google: _Literal["on", "off", "never"] | None = None
-    samsung: _Literal["on", "off", "never"] | None = None
-    paper: _Literal["on", "off", "never"] | None = None
-    nfc: _Literal["on", "off", "never"] | None = None
+    mobile: _Literal["on", "off", "never"] | str | None = None
+    apple: _Literal["on", "off", "never"] | str | None = None
+    google: _Literal["on", "off", "never"] | str | None = None
+    samsung: _Literal["on", "off", "never"] | str | None = None
+    paper: _Literal["on", "off", "never"] | str | None = None
+    nfc: _Literal["on", "off", "never"] | str | None = None
 
 class TemplatesCloneParams(_Model):
     orgId: str
@@ -7101,7 +7102,7 @@ class TemplatesListEligibleItem(_Model):
     templateId: str
     name: str
     templateOrgId: str | None
-    origin: _Literal["uploaded", "baked"]
+    origin: _Literal["uploaded", "baked"] | str
     releaseId: str
     releaseGeneration: int
     version: str
@@ -7117,7 +7118,7 @@ class TemplatesListEligibleResultItemsItem(_Model):
     templateId: str
     name: str
     templateOrgId: str | None
-    origin: _Literal["uploaded", "baked"]
+    origin: _Literal["uploaded", "baked"] | str
     releaseId: str
     releaseGeneration: int
     version: str
@@ -7136,7 +7137,7 @@ class TemplatesListPreviewsResultItemsItem(_Model):
     id: str
 
 class TemplatesListPreviewsResultItemsItemWarningsItem(_Model):
-    severity: _Literal["error", "warning", "info"]
+    severity: _Literal["error", "warning", "info"] | str
     code: str
     message: str
     path: str | None = None
@@ -7155,7 +7156,7 @@ class TemplatesPreviewResult(_Model):
     assetNames: _List[str]
 
 class TemplatesPreviewResultWarningsItem(_Model):
-    severity: _Literal["error", "warning", "info"]
+    severity: _Literal["error", "warning", "info"] | str
     code: str
     message: str
     path: str | None = None
@@ -7163,8 +7164,8 @@ class TemplatesPreviewResultWarningsItem(_Model):
 
 class TemplatesReleasesCreateParams(_Model):
     orgId: str
-    mode: _Literal["live", "test"]
-    provider: _Literal["apple", "google", "samsung"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["apple", "google", "samsung"] | str
     candidateId: str
     approvalId: str
     candidateHash: str
@@ -7174,13 +7175,13 @@ class TemplatesReleasesCreateResult(_Model):
     id: str
     templateId: str
     orgId: str | None
-    mode: _Literal["live", "test"]
-    provider: _Literal["apple", "google", "samsung"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["apple", "google", "samsung"] | str
     version: str
     generation: int
     candidateHash: str
-    source: _Literal["approved", "system", "legacy"]
-    action: _Literal["release", "rollback", "system", "legacy"]
+    source: _Literal["approved", "system", "legacy"] | str
+    action: _Literal["release", "rollback", "system", "legacy"] | str
     previousReleaseId: str | None
     createdBy: str | None
     createdByName: str | None = None
@@ -7198,13 +7199,13 @@ class TemplatesReleasesListItem(_Model):
     id: str
     templateId: str
     orgId: str | None
-    mode: _Literal["live", "test"]
-    provider: _Literal["apple", "google", "samsung"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["apple", "google", "samsung"] | str
     version: str
     generation: int
     candidateHash: str
-    source: _Literal["approved", "system", "legacy"]
-    action: _Literal["release", "rollback", "system", "legacy"]
+    source: _Literal["approved", "system", "legacy"] | str
+    action: _Literal["release", "rollback", "system", "legacy"] | str
     previousReleaseId: str | None
     createdBy: str | None
     createdByName: str | None = None
@@ -7228,13 +7229,13 @@ class TemplatesReleasesListResultItemsItem(_Model):
     id: str
     templateId: str
     orgId: str | None
-    mode: _Literal["live", "test"]
-    provider: _Literal["apple", "google", "samsung"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["apple", "google", "samsung"] | str
     version: str
     generation: int
     candidateHash: str
-    source: _Literal["approved", "system", "legacy"]
-    action: _Literal["release", "rollback", "system", "legacy"]
+    source: _Literal["approved", "system", "legacy"] | str
+    action: _Literal["release", "rollback", "system", "legacy"] | str
     previousReleaseId: str | None
     createdBy: str | None
     createdByName: str | None = None
@@ -7263,25 +7264,25 @@ class TemplatesReleasesRetrieveImpactResultDiff(_Model):
 
 class TemplatesReleasesRetrieveImpactResultDiffBarcodeItem(_Model):
     label: str
-    kind: _Literal["added", "removed", "changed"]
+    kind: _Literal["added", "removed", "changed"] | str
     from_: str | None = _Field(alias="from")
     to: str | None
 
 class TemplatesReleasesRetrieveImpactResultDiffColorsItem(_Model):
     label: str
-    kind: _Literal["added", "removed", "changed"]
+    kind: _Literal["added", "removed", "changed"] | str
     from_: str | None = _Field(alias="from")
     to: str | None
 
 class TemplatesReleasesRetrieveImpactResultDiffFieldsItem(_Model):
     label: str
-    kind: _Literal["added", "removed", "changed"]
+    kind: _Literal["added", "removed", "changed"] | str
     from_: str | None = _Field(alias="from")
     to: str | None
 
 class TemplatesReleasesRetrieveImpactResultDiffImagesItem(_Model):
     label: str
-    kind: _Literal["added", "removed", "changed"]
+    kind: _Literal["added", "removed", "changed"] | str
     from_: str | None = _Field(alias="from")
     to: str | None
 
@@ -7297,8 +7298,8 @@ class TemplatesReleasesRetrieveImpactResultPasses(_Model):
 
 class TemplatesReleasesRollbackParams(_Model):
     orgId: str
-    mode: _Literal["live", "test"]
-    provider: _Literal["apple", "google", "samsung"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["apple", "google", "samsung"] | str
     releaseId: str
     candidateHash: str
     expectedGeneration: int
@@ -7378,7 +7379,7 @@ class TemplatesVersionsRetrieveResultReport(_Model):
     issues: _List[TemplatesVersionsRetrieveResultReportIssuesItem]
 
 class TemplatesVersionsRetrieveResultReportIssuesItem(_Model):
-    severity: _Literal["error", "warning", "info"]
+    severity: _Literal["error", "warning", "info"] | str
     code: str
     message: str
     path: str | None = None
@@ -7390,14 +7391,14 @@ class TerminalActParams(_Model):
     clientTs: int
     dayStart: int | None = None
     scope: TerminalActParamsScope | None = None
-    actionId: str | _Literal["auto"]
+    actionId: str | _Literal["auto"] | str
     amount: float | None = None
     value: _Any | None = None
-    direction: _Literal["in", "out"] | None = None
+    direction: _Literal["in", "out"] | str | None = None
     overrideOf: str | None = None
     confirmed: bool | None = None
     expectedVersion: int | None = None
-    group: _Literal["bundle"] | None = None
+    group: _Literal["bundle"] | str | None = None
     approval: TerminalActParamsApproval | None = None
 
 class TerminalActParamsApproval(_Model):
@@ -7406,26 +7407,26 @@ class TerminalActParamsApproval(_Model):
 
 class TerminalActParamsInput1(_Model):
     code: str
-    method: _Literal["camera", "wedge", "nfc", "manual"]
+    method: _Literal["camera", "wedge", "nfc", "manual"] | str
 
 class TerminalActParamsInput2(_Model):
     passId: str
-    method: _Literal["manual"]
+    method: _Literal["manual"] | str
 
 class TerminalActParamsInput3(_Model):
     tag: TerminalActParamsInput3Tag
-    method: _Literal["nfc"]
+    method: _Literal["nfc"] | str
     passId: str | None = None
 
 class TerminalActParamsInput3Tag(_Model):
     uid: str | None = None
     uidRandom: bool | None = None
-    tech: _Literal["a", "b", "isodep", "unknown"]
+    tech: _Literal["a", "b", "isodep", "unknown"] | str
     ndef: TerminalActParamsInput3TagNdef | None = None
-    source: _Literal["native", "webnfc"]
+    source: _Literal["native", "webnfc"] | str
 
 class TerminalActParamsInput3TagNdef(_Model):
-    type: _Literal["U", "T"]
+    type: _Literal["U", "T"] | str
     value: str
 
 class TerminalActParamsScope(_Model):
@@ -7444,26 +7445,26 @@ class TerminalResolveParams(_Model):
 
 class TerminalResolveParamsInput1(_Model):
     code: str
-    method: _Literal["camera", "wedge", "nfc", "manual"]
+    method: _Literal["camera", "wedge", "nfc", "manual"] | str
 
 class TerminalResolveParamsInput2(_Model):
     passId: str
-    method: _Literal["manual"]
+    method: _Literal["manual"] | str
 
 class TerminalResolveParamsInput3(_Model):
     tag: TerminalResolveParamsInput3Tag
-    method: _Literal["nfc"]
+    method: _Literal["nfc"] | str
     passId: str | None = None
 
 class TerminalResolveParamsInput3Tag(_Model):
     uid: str | None = None
     uidRandom: bool | None = None
-    tech: _Literal["a", "b", "isodep", "unknown"]
+    tech: _Literal["a", "b", "isodep", "unknown"] | str
     ndef: TerminalResolveParamsInput3TagNdef | None = None
-    source: _Literal["native", "webnfc"]
+    source: _Literal["native", "webnfc"] | str
 
 class TerminalResolveParamsInput3TagNdef(_Model):
-    type: _Literal["U", "T"]
+    type: _Literal["U", "T"] | str
     value: str
 
 class TerminalResolveParamsScope(_Model):
@@ -7497,7 +7498,7 @@ class VisitorsCancelResult(_Model):
     windowFrom: int
     windowUntil: int
     note: str | None
-    status: _Literal["expected", "in", "out", "no_show", "cancelled"]
+    status: _Literal["expected", "in", "out", "no_show", "cancelled"] | str
     statusAt: int | None
     autoOut: bool
     hasEmail: bool
@@ -7510,7 +7511,7 @@ class VisitorsCheckOutResult(_Model):
     windowFrom: int
     windowUntil: int
     note: str | None
-    status: _Literal["expected", "in", "out", "no_show", "cancelled"]
+    status: _Literal["expected", "in", "out", "no_show", "cancelled"] | str
     statusAt: int | None
     autoOut: bool
     hasEmail: bool
@@ -7535,7 +7536,7 @@ class VisitorsCreateResult(_Model):
     windowFrom: int
     windowUntil: int
     note: str | None
-    status: _Literal["expected", "in", "out", "no_show", "cancelled"]
+    status: _Literal["expected", "in", "out", "no_show", "cancelled"] | str
     statusAt: int | None
     autoOut: bool
     hasEmail: bool
@@ -7562,7 +7563,7 @@ class VisitorsListItem(_Model):
     windowFrom: int
     windowUntil: int
     note: str | None
-    status: _Literal["expected", "in", "out", "no_show", "cancelled"]
+    status: _Literal["expected", "in", "out", "no_show", "cancelled"] | str
     statusAt: int | None
     autoOut: bool
     hasEmail: bool
@@ -7579,7 +7580,7 @@ class VisitorsListResultItemsItem(_Model):
     windowFrom: int
     windowUntil: int
     note: str | None
-    status: _Literal["expected", "in", "out", "no_show", "cancelled"]
+    status: _Literal["expected", "in", "out", "no_show", "cancelled"] | str
     statusAt: int | None
     autoOut: bool
     hasEmail: bool
@@ -7594,7 +7595,7 @@ class WalletCredentialsRevokeParams(_Model):
     expectedRevision: int
 
 class WalletCredentialsUpsertParams1(_Model):
-    provider: _Literal["google"]
+    provider: _Literal["google"] | str
     expectedRevision: int
     credentials: WalletCredentialsUpsertParams1Credentials
 
@@ -7602,10 +7603,10 @@ class WalletCredentialsUpsertParams1Credentials(_Model):
     issuerId: str
     serviceAccountEmail: str
     privateKeyPem: str
-    scopes: _List[_Literal["https://www.googleapis.com/auth/wallet_object.issuer"]]
+    scopes: _List[_Literal["https://www.googleapis.com/auth/wallet_object.issuer"] | str]
 
 class WalletCredentialsUpsertParams2(_Model):
-    provider: _Literal["samsung"]
+    provider: _Literal["samsung"] | str
     expectedRevision: int
     credentials: WalletCredentialsUpsertParams2Credentials
 
@@ -7628,19 +7629,19 @@ class WalletEnrollmentsRevokeParams(_Model):
     expectedRevision: int
 
 class WalletEnrollmentsUpdateParams(_Model):
-    source: _Literal["platform", "org"]
+    source: _Literal["platform", "org"] | str
     expectedRevision: int
 
 class WalletProviderAccountsRevokeParams(_Model):
     orgId: str
-    mode: _Literal["live", "test"]
-    provider: _Literal["google", "samsung"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
     expectedRevision: int
 
 class WalletProviderAccountsUpsertParams1(_Model):
     orgId: str
-    mode: _Literal["live", "test"]
-    provider: _Literal["google"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google"] | str
     expectedRevision: int
     credentials: WalletProviderAccountsUpsertParams1Credentials
 
@@ -7648,12 +7649,12 @@ class WalletProviderAccountsUpsertParams1Credentials(_Model):
     issuerId: str
     serviceAccountEmail: str
     privateKeyPem: str
-    scopes: _List[_Literal["https://www.googleapis.com/auth/wallet_object.issuer"]]
+    scopes: _List[_Literal["https://www.googleapis.com/auth/wallet_object.issuer"] | str]
 
 class WalletProviderAccountsUpsertParams2(_Model):
     orgId: str
-    mode: _Literal["live", "test"]
-    provider: _Literal["samsung"]
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["samsung"] | str
     expectedRevision: int
     credentials: WalletProviderAccountsUpsertParams2Credentials
 
@@ -7668,7 +7669,7 @@ class WalletProviderAccountsUpsertParams2Credentials(_Model):
 
 class WalletProviderAccountsVerifyParams(_Model):
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     candidateId: str
     candidateHash: str
 
@@ -7676,8 +7677,8 @@ class WebhookCapture(_Model):
     id: str
     endpointId: str
     eventId: str
-    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"]
-    trigger: _Literal["event", "replay", "test"]
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
+    trigger: _Literal["event", "replay", "test"] | str
     status: int
     durationMs: int
     headers: _Dict[str, str]
@@ -7690,10 +7691,10 @@ class WebhookCapturePage(_Model):
 
 class WebhookDeliveryDetail(_Model):
     eventId: str
-    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"]
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
     passId: str
     externalId: str | None
-    state: _Literal["pending", "delivered", "failed", "cancelled"]
+    state: _Literal["pending", "delivered", "failed", "cancelled"] | str
     attempts: int
     nextAt: int
     lastStatus: int | None
@@ -7706,7 +7707,7 @@ class WebhookDeliveryDetail(_Model):
 
 class WebhookDeliveryDetailAttemptLogItem(_Model):
     attempt: int
-    trigger: _Literal["event", "retry", "replay", "test"]
+    trigger: _Literal["event", "retry", "replay", "test"] | str
     status: int | None
     errorCode: str | None
     durationMs: int
@@ -7718,10 +7719,10 @@ class WebhookDeliveryPage(_Model):
 
 class WebhookDeliveryPageItemsItem(_Model):
     eventId: str
-    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"]
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
     passId: str
     externalId: str | None
-    state: _Literal["pending", "delivered", "failed", "cancelled"]
+    state: _Literal["pending", "delivered", "failed", "cancelled"] | str
     attempts: int
     nextAt: int
     lastStatus: int | None
@@ -7733,15 +7734,15 @@ class WebhookDeliveryPageItemsItem(_Model):
 class WebhookEndpoint(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     url: str | None
     urlMasked: str
     description: str
-    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"]]
+    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
     templateIds: _List[str] | None
-    apiVersion: _Literal["2026-12-01"]
-    status: _Literal["active", "paused", "disabled"]
-    target: _Literal["url", "capture"]
+    apiVersion: _Literal["2026-12-01"] | str
+    status: _Literal["active", "paused", "disabled"] | str
+    target: _Literal["url", "capture"] | str
     failingSince: int | None
     disabledAt: int | None
     lastSuccessAt: int | None
@@ -7763,7 +7764,7 @@ class WebhookEndpointsCreateParams(_Model):
     orgId: str | None = None
     url: str
     description: str | None = None
-    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"]]
+    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
     templateIds: _List[str] | None = None
 
 class WebhookEndpointsDeleteResult(_Model):
@@ -7772,7 +7773,7 @@ class WebhookEndpointsDeleteResult(_Model):
 class WebhookEndpointsDeliveriesBulkReplayParams(_Model):
     from_: int = _Field(alias="from")
     to: int
-    include: _Literal["failed", "failed_and_cancelled", "all"] | None = None
+    include: _Literal["failed", "failed_and_cancelled", "all"] | str | None = None
     missing: bool | None = None
     dryRun: bool | None = None
 
@@ -7781,10 +7782,10 @@ class WebhookEndpointsDeliveriesBulkReplayResult(_Model):
 
 class WebhookEndpointsDeliveriesListItem(_Model):
     eventId: str
-    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"]
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
     passId: str
     externalId: str | None
-    state: _Literal["pending", "delivered", "failed", "cancelled"]
+    state: _Literal["pending", "delivered", "failed", "cancelled"] | str
     attempts: int
     nextAt: int
     lastStatus: int | None
@@ -7798,7 +7799,7 @@ class WebhookEndpointsDeliveriesReplayResult(_Model):
 
 class WebhookEndpointsEnsureCaptureParams(_Model):
     orgId: str | None = None
-    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"]] | None = None
+    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str] | None = None
 
 class WebhookEndpointsRotateSecretParams(_Model):
     overlapHours: _Literal[0] | _Literal[24] | _Literal[72] | None = None
@@ -7807,15 +7808,15 @@ class WebhookEndpointsRotateSecretResult(_Model):
     secret: str
 
 class WebhookEndpointsSendTestParams(_Model):
-    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str | None = None
 
 class WebhookEndpointsUpdateParams(_Model):
     url: str | None = None
-    description: _Literal[""] | str | None = None
-    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"]] | None = None
+    description: _Literal[""] | str | str | None = None
+    eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str] | None = None
     templateIds: _List[str] | None = None
-    status: _Literal["active", "paused"] | None = None
-    apiVersion: _Literal["2026-12-01"] | None = None
+    status: _Literal["active", "paused"] | str | None = None
+    apiVersion: _Literal["2026-12-01"] | str | None = None
 
 class WebhookPassRef(_Model):
     id: str
@@ -7825,10 +7826,10 @@ class WebhookPassRef(_Model):
 class WebhookTestEvent(_Model):
     id: str
     type: _Literal["webhook.test"]
-    apiVersion: _Literal["2026-12-01"]
+    apiVersion: _Literal["2026-12-01"] | str
     createdAt: int
     orgId: str
-    mode: _Literal["live", "test"]
+    mode: _Literal["live", "test"] | str
     pass_: None = _Field(alias="pass")
     data: WebhookTestEventData
     sample: _Literal[True] | None = None
@@ -7842,6 +7843,17 @@ class WebhookTestResult(_Model):
     durationMs: int
     errorCode: str | None
     captureId: str | None
+
+class UnknownWebhookEvent(_Model):
+    """An event this SDK has no type for; the fields it does not name are kept as attributes."""
+
+    id: str | None = None
+    type: str | None = None
+    apiVersion: str | None = None
+    createdAt: int | None = None
+    orgId: str | None = None
+    mode: str | None = None
+    data: _Dict[str, _Any] | None = None
 
 ApiKeysActivityListResult = ApiKeyActivity
 
@@ -7899,7 +7911,7 @@ ConnectionsUpdateBody = ConnectionsUpdateParams
 
 EventsListResult = EventPage
 
-WebhookEvent = PassIssuedEvent | PassUpdatedEvent | PassVoidedEvent | PassUnvoidedEvent | PassRemovedEvent | PassRestoredEvent | PassInstalledEvent | PassUninstalledEvent | PassScannedEvent | PassScanRefusedEvent | PassScanUndoneEvent | PassChannelsChangedEvent | PassPrintedEvent | PassPrintVoidedEvent | PushFailedEvent | EmailFailedEvent | WebhookTestEvent
+WebhookEvent = _Annotated[PassIssuedEvent | PassUpdatedEvent | PassVoidedEvent | PassUnvoidedEvent | PassRemovedEvent | PassRestoredEvent | PassInstalledEvent | PassUninstalledEvent | PassScannedEvent | PassScanRefusedEvent | PassScanUndoneEvent | PassChannelsChangedEvent | PassPrintedEvent | PassPrintVoidedEvent | PushFailedEvent | EmailFailedEvent | WebhookTestEvent | UnknownWebhookEvent, _Field(union_mode="left_to_right")]
 
 EventsRetrieveResult = WebhookEvent
 

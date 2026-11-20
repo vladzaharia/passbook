@@ -41,3 +41,43 @@ def test_the_event_is_typed_by_its_type():
     v = VECTORS[0]
     event = verify_webhook(v["body"], v["headers"], v["secrets"], now=v["now"])
     assert type(event).__name__ == "PassUpdatedEvent"
+
+
+def _signed(body: str, secret: str = "whsec_x", ts: int = 1795153318):
+    import hashlib
+    import hmac
+
+    sig = hmac.new(secret.encode(), f"{ts}.{body}".encode(), hashlib.sha256).hexdigest()
+    return {"x-passbook-signature": f"v1={sig}", "x-passbook-timestamp": str(ts)}, ts + 1
+
+
+def test_an_event_of_an_unknown_type_verifies_and_parses():
+    body = json.dumps({"id": "e1", "type": "pass.teleported", "apiVersion": "2027-01-01", "extra": {"a": 1}})
+    headers, now = _signed(body)
+    event = verify_webhook(body, headers, "whsec_x", now=now)
+    assert type(event).__name__ == "UnknownWebhookEvent"
+    assert event.type == "pass.teleported" and event.extra == {"a": 1}
+
+
+def test_a_known_type_with_a_newer_api_version_verifies_and_parses():
+    body = VECTORS[0]["body"].replace('"2026-12-01"', '"2027-01-01"').replace('"mode":"test"', '"mode":"sandbox"')
+    assert body != VECTORS[0]["body"]
+    headers, now = _signed(body)
+    event = verify_webhook(body, headers, "whsec_x", now=now)
+    assert event.apiVersion == "2027-01-01"
+    assert event.type == "pass.updated"
+
+
+def test_a_signed_body_that_is_not_an_object_is_a_malformed_error_not_a_pydantic_one():
+    headers, now = _signed("[1]")
+    with pytest.raises(WebhookSignatureError) as caught:
+        verify_webhook("[1]", headers, "whsec_x", now=now)
+    assert caught.value.reason == "malformed"
+
+
+def test_non_ascii_digits_in_the_timestamp_are_malformed():
+    v = VECTORS[0]
+    headers = {**v["headers"], "x-passbook-timestamp": "١٧٩٥١٥٣٣١٨"}
+    with pytest.raises(WebhookSignatureError) as caught:
+        verify_webhook(v["body"], headers, v["secrets"], now=v["now"])
+    assert caught.value.reason == "malformed"
