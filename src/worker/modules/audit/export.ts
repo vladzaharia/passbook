@@ -2,7 +2,7 @@ import type { z } from 'zod';
 import type { AuditEntrySchema } from '../../../shared/contracts/audit.ts';
 
 type Entry = z.infer<typeof AuditEntrySchema>;
-export type Page = { items: Entry[]; nextCursor: string | null };
+type Page = { items: Entry[]; nextCursor: string | null };
 
 const HEAD = ['Time (UTC)', 'Action', 'Actor', 'Target', 'Organization'];
 
@@ -13,7 +13,7 @@ function cell(value: string): string {
 }
 
 /** One row from the redacted entry the list route returns: never detail, never a raw id the reader may not see. */
-export function csvRow(e: Entry): string {
+function csvRow(e: Entry): string {
   return `${[
     new Date(e.at).toISOString(),
     e.action,
@@ -25,7 +25,7 @@ export function csvRow(e: Entry): string {
     .join(',')}\r\n`;
 }
 
-export const EXPORT_MAX_ROWS = 10_000;
+const EXPORT_MAX_ROWS = 10_000;
 const PAGE = 200;
 
 /**

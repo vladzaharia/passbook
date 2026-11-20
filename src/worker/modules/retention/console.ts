@@ -2,9 +2,9 @@ import type { z } from 'zod';
 import type { ReceiptFileSchema, ReceiptSchema } from '../../../shared/contracts/retention.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { listHoldViews } from './hold-view.ts';
 import { readReceipts } from './receipt-service.ts';
 import type { Receipt } from './receipts.ts';
+import { listHoldViews } from './repo-hold-view.ts';
 import { receiptClass, receiptPageRows } from './repo-receipts.ts';
 
 type ReceiptItem = z.infer<typeof ReceiptSchema>;

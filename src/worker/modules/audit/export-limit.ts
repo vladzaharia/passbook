@@ -3,7 +3,7 @@ import { RateLimitedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 
 const HOUR = 3_600_000;
-export const EXPORTS_PER_HOUR = 6;
+const EXPORTS_PER_HOUR = 6;
 
 /**
  * An export reads up to 10,000 entries, so each user and each organization gets a few an hour (fixed window).
