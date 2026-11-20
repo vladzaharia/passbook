@@ -145,6 +145,10 @@ export function OperatorWorkspace(props: WorkspaceProps) {
     keys: op.recordKeys,
     machine,
     release: () => op.send({ t: 'close' }),
+    type: (text) => {
+      focusSearch(false);
+      op.setQuery(ui.query + text);
+    },
     buddy: result ? scanView.buddy : null,
     showPass: (passId) => {
       machine({ type: 'dismiss' });

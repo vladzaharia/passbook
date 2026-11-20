@@ -8,6 +8,7 @@ import type { ScanBuddyView } from '../../machine/present.ts';
 import type { Loop, ScanOutcome } from '../../machine/types.ts';
 import type { ScanRuntime } from '../../platform/runtime.ts';
 import type { Command } from '../keys.ts';
+import type { GateClock } from '../keys-gate.ts';
 import type { RecordRef } from '../operator-model.ts';
 import { focusHeading } from '../workspace/focus.ts';
 import { type PinDesk, PinDialog } from './pin-dialog.tsx';
@@ -29,6 +30,7 @@ import {
   type Source,
 } from './record-model.ts';
 import { useMarkOut } from './use-mark-out.ts';
+import { useQuietShortcut } from './use-quiet-shortcut.ts';
 import { useResolved } from './use-resolved.ts';
 import { useRunAct } from './use-run-act.ts';
 import './record.css';
@@ -61,6 +63,10 @@ export interface RecordContext {
   undo: (() => void) | null;
   /** Leave the list's record before the machine takes over. */
   release: () => void;
+  /** Hand a letter back to search as typing. */
+  type: (text: string) => void;
+  /** The key gate's clock, for the shortcut's extra wait; the real one by default. */
+  quiet?: GateClock;
   /** This device's buddy for the answer on screen; null when there is none. */
   buddy: ScanBuddyView | null;
   /** Open the person's own record, or search for them by name, ending the scan card first. */
@@ -133,22 +139,22 @@ function RecordView({
     photo: photoInput,
   });
   const keys = ctx.keys;
+  const wait = useQuietShortcut(ctx.type, ctx.quiet);
   useEffect(() => {
     const byKey = (key: Act['key']) =>
       [...(actions.primary ? [actions.primary] : []), ...actions.others].find(
         (a) => a.key === key && !a.lock,
       );
     keys.current = (command) => {
-      const act =
-        command.c === 'primary'
-          ? byKey('Enter')
-          : command.c === 'out'
-            ? byKey('O')
-            : command.c === 'photo'
-              ? byKey('P')
-              : undefined;
-      if (!act) return false;
-      run(act);
+      if (command.c === 'primary') {
+        const act = byKey('Enter');
+        if (act) run(act);
+        return Boolean(act);
+      }
+      const letter = command.c === 'out' ? 'O' : command.c === 'photo' ? 'P' : null;
+      const act = letter ? byKey(letter) : undefined;
+      if (!act || !letter) return false;
+      wait(letter.toLowerCase(), () => run(act));
       return true;
     };
     return () => {
