@@ -301,6 +301,39 @@ describe('roll call: what counts as a refused mark', () => {
   });
 });
 
+describe('roll call: an Out where nothing is tracked', () => {
+  it('is recorded as a confirmation alone and reported, when the zone left the session', async () => {
+    const pool = await trackedZone();
+    const place = `zone:${pool.id}`;
+    const p = await personInside(tpl, 'Untracked', [place]);
+    const a = await station([tpl], [pool.id]);
+    const call = (await start(a)).body;
+    await run(kit.env.DB, 'DELETE FROM scanning_session_zones WHERE session_id = ?', [a.sessionId]);
+    const res = await mark(a, call.id, [
+      { passId: p.id, status: 'out', at: kit.clock.now() - 1000 },
+    ]);
+    expect(res.status).toBe(200);
+    expect(res.body.results).toMatchObject([
+      { status: 'applied', code: 'ROLL_CALL_OUT_NOT_TRACKED' },
+    ]);
+    const [m] = await all<{ status: string; exit_scan_id: string | null }>(
+      kit.env.DB,
+      'SELECT status, exit_scan_id FROM roll_call_marks WHERE pass_id = ?',
+      [p.id],
+    );
+    expect(m).toMatchObject({ status: 'out', exit_scan_id: null });
+    expect(
+      (
+        await all<{ state: string }>(
+          kit.env.DB,
+          'SELECT state FROM scan_presence WHERE pass_id = ?',
+          [p.id],
+        )
+      )[0]?.state,
+    ).toBe('in');
+  });
+});
+
 describe('roll call: Out exits the person', () => {
   const state = async (passId: string) =>
     (

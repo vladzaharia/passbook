@@ -10,7 +10,7 @@ import type { QueuedMark } from '../roll-call/roll-call-model.ts';
 import { RollCallPanel } from '../roll-call/roll-call-panel.tsx';
 import { RollCallPrint } from '../roll-call/roll-call-print.tsx';
 import { StartRollCallFooter } from '../roll-call/start-footer.tsx';
-import { useRollCall } from '../roll-call/use-roll-call.ts';
+import { type UnsavedMark, useRollCall } from '../roll-call/use-roll-call.ts';
 import { fill } from '../ui/copy.ts';
 import { ACCESS_COPY } from '../ui/copy-access.ts';
 import { insidePort } from './inside-api.ts';
@@ -20,6 +20,14 @@ import type { InsideRow } from './inside-types.ts';
 import { useInside } from './use-inside.ts';
 
 const COPY = ACCESS_COPY.roll;
+
+/** The call ended under the taps, or the server kept refusing them: either way they are shown, not dropped. */
+function unsavedTitle(unsaved: readonly UnsavedMark[]): string {
+  const ended = unsaved.every((u) => !u.reason);
+  const n = unsaved.length;
+  if (ended) return n === 1 ? COPY.endedLostOne : fill(COPY.endedLost, { n });
+  return n === 1 ? COPY.notSavedOne : fill(COPY.notSaved, { n });
+}
 
 /**
  * Who's in, mounted once for a Desk scanner that counts a place. The list lives here, so closing the
@@ -127,16 +135,15 @@ export default function InsideHost({
       <ConfirmDialog
         open={roll.unsaved.length > 0}
         onOpenChange={(next) => !next && roll.clearUnsaved()}
-        title={
-          roll.unsaved.length === 1
-            ? COPY.endedLostOne
-            : fill(COPY.endedLost, { n: roll.unsaved.length })
-        }
+        title={unsavedTitle(roll.unsaved)}
         description={
           <ul>
             {roll.unsaved.map((u) => (
               <li key={`${u.passId}-${u.status}`}>
                 {u.name ?? ACCESS_COPY.inside.unnamed}: {u.status === 'out' ? COPY.out : COPY.safe}
+                {u.reason
+                  ? ` (${(COPY.refused as Record<string, string>)[u.reason] ?? COPY.refused.other})`
+                  : ''}
               </li>
             ))}
           </ul>

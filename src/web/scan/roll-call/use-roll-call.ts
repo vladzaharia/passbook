@@ -26,9 +26,25 @@ export interface UnsavedMark {
   passId: string;
   status: RollCallStatus;
   name: string | null;
+  /** Why, when the server kept refusing it (its code); absent when the call ended. */
+  reason?: string;
+}
+
+/** Counts identical 4xx answers to one batch; true once there have been STUCK of them in a row. */
+function stuck(
+  repeats: { current: { key: string; n: number } },
+  status: number,
+  error: unknown,
+  batch: readonly QueuedMark[],
+): boolean {
+  const key = `${status}:${error instanceof ApiError ? error.code : ''}:${batch.map((m) => m.passId).join(',')}`;
+  repeats.current = { key, n: repeats.current.key === key ? repeats.current.n + 1 : 1 };
+  return repeats.current.n >= STUCK;
 }
 
 const BATCH = 100;
+/** Identical 4xx answers to one batch before it is set aside as not saved. */
+const STUCK = 5;
 const QUEUE_KEY = 'roll-call-queue';
 
 /**
@@ -72,6 +88,8 @@ export function useRollCall({
   live.current = { server, queue, onAppear, onRefused, onBlocked, blocked };
   // Transient failures (network, 5xx) retry with a growing delay, never in a tight loop.
   const retry = useRef({ fails: 0, at: 0 });
+  // The same 4xx answer to the same taps, over and over: after STUCK of them the taps stop blocking the queue.
+  const repeats = useRef({ key: '', n: 0 });
   const sending = useRef(false);
   // The device's clock against the server's, measured on every read; taps carry the corrected time.
   const offset = useRef(0);
@@ -130,7 +148,9 @@ export function useRollCall({
       const next = await port.marks(call.id, batch);
       retry.current = { fails: 0, at: 0 };
       drop();
-      const refused = next.results.filter((r) => r.status === 'refused');
+      repeats.current = { key: '', n: 0 };
+      // Refused taps, and Outs taken as a confirmation alone, are both told to the desk.
+      const refused = next.results.filter((r) => r.status === 'refused' || r.code);
       if (refused.length)
         live.current.onRefused?.(refused.map((r) => ({ passId: r.passId, code: r.code ?? '' })));
       take(next, true);
@@ -152,6 +172,21 @@ export function useRollCall({
         setBlocked(true);
         setError(true);
         live.current.onBlocked?.(error);
+      } else if (status >= 400 && status < 500 && stuck(repeats, status, error, batch)) {
+        const code = error instanceof ApiError ? error.code : '';
+        const people = new Map(call.people.map((p) => [p.passId, p.holder]));
+        setUnsaved((u) => [
+          ...u,
+          ...batch.map((m) => ({
+            passId: m.passId,
+            status: m.status,
+            name: people.get(m.passId) ?? null,
+            reason: code,
+          })),
+        ]);
+        drop();
+        repeats.current = { key: '', n: 0 };
+        retry.current = { fails: 0, at: 0 };
       } else {
         const fails = retry.current.fails + 1;
         retry.current = { fails, at: Date.now() + Math.min(60_000, 1000 * 2 ** fails) };

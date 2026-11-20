@@ -158,13 +158,22 @@ export async function markRollCall(
       exitScan,
     });
     let exitScan = prior?.exitScanId ?? null;
+    let untracked = false;
     try {
       if (m.status === 'out' && !exitScan && c.exit) {
-        const scan = await c.exit(m.passId, where, (eg, scanId, won) =>
-          addMark(eg, mark(scanId), [won], true),
-        );
-        if (scan) exitScan = scan;
-        else addMark(g, mark(null));
+        try {
+          const scan = await c.exit(m.passId, where, (eg, scanId, won) =>
+            addMark(eg, mark(scanId), [won], true),
+          );
+          if (scan) exitScan = scan;
+          else addMark(g, mark(null));
+        } catch (error) {
+          // The zone left the session, stopped tracking or the pass is gone: nothing to exit here. The Out is
+          // recorded as a confirmation alone, and the desk is told.
+          if (!(error instanceof AppError) || error.code !== 'SCAN_MARK_OUT_INVALID') throw error;
+          addMark(g, mark(null));
+          untracked = true;
+        }
       } else if (m.status !== 'out' && exitScan && c.undoExit) {
         await c.undoExit(exitScan, (ug) => addMark(ug, mark(null), [], true));
         exitScan = null;
@@ -174,7 +183,12 @@ export async function markRollCall(
       refuse(scannedSince(error) ? 'ROLL_CALL_SCANNED_SINCE' : error.code);
       continue;
     }
-    results.push({ rollCallId: id, passId: m.passId, status: 'applied' });
+    results.push({
+      rollCallId: id,
+      passId: m.passId,
+      status: 'applied',
+      ...(untracked ? { code: 'ROLL_CALL_OUT_NOT_TRACKED' } : {}),
+    });
     held.set(m.passId, {
       passId: m.passId,
       status: m.status,

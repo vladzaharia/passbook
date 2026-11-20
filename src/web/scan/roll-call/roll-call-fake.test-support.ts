@@ -54,6 +54,8 @@ export interface FakeRoll extends RollCallPort {
   fail: Error | null;
   /** Marks for these people are refused with the code. */
   refuse: Map<string, string>;
+  /** Marks for these people apply, with this note code. */
+  note: Map<string, string>;
 }
 
 /** A server that applies marks by the later `at`, as the real one does. */
@@ -63,6 +65,7 @@ export function fakeRollCall(start: RollCall | null): FakeRoll {
     server: start,
     fail: null,
     refuse: new Map(),
+    note: new Map(),
     current: async () => ({ rollCall: f.server }),
     start: async () => {
       f.calls.start++;
@@ -86,10 +89,13 @@ export function fakeRollCall(start: RollCall | null): FakeRoll {
       f.server = call(people, { id: cur.id, rev: cur.rev + 1 });
       const results = marks.map((m) => {
         const code = f.refuse.get(m.passId);
+        const note = f.note.get(m.passId);
         return {
           rollCallId: cur.id,
           passId: m.passId,
-          ...(code ? { status: 'refused' as const, code } : { status: 'applied' as const }),
+          ...(code
+            ? { status: 'refused' as const, code }
+            : { status: 'applied' as const, ...(note ? { code: note } : {}) }),
         };
       });
       return { ...f.server, results };

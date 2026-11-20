@@ -197,6 +197,63 @@ describe('useRollCall: refused and failed syncs', () => {
   });
 });
 
+describe('useRollCall: a batch the server keeps refusing', () => {
+  it('after five identical 4xx answers the taps are set aside with their reason and the queue goes on', async () => {
+    const port = fakeRollCall(call([person(0), person(1)]));
+    const h = renderHook(() =>
+      useRollCall({ port, enabled: true, online: true, by: '', connect: connect as never }),
+    );
+    await waitFor(() => expect(h.result.current.call).not.toBeNull());
+    port.fail = new ApiError({ status: 400, code: 'SCAN_MARK_OUT_INVALID' });
+    act(() => h.result.current.mark(person(0).passId, 'out'));
+    for (let i = 0; i < 6 && h.result.current.unsaved.length === 0; i++) {
+      await act(async () => void (await vi.advanceTimersByTimeAsync(70_000)));
+      await act(async () => void (await h.result.current.reload()));
+    }
+    await waitFor(() => expect(h.result.current.unsaved).toHaveLength(1));
+    expect(h.result.current.unsaved[0]).toMatchObject({
+      passId: person(0).passId,
+      status: 'out',
+      reason: 'SCAN_MARK_OUT_INVALID',
+    });
+    expect(port.calls.marks.length).toBeGreaterThanOrEqual(5);
+    expect(h.result.current.pending).toBe(0);
+    // Later taps are not stuck behind it.
+    port.fail = null;
+    act(() => h.result.current.mark(person(1).passId, 'present'));
+    for (let i = 0; i < 4 && h.result.current.pending > 0; i++) {
+      await act(async () => void (await vi.advanceTimersByTimeAsync(70_000)));
+      await act(async () => void (await h.result.current.reload()));
+    }
+    await waitFor(() => expect(h.result.current.pending).toBe(0));
+    expect(h.result.current.call?.counts.present).toBe(1);
+  });
+
+  it('tells the desk when an Out was kept as a confirmation alone', async () => {
+    const port = fakeRollCall(call([person(0)]));
+    port.note.set(person(0).passId, 'ROLL_CALL_OUT_NOT_TRACKED');
+    const onRefused = vi.fn();
+    const h = renderHook(() =>
+      useRollCall({
+        port,
+        enabled: true,
+        online: true,
+        by: '',
+        connect: connect as never,
+        onRefused,
+      }),
+    );
+    await waitFor(() => expect(h.result.current.call).not.toBeNull());
+    act(() => h.result.current.mark(person(0).passId, 'out'));
+    await waitFor(() =>
+      expect(onRefused).toHaveBeenCalledWith([
+        { passId: person(0).passId, code: 'ROLL_CALL_OUT_NOT_TRACKED' },
+      ]),
+    );
+    expect(h.result.current.pending).toBe(0);
+  });
+});
+
 describe('useRollCall: queue identity, clock and storage', () => {
   it('stamps taps with the server-corrected time', async () => {
     const h = setup(call([person(0)], { serverNow: Date.now() + 600_000 }));
