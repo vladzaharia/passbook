@@ -119,7 +119,7 @@ export function ApprovalTray({
     pin.push(d);
   };
   return (
-    <Tray label={title} onClose={onCancel} height={588} testId="scan-approval-tray">
+    <Tray label={title} onClose={onCancel} height={614} testId="scan-approval-tray">
       <fieldset className="scan-tray-body scan-pin" aria-label={title}>
         <div className="scan-pin-head">
           <span className="scan-pin-tile" aria-hidden>

@@ -17,8 +17,7 @@ import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { useNativeCapabilities } from './platform/use-native-capabilities.ts';
 import { useVerdictHaptic } from './platform/use-verdict-haptic.ts';
 import { canAddPhoto } from './result/add-photo.tsx';
-import { shortName } from './result/approval-parts.tsx';
-import { deskOf, resultOf } from './result/desk.ts';
+import { deskOf, resultOf, useApprovedBy } from './result/desk.ts';
 import type { PassInspection } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
 import { BootCard } from './ui/boot-card.tsx';
@@ -108,21 +107,7 @@ export function ScanLoop({
   // A handheld keeps the hold on screen while its Manager PIN is with the server.
   const approving = handheld && l.s === 'applying' ? (l.retry ?? null) : null;
   const result: ScanOutcome | null = resultOf(l, counts) ?? approving;
-  const baseDesk = deskOf(l, session, dispatch);
-  // Who approved the hold on screen: named when staff sign-in lets us know (a manager code is anonymous).
-  const [approver, setApprover] = useState<{ inputId: string; name: string } | null>(null);
-  const desk = {
-    ...baseDesk,
-    onApprove: (staffId: string | undefined, pin: string) => {
-      const who = baseDesk.managers.find((m) => m.id === staffId);
-      if (who && 'input' in l) setApprover({ inputId: l.input.id, name: shortName(who.name) });
-      baseDesk.onApprove(staffId, pin);
-    },
-  };
-  const approvedBy =
-    approver && l.s === 'verdict' && l.outcome.kind === 'ok' && l.input.id === approver.inputId
-      ? approver.name
-      : undefined;
+  const { desk, approvedBy } = useApprovedBy(l, deskOf(l, session, dispatch));
   useVerdictHaptic(l.s === 'verdict' ? l.outcome : null);
   useEffect(() => {
     if (needsSessionRefetch(session, s) && requestedRev.current !== counts.configRev) {
