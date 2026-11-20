@@ -31,4 +31,6 @@ export interface PreviewSource {
   assets: readonly PreviewAsset[];
   /** The values the pass was built from: the template's sample, or the pass's own. */
   input: Personalization;
+  /** A pass in a developer org: every channel carries the TEST PREVIEW band. */
+  testBand?: boolean | undefined;
 }

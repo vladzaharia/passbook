@@ -18,5 +18,21 @@ export const SANDBOX_TEMPLATE_NAME = 'Quickstart ticket';
 export const SANDBOX_KEY_NAME = 'Sandbox key';
 export const SANDBOX_KEY_MISSING_COPY =
   'Your sandbox has no usable key. Roll or make one, then try again.';
-/** The path a sandbox pass links to; the token is the pass's capability. PX9 renders it. */
-export const TEST_PREVIEW_PATH = '/developers/preview/';
+/** The path of a sandbox pass's TEST preview page; the segment after it is a MAC'd link (PX9). */
+export const TEST_PREVIEW_PATH = '/preview/';
+
+/** The band on every channel of a sandbox pass: text, not colour alone. */
+export const TEST_BAND_COPY = 'TEST PREVIEW · NOT INSTALLABLE';
+
+export const PREVIEW_PAGE_COPY = {
+  title: 'Test preview',
+  lede: 'A sandbox pass as each wallet shows it. It cannot be added to a wallet.',
+  tag: 'Test only',
+  tabs: 'Channel',
+  noPaper: 'This template has no printed ticket.',
+  open: 'Open PassBook',
+  expiredTitle: 'Preview link expired',
+  expired: 'This link is older than 30 days. Open the pass in PassBook to copy a new one.',
+  missingTitle: 'Preview not found',
+  missing: 'This link is not valid. Open the pass in PassBook to copy it again.',
+} as const;

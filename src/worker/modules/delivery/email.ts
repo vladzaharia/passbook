@@ -166,7 +166,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     printUrl: channels.holderPrint ? `${base}/p/${plainToken}/print` : null,
     // A developer org's holder has no wallet to add the pass to: the link is its TEST preview page.
     manageUrl: (await isPreviewOnlyOrg(db, pass.orgId))
-      ? testPreviewUrl(base, plainToken)
+      ? await testPreviewUrl(ctx.env, base, pass, ctx.clock.now())
       : `${base}/p/${plainToken}`,
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
     publicBaseUrl: base,

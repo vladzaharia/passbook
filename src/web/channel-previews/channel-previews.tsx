@@ -66,7 +66,11 @@ export function ChannelPreviews({
       <div className="w-full min-w-0" data-channel={current}>
         {current === 'apple' ? apple : null}
         {current === 'google' || current === 'samsung' ? (
-          <WalletChannel target={current} previews={source ? wallets : { state: 'loading' }} />
+          <WalletChannel
+            target={current}
+            previews={source ? wallets : { state: 'loading' }}
+            testBand={source?.testBand}
+          />
         ) : null}
         {current === 'mobile' ? (
           source ? (

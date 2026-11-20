@@ -89,7 +89,9 @@ export async function linksOf(ctx: ServiceContext, pass: Pass, token?: string) {
   const previewOnly = await isPreviewOnlyOrg(ctx.env.DB, pass.orgId);
   return {
     publicUrl: `${base}/p/${plain}`,
-    downloadUrl: previewOnly ? testPreviewUrl(base, plain) : `${base}/p/${plain}/pass.pkpass`,
+    downloadUrl: previewOnly
+      ? await testPreviewUrl(ctx.env, base, pass, ctx.clock.now())
+      : `${base}/p/${plain}/pass.pkpass`,
     assetBaseUrl: `${base}/p/${plain}/assets/`,
   };
 }
@@ -190,6 +192,7 @@ export async function detailOf(
     fieldSources: pass.fieldSources,
     passJson,
     ...(await linksOf(ctx, pass)),
+    testPreview: pass.mode === 'test' && (await isPreviewOnlyOrg(db, pass.orgId)),
     channels: (await holderChannels(ctx, pass)).effective,
     assetNames: await assetNamesOf(ctx, pass),
     stamps: await stampsOf(ctx, pass),

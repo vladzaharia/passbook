@@ -1135,6 +1135,18 @@
     "sdk": false,
     "reason": "Public page or capability link; the token in the URL is the credential."
   },
+  "public.getPreviewByToken": {
+    "resource": "public.testPreviews",
+    "method": "retrievePage",
+    "sdk": false,
+    "reason": "Public page of a sandbox pass; the signed link in the URL is the credential."
+  },
+  "public.getPreviewByTokenAssetsByName": {
+    "resource": "public.testPreviews",
+    "method": "downloadAsset",
+    "sdk": false,
+    "reason": "Public page or capability link; the signed link in the URL is the credential."
+  },
   "public.getWIByFile": {
     "resource": "public.walletImages",
     "method": "download",

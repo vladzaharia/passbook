@@ -2,6 +2,7 @@ import { type CSSProperties, useState } from 'react';
 import type { PassTarget, PassView } from '../../shared/pass-view/index.ts';
 import { Back } from './back.tsx';
 import { Front } from './front.tsx';
+import { TestBand } from './test-band.tsx';
 import './pass-card-base.css';
 import './pass-card-poster.css';
 import './pass-card-text.css';
@@ -15,9 +16,18 @@ export interface PassCardProps {
   target?: PassTarget;
   /** Removed from Wallet by the org: dimmed, with no Voided stamp (the page says why). */
   removed?: boolean;
+  /** A sandbox pass: the TEST PREVIEW band across the top (developer orgs only). */
+  testBand?: boolean;
 }
 
-export function PassCard({ view, face = 'front', className, target, removed }: PassCardProps) {
+export function PassCard({
+  view,
+  face = 'front',
+  className,
+  target,
+  removed,
+  testBand,
+}: PassCardProps) {
   const layout = view.layouts[target ?? view.target];
   const c = view.colors;
   const vars = {
@@ -38,6 +48,7 @@ export function PassCard({ view, face = 'front', className, target, removed }: P
       data-approximate={layout.approximate || undefined}
       data-dark={c.dark || undefined}
       data-removed={removed || undefined}
+      data-test-band={testBand || undefined}
     >
       {/* biome-ignore lint/a11y/useSemanticElements: fieldset adds form semantics; a landmark per card is noise */}
       <div
@@ -58,6 +69,8 @@ export function PassCard({ view, face = 'front', className, target, removed }: P
           </div>
         ) : null}
       </div>
+      {/* Outside the card, so the event ticket's notch (a mask on the card) never cuts the text. */}
+      {testBand ? <TestBand /> : null}
     </div>
   );
 }

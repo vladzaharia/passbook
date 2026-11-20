@@ -2630,6 +2630,10 @@
           "publicUrl": {
             "type": "string"
           },
+          "testPreview": {
+            "type": "boolean",
+            "default": false
+          },
           "channels": {
             "type": "object",
             "properties": {
@@ -126670,6 +126674,103 @@
           "RATE_LIMITED",
           "VALIDATION"
         ]
+      }
+    },
+    "/preview/{token}": {
+      "get": {
+        "summary": "TEST preview page of a sandbox pass (server-rendered HTML)",
+        "tags": [
+          "public"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "required": true,
+            "name": "token",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "public.getPreviewByToken",
+        "x-sdk": {
+          "resource": "public.testPreviews",
+          "method": "retrievePage",
+          "sdk": false,
+          "reason": "Public page of a sandbox pass; the signed link in the URL is the credential."
+        },
+        "security": [],
+        "x-public": true
+      }
+    },
+    "/preview/{token}/assets/{name}": {
+      "get": {
+        "summary": "Pass image for the TEST preview page",
+        "tags": [
+          "public"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "required": true,
+            "name": "token",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "name",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "public.getPreviewByTokenAssetsByName",
+        "x-sdk": {
+          "resource": "public.testPreviews",
+          "method": "downloadAsset",
+          "sdk": false,
+          "reason": "Public page or capability link; the signed link in the URL is the credential."
+        },
+        "security": [],
+        "x-public": true
       }
     },
     "/b/{token}": {

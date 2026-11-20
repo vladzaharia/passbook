@@ -147,6 +147,8 @@ export const PassDetailSchema = PassSummarySchema.extend({
   blockedUsers: z.array(z.object({ id: IdSchema, name: z.string().nullable() })),
   downloadUrl: z.string(),
   publicUrl: z.string(),
+  /** A test pass of a developer org: a preview only, shown with the TEST PREVIEW band on every channel. */
+  testPreview: z.boolean().default(false),
   /** What each delivery channel offers this pass, with its source, reason and retirement. */
   channels: EffectiveChannelsSchema.optional(),
   registrations: z.number().int(),

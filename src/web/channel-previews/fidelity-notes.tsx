@@ -1,6 +1,6 @@
 import type { FidelityReport, ReportItem } from '@/passkit/wallets/types.ts';
 import { PREVIEW_COPY } from '@/shared/copy/previews.ts';
-import { Badge } from '../ui/index.ts';
+import { Badge } from '../ui/badge.tsx';
 
 function Group({ title, items }: { title: string; items: readonly ReportItem[] }) {
   if (items.length === 0) return null;
