@@ -12,7 +12,7 @@
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
         "url": "https://hooks.example.com/passbook",
-        "urlMasked": "https://hooks.example.com/\u2026",
+        "urlMasked": "https://hooks.example.com/…",
         "description": "Order system",
         "eventTypes": ["pass.issued", "pass.scanned"],
         "templateIds": null,
@@ -48,7 +48,7 @@
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "url": "https://hooks.example.com/passbook",
-          "urlMasked": "https://hooks.example.com/\u2026",
+          "urlMasked": "https://hooks.example.com/…",
           "description": "Order system",
           "eventTypes": ["pass.issued", "pass.scanned"],
           "templateIds": null,
@@ -63,7 +63,8 @@
           "previousSecretExpiresAt": null,
           "createdAt": 1764000000000
         }
-      ]
+      ],
+      "nextCursor": null
     }
   },
   "webhooks.getWebhookEndpointsById": {
@@ -73,7 +74,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "url": "https://hooks.example.com/passbook",
-      "urlMasked": "https://hooks.example.com/\u2026",
+      "urlMasked": "https://hooks.example.com/…",
       "description": "Order system",
       "eventTypes": ["pass.issued", "pass.scanned"],
       "templateIds": null,
@@ -99,7 +100,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "url": "https://hooks.example.com/passbook",
-      "urlMasked": "https://hooks.example.com/\u2026",
+      "urlMasked": "https://hooks.example.com/…",
       "description": "Order system",
       "eventTypes": ["pass.issued", "pass.scanned"],
       "templateIds": null,

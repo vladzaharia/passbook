@@ -1,14 +1,13 @@
-import { z } from 'zod';
 import {
   ApiKeyListQuerySchema,
   ApiKeyListSchema,
   ApiKeyScopeQuerySchema,
   CreateApiKeySchema,
-  CreatedApiKeySchema,
   IdParamSchema,
+  MintedApiKeySchema,
   OkSchema,
-  ReplayedApiKeySchema,
   RetireApiKeySchema,
+  RetiredApiKeySchema,
 } from '../../../shared/contracts/index.ts';
 import { requireCaller } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
@@ -103,7 +102,7 @@ register(
     summary: 'Create an organization or platform API key (secret shown once)',
     body: CreateApiKeySchema,
     status: 201,
-    response: z.union([CreatedApiKeySchema, ReplayedApiKeySchema]),
+    response: MintedApiKeySchema,
   },
   async (c) => {
     const ctx = serviceContext(c);
@@ -152,7 +151,7 @@ register(
     summary: 'Retire a key at a later instant: it stops working then (once, never after expiry)',
     params: IdParamSchema,
     body: RetireApiKeySchema,
-    response: OkSchema,
+    response: RetiredApiKeySchema,
   },
   async (c) => {
     const ctx = serviceContext(c);

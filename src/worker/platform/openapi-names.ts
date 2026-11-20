@@ -1,5 +1,12 @@
 import { zodToOpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
-import { ApiKeyMeSchema } from '../../shared/contracts/api-keys.ts';
+import {
+  ApiKeyActivitySchema,
+  ApiKeyDetailSchema,
+  ApiKeyMeSchema,
+  MintedApiKeySchema,
+  RetiredApiKeySchema,
+  RotatedApiKeySchema,
+} from '../../shared/contracts/api-keys.ts';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
 import {
@@ -111,6 +118,11 @@ const names = {
   PassDevice: PassDeviceSchema,
   PassPage: PassListSchema,
   ApiKeyCurrent: ApiKeyMeSchema,
+  ApiKeyMinted: MintedApiKeySchema,
+  ApiKeyRotation: RotatedApiKeySchema,
+  ApiKeyDetail: ApiKeyDetailSchema,
+  ApiKeyActivity: ApiKeyActivitySchema,
+  ApiKeyRetired: RetiredApiKeySchema,
   TemplateSummary: TemplateSummarySchema,
   TemplateDetail: TemplateDetailSchema,
   TemplatePage: TemplateListSchema,

@@ -7,6 +7,14 @@
     "resource": "apiKeys",
     "method": "list"
   },
+  "api-keys.getApiKeysById": {
+    "resource": "apiKeys",
+    "method": "retrieve"
+  },
+  "api-keys.getApiKeysByIdActivity": {
+    "resource": "apiKeys.activity",
+    "method": "list"
+  },
   "api-keys.getApiKeysMe": {
     "resource": "apiKeys",
     "method": "retrieveCurrent"
@@ -14,6 +22,18 @@
   "api-keys.postApiKeys": {
     "resource": "apiKeys",
     "method": "create"
+  },
+  "api-keys.postApiKeysByIdRetire": {
+    "resource": "apiKeys",
+    "method": "retire"
+  },
+  "api-keys.postApiKeysByIdRotate": {
+    "resource": "apiKeys",
+    "method": "rotate"
+  },
+  "api-keys.postApiKeysMeRotate": {
+    "resource": "apiKeys",
+    "method": "rotateCurrent"
   },
   "apple.deleteWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial": {
     "resource": "apple.registrations",
@@ -1281,6 +1301,12 @@
     "resource": "scanZones",
     "method": "resetVisits"
   },
+  "scan.deleteScanPassesByPassIdNotesByNoteId": {
+    "resource": "terminal.notes",
+    "method": "delete",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
   "scan.deleteScanStaff": {
     "resource": "terminal.staff",
     "method": "signOut",
@@ -1296,6 +1322,12 @@
   "scan.getScanBrandingLogo": {
     "resource": "terminal",
     "method": "downloadLogo",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanDevices": {
+    "resource": "terminal.devices",
+    "method": "list",
     "sdk": false,
     "reason": "Scanner device protocol; needs a paired scanner session."
   },
@@ -1320,6 +1352,18 @@
   "scan.getScanPassesByPassIdAssetsByName": {
     "resource": "terminal",
     "method": "downloadPassAsset",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanPassesByPassIdHistory": {
+    "resource": "terminal",
+    "method": "listPassHistory",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanPassesByPassIdNotes": {
+    "resource": "terminal.notes",
+    "method": "list",
     "sdk": false,
     "reason": "Scanner device protocol; needs a paired scanner session."
   },
@@ -1383,6 +1427,12 @@
     "sdk": false,
     "reason": "Scanner device protocol; needs a paired scanner session."
   },
+  "scan.patchScanPassesByPassIdNotesByNoteId": {
+    "resource": "terminal.notes",
+    "method": "update",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
   "scan.postScanActions": {
     "resource": "terminal",
     "method": "act"
@@ -1432,6 +1482,12 @@
   "scan.postScanPairPreview": {
     "resource": "terminal",
     "method": "previewPairing",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanPassesByPassIdNotes": {
+    "resource": "terminal.notes",
+    "method": "create",
     "sdk": false,
     "reason": "Scanner device protocol; needs a paired scanner session."
   },

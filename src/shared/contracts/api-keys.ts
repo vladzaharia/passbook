@@ -125,6 +125,9 @@ export const RetireApiKeySchema = z.object({
   retireAt: TimestampSchema,
 });
 
+/** What a retire answers. Its own schema so the SDK names it. */
+export const RetiredApiKeySchema = z.object({ ok: z.literal(true) });
+
 /** A key with its family and last use: what the key page shows. */
 export const ApiKeyDetailSchema = ApiKeySchema.extend({
   /** The first part of the address of the last call: a network, never a full address. */
@@ -142,6 +145,8 @@ export const RotateApiKeySchema = z.object({
 });
 /** What a call with an `Idempotency-Key` returns when it replays: the key, never its secret again. */
 export const ReplayedApiKeySchema = ApiKeySchema;
+/** The mint's answer: `secret` is absent on a replay. One object, so the 201 keeps the fields clients already read. */
+export const MintedApiKeySchema = ApiKeySchema.extend({ secret: z.string().optional() });
 export const RotatedApiKeySchema = z.object({
   key: z.union([CreatedApiKeySchema, ReplayedApiKeySchema]),
   previous: ApiKeySchema,
