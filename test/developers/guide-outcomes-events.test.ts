@@ -1,8 +1,6 @@
-import { verifyWebhook } from '@passbook/sdk';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { verifyWebhook } from '../../sdk/typescript/src/index.ts';
 import { fence, guideApi, snippetBody } from './guide-api.ts';
-
-vi.mock('@passbook/sdk', async () => await import('../../sdk/typescript/src/index.ts'));
 
 /** The sandbox claims of the door, events, go-live and bulk guides, each proven by the API. */
 describe('check in at the door', () => {
