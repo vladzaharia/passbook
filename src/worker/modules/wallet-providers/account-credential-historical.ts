@@ -20,6 +20,7 @@ import {
 import { providerIdentityHash } from './projection-contract.ts';
 import { findSamsungTombstoneCredential } from './repo-accounts.ts';
 import { findSamsungIssuedRefCredential } from './repo-accounts-issued.ts';
+import { DEFAULT_CARD_TYPE, samsungCardId } from './samsung-cards.ts';
 
 /** Public verification material only, usable solely for a retired Samsung reference callback. */
 export interface SamsungVerificationMaterial {
@@ -42,12 +43,13 @@ const material = (
   accountId: string,
   accountRevision: number,
   stored: Samsung,
+  cardType: string | null,
 ): SamsungVerificationMaterial => ({
   accountId,
   accountRevision,
   partnerId: stored.credentials.partnerId,
   certificateId: stored.credentials.certificateId,
-  cardId: stored.credentials.cardId,
+  cardId: samsungCardId(stored.credentials, cardType ?? DEFAULT_CARD_TYPE),
   samsungCertificatePem: stored.credentials.samsungCertificatePem,
 });
 
@@ -102,12 +104,17 @@ export async function readSamsungTombstoneVerification(
   const [first, ...later] = found;
   if (!row || !first) return null;
   // The tombstone's identity binds the pinned version; a later version of another card is not its successor.
-  if ((await providerIdentityHash(first)) !== row.provider_identity_hash) throw corrupt();
+  if (
+    (await providerIdentityHash(first, row.card_type ?? undefined)) !== row.provider_identity_hash
+  )
+    throw corrupt();
   const successors: SamsungVerificationMaterial[] = [];
   for (const next of later)
-    if ((await providerIdentityHash(next)) === row.provider_identity_hash)
-      successors.push(material(row.id, row.revision, next));
-  return { ...material(row.id, row.revision, first), later: successors };
+    if (
+      (await providerIdentityHash(next, row.card_type ?? undefined)) === row.provider_identity_hash
+    )
+      successors.push(material(row.id, row.revision, next, row.card_type));
+  return { ...material(row.id, row.revision, first, row.card_type), later: successors };
 }
 
 export interface SamsungIssuedVerification extends SamsungVerificationMaterial {
@@ -189,16 +196,17 @@ export async function readSamsungIssuedRefVerification(
   const [first, ...laterAll] = found;
   if (!first) return null;
   // Only a later version of the same card follows a pinned one (as in the tombstone reader).
-  const firstIdentity = await providerIdentityHash(first);
+  const firstIdentity = await providerIdentityHash(first, row.card_type ?? undefined);
   const later: Samsung[] = [];
   for (const next of laterAll)
-    if ((await providerIdentityHash(next)) === firstIdentity) later.push(next);
+    if ((await providerIdentityHash(next, row.card_type ?? undefined)) === firstIdentity)
+      later.push(next);
   return {
-    ...material(row.id, row.revision, first),
+    ...material(row.id, row.revision, first, row.card_type),
     writable: await writable(first),
     later: await Promise.all(
       later.map(async (next) => ({
-        ...material(row.id, row.revision, next),
+        ...material(row.id, row.revision, next, row.card_type),
         writable: await writable(next),
       })),
     ),

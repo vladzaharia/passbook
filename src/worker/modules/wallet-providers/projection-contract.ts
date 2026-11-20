@@ -1,6 +1,8 @@
 import { z } from 'zod';
+import { SAMSUNG_CARD_TYPES } from '../../../shared/contracts/wallet-providers.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
+import { DEFAULT_CARD_TYPE, samsungCardId } from './samsung-cards.ts';
 
 /** These revisions are part of every candidate digest and every atomic eligibility fence. */
 export const GOOGLE_PROJECTION_POLICY = {
@@ -59,7 +61,7 @@ export const GoogleProjectionSchema = z.strictObject({
 export const SamsungProjectionSchema = z.strictObject({
   ...common,
   provider: z.literal('samsung'),
-  cardType: z.literal('loyalty'),
+  cardType: z.enum(SAMSUNG_CARD_TYPES),
   cardSubType: z.literal('others'),
   countryCode: z.string().regex(/^[A-Z]{2}$/),
   appLinkLogo: HttpsUrlSchema,
@@ -154,8 +156,15 @@ export function publishableSchema(provider: NativeProvider, schema: 1 | 2): bool
 /** The non-secret provider identity is hashed; private credentials never enter a projection. */
 export type ProviderIdentitySnapshot =
   | { provider: 'google'; credentials: { issuerId: string } }
-  | { provider: 'samsung'; credentials: { partnerId: string; cardId: string } };
-export function providerIdentityHash(snapshot: ProviderIdentitySnapshot): Promise<string> {
+  | {
+      provider: 'samsung';
+      credentials: { partnerId: string; cardId: string; cardIds?: Record<string, string> };
+    };
+/** Samsung: the partner plus the card of the projection's type (`cardType`, default card if omitted). */
+export function providerIdentityHash(
+  snapshot: ProviderIdentitySnapshot,
+  cardType = DEFAULT_CARD_TYPE,
+): Promise<string> {
   return sha256Hex(
     canonicalJson(
       snapshot.provider === 'google'
@@ -163,7 +172,7 @@ export function providerIdentityHash(snapshot: ProviderIdentitySnapshot): Promis
         : {
             provider: 'samsung',
             partnerId: snapshot.credentials.partnerId,
-            cardId: snapshot.credentials.cardId,
+            cardId: samsungCardId(snapshot.credentials, cardType),
           },
     ),
   );

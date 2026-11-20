@@ -10,7 +10,7 @@ import { safeEqual } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ActRequest } from './act-claim.ts';
 import { StaleScanAuthority } from './act-override.ts';
-import { planAdmission } from './admission.ts';
+import { passRulesOf, planAdmission } from './admission.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import { policyActor } from './dto.ts';
 import { verifyEventActionLabelHash } from './event-safe-projection.ts';
@@ -152,7 +152,7 @@ export async function replayOutcome(
   let fence: ActionPassFence | null = null;
   let admissionAllowed = true;
   const configured =
-    Object.keys(found.checkInRules ?? {}).length > 0 ||
+    Object.keys(passRulesOf(found)).length > 0 ||
     Object.keys(actor.settings.checkIn ?? {}).length > 0 ||
     actor.settings.direction === 'out' ||
     actor.settings.direction === 'both';

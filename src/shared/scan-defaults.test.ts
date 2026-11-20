@@ -86,3 +86,19 @@ describe('armable', () => {
       expect(armable(only({ kind })!)).toBeNull();
   });
 });
+
+describe('a pass type check-in mode', () => {
+  const repeatOf = (checkIn: object | undefined, repeat?: string) =>
+    scanOf({
+      scan: {
+        actions: [{ id: 'check_in', label: 'In', kind: 'check_in', ...(repeat ? { repeat } : {}) }],
+        ...(checkIn ? { checkIn } : {}),
+      },
+    } as never).actions[0]?.repeat;
+  it('sets the check-in repeat unless the action names one', () => {
+    expect(repeatOf(undefined)).toBe('once');
+    expect(repeatOf({ mode: 'unlimited' })).toBe('always');
+    expect(repeatOf({ mode: 'daily' })).toBe('daily');
+    expect(repeatOf({ mode: 'single' }, 'always')).toBe('always');
+  });
+});
