@@ -589,9 +589,21 @@
     "resource": "nfc.keysets",
     "method": "disable"
   },
+  "nfc-keysets.postNfcKeysetsByIdImport": {
+    "resource": "nfc.keysets",
+    "method": "importTags"
+  },
   "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire": {
     "resource": "nfc.keysets",
     "method": "retireKey"
+  },
+  "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke": {
+    "resource": "nfc.keysets",
+    "method": "revokeKey"
+  },
+  "nfc-keysets.postNfcKeysetsByIdReenrol": {
+    "resource": "nfc.keysets",
+    "method": "reenroll"
   },
   "nfc-keysets.postNfcKeysetsByIdRotate": {
     "resource": "nfc.keysets",
