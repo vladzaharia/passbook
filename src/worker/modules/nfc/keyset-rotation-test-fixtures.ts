@@ -20,8 +20,8 @@ export async function seedTagKeys(
   const tagId = c.id();
   await run(
     db,
-    `INSERT INTO nfc_tag_keysets (id, org_id, mode, name, slug, diversify, created_at, created_by)
-     VALUES (?, ?, 'live', 'Rotation', ?, 1, ?, 'test')`,
+    `INSERT INTO nfc_tag_keysets (id, org_id, mode, name, slug, diversify, per_tag, created_at, created_by)
+     VALUES (?, ?, 'live', 'Rotation', ?, 0, 1, ?, 'test')`,
     [keysetId, c.orgId, keysetId.replaceAll('-', '').slice(-8), c.now],
   );
   const kind = versionKind('live', keysetId, 1);

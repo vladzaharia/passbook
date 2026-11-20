@@ -2,8 +2,12 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
 import { IdSchema } from '../../../shared/contracts/common.ts';
 import {
+  ImportTagsSchema,
   MadeTagKeysetSchema,
+  ReenrolledTagKeysetSchema,
+  ReenrolTagKeysetSchema,
   RotateTagKeysetSchema,
+  TagImportResultSchema,
   TagKeysetListQuerySchema,
   TagKeysetListSchema,
   TagKeysetViewSchema,
@@ -16,6 +20,7 @@ import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, tenantAuthorityOf } from '../passes/http.ts';
+import { importTags } from './import.ts';
 import {
   createKeyset,
   disableKeyset,
@@ -24,6 +29,7 @@ import {
   retireKeyVersion,
   rotateKeyset,
 } from './keysets.ts';
+import { reenrolTags, revokeKeyVersion } from './keysets-recover.ts';
 import { keysetById } from './repo-keysets.ts';
 
 const TAG = 'nfc-keysets';
@@ -139,6 +145,59 @@ export function registerKeysetRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void 
       const { id, version } = c.req.valid('param');
       const { ctx, authority } = await managing(c, id);
       return c.json(await retireKeyVersion(ctx, authority, id, version));
+    },
+  );
+
+  register(
+    nfcRoutes,
+    TAG,
+    {
+      method: 'post',
+      path: '/keysets/{id}/keys/{version}/revoke',
+      summary: 'Revoke a key version: tags on it must be written again',
+      params: TagKeyVersionParamSchema,
+      response: TagKeysetViewSchema,
+    },
+    async (c) => {
+      const { id, version } = c.req.valid('param');
+      const { ctx, authority } = await managing(c, id);
+      return c.json(await revokeKeyVersion(ctx, authority, id, version));
+    },
+  );
+
+  register(
+    nfcRoutes,
+    TAG,
+    {
+      method: 'post',
+      path: '/keysets/{id}/reenrol',
+      summary: 'Move the tags of a keyset to another keyset',
+      params: IdParam,
+      body: ReenrolTagKeysetSchema,
+      response: ReenrolledTagKeysetSchema,
+    },
+    async (c) => {
+      const { id } = c.req.valid('param');
+      const { ctx, authority } = await managing(c, id);
+      return c.json(await reenrolTags(ctx, authority, id, c.req.valid('json').toKeysetId));
+    },
+  );
+
+  register(
+    nfcRoutes,
+    TAG,
+    {
+      method: 'post',
+      path: '/keysets/{id}/import',
+      summary: 'Import supplier-personalised tags (dry run or add)',
+      params: IdParam,
+      body: ImportTagsSchema,
+      response: TagImportResultSchema,
+    },
+    async (c) => {
+      const { id } = c.req.valid('param');
+      const { ctx, authority } = await managing(c, id);
+      return c.json(await importTags(ctx, authority, id, c.req.valid('json')));
     },
   );
 

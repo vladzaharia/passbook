@@ -14,9 +14,12 @@ export class SunError extends AppError {
 export interface SunKeyset {
   /** SDM meta-read key (decrypts PICCData). 16 bytes. */
   metaKey: Uint8Array;
-  /** SDM file-read key (MAC). 16 bytes; the master key when `diversified`. */
-  fileKey: Uint8Array;
-  /** The file key is AN10922-diversified by the UID. */
+  /**
+   * SDM file-read key (MAC). 16 bytes; the master key when `diversified`. A keyset whose tags carry their
+   * own keys gives a lookup by UID instead, returning null for a tag it holds no key for: that tag is refused.
+   */
+  fileKey: Uint8Array | ((uid: string) => Promise<Uint8Array | null>);
+  /** The file key is AN10922-diversified by the UID. Not with a lookup. */
   diversified: boolean;
 }
 
@@ -67,7 +70,10 @@ export async function verifySun(keyset: SunKeyset, pHex: string, mHex: string): 
   const uid = picc.slice(1, 8);
   const counter = picc.slice(8, 11);
 
-  const fileKey = keyset.diversified ? await diversifyKey(keyset.fileKey, uid) : keyset.fileKey;
+  const uidHex = bytesToHex(uid);
+  const base = typeof keyset.fileKey === 'function' ? await keyset.fileKey(uidHex) : keyset.fileKey;
+  if (!base) return { ok: false, error: 'SUN_MAC_INVALID' };
+  const fileKey = keyset.diversified ? await diversifyKey(base, uid) : base;
   const sv2 = new Uint8Array(16);
   sv2.set(SV2_PREFIX);
   sv2.set(uid, 6);
@@ -78,5 +84,5 @@ export async function verifySun(keyset: SunKeyset, pHex: string, mHex: string): 
 
   const ctr =
     (counter[0] as number) | ((counter[1] as number) << 8) | ((counter[2] as number) << 16);
-  return { ok: true, read: { uid: bytesToHex(uid), counter: ctr } };
+  return { ok: true, read: { uid: uidHex, counter: ctr } };
 }

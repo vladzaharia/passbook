@@ -83,6 +83,7 @@ describe('the SUN plugin, NXP AN12196 vectors', () => {
         slug: an.slug,
         keyVersion: 1,
         ctr: 61,
+        active: true,
       },
     });
     // The URL names the keyset; the reader's own UID is ignored.

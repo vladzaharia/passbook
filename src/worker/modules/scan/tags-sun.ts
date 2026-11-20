@@ -177,7 +177,8 @@ export async function identifyRead(
 
 /**
  * The tag row a read found is of the read's system (a UID read never opens a Secure tag, and a SUN read
- * never a Basic one), and a SUN read is newer than the tag's counter. Reads only: the counter is used by the
+ * never a Basic one), and a SUN read is newer than the tag's counter. A tag not seen before enrols only on
+ * the active key version. Reads only: the counter is used by the
  * write that follows. Throws `TAG_CHECK_FAILED`.
  */
 export async function assertReadMatches(
@@ -186,7 +187,14 @@ export async function assertReadMatches(
   identity: ReadIdentity,
   tag: { system: TagSystemId } | null,
 ): Promise<void> {
-  if (!tag) return;
+  if (!tag) {
+    // A retiring version verifies the tags it has; a tag it has not seen enrols only on the active one.
+    if (identity.sun && !identity.sun.active) {
+      ctx.log.info('scan.tag_refused', { orgId: scope.orgId, code: 'TAG_SUN_VERSION' });
+      throw checkFailed();
+    }
+    return;
+  }
   if (tag.system !== identity.system) {
     ctx.log.info('scan.tag_refused', { orgId: scope.orgId, code: 'TAG_SYSTEM_MISMATCH' });
     throw checkFailed();

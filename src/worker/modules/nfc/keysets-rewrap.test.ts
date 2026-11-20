@@ -44,12 +44,13 @@ describe('cron keys.rewrap over Secure tag keys', () => {
     const db = f.kit.env.DB;
     const t = await f.org();
     const authority = await t.admin.authority();
+    // Own keys per tag belong to a per-tag keyset.
     const made = await createKeyset(f.kit.ctx, authority, {
       name: 'Badges',
-      diversify: true,
-      generate: true,
+      perTag: true,
+      metaKey: 'a1'.repeat(16),
     });
-    await rotateKeyset(f.kit.ctx, authority, made.id, { generate: true });
+    await rotateKeyset(f.kit.ctx, authority, made.id, { metaKey: 'b2'.repeat(16) });
     const keyset = await keysetById(db, made.id);
     if (!keyset) throw new Error('No keyset.');
     const before = await verifyingKeys(f.kit.ctx, keyset);

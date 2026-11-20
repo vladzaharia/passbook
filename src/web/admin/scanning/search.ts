@@ -37,11 +37,14 @@ export const scanningSearchSchema = z.object({
   tagState: z.enum(['assigned', 'spare', 'lost', 'retired']).optional().catch(undefined),
   tagQ: z.string().trim().max(80).optional().catch(undefined),
   tag: id,
+  // Tags > Secure keys, and the keyset open in the side sheet.
+  tagView: z.enum(['keys']).optional().catch(undefined),
+  keyset: id,
 });
 export type ScanningSearch = z.infer<typeof scanningSearchSchema>;
 
 /** Search for another tab: filters stay, the default tab and the create flag drop out. */
 export function withTab(prev: ScanningSearch, tab: ScanningTab): ScanningSearch {
-  const { new: _new, tag: _tag, ...rest } = prev;
+  const { new: _new, tag: _tag, keyset: _keyset, ...rest } = prev;
   return { ...rest, tab: tab === DEFAULT_TAB ? undefined : tab };
 }
