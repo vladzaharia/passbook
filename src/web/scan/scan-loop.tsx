@@ -237,6 +237,7 @@ export function ScanLoop({
               open={open}
               onError={setCameraError}
               inside={access.inside}
+              visitors={access.visitors}
               tags={tags}
             />
           )

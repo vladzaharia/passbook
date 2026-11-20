@@ -7,6 +7,10 @@
  */
 import type { z } from 'zod';
 import {
+  type SignOutRequestSchema,
+  SignOutResultSchema,
+} from '../../../shared/contracts/access-business.ts';
+import {
   ScanTagEnrollmentDoneSchema,
   ScanTagEnrollmentPendingSchema,
 } from '../../../shared/contracts/nfc-tag-enrollments.ts';
@@ -46,6 +50,7 @@ import {
   ScanWorkspaceSchema,
   SessionActivitySchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
+import { VisitorListSchema } from '../../../shared/contracts/visitors.ts';
 import { modeHeaders } from '../../lib/mode.ts';
 import type { BindBody, TagRead } from '../assign/types.ts';
 import {
@@ -275,6 +280,16 @@ export function createScanApi(deps: ScanApiDeps) {
       request('POST', `/overrides/${encodeURIComponent(id)}/note`, null, { note }),
     markOut: (body: MarkOutRequest, call?: Call) =>
       request('POST', '/mark-out', MarkOutResultSchema, body, call),
+    visitors: (day: { start: number; end: number }, call?: Call) =>
+      request(
+        'GET',
+        `/visitors?dayStart=${day.start}&dayEnd=${day.end}`,
+        VisitorListSchema,
+        undefined,
+        call,
+      ),
+    signOutPerson: (body: z.infer<typeof SignOutRequestSchema>, call?: Call) =>
+      request('POST', '/sign-out', SignOutResultSchema, body, call),
   };
 }
 
