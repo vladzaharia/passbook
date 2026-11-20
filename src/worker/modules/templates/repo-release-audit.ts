@@ -23,11 +23,12 @@ export function releaseAuditStmt(
     db,
     `INSERT INTO audit_log
        (at, org_id, actor_type, actor_id, action, target_type, target_id, request_id, ip_prefix, detail)
-     SELECT ?, ?, 'user', ?, ?, 'template', ?, ?, NULL, ?
+     SELECT ?, ?, ?, ?, ?, 'template', ?, ?, NULL, ?
      WHERE EXISTS (SELECT 1 FROM ${table} WHERE id = ?)`,
     [
       ctx.clock.now(),
       orgId,
+      userId.startsWith('system:') ? 'system' : 'user',
       userId,
       action,
       templateId,

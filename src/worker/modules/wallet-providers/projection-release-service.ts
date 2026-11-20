@@ -7,7 +7,7 @@ import type { AuthContext } from '../../platform/auth.ts';
 import { batch } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { authorizeTemplateWrite, type TemplateAuthority } from '../templates/access.ts';
+import { authorizeTemplateWrite } from '../templates/access.ts';
 import { releaseAuditStmt } from '../templates/repo-release-audit.ts';
 import {
   type ApprovalRow,
@@ -27,6 +27,7 @@ import {
   scopedTemplate,
   storeReleaseArt,
 } from './projection-service-support.ts';
+import { isSystemAuthored, type ProjectionAuthority } from './projection-system-authority.ts';
 import {
   insertProjectionReleaseStmt,
   type ProjectionCandidate,
@@ -34,9 +35,9 @@ import {
 } from './repo-projection-store.ts';
 import { ensureSamsungProjectionEvidence } from './samsung-verification.ts';
 
-async function publish(
+export async function publish(
   ctx: ServiceContext,
-  authority: TemplateAuthority,
+  authority: ProjectionAuthority,
   scope: ProjectionScope,
   candidate: ProjectionCandidate,
   approval: ApprovalRow,
@@ -48,7 +49,7 @@ async function publish(
     approval.candidateId !== candidate.id ||
     approval.candidateHash !== candidate.candidateHash ||
     approval.reviewerId === candidate.authorId ||
-    approval.reviewerId === candidate.versionAuthorId
+    (approval.reviewerId === candidate.versionAuthorId && !isSystemAuthored(candidate))
   )
     throw changed();
   const db = ctx.env.DB;
@@ -83,7 +84,11 @@ async function publish(
       scope.orgId,
       authority.userId,
       scope.templateId,
-      action === 'release' ? 'template.release' : 'template.rollback',
+      action === 'rollback'
+        ? 'template.rollback'
+        : authority.kind === 'system'
+          ? 'template.system_release'
+          : 'template.release',
       {
         releaseId: id,
         candidateId: candidate.id,

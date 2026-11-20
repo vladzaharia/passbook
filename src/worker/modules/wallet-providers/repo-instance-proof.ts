@@ -1,3 +1,4 @@
+import { versionAuthorIndependentSql } from './projection-system-authority.ts';
 import { projectionReleaseBindingPredicateSql } from './repo-projection.ts';
 
 function alias(value: string): string {
@@ -134,7 +135,7 @@ export function walletInstanceProofSql(
                 AND (evidence.testing_mode_off = 'Y' AND evidence.verified_at <= original.created_at
                   AND original.created_at < evidence.expires_at))))
               AND (approval.reviewer_id != candidate.author_id
-                AND (candidate.version_author_id IS NULL OR approval.reviewer_id != candidate.version_author_id)
+                AND ${versionAuthorIndependentSql('candidate', 'approval.reviewer_id')}
                 AND original.adapter_revision = ${op}.adapter_revision
                 AND original.audience_policy_revision = ${op}.policy_revision)))))
     )

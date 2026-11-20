@@ -13,7 +13,7 @@ import {
   ValidationError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { assertTemplateAuthority, type TemplateAuthority } from '../templates/access.ts';
+import { assertTemplateAuthority } from '../templates/access.ts';
 import { candidateHash } from '../templates/release-content.ts';
 import { getVersion } from '../templates/repo.ts';
 import type { ApprovalRow, ReleaseRow } from '../templates/repo-releases.ts';
@@ -39,6 +39,7 @@ import {
   walletsHash,
 } from './projection-pins.ts';
 import { assertProjectionSource, verifiedAppleSource } from './projection-source.ts';
+import type { ProjectionAuthority } from './projection-system-authority.ts';
 import { recordProjectionArt } from './repo-projection-art.ts';
 import {
   getProjectionCandidate,
@@ -110,9 +111,9 @@ export async function scopedTemplate(
 }
 export async function failedWrite(
   ctx: ServiceContext,
-  authority: TemplateAuthority,
+  authority: ProjectionAuthority,
 ): Promise<never> {
-  await assertTemplateAuthority(ctx, authority);
+  if (authority.kind !== 'system') await assertTemplateAuthority(ctx, authority);
   throw changed();
 }
 export function candidateDto(

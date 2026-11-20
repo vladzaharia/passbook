@@ -1,5 +1,6 @@
 import type { Envelope } from '../../platform/crypto.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
+import { versionAuthorIndependentSql } from './projection-system-authority.ts';
 
 export interface HistoricalSamsungRef {
   id: string;
@@ -61,7 +62,7 @@ export async function insertHistoricalProviderInstance(
         AND c.candidate_hash = r.candidate_hash
       JOIN template_approvals approval ON approval.id = r.approval_id AND approval.candidate_id = c.id
         AND approval.candidate_hash = c.candidate_hash AND approval.reviewer_id != c.author_id
-        AND (c.version_author_id IS NULL OR approval.reviewer_id != c.version_author_id)
+        AND ${versionAuthorIndependentSql('c', 'approval.reviewer_id')}
       WHERE p.id = ? AND p.org_id = ? AND p.mode = ? AND p.credential_generation = ?`,
       [
         input.id,

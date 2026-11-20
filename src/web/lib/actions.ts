@@ -231,6 +231,21 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'template.delete': a('Template deleted', I.delete, 'danger'),
   'template.manifest': a('Template manifest changed', I.edit, 'info'),
   'template.release': a('Template version released', CircleCheck, 'success'),
+  'template.system_approve': a(
+    'Wallet projection approved by the platform',
+    CircleCheck,
+    'success',
+  ),
+  'template.system_candidate': a(
+    'Wallet projection created by the platform',
+    ENTITY.version.icon,
+    'info',
+  ),
+  'template.system_release': a(
+    'Wallet projection released by the platform',
+    CircleCheck,
+    'success',
+  ),
   'template.restore': a('Template restored', I.restore, 'success'),
   'template.rollback': a('Template rolled back', I.restore, 'warning'),
   'template.upload': a('Template uploaded', ENTITY.template.icon, 'success'),
