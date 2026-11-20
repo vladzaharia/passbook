@@ -142,7 +142,7 @@ export function templateRelease(over: Record<string, unknown> = {}) {
 
 export function templateReleaseList(over: Record<string, unknown> = {}) {
   const active = templateRelease(over);
-  return { active, items: [active] };
+  return { active, items: [active], nextCursor: null };
 }
 
 export function templateVersionDetail(over: Record<string, unknown> = {}) {

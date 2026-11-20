@@ -15,6 +15,7 @@ import {
   ScanSummarySchema,
   ScanSummaryScopeSchema,
 } from '../../../shared/contracts/scan-session.ts';
+import { SessionDevicesSchema } from '../../../shared/contracts/scanning-session-devices.ts';
 import {
   ReportScanDeviceSchema,
   ScanWorkspaceSchema,
@@ -38,6 +39,7 @@ import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
 import { registerScanEnrollmentRoutes } from './routes-enrollment.ts';
 import { mountScanGuards } from './routes-guards.ts';
+import { registerScanHistoryRoutes } from './routes-history.ts';
 import { registerScanOccupancyRoutes } from './routes-occupancy.ts';
 import { registerScanOfflineRoutes } from './routes-offline.ts';
 import { limitScanBodies, registerScanPhotoRoute } from './routes-photo.ts';
@@ -50,6 +52,7 @@ import { reportScanDevice } from './scanning-workspace.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { buildSession } from './session.ts';
 import { sessionActivityFor } from './session-activity.ts';
+import { sessionDevicesFor } from './session-devices.ts';
 import { statsFor } from './stats.ts';
 
 /** Device API: /api/v1/scan. */
@@ -104,6 +107,7 @@ registerScanEnrollmentRoutes(scanRoutes);
 registerScanOfflineRoutes(scanRoutes);
 registerScanBrandingRoute(scanRoutes);
 registerScanPhotoRoute(scanRoutes);
+registerScanHistoryRoutes(scanRoutes);
 
 register(
   scanRoutes,
@@ -119,6 +123,18 @@ register(
     const { problems } = c.req.valid('query');
     return c.json(await sessionActivityFor(serviceContext(c), scanActorOf(c), problems === '1'));
   },
+);
+
+register(
+  scanRoutes,
+  'scan',
+  {
+    method: 'get',
+    path: '/devices',
+    summary: "This session's scanners and who is connected",
+    response: SessionDevicesSchema,
+  },
+  async (c) => c.json(await sessionDevicesFor(serviceContext(c), scanActorOf(c))),
 );
 
 register(
@@ -234,13 +250,16 @@ register(
     summary: "This scanner's tally",
     query: z.object({
       since: z.coerce.number().int().nonnegative().optional(),
+      updatedSince: z.coerce.number().int().nonnegative().optional(),
       scope: ScanSummaryScopeSchema.default('device'),
     }),
     response: ScanSummarySchema,
   },
   async (c) => {
-    const { since, scope } = c.req.valid('query');
-    return c.json(await summaryFor(serviceContext(c), scanActorOf(c), since, scope));
+    const { since, updatedSince, scope } = c.req.valid('query');
+    return c.json(
+      await summaryFor(serviceContext(c), scanActorOf(c), updatedSince ?? since, scope),
+    );
   },
 );
 

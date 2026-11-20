@@ -71,13 +71,17 @@ const PUBLIC = [
 
 /** Scanner principal or pairing code, checked by modules/scan/guard*.ts. */
 const SCANNER = [
+  'DELETE /api/v1/scan/passes/:passId/notes/:noteId',
   'DELETE /api/v1/scan/staff',
   'GET /api/v1/scan/activity',
   'GET /api/v1/scan/branding/logo',
+  'GET /api/v1/scan/devices',
   'GET /api/v1/scan/live',
   'GET /api/v1/scan/live/inside',
   'GET /api/v1/scan/live/passes/:passId/assets/member.png',
   'GET /api/v1/scan/passes/:passId/assets/:name',
+  'GET /api/v1/scan/passes/:passId/history',
+  'GET /api/v1/scan/passes/:passId/notes',
   'GET /api/v1/scan/roll-call',
   'GET /api/v1/scan/roll-call/:id',
   'GET /api/v1/scan/roster',
@@ -96,6 +100,8 @@ const SCANNER = [
   'POST /api/v1/scan/overrides',
   'POST /api/v1/scan/overrides/:scanId/note',
   'POST /api/v1/scan/pair',
+  'PATCH /api/v1/scan/passes/:passId/notes/:noteId',
+  'POST /api/v1/scan/passes/:passId/notes',
   'POST /api/v1/scan/passes/:passId/photo',
   'POST /api/v1/scan/pair/preview',
   'POST /api/v1/scan/resolve',

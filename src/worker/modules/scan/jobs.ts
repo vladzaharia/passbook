@@ -25,7 +25,7 @@ import {
   parseBackfillState,
   saveBackfillState,
 } from './repo-lookup-backfill.ts';
-import { deleteScansBefore, pendingScans } from './repo-scans.ts';
+import { deleteNotesBefore, deleteScansBefore, pendingScans } from './repo-scans.ts';
 
 const DAY = 86_400_000;
 const RECONCILE_AFTER_MS = 60_000;
@@ -219,11 +219,17 @@ export async function dailyScans(ctx: ServiceContext): Promise<void> {
   // Live scans follow the retention plan (org values, floors, holds); test scans keep the sandbox window.
   const live = await sweepClass(ctx, 'scans');
   const offline = await sweepClass(ctx, 'scans', undefined, 'scan_offline');
+  const notes = await sweepClass(ctx, 'scans', undefined, 'pass_notes');
   const test = await deleteScansBefore(
     ctx.env.DB,
     'test',
     now - settings['sandbox.purgeDays'] * DAY,
   );
-  ctx.log.info('scan.retention', { live, test, offline });
+  const testNotes = await deleteNotesBefore(
+    ctx.env.DB,
+    'test',
+    now - settings['sandbox.purgeDays'] * DAY,
+  );
+  ctx.log.info('scan.retention', { live, test, offline, notes, testNotes });
   await sweepEnrollments(ctx);
 }

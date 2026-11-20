@@ -11,7 +11,13 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TemplateAuthority } from './access.ts';
 import { APPLE_ADAPTER_CAPABILITIES } from './release-content.ts';
-import { approvable, candidateTemplate, headGeneration, publishable } from './repo-grant-checks.ts';
+import {
+  approvable,
+  candidateTemplate,
+  headGeneration,
+  keyChecks,
+  publishable,
+} from './repo-grant-checks.ts';
 import { templateGrant } from './repo-grants.ts';
 import { invalidateEventCache } from './repo-release-effects.ts';
 import type { ApprovalRow, CandidateRow } from './repo-releases.ts';
@@ -146,12 +152,15 @@ function audit(
     ctx,
     {
       orgId,
-      actorType: 'user',
-      actorId: authority.userId,
+      actorType: authority.kind === 'api_key' ? 'api_key' : 'user',
+      actorId: authority.kind === 'api_key' ? authority.keyId : authority.userId,
       action,
       targetType: 'template',
       targetId: templateId,
-      detail,
+      detail:
+        authority.kind === 'api_key'
+          ? { ...detail, actingUserId: authority.userId, membershipId: authority.membershipId }
+          : detail,
     },
     [exists(table, { id: entityId })],
   );
@@ -168,7 +177,10 @@ export async function writeCandidate(
   const g = templateGrant(ctx, authority, 'candidate', {
     target: c.id,
     codes: CODES,
-    checks: [candidateTemplate(c.templateId, c.version, c.versionAuthorId)],
+    checks: [
+      candidateTemplate(c.templateId, c.version, c.versionAuthorId),
+      ...keyChecks(authority.kind),
+    ],
   });
   g.insertSelect('template_candidates', CANDIDATE_COLUMNS, candidateValues(c), RETURN_ID);
   g.add(
@@ -207,10 +219,12 @@ export async function writeApproval(
         a.candidateId,
         a.candidateHash,
         a.reviewerId,
-        authority.kind === 'session' ? authority.membershipId : '',
+        authority.kind === 'platform' ? '' : authority.membershipId,
         a.kind,
         a.createdAt,
+        authority.kind === 'api_key',
       ),
+      ...keyChecks(authority.kind),
       ...(headId === null
         ? []
         : [releaseHead(candidate.templateId, candidate.mode, candidate.provider, headId)]),
@@ -256,6 +270,7 @@ export async function writeRelease(
     target: input.id,
     codes: CODES,
     checks: [
+      ...keyChecks(authority.kind),
       publishable({
         candidateId: c.id,
         approvalId: input.approvalId,

@@ -210,3 +210,17 @@
   color: var(--op-muted);
   font-size: 12px;
 }
+
+.op-chip-roll {
+  border-color: transparent;
+  background: var(--pk-danger);
+  color: var(--pk-danger-on, #fff);
+}
+.op-chip-roll b {
+  color: inherit;
+}
+@media (max-width: 1279px) {
+  .op-top:has(.op-chip-roll) .op-admits {
+    display: none;
+  }
+}

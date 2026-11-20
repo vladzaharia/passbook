@@ -1,0 +1,102 @@
+import { describe, expect, it } from 'vitest';
+import type { Doc } from './openapi-diff.ts';
+import { coverage, ratchetFailures, type SdkName, type SdkNames } from './openapi-ratchet.ts';
+
+const KEY = [{ apiKey: ['passes:read'] }, { session: [] }];
+const op = (id: string, over: Record<string, unknown> = {}) => ({
+  operationId: id,
+  tags: ['passes'],
+  security: KEY,
+  ...over,
+});
+const doc = (ops: Record<string, Record<string, unknown>>): Doc => ({
+  paths: Object.fromEntries(Object.entries(ops).map(([p, o]) => [p, { get: o }])),
+});
+const names: SdkNames = { 'passes.getPasses': { resource: 'passes', method: 'list' } };
+const base = doc({ '/api/v1/passes': op('passes.getPasses') });
+const run = (
+  next: Doc,
+  nextNames: SdkNames,
+  baseNames: SdkNames | null = names,
+  b: Doc | null = base,
+) => ratchetFailures({ base: b, next, baseNames, nextNames });
+
+describe('ratchet', () => {
+  it('passes unchanged', () => expect(run(base, names)).toEqual([]));
+
+  it('fails a rename, a removal and true to false', () => {
+    expect(run(base, { 'passes.getPasses': { resource: 'passes', method: 'all' } })[0]).toMatch(
+      /renamed/,
+    );
+    expect(run(base, {}).join()).toMatch(/passes.getPasses: name removed/);
+    const hidden = { ...names['passes.getPasses'], sdk: false, reason: 'x' } as SdkName;
+    expect(run(base, { 'passes.getPasses': hidden }).join()).toMatch(/true to false/);
+  });
+
+  it('allows false to true', () => {
+    const was = {
+      'passes.getPasses': { resource: 'passes', method: 'list', sdk: false, reason: 'r' },
+    };
+    expect(run(base, names, was)).toEqual([]);
+  });
+
+  it('fails an operation without a name, and a name without an operation', () => {
+    const next = doc({ '/api/v1/passes': op('passes.getPasses'), '/api/v1/x': op('x.getX') });
+    expect(run(next, names).join()).toMatch(/add x.getX to docs\/api\/sdk-names.json/);
+    expect(run(base, { ...names, 'x.getX': { resource: 'x', method: 'list' } }).join()).toMatch(
+      /x.getX: name has no operation/,
+    );
+  });
+
+  it('checks the shape of names', () => {
+    const bad = (n: SdkNames[string], path = '/api/v1/passes') =>
+      run(doc({ [path]: op('passes.getPasses') }), { 'passes.getPasses': n }, null, null);
+    expect(bad({ resource: 'Passes', method: 'list' })).toHaveLength(1);
+    expect(bad({ resource: 'a.b.c', method: 'list' }).join()).toMatch(/2 levels/);
+    expect(bad({ resource: 'passes', method: 'getAll' }).join()).toMatch(/HTTP verb/);
+    expect(bad({ resource: 'passes', method: 'deleteAll' }).join()).toMatch(/HTTP verb/);
+    expect(bad({ resource: 'passes', method: 'listByOrg' }).join()).toMatch(/By/);
+    expect(bad({ resource: 'passes', method: 'delete' })).toEqual([]);
+    expect(bad({ resource: 'orgs', method: 'list' }, '/api/v1/platform/orgs').join()).toMatch(
+      /platform/,
+    );
+    expect(bad({ resource: 'passes', method: 'list', sdk: false }).join()).toMatch(/reason/);
+  });
+
+  it('fails a tag that is not kebab-case', () => {
+    const next = doc({ '/api/v1/passes': op('passes.getPasses', { tags: ['wallet platform'] }) });
+    expect(run(next, names).join()).toMatch(/kebab/);
+  });
+
+  it('fails a coverage drop per operation, not in total', () => {
+    const covered = (id: string) => op(id, { description: 'Lists.' });
+    const two = {
+      'a.getA': { resource: 'a', method: 'list' },
+      'b.getB': { resource: 'b', method: 'list' },
+    };
+    const b = doc({ '/a': covered('a.getA'), '/b': op('b.getB') });
+    const next = doc({ '/a': op('a.getA'), '/b': covered('b.getB') });
+    const out = run(next, two, two, b);
+    expect(out).toEqual(['a.getA: coverage dropped, description was set']);
+  });
+
+  it('requires every flag on a new key-callable operation', () => {
+    const next = doc({ '/api/v1/passes': op('passes.getPasses'), '/api/v1/y': op('y.getY') });
+    const out = run(next, { ...names, 'y.getY': { resource: 'y', method: 'list' } });
+    expect(out).toEqual(['y.getY: new key-callable operation needs description']);
+  });
+
+  it('counts the flags over key-callable operations', () => {
+    const body = { content: { 'application/json': { schema: { $ref: '#/x' }, example: {} } } };
+    const d = doc({
+      '/a': op('a.getA', { description: 'd', responses: { 200: body } }),
+      '/b': op('b.getB', { security: [{ session: [] }] }),
+    });
+    expect(coverage(d)).toMatchObject({
+      description: [1, 1],
+      responseExample: [1, 1],
+      namedResponse: [1, 1],
+      requestExample: [0, 0],
+    });
+  });
+});

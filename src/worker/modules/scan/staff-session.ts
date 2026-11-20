@@ -90,7 +90,7 @@ export async function searchStaff(ctx: ServiceContext, actor: ScanActor, q: stri
     name: string;
     role: ScanRole;
   }>();
-  return { items: rows.results };
+  return { items: rows.results, nextCursor: null };
 }
 
 /** Bind a staff member to the scanner after a PIN check; the session is read back as committed. */

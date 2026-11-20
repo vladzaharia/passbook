@@ -6,6 +6,7 @@ import {
   type WebhookEndpointDto,
 } from '../../../shared/contracts/webhooks.ts';
 import { authorityDenial, type Grant, grant } from '../../platform/authority.ts';
+import type { Check } from '../../platform/authority-checks.ts';
 import type { Actor } from '../../platform/context.ts';
 import { loadKekRing } from '../../platform/crypto.ts';
 import {
@@ -23,6 +24,7 @@ import { countOrgTemplates, countRecentCreates } from './repo-api.ts';
 import {
   deleteEndpoint,
   type EndpointRow,
+  endpointSlot,
   getEndpoint,
   insertEndpoint,
   listEndpoints,
@@ -50,11 +52,16 @@ export const notFound = () =>
   new NotFoundError('Webhook endpoint not found.', 'WEBHOOK_ENDPOINT_NOT_FOUND');
 
 /** A grant of this caller on the endpoint's org and mode. The statements and the audit row commit together. */
-export function webhookGrant(ctx: ServiceContext, access: WebhookAccess, action: string): Grant {
+export function webhookGrant(
+  ctx: ServiceContext,
+  access: WebhookAccess,
+  action: string,
+  checks: Check[] = [],
+): Grant {
   return grant(ctx, {
     purpose: `org_mode.webhooks.${action}`,
     principal: tenantPrincipal(access.authority),
-    checks: capabilityChecks(access.authority),
+    checks: [...capabilityChecks(access.authority), ...checks],
     tables: TABLES,
   });
 }
@@ -163,7 +170,7 @@ export async function requireEndpoint(
 
 export async function list(ctx: ServiceContext, access: WebhookAccess) {
   const rows = await listEndpoints(ctx.env.DB, fenceOf(access));
-  return { items: rows.map((e) => toDto(e, access.canManage)) };
+  return { items: rows.map((e) => toDto(e, access.canManage)), nextCursor: null };
 }
 
 export async function get(ctx: ServiceContext, access: WebhookAccess, id: string) {
@@ -195,7 +202,7 @@ export async function create(
     endpointId,
     mode,
   });
-  const g = webhookGrant(ctx, access, 'endpoint.create');
+  const g = webhookGrant(ctx, access, 'endpoint.create', [endpointSlot()]);
   insertEndpoint(g, {
     id: endpointId,
     url,

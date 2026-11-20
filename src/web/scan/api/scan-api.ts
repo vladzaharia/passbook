@@ -49,6 +49,7 @@ import {
   type ScanStaffSignInSchema,
   ScanSummarySchema,
 } from '../../../shared/contracts/scan-session.ts';
+import { SessionDevicesSchema } from '../../../shared/contracts/scanning-session-devices.ts';
 import {
   type ScanDeviceCapabilities,
   ScanSessionOpenedSchema,
@@ -66,6 +67,7 @@ import {
   MarkOutResultSchema,
 } from '../inside/inside-types.ts';
 import { canReload, ScanApiError } from './errors.ts';
+import { personCalls } from './scan-api-person.ts';
 import {
   type AdminScope,
   activityPath,
@@ -87,7 +89,7 @@ export function createScanApi(deps: ScanApiDeps) {
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
 
   async function once(
-    method: 'GET' | 'POST' | 'DELETE',
+    method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
     path: string,
     body: unknown,
     call: Call,
@@ -136,7 +138,7 @@ export function createScanApi(deps: ScanApiDeps) {
   }
 
   async function request<S extends z.ZodType>(
-    method: 'GET' | 'POST' | 'DELETE',
+    method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
     path: string,
     schema: S | null,
     body?: unknown,
@@ -208,6 +210,7 @@ export function createScanApi(deps: ScanApiDeps) {
   return {
     activity: (call?: Call) =>
       request('GET', activityPath(call), SessionActivitySchema, undefined, call),
+    devices: (call?: Call) => request('GET', '/devices', SessionDevicesSchema, undefined, call),
     reportDevice: (capabilities: ScanDeviceCapabilities, call?: Call) =>
       request('POST', '/device', ScanWorkspaceSchema.nullable(), { capabilities }, call),
     pairPreview: (code: string) =>
@@ -310,6 +313,7 @@ export function createScanApi(deps: ScanApiDeps) {
         { png, includeInPass: false },
         call,
       ),
+    ...personCalls(request),
     visitors: (day: { start: number; end: number }, call?: Call) =>
       request(
         'GET',

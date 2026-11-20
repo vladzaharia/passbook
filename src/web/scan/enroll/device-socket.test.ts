@@ -123,4 +123,20 @@ describe('device socket', () => {
     expect(h.timers.filter((t) => t.ms !== PING_MS)).toEqual([]);
     expect(h.sockets).toHaveLength(1);
   });
+
+  it('turns a pulse into an activity nudge, and reports each close until closed on purpose', () => {
+    const h = harness();
+    const onNudge = vi.fn();
+    const onClose = vi.fn();
+    const c = connectDeviceSocket({ url: 'u', onNudge, onOpen: vi.fn(), onClose, ...h.deps });
+    const s = h.sockets[0];
+    s?.onopen?.();
+    s?.onmessage?.({ data: JSON.stringify({ pulse: 1 }) });
+    s?.onmessage?.({ data: JSON.stringify({ pulse: 2 }) });
+    expect(onNudge.mock.calls).toEqual([[{ kind: 'activity' }]]);
+    s?.close();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    c.close();
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });

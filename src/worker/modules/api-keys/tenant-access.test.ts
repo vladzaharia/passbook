@@ -221,6 +221,10 @@ describe('API key tenant authorization', () => {
       ip_allow: '["203.0.113.0/24"]',
       rate_tier: null,
       secret_label: 'wlt',
+      parent_key_id: null,
+      rotated_from: null,
+      created_by_key: null,
+      last_ip_prefix: null,
     };
     await expect(
       createKey(
@@ -375,16 +379,23 @@ describe('API key tenant authorization', () => {
     expect(await createApiKeyStore(h.env, h.clock).resolve(key.secret)).toBeNull();
   });
 
-  it('keeps management session-only and existing bearer scopes and org restrictions intact', async () => {
+  it('keeps management to sessions and api-keys:write keys, and existing bearer scopes and org restrictions intact', async () => {
     const tenantKey = await makeApiKey(f(), { orgId: org.id, scopes: ['passes:read'] });
     const platformKey = await makeApiKey(f(), { scopes: ['passes:read'] });
     const before = await keyState();
     for (const key of [tenantKey, platformKey]) {
-      expect((await list(key.headers, org.id)).status).toBe(401);
-      expect((await create(key.headers, keyBody(org.id))).status).toBe(401);
-      expect((await revoke(key.headers, tenantKey.id, org.id)).status).toBe(401);
+      expect((await list(key.headers, org.id)).status).toBe(403);
+      expect((await create(key.headers, keyBody(org.id))).status).toBe(403);
+      expect((await revoke(key.headers, tenantKey.id, org.id)).status).toBe(403);
     }
-    expect(await keyState()).toEqual(before);
+    // A refused call still names a real key, so its use is recorded; nothing else about a key or the audit log moves.
+    const unused = ({ keys, audits }: Awaited<ReturnType<typeof keyState>>) => ({
+      audits,
+      keys: (keys as Record<string, unknown>[]).map(
+        ({ last_used_at, last_ip_prefix, ...rest }) => rest,
+      ),
+    });
+    expect(unused(await keyState())).toEqual(unused(before));
     expect(
       (await h.call(`/api/v1/passes?orgId=${org.id}`, { headers: tenantKey.headers })).status,
     ).toBe(200);

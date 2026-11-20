@@ -5,6 +5,7 @@ import { grantedBatch, grantedBatchWith, registerPrepare } from './authority-bat
 import type { Check } from './authority-checks.ts';
 import { buildAssert, type GrantCond } from './authority-cond.ts';
 import { assertOwnStatement, assertTableAllowed, translateDenial } from './authority-denial.ts';
+import { limitHitOf } from './authority-entitled.ts';
 import { AuthorityError } from './authority-error.ts';
 import { identifier } from './authority-expr.ts';
 import {
@@ -41,7 +42,7 @@ import {
 } from './authority-statements.ts';
 import { buildUpsert, type UpsertOptions } from './authority-upsert.ts';
 import { exactStmt, type SqlValue } from './db.ts';
-import type { DenyReason } from './errors.ts';
+import type { DenyReason, LimitHit } from './errors.ts';
 import { hasJobAuthority } from './job-authority.ts';
 import type { ServiceContext } from './service-context.ts';
 
@@ -109,16 +110,6 @@ export class Grant {
     );
   }
 
-  /** A write outside the grant's `tables` is a programming error. */
-  #allow(table: string, op: 'insert' | 'change' = 'change'): string {
-    return assertTableAllowed(this.purpose, this.#tables, table, op);
-  }
-
-  /** Parts reach tables the builder does not type, so the grant must list its tables. */
-  #need(table: string): string {
-    return assertTableAllowed(this.purpose, this.#tables, table, 'change', true);
-  }
-
   #push(built: BuiltStatement): GrantedStatement {
     if (this.#committed)
       throw new AuthorityError('GRANT_ALREADY_COMMITTED', 'This grant was committed.');
@@ -140,7 +131,9 @@ export class Grant {
   ): GrantedStatement {
     if (verb) joinOnlyInserts(this.principal, verb);
     if (this.#keyed && !may) this.#limitedRefused = true;
-    return this.#push(build(this.#allow(table, op), this.#pin, this.#keyed));
+    // A write outside the grant's `tables` is a programming error.
+    const allowed = assertTableAllowed(this.purpose, this.#tables, table, op);
+    return this.#push(build(allowed, this.#pin, this.#keyed));
   }
 
   update(table: string, options: WriteOptions): GrantedStatement {
@@ -241,7 +234,8 @@ export class Grant {
       this.#push(
         buildPart(this.id, this.scope, p, {
           holder: this.#pin !== undefined,
-          onWrite: (t) => this.#need(t),
+          // Parts reach tables the builder does not type, so the grant must list its tables.
+          onWrite: (t) => assertTableAllowed(this.purpose, this.#tables, t, 'change', true),
         }),
       ),
     );
@@ -285,6 +279,9 @@ export class Grant {
   translate(error: unknown): unknown {
     return translateDenial(error, this.principal, this.#input.codes);
   }
+  /** @internal After a `limit` refusal: the limit this grant's checks ran into, or null. */
+  limitHit = (): Promise<LimitHit | null> =>
+    limitHitOf(this.#db, this.scope, this.principal, this.#now, this.#input.checks ?? []);
 
   /** Runs the grant and its writes as one D1 batch. Results are for the writes, in order. */
   async commit(): Promise<D1Result[]> {

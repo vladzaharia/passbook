@@ -13,7 +13,12 @@ import {
   tenantPrincipal,
 } from './repo-authority.ts';
 import { reissuePrincipalCheck, starterPrincipal } from './repo-bulk-principal.ts';
-import { notBlueprintCheck, releaseOrgCheck, releaseSnapshotCheck } from './repo-create-checks.ts';
+import {
+  notBlueprintCheck,
+  passLimit,
+  releaseOrgCheck,
+  releaseSnapshotCheck,
+} from './repo-create-checks.ts';
 import { externalIdFreeCheck } from './repo-external-id.ts';
 import { type RetainedIssuanceScope, retainedIssuanceChecks } from './repo-write-retained.ts';
 import type { NewPassRow } from './repo-write-types.ts';
@@ -28,7 +33,7 @@ export const CREATE_CODES = {
   release: 'CREATE_RELEASE',
   retention: 'CREATE_RETENTION',
   entitlement: 'FEATURE_NOT_INCLUDED',
-  limit: 'ORG_LIMIT',
+  limit: 'FEATURE_LIMIT_REACHED',
   stale: 'CREATE_STALE',
 } as const satisfies Record<Exclude<DenyReason, 'proof'>, string>;
 
@@ -53,6 +58,7 @@ export function createGrant(
     notBlueprintCheck(row.templateId),
     releaseSnapshotCheck(row),
     releaseOrgCheck(row.release),
+    passLimit(row.mode),
   ];
   if (row.uniqueExternalId && row.externalId !== null)
     checks.push(externalIdFreeCheck(row.templateId, row.externalId));

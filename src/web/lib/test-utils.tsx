@@ -121,7 +121,8 @@ export async function renderApp(path: string, options: RenderAppOptions = {}) {
   const kind = options.session ?? 'user';
   const fetchMock = stubFetch({
     '/api/v1/session': () => json(sessionFixture(kind)),
-    '/api/v1/orgs/memberships/me': () => json({ items: options.memberships ?? [] }),
+    '/api/v1/orgs/memberships/me': () =>
+      json({ items: options.memberships ?? [], nextCursor: null }),
     '/api/v1/orgs': () => json({ items: [], nextCursor: null }),
     ...options.handlers,
   });

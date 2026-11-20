@@ -281,7 +281,7 @@ describe('create', () => {
     expect(
       (await h.call('/api/v1/api-keys', { method: 'POST', json: body, headers: key.headers }))
         .status,
-    ).toBe(401);
+    ).toBe(403); // MISSING_SCOPE: a key without api-keys:write is refused
   });
 });
 
@@ -580,7 +580,7 @@ describe('explicit management scope', () => {
     ] as const) {
       expect(
         (await h.call(`/api/v1/api-keys?orgId=${scope}`, { headers: key.headers })).status,
-      ).toBe(401);
+      ).toBe(403);
       expect(
         (
           await h.call('/api/v1/api-keys', {
@@ -593,7 +593,7 @@ describe('explicit management scope', () => {
             },
           })
         ).status,
-      ).toBe(401);
+      ).toBe(403);
       expect(
         (
           await h.call(`/api/v1/api-keys/${key.id}?orgId=${scope}`, {
@@ -601,7 +601,7 @@ describe('explicit management scope', () => {
             headers: key.headers,
           })
         ).status,
-      ).toBe(401);
+      ).toBe(403);
       expect(
         await first(h.env.DB, 'SELECT revoked_at FROM api_keys WHERE id = ?', [key.id]),
       ).toEqual({ revoked_at: null });

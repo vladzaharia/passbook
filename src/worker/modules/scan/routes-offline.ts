@@ -27,13 +27,19 @@ export function registerScanOfflineRoutes(scanRoutes: OpenAPIHono<AppBindings>):
       query: z.object({
         cursor: z.string().max(128).optional(),
         since: z.coerce.number().int().nonnegative().optional(),
+        updatedSince: z.coerce.number().int().nonnegative().optional(),
       }),
       response: ScanRosterSchema,
     },
     async (c) => {
-      const { cursor, since } = c.req.valid('query');
+      const { cursor, since, updatedSince } = c.req.valid('query');
       return c.json(
-        await rosterFor(serviceContext(c), scanActorOf(c), cursor ?? null, since ?? null),
+        await rosterFor(
+          serviceContext(c),
+          scanActorOf(c),
+          cursor ?? null,
+          updatedSince ?? since ?? null,
+        ),
       );
     },
   );

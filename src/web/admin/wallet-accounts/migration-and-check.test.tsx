@@ -26,8 +26,9 @@ const orgHandlers = (check: (init: RequestInit | undefined) => Response) => ({
         }),
         enrolment({ provider: 'samsung' }),
       ],
+      nextCursor: null,
     }),
-  '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [credential()] }),
+  '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [credential()], nextCursor: null }),
   '/api/v1/orgs/o1/wallet-credentials/c1/check': (_u: URL, init: RequestInit | undefined) =>
     check(init),
   '/api/v1/orgs/o1/wallet-credentials/c1/checks/k1': () =>
@@ -102,7 +103,7 @@ describe('migration', () => {
   });
   const handlers = (resolve: (body: unknown) => Response) => ({
     '/api/v1/identities': () => json({ items: [], nextCursor: null }),
-    '/api/v1/platform/wallet-credentials': () => json({ items: [] }),
+    '/api/v1/platform/wallet-credentials': () => json({ items: [], nextCursor: null }),
     '/api/v1/platform/wallet-enrolments': () => json({ items: [], nextCursor: null }),
     '/api/v1/platform/wallet-credentials/migrate': (_u: URL, init: RequestInit | undefined) =>
       init?.method === 'POST'
@@ -120,6 +121,7 @@ describe('migration', () => {
                 identityShared: [{ orgId: 'o1', mode: 'live', provider: 'google' }],
               }),
             ],
+            nextCursor: null,
           }),
     '/api/v1/platform/wallet-credentials/migrate/resolve': (
       _u: URL,
@@ -192,6 +194,7 @@ describe('migration', () => {
               }),
               item({ accountId: 'a4', orgId: 'o4', reason: 'unreadable', identityShared: [] }),
             ],
+            nextCursor: null,
           }),
       },
     });

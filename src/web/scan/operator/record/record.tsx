@@ -14,7 +14,7 @@ import { focusHeading } from '../workspace/focus.ts';
 import { type PinDesk, PinDialog } from './pin-dialog.tsx';
 import { RecordActions } from './record-actions.tsx';
 import { RecordBand } from './record-band.tsx';
-import { type PickerDesk, RecordBody } from './record-body.tsx';
+import { type PersonPanels, type PickerDesk, RecordBody } from './record-body.tsx';
 import { RecordBuddy } from './record-buddy.tsx';
 import { markOutPlace } from './record-facts.ts';
 import { PhotoSlot, RecordIdentity } from './record-identity.tsx';
@@ -98,6 +98,8 @@ function RecordView({
   const [pin, setPin] = useState(false);
   const noPhoto = !displayOf(o)?.identity.photo?.url && o.kind !== 'refused';
   const [exited, setExited] = useState(false);
+  const [noteSignal, setNoteSignal] = useState(0);
+  const [noteTick, setNoteTick] = useState(0);
   const mayAct = passId !== null;
   const addPhoto = rights.photo && noPhoto && mayAct;
   const actions = actionsOf(o, {
@@ -137,6 +139,7 @@ function RecordView({
     markOut: mark.markOut,
     ask: () => setPin(true),
     photo: photoInput,
+    note: () => setNoteSignal((n) => n + 1),
   });
   const keys = ctx.keys;
   const wait = useQuietShortcut(ctx.type, ctx.quiet);
@@ -151,7 +154,8 @@ function RecordView({
         if (act) run(act);
         return Boolean(act);
       }
-      const letter = command.c === 'out' ? 'O' : command.c === 'photo' ? 'P' : null;
+      const letter =
+        command.c === 'out' ? 'O' : command.c === 'photo' ? 'P' : command.c === 'note' ? 'N' : null;
       const act = letter ? byKey(letter) : undefined;
       if (!act || !letter) return false;
       wait(letter.toLowerCase(), () => run(act));
@@ -162,6 +166,21 @@ function RecordView({
     };
   });
   const scan = source === 'scan';
+  // Only a pass the machine knew has a history; the person's lines are read again after each new event.
+  const person: PersonPanels | null =
+    passId !== null && who
+      ? {
+          api,
+          passId,
+          zone: ctx.timeZone,
+          now: ctx.clock,
+          refresh: `${o.scanId ?? ''}:${o.kind}:${exited}:${noteTick}`,
+          desk: rights.note,
+          manager: rights.role === 'manager',
+          noteSignal,
+          onNoteAdded: () => setNoteTick((n) => n + 1),
+        }
+      : null;
   const held = band && o.kind !== 'ok' ? [band.title, band.sub].filter(Boolean).join(' · ') : null;
   return (
     <div className="op-rec-wrap">
@@ -202,6 +221,7 @@ function RecordView({
           orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}
           timeZone={ctx.timeZone}
           eventNote={session.event?.note}
+          person={person}
         />
         {desk ? (
           <PinDialog

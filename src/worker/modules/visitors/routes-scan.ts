@@ -4,6 +4,7 @@ import {
   SignOutRequestSchema,
   SignOutResultSchema,
 } from '../../../shared/contracts/access-business.ts';
+import { CursorQuerySchema } from '../../../shared/contracts/common.ts';
 import { VisitorListSchema } from '../../../shared/contracts/visitors.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
@@ -36,7 +37,7 @@ export function registerScanVisitorRoutes(scanRoutes: OpenAPIHono<AppBindings>):
       method: 'get',
       path: '/visitors',
       summary: "Today's visitors",
-      query: DayQuery,
+      query: DayQuery.extend(CursorQuerySchema.shape),
       response: VisitorListSchema,
     },
     async (c) => {
@@ -53,7 +54,7 @@ export function registerScanVisitorRoutes(scanRoutes: OpenAPIHono<AppBindings>):
         { start: dayStart, end: dayEnd },
         actor.templateIds,
       );
-      return c.json({ items: items.map((v) => ({ ...v, note: null })) });
+      return c.json({ items: items.map((v) => ({ ...v, note: null })), nextCursor: null });
     },
   );
   register(

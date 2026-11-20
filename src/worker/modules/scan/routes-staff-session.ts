@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
+import { CursorQuerySchema } from '../../../shared/contracts/common.ts';
 import {
   type ScanSession,
   ScanSessionSchema,
@@ -23,7 +24,7 @@ export function registerScanStaffRoutes(scanRoutes: OpenAPIHono<AppBindings>): v
       method: 'get',
       path: '/staff',
       summary: 'Search the staff roster of this scanner',
-      query: RosterQuery,
+      query: RosterQuery.extend(CursorQuerySchema.shape),
       response: ScanStaffSearchSchema,
     },
     async (c) =>

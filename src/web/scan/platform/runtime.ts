@@ -24,6 +24,7 @@ import type { Announcement } from '../ui/live-announcer.tsx';
 import { cameraDisabledFor } from './camera-disabled.ts';
 import { chipText } from './chip-text.ts';
 import { customerBrandingOf } from './customer-branding.ts';
+import { loadDevicePrefs } from './device-prefs.ts';
 import { focusTarget } from './focus-target.ts';
 import { scanId } from './id.ts';
 import { openLocalStores } from './local-stores.ts';
@@ -66,6 +67,7 @@ export async function createRuntime(
   state.counts = session.counts;
   state.posture = scanner?.settings.flow === 'choose' ? 'desk' : 'door';
   state.prefs.sound = sound.enabled();
+  Object.assign(state.prefs, loadDevicePrefs());
   state.reader.kind =
     scanner?.settings.reader === 'nfc'
       ? 'nfc'

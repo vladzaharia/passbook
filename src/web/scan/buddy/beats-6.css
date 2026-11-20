@@ -1,0 +1,70 @@
+/* Handheld beats (handheld design 9). Same rules as beats-1: a result beat waits --wl-beat-at
+   (150 ms), plays 550 ms or less and ends at rest. Everything moves behind no-preference; with
+   reduced motion the buddy stays at rest and the card, the sound and the haptic say it.
+   nod: a Manager's PIN let this one through. The buddy dips its head twice, slowly, like a yes.
+   count: Check in more landed. The three passes lift one after the other, as if counting heads. */
+@keyframes wl-b-yes {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  22%,
+  62% {
+    rotate: 5deg;
+  }
+  42%,
+  82% {
+    rotate: 0.5deg;
+  }
+}
+@keyframes wl-b-yes-look {
+  22%,
+  62% {
+    translate: 0 1.4px;
+  }
+  42%,
+  82% {
+    translate: 0 0;
+  }
+}
+@keyframes wl-b-count-hop {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  40% {
+    translate: 0 -5px;
+  }
+  70% {
+    translate: 0 0.8px;
+  }
+}
+@keyframes wl-b-count-glad {
+  30%,
+  70% {
+    scale: 1.12 1.2;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="nod"][data-run] [data-trunk] {
+    animation: wl-b-yes 550ms ease-in-out var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="nod"][data-run] [data-look] {
+    animation: wl-b-yes-look 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="count"][data-run] [data-part="c1"] {
+    animation: wl-b-count-hop 220ms var(--art-sp) var(--wl-beat-at) backwards;
+  }
+  .wl-buddy[data-beat="count"][data-run] [data-part="c2"] {
+    animation: wl-b-count-hop 220ms var(--art-sp) calc(var(--wl-beat-at) + 110ms) backwards;
+  }
+  .wl-buddy[data-beat="count"][data-run] [data-part="c3"] {
+    animation: wl-b-count-hop 220ms var(--art-sp) calc(var(--wl-beat-at) + 220ms) backwards;
+  }
+  .wl-buddy[data-beat="count"][data-run] [data-part="joy"] {
+    animation: wl-b-count-glad 300ms var(--art-mv) calc(var(--wl-beat-at) + 240ms) backwards;
+  }
+  .wl-buddy[data-beat="count"][data-run] [data-look] {
+    animation: wl-b-yes-look 400ms var(--art-mv) calc(var(--wl-beat-at) + 60ms) backwards;
+  }
+}

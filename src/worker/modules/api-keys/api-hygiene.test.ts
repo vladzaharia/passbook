@@ -115,7 +115,7 @@ describe('OpenAPI document', () => {
     const full = (await (await call('/api/v1/docs', admin.headers)).json()) as Doc;
     expect(full.paths['/api/v1/orgs']).toBeDefined();
     expect(full.paths['/api/v1/test-inbox/{id}/html']?.get).toBeDefined();
-    expect(full.paths['/api/v1/test-inbox/{id}/html']?.get?.security).toBeUndefined();
+    expect(full.paths['/api/v1/test-inbox/{id}/html']?.get?.security).toEqual([{ session: [] }]);
     const user = await makeSession(kit.fx, { userId: (await makeUser(kit.fx)).id });
     expect(
       ((await (await call('/api/v1/docs', user.headers)).json()) as Doc).paths['/api/v1/orgs'],

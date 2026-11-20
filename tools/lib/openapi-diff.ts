@@ -5,7 +5,7 @@ export type Doc = { paths?: Record<string, Record<string, unknown>>; components?
 const METHODS = ['get', 'post', 'put', 'patch', 'delete'];
 const obj = (v: unknown): Json => (v && typeof v === 'object' ? (v as Json) : {});
 
-function deref(doc: Doc, node: unknown): Json {
+function deref(doc: Doc, node: unknown, depth = 0): Json {
   let cur = obj(node);
   for (let i = 0; i < 20 && typeof cur.$ref === 'string'; i++) {
     const target = (cur.$ref as string)
@@ -14,7 +14,9 @@ function deref(doc: Doc, node: unknown): Json {
       .reduce<unknown>((acc, k) => obj(acc)[k], doc);
     cur = obj(target);
   }
-  return cur;
+  // A nullable named schema is `allOf: [{ $ref }, { type: [..., 'null'] }]`: read it as the named schema.
+  const named = Array.isArray(cur.allOf) ? cur.allOf.find((s) => obj(s).$ref) : undefined;
+  return named && depth < 20 ? deref(doc, named, depth + 1) : cur;
 }
 
 type Side = 'request' | 'response';

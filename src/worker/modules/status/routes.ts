@@ -1,4 +1,5 @@
 import {
+  CursorQuerySchema,
   StatusQuerySchema,
   StatusResponseSchema,
   WorkflowRunListSchema,
@@ -33,6 +34,7 @@ register(
     method: 'get',
     path: '/workflows',
     summary: 'Recent workflow runs',
+    query: CursorQuerySchema,
     response: WorkflowRunListSchema,
   },
   async (c) => c.json(await listWorkflowRuns(serviceContext(c))),

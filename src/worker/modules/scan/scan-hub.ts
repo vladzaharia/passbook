@@ -20,6 +20,7 @@ import { liveRowFor, liveRowsFor, watches } from './live-render.ts';
 import { LIVE_ROW_TTL_MS, type LiveRingRow, scrubbedEntry } from './live-ring.ts';
 import { getScanner } from './repo-device.ts';
 import { liveRingStaleStmt } from './repo-live-render.ts';
+import { pulseDevices } from './scan-hub-pulse.ts';
 import {
   DEVICE_TAG,
   deviceTag,
@@ -28,6 +29,8 @@ import {
   RING,
   readRing,
   refusedUpgrade,
+  socketAttachment,
+  socketTags,
 } from './scan-hub-support.ts';
 
 /** One org and mode per object. HTTP mutations remain in D1; this is a bounded display feed. */
@@ -57,9 +60,7 @@ export class ScanHub extends DurableObject<AppEnv> {
     for (const socket of previous.slice(0, Math.max(0, previous.length - (device ? 1 : 2))))
       socket.close(4408, device ? 'Replaced' : 'Too many screens');
     server.serializeAttachment(raw);
-    this.ctx.acceptWebSocket(server, [
-      device ? deviceTag(attachment.scannerId) : attachment.scannerId,
-    ]);
+    this.ctx.acceptWebSocket(server, socketTags(attachment));
     this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
     await this.schedule(attachment.expiresAt);
     if (device) return new Response(null, { status: 101, webSocket: client });
@@ -101,9 +102,7 @@ export class ScanHub extends DurableObject<AppEnv> {
       this.ctx.getWebSockets().map(async (socket) => {
         // Device sockets get no rows.
         if (this.isDevice(socket)) return;
-        const sealed: unknown = socket.deserializeAttachment();
-        const attachment =
-          typeof sealed === 'string' ? await openLiveAttachment(ctx.env, sealed) : null;
+        const attachment = await socketAttachment(ctx, socket);
         const recipient = attachment ? await liveRecipient(ctx, attachment) : null;
         if (!recipient) {
           socket.close(4409, 'Setup changed');
@@ -118,6 +117,7 @@ export class ScanHub extends DurableObject<AppEnv> {
         );
       }),
     );
+    await pulseDevices(this.ctx, ctx, entry.sessionId ?? null, (s, text) => this.send(s, text));
     return true;
   }
 
@@ -222,9 +222,7 @@ export class ScanHub extends DurableObject<AppEnv> {
     let sent = 0;
     // The device's own socket, and for `resolved` the screens named by the scanner's id.
     for (const socket of doorbellSockets(this.ctx, input.scannerId, screens)) {
-      const sealed: unknown = socket.deserializeAttachment();
-      const attachment =
-        typeof sealed === 'string' ? await openLiveAttachment(ctx.env, sealed) : null;
+      const attachment = await socketAttachment(ctx, socket);
       if (!attachment || !(await liveRecipient(ctx, attachment))) {
         socket.close(4409, 'Setup changed');
         continue;
@@ -256,9 +254,7 @@ export class ScanHub extends DurableObject<AppEnv> {
     if (rows.length) await this.ctx.storage.put(RING, rows);
     else await this.ctx.storage.delete(RING);
     for (const socket of this.ctx.getWebSockets()) {
-      const sealed: unknown = socket.deserializeAttachment();
-      const attachment =
-        typeof sealed === 'string' ? await openLiveAttachment(ctx.env, sealed) : null;
+      const attachment = await socketAttachment(ctx, socket);
       if (
         !attachment ||
         attachment.expiresAt <= ctx.clock.now() ||

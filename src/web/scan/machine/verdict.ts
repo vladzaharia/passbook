@@ -82,6 +82,8 @@ export interface VerdictOpts {
   draft?: Draft;
   /** The Manager's PIN was refused. */
   pin?: PinNote;
+  /** A Manager's PIN let this one through: the buddy nods. */
+  approved?: boolean;
 }
 
 /** Enters `verdict`: holds, ignore windows, counts, recent, and the commands of AC 4.1 in order. */
@@ -121,11 +123,14 @@ export function enterVerdict(s: MachineState, o: VerdictOpts, env: Env): Out {
     layer = raised.patch;
     cmds.push(...raised.cmds);
   }
-  if (view.beat) cmds.push({ c: 'beat', beat: view.beat });
+  const beat = o.approved && outcome.kind === 'ok' ? 'nod' : view.beat;
+  if (beat) cmds.push({ c: 'beat', beat });
   if (view.announcement)
     cmds.push({ c: 'announce', text: view.announcement, polite: view.region === 'status' });
   // A refused PIN stays in its tray: focus is not pulled to the dock behind it.
   if (view.dock.focus && !(o.inPlace && o.pin)) cmds.push({ c: 'focus', target: view.dock.focus });
+  // The PIN tray that had focus is gone with its opener: the verdict word takes it, so it is read.
+  else if (o.approved && outcome.kind === 'ok') cmds.push({ c: 'focus', target: 'card-heading' });
   if (outcome.milestone) cmds.push({ c: 'celebrate' });
 
   const state: MachineState = {

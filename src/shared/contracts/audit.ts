@@ -27,6 +27,8 @@ export const AuditQuerySchema = z.object({
   targetId: z.string().max(100).optional(),
   from: z.coerce.number().int().optional(),
   to: z.coerce.number().int().optional(),
+  createdAfter: z.coerce.number().int().optional(),
+  createdBefore: z.coerce.number().int().optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });

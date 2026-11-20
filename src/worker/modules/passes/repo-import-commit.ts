@@ -6,8 +6,11 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from './http.ts';
 import { type EmailHold, holdRelease } from './import-email.ts';
 import type { DeferredStarter } from './repo-bulk-principal.ts';
+import type { Progress } from './repo-import-progress.ts';
 import type { ImportRowRecord } from './repo-import-rows.ts';
 import { importGrant } from './repo-imports.ts';
+
+export { type Progress, progressOf } from './repo-import-progress.ts';
 
 const TABLES = ['pass_imports', 'pass_import_rows'] as const;
 const CODES = { stale: 'IMPORT_STATE', lineage: 'IMPORT_NOT_FOUND' };
@@ -141,7 +144,7 @@ export async function reserveRows(
 
 export interface RowResult {
   row: number;
-  state: 'done' | 'failed';
+  state: 'done' | 'failed' | 'skipped';
   result: 'created' | 'updated' | 'unchanged' | null;
   code: string | null;
 }
@@ -151,6 +154,16 @@ export async function writeRowResult(ctx: ServiceContext, s: Scope, r: RowResult
   g.joined('pass_import_rows', {
     where: { import_id: s.importId, row_no: r.row, state: 'planned' },
     set: { state: r.state, result: r.result, code: r.code },
+  });
+  await g.commit();
+}
+
+/** The plan's pass limit is reached: every create still planned is skipped with `code`; updates go on. */
+export async function skipCreateRows(ctx: ServiceContext, s: Scope, code: string): Promise<void> {
+  const g = runGrant(ctx, s.orgId, s.mode, s.importId);
+  g.joined('pass_import_rows', {
+    where: { import_id: s.importId, action: 'create', state: 'planned' },
+    set: { state: 'skipped', code },
   });
   await g.commit();
 }
@@ -190,39 +203,6 @@ export async function emailedCount(db: D1Database, importId: string): Promise<nu
   return row?.n ?? 0;
 }
 
-export interface Progress {
-  done: number;
-  created: number;
-  updated: number;
-  unchanged: number;
-  failed: number;
-  notEmailed: number;
-}
-
-/** Counted from the rows, so a replayed step never counts a row twice. */
-export async function progressOf(db: D1Database, importId: string): Promise<Progress> {
-  const row = await first<Record<keyof Progress, number | null>>(
-    db,
-    `SELECT
-       sum(action IN ('create', 'update') AND state IN ('done', 'failed')) AS done,
-       sum(result = 'created') AS created,
-       sum(result = 'updated') AS updated,
-       sum(action = 'unchanged' OR result = 'unchanged') AS unchanged,
-       sum(state = 'failed') AS failed,
-       sum(result = 'created' AND holder_email IS NOT NULL AND emailed = 0) AS notEmailed
-     FROM pass_import_rows WHERE import_id = ?`,
-    [importId],
-  );
-  return {
-    done: row?.done ?? 0,
-    created: row?.created ?? 0,
-    updated: row?.updated ?? 0,
-    unchanged: row?.unchanged ?? 0,
-    failed: row?.failed ?? 0,
-    notEmailed: row?.notEmailed ?? 0,
-  };
-}
-
 export async function writeProgress(ctx: ServiceContext, s: Scope, p: Progress): Promise<void> {
   const g = runGrant(ctx, s.orgId, s.mode, s.importId);
   g.update('pass_imports', {
@@ -234,6 +214,7 @@ export async function writeProgress(ctx: ServiceContext, s: Scope, p: Progress):
       updated: p.updated,
       unchanged: p.unchanged,
       failed: p.failed,
+      skipped: p.skipped,
       not_emailed: p.notEmailed,
     },
   });
@@ -277,6 +258,7 @@ export async function finishImport(
       updated: p.updated,
       unchanged: p.unchanged,
       failed: p.failed,
+      skipped: p.skipped,
       not_emailed: p.notEmailed,
     },
   });

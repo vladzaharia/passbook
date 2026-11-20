@@ -490,7 +490,7 @@ describe('organization workspace authorization', () => {
       expect.arrayContaining([expect.objectContaining({ id: operator.membershipId })]),
     );
     const noMemberships = await call('GET', '/memberships/me', platform.session.headers);
-    expect(await noMemberships.json()).toEqual({ items: [] });
+    expect(await noMemberships.json()).toEqual({ items: [], nextCursor: null });
     expect((await call('GET', `/${org.id}/memberships`, operator.session.headers)).status).toBe(
       403,
     );
@@ -513,6 +513,7 @@ describe('organization workspace authorization', () => {
     expect(await revoked.json()).toEqual({ ok: true });
     expect(await (await call('GET', '/memberships/me', operator.session.headers)).json()).toEqual({
       items: [],
+      nextCursor: null,
     });
     await expectProblem(
       await call('GET', `/${org.id}/workspace`, operator.session.headers),

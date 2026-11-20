@@ -2,6 +2,7 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import {
   ApproveTemplateCandidateSchema,
   CreateTemplateCandidateSchema,
+  CursorQuerySchema,
   IdParamSchema,
   PromoteTemplateSchema,
   PublishTemplateReleaseSchema,
@@ -41,7 +42,7 @@ export function registerTemplateReleases(router: Router): void {
       path: '/{id}/candidates',
       summary: 'List template release candidates',
       params: IdParamSchema,
-      query: TemplateReleaseScopeSchema,
+      query: TemplateReleaseScopeSchema.extend(CursorQuerySchema.shape),
       response: TemplateCandidateListSchema,
     },
     async (c) =>
@@ -62,6 +63,7 @@ export function registerTemplateReleases(router: Router): void {
       method: 'post',
       path: '/{id}/candidates',
       summary: 'Create a template release candidate',
+      auth: { scope: 'templates:write', capability: 'templates:author' },
       params: IdParamSchema,
       body: CreateTemplateCandidateSchema,
       response: TemplateCandidateSchema,
@@ -109,7 +111,8 @@ export function registerTemplateReleases(router: Router): void {
     {
       method: 'post',
       path: '/{id}/candidates/{candidateId}/approve',
-      summary: 'Approve a template release candidate',
+      summary: 'Approve a template release candidate (a key only in Test)',
+      auth: { scope: 'templates:review', capability: 'templates:review' },
       params: TemplateCandidateParamSchema,
       body: ApproveTemplateCandidateSchema,
       response: TemplateApprovalSchema,
@@ -136,7 +139,7 @@ export function registerTemplateReleases(router: Router): void {
       path: '/{id}/releases',
       summary: 'List template releases',
       params: IdParamSchema,
-      query: TemplateReleaseScopeSchema,
+      query: TemplateReleaseScopeSchema.extend(CursorQuerySchema.shape),
       response: TemplateReleaseListSchema,
     },
     async (c) =>
@@ -202,7 +205,8 @@ export function registerTemplateReleases(router: Router): void {
     {
       method: 'post',
       path: '/{id}/releases',
-      summary: 'Publish an approved template release',
+      summary: 'Publish an approved template release (a key only in Test)',
+      auth: { scope: 'templates:publish', capability: 'templates:publish' },
       params: IdParamSchema,
       body: PublishTemplateReleaseSchema,
       response: TemplateReleaseSchema,

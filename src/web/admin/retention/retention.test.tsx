@@ -34,7 +34,7 @@ function setup(capabilities: string[], holds: unknown[]) {
     memberships: [membershipFixture('o1', { capabilities: capabilities as never })],
     handlers: {
       '/api/v1/orgs/o1': () => json(org),
-      '/api/v1/orgs/o1/retention/holds': () => json({ items: holds }),
+      '/api/v1/orgs/o1/retention/holds': () => json({ items: holds, nextCursor: null }),
       '/api/v1/orgs/o1/retention/receipts': () =>
         json({
           items: [
@@ -52,7 +52,7 @@ function setup(capabilities: string[], holds: unknown[]) {
           ],
           nextCursor: null,
         }),
-      '/api/v1/settings': () => json({ items: [] }),
+      '/api/v1/settings': () => json({ items: [], nextCursor: null }),
     },
   });
 }

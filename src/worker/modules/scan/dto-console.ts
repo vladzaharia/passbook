@@ -119,11 +119,14 @@ export function scannerDto(row: ConsoleScannerRow, now: number, today: number): 
 }
 
 /** An export names its org and a window; the other filters of the list apply. */
-export const ScanExportQuerySchema = ScanListQuerySchema.omit({ cursor: true, limit: true }).extend(
-  {
-    orgId: IdSchema,
-    from: z.coerce.number().int().nonnegative(),
-    to: z.coerce.number().int().nonnegative(),
-    timeZone: TimeZoneSchema.optional(),
-  },
-);
+export const ScanExportQuerySchema = ScanListQuerySchema.omit({
+  cursor: true,
+  limit: true,
+  createdAfter: true,
+  createdBefore: true,
+}).extend({
+  orgId: IdSchema,
+  from: z.coerce.number().int().nonnegative(),
+  to: z.coerce.number().int().nonnegative(),
+  timeZone: TimeZoneSchema.optional(),
+});

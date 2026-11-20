@@ -1,0 +1,296 @@
+/* The floor: a column of cards beside the person, from 1280. Tokens come from workspace.css. */
+.op-floor {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+  border-inline-start: 1px solid var(--op-line);
+  background: var(--op-page);
+  overscroll-behavior: contain;
+}
+@media (min-width: 1280px) {
+  .op-body[data-floor] {
+    grid-template-columns: 360px minmax(0, 1fr) 296px;
+  }
+  .op-body[data-floor] .op-floor {
+    display: flex;
+  }
+}
+.op-fl-card {
+  flex: none;
+  padding: 14px;
+  border: 1px solid var(--op-line);
+  border-radius: 12px;
+  background: var(--op-raised);
+}
+.op-fl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.op-fl-head h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--pk-text-strong);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+}
+.op-fl-head h3 svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--op-muted);
+}
+.op-fl-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--op-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.op-fl-note {
+  color: var(--op-muted);
+  font-size: 13px;
+}
+
+/* places and bars */
+.op-fl-places {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+.op-fl-place {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 4px 8px;
+  color: var(--pk-text-default);
+  font-size: 13px;
+}
+.op-fl-place[data-head] {
+  color: var(--pk-text-strong);
+  font-size: 15px;
+  font-weight: 600;
+}
+.op-fl-place[data-head] .op-fl-count {
+  font-size: 22px;
+  line-height: 26px;
+}
+.op-fl-place-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.op-fl-place-name em {
+  color: var(--pk-warning);
+  font-style: normal;
+  font-weight: 600;
+}
+.op-fl-hook {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-inline-start: 2px;
+  border-inline-start: 1.5px solid var(--op-muted);
+  border-block-end: 1.5px solid var(--op-muted);
+  border-end-start-radius: 3px;
+  transform: translateY(-2px);
+}
+.op-fl-count {
+  color: var(--pk-text-strong);
+  font-weight: 600;
+}
+.op-fl-count small {
+  color: var(--op-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.op-fl-bar {
+  grid-column: 1 / -1;
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--pk-surface-sunken);
+}
+.op-fl-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--pk-accent);
+  transition: inline-size var(--pk-duration-moderate, 200ms) var(--pk-ease-enter, ease-out);
+}
+.op-fl-bar[data-full] i {
+  background: var(--scan-heads);
+}
+.op-fl-place[data-done] .op-fl-bar i {
+  background: var(--scan-ok);
+}
+.op-fl-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--pk-danger);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.op-fl-link svg {
+  width: 15px;
+  height: 15px;
+}
+.op-fl-link:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* your shift */
+.op-fl-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.op-fl-stats dd {
+  color: var(--pk-text-strong);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 28px;
+}
+.op-fl-stats dt {
+  color: var(--op-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* visitors */
+.op-fl-visitors {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+}
+.op-fl-visitors li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.op-fl-visitors li + li {
+  border-top: 1px solid var(--op-line);
+}
+.op-fl-visitors .op-av {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+.op-fl-open {
+  display: grid;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.op-fl-open b {
+  overflow: hidden;
+  color: var(--pk-text-strong);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.op-fl-open small {
+  overflow: hidden;
+  color: var(--op-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.op-fl-act {
+  height: 30px;
+  padding: 0 10px;
+  border: 1.5px solid var(--pk-border-strong);
+  border-radius: 6px;
+  background: var(--op-raised);
+  color: var(--pk-text-strong);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.op-fl-act:hover {
+  background: var(--op-hover);
+}
+
+/* devices and the call's desks */
+.op-fl-devices {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+.op-fl-devices li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+.op-fl-device {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--pk-text-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.op-fl-device small {
+  color: var(--op-muted);
+  font-size: 12px;
+}
+.op-fl-state {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  color: var(--op-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.op-fl-state[data-online] {
+  color: var(--pk-text-default);
+}
+.op-fl-state .op-dot {
+  width: 6px;
+  height: 6px;
+  box-shadow: none;
+}
+.op-fl-state .op-dot[data-off] {
+  background: var(--pk-warning);
+}
+.op-fl-actions {
+  display: grid;
+  gap: 8px;
+}
+.op-fl-actions > * {
+  justify-content: center;
+}

@@ -1,4 +1,6 @@
+import { withinLimitValue } from '../../../shared/contracts/entitlements.ts';
 import { bump } from '../../platform/counters.ts';
+import { entitlementsOf } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recipientKey } from '../delivery/recipient-key.ts';
 import { getPlatformSettings } from '../settings/service.ts';
@@ -66,7 +68,7 @@ export async function countPlatformCard(ctx: ServiceContext): Promise<void> {
 }
 
 /**
- * The per-link and per-org counts, read before the pass is built so a flood at the cap does not sign and
+ * The per-link, per-org and plan (`join.perDay`) counts, read before the pass is built so a flood at the cap does not sign and
  * store a card each time. The grant's checks stay the exact fence; this one only saves the work.
  */
 export async function withinCaps(
@@ -76,11 +78,16 @@ export async function withinCaps(
 ): Promise<boolean> {
   const now = ctx.clock.now();
   const row: Pick<JoinLinkRow, 'id' | 'orgId' | 'mode'> = link;
-  const [perLink, perOrg] = await Promise.all([
+  const [perLink, perOrg, plan] = await Promise.all([
     issuedToday(ctx.env.DB, row, now),
     orgIssuedToday(ctx.env.DB, link.orgId, link.mode, now),
+    entitlementsOf(ctx, link.orgId),
   ]);
-  return perLink < link.dailyLimit && perOrg < orgDailyCap;
+  return (
+    perLink < link.dailyLimit &&
+    perOrg < orgDailyCap &&
+    withinLimitValue(plan['join.perDay'], perOrg)
+  );
 }
 
 /**

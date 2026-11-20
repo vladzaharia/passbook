@@ -101,3 +101,8 @@ export function withCard(o: ScanOutcome) {
   };
   return { outcome: { ...o, card }, card };
 }
+
+/** `?sun=1` is sunlight mode, `?hand=left` the mirrored thumb row. Nothing else is read. */
+export function lookFromUrl(params = new URLSearchParams(location.search)) {
+  return { sun: params.get('sun') === '1', leftHand: params.get('hand') === 'left' };
+}

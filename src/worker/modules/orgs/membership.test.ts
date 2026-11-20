@@ -272,10 +272,12 @@ describe('organization memberships', () => {
     const platform = fake.session({ userId: person.id, roles: ['admin', 'user'] });
     expect(await (await call('GET', '/memberships/me', undefined, platform)).json()).toEqual({
       items: [],
+      nextCursor: null,
     });
     expect(await (await call('GET', '/memberships/me', undefined, user(person.id))).json()).toEqual(
       {
         items: [],
+        nextCursor: null,
       },
     );
     expect((await call('GET', `/${org.id}/memberships`, undefined, user(person.id))).status).toBe(
@@ -288,6 +290,7 @@ describe('organization memberships', () => {
     await invite(org.id, person.primaryEmail, ['read_only'], platform);
     expect(await (await call('GET', '/memberships/me', undefined, platform)).json()).toEqual({
       items: [],
+      nextCursor: null,
     });
     expect((await call('GET', '/memberships/me', undefined, fake.apiKey())).status).toBe(401);
   });

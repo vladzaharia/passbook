@@ -104,7 +104,7 @@ export const MyEmailSchema = z.object({
   verifiedVia: z.enum(['magic_link', 'oidc', 'admin']).nullable(),
   primary: z.boolean(),
 });
-export const MyEmailListSchema = z.object({ items: z.array(MyEmailSchema) });
+export const MyEmailListSchema = pageOf(MyEmailSchema);
 export const AddEmailRequestSchema = z.object({ email: z.string().max(254) });
 /** POST /api/v1/me/emails/{email}/primary: sign-in emails go to this verified address. */
 export const MyEmailParamSchema = z.object({ email: z.string().max(254) });
@@ -116,7 +116,7 @@ export const MySessionSchema = z.object({
   userAgent: z.string().nullable(),
   current: z.boolean(),
 });
-export const MySessionListSchema = z.object({ items: z.array(MySessionSchema) });
+export const MySessionListSchema = pageOf(MySessionSchema);
 
 /** A self-removal is complete only after every older wallet credential is retired. */
 export const RemovePassResponseSchema = z.object({

@@ -25,6 +25,7 @@ export function registerBlueprints(router: Router): void {
       method: 'post',
       path: '/{id}/use',
       summary: 'Make a template in an organization from a blueprint',
+      auth: { scope: 'templates:write', capability: 'templates:author' },
       params: IdParamSchema,
       body: UseBlueprintSchema,
       status: 201,

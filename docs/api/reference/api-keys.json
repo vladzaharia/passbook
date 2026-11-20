@@ -1,0 +1,203 @@
+{
+  "api-keys.getApiKeysById": {
+    "description": "One key with its parent, the key that replaced it, how many child keys it has, and where it was last used from. Never the secret.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000201",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Order system",
+      "prefix": "k3v9",
+      "secretPrefix": "pb_live_k3v9",
+      "scopes": ["passes:read", "passes:write"],
+      "mode": "live",
+      "createdBy": "0193a1b2-7c00-7000-8000-000000000101",
+      "createdByName": "Ana Reyes",
+      "createdAt": 1764000000000,
+      "lastUsedAt": 1764000060000,
+      "expiresAt": null,
+      "revokedAt": null,
+      "kind": "service",
+      "roles": [],
+      "retireAt": null,
+      "ipAllow": [],
+      "templateIds": [],
+      "passStyles": [],
+      "rateTier": null,
+      "parentKeyId": null,
+      "rotatedFrom": null,
+      "lastIpPrefix": "203.0.113.0/24",
+      "parent": null,
+      "replacedBy": null,
+      "childCount": 0
+    }
+  },
+  "api-keys.getApiKeysByIdActivity": {
+    "description": "What a key did lately: calls by action over the last 30 days and the latest calls. No request bodies, no secrets.",
+    "response": {
+      "lastUsedAt": 1764000060000,
+      "lastIpPrefix": "203.0.113.0/24",
+      "summary": {
+        "since": 1761408000000,
+        "calls": 412,
+        "denied": 3,
+        "actions": [
+          {
+            "action": "pass.create",
+            "count": 390,
+            "lastAt": 1764000060000
+          }
+        ]
+      },
+      "recent": [
+        {
+          "id": 9120,
+          "at": 1764000060000,
+          "action": "pass.create",
+          "outcome": "allowed",
+          "targetType": "pass",
+          "targetId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "ipPrefix": "203.0.113.0/24",
+          "code": null
+        }
+      ]
+    }
+  },
+  "api-keys.getApiKeysMe": {
+    "description": "The key this request used: its scopes, organization and mode. Use it to check a key works.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000201",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Order system",
+      "prefix": "wlt_k3v9",
+      "scopes": ["passes:read", "passes:write"],
+      "mode": "live",
+      "createdAt": 1764000000000,
+      "lastUsedAt": 1764000060000,
+      "expiresAt": null
+    }
+  },
+  "api-keys.postApiKeysByIdRetire": {
+    "description": "Set the instant a key stops working, earlier than its expiry. Set once; the key works until then.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "retireAt": 1764090000000
+    },
+    "response": {
+      "ok": true
+    }
+  },
+  "api-keys.postApiKeysByIdRotate": {
+    "description": "Replace a key. The new secret works at once and is shown once; the old key keeps working for `overlapHours`, then stops. Send an `Idempotency-Key` to retry safely.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "overlapHours": 24
+    },
+    "response": {
+      "key": {
+        "id": "0193a1b2-7c00-7000-8000-000000000202",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Order system",
+        "prefix": "m4q2",
+        "secretPrefix": "pb_live_m4q2",
+        "scopes": ["passes:read", "passes:write"],
+        "mode": "live",
+        "createdBy": "0193a1b2-7c00-7000-8000-000000000101",
+        "createdByName": "Ana Reyes",
+        "createdAt": 1764003600000,
+        "lastUsedAt": null,
+        "expiresAt": null,
+        "revokedAt": null,
+        "kind": "service",
+        "roles": [],
+        "retireAt": null,
+        "ipAllow": [],
+        "templateIds": [],
+        "passStyles": [],
+        "rateTier": null,
+        "parentKeyId": null,
+        "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000201",
+        "secret": "pb_live_m4q2_Zk3x9Qe7LwT1uV5bN8cR2dFh"
+      },
+      "previous": {
+        "id": "0193a1b2-7c00-7000-8000-000000000201",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Order system",
+        "prefix": "k3v9",
+        "secretPrefix": "pb_live_k3v9",
+        "scopes": ["passes:read", "passes:write"],
+        "mode": "live",
+        "createdBy": "0193a1b2-7c00-7000-8000-000000000101",
+        "createdByName": "Ana Reyes",
+        "createdAt": 1764000000000,
+        "lastUsedAt": 1764000060000,
+        "expiresAt": null,
+        "revokedAt": null,
+        "kind": "service",
+        "roles": [],
+        "retireAt": 1764090000000,
+        "ipAllow": [],
+        "templateIds": [],
+        "passStyles": [],
+        "rateTier": null,
+        "parentKeyId": null,
+        "rotatedFrom": null
+      }
+    }
+  },
+  "api-keys.postApiKeysMeRotate": {
+    "description": "Replace the key this request used. The new secret works at once and is shown once; the old key keeps working for `overlapHours`, then stops. Send an `Idempotency-Key` to retry safely.",
+    "request": {
+      "overlapHours": 24
+    },
+    "response": {
+      "key": {
+        "id": "0193a1b2-7c00-7000-8000-000000000202",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Order system",
+        "prefix": "m4q2",
+        "secretPrefix": "pb_live_m4q2",
+        "scopes": ["passes:read", "passes:write"],
+        "mode": "live",
+        "createdBy": "0193a1b2-7c00-7000-8000-000000000101",
+        "createdByName": "Ana Reyes",
+        "createdAt": 1764003600000,
+        "lastUsedAt": null,
+        "expiresAt": null,
+        "revokedAt": null,
+        "kind": "service",
+        "roles": [],
+        "retireAt": null,
+        "ipAllow": [],
+        "templateIds": [],
+        "passStyles": [],
+        "rateTier": null,
+        "parentKeyId": null,
+        "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000201",
+        "secret": "pb_live_m4q2_Zk3x9Qe7LwT1uV5bN8cR2dFh"
+      },
+      "previous": {
+        "id": "0193a1b2-7c00-7000-8000-000000000201",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Order system",
+        "prefix": "k3v9",
+        "secretPrefix": "pb_live_k3v9",
+        "scopes": ["passes:read", "passes:write"],
+        "mode": "live",
+        "createdBy": "0193a1b2-7c00-7000-8000-000000000101",
+        "createdByName": "Ana Reyes",
+        "createdAt": 1764000000000,
+        "lastUsedAt": 1764000060000,
+        "expiresAt": null,
+        "revokedAt": null,
+        "kind": "service",
+        "roles": [],
+        "retireAt": 1764090000000,
+        "ipAllow": [],
+        "templateIds": [],
+        "passStyles": [],
+        "rateTier": null,
+        "parentKeyId": null,
+        "rotatedFrom": null
+      }
+    }
+  }
+}

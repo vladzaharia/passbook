@@ -13,6 +13,8 @@ import { ScanStoreContext } from './machine/use-scan-machine.ts';
 import { OperatorWorkspace } from './operator/workspace/workspace.tsx';
 import type { ScanRuntime } from './platform/runtime.ts';
 import { ReaderChip } from './ui/chips.tsx';
+import { FLOOR_CASES, floorApi } from './visual-operator-floor.ts';
+import { historyPage, NOTES } from './visual-operator-history.ts';
 import {
   GALLERY_NOW,
   mara,
@@ -30,6 +32,7 @@ export const OPERATOR_CASES = [
   'empty',
   'refusal',
   ...RECORD_CASES,
+  ...FLOOR_CASES,
 ] as const;
 export type OperatorCase = (typeof OPERATOR_CASES)[number];
 
@@ -111,8 +114,9 @@ const PEOPLE = [
   ['Tamara Stein', 'Member', 't•••@s•••.de', 'out', 87],
 ] as const;
 
-function apiFor(rows: Row[]): ScanApi {
+function apiFor(rows: Row[], scenario: string): ScanApi {
   return {
+    ...floorApi(scenario),
     activity: async () => ({ items: activity(rows) }),
     lookup: async () => ({
       items: PEOPLE.map(([title, templateName, maskedEmail, doorState, min], i) => ({
@@ -138,6 +142,17 @@ function apiFor(rows: Row[]): ScanApi {
           passView: PASS_VIEW,
         } as never,
       }),
+    history: async (_id: string, query: Parameters<ScanApi['history']>[1]) =>
+      historyPage(scenario, query),
+    notes: async () => ({ items: NOTES }),
+    addNote: async (_id: string, body: { body: string }) => ({
+      id: '01900000-0000-7000-8000-000000000899',
+      at: NOW,
+      body: body.body,
+      by: 'Theo B.',
+      own: true,
+      edited: false,
+    }),
     override: async () => fixtureOutcome('ok'),
     undo: async () => fixtureOutcome('ok'),
   } as unknown as ScanApi;
@@ -194,7 +209,7 @@ const setNative = (input: HTMLInputElement, value: string) => {
 
 export function OperatorVisual({ scenario }: { scenario: OperatorCase }) {
   const session = useMemo(() => recordSession(sessionOf(), scenario), [scenario]);
-  const api = useMemo(() => apiFor(scenario === 'empty' ? [] : ROWS), [scenario]);
+  const api = useMemo(() => apiFor(scenario === 'empty' ? [] : ROWS, scenario), [scenario]);
   const store = useMemo(
     () =>
       createScanStore(
@@ -236,6 +251,16 @@ export function OperatorVisual({ scenario }: { scenario: OperatorCase }) {
       later(() => document.querySelector<HTMLElement>('[data-testid="op-result"]')?.click(), 900);
     if (scenario === 'problems')
       later(() => document.querySelector<HTMLElement>('#op-tab-problems')?.click(), 150);
+    if (scenario === 'inside' || scenario === 'visitors')
+      later(() => document.querySelector<HTMLElement>(`#op-tab-${scenario}`)?.click(), 150);
+    if (scenario === 'rollcall-record')
+      later(
+        () =>
+          document
+            .querySelector<HTMLElement>('[data-testid="roll-call-row"] .op-row-main')
+            ?.click(),
+        700,
+      );
     return () => {
       for (const t of timers) clearTimeout(t);
     };
@@ -257,6 +282,7 @@ export function OperatorVisual({ scenario }: { scenario: OperatorCase }) {
           scanCard={null}
           announcement={null}
           onTitle={() => undefined}
+          live={false}
         />
       </WedgeFieldsContext.Provider>
     </ScanStoreContext.Provider>

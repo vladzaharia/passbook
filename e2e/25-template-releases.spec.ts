@@ -67,10 +67,12 @@ test('releases require independent review, compare-and-swap, and mode-specific i
     expect(await templateReleases(author, org.id, clone.id, 'live')).toEqual({
       active: null,
       items: [],
+      nextCursor: null,
     });
     expect(await templateReleases(author, org.id, clone.id, 'test')).toEqual({
       active: null,
       items: [],
+      nextCursor: null,
     });
     expect(await listPasses('live')).toMatchObject({ items: [], nextCursor: null });
 
@@ -207,6 +209,7 @@ test('releases require independent review, compare-and-swap, and mode-specific i
       expect(await templateReleases(author, org.id, clone.id, 'test')).toEqual({
         active: null,
         items: [],
+        nextCursor: null,
       });
 
       // The same immutable content needs its own approval and release in Test mode.

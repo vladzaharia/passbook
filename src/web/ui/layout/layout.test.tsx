@@ -426,7 +426,10 @@ describe('route guards in the app', () => {
     const { queryClient } = await renderApp('/account', { session: 'user' });
     expect(await screen.findByRole('heading', { name: 'Account', level: 1 })).toBeInTheDocument();
     await waitFor(() =>
-      expect(queryClient.getQueryData(membershipsQuery.queryKey)).toEqual({ items: [] }),
+      expect(queryClient.getQueryData(membershipsQuery.queryKey)).toEqual({
+        items: [],
+        nextCursor: null,
+      }),
     );
     expect(screen.queryByRole('link', { name: 'Admin' })).toBeNull();
   });
@@ -499,7 +502,10 @@ describe('route guards in the app', () => {
   it("keeps Admin out of a plain user's account menu", async () => {
     const { queryClient } = await renderApp('/', { session: 'user' });
     await waitFor(() =>
-      expect(queryClient.getQueryData(membershipsQuery.queryKey)).toEqual({ items: [] }),
+      expect(queryClient.getQueryData(membershipsQuery.queryKey)).toEqual({
+        items: [],
+        nextCursor: null,
+      }),
     );
     await userEvent.click(await screen.findByRole('button', { name: 'Account menu' }));
     await screen.findByRole('menuitem', { name: 'Account' });

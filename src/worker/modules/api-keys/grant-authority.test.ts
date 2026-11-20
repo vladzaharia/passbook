@@ -35,6 +35,10 @@ const row = (orgId: string | null, scopes: string[], id = f().ids.id()): ApiKeyR
   ip_allow: orgId === null ? '["203.0.113.0/24"]' : null,
   rate_tier: null,
   secret_label: 'wlt',
+  parent_key_id: null,
+  rotated_from: null,
+  created_by_key: null,
+  last_ip_prefix: null,
 });
 const entry = (action: string, targetId: string) => ({
   orgId: org.id,

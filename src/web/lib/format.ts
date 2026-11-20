@@ -215,6 +215,24 @@ export function formatWeekday(ms: number, timeZone?: string): string {
   return day.format(ms);
 }
 
+const HEADING = new Map<string, Intl.DateTimeFormat>();
+
+/** "Tue, Nov 17" in `timeZone` when given, else the browser's: a day group's heading. */
+export function formatDayHeading(ms: number, timeZone?: string): string {
+  const key = timeZone ?? '';
+  let day = HEADING.get(key);
+  if (!day) {
+    day = new Intl.DateTimeFormat(LOCALE, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      ...(timeZone ? { timeZone } : {}),
+    });
+    HEADING.set(key, day);
+  }
+  return day.format(ms);
+}
+
 /** "Sat 8:00 AM" in a zone: when something opens next. */
 export function formatWeekdayTime(ms: number, timeZone: string): string {
   return `${formatWeekday(ms, timeZone)} ${formatTime(ms, timeZone)}`;

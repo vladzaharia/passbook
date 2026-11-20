@@ -5,7 +5,7 @@ import type { ScanApi } from '../api/scan-api.ts';
 import { useLookup } from '../lookup/use-lookup.ts';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
 import type { ScanRuntime } from '../platform/runtime.ts';
-import { type Command, OPERATOR_VIEWS, type OperatorView } from './keys.ts';
+import type { Command, OperatorView } from './keys.ts';
 import { useProblemActions } from './lists/let-in.ts';
 import { problemsOf } from './lists/problems-model.ts';
 import { useSessionActivity } from './lists/use-session-activity.ts';
@@ -44,18 +44,26 @@ export function useOperator({
   api,
   runtime,
   session,
+  views,
+  poll,
 }: {
   api: ScanApi;
   runtime: ScanRuntime;
   session: ScanSession;
+  /** The list views this session has, in tab order: ⌥1 is the first. */
+  views: readonly OperatorView[];
+  /** Activity's read: the hub's pulse count, and whether the hub is up. */
+  poll?: { kick: number; hubUp: boolean };
 }) {
   const { state, dispatch: machine } = useScanMachine();
   const [ui, send] = useReducer(reduceOperator, INITIAL);
-  const activity = useSessionActivity(api, state.online);
+  const activity = useSessionActivity(api, state.online, poll);
   const opener = useRef<string | null>(null);
   const [missed, setMissed] = useState(false);
   const clock = useNow(30_000);
   const recordKeys = useRef<((command: Command) => boolean) | null>(null);
+  /** A roll call in progress: S, X and Enter are its marks, and it answers first. */
+  const rollKeys = useRef<{ open: boolean; run: (command: Command) => boolean } | null>(null);
   const live = scanLive(state.loop);
   const allowPeople = session.scanner?.settings.lookup ?? false;
   const lookup = useLookup(api, true, allowPeople, (code) => {
@@ -191,16 +199,16 @@ export function useOperator({
           setQuery(u.query + command.ch);
           break;
         default:
-          recordKeys.current?.(command);
+          if (!rollKeys.current?.run(command)) recordKeys.current?.(command);
       }
     },
     [close, open, undo, changeView, submit, setQuery],
   );
   const facts = (): KeyFacts => ({
-    views: OPERATOR_VIEWS,
+    views,
     fieldText: latest.current.ui.query.length > 0,
     record: recordOpen,
-    rollCall: false,
+    rollCall: rollKeys.current?.open ?? false,
     walkIn: false,
     undoable: latest.current.undoId !== null,
   });
@@ -256,6 +264,7 @@ export function useOperator({
     live,
     allowPeople,
     recordKeys,
+    rollKeys,
     undoable: undoId !== null,
     clock,
   };

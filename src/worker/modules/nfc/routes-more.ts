@@ -1,6 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
-import { IdSchema } from '../../../shared/contracts/common.ts';
+import { CursorQuerySchema, IdSchema } from '../../../shared/contracts/common.ts';
 import {
   ChangeTagBindingSchema,
   RebindTagSchema,
@@ -108,7 +108,7 @@ export function registerTagMoreRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void
       path: '/users/{userId}/tags',
       summary: "Tags that open a user's passes",
       params: z.object({ userId: IdSchema }),
-      query: UserTagListQuerySchema,
+      query: UserTagListQuerySchema.extend(CursorQuerySchema.shape),
       response: UserTagListSchema,
     },
     async (c) => {

@@ -37,7 +37,7 @@ function serve(items: unknown[]) {
   const inner = globalThis.fetch;
   vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) =>
     new URL(String(input), 'http://localhost').pathname === '/api/v1/orgs/org-1/wallet-enrolments'
-      ? Promise.resolve(json({ items }))
+      ? Promise.resolve(json({ items, nextCursor: null }))
       : inner(input, init),
   );
   return server;

@@ -15,6 +15,10 @@ const capabilities = JSON.stringify(APPLE_ADAPTER_CAPABILITIES);
 const check = (reason: DenyReason, sql: (bind: (v: string | number | null) => string) => string) =>
   ({ reason, ok: (b) => sql((v) => b.bind(v)) }) satisfies Check;
 
+/** A key's write lands only in Test: the actor row's mode, from the key itself, must be `test`. */
+const keyWritesTestOnly: Check = check('lineage', () => `a.mode = 'test'`);
+export const keyChecks = (kind: string): Check[] => (kind === 'api_key' ? [keyWritesTestOnly] : []);
+
 /**
  * Deferred platform work (an import by an administrator) stops when the user is disabled (even if
  * re-enabled: `access_revision` captured at upload) or no longer an administrator (`last_roles`,
@@ -55,6 +59,7 @@ export const approvable = (
   membershipId: string,
   kind: ApprovalKind,
   now: number,
+  testOnly = false,
 ): Check =>
   check(
     'lineage',
@@ -63,6 +68,7 @@ export const approvable = (
       JOIN template_versions v ON v.template_id = c.template_id AND v.version = c.version
       WHERE c.id = ${p(candidateId)} AND c.candidate_hash = ${p(candidateHash)} AND c.org_id = a.org_id
         AND EXISTS (SELECT 1 FROM org_memberships m WHERE m.id = ${p(membershipId)} AND m.user_id = ${p(reviewerId)})
+        ${testOnly ? `AND c.mode = 'test'` : ''}
         AND ${
           kind === 'peer'
             ? `c.author_id != ${p(reviewerId)}

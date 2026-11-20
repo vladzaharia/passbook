@@ -24,8 +24,8 @@ function orgHandlers(
 ) {
   return {
     '/api/v1/identities': () => json({ items: [], nextCursor: null }),
-    '/api/v1/orgs/o1/wallet-enrolments': () => json({ items: enrolments }),
-    '/api/v1/orgs/o1/wallet-credentials': () => json({ items: creds }),
+    '/api/v1/orgs/o1/wallet-enrolments': () => json({ items: enrolments, nextCursor: null }),
+    '/api/v1/orgs/o1/wallet-credentials': () => json({ items: creds, nextCursor: null }),
   };
 }
 
@@ -217,7 +217,7 @@ describe('organization wallet accounts', () => {
             saved.push(JSON.parse(String(init.body)));
             return json(credential());
           }
-          return json({ items: [] });
+          return json({ items: [], nextCursor: null });
         },
       },
     });
@@ -249,7 +249,7 @@ describe('organization wallet accounts', () => {
             saved.push(JSON.parse(String(init.body)));
             return json(credential({ provider: 'samsung' }));
           }
-          return json({ items: [] });
+          return json({ items: [], nextCursor: null });
         },
       },
     });
@@ -295,7 +295,10 @@ describe('platform wallet accounts', () => {
   ) => ({
     '/api/v1/identities': () => json({ items: [], nextCursor: null }),
     '/api/v1/platform/wallet-credentials': () =>
-      json({ items: [credential({ scope: 'platform', orgId: null, mode: 'live' })] }),
+      json({
+        items: [credential({ scope: 'platform', orgId: null, mode: 'live' })],
+        nextCursor: null,
+      }),
     '/api/v1/platform/wallet-enrolments': () => json({ items, nextCursor: null }),
   });
 

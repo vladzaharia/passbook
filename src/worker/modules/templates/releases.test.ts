@@ -386,7 +386,7 @@ describe('template release API', () => {
     );
     expect(before?.active_version).toBeNull();
     expect(await candidates(t.id)).toEqual([]);
-    expect(await releases(t.id)).toEqual({ active: null, items: [] });
+    expect(await releases(t.id)).toEqual({ active: null, items: [], nextCursor: null });
     const carried = (JSON.parse(before?.assets ?? '[]') as { name: string; sha1: string }[]).map(
       ({ name, sha1 }) => ({ name, sha1 }),
     );
@@ -413,7 +413,7 @@ describe('template release API', () => {
       active_version: null,
     });
     expect(await candidates(t.id)).toEqual([]);
-    expect(await releases(t.id)).toEqual({ active: null, items: [] });
+    expect(await releases(t.id)).toEqual({ active: null, items: [], nextCursor: null });
   });
 
   it('requires distinct authors and reviewers with the corresponding org capabilities', async () => {
@@ -501,7 +501,7 @@ describe('template release API', () => {
     expect(
       (await post(`/${ownVersion.id}/releases`, publishBody(authored, approved, 0), reader)).status,
     ).toBe(403);
-    expect(await releases(ownVersion.id)).toEqual({ active: null, items: [] });
+    expect(await releases(ownVersion.id)).toEqual({ active: null, items: [], nextCursor: null });
 
     // Different candidate and version authors must each be barred from approving.
     const byVersionAuthor = await candidate(ownVersion.id, ownVersion.version, author);
@@ -668,8 +668,12 @@ describe('template release API', () => {
     expect((await candidates(v1.id, scope('test'))).map((item) => item.id)).toEqual([
       testCandidate.id,
     ]);
-    expect(await releases(v1.id)).toEqual({ active: null, items: [] });
-    expect(await releases(v1.id, scope('test'))).toEqual({ active: null, items: [] });
+    expect(await releases(v1.id)).toEqual({ active: null, items: [], nextCursor: null });
+    expect(await releases(v1.id, scope('test'))).toEqual({
+      active: null,
+      items: [],
+      nextCursor: null,
+    });
     const liveRelease = await publish(v1.id, a, aa, 0);
     const liveTemplate = await first<{ active_version: string; updated_at: number }>(
       env.DB,
@@ -951,7 +955,11 @@ describe('template release API', () => {
     const a1 = await candidate(v1.id, v1.version);
     await assertAssignmentLocked();
     expect(await candidates(v1.id, orgB, readerB)).toEqual([]);
-    expect(await releases(v1.id, orgB, readerB)).toEqual({ active: null, items: [] });
+    expect(await releases(v1.id, orgB, readerB)).toEqual({
+      active: null,
+      items: [],
+      nextCursor: null,
+    });
     expectClientError(await call(`/${v1.id}/candidates?${query(orgB)}`, reader));
     expectClientError(await call(`/${v1.id}/releases?${query(scope())}`, readerB));
     expectClientError(
@@ -972,8 +980,16 @@ describe('template release API', () => {
       generation: 1,
       version: v1.version,
     });
-    expect(await releases(v1.id, orgB, readerB)).toEqual({ active: null, items: [] });
-    expect(await releases(v1.id, scope('test'), reader)).toEqual({ active: null, items: [] });
+    expect(await releases(v1.id, orgB, readerB)).toEqual({
+      active: null,
+      items: [],
+      nextCursor: null,
+    });
+    expect(await releases(v1.id, scope('test'), reader)).toEqual({
+      active: null,
+      items: [],
+      nextCursor: null,
+    });
     await assertAssignmentLocked();
 
     const b1 = await candidate(v1.id, v2.version, authorB, orgB);
@@ -1039,6 +1055,7 @@ describe('template release API', () => {
     expect(await releases(v1.id, scope('test', otherOrg.id), readerB)).toEqual({
       active: null,
       items: [],
+      nextCursor: null,
     });
     expect(await template()).toEqual(baseline);
 
@@ -1099,6 +1116,7 @@ describe('template release API', () => {
     expect(await releases(old.id, scope('live', otherOrg.id), foreign)).toEqual({
       active: null,
       items: [],
+      nextCursor: null,
     });
   });
 
@@ -1154,7 +1172,7 @@ describe('template release API', () => {
         expect(history.active).toEqual(createdRelease);
         expect(history.items).toEqual([createdRelease]);
       } else {
-        expect(history).toEqual({ active: null, items: [] });
+        expect(history).toEqual({ active: null, items: [], nextCursor: null });
       }
     },
     30_000,
@@ -1560,7 +1578,11 @@ describe('template release API', () => {
     for (const provider of ['google', 'samsung'] as const) {
       const nativeScope = { ...scope(), provider };
       expect(await candidates(t.id, nativeScope)).toEqual([]);
-      expect(await releases(t.id, nativeScope)).toEqual({ items: [], active: null });
+      expect(await releases(t.id, nativeScope)).toEqual({
+        items: [],
+        active: null,
+        nextCursor: null,
+      });
       const unreviewed = await post(
         `/${t.id}/candidates`,
         {
@@ -1587,7 +1609,11 @@ describe('template release API', () => {
         await post(`/${t.id}/releases/rollback`, rollbackBody(r, 0, nativeScope), publisher),
       );
       expect(await candidates(t.id, nativeScope)).toEqual([]);
-      expect(await releases(t.id, nativeScope)).toEqual({ items: [], active: null });
+      expect(await releases(t.id, nativeScope)).toEqual({
+        items: [],
+        active: null,
+        nextCursor: null,
+      });
     }
     expect(await candidates(t.id)).toEqual(beforeCandidates);
     expect(await releases(t.id)).toEqual(beforeReleases);
@@ -2128,7 +2154,7 @@ describe('template release API', () => {
         );
         expect(stale.status).toBe(409);
         expect(await stale.json()).toMatchObject({ code: 'TEMPLATE_CONTENT_CHANGED' });
-        expect(await releases(id)).toEqual({ active: null, items: [] });
+        expect(await releases(id)).toEqual({ active: null, items: [], nextCursor: null });
       } finally {
         await env.BUCKET.put(asset.source.key, bytes);
       }
@@ -2189,7 +2215,7 @@ describe('template release API', () => {
     expect(response.status).toBe(409);
     expect(await response.json()).toMatchObject({ code: 'TEMPLATE_CONTENT_CHANGED' });
     expect(await candidates(t.id)).toEqual([]);
-    expect(await releases(t.id)).toEqual({ active: null, items: [] });
+    expect(await releases(t.id)).toEqual({ active: null, items: [], nextCursor: null });
     expect(await audits(t.id)).toEqual(before);
   });
 
@@ -2212,7 +2238,7 @@ describe('template release API', () => {
     try {
       const response = await post(`/${t.id}/releases`, publishBody(c, a, 0), publisher);
       expect(response.status).toBeGreaterThanOrEqual(400);
-      expect(await releases(t.id)).toEqual({ active: null, items: [] });
+      expect(await releases(t.id)).toEqual({ active: null, items: [], nextCursor: null });
       expect((await audits(t.id)).filter((event) => event.action === 'template.release')).toEqual(
         [],
       );
@@ -2237,7 +2263,7 @@ describe('template release API', () => {
     } finally {
       await run(env.DB, 'DROP TRIGGER fail_template_release_audit');
     }
-    expect(await releases(t.id)).toEqual({ active: null, items: [] });
+    expect(await releases(t.id)).toEqual({ active: null, items: [], nextCursor: null });
     expect((await audits(t.id)).filter((event) => event.action === 'template.release')).toEqual([]);
     expect((await publish(t.id, c, a, 0)).generation).toBe(1);
   });

@@ -58,3 +58,7 @@ export const featureNotIncluded = (key: EntitlementKey): string =>
 
 export const limitReached = (key: EntitlementKey): string =>
   `${LIMIT_REACHED_COPY.replace('{feature}', ENTITLEMENT_LABEL[key])} ${LIMIT_ASK}`;
+
+/** The one-sentence refusal of a create at its cap; `used` is what the organization holds. */
+export const limitRefusal = (key: EntitlementKey, limit: number, used: number): string =>
+  `${ENTITLEMENT_LABEL[key]} limit reached (${used} of ${limit}), ask PassBook for more.`;

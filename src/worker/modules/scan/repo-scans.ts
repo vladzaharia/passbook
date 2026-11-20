@@ -257,6 +257,10 @@ export async function pendingScans(db: Db, olderThan: number, limit: number): Pr
   return rows.map(toScan);
 }
 
+/** Staff notes of one mode older than the cutoff: the test-mode window; live notes follow the retention plan. */
+export const deleteNotesBefore = (db: Db, mode: Mode, before: number) =>
+  deleteInBatches(db, 'pass_notes', 'mode = ? AND created_at < ?', [mode, before]);
+
 /** Deletes finished scans of one mode older than the cutoff (`scans_mode_at`), in batches. */
 export const deleteScansBefore = (db: Db, mode: Mode, before: number) =>
   deleteInBatches(db, 'scans', 'mode = ? AND at < ?', [mode, before]);

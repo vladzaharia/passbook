@@ -110,7 +110,7 @@ export function hooks(
   return {
     '/api/v1/orgs': () => json({ items: [ORG], nextCursor: null }),
     '/api/v1/connections': () => json({ items: [], nextCursor: null }),
-    '/api/v1/connectors': () => json({ items: [] }),
+    '/api/v1/connectors': () => json({ items: [], nextCursor: null }),
     '/api/v1/templates': () => json({ items: [], nextCursor: null }),
     '/api/v1/webhook-endpoints': (url, init) => {
       log(url, init);
@@ -118,7 +118,7 @@ export function hooks(
         return url.searchParams.get('validate')
           ? json({ ok: true })
           : json({ endpoint: endpoint({ id: 'we-new' }), secret: 'whsec_shown_once' }, 201);
-      return json({ items: state.endpoints });
+      return json({ items: state.endpoints, nextCursor: null });
     },
     '/api/v1/webhook-endpoints/we1': (url, init) => {
       log(url, init);

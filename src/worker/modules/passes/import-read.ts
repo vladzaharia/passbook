@@ -124,6 +124,7 @@ export async function importDto(
             updated: imp.updated,
             unchanged: imp.unchanged,
             failed: imp.failed,
+            skipped: imp.skipped,
             notEmailed: imp.not_emailed,
             removed: imp.removed,
           },

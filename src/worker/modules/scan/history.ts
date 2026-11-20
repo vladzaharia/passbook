@@ -45,7 +45,7 @@ function passlessReason(row: HistoryRow): PasslessReason | null {
 }
 
 /** The viewer's evidence for rows read under a projectable fence; none otherwise. */
-async function evidenceFor(
+export async function evidenceFor(
   ctx: ServiceContext,
   actor: ScanActor,
   rows: readonly HistoryRow[],

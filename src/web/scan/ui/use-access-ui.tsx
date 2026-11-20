@@ -33,6 +33,7 @@ export function useAccessUi({
   dispatch,
   handheld = false,
   scopeDirection = 'in',
+  hosts = true,
 }: {
   /** A handheld moves the direction chip to the thumb row and the state line. */
   handheld?: boolean;
@@ -44,6 +45,8 @@ export function useAccessUi({
   online: boolean;
   overlay: string | null;
   dispatch: (event: MachineEvent) => void;
+  /** Mount Who's in and Visitors as sheets. The operator console draws both itself. */
+  hosts?: boolean;
 }): {
   chips: ReactNode;
   inside: { count: number; onOpen: () => void } | undefined;
@@ -107,7 +110,7 @@ export function useAccessUi({
         onPick={(direction) => runtime.pin.set(direction)}
         onClose={() => show(null)}
       />
-      {deskInside ? (
+      {hosts && deskInside ? (
         <Suspense fallback={null}>
           <InsideHost
             api={api}
@@ -125,7 +128,7 @@ export function useAccessUi({
           />
         </Suspense>
       ) : null}
-      {isDeskRole(session) ? (
+      {hosts && isDeskRole(session) ? (
         <Suspense fallback={null}>
           <VisitorsHost
             api={api}

@@ -7,6 +7,11 @@ export const SCAN_HANDHELD_COPY = {
   details: 'Details',
   viewPass: 'View pass',
   undoFor: 'Undo {name}',
+  menu: {
+    sunlight: 'Sunlight mode',
+    leftHand: 'Left hand',
+    noVibration: 'Vibration needs the PassBook app.',
+  },
   sheet: {
     title: 'Pass',
     thisPass: 'This pass',

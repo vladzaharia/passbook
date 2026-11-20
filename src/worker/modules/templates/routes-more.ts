@@ -1,4 +1,5 @@
 import {
+  CursorQuerySchema,
   IdParamSchema,
   PreviewBatchSchema,
   SaveVersionResponseSchema,
@@ -51,7 +52,7 @@ export function registerUploadList(router: Router): void {
       method: 'get',
       path: '/uploads',
       summary: 'Recent template imports',
-      query: UploadListQuerySchema,
+      query: UploadListQuerySchema.extend(CursorQuerySchema.shape),
       response: UploadListSchema,
     },
     async (c) => c.json(await recentUploads(serviceContext(c), c.var.auth, c.req.valid('query'))),

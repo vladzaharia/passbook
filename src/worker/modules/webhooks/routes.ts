@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { IdParamSchema, IdSchema, OkSchema } from '../../../shared/contracts/common.ts';
+import {
+  CursorQuerySchema,
+  IdParamSchema,
+  IdSchema,
+  OkSchema,
+} from '../../../shared/contracts/common.ts';
 import {
   CreateWebhookEndpointSchema,
   RotateWebhookSecretSchema,
@@ -37,7 +42,7 @@ register(
     method: 'get',
     path: '/',
     summary: 'List webhook endpoints',
-    query: OrgQuerySchema,
+    query: OrgQuerySchema.extend(CursorQuerySchema.shape),
     response: WebhookEndpointListSchema,
   },
   async (c) => {

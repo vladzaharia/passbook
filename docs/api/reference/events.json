@@ -1,0 +1,48 @@
+{
+  "events.getEvents": {
+    "description": "The event feed, oldest first. Page with `after`. Takes the same events webhooks deliver.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "type": "pass.issued",
+          "apiVersion": "2026-12-01",
+          "createdAt": 1764000000000,
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "mode": "live",
+          "pass": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+            "externalId": "booking_8841",
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
+          },
+          "data": {
+            "version": 1,
+            "source": "api"
+          }
+        }
+      ],
+      "nextCursor": "ev1.4812",
+      "hasMore": false
+    }
+  },
+  "events.getEventsById": {
+    "description": "One event by id.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "type": "pass.issued",
+      "apiVersion": "2026-12-01",
+      "createdAt": 1764000000000,
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "pass": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "externalId": "booking_8841",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
+      },
+      "data": {
+        "version": 1,
+        "source": "api"
+      }
+    }
+  }
+}

@@ -40,7 +40,7 @@ export function fixtureState(over: Partial<ScanState> = {}): ScanState {
     ignore: [],
     recent: [],
     counts: fixtureCounts(),
-    prefs: { holdResults: false, sound: true },
+    prefs: { holdResults: false, sound: true, sunlight: false, leftHand: false },
     lastActivity: FIXTURE_NOW,
     ...over,
   };

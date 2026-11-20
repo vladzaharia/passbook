@@ -81,5 +81,5 @@ export async function listEnrolments(
         rows.find((r) => r.provider === provider) ?? null,
       ),
     );
-  return { items };
+  return { items, nextCursor: null };
 }

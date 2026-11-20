@@ -114,7 +114,7 @@ export const ConnectorInfoSchema = z.object({
   /** Sender recipes; empty for connectors without any. */
   recipes: z.array(RecipeInfoSchema).default([]),
 });
-export const ConnectorListSchema = z.object({ items: z.array(ConnectorInfoSchema) });
+export const ConnectorListSchema = pageOf(ConnectorInfoSchema);
 
 export const ConnectionSchema = z.object({
   id: IdSchema,

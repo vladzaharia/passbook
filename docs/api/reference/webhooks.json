@@ -1,0 +1,218 @@
+{
+  "webhooks.postWebhookEndpoints": {
+    "description": "Creates an endpoint for events of this mode. The signing `secret` is shown once. Send `?validate=1` to check the body without creating anything.",
+    "request": {
+      "url": "https://hooks.example.com/passbook",
+      "description": "Order system",
+      "eventTypes": ["pass.issued", "pass.scanned"]
+    },
+    "response": {
+      "endpoint": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000f1",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "mode": "live",
+        "url": "https://hooks.example.com/passbook",
+        "urlMasked": "https://hooks.example.com/…",
+        "description": "Order system",
+        "eventTypes": ["pass.issued", "pass.scanned"],
+        "templateIds": null,
+        "apiVersion": "2026-12-01",
+        "status": "active",
+        "failingSince": null,
+        "disabledAt": null,
+        "lastSuccessAt": null,
+        "lastFailureAt": null,
+        "lastStatus": null,
+        "secretCreatedAt": 1764000000000,
+        "previousSecretExpiresAt": null,
+        "createdAt": 1764000000000
+      },
+      "secret": "whsec_example_0000000000000000000000000000"
+    }
+  },
+  "webhooks.postWebhookEndpointsByIdTest": {
+    "description": "Sends a `webhook.test` event to the endpoint and reports the result.",
+    "response": {
+      "ok": true,
+      "status": 200,
+      "durationMs": 84,
+      "errorCode": null
+    }
+  },
+  "webhooks.getWebhookEndpoints": {
+    "description": "Lists the endpoints of this mode.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000f1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "mode": "live",
+          "url": "https://hooks.example.com/passbook",
+          "urlMasked": "https://hooks.example.com/…",
+          "description": "Order system",
+          "eventTypes": ["pass.issued", "pass.scanned"],
+          "templateIds": null,
+          "apiVersion": "2026-12-01",
+          "status": "active",
+          "failingSince": null,
+          "disabledAt": null,
+          "lastSuccessAt": null,
+          "lastFailureAt": null,
+          "lastStatus": null,
+          "secretCreatedAt": 1764000000000,
+          "previousSecretExpiresAt": null,
+          "createdAt": 1764000000000
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "webhooks.getWebhookEndpointsById": {
+    "description": "One endpoint. The signing secret is never returned.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000f1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "url": "https://hooks.example.com/passbook",
+      "urlMasked": "https://hooks.example.com/…",
+      "description": "Order system",
+      "eventTypes": ["pass.issued", "pass.scanned"],
+      "templateIds": null,
+      "apiVersion": "2026-12-01",
+      "status": "active",
+      "failingSince": null,
+      "disabledAt": null,
+      "lastSuccessAt": null,
+      "lastFailureAt": null,
+      "lastStatus": null,
+      "secretCreatedAt": 1764000000000,
+      "previousSecretExpiresAt": null,
+      "createdAt": 1764000000000
+    }
+  },
+  "webhooks.patchWebhookEndpointsById": {
+    "description": "Changes an endpoint, or pauses or resumes it with `status`. A disabled endpoint resumes with `active`.",
+    "request": {
+      "status": "paused"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000f1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "url": "https://hooks.example.com/passbook",
+      "urlMasked": "https://hooks.example.com/…",
+      "description": "Order system",
+      "eventTypes": ["pass.issued", "pass.scanned"],
+      "templateIds": null,
+      "apiVersion": "2026-12-01",
+      "status": "paused",
+      "failingSince": null,
+      "disabledAt": null,
+      "lastSuccessAt": null,
+      "lastFailureAt": null,
+      "lastStatus": null,
+      "secretCreatedAt": 1764000000000,
+      "previousSecretExpiresAt": null,
+      "createdAt": 1764000000000
+    }
+  },
+  "webhooks.deleteWebhookEndpointsById": {
+    "description": "Deletes an endpoint and its delivery history.",
+    "response": {
+      "ok": true
+    }
+  },
+  "webhooks.postWebhookEndpointsByIdSecret": {
+    "description": "Rotates the signing secret and returns the new one once. The old secret stays valid for `overlapHours` (default 24).",
+    "request": {
+      "overlapHours": 24
+    },
+    "response": {
+      "secret": "whsec_example_1111111111111111111111111111"
+    }
+  },
+  "webhooks.getWebhookEndpointsByIdDeliveries": {
+    "description": "Deliveries of an endpoint, newest first. Filter by `state` or `type`.",
+    "response": {
+      "items": [
+        {
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "type": "pass.issued",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "externalId": "booking_8841",
+          "state": "delivered",
+          "attempts": 1,
+          "nextAt": 1764000000000,
+          "lastStatus": 200,
+          "lastError": null,
+          "lastAttemptAt": 1764000000000,
+          "finishedAt": 1764000000000,
+          "replays": 0
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "webhooks.getWebhookEndpointsByIdDeliveriesByEventId": {
+    "description": "One delivery with every attempt and the payload sent.",
+    "response": {
+      "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "type": "pass.issued",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "externalId": "booking_8841",
+      "state": "delivered",
+      "attempts": 1,
+      "nextAt": 1764000000000,
+      "lastStatus": 200,
+      "lastError": null,
+      "lastAttemptAt": 1764000000000,
+      "finishedAt": 1764000000000,
+      "replays": 0,
+      "attemptLog": [
+        {
+          "attempt": 1,
+          "trigger": "event",
+          "status": 200,
+          "errorCode": null,
+          "durationMs": 84,
+          "at": 1764000000000
+        }
+      ],
+      "payload": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "type": "pass.issued",
+        "apiVersion": "2026-12-01",
+        "createdAt": 1764000000000,
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "mode": "live",
+        "pass": {
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "externalId": "booking_8841",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
+        },
+        "data": {
+          "version": 1,
+          "source": "api"
+        }
+      }
+    }
+  },
+  "webhooks.postWebhookEndpointsByIdDeliveriesByEventIdReplay": {
+    "description": "Sends one delivery again with a fresh signature.",
+    "response": {
+      "queued": 1
+    }
+  },
+  "webhooks.postWebhookEndpointsByIdReplay": {
+    "description": "Sends the deliveries in a time range again. `dryRun` counts without sending.",
+    "request": {
+      "from": 1764000000000,
+      "to": 1764003600000,
+      "include": "failed",
+      "dryRun": true
+    },
+    "response": {
+      "queued": 12
+    }
+  }
+}

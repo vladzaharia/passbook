@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { TimestampSchema } from './common.ts';
+import { pageOf, TimestampSchema } from './common.ts';
 
 /** Honest vocabulary, sorted by severity in the UI. */
 export const ComponentStateSchema = z.enum([
@@ -55,4 +55,4 @@ export const WorkflowRunSchema = z.object({
   finishedAt: TimestampSchema.nullable(),
   errorCode: z.string().nullable(),
 });
-export const WorkflowRunListSchema = z.object({ items: z.array(WorkflowRunSchema) });
+export const WorkflowRunListSchema = pageOf(WorkflowRunSchema);

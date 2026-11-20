@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, ModeSchema, TimestampSchema } from './common.ts';
+import { IdSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 
 export const TemplateReleaseProviderSchema = z.enum(['apple', 'google', 'samsung']);
 export type TemplateReleaseProvider = z.infer<typeof TemplateReleaseProviderSchema>;
@@ -79,11 +79,12 @@ export const TemplateReleaseSchema = z.object({
 });
 export type TemplateRelease = z.infer<typeof TemplateReleaseSchema>;
 
-export const TemplateCandidateListSchema = z.object({ items: z.array(TemplateCandidateSchema) });
+export const TemplateCandidateListSchema = pageOf(TemplateCandidateSchema);
 export type TemplateCandidateList = z.infer<typeof TemplateCandidateListSchema>;
 export const TemplateReleaseListSchema = z.object({
   active: TemplateReleaseSchema.nullable(),
   items: z.array(TemplateReleaseSchema),
+  nextCursor: z.string().nullable(),
   /** Live scope: versions released in Test that Live can take with one review. */
   promotable: z.array(z.string()).optional(),
 });

@@ -1,6 +1,15 @@
 import { type Check, rawCheck } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
+import { withinLimit } from '../../platform/entitlements.ts';
 import type { NewPassRow } from './repo-write-types.ts';
+
+/** The mode's pass cap (`passes.live`, `passes.test`) over the passes the org holds: removed ones free their slot. */
+export const passLimit = (mode: 'live' | 'test'): Check =>
+  withinLimit(
+    mode === 'live' ? 'passes.live' : 'passes.test',
+    `SELECT COUNT(*) FROM passes p WHERE p.org_id = {org} AND p.mode = {mode}
+      AND p.removed_at IS NULL AND p.deleted_at IS NULL AND p.test_data_quarantined = 0`,
+  );
 
 /** The release the pass is built from is still the same generation, version, candidate and provider. */
 export function releaseSnapshotCheck(row: NewPassRow): Check {

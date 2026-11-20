@@ -1,7 +1,9 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
+import type { Check } from '../../platform/authority-checks.ts';
 import { maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { all, first, prefixMatch, stmt } from '../../platform/db.ts';
+import { withinLimit } from '../../platform/entitlements.ts';
 import { templateVisibleSql, visibleBinds } from '../templates/repo-visibility.ts';
 
 type Db = D1Database;
@@ -196,6 +198,13 @@ export interface NewScanner {
   createdBy: string;
   now: number;
 }
+
+/** A scanner not revoked takes a slot of the `scanning.devices` limit (expired terminals included until revoked). */
+export const scannerSlot = (): Check =>
+  withinLimit(
+    'scanning.devices',
+    'SELECT COUNT(*) FROM scanners sc WHERE sc.org_id = {org} AND sc.revoked_at IS NULL',
+  );
 
 /** org_id and mode come from the grant row. */
 export const addScannerInsert = (g: Grant, s: NewScanner): GrantedStatement =>

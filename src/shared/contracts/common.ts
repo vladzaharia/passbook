@@ -36,6 +36,9 @@ export const ProblemSchema = z.object({
     .optional(),
   /** FEATURE_NOT_INCLUDED: the entitlement key the organization lacks. */
   feature: z.string().optional(),
+  /** FEATURE_LIMIT_REACHED: the cap and the count the organization holds. */
+  limit: z.number().int().optional(),
+  used: z.number().int().optional(),
 });
 export type ProblemDto = z.infer<typeof ProblemSchema>;
 
@@ -100,3 +103,6 @@ export const ModeSchema = z.enum(['live', 'test']);
 export type Mode = z.infer<typeof ModeSchema>;
 /** Admin sessions pick a mode with this header; anything but `test` means live. */
 export const MODE_HEADER = 'x-passbook-mode';
+
+/** Lists that return everything at once still take `cursor`, so a client can page every list the same way. */
+export const CursorQuerySchema = z.object({ cursor: z.string().max(512).optional() });

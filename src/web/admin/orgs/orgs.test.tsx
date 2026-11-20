@@ -279,8 +279,8 @@ describe('orgs list', () => {
           });
         },
         '/api/v1/orgs/o2': () => json(provisioning({ id: 'o2', name: 'Acme Gym' })),
-        '/api/v1/orgs/o2/memberships': () => json({ items: [] }),
-        '/api/v1/orgs/o2/invitations': () => json({ items: [] }),
+        '/api/v1/orgs/o2/memberships': () => json({ items: [], nextCursor: null }),
+        '/api/v1/orgs/o2/invitations': () => json({ items: [], nextCursor: null }),
         '/api/v1/identities': () => json({ items: [], nextCursor: null }),
         '/api/v1/settings': () => json(settingsEmpty),
       },
@@ -354,8 +354,8 @@ describe('org detail', () => {
   const handlers = (extra: Record<string, never> = {}) => ({
     '/api/v1/orgs/o1': () => json(summary()),
     '/api/v1/wallet-providers/accounts': walletAccount,
-    '/api/v1/orgs/o1/memberships': () => json({ items: [] }),
-    '/api/v1/orgs/o1/invitations': () => json({ items: [] }),
+    '/api/v1/orgs/o1/memberships': () => json({ items: [], nextCursor: null }),
+    '/api/v1/orgs/o1/invitations': () => json({ items: [], nextCursor: null }),
     '/api/v1/identities': () => json({ items: [], nextCursor: null }),
     '/api/v1/settings': () => json(settingsEmpty),
     ...extra,
@@ -473,7 +473,7 @@ describe('org detail', () => {
           ...handlers(),
           '/api/v1/orgs/memberships/me': async () => {
             await pending;
-            return json({ items: [membershipFixture('o1')] });
+            return json({ items: [membershipFixture('o1')], nextCursor: null });
           },
           '/api/v1/orgs/o1/workspace': () => json(summary()),
         },
@@ -510,9 +510,9 @@ describe('org detail', () => {
         ...handlers(),
         '/api/v1/orgs/memberships/me': async () => {
           requests += 1;
-          if (requests === 1) return json({ items: [membershipFixture('o1')] });
+          if (requests === 1) return json({ items: [membershipFixture('o1')], nextCursor: null });
           await pending;
-          return json({ items: [] });
+          return json({ items: [], nextCursor: null });
         },
         '/api/v1/orgs/o1/workspace': () => json(summary()),
       },
@@ -610,6 +610,7 @@ describe('org detail', () => {
                 source: 'org',
               },
             ],
+            nextCursor: null,
           }),
       },
     });
@@ -708,9 +709,12 @@ describe('org detail', () => {
         ([url]) => String(url).includes('/workspace') || String(url).includes('/api/v1/templates'),
       ),
     ).toBe(false);
-    await act(async () => resolveMemberships(json({ items: [] })));
+    await act(async () => resolveMemberships(json({ items: [], nextCursor: null })));
     await waitFor(() =>
-      expect(queryClient.getQueryData(membershipsQuery.queryKey)).toEqual({ items: [] }),
+      expect(queryClient.getQueryData(membershipsQuery.queryKey)).toEqual({
+        items: [],
+        nextCursor: null,
+      }),
     );
     expect(screen.queryByRole('heading', { name: 'Pass branding' })).toBeNull();
     expect(
@@ -902,6 +906,7 @@ describe('org detail', () => {
                 assetNames: [],
               },
             ],
+            nextCursor: null,
           });
         },
       },
@@ -1094,7 +1099,7 @@ describe('org detail', () => {
       session: 'admin',
       handlers: {
         '/api/v1/orgs/o1': () => json(provisioning()),
-        '/api/v1/platform/orgs/o1/retention/holds': () => json({ items: [] }),
+        '/api/v1/platform/orgs/o1/retention/holds': () => json({ items: [], nextCursor: null }),
         '/api/v1/platform/orgs/o1/retention/receipts': () => json({ items: [], nextCursor: null }),
         '/api/v1/orgs/o1/invitations': () => problem(403, 'forbidden', 'Not allowed.'),
       },
@@ -1414,6 +1419,7 @@ describe('org detail', () => {
           return json({
             ...settingsEmpty,
             items: ['email.buddy', 'support.email', 'support.url'].map(item),
+            nextCursor: null,
           });
         },
       },

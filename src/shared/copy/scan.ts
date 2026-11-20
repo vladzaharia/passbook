@@ -22,9 +22,9 @@ export interface ScanLine {
 
 /** Every verdict line of the scanner. `/scan`, the admin pages and the CSV read this one file. */
 export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> = {
-  not_found: { headline: 'Not found', sub: "This code isn't a pass here. Look it up by name." },
+  not_found: { headline: 'Not found', sub: "This code isn't a pass here." },
   code_replaced: { headline: 'Replaced code', sub: 'Check ID.' },
-  ambiguous: { headline: 'More than one match', sub: 'Look it up by name instead.' },
+  ambiguous: { headline: 'More than one match', sub: 'Enter the code or name.' },
   test_pass: {
     headline: 'Test pass',
     sub: "Live scanners don't take test passes. Use a test scanner.",
@@ -37,7 +37,7 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   wrong_event: { headline: 'Wrong event', sub: 'This scanner is for {event}, {day}.' },
   removed: { headline: 'Removed', sub: 'Removed {date}. Ask for a new pass.' },
   voided: { headline: 'Voided', sub: 'Voided {date}. Ask for a new pass.' },
-  expired: { headline: 'Expired', sub: 'Ended {date}. Ask for a new pass.' },
+  expired: { headline: 'Expired', sub: 'Ended {date}.' },
   no_balance: { headline: 'Not enough balance', sub: '{have} left. Needs {need}.' },
   card_full: { headline: 'Card is full', sub: 'Redeem the reward first.' },
   managed_elsewhere: {
@@ -130,7 +130,7 @@ export const SCAN_REASON_VARIANTS = {
     headline: 'Needs a manager or desk lead',
     sub: '{action} needs approval.',
   },
-  already_done: { noPrevious: 'Scanned earlier. Check ID.' },
+  already_done: { noPrevious: 'Scanned earlier. Check ID.', short: '{ago} · {scanner}' },
   wrong_event: { noEvent: 'This scanner is for a different event.' },
   not_yet_valid: { noWhen: 'Not open yet. Try again later.' },
   capacity_full: { noPlace: 'Full', noCapacity: '{in} in.', noCount: 'At capacity.' },

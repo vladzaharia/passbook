@@ -77,11 +77,15 @@ const handlers = (extra: Record<string, FetchHandler> = {}) => ({
       issuance: { state: 'disabled', reason: 'not_released' },
       updatedAt: null,
     }),
-  '/api/v1/orgs/o1/memberships': () => json({ items: [] }),
-  '/api/v1/orgs/o1/invitations': () => json({ items: [] }),
+  '/api/v1/orgs/o1/memberships': () => json({ items: [], nextCursor: null }),
+  '/api/v1/orgs/o1/invitations': () => json({ items: [], nextCursor: null }),
   '/api/v1/identities': () => json({ items: [], nextCursor: null }),
   '/api/v1/settings': () =>
-    json({ items: [], oidc: { issuer: 'https://id.plrs.im', adminGroup: null, userGroup: null } }),
+    json({
+      items: [],
+      oidc: { issuer: 'https://id.plrs.im', adminGroup: null, userGroup: null },
+      nextCursor: null,
+    }),
   ...extra,
 });
 
@@ -154,6 +158,7 @@ describe('organization people and service access', () => {
                 roles: ['org_admin'],
               }),
             ],
+            nextCursor: null,
           }),
         '/api/v1/orgs/o1/invitations': () =>
           json({
@@ -175,6 +180,7 @@ describe('organization people and service access', () => {
                 expiresAt: 1_700_000_100_000,
               }),
             ],
+            nextCursor: null,
           }),
       }),
     });
@@ -235,7 +241,10 @@ describe('organization people and service access', () => {
             items.push(created);
             return json({ ...created, token: secret }, 201);
           }
-          return json({ items: items.map((item) => ({ ...item, token: secret })) });
+          return json({
+            items: items.map((item) => ({ ...item, token: secret })),
+            nextCursor: null,
+          });
         },
       }),
     });
@@ -290,13 +299,13 @@ describe('organization people and service access', () => {
         session: 'admin',
         handlers: handlers({
           '/api/v1/orgs/memberships/me': () =>
-            json({ items: [membershipFixture('o1', { userId: currentUser })] }),
+            json({ items: [membershipFixture('o1', { userId: currentUser })], nextCursor: null }),
           '/api/v1/orgs/o1/invitations': (_url, init) => {
             if (init?.method === 'POST') {
               posts += 1;
               return pending;
             }
-            return json({ items: [] });
+            return json({ items: [], nextCursor: null });
           },
         }),
       });
@@ -353,8 +362,8 @@ describe('organization people and service access', () => {
     await renderApp('/admin/o/o1/members', {
       session: 'admin',
       handlers: handlers({
-        '/api/v1/orgs/o1/memberships': () => json({ items: members }),
-        '/api/v1/orgs/o1/invitations': () => json({ items: invitations }),
+        '/api/v1/orgs/o1/memberships': () => json({ items: members, nextCursor: null }),
+        '/api/v1/orgs/o1/invitations': () => json({ items: invitations, nextCursor: null }),
         '/api/v1/orgs/o1/memberships/member-1': (url, init) => {
           deletes.push(`${init?.method} ${url.pathname}`);
           members = members.filter((member) => member.id !== 'member-1');
@@ -419,13 +428,14 @@ describe('organization people and service access', () => {
       handlers: handlers({
         '/api/v1/orgs/memberships/me': () => {
           membershipRequests += 1;
-          return json({ items: currentMemberships });
+          return json({ items: currentMemberships, nextCursor: null });
         },
         '/api/v1/orgs/o1/memberships': () =>
           json({
             items: currentMemberships
               .filter((m) => m.orgId === 'o1')
               .map((m) => ({ ...m, userName: null, userEmail: 'u1@example.test' })),
+            nextCursor: null,
           }),
         '/api/v1/orgs/o1/memberships/member-1': (_url, init) => {
           expect(init?.method).toBe('DELETE');
@@ -446,7 +456,10 @@ describe('organization people and service access', () => {
     await user.click(within(own).getByRole('button', { name: 'Remove my access' }));
     await waitFor(() => {
       expect(membershipRequests).toBeGreaterThan(requestsBeforeRevoke);
-      expect(queryClient.getQueryData(['org-memberships', 'me'])).toEqual({ items: [other] });
+      expect(queryClient.getQueryData(['org-memberships', 'me'])).toEqual({
+        items: [other],
+        nextCursor: null,
+      });
     });
     await waitFor(() =>
       expect(screen.getByRole('combobox', { name: /^Scope:/ })).toHaveTextContent(
@@ -467,8 +480,8 @@ describe('organization people and service access', () => {
     await renderApp('/admin/o/o1/members', {
       session: 'admin',
       handlers: handlers({
-        '/api/v1/orgs/o1/memberships': () => json({ items: [membership()] }),
-        '/api/v1/orgs/o1/invitations': () => json({ items: [invitation()] }),
+        '/api/v1/orgs/o1/memberships': () => json({ items: [membership()], nextCursor: null }),
+        '/api/v1/orgs/o1/invitations': () => json({ items: [invitation()], nextCursor: null }),
         '/api/v1/orgs/o1/memberships/member-1': reject,
         '/api/v1/orgs/o1/invitations/invite-1': reject,
       }),
@@ -515,8 +528,8 @@ describe('organization people and service access', () => {
       await renderApp('/admin/o/o1/members', {
         session: 'admin',
         handlers: handlers({
-          '/api/v1/orgs/o1/memberships': () => json({ items: [membership()] }),
-          '/api/v1/orgs/o1/invitations': () => json({ items: [invitation()] }),
+          '/api/v1/orgs/o1/memberships': () => json({ items: [membership()], nextCursor: null }),
+          '/api/v1/orgs/o1/invitations': () => json({ items: [invitation()], nextCursor: null }),
           [`/api/v1/orgs/o1/${resource}`]: () =>
             problem(500, 'internal_error', 'private server detail'),
         }),
@@ -541,7 +554,7 @@ describe('organization people and service access', () => {
             posts.push(JSON.parse(String(init.body)));
             return problem(503, 'unavailable', 'private server detail');
           }
-          return json({ items: [] });
+          return json({ items: [], nextCursor: null });
         },
       }),
     });
@@ -563,7 +576,7 @@ describe('organization people and service access', () => {
     await renderApp('/admin/o/o1/members', {
       session: 'admin',
       handlers: handlers({
-        '/api/v1/orgs/o1/memberships': () => json({ items: [membership()] }),
+        '/api/v1/orgs/o1/memberships': () => json({ items: [membership()], nextCursor: null }),
         '/api/v1/orgs/o1/memberships/member-1': () =>
           problem(
             409,
@@ -591,7 +604,7 @@ describe('organization people and service access', () => {
       handlers: handlers({
         '/api/v1/orgs/o1/invitations': (_url, init) => {
           if (init?.method === 'POST') posts.push(init.body);
-          return json({ items: [] });
+          return json({ items: [], nextCursor: null });
         },
       }),
     });

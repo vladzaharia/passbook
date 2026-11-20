@@ -95,11 +95,12 @@ describe('Test inbox', () => {
   });
 
   it.each([
-    ['no email', { items: [] }, 'Verify an email address'],
+    ['no email', { items: [], nextCursor: null }, 'Verify an email address'],
     [
       'unverified email',
       {
         items: [{ email: 'admin@example.com', verifiedAt: null, verifiedVia: null, primary: true }],
+        nextCursor: null,
       },
       'Verify an email address',
     ],
@@ -151,6 +152,7 @@ describe('Test inbox', () => {
                     ]
                   : []),
               ],
+              nextCursor: null,
             }),
           '/api/v1/test-inbox/e1/send-to-me': () => json({ to: 'own@example.com' }),
         },
@@ -176,7 +178,7 @@ describe('Test inbox', () => {
     let sends = 0;
     stubFetch({
       '/api/v1/session': () => json(sessionFixture('admin')),
-      '/api/v1/orgs/memberships/me': () => json({ items: [operator] }),
+      '/api/v1/orgs/memberships/me': () => json({ items: [operator], nextCursor: null }),
       '/api/v1/orgs': () => json({ items: [], nextCursor: null }),
       ...handlers,
       '/api/v1/test-inbox/e1/send-to-me': () => {
@@ -212,7 +214,10 @@ describe('Test inbox', () => {
     });
     await enabledSendButton();
     act(() => {
-      queryClient.setQueryData(['test-inbox', 'verified-emails', 'u1'], { items: [] });
+      queryClient.setQueryData(['test-inbox', 'verified-emails', 'u1'], {
+        items: [],
+        nextCursor: null,
+      });
     });
     expect(await screen.findByText(/Verify an email address/)).toBeInTheDocument();
     const button = screen.getByRole('button', { name: 'Send to me' });
@@ -232,7 +237,8 @@ describe('Test inbox', () => {
       selectedOrg: 'o1',
       handlers: {
         ...handlers,
-        '/api/v1/me/emails': () => json(++emailReads === 1 ? verifiedEmails : { items: [] }),
+        '/api/v1/me/emails': () =>
+          json(++emailReads === 1 ? verifiedEmails : { items: [], nextCursor: null }),
         '/api/v1/test-inbox/e1/send-to-me': () => {
           sends++;
           return problem(422, 'NO_VERIFIED_EMAIL', 'Verify your email.');
@@ -258,7 +264,7 @@ describe('Test inbox', () => {
     });
     await enabledSendButton();
     act(() => {
-      queryClient.setQueryData(['org-memberships', 'me'], { items: [reader] });
+      queryClient.setQueryData(['org-memberships', 'me'], { items: [reader], nextCursor: null });
     });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Send to me' })).toBeDisabled());
     await user.click(screen.getByRole('button', { name: 'Send to me' }));

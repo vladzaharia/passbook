@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { fixtureOutcome } from '../machine/fixture-data.test-support.ts';
-import { buzz, HAPTIC_PATTERNS } from './haptics.ts';
+import { buzz, canBuzz, HAPTIC_PATTERNS } from './haptics.ts';
 import { useVerdictHaptic } from './use-verdict-haptic.ts';
 
 describe('buzz', () => {
@@ -46,7 +46,21 @@ describe('buzz', () => {
   it('does nothing where neither exists (iOS Safari), or for a kind with no pattern', () => {
     expect(buzz('ok', undefined, {} as Navigator)).toBe(false);
     expect(buzz('ready', { postMessage: vi.fn() }, { vibrate: vi.fn() }, true)).toBe(false);
-    expect(buzz('system', undefined, { vibrate: vi.fn() })).toBe(false);
+    expect(buzz('undo', undefined, { vibrate: vi.fn() })).toBe(false);
+  });
+
+  it('a system verdict is one long pulse', () => {
+    const vibrate = vi.fn(() => true);
+    expect(HAPTIC_PATTERNS.system).toEqual([200]);
+    expect(buzz('system', undefined, { vibrate })).toBe(true);
+    expect(vibrate).toHaveBeenCalledWith([200]);
+  });
+
+  it('knows whether the device can buzz', () => {
+    expect(canBuzz(undefined, {} as Navigator, false)).toBe(false);
+    expect(canBuzz(undefined, { vibrate: vi.fn() }, false)).toBe(true);
+    expect(canBuzz({ postMessage: vi.fn() }, {} as Navigator, true)).toBe(true);
+    expect(canBuzz({ postMessage: vi.fn() }, {} as Navigator, false)).toBe(false);
   });
 });
 
@@ -67,6 +81,17 @@ describe('useVerdictHaptic', () => {
     rerender({ o: fixtureOutcome('refused', 'voided') });
     expect(vibrate).toHaveBeenCalledTimes(2);
     expect(vibrate).toHaveBeenLastCalledWith([...HAPTIC_PATTERNS.refused]);
+  });
+
+  it('buzzes for a system verdict and a read saved offline, though the device made them', () => {
+    const vibrate = spy();
+    const { rerender } = renderHook(({ o }) => useVerdictHaptic(o), {
+      initialProps: { o: null as ReturnType<typeof fixtureOutcome> | null },
+    });
+    rerender({ o: fixtureOutcome('system', 'network', { local: true }) });
+    expect(vibrate).toHaveBeenLastCalledWith([...HAPTIC_PATTERNS.system]);
+    rerender({ o: fixtureOutcome('queued', null, { local: true }) });
+    expect(vibrate).toHaveBeenLastCalledWith([...HAPTIC_PATTERNS.ok]);
   });
 
   it('is silent with no verdict, a replay or a decision made on the device', () => {

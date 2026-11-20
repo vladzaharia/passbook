@@ -43,6 +43,7 @@ function principalHandlers(current: () => string): Record<string, FetchHandler> 
         items: [
           membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug, userId: current() }),
         ],
+        nextCursor: null,
       }),
   };
 }
@@ -86,8 +87,8 @@ function handlers(
         reissueRequired: false,
         updatedAt: 1,
       }),
-    '/api/v1/passes/p1/assets': () => json({ items: [] }),
-    '/api/v1/delivery': () => json({ items: server.pass.deliveries }),
+    '/api/v1/passes/p1/assets': () => json({ items: [], nextCursor: null }),
+    '/api/v1/delivery': () => json({ items: server.pass.deliveries, nextCursor: null }),
     '/api/v1/audit': () =>
       json({
         items: [

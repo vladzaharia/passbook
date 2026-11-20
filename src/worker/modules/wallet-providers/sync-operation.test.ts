@@ -439,6 +439,29 @@ describe('wallet provider operation fences', () => {
     expect(mocks.orgReason).not.toHaveBeenCalled();
   });
 
+  it('sends a Google update across a same-identity rotation and refuses a moved account epoch (D2)', async () => {
+    const withEpoch = { ...operation, accountEpoch: 3 };
+    const release = (accountEpoch: number) => ({
+      release: {
+        id: 'native-1',
+        accountId: 'account-1',
+        // The release keeps the revision it was approved under; a rotation moved the account to 9.
+        accountRevision: 4,
+        accountEpoch,
+        providerIdentityHash: 'a'.repeat(64),
+      },
+      projection,
+    });
+    mocks.getOperation.mockResolvedValue(claimed(withEpoch));
+    mocks.approved.mockResolvedValue(release(3));
+    expect(await runWalletProviderOperation(ctx, withEpoch)).toBe('completed');
+    expect(mocks.googleObject).toHaveBeenCalled();
+    mocks.googleObject.mockClear();
+    mocks.approved.mockResolvedValue(release(2));
+    await runWalletProviderOperation(ctx, withEpoch);
+    expect(mocks.googleObject).not.toHaveBeenCalled();
+  });
+
   it('does not issue a second provider request for an already claimed operation', async () => {
     mocks.claim.mockResolvedValue('already_claimed');
     expect(await runWalletProviderOperation(ctx, operation)).toBe('not_claimed');

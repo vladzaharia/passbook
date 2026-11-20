@@ -32,7 +32,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | Scope | Allows |
 |---|---|
 | `passes:read` | GET passes, assets, versions, delivery, events, devices, bundles |
-| `passes:write` | create, update, void, remove, refresh, assets, resend email, bundles |
+| `passes:write` | create, update, void, remove, refresh, assets, resend email, bundles, `POST /passes/bulk-reissue` (an org key rebuilds its own org, `orgId` defaults to it; a platform key must name the org; a test key rebuilds test mode; one active run per target, else 409 `BULK_RUN_ACTIVE` with the run id; 6 starts per key per hour, then 429) |
 | `holders:write` | assign, reassign, unassign holders |
 | `templates:read` | GET templates |
 | `messages:write` | broadcasts: list, read, create, edit, preview, send, send again, cancel, per-pass items. A `change` also needs `passes:write` |
@@ -42,6 +42,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
 | `webhooks:manage` | read and manage outbound webhook endpoints, deliveries, replay and test events (see Outbound webhooks). Neither `connections:*` nor `passes:*` scopes reach these routes, and this scope reaches nothing else |
 | `brand:manage` | read and edit the org's brand kit (`/api/v1/brand`): web logo, accent, mark level. Reaches nothing else |
+| `api-keys:write` | child keys of the calling key: mint, list, read, rotate, retire, revoke; rotate itself. A service key only (see Child keys) |
 | `scanning:write` | `POST /templates/{id}/scan-setup`: make a template's scanning events and session. Needs `scanning:manage` to delegate, so only `org_admin` can mint it. It reads the event names, venues and dates on the template's issued passes, and reaches nothing else |
 
 ### Token types
@@ -64,6 +65,30 @@ A secret scanner can match the labels. Keys are never logged: the logger and aud
 **Expiry and retirement.** `expiresAt` is fixed when the key is made. `POST /api-keys/{id}/retire` with
 `{"orgId": ..., "retireAt": <ms>}` ends the key at that instant, once, never after `expiresAt`
 (`409 API_KEY_RETIRE_SET` for a second call). Revoking is immediate and permanent.
+
+**Rotation.** `POST /api-keys/{id}/rotate` with `{"orgId": ..., "overlapHours": 0-168}` (default 24) makes a new key and
+retires the old one `overlapHours` later (never after its `expiresAt`), in one batch. The response is `{key, previous}`; `key.secret`
+is shown once and works at once. The new key has the old one's stored scopes, roles, mode, addresses, expiry, limits and terminals,
+and `rotatedFrom` names the old key. A member can rotate a key only if they could mint it (`403 API_KEY_SCOPE_EXCEEDS_CREATOR`), in
+the key's mode (`403 API_KEY_MODE_MISMATCH`); a personal key only its own member. A key that is revoked, retiring or expired is
+`409 API_KEY_NOT_ROTATABLE`. Rotate and mint take `Idempotency-Key`: a retry returns the stored key without its secret (`Idempotent-Replayed: true`), so it never makes a second key; a client that lost the response rotates again. A key with `api-keys:write` rotates itself with `POST /api-keys/me/rotate` (`{"overlapHours"}`).
+
+**Child keys.** A service key with `api-keys:write` mints a child with `POST /api-keys` (the same body: `orgId` is the key's own).
+The child is narrower than its parent in every dimension: scopes (never `api-keys:write` or `scans:write`: one level only),
+mode (the parent's), expiry (not later; omitted means the parent's), `ipAllow` (each range inside one of the parent's; omitted means
+the parent's), `templateIds` and `passStyles` (inside the parent's). Anything wider is `403 API_KEY_CHILD_WIDER` or
+`403 API_KEY_SCOPE_EXCEEDS_CREATOR`. A key reaches only its own children: `GET /api-keys`, `GET /api-keys/{id}`,
+`GET /api-keys/{id}/activity`, `POST /api-keys/{id}/rotate`, `POST /api-keys/{id}/retire` and `DELETE /api-keys/{id}` take a child of
+the caller, and any other key is `404 API_KEY_NOT_FOUND`. A child ends with its parent: revoking the parent revokes its children,
+and retiring or rotating it retires them at the same instant; a retiring key mints no more (`403 API_KEY_PARENT_RETIRING`). A key holds at
+most 50 open children (`422 API_KEY_CHILD_LIMIT`). Revoking a key also revokes the keys it replaced itself with through
+`/me/rotate`, hop by hop; a key a person rotated is not touched. A key without `api-keys:write` is `403 MISSING_SCOPE`. A key caller is
+not told which member made a key.
+
+**Activity.** `GET /api-keys/{id}` adds the parent, the key that replaced it, its open children and the network of its last use.
+`GET /api-keys/{id}/activity` gives the last use, the calls of the last 30 days by action, and the latest calls (time, action, target,
+network, and for a refused call its code). It reads the audit log: no request bodies and no secrets. A member needs `audit:read` for it (or
+the key is their own personal key); `GET /api-keys/{id}` needs only `integrations:read`.
 
 **IP allowlist.** `ipAllow` lists addresses or CIDR ranges (`203.0.113.0/24`, `2001:db8::/32`), set when the key is made
 and never changed; ranges wider than an IPv4 /8 or IPv6 /32, or lists that cover every address, are refused (`422 API_KEY_IP_TOO_BROAD`). A request from any other address, or with none, is `401 INVALID_API_KEY`, the same as a wrong key.
@@ -99,7 +124,7 @@ only, so `RateLimit-Remaining` is sent on 429 alone. Other limits (login, scanne
 | Header | Where | Meaning |
 |---|---|---|
 | `Authorization: Bearer <key>` | all key routes | the API key |
-| `Idempotency-Key` | pass create, resend | 1 to 200 characters; a retry returns the first result; the same key with another request is 422 `IDEMPOTENCY_KEY_REUSED`, a repeat while the first runs is 409 `IDEMPOTENCY_IN_PROGRESS` |
+| `Idempotency-Key` | pass create, resend, bulk email, bundle email | 1 to 200 characters; a retry returns the first result; the same key with another request is 422 `IDEMPOTENCY_KEY_REUSED`, a repeat while the first runs is 409 `IDEMPOTENCY_IN_PROGRESS` |
 | `If-Match: <version>` | pass update | optimistic concurrency; stale is `412 VERSION_CONFLICT` |
 | `x-passbook-mode` | console sessions | `test` selects Test mode; keys use their own mode |
 
@@ -216,6 +241,21 @@ Clients written against the earlier API keep working with these differences (as 
 - **Cutover**: uploaded templates start with a `legacy` release at their active version, so
   existing integrations keep creating passes. New versions need a candidate, a second reviewer
   and a release (see [Approved template releases](#approved-template-releases)).
+- **Lists and filters**: every collection `GET` returns `{ items, nextCursor }` and takes `cursor`;
+  `nextCursor` is `null` on the last page and on lists that return everything at once. `after` stays
+  only on the `/events` and `/scan/live` streams. `createdAfter`, `createdBefore` and
+  `updatedSince` (ms) are the names for `from`, `to` and `since`; the old names still work and are
+  marked deprecated in the reference. `orgId` is `x-platform-only`: an org-bound key never sends it.
+
+## Conventions for new routes
+
+- **Status**: creating a resource returns `201`; queuing a job returns `202` and names the job
+  or resource to poll; an action on an existing resource returns `200`. `POST /roll-calls` and
+  `POST /offboard` answer `200` today; they change only under a dated version.
+- **Lists**: return `pageOf(item)` (`{ items, nextCursor }`) and take `cursor` and `limit`. Use
+  `after` only for an ordered stream.
+- **Time filters**: `createdAfter`, `createdBefore`, `updatedSince`, in ms.
+- **Path ids**: one name per resource, `{id}` or `{orgId}`; never both for the same path.
 
 ## Signed webhooks
 
@@ -234,8 +274,7 @@ The MAC is HMAC-SHA-256 over `<timestamp>.<raw body>`, hex, prefixed `v1=`. The 
 seconds; the server refuses one older than 5 minutes or more than 1 minute ahead, a body over
 256 KB, and a signature that does not match (constant-time compare). Use the exact bytes you
 send: re-serializing the JSON changes the MAC. Rotate the secret with
-`POST /connections/{id}/webhook-secret`. PassBook sends no outbound webhooks yet; when it does, they
-will use this scheme.
+`POST /connections/{id}/webhook-secret`.
 
 ## Errors
 
@@ -251,6 +290,8 @@ Branch on `code`, not `detail`. Quote `requestId` when asking for help.
 `FEATURE_NOT_INCLUDED` (403) carries `feature`: the organization's plan lacks it, so ask PassBook to turn it on. Every key call of an organization also needs its `api` feature: `off` refuses all, `read` allows only GET and HEAD (so `POST` reads such as `/broadcasts/preview` and `/scan/lookup` are refused too), `full` allows all. Platform-wide keys are not limited by it. Operations that need a feature carry `x-feature` in the OpenAPI document.
 
 Delivery features follow the plan too: Google and Samsung Wallet (`wallet.google`, `wallet.samsung`), `print` and `nfc` (Basic to bind tags, Secure to create keysets). A channel the plan lacks reads `{ "on": false, "source": "platform", "reason": "not_included" }`, creating a print, binding a tag or turning `nfc.tags` on answers `FEATURE_NOT_INCLUDED`, and the settings entry for `nfc.tags` carries `blockedByPlan`. A downgrade only pauses: passes, copies, printed tickets and tag bindings stay (a printed ticket and a bound tag still admit at the door), only new prints, binds and wallet offers are refused, and an upgrade turns them back on.
+
+`FEATURE_LIMIT_REACHED` (403) carries `feature`, `limit` and `used`: a create would pass the organization's cap for that feature. It covers live and test passes, templates, members (pending invitations count), API keys, scanner devices, webhook endpoints, connections, broadcasts a day and join cards a day (a join visitor sees only the daily-limit answer). A downgrade never removes anything: what exists stays, only new creates are refused, and a removed or revoked item frees its slot. A pass import that reaches the limit stops creating: it reports the rest as `skipped` (`progress.skipped`, row code `FEATURE_LIMIT_REACHED`) and still applies its updates. A connection sync records each refused record as failed and goes on. Daily limits count per mode, so test-mode work never uses up the live allowance. Emails a day (`email.perDay`) lower the organization's own daily email cap and answer `EMAIL_RATE_LIMITED`.
 
 ## Approved template releases
 
@@ -770,6 +811,21 @@ A roll call freezes who is inside and records who is confirmed present or out. C
 | `POST /roll-calls/{id}/end` | end it; ending twice answers with the record. `scans:write` |
 
 `orgId` is for signed-in users; an org-bound key names its org. Each person carries `presence` (`in`, `left`, `lapsed`), `late` (tapped in after the start) and `notConfirmedOut` (the clock closed the stay and no one confirmed it). Out also exits the person from the place and taking it back puts them back in; for an API key Out is a confirmation alone. A key with `scans:write` acts as its terminals: it reaches only the calls of their sessions (`sessionId`), anything else is 404. Names are read from the pass when a call is shown, never stored; ended calls leave with the scans retention window (holds honoured) and a deleted pass takes its marks. Scanners use the same calls under `/scan/roll-call` with the device's own sign-in; a key reaches only `/roll-calls`.
+
+## Person history and staff notes
+
+Paired scanners and scanning consoles call these under `/api/v1/scan/passes/{id}`; the pass must be in the device's org, mode and template scope, else 404 `PASS_NOT_FOUND`.
+
+- `GET .../history?filter=all|visits|changes&cursor=&limit=` (1-50, default 20) is the last 30 days, newest first. `nextCursor` is null on the last page; send it back as `cursor`. Each line has `event` (`scanned`, `checked_in`, `checked_out`, `refused`, `held`, `let_in`, `undone`, `value`, `note`), `reason`, `label`, `place`, `staff` and `amount`. Door sees visits only, with no `staff`, `amount` or notes; Desk and above see all. A scan whose signed policy does not hold is `scanned` with only its time. An undo is not a line: the scan it undid is `undone`. Notes appear as `note` lines without their text.
+- `GET .../notes` lists up to 100 notes, newest first, each with `own` (the viewer wrote it) and `edited`. Desk and above, never a terminal; Door is 403 `NOTE_ROLE`.
+- `POST .../notes` `{ body, idempotencyKey }` adds one. `body` is one plain line of 1-280 characters; a repeated `idempotencyKey` returns the first note. Desk and above on a paired, non-terminal scan device; 20 per minute per device (429). A pass holds 100 notes (409 `NOTE_CAP`) and one device adds at most 10 to one pass a day (409 `NOTE_DEVICE_CAP`).
+- `PATCH .../notes/{noteId}` `{ body }` and `DELETE .../notes/{noteId}`: the note's author, or a Manager and above (also from the console). Anyone else gets 404 `NOTE_NOT_FOUND`.
+- Audited as `scan.note.add`, `.edit` and `.delete` with the length, never the text. Opening history (its first page) and notes leaves `scan.history.read` and `scan.note.read` with a count and no content.
+- History and notes are read only while the session is active and inside its hours; a Manager and above reads through a pause. A mixed-scope device reads only its own events.
+
+A completed credential transfer (a new holder) deletes the pass's notes, and history starts at the transfer: the next holder never sees the previous one's visits or notes.
+
+Notes are staff-only: never on a customer screen, a pass or an email. They are deleted with the pass, age out with the scans retention window (holds honoured; Test-mode notes follow the sandbox window), and are in the org export and purge.
 
 ## Scanner history
 

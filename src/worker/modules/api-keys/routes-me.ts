@@ -1,15 +1,16 @@
 import { ApiKeyMeSchema } from '../../../shared/contracts/index.ts';
 import { keyCaller } from '../../platform/auth.ts';
 import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
-import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { createRouter, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { describeOwnKey } from './service.ts';
 
 /** GET /api/v1/api-keys/me: the calling key, by bearer. Mounted ahead of the session-only key routes. */
 export const apiKeyMeRoutes = createRouter();
-guard(
-  apiKeyMeRoutes,
+// Only the bare path, for reads: `/me/rotate` and anything else belong to the router that checks `api-keys:write`.
+apiKeyMeRoutes.get(
+  '/',
   declareKeyAccess(
     async (c, next) => {
       const bearer = /^Bearer\s+(\S+)$/i.exec(c.req.header('authorization') ?? '')?.[1];

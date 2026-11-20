@@ -36,7 +36,7 @@ const toDto = (a: AssetRow) => ({
 export async function listPassAssets(ctx: ServiceContext, passId: string, scope: ScopeArg) {
   if (!(await getPass(ctx.env.DB, passId, scope)))
     throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-  return { items: (await listAssets(ctx.env.DB, passId)).map(toDto) };
+  return { items: (await listAssets(ctx.env.DB, passId)).map(toDto), nextCursor: null };
 }
 
 async function rebuild(

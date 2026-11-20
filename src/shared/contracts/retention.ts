@@ -28,7 +28,7 @@ export const HoldSchema = z.object({
   /** The caller may release it: an org administrator cannot release a platform hold. */
   canRelease: z.boolean(),
 });
-export const HoldListSchema = z.object({ items: z.array(HoldSchema) });
+export const HoldListSchema = pageOf(HoldSchema);
 
 export const ReceiptSchema = z.object({
   id: IdSchema,

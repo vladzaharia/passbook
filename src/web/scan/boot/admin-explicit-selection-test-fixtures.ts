@@ -103,7 +103,7 @@ export function setup({
   const fetch = stubFetch({
     '/api/v1/session': () => (identityResponse ? identityResponse() : json(identity)),
     '/api/v1/orgs/memberships/me': () =>
-      membershipResponse ? membershipResponse() : json({ items: memberships }),
+      membershipResponse ? membershipResponse() : json({ items: memberships, nextCursor: null }),
     '/api/v1/scanning-sessions': (url, init) => {
       if (init?.method === 'POST') return json(createdSession, 201);
       const orgId = url.searchParams.get('orgId') ?? '';

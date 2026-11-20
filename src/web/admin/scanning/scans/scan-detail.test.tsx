@@ -154,7 +154,7 @@ describe('Scan history release context', () => {
   });
 
   it('shows no active release without changing the historical reason', async () => {
-    const state = open({ release: () => json({ active: null, items: [] }) });
+    const state = open({ release: () => json({ active: null, items: [], nextCursor: null }) });
     await state.render;
     const sheet = await openScan();
     expect(await within(sheet).findByText('No active approved release')).toBeInTheDocument();

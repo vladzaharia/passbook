@@ -179,7 +179,7 @@ export function releaseServer(
   stubFetch({
     [`${base}/candidates`]: (url, init) => {
       const request = record(url, init);
-      if (request.method === 'GET') return json({ items: state.candidates });
+      if (request.method === 'GET') return json({ items: state.candidates, nextCursor: null });
       const created = candidate({
         orgId: String(request.body.orgId),
         mode: request.body.mode === 'test' ? 'test' : 'live',
@@ -219,6 +219,7 @@ export function releaseServer(
           active: state.active,
           items: state.history,
           promotable: state.promotable,
+          nextCursor: null,
         });
       if (options.publishError) return options.publishError();
       const selected = state.candidates.find((item) => item.id === request.body.candidateId);

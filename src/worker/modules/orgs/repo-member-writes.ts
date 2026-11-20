@@ -2,6 +2,7 @@ import { grant } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
+import { withinLimit } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
@@ -25,6 +26,16 @@ export function notLastOrgAdmin(membershipId: string): Check {
     },
   };
 }
+
+/** Active members and pending invitations count together against the `members` limit. */
+export const membersLimit = (now: number): Check =>
+  withinLimit(
+    'members',
+    `SELECT (SELECT COUNT(*) FROM org_memberships m WHERE m.org_id = {org} AND m.revoked_at IS NULL)
+      + (SELECT COUNT(*) FROM org_invitations i WHERE i.org_id = {org} AND i.revoked_at IS NULL
+          AND i.accepted_at IS NULL AND i.expires_at > ?)`,
+    [now],
+  );
 
 export interface NewInvitation {
   id: string;

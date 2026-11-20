@@ -4,6 +4,7 @@ import { all, first, placeholders, run, type SqlValue, stmt } from '../../platfo
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
 import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
+import { planGate } from './repo-day-limit.ts';
 
 export type { CountRow, ItemRow } from './repo-outcomes.ts';
 export { countItems, handledPassIds, insertItems } from './repo-outcomes.ts';
@@ -108,7 +109,7 @@ export function insertBroadcastStmt(db: D1Database, b: NewBroadcast): D1Prepared
   );
 }
 
-/** Insert a user-requested draft/schedule only while its checked authority is still current. */
+/** Insert a user-requested draft/schedule only while its checked authority and the plan's daily cap hold. */
 export function insertAuthorizedBroadcastStmt(
   db: D1Database,
   b: NewBroadcast,
@@ -116,13 +117,15 @@ export function insertAuthorizedBroadcastStmt(
   now: number,
 ): D1PreparedStatement {
   const guard = broadcastAuthority(authority, now, b.kind === 'change');
+  const plan = planGate(b.ruleId, b.orgId, b.mode, b.now);
+  const tenant = [b.orgId, authority.orgId, b.mode, authority.mode];
   return stmt(
     db,
     `INSERT OR IGNORE INTO broadcasts (id, org_id, mode, kind, name, state, target, patch, notify, at,
        clear_after, expect, parent_id, rule_id, window_key, created_by_type, created_by_id, created_at, started_at)
      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-     WHERE ? = ? AND ? = ? AND (${guard.sql})`,
-    [...broadcastValues(b), b.orgId, authority.orgId, b.mode, authority.mode, ...guard.params],
+     WHERE ? = ? AND ? = ? AND (${guard.sql})${plan.sql}`,
+    [...broadcastValues(b), ...tenant, ...guard.params, ...plan.params],
   );
 }
 

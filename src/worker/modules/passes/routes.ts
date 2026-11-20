@@ -50,10 +50,9 @@ export const passesRoutes = createRouter({ bodyLimit: false });
 passesRoutes.use('*', defaultBodyLimit(/\/(?:assets\/[^/]+|member-photo)$/));
 guard(
   passesRoutes,
-  // Rebuilding a whole template stays with a signed-in user (routes-bulk.ts), so keys are not offered it.
   declareKeyAccess(
     requireTenantSessionOrApiKey(methodScope({ read: 'passes:read', write: 'passes:write' })),
-    { read: ['passes:read'], write: ['passes:write'], only: /^(?!.*\/bulk-reissue$)/ },
+    { read: ['passes:read'], write: ['passes:write'] },
   ),
 );
 
