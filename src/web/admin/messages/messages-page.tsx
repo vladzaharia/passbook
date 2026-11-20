@@ -1,12 +1,14 @@
 import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { BroadcastDto, BroadcastState } from '@/shared/contracts/broadcasts.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { ENTITY } from '../../lib/entities.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
   Button,
+  Card,
+  CardHeader,
   DataTable,
   EmptyState,
   ErrorState,
@@ -23,7 +25,9 @@ import { ModePill } from '../../ui/layout/mode-pill.tsx';
 import { useBroadcastPages } from './api.ts';
 import { countsLine, KIND_LABEL, STATE_FILTERS, whenLine } from './labels.ts';
 import { BroadcastProgress } from './progress.tsx';
-import { RulesSection } from './rules-section.tsx';
+import { RuleEditor } from './rule-editor.tsx';
+import { useRules } from './rules-api.ts';
+import { type EditingRule, RulesSection } from './rules-section.tsx';
 
 const ALL = 'all';
 
@@ -75,6 +79,8 @@ function ScopedMessagesPage({
   onSearch: (patch: Partial<MessagesSearch>) => void;
 }) {
   const list = useBroadcastPages({ orgId, state: search.state });
+  const rules = useRules(orgId);
+  const [editing, setEditing] = useState<EditingRule>(null);
   const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   // Test mode already says so in the header; a pill on every row would repeat it.
   const mixed = rows.some((r) => r.mode !== 'test');
@@ -147,59 +153,108 @@ function ScopedMessagesPage({
         <Link to="/admin/messages/new">New message</Link>
       </Button>
     ) : null;
+  // Nothing sent and nothing automatic: one empty state for the page, not one per section.
+  const bare =
+    !list.isPending &&
+    !list.isError &&
+    rows.length === 0 &&
+    !filtered &&
+    !rules.isPending &&
+    (rules.data?.items.length ?? 0) === 0;
 
   return (
     <>
-      <PageHeader title="Messages" actions={create('primary')} />
-      {list.isError && rows.length === 0 ? (
-        <ErrorState error={list.error} onRetry={() => void list.refetch()} />
-      ) : (
-        <DataTable
-          caption="Messages"
-          columns={columns}
-          data={rows}
-          getRowId={(r) => r.id}
-          loading={list.isPending}
-          fetching={list.isFetching && !list.isFetchingNextPage}
-          filtered={filtered}
-          toolbar={
-            <FilterBar
-              filters={[
-                {
-                  id: 'state',
-                  label: 'State',
-                  value: search.state ?? ALL,
-                  defaultValue: ALL,
-                  options: [
-                    { value: ALL, label: 'All' },
-                    ...STATE_FILTERS.map(([value, label]) => ({ value, label })),
-                  ],
-                  onChange: (v) =>
-                    onSearch({ state: v === ALL ? undefined : (v as BroadcastState) }),
-                },
-              ]}
-              onClear={clear}
-            />
-          }
-          emptyFiltered={<FilteredEmpty entity="broadcast" onClear={clear} />}
-          empty={
-            <EmptyState
-              art={ENTITY.broadcast.art}
-              title="No messages"
-              description="Send a note to pass holders' wallets."
-            />
-          }
-          footer={
-            <LoadMore
-              query={list}
-              shown={rows.length || undefined}
-              noun={['message', 'messages']}
-              scoped
-            />
+      <PageHeader title="Messages" actions={bare ? undefined : create('primary')} />
+      {bare ? (
+        <EmptyState
+          art={ENTITY.broadcast.art}
+          title="No messages yet"
+          description="Send a note to pass holders' wallets, now or on a schedule."
+          action={
+            canCreate ? (
+              <div className="flex flex-wrap justify-center gap-2 max-sm:flex-col max-sm:[&>*]:w-full">
+                {create('primary')}
+                <Button
+                  variant="outline"
+                  iconStart={<Plus aria-hidden />}
+                  onClick={() => setEditing({})}
+                >
+                  New automatic message
+                </Button>
+              </div>
+            ) : undefined
           }
         />
+      ) : (
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardHeader title="Sent" />
+            {list.isError && rows.length === 0 ? (
+              <ErrorState inline error={list.error} onRetry={() => void list.refetch()} />
+            ) : (
+              <DataTable
+                bare
+                caption="Messages"
+                columns={columns}
+                data={rows}
+                getRowId={(r) => r.id}
+                loading={list.isPending}
+                fetching={list.isFetching && !list.isFetchingNextPage}
+                filtered={filtered}
+                toolbar={
+                  <div className="px-3 py-3">
+                    <FilterBar
+                      filters={[
+                        {
+                          id: 'state',
+                          label: 'State',
+                          value: search.state ?? ALL,
+                          defaultValue: ALL,
+                          options: [
+                            { value: ALL, label: 'All' },
+                            ...STATE_FILTERS.map(([value, label]) => ({ value, label })),
+                          ],
+                          onChange: (v) =>
+                            onSearch({ state: v === ALL ? undefined : (v as BroadcastState) }),
+                        },
+                      ]}
+                      onClear={clear}
+                    />
+                  </div>
+                }
+                emptyFiltered={<FilteredEmpty inline entity="broadcast" onClear={clear} />}
+                empty={
+                  <EmptyState
+                    inline
+                    art={ENTITY.broadcast.art}
+                    title="No messages"
+                    description="Send a note to pass holders' wallets."
+                  />
+                }
+                footer={
+                  <div className="px-3 pb-3">
+                    <LoadMore
+                      query={list}
+                      shown={rows.length || undefined}
+                      noun={['message', 'messages']}
+                      scoped
+                    />
+                  </div>
+                }
+              />
+            )}
+          </Card>
+          <RulesSection orgId={orgId} onEdit={setEditing} />
+        </div>
       )}
-      <RulesSection orgId={orgId} />
+      {editing ? (
+        <RuleEditor
+          key={editing.rule?.id ?? 'new'}
+          orgId={orgId}
+          rule={editing.rule}
+          onClose={() => setEditing(null)}
+        />
+      ) : null}
     </>
   );
 }

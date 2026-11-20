@@ -201,7 +201,13 @@ export function PassesListPage({
               <EmptyState
                 art="passes"
                 title="No passes yet"
-                action={canOperate ? create('primary') : undefined}
+                action={
+                  canOperate ? (
+                    <div className="flex flex-wrap justify-center gap-2 max-sm:flex-col max-sm:[&>*]:w-full">
+                      {create('primary')}
+                    </div>
+                  ) : undefined
+                }
               />
             }
             emptyFiltered={<FilteredEmpty entity="pass" onClear={() => onSearch(CLEARED)} />}

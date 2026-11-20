@@ -151,27 +151,26 @@ export function OrgOverviewPage({
         ) : activity.isError || !data ? (
           <ErrorState error={activity.error} onRetry={() => activity.refetch()} />
         ) : empty ? (
-          <>
+          // The checklist is the page's empty state while it is up; the box returns once it is gone.
+          checklist && !dismissed && setup.data ? (
+            <GetStarted
+              setup={setup.data.setup}
+              organization={membership?.orgName}
+              onDismiss={dismiss}
+            />
+          ) : (
             <EmptyState
               art="passes"
               title="No passes yet"
-              // With the checklist up, its first open step is the one action.
               action={
-                canOperate && !(checklist && !dismissed) ? (
+                canOperate ? (
                   <Button asChild variant="primary" iconStart={<Plus aria-hidden />}>
                     <Link to="/admin/passes/new">New pass</Link>
                   </Button>
                 ) : undefined
               }
             />
-            {checklist && !dismissed && setup.data ? (
-              <GetStarted
-                setup={setup.data.setup}
-                organization={membership?.orgName}
-                onDismiss={dismiss}
-              />
-            ) : null}
-          </>
+          )
         ) : (
           <>
             {activity.isPlaceholderData ? (
@@ -197,7 +196,7 @@ export function OrgOverviewPage({
           </>
         )}
         {orgId && caps.includes('audit:read') ? (
-          <OrgRecentActivity orgId={orgId} orgName={membership?.orgName ?? ''} />
+          <OrgRecentActivity orgId={orgId} orgName={membership?.orgName ?? ''} hideEmpty={empty} />
         ) : null}
       </div>
     </>
