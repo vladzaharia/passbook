@@ -107,7 +107,7 @@ export interface CustomHeaders {
 }
 
 export interface WebhookVerifier {
-  id: 'custom' | 'shopify' | 'stripe' | 'calcom';
+  id: 'custom' | 'shopify' | 'stripe' | 'calcom' | 'woocommerce' | 'tickettailor';
   maxBytes: number;
   /** Where the replay bound comes from: a signed header, or a signed time in the body that the recipe must bound. */
   replay: 'header-window' | 'body-window';
@@ -189,12 +189,29 @@ const calcom: WebhookVerifier = {
   },
 };
 
-const stripe: WebhookVerifier = {
-  id: 'stripe',
+/** WooCommerce: base64 HMAC-SHA256 of the body in X-WC-Webhook-Signature, no signed time (WC_Webhook::generate_signature). */
+const woocommerce: WebhookVerifier = {
+  id: 'woocommerce',
+  maxBytes: SHOPIFY_MAX_BYTES,
+  replay: 'body-window',
+  verify: async (req, secrets) => {
+    const header = req.headers.get('x-wc-webhook-signature');
+    return signed(
+      req,
+      secrets,
+      SHOPIFY_MAX_BYTES,
+      orNull(header === null ? null : decodeBase64_32(header)),
+    );
+  },
+};
+
+/** The Stripe-style `t=<seconds>,v1=<hex>` header over `<t>.<body>`, read from `headerName`. */
+const timestamped = (id: 'stripe' | 'tickettailor', headerName: string): WebhookVerifier => ({
+  id,
   maxBytes: MAX_WEBHOOK_BYTES,
   replay: 'header-window',
   verify: async (req, secrets, now) => {
-    const header = req.headers.get('stripe-signature');
+    const header = req.headers.get(headerName);
     const parsed = header === null ? null : parseStripeSignature(header);
     const body = await signed(
       req,
@@ -207,7 +224,11 @@ const stripe: WebhookVerifier = {
     if (!withinWindow(now, signedAt, REPLAY_WINDOW_MS, FUTURE_SKEW_MS)) throw auth();
     return { ...body, signedAt };
   },
-};
+});
+
+/** Ticket Tailor signs like Stripe, in its own header [verify against a live delivery]. */
+const stripe = timestamped('stripe', 'stripe-signature');
+const tickettailor = timestamped('tickettailor', 'tickettailor-webhook-signature');
 
 const custom: WebhookVerifier = {
   id: 'custom',
@@ -232,6 +253,8 @@ export const VERIFIERS: Record<WebhookVerifier['id'], WebhookVerifier> = {
   shopify,
   stripe,
   calcom,
+  woocommerce,
+  tickettailor,
 };
 
 /** Current secret first, the previous one only while its overlap lasts (runtime.ts decides). */

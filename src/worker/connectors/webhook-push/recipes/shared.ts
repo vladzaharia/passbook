@@ -7,6 +7,8 @@ const MAX_REF = 200;
 
 export interface RecipeConfig {
   acceptTestEvents: boolean;
+  /** WooCommerce: one pass per order or per line item. */
+  passPer?: 'order' | 'line_item';
 }
 
 export interface RecipeInput {
@@ -34,7 +36,9 @@ export interface RecipeOutcome {
 
 export interface Recipe extends Omit<RecipeInfo, 'id'> {
   id: Exclude<RecipeId, 'custom'>;
-  verifier: 'shopify' | 'stripe' | 'calcom';
+  verifier: 'shopify' | 'stripe' | 'calcom' | 'woocommerce' | 'tickettailor';
+  /** The signed body may be something other than JSON (WooCommerce pings with a form body): adapt gets undefined. */
+  tolerateNonJson?: boolean;
   /** Header whose value is passed as `topic`. */
   topicHeader: string | null;
   /** How old the signed body time may be (body-window verifiers only). */

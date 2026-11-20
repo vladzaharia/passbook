@@ -24,6 +24,10 @@ const config = z.object({
     .boolean()
     .default(false)
     .meta({ 'x-label': 'Accept test-mode events', 'x-group': 'Advanced' }),
+  passPer: z
+    .enum(['order', 'line_item'])
+    .default('order')
+    .meta({ 'x-label': 'Pass per', 'x-help': 'One pass for each order or each line item.' }),
   recordsPointer: pointer
     .default('/records')
     .meta({ 'x-label': 'Records', 'x-help': 'Where the list of records sits in the body.' }),
@@ -83,7 +87,10 @@ const definition: ConnectorDefinition<z.infer<typeof config>, undefined> = {
   async verifyWebhook(ctx, req) {
     const c = ctx.connection.config;
     if (c.recipe !== 'custom') {
-      return verifyRecipe(RECIPES[c.recipe], ctx, req, { acceptTestEvents: c.acceptTestEvents });
+      return verifyRecipe(RECIPES[c.recipe], ctx, req, {
+        acceptTestEvents: c.acceptTestEvents,
+        passPer: c.passPer,
+      });
     }
     const { body, signature, signedAt, usedPrevious } = await verifySignedRequest(req, {
       secrets: webhookSecretsOf(ctx),

@@ -40,7 +40,7 @@ describe('VoidRuleSchema', () => {
 });
 
 describe('recipes and overlap', () => {
-  it('lists the six senders', () => {
+  it('lists the eight senders', () => {
     expect(RecipeIdSchema.options).toEqual([
       'custom',
       'shopify-orders',
@@ -48,6 +48,8 @@ describe('recipes and overlap', () => {
       'stripe-subscriptions',
       'stripe-payments',
       'calcom-bookings',
+      'woocommerce-orders',
+      'tickettailor-tickets',
     ]);
   });
 
