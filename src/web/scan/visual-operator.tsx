@@ -4,7 +4,7 @@ import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import type { ScanApi } from './api/scan-api.ts';
 import { sessionFixture } from './boot/session.test-support.ts';
 import { WedgeFieldsContext } from './input/wedge-field.tsx';
-import { WedgeFields } from './input/wedge-source.ts';
+import { createWedgeSource, WedgeFields } from './input/wedge-source.ts';
 import { fixtureCounts, fixtureOutcome } from './machine/fixture-data.test-support.ts';
 import { states } from './machine/fixtures.test-support.ts';
 import { fakeDeps } from './machine/store.test-support.ts';
@@ -189,6 +189,19 @@ export function OperatorVisual({ scenario }: { scenario: OperatorCase }) {
   const fields = useMemo(() => new WedgeFields(), []);
   const runtime = useMemo(
     () => ({ emit: () => undefined, checkIn: () => undefined, fields }) as unknown as ScanRuntime,
+    [fields],
+  );
+  // The real wedge source, so a reader's burst is a scan here as it is on a device.
+  useEffect(
+    () =>
+      createWedgeSource({
+        fields,
+        clock: {
+          now: () => Date.now(),
+          setTimeout: (fn, ms) => window.setTimeout(fn, ms),
+          clearTimeout: (handle) => window.clearTimeout(handle as number),
+        },
+      }).start(() => undefined),
     [fields],
   );
   useEffect(() => {

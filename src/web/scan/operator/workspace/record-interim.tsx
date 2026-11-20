@@ -11,6 +11,7 @@ import { PersonAvatar } from '../lists/person-avatar.tsx';
 import { type SearchResult, statePill } from '../lists/search-results.tsx';
 import type { RecordRef } from '../operator-model.ts';
 import { Kbd } from './command-field.tsx';
+import { focusHeading } from './focus.ts';
 
 type SearchRow = SearchResult['items'][number];
 
@@ -106,6 +107,11 @@ export function RecordInterim({
       ? card?.actions.find((a) => a.kind === 'check_in' && a.available && !a.lock)
       : undefined;
   const primary = useRef<HTMLButtonElement>(null);
+  // The heading exists once the pass has loaded; if focus is waiting on the pane, it goes there.
+  const loaded = card !== null;
+  useEffect(() => {
+    if (loaded && document.activeElement?.hasAttribute('data-operator-record')) focusHeading();
+  }, [loaded]);
   useEffect(() => {
     keys.current = (command) => {
       if (command.c !== 'primary' || !primary.current) return false;
