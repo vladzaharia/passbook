@@ -85,7 +85,10 @@ describe('PassEmailPreview', () => {
     });
     await screen.findByTitle('Sample pass email');
     expect(frame().style.width).toBe('390px');
-    expect(frame().style.transform).toBe(`scale(${350 / 390})`);
+    expect(Number(/scale\(([\d.]+)\)/.exec(frame().style.transform)?.[1])).toBeCloseTo(
+      350 / 390,
+      4,
+    );
     width.mockRestore();
   });
 

@@ -1,4 +1,5 @@
 import { OrgSettingsSchema } from '@/shared/contracts/settings.ts';
+import { RETENTION_LINES } from '@/shared/copy/retention.ts';
 import { DATA_CLASSES, RETENTION_CLASSES } from '@/shared/privacy/data-classes.ts';
 import type { SettingField } from './fields.ts';
 
@@ -99,7 +100,7 @@ export const ORG_FIELDS: readonly SettingField[] = [
       kind: 'int',
       suffix: 'days',
       optional: true,
-      help: DATA_CLASSES[cls].holds,
+      help: RETENTION_LINES[cls],
       range: [DATA_CLASSES[cls].floor, DATA_CLASSES[cls].ceiling],
       unit: 'days',
       schema: O[DATA_CLASSES[cls].key],

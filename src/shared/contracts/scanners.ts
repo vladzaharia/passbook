@@ -289,6 +289,8 @@ export const ScanListQuerySchema = PageQuerySchema.extend({
   scannerId: IdSchema.optional(),
   staffId: IdSchema.optional(),
   eventId: IdSchema.optional(),
+  /** A pass type: the scans of one template. */
+  templateId: IdSchema.optional(),
   passId: IdSchema.optional(),
   outcome: z.enum(['ok', 'heads_up', 'refused', 'undone']).optional(),
   reason: ScanReasonSchema.optional(),

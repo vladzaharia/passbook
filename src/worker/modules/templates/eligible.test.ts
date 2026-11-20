@@ -46,6 +46,7 @@ const EligibleItemSchema = z.strictObject({
   version: z.string().min(1),
   candidateHash: z.string().regex(/^[0-9a-f]{64}$/),
   supportsCheckIn: z.boolean(),
+  rule: z.unknown(),
 });
 const EligiblePageSchema = z.strictObject({
   items: z.array(EligibleItemSchema),
@@ -258,6 +259,16 @@ function expectUploaded(
       version: row.version,
       candidateHash: row.candidateHash,
       supportsCheckIn,
+      rule: supportsCheckIn
+        ? {
+            mode: 'single',
+            days: null,
+            durationMinutes: null,
+            durationFrom: null,
+            plans: [],
+            source: 'action',
+          }
+        : null,
     },
   ]);
 }
@@ -667,6 +678,14 @@ describe('eligible template releases', () => {
         version: row.version,
         candidateHash: row.candidate_hash,
         supportsCheckIn: true,
+        rule: {
+          mode: 'single',
+          days: null,
+          durationMinutes: null,
+          durationFrom: null,
+          plans: [],
+          source: 'action',
+        },
       });
       const aLive = await eligible(scope(org.id), own.author);
       const aTest = await eligible(scope(org.id, 'test'), own.author);

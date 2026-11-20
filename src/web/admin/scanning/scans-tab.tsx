@@ -34,7 +34,7 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
   const [selected, setSelected] = useState<ScanRecordDto | null>(null);
 
   const range = search.range ?? 'today';
-  const { q, scannerId, eventId, staffId, outcome, reason } = search;
+  const { q, scannerId, eventId, templateId, staffId, outcome, reason } = search;
   const [day, setDay] = useState(() => Date.now());
   useEffect(() => {
     const midnight = new Date(day);
@@ -50,8 +50,8 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
     const start = new Date(range === 'today' ? day : Date.now());
     if (range === 'today') start.setHours(0, 0, 0, 0);
     else start.setDate(start.getDate() - (range === '7d' ? 7 : 30));
-    return { q, from: start.getTime(), scannerId, eventId, staffId, outcome, reason };
-  }, [range, day, q, scannerId, eventId, staffId, outcome, reason]);
+    return { q, from: start.getTime(), scannerId, eventId, templateId, staffId, outcome, reason };
+  }, [range, day, q, scannerId, eventId, templateId, staffId, outcome, reason]);
   const query = useInfiniteQuery({
     queryKey: ['admin', 'scanning', 'scans', allowed ? orgId : null, mode, filters, allowed],
     enabled: allowed,

@@ -23,6 +23,7 @@ export function insideRow(n: number, over: Partial<InsideRow> = {}): InsideRow {
     holder: names[n % names.length] ?? `Person ${n}`,
     photoUrl: null,
     plan: n % 3 === 0 ? 'Visitor' : 'Staff',
+    type: n % 3 === 0 ? 'Visitor' : 'Staff',
     place: GYM_KEY,
     since: FAKE_NOW - (n + 1) * 20 * MIN,
     via: 'Front desk',

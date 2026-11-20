@@ -14,7 +14,7 @@ const PASS_EMAIL = inGroup('Pass email');
 const EMAIL_LIMITS = inGroup('Email limits');
 const SUPPORT = inGroup('Support');
 const PRIVACY = inGroup('Privacy');
-const RETENTION = inGroup('Retention');
+const NFC_TAGS = inGroup('NFC tags');
 
 function FormCard({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -101,8 +101,8 @@ export function OrgSettingsSections({
       <FormCard title="Privacy">
         <SettingsForm scope={scope} fields={PRIVACY} />
       </FormCard>
-      <FormCard title="Data retention">
-        <SettingsForm scope={scope} fields={RETENTION} />
+      <FormCard title="NFC tags">
+        <SettingsForm scope={scope} fields={NFC_TAGS} />
       </FormCard>
       <OrgChannelsCard orgId={orgId} />
     </>

@@ -66,12 +66,16 @@ export function hourBuckets(
 export function summaryExtrasOf(
   extras: SummaryExtras,
   timeZone: string,
-): Pick<Summary, 'timeZone' | 'byHour' | 'byValue' | 'byReason' | 'byStaff' | 'overrides'> {
+): Pick<
+  Summary,
+  'timeZone' | 'byHour' | 'byValue' | 'byReason' | 'byType' | 'byStaff' | 'overrides'
+> {
   return {
     timeZone,
     byHour: hourBuckets(extras.quarters, timeZone),
     byValue: extras.value.map((r) => ({ kind: r.kind, count: r.n, amount: r.amount })),
     byReason: extras.reasons.map((r) => ({ reason: r.reason, count: r.n })),
+    byType: extras.types.map((r) => ({ templateId: r.id, name: r.name, count: r.n })),
     byStaff: extras.staff.map((r) => ({
       staffId: r.staff_id,
       name: r.name,
