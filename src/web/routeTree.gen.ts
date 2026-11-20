@@ -35,6 +35,7 @@ import { Route as AdminOrgsOrgIdRouteImport } from './routes/admin/orgs/$orgId'
 import { Route as AdminPassesIndexRouteImport } from './routes/admin/passes/index'
 import { Route as AdminPassesPassIdRouteImport } from './routes/admin/passes/$passId'
 import { Route as AdminPassesNewRouteImport } from './routes/admin/passes/new'
+import { Route as AdminPassesPhotosRouteImport } from './routes/admin/passes/photos'
 import { Route as AdminPlatformIndexRouteImport } from './routes/admin/platform/index'
 import { Route as AdminScanningIndexRouteImport } from './routes/admin/scanning/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
@@ -81,6 +82,7 @@ import { Route as AdminOOrgIdMessagesNewRouteImport } from './routes/admin/o/$or
 import { Route as AdminOOrgIdPassesIndexRouteImport } from './routes/admin/o/$orgId/passes/index'
 import { Route as AdminOOrgIdPassesPassIdRouteImport } from './routes/admin/o/$orgId/passes/$passId'
 import { Route as AdminOOrgIdPassesNewRouteImport } from './routes/admin/o/$orgId/passes/new'
+import { Route as AdminOOrgIdPassesPhotosRouteImport } from './routes/admin/o/$orgId/passes/photos'
 import { Route as AdminOOrgIdRetentionIndexRouteImport } from './routes/admin/o/$orgId/retention/index'
 import { Route as AdminOOrgIdScanningIndexRouteImport } from './routes/admin/o/$orgId/scanning/index'
 import { Route as AdminOOrgIdSettingsIndexRouteImport } from './routes/admin/o/$orgId/settings/index'
@@ -89,6 +91,7 @@ import { Route as AdminOOrgIdTemplatesTemplateIdRouteImport } from './routes/adm
 import { Route as AdminOOrgIdTemplatesNewRouteImport } from './routes/admin/o/$orgId/templates/new'
 import { Route as AdminOOrgIdTemplatesUploadRouteImport } from './routes/admin/o/$orgId/templates/upload'
 import { Route as AdminOOrgIdTestInboxIndexRouteImport } from './routes/admin/o/$orgId/test-inbox/index'
+import { Route as AdminOOrgIdVisitorsIndexRouteImport } from './routes/admin/o/$orgId/visitors/index'
 import { Route as AdminOOrgIdWalletAccountsIndexRouteImport } from './routes/admin/o/$orgId/wallet-accounts/index'
 import { Route as AdminOOrgIdConnectionsWebhooksEndpointIdRouteImport } from './routes/admin/o/$orgId/connections/webhooks.$endpointId'
 import { Route as AdminOOrgIdConnectionsWebhooksNewRouteImport } from './routes/admin/o/$orgId/connections/webhooks.new'
@@ -232,6 +235,11 @@ const AdminPassesPassIdRoute = AdminPassesPassIdRouteImport.update({
 const AdminPassesNewRoute = AdminPassesNewRouteImport.update({
   id: '/passes/new',
   path: '/passes/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminPassesPhotosRoute = AdminPassesPhotosRouteImport.update({
+  id: '/passes/photos',
+  path: '/passes/photos',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminPlatformIndexRoute = AdminPlatformIndexRouteImport.update({
@@ -487,6 +495,11 @@ const AdminOOrgIdPassesNewRoute = AdminOOrgIdPassesNewRouteImport.update({
   path: '/passes/new',
   getParentRoute: () => AdminOOrgIdRouteRoute,
 } as any)
+const AdminOOrgIdPassesPhotosRoute = AdminOOrgIdPassesPhotosRouteImport.update({
+  id: '/passes/photos',
+  path: '/passes/photos',
+  getParentRoute: () => AdminOOrgIdRouteRoute,
+} as any)
 const AdminOOrgIdRetentionIndexRoute =
   AdminOOrgIdRetentionIndexRouteImport.update({
     id: '/retention/',
@@ -532,6 +545,12 @@ const AdminOOrgIdTestInboxIndexRoute =
   AdminOOrgIdTestInboxIndexRouteImport.update({
     id: '/test-inbox/',
     path: '/test-inbox/',
+    getParentRoute: () => AdminOOrgIdRouteRoute,
+  } as any)
+const AdminOOrgIdVisitorsIndexRoute =
+  AdminOOrgIdVisitorsIndexRouteImport.update({
+    id: '/visitors/',
+    path: '/visitors/',
     getParentRoute: () => AdminOOrgIdRouteRoute,
   } as any)
 const AdminOOrgIdWalletAccountsIndexRoute =
@@ -614,6 +633,7 @@ export interface FileRoutesByFullPath {
   '/admin/orgs/$orgId': typeof AdminOrgsOrgIdRoute
   '/admin/passes/$passId': typeof AdminPassesPassIdRoute
   '/admin/passes/new': typeof AdminPassesNewRoute
+  '/admin/passes/photos': typeof AdminPassesPhotosRoute
   '/admin/templates/$templateId': typeof AdminTemplatesTemplateIdRoute
   '/admin/templates/new': typeof AdminTemplatesNewRoute
   '/admin/templates/upload': typeof AdminTemplatesUploadRoute
@@ -661,6 +681,7 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/messages/new': typeof AdminOOrgIdMessagesNewRoute
   '/admin/o/$orgId/passes/$passId': typeof AdminOOrgIdPassesPassIdRoute
   '/admin/o/$orgId/passes/new': typeof AdminOOrgIdPassesNewRoute
+  '/admin/o/$orgId/passes/photos': typeof AdminOOrgIdPassesPhotosRoute
   '/admin/o/$orgId/templates/$templateId': typeof AdminOOrgIdTemplatesTemplateIdRoute
   '/admin/o/$orgId/templates/new': typeof AdminOOrgIdTemplatesNewRoute
   '/admin/o/$orgId/templates/upload': typeof AdminOOrgIdTemplatesUploadRoute
@@ -676,6 +697,7 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/settings/': typeof AdminOOrgIdSettingsIndexRoute
   '/admin/o/$orgId/templates/': typeof AdminOOrgIdTemplatesIndexRoute
   '/admin/o/$orgId/test-inbox/': typeof AdminOOrgIdTestInboxIndexRoute
+  '/admin/o/$orgId/visitors/': typeof AdminOOrgIdVisitorsIndexRoute
   '/admin/o/$orgId/wallet-accounts/': typeof AdminOOrgIdWalletAccountsIndexRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
@@ -703,6 +725,7 @@ export interface FileRoutesByTo {
   '/admin/orgs/$orgId': typeof AdminOrgsOrgIdRoute
   '/admin/passes/$passId': typeof AdminPassesPassIdRoute
   '/admin/passes/new': typeof AdminPassesNewRoute
+  '/admin/passes/photos': typeof AdminPassesPhotosRoute
   '/admin/templates/$templateId': typeof AdminTemplatesTemplateIdRoute
   '/admin/templates/new': typeof AdminTemplatesNewRoute
   '/admin/templates/upload': typeof AdminTemplatesUploadRoute
@@ -750,6 +773,7 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/messages/new': typeof AdminOOrgIdMessagesNewRoute
   '/admin/o/$orgId/passes/$passId': typeof AdminOOrgIdPassesPassIdRoute
   '/admin/o/$orgId/passes/new': typeof AdminOOrgIdPassesNewRoute
+  '/admin/o/$orgId/passes/photos': typeof AdminOOrgIdPassesPhotosRoute
   '/admin/o/$orgId/templates/$templateId': typeof AdminOOrgIdTemplatesTemplateIdRoute
   '/admin/o/$orgId/templates/new': typeof AdminOOrgIdTemplatesNewRoute
   '/admin/o/$orgId/templates/upload': typeof AdminOOrgIdTemplatesUploadRoute
@@ -765,6 +789,7 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/settings': typeof AdminOOrgIdSettingsIndexRoute
   '/admin/o/$orgId/templates': typeof AdminOOrgIdTemplatesIndexRoute
   '/admin/o/$orgId/test-inbox': typeof AdminOOrgIdTestInboxIndexRoute
+  '/admin/o/$orgId/visitors': typeof AdminOOrgIdVisitorsIndexRoute
   '/admin/o/$orgId/wallet-accounts': typeof AdminOOrgIdWalletAccountsIndexRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
@@ -796,6 +821,7 @@ export interface FileRoutesById {
   '/admin/orgs/$orgId': typeof AdminOrgsOrgIdRoute
   '/admin/passes/$passId': typeof AdminPassesPassIdRoute
   '/admin/passes/new': typeof AdminPassesNewRoute
+  '/admin/passes/photos': typeof AdminPassesPhotosRoute
   '/admin/templates/$templateId': typeof AdminTemplatesTemplateIdRoute
   '/admin/templates/new': typeof AdminTemplatesNewRoute
   '/admin/templates/upload': typeof AdminTemplatesUploadRoute
@@ -843,6 +869,7 @@ export interface FileRoutesById {
   '/admin/o/$orgId/messages/new': typeof AdminOOrgIdMessagesNewRoute
   '/admin/o/$orgId/passes/$passId': typeof AdminOOrgIdPassesPassIdRoute
   '/admin/o/$orgId/passes/new': typeof AdminOOrgIdPassesNewRoute
+  '/admin/o/$orgId/passes/photos': typeof AdminOOrgIdPassesPhotosRoute
   '/admin/o/$orgId/templates/$templateId': typeof AdminOOrgIdTemplatesTemplateIdRoute
   '/admin/o/$orgId/templates/new': typeof AdminOOrgIdTemplatesNewRoute
   '/admin/o/$orgId/templates/upload': typeof AdminOOrgIdTemplatesUploadRoute
@@ -858,6 +885,7 @@ export interface FileRoutesById {
   '/admin/o/$orgId/settings/': typeof AdminOOrgIdSettingsIndexRoute
   '/admin/o/$orgId/templates/': typeof AdminOOrgIdTemplatesIndexRoute
   '/admin/o/$orgId/test-inbox/': typeof AdminOOrgIdTestInboxIndexRoute
+  '/admin/o/$orgId/visitors/': typeof AdminOOrgIdVisitorsIndexRoute
   '/admin/o/$orgId/wallet-accounts/': typeof AdminOOrgIdWalletAccountsIndexRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
@@ -890,6 +918,7 @@ export interface FileRouteTypes {
     | '/admin/orgs/$orgId'
     | '/admin/passes/$passId'
     | '/admin/passes/new'
+    | '/admin/passes/photos'
     | '/admin/templates/$templateId'
     | '/admin/templates/new'
     | '/admin/templates/upload'
@@ -937,6 +966,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/messages/new'
     | '/admin/o/$orgId/passes/$passId'
     | '/admin/o/$orgId/passes/new'
+    | '/admin/o/$orgId/passes/photos'
     | '/admin/o/$orgId/templates/$templateId'
     | '/admin/o/$orgId/templates/new'
     | '/admin/o/$orgId/templates/upload'
@@ -952,6 +982,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/settings/'
     | '/admin/o/$orgId/templates/'
     | '/admin/o/$orgId/test-inbox/'
+    | '/admin/o/$orgId/visitors/'
     | '/admin/o/$orgId/wallet-accounts/'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
@@ -979,6 +1010,7 @@ export interface FileRouteTypes {
     | '/admin/orgs/$orgId'
     | '/admin/passes/$passId'
     | '/admin/passes/new'
+    | '/admin/passes/photos'
     | '/admin/templates/$templateId'
     | '/admin/templates/new'
     | '/admin/templates/upload'
@@ -1026,6 +1058,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/messages/new'
     | '/admin/o/$orgId/passes/$passId'
     | '/admin/o/$orgId/passes/new'
+    | '/admin/o/$orgId/passes/photos'
     | '/admin/o/$orgId/templates/$templateId'
     | '/admin/o/$orgId/templates/new'
     | '/admin/o/$orgId/templates/upload'
@@ -1041,6 +1074,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/settings'
     | '/admin/o/$orgId/templates'
     | '/admin/o/$orgId/test-inbox'
+    | '/admin/o/$orgId/visitors'
     | '/admin/o/$orgId/wallet-accounts'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
@@ -1071,6 +1105,7 @@ export interface FileRouteTypes {
     | '/admin/orgs/$orgId'
     | '/admin/passes/$passId'
     | '/admin/passes/new'
+    | '/admin/passes/photos'
     | '/admin/templates/$templateId'
     | '/admin/templates/new'
     | '/admin/templates/upload'
@@ -1118,6 +1153,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/messages/new'
     | '/admin/o/$orgId/passes/$passId'
     | '/admin/o/$orgId/passes/new'
+    | '/admin/o/$orgId/passes/photos'
     | '/admin/o/$orgId/templates/$templateId'
     | '/admin/o/$orgId/templates/new'
     | '/admin/o/$orgId/templates/upload'
@@ -1133,6 +1169,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/settings/'
     | '/admin/o/$orgId/templates/'
     | '/admin/o/$orgId/test-inbox/'
+    | '/admin/o/$orgId/visitors/'
     | '/admin/o/$orgId/wallet-accounts/'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
@@ -1335,6 +1372,13 @@ declare module '@tanstack/react-router' {
       path: '/passes/new'
       fullPath: '/admin/passes/new'
       preLoaderRoute: typeof AdminPassesNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/passes/photos': {
+      id: '/admin/passes/photos'
+      path: '/passes/photos'
+      fullPath: '/admin/passes/photos'
+      preLoaderRoute: typeof AdminPassesPhotosRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/platform/': {
@@ -1659,6 +1703,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOOrgIdPassesNewRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
+    '/admin/o/$orgId/passes/photos': {
+      id: '/admin/o/$orgId/passes/photos'
+      path: '/passes/photos'
+      fullPath: '/admin/o/$orgId/passes/photos'
+      preLoaderRoute: typeof AdminOOrgIdPassesPhotosRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
     '/admin/o/$orgId/retention/': {
       id: '/admin/o/$orgId/retention/'
       path: '/retention'
@@ -1713,6 +1764,13 @@ declare module '@tanstack/react-router' {
       path: '/test-inbox'
       fullPath: '/admin/o/$orgId/test-inbox/'
       preLoaderRoute: typeof AdminOOrgIdTestInboxIndexRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
+    '/admin/o/$orgId/visitors/': {
+      id: '/admin/o/$orgId/visitors/'
+      path: '/visitors'
+      fullPath: '/admin/o/$orgId/visitors/'
+      preLoaderRoute: typeof AdminOOrgIdVisitorsIndexRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
     '/admin/o/$orgId/wallet-accounts/': {
@@ -1831,6 +1889,7 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdMessagesNewRoute: typeof AdminOOrgIdMessagesNewRoute
   AdminOOrgIdPassesPassIdRoute: typeof AdminOOrgIdPassesPassIdRoute
   AdminOOrgIdPassesNewRoute: typeof AdminOOrgIdPassesNewRoute
+  AdminOOrgIdPassesPhotosRoute: typeof AdminOOrgIdPassesPhotosRoute
   AdminOOrgIdTemplatesTemplateIdRoute: typeof AdminOOrgIdTemplatesTemplateIdRoute
   AdminOOrgIdTemplatesNewRoute: typeof AdminOOrgIdTemplatesNewRoute
   AdminOOrgIdTemplatesUploadRoute: typeof AdminOOrgIdTemplatesUploadRoute
@@ -1846,6 +1905,7 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdSettingsIndexRoute: typeof AdminOOrgIdSettingsIndexRoute
   AdminOOrgIdTemplatesIndexRoute: typeof AdminOOrgIdTemplatesIndexRoute
   AdminOOrgIdTestInboxIndexRoute: typeof AdminOOrgIdTestInboxIndexRoute
+  AdminOOrgIdVisitorsIndexRoute: typeof AdminOOrgIdVisitorsIndexRoute
   AdminOOrgIdWalletAccountsIndexRoute: typeof AdminOOrgIdWalletAccountsIndexRoute
   AdminOOrgIdConnectionsWebhooksEndpointIdRoute: typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   AdminOOrgIdConnectionsWebhooksNewRoute: typeof AdminOOrgIdConnectionsWebhooksNewRoute
@@ -1868,6 +1928,7 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
   AdminOOrgIdMessagesNewRoute: AdminOOrgIdMessagesNewRoute,
   AdminOOrgIdPassesPassIdRoute: AdminOOrgIdPassesPassIdRoute,
   AdminOOrgIdPassesNewRoute: AdminOOrgIdPassesNewRoute,
+  AdminOOrgIdPassesPhotosRoute: AdminOOrgIdPassesPhotosRoute,
   AdminOOrgIdTemplatesTemplateIdRoute: AdminOOrgIdTemplatesTemplateIdRoute,
   AdminOOrgIdTemplatesNewRoute: AdminOOrgIdTemplatesNewRoute,
   AdminOOrgIdTemplatesUploadRoute: AdminOOrgIdTemplatesUploadRoute,
@@ -1883,6 +1944,7 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
   AdminOOrgIdSettingsIndexRoute: AdminOOrgIdSettingsIndexRoute,
   AdminOOrgIdTemplatesIndexRoute: AdminOOrgIdTemplatesIndexRoute,
   AdminOOrgIdTestInboxIndexRoute: AdminOOrgIdTestInboxIndexRoute,
+  AdminOOrgIdVisitorsIndexRoute: AdminOOrgIdVisitorsIndexRoute,
   AdminOOrgIdWalletAccountsIndexRoute: AdminOOrgIdWalletAccountsIndexRoute,
   AdminOOrgIdConnectionsWebhooksEndpointIdRoute:
     AdminOOrgIdConnectionsWebhooksEndpointIdRoute,
@@ -1918,6 +1980,7 @@ interface AdminRouteRouteChildren {
   AdminOrgsOrgIdRoute: typeof AdminOrgsOrgIdRoute
   AdminPassesPassIdRoute: typeof AdminPassesPassIdRoute
   AdminPassesNewRoute: typeof AdminPassesNewRoute
+  AdminPassesPhotosRoute: typeof AdminPassesPhotosRoute
   AdminTemplatesTemplateIdRoute: typeof AdminTemplatesTemplateIdRoute
   AdminTemplatesNewRoute: typeof AdminTemplatesNewRoute
   AdminTemplatesUploadRoute: typeof AdminTemplatesUploadRoute
@@ -1961,6 +2024,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminOrgsOrgIdRoute: AdminOrgsOrgIdRoute,
   AdminPassesPassIdRoute: AdminPassesPassIdRoute,
   AdminPassesNewRoute: AdminPassesNewRoute,
+  AdminPassesPhotosRoute: AdminPassesPhotosRoute,
   AdminTemplatesTemplateIdRoute: AdminTemplatesTemplateIdRoute,
   AdminTemplatesNewRoute: AdminTemplatesNewRoute,
   AdminTemplatesUploadRoute: AdminTemplatesUploadRoute,

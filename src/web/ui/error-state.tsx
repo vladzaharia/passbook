@@ -37,8 +37,8 @@ export function isChunkLoadError(error: unknown): boolean {
 }
 
 /**
- * Neutral card, one sentence, Retry; the request id hides under Details. The sad buddy sits on its
- * top edge beside the pulled plug (art/state-art.tsx, as on the SSR 500); inline, a danger tile on
+ * Neutral card, one sentence, Retry; the request id hides under Details. The sad buddy stands inside
+ * the box above the title beside the pulled plug (art/state-art.tsx, as on the SSR 500); inline, a danger tile on
  * the unplugged art. A failure after Retry shakes the art once; the first render never shakes.
  */
 export function ErrorState({
@@ -82,11 +82,11 @@ export function ErrorState({
     <div
       className={cn(
         'relative flex flex-col items-center gap-4 rounded-lg border border-border bg-surface-raised p-4 text-center shadow-[var(--wl-edge),var(--pk-elevation-1)]',
-        inline ? 'sm:flex-row sm:text-left' : 'mt-20 pt-8',
+        inline ? 'sm:flex-row sm:text-left' : 'px-6 py-10',
         className,
       )}
     >
-      <div ref={art} className={inline ? 'relative shrink-0' : 'contents'}>
+      <div ref={art} className={inline ? 'relative shrink-0' : 'relative mt-[4.5rem] h-0 w-full'}>
         {inline ? (
           <>
             <UnpluggedArt size="sm" />

@@ -85,9 +85,10 @@ export function useTagMutations() {
   };
 }
 
-/** The org's tag switch. Unknown (loading, no right to read settings) counts as on. */
+/** The org's tag switch, and the platform's. Unknown (loading, no right to read settings) counts as on. */
 export function useTagsEnabled(orgId: string): boolean {
   const entry = useSettings(`org:${orgId}`).data?.items.find((i) => i.key === 'nfc.tags');
+  if (entry?.blockedByPlatform) return false;
   const v = entry?.value;
   if (v === undefined) return true;
   return typeof v === 'object' && v !== null && !Array.isArray(v) && v.enabled === true;

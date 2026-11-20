@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { ScanReason } from '../../shared/contracts/scan.ts';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import type { ScanLiveRow } from '../../shared/contracts/scan-setups.ts';
 import type { ScanApi } from './api/scan-api.ts';
@@ -6,12 +7,14 @@ import { sessionFixture } from './boot/session.test-support.ts';
 import { CustomerDisplayPage } from './customer-display.tsx';
 import { LiveScreen } from './live/live-screen.tsx';
 import { fixtureOutcome } from './machine/fixture-data.test-support.ts';
+import type { ScanOutcome } from './machine/types.ts';
 import { ScanPreviewScreen } from './preview-screen.tsx';
 import { type PassInspection, PassInspector } from './result/pass-inspector.tsx';
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
 import { ClosedVisual } from './visual-closed.tsx';
 import { MONITOR_DESK_CASES, MonitorDeskVisual } from './visual-monitor-desk.tsx';
+import { OFFLINE_SCENARIOS, OfflineVisual } from './visual-offline.tsx';
 import { TAG_SCENARIOS, TagVisual } from './visual-tags.tsx';
 import './visual-gallery.css';
 
@@ -152,6 +155,34 @@ function DuoVisual({ status }: { status: string }) {
   });
   return <CustomerDisplayPage />;
 }
+/** `?group=chip` offers Check in all; `?group=partial` shows a group with a refused member. */
+function withGroup(o: ScanOutcome, mode: string | null): ScanOutcome {
+  if (mode !== 'chip' && mode !== 'partial') return o;
+  const bundle = { id: ID, name: 'Chen family', size: 4, checkedIn: 1 };
+  if (mode === 'chip') return { ...o, bundle };
+  const m = (name: string, state: 'done' | 'already' | 'refused', reason: ScanReason | null) => ({
+    name,
+    state,
+    reason,
+  });
+  return {
+    ...o,
+    bundle,
+    group: {
+      total: 4,
+      done: 2,
+      already: 1,
+      refused: 1,
+      members: [
+        m('Taylor Chen', 'done', null),
+        m('Jo Chen', 'done', null),
+        m('Sam Chen', 'already', 'already_done'),
+        m('Kid Chen', 'refused', 'voided'),
+      ],
+    },
+  };
+}
+
 function ScanResultVisual({
   surface,
   selected,
@@ -163,10 +194,11 @@ function ScanResultVisual({
 }) {
   const [inspection, setInspection] = useState<PassInspection | null>(null);
   const [api] = useState(() => ({ resolve: async () => selected.outcome }) as unknown as ScanApi);
+  const outcome = withGroup(selected.outcome, new URLSearchParams(location.search).get('group'));
   return (
     <>
       <ScanPreviewScreen
-        outcome={selected.outcome}
+        outcome={outcome}
         surface={surface === 'operator' ? 'operator' : 'phone'}
         phase={phase}
         onPass={(card) => {
@@ -180,6 +212,13 @@ function ScanResultVisual({
   );
 }
 
+/** The desk card of a pass with no photo: Add photo, as a Desk device shows it. */
+function PhotoVisual() {
+  const [api] = useState(() => ({ addPhoto: async () => ({}) }) as unknown as ScanApi);
+  const [outcome] = useState(() => fixtureOutcome('ready', 'choose'));
+  return <ScanPreviewScreen outcome={outcome} surface="operator" addPhoto={api} />;
+}
+
 export function ScanVisualGallery() {
   const params = new URLSearchParams(location.search);
   const surface = params.get('surface') ?? 'scanner';
@@ -188,6 +227,7 @@ export function ScanVisualGallery() {
   if (!selected) return null;
   const status = params.get('status') ?? 'accepted';
   const phase = params.get('phase') === 'rising' ? 'rising' : 'up';
+  if (surface === 'photo') return <PhotoVisual />;
   if (surface === 'closed') return <ClosedVisual who={params.get('who') ?? 'manager'} />;
   if (surface === 'monitor' && params.has('desk'))
     return (
@@ -204,6 +244,12 @@ export function ScanVisualGallery() {
   if (surface === 'access')
     return (
       <AccessVisual scenario={ACCESS_SCENARIOS.find((c) => c === params.get('case')) ?? 'grant'} />
+    );
+  if (surface === 'offline')
+    return (
+      <OfflineVisual
+        scenario={OFFLINE_SCENARIOS.find((c) => c === params.get('case')) ?? 'queued'}
+      />
     );
   if (surface === 'tags')
     return (

@@ -44,7 +44,7 @@ export function inherit(entries: SettingEntry[], platform: PlatformSettings): Se
         ceiling,
       };
     }
-    if (entry.key === 'nfc.tags' && !platform['nfc.enabled'])
+    if (entry.key === 'nfc.tags' && !platform['nfc.tagsEnabled'])
       return { ...entry, blockedByPlatform: true };
     return entry;
   });
@@ -56,8 +56,12 @@ export function platformGateIssue(
   upserts: Record<string, unknown>,
 ): { path: string; message: string; code: string } | null {
   const tags = upserts['nfc.tags'] as { enabled?: boolean } | undefined;
-  if (tags?.enabled === true && !platform['nfc.enabled'])
-    return { path: 'nfc.tags', message: 'NFC is off for all organizations.', code: 'NFC_OFF' };
+  if (tags?.enabled === true && !platform['nfc.tagsEnabled'])
+    return {
+      path: 'nfc.tags',
+      message: 'NFC tags are off for all organizations.',
+      code: 'NFC_OFF',
+    };
   const cap = upserts['email.orgCapPerDay'];
   const max = platform['email.orgCapPerDayMax'];
   if (typeof cap === 'number' && cap > max)

@@ -82,6 +82,8 @@ export function setter(s: MachineState, ev: ScanEvent, env: Env): Out | null {
       return out({ ...s, scope: { ...s.scope, ...ev.scope }, lastActivity: env.now });
     case 'focus':
       return out({ ...s, focused: ev.focused });
+    case 'offline.status':
+      return out({ ...s, offline: { ...s.offline, listAt: ev.listAt, syncing: ev.syncing } });
     case 'online':
       return out({ ...s, online: ev.online });
     case 'queue':

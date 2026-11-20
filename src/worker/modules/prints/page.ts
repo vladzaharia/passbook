@@ -7,7 +7,7 @@ import type { Pass } from '../passes/repo-map.ts';
 import { getOrg } from '../passes/repo-read-issuance.ts';
 import { assertPassSnapshot, capturePassSnapshot } from '../public/snapshot.ts';
 import { printCodeOf } from './codes.ts';
-import { paperTicket } from './paper.ts';
+import { type PaperFiles, paperTicket } from './paper.ts';
 import * as repo from './repo.ts';
 
 export type PrintAudience = 'holder' | 'staff';
@@ -19,6 +19,10 @@ export type PrintPageModel = { orgName: string; mode: Pass['mode'] } & (
       state: 'ready';
       design: PaperDesign;
       content: PaperContent;
+      /** Image files of the template the sheet draws. */
+      files: PaperFiles;
+      /** When the print was made, epoch ms. */
+      printedAt: number;
       /** The print code. It goes into the page's markup and nowhere else. */
       code: string;
       generation: number;
@@ -54,6 +58,8 @@ export async function printPageModel(
           state: 'ready',
           design: ticket.design,
           content: ticket.content,
+          files: ticket.files,
+          printedAt: print.createdAt,
           generation: print.generation,
           printId: print.id,
           code: await printCodeOf(ctx.env, {

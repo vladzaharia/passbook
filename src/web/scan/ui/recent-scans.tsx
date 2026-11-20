@@ -1,4 +1,5 @@
 import { Check, CircleAlert, Info, TriangleAlert, Undo2 } from 'lucide-react';
+import { groupLine } from '../../../shared/copy/scan-group.ts';
 import { Button } from '../../ui/button.tsx';
 import { Sheet, SheetContent } from '../../ui/sheet.tsx';
 import type { ScanOutcome } from '../machine/types.ts';
@@ -51,7 +52,9 @@ export function RecentScans({ open, onClose }: { open: boolean; onClose: () => v
                           'Unknown code'}
                       </p>
                       <p className="text-sm text-fg-muted">
-                        {rowLabel(row.outcome, now)} · {sessionTime(row.at)}
+                        {rowLabel(row.outcome, now)}
+                        {row.outcome.group ? ` · ${groupLine(row.outcome.group)}` : ''} ·{' '}
+                        {sessionTime(row.at)}
                       </p>
                     </div>
                     {row.undoable && row.scanId && (row.outcome.undoUntil ?? 0) > now ? (

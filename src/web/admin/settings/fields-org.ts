@@ -106,12 +106,4 @@ export const ORG_FIELDS: readonly SettingField[] = [
       schema: O[DATA_CLASSES[cls].key],
     }),
   ),
-  {
-    key: 'nfc.tags',
-    group: 'NFC tags',
-    label: 'Third-party NFC tags',
-    kind: 'boolean',
-    wrapped: true,
-    schema: O['nfc.tags'],
-  },
 ];

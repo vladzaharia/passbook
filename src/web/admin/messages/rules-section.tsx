@@ -1,60 +1,147 @@
-import { useQuery } from '@tanstack/react-query';
-import { type MessageRuleDto, MessageRuleListSchema } from '@/shared/contracts/message-rules.ts';
+import { MoreHorizontal, Pause, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import type { MessageRuleDto } from '@/shared/contracts/message-rules.ts';
 import { missedLine, RULE_COPY, ruleSummary } from '@/shared/copy/message-rules.ts';
-import { api } from '../../lib/api.ts';
-import { Card, CardBody, CardHeader, StatusPill } from '../../ui/index.ts';
+import { deleteConfirm } from '../../lib/confirms.ts';
+import { ENTITY } from '../../lib/entities.ts';
+import { useOrgScope } from '../../lib/org-filter.tsx';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  ConfirmDialog,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  EmptyState,
+  IconButton,
+  StatusPill,
+  toast,
+} from '../../ui/index.ts';
+import { anchorLabel } from './rule-state.ts';
+import { useRuleActions, useRules } from './rules-api.ts';
 
-/** "renewsOn" -> "Renews on": the input's key, as a label. */
-const keyLabel = (key: string) => {
-  const words = key
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/[_-]+/g, ' ')
-    .toLowerCase();
-  return words.charAt(0).toUpperCase() + words.slice(1);
-};
-const anchorLabel = (rule: MessageRuleDto) =>
-  rule.anchor.kind === 'lastScan' ? 'the last scan' : keyLabel(rule.anchor.input);
+export type EditingRule = { rule?: MessageRuleDto } | null;
 
-/** Automatic messages, read only: they are set up through the API; this says what is running. */
-export function RulesSection({ orgId }: { orgId: string }) {
-  const rules = useQuery({
-    queryKey: ['admin', 'message-rules', orgId] as const,
-    queryFn: ({ signal }) =>
-      api.get('/api/v1/message-rules', MessageRuleListSchema, { query: { orgId }, signal }),
-  });
-  // No access or nothing set up: no section, not an empty card.
+/** Automatic messages: what is running, and where to set one up, edit, pause or delete it. */
+export function RulesSection({
+  orgId,
+  onEdit,
+}: {
+  orgId: string;
+  onEdit: (editing: EditingRule) => void;
+}) {
+  const rules = useRules(orgId);
+  const scope = useOrgScope();
+  const canManage = scope.membership?.capabilities.includes('messages:manage') === true;
+  const actions = useRuleActions(orgId);
+  const [deleting, setDeleting] = useState<MessageRuleDto | null>(null);
   const items = rules.data?.items ?? [];
-  if (items.length === 0) return null;
+  // No access to read them: no section.
+  if (!rules.data || (items.length === 0 && !canManage)) return null;
+  const confirm = deleting ? deleteConfirm('rule', deleting.name) : null;
   return (
-    <Card className="mt-6">
-      <CardHeader title="Automatic messages" />
+    <Card>
+      <CardHeader
+        title="Automatic messages"
+        actions={
+          canManage ? (
+            <Button size="sm" variant="outline" onClick={() => onEdit({})}>
+              <Plus aria-hidden /> New
+            </Button>
+          ) : null
+        }
+      />
       <CardBody>
-        <ul className="flex flex-col divide-y divide-border">
-          {items.map((rule) => (
-            <li key={rule.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-fg-strong">{rule.name}</p>
-                <p className="text-xs text-fg-muted">
-                  {ruleSummary({
-                    anchorLabel: anchorLabel(rule),
-                    offset: rule.offset,
-                    yearly: rule.yearly,
-                    sendAt: rule.sendAt,
-                  })}
-                  {' · '}
-                  {rule.sent} sent · {missedLine(rule.skipped)}
-                </p>
-                {rule.pausedCode ? (
-                  <p className="text-xs text-fg-muted">{RULE_COPY.paused[rule.pausedCode]}</p>
-                ) : null}
-              </div>
-              <StatusPill status={rule.state === 'on' ? 'active' : 'paused'}>
-                {rule.state === 'on' ? 'On' : 'Paused'}
-              </StatusPill>
-            </li>
-          ))}
-        </ul>
+        {items.length === 0 ? (
+          <EmptyState
+            inline
+            art={ENTITY.broadcast.art}
+            title="No automatic messages"
+            description="Send on a date or after a scan."
+          />
+        ) : (
+          <ul className="flex flex-col divide-y divide-border">
+            {items.map((rule) => (
+              <li key={rule.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-fg-strong">{rule.name}</p>
+                  <p className="text-xs text-fg-muted">
+                    {ruleSummary({
+                      anchorLabel: anchorLabel(rule),
+                      offset: rule.offset,
+                      yearly: rule.yearly,
+                      sendAt: rule.sendAt,
+                    })}
+                    {' · '}
+                    {rule.sent} sent · {missedLine(rule.skipped)}
+                  </p>
+                  {rule.pausedCode ? (
+                    <p className="text-xs text-fg-muted">{RULE_COPY.paused[rule.pausedCode]}</p>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-1">
+                  <StatusPill status={rule.state === 'on' ? 'active' : 'paused'}>
+                    {rule.state === 'on' ? 'On' : 'Paused'}
+                  </StatusPill>
+                  {canManage ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <IconButton
+                          size="sm"
+                          label={`Actions for ${rule.name}`}
+                          icon={<MoreHorizontal aria-hidden />}
+                        />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => onEdit({ rule })}>
+                          <Pencil aria-hidden /> Edit
+                        </DropdownMenuItem>
+                        {rule.state === 'on' ? (
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              actions.pause.mutate(rule.id, {
+                                onSuccess: () => toast.success('Paused'),
+                                onError: (e) => toast.error(e, 'Could not pause'),
+                              })
+                            }
+                          >
+                            <Pause aria-hidden /> Pause
+                          </DropdownMenuItem>
+                        ) : null}
+                        <DropdownMenuItem destructive onSelect={() => setDeleting(rule)}>
+                          <Trash2 aria-hidden /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </CardBody>
+      {confirm && deleting ? (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setDeleting(null)}
+          title={confirm.title}
+          description={confirm.description}
+          confirmLabel={confirm.confirmLabel}
+          destructive
+          onConfirm={async () => {
+            try {
+              await actions.remove.mutateAsync(deleting.id);
+              toast.success('Deleted');
+              setDeleting(null);
+            } catch (e) {
+              toast.error(e, 'Could not delete');
+            }
+          }}
+        />
+      ) : null}
     </Card>
   );
 }

@@ -55,6 +55,17 @@ export function begin(s: MachineState, input: ScanInput, env: Env): Out {
     const v = enterVerdict(base, { input, card, outcome }, env);
     return { state: v.state, cmds: [...cmds, ...v.cmds] };
   }
+  if (!s.online && s.offline.mode !== 'stop' && input.code !== undefined && !input.tag) {
+    // O8: the door decides from the list, or asks staff. The controller answers under this key.
+    const key = input.id;
+    return {
+      state: {
+        ...base,
+        loop: { s: 'checking', input, key, since: now, slow: false, next: null },
+      },
+      cmds: [...cmds, { c: 'offline.decide', key, input }],
+    };
+  }
   if (!s.online) {
     // Tags need a connection; a card can still wait for one.
     const outcome = input.tag

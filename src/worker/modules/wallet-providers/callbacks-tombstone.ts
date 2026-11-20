@@ -1,6 +1,7 @@
 import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { pinSamsungCredentialContext, requireSamsungCredentialKeyset } from './callbacks-ref.ts';
+import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { pinSamsungCredentialContext } from './callbacks-ref.ts';
 import { getWalletOperation } from './instance.ts';
 import {
   claimSamsungTombstoneReplay,
@@ -22,25 +23,18 @@ export async function persistSamsungTombstone(
 ): Promise<boolean> {
   ctx = pinSamsungCredentialContext(ctx);
   scope = { ...scope };
-  await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const op = await getWalletOperation(ctx.env.DB, {
     orgId: scope.orgId,
     mode: scope.mode,
     provider: 'samsung',
     instanceId: scope.instanceId,
     version: scope.operationVersion,
-    credentialKeysetCommitment: scope.credentialKeysetCommitment,
   });
-  if (
-    op?.kind !== 'revoke' ||
-    op.state !== 'succeeded' ||
-    op.credentialKeysetCommitment !== scope.credentialKeysetCommitment
-  )
-    return false;
+  if (op?.kind !== 'revoke' || op.state !== 'succeeded') return false;
   const original = await getProjectionRetirementMetadata(
     ctx.env.DB,
     op.identityProjectionReleaseId,
-    { credentialKeysetCommitment: scope.credentialKeysetCommitment },
   );
   if (
     original?.provider !== 'samsung' ||
@@ -50,14 +44,7 @@ export async function persistSamsungTombstone(
     original.id !== op.projectionReleaseId
   )
     return false;
-  const stored = await putSamsungTombstone(
-    ctx.env.DB,
-    scope,
-    original.providerIdentityHash,
-    ctx.clock.now(),
-  );
-  await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
-  return stored;
+  return putSamsungTombstone(ctx.env.DB, scope, original.providerIdentityHash, ctx.clock.now());
 }
 
 /** Authenticate against pinned approved historical certificates, without opening any card data. */
@@ -66,11 +53,9 @@ export async function authenticateSamsungTombstone(
   request: Request,
   refId: string,
   refHash: string,
-  credentialKeysetCommitment: string,
 ): Promise<boolean> {
   ctx = pinSamsungCredentialContext(ctx);
-  await requireSamsungCredentialKeyset(ctx, credentialKeysetCommitment);
-  const scopes = await findSamsungTombstones(ctx.env.DB, refHash, credentialKeysetCommitment);
+  const scopes = await findSamsungTombstones(ctx.env.DB, refHash);
   if (scopes.length > MAX_HISTORICAL_VERIFIERS)
     throw new UnavailableError('Samsung Wallet service is unavailable.', 'SAMSUNG_UNAVAILABLE');
   for (const scope of scopes) {
@@ -87,10 +72,7 @@ export async function authenticateSamsungTombstone(
             now: ctx.clock.now(),
           }),
       });
-      await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
-      const deleted = await samsungTombstoneStillDeleted(ctx.env.DB, scope);
-      await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
-      return deleted;
+      return await samsungTombstoneStillDeleted(ctx.env.DB, scope);
     } catch (error) {
       if (error instanceof SamsungTokenError) continue;
       if (error instanceof SamsungReplayStoreError || error instanceof WalletRuntimeError)

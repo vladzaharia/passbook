@@ -119,6 +119,9 @@
   opacity: 0;
 }
 
+/* The stage is always dark: the button takes its own light-on-dark colours, not the theme's. */
 .scan-reader-stage button {
   pointer-events: auto;
+  background: rgb(255 255 255 / 0.16);
+  color: white;
 }

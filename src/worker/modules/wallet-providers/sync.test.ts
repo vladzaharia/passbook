@@ -70,10 +70,7 @@ beforeEach(async () => {
     clock: { now: () => 123_000 },
     log: { warn: vi.fn(), error: vi.fn() },
   } as unknown as ServiceContext;
-  const credentialKeysetCommitment = await credentialKeyset.ensureCredentialRefKeyset(
-    ctx.env.DB,
-    ctx.env,
-  );
+  await credentialKeyset.ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
   item = {
     instanceId: 'instance-1',
     passId: 'pass-1',
@@ -81,7 +78,6 @@ beforeEach(async () => {
     mode: 'live',
     provider: 'samsung',
     generation: 4,
-    credentialKeysetCommitment,
   };
   placeholder = {
     id: item.instanceId,
@@ -92,7 +88,6 @@ beforeEach(async () => {
     credentialGeneration: 1,
     channelEpoch: 1,
     retirementCause: null,
-    credentialKeysetCommitment,
     lifecycle: 'blocked',
     accountId: null,
     identityProjectionReleaseId: null,
@@ -140,20 +135,9 @@ describe('wallet sync dirty placeholders', () => {
 
   it('acknowledges only via the pristine generation-fenced placeholder proof', async () => {
     await drainWalletProviderSync(ctx);
-    expect(mocks.dirty).toHaveBeenCalledWith(
-      sameDb(ctx.env.DB),
-      123_000,
-      30,
-      item.credentialKeysetCommitment,
-    );
+    expect(mocks.dirty).toHaveBeenCalledWith(sameDb(ctx.env.DB), 123_000, 30);
     expect(mocks.instance).toHaveBeenCalledWith(sameDb(ctx.env.DB), item);
-    expect(mocks.reconcile).toHaveBeenCalledWith(
-      expect.anything(),
-      placeholder,
-      undefined,
-      false,
-      item.credentialKeysetCommitment,
-    );
+    expect(mocks.reconcile).toHaveBeenCalledWith(expect.anything(), placeholder, undefined, false);
     expect(mocks.ackPlaceholder).toHaveBeenCalledWith(sameDb(ctx.env.DB), item);
     expect(mocks.ack).not.toHaveBeenCalled();
     expect(mocks.defer).not.toHaveBeenCalled();

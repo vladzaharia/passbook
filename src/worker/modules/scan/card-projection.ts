@@ -1,4 +1,7 @@
-import { passFieldFormats } from '../../../passkit/template/scan-display/field-formats.ts';
+import {
+  inputLabels,
+  passFieldFormats,
+} from '../../../passkit/template/scan-display/field-formats.ts';
 import {
   actionGoals,
   type ScanDisplayScope,
@@ -48,8 +51,10 @@ export function scopeOf(
   });
   const fields = visibleFields(found, actor);
   const access = safe(accessScopeOf(found, actor, input.access ?? null));
+  const inputs = safe(projectScanInputs(found, actor)) ?? {};
   return {
-    inputs: safe(projectScanInputs(found, actor)) ?? {},
+    inputs,
+    inputLabels: inputLabels(manifest.inputs, Object.keys(inputs)),
     fields,
     fieldFormats: passFieldFormats(passJson, Object.keys(fields)),
     pass: {

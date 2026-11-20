@@ -34,7 +34,14 @@ const STYLE_OF: Record<string, string> = {
   'starter-monthly-pass': 'generic',
   'starter-day-pass': 'generic',
   'starter-guest-pass': 'generic',
+  'starter-multi-day-pass': 'eventTicket',
+  'starter-hotel-stay': 'generic',
+  'starter-credential': 'generic',
+  'starter-staff-badge': 'generic',
+  'starter-visitor-pass': 'generic',
 };
+
+const POSTER = new Set(['starter-event-ticket', 'starter-multi-day-pass']);
 
 const SCAN_CODED = new Set([
   'starter-coupon',
@@ -49,6 +56,11 @@ const SCAN_CODED = new Set([
   'starter-monthly-pass',
   'starter-day-pass',
   'starter-guest-pass',
+  'starter-multi-day-pass',
+  'starter-hotel-stay',
+  'starter-credential',
+  'starter-staff-badge',
+  'starter-visitor-pass',
   // PS-28: every blueprint's barcode is the scan code (the ID card keeps its number, PS-19).
   'starter-event-ticket',
   'starter-boarding-pass',
@@ -88,7 +100,7 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
         i.severity !== 'info' &&
         i.code !== 'BACK_CONTACT' &&
         !(i.code === 'FIELD_COUNT' && i.path === 'boardingPass.primaryFields') &&
-        !(i.code === 'PET_NFC' && slug === 'starter-event-ticket'),
+        !(i.code === 'PET_NFC' && POSTER.has(slug)),
     );
     expect(issues).toEqual([]);
   });
@@ -172,8 +184,8 @@ describe.each(Object.entries(STYLE_OF))('%s', (slug, style) => {
     const used = new Set(pkg.assets.map((a) => a.slot));
     expect(used.has('icon')).toBe(true);
     // The classic event ticket draws background and thumbnail instead of a strip.
-    expect(used.has('background')).toBe(slug === 'starter-event-ticket');
-    if (slug === 'starter-event-ticket') expect(used.has('strip')).toBe(false);
+    expect(used.has('background')).toBe(POSTER.has(slug));
+    if (POSTER.has(slug)) expect(used.has('strip')).toBe(false);
   });
 
   it('removes an empty note and never leaks sample text into it', async () => {

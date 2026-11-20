@@ -1,11 +1,15 @@
 /**
  * The device API client (SA 5.1). Typed calls for every route under `/api/v1/scan`.
  *
- * It does not use the shared `api` client: a paired scanner sends no mode header (its mode is bound
- * on the server), the CSRF secret comes from the scan session and is kept in memory only, and a
- * 429 must surface its `Retry-After`.
+ * It does not use the shared `api` client: a paired scanner sends no mode header (bound on the server),
+ * its CSRF secret stays in memory, and a 429 must surface `Retry-After`.
  */
 import type { z } from 'zod';
+import {
+  type SignOutRequestSchema,
+  SignOutResultSchema,
+} from '../../../shared/contracts/access-business.ts';
+import { MemberPhotoSchema } from '../../../shared/contracts/check-in.ts';
 import {
   ScanTagEnrollmentDoneSchema,
   ScanTagEnrollmentPendingSchema,
@@ -27,6 +31,12 @@ import type {
 } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanRoleChange } from '../../../shared/contracts/scan-role.ts';
 import {
+  RollCallCurrentSchema,
+  type RollCallMarksRequestSchema,
+  RollCallMarksResponseSchema,
+  RollCallSchema,
+} from '../../../shared/contracts/scan-roll-call.ts';
+import {
   type ScanBatchRequestSchema,
   ScanBatchResultSchema,
   type ScanLookupRequestSchema,
@@ -46,6 +56,7 @@ import {
   ScanWorkspaceSchema,
   SessionActivitySchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
+import { VisitorListSchema } from '../../../shared/contracts/visitors.ts';
 import { modeHeaders } from '../../lib/mode.ts';
 import type { BindBody, TagRead } from '../assign/types.ts';
 import {
@@ -68,6 +79,13 @@ export { ScanApiError } from './errors.ts';
 export type { ScanApiDeps } from './scan-api-support.ts';
 
 const BASE = '/api/v1/scan';
+
+const rosterQuery = (cursor: string | undefined, since: number | undefined): string => {
+  const q = new URLSearchParams();
+  if (cursor) q.set('cursor', cursor);
+  if (since !== undefined) q.set('since', String(since));
+  return q.size > 0 ? `?${q}` : '';
+};
 
 export function createScanApi(deps: ScanApiDeps) {
   const doFetch = deps.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
@@ -199,8 +217,15 @@ export function createScanApi(deps: ScanApiDeps) {
     pairPreview: (code: string) =>
       request('POST', '/pair/preview', ScanPairPreviewSchema, { code }),
     pair: (code: string) => request('POST', '/pair', ScanSessionSchema, { code }),
-    session: (scope?: AdminScope, call?: Call) =>
-      request('GET', `/session${scopeQuery(scope)}`, ScanSessionSchema, undefined, call),
+    /** `pending`: reads queued on the device; 0 tells the server this contact is a clean one. */
+    session: (scope?: AdminScope, call?: Call, pending?: number) =>
+      request(
+        'GET',
+        `/session${scopeQuery(scope)}${pending === undefined ? '' : `${scope ? '&' : '?'}pending=${pending}`}`,
+        ScanSessionSchema,
+        undefined,
+        call,
+      ),
     resolve: (body: z.infer<typeof ScanResolveRequestSchema>, call?: Call) =>
       request('POST', '/resolve', ScanOutcomeSchema, body, call),
     act: (body: z.infer<typeof ScanActRequestSchema>, call?: Call) =>
@@ -234,14 +259,8 @@ export function createScanApi(deps: ScanApiDeps) {
     setRole: (body: ScanRoleChange) => request('POST', '/role', ScanSessionSchema, body),
     staffSearch: (q: string, call?: Call) =>
       request('GET', `/staff?q=${encodeURIComponent(q)}`, ScanStaffSearchSchema, undefined, call),
-    roster: (cursor?: string, call?: Call) =>
-      request(
-        'GET',
-        `/roster${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`,
-        ScanRosterSchema,
-        undefined,
-        call,
-      ),
+    roster: (cursor?: string, since?: number, call?: Call) =>
+      request('GET', `/roster${rosterQuery(cursor, since)}`, ScanRosterSchema, undefined, call),
     batch: (body: z.infer<typeof ScanBatchRequestSchema>, call?: Call) =>
       request('POST', '/batch', ScanBatchResultSchema, body, call),
     inside: (query: InsideQuery, call?: Call) => {
@@ -273,8 +292,38 @@ export function createScanApi(deps: ScanApiDeps) {
       request('POST', '/overrides', ScanOutcomeSchema, body, call),
     overrideNote: (id: string, note: z.infer<typeof ScanOverrideNoteSchema>) =>
       request('POST', `/overrides/${encodeURIComponent(id)}/note`, null, { note }),
+    rollCall: (call?: Call) => request('GET', '/roll-call', RollCallCurrentSchema, undefined, call),
+    startRollCall: (call?: Call) => request('POST', '/roll-call', RollCallSchema, {}, call),
+    rollCallMarks: (id: string, body: z.infer<typeof RollCallMarksRequestSchema>, call?: Call) =>
+      request(
+        'POST',
+        `/roll-call/${encodeURIComponent(id)}/marks`,
+        RollCallMarksResponseSchema,
+        body,
+        call,
+      ),
+    endRollCall: (id: string, call?: Call) =>
+      request('POST', `/roll-call/${encodeURIComponent(id)}/end`, RollCallSchema, {}, call),
     markOut: (body: MarkOutRequest, call?: Call) =>
       request('POST', '/mark-out', MarkOutResultSchema, body, call),
+    addPhoto: (passId: string, png: string, call?: Call) =>
+      request(
+        'POST',
+        `/passes/${encodeURIComponent(passId)}/photo`,
+        MemberPhotoSchema,
+        { png, includeInPass: false },
+        call,
+      ),
+    visitors: (day: { start: number; end: number }, call?: Call) =>
+      request(
+        'GET',
+        `/visitors?dayStart=${day.start}&dayEnd=${day.end}`,
+        VisitorListSchema,
+        undefined,
+        call,
+      ),
+    signOutPerson: (body: z.infer<typeof SignOutRequestSchema>, call?: Call) =>
+      request('POST', '/sign-out', SignOutResultSchema, body, call),
   };
 }
 

@@ -143,10 +143,12 @@ describe('settings source and ceiling', () => {
     expect((await put(scope, { 'retention.scansDays': 1001 })).status).toBe(422);
   });
 
-  it('flags the org NFC tag switch while the platform switch is off', async () => {
+  it('flags the org NFC tag switch only while the platform tag switch is off, not Apple NFC', async () => {
     const scope = await orgScope();
+    expect((await read(scope))('nfc.tags').blockedByPlatform).toBeUndefined();
+    await call('PUT', '', { values: { 'nfc.tagsEnabled': false } });
     expect((await read(scope))('nfc.tags').blockedByPlatform).toBe(true);
-    await call('PUT', '', { values: { 'nfc.enabled': true } });
+    await call('PUT', '', { values: { 'nfc.tagsEnabled': true } });
     expect((await read(scope))('nfc.tags').blockedByPlatform).toBeUndefined();
   });
 
@@ -158,13 +160,15 @@ describe('settings source and ceiling', () => {
     expect(get('scan.undoWindowMinutes').ceiling).toBeUndefined();
   });
 
-  it('refuses enabling org NFC tags while the platform switch is off, allows it once on', async () => {
+  it('allows org NFC tags with Apple NFC off; refuses enabling them while the platform tag switch is off', async () => {
     const scope = await orgScope();
+    expect((await put(scope, { 'nfc.tags': { enabled: true } })).status).toBe(200);
+    expect((await put(scope, { 'nfc.tags': { enabled: false } })).status).toBe(200);
+    await call('PUT', '', { values: { 'nfc.tagsEnabled': false } });
     const res = await put(scope, { 'nfc.tags': { enabled: true } });
     expect(res.status).toBe(422);
     expect(JSON.stringify(await res.json())).toContain('NFC_OFF');
-    expect((await put(scope, { 'nfc.tags': { enabled: false } })).status).toBe(200);
-    await call('PUT', '', { values: { 'nfc.enabled': true } });
+    await call('PUT', '', { values: { 'nfc.tagsEnabled': true } });
     expect((await put(scope, { 'nfc.tags': { enabled: true } })).status).toBe(200);
   });
 

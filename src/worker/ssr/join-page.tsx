@@ -1,5 +1,6 @@
 import { OctagonX } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import { JOIN_COPY } from '../../shared/copy/join.ts';
 import type { DeviceInfo } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
@@ -12,7 +13,8 @@ import { GO_TO_MY_PASSES } from './error-page.tsx';
 import { documentStart, type PageTheme } from './head.ts';
 import { actionHtml, type HostedArt, hostedPage, REPLAY_SCRIPT } from './hosted.ts';
 import joinCss from './join-page.css?raw';
-import { OrgBar } from './org-bar.tsx';
+import { OrgBar, OrgMark } from './org-bar.tsx';
+import { brandCss } from './org-brand-css.ts';
 import { PAGE_CSS } from './pass-page.tsx';
 
 /** What a join response says to a browser. */
@@ -20,6 +22,8 @@ export type JoinPage =
   | {
       kind: 'form';
       orgName: string;
+      /** The org's brand kit (`orgBrandOf`). */
+      brand?: OrgBrand;
       askName: boolean;
       askEmail: boolean;
       test: boolean;
@@ -32,7 +36,7 @@ export type JoinPage =
       siteKey?: string;
       device?: DeviceInfo;
     }
-  | { kind: 'check_email'; orgName: string; email: string }
+  | { kind: 'check_email'; orgName: string; email: string; brand?: OrgBrand }
   | { kind: 'refused'; reason: Refusal };
 
 export type Refusal = 'device_limit' | 'too_many' | 'daily_limit' | 'closed' | 'expired';
@@ -100,7 +104,7 @@ function JoinForm(page: Extract<JoinPage, { kind: 'form' }>) {
   const nameBad = Boolean(page.error) && page.askName && !values.name;
   return (
     <div className="jn" data-test={page.test ? '' : undefined}>
-      <OrgBar orgName={page.orgName} />
+      <OrgBar orgName={page.orgName} brand={page.brand} />
       {page.test ? <TestStrip>{JOIN_COPY.page.testStrip}</TestStrip> : null}
       <main className="jn-main">
         <h1>{JOIN_COPY.page.title.replace('{org}', page.orgName)}</h1>
@@ -173,6 +177,7 @@ function JoinForm(page: Extract<JoinPage, { kind: 'form' }>) {
           </div>
         </div>
       </main>
+      <OrgMark brand={page.brand} />
     </div>
   );
 }
@@ -197,6 +202,7 @@ export function renderJoinPage(page: JoinPage, nonce: string, theme?: PageTheme)
     return hostedPage({
       nonce,
       theme,
+      ...(page.brand ? { brand: page.brand } : {}),
       title: JOIN_COPY.page.checkEmail.title,
       art: 'confirm',
       lede: escapeHtml(
@@ -209,5 +215,5 @@ export function renderJoinPage(page: JoinPage, nonce: string, theme?: PageTheme)
   }
   const title = JOIN_COPY.page.title.replace('{org}', page.orgName);
   const head = `<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="strict-origin"><meta property="og:type" content="website"><meta property="og:title" content="${escapeHtml(title)}">`;
-  return `${documentStart(theme)}${head}<title>${escapeHtml(title)}</title>${SCRIPT}${REPLAY_SCRIPT}<style nonce="${nonce}">${JOIN_PAGE_CSS}</style></head><body>${renderToStaticMarkup(<JoinForm {...page} />)}</body></html>`;
+  return `${documentStart(theme)}${head}<title>${escapeHtml(title)}</title>${SCRIPT}${REPLAY_SCRIPT}<style nonce="${nonce}">${JOIN_PAGE_CSS}${brandCss(page.brand)}</style></head><body>${renderToStaticMarkup(<JoinForm {...page} />)}</body></html>`;
 }

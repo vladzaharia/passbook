@@ -1,5 +1,6 @@
 import { all, batch, chunk, first, run, stmt } from '../../platform/db.ts';
 import type { EventRow } from '../events/repo.ts';
+import { ORG_SERVES_SQL } from '../orgs/repo.ts';
 
 export interface RegistrationSnapshot {
   passId: string;
@@ -25,7 +26,7 @@ export interface PushFence extends RegistrationSnapshot {
 }
 
 const pushFenceSql = `SELECT 1 FROM passes p
-  JOIN orgs o ON o.id = p.org_id AND o.status = 'active'
+  JOIN orgs o ON o.id = p.org_id AND ${ORG_SERVES_SQL}
   JOIN outbox ob ON ob.pass_id = p.id AND ob.org_id = p.org_id
   WHERE p.id = ? AND p.org_id = ? AND p.identity_id = ? AND p.credential_generation = ?
     AND p.lifecycle_generation = ?

@@ -87,7 +87,11 @@ test.describe('platform administrator', () => {
     let org: { id: string; name: string };
     try {
       const slug = uid('platform-only').toLowerCase();
-      org = await api.send('POST', '/api/v1/orgs', { slug, name: `Platform only ${slug}` });
+      org = await api.send('POST', '/api/v1/orgs', {
+        slug,
+        name: `Platform only ${slug}`,
+        preset: 'legacy',
+      });
       const memberships = await api.get<{ items: OrgMembership[] }>('/api/v1/orgs/memberships/me');
       expect(memberships.items.some((membership) => membership.orgId === org.id)).toBe(false);
     } finally {

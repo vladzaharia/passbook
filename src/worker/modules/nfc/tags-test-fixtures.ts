@@ -14,12 +14,11 @@ export async function tagFixture(options: { releases?: boolean } = {}) {
 
   async function org(options: { enabled?: boolean } = {}) {
     const row = await makeOrg(kit.fx);
-    if (options.enabled !== false)
-      await run(
-        kit.env.DB,
-        "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'nfc.tags', '{\"enabled\":true}', 1)",
-        [`org:${row.id}`],
-      );
+    await run(
+      kit.env.DB,
+      "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'nfc.tags', ?, 1)",
+      [`org:${row.id}`, JSON.stringify({ enabled: options.enabled !== false })],
+    );
     const operator = await makeUser(kit.fx);
     await grantKitMembership(kit, row.id, operator.id, ['pass_operator']);
     const session = await makeSession(kit.fx, { userId: operator.id, roles: ['user'] });

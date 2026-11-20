@@ -47,20 +47,15 @@ export async function setupSamsungCallbacks(
     orgId: kit.org.id,
     mode,
     passId: pass.id,
-    credentialKeysetCommitment,
   });
-  const approved = await getApprovedProjection(
-    kit.ctx,
-    {
-      orgId: kit.org.id,
-      mode,
-      provider: 'samsung',
-      templateId: pass.templateId,
-      templateVersion: pass.templateVersion,
-      appleReleaseId: pass.releaseId,
-    },
-    { credentialKeysetCommitment },
-  );
+  const approved = await getApprovedProjection(kit.ctx, {
+    orgId: kit.org.id,
+    mode,
+    provider: 'samsung',
+    templateId: pass.templateId,
+    templateVersion: pass.templateVersion,
+    appleReleaseId: pass.releaseId,
+  });
   if (!source || !approved) throw new Error('Missing approved source fixture');
   const operation = await seedHistoricalProviderInstance(kit.env.DB, {
     id: kit.ctx.ids.id(),

@@ -19,6 +19,8 @@ import { type ApiKey, useCreateKey } from './queries.ts';
 import { type SCOPES, ScopeRows, TerminalRows } from './scope-rows.tsx';
 
 const DAY = 86_400_000;
+/** The least a key can do; more is ticked on purpose. */
+const DEFAULT_SCOPES = ['passes:read'];
 const EXPIRY = [
   { value: '30', label: '30 days' },
   { value: '90', label: '90 days' },
@@ -48,7 +50,7 @@ export function CreateKeyDialog({
 }: CreateKeyDialogProps) {
   const create = useCreateKey(principal);
   const [name, setName] = useState('');
-  const [scopes, setScopes] = useState<string[]>([]);
+  const [scopes, setScopes] = useState<string[]>(DEFAULT_SCOPES);
   const [terminalIds, setTerminalIds] = useState<string[]>([]);
   const scansWrite = scopes.includes('scans:write');
   const [expiry, setExpiry] = useState('90');
@@ -73,7 +75,7 @@ export function CreateKeyDialog({
   function close() {
     onOpenChange(false);
     setName('');
-    setScopes([]);
+    setScopes(DEFAULT_SCOPES);
     setTerminalIds([]);
     setExpiry('90');
     setKeyMode(getMode());
@@ -138,7 +140,7 @@ export function CreateKeyDialog({
   return (
     <Dialog
       open={open}
-      dirty={name.trim() !== '' || scopes.length > 0 || expiry !== '90'}
+      dirty={name.trim() !== '' || scopes.join() !== DEFAULT_SCOPES.join() || expiry !== '90'}
       onOpenChange={(o) => (o ? onOpenChange(true) : close())}
     >
       <DialogContent

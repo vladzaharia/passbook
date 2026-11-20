@@ -3,7 +3,7 @@ import { CHANNELS } from '../../../shared/contracts/channels.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { journal } from './apply-journal.ts';
-import { getPolicy, type Policy } from './repo.ts';
+import { getPolicy, type Policy, templateDefaultsOf } from './repo.ts';
 import { writeDrop, writeFail, writeFinish, writeStart, writeTouch } from './repo-apply-write.ts';
 import { mayPublish } from './repo-replace.ts';
 import type { ApplyRun } from './repo-runs.ts';
@@ -29,8 +29,11 @@ export const GATE_ROUND_MS = 5 * 60_000;
 export const isOrgRefusal = (error: unknown): boolean =>
   error instanceof AppError && error.code === 'ORG_ACCESS_CHANGED';
 
-const same = (a: Policy, b: Policy): boolean =>
-  CHANNELS.every((c) => (a[c] ?? templateDefault(c)) === (b[c] ?? templateDefault(c)));
+const same = (a: Policy, b: Policy, defaults: Policy): boolean =>
+  CHANNELS.every((c) => {
+    const d = defaults[c] ?? templateDefault(c);
+    return (a[c] ?? d) === (b[c] ?? d);
+  });
 
 /**
  * Where the run's change really begins. A run whose predecessor failed also owes the failed run's
@@ -75,7 +78,14 @@ export async function startOne(ctx: ServiceContext, runId: string): Promise<Star
   const to = stored?.channels ?? {};
   const begin = await effectiveFrom(ctx, run);
   try {
-    if (!begin.viaFailed && same(begin.from, to)) {
+    if (
+      !begin.viaFailed &&
+      same(
+        begin.from,
+        to,
+        await templateDefaultsOf(ctx.env.DB, run.templateId, run.orgId, run.mode),
+      )
+    ) {
       await writeDrop(ctx, run);
       ctx.log.info('channels.apply.dropped', {
         runId,

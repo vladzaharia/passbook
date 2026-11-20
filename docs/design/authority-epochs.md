@@ -508,6 +508,7 @@ Roll forward only once migrations have run (owner answer 6). `0059` and `0065` m
 
 The scan and fence rewrite is complete. What is left:
 - Wallet providers stay on column equality (7.3).
+- A rekey of the keyset singleton must migrate every provider commitment column (instances, operations, refs, bindings, tombstones, candidates, approvals, releases, evidence) explicitly: provider SQL no longer re-checks the singleton per statement; services pin it once at entry and carry no commitment between layers. Provider SQL reads the stored value from the singleton through `pinnedKeysetSql` (`wallet-providers/repo-keyset-pin.ts`).
 
 Done:
 
@@ -526,7 +527,7 @@ Done:
 
 Wallet providers (Google, Samsung) ship dark and stay on column equality:
 - pass-column fences in `wallet-providers/` (`walletInstanceProofSql` in `repo-instance-proof.ts`, `repo-instance*.ts`, `repo-offers.ts`, `repo-sync-*.ts`, `repo-callbacks*.ts`, `repo-accounts.ts`, `repo-projection*.ts`, `repo-samsung-verification.ts`);
-- keyset helpers (`credentialRefKeysetSql`, `credential-keyset.ts`) and the triggers in `0043` and `0050`;
+- the keyset: pinned once per entry with `requireCredentialRefKeyset` (`credential-keyset.ts`), no per-statement `credentialRefKeysetSql`; the triggers in `0043` and `0050` stay;
 - `p.version`, `p.revision`, `p.release_id`, `p.credential_generation` and `p.lifecycle_generation` keep their meaning;
 - `passes/repo-credential-transfer-finish.ts`, `passes/repo-ops-retention.ts` and `sandbox/repo.ts` call `providerRetirementCompleteSql` inside their grant checks; it takes no parameters and is vacuous while providers are dark.
 
@@ -574,6 +575,8 @@ Read by `tools/authority-scope.ts`: a file with a fence pattern must be listed h
 **WP9:** `scan/{repo-device,repo-scanners-pair,pairing,pairing-session,pairing-token,scanners,scanning-devices,scanning-device-revocation,scanning-sessions,repo-scanning-sessions,setups,staff-admin,staff-admin-views,staff-pin,repo-staff-activity,repo-staff-pin-counters,events,events-mutations,repo-event-authority,repo-event-keyset,repo-events,repo-scanner-configuration-authority,scanning-workspace-report,routes-staff-session}.ts`
 
 **WP7 (fence) and W1-13 (logic):** `scan/repo-lookup-backfill.ts`. WP7 converts its fence; W1-13 keeps the backfill logic.
+
+**MT11:** `org-lifecycle/repo.ts` (the export request and the closed-org fence repeat the admin session test in SQL: no member grant exists on a closed org)
 
 ## Appendix B. Guarded tables
 

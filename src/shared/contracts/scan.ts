@@ -27,6 +27,9 @@ export {
   TimeZoneSchema,
   UuidV7Schema,
 } from './scan-base.ts';
+
+import { ScanBundleSchema, ScanGroupMemberSchema } from './scan-group.ts';
+
 export { type ScanOccupancy, ScanOccupancySchema } from './scan-occupancy.ts';
 export { ScanValueSchema } from './scan-value.ts';
 
@@ -53,7 +56,6 @@ export type ScanOutcomeKind = z.infer<typeof ScanOutcomeKindSchema>;
 export const ScanRecordOutcomeSchema = z.enum(['ok', 'heads_up', 'refused']);
 /** What `scans.action_kind` can hold: the action kinds, and `undo` for the row an undo writes. */
 export const ScanRecordKindSchema = z.enum([...ScanActionKindSchema.options, 'undo']);
-
 /** Wire reasons. The client-only ones (network, timeout, ...) live in `src/web/scan/machine/types.ts`. */
 export const SCAN_REFUSED_REASONS = [
   'not_found',
@@ -116,6 +118,7 @@ export const ScannerSettingsSchema = z.object({
   reader: z.enum(['none', 'barcode', 'nfc']),
   lookup: z.boolean(),
   offline: z.boolean(),
+  whenOffline: z.enum(['stop', 'decide', 'list']).optional(),
   dailyAmount: z.number().int().min(1).max(10_000_000).nullable(),
   /** A monitor may act (Let in, Mark as out) when this is on. Off when absent. */
   deskActions: z.boolean().optional(),
@@ -239,14 +242,7 @@ export const ScanCardSchema = z.object({
       }),
     )
     .max(3),
-  bundle: z
-    .object({
-      id: IdSchema,
-      name: z.string(),
-      size: z.number().int(),
-      checkedIn: z.number().int().nullable(),
-    })
-    .nullable(),
+  bundle: ScanBundleSchema.nullable(),
   door: z.object({ state: z.enum(['in', 'out']).nullable() }).nullable(),
   access: ScanAccessSchema.nullable().default(null),
   /** The tag this was read from. Desk and up only; never on a customer screen. */
@@ -307,8 +303,11 @@ export const ScanOutcomeSchema = z.object({
       done: z.number().int(),
       already: z.number().int(),
       refused: z.number().int(),
+      members: z.array(ScanGroupMemberSchema).max(10).optional(),
     })
     .nullable(),
+  /** The bundle behind the scanned pass: the "Check in all" chip. Also on `card` for a ready card. */
+  bundle: ScanBundleSchema.nullable().optional(),
   counts: ScanCountsSchema,
   milestone: ScanMilestoneSchema.nullable(),
   undoUntil: TimestampSchema.nullable(),
@@ -322,7 +321,6 @@ export const ScanOutcomeSchema = z.object({
 export type ScanOutcome = z.infer<typeof ScanOutcomeSchema>;
 export type ScanCard = z.infer<typeof ScanCardSchema>;
 export type ScanCounts = z.infer<typeof ScanCountsSchema>;
-
 /** Shared with broadcasts and the passes list. */
 export const ScanTargetSchema = z.union([
   z.object({ eventId: IdSchema, checkedIn: z.boolean() }),

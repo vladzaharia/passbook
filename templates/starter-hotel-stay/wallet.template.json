@@ -1,0 +1,391 @@
+{
+  "schema": 1,
+  "name": "Hotel stay",
+  "description": "Dates, room, breakfast and Wi-Fi. Not a key.",
+  "wallets": {
+    "schema": 1,
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png",
+        "thumbnail": "wallets/google/thumbnail.png"
+      }
+    },
+    "samsung": {}
+  },
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "guest",
+      "reservation",
+      "checkIn",
+      "checkOut"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "guest": {
+        "type": "string",
+        "x-label": "Guest",
+        "x-group": "Stay",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "reservation": {
+        "type": "string",
+        "x-label": "Reservation",
+        "x-group": "Stay",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "checkIn": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Check-in",
+        "x-group": "Stay",
+        "x-order": 30,
+        "x-widget": "datetime"
+      },
+      "checkOut": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Check-out",
+        "x-group": "Stay",
+        "x-order": 40,
+        "x-widget": "datetime"
+      },
+      "nights": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 90,
+        "x-label": "Nights",
+        "x-group": "Stay",
+        "x-order": 50
+      },
+      "room": {
+        "type": "string",
+        "x-label": "Room",
+        "x-group": "Stay",
+        "x-order": 60,
+        "maxLength": 20,
+        "x-help": "Blank until check-in. The desk sets it with a scan."
+      },
+      "breakfast": {
+        "type": "string",
+        "x-label": "Breakfast",
+        "x-group": "Extras",
+        "x-order": 70,
+        "enum": [
+          "Included",
+          "Not included"
+        ],
+        "default": "Included",
+        "x-widget": "select"
+      },
+      "spa": {
+        "type": "string",
+        "x-label": "Spa",
+        "x-group": "Extras",
+        "x-order": 80,
+        "enum": [
+          "Included",
+          "Not included"
+        ],
+        "default": "Not included",
+        "x-widget": "select"
+      },
+      "plate": {
+        "type": "string",
+        "x-label": "Parking plate",
+        "x-group": "Extras",
+        "x-order": 90,
+        "maxLength": 20
+      },
+      "wifiNetwork": {
+        "type": "string",
+        "x-label": "Wi-Fi network",
+        "x-group": "Wi-Fi",
+        "x-order": 100,
+        "maxLength": 60
+      },
+      "wifiPassword": {
+        "type": "string",
+        "x-label": "Wi-Fi password",
+        "x-group": "Wi-Fi",
+        "x-order": 110,
+        "maxLength": 60
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 900,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 901,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      }
+    }
+  },
+  "sample": {
+    "guest": "Ana Rivera",
+    "reservation": "RES-48213",
+    "checkIn": "2030-11-18T15:00:00-08:00",
+    "checkOut": "2030-11-21T11:00:00-08:00",
+    "nights": 3,
+    "breakfast": "Included",
+    "spa": "Not included",
+    "plate": "7ABC123",
+    "wifiNetwork": "Luma Guest",
+    "wifiPassword": "lamplight"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{guest}}"
+    },
+    {
+      "to": {
+        "field": "room"
+      },
+      "value": "{{room}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "room"
+      },
+      "value": "At check-in",
+      "when": {
+        "input": "room",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "field": "in"
+      },
+      "value": "{{checkIn}}"
+    },
+    {
+      "to": {
+        "field": "out"
+      },
+      "value": "{{checkOut}}"
+    },
+    {
+      "to": {
+        "field": "breakfast"
+      },
+      "value": "{{breakfast}}"
+    },
+    {
+      "to": {
+        "field": "plate"
+      },
+      "value": "{{plate}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "wifi"
+      },
+      "value": "{{wifiNetwork}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "wifiPass"
+      },
+      "value": "{{wifiPassword}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{reservation}}"
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{checkOut}}"
+    }
+  ],
+  "display": {
+    "icon": "coffee",
+    "group": "get-in",
+    "aliases": [
+      "hotel",
+      "stay",
+      "room",
+      "guest",
+      "breakfast",
+      "check-in"
+    ],
+    "title": "{{guest}}",
+    "subtitle": "Stay \u00b7 {{reservation}}",
+    "status": "{{room}}",
+    "search": [
+      "guest",
+      "reservation",
+      "room"
+    ]
+  },
+  "behaviors": [
+    {
+      "use": "relevance-window",
+      "version": 1,
+      "config": {
+        "start": "checkIn",
+        "end": "checkOut",
+        "leadMinutes": 720
+      }
+    }
+  ],
+  "channels": {
+    "paper": "off",
+    "nfc": "on"
+  },
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "arrive",
+        "label": "Check in",
+        "kind": "check_in",
+        "repeat": "once",
+        "minRole": "desk"
+      },
+      {
+        "id": "room",
+        "label": "Set room",
+        "kind": "set",
+        "input": "room",
+        "repeat": "always",
+        "minRole": "desk",
+        "notify": true
+      },
+      {
+        "id": "breakfast",
+        "label": "Breakfast",
+        "kind": "check_in",
+        "repeat": "daily",
+        "minRole": "door"
+      },
+      {
+        "id": "spa",
+        "label": "Spa",
+        "kind": "check_in",
+        "repeat": "daily",
+        "minRole": "door"
+      },
+      {
+        "id": "parking",
+        "label": "Parking",
+        "kind": "check_in",
+        "repeat": "always",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "reservation"
+    },
+    "window": {
+      "from": "checkIn",
+      "until": "checkOut",
+      "earlyMinutes": 720,
+      "lateMinutes": 120
+    },
+    "flags": [
+      {
+        "input": "breakfast",
+        "label": "No breakfast",
+        "equals": [
+          "Not included"
+        ]
+      }
+    ],
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.guest}}",
+      "header": {},
+      "panels": [
+        {
+          "id": "p_details",
+          "preset": {
+            "id": "details",
+            "v": 1
+          },
+          "title": "Details",
+          "icon": "info",
+          "rows": [
+            {
+              "id": "r_field1",
+              "slot": "field1",
+              "type": "field",
+              "label": "Room",
+              "value": "{{inputs.room}}"
+            },
+            {
+              "id": "r_field2",
+              "slot": "field2",
+              "type": "field",
+              "label": "Breakfast",
+              "value": "{{inputs.breakfast}}"
+            },
+            {
+              "id": "r_field3",
+              "slot": "field3",
+              "type": "field",
+              "label": "Spa",
+              "value": "{{inputs.spa}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Send them to the front desk."
+      }
+    }
+  }
+}

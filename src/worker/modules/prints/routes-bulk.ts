@@ -12,20 +12,23 @@ import {
   assertOrg,
   authOf,
   passScopeOf,
-  requireTenantSession,
   svc,
   tenantAuthorityOf,
 } from '../passes/http.ts';
 import { bulkPrintPdf, bulkPrintStatus, startBulkPrint } from './bulk-service.ts';
 import { PDF_HEADERS } from './pdf-service.ts';
 
+/** A job belongs to the user that started it, or to the org of the key that did. */
+function callerIdOf(auth: ReturnType<typeof authOf>): string {
+  if (auth.kind === 'session') return auth.userId;
+  if (auth.kind === 'api_key') return auth.orgId ?? auth.keyId;
+  throw new ForbiddenError();
+}
+
 type Router = ReturnType<typeof createRouter>;
 
 /** /api/v1/passes/bulk-print: one combined PDF of a selection (staff sessions with passes:operate). */
 export function registerBulkPrintRoutes(passesRoutes: Router): void {
-  passesRoutes.use('/bulk-print', requireTenantSession);
-  passesRoutes.use('/bulk-print/*', requireTenantSession);
-
   register(
     passesRoutes,
     'passes',
@@ -42,10 +45,9 @@ export function registerBulkPrintRoutes(passesRoutes: Router): void {
       assertOrg(c, body.orgId);
       const ctx = svc(c);
       const auth = authOf(c);
-      if (auth.kind !== 'session') throw new ForbiddenError();
       const authority = await tenantAuthorityOf(ctx, auth, body.orgId, 'passes:operate');
       const scope = { ...passScopeOf(c), orgId: authority.orgId };
-      const caller = { authority, userId: auth.userId, mode: scope.mode, actor: actorFor(c) };
+      const caller = { authority, userId: callerIdOf(auth), mode: scope.mode, actor: actorFor(c) };
       return c.json(await startBulkPrint(ctx, caller, scope, body.ids), 202);
     },
   );
@@ -53,9 +55,14 @@ export function registerBulkPrintRoutes(passesRoutes: Router): void {
   const whoOf = async (c: Parameters<typeof svc>[0], orgId: string) => {
     assertOrg(c, orgId);
     const auth = authOf(c);
-    if (auth.kind !== 'session') throw new ForbiddenError();
-    await tenantAuthorityOf(svc(c), auth, orgId, 'passes:operate');
-    return { orgId, userId: auth.userId, mode: passScopeOf(c).mode };
+    // A key reads with passes:read (the guard picks the scope by method); a session needs the operate right it started with.
+    await tenantAuthorityOf(
+      svc(c),
+      auth,
+      orgId,
+      auth.kind === 'api_key' ? 'passes:read' : 'passes:operate',
+    );
+    return { orgId, userId: callerIdOf(auth), mode: passScopeOf(c).mode };
   };
 
   register(

@@ -45,6 +45,16 @@ export function collection<T>(db: IDBDatabase, name: StoreName) {
     put: async (value: T): Promise<void> => void (await settle(store('readwrite').put(value))),
     get: (key: string): Promise<T | undefined> => settle(store('readonly').get(key)),
     all: (): Promise<T[]> => settle(store('readonly').getAll()),
+    /** Many rows in one transaction: a 50,000-row roster is one commit, not 50,000. */
+    putMany: (values: T[]): Promise<void> =>
+      new Promise((resolve, reject) => {
+        const tx = db.transaction(name, 'readwrite');
+        const target = tx.objectStore(name);
+        for (const value of values) target.put(value);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error ?? new Error('IndexedDB write failed'));
+        tx.onabort = () => reject(tx.error ?? new Error('IndexedDB write aborted'));
+      }),
     remove: async (key: string): Promise<void> =>
       void (await settle(store('readwrite').delete(key))),
     clear: async (): Promise<void> => void (await settle(store('readwrite').clear())),

@@ -18,6 +18,27 @@ const base: ChannelInputs = {
 };
 const eff = (over: Partial<ChannelInputs> = {}) => effectiveChannels({ ...base, ...over });
 
+describe('manifest defaults', () => {
+  it('stand where the policy is silent, below the policy and the pass', () => {
+    const defaults = { paper: 'on', nfc: 'off' } as const;
+    expect(eff({ defaults }).paper).toEqual({ on: true, source: 'template' });
+    expect(eff({ defaults }).nfc).toEqual({
+      on: false,
+      source: 'template',
+      reason: 'template_off',
+    });
+    expect(eff({ defaults, template: { paper: 'off' } }).paper.on).toBe(false);
+    expect(eff({ defaults, template: { nfc: 'on' } }).nfc.on).toBe(true);
+    expect(eff({ defaults, pass: { nfc: 'on' } }).nfc).toEqual({ on: true, source: 'pass' });
+    expect(eff({ defaults, template: { paper: 'never' } }).paper.reason).toBe('never');
+  });
+
+  it('never lift a platform or org block', () => {
+    const e = eff({ defaults: { paper: 'on' }, platform: { paper: 'printing_off' } });
+    expect(e.paper).toEqual({ on: false, source: 'platform', reason: 'printing_off' });
+  });
+});
+
 describe('effectiveChannels precedence', () => {
   it('defaults: digital on, paper off, nfc on', () => {
     const e = eff();

@@ -38,6 +38,16 @@ describe('template build key', () => {
     expect(reordered).toBe(original);
   });
 
+  it('ignores the channels defaults', async () => {
+    const original = await buildKey({ manifest, assets, passJson });
+    const withChannels = await buildKey({
+      manifest: { ...manifest, channels: { paper: 'on', nfc: 'off' } },
+      assets,
+      passJson,
+    });
+    expect(withChannels).toBe(original);
+  });
+
   it('changes when a pass, shipped asset, or other manifest content changes', async () => {
     const original = await buildKey({ manifest, assets, passJson });
     expect(

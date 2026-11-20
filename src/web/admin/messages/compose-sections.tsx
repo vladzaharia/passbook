@@ -6,18 +6,15 @@ import { localZone, zoneLabel } from '../../lib/timezones.ts';
 import {
   CheckboxField,
   DateTimeField,
+  DependentSettings,
   FormField,
   SegmentedControl,
   Select,
   SwitchRow,
   Textarea,
 } from '../../ui/index.ts';
-import {
-  describeSchema,
-  type FormValues,
-  flatFields,
-  SchemaForm,
-} from '../passes/schema-form/index.ts';
+import { type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
+import { commonFields } from './common-fields.ts';
 import { atMs, type ComposerState } from './composer-state.ts';
 import { CLEAR_CHOICES } from './labels.ts';
 
@@ -62,26 +59,24 @@ export function MessageSection({
         checked={state.clearing}
         onCheckedChange={(on) => onChange({ clearing: on === true, clear: 'never' })}
       />
-      {state.clearing ? null : (
-        <>
-          <SwitchRow
-            label="Notify holders"
-            help="Wallet can show it on the lock screen."
-            checked={state.notify}
-            onCheckedChange={(notify) => onChange({ notify })}
-          />
-          <FormField label="Expires">
-            {(control) => (
-              <Select
-                {...control}
-                options={CLEAR_CHOICES.map(({ value, label }) => ({ value, label }))}
-                value={state.clear}
-                onValueChange={(clear) => onChange({ clear })}
-              />
-            )}
-          </FormField>
-        </>
-      )}
+      <DependentSettings open={!state.clearing}>
+        <SwitchRow
+          label="Notify holders"
+          help="Wallet can show it on the lock screen."
+          checked={state.notify}
+          onCheckedChange={(notify) => onChange({ notify })}
+        />
+        <FormField label="Expires">
+          {(control) => (
+            <Select
+              {...control}
+              options={CLEAR_CHOICES.map(({ value, label }) => ({ value, label }))}
+              value={state.clear}
+              onValueChange={(clear) => onChange({ clear })}
+            />
+          )}
+        </FormField>
+      </DependentSettings>
     </div>
   );
 }
@@ -106,17 +101,7 @@ export function ChangeSection({
   details: readonly TemplateDetailDto[];
   error?: string | undefined;
 }) {
-  const fields = useMemo(() => {
-    const first = details[0];
-    if (!first) return [];
-    const others = details.slice(1).map((d) => {
-      const props = (d.inputSchema as { properties?: Record<string, unknown> }).properties ?? {};
-      return new Set(Object.keys(props));
-    });
-    return flatFields(describeSchema(first.inputSchema)).filter(
-      (f) => f.type !== 'array' && others.every((set) => set.has(f.key)),
-    );
-  }, [details]);
+  const fields = useMemo(() => commonFields(details), [details]);
   const schema = commonSchema(details, state.fields);
   const toggle = (key: string, on: boolean) => {
     const next = on ? [...state.fields, key] : state.fields.filter((k) => k !== key);

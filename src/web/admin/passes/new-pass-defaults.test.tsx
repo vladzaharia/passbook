@@ -246,7 +246,7 @@ describe('new pass organization selection', () => {
         },
       },
     });
-    expect(await screen.findByText(/A reviewer has to approve/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Approve and publish one/i)).toBeInTheDocument();
     expect(
       new URL(
         screen.getByRole('link', { name: 'Open Templates' }).getAttribute('href') ?? '',
@@ -358,7 +358,7 @@ describe('new pass organization selection', () => {
         },
       },
     });
-    expect(await screen.findByText(/A reviewer has to approve/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Approve and publish one/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/Member name/)).toBeNull();
     expect(draftPreviews).toBe(0);
   });

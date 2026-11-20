@@ -15,6 +15,7 @@ import { blankOutcome } from '../outcome.ts';
 import { assertUnderOverrideCap, countOverride } from '../repo-override-cap.ts';
 import { includeSystemRetentionProof } from '../repo-scan-retention-part.ts';
 import { scanByKey } from '../repo-scans.ts';
+import { ROLL_TABLES, type WithGrant } from '../roll-call/tables.ts';
 import { scanPolicy } from '../rules.ts';
 import { SCAN_COMMIT_TABLES, scanIs, scanWriteGrant } from '../scan-write-grant.ts';
 import { ledgerEvent } from '../scan-write-statements.ts';
@@ -72,6 +73,7 @@ export async function markOut(
   ctx: ServiceContext,
   actor: ScanActor,
   req: MarkOutRequest,
+  extra?: WithGrant,
 ): Promise<ScanOutcome> {
   if (!scanPolicy(policyActor(actor), { kind: 'mark_out' }).allow)
     throw new ForbiddenError('Only Desk and above can mark someone out.', 'FORBIDDEN');
@@ -113,7 +115,8 @@ export async function markOut(
   if (!held || !liveIn({ state: held.state, due_at: held.dueAt }, now))
     throw new ConflictError('They are already out.', 'NOT_INSIDE');
 
-  await assertUnderOverrideCap(ctx, actor);
+  // A roll call Out is not a desk override: an evacuation must not meet the hourly cap.
+  if (!extra) await assertUnderOverrideCap(ctx, actor);
   const scanId = ctx.ids.ordered(now);
   const scanRow: MarkOutScan = {
     id: scanId,
@@ -156,7 +159,7 @@ export async function markOut(
     now,
     pausedSession: true,
     pass: { id: pass.id, facts: { pass, credential: {} } },
-    tables: SCAN_COMMIT_TABLES,
+    tables: extra ? [...SCAN_COMMIT_TABLES, ...ROLL_TABLES] : SCAN_COMMIT_TABLES,
   });
   const { won } = addExit(g, {
     passId: pass.id,
@@ -193,6 +196,7 @@ export async function markOut(
     },
     [scanIs(scanId, { state: 'done' })],
   );
+  extra?.(g, scanId, won);
   try {
     const committed = await g.commit();
     if (!(committed[g.indexOf(inserted)]?.results ?? []).length) {
@@ -206,7 +210,7 @@ export async function markOut(
     if (error instanceof ConflictError) throw error;
     throw await scannerRefusal(ctx, actor, error);
   }
-  await countOverride(ctx, actor);
+  if (!extra) await countOverride(ctx, actor);
   return done(
     false,
     await countNow(),

@@ -24,10 +24,7 @@ const SLUGS = [
 describe.each(SLUGS)('%s scan block', (slug) => {
   it('has no scan issues, not even warnings', async () => {
     const { template } = await loadBaked(slug, { strips: false });
-    // Membership's `holder` input predates the scan screen's own `holder` root; renaming it would break issued passes.
-    const issues = scanManifestIssues(template.manifest, { passJson: template.passJson }).filter(
-      (i) => !(slug === 'starter-generic' && i.code === 'SCAN_DISPLAY_SHADOWED'),
-    );
+    const issues = scanManifestIssues(template.manifest, { passJson: template.passJson });
     expect(issues).toEqual([]);
   });
 

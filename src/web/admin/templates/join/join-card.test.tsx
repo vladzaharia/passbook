@@ -75,7 +75,7 @@ const open = () => screen.getByRole('switch', { name: JOIN_COPY.card.open });
 describe('join card: readiness', () => {
   const lines: [JoinReadinessIssue, RegExp][] = [
     [{ code: 'no_release' }, /Release this template in Live to turn on the join link\./],
-    [{ code: 'barcode_input', label: 'Member id' }, /The barcode shows Member id\./],
+    [{ code: 'barcode_input', label: 'Member id' }, /Join links need a generated barcode\./],
     [{ code: 'input_needed', label: 'Plan' }, /Plan has no default\./],
     [{ code: 'archived' }, /This template is archived\./],
   ];
@@ -98,6 +98,25 @@ describe('join card: readiness', () => {
       else expect(screen.queryByRole('link', { name: /Design|Releases/ })).toBeNull();
     });
   }
+
+  it('shows only the one line when the barcode cannot work, no fields', async () => {
+    server(
+      stateOf(null, { ready: false, issues: [{ code: 'barcode_input', label: 'Member id' }] }),
+    );
+    await card();
+    expect(open()).toBeDisabled();
+    expect(screen.queryByText(JOIN_COPY.card.askFor)).toBeNull();
+    expect(screen.queryByLabelText(JOIN_COPY.card.dailyLimit)).toBeNull();
+    expect(screen.queryByRole('switch', { name: JOIN_COPY.card.email })).toBeNull();
+  });
+
+  it('hides what it asks and the limit while off', async () => {
+    server(stateOf(null, { ready: true, issues: [] }));
+    await card();
+    expect(open()).not.toBeChecked();
+    expect(screen.queryByRole('switch', { name: JOIN_COPY.card.email })).toBeNull();
+    expect(screen.queryByRole('spinbutton', { name: JOIN_COPY.card.dailyLimit })).toBeNull();
+  });
 
   it('says Test in a test-mode line and shows the test note', async () => {
     server(stateOf(null, { ready: false, issues: [{ code: 'no_release' }] }));

@@ -1,6 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, batch, first, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 
 export {
   putSamsungTombstone,
@@ -13,7 +13,6 @@ export interface SamsungTombstoneScope {
   accountId: string;
   accountRevision: number;
   refHash: string;
-  credentialKeysetCommitment: string;
 }
 
 const noLiveRef = `NOT EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs live_ref
@@ -30,16 +29,15 @@ const noLiveRef = `NOT EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs live_ref
 export function findSamsungTombstones(
   db: D1Database,
   refHash: string,
-  credentialKeysetCommitment: string,
 ): Promise<SamsungTombstoneScope[]> {
   return all<SamsungTombstoneScope>(
     db,
     `SELECT tomb.org_id AS orgId, tomb.mode, tomb.account_id AS accountId,
-    tomb.account_revision AS accountRevision, tomb.ref_hash AS refHash,
-    tomb.credential_keyset_commitment AS credentialKeysetCommitment FROM wallet_samsung_tombstones tomb
-    WHERE tomb.ref_hash = ? AND tomb.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+    tomb.account_revision AS accountRevision, tomb.ref_hash AS refHash
+    FROM wallet_samsung_tombstones tomb
+    WHERE tomb.ref_hash = ? AND tomb.credential_keyset_commitment = ${pinnedKeysetSql}
       AND ${noLiveRef} ORDER BY tomb.account_revision DESC LIMIT 33`,
-    [refHash, credentialKeysetCommitment, credentialKeysetCommitment],
+    [refHash],
   );
 }
 
@@ -51,17 +49,9 @@ export async function samsungTombstoneStillDeleted(
     db,
     `SELECT 1 FROM wallet_samsung_tombstones tomb
     WHERE tomb.ref_hash = ? AND tomb.org_id = ? AND tomb.mode = ? AND tomb.account_id = ?
-      AND tomb.account_revision = ? AND tomb.credential_keyset_commitment = ?
-      AND ${credentialRefKeysetSql} AND ${noLiveRef}`,
-    [
-      scope.refHash,
-      scope.orgId,
-      scope.mode,
-      scope.accountId,
-      scope.accountRevision,
-      scope.credentialKeysetCommitment,
-      scope.credentialKeysetCommitment,
-    ],
+      AND tomb.account_revision = ? AND tomb.credential_keyset_commitment = ${pinnedKeysetSql}
+      AND ${noLiveRef}`,
+    [scope.refHash, scope.orgId, scope.mode, scope.accountId, scope.accountRevision],
   );
   return row !== null;
 }
@@ -81,11 +71,7 @@ export async function claimSamsungTombstoneReplay(
   )
     return false;
   const results = await batch(db, [
-    stmt(
-      db,
-      `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ? AND ${credentialRefKeysetSql}`,
-      [claim.now, scope.credentialKeysetCommitment],
-    ),
+    stmt(db, `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ?`, [claim.now]),
     stmt(
       db,
       `INSERT INTO wallet_samsung_auth_replays (token_hash, claim_id, expires_at)
@@ -95,8 +81,8 @@ export async function claimSamsungTombstoneReplay(
         AND approved.provider = 'samsung' AND approved.kind = 'configure'
         AND approved.revision = tomb.account_revision
       WHERE tomb.ref_hash = ? AND tomb.org_id = ? AND tomb.mode = ? AND tomb.account_id = ?
-        AND tomb.account_revision = ? AND tomb.credential_keyset_commitment = ?
-        AND ${credentialRefKeysetSql} AND ${noLiveRef} ON CONFLICT DO NOTHING
+        AND tomb.account_revision = ? AND tomb.credential_keyset_commitment = ${pinnedKeysetSql}
+        AND ${noLiveRef} ON CONFLICT DO NOTHING
       RETURNING token_hash`,
       [
         claim.tokenHash,
@@ -107,8 +93,6 @@ export async function claimSamsungTombstoneReplay(
         scope.mode,
         scope.accountId,
         scope.accountRevision,
-        scope.credentialKeysetCommitment,
-        scope.credentialKeysetCommitment,
       ],
     ),
   ]);

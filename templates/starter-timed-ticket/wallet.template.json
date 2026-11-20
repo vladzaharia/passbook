@@ -4,8 +4,16 @@
   "description": "A time slot for a party, no seat.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png"
+      }
+    },
     "samsung": {}
+  },
+  "channels": {
+    "paper": "on",
+    "nfc": "on"
   },
   "blueprint": true,
   "inputs": {
@@ -348,5 +356,11 @@
         "refused": "Send them to the desk for the next slot."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "a4",
+    "barcode": "qr",
+    "kind": "admission"
   }
 }

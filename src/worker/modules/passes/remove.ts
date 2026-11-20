@@ -57,6 +57,8 @@ export async function removePass(
   scope: ScopeArg,
   authority?: TenantPassWrite,
   fence?: RemovalFence,
+  /** The org-lifecycle purge removes the passes of a closed org. */
+  closedOk?: true,
 ) {
   const db = ctx.env.DB;
   const pass = await getPassForWrite(db, passId, scope);
@@ -125,6 +127,7 @@ export async function removePass(
       source: 'remove',
       actor,
       authority,
+      ...(closedOk ? { closedOk } : {}),
       expectedPass: pass,
       expectedRemoval: {
         at: staged.at,

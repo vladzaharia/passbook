@@ -8,6 +8,8 @@ import { shopifyCustomers } from './shopify-customers.ts';
 import { shopifyOrders } from './shopify-orders.ts';
 import { stripePayments } from './stripe-payments.ts';
 import { stripeSubscriptions } from './stripe-subscriptions.ts';
+import { tickettailorTickets } from './tickettailor-tickets.ts';
+import { woocommerceOrders } from './woocommerce-orders.ts';
 
 export const RECIPES: Readonly<Record<Exclude<RecipeId, 'custom'>, Recipe>> = {
   'shopify-orders': shopifyOrders,
@@ -15,6 +17,8 @@ export const RECIPES: Readonly<Record<Exclude<RecipeId, 'custom'>, Recipe>> = {
   'stripe-subscriptions': stripeSubscriptions,
   'stripe-payments': stripePayments,
   'calcom-bookings': calcomBookings,
+  'woocommerce-orders': woocommerceOrders,
+  'tickettailor-tickets': tickettailorTickets,
 };
 
 /** What the console lists: everything but the executable parts. */
@@ -30,6 +34,16 @@ export const RECIPE_INFOS: readonly RecipeInfo[] = Object.values(RECIPES).map(
   }),
 );
 
+/** Only for a recipe that has a signed non-JSON delivery; the recipe then ignores it by shape. */
+function decodeOrUndefined(bytes: Uint8Array): unknown {
+  try {
+    return decodeJsonStrict(bytes);
+  } catch (e) {
+    if (e instanceof ConnectorError && e.code === 'INVALID_PAYLOAD') return undefined;
+    throw e;
+  }
+}
+
 /** Verifies, then adapts. The event id and the replay bound are decided here, from signed content only. */
 export async function verifyRecipe(
   recipe: Recipe,
@@ -41,7 +55,7 @@ export async function verifyRecipe(
   const now = ctx.now();
   const signed = await verifier.verify(req, webhookSecretsOf(ctx), now);
   const out = recipe.adapt({
-    body: decodeJsonStrict(signed.bytes),
+    body: recipe.tolerateNonJson ? decodeOrUndefined(signed.bytes) : decodeJsonStrict(signed.bytes),
     digest: signed.digest,
     now,
     config,

@@ -1,4 +1,12 @@
-import { Badge, Button, Callout, CheckboxField, FormField, SwitchRow } from '@/web/ui/index.ts';
+import {
+  Badge,
+  Button,
+  Callout,
+  CheckboxField,
+  DependentSettings,
+  FormField,
+  SwitchRow,
+} from '@/web/ui/index.ts';
 import { useScannerPages } from '../queries.ts';
 import { type ScannerDraft, watchKind } from './scanner-draft.ts';
 import { WatchFields } from './watch-fields.tsx';
@@ -56,11 +64,11 @@ export function SetupFields({ draft, onChange, errors }: SetupFieldsProps) {
             checked={draft.deskActions}
             onCheckedChange={(deskActions) => onChange({ deskActions })}
           />
-          {draft.deskActions ? (
+          <DependentSettings open={draft.deskActions}>
             <Callout tone="info">
               Every action is signed by the staff member and shows in the pass’s activity.
             </Callout>
-          ) : null}
+          </DependentSettings>
         </>
       ) : null}
       {draft.deviceRole !== 'scan' && watchKind(draft.watch) === 'scanners' ? (

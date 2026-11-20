@@ -9,7 +9,8 @@ import { clientIp, clientRatePrefix, enforceRateLimit } from '../../platform/rat
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { ipPrefix, readCookie, setSessionCookie } from './cookies.ts';
-import { homeFor, safeNext } from './next.ts';
+import { landingFor } from './landing.ts';
+import { safeNext } from './next.ts';
 import { breakglassPage } from './pages.ts';
 import { recordBreakglassFailure, signInBreakglass } from './service.ts';
 
@@ -64,7 +65,7 @@ export async function breakglassSignIn(c: Context<AppBindings>) {
       ipPrefix: ipPrefix(ip),
     });
     setSessionCookie(c, result.session.cookieValue, result.session.maxAgeSeconds);
-    return c.redirect(homeFor(result.roles, next), 302);
+    return c.redirect(await landingFor(ctx, result.userId, result.roles, next), 302);
   } catch (cause) {
     if (cause instanceof AppError && cause.code === 'BREAKGLASS_DISABLED') {
       return c.html(

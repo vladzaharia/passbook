@@ -65,7 +65,8 @@
     }
   ],
   "lookup": {
-    "input": "plate"
+    "input": "plate",
+    "public": true
   },
   "window": {
     "from": "validFrom",

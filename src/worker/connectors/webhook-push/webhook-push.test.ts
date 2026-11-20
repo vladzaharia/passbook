@@ -102,9 +102,9 @@ describe('webhook-push recipes', () => {
     expect(connector.configSchema.parse({}).recipe).toBe('custom');
   });
 
-  it('the recipe is fixed after creation and the console gets the five senders', () => {
+  it('the recipe is fixed after creation and the console gets the seven senders', () => {
     expect(connector.fixedConfig).toEqual(['recipe']);
-    expect(connector.recipes?.map((r) => r.id)).toHaveLength(5);
+    expect(connector.recipes?.map((r) => r.id)).toHaveLength(7);
   });
 
   it('a recipe connection verifies with the sender scheme, not the custom one', async () => {

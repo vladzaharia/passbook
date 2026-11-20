@@ -103,21 +103,15 @@ describe('tag type CRUD', () => {
     ).toEqual({ action: 'nfc.tag_type.update' });
   });
 
-  it('refuses a taken name, a Secure type while the system is off, and Secure typed IDs', async () => {
+  it('refuses a taken name and Secure typed IDs; a Secure type needs no typed IDs', async () => {
     const { org, admin } = await setup();
     const body = { name: 'Badge', use: 'staff' };
     expect((await call(admin, 'POST', `?orgId=${org.id}`, body)).status).toBe(201);
     const dupe = await call(admin, 'POST', `?orgId=${org.id}`, body);
     expect(dupe.status).toBe(409);
     expect(await dupe.json()).toMatchObject({ code: 'TAG_TYPE_NAME_TAKEN' });
-    const sun = await call(admin, 'POST', `?orgId=${org.id}`, {
-      ...body,
-      name: 'Secure',
-      system: 'sun',
-      typed: false,
-    });
-    expect(sun.status).toBe(409);
-    expect(await sun.json()).toMatchObject({ code: 'TAG_SYSTEM_DISABLED' });
+    const secure = { ...body, name: 'Secure', system: 'sun', typed: false };
+    expect((await call(admin, 'POST', `?orgId=${org.id}`, secure)).status).toBe(201);
     expect(
       (await call(admin, 'POST', `?orgId=${org.id}`, { ...body, name: 'S', system: 'sun' })).status,
     ).toBe(422);
@@ -199,7 +193,7 @@ describe('tag type access', () => {
     ).toEqual({ name: 'Acc', version: 1 });
   });
 
-  it('a key reads with scans:read and changes with scans:write, in its own org only', async () => {
+  it('a key reads with scans:read and changes with scanning:write, in its own org only', async () => {
     const { org, admin } = await setup();
     const other = await makeOrg(f.kit.fx);
     const type = (await (
@@ -208,9 +202,9 @@ describe('tag type access', () => {
     const key = (scopes: string[], orgId: string | null = org.id) =>
       makeApiKey(f.kit.fx, { orgId, scopes }).then((k) => k.headers);
     const read = await key(['scans:read']);
-    const write = await key(['scans:write']);
+    const write = await key(['scanning:write']);
     const none = await key(['passes:read']);
-    const elsewhere = await key(['scans:read', 'scans:write'], other.id);
+    const elsewhere = await key(['scans:read', 'scanning:write'], other.id);
 
     expect((await call(read, 'GET', '')).status).toBe(200);
     expect((await call(read, 'POST', '', { name: 'K2', use: 'member' })).status).toBe(403);

@@ -1,0 +1,103 @@
+{
+  "formatVersion": 1,
+  "description": "Multi-day pass",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(196,52,44)",
+  "foregroundColor": "rgb(255,244,236)",
+  "labelColor": "rgb(255,214,196)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "expirationDate": "2030-06-13T23:00:00-05:00",
+  "eventLogoText": "Organization",
+  "preferredStyleSchemes": [
+    "posterEventTicket",
+    "eventTicket"
+  ],
+  "semantics": {
+    "eventType": "PKEventTypeGeneric",
+    "eventName": "Riverbend Festival",
+    "venueName": "Riverbend Park",
+    "venueRegionName": "Austin, TX",
+    "venueRoom": "Riverbend Park",
+    "eventStartDate": "2030-06-11T12:00:00-05:00",
+    "eventEndDate": "2030-06-13T23:00:00-05:00",
+    "attendeeName": "Ana Rivera",
+    "admissionLevel": "3-day"
+  },
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "SCAN-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "RIVER-0001"
+    }
+  ],
+  "eventTicket": {
+    "headerFields": [
+      {
+        "key": "type",
+        "label": "Ticket",
+        "value": "3-day"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "event",
+        "label": "Festival",
+        "value": "Riverbend Festival"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Ana Rivera"
+      },
+      {
+        "key": "gate",
+        "label": "Gate",
+        "value": "Gate B"
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "parking",
+        "label": "Parking",
+        "value": "1 left"
+      },
+      {
+        "key": "locker",
+        "label": "Locker",
+        "value": "None left"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Keep your wristband on. Show the code at each gate."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

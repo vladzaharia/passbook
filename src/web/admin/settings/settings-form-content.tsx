@@ -1,7 +1,8 @@
+import type { ReactNode } from 'react';
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
 import { formatDay } from '@/web/lib/format.ts';
-import { Callout, Card, CardHeader, SegmentedControl } from '@/web/ui/index.ts';
+import { Callout, Card, CardHeader, DependentSettings, SegmentedControl } from '@/web/ui/index.ts';
 import type { Draft, SettingField } from './fields.ts';
 import { PolicySummary } from './policy-summary.tsx';
 import { SettingRow } from './setting-row.tsx';
@@ -68,7 +69,7 @@ export function SettingsFormContent({
 }) {
   const renderSections = (subset: readonly SettingField[]) =>
     sections(subset).map((section) => {
-      const rows = section.fields.map((field) => {
+      const built = section.fields.map((field) => {
         const entry = entries.find((item) => item.key === field.key);
         const changedField = draft[field.key] !== initial[field.key] || resets.has(field.key);
         const magicHelp =
@@ -109,7 +110,7 @@ export function SettingsFormContent({
             !entry.blockedByPlatform &&
             !resets.has(field.key) &&
             (entry.source === 'org' || changedField);
-        return (
+        const row = (
           <SettingRow
             key={field.key}
             field={field}
@@ -129,7 +130,30 @@ export function SettingsFormContent({
             onChange={(v) => edit(field.key, v)}
           />
         );
+        return { field, row };
       });
+      // Consecutive fields gated by one switch share a disclosure.
+      const rows: ReactNode[] = [];
+      for (let i = 0; i < built.length; ) {
+        const parent = built[i]?.field.parent;
+        if (!parent) {
+          rows.push(built[i]?.row);
+          i += 1;
+          continue;
+        }
+        let n = 0;
+        while (built[i + n]?.field.parent === parent) n += 1;
+        rows.push(
+          <DependentSettings
+            key={`dep-${parent}-${i}`}
+            open={draft[parent] === true}
+            className="gap-0 divide-y divide-border"
+          >
+            {built.slice(i, i + n).map((b) => b.row)}
+          </DependentSettings>,
+        );
+        i += n;
+      }
       if (!section.title)
         return (
           <div key="flat" className="flex flex-col gap-4">

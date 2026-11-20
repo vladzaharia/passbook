@@ -116,15 +116,16 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     edges: [edge('tag_id', 'nfc_tags'), edge('pass_id', 'passes')],
     pass: 'pass_id',
   },
-  // Tag types (0128): an org's named tag policies. nfc_tag_systems has no writer outside migrations.
   nfc_tag_types: { org: 'org_id' },
-  // Its trigger holds type and template to one org.
   nfc_tag_type_templates: {
     org: null,
     edges: [edge('type_id', 'nfc_tag_types'), edge('template_id', 'templates')],
   },
-  // Outbound webhooks (0090). Endpoints and secrets are written through grants; delivery bookkeeping by a
-  // reviewed raw-write allowlist entry. event_feed is written only by the pass_events trigger.
+  // Secure tag keys (0129): keys and per-tag counters hang off a keyset or tag; triggers hold them to one org and mode.
+  nfc_tag_keysets: { org: 'org_id', mode: 'mode' },
+  nfc_tag_keys: { org: null, edges: [edge('keyset_id', 'nfc_tag_keysets')] },
+  nfc_tag_sun: { org: null, edges: [edge('tag_id', 'nfc_tags')] },
+  // Outbound webhooks (0090): endpoints and secrets via grants, delivery bookkeeping via the raw-write allowlist, event_feed by the pass_events trigger.
   webhook_endpoints: { org: 'org_id', mode: 'mode' },
   webhook_endpoint_secrets: { org: 'org_id', mode: 'mode' },
   webhook_deliveries: { org: 'org_id', mode: 'mode', conflict: ['endpoint_id', 'event_seq'] },
@@ -134,14 +135,14 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   tag_enrollments: { org: 'org_id', mode: 'mode' },
   // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
   token_remac_marks: { org: null, edges: [edge('pass_id', 'passes')] },
+  visitors: { org: 'org_id', mode: 'mode' },
   pass_imports: { org: 'org_id', mode: 'mode' },
   pass_import_rows: { org: null, edges: [edge('import_id', 'pass_imports')] },
   // Org data, not per mode: a plan made in Test works in Live.
   pass_import_mappings: { org: 'org_id', conflict: ['org_id', 'template_id'] },
   // The bundle counterpart (0087).
   bundle_remac_marks: { org: null, edges: [edge('bundle_id', 'bundles')] },
-  // Trust pack (0101). Floors ride the settings grant; holds are placed and released by org:manage or a
-  // platform admin; receipts and anchors are bookkeeping of platform jobs (raw-write allowlist).
+  // Trust pack (0101): floors ride the settings grant; holds by org:manage or a platform admin; receipts and anchors by platform jobs.
   retention_floors: { org: 'org_id', conflict: ['org_id', 'class'] },
   retention_holds: { org: 'org_id' },
   retention_receipts: { org: 'org_id' },
@@ -165,24 +166,53 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   channel_apply_marks: { org: null, edges: [edge('run_id', 'channel_apply_runs')] },
   // Printed tickets (0110): minted and voided through grants; the triggers void them with the pass.
   pass_prints: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
+  // Roll call (0122): the frozen list and each person's confirmation. Marks upsert by (call, pass).
+  roll_calls: { org: 'org_id', mode: 'mode' },
+  roll_call_marks: {
+    org: 'org_id',
+    mode: 'mode',
+    conflict: ['roll_call_id', 'pass_id'],
+  },
   data_requests: { org: 'org_id' },
   data_request_passes: { org: null, edges: [edge('request_id', 'data_requests')] },
-  // Wallet provider credentials (0112). A platform-scope row has a null org_id, as a platform api_keys row: an
-  // org grant never matches it. Versions, events and checks hang off the credential and take its tenant.
+  // Wallet provider credentials (0112): a platform-scope row has a null org_id, so no org grant matches it; children take its tenant.
   wallet_credentials: { org: 'org_id', mode: 'mode' },
   wallet_credential_versions: { org: null, edges: [edge('credential_id', 'wallet_credentials')] },
   wallet_credential_events: { org: null, edges: [edge('credential_id', 'wallet_credentials')] },
   wallet_credential_checks: { org: null, edges: [edge('credential_id', 'wallet_credentials')] },
   // An enrolment's events (the account row itself is written by `include` parts, tied to {org} and {mode}).
   wallet_enrolment_events: { org: 'org_id', mode: 'mode' },
+  org_entitlements: { org: 'org_id' },
+  org_entitlement_overrides: { org: 'org_id', conflict: ['org_id', 'key'] },
+  entitlement_preset_meta: {
+    org: null,
+    platform: { columns: ['label', 'is_plan', 'revision', 'updated_at', 'updated_by'] },
+  },
+  entitlement_presets: { org: null, platform: { columns: ['value'] } },
 };
+
+const KEYSET_PURPOSES = ['create', 'rotate', 'retire_key', 'disable'].map(
+  (p) => `org_mode.nfc.keyset.${p}`,
+);
 
 /**
  * Guarded tables only the listed purposes may write, whatever the principal or the grant's `tables`. The
  * credential check job is the one writer of a check: no org_mode or platform.wallet.* grant inserts one.
+ * Entitlements (0134) are platform-only (design-multi-tenancy.md section 2.2): an org never writes its own.
  */
 export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
   wallet_credential_checks: ['platform.job.wallet.credential_check'],
+  org_entitlements: [
+    'platform.org.create',
+    'platform.job.template_sync',
+    'platform.org.entitlements_set',
+  ],
+  org_entitlement_overrides: ['platform.org.entitlements_set'],
+  entitlement_preset_meta: ['platform.entitlement_preset.update'],
+  entitlement_presets: ['platform.entitlement_preset.update'],
+  // Secure tag keys (0129): the four keyset purposes only.
+  nfc_tag_keysets: KEYSET_PURPOSES,
+  nfc_tag_keys: KEYSET_PURPOSES,
 };
 
 /** Tables only the triggers and `authority.ts` may write; raw SQL on them is a lint failure. */
@@ -223,69 +253,11 @@ export const APPEND_ONLY_TABLES = ['audit_log'] as const;
  */
 export const TRIGGER_WRITES_GUARDED: readonly string[] = [];
 
-/**
- * Unguarded tables that carry an `org_id`, `mode` or `pass_id` column. An `include` write on one must tie
- * it to `{org}`, `{mode}` or `{pass}`. A test derives these lists from the migrated schema.
- */
-export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
-  'branding_gc_queue',
-  'credentials',
-  'signing_identities',
-  'idempotency_keys',
-  'template_imports',
-  'workflow_runs',
-  'broadcasts',
-  'message_rules',
-  'message_rule_fires',
-  'vas_keys',
-  'pass_check_in',
-  'scanner_setups',
-  'template_release_reissues',
-  'workflow_release_snapshots',
-  'connection_webhook_legacy_sources',
-  'connection_webhook_replays',
-  'wallet_provider_accounts',
-  'wallet_provider_credentials',
-  'wallet_provider_account_events',
-  'wallet_provider_instances',
-  'wallet_samsung_callback_receipts',
-  'wallet_google_callback_receipts',
-  'wallet_samsung_tombstones',
-  'wallet_provider_projection_evidence',
-  'wallet_provider_projection_evidence_history',
-  'scan_retention_proofs',
-  'scan_retention_event_transitions',
-  'scan_retention_delete_intents',
-  'scan_retained_gates',
-  'pass_holder_reissue_required',
-  'pass_token_seals',
-  'pass_auth_seals',
-  'bundle_token_seals',
-  'join_link_seals',
-  'org_reply_to',
-]);
-export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
-  'broadcasts',
-  'message_rules',
-  'message_rule_fires',
-  'scanner_setups',
-  'template_release_reissues',
-  'workflow_release_snapshots',
-  'wallet_provider_accounts',
-  'wallet_provider_credentials',
-  'wallet_provider_account_events',
-  'wallet_provider_instances',
-  'wallet_samsung_callback_receipts',
-  'wallet_google_callback_receipts',
-  'wallet_samsung_tombstones',
-  'wallet_provider_projection_evidence',
-  'wallet_provider_projection_evidence_history',
-  'scan_retention_proofs',
-  'scan_retention_event_transitions',
-  'scan_retention_delete_intents',
-  'scan_retained_gates',
-  'pass_holder_reissue_required',
-]);
+export {
+  MODE_BEARING_TABLES,
+  ORG_BEARING_TABLES,
+  PASS_BEARING_TABLES,
+} from './authority-bearing-tables.ts';
 /**
  * Unguarded tables a holder grant may also write although they carry no `pass_id`: the column that names
  * its pass, or `transfer`, pinned through the transfer row (`pass_credential_transfers.pass_id`).
@@ -294,23 +266,3 @@ export const HOLDER_PART_PINS: Readonly<Record<string, { column: string; via?: '
   pass_credential_transfer_payloads: { column: 'transfer_id', via: 'transfer' },
   pass_transfer_asset_gc: { column: 'source_pass_id' },
 };
-
-export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
-  'pass_versions',
-  'pass_attach_blocks',
-  'registrations',
-  'revisions',
-  'pass_personalizations',
-  'broadcast_items',
-  'message_rule_fires',
-  'pass_check_in',
-  'sandbox_forward_passes',
-  'wallet_provider_instances',
-  'wallet_provider_pass_authority',
-  'pass_holder_reissue_required',
-  'pass_transfer_asset_candidates',
-  'pass_transfer_asset_recoveries',
-  'pass_transfer_asset_uploads',
-  'pass_token_seals',
-  'pass_auth_seals',
-]);

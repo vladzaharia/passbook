@@ -1,15 +1,14 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { first } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { candidateHash } from '../templates/release-content.ts';
 import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
-import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import {
   GOOGLE_PROJECTION_POLICY,
   type NativeProjection,
   type NativeProvider,
   SAMSUNG_PROJECTION_POLICY,
 } from './projection-contract.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import { getProjectionCandidate, projectionCandidateEnvelope } from './repo-projection-store.ts';
 import { samsungProjectionEvidencePredicateSql } from './repo-samsung-verification.ts';
 
@@ -103,7 +102,7 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
       OR (pc.provider = 'samsung' AND json_extract(pc.projection_json, '$.schema') = 1
         AND pc.adapter_revision = ${SAMSUNG_PROJECTION_POLICY.adapterRevision}
         AND pc.adapter_capabilities = '${samsung}' AND pc.audience_policy_revision = ${SAMSUNG_PROJECTION_POLICY.audiencePolicyRevision}
-        AND (${samsungProjectionEvidencePredicateSql('pc', nowSql, scope.credentialKeysetCommitmentSql)})))`;
+        AND (${samsungProjectionEvidencePredicateSql('pc', nowSql)})))`;
 }
 
 /** Reads the effective scoped Apple head without accepting it as native approval. */
@@ -137,14 +136,8 @@ export async function projectionReleaseBindingValid(
     version: string;
     sourceReleaseId: string;
     now: number;
-    credentialKeysetCommitment: string;
   },
 ): Promise<boolean> {
-  if (
-    typeof scope.credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(scope.credentialKeysetCommitment)
-  )
-    return false;
   const predicate = projectionReleaseBindingPredicateSql({
     releaseIdSql: 'requested.release_id',
     orgIdSql: 'requested.org_id',
@@ -160,7 +153,7 @@ export async function projectionReleaseBindingValid(
     db,
     `SELECT 1 AS ok FROM
     (SELECT ? AS release_id, ? AS org_id, ? AS mode, ? AS provider, ? AS template_id, ? AS version,
-      ? AS source_id, ? AS now_ms, ? AS credential_keyset_commitment) requested
+      ? AS source_id, ? AS now_ms, ${pinnedKeysetSql} AS credential_keyset_commitment) requested
     WHERE ${predicate}`,
     [
       scope.releaseId,
@@ -171,13 +164,12 @@ export async function projectionReleaseBindingValid(
       scope.version,
       scope.sourceReleaseId,
       scope.now,
-      scope.credentialKeysetCommitment,
     ],
   );
   return row !== null;
 }
 
-export interface ProjectionRetirementMetadata extends WalletCredentialKeysetProof {
+export interface ProjectionRetirementMetadata {
   id: string;
   generation: number;
   orgId: string;
@@ -198,14 +190,7 @@ export interface ProjectionRetirementMetadata extends WalletCredentialKeysetProo
 export async function getProjectionRetirementMetadata(
   db: D1Database,
   releaseId: string,
-  proof: WalletCredentialKeysetProof,
 ): Promise<ProjectionRetirementMetadata | null> {
-  const credentialKeysetCommitment = proof?.credentialKeysetCommitment;
-  if (
-    typeof credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(credentialKeysetCommitment)
-  )
-    return null;
   const row = await first<
     Omit<ProjectionRetirementMetadata, 'projection'> & {
       candidateId: string;
@@ -217,8 +202,7 @@ export async function getProjectionRetirementMetadata(
       r.version, c.id AS candidateId, c.candidate_hash AS candidateHash,
       c.source_release_id AS sourceReleaseId, c.provider_account_id AS accountId,
       c.provider_account_revision AS accountRevision, c.provider_identity_hash AS providerIdentityHash,
-      c.adapter_revision AS adapterRevision, c.audience_policy_revision AS policyRevision,
-      r.credential_keyset_commitment AS credentialKeysetCommitment
+      c.adapter_revision AS adapterRevision, c.audience_policy_revision AS policyRevision
       FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id
         AND c.org_id = r.org_id AND c.mode = r.mode AND c.provider = r.provider
         AND c.template_id = r.template_id AND c.version = r.version AND c.content_hash = r.content_hash
@@ -227,20 +211,17 @@ export async function getProjectionRetirementMetadata(
       JOIN template_approvals a ON a.id = r.approval_id AND a.candidate_id = c.id
       WHERE r.id = ? AND r.source = 'approved' AND r.provider IN ('google','samsung')
         AND r.candidate_hash = c.candidate_hash AND a.candidate_hash = c.candidate_hash
-        AND r.credential_keyset_commitment = ? AND c.credential_keyset_commitment = r.credential_keyset_commitment
-        AND a.credential_keyset_commitment = r.credential_keyset_commitment AND ${credentialRefKeysetSql}
+        AND r.credential_keyset_commitment = ${pinnedKeysetSql} AND c.credential_keyset_commitment = r.credential_keyset_commitment
+        AND a.credential_keyset_commitment = r.credential_keyset_commitment
         AND a.reviewer_id != c.author_id AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id)`,
-    [releaseId, credentialKeysetCommitment, credentialKeysetCommitment],
+    [releaseId],
   );
   if (!row) return null;
   const candidate = await getProjectionCandidate(db, row.candidateId);
   if (
     !candidate ||
-    candidate.credentialKeysetCommitment !== credentialKeysetCommitment ||
     (await candidateHash(projectionCandidateEnvelope(candidate))) !== row.candidateHash
   )
-    return null;
-  if (!(await first(db, `SELECT 1 WHERE ${credentialRefKeysetSql}`, [credentialKeysetCommitment])))
     return null;
   const { candidateId: _candidateId, candidateHash: _candidateHash, ...metadata } = row;
   return { ...metadata, projection: candidate.projection };

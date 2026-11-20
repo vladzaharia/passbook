@@ -21,6 +21,7 @@ import { channelGate, recordCopy } from '../channels/gate.ts';
 import { codesReplacedNotice } from '../channels/service.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { voidedAt } from '../events/repo-voided.ts';
+import { orgBrandOf } from '../orgs/brand.ts';
 import { servePassFile } from '../passes/file.ts';
 import { type C, svc } from '../passes/http.ts';
 import { holderPrintRoutes } from '../prints/routes-holder.ts';
@@ -120,7 +121,6 @@ register(
   },
   async (c) => {
     const svcCtx = svc(c);
-    const nonce = c.var.nonce;
     const theme = requestTheme(c);
     try {
       const { token } = c.req.valid('param');
@@ -148,9 +148,10 @@ register(
         passJson: model.passJson,
         now: new Date(svcCtx.clock.now()),
         ...(zoneOf(c) ? { timeZone: zoneOf(c) as string } : {}),
-        nonce,
+        nonce: c.var.nonce,
         theme,
         orgName: view.organizationName || model.orgName,
+        brand: await orgBrandOf(svcCtx, pass.orgId),
         orgLabel: model.orgName,
         passTitle: pass.displayTitle ?? view.description ?? model.orgName,
         downloadHref: model.channels.effective.apple.on ? `${page}/pass.pkpass` : null,
@@ -193,7 +194,7 @@ register(
       return new Response(html, { headers: PAGE_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404)
-        return new Response(renderNotFoundPage(nonce, theme), {
+        return new Response(renderNotFoundPage(c.var.nonce, theme), {
           status: 404,
           headers: PAGE_HEADERS,
         });

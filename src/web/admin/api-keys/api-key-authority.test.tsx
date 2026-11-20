@@ -183,7 +183,6 @@ describe('API key platform and membership authority', () => {
     await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
     const dialog = await screen.findByRole('dialog', { name: 'New API key' });
     await user.type(within(dialog).getByLabelText(/Name/), 'Pending key');
-    await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     expect(
       await screen.findByRole('alertdialog', { name: 'Review service key' }),

@@ -1,4 +1,5 @@
 import { EMAIL_TOKENS as T } from '../../generated/resolved-tokens.ts';
+import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import {
   type BuddyTier,
   EMAIL_BADGE,
@@ -124,6 +125,29 @@ export function badgeButtonHtml(href: string, label: string) {
 export const stackHtml = (first: string, second: string) =>
   `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 4px;border-collapse:collapse"><tr><td style="padding:0 0 12px">${first}</td></tr><tr><td style="padding:0">${second}</td></tr></table>`;
 
+/** The org's web logo, drawn in the band, and the PassBook mark's level under the card. */
+export interface EmailBrand {
+  /** Absolute URL and the size to draw it at, in px. */
+  logo: { url: string; width: number; height: number } | null;
+  mark: 'full' | 'small' | 'none';
+}
+
+/** The foot line for a mark level, or null at `none`. */
+export const markLine = (mark: EmailBrand['mark'] | undefined) =>
+  mark === 'full'
+    ? `${HOLDER_COPY.issuedWith} PassBook`
+    : mark === 'small'
+      ? HOLDER_COPY.poweredBy
+      : null;
+
+const markHtml = (mark: EmailBrand['mark'] | undefined) => {
+  const line = markLine(mark);
+  if (!line) return '';
+  const text =
+    mark === 'full' ? `${escapeHtml(HOLDER_COPY.issuedWith)} <b>PassBook</b>` : escapeHtml(line);
+  return `<tr><td class="e-muted" align="center" style="padding:16px 0 0;${type('xs')};color:${EMAIL_LIGHT.muted}">${text}</td></tr>`;
+};
+
 export interface ShellInput {
   lang: string;
   title: string;
@@ -131,6 +155,8 @@ export interface ShellInput {
   header: string;
   /** Optional 24 px image before the name (absolute URL). */
   headerMark?: string;
+  /** The org's web logo and mark level (`emailBrandOf`): the logo replaces the name, the mark ends the column. */
+  brand?: EmailBrand;
   /** The mascot seated on the card's top edge at the right. `base`: PUBLIC_BASE_URL. */
   buddy?: { base: string; mood: EmailMood; tier: BuddyTier };
   /** Content of the card body, already escaped. */
@@ -156,9 +182,12 @@ export function emailShell(input: ShellInput): string {
   const lineHeight = T.text.xl.line;
   const name = `font-size:${T.text.xl.size}px;line-height:${T.text.xl.line}px;mso-line-height-rule:exactly;font-weight:${T.weight.semibold};letter-spacing:${T.tracking};color:${c.strong}`;
   // A long name wraps beside the mark, which stays on its first line, not under it.
-  const wordmark = input.headerMark
-    ? `<table role="presentation" cellspacing="0" cellpadding="0"><tr><td valign="top" style="padding:2px 10px 0 0;vertical-align:top;font-size:0;line-height:0"><img src="${escapeHtml(input.headerMark)}" alt="" width="24" height="24" style="display:block;width:24px;height:24px;border:0;border-radius:${T.radius.md}px"></td><td class="e-strong" style="${name}">${escapeHtml(input.header)}</td></tr></table>`
-    : escapeHtml(input.header);
+  const logo = input.brand?.logo;
+  const wordmark = logo
+    ? `<img src="${escapeHtml(logo.url)}" alt="${escapeHtml(input.header)}" width="${logo.width}" height="${logo.height}" style="display:block;width:${logo.width}px;height:${logo.height}px;border:0">`
+    : input.headerMark
+      ? `<table role="presentation" cellspacing="0" cellpadding="0"><tr><td valign="top" style="padding:2px 10px 0 0;vertical-align:top;font-size:0;line-height:0"><img src="${escapeHtml(input.headerMark)}" alt="" width="24" height="24" style="display:block;width:24px;height:24px;border:0;border-radius:${T.radius.md}px"></td><td class="e-strong" style="${name}">${escapeHtml(input.header)}</td></tr></table>`
+      : escapeHtml(input.header);
   // The pocket's ink lines up with the body inset; the name's first line with the buddy's face.
   // Alone, the band is the hosted 56 px.
   const inset = art ? PAD - art.clear : 0;
@@ -199,6 +228,7 @@ ${input.body}
 </td></tr>
 </table>
 </td></tr>
+${markHtml(input.brand?.mark)}
 </table>
 <!--[if mso]></td></tr></table><![endif]-->
 </td></tr>

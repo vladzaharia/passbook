@@ -52,7 +52,7 @@ const ORGS = [
 const orgs = await admin.all('/api/v1/orgs');
 for (const org of ORGS) {
   if (!orgs.some((o) => o.slug === org.slug))
-    orgs.push(await admin.send('POST', '/api/v1/orgs', org));
+    orgs.push(await admin.send('POST', '/api/v1/orgs', { ...org, preset: 'legacy' }));
 }
 const orgId = (slug: string) => orgs.find((o) => o.slug === slug).id as string;
 const henrys = orgId('henrys');

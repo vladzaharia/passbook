@@ -1,7 +1,9 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
+import { ChannelStage } from '../../channel-previews/channel-stage.tsx';
+import { previewSource } from '../../channel-previews/source.ts';
 import { useMode } from '../../lib/mode.ts';
 import { useMintedOnArrival } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
@@ -38,6 +40,7 @@ import {
   useTemplateLifecycle,
 } from './template-lifecycle.tsx';
 import { TemplateInputs, TemplateOverview } from './template-overview.tsx';
+import { useScanPasses } from './use-scan-passes.ts';
 import { versionName, versionNumber } from './versions.ts';
 import { VersionsPanel } from './versions-panel.tsx';
 
@@ -75,7 +78,12 @@ export function TemplateDetailContent({
     scope.orgId,
     candidate?.version,
   );
+  const source = useMemo(
+    () => previewSource(preview.data, t, { version: candidate?.version }),
+    [preview.data, t, candidate?.version],
+  );
   const life = useTemplateLifecycle(t, canPublish);
+  const scanning = useScanPasses(t);
   const created = useCreated<TemplateCreated>(`template:${t.id}`);
   const importedVersion = useCreated<string>(`template:${t.id}:version`);
   const minted = useMintedOnArrival(`template:${t.id}`);
@@ -110,18 +118,27 @@ export function TemplateDetailContent({
     !t.activeVersion && !candidate ? (
       <EmptyState inline art="template" title="No preview available" />
     ) : preview.data ? (
-      <PassPreviewPanel
-        passJson={preview.data.passJson}
-        assetBaseUrl={preview.data.assetBaseUrl}
-        assetNames={preview.data.assetNames}
-        enter={size !== 'sheet' && !minted && deal}
-        mint={mint}
-        label={candidate ? 'Latest draft' : (activeLabel ?? undefined)}
-        // Arrived from an upload or a duplicate: the buddy waves from the Front / Details row.
-        beside={
-          minted ? (
-            <Buddy size="sm" at="end" mood="happy" scene="wave" className="wl-pass-buddy" />
-          ) : undefined
+      <ChannelStage
+        size={size}
+        source={source}
+        title={t.name}
+        templateId={t.id}
+        orgId={scope.orgId}
+        apple={
+          <PassPreviewPanel
+            passJson={preview.data.passJson}
+            assetBaseUrl={preview.data.assetBaseUrl}
+            assetNames={preview.data.assetNames}
+            enter={size !== 'sheet' && !minted && deal}
+            mint={mint}
+            label={candidate ? 'Latest draft' : (activeLabel ?? undefined)}
+            // Arrived from an upload or a duplicate: the buddy waves from the Front / Details row.
+            beside={
+              minted ? (
+                <Buddy size="sm" at="end" mood="happy" scene="wave" className="wl-pass-buddy" />
+              ) : undefined
+            }
+          />
         }
       />
     ) : preview.isError ? (
@@ -142,6 +159,8 @@ export function TemplateDetailContent({
         canOperate={canOperate}
         lifecycleMenu={life.menu}
         onDuplicate={() => setDuplicate(true)}
+        onScanPasses={scanning.canScan ? scanning.scan : undefined}
+        scanPending={scanning.pending}
       />
       <Card className="mb-6">
         <CardBody className="grid gap-3">
@@ -182,6 +201,8 @@ export function TemplateDetailContent({
             how={created.mark}
             versionLabel={importedLabel}
             onDismiss={created.dismiss}
+            onScanPasses={scanning.canScan ? scanning.scan : undefined}
+            scanPending={scanning.pending}
           />
         </div>
       ) : null}

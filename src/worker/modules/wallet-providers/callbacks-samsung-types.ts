@@ -12,7 +12,6 @@ export interface SamsungCallbackInput {
   refId: string;
   refHash: string;
   method: 'GET' | 'POST';
-  credentialKeysetCommitment: string;
   /** Get Card Data only. */
   fields: string[] | null;
   /** Send Card State only. */

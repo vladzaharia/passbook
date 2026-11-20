@@ -84,9 +84,7 @@ describe('holder changes and native wallet retirement', () => {
       consumedAt: null,
       deliveredAt: null,
     });
-    expect(
-      await readOffer(db, wrapperHash, t.kit.clock.now(), credentialKeysetCommitment),
-    ).not.toBeNull();
+    expect(await readOffer(db, wrapperHash, t.kit.clock.now())).not.toBeNull();
     expect((await t.call({ token: await t.token() })).status).toBe(200);
 
     const holder = await reassignHolder(
@@ -136,15 +134,9 @@ describe('holder changes and native wallet retirement', () => {
     ).toMatchObject({
       state: 'pending',
     });
-    expect(
-      await readOffer(db, wrapperHash, t.kit.clock.now(), credentialKeysetCommitment),
-    ).toBeNull();
-    expect(await walletOfferFresh(db, wrapper, t.kit.clock.now(), credentialKeysetCommitment)).toBe(
-      false,
-    );
-    expect(
-      await consumeWalletOfferRef(db, wrapper, t.kit.clock.now(), credentialKeysetCommitment),
-    ).toBeNull();
+    expect(await readOffer(db, wrapperHash, t.kit.clock.now())).toBeNull();
+    expect(await walletOfferFresh(db, wrapper, t.kit.clock.now())).toBe(false);
+    expect(await consumeWalletOfferRef(db, wrapper, t.kit.clock.now())).toBeNull();
     expect((await t.call({ token: await t.token() })).status).not.toBe(200);
     const old = await getWalletInstanceById(db, scope);
     expect(old).toMatchObject({

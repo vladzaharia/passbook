@@ -19,7 +19,7 @@ import { isAdmin, membershipsQuery, sessionQuery } from './session.ts';
 const TENANT =
   /^\/admin\/(passes|templates|blueprints|connections|messages|scanning|test-inbox)(\/|$)/;
 const NOT_A_RESOURCE =
-  /^\/(passes\/(new|import)|templates\/(new|upload)|connections\/(new|webhooks\/new)|messages\/new)$/;
+  /^\/(passes\/(new|import|photos)|templates\/(new|upload)|connections\/(new|webhooks\/new)|messages\/new)$/;
 const PLATFORM_ONLY = /^\/admin\/(orgs|users|status)(\/|$)/;
 
 export interface LegacyContext {

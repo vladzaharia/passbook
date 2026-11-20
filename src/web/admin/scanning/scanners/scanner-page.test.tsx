@@ -268,7 +268,7 @@ describe('Scanner page', () => {
       'the signed-in administrator’s Manager permissions, not a staff PIN',
     );
     expect(screen.queryByRole('checkbox', { name: 'Ask staff for their PIN' })).toBeNull();
-    expect(screen.queryByLabelText('Without sign-in, scans as')).toBeNull();
+    expect(screen.queryByRole('combobox', { name: 'Without sign-in, scans as' })).toBeNull();
   });
 
   it('goes live from a Test scanner after a confirm that names what changes', async () => {

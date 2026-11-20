@@ -1,6 +1,4 @@
 import { first } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
-import { isCredentialKeysetCommitment } from './instance-types.ts';
 import { walletRetiredInstanceSettledSql } from './repo-instance-retirement.ts';
 
 /**
@@ -30,17 +28,11 @@ export function providerRetirementCompleteSql(
 }
 
 /** True until every provider instance is retired and no provider write remains in flight. */
-export async function providerRetirementPending(
-  db: D1Database,
-  passId: string,
-  credentialKeysetCommitment: string,
-): Promise<boolean> {
-  if (!isCredentialKeysetCommitment(credentialKeysetCommitment)) return true;
+export async function providerRetirementPending(db: D1Database, passId: string): Promise<boolean> {
   const row = await first<{ pending: number }>(
     db,
-    `SELECT CASE WHEN ${credentialRefKeysetSql}
-      THEN NOT (${providerRetirementCompleteSql('p.id')}) ELSE 1 END AS pending FROM passes p WHERE p.id = ?`,
-    [credentialKeysetCommitment, passId],
+    `SELECT NOT (${providerRetirementCompleteSql('p.id')}) AS pending FROM passes p WHERE p.id = ?`,
+    [passId],
   );
   return row?.pending !== 0;
 }

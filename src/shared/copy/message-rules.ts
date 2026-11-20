@@ -11,6 +11,7 @@ interface RuleSummaryInput {
 export const RULE_COPY = {
   hoursNeedDateTime: 'Hours work only with date and time inputs.',
   yearlyNeedsDate: 'Every year works with a date input.',
+  nobodyDue: 'No passes are due in the next 14 days.',
   sendAtRange: 'Pick a time between 08:00 and 20:30.',
   paused: {
     RULE_CREATOR_REVOKED: 'Paused. The person who saved it lost access. Save it again to resume.',

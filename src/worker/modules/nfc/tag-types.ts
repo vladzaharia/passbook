@@ -34,7 +34,7 @@ export const tagTypeNotFound = () => new NotFoundError('Tag type not found.', 'T
 
 /**
  * A session needs the capability through its membership (a non-member gets a 404); an API key needs the
- * scope the route guard verified: `scans:read` to read, `scans:write` to change.
+ * scope the route guard verified: `scans:read` to read, `scanning:write` to change.
  */
 export async function tagTypeAccess(
   ctx: ServiceContext,

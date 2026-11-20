@@ -7,11 +7,9 @@ import {
   TagTypeSchema,
   UpdateTagTypeSchema,
 } from '../../../shared/contracts/nfc-tag-admin.ts';
-import { methodScope } from '../../platform/auth.ts';
 import { type AppBindings, actorOf } from '../../platform/context.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { requireTenantSessionOrApiKey } from '../passes/http.ts';
 import { webhookOrg } from '../webhooks/access.ts';
 import { listTagTypes, tagTypeOrg } from './repo-tag-types.ts';
 import {
@@ -28,20 +26,15 @@ const ArchiveSchema = z.strictObject({ version: z.number().int().min(1) });
 
 /**
  * /api/v1/nfc/tag-types. A session needs `scanning:read` to view and `scanning:manage` to change, through
- * its membership. A key needs `scans:read` to view and `scans:write` to change; org-bound keys may omit `orgId`.
+ * its membership. A key needs `scans:read` to view and `scanning:write` to change; org-bound keys may omit `orgId`.
  */
 export function registerTagTypeRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void {
-  const guard = requireTenantSessionOrApiKey(
-    methodScope({ read: 'scans:read', write: 'scans:write' }),
-  );
-  nfcRoutes.use('/tag-types', guard);
-  nfcRoutes.use('/tag-types/*', guard);
-
   register(
     nfcRoutes,
     TAG,
     {
       method: 'get',
+      auth: { scope: 'scans:read', capability: 'scanning:read' },
       path: '/tag-types',
       summary: 'Tag types of an organization',
       query: OrgQuerySchema,
@@ -60,6 +53,7 @@ export function registerTagTypeRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void
     TAG,
     {
       method: 'post',
+      auth: { scope: 'scanning:write', capability: 'scanning:manage' },
       path: '/tag-types',
       summary: 'Create a tag type',
       query: OrgQuerySchema,
@@ -83,6 +77,7 @@ export function registerTagTypeRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void
     TAG,
     {
       method: 'patch',
+      auth: { scope: 'scanning:write', capability: 'scanning:manage' },
       path: '/tag-types/{id}',
       summary: 'Change a tag type (send the version you read)',
       params: IdParamSchema,
@@ -102,6 +97,7 @@ export function registerTagTypeRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void
     TAG,
     {
       method: 'post',
+      auth: { scope: 'scanning:write', capability: 'scanning:manage' },
       path: '/tag-types/{id}/archive',
       summary: 'Archive a tag type; its tags keep working',
       params: IdParamSchema,

@@ -1,5 +1,4 @@
 /** Shared passkit types. No Cloudflare or Hono imports: this module runs in Node and in Workers. */
-
 import type { PassJson } from './schema/pass-types.ts';
 import type { PaperManifest } from './template/paper.ts';
 import type { ScanCheckIn } from './template/scan-check-in.ts';
@@ -225,7 +224,7 @@ export interface ScanManifest {
   /** 1-6. */
   actions: ScanAction[];
   /** A typed member, card or ticket number. */
-  lookup?: { input: string };
+  lookup?: { input: string; public?: boolean };
   window?: { from?: string; until?: string; earlyMinutes?: number; lateMinutes?: number };
   flags?: { input: string; label: string; equals?: string[]; stop?: boolean }[];
   /** The result screen. No display means `defaultScanDisplay` at read, never persisted. */
@@ -311,6 +310,7 @@ export interface TemplateManifest {
   wallets?: WalletsManifest;
   /** Printed ticket layout (size, barcode, fields, terms). Absent: derived from the roles. */
   paper?: PaperManifest;
+  channels?: Partial<Record<string, 'on' | 'off'>>;
 }
 
 export type Personalization = Record<string, Json>;

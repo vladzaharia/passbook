@@ -58,6 +58,12 @@ const SELECT: Record<PlaceTable, string> = {
   wallet_provider_accounts: `SELECT t.id AS pk, t.hmac_kek_version AS kek_version, t.hmac_wrapped_dek AS wrapped_dek,
       t.org_id AS x1, t.mode AS x2, t.provider AS x3, NULL AS x4
     FROM wallet_provider_accounts t WHERE t.id > ? AND t.hmac_kek_version < ? ORDER BY t.id LIMIT ?`,
+  nfc_tag_keys: `SELECT t.id AS pk, t.kek_version, t.wrapped_dek, k.org_id AS x1, k.mode AS x2, t.keyset_id AS x3, t.version AS x4
+    FROM nfc_tag_keys t JOIN nfc_tag_keysets k ON k.id = t.keyset_id
+    WHERE t.id > ? AND t.kek_version < ? ORDER BY t.id LIMIT ?`,
+  nfc_tag_sun: `SELECT t.tag_id AS pk, t.kek_version, t.wrapped_dek, k.org_id AS x1, k.mode AS x2, t.keyset_id AS x3, NULL AS x4
+    FROM nfc_tag_sun t JOIN nfc_tag_keysets k ON k.id = t.keyset_id
+    WHERE t.tag_id > ? AND t.kek_version < ? ORDER BY t.tag_id LIMIT ?`,
 };
 
 export function selectEnvelopes(
@@ -207,6 +213,20 @@ const CAS: Record<PlaceTable, (db: D1Database, m: Move) => D1PreparedStatement> 
       db,
       `UPDATE wallet_provider_accounts SET hmac_kek_version = ?, hmac_wrapped_dek = ?
        WHERE id = ? AND hmac_kek_version = ? AND hmac_wrapped_dek = ? RETURNING id`,
+      params(m),
+    ),
+  nfc_tag_keys: (db, m) =>
+    stmt(
+      db,
+      `UPDATE nfc_tag_keys SET kek_version = ?, wrapped_dek = ?
+       WHERE id = ? AND kek_version = ? AND wrapped_dek = ? RETURNING id`,
+      params(m),
+    ),
+  nfc_tag_sun: (db, m) =>
+    stmt(
+      db,
+      `UPDATE nfc_tag_sun SET kek_version = ?, wrapped_dek = ?
+       WHERE tag_id = ? AND kek_version = ? AND wrapped_dek = ? RETURNING tag_id`,
       params(m),
     ),
 };

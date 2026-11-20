@@ -14,6 +14,7 @@ import { bindingTarget, passFacts } from './repo-tag-bindings.ts';
 import { listTags, passTagViews, tagView } from './repo-tags.ts';
 import { actingIn, orgNotFound, passNotFound, tagNotFound, tagOrg } from './route-access.ts';
 import { registerEnrollmentRoutes } from './routes-enrollments.ts';
+import { registerKeysetRoutes } from './routes-keysets.ts';
 import { registerTagMoreRoutes } from './routes-more.ts';
 import { registerTagTypeRoutes } from './routes-types.ts';
 import {
@@ -28,7 +29,16 @@ import {
 /** Tags bound to passes and people: /api/v1/nfc. Console sessions only; API keys have no tag routes. */
 export const nfcRoutes = createRouter();
 // Unknown paths stay a 404 problem; every tag route needs a console session.
-for (const path of ['/passes/*', '/tags', '/tags/*', '/bindings/*', '/scanners', '/users/*'])
+for (const path of [
+  '/passes/*',
+  '/tags',
+  '/tags/*',
+  '/bindings/*',
+  '/scanners',
+  '/users/*',
+  '/keysets',
+  '/keysets/*',
+])
   nfcRoutes.use(path, requireTenantSession);
 nfcRoutes.use('*', limitBody(8 * 1024));
 
@@ -160,3 +170,4 @@ for (const [action, summary, act] of [
 registerEnrollmentRoutes(nfcRoutes);
 registerTagMoreRoutes(nfcRoutes);
 registerTagTypeRoutes(nfcRoutes);
+registerKeysetRoutes(nfcRoutes);

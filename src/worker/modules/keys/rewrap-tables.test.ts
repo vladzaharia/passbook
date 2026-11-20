@@ -118,6 +118,10 @@ const SITES: Record<string, { calls: Record<string, number>; tables: string[] | 
   'modules/join/repo-links.ts': { calls: { sealPart: 2 }, tables: ['join_link_seals'] },
   'modules/identities/push-key-service.ts': { calls: { encryptSecret: 1 }, tables: ['apns_keys'] },
   'modules/identities/service.ts': { calls: { encryptSecret: 2 }, tables: ['credentials'] },
+  'modules/nfc/keyset-seal.ts': {
+    calls: { encryptSecret: 2 },
+    tables: ['nfc_tag_keys', 'nfc_tag_sun'],
+  },
   'modules/passes/create-records.ts': { calls: { sealPart: 2 }, tables: SEALS },
   'modules/passes/create-row.ts': { calls: { issueToken: 2 }, tables: SEALS },
   'modules/passes/credential-transfer.ts': {

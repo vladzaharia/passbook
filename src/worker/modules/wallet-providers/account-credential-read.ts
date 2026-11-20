@@ -6,8 +6,8 @@ import {
 import { ValidationError } from '../../platform/errors.ts';
 import { fromBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import {
-  assertCredentialKeyset,
   corrupt,
   credentialSnapshot,
   openAccount,
@@ -37,7 +37,7 @@ export {
 export async function readConfiguredWalletProviderCredentials(
   ctx: ServiceContext,
   scope: WalletProviderScope,
-  expected: { accountId: string; accountRevision: number; credentialKeysetCommitment: string },
+  expected: { accountId: string; accountRevision: number },
 ): Promise<WalletProviderCredentialSnapshot | null> {
   ctx = snapshotWalletCredentialContext(ctx);
   const parsed = WalletProviderScopeSchema.safeParse(scope);
@@ -46,20 +46,13 @@ export async function readConfiguredWalletProviderCredentials(
     !parsed.success ||
     !IdSchema.safeParse(pinned.accountId).success ||
     !Number.isSafeInteger(pinned.accountRevision) ||
-    pinned.accountRevision <= 0 ||
-    typeof pinned.credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(pinned.credentialKeysetCommitment)
+    pinned.accountRevision <= 0
   )
     throw new ValidationError();
-  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
-  const row = await findAccountWithCredentialKeyset(
-    ctx.env.DB,
-    parsed.data,
-    pinned.credentialKeysetCommitment,
-  );
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  const row = await findAccountWithCredentialKeyset(ctx.env.DB, parsed.data);
   if (!row) {
     const existing = await findAccount(ctx.env.DB, parsed.data);
-    await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     if (existing) throw corrupt();
     return null;
   }
@@ -69,20 +62,17 @@ export async function readConfiguredWalletProviderCredentials(
     (!row.credential_id && !row.hmac_ciphertext && row.provider !== 'samsung') ||
     row.revoked_at !== null
   ) {
-    await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     return null;
   }
   // The one enrolment gate (provider-policy.ts): a new-model row issues only while On and not held.
   if (!walletEnrolmentIssues(row)) {
-    await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     return null;
   }
   const stored = await applyEnrolmentSource(ctx, enrolmentOf(row), await openAccount(ctx, row), {
     current: true,
     activeOnly: true,
   });
-  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
-  return credentialSnapshot(row, stored, pinned.credentialKeysetCommitment);
+  return credentialSnapshot(row, stored);
 }
 
 /** Server-only callback verification material; never serialize, log, or use for issuance. */
@@ -93,7 +83,6 @@ export async function readGoogleCallbackVerification(
     mode: WalletProviderScope['mode'];
     accountId: string;
     accountRevision: number;
-    credentialKeysetCommitment: string;
   },
 ): Promise<{ issuerId: string; objectIdHmacKey: Uint8Array } | null> {
   ctx = snapshotWalletCredentialContext(ctx);
@@ -103,21 +92,14 @@ export async function readGoogleCallbackVerification(
     !WalletProviderScopeSchema.safeParse(scope).success ||
     !IdSchema.safeParse(pinned.accountId).success ||
     !Number.isSafeInteger(pinned.accountRevision) ||
-    pinned.accountRevision <= 0 ||
-    typeof pinned.credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(pinned.credentialKeysetCommitment)
+    pinned.accountRevision <= 0
   )
     throw new ValidationError();
-  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
-  const row = await findAccountWithCredentialKeyset(
-    ctx.env.DB,
-    scope,
-    pinned.credentialKeysetCommitment,
-  );
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  const row = await findAccountWithCredentialKeyset(ctx.env.DB, scope);
   if (!row) {
     // An account whose retained identities do not match this keyset is unavailable, not unknown.
     const existing = await findAccount(ctx.env.DB, scope);
-    await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     if (existing) throw corrupt();
     return null;
   }
@@ -127,7 +109,6 @@ export async function readGoogleCallbackVerification(
     (!row.credential_id && !row.hmac_ciphertext && row.provider !== 'samsung') ||
     row.revoked_at !== null
   ) {
-    await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     return null;
   }
   // A callback is verified for the enrolment's own source issuer, revoked or not: callbacks outlive it.
@@ -135,7 +116,6 @@ export async function readGoogleCallbackVerification(
     current: true,
     activeOnly: false,
   });
-  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
   if (stored.provider !== 'google') throw corrupt();
   return {
     issuerId: stored.credentials.issuerId,
@@ -161,8 +141,6 @@ export async function readWalletProviderRetirementCredentials(
     !Number.isSafeInteger(pinned.version) ||
     pinned.version <= 0 ||
     !/^[0-9a-f]{64}$/.test(pinned.claimHash) ||
-    typeof pinned.credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(pinned.credentialKeysetCommitment) ||
     (pinned.provider === 'google' &&
       (!Number.isSafeInteger(pinned.credentialGeneration) ||
         pinned.credentialGeneration < 1 ||
@@ -171,7 +149,7 @@ export async function readWalletProviderRetirementCredentials(
     (pinned.provider === 'samsung' && !/^[0-9a-f]{64}$/.test(pinned.refHash))
   )
     throw new ValidationError();
-  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const row = await findRetirementAccount(ctx.env.DB, pinned, ctx.clock.now());
   const stored = row
     ? await applyEnrolmentSource(ctx, enrolmentOf(row), await openAccount(ctx, row), {
@@ -180,8 +158,7 @@ export async function readWalletProviderRetirementCredentials(
         }),
       })
     : null;
-  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
-  return row && stored ? credentialSnapshot(row, stored, pinned.credentialKeysetCommitment) : null;
+  return row && stored ? credentialSnapshot(row, stored) : null;
 }
 
 /** Server-only refresh material for an existing promoted Samsung ref, never a new offer. */
@@ -204,12 +181,10 @@ export async function readSamsungPromotedRefreshCredentials(
     pinned.accountRevision <= 0 ||
     !Number.isSafeInteger(pinned.operationVersion) ||
     pinned.operationVersion <= 0 ||
-    typeof pinned.credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(pinned.credentialKeysetCommitment) ||
     !/^[0-9a-f]{64}$/.test(pinned.refHash)
   )
     throw new ValidationError();
-  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const row = await findSamsungPromotedRefreshAccount(ctx.env.DB, pinned, ctx.clock.now());
   // A refresh is an outbound call: an Off or held enrolment stops it like any other issuance.
   if (
@@ -218,7 +193,6 @@ export async function readSamsungPromotedRefreshCredentials(
       await findEnrolmentGateRow(ctx.env.DB, 'samsung', pinned.orgId, pinned.mode),
     )
   ) {
-    await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
     return null;
   }
   const stored = row
@@ -228,6 +202,5 @@ export async function readSamsungPromotedRefreshCredentials(
         }),
       })
     : null;
-  await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
-  return row && stored ? credentialSnapshot(row, stored, pinned.credentialKeysetCommitment) : null;
+  return row && stored ? credentialSnapshot(row, stored) : null;
 }

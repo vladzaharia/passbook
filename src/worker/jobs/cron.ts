@@ -12,6 +12,7 @@ import { dailyJoin } from '../modules/join/jobs.ts';
 import { rewrapEnvelopes } from '../modules/keys/rewrap.ts';
 import { dailyMessageRules } from '../modules/message-rules/jobs.ts';
 import { tickMessageRules } from '../modules/message-rules/tick.ts';
+import { dailyOrgLifecycle } from '../modules/org-lifecycle/jobs.ts';
 import { sweepBrandingGc } from '../modules/orgs/branding-gc.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
 import { dailyImports } from '../modules/passes/import-retention.ts';
@@ -21,7 +22,7 @@ import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
 import { remacCapabilityTokens } from '../modules/passes/token-remac.ts';
 import { sweepTransferAssetGc } from '../modules/passes/transfer-asset-gc.ts';
 import { sweepPrintPdfs } from '../modules/prints/pdf-sweep.ts';
-import { dailyReceipts } from '../modules/retention/jobs.ts';
+import { dailyPhotos, dailyReceipts } from '../modules/retention/jobs.ts';
 import { dailySandbox, sweepSandboxForwards } from '../modules/sandbox/jobs.ts';
 import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan/jobs.ts';
 import { autoTapOut } from '../modules/scan/occupancy/jobs.ts';
@@ -30,11 +31,13 @@ import { recordCronRun } from '../modules/status/cron.ts';
 import { sweepForkOrphans } from '../modules/templates/fork-updates-gc.ts';
 import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
+import { dailyVisitors } from '../modules/visitors/retention.ts';
 import { enqueueCredentialChecks } from '../modules/wallet-providers/account-check.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
 import { dailyWebhooks, sweepWebhooks } from '../modules/webhooks/jobs.ts';
 import { sweepLeakedGrants } from '../platform/authority.ts';
 import type { AppEnv } from '../platform/env.ts';
+import { sweepIdempotency } from '../platform/idempotency.ts';
 import { purgeRetiredIds } from '../platform/retired-ids.ts';
 import { createJobContext, type ServiceContext } from '../platform/service-context.ts';
 import { CRON_QUERY_BUDGET, countQueries } from './query-counter.ts';
@@ -79,8 +82,10 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'authority.sweep', run: async (ctx) => void (await sweepLeakedGrants(ctx)) },
     { name: 'authority.retired_ids', run: async (ctx) => void (await purgeRetiredIds(ctx)) },
     { name: 'passes.retention', run: dailyPasses },
+    { name: 'idempotency.sweep', run: sweepIdempotency },
     { name: 'prints.pdf_sweep', run: sweepPrintPdfs },
     { name: 'passes.import_retention', run: dailyImports },
+    { name: 'visitors.retention', run: dailyVisitors },
     { name: 'connections.retention', run: dailyConnections },
     { name: 'delivery.retention', run: dailyDelivery },
     { name: 'auth.retention', run: dailyAuth },
@@ -97,6 +102,8 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'webhooks.retention', run: dailyWebhooks },
     { name: 'templates.fork_orphans', run: sweepForkOrphans },
     { name: 'message_rules.retention', run: dailyMessageRules },
+    { name: 'photos.retention', run: dailyPhotos },
+    { name: 'org_lifecycle.sweep', run: dailyOrgLifecycle },
     { name: 'retention.receipts', run: dailyReceipts },
     // Last: a backlog of test data must never starve the checks above.
     { name: 'sandbox.purge', run: dailySandbox },

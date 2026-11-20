@@ -201,7 +201,6 @@ export async function runtimeTestFixture() {
       mode: ready.mode,
       accountId: ready.accountId,
       accountRevision: ready.revision,
-      credentialKeysetCommitment: keys.credentialKeysetCommitment,
       providerIdentityHash: identityHash,
       providerReleaseId: 'pending-release',
     };

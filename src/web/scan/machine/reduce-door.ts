@@ -70,12 +70,41 @@ export function dismiss(s: MachineState, env: Env): Out {
 export function override(s: MachineState, ev: Of<'override'>, env: Env): Out {
   const l = s.loop;
   if (l.s !== 'verdict' || l.outcome.kind !== 'heads_up') return same(s);
+  if (l.outcome.reason === 'offline_decide') {
+    // Staff decide: save the read as unverified. The server checks it when the door is back online.
+    const key = env.id();
+    return out(
+      {
+        ...s,
+        ignore: settleShown(s.ignore, env.now),
+        loop: { s: 'checking', input: l.input, key, since: env.now, slow: false, next: null },
+        lastActivity: env.now,
+      },
+      [{ c: 'offline.decide', key, input: l.input, unverified: true }],
+    );
+  }
   const draft: Draft = { actionId: ev.actionId, amount: null };
   if (l.outcome.reason === 'check_required') draft.confirmed = true;
   else if (l.outcome.scanId) {
     draft.override = true;
     draft.overrideOf = l.outcome.scanId;
   } else return same(s);
+  return resend(s, l, draft, env);
+}
+
+/** "Check in all N": the scanned pass again with `group: 'bundle'`, under a new key. */
+export function groupAll(s: MachineState, env: Env): Out {
+  const l = s.loop;
+  if (l.s !== 'verdict' || !l.outcome.bundle || l.outcome.group) return same(s);
+  return resend(s, l, { actionId: 'auto', amount: null, group: true }, env);
+}
+
+function resend(
+  s: MachineState,
+  l: Extract<MachineState['loop'], { s: 'verdict' }>,
+  draft: Draft,
+  env: Env,
+): Out {
   const key = env.id();
   const now = env.now;
   return out(

@@ -17,8 +17,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, diffFields, recordAudit } from '../audit/service.ts';
-import { orgIsHeld } from '../retention/holds.ts';
-import { purgeOrgWalletArt } from '../wallet-providers/projection-art-purge.ts';
+import { closeOrg } from '../org-lifecycle/service.ts';
 import { markPassesStale } from './branding-stale.ts';
 import {
   COUNT_CAP,
@@ -41,7 +40,7 @@ type Branding = z.infer<typeof OrgBrandingSchema>;
 type Summary = z.infer<typeof OrgSummarySchema>;
 
 export function toDto(row: OrgRow): OrgDto {
-  const { logo, icon, ...branding } = JSON.parse(row.branding) as Branding;
+  const { logo, icon, web, ...branding } = JSON.parse(row.branding) as Branding;
   const image = (value: NonNullable<Branding['logo']>) => ({
     sha: value.sha,
     w: value.w,
@@ -57,6 +56,7 @@ export function toDto(row: OrgRow): OrgDto {
       ...branding,
       ...(logo ? { logo: image(logo) } : {}),
       ...(icon ? { icon: image(icon) } : {}),
+      ...(web ? { web: image(web) } : {}),
     },
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -135,19 +135,21 @@ export async function createOrg(
     name: input.name,
     status: 'active',
     default_identity_id: input.defaultIdentityId ?? null,
-    branding: JSON.stringify(input.branding ?? {}),
+    // The web logo is set only by its upload, which checks the PNG.
+    branding: JSON.stringify((({ web: _web, ...rest }) => rest)(input.branding ?? {})),
     created_at: now,
     updated_at: now,
     config_revision: 1,
   };
-  await insertOrgAsAdmin(ctx, row, admin);
+  const preset = input.preset ?? 'standard';
+  await insertOrgAsAdmin(ctx, row, admin, preset);
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: row.id,
     action: 'org.create',
     targetType: 'org',
     targetId: row.id,
-    detail: { slug: row.slug, name: row.name },
+    detail: { slug: row.slug, name: row.name, preset },
   });
   return toDto(row);
 }
@@ -230,12 +232,14 @@ const statusAction = (status: 'active' | 'suspended') =>
 
 /** Images are set only by the upload endpoint, so an update keeps the stored ones. */
 function keepImages(next: Branding, stored: string): string {
-  const { logo: _logo, icon: _icon, ...rest } = next;
+  const { logo: _logo, icon: _icon, web: _web, mark: _mark, ...rest } = next;
   const prev = JSON.parse(stored) as Branding;
   return JSON.stringify({
     ...rest,
     ...(prev.logo ? { logo: prev.logo } : {}),
     ...(prev.icon ? { icon: prev.icon } : {}),
+    ...(prev.web ? { web: prev.web } : {}),
+    ...(prev.mark ? { mark: prev.mark } : {}),
   });
 }
 
@@ -270,27 +274,12 @@ export async function setOrgStatus(
   return toDto(saved);
 }
 
-/** Soft delete: passes and audit rows keep their org reference. */
+/** Closes the org (the lifecycle module owns it): read-only, 30 days to export, then purge. */
 export async function deleteOrg(
   ctx: ServiceContext,
   actor: Actor,
   id: string,
   admin: OrgAdmin,
 ): Promise<void> {
-  const row = await requireOrg(ctx, id);
-  if (await orgIsHeld(ctx, id))
-    throw new ConflictError(
-      'A legal hold is active. Release it before deleting the organization.',
-      'ORG_HELD',
-    );
-  await moveOrgStatusAsAdmin(ctx, id, row.status, 'deleted', admin);
-  await recordAudit(ctx, {
-    ...auditActor(actor),
-    orgId: id,
-    action: 'org.delete',
-    targetType: 'org',
-    targetId: id,
-    detail: { slug: row.slug, name: row.name },
-  });
-  await purgeOrgWalletArt(ctx, id);
+  await closeOrg(ctx, actor, id, { kind: 'platform', ...admin });
 }

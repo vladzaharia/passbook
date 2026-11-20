@@ -13,23 +13,6 @@ import {
 import { googleRuntimeIdHashes, type WalletRuntimeScope } from './runtime.ts';
 import { copyRuntimeScope, runtimeAccountUnavailable } from './runtime-core.ts';
 
-async function assertBindingKeyset(
-  ctx: ServiceContext,
-  credentialKeyEnv: object,
-  scope: WalletRuntimeScope,
-): Promise<void> {
-  try {
-    if (
-      (await requireCredentialRefKeyset(ctx.env.DB, credentialKeyEnv)) !==
-        scope.credentialKeysetCommitment ||
-      (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== scope.credentialKeysetCommitment
-    )
-      throw runtimeAccountUnavailable();
-  } catch {
-    throw runtimeAccountUnavailable();
-  }
-}
-
 /** Build the callback URL from configuration only; publishing still requires the guarded helper. */
 export function googleCallbackUrl(ctx: ServiceContext, accountId: string): string {
   try {
@@ -64,14 +47,13 @@ export async function registerGoogleCallbackBinding(
     };
     const capturedScope = copyRuntimeScope(scope);
     const capturedInput = { ...input };
-    await assertBindingKeyset(ctx, credentialKeyEnv, capturedScope);
+    await requireCredentialRefKeyset(ctx.env.DB, credentialKeyEnv);
     const hashes = await googleRuntimeIdHashes(pinnedCtx, capturedScope, {
       releaseId: capturedInput.releaseId,
       passId: capturedInput.passId,
       credentialGeneration: capturedInput.credentialGeneration,
       channelEpoch: capturedInput.channelEpoch,
     });
-    await assertBindingKeyset(ctx, credentialKeyEnv, capturedScope);
     if (
       !(await putGoogleCallbackBinding(
         ctx.env.DB,
@@ -82,7 +64,6 @@ export async function registerGoogleCallbackBinding(
       ))
     )
       throw runtimeAccountUnavailable();
-    await assertBindingKeyset(ctx, credentialKeyEnv, capturedScope);
     if (
       !(await isGoogleCallbackBindingCurrent(
         ctx.env.DB,

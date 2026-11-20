@@ -95,13 +95,10 @@ beforeEach(async () => {
     env: { ...(await testEnv()), KEK_V1: btoa('0123456789abcdef0123456789abcdef') },
     clock: { now: () => 100_000 },
   } as ServiceContext;
-  const credentialKeysetCommitment = await credentialKeyset.ensureCredentialRefKeyset(
-    ctx.env.DB,
-    ctx.env,
-  );
-  instance = { ...instanceFields, credentialKeysetCommitment };
+  await credentialKeyset.ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
+  instance = { ...instanceFields };
   mocks.account.mockResolvedValue({ accountId: 'account-1', state: 'configured', revision: 4 });
-  mocks.pass.mockResolvedValue({ ...pass, credentialKeysetCommitment });
+  mocks.pass.mockResolvedValue(pass);
   mocks.original.mockResolvedValue({
     id: 'native-1',
     generation: 1,
@@ -113,7 +110,6 @@ beforeEach(async () => {
     version: 'v1',
     sourceReleaseId: 'apple-1',
     accountRevision: 4,
-    credentialKeysetCommitment,
     adapterRevision: 1,
     policyRevision: 1,
     providerIdentityHash: 'a'.repeat(64),
@@ -128,25 +124,13 @@ beforeEach(async () => {
 });
 
 describe('native wallet holder transitions', () => {
-  it('never adopts a replacement keyset for a retained instance', async () => {
-    const replacement = await credentialKeyset.credentialRefKeysetCommitment({
-      KEK_V1: btoa('z'.repeat(32)),
-    });
-    expect(
-      await reconcileWalletInstance(ctx, { ...instance, credentialKeysetCommitment: replacement }),
-    ).toBe('blocked');
-    expect(mocks.pass).not.toHaveBeenCalled();
-    expect(mocks.requestRetirement).not.toHaveBeenCalled();
-    expect(mocks.queue).not.toHaveBeenCalled();
-  });
-
-  it('rejects a pass hook whose captured keyset no longer matches', async () => {
-    const replacement = await credentialKeyset.credentialRefKeysetCommitment({
-      KEK_V1: btoa('z'.repeat(32)),
-    });
-    instance = { ...instance, credentialKeysetCommitment: replacement };
-    expect(
-      await onWalletPassUpdated(ctx, {
+  it('refuses a mismatched pin at entry', async () => {
+    const mismatched = {
+      ...ctx,
+      env: { ...ctx.env, KEK_V1: btoa('z'.repeat(32)) },
+    } as ServiceContext;
+    await expect(
+      onWalletPassUpdated(mismatched, {
         orgId: pass.orgId,
         mode: 'live',
         passId: pass.passId,
@@ -154,10 +138,10 @@ describe('native wallet holder transitions', () => {
         passRevision: pass.passRevision,
         lifecycleGeneration: pass.lifecycleGeneration,
         passCredentialGeneration: pass.credentialGeneration,
-        credentialKeysetCommitment: instance.credentialKeysetCommitment,
       }),
-    ).toEqual({ scheduled: 0, blocked: 0, stale: true });
+    ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
     expect(mocks.pass).not.toHaveBeenCalled();
+    expect(mocks.requestRetirement).not.toHaveBeenCalled();
     expect(mocks.queue).not.toHaveBeenCalled();
   });
 
@@ -202,7 +186,6 @@ describe('native wallet holder transitions', () => {
     mocks.pass.mockResolvedValue({
       ...pass,
       transferPending: 1,
-      credentialKeysetCommitment: instance.credentialKeysetCommitment,
     });
     mocks.requestRetirement.mockResolvedValue(true);
     expect(await reconcileWalletInstance(ctx, { ...instance, retirementRequestedAt: null })).toBe(
@@ -223,7 +206,6 @@ describe('native wallet holder transitions', () => {
     mocks.pass.mockResolvedValue({
       ...pass,
       transferPending: 1,
-      credentialKeysetCommitment: instance.credentialKeysetCommitment,
     });
     const target: WalletInstance = {
       ...instance,
@@ -245,7 +227,6 @@ describe('native wallet holder transitions', () => {
     mocks.pass.mockResolvedValue({
       ...pass,
       transferPending: 1,
-      credentialKeysetCommitment: instance.credentialKeysetCommitment,
     });
     mocks.retirePlaceholder.mockResolvedValue(true);
     const old: WalletInstance = {
@@ -278,7 +259,6 @@ describe('native wallet holder transitions', () => {
         passVersion: 2,
         passRevision: pass.passRevision,
         passCredentialGeneration: pass.credentialGeneration,
-        credentialKeysetCommitment: instance.credentialKeysetCommitment,
         lifecycleGeneration: pass.lifecycleGeneration,
       }),
     ).toBe('stale');

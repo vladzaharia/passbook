@@ -4,8 +4,16 @@
   "description": "Ten washes, classes or trips. Use one.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png"
+      }
+    },
     "samsung": {}
+  },
+  "channels": {
+    "paper": "off",
+    "nfc": "off"
   },
   "blueprint": true,
   "inputs": {

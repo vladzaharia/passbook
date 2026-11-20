@@ -15,6 +15,14 @@ const effective = {
   paper: { on: false, source: 'template', reason: 'template_off' },
   nfc: on,
 };
+const defaults = {
+  mobile: 'on',
+  apple: 'on',
+  google: 'on',
+  samsung: 'on',
+  paper: 'off',
+  nfc: 'on',
+};
 const impact = (passes: number, cleared = 0) => [
   { channel: 'apple', passes, rotated: 0, clearedOverrides: cleared },
 ];
@@ -49,6 +57,7 @@ const handlers = (
           channels: null,
           revision: 1,
           effective,
+          defaults,
           impact: [
             {
               channel: 'apple',
@@ -63,7 +72,7 @@ const handlers = (
           blocked: extra.blocked ?? null,
           allOff: extra.allOff ?? false,
         })
-      : json({ channels: null, revision: 0, effective });
+      : json({ channels: null, revision: 0, effective, defaults });
   },
 });
 const group = (name: string) => screen.getByRole('radiogroup', { name });
@@ -78,8 +87,9 @@ describe('Template channels', () => {
   it('disables a channel the template cannot offer and says why', async () => {
     renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />, handlers(0));
     await screen.findByRole('radiogroup', { name: 'Apple Wallet' });
-    expect(screen.getAllByText('No design for this template')).toHaveLength(2);
-    expect(within(group('Google Wallet')).getByRole('radio', { name: 'On' })).toBeDisabled();
+    expect(screen.getAllByText('Not available')).toHaveLength(2);
+    expect(screen.getAllByLabelText(/No design in this template/)).toHaveLength(2);
+    expect(screen.queryByRole('radiogroup', { name: 'Google Wallet' })).toBeNull();
     expect(within(group('Paper')).getByRole('radio', { name: 'Off' })).toBeEnabled();
   });
 
@@ -89,6 +99,7 @@ describe('Template channels', () => {
         json({
           channels: null,
           revision: 0,
+          defaults,
           effective: {
             ...effective,
             apple: { on: false, source: 'org', reason: 'blocked' },
@@ -97,10 +108,15 @@ describe('Template channels', () => {
         }),
     });
     expect(
-      await screen.findByText('Blocked for this organization. Copies stay as they are.'),
+      await screen.findByLabelText(
+        'Disabled. Off for this organization. Copies stay as they are. Change it in Organization settings.',
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByText('Printing off for all organizations')).toBeInTheDocument();
-    expect(screen.getAllByText('No design for this template')).toHaveLength(2);
+    expect(
+      screen.getByLabelText('Disabled. Off for the platform. Change it in Platform settings.'),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('Not available')).toHaveLength(2);
+    expect(screen.getAllByLabelText(/No design in this template/)).toHaveLength(2);
   });
 
   it('shows the effect before saving, then saves with the revision', async () => {
@@ -149,13 +165,15 @@ describe('Template channels', () => {
     let puts = 0;
     renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />, {
       '/api/v1/templates/t1/channels': (_u: URL, init?: RequestInit) => {
-        if (init?.method !== 'PUT') return json({ channels: null, revision: 0, effective });
+        if (init?.method !== 'PUT')
+          return json({ channels: null, revision: 0, effective, defaults });
         const body = JSON.parse(String(init.body));
         if (body.dryRun)
           return json({
             channels: null,
             revision: 0,
             effective,
+            defaults,
             impact: impact(0, dryCleared),
             workflowInstanceId: null,
             replaceSupported: false,
@@ -279,5 +297,26 @@ describe('Template channels', () => {
     expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled();
     await waitFor(() => expect(box).toBeEnabled());
     expect(dialog).toHaveTextContent('issues new codes');
+  });
+
+  it('applies the template to existing passes in bulk', async () => {
+    const { fetchMock } = renderTags(
+      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />,
+      {
+        ...handlers(0),
+        '/api/v1/passes': () => json({ items: [{ id: 'p1' }, { id: 'p2' }], nextCursor: null }),
+        '/api/v1/passes/bulk/channels': () => json({ done: 2, skipped: [] }),
+      },
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Apply to existing passes' }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Apply' }));
+    await waitFor(() => expect(calls(fetchMock, 'POST', '/bulk/channels')).toHaveLength(1));
+    const [, init] = calls(fetchMock, 'POST', '/bulk/channels')[0] ?? [];
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      action: 'reset',
+      ids: ['p1', 'p2'],
+      orgId: 'o1',
+    });
   });
 });

@@ -4,6 +4,7 @@
  */
 
 import type { ScanCounts, ScannerSettings } from '../../../shared/contracts/scan.ts';
+import { offlineModeOf } from '../../../shared/scan-offline.ts';
 import { SCAN_TIMING } from '../timing.ts';
 import { accessBeat, type MachineEvent } from './access-events.ts';
 import { createRunner } from './commands.ts';
@@ -182,6 +183,7 @@ export function createScanStore(deps: ScanDeps, initial: ScanState): ScanStore {
         ...state,
         posture: settings.flow === 'choose' ? 'desk' : 'door',
         reader: { ...state.reader, kind: reader },
+        offline: { ...state.offline, mode: offlineModeOf(settings) },
         counts,
         armed: changed ? null : state.armed,
         ignore: changed ? [] : state.ignore,

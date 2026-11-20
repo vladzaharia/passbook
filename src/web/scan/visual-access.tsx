@@ -1,5 +1,5 @@
 /** The access and occupancy scenarios of the visual gallery (`?visual=1&surface=access&case=`). */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Buddy } from '../ui/art/buddy.tsx';
 import { ScanAppView } from './app.tsx';
 import { fakeInsideApi, insideRow } from './inside/inside-fake.test-support.ts';
@@ -12,6 +12,15 @@ import { fixtureDisplay } from './machine/fixtures.test-support.ts';
 import { moodOf, presentOutcome } from './machine/present.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { ResultCard } from './result/result-card.tsx';
+import {
+  fakeRollCall,
+  T0 as ROLL_T0,
+  call as rollCall,
+  person as rollPerson,
+} from './roll-call/roll-call-fake.test-support.ts';
+import { RollCallPanel } from './roll-call/roll-call-panel.tsx';
+import { StartRollCallFooter } from './roll-call/start-footer.tsx';
+import { useRollCall } from './roll-call/use-roll-call.ts';
 import { PlaceChip } from './ui/chips.tsx';
 import { DirectionChip } from './ui/direction-chip.tsx';
 import { DirectionSheet } from './ui/direction-sheet.tsx';
@@ -56,8 +65,68 @@ export const ACCESS_SCENARIOS = [
   'inside',
   'inside-empty',
   'inside-offline',
+  'roll-call',
+  'roll-call-done',
+  'roll-call-offline',
+  'roll-call-start',
 ] as const;
 export type AccessScenario = (typeof ACCESS_SCENARIOS)[number];
+
+function RollScenario({ scenario }: { scenario: AccessScenario }) {
+  const done = { status: 'present' as const, by: 'Sam K.', at: ROLL_T0 };
+  const people =
+    scenario === 'roll-call-done'
+      ? [0, 1, 2, 3].map((n) => rollPerson(n, { mark: done }))
+      : [
+          rollPerson(0, { presence: 'lapsed', notConfirmedOut: true }),
+          rollPerson(1, { late: true }),
+          rollPerson(2, { mark: done }),
+          rollPerson(3, { mark: { status: 'out', by: 'Ana R.', at: ROLL_T0 } }),
+          rollPerson(4),
+        ];
+  const [port] = useState(() => fakeRollCall(rollCall(people)));
+  // Offline: the call loaded, then the connection dropped and a tap is waiting to sync.
+  const [dropped, setDropped] = useState(false);
+  const online = scenario !== 'roll-call-offline' || !dropped;
+  const roll = useRollCall({
+    port,
+    enabled: true,
+    online,
+    by: '',
+    connect: () => ({ close: () => undefined }),
+  });
+  const loaded = roll.call !== null;
+  const { mark } = roll;
+  useEffect(() => {
+    if (scenario !== 'roll-call-offline' || !loaded || dropped) return;
+    setDropped(true);
+    mark(rollPerson(4).passId, 'present');
+  }, [scenario, loaded, dropped, mark]);
+  const inside = useInside({
+    api: fakeInsideApi([]),
+    active: false,
+    online,
+    notify: { undo: () => undefined, error: () => undefined, info: () => undefined },
+  });
+  return (
+    <InsideSheet
+      open
+      onClose={() => undefined}
+      inside={inside}
+      online={online}
+      onOpenRow={() => undefined}
+      body={
+        <RollCallPanel
+          roll={roll}
+          online={online}
+          now={ROLL_T0 + 12 * 60_000}
+          onEnd={() => undefined}
+          onPrint={() => undefined}
+        />
+      }
+    />
+  );
+}
 
 function InsideScenario({ scenario }: { scenario: AccessScenario }) {
   const [api] = useState(() =>
@@ -86,13 +155,20 @@ function InsideScenario({ scenario }: { scenario: AccessScenario }) {
       inside={inside}
       online={online}
       onOpenRow={() => undefined}
+      footer={
+        scenario === 'roll-call-start' ? (
+          <StartRollCallFooter disabled={false} onStart={() => undefined} />
+        ) : undefined
+      }
     />
   );
 }
 
 export function AccessVisual({ scenario }: { scenario: AccessScenario }) {
   const outcome = verdicts[scenario];
+  if (scenario === 'roll-call-start') return <InsideScenario scenario={scenario} />;
   if (scenario.startsWith('inside')) return <InsideScenario scenario={scenario} />;
+  if (scenario.startsWith('roll-call')) return <RollScenario scenario={scenario} />;
   return (
     <>
       <ScanAppView

@@ -6,7 +6,6 @@ import type {
   WalletOperationKind,
   WalletScope,
 } from './instance-types.ts';
-import { isCredentialKeysetCommitment as validCommitment } from './instance-types.ts';
 
 export const nonnegative = (n: number) => Number.isSafeInteger(n) && n >= 0;
 export const scopeValid = (p: WalletScope) =>
@@ -16,7 +15,6 @@ export const scopeValid = (p: WalletScope) =>
 export function validProof(p: WalletInstanceProof, kind: WalletOperationKind): boolean {
   return (
     scopeValid(p) &&
-    validCommitment(p.credentialKeysetCommitment) &&
     !!p.passId &&
     !!p.accountId &&
     !!p.projectionReleaseId &&
@@ -51,7 +49,6 @@ export function sameProof(
     op.passRevision === p.passRevision &&
     op.lifecycleGeneration === p.lifecycleGeneration &&
     op.passCredentialGeneration === p.passCredentialGeneration &&
-    op.credentialKeysetCommitment === p.credentialKeysetCommitment &&
     op.issuingReleaseId === p.issuingReleaseId &&
     op.projectionReleaseId === p.projectionReleaseId &&
     op.accountRevision === p.accountRevision &&

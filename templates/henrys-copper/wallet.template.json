@@ -4,8 +4,16 @@
   "description": "Member card with lock-screen suggestions at the member’s clubs.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png"
+      }
+    },
     "samsung": {}
+  },
+  "channels": {
+    "paper": "off",
+    "nfc": "on"
   },
   "org": {
     "slug": "henrys",
@@ -349,6 +357,12 @@
               "type": "field",
               "label": "Home club",
               "value": "{{fields.homeClub}}"
+            },
+            {
+              "id": "r_access",
+              "type": "field",
+              "label": "Access",
+              "value": "{{inputs.access}}"
             }
           ]
         }
@@ -363,5 +377,11 @@
         ]
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "cr80",
+    "barcode": "qr",
+    "kind": "membership"
   }
 }

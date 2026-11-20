@@ -28,6 +28,8 @@ export const SettingsListSchema = z.object({
     adminGroup: z.string().nullable(),
     userGroup: z.string().nullable(),
   }),
+  /** Platform scope, read-only: whether each wallet provider is released in any mode. */
+  released: z.object({ google: z.boolean(), samsung: z.boolean() }).optional(),
 });
 export const UpdateSettingsSchema = z.object({
   scope: SettingScopeSchema.default('platform'),

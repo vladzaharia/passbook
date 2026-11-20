@@ -1,6 +1,5 @@
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { getWalletProviderReadiness } from './account-service.ts';
 import { queueWalletOperation } from './instance.ts';
 import type { WalletInstance, WalletInstanceProof, WalletOperationKind } from './instance-types.ts';
@@ -28,7 +27,6 @@ export async function scheduleInstance(
   const original = await getProjectionRetirementMetadata(
     ctx.env.DB,
     instance.identityProjectionReleaseId,
-    { credentialKeysetCommitment: pass.credentialKeysetCommitment },
   );
   if (
     !original ||
@@ -54,16 +52,12 @@ export async function scheduleInstance(
       !pass.issuingReleaseId
     )
       return 'blocked';
-    const approved = await getApprovedProjection(
-      ctx,
-      {
-        ...scope,
-        templateId: pass.templateId,
-        templateVersion: pass.templateVersion,
-        appleReleaseId: pass.issuingReleaseId,
-      },
-      { credentialKeysetCommitment: pass.credentialKeysetCommitment },
-    );
+    const approved = await getApprovedProjection(ctx, {
+      ...scope,
+      templateId: pass.templateId,
+      templateVersion: pass.templateVersion,
+      appleReleaseId: pass.issuingReleaseId,
+    });
     if (
       !approved ||
       approved.release.accountId !== instance.accountId ||
@@ -85,7 +79,6 @@ export async function scheduleInstance(
     lifecycleGeneration: pass.lifecycleGeneration,
     passCredentialGeneration: pass.credentialGeneration,
     issuingReleaseId: pass.issuingReleaseId,
-    credentialKeysetCommitment: pass.credentialKeysetCommitment,
     projectionReleaseId,
     accountId: instance.accountId,
     accountRevision: account.revision,
@@ -100,11 +93,8 @@ export async function scheduleInstance(
           instanceId: instance.id,
           orgId: instance.orgId,
           mode: instance.mode,
-          credentialKeysetCommitment: pass.credentialKeysetCommitment,
         })
       : [];
-  if ((await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== pass.credentialKeysetCommitment)
-    return 'blocked';
   const requestKey = await sha256Hex(
     JSON.stringify([
       'wallet-lifecycle-v1',
@@ -121,7 +111,6 @@ export async function scheduleInstance(
       proof.accountRevision,
       proof.adapterRevision,
       proof.policyRevision,
-      proof.credentialKeysetCommitment,
       countryHints,
     ]),
   );

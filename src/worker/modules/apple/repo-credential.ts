@@ -1,5 +1,6 @@
 import type { HolderPrincipal } from '../../platform/authority-principal.ts';
 import { first } from '../../platform/db.ts';
+import { ORG_SERVES_SQL } from '../orgs/repo.ts';
 import type { Pass } from '../passes/repo-map.ts';
 
 /** Credential captured when Wallet's serial was resolved and its token authenticated. */
@@ -12,7 +13,7 @@ export type AppleCredential = Pick<
 export const appleCredentialSql = `p.id = ? AND p.org_id = ? AND p.identity_id = ?
   AND p.serial = ? AND p.auth_token = ? AND p.credential_generation = ?
   AND p.test_data_quarantined = 0
-  AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = p.org_id AND o.status = 'active')
+  AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = p.org_id AND ${ORG_SERVES_SQL})
   AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
     WHERE t.pass_id = p.id AND t.state = 'pending')`;
 

@@ -7,11 +7,14 @@
  * its scene on a click. No inline script.
  */
 import { Lock, type LucideIcon, OctagonX } from 'lucide-react';
+import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { ART_CSS } from '../../web/ui/art/css.ts';
 import { appPageHead, documentStart, type PageTheme } from './head.ts';
 import { HOSTED_ART_CSS, type HostedArt, stateArtHtml } from './hosted-art.tsx';
 import { iconHtml } from './icon.ts';
+import { orgLogoHtml, orgMarkHtml } from './org-bar.tsx';
+import { brandCss, ORG_SHELL_CSS } from './org-brand-css.ts';
 import { escapeHtml, THEME_CSS, WORDMARK_CSS, wordmarkHtml } from './theme.ts';
 
 /** Click to replay the buddy's scene; same-origin, so `script-src 'self'` covers it. */
@@ -73,6 +76,8 @@ export interface HostedPageInput {
   after?: string;
   /** False leaves out the replay script (a page that must carry no script of its own). */
   replay?: boolean;
+  /** The org this page is about: its logo or name leads the band, its accent colours the page, and the mark level sets the foot. */
+  brand?: OrgBrand;
   /** Moves on to this URL at once (meta refresh), as a page rather than a redirect. */
   refresh?: string;
 }
@@ -112,5 +117,8 @@ export function hostedPage(input: HostedPageInput): string {
   const refresh = input.refresh
     ? `<meta http-equiv="refresh" content="0;url=${escapeHtml(input.refresh)}">`
     : '';
-  return `${documentStart(input.theme)}${appPageHead(input.title)}${refresh}<title>${escapeHtml(input.title)} · PassBook</title><style nonce="${input.nonce}">${HOSTED_CSS}${input.css ?? ''}</style>${input.head ?? ''}</head><body><main class="hosted${input.wide ? ' wide' : ''}"><div class="band"><div class="brand">${wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section></main>${input.replay === false ? '' : REPLAY_SCRIPT}${input.after ?? ''}</body></html>`;
+  const { brand } = input;
+  const sheet = brand ? `${ORG_SHELL_CSS}\n${brandCss(brand)}` : '';
+  const suffix = brand ? brand.name : 'PassBook';
+  return `${documentStart(input.theme)}${appPageHead(input.title)}${refresh}<title>${escapeHtml(input.title)} · ${escapeHtml(suffix)}</title><style nonce="${input.nonce}">${HOSTED_CSS}${sheet}${input.css ?? ''}</style>${input.head ?? ''}</head><body><main class="hosted${input.wide ? ' wide' : ''}"><div class="band"><div class="brand">${brand ? orgLogoHtml(brand) : wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section>${orgMarkHtml(brand)}</main>${input.replay === false ? '' : REPLAY_SCRIPT}${input.after ?? ''}</body></html>`;
 }

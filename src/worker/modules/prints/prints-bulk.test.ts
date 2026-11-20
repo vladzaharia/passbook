@@ -6,10 +6,15 @@ import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { voidPass } from '../passes/service.ts';
 import { handlePrintsBulk } from './jobs.ts';
 import { dropPrintPdfs } from './pdf-drop.ts';
+import { readPdf } from './pdf-read.ts';
 import { bulkKey } from './pdf-store.ts';
 import { FORBIDDEN, pdfKit, pdfText } from './pdf-test-fixtures.ts';
 
-type Started = { jobId: string; count: number; skipped: { id: string; code: string }[] };
+type Started = {
+  jobId: string;
+  count: number;
+  skipped: { id: string; code: string; reason?: string }[];
+};
 
 async function setup() {
   const k = await pdfKit();
@@ -33,7 +38,9 @@ describe('bulk print', () => {
     expect(res.status).toBe(202);
     const started = (await res.json()) as Started;
     expect(started.count).toBe(2);
-    expect(started.skipped).toEqual([{ id: off.id, code: 'PRINTING_OFF' }]);
+    expect(started.skipped).toEqual([
+      { id: off.id, code: 'PRINTING_OFF', reason: expect.stringMatching(/^Paper is off for .+/) },
+    ]);
     // The existing print stays (not replaced), the new pass got one.
     const prints = await all<{ id: string }>(
       kit.env.DB,
@@ -65,7 +72,9 @@ describe('bulk print', () => {
     expect(pdf.headers.get('cache-control')).toBe('private, no-store');
     const bytes = new Uint8Array(await pdf.arrayBuffer());
     const text = await pdfText(bytes);
-    expect(text.match(/Spring Concert/g)).toHaveLength(2);
+    const pages = await readPdf(bytes);
+    expect(pages).toHaveLength(2);
+    for (const page of pages) expect(page.lines).toContain('Spring Concert');
     expect(text).not.toContain(FORBIDDEN);
     // Running the job again changes nothing.
     await handlePrintsBulk(job as never, jobCtxOf(kit));
@@ -107,7 +116,8 @@ describe('bulk print', () => {
       { ids: [pass.id], orgId: kit.org.id },
       key,
     );
-    expect(asKey.status).toBeGreaterThanOrEqual(401);
+    // The document lists passes:write for this route: the key starts a job, and prints-bulk-key.test.ts covers its limits.
+    expect(asKey.status).toBe(202);
   });
 
   it('answers nothing-to-print without a job when no pass can print', async () => {

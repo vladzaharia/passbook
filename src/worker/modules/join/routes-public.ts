@@ -20,6 +20,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { type JoinPage, renderJoinPage, statusOf } from '../../ssr/join-page.tsx';
+import { orgBrandOf } from '../orgs/brand.ts';
 import { type C, svc } from '../passes/http.ts';
 import { langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
 import { platformLimits } from './caps.ts';
@@ -84,6 +85,7 @@ async function formPage(
   return {
     kind: 'form',
     orgName: link.orgName,
+    brand: await orgBrandOf(ctx, link.orgId),
     askName: open ? open.readiness.nameInput !== null : link.nameInput !== null,
     askEmail: link.askEmail,
     test: link.mode === 'test',
@@ -102,7 +104,12 @@ async function respond(c: C, outcome: JoinOutcome) {
       // A 303: the browser follows with a GET, so the form post is never repeated.
       return c.redirect(`/p/${outcome.token}`, 303);
     case 'check_email':
-      return html(c, { kind: 'check_email', orgName: outcome.link.orgName, email: outcome.email });
+      return html(c, {
+        kind: 'check_email',
+        orgName: outcome.link.orgName,
+        email: outcome.email,
+        brand: await orgBrandOf(svc(c), outcome.link.orgId),
+      });
     case 'form':
       return html(
         c,

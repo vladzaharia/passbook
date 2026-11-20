@@ -5,6 +5,7 @@ import { Badge } from '../../../ui/index.ts';
 import { AccessSection } from './access/access-section.tsx';
 import { readAccess } from './access/model.ts';
 import { useDesigner } from './context.tsx';
+import { readCounters } from './counters.ts';
 import { readInputs } from './inputs.ts';
 import {
   type DraftAsset,
@@ -20,6 +21,7 @@ import { ActionsSection } from './scan/actions/actions-section.tsx';
 import { readActions } from './scan/actions/model.ts';
 import { BarcodeSection } from './section-barcode.tsx';
 import { ColorsSection } from './section-colors.tsx';
+import { CountersSection } from './section-counters.tsx';
 import { FieldsSection } from './section-fields.tsx';
 import { ImagesSection } from './section-images.tsx';
 import { InputsSection } from './section-inputs.tsx';
@@ -113,6 +115,9 @@ export function Outline() {
             <StampsSection />
           </Disclosure>
         ) : null}
+        <Disclosure section="counters" index={next()} count={readCounters(doc).length}>
+          <CountersSection />
+        </Disclosure>
         {groups.map((g: GroupId) => (
           <Disclosure key={g} section={g} index={next()} count={fieldsOf(doc.passJson, g).length}>
             <FieldsSection group={g} />
