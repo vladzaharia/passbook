@@ -175,14 +175,32 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   wallet_credential_checks: { org: null, edges: [edge('credential_id', 'wallet_credentials')] },
   // An enrolment's events (the account row itself is written by `include` parts, tied to {org} and {mode}).
   wallet_enrolment_events: { org: 'org_id', mode: 'mode' },
+  // Entitlements (0134): what the org may use. Written only by platform purposes (RESTRICTED_TABLES), never by an org.
+  org_entitlements: { org: 'org_id' },
+  org_entitlement_overrides: { org: 'org_id', conflict: ['org_id', 'key'] },
+  entitlement_preset_meta: {
+    org: null,
+    platform: { columns: ['label', 'is_plan', 'revision', 'updated_at', 'updated_by'] },
+  },
+  entitlement_presets: { org: null, platform: { columns: ['value'] } },
 };
 
 /**
  * Guarded tables only the listed purposes may write, whatever the principal or the grant's `tables`. The
  * credential check job is the one writer of a check: no org_mode or platform.wallet.* grant inserts one.
+ * Entitlements are written by the platform purposes of design-multi-tenancy.md section 2.2 only.
  */
 export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
   wallet_credential_checks: ['platform.job.wallet.credential_check'],
+  // The org cannot write its own entitlements: no org or org_mode purpose is listed, whatever its tables.
+  org_entitlements: [
+    'platform.org.create',
+    'platform.job.template_sync',
+    'platform.org.entitlements_set',
+  ],
+  org_entitlement_overrides: ['platform.org.entitlements_set'],
+  entitlement_preset_meta: ['platform.entitlement_preset.update'],
+  entitlement_presets: ['platform.entitlement_preset.update'],
 };
 
 /** Tables only the triggers and `authority.ts` may write; raw SQL on them is a lint failure. */

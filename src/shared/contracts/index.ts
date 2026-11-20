@@ -5,6 +5,7 @@ export * from './bundles.ts';
 export * from './channels.ts';
 export * from './common.ts';
 export * from './connections.ts';
+export * from './entitlements.ts';
 export * from './events.ts';
 export * from './holders.ts';
 export * from './identities.ts';

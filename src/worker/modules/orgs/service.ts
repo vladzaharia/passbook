@@ -140,14 +140,15 @@ export async function createOrg(
     updated_at: now,
     config_revision: 1,
   };
-  await insertOrgAsAdmin(ctx, row, admin);
+  const preset = input.preset ?? 'standard';
+  await insertOrgAsAdmin(ctx, row, admin, preset);
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: row.id,
     action: 'org.create',
     targetType: 'org',
     targetId: row.id,
-    detail: { slug: row.slug, name: row.name },
+    detail: { slug: row.slug, name: row.name, preset },
   });
   return toDto(row);
 }

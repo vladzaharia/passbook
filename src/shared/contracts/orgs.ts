@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, PageQuerySchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
+import { EntitlementPresetSchema } from './entitlements.ts';
 import { OrgSettingsSchema } from './settings.ts';
 
 const HexColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/);
@@ -66,12 +67,16 @@ export const CreateOrgSchema = z.object({
   name: PlainLineSchema(120),
   defaultIdentityId: IdSchema.nullable().optional(),
   branding: OrgBrandingSchema.optional(),
+  /** The org's Features (entitlements); `standard` when omitted. */
+  preset: EntitlementPresetSchema.optional(),
 });
-export const UpdateOrgSchema = CreateOrgSchema.partial().extend({
-  status: z.enum(['active', 'suspended']).optional(),
-  /** The `configRevision` the form was loaded with; a save from older values is a 409. */
-  configRevision: z.number().int().optional(),
-});
+export const UpdateOrgSchema = CreateOrgSchema.omit({ preset: true })
+  .partial()
+  .extend({
+    status: z.enum(['active', 'suspended']).optional(),
+    /** The `configRevision` the form was loaded with; a save from older values is a 409. */
+    configRevision: z.number().int().optional(),
+  });
 /** Suspend stops pass updates and API keys for the org; audited as org.suspend / org.reactivate. */
 export const OrgStatusSchema = z.object({ status: z.enum(['active', 'suspended']) });
 export const OrgListSchema = pageOf(OrgSummarySchema);
