@@ -34,7 +34,7 @@ export const revokeIdentitySql = (i: string) =>
     WHERE ${allOf([
       `account.id = ${i}.account_id`,
       'account.revoked_at IS NULL',
-      `COALESCE(account.identity_hash, credential.identity_hash) = (SELECT original.provider_identity_hash
+      `COALESCE(credential.identity_hash, account.identity_hash) = (SELECT original.provider_identity_hash
         FROM template_releases rel JOIN template_candidates original ON original.id = rel.candidate_id
         WHERE rel.id = ${i}.identity_projection_release_id)`,
     ])})`;

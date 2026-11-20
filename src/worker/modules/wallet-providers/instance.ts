@@ -20,7 +20,6 @@ import {
   insertInstance,
   listDirtyInstances,
   listDueOperations,
-  readAccountEpoch,
   readPassSnapshot,
 } from './repo-instance.ts';
 import { grantDesiredOperation } from './repo-instance-desired.ts';

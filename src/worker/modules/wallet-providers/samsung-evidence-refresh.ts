@@ -6,7 +6,7 @@ const AHEAD_MS = 60_000;
 
 /**
  * Evidence lives five minutes. A request path (Get Card Data, an offer) only reads the cached proof and cannot write
- * one, so the sync job refreshes the proof of every current Samsung release before it lapses.
+ * one, so the sync job refreshes the proof of every approved Samsung candidate before it lapses.
  */
 export async function refreshExpiringSamsungEvidence(
   ctx: ServiceContext,
@@ -14,13 +14,10 @@ export async function refreshExpiringSamsungEvidence(
 ): Promise<number> {
   const due = await all<{ id: string; hash: string }>(
     ctx.env.DB,
-    `SELECT c.id, c.candidate_hash AS hash FROM template_releases r
-    JOIN template_candidates c ON c.id = r.candidate_id
+    `SELECT c.id, c.candidate_hash AS hash FROM template_candidates c
+    JOIN template_approvals approval ON approval.candidate_id = c.id
     JOIN wallet_provider_projection_evidence e ON e.candidate_id = c.id AND e.status = 'verified'
-    WHERE r.provider = 'samsung' AND r.source = 'approved' AND e.expires_at <= ?
-      AND NOT EXISTS (SELECT 1 FROM template_releases newer WHERE newer.template_id = r.template_id
-        AND newer.org_id = r.org_id AND newer.mode = r.mode AND newer.provider = r.provider
-        AND newer.generation > r.generation)
+    WHERE c.provider = 'samsung' AND e.expires_at <= ?
     ORDER BY e.expires_at LIMIT ?`,
     [ctx.clock.now() + AHEAD_MS, limit],
   );

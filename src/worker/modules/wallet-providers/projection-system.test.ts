@@ -3,7 +3,6 @@ import { groupOf } from '../../../passkit/wallets/fidelity.ts';
 import type { CompileResult, FidelityItem } from '../../../passkit/wallets/types.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import { all, first } from '../../platform/db.ts';
-import { ForbiddenError } from '../../platform/errors.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { getLatestRelease } from '../templates/repo-releases.ts';
 import { offersPaused } from './projection-pause.ts';
@@ -209,9 +208,8 @@ describe('system-authored provider candidates (CW7b)', () => {
     await S.env.DB.prepare("UPDATE orgs SET status = 'suspended' WHERE id = ?")
       .bind(kit.orgId)
       .run();
-    await expect(runSystemProjection(jobCtx(kit.ctx), jobOf(kit))).rejects.toBeInstanceOf(
-      ForbiddenError,
-    );
+    // The grant refuses a suspended org; the job skips it instead of failing into the queue's retries.
+    await expect(runSystemProjection(jobCtx(kit.ctx), jobOf(kit))).resolves.toBeUndefined();
     const rows = await all(
       S.env.DB,
       'SELECT id FROM template_candidates WHERE org_id = ? AND provider = ?',

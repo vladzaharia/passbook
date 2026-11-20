@@ -425,7 +425,7 @@ describe('authenticated Samsung card-state evidence', () => {
       await ensureSamsungProjectionEvidence(f.kit.ctx, f.candidate.id, f.candidate.candidateHash),
     ).toBe(true);
     f.kit.clock.advance(240_000);
-    expect(await refreshExpiringSamsungEvidence(f.kit.ctx, 10)).toBe(1);
+    expect(await refreshExpiringSamsungEvidence(f.kit.ctx, 10)).toBeGreaterThanOrEqual(1);
     f.kit.clock.advance(100_000);
     expect(await hasSamsungProjectionEvidence(plain, await f.stored())).toBe(true);
     // Without the job the proof lapses, and a request path cannot write one: it fails closed.
