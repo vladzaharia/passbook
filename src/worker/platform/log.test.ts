@@ -26,6 +26,11 @@ describe('redaction', () => {
       'https://x/auth/magic?t=[redacted]&x=1',
     );
     expect(redactString('key wlt_abc_def')).toBe('key wlt_[redacted]');
+    for (const label of ['pb', 'pbp', 'pbo'])
+      expect(redactString(`key ${label}_live_abc12345_${'x'.repeat(43)}`)).toBe(
+        `key ${label}_[redacted]`,
+      );
+    expect(redactString('sub_total and pbx_1')).toBe('sub_total and pbx_1');
     expect(redactString('mail me@example.com')).toBe('mail [redacted email]');
     expect(redactString('-----BEGIN PRIVATE KEY-----\nAAA\n-----END PRIVATE KEY-----')).toBe(
       '[redacted pem]',

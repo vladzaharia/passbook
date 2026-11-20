@@ -424,14 +424,28 @@ export interface ApiKeyFixture {
 /** Inserts an API key row. Format wlt_<prefix>_<secret>; only the SHA-256 is stored. */
 export async function makeApiKey(
   f: Fixtures,
-  options: { orgId?: string | null; scopes?: string[]; name?: string; mode?: 'live' | 'test' } = {},
+  options: {
+    orgId?: string | null;
+    scopes?: string[];
+    name?: string;
+    mode?: 'live' | 'test';
+    kind?: 'service' | 'personal' | 'platform';
+    roles?: string[];
+    membershipId?: string;
+    expiresAt?: number;
+    retireAt?: number;
+    ipAllow?: string[];
+    rateTier?: 'standard' | 'high' | 'bulk';
+  } = {},
 ): Promise<ApiKeyFixture> {
   const id = f.ids.id();
   const prefix = f.ids.token(6);
   const secret = `wlt_${prefix}_${f.ids.token()}`;
   await run(
     f.env.DB,
-    'INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at,
+       kind, roles, membership_id, expires_at, retire_at, ip_allow, rate_tier)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       options.orgId ?? null,
@@ -441,6 +455,13 @@ export async function makeApiKey(
       JSON.stringify(options.scopes ?? ['passes:read', 'passes:write']),
       options.mode ?? 'live',
       f.clock.now(),
+      options.kind ?? 'service',
+      JSON.stringify(options.roles ?? []),
+      options.membershipId ?? null,
+      options.expiresAt ?? null,
+      options.retireAt ?? null,
+      options.ipAllow ? JSON.stringify(options.ipAllow) : null,
+      options.rateTier ?? null,
     ],
   );
   return { id, secret, headers: { authorization: `Bearer ${secret}` } };

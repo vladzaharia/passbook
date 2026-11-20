@@ -1,3 +1,4 @@
+import { keyLive } from '../../platform/api-key-sql.ts';
 import { type Check, rawCheck, tenantMatch } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
@@ -18,15 +19,17 @@ export const deviceAwakeCheck = (scannerId: string, now: number): Check =>
   );
 
 /** The API key a till scans with is live, bound to this terminal, in the grant's tenant and lists `scans:write`. */
-export const apiKeyActsCheck = (keyId: string, scannerId: string, now: number): Check =>
-  tenantCheck(
+export const apiKeyActsCheck = (keyId: string, scannerId: string, now: number): Check => {
+  const live = keyLive('k', now);
+  return tenantCheck(
     'actor',
     `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ? AND k.org_id = {org} AND k.mode = {mode}
-       AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ?)
+       AND ${live.sql}
        AND EXISTS (SELECT 1 FROM json_each(k.scopes) j WHERE j.type = 'text' AND j.value = 'scans:write')
        AND EXISTS (SELECT 1 FROM api_key_terminals t WHERE t.key_id = k.id AND t.scanner_id = ?))`,
-    [keyId, now, scannerId],
+    [keyId, ...live.params, scannerId],
   );
+};
 
 /** No staff was derived: the device must still have no valid binding (none, expired or disabled). */
 export const noStaffBindingCheck = (scannerId: string, now: number): Check =>

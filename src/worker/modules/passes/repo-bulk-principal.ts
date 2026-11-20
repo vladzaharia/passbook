@@ -1,4 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { keyHoldsScope, keyLive } from '../../platform/api-key-sql.ts';
 import { type Check, rawCheck } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
@@ -131,14 +132,14 @@ function principalQuery(
   return {
     sql: `SELECT 1 AS ok FROM api_keys k JOIN orgs o ON ${org} AND ${orgEpochMatchSql('o')}
       WHERE k.id = ?${inGrant ? '' : ' AND k.org_id IS ? AND (k.org_id IS NULL OR k.org_id = o.id) AND k.mode = ?'}
-        AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ?)
-        AND EXISTS (SELECT 1 FROM json_each(k.scopes) s WHERE s.type = 'text' AND s.value = 'passes:write')`,
+        AND ${keyLive('k', now).sql} AND ${keyHoldsScope('k', 'passes:write').sql}`,
     params: [
       ...orgParams,
       ...orgEpochParams(principal.orgAccessRevision),
       principal.keyId,
       ...(inGrant ? [] : [principal.keyOrgId, principal.mode]),
-      now,
+      ...keyLive('k', now).params,
+      ...keyHoldsScope('k', 'passes:write').params,
     ],
   };
 }

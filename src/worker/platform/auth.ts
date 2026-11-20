@@ -77,8 +77,14 @@ export interface SessionStore {
 
 /** Implemented by modules/api-keys. Hashes the presented key; returns null when invalid. */
 export interface ApiKeyStore {
-  resolve(rawKey: string): Promise<ApiKeyAuth | null>;
+  resolve(rawKey: string, caller?: KeyCaller): Promise<ApiKeyAuth | null>;
 }
+
+/** Where the request came from, for a key's IP allowlist. Only `cf-connecting-ip` is read. */
+export interface KeyCaller {
+  ip: string | undefined;
+}
+export const keyCaller = (c: Context): KeyCaller => ({ ip: c.req.header('cf-connecting-ip') });
 
 /**
  * Implemented by modules/scan. Null for an unknown or malformed token. A known token whose scanner
@@ -250,7 +256,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const guard = createMiddleware<AppBindings>(async (c, next) => {
     const token = rule ? bearer(c) : null;
     if (rule && token) {
-      const key = await c.var.stores.apiKeys.resolve(token);
+      const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c));
       if (!key)
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
       const needed = neededScope(rule, c, key.scopes);
