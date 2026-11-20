@@ -7,8 +7,8 @@ export type Route = {
   path: string;
   name: string;
   waitFor?: string;
-  /** Selector clicked once the page has loaded (a mode toggle, a tab). */
-  click?: string;
+  /** Selector clicked once the page has loaded (a mode toggle, a tab); a list is clicked in order. */
+  click?: string | string[];
   /** Viewports for this route instead of the requested ones; `--viewports` still narrows them. */
   viewports?: ViewportName[];
   /** Placeholder that holds the org the console filters to for this route, instead of `{orgId}`. */
@@ -60,6 +60,13 @@ export function parseRoutes(json: string, source = 'route list'): Route[] {
     if (!r.role || !ROLES.includes(r.role) || !r.path?.startsWith('/') || !r.name) {
       throw new Error(
         `${source}[${i}]: needs role (${ROLES.join('|')}), path starting with /, name.`,
+      );
+    }
+    const c: unknown = r.click;
+    const ok = (x: unknown) => typeof x === 'string' && x !== '';
+    if (c !== undefined && !(ok(c) || (Array.isArray(c) && c.length > 0 && c.every(ok)))) {
+      throw new Error(
+        `${source}[${i}] (${r.path}): click must be a non-empty string or list of them.`,
       );
     }
     const bad = r.viewports?.find((v) => !ALL_VIEWPORTS.includes(v));
