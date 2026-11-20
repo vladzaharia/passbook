@@ -93,38 +93,34 @@ describe('native offer authority fences', () => {
     const env = { ...f.kit.env };
     const ctx = { ...f.kit.ctx, env };
     const captured = captureOfferContext(ctx);
-    const pending = offerPassSnapshot(ctx, f.pass.id, f.credentialKeysetCommitment);
+    const pending = offerPassSnapshot(ctx, f.pass.id);
     env.KEK_V1 = btoa(String.fromCharCode(...new Uint8Array(32).fill(42)));
     const snapshot = await pending;
-    expect(snapshot?.credentialKeysetCommitment).toBe(f.credentialKeysetCommitment);
+    expect(snapshot).not.toBeNull();
     expect(Object.isFrozen(captured.env)).toBe(true);
     expect((captured.env as { KEK_V1?: string }).KEK_V1).toBe(f.kit.env.KEK_V1);
     expect([...(await loadKekRing(captured.env)).keys.keys()]).toEqual([1]);
     expect(await requireCredentialRefKeyset(f.kit.env.DB, captured.env)).toBe(
       f.credentialKeysetCommitment,
     );
-    await expect(
-      offerPassSnapshot(ctx, f.pass.id, f.credentialKeysetCommitment),
-    ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
+    await expect(offerPassSnapshot(ctx, f.pass.id)).rejects.toMatchObject({
+      code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
+    });
   });
 
   it('does not deliver even a previously consumed wrapper without recipient-market proof', async () => {
     const f = await setupWalletOfferKit({ google: 'absent' });
-    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id, f.credentialKeysetCommitment);
+    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id);
     if (!snapshot?.pass.releaseId || !f.samsungRelease)
       throw new Error('Missing approved fixture.');
-    const approved = await getApprovedProjection(
-      f.kit.ctx,
-      {
-        orgId: f.pass.orgId,
-        mode: f.pass.mode,
-        provider: 'samsung',
-        templateId: f.pass.templateId,
-        templateVersion: f.pass.templateVersion,
-        appleReleaseId: snapshot.pass.releaseId,
-      },
-      { credentialKeysetCommitment: snapshot.credentialKeysetCommitment },
-    );
+    const approved = await getApprovedProjection(f.kit.ctx, {
+      orgId: f.pass.orgId,
+      mode: f.pass.mode,
+      provider: 'samsung',
+      templateId: f.pass.templateId,
+      templateVersion: f.pass.templateVersion,
+      appleReleaseId: snapshot.pass.releaseId,
+    });
     if (!approved) throw new Error('Missing verified Samsung projection.');
     const now = f.kit.clock.now();
     const operation = await seedHistoricalProviderInstance(f.kit.env.DB, {
@@ -134,8 +130,8 @@ describe('native offer authority fences', () => {
       mode: f.pass.mode,
       provider: 'samsung',
       passId: f.pass.id,
-      credentialKeysetCommitment: snapshot.credentialKeysetCommitment,
       credentialGeneration: snapshot.credentialGeneration,
+      credentialKeysetCommitment: f.credentialKeysetCommitment,
       accountId: approved.release.accountId,
       releaseId: approved.release.id,
       now,
@@ -167,7 +163,6 @@ describe('native offer authority fences', () => {
         snapshot.pass,
         snapshot.lifecycleGeneration,
         snapshot.credentialGeneration,
-        snapshot.credentialKeysetCommitment,
         snapshot.rawPassJson,
         'samsung',
         approved.release.id,
@@ -190,7 +185,7 @@ describe('native offer authority fences', () => {
 
   it('uses the captured service clock to expire Samsung evidence at the final fence', async () => {
     const f = await setupWalletOfferKit({ google: 'absent' });
-    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id, f.credentialKeysetCommitment);
+    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id);
     if (!snapshot?.pass.releaseId || !f.samsungRelease)
       throw new Error('Missing approved fixture.');
     const release = f.samsungRelease;
@@ -202,7 +197,6 @@ describe('native offer authority fences', () => {
       templateId: f.pass.templateId,
       version: f.pass.templateVersion,
       sourceReleaseId: snapshot.pass.releaseId,
-      credentialKeysetCommitment: snapshot.credentialKeysetCommitment,
     };
     const initially = f.kit.clock.now();
     expect(await projectionReleaseBindingValid(f.kit.env.DB, { ...scope, now: initially })).toBe(
@@ -214,7 +208,6 @@ describe('native offer authority fences', () => {
         snapshot.pass,
         snapshot.lifecycleGeneration,
         snapshot.credentialGeneration,
-        snapshot.credentialKeysetCommitment,
         snapshot.rawPassJson,
         'samsung',
         release.id,
@@ -232,7 +225,6 @@ describe('native offer authority fences', () => {
         snapshot.pass,
         snapshot.lifecycleGeneration,
         snapshot.credentialGeneration,
-        snapshot.credentialKeysetCommitment,
         snapshot.rawPassJson,
         'samsung',
         release.id,
@@ -244,42 +236,37 @@ describe('native offer authority fences', () => {
   it('pins empty and consumed-reference output fences across a missing or rekeyed sentinel', async () => {
     const f = await setupWalletOfferKit({ google: 'absent' });
     const db = f.kit.env.DB;
-    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id, f.credentialKeysetCommitment);
+    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id);
     if (!snapshot?.pass.releaseId || !f.samsungRelease) throw new Error('Missing approved fixture');
-    const approved = await getApprovedProjection(
-      f.kit.ctx,
-      {
-        orgId: f.pass.orgId,
-        mode: f.pass.mode,
-        provider: 'samsung',
-        templateId: f.pass.templateId,
-        templateVersion: f.pass.templateVersion,
-        appleReleaseId: snapshot.pass.releaseId,
-      },
-      { credentialKeysetCommitment: snapshot.credentialKeysetCommitment },
-    );
+    const approved = await getApprovedProjection(f.kit.ctx, {
+      orgId: f.pass.orgId,
+      mode: f.pass.mode,
+      provider: 'samsung',
+      templateId: f.pass.templateId,
+      templateVersion: f.pass.templateVersion,
+      appleReleaseId: snapshot.pass.releaseId,
+    });
     if (!approved) throw new Error('Missing verified Samsung projection');
     const now = f.kit.clock.now();
     const fenceDb = marketFenceFixture(db);
-    const current = (credentialKeysetCommitment: string, ref?: WalletOfferFence) =>
+    const current = (ref?: WalletOfferFence) =>
       walletOfferSnapshotCurrent(
         fenceDb,
         snapshot.pass,
         snapshot.lifecycleGeneration,
         snapshot.credentialGeneration,
-        credentialKeysetCommitment,
         snapshot.rawPassJson,
         'samsung',
         approved.release.id,
         now,
         ref,
       );
-    expect(await current(snapshot.credentialKeysetCommitment)).toBe(true);
+    expect(await current()).toBe(true);
     try {
       await replaceTestKeyset(db, null);
-      expect(await current(snapshot.credentialKeysetCommitment)).toBe(false);
+      expect(await current()).toBe(false);
     } finally {
-      await replaceTestKeyset(db, snapshot.credentialKeysetCommitment);
+      await replaceTestKeyset(db, f.credentialKeysetCommitment);
     }
     const operation = await seedHistoricalProviderInstance(db, {
       id: crypto.randomUUID(),
@@ -289,7 +276,7 @@ describe('native offer authority fences', () => {
       provider: 'samsung',
       passId: f.pass.id,
       credentialGeneration: snapshot.credentialGeneration,
-      credentialKeysetCommitment: snapshot.credentialKeysetCommitment,
+      credentialKeysetCommitment: f.credentialKeysetCommitment,
       accountId: approved.release.accountId,
       releaseId: approved.release.id,
       now,
@@ -313,17 +300,15 @@ describe('native offer authority fences', () => {
       now,
       consumed: true,
     };
-    expect(await current(snapshot.credentialKeysetCommitment)).toBe(true);
-    expect(await current(snapshot.credentialKeysetCommitment, offer)).toBe(true);
+    expect(await current()).toBe(true);
+    expect(await current(offer)).toBe(true);
     await replaceTestOperationKeyset(db, operation.id, null);
     try {
-      expect(await current(snapshot.credentialKeysetCommitment)).toBe(false);
-      expect(await current(snapshot.credentialKeysetCommitment, offer)).toBe(false);
-      expect(await current(snapshot.credentialKeysetCommitment, { ...offer, deliver: true })).toBe(
-        false,
-      );
+      expect(await current()).toBe(false);
+      expect(await current(offer)).toBe(false);
+      expect(await current({ ...offer, deliver: true })).toBe(false);
     } finally {
-      await replaceTestOperationKeyset(db, operation.id, snapshot.credentialKeysetCommitment);
+      await replaceTestOperationKeyset(db, operation.id, f.credentialKeysetCommitment);
     }
 
     const nextEnv = {
@@ -332,16 +317,14 @@ describe('native offer authority fences', () => {
     };
     const nextCtx = { ...f.kit.ctx, env: nextEnv };
     const nextCommitment = await credentialRefKeysetCommitment(nextEnv);
-    expect(nextCommitment).not.toBe(snapshot.credentialKeysetCommitment);
+    expect(nextCommitment).not.toBe(f.credentialKeysetCommitment);
     try {
       await replaceTestKeyset(db, null);
-      expect(await current(snapshot.credentialKeysetCommitment)).toBe(false);
-      expect(await current(snapshot.credentialKeysetCommitment, { ...offer, deliver: true })).toBe(
-        false,
-      );
-      await expect(
-        offerPassSnapshot(f.kit.ctx, f.pass.id, snapshot.credentialKeysetCommitment),
-      ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
+      expect(await current()).toBe(false);
+      expect(await current({ ...offer, deliver: true })).toBe(false);
+      await expect(offerPassSnapshot(f.kit.ctx, f.pass.id)).rejects.toMatchObject({
+        code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
+      });
       expect(await listWalletOffers(f.kit.ctx, f.pass.id)).toEqual([]);
       await expect(
         issueWalletOffer(f.kit.ctx, f.pass.downloadToken, 'samsung'),
@@ -353,29 +336,22 @@ describe('native offer authority fences', () => {
 
       await replaceTestKeyset(db, nextCommitment);
       expect(await requireCredentialRefKeyset(db, nextEnv)).toBe(nextCommitment);
-      await expect(
-        offerPassSnapshot(f.kit.ctx, f.pass.id, snapshot.credentialKeysetCommitment),
-      ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
-      expect(
-        await offerPassSnapshot(nextCtx, f.pass.id, snapshot.credentialKeysetCommitment),
-      ).toBeNull();
-      expect(
-        (await offerPassSnapshot(nextCtx, f.pass.id, nextCommitment))?.credentialKeysetCommitment,
-      ).toBe(nextCommitment);
-      expect(await current(snapshot.credentialKeysetCommitment)).toBe(false);
-      expect(await current(snapshot.credentialKeysetCommitment, { ...offer, deliver: true })).toBe(
-        false,
-      );
+      await expect(offerPassSnapshot(f.kit.ctx, f.pass.id)).rejects.toMatchObject({
+        code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
+      });
+      expect(await offerPassSnapshot(nextCtx, f.pass.id)).not.toBeNull();
+      expect(await current()).toBe(false);
+      expect(await current({ ...offer, deliver: true })).toBe(false);
       // A fresh keyset cannot adopt the retained instance or its wrapper.
-      expect(await current(nextCommitment)).toBe(false);
-      expect(await current(nextCommitment, { ...offer, deliver: true })).toBe(false);
+      expect(await current()).toBe(false);
+      expect(await current({ ...offer, deliver: true })).toBe(false);
       expect(
         await first(db, 'SELECT delivered_at FROM wallet_provider_offer_refs WHERE ref_hash = ?', [
           refHash,
         ]),
       ).toEqual({ delivered_at: null });
     } finally {
-      await replaceTestKeyset(db, snapshot.credentialKeysetCommitment);
+      await replaceTestKeyset(db, f.credentialKeysetCommitment);
     }
   });
 });

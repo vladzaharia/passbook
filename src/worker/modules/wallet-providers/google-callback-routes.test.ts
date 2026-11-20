@@ -97,7 +97,6 @@ async function fixture(options: { legacyBinding?: boolean } = {}): Promise<Callb
     mode: 'live',
     accountId: account.id,
     accountRevision: account.revision,
-    credentialKeysetCommitment,
   });
   if (!verification) throw new Error('Missing Google fixture verification identity.');
   const releaseId = await historicalGoogleRelease(f);
@@ -456,7 +455,6 @@ describe('Google Wallet callbacks', () => {
       mode: 'live',
       accountId: f.account.id,
       accountRevision: f.account.revision,
-      credentialKeysetCommitment: f.credentialKeysetCommitment,
     });
     if (!verification) throw new Error('Missing Google fixture verification identity.');
     const replacement = await googleObjectIds(verification.issuerId, verification.objectIdHmacKey, {
@@ -501,7 +499,6 @@ describe('Google Wallet callbacks', () => {
       mode: 'live',
       accountId: f.account.id,
       accountRevision: f.account.revision,
-      credentialKeysetCommitment: f.credentialKeysetCommitment,
     });
     if (!verification) throw new Error('Missing Google fixture verification identity.');
     const next = await googleObjectIds(verification.issuerId, verification.objectIdHmacKey, {
@@ -924,16 +921,6 @@ describe('Google Wallet callbacks', () => {
     await expect(googleCallbackClassProjection(f.f.kit.ctx, scope, binding)).rejects.toMatchObject({
       code: 'account_unavailable',
     });
-    const otherCommitment = (f.credentialKeysetCommitment === 'f'.repeat(64) ? 'e' : 'f').repeat(
-      64,
-    );
-    await expect(
-      googleCallbackClassProjection(
-        f.f.kit.ctx,
-        { ...scope, credentialKeysetCommitment: otherCommitment },
-        binding,
-      ),
-    ).rejects.toMatchObject({ code: 'account_unavailable' });
     f.f.kit.env.PUBLIC_BASE_URL = 'http://insecure.example';
     await expect(googleCallbackClassProjection(f.f.kit.ctx, scope, binding)).rejects.toMatchObject({
       code: 'account_unavailable',

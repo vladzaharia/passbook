@@ -87,7 +87,6 @@ describe('Samsung tombstone retention', () => {
           passRevision: pass.passRevision,
           lifecycleGeneration: pass.lifecycleGeneration,
           passCredentialGeneration: pass.credentialGeneration,
-          credentialKeysetCommitment: pass.credentialKeysetCommitment,
         })
       ).scheduled,
     ).toBe(1);
@@ -125,18 +124,9 @@ describe('Samsung tombstone retention', () => {
     const wrongIdentityHash = (
       original.provider_identity_hash === '0'.repeat(64) ? '1' : '0'
     ).repeat(64);
-    const wrongKeyset = (t.credentialKeysetCommitment === '0'.repeat(64) ? '1' : '0').repeat(64);
-    // Neither an unrelated identity nor an incorrect keyset/version may publish or complete retirement.
+    // Neither an unrelated identity nor an incorrect version may publish or complete retirement.
     expect(
       await putSamsungTombstone(db, tombstoneScope, wrongIdentityHash, t.kit.clock.now()),
-    ).toBe(false);
-    expect(
-      await putSamsungTombstone(
-        db,
-        { ...tombstoneScope, credentialKeysetCommitment: wrongKeyset },
-        original.provider_identity_hash,
-        t.kit.clock.now(),
-      ),
     ).toBe(false);
     expect(
       await putSamsungTombstone(
@@ -223,7 +213,7 @@ describe('Samsung tombstone retention', () => {
       (await t.call({ method: 'POST', token: state, query: '?cc2=US&event=DELETED' })).status,
     ).toBe(401);
     const refHash = await sha256Hex(t.refId);
-    const tombstones = await findSamsungTombstones(db, refHash, t.credentialKeysetCommitment);
+    const tombstones = await findSamsungTombstones(db, refHash);
     const tombstone = tombstones[0];
     if (!tombstone) throw new Error('Missing historical tombstone');
     const oldKey = t.kit.env.KEK_V1;
@@ -232,7 +222,7 @@ describe('Samsung tombstone retention', () => {
     try {
       await replaceCallbackKeysetForTest(db, newCommitment);
       t.kit.env.KEK_V1 = newKey;
-      expect(await findSamsungTombstones(db, refHash, newCommitment)).toEqual([]);
+      expect(await findSamsungTombstones(db, refHash)).toEqual([]);
       expect((await t.call({ token: await t.token() })).status).toBe(401);
       await replaceCallbackKeysetForTest(db, null);
       expect((await t.call({ token: await t.token() })).status).toBe(503);
@@ -389,7 +379,6 @@ describe('Samsung tombstone retention', () => {
           passRevision: pass.passRevision,
           lifecycleGeneration: pass.lifecycleGeneration,
           passCredentialGeneration: pass.credentialGeneration,
-          credentialKeysetCommitment: pass.credentialKeysetCommitment,
         })
       ).scheduled,
     ).toBe(1);
@@ -415,7 +404,6 @@ describe('Samsung tombstone retention', () => {
         mode: scope.mode,
         instanceId: retiring.id,
         operationVersion: retiring.desiredVersion,
-        credentialKeysetCommitment: t.credentialKeysetCommitment,
       }),
     ).toBe(true);
     expect(await retireWalletInstance(db, claim)).toBe(true);
@@ -516,7 +504,7 @@ describe('Samsung tombstone retention', () => {
         [t.pass.id],
       );
     expect(await priorDone()).toEqual({ done: 0 });
-    expect(await providerRetirementPending(db, t.pass.id, t.credentialKeysetCommitment)).toBe(true);
+    expect(await providerRetirementPending(db, t.pass.id)).toBe(true);
     expect((await finishCredentialTransfer(jobCtxOf(t.kit), transfer.transferId)).state).toBe(
       'pending',
     );
@@ -546,7 +534,7 @@ describe('Samsung tombstone retention', () => {
     expect(await finishWalletProviderRetirement(t.kit.ctx, claim)).toBe(true);
     expect(await priorDone()).toEqual({ done: 1 });
     // The blocked target is not an old credential but must still prevent pass purge.
-    expect(await providerRetirementPending(db, t.pass.id, t.credentialKeysetCommitment)).toBe(true);
+    expect(await providerRetirementPending(db, t.pass.id)).toBe(true);
     expect((await finishCredentialTransfer(jobCtxOf(t.kit), transfer.transferId)).state).toBe(
       'completed',
     );
@@ -574,7 +562,7 @@ describe('Samsung tombstone retention', () => {
       'completed',
     );
     expect(await priorDone()).toEqual({ done: 1 });
-    expect(await providerRetirementPending(db, t.pass.id, t.credentialKeysetCommitment)).toBe(true);
+    expect(await providerRetirementPending(db, t.pass.id)).toBe(true);
     const incarnations = await all<{
       credential_generation: number;
       provider: string;

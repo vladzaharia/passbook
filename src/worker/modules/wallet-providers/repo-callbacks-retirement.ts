@@ -50,7 +50,6 @@ export async function inspectSamsungRetirement(
       scope.orgId,
       scope.mode,
       scope.operationVersion,
-      scope.credentialKeysetCommitment,
     ],
   );
   return row?.disposition ?? 'pending';
@@ -63,13 +62,7 @@ export async function retireSamsungUnpromotedRef(
   now: number,
   claimHash: string,
 ): Promise<SamsungRefRetirement> {
-  const values = [
-    scope.instanceId,
-    scope.orgId,
-    scope.mode,
-    scope.operationVersion,
-    scope.credentialKeysetCommitment,
-  ] as const;
+  const values = [scope.instanceId, scope.orgId, scope.mode, scope.operationVersion] as const;
   const results = await batch(db, [
     stmt(
       db,

@@ -1,5 +1,4 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { snapshotWalletCredentialContext } from './account-service.ts';
 import { persistSamsungTombstone } from './callbacks-tombstone.ts';
 import {
@@ -9,34 +8,22 @@ import {
 } from './instance.ts';
 import type {
   WalletClaimRef,
-  WalletCredentialKeysetProof,
   WalletOperation,
   WalletOperationRef,
   WalletProviderResult,
 } from './instance-types.ts';
-import { isCredentialKeysetCommitment } from './instance-types.ts';
 import { retirementReconciled } from './repo-instance-retirement.ts';
 import type { WalletSyncRunResult } from './sync-operation-context.ts';
 
 /** Idempotent crash recovery: a Samsung tombstone must survive the eventual pass deletion. */
 export async function finishWalletProviderRetirement(
   ctx: ServiceContext,
-  ref: WalletOperationRef & WalletCredentialKeysetProof,
+  ref: WalletOperationRef,
 ): Promise<boolean> {
   ctx = snapshotWalletCredentialContext(ctx);
   ref = { ...ref };
-  if (
-    !isCredentialKeysetCommitment(ref.credentialKeysetCommitment) ||
-    (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== ref.credentialKeysetCommitment
-  )
-    return false;
   const instance = await getWalletInstanceById(ctx.env.DB, ref);
-  if (
-    !instance ||
-    instance.desiredVersion !== ref.version ||
-    instance.credentialKeysetCommitment !== ref.credentialKeysetCommitment
-  )
-    return false;
+  if (!instance || instance.desiredVersion !== ref.version) return false;
   if (instance.lifecycle === 'retired') return retirementReconciled(ctx.env.DB, ref);
   if (instance.lifecycle !== 'revoked') return false;
   // A previously disclosed Save JWT may be replayable after inactivation. Until a provider-
@@ -49,11 +36,8 @@ export async function finishWalletProviderRetirement(
       orgId: ref.orgId,
       mode: ref.mode,
       operationVersion: ref.version,
-      credentialKeysetCommitment: ref.credentialKeysetCommitment,
     }))
   )
-    return false;
-  if ((await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== ref.credentialKeysetCommitment)
     return false;
   if (instance.retirementRequestedAt === null) return retirementReconciled(ctx.env.DB, ref);
   return retireWalletInstance(ctx.env.DB, { ...ref, now: ctx.clock.now() });

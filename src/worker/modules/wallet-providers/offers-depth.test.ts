@@ -57,20 +57,16 @@ describe('offer snapshot SQL depth', () => {
   it('compiles every atomic snapshot shape and retains the complete offer fences', async () => {
     const f = await setupWalletOfferKit({ google: 'absent' });
     const db = f.kit.env.DB;
-    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id, f.credentialKeysetCommitment);
+    const snapshot = await offerPassSnapshot(f.kit.ctx, f.pass.id);
     if (!snapshot?.pass.releaseId || !f.samsungRelease) throw new Error('Missing approved fixture');
-    const approved = await getApprovedProjection(
-      f.kit.ctx,
-      {
-        orgId: f.pass.orgId,
-        mode: f.pass.mode,
-        provider: 'samsung',
-        templateId: f.pass.templateId,
-        templateVersion: f.pass.templateVersion,
-        appleReleaseId: snapshot.pass.releaseId,
-      },
-      { credentialKeysetCommitment: snapshot.credentialKeysetCommitment },
-    );
+    const approved = await getApprovedProjection(f.kit.ctx, {
+      orgId: f.pass.orgId,
+      mode: f.pass.mode,
+      provider: 'samsung',
+      templateId: f.pass.templateId,
+      templateVersion: f.pass.templateVersion,
+      appleReleaseId: snapshot.pass.releaseId,
+    });
     if (!approved) throw new Error('Missing verified Samsung projection');
     const now = f.kit.clock.now();
     const operation = await seedHistoricalProviderInstance(db, {
@@ -81,7 +77,7 @@ describe('offer snapshot SQL depth', () => {
       provider: 'samsung',
       passId: f.pass.id,
       credentialGeneration: snapshot.credentialGeneration,
-      credentialKeysetCommitment: snapshot.credentialKeysetCommitment,
+      credentialKeysetCommitment: f.credentialKeysetCommitment,
       accountId: approved.release.accountId,
       releaseId: approved.release.id,
       now,
@@ -124,7 +120,6 @@ describe('offer snapshot SQL depth', () => {
         value.pass,
         value.lifecycleGeneration,
         value.credentialGeneration,
-        value.credentialKeysetCommitment,
         value.rawPassJson,
         'samsung',
         releaseId,
@@ -139,7 +134,7 @@ describe('offer snapshot SQL depth', () => {
     expect(await current(captured, pending)).toBe(false);
     expect(await current(captured, consumed)).toBe(false);
     expect(await current(captured, { ...consumed, deliver: true })).toBe(false);
-    expect(seen.map(({ params }) => params.length)).toEqual([24, 29, 29, 31]);
+    expect(seen.map(({ params }) => params.length)).toEqual([22, 26, 26, 28]);
     for (const { sql, params } of seen) {
       const plan = await db
         .prepare(`EXPLAIN QUERY PLAN ${sql}`)
@@ -177,9 +172,6 @@ describe('offer snapshot SQL depth', () => {
     expect(
       await current(market, pending, { credentialGeneration: snapshot.credentialGeneration + 1 }),
     ).toBe(false);
-    expect(await current(market, pending, { credentialKeysetCommitment: 'd'.repeat(64) })).toBe(
-      false,
-    );
     expect(await current(market, pending, { rawPassJson: '{}' })).toBe(false);
     for (const pass of [
       { ...snapshot.pass, version: snapshot.pass.version + 1 },

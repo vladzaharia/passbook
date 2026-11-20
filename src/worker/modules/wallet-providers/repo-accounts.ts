@@ -2,6 +2,7 @@ import type { WalletProviderScope } from '../../../shared/contracts/wallet-provi
 import { first } from '../../platform/db.ts';
 import { samsungInitialWindowSql } from './repo-callbacks-window.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 
 export { saveAccountConfiguration, transitionAccount } from './repo-account-writes.ts';
 
@@ -14,7 +15,6 @@ export type WalletProviderRetirementProof = {
   operationId: string;
   version: number;
   claimHash: string;
-  credentialKeysetCommitment: string;
   projectionReleaseId: string;
 } & (
   | {
@@ -33,7 +33,6 @@ export interface SamsungPromotedRefreshProof {
   mode: WalletProviderScope['mode'];
   accountId: string;
   accountRevision: number;
-  credentialKeysetCommitment: string;
   projectionReleaseId: string;
   instanceId: string;
   refHash: string;
@@ -157,7 +156,7 @@ export function findRetirementAccount(
       AND (i.id = ? AND i.lifecycle = 'revoking'
         AND op.id = ? AND op.version = ? AND op.kind = 'revoke' AND op.state = 'claimed')
       AND (op.claim_hash = ? AND op.claim_expires_at > clock.now_ms AND op.projection_release_id = ?
-        AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = op.credential_keyset_commitment)
+        AND op.credential_keyset_commitment = ${pinnedKeysetSql} AND i.credential_keyset_commitment = op.credential_keyset_commitment)
       AND (${target}) AND (${walletInstanceOperationCurrentSql('i', 'op', 'clock.now_ms', 'revoke')})`,
     [
       now,
@@ -171,7 +170,6 @@ export function findRetirementAccount(
       proof.version,
       proof.claimHash,
       proof.projectionReleaseId,
-      proof.credentialKeysetCommitment,
       ...targetValues,
     ],
   );
@@ -206,7 +204,7 @@ export function findSamsungPromotedRefreshAccount(
       AND ${OPENABLE} AND a.revoked_at IS NULL AND i.id = ? AND i.lifecycle = 'active'
       AND op.kind = 'upsert' AND op.state IN ('pending', 'retry', 'claimed', 'succeeded')
       AND op.version = ? AND op.projection_release_id = ?
-      AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = op.credential_keyset_commitment
+      AND op.credential_keyset_commitment = ${pinnedKeysetSql} AND i.credential_keyset_commitment = op.credential_keyset_commitment
       AND ${walletInstanceOperationCurrentSql('i', 'op', 'clock.now_ms')}`,
     [
       now,
@@ -219,7 +217,6 @@ export function findSamsungPromotedRefreshAccount(
       proof.instanceId,
       proof.operationVersion,
       proof.projectionReleaseId,
-      proof.credentialKeysetCommitment,
     ],
   );
 }
@@ -233,7 +230,6 @@ export function findSamsungTombstoneCredential(
     accountId: string;
     accountRevision: number;
     refHash: string;
-    credentialKeysetCommitment: string;
   },
 ): Promise<
   | (AccountRow & {
@@ -269,7 +265,7 @@ export function findSamsungTombstoneCredential(
       AND approval.candidate_hash = candidate.candidate_hash
       AND approval.credential_keyset_commitment = t.credential_keyset_commitment
     WHERE t.ref_hash = ? AND t.org_id = ? AND t.mode = ? AND t.account_id = ? AND t.account_revision = ?
-      AND t.credential_keyset_commitment = ?
+      AND t.credential_keyset_commitment = ${pinnedKeysetSql}
       AND EXISTS (SELECT 1 FROM wallet_provider_projection_evidence_history h
         WHERE h.candidate_id = candidate.id AND h.org_id = t.org_id AND h.mode = t.mode
           AND h.account_id = t.account_id AND h.account_revision = t.account_revision
@@ -279,14 +275,7 @@ export function findSamsungTombstoneCredential(
           AND h.card_sub_type = json_extract(candidate.projection_json, '$.cardSubType')
           AND h.country_code = json_extract(candidate.projection_json, '$.countryCode')
           AND h.testing_mode_off = 'Y' AND h.verified_at <= r.created_at AND r.created_at < h.expires_at)`,
-    [
-      input.refHash,
-      input.orgId,
-      input.mode,
-      input.accountId,
-      input.accountRevision,
-      input.credentialKeysetCommitment,
-    ],
+    [input.refHash, input.orgId, input.mode, input.accountId, input.accountRevision],
   );
 }
 

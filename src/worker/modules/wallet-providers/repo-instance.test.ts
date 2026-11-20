@@ -85,7 +85,6 @@ describe('wallet provider instance repository keyset authority', () => {
       orgId: t.operation.orgId,
       mode: t.operation.mode,
       passId: pass.id,
-      credentialKeysetCommitment: t.credentialKeysetCommitment,
     });
     if (!snapshot?.issuingReleaseId) throw new Error('Missing new pass snapshot');
     const input = {
@@ -101,10 +100,6 @@ describe('wallet provider instance repository keyset authority', () => {
       issuingReleaseId: snapshot.issuingReleaseId,
       now: t.kit.clock.now(),
     };
-    const other =
-      input.credentialKeysetCommitment === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);
-    await insertInstance(db, { ...input, credentialKeysetCommitment: other });
-    await insertInstance(db, { ...input, credentialKeysetCommitment: 'invalid' });
     expect(
       await first(db, 'SELECT id FROM wallet_provider_instances WHERE id = ?', [input.instanceId]),
     ).toBeNull();
@@ -127,11 +122,9 @@ describe('wallet provider instance repository keyset authority', () => {
       await insertInstance(db, input);
       expect(await getInstanceById(db, input)).toMatchObject({
         id: input.instanceId,
-        credentialKeysetCommitment: input.credentialKeysetCommitment,
       });
       expect(await getOperation(db, { ...input, version: 1 })).toMatchObject({
         id: input.operationId,
-        credentialKeysetCommitment: input.credentialKeysetCommitment,
       });
       expect(
         await first(
@@ -142,13 +135,13 @@ describe('wallet provider instance repository keyset authority', () => {
           [input.instanceId],
         ),
       ).toEqual({
-        instance_commitment: input.credentialKeysetCommitment,
-        operation_commitment: input.credentialKeysetCommitment,
+        instance_commitment: t.credentialKeysetCommitment,
+        operation_commitment: t.credentialKeysetCommitment,
       });
     });
   });
 
-  it('returns only the captured keyset on reads and dirty work', async () => {
+  it('returns only rows of the pinned keyset on reads and dirty work', async () => {
     const t = await setupSamsungCallbacks({ reference: false, db: (await makeEnv()).DB });
     const db = t.kit.env.DB;
     const op = t.operation;
@@ -159,10 +152,8 @@ describe('wallet provider instance repository keyset authority', () => {
       provider: op.provider,
       instanceId: op.instanceId,
       version: op.version,
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
     };
-    const other =
-      op.credentialKeysetCommitment === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);
+    const other = t.credentialKeysetCommitment === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);
     const stored = await first<{ request_hash: string }>(
       db,
       'SELECT request_hash FROM wallet_provider_instance_operations WHERE id = ?',
@@ -180,60 +171,27 @@ describe('wallet provider instance repository keyset authority', () => {
 
     expect(await getInstanceByPass(db, { ...ref, passId: op.passId })).toMatchObject({
       id: op.instanceId,
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
     });
-    expect(await getInstanceById(db, ref)).toMatchObject({
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
-    });
-    expect(await getOperation(db, ref)).toMatchObject({
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
-    });
-    expect(await getOperationByRequest(db, request)).toMatchObject({
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
-    });
+    expect(await getInstanceById(db, ref)).toMatchObject({ id: op.instanceId });
+    expect(await getOperation(db, ref)).toMatchObject({ id: op.id });
+    expect(await getOperationByRequest(db, request)).toMatchObject({ id: op.id });
     expect(await readPassSnapshot(db, { ...ref, passId: op.passId })).toMatchObject({
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
+      passId: op.passId,
     });
-    expect(
-      await listDueOperations(db, now, 100, null, op.credentialKeysetCommitment),
-    ).toContainEqual(
+    expect(await listDueOperations(db, now, 100, null)).toContainEqual(
       expect.objectContaining({
         id: op.id,
-        credentialKeysetCommitment: op.credentialKeysetCommitment,
       }),
     );
-    expect(
-      await listDirtyInstances(db, now, 100, null, op.credentialKeysetCommitment),
-    ).toContainEqual(
+    expect(await listDirtyInstances(db, now, 100, null)).toContainEqual(
       expect.objectContaining({
         instanceId: op.instanceId,
-        credentialKeysetCommitment: op.credentialKeysetCommitment,
       }),
     );
-    expect(await getOperation(db, { ...ref, credentialKeysetCommitment: other })).toBeNull();
-    expect(
-      await getOperationByRequest(db, { ...request, credentialKeysetCommitment: other }),
-    ).toBeNull();
-    expect(
-      await deferDirtyInstance(db, {
-        ...dirty,
-        credentialKeysetCommitment: other,
-        nextAttemptAt: now + 10_000,
-      }),
-    ).toBe(false);
-    expect(await ackDirtyInstance(db, { ...dirty, credentialKeysetCommitment: other })).toBe(false);
-    expect(
-      await readPassSnapshot(db, {
-        ...ref,
-        passId: op.passId,
-        credentialKeysetCommitment: 'invalid',
-      }),
-    ).toBeNull();
-
     // SQLite text length/GLOB stop at NUL and TEXT affinity permits BLOBs. Neither is a
     // canonical commitment, even if the keyset singleton is itself malformed.
-    const malformed = `${op.credentialKeysetCommitment}\0x`;
-    const newline = `${op.credentialKeysetCommitment}\n`;
+    const malformed = `${t.credentialKeysetCommitment}\0x`;
+    const newline = `${t.credentialKeysetCommitment}\n`;
     for (const [table, id, trigger] of [
       ['wallet_provider_instances', op.instanceId, 'wallet_provider_instance_keyset_immutable'],
       ['wallet_provider_instance_operations', op.id, 'wallet_provider_operation_keyset_immutable'],
@@ -242,7 +200,7 @@ describe('wallet provider instance repository keyset authority', () => {
         for (const value of [
           malformed,
           newline,
-          new TextEncoder().encode(op.credentialKeysetCommitment),
+          new TextEncoder().encode(t.credentialKeysetCommitment),
           'A'.repeat(64),
           'a'.repeat(63),
           'a'.repeat(65),
@@ -256,19 +214,15 @@ describe('wallet provider instance repository keyset authority', () => {
         }
       });
     }
-    for (const invalid of [malformed, newline]) {
+    for (const invalid of [other, malformed, newline]) {
       await replaceCallbackKeysetForTest(db, invalid);
       try {
-        const forged = { ...ref, credentialKeysetCommitment: invalid };
-        expect(await getInstanceById(db, ref)).toBeNull();
-        expect(await getOperation(db, forged)).toBeNull();
-        expect(
-          await getOperationByRequest(db, { ...forged, requestHash: stored.request_hash }),
-        ).toBeNull();
-        expect(await readPassSnapshot(db, { ...forged, passId: op.passId })).toBeNull();
+        expect(await getOperation(db, ref)).toBeNull();
+        expect(await getOperationByRequest(db, request)).toBeNull();
+        expect(await listDueOperations(db, now, 100, null)).toEqual([]);
+        expect(await listDirtyInstances(db, now, 100, null)).toEqual([]);
         const next = {
           ...op,
-          ...forged,
           operationId: crypto.randomUUID(),
           requestHash: await sha256Hex(crypto.randomUUID()),
           expectedVersion: op.version,
@@ -281,18 +235,10 @@ describe('wallet provider instance repository keyset authority', () => {
             next.operationId,
           ]),
         ).toBeNull();
-        expect(await ackDirtyInstance(db, { ...dirty, credentialKeysetCommitment: invalid })).toBe(
-          false,
-        );
-        expect(
-          await deferDirtyInstance(db, {
-            ...dirty,
-            credentialKeysetCommitment: invalid,
-            nextAttemptAt: now + 10_000,
-          }),
-        ).toBe(false);
+        expect(await ackDirtyInstance(db, dirty)).toBe(false);
+        expect(await deferDirtyInstance(db, { ...dirty, nextAttemptAt: now + 10_000 })).toBe(false);
       } finally {
-        await replaceCallbackKeysetForTest(db, op.credentialKeysetCommitment);
+        await replaceCallbackKeysetForTest(db, t.credentialKeysetCommitment);
       }
     }
     expect(await deferDirtyInstance(db, { ...dirty, nextAttemptAt: now + 10_000 })).toBe(true);
@@ -309,7 +255,6 @@ describe('wallet provider instance repository keyset authority', () => {
       provider: op.provider,
       instanceId: op.instanceId,
       version: op.version,
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
     };
     const stored = await first<{ request_hash: string }>(
       db,
@@ -325,52 +270,36 @@ describe('wallet provider instance repository keyset authority', () => {
       kind: 'upsert' as const,
       now: t.kit.clock.now(),
     };
-    const other =
-      op.credentialKeysetCommitment === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);
+    const other = t.credentialKeysetCommitment === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);
 
     for (const [table, id] of [
       ['wallet_provider_instances', op.instanceId],
       ['wallet_provider_instance_operations', op.id],
     ] as const) {
       for (const value of [null, other]) {
-        await withStoredCommitment(
-          db,
-          table,
-          id,
-          op.credentialKeysetCommitment,
-          value,
-          async () => {
-            if (table === 'wallet_provider_instances') {
-              expect(await getInstanceById(db, ref)).toBeNull();
-              expect(await getInstanceByPass(db, { ...ref, passId: op.passId })).toBeNull();
-            }
-            expect(await getOperation(db, ref)).toBeNull();
-            expect(
-              await getOperationByRequest(db, { ...ref, requestHash: stored.request_hash }),
-            ).toBeNull();
-            expect(
-              await listDueOperations(db, next.now, 100, null, op.credentialKeysetCommitment),
-            ).toEqual([]);
-            await insertDesiredOperation(db, next);
-            expect(
-              await first(
-                db,
-                'SELECT desired_version, desired_operation_id FROM wallet_provider_instances WHERE id = ?',
-                [op.instanceId],
-              ),
-            ).toEqual({ desired_version: op.version, desired_operation_id: op.id });
-            expect(
-              await first(db, `SELECT credential_keyset_commitment FROM ${table} WHERE id = ?`, [
-                id,
-              ]),
-            ).toEqual({ credential_keyset_commitment: value });
-            expect(
-              await first(db, 'SELECT id FROM wallet_provider_instance_operations WHERE id = ?', [
-                next.operationId,
-              ]),
-            ).toBeNull();
-          },
-        );
+        await withStoredCommitment(db, table, id, t.credentialKeysetCommitment, value, async () => {
+          expect(await getOperation(db, ref)).toBeNull();
+          expect(
+            await getOperationByRequest(db, { ...ref, requestHash: stored.request_hash }),
+          ).toBeNull();
+          expect(await listDueOperations(db, next.now, 100, null)).toEqual([]);
+          await insertDesiredOperation(db, next);
+          expect(
+            await first(
+              db,
+              'SELECT desired_version, desired_operation_id FROM wallet_provider_instances WHERE id = ?',
+              [op.instanceId],
+            ),
+          ).toEqual({ desired_version: op.version, desired_operation_id: op.id });
+          expect(
+            await first(db, `SELECT credential_keyset_commitment FROM ${table} WHERE id = ?`, [id]),
+          ).toEqual({ credential_keyset_commitment: value });
+          expect(
+            await first(db, 'SELECT id FROM wallet_provider_instance_operations WHERE id = ?', [
+              next.operationId,
+            ]),
+          ).toBeNull();
+        });
       }
     }
   });
@@ -391,7 +320,6 @@ describe('wallet provider instance repository keyset authority', () => {
     await insertDesiredOperation(db, second);
     expect(await getOperation(db, { ...second, version: 2 })).toMatchObject({
       id: second.operationId,
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
       state: 'pending',
     });
 
@@ -423,12 +351,12 @@ describe('wallet provider instance repository keyset authority', () => {
           {
             version: 2,
             state: 'superseded',
-            credential_keyset_commitment: op.credentialKeysetCommitment,
+            credential_keyset_commitment: t.credentialKeysetCommitment,
           },
           {
             version: 3,
             state: 'pending',
-            credential_keyset_commitment: op.credentialKeysetCommitment,
+            credential_keyset_commitment: t.credentialKeysetCommitment,
           },
         ]);
       } finally {
@@ -436,13 +364,13 @@ describe('wallet provider instance repository keyset authority', () => {
           db,
           `UPDATE wallet_provider_instance_operations SET credential_keyset_commitment = ?,
           state = 'superseded', completed_at = ? WHERE id = ?`,
-          [op.credentialKeysetCommitment, now, op.id],
+          [t.credentialKeysetCommitment, now, op.id],
         );
       }
     });
   });
 
-  it('refuses a mismatched keyset pin on claims, outcomes and finalization', async () => {
+  it('refuses rows stored under another keyset on claims, outcomes and finalization', async () => {
     const t = await setupSamsungCallbacks({ reference: false, db: (await makeEnv()).DB });
     const db = t.kit.env.DB;
     const op = t.operation;
@@ -453,15 +381,10 @@ describe('wallet provider instance repository keyset authority', () => {
       provider: op.provider,
       instanceId: op.instanceId,
       version: op.version,
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
       hash: await sha256Hex(crypto.randomUUID()),
       now,
     };
-    const other =
-      op.credentialKeysetCommitment === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);
-    expect(await claimOperation(db, { ...claim, credentialKeysetCommitment: other })).toBe(
-      'not_claimable',
-    );
+    const other = t.credentialKeysetCommitment === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);
     expect(await claimOperation(db, claim)).toBe('claimed');
     const id = crypto.randomUUID();
     const envelope = await encryptSecret(
@@ -488,11 +411,6 @@ describe('wallet provider instance repository keyset authority', () => {
       attempt: 1,
       result: { kind: 'success' as const },
     };
-    expect(await markUncertain(db, { ...claim, credentialKeysetCommitment: other })).toBe(false);
-    expect(await insertOutcome(db, { ...outcome, credentialKeysetCommitment: other })).toBe(
-      'stale',
-    );
-    expect(await finishOperation(db, { ...finish, credentialKeysetCommitment: other })).toBeNull();
     for (const [table, rowId] of [
       ['wallet_provider_instances', op.instanceId],
       ['wallet_provider_instance_operations', op.id],
@@ -502,7 +420,7 @@ describe('wallet provider instance repository keyset authority', () => {
           db,
           table,
           rowId,
-          op.credentialKeysetCommitment,
+          t.credentialKeysetCommitment,
           value,
           async () => {
             expect(await insertOutcome(db, outcome)).toBe('stale');
@@ -523,7 +441,6 @@ describe('wallet provider instance repository keyset authority', () => {
     expect(await finishOperation(db, finish)).toBe('succeeded');
     expect(await getOperation(db, claim)).toMatchObject({
       state: 'succeeded',
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
     });
   });
 });
@@ -543,7 +460,7 @@ describe('wallet provider due-operation selection', () => {
       mode: op.mode,
       provider: op.provider,
       credentialGeneration: op.credentialGeneration,
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
+      credentialKeysetCommitment: t.credentialKeysetCommitment,
       accountId: op.accountId,
       releaseId: op.identityProjectionReleaseId,
       now,
@@ -551,9 +468,7 @@ describe('wallet provider due-operation selection', () => {
     });
     if (!second) throw new Error('Missing second provider operation');
     const list = async (afterId: string | null = null, limit = 100) =>
-      (await listDueOperations(db, now, limit, afterId, op.credentialKeysetCommitment)).map(
-        (item) => item.id,
-      );
+      (await listDueOperations(db, now, limit, afterId)).map((item) => item.id);
     const sorted = [op.id, second.id].sort();
     const [firstId, secondId] = sorted;
     if (!firstId || !secondId) throw new Error('Missing sorted operation IDs');
@@ -588,7 +503,6 @@ describe('wallet provider due-operation selection', () => {
       provider: op.provider,
       instanceId: op.instanceId,
       version: op.version,
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
       hash: await sha256Hex(crypto.randomUUID()),
       now,
     };
@@ -640,10 +554,8 @@ describe('wallet provider due-operation selection', () => {
       provider: op.provider,
       instanceId: op.instanceId,
       version: op.version,
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
     };
-    const other =
-      op.credentialKeysetCommitment === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);
+    const other = t.credentialKeysetCommitment === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);
     const evidence = await first<{ expires_at: number }>(
       db,
       `SELECT e.expires_at FROM template_releases r
@@ -659,9 +571,12 @@ describe('wallet provider due-operation selection', () => {
     expect(
       await deferWalletSyncOperation(db, { ...ref, orgId: crypto.randomUUID() }, now, 1_000),
     ).toBe(false);
-    expect(
-      await deferWalletSyncOperation(db, { ...ref, credentialKeysetCommitment: other }, now, 1_000),
-    ).toBe(false);
+    await replaceCallbackKeysetForTest(db, other);
+    try {
+      expect(await deferWalletSyncOperation(db, ref, now, 1_000)).toBe(false);
+    } finally {
+      await replaceCallbackKeysetForTest(db, t.credentialKeysetCommitment);
+    }
     expect(await deferWalletSyncOperation(db, ref, evidence.expires_at, 1_000)).toBe(false);
     expect(await getOperation(db, ref)).toMatchObject({
       state: 'pending',
@@ -675,12 +590,10 @@ describe('wallet provider due-operation selection', () => {
       attempts: 0,
       nextAttemptAt: now + 1_000,
     });
-    expect(await listDueOperations(db, now, 10, null, op.credentialKeysetCommitment)).toEqual([]);
-    expect(
-      (await listDueOperations(db, now + 1_000, 10, null, op.credentialKeysetCommitment)).map(
-        (item) => item.id,
-      ),
-    ).toEqual([op.id]);
+    expect(await listDueOperations(db, now, 10, null)).toEqual([]);
+    expect((await listDueOperations(db, now + 1_000, 10, null)).map((item) => item.id)).toEqual([
+      op.id,
+    ]);
     const claim = { ...ref, hash: await sha256Hex(crypto.randomUUID()), now: now + 1_000 };
     expect(await claimOperation(db, claim)).toBe('claimed');
     expect(await deferWalletSyncOperation(db, ref, now + 1_000, 1_000)).toBe(false);

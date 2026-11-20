@@ -50,34 +50,25 @@ export async function handleSamsungCallback(
   const countryHint = method === 'POST' ? samsungCountryHint(url) : null;
   const body = method === 'POST' ? await readSamsungCallbackBody(request) : null;
   const refHash = await sha256Hex(refId);
-  const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const input: SamsungCallbackInput = {
     request,
     refId,
     refHash,
     method,
-    credentialKeysetCommitment,
     fields,
     countryHint,
     event: method === 'POST' ? samsungCardEvent(url) : null,
     body,
     requestId: request.headers.get('x-request-id') ?? '',
   };
-  const snapshot = await findSamsungFetchSnapshot(
-    ctx.env.DB,
-    refHash,
-    ctx.clock.now(),
-    credentialKeysetCommitment,
-    false,
-  );
+  const snapshot = await findSamsungFetchSnapshot(ctx.env.DB, refHash, ctx.clock.now(), false);
   // An authentic request for a ref we do not serve is answered, not rejected: Get Card Data
   // documents 204 for it, Send Card State only 200.
   if (snapshot) {
     const live = await serveSamsungLive(ctx, input, snapshot);
     if (live) return live;
-  } else if (
-    await authenticateSamsungTombstone(ctx, request, refId, refHash, credentialKeysetCommitment)
-  )
+  } else if (await authenticateSamsungTombstone(ctx, request, refId, refHash))
     return method === 'GET' ? { kind: 'missing' } : { kind: 'accepted' };
   const issued = await answerSamsungIssuedRef(ctx, input);
   if (issued) return issued;

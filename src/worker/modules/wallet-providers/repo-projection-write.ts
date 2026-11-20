@@ -4,8 +4,8 @@ import type { TemplateAuthority } from '../templates/access.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { templateAuthorityPredicate } from '../templates/repo-authority.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
-import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import { projectionPolicy } from './projection-contract.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import type { ProjectionCandidate } from './repo-projection-store.ts';
 import { samsungProjectionEvidencePredicateSql } from './repo-samsung-verification.ts';
 
@@ -41,7 +41,6 @@ export function insertProjectionCandidateStmt(
   c: ProjectionCandidate,
   authority: TemplateAuthority,
   now: number,
-  proof: WalletCredentialKeysetProof,
 ): D1PreparedStatement {
   const auth = guard(authority, 'templates:author', 'source_scope.org_id', c.mode, now);
   const policy = projectionPolicy(c.provider);
@@ -62,7 +61,7 @@ export function insertProjectionCandidateStmt(
       AND account.mode = ? AND account.provider = ? AND account.revision = ?
       AND account.credential_id IS NOT NULL
       AND account.revoked_at IS NULL
-    WHERE ? = ? AND ? = ? AND ? = ? AND ? = ? AND ? = ?
+    WHERE ? = ? AND ? = ? AND ? = ? AND ? = ? AND ? = ${pinnedKeysetSql}
       AND (${auth.sql})`,
     [
       c.id,
@@ -109,7 +108,6 @@ export function insertProjectionCandidateStmt(
       c.audiencePolicyRevision,
       policy.audiencePolicyRevision,
       c.credentialKeysetCommitment,
-      proof?.credentialKeysetCommitment,
       ...auth.params,
     ],
   );
@@ -121,7 +119,6 @@ export function insertProjectionApprovalStmt(
   c: ProjectionCandidate,
   authority: TemplateAuthority,
   now: number,
-  proof: WalletCredentialKeysetProof,
 ): D1PreparedStatement {
   const auth = guard(authority, 'templates:review', 'c.org_id', c.mode, now);
   const policy = projectionPolicy(c.provider);
@@ -133,7 +130,7 @@ export function insertProjectionApprovalStmt(
     WHERE c.id = ? AND c.org_id = ? AND c.mode = ? AND c.provider = ? AND c.candidate_hash = ?
       AND c.author_id != ? AND (c.version_author_id IS NULL OR c.version_author_id != ?)
       AND ? = ? AND c.adapter_revision = ? AND c.adapter_capabilities = ? AND c.audience_policy_revision = ?
-      AND c.credential_keyset_commitment = ?
+      AND c.credential_keyset_commitment = ${pinnedKeysetSql}
       AND (${currentSourceAndAccount('c')}) AND (${auth.sql})`,
     [
       a.id,
@@ -151,7 +148,6 @@ export function insertProjectionApprovalStmt(
       policy.adapterRevision,
       JSON.stringify(policy.adapterCapabilities),
       policy.audiencePolicyRevision,
-      proof?.credentialKeysetCommitment,
       ...auth.params,
     ],
   );
@@ -159,7 +155,7 @@ export function insertProjectionApprovalStmt(
 
 export function insertProjectionReleaseStmt(
   db: D1Database,
-  input: WalletCredentialKeysetProof & {
+  input: {
     id: string;
     candidate: ProjectionCandidate;
     approval: ApprovalRow;
@@ -187,7 +183,7 @@ export function insertProjectionReleaseStmt(
     FROM template_candidates c JOIN template_approvals a ON a.candidate_id = c.id AND a.candidate_hash = c.candidate_hash
     CROSS JOIN (SELECT ? AS now_ms) proof_clock
     WHERE c.id = ? AND a.id = ? AND c.org_id = ? AND c.mode = ? AND c.provider = ? AND c.candidate_hash = ?
-      AND c.credential_keyset_commitment = ? AND a.credential_keyset_commitment = c.credential_keyset_commitment
+      AND c.credential_keyset_commitment = ${pinnedKeysetSql} AND a.credential_keyset_commitment = c.credential_keyset_commitment
       AND a.reviewer_id != c.author_id AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id)
       AND c.adapter_revision = ? AND c.adapter_capabilities = ? AND c.audience_policy_revision = ?
       AND (c.provider = 'google' OR (${samsungProjectionEvidencePredicateSql('c', 'proof_clock.now_ms')}))
@@ -214,7 +210,6 @@ export function insertProjectionReleaseStmt(
       c.mode,
       c.provider,
       c.candidateHash,
-      input.credentialKeysetCommitment,
       policy.adapterRevision,
       JSON.stringify(policy.adapterCapabilities),
       policy.audiencePolicyRevision,

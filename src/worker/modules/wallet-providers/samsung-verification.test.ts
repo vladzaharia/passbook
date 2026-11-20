@@ -7,7 +7,6 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { SamsungWalletCredentials } from '../../../shared/contracts/wallet-providers.ts';
 import { createApp } from '../../app.ts';
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
-import { interveneAtD1 } from '../apple/credential-transfer-test-fixtures.ts';
 import { createSession, createSessionStore, resolveSession } from '../auth/sessions.ts';
 import { approveAppleRelease, grantKitMembership } from '../passes/apple-release-test-fixtures.ts';
 import {
@@ -205,7 +204,7 @@ describe('authenticated Samsung card-state evidence', () => {
     });
     expect(checked).toBe(true);
     const c = await f.stored();
-    expect(await hasSamsungProjectionEvidence(f.kit.ctx, c, f.proof)).toBe(true);
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, c)).toBe(true);
     const current = await first<Record<string, unknown>>(
       f.kit.env.DB,
       'SELECT * FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
@@ -248,46 +247,31 @@ describe('authenticated Samsung card-state evidence', () => {
         [c.id],
       ),
     ).rejects.toThrow(/immutable Samsung provider evidence/);
-    expect(
-      await hasSamsungProjectionEvidence(f.kit.ctx, { ...c, orgId: 'another-org' }, f.proof),
-    ).toBe(false);
-    expect(await hasSamsungProjectionEvidence(f.kit.ctx, { ...c, mode: 'test' }, f.proof)).toBe(
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, { ...c, orgId: 'another-org' })).toBe(
       false,
     );
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, { ...c, mode: 'test' })).toBe(false);
     expect(
-      await hasSamsungProjectionEvidence(
-        f.kit.ctx,
-        { ...c, accountId: 'another-account' },
-        f.proof,
-      ),
+      await hasSamsungProjectionEvidence(f.kit.ctx, { ...c, accountId: 'another-account' }),
     ).toBe(false);
     expect(
-      await hasSamsungProjectionEvidence(
-        f.kit.ctx,
-        { ...c, accountRevision: c.accountRevision + 1 },
-        f.proof,
-      ),
+      await hasSamsungProjectionEvidence(f.kit.ctx, {
+        ...c,
+        accountRevision: c.accountRevision + 1,
+      }),
     ).toBe(false);
     expect(
-      await hasSamsungProjectionEvidence(
-        f.kit.ctx,
-        { ...c, providerIdentityHash: 'a'.repeat(64) },
-        f.proof,
-      ),
+      await hasSamsungProjectionEvidence(f.kit.ctx, { ...c, providerIdentityHash: 'a'.repeat(64) }),
     ).toBe(false);
     expect(
-      await hasSamsungProjectionEvidence(
-        f.kit.ctx,
-        { ...c, candidateHash: 'b'.repeat(64) },
-        f.proof,
-      ),
+      await hasSamsungProjectionEvidence(f.kit.ctx, { ...c, candidateHash: 'b'.repeat(64) }),
     ).toBe(false);
     f.kit.clock.set(now - 1);
-    expect(await hasSamsungProjectionEvidence(f.kit.ctx, c, f.proof)).toBe(false);
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, c)).toBe(false);
     f.kit.clock.set(now + 299_999);
-    expect(await hasSamsungProjectionEvidence(f.kit.ctx, c, f.proof)).toBe(true);
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, c)).toBe(true);
     f.kit.clock.advance(1);
-    expect(await hasSamsungProjectionEvidence(f.kit.ctx, c, f.proof)).toBe(false);
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, c)).toBe(false);
   });
 
   it('invalidates earlier proof on every unavailable, rejected, ambiguous or mismatched provider result', async () => {
@@ -328,7 +312,7 @@ describe('authenticated Samsung card-state evidence', () => {
         verifiedAt: null,
         expiresAt: null,
       });
-      expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored(), f.proof)).toBe(false);
+      expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored())).toBe(false);
       const evidence = await first<{ status: string }>(
         f.kit.env.DB,
         'SELECT status FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
@@ -356,7 +340,7 @@ describe('authenticated Samsung card-state evidence', () => {
     expect(JSON.stringify(warn.mock.calls)).not.toContain('private network failure');
     expect(JSON.stringify(warn.mock.calls)).not.toContain(f.credentials.partnerPrivateKeyPem);
     warn.mockRestore();
-    expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored(), f.proof)).toBe(false);
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored())).toBe(false);
   });
 
   it('also requires ACTIVE and Y in test mode and enforces tenant and mode authority', async () => {
@@ -392,46 +376,26 @@ describe('authenticated Samsung card-state evidence', () => {
     await f.approve();
     respond(success);
     expect(
-      await ensureSamsungProjectionEvidence(
-        f.kit.ctx,
-        f.candidate.id,
-        f.candidate.candidateHash,
-        f.proof,
-      ),
+      await ensureSamsungProjectionEvidence(f.kit.ctx, f.candidate.id, f.candidate.candidateHash),
     ).toBe(true);
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(
-      await ensureSamsungProjectionEvidence(
-        f.kit.ctx,
-        f.candidate.id,
-        f.candidate.candidateHash,
-        f.proof,
-      ),
+      await ensureSamsungProjectionEvidence(f.kit.ctx, f.candidate.id, f.candidate.candidateHash),
     ).toBe(true);
     expect(fetch).toHaveBeenCalledTimes(1);
     f.kit.clock.advance(300_000);
     respond(() => new Response(null, { status: 401 }));
     expect(
-      await ensureSamsungProjectionEvidence(
-        f.kit.ctx,
-        f.candidate.id,
-        f.candidate.candidateHash,
-        f.proof,
-      ),
+      await ensureSamsungProjectionEvidence(f.kit.ctx, f.candidate.id, f.candidate.candidateHash),
     ).toBe(false);
-    expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored(), f.proof)).toBe(false);
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored())).toBe(false);
     respond(success);
     expect(
-      await ensureSamsungProjectionEvidence(
-        f.kit.ctx,
-        f.candidate.id,
-        f.candidate.candidateHash,
-        f.proof,
-      ),
+      await ensureSamsungProjectionEvidence(f.kit.ctx, f.candidate.id, f.candidate.candidateHash),
     ).toBe(true);
-    expect(
-      await ensureSamsungProjectionEvidence(f.kit.ctx, f.candidate.id, 'a'.repeat(64), f.proof),
-    ).toBe(false);
+    expect(await ensureSamsungProjectionEvidence(f.kit.ctx, f.candidate.id, 'a'.repeat(64))).toBe(
+      false,
+    );
   });
 
   it('cannot commit an in-flight response after credential rotation or a newer failed probe', async () => {
@@ -451,7 +415,7 @@ describe('authenticated Samsung card-state evidence', () => {
     expect((await refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, f.input)).verified).toBe(
       false,
     );
-    expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored(), f.proof)).toBe(false);
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored())).toBe(false);
 
     const other = await fixture();
     await other.approve();
@@ -475,9 +439,7 @@ describe('authenticated Samsung card-state evidence', () => {
     ).toBe(false);
     finish.resolve(success());
     expect((await older).verified).toBe(false);
-    expect(
-      await hasSamsungProjectionEvidence(other.kit.ctx, await other.stored(), other.proof),
-    ).toBe(false);
+    expect(await hasSamsungProjectionEvidence(other.kit.ctx, await other.stored())).toBe(false);
     expect(
       await all(
         other.kit.env.DB,
@@ -503,7 +465,7 @@ describe('authenticated Samsung card-state evidence', () => {
     expect((await refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, f.input)).verified).toBe(
       false,
     );
-    expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored(), f.proof)).toBe(false);
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored())).toBe(false);
     expect(
       await all(
         f.kit.env.DB,
@@ -524,9 +486,7 @@ describe('authenticated Samsung card-state evidence', () => {
     expect(
       (await refreshSamsungProjectionEvidence(slow.kit.ctx, slow.auth, slow.input)).verified,
     ).toBe(false);
-    expect(await hasSamsungProjectionEvidence(slow.kit.ctx, await slow.stored(), slow.proof)).toBe(
-      false,
-    );
+    expect(await hasSamsungProjectionEvidence(slow.kit.ctx, await slow.stored())).toBe(false);
   });
 
   it.each(['changed', 'missing'] as const)(
@@ -553,12 +513,7 @@ describe('authenticated Samsung card-state evidence', () => {
       await replaceCallbackKeysetForTest(db, change === 'changed' ? replacement : null);
       try {
         await expect(
-          ensureSamsungProjectionEvidence(
-            f.kit.ctx,
-            candidate.id,
-            candidate.candidateHash,
-            f.proof,
-          ),
+          ensureSamsungProjectionEvidence(f.kit.ctx, candidate.id, candidate.candidateHash),
         ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
         await expect(
           refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, f.input),
@@ -578,7 +533,7 @@ describe('authenticated Samsung card-state evidence', () => {
       } finally {
         await replaceCallbackKeysetForTest(db, f.proof.credentialKeysetCommitment);
       }
-      expect(await hasSamsungProjectionEvidence(f.kit.ctx, candidate, f.proof)).toBe(true);
+      expect(await hasSamsungProjectionEvidence(f.kit.ctx, candidate)).toBe(true);
     },
     120_000,
   );
@@ -615,26 +570,21 @@ describe('authenticated Samsung card-state evidence', () => {
     f.kit.env.KEK_V1 = newKey;
     await replaceCallbackKeysetForTest(db, newProof.credentialKeysetCommitment);
     try {
-      expect(await hasSamsungProjectionEvidence(f.kit.ctx, candidate, newProof)).toBe(false);
+      expect(await hasSamsungProjectionEvidence(f.kit.ctx, candidate)).toBe(false);
       expect(
-        await ensureSamsungProjectionEvidence(
-          f.kit.ctx,
-          candidate.id,
-          candidate.candidateHash,
-          newProof,
-        ),
+        await ensureSamsungProjectionEvidence(f.kit.ctx, candidate.id, candidate.candidateHash),
       ).toBe(false);
-      expect(await refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, f.input)).toEqual({
-        verified: false,
-        verifiedAt: null,
-        expiresAt: null,
-      });
-      expect(await beginSamsungProjectionProbe(f.kit.ctx, null, candidate, probeId, newProof)).toBe(
-        false,
-      );
+      // The candidate is stored under the old keyset, so it is not found after the rekey.
       await expect(
-        ensureSamsungProjectionEvidence(f.kit.ctx, candidate.id, candidate.candidateHash, f.proof),
+        refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, f.input),
+      ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_NOT_FOUND' });
+      expect(await beginSamsungProjectionProbe(f.kit.ctx, null, candidate, probeId)).toBe(false);
+      // A mismatched pin at entry refuses: the old KEK no longer matches the rekeyed singleton.
+      f.kit.env.KEK_V1 = oldKey;
+      await expect(
+        ensureSamsungProjectionEvidence(f.kit.ctx, candidate.id, candidate.candidateHash),
       ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
+      f.kit.env.KEK_V1 = newKey;
       expect(fetch).toHaveBeenCalledTimes(1);
       expect(
         await first(
@@ -654,9 +604,7 @@ describe('authenticated Samsung card-state evidence', () => {
       f.kit.env.KEK_V1 = oldKey;
       await replaceCallbackKeysetForTest(db, f.proof.credentialKeysetCommitment);
     }
-    expect(await beginSamsungProjectionProbe(f.kit.ctx, null, candidate, probeId, f.proof)).toBe(
-      true,
-    );
+    expect(await beginSamsungProjectionProbe(f.kit.ctx, null, candidate, probeId)).toBe(true);
     const pending = await first(
       db,
       'SELECT * FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
@@ -670,7 +618,7 @@ describe('authenticated Samsung card-state evidence', () => {
     f.kit.env.KEK_V1 = newKey;
     await replaceCallbackKeysetForTest(db, newProof.credentialKeysetCommitment);
     try {
-      await failSamsungProjectionProbe(f.kit.ctx, candidate.id, probeId, newProof);
+      await failSamsungProjectionProbe(f.kit.ctx, candidate.id, probeId);
       expect(
         await completeSamsungProjectionProbe(
           f.kit.ctx,
@@ -679,11 +627,10 @@ describe('authenticated Samsung card-state evidence', () => {
           probeId,
           f.kit.clock.now(),
           f.kit.clock.now() + 300_000,
-          newProof,
         ),
       ).toBe(false);
       expect(
-        await beginSamsungProjectionProbe(f.kit.ctx, null, candidate, f.kit.ctx.ids.id(), newProof),
+        await beginSamsungProjectionProbe(f.kit.ctx, null, candidate, f.kit.ctx.ids.id()),
       ).toBe(false);
       expect(
         await first(
@@ -711,7 +658,6 @@ describe('authenticated Samsung card-state evidence', () => {
         probeId,
         f.kit.clock.now(),
         f.kit.clock.now() + 300_000,
-        f.proof,
       ),
     ).toBe(true);
     const finalHistory = await all<Record<string, unknown>>(
@@ -725,7 +671,7 @@ describe('authenticated Samsung card-state evidence', () => {
         (row) => row.credential_keyset_commitment === f.proof.credentialKeysetCommitment,
       ),
     ).toBe(true);
-    expect(await hasSamsungProjectionEvidence(f.kit.ctx, candidate, f.proof)).toBe(true);
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, candidate)).toBe(true);
   });
 
   it.each(['candidate', 'approval', 'current', 'history'] as const)(
@@ -766,23 +712,16 @@ describe('authenticated Samsung card-state evidence', () => {
         ]),
         stmt(db, trigger.sql),
       ]);
-      expect(await hasSamsungProjectionEvidence(f.kit.ctx, candidate, f.proof)).toBe(false);
+      expect(await hasSamsungProjectionEvidence(f.kit.ctx, candidate)).toBe(false);
       if (legacy !== 'history') {
         expect(
-          await beginSamsungProjectionProbe(
-            f.kit.ctx,
-            null,
-            candidate,
-            f.kit.ctx.ids.id(),
-            f.proof,
-          ),
+          await beginSamsungProjectionProbe(f.kit.ctx, null, candidate, f.kit.ctx.ids.id()),
         ).toBe(false);
         expect(
           await ensureSamsungProjectionEvidence(
             f.kit.ctx,
             f.candidate.id,
             f.candidate.candidateHash,
-            f.proof,
           ),
         ).toBe(false);
         if (legacy === 'candidate') {
@@ -866,7 +805,6 @@ describe('authenticated Samsung card-state evidence', () => {
           f.kit.ctx,
           f.candidate.id,
           f.candidate.candidateHash,
-          f.proof,
         );
         expect(fetch).toHaveBeenCalledTimes(2);
         expect(refreshed).toBe(true);
@@ -900,7 +838,6 @@ describe('authenticated Samsung card-state evidence', () => {
         f.kit.ctx,
         f.candidate.id,
         f.candidate.candidateHash,
-        f.proof,
       );
       f.kit.env.KEK_V1 = btoa('z'.repeat(32));
       expect(await ensure).toBe(true);
@@ -909,45 +846,6 @@ describe('authenticated Samsung card-state evidence', () => {
       f.kit.env.KEK_V1 = oldKey;
     }
   });
-
-  it.each(['changed', 'missing'] as const)(
-    'does not report a successful probe if the singleton becomes %s before output',
-    async (change) => {
-      const f = await fixture();
-      await f.approve();
-      respond(success);
-      const db = f.kit.env.DB;
-      const replacement = await credentialRefKeysetCommitment({
-        ...f.kit.env,
-        KEK_V1: btoa('z'.repeat(32)),
-      });
-      const seam = interveneAtD1(
-        db,
-        {
-          method: 'batch',
-          sql: /INSERT INTO wallet_provider_projection_evidence_history/,
-          when: 'after',
-        },
-        () => replaceCallbackKeysetForTest(db, change === 'changed' ? replacement : null),
-      );
-      const ctx = { ...f.kit.ctx, env: { ...f.kit.env, DB: seam.db } };
-      try {
-        expect(await refreshSamsungProjectionEvidence(ctx, f.auth, f.input)).toEqual({
-          verified: false,
-          verifiedAt: null,
-          expiresAt: null,
-        });
-        expect(seam.hits()).toBe(1);
-        expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored(), f.proof)).toBe(
-          false,
-        );
-      } finally {
-        await replaceCallbackKeysetForTest(db, f.proof.credentialKeysetCommitment);
-      }
-      expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored(), f.proof)).toBe(true);
-    },
-    120_000,
-  );
 
   it('requires a CSRF-protected tenant session on the verification route', async () => {
     const f = await fixture();

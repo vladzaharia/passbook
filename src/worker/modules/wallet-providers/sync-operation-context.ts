@@ -34,7 +34,6 @@ export async function originalScope(
   const original = await getProjectionRetirementMetadata(
     ctx.env.DB,
     op.identityProjectionReleaseId,
-    { credentialKeysetCommitment: op.credentialKeysetCommitment },
   );
   if (
     !original ||
@@ -54,7 +53,6 @@ export async function originalScope(
       accountRevision: op.accountRevision,
       providerIdentityHash: original.providerIdentityHash,
       providerReleaseId: op.projectionReleaseId,
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
     },
   };
 }

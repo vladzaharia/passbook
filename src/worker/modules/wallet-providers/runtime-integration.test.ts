@@ -135,18 +135,14 @@ describe('existing provider instance runtime', () => {
       .all();
     expect(plan.results.length).toBeGreaterThan(0);
     expect(
-      await getApprovedProjection(
-        f.kit.ctx,
-        {
-          orgId: f.binding.orgId,
-          mode: f.binding.mode,
-          provider: f.binding.provider,
-          templateId: f.binding.templateId,
-          templateVersion: f.binding.version,
-          appleReleaseId: f.binding.sourceReleaseId,
-        },
-        { credentialKeysetCommitment: f.binding.credentialKeysetCommitment },
-      ),
+      await getApprovedProjection(f.kit.ctx, {
+        orgId: f.binding.orgId,
+        mode: f.binding.mode,
+        provider: f.binding.provider,
+        templateId: f.binding.templateId,
+        templateVersion: f.binding.version,
+        appleReleaseId: f.binding.sourceReleaseId,
+      }),
     ).toMatchObject({ release: { id: f.binding.releaseId } });
 
     for (const rejected of [
@@ -157,7 +153,6 @@ describe('existing provider instance runtime', () => {
       { ...f.binding, templateId: 'other-template' },
       { ...f.binding, version: 'other-version' },
       { ...f.binding, sourceReleaseId: 'other-source' },
-      { ...f.binding, credentialKeysetCommitment: '0'.repeat(64) },
       { ...f.binding, now: f.binding.now + 300_000 },
     ]) {
       expect(await projectionReleaseBindingValid(f.kit.env.DB, rejected)).toBe(false);
@@ -262,7 +257,6 @@ describe('existing provider instance runtime', () => {
       provider: 'google' as const,
       accountId: f.scope.accountId,
       accountRevision: f.scope.accountRevision,
-      credentialKeysetCommitment: f.scope.credentialKeysetCommitment,
       projectionReleaseId: f.scope.providerReleaseId,
       instanceId: f.instanceId,
       operationId: f.operationId,
@@ -294,13 +288,6 @@ describe('existing provider instance runtime', () => {
     ]) {
       expect(await readWalletProviderRetirementCredentials(f.kit.ctx, rejected)).toBeNull();
     }
-    expect(
-      await findRetirementAccount(
-        db,
-        { ...proof, credentialKeysetCommitment: '0'.repeat(64) },
-        f.kit.clock.now(),
-      ),
-    ).toBeNull();
     expect(await findRetirementAccount(db, proof, f.kit.clock.now() + 120_000)).toBeNull();
     await run(
       db,
@@ -319,7 +306,6 @@ describe('existing provider instance runtime', () => {
       provider: 'samsung' as const,
       accountId: f.scope.accountId,
       accountRevision: f.scope.accountRevision,
-      credentialKeysetCommitment: f.scope.credentialKeysetCommitment,
       projectionReleaseId: f.scope.providerReleaseId,
       instanceId: f.instanceId,
       operationId: f.operationId,
@@ -650,11 +636,6 @@ describe('existing provider instance runtime', () => {
         claim: retirement,
         ref: f.refId,
       },
-      {
-        scope: { ...f.scope, credentialKeysetCommitment: '0'.repeat(64) },
-        claim: retirement,
-        ref: f.refId,
-      },
       { scope: f.scope, claim: { ...retirement, instanceId: 'other-instance' }, ref: f.refId },
       { scope: f.scope, claim: { ...retirement, operationId: 'other-operation' }, ref: f.refId },
       { scope: f.scope, claim: { ...retirement, version: retirement.version + 1 }, ref: f.refId },
@@ -808,7 +789,6 @@ describe('existing provider instance runtime', () => {
       provider: 'samsung' as const,
       accountId: f.scope.accountId,
       accountRevision: f.scope.accountRevision,
-      credentialKeysetCommitment: f.scope.credentialKeysetCommitment,
       projectionReleaseId: f.scope.providerReleaseId,
       instanceId: f.instanceId,
       operationId: f.operationId,
@@ -828,21 +808,19 @@ describe('existing provider instance runtime', () => {
         f.kit.env.DB,
         {
           ...proof,
-          credentialKeysetCommitment: replacement,
         },
         f.kit.clock.now(),
       ),
     ).toBeNull();
   }, 30_000);
 
-  it('requires promoted-ref account selection to retain the captured keyset', async () => {
+  it('selects the promoted-ref account for the pinned keyset', async () => {
     const f = await runtimeSamsungLegacyFixture('refresh');
     const proof = {
       orgId: f.scope.orgId,
       mode: f.scope.mode,
       accountId: f.scope.accountId,
       accountRevision: f.scope.accountRevision,
-      credentialKeysetCommitment: f.scope.credentialKeysetCommitment,
       projectionReleaseId: f.scope.providerReleaseId,
       instanceId: f.instanceId,
       refHash: f.refHash,
@@ -851,16 +829,6 @@ describe('existing provider instance runtime', () => {
     expect(
       await findSamsungPromotedRefreshAccount(f.kit.env.DB, proof, f.kit.clock.now()),
     ).not.toBeNull();
-    expect(
-      await findSamsungPromotedRefreshAccount(
-        f.kit.env.DB,
-        {
-          ...proof,
-          credentialKeysetCommitment: '0'.repeat(64),
-        },
-        f.kit.clock.now(),
-      ),
-    ).toBeNull();
   }, 30_000);
 
   it('uses one captured KEK snapshot when the caller changes its environment after the request starts', async () => {
@@ -889,73 +857,6 @@ describe('existing provider instance runtime', () => {
       f.kit.env.KEK_V1 = originalKek;
     }
     expect(sink).toHaveBeenCalledOnce();
-  }, 30_000);
-
-  it('treats keyset loss after sending a retirement request as ambiguous without emitting a response', async () => {
-    const f = await runtimeSamsungLegacyFixture('retirement');
-    const replacement = await credentialRefKeysetCommitment({ ...f.kit.env, KEK_V1: alternateKek });
-    const fetcher = vi.fn(async () => {
-      await replaceTestKeyset(f.kit.env.DB, replacement);
-      return new Response('private provider response', { status: 200 });
-    });
-    vi.stubGlobal('fetch', fetcher);
-    await expect(
-      sendSamsungRuntimeUpdate(f.kit.ctx, f.scope, {
-        cc2: 'GB',
-        type: 'loyalty',
-        refId: f.refId,
-        state: 'DELETED',
-        attempt: 1,
-        retirement: {
-          instanceId: f.instanceId,
-          operationId: f.operationId,
-          version: f.version,
-          claimHandle: f.claimHandle,
-        },
-        onProviderResponse: f.onProviderResponse,
-      }),
-    ).rejects.toMatchObject({ code: 'account_unavailable', ambiguous: true });
-    expect(fetcher).toHaveBeenCalledOnce();
-    expect(f.responses).toHaveLength(0);
-  }, 30_000);
-
-  it('rechecks the keyset after reading the response stream and before invoking its sink', async () => {
-    const f = await runtimeSamsungLegacyFixture('retirement');
-    const replacement = await credentialRefKeysetCommitment({ ...f.kit.env, KEK_V1: alternateKek });
-    vi.stubGlobal(
-      'fetch',
-      async () =>
-        new Response(
-          new ReadableStream<Uint8Array>(
-            {
-              async pull(controller) {
-                await replaceTestKeyset(f.kit.env.DB, replacement);
-                controller.enqueue(new TextEncoder().encode('private provider response'));
-                controller.close();
-              },
-            },
-            { highWaterMark: 0 },
-          ),
-          { status: 200 },
-        ),
-    );
-    await expect(
-      sendSamsungRuntimeUpdate(f.kit.ctx, f.scope, {
-        cc2: 'GB',
-        type: 'loyalty',
-        refId: f.refId,
-        state: 'DELETED',
-        attempt: 1,
-        retirement: {
-          instanceId: f.instanceId,
-          operationId: f.operationId,
-          version: f.version,
-          claimHandle: f.claimHandle,
-        },
-        onProviderResponse: f.onProviderResponse,
-      }),
-    ).rejects.toMatchObject({ code: 'account_unavailable', ambiguous: true });
-    expect(f.responses).toHaveLength(0);
   }, 30_000);
 
   it('retains a failure response while preserving sanitized provider status', async () => {
@@ -1089,46 +990,6 @@ describe('existing provider instance runtime', () => {
     ).rejects.toBeInstanceOf(SamsungTokenError);
   }, 30_000);
 
-  it('pins Samsung verification handles and rejects a keyset change during replay reservation', async () => {
-    const f = await runtimeSamsungLegacyFixture('refresh');
-    const request = await f.request();
-    const refresh = { instanceId: f.instanceId, refHash: f.refHash, operationVersion: f.version };
-    const handle = await verifySamsungRuntimeRequest(f.kit.ctx, f.scope, {
-      request,
-      refId: f.refId,
-      method: 'GET',
-      refresh,
-      claimReplay: async () => true,
-    });
-    await expect(
-      samsungRuntimeCardDataResponse(
-        f.kit.ctx,
-        {
-          ...f.scope,
-          credentialKeysetCommitment: '0'.repeat(64),
-        },
-        handle,
-        f.projection,
-      ),
-    ).rejects.toMatchObject({ code: 'account_unavailable' });
-    const replacement = await credentialRefKeysetCommitment({ ...f.kit.env, KEK_V1: alternateKek });
-    let replayCalled = false;
-    await expect(
-      verifySamsungRuntimeRequest(f.kit.ctx, f.scope, {
-        request,
-        refId: f.refId,
-        method: 'GET',
-        refresh,
-        claimReplay: async () => {
-          replayCalled = true;
-          await replaceTestKeyset(f.kit.env.DB, replacement);
-          return true;
-        },
-      }),
-    ).rejects.toMatchObject({ code: 'account_unavailable', ambiguous: false });
-    expect(replayCalled).toBe(true);
-  }, 30_000);
-
   it('rejects unpromoted, wrong-reference and stale-pass refreshes', async () => {
     const unpromoted = await runtimeSamsungLegacyFixture('refresh', false);
     const denied = await unpromoted.request();
@@ -1226,22 +1087,17 @@ describe('existing provider instance runtime', () => {
       orgId: f.pass.orgId,
       mode: f.pass.mode,
       passId: f.pass.id,
-      credentialKeysetCommitment,
     });
     if (!snapshot?.issuingReleaseId || !f.samsungRelease?.candidateId)
       throw new Error('Missing release fixture');
-    const approved = await getApprovedProjection(
-      f.kit.ctx,
-      {
-        orgId: f.pass.orgId,
-        mode: f.pass.mode,
-        provider: 'samsung',
-        templateId: snapshot.templateId,
-        templateVersion: snapshot.templateVersion,
-        appleReleaseId: snapshot.issuingReleaseId,
-      },
-      { credentialKeysetCommitment },
-    );
+    const approved = await getApprovedProjection(f.kit.ctx, {
+      orgId: f.pass.orgId,
+      mode: f.pass.mode,
+      provider: 'samsung',
+      templateId: snapshot.templateId,
+      templateVersion: snapshot.templateVersion,
+      appleReleaseId: snapshot.issuingReleaseId,
+    });
     if (!approved) throw new Error('Missing approved release fixture');
     const refId = 'abcdefghijklmnopqrstuvwxABCDEFGH';
     const refHash = await sha256Hex(refId);

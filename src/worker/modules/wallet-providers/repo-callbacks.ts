@@ -5,6 +5,7 @@ import { walletProviderEnabled } from './provider-policy.ts';
 import { samsungRevocableRefSql, samsungRouteCountriesSql } from './repo-callbacks-routing.ts';
 import { samsungInitialWindowSql } from './repo-callbacks-window.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import { SAMSUNG_UNCONFIRMED_SERVE_MS } from './samsung-limits.ts';
 
 export interface SamsungOperationScope {
@@ -12,7 +13,6 @@ export interface SamsungOperationScope {
   mode: Mode;
   instanceId: string;
   operationVersion: number;
-  credentialKeysetCommitment: string;
 }
 
 type BlobValue = number[] | Uint8Array | ArrayBuffer;
@@ -53,7 +53,7 @@ const upsert = `i.provider = 'samsung' AND i.lifecycle = 'active' AND op.kind = 
   AND ${walletInstanceOperationCurrentSql('i', 'op', 'clock.now')}`;
 const current = `${walletInstanceOperationCurrentSql('i', 'op', 'clock.now')}`;
 /** Bind the original operation and instance proof to the canonical singleton. */
-export const samsungOperationKeysetSql = `i.credential_keyset_commitment = ?
+export const samsungOperationKeysetSql = `i.credential_keyset_commitment = ${pinnedKeysetSql}
   AND op.credential_keyset_commitment = i.credential_keyset_commitment`;
 const join = `JOIN wallet_provider_instances i ON i.id = r.instance_id
   JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id
@@ -102,7 +102,6 @@ export async function putSamsungFetchRef(
         envelope.ciphertext,
         now,
         ...binding,
-        scope.credentialKeysetCommitment,
         input.hash,
       ],
     ),
@@ -117,16 +116,7 @@ export async function putSamsungFetchRef(
         CROSS JOIN (SELECT ? AS now) clock
         WHERE i.id = r.instance_id AND i.org_id = ? AND i.mode = ? AND op.version = ? AND ${upsert}
           AND r.credential_keyset_commitment = i.credential_keyset_commitment AND ${samsungOperationKeysetSql})`,
-      [
-        now,
-        expiresAt,
-        scope.instanceId,
-        now,
-        scope.orgId,
-        scope.mode,
-        scope.operationVersion,
-        scope.credentialKeysetCommitment,
-      ],
+      [now, expiresAt, scope.instanceId, now, scope.orgId, scope.mode, scope.operationVersion],
     ),
     stmt(
       db,
@@ -134,7 +124,7 @@ export async function putSamsungFetchRef(
       WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND op.version = ?
         AND r.retired_at IS NULL AND ${upsert}
         AND r.credential_keyset_commitment = i.credential_keyset_commitment AND ${samsungOperationKeysetSql}`,
-      [now, ...binding, scope.credentialKeysetCommitment],
+      [now, ...binding],
     ),
   ]);
   return (results[2]?.results[0] as SamsungRefEnvelope | undefined) ?? null;
@@ -145,7 +135,6 @@ export function findSamsungFetchSnapshot(
   db: D1Database,
   hash: string,
   now: number,
-  credentialKeysetCommitment: string,
   requirePromoted = false,
 ): Promise<SamsungFetchSnapshot | null> {
   return first<SamsungFetchSnapshot>(
@@ -158,17 +147,14 @@ export function findSamsungFetchSnapshot(
       op.pass_credential_generation AS passCredentialGeneration,
       p.template_id AS templateId, p.template_version AS templateVersion,
       op.issuing_release_id AS issuingReleaseId, op.projection_release_id AS projectionReleaseId,
-      i.created_at AS instanceCreatedAt, r.promoted_at AS promotedAt,
-      op.credential_keyset_commitment AS credentialKeysetCommitment
+      i.created_at AS instanceCreatedAt, r.promoted_at AS promotedAt
     FROM wallet_samsung_fetch_refs r ${join}
     JOIN passes p ON p.id = i.pass_id
     WHERE r.ref_hash = ? AND r.retired_at IS NULL
       AND ${requirePromoted ? 'r.promoted_at IS NOT NULL' : samsungInitialWindowSql}
       AND ${upsert} AND r.credential_keyset_commitment = i.credential_keyset_commitment
       AND ${samsungOperationKeysetSql}`,
-    requirePromoted
-      ? [now, hash, credentialKeysetCommitment]
-      : [now, hash, now, now, credentialKeysetCommitment],
+    requirePromoted ? [now, hash] : [now, hash, now, now],
   );
 }
 
@@ -209,7 +195,6 @@ export function samsungSnapshotParams(s: SamsungFetchSnapshot) {
     s.templateVersion,
     s.issuingReleaseId,
     s.projectionReleaseId,
-    s.credentialKeysetCommitment,
   ] as const;
 }
 
@@ -253,7 +238,6 @@ export async function samsungRefStillCurrent(
       scope.mode,
       scope.operationVersion,
       ...(forSync ? [now - SAMSUNG_UNCONFIRMED_SERVE_MS] : []),
-      scope.credentialKeysetCommitment,
     ],
   );
   return row !== null;
@@ -278,7 +262,6 @@ export function getSamsungRefForSync(
       scope.mode,
       scope.operationVersion,
       now - SAMSUNG_UNCONFIRMED_SERVE_MS,
-      scope.credentialKeysetCommitment,
     ],
   );
 }

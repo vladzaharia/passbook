@@ -66,19 +66,12 @@ describe('Samsung unpromoted reference retirement', () => {
     try {
       await replaceCallbackKeysetForTest(db, newCommitment);
       t.kit.env.KEK_V1 = newKey;
-      const newScope = { ...scope, credentialKeysetCommitment: newCommitment };
+      // Operations keyed to the old commitment are invisible once the singleton is rekeyed.
       expect(await inspectSamsungRetirement(db, scope, t.kit.clock.now())).toBe('pending');
-      expect(await inspectSamsungRetirement(db, newScope, t.kit.clock.now())).toBe('pending');
       expect(await retireSamsungUnpromotedRef(db, scope, t.kit.clock.now(), claimHash)).toBe(
         'pending',
       );
-      expect(await retireSamsungUnpromotedRef(db, newScope, t.kit.clock.now(), claimHash)).toBe(
-        'pending',
-      );
-      await expect(inspectSamsungRefRetirement(t.kit.ctx, scope)).rejects.toMatchObject({
-        code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-      });
-      expect(await inspectSamsungRefRetirement(t.kit.ctx, newScope)).toBe('pending');
+      expect(await inspectSamsungRefRetirement(t.kit.ctx, scope)).toBe('pending');
     } finally {
       t.kit.env.KEK_V1 = oldKey;
       await replaceCallbackKeysetForTest(db, t.credentialKeysetCommitment);
@@ -93,11 +86,7 @@ describe('Samsung unpromoted reference retirement', () => {
     try {
       await replaceCallbackKeysetForTest(db, newCommitment);
       t.kit.env.KEK_V1 = newKey;
-      const newScope = { ...scope, credentialKeysetCommitment: newCommitment };
-      await expect(persistSamsungTombstone(t.kit.ctx, scope)).rejects.toMatchObject({
-        code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-      });
-      expect(await persistSamsungTombstone(t.kit.ctx, newScope)).toBe(false);
+      expect(await persistSamsungTombstone(t.kit.ctx, scope)).toBe(false);
     } finally {
       t.kit.env.KEK_V1 = oldKey;
       await replaceCallbackKeysetForTest(db, t.credentialKeysetCommitment);
@@ -148,14 +137,9 @@ describe('Samsung unpromoted reference retirement', () => {
       expect(await retireSamsungUnpromotedRef(db, scope, t.kit.clock.now(), claimHash)).toBe(
         'pending',
       );
-      expect(
-        await retireSamsungUnpromotedRef(
-          db,
-          { ...scope, credentialKeysetCommitment: newCommitment },
-          t.kit.clock.now(),
-          claimHash,
-        ),
-      ).toBe('pending');
+      expect(await retireSamsungUnpromotedRef(db, { ...scope }, t.kit.clock.now(), claimHash)).toBe(
+        'pending',
+      );
       expect(
         await first(db, 'SELECT retired_at FROM wallet_samsung_fetch_refs WHERE id = ?', [
           t.referenceId,
@@ -188,7 +172,6 @@ describe('Samsung unpromoted reference retirement', () => {
       orgId: scope.orgId,
       mode: scope.mode,
       passId: t.pass.id,
-      credentialKeysetCommitment: t.credentialKeysetCommitment,
     });
     if (!pass) throw new Error('Missing restored pass');
     await t.renewEvidence();
@@ -261,7 +244,6 @@ describe('Samsung unpromoted reference retirement', () => {
         mode: revoke.mode,
         instanceId: revoke.instanceId,
         operationVersion: revoke.version,
-        credentialKeysetCommitment: t.credentialKeysetCommitment,
       }),
     ).toBe(true);
     expect(
@@ -278,7 +260,6 @@ describe('Samsung unpromoted reference retirement', () => {
       orgId: revoke.orgId,
       mode: revoke.mode,
       passId: t.pass.id,
-      credentialKeysetCommitment: t.credentialKeysetCommitment,
     });
     if (!pass) throw new Error('Missing restored pass');
     const restored = await queueWalletOperation(db, {

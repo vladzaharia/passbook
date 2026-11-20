@@ -20,7 +20,6 @@ import {
   type Kit,
   lookup,
   pinsOf,
-  proof,
   released,
   request,
   S,
@@ -49,7 +48,7 @@ async function published(kit: Kit, omissions?: string[]) {
     request(omissions ?? (await pinsOf(kit)).approvedOmissions),
   );
   const release = await released(kit, candidate);
-  const approved = await getApprovedProjection(kit.ctx, lookup(kit), await proof());
+  const approved = await getApprovedProjection(kit.ctx, lookup(kit));
   if (!approved) throw new Error('Release is not current.');
   return { candidate, release, approved };
 }
@@ -73,7 +72,7 @@ describe('Q21: a pipeline change that loses something pauses new offers', () => 
 
     undo = patch(addsSharingLoss, 2);
     // The release stays current for passes already on the wallet; only new offers wait.
-    const current = await getApprovedProjection(kit.ctx, lookup(kit), await proof());
+    const current = await getApprovedProjection(kit.ctx, lookup(kit));
     expect(current?.release.id).toBe(release.id);
     expect(await offersPaused(kit.ctx, approved)).toBe(true);
 
@@ -82,7 +81,7 @@ describe('Q21: a pipeline change that loses something pauses new offers', () => 
     expect(next.projection).toMatchObject({ approvedOmissions: ['sharing'] });
     const second = await released(kit, next, 1);
     expect(second.generation).toBe(2);
-    const reapproved = await getApprovedProjection(kit.ctx, lookup(kit), await proof());
+    const reapproved = await getApprovedProjection(kit.ctx, lookup(kit));
     expect(reapproved?.release.id).toBe(second.id);
     if (!reapproved) throw new Error('unreachable');
     expect(await offersPaused(kit.ctx, reapproved)).toBe(false);
@@ -126,7 +125,7 @@ describe('Q21: a pipeline change that loses something pauses new offers', () => 
     );
     const undo = patch(addsSharingLoss, 1);
     // Reads of the release do not recompile.
-    await getApprovedProjection(kit.ctx, lookup(kit), await proof());
+    await getApprovedProjection(kit.ctx, lookup(kit));
     expect(calls).toBe(0);
     expect(await offersPaused(kit.ctx, approved)).toBe(true);
     expect(await offersPaused(kit.ctx, approved)).toBe(true);
@@ -167,7 +166,7 @@ describe('Q21: a pipeline change that loses something pauses new offers', () => 
     // Not memoized: the next call tries again.
     expect((await memoRows(candidate.id))?.n).toBe(0);
     // The release itself is still readable for sync and scheduling.
-    expect((await getApprovedProjection(kit.ctx, lookup(kit), await proof()))?.release.id).toBe(
+    expect((await getApprovedProjection(kit.ctx, lookup(kit)))?.release.id).toBe(
       approved.release.id,
     );
   });

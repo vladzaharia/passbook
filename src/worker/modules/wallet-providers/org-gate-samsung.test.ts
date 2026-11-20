@@ -34,7 +34,6 @@ describe('Samsung promoted refresh', () => {
       mode: f.scope.mode,
       accountId: f.scope.accountId,
       accountRevision: f.scope.accountRevision,
-      credentialKeysetCommitment: f.scope.credentialKeysetCommitment,
       projectionReleaseId: f.scope.providerReleaseId,
       instanceId: f.instanceId,
       refHash: f.refHash,

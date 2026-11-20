@@ -4,6 +4,7 @@ import type { NativeProvider } from './projection-contract.ts';
 import { walletEnrolmentIssuesSql, walletProviderEnabledSql } from './provider-policy.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 import { walletRetiredInstanceSettledSql } from './repo-instance-retirement.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import { projectionReleaseBindingPredicateSql } from './repo-projection.ts';
 
 export interface WalletOfferFence {
@@ -21,18 +22,12 @@ export async function walletOfferSnapshotCurrent(
   pass: Pass,
   lifecycleGeneration: number,
   credentialGeneration: number,
-  credentialKeysetCommitment: string,
   rawPassJson: string,
   provider: NativeProvider,
   projectionReleaseId: string,
   now: number,
   offer?: WalletOfferFence,
 ): Promise<boolean> {
-  if (
-    typeof credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(credentialKeysetCommitment)
-  )
-    return false;
   if (offer?.deliver && (!offer.consumed || provider !== 'samsung')) return false;
   const projection = projectionReleaseBindingPredicateSql({
     releaseIdSql: 'requested.projection_id',
@@ -48,7 +43,7 @@ export async function walletOfferSnapshotCurrent(
   // Keep each authority proof in the same statement while preventing the nested
   // projection and operation predicates from accumulating expression depth.
   const sql = `WITH requested AS MATERIALIZED (
-      SELECT ? AS projection_id, ? AS provider, ? AS now, ? AS credential_keyset_commitment
+      SELECT ? AS projection_id, ? AS provider, ? AS now, ${pinnedKeysetSql} AS credential_keyset_commitment
     ),
     offer_snapshot AS MATERIALIZED (
     SELECT p.id, p.org_id, p.mode, p.template_id, p.template_version, p.release_id,
@@ -74,7 +69,7 @@ export async function walletOfferSnapshotCurrent(
       AND NOT EXISTS (SELECT 1 FROM wallet_provider_instances current_instance
         WHERE current_instance.pass_id = p.id AND current_instance.provider = requested.provider
           AND current_instance.credential_generation = p.credential_generation
-          AND (current_instance.credential_keyset_commitment IS NOT ?
+          AND (current_instance.credential_keyset_commitment IS NOT ${pinnedKeysetSql}
             OR (current_instance.desired_version > 0 AND NOT EXISTS (
               SELECT 1 FROM wallet_provider_instance_operations current_op
               WHERE current_op.id = current_instance.desired_operation_id
@@ -109,7 +104,7 @@ export async function walletOfferSnapshotCurrent(
       WHERE ref.ref_hash = ? AND i.id = ? AND i.pass_id = p.id
         AND i.org_id = p.org_id AND i.mode = p.mode AND i.provider = requested.provider
         AND i.credential_generation = p.credential_generation
-        AND i.credential_keyset_commitment = ?
+        AND i.credential_keyset_commitment = ${pinnedKeysetSql}
         AND op.credential_keyset_commitment = i.credential_keyset_commitment
         AND op.version = ? AND op.kind = 'upsert'
         AND op.state IN ('pending', 'retry', 'claimed', 'succeeded') AND ref.expires_at > ?
@@ -135,7 +130,6 @@ export async function walletOfferSnapshotCurrent(
     projectionReleaseId,
     provider,
     now,
-    credentialKeysetCommitment,
     pass.id,
     pass.orgId,
     pass.mode,
@@ -155,10 +149,7 @@ export async function walletOfferSnapshotCurrent(
     pass.scanCode,
     pass.barcodeHash,
     rawPassJson,
-    credentialKeysetCommitment,
-    ...(offer
-      ? [offer.refHash, offer.instanceId, credentialKeysetCommitment, offer.version, offer.now]
-      : []),
+    ...(offer ? [offer.refHash, offer.instanceId, offer.version, offer.now] : []),
   ];
   const row = offer?.deliver
     ? await first<{ ok: number }>(

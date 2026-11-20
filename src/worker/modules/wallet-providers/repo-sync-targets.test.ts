@@ -35,7 +35,7 @@ async function withoutTrigger(
 }
 
 describe('Samsung sync target keyset authority', () => {
-  it('pins hints, claims, outcomes and settlement to the original operation and reference keyset', async () => {
+  it('pins hints, claims, outcomes and settlement to the pinned operation and reference keyset', async () => {
     const t = await setupSamsungCallbacks();
     const db = t.kit.env.DB;
     const now = t.kit.clock.now();
@@ -45,7 +45,6 @@ describe('Samsung sync target keyset authority', () => {
       instanceId: t.operation.instanceId,
       orgId: t.operation.orgId,
       mode: t.operation.mode,
-      credentialKeysetCommitment: commitment,
     };
     const claim = {
       ...instance,
@@ -54,7 +53,6 @@ describe('Samsung sync target keyset authority', () => {
       claimHandle: newWalletClaimHandle(),
       now,
     };
-    const wrongClaim = { ...claim, credentialKeysetCommitment: other };
     for (const country of ['GB', 'US'])
       await run(
         db,
@@ -63,9 +61,6 @@ describe('Samsung sync target keyset authority', () => {
       );
 
     expect(await samsungSyncCountryHints(t.kit.ctx, instance)).toEqual(['GB', 'US']);
-    expect(
-      await samsungSyncCountryHints(t.kit.ctx, { ...instance, credentialKeysetCommitment: other }),
-    ).toEqual([]);
     expect(await claimWalletOperation(db, claim)).toBe('claimed');
     await withoutTrigger(db, 'wallet_samsung_ref_keyset_immutable', async () => {
       try {
@@ -87,17 +82,11 @@ describe('Samsung sync target keyset authority', () => {
         );
       }
     });
-    await ensureSamsungSyncTargets(t.kit.ctx, wrongClaim);
-    expect(await listSamsungSyncTargets(t.kit.ctx, claim)).toEqual([]);
     await ensureSamsungSyncTargets(t.kit.ctx, claim);
     expect(
       (await listSamsungSyncTargets(t.kit.ctx, claim)).map((target) => target.countryCode),
     ).toEqual(['GB', 'US']);
-    expect(await beginSamsungSyncTarget(t.kit.ctx, wrongClaim, 'GB')).toBeNull();
     expect(await beginSamsungSyncTarget(t.kit.ctx, claim, 'GB')).toBe(1);
-    expect(await finishSamsungSyncTarget(t.kit.ctx, wrongClaim, 'GB', { kind: 'success' })).toBe(
-      false,
-    );
     await run(
       db,
       'INSERT INTO wallet_samsung_country_hints (ref_id, country_code, received_at) VALUES (?, ?, ?)',

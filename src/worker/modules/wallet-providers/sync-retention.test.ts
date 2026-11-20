@@ -122,7 +122,7 @@ describe('wallet retirement fences', () => {
       );
     expect(await check()).toEqual({ complete: 0 });
     expect(await check(true)).toEqual({ complete: 1 });
-    expect(await providerRetirementPending(db, pass.id, credentialKeysetCommitment)).toBe(true);
+    expect(await providerRetirementPending(db, pass.id)).toBe(true);
 
     const scope = {
       orgId: pass.orgId,
@@ -132,13 +132,6 @@ describe('wallet retirement fences', () => {
       credentialKeysetCommitment,
     };
     const dirty = await dirtyGeneration(db, google.id);
-    expect(
-      await ackCleanWalletPlaceholder(db, {
-        ...scope,
-        credentialKeysetCommitment: wrongCommitment,
-        generation: dirty,
-      }),
-    ).toBe(false);
     expect(await ackCleanWalletPlaceholder(db, { ...scope, generation: dirty - 1 })).toBe(false);
     expect(
       await first(
@@ -179,7 +172,6 @@ describe('wallet retirement fences', () => {
         mode: pass.mode,
         provider: samsung.provider,
         instanceId: samsung.id,
-        credentialKeysetCommitment,
         generation: deletionDirty,
       }),
     ).toBe(false);
@@ -221,30 +213,6 @@ describe('wallet retirement fences', () => {
         passCredentialGeneration: generation.credential_generation + 1,
       }),
     ).toBe(false);
-    const beforeMismatch = await first(db, 'SELECT * FROM wallet_provider_instances WHERE id = ?', [
-      google.id,
-    ]);
-    const dirtyBeforeMismatch = await first(
-      db,
-      'SELECT * FROM wallet_provider_instance_dirty WHERE instance_id = ?',
-      [google.id],
-    );
-    expect(
-      await retireUnissuedPlaceholder(db, {
-        ...retirement,
-        instanceId: google.id,
-        provider: google.provider,
-        credentialKeysetCommitment: wrongCommitment,
-      }),
-    ).toBe(false);
-    expect(
-      await first(db, 'SELECT * FROM wallet_provider_instances WHERE id = ?', [google.id]),
-    ).toEqual(beforeMismatch);
-    expect(
-      await first(db, 'SELECT * FROM wallet_provider_instance_dirty WHERE instance_id = ?', [
-        google.id,
-      ]),
-    ).toEqual(dirtyBeforeMismatch);
     expect(await check()).toEqual({ complete: 0 });
     expect(
       await retireUnissuedPlaceholder(db, {
@@ -265,11 +233,9 @@ describe('wallet retirement fences', () => {
       }),
     ).toBe(true);
     expect(await check()).toEqual({ complete: 1 });
-    expect(await providerRetirementPending(db, pass.id, credentialKeysetCommitment)).toBe(false);
+    expect(await providerRetirementPending(db, pass.id)).toBe(false);
     const noInstances = await kit.pass();
-    expect(await providerRetirementPending(db, noInstances.id, credentialKeysetCommitment)).toBe(
-      false,
-    );
+    expect(await providerRetirementPending(db, noInstances.id)).toBe(false);
     expect((await expiredDeletedPasses(db, now + 1, '', 100)).some((p) => p.id === pass.id)).toBe(
       true,
     );
@@ -319,14 +285,12 @@ describe('wallet retirement fences', () => {
       ),
     ).toMatchObject({ state: 'completed' });
     const dirty = await dirtyGeneration(db, old.id);
-    const credentialKeysetCommitment = await requireCredentialRefKeyset(db, kit.env);
     expect(
       await ackCleanWalletPlaceholder(db, {
         orgId: pass.orgId,
         mode: pass.mode,
         provider: 'google',
         instanceId: old.id,
-        credentialKeysetCommitment,
         generation: dirty,
       }),
     ).toBe(false);
@@ -347,7 +311,7 @@ describe('wallet retirement fences', () => {
     await run(db, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [now, f.pass.id]);
     const deletedPass = await deletedPassSnapshot(db, f.pass.id);
     const retention = await prepareScanRetentionDelete(f.kit.env, deletedPass);
-    expect(await providerRetirementPending(db, f.pass.id, credentialKeysetCommitment)).toBe(true);
+    expect(await providerRetirementPending(db, f.pass.id)).toBe(true);
     expect((await expiredDeletedPasses(db, now + 1, '', 100)).some((p) => p.id === f.pass.id)).toBe(
       false,
     );

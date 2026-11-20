@@ -217,7 +217,6 @@ describe('provider pass status read', () => {
       orgId: f.kit.org.id,
       mode: 'live' as const,
       provider: 'samsung' as const,
-      credentialKeysetCommitment: f.operation.credentialKeysetCommitment,
       claimHandle: newWalletClaimHandle(),
       now: f.kit.clock.now(),
     };
@@ -350,7 +349,6 @@ describe('provider pass status read', () => {
       orgId: f.pass.orgId,
       mode: f.pass.mode,
       provider: 'samsung' as const,
-      credentialKeysetCommitment: f.operation.credentialKeysetCommitment,
     };
     const old = await getWalletInstanceById(f.kit.env.DB, oldScope);
     if (!old) throw new Error('Missing old instance');

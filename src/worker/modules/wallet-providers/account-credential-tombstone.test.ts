@@ -80,7 +80,6 @@ describe('Samsung tombstone and credential versions', () => {
         accountId: acct.id,
         accountRevision: revision ?? 0,
         refHash: await sha256Hex(t.refId),
-        credentialKeysetCommitment: t.credentialKeysetCommitment,
       }),
     ).rejects.toThrow();
   });
@@ -141,7 +140,6 @@ describe('Samsung tombstone and credential versions', () => {
           accountId: acct.id,
           accountRevision: revision ?? 0,
           refHash: await sha256Hex(t.refId),
-          credentialKeysetCommitment: t.credentialKeysetCommitment,
         })
       )?.cardId;
     };
@@ -188,7 +186,6 @@ describe('Samsung tombstone and credential versions', () => {
         accountId: acct.id,
         accountRevision: revision ?? 0,
         refHash: await sha256Hex(t.refId),
-        credentialKeysetCommitment: t.credentialKeysetCommitment,
       });
     expect((await read())?.later).toHaveLength(0);
     // A later version of the same card (a certificate rotation) follows the ref.
@@ -274,7 +271,6 @@ describe('Samsung tombstone and credential versions', () => {
       passRevision: pass.passRevision,
       lifecycleGeneration: pass.lifecycleGeneration,
       passCredentialGeneration: pass.credentialGeneration,
-      credentialKeysetCommitment: pass.credentialKeysetCommitment,
     });
     const retiring = await getWalletInstance(db, { ...scope, passId: pass.passId });
     if (!retiring) throw new Error('Missing revoke operation');
@@ -306,7 +302,6 @@ describe('Samsung tombstone and credential versions', () => {
         mode: scope.mode,
         instanceId: retiring.id,
         operationVersion: retiring.desiredVersion,
-        credentialKeysetCommitment: t.credentialKeysetCommitment,
       }),
     ).toBe(true);
     // The tombstone copied its reference's pin.

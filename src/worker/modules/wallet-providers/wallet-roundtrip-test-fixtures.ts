@@ -140,7 +140,6 @@ export async function verificationOf(
     mode,
     accountId: e.accountId,
     accountRevision: e.revision,
-    credentialKeysetCommitment: await requireCredentialRefKeyset(env.DB, f.kit.env),
   });
   if (!v) throw new Error('Missing callback verification.');
   return v;

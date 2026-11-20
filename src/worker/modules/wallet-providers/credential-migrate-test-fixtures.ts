@@ -105,12 +105,12 @@ export const stateOf = (id: string) =>
 /** The ids the account's Google objects get, from the issuer and key the runtime resolves now. */
 export async function currentIds(k: Kit, a: Seeded) {
   const state = await stateOf(a.id);
+  await ensureCredentialRefKeyset(env.DB, k.env);
   const v = await readGoogleCallbackVerification(k.ctx, {
     orgId: a.orgId,
     mode: a.mode,
     accountId: a.id,
     accountRevision: state.revision,
-    credentialKeysetCommitment: await ensureCredentialRefKeyset(env.DB, k.env),
   });
   if (!v) throw new Error('The account does not resolve.');
   return googleObjectIds(v.issuerId, v.objectIdHmacKey, {

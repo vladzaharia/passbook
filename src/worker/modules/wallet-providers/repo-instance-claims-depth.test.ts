@@ -60,7 +60,6 @@ async function claimFixture(db: D1Database) {
     provider: operation.provider,
     instanceId: operation.instanceId,
     version: operation.version,
-    credentialKeysetCommitment: operation.credentialKeysetCommitment,
     hash: 'a'.repeat(64),
     now: fixture.kit.clock.now(),
   };
@@ -295,7 +294,7 @@ describe('wallet operation claim SQL and atomicity', () => {
       throw new Error('Claim UPDATE was not captured');
     expect(
       [settlement, finalization, notIssued, revoke].map(({ params }) => params.length),
-    ).toEqual([18, 30, 32, 13]);
+    ).toEqual([16, 28, 30, 11]);
     for (const { sql } of [settlement, finalization, notIssued]) {
       expect(sql.match(/FROM current_operation proven/g)).toHaveLength(1);
     }
@@ -313,7 +312,7 @@ describe('wallet operation claim SQL and atomicity', () => {
     }
   });
 
-  it('refuses a mismatched keyset pin and rechecks the desired operation when settling', async () => {
+  it('rechecks the desired operation when settling', async () => {
     const db = (await makeEnv()).DB;
     const { claim, operation } = await claimFixture(db);
     expect(await claimOperation(db, claim)).toBe('claimed');
@@ -324,28 +323,6 @@ describe('wallet operation claim SQL and atomicity', () => {
         (operation_id, country_code, state, attempts, updated_at) VALUES (?, 'GB', 'uncertain', 1, ?)`,
       [operation.id, claim.now],
     );
-    const other =
-      claim.credentialKeysetCommitment === 'f'.repeat(64) ? 'e'.repeat(64) : 'f'.repeat(64);
-    expect(
-      await settleClaim(db, {
-        ...claim,
-        credentialKeysetCommitment: other,
-        now: claim.now + 1,
-      }),
-    ).toBe(false);
-    expect(
-      await first(
-        db,
-        'SELECT state, last_result_at FROM wallet_provider_instance_operations WHERE id = ?',
-        [operation.id],
-      ),
-    ).toEqual({ state: 'uncertain', last_result_at: null });
-    expect(
-      await first(db, 'SELECT state FROM wallet_provider_sync_targets WHERE operation_id = ?', [
-        operation.id,
-      ]),
-    ).toEqual({ state: 'uncertain' });
-
     const next = {
       ...operation,
       operationId: crypto.randomUUID(),
@@ -382,7 +359,7 @@ describe('wallet operation claim SQL and atomicity', () => {
     ).toEqual({ state: 'pending' });
   });
 
-  it('refuses a mismatched keyset pin and rechecks pass authority before finalization', async () => {
+  it('rechecks pass authority before finalization', async () => {
     const db = (await makeEnv()).DB;
     const fixture = await claimFixture(db);
     const { claim, operation } = fixture;
@@ -394,17 +371,6 @@ describe('wallet operation claim SQL and atomicity', () => {
       result: { kind: 'success' as const, httpStatus: 200 },
       raw: await outcome(fixture.kit.env, operation.orgId),
     };
-    const other =
-      claim.credentialKeysetCommitment === 'f'.repeat(64) ? 'e'.repeat(64) : 'f'.repeat(64);
-    expect(await finishOperation(db, { ...finish, credentialKeysetCommitment: other })).toBeNull();
-    expect(
-      await first(
-        db,
-        'SELECT state, claim_hash FROM wallet_provider_instance_operations WHERE id = ?',
-        [operation.id],
-      ),
-    ).toEqual({ state: 'claimed', claim_hash: claim.hash });
-
     const stalePass = interceptDatabase(db, [], async () => {
       await run(db, 'UPDATE passes SET revision = revision + 1 WHERE id = ?', [operation.passId]);
     });

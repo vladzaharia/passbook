@@ -1,12 +1,12 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, first } from '../../platform/db.ts';
 import type { ApprovalRow, CandidateRow } from '../templates/repo-releases.ts';
-import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import {
   type NativeProjection,
   NativeProjectionSchema,
   type NativeProvider,
 } from './projection-contract.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 
 export {
   insertProjectionApprovalStmt,
@@ -14,10 +14,10 @@ export {
   insertProjectionReleaseStmt,
 } from './repo-projection-write.ts';
 
-export interface ProjectionCandidate
-  extends Omit<CandidateRow, 'orgId' | 'provider'>,
-    WalletCredentialKeysetProof {
+export interface ProjectionCandidate extends Omit<CandidateRow, 'orgId' | 'provider'> {
   orgId: string;
+  /** The keyset the candidate was authored under; the insert guard requires it to be the pinned one. */
+  credentialKeysetCommitment: string;
   provider: NativeProvider;
   sourceReleaseId: string;
   sourceReleaseGeneration: number;
@@ -70,7 +70,8 @@ export async function getProjectionCandidate(
 ): Promise<ProjectionCandidate | null> {
   const row = await first<StoredCandidate>(
     db,
-    `SELECT ${candidateColumns} FROM template_candidates WHERE id = ? AND provider IN ('google','samsung')`,
+    `SELECT ${candidateColumns} FROM template_candidates WHERE id = ? AND provider IN ('google','samsung')
+      AND credential_keyset_commitment = ${pinnedKeysetSql}`,
     [id],
   );
   return row ? decode(row) : null;
@@ -78,15 +79,14 @@ export async function getProjectionCandidate(
 export async function selectProjectionCandidates(
   db: D1Database,
   scope: ProjectionScope,
-  proof: WalletCredentialKeysetProof,
 ): Promise<ProjectionCandidate[]> {
   const rows = await all<StoredCandidate>(
     db,
     `SELECT ${candidateColumns} FROM template_candidates
     WHERE template_id = ? AND org_id = ? AND mode = ? AND provider = ?
-      AND credential_keyset_commitment = ?
+      AND credential_keyset_commitment = ${pinnedKeysetSql}
     ORDER BY created_at DESC, id DESC`,
-    [scope.templateId, scope.orgId, scope.mode, scope.provider, proof.credentialKeysetCommitment],
+    [scope.templateId, scope.orgId, scope.mode, scope.provider],
   );
   return rows.flatMap((row) => {
     const decoded = decode(row);
@@ -98,17 +98,16 @@ export async function selectProjectionCandidates(
 export async function selectReleasedProjectionCandidates(
   db: D1Database,
   scope: ProjectionScope,
-  proof: WalletCredentialKeysetProof,
 ): Promise<ProjectionCandidate[]> {
   const values = [scope.templateId, scope.orgId, scope.mode, scope.provider];
   const rows = await all<StoredCandidate>(
     db,
     `SELECT ${candidateColumns} FROM template_candidates
-    WHERE template_id = ? AND org_id = ? AND mode = ? AND provider = ? AND credential_keyset_commitment = ?
+    WHERE template_id = ? AND org_id = ? AND mode = ? AND provider = ? AND credential_keyset_commitment = ${pinnedKeysetSql}
       AND id IN (SELECT candidate_id FROM template_releases
         WHERE template_id = ? AND org_id = ? AND mode = ? AND provider = ? AND candidate_id IS NOT NULL
-          AND credential_keyset_commitment = ?)`,
-    [...values, proof.credentialKeysetCommitment, ...values, proof.credentialKeysetCommitment],
+          AND credential_keyset_commitment = ${pinnedKeysetSql})`,
+    [...values, ...values],
   );
   return rows.flatMap((row) => {
     const decoded = decode(row);
@@ -120,7 +119,6 @@ export async function selectReleasedProjectionCandidates(
 export async function selectProjectionApprovals(
   db: D1Database,
   scope: ProjectionScope,
-  proof: WalletCredentialKeysetProof,
 ): Promise<ApprovalRow[]> {
   return all<ApprovalRow>(
     db,
@@ -128,9 +126,9 @@ export async function selectProjectionApprovals(
     a.reviewer_id AS reviewerId, a.created_at AS createdAt
     FROM template_approvals a JOIN template_candidates c ON c.id = a.candidate_id
     WHERE c.template_id = ? AND c.org_id = ? AND c.mode = ? AND c.provider = ?
-      AND c.credential_keyset_commitment = ? AND a.credential_keyset_commitment = c.credential_keyset_commitment
+      AND c.credential_keyset_commitment = ${pinnedKeysetSql} AND a.credential_keyset_commitment = c.credential_keyset_commitment
     ORDER BY a.created_at DESC, a.id DESC`,
-    [scope.templateId, scope.orgId, scope.mode, scope.provider, proof.credentialKeysetCommitment],
+    [scope.templateId, scope.orgId, scope.mode, scope.provider],
   );
 }
 
@@ -138,7 +136,6 @@ export async function selectProjectionApprovals(
 export async function selectProjectionReleaseIds(
   db: D1Database,
   scope: ProjectionScope,
-  proof: WalletCredentialKeysetProof,
 ): Promise<Set<string>> {
   const rows = await all<{ id: string }>(
     db,
@@ -146,9 +143,9 @@ export async function selectProjectionReleaseIds(
     JOIN template_candidates c ON c.id = r.candidate_id
     JOIN template_approvals a ON a.id = r.approval_id AND a.candidate_id = c.id
     WHERE r.template_id = ? AND r.org_id = ? AND r.mode = ? AND r.provider = ?
-      AND r.credential_keyset_commitment = ? AND c.credential_keyset_commitment = r.credential_keyset_commitment
+      AND r.credential_keyset_commitment = ${pinnedKeysetSql} AND c.credential_keyset_commitment = r.credential_keyset_commitment
       AND a.credential_keyset_commitment = r.credential_keyset_commitment`,
-    [scope.templateId, scope.orgId, scope.mode, scope.provider, proof.credentialKeysetCommitment],
+    [scope.templateId, scope.orgId, scope.mode, scope.provider],
   );
   return new Set(rows.map((row) => row.id));
 }

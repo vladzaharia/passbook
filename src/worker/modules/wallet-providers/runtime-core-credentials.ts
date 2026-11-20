@@ -18,14 +18,12 @@ export type Provider = 'google' | 'samsung';
 type GoogleSnapshot = Extract<WalletProviderCredentialSnapshot, { provider: 'google' }>;
 type SamsungSnapshot = Extract<WalletProviderCredentialSnapshot, { provider: 'samsung' }>;
 
-/** Server-authorized projection and the original credential-keyset proof, never client authority. */
+/** Server-authorized projection, never client authority. */
 export interface WalletRuntimeScope {
   orgId: string;
   mode: Mode;
   accountId: string;
   accountRevision: number;
-  /** Captured before creating the provider identity; never replaced by a later current keyset. */
-  credentialKeysetCommitment: string;
   providerIdentityHash: string;
   /** Current native projection, distinct from the original class identity release. */
   providerReleaseId: string;
@@ -95,15 +93,8 @@ export function runtimeAccountUnavailable(ambiguous = false): WalletRuntimeError
 
 export function copyRuntimeScope(scope: WalletRuntimeScope): WalletRuntimeScope {
   try {
-    const {
-      orgId,
-      mode,
-      accountId,
-      accountRevision,
-      credentialKeysetCommitment,
-      providerIdentityHash,
-      providerReleaseId,
-    } = scope;
+    const { orgId, mode, accountId, accountRevision, providerIdentityHash, providerReleaseId } =
+      scope;
     if (
       typeof orgId !== 'string' ||
       !orgId.trim() ||
@@ -112,8 +103,6 @@ export function copyRuntimeScope(scope: WalletRuntimeScope): WalletRuntimeScope 
       !accountId.trim() ||
       !Number.isSafeInteger(accountRevision) ||
       accountRevision < 1 ||
-      typeof credentialKeysetCommitment !== 'string' ||
-      !/^[0-9a-f]{64}$/.test(credentialKeysetCommitment) ||
       typeof providerIdentityHash !== 'string' ||
       !/^[0-9a-f]{64}$/.test(providerIdentityHash) ||
       typeof providerReleaseId !== 'string' ||
@@ -126,21 +115,12 @@ export function copyRuntimeScope(scope: WalletRuntimeScope): WalletRuntimeScope 
       mode,
       accountId,
       accountRevision,
-      credentialKeysetCommitment,
       providerIdentityHash,
       providerReleaseId,
     };
   } catch {
     throw runtimeAccountUnavailable();
   }
-}
-
-export async function assertRuntimeCredentialKeyset(
-  ctx: ServiceContext,
-  scope: WalletRuntimeScope,
-): Promise<void> {
-  if ((await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== scope.credentialKeysetCommitment)
-    throw runtimeAccountUnavailable();
 }
 
 async function snapshot(
@@ -164,6 +144,7 @@ async function snapshot(
   // Every provider credential read, hence every outbound provider call, passes this gate.
   assertWalletProviderEnabled(provider, scope.mode);
   try {
+    await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
     // Unpurposed reads have no credential path yet; the provider track that enables issuance adds one.
     if (!purpose) throw runtimeAccountUnavailable();
     let account: WalletProviderCredentialSnapshot | null;
@@ -174,7 +155,6 @@ async function snapshot(
         mode: scope.mode,
         accountId: scope.accountId,
         accountRevision: scope.accountRevision,
-        credentialKeysetCommitment: scope.credentialKeysetCommitment,
         projectionReleaseId: scope.providerReleaseId,
         instanceId: purpose.instanceId,
         operationId: purpose.operationId,
@@ -192,7 +172,6 @@ async function snapshot(
           accountId: scope.accountId,
           accountRevision: scope.accountRevision,
           providerIdentityHash: scope.providerIdentityHash,
-          credentialKeysetCommitment: scope.credentialKeysetCommitment,
           releaseId: scope.providerReleaseId,
         }))
       )
@@ -202,7 +181,6 @@ async function snapshot(
         mode: scope.mode,
         accountId: scope.accountId,
         accountRevision: scope.accountRevision,
-        credentialKeysetCommitment: scope.credentialKeysetCommitment,
         projectionReleaseId: scope.providerReleaseId,
         instanceId: purpose.instanceId,
         refHash: purpose.refHash,
@@ -219,7 +197,6 @@ async function snapshot(
       account.provider !== provider ||
       account.accountId !== scope.accountId ||
       account.revision !== scope.accountRevision ||
-      account.credentialKeysetCommitment !== scope.credentialKeysetCommitment ||
       (await providerIdentityHash(account, cardType ?? undefined)) !== scope.providerIdentityHash ||
       (account.provider === 'google' &&
         (!(account.objectIdHmacKey instanceof Uint8Array) ||
@@ -227,7 +204,6 @@ async function snapshot(
     ) {
       throw runtimeAccountUnavailable();
     }
-    await assertRuntimeCredentialKeyset(ctx, scope);
     return account;
   } catch {
     // Account service/decryption exceptions must never escape with credential material.
@@ -259,7 +235,6 @@ export async function runtimeGoogleAccount(
   const value = await snapshot(ctx, scope, 'google', retirement);
   try {
     const account = await validateGoogleAccount(value.credentials);
-    await assertRuntimeCredentialKeyset(ctx, scope);
     return {
       account,
       hmacKey: value.objectIdHmacKey,
@@ -285,7 +260,6 @@ export async function runtimeSamsungAccount(
       ctx.clock.now(),
       cardType ?? undefined,
     );
-    await assertRuntimeCredentialKeyset(ctx, scope);
     return account;
   } catch {
     throw runtimeAccountUnavailable();

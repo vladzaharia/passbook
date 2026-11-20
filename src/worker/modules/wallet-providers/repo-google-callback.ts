@@ -4,6 +4,7 @@ import { UnavailableError } from '../../platform/errors.ts';
 import { REVISION_EXPR } from './repo-accounts.ts';
 import { walletHolderEventStmt } from './repo-holder-events.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import type { WalletRuntimeScope } from './runtime-core.ts';
 
 export interface GoogleCallbackAccountScope {
@@ -11,7 +12,6 @@ export interface GoogleCallbackAccountScope {
   orgId: string;
   mode: 'live' | 'test';
   accountRevision: number;
-  credentialKeysetCommitment: string;
 }
 
 export interface GoogleCallbackBinding extends GoogleCallbackAccountScope {
@@ -37,16 +37,14 @@ export interface GoogleCallbackBindingInput {
 export function findGoogleCallbackAccount(
   db: D1Database,
   accountId: string,
-  credentialKeysetCommitment: string,
 ): Promise<GoogleCallbackAccountScope | null> {
   return first(
     db,
     `SELECT id AS accountId, org_id AS orgId, mode,
-      CASE WHEN credential_id IS NULL THEN enrolment_revision ELSE revision END AS accountRevision,
-      ? AS credentialKeysetCommitment
+      CASE WHEN credential_id IS NULL THEN enrolment_revision ELSE revision END AS accountRevision
     FROM wallet_provider_accounts WHERE id = ? AND provider = 'google' AND revoked_at IS NULL
       AND (credential_id IS NOT NULL OR hmac_ciphertext IS NOT NULL)`,
-    [credentialKeysetCommitment, accountId],
+    [accountId],
   );
 }
 
@@ -55,7 +53,7 @@ function googleBindingProof(scope: WalletRuntimeScope, input: GoogleCallbackBind
     AND i.provider = 'google' AND i.account_id = ? AND i.identity_projection_release_id = ?
     AND i.credential_generation = ? AND i.channel_epoch = ? AND op.version = ? AND op.account_revision = ? AND op.kind = 'upsert'
     AND op.state IN ('pending', 'retry', 'claimed', 'succeeded')
-    AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ?
+    AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND op.credential_keyset_commitment = ${pinnedKeysetSql}
     AND ${walletInstanceOperationCurrentSql('i', 'op', 'callback_clock.now_ms')}`;
   const params = [
     input.instanceId,
@@ -68,8 +66,6 @@ function googleBindingProof(scope: WalletRuntimeScope, input: GoogleCallbackBind
     input.channelEpoch,
     input.operationVersion,
     scope.accountRevision,
-    scope.credentialKeysetCommitment,
-    scope.credentialKeysetCommitment,
   ] as const;
   const join = `FROM wallet_provider_instances i JOIN wallet_provider_instance_operations op
     ON op.id = i.desired_operation_id AND op.instance_id = i.id
@@ -90,8 +86,8 @@ function googleBindingCurrentStatement(
     `SELECT 1 AS ok ${join}
     JOIN wallet_google_callback_bindings b ON b.instance_id = i.id AND b.account_id = i.account_id
     WHERE ${where} AND b.class_id_hash = ? AND b.object_id_hash = ?
-      AND b.credential_keyset_commitment = ?`,
-    [now, ...params, hashes.classIdHash, hashes.objectIdHash, scope.credentialKeysetCommitment],
+      AND b.credential_keyset_commitment = ${pinnedKeysetSql}`,
+    [now, ...params, hashes.classIdHash, hashes.objectIdHash],
   );
 }
 
@@ -109,16 +105,9 @@ export async function putGoogleCallbackBinding(
       db,
       `INSERT INTO wallet_google_callback_bindings
         (instance_id, account_id, class_id_hash, object_id_hash, created_at, credential_keyset_commitment)
-      SELECT i.id, i.account_id, ?, ?, ?, ? ${join} WHERE ${where}
+      SELECT i.id, i.account_id, ?, ?, ?, ${pinnedKeysetSql} ${join} WHERE ${where}
       ON CONFLICT(instance_id) DO NOTHING`,
-      [
-        hashes.classIdHash,
-        hashes.objectIdHash,
-        now,
-        scope.credentialKeysetCommitment,
-        now,
-        ...params,
-      ],
+      [hashes.classIdHash, hashes.objectIdHash, now, now, ...params],
     ),
     googleBindingCurrentStatement(db, scope, input, hashes, now),
   ]);
@@ -143,18 +132,13 @@ export async function findGoogleCallbackBinding(
   classIdHash: string,
   objectIdHash: string,
 ): Promise<GoogleCallbackBinding | null> {
-  const credentialKeysetCommitment = scope.credentialKeysetCommitment;
-  const row = await first<
-    Omit<GoogleCallbackBinding, 'credentialKeysetCommitment'> & {
-      credentialKeysetCommitment: string | null;
-    }
-  >(
+  const row = await first<GoogleCallbackBinding & { keysetOk: number }>(
     db,
     `SELECT i.id AS instanceId, i.pass_id AS passId,
       i.identity_projection_release_id AS releaseId, i.credential_generation AS credentialGeneration,
       i.channel_epoch AS channelEpoch, a.id AS accountId, a.org_id AS orgId, a.mode, ${REVISION_EXPR} AS accountRevision,
-      CASE WHEN i.credential_keyset_commitment = b.credential_keyset_commitment
-        THEN b.credential_keyset_commitment END AS credentialKeysetCommitment
+      (i.credential_keyset_commitment = b.credential_keyset_commitment
+        AND b.credential_keyset_commitment = ${pinnedKeysetSql}) AS keysetOk
     FROM wallet_google_callback_bindings b
     JOIN wallet_provider_instances i ON i.id = b.instance_id AND i.account_id = b.account_id
     JOIN wallet_provider_accounts a ON a.id = i.account_id AND a.org_id = i.org_id
@@ -165,12 +149,13 @@ export async function findGoogleCallbackBinding(
     [scope.accountId, classIdHash, objectIdHash, scope.orgId, scope.mode, scope.accountRevision],
   );
   if (!row) return null;
-  if (row.credentialKeysetCommitment !== credentialKeysetCommitment)
+  if (!row.keysetOk)
     throw new UnavailableError(
       'Google Wallet callback service is unavailable.',
       'GOOGLE_CALLBACK_UNAVAILABLE',
     );
-  return { ...row, credentialKeysetCommitment };
+  const { keysetOk: _keysetOk, ...binding } = row;
+  return binding;
 }
 
 export interface GoogleCallbackReceiptInput {
@@ -194,7 +179,7 @@ function googleReceiptProof(binding: GoogleCallbackBinding, input: GoogleCallbac
       AND i.credential_generation = ? AND i.channel_epoch = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'google' AND a.id = ?
       AND ${REVISION_EXPR} = ? AND a.revoked_at IS NULL AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
       AND b.class_id_hash = ? AND b.object_id_hash = ?
-      AND i.credential_keyset_commitment = ? AND b.credential_keyset_commitment = ?
+      AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND b.credential_keyset_commitment = ${pinnedKeysetSql}
       AND ? > ?`;
   const params = [
     binding.instanceId,
@@ -208,8 +193,6 @@ function googleReceiptProof(binding: GoogleCallbackBinding, input: GoogleCallbac
     binding.accountRevision,
     input.classIdHash,
     input.objectIdHash,
-    binding.credentialKeysetCommitment,
-    binding.credentialKeysetCommitment,
     input.validUntil,
     input.now,
   ] as const;

@@ -2,6 +2,7 @@ import type { Envelope } from '../../platform/crypto.ts';
 import { all, batch, first, type SqlValue, stmt } from '../../platform/db.ts';
 import { type InstancePass, instancePass } from './repo-callbacks-identity.ts';
 import { samsungHolderEventStmt } from './repo-holder-events.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 
 export type SamsungCardEvent = 'ADDED' | 'DELETED' | 'UPDATED' | 'PROVISIONED';
 
@@ -39,7 +40,6 @@ export interface SamsungReceipt {
 export interface SamsungStateRef {
   referenceId: string;
   instanceId: string;
-  credentialKeysetCommitment: string;
 }
 
 /** A token already recorded for this ref: the same delivery again, whatever its request id. */
@@ -208,7 +208,6 @@ export interface SamsungIssuedRef {
   referenceId: string;
   instanceId: string;
   refHash: string;
-  credentialKeysetCommitment: string;
 }
 
 const dead = `(r.retired_at IS NULL OR NOT EXISTS (
@@ -222,13 +221,12 @@ const dead = `(r.retired_at IS NULL OR NOT EXISTS (
 export function findSamsungIssuedRefs(
   db: D1Database,
   refHash: string,
-  credentialKeysetCommitment: string,
 ): Promise<SamsungIssuedRef[]> {
   return all<SamsungIssuedRef>(
     db,
     `SELECT i.org_id AS orgId, i.mode, i.account_id AS accountId,
       MAX(o.account_revision) AS accountRevision, r.id AS referenceId, i.id AS instanceId,
-      r.ref_hash AS refHash, r.credential_keyset_commitment AS credentialKeysetCommitment
+      r.ref_hash AS refHash
     FROM wallet_samsung_fetch_refs r JOIN wallet_provider_instances i ON i.id = r.instance_id
     JOIN wallet_provider_instance_operations o ON o.instance_id = i.id
     JOIN wallet_provider_account_events e ON e.account_id = i.account_id AND e.org_id = i.org_id
@@ -236,9 +234,9 @@ export function findSamsungIssuedRefs(
       AND e.revision = o.account_revision
     WHERE r.ref_hash = ? AND i.provider = 'samsung' AND i.account_id IS NOT NULL
       AND r.credential_keyset_commitment = i.credential_keyset_commitment
-      AND i.credential_keyset_commitment = ? AND ${dead}
+      AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND ${dead}
     GROUP BY e.credential_id ORDER BY accountRevision DESC LIMIT 33`,
-    [refHash, credentialKeysetCommitment],
+    [refHash],
   );
 }
 
@@ -250,15 +248,8 @@ function issuedGate(ref: SamsungIssuedRef) {
   return {
     sql: `r.id = ? AND r.ref_hash = ? AND i.org_id = ? AND i.mode = ? AND i.account_id = ?
       AND r.credential_keyset_commitment = i.credential_keyset_commitment
-      AND i.credential_keyset_commitment = ? AND ${dead}`,
-    params: [
-      ref.referenceId,
-      ref.refHash,
-      ref.orgId,
-      ref.mode,
-      ref.accountId,
-      ref.credentialKeysetCommitment,
-    ],
+      AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND ${dead}`,
+    params: [ref.referenceId, ref.refHash, ref.orgId, ref.mode, ref.accountId],
   };
 }
 

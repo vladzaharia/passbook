@@ -32,16 +32,16 @@ beforeAll(prepareRuntimeTestMaterials, 30_000);
 afterEach(() => vi.unstubAllGlobals());
 
 describe('wallet issuance prerequisites', () => {
-  it('copies and validates the original keyset commitment', async () => {
+  it('copies and validates the runtime scope', async () => {
     const f = await runtimeTestFixture();
     const scope = await f.scopeOf(await f.configuredGoogle());
     const copied = copyRuntimeScope(scope);
     expect(copied).toEqual(scope);
     expect(copied).not.toBe(scope);
-    for (const credentialKeysetCommitment of ['', 'A'.repeat(64), 'a'.repeat(63), undefined]) {
-      expect(() =>
-        copyRuntimeScope({ ...scope, credentialKeysetCommitment } as typeof scope),
-      ).toThrow('Wallet provider account is unavailable.');
+    for (const providerIdentityHash of ['', 'A'.repeat(64), 'a'.repeat(63), undefined]) {
+      expect(() => copyRuntimeScope({ ...scope, providerIdentityHash } as typeof scope)).toThrow(
+        'Wallet provider account is unavailable.',
+      );
     }
   });
 
@@ -120,7 +120,6 @@ describe('wallet issuance prerequisites', () => {
     const before = await readConfiguredWalletProviderCredentials(f.ctx, accountScope, {
       accountId: scope.accountId,
       accountRevision: scope.accountRevision,
-      credentialKeysetCommitment: scope.credentialKeysetCommitment,
     });
     if (before?.provider !== 'google') throw new Error('Missing initial credential fixture');
     const rotated = await configureWalletProviderAccount(f.ctx, f.auth, {
@@ -132,7 +131,6 @@ describe('wallet issuance prerequisites', () => {
     const after = await readConfiguredWalletProviderCredentials(f.ctx, accountScope, {
       accountId: nextScope.accountId,
       accountRevision: nextScope.accountRevision,
-      credentialKeysetCommitment: nextScope.credentialKeysetCommitment,
     });
     if (after?.provider !== 'google') throw new Error('Missing rotated credential fixture');
     expect(after.objectIdHmacKey).toEqual(before.objectIdHmacKey);

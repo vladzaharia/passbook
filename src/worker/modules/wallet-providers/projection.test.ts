@@ -45,7 +45,6 @@ import { generatedSource, syncBakedTemplates } from '../templates/sync.ts';
 import { bakedFrom, fakeAssets, importZip, sourceOf } from '../templates/testing.ts';
 import { configureWalletProviderAccount, revokeWalletProviderAccount } from './account-service.ts';
 import { replaceCallbackKeysetForTest } from './callbacks-test-fixtures.ts';
-import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import {
   GOOGLE_PROJECTION_POLICY,
   NativeProjectionSchema,
@@ -134,7 +133,7 @@ interface ProjectionFixture {
   otherReviewer: SessionAuth;
   foreign: SessionAuth;
   ctx: ServiceContext;
-  proof: WalletCredentialKeysetProof;
+  proof: { credentialKeysetCommitment: string };
   templateId: string;
   version: string;
   apple: { orgId: string; mode: 'live'; provider: 'apple' };
@@ -358,7 +357,7 @@ describe('native projection approval', () => {
   it('does not inherit Apple approval and isolates tenant, mode, provider, version and source', async () => {
     const test = await setup();
     const candidate = await nativeCandidate(test);
-    expect(await getApprovedProjection(test.ctx, lookup(test), test.proof)).toBeNull();
+    expect(await getApprovedProjection(test.ctx, lookup(test))).toBeNull();
     await expect(
       publishProjectionRelease(test.ctx, test.author, test.templateId, {
         ...test.scope,
@@ -370,39 +369,25 @@ describe('native projection approval', () => {
     ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_CONFLICT' });
     const approval = await nativeApproval(test, candidate);
     const release = await nativePublish(test, candidate, approval);
-    expect(await getApprovedProjection(test.ctx, lookup(test), test.proof)).toMatchObject({
+    expect(await getApprovedProjection(test.ctx, lookup(test))).toMatchObject({
       release: { id: release.id, sourceReleaseId: test.source.id, accountRevision: 1 },
       projection,
     });
     expect(
-      await getApprovedProjection(
-        test.ctx,
-        { ...lookup(test), orgId: test.otherOrg.id },
-        test.proof,
-      ),
+      await getApprovedProjection(test.ctx, { ...lookup(test), orgId: test.otherOrg.id }),
+    ).toBeNull();
+    expect(await getApprovedProjection(test.ctx, { ...lookup(test), mode: 'test' })).toBeNull();
+    expect(
+      await getApprovedProjection(test.ctx, { ...lookup(test), provider: 'google' }),
     ).toBeNull();
     expect(
-      await getApprovedProjection(test.ctx, { ...lookup(test), mode: 'test' }, test.proof),
+      await getApprovedProjection(test.ctx, { ...lookup(test), templateVersion: 'other' }),
     ).toBeNull();
     expect(
-      await getApprovedProjection(test.ctx, { ...lookup(test), provider: 'google' }, test.proof),
+      await getApprovedProjection(test.ctx, { ...lookup(test), appleReleaseId: 'other' }),
     ).toBeNull();
     expect(
-      await getApprovedProjection(
-        test.ctx,
-        { ...lookup(test), templateVersion: 'other' },
-        test.proof,
-      ),
-    ).toBeNull();
-    expect(
-      await getApprovedProjection(
-        test.ctx,
-        { ...lookup(test), appleReleaseId: 'other' },
-        test.proof,
-      ),
-    ).toBeNull();
-    expect(
-      await getApprovedProjection(test.ctx, { ...lookup(test), adapterRevision: 99 }, test.proof),
+      await getApprovedProjection(test.ctx, { ...lookup(test), adapterRevision: 99 }),
     ).toBeNull();
     await expect(
       createProjectionCandidate(test.ctx, test.foreign, test.templateId, {
@@ -474,7 +459,7 @@ describe('native projection approval', () => {
       }),
     ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_SCHEMA' });
     expect(
-      await getApprovedProjection(test.ctx, { ...lookup(test), provider: 'google' }, test.proof),
+      await getApprovedProjection(test.ctx, { ...lookup(test), provider: 'google' }),
     ).toBeNull();
   });
 
@@ -485,12 +470,7 @@ describe('native projection approval', () => {
     const reject = 'invalid provider release approval or source';
     await expect(insertDirectProjectionRelease(test, candidate, approval)).rejects.toThrow(reject);
     expect(
-      await ensureSamsungProjectionEvidence(
-        test.ctx,
-        candidate.id,
-        candidate.candidateHash,
-        test.proof,
-      ),
+      await ensureSamsungProjectionEvidence(test.ctx, candidate.id, candidate.candidateHash),
     ).toBe(true);
 
     const google = { ...test.scope, provider: 'google' as const };
@@ -639,7 +619,6 @@ describe('native projection approval', () => {
         test.ctx,
         otherCandidate.id,
         otherCandidate.candidateHash,
-        test.proof,
       ),
     ).toBe(true);
     const otherEvidence = await first<{ probe_id: string }>(
@@ -686,12 +665,7 @@ describe('native projection approval', () => {
     const candidate = await nativeCandidate(test);
     const approval = await nativeApproval(test, candidate);
     expect(
-      await ensureSamsungProjectionEvidence(
-        test.ctx,
-        candidate.id,
-        candidate.candidateHash,
-        test.proof,
-      ),
+      await ensureSamsungProjectionEvidence(test.ctx, candidate.id, candidate.candidateHash),
     ).toBe(true);
     // Candidates are immutable by trigger; lift those triggers for the one in-place edit, then restore.
     const triggers = (
@@ -727,7 +701,6 @@ describe('native projection approval', () => {
         staleSource.ctx,
         sourceCandidate.id,
         sourceCandidate.candidateHash,
-        staleSource.proof,
       ),
     ).toBe(true);
     const next = await createCandidate(
@@ -765,7 +738,6 @@ describe('native projection approval', () => {
         staleAccount.ctx,
         accountCandidate.id,
         accountCandidate.candidateHash,
-        staleAccount.proof,
       ),
     ).toBe(true);
     await configureWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
@@ -784,7 +756,6 @@ describe('native projection approval', () => {
         staleAccount.ctx,
         revokedCandidate.id,
         revokedCandidate.candidateHash,
-        staleAccount.proof,
       ),
     ).toBe(true);
     await revokeWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
@@ -851,7 +822,7 @@ describe('native projection approval', () => {
       templateVersion: version,
       appleReleaseId: sourceId,
     };
-    expect(await getApprovedProjection(syncCtx, trustedScope, test.proof)).toBeNull();
+    expect(await getApprovedProjection(syncCtx, trustedScope)).toBeNull();
     const candidate = await createProjectionCandidate(syncCtx, test.author, templateId, {
       ...test.scope,
       version,
@@ -872,7 +843,7 @@ describe('native projection approval', () => {
       candidateHash: candidate.candidateHash,
       expectedGeneration: 0,
     });
-    expect(await getApprovedProjection(syncCtx, trustedScope, test.proof)).toMatchObject({
+    expect(await getApprovedProjection(syncCtx, trustedScope)).toMatchObject({
       release: { sourceReleaseId: sourceId, orgId: test.org.id },
       projection,
     });
@@ -943,18 +914,11 @@ describe('native projection approval', () => {
       },
     ]) {
       expect(
-        (
-          await insertProjectionCandidateStmt(
-            env.DB,
-            stale,
-            authority,
-            clock.now(),
-            test.proof,
-          ).run()
-        ).meta.changes,
+        (await insertProjectionCandidateStmt(env.DB, stale, authority, clock.now()).run()).meta
+          .changes,
       ).toBe(0);
     }
-    await insertProjectionCandidateStmt(env.DB, forged, authority, clock.now(), test.proof).run();
+    await insertProjectionCandidateStmt(env.DB, forged, authority, clock.now()).run();
     await expect(
       approveProjectionCandidate(test.ctx, test.reviewer, test.templateId, forged.id, {
         ...test.scope,
@@ -994,7 +958,7 @@ describe('native projection approval', () => {
     await expect(nativePublish(test, waiting, waitingApproval, 1)).rejects.toMatchObject({
       code: 'WALLET_PROJECTION_CONFLICT',
     });
-    expect(await getApprovedProjection(test.ctx, lookup(test), test.proof)).toBeNull();
+    expect(await getApprovedProjection(test.ctx, lookup(test))).toBeNull();
 
     const second = await setup();
     const current = await nativeCandidate(second);
@@ -1004,7 +968,7 @@ describe('native projection approval', () => {
       ...second.scope,
       expectedRevision: 1,
     });
-    expect(await getApprovedProjection(second.ctx, lookup(second), second.proof)).toBeNull();
+    expect(await getApprovedProjection(second.ctx, lookup(second))).toBeNull();
   });
 
   it('enforces tenant, mode and independent-review permissions on the existing HTTP routes', async () => {
@@ -1159,12 +1123,7 @@ describe('native projection approval', () => {
       'templates:publish',
     );
     expect(
-      await ensureSamsungProjectionEvidence(
-        test.ctx,
-        candidate.id,
-        candidate.candidateHash,
-        test.proof,
-      ),
+      await ensureSamsungProjectionEvidence(test.ctx, candidate.id, candidate.candidateHash),
     ).toBe(true);
     const statement = insertProjectionReleaseStmt(env.DB, {
       id: test.ctx.ids.id(),
@@ -1210,12 +1169,7 @@ describe('native projection approval', () => {
       'templates:publish',
     );
     expect(
-      await ensureSamsungProjectionEvidence(
-        test.ctx,
-        candidate.id,
-        candidate.candidateHash,
-        test.proof,
-      ),
+      await ensureSamsungProjectionEvidence(test.ctx, candidate.id, candidate.candidateHash),
     ).toBe(true);
     const statement = insertProjectionReleaseStmt(env.DB, {
       id: test.ctx.ids.id(),
@@ -1254,14 +1208,9 @@ describe('native projection approval', () => {
     const unreviewed = await nativeCandidate(test);
     const waiting = await nativeCandidate(test);
     const waitingApproval = await nativeApproval(test, waiting);
-    expect(
-      await ensureSamsungProjectionEvidence(
-        test.ctx,
-        waiting.id,
-        waiting.candidateHash,
-        test.proof,
-      ),
-    ).toBe(true);
+    expect(await ensureSamsungProjectionEvidence(test.ctx, waiting.id, waiting.candidateHash)).toBe(
+      true,
+    );
     for (const [table, column, id] of [
       ['template_candidates', 'id', published.id],
       ['template_approvals', 'id', publishedApproval.id],
@@ -1277,19 +1226,15 @@ describe('native projection approval', () => {
         ),
       ).toEqual({ commitment: test.proof.credentialKeysetCommitment });
     }
-    expect(
-      await getApprovedProjection(test.ctx, lookup(test), {} as WalletCredentialKeysetProof),
-    ).toBeNull();
 
     const newKey = btoa('z'.repeat(32));
     const newCommitment = await credentialRefKeysetCommitment({ ...env, KEK_V1: newKey });
-    const newProof = { credentialKeysetCommitment: newCommitment };
     expect(newCommitment).not.toBe(test.proof.credentialKeysetCommitment);
     const oldKey = env.KEK_V1;
     try {
       // The account is encrypted under V2, so the changed oldest KEK does not make decryption fail.
       env.KEK_V1 = newKey;
-      expect(await getApprovedProjection(test.ctx, lookup(test), test.proof)).toBeNull();
+      expect(await getApprovedProjection(test.ctx, lookup(test))).toBeNull();
       await replaceCallbackKeysetForTest(env.DB, newCommitment);
       const account = await findAccount(env.DB, test.scope);
       if (
@@ -1318,22 +1263,18 @@ describe('native projection approval', () => {
       );
       expect(JSON.parse(cleartext)).toMatchObject({ provider: 'samsung' });
       for (let retry = 0; retry < 2; retry++) {
+        // Candidates stored under the old keyset are not found once the singleton is rekeyed.
         await expect(nativeApproval(test, unreviewed)).rejects.toMatchObject({
-          code: 'WALLET_PROJECTION_CONFLICT',
+          code: 'WALLET_PROJECTION_NOT_FOUND',
         });
         await expect(nativePublish(test, waiting, waitingApproval, 1)).rejects.toMatchObject({
-          code: 'WALLET_PROJECTION_CONFLICT',
+          code: 'WALLET_PROJECTION_NOT_FOUND',
         });
         expect(
-          await ensureSamsungProjectionEvidence(
-            test.ctx,
-            waiting.id,
-            waiting.candidateHash,
-            newProof,
-          ),
+          await ensureSamsungProjectionEvidence(test.ctx, waiting.id, waiting.candidateHash),
         ).toBe(false);
-        expect(await getApprovedProjection(test.ctx, lookup(test), newProof)).toBeNull();
-        expect(await getProjectionRetirementMetadata(env.DB, release.id, newProof)).toBeNull();
+        expect(await getApprovedProjection(test.ctx, lookup(test))).toBeNull();
+        expect(await getProjectionRetirementMetadata(env.DB, release.id)).toBeNull();
       }
       expect(
         (await listProjectionCandidates(test.ctx, test.author, test.templateId, test.scope)).items,
@@ -1355,7 +1296,7 @@ describe('native projection approval', () => {
       env.KEK_V1 = oldKey;
       await replaceCallbackKeysetForTest(env.DB, test.proof.credentialKeysetCommitment);
     }
-    expect(await getApprovedProjection(test.ctx, lookup(test), test.proof)).toMatchObject({
+    expect(await getApprovedProjection(test.ctx, lookup(test))).toMatchObject({
       release: { id: release.id },
     });
   });
@@ -1384,8 +1325,8 @@ describe('native projection approval', () => {
           id,
         ]);
         for (let retry = 0; retry < 2; retry++) {
-          expect(await getApprovedProjection(test.ctx, lookup(test), test.proof)).toBeNull();
-          expect(await getProjectionRetirementMetadata(env.DB, release.id, test.proof)).toBeNull();
+          expect(await getApprovedProjection(test.ctx, lookup(test))).toBeNull();
+          expect(await getProjectionRetirementMetadata(env.DB, release.id)).toBeNull();
           expect(
             (await listProjectionReleases(test.ctx, test.author, test.templateId, test.scope))
               .items,
@@ -1471,24 +1412,16 @@ describe('native projection approval', () => {
     }
   });
 
-  it('pins the pre-await KEK ring and rejects a keyset change across credential decryption', async () => {
+  it('pins the pre-await KEK ring across credential decryption', async () => {
     const test = await setup();
     const decrypt = crypto.subtle.decrypt.bind(crypto.subtle);
-    const replacement = await credentialRefKeysetCommitment({
-      ...env,
-      KEK_V1: btoa('x'.repeat(32)),
-    });
     const mutable = { ...test.ctx, env: { ...test.ctx.env } };
     let count = 0;
-    let changeSingleton = false;
     const spy = vi
       .spyOn(crypto.subtle, 'decrypt')
       .mockImplementation(async (algorithm, key, data) => {
         const result = await decrypt(algorithm, key, data);
-        if (++count === 2) {
-          if (changeSingleton) await replaceCallbackKeysetForTest(env.DB, replacement);
-          else mutable.env.KEK_V1 = btoa('x'.repeat(32));
-        }
+        if (++count === 2) mutable.env.KEK_V1 = btoa('x'.repeat(32));
         return result;
       });
     try {
@@ -1497,26 +1430,8 @@ describe('native projection approval', () => {
         (await getProjectionCandidate(env.DB, firstCandidate.id))?.credentialKeysetCommitment,
       ).toBe(test.proof.credentialKeysetCommitment);
       expect(count).toBe(2);
-      mutable.env.KEK_V1 = KEK_V1;
-      count = 0;
-      changeSingleton = true;
-      const before = await first(
-        env.DB,
-        'SELECT count(*) AS n FROM template_candidates WHERE template_id = ?',
-        [test.templateId],
-      );
-      await expect(nativeCandidate({ ...test, ctx: mutable })).rejects.toMatchObject({
-        code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-      });
-      expect(count).toBe(2);
-      expect(
-        await first(env.DB, 'SELECT count(*) AS n FROM template_candidates WHERE template_id = ?', [
-          test.templateId,
-        ]),
-      ).toEqual(before);
     } finally {
       spy.mockRestore();
-      await replaceCallbackKeysetForTest(env.DB, test.proof.credentialKeysetCommitment);
     }
   });
 
@@ -1550,7 +1465,7 @@ describe('native projection approval', () => {
     );
     try {
       const ctx = { ...test.ctx, env: { ...test.ctx.env, DB: seam.db } };
-      expect(await getApprovedProjection(ctx, lookup(test), test.proof)).toBeNull();
+      expect(await getApprovedProjection(ctx, lookup(test))).toBeNull();
       expect(seam.hits()).toBe(1);
       expect(await projectionReleaseBindingValid(env.DB, binding)).toBe(false);
     } finally {
@@ -1571,7 +1486,7 @@ describe('native projection approval', () => {
     const bytes = await original.arrayBuffer();
     try {
       await env.BUCKET.put(asset.source.key, new Uint8Array([1, 2, 3]));
-      expect(await getApprovedProjection(test.ctx, lookup(test), test.proof)).toBeNull();
+      expect(await getApprovedProjection(test.ctx, lookup(test))).toBeNull();
     } finally {
       await env.BUCKET.put(asset.source.key, bytes);
     }

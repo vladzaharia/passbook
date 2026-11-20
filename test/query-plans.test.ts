@@ -363,7 +363,6 @@ describe('occupancy query plans', () => {
 
 describe('keyset cursors seek the index', () => {
   const after = 'a';
-  const commitment = 'a'.repeat(64);
 
   it.each([
     [
@@ -378,7 +377,7 @@ describe('keyset cursors seek the index', () => {
     ],
     [
       'dirty wallet instances',
-      (db: D1Database) => listDirtyInstances(db, 1, 10, after, commitment),
+      (db: D1Database) => listDirtyInstances(db, 1, 10, after),
       'sqlite_autoindex_wallet_provider_instances_1 (id>?)',
     ],
     [

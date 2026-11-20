@@ -68,7 +68,7 @@ async function googleFixture() {
     setCompiledRuntimeForTest(true),
     setRuntimeAccountCheckForTest(async () => {}),
   );
-  const snapshot = await offerPassSnapshot(kit.ctx, f.pass.id, f.credentialKeysetCommitment);
+  const snapshot = await offerPassSnapshot(kit.ctx, f.pass.id);
   if (!snapshot) throw new Error('Offer fixture pass is not offerable.');
   return { f, snapshot };
 }

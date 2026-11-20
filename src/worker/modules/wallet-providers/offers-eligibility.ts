@@ -44,7 +44,6 @@ export interface OfferPassSnapshot {
   pass: Pass;
   lifecycleGeneration: number;
   credentialGeneration: number;
-  credentialKeysetCommitment: string;
   rawPassJson: string;
   passJson: Record<string, unknown>;
 }
@@ -63,15 +62,9 @@ export function captureOfferContext(ctx: ServiceContext): ServiceContext {
 export async function offerPassSnapshot(
   ctx: ServiceContext,
   passOrId: Pass | string,
-  credentialKeysetCommitment: string,
 ): Promise<OfferPassSnapshot | null> {
   ctx = captureOfferContext(ctx);
-  if (
-    typeof credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(credentialKeysetCommitment) ||
-    (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== credentialKeysetCommitment
-  )
-    return null;
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const pass = typeof passOrId === 'string' ? await getPass(ctx.env.DB, passOrId) : passOrId;
   if (
     !pass?.releaseId ||
@@ -88,7 +81,6 @@ export async function offerPassSnapshot(
       orgId: pass.orgId,
       mode: pass.mode,
       passId: pass.id,
-      credentialKeysetCommitment,
     }),
   ]);
   if (
@@ -96,7 +88,6 @@ export async function offerPassSnapshot(
     lifecycle.removal !== null ||
     !rawPassJson ||
     !walletPass ||
-    walletPass.credentialKeysetCommitment !== credentialKeysetCommitment ||
     walletPass.transferPending !== 0 ||
     walletPass.status !== 'active' ||
     walletPass.removedAt !== null ||
@@ -128,7 +119,6 @@ export async function offerPassSnapshot(
     pass,
     lifecycleGeneration: lifecycle.generation,
     credentialGeneration: walletPass.credentialGeneration,
-    credentialKeysetCommitment,
     rawPassJson,
     passJson: decoded as Record<string, unknown>,
   };
@@ -149,19 +139,14 @@ export async function offerStillCurrent(
   const { snapshot, approved, runtimeScope } = eligible;
   const pass = snapshot.pass;
   if (!pass.releaseId || !canPresent(pass, snapshot.passJson, ctx.clock.now())) return false;
-  if (runtimeScope.credentialKeysetCommitment !== snapshot.credentialKeysetCommitment) return false;
-  const current = await getApprovedProjection(
-    ctx,
-    {
-      orgId: pass.orgId,
-      mode: pass.mode,
-      provider: approved.projection.provider,
-      templateId: pass.templateId,
-      templateVersion: pass.templateVersion,
-      appleReleaseId: pass.releaseId,
-    },
-    { credentialKeysetCommitment: snapshot.credentialKeysetCommitment },
-  );
+  const current = await getApprovedProjection(ctx, {
+    orgId: pass.orgId,
+    mode: pass.mode,
+    provider: approved.projection.provider,
+    templateId: pass.templateId,
+    templateVersion: pass.templateVersion,
+    appleReleaseId: pass.releaseId,
+  });
   if (
     !current ||
     current.release.id !== approved.release.id ||
@@ -178,11 +163,6 @@ export async function offerStillCurrent(
     if (error instanceof WalletRuntimeError && error.code === 'account_unavailable') return false;
     throw error;
   }
-  // Opening account material may race a keyset change; keep the original proof.
-  if (
-    (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== snapshot.credentialKeysetCommitment
-  )
-    return false;
   const refHash = offer ? await sha256Hex(offer.ref) : undefined;
   const now = ctx.clock.now();
   if (!canPresent(pass, snapshot.passJson, now)) return false;
@@ -191,7 +171,6 @@ export async function offerStillCurrent(
     pass,
     snapshot.lifecycleGeneration,
     snapshot.credentialGeneration,
-    snapshot.credentialKeysetCommitment,
     snapshot.rawPassJson,
     approved.projection.provider,
     approved.release.id,
@@ -224,20 +203,16 @@ export async function eligibleWalletProvider(
   // The one channel gate: platform, org, template and pass levels, and the design's capability.
   if (!(channels ? channels[provider].on : await channelOn(ctx, pass, provider))) return null;
   const policy = projectionPolicy(provider);
-  const approved = await getApprovedProjection(
-    ctx,
-    {
-      orgId: pass.orgId,
-      mode: pass.mode,
-      provider,
-      templateId: pass.templateId,
-      templateVersion: pass.templateVersion,
-      appleReleaseId: pass.releaseId,
-      adapterRevision: policy.adapterRevision,
-      audiencePolicyRevision: policy.audiencePolicyRevision,
-    },
-    { credentialKeysetCommitment: snapshot.credentialKeysetCommitment },
-  );
+  const approved = await getApprovedProjection(ctx, {
+    orgId: pass.orgId,
+    mode: pass.mode,
+    provider,
+    templateId: pass.templateId,
+    templateVersion: pass.templateVersion,
+    appleReleaseId: pass.releaseId,
+    adapterRevision: policy.adapterRevision,
+    audiencePolicyRevision: policy.audiencePolicyRevision,
+  });
   if (!approved || approved.projection.provider !== provider) return null;
   const runtimeScope: WalletRuntimeScope = {
     orgId: pass.orgId,
@@ -246,7 +221,6 @@ export async function eligibleWalletProvider(
     accountRevision: approved.release.accountRevision,
     providerReleaseId: approved.release.id,
     providerIdentityHash: approved.release.providerIdentityHash,
-    credentialKeysetCommitment: snapshot.credentialKeysetCommitment,
   };
   if (!canRenderProjection(approved.projection, snapshot.passJson)) return null;
   const result = { snapshot, approved, runtimeScope };

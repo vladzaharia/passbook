@@ -1,7 +1,6 @@
 import type { Envelope } from '../../platform/crypto.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
 import type { WalletOperationState, WalletProviderResult } from './instance-types.ts';
-import { isCredentialKeysetCommitment } from './instance-types.ts';
 import {
   type Claim,
   CURRENT,
@@ -10,6 +9,7 @@ import {
   SCOPE,
   scope,
 } from './repo-instance-claim-sql.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import { SAMSUNG_UNCONFIRMED_SERVE_MS } from './samsung-limits.ts';
 
 export async function finishOperation(
@@ -22,7 +22,6 @@ export async function finishOperation(
   },
 ): Promise<WalletOperationState | null> {
   p = { ...p };
-  if (!isCredentialKeysetCommitment(p.credentialKeysetCommitment)) return null;
   const success = p.result.kind !== 'failure';
   const retryable = p.result.kind === 'failure' && p.result.retryable;
   const reason =
@@ -131,21 +130,11 @@ export async function finishOperation(
         db,
         `UPDATE wallet_provider_instances AS i SET lifecycle = 'revoked',
       revoked_at = ?, retirement_next_attempt_at = 0, updated_at = ? WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ?
-    AND i.credential_keyset_commitment = ?
+    AND i.credential_keyset_commitment = ${pinnedKeysetSql}
     AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations op WHERE op.id = ? AND op.kind = 'revoke'
-      AND op.credential_keyset_commitment = ? AND op.state = 'succeeded'
+      AND op.credential_keyset_commitment = ${pinnedKeysetSql} AND op.state = 'succeeded'
       AND op.claim_hash = ? AND op.attempts = ? AND op.last_result_at = ? AND ${CURRENT})`,
-        [
-          p.now,
-          p.now,
-          ...scope(p),
-          p.operationId,
-          p.credentialKeysetCommitment,
-          p.hash,
-          p.attempt,
-          p.now,
-          p.now,
-        ],
+        [p.now, p.now, ...scope(p), p.operationId, p.hash, p.attempt, p.now, p.now],
       ),
     );
   const results = await batch(db, statements);
