@@ -3,6 +3,7 @@ import type { AppEnv } from '../../platform/env.ts';
 import { problemResponse } from '../../platform/errors.ts';
 import { createDetachedContext, type ServiceContext } from '../../platform/service-context.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
+import { openLiveAttachment } from './live-attachment.ts';
 import { cloneLiveAttachment, type LiveAttachment } from './live-auth.ts';
 import { LIVE_ROW_TTL_MS, type LiveRingRow, ringRowOf } from './live-ring.ts';
 import { staleScanRead } from './stale-read.ts';
@@ -30,6 +31,15 @@ export async function readRing(storage: DurableObjectStorage, now: number): Prom
   return stored
     .map(ringRowOf)
     .filter((r): r is LiveRingRow => r !== null && now - r.row.at < LIVE_ROW_TTL_MS);
+}
+
+/** The attachment sealed on a socket when it connected; null when it will not open. */
+export async function socketAttachment(
+  ctx: ServiceContext,
+  socket: WebSocket,
+): Promise<LiveAttachment | null> {
+  const sealed: unknown = socket.deserializeAttachment();
+  return typeof sealed === 'string' ? openLiveAttachment(ctx.env, sealed) : null;
 }
 
 /** A sealed attachment the hub no longer serves: lost access is a bare 401, drift a 409 to reconnect. */

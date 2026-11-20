@@ -19,6 +19,7 @@ import {
   ReportScanDeviceSchema,
   ScanWorkspaceSchema,
   SessionActivitySchema,
+  SessionDevicesSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -50,6 +51,7 @@ import { reportScanDevice } from './scanning-workspace.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { buildSession } from './session.ts';
 import { sessionActivityFor } from './session-activity.ts';
+import { sessionDevicesFor } from './session-devices.ts';
 import { statsFor } from './stats.ts';
 
 /** Device API: /api/v1/scan. */
@@ -119,6 +121,18 @@ register(
     const { problems } = c.req.valid('query');
     return c.json(await sessionActivityFor(serviceContext(c), scanActorOf(c), problems === '1'));
   },
+);
+
+register(
+  scanRoutes,
+  'scan',
+  {
+    method: 'get',
+    path: '/devices',
+    summary: "This session's scanners and who is connected",
+    response: SessionDevicesSchema,
+  },
+  async (c) => c.json(await sessionDevicesFor(serviceContext(c), scanActorOf(c))),
 );
 
 register(
