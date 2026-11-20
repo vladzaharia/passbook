@@ -20,6 +20,11 @@ interface Renderer {
   sitemap(origin: string, urls: string[]): string;
 }
 
+/** The anonymous playground's data (src/web/developers/playground/build.tsx). */
+interface PreviewBuilder {
+  blueprintPreviews(root: string, origin: string): { json: string; files: OutFile[] };
+}
+
 export interface BuildOptions {
   /** The asset directory the Worker serves (dist/client). */
   out: string;
@@ -36,6 +41,8 @@ export interface Manifest {
 
 const TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
   '.md': 'text/markdown; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
   '.xml': 'application/xml; charset=utf-8',
@@ -60,22 +67,30 @@ export async function buildDevelopers(
   const origin = options.origin ?? publicBaseUrl(join(root, 'wrangler.jsonc'));
   const inputs = loadInputs(root, options.apiDir, options.docsDir);
   const site = buildSite(inputs);
-  const { module } = await runnerImport<Renderer>(join(root, 'src/web/developers/render.tsx'), {
-    configFile: false,
-    root,
-    logLevel: 'error',
-    plugins: [
-      {
-        name: 'no-side-effect-css',
-        enforce: 'pre',
-        resolveId: (id) => (id.endsWith('.css') ? '\0no-css' : null),
-        load: (id) => (id === '\0no-css' ? 'export {}' : null),
-      },
-    ],
-  });
+  const load = async <T>(file: string): Promise<T> =>
+    (
+      await runnerImport<T>(join(root, file), {
+        configFile: false,
+        root,
+        logLevel: 'error',
+        plugins: [
+          {
+            name: 'no-side-effect-css',
+            enforce: 'pre',
+            resolveId: (id) => (id.endsWith('.css') ? '\0no-css' : null),
+            load: (id) => (id === '\0no-css' ? 'export {}' : null),
+          },
+        ],
+      })
+    ).module;
+  const module = await load<Renderer>('src/web/developers/render.tsx');
   const rendered: OutFile[] = module.renderSite(site, origin, options.head);
   const urls = rendered.flatMap((f) => (f.url ? [f.url] : []));
   rendered.push({ file: PATHS.sitemap, body: module.sitemap(origin, urls) });
+  const previews = (
+    await load<PreviewBuilder>('src/web/developers/playground/build.tsx')
+  ).blueprintPreviews(root, origin);
+  rendered.push({ file: PATHS.previews, body: previews.json }, ...previews.files);
 
   const manifest: Manifest = {};
   for (const f of rendered) {

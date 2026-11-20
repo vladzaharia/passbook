@@ -158,6 +158,21 @@ describe('build-developers', () => {
     }
   });
 
+  it('builds the playground page, the starters’ previews and one static paper image each, all served from the manifest', () => {
+    expect(manifest['/developers/playground']?.type).toMatch(/^text\/html/);
+    expect(read('/developers/playground.html')).toContain('data-island="playground"');
+    const entry = manifest['/developers/blueprint-previews.json'];
+    expect(entry?.type).toBe('application/json; charset=utf-8');
+    const data = JSON.parse(read('/developers/blueprint-previews.json')) as {
+      items: { slug: string; paper: { src: string } }[];
+    };
+    expect(data.items.length).toBeGreaterThan(20);
+    for (const item of data.items) {
+      expect(manifest[item.paper.src]?.type, item.slug).toBe('image/svg+xml');
+      expect(read(item.paper.src).startsWith('<svg'), item.slug).toBe(true);
+    }
+  });
+
   it('takes the script and stylesheet tags from the Vite document', () => {
     expect(headTags('<html><head><title>x</title>' + HEAD + '</head></html>')).toBe(HEAD);
     expect(read('/developers/index.html')).toContain(HEAD);
