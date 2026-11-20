@@ -1,13 +1,18 @@
 // Fails when a key-reachable error code has no guide entry, an operation has no x-codes, or a generated
-// catalog file is stale, a changelog entry has no note, or versions.json is incomplete. Run in `npm run check:rules`.
+// catalog file is stale, a changelog entry has no note, versions.json is incomplete, or a guide breaks
+// its rules (tools/lib/guides-check.ts). Run in `npm run check:rules`.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { changelogFailures, versionFailures } from './lib/changelog.ts';
 import { baseVersions, diffAgainstBase, readPending, readVersions } from './lib/changelog-files.ts';
 import { developerFailures, type Guide } from './lib/developers-check.ts';
+import { guideFailures } from './lib/guides-check.ts';
 import { buildErrorCatalogFile, buildEventCatalog } from './lib/error-catalog-files.ts';
 import type { Doc } from './lib/openapi-diff.ts';
 import { buildWebhookVectors } from './lib/webhook-vectors.ts';
+import { readGuideFiles } from '../src/web/developers/guide/load.ts';
+import { guideExamples, loadInputs } from '../src/web/developers/model/load.ts';
+import { buildSite } from '../src/web/developers/model/site.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const read = (file: string): string => readFileSync(resolve(root, file), 'utf8');
@@ -30,6 +35,13 @@ const failures = developerFailures({
     },
   },
 });
+failures.push(
+  ...guideFailures(
+    readGuideFiles(root),
+    guideExamples(resolve(root, 'docs/developers/snippets/guides')),
+    buildSite(loadInputs(root)),
+  ),
+);
 const changed = diffAgainstBase(root);
 failures.push(...changelogFailures(readPending(root), changed ?? []));
 failures.push(...versionFailures(readVersions(root), baseVersions(root)));

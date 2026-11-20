@@ -1,4 +1,4 @@
-import { DEV_COPY, DEV_GUIDES } from '../../../shared/copy/developers.ts';
+import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { operations } from '../model/dates.ts';
 import { pagePath } from '../model/markdown.ts';
@@ -208,25 +208,11 @@ export function WebhooksView({ site }: { site: Site }) {
   );
 }
 
-export function SlotView({ which }: { which: 'quickstart' | 'guides' }) {
+export function SlotView({ which }: { which: 'quickstart' }) {
   const s = DEV_COPY.slots[which];
   return (
     <>
       <Head title={s.title} line={s.line} />
-      {which === 'guides' ? (
-        <div className="recipes mt8">
-          {DEV_GUIDES.map((g) => (
-            <div key={g.id} id={g.id} className="row g3 card tile-row">
-              <span className={`sw ${g.tone}`} />
-              <span>
-                <span className="strong">{g.title}</span>
-                <br />
-                <span className="xs muted">{g.line}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : null}
       <p className="mt8">
         <a className="btn outline" href={PATHS.reference}>
           {DEV_COPY.home.reference}
