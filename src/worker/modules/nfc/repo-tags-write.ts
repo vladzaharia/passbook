@@ -43,7 +43,15 @@ export interface TagActor {
 }
 
 /** The causes an admin or a staff member ends a binding with. */
-export type EndCause = 'admin' | 'staff' | 'undo' | 'lost' | 'replaced' | 'moved' | 'tag_retired';
+export type EndCause =
+  | 'admin'
+  | 'staff'
+  | 'undo'
+  | 'lost'
+  | 'replaced'
+  | 'moved'
+  | 'tag_retired'
+  | 'offboard';
 
 /** Ends one active binding. The batch is refused if it already ended. */
 export function endBinding(

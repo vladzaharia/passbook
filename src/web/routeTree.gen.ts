@@ -91,6 +91,7 @@ import { Route as AdminOOrgIdTemplatesTemplateIdRouteImport } from './routes/adm
 import { Route as AdminOOrgIdTemplatesNewRouteImport } from './routes/admin/o/$orgId/templates/new'
 import { Route as AdminOOrgIdTemplatesUploadRouteImport } from './routes/admin/o/$orgId/templates/upload'
 import { Route as AdminOOrgIdTestInboxIndexRouteImport } from './routes/admin/o/$orgId/test-inbox/index'
+import { Route as AdminOOrgIdVisitorsIndexRouteImport } from './routes/admin/o/$orgId/visitors/index'
 import { Route as AdminOOrgIdWalletAccountsIndexRouteImport } from './routes/admin/o/$orgId/wallet-accounts/index'
 import { Route as AdminOOrgIdConnectionsWebhooksEndpointIdRouteImport } from './routes/admin/o/$orgId/connections/webhooks.$endpointId'
 import { Route as AdminOOrgIdConnectionsWebhooksNewRouteImport } from './routes/admin/o/$orgId/connections/webhooks.new'
@@ -546,6 +547,12 @@ const AdminOOrgIdTestInboxIndexRoute =
     path: '/test-inbox/',
     getParentRoute: () => AdminOOrgIdRouteRoute,
   } as any)
+const AdminOOrgIdVisitorsIndexRoute =
+  AdminOOrgIdVisitorsIndexRouteImport.update({
+    id: '/visitors/',
+    path: '/visitors/',
+    getParentRoute: () => AdminOOrgIdRouteRoute,
+  } as any)
 const AdminOOrgIdWalletAccountsIndexRoute =
   AdminOOrgIdWalletAccountsIndexRouteImport.update({
     id: '/wallet-accounts/',
@@ -690,6 +697,7 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/settings/': typeof AdminOOrgIdSettingsIndexRoute
   '/admin/o/$orgId/templates/': typeof AdminOOrgIdTemplatesIndexRoute
   '/admin/o/$orgId/test-inbox/': typeof AdminOOrgIdTestInboxIndexRoute
+  '/admin/o/$orgId/visitors/': typeof AdminOOrgIdVisitorsIndexRoute
   '/admin/o/$orgId/wallet-accounts/': typeof AdminOOrgIdWalletAccountsIndexRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
@@ -781,6 +789,7 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/settings': typeof AdminOOrgIdSettingsIndexRoute
   '/admin/o/$orgId/templates': typeof AdminOOrgIdTemplatesIndexRoute
   '/admin/o/$orgId/test-inbox': typeof AdminOOrgIdTestInboxIndexRoute
+  '/admin/o/$orgId/visitors': typeof AdminOOrgIdVisitorsIndexRoute
   '/admin/o/$orgId/wallet-accounts': typeof AdminOOrgIdWalletAccountsIndexRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
@@ -876,6 +885,7 @@ export interface FileRoutesById {
   '/admin/o/$orgId/settings/': typeof AdminOOrgIdSettingsIndexRoute
   '/admin/o/$orgId/templates/': typeof AdminOOrgIdTemplatesIndexRoute
   '/admin/o/$orgId/test-inbox/': typeof AdminOOrgIdTestInboxIndexRoute
+  '/admin/o/$orgId/visitors/': typeof AdminOOrgIdVisitorsIndexRoute
   '/admin/o/$orgId/wallet-accounts/': typeof AdminOOrgIdWalletAccountsIndexRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
@@ -972,6 +982,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/settings/'
     | '/admin/o/$orgId/templates/'
     | '/admin/o/$orgId/test-inbox/'
+    | '/admin/o/$orgId/visitors/'
     | '/admin/o/$orgId/wallet-accounts/'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
@@ -1063,6 +1074,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/settings'
     | '/admin/o/$orgId/templates'
     | '/admin/o/$orgId/test-inbox'
+    | '/admin/o/$orgId/visitors'
     | '/admin/o/$orgId/wallet-accounts'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
@@ -1157,6 +1169,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/settings/'
     | '/admin/o/$orgId/templates/'
     | '/admin/o/$orgId/test-inbox/'
+    | '/admin/o/$orgId/visitors/'
     | '/admin/o/$orgId/wallet-accounts/'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
@@ -1753,6 +1766,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOOrgIdTestInboxIndexRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
+    '/admin/o/$orgId/visitors/': {
+      id: '/admin/o/$orgId/visitors/'
+      path: '/visitors'
+      fullPath: '/admin/o/$orgId/visitors/'
+      preLoaderRoute: typeof AdminOOrgIdVisitorsIndexRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
     '/admin/o/$orgId/wallet-accounts/': {
       id: '/admin/o/$orgId/wallet-accounts/'
       path: '/wallet-accounts'
@@ -1885,6 +1905,7 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdSettingsIndexRoute: typeof AdminOOrgIdSettingsIndexRoute
   AdminOOrgIdTemplatesIndexRoute: typeof AdminOOrgIdTemplatesIndexRoute
   AdminOOrgIdTestInboxIndexRoute: typeof AdminOOrgIdTestInboxIndexRoute
+  AdminOOrgIdVisitorsIndexRoute: typeof AdminOOrgIdVisitorsIndexRoute
   AdminOOrgIdWalletAccountsIndexRoute: typeof AdminOOrgIdWalletAccountsIndexRoute
   AdminOOrgIdConnectionsWebhooksEndpointIdRoute: typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   AdminOOrgIdConnectionsWebhooksNewRoute: typeof AdminOOrgIdConnectionsWebhooksNewRoute
@@ -1923,6 +1944,7 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
   AdminOOrgIdSettingsIndexRoute: AdminOOrgIdSettingsIndexRoute,
   AdminOOrgIdTemplatesIndexRoute: AdminOOrgIdTemplatesIndexRoute,
   AdminOOrgIdTestInboxIndexRoute: AdminOOrgIdTestInboxIndexRoute,
+  AdminOOrgIdVisitorsIndexRoute: AdminOOrgIdVisitorsIndexRoute,
   AdminOOrgIdWalletAccountsIndexRoute: AdminOOrgIdWalletAccountsIndexRoute,
   AdminOOrgIdConnectionsWebhooksEndpointIdRoute:
     AdminOOrgIdConnectionsWebhooksEndpointIdRoute,

@@ -11,8 +11,9 @@ import { isDeskRole, trackedPlace } from './place.ts';
 import { useDirectionPin } from './use-direction-pin.ts';
 
 const InsideHost = lazy(() => import('../inside/inside-host.tsx'));
+const VisitorsHost = lazy(() => import('../visitors/visitors-host.tsx'));
 
-type Sheet = 'direction' | 'inside' | null;
+type Sheet = 'direction' | 'inside' | 'visitors' | null;
 
 /**
  * Access and occupancy in the scanner's loop: the direction chip and sheet, the count chip of a
@@ -38,6 +39,7 @@ export function useAccessUi({
 }): {
   chips: ReactNode;
   inside: { count: number; onOpen: () => void } | undefined;
+  visitors: { onOpen: () => void } | undefined;
   layer: ReactNode;
 } {
   const pin = useDirectionPin(runtime.pin);
@@ -49,7 +51,7 @@ export function useAccessUi({
     setSheet(next);
     dispatch({
       type: 'overlay',
-      open: next === null ? null : next === 'inside' ? 'recent' : 'settings',
+      open: next === null ? null : next === 'direction' ? 'settings' : 'recent',
     });
   };
   const place = trackedPlace(counts, session.event);
@@ -99,11 +101,22 @@ export function useAccessUi({
           />
         </Suspense>
       ) : null}
+      {isDeskRole(session) ? (
+        <Suspense fallback={null}>
+          <VisitorsHost
+            api={api}
+            open={sheet === 'visitors'}
+            online={online}
+            onClose={() => show(null)}
+          />
+        </Suspense>
+      ) : null}
     </>
   );
   return {
     chips,
     inside: deskInside && place ? { count: place.inNow, onOpen: () => show('inside') } : undefined,
+    visitors: isDeskRole(session) ? { onOpen: () => show('visitors') } : undefined,
     layer,
   };
 }

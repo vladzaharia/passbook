@@ -43,6 +43,7 @@ import { settingsRoutes } from './modules/settings/routes.ts';
 import { statusRoutes } from './modules/status/routes.ts';
 import { templatesRoutes } from './modules/templates/routes.ts';
 import { usersRoutes } from './modules/users/routes.ts';
+import { offboardRoutes, visitorsRoutes } from './modules/visitors/routes.ts';
 import { walletProviderAccountRoutes } from './modules/wallet-providers/routes-accounts.ts';
 import { walletImageRoutes } from './modules/wallet-providers/routes-assets.ts';
 import { samsungCallbackRoutes } from './modules/wallet-providers/routes-callbacks.ts';
@@ -150,6 +151,8 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/broadcasts', broadcastsRoutes);
   app.route('/api/v1/message-rules', messageRulesRoutes);
   app.route('/api/v1/holders', holdersRoutes);
+  app.route('/api/v1/visitors', visitorsRoutes);
+  app.route('/api/v1/offboard', offboardRoutes);
   app.route('/api/v1/delivery', deliveryRoutes);
   app.route('/api/v1/connections', connectionsRoutes);
   app.route('/api/v1/connectors', connectorsRoutes);

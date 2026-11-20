@@ -23,6 +23,8 @@ import {
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { notifyHostOfArrival } from '../visitors/arrival.ts';
+import { registerScanVisitorRoutes } from '../visitors/routes-scan.ts';
 import { deepFreeze } from './freeze.ts';
 import { actGroup, undoGroup, withBundle } from './group.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
@@ -146,6 +148,7 @@ register(
 
 registerScanStaffRoutes(scanRoutes);
 registerScanOccupancyRoutes(scanRoutes);
+registerScanVisitorRoutes(scanRoutes);
 registerScanRoleRoutes(scanRoutes);
 registerScanTagRoutes(scanRoutes);
 registerScanSessionHoursRoutes(scanRoutes);
@@ -251,6 +254,7 @@ register(
         false,
         'code' in input,
       );
+    notifyHostOfArrival(ctx, actor, outcome);
     return c.json(await withParentHint(ctx.env.DB, actor.orgId, outcome));
   },
 );

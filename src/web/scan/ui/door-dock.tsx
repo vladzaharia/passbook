@@ -14,6 +14,7 @@ export function DoorDock({
   open,
   onError,
   inside,
+  visitors,
   tags,
 }: {
   outcome: ScanOutcome | null;
@@ -21,6 +22,7 @@ export function DoorDock({
   open: (sheet: boolean) => void;
   onError: (message: string) => void;
   inside?: { count: number; onOpen: () => void };
+  visitors?: { onOpen: () => void };
   /** Tags: Tap to read (iPhone), Add tag on a result, Assign tag on an unknown tag. */
   tags?: {
     tapToRead: (() => void) | null;
@@ -37,6 +39,7 @@ export function DoorDock({
     return (
       <DoorThumbRow
         {...(inside ? { inside } : {})}
+        {...(visitors ? { visitors } : {})}
         {...(tags?.tapToRead ? { tapToRead: tags.tapToRead } : {})}
         canTorch={runtime.camera.hasTorch()}
         torchOn={torch}
