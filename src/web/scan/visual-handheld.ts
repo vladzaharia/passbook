@@ -74,3 +74,27 @@ export const recentRows = (current: boolean): Recent[] =>
       undoable: i === 0,
     };
   });
+
+/** The card the sheet fetches: today's scans of the pass at two doors, and a bound tag. */
+export function withCard(o: ScanOutcome) {
+  if (!o.card) return { outcome: o, card: null };
+  const scan = (n: number, ago: number, label: string, scannerName: string) => ({
+    scanId: `${ID.slice(0, -2)}${40 + n}`,
+    at: FIXTURE_NOW - ago * 60_000,
+    actionLabel: label,
+    outcome: 'ok' as const,
+    scannerName,
+    undoable: false,
+  });
+  const card = {
+    ...o.card,
+    lastScans: [scan(1, 52, 'Checked in', 'Side door')],
+    tag: {
+      hint: '4F2A',
+      assurance: 'basic' as const,
+      scope: 'pass' as const,
+      typeName: 'Wristband',
+    },
+  };
+  return { outcome: { ...o, card }, card };
+}

@@ -1,9 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
-import { Eye, Undo2 } from 'lucide-react';
+import { Eye, MoreHorizontal, Undo2 } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
 import { SCAN_HANDHELD_COPY } from '../../../shared/copy/scan-handheld.ts';
 import { Button } from '../../ui/button.tsx';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../ui/dropdown-menu.tsx';
 import { SegmentedControl } from '../../ui/segmented-control.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import type { ScanInput } from '../input/types.ts';
@@ -80,6 +86,7 @@ export function PassInspector({
   const notes = o ? outcomeNotes(o, display, eventNote, isDenied(o, o.at ?? 0)) : [];
   const row = o?.scanId ? state.recent.find((r) => r.scanId === o.scanId) : undefined;
   const canUndo = Boolean(row?.undoable && (row.outcome.undoUntil ?? 0) > now);
+  const mine = new Set(state.recent.map((r) => r.scanId).filter((id): id is string => Boolean(id)));
   const then = (act: () => void) => () => {
     act();
     onClose();
@@ -125,12 +132,36 @@ export function PassInspector({
         {COPY.hidePass}
       </DockButton>
     ) : (
-      actions.slice(0, 2).map((a) => (
-        <DockButton key={a.key} onClick={a.run} disabled={a.key === 'show' && !card}>
-          {a.icon}
-          {a.label}
-        </DockButton>
-      ))
+      <>
+        {actions.slice(0, 2).map((a) => (
+          <DockButton key={a.key} onClick={a.run} disabled={a.key === 'show' && !card}>
+            {a.icon}
+            {a.label}
+          </DockButton>
+        ))}
+        {actions.length > 2 ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <DockButton shape="square" aria-label={COPY.moreLabel}>
+                <MoreHorizontal aria-hidden size={24} />
+              </DockButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {actions.slice(2).map((a) => (
+                <DropdownMenuItem
+                  key={a.key}
+                  className="min-h-14 text-lg"
+                  disabled={a.key === 'show' && !card}
+                  onSelect={a.run}
+                >
+                  {a.icon}
+                  {a.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
+      </>
     );
   return (
     <SheetFrame
@@ -167,7 +198,7 @@ export function PassInspector({
         )
       ) : hasPass ? (
         <>
-          <PassTab outcome={o} card={card} notes={notes} now={now} where={where} />
+          <PassTab outcome={o} card={card} notes={notes} now={now} where={where} mine={mine} />
           {query.isPending && sel.input ? (
             <p role="status" className="scan-sheet-status">
               {COPY.loading}

@@ -62,6 +62,10 @@ export interface ScanPreviewScreenProps {
   strip?: StripEntry | null;
   /** `glance` is the handheld's card; the designer's phone preview keeps the full card. */
   density?: 'full' | 'glance';
+  /** The capsule's menu trigger. */
+  menu?: ReactNode;
+  /** A tap on the tint outside the card. */
+  onTint?: () => void;
   /** The verdict wash and ring; none when absent. */
   tint?: Tint;
   /** The clock "12 min ago" reads from; now when absent. */
@@ -138,6 +142,8 @@ export function ScanPreviewScreen({
   density = 'full',
   recent = [],
   tint = 'none',
+  menu,
+  onTint,
   clock,
   children,
 }: ScanPreviewScreenProps) {
@@ -157,12 +163,14 @@ export function ScanPreviewScreen({
         surface={surface}
         branding={branding}
         tint={tint}
+        {...(onTint ? { onTint } : {})}
         capsule={{
           name: scannerName,
           orgName,
           logoUrl: logoUrl !== undefined ? logoUrl : scanBrandLogoUrl(branding),
           state: capsuleState,
           ...(chips ? { chips } : {}),
+          ...(menu ? { menu } : {}),
         }}
         camera={<div className="scan-visual-camera" />}
         sidebar={

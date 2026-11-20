@@ -60,8 +60,22 @@
   .scan-wash[data-kind="slate"] {
     --w: var(--scan-system);
   }
+  .scan-tint-dismiss {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+  }
   .scan-card-layer {
     padding-inline: 20px;
+  }
+  /* The 14 px ring is over the capsule: keep the pill clear of it where there is no status-bar inset. */
+  .scan-capsule {
+    inset-block-start: calc(max(env(safe-area-inset-top, 0px), 14px) + 6px);
+    width: min(366px, calc(100% - 32px));
   }
   .scan-card-layer[data-mode="boot"] {
     padding-inline: 24px;

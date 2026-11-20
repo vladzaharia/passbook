@@ -11,10 +11,12 @@ import { FIXTURE_NOW, fixtureOutcome } from './machine/fixture-data.test-support
 import type { ScanOutcome } from './machine/types.ts';
 import { ScanPreviewScreen } from './preview-screen.tsx';
 import { type PassInspection, PassInspector } from './result/pass-inspector.tsx';
+import { MenuTrigger } from './ui/capsule.tsx';
+import { CountChip } from './ui/chips.tsx';
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
 import { ClosedVisual } from './visual-closed.tsx';
-import { recentRows, TINT, withKind } from './visual-handheld.ts';
+import { recentRows, TINT, withCard, withKind } from './visual-handheld.ts';
 import { MONITOR_DESK_CASES, MonitorDeskVisual } from './visual-monitor-desk.tsx';
 import { OFFLINE_SCENARIOS, OfflineVisual } from './visual-offline.tsx';
 import { TAG_SCENARIOS, TagVisual } from './visual-tags.tsx';
@@ -199,7 +201,7 @@ function ScanResultVisual({
   const handheld = useMediaQuery(PHONE) && surface !== 'operator';
   const [inspection, setInspection] = useState<PassInspection | null>(
     sheet === 'pass' || sheet === 'recent'
-      ? { outcome: withKind(selected, params), card: selected.outcome.card, live: true, tab: sheet }
+      ? { ...withCard(withKind(selected, params)), live: true, tab: sheet }
       : null,
   );
   const [api] = useState(() => ({ resolve: async () => selected.outcome }) as unknown as ScanApi);
@@ -210,10 +212,12 @@ function ScanResultVisual({
       surface={surface === 'operator' ? 'operator' : 'phone'}
       phase={phase}
       density={handheld ? 'glance' : 'full'}
-      recent={recentRows(!params.has('kind'))}
+      recent={recentRows(!params.has('kind') || params.has('more'))}
       clock={FIXTURE_NOW}
       tint={params.has('tint') ? TINT[outcome.kind] : 'none'}
-      onPass={(card, shown) => setInspection({ outcome: shown, card, live: true })}
+      chips={<CountChip count={312} capacity={500} />}
+      menu={<MenuTrigger />}
+      onPass={(_card, shown) => setInspection({ ...withCard(shown), live: true })}
     >
       {inspection ? (
         <PassInspector

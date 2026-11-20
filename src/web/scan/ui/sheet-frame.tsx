@@ -1,20 +1,27 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
-import { type PointerEvent, type ReactNode, useRef } from 'react';
+import { type PointerEvent, type ReactNode, useRef, useState } from 'react';
 import { PHONE, useMediaQuery } from '../../lib/media.ts';
 import { prefersReducedMotion } from '../../lib/motion.ts';
 import { DialogOverlay, focusInitial, restoreOpener, useOpener } from '../../ui/overlay.tsx';
 import { Sheet, SheetContent } from '../../ui/sheet.tsx';
 import './scan-sheet.css';
 
-/** Pulling the grab area down 90 px, or fast, closes the sheet; short of that it springs back. */
-function useSwipeDown(onClose: () => void) {
+export type Snap = 'full' | 'half';
+
+/**
+ * Pulling the grab area: down 90 px (or fast) steps 700 to 460 and closes from 460; up 60 px
+ * from 460 goes back to 700. Short of that it settles where it was. No bounce.
+ */
+function useSnapDrag(snap: Snap, setSnap: (snap: Snap) => void, onClose: () => void) {
   const el = useRef<HTMLDivElement>(null);
   const drag = useRef<{ y: number; t: number; dy: number } | null>(null);
-  const reset = () => {
+  const settle = () => {
     if (!el.current) return;
-    el.current.style.transition = 'transform 180ms var(--wl-ease-out)';
-    el.current.style.transform = '';
+    const node = el.current;
+    node.style.transition = 'transform 180ms var(--wl-ease-out)';
+    node.style.transform = '';
+    node.addEventListener('transitionend', () => (node.style.transition = ''), { once: true });
   };
   return {
     ref: el,
@@ -27,19 +34,25 @@ function useSwipeDown(onClose: () => void) {
       onPointerMove: (e: PointerEvent) => {
         const d = drag.current;
         if (!d || !el.current) return;
-        d.dy = Math.max(0, e.clientY - d.y);
-        if (!prefersReducedMotion()) el.current.style.transform = `translateY(${d.dy}px)`;
+        d.dy = e.clientY - d.y;
+        if (!prefersReducedMotion())
+          el.current.style.transform = `translateY(${Math.max(0, d.dy)}px)`;
       },
       onPointerUp: (e: PointerEvent) => {
         const d = drag.current;
         drag.current = null;
         if (!d) return;
-        if (d.dy > 90 || d.dy / Math.max(1, e.timeStamp - d.t) > 0.5) onClose();
-        else reset();
+        const fast = d.dy > 40 && d.dy / Math.max(1, e.timeStamp - d.t) > 0.5;
+        if (el.current) el.current.style.transform = '';
+        if (d.dy > 90 || fast) {
+          if (snap === 'full') setSnap('half');
+          else onClose();
+        } else if (d.dy < -60 && snap === 'half') setSnap('full');
+        else settle();
       },
       onPointerCancel: () => {
         drag.current = null;
-        reset();
+        settle();
       },
     },
   };
@@ -57,13 +70,14 @@ export interface SheetFrameProps {
 }
 
 /**
- * The handheld's one sheet (design 6): a 700 px bottom sheet with a grab handle, a header, a scrolling
+ * The handheld's one sheet (design 6): a 700 px bottom sheet (snap 460) with a grab handle, a header, a scrolling
  * body and a thumb footer. At 640 and up it is the side sheet every other scanner panel uses.
  */
 export function SheetFrame({ label, onClose, header, children, footer }: SheetFrameProps) {
   const phone = useMediaQuery(PHONE);
   const opener = useOpener(true);
-  const swipe = useSwipeDown(onClose);
+  const [snap, setSnap] = useState<Snap>('full');
+  const swipe = useSnapDrag(snap, setSnap, onClose);
   if (!phone)
     return (
       <Sheet open onOpenChange={(open) => !open && onClose()}>
@@ -84,6 +98,7 @@ export function SheetFrame({ label, onClose, header, children, footer }: SheetFr
           ref={swipe.ref}
           aria-describedby={undefined}
           className="scan-pass-sheet wl-dialog"
+          data-snap={snap}
           onOpenAutoFocus={focusInitial}
           onCloseAutoFocus={restoreOpener(opener)}
         >

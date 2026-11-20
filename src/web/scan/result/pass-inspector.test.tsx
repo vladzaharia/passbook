@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -60,5 +60,71 @@ describe('the pass sheet', () => {
     );
     screen.getByRole('radio', { name: 'Recent scans' }).click();
     expect(await screen.findByTestId('scan-recent')).toBeVisible();
+  });
+
+  it('keeps every action reachable: the third and later go in More', () => {
+    const held = fixtureOutcome('heads_up', 'already_done', {
+      card: fixtureCard({
+        lastScans: [
+          {
+            scanId: '01900000-0000-7000-8000-000000000041',
+            at: FIXTURE_NOW - 3_600_000,
+            actionLabel: 'Checked in',
+            outcome: 'ok',
+            scannerName: 'Side door',
+            undoable: false,
+          },
+        ],
+        tag: { hint: '4F2A', assurance: 'basic', scope: 'pass', typeName: 'Wristband' },
+      }),
+      display: fixtureDisplay('heads_up'),
+      action: { id: 'add_stamp', label: 'Add stamp', kind: 'add' },
+      undoUntil: FIXTURE_NOW + 1e12,
+    });
+    const rows = [{ scanId: held.scanId, at: FIXTURE_NOW, outcome: held, undoable: true }];
+    const st = createScanStore(fakeDeps().deps, fixtureState({ recent: rows }));
+    render(
+      <PassInspector
+        inspection={{ outcome: held, card: held.card, live: true }}
+        api={{} as ScanApi}
+        where="Front door"
+        onClose={vi.fn()}
+      />,
+      { wrapper: wrap(st) },
+    );
+    expect(screen.getByRole('button', { name: 'Let in again' })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^Undo/ })).toBeVisible();
+    expect(screen.queryByRole('button', { name: /Show pass/ })).toBeNull();
+    fireEvent.keyDown(screen.getByRole('button', { name: 'More actions' }), { key: 'Enter' });
+    expect(screen.getByRole('menuitem', { name: /Show pass/ })).toBeVisible();
+  });
+  it("lists this pass's scans today, says you for this device, and the bound tag", () => {
+    const card = fixtureCard({
+      lastScans: [
+        {
+          scanId: '01900000-0000-7000-8000-000000000041',
+          at: FIXTURE_NOW - 3_600_000,
+          actionLabel: 'Checked in',
+          outcome: 'ok',
+          scannerName: 'Side door',
+          undoable: false,
+        },
+      ],
+      tag: { hint: '4F2A', assurance: 'basic', scope: 'pass', typeName: 'Wristband' },
+    });
+    render(
+      <PassInspector
+        inspection={{ outcome: { ...outcome, card }, card }}
+        api={{} as ScanApi}
+        where="Front door"
+        onClose={vi.fn()}
+      />,
+      { wrapper: wrap(createScanStore(fakeDeps().deps, fixtureState({ recent: [] }))) },
+    );
+    const today = screen.getByRole('region', { name: 'Today' });
+    expect(today).toHaveTextContent('Side door');
+    expect(today).toHaveTextContent('Front door');
+    expect(today).toHaveTextContent('Tag linked');
+    expect(today).toHaveTextContent('Ends 4F2A');
   });
 });

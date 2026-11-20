@@ -42,4 +42,37 @@ describe('the glance card', () => {
     expect(screen.getByText('Coffee card')).toBeVisible();
     expect(screen.queryByTestId('scan-keyfact')).toBeNull();
   });
+
+  it('keeps what the full card offered: the pass, the group and the manager PIN', () => {
+    const bundle = { id: 'b1', name: 'Chen family', size: 4, checkedIn: 1 };
+    const onGroup = vi.fn();
+    const { unmount } = render(
+      <ResultCard outcome={{ ...ok, bundle }} density="glance" onGroup={onGroup} />,
+    );
+    screen.getByTestId('scan-group-chip').querySelector('button')?.click();
+    expect(onGroup).toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'View pass' })).toBeVisible();
+    unmount();
+    const needs = fixtureOutcome('heads_up', 'needs_approval', {
+      card: fixtureCard(),
+      display: fixtureDisplay('heads_up'),
+    });
+    render(
+      <ResultCard
+        outcome={needs}
+        density="glance"
+        desk={{
+          picker: null,
+          onAmount: vi.fn(),
+          onValue: vi.fn(),
+          onConfirm: vi.fn(),
+          onCancel: vi.fn(),
+          managers: [{ id: 'm1', name: 'Maya' }],
+          approvals: 'managers',
+          onApprove: vi.fn(),
+        }}
+      />,
+    );
+    expect(screen.getByTestId('scan-manager-pin')).toBeVisible();
+  });
 });

@@ -22,5 +22,8 @@ export const SCAN_HANDHELD_COPY = {
     undo: 'Undo',
     done: 'Done',
     by: 'you',
+    tagLinked: 'Tag linked',
+    tagEnds: 'Ends {hint}',
+    moreLabel: 'More actions',
   },
 } as const;

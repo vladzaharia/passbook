@@ -173,6 +173,9 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
     await expect(page.getByRole('heading', { name: 'Not found', exact: true })).toBeVisible();
     await expect(page.getByTestId('scan-result')).toHaveAttribute('data-phase', 'up');
     await page.screenshot({ path: 'test-results/scanner-refused-phone.png' });
+    // A tap on the tint outside the card dismisses the verdict.
+    await page.mouse.click(195, 160);
+    await expect(page.getByTestId('scan-result')).toHaveCount(0);
   } finally {
     await context.close();
     await api.dispose();

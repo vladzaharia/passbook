@@ -230,6 +230,9 @@ export function ScanLoop({
           ) : null
         }
         tint={tags.tint ?? view.tint}
+        {...(handheld && result && result.kind !== 'ready' && !s.overlay && !tags.card
+          ? { onTint: () => dispatch({ type: 'dismiss' }) }
+          : {})}
         buddy={
           <Buddy
             key={view.buddy.key}
