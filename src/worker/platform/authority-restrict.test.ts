@@ -3,9 +3,10 @@
 import { describe, expect, it } from 'vitest';
 import { grant } from './authority.ts';
 import { passRow } from './authority-checks.ts';
+import { jsonSet } from './authority-expr.ts';
 import { db, refusal } from './authority-ext-fixtures.ts';
 import { authorityPredicate, tenantFilter } from './authority-read.ts';
-import { hasTemplateRef, TEMPLATE_REFS } from './authority-restrict.ts';
+import { columnOf, hasTemplateRef, partsOf, TEMPLATE_REFS } from './authority-restrict.ts';
 import { visible, world } from './authority-restrict-fixtures.ts';
 import { GUARDED_TABLES } from './authority-tables.ts';
 import { all, first, run } from './db.ts';
@@ -228,6 +229,150 @@ describe('tables that hang off a pass', () => {
   });
 });
 
+describe('what a write assigns', () => {
+  const codeOf = async (g: ReturnType<typeof grant>) => (await refusal(g.commit()))?.code ?? null;
+
+  it('a limited key cannot move a row out of its templates by assigning the template column', async () => {
+    const w = await world('as-move');
+    const key = await w.key({ templateIds: [w.a.id] });
+    const move = async (to: string) => {
+      const g = grant(w.x.route, { purpose: 'org_mode.pass.publish', principal: w.principal(key) });
+      g.update('passes', { set: { template_id: to }, where: { id: w.a.pass }, returning: ['id'] });
+      await g.commit();
+      return (
+        await first<{ t: string }>(db, 'SELECT template_id AS t FROM passes WHERE id = ?', [
+          w.a.pass,
+        ])
+      )?.t;
+    };
+    expect(await move(w.b.id)).toBe(w.a.id);
+    expect(await move(w.a.id)).toBe(w.a.id);
+  });
+
+  it('nor widen a webhook endpoint to every template, by a value, a computed value or an upsert copy of a template column', async () => {
+    const w = await world('as-widen');
+    const key = await w.key({ templateIds: [w.a.id] });
+    await run(
+      db,
+      `INSERT INTO webhook_endpoints (id, org_id, mode, url, event_types, template_ids, api_version, created_at, updated_at)
+       VALUES ('wh-own', ?, 'live', 'https://example.test/h', '["pass.created"]', ?, 'v1', 1, 1)`,
+      [w.org.id, JSON.stringify([w.a.id])],
+    );
+    const attempt = (build: (g: ReturnType<typeof grant>) => void) => {
+      const g = grant(w.x.route, {
+        purpose: 'org_mode.webhook.update',
+        principal: w.principal(key),
+      });
+      build(g);
+      return g;
+    };
+    const ids = async () =>
+      (
+        await first<{ t: string | null }>(
+          db,
+          "SELECT template_ids AS t FROM webhook_endpoints WHERE id = 'wh-own'",
+        )
+      )?.t;
+    const wide = attempt((g) =>
+      g.update('webhook_endpoints', { set: { template_ids: null }, where: { id: 'wh-own' } }),
+    );
+    await wide.commit();
+    expect(await ids()).toBe(JSON.stringify([w.a.id]));
+    const other = attempt((g) =>
+      g.update('webhook_endpoints', {
+        set: { template_ids: JSON.stringify([w.a.id, w.b.id]) },
+        where: { id: 'wh-own' },
+      }),
+    );
+    await other.commit();
+    expect(await ids()).toBe(JSON.stringify([w.a.id]));
+    const computed = attempt((g) =>
+      g.update('webhook_endpoints', {
+        set: { template_ids: jsonSet('$.a', w.b.id) },
+        where: { id: 'wh-own' },
+      }),
+    );
+    expect(await codeOf(computed)).toBe('ACTOR_CHANGED');
+    const copy = attempt((g) =>
+      g.upsert(
+        'pass_channels',
+        ['pass_id', 'template_id', 'channel', 'set_by', 'set_at'],
+        [w.a.pass, w.a.id, 'paper', 'key', 1],
+        { copy: { template_id: 'set_by' } },
+      ),
+    );
+    expect(await codeOf(copy)).toBe('ACTOR_CHANGED');
+    const narrowing = attempt((g) =>
+      g.update('webhook_endpoints', {
+        set: { template_ids: JSON.stringify([w.a.id]), description: 'ok' },
+        where: { id: 'wh-own' },
+        returning: ['id'],
+      }),
+    );
+    expect(await codeOf(narrowing)).toBeNull();
+  });
+
+  it('an insert that omits the template column is refused, not run as a no-op', async () => {
+    const w = await world('as-omit');
+    const key = await w.key({ templateIds: [w.a.id] });
+    const g = grant(w.x.route, { purpose: 'org_mode.pass.publish', principal: w.principal(key) });
+    g.insertSelect('pass_events', ['id', 'kind', 'at'], ['ev-omit', 'x', 1]);
+    expect(await codeOf(g)).toBe('ACTOR_CHANGED');
+  });
+
+  it('a lineage check in a read refuses a pass of another template', async () => {
+    const w = await world('as-read');
+    const key = await w.key({ templateIds: [w.a.id] });
+    const open = async (passId: string) => {
+      const p = authorityPredicate(w.principal(key, 'passes:read'), {
+        scope: 'org_mode',
+        now: w.x.s.f.clock.now(),
+        checks: passRow(passId),
+      });
+      return all(db, `WITH ${p.ctes} SELECT 1 AS ok FROM actor_ok`, p.params);
+    };
+    expect(await open(w.a.pass)).toHaveLength(1);
+    expect(await open(w.b.pass)).toEqual([]);
+  });
+
+  it('a delivery is limited by its event, not only by the endpoint that was wider before', async () => {
+    const w = await world('as-deliv');
+    const key = await w.key({ templateIds: [w.a.id] });
+    await run(
+      db,
+      `INSERT INTO webhook_endpoints (id, org_id, mode, url, event_types, template_ids, api_version, created_at, updated_at)
+       VALUES ('wh-d', ?, 'live', 'https://example.test/h', '["pass.created"]', ?, 'v1', 1, 1)`,
+      [w.org.id, JSON.stringify([w.a.id])],
+    );
+    const feed = async (template: { id: string; pass: string }) => {
+      const r = await first<{ seq: number }>(
+        db,
+        `INSERT INTO event_feed (event_id, org_id, mode, pass_id, template_id, type, kind, data, at)
+         VALUES (?, ?, 'live', ?, ?, 't', 'k', '{}', 1) RETURNING seq`,
+        [`evt-${template.id}`, w.org.id, template.pass, template.id],
+      );
+      await run(
+        db,
+        "INSERT INTO webhook_deliveries (endpoint_id, event_seq, org_id, mode) VALUES ('wh-d', ?, ?, 'live')",
+        [r?.seq ?? 0, w.org.id],
+      );
+      return r?.seq;
+    };
+    const mine = await feed(w.a);
+    await feed(w.b);
+    const p = authorityPredicate(w.principal(key, 'passes:read'), {
+      scope: 'org_mode',
+      now: w.x.s.f.clock.now(),
+    });
+    const seen = await all<{ event_seq: number }>(
+      db,
+      `WITH ${p.ctes} SELECT x.event_seq FROM webhook_deliveries x WHERE EXISTS (SELECT 1 FROM actor_ok) AND ${tenantFilter('x', 'webhook_deliveries')}`,
+      p.params,
+    );
+    expect(seen.map((r) => r.event_seq)).toEqual([mine]);
+  });
+});
+
 describe('pass styles', () => {
   it('a style limit reaches a template only when every one of its styles is allowed, and none passes', async () => {
     const w = await world('st');
@@ -240,6 +385,13 @@ describe('pass styles', () => {
       w.a.id,
     ]);
     expect(await visible(w.x, w.principal(key), [w.a.pass, w.b.pass, w.c.pass])).toEqual([]);
+  });
+
+  it('a style that is not text never passes the limit', async () => {
+    const w = await world('st-null');
+    await run(db, 'UPDATE templates SET styles = \'["coupon", null]\' WHERE id = ?', [w.a.id]);
+    const key = await w.key({ passStyles: ['coupon'] });
+    expect(await visible(w.x, w.principal(key), [w.a.pass])).toEqual([]);
   });
 
   it('templates and styles together narrow further, never widen', async () => {
@@ -352,9 +504,15 @@ describe('the corpus: every table with a template column is covered', () => {
   it('each reference names a column that exists, and its parent has a reference', async () => {
     for (const [table, ref] of Object.entries(TEMPLATE_REFS)) {
       expect(GUARDED_TABLES[table], `${table} is guarded`).toBeDefined();
-      const column = 'list' in ref ? ref.list : ref.column;
-      expect(await columnsOf(table), `${table}.${column}`).toContain(column);
-      if ('parent' in ref) expect(hasTemplateRef(ref.parent), `${table} parent`).toBe(true);
+      for (const part of partsOf(ref)) {
+        expect(await columnsOf(table), `${table}.${columnOf(part)}`).toContain(columnOf(part));
+        if ('parent' in part) {
+          expect(hasTemplateRef(part.parent), `${table} parent`).toBe(true);
+          expect(await columnsOf(part.parent), `${part.parent}.${part.key ?? 'id'}`).toContain(
+            part.key ?? 'id',
+          );
+        }
+      }
     }
   });
 

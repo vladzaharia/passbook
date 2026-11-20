@@ -201,6 +201,8 @@ export type RouteAuth =
       /**
        * The handler enforces a key's template and style limits: through grants (the builder adds them) and reads
        * (`authorityPredicate` with `tenantFilter`). Without this a limited key is refused (403 API_KEY_RESTRICTED_ROUTE).
+       * Set it per route, never on a router-level guard, and only where every read and write of the handler goes through
+       * those two: a repo read keyed by org alone, `afterRead`, or a job grant ignores the limit (`ApiKeyAuth.limited`).
        */
       templateScoped?: true;
     }

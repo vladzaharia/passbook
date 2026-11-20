@@ -10,7 +10,12 @@ import {
 } from './authority-expr.ts';
 import { holderTable, pinInsert, pinPredicate, pinWhere } from './authority-pin.ts';
 import type { GrantScope } from './authority-principal.ts';
-import { restrictInsert, restrictRow } from './authority-restrict.ts';
+import {
+  restrictAssigned,
+  restrictInsert,
+  restrictRow,
+  setRestriction,
+} from './authority-restrict.ts';
 import { epochColumns, GUARDED_TABLES, ownedColumns, type TableScope } from './authority-tables.ts';
 import type { SqlValue } from './db.ts';
 
@@ -25,6 +30,8 @@ export interface BuiltStatement {
   lineage?: Check;
   /** An included read part: it may bind up to PARAM_BUDGET values instead of WRITE_PARAM_BUDGET. */
   read?: true;
+  /** A key limited to templates cannot run this statement (it assigns or omits a template reference it cannot check). */
+  limitRefused?: true;
 }
 
 export function assertBudget(sql: string, params: readonly SqlValue[], limit: number): void {
@@ -192,8 +199,18 @@ export function buildUpdate(
   const params: SqlValue[] = [];
   const set = assignments(table, scope, o.set ?? {}, o.inc ?? [], params);
   const where = whereSql(t, table, scope, o.where, params, pin);
-  const sql = `UPDATE ${table} SET ${set} WHERE ${where}${scopePredicate(grantId, scope, table, table, params, o.when, table, pin, keyed)}${returningSql(o.returning)}`;
-  return { sql, params, ...lineageOf(table, o) };
+  // A limited key may assign a template column only a value inside its limit; any other reference column is refused.
+  const limit = keyed ? setRestriction(table, o) : null;
+  const assigned = limit ? restrictAssigned(grantId, limit.checks) : null;
+  if (assigned) params.push(...assigned.params);
+  const guard = assigned?.sql ? `${assigned.sql} AND ` : '';
+  const sql = `UPDATE ${table} SET ${set} WHERE ${where}${guard}${scopePredicate(grantId, scope, table, table, params, o.when, table, pin, keyed)}${returningSql(o.returning)}`;
+  return {
+    sql,
+    params,
+    ...lineageOf(table, o),
+    ...(limit?.refuse ? { limitRefused: true as const } : {}),
+  };
 }
 
 export function buildDelete(
@@ -310,11 +327,13 @@ export function buildInsertSelect(
   // A limited key inserts only a row of its templates; a statement that does not carry the template inserts nothing.
   const limit = keyed ? restrictInsert(table, columns, values, o.from?.copy) : null;
   const limitSql = keyed ? (limit ? limit.sql : ' AND g.limit_key IS NULL') : '';
+  const refused = keyed && !limit ? { limitRefused: true as const } : {};
   const params: SqlValue[] = [...values, grantId, ...holder.params, ...(limit?.params ?? [])];
   const from = o.from && src ? ` AND ${conditions(o.from.where, params, 's.')}` : '';
   const when = whenSql(o.when, scope, params);
   return {
     sql: `INSERT INTO ${table} (${all.join(', ')}) SELECT ${select.join(', ')} FROM authority_grants g${src?.join ?? ''} WHERE g.id = ?${holder.sql}${limitSql}${from}${when}${returningSql(o.returning)}`,
     params,
+    ...refused,
   };
 }

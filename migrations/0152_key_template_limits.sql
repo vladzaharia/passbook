@@ -4,7 +4,7 @@
 ALTER TABLE authority_grants ADD COLUMN limit_key TEXT;
 
 -- The templates a limited key may reach, live: its named templates (none named = every template of its org and the
--- shared or baked ones), each also passing the style limit (every style of the template is allowed; no styles never passes).
+-- shared or baked ones), each also passing the style limit (every style of the template is a text allowed by the key; no styles never passes).
 -- A template that gains a style later stops matching, with no write to the key. Aliases are distinct from the ones
 -- statements that join this view use, so a query plan names them apart.
 CREATE VIEW key_templates AS
@@ -15,4 +15,4 @@ WHERE key.restricted = 1
     OR tpl.id IN (SELECT res.value FROM api_key_resources res WHERE res.key_id = key.id AND res.kind = 'template'))
   AND (NOT EXISTS (SELECT 1 FROM api_key_resources res WHERE res.key_id = key.id AND res.kind = 'pass_style')
     OR (json_array_length(tpl.styles) > 0 AND NOT EXISTS (SELECT 1 FROM json_each(tpl.styles) sty
-      WHERE sty.value NOT IN (SELECT res.value FROM api_key_resources res WHERE res.key_id = key.id AND res.kind = 'pass_style'))));
+      WHERE sty.type <> 'text' OR sty.value NOT IN (SELECT res.value FROM api_key_resources res WHERE res.key_id = key.id AND res.kind = 'pass_style'))));

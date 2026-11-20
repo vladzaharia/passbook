@@ -20,7 +20,7 @@ export function authorityPredicate(
   principal: Principal,
   options: { scope: GrantScope; now: number; checks?: Check[] },
 ): AuthorityPredicate {
-  const b = new Binds();
+  const b = new Binds(principal.kind === 'api_key');
   const actor = actorSql(principal, options.now, b);
   const checks = (options.checks ?? []).map((c) => `COALESCE((${c.ok(b, options.scope)}), 0) = 1`);
   const tenant = options.scope === 'platform' ? '' : ' AND a.org_id IS NOT NULL';

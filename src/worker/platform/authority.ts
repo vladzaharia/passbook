@@ -129,6 +129,7 @@ export class Grant {
       throw new AuthorityError('GRANT_ALREADY_COMMITTED', 'This grant was committed.');
     assertBudget(built.sql, built.params, built.read ? PARAM_BUDGET : WRITE_PARAM_BUDGET);
     if (built.lineage) this.#lineage.push(built.lineage);
+    if (built.limitRefused && this.#keyed) this.#limitedRefused = true;
     const statement = newGrantedStatement(this.id, built);
     this.#statements.push(statement);
     return statement;

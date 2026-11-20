@@ -161,6 +161,11 @@ export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiK
       // The caller's address is not an oracle: a wrong address looks like a wrong key. No address means no match.
       const allow = row.ip_allow ? (JSON.parse(row.ip_allow) as string[]) : [];
       if (allow.length > 0 && !ipAllowed(caller?.ip, allow)) return null;
+      const tier = await enforceApiKeyRate(
+        env,
+        { keyId: row.id, orgId: row.org_id },
+        row.rate_tier,
+      );
       // A key limited to templates or styles is for routes that enforce the limit (`templateScoped`); anywhere else
       // it is refused, so a route that reads or writes outside the grant builder never sees another template's data.
       if (row.restricted === 1 && options?.limited !== 'ok')
@@ -168,11 +173,6 @@ export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiK
           'This key is limited to templates and cannot call this route.',
           'API_KEY_RESTRICTED_ROUTE',
         );
-      const tier = await enforceApiKeyRate(
-        env,
-        { keyId: row.id, orgId: row.org_id },
-        row.rate_tier,
-      );
       await repo.touchKey(env.DB, row.id, now, TOUCH_EVERY_MS, ipPrefix(caller?.ip));
       const held = effectiveScopes(parseScopes(row.scopes), parseRoles(row.roles));
       const memberRoles = row.member_roles ? parseRoles(row.member_roles) : null;

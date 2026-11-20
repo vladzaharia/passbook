@@ -6,6 +6,7 @@ import { AuthorityError } from './authority-error.ts';
 import { identifier, type SetValue, type WhereValue } from './authority-expr.ts';
 import { holderTable, pinWhere } from './authority-pin.ts';
 import type { GrantScope } from './authority-principal.ts';
+import { setRestriction } from './authority-restrict.ts';
 import {
   assignments,
   type BuiltStatement,
@@ -77,10 +78,13 @@ export function buildJoined(
   const sub = scopePredicate(grantId, scope, edge.parent, 'p', params, o.when, table, pin, keyed);
   const exists = `EXISTS (SELECT 1 FROM ${edge.parent} p WHERE p.${edge.key} = ${table}.${edge.column} AND ${sub})`;
   const head = o.delete ? `DELETE FROM ${table}` : `UPDATE ${table} SET ${set}`;
+  // A reference column of the child (one that is not an edge) cannot be re-pointed by a limited key.
+  const refused = keyed && !o.delete && setRestriction(table, o).refuse;
   return {
     sql: `${head} WHERE ${cond}${exists}${returningSql(o.returning)}`,
     params,
     ...(o.require === 'one' ? { lineage: exactlyOne(table, o.where, edge.column) } : {}),
+    ...(refused ? { limitRefused: true as const } : {}),
   };
 }
 
