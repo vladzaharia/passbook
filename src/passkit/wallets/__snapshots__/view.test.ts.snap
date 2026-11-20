@@ -517,6 +517,78 @@ exports[`resolveWalletView over every starter and baked template > starter-coupo
 }
 `;
 
+exports[`resolveWalletView over every starter and baked template > starter-credential 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#5c3a20",
+    "foreground": "#faf0de",
+    "label": "#eac48c",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.status",
+    "primaryFields.credential",
+    "secondaryFields.holder",
+    "secondaryFields.until",
+    "auxiliaryFields.number",
+    "auxiliaryFields.issued",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "headerFields.status",
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "subtitle": "style text: Ana Rivera",
+    "title": "style text: CPR / AED Provider",
+    "validUntil": "style date: 2028-03-15T00:00:00Z",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2028-03-15T00:00:00Z",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
 exports[`resolveWalletView over every starter and baked template > starter-day-pass 1`] = `
 {
   "barcodes": [
@@ -839,6 +911,86 @@ exports[`resolveWalletView over every starter and baked template > starter-guest
 }
 `;
 
+exports[`resolveWalletView over every starter and baked template > starter-hotel-stay 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#3a2040",
+    "foreground": "#faf3e6",
+    "label": "#eec478",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "primaryFields.holder",
+    "secondaryFields.in",
+    "secondaryFields.out",
+    "auxiliaryFields.breakfast",
+    "auxiliaryFields.plate",
+    "backFields.message",
+    "backFields.wifi",
+    "backFields.wifiPass",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [
+      {
+        "end": "2030-11-19T11:00:00Z",
+        "start": "2030-11-18T11:00:00Z",
+      },
+    ],
+    "locations": 0,
+  },
+  "roles": {
+    "eventEnd": "style date: 2030-11-19T11:00:00Z",
+    "eventStart": "style date: 2030-11-18T11:00:00Z",
+    "subtitle": "style text: 2030-11-18T15:00:00-08:00",
+    "title": "style text: Ana Rivera",
+    "validFrom": "style date: 2030-11-18T11:00:00Z",
+    "validUntil": "style date: 2030-11-21T11:00:00-08:00",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-11-21T11:00:00-08:00",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
 exports[`resolveWalletView over every starter and baked template > starter-id-card 1`] = `
 {
   "barcodes": [
@@ -975,6 +1127,127 @@ exports[`resolveWalletView over every starter and baked template > starter-month
   "urls": [],
   "validity": {
     "expirationDate": "2030-01-01T00:00:00Z",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-multi-day-pass 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#c4342c",
+    "foreground": "#fff4ec",
+    "label": "#ffd6c4",
+  },
+  "events": [
+    "Riverbend 2030: Friday",
+    "Riverbend 2030: Saturday",
+    "Riverbend 2030: Sunday",
+  ],
+  "featured": [],
+  "fields": [
+    "headerFields.type",
+    "primaryFields.event",
+    "secondaryFields.holder",
+    "secondaryFields.gate",
+    "auxiliaryFields.parking",
+    "auxiliaryFields.locker",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "artwork": [
+      "artwork@3x.png",
+      "artwork@2x.png",
+    ],
+    "background": [
+      "background@3x.png",
+      "background@2x.png",
+    ],
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "primaryLogo": [
+      "primaryLogo@3x.png",
+      "primaryLogo@2x.png",
+    ],
+    "secondaryLogo": [
+      "secondaryLogo@3x.png",
+      "secondaryLogo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "auxiliaryFields.parking",
+      "auxiliaryFields.locker",
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [
+      {
+        "end": "2030-06-12T15:00:00Z",
+        "start": "2030-06-11T15:00:00Z",
+      },
+      {
+        "end": "2030-06-12T04:00:00Z",
+        "start": "2030-06-11T15:00:00Z",
+      },
+      {
+        "end": "2030-06-13T04:00:00Z",
+        "start": "2030-06-12T15:00:00Z",
+      },
+      {
+        "end": "2030-06-14T04:00:00Z",
+        "start": "2030-06-13T15:00:00Z",
+      },
+    ],
+    "locations": 0,
+  },
+  "roles": {
+    "eventEnd": "semantics date: 2030-06-13T23:00:00-05:00",
+    "eventName": "semantics text: Riverbend Festival",
+    "eventStart": "semantics date: 2030-06-11T12:00:00-05:00",
+    "memberName": "semantics text: Ana Rivera",
+    "subtitle": "style text: Ana Rivera",
+    "ticketHolder": "semantics text: Ana Rivera",
+    "title": "style text: Riverbend Festival",
+    "validFrom": "style date: 2030-06-11T15:00:00Z",
+    "validUntil": "style date: 2030-06-13T23:00:00-05:00",
+    "venueAddress": "semantics text: Riverbend Park, Austin, TX",
+    "venueName": "semantics text: Riverbend Park",
+  },
+  "schemes": [
+    "posterEventTicket",
+    "eventTicket",
+  ],
+  "style": "eventTicket",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-06-13T23:00:00-05:00",
     "expired": false,
     "voided": false,
   },
@@ -1266,6 +1539,73 @@ exports[`resolveWalletView over every starter and baked template > starter-poste
   "roles": {
     "subtitle": "style text: 2026-01-01T00:00:00Z",
     "title": "style text: Alex Morgan",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-staff-badge 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#e2e8ee",
+    "foreground": "#14181c",
+    "label": "#00766c",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.plan",
+    "primaryFields.holder",
+    "secondaryFields.team",
+    "auxiliaryFields.member",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "subtitle": "style text: Platform",
+    "title": "style text: Priya Shah",
   },
   "schemes": [],
   "style": "generic",
@@ -1572,6 +1912,85 @@ exports[`resolveWalletView over every starter and baked template > starter-trans
   "urls": [],
   "validity": {
     "expirationDate": "2030-11-21T07:15:00-05:00",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-visitor-pass 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#facc15",
+    "foreground": "#281a08",
+    "label": "#6e4800",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.arrives",
+    "primaryFields.holder",
+    "secondaryFields.host",
+    "secondaryFields.where",
+    "auxiliaryFields.until",
+    "auxiliaryFields.company",
+    "backFields.message",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [
+      {
+        "end": "2030-11-19T01:00:00Z",
+        "start": "2030-11-18T16:30:00Z",
+      },
+    ],
+    "locations": 0,
+  },
+  "roles": {
+    "eventEnd": "style date: 2030-11-19T01:00:00Z",
+    "eventStart": "style date: 2030-11-18T16:30:00Z",
+    "subtitle": "style text: Priya Shah",
+    "title": "style text: Leo Brandt",
+    "validFrom": "style date: 2030-11-18T16:30:00Z",
+    "validUntil": "style date: 2030-11-18T17:00:00-08:00",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-11-18T17:00:00-08:00",
     "expired": false,
     "voided": false,
   },

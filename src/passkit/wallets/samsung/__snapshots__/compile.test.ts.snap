@@ -8,20 +8,25 @@ exports[`fidelity report > gives every template a status, none blocked 1`] = `
   "starter-boarding-pass": "loyalty: Ready with omissions (2)",
   "starter-booking": "loyalty: Ready with omissions (3)",
   "starter-coupon": "coupon: Ready with omissions (1)",
+  "starter-credential": "loyalty: Ready with omissions (3)",
   "starter-day-pass": "loyalty: Ready with omissions (3)",
   "starter-event-ticket": "ticket: Ready with omissions (3)",
   "starter-generic": "loyalty: Ready with omissions (3)",
   "starter-guest-pass": "loyalty: Ready with omissions (3)",
+  "starter-hotel-stay": "loyalty: Ready with omissions (3)",
   "starter-id-card": "loyalty: Ready with omissions (3)",
   "starter-monthly-pass": "loyalty: Ready with omissions (3)",
+  "starter-multi-day-pass": "ticket: Ready with omissions (3)",
   "starter-pack": "coupon: Ready with omissions (2)",
   "starter-permit": "loyalty: Ready with omissions (3)",
   "starter-pickup": "loyalty: Ready with omissions (3)",
   "starter-poster-generic": "loyalty: Ready with omissions (2)",
+  "starter-staff-badge": "loyalty: Ready with omissions (3)",
   "starter-stamp-card": "loyalty: Ready with omissions (1)",
   "starter-store-card": "loyalty: Ready with omissions (2)",
   "starter-timed-ticket": "ticket: Ready with omissions (1)",
   "starter-transit-ticket": "loyalty: Ready with omissions (2)",
+  "starter-visitor-pass": "loyalty: Ready with omissions (3)",
 }
 `;
 
@@ -348,6 +353,54 @@ Terms: One use per customer. Not combinable with other offers.",
 }
 `;
 
+exports[`samsung compiler over every starter and baked template > starter-credential 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#5c3a20",
+      "endDate": "1836691200000",
+      "fontColor": "#faf0de",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Status: Active
+Holder: Ana Rivera
+Valid until: 2028-03-15
+Number: 77310
+Issued: 2026-03-15
+Terms: Scan the code to check this credential. It's valid only while it shows Active.",
+      "providerName": "PassBook",
+      "title": "CPR / AED Provider",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.holder",
+    "field.header | text | headerFields.status",
+    "field.secondary | text | secondaryFields.holder",
+    "field.secondary | text | secondaryFields.until",
+    "field.auxiliary | text | auxiliaryFields.number",
+    "field.auxiliary | text | auxiliaryFields.issued",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
 exports[`samsung compiler over every starter and baked template > starter-day-pass 1`] = `
 {
   "card": {
@@ -546,6 +599,57 @@ Terms: Good for one visit. It's for you only.",
 }
 `;
 
+exports[`samsung compiler over every starter and baked template > starter-hotel-stay 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#3a2040",
+      "endDate": "1921518000000",
+      "fontColor": "#faf3e6",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Check-in: 2030-11-18
+Check-out: 2030-11-21
+Breakfast: Included
+Plate: 7ABC123
+Wi-Fi: Luma Guest
+Wi-Fi password: lamplight
+Terms: This pass does not open your room. Show it at breakfast, the spa and the desk.",
+      "providerName": "PassBook",
+      "startDate": "1921230000000",
+      "title": "Ana Rivera",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.in",
+    "field.secondary | text | secondaryFields.in",
+    "field.secondary | text | secondaryFields.out",
+    "field.auxiliary | text | auxiliaryFields.breakfast",
+    "field.auxiliary | text | auxiliaryFields.plate",
+    "field.back | text | backFields.wifi",
+    "field.back | text | backFields.wifiPass",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
 exports[`samsung compiler over every starter and baked template > starter-id-card 1`] = `
 {
   "card": {
@@ -636,6 +740,71 @@ Terms: Show this pass at the door. It's for you only.",
     "messaging.notify | difference | ",
   ],
   "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-multi-day-pass 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#c4342c",
+      "endDate": "1907640000000",
+      "fontColor": "#fff4ec",
+      "issueDate": "1794909600000",
+      "logoImage": "https://img.example/logo@3x.png",
+      "mainImg": "https://img.example/artwork@3x.png",
+      "noticeDesc": "Venue: Riverbend Park
+Address: Riverbend Park, Austin, TX
+Ticket holder: Ana Rivera
+Member: Ana Rivera
+Ticket: 3-day
+Name: Ana Rivera
+Gate: Gate B
+Parking: 1 left
+Locker: None left
+Terms: Keep your wristband on. Show the code at each gate.",
+      "providerName": "PassBook",
+      "reservationNumber": "SNAPSHOT-SCAN-CODE",
+      "startDate": "1907427600000",
+      "title": "Riverbend Festival",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "ticket",
+  },
+  "items": [
+    "colors.label | difference | ",
+    "upcoming.multi | difference | events",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.holder",
+    "role.venueName | text | ",
+    "role.venueAddress | text | ",
+    "role.ticketHolder | text | ",
+    "role.memberName | text | ",
+    "role.venueName | text | ",
+    "role.venueAddress | text | ",
+    "role.ticketHolder | text | ",
+    "role.memberName | text | ",
+    "field.header | text | headerFields.type",
+    "field.secondary | text | secondaryFields.holder",
+    "field.secondary | text | secondaryFields.gate",
+    "field.auxiliary | text | auxiliaryFields.parking",
+    "field.auxiliary | text | auxiliaryFields.locker",
+    "field.back | text | backFields.terms",
+    "image.background | omitted | background",
+    "image.thumbnail | omitted | thumbnail",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "ticket",
 }
 `;
 
@@ -834,6 +1003,49 @@ Terms: Present the barcode when asked.",
 }
 `;
 
+exports[`samsung compiler over every starter and baked template > starter-staff-badge 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#e2e8ee",
+      "fontColor": "#14181c",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Type: Staff
+Team: Platform
+Employee: E-1042
+Terms: For entry checks and attendance. It does not open doors.",
+      "providerName": "PassBook",
+      "title": "Priya Shah",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.team",
+    "field.header | text | headerFields.plan",
+    "field.secondary | text | secondaryFields.team",
+    "field.auxiliary | text | auxiliaryFields.member",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
 exports[`samsung compiler over every starter and baked template > starter-stamp-card 1`] = `
 {
   "card": {
@@ -1022,6 +1234,55 @@ Terms: Be at the quay by the board-by time. Show the code to board.",
     "field.auxiliary | text | auxiliaryFields.party",
     "field.auxiliary | text | auxiliaryFields.vehicle",
     "field.back | text | backFields.terms",
+    "sharing | omitted | ",
+    "messaging.notify | difference | ",
+  ],
+  "type": "loyalty",
+}
+`;
+
+exports[`samsung compiler over every starter and baked template > starter-visitor-pass 1`] = `
+{
+  "card": {
+    "attributes": {
+      "appLinkData": "https://org.example",
+      "appLinkLogo": "https://img.example/org-logo.png",
+      "appLinkName": "Example Org",
+      "barcode.ptFormat": "QRCODE",
+      "barcode.ptSubFormat": "QR_CODE",
+      "barcode.serialType": "QRCODE",
+      "barcode.value": "SNAPSHOT-SCAN-CODE",
+      "bgColor": "#facc15",
+      "endDate": "1921280400000",
+      "fontColor": "#281a08",
+      "logoImage": "https://img.example/logo@3x.png",
+      "noticeDesc": "Arrives: 09:30 -08:00
+Host: Priya Shah
+Go to: Floor 3, Oslo
+Until: 17:00 -08:00
+Company: Acme Ltd
+Terms: Good for one day. Wear it where staff can see it.",
+      "providerName": "PassBook",
+      "startDate": "1921249800000",
+      "title": "Leo Brandt",
+    },
+    "language": "en",
+    "state": "ACTIVE",
+    "subType": "others",
+    "type": "loyalty",
+  },
+  "items": [
+    "type | omitted | ",
+    "colors.label | difference | ",
+    "barcode.altText | difference | ",
+    "role.subtitle | text | secondaryFields.host",
+    "field.header | text | headerFields.arrives",
+    "field.secondary | text | secondaryFields.host",
+    "field.secondary | text | secondaryFields.where",
+    "field.auxiliary | text | auxiliaryFields.until",
+    "field.auxiliary | text | auxiliaryFields.company",
+    "field.back | text | backFields.terms",
+    "image.thumbnail | omitted | thumbnail",
     "sharing | omitted | ",
     "messaging.notify | difference | ",
   ],

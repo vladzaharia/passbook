@@ -1,0 +1,103 @@
+{
+  "formatVersion": 1,
+  "description": "Hotel stay",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(58,32,64)",
+  "foregroundColor": "rgb(250,243,230)",
+  "labelColor": "rgb(238,196,120)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "expirationDate": "2030-11-21T11:00:00-08:00",
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "SCAN-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "RES-48213"
+    }
+  ],
+  "generic": {
+    "headerFields": [
+      {
+        "key": "room",
+        "label": "Room",
+        "value": "At check-in"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "Guest",
+        "value": "Ana Rivera"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "in",
+        "label": "Check-in",
+        "value": "2030-11-18T15:00:00-08:00",
+        "dateStyle": "PKDateStyleMedium",
+        "timeStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true
+      },
+      {
+        "key": "out",
+        "label": "Check-out",
+        "value": "2030-11-21T11:00:00-08:00",
+        "dateStyle": "PKDateStyleMedium",
+        "timeStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "breakfast",
+        "label": "Breakfast",
+        "value": "Included"
+      },
+      {
+        "key": "plate",
+        "label": "Plate",
+        "value": "7ABC123"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "wifi",
+        "label": "Wi-Fi",
+        "value": ""
+      },
+      {
+        "key": "wifiPass",
+        "label": "Wi-Fi password",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "This pass does not open your room. Show it at breakfast, the spa and the desk."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}
