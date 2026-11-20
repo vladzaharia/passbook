@@ -541,10 +541,6 @@ export type CreatedScanningDevice = {
   } | null;
 };
 
-export type DeveloperSandboxCreateParams = {
-  turnstileToken: string;
-};
-
 export type EmailFailedEvent = {
   id: string;
   type: "email.failed";

@@ -14308,19 +14308,6 @@
           "undoneAt"
         ]
       },
-      "DeveloperSandboxCreateParams": {
-        "type": "object",
-        "properties": {
-          "turnstileToken": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 4096
-          }
-        },
-        "required": [
-          "turnstileToken"
-        ]
-      },
       "InvitationsCreateParams": {
         "type": "object",
         "properties": {
@@ -26684,7 +26671,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeveloperSandboxCreateParams"
+                "type": "object",
+                "properties": {
+                  "turnstileToken": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  }
+                },
+                "required": [
+                  "turnstileToken"
+                ]
               }
             }
           }
@@ -26820,7 +26817,9 @@
         },
         "x-sdk": {
           "resource": "developer.sandbox",
-          "method": "create"
+          "method": "create",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
         "x-codes": [
           "FORBIDDEN",
@@ -26931,7 +26930,9 @@
         },
         "x-sdk": {
           "resource": "developer.sandbox",
-          "method": "retrieve"
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
         "x-codes": [
           "FORBIDDEN",
@@ -27030,7 +27031,9 @@
         },
         "x-sdk": {
           "resource": "developer.sandbox",
-          "method": "close"
+          "method": "close",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
         "x-codes": [
           "FORBIDDEN",
