@@ -2,7 +2,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { TEST_NOW } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { beforeBatch } from './batch-interceptor-test-support.ts';
-import { TAG_UNDO_MS } from './tags-bind.ts';
+import { TAG_UNDO_MS } from './tags-bind-replay.ts';
 import { type TagScanFixture, tagScanFixture } from './tags-scan-test-fixtures.ts';
 
 let f: TagScanFixture;

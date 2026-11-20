@@ -91,17 +91,23 @@ describe('entitlementTransition', () => {
 
   it('asks for one channel-apply of the channels whose plan state changed', () => {
     expect(entitlementTransition(legacy, trial)).toEqual([
-      { kind: 'channel_apply', channels: ['google', 'samsung', 'paper', 'nfc'], blockedBefore: [] },
+      {
+        kind: 'channel_apply',
+        channels: ['google', 'samsung', 'paper', 'nfc'],
+        blockedBefore: [],
+        blockedAfter: ['google', 'samsung', 'paper', 'nfc'],
+      },
     ]);
     expect(entitlementTransition(trial, legacy)).toEqual([
       {
         kind: 'channel_apply',
         channels: ['google', 'samsung', 'paper', 'nfc'],
         blockedBefore: ['google', 'samsung', 'paper', 'nfc'],
+        blockedAfter: [],
       },
     ]);
     expect(entitlementTransition(legacy, { ...legacy, print: 0 })).toEqual([
-      { kind: 'channel_apply', channels: ['paper'], blockedBefore: [] },
+      { kind: 'channel_apply', channels: ['paper'], blockedBefore: [], blockedAfter: ['paper'] },
     ]);
   });
 

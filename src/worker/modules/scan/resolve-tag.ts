@@ -13,13 +13,14 @@ import {
   credentialTombstoneRefsForInput,
   snapshotCredentialEnv,
 } from './credential-input.ts';
-import { chooseTagPass, planTagReads, tagReadOf } from './evaluate-tag.ts';
+import { planTagReads, tagReadOf } from './evaluate-tag.ts';
 import { missCounterRead, refuseOverCap } from './misses.ts';
 import { scanAuthorizedStmt, scanReadAuthority } from './repo-read-authority.ts';
 import { defaultAction, resolveOutcome } from './resolve-outcome.ts';
 import { resolveObserved, unknown } from './resolve-outcome-observed.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
+import { chooseTagPass } from './tag-choose.ts';
 import { countTagMiss, type TagAct, tagRefusal, tagUnknown, withTagView } from './tag-scan.ts';
 import { type TagId, verifiedSunId } from './tags-sun.ts';
 

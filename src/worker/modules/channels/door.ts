@@ -1,5 +1,5 @@
 import { DIGITAL_CHANNELS, effectiveChannels } from '../../../shared/channels.ts';
-import type { Channel } from '../../../shared/contracts/channels.ts';
+import type { Channel, EffectiveChannels } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { hasPrint, rotatedSince } from './repo.ts';
@@ -26,15 +26,27 @@ interface PassRef {
   templateVersion: string;
 }
 
-/** What the door needs of a pass's channels: one read of the pass's effective state. */
+/**
+ * What a pass already has working: its channels with the plan set aside. A downgrade only stops new copies
+ * (a print, a tag bind, a wallet offer); a printed ticket, a bound tag or a copy a holder has keeps
+ * working at the door and on its page ("pause, never delete").
+ */
+export async function existingChannels(
+  ctx: ServiceContext,
+  pass: PassRef,
+): Promise<EffectiveChannels> {
+  const { inputs } = await loadPass(ctx, pass);
+  return effectiveChannels({ ...inputs, entitlement: {} });
+}
+
+/** What the door needs of a pass's channels: one read of the pass's channels as they already work. */
 /** `typed` also reads the rotation and print facts a typed number is checked by. */
 export async function doorChannels(
   ctx: ServiceContext,
   pass: PassRef,
   typed = false,
 ): Promise<DoorChannels> {
-  const { inputs } = await loadPass(ctx, pass);
-  const effective = effectiveChannels(inputs);
+  const effective = await existingChannels(ctx, pass);
   const digital = DIGITAL_CHANNELS.map((channel) => ({
     channel,
     retiredAt: effective[channel].retiredAt,

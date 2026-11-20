@@ -79,14 +79,17 @@ export async function writeStart(
 }
 
 /** pending to dropped: the policy is back where the run began, so there is nothing to apply. */
-export async function writeDrop(ctx: ServiceContext, run: ApplyRun): Promise<void> {
+export async function writeDrop(ctx: ServiceContext, run: ApplyRun): Promise<boolean> {
   const g = runGrant(ctx, run, 'drop', ['channel_apply_runs']);
   const now = ctx.clock.now();
-  g.update('channel_apply_runs', {
+  // Pinned to the row as read: a save or a plan change that joined the run since moved `updated_at`.
+  const dropped = g.update('channel_apply_runs', {
     set: { state: 'dropped', finished_at: now, updated_at: now },
-    where: { id: run.id, state: 'pending' },
+    where: { id: run.id, state: 'pending', updated_at: run.updatedAt },
+    returning: ['id'],
   });
-  await g.commit();
+  const results = await g.commit();
+  return (results[g.indexOf(dropped)]?.results?.length ?? 0) === 1;
 }
 
 /** running to done with the totals, audited once. */

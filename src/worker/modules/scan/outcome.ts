@@ -7,6 +7,7 @@ import type {
 } from '../../../shared/contracts/scan.ts';
 import type { ScanDisplay, ScanDisplayScreen } from '../../../shared/contracts/scan-display.ts';
 import { TYPED_NUMBER_FLAG } from '../../../shared/copy/scan.ts';
+import { TAG_CONFIRM_FLAG } from '../../../shared/copy/tags.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPlatformSettings } from '../settings/service.ts';
@@ -192,7 +193,9 @@ export function safeOutcomeDetails(
           privacy.safe(flag) &&
           (visibleFlags.has(flag) ||
             flag === 'This pass does not allow check-out.' ||
-            flag === TYPED_NUMBER_FLAG),
+            flag === TYPED_NUMBER_FLAG ||
+            flag === TAG_CONFIRM_FLAG.basic ||
+            flag === TAG_CONFIRM_FLAG.secure),
       ),
     };
   } catch {

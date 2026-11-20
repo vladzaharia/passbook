@@ -13,6 +13,12 @@ type Doc = { paths: Record<string, Record<string, { 'x-feature'?: unknown }>> };
 const FEATURE_ROUTES: Record<string, unknown> = {
   'post /api/v1/templates/uploads': 'templates.uploads',
   'post /api/v1/templates/{id}/scan-setup': 'scanning.devices',
+  // Declared with `xFeature` (documentation): the service and its grant enforce them.
+  'post /api/v1/passes/{id}/prints': 'print',
+  'post /api/v1/nfc/passes/{passId}/tags': { key: 'nfc', atLeast: 'basic' },
+  'patch /api/v1/nfc/bindings/{bindingId}': { key: 'nfc', atLeast: 'basic' },
+  'post /api/v1/nfc/passes/{passId}/enrollments': { key: 'nfc', atLeast: 'basic' },
+  'post /api/v1/nfc/keysets': { key: 'nfc', atLeast: 'secure' },
 };
 
 it('writes x-feature on exactly the operations that declare a feature', () => {

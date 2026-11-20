@@ -195,7 +195,7 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   entitlement_presets: { org: null, platform: { columns: ['value'] } },
 };
 
-const KEYSET_PURPOSES = ['create', 'rotate', 'retire_key', 'disable'].map(
+const KEYSET_PURPOSES = ['create', 'rotate', 'retire_key', 'revoke_key', 'disable'].map(
   (p) => `org_mode.nfc.keyset.${p}`,
 );
 
@@ -214,7 +214,7 @@ export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
   org_entitlement_overrides: ['platform.org.entitlements_set'],
   entitlement_preset_meta: ['platform.entitlement_preset.update'],
   entitlement_presets: ['platform.entitlement_preset.update'],
-  // Secure tag keys (0129): the four keyset purposes only.
+  // Secure tag keys (0129): the five keyset purposes only (re-enrol and import write side rows, not keys).
   nfc_tag_keysets: KEYSET_PURPOSES,
   nfc_tag_keys: KEYSET_PURPOSES,
 };

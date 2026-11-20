@@ -1,10 +1,12 @@
 import type { Mode } from '../../../../shared/contracts/common.ts';
 import type { TagRead } from '../../../../shared/contracts/nfc-tags.ts';
+import { loadKekRing } from '../../../platform/crypto.ts';
 import { redirectHosts } from '../../../platform/host-policy.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
+import { openTagKey } from '../keyset-seal.ts';
 import { verifyingKeys } from '../keysets.ts';
-import { keysetBySlug } from '../repo-keysets.ts';
-import { type SunSeen, type SunStored, sunStoredByRef } from '../repo-sun.ts';
+import { type KeysetRow, keysetBySlug } from '../repo-keysets.ts';
+import { type SunSeen, type SunStored, sunStoredByRef, sunTagKeyByRef } from '../repo-sun.ts';
 import { verifySun } from '../sun.ts';
 import { parseSunUrl, type SunUrl } from '../sun-url.ts';
 import { tagRef } from '../tag-ref.ts';
@@ -23,7 +25,11 @@ export type SunRefusalCode =
   | 'TAG_SUN_ROW';
 
 /** A read the plugin verified: the tag's identity in this org and mode, and the counter and key that proved it. */
-export type SunProof = TagIdentity & SunSeen;
+export type SunProof = TagIdentity &
+  SunSeen & {
+    /** The key version is the keyset's active one: a retiring version verifies known tags only. */
+    active: boolean;
+  };
 
 export type SunVerified =
   | { ok: true; proof: SunProof }
@@ -48,6 +54,30 @@ export function sunTapOf(read: TagRead, env: TagEnv): SunUrl | null {
 }
 
 /**
+ * The own file key of the tag a read names, on a keyset whose tags carry their own (imported): found by the
+ * UID the meta key revealed, opened only for that tag, keyset, mode and org. Null when the tag holds none:
+ * it is refused, never tried with the keyset's key.
+ */
+function tagKeyLookup(ctx: ServiceContext, keyset: KeysetRow) {
+  const found = new Map<string, Uint8Array | null>();
+  return async (uid: string): Promise<Uint8Array | null> => {
+    if (found.has(uid)) return found.get(uid) ?? null;
+    const { ref } = await tagRef(ctx.env, keyset.orgId, keyset.mode, uid);
+    const own = await sunTagKeyByRef(ctx.env.DB, keyset.orgId, keyset.mode, keyset.id, ref);
+    const key = own
+      ? await openTagKey(
+          await loadKekRing(ctx.env),
+          { orgId: keyset.orgId, mode: keyset.mode, keysetId: keyset.id },
+          own.tagId,
+          own.envelope,
+        )
+      : null;
+    found.set(uid, key);
+    return key;
+  };
+}
+
+/**
  * The slug names the keyset, which must be this org's, in this mode and not disabled; then the read is
  * decrypted and checked with its active key, then its retiring one. The tag's identity comes from the
  * decrypted UID only, never from a UID the reader reports. Reads, writes nothing, consumes no counter.
@@ -65,9 +95,10 @@ export async function verifySunTap(
     return refuse('TAG_SUN_KEYSET');
   if (keyset.mode !== mode)
     return refuse('TAG_SUN_MODE', mode === 'live' ? 'test_pass' : 'live_pass');
+  const lookup = keyset.perTag ? tagKeyLookup(ctx, keyset) : null;
   for (const key of await verifyingKeys(ctx, keyset)) {
     const verified = await verifySun(
-      { metaKey: key.metaKey, fileKey: key.fileKey, diversified: key.diversified },
+      { metaKey: key.metaKey, fileKey: lookup ?? key.fileKey, diversified: key.diversified },
       tap.p,
       tap.m,
     );
@@ -82,6 +113,7 @@ export async function verifySunTap(
         slug: keyset.slug,
         keyVersion: key.version,
         ctr: verified.read.counter,
+        active: key.active,
       },
     };
   }
@@ -96,7 +128,7 @@ export async function verifySunTap(
 export function sunStale(
   ctx: ServiceContext,
   orgId: string,
-  proof: SunProof,
+  proof: Omit<SunProof, 'active'>,
   stored: SunStored | null,
 ): SunRefusalCode | null {
   if (!stored) return null;

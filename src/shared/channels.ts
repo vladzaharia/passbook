@@ -120,7 +120,12 @@ export function blockedByEntitlement(values: EntitlementValues): Per<ChannelReas
 /** One thing a change of an org's entitlements asks the system to do. */
 export type EntitlementEffect =
   /** Channels whose plan state changed: a channel-apply run per template converges the passes. No rotation. */
-  { kind: 'channel_apply'; channels: Channel[]; blockedBefore: Channel[] };
+  {
+    kind: 'channel_apply';
+    channels: Channel[];
+    blockedBefore: Channel[];
+    blockedAfter: Channel[];
+  };
 
 /**
  * The one transition for entitlements (pattern of `channelTransition`). A downgrade pauses and never
@@ -140,6 +145,7 @@ export function entitlementTransition(
           kind: 'channel_apply',
           channels,
           blockedBefore: CHANNELS.filter((c) => was[c] !== undefined),
+          blockedAfter: CHANNELS.filter((c) => now[c] !== undefined),
         },
       ];
 }

@@ -10,7 +10,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { assertPassTakesTag } from './pass-state.ts';
-import { tagsRefusal } from './policy.ts';
+import { bindPolicy, tagsRefusal } from './policy.ts';
 import { activeBinding, bindingTarget, lostBinding, passFacts } from './repo-tag-bindings.ts';
 import { tagTarget, tagView } from './repo-tags.ts';
 import { addBind, bindChecks, endBinding, type TagAuthority, tagGrant } from './repo-tags-write.ts';
@@ -148,7 +148,16 @@ export async function restoreTag(ctx: ServiceContext, a: TagAuthority, id: strin
     pass.ownerUserId === last.holderOwner;
   if (!last || !pass || !holderBack)
     throw new ConflictError('The pass changed hands. Start again.', 'TAG_HOLDER_CHANGED');
-  await assertPassTakesTag(ctx, a.orgId, pass.id);
+  const candidate = await assertPassTakesTag(ctx, a.orgId, pass.id);
+  const policy = await bindPolicy(ctx, {
+    orgId: a.orgId,
+    passId: pass.id,
+    candidate,
+    scope: last.scope,
+    system: tag.system,
+    tag,
+    ending: null,
+  });
   const plan = {
     tagId: id,
     newTag: null,
@@ -160,6 +169,8 @@ export async function restoreTag(ctx: ServiceContext, a: TagAuthority, id: strin
     holderGeneration: last.holderGeneration,
     holderOwner: last.holderOwner,
     clearsLost: true,
+    expiryDays: policy.expiryDays,
+    endLapsed: policy.lapsed,
     audited: true,
     source: 'admin' as const,
     actor: { type: 'user' as const, id: a.userId },

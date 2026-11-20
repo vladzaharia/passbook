@@ -232,4 +232,12 @@ export const TAG_ERROR_COPY: Record<(typeof TAG_ERROR_CODES)[number], string> = 
   TAG_TYPE_LIMIT: 'This pass has its {type} already.',
   TAG_USE_MISMATCH: "This pass doesn't take {use} tags.",
   TAG_SECURE_NEEDS_TAP: 'This is a Secure tag. Tap it on a scanner.',
+  TAG_TYPE_SET: 'This tag already has a type. An admin can change it.',
+  TAG_TYPE_SYSTEM: 'This tag type is for another kind of tag. Choose another type.',
+  TAG_TYPE_SCOPE: "This tag type can't be assigned that way. Choose another type.",
+  TAG_TYPE_CHOOSE: 'Pick a tag type.',
+  TAG_TYPED_OFF: 'This tag type takes tapped tags only. Tap the tag on a scanner.',
 };
+
+/** Flags a door shows when a tag needs a check before it lets someone in. */
+export const TAG_CONFIRM_FLAG = { basic: 'Basic tag', secure: 'Tag check' } as const;

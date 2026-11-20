@@ -44,14 +44,15 @@ interface Plan {
 /** What the run's policy change does to one pass, from the pass's live inputs. */
 function plan(run: ApplyRun, loaded: LoadedPass, now: number, inherited: boolean): Plan {
   const { inputs, rows } = loaded;
-  // An entitlement run starts from the plan as it was: the channels the plan blocked then.
-  const planBefore = run.fromBlocked
-    ? {
-        entitlement: Object.fromEntries(run.fromBlocked.map((c) => [c, 'not_included' as const])),
-      }
-    : {};
+  // An entitlement run goes from the plan as it was to the plan as it became (the live plan on a run that
+  // stored no end), whatever the plan is by the time its pages run.
+  const slot = (blocked: Channel[]) => ({
+    entitlement: Object.fromEntries(blocked.map((c) => [c, 'not_included' as const])),
+  });
+  const planBefore = run.fromBlocked ? slot(run.fromBlocked) : {};
+  const planAfter = run.fromBlocked && run.toBlocked ? slot(run.toBlocked) : {};
   const before = effectiveChannels({ ...inputs, ...planBefore, template: run.from });
-  const after = effectiveChannels({ ...inputs, template: run.to });
+  const after = effectiveChannels({ ...inputs, ...planAfter, template: run.to });
   const actions = channelTransition(before, after, {
     copies: new Set(rows.copies),
     retired: new Set(Object.keys(rows.retired) as Channel[]),

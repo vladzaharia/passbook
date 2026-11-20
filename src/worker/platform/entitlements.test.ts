@@ -606,3 +606,23 @@ describe('org create writes entitlements by insert only', () => {
     ).not.toThrow();
   });
 });
+
+describe('entitlementsOf per request (review L2)', () => {
+  it('reads an org once per request id, and every time without one', async () => {
+    const org = await makeOrg({
+      env,
+      ids: { id: () => crypto.randomUUID() },
+      clock: { now: () => Date.now() },
+    } as never);
+    const ctx = (requestId: string | null) => ({ env, requestId, log: { error() {} } }) as never;
+    const seen = ctx('req-memo-1');
+    expect((await entitlementsOf(seen, org.id)).print).toBe(1);
+    await setPreset(org.id, 'trial');
+    // The same request keeps its first answer; another request and a job read the new plan.
+    expect((await entitlementsOf(seen, org.id)).print).toBe(1);
+    expect((await entitlementsOf(ctx('req-memo-2'), org.id)).print).toBe(0);
+    expect((await entitlementsOf(ctx(null), org.id)).print).toBe(0);
+    await setPreset(org.id, 'legacy');
+    expect((await entitlementsOf(ctx(null), org.id)).print).toBe(1);
+  });
+});

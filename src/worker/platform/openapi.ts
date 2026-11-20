@@ -9,7 +9,7 @@ import { defaultBodyLimit } from './body-limit.ts';
 import type { AppBindings } from './context.ts';
 import { AppError } from './errors.ts';
 import './openapi-names.ts';
-import { checkFeatureRule, featureUnchecked } from './feature-guard.ts';
+import { checkFeatureRule, type FeatureRule, featureUnchecked } from './feature-guard.ts';
 import { operationSecurity, scopesForMethod } from './openapi-security.ts';
 
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
@@ -35,6 +35,12 @@ export interface RouteSpec {
    */
   auth?: RouteAuth;
   /**
+   * The entitlement the organization must have, for a route that guards by its own authority (no `auth`):
+   * documentation only, written as `x-feature`. The service and its grant enforce it; nothing here does.
+   * With `auth`, declare `auth.feature` instead, which the request guard enforces.
+   */
+  xFeature?: FeatureRule;
+  /**
    * The route is open to anyone on purpose (health, holder links, provider callbacks): it takes no
    * `auth`, and route-inventory.test.ts counts it as decided. Authority, if any, is the route's own.
    */
@@ -49,6 +55,13 @@ function checkDeclaration(spec: RouteSpec): void {
   if (spec.public && spec.auth)
     throw new Error(`${spec.method.toUpperCase()} ${spec.path}: public and auth are exclusive`);
   const auth = spec.auth;
+  if (spec.xFeature !== undefined) {
+    if (auth)
+      throw new Error(
+        `${spec.method.toUpperCase()} ${spec.path}: xFeature is for routes without auth`,
+      );
+    checkFeatureRule(`${spec.method.toUpperCase()} ${spec.path}`, spec.xFeature);
+  }
   if (auth && 'platform' in auth) return;
   const where = `${spec.method.toUpperCase()} ${spec.path}`;
   if (auth?.feature !== undefined) {
@@ -116,7 +129,9 @@ export function register<S extends RouteSpec>(
   const config = {
     ...(spec.auth
       ? { middleware: requireCaller(spec.auth), ...operationSecurity(spec.auth, spec.method) }
-      : {}),
+      : spec.xFeature === undefined
+        ? {}
+        : { 'x-feature': spec.xFeature }),
     method: spec.method,
     path: spec.path,
     summary: spec.summary,
