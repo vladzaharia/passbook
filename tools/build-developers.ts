@@ -10,6 +10,7 @@ import { PATHS } from '../src/shared/developers.ts';
 import { loadInputs } from '../src/web/developers/model/load.ts';
 import { buildSite } from '../src/web/developers/model/site.ts';
 import type { OutFile, Site } from '../src/web/developers/model/types.ts';
+import { searchIndexFile } from '../src/web/developers/search/build.ts';
 import { publicBaseUrl } from './lib/site-origin.ts';
 
 const root = resolve(import.meta.dirname, '..');
@@ -91,6 +92,8 @@ export async function buildDevelopers(
     await load<PreviewBuilder>('src/web/developers/playground/build.tsx')
   ).blueprintPreviews(root, origin);
   rendered.push({ file: PATHS.previews, body: previews.json }, ...previews.files);
+  // The ⌘K index: one file, fetched on the first search; the build fails past its 150 kB gzip budget.
+  rendered.push(searchIndexFile(site));
 
   const manifest: Manifest = {};
   for (const f of rendered) {

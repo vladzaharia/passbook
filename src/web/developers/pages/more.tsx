@@ -193,7 +193,7 @@ export function WebhooksView({ site }: { site: Site }) {
         </p>
         <div className="list card mt4">
           {site.webhookEvents.map((e) => (
-            <div key={e.type} className="lrow wrap-row">
+            <div key={e.type} id={e.type} className="lrow wrap-row">
               <code className="mono sm strong">{e.type}</code>
               <span className="push muted sm">{e.summary}</span>
             </div>

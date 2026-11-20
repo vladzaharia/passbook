@@ -1,6 +1,7 @@
-import { FlaskConical, Menu } from 'lucide-react';
+import { FlaskConical, Menu, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
+import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { BrandMark } from '../../ui/layout/brand-mark.tsx';
 import { pagePath } from '../model/markdown.ts';
@@ -41,6 +42,17 @@ export function TopBar({ active }: { active?: NavKey }) {
           ))}
         </nav>
         <div className="top-end">
+          <button
+            type="button"
+            className="searchbox"
+            data-search
+            aria-label={SEARCH_COPY.button}
+            aria-keyshortcuts="Meta+K Control+K"
+          >
+            <Search aria-hidden="true" />
+            <span className="searchbox-label">{SEARCH_COPY.label}</span>
+            <kbd className="kbd">⌘K</kbd>
+          </button>
           <span className="mode">
             <FlaskConical aria-hidden="true" />
             {DEV_COPY.test}
