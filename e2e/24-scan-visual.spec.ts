@@ -114,7 +114,7 @@ test('scanner and operator pass layouts stay readable at phone, tablet and desk 
       await page.setViewportSize({ width: 390, height: 844 });
       await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
       await page.goto(`/scan?visual=1&surface=${surface}&pass=${pass}`);
-      await page.getByRole('button', { name: 'View pass', exact: true }).click();
+      await page.getByRole('button', { name: /^View pass$|\. Details$/ }).click();
       const preview = page.locator('.scan-pass-sheet');
       await expect(preview).toBeVisible();
       await expect
@@ -147,7 +147,7 @@ test('scan details remain reachable on compact screens', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 640 });
   await page.goto('/scan?visual=1&surface=scanner&pass=generic');
   await expect(page.getByTestId('scan-result')).toHaveAttribute('data-density', 'glance');
-  await page.getByRole('button', { name: 'View pass', exact: true }).click();
+  await page.getByRole('button', { name: /^View pass$|\. Details$/ }).click();
   const note = page.getByText('If the printed name differs, check with a supervisor.');
   await note.scrollIntoViewIfNeeded();
   await expect(note).toBeInViewport({ ratio: 1 });
@@ -157,7 +157,7 @@ test('scan details remain reachable on compact screens', async ({ page }) => {
     path: 'test-results/scan-visual-generic-320x640-details-scroll.png',
   });
   await page.goto('/scan?visual=1&surface=scanner&pass=identity');
-  await page.getByRole('button', { name: 'View pass', exact: true }).click();
+  await page.getByRole('button', { name: /^View pass$|\. Details$/ }).click();
   const memberId = page.getByText('NW-2048-771', { exact: true });
   await memberId.scrollIntoViewIfNeeded();
   await expect(memberId).toBeInViewport({ ratio: 1 });

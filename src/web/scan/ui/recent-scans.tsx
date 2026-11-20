@@ -27,6 +27,8 @@ export function RecentList({ onPick }: { onPick: (row: Recent) => void }) {
           {state.recent.slice(0, 20).map((row) => {
             const tone = toneOf(row.outcome.kind);
             const Glyph = DISC_GLYPH[tone];
+            const who =
+              row.outcome.display?.identity.holder ?? row.outcome.card?.title ?? 'Unknown code';
             const canUndo = row.undoable && row.scanId && (row.outcome.undoUntil ?? 0) > now;
             return (
               <li key={row.scanId ?? row.at} className="scan-recent-row">
@@ -34,13 +36,9 @@ export function RecentList({ onPick }: { onPick: (row: Recent) => void }) {
                   <span aria-hidden className="scan-strip-disc" data-kind={tone}>
                     <Glyph size={15} strokeWidth={2.5} />
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <p>
-                      {row.outcome.display?.identity.holder ??
-                        row.outcome.card?.title ??
-                        'Unknown code'}
-                    </p>
-                    <p>
+                  <span className="scan-recent-text">
+                    <span className="scan-recent-name">{who}</span>
+                    <span className="scan-recent-meta">
                       {rowLabel(row.outcome, now)}
                       {row.outcome.group ? ` · ${groupLine(row.outcome.group)}` : ''} ·{' '}
                       {sessionTime(row.at)}
@@ -50,13 +48,14 @@ export function RecentList({ onPick }: { onPick: (row: Recent) => void }) {
                           <Cloud aria-hidden size={13} className="inline" /> {COPY.notConfirmed}
                         </>
                       ) : null}
-                    </p>
+                    </span>
                   </span>
                 </button>
                 {canUndo ? (
                   <button
                     type="button"
                     className="scan-strip-undo"
+                    aria-label={SCAN_HANDHELD_COPY.undoFor.replace('{name}', who)}
                     disabled={state.undo !== null}
                     onClick={() => dispatch({ type: 'undo', scanId: row.scanId ?? '' })}
                   >

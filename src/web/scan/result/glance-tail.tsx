@@ -25,7 +25,7 @@ export function GlanceTail({
   onGroup?: (() => void) | undefined;
 }) {
   const instruction = o.kind === 'refused' || o.kind === 'heads_up';
-  const fact = denied || chip ? null : keyFactOf(display);
+  const fact = denied || chip || o.reason === 'needs_approval' ? null : keyFactOf(display);
   const note = notes[0];
   const showNote = note && (instruction || !fact) && !chip;
   return (

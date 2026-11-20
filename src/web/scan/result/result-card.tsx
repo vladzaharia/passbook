@@ -2,6 +2,7 @@ import { Info } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
+import { SCAN_HANDHELD_COPY } from '../../../shared/copy/scan-handheld.ts';
 import { Button } from '../../ui/button.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { TagFlag } from '../assign/tag-flag.tsx';
@@ -179,7 +180,19 @@ export function ResultCard({
         </h1>
       )}
       {d || o.card || o.tag || notes.length || chip ? (
-        <div className="scan-result-body" data-density={glance ? 'glance' : undefined}>
+        // biome-ignore lint/a11y/noStaticElementInteractions: the card's own button (below) is the keyboard path; this makes the scrolled body tappable too
+        // biome-ignore lint/a11y/useKeyWithClickEvents: as above
+        <div
+          className="scan-result-body"
+          data-density={glance ? 'glance' : undefined}
+          onClick={
+            glance && (o.card || o.scanId)
+              ? (e) => {
+                  if (!(e.target as HTMLElement).closest('button, a')) onPass?.(o.card, o);
+                }
+              : undefined
+          }
+        >
           <IdentityRow
             outcome={o}
             display={d}
@@ -271,8 +284,13 @@ export function ResultCard({
         <button
           type="button"
           className="scan-glance-open"
-          aria-label="View pass"
-          aria-describedby="scan-result-heading"
+          aria-label={[
+            title,
+            o.display?.identity.holder ?? o.card?.title,
+            SCAN_HANDHELD_COPY.details,
+          ]
+            .filter(Boolean)
+            .join('. ')}
           onClick={() => onPass?.(o.card, o)}
         />
       ) : null}

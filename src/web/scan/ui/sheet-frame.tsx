@@ -19,6 +19,10 @@ function useSnapDrag(snap: Snap, setSnap: (snap: Snap) => void, onClose: () => v
   const settle = () => {
     if (!el.current) return;
     const node = el.current;
+    if (prefersReducedMotion()) {
+      node.style.transform = '';
+      return;
+    }
     node.style.transition = 'transform 180ms var(--wl-ease-out)';
     node.style.transform = '';
     node.addEventListener('transitionend', () => (node.style.transition = ''), { once: true });

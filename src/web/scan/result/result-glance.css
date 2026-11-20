@@ -2,6 +2,9 @@
    opens the pass sheet; anything inside that acts on its own sits above that button. */
 .scan-result[data-density="glance"] {
   position: relative;
+  /* At large text or on a short phone the whole card scrolls: no verdict text is ever cut. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-radius: 30px;
   box-shadow:
     0 24px 48px -12px rgb(0 0 0 / 0.45),
@@ -219,7 +222,7 @@
   background: var(--sd-tone-teal);
 }
 
-/* The one note: two lines. */
+/* The one note: in full. An instruction never loses its end. */
 .scan-result[data-density="glance"] .scan-result-notes {
   align-items: flex-start;
   padding: 12px 14px;
@@ -232,11 +235,7 @@
   background: color-mix(in oklab, var(--scan-heads) 18%, var(--scan-card));
 }
 .scan-result[data-density="glance"] .scan-result-notes p {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  overflow-wrap: anywhere;
 }
 .scan-glance-more {
   display: flex;
@@ -253,4 +252,65 @@
   gap: 4px;
   color: var(--sd-accent);
   font-weight: 600;
+}
+
+/* 200 % zoom on a phone is a 195 px screen: the glyph goes over the word and the type steps down,
+   so no word breaks mid-letter. */
+@media (max-width: 359px) {
+  .scan-result[data-density="glance"] .scan-result-band,
+  .scan-result[data-density="glance"] .scan-result-band[data-layout="stack"] {
+    display: block;
+    min-height: 0;
+    padding: 16px 16px 14px;
+  }
+  .scan-result[data-density="glance"] .scan-verdict-glyph,
+  .scan-result[data-density="glance"] .scan-result-band[data-layout="stack"] .scan-verdict-glyph {
+    width: 56px;
+    height: 50px;
+    margin-bottom: 8px;
+  }
+  .scan-result[data-density="glance"] .scan-result-band h1,
+  .scan-result[data-density="glance"] .scan-result-band[data-layout="stack"] h1,
+  .scan-result[data-density="glance"][data-kind="heads_up"] .scan-result-band h1 {
+    overflow-wrap: break-word;
+    font-size: 21px;
+    line-height: 26px;
+  }
+  .scan-result[data-density="glance"] .scan-result-band p {
+    font-size: 16px;
+    line-height: 20px;
+  }
+  .scan-result[data-density="glance"] .scan-result-body {
+    gap: 10px;
+    padding: 12px 16px 14px;
+  }
+  .scan-result[data-density="glance"] .scan-identity {
+    gap: 10px;
+  }
+  .scan-result[data-density="glance"] .scan-pass-tile {
+    width: 40px;
+    height: 40px;
+  }
+  .scan-result[data-density="glance"] .scan-result-holder {
+    font-size: 22px;
+    line-height: 26px;
+  }
+  .scan-result[data-density="glance"] .scan-identity-meta {
+    white-space: normal;
+  }
+  .scan-identity-metaline {
+    flex-wrap: wrap;
+  }
+  .scan-keyfact-value {
+    font-size: 26px;
+    line-height: 30px;
+  }
+}
+
+/* A refusal or a hold changes nothing for the guest; a slate or red card on its own wash needs an edge. */
+.scan-result[data-density="glance"][data-kind="refused"],
+.scan-result[data-density="glance"][data-kind="system"] {
+  box-shadow:
+    0 24px 48px -12px rgb(0 0 0 / 0.45),
+    0 0 0 2px rgb(255 255 255 / 0.4);
 }

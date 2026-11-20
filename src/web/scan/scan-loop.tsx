@@ -1,3 +1,4 @@
+import { Nfc } from 'lucide-react';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import { PHONE, useMediaQuery } from '../lib/media.ts';
@@ -6,6 +7,7 @@ import { Buddy } from '../ui/art/buddy.tsx';
 import { Button } from '../ui/button.tsx';
 import type { ScanApi } from './api/scan-api.ts';
 import { ScanAppView } from './app.tsx';
+import { TAG_EXTRA_COPY } from './assign/copy.ts';
 import { useTagUi } from './assign/use-tag-ui.tsx';
 import { needsSessionRefetch } from './boot/use-scan-session.ts';
 import { LoopMenu } from './loop-menu.tsx';
@@ -230,7 +232,12 @@ export function ScanLoop({
           ) : null
         }
         tint={tags.tint ?? view.tint}
-        {...(handheld && result && result.kind !== 'ready' && !s.overlay && !tags.card
+        {...(handheld &&
+        result &&
+        result.kind !== 'ready' &&
+        result.reason !== 'needs_approval' &&
+        !s.overlay &&
+        !tags.card
           ? { onTint: () => dispatch({ type: 'dismiss' }) }
           : {})}
         buddy={
@@ -284,6 +291,18 @@ export function ScanLoop({
         orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}
         timeZone={session.event?.timeZone}
         where={scanner?.name ?? ''}
+        extraActions={
+          tags.addTag
+            ? [
+                {
+                  key: 'tag',
+                  label: TAG_EXTRA_COPY.addTag,
+                  icon: <Nfc aria-hidden size={20} />,
+                  run: tags.addTag,
+                },
+              ]
+            : []
+        }
         eventNote={session.event?.note}
         sheet={sheet}
         panel={panel}

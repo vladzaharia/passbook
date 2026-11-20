@@ -38,7 +38,7 @@ export interface PassInspection {
 }
 
 type Tab = 'pass' | 'recent';
-type Action = { key: string; label: string; icon?: ReactNode; run: () => void };
+export type Action = { key: string; label: string; icon?: ReactNode; run: () => void };
 
 export function PassInspector({
   inspection,
@@ -48,6 +48,7 @@ export function PassInspector({
   timeZone,
   where = '',
   eventNote,
+  extraActions = [],
 }: {
   inspection: PassInspection;
   api: ScanApi;
@@ -56,7 +57,9 @@ export function PassInspector({
   timeZone?: string;
   /** The scanner's name, for "Checked in 7:41 PM · Front door". */
   where?: string;
-  eventNote?: string | null;
+  eventNote?: string | null | undefined;
+  /** Actions the loop owns, such as Add tag: they follow the pass's own. */
+  extraActions?: Action[];
 }) {
   const { state, now, dispatch } = useScanMachine();
   const [tab, setTab] = useState<Tab>(inspection.tab ?? 'pass');
@@ -121,6 +124,7 @@ export function PassInspector({
       icon: <Eye aria-hidden size={20} />,
       run: () => setShowPass(true),
     });
+  if (sel.live) actions.push(...extraActions.map((a) => ({ ...a, run: then(a.run) })));
   const hasPass = o !== null || card !== null;
   const footer =
     tab === 'recent' || !hasPass ? (
@@ -165,7 +169,7 @@ export function PassInspector({
     );
   return (
     <SheetFrame
-      label="Pass"
+      label={COPY.title}
       onClose={onClose}
       header={<SheetHeader outcome={o} card={card} />}
       footer={footer}

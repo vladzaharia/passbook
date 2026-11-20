@@ -13,10 +13,16 @@ describe('the glance card', () => {
     expect(screen.getByTestId('scan-keyfact')).toHaveTextContent('6 of 10');
     expect(document.querySelector('.sd-panel')).toBeNull();
   });
+  it('names the card with the verdict and the holder', () => {
+    render(<ResultCard outcome={ok} density="glance" />);
+    expect(
+      screen.getByRole('button', { name: /^(Checked in|Add stamp)\. Anna Popescu\. Details$/ }),
+    ).toBeVisible();
+  });
   it('is one button that opens the pass with its outcome', () => {
     const onPass = vi.fn();
     render(<ResultCard outcome={ok} density="glance" onPass={onPass} />);
-    screen.getByRole('button', { name: 'View pass' }).click();
+    screen.getByRole('button', { name: /Details$/ }).click();
     expect(onPass).toHaveBeenCalledWith(ok.card, ok);
   });
   it('shows the note on a hold instead of a fact', () => {
@@ -51,7 +57,7 @@ describe('the glance card', () => {
     );
     screen.getByTestId('scan-group-chip').querySelector('button')?.click();
     expect(onGroup).toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'View pass' })).toBeVisible();
+    expect(screen.getByRole('button', { name: /Details$/ })).toBeVisible();
     unmount();
     const needs = fixtureOutcome('heads_up', 'needs_approval', {
       card: fixtureCard(),
@@ -74,5 +80,13 @@ describe('the glance card', () => {
       />,
     );
     expect(screen.getByTestId('scan-manager-pin')).toBeVisible();
+  });
+  it('shows identity only on a manager hold', () => {
+    const needs = fixtureOutcome('heads_up', 'needs_approval', {
+      card: fixtureCard(),
+      display: fixtureDisplay('ok'),
+    });
+    render(<ResultCard outcome={needs} density="glance" />);
+    expect(screen.queryByTestId('scan-keyfact')).toBeNull();
   });
 });

@@ -54,8 +54,7 @@
   font: 500 16px / 20px var(--pk-font-sans);
   color: var(--sd-strong);
 }
-.scan-today li p + p,
-.scan-recent-row p + p {
+.scan-today li p + p {
   color: var(--sd-muted);
   font-size: 13px;
   line-height: 16px;
@@ -126,13 +125,25 @@
   text-align: start;
   cursor: pointer;
 }
-.scan-recent-row p {
-  margin: 0;
+.scan-recent-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.scan-recent-name,
+.scan-recent-meta {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.scan-recent-name {
   color: var(--sd-strong);
   font: 500 16px / 20px var(--pk-font-sans);
+}
+.scan-recent-meta {
+  color: var(--sd-muted);
+  font: 400 13px / 16px var(--pk-font-sans);
 }
 .scan-recent-row .scan-strip-undo {
   display: inline-flex;

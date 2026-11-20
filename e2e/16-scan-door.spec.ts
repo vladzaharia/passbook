@@ -151,7 +151,7 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
     }
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ colorScheme: 'light' });
-    await page.getByRole('button', { name: 'View pass', exact: true }).click();
+    await page.getByRole('button', { name: /^View pass$|\. Details$/ }).click();
     await expect(page.getByRole('dialog', { name: 'Pass', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Show pass', exact: true }).click();
     await expect(page.locator('.pc-barcode')).toHaveCount(0);

@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from '../../ui/dialog.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
 import type { ScanRuntime } from '../platform/runtime.ts';
-import type { PassInspection } from '../result/pass-inspector.tsx';
+import type { Action, PassInspection } from '../result/pass-inspector.tsx';
 import { READER_TIPS } from './scan-menu.tsx';
 
 const LookupSheet = lazy(() =>
@@ -30,6 +30,7 @@ export function ScanOverlays({
   timeZone,
   where,
   eventNote,
+  extraActions,
   allowPeople,
   sessionTotals,
 }: {
@@ -48,6 +49,7 @@ export function ScanOverlays({
   timeZone?: string;
   where?: string;
   eventNote?: string | null | undefined;
+  extraActions?: Action[];
   allowPeople: boolean;
   sessionTotals: boolean;
 }) {
@@ -80,6 +82,7 @@ export function ScanOverlays({
             timeZone={timeZone}
             where={where ?? ''}
             eventNote={eventNote}
+            {...(extraActions ? { extraActions } : {})}
             inspection={pass}
             onClose={closePass}
           />

@@ -134,7 +134,7 @@
     "viewports": ["mobile", "tablet", "tabletLandscape"],
     "device": "touch",
     "waitFor": "[data-testid=\"scan-result\"]",
-    "click": "button[aria-label=\"View pass\"]"
+    "click": "button[aria-label=\"View pass\"], button.scan-glance-open"
   },
   {
     "role": "anon",
@@ -143,7 +143,7 @@
     "viewports": ["mobile", "tablet", "tabletLandscape"],
     "device": "touch",
     "waitFor": "[data-testid=\"scan-result\"]",
-    "click": "button[aria-label=\"View pass\"]"
+    "click": "button[aria-label=\"View pass\"], button.scan-glance-open"
   },
   {
     "role": "anon",
@@ -152,7 +152,7 @@
     "viewports": ["mobile", "tablet", "tabletLandscape"],
     "device": "touch",
     "waitFor": "[data-testid=\"scan-result\"]",
-    "click": "button[aria-label=\"View pass\"]"
+    "click": "button[aria-label=\"View pass\"], button.scan-glance-open"
   },
   {
     "role": "anon",
@@ -161,7 +161,7 @@
     "viewports": ["mobile", "tablet", "tabletLandscape"],
     "device": "touch",
     "waitFor": "[data-testid=\"scan-result\"]",
-    "click": "button[aria-label=\"View pass\"]"
+    "click": "button[aria-label=\"View pass\"], button.scan-glance-open"
   },
   {
     "role": "anon",
@@ -170,7 +170,7 @@
     "viewports": ["mobile", "tablet", "tabletLandscape"],
     "device": "touch",
     "waitFor": "[data-testid=\"scan-result\"]",
-    "click": "button[aria-label=\"View pass\"]"
+    "click": "button[aria-label=\"View pass\"], button.scan-glance-open"
   },
   {
     "role": "anon",
@@ -179,7 +179,7 @@
     "viewports": ["mobile", "tablet", "tabletLandscape"],
     "device": "touch",
     "waitFor": "[data-testid=\"scan-result\"]",
-    "click": "button[aria-label=\"View pass\"]"
+    "click": "button[aria-label=\"View pass\"], button.scan-glance-open"
   },
   {
     "role": "anon",
@@ -188,7 +188,7 @@
     "viewports": ["mobile", "tablet", "tabletLandscape"],
     "device": "touch",
     "waitFor": "[data-testid=\"scan-result\"]",
-    "click": "button[aria-label=\"View pass\"]"
+    "click": "button[aria-label=\"View pass\"], button.scan-glance-open"
   },
   {
     "role": "anon",
@@ -197,7 +197,7 @@
     "viewports": ["mobile", "tablet", "tabletLandscape"],
     "device": "touch",
     "waitFor": "[data-testid=\"scan-result\"]",
-    "click": "button[aria-label=\"View pass\"]"
+    "click": "button[aria-label=\"View pass\"], button.scan-glance-open"
   },
   {
     "role": "anon",

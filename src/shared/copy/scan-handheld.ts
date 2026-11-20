@@ -4,7 +4,10 @@ export const SCAN_HANDHELD_COPY = {
   tapForDetails: 'Tap for details',
   why: 'Why',
   details: 'Details',
+  viewPass: 'View pass',
+  undoFor: 'Undo {name}',
   sheet: {
+    title: 'Pass',
     thisPass: 'This pass',
     recent: 'Recent scans',
     views: 'Pass sheet view',

@@ -10,6 +10,8 @@ const ID = '01900000-0000-7000-8000-000000000001';
 export function withKind(selected: (typeof SCAN_VISUAL_CASES)[number], params: URLSearchParams) {
   const kind = params.get('kind');
   const o = selected.outcome;
+  if (kind === 'system')
+    return fixtureOutcome('system', 'network', { card: null, display: null, action: null });
   if (kind !== 'heads_up' && kind !== 'refused') return o;
   const d = o.display;
   const reason = (params.get('reason') ??
@@ -46,6 +48,7 @@ export const TINT: Partial<Record<ScanOutcome['kind'], Tint>> = {
   ok: 'green',
   heads_up: 'amber',
   refused: 'red',
+  system: 'slate',
 };
 
 /** The device's recent scans; the first is the scan on screen when it is a check-in. */
