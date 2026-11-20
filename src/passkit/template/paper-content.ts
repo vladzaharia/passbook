@@ -105,7 +105,13 @@ export function paperContent(input: PaperContentInput): PaperContent {
     evalExpr,
   );
   const start = roles.eventStart?.kind === 'date' ? roles.eventStart.iso : undefined;
-  const venue = [text(roles.venueName), text(roles.venueAddress)].filter(Boolean).join(', ');
+  const venueName = text(roles.venueName);
+  const venueAddress = text(roles.venueAddress);
+  // The address often repeats the venue name ("Grand Hall, Portland"): say it once.
+  const venue =
+    venueName && venueAddress?.toLowerCase().includes(venueName.toLowerCase())
+      ? venueAddress
+      : [venueName, venueAddress].filter(Boolean).join(', ');
   let terms: string | undefined;
   if (design.terms !== undefined) {
     try {

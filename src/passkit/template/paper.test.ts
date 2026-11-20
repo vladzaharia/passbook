@@ -111,6 +111,23 @@ describe('paper content derivation', () => {
     });
   });
 
+  it('says the venue once when the address repeats it', () => {
+    const passJson = {
+      ...EVENT_PASS,
+      semantics: { ...EVENT_PASS.semantics, venueRoom: 'Grand Hall', venueRegionName: 'Portland' },
+    } as typeof EVENT_PASS;
+    const c = paperContent({
+      passJson: {
+        ...passJson,
+        semantics: { ...passJson.semantics, venueName: 'Grand Hall' },
+      } as typeof EVENT_PASS,
+      manifest: EVENT_MANIFEST,
+      personalization: { name: 'Ada', ticketNo: 'T-77' },
+      design: DERIVED_PAPER,
+    });
+    expect(c.venue).toBe('Grand Hall, Portland');
+  });
+
   it('never carries the scan code or the lookup value', () => {
     const json = JSON.stringify(
       content({ ...DERIVED_PAPER, fields: ['order', 'level'], derived: false }),
