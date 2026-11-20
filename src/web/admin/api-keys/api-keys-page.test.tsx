@@ -124,13 +124,12 @@ describe('api keys page', () => {
     expect(dialog.className).toContain('sm:max-w-lg');
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
-    expect(within(dialog).getByText('Pick at least one scope.')).toBeInTheDocument();
+    expect(within(dialog).getByRole('checkbox', { name: 'Read passes' })).toBeChecked();
     expect(within(dialog).getByText('Platform')).toBeInTheDocument();
     expect(within(dialog).queryByRole('checkbox', { name: 'Scan as a terminal' })).toBeNull();
     expect(within(dialog).getByRole('checkbox', { name: 'Manage webhooks' })).toBeInTheDocument();
 
     await user.type(within(dialog).getByLabelText(/Name/), 'CI key');
-    await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     let review = await screen.findByRole('alertdialog', { name: 'Create a platform key?' });
     expect(body).toEqual({});
@@ -224,7 +223,6 @@ describe('api keys page', () => {
     expect(await screen.findByText('All modes')).toBeInTheDocument();
     expect(within(dialog).getByText('North')).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText(/Name/), 'Org integration');
-    await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
     await user.click(within(dialog).getByRole('checkbox', { name: 'Scan as a terminal' }));
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     expect(await within(dialog).findByText('Pick at least one terminal.')).toBeInTheDocument();
@@ -318,7 +316,6 @@ describe('api keys page', () => {
       ).toBeInTheDocument();
       expect(within(dialog).queryByRole('combobox', { name: /Mode/ })).not.toBeInTheDocument();
       await user.type(within(dialog).getByLabelText(/Name/), 'T');
-      await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
       await user.click(within(dialog).getByRole('button', { name: 'Create' }));
       await user.click(
         within(await screen.findByRole('alertdialog', { name: 'Review service key' })).getByRole(
@@ -356,7 +353,6 @@ describe('api keys page', () => {
     await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText(/Name/), 'P');
-    await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
     await user.click(within(dialog).getByRole('combobox', { name: /Mode/ }));
     await user.click(await screen.findByRole('option', { name: 'Test' }));
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
@@ -386,7 +382,6 @@ describe('api keys page', () => {
       await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
       const dialog = await screen.findByRole('dialog');
       await user.type(within(dialog).getByLabelText(/Name/), 'P');
-      await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
       await user.click(within(dialog).getByRole('button', { name: 'Create' }));
       await user.click(
         within(
@@ -414,7 +409,6 @@ describe('api keys page', () => {
     await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText(/Name/), 'x');
-    await user.click(within(dialog).getByRole('checkbox', { name: 'Read passes' }));
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     await user.click(
       within(await screen.findByRole('alertdialog', { name: 'Create a platform key?' })).getByRole(
