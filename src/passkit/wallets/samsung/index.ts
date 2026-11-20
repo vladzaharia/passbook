@@ -17,7 +17,7 @@ export { samsungCardBody } from './envelope.ts';
 export { SAMSUNG_LIMITS } from './limits.ts';
 
 /** Joins the release candidate digest. Bump it with any change to compiled output. */
-export const SAMSUNG_COMPILER_REVISION = 1;
+export const SAMSUNG_COMPILER_REVISION = 2;
 
 type Wanted = SamsungType | 'generic' | 'giftcard';
 

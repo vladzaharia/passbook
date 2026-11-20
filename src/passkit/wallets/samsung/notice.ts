@@ -5,8 +5,9 @@
 import { measure, sanitizeText, shorten } from '../text.ts';
 import type { CapabilityId, ViewField, WalletRole } from '../types.ts';
 import { WALLET_ROLES } from '../types.ts';
+import { formatWhen } from '../when.ts';
 import { block, isChosen, note, type Run } from './context.ts';
-import { formatWhen, roleText } from './format.ts';
+import { roleText } from './format.ts';
 import { NOTICE_MIN_ROOM, SAMSUNG_LIMITS } from './limits.ts';
 
 interface Line {

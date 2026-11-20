@@ -1522,7 +1522,7 @@ exports[`Google compilers over every starter and baked template > starter-boardi
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.departs",
       "support": "difference",
     },
@@ -1534,7 +1534,7 @@ exports[`Google compilers over every starter and baked template > starter-boardi
     },
     {
       "capability": "field.auxiliary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "auxiliaryFields.boardsAt",
       "support": "difference",
     },
@@ -1647,12 +1647,12 @@ exports[`Google compilers over every starter and baked template > starter-boardi
         "id": "primaryFields.destination",
       },
       {
-        "body": "2030-06-01T08:00:00-07:00",
+        "body": "6/1/30, 8:00 AM",
         "header": "Departs",
         "id": "secondaryFields.departs",
       },
       {
-        "body": "2030-06-01T07:15:00-07:00",
+        "body": "7:15 AM",
         "header": "Boards",
         "id": "auxiliaryFields.boardsAt",
       },
@@ -1724,7 +1724,7 @@ exports[`Google compilers over every starter and baked template > starter-boardi
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.departs",
       "support": "difference",
     },
@@ -1736,7 +1736,7 @@ exports[`Google compilers over every starter and baked template > starter-boardi
     },
     {
       "capability": "field.auxiliary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "auxiliaryFields.boardsAt",
       "support": "difference",
     },
@@ -1827,12 +1827,12 @@ exports[`Google compilers over every starter and baked template > starter-boardi
         "id": "primaryFields.destination",
       },
       {
-        "body": "2030-06-01T08:00:00-07:00",
+        "body": "6/1/30, 8:00 AM",
         "header": "Departs",
         "id": "secondaryFields.departs",
       },
       {
-        "body": "2030-06-01T07:15:00-07:00",
+        "body": "7:15 AM",
         "header": "Boards",
         "id": "auxiliaryFields.boardsAt",
       },
@@ -2164,7 +2164,7 @@ exports[`Google compilers over every starter and baked template > starter-coupon
     },
     {
       "capability": "field.header",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "headerFields.expires",
       "support": "difference",
     },
@@ -2245,7 +2245,7 @@ exports[`Google compilers over every starter and baked template > starter-coupon
     },
     "textModulesData": [
       {
-        "body": "2030-01-01T00:00:00Z",
+        "body": "Jan 1, 2030",
         "header": "Expires",
         "id": "headerFields.expires",
       },
@@ -2308,7 +2308,7 @@ exports[`Google compilers over every starter and baked template > starter-coupon
     },
     {
       "capability": "field.header",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "headerFields.expires",
       "support": "difference",
     },
@@ -2347,7 +2347,7 @@ exports[`Google compilers over every starter and baked template > starter-coupon
     "state": "ACTIVE",
     "textModulesData": [
       {
-        "body": "2030-01-01T00:00:00Z",
+        "body": "Jan 1, 2030",
         "header": "Expires",
         "id": "headerFields.expires",
       },
@@ -2411,7 +2411,7 @@ exports[`Google compilers over every starter and baked template > starter-coupon
     },
     {
       "capability": "field.header",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "headerFields.expires",
       "support": "difference",
     },
@@ -2450,7 +2450,7 @@ exports[`Google compilers over every starter and baked template > starter-coupon
     "state": "ACTIVE",
     "textModulesData": [
       {
-        "body": "2030-01-01T00:00:00Z",
+        "body": "Jan 1, 2030",
         "header": "Expires",
         "id": "headerFields.expires",
       },
@@ -2781,7 +2781,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.time",
       "support": "difference",
     },
@@ -2799,7 +2799,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
     },
     {
       "capability": "field.additionalInfo",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "additionalInfoFields.doors",
       "support": "difference",
     },
@@ -2862,7 +2862,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
     "state": "ACTIVE",
     "textModulesData": [
       {
-        "body": "2030-06-01T19:00:00-07:00",
+        "body": "7:00 PM",
         "header": "Starts",
         "id": "secondaryFields.time",
       },
@@ -2872,7 +2872,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
         "id": "auxiliaryFields.room",
       },
       {
-        "body": "2030-06-01T18:00:00-07:00",
+        "body": "6:00 PM",
         "header": "Doors",
         "id": "additionalInfoFields.doors",
       },
@@ -2887,9 +2887,9 @@ exports[`Google compilers over every starter and baked template > starter-event-
         "id": "backFields.terms",
       },
       {
-        "body": "Sample Event: 2030-06-01T19:00:00-07:00
-Sample Event: Encore: 2030-06-08T19:00:00-07:00
-Sample Event: Finale: 2030-06-15T19:00:00-07:00",
+        "body": "Sample Event: Sat, Jun 1, 2030, 7:00 PM
+Sample Event: Encore: Sat, Jun 8, 2030, 7:00 PM
+Sample Event: Finale: Sat, Jun 15, 2030, 7:00 PM",
         "header": "Upcoming",
         "id": "upcoming",
       },
@@ -2940,7 +2940,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
     },
     {
       "capability": "field.header",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "headerFields.date",
       "support": "difference",
     },
@@ -2970,7 +2970,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
     },
     {
       "capability": "field.additionalInfo",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "additionalInfoFields.doors",
       "support": "difference",
     },
@@ -3110,7 +3110,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
     },
     "textModulesData": [
       {
-        "body": "2030-06-01T19:00:00-07:00",
+        "body": "Jun 1, 2030",
         "header": "Date",
         "id": "headerFields.date",
       },
@@ -3130,7 +3130,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
         "id": "auxiliaryFields.room",
       },
       {
-        "body": "2030-06-01T18:00:00-07:00",
+        "body": "6:00 PM",
         "header": "Doors",
         "id": "additionalInfoFields.doors",
       },
@@ -3145,7 +3145,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
         "id": "backFields.terms",
       },
       {
-        "body": "2030-06-01T22:00:00-07:00",
+        "body": "Sat, Jun 1, 2030, 10:00 PM",
         "header": "Ends",
         "id": "role.eventEnd",
       },
@@ -3155,9 +3155,9 @@ exports[`Google compilers over every starter and baked template > starter-event-
         "id": "role.venueAddress",
       },
       {
-        "body": "Sample Event: 2030-06-01T19:00:00-07:00
-Sample Event: Encore: 2030-06-08T19:00:00-07:00
-Sample Event: Finale: 2030-06-15T19:00:00-07:00",
+        "body": "Sample Event: Sat, Jun 1, 2030, 7:00 PM
+Sample Event: Encore: Sat, Jun 8, 2030, 7:00 PM
+Sample Event: Finale: Sat, Jun 15, 2030, 7:00 PM",
         "header": "Upcoming",
         "id": "upcoming",
       },
@@ -3257,7 +3257,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.time",
       "support": "difference",
     },
@@ -3275,7 +3275,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
     },
     {
       "capability": "field.additionalInfo",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "additionalInfoFields.doors",
       "support": "difference",
     },
@@ -3338,7 +3338,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
     "state": "ACTIVE",
     "textModulesData": [
       {
-        "body": "2030-06-01T19:00:00-07:00",
+        "body": "7:00 PM",
         "header": "Starts",
         "id": "secondaryFields.time",
       },
@@ -3348,7 +3348,7 @@ exports[`Google compilers over every starter and baked template > starter-event-
         "id": "auxiliaryFields.room",
       },
       {
-        "body": "2030-06-01T18:00:00-07:00",
+        "body": "6:00 PM",
         "header": "Doors",
         "id": "additionalInfoFields.doors",
       },
@@ -3363,9 +3363,9 @@ exports[`Google compilers over every starter and baked template > starter-event-
         "id": "backFields.terms",
       },
       {
-        "body": "Sample Event: 2030-06-01T19:00:00-07:00
-Sample Event: Encore: 2030-06-08T19:00:00-07:00
-Sample Event: Finale: 2030-06-15T19:00:00-07:00",
+        "body": "Sample Event: Sat, Jun 1, 2030, 7:00 PM
+Sample Event: Encore: Sat, Jun 8, 2030, 7:00 PM
+Sample Event: Finale: Sat, Jun 15, 2030, 7:00 PM",
         "header": "Upcoming",
         "id": "upcoming",
       },
@@ -3888,7 +3888,7 @@ exports[`Google compilers over every starter and baked template > starter-id-car
     },
     {
       "capability": "field.auxiliary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "auxiliaryFields.until",
       "support": "difference",
     },
@@ -3973,7 +3973,7 @@ exports[`Google compilers over every starter and baked template > starter-id-car
         "id": "secondaryFields.unit",
       },
       {
-        "body": "2030-08-31T00:00:00Z",
+        "body": "Aug 31, 2030",
         "header": "Valid until",
         "id": "auxiliaryFields.until",
       },
@@ -4037,7 +4037,7 @@ exports[`Google compilers over every starter and baked template > starter-id-car
     },
     {
       "capability": "field.auxiliary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "auxiliaryFields.until",
       "support": "difference",
     },
@@ -4100,7 +4100,7 @@ exports[`Google compilers over every starter and baked template > starter-id-car
         "id": "secondaryFields.unit",
       },
       {
-        "body": "2030-08-31T00:00:00Z",
+        "body": "Aug 31, 2030",
         "header": "Valid until",
         "id": "auxiliaryFields.until",
       },
@@ -4414,7 +4414,7 @@ exports[`Google compilers over every starter and baked template > starter-pack: 
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.expires",
       "support": "difference",
     },
@@ -4500,7 +4500,7 @@ exports[`Google compilers over every starter and baked template > starter-pack: 
         "id": "headerFields.left",
       },
       {
-        "body": "2030-11-18T00:00:00Z",
+        "body": "Nov 18, 2030",
         "header": "Valid until",
         "id": "secondaryFields.expires",
       },
@@ -4575,7 +4575,7 @@ exports[`Google compilers over every starter and baked template > starter-pack: 
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.expires",
       "support": "difference",
     },
@@ -4618,7 +4618,7 @@ exports[`Google compilers over every starter and baked template > starter-pack: 
         "id": "secondaryFields.holder",
       },
       {
-        "body": "2030-11-18T00:00:00Z",
+        "body": "Nov 18, 2030",
         "header": "Valid until",
         "id": "secondaryFields.expires",
       },
@@ -4689,7 +4689,7 @@ exports[`Google compilers over every starter and baked template > starter-pack: 
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.expires",
       "support": "difference",
     },
@@ -4732,7 +4732,7 @@ exports[`Google compilers over every starter and baked template > starter-pack: 
         "id": "secondaryFields.holder",
       },
       {
-        "body": "2030-11-18T00:00:00Z",
+        "body": "Nov 18, 2030",
         "header": "Valid until",
         "id": "secondaryFields.expires",
       },
@@ -5069,7 +5069,7 @@ exports[`Google compilers over every starter and baked template > starter-pickup
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.collectBy",
       "support": "difference",
     },
@@ -5167,7 +5167,7 @@ exports[`Google compilers over every starter and baked template > starter-pickup
         "id": "headerFields.status",
       },
       {
-        "body": "2030-11-18T19:30:00-05:00",
+        "body": "7:30 PM",
         "header": "Collect by",
         "id": "secondaryFields.collectBy",
       },
@@ -5235,7 +5235,7 @@ exports[`Google compilers over every starter and baked template > starter-pickup
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.collectBy",
       "support": "difference",
     },
@@ -5311,7 +5311,7 @@ exports[`Google compilers over every starter and baked template > starter-pickup
         "id": "headerFields.status",
       },
       {
-        "body": "2030-11-18T19:30:00-05:00",
+        "body": "7:30 PM",
         "header": "Collect by",
         "id": "secondaryFields.collectBy",
       },
@@ -5379,7 +5379,7 @@ exports[`Google compilers over every starter and baked template > starter-poster
     },
     {
       "capability": "field.footer",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "footerFields.since-poster",
       "support": "difference",
     },
@@ -5479,7 +5479,7 @@ exports[`Google compilers over every starter and baked template > starter-poster
         "id": "additionalInfoFields.plan-poster",
       },
       {
-        "body": "2026-01-01T00:00:00Z",
+        "body": "Jan 1, 2026",
         "header": "Since",
         "id": "footerFields.since-poster",
       },
@@ -5549,7 +5549,7 @@ exports[`Google compilers over every starter and baked template > starter-poster
     },
     {
       "capability": "field.footer",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "footerFields.since-poster",
       "support": "difference",
     },
@@ -5638,7 +5638,7 @@ exports[`Google compilers over every starter and baked template > starter-poster
         "id": "additionalInfoFields.plan-poster",
       },
       {
-        "body": "2026-01-01T00:00:00Z",
+        "body": "Jan 1, 2026",
         "header": "Since",
         "id": "footerFields.since-poster",
       },
@@ -6663,7 +6663,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
     },
     {
       "capability": "field.header",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "headerFields.slot",
       "support": "difference",
     },
@@ -6681,7 +6681,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.until",
       "support": "difference",
     },
@@ -6732,7 +6732,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
     "state": "ACTIVE",
     "textModulesData": [
       {
-        "body": "2030-11-21T14:00:00-05:00",
+        "body": "2:00 PM",
         "header": "Slot",
         "id": "headerFields.slot",
       },
@@ -6742,7 +6742,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
         "id": "secondaryFields.venue",
       },
       {
-        "body": "2030-11-21T14:30:00-05:00",
+        "body": "2:30 PM",
         "header": "Until",
         "id": "secondaryFields.until",
       },
@@ -6789,7 +6789,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
     },
     {
       "capability": "field.header",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "headerFields.slot",
       "support": "difference",
     },
@@ -6801,7 +6801,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.until",
       "support": "difference",
     },
@@ -6893,12 +6893,12 @@ exports[`Google compilers over every starter and baked template > starter-timed-
     },
     "textModulesData": [
       {
-        "body": "2030-11-21T14:00:00-05:00",
+        "body": "2:00 PM",
         "header": "Slot",
         "id": "headerFields.slot",
       },
       {
-        "body": "2030-11-21T14:30:00-05:00",
+        "body": "2:30 PM",
         "header": "Until",
         "id": "secondaryFields.until",
       },
@@ -6981,7 +6981,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
     },
     {
       "capability": "field.header",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "headerFields.slot",
       "support": "difference",
     },
@@ -6999,7 +6999,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.until",
       "support": "difference",
     },
@@ -7050,7 +7050,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
     "state": "ACTIVE",
     "textModulesData": [
       {
-        "body": "2030-11-21T14:00:00-05:00",
+        "body": "2:00 PM",
         "header": "Slot",
         "id": "headerFields.slot",
       },
@@ -7060,7 +7060,7 @@ exports[`Google compilers over every starter and baked template > starter-timed-
         "id": "secondaryFields.venue",
       },
       {
-        "body": "2030-11-21T14:30:00-05:00",
+        "body": "2:30 PM",
         "header": "Until",
         "id": "secondaryFields.until",
       },
@@ -7125,7 +7125,7 @@ exports[`Google compilers over every starter and baked template > starter-transi
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.departs",
       "support": "difference",
     },
@@ -7137,7 +7137,7 @@ exports[`Google compilers over every starter and baked template > starter-transi
     },
     {
       "capability": "field.auxiliary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "auxiliaryFields.boardBy",
       "support": "difference",
     },
@@ -7244,12 +7244,12 @@ exports[`Google compilers over every starter and baked template > starter-transi
         "id": "primaryFields.destination",
       },
       {
-        "body": "2030-11-21T07:15:00-05:00",
+        "body": "11/21/30, 7:15 AM",
         "header": "Departs",
         "id": "secondaryFields.departs",
       },
       {
-        "body": "2030-11-21T06:55:00-05:00",
+        "body": "6:55 AM",
         "header": "Board by",
         "id": "auxiliaryFields.boardBy",
       },
@@ -7326,7 +7326,7 @@ exports[`Google compilers over every starter and baked template > starter-transi
     },
     {
       "capability": "field.secondary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "secondaryFields.departs",
       "support": "difference",
     },
@@ -7338,7 +7338,7 @@ exports[`Google compilers over every starter and baked template > starter-transi
     },
     {
       "capability": "field.auxiliary",
-      "message": "Shown as written: Google has no date or number style.",
+      "message": "Written out in English: Google has no date style.",
       "path": "auxiliaryFields.boardBy",
       "support": "difference",
     },
@@ -7423,12 +7423,12 @@ exports[`Google compilers over every starter and baked template > starter-transi
         "id": "primaryFields.destination",
       },
       {
-        "body": "2030-11-21T07:15:00-05:00",
+        "body": "11/21/30, 7:15 AM",
         "header": "Departs",
         "id": "secondaryFields.departs",
       },
       {
-        "body": "2030-11-21T06:55:00-05:00",
+        "body": "6:55 AM",
         "header": "Board by",
         "id": "auxiliaryFields.boardBy",
       },
