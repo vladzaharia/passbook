@@ -16,7 +16,7 @@ import {
   conflict,
   newCredentialRefs,
   releaseSnapshot,
-  retiredCredentials,
+  settleRotation,
   transferContent,
   transferPayloadAad,
   unchangedCredential,
@@ -138,10 +138,7 @@ export async function startCredentialTransfer(
   );
   const build = await buildTransfer(ctx, source, release, content);
   const credentialKeysetCommitment = await ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
-  const [old, targetRefs] = await Promise.all([
-    retiredCredentials(ctx, source),
-    newCredentialRefs(ctx, source, build),
-  ]);
+  const { old, targetRefs } = await settleRotation(ctx, source, build, authority.kind);
   const oldRefs = new Set(old.map((entry) => entry.ref));
   const overlaps = targetRefs.some((ref) => oldRefs.has(ref));
   const tombstoned = await tombstoneExists(

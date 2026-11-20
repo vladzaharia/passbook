@@ -287,3 +287,25 @@ export async function unchangedCredential(
     ? { source, stableRefs }
     : undefined;
 }
+
+/** A new code keeps the desk lookup value (member number, email): it is not a credential. */
+export async function settleRotation(
+  ctx: ServiceContext,
+  source: TransferPass,
+  build: TransferBuild,
+  authorityKind: string,
+): Promise<{ old: CredentialReference[]; targetRefs: string[] }> {
+  const [retired, built] = await Promise.all([
+    retiredCredentials(ctx, source),
+    newCredentialRefs(ctx, source, build),
+  ]);
+  const kept = new Set(
+    authorityKind === 'self-rotate'
+      ? retired.filter((e) => e.kind === 'lookup').map((e) => e.ref)
+      : [],
+  );
+  return {
+    old: retired.filter((entry) => !kept.has(entry.ref)),
+    targetRefs: built.filter((ref) => !kept.has(ref)),
+  };
+}

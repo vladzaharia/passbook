@@ -6,7 +6,11 @@ import { membershipsQuery, sessionQuery } from './session.ts';
 
 export function shouldRetry(failureCount: number, error: unknown): boolean {
   // A malformed body is deterministic; retrying only delays the error state.
-  if (isApiError(error) && (!error.isTransient || error.code === 'invalid_response')) return false;
+  if (
+    isApiError(error) &&
+    (!error.isTransient || error.code === 'invalid_response' || error.code === 'timeout')
+  )
+    return false;
   return failureCount < 2;
 }
 
