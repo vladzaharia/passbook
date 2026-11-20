@@ -3,6 +3,7 @@
   "api-keys.getApiKeys",
   "api-keys.getApiKeysMe",
   "api-keys.postApiKeys",
+  "api-keys.postApiKeysByIdRetire",
   "apple.deleteWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial",
   "apple.getWalletV1DevicesByDeviceIdRegistrationsByPassTypeId",
   "apple.getWalletV1PassesByPassTypeIdBySerial",
