@@ -22,7 +22,9 @@ writeFileSync(resolve(root, 'src/generated/resolved-tokens.ts'), resolvedTokensT
 const fonts = resolve(root, 'public/fonts');
 const { files } = fontSheet(sources);
 mkdirSync(fonts, { recursive: true });
-for (const stale of readdirSync(fonts)) if (!files.includes(stale)) rmSync(resolve(fonts, stale));
+// Subfolders (public/fonts/pdf, the ticket PDF's fonts) are not generated here.
+for (const stale of readdirSync(fonts, { withFileTypes: true }))
+  if (stale.isFile() && !files.includes(stale.name)) rmSync(resolve(fonts, stale.name));
 for (const file of files)
   copyFileSync(resolve(root, dirname(FONT_SOURCE), file), resolve(fonts, file));
 

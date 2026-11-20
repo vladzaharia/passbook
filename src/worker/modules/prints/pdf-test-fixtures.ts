@@ -75,21 +75,4 @@ export async function pdfKit() {
   return { kit, api, printPass, mint, staffPdf, holderPdf, tokenOf };
 }
 
-/** The text a PDF draws: pdf-lib writes hex strings in deflated content streams. */
-export async function pdfText(bytes: Uint8Array): Promise<string> {
-  let raw = '';
-  for (const b of bytes) raw += String.fromCharCode(b);
-  let out = '';
-  for (const m of raw.matchAll(/stream\r?\n([\s\S]*?)\nendstream/g)) {
-    const body = Uint8Array.from(m[1] ?? '', (c) => c.charCodeAt(0));
-    try {
-      const inflated = new Blob([body]).stream().pipeThrough(new DecompressionStream('deflate'));
-      const text = await new Response(inflated).text();
-      for (const h of text.matchAll(/<([0-9A-Fa-f]+)>\s*Tj/g))
-        out += `${String.fromCharCode(...(h[1]?.match(/../g) ?? []).map((x) => Number.parseInt(x, 16)))}\n`;
-    } catch {
-      // Not a deflate stream (a font or an image).
-    }
-  }
-  return out;
-}
+export { pdfText } from './pdf-read.ts';

@@ -6,6 +6,7 @@ import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { voidPass } from '../passes/service.ts';
 import { handlePrintsBulk } from './jobs.ts';
 import { dropPrintPdfs } from './pdf-drop.ts';
+import { readPdf } from './pdf-read.ts';
 import { bulkKey } from './pdf-store.ts';
 import { FORBIDDEN, pdfKit, pdfText } from './pdf-test-fixtures.ts';
 
@@ -71,7 +72,9 @@ describe('bulk print', () => {
     expect(pdf.headers.get('cache-control')).toBe('private, no-store');
     const bytes = new Uint8Array(await pdf.arrayBuffer());
     const text = await pdfText(bytes);
-    expect(text.match(/Spring Concert/g)).toHaveLength(2);
+    const pages = await readPdf(bytes);
+    expect(pages).toHaveLength(2);
+    for (const page of pages) expect(page.lines).toContain('Spring Concert');
     expect(text).not.toContain(FORBIDDEN);
     // Running the job again changes nothing.
     await handlePrintsBulk(job as never, jobCtxOf(kit));
