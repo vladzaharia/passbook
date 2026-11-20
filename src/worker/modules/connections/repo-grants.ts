@@ -25,7 +25,7 @@ export const CONNECTION_CODES = {
   release: 'TEMPLATE_RELEASE_CHANGED',
   retention: 'RETENTION_CHANGED',
   entitlement: 'FEATURE_NOT_INCLUDED',
-  limit: 'ORG_LIMIT',
+  limit: 'FEATURE_LIMIT_REACHED',
   stale: 'STALE',
 } as const satisfies Record<Exclude<DenyReason, 'proof'>, string>;
 

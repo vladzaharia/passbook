@@ -2,6 +2,7 @@ import type { Json } from '../../../shared/contracts/common.ts';
 import type { VoidRule } from '../../../shared/contracts/connections.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
+import { withinLimit } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   type ConnectionActor,
@@ -180,7 +181,13 @@ export async function insertConnection(
   row: ConnectionRow,
   actor: ConnectionActor,
 ): Promise<void> {
-  const g = connectionGrant(ctx, actor, 'create', [], row.id);
+  const g = connectionGrant(
+    ctx,
+    actor,
+    'create',
+    [withinLimit('connections', 'SELECT COUNT(*) FROM connections cn WHERE cn.org_id = {org}')],
+    row.id,
+  );
   g.insertSelect('connections', INSERT_COLUMNS, insertValues(row));
   await g.commit();
 }

@@ -2,6 +2,7 @@ import { grantedBatch } from '../../platform/authority.ts';
 import { type Check, rowIs } from '../../platform/authority-checks.ts';
 import { writePart } from '../../platform/authority-include.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
+import { withinLimit } from '../../platform/entitlements.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { CommitArgs } from './persist.ts';
@@ -67,6 +68,14 @@ export async function writeVersion(
   if (!authority) throw new ForbiddenError();
   const deferred = args.deferred === true;
   const checks: Check[] = [];
+  // A new org template takes a slot of the `templates` limit; platform-owned (shared) templates have none.
+  if (plan.isNew && authority.kind !== 'platform')
+    checks.push(
+      withinLimit(
+        'templates',
+        "SELECT COUNT(*) FROM templates t WHERE t.org_id = {org} AND t.status <> 'deleted'",
+      ),
+    );
   if (!plan.isNew)
     checks.push(
       rowIs(

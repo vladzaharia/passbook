@@ -103,6 +103,7 @@ export const finished = (over: Record<string, unknown> = {}) =>
       updated: 40,
       unchanged: 12,
       failed: 0,
+      skipped: 0,
       notEmailed: 0,
       removed: 0,
     },

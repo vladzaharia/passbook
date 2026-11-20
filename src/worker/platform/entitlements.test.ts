@@ -209,7 +209,7 @@ describe('fail closed', () => {
       );
       expect((await go(entitled('connections')))?.code).toBe('FEATURE_NOT_INCLUDED');
       expect((await go(withinLimit('templates', 'SELECT 0 WHERE {org} IS NOT NULL')))?.code).toBe(
-        'ORG_LIMIT',
+        'FEATURE_LIMIT_REACHED',
       );
       expect((await refusal(requireEntitled(route, s.org.id, 'apps')))?.code).toBe(
         'FEATURE_NOT_INCLUDED',
@@ -248,14 +248,14 @@ describe('fail closed', () => {
     expect((await go(entitled('api', 'read')))?.code).toBe('FEATURE_NOT_INCLUDED'); // not a level
     expect((await go(entitled('connections')))?.code).toBe('FEATURE_NOT_INCLUDED'); // not an integer
     expect((await go(withinLimit('templates', 'SELECT 0 WHERE {org} IS NOT NULL')))?.code).toBe(
-      'ORG_LIMIT',
+      'FEATURE_LIMIT_REACHED',
     ); // "5"
     expect((await go(withinLimit('connections', 'SELECT 0 WHERE {org} IS NOT NULL')))?.code).toBe(
-      'ORG_LIMIT',
+      'FEATURE_LIMIT_REACHED',
     ); // 5.5
     expect(await go(withinLimit('members', 'SELECT 0 WHERE {org} IS NOT NULL'))).toBeNull(); // 3 > 0
     expect((await go(withinLimit('api.keys', 'SELECT 0 WHERE {org} IS NOT NULL')))?.code).toBe(
-      'ORG_LIMIT',
+      'FEATURE_LIMIT_REACHED',
     ); // missing
     const e = await entitlementsOf(route, s.org.id);
     expect(e.members).toBe(3);
@@ -370,13 +370,13 @@ describe('withinLimit', () => {
     expect(await count(s.org.id)).toBe(1);
     expect(await refusal(create(route, member(), 'c-n-1'))).toBeNull();
     const e = await refusal(create(route, member(), 'c-n'));
-    expect(e?.code).toBe('ORG_LIMIT');
+    expect(e?.code).toBe('FEATURE_LIMIT_REACHED');
     expect(e?.status).toBe(403);
     expect(await count(s.org.id)).toBe(2);
     await override(s.org.id, 'connections', 'null');
     expect(await refusal(create(route, member(), 'c-null'))).toBeNull();
     await override(s.org.id, 'connections', '0');
-    expect((await refusal(create(route, member(), 'c-zero')))?.code).toBe('ORG_LIMIT');
+    expect((await refusal(create(route, member(), 'c-zero')))?.code).toBe('FEATURE_LIMIT_REACHED');
   });
 
   it('two creates at n-1 admit exactly one', async () => {
@@ -393,7 +393,7 @@ describe('withinLimit', () => {
       ['a', 'b', 'c', 'd', 'e'].map((id) => refusal(create(route, member(), `race-${id}`))),
     );
     expect(results.filter((r) => r === null)).toHaveLength(1);
-    expect(results.filter((r) => r?.code === 'ORG_LIMIT')).toHaveLength(4);
+    expect(results.filter((r) => r?.code === 'FEATURE_LIMIT_REACHED')).toHaveLength(4);
     expect(await count(s.org.id)).toBe(4);
   });
 
@@ -408,7 +408,9 @@ describe('withinLimit', () => {
         "INSERT INTO connections (id, org_id, connector_type, name, created_at, updated_at) VALUES (?, ?, 'x', ?, 1, 1)",
         [`iso-${i}`, b.s.org.id, `iso-${i}`],
       );
-    expect((await refusal(create(a.route, a.member(), 'iso-a')))?.code).toBe('ORG_LIMIT');
+    expect((await refusal(create(a.route, a.member(), 'iso-a')))?.code).toBe(
+      'FEATURE_LIMIT_REACHED',
+    );
     expect(await refusal(create(b.route, b.member(), 'iso-b'))).toBeNull();
   });
 
@@ -418,7 +420,7 @@ describe('withinLimit', () => {
     await refusal(create(route, member(), 'low-1'));
     await override(s.org.id, 'connections', '1');
     expect(await count(s.org.id)).toBe(2);
-    expect((await refusal(create(route, member(), 'low-2')))?.code).toBe('ORG_LIMIT');
+    expect((await refusal(create(route, member(), 'low-2')))?.code).toBe('FEATURE_LIMIT_REACHED');
     expect(await count(s.org.id)).toBe(2);
   });
 
@@ -461,7 +463,7 @@ describe('withinLimit', () => {
         ),
       ],
     });
-    expect((await refusal(full.commit()))?.code).toBe('ORG_LIMIT');
+    expect((await refusal(full.commit()))?.code).toBe('FEATURE_LIMIT_REACHED');
     expect(s.org.id).toBeDefined();
   });
 });

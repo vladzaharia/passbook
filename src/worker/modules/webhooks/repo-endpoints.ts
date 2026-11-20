@@ -4,8 +4,10 @@ import type {
   WebhookEndpointStatus,
 } from '../../../shared/contracts/webhooks.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
+import type { Check } from '../../platform/authority-checks.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { all, first } from '../../platform/db.ts';
+import { withinLimit } from '../../platform/entitlements.ts';
 import type { FeedFence } from './repo-feed.ts';
 
 export interface EndpointRow {
@@ -124,6 +126,13 @@ export function assertOrgModeGrant(g: Grant): void {
   if (g.scope !== 'org_mode')
     throw new AuthorityError('GRANT_BAD_PURPOSE', 'Webhook writes need an org_mode grant.');
 }
+
+/** An endpoint takes a slot of the `webhooks.endpoints` limit, counted across the org's modes. */
+export const endpointSlot = (): Check =>
+  withinLimit(
+    'webhooks.endpoints',
+    'SELECT COUNT(*) FROM webhook_endpoints we WHERE we.org_id = {org}',
+  );
 
 export interface NewEndpoint {
   id: string;

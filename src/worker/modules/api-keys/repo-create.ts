@@ -7,6 +7,7 @@ import {
 } from '../../platform/api-scopes.ts';
 import { grant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
+import { withinLimit } from '../../platform/entitlements.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -110,6 +111,13 @@ export async function createKey(
     target: key.id,
     checks: [
       ...capabilityChecks(authority),
+      // Revoked and expired keys free their slot.
+      withinLimit(
+        'api.keys',
+        `SELECT COUNT(*) FROM api_keys k WHERE k.org_id = {org} AND k.revoked_at IS NULL
+          AND (k.expires_at IS NULL OR k.expires_at > ?)`,
+        [key.created_at],
+      ),
       ...[...capabilities].map((capability) =>
         membershipCapability(authority.membershipId, capability),
       ),

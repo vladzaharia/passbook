@@ -18,7 +18,7 @@ import {
 } from './pairing-token.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
 import { credentialEpochOf, getScannerByPrefix } from './repo-device.ts';
-import type { ConsoleScannerRow } from './repo-scanners.ts';
+import { type ConsoleScannerRow, scannerSlot } from './repo-scanners.ts';
 import {
   addCodeCredential,
   addPairCode,
@@ -102,7 +102,11 @@ export async function createPairing(
     userId,
     authority,
     scanner.orgId,
-    [epochIs('scanners', scanner.id, 'credential_epoch', scanner.credentialEpoch)],
+    [
+      epochIs('scanners', scanner.id, 'credential_epoch', scanner.credentialEpoch),
+      // Bringing a revoked scanner back takes a slot like a new one.
+      ...(restored ? [scannerSlot()] : []),
+    ],
     PAIRING_CODES,
     scanner.id,
   );

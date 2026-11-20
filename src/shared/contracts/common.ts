@@ -36,6 +36,9 @@ export const ProblemSchema = z.object({
     .optional(),
   /** FEATURE_NOT_INCLUDED: the entitlement key the organization lacks. */
   feature: z.string().optional(),
+  /** FEATURE_LIMIT_REACHED: the cap and the count the organization holds. */
+  limit: z.number().int().optional(),
+  used: z.number().int().optional(),
 });
 export type ProblemDto = z.infer<typeof ProblemSchema>;
 

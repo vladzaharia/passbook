@@ -33,7 +33,7 @@ import {
   replaceScannerTemplates,
 } from './repo-admin-unguarded.ts';
 import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts';
-import { addScannerInsert, addScannerPatch } from './repo-scanners.ts';
+import { addScannerInsert, addScannerPatch, scannerSlot } from './repo-scanners.ts';
 import { scanningDeviceRow } from './repo-scanning-devices.ts';
 import { type ScanningSessionRow, scanningSessionForDevice } from './repo-scanning-sessions.ts';
 import { addDeviceRole, addSetupAcceptsClear, setupMeta, watchOf } from './repo-setups.ts';
@@ -129,6 +129,7 @@ export async function createSetup(
     authority,
     orgId,
     [
+      scannerSlot(),
       ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
       ...eventsOpen([...(accepts?.eventIds ?? []), settings.checkIn?.eventId]),
       ...scopeTemplatesUsable(accepts?.templateIds ?? [], attached),

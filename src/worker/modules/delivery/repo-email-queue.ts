@@ -1,7 +1,7 @@
 import type { Json } from '../../../shared/contracts/common.ts';
 import { type Grant, grant, grantedBatch } from '../../platform/authority.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
-import { exists, type GrantCond } from '../../platform/authority-cond.ts';
+import { exists, type GrantCond, tenantCheck } from '../../platform/authority-cond.ts';
 import { writePart } from '../../platform/authority-include.ts';
 import { first, run } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -59,6 +59,15 @@ export function rateChecks(r: QueueRate): Check[] {
   return [
     under(r.recipientKey, r.recipientWindow, r.recipientCap),
     under(r.orgKey, r.orgWindow, r.orgCap),
+    // The plan's `email.perDay`, read in the grant: `null` has no cap, a missing value none left.
+    tenantCheck(
+      'stale',
+      `COALESCE((SELECT count FROM counters WHERE key = ? AND window_start = ?), 0)
+        < COALESCE((SELECT CASE json_type(v.value) WHEN 'null' THEN 9007199254740991
+            WHEN 'integer' THEN CAST(v.value AS INTEGER) END
+          FROM org_entitlement_values v WHERE v.org_id = {org} AND v.key = 'email.perDay'), 0)`,
+      [r.orgKey, r.orgWindow],
+    ),
   ];
 }
 

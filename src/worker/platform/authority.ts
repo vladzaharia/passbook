@@ -5,6 +5,7 @@ import { grantedBatch, grantedBatchWith, registerPrepare } from './authority-bat
 import type { Check } from './authority-checks.ts';
 import { buildAssert, type GrantCond } from './authority-cond.ts';
 import { assertOwnStatement, assertTableAllowed, translateDenial } from './authority-denial.ts';
+import { limitHitOf } from './authority-entitled.ts';
 import { AuthorityError } from './authority-error.ts';
 import { identifier } from './authority-expr.ts';
 import {
@@ -41,7 +42,7 @@ import {
 } from './authority-statements.ts';
 import { buildUpsert, type UpsertOptions } from './authority-upsert.ts';
 import { exactStmt, type SqlValue } from './db.ts';
-import type { DenyReason } from './errors.ts';
+import type { DenyReason, LimitHit } from './errors.ts';
 import { hasJobAuthority } from './job-authority.ts';
 import type { ServiceContext } from './service-context.ts';
 
@@ -285,6 +286,9 @@ export class Grant {
   translate(error: unknown): unknown {
     return translateDenial(error, this.principal, this.#input.codes);
   }
+  /** @internal After a `limit` refusal: the limit this grant's checks ran into, or null. */
+  limitHit = (): Promise<LimitHit | null> =>
+    limitHitOf(this.#db, this.scope, this.principal, this.#now, this.#input.checks ?? []);
 
   /** Runs the grant and its writes as one D1 batch. Results are for the writes, in order. */
   async commit(): Promise<D1Result[]> {

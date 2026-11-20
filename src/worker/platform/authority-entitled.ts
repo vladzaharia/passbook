@@ -11,8 +11,9 @@ import {
 import type { Check } from './authority-checks.ts';
 import { tenantSql } from './authority-cond.ts';
 import { AuthorityError } from './authority-error.ts';
-import type { Binds, GrantScope } from './authority-principal.ts';
+import { actorSql, Binds, type GrantScope, type Principal } from './authority-principal.ts';
 import type { SqlValue } from './db.ts';
+import type { LimitHit } from './errors.ts';
 
 const bad = (message: string) => new AuthorityError('GRANT_BAD_PURPOSE', message);
 
@@ -91,6 +92,7 @@ export function withinLimit(
   const count = tenantSql(countSql, params);
   return {
     reason: 'limit',
+    limit: { key, count },
     ok: (b, scope) => {
       needOrg(scope);
       // The count's binds come first in the text; lookup() binds the key after them.
@@ -103,4 +105,37 @@ export function withinLimit(
       );
     },
   };
+}
+
+/**
+ * After a `limit` refusal: the first limit check of a grant whose cap the org has reached, with its cap and
+ * count. Read through the grant's own actor row, so it names the same org and mode the refusal judged; it
+ * is a diagnosis, so a count that moved since is reported as read. Null when none reads as reached.
+ */
+export async function limitHitOf(
+  db: D1Database,
+  scope: GrantScope,
+  principal: Principal,
+  now: number,
+  checks: readonly Check[],
+): Promise<LimitHit | null> {
+  for (const check of checks) {
+    if (!check.limit) continue;
+    const b = new Binds();
+    const actor = actorSql(principal, now, b);
+    const key = b.bind(check.limit.key);
+    const sql = `WITH actor AS MATERIALIZED (${actor})
+      SELECT (SELECT ent_v.value FROM org_entitlement_values ent_v
+          WHERE ent_v.org_id = a.org_id AND ent_v.key = ${key}) AS value,
+        (${check.limit.count.render(b, scope, 'a')}) AS used
+      FROM actor a`;
+    const row = await db
+      .prepare(sql)
+      .bind(...b.params)
+      .first<{ value: string | null; used: number | null }>();
+    const max = row?.value == null ? Number.NaN : Number(row.value);
+    if (!Number.isInteger(max) || row?.used == null || row.used < max) continue;
+    return { key: check.limit.key, limit: max, used: row.used };
+  }
+  return null;
 }

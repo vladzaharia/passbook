@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
   ConflictError,
+  FeatureLimitError,
   NotFoundError,
   problemResponse,
   RateLimitedError,
@@ -18,6 +19,18 @@ describe('problem mapping', () => {
       detail: 'No pass.',
       requestId: 'req-1',
       status: 404,
+    });
+  });
+
+  it('says which limit a create reached, its cap and the count, in one sentence', async () => {
+    const res = problemResponse(new FeatureLimitError({ key: 'api.keys', limit: 10, used: 10 }));
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({
+      code: 'FEATURE_LIMIT_REACHED',
+      feature: 'api.keys',
+      limit: 10,
+      used: 10,
+      detail: 'API keys limit reached (10 of 10), ask PassBook for more.',
     });
   });
 
