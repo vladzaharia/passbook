@@ -65,11 +65,17 @@ export async function setupTemplateScan(
   const [own, listed] = await Promise.all([
     source.own
       ? ownEventValues(db, orgId, mode, templateId, source.own, now - 2 * DAY)
-      : { values: [], more: false },
+      : { values: [], more: false, unparsed: 0 },
     source.list
       ? listedEventValues(db, orgId, mode, templateId, source.list, now - 2 * DAY)
-      : { values: [], more: false },
+      : { values: [], more: false, unparsed: 0 },
   ]);
+  if (own.unparsed + listed.unparsed > 0)
+    ctx.log.warn('scan.template_setup.start_skipped', {
+      orgId,
+      code: 'START_NOT_ISO',
+      count: own.unparsed + listed.unparsed,
+    });
   const plan = planEvents(templateId, source, [...own.values, ...listed.values], now);
   const planned = plan.events;
   const truncated = plan.more || own.more || listed.more;
@@ -136,13 +142,16 @@ export async function setupTemplateScan(
     made: Made[] = [],
   ): Promise<TemplateScanSetup> => {
     let row = await loadScanningSession(ctx, sessionId, mode, orgId);
-    const unchanged = (): TemplateScanSetup => ({
-      session: { id: row.id, name: row.name },
-      created: false,
-      events: [],
-      noEvents: false,
-      truncated,
-    });
+    const unchanged = async (): Promise<TemplateScanSetup> => {
+      await discard(made);
+      return {
+        session: { id: row.id, name: row.name },
+        created: false,
+        events: [],
+        noEvents: false,
+        truncated,
+      };
+    };
     // A session that admits every pass type, or one whose scope no longer reads, is left as it is.
     if (!storedAdmits(row.accepts)) return unchanged();
     const room = MAX_EVENTS - (storedAdmits(row.accepts)?.eventIds.length ?? 0);
@@ -164,7 +173,10 @@ export async function setupTemplateScan(
         row.setup_template_id === templateId && !admits.templateIds.includes(templateId)
           ? [...admits.templateIds, templateId]
           : admits.templateIds;
-      if (attach.length === 0 && templateIds === admits.templateIds)
+      // Events this call made beyond the session's room stay unattached: archive them.
+      const over = () => made.filter((e) => !have.has(e.id) && !attach.includes(e));
+      if (attach.length === 0 && templateIds === admits.templateIds) {
+        await discard(over());
         return {
           session: { id: row.id, name: row.name },
           created: false,
@@ -172,6 +184,7 @@ export async function setupTemplateScan(
           noEvents: eventStyle && have.size === 0,
           truncated,
         };
+      }
       try {
         await updateScanningSession(
           ctx,
@@ -181,6 +194,7 @@ export async function setupTemplateScan(
           authority,
           countAuthority,
         );
+        await discard(over());
         return {
           session: { id: row.id, name: row.name },
           created: false,

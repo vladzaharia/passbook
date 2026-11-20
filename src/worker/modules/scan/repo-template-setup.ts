@@ -49,17 +49,24 @@ const LIVE = `p.org_id = ? AND p.mode = ? AND p.template_id = ? AND p.status = '
   AND p.deleted_at IS NULL AND p.removed_at IS NULL AND p.test_data_quarantined = 0`;
 /** Rows read per source; one more than this means there were more. */
 export const MAX_ROWS = 500;
+/** Passes read per call, newest first (ids are time-ordered); one more than this means older ones were left out. */
+export const MAX_PASSES = 5000;
 const path = (input: string | null) => (input ? `$.${input}` : null);
 const iso = (ms: number) => new Date(ms).toISOString();
+/** The newest live passes of the template: every read below works from these, never from all of them. */
+const recent = (limit: number) =>
+  `recent AS (SELECT p.personalization FROM passes p WHERE ${LIVE} ORDER BY p.id DESC LIMIT ${limit})`;
 
 export interface EventRows {
   values: EventValues[];
-  /** More rows matched than were read. */
+  /** More rows matched than were read, or older passes were left out. */
   more: boolean;
+  /** Distinct start values that are not ISO-8601 dates: their events are skipped. */
+  unparsed: number;
 }
 
 /**
- * The distinct events the template's issued, unvoided passes name in their own inputs, soonest
+ * The distinct events the template's newest issued, unvoided passes name in their own inputs, soonest
  * first. `since` leaves out events that started long before (the plan drops ended ones exactly).
  */
 export async function ownEventValues(
@@ -69,36 +76,54 @@ export async function ownEventValues(
   templateId: string,
   own: NonNullable<EventSource['own']>,
   since: number,
+  limit = MAX_PASSES,
 ): Promise<EventRows> {
-  const rows = await all<Record<string, string | null>>(
-    db,
-    `SELECT DISTINCT json_extract(p.personalization, ?) AS name, json_extract(p.personalization, ?) AS startsAt,
-       json_extract(p.personalization, ?) AS endsAt, json_extract(p.personalization, ?) AS doorsAt,
-       json_extract(p.personalization, ?) AS venueName, json_extract(p.personalization, ?) AS venueRegion,
-       json_extract(p.personalization, ?) AS timeZone, json_extract(p.personalization, ?) AS slot,
-       julianday(json_extract(p.personalization, ?)) AS startJ
-     FROM passes p WHERE ${LIVE} AND startJ >= julianday(?)
-     ORDER BY startJ, name LIMIT ${MAX_ROWS + 1}`,
-    [
-      path(own.name),
-      path(own.start),
-      path(own.end),
-      path(own.doors),
-      path(own.venueName),
-      path(own.venueRegion),
-      path(own.zone),
-      path(own.slot),
-      path(own.start),
-      orgId,
-      mode,
-      templateId,
-      iso(since),
-    ],
-  );
+  const scope = [orgId, mode, templateId];
+  const [rows, stats] = await Promise.all([
+    all<Record<string, string | null>>(
+      db,
+      `WITH ${recent(limit)}
+       SELECT DISTINCT json_extract(p.personalization, ?) AS name, json_extract(p.personalization, ?) AS startsAt,
+         json_extract(p.personalization, ?) AS endsAt, json_extract(p.personalization, ?) AS doorsAt,
+         json_extract(p.personalization, ?) AS venueName, json_extract(p.personalization, ?) AS venueRegion,
+         json_extract(p.personalization, ?) AS timeZone, json_extract(p.personalization, ?) AS slot,
+         julianday(json_extract(p.personalization, ?)) AS startJ
+       FROM recent p WHERE startJ >= julianday(?)
+       ORDER BY startJ, name, venueName IS NULL, endsAt IS NULL, doorsAt IS NULL, venueName, endsAt, doorsAt
+       LIMIT ${MAX_ROWS + 1}`,
+      [
+        ...scope,
+        path(own.name),
+        path(own.start),
+        path(own.end),
+        path(own.doors),
+        path(own.venueName),
+        path(own.venueRegion),
+        path(own.zone),
+        path(own.slot),
+        path(own.start),
+        iso(since),
+      ],
+    ),
+    first<Stats>(
+      db,
+      `WITH ${recent(limit + 1)}
+       SELECT count(*) AS scanned,
+         count(DISTINCT CASE WHEN s IS NOT NULL AND julianday(s) IS NULL THEN s END) AS unparsed
+       FROM (SELECT json_extract(personalization, ?) AS s FROM recent)`,
+      [...scope, path(own.start)],
+    ),
+  ]);
   return {
     values: rows.slice(0, MAX_ROWS).map((row) => ({ ...row, own: true })),
-    more: rows.length > MAX_ROWS,
+    more: rows.length > MAX_ROWS || (stats?.scanned ?? 0) > limit,
+    unparsed: stats?.unparsed ?? 0,
   };
+}
+
+interface Stats {
+  scanned: number;
+  unparsed: number;
 }
 
 /** The distinct object entries of the upcoming-events list on those passes, soonest first. */
@@ -109,19 +134,35 @@ export async function listedEventValues(
   templateId: string,
   list: string,
   since: number,
+  limit = MAX_PASSES,
 ): Promise<EventRows> {
-  const rows = await all<{ item: string }>(
-    db,
-    `SELECT DISTINCT j.value AS item, julianday(json_extract(j.value, '$.startsAt')) AS startJ
-     FROM passes p, json_each(CASE WHEN json_type(p.personalization, ?) = 'array'
-       THEN json_extract(p.personalization, ?) ELSE '[]' END) j
-     WHERE ${LIVE} AND j.type = 'object' AND startJ >= julianday(?)
-     ORDER BY startJ, item LIMIT ${MAX_ROWS + 1}`,
-    [path(list), path(list), orgId, mode, templateId, iso(since)],
-  );
+  const scope = [orgId, mode, templateId];
+  const entries = `FROM recent p, json_each(CASE WHEN json_type(p.personalization, ?) = 'array'
+       THEN json_extract(p.personalization, ?) ELSE '[]' END) j WHERE j.type = 'object'`;
+  const [rows, stats] = await Promise.all([
+    all<{ item: string }>(
+      db,
+      `WITH ${recent(limit)}
+       SELECT DISTINCT j.value AS item, julianday(json_extract(j.value, '$.startsAt')) AS startJ
+       ${entries} AND startJ >= julianday(?)
+       ORDER BY startJ, item LIMIT ${MAX_ROWS + 1}`,
+      [...scope, path(list), path(list), iso(since)],
+    ),
+    first<Stats>(
+      db,
+      `WITH ${recent(limit + 1)}
+       SELECT (SELECT count(*) FROM recent) AS scanned,
+         count(DISTINCT CASE WHEN json_extract(j.value, '$.startsAt') IS NOT NULL
+           AND julianday(json_extract(j.value, '$.startsAt')) IS NULL
+           THEN json_extract(j.value, '$.startsAt') END) AS unparsed
+       ${entries}`,
+      [...scope, path(list), path(list)],
+    ),
+  ]);
   // Only object entries are read, so every value is JSON text of an object.
   return {
     values: rows.slice(0, MAX_ROWS).map(({ item }) => JSON.parse(item) as EventValues),
-    more: rows.length > MAX_ROWS,
+    more: rows.length > MAX_ROWS || (stats?.scanned ?? 0) > limit,
+    unparsed: stats?.unparsed ?? 0,
   };
 }
