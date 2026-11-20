@@ -88,6 +88,8 @@ export const ApiScopeSchema = z.enum([
   'platform:status',
   'platform:templates',
   'platform:audit',
+  /** Reads and edits the org's brand kit: web logo, accent, mark level. */
+  'brand:manage',
 ]);
 export const RoleSchema = z.enum(['admin', 'user']);
 

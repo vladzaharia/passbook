@@ -1,6 +1,7 @@
 import { Ban, Download, Printer, RotateCcw } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import holderCss from '../../generated/ssr-holder.css?raw';
+import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import { PRINT_COPY } from '../../shared/copy/print.ts';
 import { toSvg } from '../../shared/pass-view/barcode-svg.ts';
 import { PAPER_CSS, pageRule } from '../../web/paper/css.ts';
@@ -14,7 +15,8 @@ import { documentStart, type PageTheme } from './head.ts';
 import { actionHtml, hostedPage } from './hosted.ts';
 import { HOSTED_ART_CSS, stateArtHtml } from './hosted-art.tsx';
 import { iconHtml } from './icon.ts';
-import { OrgBar } from './org-bar.tsx';
+import { OrgBar, OrgMark } from './org-bar.tsx';
+import { brandCss, ORG_SHELL_CSS } from './org-brand-css.ts';
 import { RIBBON_CSS, TestRibbon } from './test-ribbon.tsx';
 import { escapeHtml, THEME_CSS } from './theme.ts';
 
@@ -104,6 +106,8 @@ export interface PrintPageProps {
   assetBase?: string;
   nonce: string;
   theme?: PageTheme;
+  /** The org's brand kit (`orgBrandOf`): its logo leads the bar, its accent colours the page, its mark sets the foot. */
+  brand?: OrgBrand;
 }
 
 const HEAD =
@@ -191,17 +195,22 @@ function holderPage(props: PrintPageProps): string {
         : '';
   const bar = renderToStaticMarkup(
     <div className="pp-noprint">
-      <OrgBar orgName={model.orgName} />
+      <OrgBar orgName={model.orgName} brand={props.brand} />
       <div className="pp-ribbon">
         <TestRibbon mode={model.mode} what="pass" />
       </div>
     </div>,
   );
   const page = model.state === 'ready' ? pageRule(model.design.size) : '';
+  const mark = renderToStaticMarkup(
+    <div className="pp-noprint">
+      <OrgMark brand={props.brand} />
+    </div>,
+  );
   const lede = sheet ? `<p class="pp-lede">${escapeHtml(PRINT_COPY.lede)}</p>` : '';
   const pair = model.state === 'unavailable' ? ' pp-scene-pair' : '';
   const scene = art ? `<div class="scene pp-scene${pair}" aria-hidden="true">${art}</div>` : '';
-  return `${documentStart(props.theme)}${HEAD}<title>${escapeHtml(heading)}</title><style nonce="${props.nonce}">${HOLDER_CSS}\n${page}\n${PRINT_ONLY_CSS}</style></head><body><div class="[--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">${bar}<main class="pp-main">${scene}<div class="pp-head"><h1>${escapeHtml(heading)}</h1>${lede}</div>${body}</main></div>${SCRIPT(props.nonce)}</body></html>`;
+  return `${documentStart(props.theme)}${HEAD}<title>${escapeHtml(heading)}</title><style nonce="${props.nonce}">${HOLDER_CSS}\n${ORG_SHELL_CSS}\n${page}\n${PRINT_ONLY_CSS}${brandCss(props.brand)}</style></head><body><div class="[--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">${bar}<main class="pp-main">${scene}<div class="pp-head"><h1>${escapeHtml(heading)}</h1>${lede}</div>${body}</main>${mark}</div>${SCRIPT(props.nonce)}</body></html>`;
 }
 
 /**
@@ -218,6 +227,7 @@ export function renderPrintPage(props: PrintPageProps): string {
   return hostedPage({
     nonce: props.nonce,
     ...(props.theme ? { theme: props.theme } : {}),
+    ...(props.brand ? { brand: props.brand } : {}),
     title: model.state === 'unavailable' ? PRINT_COPY.unavailable : PRINT_COPY.staffTitle,
     art: model.state === 'unavailable' ? 'no-access' : 'login',
     ...(sheet ? { lede: escapeHtml(PRINT_COPY.lede) } : {}),

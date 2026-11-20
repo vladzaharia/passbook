@@ -26,6 +26,8 @@ import {
   orgExportDownloadRoutes,
   orgLifecycleRoutes,
 } from './modules/org-lifecycle/routes.ts';
+import { brandAssetRoutes } from './modules/orgs/brand-assets.ts';
+import { brandRoutes } from './modules/orgs/brand-routes.ts';
 import { orgsRoutes } from './modules/orgs/routes.ts';
 import { passesRoutes } from './modules/passes/routes.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
@@ -143,6 +145,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/session', sessionRoutes);
   app.route('/api/v1/me', meRoutes);
   app.route('/api/v1/orgs', orgsRoutes);
+  app.route('/api/v1/brand', brandRoutes);
   app.route('/api/v1/orgs', walletCredentialRoutes);
   app.route('/api/v1/orgs', walletEnrolmentRoutes);
   app.route('/api/v1/orgs', retentionRoutes);
@@ -197,6 +200,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/scan', scanShellSwRoutes);
   app.route('/p', walletOfferRoutes);
   app.route('/w/i', walletImageRoutes);
+  app.route('/brand', brandAssetRoutes);
   app.route('/p', publicRoutes);
   app.route('/b', bundlePublicRoutes);
   app.route('/j', joinPublicRoutes);

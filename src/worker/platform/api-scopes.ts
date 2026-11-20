@@ -42,12 +42,14 @@ export const scopeCapability: Record<TenantScope, OrgCapability> = {
   'members:read': 'members:read',
   'members:write': 'members:manage',
   'audit:read': 'audit:read',
+  'brand:manage': 'org:manage',
 };
 
 /** A write scope that has always served the read capability of its area too. */
 const ALSO_READS: Partial<Record<TenantScope, OrgCapability>> = {
   'webhooks:manage': 'integrations:read',
   'messages:write': 'messages:read',
+  'brand:manage': 'org:read',
 };
 
 /** `scans:write` is the terminal scope (its own guard); it never stands for `passes:operate`. */

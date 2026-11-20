@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import type { Mode } from '../../shared/contracts/common.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { OFFLINE_SCRIPT } from '../../shared/pass-offline.ts';
@@ -34,6 +35,8 @@ const CSS = `${RIBBON_CSS}
 export interface PresentationPageProps {
   barcode: PresentationBarcode | null;
   orgName: string;
+  /** The org's brand kit (`orgBrandOf`). */
+  brand?: OrgBrand;
   passTitle: string;
   mode: Mode;
   backHref: string;
@@ -80,6 +83,7 @@ export function renderPresentationPage(props: PresentationPageProps): string {
   return hostedPage({
     nonce: props.nonce,
     theme: props.theme,
+    ...(props.brand ? { brand: props.brand } : {}),
     title: props.passTitle,
     art: 'login',
     lede: escapeHtml(HOLDER_COPY.presentLine),

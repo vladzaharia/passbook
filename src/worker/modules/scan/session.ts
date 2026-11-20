@@ -10,6 +10,7 @@ import {
   UnavailableError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { scanLogoOf } from '../orgs/brand.ts';
 import { planCounts } from './counts.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
@@ -145,7 +146,7 @@ async function sessionFor(
   );
   const branding = ScanBrandingSchema.parse({
     accent: storedBranding.accent ?? null,
-    logo: storedBranding.logo ?? null,
+    logo: scanLogoOf(storedBranding)?.image ?? null,
   });
   const peopleRows = peopleStmt ? (results[3]?.results ?? []) : [];
   const countResults = results.slice(peopleStmt ? 4 : 3);

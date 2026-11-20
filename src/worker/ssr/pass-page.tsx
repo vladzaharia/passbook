@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
 import holderCss from '../../generated/ssr-holder.css?raw';
+import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import type { EffectiveChannels } from '../../shared/contracts/channels.ts';
 import type { Mode } from '../../shared/contracts/common.ts';
 import type { WalletOffer } from '../../shared/contracts/me.ts';
@@ -36,7 +37,8 @@ import walletStates from '../../web/ui/art/wallet-states.css?raw';
 import { GO_TO_MY_PASSES } from './error-page.tsx';
 import { documentStart, type PageTheme } from './head.ts';
 import { actionHtml, hostedPage, REPLAY_SCRIPT } from './hosted.ts';
-import { OrgBar } from './org-bar.tsx';
+import { OrgBar, OrgMark } from './org-bar.tsx';
+import { brandCss, ORG_SHELL_CSS } from './org-brand-css.ts';
 import { RIBBON_CSS, TestRibbon } from './test-ribbon.tsx';
 import { THEME_CSS } from './theme.ts';
 
@@ -49,6 +51,7 @@ import { THEME_CSS } from './theme.ts';
  */
 const ART = [artBase, artWallet, walletStates, rest, common, nudge, tear].join('\n');
 export const PAGE_CSS = `${THEME_CSS}${holderCss}${cardBase}\n${cardPoster}\n${cardText}\n${stageCss}\n${stageMotion}\n${stageSeg}\n${ART}\n${holderPassCss}\n${addCss}\n${RIBBON_CSS}
+${ORG_SHELL_CSS}
 body{padding:0}
 @media (prefers-reduced-motion:no-preference){.wl-holder:has([data-awb]:active) .pc-lift{animation:pc-dip 420ms cubic-bezier(.2,0,0,1)}}`;
 
@@ -65,6 +68,8 @@ export interface PassPageProps {
   theme?: PageTheme;
   /** The org's name for the header and the voided note (never the platform's). */
   orgName: string;
+  /** The org's brand kit (`orgBrandOf`): logo, accent and mark level. */
+  brand?: OrgBrand;
   /** The org record's name, for link previews and the home-screen label: never a pass field. */
   orgLabel: string;
   /** The pass's own title (display title, else its description). */
@@ -119,7 +124,7 @@ function PassBody(props: PassPageProps) {
   const active = state === 'active';
   return (
     <div className="flex min-h-dvh flex-col [--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">
-      <OrgBar orgName={props.orgName} />
+      <OrgBar orgName={props.orgName} brand={props.brand} />
       <TestRibbon mode={props.mode} what="pass" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <HolderHeading
@@ -168,6 +173,7 @@ function PassBody(props: PassPageProps) {
           rise
         />
       </main>
+      <OrgMark brand={props.brand} />
     </div>
   );
 }
@@ -198,7 +204,7 @@ export function renderPassPage(props: PassPageProps): string {
           ? HOLDER_COPY.previewWallets
           : HOLDER_COPY.previewActive
         : HOLDER_COPY.expired;
-  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
+  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
 }
 
 /**
