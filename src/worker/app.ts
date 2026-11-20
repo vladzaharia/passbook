@@ -70,7 +70,8 @@ import { type AppBindings, requestContext } from './platform/context.ts';
 import type { AppEnv } from './platform/env.ts';
 import { handleError, notFoundHandler } from './platform/error-handler.ts';
 import { hostPolicy } from './platform/host-policy.ts';
-import { keyCallableOnly, withSecurity } from './platform/openapi-security.ts';
+import { buildOpenApiDocument } from './platform/openapi-document.ts';
+import { keyCallableOnly } from './platform/openapi-security.ts';
 import { apiKeyRateHeaders } from './platform/rate-limit.ts';
 import { securityHeaders, staticAsset } from './platform/security-headers.ts';
 import { asBrowserPage } from './ssr/error-response.ts';
@@ -210,14 +211,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   // operations an API key can call; signed-in platform admins get the whole document.
   const documents: { full?: unknown; keys?: unknown } = {};
   const document = async (c: Context<AppBindings>) => {
-    documents.full ??= withSecurity(
-      app,
-      app.getOpenAPI31Document({
-        openapi: '3.1.0',
-        info: { title: 'PassBook API', version: '1.0.0' },
-        servers: [{ url: '/' }],
-      }) as never,
-    );
+    documents.full ??= buildOpenApiDocument(app);
     documents.keys ??= keyCallableOnly(documents.full as never);
     const cookie = getCookie(c, SESSION_COOKIE);
     const session = cookie ? await c.var.stores.sessions.resolve(cookie) : null;
