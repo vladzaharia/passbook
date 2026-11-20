@@ -388,7 +388,7 @@ effective approved release is used (see Changes for existing clients).
 
 - `input` is validated against the template's `inputs` schema. See `GET /api/v1/templates/{id}`.
 - `Idempotency-Key` (1 to 200 chars): a retry with the same key and body returns the first result.
-  The same key with a different body is 409 `IDEMPOTENCY_KEY_REUSED`.
+  The same key with a different body is 422 `IDEMPOTENCY_KEY_REUSED`.
 - `templateId` must be a template. A blueprint answers 409 `TEMPLATE_IS_BLUEPRINT`
   (`docs/design/blueprints-and-templates.md`).
 - Optional: `serial`, `externalId`, `identityId`, `connectionId` + `externalRef`.
@@ -776,7 +776,7 @@ Session only: no API key reaches these routes (an export hands over every holder
 - `POST /orgs/{orgId}/close`: a platform admin, or an org admin with `{ "confirmSlug": "<slug>" }`. 409 `ORG_HELD` under a legal hold. Passes stop updating; 30 days to export.
 - `POST /orgs/{orgId}/reopen`: platform admin, inside the 30 days (409 `ORG_REOPEN_WINDOW`, `ORG_PURGING`).
 - `GET /orgs/{orgId}/lifecycle`: `status` (`active`, `suspended`, `closed`), `closedAt`, `purgeAfter`, `held`, `canReopen`. `GET /platform/closed-orgs` lists closed orgs.
-- `POST /orgs/{orgId}/exports` (202) starts an archive, one at a time (409 `ORG_EXPORT_RUNNING`); `GET /orgs/{orgId}/exports` lists them; `POST /orgs/{orgId}/exports/{id}/link` returns `{ url, expiresAt }` once it is `ready`. The link is the credential (24 hours): `GET /org-exports/{id}/download?exp&sig` returns the zip, NDJSON per entity plus template files, without secrets.
+- `POST /orgs/{orgId}/exports` (202) starts an archive, one at a time (409 `ORG_EXPORT_RUNNING`); `GET /orgs/{orgId}/exports` lists them; `POST /orgs/{orgId}/exports/{id}/link` returns `{ url, expiresAt }` once it is `ready`. The link is the credential (24 hours): `GET /org-exports/{id}/download?exp&sig` returns the zip, NDJSON per entity plus template, brand and member photo files, without secrets or key material. `repo-export.ts` lists the entities and `repo-export-excluded.ts` the tables left out, each with its reason.
 
 ## Brand kit
 

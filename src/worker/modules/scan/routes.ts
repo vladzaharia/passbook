@@ -205,7 +205,7 @@ register(
         false,
         'code' in input,
       );
-    notifyHostOfArrival(ctx, actor, outcome);
+    notifyHostOfArrival(ctx, actor, outcome, evaluatedSnapshot);
     return c.json(await withParentHint(ctx.env.DB, actor.orgId, outcome));
   },
 );

@@ -52,7 +52,7 @@ const ALSO_READS: Partial<Record<TenantScope, OrgCapability>> = {
   'brand:manage': 'org:read',
 };
 
-/** `scans:write` is the terminal scope (its own guard); it never stands for `passes:operate`. */
+/** `scans:write` is the terminal scope (its own guard); it stands for `passes:operate` only where a call site opts in (`tenantAuthorityOf`'s `tillKey`, roll call). */
 const NOT_TENANT_AUTHORITY: readonly ApiScope[] = ['scans:write'];
 
 /** Whether a key holding `scope` may exercise `capability` in the org it belongs to. */
