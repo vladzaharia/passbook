@@ -52,3 +52,20 @@ it('names a plain event in admit', async () => {
   const body = JSON.parse(await atEvent('Summer Gala'));
   expect(body.admit?.rule).toEqual({ kind: 'event', name: 'Summer Gala' });
 });
+
+it('keeps a private plan label out of a refusal, display included', async () => {
+  const label = 'plan-private@example.test';
+  const manifest: AccessManifest = {
+    ...ACCESS,
+    plans: ACCESS.plans.map((p) => (p.id === 'guest' ? { ...p, label } : p)),
+  };
+  const tpl = await accessTemplate(manifest, 'Gym card');
+  const d = await makeDoor([tpl]);
+  const pass = await kit.scanPass(tpl, { plan: 'guest', visits: 1 });
+  expect((await grantOf(d.headers, pass)).kind).toBe('ok');
+  kit.clock.advance(3 * HOUR);
+  const refused = await grantOf(d.headers, pass);
+  expect(refused).toMatchObject({ kind: 'refused', reason: 'guest_visits_used' });
+  expect(refused.display).not.toBeNull();
+  expect(JSON.stringify(refused)).not.toContain(label);
+});

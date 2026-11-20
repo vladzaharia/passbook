@@ -160,10 +160,8 @@ describe('admitOf', () => {
     });
   });
   it('an event wins over the plan', () => {
-    const f = found({
-      admission: { event: { name: 'Summer Gala', timeZone: 'UTC' }, state: {} } as never,
-    });
-    expect(admitOf(f, actor, null, 'Gym', () => true)).toMatchObject({
+    const at = { ...actor, event: { name: 'Summer Gala', timeZone: 'UTC' } } as ScanActor;
+    expect(admitOf(found(), at, null, 'Gym', () => true)).toMatchObject({
       type: 'Gym',
       rule: { kind: 'event', name: 'Summer Gala' },
     });

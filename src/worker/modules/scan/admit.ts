@@ -18,7 +18,7 @@ export function admitOf(
   safe: (label: string) => boolean,
   state: CheckInState | undefined = found.admission?.state,
 ): ScanAdmit {
-  const event = found.admission?.event ?? actor.event;
+  const event = actor.event;
   const until = access?.closesAt ?? state?.validUntil ?? null;
   const repeat = found.scan.actions.find((a) => a.kind === 'check_in')?.repeat;
   const mode = state?.mode ?? (repeat === 'once' ? 'single' : repeat === 'daily' ? 'daily' : null);
