@@ -18,19 +18,6 @@ import { splitPath } from './text.ts';
 import type { Ctx } from './validate-rules.ts';
 import type { CondSlot, DocSlots } from './walk.ts';
 
-const SHADOWED = [
-  'holder',
-  'inputs',
-  'fields',
-  'scan',
-  'history',
-  'event',
-  'scanner',
-  'access',
-  'occupancy',
-  'now',
-];
-
 /** Ids are unique across panels, rows, items, chips and variants. */
 export function checkIds(ctx: Ctx): void {
   const seen = new Set<string>();
@@ -237,15 +224,6 @@ const alwaysTrue = (doc: ScanDisplayDoc, i: number): boolean => {
 
 function checkWarnings(ctx: Ctx): void {
   const { doc } = ctx;
-  for (const name of Object.keys(ctx.inputs))
-    if (SHADOWED.includes(name))
-      ctx.push(
-        'warning',
-        'SHADOWED',
-        'holder',
-        `The scanner display cannot read "${name}" directly. Write inputs.${name} to show it.`,
-        { name },
-      );
   doc.variants?.forEach((variant, i) => {
     const earlier = doc.variants?.slice(0, i) ?? [];
     if (earlier.length > 0 && alwaysTrue(doc, i))

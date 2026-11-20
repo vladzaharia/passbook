@@ -357,6 +357,12 @@
               "type": "field",
               "label": "Home club",
               "value": "{{fields.homeClub}}"
+            },
+            {
+              "id": "r_access",
+              "type": "field",
+              "label": "Access",
+              "value": "{{inputs.access}}"
             }
           ]
         }

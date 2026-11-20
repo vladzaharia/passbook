@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ScanDisplaySchema } from '../../../shared/contracts/scan-display.ts';
+import { loadBaked } from '../baked-fixtures.ts';
+import { inputLabels } from './field-formats.ts';
 import type { ScanDisplayDoc } from './schema.ts';
 import { NOW, renderDoc, scopeOf } from './test-kit.ts';
 import { hasVerdictWord } from './validate-rules.ts';
@@ -537,5 +539,55 @@ describe('time', () => {
     const s = scopeOf({ at: NOW });
     const eastern = rowsOf(renderDoc(d, s))[0] as { value: string };
     expect(eastern.value).toBe('1:00 PM');
+  });
+});
+
+describe("Henry's scan display", () => {
+  it('shows the access input on the membership card', async () => {
+    const { template } = await loadBaked('henrys-blue', { strips: false });
+    const display = template.manifest.scan?.display as ScanDisplayDoc;
+    const out = renderDoc(
+      display,
+      scopeOf(
+        { memberName: 'Alex Morgan', access: 'all' },
+        { inputLabels: inputLabels(template.manifest.inputs, ['access']) },
+      ),
+      {
+        role: 'door',
+      },
+    );
+    expect(rowsOf(out)).toContainEqual(
+      expect.objectContaining({ label: 'Access', value: 'All clubs' }),
+    );
+  });
+});
+
+describe('select labels', () => {
+  const labels = { tier: { gold: 'Gold member' } };
+  const show = (value: string, inputs: Record<string, string> = { tier: 'gold' }) =>
+    rowsOf(
+      renderDoc(
+        doc({ panels: [panel('p_a', [field('r_a', value)])] }),
+        scopeOf(inputs, { inputLabels: labels }),
+      ),
+    );
+
+  it('shows the option label for a bare input and the raw value otherwise', () => {
+    expect(show('{{inputs.tier}}')).toMatchObject([{ value: 'Gold member' }]);
+    expect(show('{{inputs.tier}}', { tier: 'other' })).toMatchObject([{ value: 'other' }]);
+    expect(show('{{inputs.seat}}', { seat: 'F12' })).toMatchObject([{ value: 'F12' }]);
+  });
+
+  it('labels a mixed string and a filtered bare input', () => {
+    expect(show('Plan {{inputs.tier}}')).toMatchObject([{ value: 'Plan Gold member' }]);
+    expect(show('{{inputs.tier | upper}}')).toMatchObject([{ value: 'GOLD MEMBER' }]);
+  });
+
+  it('ignores a label table that holds __proto__', () => {
+    const out = inputLabels({ properties: { ['__proto__']: { 'x-enumLabels': { a: 'A' } } } }, [
+      '__proto__',
+    ]);
+    expect(Object.getPrototypeOf(out)).toBeNull();
+    expect(Object.keys(out)).toEqual(['__proto__']);
   });
 });

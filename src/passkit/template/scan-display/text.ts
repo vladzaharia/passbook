@@ -130,12 +130,33 @@ export function isEmptyValue(value: Json | undefined): boolean {
   );
 }
 
-/** A bare `{{fields.key}}` shows the field as the pass does: its dates, money and numbers formatted. */
+/** A bare `{{inputs.key}}` of a select reads as the option's label, with or without a filter. */
+function labelOf(ctx: EvalCtx, path: string, value: Json | undefined): string | undefined {
+  const split = splitPath(path);
+  if (split?.root !== 'inputs' || split.rest.length !== 1 || typeof value !== 'string')
+    return undefined;
+  const labels = (ctx.scope.inputLabels as Record<string, Json> | undefined)?.[
+    split.rest[0] as string
+  ];
+  if (
+    !labels ||
+    typeof labels !== 'object' ||
+    Array.isArray(labels) ||
+    !Object.hasOwn(labels, value)
+  )
+    return undefined;
+  const label = (labels as Record<string, Json>)[value];
+  return typeof label === 'string' && label !== '' ? label : undefined;
+}
+
+/** A bare `{{fields.key}}` shows the field as the pass does: its dates, money and numbers formatted. A bare select input shows its label. */
 function shown(ctx: EvalCtx, path: string, value: Json | undefined): Json | undefined {
+  const split = splitPath(path);
+  const label = labelOf(ctx, path, value);
+  if (label !== undefined) return label;
   const formats = ctx.scope.fieldFormats;
   if (value === undefined || !formats || typeof formats !== 'object' || Array.isArray(formats))
     return value;
-  const split = splitPath(path);
   const key = split?.root === 'fields' && split.rest.length === 1 ? split.rest[0] : undefined;
   const spec = key === undefined ? undefined : (formats as Record<string, Json>)[key];
   if (!spec || typeof spec !== 'object' || Array.isArray(spec)) return value;
@@ -167,7 +188,7 @@ export function evalExpr(source: string, ctx: EvalCtx, hash?: string): Json | un
     if (!part.path) continue;
     const value = resolve(ctx.scope, part.path);
     const text = part.filter
-      ? applyFilter(part.filter, value, ctx)
+      ? applyFilter(part.filter, labelOf(ctx, part.path, value) ?? value, ctx)
       : plain(shown(ctx, part.path, value));
     if (text === '') return undefined;
     out += text;

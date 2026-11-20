@@ -2,13 +2,13 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "a57638fddcec24125a08653986b04de5fb1cf7ad";
+export const BAKED_BUILD_HASH = "3057640c95ab6fef68008160a73a788011f71391";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:henrys-blue",
     "slug": "henrys-blue",
-    "version": "5d78ba5ee643bab3",
+    "version": "4dfe97e3b3012cdf",
     "name": "Henry’s · Blue Entrance",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -379,6 +379,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
                   "type": "field",
                   "label": "Home club",
                   "value": "{{fields.homeClub}}"
+                },
+                {
+                  "id": "r_access",
+                  "type": "field",
+                  "label": "Access",
+                  "value": "{{inputs.access}}"
                 }
               ]
             }
@@ -603,7 +609,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5d78ba5ee643bab3/artwork@2x.png"
+          "path": "/templates/henrys-blue/4dfe97e3b3012cdf/artwork@2x.png"
         }
       },
       {
@@ -617,7 +623,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5d78ba5ee643bab3/artwork@3x.png"
+          "path": "/templates/henrys-blue/4dfe97e3b3012cdf/artwork@3x.png"
         }
       },
       {
@@ -631,7 +637,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1010,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5d78ba5ee643bab3/background@2x.png"
+          "path": "/templates/henrys-blue/4dfe97e3b3012cdf/background@2x.png"
         }
       },
       {
@@ -645,7 +651,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1515,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5d78ba5ee643bab3/background@3x.png"
+          "path": "/templates/henrys-blue/4dfe97e3b3012cdf/background@3x.png"
         }
       },
       {
@@ -658,7 +664,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5d78ba5ee643bab3/en.lproj/pass.strings"
+          "path": "/templates/henrys-blue/4dfe97e3b3012cdf/en.lproj/pass.strings"
         }
       },
       {
@@ -672,7 +678,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5d78ba5ee643bab3/icon@2x.png"
+          "path": "/templates/henrys-blue/4dfe97e3b3012cdf/icon@2x.png"
         }
       },
       {
@@ -686,7 +692,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5d78ba5ee643bab3/icon@3x.png"
+          "path": "/templates/henrys-blue/4dfe97e3b3012cdf/icon@3x.png"
         }
       },
       {
@@ -700,7 +706,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5d78ba5ee643bab3/logo@2x.png"
+          "path": "/templates/henrys-blue/4dfe97e3b3012cdf/logo@2x.png"
         }
       },
       {
@@ -714,7 +720,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5d78ba5ee643bab3/logo@3x.png"
+          "path": "/templates/henrys-blue/4dfe97e3b3012cdf/logo@3x.png"
         }
       },
       {
@@ -728,7 +734,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5d78ba5ee643bab3/primaryLogo@2x.png"
+          "path": "/templates/henrys-blue/4dfe97e3b3012cdf/primaryLogo@2x.png"
         }
       },
       {
@@ -742,7 +748,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5d78ba5ee643bab3/primaryLogo@3x.png"
+          "path": "/templates/henrys-blue/4dfe97e3b3012cdf/primaryLogo@3x.png"
         }
       },
       {
@@ -756,30 +762,20 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 660,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-blue/5d78ba5ee643bab3/wallets/google/logo.png"
+          "path": "/templates/henrys-blue/4dfe97e3b3012cdf/wallets/google/logo.png"
         }
       }
     ],
     "extras": [],
     "report": {
       "ok": true,
-      "issues": [
-        {
-          "severity": "warning",
-          "code": "SCAN_DISPLAY_SHADOWED",
-          "message": "The scanner display cannot read \"access\" directly. Write inputs.access to show it.",
-          "path": "scan.display.holder",
-          "params": {
-            "name": "access"
-          }
-        }
-      ]
+      "issues": []
     }
   },
   {
     "id": "baked:henrys-copper",
     "slug": "henrys-copper",
-    "version": "a5d71a5cd1a87c50",
+    "version": "909d21c565517698",
     "name": "Henry’s · Copper Gym",
     "description": "Member card with lock-screen suggestions at the member’s clubs.",
     "org": {
@@ -1150,6 +1146,12 @@ export const bakedTemplates: readonly BakedTemplate[] = [
                   "type": "field",
                   "label": "Home club",
                   "value": "{{fields.homeClub}}"
+                },
+                {
+                  "id": "r_access",
+                  "type": "field",
+                  "label": "Access",
+                  "value": "{{inputs.access}}"
                 }
               ]
             }
@@ -1374,7 +1376,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 896,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a5d71a5cd1a87c50/artwork@2x.png"
+          "path": "/templates/henrys-copper/909d21c565517698/artwork@2x.png"
         }
       },
       {
@@ -1388,7 +1390,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1344,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a5d71a5cd1a87c50/artwork@3x.png"
+          "path": "/templates/henrys-copper/909d21c565517698/artwork@3x.png"
         }
       },
       {
@@ -1402,7 +1404,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1010,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a5d71a5cd1a87c50/background@2x.png"
+          "path": "/templates/henrys-copper/909d21c565517698/background@2x.png"
         }
       },
       {
@@ -1416,7 +1418,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 1515,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a5d71a5cd1a87c50/background@3x.png"
+          "path": "/templates/henrys-copper/909d21c565517698/background@3x.png"
         }
       },
       {
@@ -1429,7 +1431,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 3533825495,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a5d71a5cd1a87c50/en.lproj/pass.strings"
+          "path": "/templates/henrys-copper/909d21c565517698/en.lproj/pass.strings"
         }
       },
       {
@@ -1443,7 +1445,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a5d71a5cd1a87c50/icon@2x.png"
+          "path": "/templates/henrys-copper/909d21c565517698/icon@2x.png"
         }
       },
       {
@@ -1457,7 +1459,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a5d71a5cd1a87c50/icon@3x.png"
+          "path": "/templates/henrys-copper/909d21c565517698/icon@3x.png"
         }
       },
       {
@@ -1471,7 +1473,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a5d71a5cd1a87c50/logo@2x.png"
+          "path": "/templates/henrys-copper/909d21c565517698/logo@2x.png"
         }
       },
       {
@@ -1485,7 +1487,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a5d71a5cd1a87c50/logo@3x.png"
+          "path": "/templates/henrys-copper/909d21c565517698/logo@3x.png"
         }
       },
       {
@@ -1499,7 +1501,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 60,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a5d71a5cd1a87c50/primaryLogo@2x.png"
+          "path": "/templates/henrys-copper/909d21c565517698/primaryLogo@2x.png"
         }
       },
       {
@@ -1513,7 +1515,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 90,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a5d71a5cd1a87c50/primaryLogo@3x.png"
+          "path": "/templates/henrys-copper/909d21c565517698/primaryLogo@3x.png"
         }
       },
       {
@@ -1527,24 +1529,14 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 660,
         "source": {
           "kind": "static",
-          "path": "/templates/henrys-copper/a5d71a5cd1a87c50/wallets/google/logo.png"
+          "path": "/templates/henrys-copper/909d21c565517698/wallets/google/logo.png"
         }
       }
     ],
     "extras": [],
     "report": {
       "ok": true,
-      "issues": [
-        {
-          "severity": "warning",
-          "code": "SCAN_DISPLAY_SHADOWED",
-          "message": "The scanner display cannot read \"access\" directly. Write inputs.access to show it.",
-          "path": "scan.display.holder",
-          "params": {
-            "name": "access"
-          }
-        }
-      ]
+      "issues": []
     }
   },
   {
@@ -7425,17 +7417,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
     "extras": [],
     "report": {
       "ok": true,
-      "issues": [
-        {
-          "severity": "warning",
-          "code": "SCAN_DISPLAY_SHADOWED",
-          "message": "The scanner display cannot read \"holder\" directly. Write inputs.holder to show it.",
-          "path": "scan.display.holder",
-          "params": {
-            "name": "holder"
-          }
-        }
-      ]
+      "issues": []
     }
   },
   {
