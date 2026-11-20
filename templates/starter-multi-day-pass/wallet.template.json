@@ -1,0 +1,575 @@
+{
+  "schema": 1,
+  "name": "Multi-day pass",
+  "description": "Festival or season days, with parking and locker add-ons used once.",
+  "wallets": {
+    "schema": 1,
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png",
+        "thumbnail": "wallets/google/thumbnail.png"
+      }
+    },
+    "samsung": {}
+  },
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "eventName",
+      "name",
+      "ticketId",
+      "startsAt",
+      "endsAt"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "eventName": {
+        "type": "string",
+        "x-label": "Festival",
+        "x-group": "Pass",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "ticketType": {
+        "type": "string",
+        "x-label": "Ticket type",
+        "x-group": "Pass",
+        "x-order": 20,
+        "enum": [
+          "Friday",
+          "Saturday",
+          "Sunday",
+          "3-day",
+          "VIP",
+          "Crew"
+        ],
+        "default": "3-day",
+        "x-widget": "select",
+        "x-help": "Scanning events match on this."
+      },
+      "name": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Pass",
+        "x-order": 30,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "ticketId": {
+        "type": "string",
+        "x-label": "Ticket ID",
+        "x-group": "Pass",
+        "x-order": 40,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "gate": {
+        "type": "string",
+        "x-label": "Gate",
+        "x-group": "Pass",
+        "x-order": 50,
+        "maxLength": 40
+      },
+      "venueName": {
+        "type": "string",
+        "x-label": "Venue",
+        "x-group": "Pass",
+        "x-order": 55,
+        "maxLength": 80
+      },
+      "venueRegion": {
+        "type": "string",
+        "x-label": "City",
+        "x-group": "Pass",
+        "x-order": 56,
+        "maxLength": 80
+      },
+      "venueRoom": {
+        "type": "string",
+        "x-label": "Area",
+        "x-group": "Pass",
+        "x-order": 57,
+        "maxLength": 60
+      },
+      "startsAt": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "First day starts",
+        "x-group": "Days",
+        "x-order": 60,
+        "x-widget": "datetime"
+      },
+      "endsAt": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Last day ends",
+        "x-group": "Days",
+        "x-order": 70,
+        "x-widget": "datetime"
+      },
+      "venueTimeZone": {
+        "type": "string",
+        "x-label": "Time zone",
+        "x-group": "Days",
+        "x-order": 80,
+        "maxLength": 64,
+        "x-timeZone": true
+      },
+      "upcomingEvents": {
+        "type": "array",
+        "maxItems": 10,
+        "x-label": "Upcoming events",
+        "x-group": "Days",
+        "x-order": 90,
+        "x-widget": "list",
+        "x-itemLabel": "Day",
+        "x-addLabel": "Add day",
+        "x-help": "One line per day. Wallet lists them on the pass. Past days drop off when the pass is next updated.",
+        "items": {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "x-label": "Name",
+              "x-order": 10,
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "startsAt": {
+              "type": "string",
+              "x-label": "Starts",
+              "x-order": 20,
+              "format": "date-time",
+              "x-widget": "datetime"
+            },
+            "endsAt": {
+              "type": "string",
+              "x-label": "Ends",
+              "x-order": 30,
+              "format": "date-time",
+              "x-widget": "datetime"
+            },
+            "venueName": {
+              "type": "string",
+              "x-label": "Venue",
+              "x-order": 40,
+              "maxLength": 80
+            },
+            "venueRegion": {
+              "type": "string",
+              "x-label": "City",
+              "x-order": 50,
+              "maxLength": 80
+            },
+            "note": {
+              "type": "string",
+              "x-label": "Note",
+              "x-order": 60,
+              "maxLength": 200
+            },
+            "website": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://",
+              "maxLength": 300,
+              "x-label": "Event page",
+              "x-order": 70,
+              "x-widget": "url"
+            },
+            "directionsURL": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://",
+              "maxLength": 300,
+              "x-label": "Directions link",
+              "x-order": 80,
+              "x-widget": "url"
+            }
+          }
+        }
+      },
+      "parking": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1,
+        "default": 0,
+        "x-label": "Parking",
+        "x-group": "Add-ons",
+        "x-order": 100,
+        "x-help": "1 includes parking. A scan takes it."
+      },
+      "locker": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1,
+        "default": 0,
+        "x-label": "Locker",
+        "x-group": "Add-ons",
+        "x-order": 110,
+        "x-help": "1 includes a locker. A scan takes it."
+      },
+      "wristband": {
+        "type": "string",
+        "x-label": "Wristband",
+        "x-group": "Add-ons",
+        "x-order": 120,
+        "enum": [
+          "Not yet",
+          "On"
+        ],
+        "default": "Not yet",
+        "x-widget": "select"
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 900,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 901,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      }
+    }
+  },
+  "sample": {
+    "eventName": "Riverbend Festival",
+    "ticketType": "3-day",
+    "name": "Ana Rivera",
+    "ticketId": "RIVER-0001",
+    "gate": "Gate B",
+    "venueName": "Riverbend Park",
+    "venueRegion": "Austin, TX",
+    "startsAt": "2030-06-11T12:00:00-05:00",
+    "endsAt": "2030-06-13T23:00:00-05:00",
+    "venueTimeZone": "America/Chicago",
+    "parking": 1,
+    "locker": 0,
+    "wristband": "Not yet",
+    "upcomingEvents": [
+      {
+        "name": "Riverbend 2030: Friday",
+        "startsAt": "2030-06-11T12:00:00-05:00",
+        "endsAt": "2030-06-11T23:00:00-05:00",
+        "venueName": "Riverbend Park",
+        "venueRegion": "Austin, TX"
+      },
+      {
+        "name": "Riverbend 2030: Saturday",
+        "startsAt": "2030-06-12T12:00:00-05:00",
+        "endsAt": "2030-06-12T23:00:00-05:00",
+        "venueName": "Riverbend Park",
+        "venueRegion": "Austin, TX"
+      },
+      {
+        "name": "Riverbend 2030: Sunday",
+        "startsAt": "2030-06-13T12:00:00-05:00",
+        "endsAt": "2030-06-13T23:00:00-05:00",
+        "venueName": "Riverbend Park",
+        "venueRegion": "Austin, TX"
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "event"
+      },
+      "value": "{{eventName}}"
+    },
+    {
+      "to": {
+        "field": "type"
+      },
+      "value": "{{ticketType}}"
+    },
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{name}}"
+    },
+    {
+      "to": {
+        "field": "gate"
+      },
+      "value": "{{gate}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "parking"
+      },
+      "value": "{{pass.counters.parking.text}}"
+    },
+    {
+      "to": {
+        "field": "locker"
+      },
+      "value": "{{pass.counters.locker.text}}"
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{ticketId}}"
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{endsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/eventName"
+      },
+      "value": "{{eventName}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/venueName"
+      },
+      "value": "{{venueName}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/semantics/venueRegionName"
+      },
+      "value": "{{venueRegion}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/semantics/venueRoom"
+      },
+      "value": "{{venueRoom}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/semantics/venueRoom"
+      },
+      "value": "{{venueName}}",
+      "when": {
+        "input": "venueRoom",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "pointer": "/semantics/eventStartDate"
+      },
+      "value": "{{startsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/eventEndDate"
+      },
+      "value": "{{endsAt}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/attendeeName"
+      },
+      "value": "{{name}}"
+    },
+    {
+      "to": {
+        "pointer": "/semantics/admissionLevel"
+      },
+      "value": "{{ticketType}}"
+    }
+  ],
+  "display": {
+    "icon": "ticket",
+    "group": "get-in",
+    "aliases": [
+      "festival",
+      "season pass",
+      "wristband",
+      "multi-day",
+      "3-day"
+    ],
+    "title": "{{eventName}}",
+    "subtitle": "{{name}} \u00b7 {{ticketType}}",
+    "status": "{{ticketType}}",
+    "search": [
+      "eventName",
+      "name",
+      "ticketId"
+    ]
+  },
+  "counters": {
+    "parking": {
+      "input": "parking",
+      "size": 1
+    },
+    "locker": {
+      "input": "locker",
+      "size": 1
+    }
+  },
+  "behaviors": [
+    {
+      "use": "relevance-window",
+      "version": 1,
+      "config": {
+        "start": "startsAt",
+        "end": "endsAt",
+        "leadMinutes": 120
+      }
+    },
+    {
+      "use": "upcoming-events",
+      "version": 1,
+      "config": {
+        "input": "upcomingEvents",
+        "timeZoneInput": "venueTimeZone",
+        "schedule": {
+          "leadMinutes": 120
+        }
+      }
+    }
+  ],
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "check_in",
+        "label": "Check in",
+        "kind": "check_in",
+        "repeat": "daily",
+        "minRole": "door"
+      },
+      {
+        "id": "parking",
+        "label": "Parking",
+        "kind": "take",
+        "input": "parking",
+        "amount": {
+          "max": 1
+        },
+        "repeat": "always",
+        "minRole": "door"
+      },
+      {
+        "id": "locker",
+        "label": "Locker",
+        "kind": "take",
+        "input": "locker",
+        "amount": {
+          "max": 1
+        },
+        "repeat": "always",
+        "minRole": "door"
+      },
+      {
+        "id": "wristband",
+        "label": "Wristband on",
+        "kind": "set",
+        "input": "wristband",
+        "value": "On",
+        "repeat": "once",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "ticketId"
+    },
+    "flags": [
+      {
+        "input": "wristband",
+        "label": "No wristband yet",
+        "equals": [
+          "Not yet"
+        ]
+      }
+    ],
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.name}}",
+      "header": {},
+      "panels": [
+        {
+          "id": "p_details",
+          "preset": {
+            "id": "details",
+            "v": 1
+          },
+          "title": "Details",
+          "icon": "info",
+          "rows": [
+            {
+              "id": "r_field1",
+              "slot": "field1",
+              "type": "field",
+              "label": "Ticket",
+              "value": "{{inputs.ticketType}}"
+            },
+            {
+              "id": "r_field2",
+              "slot": "field2",
+              "type": "field",
+              "label": "Gate",
+              "value": "{{inputs.gate}}"
+            },
+            {
+              "id": "r_field3",
+              "slot": "field3",
+              "type": "field",
+              "label": "Wristband",
+              "value": "{{inputs.wristband}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Send them to the box office."
+      }
+    }
+  }
+}

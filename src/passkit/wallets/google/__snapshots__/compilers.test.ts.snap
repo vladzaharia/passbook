@@ -2470,6 +2470,304 @@ exports[`Google compilers over every starter and baked template > starter-coupon
 }
 `;
 
+exports[`Google compilers over every starter and baked template > starter-credential: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.status",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.until",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "secondaryFields.until",
+      "support": "difference",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.number",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.issued",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "auxiliaryFields.issued",
+      "support": "difference",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "77310",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "CPR / AED Provider",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#5c3a20",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Ana Rivera",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "Active",
+        "header": "Status",
+        "id": "headerFields.status",
+      },
+      {
+        "body": "2028-03-15T00:00:00Z",
+        "header": "Valid until",
+        "id": "secondaryFields.until",
+      },
+      {
+        "body": "77310",
+        "header": "Number",
+        "id": "auxiliaryFields.number",
+      },
+      {
+        "body": "2026-03-15T00:00:00Z",
+        "header": "Issued",
+        "id": "auxiliaryFields.issued",
+      },
+      {
+        "body": "Scan the code to check this credential. It's valid only while it shows Active.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2028-03-15T00:00:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-credential: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.status",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.until",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "secondaryFields.until",
+      "support": "difference",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.number",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.issued",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "auxiliaryFields.issued",
+      "support": "difference",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "77310",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "CPR / AED Provider",
+      },
+    },
+    "hexBackgroundColor": "#5c3a20",
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Ana Rivera",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "Active",
+        "header": "Status",
+        "id": "headerFields.status",
+      },
+      {
+        "body": "2028-03-15T00:00:00Z",
+        "header": "Valid until",
+        "id": "secondaryFields.until",
+      },
+      {
+        "body": "77310",
+        "header": "Number",
+        "id": "auxiliaryFields.number",
+      },
+      {
+        "body": "2026-03-15T00:00:00Z",
+        "header": "Issued",
+        "id": "auxiliaryFields.issued",
+      },
+      {
+        "body": "Scan the code to check this credential. It's valid only while it shows Active.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2028-03-15T00:00:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
 exports[`Google compilers over every starter and baked template > starter-day-pass: the default type and Generic, with Google art > generic 1`] = `
 {
   "classBody": {
@@ -3856,6 +4154,330 @@ exports[`Google compilers over every starter and baked template > starter-guest-
 }
 `;
 
+exports[`Google compilers over every starter and baked template > starter-hotel-stay: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.out",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "secondaryFields.out",
+      "support": "difference",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.breakfast",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.plate",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.wifi",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.wifiPass",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "RES-48213",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Ana Rivera",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#3a2040",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "notifications": {
+      "upcomingNotification": {
+        "enableNotification": true,
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "2030-11-18T15:00:00-08:00",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "2030-11-21T11:00:00-08:00",
+        "header": "Check-out",
+        "id": "secondaryFields.out",
+      },
+      {
+        "body": "Included",
+        "header": "Breakfast",
+        "id": "auxiliaryFields.breakfast",
+      },
+      {
+        "body": "7ABC123",
+        "header": "Plate",
+        "id": "auxiliaryFields.plate",
+      },
+      {
+        "body": "Luma Guest",
+        "header": "Wi-Fi",
+        "id": "backFields.wifi",
+      },
+      {
+        "body": "lamplight",
+        "header": "Wi-Fi password",
+        "id": "backFields.wifiPass",
+      },
+      {
+        "body": "This pass does not open your room. Show it at breakfast, the spa and the desk.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-11-21T19:00:00Z",
+      },
+      "start": {
+        "date": "2030-11-18T11:00:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-hotel-stay: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.out",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "secondaryFields.out",
+      "support": "difference",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.breakfast",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.plate",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.wifi",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.wifiPass",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "RES-48213",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Ana Rivera",
+      },
+    },
+    "hexBackgroundColor": "#3a2040",
+    "notifications": {
+      "upcomingNotification": {
+        "enableNotification": true,
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "2030-11-18T15:00:00-08:00",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "2030-11-21T11:00:00-08:00",
+        "header": "Check-out",
+        "id": "secondaryFields.out",
+      },
+      {
+        "body": "Included",
+        "header": "Breakfast",
+        "id": "auxiliaryFields.breakfast",
+      },
+      {
+        "body": "7ABC123",
+        "header": "Plate",
+        "id": "auxiliaryFields.plate",
+      },
+      {
+        "body": "Luma Guest",
+        "header": "Wi-Fi",
+        "id": "backFields.wifi",
+      },
+      {
+        "body": "lamplight",
+        "header": "Wi-Fi password",
+        "id": "backFields.wifiPass",
+      },
+      {
+        "body": "This pass does not open your room. Show it at breakfast, the spa and the desk.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-11-21T19:00:00Z",
+      },
+      "start": {
+        "date": "2030-11-18T11:00:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
 exports[`Google compilers over every starter and baked template > starter-id-card: the default type and Generic, with Google art > generic 1`] = `
 {
   "classBody": {
@@ -4391,6 +5013,589 @@ exports[`Google compilers over every starter and baked template > starter-monthl
     },
   },
   "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-multi-day-pass: the default type and Generic, with Google art > event 1`] = `
+{
+  "classBody": {
+    "dateTime": {
+      "end": "2030-06-13T23:00:00-05:00",
+      "start": "2030-06-11T12:00:00-05:00",
+    },
+    "eventName": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Riverbend Festival",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#c4342c",
+    "issuerName": "PassBook",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+    "reviewStatus": "UNDER_REVIEW",
+    "venue": {
+      "address": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Riverbend Park, Austin, TX",
+        },
+      },
+      "name": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Riverbend Park",
+        },
+      },
+    },
+  },
+  "items": [
+    {
+      "capability": "relevance.dates",
+      "message": "Google carries the first start time only.",
+      "path": "relevantDates",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.type",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.gate",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.parking",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.locker",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.memberName",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "upcoming.multi",
+      "message": "The events are listed as text.",
+      "path": "events",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "RIVER-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "3-day",
+        "header": "Ticket",
+        "id": "headerFields.type",
+      },
+      {
+        "body": "Gate B",
+        "header": "Gate",
+        "id": "secondaryFields.gate",
+      },
+      {
+        "body": "1 left",
+        "header": "Parking",
+        "id": "auxiliaryFields.parking",
+      },
+      {
+        "body": "None left",
+        "header": "Locker",
+        "id": "auxiliaryFields.locker",
+      },
+      {
+        "body": "Keep your wristband on. Show the code at each gate.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+      {
+        "body": "Riverbend 2030: Friday: 2030-06-11T12:00:00-05:00
+Riverbend 2030: Saturday: 2030-06-12T12:00:00-05:00
+Riverbend 2030: Sunday: 2030-06-13T12:00:00-05:00",
+        "header": "Upcoming",
+        "id": "upcoming",
+      },
+    ],
+    "ticketHolderName": "Ana Rivera",
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-06-14T04:00:00Z",
+      },
+      "start": {
+        "date": "2030-06-11T15:00:00Z",
+      },
+    },
+  },
+  "type": "event",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-multi-day-pass: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "relevance.dates",
+      "message": "Google carries the first start time only.",
+      "path": "relevantDates",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.type",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.gate",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.parking",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.locker",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.eventName",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.eventStart",
+      "message": "Carried as a text module.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.eventEnd",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.venueName",
+      "message": "Carried as a text module.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.venueAddress",
+      "message": "Carried as a text module.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.ticketHolder",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "role.memberName",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "upcoming.multi",
+      "message": "The events are listed as text.",
+      "path": "events",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "RIVER-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Riverbend Festival",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#c4342c",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "notifications": {
+      "upcomingNotification": {
+        "enableNotification": true,
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Ana Rivera",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "3-day",
+        "header": "Ticket",
+        "id": "headerFields.type",
+      },
+      {
+        "body": "Gate B",
+        "header": "Gate",
+        "id": "secondaryFields.gate",
+      },
+      {
+        "body": "1 left",
+        "header": "Parking",
+        "id": "auxiliaryFields.parking",
+      },
+      {
+        "body": "None left",
+        "header": "Locker",
+        "id": "auxiliaryFields.locker",
+      },
+      {
+        "body": "Keep your wristband on. Show the code at each gate.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+      {
+        "body": "2030-06-11T12:00:00-05:00",
+        "header": "Starts",
+        "id": "role.eventStart",
+      },
+      {
+        "body": "Riverbend Park",
+        "header": "Venue",
+        "id": "role.venueName",
+      },
+      {
+        "body": "Riverbend Park, Austin, TX",
+        "header": "Address",
+        "id": "role.venueAddress",
+      },
+      {
+        "body": "Riverbend 2030: Friday: 2030-06-11T12:00:00-05:00
+Riverbend 2030: Saturday: 2030-06-12T12:00:00-05:00
+Riverbend 2030: Sunday: 2030-06-13T12:00:00-05:00",
+        "header": "Upcoming",
+        "id": "upcoming",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-06-14T04:00:00Z",
+      },
+      "start": {
+        "date": "2030-06-11T17:00:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-multi-day-pass: with no Google art 1`] = `
+{
+  "classBody": {
+    "dateTime": {
+      "end": "2030-06-13T23:00:00-05:00",
+      "start": "2030-06-11T12:00:00-05:00",
+    },
+    "eventName": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Riverbend Festival",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/artwork-3x-png",
+      },
+    },
+    "hexBackgroundColor": "#c4342c",
+    "issuerName": "PassBook",
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+    "reviewStatus": "UNDER_REVIEW",
+    "venue": {
+      "address": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Riverbend Park, Austin, TX",
+        },
+      },
+      "name": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Riverbend Park",
+        },
+      },
+    },
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660.",
+      "path": "images.icon",
+      "support": "omitted",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660.",
+      "path": "images.logo",
+      "support": "omitted",
+    },
+    {
+      "capability": "relevance.dates",
+      "message": "Google carries the first start time only.",
+      "path": "relevantDates",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.type",
+      "support": "text",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.gate",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.parking",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.locker",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "role.memberName",
+      "message": "Carried elsewhere on the pass.",
+      "path": "",
+      "support": "text",
+    },
+    {
+      "capability": "upcoming.multi",
+      "message": "The events are listed as text.",
+      "path": "events",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "RIVER-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "3-day",
+        "header": "Ticket",
+        "id": "headerFields.type",
+      },
+      {
+        "body": "Gate B",
+        "header": "Gate",
+        "id": "secondaryFields.gate",
+      },
+      {
+        "body": "1 left",
+        "header": "Parking",
+        "id": "auxiliaryFields.parking",
+      },
+      {
+        "body": "None left",
+        "header": "Locker",
+        "id": "auxiliaryFields.locker",
+      },
+      {
+        "body": "Keep your wristband on. Show the code at each gate.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+      {
+        "body": "Riverbend 2030: Friday: 2030-06-11T12:00:00-05:00
+Riverbend 2030: Saturday: 2030-06-12T12:00:00-05:00
+Riverbend 2030: Sunday: 2030-06-13T12:00:00-05:00",
+        "header": "Upcoming",
+        "id": "upcoming",
+      },
+    ],
+    "ticketHolderName": "Ana Rivera",
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-06-14T04:00:00Z",
+      },
+      "start": {
+        "date": "2030-06-11T15:00:00Z",
+      },
+    },
+  },
+  "type": "event",
 }
 `;
 
@@ -5651,6 +6856,226 @@ exports[`Google compilers over every starter and baked template > starter-poster
         "body": "Present the barcode when asked.",
         "header": "Terms",
         "id": "backFields.terms-poster",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-staff-badge: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.plan",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.member",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "E-1042",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Priya Shah",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#e2e8ee",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Platform",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "Staff",
+        "header": "Type",
+        "id": "headerFields.plan",
+      },
+      {
+        "body": "E-1042",
+        "header": "Employee",
+        "id": "auxiliaryFields.member",
+      },
+      {
+        "body": "For entry checks and attendance. It does not open doors.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-staff-badge: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.plan",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.member",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "E-1042",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Priya Shah",
+      },
+    },
+    "hexBackgroundColor": "#e2e8ee",
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Platform",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "Staff",
+        "header": "Type",
+        "id": "headerFields.plan",
+      },
+      {
+        "body": "E-1042",
+        "header": "Employee",
+        "id": "auxiliaryFields.member",
+      },
+      {
+        "body": "For entry checks and attendance. It does not open doors.",
+        "header": "Terms",
+        "id": "backFields.terms",
       },
     ],
   },
@@ -7454,6 +8879,320 @@ exports[`Google compilers over every starter and baked template > starter-transi
       },
       "start": {
         "date": "2030-11-21T10:55:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-visitor-pass: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.arrives",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "headerFields.arrives",
+      "support": "difference",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.where",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.until",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "auxiliaryFields.until",
+      "support": "difference",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.company",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "VIS-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Leo Brandt",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#facc15",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "notifications": {
+      "upcomingNotification": {
+        "enableNotification": true,
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Priya Shah",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "2030-11-18T09:30:00-08:00",
+        "header": "Arrives",
+        "id": "headerFields.arrives",
+      },
+      {
+        "body": "Floor 3, Oslo",
+        "header": "Go to",
+        "id": "secondaryFields.where",
+      },
+      {
+        "body": "2030-11-18T17:00:00-08:00",
+        "header": "Until",
+        "id": "auxiliaryFields.until",
+      },
+      {
+        "body": "Acme Ltd",
+        "header": "Company",
+        "id": "auxiliaryFields.company",
+      },
+      {
+        "body": "Good for one day. Wear it where staff can see it.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-11-19T01:00:00Z",
+      },
+      "start": {
+        "date": "2030-11-18T16:30:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-visitor-pass: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.arrives",
+      "support": "text",
+    },
+    {
+      "capability": "field.header",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "headerFields.arrives",
+      "support": "difference",
+    },
+    {
+      "capability": "field.secondary",
+      "message": "Carried as a text module.",
+      "path": "secondaryFields.where",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.until",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Shown as written: Google has no date or number style.",
+      "path": "auxiliaryFields.until",
+      "support": "difference",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.company",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "VIS-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Leo Brandt",
+      },
+    },
+    "hexBackgroundColor": "#facc15",
+    "notifications": {
+      "upcomingNotification": {
+        "enableNotification": true,
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Priya Shah",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "2030-11-18T09:30:00-08:00",
+        "header": "Arrives",
+        "id": "headerFields.arrives",
+      },
+      {
+        "body": "Floor 3, Oslo",
+        "header": "Go to",
+        "id": "secondaryFields.where",
+      },
+      {
+        "body": "2030-11-18T17:00:00-08:00",
+        "header": "Until",
+        "id": "auxiliaryFields.until",
+      },
+      {
+        "body": "Acme Ltd",
+        "header": "Company",
+        "id": "auxiliaryFields.company",
+      },
+      {
+        "body": "Good for one day. Wear it where staff can see it.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-11-19T01:00:00Z",
+      },
+      "start": {
+        "date": "2030-11-18T16:30:00Z",
       },
     },
   },

@@ -1,0 +1,93 @@
+{
+  "formatVersion": 1,
+  "description": "Visitor pass",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(250,204,21)",
+  "foregroundColor": "rgb(40,26,8)",
+  "labelColor": "rgb(110,72,0)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "expirationDate": "2030-11-18T17:00:00-08:00",
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "SCAN-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "VIS-0001"
+    }
+  ],
+  "generic": {
+    "headerFields": [
+      {
+        "key": "arrives",
+        "label": "Arrives",
+        "value": "2030-11-18T09:30:00-08:00",
+        "dateStyle": "PKDateStyleNone",
+        "timeStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "Visitor",
+        "value": "Leo Brandt"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "host",
+        "label": "Host",
+        "value": "Priya Shah"
+      },
+      {
+        "key": "where",
+        "label": "Go to",
+        "value": "Floor 3, Oslo"
+      }
+    ],
+    "auxiliaryFields": [
+      {
+        "key": "until",
+        "label": "Until",
+        "value": "2030-11-18T17:00:00-08:00",
+        "dateStyle": "PKDateStyleNone",
+        "timeStyle": "PKDateStyleShort",
+        "ignoresTimeZone": true
+      },
+      {
+        "key": "company",
+        "label": "Company",
+        "value": "Acme Ltd"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Good for one day. Wear it where staff can see it."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

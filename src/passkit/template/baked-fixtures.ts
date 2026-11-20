@@ -1,4 +1,5 @@
 // Test helper: loads templates/<slug> as a ResolvedTemplate with a registry that serves its files.
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import beacons from '../behaviors/beacons/index.ts';
 import expiryFromInput from '../behaviors/expiry-from-input/index.ts';
@@ -11,7 +12,7 @@ import { FIXTURE_IDENTITY } from '../testing/fixture-identity.ts';
 import type { BehaviorPlugin, PassStyle, Personalization, SigningMaterial } from '../types.ts';
 import { PASS_STYLES } from '../types.ts';
 import { listTemplateDirs, readTemplateDir } from './load-dir.ts';
-import type { TemplatePackage } from './package.ts';
+import { crc32, pngSize, type TemplatePackage } from './package.ts';
 import type { ResolvedTemplate, TemplateRegistry } from './registry.ts';
 
 export const TEMPLATES_ROOT = join(import.meta.dirname, '../../../templates');
@@ -31,6 +32,27 @@ export function bakedSlugs(): string[] {
 // manifest and pass.json passes `{ strips: false }` and skips the drawing.
 const packages = new Map<string, Promise<TemplatePackage>>();
 
+/** The analyzer keeps `wallets/**` art as `source` assets; the plain package reader drops it. */
+const withWalletArt = (slug: string) => async (pkg: TemplatePackage) => {
+  const dir = join(TEMPLATES_ROOT, slug, 'wallets');
+  if (!existsSync(dir)) return pkg;
+  for (const target of readdirSync(dir))
+    for (const file of readdirSync(join(dir, target))) {
+      const bytes = new Uint8Array(readFileSync(join(dir, target, file)));
+      pkg.assets.push({
+        name: `wallets/${target}/${file}`,
+        slot: 'source',
+        scale: 1,
+        size: bytes.length,
+        sha1: '0'.repeat(40),
+        crc32: crc32(bytes),
+        ...(pngSize(bytes) ?? {}),
+        source: { kind: 'inline' },
+      });
+    }
+  return pkg;
+};
+
 export async function loadBaked(
   slug: string,
   options: { strips?: boolean } = {},
@@ -38,7 +60,7 @@ export async function loadBaked(
   const cacheKey = `${slug}|${options.strips !== false}`;
   let reading = packages.get(cacheKey);
   if (!reading) {
-    reading = readTemplateDir(join(TEMPLATES_ROOT, slug), options);
+    reading = readTemplateDir(join(TEMPLATES_ROOT, slug), options).then(withWalletArt(slug));
     packages.set(cacheKey, reading);
   }
   const pkg = await reading;

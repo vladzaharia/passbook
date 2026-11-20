@@ -2,8 +2,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 // The ID card carries the holder's real number (PS-19): a copy is handled at the desk, not by a new code.
+// The Credential's QR is the issuer's verify link when one is given, else the scan code (B-15).
 const slugs = readdirSync('templates').filter(
-  (d) => d.startsWith('starter-') && d !== 'starter-id-card',
+  (d) => d.startsWith('starter-') && d !== 'starter-id-card' && d !== 'starter-credential',
 );
 
 describe('blueprint barcodes', () => {
@@ -17,5 +18,19 @@ describe('blueprint barcodes', () => {
       (b) => b.to.barcode !== undefined && b.to.prop === 'message',
     );
     expect(messages.map((b) => b.value)).toEqual(['{{pass.scanCode}}']);
+  });
+});
+
+describe('credential barcode', () => {
+  it('is the verify link, else the scan code', () => {
+    const t = JSON.parse(
+      readFileSync('templates/starter-credential/wallet.template.json', 'utf8'),
+    ) as {
+      bindings: { to: { barcode?: string; prop?: string }; value: string }[];
+    };
+    const messages = t.bindings.filter(
+      (b) => b.to.barcode !== undefined && b.to.prop === 'message',
+    );
+    expect(messages.map((b) => b.value)).toEqual(['{{pass.scanCode}}', '{{verifyUrl}}']);
   });
 });

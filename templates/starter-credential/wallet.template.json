@@ -1,0 +1,317 @@
+{
+  "schema": 1,
+  "name": "Credential",
+  "description": "A certificate or licence anyone can verify.",
+  "wallets": {
+    "schema": 1,
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png",
+        "thumbnail": "wallets/google/thumbnail.png"
+      }
+    },
+    "samsung": {}
+  },
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "credential",
+      "holderName",
+      "number"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "credential": {
+        "type": "string",
+        "x-label": "Credential",
+        "x-group": "Credential",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "holderName": {
+        "type": "string",
+        "x-label": "Holder",
+        "x-group": "Credential",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "number": {
+        "type": "string",
+        "x-label": "Number",
+        "x-group": "Credential",
+        "x-order": 30,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "issuedOn": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Issued on",
+        "x-group": "Credential",
+        "x-order": 40,
+        "x-widget": "datetime"
+      },
+      "validUntil": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Valid until",
+        "x-group": "Credential",
+        "x-order": 50,
+        "x-widget": "datetime",
+        "x-noneLabel": "No end date"
+      },
+      "status": {
+        "type": "string",
+        "x-label": "Status",
+        "x-group": "Credential",
+        "x-order": 60,
+        "enum": [
+          "Active",
+          "Revoked"
+        ],
+        "default": "Active",
+        "x-widget": "select"
+      },
+      "verifyUrl": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://",
+        "maxLength": 300,
+        "x-label": "Verify link",
+        "x-group": "Credential",
+        "x-order": 70,
+        "x-widget": "url",
+        "x-placeholder": "https://",
+        "x-help": "The QR opens this page. Blank: the QR holds the scan code."
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 900,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 901,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      }
+    }
+  },
+  "sample": {
+    "credential": "CPR / AED Provider",
+    "holderName": "Ana Rivera",
+    "number": "77310",
+    "issuedOn": "2026-03-15T00:00:00Z",
+    "validUntil": "2028-03-15T00:00:00Z",
+    "status": "Active"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "status"
+      },
+      "value": "{{status}}"
+    },
+    {
+      "to": {
+        "field": "credential"
+      },
+      "value": "{{credential}}"
+    },
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{holderName}}"
+    },
+    {
+      "to": {
+        "field": "number"
+      },
+      "value": "{{number}}"
+    },
+    {
+      "to": {
+        "field": "issued"
+      },
+      "value": "{{issuedOn}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "until"
+      },
+      "value": "{{validUntil}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{validUntil}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/voided"
+      },
+      "value": "{{lookups.void[status].void}}"
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}",
+      "when": {
+        "input": "verifyUrl",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{verifyUrl}}",
+      "when": {
+        "input": "verifyUrl",
+        "empty": false
+      }
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{number}}"
+    }
+  ],
+  "display": {
+    "icon": "award",
+    "group": "prove-collect",
+    "aliases": [
+      "certificate",
+      "licence",
+      "license",
+      "cpr",
+      "training",
+      "qualification"
+    ],
+    "title": "{{credential}}",
+    "subtitle": "{{holderName}}",
+    "status": "{{status}}",
+    "search": [
+      "credential",
+      "holderName",
+      "number"
+    ]
+  },
+  "lookups": {
+    "void": {
+      "Active": {
+        "void": false
+      },
+      "Revoked": {
+        "void": true
+      }
+    }
+  },
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "verify",
+        "label": "Verify",
+        "kind": "check_in",
+        "repeat": "always",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "number"
+    },
+    "flags": [
+      {
+        "input": "status",
+        "label": "Revoked",
+        "equals": [
+          "Revoked"
+        ],
+        "stop": true
+      }
+    ],
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.holderName}}",
+      "header": {},
+      "panels": [
+        {
+          "id": "p_details",
+          "preset": {
+            "id": "details",
+            "v": 1
+          },
+          "title": "Details",
+          "icon": "info",
+          "rows": [
+            {
+              "id": "r_field1",
+              "slot": "field1",
+              "type": "field",
+              "label": "Credential",
+              "value": "{{inputs.credential}}"
+            },
+            {
+              "id": "r_field2",
+              "slot": "field2",
+              "type": "field",
+              "label": "Number",
+              "value": "{{inputs.number}}"
+            },
+            {
+              "id": "r_field3",
+              "slot": "field3",
+              "type": "field",
+              "label": "Valid until",
+              "value": "{{inputs.validUntil|date}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Ask the issuer."
+      }
+    }
+  }
+}
