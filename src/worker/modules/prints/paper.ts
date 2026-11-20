@@ -34,7 +34,10 @@ export async function paperTicket(
   const design = resolvePaper(manifest?.paper);
   const content = paperContent({
     passJson,
-    manifest: (manifest ?? {}) as Pick<TemplateManifest, 'wallets' | 'inputs' | 'lookups' | 'scan'>,
+    manifest: (manifest ?? {}) as Pick<
+      TemplateManifest,
+      'wallets' | 'inputs' | 'lookups' | 'scan' | 'display' | 'name'
+    >,
     personalization: pass.personalization,
     scanCode: pass.scanCode,
     design,

@@ -58,6 +58,40 @@ export const PRINT_COPY = {
   useDerived: 'Use derived layout',
 } as const;
 
+/** What a printed ticket says besides the facts. `oneTicket` says the print and the phone are one. */
+export const PAPER_COPY = {
+  before: 'Before you go',
+  beforePickup: 'Your order',
+  oneTicket: (noun: string) =>
+    noun === 'ticket'
+      ? [
+          'One ticket',
+          'This print and your phone ticket are the same ticket. Either one gets you in once.',
+        ]
+      : [`One ${noun}`, `This print and your phone ${noun} are the same ${noun}. Use either one.`],
+  reprints: ['Reprints', 'A reprint cancels this copy. Only the newest print works.'],
+  atDoor: ['At the door', 'Keep the code flat and unmarked. Staff can type the ticket code.'],
+  folding: ['Folding', 'Fold on the marks, in half and in half again. The code stays outside.'],
+  bringDefault: (noun: string) => `This page or your phone ${noun}`,
+  bringId: (name: string) => `Photo ID in the name ${name}`,
+  zoneNote: (abbr: string, name?: string) =>
+    name ? `Times are ${name} (${abbr}).` : `Times are in ${abbr}.`,
+  issued: (n: number, when: string) => `Print ${n} · Issued ${when}`,
+  issuedWith: 'Issued with',
+  testStrip: 'TEST TICKET · NOT VALID FOR ENTRY',
+  testMark: 'TEST · NOT VALID',
+  permitHow: 'Place face up on the dashboard, readable through the windscreen.',
+  fold: 'Fold',
+  codeLabel: {
+    admission: 'Ticket code',
+    day: 'Pass code',
+    membership: 'Card code',
+    permit: 'Permit code',
+    coupon: 'Coupon code',
+    pickup: 'Slip code',
+  },
+} as const;
+
 /** The print code in groups, easier to read and to type. */
 export function groupPrintCode(code: string): string {
   return code.match(/.{1,9}/g)?.join(' ') ?? code;
