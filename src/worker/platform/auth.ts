@@ -183,12 +183,15 @@ export type RouteAuth =
    * key's scope): `register` turns a success response without that proof into a 500
    * AUTHORITY_UNPROVEN. `session: 'admin'` takes an admin session instead of any tenant session.
    */
-  | { scope: ScopeRule; capability?: OrgCapability; session?: 'admin'; feature?: FeatureRule }
-  /**
-   * A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header.
-   * `feature` (needs `requestMode`) is an entitlement the organization must have, checked with the org's
-   * authority in `tenantAuthorityOf`, for a key as well as a session.
-   */
+  | {
+      scope: ScopeRule;
+      capability?: OrgCapability;
+      session?: 'admin';
+      feature?: FeatureRule;
+      /** A `scans:write` key acts as a terminal here (`scanning.devices` governs it): skips `api`. */
+      tillKey?: true;
+    }
+  /** A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header; `feature` needs it. */
   | { human: true; requestMode?: boolean; feature?: FeatureRule }
   /** A platform admin session. Keys never pass until a platform key kind exists. */
   | { platform: PlatformScope };
@@ -253,6 +256,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const rule = 'scope' in auth ? auth.scope : null;
   const capability = 'scope' in auth ? auth.capability : undefined;
   const feature = 'platform' in auth ? undefined : auth.feature;
+  const tillKey = 'scope' in auth && auth.tillKey === true;
   const sessionKind = sessionKindOf(auth);
   const guard = createMiddleware<AppBindings>(async (c, next) => {
     const token = rule ? bearer(c) : null;
@@ -273,14 +277,14 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       // tenantAuthorityOf refuses them, as it always has.
       if (sessionKind !== 'admin') verifiedScopes.set(scoped, needed);
       if (capability) capabilityState.set(scoped, { capability, proven: false });
-      // An org-bound key is API: `api` must allow it (read for GET and HEAD, full for the rest). A platform
-      // key is exempt on every path alike: platform authority, not an org's API use. A terminal's door calls
-      // (scanning, not API) never reach this guard: modules/scan/guard-api-key.ts has its own. Any other
-      // scope, scans:write included, is API here.
+      // An org-bound key needs the `api` level (read for GET and HEAD, full for the rest). Exempt: a platform
+      // key (on every path alike) and, on a `tillKey` route, scans:write. Door calls use guard-api-key.ts.
       trackFeatures(
         scoped,
         feature,
-        key.orgId === null ? undefined : { key: 'api', atLeast: isRead(c) ? 'read' : 'full' },
+        key.orgId === null || (tillKey && needed === 'scans:write')
+          ? undefined
+          : { key: 'api', atLeast: isRead(c) ? 'read' : 'full' },
       );
       c.set('auth', scoped);
       // An org-bound key names its org; a platform key's declared feature is checked per org in tenantAuthorityOf.

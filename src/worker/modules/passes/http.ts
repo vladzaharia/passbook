@@ -138,8 +138,11 @@ export const requireTenantSession: MiddlewareHandler<AppBindings> = requireCalle
 });
 
 /** Existing API-key scopes, or a session whose tenant access is checked by the handler. */
-export function requireTenantSessionOrApiKey(rule: ScopeRule): MiddlewareHandler<AppBindings> {
-  return declareKeyAccess(requireCaller({ scope: rule }), keyAccessOf(rule));
+export function requireTenantSessionOrApiKey(
+  rule: ScopeRule,
+  options: { tillKey?: true } = {},
+): MiddlewareHandler<AppBindings> {
+  return declareKeyAccess(requireCaller({ scope: rule, ...options }), keyAccessOf(rule));
 }
 
 /** Org and mode for by-id access (see PassScope). */

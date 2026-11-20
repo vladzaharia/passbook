@@ -96,6 +96,12 @@ beforeAll(async () => {
   register(
     router,
     't',
+    { method: 'get', path: '/till', summary: 't', auth: { scope: 'scans:write', tillKey: true } },
+    async (c) => c.json({ ok: true }),
+  );
+  register(
+    router,
+    't',
     { method: 'get', path: '/terminal', summary: 't', auth: { scope: 'scans:write' } },
     async (c) => c.json({ ok: true }),
   );
@@ -234,10 +240,14 @@ describe('the api level of a key', () => {
     await expectProblem(await call('/plain', o.key, o.orgId), 403, 'FEATURE_NOT_INCLUDED');
   });
 
-  it('gates a scans:write key like any key here: its door calls never reach this guard', async () => {
+  it('a scans:write key skips api only on a route that declares tillKey', async () => {
     const o = await apiOrg('off');
     const till = (await makeApiKey(kit.fx, { orgId: o.orgId, scopes: ['scans:write'] })).headers;
+    expect((await call('/till', till, o.orgId)).status).toBe(200);
     await expectProblem(await call('/terminal', till, o.orgId), 403, 'FEATURE_NOT_INCLUDED');
+    // Another scope on a till route is still API.
+    const reader = (await makeApiKey(kit.fx, { orgId: o.orgId, scopes: ['scans:read'] })).headers;
+    await expectProblem(await call('/till', reader, o.orgId), 403, 'MISSING_SCOPE');
     await expectProblem(await call('/plain', o.key, o.orgId), 403, 'FEATURE_NOT_INCLUDED');
   });
 
