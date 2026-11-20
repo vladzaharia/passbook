@@ -106,6 +106,25 @@ function Rail({ op, site, slot }: { op: OpView; site: Site; slot: string }) {
           }
         />
       </div>
+      {op.examples.length > 0 ? (
+        <div className="examples">
+          <h3 className="h3">{DEV_COPY.reference.examples}</h3>
+          {op.examples.map((e) => (
+            <details key={e.id} className="example">
+              <summary>{e.title}</summary>
+              <SampleTabs
+                id={`e-${op.anchor}-${e.id}`}
+                samples={[
+                  ...(e.curl
+                    ? [{ lang: 'curl' as const, label: 'curl', file: `${e.id}.sh`, code: e.curl }]
+                    : []),
+                  { lang: 'ts' as const, label: 'TypeScript', file: `${e.id}.ts`, code: e.ts },
+                ]}
+              />
+            </details>
+          ))}
+        </div>
+      ) : null}
       {ok && ok.example !== undefined ? (
         <div className="resp">
           <div className="row g2 resp-h">
@@ -210,6 +229,8 @@ export function ResourceView({ page, site }: { page: ResourcePage; site: Site })
         <span aria-hidden="true">·</span>
         <span>{page.group}</span>
       </div>
+      {/* The personalizing island: it has no size, and mounts when the page loads. */}
+      <i data-island="snippets" aria-hidden="true" />
       <h1 className="h1 page-h">{page.label}</h1>
       <p className="muted mt2">
         {operations(page.ops.length)}. Send{' '}

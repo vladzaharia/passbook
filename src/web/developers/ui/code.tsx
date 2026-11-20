@@ -1,4 +1,5 @@
 import { Copy } from 'lucide-react';
+import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { highlight, type Lang } from '../model/highlight.ts';
 import type { Sample } from '../model/samples.ts';
 
@@ -54,6 +55,31 @@ export function SampleTabs({ id, samples }: { id: string; samples: Sample[] }) {
           <CodeRegion html={highlight(s.code, s.lang)} label={`${s.label} sample`} />
         </div>
       ))}
+      {samples.length > 1 ? (
+        // One button per language: copies that sample whichever tab is open.
+        <div className="code-f">
+          <span className="xs muted">{DEV_COPY.reference.copyAs}</span>
+          {samples.map((s) => (
+            <button
+              key={s.lang}
+              type="button"
+              className="linkbtn"
+              data-copy-as={s.lang}
+              aria-label={`${DEV_COPY.reference.copyAs} ${s.label}`}
+            >
+              {s.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="linkbtn"
+            data-copy-as="md"
+            aria-label={`${DEV_COPY.reference.copyAs} Markdown`}
+          >
+            Markdown
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
