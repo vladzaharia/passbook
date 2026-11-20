@@ -114,7 +114,7 @@ async function currentAccount(
   expectedId: string,
   credentialKeysetCommitment: string,
 ): Promise<AccountRow> {
-  const row = await findAccountWithCredentialKeyset(ctx.env.DB, scope, credentialKeysetCommitment);
+  const row = await findAccountWithCredentialKeyset(ctx.env.DB, scope);
   await assertCredentialKeyset(ctx, credentialKeysetCommitment);
   if (!row || row.id !== expectedId) throw corrupt();
   return row;
@@ -246,7 +246,6 @@ export async function configureWalletProviderAccount(
       credentialId,
       eventId: ctx.ids.id(),
       envelope,
-      credentialKeysetCommitment,
     }))
   )
     return failedWrite(ctx, authority, scope, credentialKeysetCommitment);
@@ -289,7 +288,6 @@ export async function revokeWalletProviderAccount(
       expectedRevision: data.expectedRevision,
       eventId: ctx.ids.id(),
       kind: 'revoke',
-      credentialKeysetCommitment,
     }))
   ) {
     if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))

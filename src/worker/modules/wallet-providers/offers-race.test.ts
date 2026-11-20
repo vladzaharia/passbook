@@ -10,11 +10,7 @@ import { issueWalletOffer, listWalletOffers, redeemSamsungOffer } from './offers
 import { captureOfferContext, offerPassSnapshot } from './offers-eligibility.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { getApprovedProjection } from './projection-service.ts';
-import {
-  type WalletOfferFence,
-  walletOfferKeysetCurrent,
-  walletOfferSnapshotCurrent,
-} from './repo-offers.ts';
+import { type WalletOfferFence, walletOfferSnapshotCurrent } from './repo-offers.ts';
 import { projectionReleaseBindingValid } from './repo-projection.ts';
 import {
   seedHistoricalOfferRef,
@@ -339,7 +335,6 @@ describe('native offer authority fences', () => {
     expect(nextCommitment).not.toBe(snapshot.credentialKeysetCommitment);
     try {
       await replaceTestKeyset(db, null);
-      expect(await walletOfferKeysetCurrent(db, snapshot.credentialKeysetCommitment)).toBe(false);
       expect(await current(snapshot.credentialKeysetCommitment)).toBe(false);
       expect(await current(snapshot.credentialKeysetCommitment, { ...offer, deliver: true })).toBe(
         false,
@@ -358,7 +353,6 @@ describe('native offer authority fences', () => {
 
       await replaceTestKeyset(db, nextCommitment);
       expect(await requireCredentialRefKeyset(db, nextEnv)).toBe(nextCommitment);
-      expect(await walletOfferKeysetCurrent(db, nextCommitment)).toBe(true);
       await expect(
         offerPassSnapshot(f.kit.ctx, f.pass.id, snapshot.credentialKeysetCommitment),
       ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });

@@ -51,7 +51,6 @@ export async function inspectSamsungRetirement(
       scope.mode,
       scope.operationVersion,
       scope.credentialKeysetCommitment,
-      scope.credentialKeysetCommitment,
     ],
   );
   return row?.disposition ?? 'pending';
@@ -69,7 +68,6 @@ export async function retireSamsungUnpromotedRef(
     scope.orgId,
     scope.mode,
     scope.operationVersion,
-    scope.credentialKeysetCommitment,
     scope.credentialKeysetCommitment,
   ] as const;
   const results = await batch(db, [

@@ -1,7 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Envelope } from '../../platform/crypto.ts';
 import { all, batch, first, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { walletProviderEnabled } from './provider-policy.ts';
 import { samsungRevocableRefSql, samsungRouteCountriesSql } from './repo-callbacks-routing.ts';
 import { samsungInitialWindowSql } from './repo-callbacks-window.ts';
@@ -55,7 +54,7 @@ const upsert = `i.provider = 'samsung' AND i.lifecycle = 'active' AND op.kind = 
 const current = `${walletInstanceOperationCurrentSql('i', 'op', 'clock.now')}`;
 /** Bind the original operation and instance proof to the canonical singleton. */
 export const samsungOperationKeysetSql = `i.credential_keyset_commitment = ?
-  AND op.credential_keyset_commitment = i.credential_keyset_commitment AND ${credentialRefKeysetSql}`;
+  AND op.credential_keyset_commitment = i.credential_keyset_commitment`;
 const join = `JOIN wallet_provider_instances i ON i.id = r.instance_id
   JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id
     AND op.instance_id = i.id AND op.version = i.desired_version
@@ -104,7 +103,6 @@ export async function putSamsungFetchRef(
         now,
         ...binding,
         scope.credentialKeysetCommitment,
-        scope.credentialKeysetCommitment,
         input.hash,
       ],
     ),
@@ -128,7 +126,6 @@ export async function putSamsungFetchRef(
         scope.mode,
         scope.operationVersion,
         scope.credentialKeysetCommitment,
-        scope.credentialKeysetCommitment,
       ],
     ),
     stmt(
@@ -137,7 +134,7 @@ export async function putSamsungFetchRef(
       WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND op.version = ?
         AND r.retired_at IS NULL AND ${upsert}
         AND r.credential_keyset_commitment = i.credential_keyset_commitment AND ${samsungOperationKeysetSql}`,
-      [now, ...binding, scope.credentialKeysetCommitment, scope.credentialKeysetCommitment],
+      [now, ...binding, scope.credentialKeysetCommitment],
     ),
   ]);
   return (results[2]?.results[0] as SamsungRefEnvelope | undefined) ?? null;
@@ -170,8 +167,8 @@ export function findSamsungFetchSnapshot(
       AND ${upsert} AND r.credential_keyset_commitment = i.credential_keyset_commitment
       AND ${samsungOperationKeysetSql}`,
     requirePromoted
-      ? [now, hash, credentialKeysetCommitment, credentialKeysetCommitment]
-      : [now, hash, now, now, credentialKeysetCommitment, credentialKeysetCommitment],
+      ? [now, hash, credentialKeysetCommitment]
+      : [now, hash, now, now, credentialKeysetCommitment],
   );
 }
 
@@ -212,7 +209,6 @@ export function samsungSnapshotParams(s: SamsungFetchSnapshot) {
     s.templateVersion,
     s.issuingReleaseId,
     s.projectionReleaseId,
-    s.credentialKeysetCommitment,
     s.credentialKeysetCommitment,
   ] as const;
 }
@@ -258,7 +254,6 @@ export async function samsungRefStillCurrent(
       scope.operationVersion,
       ...(forSync ? [now - SAMSUNG_UNCONFIRMED_SERVE_MS] : []),
       scope.credentialKeysetCommitment,
-      scope.credentialKeysetCommitment,
     ],
   );
   return row !== null;
@@ -283,7 +278,6 @@ export function getSamsungRefForSync(
       scope.mode,
       scope.operationVersion,
       now - SAMSUNG_UNCONFIRMED_SERVE_MS,
-      scope.credentialKeysetCommitment,
       scope.credentialKeysetCommitment,
     ],
   );

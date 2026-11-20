@@ -1,5 +1,4 @@
 import { all, batch, first, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type {
   WalletClaimResult,
   WalletCredentialKeysetProof,
@@ -89,19 +88,13 @@ export async function expireClaims(
   const rows = await all(
     db,
     `UPDATE wallet_provider_instance_operations AS op SET state = 'uncertain'
-    WHERE op.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+    WHERE op.credential_keyset_commitment = ?
       AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE i.id = op.instance_id
         AND i.credential_keyset_commitment = op.credential_keyset_commitment)
       AND op.id IN (SELECT id FROM wallet_provider_instance_operations WHERE state = 'claimed'
         AND credential_keyset_commitment = ? AND claim_expires_at <= ? ORDER BY claim_expires_at, id LIMIT ?)
     RETURNING id`,
-    [
-      credentialKeysetCommitment,
-      credentialKeysetCommitment,
-      credentialKeysetCommitment,
-      now,
-      limit,
-    ],
+    [credentialKeysetCommitment, credentialKeysetCommitment, now, limit],
   );
   return rows.length;
 }

@@ -139,7 +139,7 @@ describe('offer snapshot SQL depth', () => {
     expect(await current(captured, pending)).toBe(false);
     expect(await current(captured, consumed)).toBe(false);
     expect(await current(captured, { ...consumed, deliver: true })).toBe(false);
-    expect(seen.map(({ params }) => params.length)).toEqual([25, 30, 30, 32]);
+    expect(seen.map(({ params }) => params.length)).toEqual([24, 29, 29, 31]);
     for (const { sql, params } of seen) {
       const plan = await db
         .prepare(`EXPLAIN QUERY PLAN ${sql}`)

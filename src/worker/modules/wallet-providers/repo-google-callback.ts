@@ -2,7 +2,6 @@ import { deleteInBatches } from '../../platform/batched.ts';
 import type { Envelope } from '../../platform/crypto.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
 import { UnavailableError } from '../../platform/errors.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { REVISION_EXPR } from './repo-accounts.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 import type { WalletRuntimeScope } from './runtime-core.ts';
@@ -46,8 +45,8 @@ export function findGoogleCallbackAccount(
       CASE WHEN credential_id IS NULL THEN enrolment_revision ELSE revision END AS accountRevision,
       ? AS credentialKeysetCommitment
     FROM wallet_provider_accounts WHERE id = ? AND provider = 'google' AND revoked_at IS NULL
-      AND (credential_id IS NOT NULL OR hmac_ciphertext IS NOT NULL) AND ${credentialRefKeysetSql}`,
-    [credentialKeysetCommitment, accountId, credentialKeysetCommitment],
+      AND (credential_id IS NOT NULL OR hmac_ciphertext IS NOT NULL)`,
+    [credentialKeysetCommitment, accountId],
   );
 }
 
@@ -57,7 +56,6 @@ function googleBindingProof(scope: WalletRuntimeScope, input: GoogleCallbackBind
     AND i.credential_generation = ? AND i.channel_epoch = ? AND op.version = ? AND op.account_revision = ? AND op.kind = 'upsert'
     AND op.state IN ('pending', 'retry', 'claimed', 'succeeded')
     AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ?
-    AND ${credentialRefKeysetSql}
     AND ${walletInstanceOperationCurrentSql('i', 'op', 'callback_clock.now_ms')}`;
   const params = [
     input.instanceId,
@@ -70,7 +68,6 @@ function googleBindingProof(scope: WalletRuntimeScope, input: GoogleCallbackBind
     input.channelEpoch,
     input.operationVersion,
     scope.accountRevision,
-    scope.credentialKeysetCommitment,
     scope.credentialKeysetCommitment,
     scope.credentialKeysetCommitment,
   ] as const;
@@ -164,17 +161,8 @@ export async function findGoogleCallbackBinding(
       AND a.mode = i.mode AND a.provider = i.provider
     WHERE b.account_id = ? AND b.class_id_hash = ? AND b.object_id_hash = ?
       AND i.org_id = ? AND i.mode = ? AND i.provider = 'google'
-      AND ${REVISION_EXPR} = ? AND a.revoked_at IS NULL AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
-      AND ${credentialRefKeysetSql}`,
-    [
-      scope.accountId,
-      classIdHash,
-      objectIdHash,
-      scope.orgId,
-      scope.mode,
-      scope.accountRevision,
-      credentialKeysetCommitment,
-    ],
+      AND ${REVISION_EXPR} = ? AND a.revoked_at IS NULL AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)`,
+    [scope.accountId, classIdHash, objectIdHash, scope.orgId, scope.mode, scope.accountRevision],
   );
   if (!row) return null;
   if (row.credentialKeysetCommitment !== credentialKeysetCommitment)
@@ -207,7 +195,7 @@ function googleReceiptProof(binding: GoogleCallbackBinding, input: GoogleCallbac
       AND ${REVISION_EXPR} = ? AND a.revoked_at IS NULL AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
       AND b.class_id_hash = ? AND b.object_id_hash = ?
       AND i.credential_keyset_commitment = ? AND b.credential_keyset_commitment = ?
-      AND ${credentialRefKeysetSql} AND ? > ?`;
+      AND ? > ?`;
   const params = [
     binding.instanceId,
     binding.passId,
@@ -220,7 +208,6 @@ function googleReceiptProof(binding: GoogleCallbackBinding, input: GoogleCallbac
     binding.accountRevision,
     input.classIdHash,
     input.objectIdHash,
-    binding.credentialKeysetCommitment,
     binding.credentialKeysetCommitment,
     binding.credentialKeysetCommitment,
     input.validUntil,

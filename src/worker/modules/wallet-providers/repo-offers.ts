@@ -1,6 +1,5 @@
 import { first } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type { NativeProvider } from './projection-contract.ts';
 import { walletEnrolmentIssuesSql, walletProviderEnabledSql } from './provider-policy.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
@@ -14,22 +13,6 @@ export interface WalletOfferFence {
   now: number;
   consumed: boolean;
   deliver?: boolean;
-}
-
-/** Final keyset-only output fence when multiple eligible links were assembled. */
-export async function walletOfferKeysetCurrent(
-  db: D1Database,
-  credentialKeysetCommitment: string,
-): Promise<boolean> {
-  if (
-    typeof credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(credentialKeysetCommitment)
-  )
-    return false;
-  return (
-    (await first(db, `SELECT 1 WHERE ${credentialRefKeysetSql}`, [credentialKeysetCommitment])) !==
-    null
-  );
 }
 
 /** One D1 read fences the bearer, materialized version, source, account and native release. */
@@ -79,7 +62,6 @@ export async function walletOfferSnapshotCurrent(
       AND p.object_sha256 IS ? AND p.scan_code IS ? AND p.barcode_hash IS ?
       AND p.status = 'active' AND p.removed_at IS NULL AND p.deleted_at IS NULL
       AND p.test_data_quarantined = 0 AND o.status = 'active'
-      AND ${credentialRefKeysetSql}
       AND COALESCE(json_type(o.branding, '$.logo'), 'null') = 'null'
       AND COALESCE(json_type(o.branding, '$.icon'), 'null') = 'null'
       AND (SELECT pv.pass_json FROM pass_versions pv WHERE pv.pass_id = p.id
@@ -172,7 +154,6 @@ export async function walletOfferSnapshotCurrent(
     pass.objectSha256,
     pass.scanCode,
     pass.barcodeHash,
-    credentialKeysetCommitment,
     rawPassJson,
     credentialKeysetCommitment,
     ...(offer

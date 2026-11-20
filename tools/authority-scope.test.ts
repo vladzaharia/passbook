@@ -582,7 +582,11 @@ describe('authority-scope rawCheck tenant terms', () => {
     expect(scanBans(`${MOD}/passes/repo-credential-keyset.ts`, 'credentialRefKeysetSql')).toEqual(
       [],
     );
-    for (const owner of ['passes/repo-ops-retention.ts', 'scan/repo-credential-tombstones.ts'])
+    for (const owner of [
+      'passes/repo-ops-retention.ts',
+      'scan/repo-credential-tombstones.ts',
+      'wallet-providers/repo-instance.ts',
+    ])
       expect(scanBans(`${MOD}/${owner}`, 'credentialRefKeysetSql').map((f) => f.rule)).toContain(
         'banned',
       );

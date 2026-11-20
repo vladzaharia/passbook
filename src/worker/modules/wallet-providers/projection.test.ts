@@ -1408,15 +1408,13 @@ describe('native projection approval', () => {
     }
   });
 
-  it('does not recreate a missing singleton when reading or mutating a projection', async () => {
+  it('does not recreate a missing singleton when mutating a projection', async () => {
     const test = await setup();
     const candidate = await nativeCandidate(test);
     const approval = await nativeApproval(test, candidate);
-    const release = await nativePublish(test, candidate, approval);
+    await nativePublish(test, candidate, approval);
     try {
       await replaceCallbackKeysetForTest(env.DB, null);
-      expect(await getApprovedProjection(test.ctx, lookup(test), test.proof)).toBeNull();
-      expect(await getProjectionRetirementMetadata(env.DB, release.id, test.proof)).toBeNull();
       await expect(nativeCandidate(test)).rejects.toMatchObject({
         code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
       });
@@ -1426,71 +1424,6 @@ describe('native projection approval', () => {
     } finally {
       await replaceCallbackKeysetForTest(env.DB, test.proof.credentialKeysetCommitment);
     }
-  });
-
-  it('fences candidate, review and publication at their actual final SQL statements', async () => {
-    const test = await setup();
-    const unreviewed = await nativeCandidate(test);
-    const waiting = await nativeCandidate(test);
-    const approval = await nativeApproval(test, waiting);
-    expect(
-      await ensureSamsungProjectionEvidence(
-        test.ctx,
-        waiting.id,
-        waiting.candidateHash,
-        test.proof,
-      ),
-    ).toBe(true);
-    const replacement = await credentialRefKeysetCommitment({
-      ...env,
-      KEK_V1: btoa('y'.repeat(32)),
-    });
-    const before = await first(
-      env.DB,
-      'SELECT count(*) AS n FROM template_candidates WHERE template_id = ?',
-      [test.templateId],
-    );
-    for (const stage of ['candidate', 'approval', 'release'] as const) {
-      const table =
-        stage === 'candidate'
-          ? 'template_candidates'
-          : stage === 'approval'
-            ? 'template_approvals'
-            : 'template_releases';
-      const seam = interveneAtD1(
-        env.DB,
-        { method: 'batch', sql: new RegExp(`INSERT INTO ${table}\\b`), when: 'before' },
-        () => replaceCallbackKeysetForTest(env.DB, replacement),
-      );
-      const raced = { ...test, ctx: { ...test.ctx, env: { ...test.ctx.env, DB: seam.db } } };
-      try {
-        const operation =
-          stage === 'candidate'
-            ? nativeCandidate(raced)
-            : stage === 'approval'
-              ? nativeApproval(raced, unreviewed)
-              : nativePublish(raced, waiting, approval);
-        await expect(operation).rejects.toMatchObject({ code: 'WALLET_PROJECTION_CONFLICT' });
-        expect(seam.hits()).toBe(1);
-      } finally {
-        await replaceCallbackKeysetForTest(env.DB, test.proof.credentialKeysetCommitment);
-      }
-    }
-    expect(
-      await first(env.DB, 'SELECT count(*) AS n FROM template_candidates WHERE template_id = ?', [
-        test.templateId,
-      ]),
-    ).toEqual(before);
-    expect(
-      await first(env.DB, 'SELECT count(*) AS n FROM template_approvals WHERE candidate_id = ?', [
-        unreviewed.id,
-      ]),
-    ).toEqual({ n: 0 });
-    expect(
-      await first(env.DB, 'SELECT count(*) AS n FROM template_releases WHERE candidate_id = ?', [
-        waiting.id,
-      ]),
-    ).toEqual({ n: 0 });
   });
 
   it('fences rollback publication with the original keyset at commit', async () => {

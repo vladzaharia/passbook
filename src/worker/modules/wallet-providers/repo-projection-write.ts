@@ -1,6 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type { TemplateAuthority } from '../templates/access.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { templateAuthorityPredicate } from '../templates/repo-authority.ts';
@@ -64,7 +63,7 @@ export function insertProjectionCandidateStmt(
       AND account.credential_id IS NOT NULL
       AND account.revoked_at IS NULL
     WHERE ? = ? AND ? = ? AND ? = ? AND ? = ? AND ? = ?
-      AND (${credentialRefKeysetSql}) AND (${auth.sql})`,
+      AND (${auth.sql})`,
     [
       c.id,
       c.templateId,
@@ -111,7 +110,6 @@ export function insertProjectionCandidateStmt(
       policy.audiencePolicyRevision,
       c.credentialKeysetCommitment,
       proof?.credentialKeysetCommitment,
-      proof?.credentialKeysetCommitment,
       ...auth.params,
     ],
   );
@@ -136,7 +134,7 @@ export function insertProjectionApprovalStmt(
       AND c.author_id != ? AND (c.version_author_id IS NULL OR c.version_author_id != ?)
       AND ? = ? AND c.adapter_revision = ? AND c.adapter_capabilities = ? AND c.audience_policy_revision = ?
       AND c.credential_keyset_commitment = ?
-      AND (${currentSourceAndAccount('c')}) AND (${credentialRefKeysetSql}) AND (${auth.sql})`,
+      AND (${currentSourceAndAccount('c')}) AND (${auth.sql})`,
     [
       a.id,
       a.reviewerId,
@@ -153,7 +151,6 @@ export function insertProjectionApprovalStmt(
       policy.adapterRevision,
       JSON.stringify(policy.adapterCapabilities),
       policy.audiencePolicyRevision,
-      proof?.credentialKeysetCommitment,
       proof?.credentialKeysetCommitment,
       ...auth.params,
     ],
@@ -193,7 +190,7 @@ export function insertProjectionReleaseStmt(
       AND c.credential_keyset_commitment = ? AND a.credential_keyset_commitment = c.credential_keyset_commitment
       AND a.reviewer_id != c.author_id AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id)
       AND c.adapter_revision = ? AND c.adapter_capabilities = ? AND c.audience_policy_revision = ?
-      AND (c.provider = 'google' OR (${samsungProjectionEvidencePredicateSql('c', 'proof_clock.now_ms', '?')}))
+      AND (c.provider = 'google' OR (${samsungProjectionEvidencePredicateSql('c', 'proof_clock.now_ms')}))
       AND json_extract(c.projection_json, '$.schema') = CASE c.provider WHEN 'google' THEN 2 ELSE 1 END
       AND (${currentSourceAndAccount('c')}) AND (${auth.sql})
       AND COALESCE((SELECT MAX(r.generation) FROM template_releases r WHERE ${same}), 0) = ?
@@ -221,7 +218,6 @@ export function insertProjectionReleaseStmt(
       policy.adapterRevision,
       JSON.stringify(policy.adapterCapabilities),
       policy.audiencePolicyRevision,
-      input.credentialKeysetCommitment,
       ...auth.params,
       input.expectedGeneration,
       input.expectedReleaseId,

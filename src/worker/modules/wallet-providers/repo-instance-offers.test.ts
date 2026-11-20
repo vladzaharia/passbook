@@ -180,7 +180,7 @@ describe('wallet offer reference keyset authority', () => {
     );
     expect(updates).toHaveLength(1);
     const update = updates[0]!;
-    expect(update.params).toEqual([hash, now, commitment, commitment, now, now]);
+    expect(update.params).toEqual([hash, now, commitment, now, now]);
     await db
       .prepare(`EXPLAIN ${update.sql}`)
       .bind(...update.params)

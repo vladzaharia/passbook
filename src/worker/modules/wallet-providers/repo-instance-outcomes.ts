@@ -1,6 +1,5 @@
 import type { Envelope } from '../../platform/crypto.ts';
 import { first } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type {
   WalletCredentialKeysetProof,
   WalletOperationRef,
@@ -39,7 +38,7 @@ export async function insertOutcome(
     FROM wallet_provider_instance_operations op JOIN wallet_provider_instances i ON i.id = op.instance_id
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND op.id = ?
       AND op.version = ? AND op.attempts = ? AND op.claim_hash = ? AND op.state IN ('claimed', 'uncertain')
-      AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+      AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = ?
     RETURNING id`,
     [
       p.id,
@@ -63,7 +62,6 @@ export async function insertOutcome(
       p.claimHash,
       p.credentialKeysetCommitment,
       p.credentialKeysetCommitment,
-      p.credentialKeysetCommitment,
     ],
   );
   if (inserted !== null) return 'recorded';
@@ -82,7 +80,7 @@ export async function insertOutcome(
      WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND op.id = ?
        AND op.version = ? AND op.attempts = ? AND op.claim_hash = ?
        AND outcome.attempt = ? AND (outcome.event_hash = ? OR outcome.sequence = ?)
-       AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}`,
+       AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = ?`,
     [
       p.instanceId,
       p.orgId,
@@ -95,7 +93,6 @@ export async function insertOutcome(
       p.attempt,
       p.eventHash,
       p.sequence,
-      p.credentialKeysetCommitment,
       p.credentialKeysetCommitment,
       p.credentialKeysetCommitment,
     ],

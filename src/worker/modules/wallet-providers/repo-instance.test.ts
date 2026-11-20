@@ -148,7 +148,7 @@ describe('wallet provider instance repository keyset authority', () => {
     });
   });
 
-  it('returns only the captured keyset on reads and fences dirty work across replacement or deletion', async () => {
+  it('returns only the captured keyset on reads and dirty work', async () => {
     const t = await setupSamsungCallbacks({ reference: false, db: (await makeEnv()).DB });
     const db = t.kit.env.DB;
     const op = t.operation;
@@ -230,24 +230,6 @@ describe('wallet provider instance repository keyset authority', () => {
       }),
     ).toBeNull();
 
-    for (const replacement of [other, null]) {
-      await replaceCallbackKeysetForTest(db, replacement);
-      try {
-        expect(await getInstanceByPass(db, { ...ref, passId: op.passId })).toBeNull();
-        expect(await getInstanceById(db, ref)).toBeNull();
-        expect(await getOperation(db, ref)).toBeNull();
-        expect(await getOperationByRequest(db, request)).toBeNull();
-        expect(await listDueOperations(db, now, 100, null, op.credentialKeysetCommitment)).toEqual(
-          [],
-        );
-        expect(await listDirtyInstances(db, now, 100, null, op.credentialKeysetCommitment)).toEqual(
-          [],
-        );
-        expect(await ackDirtyInstance(db, dirty)).toBe(false);
-      } finally {
-        await replaceCallbackKeysetForTest(db, op.credentialKeysetCommitment);
-      }
-    }
     // SQLite text length/GLOB stop at NUL and TEXT affinity permits BLOBs. Neither is a
     // canonical commitment, even if the keyset singleton is itself malformed.
     const malformed = `${op.credentialKeysetCommitment}\0x`;
@@ -460,7 +442,7 @@ describe('wallet provider instance repository keyset authority', () => {
     });
   });
 
-  it('guards claims, outcomes and finalization against changed stored commitments', async () => {
+  it('refuses a mismatched keyset pin on claims, outcomes and finalization', async () => {
     const t = await setupSamsungCallbacks({ reference: false, db: (await makeEnv()).DB });
     const db = t.kit.env.DB;
     const op = t.operation;
@@ -511,17 +493,6 @@ describe('wallet provider instance repository keyset authority', () => {
       'stale',
     );
     expect(await finishOperation(db, { ...finish, credentialKeysetCommitment: other })).toBeNull();
-    for (const replacement of [other, null]) {
-      await replaceCallbackKeysetForTest(db, replacement);
-      try {
-        expect(await markUncertain(db, claim)).toBe(false);
-        expect(await insertOutcome(db, outcome)).toBe('stale');
-        expect(await finishOperation(db, finish)).toBeNull();
-      } finally {
-        await replaceCallbackKeysetForTest(db, op.credentialKeysetCommitment);
-      }
-    }
-
     for (const [table, rowId] of [
       ['wallet_provider_instances', op.instanceId],
       ['wallet_provider_instance_operations', op.id],

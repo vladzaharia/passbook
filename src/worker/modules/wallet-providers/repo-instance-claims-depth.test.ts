@@ -3,7 +3,7 @@ import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
-import { replaceCallbackKeysetForTest, setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
+import { setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
 import { insertDesiredOperation } from './repo-instance.ts';
 import {
   claimOperation,
@@ -295,7 +295,7 @@ describe('wallet operation claim SQL and atomicity', () => {
       throw new Error('Claim UPDATE was not captured');
     expect(
       [settlement, finalization, notIssued, revoke].map(({ params }) => params.length),
-    ).toEqual([20, 32, 34, 14]);
+    ).toEqual([18, 30, 32, 13]);
     for (const { sql } of [settlement, finalization, notIssued]) {
       expect(sql.match(/FROM current_operation proven/g)).toHaveLength(1);
     }
@@ -313,7 +313,7 @@ describe('wallet operation claim SQL and atomicity', () => {
     }
   });
 
-  it('rechecks keyset and desired operation when settling the transaction', async () => {
+  it('refuses a mismatched keyset pin and rechecks the desired operation when settling', async () => {
     const db = (await makeEnv()).DB;
     const { claim, operation } = await claimFixture(db);
     expect(await claimOperation(db, claim)).toBe('claimed');
@@ -326,24 +326,25 @@ describe('wallet operation claim SQL and atomicity', () => {
     );
     const other =
       claim.credentialKeysetCommitment === 'f'.repeat(64) ? 'e'.repeat(64) : 'f'.repeat(64);
-    const switchedKeyset = interceptDatabase(db, [], () => replaceCallbackKeysetForTest(db, other));
-    try {
-      expect(await settleClaim(switchedKeyset, { ...claim, now: claim.now + 1 })).toBe(false);
-      expect(
-        await first(
-          db,
-          'SELECT state, last_result_at FROM wallet_provider_instance_operations WHERE id = ?',
-          [operation.id],
-        ),
-      ).toEqual({ state: 'uncertain', last_result_at: null });
-      expect(
-        await first(db, 'SELECT state FROM wallet_provider_sync_targets WHERE operation_id = ?', [
-          operation.id,
-        ]),
-      ).toEqual({ state: 'uncertain' });
-    } finally {
-      await replaceCallbackKeysetForTest(db, claim.credentialKeysetCommitment);
-    }
+    expect(
+      await settleClaim(db, {
+        ...claim,
+        credentialKeysetCommitment: other,
+        now: claim.now + 1,
+      }),
+    ).toBe(false);
+    expect(
+      await first(
+        db,
+        'SELECT state, last_result_at FROM wallet_provider_instance_operations WHERE id = ?',
+        [operation.id],
+      ),
+    ).toEqual({ state: 'uncertain', last_result_at: null });
+    expect(
+      await first(db, 'SELECT state FROM wallet_provider_sync_targets WHERE operation_id = ?', [
+        operation.id,
+      ]),
+    ).toEqual({ state: 'uncertain' });
 
     const next = {
       ...operation,
@@ -381,7 +382,7 @@ describe('wallet operation claim SQL and atomicity', () => {
     ).toEqual({ state: 'pending' });
   });
 
-  it('rechecks keyset and pass authority before finalization and never persists stale output', async () => {
+  it('refuses a mismatched keyset pin and rechecks pass authority before finalization', async () => {
     const db = (await makeEnv()).DB;
     const fixture = await claimFixture(db);
     const { claim, operation } = fixture;
@@ -395,12 +396,7 @@ describe('wallet operation claim SQL and atomicity', () => {
     };
     const other =
       claim.credentialKeysetCommitment === 'f'.repeat(64) ? 'e'.repeat(64) : 'f'.repeat(64);
-    const switchedKeyset = interceptDatabase(db, [], () => replaceCallbackKeysetForTest(db, other));
-    try {
-      expect(await finishOperation(switchedKeyset, finish)).toBeNull();
-    } finally {
-      await replaceCallbackKeysetForTest(db, claim.credentialKeysetCommitment);
-    }
+    expect(await finishOperation(db, { ...finish, credentialKeysetCommitment: other })).toBeNull();
     expect(
       await first(
         db,

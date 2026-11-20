@@ -1,5 +1,4 @@
 import { all, first } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type {
   WalletCredentialKeysetProof,
   WalletOfferAuthority,
@@ -13,7 +12,7 @@ const OFFER_CURRENT = `ref.pass_authority_generation = COALESCE((SELECT generati
     FROM wallet_provider_pass_authority authority WHERE authority.pass_id = i.pass_id), 0)
   AND ref.expires_at > ? AND op.kind = 'upsert' AND op.state IN ('pending', 'retry', 'claimed', 'succeeded')
   AND i.credential_keyset_commitment = op.credential_keyset_commitment
-  AND op.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+  AND op.credential_keyset_commitment = ?
   AND ${walletInstanceOperationCurrentSql('i', 'op', '?')}`;
 const BINDING = `i.id AS instanceId, i.pass_id AS passId, i.org_id AS orgId, i.mode, i.provider,
   i.credential_generation AS credentialGeneration, op.version,
@@ -55,7 +54,7 @@ export function readOffer(
     JOIN wallet_provider_instances i ON i.id = ref.instance_id
     JOIN wallet_provider_instance_operations op ON op.instance_id = i.id AND op.version = ref.operation_version
     WHERE ref.ref_hash = ? AND ${OFFER_CURRENT}`,
-    [hash, now, credentialKeysetCommitment, credentialKeysetCommitment, now],
+    [hash, now, credentialKeysetCommitment, now],
   );
 }
 export async function consumeOffer(
@@ -76,7 +75,7 @@ export async function consumeOffer(
     UPDATE wallet_provider_offer_refs AS ref SET consumed_at = ?
     WHERE ref.ref_hash IN (SELECT ref_hash FROM current_offer) AND ref.consumed_at IS NULL
     RETURNING instance_id`,
-    [hash, now, credentialKeysetCommitment, credentialKeysetCommitment, now, now],
+    [hash, now, credentialKeysetCommitment, now, now],
   );
   return changed ? readOffer(db, hash, now, credentialKeysetCommitment) : null;
 }

@@ -1,5 +1,4 @@
 import { all, first } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type {
   WalletCredentialKeysetProof,
   WalletInstance,
@@ -8,7 +7,6 @@ import type {
   WalletScope,
 } from './instance-types.ts';
 import { isCredentialKeysetCommitment as validCommitment } from './instance-types.ts';
-import { validCommitmentSql } from './repo-instance-keyset-sql.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 
 export {
@@ -37,8 +35,7 @@ const OPERATION_COLUMNS = `op.id, op.instance_id AS instanceId, i.pass_id AS pas
   op.last_result_at AS lastResultAt, op.completed_at AS completedAt, op.reason_code AS reasonCode,
   op.http_status AS httpStatus, op.created_at AS createdAt`;
 const scopeParams = (s: WalletScope) => [s.orgId, s.mode, s.provider] as const;
-const instanceKeysetSql = `${validCommitmentSql('i.credential_keyset_commitment')}
-  AND EXISTS (SELECT 1 FROM credential_ref_keyset keyset WHERE keyset.id = 1
+const instanceKeysetSql = `EXISTS (SELECT 1 FROM credential_ref_keyset keyset WHERE keyset.id = 1
     AND keyset.commitment = i.credential_keyset_commitment)`;
 
 export function getInstanceByPass(
@@ -79,13 +76,11 @@ export function getOperation(
     `SELECT ${OPERATION_COLUMNS} FROM wallet_provider_instance_operations op
     JOIN wallet_provider_instances i ON i.id = op.instance_id
     WHERE i.org_id = ? AND i.mode = ? AND i.provider = ? AND i.id = ? AND op.version = ?
-      AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = ?
-      AND ${validCommitmentSql('op.credential_keyset_commitment')} AND ${credentialRefKeysetSql}`,
+      AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = ?`,
     [
       ...scopeParams(s),
       s.instanceId,
       s.version,
-      s.credentialKeysetCommitment,
       s.credentialKeysetCommitment,
       s.credentialKeysetCommitment,
     ],
@@ -100,13 +95,11 @@ export function getOperationByRequest(
     `SELECT ${OPERATION_COLUMNS} FROM wallet_provider_instance_operations op
     JOIN wallet_provider_instances i ON i.id = op.instance_id
     WHERE i.org_id = ? AND i.mode = ? AND i.provider = ? AND i.id = ? AND op.request_hash = ?
-      AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = ?
-      AND ${validCommitmentSql('op.credential_keyset_commitment')} AND ${credentialRefKeysetSql}`,
+      AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = ?`,
     [
       ...scopeParams(s),
       s.instanceId,
       s.requestHash,
-      s.credentialKeysetCommitment,
       s.credentialKeysetCommitment,
       s.credentialKeysetCommitment,
     ],
@@ -144,8 +137,8 @@ export function readPassSnapshot(
     p.lifecycle_generation AS lifecycleGeneration, p.credential_generation AS credentialGeneration, p.release_id AS issuingReleaseId, p.status,
     p.removed_at AS removedAt, p.deleted_at AS deletedAt, p.test_data_quarantined AS quarantined,
     EXISTS (SELECT 1 FROM pass_credential_transfers transfer WHERE transfer.pass_id = p.id AND transfer.state = 'pending') AS transferPending
-    FROM passes p WHERE p.id = ? AND p.org_id = ? AND p.mode = ? AND ${credentialRefKeysetSql}`,
-    [s.credentialKeysetCommitment, s.passId, s.orgId, s.mode, s.credentialKeysetCommitment],
+    FROM passes p WHERE p.id = ? AND p.org_id = ? AND p.mode = ?`,
+    [s.credentialKeysetCommitment, s.passId, s.orgId, s.mode],
   );
 }
 
@@ -168,22 +161,14 @@ export async function listDueOperations(
         AND (op.next_attempt_at IS NULL OR op.next_attempt_at <= ?) ${afterId === null ? '' : 'AND op.id > ?'}
         AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations busy
           WHERE busy.instance_id = i.id AND busy.state IN ('claimed', 'uncertain'))
-        AND op.credential_keyset_commitment = ? AND ${validCommitmentSql('op.credential_keyset_commitment')}
-        AND ${credentialRefKeysetSql}
+        AND op.credential_keyset_commitment = ?
     )
     SELECT ${OPERATION_COLUMNS} FROM due
     JOIN wallet_provider_instance_operations op ON op.id = due.id
     JOIN wallet_provider_instances i ON i.id = op.instance_id
     WHERE ${walletInstanceOperationCurrentSql('i', 'op', '?')}
     ORDER BY op.id LIMIT ?`,
-    [
-      now,
-      ...(afterId === null ? [] : [afterId]),
-      credentialKeysetCommitment,
-      credentialKeysetCommitment,
-      now,
-      limit,
-    ],
+    [now, ...(afterId === null ? [] : [afterId]), credentialKeysetCommitment, now, limit],
   );
 }
 export interface DirtyWalletInstance extends WalletScope, WalletCredentialKeysetProof {
@@ -204,12 +189,11 @@ export function listDirtyInstances(
       i.credential_keyset_commitment AS credentialKeysetCommitment
     FROM wallet_provider_instance_dirty d JOIN wallet_provider_instances i ON i.id = d.instance_id
     WHERE d.next_attempt_at <= ? ${afterInstanceId === null ? '' : 'AND i.id > ?'}
-      AND i.credential_keyset_commitment = ? AND ${validCommitmentSql('i.credential_keyset_commitment')}
-      AND ${credentialRefKeysetSql} ORDER BY i.id LIMIT ?`,
+      AND i.credential_keyset_commitment = ?
+      ORDER BY i.id LIMIT ?`,
     [
       now,
       ...(afterInstanceId === null ? [] : [afterInstanceId]),
-      credentialKeysetCommitment,
       credentialKeysetCommitment,
       limit,
     ],
@@ -225,15 +209,8 @@ export async function ackDirtyInstance(
     `DELETE FROM wallet_provider_instance_dirty WHERE instance_id = ? AND generation = ?
     AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE i.id = instance_id
       AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND i.credential_keyset_commitment = ?)
-    AND ${credentialRefKeysetSql}
     RETURNING instance_id`,
-    [
-      s.instanceId,
-      s.generation,
-      ...scopeParams(s),
-      s.credentialKeysetCommitment,
-      s.credentialKeysetCommitment,
-    ],
+    [s.instanceId, s.generation, ...scopeParams(s), s.credentialKeysetCommitment],
   );
   return row !== null;
 }
@@ -254,16 +231,8 @@ export async function deferDirtyInstance(
     WHERE instance_id = ? AND generation = ?
       AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE i.id = instance_id
         AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND i.credential_keyset_commitment = ?)
-      AND ${credentialRefKeysetSql}
     RETURNING instance_id`,
-    [
-      s.nextAttemptAt,
-      s.instanceId,
-      s.generation,
-      ...scopeParams(s),
-      s.credentialKeysetCommitment,
-      s.credentialKeysetCommitment,
-    ],
+    [s.nextAttemptAt, s.instanceId, s.generation, ...scopeParams(s), s.credentialKeysetCommitment],
   );
   return row !== null;
 }

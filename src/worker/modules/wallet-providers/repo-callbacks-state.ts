@@ -1,6 +1,5 @@
 import type { Envelope } from '../../platform/crypto.ts';
 import { all, batch, first, type SqlValue, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 
 export type SamsungCardEvent = 'ADDED' | 'DELETED' | 'UPDATED' | 'PROVISIONED';
 
@@ -171,26 +170,20 @@ export function receiptStatements(
         `INSERT INTO wallet_provider_instance_dirty (instance_id, generation)
       SELECT rc.instance_id, 1 FROM wallet_samsung_callback_receipts rc
       JOIN wallet_samsung_fetch_refs live ON live.id = rc.ref_id AND live.retired_at IS NULL
-      WHERE rc.id = ? AND rc.cc2 = ? AND ${credentialRefKeysetSql}
+      WHERE rc.id = ? AND rc.cc2 = ?
         AND NOT EXISTS (SELECT 1 FROM wallet_samsung_country_hints known
           WHERE known.ref_id = rc.ref_id AND known.country_code = ?)
       ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1`,
-        [receipt.id, receipt.countryHint, ref.credentialKeysetCommitment, receipt.countryHint],
+        [receipt.id, receipt.countryHint, receipt.countryHint],
       ),
       stmt(
         db,
         `INSERT INTO wallet_samsung_country_hints (ref_id, country_code, received_at)
       SELECT rc.ref_id, ?, ? FROM wallet_samsung_callback_receipts rc
       JOIN wallet_samsung_fetch_refs live ON live.id = rc.ref_id AND live.retired_at IS NULL
-      WHERE rc.id = ? AND rc.cc2 = ? AND ${credentialRefKeysetSql}
+      WHERE rc.id = ? AND rc.cc2 = ?
       ON CONFLICT(ref_id, country_code) DO NOTHING`,
-        [
-          receipt.countryHint,
-          claim.now,
-          receipt.id,
-          receipt.countryHint,
-          ref.credentialKeysetCommitment,
-        ],
+        [receipt.countryHint, claim.now, receipt.id, receipt.countryHint],
       ),
     );
   }
@@ -235,9 +228,9 @@ export function findSamsungIssuedRefs(
       AND e.revision = o.account_revision
     WHERE r.ref_hash = ? AND i.provider = 'samsung' AND i.account_id IS NOT NULL
       AND r.credential_keyset_commitment = i.credential_keyset_commitment
-      AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql} AND ${dead}
+      AND i.credential_keyset_commitment = ? AND ${dead}
     GROUP BY e.credential_id ORDER BY accountRevision DESC LIMIT 33`,
-    [refHash, credentialKeysetCommitment, credentialKeysetCommitment],
+    [refHash, credentialKeysetCommitment],
   );
 }
 
@@ -249,14 +242,13 @@ function issuedGate(ref: SamsungIssuedRef) {
   return {
     sql: `r.id = ? AND r.ref_hash = ? AND i.org_id = ? AND i.mode = ? AND i.account_id = ?
       AND r.credential_keyset_commitment = i.credential_keyset_commitment
-      AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql} AND ${dead}`,
+      AND i.credential_keyset_commitment = ? AND ${dead}`,
     params: [
       ref.referenceId,
       ref.refHash,
       ref.orgId,
       ref.mode,
       ref.accountId,
-      ref.credentialKeysetCommitment,
       ref.credentialKeysetCommitment,
     ],
   };
@@ -276,11 +268,9 @@ export async function claimSamsungIssuedDelivery(
   if (!validClaim(claim) || (receipt && !/^[A-Za-z0-9_-]{1,64}$/.test(receipt.requestId)))
     return false;
   const gate = issuedGate(ref);
-  const deleteExpired = stmt(
-    db,
-    `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ? AND ${credentialRefKeysetSql}`,
-    [claim.now, ref.credentialKeysetCommitment],
-  );
+  const deleteExpired = stmt(db, `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ?`, [
+    claim.now,
+  ]);
   const claimReplay = stmt(
     db,
     `INSERT INTO wallet_samsung_auth_replays (token_hash, claim_id, expires_at)

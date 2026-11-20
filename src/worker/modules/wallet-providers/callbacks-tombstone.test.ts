@@ -34,12 +34,7 @@ import {
 import { onWalletPassRetired, reconcileWalletInstance } from './lifecycle.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
 import { putSamsungFetchRef } from './repo-callbacks.ts';
-import {
-  claimSamsungTombstoneReplay,
-  findSamsungTombstones,
-  putSamsungTombstone,
-  samsungTombstoneStillDeleted,
-} from './repo-callbacks-tombstone.ts';
+import { findSamsungTombstones, putSamsungTombstone } from './repo-callbacks-tombstone.ts';
 import { providerRetirementCompleteSql, providerRetirementPending } from './repo-sync-retention.ts';
 import {
   seedHistoricalProviderInstance,
@@ -238,21 +233,6 @@ describe('Samsung tombstone retention', () => {
       await replaceCallbackKeysetForTest(db, newCommitment);
       t.kit.env.KEK_V1 = newKey;
       expect(await findSamsungTombstones(db, refHash, newCommitment)).toEqual([]);
-      expect(await samsungTombstoneStillDeleted(db, tombstone)).toBe(false);
-      const now = t.kit.clock.now();
-      expect(
-        await claimSamsungTombstoneReplay(db, tombstone, {
-          tokenHash: 'Z'.repeat(43),
-          claimId: t.kit.ctx.ids.id(),
-          now,
-          expiresAt: now + 30_000,
-        }),
-      ).toBe(false);
-      expect(
-        await first(db, 'SELECT token_hash FROM wallet_samsung_auth_replays WHERE token_hash = ?', [
-          'Z'.repeat(43),
-        ]),
-      ).toBeNull();
       expect((await t.call({ token: await t.token() })).status).toBe(401);
       await replaceCallbackKeysetForTest(db, null);
       expect((await t.call({ token: await t.token() })).status).toBe(503);

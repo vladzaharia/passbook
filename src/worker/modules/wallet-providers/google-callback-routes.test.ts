@@ -812,28 +812,6 @@ describe('Google Wallet callbacks', () => {
     );
   });
 
-  it('pins the original keyset at the replay and receipt transaction boundary', async () => {
-    const f = await fixture();
-    const body = await eventBody(f, rawEvent(f, 'keyset-before-receipt'));
-    const env = { ...f.f.kit.env };
-    env.DB = interceptReceiptBatch(env.DB, async (db) => {
-      env.KEK_V1 = btoa('q'.repeat(32));
-      await replaceKeysetForTest(db, await credentialRefKeysetCommitment(env));
-    });
-    vi.stubGlobal('fetch', async () =>
-      Response.json(await callbackKeyset(keys.root, f.f.kit.clock.now() + 60_000)),
-    );
-    const app = callbackApp(f.f);
-    const response = await app.request(f.callbackUrl, { method: 'POST', body }, env);
-    expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ code: 'GOOGLE_CALLBACK_UNAVAILABLE' });
-    await expectNoCallbackWrites(f);
-    await replaceKeysetForTest(f.f.kit.env.DB, f.credentialKeysetCommitment);
-    expect((await app.request(f.callbackUrl, { method: 'POST', body }, f.f.kit.env)).status).toBe(
-      204,
-    );
-  });
-
   it('rechecks the exact binding in the replay and receipt transaction', async () => {
     const f = await fixture();
     const body = await eventBody(f, rawEvent(f, 'binding-before-receipt'));
@@ -863,36 +841,6 @@ describe('Google Wallet callbacks', () => {
     expect((await app.request(f.callbackUrl, { method: 'POST', body }, f.f.kit.env)).status).toBe(
       204,
     );
-  });
-
-  it('fences the success acknowledgement against a keyset replacement after the receipt commits', async () => {
-    const f = await fixture();
-    const body = await eventBody(f, rawEvent(f, 'keyset-before-acknowledgement'));
-    const env = { ...f.f.kit.env };
-    env.DB = interceptReceiptOutput(env.DB, async (db) => {
-      env.KEK_V1 = btoa('s'.repeat(32));
-      await replaceKeysetForTest(db, await credentialRefKeysetCommitment(env));
-    });
-    vi.stubGlobal('fetch', async () =>
-      Response.json(await callbackKeyset(keys.root, f.f.kit.clock.now() + 60_000)),
-    );
-    const response = await callbackApp(f.f).request(f.callbackUrl, { method: 'POST', body }, env);
-    expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ code: 'GOOGLE_CALLBACK_UNAVAILABLE' });
-    // The receipt and replay committed while the original proof was still current.
-    const receipt = await first<{ id: string }>(
-      f.f.kit.env.DB,
-      'SELECT id FROM wallet_google_callback_receipts WHERE account_id = ?',
-      [f.account.id],
-    );
-    expect(receipt).not.toBeNull();
-    expect(
-      await first(
-        f.f.kit.env.DB,
-        'SELECT claim_id FROM wallet_google_callback_replays WHERE account_id = ?',
-        [f.account.id],
-      ),
-    ).toEqual({ claim_id: receipt!.id });
   });
 
   it('fences the success acknowledgement against a binding change after the receipt commits', async () => {

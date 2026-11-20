@@ -21,8 +21,6 @@ import {
   inspectSamsungRetirement,
   retireSamsungUnpromotedRef,
 } from './repo-callbacks-retirement.ts';
-import { putSamsungTombstone } from './repo-callbacks-tombstone.ts';
-import { getProjectionRetirementMetadata } from './repo-projection.ts';
 
 // These cases cover historical provider instances, which exist only while a provider is enabled.
 beforeAll(() => {
@@ -92,20 +90,13 @@ describe('Samsung unpromoted reference retirement', () => {
       await completeWalletOperation(t.kit.ctx, { ...claim, result: { kind: 'not_issued' } }),
     ).toBe('succeeded');
     expect(await persistSamsungTombstone(t.kit.ctx, scope)).toBe(true);
-    const original = await getProjectionRetirementMetadata(db, revoke.identityProjectionReleaseId, {
-      credentialKeysetCommitment: t.credentialKeysetCommitment,
-    });
-    if (!original) throw new Error('Missing retirement projection');
     try {
       await replaceCallbackKeysetForTest(db, newCommitment);
       t.kit.env.KEK_V1 = newKey;
       const newScope = { ...scope, credentialKeysetCommitment: newCommitment };
-      expect(
-        await putSamsungTombstone(db, scope, original.providerIdentityHash, t.kit.clock.now()),
-      ).toBe(false);
-      expect(
-        await putSamsungTombstone(db, newScope, original.providerIdentityHash, t.kit.clock.now()),
-      ).toBe(false);
+      await expect(persistSamsungTombstone(t.kit.ctx, scope)).rejects.toMatchObject({
+        code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
+      });
       expect(await persistSamsungTombstone(t.kit.ctx, newScope)).toBe(false);
     } finally {
       t.kit.env.KEK_V1 = oldKey;

@@ -1,7 +1,6 @@
 import { CompactSign, importPKCS8 } from 'jose';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
-import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { batch, first, run, stmt } from '../../platform/db.ts';
 import { fromBase64, sha256Hex } from '../../platform/ids.ts';
 import { interveneAtD1 } from '../apple/credential-transfer-test-fixtures.ts';
@@ -10,7 +9,6 @@ import {
   credentialRefKeysetCommitment,
   requireCredentialRefKeyset,
 } from '../passes/credential-keyset.ts';
-import { tenantAuthorityOf } from '../passes/http.ts';
 import { withKitDatabase } from '../passes/pass-test-fixtures.ts';
 import {
   configureWalletProviderAccount,
@@ -24,11 +22,7 @@ import { readWalletPassSnapshot, walletClaimHash } from './instance.ts';
 import { setupWalletOfferKit as setupOfferFixture } from './offers-test-fixtures.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
-import {
-  findRetirementAccount,
-  findSamsungPromotedRefreshAccount,
-  saveAccountConfiguration,
-} from './repo-accounts.ts';
+import { findRetirementAccount, findSamsungPromotedRefreshAccount } from './repo-accounts.ts';
 import { projectionReleaseBindingValid } from './repo-projection.ts';
 import {
   assertWalletRuntimeAccount,
@@ -806,53 +800,7 @@ describe('existing provider instance runtime', () => {
     expect(f.responses).toHaveLength(0);
   }, 30_000);
 
-  it('fences an empty-reference account creation at the final SQL transaction', async () => {
-    const f = await setupWalletOfferKit({ google: 'absent', samsung: 'absent' });
-    const scope = { orgId: f.pass.orgId, mode: f.pass.mode, provider: 'google' as const };
-    const authority = await tenantAuthorityOf(
-      f.kit.ctx,
-      f.auth,
-      scope.orgId,
-      'integrations:manage',
-    );
-    if (authority.kind !== 'session') throw new Error('Missing session authority');
-    const accountId = f.kit.ctx.ids.id();
-    const credentialId = f.kit.ctx.ids.id();
-    const envelope = await encryptSecret(
-      await loadKekRing(f.kit.env),
-      '{}',
-      credentialAad(
-        credentialId,
-        scope.orgId,
-        `wallet-provider:${accountId}:${scope.mode}:${scope.provider}`,
-      ),
-    );
-    const replacement = await credentialRefKeysetCommitment({ ...f.kit.env, KEK_V1: alternateKek });
-    await replaceTestKeyset(f.kit.env.DB, replacement);
-    expect(
-      await saveAccountConfiguration(f.kit.ctx, authority, scope, {
-        accountId,
-        credentialId,
-        envelope,
-        eventId: f.kit.ctx.ids.id(),
-        isNew: true,
-        expectedRevision: 0,
-        credentialKeysetCommitment: f.credentialKeysetCommitment,
-      }),
-    ).toBe(false);
-    expect(
-      await first(f.kit.env.DB, 'SELECT id FROM wallet_provider_accounts WHERE id = ?', [
-        accountId,
-      ]),
-    ).toBeNull();
-    expect(
-      await first(f.kit.env.DB, 'SELECT id FROM wallet_provider_credentials WHERE id = ?', [
-        credentialId,
-      ]),
-    ).toBeNull();
-  }, 30_000);
-
-  it('does not adopt old claimed identities or rotate their account after an audited keyset change', async () => {
+  it('refuses old claimed identities under a changed keyset pin', async () => {
     const f = await runtimeSamsungLegacyFixture('retirement');
     const proof = {
       orgId: f.scope.orgId,
@@ -885,34 +833,6 @@ describe('existing provider instance runtime', () => {
         f.kit.clock.now(),
       ),
     ).toBeNull();
-    await expect(
-      getWalletProviderReadiness(f.kit.ctx, {
-        orgId: f.pass.orgId,
-        mode: f.pass.mode,
-        provider: 'samsung',
-      }),
-    ).rejects.toMatchObject({ code: 'WALLET_CREDENTIALS_UNAVAILABLE' });
-    const before = await first<{ n: number }>(
-      f.kit.env.DB,
-      'SELECT COUNT(*) AS n FROM wallet_provider_credentials WHERE account_id = ?',
-      [f.scope.accountId],
-    );
-    await expect(
-      configureWalletProviderAccount(f.kit.ctx, f.auth, {
-        orgId: f.pass.orgId,
-        mode: f.pass.mode,
-        provider: 'samsung',
-        expectedRevision: f.scope.accountRevision,
-        credentials: f.samsung,
-      }),
-    ).rejects.toMatchObject({ code: 'WALLET_CREDENTIALS_UNAVAILABLE' });
-    expect(
-      await first(
-        f.kit.env.DB,
-        'SELECT COUNT(*) AS n FROM wallet_provider_credentials WHERE account_id = ?',
-        [f.scope.accountId],
-      ),
-    ).toEqual(before);
   }, 30_000);
 
   it('requires promoted-ref account selection to retain the captured keyset', async () => {

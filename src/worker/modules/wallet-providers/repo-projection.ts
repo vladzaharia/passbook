@@ -1,6 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { first } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { candidateHash } from '../templates/release-content.ts';
 import { effectiveReleaseIdSql } from '../templates/repo-release-heads.ts';
 import type { WalletCredentialKeysetProof } from './instance-types.ts';
@@ -103,7 +102,7 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
       OR (pc.provider = 'samsung' AND json_extract(pc.projection_json, '$.schema') = 1
         AND pc.adapter_revision = ${SAMSUNG_PROJECTION_POLICY.adapterRevision}
         AND pc.adapter_capabilities = '${samsung}' AND pc.audience_policy_revision = ${SAMSUNG_PROJECTION_POLICY.audiencePolicyRevision}
-        AND (${samsungProjectionEvidencePredicateSql('pc', nowSql, scope.credentialKeysetCommitmentSql)})))`;
+        AND (${samsungProjectionEvidencePredicateSql('pc', nowSql)})))`;
 }
 
 /** Reads the effective scoped Apple head without accepting it as native approval. */
@@ -228,9 +227,9 @@ export async function getProjectionRetirementMetadata(
       WHERE r.id = ? AND r.source = 'approved' AND r.provider IN ('google','samsung')
         AND r.candidate_hash = c.candidate_hash AND a.candidate_hash = c.candidate_hash
         AND r.credential_keyset_commitment = ? AND c.credential_keyset_commitment = r.credential_keyset_commitment
-        AND a.credential_keyset_commitment = r.credential_keyset_commitment AND ${credentialRefKeysetSql}
+        AND a.credential_keyset_commitment = r.credential_keyset_commitment
         AND a.reviewer_id != c.author_id AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id)`,
-    [releaseId, credentialKeysetCommitment, credentialKeysetCommitment],
+    [releaseId, credentialKeysetCommitment],
   );
   if (!row) return null;
   const candidate = await getProjectionCandidate(db, row.candidateId);
@@ -239,8 +238,6 @@ export async function getProjectionRetirementMetadata(
     candidate.credentialKeysetCommitment !== credentialKeysetCommitment ||
     (await candidateHash(projectionCandidateEnvelope(candidate))) !== row.candidateHash
   )
-    return null;
-  if (!(await first(db, `SELECT 1 WHERE ${credentialRefKeysetSql}`, [credentialKeysetCommitment])))
     return null;
   const { candidateId: _candidateId, candidateHash: _candidateHash, ...metadata } = row;
   return { ...metadata, projection: candidate.projection };

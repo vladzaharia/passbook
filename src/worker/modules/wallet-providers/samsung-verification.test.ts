@@ -530,7 +530,7 @@ describe('authenticated Samsung card-state evidence', () => {
   });
 
   it.each(['changed', 'missing'] as const)(
-    'fences cached evidence and pending, failed, and successful probe writes when the singleton is %s',
+    'refuses a mismatched keyset pin at entry when the singleton is %s',
     async (change) => {
       const f = await fixture();
       await f.approve();
@@ -550,25 +550,8 @@ describe('authenticated Samsung card-state evidence', () => {
         'SELECT * FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
         [candidate.id],
       );
-      const history = await all(
-        db,
-        'SELECT * FROM wallet_provider_projection_evidence_history WHERE candidate_id = ?',
-        [candidate.id],
-      );
-      const probeId = f.kit.ctx.ids.id();
       await replaceCallbackKeysetForTest(db, change === 'changed' ? replacement : null);
       try {
-        expect(await hasSamsungProjectionEvidence(f.kit.ctx, candidate, f.proof)).toBe(false);
-        expect(
-          await beginSamsungProjectionProbe(f.kit.ctx, null, candidate, probeId, f.proof),
-        ).toBe(false);
-        expect(
-          await first(
-            db,
-            'SELECT * FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
-            [candidate.id],
-          ),
-        ).toEqual(before);
         await expect(
           ensureSamsungProjectionEvidence(
             f.kit.ctx,
@@ -581,6 +564,13 @@ describe('authenticated Samsung card-state evidence', () => {
           refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, f.input),
         ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
         expect(fetch).toHaveBeenCalledTimes(1);
+        expect(
+          await first(
+            db,
+            'SELECT * FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
+            [candidate.id],
+          ),
+        ).toEqual(before);
         if (change === 'missing')
           expect(
             await first(db, 'SELECT commitment FROM credential_ref_keyset WHERE id = 1'),
@@ -588,56 +578,6 @@ describe('authenticated Samsung card-state evidence', () => {
       } finally {
         await replaceCallbackKeysetForTest(db, f.proof.credentialKeysetCommitment);
       }
-      expect(await beginSamsungProjectionProbe(f.kit.ctx, null, candidate, probeId, f.proof)).toBe(
-        true,
-      );
-      await replaceCallbackKeysetForTest(db, change === 'changed' ? replacement : null);
-      try {
-        await failSamsungProjectionProbe(f.kit.ctx, candidate.id, probeId, f.proof);
-        expect(
-          await completeSamsungProjectionProbe(
-            f.kit.ctx,
-            null,
-            candidate,
-            probeId,
-            f.kit.clock.now(),
-            f.kit.clock.now() + 300_000,
-            f.proof,
-          ),
-        ).toBe(false);
-        expect(
-          await first(
-            db,
-            `SELECT status, probe_id, credential_keyset_commitment
-          FROM wallet_provider_projection_evidence WHERE candidate_id = ?`,
-            [candidate.id],
-          ),
-        ).toEqual({
-          status: 'pending',
-          probe_id: probeId,
-          credential_keyset_commitment: f.proof.credentialKeysetCommitment,
-        });
-        expect(
-          await all(
-            db,
-            'SELECT * FROM wallet_provider_projection_evidence_history WHERE candidate_id = ?',
-            [candidate.id],
-          ),
-        ).toEqual(history);
-      } finally {
-        await replaceCallbackKeysetForTest(db, f.proof.credentialKeysetCommitment);
-      }
-      expect(
-        await completeSamsungProjectionProbe(
-          f.kit.ctx,
-          null,
-          candidate,
-          probeId,
-          f.kit.clock.now(),
-          f.kit.clock.now() + 300_000,
-          f.proof,
-        ),
-      ).toBe(true);
       expect(await hasSamsungProjectionEvidence(f.kit.ctx, candidate, f.proof)).toBe(true);
     },
     120_000,
@@ -971,223 +911,6 @@ describe('authenticated Samsung card-state evidence', () => {
   });
 
   it.each(['changed', 'missing'] as const)(
-    'does not contact Samsung or report evidence if the singleton becomes %s after opening credentials',
-    async (change) => {
-      const f = await fixture();
-      await f.approve();
-      respond(success);
-      const db = f.kit.env.DB;
-      const oldKey = f.kit.env.KEK_V1;
-      const newKey = btoa('z'.repeat(32));
-      const replacement = await credentialRefKeysetCommitment({ ...f.kit.env, KEK_V1: newKey });
-      const decrypt = crypto.subtle.decrypt.bind(crypto.subtle);
-      let decryptions = 0;
-      const spy = vi
-        .spyOn(crypto.subtle, 'decrypt')
-        .mockImplementation(async (algorithm, key, data) => {
-          const result = await decrypt(algorithm, key, data);
-          if (++decryptions === 2) {
-            f.kit.env.KEK_V1 = newKey;
-            await replaceCallbackKeysetForTest(db, change === 'changed' ? replacement : null);
-          }
-          return result;
-        });
-      try {
-        expect(await refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, f.input)).toEqual({
-          verified: false,
-          verifiedAt: null,
-          expiresAt: null,
-        });
-        expect(decryptions).toBe(2);
-        expect(fetch).not.toHaveBeenCalled();
-        expect(
-          await first(
-            db,
-            'SELECT status FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
-            [f.candidate.id],
-          ),
-        ).toEqual({ status: 'pending' });
-        expect(
-          await all(
-            db,
-            'SELECT id FROM wallet_provider_projection_evidence_history WHERE candidate_id = ?',
-            [f.candidate.id],
-          ),
-        ).toEqual([]);
-      } finally {
-        spy.mockRestore();
-        f.kit.env.KEK_V1 = oldKey;
-        await replaceCallbackKeysetForTest(db, f.proof.credentialKeysetCommitment);
-      }
-    },
-    120_000,
-  );
-
-  it.each(['changed', 'missing'] as const)(
-    'does not invalidate existing evidence when the singleton becomes %s at pending-probe insertion',
-    async (change) => {
-      const f = await fixture();
-      await f.approve();
-      respond(success);
-      expect((await refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, f.input)).verified).toBe(
-        true,
-      );
-      const db = f.kit.env.DB;
-      const before = await first(
-        db,
-        'SELECT * FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
-        [f.candidate.id],
-      );
-      const history = await all(
-        db,
-        'SELECT * FROM wallet_provider_projection_evidence_history WHERE candidate_id = ?',
-        [f.candidate.id],
-      );
-      const replacement = await credentialRefKeysetCommitment({
-        ...f.kit.env,
-        KEK_V1: btoa('z'.repeat(32)),
-      });
-      const seam = interveneAtD1(
-        db,
-        {
-          method: 'first',
-          sql: /INSERT INTO wallet_provider_projection_evidence\s/,
-          when: 'before',
-        },
-        () => replaceCallbackKeysetForTest(db, change === 'changed' ? replacement : null),
-      );
-      const ctx = { ...f.kit.ctx, env: { ...f.kit.env, DB: seam.db } };
-      try {
-        expect(await refreshSamsungProjectionEvidence(ctx, f.auth, f.input)).toEqual({
-          verified: false,
-          verifiedAt: null,
-          expiresAt: null,
-        });
-        expect(seam.hits()).toBe(1);
-        expect(fetch).toHaveBeenCalledTimes(1);
-        expect(
-          await first(
-            db,
-            'SELECT * FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
-            [f.candidate.id],
-          ),
-        ).toEqual(before);
-        expect(
-          await all(
-            db,
-            'SELECT * FROM wallet_provider_projection_evidence_history WHERE candidate_id = ?',
-            [f.candidate.id],
-          ),
-        ).toEqual(history);
-      } finally {
-        await replaceCallbackKeysetForTest(db, f.proof.credentialKeysetCommitment);
-      }
-      expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored(), f.proof)).toBe(true);
-    },
-    120_000,
-  );
-
-  it.each(['changed', 'missing'] as const)(
-    'rejects a positive network response if the singleton becomes %s while Samsung is responding',
-    async (change) => {
-      const f = await fixture();
-      await f.approve();
-      const db = f.kit.env.DB;
-      const oldKey = f.kit.env.KEK_V1;
-      const newKey = btoa('z'.repeat(32));
-      const replacement = await credentialRefKeysetCommitment({ ...f.kit.env, KEK_V1: newKey });
-      vi.stubGlobal(
-        'fetch',
-        vi.fn(async () => {
-          f.kit.env.KEK_V1 = newKey;
-          await replaceCallbackKeysetForTest(db, change === 'changed' ? replacement : null);
-          return success();
-        }),
-      );
-      try {
-        expect(await refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, f.input)).toEqual({
-          verified: false,
-          verifiedAt: null,
-          expiresAt: null,
-        });
-        expect(fetch).toHaveBeenCalledTimes(1);
-        expect(
-          await first(
-            db,
-            `SELECT status, credential_keyset_commitment
-          FROM wallet_provider_projection_evidence WHERE candidate_id = ?`,
-            [f.candidate.id],
-          ),
-        ).toEqual({
-          status: 'pending',
-          credential_keyset_commitment: f.proof.credentialKeysetCommitment,
-        });
-        expect(
-          await all(
-            db,
-            'SELECT id FROM wallet_provider_projection_evidence_history WHERE candidate_id = ?',
-            [f.candidate.id],
-          ),
-        ).toEqual([]);
-      } finally {
-        f.kit.env.KEK_V1 = oldKey;
-        await replaceCallbackKeysetForTest(db, f.proof.credentialKeysetCommitment);
-      }
-    },
-    120_000,
-  );
-
-  it.each(['changed', 'missing'] as const)(
-    'prevents an in-flight positive result from committing when the singleton becomes %s at the CAS',
-    async (change) => {
-      const f = await fixture();
-      await f.approve();
-      respond(success);
-      const db = f.kit.env.DB;
-      const replacement = await credentialRefKeysetCommitment({
-        ...f.kit.env,
-        KEK_V1: btoa('z'.repeat(32)),
-      });
-      const seam = interveneAtD1(
-        db,
-        {
-          method: 'batch',
-          sql: /INSERT INTO wallet_provider_projection_evidence_history/,
-          when: 'before',
-        },
-        () => replaceCallbackKeysetForTest(db, change === 'changed' ? replacement : null),
-      );
-      const ctx = { ...f.kit.ctx, env: { ...f.kit.env, DB: seam.db } };
-      try {
-        expect(await refreshSamsungProjectionEvidence(ctx, f.auth, f.input)).toEqual({
-          verified: false,
-          verifiedAt: null,
-          expiresAt: null,
-        });
-        expect(seam.hits()).toBe(1);
-        expect(fetch).toHaveBeenCalledTimes(1);
-        expect(
-          await first(
-            db,
-            'SELECT status FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
-            [f.candidate.id],
-          ),
-        ).toEqual({ status: 'pending' });
-        expect(
-          await all(
-            db,
-            'SELECT id FROM wallet_provider_projection_evidence_history WHERE candidate_id = ?',
-            [f.candidate.id],
-          ),
-        ).toEqual([]);
-      } finally {
-        await replaceCallbackKeysetForTest(db, f.proof.credentialKeysetCommitment);
-      }
-    },
-    120_000,
-  );
-
-  it.each(['changed', 'missing'] as const)(
     'does not report a successful probe if the singleton becomes %s before output',
     async (change) => {
       const f = await fixture();
@@ -1218,49 +941,6 @@ describe('authenticated Samsung card-state evidence', () => {
         expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored(), f.proof)).toBe(
           false,
         );
-      } finally {
-        await replaceCallbackKeysetForTest(db, f.proof.credentialKeysetCommitment);
-      }
-      expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored(), f.proof)).toBe(true);
-    },
-    120_000,
-  );
-
-  it.each(['changed', 'missing'] as const)(
-    'does not return cached evidence when the singleton becomes %s at the lookup',
-    async (change) => {
-      const f = await fixture();
-      await f.approve();
-      respond(success);
-      expect((await refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, f.input)).verified).toBe(
-        true,
-      );
-      const db = f.kit.env.DB;
-      const replacement = await credentialRefKeysetCommitment({
-        ...f.kit.env,
-        KEK_V1: btoa('z'.repeat(32)),
-      });
-      const seam = interveneAtD1(
-        db,
-        {
-          method: 'first',
-          sql: /SELECT 1 AS ok FROM template_candidates c/,
-          when: 'before',
-        },
-        () => replaceCallbackKeysetForTest(db, change === 'changed' ? replacement : null),
-      );
-      const ctx = { ...f.kit.ctx, env: { ...f.kit.env, DB: seam.db } };
-      try {
-        expect(
-          await ensureSamsungProjectionEvidence(
-            ctx,
-            f.candidate.id,
-            f.candidate.candidateHash,
-            f.proof,
-          ),
-        ).toBe(false);
-        expect(seam.hits()).toBe(1);
-        expect(fetch).toHaveBeenCalledTimes(1);
       } finally {
         await replaceCallbackKeysetForTest(db, f.proof.credentialKeysetCommitment);
       }

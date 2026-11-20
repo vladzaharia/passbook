@@ -622,7 +622,7 @@ describe('wallet provider accounts', () => {
     if (!account) throw new Error('Missing configured credential');
     const authority = await tenantAuthorityOf(ctx, auth, org.id, 'integrations:manage');
     if (authority.kind !== 'session') throw new Error('Missing session authority');
-    const commitment = await ensureCredentialRefKeyset(env.DB, env);
+    await ensureCredentialRefKeyset(env.DB, env);
     const credentialId = f.ids.id();
     const envelope = await encryptSecret(
       await loadKekRing(env),
@@ -640,7 +640,6 @@ describe('wallet provider accounts', () => {
         credentialId,
         eventId: f.ids.id(),
         envelope,
-        credentialKeysetCommitment: commitment,
       }),
     ).toBe(false);
     expect(
@@ -650,7 +649,6 @@ describe('wallet provider accounts', () => {
         expectedRevision: 99,
         eventId: f.ids.id(),
         kind: 'revoke',
-        credentialKeysetCommitment: commitment,
       }),
     ).toBe(false);
     expect(

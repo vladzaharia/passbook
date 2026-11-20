@@ -104,29 +104,6 @@ describe('Samsung sync target keyset authority', () => {
       [t.referenceId, 'FR', now],
     );
 
-    await withoutTrigger(db, 'credential_ref_keyset_no_update', async () => {
-      await run(db, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [other]);
-      try {
-        for (const candidate of [claim, wrongClaim]) {
-          await ensureSamsungSyncTargets(t.kit.ctx, candidate);
-          expect(await listSamsungSyncTargets(t.kit.ctx, candidate)).toEqual([]);
-          expect(await beginSamsungSyncTarget(t.kit.ctx, candidate, 'US')).toBeNull();
-          expect(
-            await finishSamsungSyncTarget(t.kit.ctx, candidate, 'GB', { kind: 'success' }),
-          ).toBe(false);
-          expect(await samsungSyncCountryHints(t.kit.ctx, candidate)).toEqual([]);
-        }
-        expect(
-          await first(
-            db,
-            'SELECT COUNT(*) AS count FROM wallet_provider_sync_targets WHERE operation_id = ?',
-            [t.operation.id],
-          ),
-        ).toEqual({ count: 2 });
-      } finally {
-        await run(db, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [commitment]);
-      }
-    });
     await ensureSamsungSyncTargets(t.kit.ctx, claim);
     expect(
       (await listSamsungSyncTargets(t.kit.ctx, claim)).map((target) => target.countryCode),

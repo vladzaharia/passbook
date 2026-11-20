@@ -1,5 +1,4 @@
 import { batch, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type {
   WalletInstanceProof,
   WalletOfferAuthority,
@@ -7,7 +6,6 @@ import type {
 } from './instance-types.ts';
 import { isCredentialKeysetCommitment as validCommitment } from './instance-types.ts';
 import { sourcePinSql } from './repo-account-source.ts';
-import { validCommitmentSql } from './repo-instance-keyset-sql.ts';
 import {
   walletInstanceOperationCurrentSql,
   walletInstanceProofSql,
@@ -83,8 +81,6 @@ export function offerStatement(
       AND ((? = 'download' AND holder.download_token = ?) OR (? = 'holder' AND holder.owner_user_id = ?))
       AND ${walletInstanceOperationCurrentSql('i', 'op', '?')}
       AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ?
-      AND ${validCommitmentSql('i.credential_keyset_commitment')}
-      AND ${credentialRefKeysetSql}
     RETURNING ref_hash`,
     [
       offer.hash,
@@ -97,7 +93,6 @@ export function offerStatement(
       offer.authority.kind,
       authority,
       now,
-      credentialKeysetCommitment,
       credentialKeysetCommitment,
       credentialKeysetCommitment,
     ],
@@ -127,18 +122,11 @@ export async function insertInstance(
          credential_generation, channel_epoch, credential_keyset_commitment, desired_version, desired_operation_id, created_at, updated_at, card_type)
       SELECT i.id, i.pass_id, i.org_id, i.mode, i.provider, i.account_id, i.identity_projection_release_id,
         i.credential_generation, i.channel_epoch, i.credential_keyset_commitment, 1, i.desired_operation_id, ?, ?, (SELECT json_extract(c.projection_json, '$.cardType') FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.id = i.identity_projection_release_id) FROM i, op
-      WHERE ${walletInstanceOperationCurrentSql('i', 'op', '?')} AND ${credentialRefKeysetSql}
+      WHERE ${walletInstanceOperationCurrentSql('i', 'op', '?')}
         AND ${slotFreeSql}
         ${channelEpoch === 1 ? '' : successorGuardSql}
         ${offer ? `AND ${offerAuthoritySql}` : ''}`,
-      [
-        ...proofValues(p),
-        p.now,
-        p.now,
-        p.now,
-        p.credentialKeysetCommitment,
-        ...offerAuthorityValues(offer),
-      ],
+      [...proofValues(p), p.now, p.now, p.now, ...offerAuthorityValues(offer)],
     ),
     stmt(
       db,
@@ -160,7 +148,7 @@ export async function insertInstance(
         AND actual.credential_keyset_commitment = ?
         AND ((actual.lifecycle = 'active' AND actual.desired_operation_id = op.id)
           OR (actual.lifecycle = 'ready' AND ${walletNoProviderArtifactsSql('actual')}))
-        AND ${walletInstanceOperationCurrentSql('i', 'op', '?')} AND ${credentialRefKeysetSql}
+        AND ${walletInstanceOperationCurrentSql('i', 'op', '?')}
         ${offer ? `AND ${offerAuthoritySql}` : ''}`,
       [
         ...proofValues(p),
@@ -169,7 +157,6 @@ export async function insertInstance(
         p.accountId,
         p.credentialKeysetCommitment,
         p.now,
-        p.credentialKeysetCommitment,
         ...offerAuthorityValues(offer),
       ],
     ),
@@ -179,7 +166,7 @@ export async function insertInstance(
         identity_projection_release_id = ?, desired_version = 1, desired_operation_id = ?, updated_at = ?,
         card_type = (SELECT json_extract(c.projection_json, '$.cardType') FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.id = ?)
       WHERE target.id = ? AND target.lifecycle = 'ready' AND target.credential_keyset_commitment = ?
-        AND ${credentialRefKeysetSql} AND EXISTS (
+        AND EXISTS (
         SELECT 1 FROM wallet_provider_instance_operations op WHERE op.id = ? AND op.instance_id = target.id
           AND op.version = 1 AND op.kind = 'upsert' AND op.pass_credential_generation = target.credential_generation
           AND op.credential_keyset_commitment = ?)`,
@@ -190,7 +177,6 @@ export async function insertInstance(
         p.now,
         p.projectionReleaseId,
         p.instanceId,
-        p.credentialKeysetCommitment,
         p.credentialKeysetCommitment,
         p.operationId,
         p.credentialKeysetCommitment,
@@ -244,7 +230,7 @@ export async function insertDesiredOperation(
           WHERE reservation.pass_id = i.pass_id AND reservation.state = 'pending'
             AND reserved.credential_generation = reservation.source_generation)
         AND EXISTS (SELECT 1 FROM op WHERE ${walletInstanceProofSql('i', 'op', '?', true)})
-        AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+        AND i.credential_keyset_commitment = ?
         ${offer ? `AND ${offerAuthoritySql}` : ''}`,
       [
         ...proofValues(p),
@@ -269,7 +255,6 @@ export async function insertDesiredOperation(
         p.requestHash,
         p.now,
         p.credentialKeysetCommitment,
-        p.credentialKeysetCommitment,
         ...offerAuthorityValues(offer),
       ],
     ),
@@ -279,7 +264,7 @@ export async function insertDesiredOperation(
       WHERE instance_id = ? AND version < ? AND state IN ('pending', 'retry')
         AND credential_keyset_commitment = ?
         AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE i.id = ? AND i.desired_operation_id = ?
-          AND i.credential_keyset_commitment = ?) AND ${credentialRefKeysetSql}`,
+          AND i.credential_keyset_commitment = ?)`,
       [
         p.now,
         p.instanceId,
@@ -287,7 +272,6 @@ export async function insertDesiredOperation(
         p.credentialKeysetCommitment,
         p.instanceId,
         p.operationId,
-        p.credentialKeysetCommitment,
         p.credentialKeysetCommitment,
       ],
     ),
@@ -298,7 +282,7 @@ export async function insertDesiredOperation(
          pass_credential_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision, policy_revision,
          credential_keyset_commitment, created_at, credential_version_id)
       SELECT ?, i.id, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${sourcePinSql('i.account_id')} FROM wallet_provider_instances i
-      WHERE i.id = ? AND i.desired_operation_id = ? AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}`,
+      WHERE i.id = ? AND i.desired_operation_id = ? AND i.credential_keyset_commitment = ?`,
       [
         p.operationId,
         next,
@@ -317,7 +301,6 @@ export async function insertDesiredOperation(
         p.now,
         p.instanceId,
         p.operationId,
-        p.credentialKeysetCommitment,
         p.credentialKeysetCommitment,
       ],
     ),

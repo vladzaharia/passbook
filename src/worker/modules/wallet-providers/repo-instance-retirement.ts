@@ -1,5 +1,4 @@
 import { all, first } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type { WalletCredentialKeysetProof, WalletOperationRef } from './instance-types.ts';
 import { isCredentialKeysetCommitment } from './instance-types.ts';
 import {
@@ -53,7 +52,7 @@ export async function retireInstance(
     `UPDATE wallet_provider_instances AS i SET lifecycle = 'retired', retired_at = ?, updated_at = ?
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND i.desired_version = ?
       AND i.provider = 'samsung' AND i.lifecycle = 'revoked' AND i.retirement_requested_at IS NOT NULL
-      AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+      AND i.credential_keyset_commitment = ?
       AND ${samsungRetirementProjectionSql('i')}
       AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations op
         WHERE op.id = i.desired_operation_id AND op.instance_id = i.id AND op.version = i.desired_version
@@ -72,7 +71,6 @@ export async function retireInstance(
       p.mode,
       p.provider,
       p.version,
-      p.credentialKeysetCommitment,
       p.credentialKeysetCommitment,
       p.credentialKeysetCommitment,
     ],
@@ -95,7 +93,7 @@ export async function retirementReconciled(
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND i.desired_version = ?
       AND i.provider = 'samsung' AND i.lifecycle IN ('revoked', 'retired')
       AND op.kind = 'revoke' AND op.state = 'succeeded'
-      AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+      AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ?
       AND ${samsungRetirementProjectionSql('i')}
       AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations busy
         WHERE busy.instance_id = i.id AND busy.state IN ('pending', 'retry', 'claimed', 'uncertain'))
@@ -108,7 +106,6 @@ export async function retirementReconciled(
         p.mode,
         p.provider,
         p.version,
-        p.credentialKeysetCommitment,
         p.credentialKeysetCommitment,
         p.credentialKeysetCommitment,
       ],
@@ -150,13 +147,12 @@ export function listRetirementsReady(
                 AND tomb.account_revision = original.provider_account_revision
                 AND tomb.provider_identity_hash = original.provider_identity_hash)))))
       AND op.instance_id = i.id AND op.version = i.desired_version AND op.kind = 'revoke' AND op.state = 'succeeded'
-      AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+      AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ?
       AND ${retirementProjectionSql('i')}
       AND (i.provider != 'samsung' OR ${samsungRetirementProjectionSql('i')})
       ${afterId === null ? '' : 'AND i.id > ?'} ORDER BY i.id LIMIT ?`,
     [
       now,
-      credentialKeysetCommitment,
       credentialKeysetCommitment,
       credentialKeysetCommitment,
       ...(afterId === null ? [] : [afterId]),
@@ -175,7 +171,7 @@ export async function deferRetirement(
     `UPDATE wallet_provider_instances SET retirement_next_attempt_at = ?
     WHERE id = ? AND org_id = ? AND mode = ? AND provider = ? AND desired_version = ?
       AND lifecycle = 'revoked' AND (retirement_requested_at IS NOT NULL OR provider = 'samsung')
-      AND credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+      AND credential_keyset_commitment = ?
       AND ${retirementProjectionSql('wallet_provider_instances')}
       AND (provider != 'samsung' OR ${samsungRetirementProjectionSql('wallet_provider_instances')})
       AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations op
@@ -189,7 +185,6 @@ export async function deferRetirement(
       p.mode,
       p.provider,
       p.version,
-      p.credentialKeysetCommitment,
       p.credentialKeysetCommitment,
       p.credentialKeysetCommitment,
     ],

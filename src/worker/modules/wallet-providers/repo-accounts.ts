@@ -1,7 +1,5 @@
 import type { WalletProviderScope } from '../../../shared/contracts/wallet-providers.ts';
 import { first } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
-import { accountCredentialLineageSql } from './repo-account-lineage.ts';
 import { samsungInitialWindowSql } from './repo-callbacks-window.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 
@@ -102,7 +100,6 @@ export function findAccount(
 export function findAccountWithCredentialKeyset(
   db: D1Database,
   scope: WalletProviderScope,
-  credentialKeysetCommitment: string,
 ): Promise<AccountRow | null> {
   return first(
     db,
@@ -112,9 +109,8 @@ export function findAccountWithCredentialKeyset(
     FROM wallet_provider_accounts a
     LEFT JOIN wallet_provider_credentials c ON c.id = a.credential_id
       AND c.account_id = a.id AND c.org_id = a.org_id AND c.mode = a.mode AND c.provider = a.provider
-    WHERE a.org_id = ? AND a.mode = ? AND a.provider = ?
-      AND ${credentialRefKeysetSql} AND ${accountCredentialLineageSql}`,
-    [scope.orgId, scope.mode, scope.provider, credentialKeysetCommitment],
+    WHERE a.org_id = ? AND a.mode = ? AND a.provider = ?`,
+    [scope.orgId, scope.mode, scope.provider],
   );
 }
 
@@ -162,7 +158,6 @@ export function findRetirementAccount(
         AND op.id = ? AND op.version = ? AND op.kind = 'revoke' AND op.state = 'claimed')
       AND (op.claim_hash = ? AND op.claim_expires_at > clock.now_ms AND op.projection_release_id = ?
         AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = op.credential_keyset_commitment)
-      AND ${credentialRefKeysetSql}
       AND (${target}) AND (${walletInstanceOperationCurrentSql('i', 'op', 'clock.now_ms', 'revoke')})`,
     [
       now,
@@ -176,7 +171,6 @@ export function findRetirementAccount(
       proof.version,
       proof.claimHash,
       proof.projectionReleaseId,
-      proof.credentialKeysetCommitment,
       proof.credentialKeysetCommitment,
       ...targetValues,
     ],
@@ -213,7 +207,7 @@ export function findSamsungPromotedRefreshAccount(
       AND op.kind = 'upsert' AND op.state IN ('pending', 'retry', 'claimed', 'succeeded')
       AND op.version = ? AND op.projection_release_id = ?
       AND op.credential_keyset_commitment = ? AND i.credential_keyset_commitment = op.credential_keyset_commitment
-      AND ${credentialRefKeysetSql} AND ${walletInstanceOperationCurrentSql('i', 'op', 'clock.now_ms')}`,
+      AND ${walletInstanceOperationCurrentSql('i', 'op', 'clock.now_ms')}`,
     [
       now,
       proof.refHash,
@@ -225,7 +219,6 @@ export function findSamsungPromotedRefreshAccount(
       proof.instanceId,
       proof.operationVersion,
       proof.projectionReleaseId,
-      proof.credentialKeysetCommitment,
       proof.credentialKeysetCommitment,
     ],
   );
@@ -276,7 +269,7 @@ export function findSamsungTombstoneCredential(
       AND approval.candidate_hash = candidate.candidate_hash
       AND approval.credential_keyset_commitment = t.credential_keyset_commitment
     WHERE t.ref_hash = ? AND t.org_id = ? AND t.mode = ? AND t.account_id = ? AND t.account_revision = ?
-      AND t.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+      AND t.credential_keyset_commitment = ?
       AND EXISTS (SELECT 1 FROM wallet_provider_projection_evidence_history h
         WHERE h.candidate_id = candidate.id AND h.org_id = t.org_id AND h.mode = t.mode
           AND h.account_id = t.account_id AND h.account_revision = t.account_revision
@@ -292,7 +285,6 @@ export function findSamsungTombstoneCredential(
       input.mode,
       input.accountId,
       input.accountRevision,
-      input.credentialKeysetCommitment,
       input.credentialKeysetCommitment,
     ],
   );

@@ -25,7 +25,6 @@ import {
 import { channelOffSuccessor, instanceMatches } from './offers-instance.ts';
 import { type NativeProvider, projectionPolicy } from './projection-contract.ts';
 import { assertWalletProviderEnabled, walletProviderEnabled } from './provider-policy.ts';
-import { walletOfferKeysetCurrent } from './repo-offers.ts';
 import {
   createGoogleRuntimeOffer,
   createSamsungRuntimeOffer,
@@ -89,8 +88,7 @@ export async function listWalletOffers(
     if (await offerStillCurrent(ctx, candidate.eligible)) result.push(candidate.offer);
   if (
     result.length &&
-    ((await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== credentialKeysetCommitment ||
-      !(await walletOfferKeysetCurrent(ctx.env.DB, credentialKeysetCommitment)))
+    (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== credentialKeysetCommitment
   )
     return [];
   return result;

@@ -52,11 +52,7 @@ export async function readConfiguredWalletProviderCredentials(
   )
     throw new ValidationError();
   await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
-  const row = await findAccountWithCredentialKeyset(
-    ctx.env.DB,
-    parsed.data,
-    pinned.credentialKeysetCommitment,
-  );
+  const row = await findAccountWithCredentialKeyset(ctx.env.DB, parsed.data);
   if (!row) {
     const existing = await findAccount(ctx.env.DB, parsed.data);
     await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
@@ -109,11 +105,7 @@ export async function readGoogleCallbackVerification(
   )
     throw new ValidationError();
   await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
-  const row = await findAccountWithCredentialKeyset(
-    ctx.env.DB,
-    scope,
-    pinned.credentialKeysetCommitment,
-  );
+  const row = await findAccountWithCredentialKeyset(ctx.env.DB, scope);
   if (!row) {
     // An account whose retained identities do not match this keyset is unavailable, not unknown.
     const existing = await findAccount(ctx.env.DB, scope);

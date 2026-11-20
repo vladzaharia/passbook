@@ -155,7 +155,6 @@ export async function putSamsungTombstone(
     scope.operationVersion,
     identityHash,
     scope.credentialKeysetCommitment,
-    scope.credentialKeysetCommitment,
   ] as const;
   const results = await batch(db, [
     stmt(

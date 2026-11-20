@@ -3,7 +3,7 @@ import {
   WalletProviderPassStatusSchema,
 } from '../../../shared/contracts/wallet-provider-status.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { ForbiddenError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
   captureCredentialKeyEnv,
@@ -28,22 +28,8 @@ export async function getWalletProviderPassStatus(
     // Unlike a general pass detail read, provider status is confined to the selected mode.
     if (pass.mode !== scope.mode) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
     const authority = await tenantAuthorityOf(ctx, auth, pass.orgId, 'passes:read');
-    const credentialKeysetCommitment = await requireCredentialRefKeyset(
-      ctx.env.DB,
-      credentialKeyEnv,
-    );
-    const rows = await readWalletProviderStatus(
-      ctx.env.DB,
-      pass,
-      authority,
-      ctx.clock.now(),
-      credentialKeysetCommitment,
-    );
-    if (rows === null)
-      throw new UnavailableError(
-        'Credential references are unavailable.',
-        'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-      );
+    await requireCredentialRefKeyset(ctx.env.DB, credentialKeyEnv);
+    const rows = await readWalletProviderStatus(ctx.env.DB, pass, authority, ctx.clock.now());
     if (rows.length !== 2 || rows[0]?.provider !== 'google' || rows[1]?.provider !== 'samsung')
       throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
     return WalletProviderPassStatusSchema.parse({

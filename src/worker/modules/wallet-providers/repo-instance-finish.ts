@@ -1,6 +1,5 @@
 import type { Envelope } from '../../platform/crypto.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type { WalletOperationState, WalletProviderResult } from './instance-types.ts';
 import { isCredentialKeysetCommitment } from './instance-types.ts';
 import {
@@ -132,7 +131,7 @@ export async function finishOperation(
         db,
         `UPDATE wallet_provider_instances AS i SET lifecycle = 'revoked',
       revoked_at = ?, retirement_next_attempt_at = 0, updated_at = ? WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ?
-    AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+    AND i.credential_keyset_commitment = ?
     AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations op WHERE op.id = ? AND op.kind = 'revoke'
       AND op.credential_keyset_commitment = ? AND op.state = 'succeeded'
       AND op.claim_hash = ? AND op.attempts = ? AND op.last_result_at = ? AND ${CURRENT})`,

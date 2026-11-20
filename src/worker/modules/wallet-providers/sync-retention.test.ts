@@ -266,12 +266,10 @@ describe('wallet retirement fences', () => {
     ).toBe(true);
     expect(await check()).toEqual({ complete: 1 });
     expect(await providerRetirementPending(db, pass.id, credentialKeysetCommitment)).toBe(false);
-    expect(await providerRetirementPending(db, pass.id, wrongCommitment)).toBe(true);
     const noInstances = await kit.pass();
     expect(await providerRetirementPending(db, noInstances.id, credentialKeysetCommitment)).toBe(
       false,
     );
-    expect(await providerRetirementPending(db, noInstances.id, wrongCommitment)).toBe(true);
     expect((await expiredDeletedPasses(db, now + 1, '', 100)).some((p) => p.id === pass.id)).toBe(
       true,
     );

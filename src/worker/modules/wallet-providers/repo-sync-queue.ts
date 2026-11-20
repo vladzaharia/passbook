@@ -1,5 +1,4 @@
 import { first } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import type {
   WalletCredentialKeysetProof,
   WalletOperationRef,
@@ -25,18 +24,10 @@ export async function ackCleanWalletPlaceholder(
         WHERE i.id = d.instance_id AND i.org_id = ? AND i.mode = ? AND i.provider = ?
           AND i.lifecycle IN ('blocked', 'ready') AND i.retirement_requested_at IS NULL
           AND pass.deleted_at IS NULL AND pass.test_data_quarantined = 0
-          AND i.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+          AND i.credential_keyset_commitment = ?
           AND ${walletNoProviderArtifactsSql('i')})
     RETURNING instance_id`,
-    [
-      p.instanceId,
-      p.generation,
-      p.orgId,
-      p.mode,
-      p.provider,
-      p.credentialKeysetCommitment,
-      p.credentialKeysetCommitment,
-    ],
+    [p.instanceId, p.generation, p.orgId, p.mode, p.provider, p.credentialKeysetCommitment],
   );
   return row !== null;
 }
@@ -63,7 +54,7 @@ export async function deferWalletSyncOperation(
     WHERE op.instance_id = ? AND op.version = ? AND op.state IN ('pending', 'retry')
       AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE i.id = op.instance_id
         AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND ${walletInstanceOperationCurrentSql('i', 'op', '?')}
-        AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ? AND ${credentialRefKeysetSql})
+        AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ?)
     RETURNING id`,
     [
       now + delayMs,
@@ -73,7 +64,6 @@ export async function deferWalletSyncOperation(
       op.mode,
       op.provider,
       now,
-      op.credentialKeysetCommitment,
       op.credentialKeysetCommitment,
       op.credentialKeysetCommitment,
     ],

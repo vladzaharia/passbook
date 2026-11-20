@@ -293,13 +293,6 @@ describe('native wallet instance lifecycle', () => {
     const claim = { ...reference(op), claimHandle: newWalletClaimHandle(), now };
     const wrong = { ...claim, credentialKeysetCommitment: wrongCommitment };
     expect(
-      await readWalletPassSnapshot(db, {
-        ...f.scope,
-        passId: f.pass.id,
-        credentialKeysetCommitment: wrongCommitment,
-      }),
-    ).toBeNull();
-    expect(
       await claimWalletOperation(db, {
         ...claim,
         credentialKeysetCommitment: undefined as unknown as string,
