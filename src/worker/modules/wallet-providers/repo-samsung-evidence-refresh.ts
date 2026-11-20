@@ -1,6 +1,6 @@
 import { all } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { ensureSamsungProjectionEvidence } from './samsung-verification.ts';
+import { reprobeSamsungProjectionEvidence } from './samsung-verification.ts';
 
 const AHEAD_MS = 60_000;
 
@@ -24,7 +24,7 @@ export async function refreshExpiringSamsungEvidence(
   let refreshed = 0;
   for (const candidate of due) {
     try {
-      if (await ensureSamsungProjectionEvidence(ctx, candidate.id, candidate.hash)) refreshed++;
+      if (await reprobeSamsungProjectionEvidence(ctx, candidate.id, candidate.hash)) refreshed++;
     } catch {
       ctx.log.warn('wallet.evidence_refresh_failed', { code: 'WALLET_EVIDENCE_REFRESH' });
     }

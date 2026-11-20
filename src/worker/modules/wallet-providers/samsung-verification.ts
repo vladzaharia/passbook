@@ -172,6 +172,18 @@ export async function refreshSamsungProjectionEvidence(
   return result;
 }
 
+/** The sync job's refresh: probes again although the cached proof still holds, so it does not lapse under readers. */
+export async function reprobeSamsungProjectionEvidence(
+  ctx: ServiceContext,
+  candidateId: string,
+  expectedHash: string,
+): Promise<boolean> {
+  ctx = snapshotWalletCredentialContext(ctx);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  const candidate = await candidateForProbe(ctx, candidateId, expectedHash);
+  return candidate ? (await probe(ctx, candidate, null)).verified : false;
+}
+
 /**
  * Trusted issuance/publish callers may refresh an expired proof without an administrative session.
  * The candidate and separate human review are checked again at the database write. This establishes
