@@ -1,4 +1,3 @@
-import { first } from '../../platform/db.ts';
 import type { EventRow } from '../events/repo.ts';
 import type { UndoCommit } from './repo-undo-types.ts';
 import {
@@ -51,17 +50,11 @@ type PostUndo = {
  * deleted. Null for any other target, which retains nothing.
  */
 async function postUndo(c: Omit<UndoCommit, 'retention'>, now: number): Promise<PostUndo | null> {
-  const { ctx, actor, target, gate, presence } = c;
+  const { actor, target, gate, presence } = c;
   const scope = target.presenceScope;
   if (target.actionKind !== 'check_in' || gate.kind !== 'check_in' || !scope?.startsWith('event:'))
     return null;
-  const ref = await first<{ ref: string | null }>(
-    ctx.env.DB,
-    `SELECT json_extract(data, '$.actionIdRef') AS ref FROM pass_events WHERE pass_id = ? AND org_id = ?
-       AND (CASE WHEN json_valid(data) THEN json_extract(data, '$.scanId') END) = ? LIMIT 1`,
-    [target.passId, actor.orgId, target.id],
-  );
-  if (!ref?.ref) return null;
+  if (!gate.action_id_ref) return null;
   const restored = presence?.prev_state != null;
   return {
     postUndoGate: {
@@ -69,7 +62,7 @@ async function postUndo(c: Omit<UndoCommit, 'retention'>, now: number): Promise<
       orgId: actor.orgId,
       mode: actor.mode,
       templateId: target.templateId,
-      actionIdRef: ref.ref,
+      actionIdRef: gate.action_id_ref,
       scope: gate.scope,
       kind: 'check_in',
       state: gate.prev_state ?? 'undone',
