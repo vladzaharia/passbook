@@ -9,11 +9,14 @@ import { SurfacePicker } from './surface-picker.tsx';
 export function AddDeviceDialog({
   session,
   onClose,
+  setup = false,
 }: {
   session: ScanningSession;
   onClose: () => void;
+  /** Opened right after Scan passes: the first scanner, named and ready to pair. */
+  setup?: boolean;
 }) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(setup ? `${session.name} scanner`.slice(0, 40) : '');
   const [surface, setSurface] = useState<ScanningDevice['surface']>('auto');
   const [error, setError] = useState('');
   const [made, setMade] = useState<{ id: string; name: string; pairing: Pairing | null }>();
@@ -27,11 +30,17 @@ export function AddDeviceDialog({
     }
   }
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()} dirty={!made && !!name}>
+    <Dialog open onOpenChange={(open) => !open && onClose()} dirty={!made && !!name && !setup}>
       <DialogContent
-        title={made ? `Pair ${made.name}` : 'Add device'}
+        title={made ? `Pair ${made.name}` : setup ? 'Pair a scanner' : 'Add device'}
         size="lg"
-        description={made ? undefined : `Add a scanner, operator or display to ${session.name}.`}
+        description={
+          made
+            ? undefined
+            : setup
+              ? `Name the device that will scan at ${session.name}.`
+              : `Add a scanner, operator or display to ${session.name}.`
+        }
         footer={
           made ? undefined : (
             <>

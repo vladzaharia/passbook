@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { ScanLine } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
@@ -27,6 +28,8 @@ export function TemplateDetailHeader({
   canOperate,
   lifecycleMenu,
   onDuplicate,
+  onScanPasses,
+  scanPending = false,
 }: {
   template: Template;
   crumbs: Crumb[];
@@ -37,6 +40,9 @@ export function TemplateDetailHeader({
   canOperate: boolean;
   lifecycleMenu: ReactNode;
   onDuplicate: () => void;
+  /** Set when the template can be scanned and the viewer manages scanning. */
+  onScanPasses?: (() => void) | undefined;
+  scanPending?: boolean;
 }) {
   const baked = t.origin === 'baked';
   const archived = t.status === 'archived';
@@ -71,6 +77,17 @@ export function TemplateDetailHeader({
               <Link to="/admin/passes/new" search={newPass} aria-label="New pass">
                 New pass
               </Link>
+            </Button>
+          )}
+          {archived || !onScanPasses ? null : (
+            <Button
+              variant="outline"
+              className="whitespace-nowrap"
+              iconStart={<ScanLine aria-hidden />}
+              loading={scanPending}
+              onClick={onScanPasses}
+            >
+              Scan passes
             </Button>
           )}
           {archived || !canDesign ? null : (

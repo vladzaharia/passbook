@@ -38,6 +38,7 @@ import {
   useTemplateLifecycle,
 } from './template-lifecycle.tsx';
 import { TemplateInputs, TemplateOverview } from './template-overview.tsx';
+import { useScanPasses } from './use-scan-passes.ts';
 import { versionName, versionNumber } from './versions.ts';
 import { VersionsPanel } from './versions-panel.tsx';
 
@@ -76,6 +77,7 @@ export function TemplateDetailContent({
     candidate?.version,
   );
   const life = useTemplateLifecycle(t, canPublish);
+  const scanning = useScanPasses(t);
   const created = useCreated<TemplateCreated>(`template:${t.id}`);
   const importedVersion = useCreated<string>(`template:${t.id}:version`);
   const minted = useMintedOnArrival(`template:${t.id}`);
@@ -142,6 +144,8 @@ export function TemplateDetailContent({
         canOperate={canOperate}
         lifecycleMenu={life.menu}
         onDuplicate={() => setDuplicate(true)}
+        onScanPasses={scanning.canScan ? scanning.scan : undefined}
+        scanPending={scanning.pending}
       />
       <Card className="mb-6">
         <CardBody className="grid gap-3">
@@ -182,6 +186,8 @@ export function TemplateDetailContent({
             how={created.mark}
             versionLabel={importedLabel}
             onDismiss={created.dismiss}
+            onScanPasses={scanning.canScan && t.activeVersion ? scanning.scan : undefined}
+            scanPending={scanning.pending}
           />
         </div>
       ) : null}
