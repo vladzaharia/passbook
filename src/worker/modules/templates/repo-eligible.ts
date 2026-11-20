@@ -5,6 +5,7 @@ import { scanOf } from '../../../shared/scan-defaults.ts';
 import { all } from '../../platform/db.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
+import { entryRuleOf } from './entry-rule.ts';
 import { effectiveReleaseIdSql } from './repo-release-heads.ts';
 import type { ReleaseProvider } from './repo-releases.ts';
 
@@ -24,7 +25,7 @@ export async function listEligibleReleases(
   authority: TenantPassWrite,
   now: number,
 ): Promise<{ items: EligibleTemplate[]; nextCursor: string | null }> {
-  const rows = await all<Omit<EligibleTemplate, 'supportsCheckIn'> & { manifest: string }>(
+  const rows = await all<Omit<EligibleTemplate, 'supportsCheckIn' | 'rule'> & { manifest: string }>(
     db,
     `WITH scope(org_id, mode, provider) AS (VALUES (?, ?, ?))
      SELECT t.id AS templateId, t.name, t.org_id AS templateOrgId, t.origin,
@@ -66,6 +67,7 @@ export async function listEligibleReleases(
       supportsCheckIn: scanOf(JSON.parse(manifest) as TemplateManifest).actions.some(
         (a) => a.kind === 'check_in',
       ),
+      rule: entryRuleOf(JSON.parse(manifest) as TemplateManifest),
     })),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.templateId ?? null) : null,
   };

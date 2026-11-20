@@ -7,6 +7,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireOrgCapability } from '../orgs/access.ts';
 import { redactForRead, safeLabel } from './redact.ts';
 import { type AuditRow, auditStmt, labelKey, listAuditRows, loadLabels } from './repo.ts';
+import { tenantSettingsDetail } from './settings-detail.ts';
 import type { AuditEntry } from './types.ts';
 
 export { diffFields } from './redact.ts';
@@ -61,7 +62,14 @@ function toDto(row: AuditRow, labels: Map<string, string | null>, tenant: boolea
     targetId,
     targetLabel: targetId && targetKey ? (labels.get(targetKey) ?? null) : null,
     requestId: safeId(row.request_id),
-    detail: row.detail ? (redactForRead(JSON.parse(row.detail), tenant) as Dto['detail']) : null,
+    detail: row.detail
+      ? (redactForRead(
+          tenant && row.action === 'settings.update'
+            ? tenantSettingsDetail(JSON.parse(row.detail))
+            : JSON.parse(row.detail),
+          tenant,
+        ) as Dto['detail'])
+      : null,
   };
 }
 

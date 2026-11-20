@@ -134,6 +134,12 @@ export function where(f: ScanLogFilter): { sql: string; params: SqlValue[] } {
     clauses.push(`s.${ref.field} = ? AND ${scopedReferenceSql('s', ref)}`);
     params.push(ref.value);
   }
+  // A pass type of this org (or a baked one): another org's template id matches no row.
+  if (f.templateId !== undefined) {
+    clauses.push(`s.template_id = ? AND EXISTS (
+      SELECT 1 FROM templates ft WHERE ft.id = s.template_id AND (ft.org_id IS NULL OR ft.org_id = s.org_id))`);
+    params.push(f.templateId);
+  }
   eq('s.pass_id', f.passId);
   if (f.outcome === 'undone') clauses.push('s.undone_at IS NOT NULL');
   else eq('s.outcome', f.outcome);

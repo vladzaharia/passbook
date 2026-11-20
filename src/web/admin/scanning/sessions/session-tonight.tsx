@@ -90,6 +90,14 @@ export function SessionTonight({ sessionId }: { sessionId: string }) {
               }))}
             />
             <List
+              title="By pass type"
+              rows={s.byType.map((t) => ({
+                key: t.templateId ?? 'none',
+                label: t.name ?? 'Other',
+                value: formatCount(t.count),
+              }))}
+            />
+            <List
               title="By staff"
               rows={s.byStaff.map((p) => ({
                 key: p.staffId ?? 'none',

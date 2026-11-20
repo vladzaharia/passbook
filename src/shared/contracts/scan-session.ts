@@ -16,6 +16,7 @@ import {
   ScanValueSchema,
   UuidV7Schema,
 } from './scan.ts';
+import { ScanTypeCountSchema } from './scan-admit.ts';
 import { DeviceRoleSchema, ScannerKindSchema } from './scanners.ts';
 import { ScanWorkspaceSchema } from './scanning-sessions.ts';
 
@@ -176,6 +177,8 @@ export const ScanSummarySchema = z.object({
     )
     .default([]),
   byReason: z.array(z.object({ reason: z.string(), count: z.number().int() })).default([]),
+  /** Done scans by pass type; the rows sum to `ok`. */
+  byType: z.array(ScanTypeCountSchema).default([]),
   /** Session scope only. */
   byStaff: z
     .array(

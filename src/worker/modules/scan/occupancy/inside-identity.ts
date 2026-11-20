@@ -12,7 +12,14 @@ import { scanAuthorizedStmt, scanReadAuthority } from '../repo-read-authority.ts
 import { foundOf } from '../resolve.ts';
 import type { Identify, WhoIdentity } from './inside-list.ts';
 
-const HIDDEN: WhoIdentity = { holder: null, photoUrl: null, plan: null, host: null, ended: false };
+const HIDDEN: WhoIdentity = {
+  holder: null,
+  photoUrl: null,
+  plan: null,
+  type: null,
+  host: null,
+  ended: false,
+};
 
 /**
  * A pass this role cannot read, or one that no longer resolves, is listed without a name: it is
@@ -61,13 +68,15 @@ export function scanIdentify(
           typeof sponsor === 'string' && sponsor.trim() && privacy.safe(sponsor)
             ? sponsor.trim().slice(0, 80)
             : null;
+        const plan = access?.plans.find((p) => p.id === inputs?.[access.input.plan])?.label ?? null;
         out.set(candidate.pass.id, {
           holder: identity.title,
           photoUrl:
             photo && photo.grant.expiresAt > now
               ? photoGrantUrl(actor, candidate.pass.id, photo.grant)
               : null,
-          plan: access?.plans.find((p) => p.id === inputs?.[access.input.plan])?.label ?? null,
+          plan,
+          type: plan ?? found.ref.name,
           host,
           ended: !scannerPassActive(candidate, found.passJson, now),
         });

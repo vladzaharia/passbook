@@ -21,7 +21,7 @@ import type { useTenantAuditLog } from './queries.ts';
 import { RefChip } from './ref-chip.tsx';
 
 /** Cap long labels on narrower tables; the table remains scrollable when needed. */
-const NARROW = 'max-xl:max-w-44';
+const NARROW = 'max-xl:max-w-32';
 
 /** The log as a table, or as rows below md. Platform and organization logs share it. */
 export function AuditTable({
@@ -98,11 +98,11 @@ export function AuditTable({
       {
         header: 'Time',
         id: 'at',
-        meta: { numeric: true, nowrap: true },
+        meta: { numeric: true },
         cell: ({ row }) => (
           <time
             dateTime={new Date(row.original.at).toISOString()}
-            className="text-xs text-fg-muted"
+            className="block min-w-24 text-xs text-fg-muted"
           >
             {formatDateTime(row.original.at)}
           </time>

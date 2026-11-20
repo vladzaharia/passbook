@@ -97,10 +97,12 @@ export async function readReceipts(
   ctx: ServiceContext,
   orgId: string | null,
   cls: string,
+  /** A console read writes nothing: a head missing outside D1 stays unverified until the next append heals it. */
+  heal = true,
 ): Promise<{ receipt: Receipt; verified: boolean }[]> {
   const { rows, anchor } = await chainRows(ctx.env.DB, orgId, cls);
   const newest = rows.at(-1) ?? anchor;
-  if (newest) await healHead(ctx, orgId, cls, { seq: newest.seq, mac: newest.mac });
+  if (newest && heal) await healHead(ctx, orgId, cls, { seq: newest.seq, mac: newest.mac });
   const headOk = await headMatches(
     ctx,
     orgId,
