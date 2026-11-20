@@ -9,6 +9,7 @@ import { api } from '../../../lib/api.ts';
 import { useMode } from '../../../lib/mode.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import { useSession } from '../../../lib/session.ts';
+import type { Tone } from '../../../lib/status.ts';
 import {
   Card,
   CardBody,
@@ -19,6 +20,7 @@ import {
   ListRows,
   SkeletonRows,
   StatusPill,
+  TechnicalDetails,
 } from '../../../ui/index.ts';
 
 const LIFECYCLE: Record<WalletProviderInstanceStatus['lifecycle'], string> = {
@@ -57,32 +59,67 @@ const REASON: Record<
   provider_error: 'provider error',
 };
 
-function ProviderRow({ status }: { status: WalletProviderInstanceStatus }) {
+/** What an author reads: one pill and why. The local lifecycle and last operation sit under Technical details. */
+function headline(status: WalletProviderInstanceStatus): {
+  label: string;
+  note?: string;
+  tone: Tone;
+} {
   const operation = status.desiredOperation;
+  if (status.issuance.state === 'disabled')
+    return { label: 'Not offered', note: 'Not open to holders yet.', tone: 'neutral' };
+  if (status.lifecycle === 'blocked')
+    return { label: 'Not offered', note: 'Blocked.', tone: 'warning' };
+  if (status.lifecycle === 'revoked' || status.lifecycle === 'retired')
+    return { label: 'Closed', tone: 'neutral' };
+  if (status.lifecycle === 'revoking') return { label: 'Closing', tone: 'neutral' };
+  if (operation?.state === 'failed')
+    return {
+      label: 'Not updating',
+      ...(operation.reason ? { note: `${REASON[operation.reason]}.` } : {}),
+      tone: 'danger',
+    };
+  if (
+    operation?.state === 'pending' ||
+    operation?.state === 'claimed' ||
+    operation?.state === 'retry'
+  )
+    return { label: 'Updating', tone: 'neutral' };
+  if (operation?.state === 'succeeded') return { label: 'Up to date', tone: 'success' };
+  return { label: status.lifecycle === 'absent' ? 'Not added' : 'Ready', tone: 'neutral' };
+}
+
+const technicalOf = (status: WalletProviderInstanceStatus) => {
+  const operation = status.desiredOperation;
+  const last = operation
+    ? `${operation.kind === 'upsert' ? 'Update' : 'Revocation'} v${operation.version}: ${OPERATION[operation.state]}${operation.reason ? ` (${REASON[operation.reason]})` : ''}`
+    : 'No operation';
+  return {
+    label: status.provider === 'google' ? 'Google Wallet' : 'Samsung Wallet',
+    value: `${LIFECYCLE[status.lifecycle]} · ${last}`,
+    mono: false,
+  };
+};
+
+function ProviderRow({ status }: { status: WalletProviderInstanceStatus }) {
+  const { label, note, tone } = headline(status);
   return (
     <ListRow
       leading={<WalletCards aria-hidden />}
       title={status.provider === 'google' ? 'Google Wallet' : 'Samsung Wallet'}
       pills={
-        <>
-          {status.issuance.state === 'disabled' ? (
-            <StatusPill status="not_available" tone="neutral">
-              Not available yet
-            </StatusPill>
-          ) : null}
-          <StatusPill status="wallet_instance" tone="neutral">
-            {LIFECYCLE[status.lifecycle]}
-          </StatusPill>
-        </>
+        <StatusPill status="wallet_instance" tone={tone}>
+          {label}
+        </StatusPill>
       }
       meta={
         <>
-          <span className="block">
-            {operation
-              ? `Desired ${operation.kind === 'upsert' ? 'update' : 'revocation'} v${operation.version}: ${OPERATION[operation.state]}${operation.reason ? ` (${REASON[operation.reason]})` : ''}`
-              : 'No desired operation observed for this instance.'}
-          </span>
-          <span className="block">Installation on a device: unknown.</span>
+          {note ? (
+            <span className="block">
+              {note[0]?.toUpperCase()}
+              {note.slice(1)}
+            </span>
+          ) : null}
           {status.priorGenerationRetirementPending ? (
             <span className="block">A previous generation is still awaiting retirement.</span>
           ) : null}
@@ -173,6 +210,7 @@ export function WalletProviderStatus({ pass, active }: { pass: PassDetailDto; ac
               <ProviderRow key={status.provider} status={status} />
             ))}
           </ListRows>
+          <TechnicalDetails className="mt-3" items={query.data.providers.map(technicalOf)} />
         </CardBody>
       )}
     </Card>

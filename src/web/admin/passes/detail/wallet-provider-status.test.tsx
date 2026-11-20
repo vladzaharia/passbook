@@ -78,13 +78,12 @@ describe('wallet provider instances', () => {
     const rows = within(list).getAllByRole('listitem');
     expect(rows).toHaveLength(2);
     expect(rows[0]).toHaveTextContent('Google Wallet');
-    expect(rows[0]).toHaveTextContent('No instance observed');
+    expect(rows[0]).toHaveTextContent('Not offered');
+    expect(rows[0]).toHaveTextContent('Not open to holders yet.');
     expect(rows[1]).toHaveTextContent('Samsung Wallet');
-    expect(rows[1]).toHaveTextContent('Blocked locally');
     expect(rows[1]).toHaveTextContent('A previous generation is still awaiting retirement');
-    for (const row of rows) expect(row).toHaveTextContent('Installation on a device: unknown');
+    for (const row of rows) expect(row).not.toHaveTextContent('Installation on a device');
     expect(list).not.toHaveTextContent(/not configured/i);
-    expect(screen.getAllByText('Not available yet')).toHaveLength(2);
     expect(
       within(screen.getByRole('list', { name: 'Devices' })).getAllByRole('listitem'),
     ).toHaveLength(1);
@@ -101,10 +100,12 @@ describe('wallet provider instances', () => {
             credentialGeneration: 1,
             providers: [
               instance('google', {
+                issuance: { state: 'enabled' },
                 lifecycle: 'active',
                 desiredOperation: { version: 2, kind: 'upsert', state: 'succeeded', reason: 'ok' },
               }),
               instance('samsung', {
+                issuance: { state: 'enabled' },
                 lifecycle: 'revoked',
                 desiredOperation: { version: 3, kind: 'revoke', state: 'succeeded', reason: 'ok' },
               }),
@@ -115,23 +116,20 @@ describe('wallet provider instances', () => {
     const rows = within(
       await screen.findByRole('list', { name: 'Wallet provider instances' }),
     ).getAllByRole('listitem');
-    expect(rows[0]).toHaveTextContent('Active locally');
-    expect(rows[0]).toHaveTextContent('Desired update v2: Succeeded (provider accepted)');
-    expect(rows[1]).toHaveTextContent('Revoked locally');
-    expect(rows[1]).toHaveTextContent('Desired revocation v3: Succeeded (provider accepted)');
-    for (const row of rows) {
-      expect(row).toHaveTextContent('Installation on a device: unknown');
-      expect(row).not.toHaveTextContent(/\b(installed|deleted)\b/i);
-    }
+    expect(rows[0]).toHaveTextContent('Up to date');
+    expect(screen.getByText(/Update v2: Succeeded \(provider accepted\)/)).toBeInTheDocument();
+    expect(rows[1]).toHaveTextContent('Closed');
+    expect(screen.getByText(/Revocation v3: Succeeded \(provider accepted\)/)).toBeInTheDocument();
+    for (const row of rows) expect(row).not.toHaveTextContent(/\b(installed|deleted)\b/i);
   });
 
   it.each([
-    ['ready', 'Prepared locally'],
-    ['revoking', 'Revocation in progress'],
-    ['retired', 'Retired locally'],
+    ['ready', 'Ready', 'Prepared locally'],
+    ['revoking', 'Closing', 'Revocation in progress'],
+    ['retired', 'Closed', 'Retired locally'],
   ] as const)(
-    'renders %s as a local lifecycle with installation unknown',
-    async (lifecycle, label) => {
+    'renders %s plainly with the local lifecycle under technical details',
+    async (lifecycle, label, technical) => {
       await renderApp('/admin/passes/p1?tab=devices', {
         session: 'admin',
         ...scope,
@@ -139,7 +137,10 @@ describe('wallet provider instances', () => {
           [path]: () =>
             json({
               credentialGeneration: 1,
-              providers: [instance('google', { lifecycle }), instance('samsung')],
+              providers: [
+                instance('google', { lifecycle, issuance: { state: 'enabled' } }),
+                instance('samsung'),
+              ],
             }),
         }),
       });
@@ -147,7 +148,8 @@ describe('wallet provider instances', () => {
         await screen.findByRole('list', { name: 'Wallet provider instances' }),
       ).getAllByRole('listitem')[0];
       expect(row).toHaveTextContent(label);
-      expect(row).toHaveTextContent('Installation on a device: unknown');
+      expect(screen.getByText(new RegExp(technical))).toBeInTheDocument();
+      expect(row).not.toHaveTextContent('Installation on a device');
     },
   );
 
@@ -230,13 +232,13 @@ describe('wallet provider instances', () => {
           }),
       }),
     });
-    expect(await screen.findByText('Active locally')).toBeInTheDocument();
+    expect(await screen.findByText(/Active locally/)).toBeInTheDocument();
     act(() => {
       queryClient.setQueryData(membershipsQuery.queryKey, {
         items: [membershipFixture(ORG.id, { capabilities: ['integrations:read'] })],
       });
     });
-    await waitFor(() => expect(screen.queryByText('Active locally')).toBeNull());
+    await waitFor(() => expect(screen.queryByText(/Active locally/)).toBeNull());
   });
 
   it('does not reuse a prior principal’s status after the principal changes', async () => {
@@ -275,7 +277,7 @@ describe('wallet provider instances', () => {
             : delayed,
       }),
     });
-    expect(await screen.findByText('Active locally')).toBeInTheDocument();
+    expect(await screen.findByText(/Active locally/)).toBeInTheDocument();
     const next = sessionFixture('admin');
     if (!next.authenticated) throw new Error('Expected a signed-in fixture');
     principal = 'u2';
@@ -286,7 +288,7 @@ describe('wallet provider instances', () => {
         items: [membershipFixture(ORG.id, { userId: 'u2' })],
       });
     });
-    await waitFor(() => expect(screen.queryByText('Active locally')).toBeNull());
+    await waitFor(() => expect(screen.queryByText(/Active locally/)).toBeNull());
     await act(async () => {
       finish(
         json({
@@ -295,6 +297,6 @@ describe('wallet provider instances', () => {
         }),
       );
     });
-    expect(await screen.findByText('Blocked locally')).toBeInTheDocument();
+    expect(await screen.findByText(/Blocked locally/)).toBeInTheDocument();
   });
 });
