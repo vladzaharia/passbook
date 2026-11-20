@@ -4,7 +4,11 @@
   "description": "Member card with lock-screen suggestions at the member’s clubs.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png"
+      }
+    },
     "samsung": {}
   },
   "org": {

@@ -4,91 +4,91 @@
     "samsung": "af7807a1f4cf78f95fe4920cbecec25875d07b0b0a5b3c36efc4604c1683c44c"
   },
   "templates": {
-    "henrys-blue": "7f7598441d1e66ed",
-    "henrys-copper": "b95c69194c2acbf1",
-    "starter-access-card": "65fdc8948f915b54",
-    "starter-boarding-pass": "4b94cd1a97dc7a1b",
-    "starter-booking": "f50daf8258ac8153",
-    "starter-coupon": "e38658a2c7c8354c",
-    "starter-event-ticket": "a9fa0e97af73688b",
-    "starter-generic": "9ed1ffcbe0119247",
-    "starter-id-card": "5d81d385c83d617b",
-    "starter-pack": "a454f3c26d6c32f1",
-    "starter-permit": "65fdb5ebf5e2eb22",
-    "starter-pickup": "2ed33fb660333ab0",
-    "starter-poster-generic": "436ff08e83b9639f",
-    "starter-stamp-card": "598a6743aec87c11",
-    "starter-store-card": "a44348591b0e2cde",
-    "starter-timed-ticket": "9c68f47891a8b900",
-    "starter-transit-ticket": "7b68dda55f7ff1dc"
+    "henrys-blue": "152152a0a5543b95",
+    "henrys-copper": "7dc3267d403b1352",
+    "starter-access-card": "21eca8379864ee76",
+    "starter-boarding-pass": "1ded77661fdd9493",
+    "starter-booking": "a557c44b46fab998",
+    "starter-coupon": "35063a107b5ff940",
+    "starter-event-ticket": "79732e0c856afe03",
+    "starter-generic": "6a8e0f14dc75f050",
+    "starter-id-card": "d921042e79c90930",
+    "starter-pack": "64f6f776176d4680",
+    "starter-permit": "d47b25b845c4ca9d",
+    "starter-pickup": "93485646bae52361",
+    "starter-poster-generic": "460a2914e2c3f5b9",
+    "starter-stamp-card": "92c4344442ec1f56",
+    "starter-store-card": "f2712f7e40f14cf1",
+    "starter-timed-ticket": "526e106959f10c9d",
+    "starter-transit-ticket": "0887427cb535aaba"
   },
   "reports": {
     "henrys-blue": {
-      "google": "26dbd14dbfeda732517412662b98239c25473ee598c468b0d3200680ea25e5a8",
+      "google": "fbf340d99734be81a61dba232ed679ccebe8c9cbc8e8572bd6f7ad41cbb98ea2",
       "samsung": "3d82ab54f198918973510a1cb0675300402d7d7fa604e9442e75b8f7ed46d086"
     },
     "henrys-copper": {
-      "google": "26dbd14dbfeda732517412662b98239c25473ee598c468b0d3200680ea25e5a8",
+      "google": "fbf340d99734be81a61dba232ed679ccebe8c9cbc8e8572bd6f7ad41cbb98ea2",
       "samsung": "3d82ab54f198918973510a1cb0675300402d7d7fa604e9442e75b8f7ed46d086"
     },
     "starter-access-card": {
-      "google": "226ac618186b24dae283efcd5087850a5fcc95c146bb76adfbfb76d168d23aa6",
+      "google": "4a2114f79c8b981ae98a97e4cd7daf4266569e208a39c316e524922a6cb35aa8",
       "samsung": "0f142d8d41be6de62aec5cf1ee4800506dfee0af4f5d91318570d2e60806fecb"
     },
     "starter-boarding-pass": {
-      "google": "bd1d4e4b2c693da35ac396d6ff3b8748397f9072e32df845c89851e7f2b7ec5d",
+      "google": "35d2f6ab85aa4e33447c8b68a9b9d5388c510aa0bc20d51258d5fd52780367cc",
       "samsung": "087befba9f704919547febe606db4476c11efac3d452845bbf95f24686786a57"
     },
     "starter-booking": {
-      "google": "226ac618186b24dae283efcd5087850a5fcc95c146bb76adfbfb76d168d23aa6",
+      "google": "4a2114f79c8b981ae98a97e4cd7daf4266569e208a39c316e524922a6cb35aa8",
       "samsung": "0f142d8d41be6de62aec5cf1ee4800506dfee0af4f5d91318570d2e60806fecb"
     },
     "starter-coupon": {
-      "google": "262ff2789c55c7ff1e3e89c017b047ada00f3603db421abceab8b0ef4c24dda4",
+      "google": "cd3709114f5889b70bab0a3af1468832e59cfa9f77a3837403a0784f3a28c3e8",
       "samsung": "07f6aa64e34533bcf39f59c4e47fbc0783ba7bfa860702ab62384f5315f7e1eb"
     },
     "starter-event-ticket": {
-      "google": "fec2849eb5caaffd98396eb6c64c26cc81d02ebe7aab270d1a301d7e3f2d790e",
+      "google": "efab25c7282d26962bbe12cd141d6fa4986735b631934c7dbd4abc4eb15ac1ad",
       "samsung": "90237937ab2423fde92815a13960ca410ea35077b9f915d9d3a9c8bc99e7a13c"
     },
     "starter-generic": {
-      "google": "226ac618186b24dae283efcd5087850a5fcc95c146bb76adfbfb76d168d23aa6",
+      "google": "4a2114f79c8b981ae98a97e4cd7daf4266569e208a39c316e524922a6cb35aa8",
       "samsung": "0f142d8d41be6de62aec5cf1ee4800506dfee0af4f5d91318570d2e60806fecb"
     },
     "starter-id-card": {
-      "google": "108b1d574f87c3bda082b906d5309f234b7106e1410270c52fd342bbcc2a7550",
+      "google": "7941542f28058faf45f73ee37bfe9b7ab061ecf7658a5f1f98dbe1f0883548cd",
       "samsung": "f366d80de3f28550977473ae65d383f73c2299480785768290c062319a13d28c"
     },
     "starter-pack": {
-      "google": "c490bc8a3486ab2c061ab5e153a47977b129412bf3a7c4a86ea39c38a927b00e",
+      "google": "dbe14ed4bb2db8e0cea63227055a1fb7a7007caee356fdfb21359b50d5824445",
       "samsung": "7c3c644019416c1ae6ed8865d1e48965454f480517d24c04cf8903facc285c2f"
     },
     "starter-permit": {
-      "google": "226ac618186b24dae283efcd5087850a5fcc95c146bb76adfbfb76d168d23aa6",
+      "google": "4a2114f79c8b981ae98a97e4cd7daf4266569e208a39c316e524922a6cb35aa8",
       "samsung": "0f142d8d41be6de62aec5cf1ee4800506dfee0af4f5d91318570d2e60806fecb"
     },
     "starter-pickup": {
-      "google": "fdb2c31af6886a2f87a8571fc48e1648deedea43e62a7da4a3d02cbe047a9716",
+      "google": "aa75af207a810dcbe61e77f47c69aa4ceafb3b22a8f5a5cad81bed3315cf88cd",
       "samsung": "0f142d8d41be6de62aec5cf1ee4800506dfee0af4f5d91318570d2e60806fecb"
     },
     "starter-poster-generic": {
-      "google": "6e929a80b03af0f82a3a21f58623a3c5e4b2e7769384ad8ba66ad6e7f65569b5",
+      "google": "ad5cc1cb88eb17fd78b6c3344be53490aa4a32cd4234542ea5733be3bd4bc1f4",
       "samsung": "087befba9f704919547febe606db4476c11efac3d452845bbf95f24686786a57"
     },
     "starter-stamp-card": {
-      "google": "bf3befd4e1b9b56684030eba054a820758b095c1427dc78ebcac4ea36a478ef7",
+      "google": "4b04dd848b62b2219c3c0926a44e9c80d3994fa76a1dae75b325114e25ff8a59",
       "samsung": "0e8b6d0d73ec3cadf09185cdc7c33cbc638ba5bbe9bf4c16aa718daa9da6c6d6"
     },
     "starter-store-card": {
-      "google": "4c678a5aea500bb0f5c6f115c4d8385c5c7a765dba9f6576be002199d6ccb5e7",
+      "google": "76b17c0482f2e39f71965bde1a66d0ce75bf56c35858783e580e387614e5aca4",
       "samsung": "21839ed46dc686043bd38ba433ae424c8f986f649904f625a2c8a0f155ecc32b"
     },
     "starter-timed-ticket": {
-      "google": "fdd10d92907d94abec0f58727d3b70bbbe06d53b924713c8153d1f921534fc47",
+      "google": "ab8a34958c336b4c50fb1b0969d86655bb3fec64a38a7714e3e32d4df2dfcbfe",
       "samsung": "5a79859138c010cf0884cb8d5201a2eff40bc503c08b8aad902d6ecc4976ac4a"
     },
     "starter-transit-ticket": {
-      "google": "a0867f8da1ef650905390f9b1ac0fe4783867aa2fcf9f404f2e000b2930dcaa6",
+      "google": "b02a84b1f963951c6f9943380e2e0552b058f3b6126da8237cb13419cc06aeb1",
       "samsung": "087befba9f704919547febe606db4476c11efac3d452845bbf95f24686786a57"
     }
   }

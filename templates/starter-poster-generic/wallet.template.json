@@ -4,7 +4,11 @@
   "description": "Full-bleed artwork on iOS 27, a classic card before it.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png"
+      }
+    },
     "samsung": {}
   },
   "blueprint": true,

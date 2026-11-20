@@ -4,7 +4,12 @@
   "description": "Door access by plan and zone, with a photo for ID checks.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png",
+        "thumbnail": "wallets/google/thumbnail.png"
+      }
+    },
     "samsung": {}
   },
   "blueprint": true,
