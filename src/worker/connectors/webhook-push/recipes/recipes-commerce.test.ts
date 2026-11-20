@@ -45,7 +45,7 @@ const ttReq = async (body: string, secret: string, t = Math.floor(NOW / 1000)) =
     method: 'POST',
     body,
     headers: {
-      'tickettailor-webhook-signature': `t=${t},v1=${hex(await mac(secret, `${t}.${body}`))}`,
+      'tickettailor-webhook-signature': `timestamp=${t},signature=${hex(await mac(secret, `${t}${body}`))}`,
     },
   });
 
@@ -288,8 +288,8 @@ describe('tickettailor-tickets adapter', () => {
   });
 
   it('a voided ticket updates the record and never creates', () => {
-    const out = adapt(tt, hook({ event: 'ISSUED_TICKET.UPDATED' }, { status: 'void' }));
-    expect(out.records.it_100?.status).toBe('void');
+    const out = adapt(tt, hook({ event: 'ISSUED_TICKET.UPDATED' }, { status: 'voided' }));
+    expect(out.records.it_100?.status).toBe('voided');
     expect(out.createRefs).toEqual([]);
   });
 
@@ -334,11 +334,23 @@ describe('tickettailor-tickets verification', () => {
     ).rejects.toMatchObject({ code: 'AUTH' });
   });
 
-  it('replayed: a valid MAC with a timestamp over 5 minutes old is AUTH', async () => {
-    const t = Math.floor(NOW / 1000) - 600;
+  it('stale: a valid MAC with a timestamp over 300 s old is AUTH', async () => {
+    const t = Math.floor(NOW / 1000) - 301;
     await expect(
       verifyRecipe(tt, ctx(secret), await ttReq(body, secret, t), CFG),
     ).rejects.toMatchObject({ code: 'AUTH' });
+  });
+
+  it('a signature over `timestamp.body` (a separator) is rejected', async () => {
+    const t = Math.floor(NOW / 1000);
+    const req = new Request('https://x.test/h', {
+      method: 'POST',
+      body,
+      headers: {
+        'tickettailor-webhook-signature': `timestamp=${t},signature=${hex(await mac(secret, `${t}.${body}`))}`,
+      },
+    });
+    await expect(verifyRecipe(tt, ctx(secret), req, CFG)).rejects.toMatchObject({ code: 'AUTH' });
   });
 
   it("a Stripe signature header is not accepted: each sender's own header only", async () => {
@@ -346,7 +358,9 @@ describe('tickettailor-tickets verification', () => {
     const req = new Request('https://x.test/h', {
       method: 'POST',
       body,
-      headers: { 'stripe-signature': `t=${t},v1=${hex(await mac(secret, `${t}.${body}`))}` },
+      headers: {
+        'stripe-signature': `timestamp=${t},signature=${hex(await mac(secret, `${t}${body}`))}`,
+      },
     });
     await expect(verifyRecipe(tt, ctx(secret), req, CFG)).rejects.toMatchObject({ code: 'AUTH' });
   });

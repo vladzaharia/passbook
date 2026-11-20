@@ -1,7 +1,13 @@
 import { toHex } from '../../platform/ids.ts';
 import { readCapped } from '../../platform/read-capped.ts';
 import { ConnectorError } from '../types.ts';
-import { decodeBase64_32, decodeHex32, decodeUtf8Strict, parseStripeSignature } from './decode.ts';
+import {
+  decodeBase64_32,
+  decodeHex32,
+  decodeUtf8Strict,
+  parseStripeSignature,
+  parseTicketTailorSignature,
+} from './decode.ts';
 
 export const SIGNATURE_HEADER = 'x-wallet-signature';
 export const TIMESTAMP_HEADER = 'x-wallet-timestamp';
@@ -189,7 +195,7 @@ const calcom: WebhookVerifier = {
   },
 };
 
-/** WooCommerce: base64 HMAC-SHA256 of the body in X-WC-Webhook-Signature, no signed time (WC_Webhook::generate_signature). */
+/** WooCommerce: base64 HMAC-SHA256 of the body, no signed time. */
 const woocommerce: WebhookVerifier = {
   id: 'woocommerce',
   maxBytes: SHOPIFY_MAX_BYTES,
@@ -205,13 +211,12 @@ const woocommerce: WebhookVerifier = {
   },
 };
 
-/** The Stripe-style `t=<seconds>,v1=<hex>` header over `<t>.<body>`, read from `headerName`. */
-const timestamped = (id: 'stripe' | 'tickettailor', headerName: string): WebhookVerifier => ({
-  id,
+const stripe: WebhookVerifier = {
+  id: 'stripe',
   maxBytes: MAX_WEBHOOK_BYTES,
   replay: 'header-window',
   verify: async (req, secrets, now) => {
-    const header = req.headers.get(headerName);
+    const header = req.headers.get('stripe-signature');
     const parsed = header === null ? null : parseStripeSignature(header);
     const body = await signed(
       req,
@@ -219,16 +224,31 @@ const timestamped = (id: 'stripe' | 'tickettailor', headerName: string): Webhook
       MAX_WEBHOOK_BYTES,
       parsed && { signatures: parsed.v1, prefix: `${parsed.t}.` },
     );
-    // A matching MAC proves `t` is authentic; the window then bounds replays.
     const signedAt = (parsed?.t ?? 0) * 1000;
     if (!withinWindow(now, signedAt, REPLAY_WINDOW_MS, FUTURE_SKEW_MS)) throw auth();
     return { ...body, signedAt };
   },
-});
+};
 
-/** Ticket Tailor signs like Stripe, in its own header [verify against a live delivery]. */
-const stripe = timestamped('stripe', 'stripe-signature');
-const tickettailor = timestamped('tickettailor', 'tickettailor-webhook-signature');
+/** Ticket Tailor: hex HMAC over timestamp+body, no separator: https://developers.tickettailor.com/docs/webhook/security */
+const tickettailor: WebhookVerifier = {
+  id: 'tickettailor',
+  maxBytes: MAX_WEBHOOK_BYTES,
+  replay: 'header-window',
+  verify: async (req, secrets, now) => {
+    const header = req.headers.get('tickettailor-webhook-signature');
+    const parsed = header === null ? null : parseTicketTailorSignature(header);
+    const body = await signed(
+      req,
+      secrets,
+      MAX_WEBHOOK_BYTES,
+      parsed && { signatures: [parsed.signature], prefix: parsed.timestamp },
+    );
+    const signedAt = Number(parsed?.timestamp ?? 0) * 1000;
+    if (!withinWindow(now, signedAt, REPLAY_WINDOW_MS, FUTURE_SKEW_MS)) throw auth();
+    return { ...body, signedAt };
+  },
+};
 
 const custom: WebhookVerifier = {
   id: 'custom',

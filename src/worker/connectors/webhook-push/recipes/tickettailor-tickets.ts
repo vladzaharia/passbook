@@ -1,7 +1,7 @@
-import { HOUR_MS, ignored, num, obj, type Recipe, record, ref, str } from './shared.ts';
+import { ignored, num, obj, type Recipe, record, ref, str } from './shared.ts';
 
-// Webhooks (envelope `{ id, event, created_at, payload }`, signature header):
-// https://developers.tickettailor.com/#webhooks
+// Envelope `{ id, created_at, event, resource_url, payload }`, signature, events:
+// https://developers.tickettailor.com/docs/webhook/structure and /security and /configuration
 // Issued ticket object: https://developers.tickettailor.com/#issued-tickets
 const TOPICS = ['ISSUED_TICKET.CREATED', 'ISSUED_TICKET.UPDATED'];
 
@@ -12,7 +12,7 @@ export const tickettailorTickets: Recipe = {
   topicHeader: null,
   idPrefix: 'tickettailor',
   // The signature header carries the time, so the verifier bounds the replay.
-  windowMs: HOUR_MS,
+  windowMs: 0,
   topics: TOPICS,
   pasteSecret: true,
   outputFields: {
@@ -32,7 +32,7 @@ export const tickettailorTickets: Recipe = {
     ticketType: { from: '/ticketType' },
   },
   holderEmailField: '/email',
-  voidWhen: [{ from: '/status', op: 'in', values: ['void'] }],
+  voidWhen: [{ from: '/status', op: 'in', values: ['voided'] }],
   adapt({ body }) {
     const o = obj(body);
     const type = str(o?.event);

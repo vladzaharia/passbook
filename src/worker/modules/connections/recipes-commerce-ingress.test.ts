@@ -73,7 +73,7 @@ async function ttRequest(event: object, secret = TT): Promise<Request> {
     method: 'POST',
     body,
     headers: {
-      'tickettailor-webhook-signature': `t=${t},v1=${hex(await mac(secret, `${t}.${body}`))}`,
+      'tickettailor-webhook-signature': `timestamp=${t},signature=${hex(await mac(secret, `${t}${body}`))}`,
     },
   });
 }
@@ -110,7 +110,7 @@ const ttConn = (over: Record<string, unknown> = {}) =>
     autoCreate: true,
     defaultTemplateId: kit.templateId,
     mapping: { memberName: { from: '/name' } },
-    voidWhen: [{ from: '/status', op: 'in', values: ['void'] }],
+    voidWhen: [{ from: '/status', op: 'in', values: ['voided'] }],
     ...over,
   } as never);
 
@@ -211,7 +211,7 @@ describe('Ticket Tailor ingress', () => {
   it('a voided ticket voids the bound pass', async () => {
     const dto = await ttConn();
     const pass = await linkedPass(kit, dto.id, 'it_1');
-    await apply(dto.id, await ttRequest(ticketEvent('WHE-2', 'ISSUED_TICKET.UPDATED', 'void')));
+    await apply(dto.id, await ttRequest(ticketEvent('WHE-2', 'ISSUED_TICKET.UPDATED', 'voided')));
     expect(kit.seams.voided).toEqual([{ passId: pass.id }]);
   });
 
