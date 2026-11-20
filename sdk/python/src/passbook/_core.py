@@ -89,7 +89,8 @@ class Core:
         max_retries: int | None = None,
         timeout: float | None = None,
     ) -> Any:
-        head = {"accept": "application/json", **(headers or {})}
+        # Header names are case-insensitive: fold them so a user's `Idempotency-Key` replaces ours.
+        head = {"accept": "application/json", **{k.lower(): v for k, v in (headers or {}).items()}}
         head["authorization"] = f"Bearer {self.api_key}"
         content: bytes | None = None
         if content_type:
@@ -98,7 +99,7 @@ class Core:
             content = json.dumps(body, default=_default).encode()
         if content is not None:
             head["content-type"] = content_type or "application/json"
-        key = (idempotency_key or str(uuid.uuid4())) if idempotent else None
+        key = (idempotency_key or head.get("idempotency-key") or str(uuid.uuid4())) if idempotent else None
         if key:
             head["idempotency-key"] = key
         repeatable = method in _REPEATABLE or key is not None
