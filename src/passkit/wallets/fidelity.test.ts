@@ -90,20 +90,21 @@ describe('fidelityReport statuses', () => {
       'barcode.format.pdf417 door',
       'colors.label look',
       'field.back holder',
-      'nfc absent',
+      'nfc door',
       'relevance.beacons absent',
       'role.tier look',
     ]);
-    expect(r.status).toEqual({ kind: 'omissions', count: 2 });
+    expect(r.status).toEqual({ kind: 'omissions', count: 3 });
     expect(omissionKeys(r)).toEqual([
       'barcode.format.pdf417@barcodes.0',
       'field.back@backFields.a',
+      'nfc',
     ]);
   });
 
   it('is Ready when only look and absent items remain', () => {
     const r = report(
-      fixed({ items: [item('colors.label', 'omitted'), item('nfc', 'unsupported')] }),
+      fixed({ items: [item('colors.label', 'omitted'), item('relevance.beacons', 'unsupported')] }),
     );
     expect(r.status).toEqual({ kind: 'ready' });
     expect(r.items).toHaveLength(2);
@@ -135,7 +136,7 @@ describe('fidelityReport statuses', () => {
       'nfc@ false',
       'relevance.beacons@beacons true',
     ]);
-    expect(r.status).toEqual({ kind: 'omissions', count: 4 });
+    expect(r.status).toEqual({ kind: 'omissions', count: 5 });
   });
 
   it('blocks when a required capability is anything but native', () => {
