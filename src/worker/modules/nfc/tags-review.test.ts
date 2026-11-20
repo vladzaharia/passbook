@@ -69,12 +69,16 @@ describe('lost is kept on the tag', () => {
 describe('restore from lost', () => {
   it('is refused while the org switch is off, and writes one audit row when it works', async () => {
     const { t, authority, tag } = await lost();
-    await run(f.kit.env.DB, 'DELETE FROM settings WHERE scope = ?', [`org:${t.org.id}`]);
+    await run(
+      f.kit.env.DB,
+      "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES (?, 'nfc.tags', '{\"enabled\":false}', 1)",
+      [`org:${t.org.id}`],
+    );
     f.kit.clock.advance(10_000);
     await refused(restoreTag(f.kit.ctx, authority, tag.id), 'TAGS_OFF');
     await run(
       f.kit.env.DB,
-      "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'nfc.tags', '{\"enabled\":true}', 1)",
+      "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES (?, 'nfc.tags', '{\"enabled\":true}', 1)",
       [`org:${t.org.id}`],
     );
     // The settings cache is per isolate for a few seconds.

@@ -155,7 +155,11 @@ describe('requesting a tag', () => {
   it('is refused while the org switch is off', async () => {
     const { scanner, socket, pass } = await ready();
     const scope = `org:${f.kit.org.id}`;
-    await run(db(), 'DELETE FROM settings WHERE scope = ?', [scope]);
+    await run(
+      db(),
+      "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES (?, 'nfc.tags', '{\"enabled\":false}', 1)",
+      [scope],
+    );
     // The settings cache is per isolate for a few seconds.
     f.kit.clock.advance(10_000);
     try {
@@ -165,7 +169,7 @@ describe('requesting a tag', () => {
     } finally {
       await run(
         db(),
-        "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'nfc.tags', '{\"enabled\":true}', 1)",
+        "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES (?, 'nfc.tags', '{\"enabled\":true}', 1)",
         [scope],
       );
       f.kit.clock.advance(10_000);

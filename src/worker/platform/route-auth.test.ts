@@ -261,8 +261,8 @@ describe('scope map', () => {
 
 describe('mintable scopes', () => {
   const body = { orgId: 'org-1', name: 'k', scopes: ['passes:read'] };
-  it('are a subset of the scopes, and today they are exactly the ones that existed', () => {
-    expect([...MINTABLE_SCOPES]).toEqual(Object.keys(LEGACY_SCOPE_CAPABILITY));
+  it('are a subset of the scopes, and today they are exactly the ones that existed, plus the brand kit one', () => {
+    expect([...MINTABLE_SCOPES]).toEqual([...Object.keys(LEGACY_SCOPE_CAPABILITY), 'brand:manage']);
   });
   it('are all a key can be created with: any other scope is a validation error', () => {
     expect(CreateApiKeySchema.safeParse(body).success).toBe(true);

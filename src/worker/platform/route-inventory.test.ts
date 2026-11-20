@@ -17,6 +17,8 @@ const PUBLIC = [
   'GET /api/v1/docs',
   'GET /api/v1/openapi.json',
   'GET /assets/*',
+  'GET /brand/:orgId/:file',
+  'GET /scan/sw.js',
   'GET /auth/breakglass',
   'GET /auth/magic',
   'GET /auth/no-access',
@@ -66,42 +68,15 @@ const PUBLIC = [
 
 /** Scanner principal or pairing code, checked by modules/scan/guard*.ts. */
 const SCANNER = [
-  'DELETE /api/v1/scan/staff',
-  'GET /api/v1/scan/activity',
-  'GET /api/v1/scan/branding/logo',
-  'GET /api/v1/scan/live',
-  'GET /api/v1/scan/live/inside',
-  'GET /api/v1/scan/live/passes/:passId/assets/member.png',
-  'GET /api/v1/scan/passes/:passId/assets/:name',
-  'GET /api/v1/scan/scans',
-  'GET /api/v1/scan/session',
-  'GET /api/v1/scan/staff',
-  'GET /api/v1/scan/stats',
-  'GET /api/v1/scan/summary',
-  'GET /api/v1/scan/tag-enrollments/pending',
-  'POST /api/v1/scan/actions',
-  'POST /api/v1/scan/device',
-  'POST /api/v1/scan/lookup',
-  'POST /api/v1/scan/mark-out',
-  'POST /api/v1/scan/overrides',
-  'POST /api/v1/scan/overrides/:scanId/note',
   'POST /api/v1/scan/pair',
   'POST /api/v1/scan/pair/preview',
-  'POST /api/v1/scan/resolve',
-  'POST /api/v1/scan/role',
-  'POST /api/v1/scan/scans/:scanId/undo',
-  'POST /api/v1/scan/session/open-now',
-  'POST /api/v1/scan/staff',
-  'POST /api/v1/scan/tag-enrollments/:id/complete',
-  'POST /api/v1/scan/tag-enrollments/:id/decline',
-  'POST /api/v1/scan/tags/bind',
-  'POST /api/v1/scan/tags/bindings/:bindingId/undo',
-  'POST /api/v1/scan/tags/inspect',
   'POST /api/v1/scan/unpair',
 ];
 
 /** Guarded inside the handler or by a dispatching guard this test cannot see; migrate each to `auth`. */
 const OWN_GUARD = [
+  // A signed link: the signature is the credential (modules/org-lifecycle).
+  'GET /api/v1/org-exports/:exportId/download',
   'DELETE /api/v1/identities/:id',
   'DELETE /api/v1/identities/:id/push-key',
   'GET /api/v1/identities',

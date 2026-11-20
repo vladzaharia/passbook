@@ -57,6 +57,7 @@ const handlers = (
           channels: null,
           revision: 1,
           effective,
+          defaults,
           impact: [
             {
               channel: 'apple',
@@ -172,6 +173,7 @@ describe('Template channels', () => {
             channels: null,
             revision: 0,
             effective,
+            defaults,
             impact: impact(0, dryCleared),
             workflowInstanceId: null,
             replaceSupported: false,
