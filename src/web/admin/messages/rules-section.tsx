@@ -20,31 +20,35 @@ import {
   StatusPill,
   toast,
 } from '../../ui/index.ts';
-import { RuleEditor } from './rule-editor.tsx';
 import { anchorLabel } from './rule-state.ts';
 import { useRuleActions, useRules } from './rules-api.ts';
 
-type Editing = { rule?: MessageRuleDto } | null;
+export type EditingRule = { rule?: MessageRuleDto } | null;
 
 /** Automatic messages: what is running, and where to set one up, edit, pause or delete it. */
-export function RulesSection({ orgId }: { orgId: string }) {
+export function RulesSection({
+  orgId,
+  onEdit,
+}: {
+  orgId: string;
+  onEdit: (editing: EditingRule) => void;
+}) {
   const rules = useRules(orgId);
   const scope = useOrgScope();
   const canManage = scope.membership?.capabilities.includes('messages:manage') === true;
   const actions = useRuleActions(orgId);
-  const [editing, setEditing] = useState<Editing>(null);
   const [deleting, setDeleting] = useState<MessageRuleDto | null>(null);
   const items = rules.data?.items ?? [];
   // No access to read them: no section.
   if (!rules.data || (items.length === 0 && !canManage)) return null;
   const confirm = deleting ? deleteConfirm('rule', deleting.name) : null;
   return (
-    <Card className="mt-6">
+    <Card>
       <CardHeader
         title="Automatic messages"
         actions={
           canManage ? (
-            <Button size="sm" variant="outline" onClick={() => setEditing({})}>
+            <Button size="sm" variant="outline" onClick={() => onEdit({})}>
               <Plus aria-hidden /> New
             </Button>
           ) : null
@@ -92,7 +96,7 @@ export function RulesSection({ orgId }: { orgId: string }) {
                         />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setEditing({ rule })}>
+                        <DropdownMenuItem onSelect={() => onEdit({ rule })}>
                           <Pencil aria-hidden /> Edit
                         </DropdownMenuItem>
                         {rule.state === 'on' ? (
@@ -119,14 +123,6 @@ export function RulesSection({ orgId }: { orgId: string }) {
           </ul>
         )}
       </CardBody>
-      {editing ? (
-        <RuleEditor
-          key={editing.rule?.id ?? 'new'}
-          orgId={orgId}
-          rule={editing.rule}
-          onClose={() => setEditing(null)}
-        />
-      ) : null}
       {confirm && deleting ? (
         <ConfirmDialog
           open

@@ -228,7 +228,7 @@ export function TemplatesListPage({
           description="Start from a blueprint or upload a package."
           action={
             canAuthor ? (
-              <div className="flex flex-wrap gap-2 max-sm:[&>*]:flex-1">
+              <div className="flex flex-wrap justify-center gap-2 max-sm:flex-col max-sm:[&>*]:w-full">
                 {blueprints('Browse blueprints')}
                 {upload('outline')}
               </div>

@@ -842,7 +842,6 @@ describe('admin layout', () => {
       'Platform',
       'Henrys',
       'Harbor',
-      'All organizations',
     ]);
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/o/o2/passes'));
