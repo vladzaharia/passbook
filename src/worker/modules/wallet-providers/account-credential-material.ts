@@ -15,6 +15,7 @@ import { fromBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { accountHmacKind } from '../keys/rewrap-tables.ts';
 import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
+import { providerIdentityHash } from './projection-contract.ts';
 import type { AccountRow } from './repo-accounts.ts';
 
 /** Server-only material. Never serialize this value into an API response, audit record or log. */
@@ -49,6 +50,13 @@ export type StoredCredentials =
 export type KeyOnlyAccount =
   | { version: 1; provider: 'google'; credentials: null; objectIdHmacKey: string }
   | { version: 1; provider: 'samsung'; credentials: null };
+
+/**
+ * The identity stored with a legacy credential and compared by the account epoch: Google's issuer,
+ * Samsung's partner and default card. It is what configure already refuses to change.
+ */
+export const storedIdentityHash = (stored: StoredCredentials): Promise<string> =>
+  providerIdentityHash(stored);
 
 export const corrupt = () =>
   new UnavailableError(

@@ -47,12 +47,17 @@ export function scanBans(rel: string, text: string): Finding[] {
     ban(
       'credentialRefKeysetSql is built on in passes/repo-credential-keyset.ts only; pin the keyset at entry with requireCredentialRefKeyset',
     );
+  const provider = rel.startsWith('src/worker/modules/wallet-providers/');
   if (
-    rel.startsWith('src/worker/modules/wallet-providers/') &&
+    provider &&
     rel !== PROVIDER_KEYSET_VALUE &&
-    /\bFROM\s+credential_ref_keyset\b/.test(text)
+    /\b(?:FROM|JOIN)\s+credential_ref_keyset\b/.test(text)
   )
     ban('provider SQL takes the keyset from pinnedKeysetSql; the entry pins it once');
+  if (provider && /\b(?:credentialRefKeysetMatch|matchesCredentialRefKeyset)\b/.test(text))
+    ban(
+      'credentialRefKeysetMatch and matchesCredentialRefKeyset expand to the keyset check; pin it at entry',
+    );
   if (DELETED_IMPORT.test(text)) ban('imports a deleted fence module');
   if (/\bbalanceSql\w*\b/.test(text)) ban('stmt() no longer balances SQL; keep statements shallow');
   return found;
