@@ -19,7 +19,6 @@ import {
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { tenantPassAuthorityValid } from '../passes/repo-authority.ts';
 import {
-  assertCredentialKeyset,
   corrupt,
   decryptAccount,
   type StoredCredentials,
@@ -112,10 +111,8 @@ async function currentAccount(
   ctx: ServiceContext,
   scope: WalletProviderScope,
   expectedId: string,
-  credentialKeysetCommitment: string,
 ): Promise<AccountRow> {
-  const row = await findAccountWithCredentialKeyset(ctx.env.DB, scope, credentialKeysetCommitment);
-  await assertCredentialKeyset(ctx, credentialKeysetCommitment);
+  const row = await findAccountWithCredentialKeyset(ctx.env.DB, scope);
   if (!row || row.id !== expectedId) throw corrupt();
   return row;
 }
@@ -130,11 +127,8 @@ export async function getWalletProviderReadiness(
   if (!parsed.success) throw new ValidationError();
   const row = await findAccount(ctx.env.DB, parsed.data);
   if (!row) return readiness(parsed.data, null);
-  const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
-  return readiness(
-    parsed.data,
-    await currentAccount(ctx, parsed.data, row.id, credentialKeysetCommitment),
-  );
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  return readiness(parsed.data, await currentAccount(ctx, parsed.data, row.id));
 }
 
 /** Authorized, mode-matched administrative read. */
@@ -155,14 +149,12 @@ async function failedWrite(
   ctx: ServiceContext,
   authority: TenantPassWrite,
   scope: WalletProviderScope,
-  credentialKeysetCommitment: string,
 ): Promise<never> {
   if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
     throw new ForbiddenError();
   if (await isNewModelAccount(ctx.env.DB, scope.orgId, scope.mode, scope.provider)) throw moved();
-  await assertCredentialKeyset(ctx, credentialKeysetCommitment);
   const row = await findAccount(ctx.env.DB, scope);
-  if (row) await currentAccount(ctx, scope, row.id, credentialKeysetCommitment);
+  if (row) await currentAccount(ctx, scope, row.id);
   throw changed();
 }
 
@@ -188,13 +180,11 @@ export async function configureWalletProviderAccount(
   await validateCredentials(data, ctx.clock.now());
   const row = await findAccount(ctx.env.DB, scope);
   if ((row?.revision ?? 0) !== data.expectedRevision) throw changed();
-  const credentialKeysetCommitment = row
-    ? await requireCredentialRefKeyset(ctx.env.DB, ctx.env)
-    : await ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
-  const current = row ? await currentAccount(ctx, scope, row.id, credentialKeysetCommitment) : null;
+  if (row) await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  else await ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
+  const current = row ? await currentAccount(ctx, scope, row.id) : null;
   if (current && current.revision !== data.expectedRevision) throw changed();
   const previous = current?.credential_id ? await decryptAccount(ctx, current) : null;
-  await assertCredentialKeyset(ctx, credentialKeysetCommitment);
   let stored: StoredCredentials;
   if (data.provider === 'google') {
     if (
@@ -237,7 +227,6 @@ export async function configureWalletProviderAccount(
       `wallet-provider:${accountId}:${scope.mode}:${scope.provider}`,
     ),
   );
-  await assertCredentialKeyset(ctx, credentialKeysetCommitment);
   if (
     !(await saveAccountConfiguration(ctx, authority, scope, {
       accountId,
@@ -246,11 +235,10 @@ export async function configureWalletProviderAccount(
       credentialId,
       eventId: ctx.ids.id(),
       envelope,
-      credentialKeysetCommitment,
     }))
   )
-    return failedWrite(ctx, authority, scope, credentialKeysetCommitment);
-  return readiness(scope, await currentAccount(ctx, scope, accountId, credentialKeysetCommitment));
+    return failedWrite(ctx, authority, scope);
+  return readiness(scope, await currentAccount(ctx, scope, accountId));
 }
 
 export async function revokeWalletProviderAccount(
@@ -274,8 +262,8 @@ export async function revokeWalletProviderAccount(
   const row = await findAccount(ctx.env.DB, scope);
   if (!row?.credential_id || row.revision !== data.expectedRevision || row.revoked_at !== null)
     throw changed();
-  const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
-  const currentAccountRow = await currentAccount(ctx, scope, row.id, credentialKeysetCommitment);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  const currentAccountRow = await currentAccount(ctx, scope, row.id);
   if (
     currentAccountRow.revision !== data.expectedRevision ||
     currentAccountRow.credential_id !== row.credential_id ||
@@ -289,15 +277,13 @@ export async function revokeWalletProviderAccount(
       expectedRevision: data.expectedRevision,
       eventId: ctx.ids.id(),
       kind: 'revoke',
-      credentialKeysetCommitment,
     }))
   ) {
     if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
       throw new ForbiddenError();
     if (await isNewModelAccount(ctx.env.DB, scope.orgId, scope.mode, scope.provider)) throw moved();
-    await assertCredentialKeyset(ctx, credentialKeysetCommitment);
     const current = await findAccount(ctx.env.DB, scope);
-    if (current) await currentAccount(ctx, scope, current.id, credentialKeysetCommitment);
+    if (current) await currentAccount(ctx, scope, current.id);
     if (
       current?.id === row.id &&
       current.revision === data.expectedRevision &&
@@ -310,5 +296,5 @@ export async function revokeWalletProviderAccount(
       );
     throw changed();
   }
-  return readiness(scope, await currentAccount(ctx, scope, row.id, credentialKeysetCommitment));
+  return readiness(scope, await currentAccount(ctx, scope, row.id));
 }

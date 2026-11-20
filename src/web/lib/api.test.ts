@@ -412,6 +412,19 @@ describe('api client', () => {
     expect(errorMessage(error)).toMatch(/reach PassBook/);
   });
 
+  it('ends a stalled request in a timeout error', async () => {
+    const stall = (_url: unknown, init?: RequestInit) =>
+      new Promise<Response>((_resolve, reject) =>
+        init?.signal?.addEventListener('abort', () => reject(init.signal?.reason)),
+      );
+    const api = createApiClient({
+      fetch: stall as unknown as typeof globalThis.fetch,
+      getCsrfToken: async () => undefined,
+    });
+    const stalled = api.get('/x', Item, { timeoutMs: 20 });
+    expect(await stalled.catch((e: unknown) => e)).toMatchObject({ status: 0, code: 'timeout' });
+  });
+
   it('rethrows aborts untouched', async () => {
     const controller = new AbortController();
     controller.abort();

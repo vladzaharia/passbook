@@ -127,7 +127,6 @@ describe('Samsung issuance and callback fences', () => {
       accountId: scope.accountId,
       accountRevision: scope.accountRevision,
       refHash: await sha256Hex(refId),
-      credentialKeysetCommitment: scope.credentialKeysetCommitment,
     };
     let replayCalled = false;
     const claimReplay = async () => {
@@ -142,7 +141,6 @@ describe('Samsung issuance and callback fences', () => {
         f.ctx,
         {
           ...tombstone,
-          credentialKeysetCommitment: '0'.repeat(64),
         },
         { request, refId, claimReplay },
       ),

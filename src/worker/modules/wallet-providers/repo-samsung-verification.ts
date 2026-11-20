@@ -2,8 +2,7 @@ import { batch, first, run, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
-import type { WalletCredentialKeysetProof } from './instance-types.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import type { ProjectionCandidate } from './repo-projection-store.ts';
 
 const MAX_EVIDENCE_AGE_MS = 300_000;
@@ -13,20 +12,16 @@ type Authority = Extract<TenantPassWrite, { kind: 'session' }>;
 export function samsungProjectionEvidencePredicateSql(
   candidateAlias: string,
   nowSql: string,
-  credentialKeysetCommitmentSql: string,
 ): string {
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(candidateAlias)) throw new Error('Invalid candidate alias.');
   const c = candidateAlias;
-  if (!credentialKeysetCommitmentSql)
-    throw new Error('A credential keyset commitment is required.');
   return `EXISTS (WITH samsung_evidence_clock(now_ms) AS (VALUES (${nowSql}))
     SELECT 1 FROM wallet_provider_projection_evidence ev CROSS JOIN samsung_evidence_clock
     WHERE (${c}.provider = 'samsung' AND ev.candidate_id = ${c}.id
       AND ev.org_id = ${c}.org_id AND ev.mode = ${c}.mode
       AND ev.account_id = ${c}.provider_account_id AND ev.account_revision = ${c}.provider_account_revision)
       AND (ev.provider_identity_hash = ${c}.provider_identity_hash AND ev.candidate_hash = ${c}.candidate_hash
-        AND ev.credential_keyset_commitment = ${c}.credential_keyset_commitment
-        AND ${c}.credential_keyset_commitment = (SELECT commitment FROM credential_ref_keyset WHERE id = 1))
+        AND ev.credential_keyset_commitment = ${c}.credential_keyset_commitment)
       AND (EXISTS (SELECT 1 FROM template_approvals approval WHERE approval.candidate_id = ${c}.id
         AND approval.candidate_hash = ${c}.candidate_hash
         AND approval.reviewer_id != ${c}.author_id
@@ -47,8 +42,7 @@ export function samsungProjectionEvidencePredicateSql(
           AND (eh.candidate_hash = ev.candidate_hash AND eh.card_type = ev.card_type
             AND eh.card_sub_type = ev.card_sub_type AND eh.country_code = ev.country_code)
           AND (eh.testing_mode_off = ev.testing_mode_off AND eh.verified_at = ev.verified_at
-            AND eh.expires_at = ev.expires_at))
-      AND ${credentialRefKeysetSql.replace('?', `(${credentialKeysetCommitmentSql})`)})`;
+            AND eh.expires_at = ev.expires_at)))`;
 }
 
 /** The reviewed candidate, credential revision, and tenant grant must still be current in each write. */
@@ -58,7 +52,7 @@ const currentCandidate = `c.provider = 'samsung' AND c.id = ? AND c.org_id = ? A
   AND json_extract(c.projection_json, '$.cardType') = ?
   AND json_extract(c.projection_json, '$.cardSubType') = ?
   AND json_extract(c.projection_json, '$.countryCode') = ?
-  AND c.credential_keyset_commitment = ?
+  AND c.credential_keyset_commitment = ${pinnedKeysetSql}
   AND EXISTS (SELECT 1 FROM template_approvals approval WHERE approval.candidate_id = c.id
     AND approval.credential_keyset_commitment = c.credential_keyset_commitment
     AND approval.candidate_hash = c.candidate_hash AND approval.reviewer_id != c.author_id
@@ -73,7 +67,7 @@ const currentEvidenceCandidate = `EXISTS (SELECT 1 FROM template_candidates c
   WHERE c.id = ev.candidate_id AND c.candidate_hash = ev.candidate_hash
     AND c.credential_keyset_commitment = ev.credential_keyset_commitment)`;
 
-function candidateParams(c: ProjectionCandidate, proof: WalletCredentialKeysetProof) {
+function candidateParams(c: ProjectionCandidate) {
   if (c.projection.provider !== 'samsung' || c.projection.schema !== 1)
     throw new Error('Samsung candidate required.');
   return [
@@ -87,7 +81,6 @@ function candidateParams(c: ProjectionCandidate, proof: WalletCredentialKeysetPr
     c.projection.cardType,
     c.projection.cardSubType,
     c.projection.countryCode,
-    proof.credentialKeysetCommitment,
   ];
 }
 
@@ -104,7 +97,6 @@ function authorityGuard(authority: Authority | null, now: number) {
 export async function hasSamsungProjectionEvidence(
   ctx: ServiceContext,
   c: ProjectionCandidate,
-  proof: WalletCredentialKeysetProof,
 ): Promise<boolean> {
   const row = await first<{ ok: number }>(
     ctx.env.DB,
@@ -114,8 +106,8 @@ export async function hasSamsungProjectionEvidence(
       AND account.org_id = c.org_id AND account.mode = c.mode AND account.provider = 'samsung'
       AND account.revision = c.provider_account_revision AND account.credential_id IS NOT NULL
       AND account.revoked_at IS NULL
-    WHERE ${currentCandidate} AND ${samsungProjectionEvidencePredicateSql('c', '?', '?')}`,
-    [...candidateParams(c, proof), ctx.clock.now(), proof.credentialKeysetCommitment],
+    WHERE ${currentCandidate} AND ${samsungProjectionEvidencePredicateSql('c', '?')}`,
+    [...candidateParams(c), ctx.clock.now()],
   );
   return row !== null;
 }
@@ -126,7 +118,6 @@ export async function beginSamsungProjectionProbe(
   authority: Authority | null,
   c: ProjectionCandidate,
   probeId: string,
-  proof: WalletCredentialKeysetProof,
 ): Promise<boolean> {
   const now = ctx.clock.now();
   const db = ctx.env.DB;
@@ -146,7 +137,7 @@ export async function beginSamsungProjectionProbe(
       AND account.revision = c.provider_account_revision AND account.credential_id IS NOT NULL
       AND account.revoked_at IS NULL
     JOIN orgs owner ON owner.id = c.org_id AND owner.status = 'active'
-    WHERE ${currentCandidate} AND ${guard.sql} AND ${credentialRefKeysetSql}
+    WHERE ${currentCandidate} AND ${guard.sql}
     ON CONFLICT(candidate_id) DO UPDATE SET org_id = excluded.org_id, mode = excluded.mode,
       account_id = excluded.account_id, account_revision = excluded.account_revision,
       provider_identity_hash = excluded.provider_identity_hash, candidate_hash = excluded.candidate_hash,
@@ -154,7 +145,7 @@ export async function beginSamsungProjectionProbe(
       status = 'pending', testing_mode_off = NULL, probe_id = excluded.probe_id, verified_at = NULL, expires_at = NULL
     WHERE wallet_provider_projection_evidence.credential_keyset_commitment = excluded.credential_keyset_commitment
     RETURNING candidate_id`,
-    [probeId, ...candidateParams(c, proof), ...guard.params, proof.credentialKeysetCommitment],
+    [probeId, ...candidateParams(c), ...guard.params],
   );
   return row !== null;
 }
@@ -164,14 +155,13 @@ export async function failSamsungProjectionProbe(
   ctx: ServiceContext,
   candidateId: string,
   probeId: string,
-  proof: WalletCredentialKeysetProof,
 ): Promise<void> {
   await run(
     ctx.env.DB,
     `UPDATE wallet_provider_projection_evidence AS ev SET status = 'unverified'
-    WHERE ev.candidate_id = ? AND ev.probe_id = ? AND ev.status = 'pending' AND ev.credential_keyset_commitment = ?
-      AND ${currentEvidenceCandidate} AND ${credentialRefKeysetSql}`,
-    [candidateId, probeId, proof.credentialKeysetCommitment, proof.credentialKeysetCommitment],
+    WHERE ev.candidate_id = ? AND ev.probe_id = ? AND ev.status = 'pending' AND ev.credential_keyset_commitment = ${pinnedKeysetSql}
+      AND ${currentEvidenceCandidate}`,
+    [candidateId, probeId],
   );
 }
 
@@ -183,7 +173,6 @@ export async function completeSamsungProjectionProbe(
   probeId: string,
   verifiedAt: number,
   expiresAt: number,
-  proof: WalletCredentialKeysetProof,
 ): Promise<boolean> {
   const now = ctx.clock.now();
   if (
@@ -219,22 +208,15 @@ export async function completeSamsungProjectionProbe(
         AND account.credential_id IS NOT NULL AND account.revoked_at IS NULL
       JOIN orgs owner ON owner.id = ev.org_id AND owner.status = 'active'
       WHERE ev.status = 'pending' AND ev.probe_id = ? AND ${currentCandidate}
-        AND ${guard.sql} AND ${credentialRefKeysetSql}
+        AND ${guard.sql}
       RETURNING id`,
-      [
-        verifiedAt,
-        expiresAt,
-        probeId,
-        ...candidateParams(c, proof),
-        ...guard.params,
-        proof.credentialKeysetCommitment,
-      ],
+      [verifiedAt, expiresAt, probeId, ...candidateParams(c), ...guard.params],
     ),
     stmt(
       db,
       `UPDATE wallet_provider_projection_evidence AS ev SET status = 'verified', testing_mode_off = 'Y',
       verified_at = ?, expires_at = ? WHERE ev.candidate_id = ? AND ev.probe_id = ? AND ev.status = 'pending'
-      AND ev.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+      AND ev.credential_keyset_commitment = ${pinnedKeysetSql}
       AND ${currentEvidenceCandidate}
       AND EXISTS (SELECT 1 FROM wallet_provider_projection_evidence_history eh
         WHERE eh.id = ev.probe_id AND eh.candidate_id = ev.candidate_id
@@ -245,16 +227,7 @@ export async function completeSamsungProjectionProbe(
           AND eh.card_sub_type = ev.card_sub_type AND eh.country_code = ev.country_code
           AND eh.testing_mode_off = 'Y' AND eh.verified_at = ? AND eh.expires_at = ?)
       RETURNING candidate_id`,
-      [
-        verifiedAt,
-        expiresAt,
-        c.id,
-        probeId,
-        proof.credentialKeysetCommitment,
-        proof.credentialKeysetCommitment,
-        verifiedAt,
-        expiresAt,
-      ],
+      [verifiedAt, expiresAt, c.id, probeId, verifiedAt, expiresAt],
     ),
   ]);
   return results[0]?.results.length === 1 && results[1]?.results.length === 1;

@@ -4,7 +4,6 @@ import { GoogleWalletError } from './google-errors.ts';
 import { walletClaimHash } from './instance-claims.ts';
 import { mockProviderInput } from './mock-endpoint.ts';
 import {
-  assertRuntimeCredentialKeyset,
   copyRuntimeScope,
   runtimeCredentialCurrent as current,
   type Provider,
@@ -160,18 +159,13 @@ export function runtimeExecution(
       ? AbortSignal.any([init.signal, AbortSignal.timeout(PROVIDER_FETCH_TIMEOUT_MS)])
       : AbortSignal.timeout(PROVIDER_FETCH_TIMEOUT_MS);
     const response = await globalThis.fetch(mockProviderInput(ctx.env, input), { ...init, signal });
-    await assertRuntimeCredentialKeyset(ctx, scope);
     if (!capture || oauth) return response;
     try {
       return await captureRuntimeResponse(
         response,
         capture.stage,
         method as 'GET' | 'POST' | 'PATCH',
-        async (value) => {
-          await assertRuntimeCredentialKeyset(ctx, scope);
-          await capture.sink(value);
-          await assertRuntimeCredentialKeyset(ctx, scope);
-        },
+        (value) => capture.sink(value),
       );
     } catch {
       captureFailed = true;

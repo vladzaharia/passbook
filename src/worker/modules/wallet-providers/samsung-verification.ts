@@ -5,7 +5,6 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
-  UnavailableError,
   ValidationError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -16,7 +15,6 @@ import {
   readConfiguredWalletProviderCredentials,
   snapshotWalletCredentialContext,
 } from './account-service.ts';
-import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import { providerIdentityHash } from './projection-contract.ts';
 import { assertWalletProviderEnabled, walletProviderEnabled } from './provider-policy.ts';
 import {
@@ -56,17 +54,6 @@ const unverified = (): SamsungVerificationResult => ({
   expiresAt: null,
 });
 
-async function requireOriginalKeyset(
-  ctx: ServiceContext,
-  proof: WalletCredentialKeysetProof,
-): Promise<void> {
-  if ((await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== proof.credentialKeysetCommitment)
-    throw new UnavailableError(
-      'Credential references are unavailable.',
-      'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-    );
-}
-
 async function candidateForProbe(
   ctx: ServiceContext,
   candidateId: string,
@@ -89,7 +76,6 @@ async function probe(
   ctx: ServiceContext,
   candidate: ProjectionCandidate,
   authority: Authority | null,
-  proof: WalletCredentialKeysetProof,
 ): Promise<SamsungVerificationResult> {
   if (
     candidate.projection.provider !== 'samsung' ||
@@ -98,22 +84,17 @@ async function probe(
   )
     return unverified();
   const probeId = ctx.ids.id();
-  if (!(await beginSamsungProjectionProbe(ctx, authority, candidate, probeId, proof)))
-    return unverified();
+  if (!(await beginSamsungProjectionProbe(ctx, authority, candidate, probeId))) return unverified();
   try {
-    await requireOriginalKeyset(ctx, proof);
     const scope = { orgId: candidate.orgId, mode: candidate.mode, provider: 'samsung' as const };
     const account = await readConfiguredWalletProviderCredentials(ctx, scope, {
       accountId: candidate.accountId,
       accountRevision: candidate.accountRevision,
-      credentialKeysetCommitment: proof.credentialKeysetCommitment,
     });
-    await requireOriginalKeyset(ctx, proof);
     if (
       account?.provider !== 'samsung' ||
       account.accountId !== candidate.accountId ||
       account.revision !== candidate.accountRevision ||
-      account.credentialKeysetCommitment !== proof.credentialKeysetCommitment ||
       (await providerIdentityHash(account, candidate.projection.cardType)) !==
         candidate.providerIdentityHash
     )
@@ -132,7 +113,6 @@ async function probe(
       now: startedAt,
       requestId: ctx.ids.id().replaceAll('-', ''),
     });
-    await requireOriginalKeyset(ctx, proof);
     if (
       response.state !== 'ACTIVE' ||
       response.testingModeOff !== 'Y' ||
@@ -149,16 +129,15 @@ async function probe(
         probeId,
         startedAt,
         expiresAt,
-        proof,
       )) &&
-      (await hasSamsungProjectionEvidence(ctx, candidate, proof))
+      (await hasSamsungProjectionEvidence(ctx, candidate))
     )
       return { verified: true, verifiedAt: startedAt, expiresAt };
   } catch {
     // Never log upstream errors, credentials, identifiers, tokens, or response bodies.
     ctx.log.warn('wallet.verification_failed', { code: 'WALLET_VERIFY_FAILED' });
   }
-  await failSamsungProjectionProbe(ctx, candidate.id, probeId, proof);
+  await failSamsungProjectionProbe(ctx, candidate.id, probeId);
   return unverified();
 }
 
@@ -175,9 +154,7 @@ export async function refreshSamsungProjectionEvidence(
   const authority = await tenantAuthorityOf(ctx, auth, parsed.data.orgId, 'integrations:manage');
   if (authority.kind !== 'session') throw new ForbiddenError();
   assertWalletProviderEnabled('samsung', parsed.data.mode);
-  const proof = {
-    credentialKeysetCommitment: await requireCredentialRefKeyset(ctx.env.DB, ctx.env),
-  };
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const candidate = await candidateForProbe(
     ctx,
     parsed.data.candidateId,
@@ -188,9 +165,8 @@ export async function refreshSamsungProjectionEvidence(
       'Wallet projection candidate not found.',
       'WALLET_PROJECTION_NOT_FOUND',
     );
-  const result = await probe(ctx, candidate, authority, proof);
-  if (!result.verified && !(await hasSamsungProjectionEvidence(ctx, candidate, proof)))
-    return result;
+  const result = await probe(ctx, candidate, authority);
+  if (!result.verified && !(await hasSamsungProjectionEvidence(ctx, candidate))) return result;
   if (!result.verified)
     throw new ConflictError('A newer verification is in progress.', 'WALLET_VERIFICATION_CONFLICT');
   return result;
@@ -205,13 +181,11 @@ export async function ensureSamsungProjectionEvidence(
   ctx: ServiceContext,
   candidateId: string,
   expectedHash: string,
-  originalProof: WalletCredentialKeysetProof,
 ): Promise<boolean> {
   ctx = snapshotWalletCredentialContext(ctx);
-  const proof = { credentialKeysetCommitment: originalProof.credentialKeysetCommitment };
-  await requireOriginalKeyset(ctx, proof);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const candidate = await candidateForProbe(ctx, candidateId, expectedHash);
   if (!candidate) return false;
-  if (await hasSamsungProjectionEvidence(ctx, candidate, proof)) return true;
-  return (await probe(ctx, candidate, null, proof)).verified;
+  if (await hasSamsungProjectionEvidence(ctx, candidate)) return true;
+  return (await probe(ctx, candidate, null)).verified;
 }

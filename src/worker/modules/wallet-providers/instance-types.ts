@@ -26,17 +26,8 @@ export interface WalletScope {
   mode: WalletMode;
   provider: WalletProvider;
 }
-/** The canonical credential-reference keyset captured at the trusted authority boundary. */
-export interface WalletCredentialKeysetProof {
-  credentialKeysetCommitment: string;
-}
-
-export function isCredentialKeysetCommitment(value: unknown): value is string {
-  return typeof value === 'string' && value.length === 64 && /^[0-9a-f]{64}$/.test(value);
-}
-
 /** All values are snapshots from trusted reads, not client-provided authority. */
-export interface WalletInstanceProof extends WalletScope, WalletCredentialKeysetProof {
+export interface WalletInstanceProof extends WalletScope {
   passId: string;
   passVersion: number;
   passRevision: number;
@@ -53,7 +44,6 @@ export interface WalletInstanceProof extends WalletScope, WalletCredentialKeyset
 
 interface WalletInstanceBase extends WalletScope {
   id: string;
-  credentialKeysetCommitment: string;
   passId: string;
   /** Immutable credential lineage used to derive provider object identity. */
   credentialGeneration: number;
@@ -117,7 +107,7 @@ export interface WalletOperationRef extends WalletScope {
   instanceId: string;
   version: number;
 }
-export interface WalletClaimRef extends WalletOperationRef, WalletCredentialKeysetProof {
+export interface WalletClaimRef extends WalletOperationRef {
   /** Generate using newWalletClaimHandle(); the raw handle is never stored. */
   claimHandle: string;
   now: number;
@@ -140,7 +130,6 @@ export type WalletOfferAuthority =
   | { kind: 'holder'; ownerUserId: string };
 
 export interface WalletOfferBinding extends WalletScope {
-  credentialKeysetCommitment: string;
   instanceId: string;
   passId: string;
   version: number;

@@ -9,14 +9,12 @@ import {
   validRequest,
 } from './instance-input.ts';
 import type {
-  WalletCredentialKeysetProof,
   WalletInstanceProof,
   WalletOfferAuthority,
   WalletOfferBinding,
   WalletOperation,
   WalletOperationRef,
 } from './instance-types.ts';
-import { isCredentialKeysetCommitment as validCommitment } from './instance-types.ts';
 import { walletProviderEnabled } from './provider-policy.ts';
 import {
   getInstanceByPass,
@@ -40,23 +38,21 @@ const validRef = (ref: string) => /^[A-Za-z0-9_-]{43}$/.test(ref);
 
 export async function createWalletOfferRef(
   db: D1Database,
-  p: WalletOperationRef &
-    WalletCredentialKeysetProof & {
-      authority: WalletOfferAuthority;
-      now: number;
-    },
+  p: WalletOperationRef & {
+    authority: WalletOfferAuthority;
+    now: number;
+  },
 ): Promise<{ ref: string; expiresAt: number } | null> {
   p = { ...p, authority: { ...p.authority } };
   if (
     !walletProviderEnabled(p.provider, p.mode) ||
-    !validCommitment(p.credentialKeysetCommitment) ||
     !scopeValid(p) ||
     !nonnegative(p.now) ||
     !validAuthority(p.authority)
   )
     return null;
   const op = await getOperation(db, p);
-  if (!op || op.credentialKeysetCommitment !== p.credentialKeysetCommitment) return null;
+  if (!op) return null;
   const ref = newRef();
   const expiresAt = p.now + OFFER_TTL;
   const inserted = await insertOffer(db, {
@@ -94,7 +90,6 @@ export async function createWalletInstanceAndOffer(
   const expiresAt = p.now + OFFER_TTL;
   const offer = { hash: refHash, expiresAt, authority: p.authority };
   let instance = await getInstanceByPass(db, p);
-  if (instance && instance.credentialKeysetCommitment !== p.credentialKeysetCommitment) return null;
   // A settled channel-off predecessor is replaced by a successor born active with its first operation.
   const predecessor =
     instance?.retirementCause === 'channel_off' &&
@@ -118,7 +113,6 @@ export async function createWalletInstanceAndOffer(
     if (
       !instance ||
       instance.retirementCause === 'channel_off' ||
-      instance.credentialKeysetCommitment !== p.credentialKeysetCommitment ||
       instance.lifecycle === 'ready' ||
       instance.lifecycle === 'blocked'
     )
@@ -158,7 +152,7 @@ export async function createWalletInstanceAndOffer(
     });
     if (!operation || !sameProof(operation, p, 'upsert')) return null;
   }
-  let binding = await readOffer(db, refHash, p.now, p.credentialKeysetCommitment);
+  let binding = await readOffer(db, refHash, p.now);
   if (
     !binding &&
     (await operationFresh(db, {
@@ -176,7 +170,7 @@ export async function createWalletInstanceAndOffer(
       hash: refHash,
       expiresAt,
     });
-    if (inserted) binding = await readOffer(db, refHash, p.now, p.credentialKeysetCommitment);
+    if (inserted) binding = await readOffer(db, refHash, p.now);
   }
   return binding ? { operation, ref, expiresAt } : null;
 }
@@ -185,26 +179,18 @@ export async function consumeWalletOfferRef(
   db: D1Database,
   ref: string,
   now: number,
-  credentialKeysetCommitment: string,
 ): Promise<WalletOfferBinding | null> {
-  if (!validCommitment(credentialKeysetCommitment) || !validRef(ref) || !nonnegative(now))
-    return null;
+  if (!validRef(ref) || !nonnegative(now)) return null;
   const hash = await sha256Hex(ref);
-  const binding = await readOffer(db, hash, now, credentialKeysetCommitment);
+  const binding = await readOffer(db, hash, now);
   return binding && walletProviderEnabled(binding.provider, binding.mode)
-    ? consumeOffer(db, hash, now, credentialKeysetCommitment)
+    ? consumeOffer(db, hash, now)
     : null;
 }
 /** Call after generating provider links and before returning them to the bearer. */
-export async function walletOfferFresh(
-  db: D1Database,
-  ref: string,
-  now: number,
-  credentialKeysetCommitment: string,
-): Promise<boolean> {
-  if (!validCommitment(credentialKeysetCommitment) || !validRef(ref) || !nonnegative(now))
-    return false;
-  const binding = await readOffer(db, await sha256Hex(ref), now, credentialKeysetCommitment);
+export async function walletOfferFresh(db: D1Database, ref: string, now: number): Promise<boolean> {
+  if (!validRef(ref) || !nonnegative(now)) return false;
+  const binding = await readOffer(db, await sha256Hex(ref), now);
   return !!binding && walletProviderEnabled(binding.provider, binding.mode);
 }
 export async function expireWalletOfferRef(

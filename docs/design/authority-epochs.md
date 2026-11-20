@@ -508,6 +508,7 @@ Roll forward only once migrations have run (owner answer 6). `0059` and `0065` m
 
 The scan and fence rewrite is complete. What is left:
 - Wallet providers stay on column equality (7.3).
+- A rekey of the keyset singleton must migrate every provider commitment column (instances, operations, refs, bindings, tombstones, candidates, approvals, releases, evidence) explicitly: provider SQL no longer re-checks the singleton per statement; services pin it once at entry and carry no commitment between layers. Provider SQL reads the stored value from the singleton through `pinnedKeysetSql` (`wallet-providers/repo-keyset-pin.ts`).
 
 Done:
 
@@ -526,7 +527,7 @@ Done:
 
 Wallet providers (Google, Samsung) ship dark and stay on column equality:
 - pass-column fences in `wallet-providers/` (`walletInstanceProofSql` in `repo-instance-proof.ts`, `repo-instance*.ts`, `repo-offers.ts`, `repo-sync-*.ts`, `repo-callbacks*.ts`, `repo-accounts.ts`, `repo-projection*.ts`, `repo-samsung-verification.ts`);
-- keyset helpers (`credentialRefKeysetSql`, `credential-keyset.ts`) and the triggers in `0043` and `0050`;
+- the keyset: pinned once per entry with `requireCredentialRefKeyset` (`credential-keyset.ts`), no per-statement `credentialRefKeysetSql`; the triggers in `0043` and `0050` stay;
 - `p.version`, `p.revision`, `p.release_id`, `p.credential_generation` and `p.lifecycle_generation` keep their meaning;
 - `passes/repo-credential-transfer-finish.ts`, `passes/repo-ops-retention.ts` and `sandbox/repo.ts` call `providerRetirementCompleteSql` inside their grant checks; it takes no parameters and is vacuous while providers are dark.
 

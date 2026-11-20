@@ -1,9 +1,9 @@
 import { all, first, run } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
 import { walletClaimHash } from './instance-claims.ts';
 import type { WalletClaimRef, WalletReasonCode } from './instance-types.ts';
 import { samsungRevocableRefSql, samsungRouteCountriesSql } from './repo-callbacks-routing.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import { SAMSUNG_UNCONFIRMED_SERVE_MS } from './samsung-limits.ts';
 
 export interface SamsungSyncTarget {
@@ -21,7 +21,6 @@ export async function samsungSyncCountryHints(
     instanceId: string;
     orgId: string;
     mode: 'live' | 'test';
-    credentialKeysetCommitment: string;
   },
 ): Promise<string[]> {
   const rows = await all<{ countryCode: string }>(
@@ -34,16 +33,9 @@ export async function samsungSyncCountryHints(
     JOIN wallet_samsung_fetch_refs r ON r.instance_id = i.id
     JOIN ${samsungRouteCountriesSql} h ON h.ref_id = r.id
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'samsung'
-      AND i.credential_keyset_commitment = ? AND r.credential_keyset_commitment = i.credential_keyset_commitment
-      AND ${credentialRefKeysetSql}
+      AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND r.credential_keyset_commitment = i.credential_keyset_commitment
       AND r.promoted_at IS NOT NULL ORDER BY h.country_code`,
-    [
-      instance.instanceId,
-      instance.orgId,
-      instance.mode,
-      instance.credentialKeysetCommitment,
-      instance.credentialKeysetCommitment,
-    ],
+    [instance.instanceId, instance.orgId, instance.mode],
   );
   return rows.map((row) => row.countryCode);
 }
@@ -73,8 +65,7 @@ export async function ensureSamsungSyncTargets(
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'samsung'
       AND ? = 'samsung' AND o.version = ? AND o.state = 'claimed'
       AND o.claim_hash = ? AND o.claim_expires_at > ?
-      AND i.credential_keyset_commitment = ? AND o.credential_keyset_commitment = i.credential_keyset_commitment
-      AND ${credentialRefKeysetSql}
+      AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND o.credential_keyset_commitment = i.credential_keyset_commitment
       AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations previous
         JOIN wallet_provider_sync_targets delivered ON delivered.operation_id = previous.id
           AND delivered.country_code = h.country_code AND delivered.state = 'succeeded'
@@ -98,8 +89,6 @@ export async function ensureSamsungSyncTargets(
       claim.version,
       hash,
       claim.now,
-      claim.credentialKeysetCommitment,
-      claim.credentialKeysetCommitment,
     ],
   );
 }
@@ -120,19 +109,10 @@ export async function listSamsungSyncTargets(
     JOIN wallet_provider_instances i ON i.id = o.instance_id
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'samsung'
       AND ? = 'samsung' AND o.version = ? AND o.state IN ('claimed', 'uncertain')
-      AND o.claim_hash = ? AND i.credential_keyset_commitment = ?
+      AND o.claim_hash = ? AND i.credential_keyset_commitment = ${pinnedKeysetSql}
       AND o.credential_keyset_commitment = i.credential_keyset_commitment
-      AND ${credentialRefKeysetSql} ORDER BY t.country_code`,
-    [
-      claim.instanceId,
-      claim.orgId,
-      claim.mode,
-      claim.provider,
-      claim.version,
-      hash,
-      claim.credentialKeysetCommitment,
-      claim.credentialKeysetCommitment,
-    ],
+      ORDER BY t.country_code`,
+    [claim.instanceId, claim.orgId, claim.mode, claim.provider, claim.version, hash],
   );
 }
 
@@ -158,8 +138,7 @@ export async function beginSamsungSyncTarget(
           AND i.provider = 'samsung' AND ? = 'samsung' AND o.version = ?
           AND i.desired_version = o.version AND i.desired_operation_id = o.id
           AND o.state = 'claimed' AND o.claim_hash = ? AND o.claim_expires_at > ?
-          AND i.credential_keyset_commitment = ? AND o.credential_keyset_commitment = i.credential_keyset_commitment
-          AND ${credentialRefKeysetSql})
+          AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND o.credential_keyset_commitment = i.credential_keyset_commitment)
     RETURNING attempts`,
     [
       now,
@@ -174,8 +153,6 @@ export async function beginSamsungSyncTarget(
       claim.version,
       hash,
       now,
-      claim.credentialKeysetCommitment,
-      claim.credentialKeysetCommitment,
     ],
   );
   return row?.attempts ?? null;
@@ -228,8 +205,7 @@ export async function finishSamsungSyncTarget(
         WHERE o.id = t.operation_id AND i.id = ? AND i.org_id = ? AND i.mode = ?
           AND i.provider = 'samsung' AND ? = 'samsung' AND o.version = ?
           AND o.state IN ('claimed', 'uncertain') AND o.claim_hash = ?
-          AND i.credential_keyset_commitment = ? AND o.credential_keyset_commitment = i.credential_keyset_commitment
-          AND ${credentialRefKeysetSql})
+          AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND o.credential_keyset_commitment = i.credential_keyset_commitment)
     RETURNING operation_id`,
     [
       state,
@@ -246,8 +222,6 @@ export async function finishSamsungSyncTarget(
       claim.provider,
       claim.version,
       hash,
-      claim.credentialKeysetCommitment,
-      claim.credentialKeysetCommitment,
     ],
   );
   return row !== null;

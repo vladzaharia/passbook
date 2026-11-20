@@ -582,9 +582,18 @@ describe('authority-scope rawCheck tenant terms', () => {
     expect(scanBans(`${MOD}/passes/repo-credential-keyset.ts`, 'credentialRefKeysetSql')).toEqual(
       [],
     );
-    for (const owner of ['passes/repo-ops-retention.ts', 'scan/repo-credential-tombstones.ts'])
+    for (const owner of [
+      'passes/repo-ops-retention.ts',
+      'scan/repo-credential-tombstones.ts',
+      'wallet-providers/repo-instance.ts',
+    ])
       expect(scanBans(`${MOD}/${owner}`, 'credentialRefKeysetSql').map((f) => f.rule)).toContain(
         'banned',
       );
+    const inline = 'EXISTS (SELECT 1 FROM credential_ref_keyset keyset WHERE keyset.id = 1)';
+    expect(
+      scanBans(`${MOD}/wallet-providers/repo-instance.ts`, inline).map((f) => f.rule),
+    ).toContain('banned');
+    expect(scanBans(`${MOD}/wallet-providers/repo-keyset-pin.ts`, inline)).toEqual([]);
   });
 });

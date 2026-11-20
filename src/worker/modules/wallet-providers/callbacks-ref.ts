@@ -5,7 +5,6 @@ import {
   encryptSecret,
   loadKekRing,
 } from '../../platform/crypto.ts';
-import { UnavailableError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
@@ -33,18 +32,6 @@ export function pinSamsungCredentialContext(ctx: ServiceContext): ServiceContext
   const env = { ...ctx.env };
   Object.assign(env, captureCredentialKeyEnv(env));
   return { ...ctx, env: Object.freeze(env) };
-}
-
-/** A later environment/singleton must never replace the operation's original proof. */
-export async function requireSamsungCredentialKeyset(
-  ctx: ServiceContext,
-  expected: string,
-): Promise<void> {
-  if ((await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== expected)
-    throw new UnavailableError(
-      'Credential references are unavailable.',
-      'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-    );
 }
 
 function aad(id: string, scope: SamsungOperationScope): string {
@@ -79,7 +66,6 @@ async function openRef(
   } catch {
     throw new Error('Samsung reference is unavailable.');
   }
-  await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
   return ref;
 }
 
@@ -91,7 +77,7 @@ export async function ensureSamsungFetchRef(
   if (!walletProviderEnabled('samsung', scope.mode)) return null;
   ctx = pinSamsungCredentialContext(ctx);
   scope = { ...scope };
-  await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const now = ctx.clock.now();
   if (
     !Number.isSafeInteger(scope.expiresAt) ||
@@ -115,7 +101,6 @@ export async function ensureSamsungFetchRef(
   const actual = row.id === id ? ref : await openRef(ctx, scope, row);
   if (!(await samsungRefStillCurrent(ctx.env.DB, scope, row.id, false, ctx.clock.now())))
     return null;
-  await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
   return actual;
 }
 
@@ -126,14 +111,13 @@ export async function getSamsungRefreshTarget(
 ): Promise<{ refId: string; countryCodes: string[] } | null> {
   ctx = pinSamsungCredentialContext(ctx);
   scope = { ...scope };
-  await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const row = await getSamsungRefForSync(ctx.env.DB, scope, ctx.clock.now());
   if (!row) return null;
   const refId = await openRef(ctx, scope, row);
   const countryCodes = await listSamsungCountryHints(ctx.env.DB, row.id);
   if (!(await samsungRefStillCurrent(ctx.env.DB, scope, row.id, true, ctx.clock.now())))
     return null;
-  await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
   return { refId, countryCodes };
 }
 
@@ -144,9 +128,8 @@ export async function inspectSamsungRefRetirement(
 ): Promise<SamsungRefRetirement> {
   ctx = pinSamsungCredentialContext(ctx);
   scope = { ...scope };
-  await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const result = await inspectSamsungRetirement(ctx.env.DB, scope, ctx.clock.now());
-  await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
   return result;
 }
 
@@ -157,13 +140,12 @@ export async function retireExpiredUnpromotedRef(
   if (!/^[A-Za-z0-9_-]{43}$/.test(scope.claimHandle)) return 'pending';
   ctx = pinSamsungCredentialContext(ctx);
   scope = { ...scope };
-  await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const result = await retireSamsungUnpromotedRef(
     ctx.env.DB,
     scope,
     ctx.clock.now(),
     await walletClaimHash(scope.claimHandle),
   );
-  await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);
   return result;
 }

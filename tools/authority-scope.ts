@@ -512,7 +512,7 @@ export function scanTree(markdown: string, files: Iterable<[string, string]>): F
       ...scanFile(rel, text, owners, byPath),
       ...scanJobContext(rel, text),
       ...scanBrandImport(rel, text),
-      ...(skipFile(rel) ? [] : scanBans(rel, text)),
+      ...(notProduction(rel) ? [] : scanBans(rel, text)),
     ]),
     ...scanAllowlist(byPath),
   ];

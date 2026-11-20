@@ -25,13 +25,7 @@ describe('Samsung callback authority fences', () => {
     const t = await setupSamsungCallbacks();
     const db = t.kit.env.DB;
     const refHash = await sha256Hex(t.refId);
-    const snapshot = await findSamsungFetchSnapshot(
-      db,
-      refHash,
-      t.kit.clock.now(),
-      t.credentialKeysetCommitment,
-      true,
-    );
+    const snapshot = await findSamsungFetchSnapshot(db, refHash, t.kit.clock.now(), true);
     if (!snapshot) throw new Error('Missing callback snapshot');
     const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);
     if (!raw) throw new Error('Missing materialized pass');
@@ -45,7 +39,7 @@ describe('Samsung callback authority fences', () => {
     const oldKey = t.kit.env.KEK_V1;
     const newKey = btoa('z'.repeat(32));
     const newCommitment = await credentialRefKeysetCommitment({ ...t.kit.env, KEK_V1: newKey });
-    expect(newCommitment).not.toBe(snapshot.credentialKeysetCommitment);
+    expect(newCommitment).not.toBe(t.credentialKeysetCommitment);
     const validToken = await t.token();
     t.kit.env.KEK_V1 = newKey;
     try {
@@ -57,18 +51,9 @@ describe('Samsung callback authority fences', () => {
 
       // Simulate a separately audited singleton rekey; old durable proofs are still stale.
       await replaceCallbackKeysetForTest(db, newCommitment);
-      expect(
-        await findSamsungFetchSnapshot(db, refHash, t.kit.clock.now(), newCommitment, true),
-      ).toBeNull();
-      expect(
-        await getSamsungRefreshTarget(t.kit.ctx, {
-          ...snapshot,
-          credentialKeysetCommitment: newCommitment,
-        }),
-      ).toBeNull();
-      await expect(getSamsungRefreshTarget(t.kit.ctx, snapshot)).rejects.toMatchObject({
-        code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-      });
+      expect(await findSamsungFetchSnapshot(db, refHash, t.kit.clock.now(), true)).toBeNull();
+      // Rows keyed to the old commitment are invisible once the singleton is rekeyed.
+      expect(await getSamsungRefreshTarget(t.kit.ctx, snapshot)).toBeNull();
       expect((await t.call({ token: await t.token() })).status).toBe(401);
       const now = t.kit.clock.now();
       const claim = {
@@ -130,22 +115,16 @@ describe('Samsung callback authority fences', () => {
       mode: t.operation.mode,
       instanceId: t.operation.instanceId,
       operationVersion: t.operation.version,
-      credentialKeysetCommitment: t.credentialKeysetCommitment,
     };
     const oldKey = t.kit.env.KEK_V1;
     const newKey = btoa('z'.repeat(32));
-    const newCommitment = await credentialRefKeysetCommitment({ ...t.kit.env, KEK_V1: newKey });
     const decrypt = crypto.subtle.decrypt.bind(crypto.subtle);
     let decryptions = 0;
-    let replaceSingleton = false;
     const spy = vi
       .spyOn(crypto.subtle, 'decrypt')
       .mockImplementation(async (algorithm, key, data) => {
         const result = await decrypt(algorithm, key, data);
-        if (++decryptions === 2) {
-          if (replaceSingleton) await replaceCallbackKeysetForTest(t.kit.env.DB, newCommitment);
-          else t.kit.env.KEK_V1 = newKey;
-        }
+        if (++decryptions === 2) t.kit.env.KEK_V1 = newKey;
         return result;
       });
     try {
@@ -154,17 +133,9 @@ describe('Samsung callback authority fences', () => {
         countryCodes: [],
       });
       expect(decryptions).toBe(2);
-      t.kit.env.KEK_V1 = oldKey;
-      decryptions = 0;
-      replaceSingleton = true;
-      await expect(getSamsungRefreshTarget(t.kit.ctx, scope)).rejects.toMatchObject({
-        code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
-      });
-      expect(decryptions).toBe(2);
     } finally {
       spy.mockRestore();
       t.kit.env.KEK_V1 = oldKey;
-      await replaceCallbackKeysetForTest(t.kit.env.DB, t.credentialKeysetCommitment);
     }
     expect(await getSamsungRefreshTarget(t.kit.ctx, scope)).toEqual({
       refId: t.refId,
@@ -202,13 +173,7 @@ describe('Samsung callback authority fences', () => {
     try {
       await setReferenceProof(null);
       expect(
-        await findSamsungFetchSnapshot(
-          db,
-          await sha256Hex(t.refId),
-          t.kit.clock.now(),
-          t.credentialKeysetCommitment,
-          true,
-        ),
+        await findSamsungFetchSnapshot(db, await sha256Hex(t.refId), t.kit.clock.now(), true),
       ).toBeNull();
       expect(await getSamsungRefreshTarget(t.kit.ctx, scope)).toBeNull();
       expect((await t.call({ token: await t.token() })).status).toBe(401);
@@ -302,7 +267,6 @@ describe('Samsung callback authority fences', () => {
       db,
       await sha256Hex(t.refId),
       t.kit.clock.now(),
-      t.credentialKeysetCommitment,
     );
     if (!snapshot) throw new Error('Missing fetch snapshot');
     const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);
@@ -351,13 +315,7 @@ describe('Samsung callback authority fences', () => {
       holder_email: 'first@example.test',
     });
     expect(
-      await findSamsungFetchSnapshot(
-        db,
-        await sha256Hex(t.refId),
-        t.kit.clock.now(),
-        t.credentialKeysetCommitment,
-        true,
-      ),
+      await findSamsungFetchSnapshot(db, await sha256Hex(t.refId), t.kit.clock.now(), true),
     ).toBeNull();
     expect(await samsungFetchSnapshotCurrent(db, snapshot, raw, t.kit.clock.now())).toBe(false);
     const now = t.kit.clock.now();
@@ -384,7 +342,6 @@ describe('Samsung callback authority fences', () => {
       db,
       await sha256Hex(t.refId),
       t.kit.clock.now(),
-      t.credentialKeysetCommitment,
     );
     if (!snapshot) throw new Error('Missing fetch snapshot');
     const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);
@@ -427,7 +384,6 @@ describe('Samsung callback authority fences', () => {
       db,
       await sha256Hex(t.refId),
       t.kit.clock.now(),
-      t.credentialKeysetCommitment,
     );
     if (!snapshot) throw new Error('Missing fetch snapshot');
     const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);
@@ -504,7 +460,6 @@ describe('Samsung callback authority fences', () => {
       db,
       await sha256Hex(t.refId),
       t.kit.clock.now(),
-      t.credentialKeysetCommitment,
     );
     if (!snapshot || !t.samsungRelease?.candidateId) throw new Error('Missing evidence fixture');
     const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);

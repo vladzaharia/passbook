@@ -41,10 +41,10 @@ export const secondsToReset = (nowMs: number): number =>
   WINDOW_SECONDS - (Math.floor(nowMs / 1000) % WINDOW_SECONDS);
 
 /** `RateLimit-Policy: 600;w=60`, with the limit and reset; sent on every API-key response. */
-function apiKeyPolicyHeaders(nowMs: number): Record<string, string> {
+function policyHeaders(limit: number, nowMs: number): Record<string, string> {
   return {
-    'ratelimit-policy': `${API_KEY_LIMIT};w=${WINDOW_SECONDS}`,
-    'ratelimit-limit': String(API_KEY_LIMIT),
+    'ratelimit-policy': `${limit};w=${WINDOW_SECONDS}`,
+    'ratelimit-limit': String(limit),
     'ratelimit-reset': String(secondsToReset(nowMs)),
   };
 }
@@ -60,9 +60,66 @@ export async function enforceRateLimit(
   // The limiter's windows are not promised to align with the clock: the wait is at least this long.
   const now = Date.now();
   throw new RateLimitedError(Math.max(secondsToReset(now), 1), undefined, {
-    ...apiKeyPolicyHeaders(now),
+    ...policyHeaders(API_KEY_LIMIT, now),
     'ratelimit-remaining': '0',
   });
+}
+
+export type ApiRateTier = 'standard' | 'high' | 'bulk';
+
+/** Per-key budget per tier; keep equal to the wrangler.jsonc bindings. */
+const TIERS: Record<ApiRateTier, { name: RateLimitName; limit: number }> = {
+  standard: { name: 'RL_API_KEY', limit: API_KEY_LIMIT },
+  high: { name: 'RL_API_KEY_HIGH', limit: 3000 },
+  bulk: { name: 'RL_API_KEY_BULK', limit: 12000 },
+};
+/** The RL_API_ORG budget across all of one org's keys; keep equal to wrangler.jsonc. */
+export const API_ORG_LIMIT = 6000;
+
+const isTier = (v: unknown): v is ApiRateTier => typeof v === 'string' && v in TIERS;
+
+/** The key's stored tier, else `API_RATE_TIER_DEFAULT`, else standard. */
+export const apiRateTier = (stored: unknown, env: AppEnv): ApiRateTier =>
+  isTier(stored)
+    ? stored
+    : isTier(env.API_RATE_TIER_DEFAULT)
+      ? env.API_RATE_TIER_DEFAULT
+      : 'standard';
+
+/** Tier and org of each resolved key, for the response headers; keyed by the auth object. */
+const keyBudgets = new WeakMap<object, { tier: ApiRateTier }>();
+export const rememberApiTier = (auth: object, tier: ApiRateTier): void => {
+  keyBudgets.set(auth, { tier });
+};
+
+/**
+ * Charges a key's own budget, then its org's aggregate (so a key over its own limit does not spend
+ * the org's). Throws 429 with the policy that refused. Returns the key's tier.
+ */
+export async function enforceApiKeyRate(
+  env: AppEnv,
+  key: { keyId: string; orgId: string | null },
+  stored: unknown,
+): Promise<ApiRateTier> {
+  const tier = apiRateTier(stored, env);
+  const budgets = [
+    { name: TIERS[tier].name, id: `key:${key.keyId}`, limit: TIERS[tier].limit, who: 'key' },
+    ...(key.orgId
+      ? [{ name: 'RL_API_ORG' as const, id: `org:${key.orgId}`, limit: API_ORG_LIMIT, who: 'org' }]
+      : []),
+  ];
+  for (const b of budgets) {
+    if (await checkRateLimit(env, b.name, b.id)) continue;
+    const now = Date.now();
+    throw new RateLimitedError(
+      Math.max(secondsToReset(now), 1),
+      b.who === 'org'
+        ? 'Your organization is over its API rate limit. Try again later.'
+        : undefined,
+      { ...policyHeaders(b.limit, now), 'ratelimit-remaining': '0' },
+    );
+  }
+  return tier;
 }
 
 /** Middleware: tells an API-key caller its budget. The limiter reports pass or fail only, so `RateLimit-Remaining` is sent on 429 alone. */
@@ -70,7 +127,8 @@ export const apiKeyRateHeaders: MiddlewareHandler<AppBindings> = createMiddlewar
   async (c, next) => {
     await next();
     if (c.var.auth?.kind !== 'api_key' || c.res.headers.has('ratelimit-policy')) return;
-    for (const [name, value] of Object.entries(apiKeyPolicyHeaders(Date.now())))
+    const tier = keyBudgets.get(c.var.auth)?.tier ?? 'standard';
+    for (const [name, value] of Object.entries(policyHeaders(TIERS[tier].limit, Date.now())))
       c.header(name, value);
   },
 );

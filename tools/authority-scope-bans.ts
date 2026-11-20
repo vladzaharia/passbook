@@ -32,7 +32,8 @@ const DELETED_MODULES = [
 
 const DELETED_IMPORT = new RegExp(`from\\s+'[^']*/(?:${DELETED_MODULES.join('|')})(?:\\.ts)?'`);
 
-/** Only the keyset module itself and wallet-providers build on the raw keyset predicate. */
+/** Only the keyset module itself builds on the raw keyset predicate; callers pin the keyset once at entry. */
+const PROVIDER_KEYSET_VALUE = 'src/worker/modules/wallet-providers/repo-keyset-pin.ts';
 export const KEYSET_SQL_OWNERS = new Set(['src/worker/modules/passes/repo-credential-keyset.ts']);
 
 export function scanBans(rel: string, text: string): Finding[] {
@@ -44,8 +45,14 @@ export function scanBans(rel: string, text: string): Finding[] {
     ban("`json_extract('[]'` was a packed-fence slot; bind the value");
   if (/\bcredentialRefKeysetSql\b/.test(text) && !KEYSET_SQL_OWNERS.has(rel))
     ban(
-      'credentialRefKeysetSql is built on in passes/repo-credential-keyset.ts and wallet-providers/ only',
+      'credentialRefKeysetSql is built on in passes/repo-credential-keyset.ts only; pin the keyset at entry with requireCredentialRefKeyset',
     );
+  if (
+    rel.startsWith('src/worker/modules/wallet-providers/') &&
+    rel !== PROVIDER_KEYSET_VALUE &&
+    /\bFROM\s+credential_ref_keyset\b/.test(text)
+  )
+    ban('provider SQL takes the keyset from pinnedKeysetSql; the entry pins it once');
   if (DELETED_IMPORT.test(text)) ban('imports a deleted fence module');
   if (/\bbalanceSql\w*\b/.test(text)) ban('stmt() no longer balances SQL; keep statements shallow');
   return found;

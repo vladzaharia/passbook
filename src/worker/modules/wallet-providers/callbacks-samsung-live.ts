@@ -3,7 +3,6 @@ import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { canPresent } from '../public/presentation.ts';
 import { filterSamsungCardFields } from './callbacks-fields.ts';
-import { requireSamsungCredentialKeyset } from './callbacks-ref.ts';
 import type { SamsungCallbackInput, SamsungCallbackResult } from './callbacks-samsung-types.ts';
 import { offerPassSnapshot } from './offers-eligibility.ts';
 import { getApprovedProjection } from './projection-service.ts';
@@ -29,18 +28,14 @@ export async function serveSamsungLive(
   snapshot: SamsungFetchSnapshot,
 ): Promise<SamsungCallbackResult | null> {
   const { request, refId, refHash, method, fields, countryHint, body, event, requestId } = input;
-  const approved = await getApprovedProjection(
-    ctx,
-    {
-      orgId: snapshot.orgId,
-      mode: snapshot.mode,
-      provider: 'samsung',
-      templateId: snapshot.templateId,
-      templateVersion: snapshot.templateVersion,
-      appleReleaseId: snapshot.issuingReleaseId,
-    },
-    { credentialKeysetCommitment: snapshot.credentialKeysetCommitment },
-  );
+  const approved = await getApprovedProjection(ctx, {
+    orgId: snapshot.orgId,
+    mode: snapshot.mode,
+    provider: 'samsung',
+    templateId: snapshot.templateId,
+    templateVersion: snapshot.templateVersion,
+    appleReleaseId: snapshot.issuingReleaseId,
+  });
   if (
     approved?.projection.provider !== 'samsung' ||
     approved.release.id !== snapshot.projectionReleaseId ||
@@ -56,16 +51,10 @@ export async function serveSamsungLive(
     accountRevision: snapshot.accountRevision,
     providerIdentityHash: approved.release.providerIdentityHash,
     providerReleaseId: snapshot.projectionReleaseId,
-    credentialKeysetCommitment: snapshot.credentialKeysetCommitment,
   };
-  const materialized = await offerPassSnapshot(
-    ctx,
-    snapshot.passId,
-    snapshot.credentialKeysetCommitment,
-  );
+  const materialized = await offerPassSnapshot(ctx, snapshot.passId);
   if (
     !materialized ||
-    materialized.credentialKeysetCommitment !== snapshot.credentialKeysetCommitment ||
     materialized.pass.orgId !== snapshot.orgId ||
     materialized.pass.mode !== snapshot.mode ||
     materialized.pass.version !== snapshot.passVersion ||
@@ -150,7 +139,6 @@ export async function serveSamsungLive(
       throw new UnavailableError('Samsung Wallet service is unavailable.', 'SAMSUNG_UNAVAILABLE');
     throw error;
   }
-  await requireSamsungCredentialKeyset(ctx, snapshot.credentialKeysetCommitment);
   if (method === 'POST') {
     // Send Card State documents only 200/401/500/503: a receipt that lost a race is still accepted.
     ctx.log.info('wallet.callback_state', {
@@ -181,6 +169,5 @@ export async function serveSamsungLive(
     ))
   )
     return { kind: 'missing' };
-  await requireSamsungCredentialKeyset(ctx, snapshot.credentialKeysetCommitment);
   return { kind: 'card', cdata: response.cdata };
 }

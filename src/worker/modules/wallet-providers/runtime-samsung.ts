@@ -227,7 +227,6 @@ export async function samsungRuntimeCardDataResponse(
     proof.scope.mode !== scope.mode ||
     proof.scope.accountId !== scope.accountId ||
     proof.scope.accountRevision !== scope.accountRevision ||
-    proof.scope.credentialKeysetCommitment !== scope.credentialKeysetCommitment ||
     proof.scope.providerIdentityHash !== scope.providerIdentityHash ||
     proof.scope.providerReleaseId !== scope.providerReleaseId
   )

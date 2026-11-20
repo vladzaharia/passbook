@@ -1,6 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
-import { run } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import * as credentialKeyset from '../passes/credential-keyset.ts';
 import { sameDb } from './db-matcher-test-fixtures.ts';
@@ -171,7 +170,7 @@ beforeEach(async () => {
     ctx.env.DB,
     ctx.env,
   );
-  operation = { ...operationFields, credentialKeysetCommitment };
+  operation = { ...operationFields };
   mocks.orgReason.mockResolvedValue(null);
   mocks.claim.mockResolvedValue('claimed');
   mocks.fresh.mockResolvedValue(true);
@@ -206,7 +205,6 @@ beforeEach(async () => {
     passRevision: operation.passRevision,
     lifecycleGeneration: operation.lifecycleGeneration,
     credentialGeneration: operation.passCredentialGeneration,
-    credentialKeysetCommitment,
     issuingReleaseId: operation.issuingReleaseId,
     status: 'active',
     removedAt: null,
@@ -253,24 +251,6 @@ beforeEach(async () => {
 });
 
 describe('wallet provider operation fences', () => {
-  it('holds an in-flight operation when its keyset changes', async () => {
-    const replacement = await credentialKeyset.credentialRefKeysetCommitment({
-      KEK_V1: btoa('z'.repeat(32)),
-    });
-    mocks.googleObject.mockImplementation(async (_ctx, _scope, input) => {
-      // Simulate an out-of-band keyset replacement despite the immutable production guard.
-      await run(ctx.env.DB, 'DROP TRIGGER credential_ref_keyset_no_update');
-      await run(ctx.env.DB, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [
-        replacement,
-      ]);
-      await input.assertCurrent();
-    });
-    expect(await runWalletProviderOperation(ctx, operation)).toBe('uncertain');
-    expect(mocks.googleObject).toHaveBeenCalledOnce();
-    expect(mocks.uncertain).toHaveBeenCalledOnce();
-    expect(mocks.complete).not.toHaveBeenCalled();
-  });
-
   it('uses the KEK snapshot captured before the first asynchronous operation', async () => {
     const original = btoa('0123456789abcdef0123456789abcdef');
     mocks.claim.mockImplementationOnce(async () => {
@@ -472,7 +452,6 @@ describe('wallet provider operation fences', () => {
       expect.objectContaining({
         instanceId: operation.instanceId,
         version: operation.version,
-        credentialKeysetCommitment: operation.credentialKeysetCommitment,
       }),
     );
     expect(mocks.record).toHaveBeenCalledTimes(2);
@@ -507,7 +486,6 @@ describe('wallet provider operation fences', () => {
       credentialGeneration: revoke.credentialGeneration,
       channelEpoch: 1,
       retirementCause: null,
-      credentialKeysetCommitment: revoke.credentialKeysetCommitment,
       lifecycle: 'revoked',
       desiredVersion: revoke.version,
       desiredOperationId: revoke.id,
@@ -559,7 +537,6 @@ describe('wallet provider operation fences', () => {
       accountRevision: 4,
       adapterRevision: 1,
       policyRevision: 1,
-      credentialKeysetCommitment: samsung.credentialKeysetCommitment,
       providerIdentityHash: 'a'.repeat(64),
       projection: { schema: 1, provider: 'samsung', cardType: 'loyalty' },
     });
@@ -606,7 +583,6 @@ describe('wallet provider operation fences', () => {
       accountRevision: 4,
       adapterRevision: 1,
       policyRevision: 1,
-      credentialKeysetCommitment: samsung.credentialKeysetCommitment,
       providerIdentityHash: 'a'.repeat(64),
       projection: { schema: 1, provider: 'samsung' },
     });
@@ -647,7 +623,6 @@ describe('wallet provider operation fences', () => {
       accountRevision: 4,
       adapterRevision: 1,
       policyRevision: 1,
-      credentialKeysetCommitment: samsung.credentialKeysetCommitment,
       providerIdentityHash: 'a'.repeat(64),
       projection: { schema: 1, provider: 'samsung' },
     });

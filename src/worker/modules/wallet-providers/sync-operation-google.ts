@@ -47,18 +47,14 @@ export async function runGoogleWalletProviderOperation(
           retryable: false,
         });
       }
-      const approved = await getApprovedProjection(
-        ctx,
-        {
-          orgId: op.orgId,
-          mode: op.mode,
-          provider: 'google',
-          templateId: pass.templateId,
-          templateVersion: pass.templateVersion,
-          appleReleaseId: pass.issuingReleaseId,
-        },
-        { credentialKeysetCommitment: claim.credentialKeysetCommitment },
-      );
+      const approved = await getApprovedProjection(ctx, {
+        orgId: op.orgId,
+        mode: op.mode,
+        provider: 'google',
+        templateId: pass.templateId,
+        templateVersion: pass.templateVersion,
+        appleReleaseId: pass.issuingReleaseId,
+      });
       const raw = await currentPassJson(ctx.env.DB, op.passId);
       let passJson: unknown;
       try {

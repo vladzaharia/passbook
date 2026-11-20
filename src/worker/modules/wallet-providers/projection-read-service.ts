@@ -8,8 +8,8 @@ import type {
 import type { AuthContext } from '../../platform/auth.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { getLatestRelease, listReleases as selectReleases } from '../templates/repo-releases.ts';
-import type { WalletCredentialKeysetProof } from './instance-types.ts';
 import {
   type NativeProvider,
   NativeProviderSchema,
@@ -19,11 +19,9 @@ import {
 import {
   type ApprovedProjection,
   type ApprovedProjectionScope,
-  captureProjectionProof,
   nativeScope,
   pinProjectionContext,
   releaseDto,
-  requireProjectionProof,
   sameScope,
   scopedTemplate,
   verifiedCandidate,
@@ -40,23 +38,22 @@ import { ensureSamsungProjectionEvidence } from './samsung-verification.ts';
 export async function getApprovedProjection(
   ctx: ServiceContext,
   scope: ApprovedProjectionScope,
-  proof: WalletCredentialKeysetProof,
 ): Promise<ApprovedProjection | null> {
   ctx = pinProjectionContext(ctx);
-  scope = { ...scope };
-  const credentialKeysetCommitment = proof?.credentialKeysetCommitment;
-  if (
-    typeof credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(credentialKeysetCommitment)
-  )
-    return null;
-  const pinnedProof = Object.freeze({ credentialKeysetCommitment });
   try {
-    await requireProjectionProof(ctx, pinnedProof);
+    await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   } catch (error) {
     if (error instanceof UnavailableError) return null;
     throw error;
   }
+  return approvedProjection(ctx, scope);
+}
+
+async function approvedProjection(
+  ctx: ServiceContext,
+  scope: ApprovedProjectionScope,
+): Promise<ApprovedProjection | null> {
+  scope = { ...scope };
   const provider = NativeProviderSchema.safeParse(scope.provider);
   if (!provider.success) return null;
   const policy = projectionPolicy(provider.data);
@@ -85,18 +82,13 @@ export async function getApprovedProjection(
     !sameScope(candidate, { ...scope, provider: provider.data }) ||
     candidate.sourceReleaseId !== scope.appleReleaseId ||
     candidate.candidateHash !== row.candidateHash ||
-    !(await verifiedCandidate(ctx, candidate, pinnedProof))
+    !(await verifiedCandidate(ctx, candidate))
   )
     return null;
   if (!publishableSchema(candidate.provider, candidate.projection.schema)) return null;
   if (
     candidate.provider === 'samsung' &&
-    !(await ensureSamsungProjectionEvidence(
-      ctx,
-      candidate.id,
-      candidate.candidateHash,
-      pinnedProof,
-    ))
+    !(await ensureSamsungProjectionEvidence(ctx, candidate.id, candidate.candidateHash))
   )
     return null;
   if (
@@ -109,15 +101,10 @@ export async function getApprovedProjection(
       version: scope.templateVersion,
       sourceReleaseId: scope.appleReleaseId,
       now: ctx.clock.now(),
-      credentialKeysetCommitment,
     }))
   )
     return null;
-  return {
-    release: releaseDto(row, candidate),
-    projection: candidate.projection,
-    credentialKeysetCommitment,
-  };
+  return { release: releaseDto(row, candidate), projection: candidate.projection };
 }
 
 async function activeProjectionReleaseWithProof(
@@ -126,7 +113,6 @@ async function activeProjectionReleaseWithProof(
   orgId: string,
   mode: Mode,
   provider: NativeProvider,
-  proof: WalletCredentialKeysetProof,
 ): Promise<TemplateRelease | null> {
   const row = await getLatestRelease(ctx.env.DB, { templateId, orgId, mode, provider });
   if (!row?.candidateId) return null;
@@ -134,18 +120,14 @@ async function activeProjectionReleaseWithProof(
   if (!candidate) return null;
   return (
     (
-      await getApprovedProjection(
-        ctx,
-        {
-          templateId,
-          orgId,
-          mode,
-          provider,
-          templateVersion: row.version,
-          appleReleaseId: candidate.sourceReleaseId,
-        },
-        proof,
-      )
+      await approvedProjection(ctx, {
+        templateId,
+        orgId,
+        mode,
+        provider,
+        templateVersion: row.version,
+        appleReleaseId: candidate.sourceReleaseId,
+      })
     )?.release ?? null
   );
 }
@@ -160,8 +142,8 @@ export async function activeProjectionRelease(
   ctx = pinProjectionContext(ctx);
   const parsed = NativeProviderSchema.safeParse(provider);
   if (!parsed.success) return null;
-  const proof = await captureProjectionProof(ctx);
-  return activeProjectionReleaseWithProof(ctx, templateId, orgId, mode, parsed.data, proof);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  return activeProjectionReleaseWithProof(ctx, templateId, orgId, mode, parsed.data);
 }
 
 export async function listProjectionReleases(
@@ -172,12 +154,12 @@ export async function listProjectionReleases(
 ): Promise<TemplateReleaseList> {
   ctx = pinProjectionContext(ctx);
   await scopedTemplate(ctx, auth, templateId, scope);
-  const proof = await captureProjectionProof(ctx);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const native = nativeScope(templateId, scope);
   const [rows, candidates, releaseIds] = await Promise.all([
     selectReleases(ctx.env.DB, native),
-    selectReleasedProjectionCandidates(ctx.env.DB, native, proof),
-    selectProjectionReleaseIds(ctx.env.DB, native, proof),
+    selectReleasedProjectionCandidates(ctx.env.DB, native),
+    selectProjectionReleaseIds(ctx.env.DB, native),
   ]);
   const candidatesById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
   const items: TemplateRelease[] = [];
@@ -192,8 +174,6 @@ export async function listProjectionReleases(
     scope.orgId,
     scope.mode,
     native.provider,
-    proof,
   );
-  await requireProjectionProof(ctx, proof);
   return { items, active };
 }

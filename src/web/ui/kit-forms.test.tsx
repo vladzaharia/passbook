@@ -115,7 +115,7 @@ describe('AppleWalletBadge', () => {
     expect(img.getAttribute('src')).toBe('/apple/badge/en/black.svg');
     const link = container.querySelector('a');
     expect(link?.className).not.toMatch(/transition|animate|scale|shadow|opacity/);
-    expect(getComputedStyle(link as Element).transition || 'none').toMatch(/^(none|all 0s.*|)$/);
+    expect(getComputedStyle(link as Element).transition || 'none').toMatch(/^(none|all( 0s.*)?|)$/);
     document.documentElement.dataset.theme = 'dark';
     rerender(<AppleWalletBadge href="/p/x/pass.pkpass" label="All passes (3)" />);
     expect(screen.getByRole('img', { name: 'Add to Apple Wallet' }).getAttribute('src')).toBe(

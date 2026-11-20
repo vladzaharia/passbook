@@ -27,7 +27,6 @@ export async function runSamsungWalletProviderOperation(
     orgId: op.orgId,
     mode: op.mode,
     operationVersion: op.version,
-    credentialKeysetCommitment: claim.credentialKeysetCommitment,
   });
   try {
     await assertCurrent();

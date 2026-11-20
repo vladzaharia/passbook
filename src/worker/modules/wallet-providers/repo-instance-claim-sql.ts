@@ -1,23 +1,16 @@
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
-import type { WalletCredentialKeysetProof, WalletOperationRef } from './instance-types.ts';
+import type { WalletOperationRef } from './instance-types.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 
-export interface Claim extends WalletOperationRef, WalletCredentialKeysetProof {
+export interface Claim extends WalletOperationRef {
   hash: string;
   now: number;
 }
 export const SCOPE = `i.id = op.instance_id AND i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ?
   AND i.credential_keyset_commitment = op.credential_keyset_commitment
-  AND op.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}`;
-export const scope = (p: WalletOperationRef & WalletCredentialKeysetProof) =>
-  [
-    p.instanceId,
-    p.orgId,
-    p.mode,
-    p.provider,
-    p.credentialKeysetCommitment,
-    p.credentialKeysetCommitment,
-  ] as const;
+  AND op.credential_keyset_commitment = ${pinnedKeysetSql}`;
+export const scope = (p: WalletOperationRef) =>
+  [p.instanceId, p.orgId, p.mode, p.provider] as const;
 export const CURRENT = walletInstanceOperationCurrentSql('i', 'op', '?');
 // Keep the scoped candidate and its authority proof in separate SELECTs. Joining
 // the materialized result once prevents SQLite expanding the proof in every CASE.

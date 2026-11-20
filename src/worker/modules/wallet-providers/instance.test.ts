@@ -7,7 +7,10 @@ import { randomBytes, sha256Hex, toBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { getHolderPass } from '../holders/repo.ts';
-import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
+import {
+  credentialRefKeysetCommitment,
+  requireCredentialRefKeyset,
+} from '../passes/credential-keyset.ts';
 import {
   finishCredentialTransfer,
   startCredentialTransfer,
@@ -67,16 +70,12 @@ async function fixture() {
   };
   const snapshot = await readWalletPassSnapshot(f.kit.env.DB, { ...scope, passId: f.pass.id });
   if (!snapshot?.issuingReleaseId) throw new Error('Missing issuing release');
-  const approved = await getApprovedProjection(
-    f.kit.ctx,
-    {
-      ...scope,
-      templateId: snapshot.templateId,
-      templateVersion: snapshot.templateVersion,
-      appleReleaseId: snapshot.issuingReleaseId,
-    },
-    { credentialKeysetCommitment: f.credentialKeysetCommitment },
-  );
+  const approved = await getApprovedProjection(f.kit.ctx, {
+    ...scope,
+    templateId: snapshot.templateId,
+    templateVersion: snapshot.templateVersion,
+    appleReleaseId: snapshot.issuingReleaseId,
+  });
   if (!approved) throw new Error('Missing reviewed native projection');
   const policy = projectionPolicy(scope.provider);
   const proof: WalletInstanceProof = {
@@ -86,7 +85,6 @@ async function fixture() {
     passRevision: snapshot.passRevision,
     passCredentialGeneration: snapshot.credentialGeneration,
     lifecycleGeneration: snapshot.lifecycleGeneration,
-    credentialKeysetCommitment: f.credentialKeysetCommitment,
     issuingReleaseId: snapshot.issuingReleaseId,
     projectionReleaseId: approved.release.id,
     accountId: approved.release.accountId,
@@ -116,7 +114,7 @@ async function fixture() {
       mode: target.mode,
       provider: target.provider,
       credentialGeneration: target.passCredentialGeneration,
-      credentialKeysetCommitment: target.credentialKeysetCommitment,
+      credentialKeysetCommitment: f.credentialKeysetCommitment,
       accountId: target.accountId,
       releaseId: target.projectionReleaseId,
       now: f.kit.clock.now(),
@@ -134,7 +132,6 @@ const reference = (op: WalletOperation) => ({
   provider: op.provider,
   instanceId: op.instanceId,
   version: op.version,
-  credentialKeysetCommitment: op.credentialKeysetCommitment,
 });
 
 async function seedHistoricalOffer(
@@ -174,7 +171,7 @@ async function seedHistoricalSamsungRef(
     id,
     refHash: await sha256Hex(ref),
     instanceId: op.instanceId,
-    credentialKeysetCommitment: op.credentialKeysetCommitment,
+    credentialKeysetCommitment: await requireCredentialRefKeyset(ctx.env.DB, ctx.env),
     createdAt: now,
     initialExpiresAt: expiresAt,
     promotedAt: promoted ? now : null,
@@ -282,69 +279,17 @@ describe('native wallet instance lifecycle', () => {
     expect(await getWalletOperation(db, reference(created))).toMatchObject({ state: 'superseded' });
   });
 
-  it('holds claims and empty-reference retirement under the original keyset', async () => {
+  it('refuses a mismatched pin at entry and retires only with the pinned keyset', async () => {
     const f = await fixture();
     const db = f.kit.env.DB;
     const op = await f.create();
     const now = f.kit.clock.now();
     const wrongEnv = { ...f.kit.env, KEK_V1: btoa('z'.repeat(32)) };
-    const wrongCommitment = await credentialRefKeysetCommitment(wrongEnv);
-    expect(wrongCommitment).not.toBe(op.credentialKeysetCommitment);
+    expect(await credentialRefKeysetCommitment(wrongEnv)).not.toBe(f.credentialKeysetCommitment);
     const claim = { ...reference(op), claimHandle: newWalletClaimHandle(), now };
-    const wrong = { ...claim, credentialKeysetCommitment: wrongCommitment };
-    expect(
-      await readWalletPassSnapshot(db, {
-        ...f.scope,
-        passId: f.pass.id,
-        credentialKeysetCommitment: wrongCommitment,
-      }),
-    ).toBeNull();
-    expect(
-      await claimWalletOperation(db, {
-        ...claim,
-        credentialKeysetCommitment: undefined as unknown as string,
-      }),
-    ).toBe('not_claimable');
-    for (const malformed of [
-      `${op.credentialKeysetCommitment}\n`,
-      `${op.credentialKeysetCommitment}\0`,
-      'A'.repeat(64),
-      op.credentialKeysetCommitment.slice(1),
-      new Uint8Array(64) as unknown as string,
-    ]) {
-      expect(
-        await claimWalletOperation(db, { ...claim, credentialKeysetCommitment: malformed }),
-      ).toBe('not_claimable');
-    }
-    expect(await claimWalletOperation(db, wrong)).toBe('not_claimable');
-    expect(
-      await queueWalletOperation(db, {
-        ...f.proof,
-        credentialKeysetCommitment: wrongCommitment,
-        instanceId: op.instanceId,
-        expectedVersion: op.version,
-        kind: 'revoke',
-        requestKey: crypto.randomUUID(),
-        newId: () => crypto.randomUUID(),
-        now,
-      }),
-    ).toBeNull();
     expect(await claimWalletOperation(db, claim)).toBe('claimed');
-    expect(await walletOperationFresh(db, wrong)).toBe(false);
-    expect(await markWalletClaimUncertain(db, wrong)).toBe(false);
-    expect(await settleWalletClaim(db, wrong)).toBe(false);
-    expect(
-      await recordWalletOperationOutcome(f.kit.ctx, {
-        ...wrong,
-        sequence: 1,
-        eventKey: 'response',
-        body: new Uint8Array([1]),
-        reason: 'ok',
-      }),
-    ).toBe('stale');
-    expect(
-      await completeWalletOperation(f.kit.ctx, { ...wrong, result: { kind: 'success' } }),
-    ).toBeNull();
+    // Only an uncertain claim can be settled.
+    expect(await settleWalletClaim(db, { ...reference(op), now })).toBe(false);
     await expect(
       completeWalletOperation(
         { ...f.kit.ctx, env: wrongEnv },
@@ -380,12 +325,6 @@ describe('native wallet instance lifecycle', () => {
     expect(
       await completeWalletOperation(f.kit.ctx, { ...revokeClaim, result: { kind: 'success' } }),
     ).toBe('succeeded');
-    expect(
-      await retireWalletInstance(db, {
-        ...revokeClaim,
-        credentialKeysetCommitment: wrongCommitment,
-      }),
-    ).toBe(false);
     expect(await getWalletInstanceById(db, reference(op))).toMatchObject({ lifecycle: 'revoked' });
     expect(await retireWalletInstance(db, revokeClaim)).toBe(true);
   });
@@ -527,17 +466,13 @@ describe('native wallet instance lifecycle', () => {
     );
     expect(rows.map((row) => row.ref_hash)).toContain(hash);
     expect(JSON.stringify(rows)).not.toContain(firstRef);
-    expect(await readOffer(db, hash, input.now, op.credentialKeysetCommitment)).toMatchObject({
+    expect(await readOffer(db, hash, input.now)).toMatchObject({
       instanceId: op.instanceId,
     });
-    expect(await readOffer(db, hash, input.now + 60_000, op.credentialKeysetCommitment)).toBeNull();
-    expect(
-      await consumeWalletOfferRef(db, firstRef, input.now, op.credentialKeysetCommitment),
-    ).toBeNull();
-    expect(await walletOfferFresh(db, firstRef, input.now, op.credentialKeysetCommitment)).toBe(
-      false,
-    );
-    await expect(consumeOffer(db, hash, input.now, op.credentialKeysetCommitment)).rejects.toThrow(
+    expect(await readOffer(db, hash, input.now + 60_000)).toBeNull();
+    expect(await consumeWalletOfferRef(db, firstRef, input.now)).toBeNull();
+    expect(await walletOfferFresh(db, firstRef, input.now)).toBe(false);
+    await expect(consumeOffer(db, hash, input.now)).rejects.toThrow(
       /provider offer is unavailable/,
     );
     expect(
@@ -551,12 +486,8 @@ describe('native wallet instance lifecycle', () => {
         f.pass.id,
       ]),
     );
-    expect(
-      await readOffer(db, await sha256Hex(secondRef), input.now, op.credentialKeysetCommitment),
-    ).toBeNull();
-    expect(
-      await consumeWalletOfferRef(db, secondRef, input.now, op.credentialKeysetCommitment),
-    ).toBeNull();
+    expect(await readOffer(db, await sha256Hex(secondRef), input.now)).toBeNull();
+    expect(await consumeWalletOfferRef(db, secondRef, input.now)).toBeNull();
   });
 
   it('uses the supplied clock for historical offer and claim evidence expiry while denying creation', async () => {
@@ -573,23 +504,14 @@ describe('native wallet instance lifecycle', () => {
     const before = evidence.expires_at - 1;
     const issued = await f.create();
     const ref = await seedHistoricalOffer(db, issued, before, before + 60_000);
-    expect(
-      await readOffer(db, await sha256Hex(ref), before, issued.credentialKeysetCommitment),
-    ).toMatchObject({ instanceId: issued.instanceId });
+    expect(await readOffer(db, await sha256Hex(ref), before)).toMatchObject({
+      instanceId: issued.instanceId,
+    });
     const claim = { ...reference(issued), claimHandle: newWalletClaimHandle(), now: before };
     expect(await claimWalletOperation(db, claim)).toBe('claimed');
     expect(await walletOperationFresh(db, { ...claim, now: evidence.expires_at })).toBe(false);
-    expect(
-      await readOffer(
-        db,
-        await sha256Hex(ref),
-        evidence.expires_at,
-        issued.credentialKeysetCommitment,
-      ),
-    ).toBeNull();
-    expect(
-      await consumeWalletOfferRef(db, ref, evidence.expires_at, issued.credentialKeysetCommitment),
-    ).toBeNull();
+    expect(await readOffer(db, await sha256Hex(ref), evidence.expires_at)).toBeNull();
+    expect(await consumeWalletOfferRef(db, ref, evidence.expires_at)).toBeNull();
     const second = await f.kit.pass();
     const snapshot = await readWalletPassSnapshot(db, { ...f.scope, passId: second.id });
     if (!snapshot) throw new Error('Second pass is missing');
@@ -755,12 +677,7 @@ describe('native wallet instance lifecycle', () => {
     expect(await claimWalletOperation(db, claim)).toBe('claimed');
     expect(await markWalletClaimUncertain(db, claim)).toBe(true);
     await run(db, 'UPDATE passes SET revision = revision + 1 WHERE id = ?', [f.pass.id]);
-    const dirty = await listDirtyWalletInstances(
-      db,
-      claim.now,
-      100,
-      claim.credentialKeysetCommitment,
-    );
+    const dirty = await listDirtyWalletInstances(db, claim.now, 100);
     expect(dirty.some((row) => row.instanceId === op.instanceId)).toBe(true);
     const next = await queueWalletOperation(db, {
       ...(await f.current()),
@@ -1045,9 +962,7 @@ describe('native wallet instance lifecycle', () => {
       retirementRequestedAt: expect.any(Number),
     });
     expect(await walletOperationFresh(db, oldClaim)).toBe(false);
-    expect(
-      await readOffer(db, await sha256Hex(ref), now, op.credentialKeysetCommitment),
-    ).toBeNull();
+    expect(await readOffer(db, await sha256Hex(ref), now)).toBeNull();
     expect(await finishCredentialTransfer(jobCtxOf(f.kit), transfer.transferId)).toMatchObject({
       state: 'pending',
     });
@@ -1167,7 +1082,6 @@ describe('native wallet instance lifecycle', () => {
       mode: op.mode,
       instanceId: op.instanceId,
       operationVersion: op.version,
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
     };
     const original = await seedHistoricalSamsungRef(f.kit.ctx, op, now, now + 1_000, false);
     await run(
@@ -1244,7 +1158,6 @@ describe('native wallet instance lifecycle', () => {
       mode: op.mode,
       instanceId: op.instanceId,
       operationVersion: op.version,
-      credentialKeysetCommitment: op.credentialKeysetCommitment,
     };
     const ref = await seedHistoricalSamsungRef(f.kit.ctx, op, now, now + 1_000, true);
     await run(
@@ -1306,7 +1219,7 @@ describe('native wallet instance lifecycle', () => {
       false,
     );
     expect(
-      (await deletePassRows(db, deletedPass, retention, op.credentialKeysetCommitment)).deleted,
+      (await deletePassRows(db, deletedPass, retention, f.credentialKeysetCommitment)).deleted,
     ).toBe(false);
     const snapshot = await f.current();
     expect(await requestWalletRetirement(db, { ...reference(op), ...snapshot, now })).toBe(true);
@@ -1323,11 +1236,11 @@ describe('native wallet instance lifecycle', () => {
     const claim = { ...reference(revoke), claimHandle: newWalletClaimHandle(), now };
     expect(await claimWalletOperation(db, claim)).toBe('claimed');
     expect(
-      (await deletePassRows(db, deletedPass, retention, op.credentialKeysetCommitment)).deleted,
+      (await deletePassRows(db, deletedPass, retention, f.credentialKeysetCommitment)).deleted,
     ).toBe(false);
     expect(await markWalletClaimUncertain(db, claim)).toBe(true);
     expect(
-      (await deletePassRows(db, deletedPass, retention, op.credentialKeysetCommitment)).deleted,
+      (await deletePassRows(db, deletedPass, retention, f.credentialKeysetCommitment)).deleted,
     ).toBe(false);
     expect(
       await completeWalletOperation(f.kit.ctx, {
@@ -1336,7 +1249,7 @@ describe('native wallet instance lifecycle', () => {
       }),
     ).toBe('retry');
     expect(
-      (await deletePassRows(db, deletedPass, retention, op.credentialKeysetCommitment)).deleted,
+      (await deletePassRows(db, deletedPass, retention, f.credentialKeysetCommitment)).deleted,
     ).toBe(false);
     const retry = { ...reference(revoke), claimHandle: newWalletClaimHandle(), now: now + 1_001 };
     expect(await claimWalletOperation(db, retry)).toBe('claimed');
@@ -1348,7 +1261,7 @@ describe('native wallet instance lifecycle', () => {
       true,
     );
     expect(
-      (await deletePassRows(db, deletedPass, retention, op.credentialKeysetCommitment)).deleted,
+      (await deletePassRows(db, deletedPass, retention, f.credentialKeysetCommitment)).deleted,
     ).toBe(true);
   });
 

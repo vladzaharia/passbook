@@ -184,7 +184,12 @@ describe('exact lookup IDs', () => {
         clientTs: kit.clock.now(),
         scope: { orgId: kit.org.id, timeZone: 'UTC' },
       });
-      expect(await response.json()).toMatchObject({ kind: 'ready', card: { passId: pass.id } });
+      // The barcode is the scan code, so a camera read of the lookup ID alone is a staff check.
+      expect(await response.json()).toMatchObject(
+        method === 'camera'
+          ? { kind: 'heads_up', reason: 'check_required', card: { passId: pass.id } }
+          : { kind: 'ready', card: { passId: pass.id } },
+      );
     }
     const rows = await kit.env.DB.prepare('SELECT count(*) AS n FROM scans').first<{ n: number }>();
     expect(rows?.n).toBe(0);

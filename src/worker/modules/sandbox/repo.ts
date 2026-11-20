@@ -166,7 +166,6 @@ export async function stageExpiredTestPassRetirement(
   pass: ExpiredTestPass,
   before: number,
   now: number,
-  credentialKeysetCommitment: string,
 ): Promise<void> {
   await batch(
     db,
@@ -182,7 +181,6 @@ export async function stageExpiredTestPassRetirement(
         lifecycleGeneration: pass.lifecycleGeneration,
         issuingReleaseId: pass.releaseId,
         now,
-        credentialKeysetCommitment,
       },
       {
         sql: `p.mode = 'test' AND p.created_at = ? AND p.created_at < ?
