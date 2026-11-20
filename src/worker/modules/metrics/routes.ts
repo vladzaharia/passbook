@@ -129,6 +129,7 @@ register(
     method: 'get',
     path: '/platform/developer',
     summary: 'Developer quickstart funnel: sandboxes by step and time to first pass (30 days)',
+    auth: { platform: 'platform:status' },
     response: DeveloperFunnelSchema,
   },
   async (c) => c.json(await developerFunnel(serviceContext(c))),

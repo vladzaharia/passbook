@@ -184,7 +184,7 @@ export type FunnelColumn =
 
 /**
  * `platform.job.developer_sandbox.funnel`: stamps funnel columns of the person's open sandbox, each only while it is
- * still empty. The person's live session is checked in the same batch. Writes no audit row: a funnel stamp is
+ * still empty, and says which landed. The person's live session is checked in the same batch. Writes no audit row: a funnel stamp is
  * product telemetry, not an act on the organization.
  */
 export async function stampFunnel(
@@ -192,9 +192,9 @@ export async function stampFunnel(
   orgId: string,
   by: { userId: string; sessionIdHash: string },
   stamps: Partial<Record<FunnelColumn, number>>,
-): Promise<void> {
+): Promise<Set<FunnelColumn>> {
   const entries = Object.entries(stamps) as [FunnelColumn, number][];
-  if (entries.length === 0) return;
+  if (entries.length === 0) return new Set();
   const now = ctx.clock.now();
   const live = rawCheck(
     'actor',
@@ -208,6 +208,9 @@ export async function stampFunnel(
     g.update('developer_sandboxes', {
       set: { [column]: at },
       where: { org_id: orgId, user_id: by.userId, closed_at: null, [column]: null },
+      returning: ['id'],
     });
-  await g.commit();
+  const results = await g.commit();
+  // The columns this call set: a racing call that lost finds its column already full and lands nothing.
+  return new Set(entries.filter((_, i) => (results[i]?.results.length ?? 0) > 0).map(([c]) => c));
 }

@@ -13,24 +13,26 @@ export const funnelCounts = (db: D1Database, since: number) =>
     [since],
   );
 
-/** Page view to first pass in ms, ascending; only sandboxes that have both. */
+/** Page view to first pass in ms, ascending; only sandboxes whose first pass came after the view (a pass made first is not time to first pass). */
 export const ttfpSamples = async (db: D1Database, since: number, cap: number): Promise<number[]> =>
   (
     await all<{ ms: number }>(
       db,
       `SELECT first_pass_at - quickstart_viewed_at AS ms FROM developer_sandboxes
        WHERE created_at >= ? AND first_pass_at IS NOT NULL AND quickstart_viewed_at IS NOT NULL
+         AND first_pass_at >= quickstart_viewed_at
        ORDER BY ms LIMIT ?`,
       [since, cap],
     )
-  ).map((r) => Math.max(0, r.ms));
+  ).map((r) => r.ms);
 
 export const viewedAndPassed = async (db: D1Database, since: number): Promise<number> =>
   (
     await first<{ n: number }>(
       db,
       `SELECT COUNT(*) AS n FROM developer_sandboxes
-       WHERE created_at >= ? AND quickstart_viewed_at IS NOT NULL AND first_pass_at IS NOT NULL`,
+       WHERE created_at >= ? AND quickstart_viewed_at IS NOT NULL AND first_pass_at IS NOT NULL
+         AND first_pass_at >= quickstart_viewed_at`,
       [since],
     )
   )?.n ?? 0;

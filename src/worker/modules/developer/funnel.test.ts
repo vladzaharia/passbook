@@ -6,7 +6,7 @@ import {
 } from '../../../shared/contracts/developer.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
-import { first } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { percentile } from '../metrics/developer-funnel.ts';
@@ -89,6 +89,30 @@ const funnel = (orgId: string) =>
   );
 const beacon = (headers: Record<string, string>, body: unknown) =>
   send('POST', '/developers/beacon', headers, body);
+
+type Person = Awaited<ReturnType<typeof person>>;
+
+/** A test pass made with the sandbox's key, the way a console-first person would. Its id. */
+async function makeTestPass(p: Person): Promise<string> {
+  const detail = (await (
+    await send('GET', `/api/v1/templates/${p.made?.templateId}`, p.key ?? {})
+  ).json()) as {
+    manifest: { sample?: Record<string, unknown> };
+  };
+  const res = await send('POST', '/api/v1/passes', p.key ?? {}, {
+    templateId: p.made?.templateId,
+    input: detail.manifest.sample ?? {},
+  });
+  expect(res.status, await res.clone().text()).toBe(201);
+  return ((await res.json()) as { id: string }).id;
+}
+
+const events = (name: string) => points.filter((x) => x.blobs[0] === name);
+const metrics = async () => {
+  const admin = await makeSession(kit.f, { userId: (await makeUser(kit.f)).id, roles: ['admin'] });
+  const res = await send('GET', '/api/v1/metrics/platform/developer', admin.headers);
+  return DeveloperFunnelSchema.parse(await res.json());
+};
 
 describe('clampViewedAt', () => {
   it('holds a page view to the last 24 hours and never after now', () => {
@@ -197,11 +221,21 @@ describe('POST /developers/beacon', () => {
   it('carries only the org id: no person, pass, key or address reaches an event', async () => {
     const p = await person(true, kit.clock.now() - 30_000);
     const orgId = p.made?.orgId ?? '';
+    const passId = await makeTestPass(p);
+    expect(
+      (
+        await send('PATCH', `/api/v1/passes/${passId}`, p.key ?? {}, {
+          input: { admission: 'VIP' },
+        })
+      ).status,
+    ).toBe(200);
+    // The pass's own events (platform ones) are not the funnel's: count from here.
     points.length = 0;
     await beacon(p.headers, { step: 'view' });
+    await beacon(p.headers, { step: 'run' });
     await beacon(p.headers, { step: 'change' });
     await beacon(p.headers, { step: 'fail', code: 'TEMPLATE_RELEASE_REQUIRED' });
-    expect(points.length).toBeGreaterThanOrEqual(3);
+    expect(points.length).toBeGreaterThanOrEqual(4);
     const everything = JSON.stringify(points);
     for (const secret of [
       p.user.id,
@@ -229,7 +263,7 @@ describe('POST /developers/beacon', () => {
     );
   });
 
-  it('writes the time to first pass once, from the page view', async () => {
+  it('writes the time to first pass once, even when run beacons race', async () => {
     const p = await person(true, kit.clock.now() - 60_000);
     const orgId = p.made?.orgId ?? '';
     const sample = (
@@ -244,12 +278,96 @@ describe('POST /developers/beacon', () => {
       input: sample ?? {},
     });
     points.length = 0;
-    await beacon(p.headers, { step: 'run' });
+    await Promise.all([
+      beacon(p.headers, { step: 'run' }),
+      beacon(p.headers, { step: 'run' }),
+      beacon(p.headers, { step: 'live' }),
+    ]);
     await beacon(p.headers, { step: 'run' });
     const ttfp = points.filter((x) => x.blobs[0] === 'dev.ttfp');
     expect(ttfp).toHaveLength(1);
     const row = await funnel(orgId);
     expect(ttfp[0]?.doubles[0]).toBe((row?.first_pass_at ?? 0) - (row?.quickstart_viewed_at ?? 0));
+  });
+});
+
+describe('what the funnel counts', () => {
+  it('leaves a pass made before the quickstart view out of time to first pass', async () => {
+    const p = await person(true);
+    const orgId = p.made?.orgId ?? '';
+    await makeTestPass(p);
+    kit.clock.advance(5_000);
+    const before = await metrics();
+    points.length = 0;
+    await beacon(p.headers, { step: 'view' });
+    await beacon(p.headers, { step: 'run' });
+    const row = await funnel(orgId);
+    // The columns say what happened; the sample would be negative, so none is written or counted.
+    expect((row?.first_pass_at ?? 0) < (row?.quickstart_viewed_at ?? 0)).toBe(true);
+    expect(events('dev.ttfp')).toHaveLength(0);
+    const after = await metrics();
+    expect(after.ttfpSamples).toBe(before.ttfpSamples);
+    expect(after.ttfpP50Ms).toBe(before.ttfpP50Ms);
+    expect(after.viewed).toBe(before.viewed + 1);
+  });
+
+  it('takes `live` before `run`: it finds the pass and stamps both', async () => {
+    const p = await person(true, kit.clock.now() - 30_000);
+    const orgId = p.made?.orgId ?? '';
+    await makeTestPass(p);
+    await beacon(p.headers, { step: 'live' });
+    const row = await funnel(orgId);
+    expect(row?.first_pass_at).not.toBeNull();
+    expect(row?.first_preview_at).toBe(kit.clock.now());
+  });
+
+  it('writes one event per set-once step however often the beacon is replayed', async () => {
+    const p = await person(true);
+    points.length = 0;
+    for (let i = 0; i < 4; i++) await beacon(p.headers, { step: 'view' });
+    expect(events('dev.view')).toHaveLength(1);
+    await makeTestPass(p);
+    for (let i = 0; i < 3; i++) {
+      await beacon(p.headers, { step: 'run' });
+      await beacon(p.headers, { step: 'live' });
+    }
+    expect(events('dev.run')).toHaveLength(1);
+    expect(events('dev.live')).toHaveLength(1);
+  });
+
+  it('writes `dev.sandbox` once: a retry or a repair makes none', async () => {
+    points.length = 0;
+    const p = await person(true);
+    expect(events('dev.sandbox')).toHaveLength(1);
+    const again = await send('POST', '/api/v1/developer/sandbox', p.headers, {
+      turnstileToken: 'ok',
+    });
+    expect(again.status).toBe(201);
+    expect(events('dev.sandbox')).toHaveLength(1);
+  });
+
+  it('counts `change` and `home` only when the database shows them, and a failure by a known code', async () => {
+    const p = await person(true);
+    points.length = 0;
+    await beacon(p.headers, { step: 'change' });
+    await beacon(p.headers, { step: 'home' });
+    expect(events('dev.change')).toHaveLength(0);
+    expect(events('dev.home')).toHaveLength(0);
+    await beacon(p.headers, { step: 'fail', code: 'MADE_UP_BY_ME' });
+    expect(events('dev.fail').map((e) => e.blobs[4])).toEqual(['OTHER']);
+  });
+
+  it('keeps the first call as stamped when the request log is purged', async () => {
+    const p = await person(true);
+    const orgId = p.made?.orgId ?? '';
+    await makeTestPass(p);
+    await beacon(p.headers, { step: 'run' });
+    const stamped = (await funnel(orgId))?.first_call_at;
+    expect(stamped).not.toBeNull();
+    await run(kit.env.DB, 'DELETE FROM request_log WHERE org_id = ?', [orgId]);
+    kit.clock.advance(8 * DAY);
+    await beacon(p.headers, { step: 'view' });
+    expect((await funnel(orgId))?.first_call_at).toBe(stamped);
   });
 });
 

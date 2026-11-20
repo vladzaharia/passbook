@@ -32,3 +32,11 @@ export const firstPassAt = async (db: D1Database, orgId: string): Promise<number
       [orgId],
     )
   )?.at ?? null;
+
+/** A pass of the org has been changed since it was made: the server's proof of a quickstart "change". */
+export const hasUpdatedPass = async (db: D1Database, orgId: string): Promise<boolean> =>
+  (await first<{ n: number }>(
+    db,
+    'SELECT 1 AS n FROM passes WHERE org_id = ? AND version > 1 LIMIT 1',
+    [orgId],
+  )) !== null;
