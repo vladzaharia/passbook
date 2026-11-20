@@ -126,7 +126,6 @@ export function PlatformChannelsCards() {
             <ChannelRow
               channel="nfc"
               status={tagsOn ? ON : OFF('tags_off')}
-              level="platform"
               control={
                 <Switch
                   aria-label={CHANNEL_COPY.tagsPlatform}

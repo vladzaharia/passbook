@@ -15,7 +15,14 @@ const effective = {
   paper: { on: false, source: 'template', reason: 'template_off' },
   nfc: on,
 };
-const defaults = { mobile: 'on', apple: 'on', google: 'on', samsung: 'on', paper: 'off', nfc: 'on' };
+const defaults = {
+  mobile: 'on',
+  apple: 'on',
+  google: 'on',
+  samsung: 'on',
+  paper: 'off',
+  nfc: 'on',
+};
 const impact = (passes: number, cleared = 0) => [
   { channel: 'apple', passes, rotated: 0, clearedOverrides: cleared },
 ];
@@ -157,7 +164,8 @@ describe('Template channels', () => {
     let puts = 0;
     renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />, {
       '/api/v1/templates/t1/channels': (_u: URL, init?: RequestInit) => {
-        if (init?.method !== 'PUT') return json({ channels: null, revision: 0, effective, defaults });
+        if (init?.method !== 'PUT')
+          return json({ channels: null, revision: 0, effective, defaults });
         const body = JSON.parse(String(init.body));
         if (body.dryRun)
           return json({
