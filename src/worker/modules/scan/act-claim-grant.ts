@@ -2,7 +2,13 @@ import type { Grant } from '../../platform/authority.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { writePart } from '../../platform/authority-include.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { consumeSun, markFollowedUp, sunFollowCheck, sunFreshCheck } from '../nfc/repo-sun.ts';
+import {
+  consumeSun,
+  FOLLOW_UP_MS,
+  markFollowedUp,
+  sunFollowCheck,
+  sunFreshCheck,
+} from '../nfc/repo-sun.ts';
 import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import type { ScanActor } from './guard.ts';
 import type { Claim } from './repo-scans.ts';
@@ -29,7 +35,7 @@ export function claimGrant(ctx: ServiceContext, actor: ScanActor, claim: Claim):
     ...(sun
       ? {
           checks: sun.seen.followUp
-            ? sunFollowCheck(sun.tagId, sun.seen)
+            ? sunFollowCheck(sun.tagId, sun.seen, actor.actorKey, claim.now - FOLLOW_UP_MS)
             : sunFreshCheck(sun.tagId, sun.seen),
           codes: { stale: 'TAG_SUN_REPLAY' },
         }

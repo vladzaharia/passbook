@@ -2,7 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
-import { lt, lte } from '../../platform/authority-expr.ts';
+import { gte, lt, lte } from '../../platform/authority-expr.ts';
 import { first, stmt } from '../../platform/db.ts';
 
 /** What a SUN tag's side row holds: the keyset and key version of its last read, and that read's counter. */
@@ -94,11 +94,16 @@ export const sunFreshCheck = (tagId: string, seen: SunSeen): Check[] => [
 ];
 
 /**
- * A follow-up reuses the read of its own scan: a heads-up of this device on this tag with exactly this
+ * A follow-up reuses the read of its own scan: a heads-up of this device (actor and window pinned here, in the grant) on this tag with exactly this
  * counter, not yet followed up, while the tag's counter has not moved past it. Once: `markFollowedUp` in the
  * same batch makes a second one fail this check.
  */
-export const sunFollowCheck = (tagId: string, seen: SunSeen): Check[] => [
+export const sunFollowCheck = (
+  tagId: string,
+  seen: SunSeen,
+  actorKey: string,
+  since: number,
+): Check[] => [
   sunKeysetCheck(seen),
   exactlyOne(
     'nfc_tag_sun',
@@ -114,6 +119,8 @@ export const sunFollowCheck = (tagId: string, seen: SunSeen): Check[] => [
       sun_ctr: seen.ctr,
       state: 'done',
       outcome: 'heads_up',
+      actor_key: actorKey,
+      at: gte(since),
       sun_followup_at: null,
     },
     undefined,

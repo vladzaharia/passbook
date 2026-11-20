@@ -113,6 +113,24 @@ describe('a staffed door follows up a Secure heads-up', () => {
     expect(await act(t.door, t.tap, { overrideOf: t.scanId })).toMatchObject(refused);
   });
 
+  it('refuses a plain replay after a heads-up that clears itself; only a confirm, override or approval reuses the read', async () => {
+    const t = await headsUp();
+    expect(await act(t.door, t.tap)).toMatchObject(refused);
+    expect(await act(t.door, t.tap, { amount: 1 })).toMatchObject(refused);
+    // The refusals used nothing: the holder's own confirm still works.
+    expect(await act(t.door, t.tap, { confirmed: true })).not.toMatchObject(refused);
+  });
+
+  it('allows a confirm inside five minutes, refuses it after, and refuses another actor', async () => {
+    const t = await headsUp();
+    expect(await act(await letInDoor(), t.tap, { confirmed: true })).toMatchObject(refused);
+    f.kit.clock.advance(4 * 60_000);
+    expect(await act(t.door, t.tap, { confirmed: true })).not.toMatchObject(refused);
+    const late = await headsUp();
+    f.kit.clock.advance(5 * 60_000 + 1);
+    expect(await act(late.door, late.tap, { confirmed: true })).toMatchObject(refused);
+  });
+
   it('refuses a follow-up past its window', async () => {
     const t = await headsUp();
     f.kit.clock.advance(6 * 60_000);

@@ -139,7 +139,9 @@ export async function actTag(
     true,
     'defer',
   );
-  const plan = await planTagReads(ctx, actor, read.id, credentials, req.overrideOf, true);
+  // Only a follow-up of a heads-up may present a read its device already used.
+  const followUp = !!(req.confirmed || req.overrideOf || req.approval);
+  const plan = await planTagReads(ctx, actor, read.id, credentials, req.overrideOf, followUp);
   let view: Awaited<ReturnType<typeof chooseTagPass>> = null;
   const tag: TagAct = {
     ref: plan.ref,
