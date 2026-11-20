@@ -13,6 +13,22 @@ import {
 } from './removal-copy.ts';
 import { useWalletProviderStatus } from './wallet-provider-status.tsx';
 
+/** The Google and Samsung wallets the pass is live in, one effect line each. Mounted only when open. */
+function WalletEffects({ pass }: { pass: { id: string; orgId: string; mode?: Mode | undefined } }) {
+  const mode = useMode();
+  const status = useWalletProviderStatus({ ...pass, mode: pass.mode ?? mode }, true).query.data;
+  const wallets = (status?.providers ?? []).flatMap((p) =>
+    p.lifecycle === 'active' && p.issuance.state === 'enabled' ? [p.provider] : [],
+  );
+  return wallets.length ? (
+    <ul className="mb-4 list-disc pl-5 text-sm text-fg-muted">
+      {removalEffects(wallets).map((line) => (
+        <li key={line}>{line}</li>
+      ))}
+    </ul>
+  ) : null;
+}
+
 /**
  * Remove from Wallet. Apple has no call that deletes a pass from a device, so the copy states what
  * happens: the pass moves to Expired passes and the holder deletes it there.
@@ -34,14 +50,6 @@ export function RemoveDialog({
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  const mode = useMode();
-  const status = useWalletProviderStatus(
-    { id: pass?.id ?? '', orgId: pass?.orgId ?? '', mode: pass?.mode ?? mode },
-    open && pass !== undefined,
-  ).query.data;
-  const wallets = (status?.providers ?? []).flatMap((p) =>
-    p.lifecycle === 'active' && p.issuance.state === 'enabled' ? [p.provider] : [],
-  );
   const many = count > 1;
 
   async function submit() {
@@ -65,9 +73,7 @@ export function RemoveDialog({
         closeButton={false}
         title={many ? `Remove ${count} passes from Wallet?` : 'Remove from Wallet?'}
         description={
-          many
-            ? `${REMOVAL_LIMIT_MANY} ${REMOVAL_UNDO_MANY}`
-            : [REMOVAL_LIMIT, ...removalEffects(wallets), REMOVAL_UNDO].join(' ')
+          many ? `${REMOVAL_LIMIT_MANY} ${REMOVAL_UNDO_MANY}` : `${REMOVAL_LIMIT} ${REMOVAL_UNDO}`
         }
         footer={
           <>
@@ -86,6 +92,7 @@ export function RemoveDialog({
             void submit();
           }}
         >
+          {open && pass && !many ? <WalletEffects pass={pass} /> : null}
           <FormField
             label="Message for holders (optional)"
             error={error}
