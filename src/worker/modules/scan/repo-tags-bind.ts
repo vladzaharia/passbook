@@ -133,6 +133,7 @@ export interface ReplayRow {
   holderName: string | null;
   ownerActive: boolean;
   hint: string;
+  system: string;
   lostAt: number | null;
 }
 
@@ -155,11 +156,12 @@ export async function replayRow(
     holder: string | null;
     owner_status: string | null;
     hint: string;
+    system: string;
     lost_at: number | null;
   }>(
     db,
     `SELECT b.id, b.request_hash, b.scope, b.bound_at, b.ended_at, b.pass_id, p.display_title, p.display_subtitle,
-       tp.name AS template_name, u.name AS holder, u.status AS owner_status, t.hint, t.lost_at
+       tp.name AS template_name, u.name AS holder, u.status AS owner_status, t.hint, t.system, t.lost_at
      FROM tag_bindings b JOIN nfc_tags t ON t.id = b.tag_id JOIN passes p ON p.id = b.pass_id
      LEFT JOIN templates tp ON tp.id = p.template_id LEFT JOIN users u ON u.id = p.owner_user_id
      WHERE b.scanner_id = ? AND b.idempotency_key = ?`,
@@ -179,6 +181,7 @@ export async function replayRow(
         holderName: r.holder,
         ownerActive: r.owner_status === 'active',
         hint: r.hint,
+        system: r.system,
         lostAt: r.lost_at,
       }
     : null;

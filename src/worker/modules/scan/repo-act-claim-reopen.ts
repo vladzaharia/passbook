@@ -41,8 +41,14 @@ export function reopenOnGrant(
   nextAt: number,
   previousState: 'failed' | 'pending',
 ) {
+  // The retry's own read replaces the one the first attempt held, which it already used up.
+  const used = claim.sun && !claim.sun.followUp ? claim.sun : null;
   return g.update('scans', {
-    set: { state: 'pending', at: nextAt },
+    set: {
+      state: 'pending',
+      at: nextAt,
+      ...(used ? { sun_ctr: used.ctr, sun_key_version: used.keyVersion } : {}),
+    },
     where: ownerOf(claim, previousAt, previousState),
     returning: ['at'],
     when: [PRISTINE],

@@ -31,7 +31,7 @@ import {
 import { channelVerdict } from './resolve-channels.ts';
 import { stop, type Waive, windowStop } from './resolve-policy.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
-import { candidateTakesTag } from './tag-assurance.ts';
+import { candidateTakesTag, levelAllows } from './tag-assurance.ts';
 
 /** Additional request-local reads sharing the admission snapshot transaction. */
 export interface EvaluationReadPlan {
@@ -148,7 +148,14 @@ async function evaluateObserved(
   const matchedBy = one.matchedBy;
   delete one.matchedBy;
   // The release read at commit may differ from the one the tag was chosen on.
-  if (actor.tag && !candidateTakesTag(ctx, one)) return stop('refused', 'tag_not_allowed');
+  if (
+    actor.tag &&
+    !(
+      candidateTakesTag(ctx, one, actor.tag.assurance) &&
+      levelAllows(actor.settings.tags?.level, actor.tag.assurance)
+    )
+  )
+    return stop('refused', 'tag_not_allowed');
   if (one.orgRevision == null || one.templateRevision == null || !hasScanPolicy(one))
     return stop('refused', 'not_found', { stale: true });
   const printed = printRefusal(one);

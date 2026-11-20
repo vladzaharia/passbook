@@ -1,4 +1,9 @@
-import { ConflictError, UnavailableError, ValidationError } from '../../platform/errors.ts';
+import {
+  AppError,
+  ConflictError,
+  UnavailableError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
 import {
@@ -8,7 +13,13 @@ import {
   rememberHistoryCapacities,
   requestHashOf,
 } from './act-claim.ts';
-import { claimGrant, claimOnGrant, keysetOnGrant, tagSeenOnGrant } from './act-claim-grant.ts';
+import {
+  claimGrant,
+  claimOnGrant,
+  keysetOnGrant,
+  sunSeenOnGrant,
+  tagSeenOnGrant,
+} from './act-claim-grant.ts';
 import {
   executeClaimedAction,
   replayOrReopenClaim,
@@ -36,7 +47,7 @@ import { findCandidates, planCandidateReads } from './resolve-candidates.ts';
 import { afterReads, capturingContext } from './scan-capture.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
-import type { TagAct } from './tag-scan.ts';
+import { type TagAct, tagRefusal } from './tag-scan.ts';
 
 /**
  * `POST /actions` (SA 8.4): claim the key, evaluate, decide, gate, finalize, answer. A tag read brings
@@ -78,6 +89,8 @@ export async function act(
     ]);
     if (!initial[1] || initial[2]?.results?.[0]?.authorized !== 1) throw staleScanAuthority();
     let req: ActRequest;
+    // The actor as the guard saw it: a tag refusal is recorded without the tag the read chose.
+    const unchosen = actor;
     if ('tag' in request.input) {
       if (!tag) throw staleScanAuthority();
       // A finished scan replays with its stored pass (none for a refused tag), whatever the tag reads
@@ -118,38 +131,58 @@ export async function act(
       () => ({ sql: '1', params: [] }),
       true,
     );
-    const claim = { ...claimBase, now: plan.now };
+    const claim = {
+      ...claimBase,
+      now: plan.now,
+      ...(actor.tag?.sun ? { sun: actor.tag.sun } : {}),
+    };
     const overrideQuery = overrideEvidenceStmt(ctx, actor, req);
     const g = claimGrant(ctx, actor, claim);
     const claimed = claimOnGrant(g, claim);
     tagSeenOnGrant(g, claim);
+    sunSeenOnGrant(g, claim);
     keysetOnGrant(g, ctx.env.DB, captured.credentialKeysetCommitment);
     // One round trip: the grant claims the key, and the reads that follow see that claim.
-    const done = await g.commitWith(
-      afterReads([
-        ...plan.stmts,
-        ...(plan.capacityStmt ? [plan.capacityStmt] : []),
-        ...(overrideQuery ? [overrideQuery] : []),
-        ...(req.approval
-          ? [
-              approverStatement(
-                ctx.env.DB,
-                actor.orgId,
-                req.approval.staffId,
-                actor.settings.approvals === 'desk',
-              ),
-            ]
-          : []),
-        replayScanByKeyStmt(ctx.env.DB, actor.actorKey, req.idempotencyKey),
-        credentialTombstonesClearStmt(
-          ctx.env.DB,
-          actor.orgId,
-          actor.mode,
-          captured.credentialTombstoneRefs,
-          captured.credentialKeysetCommitment,
-        ),
-      ]),
-    );
+    const tagId = actor.tag?.sun ? actor.tag.tagId : null;
+    let done: Awaited<ReturnType<typeof g.commitWith>>;
+    try {
+      done = await g.commitWith(
+        afterReads([
+          ...plan.stmts,
+          ...(plan.capacityStmt ? [plan.capacityStmt] : []),
+          ...(overrideQuery ? [overrideQuery] : []),
+          ...(req.approval
+            ? [
+                approverStatement(
+                  ctx.env.DB,
+                  actor.orgId,
+                  req.approval.staffId,
+                  actor.settings.approvals === 'desk',
+                ),
+              ]
+            : []),
+          replayScanByKeyStmt(ctx.env.DB, actor.actorKey, req.idempotencyKey),
+          credentialTombstonesClearStmt(
+            ctx.env.DB,
+            actor.orgId,
+            actor.mode,
+            captured.credentialTombstoneRefs,
+            captured.credentialKeysetCommitment,
+          ),
+        ]),
+      );
+    } catch (error) {
+      // A read used in between: recorded against the tag, like a sequential replay, without using anything up.
+      if (tagId && error instanceof AppError && error.code === 'TAG_SUN_REPLAY') {
+        ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: 'TAG_SUN_REPLAY' });
+        return await recordTagStop(ctx, unchosen, request, hash, captured, {
+          reason: 'tag_invalid',
+          tagId,
+          miss: false,
+        });
+      }
+      throw error;
+    }
     const results = done.after;
     const candidates = plan.finish(results.slice(0, plan.stmts.length));
     if (plan.capacityStmt) rememberHistoryCapacities(candidates, results[plan.stmts.length]);
@@ -192,6 +225,15 @@ export async function act(
     // Authority lost mid-request is the actor's drift (401 only for a lost credential). A claimed
     // attempt that raced the pass is retried with the same key; a replay or claim that cannot be
     // proven stays masked.
+    // A SUN read used in between: the claim's counter check refused it, so no scan was opened.
+    if (error instanceof AppError && error.code === 'TAG_SUN_REPLAY') {
+      ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: 'TAG_SUN_REPLAY' });
+      return {
+        outcome: tagRefusal('tag_invalid'),
+        evaluatedSnapshot: null,
+        credentialContext: credentials,
+      };
+    }
     if (error instanceof StaleScanAuthority) {
       const raced = error instanceof ScanAttemptRaced;
       const refusal = await staleActorRefusal(ctx, actor, raced);

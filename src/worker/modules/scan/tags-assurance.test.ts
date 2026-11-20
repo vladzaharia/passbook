@@ -144,6 +144,7 @@ describe('evaluateObserved', () => {
       scope: 'pass' as const,
       userId: null,
       passId: pass.id,
+      assurance: 'basic' as const,
     };
     expect(await evaluate(f.kit.ctx, { ...base, tag }, input, {}, observed)).toMatchObject({
       stop: true,

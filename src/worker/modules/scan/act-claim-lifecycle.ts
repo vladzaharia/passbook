@@ -2,7 +2,7 @@ import { AppError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { attempt } from './act-attempt.ts';
 import { type ActRequest, claimOf, rememberHistoryCapacities } from './act-claim.ts';
-import { claimGrant, keysetOnGrant } from './act-claim-grant.ts';
+import { claimGrant, keysetOnGrant, sunSeenOnGrant } from './act-claim-grant.ts';
 import {
   CommittedScanUnconfirmed,
   overrideEvidenceStmt,
@@ -144,13 +144,18 @@ export async function replayOrReopenClaim(
       () => ({ sql: '1', params: [] }),
       true,
     );
-    const claim = { ...claimBase, now: plan.now };
+    const claim = {
+      ...claimBase,
+      now: plan.now,
+      ...(actor.tag?.sun ? { sun: actor.tag.sun } : {}),
+    };
     const claimAt = Math.max(row.at + 1, plan.now);
     if (!Number.isSafeInteger(claimAt)) throw staleScanAuthority();
     const overrideQuery = overrideEvidenceStmt(ctx, actor, req);
     // One grant: the actor is who the guard saw, and only a pristine generation reopens.
     const g = claimGrant(ctx, actor, claim);
     const reopened = reopenOnGrant(g, claim, row.at, claimAt, row.state);
+    sunSeenOnGrant(g, claim);
     if (row.state === 'failed') quarantineOnGrant(g, claim, row.at);
     keysetOnGrant(g, ctx.env.DB, credentials.credentialKeysetCommitment);
     const done = await g.commitWith(

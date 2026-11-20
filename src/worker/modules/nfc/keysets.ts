@@ -26,6 +26,7 @@ import {
   keysetsOf,
   keyVersionsOf,
   liveKeysetCount,
+  orgVersionEnvelopes,
   versionEnvelopes,
 } from './repo-keysets.ts';
 import {
@@ -164,6 +165,7 @@ export async function createKeyset(
       'KEYSET_LIMIT',
     );
   const { meta, file, shown } = pickKeys(input);
+  if (shown === null) await assertKeysUnused(ctx, a.orgId, meta, file);
   const ring = await loadKekRing(ctx.env);
   const id = ctx.ids.id();
   const keyId = ctx.ids.id();
@@ -196,6 +198,32 @@ export async function createKeyset(
   return { ...(await keysetView(ctx, a, id)), keys: shown };
 }
 
+/**
+ * Entered keys must be new to the org: a key any keyset of it, in either mode, has ever used (retired and
+ * disabled ones included) is not a rotation, and one key in two keysets lets a tap's slug be swapped for the other.
+ */
+async function assertKeysUnused(
+  ctx: ServiceContext,
+  orgId: string,
+  meta: Uint8Array,
+  file: Uint8Array,
+): Promise<void> {
+  const ring = await loadKekRing(ctx.env);
+  for (const v of await orgVersionEnvelopes(ctx.env.DB, orgId)) {
+    const old = await openVersion(
+      ring,
+      { orgId, mode: v.mode, keysetId: v.keysetId, keyId: v.id, version: v.version },
+      v.envelope,
+    );
+    if ([old.meta, old.file].some((k) => constantTimeEqual(k, meta) || constantTimeEqual(k, file)))
+      throw new ValidationError(
+        'Enter keys this organization has not used.',
+        [],
+        'KEYSET_KEY_REUSED',
+      );
+  }
+}
+
 /** Adds version n+1 as active; n keeps verifying as retiring until it is retired. One old version at a time. */
 export async function rotateKeyset(
   ctx: ServiceContext,
@@ -216,19 +244,7 @@ export async function rotateKeyset(
   const { meta, file, shown } = pickKeys(input);
   const ring = await loadKekRing(ctx.env);
   const scope = scopeOf(row);
-  // Entered keys must be new: a key already used in this keyset (retired ones included) is not a rotation.
-  if (shown === null)
-    for (const v of await versionEnvelopes(ctx.env.DB, id)) {
-      const old = await openVersion(
-        ring,
-        { ...scope, keyId: v.id, version: v.version },
-        v.envelope,
-      );
-      if (
-        [old.meta, old.file].some((k) => constantTimeEqual(k, meta) || constantTimeEqual(k, file))
-      )
-        throw new ValidationError('Enter keys this keyset has not used.', [], 'KEYSET_KEY_REUSED');
-    }
+  if (shown === null) await assertKeysUnused(ctx, row.orgId, meta, file);
   const keyId = ctx.ids.id();
   await commitKeyset(
     rotateKeysetGrant(ctx, a, id, active.version, {

@@ -9,6 +9,8 @@ import { derivedHmacKey } from '../../platform/crypto.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { safeEqualBytes, toBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { SunSeen } from '../nfc/repo-sun.ts';
+import type { TagAssurance } from '../nfc/systems/types.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { scanTenantSession } from './repo-actor.ts';
@@ -164,6 +166,10 @@ export interface ScanTagAuthority {
   scope: 'pass' | 'user';
   userId: string | null;
   passId: string;
+  /** What the tag proves: a template that asks for more refuses it at commit too. */
+  assurance: TagAssurance;
+  /** A SUN read: the counter the scan's claim consumes, in the same batch. */
+  sun?: SunSeen;
 }
 
 const scanningReadRoles = rolesGranting('scanning:read');

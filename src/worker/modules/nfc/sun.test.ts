@@ -139,7 +139,7 @@ describe('constantTimeEqual', () => {
 describe('parseSunUrl', () => {
   const ok = `https://pass.example/t/door-1?p=${P}&m=${M}`;
   it('parses slug, p and m', () => {
-    expect(parseSunUrl(ok)).toEqual({ slug: 'door-1', p: P, m: M });
+    expect(parseSunUrl(ok)).toEqual({ host: 'pass.example', slug: 'door-1', p: P, m: M });
   });
   it.each([
     ['http scheme', ok.replace('https', 'http')],

@@ -1,7 +1,9 @@
 import type { ScanTag, TagRead } from '../../../shared/contracts/nfc-tags.ts';
 import type { ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { type SunSeen, sunFollowupFrom, sunStoredFrom, sunStoredStmt } from '../nfc/repo-sun.ts';
 import { assuranceOfSystem, recogniseTag } from '../nfc/systems/registry.ts';
+import type { TagEnv } from '../nfc/systems/types.ts';
 import { UID_SYSTEM } from '../nfc/systems/uid.ts';
 import { isGuestPass } from './access.ts';
 import type { ScanActor, ScanTagAuthority } from './actor.ts';
@@ -23,17 +25,19 @@ import {
 import { accepts, matchesEvent } from './resolve-candidates.ts';
 import { dropNfcOff } from './resolve-channels.ts';
 import { evaluate } from './resolve-evaluate.ts';
-import { candidateTakesTag } from './tag-assurance.ts';
+import { candidateTakesTag, levelAllows } from './tag-assurance.ts';
+import { sunFollowupStmt, sunUse, type TagId } from './tags-sun.ts';
 import { resolveCandidateReadTemplates } from './template-read-snapshot.ts';
 
 /** At most this many of a user's passes are evaluated for one tag read (design §3.5). */
 const EVALUATED = 4;
 
-/** Step 1: a fixed UID is a tag; a SUN URL is a Secure tag (refused until its plugin); other NDEF text is a pass code. */
+/** Step 1: a fixed UID is a tag; a SUN URL is a Secure tag (verified next); other NDEF text is a pass code. */
 export function tagReadOf(
   read: TagRead,
+  env: TagEnv,
 ): { uid: string } | { sun: true } | { code: string } | null {
-  const found = recogniseTag(read);
+  const found = recogniseTag(read, env);
   if (found?.system === 'uid') return { uid: found.uid };
   if (found?.system === 'sun') return { sun: true };
   if (read.ndef) return { code: read.ndef.value };
@@ -48,36 +52,48 @@ export interface TagPlan {
 }
 
 export type TagFound =
-  | { stop: ScanReason; unknown?: true; tagId?: string }
+  | { stop: ScanReason; unknown?: true; tagId?: string; sun?: SunSeen }
   | {
       stop: null;
       tag: TagState & { binding: NonNullable<TagState['binding']> };
       candidates: Candidate[];
       inside: Set<string>;
       overridden: string | null;
+      /** A SUN read: what the act that uses it consumes. */
+      sun: SunSeen | null;
     };
 
 /** Steps 2-4 in one batch: the org switch, the tag and its binding, the other mode, and the candidates. */
 export async function planTagReads(
   ctx: ServiceContext,
   actor: ScanActor,
-  uid: string,
+  id: TagId,
   refs: CredentialTombstoneSnapshot,
   overrideOf?: string,
+  /** An act: a SUN read its own device's heads-up already used may be presented once more. */
+  followUp = false,
 ): Promise<TagPlan> {
   const db = ctx.env.DB;
   const other = actor.mode === 'live' ? 'test' : 'live';
-  const [own, otherRef] = await Promise.all([
-    UID_SYSTEM.identify(ctx.env, actor.orgId, actor.mode, uid),
-    UID_SYSTEM.identify(ctx.env, actor.orgId, other, uid),
-  ]);
+  const sun = 'sun' in id ? id.sun : null;
+  // A SUN read of the other mode never gets here (its keyset says so); its UID is not asked for again.
+  const [own, otherRef] = sun
+    ? [sun, sun]
+    : await Promise.all([
+        UID_SYSTEM.identify(ctx.env, actor.orgId, actor.mode, (id as { uid: string }).uid),
+        UID_SYSTEM.identify(ctx.env, actor.orgId, other, (id as { uid: string }).uid),
+      ]);
   const sessionId = actor.scanningSession?.id;
-  const stmts = [
+  const stmts: D1PreparedStatement[] = [
     tagsSwitchStmt(db, actor.orgId),
     tagStateStmt(db, actor.orgId, actor.mode, own.ref),
     otherModeTagStmt(db, actor.orgId, other, otherRef.ref),
     tagCandidatesStmt(db, actor.orgId, actor.mode, own.ref),
   ];
+  const sunAt = sun ? stmts.length : -1;
+  if (sun) stmts.push(sunStoredStmt(db, actor.orgId, actor.mode, own.ref));
+  const followAt = sun && followUp ? stmts.length : -1;
+  if (sun && followUp) stmts.push(sunFollowupStmt(ctx, actor, own.ref, sun));
   // Read on every door with tracked zones: an exit prefers the pass inside, an entry stops at it.
   const insideAt = sessionId ? stmts.length : -1;
   if (sessionId) stmts.push(tagInsideStmt(db, actor.orgId, actor.mode, own.ref, sessionId));
@@ -96,30 +112,56 @@ export async function planTagReads(
         return { stop: 'not_found', unknown: true };
       }
       const tagId = tag.id;
-      if (tag.system !== 'uid') return { stop: 'tag_invalid', tagId };
+      // A UID read of a Secure tag, or a SUN read of a Basic one, is never the tag (TS7).
+      if (tag.system !== (sun ? 'sun' : 'uid')) return { stop: 'tag_invalid', tagId };
+      // From here a SUN read is the tag's own, newer than its last use: a refusal that names the tag uses it.
+      let seen: SunSeen | undefined;
+      if (sun) {
+        const used = sunUse(ctx, actor.orgId, sun, sunStoredFrom(results[sunAt]), {
+          scanId: followAt < 0 ? null : sunFollowupFrom(results[followAt]),
+          overrideOf,
+        });
+        if ('refused' in used) {
+          ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: used.refused });
+          return { stop: 'tag_invalid', tagId };
+        }
+        seen = used.seen;
+      }
+      // A follow-up uses nothing new, so a refusal after it records no counter.
+      const halt = (reason: ScanReason): TagFound => ({
+        stop: reason,
+        tagId,
+        ...(seen && !seen.followUp ? { sun: seen } : {}),
+      });
+      const assurance = assuranceOfSystem(tag.system);
+      // The session's level: a Secure-only door never takes a Basic tag, whatever the template says.
+      if (!levelAllows(actor.settings.tags?.level, assurance)) {
+        ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: 'TAG_LEVEL_LOW' });
+        return halt('tag_not_allowed');
+      }
       if (tag.status !== 'active') {
         ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: 'TAG_RETIRED' });
-        return { stop: 'not_found', tagId };
+        return halt('not_found');
       }
-      if (tag.lostAt !== null) return { stop: 'tag_lost', tagId };
+      if (tag.lostAt !== null) return halt('tag_lost');
       const binding = tag.binding;
-      if (!binding) return { stop: 'not_found', tagId };
+      if (!binding) return halt('not_found');
       if (binding.scope === 'user' && !binding.userActive) {
         ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: 'TAG_USER_DISABLED' });
-        return { stop: 'not_found', tagId };
+        return halt('not_found');
       }
       let candidates = candidatesOf(results[3]);
       if (candidates.some((c) => c.credentialKeysetCommitment !== refs.credentialKeysetCommitment))
-        return { stop: 'not_found', tagId };
+        return halt('not_found');
       for (const c of candidates) Object.assign(c, refs);
       // A pending transfer is not ownership yet (review-t1 I4); a pass binding keeps today's answer.
       if (binding.scope === 'user') candidates = candidates.filter((c) => !c.transferPending);
-      if (!candidates.length) return { stop: 'not_found', tagId };
+      if (!candidates.length) return halt('not_found');
       // A template that asks for a stronger tag than this one is never admitted on it.
-      candidates = candidates.filter((c) => candidateTakesTag(ctx, c));
+      candidates = candidates.filter((c) => candidateTakesTag(ctx, c, assurance));
       if (!candidates.length) {
         ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: 'TAG_ASSURANCE_LOW' });
-        return { stop: 'tag_not_allowed', tagId };
+        return halt('tag_not_allowed');
       }
       const overridden =
         overrideAt < 0 ? null : (passIdsOf(results[overrideAt]).values().next().value ?? null);
@@ -129,6 +171,7 @@ export async function planTagReads(
         candidates,
         inside: insideAt < 0 ? new Set() : passIdsOf(results[insideAt]),
         overridden,
+        sun: seen ?? null,
       };
     },
   };
@@ -179,6 +222,8 @@ export async function chooseTagPass(
       scope: tag.binding.scope,
       userId: tag.binding.userId,
       passId: chosen.pass.id,
+      assurance: assuranceOfSystem(tag.system),
+      ...(found.sun ? { sun: found.sun } : {}),
     };
     const desk = actor.role === 'desk' || actor.role === 'manager';
     const view: ScanTag | null = desk

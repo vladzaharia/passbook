@@ -1,6 +1,7 @@
 import type { ScanTag } from '../../../shared/contracts/nfc-tags.ts';
 import type { ScanCodeInput, ScanOutcome, ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { SunSeen } from '../nfc/repo-sun.ts';
 import { tagRef } from '../nfc/tag-ref.ts';
 import type { ScanActor } from './actor.ts';
 import type { CountsRead } from './counts.ts';
@@ -14,6 +15,8 @@ export interface TagStop {
   reason: ScanReason;
   tagId: string | null;
   miss: boolean;
+  /** A verified SUN read of that tag: the refusal still uses it up. */
+  sun?: SunSeen;
 }
 
 /** What `act` needs from a tag read: its reads ride the first batch, then it names the pass. */

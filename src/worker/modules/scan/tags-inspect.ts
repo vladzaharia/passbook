@@ -6,18 +6,11 @@ import type {
 } from '../../../shared/contracts/nfc-tags.ts';
 import type { ScanCodeInput, ScanRole } from '../../../shared/contracts/scan.ts';
 import { validityOf } from '../../../shared/pass-view/validity.ts';
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tagsEnabled } from '../nfc/policy.ts';
 import { tagByRef, tagView } from '../nfc/repo-tags.ts';
-import { recogniseTag } from '../nfc/systems/registry.ts';
-import { UID_SYSTEM } from '../nfc/systems/uid.ts';
-import { readableUid } from '../nfc/tag-ref.ts';
+import { assuranceOfSystem } from '../nfc/systems/registry.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import {
   type CredentialTombstoneSnapshot,
@@ -34,6 +27,7 @@ import {
   matchesEvent,
 } from './resolve-candidates.ts';
 import { ROLE_RANK } from './rules.ts';
+import { assertReadMatches, identifyRead, type ReadIdentity, refusedRead } from './tags-sun.ts';
 
 type Inspect = z.infer<typeof ScanTagInspectResponseSchema>;
 type TagAssignRole = z.infer<typeof TagAssignRoleSchema>;
@@ -63,17 +57,6 @@ export function tagRights(actor: ScanActor): TagRights & { scannerId: string } {
   };
 }
 
-/** The UID a bind needs. */
-export function tagUid(read: TagRead): string {
-  const found = recogniseTag(read);
-  if (found?.system === 'uid') return found.uid;
-  if (found?.system === 'sun')
-    throw new ValidationError("Can't read this tag. Try another tag.", [], 'TAG_UNREADABLE');
-  if (read.uidRandom || (read.uid && readableUid({ uid: read.uid }) === null))
-    throw new ValidationError('This tag changes its ID. Try another tag.', [], 'TAG_UID_RANDOM');
-  throw new ValidationError("Can't read this tag. Try another tag.", [], 'TAG_UNREADABLE');
-}
-
 const BLANK: Omit<Inspect, 'state'> = {
   hint: null,
   assurance: null,
@@ -93,20 +76,29 @@ export async function inspectTag(
   const { orgId, mode } = actor;
   const db = ctx.env.DB;
   if (!(await tagsEnabled(ctx, orgId))) return { ...BLANK, state: 'not_allowed' };
-  const found = recogniseTag(read);
-  if (found?.system === 'sun') {
-    ctx.log.info('scan.tag_refused', { orgId, code: 'TAG_SUN_UNSUPPORTED' });
-    return { ...BLANK, state: 'invalid' };
-  }
-  if (found?.system !== 'uid') return { ...BLANK, state: 'invalid' };
   await ensureCredentialRefKeyset(db, ctx.env);
-  const { ref, hint } = await UID_SYSTEM.identify(ctx.env, orgId, mode, found.uid);
+  let identity: ReadIdentity;
+  try {
+    identity = await identifyRead(ctx, actor, read);
+  } catch (error) {
+    // An unreadable tag, or a Secure read that failed its check, is `invalid`; nothing says which.
+    if (refusedRead(error)) return { ...BLANK, state: 'invalid' };
+    throw error;
+  }
+  const { ref, hint } = identity;
+  const assurance = assuranceOfSystem(identity.system);
   const tag = await tagByRef(db, orgId, mode, ref);
+  try {
+    await assertReadMatches(ctx, actor, identity, tag);
+  } catch (error) {
+    if (refusedRead(error)) return { ...BLANK, state: 'invalid' };
+    throw error;
+  }
   if (!tag) {
     await bumpTagCap(db, 'unknown', scannerId, ctx.clock.now());
-    return { ...BLANK, state: 'new', hint, assurance: UID_SYSTEM.assurance };
+    return { ...BLANK, state: 'new', hint, assurance };
   }
-  const base = { ...BLANK, hint: tag.hint, assurance: UID_SYSTEM.assurance };
+  const base = { ...BLANK, hint: tag.hint, assurance };
   if (tag.status === 'retired') return { ...base, state: 'retired' };
   const binding = (await tagView(db, orgId, mode, tag.id))?.binding ?? null;
   if (binding) {

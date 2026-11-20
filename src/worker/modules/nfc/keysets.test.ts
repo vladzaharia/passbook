@@ -394,3 +394,40 @@ describe('tenant isolation', () => {
     await expect(a.t.operator.authority()).rejects.toMatchObject({ status: 403 });
   });
 });
+
+describe('entered keys', () => {
+  it('may not repeat in any keyset of the org, in either mode', async () => {
+    const t = await f.org();
+    const live = await t.admin.authority('live');
+    const test = await t.admin.authority('test');
+    const keys = {
+      metaKey: '0102030405060708090a0b0c0d0e0f10',
+      fileKey: '1112131415161718191a1b1c1d1e1f20',
+    };
+    await createKeyset(ctx(), live, { name: 'One', diversify: false, ...keys });
+    await refused(
+      createKeyset(ctx(), live, { name: 'Two', diversify: false, ...keys }),
+      'KEYSET_KEY_REUSED',
+    );
+    await refused(
+      createKeyset(ctx(), test, { name: 'Test', diversify: false, ...keys }),
+      'KEYSET_KEY_REUSED',
+    );
+    // One key of the pair is enough to be a repeat.
+    await refused(
+      createKeyset(ctx(), test, {
+        name: 'Test',
+        diversify: false,
+        ...keys,
+        fileKey: '2122232425262728292a2b2c2d2e2f30',
+      }),
+      'KEYSET_KEY_REUSED',
+    );
+    await createKeyset(ctx(), test, {
+      name: 'Test',
+      diversify: false,
+      metaKey: '3132333435363738393a3b3c3d3e3f40',
+      fileKey: '4142434445464748494a4b4c4d4e4f50',
+    });
+  });
+});

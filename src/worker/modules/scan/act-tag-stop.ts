@@ -1,6 +1,6 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type ActRequestInput, claimOf } from './act-claim.ts';
-import { claimGrant, claimOnGrant, tagSeenOnGrant } from './act-claim-grant.ts';
+import { claimGrant, claimOnGrant, sunSeenOnGrant, tagSeenOnGrant } from './act-claim-grant.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import { finishStop } from './act-stop.ts';
 import type { ScanActor } from './actor.ts';
@@ -28,10 +28,15 @@ export async function recordTagStop(
 ): Promise<ScanEvaluation> {
   const req = { ...request, input: NO_PASS };
   const scanId = ctx.ids.ordered();
-  const claim = { ...claimOf(ctx, actor, req, scanId, requestHash), tagId: stop.tagId };
+  const claim = {
+    ...claimOf(ctx, actor, req, scanId, requestHash),
+    tagId: stop.tagId,
+    ...(stop.sun ? { sun: stop.sun } : {}),
+  };
   const g = claimGrant(ctx, actor, claim);
   const claimed = claimOnGrant(g, claim);
   tagSeenOnGrant(g, claim);
+  sunSeenOnGrant(g, claim);
   const writes = await g.commit();
   const acquired = writes[g.indexOf(claimed)]?.results?.[0] as { at?: unknown } | undefined;
   // The same key claimed in between: its own request answers it.

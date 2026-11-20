@@ -91,7 +91,7 @@ describe('the nfc level: tag bind', () => {
     const grant = () => {
       const plan: BindPlan = {
         tagId: f.kit.ctx.ids.id(),
-        newTag: { ref, hint, label: null },
+        newTag: { system: UID_SYSTEM.id, ref, hint, label: null },
         bindingId: f.kit.ctx.ids.id(),
         passId: pass.id,
         scope: 'pass',

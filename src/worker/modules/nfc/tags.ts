@@ -122,6 +122,9 @@ export async function bindTag(
       );
     await assertPassTakesTag(ctx, orgId, pass.id);
     const tag = await tagByRef(ctx.env.DB, orgId, mode, ref);
+    // A typed ID is a UID, and a Secure tag is never its UID: it must be tapped.
+    if (tag && tag.system !== 'uid')
+      throw conflict('This is a Secure tag. Tap it on a scanner.', 'TAG_SECURE_NEEDS_TAP');
     const active = tag ? await activeBinding(ctx.env.DB, tag.id) : null;
     const decision = decideBind(tag, active, pass, req);
     if (decision.status === 'already_bound')
@@ -130,7 +133,7 @@ export async function bindTag(
       throw conflict('This organization has the most tags allowed.', 'TAG_LIMIT');
     const plan: BindPlan = {
       tagId: tag?.id ?? ctx.ids.id(),
-      newTag: tag ? null : { ref, hint, label: req.label ?? null },
+      newTag: tag ? null : { ref, hint, label: req.label ?? null, system: 'uid' },
       bindingId: ctx.ids.id(),
       passId: pass.id,
       scope: req.scope,
