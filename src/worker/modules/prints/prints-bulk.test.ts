@@ -107,7 +107,8 @@ describe('bulk print', () => {
       { ids: [pass.id], orgId: kit.org.id },
       key,
     );
-    expect(asKey.status).toBeGreaterThanOrEqual(401);
+    // The document lists passes:write for this route: the key starts a job, and prints-bulk-key.test.ts covers its limits.
+    expect(asKey.status).toBe(202);
   });
 
   it('answers nothing-to-print without a job when no pass can print', async () => {

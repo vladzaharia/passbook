@@ -35,6 +35,7 @@ import { actTag, resolveTag } from './resolve-tag.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
 import { registerScanEnrollmentRoutes } from './routes-enrollment.ts';
+import { tillKeyAccess } from './routes-key-access.ts';
 import { registerScanOccupancyRoutes } from './routes-occupancy.ts';
 import { registerScanRoleRoutes } from './routes-role.ts';
 import { registerScanSessionHoursRoutes } from './routes-session-hours.ts';
@@ -105,6 +106,7 @@ scanRoutes.use('/scans/*', (c, next) => {
   if (c.req.method === 'POST' && /^\/[^/]+\/undo$/.test(suffix)) return operateActor(c, next);
   return manageActor(c, next);
 });
+scanRoutes.use('*', tillKeyAccess);
 scanRoutes.use('*', async (c, next) => {
   await next();
   if (!c.res.headers.has('cache-control')) c.header('cache-control', 'no-store');
