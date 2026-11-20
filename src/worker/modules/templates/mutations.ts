@@ -4,6 +4,7 @@ import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { assertTemplateFreeOfTagTypes } from '../nfc/tag-types.ts';
 import { purgeWalletArt } from '../wallet-providers/projection-art-purge.ts';
 import {
   assertTemplateAuthority,
@@ -181,6 +182,7 @@ export async function removeTemplate(
   const denied = baked(row);
   if (denied) throw denied;
   const authority = await authorizeTemplateMutation(ctx, auth, row, 'templates:publish');
+  await assertTemplateFreeOfTagTypes(ctx, id, true);
   const archive = async () => {
     await archiveTemplate(ctx, auth, row, authority);
     return 'archived' as const;
@@ -214,8 +216,11 @@ export async function removeTemplate(
       return templateChanged(ctx, auth, row, authority);
     }
   } catch (error) {
-    // A pass was created after the count; the foreign key keeps the rows.
-    if (classifyD1Error(error)?.kind === 'foreign_key') return archive();
+    if (classifyD1Error(error)?.kind === 'foreign_key') {
+      // 0128 keeps a template a tag type names; only then is it not a pass created after the count.
+      await assertTemplateFreeOfTagTypes(ctx, id, false);
+      return archive();
+    }
     throw error;
   }
   const result = await finishDelete();
