@@ -16,6 +16,7 @@ import { api } from '../../../lib/api.ts';
 import { PAPER_CSS } from '../../../paper/css.ts';
 import { drawPaperCode, type PaperDrawing } from '../../../paper/drawing.ts';
 import { PaperTicket } from '../../../paper/ticket.tsx';
+import { usePaperCss } from '../../../paper/use-paper-css.ts';
 import { loadBarcodeEngine } from '../../../pass-card/barcode-engine.ts';
 import {
   Badge,
@@ -88,6 +89,7 @@ export function PaperPreview({
   /** Writes the block; absent when the draft is read-only. */
   onEdit?: ((patch: PaperPatch) => void) | undefined;
 }) {
+  const inlineCss = usePaperCss();
   const channels = useTemplatePaper(templateId, orgId);
   const saved = useMemo(() => resolvePaper(manifest.paper), [manifest.paper]);
   const [picked, setPicked] = useState<PaperSize>(saved.size);
@@ -113,7 +115,7 @@ export function PaperPreview({
 
   return (
     <div className="flex w-full flex-col items-center gap-3" data-testid="designer-paper">
-      <style>{PAPER_CSS}</style>
+      {inlineCss ? <style>{PAPER_CSS}</style> : null}
       {blocked && paper ? (
         <EmptyState inline art="lock" title={channelReason('paper', blocked)} />
       ) : (
