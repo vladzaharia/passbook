@@ -1,0 +1,202 @@
+/*
+ * The operator console. Tokens map the PassBook set; verdict hues are the scanner's. Fine pointer:
+ * 36 px controls, 52 px rows. Touch: 44 px, no status bar. Below 1024 one column: the list, and a
+ * person opens over it with Back.
+ */
+.op-app {
+  --op-page: var(--pk-surface-page);
+  --op-raised: var(--pk-surface-raised);
+  --op-inset: color-mix(in oklab, var(--pk-surface-sunken) 55%, var(--pk-surface-raised));
+  --op-line: var(--pk-border-subtle);
+  --op-muted: var(--pk-text-muted);
+  --op-hover: var(--pk-state-hover-tint);
+  --op-chip: color-mix(in oklab, var(--pk-text-muted) 18%, var(--pk-surface-raised));
+  --op-chip-fg: var(--pk-text-default);
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: 56px minmax(0, 1fr) 28px;
+  background: var(--op-page);
+  color: var(--pk-text-default);
+  font-family: var(--pk-font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+}
+.op-app *,
+.op-app *::before,
+.op-app *::after {
+  box-sizing: border-box;
+}
+.op-app :focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+
+/* status bar */
+.op-status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 14px;
+  overflow: hidden;
+  border-top: 1px solid var(--op-line);
+  background: var(--op-raised);
+  color: var(--op-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.op-status-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.op-status-keys {
+  display: inline-flex;
+  gap: 14px;
+  margin-inline-start: auto;
+}
+.op-status-keys span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.op-status .op-kbd {
+  min-width: 18px;
+  height: 18px;
+  font-size: 10.5px;
+}
+@media (pointer: coarse) {
+  .op-app {
+    grid-template-rows: 56px minmax(0, 1fr);
+  }
+  .op-status {
+    display: none;
+  }
+  .op-field {
+    height: 52px;
+  }
+  .op-row-main,
+  .op-tab {
+    min-height: 44px;
+  }
+  .op-row {
+    min-height: 60px;
+  }
+}
+
+/* shortcuts */
+.op-help {
+  display: grid;
+  gap: 16px;
+}
+.op-help h3 {
+  margin-bottom: 6px;
+  color: var(--op-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.op-help dl > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--op-line);
+}
+.op-help dd {
+  display: flex;
+  gap: 4px;
+}
+
+/* breakpoints: the admits chip folds to a count, then one column */
+@media (max-width: 1279px) {
+  .op-admits-names {
+    display: none;
+  }
+  .op-admits-count {
+    display: inline;
+  }
+}
+@media (max-width: 899px) {
+  .op-admits {
+    display: none;
+  }
+}
+@media (max-width: 1023px) {
+  .op-close {
+    display: none;
+  }
+  .op-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .op-list-pane {
+    border-inline-end: 0;
+  }
+  .op-record-pane {
+    position: absolute;
+    inset: 56px 0 28px;
+    z-index: 5;
+    padding: 12px 16px 24px;
+    background: var(--op-page);
+    transform: translateX(100%);
+    visibility: hidden;
+  }
+  .op-app[data-record="open"] .op-record-pane {
+    transform: none;
+    visibility: visible;
+  }
+  .op-app:not([data-record="open"]) .op-idle {
+    display: none;
+  }
+  .op-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    margin-bottom: 8px;
+    padding: 0 8px;
+    border: 0;
+    background: transparent;
+    color: var(--pk-accent-fg);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .op-back svg {
+    width: 18px;
+    height: 18px;
+  }
+  .op-org-sub,
+  .op-chip-sub {
+    display: none;
+  }
+}
+@media (max-width: 1023px) and (pointer: coarse) {
+  .op-record-pane {
+    inset-block-end: 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .op-record-pane {
+    transition:
+      transform var(--pk-duration-moderate, 200ms) var(--pk-ease-enter, ease-out),
+      visibility 0s linear var(--pk-duration-moderate, 200ms);
+  }
+  .op-app[data-record="open"] .op-record-pane {
+    transition-delay: 0s;
+  }
+  .op-record,
+  .op-idle {
+    animation: op-swap 160ms var(--pk-ease-enter, ease-out) backwards;
+  }
+  @keyframes op-swap {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+}

@@ -1,0 +1,272 @@
+/* the record pane */
+.op-record-pane {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 74px 24px 24px;
+}
+.op-record-pane:focus-visible {
+  outline: none;
+}
+.op-back {
+  display: none;
+}
+.op-close {
+  position: absolute;
+  inset: 20px 24px auto auto;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: 6px;
+  background: var(--op-raised);
+  color: var(--pk-text-strong);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.op-checking {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px;
+  color: var(--op-muted);
+}
+.op-scan-card {
+  --scan-card-w: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+}
+.op-scan-card .scan-result {
+  width: 100%;
+}
+.op-idle {
+  max-width: 880px;
+  margin: 0 auto;
+}
+.op-closed {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--scan-system);
+  color: var(--scan-system-on);
+}
+.op-last {
+  position: relative;
+  border: 1px solid var(--op-line);
+  border-radius: 16px;
+  background: var(--op-raised);
+  box-shadow: var(--pk-elevation-1);
+}
+.op-last > .wl-art {
+  position: absolute;
+  inset: auto 150px 100% auto;
+  pointer-events: none;
+}
+.op-last-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 22px;
+}
+.op-last-actions {
+  display: flex;
+  gap: 8px;
+}
+.op-eyebrow {
+  color: var(--op-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.op-last-name,
+.op-name {
+  overflow: hidden;
+  color: var(--pk-text-strong);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 30px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.op-last-name,
+.op-name {
+  width: fit-content;
+  max-width: 100%;
+}
+.op-last-name:focus-visible,
+.op-name:focus-visible {
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.op-last-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  color: var(--op-muted);
+  font-size: 14px;
+}
+.op-last-verdict b {
+  color: var(--pk-success);
+  font-weight: 600;
+}
+.op-last-verdict[data-tone="no"] b {
+  color: var(--pk-danger);
+}
+.op-last-verdict[data-tone="hu"] b {
+  color: var(--pk-warning);
+}
+.op-last-empty {
+  padding: 28px 24px;
+}
+.op-last-empty h2 {
+  color: var(--pk-text-strong);
+  font-size: 20px;
+  font-weight: 600;
+}
+.op-last-empty p {
+  margin-top: 4px;
+  color: var(--op-muted);
+}
+.op-prev {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--op-line);
+}
+.op-mini {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 16px;
+}
+.op-mini + .op-mini {
+  border-inline-start: 1px solid var(--op-line);
+}
+.op-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.op-tile {
+  display: block;
+  padding: 14px 16px;
+  border: 1px solid var(--op-line);
+  border-radius: 12px;
+  background: var(--op-raised);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+button.op-tile {
+  cursor: pointer;
+}
+.op-tile-k,
+.op-tile-s {
+  display: block;
+  color: var(--op-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+.op-tile-v {
+  display: block;
+  margin-top: 4px;
+  color: var(--pk-text-strong);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 34px;
+}
+.op-tile-v small {
+  color: var(--op-muted);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.op-tile[data-tone="alert"] .op-tile-v {
+  color: var(--pk-danger);
+}
+.op-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px dashed var(--op-line);
+  border-radius: 12px;
+  color: var(--op-muted);
+  font-size: 13px;
+}
+.op-keys span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* the person (interim record) */
+.op-record {
+  max-width: 980px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--op-line);
+  border-radius: 16px;
+  background: var(--op-raised);
+  box-shadow: var(--pk-elevation-1);
+}
+.op-band {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  height: 44px;
+  background: var(--op-inset);
+  color: var(--op-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+.op-band svg {
+  width: 16px;
+  height: 16px;
+}
+.op-record-body {
+  display: grid;
+  gap: 16px;
+  padding: 20px 22px;
+}
+.op-ident {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+}
+.op-ident-meta {
+  color: var(--op-muted);
+  font-size: 14px;
+}
+.op-ident-status {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+.op-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.op-actions .op-kbd {
+  margin-inline-start: 6px;
+  background: transparent;
+  border-color: color-mix(in oklab, currentColor 35%, transparent);
+  box-shadow: none;
+  color: inherit;
+}
