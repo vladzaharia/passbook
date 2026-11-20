@@ -179,6 +179,7 @@ export interface ProjectionRetirementMetadata {
   sourceReleaseId: string;
   accountId: string;
   accountRevision: number;
+  accountEpoch: number | null;
   providerIdentityHash: string;
   adapterRevision: number;
   policyRevision: number;
@@ -200,7 +201,8 @@ export async function getProjectionRetirementMetadata(
     `SELECT r.id, r.generation, r.org_id AS orgId, r.mode, r.provider, r.template_id AS templateId,
       r.version, c.id AS candidateId, c.candidate_hash AS candidateHash,
       c.source_release_id AS sourceReleaseId, c.provider_account_id AS accountId,
-      c.provider_account_revision AS accountRevision, c.provider_identity_hash AS providerIdentityHash,
+      c.provider_account_revision AS accountRevision, c.provider_account_epoch AS accountEpoch,
+      c.provider_identity_hash AS providerIdentityHash,
       c.adapter_revision AS adapterRevision, c.audience_policy_revision AS policyRevision
       FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id
         AND c.org_id = r.org_id AND c.mode = r.mode AND c.provider = r.provider

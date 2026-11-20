@@ -1,7 +1,7 @@
 import type { WalletProviderScope } from '../../../shared/contracts/wallet-providers.ts';
 import { first } from '../../platform/db.ts';
 import { samsungInitialWindowSql } from './repo-callbacks-window.ts';
-import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
+import { walletOpReadCurrentSql } from './repo-instance-current.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 
 export { saveAccountConfiguration, transitionAccount } from './repo-account-writes.ts';
@@ -11,6 +11,8 @@ export type WalletProviderRetirementProof = {
   mode: WalletProviderScope['mode'];
   accountId: string;
   accountRevision: number;
+  /** When set, the account is pinned by its epoch (a same-identity rotation keeps it) instead of its revision. */
+  authorityEpoch?: number | undefined;
   instanceId: string;
   operationId: string;
   version: number;
@@ -33,6 +35,7 @@ export interface SamsungPromotedRefreshProof {
   mode: WalletProviderScope['mode'];
   accountId: string;
   accountRevision: number;
+  authorityEpoch?: number | undefined;
   projectionReleaseId: string;
   instanceId: string;
   refHash: string;
@@ -74,6 +77,9 @@ export interface AccountRow {
  */
 export const REVISION_EXPR =
   'CASE WHEN a.credential_id IS NULL THEN a.enrolment_revision ELSE a.revision END';
+/** The account pin: the epoch when the proof carries one, else the revision (the enrolment gate still applies). */
+const pinExpr = (proof: { authorityEpoch?: number | undefined }) =>
+  proof.authorityEpoch === undefined ? REVISION_EXPR : 'a.authority_epoch';
 const OWN_KEY = 'a.hmac_kek_version, a.hmac_iv, a.hmac_wrapped_dek, a.hmac_ciphertext';
 /** An account the runtime can open: a legacy envelope or its own key. */
 const OPENABLE =
@@ -145,7 +151,7 @@ export function findRetirementAccount(
     db,
     `WITH clock(now_ms) AS (SELECT ?)
     SELECT a.id, a.org_id, a.mode, a.provider, ${REVISION_EXPR} AS revision, a.credential_id,
-      a.revoked_at, a.updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext, ${OWN_KEY}
+      a.revoked_at, a.updated_at, a.authority_epoch, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext, ${OWN_KEY}
     FROM wallet_provider_accounts a LEFT JOIN wallet_provider_credentials c
       ON c.id = a.credential_id AND c.account_id = a.id AND c.org_id = a.org_id
       AND c.mode = a.mode AND c.provider = a.provider
@@ -153,20 +159,20 @@ export function findRetirementAccount(
       AND i.mode = a.mode AND i.provider = a.provider
     JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id AND op.instance_id = i.id
     CROSS JOIN clock
-    WHERE (a.org_id = ? AND a.mode = ? AND a.provider = ? AND a.id = ? AND ${REVISION_EXPR} = ?
+    WHERE (a.org_id = ? AND a.mode = ? AND a.provider = ? AND a.id = ? AND ${pinExpr(proof)} = ?
       AND ${OPENABLE} AND a.revoked_at IS NULL)
       AND (i.id = ? AND i.lifecycle = 'revoking'
         AND op.id = ? AND op.version = ? AND op.kind = 'revoke' AND op.state = 'claimed')
       AND (op.claim_hash = ? AND op.claim_expires_at > clock.now_ms AND op.projection_release_id = ?
         AND op.credential_keyset_commitment = ${pinnedKeysetSql} AND i.credential_keyset_commitment = op.credential_keyset_commitment)
-      AND (${target}) AND (${walletInstanceOperationCurrentSql('i', 'op', 'clock.now_ms', 'revoke')})`,
+      AND (${target}) AND (${walletOpReadCurrentSql('i', 'op')})`,
     [
       now,
       proof.orgId,
       proof.mode,
       proof.provider,
       proof.accountId,
-      proof.accountRevision,
+      proof.authorityEpoch ?? proof.accountRevision,
       proof.instanceId,
       proof.operationId,
       proof.version,
@@ -191,7 +197,7 @@ export function findSamsungPromotedRefreshAccount(
     db,
     `WITH clock(now_ms) AS (SELECT ?)
     SELECT a.id, a.org_id, a.mode, a.provider, ${REVISION_EXPR} AS revision, a.credential_id,
-      a.revoked_at, a.updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext, ${OWN_KEY}
+      a.revoked_at, a.updated_at, a.authority_epoch, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext, ${OWN_KEY}
     FROM wallet_provider_accounts a LEFT JOIN wallet_provider_credentials c
       ON c.id = a.credential_id AND c.account_id = a.id AND c.org_id = a.org_id
       AND c.mode = a.mode AND c.provider = a.provider
@@ -202,12 +208,12 @@ export function findSamsungPromotedRefreshAccount(
       AND ${proof.window ? samsungInitialWindowSql : 'r.promoted_at IS NOT NULL'} AND r.retired_at IS NULL
       AND r.credential_keyset_commitment = i.credential_keyset_commitment
     CROSS JOIN clock
-    WHERE a.org_id = ? AND a.mode = ? AND a.provider = 'samsung' AND a.id = ? AND ${REVISION_EXPR} = ?
+    WHERE a.org_id = ? AND a.mode = ? AND a.provider = 'samsung' AND a.id = ? AND ${pinExpr(proof)} = ?
       AND ${OPENABLE} AND a.revoked_at IS NULL AND i.id = ? AND i.lifecycle = 'active'
       AND op.kind = 'upsert' AND op.state IN ('pending', 'retry', 'claimed', 'succeeded')
       AND op.version = ? AND op.projection_release_id = ?
       AND op.credential_keyset_commitment = ${pinnedKeysetSql} AND i.credential_keyset_commitment = op.credential_keyset_commitment
-      AND ${walletInstanceOperationCurrentSql('i', 'op', 'clock.now_ms')}`,
+      AND ${walletOpReadCurrentSql('i', 'op')}`,
     [
       now,
       proof.refHash,
@@ -215,7 +221,7 @@ export function findSamsungPromotedRefreshAccount(
       proof.orgId,
       proof.mode,
       proof.accountId,
-      proof.accountRevision,
+      proof.authorityEpoch ?? proof.accountRevision,
       proof.instanceId,
       proof.operationVersion,
       proof.projectionReleaseId,

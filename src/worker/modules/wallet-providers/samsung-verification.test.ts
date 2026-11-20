@@ -21,7 +21,6 @@ import { makeProviderTestTemplate } from './offers-test-fixtures.ts';
 import { approveProjectionCandidate, createProjectionCandidate } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { getProjectionCandidate } from './repo-projection-store.ts';
-import { refreshExpiringSamsungEvidence } from './repo-samsung-evidence-refresh.ts';
 import {
   beginSamsungProjectionProbe,
   completeSamsungProjectionProbe,
@@ -31,6 +30,7 @@ import {
 import {
   ensureSamsungProjectionEvidence,
   refreshSamsungProjectionEvidence,
+  reprobeSamsungProjectionEvidence,
 } from './samsung-verification.ts';
 
 // These cases cover historical provider instances, which exist only while a provider is enabled.
@@ -416,7 +416,7 @@ describe('authenticated Samsung card-state evidence', () => {
     );
   });
 
-  it('keeps a request path on the cached proof and lets the sync job refresh it before it lapses', async () => {
+  it('keeps a request path on the cached proof and lets a job re-probe it before it lapses', async () => {
     const f = await fixture();
     await f.approve();
     const plain = createServiceContext(f.kit.env, { clock: f.kit.clock });
@@ -425,7 +425,10 @@ describe('authenticated Samsung card-state evidence', () => {
       await ensureSamsungProjectionEvidence(f.kit.ctx, f.candidate.id, f.candidate.candidateHash),
     ).toBe(true);
     f.kit.clock.advance(240_000);
-    expect(await refreshExpiringSamsungEvidence(f.kit.ctx, 500)).toBeGreaterThanOrEqual(1);
+    expect(
+      await reprobeSamsungProjectionEvidence(f.kit.ctx, f.candidate.id, f.candidate.candidateHash),
+    ).toBe(true);
+    expect(fetch).toHaveBeenCalledTimes(2);
     f.kit.clock.advance(100_000);
     expect(await hasSamsungProjectionEvidence(plain, await f.stored())).toBe(true);
     // Without the job the proof lapses, and a request path cannot write one: it fails closed.
