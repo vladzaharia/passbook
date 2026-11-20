@@ -1,0 +1,5158 @@
+{
+  "codes": [
+    {
+      "code": "ACCOUNT_DISABLED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "auth"
+      ]
+    },
+    {
+      "code": "ACTOR_CHANGED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform",
+        "scan"
+      ]
+    },
+    {
+      "code": "ADMITS_TOO_MANY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ALREADY_PERSONALIZED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "apple"
+      ]
+    },
+    {
+      "code": "API_KEY_CHILD_CANNOT_MINT",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_CHILD_WIDER",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_MODE_MISMATCH",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_NOT_FOUND",
+      "statuses": [
+        404,
+        409
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_NOT_ROTATABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_NO_APPROVAL",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "API_KEY_ORG_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "API_KEY_PARENT_RETIRING",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_REQUIRED",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_RESTRICTED_ROUTE",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_RESTRICTION_UNSUPPORTED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_RETIRE_SET",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_ROUTE",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "API_KEY_SCAN_ORG_REQUIRED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_SCOPE_EXCEEDS_CREATOR",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_TERMINALS_REQUIRED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_TERMINALS_UNUSED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "APNS_BINDING_MANAGED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "APPLE_UNAUTHORIZED",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "apple"
+      ]
+    },
+    {
+      "code": "ARCHIVE_TOO_LARGE",
+      "statuses": [
+        413
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "ASSETS_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "ASSET_DIMENSIONS",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "ASSET_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "join",
+        "passes",
+        "public",
+        "scan",
+        "templates"
+      ]
+    },
+    {
+      "code": "ASSET_NOT_PNG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "ASSET_SIZE",
+      "statuses": [
+        413,
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "ASSET_SLOT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "AUTHORITY_DENIED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "AUTHORITY_UNPROVEN",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "BAD_REQUEST",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "BLOCK_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "holders"
+      ]
+    },
+    {
+      "code": "BLUEPRINT_NOT_SCANNABLE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "BRAND_IMAGE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "BRAND_MARK_NOT_ALLOWED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "BREAKGLASS_DISABLED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "auth"
+      ]
+    },
+    {
+      "code": "BROADCAST_INVALID_INPUT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_NOT_CANCELLABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_NOT_DRAFT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_NOT_EDITABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_NOT_RETRYABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_ORG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_PAST",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_TOO_FAR",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_UNKNOWN_INPUT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BULK_RUN_ACTIVE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "BUNDLE_DUPLICATE_PASS",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "bundles"
+      ]
+    },
+    {
+      "code": "BUNDLE_EMPTY",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "bundles",
+        "me"
+      ]
+    },
+    {
+      "code": "BUNDLE_MODE_MISMATCH",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "bundles"
+      ]
+    },
+    {
+      "code": "BUNDLE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "bundles"
+      ]
+    },
+    {
+      "code": "BUNDLE_SNAPSHOT_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "me"
+      ]
+    },
+    {
+      "code": "BUNDLE_TOO_LARGE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "me",
+        "passes"
+      ]
+    },
+    {
+      "code": "BUNDLE_TOO_MANY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "bundles"
+      ]
+    },
+    {
+      "code": "CAPTURED_EMAIL_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "sandbox"
+      ]
+    },
+    {
+      "code": "CHANNEL_APPLY_STALE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "channels"
+      ]
+    },
+    {
+      "code": "CHANNEL_OFF",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "channels"
+      ]
+    },
+    {
+      "code": "CHANNEL_REPLACE_ALL_OFF",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "channels"
+      ]
+    },
+    {
+      "code": "CHANNEL_REPLACE_WINDOW_OPEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "channels"
+      ]
+    },
+    {
+      "code": "CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "CONNECTION_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "CONNECTION_DISABLED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "CONNECTION_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "CONNECTION_ORG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "CONNECTION_TRANSFER_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "CONNECTOR_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "CONNECTOR_UNKNOWN",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "CREATE_STALE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "connections",
+        "passes",
+        "scan"
+      ]
+    },
+    {
+      "code": "CSRF_ORIGIN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform",
+        "scan"
+      ]
+    },
+    {
+      "code": "CSRF_TOKEN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "DELIVERY_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
+      "code": "DELIVERY_STALE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "bundles",
+        "delivery",
+        "passes"
+      ]
+    },
+    {
+      "code": "DEVICE_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "apple"
+      ]
+    },
+    {
+      "code": "DEVICE_REQUIRED",
+      "statuses": [
+        403,
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "DEVICE_TOKEN_UNAVAILABLE",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "DNS_FAILED",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "EMAIL_CONFLICT",
+      "statuses": [
+        403,
+        409
+      ],
+      "modules": [
+        "auth"
+      ]
+    },
+    {
+      "code": "EMAIL_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "bundles",
+        "delivery",
+        "holders",
+        "me",
+        "passes",
+        "users"
+      ]
+    },
+    {
+      "code": "EMAIL_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "me",
+        "users"
+      ]
+    },
+    {
+      "code": "EMAIL_OUTCOME_UNKNOWN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "delivery"
+      ]
+    },
+    {
+      "code": "EMAIL_PROOF_SENT",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "auth"
+      ]
+    },
+    {
+      "code": "EMAIL_RATE_LIMITED",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "delivery",
+        "me"
+      ]
+    },
+    {
+      "code": "EMAIL_TAKEN",
+      "statuses": [
+        403,
+        409
+      ],
+      "modules": [
+        "auth",
+        "users"
+      ]
+    },
+    {
+      "code": "ENROLLMENT_ENDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ENROLLMENT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "nfc",
+        "scan"
+      ]
+    },
+    {
+      "code": "ENTITLEMENTS_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "EVENT_ARCHIVED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "EVENT_IN_USE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "EVENT_MATCH_INPUT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "EVENT_NEEDS_CAPACITY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "EVENT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "scan",
+        "webhooks"
+      ]
+    },
+    {
+      "code": "EVENT_TEMPLATE_NO_CHECK_IN",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "EVENT_TEMPLATE_RELEASE_REQUIRED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "EXPIRY_PAST",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "EXPORT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "org-lifecycle"
+      ]
+    },
+    {
+      "code": "EXTERNAL_ID_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "FEATURE_LIMIT_REACHED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "FEATURE_NOT_INCLUDED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "FEATURE_UNCHECKED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "FORBIDDEN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform",
+        "scan",
+        "visitors"
+      ]
+    },
+    {
+      "code": "GOOGLE_CALLBACK_INVALID",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "GOOGLE_CALLBACK_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "GRANT_ALREADY_COMMITTED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "GRANT_BAD_IDENTIFIER",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "GRANT_BAD_PRINCIPAL",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "GRANT_BAD_PURPOSE",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform",
+        "webhooks"
+      ]
+    },
+    {
+      "code": "GRANT_BATCH_MIXED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "GRANT_FOREIGN_STATEMENT",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform",
+        "scan"
+      ]
+    },
+    {
+      "code": "GRANT_NOT_JOB",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "GRANT_NO_EDGE",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "GRANT_SCOPE_OVERRIDE",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform",
+        "scan"
+      ]
+    },
+    {
+      "code": "GRANT_STATEMENT_OUTSIDE_BATCH",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "GRANT_TABLE_NOT_ALLOWED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "GRANT_UNGUARDED_TABLE",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "GROUP_ENTRY_ONLY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "HOLDER_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "holders"
+      ]
+    },
+    {
+      "code": "HOLDER_EMAIL_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "HOLDER_OWNED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "holders"
+      ]
+    },
+    {
+      "code": "HOLDER_TRANSFER_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "holders",
+        "me"
+      ]
+    },
+    {
+      "code": "HOLD_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "retention"
+      ]
+    },
+    {
+      "code": "HOST_UNKNOWN",
+      "statuses": [
+        421
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "HTTP_ERROR",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "IDEMPOTENCY_IN_PROGRESS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "delivery",
+        "passes",
+        "platform"
+      ]
+    },
+    {
+      "code": "IDEMPOTENCY_KEY_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "delivery",
+        "passes",
+        "platform"
+      ]
+    },
+    {
+      "code": "IDEMPOTENCY_KEY_REUSED",
+      "statuses": [
+        409,
+        422
+      ],
+      "modules": [
+        "delivery",
+        "passes",
+        "platform",
+        "scan"
+      ]
+    },
+    {
+      "code": "IDENTITY_EXISTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_IN_USE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_KEY_UNREADABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_NOT_CONFIGURED",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_NOT_FOUND",
+      "statuses": [
+        404,
+        422
+      ],
+      "modules": [
+        "identities",
+        "orgs"
+      ]
+    },
+    {
+      "code": "IDENTITY_PROTECTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IF_MATCH_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMAGE_BYTES",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "IMAGE_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "IMAGE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "orgs",
+        "scan"
+      ]
+    },
+    {
+      "code": "IMAGE_SCALE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "IMAGE_SIZE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "IMPORT_BUSY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_COLUMN_MISSING",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "IMPORT_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_FILE_GONE",
+      "statuses": [
+        410
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_HAS_ERRORS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_HEADER_TOO_LONG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_ID_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_PASS_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_PLAN_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_ROW_UNRESERVED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_STATE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "INTERNAL",
+      "statuses": [
+        403,
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "INVALID_API_KEY",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "api-keys",
+        "platform",
+        "scan"
+      ]
+    },
+    {
+      "code": "INVALID_CURSOR",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "audit",
+        "events",
+        "retention",
+        "scan",
+        "templates",
+        "webhooks"
+      ]
+    },
+    {
+      "code": "INVALID_INPUT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes",
+        "templates"
+      ]
+    },
+    {
+      "code": "INVALID_SETTING",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "settings"
+      ]
+    },
+    {
+      "code": "INVITATION_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "INVITATION_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "JOIN_LINK_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "join"
+      ]
+    },
+    {
+      "code": "JOIN_LINK_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "join"
+      ]
+    },
+    {
+      "code": "JOIN_NOT_READY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "join",
+        "passes"
+      ]
+    },
+    {
+      "code": "JOIN_ORIGIN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "join"
+      ]
+    },
+    {
+      "code": "KEYSET_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "KEYSET_KEY_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "KEYSET_KEY_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "KEYSET_KEY_REUSED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "KEYSET_KEY_WEAK",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "KEYSET_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "KEY_CREATOR_GONE",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "KEY_CREATOR_NOT_MEMBER",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "KEY_TEST_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "LAST_ORG_ADMIN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "LINEAGE_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "LINK_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "auth"
+      ]
+    },
+    {
+      "code": "LINK_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "bundles",
+        "public"
+      ]
+    },
+    {
+      "code": "LOG_BUDGET",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "apple"
+      ]
+    },
+    {
+      "code": "MAC_ROOT_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "MAGIC_LINK_DISABLED",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "auth"
+      ]
+    },
+    {
+      "code": "MANIFEST_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "MATCH_NEEDS_TEMPLATE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "MEMBERSHIP_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "MEMBER_PHOTO_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "MEMBER_PHOTO_DIMENSIONS",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "MEMBER_PHOTO_ENCODING",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "MEMBER_PHOTO_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "MEMBER_PHOTO_STYLE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "MESSAGING_UNSUPPORTED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts",
+        "message-rules"
+      ]
+    },
+    {
+      "code": "METRICS_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "metrics"
+      ]
+    },
+    {
+      "code": "MISSING_SCOPE",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "broadcasts",
+        "connections",
+        "platform",
+        "scan",
+        "templates"
+      ]
+    },
+    {
+      "code": "MODE_MISMATCH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "MODE_UNSUPPORTED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "NEW_CODE_UNSUPPORTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "channels",
+        "passes"
+      ]
+    },
+    {
+      "code": "NOTE_CAP",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "NOTE_DEVICE_CAP",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "NOTE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "NOTE_ROLE",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "NOT_A_ZIP",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "NOT_INSIDE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan",
+        "visitors"
+      ]
+    },
+    {
+      "code": "NO_ACCESS",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "auth"
+      ]
+    },
+    {
+      "code": "NO_EMAIL",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "auth"
+      ]
+    },
+    {
+      "code": "NO_FILE",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "NO_RECIPIENT",
+      "statuses": [
+        409,
+        422
+      ],
+      "modules": [
+        "bundles",
+        "me",
+        "passes"
+      ]
+    },
+    {
+      "code": "NO_VERIFIED_EMAIL",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "sandbox"
+      ]
+    },
+    {
+      "code": "OFFLINE_OFF",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "OFFLINE_TOO_BIG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "OIDC_UNCONFIGURED",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "auth"
+      ]
+    },
+    {
+      "code": "OIDC_UNREACHABLE",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "auth"
+      ]
+    },
+    {
+      "code": "ORG_ACCESS_CHANGED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "passes",
+        "platform"
+      ]
+    },
+    {
+      "code": "ORG_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "org-lifecycle",
+        "orgs"
+      ]
+    },
+    {
+      "code": "ORG_EXPORT_RUNNING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "org-lifecycle"
+      ]
+    },
+    {
+      "code": "ORG_FORBIDDEN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "passes",
+        "platform"
+      ]
+    },
+    {
+      "code": "ORG_HELD",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "org-lifecycle"
+      ]
+    },
+    {
+      "code": "ORG_INACTIVE",
+      "statuses": [
+        403,
+        409
+      ],
+      "modules": [
+        "connections",
+        "scan"
+      ]
+    },
+    {
+      "code": "ORG_MIXED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "ORG_NOT_FOUND",
+      "statuses": [
+        404,
+        422
+      ],
+      "modules": [
+        "api-keys",
+        "broadcasts",
+        "connections",
+        "identities",
+        "message-rules",
+        "metrics",
+        "nfc",
+        "org-lifecycle",
+        "orgs",
+        "passes",
+        "retention",
+        "scan",
+        "settings",
+        "templates"
+      ]
+    },
+    {
+      "code": "ORG_PURGING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "org-lifecycle"
+      ]
+    },
+    {
+      "code": "ORG_REOPEN_WINDOW",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "org-lifecycle"
+      ]
+    },
+    {
+      "code": "ORG_REQUIRED",
+      "statuses": [
+        403,
+        422
+      ],
+      "modules": [
+        "audit",
+        "bundles",
+        "delivery",
+        "holders",
+        "passes",
+        "scan",
+        "templates"
+      ]
+    },
+    {
+      "code": "ORG_SLUG_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "ORG_STATUS_ALONE",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "PAIRING_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "PASS_CHANGING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "me"
+      ]
+    },
+    {
+      "code": "PASS_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts",
+        "connections",
+        "delivery",
+        "holders",
+        "passes",
+        "scan"
+      ]
+    },
+    {
+      "code": "PASS_CONNECTION_MISMATCH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "PASS_CREDENTIAL_FIXED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "me"
+      ]
+    },
+    {
+      "code": "PASS_FILE_INVALID",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "apple"
+      ]
+    },
+    {
+      "code": "PASS_FILE_MISSING",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "apple",
+        "me",
+        "passes"
+      ]
+    },
+    {
+      "code": "PASS_INPUT_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "PASS_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "PASS_NOT_ACTIVE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes",
+        "prints"
+      ]
+    },
+    {
+      "code": "PASS_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "bundles",
+        "channels",
+        "delivery",
+        "events",
+        "holders",
+        "me",
+        "message-rules",
+        "nfc",
+        "passes",
+        "prints",
+        "public",
+        "retention",
+        "scan",
+        "visitors",
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "PASS_REF_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "PASS_REISSUE_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "PASS_REMOVED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "PASS_TRANSFER_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "PASS_TRANSFER_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "PASS_VERSION_MISSING",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "public"
+      ]
+    },
+    {
+      "code": "PASS_VOIDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "me"
+      ]
+    },
+    {
+      "code": "PAYLOAD_TOO_LARGE",
+      "statuses": [
+        413
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "PERSONALIZATION_INCOMPLETE",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "apple"
+      ]
+    },
+    {
+      "code": "PERSONALIZATION_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "apple"
+      ]
+    },
+    {
+      "code": "PERSONALIZATION_UNAVAILABLE",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "apple"
+      ]
+    },
+    {
+      "code": "PHOTO_PASS_INACTIVE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "PHOTO_ROLE",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "PIN_GENERATION_FAILED",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "PIN_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "PIN_MANAGER_REQUIRED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "PRIMARY_EMAIL",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "me",
+        "users"
+      ]
+    },
+    {
+      "code": "PRINTING_OFF",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "prints"
+      ]
+    },
+    {
+      "code": "PRINT_CODE_UNAVAILABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "prints"
+      ]
+    },
+    {
+      "code": "PRINT_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "prints"
+      ]
+    },
+    {
+      "code": "PRINT_JOB_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "prints"
+      ]
+    },
+    {
+      "code": "PRINT_NOT_ACTIVE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "prints"
+      ]
+    },
+    {
+      "code": "PRINT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "prints"
+      ]
+    },
+    {
+      "code": "PRINT_STAFF_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "prints"
+      ]
+    },
+    {
+      "code": "PUSH_KEY_NONE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "PUSH_KEY_UNREADABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "PUSH_TOKEN_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "apple"
+      ]
+    },
+    {
+      "code": "RATE_LIMITED",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "platform",
+        "scan"
+      ]
+    },
+    {
+      "code": "RATE_LIMIT_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "RECEIPT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "retention"
+      ]
+    },
+    {
+      "code": "RECIPIENT_NOT_HOLDER",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "bundles",
+        "passes"
+      ]
+    },
+    {
+      "code": "REDIRECT_BLOCKED",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "REGISTRATION_LIMIT",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "apple"
+      ]
+    },
+    {
+      "code": "REMOVAL_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "me"
+      ]
+    },
+    {
+      "code": "REPLAY_NOT_QUEUED",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
+      "code": "REPLAY_TOO_LARGE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
+      "code": "REPLY_TO_LINK_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "delivery"
+      ]
+    },
+    {
+      "code": "REPLY_TO_NOTHING_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "delivery"
+      ]
+    },
+    {
+      "code": "REPLY_TO_RESEND_LIMITED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "delivery"
+      ]
+    },
+    {
+      "code": "RESPONSE_TOO_LARGE",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "RETENTION_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "RETENTION_GATE_INVALID",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "retention"
+      ]
+    },
+    {
+      "code": "RETENTION_HOLD_PLATFORM",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "retention"
+      ]
+    },
+    {
+      "code": "RETENTION_RECEIPT_BUSY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "retention",
+        "webhooks"
+      ]
+    },
+    {
+      "code": "ROLE_NOT_ALLOWED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ROLL_CALL_ENDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ROLL_CALL_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ROLL_CALL_NO_PLACES",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ROLL_CALL_NO_SESSION",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ROLL_CALL_TOO_LARGE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "RULE_HOURS_NEED_DATETIME",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "message-rules"
+      ]
+    },
+    {
+      "code": "RULE_INPUT_MISMATCH",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "message-rules"
+      ]
+    },
+    {
+      "code": "RULE_INPUT_MISSING",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "message-rules"
+      ]
+    },
+    {
+      "code": "RULE_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "message-rules"
+      ]
+    },
+    {
+      "code": "RULE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "message-rules"
+      ]
+    },
+    {
+      "code": "RULE_VERSION",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "message-rules"
+      ]
+    },
+    {
+      "code": "SAMPLE_TEST_ONLY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SAMSUNG_FIELDS_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "SAMSUNG_UNAUTHENTICATED",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "SAMSUNG_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "SANDBOX_PREVIEW_ONLY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "sandbox"
+      ]
+    },
+    {
+      "code": "SANDBOX_QUOTA",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "sandbox"
+      ]
+    },
+    {
+      "code": "SCANNER_ADMIN_ROLE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_ADMIN_SETUP_EXISTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_ADMIN_USER",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_CANNOT_SCAN",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_EXPIRED",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_NAME_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_NOT_FOUND",
+      "statuses": [
+        404,
+        422
+      ],
+      "modules": [
+        "nfc",
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_NOT_PAIRABLE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_NOT_TERMINAL",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_NO_TAGS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "SCANNER_OFFLINE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "SCANNER_REPAIR",
+      "statuses": [
+        401,
+        403
+      ],
+      "modules": [
+        "platform",
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_REQUESTS_OFF",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "SCANNER_REVOKED",
+      "statuses": [
+        401,
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_ROLE_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_SETUP_EXISTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_UNASSIGNED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_UNAUTHENTICATED",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_WATCH_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_WATCH_MODE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNER_WATCH_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_DEVICE_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_DEVICE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_HOLD_RANGE",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_HOURS_NONE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_SESSION_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_SESSION_CLOSED",
+      "statuses": [
+        403,
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_SESSION_CONFIG_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_SESSION_COUNTS_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_SESSION_MODE",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_SESSION_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_SESSION_OPEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_SESSION_PAUSED",
+      "statuses": [
+        403,
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_SESSION_SCOPE_INVALID",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCANNING_SESSION_SETTINGS_INVALID",
+      "statuses": [
+        403,
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_ACCESS_CHANGED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_ADMIN_SETUP_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_BODY_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_CONFIG_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "platform",
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_COUNTS_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_CREDENTIAL_CHANGED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_EPOCHS_MISSING",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_EVENT_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_EVENT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SCAN_EXPORT_RANGE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_EXPORT_TOO_LARGE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_HISTORY_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_IN_PROGRESS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_KEY_REUSED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_LIVE_ORIGIN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_LOOKUP_DISABLED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_MARK_OUT_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_MODE_MISMATCH",
+      "statuses": [
+        403,
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_NO_SESSION",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_OVERRIDE_FORBIDDEN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_OVERRIDE_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_OVERRIDE_NOTE_CLOSED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_OVERRIDE_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_PASS_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_PROOF_MISMATCH",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "SCAN_SCOPE_NOT_ALLOWED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_SCOPE_REQUIRED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_SEARCH_FORBIDDEN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_SETTINGS_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_SETUP_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_STAFF_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "platform",
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_STAFF_CURSOR",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_STAFF_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_SUMMARY_SESSION_FORBIDDEN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_SURFACE_UNSUPPORTED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_TOO_MANY_MISSES",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_TOO_MANY_OVERRIDES",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_UNDO_EXPIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_UNDO_FORBIDDEN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_WINDOW_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SCREEN_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCREEN_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SELF_DISABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "users"
+      ]
+    },
+    {
+      "code": "SERIAL_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SESSION_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "me",
+        "users"
+      ]
+    },
+    {
+      "code": "SESSION_OPEN_FORBIDDEN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SESSION_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "auth",
+        "passes",
+        "sandbox"
+      ]
+    },
+    {
+      "code": "SETTINGS_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "orgs",
+        "settings"
+      ]
+    },
+    {
+      "code": "SQL_BIND_BUDGET",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "SQL_SIZE_BUDGET",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "platform",
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_NAME_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_SIGN_IN_DISABLED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_SIGN_IN_UNAVAILABLE",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STALE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "STALE_CONTEXT",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "STAMPS_ABOVE_MAX",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes",
+        "templates"
+      ]
+    },
+    {
+      "code": "STAMPS_CARD_FULL",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "STAMPS_NONE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes",
+        "templates"
+      ]
+    },
+    {
+      "code": "STAMPS_NO_REWARD",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "STAMPS_QUERY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "STAMPS_REDRAW",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TAGS_OFF",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_ALREADY_ASSIGNED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_APPROVAL_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_ASSIGN_FORBIDDEN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_ASSURANCE_LOW",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_CARD_AMBIGUOUS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_CHECK_FAILED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_HOLDER_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc",
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_INVALID",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "apple"
+      ]
+    },
+    {
+      "code": "TAG_KEY_UNREADABLE",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_NOT_ASSIGNED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_NOT_FOUND",
+      "statuses": [
+        404,
+        409
+      ],
+      "modules": [
+        "me",
+        "nfc",
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_NO_ACCOUNT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc",
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_PASS_NOT_ACCEPTED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_POOL_UNSUPPORTED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc",
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_REQUEST_BUSY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_REQUEST_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_SCANNER_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_SUN_REPLAY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_SYSTEM_DISABLED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_TYPE_ARCHIVED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_TYPE_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_TYPE_NAME_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_TYPE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_UID_RANDOM",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_UNDO_EXPIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "nfc",
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_UNDO_FORBIDDEN",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TAG_UNREADABLE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TEMPLATE_ARCHIVED",
+      "statuses": [
+        409,
+        422
+      ],
+      "modules": [
+        "scan",
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_ASSET_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_BAKED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_BLUEPRINT_INACTIVE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_CANDIDATE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_CHANNELS_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "channels"
+      ]
+    },
+    {
+      "code": "TEMPLATE_CHANNELS_IMPACT_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "channels"
+      ]
+    },
+    {
+      "code": "TEMPLATE_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_CONTENT_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_EXISTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_IN_TAG_TYPE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TEMPLATE_IN_USE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_IS_BLUEPRINT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_MODE_MISMATCH",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "templates",
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "TEMPLATE_NOT_BLUEPRINT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_NOT_FOUND",
+      "statuses": [
+        404,
+        422
+      ],
+      "modules": [
+        "channels",
+        "connections",
+        "join",
+        "passes",
+        "scan",
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_NOT_RELEASED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TEMPLATE_NOT_SHAREABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_NOT_TESTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_ORG_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_PROVIDER_UNSUPPORTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_RELEASE_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "TEMPLATE_RELEASE_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections",
+        "passes",
+        "scan",
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_RELEASE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_RELEASE_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections",
+        "passes",
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_SELF_APPROVAL",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "TEMPLATE_SLUG_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_USED_BY_OTHER_ORG",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_VERSION_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_VERSION_CONTENT_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_VERSION_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "TERMINAL_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TERMINAL_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "TERM_MANAGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "TERM_NONE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "TERM_NOT_STARTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "TEST_FORWARD_ALREADY_ATTEMPTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "sandbox"
+      ]
+    },
+    {
+      "code": "TEST_FORWARD_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "sandbox"
+      ]
+    },
+    {
+      "code": "TEST_FORWARD_OUTCOME_UNKNOWN",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "sandbox"
+      ]
+    },
+    {
+      "code": "TEST_FORWARD_PREPARATION_FAILED",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "sandbox"
+      ]
+    },
+    {
+      "code": "TEST_KEY_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "sandbox"
+      ]
+    },
+    {
+      "code": "TIMEOUT",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "TOKEN_NOT_SEALED",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "TOKEN_SEAL_MISMATCH",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "TOKEN_SEAL_MISSING",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "TOKEN_SEAL_UNREADABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "TURNSTILE_FAILED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "auth"
+      ]
+    },
+    {
+      "code": "UNAUTHENTICATED",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "UNDO_SUPERSEDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "UNDO_UNCONFIRMED",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "UNKNOWN_TEMPLATE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc",
+        "webhooks"
+      ]
+    },
+    {
+      "code": "UNLOCK_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "UNSAFE_URL",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "connections",
+        "platform",
+        "webhooks"
+      ]
+    },
+    {
+      "code": "UNSUPPORTED_MEDIA_TYPE",
+      "statuses": [
+        415
+      ],
+      "modules": [
+        "join"
+      ]
+    },
+    {
+      "code": "UPLOAD_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "UPSTREAM",
+      "statuses": [
+        429,
+        502
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "USER_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "scan",
+        "users"
+      ]
+    },
+    {
+      "code": "VALIDATION",
+      "statuses": [
+        422,
+        500
+      ],
+      "modules": [
+        "platform",
+        "templates"
+      ]
+    },
+    {
+      "code": "VERSION_CONFLICT",
+      "statuses": [
+        412
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
+      "code": "VERSION_INVALID",
+      "statuses": [
+        409,
+        422
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
+      "code": "VERSION_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "VERSION_PURGED",
+      "statuses": [
+        410
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "VISITOR_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "visitors"
+      ]
+    },
+    {
+      "code": "VISITOR_HOST_NOTICE_FAILED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "visitors"
+      ]
+    },
+    {
+      "code": "VISITOR_HOST_UNKNOWN",
+      "statuses": [
+        403,
+        404
+      ],
+      "modules": [
+        "visitors"
+      ]
+    },
+    {
+      "code": "VISITOR_IN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "visitors"
+      ]
+    },
+    {
+      "code": "VISITOR_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "visitors"
+      ]
+    },
+    {
+      "code": "VISITOR_NOT_IN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "visitors"
+      ]
+    },
+    {
+      "code": "VISITOR_OUT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "visitors"
+      ]
+    },
+    {
+      "code": "VISITOR_RESEND_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "visitors"
+      ]
+    },
+    {
+      "code": "VISITOR_TEMPLATE_MISSING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "visitors"
+      ]
+    },
+    {
+      "code": "WALLET_ACCOUNT_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_ACCOUNT_INSTANCES_ACTIVE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_ACCOUNT_MOVED",
+      "statuses": [
+        410
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_ART_MISMATCH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_CREDENTIALS_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_CREDENTIALS_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_ENROLMENT_HELD",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_ENROLMENT_PREREQUISITE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_IDENTITY_IMMUTABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_IMAGE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_MODE_MISMATCH",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_OFFER_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_OP_ACTOR",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_OP_CONFIG",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_OP_LINEAGE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_OP_ORG",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_OP_RELEASE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_OP_STALE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_PROJECTION_BLOCKED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_PROJECTION_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_PROJECTION_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_PROJECTION_SCHEMA",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_PROJECTION_UNSUPPORTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_VERIFICATION_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WEBHOOK_ALREADY_FINISHED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_CONTEXT_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_DISPATCH_INCOMPLETE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_EFFECT_UNCERTAIN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_ENDPOINT_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
+      "code": "WEBHOOK_ENDPOINT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
+      "code": "WEBHOOK_ENQUEUE_FAILED",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_ITEM_BUSY",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_ITEM_PENDING",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_NOTHING_TO_RESOLVE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_PAYLOAD",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_PAYLOAD_MISSING",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_REFERENCE_MODE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_REFERENCE_MODE_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_RESOLVE_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_RETENTION_FAILED",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_RETENTION_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_SIGNATURE",
+      "statuses": [
+        401
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_SNAPSHOT_UNAVAILABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_STALE_CONTEXT",
+      "statuses": [
+        409,
+        503
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_STILL_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_WORK_CHANGED",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "connections"
+      ]
+    },
+    {
+      "code": "WORKFLOW_START",
+      "statuses": [
+        502,
+        503
+      ],
+      "modules": [
+        "passes",
+        "templates"
+      ]
+    },
+    {
+      "code": "ZONE_ARCHIVED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ZONE_CYCLE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ZONE_DEPTH",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ZONE_EVENT_SESSION",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ZONE_KEY_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ZONE_NAME_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "ZONE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "scan"
+      ]
+    }
+  ]
+}

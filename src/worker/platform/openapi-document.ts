@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppBindings } from './context.ts';
+import { withErrorCodes } from './openapi-codes.ts';
 import { withDecisions, withIdempotencyKey } from './openapi-decisions.ts';
 import { withNamedBodies, withReference } from './openapi-reference.ts';
 import { withSdkNames } from './openapi-sdk.ts';
@@ -97,5 +98,7 @@ export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
       withReference(withSdkNames(withParamMarks(withOperationIds(withKebabTags(doc))))),
     ) as never,
   );
-  return withIdempotencyKey(withDecisions(app, secured as never) as never) as unknown as Doc;
+  return withErrorCodes(
+    withIdempotencyKey(withDecisions(app, secured as never) as never) as never,
+  ) as unknown as Doc;
 }

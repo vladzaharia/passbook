@@ -9,7 +9,7 @@ import {
 } from '../../shared/contracts/webhooks.ts';
 import type { AppBindings } from './context.ts';
 
-const SUMMARY: Record<WebhookEventType, string> = {
+export const SUMMARY: Record<WebhookEventType, string> = {
   'pass.issued': 'A pass was created.',
   'pass.updated': 'A pass changed and a new version was published.',
   'pass.voided': 'A pass was voided.',

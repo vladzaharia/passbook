@@ -231,6 +231,7 @@ routes and filters). The reference's `info.version` is not a release number.
 
 Clients written against the earlier API keep working with these differences (as of 2026-11).
 
+- **Problem `type`** (2026-11): `type` is now `https://passbook.mobile/developers/errors/<CODE>`, not `urn:wallet:problem:<code>`. Branch on `code`, which is unchanged. Every operation lists its `x-codes`.
 - **Pass create with a key**: `templateVersion`, `releaseId` and `releaseGeneration` are optional
   together. Send none and the server uses the scope's effective approved release; with none it
   returns `409 TEMPLATE_RELEASE_REQUIRED` (approve and publish a release in the admin console, then

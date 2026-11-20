@@ -54,6 +54,12 @@ describe('problem mapping', () => {
     expect(problem.detail).not.toContain('SELECT');
   });
 
+  it("points type at the code's catalog page", () => {
+    expect(toProblem(new ConflictError('x', 'PASS_CONFLICT')).type).toBe(
+      'https://passbook.mobile/developers/errors/PASS_CONFLICT',
+    );
+  });
+
   it('keeps subclasses distinct', () => {
     expect(new ConflictError().status).toBe(409);
   });

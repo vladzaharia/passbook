@@ -1,0 +1,2678 @@
+{
+  "ACTOR_CHANGED": {
+    "title": "Actor changed",
+    "when": "You no longer have access.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "ADMITS_TOO_MANY": {
+    "title": "Admits too many",
+    "when": "Admit at most … pass types, counting each event's.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "API_KEY_CHILD_CANNOT_MINT": {
+    "title": "API key child cannot mint",
+    "when": "A child key cannot mint keys.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "API_KEY_CHILD_WIDER": {
+    "title": "API key child wider",
+    "when": "A child key cannot be wider than its parent in ….",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "API_KEY_MODE_MISMATCH": {
+    "title": "API key mode mismatch",
+    "when": "API key not found.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "API_KEY_NOT_FOUND": {
+    "title": "API key not found",
+    "when": "API key not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "API_KEY_NOT_ROTATABLE": {
+    "title": "API key not rotatable",
+    "when": "The key is revoked, retiring or expired.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "API_KEY_NO_APPROVAL": {
+    "title": "API key no approval",
+    "when": "An API key cannot approve or override.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "API_KEY_ORG_REQUIRED": {
+    "title": "API key org required",
+    "when": "A platform key cannot scan.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "API_KEY_PARENT_RETIRING": {
+    "title": "API key parent retiring",
+    "when": "A child key cannot mint keys.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "API_KEY_REQUIRED": {
+    "title": "API key needed",
+    "when": "The route takes a key and got another credential.",
+    "fix": "Call it with Authorization: Bearer $PASSBOOK_KEY.",
+    "retryable": false
+  },
+  "API_KEY_RESTRICTED_ROUTE": {
+    "title": "API key restricted route",
+    "when": "This key is limited to templates and cannot call this route.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "API_KEY_RESTRICTION_UNSUPPORTED": {
+    "title": "API key restriction unsupported",
+    "when": "Templates and styles narrow only the pass, holder, template and NFC scopes of an organization key.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "API_KEY_RETIRE_SET": {
+    "title": "API key retire set",
+    "when": "Retirement cannot be after expiry.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "API_KEY_ROUTE": {
+    "title": "API key route",
+    "when": "An API key cannot call this route.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "API_KEY_SCAN_ORG_REQUIRED": {
+    "title": "API key scan org required",
+    "when": "A platform key cannot scan.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "API_KEY_SCOPE_EXCEEDS_CREATOR": {
+    "title": "API key scope exceeds creator",
+    "when": "A key cannot hold scopes beyond your own access.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "API_KEY_TERMINALS_REQUIRED": {
+    "title": "API key terminals required",
+    "when": "Pick at least one terminal.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "API_KEY_TERMINALS_UNUSED": {
+    "title": "API key terminals unused",
+    "when": "Pick at least one terminal.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "ARCHIVE_TOO_LARGE": {
+    "title": "Archive too large",
+    "when": "The archive is larger than 15 MB.",
+    "fix": "Send a smaller body.",
+    "retryable": false
+  },
+  "ASSETS_INVALID": {
+    "title": "Assets invalid",
+    "when": "The assets are invalid.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "ASSET_DIMENSIONS": {
+    "title": "Asset dimensions",
+    "when": "The request ran into asset dimensions.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "ASSET_NOT_FOUND": {
+    "title": "Asset not found",
+    "when": "Image not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "ASSET_NOT_PNG": {
+    "title": "Asset not PNG",
+    "when": "The PNG color format is not supported.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "ASSET_SIZE": {
+    "title": "Asset size",
+    "when": "The image must be 1 MB or smaller.",
+    "fix": "Send a smaller body.",
+    "retryable": false
+  },
+  "ASSET_SLOT": {
+    "title": "Asset slot",
+    "when": "Unknown image slot in ….",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "BLOCK_NOT_FOUND": {
+    "title": "Block not found",
+    "when": "Block not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "BLUEPRINT_NOT_SCANNABLE": {
+    "title": "Blueprint not scannable",
+    "when": "Make a template from this blueprint first.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "BRAND_IMAGE_NOT_FOUND": {
+    "title": "Brand image not found",
+    "when": "Image not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "BRAND_MARK_NOT_ALLOWED": {
+    "title": "Brand mark not allowed",
+    "when": "This plan does not include that setting.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "BROADCAST_INVALID_INPUT": {
+    "title": "Broadcast invalid input",
+    "when": "The request ran into broadcast invalid input.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "BROADCAST_NOT_CANCELLABLE": {
+    "title": "Broadcast not cancellable",
+    "when": "Only a draft or scheduled message can be cancelled.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "BROADCAST_NOT_DRAFT": {
+    "title": "Broadcast not draft",
+    "when": "Only a draft can be sent.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "BROADCAST_NOT_EDITABLE": {
+    "title": "Broadcast not editable",
+    "when": "Only a draft or scheduled message can be edited.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "BROADCAST_NOT_FOUND": {
+    "title": "Broadcast not found",
+    "when": "Message not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "BROADCAST_NOT_RETRYABLE": {
+    "title": "Broadcast not retryable",
+    "when": "Only a failed or cancelled message can be sent again.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "BROADCAST_ORG": {
+    "title": "Broadcast org",
+    "when": "A message cannot move to another organization.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "BROADCAST_PAST": {
+    "title": "Broadcast past",
+    "when": "Pick a time in the future.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "BROADCAST_TOO_FAR": {
+    "title": "Broadcast too far",
+    "when": "Pick a time in the future.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "BROADCAST_UNKNOWN_INPUT": {
+    "title": "Broadcast unknown input",
+    "when": "… has no input \"…\".",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "BULK_RUN_ACTIVE": {
+    "title": "Bulk run active",
+    "when": "The request ran into bulk run active.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "BUNDLE_DUPLICATE_PASS": {
+    "title": "Bundle duplicate pass",
+    "when": "A pass is listed twice.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "BUNDLE_EMPTY": {
+    "title": "Bundle empty",
+    "when": "No passes to add.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "BUNDLE_MODE_MISMATCH": {
+    "title": "Bundle mode mismatch",
+    "when": "A … bundle holds … passes only.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "BUNDLE_NOT_FOUND": {
+    "title": "Bundle not found",
+    "when": "Enter a valid email address.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "BUNDLE_TOO_LARGE": {
+    "title": "Bundle too large",
+    "when": "The bundle is too large.",
+    "fix": "Add passes one by one.",
+    "retryable": false
+  },
+  "BUNDLE_TOO_MANY": {
+    "title": "Bundle too many",
+    "when": "A pass is listed twice.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "CAPTURED_EMAIL_NOT_FOUND": {
+    "title": "Captured email not found",
+    "when": "Use a signed-in session.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "CONNECTION_CONFLICT": {
+    "title": "Connection conflict",
+    "when": "The connection changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "CONNECTION_DISABLED": {
+    "title": "Connection disabled",
+    "when": "The connection is disabled.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "CONNECTION_NOT_FOUND": {
+    "title": "Connection not found",
+    "when": "Connection not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "CONNECTION_ORG": {
+    "title": "Connection org",
+    "when": "The connection does not belong to this organization.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "CONNECTION_TRANSFER_PENDING": {
+    "title": "Connection transfer pending",
+    "when": "The holder transfer is pending provider retirement.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "CONNECTOR_NOT_FOUND": {
+    "title": "Connector not found",
+    "when": "Connector type not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "CONNECTOR_UNKNOWN": {
+    "title": "Connector unknown",
+    "when": "Unknown connector type.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "CREATE_STALE": {
+    "title": "Create stale",
+    "when": "Another pass already has this External ID.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE": {
+    "title": "Credential ref keyset config unavailable",
+    "when": "Credential references are unavailable.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "CREDENTIAL_REF_KEYSET_UNAVAILABLE": {
+    "title": "Credential ref keyset unavailable",
+    "when": "Credential references are unavailable.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "CSRF_ORIGIN": {
+    "title": "CSRF origin",
+    "when": "Cross-origin requests are not allowed.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "DELIVERY_PENDING": {
+    "title": "Delivery pending",
+    "when": "This delivery is already waiting to be sent.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "DELIVERY_STALE": {
+    "title": "Delivery stale",
+    "when": "The bundle changed.",
+    "fix": "Review the recipient and try again.",
+    "retryable": true
+  },
+  "DEVICE_REQUIRED": {
+    "title": "Device required",
+    "when": "Name the terminal in ….",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "DEVICE_TOKEN_UNAVAILABLE": {
+    "title": "Device token unavailable",
+    "when": "The pass changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "EMAIL_INVALID": {
+    "title": "Email invalid",
+    "when": "Enter a valid email address.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "EMAIL_OUTCOME_UNKNOWN": {
+    "title": "Email outcome unknown",
+    "when": "The request ran into email outcome unknown.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "EMAIL_RATE_LIMITED": {
+    "title": "Email rate limited",
+    "when": "The request ran into email rate limited.",
+    "fix": "Wait for Retry-After, then retry.",
+    "retryable": true
+  },
+  "ENROLLMENT_ENDED": {
+    "title": "Enrollment ended",
+    "when": "This request is over.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "ENROLLMENT_NOT_FOUND": {
+    "title": "Enrollment not found",
+    "when": "Request not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "ENTITLEMENTS_CHANGED": {
+    "title": "Entitlements changed",
+    "when": "Organization not found.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "EVENT_ARCHIVED": {
+    "title": "Event archived",
+    "when": "This event is archived.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "EVENT_IN_USE": {
+    "title": "Event in use",
+    "when": "A session already uses this event.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "EVENT_MATCH_INPUT": {
+    "title": "Event match input",
+    "when": "… has no single-value input called ….",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "EVENT_NEEDS_CAPACITY": {
+    "title": "Event needs capacity",
+    "when": "Set a capacity first.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "EVENT_NOT_FOUND": {
+    "title": "Event not found",
+    "when": "Event not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "EVENT_TEMPLATE_NO_CHECK_IN": {
+    "title": "Event template no check in",
+    "when": "… has no check-in action.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "EVENT_TEMPLATE_RELEASE_REQUIRED": {
+    "title": "Event template release required",
+    "when": "Every event template needs an approved release or an eligible legacy pass in this mode.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "EXPIRY_PAST": {
+    "title": "Expiry in the past",
+    "when": "expiresAt is not in the future.",
+    "fix": "Send a future time in milliseconds.",
+    "retryable": false
+  },
+  "EXTERNAL_ID_TAKEN": {
+    "title": "externalId in use",
+    "when": "Another pass of this template has that externalId.",
+    "fix": "Send a new externalId, or PATCH the existing pass.",
+    "retryable": false
+  },
+  "FORBIDDEN": {
+    "title": "Not allowed",
+    "when": "The key is valid but may not do this.",
+    "fix": "Use a key with the scope the operation lists, or ask an org admin.",
+    "retryable": false
+  },
+  "GOOGLE_CALLBACK_INVALID": {
+    "title": "Google callback invalid",
+    "when": "Google Wallet callback is invalid.",
+    "fix": "Send a valid API key in the Authorization header.",
+    "retryable": false
+  },
+  "GOOGLE_CALLBACK_UNAVAILABLE": {
+    "title": "Google callback unavailable",
+    "when": "Google Wallet callback service is unavailable.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "GRANT_BAD_PURPOSE": {
+    "title": "Grant bad purpose",
+    "when": "Webhook writes need an org_mode grant.",
+    "fix": "Retry once; if it persists, send the requestId to support.",
+    "retryable": false
+  },
+  "GRANT_FOREIGN_STATEMENT": {
+    "title": "Grant foreign statement",
+    "when": "The keyset statement was not captured.",
+    "fix": "Retry once; if it persists, send the requestId to support.",
+    "retryable": false
+  },
+  "GRANT_SCOPE_OVERRIDE": {
+    "title": "Grant scope override",
+    "when": "A miss window binds as many values as it has marks.",
+    "fix": "Retry once; if it persists, send the requestId to support.",
+    "retryable": false
+  },
+  "GROUP_ENTRY_ONLY": {
+    "title": "Group entry only",
+    "when": "Check in all is for entry scanners.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "HOLDER_CHANGED": {
+    "title": "Holder changed",
+    "when": "The pass changed meanwhile.",
+    "fix": "Reload.",
+    "retryable": false
+  },
+  "HOLDER_EMAIL_INVALID": {
+    "title": "Holder email invalid",
+    "when": "The upstream holder email is invalid.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "HOLDER_OWNED": {
+    "title": "Holder owned",
+    "when": "The pass is owned.",
+    "fix": "Use reassign.",
+    "retryable": false
+  },
+  "HOLDER_TRANSFER_PENDING": {
+    "title": "Holder transfer pending",
+    "when": "A holder transfer is already pending.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "IDEMPOTENCY_IN_PROGRESS": {
+    "title": "First request still running",
+    "when": "A request with this Idempotency-Key has not finished.",
+    "fix": "Wait a moment and resend the identical request.",
+    "retryable": true
+  },
+  "IDEMPOTENCY_KEY_INVALID": {
+    "title": "Bad Idempotency-Key",
+    "when": "Idempotency-Key is empty or longer than 200 characters.",
+    "fix": "Send a unique string of 1 to 200 characters, such as a UUID.",
+    "retryable": false
+  },
+  "IDEMPOTENCY_KEY_REUSED": {
+    "title": "Idempotency-Key reused",
+    "when": "The same Idempotency-Key came with a different request.",
+    "fix": "Use a new key for a new request; resend the identical request to replay.",
+    "retryable": false
+  },
+  "IDENTITY_NOT_FOUND": {
+    "title": "Identity not found",
+    "when": "Signing identity not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "IF_MATCH_INVALID": {
+    "title": "Bad If-Match",
+    "when": "If-Match is not a pass version number.",
+    "fix": "Send the version from the last GET, for example If-Match: 3.",
+    "retryable": false
+  },
+  "IMAGE_BYTES": {
+    "title": "Image bytes",
+    "when": "The web logo is over 512 KB.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "IMAGE_INVALID": {
+    "title": "Image invalid",
+    "when": "The web logo is over 512 KB.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "IMAGE_NOT_FOUND": {
+    "title": "Image not found",
+    "when": "Image not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "IMAGE_SCALE": {
+    "title": "Image scale",
+    "when": "The @2x image must be two thirds of the @3x.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "IMAGE_SIZE": {
+    "title": "Image size",
+    "when": "Use at most … px wide and … px tall.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "IMPORT_BUSY": {
+    "title": "Import busy",
+    "when": "Removing needs a signed-in user.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "IMPORT_COLUMN_MISSING": {
+    "title": "Import column missing",
+    "when": "The file has no \"…\" column.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "IMPORT_CONFLICT": {
+    "title": "Import conflict",
+    "when": "The request ran into import conflict.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "IMPORT_EXPIRED": {
+    "title": "Import expired",
+    "when": "The request ran into import expired.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "IMPORT_FILE_GONE": {
+    "title": "Import file gone",
+    "when": "The file is gone.",
+    "fix": "Upload it again.",
+    "retryable": false
+  },
+  "IMPORT_HAS_ERRORS": {
+    "title": "Import has errors",
+    "when": "… rows have errors.",
+    "fix": "Fix them or skip them.",
+    "retryable": false
+  },
+  "IMPORT_HEADER_TOO_LONG": {
+    "title": "Import header too long",
+    "when": "A column header is longer than … characters.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "IMPORT_ID_TAKEN": {
+    "title": "Import ID taken",
+    "when": "The reserved pass id is in use.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "IMPORT_NOT_FOUND": {
+    "title": "Import not found",
+    "when": "Import not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "IMPORT_PASS_CHANGED": {
+    "title": "Import pass changed",
+    "when": "The pass changed since the check.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "IMPORT_PLAN_INVALID": {
+    "title": "Import plan invalid",
+    "when": "The column mapping is not valid.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "IMPORT_ROW_UNRESERVED": {
+    "title": "Import row unreserved",
+    "when": "The row has no reserved pass.",
+    "fix": "Retry once; if it persists, send the requestId to support.",
+    "retryable": false
+  },
+  "IMPORT_STATE": {
+    "title": "Import state",
+    "when": "The request ran into import state.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "INVALID_API_KEY": {
+    "title": "Invalid API key",
+    "when": "The key is unknown, revoked or expired.",
+    "fix": "Create a new key in the console and update PASSBOOK_KEY.",
+    "retryable": false
+  },
+  "INVALID_CURSOR": {
+    "title": "Bad cursor",
+    "when": "cursor is not one a list returned.",
+    "fix": "Pass the nextCursor from the previous page unchanged, or drop it to start over.",
+    "retryable": false
+  },
+  "INVALID_INPUT": {
+    "title": "Invalid input",
+    "when": "The pass input is invalid.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "INVITATION_INVALID": {
+    "title": "Invitation invalid",
+    "when": "This invitation is invalid or expired.",
+    "fix": "Correct the request and send it again.",
+    "retryable": false
+  },
+  "INVITATION_PENDING": {
+    "title": "Invitation pending",
+    "when": "This address already has a pending invitation.",
+    "fix": "Revoke it to send a new one.",
+    "retryable": false
+  },
+  "JOIN_NOT_READY": {
+    "title": "Join not ready",
+    "when": "This template is not ready for a join link.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "KEYSET_CHANGED": {
+    "title": "Keyset changed",
+    "when": "Tags still use this version.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "KEYSET_KEY_INVALID": {
+    "title": "Keyset key invalid",
+    "when": "A key is 32 hex digits.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "KEYSET_KEY_NOT_FOUND": {
+    "title": "Keyset key not found",
+    "when": "Key version not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "KEYSET_KEY_REUSED": {
+    "title": "Keyset key reused",
+    "when": "Enter keys this organization has not used.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "KEYSET_KEY_WEAK": {
+    "title": "Keyset key weak",
+    "when": "Use two different keys, and not the factory default.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "KEYSET_NOT_FOUND": {
+    "title": "Keyset not found",
+    "when": "Keyset not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "KEY_CREATOR_GONE": {
+    "title": "Key creator gone",
+    "when": "The key's creator no longer exists.",
+    "fix": "Create a new key.",
+    "retryable": false
+  },
+  "KEY_CREATOR_NOT_MEMBER": {
+    "title": "Key creator not member",
+    "when": "The key's creator no longer exists.",
+    "fix": "Create a new key.",
+    "retryable": false
+  },
+  "KEY_TEST_ONLY": {
+    "title": "Test key only",
+    "when": "The operation is limited to Test keys.",
+    "fix": "Use a pb_test_ key.",
+    "retryable": false
+  },
+  "LAST_ORG_ADMIN": {
+    "title": "Last org admin",
+    "when": "This is the last org admin.",
+    "fix": "Make someone else an org admin first.",
+    "retryable": false
+  },
+  "LINK_NOT_FOUND": {
+    "title": "Link not found",
+    "when": "This link is not valid.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "MANIFEST_INVALID": {
+    "title": "Manifest invalid",
+    "when": "wallet.template.json is not valid JSON.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "MATCH_NEEDS_TEMPLATE": {
+    "title": "Match needs template",
+    "when": "Pick an organization and a template to filter by input.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "MEMBERSHIP_CONFLICT": {
+    "title": "Membership conflict",
+    "when": "This invitation is invalid or expired.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "MEMBER_PHOTO_CHANGED": {
+    "title": "Member photo changed",
+    "when": "The pass or photo changed; reload and try again.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": true
+  },
+  "MEMBER_PHOTO_DIMENSIONS": {
+    "title": "Member photo dimensions",
+    "when": "Crop the photo to a 270 × 270 pixel square.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "MEMBER_PHOTO_ENCODING": {
+    "title": "Member photo encoding",
+    "when": "Choose a valid photo and try again.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "MEMBER_PHOTO_NOT_FOUND": {
+    "title": "Member photo not found",
+    "when": "Member photo not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "MEMBER_PHOTO_STYLE": {
+    "title": "Member photo style",
+    "when": "Use a generic or event ticket pass without a strip image for a member photo.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "MESSAGING_UNSUPPORTED": {
+    "title": "Messaging unsupported",
+    "when": "… has no message field.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "MISSING_SCOPE": {
+    "title": "Missing scope",
+    "when": "The key lacks a scope this operation needs.",
+    "fix": "Create a key with the scope the operation lists under security.",
+    "retryable": false
+  },
+  "MODE_MISMATCH": {
+    "title": "Mode mismatch",
+    "when": "This pass was removed from Wallet.",
+    "fix": "Restore it first.",
+    "retryable": false
+  },
+  "MODE_UNSUPPORTED": {
+    "title": "Mode unsupported",
+    "when": "… does not support mode ….",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "NEW_CODE_UNSUPPORTED": {
+    "title": "New code unsupported",
+    "when": "This pass's barcode is not its scan code, so a new code cannot replace it.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "NOTE_CAP": {
+    "title": "Note cap",
+    "when": "This device has added all it can to this person today.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "NOTE_DEVICE_CAP": {
+    "title": "Note device cap",
+    "when": "This device has added all it can to this person today.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "NOTE_NOT_FOUND": {
+    "title": "Note not found",
+    "when": "Note not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "NOTE_ROLE": {
+    "title": "Note role",
+    "when": "Only Desk staff can read notes.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "NOT_A_ZIP": {
+    "title": "Not a zip",
+    "when": "The file is not a zip archive.",
+    "fix": "Correct the request and send it again.",
+    "retryable": false
+  },
+  "NOT_FOUND": {
+    "title": "Not found",
+    "when": "The id does not exist in your organization and mode.",
+    "fix": "Check the id, and that the key's mode (test or live) matches the object.",
+    "retryable": false
+  },
+  "NOT_INSIDE": {
+    "title": "Not inside",
+    "when": "They are already out.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "NO_FILE": {
+    "title": "No file",
+    "when": "Attach the archive as the file field.",
+    "fix": "Correct the request and send it again.",
+    "retryable": false
+  },
+  "NO_RECIPIENT": {
+    "title": "No recipient",
+    "when": "Enter a valid email address.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "NO_VERIFIED_EMAIL": {
+    "title": "No verified email",
+    "when": "Verify your email address first.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "OFFLINE_OFF": {
+    "title": "Offline off",
+    "when": "This session does not use an offline list.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "OFFLINE_TOO_BIG": {
+    "title": "Offline too big",
+    "when": "Too many passes for an offline list.",
+    "fix": "Narrow the session.",
+    "retryable": false
+  },
+  "ORG_ACCESS_CHANGED": {
+    "title": "Org access changed",
+    "when": "Organization access changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "ORG_CONFLICT": {
+    "title": "Org conflict",
+    "when": "The organization changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "ORG_FORBIDDEN": {
+    "title": "Org forbidden",
+    "when": "A global API key is required for platform-wide pass lists.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "ORG_INACTIVE": {
+    "title": "Org inactive",
+    "when": "The connection is disabled.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "ORG_MIXED": {
+    "title": "Org mixed",
+    "when": "Some passes were not found.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "ORG_NOT_FOUND": {
+    "title": "Org not found",
+    "when": "Expiry must be in the future.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "ORG_REQUIRED": {
+    "title": "Org required",
+    "when": "Choose an organization.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "ORG_SLUG_TAKEN": {
+    "title": "Org slug taken",
+    "when": "That slug is taken.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "ORG_STATUS_ALONE": {
+    "title": "Org status alone",
+    "when": "Send the status change on its own, then the other edits.",
+    "fix": "Correct the request and send it again.",
+    "retryable": false
+  },
+  "PAIRING_INVALID": {
+    "title": "Pairing invalid",
+    "when": "Code not valid.",
+    "fix": "Ask for a new one.",
+    "retryable": false
+  },
+  "PASS_CONFLICT": {
+    "title": "Pass conflict",
+    "when": "Pass no longer matches the broadcast.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "PASS_CONNECTION_MISMATCH": {
+    "title": "Pass connection mismatch",
+    "when": "The pass is not linked to this connection.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "PASS_FILE_MISSING": {
+    "title": "Pass file missing",
+    "when": "The pass file is missing.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "PASS_INPUT_INVALID": {
+    "title": "Pass input invalid",
+    "when": "The pass input is invalid.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "PASS_INVALID": {
+    "title": "Pass invalid",
+    "when": "The pass input is invalid.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "PASS_NOT_ACTIVE": {
+    "title": "Pass not active",
+    "when": "Only an active pass can get a new code.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "PASS_NOT_FOUND": {
+    "title": "Pass not found",
+    "when": "A bundle holds at most 10 passes.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "PASS_REF_TAKEN": {
+    "title": "Pass ref taken",
+    "when": "That connection ref already has a pass.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "PASS_REISSUE_REQUIRED": {
+    "title": "Pass reissue required",
+    "when": "A scanner credential has been retired and cannot be reused.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "PASS_REMOVED": {
+    "title": "Pass removed",
+    "when": "This pass was removed from Wallet.",
+    "fix": "Restore it first.",
+    "retryable": false
+  },
+  "PASS_TRANSFER_NOT_FOUND": {
+    "title": "Pass transfer not found",
+    "when": "Transfer not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "PASS_TRANSFER_PENDING": {
+    "title": "Pass transfer pending",
+    "when": "This pass is being transferred while its existing wallet credentials are retired.",
+    "fix": "Try again shortly.",
+    "retryable": true
+  },
+  "PHOTO_PASS_INACTIVE": {
+    "title": "Photo pass inactive",
+    "when": "This pass is not active.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "PHOTO_ROLE": {
+    "title": "Photo role",
+    "when": "Only Desk staff can add photos.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "PIN_GENERATION_FAILED": {
+    "title": "PIN generation failed",
+    "when": "Could not generate a new PIN.",
+    "fix": "Try again.",
+    "retryable": true
+  },
+  "PIN_INVALID": {
+    "title": "PIN invalid",
+    "when": "Wrong PIN.",
+    "fix": "Try again later.",
+    "retryable": true
+  },
+  "PIN_MANAGER_REQUIRED": {
+    "title": "PIN manager required",
+    "when": "Choose the manager.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "RATE_LIMITED": {
+    "title": "Rate limited",
+    "when": "The key went over its request limit.",
+    "fix": "Wait for Retry-After seconds, then retry. Back off on repeats.",
+    "retryable": true
+  },
+  "RECIPIENT_NOT_HOLDER": {
+    "title": "Recipient not holder",
+    "when": "The bundle has no email.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "REPLAY_NOT_QUEUED": {
+    "title": "Replay not queued",
+    "when": "Nothing was queued.",
+    "fix": "Try again.",
+    "retryable": true
+  },
+  "REPLAY_TOO_LARGE": {
+    "title": "Replay too large",
+    "when": "That range holds more than … deliveries.",
+    "fix": "Narrow it.",
+    "retryable": false
+  },
+  "REPLY_TO_LINK_INVALID": {
+    "title": "Reply to link invalid",
+    "when": "This link is invalid or expired.",
+    "fix": "Correct the request and send it again.",
+    "retryable": false
+  },
+  "REPLY_TO_NOTHING_PENDING": {
+    "title": "Reply to nothing pending",
+    "when": "There is nothing to confirm.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "REPLY_TO_RESEND_LIMITED": {
+    "title": "Reply to resend limited",
+    "when": "Wait a minute, then send the link again.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "RETENTION_RECEIPT_BUSY": {
+    "title": "Retention receipt busy",
+    "when": "Retention receipt chain is busy.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "ROLE_NOT_ALLOWED": {
+    "title": "Role not allowed",
+    "when": "This device cannot change its role.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "ROLL_CALL_ENDED": {
+    "title": "Roll call ended",
+    "when": "This roll call has ended.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "ROLL_CALL_NOT_FOUND": {
+    "title": "Roll call not found",
+    "when": "Roll call not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "ROLL_CALL_NO_PLACES": {
+    "title": "Roll call no places",
+    "when": "Nothing is tracked here, so there is no one to call.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "ROLL_CALL_NO_SESSION": {
+    "title": "Roll call no session",
+    "when": "This device is not in a scanning session.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "ROLL_CALL_TOO_LARGE": {
+    "title": "Roll call too large",
+    "when": "Too many people inside to freeze a list.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "RULE_HOURS_NEED_DATETIME": {
+    "title": "Rule hours need datetime",
+    "when": "The request ran into rule hours need datetime.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "RULE_INPUT_MISMATCH": {
+    "title": "Rule input mismatch",
+    "when": "The date input is a date on one template and a date and time on another.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "RULE_INPUT_MISSING": {
+    "title": "Rule input missing",
+    "when": "… has no ….",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "RULE_LIMIT": {
+    "title": "Rule limit",
+    "when": "Turn one off first: … automatic messages are on.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "RULE_NOT_FOUND": {
+    "title": "Rule not found",
+    "when": "Automatic message not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "RULE_VERSION": {
+    "title": "Rule version",
+    "when": "Someone else changed this.",
+    "fix": "Reload and try again.",
+    "retryable": true
+  },
+  "SAMPLE_TEST_ONLY": {
+    "title": "Sample test only",
+    "when": "Sample passes are for test scanners.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SAMSUNG_FIELDS_INVALID": {
+    "title": "Samsung fields invalid",
+    "when": "Invalid Samsung Wallet fields.",
+    "fix": "Correct the request and send it again.",
+    "retryable": false
+  },
+  "SAMSUNG_UNAUTHENTICATED": {
+    "title": "Samsung unauthenticated",
+    "when": "Samsung Wallet authorization is invalid.",
+    "fix": "Send a valid API key in the Authorization header.",
+    "retryable": false
+  },
+  "SAMSUNG_UNAVAILABLE": {
+    "title": "Samsung unavailable",
+    "when": "Samsung Wallet service is unavailable.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "SANDBOX_PREVIEW_ONLY": {
+    "title": "Preview only",
+    "when": "A sandbox pass was asked to install in Wallet.",
+    "fix": "Use the preview card and QR in the console; live passes need a real organization.",
+    "retryable": false
+  },
+  "SANDBOX_QUOTA": {
+    "title": "Sandbox quota reached",
+    "when": "A developer sandbox hit its cap on passes, templates or webhook endpoints.",
+    "fix": "Delete test objects you no longer need, or move to an organization with live access.",
+    "retryable": false
+  },
+  "SCANNER_ADMIN_ROLE": {
+    "title": "Scanner admin role",
+    "when": "Admin user not found.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCANNER_ADMIN_SETUP_EXISTS": {
+    "title": "Scanner admin setup exists",
+    "when": "Use the existing admin setup in that mode.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "SCANNER_ADMIN_USER": {
+    "title": "Scanner admin user",
+    "when": "An admin setup belongs to the admin who creates it.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCANNER_CANNOT_SCAN": {
+    "title": "Scanner cannot scan",
+    "when": "Scanner not found.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCANNER_CHANGED": {
+    "title": "Scanner changed",
+    "when": "This scanner changed.",
+    "fix": "Reload its settings and try again.",
+    "retryable": true
+  },
+  "SCANNER_EXPIRED": {
+    "title": "Scanner expired",
+    "when": "This scanner was removed.",
+    "fix": "Send a valid API key in the Authorization header.",
+    "retryable": false
+  },
+  "SCANNER_NAME_TAKEN": {
+    "title": "Scanner name taken",
+    "when": "Another scanner already has that name.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "SCANNER_NOT_FOUND": {
+    "title": "Scanner not found",
+    "when": "Scanner not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "SCANNER_NOT_PAIRABLE": {
+    "title": "Scanner not pairable",
+    "when": "Only browser devices pair with a code.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCANNER_NOT_TERMINAL": {
+    "title": "Scanner not terminal",
+    "when": "Only tills use a token.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCANNER_NO_TAGS": {
+    "title": "Scanner no tags",
+    "when": "Scanner not found.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "SCANNER_OFFLINE": {
+    "title": "Scanner offline",
+    "when": "The scanner is offline.",
+    "fix": "Open it and try again.",
+    "retryable": true
+  },
+  "SCANNER_REPAIR": {
+    "title": "Scanner repair",
+    "when": "Pair this device again.",
+    "fix": "Send a valid API key in the Authorization header.",
+    "retryable": false
+  },
+  "SCANNER_REQUESTS_OFF": {
+    "title": "Scanner requests off",
+    "when": "This scanner cannot read tags.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "SCANNER_REVOKED": {
+    "title": "Scanner revoked",
+    "when": "This scanner was removed.",
+    "fix": "Send a valid API key in the Authorization header.",
+    "retryable": false
+  },
+  "SCANNER_ROLE_INVALID": {
+    "title": "Scanner role invalid",
+    "when": "Choose a role this device supports.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCANNER_SETUP_EXISTS": {
+    "title": "Scanner setup exists",
+    "when": "A setup with this name or admin already exists.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "SCANNER_UNASSIGNED": {
+    "title": "Scanner unassigned",
+    "when": "Choose what this scanner accepts first.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCANNER_UNAUTHENTICATED": {
+    "title": "Scanner unauthenticated",
+    "when": "Pair this scanner to continue.",
+    "fix": "Send a valid API key in the Authorization header.",
+    "retryable": false
+  },
+  "SCANNER_WATCH_INVALID": {
+    "title": "Scanner watch invalid",
+    "when": "Choose the scanners or sessions this screen should follow.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCANNER_WATCH_MODE": {
+    "title": "Scanner watch mode",
+    "when": "Move the watched scanners, sessions and event to that mode first.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCANNER_WATCH_NOT_FOUND": {
+    "title": "Scanner watch not found",
+    "when": "A watched … is unavailable.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "SCANNING_DEVICE_CHANGED": {
+    "title": "Scanning device changed",
+    "when": "This device changed.",
+    "fix": "Reload its settings and try again.",
+    "retryable": true
+  },
+  "SCANNING_DEVICE_NOT_FOUND": {
+    "title": "Scanning device not found",
+    "when": "Device not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "SCANNING_HOLD_RANGE": {
+    "title": "Scanning hold range",
+    "when": "Scanning is already open.",
+    "fix": "Correct the request and send it again.",
+    "retryable": false
+  },
+  "SCANNING_HOURS_NONE": {
+    "title": "Scanning hours none",
+    "when": "Nothing opens in the next 8 days.",
+    "fix": "Use Pause.",
+    "retryable": false
+  },
+  "SCANNING_SESSION_CHANGED": {
+    "title": "Scanning session changed",
+    "when": "This session changed.",
+    "fix": "Reload its settings and try again.",
+    "retryable": true
+  },
+  "SCANNING_SESSION_CLOSED": {
+    "title": "Scanning session closed",
+    "when": "Resume the scanning session first.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCANNING_SESSION_CONFIG_REQUIRED": {
+    "title": "Scanning session config required",
+    "when": "Configure this device from its scanning session.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "SCANNING_SESSION_COUNTS_UNAVAILABLE": {
+    "title": "Scanning session counts unavailable",
+    "when": "Scanning session counts are unavailable.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "SCANNING_SESSION_MODE": {
+    "title": "Scanning session mode",
+    "when": "Open the device in its session’s mode.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCANNING_SESSION_NOT_FOUND": {
+    "title": "Scanning session not found",
+    "when": "Scanning session not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "SCANNING_SESSION_OPEN": {
+    "title": "Scanning session open",
+    "when": "Scanning is already open.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "SCANNING_SESSION_PAUSED": {
+    "title": "Scanning session paused",
+    "when": "This scanning session is paused.",
+    "fix": "Resume it in Scanning.",
+    "retryable": false
+  },
+  "SCANNING_SESSION_SCOPE_INVALID": {
+    "title": "Scanning session scope invalid",
+    "when": "Correct this scanning session’s scope and settings before adding devices.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "SCANNING_SESSION_SETTINGS_INVALID": {
+    "title": "Scanning session settings invalid",
+    "when": "Correct this scanning session’s settings first.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCAN_ACCESS_CHANGED": {
+    "title": "Scan access changed",
+    "when": "Your access changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "SCAN_ADMIN_SETUP_REQUIRED": {
+    "title": "Scan admin setup required",
+    "when": "Choose your admin scanner setup.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCAN_BODY_INVALID": {
+    "title": "Scan body invalid",
+    "when": "The request body is not valid JSON.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCAN_CONFIG_CHANGED": {
+    "title": "Scan config changed",
+    "when": "Configuration changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "SCAN_COUNTS_UNAVAILABLE": {
+    "title": "Scan counts unavailable",
+    "when": "Scanning counts are unavailable.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "SCAN_CREDENTIAL_CHANGED": {
+    "title": "Scan credential changed",
+    "when": "The scanner credential changed.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCAN_DISPLAY_PREVIEW_NOT_FOUND": {
+    "title": "Scan display preview not found",
+    "when": "Preview not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "SCAN_EPOCHS_MISSING": {
+    "title": "Scan epochs missing",
+    "when": "Scan authority was not captured for this actor.",
+    "fix": "Retry once; if it persists, send the requestId to support.",
+    "retryable": false
+  },
+  "SCAN_EVENT_CHANGED": {
+    "title": "Scan event changed",
+    "when": "The event templates changed.",
+    "fix": "Reload and try again.",
+    "retryable": true
+  },
+  "SCAN_EVENT_NOT_FOUND": {
+    "title": "Scan event not found",
+    "when": "Event not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "SCAN_EXPORT_RANGE": {
+    "title": "Scan export range",
+    "when": "Export up to 92 days at a time.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCAN_EXPORT_TOO_LARGE": {
+    "title": "Scan export too large",
+    "when": "Export up to 100,000 scans at a time.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCAN_HISTORY_UNAVAILABLE": {
+    "title": "Scan history unavailable",
+    "when": "Scan history is unavailable.",
+    "fix": "Try again.",
+    "retryable": true
+  },
+  "SCAN_IN_PROGRESS": {
+    "title": "Scan in progress",
+    "when": "This scan is still being recorded.",
+    "fix": "Try again.",
+    "retryable": true
+  },
+  "SCAN_KEY_REUSED": {
+    "title": "Scan key reused",
+    "when": "That request key was used for something else.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "SCAN_LIVE_ORIGIN": {
+    "title": "Scan live origin",
+    "when": "Open the screen on this site.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCAN_LOOKUP_DISABLED": {
+    "title": "Scan lookup disabled",
+    "when": "Lookup is disabled for this scanner.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCAN_MARK_OUT_INVALID": {
+    "title": "Scan mark out invalid",
+    "when": "That person cannot be marked out.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCAN_MODE_MISMATCH": {
+    "title": "Scan mode mismatch",
+    "when": "… is in a different mode.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCAN_NOT_FOUND": {
+    "title": "Scan not found",
+    "when": "Scan not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "SCAN_NO_SESSION": {
+    "title": "Scan no session",
+    "when": "Session totals are for Managers.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCAN_OVERRIDE_FORBIDDEN": {
+    "title": "Scan override forbidden",
+    "when": "Full.",
+    "fix": "No one can let them in.",
+    "retryable": false
+  },
+  "SCAN_OVERRIDE_INVALID": {
+    "title": "Scan override invalid",
+    "when": "That scan cannot be let through.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCAN_OVERRIDE_NOTE_CLOSED": {
+    "title": "Scan override note closed",
+    "when": "That note can no longer be added.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCAN_OVERRIDE_TAKEN": {
+    "title": "Scan override taken",
+    "when": "Someone else already let them in.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "SCAN_PASS_CHANGED": {
+    "title": "Scan pass changed",
+    "when": "The pass changed.",
+    "fix": "Scan again.",
+    "retryable": false
+  },
+  "SCAN_SCOPE_NOT_ALLOWED": {
+    "title": "Scan scope not allowed",
+    "when": "A scanner cannot choose what it scans.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCAN_SCOPE_REQUIRED": {
+    "title": "Scan scope required",
+    "when": "Choose an organization to scan for.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCAN_SEARCH_FORBIDDEN": {
+    "title": "Scan search forbidden",
+    "when": "Pass-name search is for administrators.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCAN_SETTINGS_INVALID": {
+    "title": "Scan settings invalid",
+    "when": "Correct this scanner’s settings first.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCAN_SETUP_CONFLICT": {
+    "title": "Scan setup conflict",
+    "when": "Another session already scans this template.",
+    "fix": "Reload and try again.",
+    "retryable": true
+  },
+  "SCAN_STAFF_CHANGED": {
+    "title": "Scan staff changed",
+    "when": "Configuration changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "SCAN_STAFF_CURSOR": {
+    "title": "Scan staff cursor",
+    "when": "That page is no longer valid.",
+    "fix": "Reload the list.",
+    "retryable": false
+  },
+  "SCAN_STAFF_NOT_FOUND": {
+    "title": "Scan staff not found",
+    "when": "Staff member not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "SCAN_SUMMARY_SESSION_FORBIDDEN": {
+    "title": "Scan summary session forbidden",
+    "when": "Session totals are for Managers.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCAN_SURFACE_UNSUPPORTED": {
+    "title": "Scan surface unsupported",
+    "when": "A terminal cannot be used as a display.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCAN_TOO_MANY_MISSES": {
+    "title": "Scan too many misses",
+    "when": "Too many codes not found.",
+    "fix": "Wait a few minutes.",
+    "retryable": true
+  },
+  "SCAN_TOO_MANY_OVERRIDES": {
+    "title": "Scan too many overrides",
+    "when": "Too many overrides this hour.",
+    "fix": "Wait a bit.",
+    "retryable": true
+  },
+  "SCAN_UNDO_EXPIRED": {
+    "title": "Scan undo expired",
+    "when": "This scan is too old to undo.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCAN_UNDO_FORBIDDEN": {
+    "title": "Scan undo forbidden",
+    "when": "This scan cannot be undone by this operator.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCAN_WINDOW_INVALID": {
+    "title": "Scan window invalid",
+    "when": "End must be after start; check the inherited template dates.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "SCREEN_ONLY": {
+    "title": "Screen only",
+    "when": "This device is a screen.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SCREEN_REQUIRED": {
+    "title": "Screen required",
+    "when": "Choose a screen view in Scanning.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SERIAL_TAKEN": {
+    "title": "Serial taken",
+    "when": "That serial is already in use.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "SESSION_OPEN_FORBIDDEN": {
+    "title": "Session open forbidden",
+    "when": "A manager must open this.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SESSION_REQUIRED": {
+    "title": "Session required",
+    "when": "Removing needs a signed-in user.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "SETTINGS_CHANGED": {
+    "title": "Settings changed",
+    "when": "The organization changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "SQL_SIZE_BUDGET": {
+    "title": "Sql size budget",
+    "when": "Statement is … bytes (limit …).",
+    "fix": "Retry once; if it persists, send the requestId to support.",
+    "retryable": false
+  },
+  "STAFF_NAME_TAKEN": {
+    "title": "Staff name taken",
+    "when": "Another active staff member already has that name.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "STAFF_REQUIRED": {
+    "title": "Staff required",
+    "when": "Sign in to scan.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "STAFF_SIGN_IN_DISABLED": {
+    "title": "Staff sign in disabled",
+    "when": "Staff sign-in is not enabled on this scanner.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "STAFF_SIGN_IN_UNAVAILABLE": {
+    "title": "Staff sign in unavailable",
+    "when": "Staff sign-in is only available on a paired scanner.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "STALE_CONTEXT": {
+    "title": "Stale context",
+    "when": "Sync context is unavailable.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "STAMPS_ABOVE_MAX": {
+    "title": "Stamps above max",
+    "when": "The card has … stamps; this version allows ….",
+    "fix": "Raise the maximum or redeem first.",
+    "retryable": false
+  },
+  "STAMPS_CARD_FULL": {
+    "title": "Stamps card full",
+    "when": "The card is full.",
+    "fix": "Redeem the reward first.",
+    "retryable": false
+  },
+  "STAMPS_NONE": {
+    "title": "Stamps none",
+    "when": "This pass has no stamps.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "STAMPS_NO_REWARD": {
+    "title": "Stamps no reward",
+    "when": "The card is full.",
+    "fix": "Redeem the reward first.",
+    "retryable": false
+  },
+  "STAMPS_QUERY": {
+    "title": "Stamps query",
+    "when": "The stamp counts could not be read.",
+    "fix": "Retry.",
+    "retryable": true
+  },
+  "STAMPS_REDRAW": {
+    "title": "Stamps redraw",
+    "when": "Change stamps in the designer.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAGS_OFF": {
+    "title": "Tags off",
+    "when": "Turn on tags in settings first.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_ALREADY_ASSIGNED": {
+    "title": "Tag already assigned",
+    "when": "The tag was assigned again.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_APPROVAL_REQUIRED": {
+    "title": "Tag approval required",
+    "when": "A till cannot approve.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "TAG_ASSIGN_FORBIDDEN": {
+    "title": "Tag assign forbidden",
+    "when": "Assigning to a person is off on this scanner.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "TAG_ASSURANCE_LOW": {
+    "title": "Tag assurance low",
+    "when": "Pass not found.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_CARD_AMBIGUOUS": {
+    "title": "Tag card ambiguous",
+    "when": "This scanner does not take that pass.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_CHECK_FAILED": {
+    "title": "Tag check failed",
+    "when": "The tag failed its check.",
+    "fix": "Use another tag.",
+    "retryable": false
+  },
+  "TAG_HOLDER_CHANGED": {
+    "title": "Tag holder changed",
+    "when": "Tag not found.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_KEY_UNREADABLE": {
+    "title": "Tag key unreadable",
+    "when": "A tag key could not be read.",
+    "fix": "Retry once; if it persists, send the requestId to support.",
+    "retryable": false
+  },
+  "TAG_LIMIT": {
+    "title": "Tag limit",
+    "when": "This organization has the most tags allowed.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_NOT_ASSIGNED": {
+    "title": "Tag not assigned",
+    "when": "The tag is not assigned.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_NOT_FOUND": {
+    "title": "Tag not found",
+    "when": "Tag not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "TAG_NO_ACCOUNT": {
+    "title": "Tag no account",
+    "when": "This person has no account yet.",
+    "fix": "Assign the tag to the pass instead.",
+    "retryable": false
+  },
+  "TAG_PASS_NOT_ACCEPTED": {
+    "title": "Tag pass not accepted",
+    "when": "This scanner does not take that pass.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "TAG_POOL_UNSUPPORTED": {
+    "title": "Tag pool unsupported",
+    "when": "Loaner tags are not available.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "TAG_REQUEST_BUSY": {
+    "title": "Tag request busy",
+    "when": "A tag request is already open.",
+    "fix": "Cancel it or wait.",
+    "retryable": false
+  },
+  "TAG_REQUEST_EXPIRED": {
+    "title": "Tag request expired",
+    "when": "This request is over.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_SCANNER_ONLY": {
+    "title": "Tag scanner only",
+    "when": "Assign tags on a scanner.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "TAG_SUN_REPLAY": {
+    "title": "Tag sun replay",
+    "when": "The request ran into tag sun replay.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_SYSTEM_DISABLED": {
+    "title": "Tag system disabled",
+    "when": "A tag type with this name exists.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_TYPE_ARCHIVED": {
+    "title": "Tag type archived",
+    "when": "This tag type is archived.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_TYPE_CHANGED": {
+    "title": "Tag type changed",
+    "when": "A tag type with this name exists.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_TYPE_NAME_TAKEN": {
+    "title": "Tag type name taken",
+    "when": "A tag type with this name exists.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TAG_TYPE_NOT_FOUND": {
+    "title": "Tag type not found",
+    "when": "Tag type not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "TAG_UID_RANDOM": {
+    "title": "Tag uid random",
+    "when": "This tag changes its ID.",
+    "fix": "Try another tag.",
+    "retryable": false
+  },
+  "TAG_UNDO_EXPIRED": {
+    "title": "Tag undo expired",
+    "when": "Undo timed out.",
+    "fix": "Add the tag again.",
+    "retryable": false
+  },
+  "TAG_UNDO_FORBIDDEN": {
+    "title": "Tag undo forbidden",
+    "when": "Undo is on the scanner that assigned the tag.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "TAG_UNREADABLE": {
+    "title": "Tag unreadable",
+    "when": "This tag changes its ID.",
+    "fix": "Try another tag.",
+    "retryable": false
+  },
+  "TEMPLATE_ARCHIVED": {
+    "title": "Template archived",
+    "when": "An archived template cannot be added to an event.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TEMPLATE_ASSET_CONFLICT": {
+    "title": "Template asset conflict",
+    "when": "The stored template version asset is missing after creation.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TEMPLATE_BAKED": {
+    "title": "Template baked",
+    "when": "Built-in templates cannot be archived.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "TEMPLATE_BLUEPRINT_INACTIVE": {
+    "title": "Template blueprint inactive",
+    "when": "This blueprint is no longer offered.",
+    "fix": "Pick another.",
+    "retryable": false
+  },
+  "TEMPLATE_CANDIDATE_NOT_FOUND": {
+    "title": "Template candidate not found",
+    "when": "Template candidate not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "TEMPLATE_CONFLICT": {
+    "title": "Template conflict",
+    "when": "The template changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "TEMPLATE_CONTENT_CHANGED": {
+    "title": "Template content changed",
+    "when": "The approved template content changed.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TEMPLATE_EXISTS": {
+    "title": "Template exists",
+    "when": "A template with this name exists.",
+    "fix": "Pick another name.",
+    "retryable": false
+  },
+  "TEMPLATE_IN_TAG_TYPE": {
+    "title": "Template in tag type",
+    "when": "A tag type uses this template.",
+    "fix": "Remove it from the type first.",
+    "retryable": false
+  },
+  "TEMPLATE_IN_USE": {
+    "title": "Template in use",
+    "when": "Scanning events or setups use this template.",
+    "fix": "Remove it from them first.",
+    "retryable": false
+  },
+  "TEMPLATE_IS_BLUEPRINT": {
+    "title": "Template is blueprint",
+    "when": "Passes come from templates.",
+    "fix": "Use this blueprint to make one first.",
+    "retryable": false
+  },
+  "TEMPLATE_MODE_MISMATCH": {
+    "title": "Template mode mismatch",
+    "when": "The requested mode does not match the current session.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "TEMPLATE_NOT_BLUEPRINT": {
+    "title": "Template not blueprint",
+    "when": "Only blueprints can be used.",
+    "fix": "Duplicate a template instead.",
+    "retryable": false
+  },
+  "TEMPLATE_NOT_FOUND": {
+    "title": "Template not found",
+    "when": "Template not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "TEMPLATE_NOT_RELEASED": {
+    "title": "Template not released",
+    "when": "Release the template first.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TEMPLATE_NOT_SHAREABLE": {
+    "title": "Template not shareable",
+    "when": "Platform only.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TEMPLATE_NOT_TESTED": {
+    "title": "Template not tested",
+    "when": "This version has not been released in Test.",
+    "fix": "Release it in Test first.",
+    "retryable": false
+  },
+  "TEMPLATE_ORG_REQUIRED": {
+    "title": "Template org required",
+    "when": "This template belongs to another organization.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TEMPLATE_PROVIDER_UNSUPPORTED": {
+    "title": "Template provider unsupported",
+    "when": "This wallet provider is not configured for template releases.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TEMPLATE_RELEASE_CONFLICT": {
+    "title": "Template release conflict",
+    "when": "The approved release changed.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TEMPLATE_RELEASE_NOT_FOUND": {
+    "title": "Template release not found",
+    "when": "The template release changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "TEMPLATE_RELEASE_REQUIRED": {
+    "title": "Template release required",
+    "when": "The approved release is unavailable.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TEMPLATE_SELF_APPROVAL": {
+    "title": "Template self approval",
+    "when": "The author cannot approve this candidate.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "TEMPLATE_SLUG_CONFLICT": {
+    "title": "Template slug conflict",
+    "when": "A template with this name was created meanwhile.",
+    "fix": "Retry.",
+    "retryable": true
+  },
+  "TEMPLATE_USED_BY_OTHER_ORG": {
+    "title": "Template used by other org",
+    "when": "Passes of another organization use this template.",
+    "fix": "Reissue or delete them first.",
+    "retryable": false
+  },
+  "TEMPLATE_VERSION_CONFLICT": {
+    "title": "Template version conflict",
+    "when": "The template changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "TEMPLATE_VERSION_CONTENT_CONFLICT": {
+    "title": "Template version content conflict",
+    "when": "The baked template content changed during synchronization.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TEMPLATE_VERSION_NOT_FOUND": {
+    "title": "Template version not found",
+    "when": "Template version not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "TERMINAL_NOT_FOUND": {
+    "title": "Terminal not found",
+    "when": "Terminal not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "TERMINAL_ONLY": {
+    "title": "Terminal only",
+    "when": "A key acts only as a terminal.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "TERM_MANAGED": {
+    "title": "Term managed",
+    "when": "The pass changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "TERM_NONE": {
+    "title": "Term none",
+    "when": "This pass has no term.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TERM_NOT_STARTED": {
+    "title": "Term not started",
+    "when": "A connection sets the start.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TEST_FORWARD_ALREADY_ATTEMPTED": {
+    "title": "Test forward already attempted",
+    "when": "This captured email is being sent or its delivery outcome is unknown.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "TEST_FORWARD_CHANGED": {
+    "title": "Test forward changed",
+    "when": "The email or account changed.",
+    "fix": "Reload and try again.",
+    "retryable": true
+  },
+  "TEST_FORWARD_OUTCOME_UNKNOWN": {
+    "title": "Test forward outcome unknown",
+    "when": "The provider outcome is unknown.",
+    "fix": "Do not send this message again.",
+    "retryable": true
+  },
+  "TEST_FORWARD_PREPARATION_FAILED": {
+    "title": "Test forward preparation failed",
+    "when": "The test email could not be prepared.",
+    "fix": "Nothing was sent.",
+    "retryable": true
+  },
+  "TEST_KEY_REQUIRED": {
+    "title": "Test key required",
+    "when": "Reading the test inbox needs a test key.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "UNAUTHENTICATED": {
+    "title": "No credentials",
+    "when": "The request has no valid credentials.",
+    "fix": "Send Authorization: Bearer $PASSBOOK_KEY.",
+    "retryable": false
+  },
+  "UNDO_SUPERSEDED": {
+    "title": "Undo superseded",
+    "when": "Scan not found.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "UNDO_UNCONFIRMED": {
+    "title": "Undo unconfirmed",
+    "when": "The undo could not be confirmed.",
+    "fix": "Retry once; if it persists, send the requestId to support.",
+    "retryable": false
+  },
+  "UNKNOWN_TEMPLATE": {
+    "title": "Unknown template",
+    "when": "A template does not belong to this organization.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "UNLOCK_REQUIRED": {
+    "title": "Unlock required",
+    "when": "Enter a staff PIN to switch back.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "UNSAFE_URL": {
+    "title": "Unsafe URL",
+    "when": "The host is not allowed.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "UPLOAD_NOT_FOUND": {
+    "title": "Upload not found",
+    "when": "Upload not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "USER_NOT_FOUND": {
+    "title": "User not found",
+    "when": "Admin user not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "VALIDATION": {
+    "title": "Validation failed",
+    "when": "A body, query or path value breaks the schema.",
+    "fix": "Fix each field in issues and resend.",
+    "retryable": false
+  },
+  "VERSION_CONFLICT": {
+    "title": "Stale version",
+    "when": "If-Match holds an older version than the pass has.",
+    "fix": "GET the pass, apply your change to it, and resend with the new version.",
+    "retryable": true
+  },
+  "VERSION_INVALID": {
+    "title": "Version invalid",
+    "when": "Template version not found.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "VERSION_NOT_FOUND": {
+    "title": "Version not found",
+    "when": "Pass not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "VERSION_PURGED": {
+    "title": "Version purged",
+    "when": "Version not found.",
+    "fix": "Create the resource again.",
+    "retryable": false
+  },
+  "VISITOR_CHANGED": {
+    "title": "Visitor changed",
+    "when": "The request ran into visitor changed.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "VISITOR_HOST_NOTICE_FAILED": {
+    "title": "Visitor host notice failed",
+    "when": "The host was emailed three times already.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "VISITOR_HOST_UNKNOWN": {
+    "title": "Visitor host unknown",
+    "when": "Host not found.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "VISITOR_IN": {
+    "title": "Visitor in",
+    "when": "They are in.",
+    "fix": "Check them out first.",
+    "retryable": false
+  },
+  "VISITOR_NOT_FOUND": {
+    "title": "Visitor not found",
+    "when": "Visitor not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "VISITOR_NOT_IN": {
+    "title": "Visitor not in",
+    "when": "They have not checked in.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "VISITOR_OUT": {
+    "title": "Visitor out",
+    "when": "They are already out.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "VISITOR_RESEND_LIMIT": {
+    "title": "Visitor resend limit",
+    "when": "The host was emailed three times already.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "VISITOR_TEMPLATE_MISSING": {
+    "title": "Visitor template missing",
+    "when": "The request ran into visitor template missing.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_ACCOUNT_CONFLICT": {
+    "title": "Wallet account conflict",
+    "when": "The wallet credential cannot be checked.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_ACCOUNT_INSTANCES_ACTIVE": {
+    "title": "Wallet account instances active",
+    "when": "Retire all provider instances before revoking this account.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_ACCOUNT_MOVED": {
+    "title": "Wallet account moved",
+    "when": "The request ran into wallet account moved.",
+    "fix": "Create the resource again.",
+    "retryable": false
+  },
+  "WALLET_ART_MISMATCH": {
+    "title": "Wallet art mismatch",
+    "when": "… cannot be cut to the size … needs.",
+    "fix": "Replace the image.",
+    "retryable": false
+  },
+  "WALLET_CREDENTIALS_INVALID": {
+    "title": "Wallet credentials invalid",
+    "when": "Wallet provider settings moved to credentials and enrolments.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "WALLET_CREDENTIALS_UNAVAILABLE": {
+    "title": "Wallet credentials unavailable",
+    "when": "Wallet provider credentials are unavailable.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "WALLET_ENROLMENT_HELD": {
+    "title": "Wallet enrolment held",
+    "when": "The wallet account changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "WALLET_ENROLMENT_PREREQUISITE": {
+    "title": "Wallet enrolment prerequisite",
+    "when": "Finish the missing steps first.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_IDENTITY_IMMUTABLE": {
+    "title": "Wallet identity immutable",
+    "when": "A wallet account issuer cannot be changed.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_IMAGE_NOT_FOUND": {
+    "title": "Wallet image not found",
+    "when": "Image not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "WALLET_MODE_MISMATCH": {
+    "title": "Wallet mode mismatch",
+    "when": "The requested mode does not match the session.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "WALLET_OFFER_NOT_FOUND": {
+    "title": "Wallet offer not found",
+    "when": "This wallet offer is not available.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "WALLET_OP_ACTOR": {
+    "title": "Wallet op actor",
+    "when": "The request ran into wallet op actor.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "WALLET_OP_CONFIG": {
+    "title": "Wallet op config",
+    "when": "The request ran into wallet op config.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_OP_LINEAGE": {
+    "title": "Wallet op lineage",
+    "when": "The request ran into wallet op lineage.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_OP_ORG": {
+    "title": "Wallet op org",
+    "when": "The request ran into wallet op org.",
+    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "retryable": false
+  },
+  "WALLET_OP_RELEASE": {
+    "title": "Wallet op release",
+    "when": "The request ran into wallet op release.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_OP_STALE": {
+    "title": "Wallet op stale",
+    "when": "The request ran into wallet op stale.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_PROJECTION_BLOCKED": {
+    "title": "Wallet projection blocked",
+    "when": "The request ran into wallet projection blocked.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_PROJECTION_CONFLICT": {
+    "title": "Wallet projection conflict",
+    "when": "The wallet projection, source release or provider account changed.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_PROJECTION_NOT_FOUND": {
+    "title": "Wallet projection not found",
+    "when": "Wallet projection candidate not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "WALLET_PROJECTION_SCHEMA": {
+    "title": "Wallet projection schema",
+    "when": "Create a new candidate: Google releases use the compiled wallet format.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_PROJECTION_UNSUPPORTED": {
+    "title": "Wallet projection unsupported",
+    "when": "This template contains wallet semantics that are not supported by the selected native projection.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WALLET_VERIFICATION_CONFLICT": {
+    "title": "Wallet verification conflict",
+    "when": "A newer verification is in progress.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WEBHOOK_ALREADY_FINISHED": {
+    "title": "Webhook already finished",
+    "when": "This webhook work is already finished.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WEBHOOK_CONTEXT_CONFLICT": {
+    "title": "Webhook context conflict",
+    "when": "The webhook context changed.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WEBHOOK_DISPATCH_INCOMPLETE": {
+    "title": "Webhook dispatch incomplete",
+    "when": "Webhook dispatch is incomplete.",
+    "fix": "Retry later.",
+    "retryable": true
+  },
+  "WEBHOOK_EFFECT_UNCERTAIN": {
+    "title": "Webhook effect uncertain",
+    "when": "The webhook payload is unavailable.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WEBHOOK_ENDPOINT_LIMIT": {
+    "title": "Webhook endpoint limit",
+    "when": "This mode already has 10 endpoints.",
+    "fix": "Delete one first.",
+    "retryable": false
+  },
+  "WEBHOOK_ENDPOINT_NOT_FOUND": {
+    "title": "Webhook endpoint not found",
+    "when": "Webhook endpoint not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "WEBHOOK_ENQUEUE_FAILED": {
+    "title": "Webhook enqueue failed",
+    "when": "Could not queue the webhook replay.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "WEBHOOK_ITEM_BUSY": {
+    "title": "Webhook item busy",
+    "when": "Webhook processing needs to be retried.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "WEBHOOK_ITEM_PENDING": {
+    "title": "Webhook item pending",
+    "when": "Webhook processing needs to be retried.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "WEBHOOK_NOTHING_TO_RESOLVE": {
+    "title": "Webhook nothing to resolve",
+    "when": "A webhook item may still be running.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WEBHOOK_NOT_FOUND": {
+    "title": "Webhook not found",
+    "when": "Webhook work not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  },
+  "WEBHOOK_PAYLOAD": {
+    "title": "Webhook payload",
+    "when": "The webhook signature is invalid.",
+    "fix": "Correct the request and send it again.",
+    "retryable": false
+  },
+  "WEBHOOK_PAYLOAD_MISSING": {
+    "title": "Webhook payload missing",
+    "when": "The webhook payload is unavailable.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "WEBHOOK_REFERENCE_MODE": {
+    "title": "Webhook reference mode",
+    "when": "Webhook configuration is unavailable.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "WEBHOOK_REFERENCE_MODE_CHANGED": {
+    "title": "Webhook reference mode changed",
+    "when": "The webhook connector changed.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WEBHOOK_RESOLVE_CONFLICT": {
+    "title": "Webhook resolve conflict",
+    "when": "The webhook changed.",
+    "fix": "Reload and retry.",
+    "retryable": true
+  },
+  "WEBHOOK_RETENTION_FAILED": {
+    "title": "Webhook retention failed",
+    "when": "Could not retain the webhook.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "WEBHOOK_RETENTION_UNAVAILABLE": {
+    "title": "Webhook retention unavailable",
+    "when": "Webhook retention is unavailable.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "WEBHOOK_SIGNATURE": {
+    "title": "Webhook signature",
+    "when": "The webhook signature is invalid.",
+    "fix": "Send a valid API key in the Authorization header.",
+    "retryable": false
+  },
+  "WEBHOOK_SNAPSHOT_UNAVAILABLE": {
+    "title": "Webhook snapshot unavailable",
+    "when": "The original webhook context is unavailable.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WEBHOOK_STALE_CONTEXT": {
+    "title": "Webhook stale context",
+    "when": "Webhook processing needs to be retried.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WEBHOOK_STILL_PENDING": {
+    "title": "Webhook still pending",
+    "when": "This webhook work is already finished.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "WEBHOOK_UNAVAILABLE": {
+    "title": "Webhook unavailable",
+    "when": "The connection changed.",
+    "fix": "Retry the webhook.",
+    "retryable": true
+  },
+  "WEBHOOK_WORK_CHANGED": {
+    "title": "Webhook work changed",
+    "when": "The webhook payload is unavailable.",
+    "fix": "Retry with backoff.",
+    "retryable": true
+  },
+  "WORKFLOW_START": {
+    "title": "Workflow start",
+    "when": "The rebuild did not start.",
+    "fix": "Try again.",
+    "retryable": true
+  },
+  "ZONE_ARCHIVED": {
+    "title": "Zone archived",
+    "when": "This zone is archived.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "ZONE_CYCLE": {
+    "title": "Zone cycle",
+    "when": "A zone cannot sit inside itself.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "ZONE_DEPTH": {
+    "title": "Zone depth",
+    "when": "A zone cannot sit inside itself.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "ZONE_EVENT_SESSION": {
+    "title": "Zone event session",
+    "when": "An event session takes no zones.",
+    "fix": "Fix the fields listed in issues and send it again.",
+    "retryable": false
+  },
+  "ZONE_KEY_TAKEN": {
+    "title": "Zone key taken",
+    "when": "That key is already in use.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "ZONE_NAME_TAKEN": {
+    "title": "Zone name taken",
+    "when": "That key is already in use.",
+    "fix": "Fetch the current resource, then send the change again.",
+    "retryable": false
+  },
+  "ZONE_NOT_FOUND": {
+    "title": "Zone not found",
+    "when": "Zone not found.",
+    "fix": "Check the id, mode and organization of the key.",
+    "retryable": false
+  }
+}
