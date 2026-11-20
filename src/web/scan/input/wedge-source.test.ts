@@ -134,6 +134,23 @@ describe('createWedgeSource', () => {
     expect(events.at(-1)?.defaultPrevented).toBe(true);
   });
 
+  it('a numpad PIN typed at 30 to 60 ms a key arrives whole in a PIN field (N1)', () => {
+    env = setup();
+    const input = document.createElement('input');
+    document.body.append(input);
+    input.focus();
+    const gaps = [30, 45, 60, 35, 50];
+    const events: KeyboardEvent[] = [];
+    for (const [i, ch] of [...'482910'].entries()) {
+      if (i > 0) env.clock.advance(gaps[i - 1] ?? 40);
+      events.push(env.key(input, { code: `Digit${ch}`, key: ch }));
+    }
+    env.clock.advance(1000);
+    expect(input.value).toBe('482910');
+    expect(events.some((e) => e.defaultPrevented)).toBe(false);
+    expect(env.emitted).toEqual([]);
+  });
+
   it('a person typing into an unregistered text field is left alone', () => {
     env = setup();
     const input = document.createElement('input');

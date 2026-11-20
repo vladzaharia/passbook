@@ -54,6 +54,11 @@ export interface WedgeSourceDeps {
   /** One slow key with nothing editable focused: open lookup with it. */
   onHuman?: (ch: string) => void;
   onFocus?: (focused: boolean) => void;
+  /**
+   * Time a key by when it was pressed (`event.timeStamp`), not when the handler ran, so a long
+   * task mid-burst cannot stretch a gap and cut the code. Off by default: tests drive a fake clock.
+   */
+  eventTime?: boolean;
   /** The running count of bursts typed through the `event.key` fallback outside the scan alphabet. */
   onBadLayout?: (count: number) => void;
   target?: Window;
@@ -166,7 +171,9 @@ export function createWedgeSource(deps: WedgeSourceDeps): InputSource & { badLay
       // A select or an editable region we do not own keeps its keys; any text field of the app is scan-aware.
       if (isEditable(target) && !registered && !isTextField(target)) return;
       const det = detectorFor();
-      const t = deps.clock.now();
+      // The press, as the clock saw it: the handler's own time minus how late the handler is.
+      const late = deps.eventTime ? Math.max(0, performance.now() - e.timeStamp) : 0;
+      const t = deps.clock.now() - late;
       const pressed = toKey(e, t);
       if (pressed.key.k === 'char' && det.startsBuffer(t)) {
         field = registered || isTextField(target) ? (target as Field) : null;
@@ -182,7 +189,8 @@ export function createWedgeSource(deps: WedgeSourceDeps): InputSource & { badLay
         deps.clock.clearTimeout(idle);
         idle = null;
       }
-      if (verdict.v === 'burst' && !registered) e.preventDefault();
+      // A text field keeps every key as typed (a numpad PIN is quick); a scan restores it afterwards.
+      if (verdict.v === 'burst' && !registered && !isTextField(target)) e.preventDefault();
       else if (verdict.v === 'scan') {
         e.preventDefault();
         finish(verdict, emit);

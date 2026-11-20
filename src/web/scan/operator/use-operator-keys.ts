@@ -68,9 +68,17 @@ export function useOperatorKeys(
       const target = e.target instanceof Element ? e.target : document.activeElement;
       const zone = zoneOf(target);
       const t = timeOf(e);
+      // How long the keyboard was quiet before this key: a shortcut needs a quiet lead-in.
+      const quietBefore = gate.sinceLast(t);
       if (isPrintable(input)) {
         if (gate.printable(t) === 'burst') {
           if (zone === 'record' && input.key !== ' ' && !dialogOpen()) gate.hold(input.key, replay);
+          return;
+        }
+        // A lone key after a fast run belongs to the run: a typist's rhythm is fast pair, then slower.
+        // While the run is undecided no key of it may act as a shortcut.
+        if (gate.holding() && zone === 'record' && input.key !== ' ' && !dialogOpen()) {
+          gate.hold(input.key, replay);
           return;
         }
       } else if (e.key === 'Enter' && zone === 'record' && gate.terminates(t)) return;
@@ -86,12 +94,22 @@ export function useOperatorKeys(
         typingRecently: gate.sinceLast(t) < WEDGE_SLOW.idleAcceptMs,
       });
       if (!resolved) return;
+      // A letter shortcut right behind other keys is a slow reader's data, not a request.
+      if (
+        resolved.deferred &&
+        resolved.command.c !== 'type' &&
+        quietBefore < WEDGE_SLOW.idleAcceptMs
+      )
+        return;
       if (resolved.prevent) e.preventDefault();
       const { command } = resolved;
       if (resolved.deferred) {
         gate.hold(input.key, replay);
         gate.defer(() => latest.current.run(command));
-      } else latest.current.run(command);
+      } else {
+        gate.drop();
+        latest.current.run(command);
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener(WEDGE_SCAN_EVENT, onScan);
