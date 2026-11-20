@@ -50,6 +50,7 @@ export const TEMPLATE_REFS: Readonly<Record<string, TemplateRef>> = {
   scan_code_rotations: ofPass(),
   outbox: ofPass(),
   pass_events: ofPass(),
+  pass_notes: ofPass(),
   join_issues: ofPass(),
   join_marks: ofPass(),
   member_photos: ofPass(),
