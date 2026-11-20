@@ -1,7 +1,7 @@
 /**
- * Which bundle stands behind a check-in. The door's auto flow acts at once and the act answer does not
- * carry the bundle (the act path is held to its round-trip budget), so after an ok verdict the door
- * asks `resolve` for the same pass. The answer arrives as a `bundle` event: the card gets its group
+ * Which bundle stands behind a check-in. The door's auto flow acts at once and the act answer carries
+ * only a flag, `inBundle` (the act path is held to its round-trip budget), so after an ok verdict for
+ * a flagged pass the door asks `resolve` for the same pass; every other scan costs nothing more. The answer arrives as a `bundle` event: the card gets its group
  * row, the dock its "Check in N more", and the verdict waits for the tap. Like the assign loop's
  * events, these sit beside the frozen `types.ts`.
  */
@@ -25,11 +25,12 @@ export const isBundleCmd = (cmd: Cmd): cmd is Cmd & BundleCmd =>
   (cmd as { c: string }).c === 'bundle';
 export const bundleCmd = (cmd: BundleCmd): Cmd => cmd as unknown as Cmd;
 
-/** An ok door verdict that has not said whether a bundle stands behind it. */
+/** An ok door verdict for a pass the server says is in a bundle, whose members it has not shown. */
 export const wantsPeek = (s: MachineState, o: ScanOutcome): boolean =>
   s.posture === 'door' &&
   s.online &&
   o.kind === 'ok' &&
+  o.inBundle === true &&
   !o.local &&
   !o.bundle &&
   !o.group &&

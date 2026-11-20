@@ -53,6 +53,8 @@ export interface Candidate extends CredentialTombstoneSnapshot {
   displayTemplateVersion: string | null;
   checkInRules?: CheckInPolicy;
   hasPhoto?: boolean;
+  /** The pass is in a bundle, read with the pass: act answers carry it so the door asks for the members only then. */
+  inBundle?: boolean;
   /** Whether a pass override, a template policy or an org block can change the defaults; absent: unknown. */
   channelRules?: boolean;
   /** The credential a code input matched on; absent for a pass id or a tag. */
@@ -138,6 +140,7 @@ const PROJECTION = `SELECT p.*, snapshot.pass_json AS pass_json,
       OR EXISTS(SELECT 1 FROM settings cs WHERE cs.scope='org:'||p.org_id
         AND cs.key='channels.blocked' AND cs.value NOT IN ('[]','null'))) AS channel_rules,
     ${channelEpochSql('p.org_id', 'p.mode')} AS channel_epoch,
+    EXISTS(SELECT 1 FROM bundle_passes bpx WHERE bpx.pass_id=p.id) AS in_bundle,
     (SELECT rules FROM pass_check_in c WHERE c.org_id=p.org_id AND c.pass_id=p.id) AS check_in_rules,
     photo.version AS asset_photo_version, photo.r2_key AS asset_photo_key,
     photo.sha1 AS asset_photo_sha1, photo.include_in_pass AS asset_photo_included,

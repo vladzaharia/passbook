@@ -308,6 +308,7 @@ export const ScanOutcomeSchema = z.object({
     .nullable(),
   /** The bundle behind the scanned pass: the "Check in all" chip. Also on `card` for a ready card. */
   bundle: ScanBundleSchema.nullable().optional(),
+  inBundle: z.boolean().optional(), // act answers: the pass is in a bundle (the members come from resolve)
   counts: ScanCountsSchema,
   milestone: ScanMilestoneSchema.nullable(),
   undoUntil: TimestampSchema.nullable(),

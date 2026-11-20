@@ -14,27 +14,33 @@ function okVerdict(over: object = {}) {
 }
 
 describe('asking which bundle stands behind a check-in', () => {
-  it('an ok door verdict with no bundle asks once, for the pass just scanned', () => {
-    const v = okVerdict();
+  it('an ok door verdict for a flagged pass asks once, for the pass just scanned', () => {
+    const v = okVerdict({ inBundle: true });
     const peek = v.cmds.filter((c) => c.c === ('bundle' as never));
     expect(peek).toEqual([
       expect.objectContaining({ c: 'bundle', scanId: v.state.recent[0]?.scanId }),
     ]);
   });
 
+  it('does not ask for a pass that is in no bundle: no extra trip on a plain scan', () => {
+    expect(okVerdict().cmds.some((c) => c.c === ('bundle' as never))).toBe(false);
+  });
+
   it('does not ask when the answer already has the bundle, ran a group, or was a refusal', () => {
     const asked = (cmds: { c: string }[]) => cmds.some((c) => c.c === 'bundle');
-    expect(asked(okVerdict({ bundle }).cmds)).toBe(false);
-    expect(asked(okVerdict({ group: { total: 2, done: 2, already: 0, refused: 0 } }).cmds)).toBe(
-      false,
-    );
+    expect(asked(okVerdict({ inBundle: true, bundle }).cmds)).toBe(false);
+    expect(
+      asked(
+        okVerdict({ inBundle: true, group: { total: 2, done: 2, already: 0, refused: 0 } }).cmds,
+      ),
+    ).toBe(false);
     const r = step(states.ready(), readOf('BBBB2222'));
     const refused = step(r.state, answerOf(requestKey(r.cmds), 'refused', 'voided'), at(100));
     expect(asked(refused.cmds)).toBe(false);
   });
 
   it('shows the bundle on the verdict and holds it for the tap', () => {
-    const v = okVerdict();
+    const v = okVerdict({ inBundle: true });
     const scanId = v.state.recent[0]?.scanId as string;
     const l0 = v.state.loop;
     const closeAt0 = l0.s === 'verdict' ? l0.closeAt : null;
@@ -51,7 +57,7 @@ describe('asking which bundle stands behind a check-in', () => {
   });
 
   it('does not hold the verdict when everyone is already in', () => {
-    const v = okVerdict();
+    const v = okVerdict({ inBundle: true });
     const scanId = v.state.recent[0]?.scanId as string;
     const l0 = v.state.loop;
     const r = step(
