@@ -20,7 +20,9 @@ const ORG_INSERTS = [
 
 describe('every org-insert path writes an entitlements row', () => {
   it('enumerates the paths and each calls addOrgEntitlements', () => {
-    const insert = /INSERT\s+(?:OR\s+\w+\s+)?INTO\s+orgs\b|insertSelect\(\s*['"]orgs['"]/i;
+    // Raw SQL, or a grant builder naming the table (a literal, or a constant such as ORGS, in the first argument).
+    const insert =
+      /INSERT\s+(?:OR\s+\w+\s+)?INTO\s+orgs\b|(?:insertSelect|upsert|insertJoined)\(\s*(?:['"]orgs['"]|[A-Za-z_.]*orgs[A-Za-z_]*\s*[,)])/i;
     const found = Object.entries(sources)
       .filter(([file]) => !/\.test\.tsx?$|test-fixtures|\/test-kit\.ts$/.test(file))
       .filter(([, text]) => insert.test(text))

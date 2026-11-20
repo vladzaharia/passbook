@@ -38,7 +38,7 @@ import {
   WRITE_PARAM_BUDGET,
   type WriteOptions,
 } from './authority-statements.ts';
-import { RESTRICTED_TABLES } from './authority-tables.ts';
+import { restrictedWriteRefusal } from './authority-tables.ts';
 import { buildUpsert, type UpsertOptions } from './authority-upsert.ts';
 import { exactStmt, type SqlValue } from './db.ts';
 import { authorityDenied, type DenyReason } from './errors.ts';
@@ -98,13 +98,9 @@ export class Grant {
   }
 
   /** A write outside the grant's `tables` is a programming error. */
-  #allow(table: string): string {
-    const only = RESTRICTED_TABLES[table.toLowerCase()];
-    if (only && !only.includes(this.purpose))
-      throw new AuthorityError(
-        'GRANT_TABLE_NOT_ALLOWED',
-        `${table} is written only by ${only.join(' or ')}.`,
-      );
+  #allow(table: string, op: 'insert' | 'change' = 'change'): string {
+    const refused = restrictedWriteRefusal(table, this.purpose, op);
+    if (refused) throw new AuthorityError('GRANT_TABLE_NOT_ALLOWED', refused);
     if (this.#tables && !this.#tables.has(table.toLowerCase()))
       throw new AuthorityError(
         'GRANT_TABLE_NOT_ALLOWED',
@@ -154,7 +150,7 @@ export class Grant {
       buildInsertSelect(
         this.id,
         this.scope,
-        this.#allow(table),
+        this.#allow(table, 'insert'),
         columns,
         values,
         options,
@@ -186,7 +182,7 @@ export class Grant {
   insertJoined(table: string, options: InsertJoinedOptions): GrantedStatement {
     joinOnlyInserts(this.principal, 'inserting children');
     return this.#push(
-      buildInsertJoined(this.id, this.scope, this.#allow(table), options, this.#pin),
+      buildInsertJoined(this.id, this.scope, this.#allow(table, 'insert'), options, this.#pin),
     );
   }
 

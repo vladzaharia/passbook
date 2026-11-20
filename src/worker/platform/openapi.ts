@@ -9,6 +9,7 @@ import { defaultBodyLimit } from './body-limit.ts';
 import type { AppBindings } from './context.ts';
 import { AppError } from './errors.ts';
 import './openapi-names.ts';
+import { checkFeatureRule, featureUnchecked } from './feature-guard.ts';
 import { operationSecurity, scopesForMethod } from './openapi-security.ts';
 
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
@@ -48,6 +49,13 @@ function checkDeclaration(spec: RouteSpec): void {
   if (spec.public && spec.auth)
     throw new Error(`${spec.method.toUpperCase()} ${spec.path}: public and auth are exclusive`);
   const auth = spec.auth;
+  if (auth && 'platform' in auth) return;
+  const where = `${spec.method.toUpperCase()} ${spec.path}`;
+  if (auth?.feature !== undefined) {
+    if ('human' in auth && !auth.requestMode)
+      throw new Error(`${where}: a feature needs a tenant principal (requestMode)`);
+    checkFeatureRule(where, auth.feature);
+  }
   if (!auth || !('scope' in auth) || !auth.capability) return;
   for (const scope of scopesForMethod(auth.scope, spec.method)) {
     if (!scopeExercises(scope, auth.capability))
@@ -138,6 +146,9 @@ export function register<S extends RouteSpec>(
     // A declared capability must have been proven by the handler: fail closed, not just in tests.
     if (response.status < 400 && authorityUnproven(principal))
       throw new AppError('AUTHORITY_UNPROVEN', 500, 'Authority was not verified.');
+    // Likewise a declared feature: a success that never checked the org's entitlements is a fault.
+    if (response.status < 400 && featureUnchecked(principal))
+      throw new AppError('FEATURE_UNCHECKED', 500, 'Features were not verified.');
     const schema = spec.response;
     if (checkResponses && schema && response.status === status) {
       const parsed = schema.safeParse(await response.clone().json());

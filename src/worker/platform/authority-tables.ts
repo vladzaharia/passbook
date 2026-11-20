@@ -215,6 +215,28 @@ export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
   nfc_tag_keys: KEYSET_PURPOSES,
 };
 
+/**
+ * Restricted purposes that may only insert into a table (no update, delete or upsert). Baked-template
+ * sync creates the platform org with its `legacy` row, and must never change an org's entitlements.
+ */
+const INSERT_ONLY_PURPOSES: Readonly<Record<string, readonly string[]>> = {
+  org_entitlements: ['platform.job.template_sync', 'platform.org.create'],
+};
+
+/** Why `purpose` may not write `table` this way (`op`), or null: the restricted-table and insert-only rules. */
+export function restrictedWriteRefusal(
+  table: string,
+  purpose: string,
+  op: 'insert' | 'change',
+): string | null {
+  const name = table.toLowerCase();
+  const only = RESTRICTED_TABLES[name];
+  if (only && !only.includes(purpose)) return `${table} is written only by ${only.join(' or ')}.`;
+  if (op === 'change' && INSERT_ONLY_PURPOSES[name]?.includes(purpose))
+    return `${purpose} only inserts into ${table}.`;
+  return null;
+}
+
 /** Tables only the triggers and `authority.ts` may write; raw SQL on them is a lint failure. */
 export const AUTHORITY_TABLES = [
   'authority_grants',

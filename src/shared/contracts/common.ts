@@ -34,6 +34,8 @@ export const ProblemSchema = z.object({
   issues: z
     .array(z.object({ path: z.string(), message: z.string(), code: z.string().optional() }))
     .optional(),
+  /** FEATURE_NOT_INCLUDED: the entitlement key the organization lacks. */
+  feature: z.string().optional(),
 });
 export type ProblemDto = z.infer<typeof ProblemSchema>;
 
