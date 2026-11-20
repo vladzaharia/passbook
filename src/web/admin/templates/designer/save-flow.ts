@@ -5,10 +5,6 @@ import { clearDraft, saveDraft } from './drafts.ts';
 import type { DesignDoc } from './model.ts';
 import { type Action, signature } from './reducer.ts';
 
-const WAIT_MS = 100;
-const WAIT_TRIES = 100;
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 /**
  * Save version. The saved document is the one sent: edits made while the request ran stay in
  * the designer and keep their draft; only the baseline moves.
@@ -33,7 +29,7 @@ export function useSaveFlow({
   draftBase: string;
   /** Number of errors (or null when the check is unusable): saving waits until it is 0. */
   blocked: () => number | null;
-  /** True while the check of the latest edit is pending; Save waits for it. */
+  /** True while the check of the latest edit is pending; Save is held until it settles. */
   checking: () => boolean;
   dispatch: Dispatch<Action>;
   onSaved: (version: string) => void;
@@ -47,7 +43,10 @@ export function useSaveFlow({
   }
 
   async function run(snapshot: DesignDoc): Promise<'saved' | 'refused' | 'failed'> {
-    for (let i = 0; i < WAIT_TRIES && checking(); i++) await wait(WAIT_MS);
+    if (checking()) {
+      toast.info('Checking your changes. Save again in a moment.');
+      return 'refused';
+    }
     const errors = blocked();
     if (errors !== 0) {
       toast.error(
