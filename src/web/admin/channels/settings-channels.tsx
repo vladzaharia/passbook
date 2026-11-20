@@ -40,11 +40,16 @@ export function OrgChannelsCard({ orgId }: { orgId: string }) {
   const blocked = (item('channels.blocked')?.value as Channel[] | undefined) ?? [];
   const tags = item('nfc.tags');
   const tagsOn = (tags?.value as { enabled?: boolean } | undefined)?.enabled === true;
-  const nfcLocked = tags?.blockedByPlatform === true || tags?.blockedByPlan === true;
+  // The plan blocks NFC either way: by the channel list or by the tag switch's own flag.
+  const planBlocked = [
+    ...(item('channels.blocked')?.planBlocked ?? []),
+    ...(tags?.blockedByPlan ? (['nfc'] as const) : []),
+  ];
+  const nfcLocked = tags?.blockedByPlatform === true || planBlocked.includes('nfc');
   const status = (c: Channel): ChannelStatus => {
-    if (blocked.includes(c)) return { on: false, source: 'org', reason: 'blocked' };
     if (c === 'nfc' && tags?.blockedByPlatform) return OFF('printing_off');
-    if (c === 'nfc' && tags?.blockedByPlan) return OFF('not_included');
+    if (planBlocked.includes(c)) return OFF('not_included');
+    if (blocked.includes(c)) return { on: false, source: 'org', reason: 'blocked' };
     if (c === 'nfc' && !tagsOn) return { on: false, source: 'org', reason: 'tags_off' };
     return { on: true, source: 'org' };
   };
@@ -74,12 +79,12 @@ export function OrgChannelsCard({ orgId }: { orgId: string }) {
                     key={c}
                     channel={c}
                     status={s}
-                    locked={c === 'nfc' && nfcLocked}
+                    locked={planBlocked.includes(c) || (c === 'nfc' && nfcLocked)}
                     control={
                       <Switch
                         aria-label={`${CHANNEL_LABEL[c]} allowed`}
                         checked={s.on}
-                        disabled={pending || (c === 'nfc' && nfcLocked)}
+                        disabled={pending || planBlocked.includes(c) || (c === 'nfc' && nfcLocked)}
                         onCheckedChange={(on) => toggle(c, on)}
                       />
                     }

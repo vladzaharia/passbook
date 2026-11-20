@@ -1,4 +1,6 @@
 import type { z } from 'zod';
+import { blockedByEntitlement } from '../../../shared/channels.ts';
+import type { Channel } from '../../../shared/contracts/channels.ts';
 import { entitledValue } from '../../../shared/contracts/entitlements.ts';
 import type { PlatformSettingsSchema } from '../../../shared/contracts/settings.ts';
 import { DATA_CLASSES, RETENTION_CLASSES } from '../../../shared/privacy/data-classes.ts';
@@ -15,6 +17,7 @@ export interface SettingEntry {
   ceiling?: number;
   blockedByPlatform?: boolean;
   blockedByPlan?: boolean;
+  planBlocked?: Channel[];
   updatedAt: number | null;
   updatedBy: string | null;
 }
@@ -56,6 +59,10 @@ export function inherit(
         default: fallback,
         ceiling,
       };
+    }
+    if (entry.key === 'channels.blocked') {
+      const planBlocked = Object.keys(blockedByEntitlement(entitlements)) as Channel[];
+      return planBlocked.length > 0 ? { ...entry, planBlocked } : entry;
     }
     if (entry.key === 'nfc.tags')
       return {

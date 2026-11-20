@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ChannelSchema } from './channels.ts';
 import { JsonSchema } from './common.ts';
 
 export const SettingScopeSchema = z.union([z.literal('platform'), z.string().regex(/^org:.+$/)]);
@@ -16,6 +17,8 @@ export const SettingEntrySchema = z.object({
   blockedByPlatform: z.boolean().optional(),
   /** The organization's plan does not include the feature: the control does nothing until PassBook turns it on. */
   blockedByPlan: z.boolean().optional(),
+  /** On `channels.blocked`: the channels the plan does not include. Absent when it includes them all. */
+  planBlocked: z.array(ChannelSchema).optional(),
   updatedAt: z.number().int().nullable(),
   updatedBy: z.string().nullable(),
 });

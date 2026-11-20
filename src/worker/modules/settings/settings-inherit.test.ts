@@ -28,6 +28,7 @@ type Entry = {
   ceiling?: number;
   blockedByPlatform?: boolean;
   blockedByPlan?: boolean;
+  planBlocked?: string[];
 };
 let appEnv: AppEnv;
 let fx: Fixtures;
@@ -216,6 +217,20 @@ describe('settings and the plan', () => {
     });
     await plan(scope, 'standard');
     expect((await read(scope))('nfc.tags').blockedByPlan).toBeUndefined();
+  });
+
+  it('lists the channels the plan lacks on channels.blocked, and nothing for legacy', async () => {
+    const scope = await orgScope();
+    expect((await read(scope))('channels.blocked').planBlocked).toBeUndefined();
+    await plan(scope, 'trial');
+    expect((await read(scope))('channels.blocked').planBlocked).toEqual([
+      'google',
+      'samsung',
+      'paper',
+      'nfc',
+    ]);
+    await plan(scope, 'standard');
+    expect((await read(scope))('channels.blocked').planBlocked).toBeUndefined();
   });
 
   it('refuses turning nfc.tags on with FEATURE_NOT_INCLUDED, writes nothing, and allows turning it off', async () => {
