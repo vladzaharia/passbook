@@ -131,7 +131,9 @@
 
   // The only holder of the App Store Connect key (workers/apple-provisioner). Referenced only by
   // workflows/identity-provision.ts and modules/identities/asc-client.ts (tools/check-apple-binding.ts).
-  "services": [{ "binding": "APPLE", "service": "apple-provisioner", "entrypoint": "AppleProvisioner" }],
+  "services": [
+    { "binding": "APPLE", "service": "apple-provisioner", "entrypoint": "AppleProvisioner" }
+  ],
 
   "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["delivery@passbook.mobile"] }],
 

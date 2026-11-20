@@ -35,7 +35,8 @@ export function assertManagedIdentifier(identifier: string): void {
 }
 
 export function assertPassTypeName(name: string): void {
-  if (name.length < 1 || name.length > 100 || /[\u0000-\u001f]/.test(name)) refuse('Invalid name.');
+  if (name.length < 1 || name.length > 100 || [...name].some((c) => c.charCodeAt(0) < 32))
+    refuse('Invalid name.');
 }
 
 /** The only reason the provisioner revokes for. */
