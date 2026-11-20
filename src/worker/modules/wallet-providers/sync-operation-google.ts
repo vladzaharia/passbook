@@ -66,7 +66,10 @@ export async function runGoogleWalletProviderOperation(
         approved?.projection.provider !== 'google' ||
         approved.release.id !== op.projectionReleaseId ||
         approved.release.accountId !== op.accountId ||
-        approved.release.accountRevision !== op.accountRevision ||
+        // D2: a same-identity rotation moves the revision, not the epoch.
+        (op.accountEpoch === null
+          ? approved.release.accountRevision !== op.accountRevision
+          : approved.release.accountEpoch !== op.accountEpoch) ||
         approved.release.providerIdentityHash !== binding.original.providerIdentityHash
       ) {
         return complete(ctx, claim, op, {

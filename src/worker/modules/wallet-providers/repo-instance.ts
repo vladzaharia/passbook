@@ -28,7 +28,7 @@ const OPERATION_COLUMNS = `op.id, op.instance_id AS instanceId, i.pass_id AS pas
   op.pass_revision AS passRevision, op.lifecycle_generation AS lifecycleGeneration,
   op.pass_credential_generation AS passCredentialGeneration,
   op.issuing_release_id AS issuingReleaseId,
-  op.projection_release_id AS projectionReleaseId, op.account_revision AS accountRevision,
+  op.projection_release_id AS projectionReleaseId, op.account_revision AS accountRevision, op.account_epoch AS accountEpoch,
   op.adapter_revision AS adapterRevision, op.policy_revision AS policyRevision, op.state, op.attempts,
   op.next_attempt_at AS nextAttemptAt, op.claim_expires_at AS claimExpiresAt, op.last_attempt_at AS lastAttemptAt,
   op.last_result_at AS lastResultAt, op.completed_at AS completedAt, op.reason_code AS reasonCode,
