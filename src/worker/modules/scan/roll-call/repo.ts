@@ -7,11 +7,9 @@ export interface PlaceInfo {
   basis: 'in_now' | 'tapped_in';
 }
 
+/** Who is on the call and where. No names: they are read from the pass when the call is shown. */
 export interface SnapshotPerson {
   passId: string;
-  holder: string | null;
-  plan: string | null;
-  host: string | null;
   place: string;
   since: number;
 }
@@ -88,12 +86,14 @@ export interface MarkRow {
   by: string;
   at: number;
   late: SnapshotPerson | null;
+  /** The scan that exited them when marked Out; undone if the mark is taken back. */
+  exitScanId: string | null;
 }
 
 export const marksOf = (db: D1Database, orgId: string, mode: string, id: string) =>
   all<Omit<MarkRow, 'late'> & { late: string | null }>(
     db,
-    `SELECT pass_id AS passId, status, by_name AS "by", marked_at AS at, late FROM roll_call_marks
+    `SELECT pass_id AS passId, status, by_name AS "by", marked_at AS at, late, exit_scan_id AS exitScanId FROM roll_call_marks
      WHERE roll_call_id = ? AND org_id = ? AND mode = ?`,
     [id, orgId, mode],
   ).then((rows) =>
@@ -128,10 +128,13 @@ export const presenceNow = (
     [orgId, mode, JSON.stringify(passIds), JSON.stringify(places)],
   );
 
-/** Open calls whose places hold Max stay and Clear at exits, for the cron. */
-export const heldPlaces = (db: D1Database, now: number, horizonMs: number) =>
-  all<{ org_id: string; mode: string; places: string }>(
+/** The scanning sessions a till key's terminals belong to, as scope keys: the only calls that key may touch. */
+export async function keyScopes(db: D1Database, keyId: string): Promise<Set<string>> {
+  const rows = await all<{ session_id: string }>(
     db,
-    `SELECT org_id, mode, places FROM roll_calls WHERE ended_at IS NULL AND started_at > ?`,
-    [now - horizonMs],
+    `SELECT DISTINCT d.session_id FROM api_key_terminals t JOIN scanning_devices d ON d.scanner_id = t.scanner_id
+     WHERE t.key_id = ?`,
+    [keyId],
   );
+  return new Set(rows.map((r) => `session:${r.session_id}`));
+}

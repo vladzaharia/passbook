@@ -13,10 +13,12 @@ import type { ServiceContext } from '../../../platform/service-context.ts';
 import { grantedAudit } from '../../audit/repo-granted.ts';
 import { occupancyZones } from '../occupancy/service.ts';
 import type { Caller } from './caller.ts';
+import { reenter } from './exit.ts';
 import { nudgeDevices } from './nudge.ts';
 import {
   type CallRow,
   callById,
+  marksOf,
   openCall,
   type PlaceInfo,
   presenceNow,
@@ -44,15 +46,7 @@ async function freeze(c: Caller): Promise<SnapshotPerson[]> {
   let cursor: string | undefined;
   for (;;) {
     const list = await c.list({ limit: PAGE, ...(cursor ? { cursor } : {}) });
-    for (const r of list.items)
-      out.push({
-        passId: r.passId,
-        holder: r.holder,
-        plan: r.plan,
-        host: r.host,
-        place: r.place,
-        since: r.since,
-      });
+    for (const r of list.items) out.push({ passId: r.passId, place: r.place, since: r.since });
     if (out.length > ROLL_CALL_MAX_PEOPLE)
       throw new ConflictError('Too many people inside to freeze a list.', 'ROLL_CALL_TOO_LARGE');
     if (!list.nextCursor) return out;
@@ -60,8 +54,15 @@ async function freeze(c: Caller): Promise<SnapshotPerson[]> {
   }
 }
 
+/** A till key's scope is its terminals' sessions; anything else is not found. */
+function inReach(c: Caller, scopeKey: string): void {
+  if (c.allowed && !c.allowed.has(scopeKey))
+    throw new NotFoundError('Roll call not found.', 'ROLL_CALL_NOT_FOUND');
+}
+
 /** Starts the scope's roll call, or joins the one already open: other desks join in. */
 export async function startRollCall(ctx: ServiceContext, c: Caller): Promise<RollCall> {
+  inReach(c, c.scopeKey);
   const db = ctx.env.DB;
   const open = await openCall(db, c.orgId, c.mode, c.scopeKey);
   if (open) return rollCallView(ctx, c, open);
@@ -129,6 +130,7 @@ export async function startRollCall(ctx: ServiceContext, c: Caller): Promise<Rol
 }
 
 export async function currentRollCall(ctx: ServiceContext, c: Caller): Promise<RollCallCurrent> {
+  inReach(c, c.scopeKey);
   const open = await openCall(ctx.env.DB, c.orgId, c.mode, c.scopeKey);
   return { rollCall: open ? await rollCallView(ctx, c, open) : null };
 }
@@ -138,6 +140,7 @@ async function owned(ctx: ServiceContext, c: Caller, id: string): Promise<CallRo
   // A device sees only its own session's call; a console or key reaches any call of the org.
   if (!call || (c.via === 'scanner' && call.scopeKey !== c.scopeKey))
     throw new NotFoundError('Roll call not found.', 'ROLL_CALL_NOT_FOUND');
+  inReach(c, call.scopeKey);
   return call;
 }
 
@@ -146,6 +149,7 @@ export async function readRollCall(ctx: ServiceContext, c: Caller, id: string): 
 }
 
 export interface MarkInput {
+  rollCallId: string;
   passId: string;
   status: RollCallStatus;
   at?: number | undefined;
@@ -164,6 +168,8 @@ export async function markRollCall(
   const call = await owned(ctx, c, id);
   if (call.endedAt !== null)
     throw new ConflictError('This roll call has ended.', 'ROLL_CALL_ENDED');
+  if (marks.some((m) => m.rollCallId !== id))
+    throw new ConflictError('Those marks belong to another roll call.', 'ROLL_CALL_MARK_MISMATCH');
   const now = ctx.clock.now();
   const members = new Set(call.snapshot.map((p) => p.passId));
   const strangers = [...new Set(marks.map((m) => m.passId).filter((p) => !members.has(p)))];
@@ -174,29 +180,64 @@ export async function markRollCall(
     const view = await rollCallView(ctx, c, call);
     for (const p of view.people)
       if (p.late && strangers.includes(p.passId))
-        late.set(p.passId, {
-          passId: p.passId,
-          holder: p.holder,
-          plan: p.plan,
-          host: p.host,
-          place: p.place,
-          since: p.since,
-        });
+        late.set(p.passId, { passId: p.passId, place: p.place, since: p.since });
     for (const s of strangers)
       if (!late.has(s) && !here.some((r) => r.passId === s))
         throw new ForbiddenError('That person is not on this roll call.', 'ROLL_CALL_NOT_LISTED');
   }
+  // The later mark by time wins; one that wins as Out exits the person, one that takes it back undoes the exit.
+  const held = new Map((await marksOf(ctx.env.DB, c.orgId, c.mode, id)).map((m) => [m.passId, m]));
+  const place = new Map([...call.snapshot, ...late.values()].map((p) => [p.passId, p.place]));
   const g = c.grant(now);
   g.update('roll_calls', { inc: ['rev'], where: { id, ended_at: null } });
   for (const m of [...marks].sort((a, b) => (a.at ?? now) - (b.at ?? now))) {
     const at = Math.min(m.at ?? now, now);
+    const prior = held.get(m.passId);
+    if (prior && prior.at >= at) continue;
+    let exitScan = prior?.exitScanId ?? null;
+    const where = place.get(m.passId);
+    if (m.status === 'out' && !exitScan && c.exit && where)
+      exitScan = await c.exit(m.passId, where);
+    else if (
+      m.status !== 'out' &&
+      exitScan &&
+      where &&
+      (await reenter(ctx, c.grant, c.orgId, m.passId, where))
+    )
+      exitScan = null;
+    held.set(m.passId, {
+      passId: m.passId,
+      status: m.status,
+      by: c.by,
+      at,
+      late: null,
+      exitScanId: exitScan,
+    });
     const person = late.get(m.passId);
     g.upsert(
       'roll_call_marks',
-      ['roll_call_id', 'pass_id', 'status', 'by_name', 'scanner_id', 'late', 'marked_at'],
-      [id, m.passId, m.status, c.by, c.scannerId, person ? JSON.stringify(person) : null, at],
+      [
+        'roll_call_id',
+        'pass_id',
+        'status',
+        'by_name',
+        'scanner_id',
+        'late',
+        'marked_at',
+        'exit_scan_id',
+      ],
+      [
+        id,
+        m.passId,
+        m.status,
+        c.by,
+        c.scannerId,
+        person ? JSON.stringify(person) : null,
+        at,
+        exitScan,
+      ],
       {
-        update: ['status', 'by_name', 'scanner_id', 'marked_at'],
+        update: ['status', 'by_name', 'scanner_id', 'marked_at', 'exit_scan_id'],
         where: { marked_at: lt(at) },
         when: [exists('roll_calls', { id, ended_at: null })],
       },

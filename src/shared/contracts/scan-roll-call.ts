@@ -9,11 +9,16 @@ export type RollCallStatus = z.infer<typeof RollCallStatusSchema>;
 export const ROLL_CALL_MAX_PEOPLE = 2000;
 export const ROLL_CALL_MAX_MARKS = 100;
 
-/** `PUT /scan/roll-call/{id}/marks`: one tap, or the queue an offline device sends. `at` is the device's time. */
+/**
+ * `POST /scan/roll-call/{id}/marks`: one tap, or the queue an offline device sends. Each mark names its call,
+ * so a mark queued for an earlier call is refused on a new one. `at` is the device's time corrected by its
+ * measured offset from `serverNow`; the server never takes a time after its own.
+ */
 export const RollCallMarksRequestSchema = z.strictObject({
   marks: z
     .array(
       z.strictObject({
+        rollCallId: IdSchema,
         passId: IdSchema,
         status: RollCallStatusSchema,
         at: TimestampSchema.optional(),
@@ -52,6 +57,8 @@ export const RollCallSchema = z.object({
   endedBy: z.string().nullable(),
   /** Raised by every mark: a lower one never replaces a higher. */
   rev: z.number().int().min(0),
+  /** The server's clock at this answer: devices measure their offset from it. */
+  serverNow: TimestampSchema,
   counts: z.object({
     total: z.number().int().min(0),
     present: z.number().int().min(0),

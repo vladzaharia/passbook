@@ -9,13 +9,16 @@ import type { AuditActorType } from '../../audit/types.ts';
 import type { TenantPassWrite } from '../../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../../passes/repo-authority.ts';
 import type { ScanActor } from '../guard.ts';
+import { pinKeysetOrNull } from '../keyset-pin.ts';
 import { titles } from '../occupancy/console-inside.ts';
-import { whosInList } from '../occupancy/inside-list.ts';
+import { scanIdentify } from '../occupancy/inside-identity.ts';
+import { type Identify, whosInList } from '../occupancy/inside-list.ts';
 import { type InsideScope, sessionInsideScope, zoneScope } from '../occupancy/inside-scope.ts';
 import { occupancyZones } from '../occupancy/service.ts';
 import { whosIn } from '../occupancy/whos-in.ts';
 import { sessionZoneIds } from '../repo-zones.ts';
 import { scanWriteGrant } from '../scan-write-grant.ts';
+import { consoleExits, deviceExits, type Exits } from './exit.ts';
 
 export type ListQuery = { cursor?: string; limit: number };
 
@@ -31,10 +34,16 @@ export interface Caller {
   via: 'scanner' | 'console';
   scope(): Promise<InsideScope>;
   list(q: ListQuery): Promise<ScanWhosInList>;
+  /** Names as this caller may see them. */
+  identify: Identify;
   grant(now: number): Grant;
+  /** A till key reaches only the calls of its terminals' sessions: these scope keys. */
+  allowed?: ReadonlySet<string>;
+  /** Out also exits the person. Absent for an API key, whose Out is a confirmation alone. */
+  exit?: Exits['exit'];
 }
 
-const TABLES = ['roll_calls', 'roll_call_marks'];
+const TABLES = ['roll_calls', 'roll_call_marks', 'scan_presence', 'scan_place_revs'];
 
 export function deviceCaller(ctx: ServiceContext, actor: ScanActor): Caller {
   const session = actor.scanningSession;
@@ -51,6 +60,14 @@ export function deviceCaller(ctx: ServiceContext, actor: ScanActor): Caller {
     via: 'scanner',
     scope: () => sessionInsideScope(ctx.env.DB, actor, { max: Number.POSITIVE_INFINITY }),
     list: (q) => whosIn(ctx, actor, q),
+    identify: async (ids) => {
+      const keyset = await pinKeysetOrNull(ctx);
+      return scanIdentify(
+        ctx,
+        keyset ? { ...actor, credentialKeysetCommitment: keyset } : actor,
+        keyset,
+      )(ids);
+    },
     grant: (now) =>
       scanWriteGrant(ctx, actor, {
         purpose: 'org_mode.scan.roll_call',
@@ -58,6 +75,7 @@ export function deviceCaller(ctx: ServiceContext, actor: ScanActor): Caller {
         pausedSession: true,
         tables: TABLES,
       }),
+    ...deviceExits(ctx, actor),
   };
 }
 
@@ -67,6 +85,7 @@ export function tenantCaller(
   authority: TenantPassWrite,
   who: { type: 'user' | 'api_key'; id: string | null; name: string },
   sessionId: string | null,
+  allowed?: ReadonlySet<string>,
 ): Caller {
   const { orgId, mode } = authority;
   const db = ctx.env.DB;
@@ -87,6 +106,8 @@ export function tenantCaller(
     actor: { type: who.type, id: who.id },
     via: 'console',
     scope,
+    ...(allowed ? { allowed } : {}),
+    identify: titles(ctx, orgId, mode),
     list: async (q) =>
       whosInList({
         db,
@@ -104,5 +125,6 @@ export function tenantCaller(
         checks: capabilityChecks(authority),
         tables: TABLES,
       }),
+    ...(authority.kind === 'session' ? consoleExits(ctx, authority) : {}),
   };
 }

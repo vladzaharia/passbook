@@ -3,7 +3,9 @@ import { ConfirmDialog } from '../../ui/alert-dialog.tsx';
 import { Toaster, toast } from '../../ui/toaster.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import type { FailInfo } from '../machine/ports.ts';
+import type { KeyValue } from '../offline/wipe.ts';
 import { rollCallPort } from '../roll-call/roll-call-api.ts';
+import type { QueuedMark } from '../roll-call/roll-call-model.ts';
 import { RollCallPanel } from '../roll-call/roll-call-panel.tsx';
 import { RollCallPrint } from '../roll-call/roll-call-print.tsx';
 import { StartRollCallFooter } from '../roll-call/start-footer.tsx';
@@ -31,6 +33,7 @@ export default function InsideHost({
   onOpen,
   onOpenRow,
   onFail,
+  store,
 }: {
   api: ScanApi;
   open: boolean;
@@ -40,6 +43,8 @@ export default function InsideHost({
   onOpen?: () => void;
   onOpenRow: (row: InsideRow) => void;
   onFail: (info: FailInfo) => void;
+  /** Unsent roll call taps survive a reload here. */
+  store?: KeyValue<QueuedMark[]>;
 }) {
   const port = useMemo(() => insidePort(api), [api]);
   const inside = useInside({ api: port, active: open, online, onFail });
@@ -49,6 +54,7 @@ export default function InsideHost({
     online,
     by: '',
     onAppear: onOpen,
+    ...(store ? { store } : {}),
   });
   const [confirm, setConfirm] = useState<'start' | 'end' | null>(null);
   const [printing, setPrinting] = useState(false);

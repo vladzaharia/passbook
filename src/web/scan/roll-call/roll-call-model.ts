@@ -5,6 +5,8 @@ import type {
 } from '../../../shared/contracts/scan-roll-call.ts';
 
 export interface QueuedMark {
+  /** The call the tap was made on: a tap for an earlier call is never sent to a new one. */
+  callId: string;
   passId: string;
   status: RollCallStatus;
   /** The device's time of the tap: the server keeps the later of two marks. */
@@ -12,7 +14,8 @@ export interface QueuedMark {
 }
 
 /** The server's call with this device's unsynced taps laid over it, so a tap shows at once and offline. */
-export function withQueue(call: RollCall, queue: readonly QueuedMark[], by: string): RollCall {
+export function withQueue(call: RollCall, all: readonly QueuedMark[], by: string): RollCall {
+  const queue = all.filter((m) => m.callId === call.id);
   if (queue.length === 0) return call;
   const latest = new Map<string, QueuedMark>();
   for (const m of queue) {

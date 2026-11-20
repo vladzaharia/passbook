@@ -3,7 +3,6 @@
 import { type Grant, grantedBatch } from '../../../platform/authority.ts';
 import { AppError } from '../../../platform/errors.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
-import { loadHold } from '../roll-call/hold.ts';
 import { InvalidScanRetentionProof } from '../scan-retention-proof.ts';
 import { effectiveTimeZone, indexZones } from '../zones-tree.ts';
 import { exitGrant, type OutCause, rearmGrant } from './auto-exit.ts';
@@ -60,11 +59,10 @@ export async function autoTapOut(ctx: ServiceContext, makeExit = exitGrant): Pro
   const db = ctx.env.DB;
   const now = ctx.clock.now();
   const memory = await readUnsigned(db);
-  const held = await loadHold(db, now);
   const skip = new Set(waiting(memory, now));
   const zones = new Map<string, OccZone[]>();
   const seen = new Set<string>();
-  const tally = { due: 0, exits: 0, rearms: 0, refused: 0, unsigned: 0, held: 0 };
+  const tally = { due: 0, exits: 0, rearms: 0, refused: 0, unsigned: 0 };
   let dirty = false;
   for (let round = 0; round < ROUNDS; round++) {
     const rows = await dueRows(db, now, DUE_BATCH, [...skip]);
@@ -78,10 +76,6 @@ export async function autoTapOut(ctx: ServiceContext, makeExit = exitGrant): Pro
       const v = verdict(org, row, now);
       if (!v) continue;
       const list = org;
-      if ('exit' in v && v.exit !== 'zone' && held(row)) {
-        tally.held++;
-        continue;
-      }
       if ('exit' in v) {
         tally.exits++;
         made.push({

@@ -277,6 +277,7 @@ export async function createRuntime(
     store,
     pin,
     clear: () => wipeLocal(localStores),
+    rollCallQueue: localStores.meta,
     fields,
     emit,
     checkIn: store.checkIn,

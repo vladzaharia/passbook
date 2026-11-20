@@ -9,7 +9,8 @@ CREATE TABLE roll_calls (
   scope_key TEXT NOT NULL,
   -- [{ place, name, basis }]: basis is 'in_now' where tap-out is required, else 'tapped_in'.
   places TEXT NOT NULL CHECK (json_valid(places)),
-  -- [{ passId, holder, plan, host, place, since }] as the starter saw them.
+  -- [{ passId, place, since }]: ids only. Names are read from the pass when the call is shown, so they go
+  -- with the pass and never outlive it; the call itself leaves with the scans retention window.
   snapshot TEXT NOT NULL CHECK (json_valid(snapshot)),
   started_by TEXT NOT NULL,
   started_by_id TEXT,
@@ -26,14 +27,16 @@ CREATE INDEX roll_calls_started ON roll_calls (org_id, mode, started_at);
 
 CREATE TABLE roll_call_marks (
   roll_call_id TEXT NOT NULL REFERENCES roll_calls (id) ON DELETE CASCADE,
-  pass_id TEXT NOT NULL,
+  pass_id TEXT NOT NULL REFERENCES passes (id) ON DELETE CASCADE,
   org_id TEXT NOT NULL,
   mode TEXT NOT NULL CHECK (mode IN ('live', 'test')),
   status TEXT NOT NULL CHECK (status IN ('present', 'out', 'none')),
   by_name TEXT NOT NULL,
   scanner_id TEXT,
-  -- Who a person who tapped in after the start is (a snapshot person's shape); null for one in the snapshot.
+  -- A person who tapped in after the start (a snapshot person's shape); null for one in the snapshot.
   late TEXT CHECK (late IS NULL OR json_valid(late)),
+  -- The scan that exited them when marked Out; undone if the mark is taken back.
+  exit_scan_id TEXT,
   -- The device's time of the mark: the later one wins, whatever order the two arrive in.
   marked_at INTEGER NOT NULL,
   PRIMARY KEY (roll_call_id, pass_id)

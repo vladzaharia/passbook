@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { makeOrg } from '../../../../../test/helpers/index.ts';
 import { all, run } from '../../../platform/db.ts';
 import { createJobContext } from '../../../platform/service-context.ts';
 import { kit, setupActionFixture } from '../act-test-fixtures.ts';
@@ -169,6 +170,91 @@ describe('roll call: confirmations', () => {
   });
 });
 
+describe('roll call: mark time and call identity', () => {
+  it('refuses a mark queued for an earlier call, and writes none of that request', async () => {
+    const pool = await trackedZone();
+    const p = await personInside(tpl, 'Stale', [`zone:${pool.id}`]);
+    const a = await station([tpl], [pool.id]);
+    const first = (await start(a)).body;
+    await end(a, first.id);
+    const second = (await start(a)).body;
+    const res = await kit.post(a.headers, `/roll-call/${second.id}/marks`, {
+      marks: [{ rollCallId: first.id, passId: p.id, status: 'present' }],
+    });
+    expect(res.status).toBe(409);
+    expect(await res.text()).toContain('ROLL_CALL_MARK_MISMATCH');
+    expect((await read(a, second.id)).counts.present).toBe(0);
+  });
+
+  it('a fast device clock cannot place its mark after the server: it counts as received now', async () => {
+    const pool = await trackedZone();
+    const p = await personInside(tpl, 'Fast', [`zone:${pool.id}`]);
+    const a = await station([tpl], [pool.id]);
+    const call = (await start(a)).body;
+    const now = kit.clock.now();
+    const res = await mark(a, call.id, [{ passId: p.id, status: 'present', at: now + 3_600_000 }]);
+    expect(res.body.people[0]?.mark?.at).toBe(now);
+    expect(res.body.serverNow).toBe(now);
+    // A later, honest Out from another desk still beats it.
+    kit.clock.advance(1000);
+    const out = await mark(a, call.id, [{ passId: p.id, status: 'out', at: kit.clock.now() }]);
+    expect(out.body.people[0]?.mark?.status).toBe('out');
+  });
+});
+
+describe('roll call: Out exits the person', () => {
+  const state = async (passId: string) =>
+    (
+      await all<{ state: string }>(
+        kit.env.DB,
+        'SELECT state FROM scan_presence WHERE pass_id = ?',
+        [passId],
+      )
+    )[0]?.state;
+
+  it('exits their presence like Mark as out, and taking the mark back undoes the exit', async () => {
+    const pool = await trackedZone();
+    const p = await personInside(tpl, 'Leaver', [`zone:${pool.id}`]);
+    const a = await station([tpl], [pool.id]);
+    const call = (await start(a)).body;
+    const t = kit.clock.now();
+    const out = await mark(a, call.id, [{ passId: p.id, status: 'out', at: t - 3000 }]);
+    expect(out.status).toBe(200);
+    expect(await state(p.id)).toBe('out');
+    const rows = await all<{ exit_scan_id: string | null }>(
+      kit.env.DB,
+      'SELECT exit_scan_id FROM roll_call_marks WHERE pass_id = ?',
+      [p.id],
+    );
+    expect(rows[0]?.exit_scan_id).toBeTruthy();
+    // The same Out again does not exit twice.
+    await mark(a, call.id, [{ passId: p.id, status: 'out', at: t - 2000 }]);
+    expect(await state(p.id)).toBe('out');
+    await mark(a, call.id, [{ passId: p.id, status: 'none', at: t - 1000 }]);
+    expect(await state(p.id)).toBe('in');
+    expect(
+      (
+        await all<{ exit_scan_id: string | null }>(
+          kit.env.DB,
+          'SELECT exit_scan_id FROM roll_call_marks WHERE pass_id = ?',
+          [p.id],
+        )
+      )[0]?.exit_scan_id,
+    ).toBeNull();
+  });
+
+  it('Safe leaves presence alone, and an older Out that loses the race exits no one', async () => {
+    const pool = await trackedZone();
+    const p = await personInside(tpl, 'Stays', [`zone:${pool.id}`]);
+    const a = await station([tpl], [pool.id]);
+    const call = (await start(a)).body;
+    const t = kit.clock.now();
+    await mark(a, call.id, [{ passId: p.id, status: 'present', at: t }]);
+    await mark(a, call.id, [{ passId: p.id, status: 'out', at: t - 5000 }]);
+    expect(await state(p.id)).toBe('in');
+  });
+});
+
 describe('roll call: max stay hold', () => {
   it('holds the stay exit while the call is open, lists the person as not confirmed out, and exits after', async () => {
     const pool = await trackedZone({ maxStayMinutes: 60 });
@@ -210,6 +296,47 @@ describe('roll call: max stay hold', () => {
       )[0]?.state,
     ).toBe('out');
     expect((await read(a, call.id)).people[0]).toMatchObject({ presence: 'lapsed' });
+  });
+
+  it('held rows are left out of the due query, so 250 of them never starve another org', async () => {
+    const places = [];
+    for (let i = 0; i < 250; i++) places.push(`zone:z${i}`);
+    for (const place of places)
+      await run(
+        kit.env.DB,
+        `INSERT OR IGNORE INTO scan_zones (id, org_id, key, name, time_zone, occupancy, max_stay_minutes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'UTC', 'track', 60, 1, 1)`,
+        [place.slice(5), kit.org.id, place.slice(5), place],
+      );
+    const now = kit.clock.now();
+    const big = await personInside(tpl, 'Held Many', places, {
+      at: now - 120 * 60_000,
+      dueAt: now - 60_000,
+    });
+    await run(
+      kit.env.DB,
+      `INSERT INTO roll_calls (id, org_id, mode, scope_key, places, snapshot, started_by, started_at)
+       VALUES (?, ?, 'live', 'held-many', ?, '[]', 'Desk', ?)`,
+      [
+        kit.fx.ids.id(),
+        kit.org.id,
+        JSON.stringify(places.map((place) => ({ place, name: place, basis: 'tapped_in' }))),
+        now - 1000,
+      ],
+    );
+    const other = await makeOrg(kit.fx);
+    const zone = await trackedZone({ maxStayMinutes: 60, orgId: other.id });
+    const otherTpl = await kit.scanTemplate('Gym other', DISPLAY_TPL as never, { orgId: other.id });
+    const due = await personInside(otherTpl, 'Due Elsewhere', [`zone:${zone.id}`], {
+      orgId: other.id,
+      at: now - 120 * 60_000,
+      dueAt: now - 60_000,
+    });
+    await autoTapOut(jobCtx());
+    const states = (id: string) =>
+      all<{ state: string }>(kit.env.DB, 'SELECT state FROM scan_presence WHERE pass_id = ?', [id]);
+    expect((await states(due.id))[0]?.state).toBe('out');
+    expect((await states(big.id)).every((r) => r.state === 'in')).toBe(true);
   });
 
   it('does not hold exits for another org or place, or once the call is stale', async () => {

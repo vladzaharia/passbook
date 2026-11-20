@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RollCall, RollCallStatus } from '../../../shared/contracts/scan-roll-call.ts';
 import { ApiError } from '../../lib/errors.ts';
 import { connectDeviceSocket, deviceSocketUrl } from '../enroll/device-socket.ts';
+import type { KeyValue } from '../offline/wipe.ts';
 import { SCAN_TIMING } from '../timing.ts';
 import { type QueuedMark, withQueue } from './roll-call-model.ts';
 
@@ -17,6 +18,7 @@ const gone = (error: unknown) =>
   error instanceof ApiError && (error.code === 'ROLL_CALL_ENDED' || error.status === 404);
 
 const BATCH = 100;
+const QUEUE_KEY = 'roll-call-queue';
 
 /**
  * The session's roll call. It reads on open, on a nudge from the hub and every 20 s, and keeps this device's
@@ -29,6 +31,7 @@ export function useRollCall({
   by,
   onAppear,
   connect = connectDeviceSocket,
+  store,
 }: {
   port: RollCallPort;
   enabled: boolean;
@@ -38,6 +41,8 @@ export function useRollCall({
   onAppear?: () => void;
   /** The device socket; tests pass a stub. */
   connect?: typeof connectDeviceSocket;
+  /** Where unsent taps live across a reload; wiped when the scanner is unpaired. */
+  store?: KeyValue<QueuedMark[]>;
 }) {
   const [server, setServer] = useState<RollCall | null>(null);
   const [queue, setQueue] = useState<QueuedMark[]>([]);
@@ -47,10 +52,37 @@ export function useRollCall({
   const live = useRef({ server, queue, onAppear });
   live.current = { server, queue, onAppear };
   const sending = useRef(false);
+  // The device's clock against the server's, measured on every read; taps carry the corrected time.
+  const offset = useRef(0);
+  const hydrated = useRef(store === undefined);
+  useEffect(() => {
+    if (!store) return;
+    let alive = true;
+    store.get(QUEUE_KEY).then(
+      (saved) => {
+        if (!alive) return;
+        const id = live.current.server?.id;
+        if (saved?.length) setQueue((q) => [...saved.filter((m) => !id || m.callId === id), ...q]);
+        hydrated.current = true;
+      },
+      () => {
+        hydrated.current = true;
+      },
+    );
+    return () => {
+      alive = false;
+    };
+  }, [store]);
+  useEffect(() => {
+    if (store && hydrated.current) void store.set(QUEUE_KEY, queue).catch(() => undefined);
+  }, [store, queue]);
 
   const take = useCallback((next: RollCall | null, quiet = false) => {
     const had = live.current.server?.id;
     // A lower revision never replaces a higher one: a slow read must not undo a newer answer.
+    if (next) offset.current = next.serverNow - Date.now();
+    // Taps made on another call are history: they are never sent to this one.
+    setQueue((q) => (next ? q.filter((m) => m.callId === next.id) : []));
     setServer((cur) => (next && cur && cur.id === next.id && cur.rev > next.rev ? cur : next));
     setAsOf(Date.now());
     setError(false);
@@ -66,7 +98,8 @@ export function useRollCall({
   }, [port, take]);
 
   const flush = useCallback(async () => {
-    const { server: call, queue: pending } = live.current;
+    const { server: call, queue: all } = live.current;
+    const pending = all.filter((m) => m.callId === call?.id);
     if (sending.current || !call || pending.length === 0) return;
     sending.current = true;
     const batch = pending.slice(0, BATCH);
@@ -106,7 +139,9 @@ export function useRollCall({
   }, [online, queue, flush]);
 
   const mark = useCallback((passId: string, status: RollCallStatus) => {
-    setQueue((q) => [...q, { passId, status, at: Date.now() }]);
+    const callId = live.current.server?.id;
+    if (callId)
+      setQueue((q) => [...q, { callId, passId, status, at: Date.now() + offset.current }]);
   }, []);
 
   const start = useCallback(async () => {

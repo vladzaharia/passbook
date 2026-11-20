@@ -259,8 +259,13 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/retention/repo-sweep.ts': {
     reason:
-      'the daily retention sweep (platform job, no principal) deletes server-selected rowids of live scans, live pass events and finished outbox rows; each delete repeats the class condition, scope and hold check, and runs only while the receipt that records it exists in the same batch',
-    writes: ['outbox:90161c5a75f9', 'pass_events:4a717a8505a1', 'scans:06e74b44b9ac'],
+      'the daily retention sweep (platform job, no principal) deletes server-selected rowids of live scans, live pass events, finished outbox rows and ended roll calls (with the scans window, holds honoured); each delete repeats the class condition, scope and hold check, and runs only while the receipt that records it exists in the same batch',
+    writes: [
+      'outbox:90161c5a75f9',
+      'pass_events:4a717a8505a1',
+      'roll_calls:e6928ea80600',
+      'scans:06e74b44b9ac',
+    ],
   },
   'src/worker/modules/retention/repo-receipts.ts': {
     reason:

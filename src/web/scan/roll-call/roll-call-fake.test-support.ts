@@ -31,6 +31,7 @@ export function call(people: RollCallPerson[], over: Partial<RollCall> = {}): Ro
     endedAt: null,
     endedBy: null,
     rev: 1,
+    serverNow: T0,
     counts: {
       total: people.length,
       present: 0,

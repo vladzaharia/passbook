@@ -116,3 +116,25 @@ export function deleteChunkStmt(
       return stmt(db, `DELETE FROM outbox WHERE ${where}`, params);
   }
 }
+
+/**
+ * Ended roll calls leave with the scans window: older than the cutoff, in the scope, and not under a hold
+ * (an org-wide one, or one on a pass that is on the call). Their marks go with them. Returns the calls removed.
+ */
+export async function deleteRollCalls(
+  db: D1Database,
+  scope: Scope,
+  cutoffs: Cutoffs,
+): Promise<number> {
+  const sc = scopeSql('roll_calls', scope);
+  const res = await stmt(
+    db,
+    `DELETE FROM roll_calls WHERE roll_calls.mode = 'live' AND roll_calls.ended_at < ? AND ${sc.sql}
+       AND NOT EXISTS (SELECT 1 FROM retention_holds h WHERE h.released_at IS NULL AND h.org_id = roll_calls.org_id
+         AND (h.pass_id IS NULL
+           OR EXISTS (SELECT 1 FROM roll_call_marks m WHERE m.roll_call_id = roll_calls.id AND m.pass_id = h.pass_id)
+           OR EXISTS (SELECT 1 FROM json_each(roll_calls.snapshot) j WHERE json_extract(j.value, '$.passId') = h.pass_id)))`,
+    [cutoffs.cutoff, ...sc.params],
+  ).run();
+  return res.meta.changes ?? 0;
+}

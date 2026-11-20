@@ -20,6 +20,7 @@ import {
   tenantAuthorityOf,
 } from '../../passes/http.ts';
 import { type Caller, tenantCaller } from './caller.ts';
+import { keyScopes } from './repo.ts';
 import {
   currentRollCall,
   endRollCall,
@@ -73,7 +74,12 @@ async function callerOf(c: C, q: z.infer<typeof OrgQuerySchema>, write: boolean)
         ? { type: 'api_key' as const, id: auth.keyId, name: 'API key' }
         : null;
   if (!who) throw new UnauthenticatedError();
-  return tenantCaller(ctx, authority, who, q.sessionId ?? null);
+  // A till key acts as its terminals: only their sessions' calls.
+  const allowed =
+    auth.kind === 'api_key' && auth.scopes.includes('scans:write')
+      ? await keyScopes(ctx.env.DB, auth.keyId)
+      : undefined;
+  return tenantCaller(ctx, authority, who, q.sessionId ?? null, allowed);
 }
 
 register(

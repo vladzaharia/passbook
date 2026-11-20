@@ -1,6 +1,7 @@
 // The roll call as a device reads it: the frozen list, each person's mark and where they stand now.
 import type { RollCall, RollCallPerson } from '../../../../shared/contracts/scan-roll-call.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
+import type { WhoIdentity } from '../occupancy/inside-list.ts';
 import type { Caller } from './caller.ts';
 import {
   type CallRow,
@@ -14,6 +15,8 @@ import {
 
 /** Pages of Who's in read to find people who tapped in after the start (100 a page). */
 const LATE_PAGES = 20;
+/** As many passes as one page of Who's in names. */
+const IDENTIFY_CHUNK = 100;
 const SYSTEM_EXIT = new Set(['stay', 'clear', 'zone']);
 
 /** The people inside now who are not in the snapshot. */
@@ -23,15 +26,7 @@ async function arrivals(caller: Caller, known: ReadonlySet<string>): Promise<Sna
   for (let page = 0; page < LATE_PAGES; page++) {
     const list = await caller.list({ limit: 100, ...(cursor ? { cursor } : {}) });
     for (const r of list.items)
-      if (!known.has(r.passId))
-        found.push({
-          passId: r.passId,
-          holder: r.holder,
-          plan: r.plan,
-          host: r.host,
-          place: r.place,
-          since: r.since,
-        });
+      if (!known.has(r.passId)) found.push({ passId: r.passId, place: r.place, since: r.since });
     if (!list.nextCursor) break;
     cursor = list.nextCursor;
   }
@@ -46,6 +41,7 @@ function presenceOf(row: PresenceNow | undefined, now: number): RollCallPerson['
 
 export function person(
   p: SnapshotPerson,
+  who: WhoIdentity | undefined,
   places: ReadonlyMap<string, PlaceInfo>,
   mark: MarkRow | undefined,
   at: PresenceNow | undefined,
@@ -56,9 +52,9 @@ export function person(
   const presence = presenceOf(at, now);
   return {
     passId: p.passId,
-    holder: p.holder,
-    plan: p.plan,
-    host: p.host,
+    holder: who?.holder ?? null,
+    plan: who?.plan ?? null,
+    host: who?.host ?? null,
     place: p.place,
     placeName: places.get(p.place)?.name ?? '',
     since: p.since,
@@ -105,10 +101,15 @@ export async function rollCallView(
   );
   for (const r of rows) presence.set(`${r.passId}|${r.place}`, r);
   const lateIds = new Set(lateList.map((p) => p.passId));
+  const who = new Map<string, WhoIdentity>();
+  const ids = everyone.map((p) => p.passId);
+  for (let i = 0; i < ids.length; i += IDENTIFY_CHUNK)
+    for (const [k, v] of await caller.identify(ids.slice(i, i + IDENTIFY_CHUNK))) who.set(k, v);
   const people = everyone
     .map((p) =>
       person(
         p,
+        who.get(p.passId),
         places,
         byPass.get(p.passId),
         presence.get(`${p.passId}|${p.place}`),
@@ -126,6 +127,7 @@ export async function rollCallView(
     endedAt: call.endedAt,
     endedBy: call.endedBy,
     rev: call.rev,
+    serverNow: now,
     counts: {
       total: people.length,
       present: count((p) => p.mark?.status === 'present'),

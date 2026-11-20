@@ -112,7 +112,7 @@ export async function consoleMarkOut(
   authority: AdminAuthority,
   t: ConsoleTarget,
   input: { passId: string; place: string },
-): Promise<void> {
+): Promise<string> {
   const { orgId, mode } = authority;
   const scope = await consoleScope(ctx, orgId, mode, t);
   const pass = scope.places.some((p) => p.place === input.place)
@@ -214,4 +214,5 @@ export async function consoleMarkOut(
   if (!(committed[g.indexOf(inserted)]?.results ?? []).length)
     throw new ConflictError('They are already out.', 'NOT_INSIDE');
   await countOverride(ctx, capActor);
+  return scanId;
 }

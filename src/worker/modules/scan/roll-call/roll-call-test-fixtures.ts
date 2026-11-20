@@ -17,7 +17,9 @@ export const mark = async (
   id: string,
   marks: { passId: string; status: 'present' | 'out' | 'none'; at?: number }[],
 ) => {
-  const res = await kit.post(s.headers, `/roll-call/${id}/marks`, { marks });
+  const res = await kit.post(s.headers, `/roll-call/${id}/marks`, {
+    marks: marks.map((m) => ({ rollCallId: id, ...m })),
+  });
   return { status: res.status, body: (await res.json()) as Call };
 };
 export const end = async (s: Station, id: string) => {

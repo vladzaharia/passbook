@@ -13,6 +13,7 @@ import {
   CHUNK,
   type Cutoffs,
   deleteChunkStmt,
+  deleteRollCalls,
   FAILED_MAIL_DAYS,
   receiptGate,
   type Scope,
@@ -93,6 +94,10 @@ async function sweepTarget(
     removed += n;
     if (n < CHUNK) break;
     capped = i === t.maxChunks - 1;
+  }
+  if (cls === 'scans') {
+    const calls = await deleteRollCalls(ctx.env.DB, t.scope, cutoffs);
+    if (calls > 0) ctx.log.info('retention.roll_calls', { orgId: t.orgId, removed: calls });
   }
   if (capped)
     ctx.log.warn('retention.backlog', { cls, orgId: t.orgId, removed, code: 'RETENTION_BACKLOG' });

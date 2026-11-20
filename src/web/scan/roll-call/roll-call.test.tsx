@@ -12,18 +12,29 @@ import { axe } from 'vitest-axe';
 import '../../lib/test-utils.tsx';
 import { ApiError } from '../../lib/errors.ts';
 import { call, fakeRollCall, person, T0 } from './roll-call-fake.test-support.ts';
-import { filterPeople, withQueue } from './roll-call-model.ts';
+import { filterPeople, type QueuedMark, withQueue } from './roll-call-model.ts';
 import { RollCallPanel } from './roll-call-panel.tsx';
 import { useRollCall } from './use-roll-call.ts';
 
 const connect = vi.fn(() => ({ close: vi.fn() }));
 type Nudge = (n: { kind: 'rollCall'; id: string; rev: number; ended: boolean }) => void;
 
-function setup(start = call([person(0), person(1), person(2)]), online = true) {
+function setup(
+  start = call([person(0), person(1), person(2)]),
+  online = true,
+  store?: ReturnType<typeof memoryStore>,
+) {
   const port = fakeRollCall(start);
   const view = renderHook(
     ({ on }: { on: boolean }) =>
-      useRollCall({ port, enabled: true, online: on, by: '', connect: connect as never }),
+      useRollCall({
+        port,
+        enabled: true,
+        online: on,
+        by: '',
+        connect: connect as never,
+        ...(store ? { store } : {}),
+      }),
     { initialProps: { on: online } },
   );
   return { port, ...view };
@@ -56,8 +67,8 @@ describe('roll call model', () => {
     const shown = withQueue(
       base,
       [
-        { passId: person(0).passId, status: 'present', at: T0 + 1000 },
-        { passId: person(1).passId, status: 'present', at: T0 + 1000 },
+        { callId: call([]).id, passId: person(0).passId, status: 'present', at: T0 + 1000 },
+        { callId: call([]).id, passId: person(1).passId, status: 'present', at: T0 + 1000 },
       ],
       '',
     );
@@ -74,6 +85,58 @@ describe('roll call model', () => {
     expect(filterPeople(people, 'open')).toHaveLength(2);
     expect(filterPeople(people, 'done')).toHaveLength(1);
     expect(filterPeople(people, 'lapsed').map((p) => p.passId)).toEqual([person(2).passId]);
+  });
+});
+
+const memoryStore = (initial?: QueuedMark[]) => {
+  const data = new Map<string, QueuedMark[]>(initial ? [['roll-call-queue', initial]] : []);
+  return {
+    data,
+    set: async (k: string, v: QueuedMark[]) => void data.set(k, v),
+    get: async (k: string) => data.get(k),
+    all: async () => [...data.values()],
+    clear: async () => data.clear(),
+  };
+};
+
+describe('useRollCall: queue identity, clock and storage', () => {
+  it('stamps taps with the server-corrected time', async () => {
+    const h = setup(call([person(0)], { serverNow: Date.now() + 600_000 }));
+    await waitFor(() => expect(h.result.current.call).not.toBeNull());
+    const before = Date.now();
+    act(() => h.result.current.mark(person(0).passId, 'present'));
+    await waitFor(() => expect(h.port.calls.marks).toHaveLength(1));
+    const sent = h.port.calls.marks[0]?.marks[0] as { at: number };
+    expect(sent.at).toBeGreaterThanOrEqual(before + 590_000);
+  });
+
+  it('never sends a tap queued for an earlier call to a new one', async () => {
+    const stale: QueuedMark = {
+      callId: 'an-earlier-call',
+      passId: person(0).passId,
+      status: 'present',
+      at: T0,
+    };
+    const h = setup(call([person(0)]), true, memoryStore([stale]));
+    await waitFor(() => expect(h.result.current.call).not.toBeNull());
+    await waitFor(() => expect(h.result.current.pending).toBe(0));
+    expect(h.port.calls.marks).toHaveLength(0);
+  });
+
+  it('keeps unsent taps across a reload, and the store is wiped by the scanner wipe', async () => {
+    const store = memoryStore();
+    const first = setup(call([person(0)]), false, store);
+    first.port.server = call([person(0)]);
+    await act(async () => first.rerender({ on: true }));
+    await waitFor(() => expect(first.result.current.call).not.toBeNull());
+    first.rerender({ on: false });
+    act(() => first.result.current.mark(person(0).passId, 'present'));
+    await waitFor(() => expect(store.data.get('roll-call-queue')).toHaveLength(1));
+    first.unmount();
+    const again = setup(call([person(0)]), false, store);
+    await waitFor(() => expect(again.result.current.pending).toBe(1));
+    await store.clear();
+    expect(store.data.size).toBe(0);
   });
 });
 
