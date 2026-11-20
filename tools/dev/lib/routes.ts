@@ -62,6 +62,13 @@ export function parseRoutes(json: string, source = 'route list'): Route[] {
         `${source}[${i}]: needs role (${ROLES.join('|')}), path starting with /, name.`,
       );
     }
+    const c: unknown = r.click;
+    const ok = (x: unknown) => typeof x === 'string' && x !== '';
+    if (c !== undefined && !(ok(c) || (Array.isArray(c) && c.length > 0 && c.every(ok)))) {
+      throw new Error(
+        `${source}[${i}] (${r.path}): click must be a non-empty string or list of them.`,
+      );
+    }
     const bad = r.viewports?.find((v) => !ALL_VIEWPORTS.includes(v));
     if (bad) throw new Error(`${source}[${i}]: unknown viewport "${bad}".`);
     return r as Route;

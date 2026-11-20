@@ -55,4 +55,12 @@ describe('visual-sweep routes', () => {
     const bad = routes.filter((r) => r.click !== undefined && ![r.click].flat().every(Boolean));
     expect(bad).toEqual([]);
   });
+
+  it('validates click', () => {
+    const one = (click: unknown) =>
+      parseRoutes(JSON.stringify([{ role: 'org', path: '/a', name: 'n', click }]));
+    expect(one(['x', 'y'])).toHaveLength(1);
+    expect(one('x')).toHaveLength(1);
+    for (const bad of [5, [1, {}], '', []]) expect(() => one(bad)).toThrow(/\/a.*click/);
+  });
 });
