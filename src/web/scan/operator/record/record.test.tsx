@@ -62,7 +62,7 @@ describe('the operator record for a scan', () => {
         })}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Check in', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check in' }));
     expect(c.machine).toHaveBeenCalledWith({ type: 'pick', actionId: 'check_in' });
   });
 
