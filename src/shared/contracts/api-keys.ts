@@ -27,6 +27,7 @@ export const MINTABLE_SCOPES = [
   'webhooks:manage',
   'brand:manage',
   'scanning:write',
+  'api-keys:write',
 ] as const satisfies readonly z.infer<typeof ApiScopeSchema>[];
 export const MintableScopeSchema = z.enum(MINTABLE_SCOPES);
 
@@ -62,6 +63,10 @@ export const ApiKeySchema = z.object({
   passStyles: z.array(PassStyleSchema).default([]),
   /** Null follows the deployment default. */
   rateTier: z.enum(API_KEY_RATE_TIERS).nullable().default(null),
+  /** The key that minted this one as its child; the child ends with it. */
+  parentKeyId: IdSchema.nullable().default(null),
+  /** The key this one replaced when it was rotated. */
+  rotatedFrom: IdSchema.nullable().default(null),
 });
 /** The literal query value `null` selects platform-wide keys. */
 export const ApiKeyScopeQuerySchema = z.object({
@@ -72,6 +77,8 @@ export const ApiKeyListQuerySchema = PageQuerySchema.extend({
   orgId: ApiKeyScopeQuerySchema.shape.orgId,
   /** `live`: not revoked (expired included); `revoked`: revoked only. Both when absent. */
   state: z.enum(['live', 'revoked']).optional(),
+  /** Only the children of this key. */
+  parentKeyId: IdSchema.optional(),
 });
 /** Newest first; `cursor` is the last id of the previous page. */
 export const ApiKeyListSchema = pageOf(ApiKeySchema).extend({
@@ -116,4 +123,54 @@ export const ApiKeyMeSchema = ApiKeySchema.pick({
 export const RetireApiKeySchema = z.object({
   orgId: IdSchema.nullable(),
   retireAt: TimestampSchema,
+});
+
+/** A key with its family and last use: what the key page shows. */
+export const ApiKeyDetailSchema = ApiKeySchema.extend({
+  /** The first part of the address of the last call: a network, never a full address. */
+  lastIpPrefix: z.string().nullable(),
+  parent: z.object({ id: IdSchema, name: z.string() }).nullable(),
+  /** The key that replaced this one, once rotated. */
+  replacedBy: z.object({ id: IdSchema, name: z.string() }).nullable(),
+  childCount: z.number().int().nonnegative(),
+});
+/** Replace a key: the new secret works at once; the old key stops after the overlap. */
+export const RotateApiKeySchema = z.object({
+  orgId: IdSchema.nullable(),
+  /** Hours the old key keeps working beside the new one; 0 retires it at once. */
+  overlapHours: z.number().int().min(0).max(168).default(24),
+});
+export const RotatedApiKeySchema = z.object({
+  key: CreatedApiKeySchema,
+  previous: ApiKeySchema,
+});
+export const ApiKeyActivityQuerySchema = z.object({
+  orgId: ApiKeyScopeQuerySchema.shape.orgId,
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+/** What a key did lately, from the audit log: never a request body or a secret. */
+export const ApiKeyActivitySchema = z.object({
+  lastUsedAt: TimestampSchema.nullable(),
+  lastIpPrefix: z.string().nullable(),
+  summary: z.object({
+    since: TimestampSchema,
+    calls: z.number().int().nonnegative(),
+    denied: z.number().int().nonnegative(),
+    actions: z.array(
+      z.object({ action: z.string(), count: z.number().int(), lastAt: TimestampSchema }),
+    ),
+  }),
+  recent: z.array(
+    z.object({
+      id: z.number().int(),
+      at: TimestampSchema,
+      action: z.string(),
+      outcome: z.enum(['allowed', 'denied']),
+      targetType: z.string().nullable(),
+      targetId: z.string().nullable(),
+      ipPrefix: z.string().nullable(),
+      /** The refusal code, for a denied call. */
+      code: z.string().nullable(),
+    }),
+  ),
 });

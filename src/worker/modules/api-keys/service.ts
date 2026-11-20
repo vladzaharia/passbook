@@ -13,7 +13,7 @@ import { createLogger } from '../../platform/log.ts';
 import { enforceApiKeyRate, rememberApiTier } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { seesAccountEmails } from '../passes/account-email.ts';
-import { type ApiKeyAuthority, authorityOrgId } from './access.ts';
+import { type ApiKeyAuthority, actorOf, authorityOrgId } from './access.ts';
 import * as repo from './repo.ts';
 import { invalid } from './service-create.ts';
 import { type ApiKeyDto, parseRoles, parseScopes, type Resources, toDto } from './service-dto.ts';
@@ -57,13 +57,15 @@ export async function listApiKeys(
     authority.kind === 'session' && authority.capability === 'org:read'
       ? authority.membershipId
       : undefined;
+  // A key lists its own children, whatever else it asks for.
+  const parent = authority.kind === 'api_key' ? authority.keyId : query.parentKeyId;
   const [rows, revokedCount] = await Promise.all([
     repo.listKeys(
       ctx.env.DB,
-      { ...query, orgId, limit: query.limit + 1, mine },
+      { ...query, orgId, limit: query.limit + 1, mine, parent },
       seesAccountEmails(authority),
     ),
-    repo.countRevoked(ctx.env.DB, orgId, mine),
+    repo.countRevoked(ctx.env.DB, orgId, mine, parent),
   ]);
   const page = rows.slice(0, query.limit);
   const resources = await repo.keyResources(
@@ -97,21 +99,29 @@ export async function isOwnPersonalKey(
   return key?.kind === 'personal' && key.membership_id === authority.membershipId;
 }
 
+/** The key `id` of the caller's org, or 404: a key sees only its own children, whatever other keys exist. */
+export async function reachable(ctx: ServiceContext, authority: ApiKeyAuthority, id: string) {
+  const key = await repo.getKey(ctx.env.DB, id, authorityOrgId(authority));
+  if (!key || (authority.kind === 'api_key' && key.parent_key_id !== authority.keyId))
+    throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
+  return key;
+}
+
 /** Idempotent: revoking a revoked key succeeds. */
 export async function revokeApiKey(
   ctx: ServiceContext,
   authority: ApiKeyAuthority,
   id: string,
 ): Promise<void> {
-  const key = await repo.getKey(ctx.env.DB, id, authorityOrgId(authority));
-  if (!key) throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
+  const key = await reachable(ctx, authority, id);
+  const children = await repo.countOpenChildren(ctx.env.DB, id);
   await repo.revokeKey(ctx, id, authority, {
     orgId: key.org_id,
-    actorType: 'user',
-    actorId: authority.userId,
+    ...actorOf(authority),
     action: 'api_key.revoke',
     targetType: 'api_key',
     targetId: id,
+    ...(children > 0 ? { detail: { children } } : {}),
   });
 }
 
@@ -122,8 +132,7 @@ export async function retireApiKey(
   id: string,
   retireAt: number,
 ): Promise<void> {
-  const key = await repo.getKey(ctx.env.DB, id, authorityOrgId(authority));
-  if (!key) throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
+  const key = await reachable(ctx, authority, id);
   if (retireAt <= ctx.clock.now())
     throw invalid('Retirement must be in the future.', 'RETIRE_PAST', 'retireAt');
   if (key.expires_at !== null && retireAt > key.expires_at)
@@ -132,8 +141,7 @@ export async function retireApiKey(
     throw new ConflictError('The key is already revoked or retiring.', 'API_KEY_RETIRE_SET');
   await repo.retireKey(ctx, id, retireAt, authority, {
     orgId: key.org_id,
-    actorType: 'user',
-    actorId: authority.userId,
+    ...actorOf(authority),
     action: 'api_key.retire',
     targetType: 'api_key',
     targetId: id,
@@ -157,6 +165,17 @@ export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiK
       )
         return null;
       if (row.org_id !== null && row.org_status !== 'active') return null;
+      // A child ends with its parent: revoked, expired or retired, or gone.
+      if (row.parent_key_id !== null) {
+        const parent = row.parent
+          ? (JSON.parse(row.parent) as Record<
+              'revoked_at' | 'expires_at' | 'retire_at',
+              number | null
+            >)
+          : null;
+        const ends = parent ? [parent.expires_at, parent.retire_at].filter((t) => t !== null) : [];
+        if (!parent || parent.revoked_at !== null || ends.some((t) => t <= now)) return null;
+      }
       // A personal key dies with its membership or user; its reach is capped by the member's roles now.
       if (row.kind === 'personal' && row.member_roles === null) return null;
       // The caller's address is not an oracle: a wrong address looks like a wrong key. No address means no match.

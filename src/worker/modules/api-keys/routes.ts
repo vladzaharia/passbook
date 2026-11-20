@@ -8,28 +8,27 @@ import {
   OkSchema,
   RetireApiKeySchema,
 } from '../../../shared/contracts/index.ts';
-import { modeFromRequest, requireSession } from '../../platform/auth.ts';
+import { requireCaller } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
-import { BadRequestError, UnauthenticatedError } from '../../platform/errors.ts';
+import { BadRequestError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import { type ApiKeyAuthority, authorizeApiKeys } from './access.ts';
-import {
-  createApiKey,
-  isOwnPersonalKey,
-  listApiKeys,
-  retireApiKey,
-  revokeApiKey,
-} from './service.ts';
+import { authorizeKey, registerKeyFamilyRoutes } from './routes-family.ts';
+import { createApiKey, listApiKeys, retireApiKey, revokeApiKey } from './service.ts';
 
 export const apiKeysRoutes = createRouter();
-guard(apiKeysRoutes, requireSession, async (c, next) => {
-  const auth = c.var.auth;
-  if (auth?.kind !== 'session') throw new UnauthenticatedError();
-  c.set('auth', { ...auth, mode: modeFromRequest(c) });
-  await next();
-});
+// A signed-in member, or a key holding `api-keys:write` (it reaches its own children). `me` is the key route's.
+guard(
+  apiKeysRoutes,
+  declareKeyAccess(requireCaller({ scope: 'api-keys:write' }), {
+    read: ['api-keys:write'],
+    write: ['api-keys:write'],
+    only: /^\/api\/v1\/api-keys(?!\/me$)/,
+  }),
+);
 apiKeysRoutes.use('*', limitBody(64 * 1024));
 // Missing scope is a bad request rather than an implicit platform selection.
 apiKeysRoutes.use('*', async (c, next) => {
@@ -37,7 +36,11 @@ apiKeysRoutes.use('*', async (c, next) => {
   if ((method === 'GET' || method === 'DELETE') && c.req.query('orgId') === undefined) {
     throw new BadRequestError('orgId is required.');
   }
-  if (method === 'POST' && c.req.header('content-type')?.includes('application/json')) {
+  if (
+    method === 'POST' &&
+    !c.req.path.endsWith('/me/rotate') &&
+    c.req.header('content-type')?.includes('application/json')
+  ) {
     let body: unknown;
     try {
       body = await c.req.json();
@@ -50,6 +53,7 @@ apiKeysRoutes.use('*', async (c, next) => {
   }
   await next();
 });
+registerKeyFamilyRoutes(apiKeysRoutes);
 register(
   apiKeysRoutes,
   'api-keys',
@@ -63,6 +67,15 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const query = c.req.valid('query');
+    // A key lists its own children.
+    if (c.var.auth?.kind === 'api_key')
+      return c.json(
+        await listApiKeys(
+          ctx,
+          query,
+          await authorizeApiKeys(ctx, c.var.auth, query.orgId, 'integrations:manage'),
+        ),
+      );
     // Any member lists their own personal keys; the org's keys need `integrations:read`.
     const member =
       query.orgId === null
@@ -113,11 +126,8 @@ register(
     const ctx = serviceContext(c);
     const { orgId } = c.req.valid('query');
     const { id } = c.req.valid('param');
-    // A member may end their own personal key; anything else needs `integrations:manage`.
-    let authority =
-      orgId === null ? null : await authorizeApiKeys(ctx, c.var.auth, orgId, 'org:read');
-    if (!authority || !(await isOwnPersonalKey(ctx, id, orgId, authority)))
-      authority = await authorizeApiKeys(ctx, c.var.auth, orgId, 'integrations:manage');
+    // A member may end their own personal key; anything else needs `integrations:manage`; a key, its children.
+    const authority = await authorizeKey(ctx, c.var.auth, orgId, id, 'integrations:manage');
     await revokeApiKey(ctx, authority, id);
     return c.json({ ok: true as const });
   },
@@ -137,13 +147,8 @@ register(
     const ctx = serviceContext(c);
     const input = c.req.valid('json');
     const { id } = c.req.valid('param');
-    // As revoke: a member may retire their own personal key (rotation: make a new one, retire the old).
-    let authority =
-      input.orgId === null
-        ? null
-        : await authorizeApiKeys(ctx, c.var.auth, input.orgId, 'org:read');
-    if (!authority || !(await isOwnPersonalKey(ctx, id, input.orgId, authority)))
-      authority = await authorizeApiKeys(ctx, c.var.auth, input.orgId, 'integrations:manage');
+    // As revoke: a member may retire their own personal key.
+    const authority = await authorizeKey(ctx, c.var.auth, input.orgId, id, 'integrations:manage');
     await retireApiKey(ctx, authority, id, input.retireAt);
     return c.json({ ok: true as const });
   },

@@ -42,6 +42,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
 | `webhooks:manage` | read and manage outbound webhook endpoints, deliveries, replay and test events (see Outbound webhooks). Neither `connections:*` nor `passes:*` scopes reach these routes, and this scope reaches nothing else |
 | `brand:manage` | read and edit the org's brand kit (`/api/v1/brand`): web logo, accent, mark level. Reaches nothing else |
+| `api-keys:write` | child keys of the calling key: mint, list, read, rotate, retire, revoke; rotate itself. A service key only (see Child keys) |
 | `scanning:write` | `POST /templates/{id}/scan-setup`: make a template's scanning events and session. Needs `scanning:manage` to delegate, so only `org_admin` can mint it. It reads the event names, venues and dates on the template's issued passes, and reaches nothing else |
 
 ### Token types
@@ -64,6 +65,26 @@ A secret scanner can match the labels. Keys are never logged: the logger and aud
 **Expiry and retirement.** `expiresAt` is fixed when the key is made. `POST /api-keys/{id}/retire` with
 `{"orgId": ..., "retireAt": <ms>}` ends the key at that instant, once, never after `expiresAt`
 (`409 API_KEY_RETIRE_SET` for a second call). Revoking is immediate and permanent.
+
+**Rotation.** `POST /api-keys/{id}/rotate` with `{"orgId": ..., "overlapHours": 0-168}` (default 24) makes a new key and
+retires the old one `overlapHours` later (never after its `expiresAt`), in one batch. The response is `{key, previous}`; `key.secret`
+is shown once and works at once. The new key has the old one's stored scopes, roles, mode, addresses, expiry, limits and terminals,
+and `rotatedFrom` names the old key. A member can rotate a key only if they could mint it (`403 API_KEY_SCOPE_EXCEEDS_CREATOR`), in
+the key's mode (`403 API_KEY_MODE_MISMATCH`); a personal key only its own member. A key that is revoked, retiring or expired is
+`409 API_KEY_NOT_ROTATABLE`. A key with `api-keys:write` rotates itself with `POST /api-keys/me/rotate` (`{"overlapHours"}`).
+
+**Child keys.** A service key with `api-keys:write` mints a child with `POST /api-keys` (the same body: `orgId` is the key's own).
+The child is narrower than its parent in every dimension: scopes (never `api-keys:write` or `scans:write`: one level only),
+mode (the parent's), expiry (not later; omitted means the parent's), `ipAllow` (each range inside one of the parent's; omitted means
+the parent's), `templateIds` and `passStyles` (inside the parent's). Anything wider is `403 API_KEY_CHILD_WIDER` or
+`403 API_KEY_SCOPE_EXCEEDS_CREATOR`. A key reaches only its own children: `GET /api-keys`, `GET /api-keys/{id}`,
+`GET /api-keys/{id}/activity`, `POST /api-keys/{id}/rotate`, `POST /api-keys/{id}/retire` and `DELETE /api-keys/{id}` take a child of
+the caller, and any other key is `404 API_KEY_NOT_FOUND`. A child ends with its parent: revoking the parent revokes its children,
+and retiring or rotating it retires them at the same instant. A key without `api-keys:write` is `403 MISSING_SCOPE`.
+
+**Activity.** `GET /api-keys/{id}` adds the parent, the key that replaced it, its open children and the network of its last use.
+`GET /api-keys/{id}/activity` gives the last use, the calls of the last 30 days by action, and the latest calls (time, action, target,
+network, and for a refused call its code). It reads the audit log: no request bodies and no secrets.
 
 **IP allowlist.** `ipAllow` lists addresses or CIDR ranges (`203.0.113.0/24`, `2001:db8::/32`), set when the key is made
 and never changed; ranges wider than an IPv4 /8 or IPv6 /32, or lists that cover every address, are refused (`422 API_KEY_IP_TOO_BROAD`). A request from any other address, or with none, is `401 INVALID_API_KEY`, the same as a wrong key.

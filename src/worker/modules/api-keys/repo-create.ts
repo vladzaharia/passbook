@@ -6,7 +6,7 @@ import {
   type TenantScope,
 } from '../../platform/api-scopes.ts';
 import { grant } from '../../platform/authority.ts';
-import { exactlyOne } from '../../platform/authority-checks.ts';
+import { exactlyOne, rowIs } from '../../platform/authority-checks.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -17,9 +17,21 @@ import {
   tenantPrincipal,
 } from '../passes/repo-authority.ts';
 import { type ApiKeyAuthority, delegableScopes } from './access.ts';
-import type { ApiKeyRow, KeyExtras } from './repo-row.ts';
+import { endChildren } from './repo.ts';
+import type { ApiKeyRow, KeyExtras, Replaces } from './repo-row.ts';
 
 const PLATFORM_KEY_TENANT = ['org_id', 'mode'];
+const OPEN = { revoked_at: null, retire_at: null };
+
+/** The old key ends at `retireAt`, in the same batch as the new one; the batch fails if it was no longer open. */
+function retireOld(g: ReturnType<typeof grant>, replaces: Replaces) {
+  g.update('api_keys', {
+    set: { retire_at: replaces.retireAt },
+    where: { id: replaces.id, ...OPEN },
+    require: 'one',
+  });
+  endChildren(g, replaces.id, replaces.retireAt);
+}
 
 /**
  * Mints a key under a grant: `org_mode.api_key.create` for an org-bound key (the creator's live membership
@@ -34,7 +46,8 @@ export async function createKey(
   audit: AuditEntry,
   extras: Partial<KeyExtras> = {},
 ): Promise<void> {
-  const { terminalIds = [], templateIds = [], passStyles = [] } = extras;
+  const { terminalIds = [], templateIds = [], passStyles = [], replaces } = extras;
+  const rotating = replaces !== undefined;
   // The grant supplies org_id and mode of a tenant key: the creator's org and request mode.
   const columns = [
     'name',
@@ -50,6 +63,8 @@ export async function createKey(
     'restricted',
     'ip_allow',
     'secret_label',
+    'parent_key_id',
+    'rotated_from',
   ];
   const values = [
     key.name,
@@ -65,20 +80,24 @@ export async function createKey(
     key.restricted,
     key.ip_allow,
     key.secret_label,
+    key.parent_key_id,
+    key.rotated_from,
   ];
   if (authority.kind === 'platform') {
     if (key.org_id !== null || key.kind !== 'platform' || terminalIds.length > 0)
       throw new ForbiddenError();
     const g = grant(ctx, {
-      purpose: 'platform.api_key.create',
+      purpose: rotating ? 'platform.api_key.rotate' : 'platform.api_key.create',
       principal: { kind: 'platform', userId: authority.userId, sessionIdHash: authority.sessionId },
       target: key.id,
+      ...(rotating ? { checks: [rowIs('api_keys', replaces.id, OPEN)] } : {}),
     });
     // A platform grant injects no tenant: a platform key names its own (null) org and mode.
     const platformColumns = ['id', ...PLATFORM_KEY_TENANT, ...columns];
     const platformValues = [key.id, null, key.mode, ...values];
     g.insertSelect('api_keys', platformColumns, platformValues);
     g.add(grantedAudit(g, ctx, audit));
+    if (rotating) retireOld(g, replaces);
     await g.commit();
     return;
   }
@@ -87,14 +106,24 @@ export async function createKey(
   const delegable: string[] = delegableScopes(authority);
   const presets = roles.flatMap((role) => ROLE_PRESETS[role]);
   const personal = key.kind === 'personal';
+  const byKey = authority.kind === 'api_key';
   // A role preset is held in full or not at all: each of its scopes must be within the creator's roles.
-  const beyond =
-    explicit.some((scope) => !delegable.includes(scope)) ||
-    presets.some((scope) => !rolesCapableOf(scope).some((role) => authority.roles.includes(role)));
+  // A key's stored scopes already include its roles' presets, and a child holds at most its parent's.
+  const beyond = byKey
+    ? explicit.some(
+        (scope) => !(rotating && replaces.self ? authority.scopes : delegable).includes(scope),
+      )
+    : explicit.some((scope) => !delegable.includes(scope)) ||
+      presets.some(
+        (scope) => !rolesCapableOf(scope).some((role) => authority.roles.includes(role)),
+      );
   if (
-    authority.capability !== (personal ? 'org:read' : 'integrations:manage') ||
+    (!byKey && authority.capability !== (personal ? 'org:read' : 'integrations:manage')) ||
     key.org_id !== authority.orgId ||
-    (personal && key.membership_id !== authority.membershipId) ||
+    (personal && (byKey || key.membership_id !== authority.membershipId)) ||
+    (byKey &&
+      (key.kind !== 'service' ||
+        key.parent_key_id !== (rotating ? replaces.parent : authority.keyId))) ||
     beyond
   )
     throw new ForbiddenError(
@@ -105,14 +134,21 @@ export async function createKey(
   // The creator's own stored roles must grant each capability, not the snapshot's `roles`.
   const capabilities = new Set([...explicit, ...presets].map((scope) => scopeCapability[scope]));
   const g = grant(ctx, {
-    purpose: 'org_mode.api_key.create',
+    purpose: rotating ? 'org_mode.api_key.rotate' : 'org_mode.api_key.create',
     principal: tenantPrincipal(authority),
     target: key.id,
     checks: [
       ...capabilityChecks(authority),
-      ...[...capabilities].map((capability) =>
-        membershipCapability(authority.membershipId, capability),
-      ),
+      ...(authority.kind === 'session'
+        ? [...capabilities].map((capability) =>
+            membershipCapability(authority.membershipId, capability),
+          )
+        : []),
+      // A key mints children of itself, never when it is a child; a rotation reads the key it replaces.
+      ...(byKey && !rotating
+        ? [rowIs('api_keys', authority.keyId, { parent_key_id: null, kind: 'service' }, 'actor')]
+        : []),
+      ...(rotating ? [rowIs('api_keys', replaces.id, OPEN)] : []),
       // A terminal of the grant's org and mode, still in service; the binding is written with the key.
       ...terminalIds.map((id) =>
         exactlyOne('scanners', { id, kind: 'terminal', revoked_at: null }),
@@ -121,7 +157,11 @@ export async function createKey(
       ...templateIds.map((id) => exactlyOne('templates', { id })),
     ],
     codes: {
-      lineage: terminalIds.length ? 'API_KEY_TERMINAL_UNKNOWN' : 'API_KEY_TEMPLATE_UNKNOWN',
+      lineage: rotating
+        ? 'API_KEY_NOT_FOUND'
+        : terminalIds.length
+          ? 'API_KEY_TERMINAL_UNKNOWN'
+          : 'API_KEY_TEMPLATE_UNKNOWN',
     },
   });
   g.insertSelect('api_keys', ['id', ...columns], [key.id, ...values]);
@@ -141,5 +181,6 @@ export async function createKey(
       values: [kind, value],
     });
   g.add(grantedAudit(g, ctx, audit));
+  if (rotating) retireOld(g, replaces);
   await g.commit();
 }

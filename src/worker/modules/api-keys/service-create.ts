@@ -8,15 +8,25 @@ import { ipListTooBroad, parseCidr } from '../../platform/ip-allow.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import { orgIsActive } from '../orgs/repo.ts';
-import { type ApiKeyAuthority, authorityOrgId, delegableScopes } from './access.ts';
+import { type ApiKeyAuthority, actorOf, authorityOrgId, delegableScopes } from './access.ts';
+import { attenuate } from './attenuate.ts';
+import { getKey, keyResources } from './repo.ts';
 import { createKey } from './repo-create.ts';
 import type { ApiKeyRow } from './repo-row.ts';
-import { type ApiKeyDto, parseRoles, parseScopes, toDto } from './service-dto.ts';
+import { type ApiKeyDto, parseRoles, parseScopes, type Resources, toDto } from './service-dto.ts';
 
 /** A personal or platform key lives at most 90 days; a day of slack covers a client clock that runs ahead. */
 const MAX_LIFETIME_MS = 91 * 86_400_000;
 /** Scopes a template or pass-style restriction can narrow: those whose routes name a template. */
 const RESTRICTABLE = /^(passes|templates|nfc):|^holders:write$/;
+
+/** A fresh secret: shown once, stored only as its hash. */
+export async function newSecret(ctx: ServiceContext, kind: ApiKeyKind, mode: 'live' | 'test') {
+  const prefix = ctx.ids.token(6);
+  const label = secretLabel(kind, mode);
+  const secret = `${label}_${prefix}_${ctx.ids.token(32)}`;
+  return { prefix, label, secret, hash: await sha256Hex(secret) };
+}
 
 export const invalid = (message: string, code: string, path = 'scopes') =>
   new ValidationError(message, [{ path, message }], code);
@@ -31,6 +41,7 @@ function kindOf(authority: ApiKeyAuthority, input: z.infer<typeof CreateApiKeySc
       'kind',
     );
   if (kind === 'personal' && authority.kind !== 'session') throw new ForbiddenError();
+  if (authority.kind === 'api_key' && kind !== 'service') throw new ForbiddenError();
   return kind;
 }
 
@@ -72,20 +83,52 @@ function checkKindRules(
   return ipAllow;
 }
 
+/**
+ * A key mints a child of itself: the parent row (read now, not the snapshot) must be a live service key that is
+ * no child itself, and every dimension of the child is the parent's or narrower. The mode is the parent's: as for a
+ * member, the one named in the body is not read. Returns the request with the
+ * inherited settings filled in, so the same rules that check any key check the child.
+ */
+async function childInput(
+  ctx: ServiceContext,
+  authority: Extract<ApiKeyAuthority, { kind: 'api_key' }>,
+  input: z.infer<typeof CreateApiKeySchema>,
+): Promise<z.infer<typeof CreateApiKeySchema>> {
+  const parent = await getKey(ctx.env.DB, authority.keyId, authority.orgId);
+  if (
+    !parent ||
+    parent.revoked_at !== null ||
+    parent.kind !== 'service' ||
+    parent.mode !== authority.mode
+  )
+    throw new ForbiddenError();
+  if (parent.parent_key_id !== null)
+    throw new ForbiddenError('A child key cannot mint keys.', 'API_KEY_CHILD_CANNOT_MINT');
+  const rows = await keyResources(ctx.env.DB, [parent.id]);
+  const held: Resources = {
+    templateIds: rows.filter((r) => r.kind === 'template').map((r) => r.value),
+    passStyles: rows
+      .filter((r) => r.kind === 'pass_style')
+      .map((r) => r.value) as Resources['passStyles'],
+  };
+  const child = attenuate(parent, held, input);
+  return { ...input, ...child, mode: parent.mode } as z.infer<typeof CreateApiKeySchema>;
+}
+
 export async function createApiKey(
   ctx: ServiceContext,
   authority: ApiKeyAuthority,
   raw: z.input<typeof CreateApiKeySchema>,
 ): Promise<ApiKeyDto & { secret: string }> {
-  const input: z.infer<typeof CreateApiKeySchema> = {
+  const given: z.infer<typeof CreateApiKeySchema> = {
     ...raw,
     scopes: raw.scopes ?? [],
     roles: raw.roles ?? [],
     mode: raw.mode ?? 'live',
   };
   const now = ctx.clock.now();
-  const orgId = input.orgId;
-  const kind = kindOf(authority, input);
+  const orgId = given.orgId;
+  const kind = kindOf(authority, given);
   const needs = kind === 'personal' ? 'org:read' : 'integrations:manage';
   if (
     orgId !== authorityOrgId(authority) ||
@@ -93,6 +136,15 @@ export async function createApiKey(
   ) {
     throw new ForbiddenError();
   }
+  const delegable = delegableScopes(authority);
+  const asked = effectiveScopes(given.scopes, given.roles);
+  // A child holds a subset of its parent's scopes, whether named or through a role.
+  if (authority.kind === 'api_key' && asked.some((scope) => !delegable.includes(scope)))
+    throw new ForbiddenError(
+      'A key cannot hold scopes beyond your own access.',
+      'API_KEY_SCOPE_EXCEEDS_CREATOR',
+    );
+  const input = authority.kind === 'api_key' ? await childInput(ctx, authority, given) : given;
   const scans = input.scopes.includes('scans:write');
   const terminalIds = [...new Set(input.terminalIds ?? [])];
   const templateIds = [...new Set(input.templateIds ?? [])];
@@ -116,7 +168,6 @@ export async function createApiKey(
       [{ path: 'templateIds', message: 'Not supported with these scopes.' }],
       'API_KEY_RESTRICTION_UNSUPPORTED',
     );
-  const delegable = delegableScopes(authority);
   if (input.scopes.some((scope) => !delegable.includes(scope))) {
     throw new ForbiddenError(
       'A key cannot hold scopes beyond your own access.',
@@ -129,20 +180,18 @@ export async function createApiKey(
   if (orgId && !(await orgIsActive(ctx.env.DB, orgId))) {
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   }
-  const mode = authority.kind === 'session' ? authority.mode : input.mode;
-  const prefix = ctx.ids.token(6);
-  const label = secretLabel(kind, mode);
-  const secret = `${label}_${prefix}_${ctx.ids.token(32)}`;
+  const mode = authority.kind === 'platform' ? input.mode : authority.mode;
+  const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode);
   const row: ApiKeyRow = {
     id: ctx.ids.id(),
     org_id: orgId,
     name: input.name,
     prefix,
-    key_hash: await sha256Hex(secret),
+    key_hash: hash,
     // A role is a label: its bundle is written out here, so later changes to a bundle never reach this key.
     scopes: JSON.stringify(effectiveScopes(input.scopes, input.roles)),
     mode,
-    created_by: authority.userId,
+    created_by: authority.kind === 'api_key' ? null : authority.userId,
     created_at: now,
     last_used_at: null,
     expires_at: input.expiresAt ?? null,
@@ -156,11 +205,13 @@ export async function createApiKey(
     ip_allow: ipAllow.length ? JSON.stringify(ipAllow) : null,
     rate_tier: null,
     secret_label: label,
+    parent_key_id: authority.kind === 'api_key' ? authority.keyId : null,
+    rotated_from: null,
+    last_ip_prefix: null,
   };
   const audit: AuditEntry = {
     orgId,
-    actorType: 'user',
-    actorId: authority.userId,
+    ...actorOf(authority),
     action: 'api_key.create',
     targetType: 'api_key',
     targetId: row.id,
@@ -173,6 +224,7 @@ export async function createApiKey(
       ...(row.roles === '[]' ? {} : { roles: parseRoles(row.roles) }),
       ...(ipAllow.length ? { ipAllow } : {}),
       ...(terminalIds.length ? { terminalIds } : {}),
+      ...(row.parent_key_id ? { parentKeyId: row.parent_key_id } : {}),
       ...(restricted ? { templateIds, passStyles } : {}),
     },
   };

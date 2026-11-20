@@ -40,5 +40,7 @@ export function toDto(
     ipAllow: row.ip_allow ? (JSON.parse(row.ip_allow) as string[]) : [],
     ...resources,
     rateTier: (row.rate_tier as ApiKeyDto['rateTier']) ?? null,
+    parentKeyId: row.parent_key_id,
+    rotatedFrom: row.rotated_from,
   };
 }

@@ -261,12 +261,14 @@ describe('scope map', () => {
 
 describe('mintable scopes', () => {
   const body = { orgId: 'org-1', name: 'k', scopes: ['passes:read'] };
-  // `scanning:write` joined when POST /templates/{id}/scan-setup began to accept it (WP4).
-  it('are a subset of the scopes, and today they are exactly the ones that existed, plus the brand kit and scanning setup ones', () => {
+  // `scanning:write` joined when POST /templates/{id}/scan-setup began to accept it (WP4); `api-keys:write` when
+  // the key routes began to accept a key (WP6).
+  it('are a subset of the scopes, and today they are exactly the ones that existed, plus the brand kit, scanning setup and key management ones', () => {
     expect([...MINTABLE_SCOPES]).toEqual([
       ...Object.keys(LEGACY_SCOPE_CAPABILITY),
       'brand:manage',
       'scanning:write',
+      'api-keys:write',
     ]);
   });
   it('are all a key can be created with: any other scope is a validation error', () => {
