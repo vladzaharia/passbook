@@ -3,7 +3,7 @@ import { settleShown } from './ignore.ts';
 import type { Env, MachineState, Out } from './internal.ts';
 import { out, same } from './internal.ts';
 import { apply } from './reduce-action.ts';
-import type { ScanEvent } from './types.ts';
+import type { Draft, ScanEvent } from './types.ts';
 
 type Of<T extends ScanEvent['type']> = Extract<ScanEvent, { type: T }>;
 
@@ -40,15 +40,22 @@ export function cancel(s: MachineState, env: Env): Out {
   return out({ ...s, loop: { ...l, picker: null }, lastActivity: env.now });
 }
 
-/** A Manager's PIN: the draft that needed approval goes again under a new key, with `approval`. */
+/**
+ * A Manager's PIN: the draft that needed approval goes again under a new key, with `approval`. The
+ * PIN rides on the command only; the loop's draft never holds it, so no state a screen can read does.
+ * Offline there is nothing to check it against: the hold stays and says so.
+ */
 export function approve(s: MachineState, ev: Of<'approve'>, env: Env): Out {
   const l = s.loop;
   if (l.s !== 'verdict' || l.outcome.reason !== 'needs_approval' || !l.draft) return same(s);
+  if (!s.online)
+    return out({ ...s, loop: { ...l, pin: { unreachable: true } }, lastActivity: env.now });
   const key = env.id();
-  const draft = {
+  const sent: Draft = {
     ...l.draft,
     approval: { ...(ev.staffId ? { staffId: ev.staffId } : {}), pin: ev.pin },
   };
+  const { approval: _pin, ...kept } = sent;
   return out(
     {
       ...s,
@@ -57,7 +64,7 @@ export function approve(s: MachineState, ev: Of<'approve'>, env: Env): Out {
         s: 'applying',
         input: l.input,
         card: l.card,
-        draft,
+        draft: kept,
         key,
         since: env.now,
         slow: false,
@@ -66,6 +73,6 @@ export function approve(s: MachineState, ev: Of<'approve'>, env: Env): Out {
       },
       lastActivity: env.now,
     },
-    [{ c: 'act', key, input: l.input, draft }],
+    [{ c: 'act', key, input: l.input, draft: sent }],
   );
 }

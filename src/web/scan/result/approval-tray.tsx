@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { SCAN_COPY, scanLine } from '../../../shared/copy/scan.ts';
 import { SCAN_TRAY_COPY as COPY } from '../../../shared/copy/scan-tray.ts';
 import { CODE_LENGTH } from '../../ui/code-field.tsx';
-import type { PinNote } from '../machine/types.ts';
+import { type PinNote, pinSpent } from '../machine/fail.ts';
+import { SCAN_TIMING } from '../timing.ts';
 import { Keypad } from '../ui/keypad.tsx';
 import { Tray } from '../ui/tray.tsx';
 import { type Approver, ManagerList, ManagerRow, PinDots } from './approval-parts.tsx';
@@ -13,6 +14,8 @@ import './approval-tray.css';
 
 /** A keyed PIN is dropped after this long with no key. */
 const IDLE_MS = 30_000;
+/** A lockout with no Retry-After: the person window. */
+const LOCK_MS = 300_000;
 
 /** The last manager who approved, so the next PIN starts from them. Memory only; a reload forgets. */
 let lastApprover: string | undefined;
@@ -20,6 +23,8 @@ let lastApprover: string | undefined;
 export interface ApprovalTrayProps {
   /** What the PIN approves: "Redeem 1 Free coffee". */
   action?: string | undefined;
+  /** Whose pass it is: "Anna Popescu · Coffee card". The card behind is only a band. */
+  who?: string | undefined;
   managers: Approver[];
   /** Staff sign-in is off: six digits alone find the manager. */
   code: boolean;
@@ -42,6 +47,7 @@ export interface ApprovalTrayProps {
  */
 export function ApprovalTray({
   action,
+  who,
   managers,
   code,
   desk,
@@ -62,7 +68,9 @@ export function ApprovalTray({
   const [shakes, setShakes] = useState(0);
   const [cleared, setCleared] = useState(false);
   const manager = managers.find((m) => m.id === staffId);
-  const locked = note !== undefined && ('locked' in note || note.triesLeft === 0);
+  // A lockout ends on its own: the keys come back when the wait is over.
+  const [served, setServed] = useState(false);
+  const locked = pinSpent(note) && !served;
   const idle = busy || sent || locked || choosing || (!code && !manager);
   const pin = usePinDraft({
     length: CODE_LENGTH,
@@ -79,9 +87,20 @@ export function ApprovalTray({
   useEffect(() => {
     if (!note) return;
     setSent(false);
+    setServed(false);
     setShakes((n) => n + 1);
+    if (!pinSpent(note)) return;
+    const wait = 'locked' in note ? (note.retryAfterMs ?? LOCK_MS) : LOCK_MS;
+    const timer = setTimeout(() => setServed(true), wait);
+    return () => clearTimeout(timer);
   }, [note]);
-  const line = noteLine(note, code);
+  // A PIN that is sent and never answered (nothing took it) frees the keys again.
+  useEffect(() => {
+    if (!sent || busy) return;
+    const timer = setTimeout(() => setSent(false), SCAN_TIMING.LOOKUP_TIMEOUT + 2000);
+    return () => clearTimeout(timer);
+  }, [sent, busy]);
+  const line = served ? undefined : noteLine(note, code);
   const full = busy || sent;
   const status = full
     ? COPY.pin.checking
@@ -108,8 +127,9 @@ export function ApprovalTray({
           </span>
           <div>
             <p className="scan-pin-title">{title}</p>
+            {who ? <p className="scan-pin-who">{who}</p> : null}
             <p className="scan-pin-sub">
-              {scanLine(COPY.pin.approves, { action: action ?? 'this action' })}
+              {scanLine(COPY.pin.approves, { action: action ?? COPY.pin.thisAction })}
             </p>
           </div>
         </div>
@@ -118,6 +138,8 @@ export function ApprovalTray({
             managers={managers}
             value={staffId}
             onPick={(id) => {
+              // Digits keyed for one manager are never sent under another.
+              pin.clear();
               setStaffId(id);
               setChoosing(false);
             }}
@@ -128,7 +150,14 @@ export function ApprovalTray({
               <ManagerRow
                 manager={manager}
                 disabled={full}
-                onChange={managers.length > 1 ? () => setChoosing(true) : undefined}
+                onChange={
+                  managers.length > 1
+                    ? () => {
+                        pin.clear();
+                        setChoosing(true);
+                      }
+                    : undefined
+                }
               />
             ) : null}
             <PinDots

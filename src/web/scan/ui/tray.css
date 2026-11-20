@@ -1,4 +1,15 @@
 /* Trays (handheld design 6): a short bottom sheet over the dock, and the keypad inside it. */
+:root {
+  --scan-pin-error: #b91c1c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --scan-pin-error: #f87171;
+  }
+}
+:root[data-theme="dark"] {
+  --scan-pin-error: #f87171;
+}
 .scan-tray {
   position: fixed;
   z-index: 50;
@@ -93,7 +104,7 @@
   font-size: 20px;
   letter-spacing: 0.02em;
 }
-.scan-key:disabled {
+.scan-key[aria-disabled="true"] {
   opacity: 0.4;
   cursor: default;
 }
@@ -101,7 +112,7 @@
   .scan-key {
     transition: transform 80ms var(--wl-ease-out);
   }
-  .scan-key:active:not(:disabled) {
+  .scan-key:active:not([aria-disabled="true"]) {
     transform: scale(0.96);
   }
 }

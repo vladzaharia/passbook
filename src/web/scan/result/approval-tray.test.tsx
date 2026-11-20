@@ -62,7 +62,7 @@ describe('Manager PIN tray', () => {
     expect(onApprove).toHaveBeenCalledExactlyOnceWith('m1', '482913');
     expect(screen.getByRole('status')).toHaveTextContent('Checking PIN');
     for (const k of screen.getAllByRole('button', { name: /^(\d|Delete)$/ }))
-      expect(k).toBeDisabled();
+      expect(k).toHaveAttribute('aria-disabled', 'true');
     expect(document.querySelector('input')).toBeNull();
     expect(document.body.innerHTML).not.toContain('482913');
   });
@@ -147,8 +147,65 @@ describe('Manager PIN tray', () => {
     const { onApprove, rerender } = setup();
     rerender({ note: { locked: true, retryAfterMs: 240_000 } });
     expect(screen.getByRole('alert')).toHaveTextContent('Too many tries. Try again in 4 min.');
-    for (const k of screen.getAllByRole('button', { name: /^\d$/ })) expect(k).toBeDisabled();
+    for (const k of screen.getAllByRole('button', { name: /^\d$/ }))
+      expect(k).toHaveAttribute('aria-disabled', 'true');
     expect(onApprove).not.toHaveBeenCalled();
+  });
+
+  it('says so when the PIN got no answer, and takes a fresh one', () => {
+    const { onApprove, rerender } = setup();
+    keys('111111');
+    rerender({ note: { unreachable: true } });
+    expect(screen.getByRole('alert')).toHaveTextContent("Couldn't check the PIN. Try again.");
+    keys('222222');
+    expect(onApprove).toHaveBeenCalledTimes(2);
+  });
+
+  it('a lockout ends on its own: the keys come back when the wait is over', () => {
+    const { onApprove, rerender } = setup();
+    rerender({ note: { locked: true, retryAfterMs: 60_000 } });
+    keys('111111');
+    expect(onApprove).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(60_001);
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('');
+    keys('222222');
+    expect(onApprove).toHaveBeenCalledExactlyOnceWith('m1', '222222');
+  });
+
+  it('a PIN nobody answered frees the keys again', () => {
+    const { onApprove } = setup();
+    keys('111111');
+    expect(screen.getByRole('status')).toHaveTextContent('Checking PIN');
+    act(() => {
+      vi.advanceTimersByTime(8_000);
+    });
+    keys('222222');
+    expect(onApprove).toHaveBeenCalledTimes(2);
+  });
+
+  it('names whose pass it is, since the card behind is only a band', () => {
+    setup({ who: 'Anna Popescu · Coffee card' });
+    expect(screen.getByText('Anna Popescu · Coffee card')).toBeVisible();
+  });
+
+  it('changing the manager drops the digits already keyed', () => {
+    const { onApprove } = setup({
+      managers: [
+        { ...maya, id: 'x1' },
+        { ...noor, id: 'x2' },
+      ],
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Maya Ruiz/ }));
+    keys('123');
+    fireEvent.click(screen.getByRole('button', { name: 'Change' }));
+    fireEvent.click(screen.getByRole('button', { name: /Noor Khan/ }));
+    expect(screen.getByRole('img', { name: 'PIN, 0 of 6 digits' })).toBeVisible();
+    keys('456');
+    expect(onApprove).not.toHaveBeenCalled();
+    keys('789');
+    expect(onApprove).toHaveBeenCalledExactlyOnceWith('x2', '456789');
   });
 
   it('asks who approves when several may, then remembers who for the next time', () => {

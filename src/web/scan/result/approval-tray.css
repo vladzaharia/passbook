@@ -141,9 +141,6 @@
   border-color: var(--sd-strong);
   background: var(--sd-strong);
 }
-.scan-pin-dots[data-invalid] > span {
-  border-color: var(--scan-refused);
-}
 @media (prefers-reduced-motion: no-preference) {
   .scan-pin-dots > span[data-filled] {
     animation: scan-pin-pop 120ms var(--wl-ease-out);
@@ -176,18 +173,16 @@
   text-align: center;
 }
 .scan-pin-note[data-invalid] {
-  color: var(--scan-refused);
+  color: var(--scan-pin-error);
 }
-:root[data-theme="dark"] .scan-pin-note[data-invalid],
-:root[data-theme="dark"] .scan-pin-dots[data-invalid] > span {
-  color: #f87171;
-  border-color: #f87171;
+.scan-pin-dots[data-invalid] > span {
+  border-color: var(--scan-pin-error);
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .scan-pin-note[data-invalid] {
-    color: #f87171;
-  }
-  :root:not([data-theme="light"]) .scan-pin-dots[data-invalid] > span {
-    border-color: #f87171;
-  }
+.scan-pin-who {
+  margin: 0;
+  overflow: hidden;
+  color: var(--sd-strong);
+  font: 600 17px / 22px var(--pk-font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

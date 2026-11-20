@@ -82,6 +82,20 @@ describe('the dock under needs_approval on a handheld', () => {
     expect(screen.getByRole('img', { name: 'PIN, 0 of 6 digits' })).toBeVisible();
   });
 
+  it('the camera waits while the tray is up, and wakes when it goes', () => {
+    const { dispatch } = dock(needs(true), approval());
+    fireEvent.click(screen.getByRole('button', { name: 'Manager PIN' }));
+    expect(dispatch).toHaveBeenCalledWith({ type: 'overlay', open: 'settings' });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(dispatch).toHaveBeenLastCalledWith({ type: 'overlay', open: null });
+  });
+
+  it('names whose pass is being approved', () => {
+    dock(needs(true), approval());
+    fireEvent.click(screen.getByRole('button', { name: 'Manager PIN' }));
+    expect(screen.getByText(/Coffee card/)).toBeVisible();
+  });
+
   it('says to ask an admin when nobody may approve', () => {
     dock(needs(false), approval());
     expect(screen.getByText('Ask an admin to allow it.')).toBeVisible();

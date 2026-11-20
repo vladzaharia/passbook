@@ -249,7 +249,13 @@ export function ScanLoop({
           ) : null
         }
         tint={tags.tint ?? view.tint}
-        {...(handheld && result && result.kind !== 'ready' && !s.overlay && !tags.card
+        {...(handheld &&
+        result &&
+        result.kind !== 'ready' &&
+        // A hold waiting for a manager stays until Done or the PIN, not until a stray tap.
+        result.reason !== 'needs_approval' &&
+        !s.overlay &&
+        !tags.card
           ? { onTint: () => dispatch({ type: 'dismiss' }) }
           : {})}
         buddy={

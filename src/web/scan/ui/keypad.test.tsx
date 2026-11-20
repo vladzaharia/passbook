@@ -16,10 +16,11 @@ describe('Keypad', () => {
   });
 
   it('puts a mode key at the bottom left and disables every key together', () => {
+    const onDigit = vi.fn();
     render(
       <Keypad
         disabled
-        onDigit={vi.fn()}
+        onDigit={onDigit}
         onDelete={vi.fn()}
         corner={
           <button type="button" disabled>
@@ -28,7 +29,9 @@ describe('Keypad', () => {
         }
       />,
     );
-    expect(screen.getByRole('button', { name: 'ABC' })).toBeDisabled();
-    for (const key of screen.getAllByRole('button')) expect(key).toBeDisabled();
+    for (const key of screen.getAllByRole('button', { name: /^(\d|Delete)$/ }))
+      expect(key).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(screen.getByRole('button', { name: '5' }));
+    expect(onDigit).not.toHaveBeenCalled();
   });
 });

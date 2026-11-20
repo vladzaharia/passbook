@@ -1,6 +1,7 @@
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
+import { SCAN_HANDHELD_COPY } from '../../../shared/copy/scan-handheld.ts';
 import type { PinNote, ScanOutcome } from '../machine/types.ts';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
 import type { Approver } from '../result/approval-parts.tsx';
@@ -24,6 +25,13 @@ const idOf = (outcome: ScanOutcome): number => {
   issued += 1;
   ids.set(outcome, issued);
   return issued;
+};
+
+/** "Anna Popescu · Coffee card". */
+const whoOf = (o: ScanOutcome): string | undefined => {
+  const holder = o.display?.identity.holder || o.card?.title;
+  const pass = o.card?.template.name ?? o.template?.name;
+  return [holder, pass].filter(Boolean).join(' · ') || undefined;
 };
 
 /**
@@ -52,6 +60,13 @@ function HeldApproval({
   const { dispatch } = useScanMachine();
   const [open, setOpen] = useState(false);
   const nobody = !outcome.approvals || (!approval.code && approval.managers.length === 0);
+  // With the tray up the camera waits: a pass swung into view is not the one being approved, and
+  // must not take the hold (or the digits) away. A reader's burst still is a scan.
+  useEffect(() => {
+    if (!open) return;
+    dispatch({ type: 'overlay', open: 'settings' });
+    return () => dispatch({ type: 'overlay', open: null });
+  }, [open, dispatch]);
   // A refused PIN brings the tray back with the tries left.
   useEffect(() => {
     if (approval.note) setOpen(true);
@@ -78,11 +93,12 @@ function HeldApproval({
         shape={nobody ? undefined : 'fixed'}
         onClick={() => dispatch({ type: 'dismiss' })}
       >
-        Done
+        {SCAN_HANDHELD_COPY.sheet.done}
       </DockButton>
       {open && !nobody ? (
         <ApprovalTray
           action={outcome.action?.label}
+          who={whoOf(outcome)}
           managers={approval.managers}
           code={approval.code}
           desk={approval.approvals === 'desk'}

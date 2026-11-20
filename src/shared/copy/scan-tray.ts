@@ -26,6 +26,8 @@ export const SCAN_TRAY_COPY = {
     dots: 'PIN, {n} of {len} digits',
     count: '{n} of {len} digits',
     cleared: 'PIN cleared.',
+    unreachable: "Couldn't check the PIN. Try again.",
+    thisAction: 'this action',
     checking: 'Checking PIN…',
   },
 } as const;

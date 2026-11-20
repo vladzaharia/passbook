@@ -115,6 +115,9 @@ export function fail(s: MachineState, ev: Fail, env: Env): Out {
   const l = s.loop;
   if ((l.s !== 'checking' && l.s !== 'applying') || l.key !== ev.key) return same(s);
   if (ev.error === 'pin_invalid' || ev.error === 'pin_locked') return pinRefused(s, l, ev, env);
+  // A PIN that got no answer is never an offline read: the guest is not let in on a PIN nobody checked.
+  if (l.s === 'applying' && l.retry && (ev.error === 'network' || ev.error === 'timeout'))
+    return pinRefused(s, l, ev, env);
   const act = l.s === 'applying' || s.posture === 'door' || s.armed !== null;
   let outcome: ScanOutcome;
   let state = s;
@@ -188,7 +191,9 @@ function pinRefused(s: MachineState, l: MachineState['loop'], ev: Fail, env: Env
               locked: true,
               ...(ev.retryAfterMs !== undefined ? { retryAfterMs: ev.retryAfterMs } : {}),
             }
-          : { triesLeft: ev.triesLeft ?? 0 },
+          : ev.error === 'pin_invalid'
+            ? { triesLeft: ev.triesLeft ?? 0 }
+            : { unreachable: true },
     },
     env,
   );

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { SCAN_COPY, scanLine } from '../../../shared/copy/scan.ts';
+import { SCAN_TRAY_COPY } from '../../../shared/copy/scan-tray.ts';
 import { Button } from '../../ui/button.tsx';
 import { CodeField } from '../../ui/code-field.tsx';
 import { FormField } from '../../ui/field.tsx';
 import { Select } from '../../ui/select.tsx';
-import type { PinNote } from '../machine/types.ts';
+import { type PinNote, pinSpent } from '../machine/fail.ts';
 import './picker.css';
 
 /** "3 min" (rounded up, at least 1), or "1 hour" from 60. */
@@ -15,6 +16,7 @@ export function waitLine(ms: number): string {
 
 export const noteLine = (note: PinNote | undefined, code: boolean) => {
   if (!note) return undefined;
+  if ('unreachable' in note) return SCAN_TRAY_COPY.pin.unreachable;
   const copy = code ? SCAN_COPY.managerCode : null;
   const locked = copy ? copy.locked : SCAN_COPY.boot.pinLocked;
   // No Retry-After yet (the last try was just used): the person window is 5 min.
@@ -50,7 +52,7 @@ export function ApprovalSheet({
   // Nothing is chosen for the person while more than one may approve.
   const [staffId, setStaffId] = useState(managers.length === 1 ? (managers[0]?.id ?? '') : '');
   const [pin, setPin] = useState('');
-  const locked = note !== undefined && ('locked' in note || note.triesLeft === 0);
+  const locked = pinSpent(note);
   // A refused PIN is cleared so the next six digits are a fresh try.
   useEffect(() => {
     if (note) setPin('');
