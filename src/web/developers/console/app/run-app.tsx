@@ -99,7 +99,7 @@ function Ready({
       templateId={sandbox.templateId}
       codes={codes}
       mode={mode}
-      prefill={prefill}
+      prefill={prefill ?? undefined}
     />
   );
 }
@@ -153,7 +153,7 @@ function ConsolePage({ sandbox, csrf }: { sandbox: Sandbox; csrf: string }) {
               slug={item.slug}
               opId={item.id}
               codes={codes}
-              prefill={prefill}
+              prefill={prefill ?? undefined}
             />
           </>
         ) : null}
