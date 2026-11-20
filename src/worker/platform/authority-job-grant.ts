@@ -17,6 +17,10 @@ const INACTIVE_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
   'org_mode.job.pass_import.finish': ['pass_imports', 'counters'],
   'org_mode.job.pass_import.retention_clear': ['pass_imports', 'pass_import_rows'],
   'org_mode.job.pass_import.retention_delete': ['pass_imports', 'pass_import_rows'],
+  // A channel-apply run of a suspended org still ends (as failed); it writes nothing else.
+  'org_mode.job.channels.fail': ['channel_apply_runs'],
+  // Closing a failed run journals its marks first, whatever the org's state.
+  'org_mode.job.channels.journal_close': ['channel_apply_marks'],
   // A suspended org's enrolments are held, disabled and migrated all the same (design-wallet-accounts.md).
   'org_mode.job.wallet.enrolment_hold': ['wallet_provider_accounts', 'wallet_enrolment_events'],
   'org_mode.job.wallet.enrolment_disable': ['wallet_provider_accounts', 'wallet_enrolment_events'],

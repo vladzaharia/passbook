@@ -12,8 +12,9 @@ import type {
 } from './instance-types.ts';
 import { isCredentialKeysetCommitment } from './instance-types.ts';
 import { type ScheduleResult, scheduleInstance } from './lifecycle-instance-schedule.ts';
-import { getInstanceByPass, readPassSnapshot } from './repo-instance.ts';
+import { getInstanceById, getInstanceByPass, readPassSnapshot } from './repo-instance.ts';
 import { walletRetirementIntentStatements } from './repo-instance-retirement.ts';
+import { requestChannelOffRetirement } from './repo-instance-retirement-staging.ts';
 
 /** Captured after the pass write. A stale notification cannot enqueue work for a later revision. */
 export interface WalletPassRevision extends WalletCredentialKeysetProof {
@@ -105,6 +106,33 @@ export async function reconcileWalletInstance(
       credentialKeysetCommitment,
     });
     if (!staged) return 'blocked';
+  } else if (instance.retirementRequestedAt === null) {
+    // A retired channel marker retires the copy; with no marker this is a no-op and the copy stays live.
+    const retired = await requestChannelOffRetirement(ctx.env.DB, {
+      orgId: instance.orgId,
+      mode: instance.mode,
+      provider: instance.provider,
+      instanceId: instance.id,
+      version: instance.desiredVersion,
+      now: ctx.clock.now(),
+      credentialGeneration: instance.credentialGeneration,
+      passCredentialGeneration: pass.credentialGeneration,
+      credentialKeysetCommitment,
+    });
+    if (retired) {
+      ctx.log.info('wallet.instance.channel_off', {
+        orgId: instance.orgId,
+        provider: instance.provider,
+      });
+      const current = await getInstanceById(ctx.env.DB, {
+        orgId: instance.orgId,
+        mode: instance.mode,
+        provider: instance.provider,
+        instanceId: instance.id,
+      });
+      if (!current) return 'blocked';
+      instance = { ...current };
+    }
   }
   const kind: WalletOperationKind =
     forceRetirement ||

@@ -1,4 +1,5 @@
-import { handleAppleBump } from '../modules/channels/jobs.ts';
+import { handleCapabilityChange } from '../modules/channels/capability.ts';
+import { handleAppleBump, handleReplaceCode } from '../modules/channels/jobs.ts';
 import { handleConnectionWebhook, handlePassRefresh } from '../modules/connections/jobs.ts';
 import { handleEmailSend, handlePushDeliver } from '../modules/delivery/jobs.ts';
 import { handleJoinResend } from '../modules/join/jobs.ts';
@@ -32,6 +33,8 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'wallet.credential_migrate': handleCredentialMigrate,
   'wallet.credential_check': handleCredentialCheck,
   'channel.apple_bump': handleAppleBump,
+  'channel.capability': handleCapabilityChange,
+  'channel.replace_code': handleReplaceCode,
   'prints.bulk': handlePrintsBulk,
 };
 
@@ -65,6 +68,10 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'wallet.credential_check':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'channel.apple_bump':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'channel.capability':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'channel.replace_code':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'prints.bulk':
       return JOB_HANDLERS[job.kind](job, ctx);

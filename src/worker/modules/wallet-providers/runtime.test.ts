@@ -61,6 +61,7 @@ describe('wallet issuance prerequisites', () => {
         releaseId: 'release-1',
         passId: 'pass-1',
         credentialGeneration: 1,
+        channelEpoch: 1,
       }),
     ).rejects.toMatchObject({ code: 'account_unavailable' });
     const cls = {
@@ -72,6 +73,7 @@ describe('wallet issuance prerequisites', () => {
       releaseId: 'release-1',
       passId: 'pass-1',
       credentialGeneration: 1,
+      channelEpoch: 1,
       projection: objectProjection,
       onProviderResponse: responses.onProviderResponse,
     };
@@ -165,6 +167,7 @@ describe('wallet issuance prerequisites', () => {
         releaseId: 'release-1',
         passId: 'pass-1',
         credentialGeneration: 1,
+        channelEpoch: 1,
         onProviderResponse: responses.onProviderResponse,
         retirement: {
           instanceId: 'other-instance',

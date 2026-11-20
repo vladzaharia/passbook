@@ -120,6 +120,7 @@ export async function handleGoogleCallback(
       releaseId: binding.releaseId,
       passId: binding.passId,
       credentialGeneration: binding.credentialGeneration,
+      channelEpoch: binding.channelEpoch,
     });
     if (event.classId !== expected.classId || event.objectId !== expected.objectId)
       throw rejected();

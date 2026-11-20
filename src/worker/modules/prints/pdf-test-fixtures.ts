@@ -80,7 +80,7 @@ export async function pdfText(bytes: Uint8Array): Promise<string> {
   let raw = '';
   for (const b of bytes) raw += String.fromCharCode(b);
   let out = '';
-  for (const m of raw.matchAll(/stream\r?\n([\s\S]*?)\r?\nendstream/g)) {
+  for (const m of raw.matchAll(/stream\r?\n([\s\S]*?)\nendstream/g)) {
     const body = Uint8Array.from(m[1] ?? '', (c) => c.charCodeAt(0));
     try {
       const inflated = new Blob([body]).stream().pipeThrough(new DecompressionStream('deflate'));

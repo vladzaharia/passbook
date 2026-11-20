@@ -37,6 +37,7 @@ const ids = (issuer: string, key: Uint8Array, orgId: string, mode: Mode) =>
     releaseId: 'r1',
     passId: 'p1',
     credentialGeneration: 1,
+    channelEpoch: 1,
   });
 
 /** A brand-new enrolment through WA1b: its own org credential as the source, no legacy envelope. */
