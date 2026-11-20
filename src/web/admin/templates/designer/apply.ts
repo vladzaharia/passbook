@@ -2,6 +2,7 @@ import { renameIn } from '@/passkit/template/merge/renames.ts';
 import type { Json, PassStyle, TemplateManifest } from '@/passkit/types.ts';
 import { type AccessOp, applyAccessOp } from './access/ops.ts';
 import type { Source } from './bindings.ts';
+import { applyCounterOp, type CounterOp } from './counters.ts';
 import { setSlotImage } from './images.ts';
 import type { InputSpec } from './inputs.ts';
 import type { DesignDoc, DraftAsset, GroupId } from './model.ts';
@@ -77,6 +78,7 @@ export type Op =
   | { op: 'stamps-set'; patch: { tilt?: boolean; keepReady?: boolean; maximum?: number } }
   | { op: 'stamps-art'; slot: ArtSlot; asset: DraftAsset | null }
   | { op: 'stamps-input'; input: string }
+  | CounterOp
   | ScanOp
   | ActionsOp
   | AccessOp;
@@ -164,6 +166,11 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
       return setArt(doc, o.slot, o.asset);
     case 'stamps-input':
       return setStampsInput(doc, o.input);
+    case 'counter-add':
+    case 'counter-set':
+    case 'counter-remove':
+    case 'counter-scan':
+      return applyCounterOp(doc, o);
     case 'scan-enable':
     case 'scan-action-add':
     case 'scan-action-set':

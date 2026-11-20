@@ -23,7 +23,14 @@ export interface ConfirmCopy {
 
 const CANNOT_UNDO = 'This cannot be undone.';
 
-export type DeletableEntity = 'org' | 'pass' | 'connection' | 'template' | 'identity' | 'webhook';
+export type DeletableEntity =
+  | 'org'
+  | 'pass'
+  | 'connection'
+  | 'template'
+  | 'identity'
+  | 'webhook'
+  | 'rule';
 
 const DELETE: Record<DeletableEntity, { consequence: string; typed: boolean }> = {
   org: { consequence: 'Its templates, passes and connections stop working.', typed: true },
@@ -38,6 +45,7 @@ const DELETE: Record<DeletableEntity, { consequence: string; typed: boolean }> =
     typed: false,
   },
   webhook: { consequence: 'Pending deliveries are dropped.', typed: false },
+  rule: { consequence: 'Messages that have not started are cancelled.', typed: false },
 };
 
 /** "Delete Northwind?" with the entity's consequence. */
