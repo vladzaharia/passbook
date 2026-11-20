@@ -19,7 +19,7 @@ type Action = 'on' | 'off' | 'reset';
 const ACTIONS = [
   { value: 'on', label: 'On' },
   { value: 'off', label: 'Off' },
-  { value: 'reset', label: CHANNEL_COPY.useTemplate },
+  { value: 'reset', label: CHANNEL_COPY.templateDefault },
 ] as const;
 
 const plural = (n: number) => `${n} ${n === 1 ? 'pass' : 'passes'}`;

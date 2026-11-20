@@ -95,15 +95,38 @@ describe('org settings inheritance', () => {
         blockedByPlatform: true,
       },
     });
-    const toggle = await screen.findByRole('switch', { name: 'Third-party NFC tags' });
+    const toggle = await screen.findByRole('switch', { name: 'Linked NFC allowed' });
     expect(toggle).toBeDisabled();
-    expect(screen.getByText(/Off for all organizations\./)).toBeInTheDocument();
+    expect(screen.getByText('Not released yet')).toBeInTheDocument();
   });
 
   it('leaves the NFC tag switch usable when the platform switch is on', async () => {
     await setup({ 'nfc.tags': { value: { enabled: false }, default: { enabled: false } } });
-    expect(await screen.findByRole('switch', { name: 'Third-party NFC tags' })).toBeEnabled();
-    expect(screen.queryByText(/Off for all organizations\./)).toBeNull();
+    expect(await screen.findByRole('switch', { name: 'Linked NFC allowed' })).toBeEnabled();
+    expect(screen.getByText('Off for this organization')).toBeInTheDocument();
+  });
+
+  it('blocks a channel for the organization and turns NFC tags on', async () => {
+    const bodies: unknown[] = [];
+    await setup(
+      {
+        'nfc.tags': { value: { enabled: false }, default: { enabled: false } },
+        'channels.blocked': { value: ['paper'], default: [] },
+      },
+      (put) => bodies.push(put),
+    );
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('switch', { name: 'Apple Wallet allowed' }));
+    await waitFor(() =>
+      expect(bodies[0]).toMatchObject({
+        scope: 'org:o1',
+        values: { 'channels.blocked': ['paper', 'apple'] },
+      }),
+    );
+    await user.click(screen.getByRole('switch', { name: 'Linked NFC allowed' }));
+    await waitFor(() =>
+      expect(bodies[1]).toMatchObject({ values: { 'nfc.tags': { enabled: true } } }),
+    );
   });
 
   it('keeps platform-only settings off the organization page', async () => {

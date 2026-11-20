@@ -18,6 +18,7 @@ import { type ServiceContext, serviceContext } from '../../platform/service-cont
 import { requestActor } from '../audit/http.ts';
 import { confirmReplyTo, replyToStatus, resendReplyTo, syncReplyTo } from '../delivery/reply-to.ts';
 import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
+import { walletProviderEnabled } from '../wallet-providers/provider-policy.ts';
 import { orgIdOfScope } from './registry.ts';
 import { listSettings, settingsImpact, settingsRevision, updateSettings } from './service.ts';
 
@@ -55,6 +56,11 @@ function oidcInfo(c: Context<AppBindings>) {
   };
 }
 
+const releaseInfo = () => ({
+  google: walletProviderEnabled('google'),
+  samsung: walletProviderEnabled('samsung'),
+});
+
 register(
   settingsRoutes,
   'settings',
@@ -73,7 +79,7 @@ register(
     return c.json({
       items,
       ...(await settingsRevision(ctx, scope)),
-      ...(scope === 'platform' ? { oidc: oidcInfo(c) } : {}),
+      ...(scope === 'platform' ? { oidc: oidcInfo(c), released: releaseInfo() } : {}),
     });
   },
 );
@@ -107,7 +113,7 @@ register(
     return c.json({
       items,
       ...(await settingsRevision(ctx, input.scope)),
-      ...(input.scope === 'platform' ? { oidc: oidcInfo(c) } : {}),
+      ...(input.scope === 'platform' ? { oidc: oidcInfo(c), released: releaseInfo() } : {}),
     });
   },
 );

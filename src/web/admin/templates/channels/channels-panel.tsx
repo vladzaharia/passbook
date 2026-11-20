@@ -7,12 +7,7 @@ import {
   type PutTemplateChannelsResponseSchema,
   type TemplateChannelState,
 } from '@/shared/contracts/channels.ts';
-import {
-  CHANNEL_COPY,
-  CHANNEL_LABEL,
-  CHANNEL_STATE_LABEL,
-  channelBlocked,
-} from '@/shared/copy/channels.ts';
+import { CHANNEL_COPY, CHANNEL_LABEL, CHANNEL_STATE_LABEL } from '@/shared/copy/channels.ts';
 import { isApiError } from '../../../lib/errors.ts';
 import {
   Card,
@@ -24,7 +19,9 @@ import {
   SkeletonRows,
   toast,
 } from '../../../ui/index.ts';
+import { ChannelList, ChannelRow } from '../../channels/channel-row.tsx';
 import { usePutTemplateChannels, useTemplateChannels } from './api.ts';
+import { ApplyExisting } from './apply-existing.tsx';
 import { ChannelRuns } from './channel-runs.tsx';
 import { impactLines } from './impact.ts';
 import { ReplaceOption } from './replace-option.tsx';
@@ -134,41 +131,45 @@ export function TemplateChannelsPanel({
     <div className="flex flex-col gap-4">
       <Card>
         <CardBody>
-          <ul className="divide-y divide-border">
+          <ChannelList>
             {CHANNELS.map((c) => {
               const status = data.effective[c];
-              const blocked = !status.on && status.reason !== undefined && !OWN.has(status.reason);
+              const limited = !status.on && status.reason !== undefined && !OWN.has(status.reason);
               return (
-                <li
+                <ChannelRow
                   key={c}
-                  className="flex flex-col items-start gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-fg-strong">{CHANNEL_LABEL[c]}</p>
-                    {blocked && status.reason ? (
-                      <p className="text-xs text-fg-muted">{channelBlocked(status.reason)}</p>
-                    ) : null}
-                  </div>
-                  <SegmentedControl
-                    label={CHANNEL_LABEL[c]}
-                    options={OPTIONS.map((o) => ({
-                      ...o,
-                      disabled: blocked || !canPublish,
-                    }))}
-                    value={value(c)}
-                    onValueChange={(v) =>
-                      setEdits((e) => {
-                        const next = { ...e, [c]: v };
-                        if (v === stored(c)) delete next[c];
-                        return next;
-                      })
-                    }
-                  />
-                </li>
+                  channel={c}
+                  status={status}
+                  level="template"
+                  stack
+                  orgId={orgId}
+                  templateId={templateId}
+                  control={
+                    limited ? undefined : (
+                      <SegmentedControl
+                        label={CHANNEL_LABEL[c]}
+                        options={OPTIONS.map((o) => ({ ...o, disabled: !canPublish }))}
+                        value={value(c)}
+                        onValueChange={(v) =>
+                          setEdits((e) => {
+                            const next = { ...e, [c]: v };
+                            if (v === stored(c)) delete next[c];
+                            return next;
+                          })
+                        }
+                      />
+                    )
+                  }
+                />
               );
             })}
-          </ul>
+          </ChannelList>
         </CardBody>
+        {canPublish ? (
+          <div className="border-t border-border px-4 py-3">
+            <ApplyExisting templateId={templateId} orgId={orgId} disabled={changed.length > 0} />
+          </div>
+        ) : null}
         {canPublish ? (
           <SaveBar
             dirty={changed.length > 0}

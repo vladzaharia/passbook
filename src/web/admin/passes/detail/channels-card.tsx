@@ -7,15 +7,8 @@ import {
   type PassChannelsDto,
 } from '@/shared/contracts/channels.ts';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
-import {
-  CHANNEL_COPY,
-  CHANNEL_LABEL,
-  CHANNEL_SOURCE_LABEL,
-  CHANNEL_STATE_LABEL,
-  channelBlocked,
-} from '@/shared/copy/channels.ts';
+import { CHANNEL_COPY, CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { channelOffConfirm } from '../../../lib/confirms.ts';
-import { formatDay } from '../../../lib/format.ts';
 import {
   Button,
   Callout,
@@ -24,10 +17,10 @@ import {
   CardHeader,
   ErrorState,
   SkeletonRows,
-  StatusPill,
   Switch,
   toast,
 } from '../../../ui/index.ts';
+import { ChannelList, ChannelRow } from '../../channels/channel-row.tsx';
 import { ReplaceOption } from '../../templates/channels/replace-option.tsx';
 import { ReviewDialog } from '../../templates/channels/review-dialog.tsx';
 import { usePutPassChannels } from '../channels-api.ts';
@@ -38,69 +31,6 @@ import { PrintCard } from './print-card.tsx';
 const SWITCHABLE = new Set(['template_off', 'pass_off']);
 const canSwitch = (s: ChannelStatus) =>
   s.on || (s.reason !== undefined && SWITCHABLE.has(s.reason));
-
-function Row({
-  channel,
-  status,
-  overridden,
-  disabled,
-  busy,
-  onSwitch,
-  onReset,
-}: {
-  channel: Channel;
-  status: ChannelStatus;
-  overridden: boolean;
-  disabled: boolean;
-  busy: boolean;
-  onSwitch: (on: boolean) => void;
-  onReset: () => void;
-}) {
-  const label = CHANNEL_LABEL[channel];
-  const blocked = !status.on && !canSwitch(status);
-  const meta =
-    blocked && status.reason
-      ? channelBlocked(status.reason)
-      : [
-          CHANNEL_SOURCE_LABEL[status.source],
-          status.retiredAt ? `Retired ${formatDay(status.retiredAt)}` : null,
-        ]
-          .filter(Boolean)
-          .join(' · ');
-  const state = status.on ? 'on' : 'off';
-  return (
-    <li className="flex min-h-14 items-center gap-3 py-2">
-      <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-2 whitespace-nowrap text-sm font-medium text-fg-strong">
-          {label}
-          <StatusPill status={state} tone={status.on ? 'success' : 'neutral'}>
-            {CHANNEL_STATE_LABEL[state]}
-          </StatusPill>
-        </p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-fg-muted">
-          {meta}
-          {overridden ? (
-            <Button
-              variant="link"
-              size="sm"
-              className="text-xs"
-              disabled={disabled || busy}
-              onClick={onReset}
-            >
-              {CHANNEL_COPY.useTemplate}
-            </Button>
-          ) : null}
-        </p>
-      </div>
-      <Switch
-        aria-label={label}
-        checked={status.on}
-        disabled={disabled || busy || blocked}
-        onCheckedChange={onSwitch}
-      />
-    </li>
-  );
-}
 
 /**
  * Where a pass's copies can be offered: state, deciding level and retired date per channel, a
@@ -146,20 +76,44 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
             {nothingOn(data.effective) ? (
               <Callout tone="warning">{CHANNEL_COPY.nothingOn}</Callout>
             ) : null}
-            <ul className="divide-y divide-border">
-              {CHANNELS.map((channel) => (
-                <Row
-                  key={channel}
-                  channel={channel}
-                  status={data.effective[channel]}
-                  overridden={data.overrides[channel] !== undefined}
-                  disabled={disabled}
-                  busy={put.isPending}
-                  onSwitch={(on) => toggle(channel, on)}
-                  onReset={() => void save({ [channel]: null })}
-                />
-              ))}
-            </ul>
+            <ChannelList>
+              {CHANNELS.map((channel) => {
+                const status = data.effective[channel];
+                const overridden = data.overrides[channel] !== undefined;
+                const busy = disabled || put.isPending;
+                return (
+                  <ChannelRow
+                    key={channel}
+                    channel={channel}
+                    status={status}
+                    level="pass"
+                    orgId={pass.orgId}
+                    templateId={pass.templateId}
+                    extra={
+                      overridden ? (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="text-xs"
+                          disabled={busy}
+                          onClick={() => void save({ [channel]: null })}
+                        >
+                          {CHANNEL_COPY.templateDefault}
+                        </Button>
+                      ) : null
+                    }
+                    control={
+                      <Switch
+                        aria-label={CHANNEL_LABEL[channel]}
+                        checked={status.on}
+                        disabled={busy || !canSwitch(status)}
+                        onCheckedChange={(on) => toggle(channel, on)}
+                      />
+                    }
+                  />
+                );
+              })}
+            </ChannelList>
             <PrintCard pass={pass} readOnly={readOnly} bare />
           </div>
         )}

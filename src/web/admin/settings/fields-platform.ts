@@ -180,14 +180,6 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     unit: 'days',
     schema: P['join.unusedDays'],
   },
-  {
-    key: 'nfc.enabled',
-    group: 'NFC',
-    label: 'NFC',
-    kind: 'boolean',
-    help: 'Off until Apple approves the pass type. Off turns NFC tags off for every organization.',
-    schema: P['nfc.enabled'],
-  },
   ...RETENTION_CLASSES.map(
     (cls): SettingField => ({
       key: DATA_CLASSES[cls].maxKey,

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Card, CardBody, CardHeader, ErrorState, KeyValue, SkeletonRows } from '@/web/ui/index.ts';
+import { OrgChannelsCard } from '../channels/settings-channels.tsx';
 import { PassEmailPreview } from '../orgs/pass-email-preview.tsx';
 import { ORG_FIELDS } from './fields-org.ts';
 import { useSettings } from './queries.ts';
@@ -14,7 +15,6 @@ const EMAIL_LIMITS = inGroup('Email limits');
 const SUPPORT = inGroup('Support');
 const PRIVACY = inGroup('Privacy');
 const RETENTION = inGroup('Retention');
-const NFC_TAGS = inGroup('NFC tags');
 
 function FormCard({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -104,9 +104,7 @@ export function OrgSettingsSections({
       <FormCard title="Data retention">
         <SettingsForm scope={scope} fields={RETENTION} />
       </FormCard>
-      <FormCard title="NFC tags">
-        <SettingsForm scope={scope} fields={NFC_TAGS} />
-      </FormCard>
+      <OrgChannelsCard orgId={orgId} />
     </>
   );
 }
