@@ -128,8 +128,7 @@ function SessionStaff({
       <div>
         <h3 className="text-sm font-semibold text-fg-strong">Staff access</h3>
         <p className="mt-1 text-xs text-fg-muted">
-          Staff and PINs are shared across the organization. Admin-as-scanner sessions use the
-          signed-in administrator’s Manager permissions.
+          Admin-as-scanner sessions use the signed-in administrator’s Manager permissions.
         </p>
       </div>
       <SwitchRow

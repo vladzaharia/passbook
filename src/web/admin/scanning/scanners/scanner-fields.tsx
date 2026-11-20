@@ -84,9 +84,6 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
           <section className="grid min-w-0 gap-4 border-t border-border pt-6">
             <div>
               <h3 className="text-sm font-semibold text-fg-strong">Accepted passes</h3>
-              <p className="mt-1 text-xs text-fg-muted">
-                Choose which passes this scanner can check in.
-              </p>
             </div>
             <SegmentedControl
               label="Accepts"
