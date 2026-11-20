@@ -113,7 +113,7 @@ describe('api_keys_v2_immutable and REPLACE', () => {
     const id = await insert();
     await run(
       h.env.DB,
-      "UPDATE api_keys SET rate_tier = 'bulk', last_used_ip_prefix = '203.0.113.0/24' WHERE id = ?",
+      "UPDATE api_keys SET rate_tier = 'bulk', last_ip_prefix = '203.0.113.0/24' WHERE id = ?",
       [id],
     );
     await expect(

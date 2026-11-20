@@ -1,5 +1,5 @@
-import { keyLive } from '../../platform/api-key-sql.ts';
 import { first } from '../../platform/db.ts';
+import { keyLive } from '../../platform/repo-api-key-sql.ts';
 
 /** The key still acts as this terminal: not revoked or expired, lists `scans:write`, bound to it, in its org and mode. */
 export async function apiKeyActs(

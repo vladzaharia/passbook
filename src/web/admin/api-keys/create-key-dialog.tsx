@@ -12,11 +12,11 @@ import {
   FormField,
   Input,
   Select,
-  Textarea,
   useFormErrors,
 } from '@/web/ui/index.ts';
 import { ROLE_LABELS, ROLES } from '../orgs/org-roles.ts';
 import { KeyDisclosure } from './key-disclosure.tsx';
+import { KindFields, SHORT_EXPIRY } from './key-kind-fields.tsx';
 import { type ApiKey, useCreateKey } from './queries.ts';
 import { type SCOPES, ScopeRows, TerminalRows } from './scope-rows.tsx';
 
@@ -29,17 +29,6 @@ const EXPIRY = [
   { value: '365', label: '1 year' },
   { value: 'never', label: 'Never' },
 ];
-/** A personal or platform key lives at most 90 days. */
-const SHORT_EXPIRY = EXPIRY.slice(0, 2);
-const KINDS = [
-  { value: 'service', label: 'Service: for an integration' },
-  { value: 'personal', label: 'Personal: acts as you' },
-];
-const ACCESS = [
-  { value: 'scopes', label: 'Pick scopes' },
-  ...ROLES.map((role) => ({ value: role, label: `Role: ${ROLE_LABELS[role]}` })),
-];
-
 const MODES = [
   { value: 'live', label: 'Live' },
   { value: 'test', label: 'Test' },
@@ -230,42 +219,19 @@ export function CreateKeyDialog({
               )}
             </FormField>
           </div>
-          {orgId === null ? null : (
-            <FormField label="Type" error={errors.kind}>
-              {(p) => (
-                <Select
-                  {...p}
-                  value={kind}
-                  onValueChange={(next) => setKind(next === 'personal' ? 'personal' : 'service')}
-                  options={KINDS}
-                />
-              )}
-            </FormField>
-          )}
-          {orgId === null ? null : (
-            <FormField label="Access" error={errors.roles}>
-              {(p) => <Select {...p} value={access} onValueChange={setAccess} options={ACCESS} />}
-            </FormField>
-          )}
-          <FormField
-            label={orgId === null ? 'Allowed IPs' : 'Allowed IPs (optional)'}
-            required={orgId === null}
-            error={errors.ipAllow}
-          >
-            {(p) => (
-              <Textarea
-                {...p}
-                rows={2}
-                autoComplete="off"
-                placeholder="203.0.113.0/24"
-                value={ips}
-                onChange={(e) => {
-                  setIps(e.target.value);
-                  setServer({});
-                }}
-              />
-            )}
-          </FormField>
+          <KindFields
+            orgId={orgId}
+            kind={kind}
+            onKind={setKind}
+            access={access}
+            onAccess={setAccess}
+            ips={ips}
+            onIps={(next) => {
+              setIps(next);
+              setServer({});
+            }}
+            errors={errors}
+          />
           {orgId === null ? (
             <FormField label="Mode" error={errors.mode}>
               {(p) => (

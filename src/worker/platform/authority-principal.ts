@@ -1,5 +1,5 @@
-import { keyHoldsScope, keyLive, withParams } from './api-key-sql.ts';
 import type { SqlValue } from './db.ts';
+import { keyHoldsScope, keyLive, withParams } from './repo-api-key-sql.ts';
 
 export type Mode = 'live' | 'test';
 export type GrantScope = 'org' | 'org_mode' | 'platform';

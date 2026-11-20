@@ -1,8 +1,8 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { keyHoldsScope, keyLive } from '../../platform/api-key-sql.ts';
 import { type Check, rawCheck } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
+import { keyHoldsScope, keyLive } from '../../platform/repo-api-key-sql.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import type { TenantPassWrite } from './http.ts';
 import { loadUserAccessRevision } from './repo-access-revision.ts';

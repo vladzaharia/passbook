@@ -198,7 +198,7 @@ describe('API key tenant authorization', () => {
       (await create(session.headers, { ...keyBody(org.id), scopes: ['connections:write'] })).status,
     ).toBe(201);
     // The grant refuses a platform key insert whose admin session is not live, with nothing written.
-    const { createKey } = await import('./repo.ts');
+    const { createKey } = await import('./repo-create.ts');
     const ctx = createServiceContext(h.env, { clock: h.clock });
     const row = {
       id: 'k-sql',

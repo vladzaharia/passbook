@@ -16,7 +16,7 @@ ALTER TABLE api_keys ADD COLUMN restricted INTEGER NOT NULL DEFAULT 0 CHECK (res
 ALTER TABLE api_keys ADD COLUMN ip_allow TEXT CHECK (ip_allow IS NULL OR (json_valid(ip_allow) AND json_type(ip_allow) = 'array'));
 -- Volatile, set by a platform admin. NULL follows API_RATE_TIER_DEFAULT, else standard.
 ALTER TABLE api_keys ADD COLUMN rate_tier TEXT CHECK (rate_tier IS NULL OR rate_tier IN ('standard', 'high', 'bulk'));
-ALTER TABLE api_keys ADD COLUMN last_used_ip_prefix TEXT;
+ALTER TABLE api_keys ADD COLUMN last_ip_prefix TEXT;
 CREATE INDEX api_keys_membership ON api_keys (membership_id) WHERE membership_id IS NOT NULL;
 
 CREATE TRIGGER api_keys_v2_immutable BEFORE UPDATE ON api_keys

@@ -5,7 +5,8 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import type { ApiKeyAuthority } from './access.ts';
-import { type ApiKeyRow, createKey, revokeKey } from './repo.ts';
+import { type ApiKeyRow, revokeKey } from './repo.ts';
+import { createKey } from './repo-create.ts';
 import { f, h, member, org, other, setup, teardown } from './test-kit.ts';
 
 beforeEach(setup);

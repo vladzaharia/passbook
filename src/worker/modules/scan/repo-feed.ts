@@ -1,7 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { keyHoldsScope, keyLive } from '../../platform/api-key-sql.ts';
 import type { ApiKeyAuth } from '../../platform/auth.ts';
 import { exactStmt, first } from '../../platform/db.ts';
+import { keyHoldsScope, keyLive } from '../../platform/repo-api-key-sql.ts';
 import { scanLedgerScopeSql, where } from './repo-feed-scope.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
 import { type ScanReadAuthority, scanAuthorizedStmt, scanRead } from './repo-read-authority.ts';

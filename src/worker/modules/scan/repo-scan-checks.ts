@@ -1,8 +1,8 @@
-import { keyLive } from '../../platform/api-key-sql.ts';
 import { type Check, rawCheck, tenantMatch } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { type GrantPart, readPart } from '../../platform/authority-include.ts';
+import { keyLive } from '../../platform/repo-api-key-sql.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
 import { channelEpochSql } from './repo-lookup.ts';

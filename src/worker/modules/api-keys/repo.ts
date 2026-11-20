@@ -1,12 +1,3 @@
-import type { Mode } from '../../../shared/contracts/common.ts';
-import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
-import type { ApiKeyKind } from '../../platform/api-key-token.ts';
-import {
-  ROLE_PRESETS,
-  rolesCapableOf,
-  scopeCapability,
-  type TenantScope,
-} from '../../platform/api-scopes.ts';
 import { grant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
@@ -16,170 +7,15 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import { userLabelSql } from '../orgs/repo-user-label.ts';
-import {
-  capabilityChecks,
-  membershipCapability,
-  tenantPrincipal,
-} from '../passes/repo-authority.ts';
-import { type ApiKeyAuthority, delegableScopes } from './access.ts';
+import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
+import type { ApiKeyAuthority } from './access.ts';
+import type { ApiKeyRow } from './repo-row.ts';
 
 type Db = D1Database;
 
-export interface ApiKeyRow {
-  id: string;
-  org_id: string | null;
-  name: string;
-  prefix: string;
-  key_hash: string;
-  scopes: string;
-  mode: Mode;
-  created_by: string | null;
-  created_at: number;
-  last_used_at: number | null;
-  expires_at: number | null;
-  revoked_at: number | null;
-  kind: ApiKeyKind;
-  roles: string;
-  membership_id: string | null;
-  retire_at: number | null;
-  restricted: number;
-  ip_allow: string | null;
-  rate_tier: string | null;
-  secret_label: string;
-}
+export type { ApiKeyRow } from './repo-row.ts';
 
-/** What a key is written with besides its own row. */
-export interface KeyExtras {
-  terminalIds: readonly string[];
-  templateIds: readonly string[];
-  passStyles: readonly string[];
-}
-
-const PLATFORM_KEY_TENANT = ['org_id', 'mode'];
 const NO_ORG = { org_id: null };
-
-/**
- * Mints a key under a grant: `org_mode.api_key.create` for an org-bound key (the creator's live membership
- * and session, `integrations:manage`, in the request's mode) or `platform.api_key.create` for a null-org key (a live admin
- * session). A key cannot hold scopes beyond its creator's roles: `delegableScopes` is derived from the
- * membership's roles, which are immutable, and re-checked here so the repo stands alone.
- */
-export async function createKey(
-  ctx: ServiceContext,
-  key: ApiKeyRow,
-  authority: ApiKeyAuthority,
-  audit: AuditEntry,
-  extras: Partial<KeyExtras> = {},
-): Promise<void> {
-  const { terminalIds = [], templateIds = [], passStyles = [] } = extras;
-  // The grant supplies org_id and mode of a tenant key: the creator's org and request mode.
-  const columns = [
-    'name',
-    'prefix',
-    'key_hash',
-    'scopes',
-    'created_by',
-    'created_at',
-    'expires_at',
-    'kind',
-    'roles',
-    'membership_id',
-    'restricted',
-    'ip_allow',
-    'secret_label',
-  ];
-  const values = [
-    key.name,
-    key.prefix,
-    key.key_hash,
-    key.scopes,
-    key.created_by,
-    key.created_at,
-    key.expires_at,
-    key.kind,
-    key.roles,
-    key.membership_id,
-    key.restricted,
-    key.ip_allow,
-    key.secret_label,
-  ];
-  if (authority.kind === 'platform') {
-    if (key.org_id !== null || key.kind !== 'platform' || terminalIds.length > 0)
-      throw new ForbiddenError();
-    const g = grant(ctx, {
-      purpose: 'platform.api_key.create',
-      principal: { kind: 'platform', userId: authority.userId, sessionIdHash: authority.sessionId },
-      target: key.id,
-    });
-    // A platform grant injects no tenant: a platform key names its own (null) org and mode.
-    const platformColumns = ['id', ...PLATFORM_KEY_TENANT, ...columns];
-    const platformValues = [key.id, null, key.mode, ...values];
-    g.insertSelect('api_keys', platformColumns, platformValues);
-    g.add(grantedAudit(g, ctx, audit));
-    await g.commit();
-    return;
-  }
-  const explicit = JSON.parse(key.scopes) as TenantScope[];
-  const roles = JSON.parse(key.roles) as OrgRole[];
-  const delegable: string[] = delegableScopes(authority);
-  const presets = roles.flatMap((role) => ROLE_PRESETS[role]);
-  const personal = key.kind === 'personal';
-  // A role preset is held in full or not at all: each of its scopes must be within the creator's roles.
-  const beyond =
-    explicit.some((scope) => !delegable.includes(scope)) ||
-    presets.some((scope) => !rolesCapableOf(scope).some((role) => authority.roles.includes(role)));
-  if (
-    authority.capability !== (personal ? 'org:read' : 'integrations:manage') ||
-    key.org_id !== authority.orgId ||
-    (personal && key.membership_id !== authority.membershipId) ||
-    beyond
-  )
-    throw new ForbiddenError(
-      'A key cannot hold scopes beyond your own access.',
-      'API_KEY_SCOPE_EXCEEDS_CREATOR',
-    );
-  if (key.mode !== authority.mode) throw new ForbiddenError();
-  // The creator's own stored roles must grant each capability, not the snapshot's `roles`.
-  const capabilities = new Set([...explicit, ...presets].map((scope) => scopeCapability[scope]));
-  const g = grant(ctx, {
-    purpose: 'org_mode.api_key.create',
-    principal: tenantPrincipal(authority),
-    target: key.id,
-    checks: [
-      ...capabilityChecks(authority),
-      ...[...capabilities].map((capability) =>
-        membershipCapability(authority.membershipId, capability),
-      ),
-      // A terminal of the grant's org and mode, still in service; the binding is written with the key.
-      ...terminalIds.map((id) =>
-        exactlyOne('scanners', { id, kind: 'terminal', revoked_at: null }),
-      ),
-      // A restricted key names templates of its own org.
-      ...templateIds.map((id) => exactlyOne('templates', { id })),
-    ],
-    codes: {
-      lineage: terminalIds.length ? 'API_KEY_TERMINAL_UNKNOWN' : 'API_KEY_TEMPLATE_UNKNOWN',
-    },
-  });
-  g.insertSelect('api_keys', ['id', ...columns], [key.id, ...values]);
-  for (const scannerId of terminalIds)
-    g.insertJoined('api_key_terminals', {
-      parents: { key_id: key.id, scanner_id: scannerId },
-      columns: [],
-      values: [],
-    });
-  for (const [kind, value] of [
-    ...templateIds.map((id) => ['template', id] as const),
-    ...passStyles.map((style) => ['pass_style', style] as const),
-  ])
-    g.insertJoined('api_key_resources', {
-      parents: { key_id: key.id },
-      columns: ['kind', 'value'],
-      values: [kind, value],
-    });
-  g.add(grantedAudit(g, ctx, audit));
-  await g.commit();
-}
 
 /**
  * Revokes a key under `org.api_key.revoke` / `platform.api_key.revoke`. Idempotent: the audit row is
@@ -328,7 +164,7 @@ export async function touchKey(
 ): Promise<void> {
   await run(
     db,
-    `UPDATE api_keys SET last_used_at = ?, last_used_ip_prefix = ?
+    `UPDATE api_keys SET last_used_at = ?, last_ip_prefix = ?
      WHERE id = ? AND (last_used_at IS NULL OR last_used_at < ?)`,
     [now, ipPrefix, id, now - everyMs],
   );

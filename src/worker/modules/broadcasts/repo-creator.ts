@@ -1,6 +1,6 @@
-import { keyLive, withParams } from '../../platform/api-key-sql.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { first } from '../../platform/db.ts';
+import { keyLive, withParams } from '../../platform/repo-api-key-sql.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import type { BroadcastRow } from './repo.ts';
 

@@ -75,7 +75,7 @@ describe('IP allowlist', () => {
     expect(await store.resolve(k.secret, { ip: '203.0.113.9' })).toBeNull();
     expect(await store.resolve(k.secret, { ip: IN })).not.toBeNull();
     expect(
-      await first(h.env.DB, 'SELECT last_used_ip_prefix AS p FROM api_keys WHERE id = ?', [k.id]),
+      await first(h.env.DB, 'SELECT last_ip_prefix AS p FROM api_keys WHERE id = ?', [k.id]),
     ).toEqual({ p: '198.51.100.0/24' });
   });
 
