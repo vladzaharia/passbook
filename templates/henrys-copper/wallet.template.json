@@ -7,6 +7,10 @@
     "google": {},
     "samsung": {}
   },
+  "channels": {
+    "paper": "off",
+    "nfc": "on"
+  },
   "org": {
     "slug": "henrys",
     "name": "Henry’s Gymnasium"

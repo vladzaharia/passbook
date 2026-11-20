@@ -102,6 +102,7 @@ export function PlatformChannelsCards() {
   const released = query.data?.released;
   const paperOn = value('print.enabled');
   const tapOn = value('nfc.enabled');
+  const tagsOn = value('nfc.tagsEnabled');
   if (query.isPending) return <SkeletonRows rows={4} label="Loading channels" />;
   if (query.isError)
     return <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />;
@@ -121,6 +122,19 @@ export function PlatformChannelsCards() {
                   checked={paperOn}
                   disabled={pending}
                   onCheckedChange={(on) => save({ 'print.enabled': on })}
+                />
+              }
+            />
+            <ChannelRow
+              channel="nfc"
+              status={tagsOn ? ON : OFF('tags_off')}
+              level="platform"
+              control={
+                <Switch
+                  aria-label={CHANNEL_COPY.tagsPlatform}
+                  checked={tagsOn}
+                  disabled={pending}
+                  onCheckedChange={(on) => save({ 'nfc.tagsEnabled': on })}
                 />
               }
             />

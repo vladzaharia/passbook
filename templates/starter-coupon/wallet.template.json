@@ -7,6 +7,10 @@
     "google": {},
     "samsung": {}
   },
+  "channels": {
+    "paper": "on",
+    "nfc": "off"
+  },
   "blueprint": true,
   "inputs": {
     "type": "object",

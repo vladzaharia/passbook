@@ -66,9 +66,14 @@ export const otherModeTagStmt = (db: D1Database, orgId: string, mode: Mode, ref:
     [orgId, mode, ref],
   );
 
-/** The org switch `nfc.tags`; absent means off. */
+/** The org switch `nfc.tags` and the platform switch `nfc.tagsEnabled`; an absent row means on. */
 export const tagsSwitchStmt = (db: D1Database, orgId: string) =>
-  stmt(db, "SELECT value FROM settings WHERE scope = ? AND key = 'nfc.tags'", [`org:${orgId}`]);
+  stmt(
+    db,
+    `SELECT key, value FROM settings
+     WHERE (scope = ? AND key = 'nfc.tags') OR (scope = 'platform' AND key = 'nfc.tagsEnabled')`,
+    [`org:${orgId}`],
+  );
 
 /** Full candidate rows for the tag's passes: active before voided or removed, then oldest. */
 export const tagCandidatesStmt = (db: D1Database, orgId: string, mode: Mode, ref: string) =>
@@ -143,13 +148,17 @@ export function tagStateOf(result: D1Result | undefined): TagState | null {
 }
 
 export function tagsOn(result: D1Result | undefined): boolean {
-  const value = (result?.results?.[0] as { value?: unknown } | undefined)?.value;
-  if (typeof value !== 'string') return false;
-  try {
-    return (JSON.parse(value) as { enabled?: unknown }).enabled === true;
-  } catch {
-    return false;
+  for (const row of (result?.results ?? []) as { key: string; value: unknown }[]) {
+    if (typeof row.value !== 'string') return false;
+    try {
+      const v = JSON.parse(row.value) as unknown;
+      const on = row.key === 'nfc.tags' ? (v as { enabled?: unknown } | null)?.enabled : v;
+      if (on !== true) return false;
+    } catch {
+      return false;
+    }
   }
+  return true;
 }
 
 export const passIdsOf = (result: D1Result | undefined): Set<string> =>
