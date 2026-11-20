@@ -78,6 +78,7 @@ export const SCAN_REFUSED_REASONS = [
   'tag_lost',
   'tag_not_allowed',
   'tag_invalid',
+  'tag_expired',
   'channel_off',
   'print_replaced',
   'print_voided',

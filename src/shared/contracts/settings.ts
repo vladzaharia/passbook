@@ -3,7 +3,7 @@ import { strictEmail } from '../email.ts';
 import { checkFromName } from '../email-from-name.ts';
 import { DATA_CLASSES, type RetentionClass } from '../privacy/data-classes.ts';
 import { CHANNELS, ChannelSchema } from './channels.ts';
-import { PlainLineSchema } from './common.ts';
+import { IdSchema, PlainLineSchema } from './common.ts';
 
 export {
   SettingEntrySchema,
@@ -136,7 +136,13 @@ export const OrgSettingsSchema = z.object({
   /** Opt-in: the buddy sits on the pass email's card, as in the sign-in email. */
   'email.buddy': z.boolean().default(false),
   /** Third-party NFC tags. Off until an admin turns it on. */
-  'nfc.tags': z.object({ enabled: z.boolean().default(false) }).default({ enabled: false }),
+  'nfc.tags': z
+    .object({
+      enabled: z.boolean().default(false),
+      /** The tag type a new tag gets when several fit; null or absent: Standard. */
+      defaultType: IdSchema.nullable().optional(),
+    })
+    .default({ enabled: false }),
   /** Channels this org turns off for every template: copies keep working, nothing new is offered. */
   'channels.blocked': z.array(ChannelSchema).max(CHANNELS.length).default([]),
 });
