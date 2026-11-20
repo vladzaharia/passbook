@@ -21,13 +21,13 @@ import { makeProviderTestTemplate } from './offers-test-fixtures.ts';
 import { approveProjectionCandidate, createProjectionCandidate } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { getProjectionCandidate } from './repo-projection-store.ts';
+import { refreshExpiringSamsungEvidence } from './repo-samsung-evidence-refresh.ts';
 import {
   beginSamsungProjectionProbe,
   completeSamsungProjectionProbe,
   failSamsungProjectionProbe,
   hasSamsungProjectionEvidence,
 } from './repo-samsung-verification.ts';
-import { refreshExpiringSamsungEvidence } from './samsung-evidence-refresh.ts';
 import {
   ensureSamsungProjectionEvidence,
   refreshSamsungProjectionEvidence,

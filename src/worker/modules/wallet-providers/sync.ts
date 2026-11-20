@@ -16,9 +16,9 @@ import {
 import { reconcileWalletInstance } from './lifecycle.ts';
 import { walletProviderEnabled, walletProviderReleaseReason } from './provider-policy.ts';
 import { purgeExpiredGoogleCallbackReplays } from './repo-google-callback-replay.ts';
+import { refreshExpiringSamsungEvidence } from './repo-samsung-evidence-refresh.ts';
 import { ackCleanWalletPlaceholder, deferWalletSyncOperation } from './repo-sync-queue.ts';
 import { walletSyncHasWork } from './repo-sync-work.ts';
-import { refreshExpiringSamsungEvidence } from './samsung-evidence-refresh.ts';
 import { runWalletProviderOperation } from './sync-operation.ts';
 import { finishWalletProviderRetirement } from './sync-operation-retirement.ts';
 
