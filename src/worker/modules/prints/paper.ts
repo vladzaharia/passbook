@@ -1,8 +1,9 @@
 import { type PaperDesign, resolvePaper } from '../../../passkit/template/paper.ts';
 import { type PaperContent, paperContent } from '../../../passkit/template/paper-content.ts';
-import type { PassJson, TemplateManifest } from '../../../passkit/types.ts';
+import type { AssetEntry, PassJson, TemplateManifest } from '../../../passkit/types.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { resolveTemplate } from '../passes/builder.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { passJsonAtVersion } from '../public/repo.ts';
@@ -20,18 +21,34 @@ export async function assertHolderMayPrint(ctx: ServiceContext, pass: Pass): Pro
     throw new ForbiddenError('Printing is available from the organizer.', 'PRINT_STAFF_ONLY');
 }
 
+/** Image files the ticket draws, by file name: the template's logo and the art slot its content names. */
+export interface PaperFiles {
+  logo?: string;
+  art?: string;
+}
+
+/** The art slots a paper band can use; `strip` is the coupon's, the others the pass's own. */
+const SLOT_NAMES = ['logo', 'artwork', 'background', 'thumbnail', 'strip'];
+
+function bestFile(assets: AssetEntry[], slot: string): string | undefined {
+  const own = assets.filter((a) => (a.slot as string) === slot && !a.locale && !a.stamps);
+  return own.sort((a, b) => b.scale - a.scale)[0]?.name;
+}
+
 /** The ticket's words for this pass, from its stored pass.json at the current version. */
 export async function paperTicket(
   ctx: ServiceContext,
   pass: Pass,
-): Promise<{ design: PaperDesign; content: PaperContent } | null> {
-  const [manifest, raw] = await Promise.all([
+): Promise<{ design: PaperDesign; content: PaperContent; files: PaperFiles } | null> {
+  const [manifest, raw, template] = await Promise.all([
     repo.manifestOf(ctx.env.DB, pass.templateId, pass.templateVersion),
     passJsonAtVersion(ctx.env.DB, pass.id, pass.version),
+    resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion),
   ]);
   if (!raw) return null;
   const passJson: PassJson = parseStoredPassJson(raw);
   const design = resolvePaper(manifest?.paper);
+  const images = SLOT_NAMES.filter((slot) => bestFile(template.assets, slot));
   const content = paperContent({
     passJson,
     manifest: (manifest ?? {}) as Pick<
@@ -41,6 +58,9 @@ export async function paperTicket(
     personalization: pass.personalization,
     scanCode: pass.scanCode,
     design,
+    images,
   });
-  return { design, content };
+  const logo = bestFile(template.assets, 'logo');
+  const art = content.art ? bestFile(template.assets, content.art) : undefined;
+  return { design, content, files: { ...(logo ? { logo } : {}), ...(art ? { art } : {}) } };
 }

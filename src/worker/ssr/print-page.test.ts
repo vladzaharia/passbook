@@ -4,7 +4,7 @@ import { paperContent } from '../../passkit/template/paper-content.ts';
 import { EVENT_MANIFEST, EVENT_PASS } from '../../passkit/template/paper-fixtures.ts';
 import { pageRule } from '../../web/paper/css.ts';
 import type { PrintPageModel } from '../modules/prints/page.ts';
-import { renderPrintPage } from './print-page.tsx';
+import { PRINT_HEADERS, renderPrintPage } from './print-page.tsx';
 
 const CODE = 'PABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const design = (over: Partial<PaperDesign> = {}): PaperDesign => ({ ...DERIVED_PAPER, ...over });
@@ -25,6 +25,8 @@ const ready = (d: PaperDesign): PrintPageModel => ({
   content: content(d),
   code: CODE,
   generation: 1,
+  printedAt: Date.UTC(2026, 10, 19, 1, 2),
+  files: { logo: 'logo@3x.png', art: 'artwork@3x.png' },
 });
 
 describe('print page document', () => {
@@ -75,5 +77,79 @@ describe('print page document', () => {
     expect(scripts.join('')).not.toContain(CODE);
     expect(html).toContain('name="referrer" content="no-referrer"');
     expect(html).toContain('nonce="n0"');
+  });
+});
+
+describe('print page for a holder', () => {
+  const props = {
+    audience: 'holder',
+    nonce: 'n0',
+    backHref: '/p/t',
+    assetBase: '/p/t/assets/',
+  } as const;
+  const page = (model: PrintPageModel) => renderPrintPage({ ...props, model });
+
+  it('carries the no-store, no-referrer and noindex headers', () => {
+    expect(PRINT_HEADERS['cache-control']).toBe('private, no-store');
+    expect(PRINT_HEADERS['referrer-policy']).toBe('no-referrer');
+    expect(PRINT_HEADERS['x-robots-tag']).toBe('noindex, nofollow');
+    expect(PRINT_HEADERS['x-content-type-options']).toBe('nosniff');
+    expect(page(ready(design()))).toContain('content="noindex, nofollow, noarchive"');
+  });
+
+  it('wears the org bar, not the PassBook band, and says PassBook once on the sheet', () => {
+    const html = page(ready(design()));
+    expect(html).toContain('Northwind Hall</span></div></header>');
+    expect(html).not.toContain('class="band"');
+    expect(html.match(/PassBook/g)).toHaveLength(1);
+    expect(html).toContain('Issued with <b>PassBook</b>');
+  });
+
+  it('puts the lede and the actions, Print first, before the sheet', () => {
+    const html = page(ready(design()));
+    const at = (needle: string) => html.indexOf(needle);
+    expect(html).toContain('Print at actual size (100 %) on white paper.');
+    expect(at('Print at actual size')).toBeLessThan(at('class="pp-stage"'));
+    expect(at('data-act="print"')).toBeLessThan(at('data-act="reprint"'));
+    expect(at('data-act="print"')).toBeLessThan(at('class="pp-fit"'));
+    expect(html.match(/<button/g)?.[0]).toBeDefined();
+    expect(html.indexOf('<button')).toBe(
+      html.indexOf('data-act="print"') - '<button class="btn" type="button" '.length,
+    );
+  });
+
+  it('draws the print number, its time and the template images from the asset base', () => {
+    const html = page(ready(design()));
+    expect(html).toContain('Print 1 · Issued 18 Nov 2026, 8:02 pm GMT-5');
+    expect(html).toContain('src="/p/t/assets/logo%403x.png"');
+    expect(html).not.toContain('assets/artwork');
+  });
+
+  it('adds the test ribbon and the watermark on a test pass', () => {
+    const html = page({ ...ready(design()), mode: 'test' });
+    expect(html).toContain('pp-ribbon');
+    expect(html).toContain('TEST · NOT VALID');
+  });
+
+  it('shows the buddy only in the empty and unavailable states', () => {
+    expect(page(ready(design()))).not.toContain('wl-buddy');
+    const empty = page({ state: 'empty', orgName: 'Northwind Hall', mode: 'live' });
+    expect(empty).toContain('data-scene="inspect"');
+    const off = page({ state: 'unavailable', orgName: 'Northwind Hall', mode: 'live' });
+    expect(off).toContain('data-scene="tug"');
+    expect(off).toContain('aria-hidden="true"');
+  });
+
+  it('hides everything but the sheet when printing', () => {
+    const html = page(ready(design()));
+    expect(html).toMatch(/\.pp-noprint,\.pp-head,\.pp-actions[^{]*\{display:none!important\}/);
+  });
+});
+
+describe('print page for staff', () => {
+  it('keeps the hosted PassBook shell and offers print alone', () => {
+    const html = renderPrintPage({ audience: 'staff', nonce: 'n0', model: ready(design()) });
+    expect(html).toContain('class="band"');
+    expect(html).toContain('Print ticket');
   });
 });

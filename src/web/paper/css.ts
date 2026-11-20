@@ -16,6 +16,7 @@ const BASE_CSS = `.pp-fit{container-type:inline-size;width:100%;aspect-ratio:var
 .pp-fit+.pp-fit{margin-top:12px}
 .pp-sheet{--mm:calc(100cqw / var(--w));--ink:#000;--text:#14171F;--muted:#4A5163;--rule:#9CA3B1;--hair:#C9CED8;--wash:#F1F3F7;position:relative;display:block;box-sizing:border-box;width:100%;height:100%;overflow:hidden;background:#fff;color:var(--text);font-family:var(--pk-font-sans,Rubik,system-ui,sans-serif);font-size:${pt(9)};line-height:1.3;font-variant-numeric:tabular-nums;border-radius:${mm(1.5)};box-shadow:0 0 0 1px rgb(0 0 0/.14),0 8px 24px rgb(0 0 0/.18)}
 .pp-sheet *{box-sizing:border-box;margin:0;padding:0}
+.pp-sheet h1{color:inherit}
 .pp-mono{font-family:var(--pk-font-mono,"JetBrains Mono",ui-monospace,Menlo,monospace)}
 .pp-lbl{font-size:${pt(6.6)};font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .pp-qr,.pp-bar{display:block}

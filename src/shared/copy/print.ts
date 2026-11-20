@@ -2,7 +2,7 @@
 export const PRINT_COPY = {
   title: 'Print your ticket',
   staffTitle: 'Print ticket',
-  lede: 'Print at actual size on white paper.',
+  lede: 'Print at actual size (100 %) on white paper.',
   print: 'Print',
   download: 'Download PDF',
   make: 'Make my ticket',
