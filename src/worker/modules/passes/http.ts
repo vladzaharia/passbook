@@ -1,23 +1,21 @@
 import type { Context, MiddlewareHandler } from 'hono';
-import { createMiddleware } from 'hono/factory';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { OrgCapability, OrgRole } from '../../../shared/contracts/org-membership.ts';
+import { scopeExercises } from '../../platform/api-scopes.ts';
 import {
   type Amr,
   type ApiScope,
   type AuthContext,
   assertOrgAccess,
-  modeFromRequest,
   modeOf,
   type Role,
-  requireApiKeyOrAdmin,
-  requireSession,
-  type ScopeSelector,
+  requireCaller,
+  type ScopeRule,
+  verifiedScopeOf,
 } from '../../platform/auth.ts';
 import { type AppBindings, actorOf } from '../../platform/context.ts';
-import { reportDenied } from '../../platform/denied.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
-import { declareKeyAccess } from '../../platform/openapi-security.ts';
+import { declareKeyAccess, keyAccessOf } from '../../platform/openapi-security.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { requireOrgCapability } from '../orgs/access.ts';
 import { loadUserAccessRevision } from './repo-access-revision.ts';
@@ -29,14 +27,9 @@ export type C = Context<AppBindings>;
 
 export const svc = serviceContext;
 
-type Scopes = { read: ApiScope; write: ApiScope };
-
-// Only the endpoint guard can tag the key scope that was checked for this request.
-const tenantKeyScopes = new WeakMap<AuthContext, ApiScope>();
-
-/** The exact operation scope already checked by the tenant API-key guard. */
+/** The exact operation scope already verified by the tenant API-key guard (`requireCaller`). */
 export function tenantKeyScopeOf(auth: AuthContext): ApiScope | undefined {
-  return tenantKeyScopes.get(auth);
+  return verifiedScopeOf(auth);
 }
 
 export function authOf(c: C): AuthContext {
@@ -109,20 +102,9 @@ export async function tenantAuthorityOf(
     assertOrgAccess(auth, orgId);
     // Holder and pass routes use different scopes. The endpoint guard supplies the exact
     // scope it verified, which is checked again in the final D1 predicate.
-    const scope = tenantKeyScopes.get(auth);
-    const permitted =
-      (capability === 'passes:read' && scope === 'passes:read') ||
-      (capability === 'passes:operate' &&
-        (scope === 'passes:write' || scope === 'holders:write')) ||
-      (capability === 'integrations:read' && scope === 'connections:read') ||
-      (capability === 'integrations:manage' && scope === 'connections:write') ||
-      ((capability === 'integrations:read' || capability === 'integrations:manage') &&
-        scope === 'webhooks:manage') ||
-      (capability === 'templates:read' && scope === 'templates:read') ||
-      (capability === 'scanning:read' && scope === 'scans:read') ||
-      ((capability === 'messages:read' || capability === 'messages:manage') &&
-        scope === 'messages:write');
-    if (!scope || !permitted || !auth.scopes.includes(scope)) throw new ForbiddenError();
+    const scope = verifiedScopeOf(auth);
+    if (!scope || !scopeExercises(scope, capability) || !auth.scopes.includes(scope))
+      throw new ForbiddenError();
     authority = {
       kind: 'api_key',
       orgId,
@@ -142,59 +124,14 @@ export async function tenantAuthorityOf(
 }
 
 /** A tenant session keeps CSRF protection and the usual request-mode selection. */
-export const requireTenantSession: MiddlewareHandler<AppBindings> = createMiddleware(
-  async (c, next) =>
-    requireSession(c, async () => {
-      const auth = authOf(c);
-      if (auth.kind !== 'session') throw new UnauthenticatedError();
-      c.set('auth', { ...auth, mode: modeFromRequest(c) });
-      await next();
-    }),
-);
+export const requireTenantSession: MiddlewareHandler<AppBindings> = requireCaller({
+  human: true,
+  requestMode: true,
+});
 
 /** Existing API-key scopes, or a session whose tenant access is checked by the handler. */
-export function requireTenantSessionOrApiKey(
-  scope: ScopeSelector | readonly ApiScope[],
-): MiddlewareHandler<AppBindings> {
-  if (Array.isArray(scope)) {
-    const guard = createMiddleware<AppBindings>(async (c, next) => {
-      const bearer = /^Bearer\s+(\S+)$/i.exec(c.req.header('authorization') ?? '')?.[1];
-      if (!bearer) return requireTenantSession(c, next);
-      const auth = await c.var.stores.apiKeys.resolve(bearer);
-      if (!auth)
-        throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
-      const selected = scope.find((candidate) => auth.scopes.includes(candidate));
-      if (!selected) {
-        reportDenied(c, 'MISSING_SCOPE', auth);
-        throw new ForbiddenError('The API key lacks a required scope.', 'MISSING_SCOPE');
-      }
-      const scoped = { ...auth };
-      tenantKeyScopes.set(scoped, selected);
-      c.set('auth', scoped);
-      await next();
-    });
-    // The guard takes a key with one of the scopes for every method, so the document says so too.
-    return declareKeyAccess(guard, { read: scope, write: scope });
-  }
-  const selector = scope as ScopeSelector;
-  const keyGuard = requireApiKeyOrAdmin(selector);
-  const guard = createMiddleware<AppBindings>(async (c, next) => {
-    if (/^Bearer\s+(\S+)$/i.test(c.req.header('authorization') ?? '')) {
-      return keyGuard(c, async () => {
-        const auth = authOf(c);
-        if (auth.kind !== 'api_key') throw new UnauthenticatedError();
-        const scoped = { ...auth };
-        tenantKeyScopes.set(scoped, typeof selector === 'function' ? selector(c) : selector);
-        c.set('auth', scoped);
-        await next();
-      });
-    }
-    return requireTenantSession(c, next);
-  });
-  const scopes = typeof selector === 'function' ? (selector as { scopes?: Scopes }).scopes : null;
-  if (typeof selector === 'string')
-    return declareKeyAccess(guard, { read: [selector], write: [selector] });
-  return scopes ? declareKeyAccess(guard, { read: [scopes.read], write: [scopes.write] }) : guard;
+export function requireTenantSessionOrApiKey(rule: ScopeRule): MiddlewareHandler<AppBindings> {
+  return declareKeyAccess(requireCaller({ scope: rule }), keyAccessOf(rule));
 }
 
 /** Org and mode for by-id access (see PassScope). */

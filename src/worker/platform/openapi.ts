@@ -3,8 +3,11 @@ import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import type { Context, MiddlewareHandler } from 'hono';
 import type { ZodType, z } from 'zod';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
+import { scopeExercises } from './api-scopes.ts';
+import { type RouteAuth, requireCaller } from './auth.ts';
 import { defaultBodyLimit } from './body-limit.ts';
 import type { AppBindings } from './context.ts';
+import { keyAccessOf, operationSecurity } from './openapi-security.ts';
 
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
@@ -20,6 +23,25 @@ export interface RouteSpec {
   /** JSON success body. Omit for redirects, HTML and binary responses. */
   response?: ZodType;
   status?: 200 | 201 | 202 | 204 | 302;
+  /**
+   * Who may call: a session or a key with a scope, humans only, or platform admins only. When set,
+   * `register` installs the guard (`requireCaller`) and writes the document's `security`. A route
+   * without it relies on a router-level guard (to be migrated).
+   */
+  auth?: RouteAuth;
+}
+
+/** A `capability` on a scope declaration must be one every listed scope exercises. */
+function checkDeclaration(spec: RouteSpec): void {
+  const auth = spec.auth;
+  if (!auth || !('scope' in auth) || !auth.capability) return;
+  const access = keyAccessOf(auth.scope);
+  for (const scope of [...access.read, ...(access.write ?? [])]) {
+    if (!scopeExercises(scope, auth.capability))
+      throw new Error(
+        `${spec.method.toUpperCase()} ${spec.path}: scope ${scope} does not exercise ${auth.capability}`,
+      );
+  }
 }
 
 /**
@@ -69,7 +91,11 @@ export function register<S extends RouteSpec>(
   handler: (c: RouteContext<S>) => Response | Promise<Response>,
 ): void {
   const status = spec.status ?? 200;
+  checkDeclaration(spec);
   const config = {
+    ...(spec.auth
+      ? { middleware: requireCaller(spec.auth), ...operationSecurity(spec.auth, spec.method) }
+      : {}),
     method: spec.method,
     path: spec.path,
     summary: spec.summary,
