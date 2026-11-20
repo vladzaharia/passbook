@@ -4,6 +4,7 @@ import {
   HoldListSchema,
   HoldParamsSchema,
   PlaceHoldSchema,
+  PlatformReceiptParamsSchema,
   ReceiptFileSchema,
   ReceiptIdParamsSchema,
   ReceiptListSchema,
@@ -233,5 +234,35 @@ register(
     const { orgId, receiptId } = c.req.valid('param');
     download(c, `retention-receipt-${receiptId}.json`);
     return c.json(await receiptFile(serviceContext(c), orgId, receiptId));
+  },
+);
+
+/** Deletions of the platform pass's own records (no organization): administrators only. */
+register(
+  retentionPlatformRoutes,
+  'retention',
+  {
+    method: 'get',
+    path: '/retention/receipts',
+    summary: 'List retention receipts of platform-scope deletions',
+    response: ReceiptListSchema,
+  },
+  async (c) => c.json({ items: await listReceiptItems(serviceContext(c), null) }),
+);
+
+register(
+  retentionPlatformRoutes,
+  'retention',
+  {
+    method: 'get',
+    path: '/retention/receipts/{receiptId}/download',
+    summary: 'Download one platform-scope retention receipt',
+    params: PlatformReceiptParamsSchema,
+    response: ReceiptFileSchema,
+  },
+  async (c) => {
+    const { receiptId } = c.req.valid('param');
+    download(c, `retention-receipt-${receiptId}.json`);
+    return c.json(await receiptFile(serviceContext(c), null, receiptId));
   },
 );

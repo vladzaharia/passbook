@@ -51,9 +51,8 @@ export function AuditPage({
         description={RETENTION_COPY.auditNote(365)}
         actions={
           <ExportButton
-            path="/api/v1/audit/platform"
+            path="/api/v1/audit/platform/export"
             query={{ ...filters, filterOrgId: undefined, orgId }}
-            orgName={orgName}
           />
         }
         meta={

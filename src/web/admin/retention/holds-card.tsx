@@ -11,16 +11,15 @@ import {
   Card,
   CardBody,
   CardHeader,
-  ConfirmDialog,
   EmptyState,
   ErrorState,
   ListRow,
   ListRows,
   SkeletonRows,
-  toast,
 } from '@/web/ui/index.ts';
 import { PlaceHoldDialog } from './place-hold-dialog.tsx';
-import { type RetentionScope, useHolds, useReleaseHold } from './queries.ts';
+import { type RetentionScope, useHolds } from './queries.ts';
+import { ReleaseHoldDialog } from './release-hold-dialog.tsx';
 
 type Hold = z.infer<typeof HoldSchema>;
 
@@ -78,7 +77,6 @@ export function HoldsCard({
   canManage: boolean;
 }) {
   const query = useHolds(scope, orgId);
-  const release = useReleaseHold(scope, orgId);
   const [placing, setPlacing] = useState(false);
   const [releasing, setReleasing] = useState<Hold>();
   const items = query.data?.items ?? [];
@@ -115,17 +113,11 @@ export function HoldsCard({
         )}
       </CardBody>
       <PlaceHoldDialog scope={scope} orgId={orgId} open={placing} onOpenChange={setPlacing} />
-      <ConfirmDialog
-        open={releasing !== undefined}
-        onOpenChange={(o) => !o && setReleasing(undefined)}
-        title="Release hold?"
-        description="Deletion resumes for these records, and records past their window are deleted on the next run. Every organization admin is emailed."
-        confirmLabel={RETENTION_COPY.release}
-        onConfirm={async () => {
-          if (!releasing) return;
-          await release.mutateAsync(releasing.id);
-          toast.success('Hold released.');
-        }}
+      <ReleaseHoldDialog
+        scope={scope}
+        orgId={orgId}
+        holdId={releasing?.id}
+        onClose={() => setReleasing(undefined)}
       />
     </Card>
   );

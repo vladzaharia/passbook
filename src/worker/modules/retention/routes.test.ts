@@ -179,3 +179,39 @@ describe('retention receipts routes', () => {
     ).toBe(200);
   });
 });
+
+describe('platform-scope receipts routes', () => {
+  it('lists and downloads receipts of the platform pass for an administrator only', async () => {
+    const p = await people();
+    const r = await writeReceipt(rk.kit.ctx, {
+      orgId: null,
+      cls: 'photos',
+      kind: 'sweep',
+      policyDays: 30,
+      deleted: 3,
+    });
+    const own = await writeReceipt(rk.kit.ctx, {
+      orgId: p.orgId,
+      cls: 'photos',
+      kind: 'sweep',
+      deleted: 1,
+    });
+    const list = (await (
+      await call('GET', '/api/v1/platform/retention/receipts', p.root)
+    ).json()) as {
+      items: { id: string }[];
+    };
+    expect(list.items.map((i) => i.id)).toContain(r.id);
+    expect(list.items.map((i) => i.id)).not.toContain(own.id);
+    const file = await call('GET', `/api/v1/platform/retention/receipts/${r.id}/download`, p.root);
+    expect(file.status).toBe(200);
+    expect(((await file.json()) as { receipt: { orgId: null } }).receipt.orgId).toBeNull();
+    expect(
+      (await call('GET', `/api/v1/platform/retention/receipts/${own.id}/download`, p.root)).status,
+    ).toBe(404);
+    expect((await call('GET', '/api/v1/platform/retention/receipts', p.admin)).status).toBe(403);
+    expect(
+      (await call('GET', `/api/v1/platform/retention/receipts/${r.id}/download`, p.reader)).status,
+    ).toBe(403);
+  });
+});

@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
-import { apiAs } from './helpers/api.ts';
+import { apiAs, createPass } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
 
 // Set RETUI_SHOTS to a folder to save the visual sweep: 3 widths x 2 themes per screen.
@@ -151,6 +151,55 @@ test.describe('retention console', () => {
           `/api/v1/platform/orgs/${org.id}/retention/holds/${holdId}/release`,
           {},
         );
+      await api.dispose();
+    }
+  });
+
+  test('the audit export streams the whole log as CSV', async () => {
+    const org = readSeed().org;
+    const api = await apiAs('admin');
+    try {
+      const res = await api.ctx.get(`/api/v1/audit/export?orgId=${org.id}`);
+      expect(res.status()).toBe(200);
+      expect(res.headers()['content-type']).toContain('text/csv');
+      const text = await res.text();
+      expect(text.split('\r\n')[0]).toBe('Time (UTC),Action,Actor,Target,Organization');
+      expect(text).toContain('retention.hold.place');
+    } finally {
+      await api.dispose();
+    }
+  });
+
+  test('a pass hold is placed and released from the pass page; platform receipts page; sweep', async ({
+    page,
+  }) => {
+    const org = readSeed().org;
+    const api = await apiAs('admin');
+    try {
+      const pass = await createPass(api, org.id, { holder: 'Hold Test' });
+      const url = `/admin/o/${org.id}/passes/${pass.id}`;
+      await page.goto(url);
+      await page.getByRole('button', { name: 'Place hold' }).click();
+      await page.getByLabel(/^Reason/).fill('Dispute over this pass');
+      await page.getByRole('dialog').getByRole('button', { name: 'Place hold' }).click();
+      await expect(page.getByText('On this pass')).toBeVisible();
+      await page.waitForTimeout(300);
+      await sweep(page, url, 'pass-hold', async () => {
+        await expect(page.getByText('On this pass')).toBeVisible();
+        await page.waitForTimeout(300);
+      });
+      await page.route('**/api/v1/platform/retention/receipts', (route) =>
+        route.fulfill({ json: receipts }),
+      );
+      await sweep(page, '/admin/platform/retention', 'platform-retention', async () => {
+        await expect(page.getByText('Visitor passes').first()).toBeVisible();
+        await page.waitForTimeout(300);
+      });
+      await page.goto(url);
+      await page.getByRole('button', { name: 'Release' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Release' }).click();
+      await expect(page.getByRole('button', { name: 'Place hold' })).toBeVisible();
+    } finally {
       await api.dispose();
     }
   });

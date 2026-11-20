@@ -4,12 +4,15 @@ import { HoldListSchema, ReceiptListSchema } from '@/shared/contracts/retention.
 import { api } from '@/web/lib/api.ts';
 
 /** Org pages call the org routes with the member's capabilities; platform pages the admin routes. */
-export type RetentionScope = 'org' | 'platform';
+export type RetentionScope = 'org' | 'platform' | 'platform-pass';
 
+/** `platform-pass`: the platform's own deletions, no organization (receipts only). */
 export const retentionBase = (scope: RetentionScope, orgId: string) =>
   scope === 'org'
     ? `/api/v1/orgs/${encodeURIComponent(orgId)}/retention`
-    : `/api/v1/platform/orgs/${encodeURIComponent(orgId)}/retention`;
+    : scope === 'platform'
+      ? `/api/v1/platform/orgs/${encodeURIComponent(orgId)}/retention`
+      : '/api/v1/platform/retention';
 
 const key = (scope: RetentionScope, orgId: string, what: 'holds' | 'receipts') =>
   ['retention', scope, orgId, what] as const;

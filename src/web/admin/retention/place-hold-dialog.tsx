@@ -23,17 +23,21 @@ const SCOPES = [
 export function PlaceHoldDialog({
   scope,
   orgId,
+  passId: fixedPass,
   open,
   onOpenChange,
 }: {
   scope: RetentionScope;
   orgId: string;
+  /** A hold on this pass only: the scope choice is not offered. */
+  passId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const place = usePlaceHold(scope, orgId);
-  const [target, setTarget] = useState('org');
-  const [passId, setPassId] = useState<string>();
+  const [target, setTarget] = useState(fixedPass ? 'pass' : 'org');
+  const [picked, setPicked] = useState<string>();
+  const passId = fixedPass ?? picked;
   const [reason, setReason] = useState('');
   const [server, setServer] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
@@ -45,8 +49,8 @@ export function PlaceHoldDialog({
 
   function close() {
     onOpenChange(false);
-    setTarget('org');
-    setPassId(undefined);
+    setTarget(fixedPass ? 'pass' : 'org');
+    setPicked(undefined);
     setReason('');
     setServer({});
     setFormError(undefined);
@@ -90,23 +94,25 @@ export function PlaceHoldDialog({
         }
       >
         <Form id="place-hold" className="flex flex-col gap-4" {...check.form} onValid={submit}>
-          <RadioGroup
-            legend="Scope"
-            options={SCOPES}
-            value={target}
-            onValueChange={(v) => {
-              setTarget(v);
-              setServer({});
-            }}
-          />
-          {target === 'pass' ? (
+          {fixedPass ? null : (
+            <RadioGroup
+              legend="Scope"
+              options={SCOPES}
+              value={target}
+              onValueChange={(v) => {
+                setTarget(v);
+                setServer({});
+              }}
+            />
+          )}
+          {target === 'pass' && !fixedPass ? (
             <FormField label="Pass" required error={errors.passId}>
               {(p) => (
                 <EntityPicker
                   {...p}
                   kind="pass"
                   value={passId}
-                  onValueChange={setPassId}
+                  onValueChange={setPicked}
                   placeholder="Search passes"
                 />
               )}

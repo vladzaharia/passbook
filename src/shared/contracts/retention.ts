@@ -3,6 +3,7 @@ import { IdSchema, TimestampSchema } from './common.ts';
 
 export const HoldParamsSchema = z.strictObject({ orgId: IdSchema });
 export const HoldIdParamsSchema = z.strictObject({ orgId: IdSchema, holdId: IdSchema });
+export const PlatformReceiptParamsSchema = z.strictObject({ receiptId: IdSchema });
 export const ReceiptIdParamsSchema = z.strictObject({ orgId: IdSchema, receiptId: IdSchema });
 
 /** Leave `passId` out to hold the whole organization. */

@@ -1,30 +1,27 @@
 import { Download } from 'lucide-react';
 import { useState } from 'react';
-import { formatCount } from '@/web/lib/format.ts';
+import { buildUrl, type QueryValue } from '@/web/lib/api.ts';
+import { modeHeaders } from '@/web/lib/mode.ts';
+import { saveFromApi } from '@/web/lib/save-file.ts';
 import { Button, toast } from '@/web/ui/index.ts';
-import { EXPORT_MAX, exportAudit } from './export.ts';
 
-/** Saves the entries the page's filters match as CSV, up to 1,000. */
-export function ExportButton({
-  path,
-  query,
-  orgName,
-}: {
-  path: string;
-  query: Record<string, string | number | undefined>;
-  orgName: (id: string | null) => string | undefined;
-}) {
+/** Saves every entry the page's filters match as CSV; the server streams it. */
+export function ExportButton({ path, query }: { path: string; query: Record<string, QueryValue> }) {
   const [busy, setBusy] = useState(false);
   return (
     <Button
       variant="outline"
       loading={busy}
       iconStart={<Download aria-hidden />}
-      title={`Saves the entries these filters match, up to ${formatCount(EXPORT_MAX)}, as CSV.`}
+      title="Saves every entry these filters match as CSV."
       onClick={() => {
         setBusy(true);
-        exportAudit(path, query, orgName)
-          .then((n) => toast.success(`Exported ${n} ${n === 1 ? 'entry' : 'entries'}.`))
+        saveFromApi(
+          buildUrl(path, query),
+          'audit-log.csv',
+          modeHeaders(),
+          'Could not export the audit log.',
+        )
           .catch((cause: unknown) => toast.error(cause, 'Could not export'))
           .finally(() => setBusy(false));
       }}

@@ -24,7 +24,7 @@ describe('admin navigation per scope', () => {
     expect(labels(groups)).toEqual([
       ['Overview'],
       ['Organizations', 'Users'],
-      ['Status', 'Audit log'],
+      ['Status', 'Audit log', 'Retention'],
       ['Wallet accounts', 'API keys', 'Settings'],
     ]);
     expect(groups.flat().every((item) => item.to.startsWith('/admin/platform'))).toBe(true);

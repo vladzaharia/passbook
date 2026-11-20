@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { auditCsv } from './export.ts';
 import { settingChanges } from './settings-changes.tsx';
 
 describe('settingChanges', () => {
@@ -32,33 +31,5 @@ describe('settingChanges', () => {
   it('is undefined for details without changes', () => {
     expect(settingChanges({ scope: 'org' })).toBeUndefined();
     expect(settingChanges(null)).toBeUndefined();
-  });
-});
-
-describe('auditCsv', () => {
-  it('quotes cells and defuses formulas; leaves detail out', () => {
-    const csv = auditCsv(
-      [
-        {
-          id: 1,
-          at: 0,
-          orgId: 'o1',
-          actorType: 'user',
-          actorId: 'u1',
-          actorLabel: '=HYPERLINK("x")',
-          action: 'retention.hold.place',
-          targetType: 'retention_hold',
-          targetId: 'h1',
-          targetLabel: null,
-          requestId: null,
-          detail: { reason: 'secret reason' },
-        },
-      ],
-      () => 'Acme, Inc',
-    );
-    expect(csv).toContain("'=HYPERLINK");
-    expect(csv).toContain('"Acme, Inc"');
-    expect(csv).toContain('Legal hold placed');
-    expect(csv).not.toContain('secret reason');
   });
 });

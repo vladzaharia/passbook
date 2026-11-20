@@ -11,10 +11,10 @@ type ReceiptFile = z.infer<typeof ReceiptFileSchema>;
 
 export { listHoldViews };
 
-/** Chains an org has: the seven classes, visitor deletions (same name) and erasure. */
+/** Chains an org has (the platform pass, org null, has the seven classes): the seven classes, visitor deletions (same name) and erasure. */
 const CLASSES = [...new Set<string>([...RETENTION_CLASSES, 'visitors', 'erasure'])];
 
-async function allReceipts(ctx: ServiceContext, orgId: string) {
+async function allReceipts(ctx: ServiceContext, orgId: string | null) {
   const chains = await Promise.all(CLASSES.map((cls) => readReceipts(ctx, orgId, cls)));
   return chains
     .flat()
@@ -22,7 +22,10 @@ async function allReceipts(ctx: ServiceContext, orgId: string) {
 }
 
 /** Newest first, 200 at most. No MAC and no ids of anything deleted: counts, cutoff and policy. */
-export async function listReceiptItems(ctx: ServiceContext, orgId: string): Promise<ReceiptItem[]> {
+export async function listReceiptItems(
+  ctx: ServiceContext,
+  orgId: string | null,
+): Promise<ReceiptItem[]> {
   return (await allReceipts(ctx, orgId)).slice(0, 200).map(({ receipt: r, verified }) => ({
     id: r.id,
     cls: r.cls,
@@ -39,7 +42,7 @@ export async function listReceiptItems(ctx: ServiceContext, orgId: string): Prom
 /** One receipt of this org with what it takes to check it offline. Another org's id is a 404. */
 export async function receiptFile(
   ctx: ServiceContext,
-  orgId: string,
+  orgId: string | null,
   receiptId: string,
 ): Promise<ReceiptFile> {
   const found = (await allReceipts(ctx, orgId)).find(({ receipt }) => receipt.id === receiptId);

@@ -63,11 +63,7 @@ export function OrgAuditPage({
           </>
         }
         actions={
-          <ExportButton
-            path="/api/v1/audit"
-            query={{ ...filters, orgId: allowed }}
-            orgName={NO_NAME}
-          />
+          <ExportButton path="/api/v1/audit/export" query={{ ...filters, orgId: allowed }} />
         }
       />
       <Card className="mb-6">

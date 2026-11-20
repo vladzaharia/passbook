@@ -55,6 +55,7 @@ import { Route as AdminPlatformApiKeysIndexRouteImport } from './routes/admin/pl
 import { Route as AdminPlatformAuditIndexRouteImport } from './routes/admin/platform/audit/index'
 import { Route as AdminPlatformOrgsIndexRouteImport } from './routes/admin/platform/orgs/index'
 import { Route as AdminPlatformOrgsOrgIdRouteImport } from './routes/admin/platform/orgs/$orgId'
+import { Route as AdminPlatformRetentionIndexRouteImport } from './routes/admin/platform/retention/index'
 import { Route as AdminPlatformSettingsIndexRouteImport } from './routes/admin/platform/settings/index'
 import { Route as AdminPlatformStatusIndexRouteImport } from './routes/admin/platform/status/index'
 import { Route as AdminPlatformUsersIndexRouteImport } from './routes/admin/platform/users/index'
@@ -338,6 +339,12 @@ const AdminPlatformOrgsOrgIdRoute = AdminPlatformOrgsOrgIdRouteImport.update({
   path: '/orgs/$orgId',
   getParentRoute: () => AdminPlatformRouteRoute,
 } as any)
+const AdminPlatformRetentionIndexRoute =
+  AdminPlatformRetentionIndexRouteImport.update({
+    id: '/retention/',
+    path: '/retention/',
+    getParentRoute: () => AdminPlatformRouteRoute,
+  } as any)
 const AdminPlatformSettingsIndexRoute =
   AdminPlatformSettingsIndexRouteImport.update({
     id: '/settings/',
@@ -642,6 +649,7 @@ export interface FileRoutesByFullPath {
   '/admin/platform/api-keys/': typeof AdminPlatformApiKeysIndexRoute
   '/admin/platform/audit/': typeof AdminPlatformAuditIndexRoute
   '/admin/platform/orgs/': typeof AdminPlatformOrgsIndexRoute
+  '/admin/platform/retention/': typeof AdminPlatformRetentionIndexRoute
   '/admin/platform/settings/': typeof AdminPlatformSettingsIndexRoute
   '/admin/platform/status/': typeof AdminPlatformStatusIndexRoute
   '/admin/platform/users/': typeof AdminPlatformUsersIndexRoute
@@ -730,6 +738,7 @@ export interface FileRoutesByTo {
   '/admin/platform/api-keys': typeof AdminPlatformApiKeysIndexRoute
   '/admin/platform/audit': typeof AdminPlatformAuditIndexRoute
   '/admin/platform/orgs': typeof AdminPlatformOrgsIndexRoute
+  '/admin/platform/retention': typeof AdminPlatformRetentionIndexRoute
   '/admin/platform/settings': typeof AdminPlatformSettingsIndexRoute
   '/admin/platform/status': typeof AdminPlatformStatusIndexRoute
   '/admin/platform/users': typeof AdminPlatformUsersIndexRoute
@@ -822,6 +831,7 @@ export interface FileRoutesById {
   '/admin/platform/api-keys/': typeof AdminPlatformApiKeysIndexRoute
   '/admin/platform/audit/': typeof AdminPlatformAuditIndexRoute
   '/admin/platform/orgs/': typeof AdminPlatformOrgsIndexRoute
+  '/admin/platform/retention/': typeof AdminPlatformRetentionIndexRoute
   '/admin/platform/settings/': typeof AdminPlatformSettingsIndexRoute
   '/admin/platform/status/': typeof AdminPlatformStatusIndexRoute
   '/admin/platform/users/': typeof AdminPlatformUsersIndexRoute
@@ -915,6 +925,7 @@ export interface FileRouteTypes {
     | '/admin/platform/api-keys/'
     | '/admin/platform/audit/'
     | '/admin/platform/orgs/'
+    | '/admin/platform/retention/'
     | '/admin/platform/settings/'
     | '/admin/platform/status/'
     | '/admin/platform/users/'
@@ -1003,6 +1014,7 @@ export interface FileRouteTypes {
     | '/admin/platform/api-keys'
     | '/admin/platform/audit'
     | '/admin/platform/orgs'
+    | '/admin/platform/retention'
     | '/admin/platform/settings'
     | '/admin/platform/status'
     | '/admin/platform/users'
@@ -1094,6 +1106,7 @@ export interface FileRouteTypes {
     | '/admin/platform/api-keys/'
     | '/admin/platform/audit/'
     | '/admin/platform/orgs/'
+    | '/admin/platform/retention/'
     | '/admin/platform/settings/'
     | '/admin/platform/status/'
     | '/admin/platform/users/'
@@ -1464,6 +1477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPlatformOrgsOrgIdRouteImport
       parentRoute: typeof AdminPlatformRouteRoute
     }
+    '/admin/platform/retention/': {
+      id: '/admin/platform/retention/'
+      path: '/retention'
+      fullPath: '/admin/platform/retention/'
+      preLoaderRoute: typeof AdminPlatformRetentionIndexRouteImport
+      parentRoute: typeof AdminPlatformRouteRoute
+    }
     '/admin/platform/settings/': {
       id: '/admin/platform/settings/'
       path: '/settings'
@@ -1776,6 +1796,7 @@ interface AdminPlatformRouteRouteChildren {
   AdminPlatformApiKeysIndexRoute: typeof AdminPlatformApiKeysIndexRoute
   AdminPlatformAuditIndexRoute: typeof AdminPlatformAuditIndexRoute
   AdminPlatformOrgsIndexRoute: typeof AdminPlatformOrgsIndexRoute
+  AdminPlatformRetentionIndexRoute: typeof AdminPlatformRetentionIndexRoute
   AdminPlatformSettingsIndexRoute: typeof AdminPlatformSettingsIndexRoute
   AdminPlatformStatusIndexRoute: typeof AdminPlatformStatusIndexRoute
   AdminPlatformUsersIndexRoute: typeof AdminPlatformUsersIndexRoute
@@ -1791,6 +1812,7 @@ const AdminPlatformRouteRouteChildren: AdminPlatformRouteRouteChildren = {
   AdminPlatformApiKeysIndexRoute: AdminPlatformApiKeysIndexRoute,
   AdminPlatformAuditIndexRoute: AdminPlatformAuditIndexRoute,
   AdminPlatformOrgsIndexRoute: AdminPlatformOrgsIndexRoute,
+  AdminPlatformRetentionIndexRoute: AdminPlatformRetentionIndexRoute,
   AdminPlatformSettingsIndexRoute: AdminPlatformSettingsIndexRoute,
   AdminPlatformStatusIndexRoute: AdminPlatformStatusIndexRoute,
   AdminPlatformUsersIndexRoute: AdminPlatformUsersIndexRoute,

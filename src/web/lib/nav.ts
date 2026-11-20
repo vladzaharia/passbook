@@ -71,7 +71,7 @@ export const ORG_NAV: readonly (readonly NavSection[])[] = [
 export const PLATFORM_NAV: readonly (readonly NavSection[])[] = [
   [overview],
   [page('Organizations', '/orgs', 'org', ['tenants']), page('Users', '/users', 'user')],
-  [page('Status', '/status', 'status', ['health']), audit],
+  [page('Status', '/status', 'status', ['health']), audit, retention],
   [
     page('Wallet accounts', '/wallet-accounts', 'identity', [
       'apple',
