@@ -6,7 +6,7 @@ import { type Clock, systemClock } from '../../platform/clock.ts';
 import { derivedHmacKey, macPreviousVersion } from '../../platform/crypto.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
-import { fromBase64Url, safeEqual, toBase64Url } from '../../platform/ids.ts';
+import { fromBase64Url, safeEqual, sha256Hex, toBase64Url } from '../../platform/ids.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { keyAuthOf } from '../api-keys/service.ts';
@@ -48,6 +48,9 @@ export async function signTryToken(env: object, claims: TryClaims): Promise<stri
   return `${TRY_TOKEN_PREFIX}${payload}.${await mac(env, payload)}`;
 }
 
+/** `RL_API_TRY` counts per session, the token's binding, so a limit applies before any database read. */
+const tryBucket = (sessionIdHash: string) => `RL_API_TRY:session:${sessionIdHash}`;
+
 /** The claims of a token this deployment made (under the current MAC root or, mid-rotation, the previous one). */
 export async function verifyTryToken(env: object, raw: string): Promise<TryClaims | null> {
   if (!raw.startsWith(TRY_TOKEN_PREFIX) || raw.length > MAX_LENGTH) return null;
@@ -85,9 +88,12 @@ export async function resolveTryToken(
   const claims = await verifyTryToken(env, raw);
   const now = clock.now();
   if (!claims || claims.expiresAt <= now) return null;
+  // Only beside the session cookie it was made for: a token copied off the page is no use elsewhere.
+  const cookie = caller?.sessionCookie;
+  if (!cookie || !(await safeEqual(await sha256Hex(cookie), claims.sessionIdHash))) return null;
+  await enforceRateLimit(env, 'RL_API_TRY', tryBucket(claims.sessionIdHash));
   const row = await tryTokenKeyRow(env.DB, claims, now);
   if (!row) return null;
-  await enforceRateLimit(env, 'RL_API_TRY', `RL_API_TRY:user:${row.try_user_id}`);
   const auth = await keyAuthOf(env, clock, row, caller, options);
   if (auth) auth.via = 'try';
   return auth;
@@ -109,7 +115,7 @@ export function withTryTokens(
 
 /** Mints a try token for the caller's sandbox key, bound to this session. */
 export async function mintTryToken(ctx: ServiceContext, session: SessionAuth): Promise<TryToken> {
-  await enforceRateLimit(ctx.env, 'RL_API_TRY', `RL_API_TRY:user:${session.userId}`);
+  await enforceRateLimit(ctx.env, 'RL_API_TRY', tryBucket(session.sessionId));
   const now = ctx.clock.now();
   const found = await tryKeyOf(ctx.env.DB, session.userId, now);
   if (!found) throw new NotFoundError('Sandbox not found.', 'SANDBOX_NOT_FOUND');

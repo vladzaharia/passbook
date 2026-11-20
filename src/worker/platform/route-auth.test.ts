@@ -20,7 +20,6 @@ import {
   requireCaller,
   verifiedScopeOf,
 } from './auth.ts';
-import { hasBrowserSignals } from './browser-signals.ts';
 import { type AppBindings, requestContext } from './context.ts';
 import { run as runSql } from './db.ts';
 import type { AppEnv } from './env.ts';
@@ -163,17 +162,6 @@ async function expectSame(
         run(declared, verified, principal, method),
         run(legacy, legacyTag, principal, method),
       ]);
-      // The one intended difference (PX8): a key bearer beside browser signals (here a session cookie and Origin)
-      // is refused before lookup, where the old guards resolved it.
-      if (now.code === 'KEY_IN_BROWSER') {
-        const sent = new Request(ORIGIN, { headers: principal(fakeAuth(ORIGIN)) }).headers;
-        expect(/^Bearer\s+(?:wlt|pb|pbp|pbo)_/i.test(sent.get('authorization') ?? ''), name).toBe(
-          true,
-        );
-        expect(hasBrowserSignals(sent), name).toBe(true);
-        expect(now.status).toBe(403);
-        continue;
-      }
       expect({ name, method, ...now }).toEqual({ name, method, ...before });
     }
 }

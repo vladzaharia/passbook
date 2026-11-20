@@ -3,6 +3,11 @@ import type { ApiKeyListQuerySchema } from '../../../shared/contracts/index.ts';
 import { apiKeyPrefixOf } from '../../platform/api-key-token.ts';
 import { rolesCapableOf } from '../../platform/api-scopes.ts';
 import type { ApiKeyAuth, ApiKeyStore, KeyCaller } from '../../platform/auth.ts';
+import {
+  keyInBrowserMode,
+  keyInBrowserRefusal,
+  reportKeyInBrowser,
+} from '../../platform/browser-signals.ts';
 import { type Clock, systemClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
@@ -233,10 +238,21 @@ export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiK
   return {
     async resolve(rawKey, caller, options): Promise<ApiKeyAuth | null> {
       const prefix = apiKeyPrefixOf(rawKey);
-      if (!prefix) return null;
+      if (!prefix) {
+        if (caller?.browser) throw keyInBrowserRefusal(null);
+        return null;
+      }
       const row = await repo.findByPrefix(env.DB, prefix);
+      // From a browser: refused before the secret is checked or the key touched, unless the key predates the rollout.
+      const browser = caller?.browser
+        ? keyInBrowserMode(row?.created_at ?? null, clock.now())
+        : null;
+      const seen = row ? { orgId: row.org_id, prefix: row.prefix } : null;
+      if (browser === 'enforce') throw keyInBrowserRefusal(seen);
       if (!row || !(await safeEqual(await sha256Hex(rawKey), row.key_hash))) return null;
-      return keyAuthOf(env, clock, row, caller, options);
+      const auth = await keyAuthOf(env, clock, row, caller, options);
+      if (auth && browser === 'report' && seen) reportKeyInBrowser(caller, seen);
+      return auth;
     },
   };
 }

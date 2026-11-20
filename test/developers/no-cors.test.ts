@@ -1,3 +1,4 @@
+import { SELF, env as workerEnv } from 'cloudflare:test';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/worker/app.ts';
 import { ManualClock } from '../../src/worker/platform/clock.ts';
@@ -52,6 +53,20 @@ describe('/api/v1 has no CORS', () => {
     ];
     for (const [path, headers] of calls) {
       const res = await app.request(path, { headers }, env);
+      expect(corsHeaders(res), `${path} ${res.status}`).toEqual([]);
+    }
+  });
+
+  it('answers a preflight through the Worker entry with no Access-Control-* header', async () => {
+    for (const path of ['/api/v1/developer/try-token', '/api/v1/passes']) {
+      const res = await SELF.fetch(`${workerEnv.PUBLIC_BASE_URL}${path}`, {
+        method: 'OPTIONS',
+        headers: {
+          origin: FOREIGN,
+          'access-control-request-method': 'POST',
+          'access-control-request-headers': 'authorization',
+        },
+      });
       expect(corsHeaders(res), `${path} ${res.status}`).toEqual([]);
     }
   });

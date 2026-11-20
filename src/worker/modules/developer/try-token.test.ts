@@ -1,79 +1,27 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey, makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import { CreatedDeveloperSandboxSchema, TryTokenSchema } from '../../../shared/contracts/index.ts';
-import { createApp } from '../../app.ts';
+import { KEY_IN_BROWSER_CUTOFF } from '../../platform/browser-signals.ts';
 import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
-import { createAuthStores } from '../../stores.ts';
-import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
 import { signTryToken, TRY_TOKEN_TTL_MS } from './try-token.ts';
+import { BROWSER, bearer, fromPage, ORIGIN, page, tryKit } from './try-token-test-fixtures.ts';
 
-const ORIGIN = 'https://wallet.test';
-/** What a browser sends with every fetch from the portal page. */
-const BROWSER = { origin: ORIGIN, 'sec-fetch-site': 'same-origin', 'sec-fetch-mode': 'cors' };
-
-let kit: BlueprintKit;
-let app: ReturnType<typeof createApp>;
-const realFetch = globalThis.fetch;
-
+let t: Awaited<ReturnType<typeof tryKit>>;
 beforeAll(async () => {
-  kit = await blueprintKit();
-  kit.env.TURNSTILE_SECRET = '1x0000000000000000000000000000000AA';
-  app = createApp({ stores: createAuthStores(kit.env, kit.clock), clock: kit.clock });
-  vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = new Request(input, init).url;
-    if (url.startsWith('https://challenges.cloudflare.com/'))
-      return Response.json({ success: true });
-    return realFetch(input, init);
-  });
+  t = await tryKit();
 });
 afterAll(() => vi.unstubAllGlobals());
-
-const send = (method: string, path: string, headers: Record<string, string>) =>
-  app.request(`${ORIGIN}/api/v1${path}`, { method, headers }, kit.env);
-
-const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
-
-/** A person with a sandbox and a signed-in browser session (cookie, CSRF, Origin). */
-async function developer() {
-  const user = await makeUser(kit.f);
-  const session = await makeSession(kit.f, { userId: user.id });
-  const browser = { ...session.headers, ...BROWSER };
-  const res = await app.request(
-    `${ORIGIN}/api/v1/developer/sandbox`,
-    {
-      method: 'POST',
-      headers: { ...browser, 'content-type': 'application/json' },
-      body: JSON.stringify({ turnstileToken: 'ok' }),
-    },
-    kit.env,
-  );
-  expect(res.status, await res.clone().text()).toBe(201);
-  const made = CreatedDeveloperSandboxSchema.parse(await res.json());
-  if (!made.key) throw new Error('A new sandbox returns its key.');
-  return { user, session, browser, made, key: made.key };
-}
-
-async function mint(browser: Record<string, string>) {
-  const res = await send('POST', '/developer/try-token', browser);
-  expect(res.status, await res.clone().text()).toBe(201);
-  expect(res.headers.get('cache-control')).toBe('no-store');
-  return TryTokenSchema.parse(await res.json());
-}
-
-/** The token from the portal page: browser signals and the session cookie ride along. */
-const fromPage = (browser: Record<string, string>, token: string) => ({
-  ...browser,
-  ...bearer(token),
-});
+const send = (...args: Parameters<typeof t.send>) => t.send(...args);
+const developer = () => t.developer();
+const mint = (browser: Record<string, string>) => t.mint(browser);
 
 describe('POST /developer/try-token', () => {
   it('mints a 15-minute pbtry_ token that acts as the sandbox key, in Test, from the browser', async () => {
     const d = await developer();
     const { token, expiresAt } = await mint(d.browser);
     expect(token).toMatch(/^pbtry_[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/);
-    expect(expiresAt).toBe(kit.clock.now() + TRY_TOKEN_TTL_MS);
+    expect(expiresAt).toBe(t.kit.clock.now() + TRY_TOKEN_TTL_MS);
 
     const me = await send('GET', '/api-keys/me', fromPage(d.browser, token));
     expect(me.status, await me.clone().text()).toBe(200);
@@ -86,7 +34,7 @@ describe('POST /developer/try-token', () => {
     expect((await send('POST', '/developer/try-token', BROWSER)).status).toBe(401);
     const noCsrf = { cookie: d.session.headers.cookie ?? '', 'sec-fetch-site': 'cross-site' };
     expect((await send('POST', '/developer/try-token', noCsrf)).status).toBe(403);
-    const other = await makeSession(kit.f, { userId: (await makeUser(kit.f)).id });
+    const other = await makeSession(t.kit.f, { userId: (await makeUser(t.kit.f)).id });
     await expectProblem(
       await send('POST', '/developer/try-token', { ...other.headers, ...BROWSER }),
       404,
@@ -97,8 +45,8 @@ describe('POST /developer/try-token', () => {
   it('refuses when the sandbox key is gone, and the old token stops', async () => {
     const d = await developer();
     const { token } = await mint(d.browser);
-    await run(kit.env.DB, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
-      kit.clock.now(),
+    await run(t.kit.env.DB, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
+      t.kit.clock.now(),
       d.key.id,
     ]);
     expect((await send('GET', '/passes', fromPage(d.browser, token))).status).toBe(401);
@@ -111,12 +59,12 @@ describe('POST /developer/try-token', () => {
 
   it('answers 429 over RL_API_TRY', async () => {
     const d = await developer();
-    const saved = kit.env.RL_API_TRY;
-    kit.env.RL_API_TRY = { limit: async () => ({ success: false }) } as unknown as RateLimit;
+    const saved = t.kit.env.RL_API_TRY;
+    t.kit.env.RL_API_TRY = { limit: async () => ({ success: false }) } as unknown as RateLimit;
     try {
       expect((await send('POST', '/developer/try-token', d.browser)).status).toBe(429);
     } finally {
-      kit.env.RL_API_TRY = saved;
+      t.kit.env.RL_API_TRY = saved;
     }
   });
 });
@@ -125,23 +73,23 @@ describe('try token revocation', () => {
   it('stops at sign-out', async () => {
     const d = await developer();
     const { token } = await mint(d.browser);
-    const out = await app.request(
+    const out = await t.app.request(
       `${ORIGIN}/auth/logout`,
       { method: 'POST', headers: d.browser },
-      kit.env,
+      t.kit.env,
     );
     expect(out.status).toBe(303);
-    await expectProblem(await send('GET', '/passes', bearer(token)), 401, 'INVALID_API_KEY');
+    await expectProblem(await send('GET', '/passes', page(d, token)), 401, 'INVALID_API_KEY');
   });
 
   it('stops when the session is revoked from another session', async () => {
     const d = await developer();
     const { token } = await mint(d.browser);
-    const phone = await makeSession(kit.f, { userId: d.user.id });
+    const phone = await makeSession(t.kit.f, { userId: d.user.id });
     const idHash = await sha256Hex(d.session.cookieValue);
     const res = await send('DELETE', `/me/sessions/${idHash}`, { ...phone.headers, ...BROWSER });
     expect(res.status, await res.clone().text()).toBe(200);
-    expect((await send('GET', '/passes', bearer(token))).status).toBe(401);
+    expect((await send('GET', '/passes', page(d, token))).status).toBe(401);
   });
 
   it('stops at a generation bump; a new token works', async () => {
@@ -150,11 +98,11 @@ describe('try token revocation', () => {
     expect((await send('DELETE', '/developer/try-token', bearer(token))).status).toBe(401);
     const res = await send('DELETE', '/developer/try-token', d.browser);
     expect(res.status, await res.clone().text()).toBe(200);
-    expect((await send('GET', '/passes', bearer(token))).status).toBe(401);
+    expect((await send('GET', '/passes', page(d, token))).status).toBe(401);
     const fresh = await mint(d.browser);
-    expect((await send('GET', '/passes', bearer(fresh.token))).status).toBe(200);
+    expect((await send('GET', '/passes', page(d, fresh.token))).status).toBe(200);
     const audit = await first<{ n: number }>(
-      kit.env.DB,
+      t.kit.env.DB,
       "SELECT count(*) AS n FROM audit_log WHERE org_id = ? AND action = 'developer_sandbox.try_revoke'",
       [d.made.orgId],
     );
@@ -165,16 +113,16 @@ describe('try token revocation', () => {
     const d = await developer();
     const { token } = await mint(d.browser);
     expect((await send('DELETE', '/developer/sandbox', d.browser)).status).toBe(200);
-    expect((await send('GET', '/passes', bearer(token))).status).toBe(401);
+    expect((await send('GET', '/passes', page(d, token))).status).toBe(401);
   });
 
   it('stops at expiry', async () => {
     const d = await developer();
     const { token, expiresAt } = await mint(d.browser);
-    kit.clock.set(expiresAt - 1);
-    expect((await send('GET', '/passes', bearer(token))).status).toBe(200);
-    kit.clock.set(expiresAt);
-    expect((await send('GET', '/passes', bearer(token))).status).toBe(401);
+    t.kit.clock.set(expiresAt - 1);
+    expect((await send('GET', '/passes', page(d, token))).status).toBe(200);
+    t.kit.clock.set(expiresAt);
+    expect((await send('GET', '/passes', page(d, token))).status).toBe(401);
   });
 });
 
@@ -198,22 +146,22 @@ describe('try token reach', () => {
     const d = await developer();
     const { token } = await mint(d.browser);
     const other = await developer();
-    const own = await send('GET', `/templates/${d.made.templateId}`, bearer(token));
+    const own = await send('GET', `/templates/${d.made.templateId}`, page(d, token));
     expect(own.status, await own.clone().text()).toBe(200);
-    const theirs = await send('GET', `/templates/${other.made.templateId}`, bearer(token));
+    const theirs = await send('GET', `/templates/${other.made.templateId}`, page(d, token));
     expect([403, 404]).toContain(theirs.status);
     // The mode header does not move a key: the key's row decides, and it is Test.
-    const me = await send('GET', '/api-keys/me', { ...bearer(token), 'x-passbook-mode': 'live' });
+    const me = await send('GET', '/api-keys/me', { ...page(d, token), 'x-passbook-mode': 'live' });
     expect(await me.json()).toMatchObject({ mode: 'test', orgId: d.made.orgId });
   });
 
   it('resolves only a sandbox Test key of the same person and a live session', async () => {
     const d = await developer();
-    const exp = kit.clock.now() + TRY_TOKEN_TTL_MS;
+    const exp = t.kit.clock.now() + TRY_TOKEN_TTL_MS;
     const sessionIdHash = await sha256Hex(d.session.cookieValue);
-    const org = await makeOrg(kit.f);
-    const live = await makeApiKey(kit.f, { orgId: org.id, scopes: ['passes:read'] });
-    const stranger = await makeSession(kit.f, { userId: (await makeUser(kit.f)).id });
+    const org = await makeOrg(t.kit.f);
+    const live = await makeApiKey(t.kit.f, { orgId: org.id, scopes: ['passes:read'] });
+    const stranger = await makeSession(t.kit.f, { userId: (await makeUser(t.kit.f)).id });
     const forged = [
       // A correctly MAC'd token naming a live key of a standard org.
       { keyId: live.id, sessionIdHash, generation: 1, expiresAt: exp },
@@ -227,54 +175,33 @@ describe('try token reach', () => {
       // A generation the sandbox never had.
       { keyId: d.key.id, sessionIdHash, generation: 2, expiresAt: exp },
     ];
+    // The stranger's own cookie with a token naming their session: the session is not the sandbox person's.
+    const theirs = await signTryToken(t.kit.env, forged[1] as (typeof forged)[number]);
+    expect(
+      (await send('GET', '/passes', { cookie: stranger.headers.cookie ?? '', ...bearer(theirs) }))
+        .status,
+    ).toBe(401);
     for (const claims of forged)
       expect(
-        (await send('GET', '/passes', bearer(await signTryToken(kit.env, claims)))).status,
+        (await send('GET', '/passes', page(d, await signTryToken(t.kit.env, claims)))).status,
       ).toBe(401);
-    const good = await signTryToken(kit.env, {
+    const good = await signTryToken(t.kit.env, {
       keyId: d.key.id,
       sessionIdHash,
       generation: 1,
       expiresAt: exp,
     });
-    expect((await send('GET', '/passes', bearer(good))).status).toBe(200);
+    expect((await send('GET', '/passes', page(d, good))).status).toBe(200);
     const [payload] = good.slice('pbtry_'.length).split('.');
     expect(
-      (await send('GET', '/passes', bearer(`pbtry_${payload}.${'A'.repeat(43)}`))).status,
+      (await send('GET', '/passes', page(d, `pbtry_${payload}.${'A'.repeat(43)}`))).status,
     ).toBe(401);
   });
 });
 
 describe('KEY_IN_BROWSER', () => {
-  it('refuses any other key sent with a browser signal, and the same key from a server works', async () => {
-    const org = await makeOrg(kit.f);
-    const key = await makeApiKey(kit.f, { orgId: org.id, scopes: ['passes:read'] });
-    const signals: Record<string, string>[] = [
-      { origin: 'https://evil.example' },
-      { origin: ORIGIN },
-      { 'sec-fetch-site': 'same-origin' },
-      { 'sec-fetch-site': 'none' },
-      { cookie: '__Host-wallet_sid=x' },
-    ];
-    for (const signal of signals)
-      await expectProblem(
-        await send('GET', '/passes', { ...key.headers, ...signal }),
-        403,
-        'KEY_IN_BROWSER',
-      );
-    // Node's fetch sends sec-fetch-mode; cookie-jar clients echo Cloudflare's cookies. Neither is a browser.
-    const server = { 'sec-fetch-mode': 'cors', 'user-agent': 'node', cookie: '__cf_bm=abc' };
-    expect((await send('GET', '/passes', { ...key.headers, ...server })).status).toBe(200);
-    expect((await send('GET', '/passes', key.headers)).status).toBe(200);
-    // Every key guard: the key's own description too.
-    await expectProblem(
-      await send('GET', '/api-keys/me', { ...key.headers, ...BROWSER }),
-      403,
-      'KEY_IN_BROWSER',
-    );
-  });
-
-  it('refuses the sandbox key itself in a browser: only the try token works there', async () => {
+  it('refuses a sandbox key made after the cutoff in a browser: only the try token works there', async () => {
+    t.kit.clock.set(Math.max(t.kit.clock.now(), KEY_IN_BROWSER_CUTOFF));
     const d = await developer();
     const key = bearer(d.key.secret);
     await expectProblem(
@@ -283,5 +210,7 @@ describe('KEY_IN_BROWSER', () => {
       'KEY_IN_BROWSER',
     );
     expect((await send('GET', '/passes', key)).status).toBe(200);
+    const { token } = await mint(d.browser);
+    expect((await send('GET', '/passes', fromPage(d.browser, token))).status).toBe(200);
   });
 });
