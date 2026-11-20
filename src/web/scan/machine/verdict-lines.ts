@@ -13,8 +13,9 @@ import {
 import { headlineValues } from '../../../shared/copy/scan-headline.ts';
 import {
   formatCount,
-  formatDateTime,
+  formatDay,
   formatMoney,
+  formatShortDate,
   formatTime,
   formatWeekday,
 } from '../../lib/format.ts';
@@ -31,6 +32,14 @@ function shown(value: Value, n: unknown): string {
     return value.format === 'currency' ? formatMoney(n, value.currency ?? null) : formatCount(n);
   if (typeof n === 'string') return n;
   return n === null || n === undefined ? '' : JSON.stringify(n);
+}
+
+/** A date as a sub says it: no year inside the current one, no time of day. */
+export function subDate(at: number | null | undefined, now: number): string {
+  if (!at) return 'Never';
+  return new Date(at).getFullYear() === new Date(now).getFullYear()
+    ? formatShortDate(at)
+    : formatDay(at);
 }
 
 /** The channel as staff say it: a paper copy is a printed ticket. */
@@ -53,7 +62,7 @@ export function lineValues(o: ScanOutcome, now: number): Values {
           : o.at
             ? formatWeekday(o.at)
             : '',
-    date: formatDateTime(o.at),
+    date: subDate(o.at, now),
     time: o.at ? formatTime(o.at, o.admit?.timeZone) : '',
     ago: o.previous ? agoText(Math.max(0, now - o.previous.at)) : '',
     scanner: o.previous?.scannerName ?? (o.reason === 'still_inside' ? 'Entry recorded' : ''),
@@ -83,7 +92,7 @@ export function lineValues(o: ScanOutcome, now: number): Values {
 }
 
 /** The reason's copy, or the variant for a reason whose outcome lacks what the main line names. */
-function pick(o: ScanOutcome, desk: boolean): ScanLine | null {
+function pick(o: ScanOutcome, desk: boolean, short: boolean): ScanLine | null {
   const reason = o.reason;
   if (!reason) return null;
   const line = SCAN_REASON_COPY[reason];
@@ -94,6 +103,8 @@ function pick(o: ScanOutcome, desk: boolean): ScanLine | null {
     return { ...line, sub: v.check_required.typedNumber };
   if (reason === 'needs_approval' && desk) return v.needs_approval;
   if (reason === 'already_done' && !o.previous) return { ...line, sub: v.already_done.noPrevious };
+  // The glance card's note carries the instruction; the sub says when and where.
+  if (reason === 'already_done' && short) return { ...line, sub: v.already_done.short };
   if (reason === 'wrong_event' && !o.event) return { ...line, sub: v.wrong_event.noEvent };
   if (reason === 'not_yet_valid' && !o.at && !o.event)
     return { ...line, sub: v.not_yet_valid.noWhen };
@@ -126,7 +137,7 @@ function pick(o: ScanOutcome, desk: boolean): ScanLine | null {
 export function verdictLine(
   o: ScanOutcome,
   now: number,
-  opts: { desk?: boolean; group?: boolean } = {},
+  opts: { desk?: boolean; group?: boolean; short?: boolean } = {},
 ): ScanLine | null {
   // A handheld names the group on an ok card: who is in, and after Check in more, how many it added.
   const group = opts.group && o.kind === 'ok' ? groupView(o) : null;
@@ -135,7 +146,7 @@ export function verdictLine(
       headline: group.done ? groupHeadline(group) : SCAN_COPY.verdict.checkedIn,
       sub: groupSub(group),
     };
-  const line = pick(o, opts.desk === true);
+  const line = pick(o, opts.desk === true, opts.short === true);
   if (!line) return null;
   const values = lineValues(o, now);
   return { headline: scanLine(line.headline, values), sub: scanLine(line.sub, values) };

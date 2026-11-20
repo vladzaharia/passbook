@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import { SCAN_COPY } from '../../shared/copy/scan.ts';
 import { PHONE, useMediaQuery } from '../lib/media.ts';
@@ -10,9 +10,10 @@ import { ScanAppView } from './app.tsx';
 import { useTagUi } from './assign/use-tag-ui.tsx';
 import { needsSessionRefetch } from './boot/use-scan-session.ts';
 import { LoopMenu } from './loop-menu.tsx';
-import { loopScreen } from './loop-screen.ts';
+import { capsuleStateOf, loopScreen, tintDismisses } from './loop-screen.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { useScanMachine } from './machine/use-scan-machine.ts';
+import { LazyOperatorPanel } from './operator/lazy-operator-panel.tsx';
 import type { ScanRuntime } from './platform/runtime.ts';
 import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { useNativeCapabilities } from './platform/use-native-capabilities.ts';
@@ -34,10 +35,6 @@ import { dockStrip } from './ui/strip-of.ts';
 import { useAccessUi } from './ui/use-access-ui.tsx';
 import { useOfflineSince } from './ui/use-offline-since.ts';
 import './buddy/beats.css';
-
-const OperatorPanel = lazy(() =>
-  import('./operator/operator-panel.tsx').then((m) => ({ default: m.OperatorPanel })),
-);
 
 export function ScanLoop({
   runtime,
@@ -141,7 +138,19 @@ export function ScanLoop({
   const lastUndo = last?.scanId && last.undoable && (last.outcome.undoUntil ?? 0) > now;
   const menu = (
     <LoopMenu
-      {...{ s, session, api, runtime, tags, dispatch, refetch, leave, operator, duoLayout }}
+      {...{
+        s,
+        session,
+        api,
+        runtime,
+        tags,
+        dispatch,
+        refetch,
+        leave,
+        operator,
+        duoLayout,
+        handheld,
+      }}
       {...{ readerUsable, cameraChoice, setCameraChoice, setCameraError, showPanel }}
     />
   );
@@ -152,11 +161,7 @@ export function ScanLoop({
         surface={duoLayout ? 'duo' : operator ? 'operator' : 'phone'}
         layout={nativeCapabilities?.layout}
         sidebar={
-          operatorPane ? (
-            <Suspense fallback={null}>
-              <OperatorPanel api={api} runtime={runtime} session={session} />
-            </Suspense>
-          ) : null
+          operatorPane ? <LazyOperatorPanel api={api} runtime={runtime} session={session} /> : null
         }
         screen={loopScreen(session, s.started)}
         capsule={{
@@ -168,13 +173,7 @@ export function ScanLoop({
           ...(handheld && access.direction
             ? { direction: SCAN_COPY.direction[access.direction.value] }
             : {}),
-          state: !s.online
-            ? 'offline'
-            : l.s === 'checking' || l.s === 'applying'
-              ? 'checking'
-              : l.s === 'paused'
-                ? 'paused'
-                : 'scanning',
+          state: capsuleStateOf(s.online, l.s),
           menu,
           onTitle: () => showPanel('shift'),
           chips: (
@@ -243,13 +242,8 @@ export function ScanLoop({
           ) : null
         }
         tint={tags.tint ?? view.tint}
-        {...(handheld &&
-        result &&
-        result.kind !== 'ready' &&
-        // A hold waiting for a manager stays until Done or the PIN, not until a stray tap.
-        result.reason !== 'needs_approval' &&
-        !s.overlay &&
-        !tags.card
+        look={{ sun: handheld && s.prefs.sunlight, leftHand: handheld && s.prefs.leftHand }}
+        {...(tintDismisses(handheld, result, Boolean(s.overlay || tags.card))
           ? { onTint: () => dispatch({ type: 'dismiss' }) }
           : {})}
         buddy={

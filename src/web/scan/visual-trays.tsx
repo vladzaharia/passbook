@@ -9,7 +9,9 @@ import { ScanPreviewScreen } from './preview-screen.tsx';
 import type { DockApproval } from './ui/approval-dock.tsx';
 import { MenuTrigger } from './ui/capsule.tsx';
 import { CountChip } from './ui/chips.tsx';
+import { ScanMenu } from './ui/scan-menu.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
+import { lookFromUrl } from './visual-handheld.ts';
 
 export const TRAY_CASES = [
   'enter',
@@ -24,6 +26,7 @@ export const TRAY_CASES = [
   'pin-code',
   'pin-nobody',
   'pin-approved',
+  'menu',
 ] as const;
 export type TrayCase = (typeof TRAY_CASES)[number];
 
@@ -67,6 +70,34 @@ const MANAGERS = [
   { id: 'm3', name: 'Tomas Weber', role: 'manager' },
 ];
 
+/** The scanner menu open, with the handheld's settings as a phone shows them. */
+function OpenMenu() {
+  const [look, setLook] = useState(lookFromUrl);
+  return (
+    <ScanMenu
+      sound
+      onSound={() => undefined}
+      holdResults={false}
+      onHoldResults={() => undefined}
+      camera="back"
+      onCamera={() => undefined}
+      onShift={() => undefined}
+      onEndShift={() => undefined}
+      leave="unpair"
+      onLeave={() => undefined}
+      canSwitchStaff
+      open
+      handheld={{
+        sunlight: look.sun,
+        leftHand: look.leftHand,
+        onSunlight: (sun) => setLook({ ...look, sun }),
+        onLeftHand: (leftHand) => setLook({ ...look, leftHand }),
+        canBuzz: new URLSearchParams(location.search).get('buzz') !== '0',
+      }}
+    />
+  );
+}
+
 export function TrayVisual({ tray }: { tray: TrayCase }) {
   const base = SCAN_VISUAL_CASES[0]?.outcome;
   const handheld = useMediaQuery(PHONE);
@@ -96,13 +127,14 @@ export function TrayVisual({ tray }: { tray: TrayCase }) {
   const approved = tray === 'pin-approved';
   return (
     <ScanPreviewScreen
-      outcome={enter || approved ? base : outcome}
+      outcome={tray === 'menu' ? null : enter || approved ? base : outcome}
       {...(approved ? { approvedBy: 'Maya R.' } : {})}
       density={handheld ? 'glance' : 'full'}
       clock={FIXTURE_NOW}
-      tint={enter ? 'none' : approved ? 'green' : 'amber'}
+      tint={enter || tray === 'menu' ? 'none' : approved ? 'green' : 'amber'}
       chips={<CountChip count={312} capacity={500} />}
-      menu={<MenuTrigger />}
+      look={lookFromUrl()}
+      menu={tray === 'menu' ? <OpenMenu /> : <MenuTrigger />}
       approval={handheld ? approval : undefined}
     >
       {enter ? (

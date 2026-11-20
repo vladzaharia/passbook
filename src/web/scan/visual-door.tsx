@@ -18,7 +18,7 @@ import { MenuTrigger } from './ui/capsule.tsx';
 import { CountChip, SyncChip } from './ui/chips.tsx';
 import { ShiftSheet } from './ui/shift-sheet.tsx';
 import { dockStrip } from './ui/strip-of.ts';
-import { recentRows, TINT } from './visual-handheld.ts';
+import { lookFromUrl, recentRows, TINT } from './visual-handheld.ts';
 
 export const DOOR_CASES = [
   'ready',
@@ -258,6 +258,7 @@ export function DoorVisual({ scenario }: { scenario: DoorCase }) {
       strip={strip}
       recent={recentRows(false)}
       clock={NOW}
+      look={lookFromUrl()}
       tint={outcome ? (TINT[outcome.kind === 'queued' ? 'ok' : outcome.kind] ?? 'none') : 'none'}
     >
       {scenario === 'queue-sheet' || scenario.startsWith('shift') ? (

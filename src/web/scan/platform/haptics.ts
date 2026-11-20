@@ -1,14 +1,26 @@
 import { getNativeCapabilities } from './native-capabilities.ts';
 
-/** SA-14: one short pulse for ok, two for a heads-up, three for a refusal. Milliseconds on, off, on... */
+/** SA-14: one short pulse for ok, two for a heads-up, three for a refusal, one long one for a system verdict. Milliseconds on, off, on... */
 export const HAPTIC_PATTERNS = {
   ok: [40],
   heads_up: [40, 70, 40],
   refused: [40, 70, 40, 70, 40],
+  system: [200],
 } as const;
 
 interface Bridge {
   postMessage(message: string): void;
+}
+
+/** Whether this device can buzz at all: a native shell that plays the op, or the Vibration API (not iOS Safari). */
+export function canBuzz(
+  bridge = (globalThis as { PassBookNative?: Bridge }).PassBookNative,
+  nav: Pick<Navigator, 'vibrate'> | undefined = typeof navigator === 'undefined'
+    ? undefined
+    : navigator,
+  native: boolean = getNativeCapabilities()?.haptics === true,
+): boolean {
+  return Boolean(bridge && native) || typeof nav?.vibrate === 'function';
 }
 
 /**

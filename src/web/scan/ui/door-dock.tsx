@@ -8,8 +8,8 @@ import { groupAction } from '../machine/group-view.ts';
 import type { ScanOutcome } from '../machine/types.ts';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
 import type { ScanRuntime } from '../platform/runtime.ts';
-import { DirectionButton } from './direction-button.tsx';
 import { ApprovalDock, type DockApproval } from './approval-dock.tsx';
+import { DirectionButton } from './direction-button.tsx';
 import { DockButton, DoorThumbRow } from './dock.tsx';
 import { GroupDock } from './group-dock.tsx';
 

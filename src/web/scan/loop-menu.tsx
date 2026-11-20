@@ -4,6 +4,8 @@ import type { ScanApi } from './api/scan-api.ts';
 import type { useTagUi } from './assign/use-tag-ui.tsx';
 import type { MachineEvent } from './machine/access-events.ts';
 import type { ScanState } from './machine/types.ts';
+import { saveDevicePref } from './platform/device-prefs.ts';
+import { canBuzz } from './platform/haptics.ts';
 import type { ScanRuntime } from './platform/runtime.ts';
 import { modeLabel } from './ui/mode-label.ts';
 import { type CameraChoice, ScanMenu } from './ui/scan-menu.tsx';
@@ -21,6 +23,7 @@ export function LoopMenu(p: {
   leave: () => void;
   operator: boolean;
   duoLayout: boolean;
+  handheld: boolean;
   readerUsable: boolean;
   cameraChoice: CameraChoice;
   setCameraChoice: (choice: CameraChoice) => void;
@@ -28,12 +31,27 @@ export function LoopMenu(p: {
   showPanel: (panel: ScanPanel) => void;
 }) {
   const { s, session, api, runtime, dispatch, refetch } = p;
+  const setPref = (key: 'sunlight' | 'leftHand', value: boolean) => {
+    saveDevicePref(key, value);
+    dispatch({ type: 'prefs', prefs: { [key]: value } });
+  };
   return (
     <ScanMenu
       sound={s.prefs.sound}
       onSound={(value) => dispatch({ type: 'prefs', prefs: { sound: value } })}
       holdResults={s.prefs.holdResults}
       onHoldResults={(value) => dispatch({ type: 'prefs', prefs: { holdResults: value } })}
+      {...(p.handheld
+        ? {
+            handheld: {
+              sunlight: s.prefs.sunlight,
+              leftHand: s.prefs.leftHand,
+              onSunlight: (value: boolean) => setPref('sunlight', value),
+              onLeftHand: (value: boolean) => setPref('leftHand', value),
+              canBuzz: canBuzz(),
+            },
+          }
+        : {})}
       camera={p.cameraChoice}
       cameraAvailable={!p.operator || p.duoLayout}
       canSwitchStaff={Boolean(session.staff)}

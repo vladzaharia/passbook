@@ -1,6 +1,7 @@
 import * as Primitive from '@radix-ui/react-dropdown-menu';
 import {
   Activity,
+  ArrowLeftRight,
   BookOpen,
   CameraOff,
   Check,
@@ -8,6 +9,7 @@ import {
   LogOut,
   MonitorSmartphone,
   Nfc,
+  Sun,
   Timer,
   Unplug,
   UserRoundCog,
@@ -15,6 +17,7 @@ import {
 } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useState } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
+import { SCAN_HANDHELD_COPY } from '../../../shared/copy/scan-handheld.ts';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import {
   DropdownMenu,
@@ -80,6 +83,14 @@ export interface ScanMenuProps {
   onSound: (v: boolean) => void;
   holdResults: boolean;
   onHoldResults: (v: boolean) => void;
+  /** A handheld: its own settings, and a note when the device cannot buzz. */
+  handheld?: {
+    sunlight: boolean;
+    onSunlight: (v: boolean) => void;
+    leftHand: boolean;
+    onLeftHand: (v: boolean) => void;
+    canBuzz: boolean;
+  };
   camera: CameraChoice;
   cameraAvailable?: boolean;
   hasWide?: boolean;
@@ -140,6 +151,11 @@ export function ScanMenu(p: ScanMenuProps) {
           ) : null}
           <CheckItem icon={<Volume2 aria-hidden />} checked={p.sound} onCheckedChange={p.onSound}>
             Sound
+            {p.handheld && !p.handheld.canBuzz ? (
+              <span className="block text-sm text-fg-muted">
+                {SCAN_HANDHELD_COPY.menu.noVibration}
+              </span>
+            ) : null}
           </CheckItem>
           <CheckItem
             icon={<Hand aria-hidden />}
@@ -148,6 +164,24 @@ export function ScanMenu(p: ScanMenuProps) {
           >
             Keep results until tapped
           </CheckItem>
+          {p.handheld ? (
+            <>
+              <CheckItem
+                icon={<Sun aria-hidden />}
+                checked={p.handheld.sunlight}
+                onCheckedChange={p.handheld.onSunlight}
+              >
+                {SCAN_HANDHELD_COPY.menu.sunlight}
+              </CheckItem>
+              <CheckItem
+                icon={<ArrowLeftRight aria-hidden />}
+                checked={p.handheld.leftHand}
+                onCheckedChange={p.handheld.onLeftHand}
+              >
+                {SCAN_HANDHELD_COPY.menu.leftHand}
+              </CheckItem>
+            </>
+          ) : null}
           <DropdownMenuSeparator />
           {p.cameraAvailable !== false ? (
             <>

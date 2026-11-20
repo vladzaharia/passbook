@@ -5,6 +5,11 @@ export const SCAN_HANDHELD_COPY = {
   why: 'Why',
   aimOut: 'Point at the code to check out',
   details: 'Details',
+  menu: {
+    sunlight: 'Sunlight mode',
+    leftHand: 'Left hand',
+    noVibration: 'Vibration needs the PassBook app.',
+  },
   sheet: {
     thisPass: 'This pass',
     recent: 'Recent scans',

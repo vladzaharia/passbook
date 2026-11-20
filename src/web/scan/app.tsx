@@ -8,7 +8,7 @@ import { Capsule, type CapsuleState } from './ui/capsule.tsx';
 import { Dock } from './ui/dock.tsx';
 import { LastScanStrip, type StripEntry } from './ui/last-scan-strip.tsx';
 import type { Announcement } from './ui/live-announcer.tsx';
-import { ScanShell } from './ui/scan-shell.tsx';
+import { ScanShell, type ScanShellProps } from './ui/scan-shell.tsx';
 import { StartPanel, type StartPanelProps } from './ui/start-panel.tsx';
 import type { Tint } from './ui/verdict-tint.tsx';
 
@@ -53,6 +53,8 @@ export interface ScanAppViewProps {
   card?: ReactNode;
   buddy?: ReactNode;
   tint?: Tint;
+  /** A handheld's own look: sunlight mode, and the thumb row mirrored. */
+  look?: ScanShellProps['look'];
   /** A tap on the tint outside the card dismisses the verdict. */
   onTint?: () => void;
   announcement?: Announcement | null;
@@ -87,6 +89,7 @@ export function ScanAppView({
   card,
   buddy,
   tint = 'none',
+  look,
   onTint,
   announcement = null,
   branding,
@@ -130,6 +133,7 @@ export function ScanAppView({
       sidebar={screen.s === 'loop' ? sidebar : null}
       camera={screen.s === 'loop' ? camera : null}
       tint={tint}
+      look={look}
       {...(onTint ? { onTint } : {})}
       cardMode={screen.s === 'loop' ? 'result' : 'boot'}
       card={body}

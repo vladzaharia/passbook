@@ -159,7 +159,7 @@ export interface ScanState {
   /** At most 20, newest first. */
   recent: Recent[];
   counts: Counts | null;
-  prefs: { holdResults: boolean; sound: boolean };
+  prefs: { holdResults: boolean; sound: boolean; sunlight: boolean; leftHand: boolean };
   lastActivity: number;
 }
 
