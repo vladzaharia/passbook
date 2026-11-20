@@ -12,11 +12,11 @@ import { type ReactNode, useEffect, useRef } from 'react';
 import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
-import { formatTime } from '../../lib/format.ts';
 import { Buddy } from '../../ui/art/index.ts';
 import '../buddy/beats.css';
 import { fill } from '../ui/copy.ts';
 import './monitor-board.css';
+import { sessionTime } from '../ui/session-time.ts';
 import type { MonitorBeat } from './monitor-beat.ts';
 import { LetInButton, type OverrideNote, WhyChips } from './monitor-desk.tsx';
 import {
@@ -174,7 +174,7 @@ export function MonitorBoard({
                       <span className="mon-row-name">{row.holder ?? row.label}</span>
                       {row.holder ? <span className="mon-row-what">{row.label}</span> : null}
                       <span className="mon-row-meta">
-                        {row.scannerName} · {formatTime(row.at, timeZone)}
+                        {row.scannerName} · {sessionTime(row.at, timeZone)}
                       </span>
                       {row.scanId && resolved.has(row.scanId) ? (
                         <span className="mon-row-resolved">

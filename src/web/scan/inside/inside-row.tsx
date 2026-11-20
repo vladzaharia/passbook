@@ -1,12 +1,12 @@
 import { Clock, LogOut } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
-import { formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
 import { EntityAvatar } from '../../ui/entity.tsx';
 import { stayText } from '../machine/access-view.ts';
 import { fill } from '../ui/copy.ts';
 import { ACCESS_COPY } from '../ui/copy-access.ts';
+import { sessionTime } from '../ui/session-time.ts';
 import { flagged } from './inside-model.ts';
 import type { InsideRow } from './inside-types.ts';
 
@@ -19,7 +19,7 @@ const FLAG_TEXT = {
 export function metaOf(row: InsideRow, now: number): string {
   return [
     [row.zone.name, row.zone.parent].filter(Boolean).join(', '),
-    `In since ${formatTime(row.since)}`,
+    `In since ${sessionTime(row.since)}`,
     stayText(Math.max(0, now - row.since)),
   ].join(' · ');
 }
@@ -78,7 +78,7 @@ export function InsideRowView({
           {row.dueAt ? (
             <span className="scan-in-meta scan-in-due">
               <Clock aria-hidden size={12} />
-              {fill(ACCESS_COPY.inside.outBy, { time: formatTime(row.dueAt) })}
+              {fill(ACCESS_COPY.inside.outBy, { time: sessionTime(row.dueAt) })}
             </span>
           ) : null}
         </span>
