@@ -3,9 +3,10 @@
  * the print page (web/paper/ticket.tsx). Text is Rubik and JetBrains Mono embedded as subsets, so it
  * stays real, selectable text; characters those fonts lack become "?" and are reported once.
  */
-import { PDFDocument, type PDFImage } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import { PAPER_SPECS, type PaperDesign } from '../../../passkit/template/paper.ts';
 import type { PaperContent } from '../../../passkit/template/paper-content.ts';
+import { COUPON_BAND } from '../../../passkit/template/paper-geometry.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
 import { drawPaperCode } from '../../../web/paper/drawing.ts';
 import type { Issued } from '../../../web/paper/ticket-text.ts';
@@ -14,10 +15,11 @@ import { drawFull } from './pdf-draw-full.ts';
 import { drawCoupon, drawPermit } from './pdf-draw-small.ts';
 import { type AssetSource, embedFonts, type PdfFonts } from './pdf-fonts.ts';
 import { Pen } from './pdf-kit.ts';
+import { embedPixels, type PdfPicture, type PictureFit, readPng } from './pdf-png.ts';
 import type { PdfImages, Sheet } from './pdf-sheet.ts';
 
 /** Part of every cache fingerprint: bump it when the drawing changes. */
-export const PDF_RENDER_VERSION = 'pt4-1';
+export const PDF_RENDER_VERSION = 'pt4-2';
 
 /** A PNG a sheet draws, with an id that names its content (an etag). */
 export interface ImageSource {
@@ -40,8 +42,20 @@ export interface RenderOptions {
   assets: AssetSource;
   /** Called once when a character could not be drawn. */
   onLossy?: () => void;
-  /** Called with the image id when a PNG cannot be embedded. */
-  onImageError?: (id: string) => void;
+  /** Called with the image id when a PNG is left out: `invalid` (not drawable) or `limit` (too many images). */
+  onImageError?: (id: string, reason: 'invalid' | 'limit') => void;
+}
+
+/** Distinct images one PDF embeds: each costs a decode, and a bulk of 50 must stay inside the CPU budget. */
+export const MAX_DISTINCT_IMAGES = 12;
+
+/** The box an image fills on this sheet, for the print resolution it needs. */
+function fitOf(sheet: PrintSheet, role: 'logo' | 'art'): PictureFit {
+  const { design, content } = sheet;
+  if (role === 'logo') return { wMm: 24, hMm: 20, mode: 'contain' };
+  if (design.size === 'cr80') return { wMm: 85.6, hMm: 54, mode: 'cover' };
+  if (content.kind === 'coupon') return { wMm: 189, hMm: COUPON_BAND, mode: 'cover' };
+  return { wMm: (PAPER_SPECS[design.size].widthMm - 16) / 2, hMm: 44, mode: 'cover' };
 }
 
 function drawSheet(doc: PDFDocument, fonts: PdfFonts, sheet: Sheet, state: { lossy: boolean }) {
@@ -65,24 +79,28 @@ export async function renderPdf(
   const doc = await PDFDocument.create({ updateMetadata: false });
   const fonts = await embedFonts(doc, options.assets);
   const state = { lossy: false };
-  const embedded = new Map<string, PDFImage | undefined>();
-  const embed = async (src: ImageSource | undefined): Promise<PDFImage | undefined> => {
+  const embedded = new Map<string, PdfPicture | undefined>();
+  let distinct = 0;
+  const embed = (src: ImageSource | undefined, fit: PictureFit): PdfPicture | undefined => {
     if (!src) return undefined;
-    if (!embedded.has(src.id)) {
-      try {
-        embedded.set(src.id, await doc.embedPng(src.bytes));
-      } catch {
-        // A file that is not a PNG is left out; the caller logs it.
-        embedded.set(src.id, undefined);
-        options.onImageError?.(src.id);
-      }
+    const key = `${src.id}|${fit.mode}|${Math.round(fit.wMm)}x${Math.round(fit.hMm)}`;
+    if (embedded.has(key)) return embedded.get(key);
+    let picture: PdfPicture | undefined;
+    if (distinct >= MAX_DISTINCT_IMAGES) options.onImageError?.(src.id, 'limit');
+    else {
+      distinct++;
+      // Bounded decode: a refused file (animated, oversized, a bomb) is drawn without.
+      const pixels = readPng(src.bytes, fit);
+      if (pixels) picture = embedPixels(doc, pixels);
+      else options.onImageError?.(src.id, 'invalid');
     }
-    return embedded.get(src.id);
+    embedded.set(key, picture);
+    return picture;
   };
   for (const s of sheets) {
     const images: PdfImages = {};
-    const logo = await embed(s.images?.logo);
-    const art = await embed(s.images?.art);
+    const logo = embed(s.images?.logo, fitOf(s, 'logo'));
+    const art = embed(s.images?.art, fitOf(s, 'art'));
     if (logo) images.logo = logo;
     if (art) images.art = art;
     drawSheet(

@@ -36,7 +36,7 @@ export const FULL_PARTS = {
 } as const;
 export const HALF_FOOT = 12;
 /** The coupon's colour band; the offer and the code sit under it. */
-const COUPON_BAND = 50;
+export const COUPON_BAND = 50;
 
 export interface PaperBoxes {
   page: Box;

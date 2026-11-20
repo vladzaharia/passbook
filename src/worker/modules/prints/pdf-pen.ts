@@ -7,12 +7,13 @@ import {
   type Color,
   clip,
   closePath,
+  concatTransformationMatrix,
+  drawObject,
   endPath,
   fill,
   fillAndStroke,
   grayscale,
   LineCapStyle,
-  type PDFImage,
   type PDFName,
   type PDFOperator,
   type PDFPage,
@@ -32,6 +33,7 @@ import {
 } from 'pdf-lib';
 import type { FontKey, PdfFonts } from './pdf-fonts.ts';
 import { gstate } from './pdf-gstate.ts';
+import type { PdfPicture } from './pdf-png.ts';
 
 export const PT = 72 / 25.4;
 export const COLORS = {
@@ -258,18 +260,17 @@ export class PenBase {
 
   // Images
 
-  image(img: PDFImage, b: Box, opacity = 1) {
-    this.page.drawImage(img, {
-      x: this.px(b.x),
-      y: this.py(b.y + b.h),
-      width: b.w * PT,
-      height: b.h * PT,
-      ...(opacity < 1 ? { opacity } : {}),
-    });
+  image(img: PdfPicture, b: Box, opacity = 1) {
+    const name = this.page.node.newXObject('Img', img.ref);
+    this.save(
+      () => this.ops(drawObject(name)),
+      concatTransformationMatrix(b.w * PT, 0, 0, b.h * PT, this.px(b.x), this.py(b.y + b.h)),
+      ...(opacity < 1 ? [this.alpha(opacity)] : []),
+    );
   }
 
   /** `object-fit: cover` into a box, positioned by fractions (0 left/top, 1 right/bottom). */
-  cover(img: PDFImage, b: Box, posX = 0.5, posY = 0.5, opacity = 1) {
+  cover(img: PdfPicture, b: Box, posX = 0.5, posY = 0.5, opacity = 1) {
     const s = Math.max(b.w / img.width, b.h / img.height);
     const w = img.width * s;
     const h = img.height * s;
@@ -279,7 +280,7 @@ export class PenBase {
   }
 
   /** `object-fit: contain`, centred in the box. */
-  contain(img: PDFImage, b: Box) {
+  contain(img: PdfPicture, b: Box) {
     const s = Math.min(b.w / img.width, b.h / img.height);
     const w = img.width * s;
     const h = img.height * s;

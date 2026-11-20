@@ -5,11 +5,14 @@ import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
 import { drawPaperCode } from '../../../web/paper/drawing.ts';
 import { TINY_PNG } from '../passes/pass-test-fixtures.ts';
 import { pdfFingerprint } from './pdf-cache.ts';
+import { makePng } from './pdf-png-fixtures.ts';
 import { codeShapes, pdfText, rasterize, readPdf } from './pdf-read.ts';
 import { renderPdf } from './pdf-render.ts';
 import { SAMPLE_CODE, sheet } from './pdf-render-fixtures.ts';
 
 const PT = 72 / 25.4;
+const LOGO = makePng({ width: 8, height: 8 });
+const ART = makePng({ width: 16, height: 8 });
 const render = (...sheets: Parameters<typeof renderPdf>[0]) =>
   renderPdf(sheets, { assets: env.ASSETS });
 
@@ -159,12 +162,12 @@ describe('ink', () => {
   it('embeds the logo and art once per image', async () => {
     const bytes = await render(
       sheet('admission', 'a4', {
-        images: { logo: { id: 'logo', bytes: TINY_PNG }, art: { id: 'art', bytes: TINY_PNG } },
+        images: { logo: { id: 'logo', bytes: LOGO }, art: { id: 'art', bytes: ART } },
       }),
-      sheet('admission', 'a4', { images: { logo: { id: 'logo', bytes: TINY_PNG } } }),
+      sheet('admission', 'a4', { images: { logo: { id: 'logo', bytes: LOGO } } }),
     );
     const pages = await readPdf(bytes);
-    expect(pages[0]?.content).toMatch(/\/Image\S* Do/);
+    expect(pages[0]?.content).toMatch(/\/Img\S* Do/);
     // Two PNGs with alpha: an image and its soft mask each, the shared logo embedded once.
     expect(new TextDecoder('latin1').decode(bytes).match(/\/Subtype \/Image/g)?.length).toBe(4);
   });

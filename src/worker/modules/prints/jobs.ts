@@ -4,7 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { readStoredBulk, writeBulkStatus } from './bulk-status.ts';
 import { printPageModel } from './page.ts';
-import { type ImageCache, loadImages } from './pdf-images.ts';
+import { type ImageCache, loadImages, logImageProblem } from './pdf-images.ts';
 import { type PrintSheet, renderPdf } from './pdf-render.ts';
 import { sheetOf } from './pdf-service.ts';
 import { bulkKey, putPdf } from './pdf-store.ts';
@@ -67,8 +67,7 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
       lossy = true;
       ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' });
     },
-    onImageError: () =>
-      ctx.log.warn('prints.pdf_image_invalid', { code: 'PRINT_PDF_IMAGE_INVALID' }),
+    onImageError: logImageProblem(ctx),
   });
   const key = bulkKey(job.orgId, job.jobId, 'pdf');
   await putPdf(bucket, key, bytes);

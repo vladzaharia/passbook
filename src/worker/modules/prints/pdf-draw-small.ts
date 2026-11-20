@@ -1,13 +1,13 @@
 /** Permit and coupon: the half-sheet designs. On A4 or Letter they sit on the top half, as on the print page. */
-import type { PDFImage } from 'pdf-lib';
 import { PAPER_SPECS } from '../../../passkit/template/paper.ts';
-import { paperBoxes } from '../../../passkit/template/paper-geometry.ts';
+import { COUPON_BAND, paperBoxes } from '../../../passkit/template/paper-geometry.ts';
 import { PAPER_COPY } from '../../../shared/copy/print.ts';
 import { buddyPose } from '../../../web/paper/ticket-buddy.tsx';
 import { endsText, footMeta, paperAt, rangeText } from '../../../web/paper/ticket-text.ts';
 import { drawBuddy } from './pdf-buddy.ts';
 import { codeMark, LBL, META, passbookLine, plate, typedCode } from './pdf-draw-parts.ts';
 import { type Box, COLORS, type Pen, PT, type TextStyle } from './pdf-kit.ts';
+import type { PdfPicture } from './pdf-png.ts';
 import type { Sheet } from './pdf-sheet.ts';
 import { testStrip, watermark } from './pdf-test-mark.ts';
 
@@ -207,10 +207,10 @@ export function drawCoupon(pen: Pen, s: Sheet): void {
       borderWidth: 1.6,
     });
   const inner: Box = { x: 10.5, y: 10.5, w: PAGE.w - 21, h: PAGE.h - 21 };
-  const band: Box = { ...inner, h: 50 };
+  const band: Box = { ...inner, h: COUPON_BAND };
   const fg = tile(pen, s, band, 2.5);
   if (!mono && s.images.art && c.art)
-    pen.clipped(band, () => pen.cover(s.images.art as PDFImage, band, 1, 0.5), 2.5);
+    pen.clipped(band, () => pen.cover(s.images.art as PdfPicture, band, 1, 0.5), 2.5);
   plate(pen, s, { x: band.x + 5, y: band.y + 4 }, 9, { color: '#000000', opacity: 0.18 });
   const org: TextStyle = { size: 3.5278, font: 'semibold', color: fg };
   const kind: TextStyle = { ...LBL, color: mono ? COLORS.muted : c.colors.label };

@@ -3,7 +3,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { type PrintAudience, type PrintPageModel, printPageModel } from './page.ts';
 import { pdfFingerprint } from './pdf-cache.ts';
-import { loadImages } from './pdf-images.ts';
+import { imageIds, loadImages, logImageProblem } from './pdf-images.ts';
 import { type PrintSheet, renderPdf } from './pdf-render.ts';
 import { cachedPdf, pdfKey, putPdf } from './pdf-store.ts';
 
@@ -42,7 +42,7 @@ export async function ticketPdf(
   const key = pdfKey(pass.orgId, pass.id, model.printId);
   const fingerprint = await pdfFingerprint({
     sheet: sheetOf(model),
-    files: model.files,
+    images: await imageIds(ctx, pass, model.files),
     template: [pass.templateId, pass.templateVersion],
   });
   const hit = await cachedPdf(ctx.env.BUCKET, key, pass.version, fingerprint);
@@ -51,8 +51,7 @@ export async function ticketPdf(
   const bytes = await renderPdf([{ ...sheetOf(model), images }], {
     assets: ctx.env.ASSETS,
     onLossy: () => ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' }),
-    onImageError: () =>
-      ctx.log.warn('prints.pdf_image_invalid', { code: 'PRINT_PDF_IMAGE_INVALID' }),
+    onImageError: logImageProblem(ctx),
   });
   await putPdf(ctx.env.BUCKET, key, bytes, { passVersion: pass.version, fingerprint });
   return bytes;
