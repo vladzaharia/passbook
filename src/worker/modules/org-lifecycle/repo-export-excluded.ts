@@ -2,7 +2,6 @@ const SEALED = 'sealed secret or key material: never leaves the platform';
 const BOOKKEEPING = 'job, queue or counter state: no org content, rebuilt by the platform';
 const WALLET = 'wallet provider state: sealed credentials, evidence and delivery bookkeeping';
 const DERIVED = 'derived from rows the archive holds, rebuilt from them';
-const GAP = 'gap: org content the archive does not carry yet';
 
 /**
  * Tables the archive leaves out, each with the reason. `repo-export.test.ts` reads the migrated schema: every
@@ -13,8 +12,6 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   api_keys: 'key hashes: mint a new key after a restore',
   authority_grants: BOOKKEEPING,
   branding_gc_queue: BOOKKEEPING,
-  broadcast_items: GAP,
-  broadcasts: GAP,
   bundle_remac_marks: BOOKKEEPING,
   bundle_token_seals: SEALED,
   captured_emails: 'Test mode mail capture, not org data',
@@ -40,8 +37,6 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
     'sign-up links: the token is a capability, so none is exported; create the link again',
   join_marks: BOOKKEEPING,
   magic_links: SEALED,
-  message_rule_fires: GAP,
-  message_rules: GAP,
   nfc_tag_keys: SEALED,
   nfc_tag_sun: SEALED,
   org_exports: 'the export records themselves',
@@ -51,9 +46,6 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   pass_assets: DERIVED,
   pass_attach_blocks: 'holder mail preference',
   pass_auth_seals: SEALED,
-  pass_channel_copies: GAP,
-  pass_channels: GAP,
-  pass_check_in: GAP,
   pass_credential_tombstones: 'revocation evidence kept by the platform: refs only',
   pass_credential_transfer_payloads: SEALED,
   pass_credential_transfers: BOOKKEEPING,
@@ -79,7 +71,6 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   sandbox_forward_passes: 'Test mode forwarding queue',
   sandbox_forwards: 'Test mode forwarding queue',
   scan_code_rotations: 'old scan code hashes',
-  scan_event_templates: GAP,
   scan_gates: DERIVED,
   scan_offline_reads: 'offline sync journal: every read that counted is a scans row',
   scan_offline_state: BOOKKEEPING,
@@ -92,15 +83,12 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   scan_retention_proofs: BOOKKEEPING,
   scan_session_changes: BOOKKEEPING,
   scanner_setups: BOOKKEEPING,
-  scanner_templates: GAP,
   scanning_devices: BOOKKEEPING,
-  scanning_session_zones: GAP,
   settings: 'org settings, some of them secret: set again in the console',
   signing_identities: 'certificate and push key links: upload the certificate again',
   tag_enrollments: BOOKKEEPING,
   template_approvals: DERIVED,
   template_candidates: DERIVED,
-  template_channel_policies: GAP,
   template_fork_updates: DERIVED,
   template_forks: DERIVED,
   template_imports: BOOKKEEPING,

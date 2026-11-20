@@ -34,6 +34,10 @@ describe('the export against the migrated schema', () => {
     }
   });
 
+  it('leaves no gap: every exclusion has a real reason', () => {
+    expect(Object.entries(EXPORT_EXCLUDED).filter(([, why]) => /^gap\b/i.test(why))).toEqual([]);
+  });
+
   it('every entity is valid SQL against the schema', async () => {
     const broken: string[] = [];
     for (const entity of EXPORT_ENTITIES)
