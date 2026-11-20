@@ -309,7 +309,9 @@
   },
   "developer.deleteSandbox": {
     "resource": "developer.sandbox",
-    "method": "close"
+    "method": "close",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
   },
   "developer.deleteTryToken": {
     "resource": "developer.tryTokens",
@@ -319,11 +321,15 @@
   },
   "developer.getSandbox": {
     "resource": "developer.sandbox",
-    "method": "retrieve"
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
   },
   "developer.postSandbox": {
     "resource": "developer.sandbox",
-    "method": "create"
+    "method": "create",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
   },
   "developer.postTryToken": {
     "resource": "developer.tryTokens",

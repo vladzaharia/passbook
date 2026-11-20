@@ -1433,7 +1433,6 @@
     {
       "code": "INTERNAL",
       "statuses": [
-        403,
         500
       ],
       "modules": [
@@ -2948,8 +2947,7 @@
     {
       "code": "SCANNER_REPAIR",
       "statuses": [
-        401,
-        403
+        401
       ],
       "modules": [
         "platform",
