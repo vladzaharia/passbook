@@ -2636,6 +2636,14 @@
                   "never"
                 ],
                 "default": "manager"
+              },
+              "level": {
+                "type": "string",
+                "enum": [
+                  "off",
+                  "basic",
+                  "secure"
+                ]
               }
             }
           }
@@ -75957,6 +75965,14 @@
                               "never"
                             ],
                             "default": "manager"
+                          },
+                          "level": {
+                            "type": "string",
+                            "enum": [
+                              "off",
+                              "basic",
+                              "secure"
+                            ]
                           }
                         }
                       }
@@ -76283,6 +76299,14 @@
                               "never"
                             ],
                             "default": "manager"
+                          },
+                          "level": {
+                            "type": "string",
+                            "enum": [
+                              "off",
+                              "basic",
+                              "secure"
+                            ]
                           }
                         }
                       }
@@ -77388,6 +77412,14 @@
                               "never"
                             ],
                             "default": "manager"
+                          },
+                          "level": {
+                            "type": "string",
+                            "enum": [
+                              "off",
+                              "basic",
+                              "secure"
+                            ]
                           }
                         }
                       }
@@ -78427,6 +78459,14 @@
                               "never"
                             ],
                             "default": "manager"
+                          },
+                          "level": {
+                            "type": "string",
+                            "enum": [
+                              "off",
+                              "basic",
+                              "secure"
+                            ]
                           }
                         }
                       }
