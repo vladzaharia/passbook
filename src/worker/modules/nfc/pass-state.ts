@@ -25,9 +25,10 @@ export async function assertPassTakesTag(
   ctx: ServiceContext,
   orgId: string,
   passId: string,
-): Promise<void> {
+): Promise<Candidate | null> {
   const candidate = await candidateById(ctx.env.DB, orgId, passId);
   if (candidate) assertTakesTag(ctx, candidate);
+  return candidate;
 }
 
 /** A tag goes to a pass that works: not removed, voided or expired (the refusals a scanner assign makes). */

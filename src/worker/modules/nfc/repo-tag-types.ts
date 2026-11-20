@@ -59,24 +59,55 @@ export async function listTagTypes(
   );
   const more = rows.length > page.limit;
   const slice = rows.slice(0, page.limit);
-  const links =
-    slice.length === 0
-      ? []
-      : await all<{ type_id: string; template_id: string }>(
-          db,
-          `SELECT type_id, template_id FROM nfc_tag_type_templates
-           WHERE type_id IN (${slice.map(() => '?').join(', ')}) ORDER BY template_id`,
-          slice.map((r) => r.id),
-        );
   return {
-    items: slice.map((r) =>
-      view(
-        r,
-        links.filter((l) => l.type_id === r.id).map((l) => l.template_id),
-      ),
-    ),
+    items: await withTemplates(db, slice),
     nextCursor: more ? (slice[slice.length - 1]?.id ?? null) : null,
   };
+}
+
+async function withTemplates(db: Db, rows: Raw[]): Promise<TagType[]> {
+  if (rows.length === 0) return [];
+  const links = await all<{ type_id: string; template_id: string }>(
+    db,
+    `SELECT type_id, template_id FROM nfc_tag_type_templates
+     WHERE type_id IN (${rows.map(() => '?').join(', ')}) ORDER BY template_id`,
+    rows.map((r) => r.id),
+  );
+  return rows.map((r) =>
+    view(
+      r,
+      links.filter((l) => l.type_id === r.id).map((l) => l.template_id),
+    ),
+  );
+}
+
+/** The org's types of one system that take new tags (not archived). An org has a handful. */
+export const activeTypesOfSystem = (db: Db, orgId: string, system: string): Promise<TagType[]> =>
+  all<Raw>(
+    db,
+    `${SELECT} WHERE y.org_id = ? AND y.system = ? AND y.archived_at IS NULL ORDER BY y.id LIMIT 200`,
+    [orgId, system],
+  ).then((rows) => withTemplates(db, rows));
+
+/** Live pass-scope bindings on the pass whose tag has this type, not counting the binding a bind ends or one that lapsed. */
+export async function passTypeCount(
+  db: Db,
+  passId: string,
+  typeId: string,
+  ending: string | null,
+  now: number,
+): Promise<number> {
+  return (
+    (
+      await first<{ n: number }>(
+        db,
+        `SELECT count(*) AS n FROM tag_bindings b JOIN nfc_tags t ON t.id = b.tag_id
+         WHERE b.pass_id = ? AND b.scope = 'pass' AND b.ended_at IS NULL AND t.type_id = ? AND b.id IS NOT ?
+           AND (b.expires_at IS NULL OR b.expires_at > ?)`,
+        [passId, typeId, ending, now],
+      )
+    )?.n ?? 0
+  );
 }
 
 /** By id, fenced by the org: another org's type reads as absent. */

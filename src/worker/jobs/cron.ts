@@ -12,6 +12,7 @@ import { dailyJoin } from '../modules/join/jobs.ts';
 import { rewrapEnvelopes } from '../modules/keys/rewrap.ts';
 import { dailyMessageRules } from '../modules/message-rules/jobs.ts';
 import { tickMessageRules } from '../modules/message-rules/tick.ts';
+import { expireBindings } from '../modules/nfc/expiry.ts';
 import { dailyOrgLifecycle } from '../modules/org-lifecycle/jobs.ts';
 import { sweepBrandingGc } from '../modules/orgs/branding-gc.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
@@ -77,6 +78,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     },
     { name: 'passes.transfer_asset_gc', run: sweepTransferAssetGc },
     { name: 'passes.import_stuck', run: sweepStuckImports },
+    { name: 'nfc.binding_expiry', run: async (ctx) => void (await expireBindings(ctx)) },
   ],
   [DAILY_CRON]: [
     { name: 'authority.sweep', run: async (ctx) => void (await sweepLeakedGrants(ctx)) },

@@ -8,6 +8,8 @@ import { ROLE_RANK } from './rules.ts';
 export interface Waive {
   window?: boolean;
   confirmed?: boolean;
+  /** A Manager's PIN came with the request; the action's own check verifies it. */
+  approved?: boolean;
   direction?: 'in' | 'out';
   /** The access refusal a Manager let through; only this reason is skipped (hard ones never are). */
   access?: string | undefined;

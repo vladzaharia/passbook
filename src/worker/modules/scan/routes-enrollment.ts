@@ -9,7 +9,8 @@ import {
 import type { AppBindings } from '../../platform/context.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { completeEnrollment, declineEnrollment, pendingEnrollment } from './enrollment-device.ts';
+import { completeEnrollment } from './enrollment-complete.ts';
+import { declineEnrollment, pendingEnrollment } from './enrollment-device.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
 
 const IdParam = z.object({ id: z.string().min(1).max(64) });

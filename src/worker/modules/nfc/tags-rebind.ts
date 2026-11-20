@@ -10,7 +10,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { assertBindable } from './pass-state.ts';
-import { tagsRefusal } from './policy.ts';
+import { bindPolicy, tagsRefusal } from './policy.ts';
 import { ownerIsActive } from './repo-enrollments.ts';
 import { activeBinding, bindingTarget, type PassFacts, passFacts } from './repo-tag-bindings.ts';
 import { lastEndedBinding } from './repo-tag-history.ts';
@@ -63,8 +63,16 @@ async function place(
     const tag = await tagTarget(ctx.env.DB, tagId);
     if (!tag || tag.orgId !== a.orgId || tag.mode !== a.mode) throw tagGone();
     const active = await activeBinding(ctx.env.DB, tagId);
-    const decision = decideBind(tag, active, pass, { scope, move: false });
+    const decision = decideBind(tag, active, pass, { scope, move: false }, ctx.clock.now());
     if (decision.status === 'already_bound') return shown(ctx, a, tagId);
+    const policy = await bindPolicy(ctx, {
+      orgId: a.orgId,
+      passId: pass.id,
+      scope,
+      system: tag.system,
+      tag,
+      ending: decision.end?.id ?? null,
+    });
     const plan: BindPlan = {
       tagId,
       newTag: null,
@@ -76,6 +84,8 @@ async function place(
       holderGeneration: pass.credentialGeneration,
       holderOwner: pass.ownerUserId,
       clearsLost: false,
+      expiryDays: policy.expiryDays,
+      endLapsed: policy.lapsed,
       audited: rebind !== null,
       source: 'admin',
       actor: { type: 'user', id: a.userId },

@@ -2085,6 +2085,7 @@
                         }
                       ]
                     },
+                    "minItems": 1,
                     "maxItems": 12
                   },
                   "confirmBasic": {
@@ -2649,6 +2650,34 @@
                   "off",
                   "basic",
                   "secure"
+                ]
+              },
+              "types": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "standard"
+                      ]
+                    }
+                  ]
+                },
+                "minItems": 1,
+                "maxItems": 12
+              },
+              "confirmBasic": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "staff",
+                  "manager"
                 ]
               }
             }
@@ -8978,6 +9007,7 @@
                         }
                       ]
                     },
+                    "minItems": 1,
                     "maxItems": 12
                   },
                   "confirmBasic": {
@@ -74064,6 +74094,11 @@
                     ],
                     "default": "pass"
                   },
+                  "typeId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
                   "move": {
                     "type": "boolean"
                   },
@@ -74136,6 +74171,35 @@
                       "enum": [
                         "pass",
                         "user"
+                      ]
+                    },
+                    "type": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "use": {
+                          "type": "string",
+                          "enum": [
+                            "member",
+                            "staff",
+                            "visitor"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "use"
                       ]
                     },
                     "bindingId": {
@@ -76442,6 +76506,34 @@
                               "basic",
                               "secure"
                             ]
+                          },
+                          "types": {
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                {
+                                  "type": "string",
+                                  "enum": [
+                                    "standard"
+                                  ]
+                                }
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 12
+                          },
+                          "confirmBasic": {
+                            "type": "string",
+                            "enum": [
+                              "none",
+                              "staff",
+                              "manager"
+                            ]
                           }
                         }
                       }
@@ -76775,6 +76867,34 @@
                               "off",
                               "basic",
                               "secure"
+                            ]
+                          },
+                          "types": {
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                {
+                                  "type": "string",
+                                  "enum": [
+                                    "standard"
+                                  ]
+                                }
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 12
+                          },
+                          "confirmBasic": {
+                            "type": "string",
+                            "enum": [
+                              "none",
+                              "staff",
+                              "manager"
                             ]
                           }
                         }
@@ -77889,6 +78009,34 @@
                               "basic",
                               "secure"
                             ]
+                          },
+                          "types": {
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                {
+                                  "type": "string",
+                                  "enum": [
+                                    "standard"
+                                  ]
+                                }
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 12
+                          },
+                          "confirmBasic": {
+                            "type": "string",
+                            "enum": [
+                              "none",
+                              "staff",
+                              "manager"
+                            ]
                           }
                         }
                       }
@@ -78936,6 +79084,34 @@
                               "basic",
                               "secure"
                             ]
+                          },
+                          "types": {
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                {
+                                  "type": "string",
+                                  "enum": [
+                                    "standard"
+                                  ]
+                                }
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 12
+                          },
+                          "confirmBasic": {
+                            "type": "string",
+                            "enum": [
+                              "none",
+                              "staff",
+                              "manager"
+                            ]
                           }
                         }
                       }
@@ -79660,6 +79836,7 @@
                                 }
                               ]
                             },
+                            "minItems": 1,
                             "maxItems": 12
                           },
                           "confirmBasic": {
@@ -80254,6 +80431,7 @@
                                 }
                               ]
                             },
+                            "minItems": 1,
                             "maxItems": 12
                           },
                           "confirmBasic": {
@@ -91190,6 +91368,11 @@
                         "TAG_TYPE_LIMIT",
                         "TAG_USE_MISMATCH",
                         "TAG_SECURE_NEEDS_TAP",
+                        "TAG_TYPE_SET",
+                        "TAG_TYPE_SYSTEM",
+                        "TAG_TYPE_SCOPE",
+                        "TAG_TYPED_OFF",
+                        "TAG_TYPE_CHOOSE",
                         null
                       ]
                     },
@@ -91489,6 +91672,11 @@
                         "TAG_TYPE_LIMIT",
                         "TAG_USE_MISMATCH",
                         "TAG_SECURE_NEEDS_TAP",
+                        "TAG_TYPE_SET",
+                        "TAG_TYPE_SYSTEM",
+                        "TAG_TYPE_SCOPE",
+                        "TAG_TYPED_OFF",
+                        "TAG_TYPE_CHOOSE",
                         null
                       ]
                     },
@@ -91786,6 +91974,11 @@
                         "TAG_TYPE_LIMIT",
                         "TAG_USE_MISMATCH",
                         "TAG_SECURE_NEEDS_TAP",
+                        "TAG_TYPE_SET",
+                        "TAG_TYPE_SYSTEM",
+                        "TAG_TYPE_SCOPE",
+                        "TAG_TYPED_OFF",
+                        "TAG_TYPE_CHOOSE",
                         null
                       ]
                     },
