@@ -57,8 +57,9 @@ describe('template release panel', () => {
       return url.pathname.endsWith('/candidates')
         ? json({
             items: [candidate({ templateId, orgId, mode, candidateHash: fingerprint.repeat(64) })],
+            nextCursor: null,
           })
-        : json({ active: null, items: [] });
+        : json({ active: null, items: [], nextCursor: null });
     };
     stubFetch({
       '/api/v1/templates/template-1/candidates': handler,
@@ -79,7 +80,10 @@ describe('template release panel', () => {
     expect(screen.queryByText('2'.repeat(64))).not.toBeInTheDocument();
     expect(await screen.findByText(/Loading releases and candidates/)).toBeInTheDocument();
     delayedOrg2.resolve(
-      json({ items: [candidate({ orgId: 'org-2', mode: 'test', candidateHash: '3'.repeat(64) })] }),
+      json({
+        items: [candidate({ orgId: 'org-2', mode: 'test', candidateHash: '3'.repeat(64) })],
+        nextCursor: null,
+      }),
     );
     expect(await screen.findByText('3'.repeat(64))).toBeInTheDocument();
     expect(screen.queryByText('2'.repeat(64))).not.toBeInTheDocument();
@@ -414,7 +418,8 @@ describe('template release panel', () => {
     stubFetch({
       [`/api/v1/templates/${TEMPLATE}/candidates`]: () =>
         problem(409, 'TEMPLATE_MODE_MISMATCH', 'The requested mode does not match the session.'),
-      [`/api/v1/templates/${TEMPLATE}/releases`]: () => json({ active: null, items: [] }),
+      [`/api/v1/templates/${TEMPLATE}/releases`]: () =>
+        json({ active: null, items: [], nextCursor: null }),
     });
     mountPanel();
     expect(await screen.findByRole('alert')).toHaveTextContent(

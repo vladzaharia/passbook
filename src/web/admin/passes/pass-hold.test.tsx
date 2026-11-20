@@ -36,7 +36,7 @@ function open(capabilities: string[], holds: unknown[]) {
       '/api/v1/templates/tpl1': () => json(templateDetail()),
       '/api/v1/passes': () => json({ items: [passSummary()], nextCursor: null }),
       '/api/v1/passes/p1': () => json(pass),
-      [`/api/v1/orgs/${ORG.id}/retention/holds`]: () => json({ items: holds }),
+      [`/api/v1/orgs/${ORG.id}/retention/holds`]: () => json({ items: holds, nextCursor: null }),
     },
   });
 }

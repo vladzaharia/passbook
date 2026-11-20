@@ -125,7 +125,7 @@ describe('Stamps card', () => {
 describe('a stamp card on the Images tab', () => {
   const strip = { sha1: 'a', size: 10, width: 750, height: 288, createdAt: 1 };
   const renderTab = (current: PassStampsDto | null, items: unknown[]) => {
-    stubFetch({ '/api/v1/passes/p1/assets': () => json({ items }) });
+    stubFetch({ '/api/v1/passes/p1/assets': () => json({ items, nextCursor: null }) });
     const client = createQueryClient();
     const pass = passDetail({
       mode: 'live',

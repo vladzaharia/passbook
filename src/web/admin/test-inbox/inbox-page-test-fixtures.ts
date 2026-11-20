@@ -53,6 +53,7 @@ export function setupInboxTest() {
 
 export const verifiedEmails = {
   items: [{ email: 'admin@example.com', verifiedAt: 1, verifiedVia: 'oidc', primary: false }],
+  nextCursor: null,
 };
 export const handlers = {
   '/api/v1/test-inbox': () => json({ items: [email()], nextCursor: null }),

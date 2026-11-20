@@ -38,6 +38,7 @@ const enrolments = () =>
       hold: null,
       issuance: { state: 'disabled', reason: 'not_released' },
     })),
+    nextCursor: null,
   });
 const north = membershipFixture('o1', { orgName: 'North' });
 
@@ -49,7 +50,7 @@ describe('wallet accounts per scope', () => {
       handlers: {
         '/api/v1/identities': () => json({ items: [own], nextCursor: null }),
         '/api/v1/orgs/o1/wallet-enrolments': enrolments,
-        '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [] }),
+        '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [], nextCursor: null }),
       },
     });
     expect(await screen.findByRole('heading', { name: 'Wallet accounts', level: 1 })).toBeVisible();
@@ -72,7 +73,7 @@ describe('wallet accounts per scope', () => {
       handlers: {
         '/api/v1/identities': () => json({ items: [], nextCursor: null }),
         '/api/v1/orgs/o1/wallet-enrolments': enrolments,
-        '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [] }),
+        '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [], nextCursor: null }),
       },
     });
     expect(await screen.findByText("Signs with PassBook's identity.")).toBeInTheDocument();
@@ -104,8 +105,8 @@ describe('members per scope', () => {
       session: 'user',
       memberships: [north],
       handlers: {
-        '/api/v1/orgs/o1/memberships': () => json({ items: [] }),
-        '/api/v1/orgs/o1/invitations': () => json({ items: [] }),
+        '/api/v1/orgs/o1/memberships': () => json({ items: [], nextCursor: null }),
+        '/api/v1/orgs/o1/invitations': () => json({ items: [], nextCursor: null }),
       },
     });
     expect(await screen.findByRole('heading', { name: 'Members', level: 1 })).toBeVisible();

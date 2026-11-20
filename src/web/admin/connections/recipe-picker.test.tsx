@@ -52,7 +52,7 @@ function setup(posts: Record<string, unknown>[]) {
     memberships: [membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug })],
     handlers: {
       '/api/v1/orgs': () => json({ items: [ORG], nextCursor: null }),
-      '/api/v1/connectors': () => json({ items: [WEBHOOK] }),
+      '/api/v1/connectors': () => json({ items: [WEBHOOK], nextCursor: null }),
       '/api/v1/connectors/webhook-push': () => json(WEBHOOK),
       '/api/v1/templates': () => json({ items: [], nextCursor: null }),
       '/api/v1/connections': (_u: URL, init?: RequestInit) => {

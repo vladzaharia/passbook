@@ -25,7 +25,7 @@ const status = {
     comp('d', 'Delta', 'degraded'),
   ],
 };
-const noRuns = () => json({ items: [] });
+const noRuns = () => json({ items: [], nextCursor: null });
 
 const run = (over: Record<string, unknown>) => ({
   instanceId: 'w1',
@@ -321,6 +321,7 @@ describe('status page', () => {
               run({ instanceId: 'w2', kind: 'connection_sync', status: 'running', targetId: 'c1' }),
               run({ instanceId: 'u3', kind: 'template_import', status: 'errored', targetId: 'u3' }),
             ],
+            nextCursor: null,
           }),
       },
     });

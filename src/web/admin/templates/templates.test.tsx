@@ -136,7 +136,7 @@ describe('templates list', () => {
       selectedOrg: ORG.id,
       handlers: {
         '/api/v1/templates/previews': previewsHandler,
-        '/api/v1/templates/uploads': () => json({ items: [] }),
+        '/api/v1/templates/uploads': () => json({ items: [], nextCursor: null }),
         '/api/v1/templates': (url) => {
           const orgId = url.searchParams.get('orgId');
           requested.push(orgId);
@@ -252,7 +252,7 @@ describe('templates list', () => {
     const handlers = {
       '/api/v1/orgs': orgs,
       '/api/v1/templates': () => json({ items: [templateSummary()], nextCursor: null }),
-      '/api/v1/templates/uploads': () => json({ items }),
+      '/api/v1/templates/uploads': () => json({ items, nextCursor: null }),
     };
     const first = await renderApp('/admin/templates', { session: 'admin', ...orgAccess, handlers });
     const strip = await screen.findByRole('list', { name: 'Recent uploads' });

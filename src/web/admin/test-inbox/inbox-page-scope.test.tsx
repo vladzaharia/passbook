@@ -140,7 +140,7 @@ describe('Test inbox', () => {
         ...handlers,
         '/api/v1/me/emails': () => {
           emailReads++;
-          return emailReads === 1 ? json(verifiedEmails) : json({ items: [] });
+          return emailReads === 1 ? json(verifiedEmails) : json({ items: [], nextCursor: null });
         },
       },
     });

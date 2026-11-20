@@ -33,6 +33,7 @@ const emails = (over: object[] = []) => ({
     { email: 'work@example.com', verifiedAt: 2, verifiedVia: 'magic_link', primary: false },
     ...over,
   ],
+  nextCursor: null,
 });
 const sessions = () => ({
   items: [
@@ -51,6 +52,7 @@ const sessions = () => ({
       current: false,
     },
   ],
+  nextCursor: null,
 });
 
 // The web test target predates Promise.withResolvers.
@@ -140,7 +142,7 @@ describe('account page', () => {
     const { queryClient } = await renderApp('/account', {
       handlers: {
         '/api/v1/me/emails': (_u, init) =>
-          init?.method === 'POST' ? json({ ok: true }, 202) : json({ items: [] }),
+          init?.method === 'POST' ? json({ ok: true }, 202) : json({ items: [], nextCursor: null }),
         '/api/v1/me/sessions': () => json(sessions()),
       },
     });
@@ -180,7 +182,7 @@ describe('account page', () => {
             requests += 1;
             return pending.promise;
           }
-          return json({ items: [] });
+          return json({ items: [], nextCursor: null });
         },
         '/api/v1/me/sessions': () => json(sessions()),
       },
@@ -222,7 +224,7 @@ describe('account page', () => {
             requests += 1;
             return pending.promise;
           }
-          return json({ items: [] });
+          return json({ items: [], nextCursor: null });
         },
         '/api/v1/me/sessions': () => json(sessions()),
       },
@@ -255,6 +257,7 @@ describe('account page', () => {
       const second = { ...first, user: { ...first.user, id: 'u2' } };
       const nextEmails = {
         items: [{ email: 'second@example.com', verifiedAt: 1, verifiedVia: 'oidc', primary: true }],
+        nextCursor: null,
       };
       let current = first;
       let requests = 0;
@@ -304,6 +307,7 @@ describe('account page', () => {
     const user = userEvent.setup();
     let items = {
       items: [{ email: 'test@example.com', verifiedAt: null, verifiedVia: null, primary: true }],
+      nextCursor: null,
     };
     const posted: unknown[] = [];
     const { container } = await renderApp('/account', {
@@ -332,6 +336,7 @@ describe('account page', () => {
       items: [
         { email: 'test@example.com', verifiedAt: 5, verifiedVia: 'magic_link', primary: true },
       ],
+      nextCursor: null,
     } as unknown as typeof items;
     act(() => {
       focusManager.setFocused(false);
@@ -411,10 +416,11 @@ describe('account page', () => {
     let removed = '';
     await renderApp('/account', {
       handlers: {
-        '/api/v1/me/emails': () => json(removed ? { items: emails().items.slice(0, 1) } : emails()),
+        '/api/v1/me/emails': () =>
+          json(removed ? { items: emails().items.slice(0, 1), nextCursor: null } : emails()),
         '/api/v1/me/emails/work%40example.com': (_u, init) => {
           if (init?.method === 'DELETE') removed = 'work@example.com';
-          return json({ items: emails().items.slice(0, 1) });
+          return json({ items: emails().items.slice(0, 1), nextCursor: null });
         },
         '/api/v1/me/sessions': () => json(sessions()),
       },
@@ -443,6 +449,7 @@ describe('account page', () => {
         { email: 'test@example.com', verifiedAt: 1, verifiedVia: 'oidc', primary: false },
         { email: 'work@example.com', verifiedAt: 2, verifiedVia: 'magic_link', primary: true },
       ],
+      nextCursor: null,
     };
     await renderApp('/account', {
       handlers: {
@@ -485,7 +492,7 @@ describe('account page', () => {
       handlers: {
         '/api/v1/me/emails': () => json(emails()),
         '/api/v1/me/sessions': () =>
-          json(revoked ? { items: sessions().items.slice(0, 1) } : sessions()),
+          json(revoked ? { items: sessions().items.slice(0, 1), nextCursor: null } : sessions()),
         '/api/v1/me/sessions/s2': () => {
           revoked = true;
           return json({ ok: true });

@@ -124,8 +124,9 @@ describe('principal boundary', () => {
             items: [
               { email: 'test@example.com', verifiedAt: 1, verifiedVia: 'oidc', primary: true },
             ],
+            nextCursor: null,
           }),
-        '/api/v1/me/sessions': () => json({ items: [] }),
+        '/api/v1/me/sessions': () => json({ items: [], nextCursor: null }),
       },
     });
     await user.type(await screen.findByLabelText('Add email'), 'draft@example.com');

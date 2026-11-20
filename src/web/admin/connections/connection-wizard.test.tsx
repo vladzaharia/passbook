@@ -75,7 +75,7 @@ function wizard(
 ) {
   return {
     '/api/v1/orgs': () => json({ items: [ORG], nextCursor: null }),
-    '/api/v1/connectors': () => json({ items: [HTTP, WEBHOOK] }),
+    '/api/v1/connectors': () => json({ items: [HTTP, WEBHOOK], nextCursor: null }),
     '/api/v1/connectors/http-json': () => json(HTTP),
     '/api/v1/connectors/webhook-push': () => json(WEBHOOK),
     '/api/v1/templates': () => json({ items: [templateSummary()], nextCursor: null }),
@@ -128,7 +128,7 @@ describe('create connection wizard', () => {
         ...wizard(posts, undefined, testPosts),
         '/api/v1/connectors': (url) => {
           catalogRequests.push({ path: url.pathname, orgId: url.searchParams.get('orgId') });
-          return json({ items: [HTTP, WEBHOOK] });
+          return json({ items: [HTTP, WEBHOOK], nextCursor: null });
         },
         '/api/v1/connectors/http-json': (url) => {
           catalogRequests.push({ path: url.pathname, orgId: url.searchParams.get('orgId') });
@@ -295,7 +295,7 @@ describe('create connection wizard', () => {
         ...wizard([]),
         '/api/v1/connectors': (url) => {
           catalogRequests.push({ path: url.pathname, orgId: url.searchParams.get('orgId') });
-          return json({ items: [HTTP, WEBHOOK] });
+          return json({ items: [HTTP, WEBHOOK], nextCursor: null });
         },
         '/api/v1/connectors/webhook-push': (url) => {
           catalogRequests.push({ path: url.pathname, orgId: url.searchParams.get('orgId') });

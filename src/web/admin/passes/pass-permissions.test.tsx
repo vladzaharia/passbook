@@ -64,7 +64,7 @@ function open(path: string, writable = false, over: Record<string, unknown> = {}
           reissueRequired: false,
           updatedAt: 1,
         }),
-      '/api/v1/passes/p1/assets': () => json({ items: [] }),
+      '/api/v1/passes/p1/assets': () => json({ items: [], nextCursor: null }),
       '/api/v1/passes/p1/check-in': () =>
         json({
           passId: 'p1',
@@ -83,7 +83,7 @@ function open(path: string, writable = false, over: Record<string, unknown> = {}
           walletSupported: true,
           updatedAt: null,
         }),
-      '/api/v1/delivery': () => json({ items: pass.deliveries }),
+      '/api/v1/delivery': () => json({ items: pass.deliveries, nextCursor: null }),
       '/api/v1/bundles': () =>
         json({
           items: [

@@ -38,7 +38,7 @@ function open(items: Visitor[], extra: Record<string, FetchHandler> = {}, path =
     session: 'admin',
     memberships: [northwind],
     selectedOrg: 'o1',
-    handlers: { '/api/v1/visitors': () => json({ items }), ...extra },
+    handlers: { '/api/v1/visitors': () => json({ items, nextCursor: null }), ...extra },
   });
 }
 
@@ -102,7 +102,9 @@ describe('Visitors page', () => {
     const user = userEvent.setup();
     const { fetchMock } = await open([], {
       '/api/v1/visitors': (_url, init) =>
-        init?.method === 'POST' ? json(visitor({ name: 'Leo Park' }), 201) : json({ items: [] }),
+        init?.method === 'POST'
+          ? json(visitor({ name: 'Leo Park' }), 201)
+          : json({ items: [], nextCursor: null }),
     });
     await user.click(await screen.findByRole('button', { name: 'New visitor' }));
     const dialog = await screen.findByRole('dialog', { name: 'New visitor' });
@@ -131,7 +133,7 @@ describe('Visitors page', () => {
       '/api/v1/visitors': (_url, init) =>
         init?.method === 'POST'
           ? problem(409, 'VISITOR_TEMPLATE_MISSING', 'Make a guest pass template first.')
-          : json({ items: [] }),
+          : json({ items: [], nextCursor: null }),
     });
     await user.click(await screen.findByRole('button', { name: 'New visitor' }));
     const dialog = await screen.findByRole('dialog', { name: 'New visitor' });
@@ -148,9 +150,12 @@ describe('Visitors page', () => {
     const user = userEvent.setup();
     const { fetchMock } = await open([], {
       '/api/v1/visitors/hosts': () =>
-        json({ items: [{ id: 'u9', name: 'Ana Ruiz', email: 'ana@northwind.test' }] }),
+        json({
+          items: [{ id: 'u9', name: 'Ana Ruiz', email: 'ana@northwind.test' }],
+          nextCursor: null,
+        }),
       '/api/v1/visitors': (_url, init) =>
-        init?.method === 'POST' ? json(visitor({}), 201) : json({ items: [] }),
+        init?.method === 'POST' ? json(visitor({}), 201) : json({ items: [], nextCursor: null }),
     });
     await user.click(await screen.findByRole('button', { name: 'New visitor' }));
     const dialog = await screen.findByRole('dialog', { name: 'New visitor' });

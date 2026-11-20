@@ -31,7 +31,7 @@ describe('connections list', () => {
           catalogScopes.push(orgId);
           return orgId === ORG.id
             ? oldCatalog.promise
-            : json({ items: [{ ...CONNECTOR, displayName: 'Second catalog' }] });
+            : json({ items: [{ ...CONNECTOR, displayName: 'Second catalog' }], nextCursor: null });
         },
         '/api/v1/connections': (url) => {
           const orgId = url.searchParams.get('orgId');
@@ -62,7 +62,9 @@ describe('connections list', () => {
     expect(screen.queryByRole('link', { name: 'First connection' })).not.toBeInTheDocument();
 
     await act(async () => {
-      oldCatalog.resolve(json({ items: [{ ...CONNECTOR, displayName: 'First catalog' }] }));
+      oldCatalog.resolve(
+        json({ items: [{ ...CONNECTOR, displayName: 'First catalog' }], nextCursor: null }),
+      );
       await oldCatalog.promise;
     });
     await waitFor(() => expect(queryClient.isFetching()).toBe(0));
@@ -84,7 +86,7 @@ describe('connections list', () => {
       memberships: [membership],
       selectedOrg: ORG.id,
       handlers: {
-        '/api/v1/connectors': () => json({ items: [] }),
+        '/api/v1/connectors': () => json({ items: [], nextCursor: null }),
         '/api/v1/connections': (url) => {
           if (url.searchParams.get('q') === 'second') {
             requested = true;
@@ -122,7 +124,7 @@ describe('connections list', () => {
         selectedOrg: ORG.id,
         handlers: {
           '/api/v1/orgs': orgs,
-          '/api/v1/connectors': () => json({ items: [] }),
+          '/api/v1/connectors': () => json({ items: [], nextCursor: null }),
           '/api/v1/connections': () => json({ items: [], nextCursor: null }),
         },
       });
@@ -145,7 +147,7 @@ describe('connections list', () => {
       selectedOrg: ORG.id,
       handlers: {
         '/api/v1/orgs': orgs,
-        '/api/v1/connectors': () => json({ items: [] }),
+        '/api/v1/connectors': () => json({ items: [], nextCursor: null }),
         '/api/v1/connections': (url) => {
           seen.push(url);
           return json({
@@ -199,7 +201,7 @@ describe('connections list', () => {
       selectedOrg: ORG.id,
       handlers: {
         '/api/v1/orgs': orgs,
-        '/api/v1/connectors': () => json({ items: [] }),
+        '/api/v1/connectors': () => json({ items: [], nextCursor: null }),
         '/api/v1/connections': (url) => {
           seen.push(url);
           return url.searchParams.get('cursor') === 'c1'
@@ -270,7 +272,7 @@ describe('connections list', () => {
         ],
         selectedOrg: ORG.id,
         handlers: {
-          '/api/v1/connectors': () => json({ items: [] }),
+          '/api/v1/connectors': () => json({ items: [], nextCursor: null }),
           '/api/v1/connections': () =>
             json({
               items: state === 'empty' ? [] : [{ ...connection(), passCount: 2 }],
