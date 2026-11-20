@@ -276,7 +276,13 @@ export function CreateKeyDialog({
       <ConfirmDialog
         open={reviewKey}
         onOpenChange={setReviewKey}
-        title={orgId === null ? 'Create a platform key?' : 'Review service key'}
+        title={
+          orgId === null
+            ? 'Create a platform key?'
+            : kind === 'personal'
+              ? 'Review personal key'
+              : 'Review service key'
+        }
         description={
           <span className="block">
             <span className="block">

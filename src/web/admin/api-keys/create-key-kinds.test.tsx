@@ -56,7 +56,7 @@ describe('key type, role and expiry', () => {
     expect(screen.queryByRole('option', { name: '1 year' })).toBeNull();
     await user.click(screen.getByRole('option', { name: '30 days' }));
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    const review = await screen.findByRole('alertdialog');
+    const review = await screen.findByRole('alertdialog', { name: 'Review personal key' });
     expect(within(review).getByText(/personal, acts as you/)).toBeInTheDocument();
     await user.click(within(review).getByRole('button', { name: 'Create key' }));
     await waitFor(() => expect(body.kind).toBe('personal'));
