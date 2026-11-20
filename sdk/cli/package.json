@@ -1,0 +1,25 @@
+{
+  "name": "@passbook/cli",
+  "version": "0.1.0",
+  "description": "PassBook command line: forward webhook captures to localhost, and generate a template's input type.",
+  "type": "module",
+  "bin": {
+    "passbook": "./dist/bin.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@passbook/sdk": "^0.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
+  }
+}
