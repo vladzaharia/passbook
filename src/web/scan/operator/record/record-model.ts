@@ -14,7 +14,7 @@ import type { ScanOutcome } from '../../machine/types.ts';
 import { verdictLine } from '../../machine/verdict-lines.ts';
 import { canAddPhoto } from '../../result/add-photo.tsx';
 import { sessionTime } from '../../ui/session-time.ts';
-import { nextStepOf } from './record-facts.ts';
+import { mayNote, nextStepOf } from './record-facts.ts';
 
 const R = OPERATOR_COPY.record;
 
@@ -44,10 +44,6 @@ export function rightsOf(session: ScanSession): Rights {
     markOut: role === 'desk' || role === 'manager',
   };
 }
-
-/** Staff notes are Desk and above, never a Door. The server holds the same line. */
-export const mayNote = (rights: Rights): boolean =>
-  rights.role === 'desk' || rights.role === 'manager';
 
 export type Tone = 'ok' | 'hu' | 'no' | 'sys' | 'preview';
 
@@ -319,7 +315,7 @@ export function actionsOf(o: ScanOutcome, f: ActionFacts): Actions {
   }
   if (f.markOut && f.rights.markOut)
     acts.push({ id: 'out', label: R.markOut, icon: 'out', key: 'O', run: { t: 'mark-out' } });
-  if (f.passId && mayNote(f.rights))
+  if (f.passId && mayNote(f.rights.role))
     acts.push({ id: 'note', label: R.note, icon: 'note', key: 'N', run: { t: 'note' } });
   if (f.addPhoto)
     acts.push({ id: 'photo', label: R.photo, icon: 'photo', key: 'P', run: { t: 'photo' } });

@@ -4,6 +4,10 @@ import { formatDay, formatWeekdayTime } from '../../../lib/format.ts';
 import type { ScanOutcome } from '../../machine/types.ts';
 import { sessionTime } from '../../ui/session-time.ts';
 
+/** Staff notes: Desk and above, never a Door. */
+export const mayNote = (role: 'door' | 'desk' | 'manager' | null) =>
+  role === 'desk' || role === 'manager';
+
 const R = OPERATOR_COPY.record;
 
 /** What the operator does next after a refusal or a hold: from the reason, never a dead end. */

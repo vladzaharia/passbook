@@ -25,13 +25,6 @@ import {
   type ScanResolveRequestSchema,
   type ScanUndoRequestSchema,
 } from '../../../shared/contracts/scan.ts';
-import {
-  type HistoryFilter,
-  HistoryPageSchema,
-  type PassNoteRequestSchema,
-  PassNoteSchema,
-  PassNotesSchema,
-} from '../../../shared/contracts/scan-history.ts';
 import type {
   ScanOverrideNoteSchema,
   ScanOverrideRequestSchema,
@@ -73,6 +66,7 @@ import {
   MarkOutResultSchema,
 } from '../inside/inside-types.ts';
 import { canReload, ScanApiError } from './errors.ts';
+import { personCalls } from './scan-api-person.ts';
 import {
   type AdminScope,
   activityPath,
@@ -317,31 +311,7 @@ export function createScanApi(deps: ScanApiDeps) {
         { png, includeInPass: false },
         call,
       ),
-    history: (
-      passId: string,
-      query: { filter: HistoryFilter; cursor?: string | null },
-      call?: Call,
-    ) => {
-      const qs = new URLSearchParams({ filter: query.filter, limit: '20' });
-      if (query.cursor) qs.set('cursor', query.cursor);
-      return request(
-        'GET',
-        `/passes/${encodeURIComponent(passId)}/history?${qs}`,
-        HistoryPageSchema,
-        undefined,
-        call,
-      );
-    },
-    notes: (passId: string, call?: Call) =>
-      request(
-        'GET',
-        `/passes/${encodeURIComponent(passId)}/notes`,
-        PassNotesSchema,
-        undefined,
-        call,
-      ),
-    addNote: (passId: string, body: z.infer<typeof PassNoteRequestSchema>, call?: Call) =>
-      request('POST', `/passes/${encodeURIComponent(passId)}/notes`, PassNoteSchema, body, call),
+    ...personCalls(request),
     visitors: (day: { start: number; end: number }, call?: Call) =>
       request(
         'GET',
