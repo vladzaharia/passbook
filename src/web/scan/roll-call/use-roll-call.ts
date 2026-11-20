@@ -9,6 +9,7 @@ import { connectDeviceSocket, deviceSocketUrl } from '../enroll/device-socket.ts
 import type { KeyValue } from '../offline/wipe.ts';
 import { SCAN_TIMING } from '../timing.ts';
 import { type QueuedMark, withQueue } from './roll-call-model.ts';
+import { failsTaps, gone, isolate, stuck } from './roll-call-sync.ts';
 
 export interface RollCallPort {
   current(call?: { signal?: AbortSignal }): Promise<{ rollCall: RollCall | null }>;
@@ -16,10 +17,6 @@ export interface RollCallPort {
   marks(id: string, marks: QueuedMark[]): Promise<RollCallMarksResponse>;
   end(id: string): Promise<RollCall>;
 }
-
-/** A call the server closed under us, or one that is gone: drop the queue and start clean. */
-const gone = (error: unknown) =>
-  error instanceof ApiError && (error.code === 'ROLL_CALL_ENDED' || error.status === 404);
 
 /** A tap the server could not take because the call had ended: shown to the desk, never dropped silently. */
 export interface UnsavedMark {
@@ -30,21 +27,7 @@ export interface UnsavedMark {
   reason?: string;
 }
 
-/** Counts identical 4xx answers to one batch; true once there have been STUCK of them in a row. */
-function stuck(
-  repeats: { current: { key: string; n: number } },
-  status: number,
-  error: unknown,
-  batch: readonly QueuedMark[],
-): boolean {
-  const key = `${status}:${error instanceof ApiError ? error.code : ''}:${batch.map((m) => m.passId).join(',')}`;
-  repeats.current = { key, n: repeats.current.key === key ? repeats.current.n + 1 : 1 };
-  return repeats.current.n >= STUCK;
-}
-
 const BATCH = 100;
-/** Identical 4xx answers to one batch before it is set aside as not saved. */
-const STUCK = 5;
 const QUEUE_KEY = 'roll-call-queue';
 
 /**
@@ -83,12 +66,14 @@ export function useRollCall({
   const [busy, setBusy] = useState(false);
   const [asOf, setAsOf] = useState<number | null>(null);
   const [blocked, setBlocked] = useState(false);
+  const [stalled, setStalled] = useState(false);
   const [unsaved, setUnsaved] = useState<UnsavedMark[]>([]);
-  const live = useRef({ server, queue, onAppear, onRefused, onBlocked, blocked });
-  live.current = { server, queue, onAppear, onRefused, onBlocked, blocked };
+  const live = useRef({ server, queue, onAppear, onRefused, onBlocked, blocked, stalled });
+  live.current = { server, queue, onAppear, onRefused, onBlocked, blocked, stalled };
   // Transient failures (network, 5xx) retry with a growing delay, never in a tight loop.
   const retry = useRef({ fails: 0, at: 0 });
-  // The same 4xx answer to the same taps, over and over: after STUCK of them the taps stop blocking the queue.
+  // The same 4xx or 5xx answer to the same first tap, over and over: after STUCK of them the batch is sent
+  // one mark at a time, so the bad tap is found and the rest are saved.
   const repeats = useRef({ key: '', n: 0 });
   const sending = useRef(false);
   // The device's clock against the server's, measured on every read; taps carry the corrected time.
@@ -137,34 +122,35 @@ export function useRollCall({
   }, [port, take]);
 
   const flush = useCallback(async () => {
-    const { server: call, queue: all, blocked: stopped } = live.current;
+    const { server: call, queue: all, blocked: stopped, stalled: held } = live.current;
     const pending = all.filter((m) => m.callId === call?.id);
-    if (stopped || sending.current || !call || pending.length === 0) return;
+    if (stopped || held || sending.current || !call || pending.length === 0) return;
     if (Date.now() < retry.current.at) return;
     sending.current = true;
-    const batch = pending.slice(0, BATCH);
-    const drop = () => setQueue((q) => q.filter((m) => !batch.includes(m)));
-    try {
-      const next = await port.marks(call.id, batch);
-      retry.current = { fails: 0, at: 0 };
-      drop();
-      repeats.current = { key: '', n: 0 };
+    const people = new Map(call.people.map((p) => [p.passId, p.holder]));
+    const setAside = (marks: readonly { mark: QueuedMark; code?: string }[]) => {
+      setUnsaved((u) => [
+        ...u,
+        ...marks.map(({ mark: m, code }) => ({
+          passId: m.passId,
+          status: m.status,
+          name: people.get(m.passId) ?? null,
+          ...(code === undefined ? {} : { reason: code }),
+        })),
+      ]);
+      setQueue((q) => q.filter((m) => !marks.some((x) => x.mark === m)));
+    };
+    const told = (next: RollCallMarksResponse) => {
       // Refused taps, and Outs taken as a confirmation alone, are both told to the desk.
       const refused = next.results.filter((r) => r.status === 'refused' || r.code);
       if (refused.length)
         live.current.onRefused?.(refused.map((r) => ({ passId: r.passId, code: r.code ?? '' })));
-      take(next, true);
-    } catch (error) {
+    };
+    const fail = async (error: unknown, batch: readonly QueuedMark[]): Promise<void> => {
       const status = error instanceof ApiError ? error.status : 0;
       if (gone(error)) {
         // The call ended under these taps. They are not lost silently: the desk is shown them to note down.
-        const people = new Map(call.people.map((p) => [p.passId, p.holder]));
-        const lost = batch.map((m) => ({
-          passId: m.passId,
-          status: m.status,
-          name: people.get(m.passId) ?? null,
-        }));
-        setUnsaved((u) => [...u, ...lost]);
+        setAside(batch.map((mark) => ({ mark })));
         setQueue([]);
         await reload();
       } else if (status === 401 || status === 403) {
@@ -172,30 +158,54 @@ export function useRollCall({
         setBlocked(true);
         setError(true);
         live.current.onBlocked?.(error);
-      } else if (status >= 400 && status < 500 && stuck(repeats, status, error, batch)) {
-        const code = error instanceof ApiError ? error.code : '';
-        const people = new Map(call.people.map((p) => [p.passId, p.holder]));
-        setUnsaved((u) => [
-          ...u,
-          ...batch.map((m) => ({
-            passId: m.passId,
-            status: m.status,
-            name: people.get(m.passId) ?? null,
-            reason: code,
-          })),
-        ]);
-        drop();
+      } else if (failsTaps(status) && stuck(repeats, status, error, batch)) {
+        const one = await isolate((marks) => port.marks(call.id, marks), batch);
         repeats.current = { key: '', n: 0 };
         retry.current = { fails: 0, at: 0 };
+        if (one.last) take(one.last, true);
+        const saved = one.done.length > 0;
+        // A 5xx to a tap alone is its fault only when other taps got through; otherwise the server is down.
+        const bad = [...one.bad, ...(saved ? one.failed : [])];
+        setQueue((q) => q.filter((m) => !one.done.includes(m)));
+        setAside(bad.map((b) => ({ mark: b.mark, code: b.code || 'server' })));
+        if (one.halt)
+          await fail(
+            one.halt,
+            batch.filter((m) => !one.done.includes(m) && !bad.some((b) => b.mark === m)),
+          );
+        else if (!saved && status >= 500 && one.failed.length > 0) {
+          setStalled(true);
+          setError(true);
+        }
       } else {
         const fails = retry.current.fails + 1;
         retry.current = { fails, at: Date.now() + Math.min(60_000, 1000 * 2 ** fails) };
         setError(true);
       }
+    };
+    const batch = pending.slice(0, BATCH);
+    try {
+      const next = await port.marks(call.id, batch);
+      retry.current = { fails: 0, at: 0 };
+      setQueue((q) => q.filter((m) => !batch.includes(m)));
+      repeats.current = { key: '', n: 0 };
+      told(next);
+      take(next, true);
+    } catch (error) {
+      await fail(error, batch);
     } finally {
       sending.current = false;
     }
   }, [port, take, reload]);
+
+  /** After the stall: try the taps again from the top. */
+  const retryStalled = useCallback(() => {
+    setStalled(false);
+    live.current.stalled = false;
+    repeats.current = { key: '', n: 0 };
+    retry.current = { fails: 0, at: 0 };
+    void flush();
+  }, [flush]);
 
   useEffect(() => {
     if (!enabled || !online) return;
@@ -264,6 +274,8 @@ export function useRollCall({
     busy,
     asOf,
     blocked,
+    stalled,
+    retryStalled,
     unsaved,
     clearUnsaved: () => setUnsaved([]),
     mark,
