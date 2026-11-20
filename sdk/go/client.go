@@ -1,7 +1,7 @@
 // Package passbook is the Go client for the PassBook API.
 //
 //	pb, err := passbook.NewClient(os.Getenv("PASSBOOK_KEY"))
-//	pass, err := pb.Passes.Create(ctx, passbook.PassesCreateBody{TemplateID: id, Input: map[string]any{"name": "Ada"}})
+//	pass, err := pb.Passes.Create(ctx, &passbook.PassesCreateBody{TemplateID: id, Input: map[string]any{"name": "Ada"}})
 //
 // A pb_test_ key works in test mode: sandboxes never issue real passes.
 package passbook

@@ -3,11 +3,13 @@ package passbook
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
-	"math/rand"
+	mrand "math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -127,7 +129,14 @@ func retryAfter(header string, now time.Time) (time.Duration, bool) {
 	if header == "" {
 		return 0, false
 	}
-	if s, err := strconv.ParseFloat(header, 64); err == nil {
+	if s, err := strconv.ParseFloat(header, 64); err == nil || errors.Is(err, strconv.ErrRange) {
+		// Too long to wait is reported as just over the limit; converting a huge or infinite value overflows.
+		if math.IsNaN(s) {
+			return 0, true
+		}
+		if s > maxRetryAfter.Seconds() {
+			return maxRetryAfter + time.Second, true
+		}
 		return time.Duration(math.Max(0, s) * float64(time.Second)), true
 	}
 	if t, err := http.ParseTime(header); err == nil {
@@ -219,7 +228,7 @@ func (c *core) send(ctx context.Context, cl call, opts []RequestOption) (*http.R
 			if !repeatable || attempt >= retries {
 				return nil, &ConnectionError{Err: err}
 			}
-			if err := c.sleep(ctx, backoff(attempt, c.retryDelay, rand.Float64())); err != nil {
+			if err := c.sleep(ctx, backoff(attempt, c.retryDelay, mrand.Float64())); err != nil {
 				return nil, err
 			}
 			continue
@@ -238,7 +247,7 @@ func (c *core) send(ctx context.Context, cl call, opts []RequestOption) (*http.R
 		if !retryable || attempt >= retries || (hasAsked && asked > maxRetryAfter) {
 			return nil, apiErr
 		}
-		wait := backoff(attempt, c.retryDelay, rand.Float64())
+		wait := backoff(attempt, c.retryDelay, mrand.Float64())
 		if hasAsked {
 			wait = asked
 		}

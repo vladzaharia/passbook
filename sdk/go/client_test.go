@@ -283,6 +283,14 @@ func TestRetryAfterReadsSecondsAndDates(t *testing.T) {
 			t.Errorf("%q: %v %v, want %v", header, got, ok, want)
 		}
 	}
+	for _, header := range []string{"inf", "+Inf", "1e300", "1e999", "61"} {
+		if got, ok := retryAfter(header, now); !ok || got <= maxRetryAfter {
+			t.Errorf("%q: %v %v, want over the limit", header, got, ok)
+		}
+	}
+	if got, ok := retryAfter("nan", now); !ok || got != 0 {
+		t.Errorf("nan: %v %v", got, ok)
+	}
 	for _, header := range []string{"", "soon"} {
 		if _, ok := retryAfter(header, now); ok {
 			t.Errorf("%q was read", header)

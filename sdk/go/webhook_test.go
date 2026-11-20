@@ -3,6 +3,7 @@ package passbook
 import (
 	"encoding/json"
 	"errors"
+	"io/fs"
 	"net/http"
 	"os"
 	"testing"
@@ -21,6 +22,9 @@ type vector struct {
 func vectors(t *testing.T) []vector {
 	t.Helper()
 	data, err := os.ReadFile("../../docs/api/webhook-vectors.json")
+	if errors.Is(err, fs.ErrNotExist) {
+		t.Skip("docs/api is not beside this module")
+	}
 	if err != nil {
 		t.Fatal(err)
 	}
