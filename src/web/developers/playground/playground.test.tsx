@@ -91,6 +91,21 @@ describe('playground, anonymous', () => {
     expect(screen.getByRole('radio', { name: 'Paper', checked: true })).toBeTruthy();
   });
 
+  it('copies the link and the code, and says so in place', async () => {
+    stubFetch(() => {
+      throw new Error('no network');
+    });
+    const user = userEvent.setup();
+    render(<Playground data={data} />);
+    await user.click(await screen.findByRole('button', { name: /Copy link/ }));
+    expect(await screen.findByRole('button', { name: 'Copied' })).toBeTruthy();
+    expect(await navigator.clipboard.readText()).toBe(location.href);
+    await user.click(screen.getByRole('button', { name: 'Copy code' }));
+    const code = await navigator.clipboard.readText();
+    expect(code).toContain('/api/v1/passes');
+    expect(code).toContain('PASSBOOK_KEY');
+  });
+
   it('keeps the page in the hash, and opens a link as it was', async () => {
     stubFetch(() => {
       throw new Error('no network');

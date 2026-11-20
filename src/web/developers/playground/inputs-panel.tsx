@@ -1,5 +1,6 @@
 import { Copy, FlaskConical, Plus, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
+import { copyToClipboard } from './copy.ts';
 import { Fields } from './fields.tsx';
 import type { InputMode } from './hash.ts';
 import { JsonEditor } from './json-editor.tsx';
@@ -31,14 +32,10 @@ export function InputsPanel(props: {
   const [copied, setCopied] = useState(false);
   const own = templates.filter((t) => t.issuable);
   const starters = templates.filter((t) => !t.issuable);
-  const copyLink = () => {
-    navigator.clipboard.writeText(location.href).then(
-      () => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1600);
-      },
-      () => setCopied(false),
-    );
+  const copyLink = async () => {
+    if (!(await copyToClipboard(location.href))) return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
   };
   return (
     <section className="edit" aria-label="Inputs">
@@ -150,7 +147,7 @@ export function InputsPanel(props: {
             Previews show each blueprint's sample. Sign in to edit them live.
           </span>
         ) : null}
-        <button type="button" className="btn outline" onClick={copyLink}>
+        <button type="button" className="btn outline" onClick={() => void copyLink()}>
           <Copy aria-hidden="true" />
           {copied ? 'Copied' : 'Copy link to this pass'}
         </button>

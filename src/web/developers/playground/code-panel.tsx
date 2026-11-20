@@ -2,11 +2,19 @@ import { Copy } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Lang } from '../model/highlight.ts';
 import { CodeLines } from './code-lines.tsx';
+import { copyToClipboard } from './copy.ts';
 import { type CodeLang, LANGS } from './hash.ts';
 import type { InputValues } from './model.ts';
 import { changedLines, snippetsFor } from './snippets.ts';
 
 const FLASH_MS = 1400;
+
+/** Copies, then says "Copied" for a moment. */
+async function copyAndSay(text: string, say: (on: boolean) => void): Promise<void> {
+  if (!(await copyToClipboard(text))) return;
+  say(true);
+  setTimeout(() => say(false), 1600);
+}
 
 /**
  * `POST /passes` for what is on screen, in four languages. The line an edit changed flashes; a
@@ -64,15 +72,7 @@ export function CodePanel({
           type="button"
           className="iconbtn copy"
           aria-label={copied ? 'Copied' : 'Copy code'}
-          onClick={() =>
-            navigator.clipboard.writeText(code).then(
-              () => {
-                setCopied(true);
-                setTimeout(() => setCopied(false), 1600);
-              },
-              () => setCopied(false),
-            )
-          }
+          onClick={() => void copyAndSay(code, setCopied)}
         >
           <Copy aria-hidden="true" className="lucide" />
         </button>
