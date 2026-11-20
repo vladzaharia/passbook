@@ -79,16 +79,6 @@ const refusedWith = (o: ScanOutcome, reason: ScanOutcome['reason']): ScanOutcome
   reason,
 });
 
-/** The chip costs a read, so only a fresh check-in by code pays it; held, refused and tag scans do not. */
-export async function withChip(
-  ctx: ServiceContext,
-  actor: ScanActor,
-  e: ScanEvaluation,
-  input: ActRequestInput['input'],
-): Promise<ScanOutcome> {
-  return e.outcome.kind === 'ok' && !('tag' in input) ? withBundle(ctx, actor, e) : e.outcome;
-}
-
 /**
  * `group: 'bundle'`: every pass of the scanned pass's bundle (at most 10, the scanned one first) is
  * checked in, never anything else: each is read first, skipped when already in, then runs the

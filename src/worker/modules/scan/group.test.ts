@@ -45,7 +45,14 @@ describe('bundle check-in', () => {
     const a = await kit.scanPass(tpl);
     const b = await kit.scanPass(tpl);
     await bundleOf([a, b]);
-    const o = await out(await act(door.headers, codeOf(a)));
+    await act(door.headers, codeOf(a));
+    const o = await out(
+      await kit.post(door.headers, '/resolve', {
+        input: codeOf(a),
+        clientTs: kit.clock.now(),
+        idempotencyKey: key(),
+      }),
+    );
     expect(o.bundle).toMatchObject({ name: 'Family', size: 2, checkedIn: 1 });
   });
 

@@ -24,7 +24,7 @@ import {
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { deepFreeze } from './freeze.ts';
-import { actGroup, undoGroup, withBundle, withChip } from './group.ts';
+import { actGroup, undoGroup, withBundle } from './group.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
 import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
@@ -237,11 +237,7 @@ register(
         false,
         'code' in input,
       );
-    const hinted = {
-      ...evaluation,
-      outcome: await withParentHint(ctx.env.DB, actor.orgId, outcome),
-    };
-    return c.json(await withChip(ctx, actor, hinted, input));
+    return c.json(await withParentHint(ctx.env.DB, actor.orgId, outcome));
   },
 );
 
