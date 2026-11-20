@@ -1,0 +1,131 @@
+/* The record's pass, family and the PIN dialog. */
+/* body */
+.op-rec-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.op-rec-body[data-cols="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.op-col {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px 22px 20px;
+}
+.op-col + .op-col {
+  border-inline-start: 1px solid var(--op-line);
+}
+.op-block {
+  display: grid;
+  gap: 10px;
+}
+.op-block-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.op-block-h h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--pk-text-strong);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+}
+.op-block-h h3 svg {
+  width: 16px;
+  height: 16px;
+  color: var(--op-muted);
+}
+.op-block-aside {
+  color: var(--op-muted);
+  font-size: 12px;
+}
+.op-family-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--op-inset);
+}
+.op-family-dots i {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--pk-border-strong);
+  border-radius: 50%;
+}
+.op-family-dots i[data-in] {
+  border-color: var(--scan-ok);
+  background: var(--scan-ok);
+}
+.op-block .scan-group {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--op-inset);
+}
+.op-note {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--op-inset);
+  color: var(--pk-text-default);
+  font-size: 13px;
+  line-height: 18px;
+}
+.op-note svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: var(--op-muted);
+}
+.op-rec-pass .scan-pass-preview {
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+  pointer-events: none;
+}
+.op-rec-pass .scan-pass-preview .pc-root {
+  max-width: 240px;
+  margin-inline: auto;
+}
+
+/* the PIN dialog */
+.op-pin-held {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--pk-danger-subtle);
+  color: var(--pk-danger);
+  font-size: 13px;
+  font-weight: 600;
+}
+.op-pin-held svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.op-pin-foot {
+  margin-top: 12px;
+  color: var(--op-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .op-rec-body[data-cols="2"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .op-col + .op-col {
+    border-inline-start: 0;
+    border-top: 1px solid var(--op-line);
+  }
+}

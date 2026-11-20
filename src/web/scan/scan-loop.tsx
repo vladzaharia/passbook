@@ -279,7 +279,7 @@ export function ScanLoop({
             modeLabel={modeLabel(session)}
             chips={chipsNode}
             testing={testChip}
-            scanCard={cardNode}
+            scanCard={result && s.card && !s.block && !tags.card ? null : cardNode}
             dock={tags.dock}
             onTitle={() => showPanel('shift')}
           />
