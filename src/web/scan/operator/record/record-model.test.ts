@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import type { ScanSession } from '../../../../shared/contracts/scan-session.ts';
 import { fixtureCard, fixtureOutcome } from '../../machine/fixture-data.test-support.ts';
 import type { ScanOutcome } from '../../machine/types.ts';
-import { factsOf, markOutPlace, membersOf, nextStepOf } from './record-facts.ts';
+import { canNote, factsOf, markOutPlace, membersOf, nextStepOf } from './record-facts.ts';
 import {
   type ActionFacts,
   actionsOf,
@@ -12,7 +13,7 @@ import {
 } from './record-model.ts';
 
 const NOW = Date.UTC(2026, 10, 19, 18, 0);
-const desk: Rights = { role: 'desk', photo: true, markOut: true };
+const desk: Rights = { role: 'desk', photo: true, markOut: true, note: true };
 const facts = (over: Partial<ActionFacts> = {}): ActionFacts => ({
   source: 'scan',
   rights: desk,
@@ -145,13 +146,12 @@ describe('primary action', () => {
       ['photo', 'P'],
     ]);
   });
-  it('offers a note to Desk and Manager with a pass, never to a Door or without one', () => {
+  it('offers a note only where the rights say so and with a pass', () => {
     const o = fixtureOutcome('ok', null, { bundle });
     const has = (f: Partial<ActionFacts>) =>
       actionsOf(o, facts(f)).others.some((x) => x.id === 'note');
     expect(has({ rights: { ...desk, role: 'manager' } })).toBe(true);
-    expect(has({ rights: { ...desk, role: 'door' } })).toBe(false);
-    expect(has({ rights: { ...desk, role: null } })).toBe(false);
+    expect(has({ rights: { ...desk, note: false } })).toBe(false);
     expect(has({ passId: null })).toBe(false);
   });
   it('leaves out what the role may not do', () => {
@@ -298,5 +298,34 @@ describe('family members', () => {
       { initials: 'MO', checkedIn: true },
       { initials: 'CO', checkedIn: false, refusedReason: 'expired' },
     ]);
+  });
+});
+
+describe('who may add a note', () => {
+  const base = {
+    principal: 'scanner',
+    scanner: { kind: 'device', deviceRole: 'scan' },
+    workspace: { session: { status: 'active', window: { open: true } } },
+  } as never as ScanSession;
+  const with_ = (over: object) => ({ ...(base as object), ...over }) as ScanSession;
+  it('is Desk and above on a paired scan device in a live session', () => {
+    expect(canNote(base, 'desk')).toBe(true);
+    expect(canNote(base, 'manager')).toBe(true);
+    expect(canNote(base, 'door')).toBe(false);
+    expect(canNote(base, null)).toBe(false);
+  });
+  it('is not offered to a console, a terminal, a screen, or a paused or closed session', () => {
+    expect(canNote(with_({ principal: 'admin' }), 'manager')).toBe(false);
+    expect(canNote(with_({ scanner: { kind: 'terminal', deviceRole: 'scan' } }), 'desk')).toBe(
+      false,
+    );
+    expect(canNote(with_({ scanner: { kind: 'device', deviceRole: 'monitor' } }), 'desk')).toBe(
+      false,
+    );
+    for (const session of [
+      { status: 'paused', window: { open: true } },
+      { status: 'active', window: { open: false } },
+    ])
+      expect(canNote(with_({ workspace: { session } }), 'desk')).toBe(false);
   });
 });

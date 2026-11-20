@@ -17,8 +17,8 @@ async function note(orgId: string, passId: string, age: number, mode: 'live' | '
   const id = rk.kit.fx.ids.id();
   await run(
     db(),
-    `INSERT INTO pass_notes (id, org_id, mode, pass_id, body, author_name, idempotency_key, created_at)
-     VALUES (?, ?, ?, ?, 'n', 'Desk', ?, ?)`,
+    `INSERT INTO pass_notes (id, org_id, mode, pass_id, credential_generation, body, author_name, idempotency_key, created_at)
+     VALUES (?, ?, ?, ?, 1, 'n', 'Desk', ?, ?)`,
     [id, orgId, mode, passId, id, rk.kit.clock.now() - age * DAY],
   );
   return id;

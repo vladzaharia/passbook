@@ -24,6 +24,8 @@ export interface PersonPanels {
   refresh: unknown;
   /** Desk and above: changes and staff notes. */
   desk: boolean;
+  /** Manager and above: any note may be changed. */
+  manager: boolean;
   noteSignal: number;
   onNoteAdded: () => void;
 }
@@ -130,6 +132,7 @@ export function RecordBody({
               api={person.api}
               passId={person.passId}
               openSignal={person.noteSignal}
+              manager={person.manager}
               onAdded={person.onNoteAdded}
             />
           ) : null}

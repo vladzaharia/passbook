@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import {
   type HistoryFilter,
   HistoryPageSchema,
+  type PassNoteEditSchema,
   type PassNoteRequestSchema,
   PassNoteSchema,
   PassNotesSchema,
@@ -10,7 +11,7 @@ import type { Call } from './scan-api-support.ts';
 
 /** The device's one request function: the credential, the retries and the typed answer. */
 export type ScanRequest = <S extends z.ZodType>(
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
   schema: S | null,
   body?: unknown,
@@ -45,5 +46,26 @@ export function personCalls(request: ScanRequest) {
       ),
     addNote: (passId: string, body: z.infer<typeof PassNoteRequestSchema>, call?: Call) =>
       request('POST', `/passes/${encodeURIComponent(passId)}/notes`, PassNoteSchema, body, call),
+    editNote: (
+      passId: string,
+      noteId: string,
+      body: z.infer<typeof PassNoteEditSchema>,
+      call?: Call,
+    ) =>
+      request(
+        'PATCH',
+        `/passes/${encodeURIComponent(passId)}/notes/${encodeURIComponent(noteId)}`,
+        PassNoteSchema,
+        body,
+        call,
+      ),
+    deleteNote: (passId: string, noteId: string, call?: Call) =>
+      request(
+        'DELETE',
+        `/passes/${encodeURIComponent(passId)}/notes/${encodeURIComponent(noteId)}`,
+        null,
+        undefined,
+        call,
+      ),
   };
 }

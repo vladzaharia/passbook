@@ -73,3 +73,20 @@
 .op-note-hint[data-problem] {
   color: var(--pk-danger);
 }
+.op-staff-note-acts {
+  display: flex;
+  gap: 4px;
+  margin-inline-start: -8px;
+}
+.op-staff-note-ask {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--pk-text-strong);
+  font-size: 13px;
+}
+.op-staff-note-ask b {
+  color: var(--pk-danger);
+  font-weight: 600;
+}

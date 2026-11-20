@@ -1,8 +1,7 @@
 /**
  * What the person record shows, decided from one outcome and what this operator may do. Pure, so
  * the rules (which band, which action is primary, what a locked action leads to) are tested without
- * a screen. The outcome is a scan's verdict, a desk card waiting for an action, or a pass opened
- * from a list; the record reads them the same way.
+ * a screen. The outcome is a scan's verdict, a desk card or a pass opened from a list; all read alike.
  */
 import type { ScanRole } from '../../../../shared/contracts/scan.ts';
 import type { ScanChip } from '../../../../shared/contracts/scan-display.ts';
@@ -14,7 +13,7 @@ import type { ScanOutcome } from '../../machine/types.ts';
 import { verdictLine } from '../../machine/verdict-lines.ts';
 import { canAddPhoto } from '../../result/add-photo.tsx';
 import { sessionTime } from '../../ui/session-time.ts';
-import { mayNote, nextStepOf } from './record-facts.ts';
+import { canNote, nextStepOf } from './record-facts.ts';
 
 const R = OPERATOR_COPY.record;
 
@@ -25,6 +24,7 @@ export interface Rights {
   role: ScanRole | null;
   photo: boolean;
   markOut: boolean;
+  note: boolean;
 }
 
 /** The role acting here: the signed-in staff, the device's role without sign-in, or a manager for an admin. */
@@ -42,6 +42,7 @@ export function rightsOf(session: ScanSession): Rights {
     role,
     photo: canAddPhoto(session),
     markOut: role === 'desk' || role === 'manager',
+    note: canNote(session, role),
   };
 }
 
@@ -315,7 +316,7 @@ export function actionsOf(o: ScanOutcome, f: ActionFacts): Actions {
   }
   if (f.markOut && f.rights.markOut)
     acts.push({ id: 'out', label: R.markOut, icon: 'out', key: 'O', run: { t: 'mark-out' } });
-  if (f.passId && mayNote(f.rights.role))
+  if (f.passId && f.rights.note)
     acts.push({ id: 'note', label: R.note, icon: 'note', key: 'N', run: { t: 'note' } });
   if (f.addPhoto)
     acts.push({ id: 'photo', label: R.photo, icon: 'photo', key: 'P', run: { t: 'photo' } });

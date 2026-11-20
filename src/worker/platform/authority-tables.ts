@@ -173,8 +173,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     mode: 'mode',
     conflict: ['roll_call_id', 'pass_id'],
   },
-  // Staff notes (0145): written by a Desk scanner's grant. No `pass` pin, so a holder grant never writes one.
-  pass_notes: { org: 'org_id', mode: 'mode' },
+  // Staff notes (0145): written by a Desk scanner's grant. The pass pin is for the transfer's delete only; no holder flow inserts one.
+  pass_notes: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   data_requests: { org: 'org_id' },
   data_request_passes: { org: null, edges: [edge('request_id', 'data_requests')] },
   // Wallet provider credentials (0112): a platform-scope row has a null org_id, so no org grant matches it; children take its tenant.

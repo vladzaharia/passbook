@@ -1,12 +1,22 @@
+import type { ScanSession } from '../../../../shared/contracts/scan-session.ts';
 import { scanLine } from '../../../../shared/copy/scan.ts';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
 import { formatDay, formatWeekdayTime } from '../../../lib/format.ts';
 import type { ScanOutcome } from '../../machine/types.ts';
 import { sessionTime } from '../../ui/session-time.ts';
 
-/** Staff notes: Desk and above, never a Door. */
-export const mayNote = (role: 'door' | 'desk' | 'manager' | null) =>
-  role === 'desk' || role === 'manager';
+/**
+ * Staff notes: Desk and above on a paired scan device, never a terminal or a console, and not while
+ * the session is paused or closed. The server holds the same line.
+ */
+export function canNote(session: ScanSession, role: 'door' | 'desk' | 'manager' | null): boolean {
+  const scanner = session.scanner;
+  if (session.principal !== 'scanner' || !scanner) return false;
+  if (scanner.kind === 'terminal' || scanner.deviceRole !== 'scan') return false;
+  const live = session.workspace?.session;
+  if (live && (live.status !== 'active' || !live.window?.open)) return false;
+  return role === 'desk' || role === 'manager';
+}
 
 const R = OPERATOR_COPY.record;
 

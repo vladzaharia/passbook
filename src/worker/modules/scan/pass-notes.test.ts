@@ -184,8 +184,8 @@ describe('staff notes', () => {
     for (let i = 0; i < 100; i++)
       await run(
         kit.env.DB,
-        `INSERT INTO pass_notes (id, org_id, mode, pass_id, body, author_name, idempotency_key, created_at)
-         VALUES (?, ?, 'live', ?, 'n', 'Desk', ?, ?)`,
+        `INSERT INTO pass_notes (id, org_id, mode, pass_id, credential_generation, body, author_name, idempotency_key, created_at)
+         VALUES (?, ?, 'live', ?, 1, 'n', 'Desk', ?, ?)`,
         [`note-${pass.id}-${i}`, kit.org.id, pass.id, `k${i}`, kit.clock.now() + i],
       );
     expect((await add(pass.id, headers, noteBody())).status).toBe(409);

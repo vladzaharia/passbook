@@ -38,6 +38,8 @@ export function transferAssetRetirement(
   );
   g.joined('pass_assets', { via: 'pass_id', where: { pass_id: passId }, delete: true });
   g.delete('member_photos', { where: { pass_id: passId } });
+  // Staff notes are about the holder who is leaving: the next holder starts with none.
+  g.delete('pass_notes', { where: { pass_id: passId } });
   const at = passIs(g, passId);
   g.include(
     writePart(`DELETE FROM pass_transfer_asset_candidates WHERE ${at.sql} AND {grant}`, at.params),

@@ -40,6 +40,7 @@ const FINISH_TABLES = [
   'pass_events',
   'pass_assets',
   'member_photos',
+  'pass_notes',
   'pass_transfer_asset_gc',
   'pass_transfer_asset_candidates',
   'pass_transfer_asset_uploads',

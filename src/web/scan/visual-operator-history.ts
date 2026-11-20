@@ -92,11 +92,15 @@ export const NOTES: PassNote[] = [
     at: at(1, 120),
     body: "Chidi's climbing waiver is still unsigned. Ask Maya.",
     by: 'Jonas W.',
+    own: false,
+    edited: false,
   },
   {
     id: '01900000-0000-7000-8000-000000000802',
     at: at(20),
     body: 'Prefers the side door. Knee brace, no stairs.',
-    by: 'Ana R.',
+    by: 'Theo B.',
+    own: true,
+    edited: true,
   },
 ];

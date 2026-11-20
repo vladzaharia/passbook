@@ -4,7 +4,14 @@ import { ApiError } from '../../../lib/errors.ts';
 import type { ScanApi } from '../../api/scan-api.ts';
 import { scanId } from '../../platform/id.ts';
 
-export type AddResult = 'ok' | 'full' | 'wait' | 'failed';
+export type AddResult = 'ok' | 'full' | 'device' | 'wait' | 'failed';
+
+function resultOf(error: unknown): AddResult {
+  if (error instanceof ApiError && error.code === 'NOTE_CAP') return 'full';
+  if (error instanceof ApiError && error.code === 'NOTE_DEVICE_CAP') return 'device';
+  if (error instanceof ApiError && error.status === 429) return 'wait';
+  return 'failed';
+}
 
 interface Loaded {
   passId: string;
@@ -62,10 +69,43 @@ export function useNotes(api: ScanApi, passId: string, enabled: boolean, onAdded
         onAdded();
         return 'ok';
       } catch (error) {
-        if (error instanceof ApiError && error.code === 'NOTE_CAP') return 'full';
-        if (error instanceof ApiError && error.status === 429) return 'wait';
-        return 'failed';
+        return resultOf(error);
       }
+    },
+    [api, passId, onAdded],
+  );
+
+  const edit = useCallback(
+    async (id: string, body: string): Promise<AddResult> => {
+      try {
+        const note = await api.editNote(passId, id, { body });
+        setLoaded((was) =>
+          was?.passId === passId
+            ? { ...was, items: was.items.map((n) => (n.id === id ? note : n)) }
+            : was,
+        );
+        onAdded();
+        return 'ok';
+      } catch (error) {
+        return resultOf(error);
+      }
+    },
+    [api, passId, onAdded],
+  );
+
+  const remove = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        await api.deleteNote(passId, id);
+      } catch (error) {
+        // Already gone is as good as gone.
+        if (!(error instanceof ApiError && error.status === 404)) return false;
+      }
+      setLoaded((was) =>
+        was?.passId === passId ? { ...was, items: was.items.filter((n) => n.id !== id) } : was,
+      );
+      onAdded();
+      return true;
     },
     [api, passId, onAdded],
   );
@@ -76,6 +116,8 @@ export function useNotes(api: ScanApi, passId: string, enabled: boolean, onAdded
     loading: enabled && current === null,
     failed: current?.status === 'failed',
     add,
+    edit,
+    remove,
     retry: () => {
       setLoaded(null);
       setAttempt((n) => n + 1);

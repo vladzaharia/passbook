@@ -147,6 +147,8 @@ function apiFor(rows: Row[], scenario: string): ScanApi {
       at: NOW,
       body: body.body,
       by: 'Theo B.',
+      own: true,
+      edited: false,
     }),
     override: async () => fixtureOutcome('ok'),
     undo: async () => fixtureOutcome('ok'),

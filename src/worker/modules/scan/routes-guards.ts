@@ -48,7 +48,8 @@ export function mountScanGuards(router: OpenAPIHono<AppBindings>): void {
       ? personRead.test(c.req.path)
         ? readActor
         : photoActor
-      : c.req.method === 'POST' && /\/(?:photo|notes)$/.test(c.req.path)
+      : (c.req.method === 'POST' && /\/(?:photo|notes)$/.test(c.req.path)) ||
+          (['PATCH', 'DELETE'].includes(c.req.method) && /\/notes\/[^/]+$/.test(c.req.path))
         ? operateActor
         : manageActor)(c, next),
   );

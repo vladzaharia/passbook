@@ -6,6 +6,8 @@ import { ScanReasonSchema } from './scan.ts';
 export const HISTORY_DAYS = 30;
 /** Notes one pass keeps. */
 export const PASS_NOTE_CAP = 100;
+/** Notes one device may add to one pass in a day. */
+export const NOTE_DEVICE_CAP = 10;
 export const NOTE_MAX = 280;
 /** One plain line, capped: the only text a staff note may carry. */
 export const NoteSchema = PlainLineSchema(NOTE_MAX);
@@ -69,11 +71,17 @@ export const PassNoteRequestSchema = z.strictObject({
   idempotencyKey: IdSchema,
 });
 
+/** `PATCH /scan/passes/{id}/notes/{noteId}`. */
+export const PassNoteEditSchema = z.strictObject({ body: NoteSchema });
+
 export const PassNoteSchema = z.object({
   id: IdSchema,
   at: TimestampSchema,
   body: z.string().max(NOTE_MAX),
   by: z.string().max(120),
+  /** Written by the viewer: they may change it. A Manager may change any. */
+  own: z.boolean(),
+  edited: z.boolean(),
 });
 export type PassNote = z.infer<typeof PassNoteSchema>;
 

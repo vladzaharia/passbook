@@ -8,16 +8,18 @@ import {
   type HistoryQuerySchema,
 } from '../../../shared/contracts/scan-history.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { auditStmt } from '../audit/repo.ts';
 import type { ScanActor } from './actor.ts';
 import { evidenceFor } from './history.ts';
 import type { HistoryRow } from './history-row.ts';
 import type { HistoryEvidence } from './history-row-evidence.ts';
-import { mayReadNotes, passFor } from './notes.ts';
+import { mayReadNotes, readsAllowed } from './history-scope.ts';
+import { passFor } from './notes.ts';
 import { passHistorySelector } from './repo-history-pass.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
 import { type NoteRow, readNotes } from './repo-notes.ts';
 import { scanReadAuthority } from './repo-read-authority.ts';
-import { HISTORY_READ, historyReadable } from './repo-scan-history.ts';
+import { HISTORY_READ } from './repo-scan-history.ts';
 import { ROLE_RANK } from './rules.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { staleScanRead } from './stale-read.ts';
@@ -101,11 +103,11 @@ export async function passHistory(
   const actor = cloneObservedScanActor(source);
   const role = actor.role;
   const empty: HistoryPage = { items: [], nextCursor: null };
-  if (role === null || !historyReadable(actor)) return empty;
+  const now = context.clock.now();
+  if (role === null || !readsAllowed(actor, now)) return empty;
   const door = ROLE_RANK[role] < ROLE_RANK.desk;
   if (door && query.filter === 'changes') return empty;
   const pass = await passFor(context, actor, passId);
-  const now = context.clock.now();
   const auth = scanReadAuthority(actor, {
     now,
     read: HISTORY_READ,
@@ -114,7 +116,7 @@ export async function passHistory(
   const take = query.limit + 1;
   const before = cursorOf(query.cursor);
   const since = now - HISTORY_DAYS * DAY;
-  const notes = !door && query.filter !== 'visits' && mayReadNotes(actor);
+  const notes = !door && query.filter !== 'visits' && mayReadNotes(actor, now);
   const [scans, noted] = await Promise.all([
     readHistoryPage(
       context.env.DB,
@@ -137,6 +139,7 @@ export async function passHistory(
       ? readNotes(context.env.DB, auth, {
           passId,
           templateId: pass.templateId,
+          generation: pass.credentialGeneration,
           since,
           ...(before ? { before } : {}),
           limit: take,
@@ -150,6 +153,17 @@ export async function passHistory(
     ...noted.rows.map(noteLine),
   ].sort(newest);
   const items = lines.slice(0, query.limit);
+  // One row per history opened (its first page), with the count and no content: lookups are audited alike.
+  if (!before)
+    await auditStmt(context.env.DB, context, {
+      orgId: actor.orgId,
+      actorType: actor.actor.type,
+      actorId: actor.actor.id,
+      action: 'scan.history.read',
+      targetType: 'pass',
+      targetId: passId,
+      detail: { count: items.length },
+    }).run();
   const last = items[items.length - 1];
   return {
     items,

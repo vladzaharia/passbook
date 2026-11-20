@@ -270,6 +270,8 @@ describe('createScanApi', () => {
         'activity',
         'addNote',
         'addPhoto',
+        'deleteNote',
+        'editNote',
         'reportDevice',
         'batch',
         'endRollCall',

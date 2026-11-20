@@ -35,11 +35,18 @@ export function passHistorySelector(actor: ScanActor, q: PassHistoryQuery): Hist
     "s.action_kind IS NOT 'undo'",
     KIND_SQL[q.filter],
     HISTORICAL_SCOPE_SQL,
+    // A new holder starts clean: scans of the credential before the last completed transfer are not theirs.
+    `s.at >= coalesce((SELECT max(t.completed_at) FROM pass_credential_transfers t
+      WHERE t.pass_id = s.pass_id AND t.state = 'completed'), 0)`,
   ];
   const params: SqlValue[] = [q.passId, q.templateId, q.since];
   if (actor.event) {
     clauses.push('s.event_id IS ?');
     params.push(actor.event.id);
+  } else if (actor.events?.length) {
+    // A mixed scope names its events: another event of the same template is not this device's to read.
+    clauses.push('(s.event_id IS NULL OR s.event_id IN (SELECT value FROM json_each(?)))');
+    params.push(JSON.stringify(actor.events.map((e) => e.event.id).sort()));
   }
   if (q.before) {
     clauses.push('(s.at < ? OR (s.at = ? AND s.id < ?))');

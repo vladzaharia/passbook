@@ -1,8 +1,10 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
+import { OkSchema } from '../../../shared/contracts/common.ts';
 import {
   HistoryPageSchema,
   HistoryQuerySchema,
+  PassNoteEditSchema,
   PassNoteRequestSchema,
   PassNoteSchema,
   PassNotesSchema,
@@ -12,10 +14,11 @@ import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { scanActorOf } from './guard.ts';
 import { passHistory } from './history-pass.ts';
-import { addNote, notesFor } from './notes.ts';
+import { addNote, deleteNote, editNote, notesFor } from './notes.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 
 const PassParam = z.object({ passId: z.string().min(1).max(64) });
+const NoteParam = PassParam.extend({ noteId: z.string().min(1).max(64) });
 
 /** A person's history and staff notes. Register on the guarded scanner router, which admits the roles. */
 export function registerScanHistoryRoutes(router: OpenAPIHono<AppBindings>): void {
@@ -79,5 +82,45 @@ export function registerScanHistoryRoutes(router: OpenAPIHono<AppBindings>): voi
           c.req.valid('json'),
         ),
       ),
+  );
+  register(
+    router,
+    'scan',
+    {
+      method: 'patch',
+      path: '/passes/{passId}/notes/{noteId}',
+      summary: 'Change a staff note',
+      params: NoteParam,
+      body: PassNoteEditSchema,
+      response: PassNoteSchema,
+    },
+    async (c) => {
+      const { passId, noteId } = c.req.valid('param');
+      return c.json(
+        await editNote(
+          serviceContext(c),
+          cloneObservedScanActor(scanActorOf(c)),
+          passId,
+          noteId,
+          c.req.valid('json'),
+        ),
+      );
+    },
+  );
+  register(
+    router,
+    'scan',
+    {
+      method: 'delete',
+      path: '/passes/{passId}/notes/{noteId}',
+      summary: 'Delete a staff note',
+      params: NoteParam,
+      response: OkSchema,
+    },
+    async (c) => {
+      const { passId, noteId } = c.req.valid('param');
+      await deleteNote(serviceContext(c), cloneObservedScanActor(scanActorOf(c)), passId, noteId);
+      return c.json({ ok: true as const });
+    },
   );
 }

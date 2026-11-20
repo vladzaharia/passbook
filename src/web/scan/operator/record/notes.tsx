@@ -1,24 +1,15 @@
 import { Plus, StickyNote } from 'lucide-react';
-import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
-import { NOTE_MAX, NoteSchema } from '../../../../shared/contracts/scan-history.ts';
-import { scanLine } from '../../../../shared/copy/scan.ts';
+import { useEffect, useRef, useState } from 'react';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
-import { formatShortDate } from '../../../lib/format.ts';
 import { Button } from '../../../ui/button.tsx';
 import type { ScanApi } from '../../api/scan-api.ts';
-import { ScanTextField } from '../../input/wedge-field.tsx';
 import { Kbd } from '../workspace/command-field.tsx';
+import { NoteForm } from './note-form.tsx';
+import { NoteItem } from './note-item.tsx';
 import { type AddResult, useNotes } from './use-notes.ts';
 import './notes.css';
 
 const N = OPERATOR_COPY.notes;
-/** The counter shows only when the line is nearly full. */
-const COUNT_FROM = NOTE_MAX - 40;
-const FAIL: Record<Exclude<AddResult, 'ok'>, string> = {
-  full: N.full,
-  wait: N.wait,
-  failed: N.saveFailed,
-};
 
 function AddNote({
   open,
@@ -31,84 +22,28 @@ function AddNote({
   onClose: () => void;
   onSave: (body: string) => Promise<AddResult>;
 }) {
-  const [text, setText] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [problem, setProblem] = useState<string | null>(null);
-  const field = useRef<HTMLInputElement | null>(null);
   const opener = useRef<HTMLButtonElement | null>(null);
   const was = useRef(false);
   useEffect(() => {
-    // Operator-initiated: opening takes the field, closing gives focus back to the button.
-    if (open) field.current?.focus();
-    else if (was.current) opener.current?.focus();
+    // Closing gives focus back to the button that opened.
+    if (was.current && !open) opener.current?.focus();
     was.current = open;
   }, [open]);
-  const parsed = NoteSchema.safeParse(text);
-  const close = () => {
-    setText('');
-    setProblem(null);
-    onClose();
-  };
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!parsed.success || busy) return;
-    setBusy(true);
-    const result = await onSave(parsed.data);
-    setBusy(false);
-    if (result === 'ok') close();
-    else setProblem(FAIL[result]);
-  };
-  const keys = (e: KeyboardEvent) => {
-    if (e.key !== 'Escape') return;
-    e.stopPropagation();
-    close();
-  };
-  if (!open)
-    return (
-      <button
-        ref={opener}
-        type="button"
-        className="op-note-add"
-        data-testid="op-note-add"
-        aria-keyshortcuts="N"
-        onClick={onOpen}
-      >
-        <Plus aria-hidden /> {N.add}
-        <span className="op-keycap" aria-hidden>
-          <Kbd>N</Kbd>
-        </span>
-      </button>
-    );
+  if (open) return <NoteForm onSave={onSave} onClose={onClose} />;
   return (
-    <form className="op-note-form" onSubmit={submit} onKeyDown={keys} data-testid="op-note-form">
-      <ScanTextField
-        ref={field}
-        value={text}
-        maxLength={NOTE_MAX}
-        placeholder={N.placeholder}
-        aria-label={N.label}
-        autoComplete="off"
-        enterKeyHint="done"
-        onChange={(e) => setText(e.target.value)}
-        onValueRestore={setText}
-      />
-      <div className="op-note-foot">
-        <span
-          className="op-note-hint"
-          role={problem ? 'alert' : undefined}
-          data-problem={problem ? true : undefined}
-        >
-          {problem ??
-            (text.length >= COUNT_FROM ? scanLine(N.left, { n: NOTE_MAX - text.length }) : '')}
-        </span>
-        <Button type="button" variant="ghost" onClick={close}>
-          {N.cancel}
-        </Button>
-        <Button type="submit" aria-disabled={!parsed.success || busy || undefined}>
-          {busy ? N.saving : N.save}
-        </Button>
-      </div>
-    </form>
+    <button
+      ref={opener}
+      type="button"
+      className="op-note-add"
+      data-testid="op-note-add"
+      aria-keyshortcuts="N"
+      onClick={onOpen}
+    >
+      <Plus aria-hidden /> {N.add}
+      <span className="op-keycap" aria-hidden>
+        <Kbd>N</Kbd>
+      </span>
+    </button>
   );
 }
 
@@ -120,11 +55,14 @@ export function Notes({
   api,
   passId,
   openSignal,
+  manager,
   onAdded,
 }: {
   api: ScanApi;
   passId: string;
   openSignal: number;
+  /** A Manager and above may change any note; anyone else, their own. */
+  manager: boolean;
   /** A note was saved: the history lists it too. */
   onAdded: () => void;
 }) {
@@ -156,14 +94,18 @@ export function Notes({
       ) : (
         <ul className="op-staff-notes">
           {notes.items.map((note) => (
-            <li key={note.id} className="op-staff-note" data-testid="op-staff-note">
-              <p>{note.body}</p>
-              <span>{scanLine(N.by, { name: note.by, when: formatShortDate(note.at) })}</span>
-            </li>
+            <NoteItem
+              key={note.id}
+              note={note}
+              mayChange={manager || note.own}
+              onEdit={(body) => notes.edit(note.id, body)}
+              onDelete={() => notes.remove(note.id)}
+            />
           ))}
         </ul>
       )}
       <AddNote
+        key={passId}
         open={open}
         onOpen={() => setOpen(true)}
         onClose={() => setOpen(false)}

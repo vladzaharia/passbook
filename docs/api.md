@@ -738,8 +738,13 @@ A roll call freezes who is inside and records who is confirmed present or out. C
 Paired scanners and scanning consoles call these under `/api/v1/scan/passes/{id}`; the pass must be in the device's org, mode and template scope, else 404 `PASS_NOT_FOUND`.
 
 - `GET .../history?filter=all|visits|changes&cursor=&limit=` (1-50, default 20) is the last 30 days, newest first. `nextCursor` is null on the last page; send it back as `cursor`. Each line has `event` (`scanned`, `checked_in`, `checked_out`, `refused`, `held`, `let_in`, `undone`, `value`, `note`), `reason`, `label`, `place`, `staff` and `amount`. Door sees visits only, with no `staff`, `amount` or notes; Desk and above see all. A scan whose signed policy does not hold is `scanned` with only its time. An undo is not a line: the scan it undid is `undone`. Notes appear as `note` lines without their text.
-- `GET .../notes` lists up to 100 notes, newest first. Desk and above; Door is 403 `NOTE_ROLE`.
-- `POST .../notes` `{ body, idempotencyKey }` adds one. `body` is one plain line of 1-280 characters; a repeated `idempotencyKey` returns the first note. Desk and above on a paired, non-terminal scan device; 20 per minute per device (429). A pass holds 100 notes (409 `NOTE_CAP`). Audited as `scan.note.add` with the length, never the text.
+- `GET .../notes` lists up to 100 notes, newest first, each with `own` (the viewer wrote it) and `edited`. Desk and above, never a terminal; Door is 403 `NOTE_ROLE`.
+- `POST .../notes` `{ body, idempotencyKey }` adds one. `body` is one plain line of 1-280 characters; a repeated `idempotencyKey` returns the first note. Desk and above on a paired, non-terminal scan device; 20 per minute per device (429). A pass holds 100 notes (409 `NOTE_CAP`) and one device adds at most 10 to one pass a day (409 `NOTE_DEVICE_CAP`).
+- `PATCH .../notes/{noteId}` `{ body }` and `DELETE .../notes/{noteId}`: the note's author, or a Manager and above (also from the console). Anyone else gets 404 `NOTE_NOT_FOUND`.
+- Audited as `scan.note.add`, `.edit` and `.delete` with the length, never the text. Opening history (its first page) and notes leaves `scan.history.read` and `scan.note.read` with a count and no content.
+- History and notes are read only while the session is active and inside its hours; a Manager and above reads through a pause. A mixed-scope device reads only its own events.
+
+A completed credential transfer (a new holder) deletes the pass's notes, and history starts at the transfer: the next holder never sees the previous one's visits or notes.
 
 Notes are staff-only: never on a customer screen, a pass or an email. They are deleted with the pass, age out with the scans retention window (holds honoured; Test-mode notes follow the sandbox window), and are in the org export and purge.
 
