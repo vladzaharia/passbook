@@ -49,17 +49,21 @@ export const templatesRoutes = createRouter({ bodyLimit: false });
 /** The archive upload and the version save (base64 images) have their own caps below. */
 templatesRoutes.use('*', defaultBodyLimit(/\/(uploads|[^/]+\/(versions|use|use\/check))$/));
 // Template reads allow scoped API keys; mutations require a session and are authorized per org.
+// The scan setup route declares its own `auth` (a session or a `scanning:write` key).
+const SCAN_SETUP = /\/templates\/[^/]+\/scan-setup\/?$/;
 templatesRoutes.use(
   '*',
   declareKeyAccess(
     async (c, next) =>
-      c.req.method === 'GET'
-        ? requireTenantSessionOrApiKey(
-            /\/templates\/eligible\/?$/.test(c.req.path)
-              ? ['templates:read', 'passes:read']
-              : 'templates:read',
-          )(c, next)
-        : requireTenantSession(c, next),
+      c.req.method === 'POST' && SCAN_SETUP.test(c.req.path)
+        ? next()
+        : c.req.method === 'GET'
+          ? requireTenantSessionOrApiKey(
+              /\/templates\/eligible\/?$/.test(c.req.path)
+                ? ['templates:read', 'passes:read']
+                : 'templates:read',
+            )(c, next)
+          : requireTenantSession(c, next),
     { read: ['templates:read'] },
   ),
 );

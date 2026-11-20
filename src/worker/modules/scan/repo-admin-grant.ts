@@ -41,6 +41,37 @@ export function adminAuthorityOf(
 
 export const adminPrincipal = (authority: AdminAuthority): Principal => tenantPrincipal(authority);
 
+/** An API key that holds `scanning:write` for this org (the scan setup of a template). */
+export type KeyAdminAuthority = Extract<TenantPassWrite, { kind: 'api_key' }>;
+
+/**
+ * Who a scan admin grant acts as: the console session (`adminAuthorityOf`), or a key whose verified
+ * scope is `scanning:write`. `actorId` is the user id or the key id; the grant re-derives the scope
+ * from the key's own row (scopes, roles, expiry, retirement) at commit.
+ */
+export function grantAuthorityOf(
+  authority: TenantPassWrite | null | undefined,
+  actorId: string,
+  orgId: string,
+): AdminAuthority | KeyAdminAuthority {
+  if (authority?.kind !== 'api_key') return adminAuthorityOf(authority, actorId, orgId);
+  if (
+    authority.scope !== 'scanning:write' ||
+    authority.keyId !== actorId ||
+    authority.orgId !== orgId
+  )
+    throw new ForbiddenError();
+  return authority;
+}
+
+/** The audit actor of a scan admin write: the user, or the key. */
+export const adminActorOf = (authority: TenantPassWrite, actorId: string) =>
+  ({ actorType: authority.kind === 'api_key' ? 'api_key' : 'user', actorId }) as const;
+
+/** `created_by` references a user: a key leaves it empty and is named by the audit row instead. */
+export const createdByOf = (authority: TenantPassWrite, actorId: string): string | null =>
+  authority.kind === 'api_key' ? null : actorId;
+
 /** Every table a scan admin grant writes: the typed ones and the scanner template and setup parts. */
 const SCAN_ADMIN_TABLES = [
   'scan_events',
@@ -83,10 +114,10 @@ export function adminGrant(
   target?: string,
   tables: readonly string[] = SCAN_ADMIN_TABLES,
 ): Grant {
-  const admin = adminAuthorityOf(authority, userId, orgId);
+  const admin = grantAuthorityOf(authority, userId, orgId);
   return grant(ctx, {
     purpose,
-    principal: adminPrincipal(admin),
+    principal: tenantPrincipal(admin),
     checks: [...capabilityChecks(admin), ...checks],
     tables: [...tables],
     ...(codes ? { codes } : {}),

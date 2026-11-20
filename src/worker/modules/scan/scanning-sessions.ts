@@ -9,25 +9,22 @@ import { rowIs } from '../../platform/authority-checks.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantScanRole } from './actor.ts';
 import { admitsJson } from './admits.ts';
-import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { kickScreen } from './live.ts';
 import { noteSessionChange, savedOfflineSettings } from './offline-policy.ts';
 import {
+  adminActorOf,
   adminGrant,
   audited,
   eventsOpen,
   scopeTemplatesUsable,
   sessionEpoch,
-  templatesUsable,
 } from './repo-admin-grant.ts';
 import { addSessionPropagation, sessionDevicesAre } from './repo-scanner-configuration-sync.ts';
 import { scanningDeviceRows } from './repo-scanning-devices.ts';
 import {
-  addScanningSessionInsert,
   addScanningSessionUpdate,
   type ScanningSessionRow,
   scanningSessionRow,
@@ -46,8 +43,9 @@ import {
   sessionDto,
   storedCustomer,
 } from './scanning-session-dto.ts';
+import { insertScanningSession, SESSION_CODES } from './scanning-session-insert.ts';
 import { scanningSessionActivity } from './session-activity.ts';
-import { addHoursAudit, newTiming, timingPatch } from './session-hours-write.ts';
+import { addHoursAudit, timingPatch } from './session-hours-write.ts';
 import {
   assertNoZonesLeft,
   eventOfAccepts,
@@ -56,12 +54,6 @@ import {
 } from './session-zones.ts';
 
 export { startAdminSetup } from './scanning-session-admin-setup.ts';
-
-const SESSION_CODES = {
-  config: 'SCANNING_SESSION_CHANGED',
-  lineage: 'SCANNING_SESSION_CHANGED',
-  stale: 'SCANNING_SESSION_CHANGED',
-} as const;
 
 export async function loadScanningSession(
   ctx: ServiceContext,
@@ -122,70 +114,10 @@ export async function createScanningSession(
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
   if (countAuthority.orgId !== input.orgId || countAuthority.mode !== mode)
     throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
-  if (!(await orgIsActive(ctx.env.DB, input.orgId)))
-    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  const accepts = input.accepts ? await checkAccepts(ctx, input.orgId, mode, input.accepts) : null;
-  const zoneIds = input.zoneIds ?? [];
-  const settings = savedOfflineSettings(
-    ScanningSessionSettingsSchema.parse({
-      ...DEFAULT_SETTINGS,
-      lookup: true,
-      showPhoto: true,
-      ...input.settings,
-      acceptAllTemplates: input.accepts === null,
-    }),
-    zoneIds.length,
-  );
-  if (settings.checkIn?.eventId)
-    await checkAccepts(ctx, input.orgId, mode, { eventId: settings.checkIn.eventId });
-  const zoneChecks = await sessionZoneChecks(ctx, input.orgId, zoneIds, eventOnly(accepts));
-  const now = ctx.clock.now();
-  const id = ctx.ids.id();
-  const g = adminGrant(
-    ctx,
-    'org_mode.scan.session.create',
-    userId,
-    authority,
-    input.orgId,
-    [
-      ...eventsOpen([...(accepts?.eventIds ?? []), settings.checkIn?.eventId]),
-      ...templatesUsable(accepts?.templateIds ?? []),
-      ...zoneChecks,
-    ],
-    SESSION_CODES,
-    id,
-  );
-  addScanningSessionInsert(
-    g,
-    {
-      id,
-      name: input.name,
-      status: 'active',
-      accepts: accepts ? admitsJson(accepts.admits) : null,
-      settings: JSON.stringify(settings),
-      time_zone: input.timeZone,
-      ...newTiming(input.timeZone, input.hours ?? null, now),
-      created_at: now,
-      updated_at: now,
-      ...(setupTemplateId ? { setup_template_id: setupTemplateId } : {}),
-    },
-    userId,
-  );
-  if (zoneIds.length > 0) addSessionZones(g, id, zoneIds, false);
-  g.add(
-    audited(g, ctx, {
-      orgId: input.orgId,
-      actorType: 'user',
-      actorId: userId,
-      action: setupTemplateId ? 'scan.template_setup' : 'scanning.session_create',
-      targetType: 'scanning_session',
-      targetId: id,
-      detail: setupTemplateId ? { mode, templateId: setupTemplateId } : { mode },
-    }),
-  );
-  await g.commit();
+  const id = await insertScanningSession(ctx, userId, mode, input, authority, setupTemplateId);
   return scanningSessionDetailForAuthority(ctx, id, mode, countAuthority);
 }
+
 export async function updateScanningSession(
   ctx: ServiceContext,
   userId: string,
@@ -195,9 +127,19 @@ export async function updateScanningSession(
   countAuthority: SessionReadAuthority,
 ) {
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
+  const row = await applyScanningSessionUpdate(ctx, userId, id, input, authority);
+  return scanningSessionDetailForAuthority(ctx, id, row.mode, countAuthority);
+}
+
+/** The write of a session change, for a console session or a key; returns the session as it was. */
+export async function applyScanningSessionUpdate(
+  ctx: ServiceContext,
+  actorId: string,
+  id: string,
+  input: z.infer<typeof UpdateScanningSessionSchema>,
+  authority: TenantPassWrite,
+) {
   const row = await loadScanningSession(ctx, id, authority.mode, authority.orgId);
-  if (countAuthority.orgId !== row.org_id || countAuthority.mode !== row.mode)
-    throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
   if (input.revision !== undefined && input.revision !== row.updated_at)
     throw new ConflictError(
       'This session changed. Reload its settings and try again.',
@@ -254,7 +196,7 @@ export async function updateScanningSession(
   const g = adminGrant(
     ctx,
     'org_mode.scan.session.update',
-    userId,
+    actorId,
     authority,
     row.org_id,
     [
@@ -302,15 +244,14 @@ export async function updateScanningSession(
   g.add(
     audited(g, ctx, {
       orgId: row.org_id,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, actorId),
       action: 'scanning.session_update',
       targetType: 'scanning_session',
       targetId: id,
       detail: { status: next.status },
     }),
   );
-  addHoursAudit(g, ctx, row, userId, input.hours);
+  addHoursAudit(g, ctx, row, actorId, input.hours);
   try {
     await g.commit();
   } catch (error) {
@@ -323,5 +264,5 @@ export async function updateScanningSession(
   }
   await noteSessionChange(ctx, row, next.status, settings ?? effectiveSessionSettings(row), now);
   await Promise.all(devices.map((d) => kickScreen(ctx, row.org_id, row.mode, d.scanner_id)));
-  return scanningSessionDetailForAuthority(ctx, id, row.mode, countAuthority);
+  return row;
 }

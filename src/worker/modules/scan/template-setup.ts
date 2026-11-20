@@ -6,7 +6,7 @@ import type {
   TemplateScanSetupBodySchema,
 } from '../../../shared/contracts/scan-template-setup.ts';
 import { CreateScanningSessionSchema } from '../../../shared/contracts/scanning-sessions.ts';
-import type { SessionAuth } from '../../platform/auth.ts';
+import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -14,8 +14,6 @@ import { resolveTemplate } from '../passes/builder.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { getTemplate } from '../templates/repo.ts';
 import { storedAdmits } from './admits.ts';
-import { captureEventAuthority } from './events.ts';
-import { archiveEvent, createEvent } from './events-mutations.ts';
 import {
   listedEventValues,
   ownEventValues,
@@ -23,12 +21,8 @@ import {
   setupEvent,
   setupSession,
 } from './repo-template-setup.ts';
-import { captureConsoleSessionCountAuthority } from './scanning-session-dto.ts';
-import {
-  createScanningSession,
-  loadScanningSession,
-  updateScanningSession,
-} from './scanning-sessions.ts';
+import { loadScanningSession } from './scanning-sessions.ts';
+import { setupActor } from './template-setup-actor.ts';
 import {
   checkInOf,
   eventSource,
@@ -51,7 +45,7 @@ const DAY = 86_400_000;
  */
 export async function setupTemplateScan(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: SessionAuth | ApiKeyAuth,
   mode: Mode,
   templateId: string,
   input: Input,
@@ -75,10 +69,7 @@ export async function setupTemplateScan(
   const truncated = plan.more || own.more || listed.more;
   const eventStyle = source.own !== null || source.list !== null;
   const timeZone = input.timeZone ?? planned.find((e) => e.timeZone)?.timeZone ?? 'UTC';
-  const read = await tenantAuthorityOf(ctx, auth, orgId, 'scanning:read');
-  const countAuthority = await captureConsoleSessionCountAuthority(ctx, auth, read);
-
-  const eventAuthority = async () => captureEventAuthority(ctx, auth, authority);
+  const actor = await setupActor(ctx, auth, authority, mode);
   const ensureEvent = async (e: PlannedEvent): Promise<Made | null> => {
     const found = await setupEvent(db, orgId, mode, e.key);
     if (found) return { id: found.id, name: e.name, created: false };
@@ -97,14 +88,7 @@ export async function setupTemplateScan(
       return null;
     }
     try {
-      const made = await createEvent(
-        ctx,
-        auth.userId,
-        mode,
-        body.data,
-        await eventAuthority(),
-        e.key,
-      );
+      const made = await actor.createEvent(body.data, e.key);
       return { id: made.id, name: made.name, created: true };
     } catch (error) {
       // A concurrent call may hold the key: take its event. Anything else is the caller's error.
@@ -117,7 +101,7 @@ export async function setupTemplateScan(
   const discard = async (events: readonly Made[]) => {
     for (const e of events.filter((made) => made.created)) {
       try {
-        await archiveEvent(ctx, auth.userId, e.id, await eventAuthority());
+        await actor.archiveEvent(e.id);
       } catch (cleanup) {
         ctx.log.error('scan.template_setup.cleanup_failed', {
           orgId,
@@ -173,14 +157,10 @@ export async function setupTemplateScan(
           truncated,
         };
       try {
-        await updateScanningSession(
-          ctx,
-          auth.userId,
-          sessionId,
-          { accepts: { templateIds, eventIds: [...have, ...attach.map((e) => e.id)] } },
-          authority,
-          countAuthority,
-        );
+        await actor.updateSession(sessionId, {
+          templateIds,
+          eventIds: [...have, ...attach.map((e) => e.id)],
+        });
         return {
           session: { id: row.id, name: row.name },
           created: false,
@@ -224,15 +204,7 @@ export async function setupTemplateScan(
           : { templateIds: [templateId] },
       ...(checkIn ? { settings: { checkIn } } : {}),
     });
-    const session = await createScanningSession(
-      ctx,
-      auth.userId,
-      mode,
-      body,
-      authority,
-      countAuthority,
-      templateId,
-    );
+    const session = await actor.createSession(body, templateId);
     return {
       session: { id: session.id, name: session.name },
       created: true,

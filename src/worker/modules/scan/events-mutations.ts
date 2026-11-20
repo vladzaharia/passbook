@@ -13,6 +13,7 @@ import {
   ValidationError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
 import { admitsJson } from './admits.ts';
 import {
   checkTemplates,
@@ -23,8 +24,10 @@ import {
 } from './events.ts';
 import { assertStandaloneSession } from './legacy-session.ts';
 import {
+  adminActorOf,
   adminGrant,
   audited,
+  createdByOf,
   eventEpoch,
   scannersAssignable,
   templatesUsable,
@@ -59,7 +62,7 @@ export async function createEvent(
   userId: string,
   mode: Mode,
   input: z.infer<typeof CreateScanEventSchema>,
-  authority: EventAuthority,
+  authority: TenantPassWrite,
   /** Scan passes: one live event per key. A second insert fails on the unique index. */
   setupKey?: string,
 ) {
@@ -101,13 +104,12 @@ export async function createEvent(
     EVENT_CODES,
     values.id,
   );
-  addEventInsert(g, values, userId, now);
+  addEventInsert(g, values, createdByOf(authority, userId), now);
   addEventTemplates(g, values.id, templateIds, false);
   g.add(
     audited(g, ctx, {
       orgId: input.orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: 'scan_event.create',
       targetType: 'scan_event',
       targetId: values.id,
@@ -215,7 +217,7 @@ export async function archiveEvent(
   ctx: ServiceContext,
   userId: string,
   id: string,
-  authority: EventAuthority,
+  authority: TenantPassWrite,
 ) {
   const row = await loadManageEvent(ctx, id, userId, authority);
   const archive = row.archivedAt === null;
@@ -238,8 +240,7 @@ export async function archiveEvent(
     g.add(
       audited(g, ctx, {
         orgId: row.orgId,
-        actorType: 'user',
-        actorId: userId,
+        ...adminActorOf(authority, userId),
         action: 'scan_event.archive',
         targetType: 'scan_event',
         targetId: id,
