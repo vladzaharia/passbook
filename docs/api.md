@@ -808,5 +808,11 @@ quarantine at deletion permanently excludes their historical rows.
   version? }`, 201 with the template. `version` is a draft (`passJson`, `manifest`, `assets`); without it
   the copy is exact. Its first version is a candidate: release it as usual. `POST /templates/{id}/use/check`
   takes the same body with `version` and returns the dry-run report and the built pass.
+- `POST /templates/{id}/scan-setup` (session with `scanning:manage` in `orgId`; no API key) sets up
+  scanning for a template: `{ orgId, timeZone? }`, 200 `{ session, created, events, undated }`. An event
+  template (own event data or an upcoming-events list in `sample`) gets one event per dated entry; any
+  template gets an active session that admits the events and the template. Idempotent: an active session
+  that already admits the template or one of its events is returned with `created: false`. `undated` names
+  listed events with no start, which are skipped. A blueprint answers 422 `BLUEPRINT_NOT_SCANNABLE`.
 - Public pass and bundle links (`/p/{token}`, `/b/{token}`), the Apple web service (`/wallet/v1`) and webhooks
   (`/hooks/connections/{id}`) have their own auth and are not part of the key API.
