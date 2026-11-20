@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-19",
+  "entries": [
+    {
+      "kind": "Added",
+      "text": "Entitlements: a plan sets an organization's features and caps. A create at a cap answers FEATURE_LIMIT_REACHED (403) with feature, limit and used."
+    },
+    {
+      "kind": "Added",
+      "text": "A feature the plan lacks answers FEATURE_NOT_INCLUDED (403); operations that need one carry x-feature."
+    }
+  ]
+}

@@ -192,6 +192,15 @@
       ]
     },
     {
+      "code": "API_VERSION_UNKNOWN",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "APNS_BINDING_MANAGED",
       "statuses": [
         422

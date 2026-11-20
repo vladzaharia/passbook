@@ -1,0 +1,160 @@
+{
+  "date": "2026-11-20",
+  "entries": [
+    {
+      "kind": "Added",
+      "text": "x-sdk names on every operation: the SDK resource and method, frozen."
+    },
+    {
+      "kind": "Added",
+      "text": "Child keys: mint, list, read, rotate, retire and revoke keys under a service key (api-keys:write).",
+      "ops": [
+        "api-keys.getApiKeys",
+        "api-keys.getApiKeysById",
+        "api-keys.getApiKeysByIdActivity",
+        "api-keys.postApiKeys",
+        "api-keys.postApiKeysByIdRotate",
+        "api-keys.postApiKeysMeRotate"
+      ],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "createdAfter, createdBefore and updatedSince beside from, to and since.",
+      "ops": [
+        "audit.getAudit",
+        "audit.getAuditExport",
+        "audit.getAuditPlatform",
+        "audit.getAuditPlatformExport",
+        "scan.getScanRoster",
+        "scan.getScanSummary",
+        "scans.getScans"
+      ],
+      "covers": true
+    },
+    {
+      "kind": "Changed",
+      "text": "Every collection GET returns items and nextCursor, and takes cursor. after stays on /events and /scan/live.",
+      "ops": [
+        "connections.getConnectionsByIdWebhookFailures",
+        "connectors.getConnectors",
+        "me.deleteMeEmailsByEmail",
+        "me.getMeEmails",
+        "me.getMeSessions",
+        "me.postMeEmailsByEmailPrimary",
+        "nfc-keysets.getNfcKeysets",
+        "nfc-tags.getNfcPassesByPassIdTags",
+        "nfc-tags.getNfcScanners",
+        "nfc-tags.getNfcUsersByUserIdTags",
+        "org-lifecycle.getOrgsByOrgIdExports",
+        "org-lifecycle.getPlatformClosedOrgs",
+        "organization-memberships.getOrgsByIdInvitations",
+        "organization-memberships.getOrgsByIdMemberships",
+        "organization-memberships.getOrgsMembershipsMe",
+        "passes.getPassesByIdAssets",
+        "retention.getOrgsByOrgIdRetentionHolds",
+        "retention.getPlatformOrgsByOrgIdRetentionHolds",
+        "scan.getScanStaff",
+        "scan.getScanVisitors",
+        "status.getStatusWorkflows",
+        "templates.getTemplatesByIdCandidates",
+        "templates.getTemplatesByIdReleases",
+        "templates.getTemplatesUploads",
+        "visitors.getVisitors",
+        "visitors.getVisitorsHosts",
+        "wallet-credentials.getOrgsByOrgIdWalletCredentials",
+        "wallet-enrolments.getOrgsByOrgIdWalletEnrolments",
+        "wallet-platform.getPlatformWalletCredentials",
+        "wallet-platform.getPlatformWalletCredentialsMigrate",
+        "webhooks.getWebhookEndpoints"
+      ],
+      "covers": true
+    },
+    {
+      "kind": "Changed",
+      "text": "Problem type is https://passbook.mobile/developers/errors/<CODE>, not urn:wallet:problem:<code>. Branch on code."
+    },
+    {
+      "kind": "Added",
+      "text": "Error catalog: every operation lists its x-codes, and each code has a page with a fix."
+    },
+    {
+      "kind": "Added",
+      "text": "Developer sandbox: POST /developer/sandbox makes a developer org, a Test key and a quickstart template. GET reads it, DELETE closes it.",
+      "ops": ["developer.deleteSandbox", "developer.getSandbox", "developer.postSandbox"],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "Try token: POST /developer/try-token returns a 15 minute pbtry_ bearer for the browser. DELETE ends them.",
+      "ops": ["developer.deleteTryToken", "developer.postTryToken"],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "Sandbox passes are previews: testPreview on pass detail, a TEST preview page as downloadUrl, SANDBOX_PREVIEW_ONLY (409) on .pkpass and SANDBOX_QUOTA (403) at a cap.",
+      "ops": [
+        "passes.getPassesById",
+        "passes.getPassesByIdVersionsByVersion",
+        "passes.patchPassesById",
+        "passes.postPasses",
+        "passes.postPassesByIdRenew",
+        "passes.postPassesByIdStamps",
+        "passes.putPassesByIdConnection",
+        "public.getPreviewByToken",
+        "public.getPreviewByTokenAssetsByName"
+      ],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "x-passbook-signature and x-passbook-timestamp are accepted beside x-wallet-*. GET /templates/{id}/input-schema is new.",
+      "ops": ["templates.getTemplatesByIdInputSchema"],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "Pass imports report progress.skipped when a plan limit stops creates.",
+      "ops": [
+        "pass-imports.getPassImports",
+        "pass-imports.getPassImportsById",
+        "pass-imports.postPassImports",
+        "pass-imports.postPassImportsByIdCheck",
+        "pass-imports.postPassImportsByIdCommit"
+      ],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "POST /bundles/{id}/send-email takes Idempotency-Key.",
+      "ops": [
+        "bundles.postBundlesByIdSendEmail",
+        "passes.postPasses",
+        "passes.postPassesBulk",
+        "passes.postPassesByIdResendEmail"
+      ],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "Scanner: list devices, read a pass's history, and read or delete its notes.",
+      "ops": [
+        "scan.deleteScanPassesByPassIdNotesByNoteId",
+        "scan.getScanDevices",
+        "scan.getScanPassesByPassIdHistory",
+        "scan.getScanPassesByPassIdNotes",
+        "scan.patchScanPassesByPassIdNotesByNoteId",
+        "scan.postScanPassesByPassIdNotes"
+      ],
+      "covers": true
+    },
+    {
+      "kind": "Changed",
+      "text": "POST /roll-calls returns 201, not 200, when you send PassBook-Version: 2026-11-20. Without it nothing changes.",
+      "ops": ["roll-calls.postRollCalls"],
+      "covers": true,
+      "breaking": true,
+      "version": "2026-11-20"
+    }
+  ]
+}

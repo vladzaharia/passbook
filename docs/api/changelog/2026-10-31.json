@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-31",
+  "entries": [
+    {
+      "kind": "Added",
+      "text": "API keys: service, personal and platform tokens with scopes and live or test mode, sent as a bearer token."
+    },
+    {
+      "kind": "Changed",
+      "text": "Pass create with a key: templateVersion, releaseId and releaseGeneration are optional together. Send none and the server uses the approved release; with none it answers TEMPLATE_RELEASE_REQUIRED (409). Some but not all is 422."
+    },
+    {
+      "kind": "Changed",
+      "text": "mode on pass create defaults to the key's mode; a mismatch is MODE_MISMATCH (409)."
+    },
+    {
+      "kind": "Changed",
+      "text": "Lists: a global key or a session without orgId gets ORG_REQUIRED (422). A session listing a forbidden org's passes gets 403, not an empty 200."
+    },
+    {
+      "kind": "Changed",
+      "text": "Uploaded templates start with a legacy release at their active version, so existing integrations keep creating passes. New versions need a candidate, a second reviewer and a release."
+    }
+  ]
+}

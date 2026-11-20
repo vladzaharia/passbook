@@ -9,6 +9,7 @@ export const PATHS = {
   errors: '/developers/errors',
   protocols: '/developers/reference/protocols',
   changelog: '/developers/changelog',
+  changelogFeed: '/developers/changelog.atom',
   llms: '/developers/llms.txt',
   sitemap: '/developers/sitemap.xml',
   assets: '/developers/assets',

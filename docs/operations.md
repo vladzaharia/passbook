@@ -28,6 +28,7 @@
 - Tests: `npm run test:unit|worker|web`, `npm run test:e2e`, `npm run coverage`.
 - e2e runs the dev server or, in CI, the built preview. Both raise `RL_SCAN_PAIR` (30 a minute in production) to 100,000: `vite.config.ts` for dev, `tools/e2e-server.ts` patches the built `wrangler.json` for preview. A worker test covers the real limit.
 - `npm run gen` rewrites `src/generated/*` and `worker-configuration.d.ts`. Commit the result.
+- Changelog: the integration PR runs `npm run changelog:release` and commits the dated file; `deploy --apply` only warns while `unreleased.json` has entries.
 
 ## Go-live checklist
 

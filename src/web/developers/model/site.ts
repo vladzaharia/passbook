@@ -1,7 +1,9 @@
+import { buildChangelog } from './changelog.ts';
 import { GROUP_ORDER, groupOf, labelOf, slugOf } from './resources.ts';
 import { bodyFields, paramFields, refName, resolve } from './schema.ts';
 import {
-  type ChangeEntry,
+  type ApiVersion,
+  type ChangedIn,
   type ConsoleOp,
   type Dict,
   type ErrorEntry,
@@ -11,6 +13,7 @@ import {
   type Method,
   type OpView,
   type ProtocolOp,
+  type RawChangeFile,
   type RawDoc,
   type RawOp,
   type ReferenceEntry,
@@ -22,7 +25,8 @@ import {
 export interface Inputs {
   doc: RawDoc;
   reference: Record<string, ReferenceEntry>;
-  changelog: ChangeEntry[];
+  changelog: RawChangeFile[];
+  versions: ApiVersion[];
   /** docs/api/errors.json (PX4): `[{code,status}]` or `{code: {status}}`. Absent until PX4. */
   errors?: unknown;
   /** docs/api/error-guide.json (PX4): `{code: {title,when,fix,retryable}}`. */
@@ -97,6 +101,7 @@ function view(
   op: RawOp,
   inputs: Inputs,
   status: Map<string, number>,
+  changed: Map<string, ChangedIn>,
 ): OpView {
   const ref = inputs.reference[op.operationId];
   const sdk = op['x-sdk'] as NonNullable<RawOp['x-sdk']>;
@@ -136,6 +141,7 @@ function view(
     errors: errorRows(op, status, inputs.guide ?? {}),
     deprecated: op.deprecated === true,
     sub,
+    changedIn: changed.get(op.operationId) ?? null,
   };
 }
 
@@ -153,6 +159,18 @@ export function buildSite(inputs: Inputs): Site {
   const consoleOps = new Map<string, ConsoleOp[]>();
   const protocols: ProtocolOp[] = [];
   let opCount = 0;
+  const areas = new Map<string, string>();
+  for (const [, item] of Object.entries(doc.paths))
+    for (const m of METHODS) {
+      const sdk = item[m]?.['x-sdk'];
+      if (item[m]?.operationId && sdk)
+        areas.set(item[m].operationId, labelOf(sdk.resource.split('.')[0] ?? ''));
+    }
+  const changelog = buildChangelog(inputs.changelog, areas);
+  const changed = new Map<string, ChangedIn>();
+  for (const e of changelog)
+    for (const id of e.ops)
+      if (!changed.has(id)) changed.set(id, { date: e.date, kind: e.kind, breaking: e.breaking });
   const entries = Object.entries(doc.paths).flatMap(([path, item]) =>
     METHODS.flatMap((m) =>
       item[m]?.operationId ? [{ path, method: m, op: item[m] as RawOp }] : [],
@@ -171,7 +189,7 @@ export function buildSite(inputs: Inputs): Site {
         ops: [],
         consoleOnly: [],
       };
-      page.ops.push(view(doc, path, method, op, inputs, status));
+      page.ops.push(view(doc, path, method, op, inputs, status, changed));
       pages.set(top, page);
       opCount += 1;
     } else if (isConsoleOnly(op)) {
@@ -211,7 +229,8 @@ export function buildSite(inputs: Inputs): Site {
     pages: sorted,
     protocols,
     webhookEvents: webhookEvents(doc),
-    changelog: inputs.changelog,
+    changelog,
+    versions: [...inputs.versions].sort((a, b) => b.date.localeCompare(a.date)),
     errors: errorEntries(sorted, status, inputs),
     opCount,
   };

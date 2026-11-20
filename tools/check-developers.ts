@@ -1,7 +1,9 @@
 // Fails when a key-reachable error code has no guide entry, an operation has no x-codes, or a generated
-// catalog file is stale. Run in `npm run check:rules`.
+// catalog file is stale, a changelog entry has no note, or versions.json is incomplete. Run in `npm run check:rules`.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { changelogFailures, versionFailures } from './lib/changelog.ts';
+import { baseVersions, diffAgainstBase, readPending, readVersions } from './lib/changelog-files.ts';
 import { developerFailures, type Guide } from './lib/developers-check.ts';
 import { buildErrorCatalogFile, buildEventCatalog } from './lib/error-catalog-files.ts';
 import type { Doc } from './lib/openapi-diff.ts';
@@ -28,6 +30,9 @@ const failures = developerFailures({
     },
   },
 });
+const changed = diffAgainstBase(root);
+failures.push(...changelogFailures(readPending(root), changed ?? []));
+failures.push(...versionFailures(readVersions(root), baseVersions(root)));
 if (failures.length) {
   console.error(`check-developers: ${failures.length} failure(s):`);
   for (const f of failures) console.error(`  ${f}`);

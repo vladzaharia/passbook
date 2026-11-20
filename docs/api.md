@@ -234,34 +234,13 @@ management check and must not be used as a general tenant capability grant.
 
 ## Changes for existing clients
 
-Dated changes, newest last; `/api/v1` is unversioned and changes only additively (new fields,
-routes and filters). The reference's `info.version` is not a release number.
-
-Clients written against the earlier API keep working with these differences (as of 2026-11).
-
-- **Problem `type`** (2026-11): `type` is now `https://passbook.mobile/developers/errors/<CODE>`, not `urn:wallet:problem:<code>`. Branch on `code`, which is unchanged. Every operation lists its `x-codes`.
-- **Names** (2026-11): inbound connector webhooks accept `x-passbook-signature` and `x-passbook-timestamp` as well as `x-wallet-*`. `GET /templates/{id}/input-schema` is new.
-- **Pass create with a key**: `templateVersion`, `releaseId` and `releaseGeneration` are optional
-  together. Send none and the server uses the scope's effective approved release; with none it
-  returns `409 TEMPLATE_RELEASE_REQUIRED` (approve and publish a release in the admin console, then
-  retry). Send only some and it returns `422`. `mode` defaults to the key's mode; a mismatch is
-  `409 MODE_MISMATCH`.
-- **Lists**: a global key or a session without `orgId` gets `422 ORG_REQUIRED`. A session listing a
-  forbidden org's passes gets `403`, not an empty `200`.
-- **Cutover**: uploaded templates start with a `legacy` release at their active version, so
-  existing integrations keep creating passes. New versions need a candidate, a second reviewer
-  and a release (see [Approved template releases](#approved-template-releases)).
-- **Lists and filters**: every collection `GET` returns `{ items, nextCursor }` and takes `cursor`;
-  `nextCursor` is `null` on the last page and on lists that return everything at once. `after` stays
-  only on the `/events` and `/scan/live` streams. `createdAfter`, `createdBefore` and
-  `updatedSince` (ms) are the names for `from`, `to` and `since`; the old names still work and are
-  marked deprecated in the reference. `orgId` is `x-platform-only`: an org-bound key never sends it.
+Dated changes are in the [changelog](/developers/changelog) (`docs/api/changelog/`, one file per release date). `/api/v1` changes additively unless a dated `PassBook-Version` carries the change (`docs/api/versions.json`). Send `PassBook-Version: 2026-11-20` to opt in; without it behaviour is unchanged, and an unlisted date answers `422 API_VERSION_UNKNOWN`. `info.version` in the reference is the newest version date.
 
 ## Conventions for new routes
 
 - **Status**: creating a resource returns `201`; queuing a job returns `202` and names the job
-  or resource to poll; an action on an existing resource returns `200`. `POST /roll-calls` and
-  `POST /offboard` answer `200` today; they change only under a dated version.
+  or resource to poll; an action on an existing resource returns `200`. `POST /roll-calls` answers
+  `201` under `PassBook-Version: 2026-11-20` and later, `200` without it. `POST /offboard` is an action and stays `200`.
 - **Lists**: return `pageOf(item)` (`{ items, nextCursor }`) and take `cursor` and `limit`. Use
   `after` only for an ordered stream.
 - **Time filters**: `createdAfter`, `createdBefore`, `updatedSince`, in ms.

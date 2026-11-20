@@ -23,6 +23,30 @@ const org = () => fixture.kit.org.id;
 const q = (extra = '') => `?orgId=${org()}${extra}`;
 
 describe('roll call API: console and keys', () => {
+  it('PassBook-Version 2026-11-20 starts a roll call with 201; no header keeps 200; an unlisted date is refused', async () => {
+    await trackedZone();
+    const pinned = { ...fixture.fake.admin(), 'passbook-version': '2026-11-20' };
+    const started = await fixture.call('POST', `/roll-calls${q()}`, {}, pinned);
+    expect(started.status).toBe(201);
+    const joined = await fixture.call('POST', `/roll-calls${q()}`, {});
+    expect(joined.status).toBe(200);
+    const callId = ((await started.json()) as RollCall).id;
+    expect(((await joined.json()) as RollCall).id).toBe(callId);
+    const bad = await fixture.call(
+      'POST',
+      `/roll-calls${q()}`,
+      {},
+      {
+        ...fixture.fake.admin(),
+        'passbook-version': '2026-01-01',
+      },
+    );
+    expect(bad.status).toBe(422);
+    expect(((await bad.json()) as { code: string }).code).toBe('API_VERSION_UNKNOWN');
+    const ended = await fixture.call('POST', `/roll-calls/${callId}/end${q()}`, {});
+    expect(ended.status).toBe(200);
+  });
+
   it('a signed-in admin starts, confirms and ends a call over every tracked zone', async () => {
     const zone = await trackedZone();
     const p = await personInside(tpl, 'Ana', [`zone:${zone.id}`]);

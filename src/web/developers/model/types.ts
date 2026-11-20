@@ -77,6 +77,7 @@ export interface OpView {
   deprecated: boolean;
   /** The sub-resource heading this op sits under (`versions` for `passes.versions`). */
   sub: string | null;
+  changedIn: ChangedIn | null;
 }
 
 export interface ConsoleOp {
@@ -106,10 +107,45 @@ export interface WebhookEvent {
   summary: string;
 }
 
+export type ChangeKind = 'Added' | 'Changed' | 'Fixed' | 'Removed';
+
+/** A line from docs/api/changelog/<date>.json, newest file first. */
+export interface RawChangeFile {
+  date: string;
+  entries: {
+    kind: ChangeKind;
+    text: string;
+    ops?: string[];
+    breaking?: boolean;
+    version?: string;
+  }[];
+}
+
 export interface ChangeEntry {
   date: string;
-  kind: 'Added' | 'Changed' | 'Fixed';
+  kind: ChangeKind;
   text: string;
+  /** The operationIds it touches. */
+  ops: string[];
+  /** The resource it belongs to, or `General` when it spans several or none. */
+  area: string;
+  breaking: boolean;
+  /** The `PassBook-Version` that carries it. */
+  version: string | null;
+}
+
+/** docs/api/versions.json. */
+export interface ApiVersion {
+  date: string;
+  summary: string;
+  migration: string;
+}
+
+/** What last changed an operation: its page shows "Changed in <date>". */
+export interface ChangedIn {
+  date: string;
+  kind: ChangeKind;
+  breaking: boolean;
 }
 
 export interface ErrorEntry {
@@ -136,6 +172,8 @@ export interface Site {
   protocols: ProtocolOp[];
   webhookEvents: WebhookEvent[];
   changelog: ChangeEntry[];
+  /** Dated `PassBook-Version`s, newest first. */
+  versions: ApiVersion[];
   errors: ErrorEntry[];
   opCount: number;
 }
