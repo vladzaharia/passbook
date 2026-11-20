@@ -513,6 +513,14 @@ endpoints. Set the platform setting `events.feed` to `"off"` to skip it without 
 while it is off are never journaled, so webhook endpoints miss them and `GET /events` pollers see a silent
 gap; turning it back on does not backfill.
 
+### Closing and purging an organization
+
+`POST /orgs/{id}/close` (a platform admin, or an org admin with `{ confirmSlug }`) sets `status` to `deleted`, `closed_at` and `purge_after` (30 days on). Passes stop updating, writes stop, every org admin is mailed. The admins and PassBook can export meanwhile (`POST /orgs/{id}/exports`, then `.../link`); the archive in R2 lives 7 days, a link 24 hours. A platform admin reopens inside the window with `POST /orgs/{id}/reopen` (the default signing identity comes back); not once a purge has started.
+
+The daily `org_lifecycle.sweep` starts the `org-purge` workflow (one instance per org and day) for every closed org past `purge_after` with no active legal hold. A hold placed at any time stops it where it stands; releasing the hold lets the next sweep finish. The purge soft-deletes the passes, waits up to seven days for Wallet providers to let go, deletes every table of `PURGE_STEPS`, the org's R2 prefixes, then writes a `org_purge` retention receipt and scrubs the org row to a stub (id, slug, status, audit rows and receipts stay). `blocked` or `incomplete` in the log (`ORG_PURGE_BLOCKED`, `ORG_PURGE_INCOMPLETE`) means a pass or table could not go yet; tomorrow's sweep retries.
+
+The `ORG_EXPORT` (`wallet-org-export`) and `ORG_PURGE` (`wallet-org-purge`) workflows are new bindings: the first deploy needs `--first`.
+
 ### Printed ticket PDFs
 
 PDFs are drawn in the Worker with pdf-lib (Latin-1 text; other characters are folded or become "?", logged once per PDF as `PRINT_PDF_TEXT_LOSSY`). They are cached in R2 under `prints/{orgId}/{passId}/{printId}.pdf`, with bulk files under `prints/{orgId}/bulk/`. The daily `prints.pdf_sweep` deletes PDFs of ended prints and bulk files after 24 h.
