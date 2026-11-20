@@ -4,7 +4,11 @@
   "description": "Boat, bus or train, with party and vehicle.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png"
+      }
+    },
     "samsung": {}
   },
   "channels": {

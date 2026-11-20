@@ -16,7 +16,13 @@ export const ACTION_LABEL = {
   legacy: 'Legacy',
 } as const;
 
-const PROVIDER = { apple: 'Apple', google: 'Google', samsung: 'Samsung' } as const;
+export const PROVIDER = { apple: 'Apple', google: 'Google', samsung: 'Samsung' } as const;
 
 export const providerModeLabel = (provider: keyof typeof PROVIDER, mode: 'live' | 'test') =>
   `${PROVIDER[provider]} · ${mode === 'live' ? 'Live' : 'Test'}`;
+
+/** Why a wallet is off, from the server's `not_released` / `not_enrolled`. */
+export const offReason = (provider: keyof typeof PROVIDER, released: boolean) =>
+  released
+    ? `${PROVIDER[provider]} Wallet is off for this organization.`
+    : 'Not open to holders yet.';

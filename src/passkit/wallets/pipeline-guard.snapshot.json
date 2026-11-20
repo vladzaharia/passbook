@@ -4,107 +4,132 @@
     "samsung": "6583a230f62c47494c0eb362d5e7abe2d582212188cf18874cf4b8e0e2be7e61"
   },
   "templates": {
-    "henrys-blue": "da5e7e0c56b2eb10",
-    "henrys-copper": "4669b9231f23c7f2",
-    "starter-access-card": "e87dae6adff9a6e6",
-    "starter-boarding-pass": "1e40e5ccba955048",
-    "starter-booking": "15b3d0a44bd342ce",
-    "starter-coupon": "6bc9735e84b624cc",
-    "starter-day-pass": "b223188e78a4ed0e",
-    "starter-event-ticket": "a2351ade3c8a3fb2",
-    "starter-generic": "c98402a323770f70",
-    "starter-guest-pass": "596e54ad5c3e15ca",
-    "starter-id-card": "1bc28943cc4f89c3",
-    "starter-monthly-pass": "d0cf587fda0d92f4",
-    "starter-pack": "5d3cc55f1072b0be",
-    "starter-permit": "59a5c387ec8d0aad",
-    "starter-pickup": "8ca7997fd4b0a8b4",
-    "starter-poster-generic": "1433aace7221e55e",
-    "starter-stamp-card": "49a1d1fe0177b098",
-    "starter-store-card": "c5ae8a7487a50b5d",
-    "starter-timed-ticket": "6cf81660d705690d",
-    "starter-transit-ticket": "d92f75f268ce4ad9"
+    "henrys-blue": "4327f8c0ef1294eb",
+    "henrys-copper": "d8dee65cf8110056",
+    "starter-access-card": "31f6c9f86eac70f3",
+    "starter-boarding-pass": "f7cc309f9e6f7a2b",
+    "starter-booking": "f7b95145b32e15d3",
+    "starter-coupon": "eb8c2a5262daf602",
+    "starter-credential": "305eed4dd7fb8dc5",
+    "starter-day-pass": "7fa8ab2fd37e460f",
+    "starter-event-ticket": "7f9a9b27a9dbc3f5",
+    "starter-generic": "65ca43eda8be1e3c",
+    "starter-guest-pass": "5ddc029a1010de92",
+    "starter-hotel-stay": "04ccdd7b6f853b74",
+    "starter-id-card": "a18dfbd5c9ae9d27",
+    "starter-monthly-pass": "13ec9a43e8b5b1ef",
+    "starter-multi-day-pass": "ee0bfb1f2829d8a6",
+    "starter-pack": "5f2efea1c32c6be0",
+    "starter-permit": "618ff86d4138d6d2",
+    "starter-pickup": "345f46202c2338b2",
+    "starter-poster-generic": "f735ef73e94c2f4a",
+    "starter-staff-badge": "a54df5d5db2abb33",
+    "starter-stamp-card": "eace2140151dbb6d",
+    "starter-store-card": "482872fb4377c70c",
+    "starter-timed-ticket": "15ed7ff6372a88ca",
+    "starter-transit-ticket": "103a798e490159a6",
+    "starter-visitor-pass": "dda69d7345b9334f"
   },
   "reports": {
     "henrys-blue": {
-      "google": "4daed02aa99fc08ba219b0b54d4830d6a6e64abfc7ba50451f0b9ce50400fc35",
+      "google": "1c3d5d5a62f16cad2114e595f68246023c38f4f03cfc92e659cd56e2235ab50b",
       "samsung": "37729135ed3e0fa74fcd13c96d066a02b2b6e375e20ce7911bbd24c38e87f984"
     },
     "henrys-copper": {
-      "google": "4daed02aa99fc08ba219b0b54d4830d6a6e64abfc7ba50451f0b9ce50400fc35",
+      "google": "1c3d5d5a62f16cad2114e595f68246023c38f4f03cfc92e659cd56e2235ab50b",
       "samsung": "37729135ed3e0fa74fcd13c96d066a02b2b6e375e20ce7911bbd24c38e87f984"
     },
     "starter-access-card": {
-      "google": "3df86b453a0348e54726521be4ad11526eeb3bc50d2f620199d54f94c39dac10",
+      "google": "4cbcf376b407ebd33b13dbd4e361f71be42dce81b14d46ab460c8387367defe8",
       "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
     },
     "starter-boarding-pass": {
-      "google": "e39ffb8a77c115f360a284a20b8416f80097155db8569d5f69adce51b31cb972",
+      "google": "b5393e259bc275f7f3c50563cd2cda7eb946929a96ecf112ae17eb9e6d25fd63",
       "samsung": "096eacff93fb624a1fb7823d63771ad0c9249110cf18ccb4d8afe0640a848ed6"
     },
     "starter-booking": {
-      "google": "3df86b453a0348e54726521be4ad11526eeb3bc50d2f620199d54f94c39dac10",
+      "google": "4cbcf376b407ebd33b13dbd4e361f71be42dce81b14d46ab460c8387367defe8",
       "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
     },
     "starter-coupon": {
-      "google": "8c2f884f2beab86ccdb3c86476a14041b1cedd4a275c9e71662d32b4a1b56755",
+      "google": "378ee413227be767eac1e256966c630a48f9bc75209c22172b399a0361c1db69",
       "samsung": "9938cbfa2ca4a740c3a921830f907e22e133bafb280dba166c3bed676fa229a6"
+    },
+    "starter-credential": {
+      "google": "04a2d56db19a29c9ce17e9c0f70f2d15a4e52b7d0db50c003f6580d44ead37b5",
+      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
     },
     "starter-day-pass": {
       "google": "3df86b453a0348e54726521be4ad11526eeb3bc50d2f620199d54f94c39dac10",
       "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
     },
     "starter-event-ticket": {
-      "google": "2a2d2dd0721b0b7805abc432bfb4a35068782ecd91715c5a514891489fbcbb0b",
+      "google": "bf4543a9b231dcba654d9b0bbea58e3e52034e224c9614522ef3c241bacd4455",
       "samsung": "7922adcf804c6217054add23f00cce272b0be04ed3184a94b1fe079786637cd3"
     },
     "starter-generic": {
-      "google": "3df86b453a0348e54726521be4ad11526eeb3bc50d2f620199d54f94c39dac10",
+      "google": "4cbcf376b407ebd33b13dbd4e361f71be42dce81b14d46ab460c8387367defe8",
       "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
     },
     "starter-guest-pass": {
       "google": "3df86b453a0348e54726521be4ad11526eeb3bc50d2f620199d54f94c39dac10",
       "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
     },
+    "starter-hotel-stay": {
+      "google": "b09cd04befafd7245d41fc21b673a4909d5a2df79a946f54a18df1d0d7732274",
+      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+    },
     "starter-id-card": {
-      "google": "8f41c5fcf3ba7b2ca7f83169b9aeac6271335919ba0ddbf5c9babe31cd298f64",
+      "google": "54bde482e307246c3a17e40120317b1f6707b4d3caf88714ec1c582605485aad",
       "samsung": "aeb39e4126d5dfda5d434a36e05e57928805da9bdca2478ed3335a5e03b88bf5"
     },
     "starter-monthly-pass": {
       "google": "3df86b453a0348e54726521be4ad11526eeb3bc50d2f620199d54f94c39dac10",
       "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
     },
+    "starter-multi-day-pass": {
+      "google": "8ea4df3e78fedc7047ed7c97e8305f4adb959ecea78ecd9ad7cdd27dc94c1e31",
+      "samsung": "7922adcf804c6217054add23f00cce272b0be04ed3184a94b1fe079786637cd3"
+    },
     "starter-pack": {
-      "google": "0edc7ebf7eb36a15f0a8d3fb6b8d4d0a4f2e25f42a07c714dafac91f8c62b257",
+      "google": "5ae19ce49b75dae2e27c87c06d59b4cfcac7e4d4f6101d6d6eca73bf3f705285",
       "samsung": "3466a45409adeb5f78dd8c69cf8bec460d7e21082e60d28215f7e7f15420012d"
     },
     "starter-permit": {
-      "google": "3df86b453a0348e54726521be4ad11526eeb3bc50d2f620199d54f94c39dac10",
+      "google": "4cbcf376b407ebd33b13dbd4e361f71be42dce81b14d46ab460c8387367defe8",
       "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
     },
     "starter-pickup": {
-      "google": "3d0ddcc030bc10cdb56740e2fe35f098eca8f361d43d512e88e8b9929e6b62a6",
+      "google": "b28c66df3e8678d57c3b514ef5419a75b5a0a7259ab7468e7f00c59e1dd4344b",
       "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
     },
     "starter-poster-generic": {
-      "google": "101f180ff28fc61fe47883dbf8dd3e022a81ef23f98fbfb1f5564ab258a52d13",
+      "google": "94654aa800e7b53eaeadf1aecc44e6767449662f14af39c179001e98fe10c4d8",
       "samsung": "096eacff93fb624a1fb7823d63771ad0c9249110cf18ccb4d8afe0640a848ed6"
     },
+    "starter-staff-badge": {
+      "google": "4cbcf376b407ebd33b13dbd4e361f71be42dce81b14d46ab460c8387367defe8",
+      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+    },
     "starter-stamp-card": {
-      "google": "d39d8485972a3dd08e751073bd39d0417527698b3c440851a124dd8cc3ba0e17",
+      "google": "00c03b70b3358d8ea0f40f9db7377d52474f7a589d3652d551eb409d4fe2e980",
       "samsung": "b1a78a415b4d3395bf8b7c655263604c4863832c7d9a3743b785698a8a95d7e0"
     },
     "starter-store-card": {
-      "google": "acc2f22ec525e6db643249b69dff2ba4af3df1683bfe23467a06428e06a6a1ca",
+      "google": "979abe834b01eaf990ac6bdee4a5168a1eca1ff02cb28007edc19a7f10877d3f",
       "samsung": "a3619ebc232d7965c7ac26057d36dbbf683c0cf4684b6e445b70a01a3a1ba2fb"
     },
     "starter-timed-ticket": {
-      "google": "d006e1bbd613cf8a6d424af24cdfab2ba294fefc227d58dd2a14ad9c54c74352",
+      "google": "72eebcf3015f77c68de43a85069112184c895e7c637a4fe666e9ac72ddd34552",
       "samsung": "2641ce97f187d9d5c96512a4f565c4508359001595c9a28ee16cbd75f52a9cbb"
     },
     "starter-transit-ticket": {
-      "google": "cb94c6526b399ff96cbd7f71d19f8fa36ffc109888730d8eaa8c0a62385d1048",
+      "google": "843015009cd9432da8e52e9e2c9888d1caedf41f38de89efb248f495053814bd",
       "samsung": "096eacff93fb624a1fb7823d63771ad0c9249110cf18ccb4d8afe0640a848ed6"
+    },
+    "starter-visitor-pass": {
+      "google": "e1403355869cbe5850b73ca904d519a84b113251c65131ef1efc0c57084ff0e6",
+      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
     }
   }
 }

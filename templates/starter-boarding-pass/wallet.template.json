@@ -4,7 +4,11 @@
   "description": "Flight, gate and seat, with a route footer.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png"
+      }
+    },
     "samsung": {}
   },
   "channels": {

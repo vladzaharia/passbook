@@ -4,7 +4,11 @@
   "description": "A big balance up front, on a coin strip.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png"
+      }
+    },
     "samsung": {}
   },
   "channels": {

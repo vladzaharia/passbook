@@ -4,7 +4,11 @@
   "description": "A single-use offer with an expiry.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png"
+      }
+    },
     "samsung": {}
   },
   "channels": {

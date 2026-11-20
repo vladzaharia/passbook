@@ -4,7 +4,11 @@
   "description": "A time slot for a party, no seat.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png"
+      }
+    },
     "samsung": {}
   },
   "channels": {
