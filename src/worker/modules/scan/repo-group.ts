@@ -88,3 +88,27 @@ export async function groupMembers(db: D1Database, orgId: string, groupScanId: s
     .all<{ scan_id: string }>();
   return rows.results.map((r) => r.scan_id);
 }
+
+/** Passes whose latest live check-in in the scanner's scope (event, or today) is an entry. */
+export async function livePassIds(
+  db: D1Database,
+  actor: ScanActor,
+  passIds: readonly string[],
+  now: number,
+): Promise<Set<string>> {
+  const scope = actor.event
+    ? { sql: 'event_id = ?', arg: actor.event.id }
+    : { sql: 'at >= ?', arg: localDayStart(now, actor.timeZone) };
+  const rows = await db
+    .prepare(
+      `SELECT pass_id, direction FROM scans
+       WHERE org_id = ? AND mode = ? AND action_kind = 'check_in' AND outcome = 'ok'
+         AND undone_by IS NULL AND ${scope.sql} AND pass_id IN (${passIds.map(() => '?').join(',')})
+       ORDER BY at DESC, id DESC`,
+    )
+    .bind(actor.orgId, actor.mode, scope.arg, ...passIds)
+    .all<{ pass_id: string; direction: string | null }>();
+  const latest = new Map<string, string | null>();
+  for (const r of rows.results) if (!latest.has(r.pass_id)) latest.set(r.pass_id, r.direction);
+  return new Set([...latest].filter(([, d]) => (d ?? 'in') === 'in').map(([id]) => id));
+}

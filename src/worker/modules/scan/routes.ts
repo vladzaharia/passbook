@@ -24,7 +24,7 @@ import {
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { deepFreeze } from './freeze.ts';
-import { actGroup, undoGroup, withBundle } from './group.ts';
+import { actGroup, undoGroup, withBundle, withChip } from './group.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
 import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
@@ -201,7 +201,7 @@ register(
       false,
       'code' in input,
     );
-    return c.json(await withBundle(ctx, actor, evaluation));
+    return c.json('tag' in input ? outcome : await withBundle(ctx, actor, evaluation));
   },
 );
 
@@ -241,8 +241,7 @@ register(
       ...evaluation,
       outcome: await withParentHint(ctx.env.DB, actor.orgId, outcome),
     };
-    // The chip costs a read, so only a fresh check-in pays it; held and refused scans keep their budget.
-    return c.json(outcome.kind === 'ok' ? await withBundle(ctx, actor, hinted) : hinted.outcome);
+    return c.json(await withChip(ctx, actor, hinted, input));
   },
 );
 

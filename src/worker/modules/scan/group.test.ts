@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { makeOrg, TEST_NOW } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { act, CHECK_IN, kit, out, setupActionFixture, tpl } from './act-test-fixtures.ts';
@@ -128,5 +128,142 @@ describe('bundle check-in', () => {
     const o = await out(await group(door.headers, a));
     expect(o.group).toBeNull();
     expect(o.bundle).toBeFalsy();
+  });
+
+  it('publishes every member to the live feed, and every member undo', async () => {
+    const door = await kit.scanner({ templateIds: [tpl] });
+    await kit.scanner({ deviceRole: 'monitor' });
+    const passes = [await kit.scanPass(tpl), await kit.scanPass(tpl), await kit.scanPass(tpl)] as [
+      KitPass,
+      KitPass,
+      KitPass,
+    ];
+    await bundleOf(passes);
+    const delivered: { kind?: string }[] = [];
+    const original = kit.env.SCAN_HUB;
+    Object.assign(kit.env, {
+      SCAN_HUB: {
+        getByName: () => ({
+          publish: async (event: { kind?: string }) => {
+            delivered.push(event);
+            return true;
+          },
+        }),
+      },
+    });
+    try {
+      const o = await out(await group(door.headers, passes[0]));
+      await vi.waitFor(() => expect(delivered.length).toBeGreaterThanOrEqual(3), { timeout: 5000 });
+      const before = delivered.length;
+      await undone(door.headers, o.scanId as string);
+      await vi.waitFor(() => expect(delivered.length - before).toBeGreaterThanOrEqual(3), {
+        timeout: 5000,
+      });
+    } finally {
+      Object.assign(kit.env, { SCAN_HUB: original });
+    }
+  });
+
+  const deskCheckIn = (name: string) =>
+    kit.scanTemplate(name, {
+      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in', minRole: 'desk' }],
+    });
+
+  it('applies a manager PIN only to the members that need it, naming the manager on each scan', async () => {
+    const desk = await deskCheckIn('Desk entry');
+    const door = await kit.scanner({ templateIds: [tpl, desk] });
+    const manager = await kit.staff('manager');
+    const a = await kit.scanPass(tpl);
+    const b = await kit.scanPass(desk);
+    await bundleOf([a, b]);
+    const o = await out(
+      await act(door.headers, codeOf(a), {
+        group: 'bundle',
+        approval: { staffId: manager.id, pin: manager.pin },
+      }),
+    );
+    expect(o.group).toMatchObject({ total: 2, done: 2, refused: 0 });
+    const approvedBy = async (p: KitPass) =>
+      (
+        await first<{ approved_by: string | null }>(
+          kit.env.DB,
+          "SELECT approved_by FROM scans WHERE pass_id = ? AND outcome = 'ok'",
+          [p.id],
+        )
+      )?.approved_by;
+    expect(await approvedBy(a)).toBeNull();
+    expect(await approvedBy(b)).toBe(manager.id);
+  });
+
+  it('refuses a member that needs approval when none is given', async () => {
+    const desk = await deskCheckIn('Desk entry 2');
+    const door = await kit.scanner({ templateIds: [tpl, desk] });
+    const a = await kit.scanPass(tpl);
+    const b = await kit.scanPass(desk);
+    await bundleOf([a, b]);
+    const o = await out(await group(door.headers, a));
+    expect(o.group).toMatchObject({ total: 2, done: 1, refused: 1 });
+    expect(o.group?.members?.[1]?.reason).toBe('needs_approval');
+  });
+
+  it('checks members in only, never the stamp the scanner defaults to', async () => {
+    const stamps = await kit.scanTemplate('Stamp card', {
+      actions: [{ id: 'add', label: 'Stamp', kind: 'add', amount: 1 }, CHECK_IN],
+    });
+    const door = await kit.scanner({ templateIds: [tpl, stamps] });
+    const a = await kit.scanPass(tpl);
+    const b = await kit.scanPass(stamps, { balance: 0 });
+    await bundleOf([a, b]);
+    const o = await out(await group(door.headers, a));
+    expect(o.group).toMatchObject({ total: 2, done: 2 });
+    const kinds = await first<{ n: number }>(
+      kit.env.DB,
+      "SELECT COUNT(*) n FROM scans WHERE pass_id = ? AND action_kind != 'check_in'",
+      [b.id],
+    );
+    expect(kinds?.n).toBe(0);
+  });
+
+  it('does not admit the scanned pass twice or a member already in again', async () => {
+    const door = await kit.scanner({ templateIds: [tpl] });
+    const [a, b] = [await kit.scanPass(tpl), await kit.scanPass(tpl)] as [KitPass, KitPass];
+    await bundleOf([a, b]);
+    await act(door.headers, codeOf(a));
+    await act(door.headers, codeOf(b));
+    const o = await out(await group(door.headers, a));
+    expect(o.group).toMatchObject({ total: 2, done: 0, already: 2 });
+    expect(o.kind).toBe('heads_up');
+    expect(await inCount([a, b])).toBe(2);
+  });
+
+  it('answers a refused scanned pass with its own refusal and admits no one', async () => {
+    const door = await kit.scanner({ templateIds: [tpl] });
+    const [a, b] = [await kit.scanPass(tpl), await kit.scanPass(tpl)] as [KitPass, KitPass];
+    await bundleOf([a, b]);
+    await run(kit.env.DB, "UPDATE passes SET status='voided' WHERE id=?", [a.id]);
+    const o = await out(await group(door.headers, a));
+    expect(o.kind).toBe('refused');
+    expect(o.reason).toBe('voided');
+    expect(await inCount([a, b])).toBe(0);
+  });
+
+  it('always checks in, never out, at an in/out door', async () => {
+    const door = await kit.scanner({ templateIds: [tpl] });
+    await run(
+      kit.env.DB,
+      `UPDATE scanners SET settings = json_set(settings, '$.direction', 'both') WHERE id = ?`,
+      [door.id],
+    );
+    const [a, b] = [await kit.scanPass(tpl), await kit.scanPass(tpl)] as [KitPass, KitPass];
+    await bundleOf([a, b]);
+    await act(door.headers, codeOf(a));
+    const o = await out(await group(door.headers, a));
+    expect(o.group).toMatchObject({ done: 1, already: 1 });
+    const outs = await first<{ n: number }>(
+      kit.env.DB,
+      "SELECT COUNT(*) n FROM scans WHERE direction = 'out' AND pass_id IN (?, ?)",
+      [a.id, b.id],
+    );
+    expect(outs?.n).toBe(0);
   });
 });

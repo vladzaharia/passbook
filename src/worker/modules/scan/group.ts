@@ -1,18 +1,22 @@
-import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
-import { AppError } from '../../platform/errors.ts';
+import type { ScanCodeInput, ScanOutcome } from '../../../shared/contracts/scan.ts';
+import { AppError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { act } from './act.ts';
 import type { ActRequestInput } from './act-claim.ts';
 import type { ScanActor } from './guard.ts';
+import { publishScan } from './live.ts';
 import {
   bundleOf,
   checkedInCount,
   GROUP_MAX,
   groupMembers,
+  livePassIds,
   recordGroup,
   scanPassId,
 } from './repo-group.ts';
+import { scanByKey } from './repo-scans.ts';
+import { resolveOutcome } from './resolve-outcome.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { statsFor } from './stats.ts';
 import { undo } from './undo.ts';
@@ -28,7 +32,9 @@ async function derivedKey(key: string, part: string): Promise<string> {
 
 function stateOf(o: ScanOutcome): Member['state'] {
   if (o.kind === 'ok') return 'done';
-  return o.kind === 'heads_up' && o.reason === 'already_done' ? 'already' : 'refused';
+  return o.kind === 'heads_up' && (o.reason === 'already_done' || o.reason === 'still_inside')
+    ? 'already'
+    : 'refused';
 }
 
 const memberOf = (o: ScanOutcome): Member => ({
@@ -65,41 +71,83 @@ export async function withBundle(
   return { ...o, bundle: chip, ...(o.card ? { card: { ...o.card, bundle: chip } } : {}) };
 }
 
+type Step = { outcome: ScanOutcome; scanId: string | null; evaluation: ScanEvaluation | null };
+
+const refusedWith = (o: ScanOutcome, reason: ScanOutcome['reason']): ScanOutcome => ({
+  ...o,
+  kind: 'refused',
+  reason,
+});
+
+/** The chip costs a read, so only a fresh check-in by code pays it; held, refused and tag scans do not. */
+export async function withChip(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  e: ScanEvaluation,
+  input: ActRequestInput['input'],
+): Promise<ScanOutcome> {
+  return e.outcome.kind === 'ok' && !('tag' in input) ? withBundle(ctx, actor, e) : e.outcome;
+}
+
 /**
- * `group: 'bundle'`: the scanned pass runs the single-pass pipeline, then so does every other member
- * of its bundle (at most 10), each as its own scan under a key derived from this request's.
+ * `group: 'bundle'`: every pass of the scanned pass's bundle (at most 10, the scanned one first) is
+ * checked in, never anything else: each is read first, skipped when already in, then runs the
+ * single-pass pipeline as an entry under a key derived from this request's.
  */
 export async function actGroup(
   ctx: ServiceContext,
   actor: ScanActor,
   req: ActRequestInput,
 ): Promise<ScanEvaluation> {
-  const primary = await act(ctx, actor, req);
-  const first = primary.outcome;
-  const scanned = req.group === 'bundle' ? await passIdOf(ctx, actor, primary) : null;
-  const bundle = scanned && (await bundleOf(ctx.env.DB, actor.orgId, actor.mode, scanned));
-  if (!bundle) return primary;
-  const outcomes = [first];
-  for (const passId of bundle.passIds.filter((id) => id !== scanned)) {
-    try {
-      const member = await act(ctx, actor, {
-        idempotencyKey: await derivedKey(req.idempotencyKey, passId),
-        input: { passId, method: 'manual' },
+  if (req.group !== 'bundle' || 'tag' in req.input) return act(ctx, actor, req);
+  if (actor.settings.direction === 'out')
+    throw new ValidationError('Check in all is for entry scanners.', [], 'GROUP_ENTRY_ONLY');
+  const input = req.input;
+  const read = (i: ScanCodeInput, part: string) =>
+    derivedKey(req.idempotencyKey, part).then((idempotencyKey) =>
+      resolveOutcome(ctx, actor, {
+        idempotencyKey,
+        input: i,
         clientTs: req.clientTs,
         ...(req.dayStart === undefined ? {} : { dayStart: req.dayStart }),
         ...(req.scope ? { scope: req.scope } : {}),
-        ...(req.direction ? { direction: req.direction } : {}),
-        actionId: 'auto',
-      });
-      outcomes.push(member.outcome);
-    } catch (error) {
-      if (!(error instanceof AppError)) throw error;
-      ctx.log.warn('scan.group.member_failed', { orgId: actor.orgId, code: error.code });
-      outcomes.push({ ...first, kind: 'refused', reason: 'stale', card: null });
+      }),
+    );
+  const scannedRead = await read(input, 'scanned');
+  const scanned = scannedRead.outcome.card?.passId ?? scannedRead.evaluatedSnapshot?.pass.id;
+  const bundle = scanned && (await bundleOf(ctx.env.DB, actor.orgId, actor.mode, scanned));
+  if (!bundle) return act(ctx, actor, req);
+  const order = [scanned, ...bundle.passIds.filter((id) => id !== scanned)];
+  const live = await livePassIds(ctx.env.DB, actor, order, ctx.clock.now());
+  const steps: Step[] = [];
+  let anchor: string | null = null;
+  for (const passId of order) {
+    const step = await member(
+      ctx,
+      actor,
+      req,
+      passId,
+      live,
+      passId === scanned ? scannedRead : null,
+      scannedRead.outcome,
+    );
+    steps.push(step);
+    if (step.scanId && step.outcome.kind === 'ok') {
+      anchor ??= step.scanId;
+      await recordGroup(ctx.env.DB, actor.orgId, anchor, [step.scanId]);
+      if (step.evaluation)
+        publishScan(
+          ctx,
+          actor,
+          step.outcome,
+          step.evaluation.evaluatedSnapshot,
+          step.evaluation.credentialContext,
+          'manual',
+        );
     }
   }
-  const members = outcomes.map(memberOf);
-  const count = (s: Member['state']) => members.filter((m) => m.state === s).length;
+  const members = steps.map((s) => memberOf(s.outcome));
+  const count = (st: Member['state']) => members.filter((m) => m.state === st).length;
   const group = {
     total: members.length,
     done: count('done'),
@@ -107,17 +155,103 @@ export async function actGroup(
     refused: count('refused'),
     members,
   };
-  const made = outcomes.flatMap((o) => (o.kind === 'ok' && o.scanId ? [o.scanId] : []));
-  if (first.scanId && made.length) await recordGroup(ctx.env.DB, actor.orgId, first.scanId, made);
-  const done = outcomes.find((o) => o.kind === 'ok');
-  const until = Math.max(0, ...outcomes.map((o) => (o.kind === 'ok' ? (o.undoUntil ?? 0) : 0)));
+  const head = steps[0] as Step;
+  const made = steps.filter((s) => s.outcome.kind === 'ok');
+  const admitted = members[0]?.state === 'done' || members[0]?.state === 'already';
+  const base = !admitted
+    ? head.outcome
+    : made.length
+      ? { ...(made[0] as Step).outcome, card: null, flags: [] }
+      : { ...head.outcome, kind: 'heads_up' as const, reason: 'already_done' as const };
+  const until = Math.max(0, ...made.map((s) => s.outcome.undoUntil ?? 0));
   const outcome: ScanOutcome = {
-    ...(done ? { ...first, kind: 'ok', reason: null, action: done.action, flags: [] } : first),
+    ...base,
+    scanId: anchor ?? base.scanId,
     group,
     counts: await statsFor(ctx, actor, req.dayStart),
-    undoUntil: done ? until : first.undoUntil,
+    undoUntil: anchor ? until : base.undoUntil,
   };
-  return { ...primary, outcome };
+  return { ...scannedRead, outcome };
+}
+
+/** One member: read, skip when in, else check in under its own key (a manager's PIN only if it asks). */
+async function member(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  req: ActRequestInput,
+  passId: string,
+  live: Set<string>,
+  known: ScanEvaluation | null,
+  fallback: ScanOutcome,
+): Promise<Step> {
+  const key = await derivedKey(req.idempotencyKey, passId);
+  const approvedKey = await derivedKey(req.idempotencyKey, `${passId}:approved`);
+  try {
+    const read =
+      known ??
+      (await resolveOutcome(ctx, actor, {
+        idempotencyKey: await derivedKey(req.idempotencyKey, `${passId}:read`),
+        input: { passId, method: 'manual' },
+        clientTs: req.clientTs,
+        ...(req.dayStart === undefined ? {} : { dayStart: req.dayStart }),
+        ...(req.scope ? { scope: req.scope } : {}),
+      }));
+    const approvedRow = await scanByKey(ctx.env.DB, actor.actorKey, approvedKey);
+    const prior = approvedRow ?? (await scanByKey(ctx.env.DB, actor.actorKey, key));
+    const body = (idempotencyKey: string, actionId: string) => ({
+      idempotencyKey,
+      input: { passId, method: 'manual' as const },
+      clientTs: req.clientTs,
+      ...(req.dayStart === undefined ? {} : { dayStart: req.dayStart }),
+      ...(req.scope ? { scope: req.scope } : {}),
+      direction: 'in' as const,
+      actionId,
+    });
+    if (prior?.actionId) {
+      // A replayed group: the member's own receipt, not a fresh decision.
+      const e = await act(ctx, actor, {
+        ...body(approvedRow ? approvedKey : key, prior.actionId),
+        ...(approvedRow && req.approval ? { approval: req.approval } : {}),
+      });
+      return { outcome: e.outcome, scanId: e.outcome.scanId, evaluation: null };
+    }
+    const o = read.outcome;
+    if (o.kind !== 'ready' || !o.card) return { outcome: o, scanId: null, evaluation: null };
+    if (live.has(passId))
+      return {
+        outcome: { ...o, kind: 'heads_up', reason: 'already_done' },
+        scanId: null,
+        evaluation: null,
+      };
+    const entry = o.card.actions.find((a) => a.kind === 'check_in');
+    const asks = entry?.lock === 'approval';
+    if (!entry || (!entry.available && !(asks && req.approval)))
+      return {
+        outcome: refusedWith(o, entry?.reason ?? (asks ? 'needs_approval' : 'not_accepted')),
+        scanId: null,
+        evaluation: null,
+      };
+    let e = await act(ctx, actor, body(key, entry.id));
+    if (req.approval && e.outcome.reason === 'needs_approval')
+      e = await act(ctx, actor, { ...body(approvedKey, entry.id), approval: req.approval });
+    return { outcome: e.outcome, scanId: e.outcome.scanId, evaluation: e };
+  } catch (error) {
+    if (!(error instanceof AppError)) throw error;
+    if (error.status === 401 || error.status === 403 || error.code === 'SCAN_UNCONFIRMED')
+      throw error;
+    ctx.log.warn('scan.group.member_failed', { orgId: actor.orgId, code: error.code });
+    const retry = error.code === 'SCAN_IN_PROGRESS';
+    return {
+      outcome: {
+        ...(known?.outcome ?? fallback),
+        kind: retry ? 'heads_up' : 'refused',
+        reason: retry ? 'in_progress' : 'stale',
+        card: null,
+      },
+      scanId: null,
+      evaluation: null,
+    };
+  }
 }
 
 /** Undo of a group request's scan reverses every member it made; any other scan undoes alone. */
@@ -134,6 +268,7 @@ export async function undoGroup(
   let failure: unknown = null;
   for (const id of ids.slice(0, GROUP_MAX)) {
     try {
+      if (last) publishUndone(ctx, actor, last);
       last = await undo(
         ctx,
         actor,
@@ -149,4 +284,9 @@ export async function undoGroup(
   }
   if (!last) throw failure;
   return last;
+}
+
+/** Each member's undo reaches the live feed; the route publishes the last one it gets back. */
+function publishUndone(ctx: ServiceContext, actor: ScanActor, e: ScanEvaluation) {
+  publishScan(ctx, actor, e.outcome, e.evaluatedSnapshot, e.credentialContext, 'manual', true);
 }
