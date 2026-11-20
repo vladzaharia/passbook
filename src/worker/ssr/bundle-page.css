@@ -90,6 +90,18 @@
     grid-area: way;
   }
 }
+.bd-way {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.bd-way .wl-native-wallets a {
+  padding: 0;
+}
+.bd-way .wl-native-wallets img {
+  height: 2.5rem;
+}
 .bd-detail {
   display: block;
   font-weight: 400;

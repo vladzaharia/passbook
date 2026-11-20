@@ -123,6 +123,29 @@ describe('wallet provider instances', () => {
     for (const row of rows) expect(row).not.toHaveTextContent(/\b(installed|deleted)\b/i);
   });
 
+  it('shows what the provider reported as a pill, without calling it proof', async () => {
+    await renderApp('/admin/passes/p1?tab=devices', {
+      session: 'admin',
+      ...scope,
+      handlers: handlers({
+        [path]: () =>
+          json({
+            credentialGeneration: 1,
+            providers: [
+              instance('google', { lifecycle: 'active', reported: { event: 'saved', at: 5 } }),
+              instance('samsung', { lifecycle: 'active', reported: { event: 'removed', at: 9 } }),
+            ],
+          }),
+      }),
+    });
+    const rows = within(
+      await screen.findByRole('list', { name: 'Wallet provider instances' }),
+    ).getAllByRole('listitem');
+    expect(rows[0]).toHaveTextContent('Saved by holder');
+    expect(rows[1]).toHaveTextContent('Removed by holder');
+    for (const row of rows) expect(row).toHaveTextContent('not proof of what is on a device');
+  });
+
   it.each([
     ['ready', 'Ready', 'Prepared locally'],
     ['revoking', 'Closing', 'Revocation in progress'],

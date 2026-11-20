@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { zoneOptions } from '@/web/lib/timezones.ts';
 import {
   FormField,
   Input,
-  SegmentedControl,
   Select,
   SwitchRow,
   Tabs,
@@ -13,8 +11,8 @@ import {
   TabsTrigger,
 } from '@/web/ui/index.ts';
 import { CheckInFields } from '../check-in-fields.tsx';
-import { EligibleTemplatePicker } from '../eligible-template-picker.tsx';
-import { useScanEvents } from '../scanner-api.ts';
+import { AdmitsPicker } from './admits-picker.tsx';
+import { AdmitsRules } from './admits-rules.tsx';
 import type { SessionDraft as ScannerDraft } from './draft.ts';
 import { SessionAccessFields } from './session-access-fields.tsx';
 import { SessionCustomerFields } from './session-customer-fields.tsx';
@@ -27,11 +25,6 @@ function SessionScope({
   draft: ScannerDraft;
   set: (patch: Partial<ScannerDraft>) => void;
 }) {
-  const _scope = useOrgScope();
-  const events = useScanEvents(
-    draft.orgId || undefined,
-    Boolean(draft.orgId) && draft.accepts === 'event',
-  );
   return (
     <div className="grid gap-4">
       <FormField label="Session name" required>
@@ -56,41 +49,17 @@ function SessionScope({
         )}
       </FormField>
       <SessionHoursFields draft={draft} set={set} />
-      <SegmentedControl
-        label="Accepted passes"
-        value={draft.accepts}
-        onValueChange={(accepts) => set({ accepts })}
-        options={[
-          { value: 'all', label: 'All passes' },
-          { value: 'event', label: 'Event' },
-          { value: 'templates', label: 'Templates' },
-        ]}
-        block
+      <AdmitsPicker
+        orgId={draft.orgId}
+        any={draft.accepts === 'all'}
+        templateIds={draft.templateIds}
+        eventIds={draft.eventIds}
+        onAnyChange={(any) => set({ accepts: any ? 'all' : 'templates' })}
+        onChange={set}
       />
-      {draft.accepts === 'event' ? (
-        <FormField label="Event" required>
-          {(p) => (
-            <Select
-              {...p}
-              value={draft.eventId || undefined}
-              options={(events.data?.items ?? [])
-                .filter(
-                  (e) =>
-                    e.orgId === draft.orgId && (e.status === 'upcoming' || e.status === 'live'),
-                )
-                .map((e) => ({ value: e.id, label: e.name }))}
-              onValueChange={(eventId) => set({ eventId })}
-            />
-          )}
-        </FormField>
-      ) : null}
-      {draft.accepts === 'templates' ? (
-        <EligibleTemplatePicker
-          orgId={draft.orgId}
-          selected={draft.templateIds}
-          onChange={(templateIds) => set({ templateIds })}
-        />
-      ) : null}
+      {draft.accepts === 'all' ? null : (
+        <AdmitsRules orgId={draft.orgId} templateIds={draft.templateIds} cap={draft.checkIn} />
+      )}
     </div>
   );
 }

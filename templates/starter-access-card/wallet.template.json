@@ -133,6 +133,15 @@
         "x-order": 110,
         "maxLength": 256,
         "x-widget": "textarea"
+      },
+      "guests": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99,
+        "x-label": "Guests left",
+        "x-group": "Guest",
+        "x-order": 85,
+        "x-help": "Taken by Guest in at the door."
       }
     }
   },
@@ -213,6 +222,13 @@
     },
     {
       "to": {
+        "field": "guests"
+      },
+      "value": "{{guests}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
         "field": "note"
       },
       "value": "{{note}}",
@@ -265,6 +281,22 @@
         "id": "enter",
         "label": "Let in",
         "kind": "check_in"
+      },
+      {
+        "id": "guest_in",
+        "label": "Guest in",
+        "kind": "take",
+        "input": "guests",
+        "amount": {
+          "max": 10,
+          "presets": [
+            1,
+            2,
+            3
+          ]
+        },
+        "repeat": "always",
+        "minRole": "door"
       }
     ],
     "lookup": {

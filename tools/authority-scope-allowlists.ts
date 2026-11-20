@@ -113,7 +113,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/events/repo.ts': {
     reason:
       'pass_events is an append-only ledger written by recordPassEvent; WP5b owns the grant conversion',
-    writes: ['pass_events:223e2022931b', 'pass_events:7ac7f822118d'],
+    writes: ['pass_events:03f8a33d119c', 'pass_events:7ac7f822118d'],
   },
   'src/worker/modules/apple/repo-events.ts': {
     reason:

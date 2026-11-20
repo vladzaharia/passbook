@@ -1,13 +1,13 @@
 import { CloudOff, Search } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
-import { formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
 import { EmptyState } from '../../ui/empty-state.tsx';
 import { SkeletonRows } from '../../ui/skeleton.tsx';
 import { ScanTextField } from '../input/wedge-field.tsx';
 import { fill } from '../ui/copy.ts';
 import { ACCESS_COPY } from '../ui/copy-access.ts';
+import { sessionTime } from '../ui/session-time.ts';
 import { InsidePlaces } from './inside-places.tsx';
 import { InsideRowView, MarkOutButton } from './inside-row.tsx';
 import { INSIDE_Q_MAX, type InsideRow } from './inside-types.ts';
@@ -83,7 +83,7 @@ export function InsidePanel({
       {stale && state.asOf !== null ? (
         <p className="scan-chip scan-in-asof" data-tone="slate" role="status">
           <CloudOff aria-hidden size={14} />
-          {fill(ACCESS_COPY.inside.asOf, { time: formatTime(state.asOf) })}
+          {fill(ACCESS_COPY.inside.asOf, { time: sessionTime(state.asOf) })}
         </p>
       ) : null}
       <div className="scan-in-body" aria-busy={state.loading}>

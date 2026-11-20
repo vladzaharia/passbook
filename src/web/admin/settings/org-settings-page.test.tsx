@@ -32,8 +32,8 @@ const item = (key: string, row: Row) => ({
   ...row,
 });
 
-function setup(rows: Record<string, Row>, onPut?: (body: unknown) => void) {
-  return renderApp('/admin/o/o1/settings', {
+function setup(rows: Record<string, Row>, onPut?: (body: unknown) => void, page = 'settings') {
+  return renderApp(`/admin/o/o1/${page}`, {
     session: 'admin',
     memberships: [membershipFixture('o1')],
     handlers: {
@@ -43,6 +43,8 @@ function setup(rows: Record<string, Row>, onPut?: (body: unknown) => void) {
       '/api/v1/orgs/o1/memberships': () => json({ items: [] }),
       '/api/v1/orgs/o1/invitations': () => json({ items: [] }),
       '/api/v1/identities': () => json({ items: [], nextCursor: null }),
+      '/api/v1/orgs/o1/retention/holds': () => json({ items: [] }),
+      '/api/v1/orgs/o1/retention/receipts': () => json({ items: [], nextCursor: null }),
       '/api/v1/settings': (_url, init) => {
         if (init?.method === 'PUT') onPut?.(JSON.parse(String(init.body)));
         return json({ items: Object.entries(rows).map(([key, row]) => item(key, row)) });
@@ -53,7 +55,11 @@ function setup(rows: Record<string, Row>, onPut?: (body: unknown) => void) {
 
 describe('org settings inheritance', () => {
   it('shows an unset value as an empty input with the default as placeholder and hint', async () => {
-    await setup({ 'retention.scansDays': { value: 396, default: 396, ceiling: 1095 } });
+    await setup(
+      { 'retention.scansDays': { value: 396, default: 396, ceiling: 1095 } },
+      undefined,
+      'retention',
+    );
     const input = await screen.findByLabelText('Scans');
     expect(input).toHaveValue(null);
     expect(input).toHaveAttribute('placeholder', '396');
@@ -68,6 +74,7 @@ describe('org settings inheritance', () => {
       (put) => {
         body = put;
       },
+      'retention',
     );
     expect(await screen.findByLabelText('Scans')).toHaveValue(200);
     const user = userEvent.setup();
@@ -108,7 +115,7 @@ describe('org settings inheritance', () => {
 
   it('keeps platform-only settings off the organization page', async () => {
     await setup({ 'email.buddy': { value: false, default: false } });
-    await screen.findByLabelText('Scans').catch(() => undefined);
+    await screen.findByLabelText('Emails per day').catch(() => undefined);
     expect(screen.queryByLabelText('Refresh cooldown')).toBeNull();
     expect(screen.queryByLabelText('Magic-link sign-in')).toBeNull();
   });

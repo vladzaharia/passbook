@@ -17,7 +17,7 @@ export function loopScreen(session: ScanSession, started: boolean): ScanAppViewP
         event: session.event
           ? {
               name: session.event.name,
-              when: `${formatTime(session.event.opensAt)}–${formatTime(session.event.closesAt)}`,
+              when: `${formatTime(session.event.opensAt, session.event.timeZone)}–${formatTime(session.event.closesAt, session.event.timeZone)}`,
               note: session.event.note,
             }
           : null,

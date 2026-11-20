@@ -64,6 +64,7 @@ const CREATE = /^\/[a-z-]+\/(new|upload)$/;
 const COUNTERPART: Record<string, string> = {
   '': '',
   '/audit': '/audit',
+  '/retention': '/retention',
   '/api-keys': '/api-keys',
   '/settings': '/settings',
   '/wallet-accounts': '/wallet-accounts',

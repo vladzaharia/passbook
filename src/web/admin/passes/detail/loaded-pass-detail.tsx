@@ -43,6 +43,7 @@ import {
 } from './callouts.tsx';
 import type { PassDetailSearch as Search, PassDetailTab as Tab } from './detail-types.ts';
 import { HeaderActionsView } from './header-actions.tsx';
+import { PassHold } from './pass-hold.tsx';
 import { PassTabs } from './pass-tabs.tsx';
 import { useStageMotion } from './stage-state.ts';
 
@@ -208,6 +209,7 @@ export function LoadedPassDetail({
               { label: 'Template revision', value: p.templateVersion, copy: true },
             ]}
           />
+          <PassHold passId={p.id} orgId={p.orgId} />
         </CardBody>
       </Card>
       <div className="mb-6 flex flex-col gap-3 empty:hidden">

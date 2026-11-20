@@ -1,5 +1,6 @@
 import type { PassEventDto } from '@/shared/contracts/events.ts';
 import { humanizeStatus } from '../../../lib/status.ts';
+import { budgetFacts, SINGLE_TITLE, walletDetail } from './sync-labels.ts';
 
 /** First 8 of the 12 hex characters: enough to tell devices apart in a row. */
 export const shortDevice = (hash: string) => hash.slice(0, 8);
@@ -74,37 +75,6 @@ const HEAD_TITLE: Record<string, (v: number) => string> = {
   'pass.restored': (v) => `Restored (v${v})`,
 };
 
-const SINGLE_TITLE: Record<string, string> = {
-  'pass.voided': 'Voided',
-  'pass.unvoided': 'Unvoided',
-  'pass.link_rotated': 'Link rotated',
-  'pass.channels_changed': 'Channels changed',
-  'pass.printed': 'Printed',
-  'pass.print_voided': 'Print voided',
-  'email.queued': 'Email queued',
-  'email.sent': 'Email sent',
-  'email.failed': 'Email failed',
-  'email.captured': 'Email captured in the Test inbox',
-  'page.opened': 'Pass page opened',
-  'pass.downloaded': '.pkpass downloaded',
-  'bundle.opened': 'Bundle page opened',
-  'bundle.downloaded': 'Bundle downloaded',
-  'device.registered': 'Device added the pass',
-  'device.unregistered': 'Stopped updates',
-  'device.log': 'Wallet log line',
-  'push.sent': 'Push sent',
-  'push.failed': 'Push failed',
-  'push.queued': 'Push queued',
-  'device.fetched': 'Device fetched the pass',
-  'message.applied': 'Message applied',
-  'schedule.applied': 'Scheduled change applied',
-  'scan.checked_in': 'Checked in',
-  'scan.checked_out': 'Tapped out',
-  'scan.redeemed': 'Redeemed',
-  'scan.adjusted': 'Balance adjusted',
-  'scan.rejected': 'Scan rejected',
-};
-
 const FAILED = new Set(['email.failed', 'push.failed', 'scan.rejected']);
 
 function singleTitle(e: PassEventDto): string {
@@ -157,13 +127,18 @@ export function eventDetail(e: PassEventDto): string | null {
     parts.push(e.kind === 'push.failed' ? pushReason(reason) : reason);
   const line = str(e.data.line);
   if (line) parts.push(line);
+  const wallet = walletDetail(e);
+  if (wallet) parts.push(wallet);
   return parts.length ? parts.join(' · ') : null;
 }
 
 /** Whether holders were told, or silenced over the daily limit. */
 function notifyFacts(data: PassEventDto['data']): SyncFact[] {
   if (data.overBudget === true) return [{ text: 'Silent: daily limit reached', tone: 'warning' }];
-  return data.notified === true ? [{ text: 'Notified', tone: 'info' }] : [];
+  return [
+    ...(data.notified === true ? [{ text: 'Notified', tone: 'info' as const }] : []),
+    ...budgetFacts(data),
+  ];
 }
 
 function single(e: PassEventDto): SyncRow {

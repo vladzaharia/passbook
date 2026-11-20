@@ -15,7 +15,7 @@ import {
 } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
 import { walletProviderEnabled, walletProviderReleaseReason } from './provider-policy.ts';
-import { purgeExpiredGoogleCallbackReplays } from './repo-google-callback.ts';
+import { purgeExpiredGoogleCallbackReplays } from './repo-google-callback-replay.ts';
 import { ackCleanWalletPlaceholder, deferWalletSyncOperation } from './repo-sync-queue.ts';
 import { walletSyncHasWork } from './repo-sync-work.ts';
 import { runWalletProviderOperation } from './sync-operation.ts';

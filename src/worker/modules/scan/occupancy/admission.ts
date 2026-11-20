@@ -69,7 +69,13 @@ export const occupancyWaivers = (reason: string | null | undefined): Waivers => 
 /** The answer's view of the place: the scan's direction, the row now and the count, if read. */
 export function occupancyView(
   o: FoundOccupancy,
-  at: { state: 'in' | 'out'; since: number | null; stayMs: number | null; inNow: number | null },
+  at: {
+    state: 'in' | 'out';
+    since: number | null;
+    stayMs: number | null;
+    inNow: number | null;
+    via: string | null;
+  },
   turnaround: 'in' | 'out' | null = null,
 ): ScanOccupancy {
   return {
@@ -77,7 +83,6 @@ export function occupancyView(
     direction: o.direction,
     auto: o.auto,
     ...at,
-    via: null,
     capacity: o.zone.capacity,
     turnaround,
   };
@@ -92,6 +97,7 @@ export const occupancyAsRead = (o: FoundOccupancy, turnaround: 'in' | 'out' | nu
       since: o.inside ? (o.row?.entered_at ?? null) : (o.row?.changed_at ?? null),
       stayMs: null,
       inNow: null,
+      via: o.row?.via ?? null,
     },
     turnaround,
   );

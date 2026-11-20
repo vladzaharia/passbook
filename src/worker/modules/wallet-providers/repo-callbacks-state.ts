@@ -1,6 +1,8 @@
 import type { Envelope } from '../../platform/crypto.ts';
 import { all, batch, first, type SqlValue, stmt } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
+import { type InstancePass, instancePass } from './repo-callbacks-identity.ts';
+import { samsungHolderEventStmt } from './repo-holder-events.ts';
 
 export type SamsungCardEvent = 'ADDED' | 'DELETED' | 'UPDATED' | 'PROVISIONED';
 
@@ -74,13 +76,17 @@ function effectStatements(
   claim: SamsungReplayClaim,
   receipt: SamsungReceipt,
   requireServed: boolean,
+  pass: InstancePass | null,
 ): D1PreparedStatement[] {
   const inserted = `EXISTS (SELECT 1 FROM wallet_samsung_callback_receipts rc
     WHERE rc.id = ? AND rc.event = ?)`;
   // A retired ref belongs to a previous holder or generation: its callbacks are recorded, never applied.
   const live = `EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs live WHERE live.id = ? AND live.retired_at IS NULL)`;
+  const reported = (event: 'saved' | 'removed') =>
+    pass ? [samsungHolderEventStmt(db, pass, ref.referenceId, receipt.id, event, claim.now)] : [];
   if (receipt.event === 'DELETED')
     return [
+      ...reported('removed'),
       stmt(
         db,
         `UPDATE wallet_provider_instances SET holder_removed_at = MAX(COALESCE(holder_removed_at, 0), ?)
@@ -90,6 +96,7 @@ function effectStatements(
     ];
   if (receipt.event !== 'ADDED') return [];
   const statements = [
+    ...reported('saved'),
     stmt(
       db,
       `UPDATE wallet_provider_instances SET saved_at = MAX(COALESCE(saved_at, 0), ?)
@@ -130,6 +137,7 @@ export function receiptStatements(
   receipt: SamsungReceipt,
   gate: { sql: string; params: SqlValue[] },
   requireServed: boolean,
+  pass: InstancePass | null,
 ): D1PreparedStatement[] {
   const { envelope } = receipt;
   const statements = [
@@ -194,7 +202,7 @@ export function receiptStatements(
       ),
     );
   }
-  statements.push(...effectStatements(db, ref, claim, receipt, requireServed));
+  statements.push(...effectStatements(db, ref, claim, receipt, requireServed, pass));
   return statements;
 }
 
@@ -303,6 +311,7 @@ export async function claimSamsungIssuedDelivery(
           params: gate.params,
         },
         true,
+        await instancePass(db, ref.instanceId),
       ),
     );
   const [receiptInsert, ...effects] = receipts;

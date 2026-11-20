@@ -108,9 +108,19 @@ function ProviderRow({ status }: { status: WalletProviderInstanceStatus }) {
       leading={<WalletCards aria-hidden />}
       title={status.provider === 'google' ? 'Google Wallet' : 'Samsung Wallet'}
       pills={
-        <StatusPill status="wallet_instance" tone={tone}>
-          {label}
-        </StatusPill>
+        <>
+          <StatusPill status="wallet_instance" tone={tone}>
+            {label}
+          </StatusPill>
+          {status.reported ? (
+            <StatusPill
+              status={status.reported.event === 'saved' ? 'wallet_saved' : 'wallet_removed'}
+              tone={status.reported.event === 'saved' ? 'success' : 'warning'}
+            >
+              {status.reported.event === 'saved' ? 'Saved by holder' : 'Removed by holder'}
+            </StatusPill>
+          ) : null}
+        </>
       }
       meta={
         <>
@@ -118,6 +128,11 @@ function ProviderRow({ status }: { status: WalletProviderInstanceStatus }) {
             <span className="block">
               {note[0]?.toUpperCase()}
               {note.slice(1)}
+            </span>
+          ) : null}
+          {status.reported ? (
+            <span className="block">
+              {`Provider reported ${status.reported.event === 'saved' ? 'a save' : 'a removal'}; not proof of what is on a device.`}
             </span>
           ) : null}
           {status.priorGenerationRetirementPending ? (
@@ -129,8 +144,11 @@ function ProviderRow({ status }: { status: WalletProviderInstanceStatus }) {
   );
 }
 
-/** Independent provider instances, not device registrations or provider readiness. */
-export function WalletProviderStatus({ pass, active }: { pass: PassDetailDto; active: boolean }) {
+/** The pass's provider instances, read only for a member who may read passes, in the pass's mode. */
+export function useWalletProviderStatus(
+  pass: Pick<PassDetailDto, 'id' | 'orgId' | 'mode'>,
+  active: boolean,
+) {
   const scope = useOrgScope();
   const session = useSession();
   const mode = useMode();
@@ -167,6 +185,12 @@ export function WalletProviderStatus({ pass, active }: { pass: PassDetailDto; ac
     gcTime: 0,
     refetchInterval: enabled ? 15_000 : false,
   });
+  return { query, allowed, mode };
+}
+
+/** Independent provider instances, not device registrations or provider readiness. */
+export function WalletProviderStatus({ pass, active }: { pass: PassDetailDto; active: boolean }) {
+  const { query, allowed, mode } = useWalletProviderStatus(pass, active);
   if (!active || !allowed) return null;
   return (
     <Card className="min-w-0">

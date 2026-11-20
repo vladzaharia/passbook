@@ -1,0 +1,323 @@
+{
+  "schema": 1,
+  "name": "Monthly pass",
+  "description": "Daily entry until the paid-through date, with guests you can let in.",
+  "wallets": {
+    "schema": 1,
+    "google": {},
+    "samsung": {}
+  },
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "memberName",
+      "memberId"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "memberName": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Member",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "memberId": {
+        "type": "string",
+        "x-label": "Member ID",
+        "x-group": "Member",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "status": {
+        "type": "string",
+        "x-label": "Status",
+        "x-group": "Status",
+        "x-order": 30,
+        "enum": [
+          "Active",
+          "Suspended"
+        ],
+        "default": "Active",
+        "x-widget": "select"
+      },
+      "plan": {
+        "type": "string",
+        "x-label": "Plan",
+        "x-group": "Pass",
+        "enum": [
+          "member"
+        ],
+        "default": "member",
+        "x-widget": "select",
+        "x-enumLabels": {
+          "member": "Monthly"
+        },
+        "x-order": 40
+      },
+      "validUntil": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Paid through",
+        "x-group": "Pass",
+        "x-order": 50,
+        "x-widget": "datetime",
+        "x-noneLabel": "No end"
+      },
+      "guests": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99,
+        "default": 2,
+        "x-label": "Guests left",
+        "x-group": "Pass",
+        "x-order": 60
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 70,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 80,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      }
+    }
+  },
+  "sample": {
+    "memberName": "Alex Morgan",
+    "memberId": "MEMBER-0001",
+    "plan": "member",
+    "status": "Active",
+    "guests": 2,
+    "validUntil": "2030-01-01T00:00:00Z"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{memberName}}"
+    },
+    {
+      "to": {
+        "field": "member"
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "field": "until"
+      },
+      "value": "{{validUntil}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{validUntil}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "guests"
+      },
+      "value": "{{guests}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{memberId}}"
+    }
+  ],
+  "display": {
+    "icon": "key",
+    "group": "get-in",
+    "aliases": [
+      "monthly",
+      "membership",
+      "gym",
+      "studio",
+      "subscription"
+    ],
+    "title": "{{memberName}}",
+    "subtitle": "Monthly · {{memberId}}",
+    "status": "{{status}}",
+    "search": [
+      "memberName",
+      "memberId"
+    ]
+  },
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "enter",
+        "label": "Let in",
+        "kind": "check_in",
+        "repeat": "daily",
+        "minRole": "door"
+      },
+      {
+        "id": "guest_in",
+        "label": "Guest in",
+        "kind": "take",
+        "input": "guests",
+        "amount": {
+          "max": 10,
+          "presets": [
+            1,
+            2,
+            3
+          ]
+        },
+        "repeat": "always",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "memberId"
+    },
+    "access": {
+      "input": {
+        "plan": "plan",
+        "until": "validUntil"
+      },
+      "plans": [
+        {
+          "id": "member",
+          "label": "Monthly",
+          "kind": "always",
+          "zones": [
+            {
+              "zone": "*"
+            }
+          ]
+        }
+      ],
+      "suspend": {
+        "input": "status",
+        "equals": [
+          "Suspended"
+        ]
+      },
+      "rules": {
+        "visitGapMinutes": 120,
+        "reentryMinutes": null
+      }
+    },
+    "display": {
+      "v": 1,
+      "holder": "{{memberName}}",
+      "photo": {
+        "minRole": "door"
+      },
+      "header": {
+        "chips": [
+          {
+            "id": "c_plan",
+            "text": "{{access.plan}}",
+            "tone": "violet",
+            "icon": "infinity"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": "p_visits",
+          "preset": {
+            "id": "membership",
+            "v": 1
+          },
+          "title": "Visits",
+          "icon": "door-open",
+          "on": [
+            "ready",
+            "ok"
+          ],
+          "rows": [
+            {
+              "id": "r_member",
+              "type": "columns",
+              "items": [
+                {
+                  "id": "i_month",
+                  "label": "This month",
+                  "value": {
+                    "count": "{{history.visits.month}}",
+                    "one": "# visit",
+                    "other": "# visits",
+                    "zero": "First visit"
+                  }
+                },
+                {
+                  "id": "i_last",
+                  "label": "Last visit",
+                  "value": "{{history.lastVisit.at|ago}}"
+                }
+              ]
+            },
+            {
+              "id": "r_guests",
+              "type": "field",
+              "label": "Guests left",
+              "value": "{{inputs.guests}}",
+              "whenEmpty": "hide"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Ask at the front desk."
+      },
+      "customer": {
+        "chips": [
+          "c_plan"
+        ],
+        "panel": null
+      }
+    }
+  }
+}
