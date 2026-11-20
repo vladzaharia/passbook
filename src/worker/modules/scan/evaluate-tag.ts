@@ -92,7 +92,7 @@ export async function planTagReads(
         return { stop: 'not_found', unknown: true };
       }
       const tagId = tag.id;
-      if (tag.kind !== 'uid') return { stop: 'tag_invalid', tagId };
+      if (tag.system !== 'uid') return { stop: 'tag_invalid', tagId };
       if (tag.status !== 'active') {
         ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: 'TAG_RETIRED' });
         return { stop: 'not_found', tagId };

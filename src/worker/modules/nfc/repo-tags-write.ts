@@ -109,7 +109,7 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
   if (p.newTag)
     g.upsert(
       'nfc_tags',
-      ['id', 'tag_ref', 'kind', 'hint', 'label', 'created_at'],
+      ['id', 'tag_ref', 'system', 'hint', 'label', 'created_at'],
       [p.tagId, p.newTag.ref, 'uid', p.newTag.hint, p.newTag.label, now],
       { doNothing: true },
     );

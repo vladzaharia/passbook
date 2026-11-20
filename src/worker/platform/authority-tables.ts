@@ -116,6 +116,13 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     edges: [edge('tag_id', 'nfc_tags'), edge('pass_id', 'passes')],
     pass: 'pass_id',
   },
+  // Tag types (0128): an org's named tag policies. nfc_tag_systems has no writer outside migrations.
+  nfc_tag_types: { org: 'org_id' },
+  // Its trigger holds type and template to one org.
+  nfc_tag_type_templates: {
+    org: null,
+    edges: [edge('type_id', 'nfc_tag_types'), edge('template_id', 'templates')],
+  },
   // Outbound webhooks (0090). Endpoints and secrets are written through grants; delivery bookkeeping by a
   // reviewed raw-write allowlist entry. event_feed is written only by the pass_events trigger.
   webhook_endpoints: { org: 'org_id', mode: 'mode' },
