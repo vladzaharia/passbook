@@ -1,7 +1,7 @@
 import type { WalletProviderScope } from '../../../shared/contracts/wallet-providers.ts';
 import { first } from '../../platform/db.ts';
 import { samsungInitialWindowSql } from './repo-callbacks-window.ts';
-import { walletOpReadCurrentSql } from './repo-instance-current.ts';
+import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 
 export { saveAccountConfiguration, transitionAccount } from './repo-account-writes.ts';
@@ -165,7 +165,7 @@ export function findRetirementAccount(
         AND op.id = ? AND op.version = ? AND op.kind = 'revoke' AND op.state = 'claimed')
       AND (op.claim_hash = ? AND op.claim_expires_at > clock.now_ms AND op.projection_release_id = ?
         AND op.credential_keyset_commitment = ${pinnedKeysetSql} AND i.credential_keyset_commitment = op.credential_keyset_commitment)
-      AND (${target}) AND (${walletOpReadCurrentSql('i', 'op')})`,
+      AND (${target}) AND (${walletInstanceOperationCurrentSql('i', 'op', 'clock.now_ms', 'revoke', proof.authorityEpoch !== undefined)})`,
     [
       now,
       proof.orgId,
@@ -213,7 +213,7 @@ export function findSamsungPromotedRefreshAccount(
       AND op.kind = 'upsert' AND op.state IN ('pending', 'retry', 'claimed', 'succeeded')
       AND op.version = ? AND op.projection_release_id = ?
       AND op.credential_keyset_commitment = ${pinnedKeysetSql} AND i.credential_keyset_commitment = op.credential_keyset_commitment
-      AND ${walletOpReadCurrentSql('i', 'op')}`,
+      AND ${walletInstanceOperationCurrentSql('i', 'op', 'clock.now_ms', undefined, proof.authorityEpoch !== undefined)}`,
     [
       now,
       proof.refHash,
