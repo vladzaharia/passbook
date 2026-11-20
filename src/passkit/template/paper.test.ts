@@ -40,6 +40,27 @@ describe('paper block validation', () => {
     expect(codes({ ...base, fields: ['order'] })).toContain('PAPER_LOOKUP_FIELD');
   });
 
+  it('lets paper print the lookup value only when the template declares it public', () => {
+    const base = { schema: 1, size: 'a4', barcode: 'qr' };
+    const lookup = (value: unknown) =>
+      ({
+        ...EVENT_MANIFEST,
+        scan: { lookup: { input: 'ticketNo', ...(value === undefined ? {} : { public: value }) } },
+        paper: { ...base, terms: 'No. {{ticketNo}}', fields: ['order'] },
+      }) as unknown as TemplateManifest;
+    const codesOf = (m: TemplateManifest) =>
+      paperManifestIssues(m, { passJson: EVENT_PASS }).map((i) => i.code);
+    expect(codesOf(lookup(undefined))).toContain('PAPER_LOOKUP_FIELD');
+    expect(codesOf(lookup(false))).toContain('PAPER_LOOKUP_FIELD');
+    expect(codesOf(lookup(true))).not.toContain('PAPER_LOOKUP_FIELD');
+    // The scan code stays private whatever the lookup says.
+    const scanCode = {
+      ...lookup(true),
+      paper: { ...base, terms: '{{pass.scanCode}}' },
+    } as unknown as TemplateManifest;
+    expect(codesOf(scanCode)).toContain('PAPER_SCAN_CODE');
+  });
+
   it('refuses a field bound to the scan code and a card with Code 128', () => {
     const m = {
       ...EVENT_MANIFEST,

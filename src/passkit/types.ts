@@ -225,7 +225,8 @@ export interface ScanManifest {
   /** 1-6. */
   actions: ScanAction[];
   /** A typed member, card or ticket number. */
-  lookup?: { input: string };
+  /** The input a scanner finds a pass by. `public: true` lets paper print it (a plate is on the windscreen anyway); never set it for an order number or member id. */
+  lookup?: { input: string; public?: boolean };
   window?: { from?: string; until?: string; earlyMinutes?: number; lateMinutes?: number };
   flags?: { input: string; label: string; equals?: string[]; stop?: boolean }[];
   /** The result screen. No display means `defaultScanDisplay` at read, never persisted. */

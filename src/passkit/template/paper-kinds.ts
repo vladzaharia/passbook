@@ -14,6 +14,8 @@ export interface Kinded {
   field: (...keys: string[]) => string | undefined;
   semantics: Record<string, unknown>;
   holderName?: string | undefined;
+  /** The lookup value, when the template declares it public: a permit prints it as the plate. */
+  publicLookup?: string | undefined;
 }
 
 export interface KindParts {
@@ -144,7 +146,10 @@ export function kindContent(c: Kinded): KindParts {
     const zone = field('zone')?.replace(/^zone\s+/i, '');
     parts.type = field('type');
     parts.title = parts.type;
-    parts.hero = zone ? { zone } : {};
+    parts.hero = {
+      ...(zone ? { zone } : {}),
+      ...(c.publicLookup ? { plate: c.publicLookup } : {}),
+    };
     const bay = field('bay');
     if (bay) parts.facts.push({ label: 'Bay', text: bay });
   } else if (c.kind === 'coupon') {

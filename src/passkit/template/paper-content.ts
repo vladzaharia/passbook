@@ -13,7 +13,7 @@ import { buildFields, styleOf } from '../wallets/view-fields.ts';
 import { relevanceOf } from '../wallets/view-parts.ts';
 import { ExprError, evaluate } from './expr.ts';
 import { applyDefaults } from './manifest.ts';
-import type { PaperDesign, PaperInk, PaperKind } from './paper.ts';
+import { lookupIsPublic, type PaperDesign, type PaperInk, type PaperKind } from './paper.ts';
 import { paperZoneOf } from './paper-format.ts';
 import { type PaperColors, paperInk } from './paper-ink.ts';
 import { type Kinded, kindContent, kindOf } from './paper-kinds.ts';
@@ -93,7 +93,8 @@ const plain = (v: unknown): string | undefined => {
 const ART_ORDER: Record<PaperKind, PaperArt[]> = {
   coupon: ['strip', 'artwork', 'background'],
   admission: ['artwork', 'background', 'thumbnail', 'strip'],
-  membership: ['artwork', 'background', 'thumbnail'],
+  // Never the thumbnail: on an ID card it is the member's photo.
+  membership: ['artwork', 'background'],
   permit: [],
   pickup: [],
 };
@@ -154,11 +155,14 @@ export function paperContent(input: PaperContentInput): PaperContent {
     }
   };
   const lookup = (manifest.scan as { lookup?: { input?: unknown } } | undefined)?.lookup?.input;
+  const lookupValue = typeof lookup === 'string' ? plain(input.personalization[lookup]) : undefined;
+  // A template that declares its lookup public may print it (a permit's plate).
+  const publicLookup = lookupIsPublic(manifest);
   const credentials = new Set<string>(
     [
       passJson.serialNumber,
       input.scanCode,
-      typeof lookup === 'string' ? plain(input.personalization[lookup]) : undefined,
+      publicLookup ? undefined : lookupValue,
       ...[...(passJson.barcodes ?? []), ...(passJson.barcode ? [passJson.barcode] : [])].flatMap(
         (b) => [b.message, b.altText],
       ),
@@ -166,6 +170,14 @@ export function paperContent(input: PaperContentInput): PaperContent {
       .filter((v): v is string => typeof v === 'string' && v.trim() !== '')
       .map((v) => v.trim()),
   );
+  // The barcode's alt text is often the lookup value itself; public lets that value through.
+  if (
+    publicLookup &&
+    lookupValue &&
+    lookupValue !== input.scanCode &&
+    lookupValue !== passJson.serialNumber
+  )
+    credentials.delete(lookupValue);
   const semantics = (passJson.semantics ?? {}) as Record<string, unknown>;
   const field = (...keys: string[]): string | undefined => {
     for (const key of keys) {
@@ -181,7 +193,14 @@ export function paperContent(input: PaperContentInput): PaperContent {
   const named = tzInput ? plain(input.personalization[tzInput]) : undefined;
 
   const kind: PaperKind = design.kind ?? kindOf(manifest, style, roles);
-  const ctx: Kinded = { kind, roles, field, semantics, holderName: input.holderName ?? undefined };
+  const ctx: Kinded = {
+    kind,
+    roles,
+    field,
+    semantics,
+    holderName: input.holderName ?? undefined,
+    publicLookup: publicLookup ? lookupValue : undefined,
+  };
   const parts = kindContent(ctx);
   const venue = parts.venue;
   const holder = parts.holder;

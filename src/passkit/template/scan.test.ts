@@ -232,6 +232,15 @@ describe('scanIssues', () => {
       expect(only({ actions: [CHECK_IN], lookup: { input } })).toEqual([]);
   });
 
+  it('SCAN_LOOKUP_PUBLIC', () => {
+    for (const bad of ['yes', 1, null])
+      expect(only({ actions: [CHECK_IN], lookup: { input: 'memberId', public: bad } })).toContain(
+        'error:SCAN_LOOKUP_PUBLIC',
+      );
+    for (const ok of [true, false])
+      expect(only({ actions: [CHECK_IN], lookup: { input: 'memberId', public: ok } })).toEqual([]);
+  });
+
   it('SCAN_FLAGS', () => {
     const flag = { input: 'status', label: 'Banned' };
     const bad = [

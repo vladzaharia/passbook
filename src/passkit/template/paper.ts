@@ -159,6 +159,10 @@ function shapeIssues(error: z.ZodError): ValidationIssue[] {
   return out;
 }
 
+/** The template declares its lookup value public (a plate): paper may print it. */
+export const lookupIsPublic = (manifest: Pick<TemplateManifest, 'scan'>): boolean =>
+  (manifest.scan as { lookup?: { public?: unknown } } | undefined)?.lookup?.public === true;
+
 const keyOf = (ref: string) => ref.split('.').at(-1) ?? ref;
 
 /** Static checks for `manifest.paper`. An absent block has no issues. */
@@ -182,6 +186,7 @@ export function paperManifestIssues(
   const properties = (manifest.inputs?.properties ?? {}) as Record<string, unknown>;
   const lookups = new Set(Object.keys(manifest.lookups ?? {}));
   const lookupInput = (manifest as { scan?: { lookup?: { input?: unknown } } }).scan?.lookup?.input;
+  const publicLookup = lookupIsPublic(manifest);
 
   const checkExprAt = (value: Expr, path: string) => {
     const problem = checkExpr(value);
@@ -193,7 +198,7 @@ export function paperManifestIssues(
       error('PAPER_SCAN_CODE', 'Paper never prints the scan code.', path);
     const refs = exprReferences(value);
     for (const name of refs.inputs) {
-      if (name === lookupInput)
+      if (name === lookupInput && !publicLookup)
         error('PAPER_LOOKUP_FIELD', 'Paper never prints the scan lookup value.', path);
       else if (!Object.hasOwn(properties, name))
         warn('PAPER_INPUT', `Unknown input "${name}".`, path, { name });
@@ -225,7 +230,11 @@ export function paperManifestIssues(
       if (!targets.includes(key) || b.value === undefined) continue;
       if (typeof b.value === 'string' && /\bpass\.scanCode\b/.test(b.value))
         error('PAPER_SCAN_CODE', 'This field carries the scan code.', path);
-      if (typeof lookupInput === 'string' && exprReferences(b.value).inputs.includes(lookupInput))
+      if (
+        !publicLookup &&
+        typeof lookupInput === 'string' &&
+        exprReferences(b.value).inputs.includes(lookupInput)
+      )
         error('PAPER_LOOKUP_FIELD', 'This field carries the scan lookup value.', path);
     }
   }

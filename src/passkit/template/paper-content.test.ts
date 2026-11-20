@@ -162,6 +162,43 @@ describe('credential guards', () => {
   });
 });
 
+describe('scan.lookup.public', () => {
+  const permit = async (isPublic: boolean | undefined) => {
+    const { passJson, manifest, personalization } = await blueprintPass('starter-permit', {
+      plate: 'LK73 VHM',
+    });
+    const scan = {
+      ...manifest.scan,
+      lookup: { input: 'plate', ...(isPublic === undefined ? {} : { public: isPublic }) },
+    };
+    return paperContent({
+      passJson,
+      manifest: { ...manifest, scan } as typeof manifest,
+      personalization,
+      design: resolvePaper({ schema: 1, size: 'half', barcode: 'qr', kind: 'permit' }),
+      scanCode: SCAN_CODE,
+    });
+  };
+
+  it('prints the plate when the template declares its lookup public', async () => {
+    expect((await permit(true)).hero).toEqual({ zone: 'C', plate: 'LK73 VHM' });
+  });
+
+  it('keeps the plate off the sheet when it is not declared, or declared false', async () => {
+    for (const declared of [undefined, false]) {
+      const content = await permit(declared);
+      expect(content.hero?.plate).toBeUndefined();
+      expect(JSON.stringify(content)).not.toContain('LK73 VHM');
+    }
+  });
+
+  it('never prints the scan code or serial, public or not', async () => {
+    const json = JSON.stringify(await permit(true));
+    expect(json).not.toContain(SCAN_CODE);
+    expect(json).not.toContain('SER-0001');
+  });
+});
+
 describe('ink', () => {
   it('prints colour for a strong band and mono for a pastel one (pickup)', async () => {
     expect((await contentOf('starter-event-ticket')).content.ink).toBe('colour');
