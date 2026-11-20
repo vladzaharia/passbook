@@ -1,6 +1,7 @@
 import type { SamsungWalletCredentials } from '../../../shared/contracts/wallet-providers.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { CERT_WARN_DAYS, type CheckOutcome, DAY_MS } from './account-check-types.ts';
+import { DEFAULT_CARD_TYPE, samsungCardEntries } from './samsung-cards.ts';
 import { samsungCredentialWindow, validateSamsungCredentials } from './samsung-credentials.ts';
 import { SAMSUNG_REQUEST_TIMEOUT_MS } from './samsung-limits.ts';
 import { createSamsungAuthorizationToken } from './samsung-token.ts';
@@ -22,6 +23,7 @@ async function probeCard(
   ctx: ServiceContext,
   account: Awaited<ReturnType<typeof validateSamsungCredentials>>,
   mode: 'live' | 'test',
+  cardType: string,
 ): Promise<string | null> {
   const path = `/partner/v1/card/template/${account.cardId}`;
   const now = ctx.clock.now();
@@ -55,6 +57,8 @@ async function probeCard(
   if (page?.resultCode !== '0' || !template || typeof template !== 'object')
     return 'provider_error';
   if (template.cardId !== account.cardId) return 'card_not_found';
+  // A typed card is a template of its own type; the default card is not tied to one.
+  if (cardType !== DEFAULT_CARD_TYPE && template.cardType !== cardType) return 'card_not_found';
   return eligible(template, mode) ? null : 'card_not_active';
 }
 
@@ -75,13 +79,15 @@ export async function probeSamsungCards(
     return { ok: false, code: 'invalid_credentials' };
   }
   if (now >= validUntil) return { ok: false, code: 'cert_expired' };
-  let account: Awaited<ReturnType<typeof validateSamsungCredentials>>;
-  try {
-    account = await validateSamsungCredentials(credentials, now);
-  } catch {
-    return { ok: false, code: 'invalid_credentials' };
+  for (const [cardType] of samsungCardEntries(credentials)) {
+    let account: Awaited<ReturnType<typeof validateSamsungCredentials>>;
+    try {
+      account = await validateSamsungCredentials(credentials, now, cardType);
+    } catch {
+      return { ok: false, code: 'invalid_credentials' };
+    }
+    const failure = await probeCard(ctx, account, mode, cardType);
+    if (failure) return { ok: false, code: failure };
   }
-  const failure = await probeCard(ctx, account, mode);
-  if (failure) return { ok: false, code: failure };
   return { ok: true, code: validUntil - now <= CERT_WARN_DAYS * DAY_MS ? 'cert_expiring' : null };
 }

@@ -19,14 +19,15 @@ export {
 
 const INSTANCE_COLUMNS = `i.id, i.pass_id AS passId, i.org_id AS orgId, i.mode, i.provider,
   i.account_id AS accountId, i.identity_projection_release_id AS identityProjectionReleaseId,
-  i.credential_generation AS credentialGeneration, i.credential_keyset_commitment AS credentialKeysetCommitment,
+  i.credential_generation AS credentialGeneration, i.channel_epoch AS channelEpoch,
+  i.retirement_cause AS retirementCause, i.credential_keyset_commitment AS credentialKeysetCommitment,
   i.lifecycle, i.desired_version AS desiredVersion, i.desired_operation_id AS desiredOperationId,
   i.installation_state AS installationState, i.installation_observed_at AS installationObservedAt,
   i.revoked_at AS revokedAt, i.retirement_requested_at AS retirementRequestedAt,
   i.retired_at AS retiredAt, i.created_at AS createdAt, i.updated_at AS updatedAt`;
 const OPERATION_COLUMNS = `op.id, op.instance_id AS instanceId, i.pass_id AS passId, i.org_id AS orgId,
   i.mode, i.provider, i.account_id AS accountId, i.identity_projection_release_id AS identityProjectionReleaseId,
-  i.credential_generation AS credentialGeneration, op.version, op.kind, op.pass_version AS passVersion,
+  i.credential_generation AS credentialGeneration, i.channel_epoch AS channelEpoch, op.version, op.kind, op.pass_version AS passVersion,
   op.pass_revision AS passRevision, op.lifecycle_generation AS lifecycleGeneration,
   op.pass_credential_generation AS passCredentialGeneration, op.credential_keyset_commitment AS credentialKeysetCommitment,
   op.issuing_release_id AS issuingReleaseId,
@@ -52,7 +53,8 @@ export function getInstanceByPass(
     WHERE i.org_id = ? AND i.mode = ? AND i.provider = ? AND i.pass_id = ?
       AND ${instanceKeysetSql}
       AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers transfer
-        WHERE transfer.pass_id = i.pass_id AND transfer.state = 'pending')`,
+        WHERE transfer.pass_id = i.pass_id AND transfer.state = 'pending')
+    ORDER BY i.channel_epoch DESC LIMIT 1`,
     [...scopeParams(s), s.passId],
   );
 }

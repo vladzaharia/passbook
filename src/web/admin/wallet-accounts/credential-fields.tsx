@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import {
+  SAMSUNG_CARD_TYPES,
   type SaveWalletCredential,
   SaveWalletCredentialSchema,
   type WalletProvider,
@@ -8,7 +9,12 @@ import { FormField, Input, Textarea } from '@/web/ui/index.ts';
 
 const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/wallet_object.issuer';
 
+/** The card types a Samsung projection supports: a card row for each beside the default card. */
+const CARD_TYPES = SAMSUNG_CARD_TYPES;
+const CARD_ID = /^[A-Za-z0-9_-]{1,32}$/;
+
 type FieldName =
+  | `cardIds.${(typeof CARD_TYPES)[number]}`
   | 'issuerId'
   | 'serviceAccountEmail'
   | 'privateKeyPem'
@@ -21,6 +27,7 @@ type FieldName =
 
 type Field = {
   name: FieldName;
+  optional?: boolean;
   label: string;
   help?: string;
   pem?: 'PRIVATE KEY' | 'CERTIFICATE';
@@ -69,10 +76,20 @@ const samsungFields: Field[] = [
   },
   {
     name: 'cardId',
-    label: 'Card ID',
-    validate: (value) => /^[A-Za-z0-9_-]{1,32}$/.test(value),
+    label: 'Default card ID',
+    help: 'Used by every type without its own card.',
+    validate: (value) => CARD_ID.test(value),
     invalid: 'Enter 1–32 letters, numbers, underscores or hyphens.',
   },
+  ...CARD_TYPES.map(
+    (type): Field => ({
+      name: `cardIds.${type}`,
+      label: `Card for ${type} (optional)`,
+      optional: true,
+      validate: (value) => CARD_ID.test(value),
+      invalid: 'Enter 1–32 letters, numbers, underscores or hyphens.',
+    }),
+  ),
   {
     name: 'partnerPrivateKeyPem',
     label: 'Partner private key (PKCS#8 PEM)',
@@ -134,8 +151,9 @@ export function WalletCredentialFields({
     const nextErrors: Partial<Record<FieldName, string>> = {};
     for (const field of fields) {
       const value = values[field.name] ?? '';
-      if (!value) nextErrors[field.name] = 'Required.';
-      else if (
+      if (!value) {
+        if (!field.optional) nextErrors[field.name] = 'Required.';
+      } else if (
         field.pem
           ? !validPem(value, field.pem)
           : value.length > (field.name === 'serviceAccountEmail' ? 254 : 255) ||
@@ -144,6 +162,12 @@ export function WalletCredentialFields({
         nextErrors[field.name] = field.invalid;
       }
     }
+    const cardIds = Object.fromEntries(
+      CARD_TYPES.flatMap((type) => {
+        const id = values[`cardIds.${type}`];
+        return id ? [[type, id]] : [];
+      }),
+    );
     const credentials =
       provider === 'google'
         ? {
@@ -156,6 +180,7 @@ export function WalletCredentialFields({
             partnerId: values.partnerId,
             certificateId: values.certificateId,
             cardId: values.cardId,
+            ...(Object.keys(cardIds).length ? { cardIds } : {}),
             partnerPrivateKeyPem: values.partnerPrivateKeyPem,
             partnerCertificatePem: values.partnerCertificatePem,
             samsungCertificatePem: values.samsungCertificatePem,
@@ -191,8 +216,8 @@ export function WalletCredentialFields({
     >
       <p className="text-sm text-fg-muted">
         {rotating
-          ? 'All fields are required. The issuer, or partner and card, stay the same.'
-          : 'All fields are required. Saved credentials cannot be read back.'}
+          ? 'Required fields are marked. The issuer, or partner and cards, stay the same: enter every card again.'
+          : 'Required fields are marked. Saved credentials cannot be read back.'}
       </p>
       {fields.map((field) => (
         <FormField
@@ -200,7 +225,7 @@ export function WalletCredentialFields({
           label={field.label}
           help={field.help}
           error={errors[field.name]}
-          required
+          required={!field.optional}
         >
           {(props) =>
             field.pem ? (

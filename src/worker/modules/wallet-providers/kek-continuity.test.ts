@@ -335,6 +335,7 @@ describe('provider identity continuity across KEK rotation', () => {
       passId: 'historical-pass',
       mode: 'live' as const,
       credentialGeneration: 3,
+      channelEpoch: 1,
     };
     const originalIds = await googleObjectIds(
       before.credentials.issuerId,

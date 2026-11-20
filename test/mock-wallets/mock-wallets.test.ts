@@ -27,6 +27,7 @@ const scope = {
   passId: 'pass',
   mode: 'test' as const,
   credentialGeneration: 1,
+  channelEpoch: 1,
 };
 const projection = {
   cardTitle: { defaultValue: { language: 'en', value: 'Club' } },

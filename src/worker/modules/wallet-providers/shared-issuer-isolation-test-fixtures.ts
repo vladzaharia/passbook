@@ -47,7 +47,14 @@ export async function googleOrg(db: D1Database) {
   const { classId, objectId } = await googleObjectIds(
     verification.issuerId,
     verification.objectIdHmacKey,
-    { tenantId: pass.orgId, mode: 'live', releaseId, passId: pass.id, credentialGeneration: 1 },
+    {
+      tenantId: pass.orgId,
+      mode: 'live',
+      releaseId,
+      passId: pass.id,
+      credentialGeneration: 1,
+      channelEpoch: 1,
+    },
   );
   await seedHistoricalProviderInstance(kit.env.DB, {
     id: instanceId,

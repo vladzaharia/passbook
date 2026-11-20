@@ -1,4 +1,9 @@
 import { conditionInputs, exprReferences } from '../../../passkit/template/expr.ts';
+import {
+  barcodeBindings,
+  barcodeInputs,
+  barcodeIsScanCode,
+} from '../../../passkit/template/scan-code-barcode.ts';
 import type { Json, TemplateManifest } from '../../../passkit/types.ts';
 import type { JoinReadinessIssue } from '../../../shared/contracts/join.ts';
 
@@ -25,8 +30,6 @@ const NAME_MIN_LENGTH = 20;
 const GENERATED_DIGITS = 10;
 /** A generated value is any ten digits, so a pattern must accept the ends of the range too. */
 const SAMPLE_CODES = ['1234567890', '0123456789', '0000000000', '9999999999'];
-/** The only barcode a public card may carry: the server's scan code. */
-const SCAN_CODE_EXPR = '{{pass.scanCode}}';
 
 const labelOf = (key: string, schema: Rec): string => {
   const label = schema['x-label'] ?? schema.title;
@@ -94,30 +97,17 @@ function barcodeIssue(
   manifest: TemplateManifest,
   labels: Map<string, string>,
 ): JoinReadinessIssue | null {
-  const bindings = (manifest.bindings ?? []).filter(
-    (b) => 'barcode' in b.to && (b.to.barcode === '*' || b.to.barcode === 0),
-  );
+  const bindings = barcodeBindings(manifest);
   const named = (input: string): JoinReadinessIssue => ({
     code: 'barcode_input',
     input,
     label: labels.get(input) ?? input,
   });
   for (const b of bindings) {
-    const inputs = [
-      ...exprReferences(b.value ?? '').inputs,
-      ...[b.when, b.remove].flatMap((c) => (c ? conditionInputs(c) : [])),
-    ];
-    const first = inputs[0];
+    const first = barcodeInputs(b)[0];
     if (first !== undefined) return named(first);
   }
-  const messages = bindings.filter((b) => 'prop' in b.to && b.to.prop === 'message');
-  const last = messages.at(-1);
-  const plain =
-    last !== undefined &&
-    messages.every((b) => b.when === undefined && b.remove === undefined) &&
-    typeof last.value === 'string' &&
-    last.value.trim() === SCAN_CODE_EXPR;
-  return plain ? null : { code: 'barcode_input' };
+  return barcodeIsScanCode(manifest) ? null : { code: 'barcode_input' };
 }
 
 /**

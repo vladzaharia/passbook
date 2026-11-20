@@ -114,11 +114,16 @@ async function probe(
       account.accountId !== candidate.accountId ||
       account.revision !== candidate.accountRevision ||
       account.credentialKeysetCommitment !== proof.credentialKeysetCommitment ||
-      (await providerIdentityHash(account)) !== candidate.providerIdentityHash
+      (await providerIdentityHash(account, candidate.projection.cardType)) !==
+        candidate.providerIdentityHash
     )
       throw new Error();
     const startedAt = ctx.clock.now();
-    const credentials = await validateSamsungCredentials(account.credentials, startedAt);
+    const credentials = await validateSamsungCredentials(
+      account.credentials,
+      startedAt,
+      candidate.projection.cardType,
+    );
     const response = await probeSamsungActiveTemplate(credentials, {
       cardType: candidate.projection.cardType,
       subType: candidate.projection.cardSubType,

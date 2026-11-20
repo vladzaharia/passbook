@@ -59,6 +59,8 @@ export interface PassEmailInput {
   mode?: 'live' | 'test';
   /** The card came from a join link: the mail says why the address got it. */
   joined?: boolean;
+  /** A copy stopped working or the code changed: the heading, line and subject replace "ready". */
+  notice?: { subject: string; title: string; line: string };
   /**
    * PUBLIC_BASE_URL when the org opted in (`email.buddy`): the buddy sits at the band's right end,
    * as in the sign-in email. Absent, the band is the org's mark and name alone.
@@ -187,17 +189,19 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
   const wallets = emailWalletOffers(input);
   const printUrl = safeUrl(input.printUrl);
   const subject =
-    input.subject?.trim() ||
-    (input.joined
-      ? `Your ${JOIN_COPY.mailSubject.replace('{org}', input.orgName)}`
-      : `Your ${input.orgName} pass`);
-  const ready = input.joined ? JOIN_COPY.mailTitle : HOLDER_COPY.passReady;
+    input.notice?.subject ??
+    (input.subject?.trim() ||
+      (input.joined
+        ? `Your ${JOIN_COPY.mailSubject.replace('{org}', input.orgName)}`
+        : `Your ${input.orgName} pass`));
+  const ready = input.notice?.title ?? (input.joined ? JOIN_COPY.mailTitle : HOLDER_COPY.passReady);
   const joinLine = input.joined ? JOIN_COPY.mailLine.replace('{org}', input.orgName) : null;
   const fields = (input.summary?.fields ?? [])
     .filter((f) => f.value !== input.passTitle)
     .slice(0, 3);
   const text = [
     ready,
+    ...(input.notice ? [input.notice.line] : []),
     ...(input.mode === 'test' ? [HOLDER_COPY.testNote('pass')] : []),
     ...(input.passTitle ? ['', input.passTitle] : []),
     ...fields.map((f) => `${f.label ? `${f.label}: ` : ''}${f.value}`),
@@ -223,6 +227,7 @@ export function renderPassEmail(input: PassEmailInput): RenderedEmail {
   const muted = (margin: string, line: string) =>
     `<p class="e-muted" style="margin:${margin};${type('sm')};color:${c.muted}">${line}</p>`;
   const body = `${titleHtml(ready, '0 0 16px')}
+${input.notice ? muted('0 0 16px', escapeHtml(input.notice.line)) : ''}
 ${input.mode === 'test' ? testNoteHtml(HOLDER_COPY.testNote('pass')) : ''}
 ${passBlock(input, fields)}
 ${actionsHtml(input)}

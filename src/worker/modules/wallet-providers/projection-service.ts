@@ -170,7 +170,12 @@ export async function createProjectionCandidate(
     sourceReleaseHash: source.release.candidateHash,
     accountId: account.accountId,
     accountRevision: account.revision,
-    providerIdentityHash: await providerIdentityHash(account),
+    providerIdentityHash: await providerIdentityHash(
+      account,
+      projection.schema === 1 && projection.provider === 'samsung'
+        ? projection.cardType
+        : undefined,
+    ),
     projection,
   };
   candidate.candidateHash = await candidateHash(projectionCandidateEnvelope(candidate));

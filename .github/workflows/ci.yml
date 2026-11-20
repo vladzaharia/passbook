@@ -164,7 +164,7 @@ jobs:
           path: .vitest/blob
           merge-multiple: true
       - name: Coverage thresholds (worker)
-        run: npm run coverage:worker -- --merge-reports
+        run: npm run coverage:worker -- --merge-reports --silent
 
   predeploy:
     if: github.ref == 'refs/heads/release'

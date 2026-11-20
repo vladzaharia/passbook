@@ -11,6 +11,7 @@ import { type GoogleValidatedAccount, validateGoogleAccount } from './google-cre
 import { providerIdentityHash } from './projection-contract.ts';
 import { isCurrentApprovedProjection } from './projection-current.ts';
 import { assertWalletProviderEnabled } from './provider-policy.ts';
+import { releaseCardType } from './repo-card-type.ts';
 import { type ValidatedSamsungCredentials, validateSamsungCredentials } from './samsung.ts';
 
 export type Provider = 'google' | 'samsung';
@@ -43,6 +44,8 @@ export type RetirementTarget =
       passId: string;
       identityProjectionReleaseId: string;
       credentialGeneration: number;
+      /** Absent means 1; the SQL target fails closed for a successor. */
+      channelEpoch: number;
     }
   | { provider: 'samsung'; refHash: string };
 
@@ -207,13 +210,17 @@ async function snapshot(
         window: purpose.inbound,
       });
     }
+    const cardType =
+      provider === 'samsung'
+        ? await releaseCardType(ctx.env.DB, scope.orgId, scope.providerReleaseId)
+        : null;
     if (
       !account ||
       account.provider !== provider ||
       account.accountId !== scope.accountId ||
       account.revision !== scope.accountRevision ||
       account.credentialKeysetCommitment !== scope.credentialKeysetCommitment ||
-      (await providerIdentityHash(account)) !== scope.providerIdentityHash ||
+      (await providerIdentityHash(account, cardType ?? undefined)) !== scope.providerIdentityHash ||
       (account.provider === 'google' &&
         (!(account.objectIdHmacKey instanceof Uint8Array) ||
           account.objectIdHmacKey.byteLength < 32))
@@ -272,7 +279,12 @@ export async function runtimeSamsungAccount(
   scope = copyRuntimeScope(scope);
   const value = await snapshot(ctx, scope, 'samsung', purpose);
   try {
-    const account = await validateSamsungCredentials(value.credentials, ctx.clock.now());
+    const cardType = await releaseCardType(ctx.env.DB, scope.orgId, scope.providerReleaseId);
+    const account = await validateSamsungCredentials(
+      value.credentials,
+      ctx.clock.now(),
+      cardType ?? undefined,
+    );
     await assertRuntimeCredentialKeyset(ctx, scope);
     return account;
   } catch {

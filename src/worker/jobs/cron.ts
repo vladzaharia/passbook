@@ -2,6 +2,7 @@ import { dailyApple } from '../modules/apple/jobs.ts';
 import { dailyAudit } from '../modules/audit/jobs.ts';
 import { dailyAuth } from '../modules/auth/jobs.ts';
 import { failStuckBroadcasts, startDueBroadcasts } from '../modules/broadcasts/start.ts';
+import { dailyChannels, sweepChannelApply } from '../modules/channels/apply-start.ts';
 import { dailyConnections, reconcileConnections } from '../modules/connections/jobs.ts';
 import { dailyDelivery, sweepDelivery } from '../modules/delivery/jobs.ts';
 import { dailyEvents } from '../modules/events/jobs.ts';
@@ -55,6 +56,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'passes.stale_reissue', run: reissueStalePasses },
     { name: 'broadcasts.start', run: startDueBroadcasts },
     { name: 'broadcasts.stuck', run: failStuckBroadcasts },
+    { name: 'channels.apply_sweep', run: sweepChannelApply },
     { name: 'message_rules.tick', run: tickMessageRules },
     { name: 'scan.reconcile', run: reconcileScans },
     { name: 'scan.backfill', run: backfillScanLookups },
@@ -90,6 +92,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'wallet.credential_checks', run: enqueueCredentialChecks },
     { name: 'scan.retention', run: dailyScans },
     { name: 'join.retention', run: dailyJoin },
+    { name: 'channels.retention', run: dailyChannels },
     { name: 'orgs.branding_gc', run: sweepBrandingGc },
     { name: 'webhooks.retention', run: dailyWebhooks },
     { name: 'templates.fork_orphans', run: sweepForkOrphans },
