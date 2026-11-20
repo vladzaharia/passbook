@@ -6,10 +6,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Order system",
       "prefix": "wlt_k3v9",
-      "scopes": [
-        "passes:read",
-        "passes:write"
-      ],
+      "scopes": ["passes:read", "passes:write"],
       "mode": "live",
       "createdAt": 1764000000000,
       "lastUsedAt": 1764000060000,

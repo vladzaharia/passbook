@@ -78,11 +78,7 @@
         }
       },
       "assetBaseUrl": "https://wallet.example.com/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": [
-        "icon.png",
-        "icon@2x.png",
-        "logo.png"
-      ],
+      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
       "blockedUsers": [],
       "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8",
@@ -160,11 +156,7 @@
         }
       },
       "assetBaseUrl": "https://wallet.example.com/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": [
-        "icon.png",
-        "icon@2x.png",
-        "logo.png"
-      ],
+      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
       "blockedUsers": [],
       "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8"
@@ -277,11 +269,7 @@
         }
       },
       "assetBaseUrl": "https://wallet.example.com/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": [
-        "icon.png",
-        "icon@2x.png",
-        "logo.png"
-      ],
+      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
       "blockedUsers": [],
       "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8",

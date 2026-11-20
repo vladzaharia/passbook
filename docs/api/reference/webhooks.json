@@ -4,10 +4,7 @@
     "request": {
       "url": "https://hooks.example.com/passbook",
       "description": "Order system",
-      "eventTypes": [
-        "pass.issued",
-        "pass.scanned"
-      ]
+      "eventTypes": ["pass.issued", "pass.scanned"]
     },
     "response": {
       "endpoint": {
@@ -17,10 +14,7 @@
         "url": "https://hooks.example.com/passbook",
         "urlMasked": "https://hooks.example.com/\u2026",
         "description": "Order system",
-        "eventTypes": [
-          "pass.issued",
-          "pass.scanned"
-        ],
+        "eventTypes": ["pass.issued", "pass.scanned"],
         "templateIds": null,
         "apiVersion": "2026-12-01",
         "status": "active",
@@ -56,10 +50,7 @@
           "url": "https://hooks.example.com/passbook",
           "urlMasked": "https://hooks.example.com/\u2026",
           "description": "Order system",
-          "eventTypes": [
-            "pass.issued",
-            "pass.scanned"
-          ],
+          "eventTypes": ["pass.issued", "pass.scanned"],
           "templateIds": null,
           "apiVersion": "2026-12-01",
           "status": "active",
@@ -84,10 +75,7 @@
       "url": "https://hooks.example.com/passbook",
       "urlMasked": "https://hooks.example.com/\u2026",
       "description": "Order system",
-      "eventTypes": [
-        "pass.issued",
-        "pass.scanned"
-      ],
+      "eventTypes": ["pass.issued", "pass.scanned"],
       "templateIds": null,
       "apiVersion": "2026-12-01",
       "status": "active",
@@ -113,10 +101,7 @@
       "url": "https://hooks.example.com/passbook",
       "urlMasked": "https://hooks.example.com/\u2026",
       "description": "Order system",
-      "eventTypes": [
-        "pass.issued",
-        "pass.scanned"
-      ],
+      "eventTypes": ["pass.issued", "pass.scanned"],
       "templateIds": null,
       "apiVersion": "2026-12-01",
       "status": "paused",

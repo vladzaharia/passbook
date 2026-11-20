@@ -13,9 +13,7 @@
           "origin": "uploaded",
           "status": "active",
           "activeVersion": "3",
-          "styles": [
-            "eventTicket"
-          ],
+          "styles": ["eventTicket"],
           "passCount": 128,
           "createdAt": 1764000000000,
           "updatedAt": 1764086400000
@@ -36,9 +34,7 @@
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
-      "styles": [
-        "eventTicket"
-      ],
+      "styles": ["eventTicket"],
       "passCount": 128,
       "createdAt": 1764000000000,
       "updatedAt": 1764086400000,
