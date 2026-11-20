@@ -66,7 +66,9 @@ export function finishCheckInResult(input: CheckInResult): ScanOutcome {
           : null,
     undoUntil: now + undoWindow * 60_000,
     access: input.access ?? null,
-    admit: admitOf(found, actor, input.access, checkIn),
+    ...(details.template
+      ? { admit: admitOf(found, actor, input.access, details.template.name, checkIn) }
+      : {}),
     ...(input.occupancy ? { occupancy: input.occupancy } : {}),
     display: history
       ? safeDisplay(ctx, actor, found.pass, 'ok', {

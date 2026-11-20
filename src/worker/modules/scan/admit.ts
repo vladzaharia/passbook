@@ -6,13 +6,14 @@ import type { Found } from './resolve.ts';
 
 /**
  * The verdict's pass type and rule (design-multi-pass-entry §2). The type is the plan label, else
- * the template name. The rule is the first that applies: the event, a visit count, the end of the
+ * the template name, as the outcome's redacted `template` shows it. The rule is the first that applies: the event, a visit count, the end of the
  * pass or the day, then the repeat mode. A type with none of these has no rule to show.
  */
 export function admitOf(
   found: Found,
   actor: ScanActor,
   access: ScanAccess | null | undefined,
+  name: string,
   state: CheckInState | undefined = found.admission?.state,
 ): ScanAdmit {
   const event = found.admission?.event;
@@ -34,7 +35,7 @@ export function admitOf(
             ? { kind: 'daily' }
             : null;
   return {
-    type: access?.plan.label ?? found.ref.name,
+    type: access?.plan.label ?? name,
     rule,
     timeZone: access?.timeZone ?? event?.timeZone ?? actor.timeZone,
   };

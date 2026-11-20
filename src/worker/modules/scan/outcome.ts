@@ -228,7 +228,9 @@ export function stopOutcome(
     event: eventLine(actor, stop.reason),
     cooldownRemainingMs: stop.cooldownRemainingMs ?? null,
     access: stop.access ?? null,
-    ...(stop.found ? { admit: admitOf(stop.found, actor, stop.access) } : {}),
+    ...(stop.found && details.template
+      ? { admit: admitOf(stop.found, actor, stop.access, details.template.name) }
+      : {}),
     ...(stop.occupancy ? { occupancy: stop.occupancy } : {}),
     flags: details.flags,
     ...(stop.channel ? { channel: stop.channel } : {}),
