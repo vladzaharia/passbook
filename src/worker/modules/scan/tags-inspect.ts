@@ -15,7 +15,9 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tagsEnabled } from '../nfc/policy.ts';
 import { tagByRef, tagView } from '../nfc/repo-tags.ts';
-import { readableUid, tagRef } from '../nfc/tag-ref.ts';
+import { recogniseTag } from '../nfc/systems/registry.ts';
+import { UID_SYSTEM } from '../nfc/systems/uid.ts';
+import { readableUid } from '../nfc/tag-ref.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import {
   type CredentialTombstoneSnapshot,
@@ -63,8 +65,10 @@ export function tagRights(actor: ScanActor): TagRights & { scannerId: string } {
 
 /** The UID a bind needs. */
 export function tagUid(read: TagRead): string {
-  const uid = readableUid(read);
-  if (uid) return uid;
+  const found = recogniseTag(read);
+  if (found?.system === 'uid') return found.uid;
+  if (found?.system === 'sun')
+    throw new ValidationError("Can't read this tag. Try another tag.", [], 'TAG_UNREADABLE');
   if (read.uidRandom || (read.uid && readableUid({ uid: read.uid }) === null))
     throw new ValidationError('This tag changes its ID. Try another tag.', [], 'TAG_UID_RANDOM');
   throw new ValidationError("Can't read this tag. Try another tag.", [], 'TAG_UNREADABLE');
@@ -89,16 +93,20 @@ export async function inspectTag(
   const { orgId, mode } = actor;
   const db = ctx.env.DB;
   if (!(await tagsEnabled(ctx, orgId))) return { ...BLANK, state: 'not_allowed' };
-  const uid = readableUid(read);
-  if (!uid) return { ...BLANK, state: 'invalid' };
+  const found = recogniseTag(read);
+  if (found?.system === 'sun') {
+    ctx.log.info('scan.tag_refused', { orgId, code: 'TAG_SUN_UNSUPPORTED' });
+    return { ...BLANK, state: 'invalid' };
+  }
+  if (found?.system !== 'uid') return { ...BLANK, state: 'invalid' };
   await ensureCredentialRefKeyset(db, ctx.env);
-  const { ref, hint } = await tagRef(ctx.env, orgId, mode, uid);
+  const { ref, hint } = await UID_SYSTEM.identify(ctx.env, orgId, mode, found.uid);
   const tag = await tagByRef(db, orgId, mode, ref);
   if (!tag) {
     await bumpTagCap(db, 'unknown', scannerId, ctx.clock.now());
-    return { ...BLANK, state: 'new', hint, assurance: 'basic' };
+    return { ...BLANK, state: 'new', hint, assurance: UID_SYSTEM.assurance };
   }
-  const base = { ...BLANK, hint: tag.hint, assurance: 'basic' as const };
+  const base = { ...BLANK, hint: tag.hint, assurance: UID_SYSTEM.assurance };
   if (tag.status === 'retired') return { ...base, state: 'retired' };
   const binding = (await tagView(db, orgId, mode, tag.id))?.binding ?? null;
   if (binding) {

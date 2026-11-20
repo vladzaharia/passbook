@@ -6,6 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
+import { UID_SYSTEM } from './systems/uid.ts';
 
 type Session = Extract<TenantPassWrite, { kind: 'session' }>;
 
@@ -110,7 +111,7 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
     g.upsert(
       'nfc_tags',
       ['id', 'tag_ref', 'system', 'hint', 'label', 'created_at'],
-      [p.tagId, p.newTag.ref, 'uid', p.newTag.hint, p.newTag.label, now],
+      [p.tagId, p.newTag.ref, UID_SYSTEM.id, p.newTag.hint, p.newTag.label, now],
       { doNothing: true },
     );
   if (p.clearsLost)

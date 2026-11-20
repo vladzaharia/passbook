@@ -15,7 +15,7 @@ import {
   type TagAuthority,
   tagGrant,
 } from './repo-tags-write.ts';
-import { canonicalUid, tagRef } from './tag-ref.ts';
+import { UID_SYSTEM } from './systems/uid.ts';
 
 export const TAGS_PER_ORG_MODE = 50_000;
 const ATTEMPTS = 3;
@@ -108,9 +108,8 @@ export async function bindTag(
   const { orgId, mode } = authority;
   if (!(await tagsEnabled(ctx, orgId)))
     throw conflict('Turn on tags in settings first.', 'TAGS_OFF');
-  const uid = canonicalUid(req.uid);
   await ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
-  const { ref, hint } = await tagRef(ctx.env, orgId, mode, uid);
+  const { ref, hint } = await UID_SYSTEM.identify(ctx.env, orgId, mode, req.uid);
   for (let attempt = 1; ; attempt++) {
     const pass = await passFacts(ctx.env.DB, req.passId);
     if (!pass || pass.orgId !== orgId || pass.mode !== mode || pass.deletedAt !== null)
