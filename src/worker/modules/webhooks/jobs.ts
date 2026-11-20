@@ -5,7 +5,7 @@ import { finalizeDisabled, runLane } from './deliver.ts';
 import { dispatchDue } from './dispatch.ts';
 import { daysOf, PURGE_LIMITS, purgeScope } from './purge-run.ts';
 import { overdueEndpoints } from './repo-delivery-read.ts';
-import { type PurgeKind, purgeSecrets } from './repo-retention.ts';
+import { type PurgeKind, purgeCaptures, purgeSecrets } from './repo-retention.ts';
 
 const DAY = 86_400_000;
 export const SWEEP_LANES = 100;
@@ -67,5 +67,6 @@ export async function dailyWebhooks(ctx: ServiceContext): Promise<void> {
     await targets.finish(visited);
   }
   const secrets = await purgeSecrets(ctx.env.DB, now - DAY);
-  ctx.log.info('webhooks.retention', { ...total, secrets });
+  const captures = await purgeCaptures(ctx.env.DB, now);
+  ctx.log.info('webhooks.retention', { ...total, secrets, captures });
 }

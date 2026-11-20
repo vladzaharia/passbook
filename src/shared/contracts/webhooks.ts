@@ -192,6 +192,8 @@ export const WebhookEndpointSchema = z.object({
   templateIds: z.array(IdSchema).nullable(),
   apiVersion: WebhookApiVersionSchema,
   status: WebhookEndpointStatusSchema,
+  /** `capture` stores the signed request instead of sending it (developer orgs, Test). */
+  target: z.enum(['url', 'capture']),
   failingSince: TimestampSchema.nullable(),
   disabledAt: TimestampSchema.nullable(),
   lastSuccessAt: TimestampSchema.nullable(),
@@ -247,6 +249,8 @@ export const WebhookTestResultSchema = z.object({
   status: z.number().int().nullable(),
   durationMs: z.number().int().nonnegative(),
   errorCode: z.string().nullable(),
+  /** The stored capture, for a capture endpoint. */
+  captureId: IdSchema.nullable(),
 });
 
 export const WebhookDeliveryStateSchema = z.enum(['pending', 'delivered', 'failed', 'cancelled']);

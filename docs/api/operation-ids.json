@@ -467,12 +467,17 @@
   "webhooks.deleteWebhookEndpointsById",
   "webhooks.getWebhookEndpoints",
   "webhooks.getWebhookEndpointsById",
+  "webhooks.getWebhookEndpointsByIdCaptures",
+  "webhooks.getWebhookEndpointsByIdCapturesByCaptureId",
   "webhooks.getWebhookEndpointsByIdDeliveries",
   "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
   "webhooks.patchWebhookEndpointsById",
   "webhooks.postWebhookEndpoints",
+  "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay",
+  "webhooks.postWebhookEndpointsByIdCapturesSecret",
   "webhooks.postWebhookEndpointsByIdDeliveriesByEventIdReplay",
   "webhooks.postWebhookEndpointsByIdReplay",
   "webhooks.postWebhookEndpointsByIdSecret",
-  "webhooks.postWebhookEndpointsByIdTest"
+  "webhooks.postWebhookEndpointsByIdTest",
+  "webhooks.postWebhookEndpointsCapture"
 ]

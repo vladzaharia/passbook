@@ -3524,6 +3524,13 @@
               "disabled"
             ]
           },
+          "target": {
+            "type": "string",
+            "enum": [
+              "url",
+              "capture"
+            ]
+          },
           "failingSince": {
             "type": [
               "integer",
@@ -3588,6 +3595,7 @@
           "templateIds",
           "apiVersion",
           "status",
+          "target",
           "failingSince",
           "disabledAt",
           "lastSuccessAt",
@@ -3634,13 +3642,154 @@
               "string",
               "null"
             ]
+          },
+          "captureId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
           }
         },
         "required": [
           "ok",
           "status",
           "durationMs",
-          "errorCode"
+          "errorCode",
+          "captureId"
+        ]
+      },
+      "CaptureEndpointCreated": {
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "$ref": "#/components/schemas/WebhookEndpoint"
+          },
+          "secret": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "endpoint",
+          "secret"
+        ]
+      },
+      "WebhookCapturePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookCapture"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "WebhookCapture": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "endpointId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "eventId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "pass.issued",
+              "pass.updated",
+              "pass.voided",
+              "pass.unvoided",
+              "pass.removed",
+              "pass.restored",
+              "pass.installed",
+              "pass.uninstalled",
+              "pass.scanned",
+              "pass.scan_refused",
+              "pass.scan_undone",
+              "pass.channels_changed",
+              "pass.printed",
+              "pass.print_voided",
+              "push.failed",
+              "email.failed",
+              "webhook.test"
+            ]
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "event",
+              "replay",
+              "test"
+            ]
+          },
+          "status": {
+            "type": "integer"
+          },
+          "durationMs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "endpointId",
+          "eventId",
+          "type",
+          "trigger",
+          "status",
+          "durationMs",
+          "headers",
+          "body",
+          "createdAt"
+        ]
+      },
+      "CaptureSecret": {
+        "type": "object",
+        "properties": {
+          "secret": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "secret"
         ]
       },
       "WebhookDeliveryPage": {
@@ -18746,6 +18895,70 @@
               }
             ],
             "default": 24
+          }
+        }
+      },
+      "WebhookEndpointsSendTestParams": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "pass.issued",
+              "pass.updated",
+              "pass.voided",
+              "pass.unvoided",
+              "pass.removed",
+              "pass.restored",
+              "pass.installed",
+              "pass.uninstalled",
+              "pass.scanned",
+              "pass.scan_refused",
+              "pass.scan_undone",
+              "pass.channels_changed",
+              "pass.printed",
+              "pass.print_voided",
+              "push.failed",
+              "email.failed",
+              "webhook.test"
+            ],
+            "default": "webhook.test"
+          }
+        }
+      },
+      "WebhookEndpointsEnsureCaptureParams": {
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "eventTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "pass.issued",
+                "pass.updated",
+                "pass.voided",
+                "pass.unvoided",
+                "pass.removed",
+                "pass.restored",
+                "pass.installed",
+                "pass.uninstalled",
+                "pass.scanned",
+                "pass.scan_refused",
+                "pass.scan_undone",
+                "pass.channels_changed",
+                "pass.printed",
+                "pass.print_voided",
+                "push.failed",
+                "email.failed"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 32
           }
         }
       },
@@ -74197,6 +74410,7 @@
                       "templateIds": null,
                       "apiVersion": "2026-12-01",
                       "status": "active",
+                      "target": "url",
                       "failingSince": null,
                       "disabledAt": null,
                       "lastSuccessAt": null,
@@ -74240,6 +74454,10 @@
           }
         ],
         "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -74247,14 +74465,18 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
           "RATE_LIMITED",
           "REPLAY_NOT_QUEUED",
           "REPLAY_TOO_LARGE",
           "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
           "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
         ]
@@ -74318,6 +74540,7 @@
                     "templateIds": null,
                     "apiVersion": "2026-12-01",
                     "status": "active",
+                    "target": "url",
                     "failingSince": null,
                     "disabledAt": null,
                     "lastSuccessAt": null,
@@ -74360,6 +74583,10 @@
           }
         ],
         "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -74367,14 +74594,18 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
           "RATE_LIMITED",
           "REPLAY_NOT_QUEUED",
           "REPLAY_TOO_LARGE",
           "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
           "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
         ]
@@ -74420,6 +74651,7 @@
                   "templateIds": null,
                   "apiVersion": "2026-12-01",
                   "status": "active",
+                  "target": "url",
                   "failingSince": null,
                   "disabledAt": null,
                   "lastSuccessAt": null,
@@ -74460,6 +74692,10 @@
           }
         ],
         "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -74467,15 +74703,19 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
           "NOT_FOUND",
           "RATE_LIMITED",
           "REPLAY_NOT_QUEUED",
           "REPLAY_TOO_LARGE",
           "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
           "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
         ]
@@ -74532,6 +74772,7 @@
                   "templateIds": null,
                   "apiVersion": "2026-12-01",
                   "status": "paused",
+                  "target": "url",
                   "failingSince": null,
                   "disabledAt": null,
                   "lastSuccessAt": null,
@@ -74572,6 +74813,10 @@
           }
         ],
         "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -74579,15 +74824,19 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
           "NOT_FOUND",
           "RATE_LIMITED",
           "REPLAY_NOT_QUEUED",
           "REPLAY_TOO_LARGE",
           "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
           "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
         ]
@@ -74662,6 +74911,10 @@
           }
         ],
         "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -74669,15 +74922,19 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
           "NOT_FOUND",
           "RATE_LIMITED",
           "REPLAY_NOT_QUEUED",
           "REPLAY_TOO_LARGE",
           "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
           "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
         ]
@@ -74764,6 +75021,10 @@
           }
         ],
         "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -74771,15 +75032,19 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
           "NOT_FOUND",
           "RATE_LIMITED",
           "REPLAY_NOT_QUEUED",
           "REPLAY_TOO_LARGE",
           "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
           "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
         ]
@@ -74787,7 +75052,617 @@
     },
     "/api/v1/webhook-endpoints/{id}/test": {
       "post": {
-        "summary": "Send a test event to this endpoint",
+        "summary": "Send a test event to this endpoint (any type; a sample for all but webhook.test)",
+        "tags": [
+          "webhooks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookEndpointsSendTestParams"
+              },
+              "example": {
+                "type": "pass.updated"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookTestResult"
+                },
+                "example": {
+                  "ok": true,
+                  "status": 200,
+                  "durationMs": 12,
+                  "errorCode": null,
+                  "captureId": "0193a1b2-7c00-7000-8000-0000000000d1"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "webhooks.postWebhookEndpointsByIdTest",
+        "x-sdk": {
+          "resource": "webhookEndpoints",
+          "method": "sendTest"
+        },
+        "description": "Sends one signed event to the endpoint and reports the result. `type` is any event type and defaults to `webhook.test`; every other type carries sample data and goes to Test endpoints only. A capture endpoint stores the request and returns its `captureId`.",
+        "security": [
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
+          "DELIVERY_PENDING",
+          "EVENT_NOT_FOUND",
+          "FORBIDDEN",
+          "GRANT_BAD_PURPOSE",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "REPLAY_NOT_QUEUED",
+          "REPLAY_TOO_LARGE",
+          "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
+          "UNAUTHENTICATED",
+          "UNKNOWN_TEMPLATE",
+          "UNSAFE_URL",
+          "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
+          "WEBHOOK_ENDPOINT_LIMIT",
+          "WEBHOOK_ENDPOINT_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/webhook-endpoints/capture": {
+      "post": {
+        "summary": "Get the sandbox's capture endpoint, making it if it has none (secret shown once)",
+        "tags": [
+          "webhooks"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookEndpointsEnsureCaptureParams"
+              },
+              "example": {
+                "eventTypes": [
+                  "pass.issued",
+                  "pass.updated"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaptureEndpointCreated"
+                },
+                "example": {
+                  "endpoint": {
+                    "id": "0193a1b2-7c00-7000-8000-0000000000f2",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "mode": "test",
+                    "url": "https://capture.invalid/",
+                    "urlMasked": "capture.invalid",
+                    "description": "Test capture endpoint",
+                    "eventTypes": [
+                      "pass.issued",
+                      "pass.updated",
+                      "pass.scanned"
+                    ],
+                    "templateIds": null,
+                    "apiVersion": "2026-12-01",
+                    "status": "active",
+                    "target": "capture",
+                    "failingSince": null,
+                    "disabledAt": null,
+                    "lastSuccessAt": null,
+                    "lastFailureAt": null,
+                    "lastStatus": null,
+                    "secretCreatedAt": 1764000000000,
+                    "previousSecretExpiresAt": null,
+                    "createdAt": 1764000000000
+                  },
+                  "secret": "whsec_example_1111111111111111111111111111"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "webhooks.postWebhookEndpointsCapture",
+        "x-sdk": {
+          "resource": "webhookEndpoints",
+          "method": "ensureCapture"
+        },
+        "description": "Returns the capture endpoint of your sandbox, making it if there is none. A capture endpoint stores the signed requests PassBook would send, so you can read and verify them; it sends nothing and takes nothing from outside. Sandbox orgs in Test mode only. The signing `secret` is shown once, on creation; later calls return `secret: null`.",
+        "security": [
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
+          "DELIVERY_PENDING",
+          "EVENT_NOT_FOUND",
+          "FORBIDDEN",
+          "GRANT_BAD_PURPOSE",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
+          "RATE_LIMITED",
+          "REPLAY_NOT_QUEUED",
+          "REPLAY_TOO_LARGE",
+          "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
+          "UNAUTHENTICATED",
+          "UNKNOWN_TEMPLATE",
+          "UNSAFE_URL",
+          "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
+          "WEBHOOK_ENDPOINT_LIMIT",
+          "WEBHOOK_ENDPOINT_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/webhook-endpoints/{id}/captures": {
+      "get": {
+        "summary": "Requests a capture endpoint stored, newest first",
+        "tags": [
+          "webhooks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{1,15}\\.[A-Za-z0-9-]{1,64}$"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pass.issued",
+                "pass.updated",
+                "pass.voided",
+                "pass.unvoided",
+                "pass.removed",
+                "pass.restored",
+                "pass.installed",
+                "pass.uninstalled",
+                "pass.scanned",
+                "pass.scan_refused",
+                "pass.scan_undone",
+                "pass.channels_changed",
+                "pass.printed",
+                "pass.print_voided",
+                "push.failed",
+                "email.failed",
+                "webhook.test"
+              ]
+            },
+            "required": false,
+            "name": "type",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCapturePage"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+                      "endpointId": "0193a1b2-7c00-7000-8000-0000000000f2",
+                      "eventId": "0193a1b2-7c00-7000-8000-0000000000e2",
+                      "type": "pass.updated",
+                      "trigger": "test",
+                      "status": 200,
+                      "durationMs": 12,
+                      "headers": {
+                        "content-type": "application/json",
+                        "user-agent": "PassBook-Webhooks/1.0",
+                        "x-passbook-event-id": "0193a1b2-7c00-7000-8000-0000000000e2",
+                        "x-passbook-event-type": "pass.updated",
+                        "x-passbook-timestamp": "1764000000",
+                        "x-passbook-signature": "v1=5f2c0e9a1b7d4c3e8a6f0d2b9c4e1a7f3d5b8c0e2a4f6d8b1c3e5a7f9b0d2c4e"
+                      },
+                      "body": "{\"id\":\"0193a1b2-7c00-7000-8000-0000000000e2\",\"type\":\"pass.updated\"}",
+                      "createdAt": 1764000000000
+                    }
+                  ],
+                  "nextCursor": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "webhooks.getWebhookEndpointsByIdCaptures",
+        "x-sdk": {
+          "resource": "webhookEndpoints.captures",
+          "method": "list"
+        },
+        "description": "Requests a capture endpoint stored, newest first. Keeps 200 per endpoint for 7 days. Filter by `type`.",
+        "security": [
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
+          "DELIVERY_PENDING",
+          "EVENT_NOT_FOUND",
+          "FORBIDDEN",
+          "GRANT_BAD_PURPOSE",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "REPLAY_NOT_QUEUED",
+          "REPLAY_TOO_LARGE",
+          "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
+          "UNAUTHENTICATED",
+          "UNKNOWN_TEMPLATE",
+          "UNSAFE_URL",
+          "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
+          "WEBHOOK_ENDPOINT_LIMIT",
+          "WEBHOOK_ENDPOINT_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/webhook-endpoints/{id}/captures/{captureId}": {
+      "get": {
+        "summary": "One stored request: headers and the raw body",
+        "tags": [
+          "webhooks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "captureId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCapture"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+                  "endpointId": "0193a1b2-7c00-7000-8000-0000000000f2",
+                  "eventId": "0193a1b2-7c00-7000-8000-0000000000e2",
+                  "type": "pass.updated",
+                  "trigger": "test",
+                  "status": 200,
+                  "durationMs": 12,
+                  "headers": {
+                    "content-type": "application/json",
+                    "user-agent": "PassBook-Webhooks/1.0",
+                    "x-passbook-event-id": "0193a1b2-7c00-7000-8000-0000000000e2",
+                    "x-passbook-event-type": "pass.updated",
+                    "x-passbook-timestamp": "1764000000",
+                    "x-passbook-signature": "v1=5f2c0e9a1b7d4c3e8a6f0d2b9c4e1a7f3d5b8c0e2a4f6d8b1c3e5a7f9b0d2c4e"
+                  },
+                  "body": "{\"id\":\"0193a1b2-7c00-7000-8000-0000000000e2\",\"type\":\"pass.updated\"}",
+                  "createdAt": 1764000000000
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "webhooks.getWebhookEndpointsByIdCapturesByCaptureId",
+        "x-sdk": {
+          "resource": "webhookEndpoints.captures",
+          "method": "retrieve"
+        },
+        "description": "One stored request: the exact headers and raw body. Verify the signature over these bytes.",
+        "security": [
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
+          "DELIVERY_PENDING",
+          "EVENT_NOT_FOUND",
+          "FORBIDDEN",
+          "GRANT_BAD_PURPOSE",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "REPLAY_NOT_QUEUED",
+          "REPLAY_TOO_LARGE",
+          "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
+          "UNAUTHENTICATED",
+          "UNKNOWN_TEMPLATE",
+          "UNSAFE_URL",
+          "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
+          "WEBHOOK_ENDPOINT_LIMIT",
+          "WEBHOOK_ENDPOINT_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/webhook-endpoints/{id}/captures/{captureId}/replay": {
+      "post": {
+        "summary": "Sign a stored request again and store it as a new capture",
+        "tags": [
+          "webhooks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "captureId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCapture"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+                  "endpointId": "0193a1b2-7c00-7000-8000-0000000000f2",
+                  "eventId": "0193a1b2-7c00-7000-8000-0000000000e2",
+                  "type": "pass.updated",
+                  "trigger": "test",
+                  "status": 200,
+                  "durationMs": 12,
+                  "headers": {
+                    "content-type": "application/json",
+                    "user-agent": "PassBook-Webhooks/1.0",
+                    "x-passbook-event-id": "0193a1b2-7c00-7000-8000-0000000000e2",
+                    "x-passbook-event-type": "pass.updated",
+                    "x-passbook-timestamp": "1764000000",
+                    "x-passbook-signature": "v1=5f2c0e9a1b7d4c3e8a6f0d2b9c4e1a7f3d5b8c0e2a4f6d8b1c3e5a7f9b0d2c4e"
+                  },
+                  "body": "{\"id\":\"0193a1b2-7c00-7000-8000-0000000000e2\",\"type\":\"pass.updated\"}",
+                  "createdAt": 1764000000000
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay",
+        "x-sdk": {
+          "resource": "webhookEndpoints.captures",
+          "method": "replay"
+        },
+        "description": "Signs a stored request again with a fresh timestamp and stores it as a new capture with the same event id.",
+        "security": [
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
+          "DELIVERY_PENDING",
+          "EVENT_NOT_FOUND",
+          "FORBIDDEN",
+          "GRANT_BAD_PURPOSE",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "REPLAY_NOT_QUEUED",
+          "REPLAY_TOO_LARGE",
+          "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
+          "UNAUTHENTICATED",
+          "UNKNOWN_TEMPLATE",
+          "UNSAFE_URL",
+          "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
+          "WEBHOOK_ENDPOINT_LIMIT",
+          "WEBHOOK_ENDPOINT_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/webhook-endpoints/{id}/captures/secret": {
+      "post": {
+        "summary": "Read a capture endpoint's current signing secret",
         "tags": [
           "webhooks"
         ],
@@ -74809,13 +75684,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WebhookTestResult"
+                  "$ref": "#/components/schemas/CaptureSecret"
                 },
                 "example": {
-                  "ok": true,
-                  "status": 200,
-                  "durationMs": 84,
-                  "errorCode": null
+                  "secret": "whsec_example_1111111111111111111111111111"
                 }
               }
             }
@@ -74831,12 +75703,12 @@
             }
           }
         },
-        "operationId": "webhooks.postWebhookEndpointsByIdTest",
+        "operationId": "webhooks.postWebhookEndpointsByIdCapturesSecret",
         "x-sdk": {
-          "resource": "webhookEndpoints",
-          "method": "sendTest"
+          "resource": "webhookEndpoints.captures",
+          "method": "revealSecret"
         },
-        "description": "Sends a `webhook.test` event to the endpoint and reports the result.",
+        "description": "Returns the current signing secret of a capture endpoint, so you can verify its captures. It protects nothing outside your sandbox.",
         "security": [
           {
             "apiKey": [
@@ -74848,6 +75720,10 @@
           }
         ],
         "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -74855,15 +75731,19 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
           "NOT_FOUND",
           "RATE_LIMITED",
           "REPLAY_NOT_QUEUED",
           "REPLAY_TOO_LARGE",
           "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
           "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
         ]
@@ -75006,6 +75886,10 @@
           }
         ],
         "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -75013,15 +75897,19 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
           "NOT_FOUND",
           "RATE_LIMITED",
           "REPLAY_NOT_QUEUED",
           "REPLAY_TOO_LARGE",
           "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
           "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
         ]
@@ -75135,6 +76023,10 @@
           }
         ],
         "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -75142,15 +76034,19 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
           "NOT_FOUND",
           "RATE_LIMITED",
           "REPLAY_NOT_QUEUED",
           "REPLAY_TOO_LARGE",
           "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
           "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
         ]
@@ -75235,6 +76131,10 @@
           }
         ],
         "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -75242,15 +76142,19 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
           "NOT_FOUND",
           "RATE_LIMITED",
           "REPLAY_NOT_QUEUED",
           "REPLAY_TOO_LARGE",
           "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
           "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
         ]
@@ -75341,6 +76245,10 @@
           }
         ],
         "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -75348,15 +76256,19 @@
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
           "NOT_FOUND",
           "RATE_LIMITED",
           "REPLAY_NOT_QUEUED",
           "REPLAY_TOO_LARGE",
           "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
           "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
         ]

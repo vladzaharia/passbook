@@ -130,6 +130,8 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   wallet_samsung_fetch_refs: WALLET,
   wallet_samsung_tombstones: WALLET,
   webhook_attempts: 'delivery log',
+  webhook_capture_hours: BOOKKEEPING,
+  webhook_captures: 'Test mode webhook tester captures, not org data',
   webhook_deliveries: 'delivery log',
   webhook_endpoint_secrets: SEALED,
   webhook_events: BOOKKEEPING,

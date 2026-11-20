@@ -287,6 +287,30 @@
     "fix": "List emails with GET /api/v1/test-inbox and use an id from the result.",
     "retryable": false
   },
+  "CAPTURE_DEVELOPER_ONLY": {
+    "title": "Capture needs a sandbox",
+    "when": "You asked for a capture endpoint outside a developer sandbox, or in Live mode.",
+    "fix": "Make your sandbox in the developer portal and call this in Test mode.",
+    "retryable": false
+  },
+  "CAPTURE_NOT_STORED": {
+    "title": "Capture was not stored",
+    "when": "The capture was written but could not be read back.",
+    "fix": "Send the request again.",
+    "retryable": true
+  },
+  "CAPTURE_TOO_LARGE": {
+    "title": "Capture too large",
+    "when": "The request body is over 256 KiB, the most a capture keeps.",
+    "fix": "Send a smaller body.",
+    "retryable": false
+  },
+  "CAPTURE_URL_FIXED": {
+    "title": "Capture endpoint has no URL",
+    "when": "You tried to set the URL of a capture endpoint, which stores requests and has none.",
+    "fix": "Leave the url out, or create a URL endpoint instead.",
+    "retryable": false
+  },
   "CONNECTION_CONFLICT": {
     "title": "Connection changed",
     "when": "Another request changed the connection while yours was running.",
@@ -893,6 +917,12 @@
     "fix": "Sign in as Desk staff or a manager with the staff PIN.",
     "retryable": false
   },
+  "NOT_A_CAPTURE_ENDPOINT": {
+    "title": "Not a capture endpoint",
+    "when": "You read captures of an endpoint that sends to a URL.",
+    "fix": "Use a capture endpoint: POST /api/v1/webhook-endpoints/capture returns your sandbox's.",
+    "retryable": false
+  },
   "NOT_A_ZIP": {
     "title": "Not a zip file",
     "when": "The uploaded file is not a zip archive.",
@@ -1222,6 +1252,12 @@
     "when": "Someone changed the rule after you loaded it.",
     "fix": "Fetch it with GET /api/v1/message-rules/{id} and send your change again.",
     "retryable": true
+  },
+  "SAMPLE_EVENT_LIVE": {
+    "title": "Sample events are Test only",
+    "when": "You sent a sample event of a type other than webhook.test to a Live endpoint.",
+    "fix": "Send it to a Test endpoint, or send webhook.test.",
+    "retryable": false
   },
   "SAMPLE_TEST_ONLY": {
     "title": "Sample passes are test-only",
@@ -1731,6 +1767,12 @@
     "title": "Screen view required",
     "when": "A live connection needs a device set to a screen view.",
     "fix": "Choose a screen view for the device in Scanning.",
+    "retryable": false
+  },
+  "SECRET_UNAVAILABLE": {
+    "title": "Signing secret unavailable",
+    "when": "The endpoint has no signing secret that can be read.",
+    "fix": "Rotate the secret with POST /api/v1/webhook-endpoints/{id}/secret, then send the request again.",
     "retryable": false
   },
   "SERIAL_TAKEN": {
@@ -2559,6 +2601,12 @@
     "title": "Webhook work finished",
     "when": "The webhook item has already finished.",
     "fix": "Do nothing; check its status with GET /api/v1/connections/{id}/webhook-failures.",
+    "retryable": false
+  },
+  "WEBHOOK_CAPTURE_NOT_FOUND": {
+    "title": "Capture not found",
+    "when": "No capture with this id exists on this endpoint; it may be older than 7 days or past the last 200.",
+    "fix": "List the endpoint's captures with GET /api/v1/webhook-endpoints/{id}/captures.",
     "retryable": false
   },
   "WEBHOOK_CONTEXT_CONFLICT": {

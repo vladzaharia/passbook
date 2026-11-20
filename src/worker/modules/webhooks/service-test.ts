@@ -1,16 +1,18 @@
+import type { WebhookEventType } from '../../../shared/contracts/webhooks.ts';
 import type { Actor } from '../../platform/context.ts';
-import { type KekRing, loadKekRing } from '../../platform/crypto.ts';
-import { AppError, RateLimitedError } from '../../platform/errors.ts';
+import { loadKekRing } from '../../platform/crypto.ts';
+import { AppError, ConflictError, RateLimitedError } from '../../platform/errors.ts';
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import { createSafeFetch, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { WebhookAccess } from './access.ts';
+import { openActiveSecrets, storeCapture } from './capture.ts';
 import { SEND_TIMEOUT_MS } from './deliver.ts';
-import { bodyOf, testEnvelope } from './payload.ts';
+import { sendAllowed } from './deliver-gate.ts';
+import { bodyOf, buildEnvelope, testEnvelope } from './payload.ts';
 import { insertTestAttempt } from './repo-api.ts';
-import { activeSecrets } from './repo-secrets.ts';
 import { memoResolver } from './resolver-memo.ts';
-import { openSecret } from './secrets.ts';
+import { sampleRow } from './sample-events.ts';
 import { commitEndpoint, requireEndpoint, webhookGrant } from './service.ts';
 import { requestHeaders } from './sign.ts';
 
@@ -19,76 +21,72 @@ export interface TestResult {
   status: number | null;
   durationMs: number;
   errorCode: string | null;
-}
-
-async function secretsOf(
-  ctx: ServiceContext,
-  ring: KekRing,
-  access: WebhookAccess,
-  endpoint: { id: string },
-) {
-  const { orgId, mode } = access.authority;
-  const rows = await activeSecrets(ctx.env.DB, { orgId, mode }, endpoint.id, ctx.clock.now());
-  const out: string[] = [];
-  for (const row of rows) {
-    try {
-      out.push(
-        await openSecret(ring, row.envelope, {
-          secretId: row.id,
-          orgId,
-          endpointId: endpoint.id,
-          mode,
-        }),
-      );
-    } catch {
-      ctx.log.error('webhooks.secret_unavailable', {
-        orgId,
-        endpointId: endpoint.id,
-        code: 'SECRET_UNAVAILABLE',
-      });
-    }
-  }
-  return out;
+  /** The stored capture, for a capture endpoint. */
+  captureId: string | null;
 }
 
 /**
- * "Send test": one signed `webhook.test` POST to this endpoint only, in the endpoint's own mode. It
- * describes no pass, writes no feed row or delivery, and leaves the endpoint's health counters alone;
- * the attempt is logged (event_seq NULL, kept 7 days). Ten a minute per endpoint.
+ * "Send test": one signed event to this endpoint only, in the endpoint's own mode: `webhook.test`, or a
+ * sample of any other type (Test endpoints only, since a Live receiver would take it for a real event). It
+ * describes no real pass, writes no feed row or delivery, and leaves the endpoint's health counters alone;
+ * the attempt is logged (event_seq NULL, kept 7 days). A capture endpoint stores the signed request and
+ * sends nothing. Ten a minute per tenant.
  */
 export async function sendTest(
   ctx: ServiceContext,
   _actor: Actor,
   access: WebhookAccess,
   endpointId: string,
+  type: WebhookEventType = 'webhook.test',
 ): Promise<TestResult> {
   const endpoint = await requireEndpoint(ctx, access, endpointId);
+  if (type !== 'webhook.test' && endpoint.mode !== 'test')
+    throw new ConflictError('Sample events go to Test endpoints only.', 'SAMPLE_EVENT_LIVE');
   // Per tenant, so recreating endpoints does not reset it; and the destination host's global budget is charged.
   const { orgId, mode } = access.authority;
   if (!(await checkRateLimit(ctx.env, 'RL_WEBHOOK_OUT', `test:${orgId}:${mode}`)))
     throw new RateLimitedError();
-  // The same two budgets a delivery spends: the org's share of the host first, then the host's.
-  const host = new URL(endpoint.url).host.toLowerCase();
-  if (
-    !(await checkRateLimit(ctx.env, 'RL_WEBHOOK_HOST_ORG', `host:${host}:${orgId}`)) ||
-    !(await checkRateLimit(ctx.env, 'RL_WEBHOOK_HOST', `host:${host}`))
-  )
-    throw new RateLimitedError();
-  const secrets = await secretsOf(ctx, await loadKekRing(ctx.env), access, endpoint);
+  // The same budgets a delivery spends.
+  if (!(await sendAllowed(ctx, endpoint))) throw new RateLimitedError();
+  const secrets = await openActiveSecrets(ctx, await loadKekRing(ctx.env), endpoint);
   const startedAt = ctx.clock.now();
-  const event = testEnvelope({
-    id: ctx.ids.id(),
-    orgId: endpoint.orgId,
-    mode: endpoint.mode,
-    now: startedAt,
-    apiVersion: endpoint.apiVersion,
-  });
-  const body = bodyOf(event);
+  const id = ctx.ids.id();
+  const event =
+    type === 'webhook.test'
+      ? testEnvelope({
+          id,
+          orgId: endpoint.orgId,
+          mode: endpoint.mode,
+          now: startedAt,
+          apiVersion: endpoint.apiVersion,
+        })
+      : buildEnvelope(
+          sampleRow(type, {
+            eventId: id,
+            orgId: endpoint.orgId,
+            mode: endpoint.mode,
+            now: startedAt,
+          }),
+          endpoint.apiVersion,
+        );
   let status: number | null = null;
   let errorCode: string | null = null;
+  let captureId: string | null = null;
   if (secrets.length === 0) {
     errorCode = 'SECRET_UNAVAILABLE';
+  } else if (endpoint.target === 'capture') {
+    const input = {
+      eventId: event.id,
+      eventType: event.type,
+      body: bodyOf(event),
+      trigger: 'test',
+      secrets,
+      now: startedAt,
+    } as const;
+    captureId = (await storeCapture(ctx, endpoint, input)).id;
+    status = 200;
   } else {
+    const body = bodyOf(event);
     const send = createSafeFetch({
       platformHosts: platformHostsOf(ctx.env),
       timeoutMs: SEND_TIMEOUT_MS,
@@ -124,5 +122,11 @@ export async function sendTest(
     at: startedAt,
   });
   await commitEndpoint(g);
-  return { ok: status !== null && status >= 200 && status < 300, status, durationMs, errorCode };
+  return {
+    ok: status !== null && status >= 200 && status < 300,
+    status,
+    durationMs,
+    errorCode,
+    captureId,
+  };
 }

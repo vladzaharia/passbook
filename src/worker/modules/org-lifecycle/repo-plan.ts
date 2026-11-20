@@ -36,6 +36,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('scanning_sessions'),
   inOrg('scan_zones'),
   inOrg('webhook_endpoints'),
+  inOrg('webhook_capture_hours'),
   inOrg('api_keys'),
   inOrg('outbox'),
   inOrg('captured_emails'),

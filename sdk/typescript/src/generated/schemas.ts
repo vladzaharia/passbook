@@ -376,6 +376,15 @@ export type BundlesSendEmailParams = {
   to?: string;
 };
 
+export type CaptureEndpointCreated = {
+  endpoint: WebhookEndpoint;
+  secret: string | null;
+};
+
+export type CaptureSecret = {
+  secret: string;
+};
+
 export type CapturedEmail = {
   id: string;
   orgId: string;
@@ -3748,6 +3757,24 @@ export type WalletProviderAccountsVerifyParams = {
   candidateHash: string;
 };
 
+export type WebhookCapture = {
+  id: string;
+  endpointId: string;
+  eventId: string;
+  type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+  trigger: "event" | "replay" | "test";
+  status: number;
+  durationMs: number;
+  headers: Record<string, string>;
+  body: string;
+  createdAt: number;
+};
+
+export type WebhookCapturePage = {
+  items: Array<WebhookCapture>;
+  nextCursor: string | null;
+};
+
 export type WebhookDeliveryDetail = {
   eventId: string;
   type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
@@ -3801,6 +3828,7 @@ export type WebhookEndpoint = {
   templateIds: Array<string> | null;
   apiVersion: "2026-12-01";
   status: "active" | "paused" | "disabled";
+  target: "url" | "capture";
   failingSince: number | null;
   disabledAt: number | null;
   lastSuccessAt: number | null;
@@ -3837,8 +3865,17 @@ export type WebhookEndpointsDeliveriesBulkReplayParams = {
   dryRun?: boolean;
 };
 
+export type WebhookEndpointsEnsureCaptureParams = {
+  orgId?: string;
+  eventTypes?: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
+};
+
 export type WebhookEndpointsRotateSecretParams = {
   overlapHours?: 0 | 24 | 72;
+};
+
+export type WebhookEndpointsSendTestParams = {
+  type?: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
 };
 
 export type WebhookEndpointsUpdateParams = {
@@ -3874,4 +3911,5 @@ export type WebhookTestResult = {
   status: number | null;
   durationMs: number;
   errorCode: string | null;
+  captureId: string | null;
 };

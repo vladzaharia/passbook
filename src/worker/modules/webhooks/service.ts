@@ -120,6 +120,7 @@ export function toDto(e: EndpointRow, canManage: boolean): WebhookEndpointDto {
     templateIds: e.templateIds,
     apiVersion: e.apiVersion,
     status: e.status,
+    target: e.target,
     failingSince: e.failingSince,
     disabledAt: e.disabledAt,
     lastSuccessAt: e.lastSuccessAt,
@@ -177,21 +178,22 @@ export async function get(ctx: ServiceContext, access: WebhookAccess, id: string
   return toDto(await requireEndpoint(ctx, access, id), access.canManage);
 }
 
-/** `dryRun` validates everything a create would and writes nothing. */
-export async function create(
+export interface NewEndpointInput {
+  url: string;
+  target: 'url' | 'capture';
+  description: string;
+  eventTypes: readonly string[];
+  templateIds: readonly string[] | null;
+}
+
+/** Writes the endpoint, its first secret and the audit row in one grant; the secret is shown once. */
+export async function makeEndpoint(
   ctx: ServiceContext,
   actor: Actor,
   access: WebhookAccess,
-  input: CreateInput,
-  dryRun: boolean,
-): Promise<{ endpoint: WebhookEndpointDto; secret: string } | null> {
+  input: NewEndpointInput,
+): Promise<{ endpoint: WebhookEndpointDto; secret: string }> {
   const { orgId, mode } = access.authority;
-  const url = await checkedUrl(ctx, input.url);
-  const templateIds = await checkTemplates(ctx, orgId, input.templateIds);
-  if (dryRun) return null;
-  // Each create costs DoH lookups and a secret: per org, counted from the audit log so a delete does not reset it.
-  if ((await countRecentCreates(ctx.env.DB, orgId, ctx.clock.now() - HOUR)) >= MAX_CREATES_PER_HOUR)
-    throw new RateLimitedError(3600, 'Too many endpoints created. Try again later.');
   const endpointId = ctx.ids.id();
   const secretId = ctx.ids.id();
   const secret = newEndpointSecret(ctx);
@@ -205,23 +207,49 @@ export async function create(
   const g = webhookGrant(ctx, access, 'endpoint.create', [endpointSlot()]);
   insertEndpoint(g, {
     id: endpointId,
-    url,
-    description: input.description ?? '',
+    url: input.url,
+    target: input.target,
+    description: input.description,
     eventTypes: input.eventTypes,
-    templateIds,
+    templateIds: input.templateIds,
     apiVersion: WEBHOOK_API_VERSIONS[WEBHOOK_API_VERSIONS.length - 1] as EndpointRow['apiVersion'],
     createdBy: actor.type === 'user' ? actor.id : null,
     now,
   });
   insertSecret(g, { id: secretId, endpointId, envelope, now });
   auditEndpoint(ctx, g, actor, access, 'webhook.endpoint.create', endpointId, {
-    host: hostOf(url),
+    host: hostOf(input.url),
+    target: input.target,
     eventTypes: input.eventTypes,
   });
   await commitEndpoint(g);
   const endpoint = await requireEndpoint(ctx, access, endpointId);
-  ctx.log.info('webhooks.endpoint_created', { orgId, endpointId, host: hostOf(url) });
+  ctx.log.info('webhooks.endpoint_created', { orgId, endpointId, host: hostOf(input.url) });
   return { endpoint: toDto(endpoint, true), secret };
+}
+
+/** `dryRun` validates everything a create would and writes nothing. */
+export async function create(
+  ctx: ServiceContext,
+  actor: Actor,
+  access: WebhookAccess,
+  input: CreateInput,
+  dryRun: boolean,
+): Promise<{ endpoint: WebhookEndpointDto; secret: string } | null> {
+  const { orgId } = access.authority;
+  const url = await checkedUrl(ctx, input.url);
+  const templateIds = await checkTemplates(ctx, orgId, input.templateIds);
+  if (dryRun) return null;
+  // Each create costs DoH lookups and a secret: per org, counted from the audit log so a delete does not reset it.
+  if ((await countRecentCreates(ctx.env.DB, orgId, ctx.clock.now() - HOUR)) >= MAX_CREATES_PER_HOUR)
+    throw new RateLimitedError(3600, 'Too many endpoints created. Try again later.');
+  return makeEndpoint(ctx, actor, access, {
+    url,
+    target: 'url',
+    description: input.description ?? '',
+    eventTypes: input.eventTypes,
+    templateIds,
+  });
 }
 
 export async function update(
@@ -232,6 +260,12 @@ export async function update(
   input: UpdateInput,
 ): Promise<WebhookEndpointDto> {
   const current = await requireEndpoint(ctx, access, id);
+  if (input.url !== undefined && current.target === 'capture')
+    throw new ValidationError(
+      'A capture endpoint has no URL to change.',
+      [{ path: 'url', message: 'Not allowed', code: 'custom' }],
+      'CAPTURE_URL_FIXED',
+    );
   const url = input.url === undefined ? undefined : await checkedUrl(ctx, input.url);
   const templateIds = await checkTemplates(ctx, access.authority.orgId, input.templateIds);
   const g = webhookGrant(ctx, access, 'endpoint.update');
