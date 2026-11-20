@@ -23,7 +23,7 @@ export const SMALL_CSS = `.pp-pm{--org:rgb(170,28,44);--org-label:rgb(255,210,21
 .pp-cp{--org:rgb(181,64,0)}
 .pp-cp .pp-cp-cut{position:absolute;inset:calc(var(--mm) * 8);border:calc(var(--mm) * 0.45) dashed var(--rule);border-radius:calc(var(--mm) * 3.5)}
 .pp-cp .pp-cp-scissors{position:absolute;left:calc(var(--mm) * 16);top:calc(var(--mm) * 5.6);background:#fff;padding:0 calc(var(--mm) * 1.2);width:calc(var(--mm) * 7.2);height:calc(var(--mm) * 5);color:var(--muted)}
-.pp-cp .pp-cp-inner{position:absolute;inset:calc(var(--mm) * 10.5);display:grid;grid-template-rows:calc(var(--mm) * 34) 1fr auto;gap:calc(var(--mm) * 4)}
+.pp-cp .pp-cp-inner{position:absolute;inset:calc(var(--mm) * 10.5);display:grid;grid-template-rows:calc(var(--mm) * 50) 1fr auto;gap:calc(var(--mm) * 4)}
 .pp-cp .pp-cp-band{position:relative;border-radius:calc(var(--mm) * 2.5);overflow:hidden;background:var(--org);color:#fff;padding:calc(var(--mm) * 4) calc(var(--mm) * 5);display:flex;align-items:flex-start;gap:calc(var(--mm) * 2.6)}
 .pp-cp .pp-cp-band img.pp-cp-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:right center}
 .pp-cp .pp-cp-band>*:not(.pp-cp-bg){position:relative}

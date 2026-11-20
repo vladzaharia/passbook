@@ -115,6 +115,18 @@ describe('paper ticket per class and size', () => {
   });
 });
 
+describe('follow-ups', () => {
+  it('names a permit "Parking permit"', async () => {
+    expect((await sheet('permit', 'half')).html).toContain('Parking permit');
+  });
+
+  it('gives a half sheet a one-line Before you go with when and where', async () => {
+    const { html } = await sheet('admission', 'half');
+    expect(html).toMatch(/Before you go<\/b> [^<]*· [^<]+/);
+    expect((await sheet('admission', 'a4')).html.match(/Before you go/g)).toHaveLength(1);
+  });
+});
+
 describe('code size and quiet zone', () => {
   it.each(COMBOS.filter(([, size]) => size !== 'cr80' || true))(
     '%s on %s: QR 30 mm or more with 4 modules around it',

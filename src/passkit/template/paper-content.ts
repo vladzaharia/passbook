@@ -224,7 +224,9 @@ export function paperContent(input: PaperContentInput): PaperContent {
   const art = input.images ? ART_ORDER[kind].find((slot) => have.has(slot)) : undefined;
 
   const title = parts.title ?? text(roles.title) ?? passJson.description;
-  const kicker = parts.kicker ?? manifest.name ?? title;
+  const label = parts.kicker ?? manifest.name;
+  // The permit blueprint's own label is "Permit"; on paper it says what it is.
+  const kicker = (kind === 'permit' && label === 'Permit' ? 'Parking permit' : label) ?? title;
   const noun = kind === 'admission' && !/pass|card/i.test(kicker) ? 'ticket' : 'pass';
   const idRequired = idFlagged(manifest, input.personalization);
   const bring = [

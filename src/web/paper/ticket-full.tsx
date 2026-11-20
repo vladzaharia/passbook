@@ -13,7 +13,7 @@ import {
   Typed,
   Watermark,
 } from './ticket-parts.tsx';
-import { doorRows, doorWhen, faceLines, infoColumns, rules } from './ticket-text.ts';
+import { compactBefore, doorRows, doorWhen, faceLines, infoColumns, rules } from './ticket-text.ts';
 
 const ART_POS = {
   artwork: '50% 30%',
@@ -49,11 +49,17 @@ function Band({ p }: { p: TicketProps }) {
   );
 }
 
-/** A half sheet has no "before you go": the bring line goes under the facts and help joins the footer. */
+/** A half sheet has no "before you go" page: a one-line version and the bring line go under the facts, and help joins the footer. */
 function FaceNotes({ p }: { p: TicketProps }) {
   const { content: c } = p;
+  const before = compactBefore(c);
   return (
     <>
+      {before ? (
+        <p className="pp-face-note">
+          <b>{PAPER_COPY.before}</b> {before}
+        </p>
+      ) : null}
       {c.bring.length ? (
         <p className="pp-face-note">
           <b>Bring</b> {c.bring.join(' · ')}

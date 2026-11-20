@@ -174,6 +174,19 @@ export function footMeta(c: PaperContent, issued: Issued | undefined): string {
   return PAPER_COPY.issued(n, paperDate(issued.at, c.zone, 'stamp'));
 }
 
+/** A half sheet's "Before you go": when and where in one line, when the pass has both. */
+export function compactBefore(c: PaperContent): string | undefined {
+  const when = c.doors
+    ? `Doors ${at(c, c.doors, 'time')}`
+    : c.start
+      ? `Starts ${at(c, c.start, 'time')}`
+      : c.validUntil
+        ? `Until ${at(c, c.validUntil, 'short')}`
+        : undefined;
+  const where = join(c.venue, c.address);
+  return when && where ? `${when} · ${where}` : undefined;
+}
+
 /** `1 Dec – 31 Dec 2026` for a validity range, `Until ...` for an end alone. */
 export function rangeText(c: PaperContent): string | undefined {
   if (!c.validUntil) return undefined;
