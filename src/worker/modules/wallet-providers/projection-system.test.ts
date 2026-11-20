@@ -261,8 +261,12 @@ describe('the Apple release hook', () => {
     await queueSystemProjections(ctx, release('apple', 'org-without-account'));
     expect(sent).toEqual([]);
     await queueSystemProjections(ctx, {
-      ...release('apple', kit.orgId),
+      id: 'r1',
       templateId: kit.templateId,
+      orgId: kit.orgId,
+      mode: 'live',
+      provider: 'apple',
+      version: 'v1',
     } as never);
     expect(sent).toEqual([
       {
