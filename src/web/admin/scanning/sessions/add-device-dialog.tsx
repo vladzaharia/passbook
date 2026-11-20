@@ -6,17 +6,32 @@ import { type Pairing, PairingFace } from '../pairing-face.tsx';
 import { useAddSessionDevice } from './api.ts';
 import { SurfacePicker } from './surface-picker.tsx';
 
+/** `base`, else `base 2`, `base 3`... cut to the 40 characters a device name takes. */
+export function freeName(base: string, taken: readonly string[]): string {
+  const used = new Set(taken.map((n) => n.toLowerCase()));
+  for (let n = 1; ; n++) {
+    const suffix = n === 1 ? '' : ` ${n}`;
+    const name = `${base.slice(0, 40 - suffix.length).trimEnd()}${suffix}`;
+    if (!used.has(name.toLowerCase())) return name;
+  }
+}
+
 export function AddDeviceDialog({
   session,
   onClose,
   setup = false,
+  deviceNames = [],
 }: {
   session: ScanningSession;
   onClose: () => void;
   /** Opened right after Scan passes: the first scanner, named and ready to pair. */
   setup?: boolean;
+  /** Names taken in this session: the first scanner name is a free one. */
+  deviceNames?: string[];
 }) {
-  const [name, setName] = useState(setup ? `${session.name} scanner`.slice(0, 40) : '');
+  const [name, setName] = useState(() =>
+    setup ? freeName(`${session.name} scanner`, deviceNames) : '',
+  );
   const [surface, setSurface] = useState<ScanningDevice['surface']>('auto');
   const [error, setError] = useState('');
   const [made, setMade] = useState<{ id: string; name: string; pairing: Pairing | null }>();

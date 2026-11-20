@@ -232,6 +232,7 @@ export function SessionDetail({
         <AddDeviceDialog
           session={s}
           setup={setupNote.mark !== undefined}
+          deviceNames={s.devices.map((d) => d.name)}
           onClose={() => setDialog(undefined)}
         />
       ) : null}

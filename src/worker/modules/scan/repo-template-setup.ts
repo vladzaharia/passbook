@@ -1,12 +1,10 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, first, run } from '../../platform/db.ts';
-
-const KEY_PREFIX = 'scan-setup:';
-const REQUEST = 'scan-setup';
+import { all, first } from '../../platform/db.ts';
+import type { EventSource, EventValues } from './template-setup-plan.ts';
 
 /**
- * The newest active session that names the template or an open event of it. A session that admits
- * every pass type is not a setup for this template, so it never matches.
+ * The newest live session (active or paused) that names the template or an open event of it. A
+ * session that admits every pass type is not a setup for this template, so it never matches.
  */
 export const sessionScanningTemplate = (
   db: D1Database,
@@ -17,7 +15,7 @@ export const sessionScanningTemplate = (
   first<{ id: string }>(
     db,
     `SELECT s.id FROM scanning_sessions s
-     WHERE s.org_id = ? AND s.mode = ? AND s.status = 'active' AND s.accepts IS NOT NULL
+     WHERE s.org_id = ? AND s.mode = ? AND s.status IN ('active', 'paused') AND s.accepts IS NOT NULL
        AND (EXISTS (SELECT 1 FROM json_each(json_extract(s.accepts, '$.templateIds')) j WHERE j.value = ?)
          OR EXISTS (SELECT 1 FROM json_each(json_extract(s.accepts, '$.eventIds')) j
               JOIN scan_events e ON e.id = j.value AND e.org_id = s.org_id AND e.archived_at IS NULL
@@ -25,80 +23,76 @@ export const sessionScanningTemplate = (
          OR EXISTS (SELECT 1 FROM scan_events e
               JOIN scan_event_templates t ON t.event_id = e.id AND t.template_id = ?
               WHERE e.id = json_extract(s.accepts, '$.eventId') AND e.org_id = s.org_id AND e.archived_at IS NULL))
-     ORDER BY s.created_at DESC, s.id LIMIT 1`,
+     ORDER BY (s.setup_template_id IS NOT NULL) DESC, s.created_at DESC, s.id LIMIT 1`,
     [orgId, mode, templateId, templateId, templateId],
   );
 
-/** A live event of the template with this name and window, left by an earlier call that did not finish. */
-export const eventLike = (
-  db: D1Database,
-  orgId: string,
-  mode: Mode,
-  templateId: string,
-  name: string,
-  opensAt: number,
-  closesAt: number,
-) =>
+/** The live event Scan passes made for this key. */
+export const setupEvent = (db: D1Database, orgId: string, mode: Mode, key: string) =>
   first<{ id: string }>(
     db,
-    `SELECT e.id FROM scan_events e
-     JOIN scan_event_templates t ON t.event_id = e.id AND t.template_id = ?
-     WHERE e.org_id = ? AND e.mode = ? AND e.name = ? AND e.opens_at = ? AND e.closes_at = ?
-       AND e.archived_at IS NULL
-     ORDER BY e.created_at, e.id LIMIT 1`,
-    [templateId, orgId, mode, name, opensAt, closesAt],
+    `SELECT id FROM scan_events
+     WHERE org_id = ? AND mode = ? AND setup_key = ? AND archived_at IS NULL`,
+    [orgId, mode, key],
   );
 
-export const eventNames = (db: D1Database, orgId: string, ids: readonly string[]) =>
-  all<{ id: string; name: string }>(
-    db,
-    `SELECT id, name FROM scan_events WHERE org_id = ? AND id IN (${ids.map(() => '?').join(',')})`,
-    [orgId, ...ids],
-  );
+const LIVE = `p.org_id = ? AND p.mode = ? AND p.template_id = ? AND p.status = 'active'
+  AND p.deleted_at IS NULL AND p.removed_at IS NULL AND p.test_data_quarantined = 0`;
+const MAX_ROWS = 500;
+const path = (input: string | null) => (input ? `$.${input}` : null);
 
-const keyOf = (mode: Mode, templateId: string) => `${KEY_PREFIX}${mode}:${templateId}`;
-
-/** Only one call per template and mode builds a setup at a time; the key is a lock, not a record. */
-export async function claimSetup(
+/** The distinct events the template's issued, unvoided passes name in their own inputs. */
+export async function ownEventValues(
   db: D1Database,
   orgId: string,
   mode: Mode,
   templateId: string,
-  reservation: string,
-  now: number,
-): Promise<boolean> {
-  const done = await run(
+  own: NonNullable<EventSource['own']>,
+): Promise<EventValues[]> {
+  const rows = await all<Record<string, string | null>>(
     db,
-    `INSERT OR IGNORE INTO idempotency_keys (org_id, key, request_hash, resource_id, created_at)
-     VALUES (?, ?, ?, ?, ?)`,
-    [orgId, keyOf(mode, templateId), REQUEST, reservation, now],
+    `SELECT DISTINCT json_extract(p.personalization, ?) AS name, json_extract(p.personalization, ?) AS startsAt,
+       json_extract(p.personalization, ?) AS endsAt, json_extract(p.personalization, ?) AS doorsAt,
+       json_extract(p.personalization, ?) AS venueName, json_extract(p.personalization, ?) AS venueRegion,
+       json_extract(p.personalization, ?) AS timeZone
+     FROM passes p WHERE ${LIVE} LIMIT ${MAX_ROWS}`,
+    [
+      path(own.name),
+      path(own.start),
+      path(own.end),
+      path(own.doors),
+      path(own.venueName),
+      path(own.venueRegion),
+      path(own.zone),
+      orgId,
+      mode,
+      templateId,
+    ],
   );
-  return done.changes === 1;
+  return rows.map((row) => ({ ...row, own: true }));
 }
 
-export const releaseSetup = (
+/** The distinct entries of the upcoming-events list on those passes. */
+export async function listedEventValues(
   db: D1Database,
   orgId: string,
   mode: Mode,
   templateId: string,
-  reservation: string,
-) =>
-  run(db, 'DELETE FROM idempotency_keys WHERE org_id = ? AND key = ? AND resource_id = ?', [
-    orgId,
-    keyOf(mode, templateId),
-    reservation,
-  ]);
-
-/** Frees a lock whose holder died: the same reservation, older than `before`. */
-export const reclaimSetup = (
-  db: D1Database,
-  orgId: string,
-  mode: Mode,
-  templateId: string,
-  before: number,
-) =>
-  run(db, 'DELETE FROM idempotency_keys WHERE org_id = ? AND key = ? AND created_at < ?', [
-    orgId,
-    keyOf(mode, templateId),
-    before,
-  ]);
+  list: string,
+): Promise<EventValues[]> {
+  const rows = await all<{ item: string }>(
+    db,
+    `SELECT DISTINCT j.value AS item
+     FROM passes p, json_each(CASE WHEN json_type(p.personalization, ?) = 'array'
+       THEN json_extract(p.personalization, ?) ELSE '[]' END) j
+     WHERE ${LIVE} LIMIT ${MAX_ROWS}`,
+    [path(list), path(list), orgId, mode, templateId],
+  );
+  // json_each yields valid JSON text; only an object is an event.
+  return rows.flatMap(({ item }) => {
+    const value = JSON.parse(item) as unknown;
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? [value as EventValues]
+      : [];
+  });
+}

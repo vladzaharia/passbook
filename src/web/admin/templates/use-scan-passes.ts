@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import type { z } from 'zod';
-import { TemplateScanSetupSchema } from '@/shared/contracts/scan-setups.ts';
+import { TemplateScanSetupSchema } from '@/shared/contracts/scan-template-setup.ts';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { api } from '../../lib/api.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
@@ -10,7 +10,7 @@ import { toast } from '../../ui/index.ts';
 import { markCreated } from '../passes/created.tsx';
 import { scanningKeys } from '../scanning/queries.ts';
 import { sessionKeys } from '../scanning/sessions/api.ts';
-import { hasScanBlock, scanSetupSummary } from './scan-setup.ts';
+import { scanSetupSummary } from './scan-setup.ts';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
 
@@ -25,7 +25,7 @@ export function useScanPasses(t: Template) {
       scope.membership?.capabilities.includes('scanning:manage') &&
       !t.blueprint &&
       t.status === 'active' &&
-      hasScanBlock(t.manifest),
+      t.activeVersion !== null,
   );
   const make = useMutation({
     mutationFn: () =>

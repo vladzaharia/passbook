@@ -186,7 +186,7 @@ export function TemplateDetailContent({
             how={created.mark}
             versionLabel={importedLabel}
             onDismiss={created.dismiss}
-            onScanPasses={scanning.canScan && t.activeVersion ? scanning.scan : undefined}
+            onScanPasses={scanning.canScan ? scanning.scan : undefined}
             scanPending={scanning.pending}
           />
         </div>

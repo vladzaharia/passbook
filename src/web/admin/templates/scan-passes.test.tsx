@@ -36,7 +36,7 @@ describe('Scan passes', () => {
             session: { id: 'session-1', name: 'Front door' },
             created: true,
             events: [{ id: 'e1', name: 'Harbour Lights: Night Two', created: true }],
-            undated: [],
+            noEvents: false,
           });
         },
         '/api/v1/scanning-sessions/session-1': () => json(session),
@@ -57,12 +57,25 @@ describe('Scan passes', () => {
     expect(bodies).toEqual([{ orgId: ORG.id, timeZone: expect.any(String) }]);
   });
 
-  it('is hidden for a template with no scan block', async () => {
+  it('is offered for a template with no scan block, which scans by one check-in', async () => {
     await renderApp('/admin/templates/tpl1', {
       session: 'admin',
       ...orgAccess,
       handlers: {
         '/api/v1/templates/tpl1': () => json(templateDetail()),
+        '/api/v1/templates/previews': previewsHandler,
+      },
+    });
+    await screen.findByRole('heading', { name: 'Copper card' });
+    expect(screen.getByRole('button', { name: 'Scan passes' })).toBeInTheDocument();
+  });
+
+  it('is hidden until the template has an active version', async () => {
+    await renderApp('/admin/templates/tpl1', {
+      session: 'admin',
+      ...orgAccess,
+      handlers: {
+        '/api/v1/templates/tpl1': () => json(withScan({ activeVersion: null })),
         '/api/v1/templates/previews': previewsHandler,
       },
     });

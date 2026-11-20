@@ -2,7 +2,7 @@ import { IdParamSchema } from '../../../shared/contracts/common.ts';
 import {
   TemplateScanSetupBodySchema,
   TemplateScanSetupSchema,
-} from '../../../shared/contracts/scan-setups.ts';
+} from '../../../shared/contracts/scan-template-setup.ts';
 import { modeOf } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';

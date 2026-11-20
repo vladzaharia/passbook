@@ -115,6 +115,8 @@ export async function createScanningSession(
   input: z.infer<typeof CreateScanningSessionSchema>,
   authority: TenantPassWrite,
   countAuthority: SessionReadAuthority,
+  /** Scan passes: the template this session is for. One live session per template (unique index). */
+  setupTemplateId?: string,
 ) {
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
   if (countAuthority.orgId !== input.orgId || countAuthority.mode !== mode)
@@ -161,6 +163,7 @@ export async function createScanningSession(
       ...newTiming(input.timeZone, input.hours ?? null, now),
       created_at: now,
       updated_at: now,
+      ...(setupTemplateId ? { setup_template_id: setupTemplateId } : {}),
     },
     userId,
   );
@@ -170,10 +173,10 @@ export async function createScanningSession(
       orgId: input.orgId,
       actorType: 'user',
       actorId: userId,
-      action: 'scanning.session_create',
+      action: setupTemplateId ? 'scan.template_setup' : 'scanning.session_create',
       targetType: 'scanning_session',
       targetId: id,
-      detail: { mode },
+      detail: setupTemplateId ? { mode, templateId: setupTemplateId } : { mode },
     }),
   );
   await g.commit();

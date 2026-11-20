@@ -111,19 +111,3 @@ export const ScanLiveMessageSchema = z.union([
   z.object({ control: z.literal('reset') }),
   z.object({ enroll: ScanLiveEnrollSchema }),
 ]);
-
-/** One call: the events and the session that scan a template's passes. Idempotent. */
-export const TemplateScanSetupBodySchema = z.strictObject({
-  orgId: IdSchema,
-  /** The session's zone: the console's. Absent: the template's venue zone, else UTC. */
-  timeZone: TimeZoneSchema.optional(),
-});
-export const TemplateScanSetupSchema = z.object({
-  session: z.object({ id: IdSchema, name: z.string() }),
-  /** False when an active session already scanned the template and nothing was made. */
-  created: z.boolean(),
-  events: z.array(z.object({ id: IdSchema, name: z.string(), created: z.boolean() })),
-  /** Template events with no date; they need one in Scanning before they can admit. */
-  undated: z.array(z.string()),
-});
-export type TemplateScanSetup = z.infer<typeof TemplateScanSetupSchema>;
