@@ -1,0 +1,26 @@
+/** Scanner words for the handheld's glance card and pass sheet. `{n}` and `{goal}` mark values. */
+export const SCAN_HANDHELD_COPY = {
+  ofGoal: '{n} of {goal}',
+  tapForDetails: 'Tap for details',
+  why: 'Why',
+  details: 'Details',
+  sheet: {
+    thisPass: 'This pass',
+    recent: 'Recent scans',
+    views: 'Pass sheet view',
+    today: 'Today',
+    showPass: 'Show pass',
+    hidePass: 'Back to details',
+    more: 'More',
+    loading: 'Loading pass…',
+    gone: 'This pass is no longer available.',
+    retry: 'Retry',
+    noScans: 'No scans yet.',
+    unsure: '{n} scans not confirmed yet. Keep this page open.',
+    notConfirmed: 'Not confirmed',
+    undoCheckIn: 'Undo check-in',
+    undo: 'Undo',
+    done: 'Done',
+    by: 'you',
+  },
+} as const;

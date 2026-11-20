@@ -14,13 +14,16 @@ import type { Draft, PinNote, ScanOutcome } from '../machine/types.ts';
 import { verdictLine } from '../machine/verdict-lines.ts';
 import { AddPhoto } from './add-photo.tsx';
 import { ApprovalSheet } from './approval-sheet.tsx';
+import { GlanceTail } from './glance-tail.tsx';
 import { GroupChip } from './group-chip.tsx';
 import { IdentityRow } from './identity-row.tsx';
+import { isDenied, outcomeNotes } from './notes.ts';
 import { ValuePicker } from './value-picker.tsx';
-import { VerdictGlyph } from './verdict-glyph.tsx';
+import { VerdictBand } from './verdict-band.tsx';
 import './result.css';
 import './identity.css';
 import './motion.css';
+import './result-glance.css';
 
 export function ResultCard({
   outcome: o,
@@ -34,7 +37,10 @@ export function ResultCard({
   desk,
   tagRead = false,
   addPhoto,
+  density = 'full',
 }: {
+  /** `glance` is the handheld's card: verdict, who, one fact. The rest is in the pass sheet. */
+  density?: 'full' | 'glance';
   /** Set when this device may add photos: the desk card offers it for a pass with none. */
   addPhoto?: ScanApi | undefined;
   /** The scan was a tag read: an unknown one has its own words. */
@@ -45,7 +51,7 @@ export function ResultCard({
   onGroup?: () => void;
   eventNote?: string | null;
   holdMs?: number | null;
-  onPass?: (card: ScanCard | null) => void;
+  onPass?: (card: ScanCard | null, outcome: ScanOutcome) => void;
   /** The machine's clock, for "3 min ago". */
   clock?: number;
   /** The desk's value regions: the open picker, and a Manager's PIN for a `needs_approval` verdict. */
@@ -111,22 +117,17 @@ export function ResultCard({
     pill !== 'out';
   const title = noExit ? 'Check-out not allowed' : noReentry ? 'No re-entry' : systemTitle;
   // The verdict word is always the headline; a template's own line sits under it.
-  const customLine = custom && !noExit && !noReentry ? d?.header.title : null;
-  const nameInBand = custom && Boolean(d) && d?.header.title === d?.identity.holder;
-  const CustomGlyph = ok && d?.header.icon ? scanIcon(d.header.icon) : null;
-  const layout = custom ? 'custom' : shown === 'ok' || shown === 'heads_up' ? 'row' : 'stack';
-  // A refusal or a hold (gym full, already in) changed nothing: no stamp, balance or staff note
-  // for a grant, so the card cannot read as granted.
-  const denied =
-    o.kind === 'refused' || (o.kind === 'heads_up' && (Boolean(held) || Boolean(o.occupancy)));
-  const notes = [
-    ...new Set(
-      [
-        o.kind === 'refused' ? d?.notes.refused : denied ? null : d?.notes.staff,
-        o.kind === 'refused' || o.kind === 'heads_up' ? eventNote : null,
-      ].filter(Boolean),
-    ),
-  ];
+  const glance = density === 'glance' && !ready;
+  const nameInBand = custom && !glance && Boolean(d) && d?.header.title === d?.identity.holder;
+  const customLine =
+    custom && !noExit && !noReentry && !(glance && d?.header.title === d?.identity.holder)
+      ? d?.header.title
+      : null;
+  const CustomGlyph = ok && !glance && d?.header.icon ? scanIcon(d.header.icon) : null;
+  const layout =
+    custom && !glance ? 'custom' : shown === 'ok' || shown === 'heads_up' ? 'row' : 'stack';
+  const denied = isDenied(o, now);
+  const notes = outcomeNotes(o, d, eventNote, denied);
   useLayoutEffect(() => {
     const el = root.current;
     if (!el || phase !== 'rising' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -146,6 +147,7 @@ export function ResultCard({
       ref={root}
       className="scan-result"
       data-kind={shown}
+      data-density={glance ? 'glance' : undefined}
       data-phase={phase}
       data-screen={d?.screen ?? o.kind}
       data-reason={o.reason}
@@ -154,75 +156,38 @@ export function ResultCard({
       aria-labelledby="scan-result-heading"
     >
       {!ready ? (
-        <div
-          className="scan-result-band"
-          data-layout={layout}
-          data-testid="scan-verdict"
-          data-kind={shown}
-          data-reason={o.reason}
-          data-phase={phase}
-          data-screen={d?.screen ?? o.kind}
-        >
-          <div className="scan-glyph-row">
-            {CustomGlyph ? (
-              <span className="scan-custom-glyph">
-                <CustomGlyph aria-hidden />
-                <span className="scan-custom-badge">
-                  <VerdictGlyph kind="ok" />
-                </span>
-              </span>
-            ) : (
-              <VerdictGlyph kind={shown} />
-            )}
-          </div>
-          <div className="scan-verdict-text">
-            <h1 id="scan-result-heading" tabIndex={-1}>
-              {title}
-            </h1>
-            {customLine ? <p className="scan-verdict-custom">{customLine}</p> : null}
-            {noExit ? (
-              <p>{SCAN_COPY.verdict.noExitSub}</p>
-            ) : noReentry ? (
-              <p>{SCAN_COPY.verdict.noReentrySub}</p>
-            ) : pill || held?.sub || line?.sub ? (
-              <p>
-                {pill ? (
-                  <span className="scan-dir-pill" data-dir={pill} data-testid="scan-dir-pill">
-                    {SCAN_COPY.direction[pill]}
-                  </span>
-                ) : null}
-                {held ? held.sub : (line?.sub ?? null)}
-              </p>
-            ) : null}
-            {admit ? (
-              <p className="scan-admit" data-testid="scan-admit">
-                {admit}
-              </p>
-            ) : null}
-          </div>
-          {holdMs ? (
-            <span
-              key={o.scanId}
-              aria-hidden
-              className="scan-hold-rail"
-              style={{ animationDuration: `${holdMs}ms` }}
-            />
-          ) : null}
-        </div>
+        <VerdictBand
+          kind={shown}
+          layout={layout}
+          reason={o.reason}
+          phase={phase}
+          screen={d?.screen ?? o.kind}
+          scanId={o.scanId}
+          title={title}
+          customLine={customLine}
+          CustomGlyph={CustomGlyph}
+          noExit={noExit}
+          noReentry={noReentry}
+          pill={pill}
+          sub={held ? held.sub : line?.sub}
+          admit={admit}
+          holdMs={holdMs}
+        />
       ) : (
         <h1 className="scan-ready-heading" id="scan-result-heading" tabIndex={-1}>
           Choose an action
         </h1>
       )}
       {d || o.card || o.tag || notes.length || chip ? (
-        <div className="scan-result-body">
+        <div className="scan-result-body" data-density={glance ? 'glance' : undefined}>
           <IdentityRow
             outcome={o}
             display={d}
             hideName={nameInBand}
             compact={denied}
+            glance={glance}
             onPass={() => {
-              onPass?.(o.card);
+              onPass?.(o.card, o);
             }}
           />
           {ready && o.card && addPhoto && !d?.identity.photo?.url ? (
@@ -235,8 +200,10 @@ export function ResultCard({
               refused={o.kind === 'refused'}
             />
           ) : null}
-          {d && !denied && !desk?.picker && !o.group ? <DisplayPanels display={d} /> : null}
-          {notes.length ? (
+          {!glance && d && !denied && !desk?.picker && !o.group ? (
+            <DisplayPanels display={d} />
+          ) : null}
+          {!glance && notes.length ? (
             <div className="scan-result-notes">
               <Info size={18} aria-hidden />
               <div>
@@ -269,7 +236,18 @@ export function ResultCard({
               </Button>
             ))
           )}
-          {chip ? <GroupChip outcome={o} onGroup={onGroup} /> : null}
+          {glance ? (
+            <GlanceTail
+              outcome={o}
+              display={d}
+              denied={denied}
+              notes={notes}
+              chip={chip}
+              onGroup={onGroup}
+            />
+          ) : chip ? (
+            <GroupChip outcome={o} onGroup={onGroup} />
+          ) : null}
           {o.reason === 'needs_approval' && desk && o.approvals ? (
             pin ? (
               <ApprovalSheet
@@ -288,6 +266,15 @@ export function ResultCard({
             )
           ) : null}
         </div>
+      ) : null}
+      {glance && (o.card || o.scanId) ? (
+        <button
+          type="button"
+          className="scan-glance-open"
+          aria-label="View pass"
+          aria-describedby="scan-result-heading"
+          onClick={() => onPass?.(o.card, o)}
+        />
       ) : null}
     </section>
   );
