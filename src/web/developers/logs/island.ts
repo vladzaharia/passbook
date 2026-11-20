@@ -83,7 +83,7 @@ function rowView(row: RequestLogEntry, ops: Promise<OpIndex>): HTMLElement {
   const detail = h('div', { class: 'logs-detail' });
   const el = h(
     'details',
-    { class: 'logs-row' },
+    { class: 'logs-row', 'data-id': row.id },
     h(
       'summary',
       { class: 'lrow logs-sum' },
@@ -130,6 +130,16 @@ type Page = {
 
 const notice = (text: string, action?: HTMLElement) =>
   h('div', { class: 'card card-b' }, h('p', { class: 'muted' }, text), action);
+
+/** The hash without its `#`; one that does not decode (`#%E0`) is no hash. */
+function decodeHash(raw: string): string {
+  try {
+    return decodeURIComponent(raw.slice(1));
+  } catch {
+    // A malformed link opens the log as it is.
+    return '';
+  }
+}
 
 /** The request log: filters, the list, and a detail row with redacted bodies. Text and DOM calls only. */
 export async function mountLogs(el: HTMLElement, ops: Promise<OpIndex>): Promise<void> {
@@ -215,12 +225,35 @@ export async function mountLogs(el: HTMLElement, ops: Promise<OpIndex>): Promise
     else fill(list, h('p', { class: 'lrow muted' }, LOGS_COPY.failed));
   }
 
+  /** From search: `#<row id>` opens that request (fetched when it is older than the page), `#code=X` filters by code. */
+  async function openFromHash() {
+    const hash = decodeHash(location.hash);
+    if (hash.startsWith('code=')) {
+      code.value = hash.slice('code='.length).toUpperCase();
+      return refresh();
+    }
+    if (!hash) return;
+    let row = [...list.querySelectorAll<HTMLDetailsElement>('details[data-id]')].find(
+      (r) => r.dataset.id === hash,
+    );
+    if (!row) {
+      const { body } = await getJson<RequestLogEntry>(`${API}/${encodeURIComponent(hash)}`);
+      if (!body) return;
+      row = rowView(body, ops) as HTMLDetailsElement;
+      list.prepend(row);
+    }
+    row.open = true;
+    row.scrollIntoView({ block: 'center' });
+  }
+
   show(first.body, false);
   let timer: ReturnType<typeof setTimeout> | undefined;
   const refresh = () => {
     clearTimeout(timer);
     timer = setTimeout(() => void load(false), 250);
   };
+  void openFromHash();
+  window.addEventListener('hashchange', () => void openFromHash());
   for (const control of [status, method]) control.addEventListener('change', refresh);
   for (const control of [code, path]) control.addEventListener('input', refresh);
   bar.addEventListener('submit', (e) => e.preventDefault());

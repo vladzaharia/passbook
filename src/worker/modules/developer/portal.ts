@@ -4,9 +4,14 @@
  * the manifest lists is served; the asset layer's SPA fallback never answers for a portal URL.
  */
 import { Hono } from 'hono';
+import { SearchMissSchema } from '../../../shared/contracts/developer.ts';
 import { DEVELOPERS_INDEXABLE, PATHS } from '../../../shared/developers.ts';
+import { missTerm } from '../../../shared/developers-search.ts';
+import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
+import { sameOriginOnly } from '../../platform/csrf.ts';
 import { notFoundHandler } from '../../platform/error-handler.ts';
+import { rateLimit } from '../../platform/rate-limit.ts';
 import { developersContentSecurityPolicy } from '../../platform/security-headers.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { asBrowserPage } from '../../ssr/error-response.ts';
@@ -26,6 +31,39 @@ async function manifestOf(assets: Fetcher, origin: string): Promise<Manifest> {
 }
 
 export const developerPortalRoutes = new Hono<AppBindings>();
+
+/** Longest body the miss endpoint reads: `{"term":"…"}` for a term of at most 60 characters. */
+const MISS_BODY_BYTES = 1024;
+
+/**
+ * A search that found nothing: the term, for the docs backlog. Takes no cookie's worth of identity
+ * (the browser sends none) and logs nothing but the term, and only if it is plain words: a key,
+ * token, id, address or link is dropped here even if a client sends it. Same origin only, limited
+ * per network (an IPv6 /64 counts as one), and the body is capped before it is read.
+ */
+developerPortalRoutes.post(
+  '/search-miss',
+  sameOriginOnly,
+  rateLimit('RL_PUBLIC'),
+  limitBody(MISS_BODY_BYTES),
+  async (c) => {
+    const body = parseMiss(await c.req.text());
+    if (!body) return c.body(null, 400);
+    const term = missTerm(body.term);
+    if (term) c.var.log.info('developers.search_miss', { term });
+    return c.body(null, 204);
+  },
+);
+
+function parseMiss(text: string) {
+  try {
+    const parsed = SearchMissSchema.safeParse(JSON.parse(text));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    // Not JSON: the caller gets a 400.
+    return null;
+  }
+}
 
 developerPortalRoutes.get('/*', async (c) => {
   const url = new URL(c.req.url);

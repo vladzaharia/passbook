@@ -2178,5 +2178,11 @@
   "webhooks.postWebhookEndpointsByIdTest": {
     "resource": "webhookEndpoints",
     "method": "sendTest"
+  },
+  "developer.getResolve": {
+    "resource": "developer.search",
+    "method": "resolve",
+    "sdk": false,
+    "reason": "Developer portal search: a signed-in person in a browser, not an integration."
   }
 }

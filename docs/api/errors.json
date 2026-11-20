@@ -2691,6 +2691,15 @@
       ]
     },
     {
+      "code": "RESOLVE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
       "code": "RESPONSE_TOO_LARGE",
       "statuses": [
         502

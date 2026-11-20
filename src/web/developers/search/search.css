@@ -1,0 +1,162 @@
+/* The ⌘K palette. The frame, rows and footer are the kit's utilities (generated/playground-kit.css);
+   this is what the portal adds: motion, the selection pill, marks, the secret card, the preview. */
+@import "../../styles/kit-motion.css";
+
+.wl-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: var(--pk-radius-sm);
+  background: var(--pk-accent-subtle);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-indicator[data-ready] {
+    transition: transform 120ms var(--wl-ease-out);
+  }
+}
+[role="dialog"] [cmdk-item][data-selected="true"] {
+  box-shadow: inset 2px 0 0 var(--pk-accent);
+}
+[role="dialog"] [cmdk-item] {
+  position: relative;
+}
+[role="dialog"] [cmdk-group-heading] {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+/* The portal's own text-field styling must not box the palette's input. */
+[role="dialog"] [cmdk-input] {
+  height: 48px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  padding-inline: 0;
+  font-size: 16px;
+  color: var(--pk-text-strong);
+}
+[role="dialog"] [cmdk-input]::placeholder {
+  color: var(--wl-placeholder);
+}
+.mono {
+  font-family: var(--pk-font-mono);
+}
+.srch-mark {
+  background: none;
+  color: var(--pk-accent-fg);
+  font-weight: 600;
+}
+.method {
+  min-width: 44px;
+}
+
+.srch-secret {
+  margin: 12px;
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+  border-radius: var(--pk-radius-lg);
+  border: 1px solid var(--pk-danger-border);
+  background: var(--pk-danger-subtle);
+  color: var(--pk-text-default);
+}
+.srch-secret-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--pk-text-strong);
+}
+.srch-secret-h svg {
+  width: 16px;
+  height: 16px;
+  color: var(--pk-danger);
+}
+.srch-secret p {
+  margin: 0;
+}
+.srch-status {
+  margin: 0;
+  padding: 10px 16px;
+  color: var(--pk-text-muted);
+  border-bottom: 1px solid var(--pk-border-subtle);
+}
+.srch-link {
+  color: var(--pk-accent-fg);
+  text-decoration: underline;
+}
+.srch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.srch-actions .btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.srch-pv {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 100%;
+}
+.srch-pv p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.srch-pv {
+  max-width: 100%;
+}
+.srch-pvh {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--pk-text-strong);
+  overflow-wrap: anywhere;
+}
+.srch-pv .srch-actions {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.srch-empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 4px 16px 16px;
+  text-align: center;
+}
+.srch-empty p {
+  margin: 0;
+}
+.srch-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.srch-pills .pill {
+  text-decoration: none;
+}
+
+/* The kit's empty block, read as the portal's: the buddy peeks over a quiet title, no frame. */
+[role="dialog"] [data-art-host] {
+  border-color: transparent;
+  margin-top: 56px;
+  padding-bottom: 4px;
+}
+[role="dialog"] [data-art-host] > p {
+  font-weight: 600;
+  color: var(--pk-text-strong);
+}
+
+@media (max-width: 639.98px) {
+  .srch-path {
+    display: none;
+  }
+}

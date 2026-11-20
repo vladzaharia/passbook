@@ -23,6 +23,13 @@ export const DEV_BUDGET_BYTES = 60_000;
  * bytes: 88.3 kB measured. It loads only for a signed-in visitor, so it sits outside the 60 kB.
  */
 export const DEV_ISLAND_BUDGET_BYTES = 95_000;
+/**
+ * The ⌘K search island (palette, kit dialog, cmdk, React): loads on the first ⌘K or click of the
+ * search button, so it sits outside the 60 kB: 130 kB measured, of which React and Radix are 90 kB
+ * (shared with every other island). The index it fetches has its own 150 kB budget
+ * (src/web/developers/search/build.ts).
+ */
+export const DEV_SEARCH_BUDGET_BYTES = 135_000;
 /** Literal strings: this check matches text, so an identifier would not survive minification. */
 export const FORBIDDEN = [
   'cmdk-',
@@ -71,6 +78,35 @@ export function islandAssets(
   const deps = list ? (JSON.parse(list) as string[]).map((d) => `/${d}`) : [];
   const skip = new Set(initial);
   return [...new Set([url, ...deps])].filter((u) => !skip.has(u));
+}
+
+/**
+ * An island that has no dynamic imports of its own: its chunk, the shared chunks it imports
+ * statically (read from the minified `from"./x.js"`), and its stylesheet, which the initial scripts
+ * name in a `__vite__mapDeps` list. Nothing the initial load already has.
+ */
+export function staticIslandAssets(
+  read: (url: string) => string,
+  initial: readonly string[],
+  name: string,
+): string[] {
+  const skip = new Set(initial);
+  const [chunk] = islandAssets(read, initial, name);
+  if (!chunk) return [];
+  const seen = new Set<string>();
+  const walk = (url: string) => {
+    if (seen.has(url) || skip.has(url)) return;
+    seen.add(url);
+    for (const m of read(url).matchAll(/(?:from|import)\s*"\.\/([\w.-]+\.js)"/g))
+      walk(`/assets/${m[1]}`);
+  };
+  walk(chunk);
+  const css = new RegExp(`assets/(${name}-[\\w-]+\\.css)`);
+  for (const url of initial) {
+    const file = css.exec(read(url))?.[1];
+    if (file) seen.add(`/assets/${file}`);
+  }
+  return [...seen];
 }
 
 export function checkBundle(
@@ -129,17 +165,32 @@ if (import.meta.main) {
   }
   const read = (url: string) => readFileSync(join(dist, url.replace(/^\//, '')), 'utf8');
   const initial = initialAssets(readFileSync(join(dist, 'developers.html'), 'utf8'), true);
-  const islands = [
+  const islands: {
+    label: string;
+    name: string;
+    budget: number;
+    forbidden?: readonly string[];
+    /** The island imports its pieces statically (no dynamic imports of its own to read them from). */
+    statics?: boolean;
+  }[] = [
     { label: 'playground island', name: 'playground', budget: PLAYGROUND_BUDGET_BYTES },
+    {
+      label: 'developers search island',
+      name: 'palette-island',
+      budget: DEV_SEARCH_BUDGET_BYTES,
+      statics: true,
+      // The palette is cmdk; everything else the portal keeps out stays out.
+      forbidden: DEV_FORBIDDEN.filter((m) => m !== 'cmdk-'),
+    },
     { label: 'developers run island', name: 'run-entry', budget: DEV_ISLAND_BUDGET_BYTES },
   ];
-  for (const { label, name, budget } of islands) {
-    const files = islandAssets(read, initial, name);
+  for (const { label, name, budget, forbidden = DEV_FORBIDDEN, statics } of islands) {
+    const files = (statics ? staticIslandAssets : islandAssets)(read, initial, name);
     let total = 0;
     for (const url of files) {
       const body = read(url);
       total += gzipSync(body).length;
-      for (const marker of DEV_FORBIDDEN)
+      for (const marker of forbidden)
         if (body.includes(marker)) {
           process.stderr.write(`${url} contains ${marker}\n`);
           failed = true;

@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "key": "GET /api/v1/developer/resolve new operation",
+    "class": "additive",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "new operation",
+    "note": "Names a pasted request or object id in your sandbox, for the portal search. Session or try token only."
+  }
+]
