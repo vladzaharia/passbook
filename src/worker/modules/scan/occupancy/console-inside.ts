@@ -61,13 +61,21 @@ const titles =
   async (ids) => {
     const out = new Map<
       string,
-      { holder: string | null; photoUrl: null; plan: null; host: null; ended: boolean }
+      {
+        holder: string | null;
+        photoUrl: null;
+        plan: null;
+        type: string | null;
+        host: null;
+        ended: boolean;
+      }
     >();
     if (ids.length === 0) return out;
     const [res] = await runReads(ctx.env.DB, [passTitlesRead(orgId, mode, ids)]);
     for (const r of (res?.results ?? []) as {
       id: string;
       title: string | null;
+      type: string | null;
       status: string;
       removedAt: number | null;
       deletedAt: number | null;
@@ -76,6 +84,7 @@ const titles =
         holder: r.title,
         photoUrl: null,
         plan: null,
+        type: r.type,
         host: null,
         ended: r.status !== 'active' || r.removedAt !== null || r.deletedAt !== null,
       });

@@ -67,8 +67,10 @@ export const presenceRead = (orgId: string, passId: string, place: string): Afte
 /** Console names: the pass's own title and standing. */
 export const passTitlesRead = (orgId: string, mode: string, ids: readonly string[]): AfterRead =>
   afterRead(
-    `SELECT id, display_title AS title, status, removed_at AS removedAt, deleted_at AS deletedAt
-     FROM passes WHERE org_id = ? AND mode = ? AND id IN (${marks(ids.length)})`,
+    `SELECT p.id, p.display_title AS title, t.name AS type, p.status, p.removed_at AS removedAt,
+       p.deleted_at AS deletedAt
+     FROM passes p LEFT JOIN templates t ON t.id = p.template_id AND (t.org_id IS NULL OR t.org_id = p.org_id)
+     WHERE p.org_id = ? AND p.mode = ? AND p.id IN (${marks(ids.length)})`,
     [orgId, mode, ...ids],
   );
 

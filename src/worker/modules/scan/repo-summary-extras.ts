@@ -18,6 +18,7 @@ export interface SummaryExtras {
   quarters: { q: number; n: number; refused: number }[];
   value: { kind: 'add' | 'take' | 'set' | 'use_up'; n: number; amount: number }[];
   reasons: { reason: string; n: number }[];
+  types: { id: string | null; name: string | null; n: number }[];
   staff: {
     staff_id: string | null;
     name: string | null;
@@ -55,58 +56,67 @@ export async function readSummaryExtras(
   const from = fromOf();
   const params = [...scope.params, window.from, window.to];
   const refused = `COALESCE(SUM(s.outcome = 'refused'), 0)`;
-  const [authorized, totals, quarters, value, reasons, staff, count, overrides] = await db.batch([
-    scanAuthorizedStmt(db, auth),
-    scanRead(
-      db,
-      auth,
-      `SELECT COUNT(*) AS total, COALESCE(SUM(s.outcome = 'ok'), 0) AS ok,
+  const [authorized, totals, quarters, value, reasons, types, staff, count, overrides] =
+    await db.batch([
+      scanAuthorizedStmt(db, auth),
+      scanRead(
+        db,
+        auth,
+        `SELECT COUNT(*) AS total, COALESCE(SUM(s.outcome = 'ok'), 0) AS ok,
         COALESCE(SUM(s.outcome = 'heads_up'), 0) AS heads_up, ${refused} AS refused,
         COALESCE(SUM(s.undone_by IS NOT NULL), 0) AS undone,
         MIN(s.at) AS first_at, MAX(s.at) AS last_at ${from}`,
-      params,
-    ),
-    scanRead(
-      db,
-      auth,
-      `SELECT s.at / ${QUARTER} AS q, COUNT(*) AS n, ${refused} AS refused ${from} GROUP BY q ORDER BY q`,
-      params,
-    ),
-    scanRead(
-      db,
-      auth,
-      `SELECT s.action_kind AS kind, COUNT(*) AS n, COALESCE(SUM(s.amount), 0) AS amount ${from}
+        params,
+      ),
+      scanRead(
+        db,
+        auth,
+        `SELECT s.at / ${QUARTER} AS q, COUNT(*) AS n, ${refused} AS refused ${from} GROUP BY q ORDER BY q`,
+        params,
+      ),
+      scanRead(
+        db,
+        auth,
+        `SELECT s.action_kind AS kind, COUNT(*) AS n, COALESCE(SUM(s.amount), 0) AS amount ${from}
         AND s.outcome = 'ok' AND s.undone_by IS NULL
         AND s.action_kind IS NOT NULL AND s.action_kind <> 'check_in' GROUP BY s.action_kind`,
-      params,
-    ),
-    scanRead(
-      db,
-      auth,
-      `SELECT s.reason AS reason, COUNT(*) AS n ${from}
+        params,
+      ),
+      scanRead(
+        db,
+        auth,
+        `SELECT s.reason AS reason, COUNT(*) AS n ${from}
         AND s.outcome IS NOT 'ok' AND s.reason IS NOT NULL GROUP BY s.reason ORDER BY n DESC, s.reason LIMIT 20`,
-      params,
-    ),
-    scanRead(
-      db,
-      auth,
-      `SELECT s.staff_id AS staff_id, st.name AS name, COUNT(*) AS n,
+        params,
+      ),
+      scanRead(
+        db,
+        auth,
+        `SELECT s.template_id AS id, tt.name AS name, COUNT(*) AS n ${fromOf(`
+    LEFT JOIN templates tt ON tt.id = s.template_id AND (tt.org_id IS NULL OR tt.org_id = s.org_id)`)}
+        AND s.outcome = 'ok' GROUP BY s.template_id ORDER BY n DESC, tt.name LIMIT 100`,
+        params,
+      ),
+      scanRead(
+        db,
+        auth,
+        `SELECT s.staff_id AS staff_id, st.name AS name, COUNT(*) AS n,
         COALESCE(SUM(s.override_of IS NOT NULL), 0) AS overrides, ${refused} AS refused ${from}
         GROUP BY s.staff_id ORDER BY n DESC, s.staff_id LIMIT ${STAFF_LIMIT}`,
-      params,
-    ),
-    scanRead(db, auth, `SELECT COUNT(*) AS n ${from} AND s.override_of IS NOT NULL`, params),
-    scanRead(
-      db,
-      auth,
-      `SELECT s.id AS id, s.at AS at, st.name AS staff_name, ap.name AS approver, ov.reason AS reason
+        params,
+      ),
+      scanRead(db, auth, `SELECT COUNT(*) AS n ${from} AND s.override_of IS NOT NULL`, params),
+      scanRead(
+        db,
+        auth,
+        `SELECT s.id AS id, s.at AS at, st.name AS staff_name, ap.name AS approver, ov.reason AS reason
         ${fromOf(`
     LEFT JOIN scan_staff ap ON ap.id = s.approved_by AND ap.org_id = s.org_id
     LEFT JOIN scans ov ON ov.id = s.override_of AND ov.org_id = s.org_id`)}
         AND s.override_of IS NOT NULL ORDER BY s.at DESC, s.id DESC LIMIT ${OVERRIDE_LIMIT}`,
-      params,
-    ),
-  ]);
+        params,
+      ),
+    ]);
   const ok = (authorized?.results[0] as { authorized: number } | undefined)?.authorized === 1;
   const rows = <T>(r: D1Result | undefined): T[] => (ok ? ((r?.results ?? []) as T[]) : []);
   return {
@@ -123,6 +133,7 @@ export async function readSummaryExtras(
     quarters: rows(quarters),
     value: rows(value),
     reasons: rows(reasons),
+    types: rows(types),
     staff: rows(staff),
     overrideCount: ok ? ((count?.results[0] as { n: number } | undefined)?.n ?? 0) : 0,
     overrides: rows(overrides),
