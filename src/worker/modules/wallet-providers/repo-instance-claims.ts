@@ -6,6 +6,7 @@ import type {
   WalletOperationRef,
 } from './instance-types.ts';
 import { isCredentialKeysetCommitment } from './instance-types.ts';
+import { walletEnrolmentIssuesSql } from './repo-enrolment-gate.ts';
 import { type Claim, CURRENT, CURRENT_OPERATION, SCOPE, scope } from './repo-instance-claim-sql.ts';
 
 export { finishOperation } from './repo-instance-finish.ts';
@@ -51,6 +52,7 @@ export async function operationFresh(
       `SELECT 1 FROM wallet_provider_instance_operations op
     JOIN wallet_provider_instances i ON i.id = op.instance_id
     WHERE ${SCOPE} AND op.version = ? AND ${CURRENT}
+      AND (op.kind != 'upsert' OR ${walletEnrolmentIssuesSql('i.org_id', 'i.mode', 'i.provider')})
       AND ${
         p.hash === undefined
           ? "op.kind = 'upsert' AND op.state IN ('pending', 'retry', 'claimed', 'succeeded')"

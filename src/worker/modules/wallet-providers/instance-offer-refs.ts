@@ -48,7 +48,7 @@ export async function createWalletOfferRef(
 ): Promise<{ ref: string; expiresAt: number } | null> {
   p = { ...p, authority: { ...p.authority } };
   if (
-    !walletProviderEnabled(p.provider) ||
+    !walletProviderEnabled(p.provider, p.mode) ||
     !validCommitment(p.credentialKeysetCommitment) ||
     !scopeValid(p) ||
     !nonnegative(p.now) ||
@@ -81,7 +81,7 @@ export async function createWalletInstanceAndOffer(
 ): Promise<{ operation: WalletOperation; ref: string; expiresAt: number } | null> {
   p = { ...p, authority: { ...p.authority } };
   if (
-    !walletProviderEnabled(p.provider) ||
+    !walletProviderEnabled(p.provider, p.mode) ||
     !validProof(p, 'upsert') ||
     !validRequest(p.requestKey, p.now) ||
     !p.instanceId ||
@@ -191,7 +191,7 @@ export async function consumeWalletOfferRef(
     return null;
   const hash = await sha256Hex(ref);
   const binding = await readOffer(db, hash, now, credentialKeysetCommitment);
-  return binding && walletProviderEnabled(binding.provider)
+  return binding && walletProviderEnabled(binding.provider, binding.mode)
     ? consumeOffer(db, hash, now, credentialKeysetCommitment)
     : null;
 }
@@ -205,7 +205,7 @@ export async function walletOfferFresh(
   if (!validCommitment(credentialKeysetCommitment) || !validRef(ref) || !nonnegative(now))
     return false;
   const binding = await readOffer(db, await sha256Hex(ref), now, credentialKeysetCommitment);
-  return !!binding && walletProviderEnabled(binding.provider);
+  return !!binding && walletProviderEnabled(binding.provider, binding.mode);
 }
 export async function expireWalletOfferRef(
   db: D1Database,
