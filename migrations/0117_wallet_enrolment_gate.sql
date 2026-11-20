@@ -9,7 +9,7 @@ WHEN NEW.lifecycle = 'active' AND NEW.account_id IS NOT NULL AND EXISTS (
 BEGIN SELECT RAISE(ABORT, 'provider enrolment is not on'); END;
 
 CREATE TRIGGER wallet_enrolment_gate_instance_activate BEFORE UPDATE OF lifecycle ON wallet_provider_instances
-WHEN OLD.lifecycle = 'ready' AND NEW.lifecycle = 'active' AND NEW.account_id IS NOT NULL AND EXISTS (
+WHEN OLD.lifecycle != 'active' AND NEW.lifecycle = 'active' AND NEW.account_id IS NOT NULL AND EXISTS (
   SELECT 1 FROM wallet_provider_accounts a WHERE a.id = NEW.account_id AND a.credential_id IS NULL
     AND (a.enabled_at IS NULL OR a.platform_hold_at IS NOT NULL OR a.revoked_at IS NOT NULL)
 )

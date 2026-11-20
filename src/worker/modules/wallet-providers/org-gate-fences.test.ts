@@ -2,13 +2,19 @@
 import { env } from 'cloudflare:workers';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeUser } from '../../../../test/helpers/index.ts';
-import { first } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
+import { sha256Hex } from '../../platform/ids.ts';
+import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { holdEnrolment } from './enrolment-hold.ts';
 import { enableEnrolment } from './enrolment-service.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { addCheck } from './repo-wallet-credentials-test-fixtures.ts';
-import { seedHistoricalOfferRef } from './runtime-historical-fixtures.ts';
+import {
+  seedHistoricalOfferRef,
+  seedHistoricalProviderInstance,
+} from './runtime-historical-fixtures.ts';
+import { historicalGoogleRelease } from './runtime-integration-fixtures.ts';
 import {
   dropInsertGuards,
   enrol,
@@ -65,5 +71,61 @@ describe('enrolment gate in the database and the claim proof', () => {
         seeded.instanceId,
       ]),
     ).toBeNull();
+
+    // Retirement is unaffected by the hold; a restore to active is refused.
+    const setLifecycle = (lifecycle: string) =>
+      run(env.DB, 'UPDATE wallet_provider_instances SET lifecycle = ? WHERE id = ?', [
+        lifecycle,
+        seeded.instanceId,
+      ]);
+    await setLifecycle('revoking');
+    await expect(setLifecycle('active')).rejects.toThrow(/enrolment is not on/);
+    await setLifecycle('revoked');
+    await expect(setLifecycle('active')).rejects.toThrow(/enrolment is not on/);
+  });
+
+  it('leaves a legacy envelope row alone: its instance and offer ref are not gated', async () => {
+    const f = await setupWalletOfferKit({
+      google: 'configured',
+      samsung: 'absent',
+      holderEmail: 'old@example.test',
+    });
+    const { kit, pass } = f;
+    const keyset = await requireCredentialRefKeyset(env.DB, kit.env);
+    const account = await first<{ id: string; enabled_at: number | null }>(
+      env.DB,
+      "SELECT id, enabled_at FROM wallet_provider_accounts WHERE org_id = ? AND mode = 'live' AND provider = 'google'",
+      [pass.orgId],
+    );
+    expect(account?.enabled_at).toBeNull();
+    const instanceId = kit.ctx.ids.id();
+    await seedHistoricalProviderInstance(env.DB, {
+      id: instanceId,
+      passId: pass.id,
+      orgId: pass.orgId,
+      mode: 'live',
+      provider: 'google',
+      credentialGeneration: 1,
+      credentialKeysetCommitment: keyset,
+      accountId: account?.id ?? '',
+      releaseId: await historicalGoogleRelease(f),
+      operationId: kit.ctx.ids.id(),
+      now: kit.clock.now(),
+      upsert: { requestHash: await sha256Hex('legacy-op'), state: 'succeeded' },
+    });
+    await seedHistoricalOfferRef(env.DB, {
+      refHash: 'b'.repeat(64),
+      instanceId,
+      operationVersion: 1,
+      createdAt: kit.clock.now(),
+      expiresAt: kit.clock.now() + 60_000,
+      consumedAt: null,
+      deliveredAt: null,
+    });
+    expect(
+      await first(env.DB, 'SELECT 1 FROM wallet_provider_offer_refs WHERE instance_id = ?', [
+        instanceId,
+      ]),
+    ).not.toBeNull();
   });
 });
