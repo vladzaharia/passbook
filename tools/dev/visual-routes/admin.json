@@ -413,5 +413,15 @@
     "role": "platform",
     "path": "/admin/users/{userId}",
     "name": "legacy-user-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/o/{orgId}/retention",
+    "name": "admin-retention"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/retention",
+    "name": "admin-platform-retention"
   }
 ]
