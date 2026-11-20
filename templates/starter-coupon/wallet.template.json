@@ -314,5 +314,11 @@
         "refused": "One per customer."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "half",
+    "barcode": "code128",
+    "kind": "coupon"
   }
 }

@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   IdParamSchema,
   MintedPrintSchema,
@@ -12,6 +13,7 @@ import { requestTheme } from '../../ssr/head.ts';
 import { PRINT_HEADERS, renderPrintPage } from '../../ssr/print-page.tsx';
 import { actorFor, authOf, passScopeOf, svc } from '../passes/http.ts';
 import { tenantPassForRead, tenantPassForWrite } from '../passes/pass-access.ts';
+import { openPublicAsset } from '../public/service.ts';
 import { printPageModel } from './page.ts';
 import { PDF_HEADERS, ticketPdf } from './pdf-service.ts';
 import * as repo from './repo.ts';
@@ -100,6 +102,7 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
           audience: 'staff',
           nonce: c.var.nonce,
           pdfHref: `/api/v1/passes/${encodeURIComponent(pass.id)}/print/pdf`,
+          assetBase: `/api/v1/passes/${encodeURIComponent(pass.id)}/print/assets/`,
           ...(theme ? { theme } : {}),
         });
         return new Response(html, { headers: PRINT_HEADERS });
@@ -131,6 +134,30 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
       const { id } = c.req.valid('param');
       const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
       return new Response(await ticketPdf(ctx, pass, 'staff'), { headers: PDF_HEADERS });
+    },
+  );
+
+  register(
+    passesRoutes,
+    'passes',
+    {
+      method: 'get',
+      path: '/{id}/print/assets/{name}',
+      summary: 'A template image of the print page, for staff',
+      params: IdParamSchema.extend({ name: z.string().max(200) }),
+    },
+    async (c) => {
+      const ctx = svc(c);
+      const { id, name } = c.req.valid('param');
+      const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
+      const asset = await openPublicAsset(ctx, pass, name);
+      return new Response(asset.body, {
+        headers: {
+          'content-type': 'image/png',
+          'cache-control': 'private, no-store',
+          'x-content-type-options': 'nosniff',
+        },
+      });
     },
   );
 }

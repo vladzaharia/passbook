@@ -1,40 +1,82 @@
 /**
- * What a printed ticket says, from a built pass and its template: event, date, venue, holder, type,
- * seat, terms, brand and any fields the design names. Roles come from the shared resolver
- * (wallets/roles.ts), so a ticket reads like the wallet copies. The scan code, the lookup value
- * and barcode messages are never read: the code on paper is the print code, added by the page.
+ * What a printed ticket says, from a built pass and its template. Renderer-neutral: dates are ISO
+ * strings plus a zone (format them with paper-format.ts), colours are `#rrggbb`, and nothing here
+ * knows about CSS or PDF. Roles come from the shared resolver (wallets/roles.ts), so a ticket reads
+ * like the wallet copies. The scan code, the lookup value and barcode messages are never read: the
+ * code on paper is the print code, added by the page.
  */
-import { placeDate } from '../../shared/pass-view/semantic.ts';
+import { PAPER_COPY } from '../../shared/copy/print.ts';
 import type { Expr, PassJson, Personalization, TemplateManifest } from '../types.ts';
 import { resolveRoles } from '../wallets/roles.ts';
-import type { ResolvedRoles, RoleValue } from '../wallets/types.ts';
+import type { RoleValue } from '../wallets/types.ts';
 import { buildFields, styleOf } from '../wallets/view-fields.ts';
 import { relevanceOf } from '../wallets/view-parts.ts';
 import { ExprError, evaluate } from './expr.ts';
 import { applyDefaults } from './manifest.ts';
-import type { PaperDesign } from './paper.ts';
+import { lookupIsPublic, type PaperDesign, type PaperInk, type PaperKind } from './paper.ts';
+import { paperZoneOf } from './paper-format.ts';
+import { type PaperColors, paperInk } from './paper-ink.ts';
+import { type Kinded, kindContent, kindOf } from './paper-kinds.ts';
+
+export type PaperArt = 'artwork' | 'background' | 'thumbnail' | 'strip';
+export interface PaperFact {
+  label: string;
+  text: string;
+}
 
 export interface PaperContent {
   brand: string;
-  event: string;
-  date?: string;
+  kind: PaperKind;
+  /** Resolved: `mono` when the design asks for it or the greyscale check fails. */
+  ink: PaperInk;
+  colors: PaperColors;
+  /** The art slot to draw in the band, when the template has one. */
+  art?: PaperArt;
+  /** The template has a logo; it always sits on a plate in the pass colour. */
+  logo: boolean;
+  title: string;
+  /** The class word above the title: "Event ticket", "Day pass". */
+  kicker: string;
+  /** "Ticket", "Pass": what the phone copy is called in the one-ticket line. */
+  noun: string;
+  start?: string;
+  end?: string;
+  doors?: string;
+  validFrom?: string;
+  validUntil?: string;
+  /** IANA name or `+hh:mm`; every time prints with this zone. */
+  zone?: string;
+  /** Venue, or the home club for a membership. */
   venue?: string;
+  address?: string;
+  room?: string;
+  directions?: string;
   holder?: string;
   type?: string;
-  seat?: string;
+  seat?: { section?: string; row?: string; seat?: string };
+  /** Up to three boxes on the holder panel: seat parts, or class facts. */
+  facts: PaperFact[];
+  items?: string[];
+  /** Permit zone and plate, coupon offer, pickup name. */
+  hero?: { zone?: string; plate?: string; offer?: string; offerNote?: string; name?: string };
+  bring: string[];
+  help: string[];
   terms?: string;
+  /** Fields the design names, after the credential guards. */
   extras: { label?: string; text: string }[];
 }
 
 export interface PaperContentInput {
   passJson: PassJson;
-  manifest: Pick<TemplateManifest, 'wallets' | 'inputs' | 'lookups' | 'scan'>;
+  manifest: Pick<TemplateManifest, 'wallets' | 'inputs' | 'lookups' | 'scan' | 'display' | 'name'>;
   personalization: Personalization;
   design: PaperDesign;
   /** The holder's name when the pass has one; never an email address. */
   holderName?: string | null;
   /** The pass's own scan code: a field equal to it is never printed. */
   scanCode?: string | null;
+  /** Image slots the template ships (`logo`, `artwork`, ...). Absent: the logo is assumed, no art. */
+  images?: readonly string[];
 }
 
 const text = (v: RoleValue | undefined): string | undefined => {
@@ -43,35 +85,34 @@ const text = (v: RoleValue | undefined): string | undefined => {
   return undefined;
 };
 
-function when(iso: string | undefined): string | undefined {
-  if (!iso) return undefined;
-  const at = placeDate(iso, { locale: 'en', now: new Date(0) }, { local: true });
-  if (!at) return undefined;
-  return new Intl.DateTimeFormat('en', {
-    weekday: 'short',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    ...(at.timeZone ? { timeZone: at.timeZone } : {}),
-  }).format(at.date);
-}
-
-function seatOf(roles: ResolvedRoles): string | undefined {
-  const parts = [
-    text(roles.section) && `Section ${text(roles.section)}`,
-    text(roles.row) && `Row ${text(roles.row)}`,
-    text(roles.seat) && `Seat ${text(roles.seat)}`,
-    text(roles.gate) && `Gate ${text(roles.gate)}`,
-  ].filter(Boolean);
-  return parts.length ? parts.join(', ') : undefined;
-}
-
 const plain = (v: unknown): string | undefined => {
   if (typeof v === 'string' || typeof v === 'number') return String(v).trim() || undefined;
   return undefined;
 };
+
+const ART_ORDER: Record<PaperKind, PaperArt[]> = {
+  coupon: ['strip', 'artwork', 'background'],
+  admission: ['artwork', 'background', 'thumbnail', 'strip'],
+  // Never the thumbnail: on an ID card it is the member's photo.
+  membership: ['artwork', 'background'],
+  permit: [],
+  pickup: [],
+};
+const MAX_HELP = 3;
+const MAX_BRING = 4;
+
+/** An address that starts with the venue name drops the repeat; one that equals it vanishes. */
+export function dedupeAddress(venue: string | undefined, address: string | undefined) {
+  if (!address) return undefined;
+  if (!venue) return address;
+  let rest = address;
+  while (rest.toLowerCase().startsWith(venue.toLowerCase()))
+    rest = rest
+      .slice(venue.length)
+      .replace(/^[\s,·–-]+/, '')
+      .trim();
+  return rest || undefined;
+}
 
 /** The ticket's words. Pure; the same pass and design always give the same content. */
 export function paperContent(input: PaperContentInput): PaperContent {
@@ -104,30 +145,24 @@ export function paperContent(input: PaperContentInput): PaperContent {
     manifest.wallets?.roles,
     evalExpr,
   );
-  const start = roles.eventStart?.kind === 'date' ? roles.eventStart.iso : undefined;
-  const venueName = text(roles.venueName);
-  const venueAddress = text(roles.venueAddress);
-  // The address often repeats the venue name ("Grand Hall, Portland"): say it once.
-  const venue =
-    venueName && venueAddress?.toLowerCase().includes(venueName.toLowerCase())
-      ? venueAddress
-      : [venueName, venueAddress].filter(Boolean).join(', ');
-  let terms: string | undefined;
-  if (design.terms !== undefined) {
+  const evalText = (e: Expr): string | undefined => {
     try {
-      terms = plain(evalExpr(design.terms));
+      return plain(evalExpr(e));
     } catch (error) {
-      // A bad expression is the author's data problem: no terms. Anything else is a bug.
+      // A bad expression is the author's data problem: nothing printed. Anything else is a bug.
       if (!(error instanceof ExprError)) throw error;
-      terms = undefined;
+      return undefined;
     }
-  }
-  terms ??= text(roles.finePrint);
+  };
   const lookup = (manifest.scan as { lookup?: { input?: unknown } } | undefined)?.lookup?.input;
+  const lookupValue = typeof lookup === 'string' ? plain(input.personalization[lookup]) : undefined;
+  // A template that declares its lookup public may print it (a permit's plate).
+  const publicLookup = lookupIsPublic(manifest);
   const credentials = new Set<string>(
     [
       passJson.serialNumber,
       input.scanCode,
+      publicLookup ? undefined : lookupValue,
       ...[...(passJson.barcodes ?? []), ...(passJson.barcode ? [passJson.barcode] : [])].flatMap(
         (b) => [b.message, b.altText],
       ),
@@ -135,31 +170,123 @@ export function paperContent(input: PaperContentInput): PaperContent {
       .filter((v): v is string => typeof v === 'string' && v.trim() !== '')
       .map((v) => v.trim()),
   );
+  // The barcode's alt text is often the lookup value itself; public lets that value through.
+  if (
+    publicLookup &&
+    lookupValue &&
+    lookupValue !== input.scanCode &&
+    lookupValue !== passJson.serialNumber
+  )
+    credentials.delete(lookupValue);
+  const semantics = (passJson.semantics ?? {}) as Record<string, unknown>;
+  const field = (...keys: string[]): string | undefined => {
+    for (const key of keys) {
+      const f = fields.find((x) => x.key === key);
+      const value = f?.text.trim();
+      if (value && !credentials.has(value)) return value;
+    }
+    return undefined;
+  };
+  const tzInput = Object.entries(manifest.inputs?.properties ?? {}).find(
+    ([, schema]) => (schema as Record<string, unknown>)['x-timeZone'] === true,
+  )?.[0];
+  const named = tzInput ? plain(input.personalization[tzInput]) : undefined;
+
+  const kind: PaperKind = design.kind ?? kindOf(manifest, style, roles);
+  const ctx: Kinded = {
+    kind,
+    roles,
+    field,
+    semantics,
+    holderName: input.holderName ?? undefined,
+    publicLookup: publicLookup ? lookupValue : undefined,
+  };
+  const parts = kindContent(ctx);
+  const venue = parts.venue;
+  const holder = parts.holder;
+  // A terms expression of the design is the author's word, even when it comes out empty.
+  const terms =
+    design.terms === undefined
+      ? (text(roles.finePrint) ?? (kind === 'coupon' ? field('fine') : field('terms', 'fine')))
+      : evalText(design.terms);
   const extras = design.fields.flatMap((ref) => {
     const key = ref.split('.').at(-1);
     const f = fields.find((x) => x.path === ref || x.key === key);
-    if (!f?.text.trim()) return [];
-    const value = f.text.trim();
-    if (typeof lookup === 'string' && plain(input.personalization[lookup]) === value) return [];
-    // Never a second door credential: a field that equals a barcode message, its alt text or the serial.
-    if (credentials.has(value)) return [];
-    return [{ ...(f.label ? { label: f.label } : {}), text: f.text.trim() }];
+    const value = f?.text.trim();
+    // Never a second door credential: a field equal to the lookup value, a barcode message, its
+    // alt text, the scan code or the serial.
+    if (!f || !value || credentials.has(value)) return [];
+    return [{ ...(f.label ? { label: f.label } : {}), text: value }];
   });
-  const holder =
-    text(roles.ticketHolder) ?? text(roles.memberName) ?? input.holderName ?? undefined;
-  const seat = seatOf(roles);
-  const admission = (passJson.semantics as Record<string, unknown> | undefined)?.admissionLevel;
-  const type = text(roles.tier) ?? plain(admission);
-  const date = when(start);
+  const mono = design.ink === 'mono';
+  const { colour, colors } = paperInk(passJson);
+  const have = new Set(input.images);
+  const art = input.images ? ART_ORDER[kind].find((slot) => have.has(slot)) : undefined;
+
+  const title = parts.title ?? text(roles.title) ?? passJson.description;
+  const label = parts.kicker ?? manifest.name;
+  // The permit blueprint's own label is "Permit"; on paper it says what it is.
+  const kicker = (kind === 'permit' && label === 'Permit' ? 'Parking permit' : label) ?? title;
+  const noun = kind === 'admission' && !/pass|card/i.test(kicker) ? 'ticket' : 'pass';
+  const idRequired = idFlagged(manifest, input.personalization);
+  const bring = [
+    PAPER_COPY.bringDefault(noun),
+    ...(idRequired && holder ? [PAPER_COPY.bringId(holder)] : []),
+    ...(design.bring === undefined ? [] : (evalText(design.bring) ?? '').split('\n')),
+  ]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, MAX_BRING);
+  const helpLinks =
+    roles.support?.kind === 'links' ? roles.support.links.map((l) => l.text ?? l.url) : [];
+  const help = [
+    ...new Set(
+      [field('contact'), field('phone'), field('support'), field('site', 'website'), ...helpLinks]
+        .filter((v): v is string => Boolean(v))
+        .map((v) => v.replace(/^(?:mailto:|tel:)/, '')),
+    ),
+  ].slice(0, MAX_HELP);
+  const zone = paperZoneOf(parts.start ?? parts.validUntil ?? parts.end, named);
+  const room = parts.room && parts.room !== venue ? parts.room : undefined;
+  const address = dedupeAddress(room, dedupeAddress(venue, parts.address));
   return {
     brand: passJson.organizationName,
-    event: text(roles.eventName) ?? text(roles.title) ?? passJson.description,
-    ...(date ? { date } : {}),
+    kind,
+    ink: mono || !colour ? 'mono' : 'colour',
+    colors,
+    ...(art ? { art } : {}),
+    logo: input.images ? have.has('logo') : true,
+    title,
+    kicker,
+    noun,
+    ...(parts.start ? { start: parts.start } : {}),
+    ...(parts.end ? { end: parts.end } : {}),
+    ...(parts.doors ? { doors: parts.doors } : {}),
+    ...(parts.validFrom ? { validFrom: parts.validFrom } : {}),
+    ...(parts.validUntil ? { validUntil: parts.validUntil } : {}),
+    ...(zone ? { zone } : {}),
     ...(venue ? { venue } : {}),
+    ...(address ? { address } : {}),
+    ...(room ? { room } : {}),
+    ...(parts.directions ? { directions: parts.directions } : {}),
     ...(holder ? { holder } : {}),
-    ...(type ? { type } : {}),
-    ...(seat ? { seat } : {}),
+    ...(parts.type ? { type: parts.type } : {}),
+    ...(parts.seat ? { seat: parts.seat } : {}),
+    facts: parts.facts.slice(0, 3),
+    ...(parts.items?.length ? { items: parts.items } : {}),
+    ...(parts.hero ? { hero: parts.hero } : {}),
+    bring,
+    help,
     ...(terms ? { terms } : {}),
     extras,
-  } as PaperContent;
+  };
+}
+
+/** `scan.flags` names an `idRequired` input and this pass has it on. */
+function idFlagged(manifest: PaperContentInput['manifest'], personalization: Personalization) {
+  const flags = (manifest.scan as { flags?: { input?: string }[] } | undefined)?.flags ?? [];
+  return flags.some((f) => {
+    const v = f.input === 'idRequired' ? personalization.idRequired : undefined;
+    return v === true || (typeof v === 'string' && /^(true|yes|y|1)$/i.test(v));
+  });
 }

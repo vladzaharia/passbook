@@ -67,6 +67,8 @@ export function scanIssues(manifest: TemplateManifest): ValidationIssue[] {
         'lookup.input must be a text or whole-number input.',
         'scan.lookup',
       );
+    if (isRecord(lookup) && lookup.public !== undefined && typeof lookup.public !== 'boolean')
+      error('SCAN_LOOKUP_PUBLIC', 'lookup.public is true or false.', 'scan.lookup.public');
   }
 
   if (scan.window !== undefined) {

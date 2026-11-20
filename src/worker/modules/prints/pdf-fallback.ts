@@ -1,6 +1,7 @@
 import { PDFDocument, type PDFFont, type PDFPage, rgb, StandardFonts } from 'pdf-lib';
 import { PAPER_SPECS, type PaperDesign } from '../../../passkit/template/paper.ts';
 import type { PaperContent } from '../../../passkit/template/paper-content.ts';
+import { type PaperPlain, paperPlain } from '../../../passkit/template/paper-text.ts';
 import { groupPrintCode, PRINT_COPY } from '../../../shared/copy/print.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
 import { drawPaperCode } from '../../../web/paper/drawing.ts';
@@ -48,9 +49,11 @@ function fold(font: PDFFont, s: string, state: { lossy: boolean }): string {
   return out;
 }
 
-function foldSheet(font: PDFFont, sheet: PrintSheet, state: { lossy: boolean }): PrintSheet {
+type DrawSheet = Omit<PrintSheet, 'content'> & { content: PaperPlain };
+
+function foldSheet(font: PDFFont, sheet: PrintSheet, state: { lossy: boolean }): DrawSheet {
   const f = (v: string) => fold(font, v, state);
-  const c = sheet.content;
+  const c = paperPlain(sheet.content);
   return {
     ...sheet,
     content: {
@@ -91,7 +94,7 @@ interface Code {
   scale: number;
 }
 
-function codeOf(sheet: PrintSheet): Code | null {
+function codeOf(sheet: DrawSheet): Code | null {
   const { design, code } = sheet;
   const drawing = drawPaperCode(toSvg, design.barcode, code);
   if (!drawing) return null;
@@ -125,7 +128,7 @@ const TYPE = {
 } as const;
 
 /** Half sheets and cards put the code in a right column, as the HTML design does; A4 and Letter stack it. */
-function drawSheet(page: PDFPage, sheet: PrintSheet, f: Fonts): void {
+function drawSheet(page: PDFPage, sheet: DrawSheet, f: Fonts): void {
   const { design, content } = sheet;
   const spec = PAPER_SPECS[design.size];
   const small = design.size === 'half' || design.size === 'cr80';

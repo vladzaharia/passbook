@@ -356,5 +356,11 @@
         "refused": "Send them to the desk for the next slot."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "a4",
+    "barcode": "qr",
+    "kind": "admission"
   }
 }

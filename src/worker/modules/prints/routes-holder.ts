@@ -51,6 +51,7 @@ holderPrintRoutes.get('/:token/print', async (c) => {
       audience: 'holder',
       backHref: `/p/${token}`,
       pdfHref: `/p/${token}/print/pdf`,
+      assetBase: `/p/${token}/assets/`,
       nonce: c.var.nonce,
       ...(theme ? { theme } : {}),
     });

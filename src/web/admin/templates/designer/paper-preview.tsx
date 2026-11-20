@@ -7,6 +7,7 @@ import {
   type PaperSize,
   resolvePaper,
 } from '@/passkit/template/paper.ts';
+import { bestImage, imageSlots } from '@/passkit/template/paper-assets.ts';
 import { paperContent } from '@/passkit/template/paper-content.ts';
 import type { PassJson, TemplateManifest } from '@/passkit/types.ts';
 import { TemplateChannelsResponseSchema } from '@/shared/contracts/channels.ts';
@@ -22,10 +23,13 @@ import {
   Badge,
   Button,
   Callout,
+  CheckboxField,
   EmptyState,
   SegmentedControl,
   Skeleton,
 } from '../../../ui/index.ts';
+import { previewAssetMap } from './images.ts';
+import type { DraftAsset } from './model.ts';
 import type { PaperPatch } from './ops-paper.ts';
 import { PaperEditor } from './paper-editor.tsx';
 
@@ -80,10 +84,15 @@ export function PaperPreview({
   manifest,
   templateId,
   orgId,
+  assets = [],
+  assetBase = '',
   onEdit,
 }: {
   passJson: Record<string, unknown> | null | undefined;
   manifest: Record<string, unknown>;
+  /** The draft's images and where saved ones are served: the sheet shows the logo and art. */
+  assets?: readonly DraftAsset[] | undefined;
+  assetBase?: string | undefined;
   templateId?: string | undefined;
   orgId?: string | undefined;
   /** Writes the block; absent when the draft is read-only. */
@@ -93,6 +102,7 @@ export function PaperPreview({
   const channels = useTemplatePaper(templateId, orgId);
   const saved = useMemo(() => resolvePaper(manifest.paper), [manifest.paper]);
   const [picked, setPicked] = useState<PaperSize>(saved.size);
+  const [grey, setGrey] = useState(false);
   const design = useMemo<PaperDesign>(() => ({ ...saved, size: picked }), [saved, picked]);
   const drawing = useDrawing(design);
   const paper = channels.data?.effective.paper;
@@ -107,11 +117,20 @@ export function PaperPreview({
         personalization: (manifest.sample as Record<string, never> | undefined) ?? {},
         design: saved,
         holderName: 'Sample holder',
+        images: imageSlots(assets),
       });
     } catch {
       return null;
     }
-  }, [passJson, manifest, saved]);
+  }, [passJson, manifest, saved, assets]);
+  const urls = useMemo(() => previewAssetMap(assets, assetBase), [assets, assetBase]);
+  const files = useMemo(() => {
+    const url = (name: string | undefined) => (name ? urls[name] : undefined);
+    return {
+      logo: url(bestImage(assets, 'logo')),
+      art: url(content?.art ? bestImage(assets, content.art) : undefined),
+    };
+  }, [assets, urls, content?.art]);
 
   return (
     <div className="flex w-full flex-col items-center gap-3" data-testid="designer-paper">
@@ -135,9 +154,23 @@ export function PaperPreview({
             }}
             className="self-center"
           />
-          <div className={`w-full ${WIDTH[picked]}`}>
+          <CheckboxField
+            label={PRINT_COPY.greyscale}
+            checked={grey}
+            onCheckedChange={(on) => setGrey(on === true)}
+          />
+          <div
+            className={`w-full ${WIDTH[picked]}`}
+            style={grey ? { filter: 'grayscale(1)' } : undefined}
+          >
             {content && drawing !== null ? (
-              <PaperTicket content={content} design={design} code={SAMPLE_CODE} drawing={drawing} />
+              <PaperTicket
+                content={content}
+                design={design}
+                code={SAMPLE_CODE}
+                drawing={drawing}
+                assets={files}
+              />
             ) : passJson && content === null ? (
               <p role="alert" className="text-sm text-danger">
                 This ticket cannot be previewed. See the issues.
@@ -150,6 +183,9 @@ export function PaperPreview({
             <Badge tone="neutral">{PRINT_COPY.sample}</Badge>
             {saved.derived ? <Badge tone="neutral">{PRINT_COPY.derived}</Badge> : null}
             {saved.holder ? null : <Badge tone="warning">{PRINT_COPY.staffOnly}</Badge>}
+            {content?.ink === 'mono' && saved.ink !== 'mono' ? (
+              <Badge tone="neutral">{PRINT_COPY.inkMonoNote}</Badge>
+            ) : null}
           </div>
           {onEdit && saved.derived ? (
             <Button variant="outline" onClick={() => onEdit({ size: picked })}>

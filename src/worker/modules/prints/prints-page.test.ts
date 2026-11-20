@@ -91,8 +91,11 @@ describe('holder print page', () => {
     expect((await holder(t, 'POST')).status).toBe(200);
     const page = await holder(t);
     const html = await page.text();
-    expect(html).toContain('class="pp-sheet pp-a4"');
+    expect(html).toContain('class="pp-sheet pp-page pp-a4');
     expect(html).toMatch(GROUPED);
+    // The org's bar leads; the PassBook band is not on a holder's print page.
+    expect(html).toContain('<header class="sticky');
+    expect(html).not.toContain('class="band"');
     expect(html).toContain('data-act="reprint"');
     expect(await count(pass.id)).toBe(1);
     expect(page.headers.get('cache-control')).toBe('private, no-store');
@@ -119,7 +122,7 @@ describe('holder print page', () => {
     const html = await (await holder(t)).text();
     expect(html).toContain('pp-half');
     expect(html).toContain('@page{size:210mm 148mm;margin:0}');
-    expect(html).toContain('aria-label="Code 128 barcode"');
+    expect(html).toContain('aria-label="Code 128 barcode. Ticket code');
   });
 });
 
@@ -177,5 +180,30 @@ describe('staff print page', () => {
     expect(denied.status).toBe(403);
     const stranger = await kit.api(`/passes/${pass.id}/print`, { headers: kit.auth.user() });
     expect([403, 404]).toContain(stranger.status);
+  });
+});
+
+describe('staff print page images', () => {
+  it('serves a template image to passes:operate, refuses readers and unknown names', async () => {
+    const { kit, api, withPaper } = await setup();
+    const pass = await withPaper();
+    await api('POST', `/passes/${pass.id}/prints`);
+    const page = await (
+      await kit.api(`/passes/${pass.id}/print`, { headers: kit.auth.admin() })
+    ).text();
+    expect(page).toContain('Print ticket');
+    const ok = await kit.api(`/passes/${pass.id}/print/assets/icon.png`, {
+      headers: kit.auth.admin(),
+    });
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get('content-type')).toBe('image/png');
+    expect(ok.headers.get('cache-control')).toBe('private, no-store');
+    const missing = await kit.api(`/passes/${pass.id}/print/assets/nope.png`, {
+      headers: kit.auth.admin(),
+    });
+    expect(missing.status).toBe(404);
+    const reader = await kit.auth.apiKey({ orgId: kit.org.id, scopes: ['passes:read'] });
+    const denied = await kit.api(`/passes/${pass.id}/print/assets/icon.png`, { headers: reader });
+    expect(denied.status).toBe(403);
   });
 });

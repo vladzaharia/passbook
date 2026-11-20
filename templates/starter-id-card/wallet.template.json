@@ -285,5 +285,12 @@
         "refused": "Send them to the office."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "cr80",
+    "barcode": "qr",
+    "kind": "membership",
+    "ink": "mono"
   }
 }

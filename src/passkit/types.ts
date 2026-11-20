@@ -224,7 +224,7 @@ export interface ScanManifest {
   /** 1-6. */
   actions: ScanAction[];
   /** A typed member, card or ticket number. */
-  lookup?: { input: string };
+  lookup?: { input: string; public?: boolean };
   window?: { from?: string; until?: string; earlyMinutes?: number; lateMinutes?: number };
   flags?: { input: string; label: string; equals?: string[]; stop?: boolean }[];
   /** The result screen. No display means `defaultScanDisplay` at read, never persisted. */

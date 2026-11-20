@@ -40,6 +40,27 @@ describe('paper block validation', () => {
     expect(codes({ ...base, fields: ['order'] })).toContain('PAPER_LOOKUP_FIELD');
   });
 
+  it('lets paper print the lookup value only when the template declares it public', () => {
+    const base = { schema: 1, size: 'a4', barcode: 'qr' };
+    const lookup = (value: unknown) =>
+      ({
+        ...EVENT_MANIFEST,
+        scan: { lookup: { input: 'ticketNo', ...(value === undefined ? {} : { public: value }) } },
+        paper: { ...base, terms: 'No. {{ticketNo}}', fields: ['order'] },
+      }) as unknown as TemplateManifest;
+    const codesOf = (m: TemplateManifest) =>
+      paperManifestIssues(m, { passJson: EVENT_PASS }).map((i) => i.code);
+    expect(codesOf(lookup(undefined))).toContain('PAPER_LOOKUP_FIELD');
+    expect(codesOf(lookup(false))).toContain('PAPER_LOOKUP_FIELD');
+    expect(codesOf(lookup(true))).not.toContain('PAPER_LOOKUP_FIELD');
+    // The scan code stays private whatever the lookup says.
+    const scanCode = {
+      ...lookup(true),
+      paper: { ...base, terms: '{{pass.scanCode}}' },
+    } as unknown as TemplateManifest;
+    expect(codesOf(scanCode)).toContain('PAPER_SCAN_CODE');
+  });
+
   it('refuses a field bound to the scan code and a card with Code 128', () => {
     const m = {
       ...EVENT_MANIFEST,
@@ -63,6 +84,31 @@ describe('paper block validation', () => {
     expect(issues).toMatchObject([{ severity: 'warning', code: 'PAPER_FIELD' }]);
   });
 
+  it('accepts kind, ink, fold, bring and buddy, and refuses bad values', () => {
+    const base = { schema: 1, size: 'a4', barcode: 'qr' };
+    expect(
+      codes({ ...base, kind: 'permit', ink: 'mono', fold: false, bring: 'Water', buddy: true }),
+    ).toEqual([]);
+    expect(codes({ ...base, kind: 'ticket' })).toEqual(['PAPER_KIND']);
+    expect(codes({ ...base, ink: 'sepia' })).toEqual(['PAPER_INK']);
+    expect(codes({ ...base, bring: 'Code {{pass.scanCode}}' })).toContain('PAPER_SCAN_CODE');
+    expect(codes({ ...base, bring: 'No. {{ticketNo}}' })).toContain('PAPER_LOOKUP_FIELD');
+  });
+
+  it('warns when the pass colours do not survive black and white', () => {
+    const pastel = {
+      ...EVENT_PASS,
+      backgroundColor: 'rgb(206,242,226)',
+      foregroundColor: 'rgb(12,52,38)',
+    };
+    const base = withPaper({ schema: 1, size: 'a4', barcode: 'qr' });
+    expect(paperManifestIssues(base, { passJson: pastel }).map((i) => i.code)).toEqual([
+      'PAPER_INK',
+    ]);
+    const mono = withPaper({ schema: 1, size: 'a4', barcode: 'qr', ink: 'mono' });
+    expect(paperManifestIssues(mono, { passJson: pastel })).toEqual([]);
+  });
+
   it('runs inside validateManifest', () => {
     const issues = validateManifest(withPaper({ schema: 1, size: 'a3', barcode: 'qr' }));
     expect(issues.some((i) => i.code === 'PAPER_SIZE')).toBe(true);
@@ -78,6 +124,9 @@ describe('paper design', () => {
       barcode: 'code128',
       fields: [],
       holder: false,
+      ink: 'colour',
+      fold: true,
+      buddy: false,
       derived: false,
     });
     expect(resolvePaper({ schema: 1, size: 'a4', barcode: 'qr' }).holder).toBe(true);
@@ -98,34 +147,46 @@ describe('paper content derivation', () => {
       ...(holderName ? { holderName } : {}),
     });
 
-  it('reads event, date, venue, holder, type and seat from the roles', () => {
-    expect(content()).toEqual({
+  it('reads title, times, venue, holder, type and seat from the roles', () => {
+    expect(content()).toMatchObject({
       brand: 'Northwind Hall',
-      event: 'Spring Concert',
-      date: 'Mon, April 12, 2027 at 7:30 PM',
+      kind: 'admission',
+      title: 'Spring Concert',
+      start: '2027-04-12T19:30:00-05:00',
+      zone: '-05:00',
       venue: 'Northwind Hall',
       holder: 'Ada Lovelace',
       type: 'General admission',
-      seat: 'Section B, Row 4, Seat 12',
-      extras: [],
+      seat: { section: 'B', row: '4', seat: '12' },
+      facts: [
+        { label: 'Section', text: 'B' },
+        { label: 'Row', text: '4' },
+        { label: 'Seat', text: '12' },
+      ],
     });
   });
 
   it('says the venue once when the address repeats it', () => {
     const passJson = {
       ...EVENT_PASS,
-      semantics: { ...EVENT_PASS.semantics, venueRoom: 'Grand Hall', venueRegionName: 'Portland' },
+      semantics: {
+        ...EVENT_PASS.semantics,
+        venueName: 'Grand Hall',
+        venueRoom: 'Grand Hall',
+        venueRegionName: 'Portland',
+      },
     } as typeof EVENT_PASS;
     const c = paperContent({
-      passJson: {
-        ...passJson,
-        semantics: { ...passJson.semantics, venueName: 'Grand Hall' },
-      } as typeof EVENT_PASS,
+      passJson,
       manifest: EVENT_MANIFEST,
       personalization: { name: 'Ada', ticketNo: 'T-77' },
       design: DERIVED_PAPER,
     });
-    expect(c.venue).toBe('Grand Hall, Portland');
+    const lines = [c.venue, c.address, c.room].filter(Boolean);
+    expect(c.venue).toBe('Grand Hall');
+    expect(c.address).toBe('Portland');
+    expect(new Set(lines).size).toBe(lines.length);
+    expect(JSON.stringify(c).match(/Grand Hall/g)).toHaveLength(1);
   });
 
   it('never carries the scan code or the lookup value', () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resolvePaper } from '../../../passkit/template/paper.ts';
+import type { PaperContent } from '../../../passkit/template/paper-content.ts';
 import { fallbackPdf } from './pdf-fallback.ts';
 import { pdfText } from './pdf-test-fixtures.ts';
 
@@ -7,7 +8,22 @@ const design = resolvePaper(undefined);
 const sheet = (holder: string, venue = 'Hall') => ({
   design,
   code: 'PFM3CZW77MCQRJHH2FZ7A73R5XY',
-  content: { brand: 'Brand', event: 'Show', venue, holder, extras: [] },
+  content: {
+    brand: 'Brand',
+    kind: 'admission',
+    ink: 'colour',
+    colors: { bg: '#333333', fg: '#ffffff', label: '#dddddd' },
+    logo: true,
+    title: 'Show',
+    kicker: 'Ticket',
+    noun: 'ticket',
+    venue,
+    holder,
+    facts: [],
+    bring: [],
+    help: [],
+    extras: [],
+  } satisfies PaperContent,
 });
 
 describe('pdf-lib fallback text', () => {
