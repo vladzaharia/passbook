@@ -1,5 +1,15 @@
 import { ChevronRight } from 'lucide-react';
-import { Card, CardBody, CardHeader, CodeBlock, SecretReveal } from '../../ui/index.ts';
+import type { RecipeInfo } from '@/shared/contracts/connections.ts';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  CodeBlock,
+  CopyField,
+  SecretReveal,
+} from '../../ui/index.ts';
+import { RECIPE_COPY } from './recipe-copy.ts';
 
 /** The default body each connector reads: records pushed whole, or refs to fetch. */
 const BODY: Record<string, string> = {
@@ -27,13 +37,45 @@ export function CreatedStep({
   url,
   secret,
   connectorType,
+  sender,
   onDone,
 }: {
   url: string | null;
-  secret: string;
+  /** None when the sender made it and it was pasted. */
+  secret: string | undefined;
   connectorType: string;
+  sender?: RecipeInfo | undefined;
   onDone: () => void;
 }) {
+  const topics = sender && sender.id !== 'custom' ? RECIPE_COPY[sender.id].topics : [];
+  const setup =
+    topics.length > 0 ? (
+      <p className="text-sm text-fg-muted">
+        Add this URL in {sender?.label.split(' ')[0]} and subscribe to: {topics.join(', ')}.
+      </p>
+    ) : null;
+  // The sender made the secret and it was pasted: nothing secret to show once.
+  if (!secret)
+    return (
+      <Card className="max-w-2xl">
+        <CardHeader title="Connect your system" />
+        <CardBody className="flex flex-col gap-4">
+          {url ? (
+            <CopyField
+              label="Endpoint URL"
+              value={url}
+              copyLabel="Copy endpoint URL"
+              secret={false}
+              sheen={false}
+            />
+          ) : null}
+          {setup}
+          <div>
+            <Button onClick={onDone}>Done</Button>
+          </div>
+        </CardBody>
+      </Card>
+    );
   return (
     <Card className="max-w-2xl">
       <CardHeader title="Connect your system" />
@@ -56,7 +98,8 @@ export function CreatedStep({
           ]}
           onDone={onDone}
         >
-          {url ? (
+          {setup}
+          {url && !sender ? (
             <details className="group min-w-0">
               <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1.5 rounded-sm text-sm font-medium text-fg [&::-webkit-details-marker]:hidden">
                 <ChevronRight

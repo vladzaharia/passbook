@@ -39,6 +39,7 @@ export function lifecycleOf(c: Detail): Lifecycle {
     autoCreate: c.autoCreate,
     autoEmail: c.autoEmail,
     onMissing: c.onMissing,
+    voidWhen: c.voidWhen,
   };
 }
 
