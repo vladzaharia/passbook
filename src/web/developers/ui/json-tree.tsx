@@ -6,12 +6,17 @@ import { copyToClipboard as copyText } from '../shell/copy.ts';
 const MAX_ITEMS = 100;
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** Pages a response may link to: the TEST preview, pass pages and these docs. Not sign-in or API paths. */
+const LINKABLE = [/^\/preview\//, /^\/p\//, /^\/developers(\/|$)/];
+
 /** A link only to this site: a response cannot make us link anywhere else, nor to a `javascript:` URL. */
 export function safeLink(value: string): string | null {
   try {
     const url = new URL(value);
     const web = url.protocol === 'https:' || url.protocol === 'http:';
-    return web && url.origin === location.origin ? url.href : null;
+    return web && url.origin === location.origin && LINKABLE.some((r) => r.test(url.pathname))
+      ? url.href
+      : null;
   } catch {
     return null;
   }

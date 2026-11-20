@@ -30,6 +30,7 @@ export function OpConsole({ op, origin, csrf, templateId, codes }: ConsoleProps)
   const [error, setError] = useState<string | null>(null);
   const [spent, setSpent] = useState(() => remaining() === 0);
   const live = useRef(true);
+  const pressRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     live.current = true;
@@ -69,9 +70,10 @@ export function OpConsole({ op, origin, csrf, templateId, codes }: ConsoleProps)
     <div
       className="run-root"
       onKeyDown={(e) => {
-        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !pending) {
+        // Same gate as the button: validation, budget and the destructive second press.
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
           e.preventDefault();
-          run();
+          pressRef.current?.();
         }
       }}
     >
@@ -87,6 +89,7 @@ export function OpConsole({ op, origin, csrf, templateId, codes }: ConsoleProps)
             set={setDraft}
             setTab={setTab}
             run={run}
+            pressRef={pressRef}
           />
         }
         body={

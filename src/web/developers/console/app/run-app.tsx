@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { PATHS } from '../../../../shared/developers.ts';
 import { Ticket } from '../../ui/ticket.tsx';
 import { loadFile, loadIndex } from '../data.ts';
-import { type Sandbox, type Session, setSession as shareSession } from '../session.ts';
+import type { Sandbox, Session } from '../session.ts';
 import { retain } from '../token.ts';
 import type { RunIndex, RunIndexItem, RunOp } from '../types.ts';
 import { OpConsole } from './console.tsx';
@@ -101,7 +101,12 @@ function Ready({
 }
 
 function fromHash(index: RunIndex): RunIndexItem | null {
-  const id = decodeURIComponent(location.hash.slice(1));
+  let id = '';
+  try {
+    id = decodeURIComponent(location.hash.slice(1));
+  } catch {
+    // A malformed escape in the hash: start from the first operation.
+  }
   for (const g of index.groups) for (const i of g.items) if (i.id === id) return i;
   return index.groups[0]?.items[0] ?? null;
 }
@@ -152,8 +157,7 @@ function ConsolePage({ sandbox, csrf }: { sandbox: Sandbox; csrf: string }) {
   );
 }
 
-export function RunApp({ session: first, mode, slug, opId }: RunAppProps) {
-  const [session, setSession] = useState(first);
+export function RunApp({ session, mode, slug, opId }: RunAppProps) {
   const [codes, setCodes] = useState<ReadonlySet<string>>(new Set());
   useEffect(() => {
     void loadIndex().then(
@@ -178,10 +182,9 @@ export function RunApp({ session: first, mode, slug, opId }: RunAppProps) {
           <CreateSandbox
             csrf={session.csrf}
             siteKey={session.siteKey}
-            onReady={(sandbox) => {
-              const next = { kind: 'ready', csrf: session.csrf, sandbox } as const;
-              shareSession(next);
-              setSession(next);
+            onReady={() => {
+              // A fresh document: the Turnstile script does not stay beside the tokens.
+              location.reload();
             }}
           />
         }

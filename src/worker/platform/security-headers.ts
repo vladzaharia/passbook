@@ -44,6 +44,8 @@ export function developersContentSecurityPolicy(options: { turnstile?: boolean }
     "object-src 'none'",
     "frame-ancestors 'none'",
     "require-trusted-types-for 'script'",
+    // The one policy the console page makes, for the Turnstile script address.
+    ...(options.turnstile ? ['trusted-types passbook-turnstile'] : []),
     'upgrade-insecure-requests',
   ].join('; ');
 }

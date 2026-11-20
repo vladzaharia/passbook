@@ -1,5 +1,5 @@
 import { exhausted, spend } from './budget.ts';
-import { masked } from './mask.ts';
+import { masked, maskedJson } from './mask.ts';
 import { type Draft, wireOf } from './request.ts';
 import { drop, TokenError, token } from './token.ts';
 import type { Json, RunOp } from './types.ts';
@@ -31,6 +31,14 @@ export interface Outcome {
   key: string | null;
 }
 
+async function staleToken(res: Response): Promise<boolean> {
+  const body = (await res
+    .clone()
+    .json()
+    .catch(() => ({}))) as { code?: unknown };
+  return body.code === 'UNAUTHENTICATED';
+}
+
 export class RunError extends Error {
   readonly code: 'network' | 'token';
   constructor(code: 'network' | 'token', message: string) {
@@ -45,6 +53,7 @@ async function once(op: RunOp, draft: Draft, csrf: string): Promise<Response> {
   spend();
   return fetch(wire.path, {
     method: op.method.toUpperCase(),
+    redirect: 'error',
     headers: { ...wire.headers, authorization: `Bearer ${bearer}` },
     ...(wire.body !== undefined ? { body: wire.body } : {}),
   });
@@ -56,7 +65,8 @@ export async function send(op: RunOp, draft: Draft, csrf: string): Promise<Outco
   let res: Response;
   try {
     res = await once(op, draft, csrf);
-    if (res.status === 401) {
+    // Only the guard's own refusal means a stale token; a 401 from a handler may have done work.
+    if (res.status === 401 && (await staleToken(res))) {
       drop();
       res = await once(op, draft, csrf);
     }
@@ -70,7 +80,7 @@ export async function send(op: RunOp, draft: Draft, csrf: string): Promise<Outco
   const text = masked(raw.length > MAX_TEXT ? raw.slice(0, MAX_TEXT) : raw);
   let json: Json | undefined;
   try {
-    json = raw.length <= MAX_TEXT && raw !== '' ? (JSON.parse(text) as Json) : undefined;
+    json = raw.length <= MAX_TEXT && raw !== '' ? maskedJson(JSON.parse(raw) as Json) : undefined;
   } catch {
     // Not JSON (a proxy page, an empty body): drawn as text.
   }

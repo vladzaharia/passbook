@@ -76,6 +76,11 @@ export function problems(op: RunOp, draft: Draft): Issue[] {
   const out: Issue[] = [];
   for (const p of op.params) {
     const v = draft[p.where][p.name] ?? '';
+    // `.` and `..` are path segments, not ids: the URL would point somewhere else.
+    if (p.where === 'path' && (v === '.' || v === '..')) {
+      out.push({ path: p.name, message: 'is not a valid id' });
+      continue;
+    }
     if (v === '') {
       if (p.required) out.push({ path: p.name, message: 'is required' });
       continue;

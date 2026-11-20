@@ -16,10 +16,20 @@ let csrfOf: (() => string) | undefined;
 
 export class TokenError extends Error {
   readonly code: string;
-  constructor(code: string, message: string) {
+  readonly status: number;
+  constructor(code: string, message: string, status = 0) {
     super(message);
     this.code = code;
+    this.status = status;
   }
+}
+
+const goneListeners = new Set<() => void>();
+
+/** Called when the server says there is no session (or no sandbox) behind this page any more. */
+export function onSignedOut(fn: () => void): () => void {
+  goneListeners.add(fn);
+  return () => goneListeners.delete(fn);
 }
 
 async function mint(csrf: string): Promise<string> {
@@ -37,6 +47,7 @@ async function mint(csrf: string): Promise<string> {
     throw new TokenError(
       body.code ?? 'TRY_TOKEN',
       masked(body.detail ?? 'Could not start Try it. Reload and try again.'),
+      res.status,
     );
   }
   held = { value: body.token, refreshAt: Date.now() + REFRESH_MS };
@@ -53,7 +64,13 @@ function schedule(retryIn?: number): void {
     if (holders > 0 && csrf)
       void token(csrf).then(
         () => schedule(),
-        () => schedule(30_000),
+        (e) => {
+          // No session behind the page any more: stop asking, say so once.
+          if (e instanceof TokenError && (e.status === 401 || e.status === 403)) {
+            resetToken();
+            for (const fn of goneListeners) fn();
+          } else schedule(30_000);
+        },
       );
   }, wait);
 }

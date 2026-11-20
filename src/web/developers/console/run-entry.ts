@@ -1,5 +1,6 @@
 import { PHONE } from './phone.ts';
 import { loadSession } from './session.ts';
+import { onSignedOut } from './token.ts';
 
 /** What a Run slot says in the DOM: which page's operations, and which one. */
 function ids(el: HTMLElement): { slug?: string; opId?: string } {
@@ -12,6 +13,7 @@ function ids(el: HTMLElement): { slug?: string; opId?: string } {
  * in, the slot shows its skeleton (same size, so nothing moves) while the console chunk arrives.
  */
 export async function mount(el: HTMLElement): Promise<void> {
+  watchSession();
   const session = await loadSession();
   if (session.kind === 'out') return;
   const full = el.dataset.mode === 'console';
@@ -47,4 +49,16 @@ export async function mountSheet(
   }
   const { mountRun } = await import('./app/mount.tsx');
   return mountRun(body, { session, mode: 'sheet', slug, opId });
+}
+
+let watching = false;
+
+/** A signed-out session, or a page restored from the back/forward cache, starts from the server again. */
+function watchSession(): void {
+  if (watching) return;
+  watching = true;
+  onSignedOut(() => location.reload());
+  addEventListener('pageshow', (e) => {
+    if (e.persisted) location.reload();
+  });
 }

@@ -1,3 +1,4 @@
+import { goString, jsonText, pyString, pyValue, shq, tsString, tsValue } from './code-literals.ts';
 import type { Lang } from './highlight.ts';
 import type { Json, OpView } from './types.ts';
 
@@ -13,33 +14,17 @@ const hasBody = (op: OpView) => op.requestExample !== undefined && op.method !==
 
 /** Path templates as a person fills them: `{id}` becomes `<id>`. */
 const target = (op: OpView, base: string) => `${base}${op.path.replace(/\{(\w+)\}/g, '<$1>')}`;
-const json = (v: Json) => JSON.stringify(v, null, 2);
-
-/** A TypeScript literal for a JSON value: bare keys, single quotes. */
-export function tsValue(v: Json, pad = ''): string {
-  if (v === null || typeof v !== 'object')
-    return typeof v === 'string' ? `'${v.replaceAll("'", "\\'")}'` : String(v);
-  const inner = `${pad}  `;
-  if (Array.isArray(v)) {
-    return v.length === 0
-      ? '[]'
-      : `[\n${v.map((x) => inner + tsValue(x, inner)).join(',\n')},\n${pad}]`;
-  }
-  const entries = Object.entries(v);
-  if (entries.length === 0) return '{}';
-  const key = (k: string) => (/^[A-Za-z_$][\w$]*$/.test(k) ? k : `'${k}'`);
-  return `{\n${entries.map(([k, x]) => `${inner}${key(k)}: ${tsValue(x, inner)}`).join(',\n')},\n${pad}}`;
-}
 
 function curl(op: OpView, base: string): string {
+  // Fixed text may expand ($PASSBOOK_KEY, $(uuidgen)); everything else is a single-quoted literal.
   const parts = [
-    `curl -X ${op.method.toUpperCase()} "${target(op, base)}"`,
+    `curl -X ${op.method.toUpperCase()} ${shq(target(op, base))}`,
     `  -H "Authorization: Bearer $${KEY}"`,
   ];
   if (op.idempotent) parts.push('  -H "Idempotency-Key: $(uuidgen)"');
   if (hasBody(op)) {
     parts.push('  -H "Content-Type: application/json"');
-    parts.push(`  -d '${json(op.requestExample as Json)}'`);
+    parts.push(`  -d ${shq(jsonText(op.requestExample as Json))}`);
   }
   return parts.join(' \\\n');
 }
@@ -52,7 +37,7 @@ function ts(op: OpView, base: string): string {
     ? `\n  body: JSON.stringify(${tsValue(op.requestExample as Json, '  ')}),`
     : '';
   return [
-    `const res = await fetch('${target(op, base)}', {`,
+    `const res = await fetch(${tsString(target(op, base))}, {`,
     `  method: '${op.method.toUpperCase()}',`,
     '  headers: {',
     ...headers,
@@ -62,27 +47,10 @@ function ts(op: OpView, base: string): string {
   ].join('\n');
 }
 
-/** A Python literal for a JSON value. */
-export function pyValue(v: Json, pad = ''): string {
-  if (v === null) return 'None';
-  if (typeof v === 'boolean') return v ? 'True' : 'False';
-  if (typeof v !== 'object') return JSON.stringify(v);
-  const inner = `${pad}    `;
-  if (Array.isArray(v)) {
-    return v.length === 0
-      ? '[]'
-      : `[\n${v.map((x) => inner + pyValue(x, inner)).join(',\n')},\n${pad}]`;
-  }
-  const entries = Object.entries(v);
-  if (entries.length === 0) return '{}';
-  const rows = entries.map(([k, x]) => `${inner}${JSON.stringify(k)}: ${pyValue(x, inner)}`);
-  return `{\n${rows.join(',\n')},\n${pad}}`;
-}
-
 function py(op: OpView, base: string): string {
   const headers = [`"Authorization": f"Bearer {os.environ['${KEY}']}"`];
   if (op.idempotent) headers.push('"Idempotency-Key": str(uuid.uuid4())');
-  const args = [`    "${target(op, base)}",`, `    headers={${headers.join(', ')}},`];
+  const args = [`    ${pyString(target(op, base))},`, `    headers={${headers.join(', ')}},`];
   if (hasBody(op)) args.push(`    json=${pyValue(op.requestExample as Json, '    ')},`);
   return [
     `import os${op.idempotent ? ', uuid' : ''}`,
@@ -111,8 +79,10 @@ function go(op: OpView, base: string): string {
     ')',
     '',
     'func main() {',
-    ...(body ? [`\tbody := strings.NewReader(\`${json(op.requestExample as Json)}\`)`] : []),
-    `\treq, err := http.NewRequest("${op.method.toUpperCase()}", "${target(op, base)}", ${body ? 'body' : 'nil'})`,
+    ...(body
+      ? [`\tbody := strings.NewReader(${goString(jsonText(op.requestExample as Json))})`]
+      : []),
+    `\treq, err := http.NewRequest("${op.method.toUpperCase()}", ${goString(target(op, base))}, ${body ? 'body' : 'nil'})`,
     '\tif err != nil {',
     '\t\tpanic(err)',
     '\t}',

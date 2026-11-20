@@ -28,10 +28,23 @@ interface Props {
   set: (next: Draft) => void;
   setTab: (t: Tab) => void;
   run: () => void;
+  /** The Cmd/Ctrl+Enter path: the same gate as the button. */
+  pressRef: { current: (() => void) | null };
 }
 
 /** The ticket stub: tabs, header chips, the editor and the Run button. */
-export function Builder({ op, origin, draft, tab, pending, spent, set, setTab, run }: Props) {
+export function Builder({
+  op,
+  origin,
+  draft,
+  tab,
+  pending,
+  spent,
+  set,
+  setTab,
+  run,
+  pressRef,
+}: Props) {
   const [armed, setArmed] = useState(false);
   const [copied, setCopied] = useState(false);
   const issues = problems(op, draft);
@@ -42,12 +55,14 @@ export function Builder({ op, origin, draft, tab, pending, spent, set, setTab, r
     const t = setTimeout(() => setArmed(false), CONFIRM_MS);
     return () => clearTimeout(t);
   }, [armed]);
+  const blocked = issues.length > 0 || pending || spent;
   const press = () => {
+    if (blocked) return;
     if (op.destructive && !armed) return setArmed(true);
     setArmed(false);
     run();
   };
-  const blocked = issues.length > 0 || pending || spent;
+  pressRef.current = press;
   const code = tab !== 'form' && tab !== 'json' ? copyAs(tab, buildSent(op, draft, origin)) : '';
   const move = (e: React.KeyboardEvent, i: number) => {
     const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;

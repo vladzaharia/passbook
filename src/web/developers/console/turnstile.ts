@@ -7,6 +7,8 @@ type Api = NonNullable<Window['turnstile']>;
 let loading: Promise<Api> | undefined;
 
 /** The portal's CSP requires Trusted Types for script URLs: one policy that admits this one address. */
+let policy: { createScriptURL(s: string): string } | undefined;
+
 function scriptUrl(): string {
   const types = (
     window as unknown as {
@@ -14,7 +16,7 @@ function scriptUrl(): string {
     }
   ).trustedTypes;
   if (!types) return SRC;
-  const policy = types.createPolicy('passbook-turnstile', {
+  policy ??= types.createPolicy('passbook-turnstile', {
     createScriptURL: (u: string) => {
       if (u !== SRC) throw new TypeError('Unexpected script address.');
       return u;

@@ -1,5 +1,14 @@
+import {
+  goString,
+  jsonText,
+  pyString,
+  pyValue,
+  shq,
+  tsKey,
+  tsString,
+  tsValue,
+} from '../model/code-literals.ts';
 import type { Lang } from '../model/highlight.ts';
-import { pyValue, tsValue } from '../model/samples.ts';
 import type { Json } from './types.ts';
 
 /** The request the console sent, with the key left out: Copy as writes `$PASSBOOK_KEY` in its place. */
@@ -18,28 +27,34 @@ export const COPY_LANGS = [
 ] as const satisfies { lang: Lang; label: string }[];
 export type CopyLang = (typeof COPY_LANGS)[number]['lang'];
 
+/**
+ * Every value below (URL, header names and values, body) is written as the language's own string
+ * literal by model/code-literals.ts. Only fixed text in this file is ever code: the key is read from
+ * the environment, and in curl it is the one thing left to expand.
+ */
 const KEY = 'PASSBOOK_KEY';
-const json = (v: Json) => JSON.stringify(v, null, 2);
 const withBody = (s: Sent) => s.body !== undefined && s.method !== 'GET';
 const hdrs = (s: Sent): [string, string][] => [
   ...s.headers,
   ...(withBody(s) ? ([['Content-Type', 'application/json']] as [string, string][]) : []),
 ];
+/** The verb comes from the document; anything that is not letters is not a verb. */
+const verb = (s: Sent): string => (/^[A-Z]{3,7}$/.test(s.method) ? s.method : 'GET');
 
 function curl(s: Sent): string {
-  const parts = [`curl -X ${s.method} "${s.url}"`, `  -H "Authorization: Bearer $${KEY}"`];
-  for (const [k, v] of hdrs(s)) parts.push(`  -H "${k}: ${v.replaceAll('"', '\\"')}"`);
-  if (withBody(s)) parts.push(`  -d '${json(s.body as Json).replaceAll("'", "'\\''")}'`);
+  const parts = [`curl -X ${verb(s)} ${shq(s.url)}`, `  -H "Authorization: Bearer $${KEY}"`];
+  for (const [k, v] of hdrs(s)) parts.push(`  -H ${shq(`${k}: ${v}`)}`);
+  if (withBody(s)) parts.push(`  -d ${shq(jsonText(s.body as Json))}`);
   return parts.join(' \\\n');
 }
 
 function ts(s: Sent): string {
   const head = [`    Authorization: \`Bearer \${process.env.${KEY}}\`,`];
-  for (const [k, v] of hdrs(s)) head.push(`    '${k}': ${tsValue(v)},`);
+  for (const [k, v] of hdrs(s)) head.push(`    ${tsKey(k)}: ${tsString(v)},`);
   const body = withBody(s) ? `\n  body: JSON.stringify(${tsValue(s.body as Json, '  ')}),` : '';
   return [
-    `const res = await fetch('${s.url}', {`,
-    `  method: '${s.method}',`,
+    `const res = await fetch(${tsString(s.url)}, {`,
+    `  method: ${tsString(verb(s))},`,
     '  headers: {',
     ...head,
     `  },${body}`,
@@ -51,14 +66,14 @@ function ts(s: Sent): string {
 function py(s: Sent): string {
   const head = [`"Authorization": f"Bearer {os.environ['${KEY}']}"`];
   for (const [k, v] of hdrs(s).filter(([name]) => name !== 'Content-Type'))
-    head.push(`${JSON.stringify(k)}: ${JSON.stringify(v)}`);
-  const args = [`    "${s.url}",`, `    headers={${head.join(', ')}},`];
+    head.push(`${pyString(k)}: ${pyString(v)}`);
+  const args = [`    ${pyString(s.url)},`, `    headers={${head.join(', ')}},`];
   if (withBody(s)) args.push(`    json=${pyValue(s.body as Json, '    ')},`);
   return [
     'import os',
     'import httpx',
     '',
-    `res = httpx.${s.method.toLowerCase()}(`,
+    `res = httpx.request(${pyString(verb(s))},`,
     ...args,
     ')',
     'print(res.status_code, res.json())',
@@ -79,13 +94,13 @@ function go(s: Sent): string {
     ')',
     '',
     'func main() {',
-    ...(body ? [`\tbody := strings.NewReader(\`${json(s.body as Json)}\`)`] : []),
-    `\treq, err := http.NewRequest("${s.method}", "${s.url}", ${body ? 'body' : 'nil'})`,
+    ...(body ? [`\tbody := strings.NewReader(${goString(jsonText(s.body as Json))})`] : []),
+    `\treq, err := http.NewRequest(${goString(verb(s))}, ${goString(s.url)}, ${body ? 'body' : 'nil'})`,
     '\tif err != nil {',
     '\t\tpanic(err)',
     '\t}',
     `\treq.Header.Set("Authorization", "Bearer "+os.Getenv("${KEY}"))`,
-    ...hdrs(s).map(([k, v]) => `\treq.Header.Set(${JSON.stringify(k)}, ${JSON.stringify(v)})`),
+    ...hdrs(s).map(([k, v]) => `\treq.Header.Set(${goString(k)}, ${goString(v)})`),
     '\tres, err := http.DefaultClient.Do(req)',
     '\tif err != nil {',
     '\t\tpanic(err)',

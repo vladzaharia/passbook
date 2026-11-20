@@ -192,6 +192,80 @@ describe('the request builder', () => {
     expect(net.calls.find((c) => c.path === '/api/v1/passes/p1/void')).toBeTruthy();
   });
 
+  it('Cmd+Enter takes the same gates: the destructive second press, and invalid input', async () => {
+    const net = fakeNetwork(() => json({ ok: true }));
+    view(passesVoid);
+    await userEvent.type(screen.getByLabelText(/^id/), 'p1');
+    await userEvent.keyboard('{Meta>}{Enter}{/Meta}');
+    expect(net.calls.filter((c) => c.path.startsWith('/api/v1/passes/'))).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Confirm POST' })).toBeInTheDocument();
+    await userEvent.keyboard('{Meta>}{Enter}{/Meta}');
+    await screen.findByText('200 OK');
+    expect(net.calls.filter((c) => c.path.startsWith('/api/v1/passes/'))).toHaveLength(1);
+  });
+
+  it('Cmd+Enter does nothing while the body is invalid', async () => {
+    const net = fakeNetwork(() => json({}));
+    view();
+    await userEvent.click(screen.getByRole('tab', { name: 'JSON' }));
+    const box = screen.getByLabelText('Request body (JSON)');
+    await userEvent.clear(box);
+    await userEvent.click(box);
+    await userEvent.paste('{');
+    await userEvent.keyboard('{Control>}{Enter}{/Control}');
+    expect(net.calls.filter((c) => c.path === '/api/v1/passes')).toHaveLength(0);
+  });
+
+  it("does not re-send after a 401 that is not the guard's", async () => {
+    const net = fakeNetwork(() => json({ code: 'CONNECTOR_AUTH' }, { status: 401 }));
+    view();
+    await run();
+    await screen.findByText('401 Unauthorized');
+    expect(net.calls.filter((c) => c.path === '/api/v1/passes')).toHaveLength(1);
+    expect(net.mints()).toBe(1);
+  });
+
+  it('cuts a token written with JSON escapes, in values and keys', async () => {
+    fakeNetwork(
+      () =>
+        new Response('{"a":"pbtry\\u005fSECRETPAYLOAD123.sig","pbtry\\u005fKEYNAME.x":1}', {
+          status: 201,
+          headers: { 'content-type': 'application/json' },
+        }),
+    );
+    const { container } = view();
+    await run();
+    await screen.findByText('201 Created');
+    expect(container.textContent).not.toContain('SECRETPAYLOAD123');
+    expect(container.textContent).not.toContain('KEYNAME');
+  });
+
+  it('links only to previews, pass pages and these docs, never to sign-in or API paths', async () => {
+    fakeNetwork(() =>
+      json({
+        preview: `${location.origin}/preview/abc`,
+        docs: `${location.origin}/developers/errors/X`,
+        login: `${location.origin}/auth/magic?token=attacker`,
+        api: `${location.origin}/api/v1/passes`,
+      }),
+    );
+    const { container } = view();
+    await run();
+    await screen.findByText(/magic/);
+    const hrefs = [...container.querySelectorAll('a')].map((a) => a.getAttribute('href') ?? '');
+    expect(hrefs.some((h) => h.endsWith('/preview/abc'))).toBe(true);
+    expect(hrefs.some((h) => h.endsWith('/developers/errors/X'))).toBe(true);
+    expect(hrefs.some((h) => h.includes('/auth/') || h.includes('/api/v1'))).toBe(false);
+  });
+
+  it('refuses . and .. as a path id', async () => {
+    const net = fakeNetwork(() => json({}));
+    view(passesVoid);
+    await userEvent.type(screen.getByLabelText(/^id/), '..');
+    expect(screen.getByRole('button', { name: 'Run' })).toBeDisabled();
+    expect(net.calls).toHaveLength(0);
+  });
+
   it("stops at the server's 429 and says so", async () => {
     fakeNetwork(() =>
       json({ code: 'RATE_LIMITED' }, { status: 429, headers: { 'retry-after': '30' } }),

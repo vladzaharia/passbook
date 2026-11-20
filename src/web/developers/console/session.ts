@@ -58,16 +58,3 @@ export function loadSession(): Promise<Session> {
   pending ??= read().catch(() => ({ kind: 'out' }) as Session);
   return pending;
 }
-
-const watchers = new Set<(s: Session) => void>();
-
-/** Hears about a change made on the page, such as the sandbox just created. */
-export function onSession(fn: (s: Session) => void): () => void {
-  watchers.add(fn);
-  return () => watchers.delete(fn);
-}
-
-export function setSession(next: Session): void {
-  pending = Promise.resolve(next);
-  for (const w of watchers) w(next);
-}

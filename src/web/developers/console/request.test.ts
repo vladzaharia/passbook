@@ -79,8 +79,8 @@ describe('request', () => {
       expect(code).not.toMatch(/pbtry|pbp_/);
     }
     expect(out[0]).toContain("-d '{");
-    expect(out[1]).toContain("method: 'POST'");
-    expect(out[2]).toContain('httpx.post(');
+    expect(out[1]).toContain('method: "POST"');
+    expect(out[2]).toContain('httpx.request("POST"');
     expect(out[3]).toContain('http.NewRequest("POST"');
   });
 });
