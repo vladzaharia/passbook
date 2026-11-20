@@ -19,6 +19,7 @@ import type { SessionDraft as ScannerDraft } from './draft.ts';
 import { SessionAccessFields } from './session-access-fields.tsx';
 import { SessionCustomerFields } from './session-customer-fields.tsx';
 import { SessionHoursFields } from './session-hours-fields.tsx';
+import { SessionOfflineFields } from './session-offline-fields.tsx';
 
 function SessionScope({
   draft,
@@ -249,6 +250,7 @@ export function SessionFields({
           rules={draft.checkIn}
           onChange={(checkIn) => set({ checkIn })}
         />
+        <SessionOfflineFields draft={draft} set={set} />
         <SessionStaff draft={draft} set={set} />
       </TabsContent>
       <TabsContent value="access">

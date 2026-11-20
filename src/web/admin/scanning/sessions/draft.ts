@@ -3,6 +3,7 @@ import type {
   ScanningSession,
   SessionCustomerSettings,
 } from '@/shared/contracts/scanning-sessions.ts';
+import { type OfflineMode, offlineModeOf } from '@/shared/scan-offline.ts';
 import { localZone } from '@/web/lib/timezones.ts';
 import {
   acceptsOf,
@@ -14,6 +15,8 @@ import { hoursBody, hoursProblem, weekOf } from './session-hours.ts';
 
 export type SessionDraft = ScannerDraft & {
   timeZone: string;
+  /** What the door does with no connection (O8). */
+  whenOffline: OfflineMode;
   /** Zones this session checks. Absent while the server has not said (a list row). */
   zoneIds?: string[];
   /** The session already stores Desk actions, so Off is sent rather than left out. */
@@ -33,6 +36,7 @@ export const emptySessionDraft = (): SessionDraft => ({
   timeZone: localZone(),
   accepts: 'all',
   lookup: true,
+  whenOffline: 'stop',
   zoneIds: [],
   hoursOn: false,
 });
@@ -53,6 +57,7 @@ export function sessionDraft(s: ScanningSession): SessionDraft {
     eventId: s.accepts && 'eventId' in s.accepts ? s.accepts.eventId : '',
     templateIds: s.accepts && 'templateIds' in s.accepts ? s.accepts.templateIds : [],
     ...(s.accepts && 'eventIds' in s.accepts ? { keptEventIds: s.accepts.eventIds } : {}),
+    whenOffline: offlineModeOf(s.settings),
     flow: s.settings.flow,
     reader: s.settings.reader === 'barcode' ? 'barcode' : 'none',
     lookup: s.settings.lookup,
@@ -85,6 +90,8 @@ export const sessionBody = (d: SessionDraft) => ({
       : acceptsOf(d),
   settings: {
     ...settingsOf(d),
+    whenOffline: d.whenOffline,
+    offline: d.whenOffline === 'list',
     ...(d.deskActions || d.deskActionsSaved ? { deskActions: d.deskActions } : {}),
     ...(d.customer === undefined ? {} : { customer: cleanCustomer(d.customer) }),
   },
