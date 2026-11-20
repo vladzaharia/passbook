@@ -22,6 +22,9 @@ export const VISITOR_COPY = {
     email: 'Email',
     emailHelp: 'We send the pass here.',
     host: 'Host',
+    hostName: 'Host name',
+    hostPick: 'Choose a host',
+    hostOther: 'Someone else',
     hostEmail: 'Host email',
     hostHelp: 'Gets an email when they arrive.',
     date: 'Date',
@@ -44,7 +47,7 @@ export const VISITOR_COPY = {
     stay: '{stay}',
   },
   email: {
-    subject: '{name} is here',
+    subject: 'Your visitor has arrived',
     title: '{name} is here.',
     when: '{place}, {time}.',
     place: 'Reception',

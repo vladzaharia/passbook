@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, first } from '../../platform/db.ts';
+import { knownEmailSql } from '../../platform/known-email-sql.ts';
 
 export interface VisitorRow {
   id: string;
@@ -79,6 +80,7 @@ export async function listVisitors(
   mode: Mode,
   tab: VisitTab,
   day: { start: number; end: number },
+  templateIds?: readonly string[],
 ): Promise<VisitorRow[]> {
   const t = {
     today: {
@@ -91,9 +93,11 @@ export async function listVisitors(
   }[tab];
   const rows = await all<Raw>(
     db,
-    `${SELECT} WHERE v.org_id = ? AND v.mode = ? AND ${t.where}
+    `${SELECT} WHERE v.org_id = ? AND v.mode = ? AND ${t.where}${
+      templateIds ? ' AND p.template_id IN (SELECT value FROM json_each(?))' : ''
+    }
      ORDER BY v.window_from ${t.dir}, v.id LIMIT 200`,
-    [orgId, mode, ...t.by],
+    [orgId, mode, ...t.by, ...(templateIds ? [JSON.stringify(templateIds)] : [])],
   );
   return rows.map(toRow);
 }
@@ -210,4 +214,22 @@ export async function activeBindingsOn(
     passIds,
   );
   return rows.map((r) => ({ id: r.id, tagId: r.tag_id }));
+}
+
+export interface HostChoice {
+  name: string;
+  email: string;
+}
+
+/** Members of the org with a verified email: who a visitor may be hosted by. */
+export async function hostChoices(db: D1Database, orgId: string): Promise<HostChoice[]> {
+  const rows = await all<{ name: string | null; email: string }>(
+    db,
+    `SELECT u.name AS name, ${knownEmailSql('u.primary_email')} AS email FROM org_memberships m
+     JOIN users u ON u.id = m.user_id
+     WHERE m.org_id = ? AND m.revoked_at IS NULL AND ${knownEmailSql('u.primary_email')} IS NOT NULL
+     ORDER BY COALESCE(u.name, u.primary_email) LIMIT 200`,
+    [orgId],
+  );
+  return rows.map((r) => ({ name: r.name?.trim() || r.email, email: r.email }));
 }

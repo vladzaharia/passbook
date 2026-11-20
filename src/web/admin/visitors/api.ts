@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { OkSchema } from '@/shared/contracts/common.ts';
 import {
+  HostListSchema,
   type NewVisitor,
   type Visitor,
   VisitorListSchema,
@@ -74,5 +75,15 @@ export function useResendInvite() {
   return useMutation({
     mutationFn: (v: Pick<Visitor, 'passId'>) =>
       api.post(`/api/v1/passes/${encodeURIComponent(v.passId)}/resend-email`, OkSchema, {}),
+  });
+}
+
+/** The org's members, who a visitor may be hosted by. */
+export function useHosts(orgId: string) {
+  return useQuery({
+    queryKey: ['admin', 'visitor-hosts', orgId] as const,
+    queryFn: ({ signal }) =>
+      api.get('/api/v1/visitors/hosts', HostListSchema, { query: { orgId }, signal }),
+    staleTime: 60_000,
   });
 }

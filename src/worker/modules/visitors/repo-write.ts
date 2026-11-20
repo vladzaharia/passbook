@@ -28,6 +28,7 @@ export interface NewVisitorRow {
   windowFrom: number;
   windowUntil: number;
   note: string | null;
+  typedHost: boolean;
 }
 
 function tenantGrant(
@@ -83,6 +84,7 @@ export function createVisitorGrant(ctx: ServiceContext, a: Authority, v: NewVisi
     action: 'visitor.create',
     targetType: 'pass',
     targetId: v.passId,
+    detail: { typedHost: v.typedHost },
   });
   return g;
 }

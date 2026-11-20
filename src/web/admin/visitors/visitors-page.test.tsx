@@ -143,4 +143,27 @@ describe('Visitors page', () => {
       await within(dialog).findByText('Make a guest pass template first.'),
     ).toBeInTheDocument();
   });
+
+  it('lets the inviter pick the host from the members, with typing as the other choice', async () => {
+    const user = userEvent.setup();
+    const { fetchMock } = await open([], {
+      '/api/v1/visitors/hosts': () =>
+        json({ items: [{ name: 'Ana Ruiz', email: 'ana@northwind.test' }] }),
+      '/api/v1/visitors': (_url, init) =>
+        init?.method === 'POST' ? json(visitor({}), 201) : json({ items: [] }),
+    });
+    await user.click(await screen.findByRole('button', { name: 'New visitor' }));
+    const dialog = await screen.findByRole('dialog', { name: 'New visitor' });
+    await user.type(within(dialog).getByLabelText(/^Name/), 'Leo Park');
+    expect(within(dialog).queryByLabelText(/^Host email/)).toBeNull();
+    await user.click(await within(dialog).findByRole('combobox', { name: /^Host/ }));
+    await user.click(await screen.findByRole('option', { name: /Ana Ruiz/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Invite' }));
+    await waitFor(() => expect(callsTo(fetchMock, 'POST', '/visitors')).toHaveLength(1));
+    const [, init] = callsTo(fetchMock, 'POST', '/visitors')[0] ?? [];
+    expect(JSON.parse(String((init as RequestInit).body))).toMatchObject({
+      hostName: 'Ana Ruiz',
+      hostEmail: 'ana@northwind.test',
+    });
+  });
 });

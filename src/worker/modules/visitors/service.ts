@@ -2,8 +2,14 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { NewVisitor, Visitor } from '../../../shared/contracts/visitors.ts';
 import { VISITOR_COPY } from '../../../shared/copy/visitors.ts';
 import { classifyD1Error } from '../../platform/db.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { getOrgAccess } from '../orgs/access.ts';
 import { createPassIdempotent } from '../passes/create.ts';
 import { effectiveApiRelease } from '../passes/create-release.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
@@ -11,6 +17,7 @@ import type { ScopeArg } from '../passes/scope.ts';
 import { type Actor, voidPass } from '../passes/service.ts';
 import { deriveVisit } from './derive.ts';
 import {
+  hostChoices,
   listVisitors as listRows,
   orgTemplates,
   type VisitorRow,
@@ -53,9 +60,12 @@ export async function listVisits(
   mode: Mode,
   tab: VisitTab,
   day: { start: number; end: number },
+  templateIds?: readonly string[],
 ): Promise<Visitor[]> {
   const now = ctx.clock.now();
-  return (await listRows(ctx.env.DB, orgId, mode, tab, day)).map((r) => toVisitor(r, now));
+  return (await listRows(ctx.env.DB, orgId, mode, tab, day, templateIds)).map((r) =>
+    toVisitor(r, now),
+  );
 }
 
 async function rowOf(ctx: ServiceContext, authority: TenantPassWrite, id: string) {
@@ -78,6 +88,7 @@ export async function createVisit(
     throw new ValidationError('Choose an end after the start, within 14 days.', [
       { path: 'windowUntil', message: 'Choose a later end.' },
     ]);
+  const typedHost = await assertHost(ctx, authority, body.orgId, body.hostEmail);
   const templates = visitorTemplates(await orgTemplates(ctx.env.DB, authority.orgId));
   const template = body.templateId ? templates.find((t) => t.id === body.templateId) : templates[0];
   if (!template) throw new ConflictError(VISITOR_COPY.noTemplate, 'VISITOR_TEMPLATE_MISSING');
@@ -123,6 +134,7 @@ export async function createVisit(
     windowFrom: body.windowFrom,
     windowUntil: body.windowUntil,
     note: body.note ?? null,
+    typedHost,
   });
   try {
     await g.commit();
@@ -132,6 +144,25 @@ export async function createVisit(
     throw classifyD1Error(error) ? new ConflictError('Try again.', 'VISITOR_CHANGED') : error;
   }
   return toVisitor(await rowOf(ctx, authority, id), ctx.clock.now());
+}
+
+/**
+ * The host is a member of the org. A typed address is for people who manage members, and is audited as typed;
+ * an API key must name a member.
+ */
+async function assertHost(
+  ctx: ServiceContext,
+  authority: TenantPassWrite,
+  orgId: string,
+  email: string,
+): Promise<boolean> {
+  const members = await hostChoices(ctx.env.DB, orgId);
+  if (members.some((m) => m.email.toLowerCase() === email)) return false;
+  const access =
+    authority.kind === 'session' ? await getOrgAccess(ctx, authority.userId, orgId) : null;
+  if (!access?.capabilities.includes('members:manage'))
+    throw new ForbiddenError('Choose a member as the host.', 'VISITOR_HOST_UNKNOWN');
+  return true;
 }
 
 const scopeOf = (a: TenantPassWrite): ScopeArg => ({

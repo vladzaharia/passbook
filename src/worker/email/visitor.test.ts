@@ -14,15 +14,16 @@ const mail = (name = 'Leo Park') =>
 describe('visitorArrivalEmail', () => {
   it('names the visitor, the door and the time in the door zone', () => {
     const m = mail();
-    expect(m.subject).toBe('Leo Park is here');
+    expect(m.subject).toBe('Your visitor has arrived');
     expect(m.text).toBe('Leo Park is here.\n\nReception, 9:12 AM EST.');
     expect(m.html).toContain('Leo Park is here.');
   });
 
-  it('escapes the visitor name in the page and keeps the subject to one line', () => {
+  it('escapes the visitor name in the page and never puts it in the subject', () => {
     const m = mail('<b>Eve</b>');
     expect(m.html).not.toContain('<b>Eve</b>');
     expect(m.html).toContain('&lt;b&gt;Eve&lt;/b&gt;');
+    expect(m.subject).not.toContain('Eve');
   });
 
   it('falls back to UTC for a zone it does not know', () => {

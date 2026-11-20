@@ -5,6 +5,7 @@ import {
 } from '../../../shared/contracts/access-business.ts';
 import { OkSchema } from '../../../shared/contracts/common.ts';
 import {
+  HostListSchema,
   NewVisitorSchema,
   VisitorListSchema,
   VisitorOrgQuerySchema,
@@ -25,7 +26,7 @@ import {
 } from '../passes/http.ts';
 import { resendHostNotice } from './arrival.ts';
 import { offboard } from './offboard.ts';
-import { visitorById } from './repo.ts';
+import { hostChoices, visitorById } from './repo.ts';
 import { cancelVisit, checkOutVisit, createVisit, listVisits } from './service.ts';
 
 /**
@@ -63,6 +64,23 @@ register(
     return c.json({
       items: await listVisits(ctx, a.orgId, a.mode, q.tab, { start: q.dayStart, end: q.dayEnd }),
     });
+  },
+);
+
+register(
+  visitorsRoutes,
+  TAG,
+  {
+    method: 'get',
+    path: '/hosts',
+    summary: 'People who can host a visitor: the org members',
+    query: VisitorOrgQuerySchema,
+    response: HostListSchema,
+  },
+  async (c) => {
+    const ctx = svc(c);
+    const a = await tenantAuthorityOf(ctx, authOf(c), c.req.valid('query').orgId, 'passes:read');
+    return c.json({ items: await hostChoices(ctx.env.DB, a.orgId) });
   },
 );
 

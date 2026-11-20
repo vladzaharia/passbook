@@ -51,3 +51,7 @@ export type NewVisitor = z.infer<typeof NewVisitorSchema>;
 
 export const VisitorParamsSchema = z.object({ id: IdSchema });
 export const VisitorOrgQuerySchema = z.object({ orgId: IdSchema });
+
+export const HostListSchema = z.object({
+  items: z.array(z.object({ name: z.string(), email: z.string() })),
+});

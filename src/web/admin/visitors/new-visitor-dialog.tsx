@@ -8,11 +8,13 @@ import {
   Form,
   FormField,
   Input,
+  Select,
   toast,
   useFormErrors,
 } from '@/web/ui/index.ts';
-import { useNewVisitor } from './api.ts';
+import { useHosts, useNewVisitor } from './api.ts';
 
+const OTHER = '__other';
 const pad = (n: number) => String(n).padStart(2, '0');
 const today = () => {
   const d = new Date();
@@ -30,6 +32,10 @@ export function NewVisitorDialog({
   orgId: string;
 }) {
   const create = useNewVisitor(orgId);
+  const hosts = useHosts(orgId).data?.items ?? [];
+  // A member is chosen by email; OTHER (or no members) shows the typed name and email.
+  const [pick, setPick] = useState('');
+  const typed = pick === OTHER || hosts.length === 0;
   const [f, setF] = useState({
     name: '',
     email: '',
@@ -134,33 +140,66 @@ export function NewVisitorDialog({
               />
             )}
           </FormField>
-          <FormField label={VISITOR_COPY.form.host} required error={errors.hostName}>
-            {(p) => (
-              <Input
-                {...p}
-                autoComplete="off"
-                value={f.hostName}
-                maxLength={80}
-                onChange={(e) => set({ hostName: e.target.value })}
-              />
-            )}
-          </FormField>
-          <FormField
-            label={VISITOR_COPY.form.hostEmail}
-            help={VISITOR_COPY.form.hostHelp}
-            required
-            error={errors.hostEmail}
-          >
-            {(p) => (
-              <Input
-                {...p}
-                type="email"
-                autoComplete="off"
-                value={f.hostEmail}
-                onChange={(e) => set({ hostEmail: e.target.value })}
-              />
-            )}
-          </FormField>
+          {hosts.length > 0 ? (
+            <FormField
+              label={VISITOR_COPY.form.host}
+              help={typed ? undefined : VISITOR_COPY.form.hostHelp}
+              required
+              error={typed ? undefined : (errors.hostName ?? errors.hostEmail)}
+            >
+              {(p) => (
+                <Select
+                  {...p}
+                  value={pick || undefined}
+                  placeholder={VISITOR_COPY.form.hostPick}
+                  options={[
+                    ...hosts.map((h) => ({ value: h.email, label: `${h.name} · ${h.email}` })),
+                    { value: OTHER, label: VISITOR_COPY.form.hostOther },
+                  ]}
+                  onValueChange={(next) => {
+                    setPick(next);
+                    const chosen = hosts.find((h) => h.email === next);
+                    set(
+                      chosen
+                        ? { hostName: chosen.name, hostEmail: chosen.email }
+                        : { hostName: '', hostEmail: '' },
+                    );
+                  }}
+                />
+              )}
+            </FormField>
+          ) : null}
+          {typed ? (
+            <>
+              <FormField label={VISITOR_COPY.form.hostName} required error={errors.hostName}>
+                {(p) => (
+                  <Input
+                    {...p}
+                    autoComplete="off"
+                    value={f.hostName}
+                    maxLength={80}
+                    onChange={(e) => set({ hostName: e.target.value })}
+                  />
+                )}
+              </FormField>
+              <FormField
+                label={VISITOR_COPY.form.hostEmail}
+                help={VISITOR_COPY.form.hostHelp}
+                required
+                error={errors.hostEmail}
+              >
+                {(p) => (
+                  <Input
+                    {...p}
+                    type="email"
+                    autoComplete="off"
+                    value={f.hostEmail}
+                    onChange={(e) => set({ hostEmail: e.target.value })}
+                  />
+                )}
+              </FormField>
+            </>
+          ) : null}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <FormField label={VISITOR_COPY.form.date} required>
               {(p) => (

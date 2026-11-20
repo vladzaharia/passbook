@@ -6,10 +6,13 @@ import {
 } from '../../../shared/contracts/access-business.ts';
 import { VisitorListSchema } from '../../../shared/contracts/visitors.ts';
 import type { AppBindings } from '../../platform/context.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { policyActor } from '../scan/dto.ts';
 import { deepFreeze } from '../scan/freeze.ts';
 import { requireScanActor, scanActorOf } from '../scan/guard.ts';
+import { scanPolicy } from '../scan/rules.ts';
 import { cloneObservedScanActor } from '../scan/scanning-workspace-observation.ts';
 import { listVisits } from './service.ts';
 import { signOut } from './sign-out.ts';
@@ -38,13 +41,19 @@ export function registerScanVisitorRoutes(scanRoutes: OpenAPIHono<AppBindings>):
     },
     async (c) => {
       const actor = scanActorOf(c);
+      // Desk and above, and only the passes this session's templates admit. Desk notes stay in the console.
+      if (!scanPolicy(policyActor(actor), { kind: 'mark_out' }).allow)
+        throw new ForbiddenError('Only Desk and above can see visitors.', 'FORBIDDEN');
       const { dayStart, dayEnd } = c.req.valid('query');
-      return c.json({
-        items: await listVisits(serviceContext(c), actor.orgId, actor.mode, 'today', {
-          start: dayStart,
-          end: dayEnd,
-        }),
-      });
+      const items = await listVisits(
+        serviceContext(c),
+        actor.orgId,
+        actor.mode,
+        'today',
+        { start: dayStart, end: dayEnd },
+        actor.templateIds,
+      );
+      return c.json({ items: items.map((v) => ({ ...v, note: null })) });
     },
   );
   register(

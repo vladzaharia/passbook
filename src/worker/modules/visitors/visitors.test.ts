@@ -1,7 +1,9 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import { bump } from '../../platform/counters.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { resolveSession } from '../auth/sessions.ts';
+import { emailRate } from '../delivery/email-limits.ts';
 import type { MailMessage } from '../delivery/mailer.ts';
 import { overrideDeps } from '../passes/deps.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
@@ -9,7 +11,9 @@ import { ACCESS, accessTemplate, grantOf, makeDoor } from '../scan/access-test-f
 import { CHECK_IN, HOUR, kit, setupActionFixture } from '../scan/act-test-fixtures.ts';
 import { station, useKit } from '../scan/occupancy/whos-in-test-fixtures.ts';
 import { grantScanMembership, key } from '../scan/test-kit.ts';
+import { mailHost, resendHostNotice } from './arrival.ts';
 import { offboard } from './offboard.ts';
+import { visitorById } from './repo.ts';
 import { cancelVisit, checkOutVisit, createVisit, listVisits } from './service.ts';
 
 let tpl: string;
@@ -152,7 +156,8 @@ describe('host email on arrival', () => {
     await grantOf(door.headers, v.pass);
     await vi.waitFor(() => expect(sent.filter((m) => m.to === 'ana@host.test')).toHaveLength(1));
     const mail = sent.find((m) => m.to === 'ana@host.test') as MailMessage;
-    expect(mail.subject).toBe('Leo Park is here');
+    expect(mail.subject).toBe('Your visitor has arrived');
+    expect(mail.subject).not.toContain('Leo');
     for (const body of [mail.html, mail.text, mail.subject]) {
       expect(body).not.toContain('leo.guest@example.test');
       expect(body).not.toContain('Gate code 4411');
@@ -337,5 +342,79 @@ describe('offboard', () => {
     expect(await state(spare)).toEqual({ lost_at: null, ended: 1 });
     expect(await state(lost)).toMatchObject({ ended: 1 });
     expect((await state(lost))?.lost_at).not.toBeNull();
+  });
+});
+
+describe('host email limits and hosts', () => {
+  it('limits a resend to once per 10 minutes and three per visit', async () => {
+    sent.length = 0;
+    const door = await makeDoor([tpl]);
+    const v = await visit();
+    await run(kit.env.DB, "UPDATE visitors SET host_email = 'resend@host.test' WHERE id = ?", [
+      v.id,
+    ]);
+    await grantOf(door.headers, v.pass);
+    const row = await visitorById(kit.env.DB, kit.org.id, 'live', v.id);
+    if (!row) throw new Error('visit');
+    await resendHostNotice(kit.ctx, row, 'UTC');
+    await expect(resendHostNotice(kit.ctx, row, 'UTC')).rejects.toMatchObject({ status: 429 });
+    for (let i = 0; i < 2; i++) {
+      kit.clock.advance(61 * 60_000);
+      await resendHostNotice(kit.ctx, row, 'UTC');
+    }
+    kit.clock.advance(61 * 60_000);
+    await expect(resendHostNotice(kit.ctx, row, 'UTC')).rejects.toMatchObject({
+      code: 'VISITOR_RESEND_LIMIT',
+    });
+  });
+
+  it('takes a typed host only from someone who manages members, and audits it', async () => {
+    const reader = await makeUser(kit.fx);
+    await grantScanMembership(kit.fx, kit.org.id, reader.id, ['pass_operator']);
+    const operator = await authorityIn(kit.org.id, reader.id);
+    const body = {
+      orgId: kit.org.id,
+      name: 'Mia Stone',
+      hostName: 'Typed Host',
+      hostEmail: 'typed@host.test',
+      windowFrom: kit.clock.now(),
+      windowUntil: kit.clock.now() + HOUR,
+    };
+    await expect(
+      createVisit(kit.ctx, { type: 'user', id: reader.id }, operator, body),
+    ).rejects.toMatchObject({ code: 'VISITOR_HOST_UNKNOWN' });
+    await createVisit(kit.ctx, { type: 'user', id: 'admin-1' }, await admin(), body);
+    const audit = await first<{ detail: string }>(
+      kit.env.DB,
+      "SELECT detail FROM audit_log WHERE action = 'visitor.create' ORDER BY id DESC LIMIT 1",
+    );
+    expect(JSON.parse(audit?.detail ?? '{}')).toMatchObject({ typedHost: true });
+  });
+
+  it('sends nothing in Test mode, and nothing once the org cap is used', async () => {
+    sent.length = 0;
+    const base = { id: 'v', orgId: kit.org.id, name: 'Leo', hostEmail: 'test-mode@host.test' };
+    expect(await mailHost(kit.ctx, { ...base, mode: 'test' }, 1, 'Door', 'UTC')).toBe(true);
+    expect(sent).toHaveLength(0);
+    const rate = await emailRate(kit.ctx, 'live', kit.org.id, 'capped@host.test');
+    await bump(kit.env.DB, rate.orgKey, rate.orgWindow, rate.orgCap);
+    expect(await mailHost(kit.ctx, { ...base, mode: 'live' }, 1, 'Door', 'UTC')).toBe(false);
+    expect(sent).toHaveLength(0);
+  });
+
+  it('shows the desk only its own templates, without notes', async () => {
+    const desk = await station([tpl], []);
+    const v = await visit();
+    const other = await outsider();
+    const foreign = await kit.scanPass(other.template, { plan: 'guest' }, { orgId: other.org.id });
+    void foreign;
+    const res = await kit.get(
+      desk.headers,
+      `/visitors?dayStart=${day().start}&dayEnd=${day().end}`,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { items: { id: string; note: string | null }[] };
+    const mine = body.items.find((i) => i.id === v.id);
+    expect(mine?.note).toBeNull();
   });
 });
