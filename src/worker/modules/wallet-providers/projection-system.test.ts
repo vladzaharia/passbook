@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { groupOf } from '../../../passkit/wallets/fidelity.ts';
 import type { CompileResult, FidelityItem } from '../../../passkit/wallets/types.ts';
 import type { JobOf } from '../../jobs/types.ts';
-import { all } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { getLatestRelease } from '../templates/repo-releases.ts';
@@ -14,7 +14,12 @@ import {
   publishProjectionRelease,
 } from './projection-service.ts';
 import { runSystemProjection } from './projection-system.ts';
-import { SYSTEM_AUTHOR, SYSTEM_REVIEWER, systemAuthority } from './projection-system-authority.ts';
+import {
+  SYSTEM_AUTHOR,
+  SYSTEM_REVIEWER,
+  systemAuthority,
+  versionAuthorIndependentSql,
+} from './projection-system-authority.ts';
 import { queueSystemProjections } from './projection-system-queue.ts';
 import {
   candidateOf,
@@ -28,6 +33,7 @@ import {
   setup,
   updateCompiler,
 } from './projection-v2-test-fixtures.ts';
+import { walletInstanceProofSql } from './repo-instance-proof.ts';
 import { getProjectionCandidate, insertProjectionApprovalStmt } from './repo-projection-store.ts';
 
 installV2Env();
@@ -281,5 +287,69 @@ describe('the Apple release hook', () => {
         release('apple', 'org1'),
       ),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe('resuming and edge cases of the system job', () => {
+  const nfcLoss: FidelityItem = {
+    capability: 'nfc',
+    path: '',
+    support: 'unsupported',
+    message: 'No NFC here.',
+  };
+  const count = async (kit: Kit, table: string) =>
+    (
+      await all(
+        S.env.DB,
+        `SELECT 1 FROM ${table} t WHERE ${table === 'template_approvals' ? "candidate_id IN (SELECT id FROM template_candidates WHERE org_id = ? AND provider = 'google')" : "org_id = ? AND provider = 'google'"}`,
+        [kit.orgId],
+      )
+    ).length;
+
+  it('a lost NFC counts as a door loss: it waits for a human', async () => {
+    patch((r) => ({ ...quiet(lookLoss)(r), items: [...quiet(lookLoss)(r).items, nfcLoss] }));
+    const kit = await setup();
+    await runSystemProjection(kit.ctx, jobOf(kit));
+    const [candidate] = (await candidates(kit)).items;
+    expect(candidate?.projection).toMatchObject({ approvedOmissions: ['nfc'] });
+    expect(candidate?.approvals).toEqual([]);
+  });
+
+  it.each([3, 4])(
+    'retries after a failure at compile %i without repeating a step',
+    async (failAt) => {
+      let calls = 0;
+      patch((r) => {
+        calls += 1;
+        if (calls === failAt) throw new Error('boom');
+        return quiet(lookLoss)(r);
+      });
+      const kit = await setup();
+      calls = 0;
+      await expect(runSystemProjection(kit.ctx, jobOf(kit))).rejects.toThrow('boom');
+      await runSystemProjection(kit.ctx, jobOf(kit));
+      expect({
+        candidates: await count(kit, 'template_candidates'),
+        approvals: await count(kit, 'template_approvals'),
+        releases: await count(kit, 'template_releases'),
+      }).toEqual({ candidates: 1, approvals: 1, releases: 1 });
+      const active = await getApprovedProjection(kit.ctx, lookup(kit), await proof());
+      expect(active?.release.createdBy).toBe(SYSTEM_REVIEWER);
+    },
+  );
+
+  it('the revoke proof exempts the version author from a system candidate only', async () => {
+    const row = (author: string) =>
+      first<{ ok: number }>(
+        S.env.DB,
+        `SELECT ${versionAuthorIndependentSql('c', 'r.id')} AS ok
+         FROM (SELECT 'u1' AS version_author_id, ? AS author_id) c, (SELECT 'u1' AS id) r`,
+        [author],
+      );
+    expect((await row(SYSTEM_AUTHOR))?.ok).toBe(1);
+    expect((await row('u2'))?.ok).toBe(0);
+    expect(walletInstanceProofSql('i', 'o', '1', false, 'revoke')).toContain(
+      `author_id = '${SYSTEM_AUTHOR}'`,
+    );
   });
 });

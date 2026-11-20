@@ -36,8 +36,9 @@ const LOOK = ['type', 'colors.', 'localization.images', 'text.length'];
 const startsWithAny = (capability: string, prefixes: readonly string[]): boolean =>
   prefixes.some((p) => (p.endsWith('.') ? capability.startsWith(p) : capability === p));
 
-/** Who notices the loss (architecture 4.2). A feature the wallet lacks is `absent` whatever it is. */
+/** Who notices the loss (architecture 4.2). A feature the wallet lacks is `absent`, except NFC: staff at the door lose it. */
 export function groupOf(item: Pick<FidelityItem, 'capability' | 'support'>): ItemGroup {
+  if (item.capability === 'nfc') return 'door';
   if (item.support === 'unsupported') return 'absent';
   if (startsWithAny(item.capability, DOOR)) return 'door';
   if (item.support === 'difference' || startsWithAny(item.capability, LOOK)) return 'look';

@@ -24,7 +24,9 @@ import {
 import {
   insertProjectionApprovalStmt,
   insertProjectionCandidateStmt,
+  type ProjectionCandidate,
   type ProjectionScope,
+  selectProjectionApprovals,
   selectProjectionCandidates,
 } from './repo-projection-store.ts';
 
@@ -55,61 +57,71 @@ export async function runSystemProjection(
   const scope: ProjectionScope = { orgId, mode, provider, templateId };
   const proof = await captureProjectionProof(ctx);
   const db = ctx.env.DB;
-  const earlier = await selectProjectionCandidates(db, scope, proof);
-  if (earlier.some((c) => isSystemAuthored(c) && c.sourceReleaseId === job.sourceReleaseId)) return;
-  const version = await getVersion(db, templateId, job.version);
-  if (!version) return skipped(ctx, job, 'version missing');
-  const { pins, report } = await computeProjectionPins(ctx, provider, version);
-  if (unreleasable(report)) return skipped(ctx, job, report.status.kind);
-  const author = systemAuthority('author', orgId, mode);
+  const earlier = (await selectProjectionCandidates(db, scope, proof)).find(
+    (c) => isSystemAuthored(c) && c.sourceReleaseId === job.sourceReleaseId,
+  );
   const reviewer = systemAuthority('reviewer', orgId, mode);
-  const autoPublish = pins.approvedOmissions.length === 0;
-  const candidate = await buildProjectionCandidate(
-    ctx,
-    scope,
-    {
-      sourceReleaseId: job.sourceReleaseId,
-      version: job.version,
-      projection: { schema: 2, provider, approvedOmissions: pins.approvedOmissions },
-      authorId: SYSTEM_AUTHOR,
-    },
-    proof,
-  ).catch((error: unknown) => {
-    if (!(error instanceof ConflictError)) throw error;
-    skipped(ctx, job, error.code);
-    return null;
-  });
-  if (!candidate) return;
-  const audit = (entity: 'candidate' | 'approval', id: string, action: string, userId: string) =>
-    releaseAuditStmt(db, ctx, entity, id, orgId, userId, templateId, action, {
-      candidateId: candidate.id,
-      candidateHash: candidate.candidateHash,
-      mode,
-      provider,
-      autoPublish,
+  // A retry resumes where the last run stopped: candidate, then approval, then release.
+  let candidate = earlier ?? null;
+  if (!candidate) {
+    const version = await getVersion(db, templateId, job.version);
+    if (!version) return skipped(ctx, job, 'version missing');
+    const { pins, report } = await computeProjectionPins(ctx, provider, version);
+    if (unreleasable(report)) return skipped(ctx, job, report.status.kind);
+    const author = systemAuthority('author', orgId, mode);
+    candidate = await buildProjectionCandidate(
+      ctx,
+      scope,
+      {
+        sourceReleaseId: job.sourceReleaseId,
+        version: job.version,
+        projection: { schema: 2, provider, approvedOmissions: pins.approvedOmissions },
+        authorId: SYSTEM_AUTHOR,
+      },
+      proof,
+    ).catch((error: unknown) => {
+      if (!(error instanceof ConflictError)) throw error;
+      skipped(ctx, job, error.code);
+      return null;
     });
-  const created = await batch(db, [
-    insertProjectionCandidateStmt(db, candidate, author, ctx.clock.now(), proof),
-    audit('candidate', candidate.id, 'template.system_candidate', SYSTEM_AUTHOR),
-  ]);
-  if (!created[0]?.meta.changes) return failedWrite(ctx, author);
-  if (!autoPublish) return;
+    if (!candidate) return;
+    const created = candidate;
+    const made = await batch(db, [
+      insertProjectionCandidateStmt(db, created, author, ctx.clock.now(), proof),
+      audit(ctx, created, 'candidate', created.id, 'template.system_candidate', SYSTEM_AUTHOR),
+    ]);
+    if (!made[0]?.meta.changes) return failedWrite(ctx, author);
+  }
+  if (candidate.projection.schema !== 2 || candidate.projection.approvedOmissions.length > 0)
+    return;
+  const head = await getLatestRelease(db, scope);
+  if (head?.candidateId === candidate.id) return;
 
-  const approval: ApprovalRow = {
+  let checked: ProjectionCandidate;
+  try {
+    checked = await scopedCandidate(ctx, scope, candidate.id, candidate.candidateHash, proof);
+  } catch (error) {
+    if (!(error instanceof ConflictError)) throw error;
+    return skipped(ctx, job, error.code);
+  }
+  const have = (await selectProjectionApprovals(db, scope, proof)).find(
+    (a) => a.candidateId === checked.id && a.reviewerId === SYSTEM_REVIEWER,
+  );
+  const approval: ApprovalRow = have ?? {
     id: ctx.ids.id(),
-    candidateId: candidate.id,
-    candidateHash: candidate.candidateHash,
+    candidateId: checked.id,
+    candidateHash: checked.candidateHash,
     reviewerId: SYSTEM_REVIEWER,
     kind: 'peer',
     createdAt: ctx.clock.now(),
   };
-  const checked = await scopedCandidate(ctx, scope, candidate.id, candidate.candidateHash, proof);
-  const approved = await batch(db, [
-    insertProjectionApprovalStmt(db, approval, checked, reviewer, ctx.clock.now(), proof),
-    audit('approval', approval.id, 'template.system_approve', SYSTEM_REVIEWER),
-  ]);
-  if (!approved[0]?.meta.changes) return failedWrite(ctx, reviewer);
-  const head = await getLatestRelease(db, scope);
+  if (!have) {
+    const approved = await batch(db, [
+      insertProjectionApprovalStmt(db, approval, checked, reviewer, ctx.clock.now(), proof),
+      audit(ctx, checked, 'approval', approval.id, 'template.system_approve', SYSTEM_REVIEWER),
+    ]);
+    if (!approved[0]?.meta.changes) return failedWrite(ctx, reviewer);
+  }
   await publish(
     ctx,
     reviewer,
@@ -122,3 +134,30 @@ export async function runSystemProjection(
     proof,
   );
 }
+
+const audit = (
+  ctx: ServiceContext,
+  candidate: ProjectionCandidate,
+  entity: 'candidate' | 'approval',
+  id: string,
+  action: string,
+  userId: string,
+) =>
+  releaseAuditStmt(
+    ctx.env.DB,
+    ctx,
+    entity,
+    id,
+    candidate.orgId,
+    userId,
+    candidate.templateId,
+    action,
+    {
+      candidateId: candidate.id,
+      candidateHash: candidate.candidateHash,
+      mode: candidate.mode,
+      provider: candidate.provider,
+      autoPublish:
+        candidate.projection.schema === 2 && candidate.projection.approvedOmissions.length === 0,
+    },
+  );
