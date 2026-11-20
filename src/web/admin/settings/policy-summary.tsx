@@ -65,7 +65,7 @@ export function PolicySummary({
           {rows.map(([label, text, note]) => (
             <div
               key={label}
-              className={`grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 border-b border-border pb-2 ${text.length > 24 ? 'sm:col-span-2' : ''}`}
+              className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 border-b border-border pb-2"
             >
               <dt className="text-fg-muted">{label}</dt>
               <dd className="text-right text-fg-strong">{text}</dd>

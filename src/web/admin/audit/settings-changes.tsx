@@ -26,7 +26,15 @@ export function settingChanges(detail: unknown): Change[] | undefined {
   if (typeof detail !== 'object' || detail === null) return undefined;
   const changes = (redact(detail) as { changes?: unknown }).changes;
   if (typeof changes !== 'object' || changes === null) return undefined;
-  const list = Object.entries(changes).map(([key, v]) => {
+  // The platform log keeps `{ key: { from, to } }`; an organization's reads `[{ label: key, from, to }]`.
+  const pairs: [string, unknown][] = Array.isArray(changes)
+    ? changes.flatMap((c: { label?: unknown; from?: unknown; to?: unknown }) =>
+        typeof c?.label === 'string'
+          ? [[c.label, { from: c.from, to: c.to }] as [string, unknown]]
+          : [],
+      )
+    : Object.entries(changes);
+  const list = pairs.map(([key, v]) => {
     const pair =
       typeof v === 'object' && v !== null ? (v as { from?: unknown; to?: unknown }) : null;
     return {

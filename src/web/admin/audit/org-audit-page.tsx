@@ -113,7 +113,11 @@ export function OrgAuditPage({
         onOpen={(next) => onSearch({ ...filters, entry: next })}
         onClear={() => onSearch({})}
       />
-      <EntryDrawer entry={selected} orgName={NO_NAME} onClose={() => onSearch(filters)} />
+      <EntryDrawer
+        entry={selected}
+        orgName={(id) => (id === allowed ? membership?.orgName : undefined)}
+        onClose={() => onSearch(filters)}
+      />
     </>
   );
 }

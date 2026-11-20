@@ -17,6 +17,12 @@ describe('settingChanges', () => {
     ]);
   });
 
+  it("reads the organization's list shape", () => {
+    expect(
+      settingChanges({ changes: [{ label: 'retention.scansDays', from: 396, to: 200 }] }),
+    ).toEqual([{ key: 'retention.scansDays', label: 'Scans', from: '396', to: '200' }]);
+  });
+
   it('never shows a secret-looking setting value', () => {
     const [change] = settingChanges({ changes: { 'smtp.password': { from: 'a', to: 'b' } } }) ?? [];
     expect(change?.from).toBe('[redacted]');
