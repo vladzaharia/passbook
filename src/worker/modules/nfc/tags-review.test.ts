@@ -181,7 +181,7 @@ describe('a bind pins the pass holder it read', () => {
     );
     addBind(g, f.kit.ctx, {
       tagId: f.kit.ctx.ids.id(),
-      newTag: { ref: 'e'.repeat(64), hint: 'EEEE', label: null },
+      newTag: { ref: 'e'.repeat(64), hint: 'EEEE', label: null, system: 'uid' },
       bindingId: f.kit.ctx.ids.id(),
       passId: pass.id,
       scope: 'pass',

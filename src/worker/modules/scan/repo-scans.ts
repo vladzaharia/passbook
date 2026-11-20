@@ -1,6 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { all, exactStmt, first, type SqlValue, stmt } from '../../platform/db.ts';
+import type { SunSeen } from '../nfc/repo-sun.ts';
 import { scanConjunction } from './scan-conjunction.ts';
 import { type ScanPredicate, withCtes } from './scan-predicate.ts';
 
@@ -29,6 +30,8 @@ export interface Claim {
   method: string;
   /** The tag the scan was read from. */
   tagId?: string | null;
+  /** A SUN read of that tag: the claim consumes its counter in the same batch, or is refused. */
+  sun?: SunSeen | null;
   clientTs: number;
   now: number;
 }

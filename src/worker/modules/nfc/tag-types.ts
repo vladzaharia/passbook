@@ -122,10 +122,6 @@ async function commit(
   }
 }
 
-/** Until the SUN plugin (S3) verifies taps, a sun type would claim secure assurance on a plain UID read. */
-const sunNotReady = () =>
-  new ConflictError('Secure tags are not available yet.', 'NFC_SYSTEM_NOT_READY');
-
 const archived = () => new ConflictError('This tag type is archived.', 'TAG_TYPE_ARCHIVED');
 
 export async function createTagType(
@@ -135,7 +131,6 @@ export async function createTagType(
   input: z.infer<typeof CreateTagTypeSchema>,
 ): Promise<TagType> {
   const { orgId } = authority;
-  if (input.system === 'sun') throw sunNotReady();
   const templateIds = await checkTemplates(ctx, orgId, input.templateIds);
   if (!(await systemEnabled(ctx.env.DB, input.system)))
     throw new ConflictError('This tag system is not available.', 'TAG_SYSTEM_DISABLED');
@@ -183,7 +178,6 @@ export async function updateType(
   const current = await getTagType(ctx.env.DB, orgId, id);
   if (!current) throw tagTypeNotFound();
   if (current.archivedAt !== null) throw archived();
-  if (current.system === 'sun') throw sunNotReady();
   if (input.typed === true && current.system !== 'uid')
     throw new ValidationError('Secure tags cannot be typed.', [
       { path: 'typed', message: 'Secure tags cannot be typed.', code: 'custom' },

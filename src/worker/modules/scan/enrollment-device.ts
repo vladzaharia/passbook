@@ -23,14 +23,15 @@ import {
 import { activeBinding, type PassFacts, passFacts } from '../nfc/repo-tag-bindings.ts';
 import { orgTagCount, tagByRef } from '../nfc/repo-tags.ts';
 import { addBind, type BindPlan, bindChecks, ENROLL_TABLES } from '../nfc/repo-tags-write.ts';
-import { UID_SYSTEM } from '../nfc/systems/uid.ts';
+import { assuranceOfSystem } from '../nfc/systems/registry.ts';
 import { decideBind, TAGS_PER_ORG_MODE, triggerRefusal } from '../nfc/tags.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import type { ScanActor } from './guard.ts';
 import { bumpTagCap, ownerActiveCheck } from './repo-tags-bind.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
-import { tagRights, tagUid } from './tags-inspect.ts';
+import { tagRights } from './tags-inspect.ts';
+import { assertReadMatches, identifyRead, sunUsedMeanwhile } from './tags-sun.ts';
 
 type Pending = z.infer<typeof ScanTagEnrollmentSchema>;
 type Done = z.infer<typeof ScanTagEnrollmentDoneSchema>;
@@ -201,7 +202,8 @@ async function complete(
   if (!(await tagsEnabled(ctx, orgId)))
     throw new ConflictError('Turn on tags in settings first.', 'TAGS_OFF');
   await bumpTagCap(db, 'bind', scannerId, ctx.clock.now());
-  const uid = tagUid(read);
+  await ensureCredentialRefKeyset(db, ctx.env);
+  const identity = await identifyRead(ctx, actor, read);
   const pass = await passFacts(db, row.passId);
   const holderChanged = () =>
     new ConflictError('The pass changed hands. Ask for a new request.', 'TAG_HOLDER_CHANGED');
@@ -212,13 +214,13 @@ async function complete(
     throw holderChanged();
   if (row.scope === 'user' && (pass.ownerUserId === null || pass.ownerUserId !== row.userId))
     throw holderChanged();
-  await assertBindable(ctx, orgId, pass.id);
-  await ensureCredentialRefKeyset(db, ctx.env);
-  const { ref, hint } = await UID_SYSTEM.identify(ctx.env, orgId, mode, uid);
+  await assertBindable(ctx, orgId, pass.id, assuranceOfSystem(identity.system));
+  const { ref, hint } = identity;
   const facts: PassFacts = pass;
 
   for (let attempt = 1; ; attempt++) {
     const tag = await tagByRef(db, orgId, mode, ref);
+    await assertReadMatches(ctx, actor, identity, tag);
     const active = tag ? await activeBinding(db, tag.id) : null;
     const decision = decideBind(tag, active, facts, { scope: row.scope, move: false });
     const now = ctx.clock.now();
@@ -276,7 +278,8 @@ async function complete(
       throw new ConflictError('This organization has the most tags allowed.', 'TAG_LIMIT');
     const plan: BindPlan = {
       tagId: tag?.id ?? ctx.ids.id(),
-      newTag: tag ? null : { ref, hint, label: null },
+      newTag: tag ? null : { ref, hint, label: null, system: identity.system },
+      sun: identity.sun,
       bindingId: ctx.ids.id(),
       passId: pass.id,
       scope: row.scope,
@@ -311,6 +314,7 @@ async function complete(
         return done(plan.bindingId, tag?.hint ?? hint);
       }
     } catch (error) {
+      await sunUsedMeanwhile(ctx, actor, identity, error);
       const refusal = triggerRefusal(error);
       if (refusal) throw refusal;
       if (classifyD1Error(error)?.kind !== 'unique' || attempt >= ATTEMPTS) throw error;

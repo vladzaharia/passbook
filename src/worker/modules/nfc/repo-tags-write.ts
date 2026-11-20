@@ -6,16 +6,22 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
-import { UID_SYSTEM } from './systems/uid.ts';
+import { consumeSun, enrolSun, type SunSeen, sunFreshCheck, sunKeysetCheck } from './repo-sun.ts';
+import type { TagSystemId } from './systems/types.ts';
 
 type Session = Extract<TenantPassWrite, { kind: 'session' }>;
 
 /** A tag edit is a console action: the captured session holds passes:operate. */
 export type TagAuthority = Session & { capability: 'passes:operate' };
 
-const TAG_TABLES = ['nfc_tags', 'tag_bindings'] as const;
+const TAG_TABLES = ['nfc_tags', 'tag_bindings', 'nfc_tag_sun'] as const;
 /** What an enrollment grant writes: its own row, and the binding it creates. */
-export const ENROLL_TABLES = ['tag_enrollments', 'nfc_tags', 'tag_bindings'] as const;
+export const ENROLL_TABLES = [
+  'tag_enrollments',
+  'nfc_tags',
+  'tag_bindings',
+  'nfc_tag_sun',
+] as const;
 const TAG_CODES = { lineage: 'TAG_HOLDER_CHANGED', stale: 'TAG_HOLDER_CHANGED' } as const;
 
 export type TagPurpose =
@@ -73,7 +79,9 @@ export function endBinding(
 export interface BindPlan {
   tagId: string;
   /** Set when the tag has not been seen: its row is created in the same batch. */
-  newTag: { ref: string; hint: string; label: string | null } | null;
+  newTag: { ref: string; hint: string; label: string | null; system: TagSystemId } | null;
+  /** A SUN read: a new tag's side row starts at its counter, a known tag's moves up to it (or the batch is refused). */
+  sun?: SunSeen | null;
   bindingId: string;
   passId: string;
   scope: 'pass' | 'user';
@@ -100,13 +108,19 @@ export interface BindPlan {
 
 /** The pass is live in the tenant, still has the holder the plan read, and a user binding's owner still owns it. */
 export const bindChecks = (
-  p: Pick<BindPlan, 'passId' | 'holderGeneration' | 'holderOwner'>,
+  p: Pick<BindPlan, 'passId' | 'holderGeneration' | 'holderOwner'> &
+    Partial<Pick<BindPlan, 'tagId' | 'newTag' | 'sun'>>,
 ): Check[] => [
   rowIs('passes', p.passId, {
     deleted_at: null,
     credential_generation: p.holderGeneration,
     owner_user_id: p.holderOwner,
   }),
+  ...(p.sun
+    ? p.tagId && !p.newTag
+      ? sunFreshCheck(p.tagId, p.sun)
+      : [sunKeysetCheck(p.sun)]
+    : []),
 ];
 
 /**
@@ -119,9 +133,11 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
     g.upsert(
       'nfc_tags',
       ['id', 'tag_ref', 'system', 'hint', 'label', 'created_at'],
-      [p.tagId, p.newTag.ref, UID_SYSTEM.id, p.newTag.hint, p.newTag.label, now],
+      [p.tagId, p.newTag.ref, p.newTag.system, p.newTag.hint, p.newTag.label, now],
       { doNothing: true },
     );
+  if (p.sun && p.newTag) enrolSun(g, p.tagId, p.sun, now);
+  else if (p.sun) consumeSun(g, p.tagId, p.sun, now);
   if (p.clearsLost)
     g.update('nfc_tags', { set: { lost_at: null, lost_by: null }, where: { id: p.tagId } });
   if (p.end) endBinding(g, p.end, p.end.cause, p.actor, now);
