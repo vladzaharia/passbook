@@ -117,7 +117,6 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-inline: 12px;
 }
 .scan-add-photo-done,
 .scan-add-photo-error {

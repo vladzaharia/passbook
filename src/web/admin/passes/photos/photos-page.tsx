@@ -23,6 +23,10 @@ const CRUMBS = [{ label: 'Passes', to: '/admin/passes' }, { label: 'Photos' }];
 const PARALLEL = 3;
 const MAX_FILES = 1000;
 
+/** A failed upload of a matched pass can be sent again. */
+const retryable = (e: Entry) =>
+  e.state === 'matched' || (e.state === 'failed' && Boolean(e.passId));
+
 const LABEL: Record<Entry['state'], [string, 'neutral' | 'success' | 'warning' | 'danger']> = {
   matching: ['Matching', 'neutral'],
   matched: ['Matched', 'success'],
@@ -67,9 +71,7 @@ export function PhotosPage() {
 
   async function upload() {
     setBusy(true);
-    const queue = live.current
-      .map((e, i) => [e, i] as const)
-      .filter(([e]) => e.state === 'matched');
+    const queue = live.current.map((e, i) => [e, i] as const).filter(([e]) => retryable(e));
     const worker = async () => {
       for (let next = queue.shift(); next; next = queue.shift()) {
         const [entry, index] = next;
@@ -86,7 +88,7 @@ export function PhotosPage() {
   }
 
   const count = (s: Entry['state']) => entries.filter((e) => e.state === s).length;
-  const ready = count('matched');
+  const ready = entries.filter(retryable).length;
   const finished = count('done') + count('failed');
   const handled = entries.filter((e) => e.state === 'done' || e.state === 'failed').length;
   return (
