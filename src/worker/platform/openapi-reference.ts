@@ -3,7 +3,7 @@ type Media = { example?: unknown; schema?: unknown };
 type Op = {
   operationId?: string;
   description?: string;
-  'x-sdk'?: { resource: string; method: string; sdk?: boolean };
+  'x-sdk'?: unknown;
   requestBody?: { content?: Record<string, Media> };
   responses?: Record<string, { content?: Record<string, Media> }>;
 };
@@ -56,7 +56,7 @@ export function withNamedBodies(doc: Doc): Doc {
   const schemas = components.schemas ?? {};
   doc.components = { ...components, schemas };
   for (const op of operations(doc)) {
-    const sdk = op['x-sdk'];
+    const sdk = op['x-sdk'] as { resource: string; method: string; sdk?: boolean } | undefined;
     const media = op.requestBody?.content?.[JSON_TYPE];
     if (!sdk || sdk.sdk === false || !media?.schema) continue;
     if (typeof media.schema === 'object' && '$ref' in media.schema) continue;

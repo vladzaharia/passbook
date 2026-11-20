@@ -54,8 +54,9 @@ describe('ratchet', () => {
     expect(bad({ resource: 'Passes', method: 'list' })).toHaveLength(1);
     expect(bad({ resource: 'a.b.c', method: 'list' }).join()).toMatch(/2 levels/);
     expect(bad({ resource: 'passes', method: 'getAll' }).join()).toMatch(/HTTP verb/);
+    expect(bad({ resource: 'passes', method: 'deleteAll' }).join()).toMatch(/HTTP verb/);
     expect(bad({ resource: 'passes', method: 'listByOrg' }).join()).toMatch(/By/);
-    expect(bad({ resource: 'passes', method: 'del' })).toEqual([]);
+    expect(bad({ resource: 'passes', method: 'delete' })).toEqual([]);
     expect(bad({ resource: 'orgs', method: 'list' }, '/api/v1/platform/orgs').join()).toMatch(
       /platform/,
     );

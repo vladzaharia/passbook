@@ -32,7 +32,7 @@ const NAMESPACES = new Set([
 ]);
 const SEGMENT = /^[a-z][a-zA-Z0-9]*$/;
 const TAG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-const HTTP_VERB = /^(get|post|put|patch|delete)([A-Z]|$)/;
+const HTTP_VERB = /^(?:(?:get|post|put|patch)(?:[A-Z]|$)|delete[A-Z])/;
 
 type Json = Record<string, unknown>;
 const obj = (v: unknown): Json => (v && typeof v === 'object' ? (v as Json) : {});

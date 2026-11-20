@@ -13177,7 +13177,7 @@
         ],
         "additionalProperties": false
       },
-      "WalletEnrolmentsUpdateParams": {
+      "WalletEnrollmentsUpdateParams": {
         "type": "object",
         "properties": {
           "source": {
@@ -13198,7 +13198,7 @@
         ],
         "additionalProperties": false
       },
-      "WalletEnrolmentsEnableParams": {
+      "WalletEnrollmentsEnableParams": {
         "type": "object",
         "properties": {
           "expectedRevision": {
@@ -13211,7 +13211,7 @@
         ],
         "additionalProperties": false
       },
-      "WalletEnrolmentsDisableParams": {
+      "WalletEnrollmentsDisableParams": {
         "type": "object",
         "properties": {
           "expectedRevision": {
@@ -13224,7 +13224,7 @@
         ],
         "additionalProperties": false
       },
-      "WalletEnrolmentsRevokeParams": {
+      "WalletEnrollmentsRevokeParams": {
         "type": "object",
         "properties": {
           "expectedRevision": {
@@ -13433,7 +13433,7 @@
         ],
         "additionalProperties": false
       },
-      "PlatformOrgsWalletEnrolmentsHoldParams": {
+      "PlatformOrgsWalletEnrollmentsHoldParams": {
         "type": "object",
         "properties": {
           "reason": {
@@ -15462,7 +15462,7 @@
           "patch"
         ]
       },
-      "BroadcastsPreviewParams": {
+      "BroadcastsCountRecipientsParams": {
         "type": "object",
         "properties": {
           "orgId": {
@@ -16263,7 +16263,7 @@
           "version"
         ]
       },
-      "MessageRulesPreviewParams": {
+      "MessageRulesCountDueParams": {
         "type": "object",
         "properties": {
           "orgId": {
@@ -17293,7 +17293,7 @@
           "to"
         ]
       },
-      "PlatformIdentitiesCreateParams": {
+      "IdentitiesCreateParams": {
         "type": "object",
         "properties": {
           "orgId": {
@@ -17335,7 +17335,7 @@
           "label"
         ]
       },
-      "PlatformIdentitiesUpdateParams": {
+      "IdentitiesUpdateParams": {
         "type": "object",
         "properties": {
           "label": {
@@ -17358,7 +17358,7 @@
           }
         }
       },
-      "PlatformIdentitiesRotateParams": {
+      "IdentitiesRotateParams": {
         "type": "object",
         "properties": {
           "certificatePem": {
@@ -17381,7 +17381,7 @@
           }
         }
       },
-      "PlatformIdentitiesPushKeyUploadParams": {
+      "IdentitiesPushKeyUploadParams": {
         "type": "object",
         "properties": {
           "keyId": {
@@ -18209,7 +18209,7 @@
         ],
         "additionalProperties": false
       },
-      "TerminalUndoParams": {
+      "TerminalScansUndoParams": {
         "type": "object",
         "properties": {
           "idempotencyKey": {
@@ -23399,7 +23399,7 @@
         "operationId": "me.deleteMePassesById",
         "x-sdk": {
           "resource": "me.passes",
-          "method": "del",
+          "method": "detach",
           "sdk": false,
           "reason": "Acts on the signed-in person's own account; needs a person's session."
         }
@@ -24007,7 +24007,7 @@
         "operationId": "me.deleteMeEmailsByEmail",
         "x-sdk": {
           "resource": "me.emails",
-          "method": "del",
+          "method": "delete",
           "sdk": false,
           "reason": "Acts on the signed-in person's own account; needs a person's session."
         }
@@ -25761,7 +25761,7 @@
         "operationId": "orgs.deleteOrgsById",
         "x-sdk": {
           "resource": "platform.orgs",
-          "method": "del"
+          "method": "delete"
         }
       }
     },
@@ -26054,7 +26054,7 @@
         "operationId": "orgs.deleteOrgsByIdBrandingBySlot",
         "x-sdk": {
           "resource": "brand.passImages",
-          "method": "del"
+          "method": "delete"
         }
       }
     },
@@ -26546,7 +26546,7 @@
         "operationId": "brand.deleteBrandWebLogo",
         "x-sdk": {
           "resource": "brand.webLogo",
-          "method": "del"
+          "method": "delete"
         },
         "security": [
           {
@@ -27366,7 +27366,7 @@
         },
         "operationId": "wallet-enrolments.getOrgsByOrgIdWalletEnrolments",
         "x-sdk": {
-          "resource": "walletEnrolments",
+          "resource": "walletEnrollments",
           "method": "list"
         }
       }
@@ -27406,7 +27406,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WalletEnrolmentsUpdateParams"
+                "$ref": "#/components/schemas/WalletEnrollmentsUpdateParams"
               }
             }
           }
@@ -27580,7 +27580,7 @@
         },
         "operationId": "wallet-enrolments.putOrgsByOrgIdWalletEnrolmentsByProvider",
         "x-sdk": {
-          "resource": "walletEnrolments",
+          "resource": "walletEnrollments",
           "method": "update"
         }
       }
@@ -27620,7 +27620,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WalletEnrolmentsEnableParams"
+                "$ref": "#/components/schemas/WalletEnrollmentsEnableParams"
               }
             }
           }
@@ -27794,7 +27794,7 @@
         },
         "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderEnable",
         "x-sdk": {
-          "resource": "walletEnrolments",
+          "resource": "walletEnrollments",
           "method": "enable"
         }
       }
@@ -27834,7 +27834,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WalletEnrolmentsDisableParams"
+                "$ref": "#/components/schemas/WalletEnrollmentsDisableParams"
               }
             }
           }
@@ -28008,7 +28008,7 @@
         },
         "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderDisable",
         "x-sdk": {
-          "resource": "walletEnrolments",
+          "resource": "walletEnrollments",
           "method": "disable"
         }
       }
@@ -28048,7 +28048,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WalletEnrolmentsRevokeParams"
+                "$ref": "#/components/schemas/WalletEnrollmentsRevokeParams"
               }
             }
           }
@@ -28222,7 +28222,7 @@
         },
         "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderRevoke",
         "x-sdk": {
-          "resource": "walletEnrolments",
+          "resource": "walletEnrollments",
           "method": "revoke"
         }
       }
@@ -30043,7 +30043,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlatformOrgsWalletEnrolmentsHoldParams"
+                "$ref": "#/components/schemas/PlatformOrgsWalletEnrollmentsHoldParams"
               }
             }
           }
@@ -30086,7 +30086,7 @@
         },
         "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderHold",
         "x-sdk": {
-          "resource": "platform.orgs.walletEnrolments",
+          "resource": "platform.orgs.walletEnrollments",
           "method": "hold"
         }
       }
@@ -30171,7 +30171,7 @@
         },
         "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderRelease",
         "x-sdk": {
-          "resource": "platform.orgs.walletEnrolments",
+          "resource": "platform.orgs.walletEnrollments",
           "method": "release"
         }
       }
@@ -30338,7 +30338,7 @@
         },
         "operationId": "wallet-platform.getPlatformWalletEnrolments",
         "x-sdk": {
-          "resource": "platform.walletEnrolments",
+          "resource": "platform.walletEnrollments",
           "method": "list"
         }
       }
@@ -33253,7 +33253,7 @@
         "operationId": "templates.deleteTemplatesById",
         "x-sdk": {
           "resource": "templates",
-          "method": "del"
+          "method": "delete"
         }
       }
     },
@@ -38413,7 +38413,7 @@
         "operationId": "passes.deletePassesById",
         "x-sdk": {
           "resource": "passes",
-          "method": "del"
+          "method": "delete"
         },
         "description": "Deletes the pass record. To take a pass out of Wallet and keep the record, use remove.",
         "security": [
@@ -39548,7 +39548,7 @@
         "operationId": "passes.deletePassesByIdAssetsByName",
         "x-sdk": {
           "resource": "passes.assets",
-          "method": "del"
+          "method": "delete"
         },
         "security": [
           {
@@ -39946,7 +39946,7 @@
         "operationId": "passes.deletePassesByIdMemberPhoto",
         "x-sdk": {
           "resource": "passes.memberPhoto",
-          "method": "del"
+          "method": "delete"
         },
         "security": [
           {
@@ -43083,7 +43083,7 @@
         },
         "operationId": "passes.getPassesByIdEvents",
         "x-sdk": {
-          "resource": "passes.events",
+          "resource": "passes.activity",
           "method": "list"
         },
         "security": [
@@ -45274,7 +45274,7 @@
         "operationId": "pass-imports.deletePassImportsById",
         "x-sdk": {
           "resource": "passImports",
-          "method": "del"
+          "method": "delete"
         },
         "security": [
           {
@@ -47487,7 +47487,7 @@
         "operationId": "bundles.deleteBundlesById",
         "x-sdk": {
           "resource": "bundles",
-          "method": "del"
+          "method": "delete"
         },
         "security": [
           {
@@ -49626,7 +49626,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BroadcastsPreviewParams"
+                "$ref": "#/components/schemas/BroadcastsCountRecipientsParams"
               }
             }
           }
@@ -49680,7 +49680,7 @@
         "operationId": "broadcasts.postBroadcastsPreview",
         "x-sdk": {
           "resource": "broadcasts",
-          "method": "preview"
+          "method": "countRecipients"
         },
         "security": [
           {
@@ -53205,7 +53205,7 @@
         "operationId": "message-rules.deleteMessageRulesById",
         "x-sdk": {
           "resource": "messageRules",
-          "method": "del"
+          "method": "delete"
         },
         "security": [
           {
@@ -53983,7 +53983,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MessageRulesPreviewParams"
+                "$ref": "#/components/schemas/MessageRulesCountDueParams"
               }
             }
           }
@@ -54047,7 +54047,7 @@
         "operationId": "message-rules.postMessageRulesPreview",
         "x-sdk": {
           "resource": "messageRules",
-          "method": "preview"
+          "method": "countDue"
         },
         "security": [
           {
@@ -58453,7 +58453,7 @@
         "operationId": "connections.deleteConnectionsById",
         "x-sdk": {
           "resource": "connections",
-          "method": "del"
+          "method": "delete"
         },
         "security": [
           {
@@ -60640,7 +60640,7 @@
         "operationId": "webhooks.deleteWebhookEndpointsById",
         "x-sdk": {
           "resource": "webhookEndpoints",
-          "method": "del"
+          "method": "delete"
         },
         "description": "Deletes an endpoint and its delivery history.",
         "security": [
@@ -61887,7 +61887,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlatformIdentitiesCreateParams"
+                "$ref": "#/components/schemas/IdentitiesCreateParams"
               }
             }
           }
@@ -62171,7 +62171,7 @@
         },
         "operationId": "identities.postIdentities",
         "x-sdk": {
-          "resource": "platform.identities",
+          "resource": "identities",
           "method": "create"
         }
       }
@@ -62473,7 +62473,7 @@
         },
         "operationId": "identities.getIdentitiesById",
         "x-sdk": {
-          "resource": "platform.identities",
+          "resource": "identities",
           "method": "retrieve"
         }
       },
@@ -62499,7 +62499,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlatformIdentitiesUpdateParams"
+                "$ref": "#/components/schemas/IdentitiesUpdateParams"
               }
             }
           }
@@ -62783,7 +62783,7 @@
         },
         "operationId": "identities.patchIdentitiesById",
         "x-sdk": {
-          "resource": "platform.identities",
+          "resource": "identities",
           "method": "update"
         }
       },
@@ -62839,8 +62839,8 @@
         },
         "operationId": "identities.deleteIdentitiesById",
         "x-sdk": {
-          "resource": "platform.identities",
-          "method": "del"
+          "resource": "identities",
+          "method": "delete"
         }
       }
     },
@@ -62867,7 +62867,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlatformIdentitiesRotateParams"
+                "$ref": "#/components/schemas/IdentitiesRotateParams"
               }
             }
           }
@@ -63151,7 +63151,7 @@
         },
         "operationId": "identities.postIdentitiesByIdRotate",
         "x-sdk": {
-          "resource": "platform.identities",
+          "resource": "identities",
           "method": "rotate"
         }
       }
@@ -63237,7 +63237,7 @@
         },
         "operationId": "identities.postIdentitiesByIdApnsCheck",
         "x-sdk": {
-          "resource": "platform.identities",
+          "resource": "identities",
           "method": "checkApns"
         }
       }
@@ -63265,7 +63265,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlatformIdentitiesPushKeyUploadParams"
+                "$ref": "#/components/schemas/IdentitiesPushKeyUploadParams"
               }
             }
           }
@@ -63549,7 +63549,7 @@
         },
         "operationId": "identities.putIdentitiesByIdPushKey",
         "x-sdk": {
-          "resource": "platform.identities.pushKey",
+          "resource": "identities.pushKey",
           "method": "upload"
         }
       },
@@ -63849,8 +63849,8 @@
         },
         "operationId": "identities.deleteIdentitiesByIdPushKey",
         "x-sdk": {
-          "resource": "platform.identities.pushKey",
-          "method": "del"
+          "resource": "identities.pushKey",
+          "method": "delete"
         }
       }
     },
@@ -64779,7 +64779,7 @@
         "operationId": "wallet-providers.getWalletProvidersPassesById",
         "x-sdk": {
           "resource": "passes",
-          "method": "retrieveWalletStatus"
+          "method": "retrieveProviderStatus"
         },
         "security": [
           {
@@ -66109,7 +66109,7 @@
         "operationId": "users.deleteUsersByIdEmailsByEmail",
         "x-sdk": {
           "resource": "platform.users.emails",
-          "method": "del"
+          "method": "delete"
         }
       }
     },
@@ -73966,8 +73966,8 @@
         },
         "operationId": "scan.getScanScans",
         "x-sdk": {
-          "resource": "terminal",
-          "method": "listScans",
+          "resource": "terminal.scans",
+          "method": "list",
           "sdk": false,
           "reason": "Scanner device protocol; needs a paired scanner session."
         }
@@ -74278,7 +74278,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TerminalUndoParams"
+                "$ref": "#/components/schemas/TerminalScansUndoParams"
               }
             }
           }
@@ -74307,7 +74307,7 @@
         },
         "operationId": "scan.postScanScansByScanIdUndo",
         "x-sdk": {
-          "resource": "terminal",
+          "resource": "terminal.scans",
           "method": "undo"
         },
         "security": [
@@ -84450,7 +84450,7 @@
         "operationId": "nfc-tags.deleteNfcBindingsByBindingId",
         "x-sdk": {
           "resource": "nfc.bindings",
-          "method": "del"
+          "method": "delete"
         }
       },
       "patch": {
@@ -90029,7 +90029,7 @@
         "operationId": "apple.deleteWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial",
         "x-sdk": {
           "resource": "apple.registrations",
-          "method": "del",
+          "method": "delete",
           "sdk": false,
           "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
         }
