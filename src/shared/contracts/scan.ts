@@ -5,7 +5,7 @@ import { IdSchema, JsonSchema, ModeSchema, TimestampSchema } from './common.ts';
 import { ScannerTagsSettingsSchema, ScanTagSchema, TagReadSchema } from './nfc-tags.ts';
 import { ScanAccessSchema } from './scan-access.ts';
 import { ScanActionInputSchema } from './scan-action-input.ts';
-import { ScanAdmitSchema } from './scan-admit.ts';
+import { ScanAdmitSchema, ScanTypeCountSchema } from './scan-admit.ts';
 import {
   ScanAdminScopeSchema,
   ScanApprovalSchema,
@@ -53,7 +53,6 @@ export type ScanOutcomeKind = z.infer<typeof ScanOutcomeKindSchema>;
 export const ScanRecordOutcomeSchema = z.enum(['ok', 'heads_up', 'refused']);
 /** What `scans.action_kind` can hold: the action kinds, and `undo` for the row an undo writes. */
 export const ScanRecordKindSchema = z.enum([...ScanActionKindSchema.options, 'undo']);
-
 /** Wire reasons. The client-only ones (network, timeout, ...) live in `src/web/scan/machine/types.ts`. */
 export const SCAN_REFUSED_REASONS = [
   'not_found',
@@ -273,6 +272,7 @@ export const ScanCountsSchema = z.object({
     .nullable(),
   /** The scanner's zone, when it has one. Null on every other scanner. */
   place: ScanPlaceCountSchema.nullable().optional(),
+  byType: z.array(ScanTypeCountSchema).optional(),
   asOf: TimestampSchema,
   configRev: z.number().int(),
 });

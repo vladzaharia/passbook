@@ -12,7 +12,7 @@ describe('admin navigation per scope', () => {
       ['Overview'],
       ['Passes', 'Templates', 'Blueprints', 'Connections'],
       ['Messages', 'Scanning', 'Test inbox'],
-      ['Members', 'Wallet accounts', 'API keys', 'Audit log', 'Settings'],
+      ['Members', 'Wallet accounts', 'API keys', 'Audit log', 'Retention', 'Settings'],
     ]);
     expect(adminNavGroups(org, false, membershipFixture('o1'))[1]?.[0]?.to).toBe(
       '/admin/o/o1/passes',
@@ -24,7 +24,7 @@ describe('admin navigation per scope', () => {
     expect(labels(groups)).toEqual([
       ['Overview'],
       ['Organizations', 'Users'],
-      ['Status', 'Audit log'],
+      ['Status', 'Audit log', 'Retention'],
       ['Wallet accounts', 'API keys', 'Settings'],
     ]);
     expect(groups.flat().every((item) => item.to.startsWith('/admin/platform'))).toBe(true);
@@ -45,7 +45,7 @@ describe('admin navigation per scope', () => {
       ['Overview'],
       ['Passes'],
       ['Test inbox'],
-      ['Wallet accounts', 'Settings'],
+      ['Wallet accounts', 'Retention', 'Settings'],
     ]);
     const scanner = membershipFixture('o1', { capabilities: ['scanning:read'] });
     expect(firstAllowedPath(org, false, scanner)).toBe('/admin/o/o1/scanning');

@@ -19,7 +19,16 @@ export interface ConsoleCursorScope {
   mode: Mode;
   filters: Pick<
     ScanLogFilter,
-    'q' | 'passId' | 'scannerId' | 'staffId' | 'eventId' | 'outcome' | 'reason' | 'from' | 'to'
+    | 'q'
+    | 'passId'
+    | 'scannerId'
+    | 'staffId'
+    | 'eventId'
+    | 'templateId'
+    | 'outcome'
+    | 'reason'
+    | 'from'
+    | 'to'
   >;
   operation: 'list' | 'export';
 }
@@ -62,6 +71,8 @@ function associatedData(scope: ConsoleCursorScope, kekVersion: number): string {
     f.reason ?? null,
     f.from ?? null,
     f.to ?? null,
+    // After the older fields, so a cursor of an unfiltered list keeps its binding.
+    ...(f.templateId ? [f.templateId] : []),
   ]);
 }
 
