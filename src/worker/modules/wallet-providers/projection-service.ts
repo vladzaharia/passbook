@@ -6,8 +6,9 @@ import type {
   TemplateCandidateList,
   TemplateReleaseScope,
 } from '../../../shared/contracts/template-releases.ts';
+import { featureNotIncluded } from '../../../shared/copy/entitlements.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
+import { FeatureNotIncludedError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { authorizeTemplateWrite } from '../templates/access.ts';
@@ -22,6 +23,7 @@ import {
   scopedTemplate,
 } from './projection-service-support.ts';
 import { isSystemAuthored } from './projection-system-authority.ts';
+import { walletEntitled } from './repo-enrolment-gate.ts';
 import { selectProjectionApprovals, selectProjectionCandidates } from './repo-projection-store.ts';
 import { writeProjectionApproval, writeProjectionCandidate } from './repo-projection-write.ts';
 
@@ -74,6 +76,10 @@ export async function createProjectionCandidate(
   const authority = await authorizeTemplateWrite(ctx, auth, scope.orgId, 'templates:author');
   const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   if (!body.sourceReleaseId || !body.version) throw new ValidationError();
+  // The plan before the account: a plan without the wallet is a 403, not a "changed, retry" conflict.
+  const feature = `wallet.${scope.provider}` as const;
+  if (!(await walletEntitled(ctx.env.DB, scope.provider, scope.orgId)))
+    throw new FeatureNotIncludedError(feature, featureNotIncluded(feature));
   const candidate = await buildProjectionCandidate(
     ctx,
     scope,

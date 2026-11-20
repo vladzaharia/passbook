@@ -35356,6 +35356,7 @@
     },
     "/api/v1/passes/{id}/prints": {
       "post": {
+        "x-feature": "print",
         "summary": "Print a ticket; an earlier print of the pass is voided",
         "tags": [
           "passes"
@@ -88091,6 +88092,10 @@
         "operationId": "nfc-tags.getNfcPassesByPassIdTags"
       },
       "post": {
+        "x-feature": {
+          "key": "nfc",
+          "atLeast": "basic"
+        },
         "summary": "Put a removed tag back on a pass",
         "tags": [
           "nfc-tags"
@@ -88724,6 +88729,10 @@
         "operationId": "nfc-tags.deleteNfcBindingsByBindingId"
       },
       "patch": {
+        "x-feature": {
+          "key": "nfc",
+          "atLeast": "basic"
+        },
         "summary": "Change what a tag works with",
         "tags": [
           "nfc-tags"
@@ -91083,6 +91092,10 @@
     },
     "/api/v1/nfc/passes/{passId}/enrollments": {
       "post": {
+        "x-feature": {
+          "key": "nfc",
+          "atLeast": "basic"
+        },
         "summary": "Ask a scanner to read a tag for a pass",
         "tags": [
           "nfc-tags"
@@ -93597,6 +93610,10 @@
         "operationId": "nfc-keysets.getNfcKeysets"
       },
       "post": {
+        "x-feature": {
+          "key": "nfc",
+          "atLeast": "secure"
+        },
         "summary": "Create a tag keyset",
         "tags": [
           "nfc-keysets"

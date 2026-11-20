@@ -244,6 +244,21 @@ describe('settings and the plan', () => {
     expect((await put(scope, { 'email.orgCapPerDay': 100 })).status).toBe(200);
   });
 
+  it('refuses a reset of nfc.tags while the plan lacks nfc: the default is on (L1)', async () => {
+    const scope = await orgScope();
+    expect((await put(scope, { 'nfc.tags': { enabled: false } })).status).toBe(200);
+    await plan(scope, 'trial');
+    const res = await put(scope, { 'nfc.tags': null });
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ code: 'FEATURE_NOT_INCLUDED', feature: 'nfc' });
+    expect((await read(scope))('nfc.tags')).toMatchObject({
+      source: 'org',
+      value: { enabled: false },
+    });
+    await plan(scope, 'standard');
+    expect((await put(scope, { 'nfc.tags': null })).status).toBe(200);
+  });
+
   it('allows the write again once the plan includes nfc', async () => {
     const scope = await orgScope();
     await plan(scope, 'trial');

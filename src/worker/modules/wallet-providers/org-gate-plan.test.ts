@@ -3,7 +3,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
 import { first, run } from '../../platform/db.ts';
 import { passChannels } from '../channels/service.ts';
+import { getVersion } from '../templates/repo.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
+import { computeProjectionPins } from './projection-pins.ts';
+import { createProjectionCandidate } from './projection-service.ts';
 import {
   setWalletProvidersEnabledForTest,
   walletEnrolmentIssuesSql,
@@ -99,5 +102,30 @@ describe('the plan layer of the provider gate', () => {
     await override('7');
     expect(await reason()).toBe('not_included');
     expect(await open()).toBe(0);
+  });
+
+  it('answers a projection create for a plan without the wallet with 403, not a retry conflict (review L5)', async () => {
+    const { f, plan } = await kitOf('configured');
+    const { kit, apple } = f;
+    const version = await getVersion(kit.env.DB, kit.template.id, kit.template.version);
+    if (!version) throw new Error('Offer fixture version is missing.');
+    const { pins } = await computeProjectionPins(kit.ctx, 'google', version);
+    const create = () =>
+      createProjectionCandidate(kit.ctx, apple.authorAuth, kit.template.id, {
+        orgId: kit.org.id,
+        mode: 'live',
+        provider: 'google',
+        version: kit.template.version,
+        sourceReleaseId: apple.id,
+        projection: { schema: 2, provider: 'google', approvedOmissions: pins.approvedOmissions },
+      });
+    await plan('trial');
+    await expect(create()).rejects.toMatchObject({
+      status: 403,
+      code: 'FEATURE_NOT_INCLUDED',
+      feature: 'wallet.google',
+    });
+    await plan('legacy');
+    await expect(create()).resolves.toMatchObject({ provider: 'google' });
   });
 });

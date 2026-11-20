@@ -3,10 +3,14 @@ import type {
   WalletEnrolment,
   WalletEnrolmentAction,
 } from '../../../shared/contracts/wallet-providers.ts';
+import { featureNotIncluded } from '../../../shared/copy/entitlements.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { grant } from '../../platform/authority.ts';
+import type { Check } from '../../platform/authority-checks.ts';
+import { entitled } from '../../platform/authority-entitled.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
-import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
+import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
+import { ConflictError, FeatureNotIncludedError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
@@ -79,12 +83,13 @@ async function orgStep(
   provider: Provider,
   purpose: string,
   step: (w: OrgWriter) => EnrolmentStep,
+  extra: Check[] = [],
 ): Promise<WalletEnrolment> {
   const w = await orgWriter(ctx, auth, orgId);
   const g = grant(ctx, {
     purpose,
     principal: w.principal,
-    checks: w.checks,
+    checks: [...w.checks, ...extra],
     tables: ENROLMENT_TABLES,
     codes: { config: 'WALLET_ACCOUNT_CONFLICT' },
   });
@@ -157,6 +162,10 @@ export async function enableEnrolment(
 ): Promise<WalletEnrolment> {
   const mode = sessionOf(auth).mode;
   await tenantAuthorityOf(ctx, auth, orgId, 'integrations:manage');
+  // The plan first, in Test and Live alike: a plan without the wallet must not read as a missing prerequisite.
+  const feature = `wallet.${provider}` as const;
+  if (!isEntitled(await entitlementsOf(ctx, orgId), feature))
+    throw new FeatureNotIncludedError(feature, featureNotIncluded(feature));
   const row = await current(ctx, orgId, mode, provider, input.expectedRevision);
   if (!row?.credential_source_id || row.revoked_at !== null || row.enabled_at !== null)
     throw changed();
@@ -172,23 +181,31 @@ export async function enableEnrolment(
   const roundTrip = mode === 'live' ? await testRoundTrip(ctx.env.DB, orgId, provider) : null;
   if (mode === 'live' && roundTrip === null) missing.push('round_trip');
   if (missing.length > 0 || checkId === null) throw prerequisite(missing);
-  return orgStep(ctx, auth, orgId, provider, 'org_mode.wallet.enrolment_enable', (w) => ({
-    accountId: row.id,
-    isNew: false,
+  return orgStep(
+    ctx,
+    auth,
+    orgId,
     provider,
-    expectedRevision: row.enrolment_revision,
-    revision: row.enrolment_revision + 1,
-    event: {
-      id: ctx.ids.id(),
-      kind: 'enable',
-      credentialId: source.id,
-      checkId,
-      ...(roundTrip ? { roundTrip } : {}),
-      actor: { type: 'user', id: w.userId },
-      createdAt: now,
-    },
-    set: { enabled_at: now },
-  }));
+    'org_mode.wallet.enrolment_enable',
+    (w) => ({
+      accountId: row.id,
+      isNew: false,
+      provider,
+      expectedRevision: row.enrolment_revision,
+      revision: row.enrolment_revision + 1,
+      event: {
+        id: ctx.ids.id(),
+        kind: 'enable',
+        credentialId: source.id,
+        checkId,
+        ...(roundTrip ? { roundTrip } : {}),
+        actor: { type: 'user', id: w.userId },
+        createdAt: now,
+      },
+      set: { enabled_at: now },
+    }),
+    [entitled(feature)],
+  );
 }
 
 export async function disableEnrolment(

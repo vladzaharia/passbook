@@ -22,10 +22,10 @@ export async function appleVariant(
   ctx: ServiceContext,
   pass: Pass,
 ): Promise<PassFileVariant | null> {
-  // Only the pass and template levels decide: a kill switch (org, platform) never un-voids a copy
+  // Only the pass and template levels decide: a kill switch (org, platform, plan) never un-voids a copy
   // that was retired before it, nor retires a live one.
   const { inputs } = await loadPass(ctx, pass);
-  const lower = effectiveChannels({ ...inputs, platform: {}, org: {} });
+  const lower = effectiveChannels({ ...inputs, platform: {}, entitlement: {}, org: {} });
   if (lower.apple.on) return null;
   return {
     objectKey: voidedKey(pass.id, pass.version),

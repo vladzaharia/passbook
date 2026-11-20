@@ -97,9 +97,10 @@ export async function startOne(ctx: ServiceContext, runId: string): Promise<Star
         await templateDefaultsOf(ctx.env.DB, run.templateId, run.orgId, run.mode),
       ) &&
       (begin.fromBlocked === null ||
-        begin.fromBlocked.join() === (await blockedNow(ctx, run.orgId)).join())
+        begin.fromBlocked.join() === (run.toBlocked ?? (await blockedNow(ctx, run.orgId))).join())
     ) {
-      await writeDrop(ctx, run);
+      // A plan change that joined the run since it was read keeps it alive.
+      if (!(await writeDrop(ctx, run))) return 'moved';
       ctx.log.info('channels.apply.dropped', {
         runId,
         orgId: run.orgId,

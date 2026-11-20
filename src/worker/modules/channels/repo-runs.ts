@@ -34,6 +34,11 @@ export interface ApplyRun {
   replace: Channel[];
   /** An entitlement run: the channels the plan blocked before the change. Null for a template save. */
   fromBlocked: Channel[] | null;
+  /** The channels the plan blocked after it; null on a run made before 0153 (the plan as it is then). */
+  toBlocked: Channel[] | null;
+  /** The entitlement revisions the run covers, `from_rev` to `to_rev`; null on a template-save run. */
+  fromRev: number | null;
+  toRev: number | null;
   requestedBy: string;
   dueAt: number;
   updatedAt: number;
@@ -56,6 +61,9 @@ interface RunRow {
   to_revision: number | null;
   replace_channels: string;
   from_blocked: string | null;
+  to_blocked: string | null;
+  from_rev: number | null;
+  to_rev: number | null;
   requested_by: string;
   due_at: number;
   updated_at: number;
@@ -67,7 +75,7 @@ interface RunRow {
 }
 
 const COLUMNS = `id, org_id, mode, template_id, state, from_channels, from_revision, to_channels, to_revision,
-  replace_channels, from_blocked, requested_by, due_at, updated_at, cursor, counts, error_code, started_at, finished_at`;
+  replace_channels, from_blocked, to_blocked, from_rev, to_rev, requested_by, due_at, updated_at, cursor, counts, error_code, started_at, finished_at`;
 
 const map = (r: RunRow): ApplyRun => ({
   id: r.id,
@@ -81,6 +89,9 @@ const map = (r: RunRow): ApplyRun => ({
   toRevision: r.to_revision,
   replace: JSON.parse(r.replace_channels) as Channel[],
   fromBlocked: r.from_blocked === null ? null : (JSON.parse(r.from_blocked) as Channel[]),
+  toBlocked: r.to_blocked === null ? null : (JSON.parse(r.to_blocked) as Channel[]),
+  fromRev: r.from_rev,
+  toRev: r.to_rev,
   requestedBy: r.requested_by,
   dueAt: r.due_at,
   updatedAt: r.updated_at,

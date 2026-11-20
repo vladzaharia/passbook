@@ -206,7 +206,8 @@ export async function updateSettings(
   const gated = orgId === null ? null : platformGateIssue(await getPlatformSettings(ctx), upserts);
   if (gated) throw new ValidationError('Invalid settings.', [gated], gated.code);
   // The plan comes after the platform: a write the plan blocks is a 403 naming the feature, not a field error.
-  const planned = orgId === null ? null : planGateIssue(await entitlementsOf(ctx, orgId), upserts);
+  const planned =
+    orgId === null ? null : planGateIssue(await entitlementsOf(ctx, orgId), upserts, deletes);
   if (planned) throw new FeatureNotIncludedError(planned.key, featureNotIncluded(planned.key));
   // Bounds against the platform maximum, and the floors that delay a shortening (retention keys only).
   const retention = await planRetentionChange(ctx, scope, upserts, deletes);

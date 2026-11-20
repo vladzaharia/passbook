@@ -33,7 +33,25 @@ export function addOrgEntitlements(
 /** The org's resolved values; a key absent here is not entitled. */
 export type Entitlements = Partial<Record<EntitlementKey, EntitlementValue>>;
 
-export async function entitlementsOf(ctx: ServiceContext, orgId: string): Promise<Entitlements> {
+// One read per org per request (design-multi-tenancy.md section 2.3): a door read asks for the same org's
+// plan several times. Only a request context (it has an id) is memoised; a job or a test context reads each time.
+const MEMO_MAX = 512;
+const memo = new Map<string, Promise<Entitlements>>();
+
+export function entitlementsOf(ctx: ServiceContext, orgId: string): Promise<Entitlements> {
+  if (ctx.requestId === null) return readEntitlements(ctx, orgId);
+  const key = `${ctx.requestId}:${orgId}`;
+  const hit = memo.get(key);
+  if (hit !== undefined) return hit;
+  const read = readEntitlements(ctx, orgId);
+  memo.set(key, read);
+  if (memo.size > MEMO_MAX) memo.delete(memo.keys().next().value as string);
+  // A failed read is not kept: the next ask tries again.
+  read.catch(() => memo.delete(key));
+  return read;
+}
+
+async function readEntitlements(ctx: ServiceContext, orgId: string): Promise<Entitlements> {
   const out: Entitlements = {};
   for (const row of await entitlementRows(ctx.env.DB, orgId)) {
     const key = ENTITLEMENT_KEYS.find((k) => k === row.key);

@@ -59,16 +59,20 @@ export function walletEnrolmentIssues(row: EnrolmentGateRow | null): boolean {
   );
 }
 
-/** Null when the provider may run for this org and mode, else the first failing layer. */
+/**
+ * Null when the provider may run for this org and mode, else the first failing layer. A caller that already
+ * read the org's plan passes `entitled` and saves the read.
+ */
 export async function walletProviderDisabledReason(
   db: D1Database,
   provider: WalletProvider,
   orgId: string,
   mode: Mode,
+  entitled?: boolean,
 ): Promise<WalletProviderDisabledReason | null> {
   const released = walletProviderReleaseReason(provider, mode);
   if (released) return released;
-  if (!(await walletEntitled(db, provider, orgId))) return 'not_included';
+  if (!(entitled ?? (await walletEntitled(db, provider, orgId)))) return 'not_included';
   const row = await findEnrolmentGateRow(db, provider, orgId, mode);
   return walletEnrolmentIssues(row) ? null : 'not_enrolled';
 }

@@ -92,6 +92,7 @@ export function registerKeysetRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void 
       method: 'post',
       path: '/keysets',
       summary: 'Create a tag keyset',
+      xFeature: { key: 'nfc', atLeast: 'secure' },
       query: TagKeysetListQuerySchema,
       body: CreateTagKeysetSchema,
       status: 201,
