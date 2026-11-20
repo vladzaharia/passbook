@@ -60,8 +60,10 @@ export const PlatformSettingsSchema = z.object({
   'scan.lookupsPerHour': z.number().int().min(20).max(2000).default(200),
   /** Apple NFC (VAS). Off until Apple approves the pass type. */
   'nfc.enabled': z.boolean().default(false),
-  /** Paper tickets. Off until the platform turns printing on. */
-  'print.enabled': z.boolean().default(false),
+  /** Linked third-party NFC tags. On; independent of Apple NFC (VAS). Off stops every tag. */
+  'nfc.tagsEnabled': z.boolean().default(true),
+  /** Paper tickets. Off stops printing for every organization. */
+  'print.enabled': z.boolean().default(true),
   /** Join links: public self-issue. Off stops every link. */
   'join.enabled': z.boolean().default(true),
   /** Join cards one org may issue per rolling 24 hours across its live links. */
@@ -135,8 +137,8 @@ export const OrgSettingsSchema = z.object({
     .optional(),
   /** Opt-in: the buddy sits on the pass email's card, as in the sign-in email. */
   'email.buddy': z.boolean().default(false),
-  /** Third-party NFC tags. Off until an admin turns it on. */
-  'nfc.tags': z.object({ enabled: z.boolean().default(false) }).default({ enabled: false }),
+  /** Third-party NFC tags. On until an admin turns it off. */
+  'nfc.tags': z.object({ enabled: z.boolean().default(true) }).default({ enabled: true }),
   /** Channels this org turns off for every template: copies keep working, nothing new is offered. */
   'channels.blocked': z.array(ChannelSchema).max(CHANNELS.length).default([]),
 });

@@ -66,8 +66,8 @@ export async function contentVersion(input: VersionInput): Promise<string> {
 
 /**
  * SHA-256 of the inputs that can affect an issued pass, independently of the version ID. The
- * `wallets` block and `wallets/**` art are for other wallets: Apple output ignores them, so they
- * never change this key.
+ * `wallets` block, `wallets/**` art and the `channels` defaults are for other wallets and the
+ * channel resolver: Apple output ignores them, so they never change this key.
  */
 export async function buildKey(input: {
   passJson: unknown;
@@ -79,6 +79,7 @@ export async function buildKey(input: {
     previewOnlyAssets = [],
     scan,
     wallets: _wallets,
+    channels: _channels,
     ...manifest
   } = input.manifest;
   const previewOnly = new Set(previewOnlyAssets);

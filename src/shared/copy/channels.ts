@@ -23,7 +23,7 @@ export const CHANNEL_REASON_COPY: Record<ChannelReason, string> = {
   not_released: '{channel}: not available yet',
   not_enrolled: '{channel}: organization not enrolled',
   no_design: '{channel}: no design for this template',
-  tags_off: '{channel}: tags off for this organization',
+  tags_off: '{channel}: tags off',
   printing_off: '{channel}: printing off for all organizations',
   blocked: '{channel}: blocked for this organization',
   never: '{channel}: never on for this template',

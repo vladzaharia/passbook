@@ -123,6 +123,21 @@ the build key and the Apple release hash ignore it, so editing it never reissues
 - Unknown keys are errors. Issues are `WALLETS_*`, plus `WALLET_ART_PNG` for a file that is not a
   PNG (`src/passkit/template/wallets/`).
 
+## Set channel defaults
+
+An optional `channels` block sets the template's default per delivery channel, used while the org has
+saved no channel policy for the template:
+
+```json
+"channels": { "paper": "on", "nfc": "off" }
+```
+
+- Keys: `mobile`, `apple`, `google`, `samsung`, `paper`, `nfc`. Values: `on` or `off`. A channel left
+  out uses the global default (paper off, the rest on).
+- Order: org policy row, then this block (read from the pass's pinned version), then the global
+  default. The source stays `template`. Platform, org, capability and pass levels apply as before.
+- The Apple build key and `pass.json` ignore it, like `wallets`.
+
 ## Google and Samsung wallets
 
 Both compile from the same pass; the matrix of what each carries is

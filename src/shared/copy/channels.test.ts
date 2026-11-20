@@ -8,7 +8,7 @@ describe('channel reason lines', () => {
   const cases: [string, ChannelReason, string, boolean][] = [
     ['org block', 'blocked', 'Blocked for this organization', true],
     ['not enrolled', 'not_enrolled', 'Organization not enrolled', true],
-    ['tags off', 'tags_off', 'Tags off for this organization', true],
+    ['tags off', 'tags_off', 'Tags off', true],
     ['platform printing off', 'printing_off', 'Printing off for all organizations', false],
     ['not released', 'not_released', 'Not available yet', false],
     ['no design', 'no_design', 'No design for this template', false],

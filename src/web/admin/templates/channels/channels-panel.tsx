@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { z } from 'zod';
-import { isDigital, templateDefault } from '@/shared/channels.ts';
+import { isDigital } from '@/shared/channels.ts';
 import {
   CHANNELS,
   type Channel,
@@ -72,7 +72,7 @@ export function TemplateChannelsPanel({
   if (query.isError || !data)
     return <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />;
 
-  const stored = (c: Channel): TemplateChannelState => data.channels?.[c] ?? templateDefault(c);
+  const stored = (c: Channel): TemplateChannelState => data.channels?.[c] ?? data.defaults[c];
   const value = (c: Channel) => edits[c] ?? stored(c);
   const changed = CHANNELS.filter((c) => value(c) !== stored(c));
   const body = (replace = false) => ({

@@ -183,6 +183,7 @@ describe('manifest rule coverage', () => {
     counters: 'rule',
     wallets: 'rule',
     paper: 'rule',
+    channels: 'rule',
   } satisfies Record<keyof TemplateManifest, string>;
   it('every manifest key has a rule or sits on the explicit atomic, ours or dropped lists', () => {
     for (const [key, how] of Object.entries(KEYS))

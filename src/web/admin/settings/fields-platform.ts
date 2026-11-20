@@ -181,12 +181,28 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     schema: P['join.unusedDays'],
   },
   {
+    key: 'print.enabled',
+    group: 'Paper',
+    label: 'Paper tickets',
+    kind: 'boolean',
+    help: 'Off stops printing for every organization.',
+    schema: P['print.enabled'],
+  },
+  {
     key: 'nfc.enabled',
     group: 'NFC',
     label: 'NFC',
     kind: 'boolean',
-    help: 'Off until Apple approves the pass type. Off turns NFC tags off for every organization.',
+    help: 'Apple NFC passes. Off until Apple approves the pass type.',
     schema: P['nfc.enabled'],
+  },
+  {
+    key: 'nfc.tagsEnabled',
+    group: 'NFC',
+    label: 'NFC tags',
+    kind: 'boolean',
+    help: 'Linked third-party tags. Off turns them off for every organization.',
+    schema: P['nfc.tagsEnabled'],
   },
   ...RETENTION_CLASSES.map(
     (cls): SettingField => ({

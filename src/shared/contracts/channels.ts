@@ -178,6 +178,8 @@ export const TemplateChannelsResponseSchema = z.object({
   revision: z.number().int().nonnegative(),
   /** The template's own view: platform, org and capability, before any pass override. */
   effective: EffectiveChannelsSchema,
+  /** What each channel is when the policy is silent: the manifest default, else the global one. */
+  defaults: z.record(ChannelSchema, z.enum(['on', 'off'])),
 });
 export type TemplateChannelsDto = z.infer<typeof TemplateChannelsResponseSchema>;
 
