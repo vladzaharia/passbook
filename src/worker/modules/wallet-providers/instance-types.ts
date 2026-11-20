@@ -40,6 +40,12 @@ export interface WalletInstanceProof extends WalletScope {
   accountRevision: number;
   adapterRevision: number;
   policyRevision: number;
+  /**
+   * The pass row_version and the account authority_epoch the reconcile read. The queue grant refuses when either
+   * moved. A caller that does not carry them gets the values current at the call.
+   */
+  passRowVersion?: number;
+  accountEpoch?: number;
 }
 
 interface WalletInstanceBase extends WalletScope {
