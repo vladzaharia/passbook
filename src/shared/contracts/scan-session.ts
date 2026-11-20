@@ -218,6 +218,14 @@ export const ScanRosterSchema = z.object({
   cursor: z.string().nullable(),
   asOf: TimestampSchema,
   validUntil: TimestampSchema,
+  /** Keyed MAC of the window, session and scope. The device echoes it on `batch`. */
+  sig: z.string().max(64).optional(),
+});
+/** The roster window a device decided under. The server checks `sig` and holds `clientTs` to it. */
+export const ScanRosterStampSchema = z.object({
+  asOf: TimestampSchema,
+  validUntil: TimestampSchema,
+  sig: z.string().max(64),
 });
 export const ScanBatchRequestSchema = z.object({
   items: z
@@ -230,11 +238,21 @@ export const ScanBatchRequestSchema = z.object({
         direction: ScanDirectionSchema.optional(),
         /** An offline heads-up never reached the server, so a queued override carries this, not `overrideOf`. */
         override: z.boolean().optional(),
+        /** How the door decided: `listed` on the roster, `unverified` by staff with no list, `refused` turned away. */
+        door: z.enum(['listed', 'unverified', 'refused']).optional(),
       }),
     )
     .min(1)
     .max(50),
+  roster: ScanRosterStampSchema.optional(),
 });
 export const ScanBatchResultSchema = z.object({
-  items: z.array(z.object({ idempotencyKey: UuidV7Schema, outcome: ScanOutcomeSchema })),
+  items: z.array(
+    z.object({
+      idempotencyKey: UuidV7Schema,
+      outcome: ScanOutcomeSchema,
+      /** The door let this in and the server did not. */
+      conflict: z.boolean().optional(),
+    }),
+  ),
 });

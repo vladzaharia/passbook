@@ -36,6 +36,7 @@ import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
 import { registerScanEnrollmentRoutes } from './routes-enrollment.ts';
 import { registerScanOccupancyRoutes } from './routes-occupancy.ts';
+import { registerScanOfflineRoutes } from './routes-offline.ts';
 import { registerScanRoleRoutes } from './routes-role.ts';
 import { registerScanSessionHoursRoutes } from './routes-session-hours.ts';
 import { registerScanStaffRoutes } from './routes-staff-session.ts';
@@ -139,6 +140,7 @@ registerScanRoleRoutes(scanRoutes);
 registerScanTagRoutes(scanRoutes);
 registerScanSessionHoursRoutes(scanRoutes);
 registerScanEnrollmentRoutes(scanRoutes);
+registerScanOfflineRoutes(scanRoutes);
 registerScanBrandingRoute(scanRoutes);
 
 register(

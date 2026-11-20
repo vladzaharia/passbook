@@ -115,6 +115,7 @@ export const ScannerSettingsSchema = z.object({
   reader: z.enum(['none', 'barcode', 'nfc']),
   lookup: z.boolean(),
   offline: z.boolean(),
+  whenOffline: z.enum(['stop', 'decide', 'list']).optional(),
   dailyAmount: z.number().int().min(1).max(10_000_000).nullable(),
   /** A monitor may act (Let in, Mark as out) when this is on. Off when absent. */
   deskActions: z.boolean().optional(),
