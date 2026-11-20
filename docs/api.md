@@ -68,8 +68,12 @@ read at each request. A creator can give a role only if every scope in it is wit
 and never changed. A request from any other address, or with none, is `401 INVALID_API_KEY`, the same as a wrong key.
 Only `cf-connecting-ip` is read. The key list shows the network of the last use.
 
-**Template and style limits.** `templateIds` and `passStyles` are stored with the key. The routes do not enforce them
-yet, so a limited key is refused (`403 API_KEY_RESTRICTION_PENDING`) until they do. Only pass, holder, template and NFC scopes can be limited.
+**Template and style limits.** `templateIds` and `passStyles` are stored with the key and never change. A limited key reaches
+only passes (and their events, scans, prints and webhook endpoints) of its templates: with `passStyles` a template counts when every
+one of its styles is allowed, so a template that gains a style drops out; with both, a template must pass both. Limits only narrow:
+the key holds no more than the same key without them. A route takes a limited key only where it enforces the limit and answers every
+other one `403 API_KEY_RESTRICTED_ROUTE`. Today only `GET /api-keys/me` takes one; the pass, holder, template and webhook routes
+adopt the limit as they move to the grant builder's reads and writes. Only pass, holder, template and NFC scopes can be limited.
 
 Tenant list requests name an organization with `orgId`. An org-bound key may omit it (on pass create
 and on pass, holder and bundle lists it defaults to the key's org) and must otherwise send exactly

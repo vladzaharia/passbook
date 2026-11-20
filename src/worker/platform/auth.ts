@@ -48,6 +48,8 @@ export interface ApiKeyAuth {
   scopes: ApiScope[];
   /** From api_keys.mode. */
   mode: Mode;
+  /** The key is limited to templates or styles (`api_key_resources`); only a `templateScoped` route admits it. */
+  limited?: true;
 }
 
 export const SCANNER_COOKIE = '__Host-wallet_scan';
@@ -77,7 +79,12 @@ export interface SessionStore {
 
 /** Implemented by modules/api-keys. Hashes the presented key; returns null when invalid. */
 export interface ApiKeyStore {
-  resolve(rawKey: string, caller?: KeyCaller): Promise<ApiKeyAuth | null>;
+  /** A key limited to templates is refused (403) unless the caller passes `limited: 'ok'`. */
+  resolve(
+    rawKey: string,
+    caller?: KeyCaller,
+    options?: { limited?: 'ok' },
+  ): Promise<ApiKeyAuth | null>;
 }
 
 /** Where the request came from, for a key's IP allowlist. Only `cf-connecting-ip` is read. */
@@ -187,7 +194,16 @@ export type RouteAuth =
    * key's scope): `register` turns a success response without that proof into a 500
    * AUTHORITY_UNPROVEN. `session: 'admin'` takes an admin session instead of any tenant session.
    */
-  | { scope: ScopeRule; capability?: OrgCapability; session?: 'admin' }
+  | {
+      scope: ScopeRule;
+      capability?: OrgCapability;
+      session?: 'admin';
+      /**
+       * The handler enforces a key's template and style limits: through grants (the builder adds them) and reads
+       * (`authorityPredicate` with `tenantFilter`). Without this a limited key is refused (403 API_KEY_RESTRICTED_ROUTE).
+       */
+      templateScoped?: true;
+    }
   /** A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header. */
   | { human: true; requestMode?: boolean }
   /** A platform admin session. Keys never pass until a platform key kind exists. */
@@ -252,11 +268,12 @@ function sessionKindOf(auth: RouteAuth): SessionKind {
 export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const rule = 'scope' in auth ? auth.scope : null;
   const capability = 'scope' in auth ? auth.capability : undefined;
+  const limited = 'scope' in auth && auth.templateScoped ? ({ limited: 'ok' } as const) : undefined;
   const sessionKind = sessionKindOf(auth);
   const guard = createMiddleware<AppBindings>(async (c, next) => {
     const token = rule ? bearer(c) : null;
     if (rule && token) {
-      const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c));
+      const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c), limited);
       if (!key)
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
       const needed = neededScope(rule, c, key.scopes);

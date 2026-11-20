@@ -8,7 +8,7 @@ import { loadManifests, type ManifestCache, manifestCacheKey } from './repo-temp
 export function testFence(orgId: string, mode: 'live' | 'test' = 'live'): ScanReadAuthority {
   return {
     ctes: `actor AS MATERIALIZED (SELECT ? AS org_id, ? AS mode),
-      actor_ok AS MATERIALIZED (SELECT org_id, mode FROM actor)`,
+      actor_ok AS MATERIALIZED (SELECT org_id, mode, NULL AS limit_key FROM actor)`,
     params: [orgId, mode],
     ok: 'EXISTS (SELECT 1 FROM actor_ok)',
     tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),

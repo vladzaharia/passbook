@@ -14,15 +14,17 @@ function roleList(roles: readonly string[]): string {
 }
 
 /**
- * The key row `k` is in force at `now`: not revoked, not past `expires_at` or `retire_at`, not a key whose
- * template restrictions no grant enforces yet, and, for a personal key, its membership is live and its
- * user active (the membership is of the key's org: the insert trigger holds that, and neither row's org moves).
+ * The key row `k` is in force at `now`: not revoked, not past `expires_at` or `retire_at`, and, for a personal key,
+ * its membership is live and its user active (the membership is of the key's org: the insert trigger holds that,
+ * and neither row's org moves). A key limited to templates or styles is live only with `limited: true`, which the
+ * grant actor row passes: its statements enforce the limits (authority-restrict.ts). Every other statement that asks
+ * "may this key act" leaves the limit out and so refuses a limited key.
  * One definition for every statement that asks "may this key act".
  */
-export function keyLive(k: string, now: number): Fragment {
+export function keyLive(k: string, now: number, limited = false): Fragment {
   // One line, short aliases: the text rides in every key grant (docs: a tenant grant stays under 2 KB).
   return {
-    sql: `(${k}.revoked_at IS NULL AND ${k}.restricted=0 AND (${k}.expires_at IS NULL AND ${k}.retire_at IS NULL OR COALESCE(MIN(${k}.expires_at,${k}.retire_at),${k}.expires_at,${k}.retire_at)>?) AND (${k}.kind<>'personal' OR EXISTS(SELECT 1 FROM org_memberships p JOIN users u ON u.id=p.user_id WHERE p.id=${k}.membership_id AND p.revoked_at IS NULL AND u.status='active')))`,
+    sql: `(${k}.revoked_at IS NULL${limited ? '' : ` AND ${k}.restricted=0`} AND (${k}.expires_at IS NULL AND ${k}.retire_at IS NULL OR COALESCE(MIN(${k}.expires_at,${k}.retire_at),${k}.expires_at,${k}.retire_at)>?) AND (${k}.kind<>'personal' OR EXISTS(SELECT 1 FROM org_memberships p JOIN users u ON u.id=p.user_id WHERE p.id=${k}.membership_id AND p.revoked_at IS NULL AND u.status='active')))`,
     params: [now],
   };
 }

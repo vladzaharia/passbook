@@ -13,7 +13,9 @@ guard(
   declareKeyAccess(
     async (c, next) => {
       const bearer = /^Bearer\s+(\S+)$/i.exec(c.req.header('authorization') ?? '')?.[1];
-      const auth = bearer ? await c.var.stores.apiKeys.resolve(bearer, keyCaller(c)) : null;
+      const auth = bearer
+        ? await c.var.stores.apiKeys.resolve(bearer, keyCaller(c), { limited: 'ok' })
+        : null;
       if (!auth)
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
       c.set('auth', auth);

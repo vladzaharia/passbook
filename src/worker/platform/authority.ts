@@ -4,11 +4,11 @@ import { type AuditRow, type AuditWhen, buildAudit } from './authority-audit.ts'
 import { grantedBatch, grantedBatchWith, registerPrepare } from './authority-batch.ts';
 import type { Check } from './authority-checks.ts';
 import { buildAssert, type GrantCond } from './authority-cond.ts';
+import { assertOwnStatement, assertTableAllowed, translateDenial } from './authority-denial.ts';
 import { AuthorityError } from './authority-error.ts';
 import { identifier } from './authority-expr.ts';
 import {
   assertDeferredContext,
-  authorityDenial,
   builtOf,
   type GrantedStatement,
   type GrantInput,
@@ -26,7 +26,8 @@ import {
 } from './authority-joined.ts';
 import { joinLedgerRow, joinOnlyInserts, pinOf } from './authority-pin.ts';
 import type { GrantScope, Principal } from './authority-principal.ts';
-import { isReceiptStatement, type ReceiptStatement } from './authority-receipt.ts';
+import { assertReceipt, type ReceiptStatement } from './authority-receipt.ts';
+import { keyMayJoin, keyMayRow, keyMayWrite } from './authority-restrict.ts';
 import {
   assertBudget,
   type BuiltStatement,
@@ -38,10 +39,9 @@ import {
   WRITE_PARAM_BUDGET,
   type WriteOptions,
 } from './authority-statements.ts';
-import { RESTRICTED_TABLES } from './authority-tables.ts';
 import { buildUpsert, type UpsertOptions } from './authority-upsert.ts';
 import { exactStmt, type SqlValue } from './db.ts';
-import { authorityDenied, type DenyReason } from './errors.ts';
+import type { DenyReason } from './errors.ts';
 import { hasJobAuthority } from './job-authority.ts';
 import type { ServiceContext } from './service-context.ts';
 
@@ -51,7 +51,7 @@ export type { GrantedStatement, GrantInput } from './authority-granted.ts';
 export { authorityDenial, sweepLeakedGrants } from './authority-granted.ts';
 export type { JobGrantInput } from './authority-job-grant.ts';
 
-type StatementSize = { params: number; bytes: number };
+type Size = { params: number; bytes: number };
 export class Grant {
   readonly id: string;
   readonly scope: GrantScope;
@@ -66,6 +66,10 @@ export class Grant {
   readonly #pin: string | undefined;
   readonly #tables: ReadonlySet<string> | undefined;
   readonly #lineage: Check[] = [];
+  /** An API key principal: its statements carry the key's template limits. */
+  readonly #keyed: boolean;
+  /** A statement writes what a key limited to templates may not (no template dimension, or a part); that key is denied. */
+  #limitedRefused = false;
   #statements: GrantedStatement[] = [];
   #committed = false;
 
@@ -83,6 +87,7 @@ export class Grant {
     this.#input = input;
     this.#now = now;
     this.#pin = pinOf(input.principal, input.target);
+    this.#keyed = input.principal.kind === 'api_key';
     this.#tables = input.tables ? new Set(input.tables.map(identifier)) : undefined;
     this.#insert();
   }
@@ -94,23 +99,19 @@ export class Grant {
 
   /** Built at prepare time: `require: 'one'` writes add their lineage checks to it. */
   #insert(): BuiltStatement {
-    return grantInsert(this.id, this.scope, this.#input, this.#lineage, this.#now);
+    return grantInsert(
+      this.id,
+      this.scope,
+      this.#input,
+      this.#lineage,
+      this.#now,
+      this.#limitedRefused,
+    );
   }
 
   /** A write outside the grant's `tables` is a programming error. */
   #allow(table: string): string {
-    const only = RESTRICTED_TABLES[table.toLowerCase()];
-    if (only && !only.includes(this.purpose))
-      throw new AuthorityError(
-        'GRANT_TABLE_NOT_ALLOWED',
-        `${table} is written only by ${only.join(' or ')}.`,
-      );
-    if (this.#tables && !this.#tables.has(table.toLowerCase()))
-      throw new AuthorityError(
-        'GRANT_TABLE_NOT_ALLOWED',
-        `${this.purpose} does not write ${table}.`,
-      );
-    return table;
+    return assertTableAllowed(this.purpose, this.#tables, table);
   }
 
   /** Parts reach tables the builder does not type, so the grant must list its tables. */
@@ -133,14 +134,28 @@ export class Grant {
     return statement;
   }
 
+  /** A typed write: the join-link rule, the key's template limit, then the statement from `build`. */
+  #write(
+    verb: string | null,
+    may: boolean,
+    table: string,
+    build: (table: string, pin: string | undefined, keyed: boolean) => BuiltStatement,
+  ): GrantedStatement {
+    if (verb) joinOnlyInserts(this.principal, verb);
+    if (this.#keyed && !may) this.#limitedRefused = true;
+    return this.#push(build(this.#allow(table), this.#pin, this.#keyed));
+  }
+
   update(table: string, options: WriteOptions): GrantedStatement {
-    joinOnlyInserts(this.principal, 'updating');
-    return this.#push(buildUpdate(this.id, this.scope, this.#allow(table), options, this.#pin));
+    return this.#write('updating', keyMayRow(table), table, (t, pin, keyed) =>
+      buildUpdate(this.id, this.scope, t, options, pin, keyed),
+    );
   }
 
   delete(table: string, options: Omit<WriteOptions, 'set' | 'inc'>): GrantedStatement {
-    joinOnlyInserts(this.principal, 'deleting');
-    return this.#push(buildDelete(this.id, this.scope, this.#allow(table), options, this.#pin));
+    return this.#write('deleting', keyMayRow(table), table, (t, pin, keyed) =>
+      buildDelete(this.id, this.scope, t, options, pin, keyed),
+    );
   }
 
   insertSelect(
@@ -150,16 +165,8 @@ export class Grant {
     options?: InsertOptions,
   ): GrantedStatement {
     joinLedgerRow(this.principal, table, columns, values);
-    return this.#push(
-      buildInsertSelect(
-        this.id,
-        this.scope,
-        this.#allow(table),
-        columns,
-        values,
-        options,
-        this.#pin,
-      ),
+    return this.#write(null, keyMayRow(table, options?.from), table, (t, pin, keyed) =>
+      buildInsertSelect(this.id, this.scope, t, columns, values, options, pin, keyed),
     );
   }
 
@@ -170,36 +177,32 @@ export class Grant {
     values: SqlValue[],
     options: UpsertOptions,
   ): GrantedStatement {
-    joinOnlyInserts(this.principal, 'upserting');
-    return this.#push(
-      buildUpsert(this.id, this.scope, this.#allow(table), columns, values, options, this.#pin),
+    return this.#write('upserting', keyMayRow(table, options.from), table, (t, pin, keyed) =>
+      buildUpsert(this.id, this.scope, t, columns, values, options, pin, keyed),
     );
   }
 
   /** Update or delete an org-less child through a declared foreign key to a parent in the tenant. */
   joined(table: string, options: JoinedOptions): GrantedStatement {
-    joinOnlyInserts(this.principal, 'updating');
-    return this.#push(buildJoined(this.id, this.scope, this.#allow(table), options, this.#pin));
+    return this.#write('updating', keyMayJoin(table, options.via), table, (t, pin, keyed) =>
+      buildJoined(this.id, this.scope, t, options, pin, keyed),
+    );
   }
 
   /** Insert an org-less child under parents in the tenant; the parent rows supply its foreign keys. */
   insertJoined(table: string, options: InsertJoinedOptions): GrantedStatement {
-    joinOnlyInserts(this.principal, 'inserting children');
-    return this.#push(
-      buildInsertJoined(this.id, this.scope, this.#allow(table), options, this.#pin),
+    return this.#write(
+      'inserting children',
+      keyMayWrite(table.toLowerCase()),
+      table,
+      (t, pin, keyed) => buildInsertJoined(this.id, this.scope, t, options, pin, keyed),
     );
   }
 
   /** Adds statements built elsewhere for this grant (hooks must return these, never run after commit). */
   add(...statements: GrantedStatement[]): void {
     for (const s of statements) {
-      if (builtOf(s).grantId !== this.id)
-        throw new AuthorityError(
-          'GRANT_FOREIGN_STATEMENT',
-          'A statement belongs to a different grant.',
-        );
-      const built = builtOf(s);
-      assertBudget(built.sql, built.params, built.read ? PARAM_BUDGET : WRITE_PARAM_BUDGET);
+      assertOwnStatement(s, this.id);
       if (!this.#statements.includes(s)) this.#statements.push(s);
     }
   }
@@ -229,6 +232,8 @@ export class Grant {
 
   /** Validated read and write parts from side builders, appended in call order (see `readPart`, `writePart`). */
   include(...parts: GrantPart[]): GrantedStatement[] {
+    // A part is checked text, not typed by table: it cannot carry a key's template limits.
+    this.#limitedRefused ||= this.#keyed;
     return parts.map((p) =>
       this.#push(
         buildPart(this.id, this.scope, p, {
@@ -248,8 +253,8 @@ export class Grant {
   }
 
   /** Bound-parameter and byte counts of the grant insert and each write, for the corpus test. */
-  inspect(): { grant: StatementSize; writes: StatementSize[] } {
-    const size = (b: BuiltStatement) => ({ params: b.params.length, bytes: b.sql.length });
+  inspect(): { grant: Size; writes: Size[] } {
+    const size = (b: BuiltStatement): Size => ({ params: b.params.length, bytes: b.sql.length });
     return {
       grant: size(this.#insert()),
       writes: this.#statements.map((s) => size(builtOf(s))),
@@ -275,12 +280,7 @@ export class Grant {
 
   /** @internal Maps a refusal to the HTTP error; other errors are returned unchanged. */
   translate(error: unknown): unknown {
-    const reason = authorityDenial(error);
-    if (reason === null) return error;
-    return authorityDenied(reason, {
-      scanner: this.principal.kind === 'scanner',
-      ...(this.#input.codes ? { codes: this.#input.codes } : {}),
-    });
+    return translateDenial(error, this.principal, this.#input.codes);
   }
 
   /** Runs the grant and its writes as one D1 batch. Results are for the writes, in order. */
@@ -290,11 +290,7 @@ export class Grant {
 
   /** `commit()` with a retention receipt first in the same transaction: a refusal undoes it, and its absence refuses. */
   async commitAfter(receipt: ReceiptStatement): Promise<D1Result[]> {
-    if (!isReceiptStatement(receipt))
-      throw new AuthorityError(
-        'GRANT_FOREIGN_STATEMENT',
-        'Only a retention receipt may run first in a grant batch.',
-      );
+    assertReceipt(receipt);
     return (await grantedBatchWith(this.#db, [this], [], [receipt])).grants[0] ?? [];
   }
 

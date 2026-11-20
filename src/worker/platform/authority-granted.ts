@@ -80,7 +80,13 @@ export function builtOf(s: GrantedStatement): { grantId: string } & BuiltStateme
   return built;
 }
 
-function deniedSql(scope: GrantScope, p: Principal, checks: Check[], b: Binds): string {
+function deniedSql(
+  scope: GrantScope,
+  p: Principal,
+  checks: Check[],
+  b: Binds,
+  limitedRefused: boolean,
+): string {
   const when = (reason: DenyReason) => {
     const parts = checks
       .filter((c) => c.reason === reason)
@@ -94,6 +100,8 @@ function deniedSql(scope: GrantScope, p: Principal, checks: Check[], b: Binds): 
   ];
   if (scope !== 'platform') whens.push(`WHEN a.org_id IS NULL THEN 'actor'`);
   whens.push(`WHEN a.actor_ok = 0 THEN 'actor'`);
+  // A key limited to templates holds no grant that writes a table with no template dimension.
+  if (limitedRefused) whens.push(`WHEN a.limit_key IS NOT NULL THEN 'actor'`);
   if (scope === 'platform' && p.kind === 'api_key')
     whens.push(`WHEN a.org_id IS NOT NULL THEN 'actor'`);
   whens.push(...when('actor'));
@@ -107,21 +115,29 @@ export function grantInsert(
   input: GrantInput,
   extra: Check[],
   now: number,
+  /** A statement of the grant writes a table a limited key may not (`keyMayWrite`). */
+  limitedRefused = false,
 ): BuiltStatement {
-  const b = new Binds();
+  const b = new Binds(input.principal.kind === 'api_key');
   const actor = actorSql(input.principal, now, b);
   const idP = b.bind(id);
   const scopeP = b.bind(scope);
   const label = b.bind(principalLabel(input.principal));
   const purpose = b.bind(input.purpose);
   const target = b.bind(input.target ?? null);
-  const denied = deniedSql(scope, input.principal, [...(input.checks ?? []), ...extra], b);
+  const denied = deniedSql(
+    scope,
+    input.principal,
+    [...(input.checks ?? []), ...extra],
+    b,
+    limitedRefused,
+  );
   const created = b.bind(now);
   const guard = b.bind(id);
   const sql = `WITH actor AS MATERIALIZED (${actor})
-    INSERT INTO authority_grants (id, scope, org_id, mode, principal, purpose, target_id, denied, created_at, leak_guard)
+    INSERT INTO authority_grants (id, scope, org_id, mode, principal, purpose, target_id, denied, created_at, leak_guard, limit_key)
     SELECT ${idP}, ${scopeP}, ${scope === 'platform' ? 'NULL' : 'a.org_id'}, ${scope === 'org_mode' ? 'a.mode' : 'NULL'},
-      ${label}, ${purpose}, ${target}, ${denied}, ${created}, ${guard}
+      ${label}, ${purpose}, ${target}, ${denied}, ${created}, ${guard}, a.limit_key
     FROM (SELECT 1 AS one) AS one LEFT JOIN actor AS a ON 1 = 1`;
   assertBudget(sql, b.params, PARAM_BUDGET);
   return { sql, params: b.params };

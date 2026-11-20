@@ -8,6 +8,7 @@ import {
   type WhereValue,
 } from './authority-expr.ts';
 import type { GrantScope } from './authority-principal.ts';
+import { restrictRow } from './authority-restrict.ts';
 import {
   type BuiltStatement,
   buildInsertSelect,
@@ -82,6 +83,7 @@ export function buildUpsert(
   values: SqlValue[],
   o: UpsertOptions,
   pin?: string,
+  keyed = false,
 ): BuiltStatement {
   // Rows copied from a tenant source can only be skipped on conflict, never merged into the existing row.
   if (o.from && !o.doNothing) throw bad('upsert takes its values from the caller.');
@@ -96,6 +98,7 @@ export function buildUpsert(
     values,
     { ...(o.when ? { when: o.when } : {}), ...(o.from ? { from: o.from } : {}) },
     pin,
+    keyed,
   );
   const lead =
     scope === 'platform' || !t.org
@@ -124,8 +127,12 @@ export function buildUpsert(
   ];
   const where = Object.keys(o.where ?? {});
   if (where.length > 0) rejectOwned(table, scope, where, 'upsert where', false);
+  // The conflicting row must be one the limited key may touch too, not only one of its org.
+  const limited = keyed ? restrictRow(table, table, 'k.limit_key') : '';
+  if (limited) params.push(grantId);
   const guard = [
     ...tenantGuard(t, table, scope),
+    ...(limited ? [`EXISTS (SELECT 1 FROM authority_grants k WHERE k.id = ?${limited})`] : []),
     ...Object.entries(o.where ?? {}).map(([c, v]) => renderCond(`${table}.`, c, v, params)),
   ];
   const tail = guard.length > 0 ? ` WHERE ${guard.join(' AND ')}` : '';
