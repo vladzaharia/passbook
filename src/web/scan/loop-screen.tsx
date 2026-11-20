@@ -28,7 +28,7 @@ export function loopScreen(session: ScanSession, started: boolean): ScanAppViewP
     : { s: 'loop' };
 }
 
-export function tagExtraActions(addTag: (() => void) | undefined) {
+export function tagExtraActions(addTag: (() => void) | null | undefined) {
   return addTag
     ? [
         {
