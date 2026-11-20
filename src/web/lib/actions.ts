@@ -174,6 +174,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'scan_staff.create': a('Staff member added', UserPlus, 'success'),
   'scan_staff.pin_reset': a('Staff PIN reset', Lock, 'info'),
   'scan_event.create': a('Event created', ENTITY.event.icon, 'success'),
+  'scan.template_setup': a('Scanning set up from template', ENTITY.scanner.icon, 'success'),
   'scan_event.update': a('Event changed', I.edit, 'info'),
   'scan_event.archive': a('Event archived', ENTITY.event.icon, 'neutral'),
   'scan_zone.create': a('Zone created', ENTITY.scanner.icon, 'success'),

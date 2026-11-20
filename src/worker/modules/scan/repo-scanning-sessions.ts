@@ -28,6 +28,8 @@ export interface ScanningSessionRow {
   updated_at: number;
   /** Trigger-owned; an edit derived from this row is checked against it at commit. */
   config_epoch: number;
+  /** The template Scan passes made this session for; one live session per template. */
+  setup_template_id?: string | null;
 }
 const SELECT = `SELECT s.*,o.name AS org_name FROM scanning_sessions s JOIN orgs o ON o.id=s.org_id`;
 
@@ -90,6 +92,7 @@ export const addScanningSessionInsert = (
       'created_at',
       'updated_at',
       'created_by',
+      ...(row.setup_template_id ? ['setup_template_id'] : []),
     ],
     [
       row.id,
@@ -103,6 +106,7 @@ export const addScanningSessionInsert = (
       row.created_at,
       row.updated_at,
       userId,
+      ...(row.setup_template_id ? [row.setup_template_id] : []),
     ],
   );
 
@@ -113,7 +117,15 @@ export function addScanningSessionUpdate(
   patch: Partial<
     Pick<
       ScanningSessionRow,
-      'name' | 'status' | 'accepts' | 'settings' | 'time_zone' | 'hours' | 'hold' | 'hours_next_at'
+      | 'name'
+      | 'status'
+      | 'accepts'
+      | 'settings'
+      | 'time_zone'
+      | 'hours'
+      | 'hold'
+      | 'hours_next_at'
+      | 'setup_template_id'
     >
   >,
   now: number,

@@ -847,5 +847,15 @@ Send the `configRevision` you read; a save from older values is a `409`. SVG, JP
   version? }`, 201 with the template. `version` is a draft (`passJson`, `manifest`, `assets`); without it
   the copy is exact. Its first version is a candidate: release it as usual. `POST /templates/{id}/use/check`
   takes the same body with `version` and returns the dry-run report and the built pass.
+- `POST /templates/{id}/scan-setup` (session with `scanning:manage` in `orgId`; no API key) sets up
+  scanning for a template: `{ orgId, timeZone? }`, 200 `{ session, created, events, noEvents }`. The session
+  is live (active or paused), admits the template and has no hours, so each pass's own `scan.window` gates
+  entry. A template that names its event on each pass (`eventName` plus a start input, or an
+  upcoming-events list) also gets one event per distinct upcoming event on its issued, unvoided passes in the
+  request's mode (soonest 10); the template's `sample` is never read. Repeat calls reuse the live session
+  and add events passes have gained since (`created: false`, `events` lists what was added). One live
+  session per template and mode is held by a unique index, so concurrent calls end with one. `noEvents` is
+  true when the template names events but no pass has an upcoming one. A blueprint answers 422
+  `BLUEPRINT_NOT_SCANNABLE`, a template with no active version 409 `TEMPLATE_NOT_RELEASED`.
 - Public pass and bundle links (`/p/{token}`, `/b/{token}`), the Apple web service (`/wallet/v1`) and webhooks
   (`/hooks/connections/{id}`) have their own auth and are not part of the key API.

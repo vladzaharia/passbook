@@ -163,7 +163,7 @@ export const EPOCH_TABLES: EpochTable[] = [
         'mode',
       ],
     },
-    volatile: ['name', 'note', 'expected', 'expected_at', 'updated_at'],
+    volatile: ['name', 'note', 'expected', 'expected_at', 'updated_at', 'setup_key'],
     fixed: ['id', 'created_at', 'created_by'],
   },
   {
@@ -180,7 +180,7 @@ export const EPOCH_TABLES: EpochTable[] = [
         'hold',
       ],
     },
-    volatile: ['name', 'updated_at', 'hours_next_at'],
+    volatile: ['name', 'updated_at', 'hours_next_at', 'setup_template_id'],
     fixed: ['id', 'created_at', 'created_by'],
   },
   {
