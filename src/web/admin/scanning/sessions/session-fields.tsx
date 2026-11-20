@@ -226,7 +226,11 @@ export function SessionFields({
         <SessionAccessFields draft={draft} set={set} />
       </TabsContent>
       <TabsContent value="customer">
-        <SessionCustomerFields value={draft.customer} onChange={(customer) => set({ customer })} />
+        <SessionCustomerFields
+          desk={draft.deskActions}
+          value={draft.customer}
+          onChange={(customer) => set({ customer })}
+        />
       </TabsContent>
       <TabsContent value="defaults">
         <SessionDefaults draft={draft} set={set} />

@@ -9,6 +9,7 @@ import {
   CardBody,
   CardHeader,
   ConfirmDialog,
+  DependentSettings,
   Label,
   NumberField,
   Select,
@@ -18,7 +19,7 @@ import {
 } from '../../../ui/index.ts';
 import { TestStrip } from '../../../ui/layout/test-strip.tsx';
 import { type JoinScope, useJoinLink, useJoinLinkActions } from './api.ts';
-import { JoinReadiness } from './join-readiness.tsx';
+import { JoinNeedsCode, JoinReadiness } from './join-readiness.tsx';
 import { JoinShare } from './join-share.tsx';
 import './join.css';
 
@@ -69,6 +70,7 @@ export function JoinCard(props: JoinCardProps) {
   const toggle = (next: boolean) =>
     save({ enabled: next, revision }, next ? JOIN_COPY.toast.on : JOIN_COPY.toast.off);
   // Turning on needs a ready template and the publish grant; turning off, only operate.
+  const unsupported = issues.some((i) => i.code === 'barcode_input');
   const switchOff = !canOperate || update.isPending || (!enabled && (!ready || !canPublish));
 
   return (
@@ -91,7 +93,7 @@ export function JoinCard(props: JoinCardProps) {
         {canOperate && !canPublish && !enabled ? (
           <p className="-mt-2 text-xs text-fg-muted">{JOIN_COPY.card.askAdmin}</p>
         ) : null}
-        {!ready ? (
+        {!ready && !unsupported ? (
           <JoinReadiness
             issues={issues}
             mode={test ? 'Test' : 'Live'}
@@ -99,48 +101,57 @@ export function JoinCard(props: JoinCardProps) {
             orgId={props.scopeOrgId}
           />
         ) : null}
-        <hr className="border-border" />
-        <fieldset className="flex min-w-0 flex-col gap-3 border-0 p-0">
-          <legend className="mb-1 p-0 text-sm font-medium text-fg-muted">
-            {JOIN_COPY.card.askFor}
-          </legend>
-          <NameRow
+        <DependentSettings
+          open={enabled}
+          unsupported={
+            unsupported ? (
+              <JoinNeedsCode templateId={props.templateId} orgId={props.scopeOrgId} />
+            ) : undefined
+          }
+        >
+          <hr className="border-border" />
+          <fieldset className="flex min-w-0 flex-col gap-3 border-0 p-0">
+            <legend className="mb-1 p-0 text-sm font-medium text-fg-muted">
+              {JOIN_COPY.card.askFor}
+            </legend>
+            <NameRow
+              link={link}
+              disabled={!canOperate || !canPublish || update.isPending}
+              save={save}
+              revision={revision}
+            />
+            <SwitchRow
+              label={JOIN_COPY.card.email}
+              help={JOIN_COPY.card.emailHelp}
+              checked={link?.askEmail ?? false}
+              disabled={!canOperate || !canPublish || update.isPending}
+              onCheckedChange={(askEmail) => save({ askEmail, revision })}
+            />
+            {link?.generated.map((g) => (
+              <p key={g.key} className="text-xs text-fg-muted">
+                {JOIN_COPY.card.generated.replace('{label}', g.label)}
+              </p>
+            ))}
+          </fieldset>
+          <hr className="border-border" />
+          <LimitRow
             link={link}
-            disabled={!canOperate || !canPublish || update.isPending}
-            save={save}
-            revision={revision}
+            max={limitMax}
+            disabled={!canOperate || update.isPending}
+            canRaise={canPublish}
+            save={(dailyLimit) => save({ dailyLimit, revision })}
           />
-          <SwitchRow
-            label={JOIN_COPY.card.email}
-            help={JOIN_COPY.card.emailHelp}
-            checked={link?.askEmail ?? false}
-            disabled={!canOperate || !canPublish || update.isPending}
-            onCheckedChange={(askEmail) => save({ askEmail, revision })}
-          />
-          {link?.generated.map((g) => (
-            <p key={g.key} className="text-xs text-fg-muted">
-              {JOIN_COPY.card.generated.replace('{label}', g.label)}
-            </p>
-          ))}
-        </fieldset>
-        <hr className="border-border" />
-        <LimitRow
-          link={link}
-          max={limitMax}
-          disabled={!canOperate || update.isPending}
-          canRaise={canPublish}
-          save={(dailyLimit) => save({ dailyLimit, revision })}
-        />
-        {link?.url && canOperate ? (
-          <JoinShare
-            url={link.url}
-            open={enabled}
-            templateId={props.templateId}
-            orgId={props.scopeOrgId}
-            canRotate={canPublish}
-            onRotate={() => setConfirming(true)}
-          />
-        ) : null}
+          {link?.url && canOperate ? (
+            <JoinShare
+              url={link.url}
+              open={enabled}
+              templateId={props.templateId}
+              orgId={props.scopeOrgId}
+              canRotate={canPublish}
+              onRotate={() => setConfirming(true)}
+            />
+          ) : null}
+        </DependentSettings>
       </CardBody>
       <ConfirmDialog
         open={confirming}

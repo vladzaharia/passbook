@@ -114,6 +114,20 @@ describe('settings page', () => {
     await waitFor(() => expect(bodies[1]).toMatchObject({ values: { 'nfc.enabled': true } }));
   });
 
+  it('hides the join limits while join links are off, and shows them when on', async () => {
+    await renderApp('/admin/settings', {
+      session: 'admin',
+      handlers: { '/api/v1/settings': () => json(entries()) },
+    });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('radio', { name: 'Advanced' }));
+    const join = screen.getByRole('switch', { name: 'Join links' });
+    if (join.getAttribute('aria-checked') === 'true') await user.click(join);
+    expect(screen.queryByRole('spinbutton', { name: 'Join cards per day' })).toBeNull();
+    await user.click(join);
+    expect(screen.getByRole('spinbutton', { name: 'Join cards per day' })).toBeVisible();
+  });
+
   it('links to the configured issuer', async () => {
     await renderApp('/admin/settings', {
       session: 'admin',

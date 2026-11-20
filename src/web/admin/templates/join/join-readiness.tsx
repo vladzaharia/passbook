@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { TriangleAlert } from 'lucide-react';
 import type { JoinReadinessIssue } from '@/shared/contracts/join.ts';
-import { joinIssueLine } from '@/shared/copy/join.ts';
+import { JOIN_COPY, joinIssueLine } from '@/shared/copy/join.ts';
 
 /** Why the link cannot be turned on, one line each, each with the place that fixes it. */
 export function JoinReadiness({
@@ -48,5 +48,28 @@ export function JoinReadiness({
         </li>
       ))}
     </ul>
+  );
+}
+
+/** The template cannot have a join link at all: the one line shown in place of the settings. */
+export function JoinNeedsCode({
+  templateId,
+  orgId,
+}: {
+  templateId: string;
+  orgId: string | undefined;
+}) {
+  return (
+    <>
+      {JOIN_COPY.card.needsCode}{' '}
+      <Link
+        to="/admin/templates/$templateId/design"
+        params={{ templateId }}
+        search={{ orgId }}
+        className="text-accent-fg underline-offset-2 hover:underline"
+      >
+        Design
+      </Link>
+    </>
   );
 }

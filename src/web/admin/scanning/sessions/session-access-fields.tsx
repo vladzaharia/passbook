@@ -1,5 +1,5 @@
 import { ArrowLeftRight, LogIn, LogOut, ScanLine } from 'lucide-react';
-import { Callout, OptionTile, SwitchRow } from '@/web/ui/index.ts';
+import { Callout, DependentSettings, OptionTile, SwitchRow } from '@/web/ui/index.ts';
 import type { ScannerDraft } from '../scanners/scanner-draft.ts';
 import { ZonePicker } from '../zones/zone-picker.tsx';
 import { zoneNodes } from '../zones/zone-tree.ts';
@@ -78,11 +78,11 @@ export function SessionAccessFields({
           checked={draft.deskActions}
           onCheckedChange={(deskActions) => set({ deskActions })}
         />
-        {draft.deskActions ? (
+        <DependentSettings open={draft.deskActions}>
           <Callout tone="info">
             Every action is signed by the staff member and shows in the pass’s activity.
           </Callout>
-        ) : null}
+        </DependentSettings>
       </section>
     </div>
   );

@@ -113,7 +113,7 @@ describe('Zones tab', () => {
     const dialog = await screen.findByRole('dialog', { name: 'New zone' });
     await user.type(within(dialog).getByRole('textbox', { name: /^Name/ }), 'Front Gate 2');
     expect(within(dialog).getByRole('textbox', { name: /^Key/ })).toHaveValue('front-gate-2');
-    expect(within(dialog).getByRole('spinbutton', { name: 'Capacity' })).toBeDisabled();
+    expect(within(dialog).queryByRole('spinbutton', { name: 'Capacity' })).toBeNull();
     await user.click(within(dialog).getByRole('switch', { name: 'Track who’s inside' }));
     expect(within(dialog).getByRole('spinbutton', { name: 'Max stay' })).toHaveValue(720);
     await user.type(within(dialog).getByRole('spinbutton', { name: 'Capacity' }), '40');
