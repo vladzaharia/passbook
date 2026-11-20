@@ -4,6 +4,7 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { all } from '../../platform/db.ts';
+import { walletOpCurrentSql, walletOpReadCurrentSql } from './repo-instance-current.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 import { projectionReleaseBindingPredicateSql } from './repo-projection.ts';
 
@@ -57,6 +58,8 @@ describe('expression depth of the largest wallet-provider predicates', () => {
     ['upsert proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now'), 63, 248],
     ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 25, 55],
     ['release binding', bindingSql, 49, 159],
+    ['epoch current (grant part)', walletOpCurrentSql('i', 'op'), 24, 32],
+    ['epoch current (read)', walletOpReadCurrentSql('i', 'op'), 26, 50],
   ])(
     '%s prepares on D1 within its measured depth and terms',
     async (_name, predicate, depth, n) => {
