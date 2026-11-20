@@ -21,4 +21,11 @@ export const ScanAdmitSchema = z.object({
   rule: ScanAdmitRuleSchema.nullable(),
   timeZone: TimeZoneSchema,
 });
+/** Done scans of one pass type; `name` is null for a template that is gone. The rows sum to the total. */
+export const ScanTypeCountSchema = z.object({
+  templateId: z.string().nullable(),
+  name: z.string().nullable(),
+  count: z.number().int(),
+});
+export type ScanTypeCount = z.infer<typeof ScanTypeCountSchema>;
 export type ScanAdmit = z.infer<typeof ScanAdmitSchema>;

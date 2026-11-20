@@ -98,6 +98,7 @@ export function recordMatches(record: ScanRecordDto, filter: ScanLogFilter): boo
   return (
     (!filter.passId || record.passId === filter.passId) &&
     (!filter.eventId || record.eventId === filter.eventId) &&
+    (!filter.templateId || record.templateId === filter.templateId) &&
     (!filter.scannerId || record.scannerId === filter.scannerId) &&
     (!filter.staffId || record.staffId === filter.staffId) &&
     (!filter.q ||

@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
+import { PLATFORM_RETENTION_LINES as LINES, RETENTION_COPY } from '@/shared/copy/retention.ts';
 import { Button, Card, CardBody, CardHeader } from '@/web/ui/index.ts';
 import { PLATFORM_FIELDS } from './fields-platform.ts';
 
@@ -25,15 +26,15 @@ export function PolicySummary({
   const trust = value('oidc.trustEmail');
   const proof =
     trust === true ? 'Trust Polaris ID emails' : trust === false ? 'Proof required' : 'Unavailable';
-  const rows = [
+  const rows: [string, string, string?][] = [
     ['Email proof', proof],
     ['Refresh cooldown', number('refresh.userCooldownSeconds', 'seconds per pass')],
     ['Notifications', number('push.budgetPerDay', 'per pass / rolling 24 hours')],
-    ['Pass versions', number('retention.passVersionsKeep', 'historical + current')],
-    ['Audit retention', number('retention.auditDays', 'days')],
-    ['Sync log retention', number('retention.eventsDays', 'days')],
-    ['Scan retention', number('retention.scansDays', 'days')],
-    ['Test data retention', number('sandbox.purgeDays', 'days')],
+    ['Pass versions', number('retention.passVersionsKeep', 'historical + current'), LINES.versions],
+    ['Audit retention', number('retention.auditDays', 'days'), LINES.audit],
+    ['Sync log retention', number('retention.eventsDays', 'days'), LINES.events],
+    ['Scan retention', number('retention.scansDays', 'days'), LINES.scans],
+    ['Test data retention', number('sandbox.purgeDays', 'days'), LINES.sandbox],
     ['Scan undo', number('scan.undoWindowMinutes', 'minutes')],
     ['People lookups', number('scan.lookupsPerHour', 'per scanner / hour')],
   ];
@@ -54,21 +55,27 @@ export function PolicySummary({
       />
       <CardBody className="space-y-3">
         <p className="text-sm text-fg-muted">
-          {defaultsKnown
-            ? `${exceptions} advanced ${exceptions === 1 ? 'policy differs' : 'policies differ'} from the platform default.`
-            : 'Some policy defaults are unavailable.'}
+          {!defaultsKnown
+            ? 'Some policy defaults are unavailable.'
+            : exceptions === 0
+              ? 'All policies use their defaults.'
+              : `${exceptions} ${exceptions === 1 ? 'policy differs' : 'policies differ'} from its default.`}
         </p>
         <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
-          {rows.map(([label, text]) => (
+          {rows.map(([label, text, note]) => (
             <div
               key={label}
-              className="flex flex-wrap justify-between gap-x-3 gap-y-1 border-b border-border pb-2"
+              className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 border-b border-border pb-2"
             >
               <dt className="text-fg-muted">{label}</dt>
-              <dd className="text-fg-strong">{text}</dd>
+              <dd className="text-right text-fg-strong">{text}</dd>
+              {note ? <dd className="col-span-2 text-xs text-fg-muted">{note}</dd> : null}
             </div>
           ))}
         </dl>
+        <p className="text-sm text-fg-muted">
+          {RETENTION_COPY.holdNote} Place a platform hold from an organization page.
+        </p>
         {advancedDirty > 0 ? (
           <p className="text-sm text-fg-muted">
             {advancedDirty} unsaved {advancedDirty === 1 ? 'change' : 'changes'} in Advanced.

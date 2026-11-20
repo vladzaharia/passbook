@@ -4,7 +4,7 @@ import type { ScannerDraft } from '../scanners/scanner-draft.ts';
 import { ZonePicker } from '../zones/zone-picker.tsx';
 import { zoneNodes } from '../zones/zone-tree.ts';
 import { useZones } from '../zones/zones-api.ts';
-import type { SessionDraft } from './draft.ts';
+import { eventsOnly, type SessionDraft } from './draft.ts';
 
 const DIRECTIONS = [
   { value: 'pass', label: 'Pass rules', description: 'The pass decides.', icon: ScanLine },
@@ -27,7 +27,7 @@ export function SessionAccessFields({
   set: (patch: Partial<SessionDraft>) => void;
 }) {
   const zones = useZones(draft.orgId || undefined, false, Boolean(draft.orgId));
-  const event = draft.accepts === 'event';
+  const event = eventsOnly(draft);
   const counted = zoneNodes(zones.data ?? []).find(
     (n) => draft.zoneIds?.includes(n.zone.id) && n.zone.occupancy !== 'off',
   )?.zone;
@@ -45,7 +45,7 @@ export function SessionAccessFields({
           help={
             event
               ? 'Events check in once. Zones don’t apply.'
-              : 'Lets in passes that open one of these zones.'
+              : 'Zones gate the pass types. Events ignore them.'
           }
           onChange={(zoneIds) => set({ zoneIds })}
         />

@@ -41,7 +41,13 @@ describe('occupancy at a door: entry and exit', () => {
     expect(entry).toMatchObject({
       kind: 'ok',
       access: { visit: true },
-      occupancy: { place: { kind: 'zone', id: gym }, direction: 'in', state: 'in', inNow: 1 },
+      occupancy: {
+        place: { kind: 'zone', id: gym },
+        direction: 'in',
+        state: 'in',
+        inNow: 1,
+        via: expect.any(String),
+      },
     });
     expect(await placeRow(pass.id, gym)).toMatchObject({
       state: 'in',
@@ -58,7 +64,13 @@ describe('occupancy at a door: entry and exit', () => {
     expect(left).toMatchObject({
       kind: 'ok',
       access: null,
-      occupancy: { direction: 'out', state: 'out', stayMs: 30 * MINUTE, inNow: 0 },
+      occupancy: {
+        direction: 'out',
+        state: 'out',
+        stayMs: 30 * MINUTE,
+        inNow: 0,
+        via: expect.any(String),
+      },
     });
     expect(await placeRow(pass.id, gym)).toMatchObject({ state: 'out', due_at: null });
     expect(await scanRow(left.scanId)).toMatchObject({ direction: 'out', out_cause: null });

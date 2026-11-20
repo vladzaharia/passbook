@@ -108,7 +108,7 @@ describe('session configuration flows', () => {
     await user.click(await screen.findByRole('button', { name: 'New scanning session' }));
     const dialog = screen.getByRole('dialog', { name: 'New scanning session' });
     await user.type(within(dialog).getByRole('textbox', { name: 'Session name' }), 'Entry');
-    await user.click(within(dialog).getByRole('radio', { name: 'Templates' }));
+    await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
     await user.click(await within(dialog).findByRole('checkbox', { name: 'Gala ticket' }));
     await user.click(within(dialog).getByRole('combobox', { name: 'Organization' }));
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
@@ -198,11 +198,10 @@ describe('session configuration flows', () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'New scanning session' }));
     const dialog = screen.getByRole('dialog', { name: 'New scanning session' });
-    await user.click(within(dialog).getByRole('radio', { name: 'Templates' }));
+    await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
     expect(
       await within(dialog).findByRole('checkbox', { name: 'Gala ticket' }),
     ).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: 'Load more templates' }));
     expect(
       await within(dialog).findByRole('checkbox', { name: 'Shared approved' }),
     ).toBeInTheDocument();

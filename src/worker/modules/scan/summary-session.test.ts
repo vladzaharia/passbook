@@ -62,6 +62,11 @@ describe('GET /scan/summary?scope=session', () => {
       { staffId: f.staff?.id, name: expect.any(String), count: 1, overrides: 0, refused: 0 },
     ]);
     expect(summary.overrides).toEqual({ count: 0, latest: [] });
+    // By type: the one done scan, under its template's name; the rows sum to the done total.
+    expect(summary.byType).toEqual([
+      { templateId: expect.any(String), name: expect.any(String), count: 1 },
+    ]);
+    expect(summary.byType.reduce((n, t) => n + t.count, 0)).toBe(summary.ok);
   });
 
   it('lists the overrides with who ran them', async () => {

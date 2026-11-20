@@ -1094,6 +1094,8 @@ describe('org detail', () => {
       session: 'admin',
       handlers: {
         '/api/v1/orgs/o1': () => json(provisioning()),
+        '/api/v1/platform/orgs/o1/retention/holds': () => json({ items: [] }),
+        '/api/v1/platform/orgs/o1/retention/receipts': () => json({ items: [], nextCursor: null }),
         '/api/v1/orgs/o1/invitations': () => problem(403, 'forbidden', 'Not allowed.'),
       },
     });
