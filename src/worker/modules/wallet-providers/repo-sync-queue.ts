@@ -1,8 +1,12 @@
+import { writePart } from '../../platform/authority-include.ts';
 import { first } from '../../platform/db.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
 import type { WalletOperationRef, WalletScope } from './instance-types.ts';
-import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
+import { PART_CURRENT, PART_SCOPE } from './repo-instance-claim-sql.ts';
+import { walletOpCurrentCheck } from './repo-instance-current.ts';
 import { walletNoProviderArtifactsSql } from './repo-instance-retirement.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
+import { commitWalletGrant, walletQueueGrant } from './repo-queue-grant.ts';
 
 /** Ack only the same dirty generation while the current holder's placeholder is pristine. */
 export async function ackCleanWalletPlaceholder(
@@ -29,7 +33,7 @@ export async function ackCleanWalletPlaceholder(
 
 /** A missing Samsung region is not a provider attempt; rotate it without consuming retries. */
 export async function deferWalletSyncOperation(
-  db: D1Database,
+  ctx: ServiceContext,
   op: WalletOperationRef,
   now: number,
   delayMs: number,
@@ -42,15 +46,17 @@ export async function deferWalletSyncOperation(
     delayMs > 300_000
   )
     return false;
-  const row = await first(
-    db,
-    `UPDATE wallet_provider_instance_operations AS op SET next_attempt_at = ?
+  const g = walletQueueGrant(ctx, 'sync', op, [walletOpCurrentCheck(op.instanceId, op.version)]);
+  g.include(
+    writePart(
+      `UPDATE wallet_provider_instance_operations AS op SET next_attempt_at = ?
     WHERE op.instance_id = ? AND op.version = ? AND op.state IN ('pending', 'retry')
-      AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE i.id = op.instance_id
-        AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND ${walletInstanceOperationCurrentSql('i', 'op', '?')}
-        AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND op.credential_keyset_commitment = ${pinnedKeysetSql})
+      AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE ${PART_SCOPE} AND ${PART_CURRENT})
+      AND {grant}
     RETURNING id`,
-    [now + delayMs, op.instanceId, op.version, op.orgId, op.mode, op.provider, now],
+      [now + delayMs, op.instanceId, op.version, op.instanceId, op.provider],
+    ),
   );
-  return row !== null;
+  const committed = await commitWalletGrant(g);
+  return 'results' in committed && (committed.results[0]?.results.length ?? 0) === 1;
 }

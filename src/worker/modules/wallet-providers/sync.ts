@@ -49,7 +49,7 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
     ctx.log.error('wallet.sync_keyset_unavailable', { code: error.code });
     return;
   }
-  await expireWalletClaims(db, ctx.clock.now(), BATCH_SIZE);
+  await expireWalletClaims(ctx, ctx.clock.now(), BATCH_SIZE);
   const dirty = await listDirtyWalletInstances(db, ctx.clock.now(), BATCH_SIZE);
   for (const item of dirty) {
     try {
@@ -89,7 +89,7 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
     try {
       const result = await runWalletProviderOperation(ctx, operation);
       if (result === 'deferred')
-        await deferWalletSyncOperation(db, operation, ctx.clock.now(), BLOCKED_DELAY_MS);
+        await deferWalletSyncOperation(ctx, operation, ctx.clock.now(), BLOCKED_DELAY_MS);
     } catch {
       // A claim which may have reached a provider stays held; expiry moves it to uncertain.
       ctx.log.warn('wallet.sync_operation_failed', { code: 'WALLET_SYNC_OPERATION' });

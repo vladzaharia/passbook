@@ -14,6 +14,14 @@ export interface JobGrantInput extends Omit<GrantInput, 'principal'> {
   closedOk?: true;
 }
 
+const WALLET_QUEUE_TABLES = [
+  'wallet_provider_instances',
+  'wallet_provider_instance_operations',
+  'wallet_provider_instance_outcomes',
+  'wallet_provider_instance_dirty',
+  'wallet_provider_sync_targets',
+] as const;
+
 /** The purposes that may act while the org is suspended, with the tables each may write. */
 const INACTIVE_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
   'org_mode.job.pass_import.finish': ['pass_imports', 'counters'],
@@ -33,6 +41,11 @@ const INACTIVE_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
     'wallet_enrolment_events',
     'wallet_provider_accounts',
   ],
+  // Provider queue work (PE5a/PE5b): a suspended org's results are recorded, its revocations run, and its
+  // retirements are staged all the same. A queued upsert never runs for it (`org_mode.job.wallet.sync` is active-only).
+  'org_mode.job.wallet.revoke': WALLET_QUEUE_TABLES,
+  'org_mode.job.wallet.record': WALLET_QUEUE_TABLES,
+  'org_mode.job.wallet.retire': WALLET_QUEUE_TABLES,
 };
 
 /**
@@ -41,6 +54,10 @@ const INACTIVE_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
  */
 const CLOSED_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
   'org_mode.job.pass.publish': ['passes', 'scan_code_rotations'],
+  // Revoking a closed org's provider cards is not optional (design D10).
+  'org_mode.job.wallet.revoke': WALLET_QUEUE_TABLES,
+  'org_mode.job.wallet.record': WALLET_QUEUE_TABLES,
+  'org_mode.job.wallet.retire': WALLET_QUEUE_TABLES,
 };
 
 /** The checked input of a `system:` grant: a job purpose, `inactiveOk` only where allowlisted, the job principal. */

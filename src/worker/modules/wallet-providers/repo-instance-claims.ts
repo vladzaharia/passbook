@@ -1,27 +1,56 @@
-import { all, batch, first, stmt } from '../../platform/db.ts';
+import { writePart } from '../../platform/authority-include.ts';
+import { all, first } from '../../platform/db.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
 import type { WalletClaimResult, WalletOperationRef } from './instance-types.ts';
 import { walletEnrolmentIssuesSql } from './repo-enrolment-gate.ts';
-import { type Claim, CURRENT, CURRENT_OPERATION, SCOPE, scope } from './repo-instance-claim-sql.ts';
+import {
+  type Claim,
+  CURRENT,
+  PART_CURRENT,
+  PART_CURRENT_OPERATION,
+  PART_SCOPE,
+  partScope,
+  SCOPE,
+  scope,
+} from './repo-instance-claim-sql.ts';
+import { instanceCheck, walletOpCurrentCheck } from './repo-instance-current.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
+import { commitWalletGrant, walletQueueGrant } from './repo-queue-grant.ts';
 
 export { finishOperation } from './repo-instance-finish.ts';
 
-export async function claimOperation(db: D1Database, p: Claim): Promise<WalletClaimResult> {
+/**
+ * Claims one exact operation under the sync grant (a revoke under the revoke grant, which also runs for a suspended
+ * org). The grant refuses a stale operation; a refusal is `not_claimable`, never an error.
+ */
+export async function claimOperation(ctx: ServiceContext, p: Claim): Promise<WalletClaimResult> {
   p = { ...p };
-  const claimed = await first(
+  const db = ctx.env.DB;
+  const kind = await first<{ kind: 'upsert' | 'revoke' }>(
     db,
-    `UPDATE wallet_provider_instance_operations AS op
-    SET state = 'claimed', attempts = attempts + 1, claim_hash = ?, claim_expires_at = ?,
-      last_attempt_at = ?, next_attempt_at = NULL
-    WHERE op.instance_id = ? AND op.version = ? AND op.state IN ('pending', 'retry') AND op.attempts < 8
-      AND (op.next_attempt_at IS NULL OR op.next_attempt_at <= ?)
-      AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations busy
-        WHERE busy.instance_id = op.instance_id AND busy.state IN ('claimed', 'uncertain'))
-      AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE ${SCOPE} AND ${CURRENT})
-    RETURNING id`,
-    [p.hash, p.now + 120_000, p.now, p.instanceId, p.version, p.now, ...scope(p), p.now],
+    'SELECT kind FROM wallet_provider_instance_operations WHERE instance_id = ? AND version = ?',
+    [p.instanceId, p.version],
   );
-  if (claimed !== null) return 'claimed';
+  const g = walletQueueGrant(ctx, kind?.kind === 'revoke' ? 'revoke' : 'sync', p, [
+    walletOpCurrentCheck(p.instanceId, p.version),
+  ]);
+  g.include(
+    writePart(
+      `UPDATE wallet_provider_instance_operations AS op
+      SET state = 'claimed', attempts = attempts + 1, claim_hash = ?, claim_expires_at = ?,
+        last_attempt_at = ?, next_attempt_at = NULL
+      WHERE op.instance_id = ? AND op.version = ? AND op.state IN ('pending', 'retry') AND op.attempts < 8
+        AND (op.next_attempt_at IS NULL OR op.next_attempt_at <= ?)
+        AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations busy
+          WHERE busy.instance_id = op.instance_id AND busy.state IN ('claimed', 'uncertain'))
+        AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE ${PART_SCOPE} AND ${PART_CURRENT})
+        AND {grant}
+      RETURNING id`,
+      [p.hash, p.now + 120_000, p.now, p.instanceId, p.version, p.now, ...partScope(p)],
+    ),
+  );
+  const committed = await commitWalletGrant(g);
+  if ('results' in committed && (committed.results[0]?.results.length ?? 0) === 1) return 'claimed';
   const existing = await first<{ state: string; claim_hash: string | null }>(
     db,
     `SELECT op.state, op.claim_hash FROM wallet_provider_instance_operations op
@@ -51,51 +80,75 @@ export async function operationFresh(
           ? "op.kind = 'upsert' AND op.state IN ('pending', 'retry', 'claimed', 'succeeded')"
           : "op.state = 'claimed' AND op.claim_hash = ? AND op.claim_expires_at > ?"
       }`,
-      p.hash === undefined
-        ? [...scope(p), p.version, p.now]
-        : [...scope(p), p.version, p.now, p.hash, p.now],
+      p.hash === undefined ? [...scope(p), p.version] : [...scope(p), p.version, p.hash, p.now],
     )) !== null
   );
 }
 
-export async function markUncertain(db: D1Database, p: Claim): Promise<boolean> {
-  const row = await first(
-    db,
-    `UPDATE wallet_provider_instance_operations AS op SET state = 'uncertain'
-    WHERE op.instance_id = ? AND op.version = ? AND op.state IN ('claimed', 'uncertain') AND op.claim_hash = ?
-      AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE ${SCOPE})
-    RETURNING id`,
-    [p.instanceId, p.version, p.hash, ...scope(p)],
+/** A claim that may have reached a provider is held, whatever the org's state: lineage only. */
+export async function markUncertain(ctx: ServiceContext, p: Claim): Promise<boolean> {
+  const g = walletQueueGrant(ctx, 'record', p, [instanceCheck(p.instanceId)]);
+  g.include(
+    writePart(
+      `UPDATE wallet_provider_instance_operations AS op SET state = 'uncertain'
+      WHERE op.instance_id = ? AND op.version = ? AND op.state IN ('claimed', 'uncertain') AND op.claim_hash = ?
+        AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE ${PART_SCOPE}) AND {grant}
+      RETURNING id`,
+      [p.instanceId, p.version, p.hash, ...partScope(p)],
+    ),
   );
-  return row !== null;
+  const committed = await commitWalletGrant(g);
+  return 'results' in committed && (committed.results[0]?.results.length ?? 0) === 1;
 }
 
 /** Expiry never releases the serial fence: uncertain work requires explicit transport settlement. */
-export async function expireClaims(db: D1Database, now: number, limit: number): Promise<number> {
-  const rows = await all(
-    db,
-    `UPDATE wallet_provider_instance_operations AS op SET state = 'uncertain'
-    WHERE op.credential_keyset_commitment = ${pinnedKeysetSql}
-      AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE i.id = op.instance_id
-        AND i.credential_keyset_commitment = op.credential_keyset_commitment)
-      AND op.id IN (SELECT id FROM wallet_provider_instance_operations WHERE state = 'claimed'
-        AND credential_keyset_commitment = ${pinnedKeysetSql} AND claim_expires_at <= ? ORDER BY claim_expires_at, id LIMIT ?)
-    RETURNING id`,
+export async function expireClaims(
+  ctx: ServiceContext,
+  now: number,
+  limit: number,
+): Promise<number> {
+  const due = await all<{ id: string; instanceId: string; orgId: string; mode: 'live' | 'test' }>(
+    ctx.env.DB,
+    `SELECT op.id, i.id AS instanceId, i.org_id AS orgId, i.mode FROM wallet_provider_instance_operations op
+    JOIN wallet_provider_instances i ON i.id = op.instance_id
+      AND i.credential_keyset_commitment = op.credential_keyset_commitment
+    WHERE op.state = 'claimed' AND op.credential_keyset_commitment = ${pinnedKeysetSql}
+      AND op.claim_expires_at <= ? ORDER BY op.claim_expires_at, op.id LIMIT ?`,
     [now, limit],
   );
-  return rows.length;
+  let expired = 0;
+  for (const op of due) {
+    const g = walletQueueGrant(ctx, 'record', op, [instanceCheck(op.instanceId)]);
+    g.include(
+      writePart(
+        `UPDATE wallet_provider_instance_operations AS op SET state = 'uncertain'
+        WHERE op.id = ? AND op.state = 'claimed' AND op.claim_expires_at <= ?
+          AND op.credential_keyset_commitment = ${pinnedKeysetSql}
+          AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE i.id = op.instance_id
+            AND i.org_id = {org} AND i.mode = {mode}
+            AND i.credential_keyset_commitment = op.credential_keyset_commitment) AND {grant}
+        RETURNING id`,
+        [op.id, now],
+      ),
+    );
+    const committed = await commitWalletGrant(g);
+    if ('results' in committed) expired += committed.results[0]?.results.length ?? 0;
+  }
+  return expired;
 }
 
 /** Call only after the transport is known to have stopped; uncertain remote writes cannot overlap. */
 export async function settleClaim(
-  db: D1Database,
+  ctx: ServiceContext,
   p: WalletOperationRef & { now: number },
 ): Promise<boolean> {
-  const results = await batch(db, [
+  const g = walletQueueGrant(ctx, 'record', p, [instanceCheck(p.instanceId)]);
+  const cte = [p.instanceId, p.version, ...partScope(p)];
+  const rest = [p.instanceId, p.version, ...partScope(p)];
+  g.include(
     // Runs before the operation moves: the target follows the operation's uncertain state.
-    stmt(
-      db,
-      `WITH ${CURRENT_OPERATION}
+    writePart(
+      `WITH ${PART_CURRENT_OPERATION}
       UPDATE wallet_provider_sync_targets AS target SET
       state = CASE WHEN target.attempts < 3 AND proven.is_current AND op.attempts < 8
         THEN 'retry' ELSE 'failed' END,
@@ -105,22 +158,11 @@ export async function settleClaim(
       FROM current_operation proven JOIN wallet_provider_instance_operations op ON op.id = proven.id
       WHERE target.operation_id = op.id AND target.state IN ('inflight', 'uncertain')
         AND op.instance_id = ? AND op.version = ? AND op.state = 'uncertain'
-        AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE ${SCOPE})`,
-      [
-        p.instanceId,
-        p.version,
-        ...scope(p),
-        p.now,
-        p.now,
-        p.now,
-        p.instanceId,
-        p.version,
-        ...scope(p),
-      ],
+        AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE ${PART_SCOPE}) AND {grant}`,
+      [...cte, p.now, p.now, ...rest],
     ),
-    stmt(
-      db,
-      `WITH ${CURRENT_OPERATION}
+    writePart(
+      `WITH ${PART_CURRENT_OPERATION}
       UPDATE wallet_provider_instance_operations AS op SET
       state = CASE WHEN NOT proven.is_current
         THEN 'superseded' WHEN op.attempts >= 8 THEN 'failed' ELSE 'retry' END,
@@ -129,21 +171,11 @@ export async function settleClaim(
       completed_at = CASE WHEN op.attempts >= 8 OR NOT proven.is_current THEN ? ELSE NULL END
       FROM current_operation proven
       WHERE op.id = proven.id AND op.instance_id = ? AND op.version = ? AND op.state = 'uncertain'
-        AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE ${SCOPE})
+        AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE ${PART_SCOPE}) AND {grant}
       RETURNING id`,
-      [
-        p.instanceId,
-        p.version,
-        ...scope(p),
-        p.now,
-        p.now,
-        p.now,
-        p.now,
-        p.instanceId,
-        p.version,
-        ...scope(p),
-      ],
+      [...cte, p.now, p.now, p.now, ...rest],
     ),
-  ]);
-  return results[1]?.results.length === 1;
+  );
+  const committed = await commitWalletGrant(g);
+  return 'results' in committed && committed.results[1]?.results.length === 1;
 }

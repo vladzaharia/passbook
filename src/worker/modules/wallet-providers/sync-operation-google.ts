@@ -121,7 +121,7 @@ export async function runGoogleWalletProviderOperation(
     const failure = classifyWalletSyncFailure('google', op.attempts, error);
     // A lost authority fence does not settle an ambiguous provider transport.
     if (failure.disposition === 'uncertain') {
-      await markWalletClaimUncertain(ctx.env.DB, { ...claim, now: ctx.clock.now() });
+      await markWalletClaimUncertain(ctx, { ...claim, now: ctx.clock.now() });
       return 'uncertain';
     }
     return complete(ctx, claim, op, {
