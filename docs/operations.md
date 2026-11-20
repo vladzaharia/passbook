@@ -439,11 +439,14 @@ ORDER BY a.id
 
 ### Entitlements gate
 
-`npm run deploy -- --apply` (and `--promote --apply`) runs `entitlements-gate` remotely after the migrations and refuses to promote while it lists an org. Each row is an org with no `org_entitlements` row: every key call and guarded session call of that org is refused (`FEATURE_NOT_INCLUDED`). Repair: Features tab, apply a preset (platform admin), or insert `legacy` by hand.
+`npm run deploy -- --apply` (and `--promote --apply`) runs `entitlements-gate` remotely after the migrations and refuses to promote while it lists an org. Each row is an org with no `org_entitlements` row: every key call and guarded session call of that org is refused (`FEATURE_NOT_INCLUDED`), and so are wallet enable and offers, new prints and tag binds (the plan fails closed everywhere). Repair: Features tab, apply a preset (platform admin), or insert `legacy` by hand.
 
 ```sql entitlements-gate
 SELECT o.id FROM orgs o WHERE NOT EXISTS (SELECT 1 FROM org_entitlements e WHERE e.org_id = o.id) ORDER BY o.id
 ```
+
+A plan change that moves a delivery channel (Google, Samsung, Paper, NFC) queues `channel.entitlement`, keyed on the entitlement revision: one apply run per template and mode journals the flips once, in any job order and under retry. Two gaps are known: an override that expires changes the channels live without a run (no journal), and a preset edit must call `onEntitlementsChanged` for each org it moves (`PUT /platform/entitlement-presets` is not built yet).
+
 
 ### Large connection syncs
 

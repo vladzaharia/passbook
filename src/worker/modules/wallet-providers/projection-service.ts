@@ -7,9 +7,15 @@ import type {
   TemplateCandidateList,
   TemplateReleaseScope,
 } from '../../../shared/contracts/template-releases.ts';
+import { featureNotIncluded } from '../../../shared/copy/entitlements.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { batch } from '../../platform/db.ts';
-import { ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
+import {
+  ConflictError,
+  FeatureNotIncludedError,
+  ForbiddenError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { authorizeTemplateWrite } from '../templates/access.ts';
@@ -41,6 +47,7 @@ import {
   scopedTemplate,
 } from './projection-service-support.ts';
 import { assertProjectionSource, verifiedAppleSource } from './projection-source.ts';
+import { walletEntitled } from './repo-enrolment-gate.ts';
 import {
   insertProjectionApprovalStmt,
   insertProjectionCandidateStmt,
@@ -135,6 +142,10 @@ export async function createProjectionCandidate(
     assertProjectionSource(projection, source.version);
   }
   const accountScope = { orgId: scope.orgId, mode: scope.mode, provider: scope.provider };
+  // The plan before the account: a plan without the wallet is a 403, not a "changed, retry" conflict.
+  const feature = `wallet.${scope.provider}` as const;
+  if (!(await walletEntitled(ctx.env.DB, scope.provider, scope.orgId)))
+    throw new FeatureNotIncludedError(feature, featureNotIncluded(feature));
   const readiness = await getWalletProviderReadiness(ctx, accountScope);
   if (!readiness.accountId || readiness.state === 'revoked' || readiness.state === 'absent')
     throw changed();

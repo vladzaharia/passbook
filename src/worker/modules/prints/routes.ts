@@ -35,6 +35,7 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
       method: 'post',
       path: '/{id}/prints',
       summary: 'Print a ticket; an earlier print of the pass is voided',
+      xFeature: 'print',
       params: IdParamSchema,
       response: MintedPrintSchema,
     },

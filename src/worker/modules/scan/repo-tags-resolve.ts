@@ -67,17 +67,15 @@ export const otherModeTagStmt = (db: D1Database, orgId: string, mode: Mode, ref:
   );
 
 /**
- * The org switch `nfc.tags` and the platform switch `nfc.tagsEnabled` (an absent row means on), and the
- * org's `nfc` entitlement (an absent row means off).
+ * The org switch `nfc.tags` and the platform switch `nfc.tagsEnabled`; an absent row means on. The plan is
+ * not read: a tag already bound keeps admitting after a downgrade, and a new bind is refused at the bind.
  */
 export const tagsSwitchStmt = (db: D1Database, orgId: string) =>
   stmt(
     db,
     `SELECT key, value FROM settings
-     WHERE (scope = ? AND key = 'nfc.tags') OR (scope = 'platform' AND key = 'nfc.tagsEnabled')
-     UNION ALL
-     SELECT 'entitlement.nfc' AS key, value FROM org_entitlement_values WHERE org_id = ? AND key = 'nfc'`,
-    [`org:${orgId}`, orgId],
+     WHERE (scope = ? AND key = 'nfc.tags') OR (scope = 'platform' AND key = 'nfc.tagsEnabled')`,
+    [`org:${orgId}`],
   );
 
 /** Full candidate rows for the tag's passes: active before voided or removed, then oldest. */
@@ -153,23 +151,17 @@ export function tagStateOf(result: D1Result | undefined): TagState | null {
 }
 
 export function tagsOn(result: D1Result | undefined): boolean {
-  let entitled = false;
   for (const row of (result?.results ?? []) as { key: string; value: unknown }[]) {
     if (typeof row.value !== 'string') return false;
     try {
       const v = JSON.parse(row.value) as unknown;
-      if (row.key === 'entitlement.nfc') {
-        if (v !== 'basic' && v !== 'secure') return false;
-        entitled = true;
-        continue;
-      }
       const on = row.key === 'nfc.tags' ? (v as { enabled?: unknown } | null)?.enabled : v;
       if (on !== true) return false;
     } catch {
       return false;
     }
   }
-  return entitled;
+  return true;
 }
 
 export const passIdsOf = (result: D1Result | undefined): Set<string> =>

@@ -66,6 +66,7 @@ export function registerEnrollmentRoutes(nfcRoutes: OpenAPIHono<AppBindings>): v
       method: 'post',
       path: '/passes/{passId}/enrollments',
       summary: 'Ask a scanner to read a tag for a pass',
+      xFeature: { key: 'nfc', atLeast: 'basic' },
       params: PassParam,
       body: CreateTagEnrollmentSchema,
       response: TagEnrollmentSchema,

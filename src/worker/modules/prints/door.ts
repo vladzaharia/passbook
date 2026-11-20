@@ -1,5 +1,5 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { passChannels } from '../channels/service.ts';
+import { existingChannels } from '../channels/door.ts';
 import type { Pass } from '../passes/repo-map.ts';
 
 export interface PrintHit {
@@ -21,12 +21,13 @@ export function printRefusal(candidate: {
 }
 
 /**
- * A print hit on a pass whose paper channel is not effectively on (template, org, platform or pass).
- * It refuses without voiding, so turning paper back on restores the ticket.
+ * A print hit on a pass whose paper channel is not effectively on (template, org, platform or pass). The
+ * plan is set aside: a ticket already printed keeps admitting after a downgrade, and only a new print is
+ * refused. A refusal does not void, so turning paper back on restores the ticket.
  */
 export async function paperOff(
   ctx: ServiceContext,
   candidate: { print?: PrintHit; pass: Pass },
 ): Promise<boolean> {
-  return candidate.print ? !(await passChannels(ctx, candidate.pass)).effective.paper.on : false;
+  return candidate.print ? !(await existingChannels(ctx, candidate.pass)).paper.on : false;
 }
