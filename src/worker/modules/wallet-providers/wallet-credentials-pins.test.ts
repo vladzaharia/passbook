@@ -163,7 +163,7 @@ describe('credential_version_id pins', () => {
         'UPDATE wallet_provider_instance_operations SET instance_id = ? WHERE credential_version_id = ?',
         [uid(), own.versionId],
       ),
-      /pin is immutable/,
+      /immutable/, // the recreated snapshot guard (0137) now fires before the pin guard
     );
   });
 

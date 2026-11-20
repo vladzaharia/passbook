@@ -51,7 +51,7 @@ export interface AccountRow {
   revoked_at: number | null;
   updated_at: number;
   /** Moves on a revoke or an identity change, not on a rotation under the same identity. */
-  authority_epoch?: number;
+  authority_epoch: number;
   kek_version: number | null;
   iv: number[] | Uint8Array | ArrayBuffer | null;
   wrapped_dek: number[] | Uint8Array | ArrayBuffer | null;

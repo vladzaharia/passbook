@@ -577,6 +577,26 @@ describe('native wallet instance lifecycle', () => {
       now,
     });
     if (!revoke) throw new Error('Revocation not queued');
+    const snapshot = await first<{
+      v: number | null;
+      e: number | null;
+      row: number;
+      epoch: number;
+    }>(
+      db,
+      `SELECT o.pass_row_version AS v, o.account_epoch AS e, p.row_version AS row, a.authority_epoch AS epoch
+       FROM wallet_provider_instance_operations o JOIN wallet_provider_instances i ON i.id = o.instance_id
+       JOIN passes p ON p.id = i.pass_id JOIN wallet_provider_accounts a ON a.id = i.account_id WHERE o.id = ?`,
+      [revoke.id],
+    );
+    expect(snapshot?.v).toBe(snapshot?.row);
+    expect(snapshot?.e).toBe(snapshot?.epoch);
+    for (const column of ['pass_row_version', 'account_epoch'])
+      await expect(
+        run(db, `UPDATE wallet_provider_instance_operations SET ${column} = 99 WHERE id = ?`, [
+          revoke.id,
+        ]),
+      ).rejects.toThrow(/snapshot is immutable/);
     const revokeClaim = { ...reference(revoke), claimHandle: newWalletClaimHandle(), now: now + 1 };
     expect(revoke.version).toBeGreaterThan(op.version);
     expect(await walletOperationFresh(db, oldClaim)).toBe(false);

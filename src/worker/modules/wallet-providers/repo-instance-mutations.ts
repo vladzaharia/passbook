@@ -134,10 +134,12 @@ export async function insertInstance(
       INSERT INTO wallet_provider_instance_operations
         (id, instance_id, version, kind, request_hash, pass_version, pass_revision, lifecycle_generation,
          pass_credential_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision, policy_revision,
-         credential_keyset_commitment, created_at, credential_version_id)
+         credential_keyset_commitment, created_at, credential_version_id, pass_row_version, account_epoch)
       SELECT op.id, actual.id, 1, 'upsert', ?, op.pass_version, op.pass_revision, op.lifecycle_generation,
         op.pass_credential_generation, op.issuing_release_id, op.projection_release_id, op.account_revision,
-        op.adapter_revision, op.policy_revision, op.credential_keyset_commitment, ?, ${sourcePinSql('?')} FROM i, op, wallet_provider_instances actual
+        op.adapter_revision, op.policy_revision, op.credential_keyset_commitment, ?, ${sourcePinSql('?')},
+        (SELECT p.row_version FROM passes p WHERE p.id = i.pass_id),
+        (SELECT a.authority_epoch FROM wallet_provider_accounts a WHERE a.id = i.account_id) FROM i, op, wallet_provider_instances actual
       WHERE actual.id = i.id AND actual.pass_id = i.pass_id AND actual.org_id = i.org_id AND actual.mode = i.mode
         AND actual.provider = i.provider AND actual.credential_generation = i.credential_generation
         AND actual.credential_keyset_commitment = ${pinnedKeysetSql}
@@ -147,6 +149,7 @@ export async function insertInstance(
         ${offer ? `AND ${offerAuthoritySql}` : ''}`,
       [...proofValues(p), p.requestHash, p.now, p.accountId, p.now, ...offerAuthorityValues(offer)],
     ),
+    // card_type is set once, here, from the first approved projection; 0116 refuses any later change.
     stmt(
       db,
       `UPDATE wallet_provider_instances AS target SET lifecycle = 'active', account_id = ?,
@@ -252,8 +255,10 @@ export async function insertDesiredOperation(
       `INSERT INTO wallet_provider_instance_operations
         (id, instance_id, version, kind, request_hash, pass_version, pass_revision, lifecycle_generation,
          pass_credential_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision, policy_revision,
-         credential_keyset_commitment, created_at, credential_version_id)
-      SELECT ?, i.id, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${pinnedKeysetSql}, ?, ${sourcePinSql('i.account_id')} FROM wallet_provider_instances i
+         credential_keyset_commitment, created_at, credential_version_id, pass_row_version, account_epoch)
+      SELECT ?, i.id, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${pinnedKeysetSql}, ?, ${sourcePinSql('i.account_id')},
+        (SELECT p.row_version FROM passes p WHERE p.id = i.pass_id),
+        (SELECT a.authority_epoch FROM wallet_provider_accounts a WHERE a.id = i.account_id) FROM wallet_provider_instances i
       WHERE i.id = ? AND i.desired_operation_id = ? AND i.credential_keyset_commitment = ${pinnedKeysetSql}`,
       [
         p.operationId,

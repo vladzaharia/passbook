@@ -49,8 +49,9 @@ export function insertProjectionCandidateStmt(
     `INSERT INTO template_candidates (id, template_id, org_id, mode, provider, version,
     candidate_hash, content_hash, adapter_revision, adapter_capabilities, audience_policy_revision,
     author_id, version_author_id, created_at, source_release_id, source_release_generation, source_release_hash,
-    provider_account_id, provider_account_revision, provider_identity_hash, projection_json, credential_keyset_commitment)
-    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    provider_account_id, provider_account_revision, provider_identity_hash, projection_json, credential_keyset_commitment,
+    provider_account_epoch)
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, account.authority_epoch
     FROM (SELECT ? AS org_id) source_scope
     JOIN template_provider_apple_sources source ON source.id = ? AND source.template_id = ?
       AND source.mode = ? AND source.version = ? AND source.generation = ? AND source.candidate_hash = ?
