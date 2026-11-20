@@ -162,7 +162,7 @@ describe('POST /developer/sandbox', () => {
     expect(read.templateId).toBe(s.made.templateId);
     expect(JSON.stringify(body)).not.toContain(s.made.key.secret);
     const none = await send('GET', '/developer/sandbox', (await person()).headers);
-    expect(await none.json()).toEqual({ sandbox: null });
+    expect(await none.json()).toEqual({ sandbox: null, turnstileSiteKey: expect.any(String) });
   });
 
   it('makes one sandbox per person: a repeat finishes it and never shows a second secret', async () => {

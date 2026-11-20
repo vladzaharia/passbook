@@ -1,3 +1,4 @@
+import { runOp } from '../console/run-spec.ts';
 import { buildChangelog } from './changelog.ts';
 import { minimalExample } from './example.ts';
 import { GROUP_ORDER, groupOf, labelOf, slugOf } from './resources.ts';
@@ -141,7 +142,7 @@ function view(
   const requestExample = testMode((asDict(body).example as Json | undefined) ?? ref?.request);
   const scopes = [...new Set((op.security ?? []).flatMap((s) => s.apiKey ?? []))];
   const idempotent = /Idempotency-Key/.test(summary);
-  return {
+  const base: Omit<OpView, 'run'> = {
     anchor: sub ? `${sub}-${sdk.method}` : sdk.method,
     operationId: op.operationId,
     method,
@@ -182,6 +183,7 @@ function view(
     binary: !body && sdk.method === 'upload' && method !== 'get',
     download: method === 'get' && !okSchema,
   };
+  return { ...base, run: runOp(doc, base, op, method) };
 }
 
 function webhookEvents(doc: RawDoc): WebhookEvent[] {

@@ -3,6 +3,7 @@ import {
   checkBundle,
   DEV_BUDGET_BYTES,
   DEV_FORBIDDEN,
+  DEV_ISLAND_BUDGET_BYTES,
   FORBIDDEN,
   initialAssets,
   islandAssets,
@@ -101,18 +102,36 @@ describe('check-bundle', () => {
         'const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/boot-x.js","assets/react-y.js","assets/boot-x.css","assets/developers-a.js"])))=>i',
     };
     const initial = ['/assets/developers-a.js', '/assets/developers-b.css'];
-    expect(islandAssets((url) => files[url] ?? '', initial)).toEqual([
+    expect(islandAssets((url) => files[url] ?? '', initial, 'playground')).toEqual([
       '/assets/playground-Abc_12.js',
       '/assets/boot-x.js',
       '/assets/react-y.js',
       '/assets/boot-x.css',
     ]);
     // No island named in the scripts: nothing to measure, which the build reports as a failure.
-    expect(islandAssets(() => 'nothing', initial)).toEqual([]);
+    expect(islandAssets(() => 'nothing', initial, 'playground')).toEqual([]);
   });
 
-  it('the playground island has a budget of its own, above the portal’s and below the console’s', () => {
+  it('the playground island has a budget of its own, above the portal’s and the console’s, below the SPA’s', () => {
     expect(PLAYGROUND_BUDGET_BYTES).toBeGreaterThan(DEV_BUDGET_BYTES);
+    expect(PLAYGROUND_BUDGET_BYTES).toBeGreaterThan(DEV_ISLAND_BUDGET_BYTES);
     expect(PLAYGROUND_BUDGET_BYTES).toBeLessThan(235_000);
+  });
+
+  it('finds the Try it island: its loader and the chunks Vite lists in it', () => {
+    const files: Record<string, string> = {
+      '/assets/developers-A.js': 'x(()=>import("./run-entry-B1.js"),__vite__mapDeps([0]))',
+      '/assets/run-entry-B1.js':
+        'const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/mount-C.js","assets/react-D.js","assets/mount-C.css"])))=>i.map(i=>d[i]);',
+    };
+    const read = (url: string) => files[url] ?? '';
+    expect(islandAssets(read, ['/assets/developers-A.js'], 'run-entry')).toEqual([
+      '/assets/run-entry-B1.js',
+      '/assets/mount-C.js',
+      '/assets/react-D.js',
+      '/assets/mount-C.css',
+    ]);
+    expect(islandAssets(read, ['/assets/developers-A.js'], 'missing')).toEqual([]);
+    expect(DEV_ISLAND_BUDGET_BYTES).toBe(95_000);
   });
 });

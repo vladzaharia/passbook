@@ -4,6 +4,7 @@ export const PATHS = {
   quickstart: '/developers/quickstart',
   guides: '/developers/guides',
   playground: '/developers/playground',
+  console: '/developers/console',
   webhooks: '/developers/webhooks',
   reference: '/developers/reference',
   errors: '/developers/errors',

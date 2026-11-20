@@ -17,6 +17,11 @@ const MANIFEST = {
     asset: '/developers/reference/passes.md',
     type: 'text/markdown; charset=utf-8',
   },
+  '/developers/console': { asset: '/developers/console', type: 'text/html; charset=utf-8' },
+  '/developers/run/passes.json': {
+    asset: '/developers/run/passes.json',
+    type: 'application/json; charset=utf-8',
+  },
 };
 
 /** ASSETS as Cloudflare answers: the listed files, and the SPA's shell for anything else. */
@@ -26,7 +31,12 @@ function appEnv(fetched: string[] = [], manifest: object = MANIFEST): AppEnv {
       const path = new URL(input.url).pathname;
       fetched.push(path);
       if (path === '/developers/manifest.json') return Response.json(manifest);
-      if (path === '/developers/' || path === '/developers/reference/passes')
+      if (path === '/developers/run/passes.json') return Response.json({ origin: ORIGIN, ops: [] });
+      if (
+        path === '/developers/' ||
+        path === '/developers/reference/passes' ||
+        path === '/developers/console'
+      )
         return new Response(PAGE, { headers: { 'content-type': 'text/html', etag: '"v1"' } });
       if (path === '/developers/reference/passes.md')
         return new Response('# Passes', { headers: { 'content-type': 'text/markdown' } });
@@ -54,6 +64,27 @@ describe('developer portal route', () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("require-trusted-types-for 'script'");
     expect(csp).not.toMatch(/nonce|unsafe-inline|unsafe-eval/);
+  });
+
+  it('admits the Turnstile widget on the console page alone, for Create sandbox', async () => {
+    const csp = (await call('/developers/console')).headers.get('content-security-policy') ?? '';
+    expect(csp).toContain("script-src 'self' https://challenges.cloudflare.com;");
+    expect(csp).toContain('frame-src https://challenges.cloudflare.com;');
+    expect(csp).toContain("require-trusted-types-for 'script'");
+    expect(csp).toContain('trusted-types passbook-turnstile;');
+    for (const path of ['/developers', '/developers/reference/passes']) {
+      const other = (await call(path)).headers.get('content-security-policy') ?? '';
+      expect(other, path).not.toContain('cloudflare');
+      expect(other, path).toContain("frame-src 'none'");
+    }
+  });
+
+  it('serves what the Run island reads as JSON, under the ordinary CSP', async () => {
+    const res = await call('/developers/run/passes.json');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('application/json; charset=utf-8');
+    expect(await res.json()).toEqual({ origin: ORIGIN, ops: [] });
+    expect(res.headers.get('content-security-policy')).not.toContain('trusted-types');
   });
 
   it('serves the home page for /developers and /developers/, and a markdown twin', async () => {

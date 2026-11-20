@@ -61,15 +61,21 @@ register(
   {
     method: 'get',
     path: '/sandbox',
-    summary: 'Your developer sandbox, or null',
+    summary: 'Your developer sandbox, or null, and the site key for the check that makes one',
     operationId: 'developer.getSandbox',
     auth: { human: true },
-    response: z.object({ sandbox: DeveloperSandboxSchema.nullable() }),
+    response: z.object({
+      sandbox: DeveloperSandboxSchema.nullable(),
+      turnstileSiteKey: z.string(),
+    }),
   },
   async (c) => {
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
-    return c.json({ sandbox: await getSandbox(serviceContext(c), auth) });
+    return c.json({
+      sandbox: await getSandbox(serviceContext(c), auth),
+      turnstileSiteKey: c.env.TURNSTILE_SITE_KEY,
+    });
   },
 );
 

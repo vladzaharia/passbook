@@ -63,6 +63,12 @@ export const DEV_COPY = {
     tryLine: 'Runs against your own test sandbox. Nothing is issued.',
     tryPlaceholder: 'The console opens here once you are signed in.',
   },
+  console: {
+    title: 'Console',
+    line: 'Run any operation against your test sandbox. Nothing is issued. A new key or secret in a response shows in full.',
+    signIn: 'Sign in to try',
+    placeholder: 'Pick an operation after you sign in.',
+  },
   footer: {
     changelog: 'Changelog',
     whatsNew: "What's new",

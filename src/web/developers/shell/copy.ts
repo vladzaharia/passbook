@@ -34,6 +34,16 @@ function sampleFor(button: HTMLElement): string {
   return panel ? `\`\`\`${shown?.dataset.lang}\n${panelText(panel)}\n\`\`\`` : '';
 }
 
+/** True when the text is on the clipboard. Islands use it too, so the one clipboard call lives here. */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Not the kit's copyText: that toasts through sonner and React, which the portal's first load cannot afford.
 export function initCopy(): void {
   document.addEventListener('click', async (event) => {
@@ -42,11 +52,10 @@ export function initCopy(): void {
     // An icon button is named by its label; a "Copy as" button by its text, which the state suffix extends.
     const label = button.getAttribute('aria-label');
     const text = button.dataset.copyAs ? sampleFor(button) : textFor(button);
-    try {
-      await navigator.clipboard.writeText(text);
+    if (await copyToClipboard(text)) {
       button.dataset.state = 'copied';
       if (label) button.setAttribute('aria-label', 'Copied');
-    } catch {
+    } else {
       button.dataset.state = 'failed';
       if (label)
         button.setAttribute('aria-label', 'Could not copy. Allow clipboard access and try again.');

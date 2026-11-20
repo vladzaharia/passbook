@@ -4,7 +4,7 @@
  * the manifest lists is served; the asset layer's SPA fallback never answers for a portal URL.
  */
 import { Hono } from 'hono';
-import { DEVELOPERS_INDEXABLE } from '../../../shared/developers.ts';
+import { DEVELOPERS_INDEXABLE, PATHS } from '../../../shared/developers.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { notFoundHandler } from '../../platform/error-handler.ts';
 import { developersContentSecurityPolicy } from '../../platform/security-headers.ts';
@@ -44,7 +44,10 @@ developerPortalRoutes.get('/*', async (c) => {
   const etag = res.headers.get('etag');
   if (etag) headers.set('etag', etag);
   if (entry.type.startsWith('text/html')) {
-    headers.set('content-security-policy', developersContentSecurityPolicy());
+    headers.set(
+      'content-security-policy',
+      developersContentSecurityPolicy({ turnstile: key === PATHS.console }),
+    );
   }
   return new Response(c.req.method === 'HEAD' ? null : res.body, { headers });
 });

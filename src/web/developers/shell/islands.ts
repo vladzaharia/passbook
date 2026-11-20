@@ -1,5 +1,5 @@
 export interface Island {
-  mount(el: HTMLElement): void;
+  mount(el: HTMLElement): void | Promise<void>;
 }
 
 /**
@@ -11,6 +11,11 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
   'webhook-tester': () => import('../webhooks/index.tsx'),
   snippets: () => import('./personal.ts'),
   playground: () => import('../playground/index.tsx'),
+  run: () => import('../console/run-entry.ts'),
+  'org-chip': async () => {
+    const { mountOrgChip } = await import('../console/org-chip.ts');
+    return { mount: mountOrgChip };
+  },
 };
 
 export function mountIslands(root: ParentNode = document): void {

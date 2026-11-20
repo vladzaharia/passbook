@@ -18,6 +18,11 @@ export const SCAN_BUDGET_BYTES = 150_000;
  * playground and tester are lazy chunks.
  */
 export const DEV_BUDGET_BYTES = 60_000;
+/**
+ * The Try it island, everything its loader pulls (React, the console, its stylesheet), in gzip
+ * bytes: 88.3 kB measured. It loads only for a signed-in visitor, so it sits outside the 60 kB.
+ */
+export const DEV_ISLAND_BUDGET_BYTES = 95_000;
 /** Literal strings: this check matches text, so an identifier would not survive minification. */
 export const FORBIDDEN = [
   'cmdk-',
@@ -39,22 +44,6 @@ export const DEV_FORBIDDEN = [...FORBIDDEN, 'routeTree'] as const;
  */
 export const PLAYGROUND_BUDGET_BYTES = 215_000;
 
-/**
- * The island's files: its entry (named in the portal's initial scripts) and what the entry's
- * preload list names, minus the initial load. `read` takes `/assets/x.js` style urls.
- */
-export function islandAssets(read: (url: string) => string, initial: readonly string[]): string[] {
-  const entry = initial
-    .map((url) => /(?:^|\/)(playground-[\w-]+\.js)/.exec(read(url))?.[1])
-    .find((name) => name);
-  if (!entry) return [];
-  const url = `/assets/${entry}`;
-  const list = /m\.f\|\|\(m\.f=(\[[^\]]*\])\)/.exec(read(url))?.[1];
-  const deps = list ? (JSON.parse(list) as string[]).map((d) => `/${d}`) : [];
-  const skip = new Set(initial);
-  return [...new Set([url, ...deps])].filter((u) => !skip.has(u));
-}
-
 export function initialAssets(html: string, stylesheets = false): string[] {
   const urls = [
     ...html.matchAll(/<script[^>]*type="module"[^>]*src="([^"]+)"/g),
@@ -62,6 +51,26 @@ export function initialAssets(html: string, stylesheets = false): string[] {
     ...(stylesheets ? html.matchAll(/<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"/g) : []),
   ].map((m) => m[1] ?? '');
   return urls.filter(Boolean);
+}
+
+/**
+ * The files a lazy island pulls on top of the initial load: its loader chunk (`name-<hash>.js`,
+ * named in one of the initial scripts) and the `__vite__mapDeps` list Vite writes into it. `read`
+ * takes `/assets/x.js` style urls.
+ */
+export function islandAssets(
+  read: (url: string) => string,
+  initial: readonly string[],
+  name: string,
+): string[] {
+  const loader = new RegExp(`(?:^|[/"'])(${name}-[\\w-]+\\.js)`);
+  const entry = initial.map((url) => loader.exec(read(url))?.[1]).find((file) => file);
+  if (!entry) return [];
+  const url = `/assets/${entry}`;
+  const list = /m\.f=(\[[^\]]*\])/.exec(read(url))?.[1];
+  const deps = list ? (JSON.parse(list) as string[]).map((d) => `/${d}`) : [];
+  const skip = new Set(initial);
+  return [...new Set([url, ...deps])].filter((u) => !skip.has(u));
 }
 
 export function checkBundle(
@@ -120,16 +129,31 @@ if (import.meta.main) {
   }
   const read = (url: string) => readFileSync(join(dist, url.replace(/^\//, '')), 'utf8');
   const initial = initialAssets(readFileSync(join(dist, 'developers.html'), 'utf8'), true);
-  const island = islandAssets(read, initial);
-  const total = island.reduce((n, url) => n + gzipSync(read(url)).length, 0);
-  process.stdout.write(`playground island gzip: ${total} B (${island.length} files)\n`);
-  if (island.length === 0 || total > PLAYGROUND_BUDGET_BYTES) {
-    process.stderr.write(
-      island.length === 0
-        ? 'playground island: no entry found in the portal scripts\n'
-        : `playground island gzip ${total} B exceeds budget ${PLAYGROUND_BUDGET_BYTES} B\n`,
-    );
-    failed = true;
+  const islands = [
+    { label: 'playground island', name: 'playground', budget: PLAYGROUND_BUDGET_BYTES },
+    { label: 'developers run island', name: 'run-entry', budget: DEV_ISLAND_BUDGET_BYTES },
+  ];
+  for (const { label, name, budget } of islands) {
+    const files = islandAssets(read, initial, name);
+    let total = 0;
+    for (const url of files) {
+      const body = read(url);
+      total += gzipSync(body).length;
+      for (const marker of DEV_FORBIDDEN)
+        if (body.includes(marker)) {
+          process.stderr.write(`${url} contains ${marker}\n`);
+          failed = true;
+        }
+    }
+    process.stdout.write(`${label} gzip: ${total} B (${files.length} files)\n`);
+    if (files.length === 0 || total > budget) {
+      process.stderr.write(
+        files.length === 0
+          ? `${label}: no entry found in the portal scripts\n`
+          : `${label} gzip ${total} B exceeds budget ${budget} B\n`,
+      );
+      failed = true;
+    }
   }
   if (failed) process.exit(1);
 }

@@ -5,7 +5,7 @@ import { pagePath } from '../model/markdown.ts';
 import type { ErrorEntry, Site } from '../model/types.ts';
 import { MethodPill } from '../ui/method-pill.tsx';
 
-function Head({ eyebrow, title, line }: { eyebrow?: string; title: string; line?: string }) {
+export function Head({ eyebrow, title, line }: { eyebrow?: string; title: string; line?: string }) {
   return (
     <>
       {eyebrow ? <div className="eyebrow">{eyebrow}</div> : null}
@@ -38,6 +38,10 @@ export function ReferenceIndex({ site }: { site: Site }) {
           <a className="card link tile slim" href={PATHS.errors}>
             <div className="h3">Errors</div>
             <span className="xs muted">Codes and their fixes</span>
+          </a>
+          <a className="card link tile slim" href={PATHS.console}>
+            <div className="h3">Console</div>
+            <span className="xs muted">Run any operation in your sandbox</span>
           </a>
           <a className="card link tile slim" href={PATHS.protocols}>
             <div className="h3">Protocols</div>

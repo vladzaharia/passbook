@@ -1,3 +1,5 @@
+import type { RunOp } from '../console/types.ts';
+
 /** The slice of OpenAPI the portal reads, and the view models it builds. Build-time only. */
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type Dict = Record<string, unknown>;
@@ -100,6 +102,8 @@ export interface OpView {
   examples: Example[];
   /** What the code samples send: the body, the query the call needs and any extra headers. */
   sample: { body: Json | undefined; query: Record<string, Json>; headers: Record<string, string> };
+  /** What the console island needs to run it. */
+  run: RunOp;
 }
 
 export interface ConsoleOp {
