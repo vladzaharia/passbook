@@ -205,7 +205,9 @@ register(
         'code' in input,
       );
     notifyHostOfArrival(ctx, actor, outcome, evaluatedSnapshot);
-    return c.json(await withParentHint(ctx.env.DB, actor.orgId, outcome));
+    // The door asks which bundle only for a pass that is in one (read with the pass, no extra trip).
+    const shown = evaluatedSnapshot?.inBundle ? { ...outcome, inBundle: true } : outcome;
+    return c.json(await withParentHint(ctx.env.DB, actor.orgId, shown));
   },
 );
 

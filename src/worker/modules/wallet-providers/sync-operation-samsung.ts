@@ -82,7 +82,7 @@ export async function runSamsungWalletProviderOperation(
             : { status: execution.lastResponseStatus }),
         }))
       ) {
-        await markWalletClaimUncertain(ctx.env.DB, { ...claim, now: ctx.clock.now() });
+        await markWalletClaimUncertain(ctx, { ...claim, now: ctx.clock.now() });
         return 'uncertain';
       }
     } catch (error) {
@@ -95,7 +95,7 @@ export async function runSamsungWalletProviderOperation(
           reason: failure.reason,
           ...status,
         });
-        await markWalletClaimUncertain(ctx.env.DB, { ...claim, now: ctx.clock.now() });
+        await markWalletClaimUncertain(ctx, { ...claim, now: ctx.clock.now() });
         return 'uncertain';
       }
       if (
@@ -111,7 +111,7 @@ export async function runSamsungWalletProviderOperation(
             status: 204,
           }))
         ) {
-          await markWalletClaimUncertain(ctx.env.DB, { ...claim, now: ctx.clock.now() });
+          await markWalletClaimUncertain(ctx, { ...claim, now: ctx.clock.now() });
           return 'uncertain';
         }
         continue;
@@ -134,7 +134,7 @@ export async function runSamsungWalletProviderOperation(
   }
   const results = await listSamsungSyncTargets(ctx, claim);
   if (results.some((target) => target.state === 'inflight' || target.state === 'uncertain')) {
-    await markWalletClaimUncertain(ctx.env.DB, { ...claim, now: ctx.clock.now() });
+    await markWalletClaimUncertain(ctx, { ...claim, now: ctx.clock.now() });
     return 'uncertain';
   }
   const pending = results.filter(

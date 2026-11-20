@@ -12,7 +12,6 @@ import { setupKit } from '../passes/pass-test-fixtures.ts';
 import {
   claimWalletOperation,
   newWalletClaimHandle,
-  queueWalletOperation,
   readWalletPassSnapshot,
   requestWalletRetirement,
 } from './instance.ts';
@@ -21,9 +20,11 @@ import { projectionPolicy } from './projection-contract.ts';
 import { approveProjectionCandidate, publishProjectionRelease } from './projection-service.ts';
 import { runSystemProjection } from './projection-system.ts';
 import { SYSTEM_AUTHOR, SYSTEM_REVIEWER } from './projection-system-authority.ts';
-import { updateCompiler } from './projection-v2-test-fixtures.ts';
+import { jobCtx, updateCompiler } from './projection-v2-test-fixtures.ts';
+import { queueWalletOperation } from './queue-test-fixtures.ts';
 import { selectProjectionCandidates } from './repo-projection-store.ts';
 import { seedHistoricalProviderInstance } from './runtime-historical-fixtures.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 const holderLoss: FidelityItem = {
   capability: 'field.back',
@@ -79,7 +80,7 @@ describe('revoke claims on a system release', () => {
       provider: 'google' as const,
       templateId: kit.template.id,
     };
-    await runSystemProjection(kit.ctx, {
+    await runSystemProjection(jobCtx(kit.ctx), {
       kind: 'wallet.projection_system',
       orgId: scope.orgId,
       mode: 'live',
@@ -190,7 +191,7 @@ describe('revoke claims on a system release', () => {
     expect(
       await requestWalletRetirement(db, { ...ref, version: issued.version, ...proof, now }),
     ).toBe(true);
-    const revoke = await queueWalletOperation(db, {
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...proof,
       instanceId,
       expectedVersion: issued.version,
@@ -201,7 +202,7 @@ describe('revoke claims on a system release', () => {
     });
     if (!revoke) throw new Error('Revoke not queued');
     expect(
-      await claimWalletOperation(db, {
+      await claimWalletOperation(walletJobCtx(db), {
         ...ref,
         version: revoke.version,
         claimHandle: newWalletClaimHandle(),

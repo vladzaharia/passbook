@@ -24,7 +24,24 @@ export function findEnrolmentGateRow(
 
 const IDENT = /^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?$/;
 
-/** Trusted SQL predicate for the org layer: the (org, mode, provider) enrolment may issue. */
+/** Whether the org's plan includes the provider's wallet (`wallet.<provider>`). No row denies. */
+export async function walletEntitled(
+  db: D1Database,
+  provider: WalletProvider,
+  orgId: string,
+): Promise<boolean> {
+  const row = await first<{ value: string }>(
+    db,
+    'SELECT value FROM org_entitlement_values WHERE org_id = ? AND key = ?',
+    [orgId, `wallet.${provider}`],
+  );
+  return row?.value === '1';
+}
+
+/**
+ * Trusted SQL predicate for the org layer: the (org, mode, provider) enrolment may issue and the org's plan
+ * includes the provider (`wallet.<provider>`; no row denies).
+ */
 export function walletEnrolmentIssuesSql(
   orgSql: string,
   modeSql: string,
@@ -35,5 +52,7 @@ export function walletEnrolmentIssuesSql(
   return `EXISTS (SELECT 1 FROM wallet_provider_accounts gate_a WHERE gate_a.org_id = ${orgSql}
     AND gate_a.mode = ${modeSql} AND gate_a.provider = ${providerSql}
     AND gate_a.revoked_at IS NULL AND gate_a.platform_hold_at IS NULL
-    AND (gate_a.credential_id IS NOT NULL OR gate_a.enabled_at IS NOT NULL))`;
+    AND (gate_a.credential_id IS NOT NULL OR gate_a.enabled_at IS NOT NULL))
+    AND EXISTS (SELECT 1 FROM org_entitlement_values gate_e WHERE gate_e.org_id = ${orgSql}
+    AND gate_e.key = 'wallet.' || ${providerSql} AND gate_e.value = '1')`;
 }

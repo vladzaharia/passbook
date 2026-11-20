@@ -124,7 +124,8 @@ export function enterVerdict(s: MachineState, o: VerdictOpts, env: Env): Out {
   if (view.beat) cmds.push({ c: 'beat', beat: view.beat });
   if (view.announcement)
     cmds.push({ c: 'announce', text: view.announcement, polite: view.region === 'status' });
-  if (view.dock.focus) cmds.push({ c: 'focus', target: view.dock.focus });
+  // A refused PIN stays in its tray: focus is not pulled to the dock behind it.
+  if (view.dock.focus && !(o.inPlace && o.pin)) cmds.push({ c: 'focus', target: view.dock.focus });
   if (outcome.milestone) cmds.push({ c: 'celebrate' });
 
   const state: MachineState = {

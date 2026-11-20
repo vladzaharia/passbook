@@ -1,0 +1,39 @@
+/* Direction on the handheld's thumb row (handheld design 4): 76 wide, the glyph over its word. */
+.scan-dock-btn.scan-dir-btn {
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  width: 76px;
+  padding: 0;
+  font: 600 14px / 16px var(--pk-font-sans);
+}
+.scan-dir-word {
+  animation: scan-dir-word 160ms var(--wl-ease-out, ease-out);
+}
+@keyframes scan-dir-word {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scan-dir-word {
+    animation: none;
+  }
+}
+
+/* Out marks: one dashed frame in place of the solid brackets, so a door that checks people out never reads as one that checks them in. */
+.scan-aim[data-direction="out"] .scan-reticle i {
+  display: none;
+}
+.scan-aim[data-direction="out"] .scan-reticle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 4px dashed white;
+  border-radius: 26px;
+}
+.scan-aim[data-direction="out"] .scan-live-pill {
+  background: color-mix(in oklab, var(--sd-accent) 82%, rgb(10 12 20));
+  color: var(--scan-accent-on, white);
+}

@@ -22,6 +22,7 @@ export const CHANNEL_REASONS = [
   'no_design',
   'tags_off',
   'printing_off',
+  'not_included',
   'blocked',
   'never',
   'template_off',

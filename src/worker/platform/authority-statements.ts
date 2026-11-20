@@ -10,6 +10,7 @@ import {
 } from './authority-expr.ts';
 import { holderTable, pinInsert, pinPredicate, pinWhere } from './authority-pin.ts';
 import type { GrantScope } from './authority-principal.ts';
+import { keyedInsert, keyedSet, restrictRow } from './authority-restrict.ts';
 import { epochColumns, GUARDED_TABLES, ownedColumns, type TableScope } from './authority-tables.ts';
 import type { SqlValue } from './db.ts';
 
@@ -24,6 +25,8 @@ export interface BuiltStatement {
   lineage?: Check;
   /** An included read part: it may bind up to PARAM_BUDGET values instead of WRITE_PARAM_BUDGET. */
   read?: true;
+  /** A key limited to templates cannot run this: it assigns or omits a template reference it cannot check. */
+  limitRefused?: true;
 }
 
 export function assertBudget(sql: string, params: readonly SqlValue[], limit: number): void {
@@ -66,6 +69,7 @@ export function scopePredicate(
   when?: readonly GrantCond[],
   row?: string,
   pin?: string,
+  keyed = false,
 ): string {
   const t = tableScope(table);
   holderTable(t, table, pin);
@@ -88,7 +92,8 @@ export function scopePredicate(
         : ` AND g.org_id = ${alias}.${t.org}`;
   const mode = scope === 'org_mode' && t.mode ? ` AND g.mode = ${alias}.mode` : '';
   const holder = pinPredicate(t, table, alias, pin);
-  return `EXISTS (SELECT 1 FROM authority_grants g WHERE g.id = ?${org}${mode}${holder}${whenSql(when, scope, params, row)})`;
+  const limit = keyed ? restrictRow(table, alias, 'g.limit_key') : '';
+  return `EXISTS (SELECT 1 FROM authority_grants g WHERE g.id = ?${org}${mode}${holder}${limit}${whenSql(when, scope, params, row)})`;
 }
 
 /** The grant supplies the tenant columns and triggers own the epochs: no write may name either. */
@@ -183,13 +188,23 @@ export function buildUpdate(
   table: string,
   o: WriteOptions,
   pin?: string,
+  keyed = false,
 ): BuiltStatement {
   const t = tableScope(table);
   const params: SqlValue[] = [];
   const set = assignments(table, scope, o.set ?? {}, o.inc ?? [], params);
   const where = whereSql(t, table, scope, o.where, params, pin);
-  const sql = `UPDATE ${table} SET ${set} WHERE ${where}${scopePredicate(grantId, scope, table, table, params, o.when, table, pin)}${returningSql(o.returning)}`;
-  return { sql, params, ...lineageOf(table, o) };
+  // A limited key assigns a template column only a value inside its limit (see keyedSet).
+  const limit = keyedSet(grantId, table, o, keyed);
+  params.push(...limit.params);
+  const guard = limit.sql ? `${limit.sql} AND ` : '';
+  const sql = `UPDATE ${table} SET ${set} WHERE ${where}${guard}${scopePredicate(grantId, scope, table, table, params, o.when, table, pin, keyed)}${returningSql(o.returning)}`;
+  return {
+    sql,
+    params,
+    ...lineageOf(table, o),
+    ...(limit?.refuse ? { limitRefused: true as const } : {}),
+  };
 }
 
 export function buildDelete(
@@ -198,12 +213,13 @@ export function buildDelete(
   table: string,
   o: Omit<WriteOptions, 'set' | 'inc'>,
   pin?: string,
+  keyed = false,
 ): BuiltStatement {
   const t = tableScope(table);
   if (t.platform) throw override(`${table} rows are not deleted through a grant.`);
   const params: SqlValue[] = [];
   const where = whereSql(t, table, scope, o.where, params, pin);
-  const sql = `DELETE FROM ${table} WHERE ${where}${scopePredicate(grantId, scope, table, table, params, o.when, table, pin)}${returningSql(o.returning)}`;
+  const sql = `DELETE FROM ${table} WHERE ${where}${scopePredicate(grantId, scope, table, table, params, o.when, table, pin, keyed)}${returningSql(o.returning)}`;
   return { sql, params, ...lineageOf(table, o) };
 }
 
@@ -258,6 +274,7 @@ function sourceJoin(
   scope: GrantScope,
   columns: string[],
   from: InsertFrom,
+  keyed: boolean,
 ): { targets: string[]; sources: string[]; join: string } {
   const st = tableScope(from.table);
   if (st.org === null)
@@ -276,7 +293,7 @@ function sourceJoin(
   return {
     targets,
     sources,
-    join: ` JOIN ${from.table} s ON ${tenantMatch(from.table, 's', scope, 'g')}`,
+    join: ` JOIN ${from.table} s ON ${tenantMatch(from.table, 's', scope, 'g')}${keyed ? restrictRow(from.table, 's', 'g.limit_key') : ''}`,
   };
 }
 
@@ -289,22 +306,25 @@ export function buildInsertSelect(
   values: SqlValue[],
   o: InsertOptions = {},
   pin?: string,
+  keyed = false,
 ): BuiltStatement {
   const t = checkInsertColumns(table, scope, columns, values, o.from !== undefined);
   const holder = pinInsert(t, table, columns, values, o.from?.copy, pin);
   const lead = leadColumns(t, scope);
-  const src = o.from ? sourceJoin(table, scope, columns, o.from) : null;
+  const src = o.from ? sourceJoin(table, scope, columns, o.from, keyed) : null;
   const all = [...lead.map(([c]) => c), ...columns, ...(src?.targets ?? [])];
   const select = [
     ...lead.map(([, e]) => e),
     ...columns.map(() => '?'),
     ...(src?.sources.map((c) => `s.${c}`) ?? []),
   ];
-  const params: SqlValue[] = [...values, grantId, ...holder.params];
+  const limit = keyedInsert(table, columns, values, o.from?.copy, keyed);
+  const params: SqlValue[] = [...values, grantId, ...holder.params, ...limit.params];
   const from = o.from && src ? ` AND ${conditions(o.from.where, params, 's.')}` : '';
   const when = whenSql(o.when, scope, params);
   return {
-    sql: `INSERT INTO ${table} (${all.join(', ')}) SELECT ${select.join(', ')} FROM authority_grants g${src?.join ?? ''} WHERE g.id = ?${holder.sql}${from}${when}${returningSql(o.returning)}`,
+    sql: `INSERT INTO ${table} (${all.join(', ')}) SELECT ${select.join(', ')} FROM authority_grants g${src?.join ?? ''} WHERE g.id = ?${holder.sql}${limit.sql}${from}${when}${returningSql(o.returning)}`,
     params,
+    ...(limit.refuse ? { limitRefused: true as const } : {}),
   };
 }

@@ -25,7 +25,7 @@ import {
   type SamsungPromotedRefreshProof,
   type WalletProviderRetirementProof,
 } from './repo-accounts.ts';
-import { findEnrolmentGateRow } from './repo-enrolment-gate.ts';
+import { findEnrolmentGateRow, walletEntitled } from './repo-enrolment-gate.ts';
 
 export {
   readSamsungIssuedRefVerification,
@@ -33,20 +33,28 @@ export {
   type SamsungTombstoneVerification,
 } from './account-credential-historical.ts';
 
-/** Server-only probe material; the caller must authorize the probe and fence provider evidence. */
+/**
+ * Server-only probe material; the caller must authorize the probe and fence provider evidence. Pin the
+ * revision for work built under one credential, or the authority epoch for work that survives a rotation
+ * under the same provider identity (candidates, approvals, evidence).
+ */
 export async function readConfiguredWalletProviderCredentials(
   ctx: ServiceContext,
   scope: WalletProviderScope,
-  expected: { accountId: string; accountRevision: number },
+  expected: { accountId: string } & (
+    | { accountRevision: number; authorityEpoch?: never }
+    | { authorityEpoch: number; accountRevision?: never }
+  ),
 ): Promise<WalletProviderCredentialSnapshot | null> {
   ctx = snapshotWalletCredentialContext(ctx);
   const parsed = WalletProviderScopeSchema.safeParse(scope);
   const pinned = { ...expected };
+  const pin = pinned.authorityEpoch ?? pinned.accountRevision;
   if (
     !parsed.success ||
     !IdSchema.safeParse(pinned.accountId).success ||
-    !Number.isSafeInteger(pinned.accountRevision) ||
-    pinned.accountRevision <= 0
+    !Number.isSafeInteger(pin) ||
+    pin <= 0
   )
     throw new ValidationError();
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
@@ -58,7 +66,9 @@ export async function readConfiguredWalletProviderCredentials(
   }
   if (
     row.id !== pinned.accountId ||
-    row.revision !== pinned.accountRevision ||
+    (pinned.authorityEpoch === undefined
+      ? row.revision !== pinned.accountRevision
+      : row.authority_epoch !== pinned.authorityEpoch) ||
     (!row.credential_id && !row.hmac_ciphertext && row.provider !== 'samsung') ||
     row.revoked_at !== null
   ) {
@@ -66,6 +76,10 @@ export async function readConfiguredWalletProviderCredentials(
   }
   // The one enrolment gate (provider-policy.ts): a new-model row issues only while On and not held.
   if (!walletEnrolmentIssues(row)) {
+    return null;
+  }
+  // A probe is a provider call: an org whose plan lacks the wallet gets none.
+  if (!(await walletEntitled(ctx.env.DB, parsed.data.provider, parsed.data.orgId))) {
     return null;
   }
   const stored = await applyEnrolmentSource(ctx, enrolmentOf(row), await openAccount(ctx, row), {
@@ -186,12 +200,14 @@ export async function readSamsungPromotedRefreshCredentials(
     throw new ValidationError();
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const row = await findSamsungPromotedRefreshAccount(ctx.env.DB, pinned, ctx.clock.now());
-  // A refresh is an outbound call: an Off or held enrolment stops it like any other issuance.
+  // A refresh is an outbound call: an Off or held enrolment, or a plan without Samsung Wallet, stops it
+  // like any other issuance.
   if (
     row &&
-    !walletEnrolmentIssues(
+    (!walletEnrolmentIssues(
       await findEnrolmentGateRow(ctx.env.DB, 'samsung', pinned.orgId, pinned.mode),
-    )
+    ) ||
+      !(await walletEntitled(ctx.env.DB, 'samsung', pinned.orgId)))
   ) {
     return null;
   }

@@ -7,6 +7,7 @@ import { formatDay } from '@/web/lib/format.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { MetaLink, RowActions, StatusPill } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
+import { ROLE_LABELS } from '../orgs/org-roles.ts';
 import { type ApiKey, keyState, SCOPE_LABEL } from './queries.ts';
 
 const STATE_TONE = { active: 'success', expired: 'warning', revoked: 'neutral' } as const;
@@ -19,8 +20,9 @@ export interface KeyColumnsOptions {
   onRevoke: (key: ApiKey) => void;
 }
 
-/** What the list shows of a key: `wlt_` and the prefix, the start of every secret it issues. */
-export const keyPrefix = (k: Pick<ApiKey, 'prefix'>) => `wlt_${k.prefix}`;
+/** What the list shows of a key: the start of its secret (`pb_live_`, `pbp_`, `pbo_`, or `wlt_` for an older key) and its prefix. */
+export const keyPrefix = (k: Pick<ApiKey, 'prefix' | 'secretPrefix'>) =>
+  k.secretPrefix ?? `wlt_${k.prefix}`;
 
 /** Name (no detail page: plain strong text), mode, scopes, created by, last used, status, actions. */
 
@@ -47,8 +49,22 @@ export function keyColumns({
               <KeyRound />
             </span>
             <div className="min-w-0">
-              <span className="block truncate font-medium text-fg-strong">{k.name}</span>
+              <span className="block truncate font-medium text-fg-strong">
+                {k.name}
+                {k.kind === 'service' ? null : (
+                  <span className="ml-2 text-xs font-normal text-fg-muted">
+                    {k.kind === 'personal' ? 'Personal' : 'Platform'}
+                  </span>
+                )}
+              </span>
               <code className="block truncate font-mono text-xs text-fg-muted">{keyPrefix(k)}</code>
+              {k.kind === 'platform' &&
+              k.revokedAt === null &&
+              (k.expiresAt === null || k.ipAllow.length === 0) ? (
+                <span className="block text-xs text-warning">
+                  Set allowed IPs and expiry: make a new key
+                </span>
+              ) : null}
             </div>
           </div>
         );
@@ -69,7 +85,11 @@ export function keyColumns({
       header: 'Scopes',
       id: 'scopes',
       cell: ({ row }) => {
-        const scopes = row.original.scopes.map((s) => SCOPE_LABEL[s] ?? s).join(', ');
+        const { roles, scopes: held } = row.original;
+        const scopes = [
+          ...roles.map((r) => ROLE_LABELS[r]),
+          ...held.map((s) => SCOPE_LABEL[s] ?? s),
+        ].join(', ');
         return (
           <span className="block max-w-56 whitespace-normal break-words text-fg">{scopes}</span>
         );

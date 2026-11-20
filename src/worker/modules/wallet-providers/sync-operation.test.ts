@@ -201,6 +201,7 @@ beforeEach(async () => {
     mode: operation.mode,
     templateId: 'template-1',
     templateVersion: 'v1',
+    passRowVersion: 1,
     passVersion: operation.passVersion,
     passRevision: operation.passRevision,
     lifecycleGeneration: operation.lifecycleGeneration,
@@ -307,7 +308,7 @@ describe('wallet provider operation fences', () => {
     expect(await runWalletProviderOperation(ctx, operation)).toBe('uncertain');
     expect(mocks.googleObject).toHaveBeenCalledOnce();
     expect(mocks.uncertain).toHaveBeenCalledWith(
-      sameDb(ctx.env.DB),
+      expect.objectContaining({ env: expect.objectContaining({ DB: sameDb(ctx.env.DB) }) }),
       expect.objectContaining({
         instanceId: operation.instanceId,
         version: operation.version,
@@ -448,7 +449,7 @@ describe('wallet provider operation fences', () => {
   it('records both ordered responses but does not infer installation from an object update', async () => {
     expect(await runWalletProviderOperation(ctx, operation)).toBe('completed');
     expect(mocks.claim).toHaveBeenCalledWith(
-      sameDb(ctx.env.DB),
+      expect.objectContaining({ env: expect.objectContaining({ DB: sameDb(ctx.env.DB) }) }),
       expect.objectContaining({
         instanceId: operation.instanceId,
         version: operation.version,

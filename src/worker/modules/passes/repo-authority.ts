@@ -2,6 +2,7 @@ import type { OrgCapability } from '../../../shared/contracts/org-membership.ts'
 import { type Check, rawCheck } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
+import { keyHoldsScope, keyLive } from '../../platform/repo-api-key-sql.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import type { TenantPassWrite } from './http.ts';
 
@@ -38,8 +39,7 @@ export function tenantPassAuthoritySql(authority: TenantPassWrite, tableAlias?: 
   return `(${target} AND EXISTS (
     SELECT 1 FROM api_keys k JOIN orgs o ON o.id = ? AND ${orgEpochMatchSql('o')}
     WHERE k.id = ? AND k.org_id IS ? AND (k.org_id IS NULL OR k.org_id = o.id)
-      AND k.mode = ? AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ?)
-      AND EXISTS (SELECT 1 FROM json_each(k.scopes) required WHERE required.type = 'text' AND required.value = ?)
+      AND k.mode = ? AND ${keyLive('k', 0).sql} AND ${keyHoldsScope('k', authority.scope).sql}
   ))`;
 }
 
@@ -65,8 +65,8 @@ export function tenantPassAuthorityParams(authority: TenantPassWrite, now: numbe
     authority.keyId,
     authority.keyOrgId,
     authority.mode,
-    now,
-    authority.scope,
+    ...keyLive('k', now).params,
+    ...keyHoldsScope('k', authority.scope).params,
   ];
 }
 
@@ -103,14 +103,13 @@ export function capabilityChecks(authority: TenantPassWrite): Check[] {
   return [keyScope(authority.keyId, authority.scope)];
 }
 
-/** The key's own scopes list `scope`. */
+/** The key holds `scope`, by its own scopes or a role's preset (a personal key within its member's roles). */
 export function keyScope(keyId: string, scope: string): Check {
-  return rawCheck(
-    'actor',
-    `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ?
-      AND EXISTS (SELECT 1 FROM json_each(k.scopes) j WHERE j.type = 'text' AND j.value = ?))`,
-    [keyId, scope],
-  );
+  const holds = keyHoldsScope('k', scope);
+  return rawCheck('actor', `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ? AND ${holds.sql})`, [
+    keyId,
+    ...holds.params,
+  ]);
 }
 
 /** The membership's own roles grant the capability. */

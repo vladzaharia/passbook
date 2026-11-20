@@ -1,0 +1,57 @@
+/* This shift as a 560 tray (handheld design 6). */
+.scan-tray-head h2 {
+  margin: 0;
+  color: var(--sd-strong);
+  font: 650 22px / 28px var(--pk-font-sans);
+}
+.scan-tray-head p {
+  margin: 0;
+  color: var(--sd-muted);
+  font: 500 15px / 20px var(--pk-font-sans);
+}
+.scan-tray-head {
+  flex: 1;
+  min-width: 0;
+}
+.scan-tray-count p {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+}
+.scan-tray-count strong {
+  color: var(--sd-strong);
+  font: 700 44px / 48px var(--pk-font-sans);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.scan-tray-count span {
+  color: var(--sd-muted);
+  font: 500 17px / 22px var(--pk-font-sans);
+}
+.scan-tray-bar {
+  height: 10px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--sd-fill-gray);
+}
+.scan-tray-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: var(--sd-accent);
+}
+.scan-tray-you {
+  margin: 0;
+  color: var(--sd-strong);
+  font: 600 17px / 22px var(--pk-font-sans);
+}
+.scan-tray-more > summary {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  color: var(--sd-accent);
+  font: 600 16px / 20px var(--pk-font-sans);
+  cursor: pointer;
+}

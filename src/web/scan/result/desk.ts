@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { localOutcome } from '../machine/outcome.ts';
 import type { Counts, ScanEvent, ScanOutcome, ScanState } from '../machine/types.ts';
+import { shortName } from './approval-parts.tsx';
 
 /** What the result card's desk regions need from the machine: the open picker and the PIN's managers. */
 export function deskOf(
@@ -44,4 +46,29 @@ export function resultOf(loop: ScanState['loop'], counts: Counts): ScanOutcome |
     display: loop.card.display,
     local: false,
   };
+}
+
+/**
+ * Who approved the hold on screen, for the green card's "Approved by Maya R." (a manager code is
+ * anonymous, so it names nobody). The name is remembered against the read it approved.
+ */
+export function useApprovedBy(loop: ScanState['loop'], desk: ReturnType<typeof deskOf>) {
+  const [approver, setApprover] = useState<{ inputId: string; name: string } | null>(null);
+  const withName = {
+    ...desk,
+    onApprove: (staffId: string | undefined, pin: string) => {
+      const who = desk.managers.find((m) => m.id === staffId);
+      if (who && 'input' in loop)
+        setApprover({ inputId: loop.input.id, name: shortName(who.name) });
+      desk.onApprove(staffId, pin);
+    },
+  };
+  const approvedBy =
+    approver &&
+    loop.s === 'verdict' &&
+    loop.outcome.kind === 'ok' &&
+    loop.input.id === approver.inputId
+      ? approver.name
+      : undefined;
+  return { desk: withName, approvedBy };
 }

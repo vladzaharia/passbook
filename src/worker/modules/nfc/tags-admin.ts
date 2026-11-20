@@ -10,7 +10,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { assertPassTakesTag } from './pass-state.ts';
-import { tagsEnabled } from './policy.ts';
+import { tagsRefusal } from './policy.ts';
 import { activeBinding, bindingTarget, lostBinding, passFacts } from './repo-tag-bindings.ts';
 import { tagTarget, tagView } from './repo-tags.ts';
 import { addBind, bindChecks, endBinding, type TagAuthority, tagGrant } from './repo-tags-write.ts';
@@ -135,8 +135,8 @@ export async function restoreTag(ctx: ServiceContext, a: TagAuthority, id: strin
     return shown(ctx, a, id);
   }
   if (tag.lostAt === null) return shown(ctx, a, id);
-  if (!(await tagsEnabled(ctx, a.orgId)))
-    throw new ConflictError('Turn on tags in settings first.', 'TAGS_OFF');
+  const off = await tagsRefusal(ctx, a.orgId);
+  if (off) throw off;
   const last = await lostBinding(ctx.env.DB, id);
   const pass = last ? await passFacts(ctx.env.DB, last.passId) : null;
   const holderBack =

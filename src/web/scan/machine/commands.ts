@@ -3,51 +3,19 @@
  * results back as events. It owns the in-flight requests, their timeouts and the unsure retries.
  */
 import { doneResult } from '../assign/enroll-result.ts';
-import type { ScanInput } from '../input/types.ts';
 import { SCAN_TIMING } from '../timing.ts';
-import type { DirectionDraft, MachineEvent } from './access-events.ts';
+import type { MachineEvent } from './access-events.ts';
 import { type AssignCmd, isAssignCmd } from './assign-state.ts';
+import { isBundleCmd } from './bundle-peek.ts';
+import { peekBundle } from './commands-bundle.ts';
+import { directionOf, inputBody, type Wire, wireOf, withoutPin } from './commands-wire.ts';
 import type { ActBody, ResolveBody, ScanDeps, UnsureRow } from './ports.ts';
 import type { Cmd, Draft, ScanEvent, ScanOutcome, ScanState, Unsure } from './types.ts';
-
-type Wire = Pick<ScanInput, 'code' | 'passId' | 'method' | 'tag'>;
 
 export interface Host {
   state(): ScanState;
   dispatch(event: MachineEvent): void;
   beat(beat: Extract<Cmd, { c: 'beat' }>['beat']): void;
-}
-
-const wireOf = (i: ScanInput | Wire): Wire => ({
-  ...(i.code !== undefined ? { code: i.code } : {}),
-  ...(i.tag ? { tag: i.tag } : {}),
-  ...(i.passId !== undefined ? { passId: i.passId } : {}),
-  method: i.method,
-});
-
-const inputBody = (w: Wire): ResolveBody['input'] =>
-  w.tag
-    ? { tag: w.tag, method: 'nfc' }
-    : w.passId
-      ? { passId: w.passId, method: 'manual' }
-      : { code: w.code ?? '', method: w.method };
-
-/** The draft a retry resends: the same action, never the Manager's PIN. */
-function withoutPin(draft: Draft | 'auto'): Draft {
-  if (draft === 'auto') return { actionId: 'auto', amount: null };
-  const { approval: _pin, ...rest } = draft;
-  return rest;
-}
-
-/** An explicit direction beats the pin, which beats an Out start; Auto sends none. */
-function directionOf(
-  draft: DirectionDraft | null,
-  state: ScanState,
-  deps: ScanDeps,
-): { direction?: 'in' | 'out' } {
-  const direction =
-    draft?.direction ?? deps.pin?.get() ?? (state.scope.direction === 'out' ? 'out' : null);
-  return direction ? { direction } : {};
 }
 
 export function createRunner(deps: ScanDeps, host: Host) {
@@ -215,6 +183,10 @@ export function createRunner(deps: ScanDeps, host: Host) {
 
   function run(cmds: Cmd[]): void {
     for (const cmd of cmds) {
+      if (isBundleCmd(cmd)) {
+        peekBundle(deps, host, cmd);
+        continue;
+      }
       if (isAssignCmd(cmd)) {
         sendTag(cmd as AssignCmd & { key?: string });
         continue;

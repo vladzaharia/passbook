@@ -1,14 +1,21 @@
 import type { z } from 'zod';
 import { OrgSettingsSchema, PlatformSettingsSchema } from '../../../shared/contracts/settings.ts';
+import { featureNotIncluded } from '../../../shared/copy/entitlements.ts';
 import { checkFromName } from '../../../shared/email-from-name.ts';
 import type { Actor } from '../../platform/context.ts';
-import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { entitlementsOf } from '../../platform/entitlements.ts';
+import {
+  FeatureNotIncludedError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
 import { planRetentionChange } from '../retention/changes.ts';
 import { enqueueShortenNotices } from '../retention/notify.ts';
-import { inherit, platformGateIssue, type SettingEntry } from './inherit.ts';
+import { inherit, planGateIssue, platformGateIssue, type SettingEntry } from './inherit.ts';
 import { orgIdOfScope, registryFor } from './registry.ts';
 import { isPlatformAddress } from './reply-to-domain.ts';
 import {
@@ -139,7 +146,9 @@ async function listStored(ctx: ServiceContext, scope: string): Promise<SettingEn
 export async function listSettings(ctx: ServiceContext, scope: string): Promise<SettingEntry[]> {
   const entries = await listStored(ctx, scope);
   const orgId = orgIdOfScope(scope);
-  return orgId === null ? entries : inherit(entries, await getPlatformSettings(ctx));
+  return orgId === null
+    ? entries
+    : inherit(entries, await getPlatformSettings(ctx), await entitlementsOf(ctx, orgId));
 }
 
 /** The schema checks the name against "PassBook"; this also checks the platform's current sender name. */
@@ -196,6 +205,9 @@ export async function updateSettings(
   if (issues.length) throw new ValidationError('Invalid settings.', issues, 'INVALID_SETTING');
   const gated = orgId === null ? null : platformGateIssue(await getPlatformSettings(ctx), upserts);
   if (gated) throw new ValidationError('Invalid settings.', [gated], gated.code);
+  // The plan comes after the platform: a write the plan blocks is a 403 naming the feature, not a field error.
+  const planned = orgId === null ? null : planGateIssue(await entitlementsOf(ctx, orgId), upserts);
+  if (planned) throw new FeatureNotIncludedError(planned.key, featureNotIncluded(planned.key));
   // Bounds against the platform maximum, and the floors that delay a shortening (retention keys only).
   const retention = await planRetentionChange(ctx, scope, upserts, deletes);
   const [first] = retention.issues;

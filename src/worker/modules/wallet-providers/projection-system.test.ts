@@ -3,7 +3,6 @@ import { groupOf } from '../../../passkit/wallets/fidelity.ts';
 import type { CompileResult, FidelityItem } from '../../../passkit/wallets/types.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import { all, first } from '../../platform/db.ts';
-import { ConflictError } from '../../platform/errors.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { getLatestRelease } from '../templates/repo-releases.ts';
 import { offersPaused } from './projection-pause.ts';
@@ -24,6 +23,7 @@ import { queueSystemProjections } from './projection-system-queue.ts';
 import {
   candidateOf,
   installV2Env,
+  jobCtx,
   type Kit,
   lookup,
   pinsOf,
@@ -33,7 +33,8 @@ import {
   updateCompiler,
 } from './projection-v2-test-fixtures.ts';
 import { walletInstanceProofSql } from './repo-instance-proof.ts';
-import { getProjectionCandidate, insertProjectionApprovalStmt } from './repo-projection-store.ts';
+import { getProjectionCandidate } from './repo-projection-store.ts';
+import { writeProjectionApproval } from './repo-projection-write.ts';
 
 installV2Env();
 
@@ -88,7 +89,7 @@ describe('system-authored provider candidates (CW7b)', () => {
   it('publishes itself when only look and absent items remain, and audits each step', async () => {
     patch(quiet(lookLoss));
     const kit = await setup();
-    await runSystemProjection(kit.ctx, jobOf(kit));
+    await runSystemProjection(jobCtx(kit.ctx), jobOf(kit));
 
     const { items } = await candidates(kit);
     expect(items).toHaveLength(1);
@@ -107,15 +108,15 @@ describe('system-authored provider candidates (CW7b)', () => {
   it('runs once per Apple release: a retried job adds nothing', async () => {
     patch(quiet(lookLoss));
     const kit = await setup();
-    await runSystemProjection(kit.ctx, jobOf(kit));
-    await runSystemProjection(kit.ctx, jobOf(kit));
+    await runSystemProjection(jobCtx(kit.ctx), jobOf(kit));
+    await runSystemProjection(jobCtx(kit.ctx), jobOf(kit));
     expect((await candidates(kit)).items).toHaveLength(1);
   });
 
   it('waits for a human when a holder item is lost, and a solo admin can approve it', async () => {
     patch(loud);
     const kit = await setup();
-    await runSystemProjection(kit.ctx, jobOf(kit));
+    await runSystemProjection(jobCtx(kit.ctx), jobOf(kit));
 
     const { items } = await candidates(kit);
     expect(items).toHaveLength(1);
@@ -177,26 +178,27 @@ describe('system-authored provider candidates (CW7b)', () => {
   it('refuses the platform reviewer on a candidate that loses something, in the database', async () => {
     patch(loud);
     const kit = await setup();
-    await runSystemProjection(kit.ctx, jobOf(kit));
+    await runSystemProjection(jobCtx(kit.ctx), jobOf(kit));
     const listed = (await candidates(kit)).items[0];
     const candidate = listed ? await getProjectionCandidate(S.env.DB, listed.id) : null;
     if (!candidate) throw new Error('unreachable');
     const now = S.clock.now();
-    const statement = insertProjectionApprovalStmt(
-      S.env.DB,
-      {
-        id: S.f.ids.id(),
-        candidateId: candidate.id,
-        candidateHash: candidate.candidateHash,
-        reviewerId: SYSTEM_REVIEWER,
-        kind: 'peer',
-        createdAt: now,
-      },
-      candidate,
-      systemAuthority('reviewer', kit.orgId, 'live'),
-      now,
-    );
-    await expect(statement.run()).rejects.toThrow();
+    await expect(
+      writeProjectionApproval(
+        jobCtx(kit.ctx),
+        {
+          id: S.f.ids.id(),
+          candidateId: candidate.id,
+          candidateHash: candidate.candidateHash,
+          reviewerId: SYSTEM_REVIEWER,
+          kind: 'peer',
+          createdAt: now,
+        },
+        candidate,
+        systemAuthority('reviewer', kit.orgId, 'live'),
+        { action: 'template.system_approve', detail: {} },
+      ),
+    ).rejects.toThrow();
     expect((await candidates(kit)).items[0]?.approvals).toEqual([]);
   });
 
@@ -206,7 +208,8 @@ describe('system-authored provider candidates (CW7b)', () => {
     await S.env.DB.prepare("UPDATE orgs SET status = 'suspended' WHERE id = ?")
       .bind(kit.orgId)
       .run();
-    await expect(runSystemProjection(kit.ctx, jobOf(kit))).rejects.toBeInstanceOf(ConflictError);
+    // The grant refuses a suspended org; the job skips it instead of failing into the queue's retries.
+    await expect(runSystemProjection(jobCtx(kit.ctx), jobOf(kit))).resolves.toBeUndefined();
     const rows = await all(
       S.env.DB,
       'SELECT id FROM template_candidates WHERE org_id = ? AND provider = ?',
@@ -230,7 +233,7 @@ describe('Q21 after a system release', () => {
   it('keeps offers open when a compiler update adds only a look item', async () => {
     patch(quiet(lookLoss));
     const kit = await setup();
-    await runSystemProjection(kit.ctx, jobOf(kit));
+    await runSystemProjection(jobCtx(kit.ctx), jobOf(kit));
     const release = await approved(kit);
     patch(add({ ...lookLoss, capability: 'colors.background', message: 'Background colour.' }));
     expect(await offersPaused(kit.ctx, release)).toBe(false);
@@ -239,7 +242,7 @@ describe('Q21 after a system release', () => {
   it('pauses offers when a compiler update adds a holder item', async () => {
     patch(quiet(lookLoss));
     const kit = await setup();
-    await runSystemProjection(kit.ctx, jobOf(kit));
+    await runSystemProjection(jobCtx(kit.ctx), jobOf(kit));
     const release = await approved(kit);
     patch(add(holderLoss));
     expect(await offersPaused(kit.ctx, release)).toBe(true);
@@ -316,7 +319,7 @@ describe('resuming and edge cases of the system job', () => {
   it('a lost NFC counts as a door loss: it waits for a human', async () => {
     patch((r) => ({ ...quiet(lookLoss)(r), items: [...quiet(lookLoss)(r).items, nfcLoss] }));
     const kit = await setup();
-    await runSystemProjection(kit.ctx, jobOf(kit));
+    await runSystemProjection(jobCtx(kit.ctx), jobOf(kit));
     const [candidate] = (await candidates(kit)).items;
     expect(candidate?.projection).toMatchObject({ approvedOmissions: ['nfc'] });
     expect(candidate?.approvals).toEqual([]);
@@ -333,8 +336,8 @@ describe('resuming and edge cases of the system job', () => {
       });
       const kit = await setup();
       calls = 0;
-      await expect(runSystemProjection(kit.ctx, jobOf(kit))).rejects.toThrow('boom');
-      await runSystemProjection(kit.ctx, jobOf(kit));
+      await expect(runSystemProjection(jobCtx(kit.ctx), jobOf(kit))).rejects.toThrow('boom');
+      await runSystemProjection(jobCtx(kit.ctx), jobOf(kit));
       expect({
         candidates: await count(kit, 'template_candidates'),
         approvals: await count(kit, 'template_approvals'),
@@ -345,16 +348,18 @@ describe('resuming and edge cases of the system job', () => {
     },
   );
 
-  it('the revoke proof exempts the version author from a system candidate only', async () => {
-    const row = (author: string) =>
+  it('the revoke proof exempts the version author from a Google system candidate only', async () => {
+    const row = (author: string, provider = 'google') =>
       first<{ ok: number }>(
         S.env.DB,
         `SELECT ${versionAuthorIndependentSql('c', 'r.id')} AS ok
-         FROM (SELECT 'u1' AS version_author_id, ? AS author_id) c, (SELECT 'u1' AS id) r`,
-        [author],
+         FROM (SELECT 'u1' AS version_author_id, ? AS author_id, ? AS provider) c, (SELECT 'u1' AS id) r`,
+        [author, provider],
       );
     expect((await row(SYSTEM_AUTHOR))?.ok).toBe(1);
     expect((await row('u2'))?.ok).toBe(0);
+    // Samsung retirement and tombstone proofs keep the raw predicate, so the exemption stops at Google.
+    expect((await row(SYSTEM_AUTHOR, 'samsung'))?.ok).toBe(0);
     expect(walletInstanceProofSql('i', 'o', '1', false, 'revoke')).toContain(
       `author_id = '${SYSTEM_AUTHOR}'`,
     );

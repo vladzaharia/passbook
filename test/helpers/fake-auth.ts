@@ -14,6 +14,7 @@ import { run, stmt } from '../../src/worker/platform/db.ts';
 import type { DeniedEvent } from '../../src/worker/platform/denied.ts';
 import type { AppEnv } from '../../src/worker/platform/env.ts';
 import { randomBytes, sha256Hex, toBase64Url } from '../../src/worker/platform/ids.ts';
+import { withoutTrigger } from './triggers.ts';
 
 export interface FakeAuth {
   stores: AuthStores;
@@ -76,21 +77,25 @@ async function seedApiKey(
   raw: string,
   key: FakeApiKey,
 ): Promise<void> {
-  await run(
-    db,
-    `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      crypto.randomUUID(),
-      key.auth.orgId,
-      'Test key',
-      key.prefix,
-      await sha256Hex(raw),
-      JSON.stringify(key.auth.scopes),
-      key.auth.mode,
-      clock.now(),
-    ],
-  );
+  // An org-less key stands for a platform key from before 0142: unbounded, past the insert rules.
+  const insert = async () =>
+    run(
+      db,
+      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        crypto.randomUUID(),
+        key.auth.orgId,
+        'Test key',
+        key.prefix,
+        await sha256Hex(raw),
+        JSON.stringify(key.auth.scopes),
+        key.auth.mode,
+        clock.now(),
+        key.auth.orgId === null ? 'platform' : 'service',
+      ],
+    );
+  await (key.auth.orgId === null ? withoutTrigger(db, 'api_keys_kind_rules', insert) : insert());
 }
 
 const IDLE_MS = 3_600_000;

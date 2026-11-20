@@ -1,6 +1,7 @@
 import { expect } from 'vitest';
 import { all, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
 import { persistSamsungTombstone } from './callbacks-tombstone.ts';
@@ -14,6 +15,7 @@ import {
 } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
 import { insertInstance } from './repo-instance.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 /** A live Samsung copy on a pass, with helpers to turn its channel off, settle and replace it. */
 export async function setupSamsungChannelOff() {
@@ -59,16 +61,16 @@ export async function setupSamsungChannelOff() {
       claimHandle: newWalletClaimHandle(),
       now: f.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     expect(
-      await completeWalletOperation(f.kit.ctx, { ...claim, result: { kind: 'success' } }),
+      await completeWalletOperation(jobCtxOf(f.kit), { ...claim, result: { kind: 'success' } }),
     ).toBe('succeeded');
     return claim;
   }
   /** Off, revoke settled, tombstones written, copy retired. */
   async function turnOffAndRetire() {
     await marker(f.kit.clock.now());
-    await reconcileWalletInstance(f.kit.ctx, await instance());
+    await reconcileWalletInstance(jobCtxOf(f.kit), await instance());
     const claim = await settleRevoke();
     await persistSamsungTombstone(f.kit.ctx, {
       orgId: scope.orgId,

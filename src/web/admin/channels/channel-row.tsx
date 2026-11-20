@@ -24,8 +24,11 @@ export interface ChannelRowProps {
   reasonText?: string;
 }
 
+/** A left tooltip stays inside a narrow screen: the label sits at the right edge. */
+const TIP_WIDTH = 'max-w-[min(20rem,calc(100vw-9rem))]';
+
 /** What the locked label says: unavailable outright, or turned off by a higher level. */
-const UNAVAILABLE = new Set(['not_released', 'not_enrolled', 'no_design']);
+const UNAVAILABLE = new Set(['not_released', 'not_enrolled', 'no_design', 'not_included']);
 
 /**
  * One channel at any level: name, effective state and the level's own control. A row this level
@@ -66,7 +69,7 @@ export function ChannelRow({
       </p>
       <div className="flex shrink-0 items-center gap-3">
         {locked ? (
-          <Tooltip content={detail} side="left">
+          <Tooltip content={detail} side="left" className={TIP_WIDTH}>
             <button
               type="button"
               aria-label={`${word}. ${detail}`}

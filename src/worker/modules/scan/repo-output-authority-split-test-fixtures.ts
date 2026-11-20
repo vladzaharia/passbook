@@ -149,13 +149,13 @@ export async function finishProviderTransfer(
   };
   const instance = await getWalletInstanceById(db, scope);
   if (!instance) throw new Error('Missing provider instance.');
-  expect(await reconcileWalletInstance(kit.ctx, instance)).toBe('scheduled');
+  expect(await reconcileWalletInstance(jobCtxOf(kit), instance)).toBe('scheduled');
   const retiring = await getWalletInstanceById(db, scope);
   if (!retiring) throw new Error('Missing retiring instance.');
   const revoke = await getWalletOperation(db, { ...scope, version: retiring.desiredVersion });
   if (!revoke) throw new Error('Missing provider revoke.');
   expect(revoke).toMatchObject({ kind: 'revoke', state: 'pending' });
-  expect(await runWalletProviderOperation(kit.ctx, revoke)).toBe('completed');
+  expect(await runWalletProviderOperation(jobCtxOf(kit), revoke)).toBe('completed');
   expect(await getWalletInstanceById(db, scope)).toMatchObject({ lifecycle: 'retired' });
   expect(await finishCredentialTransfer(jobCtxOf(kit), transferId)).toMatchObject({
     state: 'completed',

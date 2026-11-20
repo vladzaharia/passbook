@@ -71,12 +71,10 @@ export async function ensureSamsungSyncTargets(
           AND delivered.country_code = h.country_code AND delivered.state = 'succeeded'
         WHERE previous.instance_id = i.id AND previous.version < o.version AND previous.kind = o.kind
           AND previous.credential_keyset_commitment = o.credential_keyset_commitment
-          AND previous.pass_version = o.pass_version AND previous.pass_revision = o.pass_revision
+          AND previous.pass_row_version = o.pass_row_version AND previous.account_epoch = o.account_epoch
           AND previous.lifecycle_generation = o.lifecycle_generation
           AND previous.pass_credential_generation = o.pass_credential_generation
-          AND previous.issuing_release_id IS o.issuing_release_id
           AND previous.projection_release_id = o.projection_release_id
-          AND previous.account_revision = o.account_revision
           AND previous.adapter_revision = o.adapter_revision AND previous.policy_revision = o.policy_revision)
     ON CONFLICT(operation_id, country_code) DO NOTHING`,
     [

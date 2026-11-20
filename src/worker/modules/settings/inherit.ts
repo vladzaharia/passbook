@@ -1,6 +1,10 @@
 import type { z } from 'zod';
+import { blockedByEntitlement } from '../../../shared/channels.ts';
+import type { Channel } from '../../../shared/contracts/channels.ts';
+import { entitledValue } from '../../../shared/contracts/entitlements.ts';
 import type { PlatformSettingsSchema } from '../../../shared/contracts/settings.ts';
 import { DATA_CLASSES, RETENTION_CLASSES } from '../../../shared/privacy/data-classes.ts';
+import type { Entitlements } from '../../platform/entitlements.ts';
 
 type PlatformSettings = z.infer<typeof PlatformSettingsSchema>;
 
@@ -12,14 +16,26 @@ export interface SettingEntry {
   source: 'org' | 'default';
   ceiling?: number;
   blockedByPlatform?: boolean;
+  blockedByPlan?: boolean;
+  planBlocked?: Channel[];
   updatedAt: number | null;
   updatedBy: string | null;
 }
 
 const clamp = (n: number, max: number) => Math.min(n, max);
 
-/** Org entries read through the platform: defaults come from it and values stop at its ceilings. */
-export function inherit(entries: SettingEntry[], platform: PlatformSettings): SettingEntry[] {
+/** NFC tags need the plan's `nfc` at least Basic. */
+const nfcIncluded = (entitlements: Entitlements) => entitledValue('nfc', entitlements.nfc, 'basic');
+
+/**
+ * Org entries read through the platform and the plan: defaults come from the platform and values stop at its
+ * ceilings; a setting whose feature the plan lacks reads `blockedByPlan`.
+ */
+export function inherit(
+  entries: SettingEntry[],
+  platform: PlatformSettings,
+  entitlements: Entitlements,
+): SettingEntry[] {
   const retention = new Map(
     RETENTION_CLASSES.map((cls) => [DATA_CLASSES[cls].key as string, DATA_CLASSES[cls]]),
   );
@@ -44,10 +60,27 @@ export function inherit(entries: SettingEntry[], platform: PlatformSettings): Se
         ceiling,
       };
     }
-    if (entry.key === 'nfc.tags' && !platform['nfc.tagsEnabled'])
-      return { ...entry, blockedByPlatform: true };
+    if (entry.key === 'channels.blocked') {
+      const planBlocked = Object.keys(blockedByEntitlement(entitlements)) as Channel[];
+      return planBlocked.length > 0 ? { ...entry, planBlocked } : entry;
+    }
+    if (entry.key === 'nfc.tags')
+      return {
+        ...entry,
+        ...(platform['nfc.tagsEnabled'] ? {} : { blockedByPlatform: true }),
+        ...(nfcIncluded(entitlements) ? {} : { blockedByPlan: true }),
+      };
     return entry;
   });
+}
+
+/** The feature an org write needs that the plan lacks (`FEATURE_NOT_INCLUDED`), or null. */
+export function planGateIssue(
+  entitlements: Entitlements,
+  upserts: Record<string, unknown>,
+): { key: 'nfc' } | null {
+  const tags = upserts['nfc.tags'] as { enabled?: boolean } | undefined;
+  return tags?.enabled === true && !nfcIncluded(entitlements) ? { key: 'nfc' } : null;
 }
 
 /** An org write the platform's switches or ceilings refuse, or null. */

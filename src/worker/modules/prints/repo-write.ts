@@ -1,5 +1,6 @@
 import { grant } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
+import { entitled } from '../../platform/authority-entitled.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
@@ -71,13 +72,13 @@ const auditRow = (
   detail: JSON.stringify(detail),
 });
 
-const newGrant = (ctx: ServiceContext, w: PrintWriter, passId: string) =>
+const newGrant = (ctx: ServiceContext, w: PrintWriter, passId: string, extra: Check[] = []) =>
   grant(ctx, {
     purpose: w.purpose,
     principal: w.principal,
     target: passId,
     tables: ['pass_prints'],
-    checks: w.checks,
+    checks: [...w.checks, ...extra],
   });
 
 export interface NewPrint {
@@ -87,7 +88,10 @@ export interface NewPrint {
   generation: number;
 }
 
-/** A new print; with `replace` the pass's active print is voided as `replaced` in the same batch. Returns how many it voided. */
+/**
+ * A new print; with `replace` the pass's active print is voided as `replaced` in the same batch. Returns how many it voided.
+ * Only a mint needs the org's plan to include print: a void always runs, so a downgrade never strands a ticket.
+ */
 export async function writeMint(
   ctx: ServiceContext,
   w: PrintWriter,
@@ -95,7 +99,7 @@ export async function writeMint(
   print: NewPrint,
   replace: boolean,
 ): Promise<number> {
-  const g = newGrant(ctx, w, passId);
+  const g = newGrant(ctx, w, passId, [entitled('print')]);
   const now = ctx.clock.now();
   const voided = replace
     ? g.update('pass_prints', {

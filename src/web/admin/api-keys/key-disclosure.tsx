@@ -1,5 +1,6 @@
 import { formatDay } from '@/web/lib/format.ts';
 import { KeyValue, SecretReveal } from '@/web/ui/index.ts';
+import { ROLE_LABELS } from '../orgs/org-roles.ts';
 import type { ApiKey } from './queries.ts';
 
 /** The one-time key on the kit's SecretReveal, with the credential it belongs to beneath. */
@@ -23,7 +24,16 @@ export function KeyDisclosure({
           { label: 'Name', value: created.name },
           { label: 'Organization', value: organization },
           { label: 'Mode', value: created.mode === 'test' ? 'Test' : 'Live' },
-          { label: 'Permissions', value: created.scopes.join(', ') },
+          ...(created.kind === 'service'
+            ? []
+            : [{ label: 'Type', value: created.kind === 'personal' ? 'Personal' : 'Platform' }]),
+          {
+            label: 'Permissions',
+            value: [...created.roles.map((r) => ROLE_LABELS[r]), ...created.scopes].join(', '),
+          },
+          ...(created.ipAllow.length
+            ? [{ label: 'Allowed IPs', value: created.ipAllow.join(', ') }]
+            : []),
           { label: 'Expiry', value: formatDay(created.expiresAt, 'Never') },
         ]}
       />

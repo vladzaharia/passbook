@@ -1,6 +1,12 @@
 import type { MintedPrint, PassPrint, PrintVoidCause } from '../../../shared/contracts/prints.ts';
+import { featureNotIncluded } from '../../../shared/copy/entitlements.ts';
 import { bump } from '../../platform/counters.ts';
-import { ConflictError, NotFoundError, RateLimitedError } from '../../platform/errors.ts';
+import {
+  ConflictError,
+  FeatureNotIncludedError,
+  NotFoundError,
+  RateLimitedError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { passChannels } from '../channels/service.ts';
 import { recordPassEvents } from '../events/record.ts';
@@ -44,8 +50,10 @@ export async function mintPrint(
 ): Promise<MintedPrint> {
   if (pass.status !== 'active' || pass.removedAt !== null)
     throw new ConflictError('Only an active pass can be printed.', 'PASS_NOT_ACTIVE');
-  if (!(await passChannels(ctx, pass)).effective.paper.on)
-    throw new ConflictError('Printing is off for this ticket.', 'PRINTING_OFF');
+  const paper = (await passChannels(ctx, pass)).effective.paper;
+  if (paper.reason === 'not_included')
+    throw new FeatureNotIncludedError('print', featureNotIncluded('print'));
+  if (!paper.on) throw new ConflictError('Printing is off for this ticket.', 'PRINTING_OFF');
   const existing = await repo.activePrint(ctx.env.DB, pass.id);
   if (existing && !replace) return { ...existing, code: await codeOf(ctx, pass, existing) };
   await spend(ctx, pass, caller.limit);

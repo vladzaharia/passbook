@@ -8,6 +8,7 @@ import {
   type WhereValue,
 } from './authority-expr.ts';
 import type { GrantScope } from './authority-principal.ts';
+import { keyedSet, restrictRow } from './authority-restrict.ts';
 import {
   type BuiltStatement,
   buildInsertSelect,
@@ -82,6 +83,7 @@ export function buildUpsert(
   values: SqlValue[],
   o: UpsertOptions,
   pin?: string,
+  keyed = false,
 ): BuiltStatement {
   // Rows copied from a tenant source can only be skipped on conflict, never merged into the existing row.
   if (o.from && !o.doNothing) throw bad('upsert takes its values from the caller.');
@@ -96,6 +98,7 @@ export function buildUpsert(
     values,
     { ...(o.when ? { when: o.when } : {}), ...(o.from ? { from: o.from } : {}) },
     pin,
+    keyed,
   );
   const lead =
     scope === 'platform' || !t.org
@@ -110,6 +113,7 @@ export function buildUpsert(
     return {
       sql: `${base.sql} ${key} DO NOTHING${returningSql(o.returning)}`,
       params: base.params,
+      ...(base.limitRefused ? { limitRefused: true as const } : {}),
     };
   }
   checkTargets(t, table, scope, target, o);
@@ -124,13 +128,22 @@ export function buildUpsert(
   ];
   const where = Object.keys(o.where ?? {});
   if (where.length > 0) rejectOwned(table, scope, where, 'upsert where', false);
+  // The conflicting row must be one the limited key may touch too, not only one of its org.
+  const limited = keyed ? restrictRow(table, table, 'k.limit_key') : '';
+  if (limited) params.push(grantId);
+  // A template column it assigns must also be inside the key's limit; any other reference column is refused.
+  const assigned = keyedSet(grantId, table, o, keyed);
+  params.push(...assigned.params);
   const guard = [
     ...tenantGuard(t, table, scope),
+    ...(limited ? [`EXISTS (SELECT 1 FROM authority_grants k WHERE k.id = ?${limited})`] : []),
+    ...(assigned.sql ? [assigned.sql] : []),
     ...Object.entries(o.where ?? {}).map(([c, v]) => renderCond(`${table}.`, c, v, params)),
   ];
   const tail = guard.length > 0 ? ` WHERE ${guard.join(' AND ')}` : '';
   return {
     sql: `${base.sql} ${key} DO UPDATE SET ${parts.join(', ')}${tail}${returningSql(o.returning)}`,
     params,
+    ...(base.limitRefused || assigned.refuse ? { limitRefused: true as const } : {}),
   };
 }

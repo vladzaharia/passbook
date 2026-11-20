@@ -1,19 +1,14 @@
-import { ArrowLeft } from 'lucide-react';
-import { lazy, Suspense, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
-import { reasonHeadline } from '../../../shared/copy/scan-headline.ts';
 import { Button } from '../../ui/button.tsx';
 import { Callout } from '../../ui/callout.tsx';
 import { FormField } from '../../ui/field.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { ScanTextField } from '../input/wedge-field.tsx';
+import { LookupConfirm } from './lookup-confirm.tsx';
 import { LookupResults } from './lookup-results.tsx';
 import { useLookup } from './use-lookup.ts';
 import './lookup.css';
-
-const PassPreview = lazy(() =>
-  import('../result/pass-preview.tsx').then((m) => ({ default: m.PassPreview })),
-);
 
 export interface LookupPanelProps {
   open: boolean;
@@ -40,16 +35,9 @@ export function LookupPanel({
   const lookup = useLookup(api, open, allowPeople, onCode);
   const { q, picked, busy, seconds, error, result } = lookup;
   const field = useRef<HTMLInputElement>(null);
-  const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
-    if (picked) heading.current?.focus();
-    else if (open && !inline) field.current?.focus();
+    if (!picked && open && !inline) field.current?.focus();
   }, [picked, open, inline]);
-  const card = picked?.card;
-  const action =
-    picked?.kind === 'ready'
-      ? card?.actions.find((a) => a.kind === 'check_in' && a.available && !a.lock)
-      : undefined;
   useEffect(() => {
     onEditing?.(Boolean(q || picked));
   }, [q, picked, onEditing]);
@@ -70,48 +58,14 @@ export function LookupPanel({
       }}
     >
       {picked ? (
-        <div className="scan-lookup-confirm">
-          <Button variant="ghost" iconStart={<ArrowLeft aria-hidden />} onClick={lookup.back}>
-            Back
-          </Button>
-          {card ? (
-            <Suspense fallback={<div className="scan-pass-preview" aria-hidden />}>
-              <PassPreview card={card} orgId={orgId} timeZone={timeZone} still />
-            </Suspense>
-          ) : null}
-          <h2 ref={heading} tabIndex={-1} className="text-xl font-semibold">
-            {card?.title ?? 'Pass not available'}
-          </h2>
-          {card ? (
-            <>
-              <p className="text-sm text-fg-muted">
-                {card.template.name}
-                {card.subtitle ? ` · ${card.subtitle}` : ''}
-              </p>
-              <p className="capitalize">{card.status}</p>
-            </>
-          ) : null}
-          {picked.reason && picked.reason !== 'choose' ? (
-            <Callout tone={picked.kind === 'refused' ? 'danger' : 'warning'}>
-              {reasonHeadline(picked.reason, {
-                actionKind: picked.action?.kind,
-                action: picked.action?.label,
-                place: picked.occupancy?.place.name ?? picked.event?.name,
-                flag: picked.flags[0],
-                input: picked.value?.label,
-              })}
-            </Callout>
-          ) : null}
-          {card && action ? (
-            <Button
-              className="scan-lookup-commit"
-              disabled={busy}
-              onClick={() => onCheckIn(card, action.id)}
-            >
-              {action.label}
-            </Button>
-          ) : null}
-        </div>
+        <LookupConfirm
+          picked={picked}
+          busy={busy}
+          onBack={lookup.back}
+          onCheckIn={onCheckIn}
+          orgId={orgId}
+          timeZone={timeZone}
+        />
       ) : (
         <form
           onSubmit={(e) => {

@@ -64,7 +64,7 @@ describe('API key tenant authorization', () => {
         scopes,
         mode: 'live',
       });
-      expect(created.secret).toMatch(/^wlt_[\w-]{8}_[\w-]{43}$/);
+      expect(created.secret).toMatch(/^pb_live_[\w-]{8}_[\w-]{43}$/);
       const row = await first<{ key_hash: string }>(
         h.env.DB,
         'SELECT key_hash FROM api_keys WHERE id = ?',
@@ -198,7 +198,7 @@ describe('API key tenant authorization', () => {
       (await create(session.headers, { ...keyBody(org.id), scopes: ['connections:write'] })).status,
     ).toBe(201);
     // The grant refuses a platform key insert whose admin session is not live, with nothing written.
-    const { createKey } = await import('./repo.ts');
+    const { createKey } = await import('./repo-create.ts');
     const ctx = createServiceContext(h.env, { clock: h.clock });
     const row = {
       id: 'k-sql',
@@ -211,8 +211,16 @@ describe('API key tenant authorization', () => {
       created_by: session.userId,
       created_at: 1,
       last_used_at: null,
-      expires_at: null,
+      expires_at: 86_400_000,
       revoked_at: null,
+      kind: 'platform' as const,
+      roles: '[]',
+      membership_id: null,
+      retire_at: null,
+      restricted: 0,
+      ip_allow: '["203.0.113.0/24"]',
+      rate_tier: null,
+      secret_label: 'wlt',
     };
     await expect(
       createKey(
@@ -287,7 +295,11 @@ describe('API key tenant authorization', () => {
     const { session: author } = await member('template_author');
     const key = await makeApiKey(f(), { orgId: org.id });
     const before = await keyState();
-    await expectProblem(await list(author.headers, org.id), 403, 'FORBIDDEN');
+    // Before: listing was 403 for a role without integrations:read. Now it answers with the member's own
+    // personal keys only (api-tokens.test.ts); an org key is never in it.
+    const mine = await list(author.headers, org.id);
+    expect(mine.status).toBe(200);
+    expect(((await mine.json()) as KeyPage).items).toEqual([]);
     await expectProblem(await create(author.headers, keyBody(org.id)), 403, 'FORBIDDEN');
     await expectProblem(await revoke(author.headers, key.id, org.id), 403, 'FORBIDDEN');
 
@@ -347,7 +359,9 @@ describe('API key tenant authorization', () => {
     expect(response.status).toBe(201);
     const key = (await response.json()) as CreatedKey;
     expect(key.orgId).toBeNull();
-    expect(await createApiKeyStore(h.env, h.clock).resolve(key.secret)).toMatchObject({
+    expect(
+      await createApiKeyStore(h.env, h.clock).resolve(key.secret, { ip: '198.51.100.9' }),
+    ).toMatchObject({
       orgId: null,
       scopes,
     });

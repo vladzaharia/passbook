@@ -15,6 +15,7 @@ import {
   settleClaim,
 } from './repo-instance-claims.ts';
 import { deferWalletSyncOperation } from './repo-sync-queue.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 // Epoch triggers on these tables add writes to D1's change count; results must not depend on it.
 const NOISY_TABLES = [
@@ -54,28 +55,28 @@ describe('row counts, not trigger counts', () => {
       };
       const results: unknown[] = [];
 
-      results.push(await claimOperation(db, claim));
-      results.push(await claimOperation(db, claim));
-      results.push(await markUncertain(db, { ...claim, hash: 'f'.repeat(64) }));
-      results.push(await markUncertain(db, claim));
-      results.push(await expireClaims(db, now + 600_000, 10));
+      results.push(await claimOperation(walletJobCtx(db), claim));
+      results.push(await claimOperation(walletJobCtx(db), claim));
+      results.push(await markUncertain(walletJobCtx(db), { ...claim, hash: 'f'.repeat(64) }));
+      results.push(await markUncertain(walletJobCtx(db), claim));
+      results.push(await expireClaims(walletJobCtx(db), now + 600_000, 10));
       await run(
         db,
         `INSERT INTO wallet_provider_sync_targets
         (operation_id, country_code, state, attempts, updated_at) VALUES (?, 'GB', 'inflight', 1, ?)`,
         [operation.id, now],
       );
-      results.push(await settleClaim(db, { ...claim, now: now + 1 }));
-      results.push(await settleClaim(db, { ...claim, now: now + 1 }));
+      results.push(await settleClaim(walletJobCtx(db), { ...claim, now: now + 1 }));
+      results.push(await settleClaim(walletJobCtx(db), { ...claim, now: now + 1 }));
       results.push(
         await first(db, 'SELECT state FROM wallet_provider_sync_targets WHERE operation_id = ?', [
           operation.id,
         ]),
       );
-      results.push(await deferWalletSyncOperation(db, claim, now + 2, 5000));
+      results.push(await deferWalletSyncOperation(walletJobCtx(db), claim, now + 2, 5000));
 
       const second = { ...claim, hash: 'b'.repeat(64), now: now + 10_000 };
-      results.push(await claimOperation(db, second));
+      results.push(await claimOperation(walletJobCtx(db), second));
       const outcomeId = crypto.randomUUID();
       const finish = {
         ...second,
@@ -93,9 +94,9 @@ describe('row counts, not trigger counts', () => {
           ),
         },
       };
-      results.push(await finishOperation(db, { ...finish, hash: 'e'.repeat(64) }));
-      results.push(await finishOperation(db, finish));
-      results.push(await finishOperation(db, finish));
+      results.push(await finishOperation(walletJobCtx(db), { ...finish, hash: 'e'.repeat(64) }));
+      results.push(await finishOperation(walletJobCtx(db), finish));
+      results.push(await finishOperation(walletJobCtx(db), finish));
       results.push(
         await first(
           db,

@@ -815,6 +815,7 @@
                       "no_design",
                       "tags_off",
                       "printing_off",
+                      "not_included",
                       "blocked",
                       "never",
                       "template_off",
@@ -861,6 +862,7 @@
                       "no_design",
                       "tags_off",
                       "printing_off",
+                      "not_included",
                       "blocked",
                       "never",
                       "template_off",
@@ -907,6 +909,7 @@
                       "no_design",
                       "tags_off",
                       "printing_off",
+                      "not_included",
                       "blocked",
                       "never",
                       "template_off",
@@ -953,6 +956,7 @@
                       "no_design",
                       "tags_off",
                       "printing_off",
+                      "not_included",
                       "blocked",
                       "never",
                       "template_off",
@@ -999,6 +1003,7 @@
                       "no_design",
                       "tags_off",
                       "printing_off",
+                      "not_included",
                       "blocked",
                       "never",
                       "template_off",
@@ -1045,6 +1050,7 @@
                       "no_design",
                       "tags_off",
                       "printing_off",
+                      "not_included",
                       "blocked",
                       "never",
                       "template_off",
@@ -3472,6 +3478,32 @@
                   "integer",
                   "null"
                 ]
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "initials": {
+                      "type": "string",
+                      "maxLength": 4
+                    },
+                    "checkedIn": {
+                      "type": "boolean"
+                    },
+                    "refusedReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "initials",
+                    "checkedIn"
+                  ]
+                },
+                "maxItems": 10
               }
             },
             "required": [
@@ -3480,6 +3512,9 @@
               "size",
               "checkedIn"
             ]
+          },
+          "inBundle": {
+            "type": "boolean"
           },
           "counts": {
             "$ref": "#/components/schemas/ScanCounts"
@@ -6740,6 +6775,32 @@
                   "integer",
                   "null"
                 ]
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "initials": {
+                      "type": "string",
+                      "maxLength": 4
+                    },
+                    "checkedIn": {
+                      "type": "boolean"
+                    },
+                    "refusedReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "initials",
+                    "checkedIn"
+                  ]
+                },
+                "maxItems": 10
               }
             },
             "required": [
@@ -10172,7 +10233,7 @@
       "apiKey": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "wlt_<prefix>_<secret>",
+        "bearerFormat": "pb_<live|test>_<prefix>_<secret>",
         "description": "An API key. A key with any one of the listed scopes may call the operation, in its own organization and mode."
       },
       "session": {
@@ -10940,6 +11001,7 @@
                                       "no_design",
                                       "tags_off",
                                       "printing_off",
+                                      "not_included",
                                       "blocked",
                                       "never",
                                       "template_off",
@@ -10986,6 +11048,7 @@
                                       "no_design",
                                       "tags_off",
                                       "printing_off",
+                                      "not_included",
                                       "blocked",
                                       "never",
                                       "template_off",
@@ -11032,6 +11095,7 @@
                                       "no_design",
                                       "tags_off",
                                       "printing_off",
+                                      "not_included",
                                       "blocked",
                                       "never",
                                       "template_off",
@@ -11078,6 +11142,7 @@
                                       "no_design",
                                       "tags_off",
                                       "printing_off",
+                                      "not_included",
                                       "blocked",
                                       "never",
                                       "template_off",
@@ -11124,6 +11189,7 @@
                                       "no_design",
                                       "tags_off",
                                       "printing_off",
+                                      "not_included",
                                       "blocked",
                                       "never",
                                       "template_off",
@@ -11170,6 +11236,7 @@
                                       "no_design",
                                       "tags_off",
                                       "printing_off",
+                                      "not_included",
                                       "blocked",
                                       "never",
                                       "template_off",
@@ -11747,6 +11814,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -11793,6 +11861,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -11839,6 +11908,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -11885,6 +11955,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -11931,6 +12002,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -11977,6 +12049,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -24747,6 +24820,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -24793,6 +24867,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -24839,6 +24914,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -24885,6 +24961,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -24931,6 +25008,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -24977,6 +25055,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -25284,6 +25363,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -25330,6 +25410,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -25376,6 +25457,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -25422,6 +25504,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -25468,6 +25551,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -25514,6 +25598,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -27638,10 +27723,14 @@
       "post": {
         "security": [
           {
+            "apiKey": [
+              "scanning:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
-        "x-human-only": true,
         "x-feature": "scanning.devices",
         "summary": "Set up scanning for a template: its events and a session, once",
         "tags": [
@@ -33934,6 +34023,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -33980,6 +34070,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -34026,6 +34117,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -34072,6 +34164,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -34118,6 +34211,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -34164,6 +34258,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -34525,6 +34620,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -34571,6 +34667,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -34617,6 +34714,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -34663,6 +34761,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -34709,6 +34808,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -34755,6 +34855,7 @@
                                 "no_design",
                                 "tags_off",
                                 "printing_off",
+                                "not_included",
                                 "blocked",
                                 "never",
                                 "template_off",
@@ -67603,6 +67704,39 @@
                         "null"
                       ],
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "service",
+                        "personal",
+                        "platform"
+                      ],
+                      "default": "service"
+                    },
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "org_admin",
+                          "integration_admin",
+                          "template_author",
+                          "template_reviewer",
+                          "template_publisher",
+                          "pass_operator",
+                          "read_only"
+                        ]
+                      },
+                      "default": []
+                    },
+                    "retireAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
                     }
                   },
                   "required": [
@@ -67733,6 +67867,9 @@
                           "prefix": {
                             "type": "string"
                           },
+                          "secretPrefix": {
+                            "type": "string"
+                          },
                           "scopes": {
                             "type": "array",
                             "items": {
@@ -67822,6 +67959,83 @@
                               "null"
                             ],
                             "minimum": 0
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "service",
+                              "personal",
+                              "platform"
+                            ],
+                            "default": "service"
+                          },
+                          "roles": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "org_admin",
+                                "integration_admin",
+                                "template_author",
+                                "template_reviewer",
+                                "template_publisher",
+                                "pass_operator",
+                                "read_only"
+                              ]
+                            },
+                            "default": []
+                          },
+                          "retireAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0,
+                            "default": null
+                          },
+                          "ipAllow": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "default": []
+                          },
+                          "templateIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64
+                            },
+                            "default": []
+                          },
+                          "passStyles": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "generic",
+                                "posterGeneric",
+                                "storeCard",
+                                "coupon",
+                                "eventTicket",
+                                "boardingPass"
+                              ]
+                            },
+                            "default": []
+                          },
+                          "rateTier": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "standard",
+                              "high",
+                              "bulk",
+                              null
+                            ],
+                            "default": null
                           }
                         },
                         "required": [
@@ -67896,6 +68110,14 @@
                     "minLength": 1,
                     "maxLength": 120
                   },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "service",
+                      "personal",
+                      "platform"
+                    ]
+                  },
                   "scopes": {
                     "type": "array",
                     "items": {
@@ -67911,10 +68133,61 @@
                         "connections:read",
                         "connections:write",
                         "webhooks:manage",
-                        "brand:manage"
+                        "brand:manage",
+                        "scanning:write"
                       ]
                     },
-                    "minItems": 1
+                    "default": []
+                  },
+                  "roles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "org_admin",
+                        "integration_admin",
+                        "template_author",
+                        "template_reviewer",
+                        "template_publisher",
+                        "pass_operator",
+                        "read_only"
+                      ]
+                    },
+                    "maxItems": 7,
+                    "default": []
+                  },
+                  "ipAllow": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 60
+                    },
+                    "maxItems": 20
+                  },
+                  "templateIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "maxItems": 20
+                  },
+                  "passStyles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "generic",
+                        "posterGeneric",
+                        "storeCard",
+                        "coupon",
+                        "eventTicket",
+                        "boardingPass"
+                      ]
+                    },
+                    "maxItems": 10
                   },
                   "terminalIds": {
                     "type": "array",
@@ -67943,8 +68216,7 @@
                 },
                 "required": [
                   "orgId",
-                  "name",
-                  "scopes"
+                  "name"
                 ]
               }
             }
@@ -67975,6 +68247,9 @@
                       "type": "string"
                     },
                     "prefix": {
+                      "type": "string"
+                    },
+                    "secretPrefix": {
                       "type": "string"
                     },
                     "scopes": {
@@ -68066,6 +68341,83 @@
                         "null"
                       ],
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "service",
+                        "personal",
+                        "platform"
+                      ],
+                      "default": "service"
+                    },
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "org_admin",
+                          "integration_admin",
+                          "template_author",
+                          "template_reviewer",
+                          "template_publisher",
+                          "pass_operator",
+                          "read_only"
+                        ]
+                      },
+                      "default": []
+                    },
+                    "retireAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "ipAllow": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "default": []
+                    },
+                    "templateIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "default": []
+                    },
+                    "passStyles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "generic",
+                          "posterGeneric",
+                          "storeCard",
+                          "coupon",
+                          "eventTicket",
+                          "boardingPass"
+                        ]
+                      },
+                      "default": []
+                    },
+                    "rateTier": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "standard",
+                        "high",
+                        "bulk",
+                        null
+                      ],
+                      "default": null
                     },
                     "secret": {
                       "type": "string"
@@ -68176,6 +68528,88 @@
         "operationId": "api-keys.deleteApiKeysById"
       }
     },
+    "/api/v1/api-keys/{id}/retire": {
+      "post": {
+        "summary": "Retire a key at a later instant: it stops working then (once, never after expiry)",
+        "tags": [
+          "api-keys"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orgId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "retireAt": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "orgId",
+                  "retireAt"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "api-keys.postApiKeysByIdRetire"
+      }
+    },
     "/api/v1/settings": {
       "get": {
         "summary": "Read settings",
@@ -68248,6 +68682,23 @@
                           },
                           "blockedByPlatform": {
                             "type": "boolean"
+                          },
+                          "blockedByPlan": {
+                            "type": "boolean"
+                          },
+                          "planBlocked": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "mobile",
+                                "apple",
+                                "google",
+                                "samsung",
+                                "paper",
+                                "nfc"
+                              ]
+                            }
                           },
                           "updatedAt": {
                             "type": [
@@ -68421,6 +68872,23 @@
                           },
                           "blockedByPlatform": {
                             "type": "boolean"
+                          },
+                          "blockedByPlan": {
+                            "type": "boolean"
+                          },
+                          "planBlocked": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "mobile",
+                                "apple",
+                                "google",
+                                "samsung",
+                                "paper",
+                                "nfc"
+                              ]
+                            }
                           },
                           "updatedAt": {
                             "type": [

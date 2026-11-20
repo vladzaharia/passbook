@@ -3,12 +3,13 @@ import { all, first, run } from '../../platform/db.ts';
 import { sha256Base64Url, sha256Hex } from '../../platform/ids.ts';
 import { getSamsungRefreshTarget } from './callbacks-ref.ts';
 import { setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
-import { queueWalletOperation } from './instance.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
+import { queueWalletOperation } from './queue-test-fixtures.ts';
 import { findSamsungPromotedRefreshAccount } from './repo-accounts.ts';
 import { listSamsungCountryHints, putSamsungFetchRef } from './repo-callbacks.ts';
 import { inspectSamsungRetirement } from './repo-callbacks-retirement.ts';
 import { SAMSUNG_CLOCK_SKEW_MS, SAMSUNG_TOKEN_WINDOW_MS } from './samsung-limits.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 // These cases cover historical provider instances, which exist only while a provider is enabled.
 beforeAll(() => {
@@ -307,7 +308,7 @@ describe('Samsung refs that served card data', () => {
     expect(await servedAt(t)).not.toBeNull();
   };
   const queue = (t: Kit, kind: 'upsert' | 'revoke', expectedVersion: number) =>
-    queueWalletOperation(t.kit.env.DB, {
+    queueWalletOperation(walletJobCtx(t.kit.env.DB), {
       ...t.operation,
       kind,
       expectedVersion,
@@ -398,7 +399,7 @@ describe('Samsung refs that served card data', () => {
 describe('Samsung requests on issued refs outside their live fences', () => {
   it('answers authentic ones, and only authentic ones, with 204 and 200', async () => {
     const t = await setupSamsungCallbacks();
-    const revoke = await queueWalletOperation(t.kit.env.DB, {
+    const revoke = await queueWalletOperation(walletJobCtx(t.kit.env.DB), {
       ...t.operation,
       kind: 'revoke',
       expectedVersion: t.operation.version,
