@@ -1,6 +1,7 @@
 // Mark as out (SA §20.9): the exit's scans row, written in the exit's own batch and only if the exit won.
 import type { Grant, GrantedStatement } from '../../../platform/authority.ts';
 import type { GrantCond } from '../../../platform/authority-cond.ts';
+import { first } from '../../../platform/db.ts';
 
 export interface MarkOutScan {
   id: string;
@@ -73,4 +74,74 @@ export function markOutScan(g: Grant, s: MarkOutScan, when: GrantCond[]): Grante
     ],
     { doNothing: true, when, returning: ['id'] },
   );
+}
+
+/** What an exit at an event place leaves, for the proof that follows the pass past its deletion. */
+export interface MarkOutEffect {
+  gateAfter: Record<string, string | number | null>;
+  presenceAfter: Record<string, string | number | null>;
+}
+
+interface Held {
+  state: string;
+  tracking: number;
+  enteredAt: number | null;
+  firstAt: number;
+  lastEntryAt: number;
+  lastScanId: string;
+}
+
+/**
+ * The check-in gate (unchanged by an exit) and the presence row the exit writes, from the rows the desk
+ * read. Null unless the place is an event, the gate still belongs to the entry's check-in and that
+ * check-in's ledger row names its action.
+ */
+export async function markOutEffect(
+  db: D1Database,
+  s: Pick<MarkOutScan, 'id' | 'passId' | 'templateId' | 'place'>,
+  orgId: string,
+  mode: string,
+): Promise<MarkOutEffect | null> {
+  if (!s.place.startsWith('event:')) return null;
+  const held = await first<Held>(
+    db,
+    `SELECT state, tracking, entered_at AS enteredAt, first_at AS firstAt, last_entry_at AS lastEntryAt,
+       last_scan_id AS lastScanId FROM scan_presence WHERE org_id = ? AND pass_id = ? AND scope = ?`,
+    [orgId, s.passId, s.place],
+  );
+  if (!held) return null;
+  const gate = await first<Record<string, string | number | null>>(
+    db,
+    `SELECT g.scope, g.kind, g.state, g.count, g.first_at AS firstAt, g.last_at AS lastAt,
+       g.last_scan_id AS lastScanId, g.prev_state AS prevState, g.prev_last_at AS prevLastAt,
+       g.prev_scan_id AS prevScanId,
+       (SELECT json_extract(e.data, '$.actionIdRef') FROM pass_events e WHERE e.pass_id = g.pass_id
+         AND e.org_id = g.org_id AND e.mode = g.mode
+         AND (CASE WHEN json_valid(e.data) THEN json_extract(e.data, '$.scanId') END) = g.last_scan_id
+         LIMIT 1) AS actionIdRef
+     FROM scan_gates g WHERE g.pass_id = ? AND g.org_id = ? AND g.mode = ? AND g.template_id = ?
+       AND g.last_scan_id = ? AND g.kind = 'check_in' AND g.state IN ('in', 'out')`,
+    [s.passId, orgId, mode, s.templateId, held.lastScanId],
+  );
+  if (!gate?.actionIdRef) return null;
+  return {
+    gateAfter: { passId: s.passId, orgId, mode, templateId: s.templateId, ...gate },
+    presenceAfter: {
+      passId: s.passId,
+      orgId,
+      scope: s.place,
+      state: 'out',
+      tracking: held.tracking,
+      enteredAt: null,
+      firstAt: held.firstAt,
+      lastEntryAt: held.lastEntryAt,
+      lastScanId: s.id,
+      prevState: held.state,
+      prevTracking: held.tracking,
+      prevEnteredAt: held.enteredAt,
+      prevFirstAt: held.firstAt,
+      prevLastEntryAt: held.lastEntryAt,
+      prevScanId: held.lastScanId,
+    },
+  };
 }

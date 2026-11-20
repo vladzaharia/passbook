@@ -22,7 +22,7 @@ import { scannerRefusal } from '../scanner-credential-lost.ts';
 import { sessionInsideScope, zoneScope } from './inside-scope.ts';
 import { signMarkOut } from './mark-out-retention.ts';
 import { presenceRead } from './repo-inside.ts';
-import { type MarkOutScan, markOutScan } from './repo-mark-out.ts';
+import { type MarkOutScan, markOutEffect, markOutScan } from './repo-mark-out.ts';
 import { countsRead, runReads } from './repo-reads.ts';
 import { exitAsGiven, liveIn } from './rules.ts';
 import { addExit, occupancyZones } from './service.ts';
@@ -129,7 +129,7 @@ export async function markOut(
     staffId: actor.staff?.id ?? null,
     sessionId: actor.scanningSession?.id ?? null,
     apiKeyId: actor.apiKeyId ?? null,
-    eventId: actor.event?.id ?? null,
+    eventId: req.place.startsWith('event:') ? req.place.slice(6) : (actor.event?.id ?? null),
     idempotencyKey: req.idempotencyKey,
     requestHash,
   };
@@ -144,10 +144,13 @@ export async function markOut(
     approvedBy: null,
     direction: 'out',
   });
-  const { event, retention } = await signMarkOut(ctx.env, ledger, scanRow, {
-    kind: 'device',
-    purpose: 'org_mode.scan.check_in',
-  });
+  const { event, retention } = await signMarkOut(
+    ctx.env,
+    ledger,
+    scanRow,
+    { kind: 'device', purpose: 'org_mode.scan.check_in' },
+    await markOutEffect(db, scanRow, actor.orgId, actor.mode),
+  );
   const g = scanWriteGrant(ctx, actor, {
     purpose: 'org_mode.scan.check_in',
     now,
