@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { aesCmac } from './aes-cmac.ts';
-import { diversifyKey } from './diversify.ts';
 import {
   bytesToHex,
   constantTimeEqual,
@@ -112,7 +111,8 @@ describe('verifySun: diversified file key', () => {
     const p = new Uint8Array(
       await crypto.subtle.encrypt({ name: 'AES-CBC', iv: new Uint8Array(16) }, key, plain),
     ).slice(0, 16);
-    const kfile = await diversifyKey(master, uid);
+    // AN10922 key for this master and UID, computed independently (not by diversifyKey).
+    const kfile = h('f26446b4714c2b7e1756860838240443');
     const sv2 = h(`3cc300010080${bytesToHex(uid)}${bytesToHex(ctr)}`);
     const mac = (await aesCmac(await aesCmac(kfile, sv2), new Uint8Array(0))).filter(
       (_, i) => i % 2,

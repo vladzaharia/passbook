@@ -44,4 +44,24 @@ describe('diversifyKey: NXP AN10922 section 2.2.1 AES-128 example', () => {
     const input = h('04782e21801d80' + '3042f5' + '4e585020416275');
     expect(bytesToHex(await diversifyKey(master, input))).toBe('a8dd63a3b89d54b37ca802473fda9175');
   });
+  it('pads a 7-byte UID to 32 bytes (independent known answer)', async () => {
+    const master = h('00112233445566778899aabbccddeeff');
+    expect(bytesToHex(await diversifyKey(master, h('04de5f1eacc040')))).toBe(
+      'f26446b4714c2b7e1756860838240443',
+    );
+  });
+  it('refuses empty and over-long input', async () => {
+    const master = h('00112233445566778899aabbccddeeff');
+    await expect(diversifyKey(master, new Uint8Array(0))).rejects.toThrow(RangeError);
+    await expect(diversifyKey(master, new Uint8Array(32))).rejects.toThrow(RangeError);
+  });
+});
+
+describe('key and block guards', () => {
+  it('refuses non-AES-128 keys and partial blocks', async () => {
+    await expect(aesCmac(new Uint8Array(32), new Uint8Array(0))).rejects.toThrow(RangeError);
+    await expect(aesCbcDecryptNoPad(new Uint8Array(16), new Uint8Array(15))).rejects.toThrow(
+      RangeError,
+    );
+  });
 });

@@ -3,8 +3,10 @@
 const BLOCK = 16;
 const ZERO_IV = new Uint8Array(BLOCK);
 
-const importKey = (key: Uint8Array) =>
-  crypto.subtle.importKey('raw', key, { name: 'AES-CBC' }, false, ['encrypt', 'decrypt']);
+const importKey = (key: Uint8Array) => {
+  if (key.length !== BLOCK) throw new RangeError('AES-128 key must be 16 bytes');
+  return crypto.subtle.importKey('raw', key, { name: 'AES-CBC' }, false, ['encrypt', 'decrypt']);
+};
 
 /** Left-shift by one bit; the carry folds back as 0x87 (the GF(2^128) reduction). */
 function double(block: Uint8Array): Uint8Array {
@@ -26,6 +28,21 @@ async function cbcMacBlocks(key: CryptoKey, data: Uint8Array): Promise<Uint8Arra
   return out.slice(data.length - BLOCK, data.length);
 }
 
+/** CMAC of exactly two whole blocks with an explicit last-block subkey (K2 when `padded`). */
+export async function aesCmac32(
+  key: Uint8Array,
+  d: Uint8Array,
+  padded: boolean,
+): Promise<Uint8Array> {
+  if (d.length !== 2 * BLOCK) throw new RangeError('input must be 32 bytes');
+  const k = await importKey(key);
+  const k1 = double(await cbcMacBlocks(k, new Uint8Array(BLOCK)));
+  const subkey = padded ? double(k1) : k1;
+  const x = d.slice();
+  for (let i = 0; i < BLOCK; i++) x[BLOCK + i] = (x[BLOCK + i] as number) ^ (subkey[i] as number);
+  return cbcMacBlocks(k, x);
+}
+
 export async function aesCmac(key: Uint8Array, message: Uint8Array): Promise<Uint8Array> {
   const k = await importKey(key);
   const l = await cbcMacBlocks(k, new Uint8Array(BLOCK));
@@ -44,6 +61,7 @@ export async function aesCmac(key: Uint8Array, message: Uint8Array): Promise<Uin
 
 /** AES-128-CBC decrypt, zero IV, no padding (one or more whole blocks). */
 export async function aesCbcDecryptNoPad(key: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
+  if (data.length < BLOCK || data.length % BLOCK !== 0) throw new RangeError('whole blocks only');
   const k = await importKey(key);
   // WebCrypto always strips PKCS#7, so append a valid padding block: encrypt 16 bytes of 0x10
   // chained from the last ciphertext block, then decrypt everything and drop the pad.
