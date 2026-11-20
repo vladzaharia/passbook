@@ -1,4 +1,5 @@
-import { Check, CircleAlert, Info, Minus, TriangleAlert } from 'lucide-react';
+import { Minus, Undo2 } from 'lucide-react';
+import { DISC_GLYPH } from './disc-glyph.ts';
 
 export type StripKind = 'ok' | 'heads_up' | 'refused' | 'system';
 
@@ -11,9 +12,7 @@ export interface StripEntry {
   undoable?: boolean;
 }
 
-const GLYPH = { ok: Check, heads_up: TriangleAlert, refused: CircleAlert, system: Info } as const;
-
-/** The dock's 48 px strip. It always holds its box: an empty strip shows a muted dash. */
+/** The dock's strip: 44 px on a handheld (the name over its meta), 48 on a tablet. It always holds its box: an empty strip shows a muted dash. */
 export function LastScanStrip({
   entry,
   onOpen,
@@ -23,7 +22,7 @@ export function LastScanStrip({
   onOpen?: () => void;
   onUndo?: () => void;
 }) {
-  const Glyph = entry ? GLYPH[entry.kind] : Minus;
+  const Glyph = entry ? DISC_GLYPH[entry.kind] : Minus;
   return (
     <div className="scan-dock-strip" data-testid="scan-last">
       <button
@@ -32,8 +31,8 @@ export function LastScanStrip({
         onClick={onOpen}
         aria-label={
           entry
-            ? `Last scan: ${entry.title} ${entry.meta}. Open Recent`
-            : 'No scans yet. Open Recent'
+            ? `Last scan: ${entry.title} ${entry.meta}. Open details`
+            : 'No scans yet. Open recent scans'
         }
       >
         <span aria-hidden className="scan-strip-disc" data-kind={entry?.kind}>
@@ -53,6 +52,7 @@ export function LastScanStrip({
       </button>
       {entry?.undoable ? (
         <button type="button" className="scan-strip-undo" onClick={onUndo}>
+          <Undo2 aria-hidden size={18} className="scan-strip-undo-icon" />
           Undo
         </button>
       ) : null}
