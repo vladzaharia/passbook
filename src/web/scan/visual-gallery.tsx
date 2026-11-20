@@ -6,6 +6,7 @@ import type { ScanApi } from './api/scan-api.ts';
 import { sessionFixture } from './boot/session.test-support.ts';
 import { CustomerDisplayPage } from './customer-display.tsx';
 import { LiveScreen } from './live/live-screen.tsx';
+import { fixtureOutcome } from './machine/fixture-data.test-support.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { ScanPreviewScreen } from './preview-screen.tsx';
 import { type PassInspection, PassInspector } from './result/pass-inspector.tsx';
@@ -239,6 +240,21 @@ export function ScanVisualGallery() {
     return (
       <TagVisual
         scenario={TAG_SCENARIOS.find((c) => c === params.get('case')) ?? 'assign-tag-android'}
+      />
+    );
+  if (surface === 'replaced')
+    return (
+      <ScanPreviewScreen
+        outcome={fixtureOutcome('refused', 'code_replaced', {
+          display: {
+            ...selected.outcome.display,
+            identity: { holder: '', initials: '', photo: null },
+          } as never,
+          card: null,
+        })}
+        surface="operator"
+        phase={phase}
+        onPass={() => {}}
       />
     );
   const session = sessionFor(surface);

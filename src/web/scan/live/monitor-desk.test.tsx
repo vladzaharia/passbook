@@ -68,7 +68,7 @@ function fakeApi() {
     places: [{ place: 'zone:gym', name: 'Gym', inNow: 2, capacity: null, rev: 1 }],
     items: [
       insideRow(1, { photoUrl: '/api/v1/scan/photo/x' }),
-      insideRow(2, { photoUrl: null, plan: 'Visitor' }),
+      insideRow(2, { photoUrl: null, type: 'Visitor' }),
     ],
     total: 2,
     nextCursor: null,

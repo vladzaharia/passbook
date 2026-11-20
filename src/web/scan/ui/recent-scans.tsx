@@ -1,11 +1,11 @@
 import { Check, CircleAlert, Info, TriangleAlert, Undo2 } from 'lucide-react';
 import { groupLine } from '../../../shared/copy/scan-group.ts';
-import { formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
 import { Sheet, SheetContent } from '../../ui/sheet.tsx';
 import type { ScanOutcome } from '../machine/types.ts';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
 import { verdictLine } from '../machine/verdict-lines.ts';
+import { sessionTime } from './session-time.ts';
 
 const GLYPH = {
   ok: Check,
@@ -54,7 +54,7 @@ export function RecentScans({ open, onClose }: { open: boolean; onClose: () => v
                       <p className="text-sm text-fg-muted">
                         {rowLabel(row.outcome, now)}
                         {row.outcome.group ? ` · ${groupLine(row.outcome.group)}` : ''} ·{' '}
-                        {formatTime(row.at)}
+                        {sessionTime(row.at)}
                       </p>
                     </div>
                     {row.undoable && row.scanId && (row.outcome.undoUntil ?? 0) > now ? (

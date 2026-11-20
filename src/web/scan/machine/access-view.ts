@@ -6,6 +6,7 @@ import {
   scanLine,
 } from '../../../shared/copy/scan.ts';
 import { formatTime, formatWeekdayTime } from '../../lib/format.ts';
+import { sessionTime } from '../ui/session-time.ts';
 import { accessBeat, type ResolvedOutcome } from './access-events.ts';
 import type { BuddyBeat, ScanOutcome } from './types.ts';
 
@@ -57,7 +58,7 @@ export function accessValues(o: ScanOutcome, now: number): Record<string, string
     if (p.capacity != null) v.capacity = p.capacity;
     if (p.since != null) {
       v.ago = agoText(Math.max(0, now - p.since));
-      if (!v.time || o.kind === 'heads_up') v.time = formatTime(p.since);
+      if (!v.time || o.kind === 'heads_up') v.time = sessionTime(p.since);
     }
     if (p.via) v.scanner = p.via;
   }

@@ -5,7 +5,7 @@ import { IdSchema, JsonSchema, ModeSchema, TimestampSchema } from './common.ts';
 import { ScannerTagsSettingsSchema, ScanTagSchema, TagReadSchema } from './nfc-tags.ts';
 import { ScanAccessSchema } from './scan-access.ts';
 import { ScanActionInputSchema } from './scan-action-input.ts';
-import { ScanAdmitSchema } from './scan-admit.ts';
+import { ScanAdmitSchema, ScanTypeCountSchema } from './scan-admit.ts';
 import {
   ScanAdminScopeSchema,
   ScanApprovalSchema,
@@ -268,6 +268,7 @@ export const ScanCountsSchema = z.object({
     .nullable(),
   /** The scanner's zone, when it has one. Null on every other scanner. */
   place: ScanPlaceCountSchema.nullable().optional(),
+  byType: z.array(ScanTypeCountSchema).optional(),
   asOf: TimestampSchema,
   configRev: z.number().int(),
 });

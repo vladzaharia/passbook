@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { SCAN_REASON_COPY } from '@/shared/copy/scan.ts';
 import { Button, FormField, Input, Select } from '@/web/ui/index.ts';
 import { useScannerPages } from '../queries.ts';
-import { useScanEvents } from '../scanner-api.ts';
+import { useOrgTemplates, useScanEvents } from '../scanner-api.ts';
 import type { ScanningSearch } from '../search.ts';
 import { ExportButton } from './export-button.tsx';
 import { useStaffOptions } from './staff-options.ts';
@@ -22,6 +22,7 @@ export function ScanFilters({
   const [q, setQ] = useState(search.q ?? '');
   const scanners = useScannerPages(orgId, false, Boolean(orgId));
   const events = useScanEvents(orgId, Boolean(orgId));
+  const types = useOrgTemplates(orgId);
   const staff = useStaffOptions(orgId);
   const set = (patch: Partial<ScanningSearch>) =>
     void navigate({ to: '.', search: (prev) => ({ ...prev, ...patch }), replace: true });
@@ -111,6 +112,20 @@ export function ScanFilters({
           />
         )}
       </FormField>
+      <FormField label="Pass type">
+        {(p) => (
+          <Select
+            {...p}
+            value={search.templateId ?? 'all'}
+            onValueChange={(value) => set({ templateId: value === 'all' ? undefined : value })}
+            options={[
+              { value: 'all', label: 'All pass types' },
+              ...(types.data?.items.map((t) => ({ value: t.id, label: t.name })) ??
+                (search.templateId ? [{ value: search.templateId, label: 'Loading…' }] : [])),
+            ]}
+          />
+        )}
+      </FormField>
       <FormField label="Reason">
         {(p) => (
           <Select
@@ -150,6 +165,7 @@ export function ScanFilters({
             scannerId: undefined,
             staffId: undefined,
             eventId: undefined,
+            templateId: undefined,
             reason: undefined,
             range: undefined,
           });

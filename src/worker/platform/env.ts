@@ -20,6 +20,8 @@ export interface AppEnv
   OIDC_CLIENT_SECRET?: string;
   /** SHA-256 of the break-glass token. Unset turns the route off. */
   BREAKGLASS_TOKEN_SHA256?: string;
+  /** Rate tier for API keys with none stored: standard, high or bulk. Unset or unknown means standard. */
+  API_RATE_TIER_DEFAULT?: string;
   /** Optional ceiling on the daily magic-link volume. */
   MAGIC_LINK_DAILY_CAP?: string;
   /** Optional chain override; defaults to the bundled WWDR G4. */
@@ -52,6 +54,9 @@ export const RATE_LIMITS = [
   'RL_APPLE',
   'RL_APPLE_IP',
   'RL_API_KEY',
+  'RL_API_KEY_HIGH',
+  'RL_API_KEY_BULK',
+  'RL_API_ORG',
   'RL_WEBHOOK',
   'RL_REFRESH',
   'RL_SCAN_PAIR',
