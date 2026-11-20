@@ -2,7 +2,14 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppBindings } from './context.ts';
 import { withSecurity } from './openapi-security.ts';
 
-type Op = { operationId?: string; tags?: string[]; 'x-operation-key'?: string };
+type Param = { name: string; in: string; deprecated?: boolean; 'x-platform-only'?: boolean };
+type Op = {
+  operationId?: string;
+  tags?: string[];
+  'x-operation-key'?: string;
+  parameters?: Param[];
+  requestBody?: { content?: Record<string, { schema?: { properties?: Record<string, object> } }> };
+};
 type Doc = { paths?: Record<string, Record<string, Op | undefined>> } & Record<string, unknown>;
 
 const API_PREFIX = /^\/api\/v1/;
@@ -30,6 +37,36 @@ export function withOperationIds(doc: Doc): Doc {
   return doc;
 }
 
+/** Old spelling of a query parameter, and the alias that replaces it when an operation takes both. */
+const DEPRECATED_BY: Record<string, string> = {
+  from: 'createdAfter',
+  to: 'createdBefore',
+  since: 'updatedSince',
+  after: 'cursor',
+};
+
+/**
+ * Marks the old time and cursor names deprecated where their replacement exists, and `orgId` (a query
+ * parameter, or the `POST /passes` body field) `x-platform-only`: org-bound keys never send it.
+ */
+export function withParamMarks(doc: Doc): Doc {
+  for (const [path, item] of Object.entries(doc.paths ?? {})) {
+    for (const op of Object.values(item)) {
+      if (!op || typeof op !== 'object') continue;
+      const names = new Set(op.parameters?.map((p) => p.name));
+      for (const p of op.parameters ?? []) {
+        if (p.in !== 'query') continue;
+        const alias = DEPRECATED_BY[p.name];
+        if (alias && names.has(alias)) p.deprecated = true;
+        if (p.name === 'orgId') p['x-platform-only'] = true;
+      }
+      const orgId = op.requestBody?.content?.['application/json']?.schema?.properties?.orgId;
+      if (orgId && path === '/api/v1/passes') Object.assign(orgId, { 'x-platform-only': true });
+    }
+  }
+  return doc;
+}
+
 /** The full document (every operation, with ids and security). The route filters it per caller. */
 export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
   const doc = app.getOpenAPI31Document({
@@ -37,5 +74,5 @@ export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
     info: { title: 'PassBook API', version: '1.0.0' },
     servers: [{ url: '/' }],
   }) as unknown as Doc;
-  return withSecurity(app, withOperationIds(doc) as never) as unknown as Doc;
+  return withSecurity(app, withParamMarks(withOperationIds(doc)) as never) as unknown as Doc;
 }

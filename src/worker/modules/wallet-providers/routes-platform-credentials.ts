@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema } from '../../../shared/contracts/common.ts';
+import { CursorQuerySchema, IdSchema } from '../../../shared/contracts/common.ts';
 import {
   HoldWalletEnrolmentSchema,
   PlatformWalletCredentialCheckParamsSchema,
@@ -56,6 +56,7 @@ register(
     method: 'get',
     path: '/wallet-credentials',
     summary: 'List the platform wallet credentials',
+    query: CursorQuerySchema,
     response: WalletCredentialListSchema,
   },
   async (c) => c.json(await listPlatformCredentials(serviceContext(c), sessionOf(c))),
@@ -181,7 +182,7 @@ register(
     method: 'get',
     path: '/wallet-enrolments',
     summary: 'List every organization enrolment of a wallet provider',
-    query: PlatformWalletEnrolmentQuerySchema,
+    query: PlatformWalletEnrolmentQuerySchema.extend(CursorQuerySchema.shape),
     response: PlatformWalletEnrolmentListSchema,
   },
   async (c) =>
@@ -206,8 +207,10 @@ register(
     query: WalletMigrationReportQuerySchema,
     response: WalletMigrationReportSchema,
   },
-  async (c) =>
-    c.json(await migrationReport(serviceContext(c), sessionOf(c), c.req.valid('query').after)),
+  async (c) => {
+    const { after, cursor } = c.req.valid('query');
+    return c.json(await migrationReport(serviceContext(c), sessionOf(c), cursor ?? after));
+  },
 );
 
 register(

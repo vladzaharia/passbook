@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema } from '../../../shared/contracts/common.ts';
+import { CursorQuerySchema, IdSchema } from '../../../shared/contracts/common.ts';
 import {
   TagListQuerySchema,
   TagListSchema,
@@ -55,6 +55,7 @@ register(
     path: '/passes/{passId}/tags',
     summary: 'Tags that open a pass',
     params: PassParam,
+    query: CursorQuerySchema,
     response: TagListSchema,
   },
   async (c) => {

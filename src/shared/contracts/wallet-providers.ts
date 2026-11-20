@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, ModeSchema, TimestampSchema } from './common.ts';
+import { IdSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 
 export const WalletProviderSchema = z.enum(['google', 'samsung']);
 export type WalletProvider = z.infer<typeof WalletProviderSchema>;
@@ -131,9 +131,7 @@ export const WalletCredentialSchema = z.strictObject({
 });
 export type WalletCredential = z.infer<typeof WalletCredentialSchema>;
 
-export const WalletCredentialListSchema = z.strictObject({
-  items: z.array(WalletCredentialSchema),
-});
+export const WalletCredentialListSchema = pageOf(WalletCredentialSchema);
 export type WalletCredentialList = z.infer<typeof WalletCredentialListSchema>;
 
 export const WalletCredentialListQuerySchema = z.strictObject({
@@ -172,7 +170,7 @@ export const WalletEnrolmentSchema = z.strictObject({
 });
 export type WalletEnrolment = z.infer<typeof WalletEnrolmentSchema>;
 
-export const WalletEnrolmentListSchema = z.strictObject({ items: z.array(WalletEnrolmentSchema) });
+export const WalletEnrolmentListSchema = pageOf(WalletEnrolmentSchema);
 export type WalletEnrolmentList = z.infer<typeof WalletEnrolmentListSchema>;
 
 export const SetWalletEnrolmentSourceSchema = z.strictObject({
@@ -236,11 +234,16 @@ export const WalletMigrationReportSchema = z.strictObject({
   pending: z.number().int().nonnegative(),
   migrated: z.number().int().nonnegative(),
   items: z.array(WalletMigrationItemSchema),
+  nextCursor: IdSchema.nullable(),
   /** Pass as `after` for the next page; null on the last. */
   next: IdSchema.nullable(),
 });
 
-export const WalletMigrationReportQuerySchema = z.strictObject({ after: IdSchema.optional() });
+export const WalletMigrationReportQuerySchema = z.strictObject({
+  /** Deprecated: use `cursor`. */
+  after: IdSchema.optional(),
+  cursor: IdSchema.optional(),
+});
 export type WalletMigrationReport = z.infer<typeof WalletMigrationReportSchema>;
 
 export const WalletMigrationQueuedSchema = z.strictObject({

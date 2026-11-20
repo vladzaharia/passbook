@@ -66,6 +66,7 @@ const RetainedWebhookListSchema = z
         })
         .strict(),
     ),
+    nextCursor: z.string().nullable(),
   })
   .strict();
 type RetainedItem = z.infer<typeof RetainedWebhookListSchema>['items'][number];

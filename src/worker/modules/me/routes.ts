@@ -11,7 +11,6 @@ import {
   MyEmailParamSchema,
   MyPassListSchema,
   MyPassSchema,
-  MySessionListSchema,
   OkSchema,
   PageQuerySchema,
   ProblemSchema,
@@ -30,11 +29,10 @@ import { recordCopy } from '../channels/gate.ts';
 import { assertPassSnapshot } from '../public/snapshot.ts';
 import { myPassesBundle } from './bundle.ts';
 import { assertOwnerPass, presentationForOwner } from './presentation.ts';
+import { registerMyEmailList, registerMySessionList } from './routes-lists.ts';
 import { getMyPass, getMyRemoval, listMyPasses, refreshMyPass, removeMyPass } from './service.ts';
 import {
   addMyEmail,
-  listMyEmails,
-  listMySessions,
   makeMyEmailPrimary,
   removeMyEmail,
   revokeAllMySessions,
@@ -234,12 +232,7 @@ register(
       ),
     ),
 );
-register(
-  meRoutes,
-  'me',
-  { method: 'get', path: '/emails', summary: 'My emails', response: MyEmailListSchema },
-  async (c: C) => c.json(await listMyEmails(serviceContext(c), currentUserId(c))),
-);
+registerMyEmailList(meRoutes);
 register(
   meRoutes,
   'me',
@@ -284,12 +277,7 @@ register(
       await makeMyEmailPrimary(serviceContext(c), currentUserId(c), c.req.valid('param').email),
     ),
 );
-register(
-  meRoutes,
-  'me',
-  { method: 'get', path: '/sessions', summary: 'My sessions', response: MySessionListSchema },
-  async (c: C) => c.json(await listMySessions(serviceContext(c), currentUserId(c), sessionId(c))),
-);
+registerMySessionList(meRoutes);
 register(
   meRoutes,
   'me',

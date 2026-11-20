@@ -4,6 +4,7 @@ import { z } from 'zod';
 import {
   ConnectorInfoSchema,
   ConnectorListSchema,
+  CursorQuerySchema,
   IdSchema,
 } from '../../../shared/contracts/index.ts';
 import { connectors } from '../../connectors/registry.ts';
@@ -38,12 +39,12 @@ export function registerConnectorCatalogRoutes(router: OpenAPIHono<AppBindings>)
       method: 'get',
       path: '/',
       summary: 'List connector types',
-      query: ConnectionOrgQuerySchema,
+      query: ConnectionOrgQuerySchema.extend(CursorQuerySchema.shape),
       response: ConnectorListSchema,
     },
     async (c) => {
       await authorizeCatalog(c, c.req.valid('query').orgId);
-      return c.json({ items: connectors.list().map(connectorInfo) });
+      return c.json({ items: connectors.list().map(connectorInfo), nextCursor: null });
     },
   );
   register(

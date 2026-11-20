@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, ModeSchema, TimestampSchema } from './common.ts';
+import { IdSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { BrandingImageSchema, OrgBrandingSchema } from './orgs.ts';
 import {
   CodeFormatSchema,
@@ -32,7 +32,7 @@ const SessionTemplateSchema = z.object({
 const SessionStaffSchema = z.object({ id: IdSchema, name: z.string(), role: ScanRoleSchema });
 
 /** `GET /scan/staff?q=`: people matching a name, when the sign-in roster was cut. */
-export const ScanStaffSearchSchema = z.object({ items: z.array(SessionStaffSchema) });
+export const ScanStaffSearchSchema = pageOf(SessionStaffSchema);
 
 export const ScanBrandingSchema = z.strictObject({
   accent: OrgBrandingSchema.shape.accent.unwrap().nullable(),

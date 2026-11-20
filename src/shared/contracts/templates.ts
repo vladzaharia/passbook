@@ -144,7 +144,7 @@ export const UploadSummarySchema = z.object({
   issues: z.number().int(),
   createdAt: TimestampSchema,
 });
-export const UploadListSchema = z.object({ items: z.array(UploadSummarySchema) });
+export const UploadListSchema = pageOf(UploadSummarySchema);
 
 export const TemplateVersionParamSchema = z.object({
   id: IdSchema,

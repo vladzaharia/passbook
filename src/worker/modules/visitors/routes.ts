@@ -3,7 +3,7 @@ import {
   OffboardRequestSchema,
   OffboardResultSchema,
 } from '../../../shared/contracts/access-business.ts';
-import { OkSchema } from '../../../shared/contracts/common.ts';
+import { CursorQuerySchema, OkSchema } from '../../../shared/contracts/common.ts';
 import {
   HostListSchema,
   NewVisitorSchema,
@@ -54,7 +54,7 @@ register(
     method: 'get',
     path: '/',
     summary: 'List visitors for a day',
-    query: VisitorQuerySchema,
+    query: VisitorQuerySchema.extend(CursorQuerySchema.shape),
     response: VisitorListSchema,
   },
   async (c) => {
@@ -63,6 +63,7 @@ register(
     const a = await tenantAuthorityOf(ctx, authOf(c), q.orgId, 'passes:read');
     return c.json({
       items: await listVisits(ctx, a.orgId, a.mode, q.tab, { start: q.dayStart, end: q.dayEnd }),
+      nextCursor: null,
     });
   },
 );
@@ -74,7 +75,7 @@ register(
     method: 'get',
     path: '/hosts',
     summary: 'People who can host a visitor: the org members',
-    query: VisitorOrgQuerySchema,
+    query: VisitorOrgQuerySchema.extend(CursorQuerySchema.shape),
     response: HostListSchema,
   },
   async (c) => {
@@ -82,7 +83,10 @@ register(
     const a = await tenantAuthorityOf(ctx, authOf(c), c.req.valid('query').orgId, 'passes:read');
     const emails = await canTypeHost(ctx, a);
     const items = await hostChoices(ctx.env.DB, a.orgId);
-    return c.json({ items: items.map((h) => ({ ...h, email: emails ? h.email : null })) });
+    return c.json({
+      items: items.map((h) => ({ ...h, email: emails ? h.email : null })),
+      nextCursor: null,
+    });
   },
 );
 

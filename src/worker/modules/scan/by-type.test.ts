@@ -98,6 +98,20 @@ describe('feed filter by pass type', () => {
     expect((await list('')).items.length).toBe(days.items.length + guests.items.length);
   });
 
+  it('createdAfter and createdBefore bound the list like from and to', async () => {
+    const all = (await list('')).items.length;
+    expect(all).toBeGreaterThan(0);
+    for (const [after, before] of [
+      ['from', 'to'],
+      ['createdAfter', 'createdBefore'],
+    ] as const) {
+      expect((await list(`${after}=0&${before}=1`)).items).toEqual([]);
+      expect((await list(`${after}=0&${before}=${Date.now() + 86_400_000}`)).items).toHaveLength(
+        all,
+      );
+    }
+  });
+
   it("matches nothing for another organization's type", async () => {
     const other = await makeOrg(kit.fx);
     const foreign = await kit.scanTemplate(

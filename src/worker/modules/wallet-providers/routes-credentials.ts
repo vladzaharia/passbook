@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema } from '../../../shared/contracts/common.ts';
+import { CursorQuerySchema, IdSchema } from '../../../shared/contracts/common.ts';
 import {
   RevokeWalletCredentialSchema,
   SaveWalletCredentialSchema,
@@ -45,7 +45,7 @@ register(
     path: '/{orgId}/wallet-credentials',
     summary: 'List the organization wallet credentials of the session mode',
     params: orgParam,
-    query: WalletCredentialListQuerySchema,
+    query: WalletCredentialListQuerySchema.extend(CursorQuerySchema.shape),
     response: WalletCredentialListSchema,
   },
   async (c) =>

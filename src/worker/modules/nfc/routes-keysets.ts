@@ -1,6 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
-import { IdSchema } from '../../../shared/contracts/common.ts';
+import { CursorQuerySchema, IdSchema } from '../../../shared/contracts/common.ts';
 import {
   MadeTagKeysetSchema,
   RotateTagKeysetSchema,
@@ -64,7 +64,7 @@ export function registerKeysetRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void 
       method: 'get',
       path: '/keysets',
       summary: 'List tag keysets',
-      query: TagKeysetListQuerySchema,
+      query: TagKeysetListQuerySchema.extend(CursorQuerySchema.shape),
       response: TagKeysetListSchema,
     },
     async (c) => {

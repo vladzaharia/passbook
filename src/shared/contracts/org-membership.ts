@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { normalizeEmail, strictEmail } from '../email.ts';
-import { IdSchema, TimestampSchema } from './common.ts';
+import { IdSchema, pageOf, TimestampSchema } from './common.ts';
 
 /** Organization roles are separate from the platform session roles. */
 export const OrgRoleSchema = z.enum([
@@ -54,7 +54,10 @@ export const OrgMembershipSchema = z.object({
   revokedAt: TimestampSchema.nullable(),
 });
 export type OrgMembership = z.infer<typeof OrgMembershipSchema>;
-export const OrgMembershipListSchema = z.object({ items: z.array(OrgMembershipSchema) });
+/** `nextCursor` is optional in the type only: the session fixtures in the web tests predate it. The server always sends it. */
+export const OrgMembershipListSchema = pageOf(OrgMembershipSchema).extend({
+  nextCursor: z.string().nullable().optional(),
+});
 
 /** A member as org managers see them: the person, not just the user id. */
 export const OrgMemberSchema = OrgMembershipSchema.extend({
@@ -63,7 +66,7 @@ export const OrgMemberSchema = OrgMembershipSchema.extend({
   userEmail: z.string().nullable(),
 });
 export type OrgMember = z.infer<typeof OrgMemberSchema>;
-export const OrgMemberListSchema = z.object({ items: z.array(OrgMemberSchema) });
+export const OrgMemberListSchema = pageOf(OrgMemberSchema);
 
 export const OrgInvitationSchema = z.object({
   id: IdSchema,
@@ -76,7 +79,7 @@ export const OrgInvitationSchema = z.object({
   acceptedAt: TimestampSchema.nullable(),
 });
 export type OrgInvitation = z.infer<typeof OrgInvitationSchema>;
-export const OrgInvitationListSchema = z.object({ items: z.array(OrgInvitationSchema) });
+export const OrgInvitationListSchema = pageOf(OrgInvitationSchema);
 
 const InvitationEmailSchema = z
   .string()

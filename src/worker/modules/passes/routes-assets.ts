@@ -1,5 +1,6 @@
 import { bodyLimit } from 'hono/body-limit';
 import {
+  CursorQuerySchema,
   IdParamSchema,
   OkSchema,
   PassAssetListSchema,
@@ -33,6 +34,7 @@ export function registerAssetRoutes(passesRoutes: ReturnType<typeof createRouter
       path: '/{id}/assets',
       summary: 'Per-pass image overrides',
       params: IdParamSchema,
+      query: CursorQuerySchema,
       response: PassAssetListSchema,
     },
     async (c) => {

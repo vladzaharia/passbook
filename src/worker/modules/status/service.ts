@@ -127,6 +127,7 @@ export async function getStatus(ctx: ServiceContext, deps: StatusDeps = {}): Pro
 export async function listWorkflowRuns(ctx: ServiceContext): Promise<RunList> {
   const rows = await recentWorkflowRuns(ctx.env.DB, 50);
   return {
+    nextCursor: null,
     items: rows.map((r) => ({
       instanceId: r.instance_id,
       kind: r.kind,

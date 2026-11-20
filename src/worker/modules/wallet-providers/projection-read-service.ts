@@ -175,5 +175,5 @@ export async function listProjectionReleases(
     scope.mode,
     native.provider,
   );
-  return { items, active };
+  return { items, active, nextCursor: null };
 }

@@ -1,6 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
-import { IdSchema, pageOf } from '../../../shared/contracts/common.ts';
+import { CursorQuerySchema, IdSchema, pageOf } from '../../../shared/contracts/common.ts';
 import {
   CreateTagEnrollmentSchema,
   TagEnrollmentSchema,
@@ -29,7 +29,7 @@ export function registerEnrollmentRoutes(nfcRoutes: OpenAPIHono<AppBindings>): v
       method: 'get',
       path: '/scanners',
       summary: 'Scanners that can take a tag request',
-      query: TagScannerQuerySchema,
+      query: TagScannerQuerySchema.extend(CursorQuerySchema.shape),
       response: pageOf(TagScannerSchema),
     },
     async (c) => {
