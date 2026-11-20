@@ -2,6 +2,7 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppBindings } from './context.ts';
 import { withSdkNames } from './openapi-sdk.ts';
 import { withSecurity } from './openapi-security.ts';
+import { registerWebhookEvents } from './openapi-webhooks.ts';
 
 type Op = { operationId?: string; tags?: string[]; 'x-operation-key'?: string };
 type Doc = { paths?: Record<string, Record<string, Op | undefined>> } & Record<string, unknown>;
@@ -43,10 +44,14 @@ export function withOperationIds(doc: Doc): Doc {
 
 /** The full document (every operation, with ids and security). The route filters it per caller. */
 export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
+  registerWebhookEvents(app);
   const doc = app.getOpenAPI31Document({
     openapi: '3.1.0',
     info: { title: 'PassBook API', version: '1.0.0' },
     servers: [{ url: '/' }],
   }) as unknown as Doc;
-  return withSecurity(app, withSdkNames(withOperationIds(withKebabTags(doc))) as never) as unknown as Doc;
+  return withSecurity(
+    app,
+    withSdkNames(withOperationIds(withKebabTags(doc))) as never,
+  ) as unknown as Doc;
 }
