@@ -253,71 +253,11 @@ export const APPEND_ONLY_TABLES = ['audit_log'] as const;
  */
 export const TRIGGER_WRITES_GUARDED: readonly string[] = [];
 
-/**
- * Unguarded tables that carry an `org_id`, `mode` or `pass_id` column. An `include` write on one must tie
- * it to `{org}`, `{mode}` or `{pass}`. A test derives these lists from the migrated schema.
- */
-export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
-  'branding_gc_queue',
-  'credentials',
-  'signing_identities',
-  'idempotency_keys',
-  'idempotent_requests',
-  'template_imports',
-  'workflow_runs',
-  'broadcasts',
-  'message_rules',
-  'message_rule_fires',
-  'vas_keys',
-  'pass_check_in',
-  'scanner_setups',
-  'template_release_reissues',
-  'workflow_release_snapshots',
-  'connection_webhook_legacy_sources',
-  'connection_webhook_replays',
-  'wallet_provider_accounts',
-  'wallet_provider_credentials',
-  'wallet_provider_account_events',
-  'wallet_provider_instances',
-  'wallet_samsung_callback_receipts',
-  'wallet_google_callback_receipts',
-  'wallet_samsung_tombstones',
-  'wallet_provider_projection_evidence',
-  'wallet_provider_projection_evidence_history',
-  'scan_retention_proofs',
-  'scan_retention_event_transitions',
-  'scan_retention_delete_intents',
-  'scan_retained_gates',
-  'pass_holder_reissue_required',
-  'pass_token_seals',
-  'pass_auth_seals',
-  'bundle_token_seals',
-  'join_link_seals',
-  'org_reply_to',
-]);
-export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
-  'broadcasts',
-  'idempotent_requests',
-  'message_rules',
-  'message_rule_fires',
-  'scanner_setups',
-  'template_release_reissues',
-  'workflow_release_snapshots',
-  'wallet_provider_accounts',
-  'wallet_provider_credentials',
-  'wallet_provider_account_events',
-  'wallet_provider_instances',
-  'wallet_samsung_callback_receipts',
-  'wallet_google_callback_receipts',
-  'wallet_samsung_tombstones',
-  'wallet_provider_projection_evidence',
-  'wallet_provider_projection_evidence_history',
-  'scan_retention_proofs',
-  'scan_retention_event_transitions',
-  'scan_retention_delete_intents',
-  'scan_retained_gates',
-  'pass_holder_reissue_required',
-]);
+export {
+  MODE_BEARING_TABLES,
+  ORG_BEARING_TABLES,
+  PASS_BEARING_TABLES,
+} from './authority-bearing-tables.ts';
 /**
  * Unguarded tables a holder grant may also write although they carry no `pass_id`: the column that names
  * its pass, or `transfer`, pinned through the transfer row (`pass_credential_transfers.pass_id`).
@@ -326,23 +266,3 @@ export const HOLDER_PART_PINS: Readonly<Record<string, { column: string; via?: '
   pass_credential_transfer_payloads: { column: 'transfer_id', via: 'transfer' },
   pass_transfer_asset_gc: { column: 'source_pass_id' },
 };
-
-export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
-  'pass_versions',
-  'pass_attach_blocks',
-  'registrations',
-  'revisions',
-  'pass_personalizations',
-  'broadcast_items',
-  'message_rule_fires',
-  'pass_check_in',
-  'sandbox_forward_passes',
-  'wallet_provider_instances',
-  'wallet_provider_pass_authority',
-  'pass_holder_reissue_required',
-  'pass_transfer_asset_candidates',
-  'pass_transfer_asset_recoveries',
-  'pass_transfer_asset_uploads',
-  'pass_token_seals',
-  'pass_auth_seals',
-]);
