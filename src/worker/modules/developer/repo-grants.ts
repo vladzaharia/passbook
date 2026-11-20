@@ -174,3 +174,40 @@ export async function bumpTryGeneration(
   const [bumped] = await g.commit();
   return (bumped?.results.length ?? 0) > 0;
 }
+
+/** The funnel columns a step may stamp; each is set once, by the trigger as well as by the `IS NULL` below. */
+export type FunnelColumn =
+  | 'quickstart_viewed_at'
+  | 'first_call_at'
+  | 'first_pass_at'
+  | 'first_preview_at';
+
+/**
+ * `platform.job.developer_sandbox.funnel`: stamps funnel columns of the person's open sandbox, each only while it is
+ * still empty. The person's live session is checked in the same batch. Writes no audit row: a funnel stamp is
+ * product telemetry, not an act on the organization.
+ */
+export async function stampFunnel(
+  ctx: ServiceContext,
+  orgId: string,
+  by: { userId: string; sessionIdHash: string },
+  stamps: Partial<Record<FunnelColumn, number>>,
+): Promise<void> {
+  const entries = Object.entries(stamps) as [FunnelColumn, number][];
+  if (entries.length === 0) return;
+  const now = ctx.clock.now();
+  const live = rawCheck(
+    'actor',
+    `EXISTS (SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
+      WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL
+        AND s.expires_at > ? AND s.idle_expires_at > ?)`,
+    [by.sessionIdHash, by.userId, now, now],
+  );
+  const g = developerSandboxGrant(ctx, 'platform.job.developer_sandbox.funnel', [live], orgId);
+  for (const [column, at] of entries)
+    g.update('developer_sandboxes', {
+      set: { [column]: at },
+      where: { org_id: orgId, user_id: by.userId, closed_at: null, [column]: null },
+    });
+  await g.commit();
+}

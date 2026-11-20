@@ -1,4 +1,5 @@
 import {
+  DeveloperFunnelSchema,
   IdSchema,
   MetricsOverviewSchema,
   MetricsQuerySchema,
@@ -16,6 +17,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { getOrgActivity } from './activity.ts';
+import { developerFunnel } from './developer-funnel.ts';
 import { templateUsableByOrg } from './repo.ts';
 import { getOverview } from './service.ts';
 
@@ -118,4 +120,16 @@ register(
     await requireMetricsReader(ctx, c.var.auth, query.orgId);
     return c.json(await getOrgActivity(ctx, query, modeFromRequest(c)));
   },
+);
+
+register(
+  metricsRoutes,
+  'metrics',
+  {
+    method: 'get',
+    path: '/platform/developer',
+    summary: 'Developer quickstart funnel: sandboxes by step and time to first pass (30 days)',
+    response: DeveloperFunnelSchema,
+  },
+  async (c) => c.json(await developerFunnel(serviceContext(c))),
 );

@@ -21,6 +21,7 @@ import { createCandidate } from '../templates/releases-create.ts';
 import { useBlueprint as forkBlueprint } from '../templates/use-blueprint.ts';
 import { authorizeWebhooks } from '../webhooks/access.ts';
 import { ensureCapture } from '../webhooks/service-captures.ts';
+import { recordSandboxMade } from './funnel.ts';
 import {
   approvalOf,
   candidateOf,
@@ -148,6 +149,8 @@ export async function createSandbox(
   ctx: ServiceContext,
   session: SessionAuth,
   hooks: SandboxHooks = {},
+  /** `viewedAt`: when the person's browser first opened the quickstart (the funnel's start). */
+  options: { viewedAt?: number } = {},
 ): Promise<CreatedDeveloperSandbox> {
   const db = ctx.env.DB;
   const tick = async (step: SandboxStep) => {
@@ -184,6 +187,7 @@ export async function createSandbox(
       await tick('org');
     }
     if (!row) throw new NotFoundError('Sandbox not found.', 'SANDBOX_NOT_FOUND');
+    await recordSandboxMade(ctx, session, row.org_id, options.viewedAt);
     // Everything in the sandbox is Test: the person acts in it as a Test session.
     const test: SessionAuth = { ...session, mode: 'test' };
     const templateId = await quickstartTemplate(ctx, test, row.org_id, tick);
