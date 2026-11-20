@@ -53,7 +53,6 @@ export type ScanOutcomeKind = z.infer<typeof ScanOutcomeKindSchema>;
 export const ScanRecordOutcomeSchema = z.enum(['ok', 'heads_up', 'refused']);
 /** What `scans.action_kind` can hold: the action kinds, and `undo` for the row an undo writes. */
 export const ScanRecordKindSchema = z.enum([...ScanActionKindSchema.options, 'undo']);
-
 /** Wire reasons. The client-only ones (network, timeout, ...) live in `src/web/scan/machine/types.ts`. */
 export const SCAN_REFUSED_REASONS = [
   'not_found',
