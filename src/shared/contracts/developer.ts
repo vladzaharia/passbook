@@ -118,3 +118,23 @@ export const ApiRailSchema = z.object({
   key: z.object({ id: IdSchema, name: z.string(), prefix: z.string() }).nullable(),
 });
 export type ApiRail = z.infer<typeof ApiRailSchema>;
+
+/** What a pasted id is: a request id (a Cloudflare ray or a UUID) or the id of an object in the caller's sandbox. */
+export const ResolveQuerySchema = z.object({
+  id: z
+    .string()
+    .regex(
+      /^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|[0-9a-fA-F]{16}-[A-Za-z]{3})$/,
+    ),
+});
+export const ResolvedSchema = z.object({
+  kind: z.enum(['request', 'pass', 'template', 'org']),
+  /** Where it opens: the request log row, or the sandbox's admin page. */
+  href: z.string(),
+  /** `GET /passes` for a request; the object's name otherwise. */
+  label: z.string(),
+});
+export type Resolved = z.infer<typeof ResolvedSchema>;
+
+/** `POST /developers/search-miss`: a search term that found nothing. Re-checked on arrival; anything else is dropped. */
+export const SearchMissSchema = z.object({ term: z.string().max(200) });

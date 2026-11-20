@@ -72,6 +72,7 @@
   "developer.getLog",
   "developer.getLogs",
   "developer.getRail",
+  "developer.getResolve",
   "developer.getSandbox",
   "developer.postSandbox",
   "developer.postTryToken",
