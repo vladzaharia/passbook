@@ -247,6 +247,10 @@
       }
     }
   },
+  "channels": {
+    "paper": "off",
+    "nfc": "on"
+  },
   "messaging": {
     "input": "message"
   },

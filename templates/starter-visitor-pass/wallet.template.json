@@ -260,6 +260,10 @@
       }
     }
   ],
+  "channels": {
+    "paper": "on",
+    "nfc": "on"
+  },
   "messaging": {
     "input": "message"
   },
