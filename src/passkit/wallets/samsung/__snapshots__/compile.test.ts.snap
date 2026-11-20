@@ -370,9 +370,9 @@ exports[`samsung compiler over every starter and baked template > starter-creden
       "logoImage": "https://img.example/logo@3x.png",
       "noticeDesc": "Status: Active
 Holder: Ana Rivera
-Valid until: 2028-03-15
+Valid until: Mar 15, 2028
 Number: 77310
-Issued: 2026-03-15
+Issued: Mar 15, 2026
 Terms: Scan the code to check this credential. It's valid only while it shows Active.",
       "providerName": "PassBook",
       "title": "CPR / AED Provider",
@@ -614,8 +614,8 @@ exports[`samsung compiler over every starter and baked template > starter-hotel-
       "endDate": "1921518000000",
       "fontColor": "#faf3e6",
       "logoImage": "https://img.example/logo@3x.png",
-      "noticeDesc": "Check-in: 2030-11-18
-Check-out: 2030-11-21
+      "noticeDesc": "Check-in: Nov 18, 2030
+Check-out: Nov 21, 2030
 Breakfast: Included
 Plate: 7ABC123
 Wi-Fi: Luma Guest
@@ -1256,10 +1256,10 @@ exports[`samsung compiler over every starter and baked template > starter-visito
       "endDate": "1921280400000",
       "fontColor": "#281a08",
       "logoImage": "https://img.example/logo@3x.png",
-      "noticeDesc": "Arrives: 09:30 -08:00
+      "noticeDesc": "Arrives: 9:30 AM
 Host: Priya Shah
 Go to: Floor 3, Oslo
-Until: 17:00 -08:00
+Until: 5:00 PM
 Company: Acme Ltd
 Terms: Good for one day. Wear it where staff can see it.",
       "providerName": "PassBook",

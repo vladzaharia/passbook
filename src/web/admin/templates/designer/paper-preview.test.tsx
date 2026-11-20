@@ -16,6 +16,7 @@ const channels = (paper: Record<string, unknown>) => () =>
     channels: null,
     revision: 0,
     effective: { mobile: on, apple: on, google: on, samsung: on, nfc: on, paper },
+    defaults: { mobile: 'on', apple: 'on', google: 'on', samsung: 'on', paper: 'off', nfc: 'on' },
   });
 
 const stage = (paper?: unknown, onPaper?: (p: unknown) => void) => (
