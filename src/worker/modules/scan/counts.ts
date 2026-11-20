@@ -10,6 +10,7 @@ import {
   setExpectedStmt,
   todayStmt,
 } from './repo-counts.ts';
+import { sessionTodayByTypeStmt, todayByTypeStmt } from './repo-counts-by-type.ts';
 import { eventTotalsStmt } from './repo-event-attendance.ts';
 import { scanningSessionTodayStmt } from './repo-scanning-sessions.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
@@ -122,6 +123,8 @@ function buildCounts(
   const actorKey = actor.actorKey;
   const timeZone = actor.timeZone;
   const sessionId = actor.scanningSession?.id;
+  // An event has its own totals, and one pass type would repeat the total.
+  const byType = !event && templateIds.length !== 1;
   const configRev = Math.max(
     actor.scanner?.updatedAt ?? 0,
     event?.updatedAt ?? 0,
@@ -132,6 +135,7 @@ function buildCounts(
   // Bind the injected clock as late as possible, when the caller assembles its batch.
   let asOf = ctx.clock.now();
   let prepared: D1PreparedStatement[] | undefined;
+  let typeAt = -1;
   return {
     get stmts() {
       if (!prepared) {
@@ -152,6 +156,14 @@ function buildCounts(
             prepared.push(cache, expectedCountAfterCacheStmt(db, event, templateIds, asOf));
           else prepared.push(expectedCountStmt(db, event, templateIds, asOf));
         }
+        if (byType) {
+          typeAt = prepared.length;
+          prepared.push(
+            sessionId
+              ? sessionTodayByTypeStmt(db, orgId, sessionId, mode, since)
+              : todayByTypeStmt(db, actorKey, orgId, mode, since),
+          );
+        }
       }
       return prepared;
     },
@@ -169,7 +181,17 @@ function buildCounts(
           capacity: event.capacity,
         };
       }
-      return { counts: { today, event: eventCounts, asOf, configRev }, approvals };
+      const typed = byType ? (results[typeAt]?.results ?? []) : null;
+      const types = typed
+        ? {
+            byType: (typed as { id: string | null; name: string | null; n: number }[]).map((r) => ({
+              templateId: r.id,
+              name: r.name,
+              count: r.n,
+            })),
+          }
+        : {};
+      return { counts: { today, event: eventCounts, ...types, asOf, configRev }, approvals };
     },
   };
 }

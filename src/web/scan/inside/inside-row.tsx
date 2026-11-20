@@ -62,7 +62,7 @@ export function InsideRowView({
             <span className="scan-in-who" dir="auto">
               {name}
             </span>
-            {row.plan ? <span className="scan-in-plan">{row.plan}</span> : null}
+            {row.type ? <span className="scan-in-plan">{row.type}</span> : null}
             {row.flags.map((flag) => (
               <span key={flag} className="scan-in-flag">
                 {FLAG_TEXT[flag]}
