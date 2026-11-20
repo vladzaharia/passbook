@@ -87,7 +87,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       await scanner.getByRole('menuitemcheckbox', { name: 'Keep results until tapped' }).click();
       await scanner.keyboard.press('Escape');
     }
-    await expect(desk.getByRole('complementary', { name: 'Operator view' })).toBeVisible();
+    await expect(desk.getByTestId('operator-workspace')).toBeVisible();
     await expect(customer.getByTestId('duo-customer-display')).toHaveAttribute(
       'data-status',
       'ready',
@@ -107,12 +107,12 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     const previewAsset = desk.waitForResponse((r) =>
       r.url().includes(`/scan/passes/${pass.id}/assets/`),
     );
-    await desk.getByRole('button', { name: holderName }).click();
+    await desk.getByRole('option', { name: new RegExp(holderName) }).click();
     expect((await previewAsset).status()).toBe(200);
     const ledger = async () =>
       (await api.get(`/api/v1/scans?orgId=${orgId}&passId=${pass.id}`)).items;
     expect(await ledger()).toHaveLength(0);
-    await desk.getByRole('button', { name: 'Back', exact: true }).click();
+    await desk.getByRole('button', { name: /^Close/ }).click();
     await field.fill('');
     await field.focus();
     await hardwareCode(desk, memberId);
@@ -154,7 +154,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       settings: { flow: 'choose' },
     });
     await expect
-      .poll(async () => await desk.locator('.scan-shell').getAttribute('data-surface'))
+      .poll(async () => await desk.locator('[data-surface]').first().getAttribute('data-surface'))
       .toBe('operator');
     // Configuration refresh keeps this device started. A hardware scanner follows review mode.
     await expect(desk.getByTestId('scan-start')).toHaveCount(0);

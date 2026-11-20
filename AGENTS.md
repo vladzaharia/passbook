@@ -94,6 +94,7 @@ Work on your own branch from the foundation commit, in your own directories, wit
 | n8-cc | scanner: client core | `src/web/scan/{main.tsx,machine,input,camera,platform,api,offline,dev}/**` (not the n8-p0 files), `src/web/scan/boot/{use-scan-session,pair-link}.ts` |
 | n8-ui | scanner: screens | `src/web/scan/{app.tsx,ui,result,display,lookup,desk}/**`, `src/web/scan/boot/*.tsx` |
 | n8-bu | scanner: buddy, sound | `src/web/scan/{buddy,sound}/**`, the scanner's `ui/art` additions |
+| op | operator console (OP-1 shell and keys, OP-2 lists; OP-3 to OP-8 follow) | `src/web/scan/operator/**` except `operator-panel.tsx` and `operator.css` (the handheld panel), `src/web/scan/visual-operator.tsx`, `src/shared/copy/scan-operator.ts` |
 | n8-ad | scanner: admin | `src/web/admin/scanning/**`, `src/web/routes/admin/scanning/**` |
 | n8-td | scanner: template designer | `src/web/admin/templates/designer/scan/**` |
 | integration | schema, wiring, e2e, email polish | `migrations/**`, `src/worker/{app,index}.ts`, `e2e/**`, `vitest.config.ts`, CI |

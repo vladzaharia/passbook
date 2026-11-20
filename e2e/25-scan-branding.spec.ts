@@ -83,7 +83,7 @@ test('paired scanner, operator and customer surfaces use authenticated org brand
     ]);
     await expect(phone.getByTestId('scan-start')).toBeVisible();
     await operator.getByTestId('scan-start').click();
-    await expect(operator.getByRole('complementary', { name: 'Operator view' })).toBeVisible();
+    await expect(operator.getByTestId('operator-workspace')).toBeVisible();
     await expect(customer.getByTestId('duo-customer-display')).toBeVisible();
     await expect(customer.getByTestId('duo-customer-display')).not.toContainText(
       'Private pass holder',
