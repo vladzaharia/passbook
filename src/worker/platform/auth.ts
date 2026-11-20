@@ -273,15 +273,17 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       // tenantAuthorityOf refuses them, as it always has.
       if (sessionKind !== 'admin') verifiedScopes.set(scoped, needed);
       if (capability) capabilityState.set(scoped, { capability, proven: false });
-      // A key is API: `api` must allow it (read for GET and HEAD, full for the rest). A terminal's
-      // scans:write is scanning, not API, so it is exempt.
+      // An org-bound key is API: `api` must allow it (read for GET and HEAD, full for the rest). A platform
+      // key is exempt on every path alike: platform authority, not an org's API use. A terminal's door calls
+      // (scanning, not API) never reach this guard: modules/scan/guard-api-key.ts has its own. Any other
+      // scope, scans:write included, is API here.
       trackFeatures(
         scoped,
         feature,
-        needed === 'scans:write' ? undefined : { key: 'api', atLeast: isRead(c) ? 'read' : 'full' },
+        key.orgId === null ? undefined : { key: 'api', atLeast: isRead(c) ? 'read' : 'full' },
       );
       c.set('auth', scoped);
-      // An org-bound key names its org; a platform key is checked per org in tenantAuthorityOf.
+      // An org-bound key names its org; a platform key's declared feature is checked per org in tenantAuthorityOf.
       if (key.orgId !== null) await enforceFeatures(serviceContext(c), scoped, key.orgId);
       return next();
     }

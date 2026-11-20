@@ -220,7 +220,7 @@ export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
  * sync creates the platform org with its `legacy` row, and must never change an org's entitlements.
  */
 const INSERT_ONLY_PURPOSES: Readonly<Record<string, readonly string[]>> = {
-  org_entitlements: ['platform.job.template_sync'],
+  org_entitlements: ['platform.job.template_sync', 'platform.org.create'],
 };
 
 /** Why `purpose` may not write `table` this way (`op`), or null: the restricted-table and insert-only rules. */

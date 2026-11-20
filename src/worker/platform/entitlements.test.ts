@@ -587,3 +587,20 @@ describe('baked-template sync writes entitlements by insert only', () => {
     ).not.toThrow();
   });
 });
+
+describe('org create writes entitlements by insert only', () => {
+  it('refuses update, delete and upsert of org_entitlements, so create cannot change a preset', async () => {
+    const { s, route } = await setupGrant('create-insert-only');
+    const principal = await platformPrincipal(s);
+    const g = () => grant(route, { purpose: 'platform.org.create', principal });
+    expect(() =>
+      g().update('org_entitlements', { set: { preset: 'trial' }, where: { org_id: 'x' } }),
+    ).toThrow(/only inserts/);
+    expect(() => g().delete('org_entitlements', { where: { org_id: 'x' } })).toThrow(
+      /only inserts/,
+    );
+    expect(() =>
+      g().insertSelect('org_entitlements', ['org_id', 'preset', 'updated_at'], ['x', 'legacy', 1]),
+    ).not.toThrow();
+  });
+});

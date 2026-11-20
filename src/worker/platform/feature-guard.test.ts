@@ -12,7 +12,7 @@ import { eventMember } from '../modules/holders/test-auth-fixtures.ts';
 import { authOf, tenantAuthorityOf } from '../modules/passes/http.ts';
 import { type Kit, setupKit } from '../modules/passes/pass-test-fixtures.ts';
 import { createAuthStores } from '../stores.ts';
-import type { RouteAuth } from './auth.ts';
+import type { AuthContext, RouteAuth } from './auth.ts';
 import { type AppBindings, requestContext } from './context.ts';
 import { run } from './db.ts';
 import { handleError } from './error-handler.ts';
@@ -129,8 +129,8 @@ describe('RouteAuth.feature: the guard matrix', () => {
         for (const state of ['off', 'missing'] as const) {
           const res = await call(path, who[state][principal], orgs[state]);
           await expectProblem(res, 403, 'FEATURE_NOT_INCLUDED');
-          // A key without any values fails on `api` first: nothing is entitled.
-          const named = state === 'missing' && principal !== 'session' ? 'api' : feature;
+          // An org-bound key without any values fails on `api` first: nothing is entitled.
+          const named = state === 'missing' && principal === 'key' ? 'api' : feature;
           expect(((await res.json()) as { feature?: string }).feature).toBe(named);
         }
       });
@@ -190,27 +190,23 @@ describe('the api level of a key', () => {
     };
   };
 
-  it('off refuses every key call, org-bound or platform; sessions are not API', async () => {
+  it('off refuses every call of an org-bound key; sessions and platform keys are not org API use', async () => {
     const o = await apiOrg('off');
-    for (const headers of [o.key, o.platformKey]) {
-      await expectProblem(await call('/plain', headers, o.orgId), 403, 'FEATURE_NOT_INCLUDED');
-      await expectProblem(
-        await call('/write', headers, o.orgId, 'POST'),
-        403,
-        'FEATURE_NOT_INCLUDED',
-      );
-    }
+    await expectProblem(await call('/plain', o.key, o.orgId), 403, 'FEATURE_NOT_INCLUDED');
+    await expectProblem(await call('/write', o.key, o.orgId, 'POST'), 403, 'FEATURE_NOT_INCLUDED');
     expect((await call('/plain', o.session, o.orgId)).status).toBe(200);
+    // A platform key is platform authority: the same on a read, a write and a declared-feature route.
+    expect((await call('/plain', o.platformKey, o.orgId)).status).toBe(200);
+    expect((await call('/write', o.platformKey, o.orgId, 'POST')).status).toBe(200);
   });
 
-  it('read allows GET and refuses the rest', async () => {
+  it('read allows GET and refuses the rest for an org-bound key', async () => {
     const o = await apiOrg('read');
-    for (const headers of [o.key, o.platformKey]) {
-      expect((await call('/plain', headers, o.orgId)).status).toBe(200);
-      const res = await call('/write', headers, o.orgId, 'POST');
-      await expectProblem(res, 403, 'FEATURE_NOT_INCLUDED');
-      expect(((await res.json()) as { feature?: string }).feature).toBe('api');
-    }
+    expect((await call('/plain', o.key, o.orgId)).status).toBe(200);
+    const res = await call('/write', o.key, o.orgId, 'POST');
+    await expectProblem(res, 403, 'FEATURE_NOT_INCLUDED');
+    expect(((await res.json()) as { feature?: string }).feature).toBe('api');
+    expect((await call('/write', o.platformKey, o.orgId, 'POST')).status).toBe(200);
   });
 
   it('full allows both; so does legacy', async () => {
@@ -238,12 +234,10 @@ describe('the api level of a key', () => {
     await expectProblem(await call('/plain', o.key, o.orgId), 403, 'FEATURE_NOT_INCLUDED');
   });
 
-  it('exempts a terminal key: scans:write is scanning, not API', async () => {
+  it('gates a scans:write key like any key here: its door calls never reach this guard', async () => {
     const o = await apiOrg('off');
-    const terminal = (await makeApiKey(kit.fx, { orgId: o.orgId, scopes: ['scans:write'] }))
-      .headers;
-    expect((await call('/terminal', terminal, o.orgId)).status).toBe(200);
-    // The same org's ordinary key is refused: only the terminal scope is exempt.
+    const till = (await makeApiKey(kit.fx, { orgId: o.orgId, scopes: ['scans:write'] })).headers;
+    await expectProblem(await call('/terminal', till, o.orgId), 403, 'FEATURE_NOT_INCLUDED');
     await expectProblem(await call('/plain', o.key, o.orgId), 403, 'FEATURE_NOT_INCLUDED');
   });
 
@@ -304,5 +298,18 @@ describe('declarations', () => {
         async (c) => c.json({}),
       ),
     ).toThrow(/tenant principal/);
+  });
+});
+
+describe('principal kinds', () => {
+  // WP9 adds an installation principal. This list fails until the new kind is gated (through requireCaller's
+  // key branch or tenantAuthorityOf) or named exempt here with its reason.
+  it('every principal kind is gated or explicitly exempt', () => {
+    const kinds: Record<AuthContext['kind'], 'gated' | 'exempt'> = {
+      session: 'gated', // declared features, in tenantAuthorityOf
+      api_key: 'gated', // api level (org-bound) and declared features
+      scanner: 'exempt', // doors: scanning, not API; own guards in modules/scan
+    };
+    expect(Object.keys(kinds).sort()).toEqual(['api_key', 'scanner', 'session']);
   });
 });
