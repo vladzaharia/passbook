@@ -1,9 +1,8 @@
 import os
-import httpx
 
-res = httpx.delete(
-    "https://passbook.mobile/api/v1/message-rules/0193a1b2-7c00-7000-8000-0000000000e1",
-    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}"},
-)
-res.raise_for_status()
-print(res.json())
+from passbook import PassBook
+
+pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
+
+result = pb.message_rules.delete("0193a1b2-7c00-7000-8000-0000000000e1")
+print(result)

@@ -37,6 +37,25 @@ jobs:
       - name: Generated files are committed
         run: git diff --exit-code -- src/generated docs/design/wallet-providers/capabilities.md test/setup/schema-snapshot.generated.json worker-configuration.d.ts src/web/routeTree.gen.ts
 
+  sdk:
+    # The Python and Go SDKs run their own tests; `npm run check` only proves their generated files are current.
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: sdk/python/pyproject.toml
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: sdk/go/go.mod
+          cache-dependency-path: sdk/go/go.mod
+      - run: pip install -e 'sdk/python[test]'
+      - run: npm run test:sdk
+
   e2e:
     # Draft PRs skip CI; marking a PR ready runs it.
     if: ${{ !github.event.pull_request.draft }}

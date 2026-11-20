@@ -1,10 +1,12 @@
 import os
-import httpx
 
-res = httpx.post(
-    "https://passbook.mobile/api/v1/roll-calls/0193a1b2-7c00-7000-8000-0000000000e1/marks",
-    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}"},
-    json={
+from passbook import PassBook
+
+pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
+
+result = pb.roll_calls.mark(
+    "0193a1b2-7c00-7000-8000-0000000000e1",
+    {
         "marks": [
             {
                 "rollCallId": "0193a1b2-7c00-7000-8000-0000000000e1",
@@ -14,5 +16,4 @@ res = httpx.post(
         ],
     },
 )
-res.raise_for_status()
-print(res.json())
+print(result)
