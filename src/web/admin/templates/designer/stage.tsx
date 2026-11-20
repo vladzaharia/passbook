@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { PRINT_COPY } from '@/shared/copy/print.ts';
-import { SegmentedControl } from '../../../ui/index.ts';
+import { useMemo } from 'react';
+import { ChannelPreviews } from '../../../channel-previews/channel-previews.tsx';
+import type { PreviewSource } from '../../../channel-previews/types.ts';
 import type { DraftAsset } from './model.ts';
 import type { PaperPatch } from './ops-paper.ts';
 import { PaperPreview } from './paper-preview.tsx';
 import { DesignerPreview } from './preview.tsx';
 
-type Tab = 'wallet' | 'paper';
-const TABS = [
-  { value: 'wallet', label: 'Wallet' },
-  { value: 'paper', label: PRINT_COPY.tab },
-] as const;
+const NO_INPUT = {};
 
-/** The designer's preview stage: the wallet card, or the printed ticket on the Paper tab. */
+/**
+ * The designer's preview stage: every channel from the draft, the card from the dry run and the
+ * printed ticket with its layout editor on Paper. Google and Samsung compile the draft's own
+ * wallets block in the browser.
+ */
 export function DesignerStage({
   manifest,
   templateId,
@@ -30,27 +30,34 @@ export function DesignerStage({
   checking: boolean;
   stripUrl?: string | null;
 }) {
-  const [tab, setTab] = useState<Tab>('wallet');
+  const { passJson, assets, assetBase } = card;
+  const source = useMemo<PreviewSource | null>(
+    () =>
+      passJson
+        ? {
+            passJson,
+            assetBaseUrl: assetBase,
+            assetNames: assets.map((a) => a.name),
+            manifest,
+            assets,
+            input: (manifest.sample as PreviewSource['input'] | undefined) ?? NO_INPUT,
+          }
+        : null,
+    [passJson, assets, assetBase, manifest],
+  );
   return (
-    <div className="flex w-full flex-col items-center gap-4">
-      <SegmentedControl
-        label="Preview"
-        options={TABS}
-        value={tab}
-        onValueChange={setTab}
-        className="self-center"
-      />
-      {tab === 'wallet' ? (
-        <DesignerPreview {...card} />
-      ) : (
+    <ChannelPreviews
+      source={source}
+      apple={<DesignerPreview {...card} />}
+      paper={
         <PaperPreview
-          passJson={card.passJson}
+          passJson={passJson}
           manifest={manifest}
           templateId={templateId}
           orgId={orgId}
           onEdit={onPaper}
         />
-      )}
-    </div>
+      }
+    />
   );
 }

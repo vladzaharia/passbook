@@ -1,7 +1,9 @@
 import { Link, Navigate, useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
+import { ChannelStage } from '../../channel-previews/channel-stage.tsx';
+import { previewSource } from '../../channel-previews/source.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import {
   Badge,
@@ -105,16 +107,25 @@ function Loaded({ blueprint: b, tab }: { blueprint: Blueprint; tab: BlueprintTab
   const inputs = flatFields(describeSchema(b.inputSchema));
   const required = inputs.filter((f) => f.required).map((f) => f.label);
   const passJson = preview.data?.passJson;
+  const source = useMemo(() => previewSource(preview.data, b), [preview.data, b]);
   const stage = (size: 'column' | 'card' | 'sheet') =>
     preview.data ? (
-      <BlueprintStage passJson={passJson}>
-        <PassPreviewPanel
-          passJson={preview.data.passJson}
-          assetBaseUrl={preview.data.assetBaseUrl}
-          assetNames={preview.data.assetNames}
-          enter={size !== 'sheet'}
-        />
-      </BlueprintStage>
+      <ChannelStage
+        size={size}
+        source={source}
+        title={b.name}
+        templateId={b.id}
+        apple={
+          <BlueprintStage passJson={passJson}>
+            <PassPreviewPanel
+              passJson={preview.data.passJson}
+              assetBaseUrl={preview.data.assetBaseUrl}
+              assetNames={preview.data.assetNames}
+              enter={size !== 'sheet'}
+            />
+          </BlueprintStage>
+        }
+      />
     ) : preview.isError ? (
       <ErrorState inline error={preview.error} onRetry={() => void preview.refetch()} />
     ) : b.activeVersion ? (

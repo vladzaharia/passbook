@@ -1,7 +1,9 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
+import { ChannelStage } from '../../channel-previews/channel-stage.tsx';
+import { previewSource } from '../../channel-previews/source.ts';
 import { useMode } from '../../lib/mode.ts';
 import { useMintedOnArrival } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
@@ -75,6 +77,10 @@ export function TemplateDetailContent({
     scope.orgId,
     candidate?.version,
   );
+  const source = useMemo(
+    () => previewSource(preview.data, t, { version: candidate?.version }),
+    [preview.data, t, candidate?.version],
+  );
   const life = useTemplateLifecycle(t, canPublish);
   const created = useCreated<TemplateCreated>(`template:${t.id}`);
   const importedVersion = useCreated<string>(`template:${t.id}:version`);
@@ -110,18 +116,27 @@ export function TemplateDetailContent({
     !t.activeVersion && !candidate ? (
       <EmptyState inline art="template" title="No preview available" />
     ) : preview.data ? (
-      <PassPreviewPanel
-        passJson={preview.data.passJson}
-        assetBaseUrl={preview.data.assetBaseUrl}
-        assetNames={preview.data.assetNames}
-        enter={size !== 'sheet' && !minted && deal}
-        mint={mint}
-        label={candidate ? 'Latest draft' : (activeLabel ?? undefined)}
-        // Arrived from an upload or a duplicate: the buddy waves from the Front / Details row.
-        beside={
-          minted ? (
-            <Buddy size="sm" at="end" mood="happy" scene="wave" className="wl-pass-buddy" />
-          ) : undefined
+      <ChannelStage
+        size={size}
+        source={source}
+        title={t.name}
+        templateId={t.id}
+        orgId={scope.orgId}
+        apple={
+          <PassPreviewPanel
+            passJson={preview.data.passJson}
+            assetBaseUrl={preview.data.assetBaseUrl}
+            assetNames={preview.data.assetNames}
+            enter={size !== 'sheet' && !minted && deal}
+            mint={mint}
+            label={candidate ? 'Latest draft' : (activeLabel ?? undefined)}
+            // Arrived from an upload or a duplicate: the buddy waves from the Front / Details row.
+            beside={
+              minted ? (
+                <Buddy size="sm" at="end" mood="happy" scene="wave" className="wl-pass-buddy" />
+              ) : undefined
+            }
+          />
         }
       />
     ) : preview.isError ? (

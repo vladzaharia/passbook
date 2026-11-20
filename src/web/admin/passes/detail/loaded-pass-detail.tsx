@@ -1,7 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
+import { ChannelStage } from '../../../channel-previews/channel-stage.tsx';
+import { previewSource } from '../../../channel-previews/source.ts';
 import { entityLabel } from '../../../lib/entity-label.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import { useLasting, useMintedOnArrival } from '../../../lib/motion.ts';
@@ -123,50 +125,68 @@ export function LoadedPassDetail({
         ? version.data
         : p;
   const showing = picked !== undefined && version.data ? picked : p.version;
+  const channelSource = useMemo(
+    () =>
+      previewSource(source, template.data, {
+        input: p.personalization,
+        version: p.templateVersion,
+      }),
+    [source, template.data, p.personalization, p.templateVersion],
+  );
 
   const stage = (size: 'column' | 'card' | 'sheet') => (
     <div className="relative">
       {size === 'sheet' ? null : <Celebrate when={created.mark?.first === true} />}
-      <PassPreviewPanel
-        passJson={source.passJson}
-        assetBaseUrl={source.assetBaseUrl}
-        assetNames={source.assetNames}
-        transitionName={size === 'sheet' ? undefined : `pass-${p.id}`}
-        enter={deal && picked === undefined && size !== 'sheet'}
-        mint={picked === undefined && !draft ? motion.mint : undefined}
-        settle={motion.settle}
-        dim={voided}
-        removed={removed}
-        unsaved={draft !== null}
-        waiting={waiting}
-        // Browsing versions crossfades in place; a new current version mints the same card.
-        swapKey={picked === undefined ? 'current' : showing}
-        label={picked !== undefined ? `v${showing} of ${p.version}` : `v${p.version}`}
-        className={size === 'card' ? 'gap-2' : undefined}
-        // Any pass can be voided while open: the buddy's seat is kept from the first frame.
-        seat
-        // Just created, the buddy falls onto the Front / Details control and waves at the pass;
-        // just voided, it sheds a tear. It stays there, in every layout.
-        beside={
-          motion.stamp ? (
-            <Buddy
-              key="tear"
-              size="sm"
-              at="end"
-              mood="sad"
-              scene="tear"
-              className="wl-pass-buddy"
-            />
-          ) : minted ? (
-            <Buddy
-              key="wave"
-              size="sm"
-              at="end"
-              mood="happy"
-              scene="wave"
-              className="wl-pass-buddy"
-            />
-          ) : undefined
+      <ChannelStage
+        size={size}
+        source={channelSource}
+        title={entityLabel(p.title, 'Pass')}
+        templateId={p.templateId}
+        orgId={p.orgId}
+        channels={p.channels}
+        apple={
+          <PassPreviewPanel
+            passJson={source.passJson}
+            assetBaseUrl={source.assetBaseUrl}
+            assetNames={source.assetNames}
+            transitionName={size === 'sheet' ? undefined : `pass-${p.id}`}
+            enter={deal && picked === undefined && size !== 'sheet'}
+            mint={picked === undefined && !draft ? motion.mint : undefined}
+            settle={motion.settle}
+            dim={voided}
+            removed={removed}
+            unsaved={draft !== null}
+            waiting={waiting}
+            // Browsing versions crossfades in place; a new current version mints the same card.
+            swapKey={picked === undefined ? 'current' : showing}
+            label={picked !== undefined ? `v${showing} of ${p.version}` : `v${p.version}`}
+            className={size === 'card' ? 'gap-2' : undefined}
+            // Any pass can be voided while open: the buddy's seat is kept from the first frame.
+            seat
+            // Just created, the buddy falls onto the Front / Details control and waves at the pass;
+            // just voided, it sheds a tear. It stays there, in every layout.
+            beside={
+              motion.stamp ? (
+                <Buddy
+                  key="tear"
+                  size="sm"
+                  at="end"
+                  mood="sad"
+                  scene="tear"
+                  className="wl-pass-buddy"
+                />
+              ) : minted ? (
+                <Buddy
+                  key="wave"
+                  size="sm"
+                  at="end"
+                  mood="happy"
+                  scene="wave"
+                  className="wl-pass-buddy"
+                />
+              ) : undefined
+            }
+          />
         }
       />
     </div>
