@@ -63,14 +63,51 @@ describe('fidelityReport statuses', () => {
         ],
       }),
     );
-    expect(r.status).toEqual({ kind: 'omissions', count: 2 });
-    expect(statusLabel(r.status)).toBe('Ready with omissions (2)');
+    expect(r.status).toEqual({ kind: 'omissions', count: 1 });
+    expect(statusLabel(r.status)).toBe('Ready with omissions (1)');
     expect(r.items.map((i) => `${i.severity} ${i.capability}`)).toEqual([
       'difference colors.foreground',
       'omission field.back',
       'omission relevance.beacons',
     ]);
-    expect(omissionKeys(r)).toEqual(['field.back@backFields.terms', 'relevance.beacons@beacons']);
+    expect(omissionKeys(r)).toEqual(['field.back@backFields.terms']);
+  });
+
+  it('tags each item with who notices it and approves only holder and door', () => {
+    const r = report(
+      fixed({
+        items: [
+          item('field.back', 'omitted', 'backFields.a'),
+          item('barcode.format.pdf417', 'omitted', 'barcodes.0'),
+          item('colors.label', 'omitted'),
+          item('role.tier', 'difference'),
+          item('nfc', 'unsupported'),
+          item('relevance.beacons', 'unsupported', 'beacons'),
+        ],
+      }),
+    );
+    expect(r.items.map((i) => `${i.capability} ${i.group}`)).toEqual([
+      'barcode.format.pdf417 door',
+      'colors.label look',
+      'field.back holder',
+      'nfc absent',
+      'relevance.beacons absent',
+      'role.tier look',
+    ]);
+    expect(r.status).toEqual({ kind: 'omissions', count: 2 });
+    expect(omissionKeys(r)).toEqual([
+      'barcode.format.pdf417@barcodes.0',
+      'field.back@backFields.a',
+    ]);
+  });
+
+  it('is Ready when only look and absent items remain', () => {
+    const r = report(
+      fixed({ items: [item('colors.label', 'omitted'), item('nfc', 'unsupported')] }),
+    );
+    expect(r.status).toEqual({ kind: 'ready' });
+    expect(r.items).toHaveLength(2);
+    expect(omissionKeys(r)).toEqual([]);
   });
 
   it('only differences leave the report Ready', () => {
@@ -98,7 +135,7 @@ describe('fidelityReport statuses', () => {
       'nfc@ false',
       'relevance.beacons@beacons true',
     ]);
-    expect(r.status).toEqual({ kind: 'omissions', count: 5 });
+    expect(r.status).toEqual({ kind: 'omissions', count: 4 });
   });
 
   it('blocks when a required capability is anything but native', () => {
@@ -220,7 +257,7 @@ describe('fidelityReport order and hash', () => {
 
   it('pins the hash of a fixed report', async () => {
     expect(await reportHash(report(fixed({ items: [a, b, c, d] })))).toMatchInlineSnapshot(
-      `"00c81dadefcc2d23a327ccc905296a99ec7a4f5e1b549d7ce64e59150199e6de"`,
+      `"c0f4cfffc94ce1659ee946f2e565d598ccefa8033a2e081c775022f462ce903a"`,
     );
   });
 
