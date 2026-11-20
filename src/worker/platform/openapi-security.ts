@@ -12,6 +12,8 @@ export interface KeyAccess {
   anyKey?: boolean;
   /** Limits the claim to doc paths that match. */
   only?: RegExp;
+  /** The guard only documents key access; another guard on the route does the checking. */
+  documentOnly?: true;
 }
 
 /** The scopes a rule accepts, for reads and for the rest. */
@@ -43,6 +45,10 @@ export function scopesForMethod(rule: ScopeRule, method: string): readonly ApiSc
 
 /** Whether a guard declared its key scopes, which puts its routes in the OpenAPI document. */
 export const hasKeyAccess = (guard: object): boolean => accessOf.has(guard);
+
+/** Whether a guard declared key access and enforces it, so a route it covers needs no other decision. */
+export const enforcesKeyAccess = (guard: object): boolean =>
+  accessOf.get(guard)?.documentOnly !== true && accessOf.has(guard);
 
 /** The OpenAPI `security` (and extensions) a route's `auth` declaration writes. */
 export function operationSecurity(
