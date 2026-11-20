@@ -75,16 +75,17 @@ export const TagEndCauseSchema = z.enum([
 export const TagAssignRoleSchema = z.enum(['desk', 'manager', 'never']);
 /** A session's tag level; absent means the org's. */
 export const TagLevelSchema = z.enum(['off', 'basic', 'secure']);
+const TYPES_EMPTY = 'Name at least one tag type, or set the level to off.';
 /**
  * `assign` binds a tag to the scanned pass, `assignAll` to the person. The rest is the door's tag policy: the
  * weakest tag it takes (`secure` refuses a Basic tag, `off` every tag; absent: any), the tag types it takes
- * (`standard` is a tag with no type; absent: all, an empty list: none) and what a Basic tag needs besides.
+ * (`standard` is a tag with no type; absent: all; never empty, `level: off` takes none) and what a Basic tag needs besides.
  */
 export const ScannerTagsSettingsSchema = z.object({
   assign: TagAssignRoleSchema.default('desk'),
   assignAll: TagAssignRoleSchema.default('manager'),
   level: TagLevelSchema.optional(),
-  types: z.array(TagTypeKeySchema).max(12).optional(),
+  types: z.array(TagTypeKeySchema).min(1, TYPES_EMPTY).max(12).optional(),
   confirmBasic: TagConfirmSchema.optional(),
 });
 /** The session's tag rules are the scanner's. */
@@ -144,6 +145,7 @@ export const TAG_ERROR_CODES = [
   'TAG_TYPE_SYSTEM',
   'TAG_TYPE_SCOPE',
   'TAG_TYPED_OFF',
+  'TAG_TYPE_CHOOSE',
 ] as const;
 export const TagErrorCodeSchema = z.enum(TAG_ERROR_CODES);
 

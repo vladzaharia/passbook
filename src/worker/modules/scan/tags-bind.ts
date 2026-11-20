@@ -145,7 +145,13 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     const warnings: Warning[] = [];
     let decision: ReturnType<typeof decideBind> | null = null;
     try {
-      decision = decideBind(tag, active, facts, { scope: req.binding, move: req.move });
+      decision = decideBind(
+        tag,
+        active,
+        facts,
+        { scope: req.binding, move: req.move },
+        ctx.clock.now(),
+      );
     } catch (error) {
       if (!req.preview || !(error instanceof AppError)) throw error;
       if (error.code === 'TAG_LOST') warnings.push('lost');
@@ -223,6 +229,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
             typeId: policy?.type?.id ?? null,
           },
       expiryDays: policy?.expiryDays ?? null,
+      endLapsed: policy?.lapsed ?? [],
       sun: identity.sun,
       bindingId: ctx.ids.id(),
       passId: pass.id,

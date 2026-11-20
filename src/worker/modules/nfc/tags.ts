@@ -54,9 +54,16 @@ export function decideBind(
   active: BindingRow | null,
   pass: PassFacts,
   req: Pick<BindRequest, 'scope' | 'move'>,
+  now: number,
 ): Decision {
   if (tag?.status === 'retired')
     throw conflict('This tag was retired. An admin can restore it.', 'TAG_RETIRED');
+  // A binding past its expiry is over: it ends in this bind's batch, whoever binds next.
+  const lapsed = active !== null && active.expiresAt !== null && active.expiresAt <= now;
+  if (active && lapsed) {
+    if (tag?.lostAt != null && !req.move) throw conflict('This tag was reported lost.', 'TAG_LOST');
+    return { status: 'bound', end: { id: active.id, cause: 'expired' } };
+  }
   if (active) {
     if (sameTarget(active, pass, req.scope))
       return { status: 'already_bound', tagId: active.tagId };
@@ -146,7 +153,7 @@ export async function bindTag(
     if (tag && tag.system !== 'uid')
       throw conflict('This is a Secure tag. Tap it on a scanner.', 'TAG_SECURE_NEEDS_TAP');
     const active = tag ? await activeBinding(ctx.env.DB, tag.id) : null;
-    const decision = decideBind(tag, active, pass, req);
+    const decision = decideBind(tag, active, pass, req, ctx.clock.now());
     if (decision.status === 'already_bound')
       return { status: 'already_bound', tag: await shown(ctx, orgId, mode, decision.tagId) };
     const policy = await bindPolicy(ctx, {
@@ -168,6 +175,7 @@ export async function bindTag(
         ? null
         : { ref, hint, label: req.label ?? null, system: 'uid', typeId: policy.type?.id ?? null },
       expiryDays: policy.expiryDays,
+      endLapsed: policy.lapsed,
       bindingId: ctx.ids.id(),
       passId: pass.id,
       scope: req.scope,

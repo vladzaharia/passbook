@@ -63,7 +63,7 @@ async function place(
     const tag = await tagTarget(ctx.env.DB, tagId);
     if (!tag || tag.orgId !== a.orgId || tag.mode !== a.mode) throw tagGone();
     const active = await activeBinding(ctx.env.DB, tagId);
-    const decision = decideBind(tag, active, pass, { scope, move: false });
+    const decision = decideBind(tag, active, pass, { scope, move: false }, ctx.clock.now());
     if (decision.status === 'already_bound') return shown(ctx, a, tagId);
     const policy = await bindPolicy(ctx, {
       orgId: a.orgId,
@@ -85,6 +85,7 @@ async function place(
       holderOwner: pass.ownerUserId,
       clearsLost: false,
       expiryDays: policy.expiryDays,
+      endLapsed: policy.lapsed,
       audited: rebind !== null,
       source: 'admin',
       actor: { type: 'user', id: a.userId },

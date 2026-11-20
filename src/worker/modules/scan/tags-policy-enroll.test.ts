@@ -58,25 +58,23 @@ describe('a remote request follows the type rules', () => {
     socket.socket.close(1000);
   });
 
-  it('a type with no room on the pass refuses the completion', async () => {
-    await addType(f, { name: 'Wristband' });
+  it('a type with no room on the pass, or for another assignment, is not offered: the tag is Standard', async () => {
+    const only = await addType(f, { name: 'Pass only', scopes: 'pass', perPass: 1 });
     const scanner = await f.device('desk');
     const socket = await f.connect(scanner.id);
     const first = await enrol(scanner, f.read());
-    expect(first.done.status).toBe(200);
+    expect(await typeAndExpiry((await json(first.done)).bindingId)).toMatchObject({
+      type_id: only,
+    });
     const second = await enrol(scanner, f.read(), 'pass', first.pass);
-    expect(second.done.status).toBe(409);
-    expect(await json(second.done)).toMatchObject({ code: 'TAG_TYPE_LIMIT' });
-    socket.socket.close(1000);
-  });
-
-  it('a type that takes a pass only refuses a person-wide request', async () => {
-    await addType(f, { scopes: 'pass' });
-    const scanner = await f.device('desk');
-    const socket = await f.connect(scanner.id);
-    const { done } = await enrol(scanner, f.read(), 'user');
-    expect(done.status).toBe(409);
-    expect(await json(done)).toMatchObject({ code: 'TAG_TYPE_SCOPE' });
+    expect(second.done.status).toBe(200);
+    expect(await typeAndExpiry((await json(second.done)).bindingId)).toMatchObject({
+      type_id: null,
+    });
+    const person = await enrol(scanner, f.read(), 'user');
+    expect(await typeAndExpiry((await json(person.done)).bindingId)).toMatchObject({
+      type_id: null,
+    });
     socket.socket.close(1000);
   });
 });

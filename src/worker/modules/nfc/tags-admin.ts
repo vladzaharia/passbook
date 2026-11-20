@@ -170,6 +170,7 @@ export async function restoreTag(ctx: ServiceContext, a: TagAuthority, id: strin
     holderOwner: last.holderOwner,
     clearsLost: true,
     expiryDays: policy.expiryDays,
+    endLapsed: policy.lapsed,
     audited: true,
     source: 'admin' as const,
     actor: { type: 'user' as const, id: a.userId },

@@ -235,6 +235,7 @@ export const TAG_ERROR_COPY: Record<(typeof TAG_ERROR_CODES)[number], string> = 
   TAG_TYPE_SET: 'This tag already has a type. An admin can change it.',
   TAG_TYPE_SYSTEM: 'This tag type is for another kind of tag. Choose another type.',
   TAG_TYPE_SCOPE: "This tag type can't be assigned that way. Choose another type.",
+  TAG_TYPE_CHOOSE: 'Pick a tag type.',
   TAG_TYPED_OFF: 'This tag type takes tapped tags only. Tap the tag on a scanner.',
 };
 

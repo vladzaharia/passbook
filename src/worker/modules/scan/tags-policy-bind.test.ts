@@ -51,16 +51,37 @@ describe('which type a new tag gets', () => {
     expect(await expiry(res.bindingId)).toBeNull();
   });
 
-  it('several fit: the org default if it is one of them, else Standard', async () => {
-    const a = await addType(f, { name: 'A' });
+  it('several fit: the org default if it is one of them, else the scanner must pick', async () => {
+    await addType(f, { name: 'A' });
     const b = await addType(f, { name: 'B' });
     const s = await f.desk();
-    const none = await bound(await f.bind(s, { card: (await f.pass()).card }));
-    expect(none.type).toBeNull();
+    const { card, pass } = await f.pass();
+    await refusal(await f.bind(s, { card }), 409, 'TAG_TYPE_CHOOSE');
+    expect(await json(await f.bind(s, { card, preview: true }))).toMatchObject({
+      detail: 'Pick a tag type.',
+    });
+    expect(await onPass(pass.id)).toBe(0);
     await setDefaultType(f, b);
     const preferred = await bound(await f.bind(s, { card: (await f.pass()).card }));
     expect(preferred.type).toMatchObject({ id: b });
-    expect(a).not.toBe(b);
+  });
+
+  it('a type that cannot take this bind is not a candidate: scope, typed and room', async () => {
+    const m = await f.manager();
+    await addType(f, { name: 'Pass only', scopes: 'pass' });
+    const user = await addType(f, { name: 'Person', scopes: 'user' });
+    const owner = await f.pass({ owner: true });
+    expect(
+      (await bound(await f.bind(m.scanner, { card: owner.card, binding: 'user' }))).type,
+    ).toMatchObject({ id: user });
+    await clearTypes(f);
+    const wrist = await addType(f, { name: 'Wristband' });
+    const full = await f.pass();
+    expect((await bound(await f.bind(m.scanner, { card: full.card }))).type).toMatchObject({
+      id: wrist,
+    });
+    // The pass has its wristband: a second tag is not offered the type, and is Standard.
+    expect((await bound(await f.bind(m.scanner, { card: full.card }))).type).toBeNull();
   });
 
   it('a type asked for wins over the default', async () => {

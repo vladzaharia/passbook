@@ -30,18 +30,22 @@ describe("a session's tag rules over the API", () => {
       ((await body(device)) as unknown as { settings: { tags?: Tags } }).settings.tags,
     ).toMatchObject(rules);
     const changed = await call('PATCH', `/scanning-sessions/${session.id}`, {
-      settings: { tags: { types: [], confirmBasic: 'manager' } },
+      settings: { tags: { types: ['standard'], confirmBasic: 'manager' } },
     });
     expect(changed.status).toBe(200);
     const detail = await body(changed);
-    expect(detail.settings.tags).toMatchObject({ types: [], confirmBasic: 'manager' });
-    expect(detail.devices[0]?.settings.tags).toMatchObject({ types: [], confirmBasic: 'manager' });
+    expect(detail.settings.tags).toMatchObject({ types: ['standard'], confirmBasic: 'manager' });
+    expect(detail.devices[0]?.settings.tags).toMatchObject({
+      types: ['standard'],
+      confirmBasic: 'manager',
+    });
   });
 
   it('refuses a rule it cannot enforce', async () => {
     const { kit, call } = fixture;
     for (const tags of [
       { confirmBasic: 'owner' },
+      { types: [] },
       { types: Array.from({ length: 13 }, () => kit.fx.ids.id()) },
       { level: 'strict' },
     ]) {
@@ -53,5 +57,17 @@ describe("a session's tag rules over the API", () => {
       });
       expect(res.status, JSON.stringify(tags)).toBe(422);
     }
+  });
+
+  it('names the fix when the type list is empty', async () => {
+    const { kit, call } = fixture;
+    const res = await call('POST', '/scanning-sessions', {
+      orgId: kit.org.id,
+      name: 'Empty types',
+      timeZone: 'UTC',
+      settings: { tags: { types: [] } },
+    });
+    expect(res.status).toBe(422);
+    expect(await res.text()).toContain('Name at least one tag type, or set the level to off.');
   });
 });

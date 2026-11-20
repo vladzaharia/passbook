@@ -89,20 +89,22 @@ export const activeTypesOfSystem = (db: Db, orgId: string, system: string): Prom
     [orgId, system],
   ).then((rows) => withTemplates(db, rows));
 
-/** Active pass-scope bindings on the pass whose tag has this type, not counting the binding a bind ends. */
+/** Live pass-scope bindings on the pass whose tag has this type, not counting the binding a bind ends or one that lapsed. */
 export async function passTypeCount(
   db: Db,
   passId: string,
   typeId: string,
   ending: string | null,
+  now: number,
 ): Promise<number> {
   return (
     (
       await first<{ n: number }>(
         db,
         `SELECT count(*) AS n FROM tag_bindings b JOIN nfc_tags t ON t.id = b.tag_id
-         WHERE b.pass_id = ? AND b.scope = 'pass' AND b.ended_at IS NULL AND t.type_id = ? AND b.id IS NOT ?`,
-        [passId, typeId, ending],
+         WHERE b.pass_id = ? AND b.scope = 'pass' AND b.ended_at IS NULL AND t.type_id = ? AND b.id IS NOT ?
+           AND (b.expires_at IS NULL OR b.expires_at > ?)`,
+        [passId, typeId, ending, now],
       )
     )?.n ?? 0
   );

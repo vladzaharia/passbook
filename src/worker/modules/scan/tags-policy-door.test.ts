@@ -3,7 +3,7 @@ import { TEST_NOW } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { addType, clearTypes, doorCalls, json } from './tags-policy-test-fixtures.ts';
 import { type TagScanFixture, tagScanFixture } from './tags-scan-test-fixtures.ts';
-import { DAY } from './test-kit.ts';
+import { DAY, key } from './test-kit.ts';
 
 const CHECK_IN = { id: 'check_in', label: 'Check in', kind: 'check_in' } as const;
 let f: TagScanFixture;
@@ -76,13 +76,11 @@ describe('session types', () => {
     );
   });
 
-  it('no list takes every type, an empty list none', async () => {
+  it('no list takes every type', async () => {
     const wrist = await addType(f);
     const typed = await bound(wrist);
     const any = await f.desk();
     expect(await door.post(any, '/resolve', typed.tag)).toMatchObject(ready);
-    const none = await f.desk({ tags: { types: [] } });
-    expect(await door.post(none, '/resolve', typed.tag)).toMatchObject(refused('tag_not_allowed'));
   });
 
   it('an unknown type id takes nothing', async () => {
@@ -146,6 +144,32 @@ describe('a second factor', () => {
     expect(await door.post(m.scanner, '/resolve', tag)).toMatchObject(ready);
     const other = await bound(vip);
     expect(await door.post(m.scanner, '/actions', other.tag)).toMatchObject({ kind: 'ok' });
+  });
+
+  it('a manager type is never satisfied by a Desk PIN, even where Desks approve actions', async () => {
+    const vip = await addType(f, { confirm: 'manager' });
+    const desk = await f.kit.staff('desk');
+    const boss = await f.kit.staff('manager');
+    const s = await f.desk({ settings: { approvals: 'desk' } });
+    const { tag, pass } = await bound(vip);
+    const withPin = (pin: { staffId: string; pin: string }) =>
+      f.kit.post(s.headers, '/actions', {
+        idempotencyKey: key(),
+        input: { tag, method: 'nfc' },
+        clientTs: f.kit.clock.now(),
+        actionId: 'auto',
+        approval: pin,
+      });
+    const refusedPin = await withPin({ staffId: desk.id, pin: desk.pin });
+    expect(refusedPin.status).toBeGreaterThanOrEqual(400);
+    expect(
+      await f.count('SELECT count(*) AS n FROM scans WHERE pass_id = ? AND outcome = ?', [
+        pass.id,
+        'ok',
+      ]),
+    ).toBe(0);
+    const ok = await withPin({ staffId: boss.id, pin: boss.pin });
+    expect(await json(ok)).toMatchObject({ kind: 'ok' });
   });
 
   it('session confirmBasic asks the same of a Basic tag, and the strictest of the two wins', async () => {

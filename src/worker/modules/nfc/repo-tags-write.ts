@@ -58,14 +58,15 @@ export type EndCause =
   | 'replaced'
   | 'moved'
   | 'tag_retired'
-  | 'offboard';
+  | 'offboard'
+  | 'expired';
 
 /** Ends one active binding. The batch is refused if it already ended. */
 export function endBinding(
   g: Grant,
   binding: { id: string },
   cause: EndCause,
-  actor: TagActor,
+  actor: { type: TagActor['type'] | 'system'; id: string },
   now: number,
 ): GrantedStatement {
   return g.joined('tag_bindings', {
@@ -95,7 +96,9 @@ export interface BindPlan {
   scope: 'pass' | 'user';
   userId: string | null;
   /** The active binding this one replaces or takes over. */
-  end: { id: string; cause: 'replaced' | 'moved' } | null;
+  end: { id: string; cause: 'replaced' | 'moved' | 'expired' } | null;
+  /** Other bindings of this holder that lapsed: they end in this batch, so they hold up no limit. */
+  endLapsed?: readonly string[];
   /** The pass's credential generation and owner read with the plan: pinned at commit, kept on the binding. */
   holderGeneration: number;
   holderOwner: string | null;
@@ -158,7 +161,21 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
   else if (p.sun) consumeSun(g, p.tagId, p.sun, now);
   if (p.clearsLost)
     g.update('nfc_tags', { set: { lost_at: null, lost_by: null }, where: { id: p.tagId } });
-  if (p.end) endBinding(g, p.end, p.end.cause, p.actor, now);
+  for (const id of p.endLapsed ?? [])
+    if (id !== p.end?.id)
+      g.joined('tag_bindings', {
+        via: 'tag_id',
+        where: { id, ended_at: null },
+        set: { ended_at: now, ended_by_type: 'system', ended_by: 'expiry', end_cause: 'expired' },
+      });
+  if (p.end)
+    endBinding(
+      g,
+      p.end,
+      p.end.cause,
+      p.end.cause === 'expired' ? { type: 'system', id: 'expiry' } : p.actor,
+      now,
+    );
   const insert = g.insertJoined('tag_bindings', {
     parents: { tag_id: p.tagId, pass_id: p.passId },
     columns: [

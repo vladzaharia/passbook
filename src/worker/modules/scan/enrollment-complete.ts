@@ -77,7 +77,13 @@ async function complete(
     const tag = await tagByRef(db, orgId, mode, ref);
     await assertReadMatches(ctx, actor, identity, tag);
     const active = tag ? await activeBinding(db, tag.id) : null;
-    const decision = decideBind(tag, active, facts, { scope: row.scope, move: false });
+    const decision = decideBind(
+      tag,
+      active,
+      facts,
+      { scope: row.scope, move: false },
+      ctx.clock.now(),
+    );
     const now = ctx.clock.now();
     const checks = [
       exactlyOne(
@@ -145,6 +151,7 @@ async function complete(
         ? null
         : { ref, hint, label: null, system: identity.system, typeId: policy.type?.id ?? null },
       expiryDays: policy.expiryDays,
+      endLapsed: policy.lapsed,
       sun: identity.sun,
       bindingId: ctx.ids.id(),
       passId: pass.id,

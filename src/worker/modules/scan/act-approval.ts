@@ -88,11 +88,14 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
     );
   const sized = action.kind === 'add' || action.kind === 'take';
   const max = typeof action.amount === 'object' ? action.amount.max : null;
-  const deskOk = deskMayApprove(
-    pa.settings,
-    action,
-    sized && max !== null && amountOf(action, req.amount) > max,
-  );
+  // A type that asks for a Manager is never satisfied by a Desk PIN, whatever the session allows for actions.
+  const deskOk =
+    actor.tag?.confirm !== 'manager' &&
+    deskMayApprove(
+      pa.settings,
+      action,
+      sized && max !== null && amountOf(action, req.amount) > max,
+    );
   const checks = [
     scanPolicy(pa, {
       kind: 'act',

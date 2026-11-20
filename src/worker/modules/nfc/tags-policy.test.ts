@@ -44,22 +44,23 @@ describe('a typed ID from the console', () => {
     expect(await bindingOf(tag.binding?.id ?? '')).toMatchObject({ type_id: typeId });
   });
 
-  it('a type that takes tapped tags only refuses a typed ID, whether asked for or picked', async () => {
+  it('a type that takes tapped tags only refuses a typed ID when asked for, and is not picked', async () => {
     const { typeId, pass, authority } = await setup({ typed: false });
-    for (const req of [{ typeId }, {}])
-      await refused(
-        bindTag(f.kit.ctx, authority, { uid: f.nextUid(), passId: pass.id, scope: 'pass', ...req }),
-        'TAG_TYPED_OFF',
-      );
-    expect(
-      (
-        await first<{ n: number }>(
-          f.kit.env.DB,
-          'SELECT count(*) AS n FROM tag_bindings WHERE pass_id = ?',
-          [pass.id],
-        )
-      )?.n,
-    ).toBe(0);
+    await refused(
+      bindTag(f.kit.ctx, authority, {
+        uid: f.nextUid(),
+        passId: pass.id,
+        scope: 'pass',
+        typeId,
+      }),
+      'TAG_TYPED_OFF',
+    );
+    const { tag } = await bindTag(f.kit.ctx, authority, {
+      uid: f.nextUid(),
+      passId: pass.id,
+      scope: 'pass',
+    });
+    expect(tag.type).toBeNull();
   });
 
   it('refuses a Secure type: a typed ID is a UID', async () => {
@@ -79,7 +80,12 @@ describe('a typed ID from the console', () => {
     });
     expect(first.tag.type).toMatchObject({ name: 'Wristband' });
     await refused(
-      bindTag(f.kit.ctx, one.authority, { uid: f.nextUid(), passId: one.pass.id, scope: 'pass' }),
+      bindTag(f.kit.ctx, one.authority, {
+        uid: f.nextUid(),
+        passId: one.pass.id,
+        scope: 'pass',
+        typeId: one.typeId,
+      }),
       'TAG_TYPE_LIMIT',
     );
     const user = await setup({ scopes: 'pass' }, { owner: true });

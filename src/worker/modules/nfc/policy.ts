@@ -6,6 +6,7 @@ import { type Candidate, candidateById } from '../scan/repo-lookup.ts';
 import { levelAllows } from '../scan/tag-assurance.ts';
 import { resolveCandidateReadTemplates } from '../scan/template-read-snapshot.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
+import { lapsedOnHolder } from './repo-tag-bindings.ts';
 import { activeTypesOfSystem, getTagType, passTypeCount } from './repo-tag-types.ts';
 import type { TagRow } from './repo-tags.ts';
 import { assuranceOfSystem } from './systems/registry.ts';
@@ -117,6 +118,8 @@ export interface BindPolicy {
   type: TagType | null;
   /** The binding ends this many days after it is made. */
   expiryDays: number | null;
+  /** Bindings of this holder that already lapsed: the bind ends them with its own. */
+  lapsed: string[];
 }
 
 /** The type a bind uses: the tag's own, the one asked for, or the one that fits best. */
@@ -150,12 +153,25 @@ async function bindType(
       );
     return asked;
   }
-  const fits = (await activeTypesOfSystem(db, i.orgId, i.system)).filter(
-    (t) => typeFit(typeFacts(t), templateId, uses) === 'ok',
-  );
+  // Types of the system that fit the pass and can take this very bind: its scope, a typed ID, room on the pass.
+  const fits: TagType[] = [];
+  for (const t of await activeTypesOfSystem(db, i.orgId, i.system)) {
+    if (typeFit(typeFacts(t), templateId, uses) !== 'ok') continue;
+    if (t.scopes !== 'both' && t.scopes !== i.scope) continue;
+    if (i.typed && !t.typed) continue;
+    if (
+      i.scope === 'pass' &&
+      (await passTypeCount(db, i.passId, t.id, i.ending, ctx.clock.now())) >= t.perPass
+    )
+      continue;
+    fits.push(t);
+  }
   if (fits.length === 1) return fits[0] ?? null;
+  if (fits.length === 0) return null;
   const preferred = (await getOrgSettings(ctx, i.orgId))['nfc.tags'].defaultType;
-  return fits.find((t) => t.id === preferred) ?? null;
+  const chosen = fits.find((t) => t.id === preferred);
+  if (!chosen) throw new ConflictError('Pick a tag type.', 'TAG_TYPE_CHOOSE');
+  return chosen;
 }
 
 /**
@@ -170,6 +186,12 @@ export async function bindPolicy(ctx: ServiceContext, i: BindPolicyInput): Promi
   if (!candidate || !manifest) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   const uses = manifest.scan?.tags?.uses;
   const type = await bindType(ctx, i, candidate.pass.templateId, uses);
+  const now = ctx.clock.now();
+  const lapsed = await lapsedOnHolder(
+    ctx.env.DB,
+    { passId: i.passId, userId: candidate.pass.ownerUserId },
+    now,
+  );
   const fit = typeFit(type ? typeFacts(type) : null, candidate.pass.templateId, uses);
   if (fit === 'template')
     throw new ConflictError("This tag type can't go on this pass.", 'TAG_TYPE_MISMATCH');
@@ -178,7 +200,7 @@ export async function bindPolicy(ctx: ServiceContext, i: BindPolicyInput): Promi
       `This pass doesn't take ${type?.use ?? STANDARD_USE} tags.`,
       'TAG_USE_MISMATCH',
     );
-  if (!type) return { type, expiryDays: null };
+  if (!type) return { type, expiryDays: null, lapsed };
   if (type.scopes !== 'both' && type.scopes !== i.scope)
     throw new ConflictError(
       "This tag type can't be assigned that way. Choose another type.",
@@ -191,8 +213,8 @@ export async function bindPolicy(ctx: ServiceContext, i: BindPolicyInput): Promi
     );
   if (
     i.scope === 'pass' &&
-    (await passTypeCount(ctx.env.DB, i.passId, type.id, i.ending)) >= type.perPass
+    (await passTypeCount(ctx.env.DB, i.passId, type.id, i.ending, now)) >= type.perPass
   )
     throw new ConflictError(`This pass has its ${type.name} already.`, 'TAG_TYPE_LIMIT');
-  return { type, expiryDays: type.bindingDays };
+  return { type, expiryDays: type.bindingDays, lapsed };
 }
