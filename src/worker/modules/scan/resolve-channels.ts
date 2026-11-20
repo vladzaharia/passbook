@@ -21,14 +21,16 @@ export async function channelVerdict(
 ): Promise<ChannelVerdict> {
   const nfc = input.method === 'nfc' && 'passId' in input;
   const picked = input.method === 'manual' && 'passId' in input;
-  if ((!nfc && !picked && !matchedBy) || matchedBy === 'print' || one.channelRules === false)
-    return null;
+  if ((!nfc && !picked && !matchedBy) || matchedBy === 'print') return null;
+  // A camera or wedge read that matched the lookup value alone (the barcode is something else) is a typed number.
+  const alone = matchedBy === 'lookup' && input.method !== 'manual';
+  if (one.channelRules === false) return alone ? { kind: 'typed' } : null;
   const lookup = matchedBy === 'lookup' || matchedBy === 'serial';
   const typed = picked || (input.method === 'manual' && lookup);
   const door = await doorChannels(ctx, one.pass, lookup || picked);
   if (nfc) return door.nfcOn ? null : { kind: 'off', channel: 'nfc' };
   if (door.digitalOff) return typed ? { kind: 'typed' } : { kind: 'off', channel: door.named };
-  return lookup && (door.rotatedAfterRetire || door.printed) ? { kind: 'typed' } : null;
+  return lookup && (alone || door.rotatedAfterRetire || door.printed) ? { kind: 'typed' } : null;
 }
 
 /**

@@ -251,9 +251,16 @@ export async function newCredentialRefs(
   source: TransferPass,
   build: TransferBuild,
 ): Promise<string[]> {
+  return [...new Set((await newCredentialEntries(ctx, source, build)).map((entry) => entry.ref))];
+}
+async function newCredentialEntries(
+  ctx: ServiceContext,
+  source: TransferPass,
+  build: TransferBuild,
+): Promise<CredentialReference[]> {
   const input = build.artifact.template.manifest.scan?.lookup?.input;
   const lookupValue = input ? lookupValueOf(build.content.personalization, input) : null;
-  const refs = await credentialReferences(ctx.env, source.pass.orgId, source.pass.mode, {
+  return credentialReferences(ctx.env, source.pass.orgId, source.pass.mode, {
     serial: build.credentials.serial,
     scanCode: build.credentials.scanCode,
     barcodeMessage: primaryBarcodeMessage(build.artifact.passJson),
@@ -261,7 +268,6 @@ export async function newCredentialRefs(
     lookupValue,
     lookupHash: build.artifact.lookupHash,
   });
-  return [...new Set(refs.map((entry) => entry.ref))];
 }
 /**
  * The rebuilt credential cannot differ from the live one: every reference that is not freshly
@@ -288,20 +294,26 @@ export async function unchangedCredential(
     : undefined;
 }
 
-/** A new code keeps the desk lookup value (member number, email): it is not a credential. */
+/**
+ * A new code keeps the desk lookup value (member number, email): it is not a credential. A ref that
+ * the barcode, scan code or serial shares with it (Henry's barcode is the member id) stays retired.
+ */
 export async function settleRotation(
   ctx: ServiceContext,
   source: TransferPass,
   build: TransferBuild,
   authorityKind: string,
 ): Promise<{ old: CredentialReference[]; targetRefs: string[] }> {
-  const [retired, built] = await Promise.all([
-    retiredCredentials(ctx, source),
-    newCredentialRefs(ctx, source, build),
-  ]);
+  const retired = await retiredCredentials(ctx, source);
+  const built = await newCredentialRefs(ctx, source, build);
+  const shared = new Set(
+    [...retired, ...(await newCredentialEntries(ctx, source, build))]
+      .filter((e) => e.kind !== 'lookup')
+      .map((e) => e.ref),
+  );
   const kept = new Set(
     authorityKind === 'self-rotate'
-      ? retired.filter((e) => e.kind === 'lookup').map((e) => e.ref)
+      ? retired.filter((e) => e.kind === 'lookup' && !shared.has(e.ref)).map((e) => e.ref)
       : [],
   );
   return {
