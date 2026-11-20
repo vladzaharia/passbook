@@ -1,0 +1,236 @@
+/* Trays (handheld design 6): a short bottom sheet over the dock, and the keypad inside it. */
+.scan-tray {
+  position: fixed;
+  z-index: 50;
+  inset-inline: 0;
+  inset-block-end: var(--tray-bottom, 0px);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  max-height: calc(var(--tray-room, 100dvh) - env(safe-area-inset-top, 0px) - 96px);
+  padding: 0 16px max(20px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+  border-radius: 28px 28px 0 0;
+  background: var(--scan-card);
+  color: var(--sd-body);
+  font-family: var(--pk-font-sans);
+  box-shadow: 0 -12px 40px rgb(0 0 0 / 0.35);
+  outline: none;
+}
+.scan-tray[data-fixed] {
+  height: min(var(--tray-h), calc(var(--tray-room, 100dvh) - env(safe-area-inset-top, 0px) - 96px));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scan-tray[data-fixed] {
+    transition: height 200ms var(--wl-ease-out);
+  }
+}
+.scan-tray :focus-visible {
+  outline: 2px solid var(--sd-accent);
+  outline-offset: 2px;
+}
+.scan-tray-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.scan-tray-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 56px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--sd-fill-gray);
+  color: var(--sd-strong);
+  font: 600 18px / 22px var(--pk-font-sans);
+  cursor: pointer;
+}
+.scan-tray-btn[data-variant="filled"] {
+  background: var(--sd-accent);
+  color: var(--scan-accent-on);
+}
+.scan-tray-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Keypad. */
+.scan-keypad {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.scan-key {
+  display: grid;
+  place-items: center;
+  height: clamp(56px, 7.1dvh, 60px);
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: var(--sd-fill-gray);
+  color: var(--sd-strong);
+  font: 600 28px / 1 var(--pk-font-sans);
+  font-variant-numeric: tabular-nums;
+  touch-action: manipulation;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.scan-key[data-kind="delete"],
+.scan-key[data-kind="mode"] {
+  background: none;
+}
+.scan-key[data-kind="mode"] {
+  color: var(--sd-accent);
+  font-size: 20px;
+  letter-spacing: 0.02em;
+}
+.scan-key:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scan-key {
+    transition: transform 80ms var(--wl-ease-out);
+  }
+  .scan-key:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+}
+
+/* Enter code. */
+.scan-code-row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+.scan-code-field {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 56px;
+  padding: 0 16px;
+  border: 1.5px solid var(--sd-rule);
+  border-radius: 16px;
+  background: var(--sd-inset);
+  color: var(--sd-strong);
+  font: 500 24px / 32px var(--pk-font-mono);
+  letter-spacing: 0.04em;
+}
+.scan-code-field:focus {
+  border-color: var(--sd-accent);
+  outline: none;
+}
+.scan-code-field:disabled {
+  opacity: 0.5;
+}
+.scan-code-x {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: none;
+  color: var(--sd-strong);
+  cursor: pointer;
+}
+.scan-code-results {
+  flex: none;
+  min-height: 0;
+  max-height: 232px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.scan-code-note {
+  margin: 0;
+  color: var(--sd-muted);
+  font: 400 15px / 20px var(--pk-font-sans);
+}
+.scan-code-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+.scan-code-form .scan-lookup-row {
+  min-height: 56px;
+  padding-block: 6px;
+}
+.scan-code-form .scan-lookup-avatar {
+  width: 40px;
+  height: 40px;
+}
+.scan-code-keys {
+  display: flex;
+  gap: 8px;
+}
+.scan-code-keys > .scan-tray-btn[data-kind="mode"] {
+  flex: none;
+  width: 96px;
+}
+.scan-code-keys > .scan-tray-btn:not([data-kind="mode"]) {
+  flex: 1;
+}
+.scan-tray .scan-lookup-confirm {
+  min-height: 0;
+}
+.scan-code-retry {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sd-accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* The verdict compacts to its band, under the capsule, while a tray is open over it (design 6). */
+@media (max-width: 639.98px) {
+  body:has(.scan-tray) .scan-card-layer[data-mode="result"] {
+    align-items: flex-start;
+  }
+  body:has(.scan-tray) .scan-result-body,
+  body:has(.scan-tray) .scan-glance-open {
+    display: none;
+  }
+  body:has(.scan-tray) .scan-result[data-density="glance"] .scan-result-band {
+    min-height: 0;
+    padding: 14px 20px;
+  }
+  body:has(.scan-tray) .scan-result[data-density="glance"] .scan-verdict-glyph {
+    width: 48px;
+    height: 44px;
+    margin: 0;
+  }
+  body:has(.scan-tray) .scan-result[data-density="glance"] .scan-result-band h1 {
+    font-size: 29px;
+    line-height: 34px;
+    letter-spacing: -0.025em;
+  }
+  body:has(.scan-tray) .scan-result[data-density="glance"] .scan-result-band p {
+    display: -webkit-box;
+    margin-top: 2px;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    font-size: 17px;
+    line-height: 22px;
+  }
+}
+.scan-code-form .scan-lookup-results {
+  min-height: 0;
+}
