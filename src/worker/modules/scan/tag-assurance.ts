@@ -33,6 +33,12 @@ export function tagFit(
   return meetsAssurance(tag, templateMinAssurance(templates.active.manifest)) ? 'ok' : 'low';
 }
 
+/** A session's tag level: `off` takes no tag, `secure` only Secure ones. Absent: any. */
+export const levelAllows = (
+  level: 'off' | 'basic' | 'secure' | undefined,
+  tag: Assurance,
+): boolean => level === undefined || level === 'basic' || (level === 'secure' && tag === 'secure');
+
 export const candidateTakesTag = (
   ctx: ServiceContext,
   c: Candidate,

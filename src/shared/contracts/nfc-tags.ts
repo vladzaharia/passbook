@@ -79,6 +79,8 @@ export const TagLevelSchema = z.enum(['off', 'basic', 'secure']);
 export const ScannerTagsSettingsSchema = z.object({
   assign: TagAssignRoleSchema.default('desk'),
   assignAll: TagAssignRoleSchema.default('manager'),
+  /** The weakest tag a door takes: `secure` refuses a Basic tag, `off` every tag. Absent: any. */
+  level: TagLevelSchema.optional(),
 });
 /** The session's tag rules: the level, the types a door takes (`standard` is a tag with no type) and what a Basic tag needs. */
 export const SessionTagRulesSchema = ScannerTagsSettingsSchema.extend({

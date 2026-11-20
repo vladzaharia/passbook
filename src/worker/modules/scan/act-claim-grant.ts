@@ -2,7 +2,7 @@ import type { Grant } from '../../platform/authority.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { writePart } from '../../platform/authority-include.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { consumeSun, sunFreshCheck } from '../nfc/repo-sun.ts';
+import { consumeSun, markFollowedUp, sunFollowCheck, sunFreshCheck } from '../nfc/repo-sun.ts';
 import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import type { ScanActor } from './guard.ts';
 import type { Claim } from './repo-scans.ts';
@@ -27,7 +27,12 @@ export function claimGrant(ctx: ServiceContext, actor: ScanActor, claim: Claim):
       ...(sun ? ['nfc_tag_sun'] : []),
     ],
     ...(sun
-      ? { checks: [sunFreshCheck(sun.tagId, sun.seen)], codes: { stale: 'TAG_SUN_REPLAY' } }
+      ? {
+          checks: sun.seen.followUp
+            ? sunFollowCheck(sun.tagId, sun.seen)
+            : sunFreshCheck(sun.tagId, sun.seen),
+          codes: { stale: 'TAG_SUN_REPLAY' },
+        }
       : {}),
   });
 }
@@ -37,6 +42,8 @@ export function claimGrant(ctx: ServiceContext, actor: ScanActor, claim: Claim):
  * batch tells which). The row comes back with the `at` that owns this generation.
  */
 export function claimOnGrant(g: Grant, claim: Claim) {
+  // The counter this scan consumed, for its follow-ups. A follow-up consumes none.
+  const used = claim.sun && !claim.sun.followUp ? claim.sun : null;
   return g.upsert(
     'scans',
     [
@@ -54,6 +61,7 @@ export function claimOnGrant(g: Grant, claim: Claim) {
       'request_hash',
       'method',
       'tag_id',
+      ...(used ? ['sun_ctr', 'sun_key_version'] : []),
       'state',
       'client_ts',
       'at',
@@ -73,6 +81,7 @@ export function claimOnGrant(g: Grant, claim: Claim) {
       claim.requestHash,
       claim.method,
       claim.tagId ?? null,
+      ...(used ? [used.ctr, used.keyVersion] : []),
       'pending',
       claim.clientTs,
       claim.now,
@@ -87,9 +96,14 @@ export function tagSeenOnGrant(g: Grant, claim: Claim): void {
     g.update('nfc_tags', { set: { last_seen_at: claim.now }, where: { id: claim.tagId } });
 }
 
-/** A SUN read is used when its scan is claimed: the tag's counter moves up to it. */
+/**
+ * A SUN read is used when its scan is claimed: the tag's counter moves up to it. A follow-up marks its scan
+ * followed up instead, once.
+ */
 export function sunSeenOnGrant(g: Grant, claim: Claim): void {
-  if (claim.tagId && claim.sun) consumeSun(g, claim.tagId, claim.sun, claim.now);
+  if (!claim.tagId || !claim.sun) return;
+  if (claim.sun.followUp) markFollowedUp(g, claim.sun.followUp, claim.now);
+  else consumeSun(g, claim.tagId, claim.sun, claim.now);
 }
 
 /** The one-time keyset initialization rides the claim's grant instead of a claim-proving predicate. */

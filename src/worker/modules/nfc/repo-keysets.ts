@@ -144,3 +144,31 @@ export async function versionEnvelopes(
     envelope: envelopeOf(r),
   }));
 }
+
+export interface OrgVersionEnvelope extends VersionEnvelope {
+  keysetId: string;
+  mode: Mode;
+}
+
+/** Every key version of every keyset of the org, both modes and disabled ones, to check a new key against. */
+export async function orgVersionEnvelopes(
+  db: D1Database,
+  orgId: string,
+): Promise<OrgVersionEnvelope[]> {
+  const rows = await all<
+    EnvelopeRaw & { id: string; version: number; state: KeyState; keyset_id: string; mode: Mode }
+  >(
+    db,
+    `SELECT k.id, k.version, k.state, k.keyset_id, s.mode, k.kek_version, k.iv, k.wrapped_dek, k.ciphertext
+      FROM nfc_tag_keys k JOIN nfc_tag_keysets s ON s.id = k.keyset_id WHERE s.org_id = ? LIMIT 5000`,
+    [orgId],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    version: r.version,
+    state: r.state,
+    keysetId: r.keyset_id,
+    mode: r.mode,
+    envelope: envelopeOf(r),
+  }));
+}

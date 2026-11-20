@@ -79,6 +79,7 @@ export async function verifySunTap(
         ref,
         hint,
         keysetId: keyset.id,
+        slug: keyset.slug,
         keyVersion: key.version,
         ctr: verified.read.counter,
       },

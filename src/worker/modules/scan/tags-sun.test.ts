@@ -76,7 +76,14 @@ describe('the SUN plugin, NXP AN12196 vectors', () => {
     const { ref } = await tagRef(f.kit.env, f.kit.org.id, 'live', '04de5f1eacc040');
     expect(res).toEqual({
       ok: true,
-      proof: { ref, hint: ref.slice(0, 4).toUpperCase(), keysetId: an.id, keyVersion: 1, ctr: 61 },
+      proof: {
+        ref,
+        hint: ref.slice(0, 4).toUpperCase(),
+        keysetId: an.id,
+        slug: an.slug,
+        keyVersion: 1,
+        ctr: 61,
+      },
     });
     // The URL names the keyset; the reader's own UID is ignored.
     const other = await verifySunTap(f.kit.ctx, f.kit.org.id, 'live', {
@@ -165,6 +172,13 @@ describe('a SUN read at the door', () => {
       [t.tagId],
     );
     expect(ok?.n).toBe(1);
+    // The losers are on the tag's record, as a sequential replay is.
+    const lost = await first<{ n: number }>(
+      f.kit.env.DB,
+      "SELECT count(*) AS n FROM scans WHERE tag_id = ? AND reason = 'tag_invalid'",
+      [t.tagId],
+    );
+    expect(lost?.n).toBe(2);
   });
 
   it('refuses a refused tag read too, and uses the read up', async () => {
@@ -331,7 +345,7 @@ describe('keysets and keys', () => {
   it('logs a gap and refuses a tag on another keyset', () => {
     const logs: unknown[] = [];
     const ctx = { ...f.kit.ctx, log: { info: (...a: unknown[]) => logs.push(a) } } as never;
-    const proof = { ref: 'r', hint: 'RRRR', keysetId: 'k', keyVersion: 1, ctr: 2000 };
+    const proof = { ref: 'r', hint: 'RRRR', keysetId: 'k', slug: 's', keyVersion: 1, ctr: 2000 };
     const stored = { tagId: 't', system: 'sun', keysetId: 'k', keyVersion: 1, ctr: 5 };
     expect(sunStale(ctx, 'o', proof, stored)).toBeNull();
     expect(JSON.stringify(logs)).toContain('TAG_SUN_GAP');

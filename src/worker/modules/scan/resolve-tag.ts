@@ -12,13 +12,7 @@ import {
   credentialTombstoneRefsForInput,
   snapshotCredentialEnv,
 } from './credential-input.ts';
-import {
-  chooseTagPass,
-  planTagReads,
-  type TagId,
-  tagReadOf,
-  verifiedSunId,
-} from './evaluate-tag.ts';
+import { chooseTagPass, planTagReads, tagReadOf } from './evaluate-tag.ts';
 import { missCounterRead, refuseOverCap } from './misses.ts';
 import { scanAuthorizedStmt, scanReadAuthority } from './repo-read-authority.ts';
 import { defaultAction, resolveOutcome } from './resolve-outcome.ts';
@@ -26,6 +20,7 @@ import { resolveObserved, unknown } from './resolve-outcome-observed.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { countTagMiss, type TagAct, tagRefusal, tagUnknown, withTagView } from './tag-scan.ts';
+import { type TagId, verifiedSunId } from './tags-sun.ts';
 
 type TagInput = Extract<ActRequestInput['input'], { tag: unknown }>;
 type ResolveRequest = Omit<z.infer<typeof ScanResolveRequestSchema>, 'input'>;
@@ -144,7 +139,7 @@ export async function actTag(
     true,
     'defer',
   );
-  const plan = await planTagReads(ctx, actor, read.id, credentials, req.overrideOf);
+  const plan = await planTagReads(ctx, actor, read.id, credentials, req.overrideOf, true);
   let view: Awaited<ReturnType<typeof chooseTagPass>> = null;
   const tag: TagAct = {
     ref: plan.ref,
