@@ -36,11 +36,12 @@
     "identity:add": "node tools/identity-add.ts",
     "deploy:check": "node tools/deploy.ts --check",
     "deploy": "node tools/deploy.ts",
-    "check:rules": "node tools/check-log-codes.ts && node tools/check-sizes.ts && node tools/check-sql-owner.ts && node tools/authority-scope.ts --strict && knip",
+    "check:rules": "node tools/check-log-codes.ts && node tools/check-sizes.ts && node tools/check-sql-owner.ts && node tools/check-openapi.ts && node tools/authority-scope.ts --strict && knip",
     "check": "npm run gen && npm run ci:lint && npm run check:rules && npm run typecheck && npm run test && npm run build",
     "dev:oidc": "node test/mock-oidc/server.ts 5174"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "9.1.0",
     "@cfworker/json-schema": "4.1.4",
     "@hono/zod-openapi": "1.6.3",
     "@pdf-lib/fontkit": "1.1.1",

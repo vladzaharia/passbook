@@ -1,10 +1,13 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { stmt } from '../../platform/db.ts';
-import type { TemplateAuthority } from '../templates/access.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { templateAuthorityPredicate } from '../templates/repo-authority.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
 import { projectionPolicy } from './projection-contract.ts';
+import {
+  type ProjectionAuthority,
+  versionAuthorIndependentSql,
+} from './projection-system-authority.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import type { ProjectionCandidate } from './repo-projection-store.ts';
 import { samsungProjectionEvidencePredicateSql } from './repo-samsung-verification.ts';
@@ -24,12 +27,22 @@ function currentSourceAndAccount(alias: string): string {
         AND source.content_hash = ${alias}.content_hash AND version.created_by IS ${alias}.version_author_id)`;
 }
 function guard(
-  authority: TemplateAuthority,
+  authority: ProjectionAuthority,
   capability: 'templates:author' | 'templates:review' | 'templates:publish',
   orgSql: string,
   mode: Mode,
   now: number,
 ) {
+  if (authority.kind === 'system') {
+    // The author role writes candidates; the reviewer role approves and publishes. The org must be active.
+    const valid =
+      authority.mode === mode &&
+      authority.role === (capability === 'templates:author' ? 'author' : 'reviewer');
+    return {
+      sql: `? = 1 AND (${orgSql}) = ? AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = ? AND o.status = 'active')`,
+      params: [valid ? 1 : 0, authority.orgId, authority.orgId],
+    };
+  }
   const valid =
     authority.kind === 'session' && authority.capability === capability && authority.mode === mode;
   const predicate = templateAuthorityPredicate(authority, orgSql, now);
@@ -39,7 +52,7 @@ function guard(
 export function insertProjectionCandidateStmt(
   db: D1Database,
   c: ProjectionCandidate,
-  authority: TemplateAuthority,
+  authority: ProjectionAuthority,
   now: number,
 ): D1PreparedStatement {
   const auth = guard(authority, 'templates:author', 'source_scope.org_id', c.mode, now);
@@ -118,7 +131,7 @@ export function insertProjectionApprovalStmt(
   db: D1Database,
   a: ApprovalRow,
   c: ProjectionCandidate,
-  authority: TemplateAuthority,
+  authority: ProjectionAuthority,
   now: number,
 ): D1PreparedStatement {
   const auth = guard(authority, 'templates:review', 'c.org_id', c.mode, now);
@@ -129,7 +142,7 @@ export function insertProjectionApprovalStmt(
     (id, candidate_id, candidate_hash, reviewer_id, created_at, credential_keyset_commitment)
     SELECT ?, c.id, c.candidate_hash, ?, ?, c.credential_keyset_commitment FROM template_candidates c
     WHERE c.id = ? AND c.org_id = ? AND c.mode = ? AND c.provider = ? AND c.candidate_hash = ?
-      AND c.author_id != ? AND (c.version_author_id IS NULL OR c.version_author_id != ?)
+      AND c.author_id != ? AND ${versionAuthorIndependentSql('c', '?')}
       AND ? = ? AND c.adapter_revision = ? AND c.adapter_capabilities = ? AND c.audience_policy_revision = ?
       AND c.credential_keyset_commitment = ${pinnedKeysetSql}
       AND (${currentSourceAndAccount('c')}) AND (${auth.sql})`,
@@ -160,7 +173,7 @@ export function insertProjectionReleaseStmt(
     id: string;
     candidate: ProjectionCandidate;
     approval: ApprovalRow;
-    authority: TemplateAuthority;
+    authority: ProjectionAuthority;
     expectedGeneration: number;
     expectedReleaseId: string | null;
     action: 'release' | 'rollback';
@@ -185,7 +198,7 @@ export function insertProjectionReleaseStmt(
     CROSS JOIN (SELECT ? AS now_ms) proof_clock
     WHERE c.id = ? AND a.id = ? AND c.org_id = ? AND c.mode = ? AND c.provider = ? AND c.candidate_hash = ?
       AND c.credential_keyset_commitment = ${pinnedKeysetSql} AND a.credential_keyset_commitment = c.credential_keyset_commitment
-      AND a.reviewer_id != c.author_id AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id)
+      AND a.reviewer_id != c.author_id AND ${versionAuthorIndependentSql('c', 'a.reviewer_id')}
       AND c.adapter_revision = ? AND c.adapter_capabilities = ? AND c.audience_policy_revision = ?
       AND (c.provider = 'google' OR (${samsungProjectionEvidencePredicateSql('c', 'proof_clock.now_ms')}))
       AND json_extract(c.projection_json, '$.schema') = CASE c.provider WHEN 'google' THEN 2 ELSE 1 END

@@ -52,6 +52,8 @@ export interface FakeRoll extends RollCallPort {
   calls: { marks: { id: string; marks: unknown[] }[]; end: string[]; start: number };
   server: RollCall | null;
   fail: Error | null;
+  /** A batch holding any of these people throws the error. */
+  failFor: Map<string, Error>;
   /** Marks for these people are refused with the code. */
   refuse: Map<string, string>;
   /** Marks for these people apply, with this note code. */
@@ -64,6 +66,7 @@ export function fakeRollCall(start: RollCall | null): FakeRoll {
     calls: { marks: [], end: [], start: 0 },
     server: start,
     fail: null,
+    failFor: new Map(),
     refuse: new Map(),
     note: new Map(),
     current: async () => ({ rollCall: f.server }),
@@ -75,6 +78,7 @@ export function fakeRollCall(start: RollCall | null): FakeRoll {
     marks: async (cid, marks) => {
       f.calls.marks.push({ id: cid, marks });
       if (f.fail) throw f.fail;
+      for (const m of marks) if (f.failFor.has(m.passId)) throw f.failFor.get(m.passId);
       const cur = f.server;
       if (!cur) throw new Error('no call');
       const people = cur.people.map((p) => {

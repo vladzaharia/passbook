@@ -43,6 +43,7 @@ import {
   secretNames,
   uploadAndMigrate,
 } from './lib/deploy-plan.ts';
+import { entitlementsRefusal, orgsWithoutEntitlements } from './lib/entitlements-gate.ts';
 import { readJsonc } from './lib/jsonc.ts';
 import { parseBookmark, predeployProblems } from './lib/predeploy.ts';
 import { unmigratedWalletAccounts, walletMigrationRefusal } from './lib/wallet-migrate-gate.ts';
@@ -129,6 +130,7 @@ const steps = {
     'wait until every live pass has a release head (verify-heads; GET /api/v1/templates with WALLET_API_KEY triggers the sync)',
   saveVersion: 'save the version id for --promote (.wrangler/deploy-version.txt)',
   readVersion: 'read the version id saved by --migrate-only (.wrangler/deploy-version.txt)',
+  entitlements: `wrangler d1 execute ${database} --remote   (refuses while any org has no org_entitlements row: the entitlements-gate query)`,
   promote: first
     ? 'wrangler deploy   (registers queue consumers, workflows and Durable Object classes; serves at once)'
     : 'wrangler versions deploy <version>@100%   (promote)',
@@ -140,7 +142,7 @@ const plan = [
   ...(stage === 'promote' ? (first ? [] : [steps.readVersion]) : first ? [] : [steps.upload]),
   ...(stage === 'promote' ? [] : [steps.bookmark, steps.migrate]),
   ...(stage === 'migrate' && !first ? [steps.saveVersion] : []),
-  ...(stage === 'migrate' ? [] : [steps.promote, steps.bakedSync]),
+  ...(stage === 'migrate' ? [] : [steps.entitlements, steps.promote, steps.bakedSync]),
 ];
 if (!args.has('--apply')) {
   console.log(`${plan.join('\n')}\nDry run. Re-run with --apply.`);
@@ -240,8 +242,27 @@ function requireWalletMigrated(): void {
   }
 }
 
+/** MT2: never serve while an org has no entitlements row (it would be refused every key call). Always on. */
+function requireEntitlements(): void {
+  const block = runbookSql(
+    readFileSync(resolve(root, 'docs/operations.md'), 'utf8'),
+    'entitlements-gate',
+  );
+  if (!block) throw new Error('docs/operations.md has no entitlements-gate query.');
+  const refusal = entitlementsRefusal(
+    orgsWithoutEntitlements(
+      wrangler('d1', 'execute', database, '--remote', '--json', '--command', singleSelect(block)),
+    ),
+  );
+  if (refusal) {
+    console.error(refusal);
+    process.exit(1);
+  }
+}
+
 if (stage === 'promote') {
   requireWalletMigrated();
+  requireEntitlements();
   const saved = first || !existsSync(versionFile) ? null : readFileSync(versionFile, 'utf8').trim();
   if (!first && !saved) throw new Error('No saved version id. Run --migrate-only first.');
   promote(saved);
@@ -290,6 +311,7 @@ if (stage === 'migrate')
   console.log('Migrated. The old Worker still serves. Run the bootstrap, then --promote --apply.');
 else {
   requireWalletMigrated();
+  requireEntitlements();
   promote(versionId);
   await waitForBakedSync();
 }

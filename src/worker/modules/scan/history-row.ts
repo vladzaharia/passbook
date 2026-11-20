@@ -44,6 +44,8 @@ export interface HistoryRaw {
   undone_by: string | null;
   undoes: string | null;
   undone_by_name: string | null;
+  /** Scans one group request made, on its anchor row; 0 elsewhere. */
+  group_size: number;
   passless_candidate: number;
   retention_candidate: number;
   has_ledger: number;

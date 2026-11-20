@@ -15,7 +15,7 @@ import { tenantScanRole } from './actor.ts';
 import { admitsJson } from './admits.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { kickScreen } from './live.ts';
-import { noteSessionChange, savedOfflineSettings } from './offline-policy.ts';
+import { savedOfflineSettings } from './offline-policy.ts';
 import {
   adminGrant,
   audited,
@@ -321,7 +321,6 @@ export async function updateScanningSession(
       );
     throw error;
   }
-  await noteSessionChange(ctx, row, next.status, settings ?? effectiveSessionSettings(row), now);
   await Promise.all(devices.map((d) => kickScreen(ctx, row.org_id, row.mode, d.scanner_id)));
   return scanningSessionDetailForAuthority(ctx, id, row.mode, countAuthority);
 }

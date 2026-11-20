@@ -15,7 +15,7 @@ on build structure, `scanner-architecture.md` on design.
 | UD, UK, UA | `ux-door.md`, `ux-desk.md`, `ux-admin.md` | detail SD does not restate |
 | PM | `platform-map.md` | facts about the platform's code when these were written |
 
-`buddy-draft/` holds measured CSS and JSX drafts for the buddy. They are a reference and are not built.
+`buddy-draft/` holds measured CSS and JSX drafts for the buddy. They are a reference; the buddy itself is built in `src/web/scan/buddy`.
 
 ## Not shipped
 
@@ -38,6 +38,6 @@ Built: scanners, events, staff, scans and gates (`0014`, `0022`), pairing, setup
 
 Since then: value actions with undo and Manager PIN approval (SV.5, SV.6b: `add`, `take`, `set`, `use_up`, stamp scans, `ScanCardAction.input`; the `scan` block of the Stamp card blueprint), stateless asset grants (`0061`), the scan read and write side on epochs (SCAN-CORE: `0063`, `0064`), the hard miss cap (`SCAN_TOO_MANY_MISSES`) and PIN-only approval. The round-trip budgets in SA 13.1 are asserted by tests (check-in 5, value action 10, undo 2, lookup 5).
 
-Not built: the `scan_stations` table and `station_id` (`0019`), access zones, plans and `scan_zones` (`0020`), occupancy, tap-out and desk overrides (`/scan/overrides`, `/scan/mark-out`). Those documents (`addendum/stations.md`, `addendum/access.md`, `addendum/occupancy/occupancy.md`, and the parts of `scanner-plan.md`, `scanner-architecture.md`, `display-model.md` and `ux-*.md` that cite them) are design only. There is no migration `0019` or `0020`; migration numbers in these files are the plan's, not the repository's.
+Built since: access zones and plans (`scan_zones`, `0073`), occupancy, tap-out and desk overrides (`0074`, `/scan/overrides`, `/scan/mark-out`). Not built: the `scan_stations` table and `station_id` (`0019`), `scanner_zones` and `orgs.zones_rev`; `addendum/stations.md` is design only. Migration numbers in these files are the plan's, not the repository's: there is no `0019` or `0020`.
 
 Authority: console routes and scanner writes follow `docs/design/authority-epochs.md`. A scanner is unpaired (401 `SCANNER_REPAIR`) only when its credential is lost (`scannerCredentialLost`); every other `credential_epoch` move is 409 `SCAN_CONFIG_CHANGED`. Where older text says `requireAdmin` for a scanning route, read: the session's org membership must hold `scanning:manage` (console) or `scanning:read`; `requireAdmin` is the platform-admin guard and does not apply (`docs/api.md`, "Scanner console").

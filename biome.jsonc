@@ -8,6 +8,7 @@
       "!**/.wrangler",
       "!**/dist",
       "!**/coverage",
+      "!docs/api/openapi.v1.json",
       "!**/playwright-report",
       "!**/test-results",
       "!src/generated",

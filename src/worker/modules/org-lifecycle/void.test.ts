@@ -6,7 +6,7 @@ import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { removePass } from '../passes/remove.ts';
 import { type RetentionKit, retentionKit } from '../retention/retention-test-fixtures.ts';
 import { fakeStep, populateOrg } from './lifecycle-test-fixtures.ts';
-import { deletePassesPage, GRACE_MS, leftovers, runRows } from './purge.ts';
+import { beginPurge, deletePassesPage, GRACE_MS, leftovers, runRows } from './purge.ts';
 import { PURGE_STEPS } from './repo-plan.ts';
 import { closeOrg, requestExport } from './service.ts';
 
@@ -40,6 +40,12 @@ describe('voiding at purge', () => {
     expect(await serials()).toHaveLength(2);
     await close(org.orgId);
     expect(await serials()).toEqual([]);
+    // Voiding a closed org's pass is the purge's: it holds only once the purge has started.
+    await expect(
+      removePass(jobCtxOf(kit), actor, a.id, {}, null, undefined, undefined, true),
+    ).rejects.toThrow();
+    kit.clock.advance(31 * DAY);
+    expect(await beginPurge(jobCtxOf(kit), org.orgId)).toBe('started');
     await removePass(jobCtxOf(kit), actor, a.id, {}, null, undefined, undefined, true);
     expect(await serials()).toEqual([a.id]);
   });

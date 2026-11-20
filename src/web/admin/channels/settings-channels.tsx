@@ -42,7 +42,7 @@ export function OrgChannelsCard({ orgId }: { orgId: string }) {
   const tagsOn = (tags?.value as { enabled?: boolean } | undefined)?.enabled === true;
   const status = (c: Channel): ChannelStatus => {
     if (blocked.includes(c)) return { on: false, source: 'org', reason: 'blocked' };
-    if (c === 'nfc' && tags?.blockedByPlatform) return OFF('printing_off');
+    if (c === 'nfc' && tags?.blockedByPlatform) return OFF('tags_off');
     if (c === 'nfc' && !tagsOn) return { on: false, source: 'org', reason: 'tags_off' };
     return { on: true, source: 'org' };
   };

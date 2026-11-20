@@ -15,7 +15,14 @@ import { prepareScanRetentionDelete } from '../scan/scan-retention-proof.ts';
 import { purgeOrgWalletArt } from '../wallet-providers/projection-art-purge.ts';
 import { failOpenExports, lifecycleRow } from './repo.ts';
 import { orgPrefixes, PASSES_AT, PURGE_STEPS, type PurgeStep } from './repo-plan.ts';
-import { deleteGroup, deleteStep, orgPasses, remaining, uploadIds } from './repo-purge.ts';
+import {
+  deleteGroup,
+  deleteStep,
+  hasPurgeReceipt,
+  orgPasses,
+  remaining,
+  uploadIds,
+} from './repo-purge.ts';
 
 export type PurgeStart = 'started' | 'resumed' | 'held' | 'not_due' | 'skipped' | 'done';
 
@@ -33,7 +40,10 @@ export const PURGE_RECEIPT_CLASS = 'org_purge';
 export async function beginPurge(ctx: ServiceContext, orgId: string): Promise<PurgeStart> {
   const row = await lifecycleRow(ctx.env.DB, orgId);
   if (row?.status !== 'deleted' || row.purge_after === null) return 'skipped';
-  if (row.purged_at !== null) return 'done';
+  if (row.purged_at !== null) {
+    await ensureReceipt(ctx, orgId, 0);
+    return 'done';
+  }
   if (row.held) return 'held';
   if (row.purge_started_at !== null) {
     await failOpenExports(ctx.env.DB, orgId, ctx.clock.now());
@@ -226,8 +236,8 @@ export async function purgeFiles(ctx: ServiceContext, orgId: string): Promise<nu
 }
 
 /**
- * The stub, then the receipt and the audit row, by whichever run claims the stub first: a repeat or a parallel
- * run finds it claimed and writes nothing.
+ * The stub and its audit row, by whichever run claims the stub first; a repeat or a parallel run finds it
+ * claimed. The receipt follows (`ensureReceipt`), and is retried by the next run if it failed.
  */
 export async function finishPurge(
   ctx: ServiceContext,
@@ -245,13 +255,6 @@ export async function finishPurge(
   });
   const [result] = await g.commit();
   if ((result?.results.length ?? 0) === 0) return false;
-  await writeReceipt(ctx, {
-    orgId,
-    cls: PURGE_RECEIPT_CLASS,
-    kind: 'sweep',
-    cutoffAt: row.purge_after,
-    deleted,
-  });
   await recordAudit(ctx, {
     orgId,
     actorType: 'system',
@@ -260,6 +263,28 @@ export async function finishPurge(
     targetType: 'org',
     targetId: orgId,
     detail: { deleted },
+  });
+  await ensureReceipt(ctx, orgId, deleted);
+  return true;
+}
+
+/**
+ * A purged org has exactly one `org_purge` receipt. If the claiming run died before writing it, the next run
+ * (or the daily sweep, which lists purged orgs without one) writes it; `deleted` is then that run's count.
+ */
+export async function ensureReceipt(
+  ctx: ServiceContext,
+  orgId: string,
+  deleted: number,
+): Promise<boolean> {
+  const row = await lifecycleRow(ctx.env.DB, orgId);
+  if (row?.purged_at == null || (await hasPurgeReceipt(ctx.env.DB, orgId))) return false;
+  await writeReceipt(ctx, {
+    orgId,
+    cls: PURGE_RECEIPT_CLASS,
+    kind: 'sweep',
+    cutoffAt: row.purge_after,
+    deleted,
   });
   return true;
 }

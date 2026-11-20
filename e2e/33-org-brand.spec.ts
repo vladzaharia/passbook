@@ -173,6 +173,8 @@ function joinableZip(name: string): Buffer {
       const manifest = JSON.parse(Buffer.from(bytes).toString('utf8'));
       manifest.name = name;
       manifest.blueprint = undefined;
+      // The zip copies top-level files only, so the art the wallets block names is not in it.
+      manifest.wallets = undefined;
       manifest.inputs.properties.website.pattern = undefined;
       manifest.inputs.dependentRequired = undefined;
       manifest.bindings = manifest.bindings.filter(

@@ -315,7 +315,11 @@ export async function sendBundleEmail(
       principal: principalOf(auth),
       operation: 'POST /bundles/{id}/send-email',
       key: idempotencyKey,
-      request: { method: 'POST', path: `/bundles/${id}/send-email`, body: input },
+      request: {
+        method: 'POST',
+        path: `/bundles/${id}/send-email`,
+        body: { to: input.to?.toLowerCase() },
+      },
     },
     async () => {
       await send();

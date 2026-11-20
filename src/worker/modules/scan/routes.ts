@@ -112,10 +112,12 @@ register(
     method: 'get',
     path: '/activity',
     summary: 'Recent activity on this scanning session',
+    query: z.object({ problems: z.enum(['1']).optional() }),
     response: SessionActivitySchema,
   },
   async (c) => {
-    return c.json(await sessionActivityFor(serviceContext(c), scanActorOf(c)));
+    const { problems } = c.req.valid('query');
+    return c.json(await sessionActivityFor(serviceContext(c), scanActorOf(c), problems === '1'));
   },
 );
 
@@ -202,7 +204,7 @@ register(
         false,
         'code' in input,
       );
-    notifyHostOfArrival(ctx, actor, outcome);
+    notifyHostOfArrival(ctx, actor, outcome, evaluatedSnapshot);
     return c.json(await withParentHint(ctx.env.DB, actor.orgId, outcome));
   },
 );

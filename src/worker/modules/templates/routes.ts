@@ -108,6 +108,7 @@ register(
     method: 'post',
     path: '/uploads',
     summary: 'Upload a template archive (zip or multipart, up to 15 MB)',
+    auth: { human: true, requestMode: true, feature: 'templates.uploads' },
     query: UploadTemplateQuerySchema,
     status: 202,
     response: UploadTemplateResponseSchema,

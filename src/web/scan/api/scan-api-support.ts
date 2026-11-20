@@ -15,7 +15,11 @@ export interface ScanApiDeps {
 }
 
 export type AdminScope = z.infer<typeof ScanAdminScopeSchema>;
-export type Call = { signal?: AbortSignal };
+/** `problems` asks for the refusals and holds of the last 15 minutes instead of the newest scans. */
+export type Call = { signal?: AbortSignal; problems?: boolean };
+
+export const activityPath = (call?: Call): string =>
+  call?.problems ? '/activity?problems=1' : '/activity';
 
 export function retryAfterMs(res: Response): number | undefined {
   const raw = res.headers.get('retry-after');
@@ -36,3 +40,10 @@ export function scopeQuery(scope: AdminScope | undefined): string {
   q.set('timeZone', scope.timeZone);
   return `?${q.toString()}`;
 }
+
+export const rosterQuery = (cursor: string | undefined, since: number | undefined): string => {
+  const q = new URLSearchParams();
+  if (cursor) q.set('cursor', cursor);
+  if (since !== undefined) q.set('since', String(since));
+  return q.size > 0 ? `?${q}` : '';
+};

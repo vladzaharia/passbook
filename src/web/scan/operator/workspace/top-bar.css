@@ -1,0 +1,212 @@
+/* top bar */
+.op-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 16px 0 14px;
+  border-bottom: 1px solid var(--op-line);
+  background: var(--op-page);
+}
+.op-org {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.op-org-tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--scan-org-accent, var(--pk-accent));
+  color: var(--pk-accent-on);
+  font-size: 13px;
+  font-weight: 650;
+}
+.op-org-tile[data-has-logo] {
+  background: var(--op-raised);
+  box-shadow: inset 0 0 0 1px var(--op-line);
+}
+.op-org-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.op-org-text {
+  min-width: 0;
+}
+.op-org-name {
+  overflow: hidden;
+  color: var(--pk-text-strong);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.op-org-sub {
+  overflow: hidden;
+  color: var(--op-muted);
+  font-size: 12px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.op-sep {
+  flex: none;
+  width: 1px;
+  height: 24px;
+  background: var(--op-line);
+}
+.op-chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--op-line);
+  border-radius: 999px;
+  background: var(--op-raised);
+  color: var(--pk-text-default);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.op-chip b {
+  color: var(--pk-text-strong);
+  font-weight: 600;
+}
+.op-chip svg {
+  width: 14px;
+  height: 14px;
+}
+.op-chip[data-muted] {
+  color: var(--op-muted);
+  min-width: 0;
+}
+.op-chip[data-tone="warn"] {
+  border-color: color-mix(in oklab, var(--pk-warning-border) 45%, transparent);
+  background: var(--pk-warning-subtle);
+  color: var(--pk-warning);
+}
+.op-chip-sub {
+  color: var(--op-muted);
+}
+.op-admits {
+  overflow: hidden;
+}
+.op-admits-names {
+  overflow: hidden;
+  max-width: 18rem;
+  text-overflow: ellipsis;
+}
+.op-admits-count {
+  display: none;
+}
+.op-meter {
+  display: inline-block;
+  width: 44px;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--pk-surface-sunken);
+}
+.op-meter i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--pk-accent);
+}
+.op-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--scan-ok);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--scan-ok) 22%, transparent);
+}
+.op-dot[data-off] {
+  background: var(--pk-border-strong);
+  box-shadow: none;
+}
+.op-top-end {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+}
+.op-top-end .scan-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--op-line);
+  border-radius: 999px;
+  background: var(--op-raised);
+  color: var(--pk-text-default);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  backdrop-filter: none;
+}
+.op-top-end .scan-chip[data-tone="slate"] {
+  border-color: transparent;
+  background: var(--scan-system);
+  color: var(--scan-system-on);
+}
+.op-top-end .scan-chip[data-tone="amber"] {
+  border-color: color-mix(in oklab, var(--pk-warning-border) 45%, transparent);
+  background: var(--pk-warning-subtle);
+  color: var(--pk-warning);
+}
+.op-top-end .scan-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--op-muted);
+  backdrop-filter: none;
+  box-shadow: none;
+}
+.op-staff {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 10px 0 4px;
+  border: 1px solid var(--op-line);
+  border-radius: 999px;
+  background: var(--op-raised);
+  color: var(--pk-text-strong);
+  font: inherit;
+  cursor: pointer;
+}
+.op-staff-av {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--pk-accent-subtle);
+  color: var(--pk-accent-fg);
+  font-size: 11px;
+  font-weight: 600;
+}
+.op-staff-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+.op-staff small {
+  color: var(--op-muted);
+  font-size: 12px;
+}

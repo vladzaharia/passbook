@@ -3,6 +3,7 @@ import type { MiddlewareHandler } from 'hono';
 import type { ApiScope, RouteAuth, ScopeRule } from './auth.ts';
 import { SESSION_COOKIE } from './auth.ts';
 import type { AppBindings } from './context.ts';
+import type { FeatureRule } from './feature-guard.ts';
 
 /** What an API key needs on the routes a guard covers; read for GET and HEAD, write for the rest. */
 export interface KeyAccess {
@@ -12,6 +13,8 @@ export interface KeyAccess {
   anyKey?: boolean;
   /** Limits the claim to doc paths that match. */
   only?: RegExp;
+  /** The guard only documents key access; another guard on the route does the checking. */
+  documentOnly?: true;
 }
 
 /** The scopes a rule accepts, for reads and for the rest. */
@@ -41,18 +44,31 @@ export function scopesForMethod(rule: ScopeRule, method: string): readonly ApiSc
   return isRead(method) ? access.read : (access.write ?? []);
 }
 
-/** Whether a guard declared its key scopes, which puts its routes in the OpenAPI document. */
-export const hasKeyAccess = (guard: object): boolean => accessOf.has(guard);
+/** Whether a guard declared key access and enforces it: a route it covers has its access decision. */
+export const enforcesKeyAccess = (guard: object): boolean => {
+  const access = accessOf.get(guard);
+  return access !== undefined && access.documentOnly !== true;
+};
 
 /** The OpenAPI `security` (and extensions) a route's `auth` declaration writes. */
 export function operationSecurity(
   auth: RouteAuth,
   method: string,
-): { security: unknown[]; 'x-human-only'?: true; 'x-platform-scope'?: string } {
-  if ('human' in auth) return { security: [{ session: [] }], 'x-human-only': true };
+): {
+  security: unknown[];
+  'x-human-only'?: true;
+  'x-platform-scope'?: string;
+  'x-feature'?: FeatureRule;
+} {
   if ('platform' in auth) return { security: [{ session: [] }], 'x-platform-scope': auth.platform };
+  // The entitlement the organization must have: a key, or { key, atLeast } for a level.
+  const feature = auth.feature === undefined ? {} : { 'x-feature': auth.feature };
+  if ('human' in auth) return { security: [{ session: [] }], 'x-human-only': true, ...feature };
   const scopes = scopesForMethod(auth.scope, method);
-  return { security: [...scopes.map((scope) => ({ apiKey: [scope] })), { session: [] }] };
+  return {
+    security: [...scopes.map((scope) => ({ apiKey: [scope] })), { session: [] }],
+    ...feature,
+  };
 }
 const patternOf = (path: string) =>
   new RegExp(

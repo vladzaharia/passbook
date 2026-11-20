@@ -138,7 +138,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'bundle_remac_marks:c55ee2c8e29c',
       'bundles:4d66feaeeccb',
       'join_links:4a5b982fa241',
-      'passes:8dac9824a940',
+      'passes:a726179ad7c0',
       'passes:a565c31165b3',
       'passes:a978e7f9948b',
       'passes:a978e7f9948b@use',

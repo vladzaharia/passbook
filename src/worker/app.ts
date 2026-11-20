@@ -29,6 +29,10 @@ import {
 import { brandAssetRoutes } from './modules/orgs/brand-assets.ts';
 import { brandRoutes } from './modules/orgs/brand-routes.ts';
 import { orgsRoutes } from './modules/orgs/routes.ts';
+import {
+  orgEntitlementsRoutes,
+  platformEntitlementsRoutes,
+} from './modules/orgs/routes-entitlements.ts';
 import { passesRoutes } from './modules/passes/routes.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
@@ -70,7 +74,8 @@ import { type AppBindings, requestContext } from './platform/context.ts';
 import type { AppEnv } from './platform/env.ts';
 import { handleError, notFoundHandler } from './platform/error-handler.ts';
 import { hostPolicy } from './platform/host-policy.ts';
-import { keyCallableOnly, withSecurity } from './platform/openapi-security.ts';
+import { buildOpenApiDocument } from './platform/openapi-document.ts';
+import { keyCallableOnly } from './platform/openapi-security.ts';
 import { apiKeyRateHeaders } from './platform/rate-limit.ts';
 import { securityHeaders, staticAsset } from './platform/security-headers.ts';
 import { asBrowserPage } from './ssr/error-response.ts';
@@ -144,6 +149,8 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/auth', authRoutes);
   app.route('/api/v1/session', sessionRoutes);
   app.route('/api/v1/me', meRoutes);
+  // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
+  app.route('/api/v1/orgs', orgEntitlementsRoutes);
   app.route('/api/v1/orgs', orgsRoutes);
   app.route('/api/v1/brand', brandRoutes);
   app.route('/api/v1/orgs', walletCredentialRoutes);
@@ -152,6 +159,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/orgs', orgLifecycleRoutes);
   app.route('/api/v1/org-exports', orgExportDownloadRoutes);
   app.route('/api/v1/platform', walletPlatformRoutes);
+  app.route('/api/v1/platform', platformEntitlementsRoutes);
   app.route('/api/v1/platform', retentionPlatformRoutes);
   app.route('/api/v1/platform', orgClosedRoutes);
   app.route('/api/v1/templates', templatesRoutes);
@@ -210,14 +218,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   // operations an API key can call; signed-in platform admins get the whole document.
   const documents: { full?: unknown; keys?: unknown } = {};
   const document = async (c: Context<AppBindings>) => {
-    documents.full ??= withSecurity(
-      app,
-      app.getOpenAPI31Document({
-        openapi: '3.1.0',
-        info: { title: 'PassBook API', version: '1.0.0' },
-        servers: [{ url: '/' }],
-      }) as never,
-    );
+    documents.full ??= buildOpenApiDocument(app);
     documents.keys ??= keyCallableOnly(documents.full as never);
     const cookie = getCookie(c, SESSION_COOKIE);
     const session = cookie ? await c.var.stores.sessions.resolve(cookie) : null;

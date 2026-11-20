@@ -186,6 +186,7 @@ export async function createRuntime(
   const stopWedge = createWedgeSource({
     clock,
     fields,
+    eventTime: true,
     onFocus: (focused) => store.dispatch({ type: 'focus', focused }),
     onBadLayout: (badLayout) => store.dispatch({ type: 'reader', reader: { badLayout } }),
   }).start((read) => emit(read));
