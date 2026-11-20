@@ -14,6 +14,13 @@ const initials = (name: string) =>
     .map((word) => word[0]?.toUpperCase())
     .join('');
 
+/** "Maya Ruiz" -> "Maya R." */
+export const shortName = (name: string) => {
+  const [first, ...rest] = name.trim().split(/\s+/);
+  const last = rest.at(-1);
+  return last ? `${first} ${last[0]?.toUpperCase()}.` : (first ?? name);
+};
+
 export const roleLabel = (role: string | undefined) =>
   role === 'desk' ? COPY.pin.desk : COPY.pin.manager;
 

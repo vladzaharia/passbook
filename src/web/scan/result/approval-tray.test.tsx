@@ -4,6 +4,7 @@ import '../../lib/test-utils.tsx';
 import type { RawRead } from '../input/types.ts';
 import { createWedgeSource, WedgeFields } from '../input/wedge-source.ts';
 import { fakeClock } from '../machine/store.test-support.ts';
+import { shortName } from './approval-parts.tsx';
 import { ApprovalTray, type ApprovalTrayProps } from './approval-tray.tsx';
 
 const maya = { id: 'm1', name: 'Maya Ruiz', role: 'manager' };
@@ -188,5 +189,13 @@ describe('Manager PIN tray', () => {
     expect(onCancel).toHaveBeenCalledOnce();
     rerender({ busy: true });
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+  });
+});
+
+describe('shortName', () => {
+  it('is first name and last initial', () => {
+    expect(shortName('Maya Ruiz')).toBe('Maya R.');
+    expect(shortName('Ana María de la Cruz')).toBe('Ana C.');
+    expect(shortName('Maya')).toBe('Maya');
   });
 });

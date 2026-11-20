@@ -75,6 +75,8 @@ export interface ScanPreviewScreenProps {
   recent?: Recent[];
   /** A handheld's Manager PIN: the dock offers the tray for a `needs_approval` hold. */
   approval?: DockApproval;
+  /** A Manager's PIN let this through: the sub names them. */
+  approvedBy?: string;
   /** Rendered inside the scan store: sheets that read it. */
   children?: ReactNode;
 }
@@ -149,6 +151,7 @@ export function ScanPreviewScreen({
   onTint,
   clock,
   approval,
+  approvedBy,
   children,
 }: ScanPreviewScreenProps) {
   const store = useStaticStore(recent, clock ?? Date.now());
@@ -203,6 +206,7 @@ export function ScanPreviewScreen({
             onGroup={() => undefined}
             addPhoto={addPhoto}
             density={density}
+            approvedBy={approvedBy}
             {...(clock ? { clock } : {})}
           />
         }

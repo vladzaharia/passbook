@@ -21,6 +21,7 @@ export const SCAN_TRAY_COPY = {
     manager: 'Manager',
     desk: 'Desk',
     change: 'Change',
+    approvedBy: 'Approved by {staff}',
     choose: 'Choose who approves',
     dots: 'PIN, {n} of {len} digits',
     count: '{n} of {len} digits',

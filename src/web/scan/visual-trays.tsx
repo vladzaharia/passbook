@@ -23,6 +23,7 @@ export const TRAY_CASES = [
   'pin-locked',
   'pin-code',
   'pin-nobody',
+  'pin-approved',
 ] as const;
 export type TrayCase = (typeof TRAY_CASES)[number];
 
@@ -92,12 +93,14 @@ export function TrayVisual({ tray }: { tray: TrayCase }) {
     onApprove: () => undefined,
   };
   const enter = tray.startsWith('enter');
+  const approved = tray === 'pin-approved';
   return (
     <ScanPreviewScreen
-      outcome={enter ? (base ?? outcome) : outcome}
+      outcome={enter || approved ? base : outcome}
+      {...(approved ? { approvedBy: 'Maya R.' } : {})}
       density={handheld ? 'glance' : 'full'}
       clock={FIXTURE_NOW}
-      tint={enter ? 'none' : 'amber'}
+      tint={enter ? 'none' : approved ? 'green' : 'amber'}
       chips={<CountChip count={312} capacity={500} />}
       menu={<MenuTrigger />}
       approval={handheld ? approval : undefined}

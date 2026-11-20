@@ -206,7 +206,7 @@ test('a decoder download failure offers recovery and lookup pauses camera reads'
       timeout: 15_000,
     });
     await expect(
-      page.getByText('Camera reader unavailable. Use Look up.', { exact: true }),
+      page.getByText('Camera reader unavailable. Enter the code instead.', { exact: true }),
     ).toBeVisible();
     await page.unroute('**/*.wasm*');
     await page.getByRole('button', { name: 'Retry camera' }).click();
