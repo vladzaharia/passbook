@@ -1,12 +1,19 @@
 import { zodToOpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
+import { ApiKeyMeSchema } from '../../shared/contracts/api-keys.ts';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
 import {
   PassDetailSchema,
   PassDeviceSchema,
+  PassListSchema,
   PassSummarySchema,
   PassVersionSchema,
 } from '../../shared/contracts/passes.ts';
+import {
+  CapturedEmailDetailSchema,
+  CapturedEmailListSchema,
+  CapturedEmailSchema,
+} from '../../shared/contracts/sandbox.ts';
 import {
   ScanCardActionSchema,
   ScanCardSchema,
@@ -44,6 +51,20 @@ import {
   ScanWorkspaceSchema,
   SessionActivitySchema,
 } from '../../shared/contracts/scanning-sessions.ts';
+import {
+  TemplateDetailSchema,
+  TemplateListSchema,
+  TemplateSummarySchema,
+} from '../../shared/contracts/templates.ts';
+import {
+  EventFeedPageSchema,
+  WebhookDeliveryDetailSchema,
+  WebhookDeliveryListSchema,
+  WebhookEndpointCreatedSchema,
+  WebhookEndpointListSchema,
+  WebhookEndpointSchema,
+  WebhookTestResultSchema,
+} from '../../shared/contracts/webhooks.ts';
 
 /**
  * Component schema names for the OpenAPI document. Registered here, not with `.meta()` in the
@@ -88,6 +109,21 @@ const names = {
   PassDetail: PassDetailSchema,
   PassVersion: PassVersionSchema,
   PassDevice: PassDeviceSchema,
+  PassPage: PassListSchema,
+  ApiKeyCurrent: ApiKeyMeSchema,
+  TemplateSummary: TemplateSummarySchema,
+  TemplateDetail: TemplateDetailSchema,
+  TemplatePage: TemplateListSchema,
+  CapturedEmail: CapturedEmailSchema,
+  CapturedEmailDetail: CapturedEmailDetailSchema,
+  CapturedEmailPage: CapturedEmailListSchema,
+  WebhookEndpoint: WebhookEndpointSchema,
+  WebhookEndpointCreated: WebhookEndpointCreatedSchema,
+  WebhookEndpointPage: WebhookEndpointListSchema,
+  WebhookDeliveryPage: WebhookDeliveryListSchema,
+  WebhookDeliveryDetail: WebhookDeliveryDetailSchema,
+  WebhookTestResult: WebhookTestResultSchema,
+  EventPage: EventFeedPageSchema,
 };
 
 for (const [refId, schema] of Object.entries(names))

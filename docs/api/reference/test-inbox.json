@@ -1,0 +1,38 @@
+{
+  "sandbox.getTestInbox": {
+    "description": "Lists emails captured in Test mode, newest first. Nothing is sent to the recipient.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000101",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "kind": "pass",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "bundleId": null,
+          "to": "ada@example.com",
+          "subject": "Your ticket to Example Events",
+          "attached": true,
+          "createdAt": 1764000000000
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "sandbox.getTestInboxById": {
+    "description": "One captured email with its HTML and text.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000101",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "kind": "pass",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "bundleId": null,
+      "to": "ada@example.com",
+      "subject": "Your ticket to Example Events",
+      "attached": true,
+      "createdAt": 1764000000000,
+      "html": "<p>Your ticket is ready.</p>",
+      "text": "Your ticket is ready.",
+      "forwarding": "none"
+    }
+  }
+}

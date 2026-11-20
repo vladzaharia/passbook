@@ -1,0 +1,2030 @@
+{
+  "api-keys.deleteApiKeysById": {
+    "resource": "apiKeys",
+    "method": "revoke"
+  },
+  "api-keys.getApiKeys": {
+    "resource": "apiKeys",
+    "method": "list"
+  },
+  "api-keys.getApiKeysMe": {
+    "resource": "apiKeys",
+    "method": "retrieveCurrent"
+  },
+  "api-keys.postApiKeys": {
+    "resource": "apiKeys",
+    "method": "create"
+  },
+  "apple.deleteWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial": {
+    "resource": "apple.registrations",
+    "method": "delete",
+    "sdk": false,
+    "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
+  },
+  "apple.getWalletV1DevicesByDeviceIdRegistrationsByPassTypeId": {
+    "resource": "apple.registrations",
+    "method": "listUpdated",
+    "sdk": false,
+    "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
+  },
+  "apple.getWalletV1PassesByPassTypeIdBySerial": {
+    "resource": "apple.passes",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
+  },
+  "apple.postWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial": {
+    "resource": "apple.registrations",
+    "method": "create",
+    "sdk": false,
+    "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
+  },
+  "apple.postWalletV1Log": {
+    "resource": "apple.logs",
+    "method": "create",
+    "sdk": false,
+    "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
+  },
+  "apple.postWalletV1PassesByPassTypeIdBySerialPersonalize": {
+    "resource": "apple.passes",
+    "method": "personalize",
+    "sdk": false,
+    "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
+  },
+  "audit.getAudit": {
+    "resource": "auditEntries",
+    "method": "list"
+  },
+  "audit.getAuditExport": {
+    "resource": "auditEntries",
+    "method": "export"
+  },
+  "audit.getAuditPlatform": {
+    "resource": "platform.auditEntries",
+    "method": "list"
+  },
+  "audit.getAuditPlatformExport": {
+    "resource": "platform.auditEntries",
+    "method": "export"
+  },
+  "auth.getAuthBreakglass": {
+    "resource": "auth.breakglass",
+    "method": "retrievePage",
+    "sdk": false,
+    "reason": "Browser sign-in flow."
+  },
+  "auth.getAuthMagic": {
+    "resource": "auth.magicLinks",
+    "method": "retrievePage",
+    "sdk": false,
+    "reason": "Browser sign-in flow."
+  },
+  "auth.getAuthNoAccess": {
+    "resource": "auth",
+    "method": "retrieveNoAccessPage",
+    "sdk": false,
+    "reason": "Browser sign-in flow."
+  },
+  "auth.getAuthOidcCallback": {
+    "resource": "auth.oidc",
+    "method": "callback",
+    "sdk": false,
+    "reason": "Browser sign-in flow."
+  },
+  "auth.getAuthOidcClientMetadataJson": {
+    "resource": "auth.oidc",
+    "method": "retrieveClientMetadata",
+    "sdk": false,
+    "reason": "Browser sign-in flow."
+  },
+  "auth.getAuthOidcStart": {
+    "resource": "auth.oidc",
+    "method": "start",
+    "sdk": false,
+    "reason": "Browser sign-in flow."
+  },
+  "auth.postAuthBreakglass": {
+    "resource": "auth.breakglass",
+    "method": "signIn",
+    "sdk": false,
+    "reason": "Browser sign-in flow."
+  },
+  "auth.postAuthLogout": {
+    "resource": "auth",
+    "method": "signOut",
+    "sdk": false,
+    "reason": "Browser sign-in flow."
+  },
+  "auth.postAuthMagicConsume": {
+    "resource": "auth.magicLinks",
+    "method": "consume",
+    "sdk": false,
+    "reason": "Browser sign-in flow."
+  },
+  "auth.postAuthMagicRequest": {
+    "resource": "auth.magicLinks",
+    "method": "request",
+    "sdk": false,
+    "reason": "Browser sign-in flow."
+  },
+  "auth.postAuthMagicResend": {
+    "resource": "auth.magicLinks",
+    "method": "resend",
+    "sdk": false,
+    "reason": "Browser sign-in flow."
+  },
+  "brand.deleteBrandWebLogo": {
+    "resource": "brand.webLogo",
+    "method": "delete"
+  },
+  "brand.getBrand": {
+    "resource": "brand",
+    "method": "retrieve"
+  },
+  "brand.patchBrand": {
+    "resource": "brand",
+    "method": "update"
+  },
+  "brand.putBrandWebLogo": {
+    "resource": "brand.webLogo",
+    "method": "upload"
+  },
+  "broadcasts.getBroadcasts": {
+    "resource": "broadcasts",
+    "method": "list"
+  },
+  "broadcasts.getBroadcastsById": {
+    "resource": "broadcasts",
+    "method": "retrieve"
+  },
+  "broadcasts.getBroadcastsByIdItems": {
+    "resource": "broadcasts.recipients",
+    "method": "list"
+  },
+  "broadcasts.patchBroadcastsById": {
+    "resource": "broadcasts",
+    "method": "update"
+  },
+  "broadcasts.postBroadcasts": {
+    "resource": "broadcasts",
+    "method": "create"
+  },
+  "broadcasts.postBroadcastsByIdCancel": {
+    "resource": "broadcasts",
+    "method": "cancel"
+  },
+  "broadcasts.postBroadcastsByIdRetry": {
+    "resource": "broadcasts",
+    "method": "retry"
+  },
+  "broadcasts.postBroadcastsByIdSend": {
+    "resource": "broadcasts",
+    "method": "send"
+  },
+  "broadcasts.postBroadcastsPreview": {
+    "resource": "broadcasts",
+    "method": "countRecipients"
+  },
+  "bundles.deleteBundlesById": {
+    "resource": "bundles",
+    "method": "delete"
+  },
+  "bundles.getBundles": {
+    "resource": "bundles",
+    "method": "list"
+  },
+  "bundles.getBundlesById": {
+    "resource": "bundles",
+    "method": "retrieve"
+  },
+  "bundles.postBundles": {
+    "resource": "bundles",
+    "method": "create"
+  },
+  "bundles.postBundlesByIdRotateLink": {
+    "resource": "bundles",
+    "method": "rotateLink"
+  },
+  "bundles.postBundlesByIdSendEmail": {
+    "resource": "bundles",
+    "method": "sendEmail"
+  },
+  "connections.deleteConnectionsById": {
+    "resource": "connections",
+    "method": "delete"
+  },
+  "connections.deleteConnectionsByIdWebhookSecretPrevious": {
+    "resource": "connections",
+    "method": "revokePreviousWebhookSecret"
+  },
+  "connections.getConnections": {
+    "resource": "connections",
+    "method": "list"
+  },
+  "connections.getConnectionsById": {
+    "resource": "connections",
+    "method": "retrieve"
+  },
+  "connections.getConnectionsByIdRuns": {
+    "resource": "connections.runs",
+    "method": "list"
+  },
+  "connections.getConnectionsByIdWebhookFailures": {
+    "resource": "connections.webhookFailures",
+    "method": "list"
+  },
+  "connections.getConnectionsSummary": {
+    "resource": "connections",
+    "method": "retrieveSummary"
+  },
+  "connections.patchConnectionsById": {
+    "resource": "connections",
+    "method": "update"
+  },
+  "connections.postConnections": {
+    "resource": "connections",
+    "method": "create"
+  },
+  "connections.postConnectionsByIdSync": {
+    "resource": "connections",
+    "method": "sync"
+  },
+  "connections.postConnectionsByIdTest": {
+    "resource": "connections",
+    "method": "test"
+  },
+  "connections.postConnectionsByIdWebhookFailuresByRetentionIdReplay": {
+    "resource": "connections.webhookFailures",
+    "method": "replay"
+  },
+  "connections.postConnectionsByIdWebhookFailuresByRetentionIdResolve": {
+    "resource": "connections.webhookFailures",
+    "method": "resolve"
+  },
+  "connections.postConnectionsByIdWebhookSecret": {
+    "resource": "connections",
+    "method": "rotateWebhookSecret"
+  },
+  "connections.postConnectionsTestConfig": {
+    "resource": "connections",
+    "method": "testConfig"
+  },
+  "connections.postHooksConnectionsById": {
+    "resource": "connections",
+    "method": "receiveWebhook",
+    "sdk": false,
+    "reason": "Inbound connection webhook, authenticated by its HMAC signature, not an API key."
+  },
+  "connectors.getConnectors": {
+    "resource": "connectors",
+    "method": "list"
+  },
+  "connectors.getConnectorsByType": {
+    "resource": "connectors",
+    "method": "retrieve"
+  },
+  "delivery.getDelivery": {
+    "resource": "deliveries",
+    "method": "list"
+  },
+  "entitlements.getOrgsByIdEntitlements": {
+    "resource": "orgs.entitlements",
+    "method": "retrieve"
+  },
+  "entitlements.getPlatformOrgsByIdEntitlements": {
+    "resource": "platform.orgs.entitlements",
+    "method": "retrieve"
+  },
+  "entitlements.putPlatformOrgsByIdEntitlements": {
+    "resource": "platform.orgs.entitlements",
+    "method": "update"
+  },
+  "events.getEvents": {
+    "resource": "events",
+    "method": "list"
+  },
+  "events.getEventsById": {
+    "resource": "events",
+    "method": "retrieve"
+  },
+  "google-wallet.postWalletV1GoogleByAccountId": {
+    "resource": "googleWallet",
+    "method": "receiveCallback",
+    "sdk": false,
+    "reason": "Wallet provider server callback, signed by the provider."
+  },
+  "holders.getHolders": {
+    "resource": "holders",
+    "method": "list"
+  },
+  "holders.getHoldersById": {
+    "resource": "holders",
+    "method": "retrieve"
+  },
+  "holders.postHoldersAssign": {
+    "resource": "holders",
+    "method": "assign"
+  },
+  "holders.postHoldersAssignBulk": {
+    "resource": "holders",
+    "method": "bulkAssign"
+  },
+  "holders.postHoldersClearBlock": {
+    "resource": "holders",
+    "method": "clearBlock"
+  },
+  "holders.postHoldersReassign": {
+    "resource": "holders",
+    "method": "reassign"
+  },
+  "holders.postHoldersUnassign": {
+    "resource": "holders",
+    "method": "unassign"
+  },
+  "identities.deleteIdentitiesById": {
+    "resource": "identities",
+    "method": "delete"
+  },
+  "identities.deleteIdentitiesByIdPushKey": {
+    "resource": "identities.pushKey",
+    "method": "delete"
+  },
+  "identities.getIdentities": {
+    "resource": "identities",
+    "method": "list"
+  },
+  "identities.getIdentitiesById": {
+    "resource": "identities",
+    "method": "retrieve"
+  },
+  "identities.patchIdentitiesById": {
+    "resource": "identities",
+    "method": "update"
+  },
+  "identities.postIdentities": {
+    "resource": "identities",
+    "method": "create"
+  },
+  "identities.postIdentitiesByIdApnsCheck": {
+    "resource": "identities",
+    "method": "checkApns"
+  },
+  "identities.postIdentitiesByIdRotate": {
+    "resource": "identities",
+    "method": "rotate"
+  },
+  "identities.putIdentitiesByIdPushKey": {
+    "resource": "identities.pushKey",
+    "method": "upload"
+  },
+  "join-links.getJoinLinksByTemplateId": {
+    "resource": "joinLinks",
+    "method": "retrieve"
+  },
+  "join-links.postJoinLinksByTemplateIdRotate": {
+    "resource": "joinLinks",
+    "method": "rotate"
+  },
+  "join-links.putJoinLinksByTemplateId": {
+    "resource": "joinLinks",
+    "method": "upsert"
+  },
+  "join.getJByToken": {
+    "resource": "public.joinLinks",
+    "method": "retrievePage",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "join.getJByTokenCardByName": {
+    "resource": "public.joinLinks",
+    "method": "downloadCardImage",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "join.postJByToken": {
+    "resource": "public.joinLinks",
+    "method": "submit",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "me.deleteMeEmailsByEmail": {
+    "resource": "me.emails",
+    "method": "delete",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.deleteMePassesById": {
+    "resource": "me.passes",
+    "method": "detach",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.deleteMeSessionsById": {
+    "resource": "me.sessions",
+    "method": "revoke",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.getMeEmails": {
+    "resource": "me.emails",
+    "method": "list",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.getMePassRemovalsById": {
+    "resource": "me.passRemovals",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.getMePasses": {
+    "resource": "me.passes",
+    "method": "list",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.getMePassesById": {
+    "resource": "me.passes",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.getMePassesByIdBarcode": {
+    "resource": "me.passes",
+    "method": "retrieveBarcode",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.getMePassesPkpasses": {
+    "resource": "me.passes",
+    "method": "downloadAll",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.getMeSessions": {
+    "resource": "me.sessions",
+    "method": "list",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.postMeEmails": {
+    "resource": "me.emails",
+    "method": "create",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.postMeEmailsByEmailPrimary": {
+    "resource": "me.emails",
+    "method": "makePrimary",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.postMePassesByIdLostPhone": {
+    "resource": "me.passes",
+    "method": "replaceLostPhone",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.postMePassesByIdRefresh": {
+    "resource": "me.passes",
+    "method": "refresh",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.postMePassesByIdResend": {
+    "resource": "me.passes",
+    "method": "sendEmail",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.postMeSessionsRevokeAll": {
+    "resource": "me.sessions",
+    "method": "revokeAll",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "me.postMeTagsByIdLost": {
+    "resource": "me.tags",
+    "method": "reportLost",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "message-rules.deleteMessageRulesById": {
+    "resource": "messageRules",
+    "method": "delete"
+  },
+  "message-rules.getMessageRules": {
+    "resource": "messageRules",
+    "method": "list"
+  },
+  "message-rules.getMessageRulesById": {
+    "resource": "messageRules",
+    "method": "retrieve"
+  },
+  "message-rules.getMessageRulesByIdRuns": {
+    "resource": "messageRules.runs",
+    "method": "list"
+  },
+  "message-rules.postMessageRules": {
+    "resource": "messageRules",
+    "method": "create"
+  },
+  "message-rules.postMessageRulesByIdPause": {
+    "resource": "messageRules",
+    "method": "pause"
+  },
+  "message-rules.postMessageRulesByIdTest": {
+    "resource": "messageRules",
+    "method": "sendTest"
+  },
+  "message-rules.postMessageRulesPreview": {
+    "resource": "messageRules",
+    "method": "countDue"
+  },
+  "message-rules.putMessageRulesById": {
+    "resource": "messageRules",
+    "method": "update"
+  },
+  "metrics.getMetricsActivity": {
+    "resource": "metrics",
+    "method": "retrieveActivity"
+  },
+  "metrics.getMetricsOverview": {
+    "resource": "metrics",
+    "method": "retrieveOverview"
+  },
+  "metrics.getMetricsPlatformOverview": {
+    "resource": "platform.metrics",
+    "method": "retrieveOverview"
+  },
+  "nfc-keysets.getNfcKeysets": {
+    "resource": "nfc.keysets",
+    "method": "list"
+  },
+  "nfc-keysets.postNfcKeysets": {
+    "resource": "nfc.keysets",
+    "method": "create"
+  },
+  "nfc-keysets.postNfcKeysetsByIdDisable": {
+    "resource": "nfc.keysets",
+    "method": "disable"
+  },
+  "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire": {
+    "resource": "nfc.keysets",
+    "method": "retireKey"
+  },
+  "nfc-keysets.postNfcKeysetsByIdRotate": {
+    "resource": "nfc.keysets",
+    "method": "rotate"
+  },
+  "nfc-tags.deleteNfcBindingsByBindingId": {
+    "resource": "nfc.bindings",
+    "method": "delete"
+  },
+  "nfc-tags.deleteNfcPassesByPassIdEnrollmentsById": {
+    "resource": "nfc.enrollments",
+    "method": "cancel"
+  },
+  "nfc-tags.getNfcPassesByPassIdEnrollmentsById": {
+    "resource": "nfc.enrollments",
+    "method": "retrieve"
+  },
+  "nfc-tags.getNfcPassesByPassIdTags": {
+    "resource": "nfc.tags",
+    "method": "listForPass"
+  },
+  "nfc-tags.getNfcScanners": {
+    "resource": "nfc.enrollments",
+    "method": "listScanners"
+  },
+  "nfc-tags.getNfcTagTypes": {
+    "resource": "nfc.tagTypes",
+    "method": "list"
+  },
+  "nfc-tags.getNfcTags": {
+    "resource": "nfc.tags",
+    "method": "list"
+  },
+  "nfc-tags.getNfcTagsById": {
+    "resource": "nfc.tags",
+    "method": "retrieve"
+  },
+  "nfc-tags.getNfcTagsByIdHistory": {
+    "resource": "nfc.tags",
+    "method": "listHistory"
+  },
+  "nfc-tags.getNfcUsersByUserIdTags": {
+    "resource": "nfc.tags",
+    "method": "listForUser"
+  },
+  "nfc-tags.patchNfcBindingsByBindingId": {
+    "resource": "nfc.bindings",
+    "method": "update"
+  },
+  "nfc-tags.patchNfcTagTypesById": {
+    "resource": "nfc.tagTypes",
+    "method": "update"
+  },
+  "nfc-tags.patchNfcTagsById": {
+    "resource": "nfc.tags",
+    "method": "update"
+  },
+  "nfc-tags.postNfcPassesByPassIdEnrollments": {
+    "resource": "nfc.enrollments",
+    "method": "create"
+  },
+  "nfc-tags.postNfcPassesByPassIdTags": {
+    "resource": "nfc.tags",
+    "method": "rebind"
+  },
+  "nfc-tags.postNfcTagTypes": {
+    "resource": "nfc.tagTypes",
+    "method": "create"
+  },
+  "nfc-tags.postNfcTagTypesByIdArchive": {
+    "resource": "nfc.tagTypes",
+    "method": "archive"
+  },
+  "nfc-tags.postNfcTagsByIdLost": {
+    "resource": "nfc.tags",
+    "method": "reportLost"
+  },
+  "nfc-tags.postNfcTagsByIdRestore": {
+    "resource": "nfc.tags",
+    "method": "restore"
+  },
+  "nfc-tags.postNfcTagsByIdRetire": {
+    "resource": "nfc.tags",
+    "method": "retire"
+  },
+  "nfc.getTBySlug": {
+    "resource": "public.tags",
+    "method": "retrievePage",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "offboard.postOffboard": {
+    "resource": "holders",
+    "method": "offboard"
+  },
+  "org-lifecycle.getOrgExportsByExportIdDownload": {
+    "resource": "orgExports",
+    "method": "download",
+    "sdk": false,
+    "reason": "Signed link from orgExports.createLink; the signature in the URL is the credential."
+  },
+  "org-lifecycle.getOrgsByOrgIdExports": {
+    "resource": "orgExports",
+    "method": "list"
+  },
+  "org-lifecycle.getOrgsByOrgIdLifecycle": {
+    "resource": "orgs",
+    "method": "retrieveLifecycle"
+  },
+  "org-lifecycle.getPlatformClosedOrgs": {
+    "resource": "platform.orgs",
+    "method": "listClosed"
+  },
+  "org-lifecycle.postOrgsByOrgIdClose": {
+    "resource": "orgs",
+    "method": "close"
+  },
+  "org-lifecycle.postOrgsByOrgIdExports": {
+    "resource": "orgExports",
+    "method": "create"
+  },
+  "org-lifecycle.postOrgsByOrgIdExportsByExportIdLink": {
+    "resource": "orgExports",
+    "method": "createLink"
+  },
+  "org-lifecycle.postOrgsByOrgIdReopen": {
+    "resource": "orgs",
+    "method": "reopen"
+  },
+  "organization-memberships.deleteOrgsByIdInvitationsByInvitationId": {
+    "resource": "invitations",
+    "method": "revoke"
+  },
+  "organization-memberships.deleteOrgsByIdMembershipsByMembershipId": {
+    "resource": "memberships",
+    "method": "revoke"
+  },
+  "organization-memberships.getOrgsByIdInvitations": {
+    "resource": "invitations",
+    "method": "list"
+  },
+  "organization-memberships.getOrgsByIdMemberships": {
+    "resource": "memberships",
+    "method": "list"
+  },
+  "organization-memberships.getOrgsInvitationsAccept": {
+    "resource": "invitations",
+    "method": "open",
+    "sdk": false,
+    "reason": "Invitee flow; needs the invited person's own session."
+  },
+  "organization-memberships.getOrgsMembershipsMe": {
+    "resource": "me.memberships",
+    "method": "list",
+    "sdk": false,
+    "reason": "Acts on the signed-in person's own account; needs a person's session."
+  },
+  "organization-memberships.postOrgsByIdInvitations": {
+    "resource": "invitations",
+    "method": "create"
+  },
+  "organization-memberships.postOrgsInvitationsAccept": {
+    "resource": "invitations",
+    "method": "accept",
+    "sdk": false,
+    "reason": "Invitee flow; needs the invited person's own session."
+  },
+  "organization-memberships.postOrgsInvitationsPreview": {
+    "resource": "invitations",
+    "method": "preview",
+    "sdk": false,
+    "reason": "Invitee flow; needs the invited person's own session."
+  },
+  "orgs.deleteOrgsById": {
+    "resource": "platform.orgs",
+    "method": "delete"
+  },
+  "orgs.deleteOrgsByIdBrandingBySlot": {
+    "resource": "brand.passImages",
+    "method": "delete"
+  },
+  "orgs.getOrgs": {
+    "resource": "platform.orgs",
+    "method": "list"
+  },
+  "orgs.getOrgsById": {
+    "resource": "platform.orgs",
+    "method": "retrieve"
+  },
+  "orgs.getOrgsByIdBrandingBySlotByScale": {
+    "resource": "brand.passImages",
+    "method": "download"
+  },
+  "orgs.getOrgsByIdEmailPreview": {
+    "resource": "brand",
+    "method": "previewEmail"
+  },
+  "orgs.getOrgsByIdWorkspace": {
+    "resource": "orgs",
+    "method": "retrieve"
+  },
+  "orgs.patchOrgsById": {
+    "resource": "orgs",
+    "method": "update"
+  },
+  "orgs.postOrgs": {
+    "resource": "platform.orgs",
+    "method": "create"
+  },
+  "orgs.postOrgsByIdStatus": {
+    "resource": "platform.orgs",
+    "method": "setStatus"
+  },
+  "orgs.putOrgsByIdBrandingBySlot": {
+    "resource": "brand.passImages",
+    "method": "upload"
+  },
+  "pass-imports.deletePassImportsById": {
+    "resource": "passImports",
+    "method": "delete"
+  },
+  "pass-imports.getPassImports": {
+    "resource": "passImports",
+    "method": "list"
+  },
+  "pass-imports.getPassImportsById": {
+    "resource": "passImports",
+    "method": "retrieve"
+  },
+  "pass-imports.getPassImportsByIdErrorsCsv": {
+    "resource": "passImports",
+    "method": "downloadErrors"
+  },
+  "pass-imports.getPassImportsByIdResultsCsv": {
+    "resource": "passImports",
+    "method": "downloadResults"
+  },
+  "pass-imports.getPassImportsByIdRows": {
+    "resource": "passImports.rows",
+    "method": "list"
+  },
+  "pass-imports.postPassImports": {
+    "resource": "passImports",
+    "method": "create"
+  },
+  "pass-imports.postPassImportsByIdCheck": {
+    "resource": "passImports",
+    "method": "check"
+  },
+  "pass-imports.postPassImportsByIdCommit": {
+    "resource": "passImports",
+    "method": "commit"
+  },
+  "pass-imports.postPassImportsByIdEmailRest": {
+    "resource": "passImports",
+    "method": "sendEmails"
+  },
+  "pass-imports.postPassImportsByIdRemoveCreated": {
+    "resource": "passImports",
+    "method": "removeCreated"
+  },
+  "passes.deletePassesById": {
+    "resource": "passes",
+    "method": "delete"
+  },
+  "passes.deletePassesByIdAssetsByName": {
+    "resource": "passes.assets",
+    "method": "delete"
+  },
+  "passes.deletePassesByIdMemberPhoto": {
+    "resource": "passes.memberPhoto",
+    "method": "delete"
+  },
+  "passes.getPasses": {
+    "resource": "passes",
+    "method": "list"
+  },
+  "passes.getPassesBulkPrintByJobId": {
+    "resource": "printJobs",
+    "method": "retrieve"
+  },
+  "passes.getPassesBulkPrintByJobIdPdf": {
+    "resource": "printJobs",
+    "method": "downloadPdf"
+  },
+  "passes.getPassesById": {
+    "resource": "passes",
+    "method": "retrieve"
+  },
+  "passes.getPassesByIdAssets": {
+    "resource": "passes.assets",
+    "method": "list"
+  },
+  "passes.getPassesByIdChannels": {
+    "resource": "passes.channels",
+    "method": "retrieve"
+  },
+  "passes.getPassesByIdCheckIn": {
+    "resource": "passes.checkInRules",
+    "method": "retrieve"
+  },
+  "passes.getPassesByIdDevices": {
+    "resource": "passes.devices",
+    "method": "list"
+  },
+  "passes.getPassesByIdDiff": {
+    "resource": "passes.versions",
+    "method": "diff"
+  },
+  "passes.getPassesByIdEvents": {
+    "resource": "passes.activity",
+    "method": "list"
+  },
+  "passes.getPassesByIdMemberPhoto": {
+    "resource": "passes.memberPhoto",
+    "method": "retrieve"
+  },
+  "passes.getPassesByIdMemberPhotoImage": {
+    "resource": "passes.memberPhoto",
+    "method": "download"
+  },
+  "passes.getPassesByIdPrint": {
+    "resource": "passes.prints",
+    "method": "retrievePage"
+  },
+  "passes.getPassesByIdPrintAssetsByName": {
+    "resource": "passes.prints",
+    "method": "downloadAsset"
+  },
+  "passes.getPassesByIdPrintPdf": {
+    "resource": "passes.prints",
+    "method": "downloadPdf"
+  },
+  "passes.getPassesByIdPrints": {
+    "resource": "passes.prints",
+    "method": "list"
+  },
+  "passes.getPassesByIdVersionsByVersion": {
+    "resource": "passes.versions",
+    "method": "retrieve"
+  },
+  "passes.patchPassesById": {
+    "resource": "passes",
+    "method": "update"
+  },
+  "passes.patchPassesByIdMemberPhoto": {
+    "resource": "passes.memberPhoto",
+    "method": "update"
+  },
+  "passes.postPasses": {
+    "resource": "passes",
+    "method": "create"
+  },
+  "passes.postPassesBulk": {
+    "resource": "passes",
+    "method": "bulkApply"
+  },
+  "passes.postPassesBulkChannels": {
+    "resource": "passes",
+    "method": "bulkUpdateChannels"
+  },
+  "passes.postPassesBulkPrint": {
+    "resource": "printJobs",
+    "method": "create"
+  },
+  "passes.postPassesBulkReissue": {
+    "resource": "passes",
+    "method": "bulkReissue"
+  },
+  "passes.postPassesByIdNewCode": {
+    "resource": "passes",
+    "method": "rotateCode"
+  },
+  "passes.postPassesByIdPrints": {
+    "resource": "passes.prints",
+    "method": "create"
+  },
+  "passes.postPassesByIdPrintsByPrintIdVoid": {
+    "resource": "passes.prints",
+    "method": "void"
+  },
+  "passes.postPassesByIdRefresh": {
+    "resource": "passes",
+    "method": "refresh"
+  },
+  "passes.postPassesByIdRemove": {
+    "resource": "passes",
+    "method": "remove"
+  },
+  "passes.postPassesByIdRenew": {
+    "resource": "passes",
+    "method": "renew"
+  },
+  "passes.postPassesByIdResendEmail": {
+    "resource": "passes",
+    "method": "sendEmail"
+  },
+  "passes.postPassesByIdRestore": {
+    "resource": "passes",
+    "method": "restore"
+  },
+  "passes.postPassesByIdRotateLink": {
+    "resource": "passes",
+    "method": "rotateLink"
+  },
+  "passes.postPassesByIdStamps": {
+    "resource": "passes.stamps",
+    "method": "apply"
+  },
+  "passes.postPassesByIdUnvoid": {
+    "resource": "passes",
+    "method": "unvoid"
+  },
+  "passes.postPassesByIdVoid": {
+    "resource": "passes",
+    "method": "void"
+  },
+  "passes.postPassesPhotosMatch": {
+    "resource": "passes",
+    "method": "matchPhotos"
+  },
+  "passes.putPassesByIdAssetsByName": {
+    "resource": "passes.assets",
+    "method": "upload"
+  },
+  "passes.putPassesByIdChannels": {
+    "resource": "passes.channels",
+    "method": "update"
+  },
+  "passes.putPassesByIdCheckIn": {
+    "resource": "passes.checkInRules",
+    "method": "update"
+  },
+  "passes.putPassesByIdConnection": {
+    "resource": "passes.connection",
+    "method": "update"
+  },
+  "passes.putPassesByIdMemberPhoto": {
+    "resource": "passes.memberPhoto",
+    "method": "upload"
+  },
+  "public.getBByToken": {
+    "resource": "public.bundles",
+    "method": "retrievePage",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getBByTokenByPassIdAssetsByName": {
+    "resource": "public.bundles",
+    "method": "downloadPassAsset",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getBByTokenByPassIdBarcode": {
+    "resource": "public.bundles",
+    "method": "retrievePassBarcode",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getBByTokenByPassIdPassPkpass": {
+    "resource": "public.bundles",
+    "method": "downloadPass",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getBByTokenByPassIdWalletByProvider": {
+    "resource": "public.bundles",
+    "method": "addPassToWallet",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getBByTokenPassesPkpasses": {
+    "resource": "public.bundles",
+    "method": "downloadAll",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getBrandByOrgIdByFile": {
+    "resource": "public.brand",
+    "method": "downloadWebLogo",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getPByToken": {
+    "resource": "public.passes",
+    "method": "retrievePage",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getPByTokenAssetsByName": {
+    "resource": "public.passes",
+    "method": "downloadAsset",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getPByTokenBarcode": {
+    "resource": "public.passes",
+    "method": "retrieveBarcode",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getPByTokenPassPkpass": {
+    "resource": "public.passes",
+    "method": "download",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getPByTokenWalletByProvider": {
+    "resource": "public.passes",
+    "method": "addToWallet",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getPWalletSamsungByOffer": {
+    "resource": "public.passes",
+    "method": "openSamsungOffer",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getWIByFile": {
+    "resource": "public.walletImages",
+    "method": "download",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "retention.getOrgsByOrgIdRetentionHolds": {
+    "resource": "legalHolds",
+    "method": "list"
+  },
+  "retention.getOrgsByOrgIdRetentionReceipts": {
+    "resource": "retentionReceipts",
+    "method": "list"
+  },
+  "retention.getOrgsByOrgIdRetentionReceiptsByReceiptIdDownload": {
+    "resource": "retentionReceipts",
+    "method": "download"
+  },
+  "retention.getPlatformOrgsByOrgIdRetentionHolds": {
+    "resource": "platform.orgs.legalHolds",
+    "method": "list"
+  },
+  "retention.getPlatformOrgsByOrgIdRetentionReceipts": {
+    "resource": "platform.orgs.retentionReceipts",
+    "method": "list"
+  },
+  "retention.getPlatformOrgsByOrgIdRetentionReceiptsByReceiptIdDownload": {
+    "resource": "platform.orgs.retentionReceipts",
+    "method": "download"
+  },
+  "retention.getPlatformRetentionReceipts": {
+    "resource": "platform.retentionReceipts",
+    "method": "list"
+  },
+  "retention.getPlatformRetentionReceiptsByReceiptIdDownload": {
+    "resource": "platform.retentionReceipts",
+    "method": "download"
+  },
+  "retention.postOrgsByOrgIdRetentionHolds": {
+    "resource": "legalHolds",
+    "method": "create"
+  },
+  "retention.postOrgsByOrgIdRetentionHoldsByHoldIdRelease": {
+    "resource": "legalHolds",
+    "method": "release"
+  },
+  "retention.postPlatformOrgsByOrgIdRetentionHolds": {
+    "resource": "platform.orgs.legalHolds",
+    "method": "create"
+  },
+  "retention.postPlatformOrgsByOrgIdRetentionHoldsByHoldIdRelease": {
+    "resource": "platform.orgs.legalHolds",
+    "method": "release"
+  },
+  "roll-calls.getRollCalls": {
+    "resource": "rollCalls",
+    "method": "retrieveOpen"
+  },
+  "roll-calls.getRollCallsById": {
+    "resource": "rollCalls",
+    "method": "retrieve"
+  },
+  "roll-calls.postRollCalls": {
+    "resource": "rollCalls",
+    "method": "create"
+  },
+  "roll-calls.postRollCallsByIdEnd": {
+    "resource": "rollCalls",
+    "method": "end"
+  },
+  "roll-calls.postRollCallsByIdMarks": {
+    "resource": "rollCalls",
+    "method": "mark"
+  },
+  "samsung.getWalletV1SamsungCardsByCardIdByRefId": {
+    "resource": "samsungWallet.cards",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Wallet provider server callback, signed by the provider."
+  },
+  "samsung.postWalletV1SamsungCardsByCardIdByRefId": {
+    "resource": "samsungWallet",
+    "method": "receiveCallback",
+    "sdk": false,
+    "reason": "Wallet provider server callback, signed by the provider."
+  },
+  "sandbox.getTestInbox": {
+    "resource": "testEmails",
+    "method": "list"
+  },
+  "sandbox.getTestInboxById": {
+    "resource": "testEmails",
+    "method": "retrieve"
+  },
+  "sandbox.getTestInboxByIdHtml": {
+    "resource": "testEmails",
+    "method": "retrieveHtml",
+    "sdk": false,
+    "reason": "Console preview frame; testEmails.retrieve returns the same HTML."
+  },
+  "sandbox.postTestInboxByIdSendToMe": {
+    "resource": "testEmails",
+    "method": "sendToMe",
+    "sdk": false,
+    "reason": "Sends to the signed-in person's own verified address."
+  },
+  "scan-display.getScanDisplayPreview": {
+    "resource": "scanDisplays",
+    "method": "preview"
+  },
+  "scan-events.getScanEvents": {
+    "resource": "scanEvents",
+    "method": "list"
+  },
+  "scan-events.getScanEventsById": {
+    "resource": "scanEvents",
+    "method": "retrieve"
+  },
+  "scan-events.getScanEventsByIdInside": {
+    "resource": "scanEvents",
+    "method": "listInside"
+  },
+  "scan-events.patchScanEventsById": {
+    "resource": "scanEvents",
+    "method": "update"
+  },
+  "scan-events.postScanEvents": {
+    "resource": "scanEvents",
+    "method": "create"
+  },
+  "scan-events.postScanEventsByIdArchive": {
+    "resource": "scanEvents",
+    "method": "archive"
+  },
+  "scan-events.postScanEventsByIdMarkOut": {
+    "resource": "scanEvents",
+    "method": "markOut"
+  },
+  "scan-events.postScanEventsByIdScanners": {
+    "resource": "scanEvents",
+    "method": "attachScanners"
+  },
+  "scan-staff.getScanStaff": {
+    "resource": "scanStaff",
+    "method": "list"
+  },
+  "scan-staff.patchScanStaffById": {
+    "resource": "scanStaff",
+    "method": "update"
+  },
+  "scan-staff.postScanStaff": {
+    "resource": "scanStaff",
+    "method": "create"
+  },
+  "scan-staff.postScanStaffByIdResetPin": {
+    "resource": "scanStaff",
+    "method": "resetPin"
+  },
+  "scan-zones.getScanZones": {
+    "resource": "scanZones",
+    "method": "list"
+  },
+  "scan-zones.getScanZonesByIdInside": {
+    "resource": "scanZones",
+    "method": "listInside"
+  },
+  "scan-zones.patchScanZonesById": {
+    "resource": "scanZones",
+    "method": "update"
+  },
+  "scan-zones.postScanZones": {
+    "resource": "scanZones",
+    "method": "create"
+  },
+  "scan-zones.postScanZonesByIdArchive": {
+    "resource": "scanZones",
+    "method": "archive"
+  },
+  "scan-zones.postScanZonesByIdMarkOut": {
+    "resource": "scanZones",
+    "method": "markOut"
+  },
+  "scan-zones.postScanZonesByIdRestore": {
+    "resource": "scanZones",
+    "method": "restore"
+  },
+  "scan-zones.postScanZonesVisitsByIdReset": {
+    "resource": "scanZones",
+    "method": "resetVisits"
+  },
+  "scan.deleteScanStaff": {
+    "resource": "terminal.staff",
+    "method": "signOut",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanActivity": {
+    "resource": "terminal",
+    "method": "listActivity",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanBrandingLogo": {
+    "resource": "terminal",
+    "method": "downloadLogo",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanLive": {
+    "resource": "terminal",
+    "method": "connectLive",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanLiveInside": {
+    "resource": "terminal",
+    "method": "listInside",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanLivePassesByPassIdAssetsMemberPng": {
+    "resource": "terminal",
+    "method": "downloadMemberPhoto",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanPassesByPassIdAssetsByName": {
+    "resource": "terminal",
+    "method": "downloadPassAsset",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanRollCall": {
+    "resource": "terminal.rollCalls",
+    "method": "retrieveOpen",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanRollCallById": {
+    "resource": "terminal.rollCalls",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanRoster": {
+    "resource": "terminal",
+    "method": "retrieveRoster",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanScans": {
+    "resource": "terminal.scans",
+    "method": "list",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanSession": {
+    "resource": "terminal",
+    "method": "retrieveSession",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanStaff": {
+    "resource": "terminal.staff",
+    "method": "search",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanStats": {
+    "resource": "terminal",
+    "method": "retrieveStats",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanSummary": {
+    "resource": "terminal",
+    "method": "retrieveSummary",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanTagEnrollmentsPending": {
+    "resource": "terminal.tagEnrollments",
+    "method": "retrievePending",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.getScanVisitors": {
+    "resource": "terminal",
+    "method": "listVisitors",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanActions": {
+    "resource": "terminal",
+    "method": "act"
+  },
+  "scan.postScanBatch": {
+    "resource": "terminal",
+    "method": "uploadBatch",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanDevice": {
+    "resource": "terminal",
+    "method": "reportDevice",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanLookup": {
+    "resource": "terminal",
+    "method": "lookup",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanMarkOut": {
+    "resource": "terminal",
+    "method": "markOut",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanOverrides": {
+    "resource": "terminal",
+    "method": "override",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanOverridesByScanIdNote": {
+    "resource": "terminal",
+    "method": "addOverrideNote",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanPair": {
+    "resource": "terminal",
+    "method": "pair",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanPairPreview": {
+    "resource": "terminal",
+    "method": "previewPairing",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanPassesByPassIdPhoto": {
+    "resource": "terminal",
+    "method": "addMemberPhoto",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanResolve": {
+    "resource": "terminal",
+    "method": "resolve"
+  },
+  "scan.postScanRole": {
+    "resource": "terminal",
+    "method": "setRole",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanRollCall": {
+    "resource": "terminal.rollCalls",
+    "method": "create",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanRollCallByIdEnd": {
+    "resource": "terminal.rollCalls",
+    "method": "end",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanRollCallByIdMarks": {
+    "resource": "terminal.rollCalls",
+    "method": "mark",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanScansByScanIdUndo": {
+    "resource": "terminal.scans",
+    "method": "undo"
+  },
+  "scan.postScanSessionOpenNow": {
+    "resource": "terminal",
+    "method": "openSessionNow",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanSignOut": {
+    "resource": "terminal",
+    "method": "signOutEverywhere",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanStaff": {
+    "resource": "terminal.staff",
+    "method": "signIn",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanTagEnrollmentsByIdComplete": {
+    "resource": "terminal.tagEnrollments",
+    "method": "complete",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanTagEnrollmentsByIdDecline": {
+    "resource": "terminal.tagEnrollments",
+    "method": "decline",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanTagsBind": {
+    "resource": "terminal.tags",
+    "method": "bind",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanTagsBindingsByBindingIdUndo": {
+    "resource": "terminal.tags",
+    "method": "undoBind",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanTagsInspect": {
+    "resource": "terminal.tags",
+    "method": "inspect",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanUnpair": {
+    "resource": "terminal",
+    "method": "unpair",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scanners.getScanSetups": {
+    "resource": "scanSetups",
+    "method": "list"
+  },
+  "scanners.getScanSetupsById": {
+    "resource": "scanSetups",
+    "method": "retrieve"
+  },
+  "scanners.getScanners": {
+    "resource": "scanners",
+    "method": "list"
+  },
+  "scanners.getScannersById": {
+    "resource": "scanners",
+    "method": "retrieve"
+  },
+  "scanners.getScannersByIdPairing": {
+    "resource": "scanners.pairing",
+    "method": "retrieve"
+  },
+  "scanners.getScanningSessions": {
+    "resource": "scanningSessions",
+    "method": "list"
+  },
+  "scanners.getScanningSessionsById": {
+    "resource": "scanningSessions",
+    "method": "retrieve"
+  },
+  "scanners.getScanningSessionsByIdSummary": {
+    "resource": "scanningSessions",
+    "method": "retrieveSummary"
+  },
+  "scanners.patchScanSetupsById": {
+    "resource": "scanSetups",
+    "method": "update"
+  },
+  "scanners.patchScannersById": {
+    "resource": "scanners",
+    "method": "update"
+  },
+  "scanners.patchScanningSessionsById": {
+    "resource": "scanningSessions",
+    "method": "update"
+  },
+  "scanners.patchScanningSessionsByIdDevicesByDeviceId": {
+    "resource": "scanningSessions.devices",
+    "method": "update"
+  },
+  "scanners.postScanSetups": {
+    "resource": "scanSetups",
+    "method": "create"
+  },
+  "scanners.postScanSetupsAdminSession": {
+    "resource": "scanSetups",
+    "method": "createAdminSession",
+    "sdk": false,
+    "reason": "Binds the calling browser or the signed-in admin as a scanner device."
+  },
+  "scanners.postScanners": {
+    "resource": "scanners",
+    "method": "create"
+  },
+  "scanners.postScannersByIdMode": {
+    "resource": "scanners",
+    "method": "setMode"
+  },
+  "scanners.postScannersByIdPairHere": {
+    "resource": "scanners",
+    "method": "pairHere",
+    "sdk": false,
+    "reason": "Binds the calling browser or the signed-in admin as a scanner device."
+  },
+  "scanners.postScannersByIdPairing": {
+    "resource": "scanners.pairing",
+    "method": "create"
+  },
+  "scanners.postScannersByIdRevoke": {
+    "resource": "scanners",
+    "method": "revoke"
+  },
+  "scanners.postScannersByIdSamplePass": {
+    "resource": "scanners",
+    "method": "createSamplePass"
+  },
+  "scanners.postScannersByIdToken": {
+    "resource": "scanners",
+    "method": "rotateToken"
+  },
+  "scanners.postScanningSessions": {
+    "resource": "scanningSessions",
+    "method": "create"
+  },
+  "scanners.postScanningSessionsByIdDevices": {
+    "resource": "scanningSessions.devices",
+    "method": "create"
+  },
+  "scanners.postScanningSessionsByIdHold": {
+    "resource": "scanningSessions",
+    "method": "overrideHours"
+  },
+  "scanners.postScanningSessionsJoin": {
+    "resource": "scanningSessions",
+    "method": "join",
+    "sdk": false,
+    "reason": "Binds the calling browser or the signed-in admin as a scanner device."
+  },
+  "scans.getScans": {
+    "resource": "scans",
+    "method": "list"
+  },
+  "scans.getScansById": {
+    "resource": "scans",
+    "method": "retrieve"
+  },
+  "scans.getScansExport": {
+    "resource": "scans",
+    "method": "export"
+  },
+  "scans.postScansByIdUndo": {
+    "resource": "scans",
+    "method": "undo"
+  },
+  "session.getSession": {
+    "resource": "session",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "The browser session and its CSRF token."
+  },
+  "settings.getSettings": {
+    "resource": "settings",
+    "method": "retrieve"
+  },
+  "settings.getSettingsImpact": {
+    "resource": "platform.settings",
+    "method": "retrieveImpact"
+  },
+  "settings.getSettingsReplyTo": {
+    "resource": "settings.replyTo",
+    "method": "retrieve"
+  },
+  "settings.postSettingsReplyToConfirm": {
+    "resource": "settings.replyTo",
+    "method": "confirm"
+  },
+  "settings.postSettingsReplyToResend": {
+    "resource": "settings.replyTo",
+    "method": "resendConfirmation"
+  },
+  "settings.putSettings": {
+    "resource": "settings",
+    "method": "update"
+  },
+  "status.getStatus": {
+    "resource": "platform.status",
+    "method": "retrieve"
+  },
+  "status.getStatusWorkflows": {
+    "resource": "platform.status",
+    "method": "listWorkflowRuns"
+  },
+  "templates.deleteTemplatesById": {
+    "resource": "templates",
+    "method": "delete"
+  },
+  "templates.getTemplates": {
+    "resource": "templates",
+    "method": "list"
+  },
+  "templates.getTemplatesById": {
+    "resource": "templates",
+    "method": "retrieve"
+  },
+  "templates.getTemplatesByIdCandidates": {
+    "resource": "templates.candidates",
+    "method": "list"
+  },
+  "templates.getTemplatesByIdChannels": {
+    "resource": "templates.channels",
+    "method": "retrieve"
+  },
+  "templates.getTemplatesByIdChannelsRuns": {
+    "resource": "templates.channels",
+    "method": "listRuns"
+  },
+  "templates.getTemplatesByIdPackage": {
+    "resource": "templates",
+    "method": "downloadPackage"
+  },
+  "templates.getTemplatesByIdReleases": {
+    "resource": "templates.releases",
+    "method": "list"
+  },
+  "templates.getTemplatesByIdReleasesImpact": {
+    "resource": "templates.releases",
+    "method": "retrieveImpact"
+  },
+  "templates.getTemplatesByIdStampsImpact": {
+    "resource": "templates",
+    "method": "retrieveStampsImpact"
+  },
+  "templates.getTemplatesByIdVersionsByVersion": {
+    "resource": "templates.versions",
+    "method": "retrieve"
+  },
+  "templates.getTemplatesByIdVersionsByVersionAssetsByName": {
+    "resource": "templates.versions",
+    "method": "downloadAsset"
+  },
+  "templates.getTemplatesEligible": {
+    "resource": "templates",
+    "method": "listEligible"
+  },
+  "templates.getTemplatesPreviews": {
+    "resource": "templates",
+    "method": "listPreviews"
+  },
+  "templates.getTemplatesUploads": {
+    "resource": "templateImports",
+    "method": "list"
+  },
+  "templates.getTemplatesUploadsById": {
+    "resource": "templateImports",
+    "method": "retrieve"
+  },
+  "templates.patchTemplatesById": {
+    "resource": "platform.templates",
+    "method": "assign"
+  },
+  "templates.postTemplatesByIdArchive": {
+    "resource": "templates",
+    "method": "archive"
+  },
+  "templates.postTemplatesByIdCandidates": {
+    "resource": "templates.candidates",
+    "method": "create"
+  },
+  "templates.postTemplatesByIdCandidatesByCandidateIdApprove": {
+    "resource": "templates.candidates",
+    "method": "approve"
+  },
+  "templates.postTemplatesByIdCandidatesPromote": {
+    "resource": "templates.candidates",
+    "method": "promote"
+  },
+  "templates.postTemplatesByIdClone": {
+    "resource": "templates",
+    "method": "clone"
+  },
+  "templates.postTemplatesByIdPreview": {
+    "resource": "templates",
+    "method": "preview"
+  },
+  "templates.postTemplatesByIdReleases": {
+    "resource": "templates.releases",
+    "method": "create"
+  },
+  "templates.postTemplatesByIdReleasesRollback": {
+    "resource": "templates.releases",
+    "method": "rollback"
+  },
+  "templates.postTemplatesByIdRestore": {
+    "resource": "templates",
+    "method": "restore"
+  },
+  "templates.postTemplatesByIdScanSetup": {
+    "resource": "templates",
+    "method": "setUpScanning"
+  },
+  "templates.postTemplatesByIdShare": {
+    "resource": "platform.templates",
+    "method": "share"
+  },
+  "templates.postTemplatesByIdUse": {
+    "resource": "blueprints",
+    "method": "use"
+  },
+  "templates.postTemplatesByIdUseCheck": {
+    "resource": "blueprints",
+    "method": "checkUse"
+  },
+  "templates.postTemplatesByIdVersions": {
+    "resource": "templates.versions",
+    "method": "create"
+  },
+  "templates.postTemplatesUploads": {
+    "resource": "templateImports",
+    "method": "create"
+  },
+  "templates.putTemplatesByIdChannels": {
+    "resource": "templates.channels",
+    "method": "update"
+  },
+  "templates.putTemplatesByIdManifest": {
+    "resource": "templates.versions",
+    "method": "createFromManifest"
+  },
+  "users.deleteUsersByIdEmailsByEmail": {
+    "resource": "platform.users.emails",
+    "method": "delete"
+  },
+  "users.deleteUsersByIdSessionsBySessionId": {
+    "resource": "platform.users.sessions",
+    "method": "revoke"
+  },
+  "users.getUsers": {
+    "resource": "platform.users",
+    "method": "list"
+  },
+  "users.getUsersById": {
+    "resource": "platform.users",
+    "method": "retrieve"
+  },
+  "users.patchUsersById": {
+    "resource": "platform.users",
+    "method": "update"
+  },
+  "users.postUsersByIdEmails": {
+    "resource": "platform.users.emails",
+    "method": "create"
+  },
+  "users.postUsersByIdEmailsByEmailPrimary": {
+    "resource": "platform.users.emails",
+    "method": "makePrimary"
+  },
+  "users.postUsersByIdSessionsRevoke": {
+    "resource": "platform.users.sessions",
+    "method": "revokeAll"
+  },
+  "visitors.getVisitors": {
+    "resource": "visitors",
+    "method": "list"
+  },
+  "visitors.getVisitorsHosts": {
+    "resource": "visitors",
+    "method": "listHosts"
+  },
+  "visitors.postVisitors": {
+    "resource": "visitors",
+    "method": "create"
+  },
+  "visitors.postVisitorsByIdCancel": {
+    "resource": "visitors",
+    "method": "cancel"
+  },
+  "visitors.postVisitorsByIdCheckOut": {
+    "resource": "visitors",
+    "method": "checkOut"
+  },
+  "visitors.postVisitorsByIdHostEmail": {
+    "resource": "visitors",
+    "method": "sendHostEmail"
+  },
+  "wallet-credentials.getOrgsByOrgIdWalletCredentials": {
+    "resource": "walletCredentials",
+    "method": "list"
+  },
+  "wallet-credentials.getOrgsByOrgIdWalletCredentialsByIdChecksByCheckId": {
+    "resource": "walletCredentials.checks",
+    "method": "retrieve"
+  },
+  "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdCheck": {
+    "resource": "walletCredentials.checks",
+    "method": "create"
+  },
+  "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke": {
+    "resource": "walletCredentials",
+    "method": "revoke"
+  },
+  "wallet-credentials.putOrgsByOrgIdWalletCredentials": {
+    "resource": "walletCredentials",
+    "method": "upsert"
+  },
+  "wallet-enrolments.getOrgsByOrgIdWalletEnrolments": {
+    "resource": "walletEnrollments",
+    "method": "list"
+  },
+  "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderDisable": {
+    "resource": "walletEnrollments",
+    "method": "disable"
+  },
+  "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderEnable": {
+    "resource": "walletEnrollments",
+    "method": "enable"
+  },
+  "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderRevoke": {
+    "resource": "walletEnrollments",
+    "method": "revoke"
+  },
+  "wallet-enrolments.putOrgsByOrgIdWalletEnrolmentsByProvider": {
+    "resource": "walletEnrollments",
+    "method": "update"
+  },
+  "wallet-platform.getPlatformWalletCredentials": {
+    "resource": "platform.walletCredentials",
+    "method": "list"
+  },
+  "wallet-platform.getPlatformWalletCredentialsByIdChecksByCheckId": {
+    "resource": "platform.walletCredentials.checks",
+    "method": "retrieve"
+  },
+  "wallet-platform.getPlatformWalletCredentialsMigrate": {
+    "resource": "platform.walletCredentials",
+    "method": "retrieveMigration"
+  },
+  "wallet-platform.getPlatformWalletEnrolments": {
+    "resource": "platform.walletEnrollments",
+    "method": "list"
+  },
+  "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderHold": {
+    "resource": "platform.orgs.walletEnrollments",
+    "method": "hold"
+  },
+  "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderRelease": {
+    "resource": "platform.orgs.walletEnrollments",
+    "method": "release"
+  },
+  "wallet-platform.postPlatformWalletCredentialsByIdCheck": {
+    "resource": "platform.walletCredentials.checks",
+    "method": "create"
+  },
+  "wallet-platform.postPlatformWalletCredentialsByIdRevoke": {
+    "resource": "platform.walletCredentials",
+    "method": "revoke"
+  },
+  "wallet-platform.postPlatformWalletCredentialsMigrate": {
+    "resource": "platform.walletCredentials",
+    "method": "migrate"
+  },
+  "wallet-platform.postPlatformWalletCredentialsMigrateResolve": {
+    "resource": "platform.walletCredentials",
+    "method": "resolveMigration"
+  },
+  "wallet-platform.putPlatformWalletCredentials": {
+    "resource": "platform.walletCredentials",
+    "method": "upsert"
+  },
+  "wallet-providers.getWalletProvidersAccounts": {
+    "resource": "walletProviderAccounts",
+    "method": "retrieve"
+  },
+  "wallet-providers.getWalletProvidersPassesById": {
+    "resource": "passes",
+    "method": "retrieveProviderStatus"
+  },
+  "wallet-providers.postWalletProvidersAccountsRevoke": {
+    "resource": "walletProviderAccounts",
+    "method": "revoke"
+  },
+  "wallet-providers.postWalletProvidersAccountsVerify": {
+    "resource": "walletProviderAccounts",
+    "method": "verify"
+  },
+  "wallet-providers.putWalletProvidersAccounts": {
+    "resource": "walletProviderAccounts",
+    "method": "upsert"
+  },
+  "webhooks.deleteWebhookEndpointsById": {
+    "resource": "webhookEndpoints",
+    "method": "delete"
+  },
+  "webhooks.getWebhookEndpoints": {
+    "resource": "webhookEndpoints",
+    "method": "list"
+  },
+  "webhooks.getWebhookEndpointsById": {
+    "resource": "webhookEndpoints",
+    "method": "retrieve"
+  },
+  "webhooks.getWebhookEndpointsByIdDeliveries": {
+    "resource": "webhookEndpoints.deliveries",
+    "method": "list"
+  },
+  "webhooks.getWebhookEndpointsByIdDeliveriesByEventId": {
+    "resource": "webhookEndpoints.deliveries",
+    "method": "retrieve"
+  },
+  "webhooks.patchWebhookEndpointsById": {
+    "resource": "webhookEndpoints",
+    "method": "update"
+  },
+  "webhooks.postWebhookEndpoints": {
+    "resource": "webhookEndpoints",
+    "method": "create"
+  },
+  "webhooks.postWebhookEndpointsByIdDeliveriesByEventIdReplay": {
+    "resource": "webhookEndpoints.deliveries",
+    "method": "replay"
+  },
+  "webhooks.postWebhookEndpointsByIdReplay": {
+    "resource": "webhookEndpoints.deliveries",
+    "method": "bulkReplay"
+  },
+  "webhooks.postWebhookEndpointsByIdSecret": {
+    "resource": "webhookEndpoints",
+    "method": "rotateSecret"
+  },
+  "webhooks.postWebhookEndpointsByIdTest": {
+    "resource": "webhookEndpoints",
+    "method": "sendTest"
+  }
+}

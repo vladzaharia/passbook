@@ -1,0 +1,62 @@
+{
+  "templates.getTemplates": {
+    "description": "Lists the organization's templates, newest first. Use `blueprint=1` for starters.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Example Events",
+          "slug": "event-ticket",
+          "name": "Event ticket",
+          "description": "Admission ticket with a seat and a QR code.",
+          "origin": "uploaded",
+          "status": "active",
+          "activeVersion": "3",
+          "styles": ["eventTicket"],
+          "passCount": 128,
+          "createdAt": 1764000000000,
+          "updatedAt": 1764086400000
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "templates.getTemplatesById": {
+    "description": "One template with its versions and a sample input. `sample` is a valid `input` for creating a pass.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgName": "Example Events",
+      "slug": "event-ticket",
+      "name": "Event ticket",
+      "description": "Admission ticket with a seat and a QR code.",
+      "origin": "uploaded",
+      "status": "active",
+      "activeVersion": "3",
+      "styles": ["eventTicket"],
+      "passCount": 128,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764086400000,
+      "sample": {
+        "name": "Ada Example",
+        "seat": "Row 4, seat 12"
+      },
+      "versions": [
+        {
+          "version": "3",
+          "createdAt": 1764000000000,
+          "createdBy": null,
+          "assets": [],
+          "report": {
+            "ok": true,
+            "issues": []
+          },
+          "active": true,
+          "displayOnly": false,
+          "passCount": 128
+        }
+      ]
+    }
+  }
+}

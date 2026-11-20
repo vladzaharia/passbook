@@ -1,0 +1,16 @@
+{
+  "api-keys.getApiKeysMe": {
+    "description": "The key this request used: its scopes, organization and mode. Use it to check a key works.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000201",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Order system",
+      "prefix": "wlt_k3v9",
+      "scopes": ["passes:read", "passes:write"],
+      "mode": "live",
+      "createdAt": 1764000000000,
+      "lastUsedAt": 1764000060000,
+      "expiresAt": null
+    }
+  }
+}

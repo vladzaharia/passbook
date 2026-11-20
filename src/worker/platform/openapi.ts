@@ -19,7 +19,7 @@ export interface RouteSpec {
   /** OpenAPI style path, e.g. `/{id}/void`. */
   path: string;
   summary: string;
-  /** Stable id for SDKs. Default: `<tag>.<verb><Path>` (openapi-document.ts); frozen in docs/api/operation-ids.json. */
+  /** Stable id. Default: `<tag>.<verb><Path>` (openapi-document.ts); frozen in docs/api/operation-ids.json. SDK names come from docs/api/sdk-names.json. */
   operationId?: string;
   params?: ZodType;
   query?: ZodType;
