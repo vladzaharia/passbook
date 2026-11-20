@@ -3,11 +3,12 @@
 exports[`fidelityReport over every starter and baked template > henrys-blue 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "3ea4796aafca928ae8f1b0ffd178b4ca144185e7cfacb03bc1c940b14a6e341c",
+  "hash": "b7598e5da2d429470e38fae38313ddb1380f4f6f6200d7c6d80cd58a1e0523c1",
   "items": [
     {
       "capability": "barcode.format.code128",
       "chosen": false,
+      "group": "door",
       "message": "barcode.format.code128 omitted",
       "path": "barcodes.1",
       "severity": "omission",
@@ -16,6 +17,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "barcode.format.code39",
       "chosen": false,
+      "group": "door",
       "message": "barcode.format.code39 omitted",
       "path": "barcodes.0",
       "severity": "omission",
@@ -24,6 +26,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "directions-capitol-hill-poster does not fit.",
       "path": "backFields.directions-capitol-hill-poster",
       "severity": "omission",
@@ -32,6 +35,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "message-poster does not fit.",
       "path": "backFields.message-poster",
       "severity": "omission",
@@ -40,6 +44,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "pass-service does not fit.",
       "path": "backFields.pass-service",
       "severity": "omission",
@@ -48,6 +53,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "pass-service-poster does not fit.",
       "path": "backFields.pass-service-poster",
       "severity": "omission",
@@ -56,6 +62,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "phone-poster does not fit.",
       "path": "backFields.phone-poster",
       "severity": "omission",
@@ -64,6 +71,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "portal-poster does not fit.",
       "path": "backFields.portal-poster",
       "severity": "omission",
@@ -72,6 +80,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "status-poster does not fit.",
       "path": "backFields.status-poster",
       "severity": "omission",
@@ -80,6 +89,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "support-poster does not fit.",
       "path": "backFields.support-poster",
       "severity": "omission",
@@ -88,6 +98,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "terms does not fit.",
       "path": "backFields.terms",
       "severity": "omission",
@@ -96,6 +107,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "terms-poster does not fit.",
       "path": "backFields.terms-poster",
       "severity": "omission",
@@ -104,6 +116,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "website does not fit.",
       "path": "backFields.website",
       "severity": "omission",
@@ -112,6 +125,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "website-poster does not fit.",
       "path": "backFields.website-poster",
       "severity": "omission",
@@ -120,6 +134,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -128,6 +143,7 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -148,11 +164,12 @@ exports[`fidelityReport over every starter and baked template > henrys-blue 1`] 
 exports[`fidelityReport over every starter and baked template > henrys-copper 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "3ea4796aafca928ae8f1b0ffd178b4ca144185e7cfacb03bc1c940b14a6e341c",
+  "hash": "b7598e5da2d429470e38fae38313ddb1380f4f6f6200d7c6d80cd58a1e0523c1",
   "items": [
     {
       "capability": "barcode.format.code128",
       "chosen": false,
+      "group": "door",
       "message": "barcode.format.code128 omitted",
       "path": "barcodes.1",
       "severity": "omission",
@@ -161,6 +178,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "barcode.format.code39",
       "chosen": false,
+      "group": "door",
       "message": "barcode.format.code39 omitted",
       "path": "barcodes.0",
       "severity": "omission",
@@ -169,6 +187,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "directions-capitol-hill-poster does not fit.",
       "path": "backFields.directions-capitol-hill-poster",
       "severity": "omission",
@@ -177,6 +196,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "message-poster does not fit.",
       "path": "backFields.message-poster",
       "severity": "omission",
@@ -185,6 +205,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "pass-service does not fit.",
       "path": "backFields.pass-service",
       "severity": "omission",
@@ -193,6 +214,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "pass-service-poster does not fit.",
       "path": "backFields.pass-service-poster",
       "severity": "omission",
@@ -201,6 +223,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "phone-poster does not fit.",
       "path": "backFields.phone-poster",
       "severity": "omission",
@@ -209,6 +232,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "portal-poster does not fit.",
       "path": "backFields.portal-poster",
       "severity": "omission",
@@ -217,6 +241,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "status-poster does not fit.",
       "path": "backFields.status-poster",
       "severity": "omission",
@@ -225,6 +250,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "support-poster does not fit.",
       "path": "backFields.support-poster",
       "severity": "omission",
@@ -233,6 +259,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "terms does not fit.",
       "path": "backFields.terms",
       "severity": "omission",
@@ -241,6 +268,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "terms-poster does not fit.",
       "path": "backFields.terms-poster",
       "severity": "omission",
@@ -249,6 +277,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "website does not fit.",
       "path": "backFields.website",
       "severity": "omission",
@@ -257,6 +286,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "website-poster does not fit.",
       "path": "backFields.website-poster",
       "severity": "omission",
@@ -265,6 +295,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -273,6 +304,7 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -293,11 +325,12 @@ exports[`fidelityReport over every starter and baked template > henrys-copper 1`
 exports[`fidelityReport over every starter and baked template > starter-access-card 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -306,6 +339,7 @@ exports[`fidelityReport over every starter and baked template > starter-access-c
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -325,11 +359,12 @@ exports[`fidelityReport over every starter and baked template > starter-access-c
 exports[`fidelityReport over every starter and baked template > starter-boarding-pass 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "006f56e3a870b077bd65a834f6c46366f4caf792e0e0c9d347dd1b6a0265e241",
+  "hash": "3aa9ad5d8b1293e18d26830b49fc403aad691ab6112700cae3120aa4f0fa9675",
   "items": [
     {
       "capability": "barcode.format.pdf417",
       "chosen": false,
+      "group": "door",
       "message": "barcode.format.pdf417 omitted",
       "path": "barcodes.0",
       "severity": "omission",
@@ -338,6 +373,7 @@ exports[`fidelityReport over every starter and baked template > starter-boarding
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -346,6 +382,7 @@ exports[`fidelityReport over every starter and baked template > starter-boarding
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "May be shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -366,11 +403,12 @@ exports[`fidelityReport over every starter and baked template > starter-boarding
 exports[`fidelityReport over every starter and baked template > starter-booking 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -379,6 +417,7 @@ exports[`fidelityReport over every starter and baked template > starter-booking 
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -398,11 +437,12 @@ exports[`fidelityReport over every starter and baked template > starter-booking 
 exports[`fidelityReport over every starter and baked template > starter-coupon 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "3670f709b08c33f8dc7466bcb7c95ede3c98ad1bca0279fabc45171265aa58c2",
+  "hash": "5d736f81ccbe3e2774405729ee01c8df62fe7e4065d8e1a51383d6eaac8b5994",
   "items": [
     {
       "capability": "barcode.format.pdf417",
       "chosen": false,
+      "group": "door",
       "message": "barcode.format.pdf417 omitted",
       "path": "barcodes.0",
       "severity": "omission",
@@ -411,6 +451,7 @@ exports[`fidelityReport over every starter and baked template > starter-coupon 1
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -431,11 +472,12 @@ exports[`fidelityReport over every starter and baked template > starter-coupon 1
 exports[`fidelityReport over every starter and baked template > starter-credential 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -444,6 +486,7 @@ exports[`fidelityReport over every starter and baked template > starter-credenti
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -463,11 +506,12 @@ exports[`fidelityReport over every starter and baked template > starter-credenti
 exports[`fidelityReport over every starter and baked template > starter-day-pass 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -476,6 +520,7 @@ exports[`fidelityReport over every starter and baked template > starter-day-pass
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -495,11 +540,12 @@ exports[`fidelityReport over every starter and baked template > starter-day-pass
 exports[`fidelityReport over every starter and baked template > starter-event-ticket 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "14691e269d706cb4a804990d983cd752993bc9e6ffddee124e5168c318d60a78",
+  "hash": "7ace0828852f72de6b6c9f339c1e5640d7004aef3dfcf179ef3479b122907b5e",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -508,6 +554,7 @@ exports[`fidelityReport over every starter and baked template > starter-event-ti
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -516,6 +563,7 @@ exports[`fidelityReport over every starter and baked template > starter-event-ti
     {
       "capability": "upcoming.multi",
       "chosen": false,
+      "group": "look",
       "message": "Only the next event.",
       "path": "",
       "severity": "difference",
@@ -535,11 +583,12 @@ exports[`fidelityReport over every starter and baked template > starter-event-ti
 exports[`fidelityReport over every starter and baked template > starter-generic 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -548,6 +597,7 @@ exports[`fidelityReport over every starter and baked template > starter-generic 
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -567,11 +617,12 @@ exports[`fidelityReport over every starter and baked template > starter-generic 
 exports[`fidelityReport over every starter and baked template > starter-guest-pass 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -580,6 +631,7 @@ exports[`fidelityReport over every starter and baked template > starter-guest-pa
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -599,11 +651,12 @@ exports[`fidelityReport over every starter and baked template > starter-guest-pa
 exports[`fidelityReport over every starter and baked template > starter-hotel-stay 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -612,6 +665,7 @@ exports[`fidelityReport over every starter and baked template > starter-hotel-st
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -631,11 +685,12 @@ exports[`fidelityReport over every starter and baked template > starter-hotel-st
 exports[`fidelityReport over every starter and baked template > starter-id-card 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "80d8863939bd8ef83126f8300c12689613a2d8cf997f4bde482c16078af5e6d8",
+  "hash": "d887c76f34b6e11c273b8ba0bcb61fcb1a56a237da6297ecd98150946568e52b",
   "items": [
     {
       "capability": "barcode.format.code39",
       "chosen": false,
+      "group": "door",
       "message": "barcode.format.code39 omitted",
       "path": "barcodes.0",
       "severity": "omission",
@@ -644,6 +699,7 @@ exports[`fidelityReport over every starter and baked template > starter-id-card 
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -652,6 +708,7 @@ exports[`fidelityReport over every starter and baked template > starter-id-card 
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -672,11 +729,12 @@ exports[`fidelityReport over every starter and baked template > starter-id-card 
 exports[`fidelityReport over every starter and baked template > starter-monthly-pass 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -685,6 +743,7 @@ exports[`fidelityReport over every starter and baked template > starter-monthly-
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -704,11 +763,12 @@ exports[`fidelityReport over every starter and baked template > starter-monthly-
 exports[`fidelityReport over every starter and baked template > starter-multi-day-pass 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "14691e269d706cb4a804990d983cd752993bc9e6ffddee124e5168c318d60a78",
+  "hash": "7ace0828852f72de6b6c9f339c1e5640d7004aef3dfcf179ef3479b122907b5e",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -717,6 +777,7 @@ exports[`fidelityReport over every starter and baked template > starter-multi-da
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -725,6 +786,7 @@ exports[`fidelityReport over every starter and baked template > starter-multi-da
     {
       "capability": "upcoming.multi",
       "chosen": false,
+      "group": "look",
       "message": "Only the next event.",
       "path": "",
       "severity": "difference",
@@ -744,11 +806,12 @@ exports[`fidelityReport over every starter and baked template > starter-multi-da
 exports[`fidelityReport over every starter and baked template > starter-pack 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -757,6 +820,7 @@ exports[`fidelityReport over every starter and baked template > starter-pack 1`]
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -776,11 +840,12 @@ exports[`fidelityReport over every starter and baked template > starter-pack 1`]
 exports[`fidelityReport over every starter and baked template > starter-permit 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -789,6 +854,7 @@ exports[`fidelityReport over every starter and baked template > starter-permit 1
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -808,11 +874,12 @@ exports[`fidelityReport over every starter and baked template > starter-permit 1
 exports[`fidelityReport over every starter and baked template > starter-pickup 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "faa828b5ca7d68a82df5233fa1be8cdbff04d3da76e654a725a76d83a0e7b4b0",
+  "hash": "4ff608a55c4ce29373398f66a6c452741ad17433d86ceadb72e73d17afc77113",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -821,6 +888,7 @@ exports[`fidelityReport over every starter and baked template > starter-pickup 1
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "May be shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -840,11 +908,12 @@ exports[`fidelityReport over every starter and baked template > starter-pickup 1
 exports[`fidelityReport over every starter and baked template > starter-poster-generic 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "0f6a9499810e0c2d70a6ce12f67405abc677ef1543e96c16557968a9bf282d4b",
+  "hash": "7141b41be46c268fd6e429f8b4d694ddbc21f2d8bcfae0d567818d463b6875ee",
   "items": [
     {
       "capability": "field.back",
       "chosen": false,
+      "group": "holder",
       "message": "pass-service-poster does not fit.",
       "path": "backFields.pass-service-poster",
       "severity": "omission",
@@ -853,6 +922,7 @@ exports[`fidelityReport over every starter and baked template > starter-poster-g
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -861,6 +931,7 @@ exports[`fidelityReport over every starter and baked template > starter-poster-g
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -881,11 +952,12 @@ exports[`fidelityReport over every starter and baked template > starter-poster-g
 exports[`fidelityReport over every starter and baked template > starter-staff-badge 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -894,6 +966,7 @@ exports[`fidelityReport over every starter and baked template > starter-staff-ba
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -913,11 +986,12 @@ exports[`fidelityReport over every starter and baked template > starter-staff-ba
 exports[`fidelityReport over every starter and baked template > starter-stamp-card 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -926,6 +1000,7 @@ exports[`fidelityReport over every starter and baked template > starter-stamp-ca
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -945,11 +1020,12 @@ exports[`fidelityReport over every starter and baked template > starter-stamp-ca
 exports[`fidelityReport over every starter and baked template > starter-store-card 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "7dfe63eb766db02a857444e2ad16b7d21792f6a8cafaa4dbcfea1f64c10642c1",
+  "hash": "3e0711cb91c2c59dcb34e8563bdbcd1645e100dc1b4133585ff2e26e86c3f609",
   "items": [
     {
       "capability": "relevance.beacons",
       "chosen": false,
+      "group": "absent",
       "message": "relevance.beacons unsupported",
       "path": "beacons",
       "severity": "omission",
@@ -958,6 +1034,7 @@ exports[`fidelityReport over every starter and baked template > starter-store-ca
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -966,17 +1043,17 @@ exports[`fidelityReport over every starter and baked template > starter-store-ca
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "May be shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
       "support": "difference",
     },
   ],
-  "label": "Ready with omissions (1)",
+  "label": "Ready",
   "schema": 1,
   "status": {
-    "count": 1,
-    "kind": "omissions",
+    "kind": "ready",
   },
   "target": "samsung",
   "type": "loyalty",
@@ -986,11 +1063,12 @@ exports[`fidelityReport over every starter and baked template > starter-store-ca
 exports[`fidelityReport over every starter and baked template > starter-timed-ticket 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "8f84f05742e2c3e10abe931d7a1ca4c509d7366754ea765275b04a63af60991d",
+  "hash": "4ce603ea1e8605ef3ea03265fc247ae5b1c815dbf237e279c3c32297794f3ae4",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -999,6 +1077,7 @@ exports[`fidelityReport over every starter and baked template > starter-timed-ti
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -1018,11 +1097,12 @@ exports[`fidelityReport over every starter and baked template > starter-timed-ti
 exports[`fidelityReport over every starter and baked template > starter-transit-ticket 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -1031,6 +1111,7 @@ exports[`fidelityReport over every starter and baked template > starter-transit-
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
@@ -1050,11 +1131,12 @@ exports[`fidelityReport over every starter and baked template > starter-transit-
 exports[`fidelityReport over every starter and baked template > starter-visitor-pass 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "hash": "5f76ce33d38cdea6dc0d36efbe6daca5f617deab5e5d2b4f3d7e5cec140e19db",
   "items": [
     {
       "capability": "sharing",
       "chosen": false,
+      "group": "door",
       "message": "sharing difference",
       "path": "",
       "severity": "difference",
@@ -1063,6 +1145,7 @@ exports[`fidelityReport over every starter and baked template > starter-visitor-
     {
       "capability": "text.length",
       "chosen": false,
+      "group": "look",
       "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",

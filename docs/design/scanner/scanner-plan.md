@@ -458,8 +458,8 @@ routers are mounted but empty.
 - Copy `directions/b-final/README.md` to `docs/design/scanner/b-final.md` and `directions/b-final/sheets/*.png` into
   `docs/design/scanner/b-final/`: the visual source of truth for `/scan`.
 - Copy `directions/display/sheets/*.png` into `docs/design/scanner/display/`: the source for the Scan screen editor.
-- Copy `buddy-draft/{beats.css,props.tsx,sound.ts}` into `docs/design/scanner/buddy-draft/`. They are a reference,
-  not built.
+- Copy `buddy-draft/{beats.css,props.tsx,sound.ts}` into `docs/design/scanner/buddy-draft/`. They are a reference;
+  the buddy is built in `src/web/scan/buddy`.
 - Copy only the `admin-*` mockup sheets (`mockups/sheets/admin-*.png`) into `docs/design/scanner/mockups/`, after
   regenerating **Admin 01 Pairing** and **Admin 03 Designer** for SD §14's two fixes. The `scan-*` sheets are
   superseded and not copied.
@@ -2202,7 +2202,7 @@ A gate passes when all of these hold:
 | **0027** | `migrations/0027_templates_build_key.sql` | PT.7 (M2) | `template_versions.build_key TEXT` and `template_versions_build (template_id, build_key)`; no backfill (the immutability trigger forbids it; `NULL` keeps today's behaviour). SA §6.1a |
 | **0014** (amended) | `migrations/0014_scan.sql` | P0.8 | `scanners.kind` + `display`; `device_role` with its two CHECKs; the terminal-only CSRF CHECK (P0A P0-1). Before the P0 merge |
 | **0019** (not built) | `migrations/0019_scan_stations.sql` | ST.1 (M3A) | `scan_stations`; `scanners.station_id`, `.watch`, `.screen`; `scans.station_id`; indexes `scanners_station`, `scanners_org_role`, `scans_station` (SA §18.7) |
-| **0020** (not built) | `migrations/0020_scan_access.sql` | AX.1 (M2A) | `scan_zones`, `scanner_zones`; `orgs.time_zone`, `orgs.zones_rev` (g's table, reported); `scans.zone_id`, `.visit`, `.access_plan`; index `scans_zone` (SA §19.7). **Extended** (2026-11-05 later, SA §20.13): `scan_zones.occupancy`, `.capacity`, `.max_stay_minutes`, `.clear_at` with CHECKs; `scans.out_cause`, `.override_note`; unique `scans_override_once`; `scan_gates.due_at` + partial `scan_gates_due`; table `scan_place_revs`. Touches SV's `scans` and `scan_gates` additively (reported) |
+| **0020** (built as `0073` and `0074`) | `migrations/0020_scan_access.sql` | AX.1 (M2A) | `scan_zones`, `scanner_zones`; `orgs.time_zone`, `orgs.zones_rev` (g's table, reported); `scans.zone_id`, `.visit`, `.access_plan`; index `scans_zone` (SA §19.7). **Extended** (2026-11-05 later, SA §20.13): `scan_zones.occupancy`, `.capacity`, `.max_stay_minutes`, `.clear_at` with CHECKs; `scans.out_cause`, `.override_note`; unique `scans_override_once`; `scan_gates.due_at` + partial `scan_gates_due`; table `scan_place_revs`. Touches SV's `scans` and `scan_gates` additively (reported) |
 | **0014** (amended) | `migrations/0014_scan.sql` | P0.9 | `scans.actor_type` + `system`; `scans.method` + `auto` (P0A P0-9). Before the P0 merge; otherwise auto tap-outs need a `scans` rebuild |
 
 **No ledger or visit table.** The balance ledger, visits and last visit are computed from `scans` (which already holds

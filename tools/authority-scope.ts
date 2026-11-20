@@ -111,6 +111,8 @@ const TENANT_KEY_ALLOWLIST: Record<string, string> = {
     'a platform settings save (a retention maximum or default moved) names the org each floor belongs to; the org grant branch names none',
   'src/worker/modules/retention/repo-holds.ts':
     'a platform admin places a legal hold on an org: the platform grant names it; the org grant branch names none',
+  'src/worker/modules/orgs/repo-entitlements.ts':
+    "a platform admin sets one org's preset and overrides: the platform grant names the org it writes; no org grant reaches these tables",
   'src/worker/modules/scan/repo-scanners.ts':
     'the scanner mode move is the one org-scope write that names its destination mode; the source mode is checked with exactlyOne in the same grant',
   'src/worker/platform/entitlements.ts':

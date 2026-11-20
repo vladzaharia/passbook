@@ -5,6 +5,7 @@ import type { Json, PassBeacon, PassLocation, PassStyle, SemanticTags } from '..
 import type {
   BarcodeKind,
   CapabilityId,
+  ItemGroup,
   Support,
   ViewGroup,
   WalletRole,
@@ -200,11 +201,16 @@ export interface WalletCompiler {
 }
 
 export type ItemSeverity = 'difference' | 'omission' | 'blocked';
+/**
+ * Who notices a loss: `holder` (customers won't see it), `door` (staff scanning), `look` (it looks
+ * different) or `absent` (the wallet has no such feature). Only `holder` and `door` need approval.
+ */
 export interface ReportItem {
   capability: CapabilityId;
   path: string;
   support: Support;
   severity: ItemSeverity;
+  group: ItemGroup;
   /** The author listed it in `<target>.omit`. */
   chosen: boolean;
   message: string;

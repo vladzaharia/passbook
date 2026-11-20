@@ -8,7 +8,13 @@ import {
   TimestampSchema,
 } from './common.ts';
 import { SessionTagRulesSchema } from './nfc-tags.ts';
-import { ScanApprovalSchema, ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
+import {
+  ScanApprovalSchema,
+  ScannerSettingsSchema,
+  ScanReasonSchema,
+  ScanRecordMethodSchema,
+  TimeZoneSchema,
+} from './scan.ts';
 import { HoursSpanSchema, ZoneIdsSchema } from './scan-access.ts';
 import { AdmitsSchema } from './scanners.ts';
 
@@ -261,9 +267,19 @@ export const SessionActivitySchema = z.object({
         title: z.string().nullable(),
         outcome: z.enum(['ok', 'heads_up', 'refused', 'undone']),
         direction: z.enum(['in', 'out']).nullable(),
+        /** The scan to undo or let in: the row's id when the viewer may see its pass, else null. */
+        scanId: IdSchema.nullable().default(null),
+        reason: ScanReasonSchema.nullable().default(null),
+        /** Who was signed in on the device. Desk and Manager viewers only. */
+        staff: z.string().nullable().default(null),
+        method: ScanRecordMethodSchema.nullable().default(null),
+        /** The viewing device may undo this scan now: its own, inside the undo window. */
+        undoable: z.boolean().default(false),
+        /** Passes one group request checked in, on the group's anchor row. */
+        groupSize: z.number().int().min(2).nullable().default(null),
       }),
     )
-    .max(20),
+    .max(50),
 });
 export const ScanningSessionDetailSchema = ScanningSessionSchema.extend({
   devices: z.array(ScanningDeviceSchema),

@@ -66,7 +66,7 @@ only, so `RateLimit-Remaining` is sent on 429 alone. Other limits (login, scanne
 | Header | Where | Meaning |
 |---|---|---|
 | `Authorization: Bearer <key>` | all key routes | the API key |
-| `Idempotency-Key` | pass create, resend | 1 to 200 characters; a retry returns the first result |
+| `Idempotency-Key` | pass create, resend | 1 to 200 characters; a retry returns the first result; the same key with another request is 422 `IDEMPOTENCY_KEY_REUSED`, a repeat while the first runs is 409 `IDEMPOTENCY_IN_PROGRESS` |
 | `If-Match: <version>` | pass update | optimistic concurrency; stale is `412 VERSION_CONFLICT` |
 | `x-passbook-mode` | console sessions | `test` selects Test mode; keys use their own mode |
 
@@ -213,6 +213,8 @@ will use this scheme.
 ```
 
 Branch on `code`, not `detail`. Quote `requestId` when asking for help.
+
+`FEATURE_NOT_INCLUDED` (403) carries `feature`: the organization's plan lacks it, so ask PassBook to turn it on. Every key call of an organization also needs its `api` feature: `off` refuses all, `read` allows only GET and HEAD (so `POST` reads such as `/broadcasts/preview` and `/scan/lookup` are refused too), `full` allows all. Platform-wide keys are not limited by it. Operations that need a feature carry `x-feature` in the OpenAPI document.
 
 ## Approved template releases
 

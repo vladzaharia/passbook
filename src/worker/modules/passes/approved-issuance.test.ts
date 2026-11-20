@@ -1696,7 +1696,7 @@ describe('approved issuance over tenant HTTP', () => {
       },
       key,
     );
-    expect(different.status).toBe(409);
+    expect(different.status).toBe(422);
     expect(await different.json()).toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSED' });
     const staleKey = unique();
     const stale = { ...data, externalId: unique() };

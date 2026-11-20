@@ -361,7 +361,8 @@ Spec and guide: `docs/importing-passes.md`, `docs/api.md` ("Import passes").
 - **Migrations**: `npm run deploy` handles them. Manual: `npx wrangler d1 time-travel info wallet-platform`,
   note the bookmark, then `npx wrangler d1 migrations apply wallet-platform --remote`.
   Migrations are forward-only: roll back a bad release by promoting the previous Worker version
-  (`npx wrangler versions deploy <previous>@100%`), not by restoring D1. Exception: 0059 and 0065 are
+  (`npx wrangler versions deploy <previous>@100%`), not by restoring D1. An org created while old code
+  runs has no entitlements row: Features, apply a preset repairs it (the deploy gate lists them). Exception: 0059 and 0065 are
   a one-way line. Never promote a Worker older than the release that ships them: it cannot read a
   sealed token (every device call answers 401, a stored MAC would pass its plain compare) and every
   create, publish and transfer aborts on the new triggers. Roll forward. `npm run deploy` only ever
@@ -434,6 +435,14 @@ SELECT a.id, a.org_id, a.mode, a.provider FROM wallet_provider_accounts a
 JOIN orgs o ON o.id = a.org_id AND o.status != 'deleted'
 WHERE a.credential_id IS NOT NULL AND a.credential_source_id IS NULL AND a.revoked_at IS NULL
 ORDER BY a.id
+```
+
+### Entitlements gate
+
+`npm run deploy -- --apply` (and `--promote --apply`) runs `entitlements-gate` remotely after the migrations and refuses to promote while it lists an org. Each row is an org with no `org_entitlements` row: every key call and guarded session call of that org is refused (`FEATURE_NOT_INCLUDED`). Repair: Features tab, apply a preset (platform admin), or insert `legacy` by hand.
+
+```sql entitlements-gate
+SELECT o.id FROM orgs o WHERE NOT EXISTS (SELECT 1 FROM org_entitlements e WHERE e.org_id = o.id) ORDER BY o.id
 ```
 
 ### Large connection syncs

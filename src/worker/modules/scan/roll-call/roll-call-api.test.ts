@@ -110,6 +110,30 @@ describe('roll call API: console and keys', () => {
     expect((await fixture.call('POST', `/roll-calls/${call.id}/end`, {}, key)).status).toBe(200);
   });
 
+  it('a till key starts a call under api=off (scanning.devices governs it) but is gated as API elsewhere', async () => {
+    const zone = await trackedZone();
+    const { key, sessionId } = await boundKey(zone.id);
+    const db = fixture.kit.env.DB;
+    await db
+      .prepare(
+        "INSERT OR REPLACE INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'api', '\"off\"', 1)",
+      )
+      .bind(org())
+      .run();
+    try {
+      const started = await fixture.call('POST', `/roll-calls?sessionId=${sessionId}`, {}, key);
+      expect(started.status, await started.clone().text()).toBe(200);
+      const call = (await started.json()) as RollCall;
+      expect((await fixture.call('POST', `/roll-calls/${call.id}/end`, {}, key)).status).toBe(200);
+      // A route that does not opt in: the same key is API and refused.
+      const scans = await fixture.call('GET', `/scans${q()}`, undefined, key);
+      expect(scans.status).toBe(403);
+      expect(((await scans.json()) as { code: string }).code).toBe('FEATURE_NOT_INCLUDED');
+    } finally {
+      await db.prepare('DELETE FROM org_entitlement_overrides WHERE org_id = ?').bind(org()).run();
+    }
+  });
+
   it('an admin Out exits the person; a key Out is a confirmation alone', async () => {
     const zone = await trackedZone();
     const a = await personInside(tpl, 'Admin Out', [`zone:${zone.id}`]);

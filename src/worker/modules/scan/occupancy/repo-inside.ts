@@ -1,7 +1,7 @@
 // Who's in: live in rows across a set of places, one row per pass at its deepest place (SA §20.9).
 import { type AfterRead, afterRead } from '../../../platform/authority-after.ts';
 import type { SqlValue } from '../../../platform/db.ts';
-import { marks } from './repo.ts';
+import { marks, VIA_JOIN, VIA_SQL } from './repo.ts';
 
 const LIVE_X = `x.state = 'in' AND (x.due_at IS NULL OR x.due_at > ?)`;
 const LIVE_Y = `y.state = 'in' AND (y.due_at IS NULL OR y.due_at > ?)`;
@@ -34,10 +34,10 @@ export function insideRowsRead(
     ? [after.since, after.since, after.passId, after.passId, after.place]
     : [];
   return afterRead(
-    `SELECT x.pass_id AS passId, x.scope AS place, x.entered_at AS since, x.due_at AS dueAt, sc.name AS via
+    `SELECT x.pass_id AS passId, x.scope AS place, x.entered_at AS since, x.due_at AS dueAt, ${VIA_SQL} AS via
      FROM scan_presence x
      LEFT JOIN scans s ON s.id = x.last_scan_id
-     LEFT JOIN scanners sc ON sc.id = s.scanner_id AND sc.org_id = x.org_id
+     ${VIA_JOIN}
      WHERE x.org_id = ? AND x.mode = ? AND x.scope IN (${marks(q.places.length)}) AND ${LIVE_X}
        AND NOT EXISTS (SELECT 1 FROM json_each(?) m JOIN scan_presence y
          ON y.org_id = x.org_id AND y.pass_id = x.pass_id AND y.scope = m.key

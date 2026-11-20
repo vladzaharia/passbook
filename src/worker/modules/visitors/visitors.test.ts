@@ -13,7 +13,7 @@ import { station, useKit } from '../scan/occupancy/whos-in-test-fixtures.ts';
 import { grantScanMembership, key } from '../scan/test-kit.ts';
 import { mailHost, resendHostNotice } from './arrival.ts';
 import { offboard } from './offboard.ts';
-import { visitorById } from './repo.ts';
+import { hostChoices, visitorById } from './repo.ts';
 import { cancelVisit, checkOutVisit, createVisit, listVisits } from './service.ts';
 
 let tpl: string;
@@ -368,6 +368,15 @@ describe('host email limits and hosts', () => {
     await expect(resendHostNotice(kit.ctx, row, 'UTC')).rejects.toMatchObject({
       code: 'VISITOR_RESEND_LIMIT',
     });
+  });
+
+  it('names a member with no name "Member", never by the email', async () => {
+    const nameless = await makeUser(kit.fx);
+    await grantScanMembership(kit.fx, kit.org.id, nameless.id, ['pass_operator']);
+    await run(kit.env.DB, 'UPDATE users SET name = NULL WHERE id = ?', [nameless.id]);
+    const hosts = await hostChoices(kit.env.DB, kit.org.id);
+    const mine = hosts.find((h) => h.id === nameless.id);
+    expect(mine?.name).toBe('Member');
   });
 
   it('takes a typed host only from someone who manages members, and audits it', async () => {

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
+import { PHONE, useMediaQuery } from '../lib/media.ts';
 import { getMode } from '../lib/mode.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
 import { Button } from '../ui/button.tsx';
@@ -35,6 +36,9 @@ import './buddy/beats.css';
 const OperatorPanel = lazy(() =>
   import('./operator/operator-panel.tsx').then((m) => ({ default: m.OperatorPanel })),
 );
+const OperatorWorkspace = lazy(() =>
+  import('./operator/workspace/workspace.tsx').then((m) => ({ default: m.OperatorWorkspace })),
+);
 
 export function ScanLoop({
   runtime,
@@ -54,6 +58,7 @@ export function ScanLoop({
   leave: () => void;
 }) {
   const { state: s, view, dispatch, now } = useScanMachine();
+  const phone = useMediaQuery(PHONE);
   setSessionZone(session.scanner?.timeZone ?? session.event?.timeZone);
   const [sheet, setSheet] = useState(false);
   const [panel, setPanel] = useState<ScanPanel>(null);
@@ -95,6 +100,8 @@ export function ScanLoop({
     nativeCapabilities?.layout?.posture === 'half-folded';
   const operator = session.workspace?.device.effectiveSurface === 'operator';
   const operatorPane = operator || duoLayout;
+  // Phones keep the handheld layout and its operator panel.
+  const workspace = operator && !duoLayout && s.started && !phone;
   const nativeBarcode =
     session.workspace?.device.capabilities?.nativeBarcode ??
     nativeCapabilities?.platform === 'android';
@@ -135,133 +142,151 @@ export function ScanLoop({
       {...{ readerUsable, cameraChoice, setCameraChoice, setCameraError, showPanel }}
     />
   );
+  const cardNode = s.block ? (
+    <BootCard title="Scanner unavailable" line="Pair this device again." testId="scan-block">
+      <Button onClick={leave}>Pair again</Button>
+    </BootCard>
+  ) : tags.card ? (
+    tags.card
+  ) : result && s.card ? (
+    <ResultCard
+      key={s.card.id}
+      outcome={result}
+      onPass={(card) => {
+        if (card) setPass({ card });
+        else if ('input' in l) setPass({ input: l.input });
+        dispatch({ type: 'overlay', open: 'settings' });
+      }}
+      phase={s.card.phase}
+      clock={now}
+      eventNote={session.event?.note}
+      holdMs={l.s === 'verdict' && l.closeAt ? Math.max(0, l.closeAt - l.since) : null}
+      onAction={(actionId) => dispatch({ type: 'pick', actionId })}
+      onGroup={() => dispatch({ type: 'group' })}
+      desk={deskOf(l, session, dispatch)}
+      addPhoto={canAddPhoto(session) ? api : undefined}
+      tagRead={'input' in l && Boolean(l.input.tag)}
+    />
+  ) : l.s === 'paused' ? (
+    <BootCard title="Paused">
+      <Button onClick={runtime.resume}>Resume</Button>
+    </BootCard>
+  ) : null;
+  const testChip = <TestChip mode={scanner?.mode ?? getMode()} />;
+  const chipsNode = (
+    <>
+      {readerUsable ? <ReaderChip state={s.focused ? 'ready' : 'paused'} /> : null}
+      {sync ? <SyncChip state={sync} /> : null}
+      {access.chips}
+      {tags.chip}
+    </>
+  );
+  const appView = (
+    <ScanAppView
+      branding={branding}
+      surface={duoLayout ? 'duo' : operator ? 'operator' : 'phone'}
+      layout={nativeCapabilities?.layout}
+      sidebar={
+        operatorPane ? (
+          <Suspense fallback={null}>
+            <OperatorPanel api={api} runtime={runtime} session={session} />
+          </Suspense>
+        ) : null
+      }
+      screen={loopScreen(session, s.started)}
+      capsule={{
+        logoUrl,
+        orgName: scanner?.orgName ?? session.admin?.orgs[0]?.name ?? '',
+        name: scanner?.name ?? 'Scan as admin',
+        staff: session.staff?.name,
+        mode: modeLabel(session),
+        state: !s.online
+          ? 'offline'
+          : l.s === 'checking' || l.s === 'applying'
+            ? 'checking'
+            : l.s === 'paused'
+              ? 'paused'
+              : 'scanning',
+        menu,
+        onTitle: () => showPanel('shift'),
+        chips: (
+          <>
+            {testChip}
+            {chipsNode}
+          </>
+        ),
+      }}
+      camera={
+        operator && !duoLayout ? null : (
+          <CameraLayer
+            videoRef={videoRef}
+            status={s.camera}
+            checking={l.s === 'checking' || l.s === 'applying'}
+            result={Boolean(result) || l.s === 'paused' || Boolean(s.block) || tags.dim}
+            onRetry={runtime.camera.start}
+            reader={readerUsable}
+          />
+        )
+      }
+      card={cardNode}
+      tint={tags.tint ?? view.tint}
+      buddy={
+        <Buddy
+          key={view.buddy.key}
+          scene="scan"
+          size="xl-scan"
+          mood={view.buddy.mood === 'neutral' ? 'flat' : view.buddy.mood}
+          pose={tags.pose ?? view.buddy.pose}
+          beat={view.buddy.beat ?? undefined}
+          card={view.buddy.card}
+          immediate
+        />
+      }
+      dockRow={
+        tags.dock ?? (
+          <DoorDock
+            outcome={result}
+            runtime={runtime}
+            open={open}
+            onError={setCameraError}
+            inside={access.inside}
+            visitors={access.visitors}
+            tags={tags}
+          />
+        )
+      }
+      strip={tags.strip ?? dockStrip(s, last, Boolean(lastUndo), now)}
+      announcement={announcement}
+      on={{
+        start: () => {
+          setShiftStart(Date.now());
+          runtime.start();
+        },
+        openRecent: () => showPanel('recent'),
+        undo: () => {
+          if (tags.strip && tags.onUndo) tags.onUndo();
+          else if (last?.scanId) dispatch({ type: 'undo', scanId: last.scanId });
+        },
+      }}
+    />
+  );
   return (
     <>
-      <ScanAppView
-        branding={branding}
-        surface={duoLayout ? 'duo' : operator ? 'operator' : 'phone'}
-        layout={nativeCapabilities?.layout}
-        sidebar={
-          operatorPane ? (
-            <Suspense fallback={null}>
-              <OperatorPanel api={api} runtime={runtime} session={session} />
-            </Suspense>
-          ) : null
-        }
-        screen={loopScreen(session, s.started)}
-        capsule={{
-          logoUrl,
-          orgName: scanner?.orgName ?? session.admin?.orgs[0]?.name ?? '',
-          name: scanner?.name ?? 'Scan as admin',
-          staff: session.staff?.name,
-          mode: modeLabel(session),
-          state: !s.online
-            ? 'offline'
-            : l.s === 'checking' || l.s === 'applying'
-              ? 'checking'
-              : l.s === 'paused'
-                ? 'paused'
-                : 'scanning',
-          menu,
-          onTitle: () => showPanel('shift'),
-          chips: (
-            <>
-              <TestChip mode={scanner?.mode ?? getMode()} />
-              {readerUsable ? <ReaderChip state={s.focused ? 'ready' : 'paused'} /> : null}
-              {sync ? <SyncChip state={sync} /> : null}
-              {access.chips}
-              {tags.chip}
-            </>
-          ),
-        }}
-        camera={
-          operator && !duoLayout ? null : (
-            <CameraLayer
-              videoRef={videoRef}
-              status={s.camera}
-              checking={l.s === 'checking' || l.s === 'applying'}
-              result={Boolean(result) || l.s === 'paused' || Boolean(s.block) || tags.dim}
-              onRetry={runtime.camera.start}
-              reader={readerUsable}
-            />
-          )
-        }
-        card={
-          s.block ? (
-            <BootCard
-              title="Scanner unavailable"
-              line="Pair this device again."
-              testId="scan-block"
-            >
-              <Button onClick={leave}>Pair again</Button>
-            </BootCard>
-          ) : tags.card ? (
-            tags.card
-          ) : result && s.card ? (
-            <ResultCard
-              key={s.card.id}
-              outcome={result}
-              onPass={(card) => {
-                if (card) setPass({ card });
-                else if ('input' in l) setPass({ input: l.input });
-                dispatch({ type: 'overlay', open: 'settings' });
-              }}
-              phase={s.card.phase}
-              clock={now}
-              eventNote={session.event?.note}
-              holdMs={l.s === 'verdict' && l.closeAt ? Math.max(0, l.closeAt - l.since) : null}
-              onAction={(actionId) => dispatch({ type: 'pick', actionId })}
-              onGroup={() => dispatch({ type: 'group' })}
-              desk={deskOf(l, session, dispatch)}
-              addPhoto={canAddPhoto(session) ? api : undefined}
-              tagRead={'input' in l && Boolean(l.input.tag)}
-            />
-          ) : l.s === 'paused' ? (
-            <BootCard title="Paused">
-              <Button onClick={runtime.resume}>Resume</Button>
-            </BootCard>
-          ) : null
-        }
-        tint={tags.tint ?? view.tint}
-        buddy={
-          <Buddy
-            key={view.buddy.key}
-            scene="scan"
-            size="xl-scan"
-            mood={view.buddy.mood === 'neutral' ? 'flat' : view.buddy.mood}
-            pose={tags.pose ?? view.buddy.pose}
-            beat={view.buddy.beat ?? undefined}
-            card={view.buddy.card}
-            immediate
+      {workspace ? (
+        <Suspense fallback={null}>
+          <OperatorWorkspace
+            {...{ api, runtime, session, branding, logoUrl, menu, counts, announcement }}
+            modeLabel={modeLabel(session)}
+            chips={chipsNode}
+            testing={testChip}
+            scanCard={result && s.card && !s.block && !tags.card ? null : cardNode}
+            dock={tags.dock}
+            onTitle={() => showPanel('shift')}
           />
-        }
-        dockRow={
-          tags.dock ?? (
-            <DoorDock
-              outcome={result}
-              runtime={runtime}
-              open={open}
-              onError={setCameraError}
-              inside={access.inside}
-              visitors={access.visitors}
-              tags={tags}
-            />
-          )
-        }
-        strip={tags.strip ?? dockStrip(s, last, Boolean(lastUndo), now)}
-        announcement={announcement}
-        on={{
-          start: () => {
-            setShiftStart(Date.now());
-            runtime.start();
-          },
-          openRecent: () => showPanel('recent'),
-          undo: () => {
-            if (tags.strip && tags.onUndo) tags.onUndo();
-            else if (last?.scanId) dispatch({ type: 'undo', scanId: last.scanId });
-          },
-        }}
-      />
+        </Suspense>
+      ) : (
+        appView
+      )}
       {access.layer}
       {tags.layer}
       <ScanOverlays

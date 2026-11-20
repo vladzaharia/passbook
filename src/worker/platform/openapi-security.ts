@@ -3,6 +3,7 @@ import type { MiddlewareHandler } from 'hono';
 import type { ApiScope, RouteAuth, ScopeRule } from './auth.ts';
 import { SESSION_COOKIE } from './auth.ts';
 import type { AppBindings } from './context.ts';
+import type { FeatureRule } from './feature-guard.ts';
 
 /** What an API key needs on the routes a guard covers; read for GET and HEAD, write for the rest. */
 export interface KeyAccess {
@@ -53,11 +54,21 @@ export const enforcesKeyAccess = (guard: object): boolean => {
 export function operationSecurity(
   auth: RouteAuth,
   method: string,
-): { security: unknown[]; 'x-human-only'?: true; 'x-platform-scope'?: string } {
-  if ('human' in auth) return { security: [{ session: [] }], 'x-human-only': true };
+): {
+  security: unknown[];
+  'x-human-only'?: true;
+  'x-platform-scope'?: string;
+  'x-feature'?: FeatureRule;
+} {
   if ('platform' in auth) return { security: [{ session: [] }], 'x-platform-scope': auth.platform };
+  // The entitlement the organization must have: a key, or { key, atLeast } for a level.
+  const feature = auth.feature === undefined ? {} : { 'x-feature': auth.feature };
+  if ('human' in auth) return { security: [{ session: [] }], 'x-human-only': true, ...feature };
   const scopes = scopesForMethod(auth.scope, method);
-  return { security: [...scopes.map((scope) => ({ apiKey: [scope] })), { session: [] }] };
+  return {
+    security: [...scopes.map((scope) => ({ apiKey: [scope] })), { session: [] }],
+    ...feature,
+  };
 }
 const patternOf = (path: string) =>
   new RegExp(

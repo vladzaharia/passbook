@@ -126,3 +126,7 @@ export type CapabilityId = (typeof CAPABILITY_IDS)[number];
 /** How a target carries a capability (architecture 4.1). */
 export const SUPPORT_LEVELS = ['native', 'text', 'difference', 'omitted', 'unsupported'] as const;
 export type Support = (typeof SUPPORT_LEVELS)[number];
+
+/** Who notices a loss in a fidelity report; only `holder` and `door` items need approval. */
+export const ITEM_GROUPS = ['holder', 'door', 'look', 'absent'] as const;
+export type ItemGroup = (typeof ITEM_GROUPS)[number];

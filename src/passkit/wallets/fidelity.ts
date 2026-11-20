@@ -7,6 +7,7 @@ import type { WalletsManifest } from '../template/wallets/schema.ts';
 import type {
   FidelityItem,
   FidelityReport,
+  ItemGroup,
   ItemSeverity,
   ReportItem,
   ReportStatus,
@@ -16,7 +17,7 @@ import type {
 } from './types.ts';
 
 /** Bump with any change to how reports are built (severity, status, order). It joins the release pipeline pin. */
-export const FIDELITY_REVISION = 1;
+export const FIDELITY_REVISION = 2;
 
 const compare = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -29,6 +30,24 @@ const isChosen = (omit: readonly string[], item: FidelityItem): boolean =>
   omit.some(
     (entry) => entry === item.capability || entry === item.path || item.path.endsWith(`.${entry}`),
   );
+
+const DOOR = ['barcode.', 'image.personal', 'sharing', 'nfc'];
+const LOOK = ['type', 'colors.', 'localization.images', 'text.length'];
+const startsWithAny = (capability: string, prefixes: readonly string[]): boolean =>
+  prefixes.some((p) => (p.endsWith('.') ? capability.startsWith(p) : capability === p));
+
+/** Who notices the loss (architecture 4.2). A feature the wallet lacks is `absent`, except NFC: staff at the door lose it. */
+export function groupOf(item: Pick<FidelityItem, 'capability' | 'support'>): ItemGroup {
+  if (item.capability === 'nfc') return 'door';
+  if (item.support === 'unsupported') return 'absent';
+  if (startsWithAny(item.capability, DOOR)) return 'door';
+  if (item.support === 'difference' || startsWithAny(item.capability, LOOK)) return 'look';
+  return 'holder';
+}
+
+/** Only losses a customer or the door would notice are approved. */
+const needsApproval = (item: Pick<ReportItem, 'severity' | 'group'>): boolean =>
+  item.severity === 'omission' && (item.group === 'holder' || item.group === 'door');
 
 function classify(
   item: FidelityItem,
@@ -46,6 +65,7 @@ function classify(
     path: item.path,
     support: item.support,
     severity,
+    group: groupOf(item),
     chosen: severity === 'omission' && isChosen(omit, item),
     message: item.message,
   };
@@ -92,7 +112,7 @@ export function fidelityReport(input: ReportInput): FidelityReport {
 
   const blocked = results.find((r) => r.blocked)?.blocked;
   const firstBlocked = items.find((i) => i.severity === 'blocked');
-  const omissions = items.filter((i) => i.severity === 'omission').length;
+  const omissions = items.filter(needsApproval).length;
   let status: ReportStatus = { kind: 'ready' };
   if (blocked) status = { kind: 'blocked', reason: blocked.message };
   else if (firstBlocked)
@@ -121,11 +141,9 @@ export function statusLabel(status: ReportStatus): string {
 export const omissionKey = (item: Pick<ReportItem, 'capability' | 'path'>): string =>
   item.path ? `${item.capability}@${item.path}` : item.capability;
 
-/** The omissions an approval covers, sorted. Differences and blocks are not approved. */
+/** The omissions an approval covers, sorted. Differences, blocks and `look`/`absent` items are not approved. */
 export function omissionKeys(report: FidelityReport): string[] {
-  return [...new Set(report.items.filter((i) => i.severity === 'omission').map(omissionKey))].sort(
-    compare,
-  );
+  return [...new Set(report.items.filter(needsApproval).map(omissionKey))].sort(compare);
 }
 
 /** JSON with object keys sorted at every depth. */

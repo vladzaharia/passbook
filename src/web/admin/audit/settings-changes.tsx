@@ -1,4 +1,11 @@
 import { ArrowRight } from 'lucide-react';
+import {
+  ENTITLEMENT_KEYS,
+  type EntitlementKey,
+  type EntitlementValue,
+} from '@/shared/contracts/entitlements.ts';
+import { ENTITLEMENT_LABEL } from '@/shared/copy/entitlements.ts';
+import { formatValue } from '../orgs/features/values.ts';
 import { ORG_FIELDS } from '../settings/fields-org.ts';
 import { PLATFORM_FIELDS } from '../settings/fields-platform.ts';
 import { redact } from './redact.ts';
@@ -37,11 +44,14 @@ export function settingChanges(detail: unknown): Change[] | undefined {
   const list = pairs.map(([key, v]) => {
     const pair =
       typeof v === 'object' && v !== null ? (v as { from?: unknown; to?: unknown }) : null;
+    // A feature (org.entitlements_update) reads in its own words: On, a level's name, No limit.
+    const feature = LABEL.has(key) ? undefined : ENTITLEMENT_KEYS.find((k) => k === key);
+    const text = (x: unknown) => (feature ? formatValue(feature, x as EntitlementValue) : show(x));
     return {
       key,
-      label: LABEL.get(key) ?? key,
-      from: pair ? show(pair.from) : show(v),
-      to: pair ? show(pair.to) : show(v),
+      label: feature ? ENTITLEMENT_LABEL[feature as EntitlementKey] : (LABEL.get(key) ?? key),
+      from: pair ? text(pair.from) : text(v),
+      to: pair ? text(pair.to) : text(v),
     };
   });
   return list.length > 0 ? list : undefined;
