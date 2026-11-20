@@ -59,7 +59,8 @@ function CandidateCard({
     props.currentUserId !== null &&
     (candidate.authorId === props.currentUserId ||
       candidate.versionAuthorId === props.currentUserId);
-  const alreadyPublished = props.releasedCandidates.has(candidate.id);
+  const alreadyPublished =
+    props.releasedCandidates.has(candidate.id) || props.active?.version === candidate.version;
   const cannotReview =
     props.busy || selfReview || !props.currentUserId || alreadyPublished || Boolean(approval);
   const cannotApproveAlone =
@@ -132,7 +133,8 @@ function CandidateCard({
         ) : null}
         {alreadyPublished ? (
           <p className="text-sm text-fg-muted">
-            {props.active?.candidateId === candidate.id
+            {props.active?.candidateId === candidate.id ||
+            props.active?.version === candidate.version
               ? 'This candidate is the active release.'
               : 'Already released. Roll back from the history to restore it.'}
           </p>
@@ -184,8 +186,8 @@ function CandidateCard({
 
 export function CandidateSection(props: CandidateSectionProps) {
   const [selected, setSelected] = useState<string>();
-  const chronological = [...props.versions].sort((a, b) => a.createdAt - b.createdAt);
-  const options = chronological.flatMap((v) => {
+  const newestFirst = [...props.versions].sort((a, b) => b.createdAt - a.createdAt);
+  const options = newestFirst.flatMap((v) => {
     if (v.version === props.active?.version) return [];
     const name = versionLabel(props.versions, v.version);
     const failing = v.report?.ok === false;

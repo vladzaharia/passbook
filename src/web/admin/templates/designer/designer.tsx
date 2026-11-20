@@ -181,6 +181,9 @@ export function Designer({
     check.isError || check.checking || check.isPlaceholderData || !check.data?.report.ok
       ? null
       : blocking;
+  // Save outlives this render: it reads the check as it is when its wait ends.
+  const live = useRef({ blocked, checking: check.checking });
+  live.current = { blocked, checking: check.checking };
   const created = useCreateFlow(create, blocked);
   // A new template is unsaved until Create template, edits or not.
   const guard = useUnsavedChangesGuard(create ? created.made === null : dirty);
@@ -190,7 +193,8 @@ export function Designer({
     latest,
     savedDoc: state.saved,
     draftBase: version,
-    blocked,
+    blocked: () => live.current.blocked(),
+    checking: () => live.current.checking,
     dispatch,
     onSaved: (v) => {
       setVersion(v);
