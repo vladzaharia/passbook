@@ -52,12 +52,13 @@ curl "https://passbook.mobile/api/v1/passes" \
 | Personal | one member | `pbp_live_` / `pbp_test_` | made by any member for themself; expiry required, at most 90 days; works only while the membership and user are active, and within the member's current roles; no `scans:write` |
 | Platform | the operator, no org | `pbo_live_` / `pbo_test_` | made by a platform admin; expiry required (at most 90 days), IP allowlist required, no roles |
 
-Keys made before this carry `wlt_` and keep working as service (org) or platform (no org) keys, with the same scopes.
+Keys made before this carry `wlt_` and keep working as service (org) or platform (no org) keys, with the same scopes. An older platform key has no expiry or IP list: it is not expired, the console marks it, and each use logs `API_KEY_PLATFORM_UNBOUNDED`.
 A secret scanner can match the labels. Keys are never logged: the logger and audit rows redact every label.
 
+**Personal keys and sessions.** A personal key is its own credential, bounded by the membership and the user, not by a browser session: signing out or revoking a session does not end it. Revoke it, retire it, or remove the membership.
+
 **Roles.** `roles` holds role presets: `org_admin`, `integration_admin`, `template_author`, `template_reviewer`,
-`template_publisher`, `pass_operator`, `read_only`. A key holds its `scopes` plus the scope of every role capability,
-read at each request. A creator can give a role only if every scope in it is within their own roles
+`template_publisher`, `pass_operator`, `read_only`. The role's scopes are copied into the key's `scopes` when it is made and the role stays as a label: a bundle that gains a scope later never reaches an existing key. A creator can give a role only if every scope in it is within their own roles
 (`403 API_KEY_SCOPE_EXCEEDS_CREATOR`). The terminal scope `scans:write` is never in a role.
 
 **Expiry and retirement.** `expiresAt` is fixed when the key is made. `POST /api-keys/{id}/retire` with
@@ -65,7 +66,7 @@ read at each request. A creator can give a role only if every scope in it is wit
 (`409 API_KEY_RETIRE_SET` for a second call). Revoking is immediate and permanent.
 
 **IP allowlist.** `ipAllow` lists addresses or CIDR ranges (`203.0.113.0/24`, `2001:db8::/32`), set when the key is made
-and never changed. A request from any other address, or with none, is `401 INVALID_API_KEY`, the same as a wrong key.
+and never changed; ranges wider than an IPv4 /8 or IPv6 /32, or lists that cover every address, are refused (`422 API_KEY_IP_TOO_BROAD`). A request from any other address, or with none, is `401 INVALID_API_KEY`, the same as a wrong key.
 Only `cf-connecting-ip` is read. The key list shows the network of the last use.
 
 **Template and style limits.** `templateIds` and `passStyles` are stored with the key. The routes do not enforce them

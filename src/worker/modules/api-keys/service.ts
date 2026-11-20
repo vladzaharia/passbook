@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { ApiKeyListQuerySchema } from '../../../shared/contracts/index.ts';
 import { apiKeyPrefixOf } from '../../platform/api-key-token.ts';
-import { effectiveScopes, rolesCapableOf } from '../../platform/api-scopes.ts';
+import { rolesCapableOf } from '../../platform/api-scopes.ts';
 import type { ApiKeyAuth, ApiKeyStore } from '../../platform/auth.ts';
 import { type Clock, systemClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
@@ -9,6 +9,7 @@ import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/err
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { ipPrefix } from '../../platform/ip.ts';
 import { ipAllowed } from '../../platform/ip-allow.ts';
+import { createLogger } from '../../platform/log.ts';
 import { enforceApiKeyRate, rememberApiTier } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { seesAccountEmails } from '../passes/account-email.ts';
@@ -172,7 +173,13 @@ export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiK
         row.rate_tier,
       );
       await repo.touchKey(env.DB, row.id, now, TOUCH_EVERY_MS, ipPrefix(caller?.ip));
-      const held = effectiveScopes(parseScopes(row.scopes), parseRoles(row.roles));
+      // A platform key made before 0142 has no expiry or IP list: it keeps working, and every use is logged.
+      if (row.kind === 'platform' && (row.expires_at === null || allow.length === 0))
+        createLogger().warn('api_key.platform_unbounded', {
+          code: 'API_KEY_PLATFORM_UNBOUNDED',
+          keyId: row.id,
+        });
+      const held = parseScopes(row.scopes);
       const memberRoles = row.member_roles ? parseRoles(row.member_roles) : null;
       const auth: ApiKeyAuth = {
         kind: 'api_key',

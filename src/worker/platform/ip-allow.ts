@@ -44,3 +44,29 @@ export function ipAllowed(ip: string | undefined, cidrs: readonly string[]): boo
     return net?.v === a.v && a.n >> BigInt(width - net.bits) === net.n >> BigInt(width - net.bits);
   });
 }
+
+/** The widest range an allowlist may hold, in bits: wider than an IPv4 /8 or an IPv6 /32 is no allowlist. */
+const MIN_BITS = { 4: 8, 6: 32 } as const;
+
+/**
+ * Whether a list is too broad to restrict anything: a range wider than the minimum, or ranges that
+ * together cover a whole address family. Entries that do not parse are not judged here.
+ */
+export function ipListTooBroad(cidrs: readonly string[]): boolean {
+  const nets = cidrs.map(parseCidr).filter((n): n is Net => n !== null);
+  if (nets.some((n) => n.bits < MIN_BITS[n.v])) return true;
+  for (const v of [4, 6] as const) {
+    const width = v === 4 ? 32 : 128;
+    const spans = nets
+      .filter((n) => n.v === v)
+      .map((n) => [n.n, n.n | ((1n << BigInt(width - n.bits)) - 1n)] as const)
+      .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+    let next = 0n;
+    for (const [from, to] of spans) {
+      if (from > next) break;
+      if (to + 1n > next) next = to + 1n;
+    }
+    if (next >= 1n << BigInt(width)) return true;
+  }
+  return false;
+}

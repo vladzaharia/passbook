@@ -1,4 +1,4 @@
-import { fakeAuth, makeScanner } from '../../../../test/helpers/index.ts';
+import { fakeAuth, makeScanner, withoutTrigger } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
@@ -68,21 +68,26 @@ export async function setupTillKit() {
     const id = kit.fx.ids.id();
     const prefix = kit.fx.ids.token(6);
     const secret = `wlt_${prefix}_${kit.fx.ids.token()}`;
-    await run(
-      kit.env.DB,
-      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, expires_at)
-       VALUES (?, ?, 'Till', ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        options.orgId === undefined ? kit.org.id : options.orgId,
-        prefix,
-        await sha256Hex(secret),
-        JSON.stringify(options.scopes ?? ['scans:write']),
-        options.mode ?? 'live',
-        kit.clock.now(),
-        options.expiresAt ?? null,
-      ],
-    );
+    const orgId = options.orgId === undefined ? kit.org.id : options.orgId;
+    // An org-less key stands for a platform key from before 0142: unbounded, past the insert rules.
+    const insert = async () =>
+      run(
+        kit.env.DB,
+        `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, expires_at, kind)
+       VALUES (?, ?, 'Till', ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          orgId,
+          prefix,
+          await sha256Hex(secret),
+          JSON.stringify(options.scopes ?? ['scans:write']),
+          options.mode ?? 'live',
+          kit.clock.now(),
+          options.expiresAt ?? null,
+          orgId === null ? 'platform' : 'service',
+        ],
+      );
+    await (orgId === null ? withoutTrigger(kit.env.DB, 'api_keys_kind_rules', insert) : insert());
     for (const scannerId of options.terminals)
       await run(kit.env.DB, 'INSERT INTO api_key_terminals (key_id, scanner_id) VALUES (?, ?)', [
         id,

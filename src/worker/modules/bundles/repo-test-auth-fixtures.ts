@@ -1,24 +1,29 @@
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
 import { all, run } from '../../platform/db.ts';
 import type { Kit } from '../passes/pass-test-fixtures.ts';
 
 export async function insertBundleApiKey(kit: Kit, key: ApiKeyAuth) {
-  await run(
-    kit.env.DB,
-    // Not OR IGNORE: the api_keys insert guard (0039) aborts on an existing key.
-    `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at)
-    SELECT ?, ?, 'bundle fixture', ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM api_keys WHERE id = ?)`,
-    [
-      key.keyId,
-      key.orgId,
-      key.keyId,
-      key.keyId,
-      JSON.stringify(key.scopes),
-      key.mode,
-      kit.clock.now(),
-      key.keyId,
-    ],
-  );
+  const insert = () =>
+    run(
+      kit.env.DB,
+      // Not OR IGNORE: the api_keys insert guard (0039) aborts on an existing key.
+      // An org-less key stands for a platform key from before 0142: unbounded, past the insert rules.
+      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind)
+    SELECT ?, ?, 'bundle fixture', ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM api_keys WHERE id = ?)`,
+      [
+        key.keyId,
+        key.orgId,
+        key.keyId,
+        key.keyId,
+        JSON.stringify(key.scopes),
+        key.mode,
+        kit.clock.now(),
+        key.orgId === null ? 'platform' : 'service',
+        key.keyId,
+      ],
+    );
+  await (key.orgId === null ? withoutTrigger(kit.env.DB, 'api_keys_kind_rules', insert) : insert());
 }
 
 export function listBundleOrgs(kit: Kit) {

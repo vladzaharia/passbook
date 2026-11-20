@@ -1,8 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey, makeOrg } from '../../../../test/helpers/index.ts';
+import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
 import type { TemplateScanSetup } from '../../../shared/contracts/scan-template-setup.ts';
 import { createApp } from '../../app.ts';
+import { ROLE_PRESETS } from '../../platform/api-scopes.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createScannerStore } from './auth-store.ts';
@@ -37,6 +39,8 @@ const call = (id: string, headers: Record<string, string>, orgId = fixture.kit.o
   );
 const keyOf = (scopes: string[], over: { roles?: string[]; mode?: 'live' | 'test' } = {}) =>
   makeApiKey(fixture.kit.fx, { orgId: fixture.kit.org.id, scopes, ...over });
+/** A role key as minted: the role's bundle is written onto the key, the role is a label. */
+const roleKey = (role: OrgRole) => keyOf([...ROLE_PRESETS[role]], { roles: [role] });
 const template = () =>
   eventTemplate(fixture.kit, 'Key ticket', {
     scan: { actions: [{ id: 'enter', label: 'Let in', kind: 'check_in' }] },
@@ -74,12 +78,12 @@ describe('template scan setup by API key', () => {
     const id = await template();
     for (const role of ['integration_admin', 'pass_operator', 'read_only'])
       await expectProblem(
-        await call(id, (await keyOf([], { roles: [role] })).headers),
+        await call(id, (await roleKey(role as OrgRole)).headers),
         403,
         'MISSING_SCOPE',
       );
     expect(await sessions(id)).toHaveLength(0);
-    expect((await call(id, (await keyOf([], { roles: ['org_admin'] })).headers)).status).toBe(200);
+    expect((await call(id, (await roleKey('org_admin')).headers)).status).toBe(200);
     expect(await sessions(id)).toHaveLength(1);
   });
 

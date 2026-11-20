@@ -1,4 +1,4 @@
-import { rolesCapableOf, rolesWithScope } from './api-scopes.ts';
+import { rolesCapableOf } from './api-scopes.ts';
 import type { SqlValue } from './db.ts';
 
 /** A SQL fragment with its `?` parameters, in text order. */
@@ -28,12 +28,13 @@ export function keyLive(k: string, now: number): Fragment {
 }
 
 /**
- * The key holds `scope`: listed, or in the preset of one of its roles. A personal key also needs its
+ * The key holds `scope`: it is in the key's stored `scopes` (a role is a label: its bundle was written into
+ * `scopes` at mint, so a scope added to a bundle later never reaches an existing key). A personal key also needs its
  * member's current roles to grant what the scope exercises, so it never outlives a demotion.
  */
 export function keyHoldsScope(k: string, scope: string): Fragment {
   return {
-    sql: `((EXISTS(SELECT 1 FROM json_each(${k}.scopes) s WHERE s.value=?) OR EXISTS(SELECT 1 FROM json_each(${k}.roles) r WHERE r.value IN (${roleList(rolesWithScope(scope))}))) AND (${k}.kind<>'personal' OR EXISTS(SELECT 1 FROM org_memberships c, json_each(c.roles) m WHERE c.id=${k}.membership_id AND m.value IN (${roleList(rolesCapableOf(scope))}))))`,
+    sql: `(EXISTS(SELECT 1 FROM json_each(${k}.scopes) s WHERE s.value=?) AND (${k}.kind<>'personal' OR EXISTS(SELECT 1 FROM org_memberships c, json_each(c.roles) m WHERE c.id=${k}.membership_id AND m.value IN (${roleList(rolesCapableOf(scope))}))))`,
     params: [scope],
   };
 }

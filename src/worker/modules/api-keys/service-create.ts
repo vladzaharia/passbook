@@ -1,9 +1,10 @@
 import type { z } from 'zod';
 import type { CreateApiKeySchema } from '../../../shared/contracts/index.ts';
 import { type ApiKeyKind, secretLabel } from '../../platform/api-key-token.ts';
+import { effectiveScopes } from '../../platform/api-scopes.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
-import { parseCidr } from '../../platform/ip-allow.ts';
+import { ipListTooBroad, parseCidr } from '../../platform/ip-allow.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import { orgIsActive } from '../orgs/repo.ts';
@@ -40,11 +41,17 @@ function checkKindRules(
   now: number,
 ): string[] {
   const ipAllow = [...new Set((input.ipAllow ?? []).map((c) => c.trim()))];
-  // A range of every address is no allowlist.
-  if (ipAllow.some((c) => (parseCidr(c)?.bits ?? 0) === 0))
+  if (ipAllow.some((c) => parseCidr(c) === null))
     throw invalid(
-      'Use addresses or CIDR ranges, such as 203.0.113.0/24, not 0.0.0.0/0.',
+      'Use addresses or CIDR ranges, such as 203.0.113.0/24.',
       'API_KEY_IP_INVALID',
+      'ipAllow',
+    );
+  // A list that allows (nearly) everyone is no allowlist: nothing wider than a v4 /8 or a v6 /32, in total.
+  if (ipListTooBroad(ipAllow))
+    throw invalid(
+      'Allow narrower ranges: no wider than a /8 (IPv4) or /32 (IPv6), and not all addresses together.',
+      'API_KEY_IP_TOO_BROAD',
       'ipAllow',
     );
   if (input.scopes.length === 0 && input.roles.length === 0)
@@ -132,7 +139,8 @@ export async function createApiKey(
     name: input.name,
     prefix,
     key_hash: await sha256Hex(secret),
-    scopes: JSON.stringify([...new Set(input.scopes)]),
+    // A role is a label: its bundle is written out here, so later changes to a bundle never reach this key.
+    scopes: JSON.stringify(effectiveScopes(input.scopes, input.roles)),
     mode,
     created_by: authority.userId,
     created_at: now,
