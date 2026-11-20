@@ -17,7 +17,7 @@ import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { useNativeCapabilities } from './platform/use-native-capabilities.ts';
 import { useVerdictHaptic } from './platform/use-verdict-haptic.ts';
 import { canAddPhoto } from './result/add-photo.tsx';
-import { deskOf, resultOf } from './result/desk.ts';
+import { deskOf, resultOf, useApprovedBy } from './result/desk.ts';
 import type { PassInspection } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
 import { BootCard } from './ui/boot-card.tsx';
@@ -110,7 +110,9 @@ export function ScanLoop({
     (s.reader.kind === 'barcode' && nativeBarcode) ||
     (s.reader.kind === 'nfc' && nativeCapabilities?.vas.available === true);
   const last = s.recent[0];
-  const result: ScanOutcome | null = resultOf(l, counts);
+  const approving = handheld && l.s === 'applying' ? (l.retry ?? null) : null;
+  const result: ScanOutcome | null = resultOf(l, counts) ?? approving;
+  const { desk, approvedBy } = useApprovedBy(l, deskOf(l, session, dispatch));
   useVerdictHaptic(l.s === 'verdict' ? l.outcome : null);
   useEffect(() => {
     if (needsSessionRefetch(session, s) && requestedRev.current !== counts.configRev) {
@@ -164,7 +166,8 @@ export function ScanLoop({
       holdMs={l.s === 'verdict' && l.closeAt ? Math.max(0, l.closeAt - l.since) : null}
       onAction={(actionId) => dispatch({ type: 'pick', actionId })}
       onGroup={() => dispatch({ type: 'group' })}
-      desk={deskOf(l, session, dispatch)}
+      desk={desk}
+      approvedBy={approvedBy}
       addPhoto={canAddPhoto(session) ? api : undefined}
       tagRead={'input' in l && Boolean(l.input.tag)}
     />
@@ -256,6 +259,8 @@ export function ScanLoop({
             inside={access.inside}
             visitors={access.visitors}
             tags={tags}
+            approval={handheld ? desk : undefined}
+            approving={approving !== null}
           />
         )
       }

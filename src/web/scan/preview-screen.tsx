@@ -13,6 +13,7 @@ import { OperatorPanel } from './operator/operator-panel.tsx';
 import type { ScanRuntime } from './platform/runtime.ts';
 import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { ResultCard } from './result/result-card.tsx';
+import type { DockApproval } from './ui/approval-dock.tsx';
 import { DoorDock } from './ui/door-dock.tsx';
 import type { StripEntry } from './ui/last-scan-strip.tsx';
 import type { Tint } from './ui/verdict-tint.tsx';
@@ -72,6 +73,10 @@ export interface ScanPreviewScreenProps {
   clock?: number;
   /** The device's recent scans, for the pass sheet's Recent tab. */
   recent?: Recent[];
+  /** A handheld's Manager PIN: the dock offers the tray for a `needs_approval` hold. */
+  approval?: DockApproval;
+  /** A Manager's PIN let this through: the sub names them. */
+  approvedBy?: string;
   /** Rendered inside the scan store: sheets that read it. */
   children?: ReactNode;
 }
@@ -145,6 +150,8 @@ export function ScanPreviewScreen({
   menu,
   onTint,
   clock,
+  approval,
+  approvedBy,
   children,
 }: ScanPreviewScreenProps) {
   const store = useStaticStore(recent, clock ?? Date.now());
@@ -188,6 +195,7 @@ export function ScanPreviewScreen({
             runtime={runtime}
             open={() => undefined}
             onError={() => undefined}
+            approval={approval}
           />
         }
         card={
@@ -198,6 +206,7 @@ export function ScanPreviewScreen({
             onGroup={() => undefined}
             addPhoto={addPhoto}
             density={density}
+            approvedBy={approvedBy}
             {...(clock ? { clock } : {})}
           />
         }

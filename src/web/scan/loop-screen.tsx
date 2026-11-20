@@ -41,7 +41,7 @@ export function tagExtraActions(addTag: (() => void) | undefined) {
     : [];
 }
 
-/** A tap on the tint dismisses a settled verdict that needs no decision. */
+/** A tap on the tint dismisses a settled verdict. A hold waiting for a manager stays until Done or the PIN, not until a stray tap. */
 export function tintDismissible(result: ScanOutcome | null, blocked: boolean) {
   return Boolean(
     result && result.kind !== 'ready' && result.reason !== 'needs_approval' && !blocked,

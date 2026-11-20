@@ -172,7 +172,8 @@ export function holdVerbs(o: ScanOutcome): HoldVerb[] {
       },
     ];
   }
-  if (o.overridable && o.action)
+  // A manager's PIN is the way past needs_approval, never a bare override.
+  if (o.overridable && o.action && o.reason !== 'needs_approval')
     return [
       {
         kind: 'letIn',

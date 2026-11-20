@@ -1,8 +1,9 @@
 import { Info } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
-import { SCAN_COPY } from '../../../shared/copy/scan.ts';
+import { SCAN_COPY, scanLine } from '../../../shared/copy/scan.ts';
 import { SCAN_HANDHELD_COPY } from '../../../shared/copy/scan-handheld.ts';
+import { SCAN_TRAY_COPY } from '../../../shared/copy/scan-tray.ts';
 import { Button } from '../../ui/button.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { TagFlag } from '../assign/tag-flag.tsx';
@@ -39,11 +40,14 @@ export function ResultCard({
   tagRead = false,
   addPhoto,
   density = 'full',
+  approvedBy,
 }: {
   /** `glance` is the handheld's card: verdict, who, one fact. The rest is in the pass sheet. */
   density?: 'full' | 'glance';
   /** Set when this device may add photos: the desk card offers it for a pass with none. */
   addPhoto?: ScanApi | undefined;
+  /** A Manager's PIN let this one through: the sub names them. */
+  approvedBy?: string | undefined;
   /** The scan was a tag read: an unknown one has its own words. */
   tagRead?: boolean;
   outcome: ScanOutcome;
@@ -170,7 +174,13 @@ export function ResultCard({
           noExit={noExit}
           noReentry={noReentry}
           pill={pill}
-          sub={held ? held.sub : line?.sub}
+          sub={
+            approvedBy && ok
+              ? scanLine(SCAN_TRAY_COPY.pin.approvedBy, { staff: approvedBy })
+              : held
+                ? held.sub
+                : line?.sub
+          }
           admit={admit}
           holdMs={holdMs}
         />
@@ -261,7 +271,7 @@ export function ResultCard({
           ) : chip ? (
             <GroupChip outcome={o} onGroup={onGroup} />
           ) : null}
-          {o.reason === 'needs_approval' && desk && o.approvals ? (
+          {o.reason === 'needs_approval' && desk && o.approvals && !glance ? (
             pin ? (
               <ApprovalSheet
                 managers={desk.managers}

@@ -13,4 +13,12 @@ export type FailCode =
   | 'pin_locked';
 
 /** Why a Manager's PIN was not taken: `triesLeft` is the lockout's own count. */
-export type PinNote = { triesLeft: number } | { locked: true; retryAfterMs?: number };
+export type PinNote =
+  | { triesLeft: number }
+  | { locked: true; retryAfterMs?: number }
+  /** The PIN never got an answer (timeout, no connection): nothing was checked, nothing is let in. */
+  | { unreachable: true };
+
+/** No more tries now: locked out, or the last one was spent. */
+export const pinSpent = (note: PinNote | undefined): boolean =>
+  note !== undefined && ('locked' in note || ('triesLeft' in note && note.triesLeft === 0));

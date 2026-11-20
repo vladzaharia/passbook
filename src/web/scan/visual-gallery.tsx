@@ -21,6 +21,7 @@ import { MONITOR_DESK_CASES, MonitorDeskVisual } from './visual-monitor-desk.tsx
 import { OFFLINE_SCENARIOS, OfflineVisual } from './visual-offline.tsx';
 import { OPERATOR_CASES, OperatorVisual } from './visual-operator.tsx';
 import { TAG_SCENARIOS, TagVisual } from './visual-tags.tsx';
+import { TRAY_CASES, TrayVisual } from './visual-trays.tsx';
 import './visual-gallery.css';
 
 const ID = '01900000-0000-7000-8000-000000000001';
@@ -265,6 +266,8 @@ export function ScanVisualGallery() {
       />
     );
   if (surface === 'duo') return <DuoVisual status={status} />;
+  if (surface === 'tray')
+    return <TrayVisual tray={TRAY_CASES.find((c) => c === params.get('case')) ?? 'enter'} />;
   if (surface === 'access')
     return (
       <AccessVisual scenario={ACCESS_SCENARIOS.find((c) => c === params.get('case')) ?? 'grant'} />

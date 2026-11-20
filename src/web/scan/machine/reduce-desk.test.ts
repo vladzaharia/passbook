@@ -95,10 +95,18 @@ describe('the desk picks a value action', () => {
       { type: 'approve', staffId: 'staff-1', pin: '123456' },
       at(400),
     );
+    // The PIN rides on the command; the state a screen can read never holds it.
     expect(approved.state.loop).toMatchObject({
       s: 'applying',
-      draft: { actionId: 'stamp', amount: 1, approval: { staffId: 'staff-1', pin: '123456' } },
+      draft: { actionId: 'stamp', amount: 1 },
     });
+    expect(JSON.stringify(approved.state)).not.toContain('123456');
+    expect(approved.cmds).toContainEqual(
+      expect.objectContaining({
+        c: 'act',
+        draft: expect.objectContaining({ approval: { staffId: 'staff-1', pin: '123456' } }),
+      }),
+    );
     expect(requestKey(approved.cmds)).not.toBe(key);
   });
 

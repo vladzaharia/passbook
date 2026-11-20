@@ -75,6 +75,12 @@ export function answer(s: MachineState, ev: Answer, env: Env): Out {
       next: l.next,
       // The Manager's PIN is spent: the draft a later approval re-sends never holds one.
       ...(l.s === 'applying' ? { draft: withoutApproval(l.draft) } : {}),
+      // A door's read that needs a Manager: the PIN re-sends the draft the read went with.
+      ...(l.s === 'checking' &&
+      ev.outcome.reason === 'needs_approval' &&
+      (s.posture === 'door' || s.armed !== null)
+        ? { draft: asDraft(doorDraft(s)) }
+        : {}),
     },
     env,
   );
@@ -109,6 +115,9 @@ export function fail(s: MachineState, ev: Fail, env: Env): Out {
   const l = s.loop;
   if ((l.s !== 'checking' && l.s !== 'applying') || l.key !== ev.key) return same(s);
   if (ev.error === 'pin_invalid' || ev.error === 'pin_locked') return pinRefused(s, l, ev, env);
+  // A PIN that got no answer is never an offline read: the guest is not let in on a PIN nobody checked.
+  if (l.s === 'applying' && l.retry && (ev.error === 'network' || ev.error === 'timeout'))
+    return pinRefused(s, l, ev, env);
   const act = l.s === 'applying' || s.posture === 'door' || s.armed !== null;
   let outcome: ScanOutcome;
   let state = s;
@@ -182,7 +191,9 @@ function pinRefused(s: MachineState, l: MachineState['loop'], ev: Fail, env: Env
               locked: true,
               ...(ev.retryAfterMs !== undefined ? { retryAfterMs: ev.retryAfterMs } : {}),
             }
-          : { triesLeft: ev.triesLeft ?? 0 },
+          : ev.error === 'pin_invalid'
+            ? { triesLeft: ev.triesLeft ?? 0 }
+            : { unreachable: true },
     },
     env,
   );
