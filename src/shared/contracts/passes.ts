@@ -34,45 +34,49 @@ export const PassCauseSchema = z.enum([
   'resign',
 ]);
 
-export const PassSummarySchema = z.object({
-  id: IdSchema,
-  orgId: IdSchema,
-  templateId: IdSchema,
-  templateVersion: z.string(),
-  identityId: IdSchema,
-  serial: z.string(),
-  title: z.string().nullable(),
-  subtitle: z.string().nullable(),
-  externalId: z.string().nullable(),
-  status: PassStatusSchema,
-  mode: ModeSchema.default('live'),
-  version: z.number().int(),
-  connectionId: IdSchema.nullable(),
-  externalRef: z.string().nullable().optional(),
-  syncErrorCode: z.string().nullable(),
-  holderEmail: z.string().nullable(),
-  holderState: z.enum(['unassigned', 'waiting', 'owned']),
-  ownerUserId: IdSchema.nullable(),
-  /** Devices that have the pass in Wallet. */
-  deviceCount: z.number().int().default(0),
-  /** When the pass was removed from Wallet; null while it is not. */
-  removedAt: TimestampSchema.nullable().default(null),
-  modifiedAt: TimestampSchema,
-  createdAt: TimestampSchema,
-});
+export const PassSummarySchema = z
+  .object({
+    id: IdSchema,
+    orgId: IdSchema,
+    templateId: IdSchema,
+    templateVersion: z.string(),
+    identityId: IdSchema,
+    serial: z.string(),
+    title: z.string().nullable(),
+    subtitle: z.string().nullable(),
+    externalId: z.string().nullable(),
+    status: PassStatusSchema,
+    mode: ModeSchema.default('live'),
+    version: z.number().int(),
+    connectionId: IdSchema.nullable(),
+    externalRef: z.string().nullable().optional(),
+    syncErrorCode: z.string().nullable(),
+    holderEmail: z.string().nullable(),
+    holderState: z.enum(['unassigned', 'waiting', 'owned']),
+    ownerUserId: IdSchema.nullable(),
+    /** Devices that have the pass in Wallet. */
+    deviceCount: z.number().int().default(0),
+    /** When the pass was removed from Wallet; null while it is not. */
+    removedAt: TimestampSchema.nullable().default(null),
+    modifiedAt: TimestampSchema,
+    createdAt: TimestampSchema,
+  })
+  .meta({ id: 'PassSummary' });
 export type PassSummaryDto = z.infer<typeof PassSummarySchema>;
 
-export const PassVersionSchema = z.object({
-  version: z.number().int(),
-  templateVersion: z.string(),
-  cause: PassCauseSchema,
-  /** Why the version was published beside its cause; null for plain edits and syncs. */
-  source: PassSourceSchema.nullable().optional(),
-  actorType: z.string().nullable(),
-  actorId: z.string().nullable(),
-  createdAt: TimestampSchema,
-  purged: z.boolean(),
-});
+export const PassVersionSchema = z
+  .object({
+    version: z.number().int(),
+    templateVersion: z.string(),
+    cause: PassCauseSchema,
+    /** Why the version was published beside its cause; null for plain edits and syncs. */
+    source: PassSourceSchema.nullable().optional(),
+    actorType: z.string().nullable(),
+    actorId: z.string().nullable(),
+    createdAt: TimestampSchema,
+    purged: z.boolean(),
+  })
+  .meta({ id: 'PassVersion' });
 
 export const DeliveryEntrySchema = z.object({
   /** Outbox ids carry their kind and reason (`push:<pass>:<reason>:<uuid>`), longer than an IdSchema. */
@@ -85,20 +89,22 @@ export const DeliveryEntrySchema = z.object({
   finishedAt: TimestampSchema.nullable(),
 });
 
-export const PassDeviceSchema = z.object({
-  /** Last six characters of the device library id; enough to tell devices apart. */
-  shortId: z.string(),
-  /** The same device as the sync log's `device`: first 12 hex characters of SHA-256(device id). */
-  device: z.string(),
-  createdAt: TimestampSchema,
-  /** The newest push since the device registered. */
-  lastPush: z
-    .object({
-      state: DeliveryEntrySchema.shape.state,
-      at: TimestampSchema,
-    })
-    .nullable(),
-});
+export const PassDeviceSchema = z
+  .object({
+    /** Last six characters of the device library id; enough to tell devices apart. */
+    shortId: z.string(),
+    /** The same device as the sync log's `device`: first 12 hex characters of SHA-256(device id). */
+    device: z.string(),
+    createdAt: TimestampSchema,
+    /** The newest push since the device registered. */
+    lastPush: z
+      .object({
+        state: DeliveryEntrySchema.shape.state,
+        at: TimestampSchema,
+      })
+      .nullable(),
+  })
+  .meta({ id: 'PassDevice' });
 
 export const PassVoidedSchema = z.object({
   at: TimestampSchema,
@@ -159,7 +165,7 @@ export const PassDetailSchema = PassSummarySchema.extend({
   warnings: z.array(ValidationIssueSchema),
   /** Issues every pass of the template shares; the template page shows them. */
   templateWarnings: z.array(ValidationIssueSchema).default([]),
-});
+}).meta({ id: 'PassDetail' });
 export type PassDetailDto = z.infer<typeof PassDetailSchema>;
 
 export const PassListQuerySchema = z.object({

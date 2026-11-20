@@ -34,57 +34,61 @@ const SessionStaffSchema = z.object({ id: IdSchema, name: z.string(), role: Scan
 /** `GET /scan/staff?q=`: people matching a name, when the sign-in roster was cut. */
 export const ScanStaffSearchSchema = z.object({ items: z.array(SessionStaffSchema) });
 
-export const ScanBrandingSchema = z.strictObject({
-  accent: OrgBrandingSchema.shape.accent.unwrap().nullable(),
-  logo: BrandingImageSchema.nullable(),
-});
+export const ScanBrandingSchema = z
+  .strictObject({
+    accent: OrgBrandingSchema.shape.accent.unwrap().nullable(),
+    logo: BrandingImageSchema.nullable(),
+  })
+  .meta({ id: 'ScanBranding' });
 export type ScanBranding = z.infer<typeof ScanBrandingSchema>;
 
-export const ScanSessionSchema = z.object({
-  workspace: ScanWorkspaceSchema.nullable().optional(),
-  principal: z.enum(['scanner', 'admin']),
-  state: z.enum(['ready', 'staff_required', 'not_open', 'closed', 'unassigned']),
-  branding: ScanBrandingSchema.optional(),
-  scanner: z
-    .object({
-      id: IdSchema,
-      name: z.string(),
-      kind: ScannerKindSchema,
-      deviceRole: DeviceRoleSchema,
-      mode: ModeSchema,
-      orgId: IdSchema,
-      orgName: z.string(),
-      timeZone: z.string(),
-      settings: ScannerSettingsSchema,
-    })
-    .nullable(),
-  admin: z
-    .object({ name: z.string(), orgs: z.array(z.object({ id: IdSchema, name: z.string() })) })
-    .nullable(),
-  event: z
-    .object({
-      id: IdSchema,
-      name: z.string(),
-      opensAt: TimestampSchema,
-      closesAt: TimestampSchema,
-      timeZone: z.string(),
-      reentry: z.boolean(),
-      /** The event's staff note: Start panel, heads_up and refused. */
-      note: z.string().max(140).nullable(),
-    })
-    .nullable(),
-  templates: z.array(SessionTemplateSchema),
-  formats: z.array(CodeFormatSchema),
-  staff: SessionStaffSchema.nullable(),
-  /** Only when staff sign-in is on. */
-  staffList: z.array(SessionStaffSchema).nullable(),
-  /** The roster was cut: search it with `GET /scan/staff?q=`. */
-  staffTruncated: z.boolean().optional(),
-  approvals: z.boolean(),
-  csrfToken: z.string().nullable(),
-  undoWindowMinutes: z.number().int(),
-  counts: ScanCountsSchema,
-});
+export const ScanSessionSchema = z
+  .object({
+    workspace: ScanWorkspaceSchema.nullable().optional(),
+    principal: z.enum(['scanner', 'admin']),
+    state: z.enum(['ready', 'staff_required', 'not_open', 'closed', 'unassigned']),
+    branding: ScanBrandingSchema.optional(),
+    scanner: z
+      .object({
+        id: IdSchema,
+        name: z.string(),
+        kind: ScannerKindSchema,
+        deviceRole: DeviceRoleSchema,
+        mode: ModeSchema,
+        orgId: IdSchema,
+        orgName: z.string(),
+        timeZone: z.string(),
+        settings: ScannerSettingsSchema,
+      })
+      .nullable(),
+    admin: z
+      .object({ name: z.string(), orgs: z.array(z.object({ id: IdSchema, name: z.string() })) })
+      .nullable(),
+    event: z
+      .object({
+        id: IdSchema,
+        name: z.string(),
+        opensAt: TimestampSchema,
+        closesAt: TimestampSchema,
+        timeZone: z.string(),
+        reentry: z.boolean(),
+        /** The event's staff note: Start panel, heads_up and refused. */
+        note: z.string().max(140).nullable(),
+      })
+      .nullable(),
+    templates: z.array(SessionTemplateSchema),
+    formats: z.array(CodeFormatSchema),
+    staff: SessionStaffSchema.nullable(),
+    /** Only when staff sign-in is on. */
+    staffList: z.array(SessionStaffSchema).nullable(),
+    /** The roster was cut: search it with `GET /scan/staff?q=`. */
+    staffTruncated: z.boolean().optional(),
+    approvals: z.boolean(),
+    csrfToken: z.string().nullable(),
+    undoWindowMinutes: z.number().int(),
+    counts: ScanCountsSchema,
+  })
+  .meta({ id: 'ScanSession' });
 export type ScanSession = z.infer<typeof ScanSessionSchema>;
 
 export const ScanPairRequestSchema = z.object({ code: z.string().min(10).max(16) });
@@ -101,131 +105,139 @@ export const ScanLookupRequestSchema = z.object({
   q: z.string().trim().min(1).max(120),
   scope: ScanAdminScopeSchema.optional(),
 });
-export const ScanLookupRowSchema = z.object({
-  passId: IdSchema,
-  title: z.string(),
-  subtitle: z.string().nullable(),
-  templateName: z.string(),
-  status: z.enum(['active', 'voided', 'expired', 'removed']),
-  maskedEmail: z.string().nullable(),
-  /** Only when the template's display sets `photo` and its minRole admits the actor's role. */
-  photoUrl: z.string().nullable(),
-  doorState: z.enum(['in', 'out']).nullable(),
-  lastScanAt: TimestampSchema.nullable(),
-  /** Every digital channel is off: its code is refused at the door; staff check ID. */
-  channelsOff: z.boolean().optional(),
-});
+export const ScanLookupRowSchema = z
+  .object({
+    passId: IdSchema,
+    title: z.string(),
+    subtitle: z.string().nullable(),
+    templateName: z.string(),
+    status: z.enum(['active', 'voided', 'expired', 'removed']),
+    maskedEmail: z.string().nullable(),
+    /** Only when the template's display sets `photo` and its minRole admits the actor's role. */
+    photoUrl: z.string().nullable(),
+    doorState: z.enum(['in', 'out']).nullable(),
+    lastScanAt: TimestampSchema.nullable(),
+    /** Every digital channel is off: its code is refused at the door; staff check ID. */
+    channelsOff: z.boolean().optional(),
+  })
+  .meta({ id: 'ScanLookupRow' });
 export const ScanLookupResultSchema = z.object({
   items: z.array(ScanLookupRowSchema).max(10),
   more: z.boolean(),
 });
-export const ScanRecentSchema = z.object({
-  items: z
-    .array(
+export const ScanRecentSchema = z
+  .object({
+    items: z
+      .array(
+        z.object({
+          scanId: IdSchema,
+          at: TimestampSchema,
+          outcome: ScanRecordOutcomeSchema,
+          reason: ScanReasonSchema.nullable(),
+          actionLabel: z.string(),
+          title: z.string().nullable(),
+          value: ScanValueSchema.nullable(),
+          undoable: z.boolean(),
+        }),
+      )
+      .max(20),
+  })
+  .meta({ id: 'ScanRecent' });
+export const ScanSummarySchema = z
+  .object({
+    from: TimestampSchema,
+    to: TimestampSchema,
+    total: z.number().int(),
+    ok: z.number().int(),
+    headsUp: z.number().int(),
+    refused: z.number().int(),
+    undone: z.number().int(),
+    byAction: z.array(
       z.object({
-        scanId: IdSchema,
-        at: TimestampSchema,
-        outcome: ScanRecordOutcomeSchema,
-        reason: ScanReasonSchema.nullable(),
-        actionLabel: z.string(),
-        title: z.string().nullable(),
-        value: ScanValueSchema.nullable(),
-        undoable: z.boolean(),
-      }),
-    )
-    .max(20),
-});
-export const ScanSummarySchema = z.object({
-  from: TimestampSchema,
-  to: TimestampSchema,
-  total: z.number().int(),
-  ok: z.number().int(),
-  headsUp: z.number().int(),
-  refused: z.number().int(),
-  undone: z.number().int(),
-  byAction: z.array(
-    z.object({
-      actionId: z.string(),
-      label: z.string(),
-      count: z.number().int(),
-      amount: z.number(),
-    }),
-  ),
-  firstAt: TimestampSchema.nullable(),
-  lastAt: TimestampSchema.nullable(),
-  scope: z.enum(['device', 'session']).default('device'),
-  timeZone: z.string().nullable().default(null),
-  /** Local hours with scans, oldest first; the repeated hour of a clock change is two buckets. */
-  byHour: z
-    .array(
-      z.object({
-        start: TimestampSchema,
+        actionId: z.string(),
         label: z.string(),
-        count: z.number().int(),
-        refused: z.number().int(),
-      }),
-    )
-    .default([]),
-  /** Money and stock moved by value actions that ran and were not undone. */
-  byValue: z
-    .array(
-      z.object({
-        kind: z.enum(['add', 'take', 'set', 'use_up']),
         count: z.number().int(),
         amount: z.number(),
       }),
-    )
-    .default([]),
-  byReason: z.array(z.object({ reason: z.string(), count: z.number().int() })).default([]),
-  /** Done scans by pass type; the rows sum to `ok`. */
-  byType: z.array(ScanTypeCountSchema).default([]),
-  /** Session scope only. */
-  byStaff: z
-    .array(
-      z.object({
-        staffId: z.string().nullable(),
-        name: z.string().nullable(),
-        count: z.number().int(),
-        overrides: z.number().int(),
-        refused: z.number().int(),
-      }),
-    )
-    .default([]),
-  /** The count and the 20 latest, for the next person to read at handover. */
-  overrides: z
-    .object({
-      count: z.number().int(),
-      latest: z.array(
+    ),
+    firstAt: TimestampSchema.nullable(),
+    lastAt: TimestampSchema.nullable(),
+    scope: z.enum(['device', 'session']).default('device'),
+    timeZone: z.string().nullable().default(null),
+    /** Local hours with scans, oldest first; the repeated hour of a clock change is two buckets. */
+    byHour: z
+      .array(
         z.object({
-          scanId: z.string(),
-          at: TimestampSchema,
-          staffName: z.string().nullable(),
-          approvedBy: z.string().nullable(),
-          reason: z.string().nullable(),
+          start: TimestampSchema,
+          label: z.string(),
+          count: z.number().int(),
+          refused: z.number().int(),
         }),
-      ),
-    })
-    .default({ count: 0, latest: [] }),
-});
+      )
+      .default([]),
+    /** Money and stock moved by value actions that ran and were not undone. */
+    byValue: z
+      .array(
+        z.object({
+          kind: z.enum(['add', 'take', 'set', 'use_up']),
+          count: z.number().int(),
+          amount: z.number(),
+        }),
+      )
+      .default([]),
+    byReason: z.array(z.object({ reason: z.string(), count: z.number().int() })).default([]),
+    /** Done scans by pass type; the rows sum to `ok`. */
+    byType: z.array(ScanTypeCountSchema).default([]),
+    /** Session scope only. */
+    byStaff: z
+      .array(
+        z.object({
+          staffId: z.string().nullable(),
+          name: z.string().nullable(),
+          count: z.number().int(),
+          overrides: z.number().int(),
+          refused: z.number().int(),
+        }),
+      )
+      .default([]),
+    /** The count and the 20 latest, for the next person to read at handover. */
+    overrides: z
+      .object({
+        count: z.number().int(),
+        latest: z.array(
+          z.object({
+            scanId: z.string(),
+            at: TimestampSchema,
+            staffName: z.string().nullable(),
+            approvedBy: z.string().nullable(),
+            reason: z.string().nullable(),
+          }),
+        ),
+      })
+      .default({ count: 0, latest: [] }),
+  })
+  .meta({ id: 'ScanSummary' });
 export const ScanSummaryScopeSchema = z.enum(['device', 'session']);
 
 // v2: offline roster and batch sync.
-export const ScanRosterSchema = z.object({
-  entries: z.array(
-    z.object({
-      h: z.string().regex(/^[0-9a-f]{32}$/),
-      status: z.enum(['active', 'voided', 'removed']),
-      state: z.enum(['in', 'out']).nullable(),
-      /** `in` counts for one venue day (a daily check-in), not for good. */
-      day: z.boolean().optional(),
-    }),
-  ),
-  cursor: z.string().nullable(),
-  asOf: TimestampSchema,
-  validUntil: TimestampSchema,
-  /** Keyed MAC of the window, session and scope. The device echoes it on `batch`. */
-  sig: z.string().max(64).optional(),
-});
+export const ScanRosterSchema = z
+  .object({
+    entries: z.array(
+      z.object({
+        h: z.string().regex(/^[0-9a-f]{32}$/),
+        status: z.enum(['active', 'voided', 'removed']),
+        state: z.enum(['in', 'out']).nullable(),
+        /** `in` counts for one venue day (a daily check-in), not for good. */
+        day: z.boolean().optional(),
+      }),
+    ),
+    cursor: z.string().nullable(),
+    asOf: TimestampSchema,
+    validUntil: TimestampSchema,
+    /** Keyed MAC of the window, session and scope. The device echoes it on `batch`. */
+    sig: z.string().max(64).optional(),
+  })
+  .meta({ id: 'ScanRoster' });
 /** The roster window a device decided under. The server checks `sig` and holds `clientTs` to it. */
 export const ScanRosterStampSchema = z.object({
   asOf: TimestampSchema,
@@ -251,13 +263,15 @@ export const ScanBatchRequestSchema = z.object({
     .max(50),
   roster: ScanRosterStampSchema.optional(),
 });
-export const ScanBatchResultSchema = z.object({
-  items: z.array(
-    z.object({
-      idempotencyKey: UuidV7Schema,
-      outcome: ScanOutcomeSchema,
-      /** The door let this in and the server did not. */
-      conflict: z.boolean().optional(),
-    }),
-  ),
-});
+export const ScanBatchResultSchema = z
+  .object({
+    items: z.array(
+      z.object({
+        idempotencyKey: UuidV7Schema,
+        outcome: ScanOutcomeSchema,
+        /** The door let this in and the server did not. */
+        conflict: z.boolean().optional(),
+      }),
+    ),
+  })
+  .meta({ id: 'ScanBatchResult' });

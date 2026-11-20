@@ -16,39 +16,43 @@ export const BrandingSlotSchema = z.enum(['logo', 'icon']);
 export const BrandMarkSchema = z.enum(['full', 'small', 'none']);
 export type BrandMark = z.infer<typeof BrandMarkSchema>;
 
-export const OrgBrandingSchema = z.object({
-  accent: HexColorSchema.optional(),
-  supportEmail: z.string().max(254).optional(),
-  supportUrl: z.string().max(500).optional(),
-  /** pass.json backgroundColor, foregroundColor and labelColor for the org's passes. */
-  passColors: z
-    .object({ background: HexColorSchema, foreground: HexColorSchema, label: HexColorSchema })
-    .optional(),
-  /** Set by the image upload endpoint; ignored on update. */
-  logo: BrandingImageSchema.optional(),
-  icon: BrandingImageSchema.optional(),
-  /** The web logo (holder pages, emails); set by its own endpoint, ignored on update. */
-  web: BrandingImageSchema.optional(),
-  /** Set through the brand kit; kept on update. Absent: full. */
-  mark: BrandMarkSchema.optional(),
-  /** The logo already shows the org name, so passes leave logoText empty. */
-  logoHasName: z.boolean().optional(),
-});
+export const OrgBrandingSchema = z
+  .object({
+    accent: HexColorSchema.optional(),
+    supportEmail: z.string().max(254).optional(),
+    supportUrl: z.string().max(500).optional(),
+    /** pass.json backgroundColor, foregroundColor and labelColor for the org's passes. */
+    passColors: z
+      .object({ background: HexColorSchema, foreground: HexColorSchema, label: HexColorSchema })
+      .optional(),
+    /** Set by the image upload endpoint; ignored on update. */
+    logo: BrandingImageSchema.optional(),
+    icon: BrandingImageSchema.optional(),
+    /** The web logo (holder pages, emails); set by its own endpoint, ignored on update. */
+    web: BrandingImageSchema.optional(),
+    /** Set through the brand kit; kept on update. Absent: full. */
+    mark: BrandMarkSchema.optional(),
+    /** The logo already shows the org name, so passes leave logoText empty. */
+    logoHasName: z.boolean().optional(),
+  })
+  .meta({ id: 'OrgBranding' });
 
-export const OrgSchema = z.object({
-  id: IdSchema,
-  slug: z.string(),
-  name: z.string(),
-  status: z.enum(['active', 'suspended', 'deleted']),
-  defaultIdentityId: IdSchema.nullable(),
-  branding: OrgBrandingSchema,
-  createdAt: TimestampSchema,
-  updatedAt: TimestampSchema,
-  /** Moves with name, slug, branding, default identity and settings; send it back with a save. */
-  configRevision: z.number().int().optional(),
-  /** Only on a save that restyles live passes: how many will be rebuilt and pushed. */
-  passesToUpdate: z.number().int().optional(),
-});
+export const OrgSchema = z
+  .object({
+    id: IdSchema,
+    slug: z.string(),
+    name: z.string(),
+    status: z.enum(['active', 'suspended', 'deleted']),
+    defaultIdentityId: IdSchema.nullable(),
+    branding: OrgBrandingSchema,
+    createdAt: TimestampSchema,
+    updatedAt: TimestampSchema,
+    /** Moves with name, slug, branding, default identity and settings; send it back with a save. */
+    configRevision: z.number().int().optional(),
+    /** Only on a save that restyles live passes: how many will be rebuilt and pushed. */
+    passesToUpdate: z.number().int().optional(),
+  })
+  .meta({ id: 'Org' });
 export type OrgDto = z.infer<typeof OrgSchema>;
 
 export const OrgSummarySchema = OrgSchema.extend({
@@ -62,7 +66,7 @@ export const OrgSummarySchema = OrgSchema.extend({
   }),
   /** Counts stop at 100000 so a large org never costs a scan. */
   countsCapped: z.boolean(),
-});
+}).meta({ id: 'OrgSummary' });
 
 export const OrgListQuerySchema = PageQuerySchema.extend({
   /** Name or slug contains. */
