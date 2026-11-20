@@ -115,6 +115,8 @@ const TENANT_KEY_ALLOWLIST: Record<string, string> = {
     "a platform admin sets one org's preset and overrides: the platform grant names the org it writes; no org grant reaches these tables",
   'src/worker/modules/scan/repo-scanners.ts':
     'the scanner mode move is the one org-scope write that names its destination mode; the source mode is checked with exactlyOne in the same grant',
+  'src/worker/modules/developer/repo-grants.ts':
+    'a platform-scope job grant makes a sandbox org in one batch: no tenant exists yet, so its membership and sandbox rows name the org the same batch inserts; the close update names the one org the sweep read',
   'src/worker/platform/entitlements.ts':
     'the entitlements row of a new org names the org the same batch just inserted; the one helper every org-insert path calls',
 };
@@ -418,6 +420,7 @@ export const JOB_FACTORY_IMPORTERS: Record<string, string | string[]> = {
     'src/worker/modules/templates/fork-updates-offer.ts',
     'src/worker/modules/templates/fork-updates-write.ts',
   ],
+  'developer-sandbox': 'src/worker/modules/developer/repo-grants.ts',
   'webhook-ingress': [
     'src/worker/modules/connections/repo-grants.ts',
     'src/worker/modules/connections/webhooks.ts',

@@ -58,6 +58,14 @@ A secret scanner can match the labels. Keys are never logged: the logger and aud
 
 **Personal keys and sessions.** A personal key is its own credential, bounded by the membership and the user, not by a browser session: signing out or revoking a session does not end it. Revoke it, retire it, or remove the membership.
 
+**Keys stay on servers.** A key sent with browser headers is refused: 403 `KEY_IN_BROWSER`, live or test, before the secret is checked. Browser headers are `Sec-Fetch-Site`, `Origin` or a `__Host-wallet_` cookie. curl, Node `fetch`, Python, Go and Workers `fetch` send none of them (`Sec-Fetch-Mode`, `User-Agent` and other cookies do not count). `/api/v1` sends no CORS headers. In the browser, the developer portal's Try it uses a try token (see Developer sandbox).
+
+Two proxy setups forward the browser's headers with your key and get refused:
+- nginx `proxy_pass` forwards every client header. Add `proxy_set_header Origin "";`, `proxy_set_header Cookie "";` and `proxy_set_header Sec-Fetch-Site "";` (and the other `Sec-Fetch-*`).
+- A Worker or Node proxy that passes the incoming request or its headers on (`fetch(new Request(url, request))`, `http-proxy-middleware`). Build new headers with only what PassBook needs: `Authorization`, `Content-Type`, `Idempotency-Key`, `If-Match`.
+
+Rollout: a key made before 1 December 2026 that is sent from a browser still works until 31 December 2026. The answer carries a `PassBook-Warning` header saying so, and we log `KEY_IN_BROWSER_SEEN` with the org and key prefix. Keys made from 1 December 2026 are refused at once.
+
 **Roles.** `roles` holds role presets: `org_admin`, `integration_admin`, `template_author`, `template_reviewer`,
 `template_publisher`, `pass_operator`, `read_only`. The role's scopes are copied into the key's `scopes` when it is made and the role stays as a label: a bundle that gains a scope later never reaches an existing key. A creator can give a role only if every scope in it is within their own roles
 (`403 API_KEY_SCOPE_EXCEEDS_CREATOR`). The terminal scope `scans:write` is never in a role.
@@ -289,11 +297,21 @@ send: re-serializing the JSON changes the MAC. Rotate the secret with
 
 Branch on `code`, not `detail`. Quote `requestId` when asking for help.
 
+`KEY_IN_BROWSER` (403): an API key was sent with browser headers. Call from your server; a proxy must strip `Origin`, `Sec-Fetch-*` and `Cookie` (see Authenticate).
+
 `FEATURE_NOT_INCLUDED` (403) carries `feature`: the organization's plan lacks it, so ask PassBook to turn it on. Every key call of an organization also needs its `api` feature: `off` refuses all, `read` allows only GET and HEAD (so `POST` reads such as `/broadcasts/preview` and `/scan/lookup` are refused too), `full` allows all. Platform-wide keys are not limited by it. Operations that need a feature carry `x-feature` in the OpenAPI document.
 
 Delivery features follow the plan too: Google and Samsung Wallet (`wallet.google`, `wallet.samsung`), `print` and `nfc` (Basic to bind tags, Secure to create keysets). A channel the plan lacks reads `{ "on": false, "source": "platform", "reason": "not_included" }`, creating a print, binding a tag or turning `nfc.tags` on answers `FEATURE_NOT_INCLUDED`, and the settings entry for `nfc.tags` carries `blockedByPlan`. A downgrade only pauses: passes, copies, prints and tag bindings stay, and an upgrade turns them back on.
 
 `FEATURE_LIMIT_REACHED` (403) carries `feature`, `limit` and `used`: a create would pass the organization's cap for that feature. It covers live and test passes, templates, members (pending invitations count), API keys, scanner devices, webhook endpoints, connections, broadcasts a day and join cards a day (a join visitor sees only the daily-limit answer). A downgrade never removes anything: what exists stays, only new creates are refused, and a removed or revoked item frees its slot. A pass import that reaches the limit stops creating: it reports the rest as `skipped` (`progress.skipped`, row code `FEATURE_LIMIT_REACHED`) and still applies its updates. A connection sync records each refused record as failed and goes on. Daily limits count per mode, so test-mode work never uses up the live allowance. Emails a day (`email.perDay`) lower the organization's own daily email cap and answer `EMAIL_RATE_LIMITED`.
+
+## Developer sandbox
+
+`POST /api/v1/developer/sandbox` (a signed-in person: session, CSRF and a Turnstile token; never a key) makes your sandbox, once per person: a `developer` organization with you as admin, a Test personal key (`pbp_test_...`, 30 days, the secret shown once) and a "Quickstart ticket" template released in Test. `GET` reads it back. A repeat `POST` finishes a sandbox a failed request left half made and returns it; the key is minted once, so the repeat has `key: null` and `previousKey`: roll it. `DELETE` closes your sandbox (read-only, keys revoked); it is not made again.
+
+**Try tokens.** `POST /api/v1/developer/try-token` (signed-in person, CSRF) returns `{ token, expiresAt }`: a `pbtry_` bearer that acts as your sandbox's Test key for 15 minutes, and the one bearer a browser may send. It works only beside the session cookie it was made for, so it cannot be used from curl or another machine. Audit rows of its writes carry `via: "try"`. It ends at expiry, sign-out, a revoked session, a revoked, expired or retired key, a closed sandbox, or `DELETE /api/v1/developer/try-token` (ends every try token of your sandbox). Routes for a signed-in person never take it. Minting and using share `RL_API_TRY`: 60 a minute per session. The portal keeps it in memory and refreshes it at 12 minutes; never store it or put it in a URL.
+
+A sandbox pass is a preview. Nothing in a sandbox is ever signed, added to a wallet, pushed or mailed: issue and send calls answer with the same shapes, `downloadUrl` is the TEST preview page (`/developers/preview/<token>`), and mail lands in the test inbox. `GET /p/<token>/pass.pkpass` answers `SANDBOX_PREVIEW_ONLY` (409). A sandbox never holds Live: a Live key or request is refused. Its plan is the `developer` preset (500 test passes, 10 templates, 3 webhook endpoints); a create at a cap answers `SANDBOX_QUOTA` (403) with `feature`, `limit` and `used`, as `FEATURE_LIMIT_REACHED` does elsewhere. A sandbox with no activity for 90 days closes.
 
 ## Approved template releases
 

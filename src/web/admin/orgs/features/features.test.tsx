@@ -12,8 +12,13 @@ import {
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
 
 const PATH = '/api/v1/platform/orgs/o1/entitlements';
-const LABEL = { legacy: 'Legacy', trial: 'Trial', standard: 'Standard' } as const;
-const COUNTS = { legacy: 4, trial: 1, standard: 7 } as const;
+const LABEL = {
+  legacy: 'Legacy',
+  trial: 'Trial',
+  standard: 'Standard',
+  developer: 'Developer sandbox',
+} as const;
+const COUNTS = { legacy: 4, trial: 1, standard: 7, developer: 0 } as const;
 
 type Override = { value: EntitlementValue; note?: string | null; expiresAt?: number | null };
 
@@ -40,7 +45,8 @@ function state(
         expiresAt: o?.expiresAt ?? null,
       };
     }),
-    presets: ENTITLEMENT_PRESETS.map((p) => ({
+    // The developer preset belongs to developer orgs only; the server lists it for them alone.
+    presets: ENTITLEMENT_PRESETS.filter((p) => p !== 'developer').map((p) => ({
       preset: p,
       label: LABEL[p],
       orgCount: COUNTS[p],

@@ -28,6 +28,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   credentials: SEALED,
   data_request_passes: 'privacy request case file, handled in the app',
   data_requests: 'privacy request case file, handled in the app',
+  developer_sandboxes: 'a sandbox record: ids and funnel times, no content',
   devices: 'Apple push tokens',
   event_feed: DERIVED,
   idempotency_keys: 'dedupe state that expires within 24 hours',

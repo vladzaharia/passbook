@@ -10,6 +10,7 @@ import {
 } from '../../shared/contracts/common.ts';
 import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
 import { scopeExercises } from './api-scopes.ts';
+import { type KeyCaller, keyCallerOf } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
 import { type DeniedEvent, reportDenied } from './denied.ts';
@@ -53,6 +54,8 @@ export interface ApiKeyAuth {
   mode: Mode;
   /** The key is limited to templates or styles (`api_key_resources`); only a `templateScoped` route admits it. */
   limited?: true;
+  /** Presented as a developer try token (`pbtry_`), not the key's secret. */
+  via?: 'try';
 }
 
 export const SCANNER_COOKIE = '__Host-wallet_scan';
@@ -90,11 +93,9 @@ export interface ApiKeyStore {
   ): Promise<ApiKeyAuth | null>;
 }
 
-/** Where the request came from, for a key's IP allowlist. Only `cf-connecting-ip` is read. */
-export interface KeyCaller {
-  ip: string | undefined;
-}
-export const keyCaller = (c: Context): KeyCaller => ({ ip: c.req.header('cf-connecting-ip') });
+export type { KeyCaller } from './browser-signals.ts';
+/** Every key guard passes this to the key store: the address, browser signals and session cookie (KEY_IN_BROWSER). */
+export const keyCaller = (c: Context): KeyCaller => keyCallerOf(c, SESSION_COOKIE);
 
 /**
  * Implemented by modules/scan. Null for an unknown or malformed token. A known token whose scanner

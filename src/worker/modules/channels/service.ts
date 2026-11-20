@@ -17,6 +17,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { CHANNEL_COPY } from '../../../shared/copy/channels.ts';
 import { entitlementsOf } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { walletProviderDisabledReason } from '../wallet-providers/provider-policy.ts';
 import { passReplaceable } from './replaceable.ts';
@@ -48,7 +49,10 @@ async function levels(
   }
   for (const c of org['channels.blocked']) blocked[c] = 'blocked';
   if (!org['nfc.tags'].enabled) blocked.nfc = 'tags_off';
-  return { platform, entitlement: blockedByEntitlement(entitlements), org: blocked };
+  const entitlement = blockedByEntitlement(entitlements);
+  // A developer org's passes are never added to Apple Wallet: the channel reads as not included.
+  if (await isPreviewOnlyOrg(ctx.env.DB, orgId)) entitlement.apple = 'not_included';
+  return { platform, entitlement, org: blocked };
 }
 
 export function capabilityReasons(cap: repo.Capability): Per<ChannelReason> {

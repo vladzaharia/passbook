@@ -4,6 +4,7 @@ import { effectiveChannels } from '../../../shared/channels.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { loadPass } from '../channels/service.ts';
+import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { depsOf } from '../passes/deps.ts';
 import { type PassFileVariant, voidedKey } from '../passes/file.ts';
 import { applyRemoval } from '../passes/remove-build.ts';
@@ -41,6 +42,7 @@ export async function appleVariant(
  * version, variant). A version bump (an Apple flip, N4) is what makes a device fetch it.
  */
 export async function voidedVariant(ctx: ServiceContext, pass: Pass): Promise<PassFileVariant> {
+  await assertNotPreviewOnly(ctx.env.DB, pass.orgId);
   const variant = {
     objectKey: voidedKey(pass.id, pass.version),
     name: 'voided',

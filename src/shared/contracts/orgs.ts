@@ -75,7 +75,8 @@ export const CreateOrgSchema = z.object({
   defaultIdentityId: IdSchema.nullable().optional(),
   branding: OrgBrandingSchema.optional(),
   /** The org's Features (entitlements); `standard` when omitted. */
-  preset: EntitlementPresetSchema.optional(),
+  // The developer preset is for sandboxes, which are made through /developer/sandbox only.
+  preset: EntitlementPresetSchema.exclude(['developer']).optional(),
 });
 export const UpdateOrgSchema = CreateOrgSchema.omit({ preset: true })
   .partial()

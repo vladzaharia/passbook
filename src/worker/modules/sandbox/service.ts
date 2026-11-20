@@ -16,6 +16,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { channelOn, recordCopy } from '../channels/gate.ts';
 import type { MailAttachment, Mailer } from '../delivery/mailer.ts';
+import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { resolveCaptureSnapshot } from './binding.ts';
@@ -106,6 +107,8 @@ export async function sendCapturedToMe(
   )
     throw new NotFoundError('Email not found.', 'CAPTURED_EMAIL_NOT_FOUND');
   const db = ctx.env.DB;
+  // A developer org's mail stays in the Test inbox: nothing is forwarded to a real address.
+  await assertNotPreviewOnly(db, authority.orgId);
   const ref = await getCapturedReference(db, id, authority, ctx.clock.now());
   if (!ref) throw new NotFoundError('Email not found.', 'CAPTURED_EMAIL_NOT_FOUND');
   const snapshot = await resolveCaptureSnapshot(ctx.env, ref);

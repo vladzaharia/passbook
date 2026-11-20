@@ -310,6 +310,8 @@ export const DYNAMIC_WRITE_ALLOWLIST: Record<string, string> = {
  * uses `tenantCheck` with `{org}`. Each entry names what ties the row to the grant's tenant instead.
  */
 export const UNTENANTED_CHECK_ALLOWLIST: Record<string, string> = {
+  'src/worker/modules/developer/repo-grants.ts#developer_sandboxes':
+    "the owner's own close: the check asks that the person has a sandbox, and the grant's org write is pinned to the org id the service read for that person",
   'src/worker/modules/passes/repo-authority.ts#api_keys':
     "capabilityChecks: k.id is the grant's own API-key principal (the same authority object), which the actor row resolves in its tenant",
   'src/worker/modules/passes/repo-authority.ts#org_memberships':

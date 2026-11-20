@@ -6,6 +6,7 @@ import { BadRequestError, ConflictError, NotFoundError } from '../../platform/er
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { channelOn } from '../channels/gate.ts';
+import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { depsOf } from '../passes/deps.ts';
 import { publishPass } from '../passes/publish.ts';
@@ -145,6 +146,7 @@ export async function personalize(
     if (!(await markPersonalizationPublished(ctx, pass, tokenHash))) throw unavailable();
   }
 
+  await assertNotPreviewOnly(db, pass.orgId);
   const resolved = await deps.identities.byId(identity.id);
   const signed = await signManifest(new TextEncoder().encode(token), resolved.material, {
     now: new Date(ctx.clock.now()),

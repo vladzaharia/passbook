@@ -129,7 +129,7 @@ export function withSecurity(app: OpenAPIHono<AppBindings>, doc: Doc): Doc {
         scheme: 'bearer',
         bearerFormat: 'pb_<live|test>_<prefix>_<secret>',
         description:
-          'An API key. A key with any one of the listed scopes may call the operation, in its own organization and mode.',
+          'An API key, for server calls only. A key with any one of the listed scopes may call the operation, in its own organization and mode. Sent with browser headers (`Origin`, `Sec-Fetch-Site` or a PassBook cookie) it is refused: 403 `KEY_IN_BROWSER`.',
       },
       session: {
         type: 'apiKey',

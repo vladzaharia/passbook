@@ -38,9 +38,9 @@ export interface OrgRow {
 
 export async function makeOrg(
   f: Fixtures,
-  overrides: Partial<OrgRow> & { preset?: string } = {},
+  overrides: Partial<OrgRow> & { preset?: string; kind?: 'developer' } = {},
 ): Promise<OrgRow> {
-  const preset = overrides.preset ?? 'legacy';
+  const preset = overrides.preset ?? (overrides.kind === 'developer' ? 'developer' : 'legacy');
   const id = overrides.id ?? f.ids.id();
   const row = {
     id,
@@ -50,8 +50,8 @@ export async function makeOrg(
   const now = f.clock.now();
   await run(
     f.env.DB,
-    'INSERT INTO orgs (id, slug, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
-    [row.id, row.slug, row.name, now, now],
+    'INSERT INTO orgs (id, slug, name, kind, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+    [row.id, row.slug, row.name, overrides.kind ?? 'standard', now, now],
   );
   // Every org has an entitlements row; a test org is `legacy` (every flag on, no limits) unless it says otherwise.
   await run(

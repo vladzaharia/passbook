@@ -4,6 +4,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { BadRequestError, ConflictError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getOrg } from '../passes/repo-read-issuance.ts';
 import { isPlatformAddress } from '../settings/reply-to-domain.ts';
@@ -35,6 +36,7 @@ async function sendLink(ctx: ServiceContext, orgId: string, address: string): Pr
     now + LINK_TTL_MS,
     now,
   );
+  await assertNotPreviewOnly(ctx.env.DB, orgId);
   const org = await getOrg(ctx.env.DB, orgId);
   const email = renderReplyToConfirm({
     orgName: org?.name ?? 'An organization',

@@ -1,5 +1,6 @@
 import { AppError, ConflictError, PreconditionFailedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { objectFileOf } from './builder-finish.ts';
 import type { PublishOptions } from './publish.ts';
 import type { PreparedPublishAttempt } from './publish-flow-prepare.ts';
 import { assertPublishAuthority, assertReleaseFence } from './publish-service-release.ts';
@@ -16,9 +17,10 @@ export async function commitPublishArtifact(
   const { current, next, artifact, expectedPass, release, requireNoReleaseHistory, scanCode } =
     prepared;
   const now = ctx.clock.now();
-  const objectKey = `passes/${current.id}/v${current.version + 1}-${ctx.ids.token(6)}.pkpass`;
+  const file = objectFileOf(artifact);
+  const objectKey = `passes/${current.id}/v${current.version + 1}-${ctx.ids.token(6)}${file.ext}`;
   await ctx.env.BUCKET.put(objectKey, artifact.bytes, {
-    httpMetadata: { contentType: 'application/vnd.apple.pkpass' },
+    httpMetadata: { contentType: file.contentType },
   });
   let written: number | null;
   try {

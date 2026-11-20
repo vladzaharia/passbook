@@ -1,4 +1,5 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { nonnegative, requestHash, sameProof, validProof, validRequest } from './instance-input.ts';
 import type {
   WalletInstance,
@@ -81,7 +82,8 @@ export async function createWalletInstance(
     !walletProviderEnabled(p.provider, p.mode) ||
     !validProof(p, 'upsert') ||
     !validRequest(p.requestKey, p.now) ||
-    !p.instanceId
+    !p.instanceId ||
+    (await isPreviewOnlyOrg(db, p.orgId))
   )
     return null;
   const hash = await requestHash(p.requestKey);

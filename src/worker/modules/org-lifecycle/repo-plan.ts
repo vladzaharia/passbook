@@ -115,6 +115,8 @@ export const PURGE_KEEP: Readonly<Record<string, string>> = {
   pass_credential_tombstones: 'revocation evidence: refs only, no personal data',
   org_entitlements:
     'the stub keeps its plan row: a trigger refuses deleting it while the org exists',
+  developer_sandboxes:
+    'the one-per-person record: ids and times only, so a closed sandbox is not made again; a trigger refuses deleting it',
 };
 
 /** Tables with no tenant rows. The authority tables (grants live inside one batch and are swept) count as well. */

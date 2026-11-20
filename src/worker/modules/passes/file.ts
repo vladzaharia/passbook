@@ -1,5 +1,6 @@
 import { PKPASS_CONTENT_TYPE } from '../../../passkit/index.ts';
 import { NotFoundError } from '../../platform/errors.ts';
+import { assertSignedObject } from '../developer/fence.ts';
 import type { Pass } from './repo.ts';
 
 const slug = (text: string) =>
@@ -52,6 +53,7 @@ export async function servePassFile(
   extraHeaders: Record<string, string> = {},
   variant?: PassFileVariant,
 ): Promise<Response> {
+  assertSignedObject(variant?.objectKey ?? pass.objectKey);
   const etag = etagOf(pass, variant);
   const modifiedSeconds = Math.floor(pass.modifiedAt / 1000);
   const headers = new Headers({

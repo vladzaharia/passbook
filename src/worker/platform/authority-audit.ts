@@ -59,3 +59,12 @@ export function buildAudit(
     ...(lineage ? { lineage } : {}),
   };
 }
+
+/** A try-token request (PX8) marks every audit row it writes with `detail.via`. */
+export function withVia(entry: AuditRow, via: string | undefined): AuditRow {
+  if (!via) return entry;
+  const parsed: unknown = entry.detail ? JSON.parse(entry.detail) : {};
+  const detail =
+    parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : { detail: parsed };
+  return { ...entry, detail: JSON.stringify({ ...detail, via }) };
+}

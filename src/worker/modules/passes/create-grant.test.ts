@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { originUnlessKey } from '../../../../test/helpers/browser.ts';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   assertNoLeakedGrants,
@@ -88,7 +89,7 @@ const issue = (headers: Record<string, string>, payload: object, key = kit.fx.id
       method: 'POST',
       headers: {
         ...headers,
-        origin: ORIGIN,
+        ...originUnlessKey(headers, ORIGIN),
         'content-type': 'application/json',
         'idempotency-key': key,
       },

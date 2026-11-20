@@ -4,6 +4,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { isPreviewOnlyOrg, testPreviewUrl } from '../developer/fence.ts';
 import type { TenantPassWrite } from './http.ts';
 import { problemsOf } from './import-read.ts';
 import { passLinkRows, type ResultRow, resultRows } from './repo-import-results.ts';
@@ -40,6 +41,7 @@ export async function resultsCsv(
   if (imp.committed_at === null)
     throw new ConflictError('This import has not run yet.', 'IMPORT_STATE');
   const base = baseUrl(ctx.env);
+  const previewOnly = await isPreviewOnlyOrg(ctx.env.DB, imp.org_id);
   const lines: string[][] = [];
   let after = 0;
   for (;;) {
@@ -74,7 +76,7 @@ export async function resultsCsv(
         r.external_id ?? '',
         r.holder_email ?? '',
         token ? `${base}/p/${token}` : '',
-        token ? `${base}/p/${token}/pass.pkpass` : '',
+        token ? (previewOnly ? testPreviewUrl(base, token) : `${base}/p/${token}/pass.pkpass`) : '',
         problem,
       ]);
     }
