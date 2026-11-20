@@ -1,0 +1,281 @@
+{
+  "passes.postPasses": {
+    "description": "Creates a pass from a template. `input` holds the template's fields; see `sample` on the template. Send an `Idempotency-Key` header to retry safely. Set `sendEmail` with `holderEmail` to email the pass.",
+    "request": {
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "input": {
+        "name": "Ada Example",
+        "seat": "Row 4, seat 12"
+      },
+      "holderEmail": "ada@example.com",
+      "externalId": "booking_8841",
+      "sendEmail": true
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
+      "title": "Ada Example",
+      "subtitle": "Row 4, seat 12",
+      "externalId": "booking_8841",
+      "status": "active",
+      "mode": "live",
+      "version": 1,
+      "connectionId": null,
+      "externalRef": null,
+      "syncErrorCode": null,
+      "holderEmail": "ada@example.com",
+      "holderState": "waiting",
+      "ownerUserId": null,
+      "deviceCount": 0,
+      "removedAt": null,
+      "modifiedAt": 1764000000000,
+      "createdAt": 1764000000000,
+      "reissueRequired": false,
+      "ownerName": null,
+      "ownerEmail": null,
+      "personalization": {
+        "name": "Ada Example",
+        "seat": "Row 4, seat 12"
+      },
+      "fieldSources": {
+        "name": "manual",
+        "seat": "manual"
+      },
+      "registrations": 0,
+      "lastRefreshedAt": null,
+      "versions": [
+        {
+          "version": 1,
+          "templateVersion": "3",
+          "cause": "create",
+          "source": null,
+          "actorType": "api_key",
+          "actorId": null,
+          "createdAt": 1764000000000,
+          "purged": false
+        }
+      ],
+      "deliveries": [],
+      "warnings": [],
+      "passJson": {
+        "formatVersion": 1,
+        "passTypeIdentifier": "pass.example.wallet",
+        "serialNumber": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
+        "organizationName": "Example Events",
+        "description": "Event ticket",
+        "eventTicket": {
+          "primaryFields": [
+            {
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ]
+        }
+      },
+      "assetBaseUrl": "https://wallet.example.com/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "blockedUsers": [],
+      "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
+      "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8",
+      "email": {
+        "outcome": "queued"
+      }
+    }
+  },
+  "passes.getPassesById": {
+    "description": "One pass with its fields, links and channels.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
+      "title": "Ada Example",
+      "subtitle": "Row 4, seat 12",
+      "externalId": "booking_8841",
+      "status": "active",
+      "mode": "live",
+      "version": 1,
+      "connectionId": null,
+      "externalRef": null,
+      "syncErrorCode": null,
+      "holderEmail": "ada@example.com",
+      "holderState": "waiting",
+      "ownerUserId": null,
+      "deviceCount": 0,
+      "removedAt": null,
+      "modifiedAt": 1764000000000,
+      "createdAt": 1764000000000,
+      "reissueRequired": false,
+      "ownerName": null,
+      "ownerEmail": null,
+      "personalization": {
+        "name": "Ada Example",
+        "seat": "Row 4, seat 12"
+      },
+      "fieldSources": {
+        "name": "manual",
+        "seat": "manual"
+      },
+      "registrations": 0,
+      "lastRefreshedAt": null,
+      "versions": [
+        {
+          "version": 1,
+          "templateVersion": "3",
+          "cause": "create",
+          "source": null,
+          "actorType": "api_key",
+          "actorId": null,
+          "createdAt": 1764000000000,
+          "purged": false
+        }
+      ],
+      "deliveries": [],
+      "warnings": [],
+      "passJson": {
+        "formatVersion": 1,
+        "passTypeIdentifier": "pass.example.wallet",
+        "serialNumber": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
+        "organizationName": "Example Events",
+        "description": "Event ticket",
+        "eventTicket": {
+          "primaryFields": [
+            {
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ]
+        }
+      },
+      "assetBaseUrl": "https://wallet.example.com/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "blockedUsers": [],
+      "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
+      "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8"
+    }
+  },
+  "passes.getPasses": {
+    "description": "Lists passes, newest first. Filter by template, status, holder email or `externalId`; page with `cursor`.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "templateVersion": "3",
+          "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+          "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
+          "title": "Ada Example",
+          "subtitle": "Row 4, seat 12",
+          "externalId": "booking_8841",
+          "status": "active",
+          "mode": "live",
+          "version": 1,
+          "connectionId": null,
+          "externalRef": null,
+          "syncErrorCode": null,
+          "holderEmail": "ada@example.com",
+          "holderState": "waiting",
+          "ownerUserId": null,
+          "deviceCount": 0,
+          "removedAt": null,
+          "modifiedAt": 1764000000000,
+          "createdAt": 1764000000000
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "passes.patchPassesById": {
+    "description": "Changes a pass's fields. Send `If-Match` with the current `version`; a stale version is `412 VERSION_CONFLICT`. Installed passes update in Wallet.",
+    "request": {
+      "input": {
+        "seat": "Row 5, seat 3"
+      },
+      "notify": true
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
+      "title": "Ada Example",
+      "subtitle": "Row 4, seat 12",
+      "externalId": "booking_8841",
+      "status": "active",
+      "mode": "live",
+      "version": 2,
+      "connectionId": null,
+      "externalRef": null,
+      "syncErrorCode": null,
+      "holderEmail": "ada@example.com",
+      "holderState": "waiting",
+      "ownerUserId": null,
+      "deviceCount": 0,
+      "removedAt": null,
+      "modifiedAt": 1764000000000,
+      "createdAt": 1764000000000,
+      "reissueRequired": false,
+      "ownerName": null,
+      "ownerEmail": null,
+      "personalization": {
+        "name": "Ada Example",
+        "seat": "Row 5, seat 3"
+      },
+      "fieldSources": {
+        "name": "manual",
+        "seat": "manual"
+      },
+      "registrations": 0,
+      "lastRefreshedAt": null,
+      "versions": [
+        {
+          "version": 1,
+          "templateVersion": "3",
+          "cause": "create",
+          "source": null,
+          "actorType": "api_key",
+          "actorId": null,
+          "createdAt": 1764000000000,
+          "purged": false
+        }
+      ],
+      "deliveries": [],
+      "warnings": [],
+      "passJson": {
+        "formatVersion": 1,
+        "passTypeIdentifier": "pass.example.wallet",
+        "serialNumber": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
+        "organizationName": "Example Events",
+        "description": "Event ticket",
+        "eventTicket": {
+          "primaryFields": [
+            {
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ]
+        }
+      },
+      "assetBaseUrl": "https://wallet.example.com/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "blockedUsers": [],
+      "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
+      "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8",
+      "email": {
+        "outcome": "queued"
+      }
+    }
+  }
+}

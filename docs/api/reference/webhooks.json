@@ -1,0 +1,42 @@
+{
+  "webhooks.postWebhookEndpoints": {
+    "description": "Creates an endpoint for events of this mode. The signing `secret` is shown once. Send `?validate=1` to check the body without creating anything.",
+    "request": {
+      "url": "https://hooks.example.com/passbook",
+      "description": "Order system",
+      "eventTypes": ["pass.issued", "pass.scanned"]
+    },
+    "response": {
+      "endpoint": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000f1",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "mode": "live",
+        "url": "https://hooks.example.com/passbook",
+        "urlMasked": "https://hooks.example.com/\u2026",
+        "description": "Order system",
+        "eventTypes": ["pass.issued", "pass.scanned"],
+        "templateIds": null,
+        "apiVersion": "2026-12-01",
+        "status": "active",
+        "failingSince": null,
+        "disabledAt": null,
+        "lastSuccessAt": null,
+        "lastFailureAt": null,
+        "lastStatus": null,
+        "secretCreatedAt": 1764000000000,
+        "previousSecretExpiresAt": null,
+        "createdAt": 1764000000000
+      },
+      "secret": "whsec_example_0000000000000000000000000000"
+    }
+  },
+  "webhooks.postWebhookEndpointsByIdTest": {
+    "description": "Sends a `webhook.test` event to the endpoint and reports the result.",
+    "response": {
+      "ok": true,
+      "status": 200,
+      "durationMs": 84,
+      "errorCode": null
+    }
+  }
+}
