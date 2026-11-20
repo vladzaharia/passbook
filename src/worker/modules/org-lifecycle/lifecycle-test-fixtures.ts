@@ -12,7 +12,7 @@ import { run } from '../../platform/db.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { RetentionKit } from '../retention/retention-test-fixtures.ts';
 import { credential } from '../wallet-providers/repo-wallet-credentials-test-fixtures.ts';
-import { seedWaveTables } from './lifecycle-wave-fixtures.ts';
+import { seedWaveTables } from './lifecycle-wave-test-fixtures.ts';
 
 /** A workflow step that runs its callback in place; `crashAfter` throws on the next step after that many. */
 /** `clock` moves to a `sleepUntil` time, as a waiting workflow would find it on waking. */
