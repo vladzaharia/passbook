@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { fixtures, makeOrg } from '../../../../test/helpers/factories.ts';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
+import { fixtures, makeOrg } from '../../../../test/helpers/factories.ts';
 import { all, run } from '../../platform/db.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
 import { setOidcTrust } from './oidc-trust-test-fixtures.ts';

@@ -59,9 +59,7 @@ export function ImportDetailPage({ importId }: { importId: string }) {
           title={C.results.gone}
           action={
             <Button asChild variant="outline">
-              <Link to={orgPath(orgId, '/passes/import')}>
-                {C.results.startAgain}
-              </Link>
+              <Link to={orgPath(orgId, '/passes/import')}>{C.results.startAgain}</Link>
             </Button>
           }
         />
@@ -98,7 +96,10 @@ export function ImportDetailPage({ importId }: { importId: string }) {
         title={imp?.source.name ?? 'Import'}
         breadcrumbs={[
           { label: 'Passes', to: orgId ? orgPath(orgId, '/passes') : '/admin/passes' },
-          { label: 'Import', to: orgId ? orgPath(orgId, '/passes/import') : '/admin/passes/import' },
+          {
+            label: 'Import',
+            to: orgId ? orgPath(orgId, '/passes/import') : '/admin/passes/import',
+          },
           { label: imp?.source.name ?? 'Import' },
         ]}
         meta={

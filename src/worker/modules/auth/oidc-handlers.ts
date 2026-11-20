@@ -17,8 +17,8 @@ import {
   setBindingCookie,
   setSessionCookie,
 } from './cookies.ts';
-import { MAGIC_TTL_MS } from './magic-service.ts';
 import { landingFor } from './landing.ts';
+import { MAGIC_TTL_MS } from './magic-service.ts';
 import { safeNext } from './next.ts';
 import { OIDC_SCOPE, oidcRedirectUri, usesCimd } from './oidc-cimd.ts';
 import {

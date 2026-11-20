@@ -23,6 +23,7 @@ import {
   setBindingCookie,
   setSessionCookie,
 } from './cookies.ts';
+import { landingFor } from './landing.ts';
 import { magicLinkTrace, peekMagicLink } from './magic-peek.ts';
 import {
   consumeMagicCode,
@@ -32,7 +33,6 @@ import {
   type MagicOutcome,
   processSignInRequest,
 } from './magic-service.ts';
-import { landingFor } from './landing.ts';
 import { safeNext } from './next.ts';
 import { confirmPage, expiredPage, signInErrorPage, signInToConfirm, verifyPage } from './pages.ts';
 import { resolveSession } from './sessions.ts';
@@ -169,12 +169,7 @@ async function targetOf(c: Context<AppBindings>, outcome: MagicOutcome): Promise
     const next = safeNext(outcome.next);
     return next ? `/auth/oidc/start?next=${encodeURIComponent(next)}` : '/auth/oidc/start';
   }
-  return landingFor(
-    serviceContext(c),
-    outcome.result.userId,
-    outcome.result.roles,
-    outcome.next,
-  );
+  return landingFor(serviceContext(c), outcome.result.userId, outcome.result.roles, outcome.next);
 }
 
 /** POST /auth/magic/consume. Forms get a redirect or an error page; JSON gets JSON. */

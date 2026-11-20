@@ -2,13 +2,7 @@ import { useState } from 'react';
 import type { PassImportDto } from '@/shared/contracts/pass-imports.ts';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
 import { errorMessage } from '../../../lib/errors.ts';
-import {
-  Button,
-  Callout,
-  Sheet,
-  SheetContent,
-  SwitchRow,
-} from '../../../ui/index.ts';
+import { Button, Callout, Sheet, SheetContent, SwitchRow } from '../../../ui/index.ts';
 import { useCommitImport } from './api.ts';
 
 /** The confirm sheet: email the new holders, then start. The button names any rows it skips. */
