@@ -3,7 +3,9 @@ import { Hono, type MiddlewareHandler } from 'hono';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { type FakeAuth, fakeAuth } from '../../../test/helpers/fake-auth.ts';
+import { CreateApiKeySchema, MINTABLE_SCOPES } from '../../shared/contracts/api-keys.ts';
 import { OrgCapabilitySchema, OrgRoleSchema } from '../../shared/contracts/org-membership.ts';
+import { createApp } from '../app.ts';
 import { delegableScopes } from '../modules/api-keys/access.ts';
 import { rolesGranting } from '../modules/orgs/access.ts';
 import { requireTenantSession, requireTenantSessionOrApiKey } from '../modules/passes/http.ts';
@@ -14,10 +16,8 @@ import {
   type AuthContext,
   methodScope,
   type RouteAuth,
-  requireAdmin,
   requireApiKeyOrAdmin,
   requireCaller,
-  requireSession,
   verifiedScopeOf,
 } from './auth.ts';
 import { type AppBindings, requestContext } from './context.ts';
@@ -30,6 +30,8 @@ import {
   legacyKeyOrAdmin,
   legacyMethodScope,
   legacyPermitted,
+  legacyRequireAdmin,
+  legacyRequireSession,
   legacyTagOf,
   legacyTenantSession,
   legacyTenantSessionOrApiKey,
@@ -62,6 +64,25 @@ const principals: Record<string, Principal> = {
   'key with templates:read': withScopes(['templates:read']),
   'key with webhooks:manage': withScopes(['webhooks:manage']),
   'key with no scopes': withScopes([]),
+  'platform key (no org)': (f) =>
+    f.apiKey({ orgId: null, scopes: ['passes:read', 'passes:write'] }),
+  'test-mode key': (f) => f.apiKey({ orgId: 'org-1', mode: 'test', scopes: ['passes:read'] }),
+  'scanner terminal bearer (wls_)': (f) => f.scanner({ transport: 'bearer' }),
+  'scanner device cookie': (f) => f.scanner({ transport: 'cookie' }),
+  'lowercase bearer scheme': (f) => ({
+    authorization: (
+      f.apiKey({ orgId: 'org-1', scopes: ['passes:read'] }).authorization ?? ''
+    ).replace('Bearer', 'bearer'),
+  }),
+  'bare Bearer': () => ({ authorization: 'Bearer' }),
+  'Bearer with two tokens': () => ({ authorization: 'Bearer wlt_a_b wlt_c_d' }),
+  'Bearer with two tokens beside an admin cookie': (f) => ({
+    ...f.admin(),
+    authorization: 'Bearer a b',
+  }),
+  'Basic credentials': () => ({ authorization: 'Basic eDp5' }),
+  'Basic credentials beside a user cookie': (f) => ({ ...f.user(), authorization: 'Basic eDp5' }),
+  'empty Authorization': () => ({ authorization: '' }),
   'unknown key beside an admin cookie': (f) => ({
     ...f.admin(),
     authorization: 'Bearer wlt_nope_nope',
@@ -171,8 +192,8 @@ describe('requireCaller matches the guards it replaced', () => {
     await expectSame(requireCaller({ human: true, requestMode: true }), legacyTenantSession);
   });
   it('human replaces requireSession, and platform replaces requireAdmin', async () => {
-    await expectSame(requireCaller({ human: true }), requireSession);
-    await expectSame(requireCaller({ platform: 'platform:orgs' }), requireAdmin);
+    await expectSame(requireCaller({ human: true }), legacyRequireSession);
+    await expectSame(requireCaller({ platform: 'platform:orgs' }), legacyRequireAdmin);
   });
   it('the passes/http.ts guards are declarations now and keep their behaviour', async () => {
     await expectSame(requireTenantSession, legacyTenantSession);
@@ -232,8 +253,40 @@ describe('scope map', () => {
       );
       expect(got.filter((s) => oldScopes.includes(s)).sort()).toEqual(before.sort());
       expect(got.some(isPlatformScope)).toBe(false);
+      expect(got.every((scope) => MINTABLE_SCOPES.some((m) => m === scope))).toBe(true);
     }
-    expect(delegableScopes({ kind: 'platform' } as never)).toEqual([...API_SCOPES]);
+    expect(delegableScopes({ kind: 'platform' } as never)).toEqual([...MINTABLE_SCOPES]);
+  });
+});
+
+describe('mintable scopes', () => {
+  const body = { orgId: 'org-1', name: 'k', scopes: ['passes:read'] };
+  it('are a subset of the scopes, and today they are exactly the ones that existed', () => {
+    expect([...MINTABLE_SCOPES]).toEqual(Object.keys(LEGACY_SCOPE_CAPABILITY));
+  });
+  it('are all a key can be created with: any other scope is a validation error', () => {
+    expect(CreateApiKeySchema.safeParse(body).success).toBe(true);
+    for (const scope of API_SCOPES.filter((s) => !MINTABLE_SCOPES.some((m) => m === s)))
+      expect(CreateApiKeySchema.safeParse({ ...body, scopes: [scope] }).success).toBe(false);
+  });
+  it('are each accepted by some route', async () => {
+    const fake = fakeAuth(ORIGIN);
+    const res = await createApp({ stores: fake.stores }).request(
+      `${ORIGIN}/api/v1/openapi.json`,
+      { headers: fake.admin() },
+      env as AppEnv,
+    );
+    const doc = (await res.json()) as {
+      paths: Record<string, Record<string, { security?: unknown[] }>>;
+    };
+    const named = new Set<string>();
+    for (const item of Object.values(doc.paths))
+      for (const op of Object.values(item))
+        for (const entry of op.security ?? [])
+          for (const scope of (entry as { apiKey?: string[] }).apiKey ?? []) named.add(scope);
+    // `scans:write` is the terminal scope: modules/scan/guard-api-key.ts checks it, not a route rule.
+    const unaccepted = MINTABLE_SCOPES.filter((s) => !named.has(s) && s !== 'scans:write');
+    expect(unaccepted).toEqual([]);
   });
 });
 
@@ -336,6 +389,37 @@ describe('RouteSpec.auth', () => {
           auth: { scope: ['templates:read'], capability: 'templates:read' },
         },
         (c) => c.json({}),
+      ),
+    ).not.toThrow();
+  });
+
+  it('checks a capability only against the scopes the route method accepts', () => {
+    const split = methodScope({ read: 'passes:read', write: 'passes:write' });
+    const declare = (method: 'get' | 'post', capability: 'passes:read' | 'passes:operate') =>
+      register(
+        createRouter(),
+        't',
+        { method, path: '/m', summary: 'm', auth: { scope: split, capability } },
+        (c) => c.json({}),
+      );
+    expect(() => declare('get', 'passes:read')).not.toThrow();
+    expect(() => declare('post', 'passes:operate')).not.toThrow();
+    expect(() => declare('get', 'passes:operate')).toThrow(/does not exercise/);
+  });
+
+  it('refuses a route that is both public and guarded, and marks a public one', () => {
+    const router = createRouter();
+    expect(() =>
+      register(
+        router,
+        't',
+        { method: 'get', path: '/p', summary: 'p', public: true, auth: { human: true } },
+        (c) => c.json({}),
+      ),
+    ).toThrow(/exclusive/);
+    expect(() =>
+      register(router, 't', { method: 'get', path: '/q', summary: 'q', public: true }, (c) =>
+        c.json({}),
       ),
     ).not.toThrow();
   });

@@ -8,6 +8,7 @@ import {
   type AuthContext,
   assertOrgAccess,
   modeOf,
+  proveCapability,
   type Role,
   requireCaller,
   type ScopeRule,
@@ -120,6 +121,7 @@ export async function tenantAuthorityOf(
   }
   if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
     throw new ForbiddenError();
+  proveCapability(auth, capability);
   return authority;
 }
 

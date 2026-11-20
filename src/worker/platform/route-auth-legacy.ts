@@ -2,15 +2,17 @@
 // route-auth.test.ts can prove the declaration behaves exactly like the code it superseded.
 // Do not "fix" this file: a difference from requireCaller is what the test exists to find.
 import type { Context, MiddlewareHandler } from 'hono';
+import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 import {
   type ApiScope,
   type AuthContext,
   modeFromRequest,
-  requireAdmin,
-  requireSession,
+  SESSION_COOKIE,
+  type SessionAuth,
 } from './auth.ts';
 import type { AppBindings } from './context.ts';
+import { csrfGuard } from './csrf.ts';
 import { reportDenied } from './denied.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
 
@@ -18,6 +20,42 @@ type Selector = ApiScope | ((c: Context<AppBindings>) => ApiScope);
 
 const bearer = (c: Context) =>
   /^Bearer\s+(\S+)$/i.exec(c.req.header('authorization') ?? '')?.[1] ?? null;
+async function sessionOrThrow(c: Context<AppBindings>): Promise<SessionAuth> {
+  const cookie = getCookie(c, SESSION_COOKIE);
+  const session =
+    c.var.auth?.kind === 'session'
+      ? c.var.auth
+      : cookie
+        ? await c.var.stores.sessions.resolve(cookie)
+        : null;
+  if (!session) throw new UnauthenticatedError();
+  c.set('auth', session);
+  return session;
+}
+
+/** The old requireSession, frozen. */
+export const legacyRequireSession: MiddlewareHandler<AppBindings> = createMiddleware(
+  async (c, next) => {
+    const session = await sessionOrThrow(c);
+    await csrfGuard(c, session);
+    await next();
+  },
+);
+
+/** The old requireAdmin, frozen. */
+export const legacyRequireAdmin: MiddlewareHandler<AppBindings> = createMiddleware(
+  async (c, next) => {
+    const session = await sessionOrThrow(c);
+    if (!session.roles.includes('admin')) {
+      reportDenied(c, 'FORBIDDEN', session);
+      throw new ForbiddenError('Admin access is required.');
+    }
+    c.set('auth', { ...session, mode: modeFromRequest(c) });
+    await csrfGuard(c, session);
+    await next();
+  },
+);
+
 const tags = new WeakMap<AuthContext, ApiScope>();
 export const legacyTagOf = (auth: AuthContext) => tags.get(auth);
 
@@ -44,13 +82,13 @@ export function legacyKeyOrAdmin(scope: Selector): MiddlewareHandler<AppBindings
       c.set('auth', auth);
       return next();
     }
-    return requireAdmin(c, next);
+    return legacyRequireAdmin(c, next);
   });
 }
 
 export const legacyTenantSession: MiddlewareHandler<AppBindings> = createMiddleware(
   async (c, next) =>
-    requireSession(c, async () => {
+    legacyRequireSession(c, async () => {
       const auth = c.var.auth;
       if (auth?.kind !== 'session') throw new UnauthenticatedError();
       c.set('auth', { ...auth, mode: modeFromRequest(c) });

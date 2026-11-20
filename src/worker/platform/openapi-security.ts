@@ -35,6 +35,15 @@ export function declareKeyAccess<T extends MiddlewareHandler<AppBindings>>(
 
 const isRead = (method: string) => method === 'get' || method === 'head';
 
+/** The scopes a rule accepts for a method: the read half for GET and HEAD, the write half else. */
+export function scopesForMethod(rule: ScopeRule, method: string): readonly ApiScope[] {
+  const access = keyAccessOf(rule);
+  return isRead(method) ? access.read : (access.write ?? []);
+}
+
+/** Whether a guard declared its key scopes, which puts its routes in the OpenAPI document. */
+export const hasKeyAccess = (guard: object): boolean => accessOf.has(guard);
+
 /** The OpenAPI `security` (and extensions) a route's `auth` declaration writes. */
 export function operationSecurity(
   auth: RouteAuth,
@@ -42,8 +51,7 @@ export function operationSecurity(
 ): { security: unknown[]; 'x-human-only'?: true; 'x-platform-scope'?: string } {
   if ('human' in auth) return { security: [{ session: [] }], 'x-human-only': true };
   if ('platform' in auth) return { security: [{ session: [] }], 'x-platform-scope': auth.platform };
-  const access = keyAccessOf(auth.scope);
-  const scopes = isRead(method) ? access.read : (access.write ?? []);
+  const scopes = scopesForMethod(auth.scope, method);
   return { security: [...scopes.map((scope) => ({ apiKey: [scope] })), { session: [] }] };
 }
 const patternOf = (path: string) =>
