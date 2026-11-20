@@ -78,8 +78,17 @@ function errorRows(
   });
 }
 
+/** Examples show the sandbox: `mode` reads "test" wherever the contract's example says "live". */
+function testMode(value: Json | undefined): Json | undefined {
+  if (Array.isArray(value)) return value.map((v) => testMode(v) as Json);
+  if (value === null || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([k, v]) => [k, k === 'mode' && v === 'live' ? 'test' : testMode(v)]),
+  ) as Json;
+}
+
 const exampleOf = (content: Dict | undefined): Json | undefined =>
-  asDict(asDict(content)['application/json']).example as Json | undefined;
+  testMode(asDict(asDict(content)['application/json']).example as Json | undefined);
 
 function view(
   doc: RawDoc,
@@ -115,13 +124,13 @@ function view(
       ...paramFields(doc, op.parameters),
       ...(body ? bodyFields(doc, asDict(body).schema) : []),
     ],
-    requestExample: (asDict(body).example as Json | undefined) ?? ref?.request,
+    requestExample: testMode((asDict(body).example as Json | undefined) ?? ref?.request),
     returns: ok
       ? {
           status: ok[0],
           schema:
             refName(okSchema) ?? (okSchema ? (refName(resolve(doc, okSchema)) ?? null) : null),
-          example: exampleOf(asDict(ok[1]).content as Dict) ?? ref?.response,
+          example: exampleOf(asDict(ok[1]).content as Dict) ?? testMode(ref?.response),
         }
       : null,
     errors: errorRows(op, status, inputs.guide ?? {}),

@@ -82,4 +82,15 @@ describe('portal model', () => {
       '<span class="envchip">$PASSBOOK_KEY</span>',
     );
   });
+
+  it('shows test-mode values in every example', () => {
+    const json = JSON.stringify(
+      site.pages.flatMap((p) => p.ops.map((o) => [o.requestExample, o.returns?.example])),
+    );
+    expect(json).not.toContain('"mode":"live"');
+    const create = site.pages
+      .find((p) => p.key === 'passes')
+      ?.ops.find((o) => o.anchor === 'create');
+    expect(JSON.stringify(create?.returns?.example)).toContain('"mode":"test"');
+  });
 });
