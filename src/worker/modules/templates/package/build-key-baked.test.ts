@@ -44,7 +44,8 @@ describe('build keys of the baked templates', () => {
   );
 
   it.each(templates)('%s: the scanner display is not part of the key', async (_s, t) => {
-    const scan = { ...t.manifest.scan, display: undefined };
+    if (!t.manifest.scan) return;
+    const { display: _display, ...scan } = t.manifest.scan;
     expect(await buildKey({ ...t, manifest: { ...t.manifest, scan } })).toBe(await buildKey(t));
   });
 
