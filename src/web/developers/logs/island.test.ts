@@ -93,4 +93,18 @@ describe('the log opened from search', () => {
     expect(el.querySelector<HTMLInputElement>('input[name="code"]')?.value).toBe('PASS_CONFLICT');
     await vi.waitFor(() => expect(urls.some((u) => u.includes('code=PASS_CONFLICT'))).toBe(true));
   });
+
+  it('opens the list as it is on a hash that does not decode', async () => {
+    const urls = stub(['a']);
+    const unhandled = vi.fn();
+    process.on('unhandledRejection', unhandled);
+    window.location.hash = '#%E0';
+    const el = await mount();
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    await new Promise((done) => setTimeout(done, 50));
+    process.off('unhandledRejection', unhandled);
+    expect(unhandled).not.toHaveBeenCalled();
+    expect(el.querySelectorAll('details[data-id]')).toHaveLength(1);
+    expect(urls.some((u) => u.includes('%E0'))).toBe(false);
+  });
 });

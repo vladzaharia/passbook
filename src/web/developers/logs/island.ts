@@ -131,6 +131,16 @@ type Page = {
 const notice = (text: string, action?: HTMLElement) =>
   h('div', { class: 'card card-b' }, h('p', { class: 'muted' }, text), action);
 
+/** The hash without its `#`; one that does not decode (`#%E0`) is no hash. */
+function decodeHash(raw: string): string {
+  try {
+    return decodeURIComponent(raw.slice(1));
+  } catch {
+    // A malformed link opens the log as it is.
+    return '';
+  }
+}
+
 /** The request log: filters, the list, and a detail row with redacted bodies. Text and DOM calls only. */
 export async function mountLogs(el: HTMLElement, ops: Promise<OpIndex>): Promise<void> {
   const first = await getJson<Page>(API);
@@ -217,7 +227,7 @@ export async function mountLogs(el: HTMLElement, ops: Promise<OpIndex>): Promise
 
   /** From search: `#<row id>` opens that request (fetched when it is older than the page), `#code=X` filters by code. */
   async function openFromHash() {
-    const hash = decodeURIComponent(location.hash.slice(1));
+    const hash = decodeHash(location.hash);
     if (hash.startsWith('code=')) {
       code.value = hash.slice('code='.length).toUpperCase();
       return refresh();
