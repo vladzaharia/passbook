@@ -15,6 +15,10 @@ vi.mock('../wallet-providers/instance.ts', async (importOriginal) => ({
   getWalletInstance: vi.fn(async () => ({ lifecycle: 'active' })),
 }));
 
+vi.mock('../wallet-providers/provider-policy.ts', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  walletProviderDisabledReason: vi.fn(async () => null),
+}));
 // Both wallets are on for the org; enrolment itself is tested with the channel gate.
 vi.mock('../channels/gate.ts', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),

@@ -23,6 +23,8 @@ export interface UndoGate {
   prev_state: string | null;
   prev_last_at: number | null;
   prev_scan_id: string | null;
+  /** The target's signed action reference, from its ledger row. */
+  action_id_ref?: string | null;
 }
 
 export interface UndoPresence {

@@ -235,6 +235,7 @@ export async function sessionDto(
     ),
   ]);
   if (!stats) throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
+  const hours = storedHours(row.hours);
   return ScanningSessionSchema.parse({
     id: row.id,
     orgId: row.org_id,
@@ -251,7 +252,8 @@ export async function sessionDto(
         }
       : { ...parseSettings(row.settings), acceptAllTemplates: false, lookup: false },
     timeZone: row.time_zone,
-    hours: ((h) => (h === 'invalid' ? null : h))(storedHours(row.hours)),
+    hours: hours === 'invalid' ? null : hours,
+    ...(hours === 'invalid' ? { hoursInvalid: true } : {}),
     hold: activeHold(row.hold, now),
     window: sessionWindow(row, now),
     createdAt: row.created_at,

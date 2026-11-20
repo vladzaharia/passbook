@@ -158,7 +158,7 @@ register(
         channels: model.channels.effective,
         ...(model.channels.holderPrint ? { printHref: `${page}/print` } : {}),
         walletOffers,
-        issuance: walletIssuanceByProvider(),
+        issuance: walletIssuanceByProvider(pass.mode),
         // The add QR opens this page on the phone, where the badge adds the pass.
         publicUrl: `${baseUrl(c.env)}${page}`,
         portalHref: `/passes/${pass.id}`,

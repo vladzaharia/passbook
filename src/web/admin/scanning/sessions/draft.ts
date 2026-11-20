@@ -10,7 +10,7 @@ import {
   type ScannerDraft,
   settingsOf,
 } from '../scanners/scanner-draft.ts';
-import { hoursBody, hoursProblem } from './session-hours.ts';
+import { hoursBody, hoursProblem, weekOf } from './session-hours.ts';
 
 export type SessionDraft = ScannerDraft & {
   timeZone: string;
@@ -22,6 +22,8 @@ export type SessionDraft = ScannerDraft & {
   /** Open only at set hours, in the time zone above. */
   hoursOn: boolean;
   hours?: WeeklyHours;
+  /** Dated exceptions in the session's zone: no spans is closed all day. */
+  dates?: Record<string, string[]>;
   /** Events a mixed session admits beside its templates; this editor does not show them, so it sends them back. */
   keptEventIds?: string[];
 };
@@ -68,14 +70,15 @@ export function sessionDraft(s: ScanningSession): SessionDraft {
     deskActionsSaved: s.settings.deskActions !== undefined,
     customer: s.settings.customer,
     hoursOn: Boolean(s.hours),
-    ...(s.hours ? { hours: s.hours } : {}),
+    ...(s.hours ? { hours: weekOf(s.hours) } : {}),
+    ...(s.hours?.dates ? { dates: s.hours.dates } : {}),
   };
 }
 export const sessionBody = (d: SessionDraft) => ({
   name: d.name.trim(),
   orgId: d.orgId,
   timeZone: d.timeZone,
-  hours: hoursBody(d.hoursOn, d.hours),
+  hours: hoursBody(d.hoursOn, d.hours, d.dates, d.timeZone),
   accepts:
     d.accepts === 'templates' && d.keptEventIds?.length
       ? { templateIds: d.templateIds, eventIds: d.keptEventIds }

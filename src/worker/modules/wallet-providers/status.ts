@@ -71,7 +71,7 @@ export async function getWalletProviderPassStatus(
         priorGenerationRetirementPending: row.priorRetirementPending === 1,
         installation: 'unknown',
         ...holderReport(row),
-        issuance: walletProviderIssuance(row.provider),
+        issuance: walletProviderIssuance(row.provider, pass.mode),
       })),
     });
   } catch (error) {
