@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Card, CardBody, CardHeader, ErrorState, KeyValue, SkeletonRows } from '@/web/ui/index.ts';
+import { OrgChannelsCard } from '../channels/settings-channels.tsx';
 import { PassEmailPreview } from '../orgs/pass-email-preview.tsx';
 import { ORG_FIELDS } from './fields-org.ts';
 import { useSettings } from './queries.ts';
@@ -103,6 +104,7 @@ export function OrgSettingsSections({
       <FormCard title="NFC tags">
         <SettingsForm scope={scope} fields={NFC_TAGS} />
       </FormCard>
+      <OrgChannelsCard orgId={orgId} />
     </>
   );
 }

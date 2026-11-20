@@ -49,9 +49,66 @@ export const channelBlocked = (reason: ChannelReason): string =>
     ? `${channelReasonText(reason)}. ${CHANNEL_COPY.copiesStay}`
     : channelReasonText(reason);
 
+/** Where a limit is changed: a level, or the wallet accounts page for provider enrolment. */
+export type ChannelFix = 'platform' | 'org' | 'template' | 'wallet';
+
+const PROVIDER_ACCOUNT: Partial<Record<Channel, string>> = {
+  google: 'Google account',
+  samsung: 'Samsung account',
+};
+
+/** Why a channel cannot be on, and where to fix it; null `fix` when nothing in the admin can. */
+export const channelWhy = (
+  channel: Channel,
+  reason: ChannelReason,
+): { text: string; fix: ChannelFix | null; copiesStay: boolean } => {
+  switch (reason) {
+    case 'not_released':
+      return { text: 'Not released yet', fix: null, copiesStay: false };
+    case 'not_enrolled':
+      return {
+        text: `Waiting for ${PROVIDER_ACCOUNT[channel] ?? 'account'}`,
+        fix: 'wallet',
+        copiesStay: true,
+      };
+    case 'no_design':
+      return { text: 'No design in this template', fix: 'template', copiesStay: false };
+    case 'tags_off':
+    case 'blocked':
+      return { text: 'Off for this organization', fix: 'org', copiesStay: true };
+    case 'printing_off':
+      return { text: 'Off for the platform', fix: 'platform', copiesStay: false };
+    case 'never':
+      return { text: 'Never for this template', fix: 'template', copiesStay: false };
+    case 'template_off':
+      return { text: 'Off for this template', fix: 'template', copiesStay: false };
+    case 'pass_off':
+      return { text: 'Off for this pass', fix: null, copiesStay: false };
+  }
+};
+
+export const CHANNEL_FIX_LABEL: Record<ChannelFix, string> = {
+  platform: 'Platform settings',
+  org: 'Organization settings',
+  template: 'Template channels',
+  wallet: 'Wallet accounts',
+};
+
 export const CHANNEL_COPY = {
+  templateDefault: 'Template default',
+  applyExisting: 'Apply to existing passes',
+  applyTitle: 'Apply to existing passes?',
+  applyBody: 'Passes with their own channel choices follow this template again.',
+  applyDone: 'Passes follow the template',
+  applyNone: 'No passes to update.',
+  applyFailed: 'Could not update every pass. Try again.',
+  platformCard: 'Channels',
+  appleTap: 'Apple phone tap',
+  appleTapWaiting: 'Waiting for Apple approval',
+  paperPlatform: 'Paper tickets for all organizations',
+  orgCard: 'Channels',
+  orgNote: 'A blocked channel stops offering new copies. Copies stay as they are.',
   copiesStay: 'Copies stay as they are.',
-  useTemplate: 'Use template',
   nothingOn: 'No channel is on. This pass cannot be used.',
   holderNotice: 'Your {channel} copy no longer works. Open {link}.',
   /** `{channel}` is a label; `{n}` a pass count. */

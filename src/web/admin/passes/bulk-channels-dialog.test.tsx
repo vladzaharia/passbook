@@ -52,7 +52,7 @@ it('Use template applies at once, without a confirm', async () => {
     <BulkChannelsDialog open onOpenChange={() => {}} orgId="o1" ids={['a']} onDone={onDone} />,
     { '/api/v1/passes/bulk/channels': () => json({ done: 1, skipped: [] }) },
   );
-  await userEvent.click(await screen.findByRole('radio', { name: 'Use template' }));
+  await userEvent.click(await screen.findByRole('radio', { name: 'Template default' }));
   await userEvent.click(screen.getByRole('checkbox', { name: 'Paper' }));
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
   await waitFor(() => expect(onDone).toHaveBeenCalled());

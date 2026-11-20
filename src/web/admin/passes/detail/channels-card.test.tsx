@@ -57,7 +57,7 @@ describe('Channels card', () => {
     await screen.findByRole('switch', { name: 'Apple Wallet' });
     expect(row('Apple Wallet')).toHaveTextContent('OnTemplate');
     expect(row('Google Wallet')).toHaveTextContent(
-      'Organization not enrolled. Copies stay as they are.',
+      'Waiting for Google accountCopies stay as they are.Wallet accounts',
     );
     expect(screen.getByRole('switch', { name: 'Google Wallet' })).toBeDisabled();
     expect(screen.getByRole('switch', { name: 'Paper' })).toBeEnabled();
@@ -151,7 +151,7 @@ describe('Channels card', () => {
     await userEvent.click(screen.getByRole('switch', { name: 'Apple Wallet' }));
     await waitFor(() => expect(calls(fetchMock, 'PUT', '/channels')).toHaveLength(1));
     await userEvent.click(
-      within(row('Paper')).getByRole('button', { name: CHANNEL_COPY.useTemplate }),
+      within(row('Paper')).getByRole('button', { name: CHANNEL_COPY.templateDefault }),
     );
     await waitFor(() => expect(calls(fetchMock, 'PUT', '/channels')).toHaveLength(2));
     const [, init] = calls(fetchMock, 'PUT', '/channels')[1] ?? [];
