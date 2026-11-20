@@ -79,6 +79,16 @@ export class QuietGate {
     }, this.replayMs);
   }
 
+  /** A run of keys is waiting to be decided: a scan's code, or a person's word. */
+  holding(): boolean {
+    return this.held.length > 0;
+  }
+
+  /** The person moved on (Esc, a chord): what was held is theirs no longer. */
+  drop(): void {
+    this.dropHeld();
+  }
+
   /** The wedge took a scan: whatever was held was its code. */
   scanSeen(): void {
     this.dropHeld();

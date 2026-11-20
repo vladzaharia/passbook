@@ -263,6 +263,21 @@ describe('Enter in the field belongs to the person, even after fast keys (L2)', 
   });
 });
 
+describe('a letter shortcut needs a quiet lead-in (M1)', () => {
+  it("a slow reader's O in the middle of a code does not Mark out", () => {
+    const h = setup();
+    stop = h.stop;
+    screen.getByRole('heading', { name: 'Maya Okafor' }).focus();
+    const target = document.activeElement as Element;
+    for (const ch of '1234O567') {
+      h.key(target, { code: codeFor(ch), key: ch, shiftKey: /[A-Z]/.test(ch) });
+      h.clock.advance(100);
+    }
+    h.clock.advance(600);
+    expect(h.commands.some((c) => c.c === 'out')).toBe(false);
+  });
+});
+
 describe('a fast typist keeps the first letters (80 ms gap)', () => {
   it('two keys inside the gap that the wedge does not take are replayed into search', () => {
     const h = setup();
@@ -275,6 +290,57 @@ describe('a fast typist keeps the first letters (80 ms gap)', () => {
     h.clock.advance(500);
     expect(h.commands).toEqual([{ c: 'type', ch: 'ma' }]);
     expect(h.scans).toEqual([]);
+  });
+
+  const rhythm = (h: ReturnType<typeof setup>, text: string, gaps: number[]) => {
+    const target = document.activeElement as Element;
+    for (const [i, ch] of [...text].entries()) {
+      if (i > 0) h.clock.advance(gaps[i - 1] ?? 100);
+      h.key(target, { code: codeFor(ch), key: ch });
+    }
+    h.clock.advance(600);
+  };
+
+  it('"maya" with a normal rhythm (fast pair, then slower) is all replayed (N2)', () => {
+    const h = setup();
+    stop = h.stop;
+    screen.getByRole('heading', { name: 'Maya Okafor' }).focus();
+    rhythm(h, 'maya', [50, 120, 100]);
+    expect(h.commands).toEqual([{ c: 'type', ch: 'maya' }]);
+  });
+
+  it('a slower key in a typed name never fires a shortcut: "jao" does not Mark out (N2)', () => {
+    const h = setup();
+    stop = h.stop;
+    screen.getByRole('heading', { name: 'Maya Okafor' }).focus();
+    rhythm(h, 'jao', [40, 90]);
+    expect(h.commands).toEqual([{ c: 'type', ch: 'jao' }]);
+  });
+
+  it.each([
+    ['sam', [60, 140]],
+    ['ana', [30, 30]],
+    ['okafor', [70, 110, 90, 130, 60]],
+  ])('realistic rhythm "%s" is replayed whole and fires no shortcut', (word, gaps) => {
+    const h = setup();
+    stop = h.stop;
+    screen.getByRole('heading', { name: 'Maya Okafor' }).focus();
+    rhythm(h, word, gaps as number[]);
+    expect(h.commands).toEqual([{ c: 'type', ch: word }]);
+  });
+
+  it('Esc while a run is waiting abandons it', () => {
+    const h = setup();
+    stop = h.stop;
+    screen.getByRole('heading', { name: 'Maya Okafor' }).focus();
+    const target = document.activeElement as Element;
+    h.key(target, { code: 'KeyM', key: 'm' });
+    h.clock.advance(40);
+    h.key(target, { code: 'KeyA', key: 'a' });
+    h.clock.advance(100);
+    h.key(target, { code: 'Escape', key: 'Escape' });
+    h.clock.advance(600);
+    expect(h.commands).toEqual([{ c: 'close-record' }]);
   });
 
   it('a scan claims its held keys: nothing is replayed', () => {
