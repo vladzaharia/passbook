@@ -141,6 +141,8 @@ describe('a Stamp card in the designer', () => {
       'stamps/filled.png',
       'stamps/reward-earned.png',
       'stamps/reward.png',
+      // The manifest names it, so a clone keeps the Google art.
+      'wallets/google/logo.png',
     ]);
   });
 
