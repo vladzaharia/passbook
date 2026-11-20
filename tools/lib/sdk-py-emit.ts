@@ -111,7 +111,7 @@ function orderedAliases(aliases: Array<Extract<Decl, { kind: 'alias' }>>): typeo
 
 /** What verify_webhook returns when an event is newer than this SDK: any object, with the usual fields if present. */
 const UNKNOWN_EVENT = `class UnknownWebhookEvent(_Model):
-    \"\"\"An event this SDK has no type for; the fields it does not name are kept as attributes.\"\"\"
+    """An event this SDK has no type for; the fields it does not name are kept as attributes."""
 
     id: str | None = None
     type: str | None = None

@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { drift, generate, manifest, OUT, owns } from './gen-sdk-py.ts';
 import { Models } from './lib/sdk-model.ts';
-import { pyType, resourcesFile, resourceTree, type PyOp } from './lib/sdk-py-emit.ts';
+import { type PyOp, pyType, resourcesFile, resourceTree } from './lib/sdk-py-emit.ts';
 import type { OpenApiDoc, SdkNames } from './lib/sdk-ts-ops.ts';
 
 const root = resolve(import.meta.dirname, '..');
