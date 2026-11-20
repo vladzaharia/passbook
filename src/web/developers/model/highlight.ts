@@ -26,7 +26,7 @@ const COMMENT: Record<Lang, string | null> = { json: null, curl: '#', ts: '//', 
 const span = (cls: string, text: string) => `<span class="${cls}">${escapeHtml(text)}</span>`;
 
 /** The caller's own key never renders: samples read it from the environment, shown as a chip. */
-const ENV_CHIP = /(\$?PASSBOOK_KEY)/g;
+const ENV_CHIP = /(\$?PASSBOOK_(?:KEY|WEBHOOK_SECRET))/g;
 const chip = (html: string) => html.replace(ENV_CHIP, '<span class="envchip">$1</span>');
 
 interface State {

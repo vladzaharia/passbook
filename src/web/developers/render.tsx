@@ -170,13 +170,17 @@ export function renderSite(site: Site, origin: string, assets: string): OutFile[
       <ErrorEntryView entry={e} />,
       side(),
     );
-  page(
-    PATHS.webhooks,
-    'Webhooks',
-    'Signed webhook events.',
-    'webhooks',
-    <WebhooksView site={site} />,
-  );
+  // Wide, no docs grid: the tester needs two columns.
+  add({
+    url: PATHS.webhooks,
+    title: `Webhooks · ${base}`,
+    description: 'Capture signed webhooks in your sandbox, verify them and replay them.',
+    body: html(
+      <Shell site={site} active="webhooks" bare>
+        <WebhooksView site={site} />
+      </Shell>,
+    ),
+  });
   page(
     PATHS.changelog,
     'Changelog',
