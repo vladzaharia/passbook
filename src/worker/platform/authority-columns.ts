@@ -217,4 +217,62 @@ export const EPOCH_TABLES: EpochTable[] = [
     ],
     fixed: ['id', 'created_at'],
   },
+  {
+    table: 'wallet_provider_accounts',
+    // A key rotation under the same identity moves neither. `revision` stays the admin CAS (0037).
+    epochs: { authority_epoch: ['revoked_at', 'identity_hash', 'credential_id'] },
+    volatile: [
+      'revision',
+      'updated_at',
+      'credential_source_id',
+      'enabled_at',
+      'enrolment_revision',
+      'platform_hold_at',
+      'platform_hold_reason',
+      'hmac_kek_version',
+      'hmac_iv',
+      'hmac_wrapped_dek',
+      'hmac_ciphertext',
+    ],
+    fixed: ['id', 'org_id', 'mode', 'provider', 'created_at'],
+  },
+  {
+    table: 'wallet_provider_instances',
+    epochs: {
+      instance_epoch: [
+        'lifecycle',
+        'account_id',
+        'identity_projection_release_id',
+        'desired_version',
+        'desired_operation_id',
+        'retirement_requested_at',
+        'revoked_at',
+        'retired_at',
+        'retirement_reason',
+        'retirement_cause',
+      ],
+    },
+    volatile: [
+      'updated_at',
+      'retirement_next_attempt_at',
+      'installation_state',
+      'installation_observed_at',
+      'saved_at',
+      'holder_removed_at',
+      // Set once, from NULL (0116); no epoch moves, because it only names the card a copy was made with.
+      'card_type',
+    ],
+    // `channel_epoch` is the successor counter of a channel cycle (0114), fixed for one instance.
+    fixed: [
+      'id',
+      'pass_id',
+      'org_id',
+      'mode',
+      'provider',
+      'credential_generation',
+      'channel_epoch',
+      'credential_keyset_commitment',
+      'created_at',
+    ],
+  },
 ];

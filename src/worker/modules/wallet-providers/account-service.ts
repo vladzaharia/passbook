@@ -23,6 +23,7 @@ import {
   decryptAccount,
   type StoredCredentials,
   snapshotWalletCredentialContext,
+  storedIdentityHash,
 } from './account-credential-material.ts';
 import { validateGoogleAccount } from './google-credentials.ts';
 import { walletProviderIssuance } from './provider-policy.ts';
@@ -233,6 +234,7 @@ export async function configureWalletProviderAccount(
       isNew: !row,
       expectedRevision: data.expectedRevision,
       credentialId,
+      identityHash: await storedIdentityHash(stored),
       eventId: ctx.ids.id(),
       envelope,
     }))
