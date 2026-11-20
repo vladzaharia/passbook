@@ -11,14 +11,14 @@ import { describe, expect, it } from 'vitest';
 const root = join(import.meta.dirname, '..');
 
 const PRIMITIVES: Record<string, RegExp> = {
-  'sign a pass': /\b(?:signPass|buildPass|packagePassBytes|packagePasses?)\(/,
-  'read a stored .pkpass':
-    /\b(?:BUCKET|bucket)\.get\(\s*[^)]*?(?:\b(?:pass|row)\.(?:objectKey|object_key)|\bvariant\??\.objectKey)\b/,
+  'sign a pass': /\b(?:signPass|signManifest|buildPass|packagePassBytes|packagePasses?)\(/,
+  'read a stored .pkpass': /\b(?:BUCKET|bucket)\.get\([^)]*\b(?:objectKey|object_key)\b/,
   'mint a Google object or link':
-    /\b(?:createGoogleSaveOffer|signGoogleJwt|(?:upsert|patch)GoogleGeneric(?:Class|Object)|inactivateGoogleGenericObject)\(/,
+    /\b(?:createGoogleSaveOffer|signGoogleJwt|(?:upsert|patch)GoogleGeneric(?:Class|Object)|inactivateGoogleGenericObject|createGoogleRuntimeOffer|(?:upsert|patch|inactivate)GoogleRuntime(?:Class|Object))\(/,
   'mint a Samsung card or link':
-    /\b(?:createSamsung(?:AuthorizationToken|CardDataToken)|buildSamsungDataFetchLink|sendSamsung(?:Update|Cancel))\(/,
-  'push to APNs': /\b(?:apns\.send|createApnsTransport)\(/,
+    /\b(?:createSamsung(?:AuthorizationToken|CardDataToken)|buildSamsungDataFetchLink|sendSamsung(?:Update|Cancel)|createSamsungRuntimeOffer|sendSamsungRuntimeUpdate)\(/,
+  'push to APNs':
+    /\b(?:apns\.send|createApnsTransport|createKeyApnsTransport|createMtlsApnsTransport)\(/,
   'send mail': /\b(?:mailer\.send|EMAIL\.send|createEmailBindingMailer)\(/,
 };
 
@@ -32,11 +32,23 @@ interface Exempt {
 }
 
 const LIBRARY = 'a library with no org: its callers are listed here and fenced';
+const IMPORT_FILE = 'reads an uploaded import file (a CSV or a template package), never a pass';
 const CREDENTIALS =
   'reads a provider credential only through runtime-core-credentials.ts, whose gate refuses a developer org';
 
 /** Every file that holds a primitive and no fence of its own, with why that is safe. */
 const EXEMPT: Record<string, Exempt> = {
+  'src/worker/modules/passes/import-read.ts': { reason: IMPORT_FILE },
+  'src/worker/modules/passes/import-service.ts': { reason: IMPORT_FILE },
+  'src/worker/modules/templates/import-pipeline.ts': { reason: IMPORT_FILE },
+  'src/worker/modules/wallet-providers/sync-operation-google.ts': {
+    reason: CREDENTIALS,
+    via: 'src/worker/modules/wallet-providers/runtime-core-credentials.ts',
+  },
+  'src/worker/modules/wallet-providers/sync-operation-samsung.ts': {
+    reason: CREDENTIALS,
+    via: 'src/worker/modules/wallet-providers/runtime-core-credentials.ts',
+  },
   'src/passkit/build.ts': { reason: LIBRARY },
   'src/passkit/sign/index.ts': { reason: LIBRARY },
   'src/passkit/package/zip.ts': { reason: LIBRARY },
@@ -116,7 +128,12 @@ function* sourceFiles(dir: string): Generator<string> {
   }
 }
 
-const strip = (text: string) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+/** Code only: no comments (whole-line or trailing), no import lines, no string contents of one line. */
+const strip = (text: string) =>
+  text
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*import\b[\s\S]*?from\s+['"][^'"]+['"];?\s*$/gm, '')
+    .replace(/\s\/\/.*$/gm, '');
 
 interface Hit {
   file: string;

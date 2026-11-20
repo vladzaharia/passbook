@@ -12,12 +12,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
 import { deliverBundleEmail } from '../bundles/deliver.ts';
 import { holderChannels, recordCopy } from '../channels/gate.ts';
-import {
-  assertNotPreviewOnly,
-  assertSignedObject,
-  isPreviewOnlyOrg,
-  testPreviewUrl,
-} from '../developer/fence.ts';
+import { assertSignedObject, isPreviewOnlyOrg, testPreviewUrl } from '../developer/fence.ts';
 import { isJoinCard } from '../join/repo-issues.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
@@ -259,7 +254,11 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     );
     return;
   }
-  await assertNotPreviewOnly(db, pass.orgId);
+  // Developer mail is captured above; reaching the mailer is a bug, and the row ends instead of retrying.
+  if (await isPreviewOnlyOrg(db, pass.orgId)) {
+    await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'SANDBOX_PREVIEW_ONLY');
+    return;
+  }
   let messageId: string;
   try {
     ({ messageId } = await depsOf(ctx.env).mailer.send({

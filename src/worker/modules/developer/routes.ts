@@ -8,7 +8,7 @@ import { TURNSTILE_SANDBOX_ACTION } from '../../../shared/turnstile.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { clientIp } from '../../platform/rate-limit.ts';
+import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { verifyTurnstile } from '../auth/turnstile.ts';
 import { createSandbox, getSandbox } from './service.ts';
@@ -33,6 +33,7 @@ register(
     const ctx = serviceContext(c);
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    await enforceRateLimit(c.env, 'RL_REFRESH', `RL_REFRESH:developer-sandbox:${auth.userId}`);
     const input = c.req.valid('json');
     if (
       !(await verifyTurnstile(

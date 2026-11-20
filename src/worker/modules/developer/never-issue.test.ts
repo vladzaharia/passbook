@@ -3,10 +3,12 @@ import { makeOrg } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { revealToken } from '../../platform/capability-token.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { voidedVariant } from '../apple/variant.ts';
 import { holderChannels } from '../channels/gate.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { enqueuePassEmail } from '../delivery/issuance-intent.ts';
 import { handleEmailSend, handlePushDeliver } from '../delivery/jobs.ts';
+import { syncReplyTo } from '../delivery/reply-to.ts';
 import { enqueuePush } from '../delivery/service.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { linksOf } from '../passes/detail.ts';
@@ -260,6 +262,20 @@ describe('send mail', () => {
     const plain = await token(pass);
     expect(html).toContain(`/developers/preview/${plain}`);
     expect(html).not.toContain('pass.pkpass');
+  });
+
+  it('refuses the reply-to confirmation mail for a developer org and sends it for a standard org', async () => {
+    const before = kit.mailer.sent.length;
+    await expect(syncReplyTo(kit.ctx, dev.id, 'help@dev.test')).rejects.toBeInstanceOf(
+      PreviewOnlyError,
+    );
+    expect(kit.mailer.sent.length).toBe(before);
+    await syncReplyTo(kit.ctx, std.id, 'help@std.test');
+    expect(kit.mailer.sent.length).toBe(before + 1);
+  });
+
+  it('refuses a re-signed Apple copy of a developer pass', async () => {
+    await expect(voidedVariant(kit.ctx, await devPass())).rejects.toBeInstanceOf(PreviewOnlyError);
   });
 
   it('refuses the real mailer for a developer org at every send site', async () => {

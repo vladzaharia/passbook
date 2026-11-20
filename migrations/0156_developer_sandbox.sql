@@ -15,6 +15,16 @@ CREATE TRIGGER passes_developer_test_only BEFORE INSERT ON passes
 WHEN NEW.mode = 'live' AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.kind = 'developer')
 BEGIN SELECT RAISE(ABORT, 'a developer org holds no Live pass'); END;
 
+CREATE TRIGGER scanners_developer_test_only_insert BEFORE INSERT ON scanners
+WHEN NEW.mode = 'live' AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.kind = 'developer')
+BEGIN SELECT RAISE(ABORT, 'a developer org holds no Live scanner'); END;
+CREATE TRIGGER scanners_developer_test_only_update BEFORE UPDATE OF mode ON scanners
+WHEN NEW.mode = 'live' AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.kind = 'developer')
+BEGIN SELECT RAISE(ABORT, 'a developer org holds no Live scanner'); END;
+CREATE TRIGGER join_links_developer_test_only BEFORE INSERT ON join_links
+WHEN NEW.mode = 'live' AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.kind = 'developer')
+BEGIN SELECT RAISE(ABORT, 'a developer org holds no Live join link'); END;
+
 -- One sandbox per person. The funnel columns are set once (first call, first pass, first preview, first Live key
 -- in any org); `closed_at` is set when the sandbox closes, idle or by an admin, and the row stays so a person
 -- cannot make a second one.

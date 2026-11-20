@@ -120,6 +120,7 @@ export async function inviteOrgMember(
   input: InviteOrgMember,
 ): Promise<OrgInvitation> {
   const manager = await managerOf(ctx, auth, orgId);
+  await assertNotPreviewOnly(ctx.env.DB, orgId);
   const parsed = InviteOrgMemberSchema.safeParse(input);
   if (!parsed.success) throw new ValidationError();
   await checkInviteAllowed(ctx, { actorId: auth.userId, orgId, email: parsed.data.email });

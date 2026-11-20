@@ -12,7 +12,6 @@ import { isPlatformScope } from '../../platform/api-scopes.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
-import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { authorizeApiKeys } from '../api-keys/access.ts';
 import { createApiKey } from '../api-keys/service-create.ts';
@@ -90,7 +89,6 @@ export async function createSandbox(
   session: SessionAuth,
 ): Promise<CreatedDeveloperSandbox> {
   const db = ctx.env.DB;
-  await enforceRateLimit(ctx.env, 'RL_REFRESH', `RL_REFRESH:developer-sandbox:${session.userId}`);
   if (await sandboxOfUser(db, session.userId))
     throw new ConflictError(SANDBOX_EXISTS_COPY, 'SANDBOX_EXISTS');
   const email = await primaryEmailOf(db, session.userId);

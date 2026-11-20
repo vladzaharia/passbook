@@ -200,7 +200,7 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
     }
     case 'scanner': {
       const live = `sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ${b.bind(now)})
-        AND sc.credential_epoch = ${b.bind(p.credentialEpoch)}`;
+        AND sc.credential_epoch = ${b.bind(p.credentialEpoch)} AND ${developerTestOnly('o', 'sc.mode')}`;
       return `SELECT sc.org_id AS org_id, sc.mode AS mode, ${flag(live)} AS actor_ok,
         ${flag(`o.status = 'active'`)} AS org_ok, NULL AS limit_key
         FROM scanners sc JOIN orgs o ON o.id = sc.org_id WHERE sc.id = ${b.bind(p.scannerId)}`;
@@ -215,7 +215,7 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
         FROM passes p JOIN orgs o ON o.id = p.org_id WHERE p.id = ${b.bind(p.passId)}`;
     }
     case 'join': {
-      const live = `jl.enabled = 1 AND jl.generation = ${b.bind(p.generation)}`;
+      const live = `jl.enabled = 1 AND jl.generation = ${b.bind(p.generation)} AND ${developerTestOnly('o', 'jl.mode')}`;
       return `SELECT jl.org_id AS org_id, jl.mode AS mode, ${flag(live)} AS actor_ok,
         ${flag(`o.status = 'active'`)} AS org_ok, NULL AS limit_key
         FROM join_links jl JOIN orgs o ON o.id = jl.org_id WHERE jl.id = ${b.bind(p.linkId)}`;

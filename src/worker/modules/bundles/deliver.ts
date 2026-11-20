@@ -18,7 +18,7 @@ import { hasDeliveryLease } from '../delivery/repo-binding.ts';
 import type { OutboxRow } from '../delivery/repo-outbox-map.ts';
 import { finishOutbox } from '../delivery/repo-outbox-processing.ts';
 import { ATTEMPT_CANCEL_CODE, beginProviderAttempt } from '../delivery/repo-provider-attempt.ts';
-import { assertNotPreviewOnly } from '../developer/fence.ts';
+import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
 import { depsOf } from '../passes/deps.ts';
@@ -205,7 +205,10 @@ export async function deliverBundleEmail(
     );
     return;
   }
-  await assertNotPreviewOnly(db, bundle.org_id);
+  if (await isPreviewOnlyOrg(db, bundle.org_id)) {
+    await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'SANDBOX_PREVIEW_ONLY');
+    return;
+  }
   let messageId: string;
   try {
     ({ messageId } = await depsOf(ctx.env).mailer.send({
