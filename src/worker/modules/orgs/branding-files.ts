@@ -63,3 +63,6 @@ export async function brandingFiles(
   );
   return found.filter((f): f is BrandingFile => f !== null);
 }
+
+/** The web logo, content-addressed: the key is the PNG's own digest, so it never changes in place. */
+export const webLogoKey = (orgId: string, sha: string) => `orgs/${orgId}/branding/web/${sha}.png`;

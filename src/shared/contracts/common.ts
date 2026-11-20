@@ -62,6 +62,8 @@ export const ApiScopeSchema = z.enum([
   'connections:write',
   /** Manages the org's outbound webhook endpoints (`integrations:manage` for a session). */
   'webhooks:manage',
+  /** Reads and edits the org's brand kit: web logo, accent, mark level. */
+  'brand:manage',
 ]);
 export const RoleSchema = z.enum(['admin', 'user']);
 

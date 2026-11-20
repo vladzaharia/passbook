@@ -41,6 +41,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `connections:read` | scoped connection reads |
 | `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
 | `webhooks:manage` | read and manage outbound webhook endpoints, deliveries, replay and test events (see Outbound webhooks). Neither `connections:*` nor `passes:*` scopes reach these routes, and this scope reaches nothing else |
+| `brand:manage` | read and edit the org's brand kit (`/api/v1/brand`): web logo, accent, mark level. Reaches nothing else |
 
 Tenant list requests name an organization with `orgId`. An org-bound key may omit it (on pass create
 and on pass, holder and bundle lists it defaults to the key's org) and must otherwise send exactly
@@ -753,6 +754,21 @@ Where no scoped release history exists, a valid legacy pass may use its pinned p
 but ineligible or corrupt release head never reopens that fallback.
 Hard-deleted passes retain only trusted nonexcluded, noninvalidated ledger and aggregate evidence;
 quarantine at deletion permanently excludes their historical rows.
+
+## Brand kit
+
+`/api/v1/brand` reads and edits the org's look on holder pages and emails. A key needs `brand:manage`; a session needs
+`org:read` to view and `org:manage` to change. An org-bound key may omit `orgId`.
+
+| Call | Does |
+| --- | --- |
+| `GET /api/v1/brand` | the kit: `accent`, `webLogo` (`/brand/{orgId}/{sha}.png`, `w`, `h`), support contacts, `mark` (what holders see), `markChosen`, `markAllowed`, `configRevision` |
+| `PATCH /api/v1/brand` | `accent` (hex, `null` clears) and `mark` (`full`, `small`, `none`). `none` is `403 BRAND_MARK_NOT_ALLOWED` until the org's plan includes it |
+| `PUT /api/v1/brand/web-logo` | `{ "png": "<base64>" }`: a still PNG, at most 1024 by 512 px and 512 KB |
+| `DELETE /api/v1/brand/web-logo` | removes it |
+
+Send the `configRevision` you read; a save from older values is a `409`. SVG, JPEG and animated PNG are refused with
+`422`. The logo is served without a session at its content-addressed path, so a changed logo is a new URL.
 
 ## Other
 

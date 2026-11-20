@@ -22,9 +22,16 @@ async function writeOrg(
   configRevision: number,
   columns: Record<string, string | null>,
   now: number,
-  authority: OrgWriteAuthority,
+  authority: OrgWriteAuthority | TenantPassWrite,
 ): Promise<OrgRow | null> {
-  if (authority.orgId !== id || authority.capability !== 'org:manage') return null;
+  if (authority.orgId !== id) return null;
+  // A key may only write through the brand kit's own scope; a session needs org:manage.
+  if (
+    authority.kind === 'session'
+      ? authority.capability !== 'org:manage'
+      : authority.scope !== 'brand:manage'
+  )
+    return null;
   const g = grant(ctx, {
     purpose: 'org.org.update',
     principal: tenantPrincipal(authority),
@@ -68,6 +75,17 @@ export function saveOrgBranding(
   branding: string,
   now: number,
   authority: OrgWriteAuthority,
+): Promise<OrgRow | null> {
+  return writeOrg(ctx, before.id, before.config_revision, { branding }, now, authority);
+}
+
+/** The brand kit's write: a session with `org:manage` or a key with `brand:manage`. */
+export function saveOrgBrandKit(
+  ctx: ServiceContext,
+  before: OrgRow,
+  branding: string,
+  now: number,
+  authority: TenantPassWrite,
 ): Promise<OrgRow | null> {
   return writeOrg(ctx, before.id, before.config_revision, { branding }, now, authority);
 }

@@ -150,6 +150,7 @@ describe('API key scopes', () => {
       'connections:read',
       'connections:write',
       'webhooks:manage',
+      'brand:manage',
     ]);
   });
 });

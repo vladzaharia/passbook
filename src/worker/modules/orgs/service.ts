@@ -41,7 +41,7 @@ type Branding = z.infer<typeof OrgBrandingSchema>;
 type Summary = z.infer<typeof OrgSummarySchema>;
 
 export function toDto(row: OrgRow): OrgDto {
-  const { logo, icon, ...branding } = JSON.parse(row.branding) as Branding;
+  const { logo, icon, web, ...branding } = JSON.parse(row.branding) as Branding;
   const image = (value: NonNullable<Branding['logo']>) => ({
     sha: value.sha,
     w: value.w,
@@ -57,6 +57,7 @@ export function toDto(row: OrgRow): OrgDto {
       ...branding,
       ...(logo ? { logo: image(logo) } : {}),
       ...(icon ? { icon: image(icon) } : {}),
+      ...(web ? { web: image(web) } : {}),
     },
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -135,7 +136,8 @@ export async function createOrg(
     name: input.name,
     status: 'active',
     default_identity_id: input.defaultIdentityId ?? null,
-    branding: JSON.stringify(input.branding ?? {}),
+    // The web logo is set only by its upload, which checks the PNG.
+    branding: JSON.stringify((({ web: _web, ...rest }) => rest)(input.branding ?? {})),
     created_at: now,
     updated_at: now,
     config_revision: 1,
@@ -230,12 +232,14 @@ const statusAction = (status: 'active' | 'suspended') =>
 
 /** Images are set only by the upload endpoint, so an update keeps the stored ones. */
 function keepImages(next: Branding, stored: string): string {
-  const { logo: _logo, icon: _icon, ...rest } = next;
+  const { logo: _logo, icon: _icon, web: _web, mark: _mark, ...rest } = next;
   const prev = JSON.parse(stored) as Branding;
   return JSON.stringify({
     ...rest,
     ...(prev.logo ? { logo: prev.logo } : {}),
     ...(prev.icon ? { icon: prev.icon } : {}),
+    ...(prev.web ? { web: prev.web } : {}),
+    ...(prev.mark ? { mark: prev.mark } : {}),
   });
 }
 

@@ -11,6 +11,9 @@ export const BrandingImageSchema = z.object({
   h: z.number().int().positive(),
 });
 export const BrandingSlotSchema = z.enum(['logo', 'icon']);
+/** The PassBook mark on holder pages: wordmark, one quiet line, or nothing (gated by entitlement). */
+export const BrandMarkSchema = z.enum(['full', 'small', 'none']);
+export type BrandMark = z.infer<typeof BrandMarkSchema>;
 
 export const OrgBrandingSchema = z.object({
   accent: HexColorSchema.optional(),
@@ -23,6 +26,10 @@ export const OrgBrandingSchema = z.object({
   /** Set by the image upload endpoint; ignored on update. */
   logo: BrandingImageSchema.optional(),
   icon: BrandingImageSchema.optional(),
+  /** The web logo (holder pages, emails); set by its own endpoint, ignored on update. */
+  web: BrandingImageSchema.optional(),
+  /** Set through the brand kit; kept on update. Absent: full. */
+  mark: BrandMarkSchema.optional(),
   /** The logo already shows the org name, so passes leave logoText empty. */
   logoHasName: z.boolean().optional(),
 });
