@@ -1,10 +1,8 @@
 import type { JobOf } from '../../jobs/types.ts';
-import { batch } from '../../platform/db.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { getVersion } from '../templates/repo.ts';
-import { releaseAuditStmt } from '../templates/repo-release-audit.ts';
 import { type ApprovalRow, getLatestRelease } from '../templates/repo-releases.ts';
 import { buildProjectionCandidate } from './projection-candidate-build.ts';
 import { publishableSchema } from './projection-contract.ts';
@@ -22,13 +20,12 @@ import {
   systemAuthority,
 } from './projection-system-authority.ts';
 import {
-  insertProjectionApprovalStmt,
-  insertProjectionCandidateStmt,
   type ProjectionCandidate,
   type ProjectionScope,
   selectProjectionApprovals,
   selectProjectionCandidates,
 } from './repo-projection-store.ts';
+import { writeProjectionApproval, writeProjectionCandidate } from './repo-projection-write.ts';
 
 type SystemProjectionJob = JobOf<'wallet.projection_system'>;
 
@@ -86,11 +83,11 @@ export async function runSystemProjection(
     });
     if (!candidate) return;
     const created = candidate;
-    const made = await batch(db, [
-      insertProjectionCandidateStmt(db, created, author, ctx.clock.now()),
-      audit(ctx, created, 'candidate', created.id, 'template.system_candidate', SYSTEM_AUTHOR),
-    ]);
-    if (!made[0]?.meta.changes) return failedWrite(ctx, author);
+    const made = await writeProjectionCandidate(ctx, created, author, {
+      action: 'template.system_candidate',
+      detail: auditDetail(created),
+    });
+    if (!made) return failedWrite(ctx, author);
   }
   if (candidate.projection.schema !== 2 || candidate.projection.approvedOmissions.length > 0)
     return;
@@ -116,38 +113,20 @@ export async function runSystemProjection(
     createdAt: ctx.clock.now(),
   };
   if (!have) {
-    const approved = await batch(db, [
-      insertProjectionApprovalStmt(db, approval, checked, reviewer, ctx.clock.now()),
-      audit(ctx, checked, 'approval', approval.id, 'template.system_approve', SYSTEM_REVIEWER),
-    ]);
-    if (!approved[0]?.meta.changes) return failedWrite(ctx, reviewer);
+    const approved = await writeProjectionApproval(ctx, approval, checked, reviewer, {
+      action: 'template.system_approve',
+      detail: auditDetail(checked),
+    });
+    if (!approved) return failedWrite(ctx, reviewer);
   }
   await publish(ctx, reviewer, scope, checked, approval, head?.generation ?? 0, 'release', null);
 }
 
-const audit = (
-  ctx: ServiceContext,
-  candidate: ProjectionCandidate,
-  entity: 'candidate' | 'approval',
-  id: string,
-  action: string,
-  userId: string,
-) =>
-  releaseAuditStmt(
-    ctx.env.DB,
-    ctx,
-    entity,
-    id,
-    candidate.orgId,
-    userId,
-    candidate.templateId,
-    action,
-    {
-      candidateId: candidate.id,
-      candidateHash: candidate.candidateHash,
-      mode: candidate.mode,
-      provider: candidate.provider,
-      autoPublish:
-        candidate.projection.schema === 2 && candidate.projection.approvedOmissions.length === 0,
-    },
-  );
+const auditDetail = (candidate: ProjectionCandidate) => ({
+  candidateId: candidate.id,
+  candidateHash: candidate.candidateHash,
+  mode: candidate.mode,
+  provider: candidate.provider,
+  autoPublish:
+    candidate.projection.schema === 2 && candidate.projection.approvedOmissions.length === 0,
+});

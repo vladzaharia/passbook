@@ -7,6 +7,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { SamsungWalletCredentials } from '../../../shared/contracts/wallet-providers.ts';
 import { createApp } from '../../app.ts';
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
+import { createJobContext, createServiceContext } from '../../platform/service-context.ts';
 import { createSession, createSessionStore, resolveSession } from '../auth/sessions.ts';
 import { approveAppleRelease, grantKitMembership } from '../passes/apple-release-test-fixtures.ts';
 import {
@@ -122,7 +123,8 @@ async function fixture(mode: Mode = 'live') {
     return value;
   };
   return {
-    kit,
+    // An expired proof is refreshed by an admin or a job, which is a job context here.
+    kit: { ...kit, ctx: createJobContext(kit.env, 'test', { clock: kit.clock }) },
     apple,
     auth,
     session,
@@ -413,6 +415,15 @@ describe('authenticated Samsung card-state evidence', () => {
     );
   });
 
+  it('refuses to write evidence without an authority outside a job', async () => {
+    const f = await fixture();
+    await f.approve();
+    const plain = createServiceContext(f.kit.env, { clock: f.kit.clock });
+    expect(await beginSamsungProjectionProbe(plain, null, await f.stored(), plain.ids.id())).toBe(
+      false,
+    );
+  });
+
   it('commits an in-flight response across a rotation under the same identity', async () => {
     const f = await fixture();
     await f.approve();
@@ -652,7 +663,7 @@ describe('authenticated Samsung card-state evidence', () => {
     f.kit.env.KEK_V1 = newKey;
     await replaceCallbackKeysetForTest(db, newProof.credentialKeysetCommitment);
     try {
-      await failSamsungProjectionProbe(f.kit.ctx, candidate.id, probeId);
+      await failSamsungProjectionProbe(f.kit.ctx, null, candidate, probeId);
       expect(
         await completeSamsungProjectionProbe(
           f.kit.ctx,

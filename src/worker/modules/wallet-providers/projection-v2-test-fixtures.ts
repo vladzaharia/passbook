@@ -15,7 +15,11 @@ import type { SessionAuth } from '../../platform/auth.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
+import {
+  createJobContext,
+  createServiceContext,
+  type ServiceContext,
+} from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { basicPackage, makePng, passJson, zipOf } from '../templates/package/fixtures.ts';
 import { approveCandidate, createCandidate, publishRelease } from '../templates/releases.ts';
@@ -231,3 +235,7 @@ export const addsSharingLoss = (result: CompileResult): CompileResult => ({
   ...result,
   items: [...result.items, sharingLoss],
 });
+
+/** A queue context: the platform's system writes need job authority. */
+export const jobCtx = (of: ServiceContext): ServiceContext =>
+  createJobContext(of.env, 'wallet.projection_system', { clock: of.clock });
