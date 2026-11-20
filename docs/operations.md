@@ -120,6 +120,26 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
     - Near a venue the pass appears on the lock screen. The barcode scans.
     - Void the pass; the phone shows it as voided.
 
+## Apple provisioner
+
+`workers/apple-provisioner` is a separate Worker that holds the App Store Connect key. The main Worker reaches it only through the `APPLE` service binding; it has no route and no `workers.dev` host. Its D1 holds the allowlist (`asc_pass_types`) and the append-only call ledger (`asc_calls`). Limits: 30 calls a minute and 200 a day per method, one revoke an hour, all fail closed (`ASC_BUDGET`).
+
+One-time setup (owner; managed IDs live in team 48H7CLBV8Y):
+
+1. In App Store Connect create a Team key with the Admin role, named `passbook-provisioner`. The `.p8` downloads once.
+2. `npx wrangler d1 create apple-provisioner`, then put the id in `workers/apple-provisioner/wrangler.jsonc`.
+3. `npx wrangler d1 migrations apply apple-provisioner --config workers/apple-provisioner/wrangler.jsonc --remote`
+4. Secrets, from the `.p8` file and the key page (key id, issuer id):
+
+       npx wrangler secret put ASC_KEY_P8 --config workers/apple-provisioner/wrangler.jsonc < AuthKey_XXXX.p8
+       npx wrangler secret put ASC_KEY_ID --config workers/apple-provisioner/wrangler.jsonc
+       npx wrangler secret put ASC_ISSUER_ID --config workers/apple-provisioner/wrangler.jsonc
+
+5. Deploy the provisioner first: `npx wrangler deploy --config workers/apple-provisioner/wrangler.jsonc`. The main Worker's `APPLE` binding needs it to exist, so deploy the main Worker after, with `npm run deploy -- --first --apply` if the deploy tool asks for it.
+6. Seed the allowlist with the platform pass type: `node tools/apple-provisioner-seed.ts --apply --remote`. Without `--apply` it prints the command. The first `findPassType('pass.im.plrs.wallet')` call fills in Apple's id.
+
+Rotate the key: create a new one, `secret put` the three values, revoke the old key. Compromise: revoke the key in App Store Connect. Losing it stops automated renewal only; manual upload still works. Calls: `apple-provisioner` D1 table `asc_calls`.
+
 ## Google and Samsung Wallet accounts
 
 Keep Apple signing and push in place. Provider accounts and reviews are isolated by organization,
