@@ -595,5 +595,19 @@ describe('authority-scope rawCheck tenant terms', () => {
       scanBans(`${MOD}/wallet-providers/repo-instance.ts`, inline).map((f) => f.rule),
     ).toContain('banned');
     expect(scanBans(`${MOD}/wallet-providers/repo-keyset-pin.ts`, inline)).toEqual([]);
+    const join = 'JOIN credential_ref_keyset keyset ON keyset.id = 1';
+    expect(scanBans(`${MOD}/wallet-providers/repo-instance.ts`, join).map((f) => f.rule)).toContain(
+      'banned',
+    );
+    expect(scanBans(`${MOD}/wallet-providers/repo-keyset-pin.ts`, join)).toEqual([]);
+    for (const helper of ['credentialRefKeysetMatch(c)', 'await matchesCredentialRefKeyset(db, c)'])
+      expect(
+        scanBans(`${MOD}/wallet-providers/repo-instance.ts`, helper).map((f) => f.rule),
+        helper,
+      ).toContain('banned');
+    // Outside wallet-providers the helpers are the supported way to deny a foreign keyset.
+    expect(
+      scanBans(`${MOD}/scan/repo-credential-tombstones.ts`, 'credentialRefKeysetMatch(c)'),
+    ).toEqual([]);
   });
 });
