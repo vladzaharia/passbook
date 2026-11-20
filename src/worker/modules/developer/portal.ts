@@ -7,9 +7,11 @@ import { Hono } from 'hono';
 import { SearchMissSchema } from '../../../shared/contracts/developer.ts';
 import { DEVELOPERS_INDEXABLE, PATHS } from '../../../shared/developers.ts';
 import { missTerm } from '../../../shared/developers-search.ts';
+import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
+import { sameOriginOnly } from '../../platform/csrf.ts';
 import { notFoundHandler } from '../../platform/error-handler.ts';
-import { clientRatePrefix } from '../../platform/rate-limit.ts';
+import { rateLimit } from '../../platform/rate-limit.ts';
 import { developersContentSecurityPolicy } from '../../platform/security-headers.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { asBrowserPage } from '../../ssr/error-response.ts';
@@ -30,33 +32,28 @@ async function manifestOf(assets: Fetcher, origin: string): Promise<Manifest> {
 
 export const developerPortalRoutes = new Hono<AppBindings>();
 
-const MISS_WINDOW_MS = 60_000;
-/** Terms accepted per network prefix per minute; a count in this isolate, which is enough to keep one reader from flooding the log. */
-const MISS_PER_MINUTE = 20;
-const missCounts = new Map<string, { window: number; n: number }>();
+/** Longest body the miss endpoint reads: `{"term":"…"}` for a term of at most 60 characters. */
+const MISS_BODY_BYTES = 1024;
 
 /**
  * A search that found nothing: the term, for the docs backlog. Takes no cookie's worth of identity
  * (the browser sends none) and logs nothing but the term, and only if it is plain words: a key,
- * token, id, address or link is dropped here even if a client sent it.
+ * token, id, address or link is dropped here even if a client sends it. Same origin only, limited
+ * per network (an IPv6 /64 counts as one), and the body is capped before it is read.
  */
-developerPortalRoutes.post('/search-miss', async (c) => {
-  const origin = c.req.header('origin');
-  if (origin && origin !== new URL(c.req.url).origin) return c.body(null, 403);
-  const window = Math.floor(c.var.clock.now() / MISS_WINDOW_MS);
-  const key = clientRatePrefix(c);
-  const seen = missCounts.get(key);
-  const n = seen?.window === window ? seen.n + 1 : 1;
-  if (missCounts.size > 5000) missCounts.clear();
-  missCounts.set(key, { window, n });
-  if (n > MISS_PER_MINUTE) return c.body(null, 429);
-  const text = await c.req.text();
-  const body = text.length <= 1024 ? parseMiss(text) : null;
-  if (!body) return c.body(null, 400);
-  const term = missTerm(body.term);
-  if (term) c.var.log.info('developers.search_miss', { term });
-  return c.body(null, 204);
-});
+developerPortalRoutes.post(
+  '/search-miss',
+  sameOriginOnly,
+  rateLimit('RL_PUBLIC'),
+  limitBody(MISS_BODY_BYTES),
+  async (c) => {
+    const body = parseMiss(await c.req.text());
+    if (!body) return c.body(null, 400);
+    const term = missTerm(body.term);
+    if (term) c.var.log.info('developers.search_miss', { term });
+    return c.body(null, 204);
+  },
+);
 
 function parseMiss(text: string) {
   try {
