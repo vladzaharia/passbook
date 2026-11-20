@@ -162,6 +162,7 @@ export async function insertPass(
       // A join create hands every refusal but a stale owner to the public submit, which answers each one.
       if (
         reason === null ||
+        reason === 'limit' ||
         (execution.kind === 'tenant' && (reason === 'org' || reason === 'actor')) ||
         (execution.kind === 'join' && reason !== 'stale')
       )

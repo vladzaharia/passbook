@@ -22,6 +22,7 @@ import {
   type RowResult,
   reserveRows,
   type Scope,
+  skipCreateRows,
   writeProgress,
   writeRowResult,
 } from './repo-import-commit.ts';
@@ -220,7 +221,10 @@ export async function applyChunk(
   await reserve(ctx, s, imp, rows);
   const keepManual = parsePlan(imp.plan, ctx.log)?.keepManual === true;
   let revoked = false;
+  let limited = false;
   for (const row of rows) {
+    // The plan's pass limit stopped the creates: they were marked skipped; updates still apply.
+    if (limited && row.action === 'create') continue;
     try {
       const result =
         row.action === 'create'
@@ -229,6 +233,12 @@ export async function applyChunk(
       await writeRowResult(ctx, s, { row: row.row_no, state: 'done', result, code: null });
     } catch (error) {
       if (!(error instanceof AppError)) throw error;
+      if (error.code === 'FEATURE_LIMIT_REACHED') {
+        limited = true;
+        ctx.log.info('pass_import.limit_reached', { importId: imp.id, code: error.code });
+        await skipCreateRows(ctx, s, error.code);
+        continue;
+      }
       if (!(await reissuePrincipalValid(db, imp.org_id, starter, ctx.clock.now()))) {
         revoked = true;
         break;

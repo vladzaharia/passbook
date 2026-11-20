@@ -36,6 +36,7 @@ export interface ImportRow {
   created: number;
   updated: number;
   failed: number;
+  skipped: number;
   not_emailed: number;
   removed: number;
   created_by: string;

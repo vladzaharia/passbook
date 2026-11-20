@@ -103,6 +103,8 @@ export const PassImportProgressSchema = z.object({
   updated: count,
   unchanged: count,
   failed: count,
+  /** Creates skipped because the plan's pass limit was reached. */
+  skipped: count.default(0),
   notEmailed: count,
   removed: count,
 });
