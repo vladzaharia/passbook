@@ -319,6 +319,24 @@
     "sdk": false,
     "reason": "Developer portal Try it: a signed-in person in a browser, not an integration."
   },
+  "developer.getLog": {
+    "resource": "developer.requestLogs",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Developer portal request log: a signed-in person in a browser, not an integration."
+  },
+  "developer.getLogs": {
+    "resource": "developer.requestLogs",
+    "method": "list",
+    "sdk": false,
+    "reason": "Developer portal request log: a signed-in person in a browser, not an integration."
+  },
+  "developer.getRail": {
+    "resource": "developer.rail",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Developer portal rail: a signed-in person in a browser, not an integration."
+  },
   "developer.getSandbox": {
     "resource": "developer.sandbox",
     "method": "retrieve",

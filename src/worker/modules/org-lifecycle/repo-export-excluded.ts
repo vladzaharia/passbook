@@ -46,6 +46,8 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   org_reply_to: 'a reply-to address mid-confirmation, with a token hash',
   outbox: BOOKKEEPING,
   pass_assets: DERIVED,
+  request_log:
+    'API call metadata kept 7 days, with Test bodies of a developer org for 24 hours: no org content',
   pass_attach_blocks: 'holder mail preference',
   pass_auth_seals: SEALED,
   pass_credential_tombstones: 'revocation evidence kept by the platform: refs only',

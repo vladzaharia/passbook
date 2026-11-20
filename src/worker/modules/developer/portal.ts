@@ -4,11 +4,14 @@
  * the manifest lists is served; the asset layer's SPA fallback never answers for a portal URL.
  */
 import { Hono } from 'hono';
-import { DEVELOPERS_INDEXABLE } from '../../../shared/developers.ts';
+import { DEVELOPERS_INDEXABLE, PATHS } from '../../../shared/developers.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { notFoundHandler } from '../../platform/error-handler.ts';
 import { developersContentSecurityPolicy } from '../../platform/security-headers.ts';
+import { serviceContext } from '../../platform/service-context.ts';
 import { asBrowserPage } from '../../ssr/error-response.ts';
+import { publicStatus } from '../status/public.ts';
+import { statusHtml } from '../status/public-page.tsx';
 
 type Manifest = Record<string, { asset: string; type: string }>;
 
@@ -26,6 +29,13 @@ export const developerPortalRoutes = new Hono<AppBindings>();
 developerPortalRoutes.get('/*', async (c) => {
   const url = new URL(c.req.url);
   const key = url.pathname.replace(/\/+$/, '') || '/developers';
+  // Public status as data: the same allowlisted read as the page, never cached for long.
+  if (key === PATHS.statusJson) {
+    const body = JSON.stringify(await publicStatus(serviceContext(c)));
+    return new Response(c.req.method === 'HEAD' ? null : body, {
+      headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=30' },
+    });
+  }
   let manifest = manifests.get(c.env.ASSETS);
   if (!manifest) {
     manifest = manifestOf(c.env.ASSETS, url.origin);
@@ -45,6 +55,12 @@ developerPortalRoutes.get('/*', async (c) => {
   if (etag) headers.set('etag', etag);
   if (entry.type.startsWith('text/html')) {
     headers.set('content-security-policy', developersContentSecurityPolicy());
+  }
+  if (key === PATHS.status) {
+    headers.set('cache-control', 'public, max-age=30');
+    headers.delete('etag');
+    const page = await statusHtml(serviceContext(c), await res.text());
+    return new Response(c.req.method === 'HEAD' ? null : page, { headers });
   }
   return new Response(c.req.method === 'HEAD' ? null : res.body, { headers });
 });

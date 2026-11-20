@@ -525,6 +525,18 @@ endpoints. Set the platform setting `events.feed` to `"off"` to skip it without 
 while it is off are never journaled, so webhook endpoints miss them and `GET /events` pollers see a silent
 gap; turning it back on does not backfill.
 
+### Request log and status notes
+
+`request_log` holds one row per API-key call: metadata for 7 days, request and response bodies for 24 hours, only for Test calls of a developer org (a trigger refuses a body anywhere else). The minute cron hook `developer.request_log_purge` runs the purge at minute 07 of every hour; reads already hide bodies older than 24 hours and rows older than 7 days, so a missed run only delays freeing the space.
+
+Public status incident notes are rows of `status_incidents`; there is no admin screen yet. Open one:
+
+```sh
+npx wrangler d1 execute DB --remote --command "INSERT INTO status_incidents (id, title, note, component, impact, started_at) VALUES (lower(hex(randomblob(8))), 'Apple push delayed', 'Pushes arrive late. We are on it.', 'apple_push', 'degraded', strftime('%s','now') * 1000)"
+```
+
+`component` is `api`, `apple_push`, `email`, `webhooks`, `google`, `samsung` or NULL; `impact` is `notice`, `degraded` or `outage` (an open degraded or outage note moves the page's overall state). Resolve it with `UPDATE status_incidents SET resolved_at = ... WHERE id = ...`; it stays listed for 14 days.
+
 ### Closing and purging an organization
 
 `POST /orgs/{id}/close` (a platform admin, or an org admin with `{ confirmSlug }`) sets `status` to `deleted`, `closed_at` and `purge_after` (30 days on). Passes stop updating, writes stop, every org admin is mailed. The admins and PassBook can export meanwhile (`POST /orgs/{id}/exports`, then `.../link`); the archive in R2 lives 7 days, a link 24 hours. A platform admin reopens inside the window with `POST /orgs/{id}/reopen` (the default signing identity comes back); not once a purge has started.

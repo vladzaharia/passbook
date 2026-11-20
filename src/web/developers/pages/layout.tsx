@@ -16,6 +16,7 @@ const NAV_PATH: Record<NavKey, string> = {
   reference: PATHS.reference,
   playground: PATHS.playground,
   webhooks: PATHS.webhooks,
+  logs: PATHS.logs,
 };
 
 export function TopBar({ active }: { active?: NavKey }) {
@@ -132,6 +133,7 @@ export function Footer({ site }: { site: Site }) {
           {DEV_COPY.footer.changelog}
           {latest ? <span className="pill accent">{DEV_COPY.footer.whatsNew}</span> : null}
         </a>
+        <a href={PATHS.status}>{DEV_COPY.footer.status}</a>
         <a href={PATHS.openapi}>{DEV_COPY.footer.openapi}</a>
         <a href={PATHS.llms}>{DEV_COPY.footer.llms}</a>
       </span>

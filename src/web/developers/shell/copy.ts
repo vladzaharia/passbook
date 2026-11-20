@@ -2,6 +2,7 @@ const RESET_MS = 1500;
 
 /** The text a copy button stands for: the visible sample, the response, the path or the command. */
 function textFor(button: HTMLElement): string {
+  if (button.dataset.copyText) return button.dataset.copyText;
   const owner = button.closest<HTMLElement>('[data-samples], .resp, .endpoint, .cmd, .code');
   if (!owner) return '';
   if (owner.matches('.endpoint')) return owner.querySelector('code')?.textContent ?? '';

@@ -5,9 +5,12 @@ export interface Island {
 /**
  * Placeholders the prerendered pages carry as `data-island="<name>"`, each a lazy chunk. Add a
  * loader here and the island mounts when its element nears the viewport. Registered so far:
- * none; the static markup inside a placeholder is its signed-out state.
+ * `logs` and `api-rail` (the request log page); the static markup inside a placeholder is its signed-out state.
  */
-export const ISLANDS: Record<string, () => Promise<Island>> = {};
+export const ISLANDS: Record<string, () => Promise<Island>> = {
+  logs: async () => (await import('../logs/entry.ts')).logsIsland,
+  'api-rail': async () => (await import('../logs/entry.ts')).railIsland,
+};
 
 export function mountIslands(root: ParentNode = document): void {
   const pending = [...root.querySelectorAll<HTMLElement>('[data-island]')].filter(

@@ -7,6 +7,7 @@ export const DEV_COPY = {
     { key: 'reference', label: 'Reference' },
     { key: 'playground', label: 'Playground' },
     { key: 'webhooks', label: 'Webhooks' },
+    { key: 'logs', label: 'Logs' },
   ],
   test: 'Test',
   signIn: 'Sign in',
@@ -66,6 +67,7 @@ export const DEV_COPY = {
     whatsNew: "What's new",
     openapi: 'OpenAPI',
     llms: 'llms.txt',
+    status: 'Status',
     note: 'Test mode never issues a real pass.',
   },
   slots: {

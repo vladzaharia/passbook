@@ -20,7 +20,7 @@ const FAILURE: Record<string, string> = {
   unreachable: 'the provider could not be reached',
 };
 
-function rowOf(c: LatestCheck, now: number): { state: State; detail: string | null } {
+export function rowOf(c: LatestCheck, now: number): { state: State; detail: string | null } {
   if (c.checked_at === null || c.check_version_id !== c.current_version_id)
     return { state: 'configured', detail: 'Not checked yet.' };
   if (c.ok === 0)
