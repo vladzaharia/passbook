@@ -268,6 +268,7 @@ describe('createScanApi', () => {
       [
         'act',
         'activity',
+        'addPhoto',
         'reportDevice',
         'batch',
         'inside',
@@ -284,6 +285,7 @@ describe('createScanApi', () => {
         'session',
         'setRole',
         'signOut',
+        'signOutPerson',
         'staffSearch',
         'staffSignIn',
         'staffSignOut',
@@ -296,6 +298,7 @@ describe('createScanApi', () => {
         'tagPending',
         'tagUndo',
         'undo',
+        'visitors',
       ].sort(),
     );
   });
