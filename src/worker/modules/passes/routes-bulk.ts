@@ -9,21 +9,11 @@ import { type createRouter, register } from '../../platform/openapi.ts';
 import { idempotencyKeyOf, sendOnce } from '../delivery/idempotent-send.ts';
 import { startBulkReissue } from './bulk.ts';
 import { bulkPassAction, selectBulkPasses } from './bulk-actions.ts';
-import {
-  actorFor,
-  assertOrg,
-  authOf,
-  passScopeOf,
-  requireTenantSession,
-  svc,
-  tenantAuthorityOf,
-} from './http.ts';
+import { actorFor, assertOrg, authOf, passScopeOf, svc, tenantAuthorityOf } from './http.ts';
 import { getPass } from './repo-read-pass.ts';
 
 /** Many-pass actions: void, email or remove a selection, and template-wide reissues. */
 export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>): void {
-  passesRoutes.use('/bulk-reissue', requireTenantSession);
-
   register(
     passesRoutes,
     'passes',
@@ -112,20 +102,27 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
       const ctx = svc(c);
       const auth = authOf(c);
       const mode = passScopeOf(c).mode;
-      if (!body.orgId && (auth.kind !== 'session' || !auth.roles.includes('admin')))
+      const orgId = body.orgId ?? (auth.kind === 'api_key' ? auth.orgId : null) ?? undefined;
+      if (!orgId && (auth.kind !== 'session' || !auth.roles.includes('admin')))
         throw new ForbiddenError('Admin access is required.');
-      const authority = body.orgId
-        ? await tenantAuthorityOf(ctx, auth, body.orgId, 'passes:operate')
+      if (orgId) assertOrg(c, orgId);
+      const authority = orgId
+        ? await tenantAuthorityOf(ctx, auth, orgId, 'passes:operate')
         : undefined;
       const platformSession =
-        !body.orgId && auth.kind === 'session'
+        !orgId && auth.kind === 'session'
           ? { userId: auth.userId, sessionId: auth.sessionId }
           : undefined;
-      const workflowInstanceId = await startBulkReissue(ctx, actorFor(c), body, {
-        ...(authority ? { authority } : {}),
-        ...(platformSession ? { platformSession } : {}),
-        mode,
-      });
+      const workflowInstanceId = await startBulkReissue(
+        ctx,
+        actorFor(c),
+        { ...body, orgId },
+        {
+          ...(authority ? { authority } : {}),
+          ...(platformSession ? { platformSession } : {}),
+          mode,
+        },
+      );
       return c.json({ workflowInstanceId }, 202);
     },
   );

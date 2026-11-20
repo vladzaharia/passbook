@@ -19,6 +19,7 @@ import { methodScope } from '../../platform/auth.ts';
 import { defaultBodyLimit, limitBody } from '../../platform/body-limit.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import {
   actorFor,
   assertOrg,
@@ -49,7 +50,11 @@ passImportRoutes.use('*', defaultBodyLimit(/\/pass-imports\/?$/));
 passImportRoutes.use('/', limitBody(CREATE_BODY_BYTES));
 guard(
   passImportRoutes,
-  requireTenantSessionOrApiKey(methodScope({ read: 'passes:read', write: 'passes:write' })),
+  // Removing passes stays with a signed-in user (removeCreated), so the document does not offer it to keys.
+  declareKeyAccess(
+    requireTenantSessionOrApiKey(methodScope({ read: 'passes:read', write: 'passes:write' })),
+    { read: ['passes:read'], write: ['passes:write'], only: /^(?!.*\/remove-created$)/ },
+  ),
 );
 
 const TAG = 'pass-imports';
