@@ -10,7 +10,9 @@ const MODE = {
   unlimited: 'Every visit',
 } as const;
 const PLAN = { always: 'always-on plan', timed: 'timed plan', guest: 'guest plan' } as const;
-const ORDER = ['single', 'daily', 'unlimited'] as const;
+// Strictest first, as admission.ts ranks them.
+const ORDER = ['single', 'in_out', 'daily', 'unlimited'] as const;
+const CAP_MODE = { ...MODE, in_out: 'Track in / out' } as const;
 
 /** A type's rule in plain words. */
 export function ruleWords(rule: EntryRule): string {
@@ -23,13 +25,21 @@ export function ruleWords(rule: EntryRule): string {
   return parts.join(' · ');
 }
 
-/** What the session's own cap does to a type, or null when it changes nothing. */
-export function capNote(rule: EntryRule, cap: CheckInPolicy): string | null {
+const span = (days: number | null | undefined, minutes: number | null | undefined) =>
+  days ? (days === 1 ? 'all day' : `${days} days`) : `${minutes} min`;
+
+/** What the session's own cap takes away from a type: a stricter mode or a shorter validity. */
+export function capNotes(rule: EntryRule, cap: CheckInPolicy): string[] {
+  const notes: string[] = [];
   const capMode = ORDER.find((m) => m === cap.mode);
-  if (!capMode) return null;
-  return ORDER.indexOf(capMode) < ORDER.indexOf(rule.mode)
-    ? `Session cap: ${MODE[capMode].toLowerCase()}`
-    : null;
+  if (capMode && ORDER.indexOf(capMode) < ORDER.indexOf(rule.mode))
+    notes.push(`Session cap: ${CAP_MODE[capMode].toLowerCase()}`);
+  const from = (cap.durationFrom ?? rule.durationFrom) === 'issued' ? 'issue' : 'first scan';
+  if (cap.days && (!rule.days || cap.days < rule.days))
+    notes.push(`Session cap: ${span(cap.days, null)} from ${from}`);
+  if (cap.durationMinutes && (!rule.durationMinutes || cap.durationMinutes < rule.durationMinutes))
+    notes.push(`Session cap: ${span(null, cap.durationMinutes)} from ${from}`);
+  return notes;
 }
 
 /** Read-only: each admitted pass type with the rule its template sets. Passes can override it. */
@@ -52,7 +62,7 @@ export function AdmitsRules({
       <h3 className="text-sm font-medium text-fg">Rules</h3>
       <ul className="divide-y divide-border rounded-md border border-border text-sm">
         {items.map((t) => {
-          const note = t.rule ? capNote(t.rule, cap) : null;
+          const notes = t.rule ? capNotes(t.rule, cap) : [];
           return (
             <li key={t.templateId} className="grid gap-1 px-3 py-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -72,7 +82,11 @@ export function AdmitsRules({
                     {t.rule.source === 'template' ? 'Template default' : 'Action setting'}
                   </Badge>
                 ) : null}
-                {note ? <Badge tone="warning">{note}</Badge> : null}
+                {notes.map((n) => (
+                  <Badge key={n} tone="warning">
+                    {n}
+                  </Badge>
+                ))}
               </div>
             </li>
           );

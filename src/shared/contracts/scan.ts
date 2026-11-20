@@ -272,7 +272,7 @@ export const ScanCountsSchema = z.object({
     .nullable(),
   /** The scanner's zone, when it has one. Null on every other scanner. */
   place: ScanPlaceCountSchema.nullable().optional(),
-  byType: z.array(ScanTypeCountSchema).max(100).optional(),
+  byType: z.array(ScanTypeCountSchema).optional(),
   asOf: TimestampSchema,
   configRev: z.number().int(),
 });

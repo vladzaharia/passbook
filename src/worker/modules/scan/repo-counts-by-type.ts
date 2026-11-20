@@ -8,8 +8,6 @@ import {
 
 type Db = D1Database;
 
-const TYPE_LIMIT = 100;
-
 // A baked template has no org; an org's own never reads another's name.
 const TYPE_JOIN = `LEFT JOIN templates t ON t.id = s.template_id AND (t.org_id IS NULL OR t.org_id = s.org_id)`;
 
@@ -27,7 +25,7 @@ export const todayByTypeStmt = (
      WHERE s.actor_key = ? AND s.org_id = ? AND s.mode = ? AND s.at >= ?
        AND ${scanLedgerScopeSql('s')}
        AND s.outcome = 'ok' AND s.action_kind != 'undo' AND s.undone_by IS NULL
-     GROUP BY s.template_id ORDER BY n DESC, t.name LIMIT ${TYPE_LIMIT}`,
+     GROUP BY s.template_id ORDER BY n DESC, t.name`,
     [actorKey, orgId, mode, since],
   );
 
@@ -54,6 +52,6 @@ export const sessionTodayByTypeStmt = (
     SELECT s.template_id AS id, t.name AS name, count(*) AS n FROM scans s
     JOIN session_successes matching ON matching.id=s.id ${TYPE_JOIN}
     WHERE ${scanLedgerSuccessfulCandidateSql('s')}
-    GROUP BY s.template_id ORDER BY n DESC, t.name LIMIT ${TYPE_LIMIT}`,
+    GROUP BY s.template_id ORDER BY n DESC, t.name`,
     [orgId, sessionId, mode, since],
   );

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EntryRule } from '@/shared/contracts/template-releases.ts';
-import { capNote, ruleWords } from './admits-rules.tsx';
+import { capNotes, ruleWords } from './admits-rules.tsx';
 
 const rule = (over: Partial<EntryRule> = {}): EntryRule => ({
   mode: 'unlimited',
@@ -27,11 +27,26 @@ describe('ruleWords', () => {
   });
 });
 
-describe('capNote', () => {
-  it('warns only when the session cap is stricter than the type', () => {
-    expect(capNote(rule(), { mode: 'single' })).toBe('Session cap: one scan per pass');
-    expect(capNote(rule({ mode: 'single' }), { mode: 'daily' })).toBeNull();
-    expect(capNote(rule(), {})).toBeNull();
-    expect(capNote(rule(), { mode: 'in_out' })).toBeNull();
+describe('capNotes', () => {
+  it('ranks the session mode as admission does', () => {
+    expect(capNotes(rule(), { mode: 'single' })).toEqual(['Session cap: one scan per pass']);
+    expect(capNotes(rule(), { mode: 'in_out' })).toEqual(['Session cap: track in / out']);
+    expect(capNotes(rule({ mode: 'daily' }), { mode: 'in_out' })).toEqual([
+      'Session cap: track in / out',
+    ]);
+    expect(capNotes(rule({ mode: 'single' }), { mode: 'in_out' })).toEqual([]);
+    expect(capNotes(rule({ mode: 'single' }), { mode: 'daily' })).toEqual([]);
+    expect(capNotes(rule(), {})).toEqual([]);
+  });
+
+  it('shows a cap that shortens the validity, never one that lengthens it', () => {
+    const day = rule({ days: 3, durationFrom: 'issued' });
+    expect(capNotes(day, { days: 1 })).toEqual(['Session cap: all day from issue']);
+    expect(capNotes(day, { days: 5 })).toEqual([]);
+    expect(capNotes(rule(), { days: 2 })).toEqual(['Session cap: 2 days from first scan']);
+    expect(capNotes(rule({ durationMinutes: 90 }), { durationMinutes: 60 })).toEqual([
+      'Session cap: 60 min from first scan',
+    ]);
+    expect(capNotes(rule({ durationMinutes: 30 }), { durationMinutes: 60 })).toEqual([]);
   });
 });

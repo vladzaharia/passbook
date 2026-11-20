@@ -23,6 +23,7 @@ function Group({
   selected,
   onToggle,
   empty,
+  blocked,
 }: {
   title: string;
   count: number;
@@ -31,6 +32,8 @@ function Group({
   selected: string[];
   onToggle: (id: string, on: boolean) => void;
   empty: string;
+  /** Adding this one would pass a cap the count does not show. */
+  blocked?: (id: string) => boolean;
 }) {
   return (
     <fieldset className="flex min-w-0 flex-col gap-1">
@@ -46,7 +49,7 @@ function Group({
           <CheckboxField
             key={o.id}
             checked={on}
-            disabled={!on && count >= cap}
+            disabled={!on && (count >= cap || blocked?.(o.id) === true)}
             label={
               <>
                 {o.name}
@@ -118,6 +121,13 @@ export function AdmitsPicker({
   for (const id of eventIds)
     if (!eventOptions.some((o) => o.id === id) && events.isFetched)
       eventOptions.push({ id, name: 'Event', note: 'gone' });
+  // The server counts the types and the admitted events' types together, once each.
+  const named = (ids: string[]) =>
+    new Set([
+      ...templateIds,
+      ...allEvents.filter((e) => ids.includes(e.id)).flatMap((e) => e.templateIds),
+    ]);
+  const typeCount = named(eventIds).size;
   const match = (o: Option) => o.name.toLowerCase().includes(q.trim().toLowerCase());
   const chips = [
     ...templateIds.map((id) => ({ id, kind: 'type' as const, name: typeName(id) })),
@@ -172,7 +182,7 @@ export function AdmitsPicker({
           ) : null}
           <Group
             title="Pass types"
-            count={templateIds.length}
+            count={typeCount}
             cap={ADMITS_TEMPLATE_CAP}
             options={typeOptions.filter(match)}
             selected={templateIds}
@@ -187,6 +197,7 @@ export function AdmitsPicker({
             cap={ADMITS_EVENT_CAP}
             options={eventOptions.filter(match)}
             selected={eventIds}
+            blocked={(id) => named([...eventIds, id]).size > ADMITS_TEMPLATE_CAP}
             onToggle={(id, on) => onChange({ eventIds: toggle(eventIds, id, on) })}
             empty={events.isFetching ? 'Loading…' : q ? 'No events match.' : 'No open events.'}
           />

@@ -60,10 +60,12 @@ const eventFixture = (n: number, status = 'upcoming') => ({
 
 function setup({
   types = 1,
+  eventTypes = [],
   events = 1,
   initial,
   fail,
 }: {
+  eventTypes?: string[];
   types?: number;
   events?: number;
   initial?: ScanningSession;
@@ -87,7 +89,10 @@ function setup({
       }),
     '/api/v1/scan-events': () =>
       json({
-        items: Array.from({ length: events }, (_, i) => eventFixture(i + 1)),
+        items: Array.from({ length: events }, (_, i) => ({
+          ...eventFixture(i + 1),
+          templateIds: eventTypes,
+        })),
         nextCursor: null,
       }),
     '/api/v1/scanning-sessions': (_url: URL, init?: RequestInit) => {
@@ -197,5 +202,15 @@ describe('the Admits picker', () => {
     expect(rules).toHaveTextContent('Template default');
     expect(rules).toHaveTextContent('No check-in action');
     expect(within(rules).getAllByRole('link', { name: 'Scan settings' })).toHaveLength(2);
+  });
+
+  it("counts an event's types with the chosen ones, once each", async () => {
+    setup({ types: 3, events: 1, eventTypes: ['t1', 't2', 'tx'] });
+    const { user, dialog } = await open();
+    await user.click(await within(dialog).findByRole('checkbox', { name: 'Type 1' }));
+    expect(within(dialog).getByText('1 of 100')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('checkbox', { name: /Gala 1/ }));
+    // t1 is shared; t2 and tx come with the event.
+    expect(within(dialog).getByText('3 of 100')).toBeInTheDocument();
   });
 });

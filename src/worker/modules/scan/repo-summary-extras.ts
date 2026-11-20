@@ -94,7 +94,7 @@ export async function readSummaryExtras(
         auth,
         `SELECT s.template_id AS id, tt.name AS name, COUNT(*) AS n ${fromOf(`
     LEFT JOIN templates tt ON tt.id = s.template_id AND (tt.org_id IS NULL OR tt.org_id = s.org_id)`)}
-        AND s.outcome = 'ok' GROUP BY s.template_id ORDER BY n DESC, tt.name LIMIT 100`,
+        AND s.outcome = 'ok' GROUP BY s.template_id ORDER BY n DESC, tt.name`,
         params,
       ),
       scanRead(
