@@ -12,7 +12,7 @@ import { AppError, ConflictError, NotFoundError } from '../../platform/errors.ts
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { assertBindable } from '../nfc/pass-state.ts';
-import { tagsEnabled } from '../nfc/policy.ts';
+import { tagsEnabled, tagsRefusal } from '../nfc/policy.ts';
 import {
   deviceFacts,
   type EnrollmentRow,
@@ -198,8 +198,8 @@ async function complete(
   const db = ctx.env.DB;
   const row = await ownRequest(ctx, actor, id, scannerId);
   openRequest(row, ctx.clock.now());
-  if (!(await tagsEnabled(ctx, orgId)))
-    throw new ConflictError('Turn on tags in settings first.', 'TAGS_OFF');
+  const off = await tagsRefusal(ctx, orgId);
+  if (off) throw off;
   await bumpTagCap(db, 'bind', scannerId, ctx.clock.now());
   const uid = tagUid(read);
   const pass = await passFacts(db, row.passId);

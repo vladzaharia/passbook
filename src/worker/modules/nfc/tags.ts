@@ -4,7 +4,7 @@ import { AppError, ConflictError, NotFoundError, ValidationError } from '../../p
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { assertPassTakesTag } from './pass-state.ts';
-import { tagsEnabled } from './policy.ts';
+import { tagsRefusal } from './policy.ts';
 import { activeBinding, type BindingRow, type PassFacts, passFacts } from './repo-tag-bindings.ts';
 import { orgTagCount, type TagRow, tagByRef, tagView } from './repo-tags.ts';
 import {
@@ -106,8 +106,8 @@ export async function bindTag(
   req: BindRequest,
 ): Promise<{ status: BindStatus; tag: Tag }> {
   const { orgId, mode } = authority;
-  if (!(await tagsEnabled(ctx, orgId)))
-    throw conflict('Turn on tags in settings first.', 'TAGS_OFF');
+  const off = await tagsRefusal(ctx, orgId);
+  if (off) throw off;
   await ensureCredentialRefKeyset(ctx.env.DB, ctx.env);
   const { ref, hint } = await UID_SYSTEM.identify(ctx.env, orgId, mode, req.uid);
   for (let attempt = 1; ; attempt++) {

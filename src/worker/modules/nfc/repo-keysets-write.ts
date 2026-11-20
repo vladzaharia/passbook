@@ -1,6 +1,7 @@
 import { type Grant, grant } from '../../platform/authority.ts';
 import { type Check, exactlyOne, rowIs } from '../../platform/authority-checks.ts';
 import { exists, type GrantCond } from '../../platform/authority-cond.ts';
+import { entitled } from '../../platform/authority-entitled.ts';
 import { ne } from '../../platform/authority-expr.ts';
 import type { Envelope } from '../../platform/crypto.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -92,7 +93,8 @@ const versionValues = (v: NewVersion, now: number) => [
 /** The keyset and its version 1 in one batch. */
 export function createKeysetGrant(ctx: ServiceContext, a: KeysetAuthority, k: NewKeyset): Grant {
   const now = ctx.clock.now();
-  const g = keysetGrant(ctx, 'org_mode.nfc.keyset.create', a, []);
+  // Secure tags need the plan's Secure level; existing keysets keep verifying after a downgrade.
+  const g = keysetGrant(ctx, 'org_mode.nfc.keyset.create', a, [entitled('nfc', 'secure')]);
   g.insertSelect(
     'nfc_tag_keysets',
     ['id', 'name', 'slug', 'diversify', 'created_at', 'created_by'],
