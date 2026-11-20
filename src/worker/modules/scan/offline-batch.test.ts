@@ -312,4 +312,50 @@ describe('syncing queued reads', () => {
     await kit.get(headers, '/session?pending=0');
     expect(await floor()).toEqual([{ online_at: kit.clock.now() }]);
   });
+
+  it('an online scan floors the dates a queued read may carry, with a short slack', async () => {
+    const { tpl, headers } = await door();
+    const [old, recent] = [await kit.scanPass(tpl), await kit.scanPass(tpl)];
+    const scanned = await kit.scanPass(tpl);
+    const now = kit.clock.now();
+    expect((await act(headers, { code: scanned.scanCode ?? '', method: 'camera' })).status).toBe(
+      200,
+    );
+    const [backdated, honest] = (
+      await batchOf(
+        await batch(headers, [
+          item(old.scanCode ?? '', { clientTs: now - 3_600_000 }),
+          item(recent.scanCode ?? '', { clientTs: now - 60_000 }),
+        ]),
+      )
+    ).items;
+    expect(backdated).toMatchObject({
+      conflict: true,
+      outcome: { kind: 'heads_up', reason: 'ended' },
+    });
+    expect(honest?.outcome.kind).toBe('ok');
+    expect(await rowsOf('SELECT 1 FROM scans WHERE pass_id = ?', [old.id])).toHaveLength(0);
+  });
+
+  it('labels a scan its first run left unlabelled when the batch is sent again', async () => {
+    const { tpl, headers } = await door({ offline: false, whenOffline: 'decide' });
+    const pass = await kit.scanPass(tpl);
+    const sent = item(pass.scanCode ?? '', { door: 'unverified' });
+    await batch(headers, [sent]);
+    // The first run stopped between the scan and its label and record.
+    await run(kit.env.DB, 'UPDATE scans SET offline = 0 WHERE pass_id = ?', [pass.id]);
+    await run(kit.env.DB, 'DELETE FROM scan_offline_reads WHERE idempotency_key = ?', [
+      sent.idempotencyKey,
+    ]);
+    const [again] = (await batchOf(await batch(headers, [sent]))).items;
+    expect(again?.outcome).toMatchObject({ kind: 'ok', replay: true });
+    expect(await rowsOf('SELECT offline FROM scans WHERE pass_id = ?', [pass.id])).toEqual([
+      { offline: 2 },
+    ]);
+    expect(
+      await rowsOf('SELECT 1 FROM scan_offline_reads WHERE idempotency_key = ?', [
+        sent.idempotencyKey,
+      ]),
+    ).toHaveLength(1);
+  });
 });

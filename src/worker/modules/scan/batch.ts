@@ -18,6 +18,7 @@ import { requireOfflineQueue } from './offline-policy.ts';
 import { unknownOutcome } from './outcome.ts';
 import { markScanOffline } from './repo-act-claim.ts';
 import {
+  offlineReadRecorded,
   offlineReadScan,
   onlineAtOf,
   recordOfflineRead,
@@ -29,7 +30,7 @@ import {
   captureObservedScanningSession,
   cloneObservedScanActor,
 } from './scanning-workspace-observation.ts';
-import { openAt } from './session-hours.ts';
+import { type HoursFields, openAt } from './session-hours.ts';
 
 /** Clock drift between a door and the server. */
 const ONLINE_SLACK_MS = 60_000;
@@ -78,20 +79,46 @@ async function doorOf(
   return { door: 'listed', expired: item.clientTs > roster.validUntil };
 }
 
-/** The session's status and offline mode in force at `t`, from its recorded changes; the current ones when it never changed. */
-function stateAt(actor: ScanActor, changes: readonly SessionChange[], t: number) {
+interface StateAt {
+  status: string;
+  mode: string;
+  /** Hours, hold and zone in force then; null when the log has none (older rows): the current ones apply. */
+  timing: HoursFields | null;
+}
+
+const timingOf = (raw: string | null): HoursFields | null => {
+  if (!raw) return null;
+  try {
+    const t = JSON.parse(raw) as { hours: string | null; hold: string | null; timeZone: string };
+    return { hours: t.hours, hold: t.hold, time_zone: t.timeZone };
+  } catch {
+    return null;
+  }
+};
+
+/** The session's status, offline mode and timing in force at `t`, from its recorded changes; the current ones when it never changed. */
+function stateAt(actor: ScanActor, changes: readonly SessionChange[], t: number): StateAt {
   const past = changes.filter((c) => c.at <= t).at(-1);
-  if (past) return { status: past.status, mode: past.mode };
+  if (past) return { status: past.status, mode: past.mode, timing: timingOf(past.timing) };
   const later = changes.find((c) => c.at > t);
-  if (later) return { status: later.prev_status, mode: later.prev_mode };
-  return { status: actor.scanningSession?.status ?? 'active', mode: offlineModeOf(actor.settings) };
+  if (later)
+    return {
+      status: later.prev_status,
+      mode: later.prev_mode,
+      timing: timingOf(later.prev_timing),
+    };
+  return {
+    status: actor.scanningSession?.status ?? 'active',
+    mode: offlineModeOf(actor.settings),
+    timing: null,
+  };
 }
 
 /**
  * Was the session taking reads at `t`, and could the door honestly have made one then? Each read is judged by
- * the status and mode in force at its own time (recorded when they changed, so an unrelated edit moves
- * nothing), by the hours at that time, and by the door's last online contact with nothing queued: a read dated
- * before it is a backdated one. A read that fails is recorded as a conflict and never admitted.
+ * the status, mode, hours and hold in force at its own time (recorded when they changed, so an Open now or an
+ * hours edit made later moves nothing), and by the door's last online contact: a read dated before it is a
+ * backdated one. A read that fails is recorded as a conflict and never admitted.
  */
 export function sessionAcceptsAt(
   actor: ScanActor,
@@ -105,8 +132,8 @@ export function sessionAcceptsAt(
   if (state.mode === 'stop' && (actor.scanningSession || t >= (actor.scanner?.updatedAt ?? 0)))
     return false;
   if (state.status !== 'active') return false;
-  const parent = captureObservedScanningSession(actor)?.parent;
-  return !parent || openAt(parent, t);
+  const hours = state.timing ?? captureObservedScanningSession(actor)?.parent;
+  return !hours || openAt(hours, t);
 }
 
 const endedOutcome = (at: number): ScanOutcome => ({
@@ -166,7 +193,12 @@ export async function syncBatch(
       );
       outcome = bare(done.outcome);
       scanId = outcome.scanId;
-      if (scanId && !done.outcome.replay)
+      // A replay was labelled by its first run, unless that stopped between the scan and its label.
+      if (
+        scanId &&
+        (!done.outcome.replay ||
+          !(await offlineReadRecorded(ctx.env.DB, actor.actorKey, item.idempotencyKey)))
+      )
         await markScanOffline(
           ctx.env.DB,
           { id: scanId, orgId: actor.orgId, mode: actor.mode },

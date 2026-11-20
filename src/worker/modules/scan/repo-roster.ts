@@ -73,6 +73,16 @@ export const offlineReadScan = async (db: D1Database, actorKey: string, key: str
     )
   )[0]?.scan_id ?? null;
 
+/** Whether the key's read was recorded: a replay with no row is one whose first run stopped before it. */
+export const offlineReadRecorded = async (db: D1Database, actorKey: string, key: string) =>
+  (
+    await all<{ one: 1 }>(
+      db,
+      'SELECT 1 AS one FROM scan_offline_reads WHERE actor_key = ? AND idempotency_key = ?',
+      [actorKey, key],
+    )
+  ).length > 0;
+
 export interface OfflineRead {
   id: string;
   actorKey: string;
@@ -124,23 +134,16 @@ export interface SessionChange {
   mode: string;
   prev_status: string;
   prev_mode: string;
+  /** Hours, hold and zone as JSON after the change; null on rows from before they were kept. */
+  timing: string | null;
+  prev_timing: string | null;
 }
 
-export const recordSessionChange = (
-  db: D1Database,
-  c: SessionChange & { sessionId: string; orgId: string },
-) =>
-  run(
-    db,
-    `INSERT OR IGNORE INTO scan_session_changes (session_id, org_id, at, status, mode, prev_status, prev_mode)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [c.sessionId, c.orgId, c.at, c.status, c.mode, c.prev_status, c.prev_mode],
-  );
-
+/** The session's status, offline mode and timing changes, kept by a trigger in the edit's own statement. */
 export const sessionChanges = (db: D1Database, sessionId: string) =>
   all<SessionChange>(
     db,
-    `SELECT at, status, mode, prev_status, prev_mode FROM scan_session_changes
+    `SELECT at, status, mode, prev_status, prev_mode, timing, prev_timing FROM scan_session_changes
      WHERE session_id = ? ORDER BY at`,
     [sessionId],
   );
@@ -153,6 +156,15 @@ export const touchOnlineAt = (db: D1Database, scannerId: string, orgId: string, 
      ON CONFLICT (scanner_id) DO UPDATE SET online_at = excluded.online_at WHERE excluded.online_at > online_at`,
     [scannerId, orgId, now],
   );
+
+/**
+ * The door scanned online: it was in touch with the server then, whatever its queue says. A queued read dated
+ * more than this before that scan is backdated. The slack lets an honest door that scans before its queue
+ * has drained still sync reads from a short outage; a longer one waits for the door's own clean contact.
+ */
+export const ONLINE_SCAN_SLACK_MS = 15 * 60_000;
+export const touchOnlineScan = (db: D1Database, scannerId: string, orgId: string, now: number) =>
+  touchOnlineAt(db, scannerId, orgId, now - ONLINE_SCAN_SLACK_MS);
 
 export const onlineAtOf = async (db: D1Database, scannerId: string): Promise<number> =>
   (

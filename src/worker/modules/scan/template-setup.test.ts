@@ -435,7 +435,7 @@ describe('template scan setup', () => {
     const db = fixture.kit.env.DB;
     const eventIds: string[] = [];
     for (let n = 0; n < 9; n++)
-      eventIds.push((await fixture.kit.event({ name: `Manual ${n}`, templateIds: [id] })).id);
+      eventIds.push((await fixture.kit.event({ templateIds: [id] })).id);
     const accepts = JSON.stringify({ templateIds: [id], eventIds });
     const settings = JSON.stringify(DEFAULT_SETTINGS);
     // The third event's insert lands a competing setup session that already admits nine events.
