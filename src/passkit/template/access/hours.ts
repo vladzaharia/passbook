@@ -133,9 +133,16 @@ export function endOfDay(t: number, timeZone: string, days = 1): number {
   return instantOf(timeZone, y, m, d, 0);
 }
 
-function spansOf(hours: WeeklyHours, day: AccessDay): Span[] {
+/** Weekly hours plus dated exceptions: `YYYY-MM-DD` replaces that day's spans; none is closed all day. */
+export type DatedHours = WeeklyHours & { dates?: Record<string, string[]> | undefined };
+
+export const dateKey = (y: number, m: number, d: number): string =>
+  `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+function spansOf(hours: DatedHours, y: number, m: number, d: number): Span[] {
   const out: Span[] = [];
-  for (const text of hours[day] ?? []) {
+  const day = DAYS[dowOf(y, m, d)] ?? 'mon';
+  for (const text of hours.dates?.[dateKey(y, m, d)] ?? hours[day] ?? []) {
     const span = parseSpan(text);
     if (span) out.push(span);
   }
@@ -143,25 +150,24 @@ function spansOf(hours: WeeklyHours, day: AccessDay): Span[] {
 }
 
 /** Open at an instant by the local wall clock: start inclusive, end exclusive, overnight spills into the next day. */
-export function isOpen(hours: WeeklyHours | undefined, timeZone: string, t: number): boolean {
+export function isOpen(hours: DatedHours | undefined, timeZone: string, t: number): boolean {
   if (hours === undefined) return true;
   const w = wall(t, timeZone);
-  for (const s of spansOf(hours, DAYS[w.dow] ?? 'mon'))
+  for (const s of spansOf(hours, w.y, w.m, w.d))
     if (w.min >= s.start && w.min < Math.min(s.end, DAY_MINUTES)) return true;
-  for (const s of spansOf(hours, DAYS[(w.dow + 6) % 7] ?? 'mon'))
+  for (const s of spansOf(hours, ...addDays(w.y, w.m, w.d, -1)))
     if (s.end > DAY_MINUTES && w.min < s.end - DAY_MINUTES) return true;
   return false;
 }
 
 /** Instants where `hours` may change state: span edges (every reading of an ambiguous time) and offset changes. */
-function edges(hours: WeeklyHours, timeZone: string, from: number, days: number): number[] {
+function edges(hours: DatedHours, timeZone: string, from: number, days: number): number[] {
   const w = wall(from, timeZone);
   const out: number[] = [];
   let prev = Math.floor(from / MINUTE) * MINUTE;
   for (let i = -1; i <= days; i++) {
     const [y, m, d] = addDays(w.y, w.m, w.d, i);
-    const day = DAYS[dowOf(y, m, d)] ?? 'mon';
-    for (const s of spansOf(hours, day))
+    for (const s of spansOf(hours, y, m, d))
       for (const minutes of [s.start, s.end]) out.push(...readings(timeZone, y, m, d, minutes));
     const mid = instantOf(timeZone, ...addDays(y, m, d, 1), 0);
     const offA = offsetAt(prev, timeZone);
@@ -186,7 +192,7 @@ function readings(timeZone: string, y: number, m: number, d: number, minutes: nu
 }
 
 /** The open state of the intersection of several schedules. */
-export function openAll(list: (WeeklyHours | undefined)[], timeZone: string, t: number): boolean {
+export function openAll(list: (DatedHours | undefined)[], timeZone: string, t: number): boolean {
   return list.every((h) => isOpen(h, timeZone, t));
 }
 
@@ -195,7 +201,7 @@ export function openAll(list: (WeeklyHours | undefined)[], timeZone: string, t: 
  * within `days` calendar days; null when it doesn't.
  */
 export function nextFlip(
-  list: (WeeklyHours | undefined)[],
+  list: (DatedHours | undefined)[],
   timeZone: string,
   now: number,
   days = 8,
@@ -210,7 +216,7 @@ export function nextFlip(
 
 /** When a closed schedule opens next (7 days ahead); null for none. Open already: `now`. */
 export function nextOpen(
-  list: (WeeklyHours | undefined)[],
+  list: (DatedHours | undefined)[],
   timeZone: string,
   now: number,
 ): number | null {
@@ -220,7 +226,7 @@ export function nextOpen(
 
 /** When an open schedule next closes; null when it stays open through the horizon. */
 export function closesAt(
-  list: (WeeklyHours | undefined)[],
+  list: (DatedHours | undefined)[],
   timeZone: string,
   now: number,
 ): number | null {

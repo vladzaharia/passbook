@@ -1,7 +1,7 @@
 import { Pencil } from 'lucide-react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
 import { zoneLabel } from '@/web/lib/timezones.ts';
-import { Button, Card, CardBody, CardHeader } from '@/web/ui/index.ts';
+import { Button, Callout, Card, CardBody, CardHeader } from '@/web/ui/index.ts';
 import { sessionAccepts, sessionRuleLabel } from './draft.ts';
 import { hoursSummary } from './session-hours.ts';
 
@@ -53,9 +53,16 @@ export function SessionSummary({
             <div className="grid gap-1 text-sm">
               <dt className="text-fg-muted">Hours</dt>
               <dd className="grid gap-0.5 font-medium text-fg-strong">
-                {hours.length ? hours.map((line) => <span key={line}>{line}</span>) : 'Always open'}
+                {hours.length
+                  ? hours.map((line) => <span key={line}>{line}</span>)
+                  : session.hoursInvalid
+                    ? 'Closed'
+                    : 'Always open'}
               </dd>
             </div>
+            {session.hoursInvalid ? (
+              <Callout tone="warning">Hours could not be read. Edit and save them again.</Callout>
+            ) : null}
           </dl>
         </div>
         <div className="border-t border-border pt-4">
