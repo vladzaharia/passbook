@@ -37,6 +37,7 @@ interface __BaseEnv_Env {
 	ASSETS: Fetcher;
 	PUBLIC_BASE_URL: string;
 	REDIRECT_HOSTS: string;
+	DEVELOPERS_HOSTS: string;
 	EMAIL_FROM: string;
 	SUPPORT_EMAIL: string;
 	OIDC_ISSUER: string;
@@ -74,7 +75,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "PUBLIC_BASE_URL" | "REDIRECT_HOSTS" | "EMAIL_FROM" | "SUPPORT_EMAIL" | "OIDC_ISSUER" | "OIDC_CLIENT_ID" | "OIDC_ADMIN_GROUP" | "OIDC_USER_GROUP" | "PLATFORM_PASS_TYPE_ID" | "PLATFORM_TEAM_ID" | "TURNSTILE_SITE_KEY" | "SSRF_DENY_HOSTS" | "SCAN_ENABLED" | "TURNSTILE_SECRET" | "SIGNER_PLATFORM_CERTIFICATE" | "SIGNER_PLATFORM_PRIVATE_KEY" | "BREAKGLASS_TOKEN_SHA256">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "PUBLIC_BASE_URL" | "REDIRECT_HOSTS" | "DEVELOPERS_HOSTS" | "EMAIL_FROM" | "SUPPORT_EMAIL" | "OIDC_ISSUER" | "OIDC_CLIENT_ID" | "OIDC_ADMIN_GROUP" | "OIDC_USER_GROUP" | "PLATFORM_PASS_TYPE_ID" | "PLATFORM_TEAM_ID" | "TURNSTILE_SITE_KEY" | "SSRF_DENY_HOSTS" | "SCAN_ENABLED" | "TURNSTILE_SECRET" | "SIGNER_PLATFORM_CERTIFICATE" | "SIGNER_PLATFORM_PRIVATE_KEY" | "BREAKGLASS_TOKEN_SHA256">> {}
 }
 declare module "*.txt" {
 	const value: string;

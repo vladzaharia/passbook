@@ -12,6 +12,7 @@ import { bundlePublicRoutes } from './modules/bundles/public-routes.ts';
 import { bundlesRoutes } from './modules/bundles/routes.ts';
 import { connectionsRoutes, connectorsRoutes, hooksRoutes } from './modules/connections/routes.ts';
 import { deliveryRoutes } from './modules/delivery/routes.ts';
+import { developerPortalRoutes } from './modules/developer/portal.ts';
 import { holdersRoutes } from './modules/holders/routes.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
@@ -213,6 +214,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/b', bundlePublicRoutes);
   app.route('/j', joinPublicRoutes);
   app.route('/hooks', hooksRoutes);
+  app.route('/developers', developerPortalRoutes);
 
   // The same JSON document at both paths: `/api/v1/docs` is the one to link. Everyone gets the
   // operations an API key can call; signed-in platform admins get the whole document.

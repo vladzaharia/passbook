@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkBundle,
+  DEV_BUDGET_BYTES,
+  DEV_FORBIDDEN,
   FORBIDDEN,
   initialAssets,
   SCAN_BUDGET_BYTES,
@@ -63,5 +65,30 @@ describe('check-bundle', () => {
   it('the scan run also forbids the e2e hook', () => {
     const { errors } = checkBundle(() => 'window.__passbookScan', html, 0, SCAN_FORBIDDEN);
     expect(errors).toContain('/assets/index.js contains __passbookScan');
+  });
+
+  it('the portal run counts stylesheets, holds 60 kB and refuses the router tree', () => {
+    expect(DEV_BUDGET_BYTES).toBe(60_000);
+    expect(initialAssets(html, true)).toEqual([
+      '/assets/index.js',
+      '/assets/ui.js',
+      '/assets/a.css',
+    ]);
+    const files: Record<string, string> = {
+      '/assets/index.js': 'ok',
+      '/assets/ui.js': 'ok',
+      '/assets/a.css': 'routeTree',
+    };
+    const { errors } = checkBundle(
+      (url) => files[url] ?? '',
+      html,
+      DEV_BUDGET_BYTES,
+      DEV_FORBIDDEN,
+      true,
+    );
+    expect(errors).toEqual(['/assets/a.css contains routeTree']);
+    const css = Array.from({ length: 80_000 }, () => Math.random().toString(36)).join('');
+    const over = checkBundle(() => css, html, DEV_BUDGET_BYTES, DEV_FORBIDDEN, true);
+    expect(over.errors.some((e) => e.includes('exceeds budget 60000 B'))).toBe(true);
   });
 });

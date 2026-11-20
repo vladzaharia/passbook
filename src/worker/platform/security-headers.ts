@@ -23,6 +23,29 @@ export function scanContentSecurityPolicy(): string {
   return contentSecurityPolicy(undefined, { scan: true });
 }
 
+/**
+ * /developers: prerendered pages and one same-origin script, so no inline script or style and no
+ * nonce. Trusted Types closes the DOM's HTML sinks; the portal's own code uses text only.
+ */
+export function developersContentSecurityPolicy(): string {
+  return [
+    "default-src 'none'",
+    "script-src 'self'",
+    "style-src 'self'",
+    "img-src 'self' data:",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "manifest-src 'self'",
+    "form-action 'self'",
+    "base-uri 'none'",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "require-trusted-types-for 'script'",
+    'upgrade-insecure-requests',
+  ].join('; ');
+}
+
 /** The Turnstile widget (join page only): its script and its challenge frame. */
 export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
 

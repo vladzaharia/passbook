@@ -48,6 +48,8 @@
   "vars": {
     "PUBLIC_BASE_URL": "https://passbook.mobile",
     "REDIRECT_HOSTS": "wallet.plrs.im",
+    // Answers 308 to /developers on PUBLIC_BASE_URL. The DNS record and Worker route are the owner's.
+    "DEVELOPERS_HOSTS": "developers.passbook.mobile",
     "EMAIL_FROM": "delivery@passbook.mobile",
     "SUPPORT_EMAIL": "support@passbook.mobile",
     "OIDC_ISSUER": "https://id.plrs.im",
