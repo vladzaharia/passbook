@@ -15,5 +15,6 @@ const result = await pb.passes.create({
   },
   holderEmail: 'ada@example.com',
   externalId: 'booking_8841',
+  sendEmail: true,
 });
 console.log(result);

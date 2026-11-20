@@ -12,6 +12,7 @@ import { UnauthenticatedError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { seesAccountEmails } from '../passes/account-email.ts';
+import { authOf, orgIdOf } from '../passes/http.ts';
 import { type ApiKeyAuthority, authorizeApiKeys } from './access.ts';
 import { idempotentSecret } from './idempotent-secret.ts';
 import { isOwnPersonalKey } from './service.ts';
@@ -126,7 +127,7 @@ export function registerKeyFamilyRoutes(router: Router): void {
     async (c) => {
       const ctx = serviceContext(c);
       const { id } = c.req.valid('param');
-      const { orgId } = c.req.valid('query');
+      const orgId = orgIdOf(authOf(c), c.req.valid('query').orgId);
       const authority = await authorizeKey(ctx, c.var.auth, orgId, id, 'integrations:read');
       return c.json(await getApiKey(ctx, authority, id, seesAccountEmails(authority)));
     },
@@ -146,7 +147,8 @@ export function registerKeyFamilyRoutes(router: Router): void {
     async (c) => {
       const ctx = serviceContext(c);
       const { id } = c.req.valid('param');
-      const { orgId, limit } = c.req.valid('query');
+      const { limit } = c.req.valid('query');
+      const orgId = orgIdOf(authOf(c), c.req.valid('query').orgId);
       // The audit log is behind `audit:read`: a member sees a key's trail with it, or their own personal key's.
       const authority = await authorizeKey(ctx, c.var.auth, orgId, id, 'audit:read');
       return c.json(await getApiKeyActivity(ctx, authority, id, limit));

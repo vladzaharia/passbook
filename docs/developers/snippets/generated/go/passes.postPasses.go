@@ -22,7 +22,8 @@ func main() {
     "ticketId": "TICKET-0001"
   },
   "holderEmail": "ada@example.com",
-  "externalId": "booking_8841"
+  "externalId": "booking_8841",
+  "sendEmail": true
 }`)
 	req, err := http.NewRequest("POST", "https://passbook.mobile/api/v1/passes", body)
 	if err != nil {

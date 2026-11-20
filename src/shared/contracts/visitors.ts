@@ -8,7 +8,7 @@ export type VisitorStatus = z.infer<typeof VisitorStatusSchema>;
 export const VISITOR_TABS = ['today', 'upcoming', 'past'] as const;
 
 export const VisitorQuerySchema = z.object({
-  orgId: IdSchema,
+  orgId: IdSchema.optional(),
   tab: z.enum(VISITOR_TABS).default('today'),
   /** The browser's local day, as epoch ms, so Today follows the viewer's clock. */
   dayStart: z.coerce.number().int().nonnegative(),
@@ -57,7 +57,8 @@ export const NewVisitorSchema = z
 export type NewVisitor = z.infer<typeof NewVisitorSchema>;
 
 export const VisitorParamsSchema = z.object({ id: IdSchema });
-export const VisitorOrgQuerySchema = z.object({ orgId: IdSchema });
+/** An org key leaves `orgId` out and acts in its own org. */
+export const VisitorOrgQuerySchema = z.object({ orgId: IdSchema.optional() });
 
 export const HostListSchema = z.object({
   /** Emails come only with members:manage. */

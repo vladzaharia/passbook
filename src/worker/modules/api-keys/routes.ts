@@ -16,6 +16,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { rolesGranting } from '../orgs/access.ts';
+import { authOf, orgIdOf } from '../passes/http.ts';
 import { type ApiKeyAuthority, authorizeApiKeys } from './access.ts';
 import { idempotentSecret } from './idempotent-secret.ts';
 import { authorizeKey, registerKeyFamilyRoutes } from './routes-family.ts';
@@ -35,7 +36,8 @@ apiKeysRoutes.use('*', limitBody(64 * 1024));
 // Missing scope is a bad request rather than an implicit platform selection.
 apiKeysRoutes.use('*', async (c, next) => {
   const method = c.req.method;
-  if ((method === 'GET' || method === 'DELETE') && c.req.query('orgId') === undefined) {
+  const ownOrg = c.var.auth?.kind === 'api_key' && c.var.auth.orgId !== null;
+  if ((method === 'GET' || method === 'DELETE') && !ownOrg && c.req.query('orgId') === undefined) {
     throw new BadRequestError('orgId is required.');
   }
   if (
@@ -68,7 +70,8 @@ register(
   },
   async (c) => {
     const ctx = serviceContext(c);
-    const query = c.req.valid('query');
+    const q = c.req.valid('query');
+    const query = { ...q, orgId: orgIdOf(authOf(c), q.orgId) };
     // A key lists its own children.
     if (c.var.auth?.kind === 'api_key')
       return c.json(
@@ -134,7 +137,7 @@ register(
   },
   async (c) => {
     const ctx = serviceContext(c);
-    const { orgId } = c.req.valid('query');
+    const orgId = orgIdOf(authOf(c), c.req.valid('query').orgId);
     const { id } = c.req.valid('param');
     // A member may end their own personal key; anything else needs `integrations:manage`; a key, its children.
     const authority = await authorizeKey(ctx, c.var.auth, orgId, id, 'integrations:manage');

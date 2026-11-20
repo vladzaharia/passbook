@@ -43,13 +43,13 @@ export class PassImportsResource {
   }
 
   /** The rows that failed the check, with a Problem column `GET /api/v1/pass-imports/{id}/errors.csv` */
-  downloadErrors(id: string, options?: RequestOptions): Promise<void> {
-    return this.core.request({ method: 'GET', path: `/api/v1/pass-imports/${encodeURIComponent(id)}/errors.csv` }, options);
+  downloadErrors(id: string, options?: RequestOptions): Promise<Response> {
+    return this.core.request({ method: 'GET', path: `/api/v1/pass-imports/${encodeURIComponent(id)}/errors.csv`, raw: true }, options);
   }
 
   /** What happened to each row, with the pass and its links `GET /api/v1/pass-imports/{id}/results.csv` */
-  downloadResults(id: string, options?: RequestOptions): Promise<void> {
-    return this.core.request({ method: 'GET', path: `/api/v1/pass-imports/${encodeURIComponent(id)}/results.csv` }, options);
+  downloadResults(id: string, options?: RequestOptions): Promise<Response> {
+    return this.core.request({ method: 'GET', path: `/api/v1/pass-imports/${encodeURIComponent(id)}/results.csv`, raw: true }, options);
   }
 
   /** Recent imports of this mode `GET /api/v1/pass-imports` */

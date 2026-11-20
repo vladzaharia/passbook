@@ -14,5 +14,6 @@ curl -X POST "https://passbook.mobile/api/v1/passes" \
     "ticketId": "TICKET-0001"
   },
   "holderEmail": "ada@example.com",
-  "externalId": "booking_8841"
+  "externalId": "booking_8841",
+  "sendEmail": true
 }'

@@ -24,7 +24,12 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { registerTemplateChannelRoutes } from '../channels/routes.ts';
-import { requireTenantSession, requireTenantSessionOrApiKey } from '../passes/http.ts';
+import {
+  authOf,
+  orgIdOf,
+  requireTenantSession,
+  requireTenantSessionOrApiKey,
+} from '../passes/http.ts';
 import { registerTemplateScanSetup } from '../scan/routes-template-setup.ts';
 import { eligibleTemplates } from './eligible.ts';
 import { cloneTemplate } from './fork.ts';
@@ -166,7 +171,13 @@ register(
     query: EligibleTemplateQuerySchema,
     response: EligibleTemplateListSchema,
   },
-  async (c) => c.json(await eligibleTemplates(serviceContext(c), c.var.auth, c.req.valid('query'))),
+  async (c) => {
+    const auth = authOf(c);
+    const q = c.req.valid('query');
+    return c.json(
+      await eligibleTemplates(serviceContext(c), auth, { ...q, orgId: orgIdOf(auth, q.orgId) }),
+    );
+  },
 );
 
 register(

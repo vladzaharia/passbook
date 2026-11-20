@@ -116,7 +116,7 @@ function operationOf(doc: OpenApiDoc, path: string, http: string, op: Operation)
   const okSchema = success
     ? op.responses[success]?.content?.['application/json']?.schema
     : undefined;
-  const raw = !okSchema && http === 'GET';
+  const raw = !okSchema && http === 'get';
   const binary = !bodySchema && name.method === 'upload' && http !== 'get';
   const cursor = cursorParam(doc, http.toUpperCase(), queryParams, okSchema);
 
