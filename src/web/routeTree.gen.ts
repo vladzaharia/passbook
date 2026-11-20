@@ -80,6 +80,7 @@ import { Route as AdminOOrgIdMessagesNewRouteImport } from './routes/admin/o/$or
 import { Route as AdminOOrgIdPassesIndexRouteImport } from './routes/admin/o/$orgId/passes/index'
 import { Route as AdminOOrgIdPassesPassIdRouteImport } from './routes/admin/o/$orgId/passes/$passId'
 import { Route as AdminOOrgIdPassesNewRouteImport } from './routes/admin/o/$orgId/passes/new'
+import { Route as AdminOOrgIdRetentionIndexRouteImport } from './routes/admin/o/$orgId/retention/index'
 import { Route as AdminOOrgIdScanningIndexRouteImport } from './routes/admin/o/$orgId/scanning/index'
 import { Route as AdminOOrgIdSettingsIndexRouteImport } from './routes/admin/o/$orgId/settings/index'
 import { Route as AdminOOrgIdTemplatesIndexRouteImport } from './routes/admin/o/$orgId/templates/index'
@@ -479,6 +480,12 @@ const AdminOOrgIdPassesNewRoute = AdminOOrgIdPassesNewRouteImport.update({
   path: '/passes/new',
   getParentRoute: () => AdminOOrgIdRouteRoute,
 } as any)
+const AdminOOrgIdRetentionIndexRoute =
+  AdminOOrgIdRetentionIndexRouteImport.update({
+    id: '/retention/',
+    path: '/retention/',
+    getParentRoute: () => AdminOOrgIdRouteRoute,
+  } as any)
 const AdminOOrgIdScanningIndexRoute =
   AdminOOrgIdScanningIndexRouteImport.update({
     id: '/scanning/',
@@ -656,6 +663,7 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/members/': typeof AdminOOrgIdMembersIndexRoute
   '/admin/o/$orgId/messages/': typeof AdminOOrgIdMessagesIndexRoute
   '/admin/o/$orgId/passes/': typeof AdminOOrgIdPassesIndexRoute
+  '/admin/o/$orgId/retention/': typeof AdminOOrgIdRetentionIndexRoute
   '/admin/o/$orgId/scanning/': typeof AdminOOrgIdScanningIndexRoute
   '/admin/o/$orgId/settings/': typeof AdminOOrgIdSettingsIndexRoute
   '/admin/o/$orgId/templates/': typeof AdminOOrgIdTemplatesIndexRoute
@@ -743,6 +751,7 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/members': typeof AdminOOrgIdMembersIndexRoute
   '/admin/o/$orgId/messages': typeof AdminOOrgIdMessagesIndexRoute
   '/admin/o/$orgId/passes': typeof AdminOOrgIdPassesIndexRoute
+  '/admin/o/$orgId/retention': typeof AdminOOrgIdRetentionIndexRoute
   '/admin/o/$orgId/scanning': typeof AdminOOrgIdScanningIndexRoute
   '/admin/o/$orgId/settings': typeof AdminOOrgIdSettingsIndexRoute
   '/admin/o/$orgId/templates': typeof AdminOOrgIdTemplatesIndexRoute
@@ -834,6 +843,7 @@ export interface FileRoutesById {
   '/admin/o/$orgId/members/': typeof AdminOOrgIdMembersIndexRoute
   '/admin/o/$orgId/messages/': typeof AdminOOrgIdMessagesIndexRoute
   '/admin/o/$orgId/passes/': typeof AdminOOrgIdPassesIndexRoute
+  '/admin/o/$orgId/retention/': typeof AdminOOrgIdRetentionIndexRoute
   '/admin/o/$orgId/scanning/': typeof AdminOOrgIdScanningIndexRoute
   '/admin/o/$orgId/settings/': typeof AdminOOrgIdSettingsIndexRoute
   '/admin/o/$orgId/templates/': typeof AdminOOrgIdTemplatesIndexRoute
@@ -926,6 +936,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/members/'
     | '/admin/o/$orgId/messages/'
     | '/admin/o/$orgId/passes/'
+    | '/admin/o/$orgId/retention/'
     | '/admin/o/$orgId/scanning/'
     | '/admin/o/$orgId/settings/'
     | '/admin/o/$orgId/templates/'
@@ -1013,6 +1024,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/members'
     | '/admin/o/$orgId/messages'
     | '/admin/o/$orgId/passes'
+    | '/admin/o/$orgId/retention'
     | '/admin/o/$orgId/scanning'
     | '/admin/o/$orgId/settings'
     | '/admin/o/$orgId/templates'
@@ -1103,6 +1115,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/members/'
     | '/admin/o/$orgId/messages/'
     | '/admin/o/$orgId/passes/'
+    | '/admin/o/$orgId/retention/'
     | '/admin/o/$orgId/scanning/'
     | '/admin/o/$orgId/settings/'
     | '/admin/o/$orgId/templates/'
@@ -1626,6 +1639,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOOrgIdPassesNewRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
+    '/admin/o/$orgId/retention/': {
+      id: '/admin/o/$orgId/retention/'
+      path: '/retention'
+      fullPath: '/admin/o/$orgId/retention/'
+      preLoaderRoute: typeof AdminOOrgIdRetentionIndexRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
     '/admin/o/$orgId/scanning/': {
       id: '/admin/o/$orgId/scanning/'
       path: '/scanning'
@@ -1799,6 +1819,7 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdMembersIndexRoute: typeof AdminOOrgIdMembersIndexRoute
   AdminOOrgIdMessagesIndexRoute: typeof AdminOOrgIdMessagesIndexRoute
   AdminOOrgIdPassesIndexRoute: typeof AdminOOrgIdPassesIndexRoute
+  AdminOOrgIdRetentionIndexRoute: typeof AdminOOrgIdRetentionIndexRoute
   AdminOOrgIdScanningIndexRoute: typeof AdminOOrgIdScanningIndexRoute
   AdminOOrgIdSettingsIndexRoute: typeof AdminOOrgIdSettingsIndexRoute
   AdminOOrgIdTemplatesIndexRoute: typeof AdminOOrgIdTemplatesIndexRoute
@@ -1835,6 +1856,7 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
   AdminOOrgIdMembersIndexRoute: AdminOOrgIdMembersIndexRoute,
   AdminOOrgIdMessagesIndexRoute: AdminOOrgIdMessagesIndexRoute,
   AdminOOrgIdPassesIndexRoute: AdminOOrgIdPassesIndexRoute,
+  AdminOOrgIdRetentionIndexRoute: AdminOOrgIdRetentionIndexRoute,
   AdminOOrgIdScanningIndexRoute: AdminOOrgIdScanningIndexRoute,
   AdminOOrgIdSettingsIndexRoute: AdminOOrgIdSettingsIndexRoute,
   AdminOOrgIdTemplatesIndexRoute: AdminOOrgIdTemplatesIndexRoute,

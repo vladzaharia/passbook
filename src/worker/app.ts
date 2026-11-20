@@ -24,6 +24,7 @@ import { orgsRoutes } from './modules/orgs/routes.ts';
 import { passesRoutes } from './modules/passes/routes.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
+import { retentionPlatformRoutes, retentionRoutes } from './modules/retention/routes.ts';
 import { sandboxRoutes } from './modules/sandbox/routes.ts';
 import { scanRoutes } from './modules/scan/routes.ts';
 import { scanDisplayRoutes } from './modules/scan/routes-display.ts';
@@ -135,7 +136,9 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/orgs', orgsRoutes);
   app.route('/api/v1/orgs', walletCredentialRoutes);
   app.route('/api/v1/orgs', walletEnrolmentRoutes);
+  app.route('/api/v1/orgs', retentionRoutes);
   app.route('/api/v1/platform', walletPlatformRoutes);
+  app.route('/api/v1/platform', retentionPlatformRoutes);
   app.route('/api/v1/templates', templatesRoutes);
   app.route('/api/v1/passes', passesRoutes);
   app.route('/api/v1/pass-imports', passImportRoutes);

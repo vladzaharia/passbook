@@ -1,0 +1,237 @@
+import { OkSchema } from '../../../shared/contracts/common.ts';
+import {
+  HoldIdParamsSchema,
+  HoldListSchema,
+  HoldParamsSchema,
+  PlaceHoldSchema,
+  ReceiptFileSchema,
+  ReceiptIdParamsSchema,
+  ReceiptListSchema,
+} from '../../../shared/contracts/retention.ts';
+import { requireAdmin } from '../../platform/auth.ts';
+import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { serviceContext } from '../../platform/service-context.ts';
+import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
+import { listHoldViews, listReceiptItems, receiptFile } from './console.ts';
+import { type HoldBy, placeHold, releaseHold } from './holds.ts';
+
+type C = Parameters<typeof authOf>[0];
+
+const sessionOf = (c: C) => {
+  const auth = authOf(c);
+  if (auth.kind !== 'session') throw new UnauthenticatedError();
+  return auth;
+};
+
+/** An org member with the capability; the grant re-checks it at commit. */
+async function orgBy(c: C, orgId: string, capability: 'audit:read' | 'org:manage') {
+  const authority = await tenantAuthorityOf(serviceContext(c), sessionOf(c), orgId, capability);
+  if (authority.kind !== 'session') throw new ForbiddenError();
+  return authority;
+}
+
+const platformBy = (c: C): HoldBy => {
+  const auth = sessionOf(c);
+  return { kind: 'platform', admin: { userId: auth.userId, sessionId: auth.sessionId } };
+};
+
+const download = (c: C, name: string) =>
+  c.header('content-disposition', `attachment; filename="${name}"`);
+
+/**
+ * Mount at /api/v1/orgs. Reading holds and receipts needs `audit:read`; placing and releasing an org hold
+ * needs `org:manage`. A hold PassBook placed is listed read-only and an org cannot release it.
+ */
+export const retentionRoutes = createRouter();
+guard(retentionRoutes, requireTenantSession);
+retentionRoutes.use('*', async (c, next) => {
+  await next();
+  c.header('cache-control', 'no-store');
+});
+
+register(
+  retentionRoutes,
+  'retention',
+  {
+    method: 'get',
+    path: '/{orgId}/retention/holds',
+    summary: 'List legal holds',
+    params: HoldParamsSchema,
+    response: HoldListSchema,
+  },
+  async (c) => {
+    const { orgId } = c.req.valid('param');
+    await orgBy(c, orgId, 'audit:read');
+    return c.json({ items: await listHoldViews(serviceContext(c).env.DB, orgId, 'org') });
+  },
+);
+
+register(
+  retentionRoutes,
+  'retention',
+  {
+    method: 'post',
+    path: '/{orgId}/retention/holds',
+    summary: 'Place a legal hold on the organization or one pass',
+    params: HoldParamsSchema,
+    body: PlaceHoldSchema,
+    response: OkSchema,
+    status: 201,
+  },
+  async (c) => {
+    const { orgId } = c.req.valid('param');
+    const authority = await orgBy(c, orgId, 'org:manage');
+    await placeHold(serviceContext(c), orgId, c.req.valid('json'), { kind: 'org', authority });
+    return c.json({ ok: true as const }, 201);
+  },
+);
+
+register(
+  retentionRoutes,
+  'retention',
+  {
+    method: 'post',
+    path: '/{orgId}/retention/holds/{holdId}/release',
+    summary: 'Release a legal hold the organization placed',
+    params: HoldIdParamsSchema,
+    response: OkSchema,
+  },
+  async (c) => {
+    const { orgId, holdId } = c.req.valid('param');
+    const authority = await orgBy(c, orgId, 'org:manage');
+    await releaseHold(serviceContext(c), orgId, holdId, { kind: 'org', authority });
+    return c.json({ ok: true as const });
+  },
+);
+
+register(
+  retentionRoutes,
+  'retention',
+  {
+    method: 'get',
+    path: '/{orgId}/retention/receipts',
+    summary: 'List retention receipts',
+    params: HoldParamsSchema,
+    response: ReceiptListSchema,
+  },
+  async (c) => {
+    const { orgId } = c.req.valid('param');
+    await orgBy(c, orgId, 'audit:read');
+    return c.json({ items: await listReceiptItems(serviceContext(c), orgId) });
+  },
+);
+
+register(
+  retentionRoutes,
+  'retention',
+  {
+    method: 'get',
+    path: '/{orgId}/retention/receipts/{receiptId}/download',
+    summary: 'Download one retention receipt',
+    params: ReceiptIdParamsSchema,
+    response: ReceiptFileSchema,
+  },
+  async (c) => {
+    const { orgId, receiptId } = c.req.valid('param');
+    await orgBy(c, orgId, 'audit:read');
+    const file = await receiptFile(serviceContext(c), orgId, receiptId);
+    download(c, `retention-receipt-${receiptId}.json`);
+    return c.json(file);
+  },
+);
+
+/** Mount at /api/v1/platform: a platform administrator places holds an org cannot release. */
+export const retentionPlatformRoutes = createRouter();
+retentionPlatformRoutes.use('*', requireAdmin);
+retentionPlatformRoutes.use('*', async (c, next) => {
+  await next();
+  c.header('cache-control', 'no-store');
+});
+
+register(
+  retentionPlatformRoutes,
+  'retention',
+  {
+    method: 'get',
+    path: '/orgs/{orgId}/retention/holds',
+    summary: 'List the legal holds of an organization',
+    params: HoldParamsSchema,
+    response: HoldListSchema,
+  },
+  async (c) =>
+    c.json({
+      items: await listHoldViews(serviceContext(c).env.DB, c.req.valid('param').orgId, 'platform'),
+    }),
+);
+
+register(
+  retentionPlatformRoutes,
+  'retention',
+  {
+    method: 'post',
+    path: '/orgs/{orgId}/retention/holds',
+    summary: 'Place a platform legal hold; only a platform administrator releases it',
+    params: HoldParamsSchema,
+    body: PlaceHoldSchema,
+    response: OkSchema,
+    status: 201,
+  },
+  async (c) => {
+    await placeHold(
+      serviceContext(c),
+      c.req.valid('param').orgId,
+      c.req.valid('json'),
+      platformBy(c),
+    );
+    return c.json({ ok: true as const }, 201);
+  },
+);
+
+register(
+  retentionPlatformRoutes,
+  'retention',
+  {
+    method: 'post',
+    path: '/orgs/{orgId}/retention/holds/{holdId}/release',
+    summary: 'Release any legal hold',
+    params: HoldIdParamsSchema,
+    response: OkSchema,
+  },
+  async (c) => {
+    const { orgId, holdId } = c.req.valid('param');
+    await releaseHold(serviceContext(c), orgId, holdId, platformBy(c));
+    return c.json({ ok: true as const });
+  },
+);
+
+register(
+  retentionPlatformRoutes,
+  'retention',
+  {
+    method: 'get',
+    path: '/orgs/{orgId}/retention/receipts',
+    summary: 'List the retention receipts of an organization',
+    params: HoldParamsSchema,
+    response: ReceiptListSchema,
+  },
+  async (c) =>
+    c.json({ items: await listReceiptItems(serviceContext(c), c.req.valid('param').orgId) }),
+);
+
+register(
+  retentionPlatformRoutes,
+  'retention',
+  {
+    method: 'get',
+    path: '/orgs/{orgId}/retention/receipts/{receiptId}/download',
+    summary: 'Download one retention receipt of an organization',
+    params: ReceiptIdParamsSchema,
+    response: ReceiptFileSchema,
+  },
+  async (c) => {
+    const { orgId, receiptId } = c.req.valid('param');
+    download(c, `retention-receipt-${receiptId}.json`);
+    return c.json(await receiptFile(serviceContext(c), orgId, receiptId));
+  },
+);

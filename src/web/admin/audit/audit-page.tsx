@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { RETENTION_COPY } from '@/shared/copy/retention.ts';
 import { Badge, Card, CardBody, PageHeader } from '@/web/ui/index.ts';
 import { useOrgPages } from '../orgs/org-pages.ts';
 import { useOrgList } from '../orgs/queries.ts';
@@ -6,6 +7,7 @@ import { AuditFilters } from './audit-filters.tsx';
 import type { AuditSearch } from './audit-search.ts';
 import { AuditTable } from './audit-table.tsx';
 import { EntryDrawer } from './entry-drawer.tsx';
+import { ExportButton } from './export-button.tsx';
 import { usePlatformAuditLog } from './queries.ts';
 
 export function AuditPage({
@@ -46,6 +48,14 @@ export function AuditPage({
     <>
       <PageHeader
         title="Audit log"
+        description={RETENTION_COPY.auditNote(365)}
+        actions={
+          <ExportButton
+            path="/api/v1/audit/platform"
+            query={{ ...filters, filterOrgId: undefined, orgId }}
+            orgName={orgName}
+          />
+        }
         meta={
           <Badge className="max-w-full break-words whitespace-normal">
             Organization filter: {orgId ? (orgName(orgId) ?? orgId) : 'All organizations'}

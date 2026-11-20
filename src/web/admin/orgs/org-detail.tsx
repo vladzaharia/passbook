@@ -26,6 +26,8 @@ import {
   toast,
 } from '@/web/ui/index.ts';
 import { CreatedCallout, useCreated } from '../passes/created.tsx';
+import { HoldsCard } from '../retention/holds-card.tsx';
+import { ReceiptsCard } from '../retention/receipts-card.tsx';
 import { BootstrapOrgAdmin, ProvisioningCounts, showBootstrap } from './org-provisioning.tsx';
 import { OrgStatus } from './orgs-page.tsx';
 import { useDeleteOrg, useOrg, useSetOrgStatus } from './queries.ts';
@@ -215,6 +217,8 @@ export function OrgDetailPage({
             Signing identities are managed under Identities.
           </CardBody>
         </Card>
+        <HoldsCard scope="platform" orgId={org.id} canManage />
+        <ReceiptsCard scope="platform" orgId={org.id} />
       </TwoPane>
       <TypedConfirmDialog
         open={deleting}

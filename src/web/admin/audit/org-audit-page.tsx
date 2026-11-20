@@ -1,5 +1,7 @@
+import { Link } from '@tanstack/react-router';
 import { X } from 'lucide-react';
 import { useId } from 'react';
+import { RETENTION_COPY } from '@/shared/copy/retention.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import { Button, Card, CardBody, Combobox, EmptyState, Label, PageHeader } from '@/web/ui/index.ts';
 import { ACTION_OPTIONS } from './audit-filters.tsx';
@@ -7,6 +9,7 @@ import type { AuditSearch } from './audit-search.ts';
 import { AuditTable } from './audit-table.tsx';
 import { DateFilter } from './date-filter.tsx';
 import { EntryDrawer } from './entry-drawer.tsx';
+import { ExportButton } from './export-button.tsx';
 import { useTenantAuditLog } from './queries.ts';
 
 const NO_NAME = () => undefined;
@@ -45,7 +48,28 @@ export function OrgAuditPage({
       : ACTION_OPTIONS;
   return (
     <>
-      <PageHeader title="Audit log" />
+      <PageHeader
+        title="Audit log"
+        description={
+          <>
+            {RETENTION_COPY.auditNote(365)}{' '}
+            <Link
+              to="/admin/o/$orgId/retention"
+              params={{ orgId: allowed }}
+              className="text-accent-fg underline underline-offset-2"
+            >
+              Holds and receipts
+            </Link>
+          </>
+        }
+        actions={
+          <ExportButton
+            path="/api/v1/audit"
+            query={{ ...filters, orgId: allowed }}
+            orgName={NO_NAME}
+          />
+        }
+      />
       <Card className="mb-6">
         <CardBody>
           <search aria-label="Filters" className="grid gap-3 sm:grid-cols-2">
