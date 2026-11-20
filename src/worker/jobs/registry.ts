@@ -1,4 +1,5 @@
 import { handleCapabilityChange } from '../modules/channels/capability.ts';
+import { handleEntitlementApply } from '../modules/channels/entitlement-apply.ts';
 import { handleAppleBump, handleReplaceCode } from '../modules/channels/jobs.ts';
 import { handleConnectionWebhook, handlePassRefresh } from '../modules/connections/jobs.ts';
 import { handleEmailSend, handlePushDeliver } from '../modules/delivery/jobs.ts';
@@ -36,6 +37,7 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'wallet.projection_system': handleProjectionSystem,
   'channel.apple_bump': handleAppleBump,
   'channel.capability': handleCapabilityChange,
+  'channel.entitlement': handleEntitlementApply,
   'channel.replace_code': handleReplaceCode,
   'prints.bulk': handlePrintsBulk,
 };
@@ -74,6 +76,8 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'channel.apple_bump':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'channel.capability':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'channel.entitlement':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'channel.replace_code':
       return JOB_HANDLERS[job.kind](job, ctx);

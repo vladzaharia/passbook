@@ -5,18 +5,19 @@ import {
   type EnrolmentGateRow,
   findEnrolmentGateRow,
   walletEnrolmentIssuesSql,
+  walletEntitled,
 } from './repo-enrolment-gate.ts';
 
 export { walletEnrolmentIssuesSql };
 
 /**
  * The only place that decides whether Google or Samsung may issue, update, offer or call out.
- * Account setup and credential storage never consult it. Two layers: the platform release
- * (`not_released`, sync) and the org's enrolment in the pass's mode (`not_enrolled`, needs the
- * database). Enabling a provider is a release decision made here; no other file may encode
+ * Account setup and credential storage never consult it. Three layers: the platform release
+ * (`not_released`, sync), the org's plan (`not_included`) and the org's enrolment in the pass's mode
+ * (`not_enrolled`); the last two need the database. Enabling a provider is a release decision made here; no other file may encode
  * "provider X is off".
  */
-export type WalletProviderDisabledReason = 'not_released' | 'not_enrolled';
+export type WalletProviderDisabledReason = 'not_released' | 'not_included' | 'not_enrolled';
 
 type Mode = 'live' | 'test';
 const MODES: readonly Mode[] = ['live', 'test'];
@@ -67,6 +68,7 @@ export async function walletProviderDisabledReason(
 ): Promise<WalletProviderDisabledReason | null> {
   const released = walletProviderReleaseReason(provider, mode);
   if (released) return released;
+  if (!(await walletEntitled(db, provider, orgId))) return 'not_included';
   const row = await findEnrolmentGateRow(db, provider, orgId, mode);
   return walletEnrolmentIssues(row) ? null : 'not_enrolled';
 }

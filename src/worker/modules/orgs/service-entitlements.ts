@@ -16,6 +16,7 @@ import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor } from '../audit/service.ts';
+import { onEntitlementsChanged } from '../channels/entitlement-apply.ts';
 import {
   orgEntitlementsRow,
   orgExists,
@@ -272,6 +273,8 @@ export async function setOrgEntitlements(
     if (classifyD1Error(error)?.kind === 'unique') throw changed();
     throw error;
   }
+  // Delivery channels the plan gates converge their passes: one channel-apply run per template.
+  await onEntitlementsChanged(ctx, orgId, was, after, admin.userId);
   ctx.log.info('org.entitlements_set', { orgId, preset: input.preset });
   return readOrgEntitlements(ctx, orgId);
 }

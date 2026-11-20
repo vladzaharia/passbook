@@ -22,6 +22,8 @@ interface Row {
   default?: unknown;
   ceiling?: number;
   blockedByPlatform?: boolean;
+  blockedByPlan?: boolean;
+  planBlocked?: string[];
 }
 const item = (key: string, row: Row) => ({
   scope: 'org:o1',
@@ -111,6 +113,34 @@ describe('org settings inheritance', () => {
     expect(screen.queryByText(/printing/i)).toBeNull();
     expect(screen.queryByRole('switch', { name: 'Linked NFC allowed' })).toBeNull();
     expect(screen.queryByText('Off for this organization')).toBeNull();
+  });
+
+  it('locks the NFC tag switch while the plan does not include NFC, with the reason in the tooltip', async () => {
+    await setup({
+      'nfc.tags': { value: { enabled: true }, default: { enabled: true }, blockedByPlan: true },
+    });
+    expect(
+      await screen.findByLabelText(
+        'Not available. Not included for this organization. Ask PassBook to turn it on. Copies stay as they are.',
+      ),
+    ).toHaveTextContent('Not available');
+    expect(screen.queryByRole('switch', { name: 'Linked NFC allowed' })).toBeNull();
+  });
+
+  it('locks every channel the plan does not include, and leaves the others switchable', async () => {
+    await setup({
+      'nfc.tags': { value: { enabled: true }, default: { enabled: true }, blockedByPlan: true },
+      'channels.blocked': { value: [], default: [], planBlocked: ['google', 'paper', 'nfc'] },
+    });
+    expect(await screen.findByRole('switch', { name: 'Apple Wallet allowed' })).toBeEnabled();
+    expect(screen.getByRole('switch', { name: 'Samsung Wallet allowed' })).toBeEnabled();
+    for (const name of ['Google Wallet allowed', 'Paper allowed', 'Linked NFC allowed'])
+      expect(screen.queryByRole('switch', { name })).toBeNull();
+    expect(
+      screen.getAllByLabelText(
+        'Not available. Not included for this organization. Ask PassBook to turn it on. Copies stay as they are.',
+      ),
+    ).toHaveLength(3);
   });
 
   it('leaves the NFC tag switch usable when the platform switch is on', async () => {

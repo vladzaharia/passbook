@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts';
+import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { decodePlatformSettings, platformSettingsStmt } from '../settings/service.ts';
@@ -39,6 +40,21 @@ async function readOf(ctx: ServiceContext, actor: ScanActor, input: TagInput) {
   return read;
 }
 
+/**
+ * Why a read that is not a UID tag is refused. A SUN tag below the plan's Secure level is not allowed; at
+ * Secure it stays invalid until its plugin.
+ */
+async function unreadable(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  read: Awaited<ReturnType<typeof readOf>>,
+): Promise<'tag_invalid' | 'tag_not_allowed'> {
+  if (!read) return 'tag_invalid';
+  return isEntitled(await entitlementsOf(ctx, actor.orgId), 'nfc', 'secure')
+    ? 'tag_invalid'
+    : 'tag_not_allowed';
+}
+
 /** `POST /resolve` with a tag read (design §4.2): one batch, then the chosen pass's own answer. */
 export async function resolveTag(
   ctx: ServiceContext,
@@ -51,7 +67,11 @@ export async function resolveTag(
   actor = cloneObservedScanActor(actor);
   const read = await readOf(ctx, actor, req.input);
   if (!read || 'sun' in read)
-    return { outcome: tagRefusal('tag_invalid'), evaluatedSnapshot: null, credentialContext: null };
+    return {
+      outcome: tagRefusal(await unreadable(ctx, actor, read)),
+      evaluatedSnapshot: null,
+      credentialContext: null,
+    };
   if ('code' in read)
     return resolveOutcome(ctx, actor, { ...req, input: { code: read.code, method: 'nfc' } });
   const credentials = frozen(
@@ -110,7 +130,11 @@ export async function actTag(
 ): Promise<ScanEvaluation> {
   const read = await readOf(ctx, actor, req.input);
   if (!read || 'sun' in read)
-    return { outcome: tagRefusal('tag_invalid'), evaluatedSnapshot: null, credentialContext: null };
+    return {
+      outcome: tagRefusal(await unreadable(ctx, actor, read)),
+      evaluatedSnapshot: null,
+      credentialContext: null,
+    };
   if ('code' in read) return act(ctx, actor, { ...req, input: { code: read.code, method: 'nfc' } });
   const credentials = await credentialTombstoneRefsForInput(
     ctx,

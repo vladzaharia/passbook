@@ -4,10 +4,13 @@ import type {
   TagKeysetViewSchema,
 } from '../../../shared/contracts/nfc-tag-keysets.ts';
 import type { CreateTagKeysetSchema } from '../../../shared/contracts/nfc-tags.ts';
+import { featureNotIncluded } from '../../../shared/copy/entitlements.ts';
 import { loadKekRing } from '../../platform/crypto.ts';
 import { classifyD1Error } from '../../platform/db.ts';
+import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
 import {
   ConflictError,
+  FeatureNotIncludedError,
   ForbiddenError,
   NotFoundError,
   ValidationError,
@@ -153,6 +156,8 @@ export async function createKeyset(
   a: KeysetAuthority,
   input: z.infer<typeof CreateTagKeysetSchema>,
 ): Promise<MadeKeyset> {
+  if (!isEntitled(await entitlementsOf(ctx, a.orgId), 'nfc', 'secure'))
+    throw new FeatureNotIncludedError('nfc', featureNotIncluded('nfc'));
   if ((await liveKeysetCount(ctx.env.DB, a.orgId, a.mode)) >= KEYSETS_PER_ORG_MODE)
     throw conflict(
       `${KEYSETS_PER_ORG_MODE} keysets are in use. Disable one first.`,
