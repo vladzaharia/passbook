@@ -7,6 +7,7 @@ import {
   tenantPassAuthoritySql,
 } from '../passes/repo-authority.ts';
 import type { TemplateAuthority } from './access.ts';
+import { creatorGrantsParams, creatorGrantsSql } from './repo-key-creator.ts';
 
 /** Bind a captured grant to the actual row and recheck it at the D1 statement. */
 export function templateAuthorityPredicate(
@@ -16,6 +17,15 @@ export function templateAuthorityPredicate(
   deferred = false,
 ): { sql: string; params: SqlValue[] } {
   if (deferred) return deferredPredicate(authority, orgSql);
+  if (authority.kind === 'api_key')
+    return {
+      sql: `(${orgSql}) = ? AND (${tenantPassAuthoritySql(authority)}) AND ${creatorGrantsSql}`,
+      params: [
+        authority.orgId,
+        ...tenantPassAuthorityParams(authority, now),
+        ...creatorGrantsParams(authority.membershipId, authority.userId, authority.capability),
+      ],
+    };
   if (authority.kind === 'session') {
     if (
       authority.capability !== 'templates:author' &&
@@ -51,6 +61,8 @@ function deferredPredicate(
   authority: TemplateAuthority,
   orgSql: string,
 ): { sql: string; params: SqlValue[] } {
+  // Queued work outlives a key's request and is never a key's to start.
+  if (authority.kind === 'api_key') return { sql: `((${orgSql}) IS NULL AND 0)`, params: [] };
   if (authority.kind === 'platform')
     return {
       sql: `(${orgSql}) IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = ? AND u.status = 'active'
@@ -85,7 +97,7 @@ export async function hasTemplateAuthority(
 ): Promise<boolean> {
   const predicate = templateAuthorityPredicate(authority, '?', now, deferred);
   const row = await first<{ ok: number }>(db, `SELECT 1 AS ok WHERE ${predicate.sql}`, [
-    authority.kind === 'session' ? authority.orgId : null,
+    authority.kind === 'platform' ? null : authority.orgId,
     ...predicate.params,
   ]);
   return !!row;

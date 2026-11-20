@@ -48,18 +48,24 @@ import { VERSION_BODY_LIMIT } from './version-files.ts';
 export const templatesRoutes = createRouter({ bodyLimit: false });
 /** The archive upload and the version save (base64 images) have their own caps below. */
 templatesRoutes.use('*', defaultBodyLimit(/\/(uploads|[^/]+\/(versions|use|use\/check))$/));
+/** Writes that declare their own `auth` (keys included): the router guard leaves them to it. */
+const OWN_AUTH_WRITES =
+  /\/templates\/[^/]+\/(use|candidates|candidates\/[^/]+\/approve|releases|preview)\/?$/;
+
 // Template reads allow scoped API keys; mutations require a session and are authorized per org.
 templatesRoutes.use(
   '*',
   declareKeyAccess(
     async (c, next) =>
-      c.req.method === 'GET'
-        ? requireTenantSessionOrApiKey(
-            /\/templates\/eligible\/?$/.test(c.req.path)
-              ? ['templates:read', 'passes:read']
-              : 'templates:read',
-          )(c, next)
-        : requireTenantSession(c, next),
+      c.req.method === 'POST' && OWN_AUTH_WRITES.test(c.req.path)
+        ? next()
+        : c.req.method === 'GET'
+          ? requireTenantSessionOrApiKey(
+              /\/templates\/eligible\/?$/.test(c.req.path)
+                ? ['templates:read', 'passes:read']
+                : 'templates:read',
+            )(c, next)
+          : requireTenantSession(c, next),
     { read: ['templates:read'] },
   ),
 );
@@ -273,6 +279,7 @@ register(
     method: 'post',
     path: '/{id}/preview',
     summary: 'Render pass.json for input',
+    auth: { scope: 'templates:read' },
     params: IdParamSchema,
     query: TemplateScopeQuerySchema,
     body: PreviewRequestSchema,

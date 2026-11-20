@@ -1,10 +1,11 @@
-import type { AuthContext } from '../../platform/auth.ts';
+import type { ApiKeyAuth, AuthContext } from '../../platform/auth.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { waiveFeature } from '../../platform/feature-guard.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { loadUserAccessRevision } from '../passes/repo-access-revision.ts';
 import { hasTemplateAuthority } from './repo-authority.ts';
+import { creatorMembership, keyCreator } from './repo-key-creator.ts';
 
 export type PlatformSessionAuthority = {
   kind: 'platform';
@@ -13,18 +14,30 @@ export type PlatformSessionAuthority = {
   /** `users.access_revision` at upload: a queued import ends if the admin was disabled meanwhile. */
   userAccessRevision?: number;
 };
+/**
+ * A Test-mode key acting as its creator: the template rows record `userId` as author or reviewer,
+ * and the creator's membership must still grant `capability` wherever the authority is rechecked.
+ */
+export type KeyTemplateAuthority = Extract<TenantPassWrite, { kind: 'api_key' }> & {
+  userId: string;
+  membershipId: string;
+  capability: TemplateCapability;
+};
+export type TemplateCapability = 'templates:author' | 'templates:review' | 'templates:publish';
 export type TemplateAuthority =
   | Extract<TenantPassWrite, { kind: 'session' }>
-  | PlatformSessionAuthority;
+  | PlatformSessionAuthority
+  | KeyTemplateAuthority;
 
 /** Authorize the actual destination organization, never a caller-supplied replacement for it. */
 export async function authorizeTemplateWrite(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   orgId: string | null,
-  capability: 'templates:author' | 'templates:review' | 'templates:publish',
+  capability: TemplateCapability,
 ): Promise<TemplateAuthority> {
   if (!auth) throw new UnauthenticatedError();
+  if (auth.kind === 'api_key') return keyTemplateAuthority(ctx, auth, orgId, capability);
   if (auth.kind !== 'session') throw new ForbiddenError();
   if (orgId !== null) {
     const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
@@ -44,6 +57,34 @@ export async function authorizeTemplateWrite(
   return authority;
 }
 
+/**
+ * Test-mode keys only: Live approval and release stay with people. The key acts as the member who
+ * created it, so the same reviewer rules apply to that member's work.
+ */
+async function keyTemplateAuthority(
+  ctx: ServiceContext,
+  auth: ApiKeyAuth,
+  orgId: string | null,
+  capability: TemplateCapability,
+): Promise<KeyTemplateAuthority> {
+  if (orgId === null || auth.mode !== 'test')
+    throw new ForbiddenError(
+      'Only a Test key can do this. Use a person for Live.',
+      'KEY_TEST_ONLY',
+    );
+  const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
+  if (authority.kind !== 'api_key') throw new ForbiddenError();
+  const userId = await keyCreator(ctx.env.DB, auth.keyId);
+  const membershipId =
+    userId === null ? null : await creatorMembership(ctx.env.DB, orgId, userId, capability);
+  if (userId === null || membershipId === null)
+    throw new ForbiddenError(
+      "The key's creator is no longer a member who can do this. Create a new key.",
+      'KEY_CREATOR_GONE',
+    );
+  return { ...authority, userId, membershipId, capability };
+}
+
 /** Recheck a captured grant immediately before a non-D1 side effect. */
 export async function assertTemplateAuthority(
   ctx: ServiceContext,
@@ -52,4 +93,9 @@ export async function assertTemplateAuthority(
 ): Promise<void> {
   if (!(await hasTemplateAuthority(ctx.env.DB, authority, ctx.clock.now(), deferred)))
     throw new ForbiddenError();
+}
+
+/** A key reaches the Apple release path only; Google and Samsung projections stay with people. */
+export function keysApplyOnly(auth: AuthContext | undefined, provider: string): void {
+  if (auth?.kind === 'api_key' && provider !== 'apple') throw new ForbiddenError();
 }

@@ -24175,6 +24175,16 @@
     },
     "/api/v1/templates/{id}/preview": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "templates:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Render pass.json for input",
         "tags": [
           "templates"
@@ -26578,6 +26588,16 @@
     },
     "/api/v1/templates/{id}/use": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "templates:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Make a template in an organization from a blueprint",
         "tags": [
           "templates"
@@ -28818,6 +28838,16 @@
         ]
       },
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "templates:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Create a template release candidate",
         "tags": [
           "templates"
@@ -29341,7 +29371,17 @@
     },
     "/api/v1/templates/{id}/candidates/{candidateId}/approve": {
       "post": {
-        "summary": "Approve a template release candidate",
+        "security": [
+          {
+            "apiKey": [
+              "templates:review"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Approve a template release candidate (a key only in Test)",
         "tags": [
           "templates"
         ],
@@ -29884,7 +29924,17 @@
         ]
       },
       "post": {
-        "summary": "Publish an approved template release",
+        "security": [
+          {
+            "apiKey": [
+              "templates:publish"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Publish an approved template release (a key only in Test)",
         "tags": [
           "templates"
         ],

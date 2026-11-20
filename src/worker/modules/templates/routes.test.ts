@@ -291,7 +291,6 @@ describe('auth', () => {
       ['POST', `/${templateId}/archive`, json({}), 404],
       ['POST', `/${templateId}/restore`, json({}), 404],
       ['PUT', `/${templateId}/manifest`, json({ manifest: manifest('x') }), 404],
-      ['POST', `/${templateId}/preview`, json({}), 404],
     ];
     for (const [method, path, init, userStatus] of attempts) {
       expect((await call(path, { method, ...init }, key)).status, `${method} ${path}`).toBe(401);
@@ -302,6 +301,15 @@ describe('auth', () => {
     expect(
       await first(env.DB, 'SELECT id FROM templates WHERE id = ?', [templateId]),
     ).not.toBeNull();
+  });
+
+  // Preview only renders (D17): a key needs `templates:read`, and nothing is written.
+  it('lets only a templates:read key render a preview', async () => {
+    const preview = `/${templateId}/preview`;
+    const noScope = auth.apiKey({ scopes: ['passes:write'] });
+    expect((await call(preview, { method: 'POST', ...json({}) }, noScope)).status).toBe(403);
+    const reader = auth.apiKey({ scopes: ['templates:read'] });
+    expect((await call(preview, { method: 'POST', ...json({}) }, reader)).status).toBe(200);
   });
 
   it('enforces CSRF on admin writes', async () => {

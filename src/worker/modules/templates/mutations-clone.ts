@@ -43,7 +43,7 @@ export async function prepareClone(
   body: z.infer<typeof CloneTemplateSchema>,
 ): Promise<CloneTarget> {
   const source = await loadTemplate(ctx, auth, id, body.orgId, cloneSourceOptions);
-  if (auth?.kind !== 'session') throw new ForbiddenError();
+  if (auth?.kind !== 'session' && auth?.kind !== 'api_key') throw new ForbiddenError();
   const authority = await authorizeTemplateWrite(ctx, auth, body.orgId, 'templates:author');
   let sourceAuthority: Extract<TemplateAuthority, { kind: 'session' }> | undefined;
   if (source.orgId !== null) {
@@ -67,7 +67,7 @@ export async function prepareClone(
       'A template with this name exists. Pick another name.',
       'TEMPLATE_EXISTS',
     );
-  return { source, authority, sourceAuthority, org, name, slug, plan, createdBy: auth.userId };
+  return { source, authority, sourceAuthority, org, name, slug, plan, createdBy: authority.userId };
 }
 
 type CloneVersionArgs = {
