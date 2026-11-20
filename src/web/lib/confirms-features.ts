@@ -43,3 +43,13 @@ export function resetOverrideConfirm(
     typed: false,
   };
 }
+
+/** The first preset of an organization with no features set. */
+export function firstPresetConfirm(preset: string, orgName: string): ConfirmCopy {
+  return {
+    title: `Apply ${preset} to ${orgName}?`,
+    confirmLabel: 'Apply',
+    description: 'Sets its features for the first time.',
+    typed: false,
+  };
+}

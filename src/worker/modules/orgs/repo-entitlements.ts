@@ -1,3 +1,6 @@
+// Single-purpose file: every grant here is `platform.org.entitlements_set`, written by a live platform admin.
+// The authority-scope allowlist exempts this file from the "names org_id" lint on that basis; a tenant grant
+// does not belong here.
 import { grant } from '../../platform/authority.ts';
 import { inList } from '../../platform/authority-expr.ts';
 import { all, first } from '../../platform/db.ts';
@@ -68,6 +71,7 @@ export const presetValueRows = (db: D1Database) =>
 export interface EntitlementsWrite {
   orgId: string;
   admin: { userId: string; sessionId: string };
+  /** The revision read; 0 creates the missing row instead of moving an existing one. */
   expectedRevision: number;
   preset: string;
   now: number;
@@ -91,12 +95,20 @@ export async function writeEntitlements(ctx: ServiceContext, w: EntitlementsWrit
     target: w.orgId,
     codes: { lineage: 'ENTITLEMENTS_CHANGED' },
   });
-  g.update('org_entitlements', {
-    set: { preset: w.preset, updated_at: w.now, updated_by: who },
-    inc: ['revision'],
-    where: { org_id: w.orgId, revision: w.expectedRevision },
-    require: 'one',
-  });
+  if (w.expectedRevision === 0)
+    // An org that lost its row (an old build inserted it after 0134): the first save makes it.
+    g.insertSelect(
+      'org_entitlements',
+      ['org_id', 'preset', 'updated_at', 'updated_by'],
+      [w.orgId, w.preset, w.now, who],
+    );
+  else
+    g.update('org_entitlements', {
+      set: { preset: w.preset, updated_at: w.now, updated_by: who },
+      inc: ['revision'],
+      where: { org_id: w.orgId, revision: w.expectedRevision },
+      require: 'one',
+    });
   if (w.remove.length > 0)
     g.delete('org_entitlement_overrides', {
       where: { org_id: w.orgId, key: inList(w.remove) },

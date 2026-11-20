@@ -7,7 +7,7 @@ import type {
 import { ENTITLEMENT_KEYS, presetValues } from '../../../shared/contracts/entitlements.ts';
 import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
-import { entitlementsOf } from '../../platform/entitlements.ts';
+import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
 import { type RetentionKit, retentionKit } from '../retention/retention-test-fixtures.ts';
 import { writeEntitlements } from './repo-entitlements.ts';
 
@@ -270,7 +270,7 @@ describe('platform write', () => {
     const before = await read(p);
     const res = await put(p, {
       expectedRevision: before.revision,
-      preset: before.preset,
+      preset: before.preset ?? 'legacy',
       overrides: {},
     });
     expect(res.status).toBe(200);
@@ -373,5 +373,75 @@ describe('org read', () => {
     const lacking = fake.apiKey({ orgId: p.orgId, scopes: ['passes:read'] });
     expect((await call('GET', orgPath(p.orgId), lacking)).status).toBe(403);
     expect((await call('PUT', orgPath(p.orgId), p.admin, {})).status).toBeGreaterThanOrEqual(404);
+  });
+});
+
+describe('an org without a features row', () => {
+  /** What an old build leaves after 0134: the org exists, its row does not. */
+  async function rowless() {
+    const p = await people();
+    const id = rk.kit.fx.ids.id();
+    await run(
+      rk.kit.env.DB,
+      'INSERT INTO orgs (id, slug, name, created_at, updated_at) VALUES (?, ?, ?, 1, 1)',
+      [id, `orphan-${id.slice(-12)}`, 'Orphan'],
+    );
+    return { ...p, orgId: id };
+  }
+
+  it('reads as "no features set": nothing on, revision 0, the presets to pick from', async () => {
+    const p = await rowless();
+    const res = await call('GET', platformPath(p.orgId), p.root);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as OrgEntitlementsDto;
+    expect(body).toMatchObject({ preset: null, presetLabel: null, revision: 0, items: [] });
+    expect(body.presets.map((x) => x.preset)).toEqual(['legacy', 'trial', 'standard']);
+    // The guard's read sees nothing: fail closed.
+    expect(isEntitled(await entitlementsOf(rk.kit.ctx, p.orgId), 'api', 'read')).toBe(false);
+  });
+
+  it('is repaired by a PUT with revision 0: the row, the overrides and the audit commit together', async () => {
+    const p = await rowless();
+    const res = await put(p, {
+      expectedRevision: 0,
+      preset: 'standard',
+      overrides: { webhooks: { value: 0, note: 'Repaired' } },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as OrgEntitlementsDto;
+    expect(body).toMatchObject({ preset: 'standard', revision: 1 });
+    expect(body.items.find((i) => i.key === 'webhooks')).toMatchObject({
+      value: 0,
+      source: 'override',
+    });
+    // The guard's read now passes where it failed closed.
+    const ent = await entitlementsOf(rk.kit.ctx, p.orgId);
+    expect(isEntitled(ent, 'api', 'full')).toBe(true);
+    expect(isEntitled(ent, 'webhooks')).toBe(false);
+    const rows = await auditRows(p.orgId);
+    expect(rows).toHaveLength(1);
+    expect(JSON.parse(rows[0]?.detail ?? '{}')).toMatchObject({
+      created: true,
+      preset: { from: null, to: 'standard' },
+      version: 1,
+    });
+  });
+
+  it('refuses a wrong revision for a missing row, and a second create', async () => {
+    const p = await rowless();
+    const wrong = await put(p, { expectedRevision: 1, preset: 'standard', overrides: {} });
+    expect(wrong.status).toBe(409);
+    expect((await put(p, { expectedRevision: 0, preset: 'standard', overrides: {} })).status).toBe(
+      200,
+    );
+    const again = await put(p, { expectedRevision: 0, preset: 'trial', overrides: {} });
+    expect(again.status).toBe(409);
+    expect(((await again.json()) as { code: string }).code).toBe('ENTITLEMENTS_CHANGED');
+    const rows = await all<{ preset: string }>(
+      rk.kit.env.DB,
+      'SELECT preset FROM org_entitlements WHERE org_id = ?',
+      [p.orgId],
+    );
+    expect(rows).toEqual([{ preset: 'standard' }]);
   });
 });

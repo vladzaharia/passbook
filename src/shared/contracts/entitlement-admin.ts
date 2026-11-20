@@ -38,11 +38,12 @@ export const PresetOptionSchema = z.object({
 
 export const OrgEntitlementsSchema = z.object({
   orgId: IdSchema,
-  preset: z.string(),
-  presetLabel: z.string(),
-  /** The compare-and-set token of a write. */
-  revision: z.number().int().min(1),
-  updatedAt: TimestampSchema,
+  /** Null when the organization has no features row: nothing is on until a preset is applied. */
+  preset: z.string().nullable(),
+  presetLabel: z.string().nullable(),
+  /** The compare-and-set token of a write; 0 is "no row yet" and the first write creates it. */
+  revision: z.number().int().min(0),
+  updatedAt: TimestampSchema.nullable(),
   items: z.array(EntitlementItemSchema),
   presets: z.array(PresetOptionSchema),
 });
@@ -50,8 +51,8 @@ export const OrgEntitlementsSchema = z.object({
 /** What an organization's own admins see: no notes, no revision, no other presets. */
 export const OrgOwnEntitlementsSchema = z.object({
   orgId: IdSchema,
-  preset: z.string(),
-  label: z.string(),
+  preset: z.string().nullable(),
+  label: z.string().nullable(),
   items: z.array(
     z.object({
       key: EntitlementKeySchema,
@@ -74,11 +75,11 @@ export const EntitlementOverrideSchema = z.strictObject({
 
 /**
  * The whole state after the change: the preset and every override that should stand. An override not listed
- * is removed. `expectedRevision` is the revision the caller read; a stale one is refused (409).
+ * is removed. `expectedRevision` is the revision the caller read (0 when the organization has no row yet); a stale one is refused (409).
  */
 export const SetOrgEntitlementsSchema = z
   .strictObject({
-    expectedRevision: z.number().int().min(1),
+    expectedRevision: z.number().int().min(0),
     preset: z
       .string()
       .min(1)

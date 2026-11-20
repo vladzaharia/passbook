@@ -28,7 +28,8 @@ const noStore = async (
  * the other presets and the notes) and writes it. Entitlements are never writable by the org itself.
  */
 export const platformEntitlementsRoutes = createRouter();
-platformEntitlementsRoutes.use('*', noStore);
+// Only these paths: a sub-router's `*` would wrap every route under the mount, branding images included.
+platformEntitlementsRoutes.use('/orgs/:id/entitlements', noStore);
 
 register(
   platformEntitlementsRoutes,
@@ -73,7 +74,7 @@ register(
 
 /** Mount at /api/v1/orgs. An organization's admins and `org:read` keys see their own features, read-only. */
 export const orgEntitlementsRoutes = createRouter();
-orgEntitlementsRoutes.use('*', noStore);
+orgEntitlementsRoutes.use('/:id/entitlements', noStore);
 
 register(
   orgEntitlementsRoutes,

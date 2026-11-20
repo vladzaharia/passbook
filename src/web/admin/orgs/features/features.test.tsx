@@ -259,3 +259,31 @@ describe('Features tab', () => {
     expect(await screen.findByRole('button', { name: /Retry|Try again/ })).toBeVisible();
   });
 });
+
+describe('Features tab without a row', () => {
+  it('says no features are set and offers one Apply preset action that creates the row', async () => {
+    const user = userEvent.setup();
+    const empty: OrgEntitlementsDto = {
+      ...state('legacy'),
+      preset: null,
+      presetLabel: null,
+      revision: 0,
+      updatedAt: null,
+      items: [],
+    };
+    const server: Server = { current: empty, puts: [] };
+    await open(server);
+    expect(await screen.findByText('No features set')).toBeVisible();
+    const apply = screen.getByRole('button', { name: 'Apply preset' });
+    expect(apply).toBeDisabled();
+    expect(screen.queryByRole('list', { name: 'API and apps' })).toBeNull();
+    await user.click(screen.getByRole('radio', { name: /Standard/ }));
+    await user.click(apply);
+    const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText('Sets its features for the first time.')).toBeVisible();
+    await user.click(within(dialog).getByRole('button', { name: 'Apply' }));
+    await waitFor(() => expect(server.puts).toHaveLength(1));
+    expect(server.puts[0]).toEqual({ expectedRevision: 0, preset: 'standard', overrides: {} });
+    expect(await screen.findByRole('radio', { name: /Standard/, checked: true })).toBeVisible();
+  });
+});

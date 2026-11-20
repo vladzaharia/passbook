@@ -12,6 +12,7 @@ import {
 } from '../../../shared/contracts/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '../../../shared/entitlement-impact.ts';
 import type { Actor } from '../../platform/context.ts';
+import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor } from '../audit/service.ts';
@@ -49,10 +50,12 @@ function parseStored(ctx: ServiceContext, key: string, text: string): Entitlemen
 }
 
 interface State {
-  preset: string;
-  presetLabel: string;
+  /** Null for an org with no row. */
+  preset: string | null;
+  presetLabel: string | null;
+  /** 0 for an org with no row. */
   revision: number;
-  updatedAt: number;
+  updatedAt: number | null;
   presets: { preset: string; label: string; orgCount: number; values: EntitlementValues }[];
   presetValues: EntitlementValues;
   overrides: Map<
@@ -65,7 +68,6 @@ async function stateOf(ctx: ServiceContext, orgId: string): Promise<State> {
   const db = ctx.env.DB;
   if (!(await orgExists(db, orgId))) throw notFound();
   const row = await orgEntitlementsRow(db, orgId);
-  if (!row) throw notFound();
   const [presets, values, stored] = await Promise.all([
     presetRows(db),
     presetValueRows(db),
@@ -90,20 +92,20 @@ async function stateOf(ctx: ServiceContext, orgId: string): Promise<State> {
       values: byPreset.get(p.preset) ?? {},
     }))
     .sort((a, b) => order(a.preset) - order(b.preset) || a.preset.localeCompare(b.preset));
-  const current = list.find((p) => p.preset === row.preset);
+  const current = row ? list.find((p) => p.preset === row.preset) : undefined;
   const overrides = new Map<
     string,
     { value: EntitlementValue; note: string | null; expiresAt: number | null }
   >();
-  for (const o of stored) {
+  for (const o of row ? stored : []) {
     const value = parseStored(ctx, o.key, o.value);
     if (value !== undefined) overrides.set(o.key, { value, note: o.note, expiresAt: o.expires_at });
   }
   return {
-    preset: row.preset,
-    presetLabel: current?.label ?? row.preset,
-    revision: row.revision,
-    updatedAt: row.updated_at,
+    preset: row?.preset ?? null,
+    presetLabel: row ? (current?.label ?? row.preset) : null,
+    revision: row?.revision ?? 0,
+    updatedAt: row?.updated_at ?? null,
     presets: list,
     presetValues: current?.values ?? {},
     overrides,
@@ -210,7 +212,8 @@ export async function setOrgEntitlements(
   });
   const stored = await storedOverrideKeys(ctx.env.DB, orgId);
   const remove = stored.filter((key) => !next.has(key));
-  const noOp = input.preset === before.preset && put.length === 0 && remove.length === 0;
+  const create = before.preset === null;
+  const noOp = !create && input.preset === before.preset && put.length === 0 && remove.length === 0;
   if (noOp) return readOrgEntitlements(ctx, orgId);
 
   const was = resolve(before.presetValues, before.overrides);
@@ -252,6 +255,7 @@ export async function setOrgEntitlements(
           ...(input.preset === before.preset
             ? {}
             : { preset: { from: before.preset, to: input.preset } }),
+          ...(create ? { created: true } : {}),
           changes,
           off: impact.counts.off,
           down: impact.counts.down,
@@ -263,7 +267,9 @@ export async function setOrgEntitlements(
     });
   } catch (error) {
     // A save that landed between the read and the write moves `revision`: the batch aborted whole.
+    // Two repairs of a row-less org race on the insert: the loser hits the primary key.
     if (error instanceof ConflictError && error.code === 'ENTITLEMENTS_CHANGED') throw changed();
+    if (classifyD1Error(error)?.kind === 'unique') throw changed();
     throw error;
   }
   ctx.log.info('org.entitlements_set', { orgId, preset: input.preset });

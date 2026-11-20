@@ -43,7 +43,7 @@ export function PresetCard({
   overrides,
   onApply,
 }: {
-  state: OrgEntitlementsDto;
+  state: OrgEntitlementsDto & { preset: string; presetLabel: string };
   orgName: string;
   overrides: OverrideMap;
   onApply: (preset: string) => Promise<void>;

@@ -5,6 +5,7 @@ import { ENTITLEMENT_LABEL } from '@/shared/copy/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '@/shared/entitlement-impact.ts';
 import { overrideConfirm, resetOverrideConfirm } from '@/web/lib/confirms-features.ts';
 import { ConfirmDialog, ErrorState, SkeletonRows, toast } from '@/web/ui/index.ts';
+import { EmptyFeatures } from './empty-features.tsx';
 import { FeatureList } from './feature-list.tsx';
 import { OverrideDialog } from './override-dialog.tsx';
 import { PresetCard } from './preset-card.tsx';
@@ -54,10 +55,24 @@ function FeaturesBody({
   const label = pending ? ENTITLEMENT_LABEL[pending.key] : '';
   const item = editing ? state.items.find((i) => i.key === editing) : undefined;
 
+  const { preset, presetLabel } = state;
+  if (preset === null || presetLabel === null)
+    return (
+      <EmptyFeatures
+        state={state}
+        orgName={orgName}
+        onApply={async (chosen) => {
+          const next = await save.mutateAsync({ preset: chosen, overrides: {} });
+          toast.success(`${next.presetLabel} applied`);
+        }}
+      />
+    );
+  const ready = { ...state, preset, presetLabel };
+
   return (
     <div className="flex flex-col gap-6">
       <PresetCard
-        state={state}
+        state={ready}
         orgName={orgName}
         overrides={overrides}
         onApply={async (preset) => {
@@ -67,7 +82,7 @@ function FeaturesBody({
       />
       <FeatureList
         items={state.items}
-        presetLabel={state.presetLabel}
+        presetLabel={presetLabel}
         busy={save.isPending}
         onEdit={setEditing}
         onReset={(key) => setPending({ key, draft: null })}
@@ -75,7 +90,7 @@ function FeaturesBody({
       {item ? (
         <OverrideDialog
           item={item}
-          presetLabel={state.presetLabel}
+          presetLabel={presetLabel}
           now={Date.now()}
           onClose={() => setEditing(null)}
           onContinue={(draft) => {
@@ -90,9 +105,9 @@ function FeaturesBody({
           onOpenChange={(open) => !open && setPending(null)}
           {...(pending.draft
             ? overrideConfirm(label, impact)
-            : resetOverrideConfirm(label, state.presetLabel, impact))}
+            : resetOverrideConfirm(label, presetLabel, impact))}
           onConfirm={async () => {
-            await save.mutateAsync({ preset: state.preset, overrides: withOverride(pending) });
+            await save.mutateAsync({ preset, overrides: withOverride(pending) });
             toast.success(pending.draft ? `${label} overridden` : `${label} reset`);
           }}
         />

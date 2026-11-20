@@ -182,4 +182,44 @@ test.describe('org features', () => {
       await api.dispose();
     }
   });
+
+  test('an org with no features row says so and offers one Apply preset action', async ({
+    page,
+  }) => {
+    const api = await apiAs('admin');
+    try {
+      const name = uid('Nofeatures');
+      const org = await api.send<{ id: string }>('POST', '/api/v1/orgs', {
+        name,
+        slug: name.toLowerCase(),
+      });
+      const real = await api.get<Record<string, unknown>>(
+        `/api/v1/platform/orgs/${org.id}/entitlements`,
+      );
+      // The row cannot be removed through the app (that is the point), so the read is faked.
+      const empty = {
+        ...real,
+        preset: null,
+        presetLabel: null,
+        revision: 0,
+        updatedAt: null,
+        items: [],
+      };
+      await page.route(`**/api/v1/platform/orgs/${org.id}/entitlements`, (route) =>
+        route.request().method() === 'GET' ? route.fulfill({ json: empty }) : route.continue(),
+      );
+      const url = `/admin/platform/orgs/${org.id}?tab=features`;
+      await page.goto(url);
+      await expect(page.getByText('No features set')).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Apply preset' })).toBeDisabled();
+      await page.locator('label', { hasText: 'Standard' }).first().click();
+      await expect(page.getByRole('button', { name: 'Apply preset' })).toBeEnabled();
+      await sweep(page, url, 'features-empty', async () => {
+        await expect(page.getByText('No features set')).toBeVisible();
+        await page.locator('label', { hasText: 'Standard' }).first().click();
+      });
+    } finally {
+      await api.dispose();
+    }
+  });
 });
