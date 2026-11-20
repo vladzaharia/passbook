@@ -7,7 +7,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { runnerImport } from 'vite';
 import { PATHS } from '../src/shared/developers.ts';
-import { loadGuideInputs, type GuideInputs } from '../src/web/developers/guide/load.ts';
+import { type GuideInputs, loadGuideInputs } from '../src/web/developers/guide/load.ts';
 import { loadInputs } from '../src/web/developers/model/load.ts';
 import { buildSite } from '../src/web/developers/model/site.ts';
 import type { OutFile, Site } from '../src/web/developers/model/types.ts';

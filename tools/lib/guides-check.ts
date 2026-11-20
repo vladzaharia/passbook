@@ -4,8 +4,8 @@ import { DEV_GUIDES } from '../../src/shared/copy/developers.ts';
 import { PATHS } from '../../src/shared/developers.ts';
 import { guideUrl, resolveGuide } from '../../src/web/developers/guide/model.ts';
 import {
-  type GuideDoc,
   blockTexts,
+  type GuideDoc,
   linksIn,
   parseGuide,
 } from '../../src/web/developers/guide/parse.ts';

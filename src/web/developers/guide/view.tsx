@@ -7,7 +7,7 @@ import { Head } from '../pages/more.tsx';
 import { CodeRegion, SampleTabs } from '../ui/code.tsx';
 import { MethodPill } from '../ui/method-pill.tsx';
 import { lifecycleSvg } from './lifecycle.ts';
-import { type Guide, GUIDE_TWIN, hrefOf } from './model.ts';
+import { GUIDE_TWIN, type Guide, hrefOf } from './model.ts';
 import type { Block, GuideStatus } from './parse.ts';
 
 const STATUS: Record<GuideStatus, string | null> = {
@@ -115,7 +115,8 @@ function BlockView({
     }
     case 'table':
       return (
-        <div className="gtable" role="region" aria-label="Table" tabIndex={0}>
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable table region
+        <section className="gtable" aria-label="Table" tabIndex={0}>
           <table>
             <thead>
               <tr>
@@ -138,7 +139,7 @@ function BlockView({
               ))}
             </tbody>
           </table>
-        </div>
+        </section>
       );
     case 'code': {
       const href = guide.steps.find((s) => s.block === n)?.href;

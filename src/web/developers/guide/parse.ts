@@ -127,7 +127,7 @@ export function parseGuide(text: string, file: string): GuideDoc {
       for (; i < lines.length && (lines[i] ?? '').startsWith('|'); i++)
         rows.push(cells(lines[i] ?? ''));
       const [head, rule, ...rest] = rows;
-      if (!head || !rule || !rule.every((c) => /^:?-+:?$/.test(c)))
+      if (!head || !rule?.every((c) => /^:?-+:?$/.test(c)))
         throw new GuideError(`${file}: a table needs a header row and a --- rule`);
       blocks.push({ kind: 'table', head, rows: rest });
       continue;

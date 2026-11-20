@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseHash } from '../console/prefill.ts';
-import { consoleHref, prefillFromCurl } from './model.ts';
 import { EDGES, lifecycleMermaid, lifecycleSvg } from './lifecycle.ts';
+import { consoleHref, prefillFromCurl } from './model.ts';
 import { GuideError, linksIn, parseGuide } from './parse.ts';
 
 const HEAD = '---\nid: a\ntitle: A\nline: A line\nstatus: ready\nops: x.y, z.w\n---\n';

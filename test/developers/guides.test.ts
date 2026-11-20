@@ -2,13 +2,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import openapi from '../../docs/api/openapi.v1.json';
 import snippets from '../../docs/developers/snippets/guides/index.json';
+import { prefillFromCurl } from '../../src/web/developers/guide/model.ts';
 import {
   type Block,
   blockTexts,
   linksIn,
   parseGuide,
 } from '../../src/web/developers/guide/parse.ts';
-import { prefillFromCurl } from '../../src/web/developers/guide/model.ts';
 import { EXAMPLE_IDS } from '../../src/web/developers/model/ids.ts';
 import { type Call, kit, snippetWorld } from './snippet-world.ts';
 

@@ -67,7 +67,9 @@ describe('guide pages', () => {
 
   it('draws the lifecycle as an accessible SVG with the table beside it', () => {
     const html = page('pass-lifecycle');
-    expect(html).toMatch(/<svg class="lifecycle"[^>]*role="img"[^>]*aria-labelledby="lc-title lc-desc"/);
+    expect(html).toMatch(
+      /<svg class="lifecycle"[^>]*role="img"[^>]*aria-labelledby="lc-title lc-desc"/,
+    );
     expect(html).toContain('<title id="lc-title">Pass lifecycle</title>');
     for (const call of ['void', 'unvoid', 'remove', 'restore', 'DELETE'])
       expect(html, call).toContain(`>${call}<`);
