@@ -45,6 +45,10 @@ export function rightsOf(session: ScanSession): Rights {
   };
 }
 
+/** Staff notes are Desk and above, never a Door. The server holds the same line. */
+export const mayNote = (rights: Rights): boolean =>
+  rights.role === 'desk' || rights.role === 'manager';
+
 export type Tone = 'ok' | 'hu' | 'no' | 'sys' | 'preview';
 
 export interface Band {
@@ -184,14 +188,15 @@ export type Run =
   | { t: 'mark-out' }
   | { t: 'show-pass'; passId: string }
   | { t: 'look-up'; q: string }
-  | { t: 'photo' };
+  | { t: 'photo' }
+  | { t: 'note' };
 
 export interface Act {
   id: string;
   label: string;
   run: Run;
   /** The key that runs it from the record. */
-  key?: 'Enter' | 'O' | 'P';
+  key?: 'Enter' | 'O' | 'N' | 'P';
   /** Kept in its place with a lock: a role cannot, a Manager's PIN can. */
   lock?: 'role' | 'approval' | 'max';
   icon:
@@ -200,6 +205,7 @@ export interface Act {
     | 'out'
     | 'shield'
     | 'photo'
+    | 'note'
     | 'value'
     | 'again'
     | 'tap'
@@ -313,6 +319,8 @@ export function actionsOf(o: ScanOutcome, f: ActionFacts): Actions {
   }
   if (f.markOut && f.rights.markOut)
     acts.push({ id: 'out', label: R.markOut, icon: 'out', key: 'O', run: { t: 'mark-out' } });
+  if (f.passId && mayNote(f.rights))
+    acts.push({ id: 'note', label: R.note, icon: 'note', key: 'N', run: { t: 'note' } });
   if (f.addPhoto)
     acts.push({ id: 'photo', label: R.photo, icon: 'photo', key: 'P', run: { t: 'photo' } });
   if (primary) primary = { ...primary, key: 'Enter' };

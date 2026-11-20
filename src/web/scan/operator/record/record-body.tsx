@@ -1,15 +1,32 @@
 import { Info } from 'lucide-react';
 import { lazy, Suspense } from 'react';
+import type { ScanApi } from '../../api/scan-api.ts';
 import { DisplayPanels } from '../../display/display-panels.tsx';
 import type { Draft, ScanOutcome } from '../../machine/types.ts';
 import { ValuePicker } from '../../result/value-picker.tsx';
 import { FamilyBlock } from './family-block.tsx';
+import { History } from './history.tsx';
+import { Notes } from './notes.tsx';
 import { type Fact, factsOf } from './record-facts.ts';
 import { displayOf } from './record-model.ts';
 
 const PassPreview = lazy(() =>
   import('../../result/pass-preview.tsx').then((m) => ({ default: m.PassPreview })),
 );
+
+/** What the person's history and staff notes need: who, which role, and when to read again. */
+export interface PersonPanels {
+  api: ScanApi;
+  passId: string;
+  zone: string | undefined;
+  now: number;
+  /** Changes when something new happened to this person. */
+  refresh: unknown;
+  /** Desk and above: changes and staff notes. */
+  desk: boolean;
+  noteSignal: number;
+  onNoteAdded: () => void;
+}
 
 export interface PickerDesk {
   picker: Draft | null;
@@ -57,20 +74,28 @@ export function RecordBody({
   orgId,
   timeZone,
   eventNote,
+  person,
 }: {
   outcome: ScanOutcome;
   desk: PickerDesk | undefined;
   orgId: string | undefined;
   timeZone: string | undefined;
   eventNote: string | null | undefined;
+  person: PersonPanels | null;
 }) {
   const d = displayOf(o);
   const denied = deniedOf(o);
   const notes = notesOf(o, eventNote);
   const facts = denied ? factsOf(o, timeZone) : [];
   const picker = o.kind === 'ready' && o.card && desk?.picker ? desk.picker : null;
-  const left = picker || (d && !denied && !o.group) || notes.length > 0 || facts.length > 0;
-  const right = Boolean(o.bundle ?? o.card?.bundle ?? o.group) || Boolean(o.card?.passView);
+  const left =
+    picker ||
+    (d && !denied && !o.group) ||
+    notes.length > 0 ||
+    facts.length > 0 ||
+    Boolean(person?.desk);
+  const right =
+    Boolean(o.bundle ?? o.card?.bundle ?? o.group) || Boolean(o.card?.passView) || Boolean(person);
   if (!left && !right) return null;
   return (
     <div className="op-rec-body" data-cols={left && right ? 2 : 1}>
@@ -100,11 +125,29 @@ export function RecordBody({
               </div>
             </div>
           ) : null}
+          {person?.desk ? (
+            <Notes
+              api={person.api}
+              passId={person.passId}
+              openSignal={person.noteSignal}
+              onAdded={person.onNoteAdded}
+            />
+          ) : null}
         </div>
       ) : null}
       {right ? (
         <div className="op-col">
           <FamilyBlock outcome={o} />
+          {person ? (
+            <History
+              api={person.api}
+              passId={person.passId}
+              zone={person.zone}
+              now={person.now}
+              refresh={person.refresh}
+              changes={person.desk}
+            />
+          ) : null}
           {o.card ? (
             <div className="op-rec-pass">
               <Suspense fallback={<div className="scan-pass-preview" aria-hidden />}>

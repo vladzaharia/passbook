@@ -85,7 +85,7 @@ describe('the operator record for a scan', () => {
     expect(c.machine).toHaveBeenCalledWith({ type: 'group' });
   });
 
-  it('wires the record keys: Enter is the primary action, an unlisted key is not taken', () => {
+  it('wires the record keys: Enter is the primary action, an unlisted key is not taken, the note key is', () => {
     const c = ctx();
     render(
       <RecordScan
@@ -95,7 +95,8 @@ describe('the operator record for a scan', () => {
         outcome={fixtureOutcome('ok', null, { action: checkIn, bundle })}
       />,
     );
-    expect(c.keys.current?.({ c: 'note' } satisfies Command)).toBe(false);
+    expect(c.keys.current?.({ c: 'safe' } satisfies Command)).toBe(false);
+    expect(c.keys.current?.({ c: 'note' } satisfies Command)).toBe(true);
     expect(c.keys.current?.({ c: 'primary' })).toBe(true);
     expect(c.machine).toHaveBeenCalledWith({ type: 'group' });
   });

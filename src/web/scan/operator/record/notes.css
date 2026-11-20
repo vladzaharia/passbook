@@ -1,0 +1,75 @@
+/* Staff notes: a gold note tone, one line each, and the add field in place. */
+.op-staff-notes {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.op-staff-note {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--pk-warning-subtle);
+  color: var(--pk-text-strong);
+}
+.op-staff-note p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 19px;
+  overflow-wrap: anywhere;
+}
+.op-staff-note span {
+  color: var(--op-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+.op-note-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px dashed var(--pk-border-strong);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--op-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.op-note-add svg {
+  width: 16px;
+  height: 16px;
+}
+.op-note-add .op-keycap {
+  margin-inline-start: auto;
+}
+.op-note-add:hover {
+  border-color: var(--pk-text-muted);
+  color: var(--pk-text-strong);
+}
+.op-note-add:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.op-note-form {
+  display: grid;
+  gap: 8px;
+}
+.op-note-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.op-note-hint {
+  flex: 1;
+  min-width: 0;
+  color: var(--op-muted);
+  font-size: 12px;
+}
+.op-note-hint[data-problem] {
+  color: var(--pk-danger);
+}

@@ -13,6 +13,7 @@ import { ScanStoreContext } from './machine/use-scan-machine.ts';
 import { OperatorWorkspace } from './operator/workspace/workspace.tsx';
 import type { ScanRuntime } from './platform/runtime.ts';
 import { ReaderChip } from './ui/chips.tsx';
+import { historyPage, NOTES } from './visual-operator-history.ts';
 import {
   GALLERY_NOW,
   mara,
@@ -111,7 +112,7 @@ const PEOPLE = [
   ['Tamara Stein', 'Member', 't•••@s•••.de', 'out', 87],
 ] as const;
 
-function apiFor(rows: Row[]): ScanApi {
+function apiFor(rows: Row[], scenario: string): ScanApi {
   return {
     activity: async () => ({ items: activity(rows) }),
     lookup: async () => ({
@@ -138,6 +139,15 @@ function apiFor(rows: Row[]): ScanApi {
           passView: PASS_VIEW,
         } as never,
       }),
+    history: async (_id: string, query: Parameters<ScanApi['history']>[1]) =>
+      historyPage(scenario, query),
+    notes: async () => ({ items: NOTES }),
+    addNote: async (_id: string, body: { body: string }) => ({
+      id: '01900000-0000-7000-8000-000000000899',
+      at: NOW,
+      body: body.body,
+      by: 'Theo B.',
+    }),
     override: async () => fixtureOutcome('ok'),
     undo: async () => fixtureOutcome('ok'),
   } as unknown as ScanApi;
@@ -194,7 +204,7 @@ const setNative = (input: HTMLInputElement, value: string) => {
 
 export function OperatorVisual({ scenario }: { scenario: OperatorCase }) {
   const session = useMemo(() => recordSession(sessionOf(), scenario), [scenario]);
-  const api = useMemo(() => apiFor(scenario === 'empty' ? [] : ROWS), [scenario]);
+  const api = useMemo(() => apiFor(scenario === 'empty' ? [] : ROWS, scenario), [scenario]);
   const store = useMemo(
     () =>
       createScanStore(

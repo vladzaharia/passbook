@@ -72,7 +72,7 @@ describe('primary action', () => {
   it('is Check in on a ready card, ahead of a value action', () => {
     const a = actionsOf(ready({ actions: [stamp!, checkIn] }), facts());
     expect(a.primary).toMatchObject({ id: 'check_in', key: 'Enter', run: { t: 'pick' } });
-    expect(a.others.map((x) => x.id)).toEqual(['add_stamp']);
+    expect(a.others.map((x) => x.id)).toEqual(['add_stamp', 'note']);
   });
   it('is the template first action when there is no check-in', () => {
     expect(actionsOf(ready(), facts()).primary?.id).toBe('add_stamp');
@@ -136,18 +136,30 @@ describe('primary action', () => {
       actionsOf(fixtureOutcome('refused', 'guest_visits_used'), facts()).primary?.run.t,
     ).not.toBe('override');
   });
-  it('lists Mark out and Photo after the primary, each with its key', () => {
+  it('lists Mark out, Note and Photo after the primary, each with its key', () => {
     const o = fixtureOutcome('ok', null, { bundle });
     const a = actionsOf(o, facts({ markOut: true, addPhoto: true }));
     expect(a.others.map((x) => [x.id, x.key])).toEqual([
       ['out', 'O'],
+      ['note', 'N'],
       ['photo', 'P'],
     ]);
+  });
+  it('offers a note to Desk and Manager with a pass, never to a Door or without one', () => {
+    const o = fixtureOutcome('ok', null, { bundle });
+    const has = (f: Partial<ActionFacts>) =>
+      actionsOf(o, facts(f)).others.some((x) => x.id === 'note');
+    expect(has({ rights: { ...desk, role: 'manager' } })).toBe(true);
+    expect(has({ rights: { ...desk, role: 'door' } })).toBe(false);
+    expect(has({ rights: { ...desk, role: null } })).toBe(false);
+    expect(has({ passId: null })).toBe(false);
   });
   it('leaves out what the role may not do', () => {
     const o = fixtureOutcome('ok', null, { bundle });
     const noMark: Rights = { ...desk, markOut: false };
-    expect(actionsOf(o, facts({ rights: noMark, markOut: true })).others).toEqual([]);
+    expect(actionsOf(o, facts({ rights: noMark, markOut: true })).others.map((x) => x.id)).toEqual([
+      'note',
+    ]);
   });
   it('reads a card whose actions are all role-locked as view only', () => {
     const locked = fixtureCard().actions.map((a) => ({
@@ -234,7 +246,7 @@ describe('a refusal is never a dead end', () => {
     const o = fixtureOutcome('heads_up', 'already_done', { action: checkIn });
     const a = actionsOf(o, facts());
     expect(a.primary?.run.t).toBe('override');
-    expect(a.others.map((x) => x.id)).toEqual(['show-pass', 'look-up']);
+    expect(a.others.map((x) => x.id)).toEqual(['show-pass', 'look-up', 'note']);
   });
   it('has Look up alone for a code that named no pass', () => {
     const a = actionsOf(
