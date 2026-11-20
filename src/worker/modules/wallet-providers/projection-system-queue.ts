@@ -1,5 +1,6 @@
 import type { TemplateRelease } from '../../../shared/contracts/template-releases.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { getWalletProviderReadiness } from './account-service.ts';
 import { publishableSchema } from './projection-contract.ts';
 
 const PROVIDERS = ['google', 'samsung'] as const;
@@ -16,8 +17,17 @@ export async function queueSystemProjections(
   if (release.provider !== 'apple' || !release.orgId) return;
   const { orgId, mode, templateId, version } = release;
   try {
+    // Only orgs with a provider account have anything to project; others queue nothing.
+    const open = PROVIDERS.filter((provider) => publishableSchema(provider, 2));
+    const ready: (typeof PROVIDERS)[number][] = [];
+    for (const provider of open) {
+      const readiness = await getWalletProviderReadiness(ctx, { orgId, mode, provider });
+      if (readiness.accountId && readiness.state !== 'revoked' && readiness.state !== 'absent')
+        ready.push(provider);
+    }
+    if (ready.length === 0) return;
     await ctx.env.JOBS.sendBatch(
-      PROVIDERS.filter((provider) => publishableSchema(provider, 2)).map((provider) => ({
+      ready.map((provider) => ({
         body: {
           kind: 'wallet.projection_system' as const,
           orgId,

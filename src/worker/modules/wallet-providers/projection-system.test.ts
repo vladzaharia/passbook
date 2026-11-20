@@ -254,18 +254,22 @@ describe('the Apple release hook', () => {
   const ctxWith = (sendBatch: (messages: { body: unknown }[]) => Promise<void>) =>
     createServiceContext({ ...S.env, JOBS: { sendBatch } } as never, { clock: S.clock });
 
-  it('queues one job for Google only, since Samsung stays dark', async () => {
+  it('queues one job for Google only, and only for an org with an account', async () => {
+    const kit = await setup();
     const sent: unknown[] = [];
-    await queueSystemProjections(
-      ctxWith(async (messages) => void sent.push(...messages.map((m) => m.body))),
-      release('apple', 'org1'),
-    );
+    const ctx = ctxWith(async (messages) => void sent.push(...messages.map((m) => m.body)));
+    await queueSystemProjections(ctx, release('apple', 'org-without-account'));
+    expect(sent).toEqual([]);
+    await queueSystemProjections(ctx, {
+      ...release('apple', kit.orgId),
+      templateId: kit.templateId,
+    } as never);
     expect(sent).toEqual([
       {
         kind: 'wallet.projection_system',
-        orgId: 'org1',
+        orgId: kit.orgId,
         mode: 'live',
-        templateId: 't1',
+        templateId: kit.templateId,
         sourceReleaseId: 'r1',
         version: 'v1',
         provider: 'google',
@@ -279,12 +283,13 @@ describe('the Apple release hook', () => {
     await queueSystemProjections(ctx, release('google', 'org1'));
     await queueSystemProjections(ctx, release('apple', null));
     expect(sent).toEqual([]);
+    const kit = await setup();
     await expect(
       queueSystemProjections(
         ctxWith(async () => {
           throw new Error('queue down');
         }),
-        release('apple', 'org1'),
+        release('apple', kit.orgId),
       ),
     ).resolves.toBeUndefined();
   });
