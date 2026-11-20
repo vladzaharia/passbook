@@ -26,7 +26,7 @@ const channels = (paper: ReturnType<typeof status>) => () => {
   return json({
     effective: { mobile: on, apple: on, google: on, samsung: on, nfc: on, paper },
     overrides: {},
-    replace: { supported: true, windows: [] },
+    replace: { supported: true, owed: false, blocked: null, lastDigital: [], windows: [] },
   });
 };
 const print = (over: Record<string, unknown> = {}) => ({

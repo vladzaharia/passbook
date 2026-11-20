@@ -17,7 +17,7 @@ import {
   unauthenticated,
 } from './callbacks-samsung-types.ts';
 import { authenticateSamsungTombstone } from './callbacks-tombstone.ts';
-import { walletProviderDisabledReason } from './provider-policy.ts';
+import { walletProviderReleaseReason } from './provider-policy.ts';
 import { findSamsungFetchSnapshot } from './repo-callbacks.ts';
 
 /** Only the exact configured partner endpoint is admitted, with no path normalization aliases. */
@@ -37,7 +37,7 @@ export async function handleSamsungCallback(
   const method = request.method;
   // Credentials cannot be opened while disabled, so nothing can be verified or promoted: the
   // answer is constant, carries no state and records nothing.
-  const disabled = walletProviderDisabledReason('samsung');
+  const disabled = walletProviderReleaseReason('samsung');
   if (disabled) {
     ctx.log.info('wallet.callback_ignored', {
       code: 'WALLET_PROVIDER_DISABLED',

@@ -78,7 +78,7 @@ export async function createWalletInstance(
 ): Promise<WalletOperation | null> {
   p = { ...p };
   if (
-    !walletProviderEnabled(p.provider) ||
+    !walletProviderEnabled(p.provider, p.mode) ||
     !validProof(p, 'upsert') ||
     !validRequest(p.requestKey, p.now) ||
     !p.instanceId

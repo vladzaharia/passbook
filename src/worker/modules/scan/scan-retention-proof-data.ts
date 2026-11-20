@@ -225,22 +225,59 @@ export function retainedEffect(
       presence.data.prevScanId === event.pass_id)
   )
     return none;
-  const {
-    passId: _passId,
-    orgId: _orgId,
-    mode: _mode,
-    templateId: _templateId,
-    ...safeGate
-  } = gate.data;
-  let safePresence: Omit<z.infer<typeof presenceSchema>, 'passId' | 'orgId'> | null = null;
-  if (presence?.success) {
-    const { passId: _passId, orgId: _orgId, ...rest } = presence.data;
+  return detached(gate.data, presence?.success ? presence.data : null);
+}
+
+type Gate = z.infer<typeof gateSchema>;
+type Presence = z.infer<typeof presenceSchema>;
+
+/** The stored form of a gate and presence: no pass, org, mode or template. */
+function detached(
+  gate: Gate,
+  presence: Presence | null,
+): { gateSnapshot: string; presenceSnapshot: string | null } {
+  const { passId: _p, orgId: _o, mode: _m, templateId: _t, ...safeGate } = gate;
+  let safePresence: Omit<Presence, 'passId' | 'orgId'> | null = null;
+  if (presence) {
+    const { passId: _passId, orgId: _orgId, ...rest } = presence;
     safePresence = rest;
   }
   return {
     gateSnapshot: JSON.stringify(safeGate),
     presenceSnapshot: safePresence === null ? null : JSON.stringify(safePresence),
   };
+}
+
+/**
+ * What a desk mark-out or auto exit at an event place retains: the presence row it closed, which names the
+ * entry it followed (`prevScanId`). No gate: a gate shared across events can move without changing the
+ * arrival. A ledger row without `data.effect`, or one that does not fit the scan, retains nothing.
+ */
+export function retainedExitEffect(
+  raw: unknown,
+  event: EventRow,
+  scan: ScanRetentionSnapshot,
+): { gateSnapshot: string | null; presenceSnapshot: string | null } {
+  const none = { gateSnapshot: null, presenceSnapshot: null };
+  if (proofKind(scan) === 'undo') return none;
+  const envelope = z.object({ effect: z.object({ presenceAfter: z.unknown() }) }).safeParse(raw);
+  const presence = presenceSchema.safeParse(
+    envelope.success ? envelope.data.effect.presenceAfter : null,
+  );
+  if (
+    !scan.eventId ||
+    !presence.success ||
+    presence.data.passId !== event.pass_id ||
+    presence.data.orgId !== scan.orgId ||
+    presence.data.scope !== `event:${scan.eventId}` ||
+    presence.data.state !== 'out' ||
+    presence.data.lastScanId !== scan.id ||
+    !presence.data.prevScanId ||
+    presence.data.prevScanId === event.pass_id
+  )
+    return none;
+  const { passId: _p, orgId: _o, ...safePresence } = presence.data;
+  return { gateSnapshot: null, presenceSnapshot: JSON.stringify(safePresence) };
 }
 
 export const proofSchema = z

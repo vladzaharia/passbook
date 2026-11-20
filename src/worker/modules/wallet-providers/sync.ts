@@ -14,7 +14,7 @@ import {
   purgeExpiredWalletOffers,
 } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
-import { walletProviderDisabledReason, walletProviderEnabled } from './provider-policy.ts';
+import { walletProviderEnabled, walletProviderReleaseReason } from './provider-policy.ts';
 import { purgeExpiredGoogleCallbackReplays } from './repo-google-callback.ts';
 import { ackCleanWalletPlaceholder, deferWalletSyncOperation } from './repo-sync-queue.ts';
 import { walletSyncHasWork } from './repo-sync-work.ts';
@@ -34,7 +34,7 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
   if (!walletProviderEnabled('google') && !walletProviderEnabled('samsung'))
     ctx.log.info('wallet.sync_provider_calls_skipped', {
       code: 'WALLET_PROVIDER_DISABLED',
-      reason: walletProviderDisabledReason('google'),
+      reason: walletProviderReleaseReason('google'),
     });
   ctx = snapshotWalletCredentialContext(ctx);
   const db = ctx.env.DB;

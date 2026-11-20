@@ -1,4 +1,9 @@
-import { type ChannelInputs, effectiveChannels } from '../../../shared/channels.ts';
+import {
+  anyDigitalOn,
+  type ChannelInputs,
+  DIGITAL_CHANNELS,
+  effectiveChannels,
+} from '../../../shared/channels.ts';
 import type {
   Channel,
   ChannelReason,
@@ -12,7 +17,8 @@ import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { walletProviderDisabledReason } from '../wallet-providers/provider-policy.ts';
 import { passReplaceable } from './replaceable.ts';
 import * as repo from './repo.ts';
-import { openWindows } from './windows.ts';
+import { rotationOwed } from './repo-replace.ts';
+import { openWindows, splitWindows } from './windows.ts';
 
 type Per<T> = Partial<Record<Channel, T>>;
 
@@ -20,6 +26,7 @@ type Per<T> = Partial<Record<Channel, T>>;
 async function levels(
   ctx: ServiceContext,
   orgId: string,
+  mode: Mode,
 ): Promise<Pick<ChannelInputs, 'platform' | 'org'>> {
   const [platformSettings, org] = await Promise.all([
     getPlatformSettings(ctx),
@@ -27,9 +34,12 @@ async function levels(
   ]);
   const platform: Per<ChannelReason> = {};
   if (!platformSettings['print.enabled']) platform.paper = 'printing_off';
-  for (const p of ['google', 'samsung'] as const)
-    if (walletProviderDisabledReason(p)) platform[p] = 'not_released';
   const blocked: Per<ChannelReason> = {};
+  for (const p of ['google', 'samsung'] as const) {
+    const reason = await walletProviderDisabledReason(ctx.env.DB, p, orgId, mode);
+    if (reason === 'not_released') platform[p] = reason;
+    else if (reason) blocked[p] = reason;
+  }
   for (const c of org['channels.blocked']) blocked[c] = 'blocked';
   if (!org['nfc.tags'].enabled) blocked.nfc = 'tags_off';
   return { platform, org: blocked };
@@ -84,7 +94,7 @@ export async function loadMany(
   await Promise.all(
     passes.map(async (pass) => {
       const [levelsOf, policy, capability] = await Promise.all([
-        memo(lv, pass.orgId, () => levels(ctx, pass.orgId)),
+        memo(lv, `${pass.orgId}:${pass.mode}`, () => levels(ctx, pass.orgId, pass.mode)),
         memo(pol, `${pass.orgId}:${pass.mode}:${pass.templateId}`, () =>
           repo
             .getPolicy(ctx.env.DB, pass.orgId, pass.mode, pass.templateId)
@@ -123,15 +133,38 @@ export async function passChannels(
   ctx: ServiceContext,
   pass: Parameters<typeof loadPass>[1],
 ): Promise<PassChannelsDto> {
-  const { inputs } = await loadPass(ctx, pass);
+  const { inputs, rows } = await loadPass(ctx, pass);
+  const now = ctx.clock.now();
   const [supported, windows] = await Promise.all([
     passReplaceable(ctx, pass),
-    openWindows(ctx, pass.orgId, pass.mode, pass.templateId, ctx.clock.now()),
+    openWindows(ctx, pass.orgId, pass.mode, pass.templateId, now),
   ]);
+  // A code is owed when a digital channel with a copy goes off and the last code predates it.
+  const copies = rows.copies.filter((c) => DIGITAL_CHANNELS.includes(c));
+  const owed =
+    supported &&
+    copies.length > 0 &&
+    (await rotationOwed(
+      ctx.env.DB,
+      pass.orgId,
+      pass.id,
+      { ...rows.retired, ...Object.fromEntries(copies.map((c) => [c, now])) },
+      copies,
+    ));
+  const split = splitWindows(windows);
   return {
     effective: effectiveChannels(inputs),
     overrides: inputs.pass,
-    replace: { supported, windows },
+    replace: {
+      supported,
+      owed,
+      windows: split.windows,
+      blocked: owed ? split.blocked : null,
+      lastDigital: DIGITAL_CHANNELS.filter(
+        (c) =>
+          !anyDigitalOn(effectiveChannels({ ...inputs, pass: { ...inputs.pass, [c]: 'off' } })),
+      ),
+    },
   };
 }
 
@@ -143,7 +176,7 @@ export async function loadTemplate(
   policyOverride?: repo.Policy,
 ): Promise<{ inputs: ChannelInputs; policy: repo.Policy | null; revision: number }> {
   const [lv, stored, version] = await Promise.all([
-    levels(ctx, template.orgId),
+    levels(ctx, template.orgId, mode),
     repo.getPolicy(ctx.env.DB, template.orgId, mode, template.id),
     repo.releasedVersion(ctx.env.DB, template.id, template.orgId, mode),
   ]);

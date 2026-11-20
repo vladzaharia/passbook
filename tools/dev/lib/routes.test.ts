@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { fillPath, filterRoutes, parseRoutes, placeholdersOf, shotName } from './routes.ts';
 
@@ -33,5 +35,32 @@ describe('visual-sweep routes', () => {
     expect(filterRoutes(routes)).toHaveLength(2);
     expect(() => parseRoutes('[{"role":"x","path":"/a","name":"n"}]')).toThrow(/role/);
     expect(() => parseRoutes('{}')).toThrow(/array/);
+  });
+
+  it('keeps the scanning capture gaps listed, each click a string or a list', () => {
+    const file = resolve(import.meta.dirname, '../visual-routes/scanning.json');
+    const routes = parseRoutes(readFileSync(file, 'utf8'));
+    const names = routes.map((r) => r.name);
+    for (const n of [
+      'scan-admin-designer-dark',
+      'scan-admin-designer-role-manager',
+      'scan-admin-designer-state-refused',
+      'scan-admin-new-zone-dialog',
+      'scan-admin-session-dates',
+      'scan-admin-scan-row-detail',
+      'scan-admin-template-channels',
+    ])
+      expect(names).toContain(n);
+    expect(new Set(names).size).toBe(names.length);
+    const bad = routes.filter((r) => r.click !== undefined && ![r.click].flat().every(Boolean));
+    expect(bad).toEqual([]);
+  });
+
+  it('validates click', () => {
+    const one = (click: unknown) =>
+      parseRoutes(JSON.stringify([{ role: 'org', path: '/a', name: 'n', click }]));
+    expect(one(['x', 'y'])).toHaveLength(1);
+    expect(one('x')).toHaveLength(1);
+    for (const bad of [5, [1, {}], '', []]) expect(() => one(bad)).toThrow(/\/a.*click/);
   });
 });

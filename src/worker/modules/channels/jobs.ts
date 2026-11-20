@@ -4,7 +4,8 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { assertNewCodeAllowed, countNewCode } from '../passes/new-code.ts';
 import { publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { noticeHolder, rotateCode, rotationOwed } from './replace.ts';
+import { noticeHolder, rotateCode } from './replace.ts';
+import { rotationOwed } from './repo-replace.ts';
 import { loadPass } from './service.ts';
 import { blockingWindow, openWindows } from './windows.ts';
 

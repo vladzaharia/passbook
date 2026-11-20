@@ -23,8 +23,8 @@ import {
   assertWalletProviderEnabled,
   setWalletProvidersEnabledForTest,
   WalletProviderDisabledError,
-  walletProviderDisabledReason,
   walletProviderEnabledSql,
+  walletProviderReleaseReason,
 } from './provider-policy.ts';
 import { providerRetirementPending } from './repo-sync-retention.ts';
 import { samsungCallbackRoutes } from './routes-callbacks.ts';
@@ -65,7 +65,7 @@ async function expectNoProviderState(db: D1Database) {
 describe('wallet provider policy', () => {
   it('disables both providers with one typed reason, in code and in SQL', () => {
     for (const provider of ['google', 'samsung'] as const) {
-      expect(walletProviderDisabledReason(provider)).toBe('not_released');
+      expect(walletProviderReleaseReason(provider)).toBe('not_released');
       expect(() => assertWalletProviderEnabled(provider)).toThrow(WalletProviderDisabledError);
     }
     expect(walletProviderEnabledSql('i.provider')).toBe('1 = 0');
@@ -74,10 +74,28 @@ describe('wallet provider policy', () => {
 
   it('opens and restores through the test seam only', () => {
     const restore = setWalletProvidersEnabledForTest(true);
-    expect(walletProviderDisabledReason('google')).toBeNull();
+    expect(walletProviderReleaseReason('google')).toBeNull();
     expect(walletProviderEnabledSql('i.provider')).toBe("i.provider IN ('google', 'samsung')");
     restore();
-    expect(walletProviderDisabledReason('samsung')).toBe('not_released');
+    expect(walletProviderReleaseReason('samsung')).toBe('not_released');
+  });
+});
+
+describe('release per mode', () => {
+  it('releases Test before Live, in code and in SQL', () => {
+    const restore = setWalletProvidersEnabledForTest(true, 'test');
+    expect(walletProviderReleaseReason('google', 'test')).toBeNull();
+    expect(walletProviderReleaseReason('google', 'live')).toBe('not_released');
+    expect(walletProviderReleaseReason('google')).toBeNull();
+    expect(walletProviderEnabledSql('i.provider', 'i.mode')).toBe(
+      "((i.provider = 'google' AND i.mode IN ('test')) OR (i.provider = 'samsung' AND i.mode IN ('test')))",
+    );
+    expect(() => assertWalletProviderEnabled('google', 'live')).toThrow(
+      WalletProviderDisabledError,
+    );
+    expect(() => assertWalletProviderEnabled('google', 'test')).not.toThrow();
+    restore();
+    expect(walletProviderReleaseReason('google')).toBe('not_released');
   });
 });
 
