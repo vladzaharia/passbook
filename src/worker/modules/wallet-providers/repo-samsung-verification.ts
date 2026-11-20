@@ -127,11 +127,11 @@ export async function beginSamsungProjectionProbe(
     `INSERT INTO wallet_provider_projection_evidence
     (candidate_id, org_id, mode, account_id, account_revision, provider_identity_hash, candidate_hash,
      card_type, card_sub_type, country_code, status, testing_mode_off, probe_id, verified_at, expires_at,
-     credential_keyset_commitment)
+     credential_keyset_commitment, account_epoch)
     SELECT c.id, c.org_id, c.mode, c.provider_account_id, c.provider_account_revision,
       c.provider_identity_hash, c.candidate_hash, json_extract(c.projection_json, '$.cardType'),
       json_extract(c.projection_json, '$.cardSubType'), json_extract(c.projection_json, '$.countryCode'),
-      'pending', NULL, ?, NULL, NULL, c.credential_keyset_commitment
+      'pending', NULL, ?, NULL, NULL, c.credential_keyset_commitment, c.provider_account_epoch
     FROM template_candidates c JOIN wallet_provider_accounts account ON account.id = c.provider_account_id
       AND account.org_id = c.org_id AND account.mode = c.mode AND account.provider = 'samsung'
       AND account.revision = c.provider_account_revision AND account.credential_id IS NOT NULL
@@ -139,7 +139,7 @@ export async function beginSamsungProjectionProbe(
     JOIN orgs owner ON owner.id = c.org_id AND owner.status = 'active'
     WHERE ${currentCandidate} AND ${guard.sql}
     ON CONFLICT(candidate_id) DO UPDATE SET org_id = excluded.org_id, mode = excluded.mode,
-      account_id = excluded.account_id, account_revision = excluded.account_revision,
+      account_id = excluded.account_id, account_revision = excluded.account_revision, account_epoch = excluded.account_epoch,
       provider_identity_hash = excluded.provider_identity_hash, candidate_hash = excluded.candidate_hash,
       card_type = excluded.card_type, card_sub_type = excluded.card_sub_type, country_code = excluded.country_code,
       status = 'pending', testing_mode_off = NULL, probe_id = excluded.probe_id, verified_at = NULL, expires_at = NULL
@@ -191,10 +191,11 @@ export async function completeSamsungProjectionProbe(
       db,
       `INSERT INTO wallet_provider_projection_evidence_history
       (id, candidate_id, org_id, mode, account_id, account_revision, provider_identity_hash, candidate_hash,
-       card_type, card_sub_type, country_code, testing_mode_off, verified_at, expires_at, credential_keyset_commitment)
+       card_type, card_sub_type, country_code, testing_mode_off, verified_at, expires_at, credential_keyset_commitment,
+       account_epoch)
       SELECT ev.probe_id, ev.candidate_id, ev.org_id, ev.mode, ev.account_id, ev.account_revision,
         ev.provider_identity_hash, ev.candidate_hash, ev.card_type, ev.card_sub_type, ev.country_code, 'Y', ?, ?,
-        ev.credential_keyset_commitment
+        ev.credential_keyset_commitment, ev.account_epoch
       FROM wallet_provider_projection_evidence ev
       JOIN template_candidates c ON c.id = ev.candidate_id AND c.org_id = ev.org_id AND c.mode = ev.mode
         AND c.provider_account_id = ev.account_id AND c.provider_account_revision = ev.account_revision
