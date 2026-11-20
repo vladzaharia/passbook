@@ -1,0 +1,146 @@
+/* Responsive steps; loads last. */
+/* ---------- Responsive ---------- */
+@media (max-width: 1180px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .two {
+    grid-template-columns: 1fr;
+  }
+  .docs {
+    grid-template-columns: 13rem minmax(0, 1fr);
+  }
+  .docs.no-side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .op {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .rail-pane {
+    position: static;
+  }
+}
+@media (max-width: 900px) {
+  .topnav {
+    display: none;
+  }
+  .menu-btn {
+    display: inline-grid;
+  }
+  .docs,
+  .docs.no-side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sidenav {
+    display: none;
+    position: fixed;
+    inset: 59px 0 0 0;
+    z-index: 25;
+    max-height: none;
+    align-self: stretch;
+    height: auto;
+    width: auto;
+    border-right: 0;
+    padding: 16px;
+  }
+  .sidenav .menu-only {
+    display: flex;
+  }
+  :root[data-menu="open"] .sidenav {
+    display: flex;
+  }
+  :root[data-menu="open"] body {
+    overflow: hidden;
+  }
+}
+@media (max-width: 720px) {
+  .top {
+    padding-inline: 16px;
+    gap: 8px;
+  }
+  .brand .sub {
+    display: none;
+  }
+  .main {
+    padding: 20px 16px 96px;
+  }
+  .h1 {
+    font-size: 24px;
+    line-height: 30px;
+  }
+  .hero {
+    padding: 28px 16px 16px;
+    gap: 28px;
+  }
+  .hero h1 {
+    font-size: 32px;
+    line-height: 36px;
+  }
+  .comp {
+    min-height: 0;
+    padding: 72px 12px 20px;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .comp .ticket {
+    flex: none;
+    width: 100%;
+    margin-top: 0;
+  }
+  .comp .pv {
+    flex: none;
+  }
+  .sect {
+    padding: 12px 16px;
+  }
+  .tiles {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .tile:not(.slim) {
+    flex-direction: row;
+    align-items: center;
+  }
+  .tile:not(.slim) > span:last-child {
+    display: none;
+  }
+  .kv {
+    grid-template-columns: 1fr auto;
+  }
+  .kv:not(.cta) > :nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .recipes {
+    grid-template-columns: 1fr;
+  }
+  .foot {
+    padding: 20px 16px 88px;
+  }
+  pre.src {
+    font-size: 12px;
+  }
+  .op {
+    padding-block: 28px 8px;
+  }
+  .trybar {
+    display: flex;
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 15;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in oklab, var(--pk-surface-page) 90%, transparent);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--pk-border-subtle);
+  }
+  .trybar .btn {
+    flex: 1;
+  }
+}
+@media (pointer: coarse) {
+  .iconbtn {
+    width: 44px;
+    height: 44px;
+  }
+}

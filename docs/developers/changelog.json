@@ -1,0 +1,17 @@
+[
+  {
+    "date": "2026-11-20",
+    "kind": "Added",
+    "text": "x-sdk names on every operation: the SDK resource and method, frozen."
+  },
+  {
+    "date": "2026-11-20",
+    "kind": "Added",
+    "text": "createdAfter, createdBefore and updatedSince beside from, to and since."
+  },
+  {
+    "date": "2026-11-20",
+    "kind": "Changed",
+    "text": "Every collection GET returns items and nextCursor, and takes cursor."
+  }
+]

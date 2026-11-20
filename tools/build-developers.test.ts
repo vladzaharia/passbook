@@ -1,0 +1,165 @@
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { DEVELOPERS_INDEXABLE } from '../src/shared/developers.ts';
+import { loadInputs } from '../src/web/developers/model/load.ts';
+import { buildSite } from '../src/web/developers/model/site.ts';
+import { buildDevelopers, headTags, type Manifest } from './build-developers.ts';
+
+const root = resolve(import.meta.dirname, '..');
+const HEAD =
+  '<script type="module" crossorigin src="/assets/developers-X.js"></script><link rel="stylesheet" crossorigin href="/assets/developers-X.css">';
+const work = mkdtempSync(join(tmpdir(), 'developers-'));
+const out = join(work, 'client');
+const api = join(work, 'api');
+let manifest: Manifest;
+const site = buildSite(loadInputs(root));
+
+const read = (file: string) => readFileSync(join(out, file), 'utf8');
+const ids = (html: string) => new Set([...html.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]));
+const hrefs = (html: string) => [...html.matchAll(/ href="([^"]+)"/g)].map((m) => m[1] ?? '');
+
+beforeAll(async () => {
+  // PX4 has not landed: give two operations x-codes and the catalog files to prove the table renders.
+  mkdirSync(api, { recursive: true });
+  cpSync(join(root, 'docs/api'), api, { recursive: true });
+  const docPath = join(api, 'openapi.v1.json');
+  const doc = JSON.parse(readFileSync(docPath, 'utf8'));
+  doc.paths['/api/v1/passes'].post['x-codes'] = ['VALIDATION', 'PASS_CONFLICT'];
+  writeFileSync(docPath, JSON.stringify(doc));
+  writeFileSync(
+    join(api, 'errors.json'),
+    JSON.stringify([
+      { code: 'VALIDATION', status: 422 },
+      { code: 'PASS_CONFLICT', status: 409 },
+    ]),
+  );
+  writeFileSync(
+    join(api, 'error-guide.json'),
+    JSON.stringify({
+      VALIDATION: { title: 'Invalid request', fix: 'Fix the fields listed in issues.' },
+      PASS_CONFLICT: { title: 'Pass conflict', fix: 'This serial exists. Use another or omit it.' },
+    }),
+  );
+  mkdirSync(out, { recursive: true });
+  manifest = (
+    await buildDevelopers({ out, head: HEAD, apiDir: api, origin: 'https://passbook.mobile' })
+  ).manifest;
+}, 120_000);
+
+afterAll(() => rmSync(work, { recursive: true, force: true }));
+
+describe('build-developers', () => {
+  it('writes one page and one markdown twin per resource', () => {
+    for (const page of site.pages) {
+      const url = `/developers/reference/${page.slug}`;
+      expect(manifest[url], url).toBeDefined();
+      expect(manifest[`${url}.md`], url).toBeDefined();
+      expect(existsSync(join(out, `${url}.html`)), url).toBe(true);
+      const html = read(`${url}.html`);
+      expect(html.match(/<section class="op"/g)?.length, page.key).toBe(page.ops.length);
+      expect(read(`${url}.md`)).toContain(`# ${page.label}`);
+    }
+  });
+
+  it('resolves every anchor: a method id and an operation id alias per operation, every #link', () => {
+    for (const page of site.pages) {
+      const html = read(`/developers/reference/${page.slug}.html`);
+      const have = ids(html);
+      for (const op of page.ops) {
+        expect(have.has(op.anchor), `${page.slug}#${op.anchor}`).toBe(true);
+        expect(have.has(op.operationId), op.operationId).toBe(true);
+      }
+      for (const href of hrefs(html).filter((h) => h.startsWith('#')))
+        expect(have.has(href.slice(1)), `${page.slug} ${href}`).toBe(true);
+    }
+  });
+
+  it('links only to pages and files that exist', () => {
+    const served = new Set(Object.keys(manifest));
+    const outside = [
+      '/login',
+      '/api/v1/openapi.json',
+      '/favicon',
+      '/apple-touch-icon.png',
+      '/theme-init.js',
+      '/assets/',
+    ];
+    for (const [url, entry] of Object.entries(manifest)) {
+      if (!entry.type.startsWith('text/html')) continue;
+      for (const href of hrefs(
+        read(entry.asset.endsWith('/') ? `${entry.asset}index.html` : `${entry.asset}.html`),
+      )) {
+        const [path, hash] = href.split('#') as [string, string | undefined];
+        if (!path.startsWith('/') || outside.some((o) => path.startsWith(o))) continue;
+        expect(served.has(path), `${url} -> ${href}`).toBe(true);
+        if (hash && !path.endsWith('.md')) {
+          const asset = manifest[path]?.asset ?? '';
+          const file = asset.endsWith('/') ? `${asset}index.html` : `${asset}.html`;
+          if (path !== '/developers/guides')
+            expect(ids(read(file)).has(hash), `${url} -> ${href}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('renders the errors table from x-codes, with fixes from the catalog, and an entry per code', () => {
+    const html = read('/developers/reference/passes.html');
+    expect(html).toContain('<table class="errs">');
+    expect(html).toContain('This serial exists. Use another or omit it.');
+    expect(html).toContain('href="/developers/errors/PASS_CONFLICT"');
+    expect(read('/developers/errors/PASS_CONFLICT.html')).toContain('Returned by');
+    expect(read('/developers/errors/index.html')).toContain('VALIDATION');
+  });
+
+  it('carries no inline script, style or event handler (the CSP allows none)', () => {
+    for (const [url, entry] of Object.entries(manifest)) {
+      if (!entry.type.startsWith('text/html')) continue;
+      const html = read(
+        entry.asset.endsWith('/') ? `${entry.asset}index.html` : `${entry.asset}.html`,
+      );
+      expect(html, url).not.toMatch(/<script(?![^>]*\ssrc=)/);
+      expect(html, url).not.toMatch(/<style|\sstyle="|\son[a-z]+="/);
+      expect(html.includes('name="robots"'), url).toBe(!DEVELOPERS_INDEXABLE);
+      expect(html, url).toContain(`rel="canonical" href="https://passbook.mobile${url}"`);
+    }
+  });
+
+  it('writes llms.txt, a sitemap and a manifest that the Worker serves from', () => {
+    const llms = read('/developers/llms.txt');
+    for (const page of site.pages) expect(llms).toContain(`/developers/reference/${page.slug}.md`);
+    expect(read('/developers/sitemap.xml')).toContain(
+      '<loc>https://passbook.mobile/developers</loc>',
+    );
+    expect(manifest['/developers']).toEqual({
+      asset: '/developers/',
+      type: 'text/html; charset=utf-8',
+    });
+    expect(manifest['/developers/llms.txt']?.type).toBe('text/plain; charset=utf-8');
+  });
+
+  it('keeps the key out of every page and every sample', () => {
+    for (const entry of Object.values(manifest)) {
+      const file = entry.type.startsWith('text/html')
+        ? entry.asset.endsWith('/')
+          ? `${entry.asset}index.html`
+          : `${entry.asset}.html`
+        : entry.asset;
+      expect(read(file)).not.toMatch(/pb_(live|test)_[A-Za-z0-9]{6,}/);
+    }
+  });
+
+  it('takes the script and stylesheet tags from the Vite document', () => {
+    expect(headTags('<html><head><title>x</title>' + HEAD + '</head></html>')).toBe(HEAD);
+    expect(read('/developers/index.html')).toContain(HEAD);
+  });
+});
