@@ -1,5 +1,4 @@
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
-import type { AppEnv } from '../../platform/env.ts';
 
 export interface IdentityRow {
   id: string;
