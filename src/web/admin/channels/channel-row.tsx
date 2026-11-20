@@ -1,113 +1,86 @@
-import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import type { Channel, ChannelStatus } from '@/shared/contracts/channels.ts';
 import {
   CHANNEL_COPY,
   CHANNEL_FIX_LABEL,
   CHANNEL_LABEL,
-  CHANNEL_SOURCE_LABEL,
-  type ChannelFix,
   channelWhy,
 } from '@/shared/copy/channels.ts';
-import { cn } from '../../lib/cn.ts';
-import { formatDay } from '../../lib/format.ts';
-import { orgPath, platformPath } from '../../lib/scope.ts';
-import { StatusPill } from '../../ui/index.ts';
+import { StatusPill, Tooltip } from '../../ui/index.ts';
 
 export interface ChannelRowProps {
   channel: Channel;
   /** The effective state at this level. */
   status: ChannelStatus;
-  /** The level this row edits: a fix for its own level is not linked. */
-  level: ChannelFix | 'pass';
-  /** The control: segmented, switch or nothing when read-only. */
+  /** True when this level cannot change the row: it shows a label instead of the control. */
+  locked?: boolean;
+  /** The control: segmented or switch. */
   control?: ReactNode;
-  /** Under the state line, e.g. "Template default". */
+  /** Beside the control, e.g. "Template default". */
   extra?: ReactNode;
-  orgId?: string | undefined;
-  templateId?: string | undefined;
   /** Shown instead of the generic label, e.g. "Apple phone tap". */
   label?: string;
   /** Replaces the generic reason, e.g. "Waiting for Apple approval". */
   reasonText?: string;
-  /** A wide control drops under the label on phones; a switch stays beside it. */
-  stack?: boolean;
 }
 
-function FixLink({
-  fix,
-  orgId,
-  templateId,
-}: {
-  fix: ChannelFix;
-  orgId: string | undefined;
-  templateId: string | undefined;
-}) {
-  const label = CHANNEL_FIX_LABEL[fix];
-  if (fix === 'platform') return <Link to={platformPath('/settings')}>{label}</Link>;
-  if (!orgId) return null;
-  if (fix === 'org') return <Link to={orgPath(orgId, '/settings')}>{label}</Link>;
-  if (fix === 'wallet') return <Link to={orgPath(orgId, '/wallet-accounts')}>{label}</Link>;
-  if (!templateId) return null;
-  return (
-    <Link
-      to={orgPath(orgId, `/templates/${encodeURIComponent(templateId)}`)}
-      search={{ tab: 'channels' }}
-    >
-      {label}
-    </Link>
-  );
-}
+/** What the locked label says: unavailable outright, or turned off by a higher level. */
+const UNAVAILABLE = new Set(['not_released', 'not_enrolled', 'no_design']);
 
 /**
- * One channel at any level: name, effective state, the plain reason when it cannot be on with a
- * link to where it is fixed, and the level's own control. Every channel list in the admin renders
- * these.
+ * One channel at any level: name, effective state and the level's own control. A row this level
+ * cannot change shows a muted "Not available" or "Disabled" instead; the reason and where to fix
+ * it sit in its tooltip. Every row is the same height. Every channel list renders these.
  */
 export function ChannelRow({
   channel,
   status,
-  level,
+  locked,
   control,
   extra,
-  orgId,
-  templateId,
   label,
   reasonText,
-  stack,
 }: ChannelRowProps) {
   const why = !status.on && status.reason ? channelWhy(channel, status.reason) : null;
   const state = status.on ? 'on' : 'off';
-  const meta = status.on ? CHANNEL_SOURCE_LABEL[status.source] : null;
+  const word =
+    status.reason && UNAVAILABLE.has(status.reason)
+      ? CHANNEL_COPY.notAvailable
+      : CHANNEL_COPY.disabled;
+  const detail = [
+    reasonText ?? why?.text,
+    why?.copiesStay && !reasonText ? CHANNEL_COPY.copiesStay : null,
+    why?.fix && !reasonText ? `Change it in ${CHANNEL_FIX_LABEL[why.fix]}.` : null,
+  ]
+    .filter(Boolean)
+    .join('. ')
+    .replace(/\.\./g, '.');
   return (
-    <li
-      className={cn(
-        'flex min-h-14 gap-2 py-3',
-        stack
-          ? 'flex-col items-start sm:flex-row sm:items-center sm:justify-between sm:gap-4'
-          : 'items-center justify-between gap-4',
-      )}
-    >
-      <div className="min-w-0">
-        <p className="flex items-center gap-2 text-sm font-medium text-fg-strong">
-          {label ?? CHANNEL_LABEL[channel]}
-          <StatusPill status={state} tone={status.on ? 'success' : 'neutral'}>
-            {status.on ? 'On' : 'Off'}
-          </StatusPill>
-        </p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-fg-muted">
-          {reasonText && !status.on ? reasonText : why ? why.text : meta}
-          {why?.copiesStay ? <span>{CHANNEL_COPY.copiesStay}</span> : null}
-          {!reasonText && why?.fix && why.fix !== level ? (
-            <span className="[&_a]:text-accent-fg [&_a]:underline">
-              <FixLink fix={why.fix} orgId={orgId} templateId={templateId} />
-            </span>
-          ) : null}
-          {status.retiredAt ? <span>Retired {formatDay(status.retiredAt)}</span> : null}
-          {extra}
-        </p>
+    <li className="flex min-h-14 items-center justify-between gap-4 py-2">
+      <p className="flex min-w-0 items-center gap-2 text-sm font-medium text-fg-strong">
+        {label ?? CHANNEL_LABEL[channel]}
+        <StatusPill status={state} tone={status.on ? 'success' : 'neutral'}>
+          {status.on ? 'On' : 'Off'}
+        </StatusPill>
+      </p>
+      <div className="flex shrink-0 items-center gap-3">
+        {locked ? (
+          <Tooltip content={detail} side="left">
+            <button
+              type="button"
+              aria-label={`${word}. ${detail}`}
+              className="cursor-default text-sm text-fg-muted"
+            >
+              {word}
+            </button>
+          </Tooltip>
+        ) : (
+          <>
+            {extra}
+            {control}
+          </>
+        )}
       </div>
-      {control}
     </li>
   );
 }

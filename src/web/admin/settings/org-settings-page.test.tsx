@@ -102,15 +102,19 @@ describe('org settings inheritance', () => {
         blockedByPlatform: true,
       },
     });
-    const toggle = await screen.findByRole('switch', { name: 'Linked NFC allowed' });
-    expect(toggle).toBeDisabled();
-    expect(screen.getByText('Not released yet')).toBeInTheDocument();
+    expect(
+      await screen.findByLabelText(
+        'Disabled. Off for the platform. Change it in Platform settings.',
+      ),
+    ).toHaveTextContent('Disabled');
+    expect(screen.queryByRole('switch', { name: 'Linked NFC allowed' })).toBeNull();
+    expect(screen.queryByText('Off for this organization')).toBeNull();
   });
 
   it('leaves the NFC tag switch usable when the platform switch is on', async () => {
     await setup({ 'nfc.tags': { value: { enabled: false }, default: { enabled: false } } });
     expect(await screen.findByRole('switch', { name: 'Linked NFC allowed' })).toBeEnabled();
-    expect(screen.getByText('Off for this organization')).toBeInTheDocument();
+    expect(screen.queryByText('Not available')).toBeNull();
   });
 
   it('blocks a channel for the organization and turns NFC tags on', async () => {

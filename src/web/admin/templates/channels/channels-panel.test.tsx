@@ -78,7 +78,8 @@ describe('Template channels', () => {
   it('disables a channel the template cannot offer and says why', async () => {
     renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />, handlers(0));
     await screen.findByRole('radiogroup', { name: 'Apple Wallet' });
-    expect(screen.getAllByText('No design in this template')).toHaveLength(2);
+    expect(screen.getAllByText('Not available')).toHaveLength(2);
+    expect(screen.getAllByLabelText(/No design in this template/)).toHaveLength(2);
     expect(screen.queryByRole('radiogroup', { name: 'Google Wallet' })).toBeNull();
     expect(within(group('Paper')).getByRole('radio', { name: 'Off' })).toBeEnabled();
   });
@@ -96,10 +97,16 @@ describe('Template channels', () => {
           },
         }),
     });
-    expect(await screen.findByText('Off for this organization')).toBeInTheDocument();
-    expect(screen.getAllByText('Copies stay as they are.')).toHaveLength(1);
-    expect(screen.getByText('Off for the platform')).toBeInTheDocument();
-    expect(screen.getAllByText('No design in this template')).toHaveLength(2);
+    expect(
+      await screen.findByLabelText(
+        'Disabled. Off for this organization. Copies stay as they are. Change it in Organization settings.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Disabled. Off for the platform. Change it in Platform settings.'),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('Not available')).toHaveLength(2);
+    expect(screen.getAllByLabelText(/No design in this template/)).toHaveLength(2);
   });
 
   it('shows the effect before saving, then saves with the revision', async () => {
