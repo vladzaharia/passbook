@@ -1627,7 +1627,9 @@ describe('approved issuance over tenant HTTP', () => {
       { releaseGeneration: original.generation + 1 },
     ]) {
       const response = await issue(operator.session.headers, { ...data, ...changed }, key);
-      expect(response.status).toBe(409);
+      // v2 answers a reused key with another body as 422 (design-api-platform.md section 3); it is refused
+      // before any write, so the reservation and objects checks below still hold.
+      expect(response.status).toBe(422);
       expect(await response.json()).toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSED' });
     }
     const versions = await all(
