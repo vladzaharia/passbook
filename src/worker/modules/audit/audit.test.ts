@@ -141,6 +141,10 @@ describe('audit api', () => {
       'identity.delete',
     ]);
 
+    expect(
+      (await list('?createdAfter=1002000&createdBefore=1003000')).items.map((i) => i.action),
+    ).toEqual(['org.update', 'identity.delete']);
+
     const page1 = await list(`?limit=2&targetType=identity`);
     expect(page1.items).toHaveLength(2);
     expect(page1.nextCursor).toBeNull();

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema } from '../../../shared/contracts/common.ts';
+import { CursorQuerySchema, IdSchema } from '../../../shared/contracts/common.ts';
 import {
   SetWalletEnrolmentSourceSchema,
   WalletEnrolmentActionSchema,
@@ -41,6 +41,7 @@ register(
     path: '/{orgId}/wallet-enrolments',
     summary: 'List the wallet provider enrolments of the session mode',
     params: z.strictObject({ orgId: IdSchema }),
+    query: CursorQuerySchema,
     response: WalletEnrolmentListSchema,
   },
   async (c) =>

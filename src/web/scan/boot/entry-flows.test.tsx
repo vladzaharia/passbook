@@ -132,9 +132,10 @@ describe('scanner entry flows', () => {
   });
   it('searches the roster by name when it was cut, and signs the match in', async () => {
     const signIn = vi.fn<ScanApi['staffSignIn']>().mockResolvedValue(sessionFixture());
-    const search = vi
-      .fn<ScanApi['staffSearch']>()
-      .mockResolvedValue({ items: [{ id: 'staff-9', name: 'Zed Last', role: 'door' }] });
+    const search = vi.fn<ScanApi['staffSearch']>().mockResolvedValue({
+      items: [{ id: 'staff-9', name: 'Zed Last', role: 'door' }],
+      nextCursor: null,
+    });
     render(
       wrapper(
         <StaffStart

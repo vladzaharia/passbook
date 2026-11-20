@@ -250,13 +250,16 @@ register(
     summary: "This scanner's tally",
     query: z.object({
       since: z.coerce.number().int().nonnegative().optional(),
+      updatedSince: z.coerce.number().int().nonnegative().optional(),
       scope: ScanSummaryScopeSchema.default('device'),
     }),
     response: ScanSummarySchema,
   },
   async (c) => {
-    const { since, scope } = c.req.valid('query');
-    return c.json(await summaryFor(serviceContext(c), scanActorOf(c), since, scope));
+    const { since, updatedSince, scope } = c.req.valid('query');
+    return c.json(
+      await summaryFor(serviceContext(c), scanActorOf(c), updatedSince ?? since, scope),
+    );
   },
 );
 

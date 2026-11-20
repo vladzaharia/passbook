@@ -170,7 +170,7 @@ export async function requireEndpoint(
 
 export async function list(ctx: ServiceContext, access: WebhookAccess) {
   const rows = await listEndpoints(ctx.env.DB, fenceOf(access));
-  return { items: rows.map((e) => toDto(e, access.canManage)) };
+  return { items: rows.map((e) => toDto(e, access.canManage)), nextCursor: null };
 }
 
 export async function get(ctx: ServiceContext, access: WebhookAccess, id: string) {

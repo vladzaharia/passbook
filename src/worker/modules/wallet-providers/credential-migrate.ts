@@ -311,5 +311,5 @@ export async function migrationReport(
             : { ...base, state: 'ready', reason: null, identityShared: [] },
     );
   }
-  return { ...counts, items, next };
+  return { ...counts, items, next, nextCursor: next };
 }

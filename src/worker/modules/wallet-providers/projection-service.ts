@@ -59,7 +59,7 @@ export async function listProjectionCandidates(
   const items = candidates.map((candidate) =>
     candidateDto(candidate, approvalsByCandidate.get(candidate.id) ?? []),
   );
-  return { items };
+  return { items, nextCursor: null };
 }
 
 export async function createProjectionCandidate(

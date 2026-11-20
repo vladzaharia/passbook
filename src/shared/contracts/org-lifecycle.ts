@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, TimestampSchema } from './common.ts';
+import { IdSchema, pageOf, TimestampSchema } from './common.ts';
 
 export const OrgLifecycleParamsSchema = z.strictObject({ orgId: IdSchema });
 export const OrgExportParamsSchema = z.strictObject({ orgId: IdSchema, exportId: IdSchema });
@@ -36,7 +36,7 @@ export const OrgExportSchema = z.object({
   entities: z.record(z.string(), z.number().int()).nullable(),
   errorCode: z.string().nullable(),
 });
-export const OrgExportListSchema = z.object({ items: z.array(OrgExportSchema) });
+export const OrgExportListSchema = pageOf(OrgExportSchema);
 export const OrgExportLinkSchema = z.object({ url: z.string(), expiresAt: TimestampSchema });
 
 export const ClosedOrgSchema = z.object({
@@ -48,4 +48,4 @@ export const ClosedOrgSchema = z.object({
   purging: z.boolean(),
   held: z.boolean(),
 });
-export const ClosedOrgListSchema = z.object({ items: z.array(ClosedOrgSchema) });
+export const ClosedOrgListSchema = pageOf(ClosedOrgSchema);

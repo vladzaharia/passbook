@@ -267,7 +267,7 @@ export const PassAssetSchema = z.object({
   height: z.number().int().nullable(),
   createdAt: TimestampSchema,
 });
-export const PassAssetListSchema = z.object({ items: z.array(PassAssetSchema) });
+export const PassAssetListSchema = pageOf(PassAssetSchema);
 /** Per-pass image override. `name` is `<slot>@<scale>x.png`, e.g. thumbnail@2x.png. Body is the PNG. */
 export const PassAssetParamSchema = z.object({
   id: IdSchema,

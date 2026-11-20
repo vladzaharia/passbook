@@ -12741,6 +12741,17 @@
         "tags": [
           "me"
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -12787,10 +12798,17 @@
                           "primary"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -12941,10 +12959,17 @@
                           "primary"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -13032,10 +13057,17 @@
                           "primary"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -13065,6 +13097,17 @@
         "summary": "My sessions",
         "tags": [
           "me"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
         ],
         "responses": {
           "200": {
@@ -13110,10 +13153,17 @@
                           "current"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -13628,6 +13678,17 @@
         "tags": [
           "organization memberships"
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -13728,6 +13789,12 @@
                           "revokedAt"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
@@ -13772,6 +13839,15 @@
             "required": true,
             "name": "id",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
@@ -13888,10 +13964,17 @@
                           "userEmail"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -13932,6 +14015,15 @@
             "required": true,
             "name": "id",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
@@ -14011,10 +14103,17 @@
                           "acceptedAt"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -15302,7 +15401,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -15446,7 +15546,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -15529,7 +15630,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -15602,7 +15704,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -15678,6 +15781,15 @@
             },
             "required": false,
             "name": "provider",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -15773,12 +15885,18 @@
                         ],
                         "additionalProperties": false
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
-                  ],
-                  "additionalProperties": false
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -16420,6 +16538,15 @@
             "required": true,
             "name": "orgId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
@@ -16580,12 +16707,18 @@
                         ],
                         "additionalProperties": false
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
-                  ],
-                  "additionalProperties": false
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -17533,6 +17666,15 @@
             "required": true,
             "name": "orgId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
@@ -17617,10 +17759,17 @@
                           "canRelease"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -18431,6 +18580,15 @@
             "required": true,
             "name": "orgId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
@@ -18512,10 +18670,17 @@
                           "errorCode"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -18785,6 +18950,17 @@
         "tags": [
           "wallet platform"
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -18877,12 +19053,18 @@
                         ],
                         "additionalProperties": false
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
-                  ],
-                  "additionalProperties": false
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -19858,6 +20040,17 @@
             },
             "required": false,
             "name": "after",
+            "in": "query",
+            "deprecated": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -19972,6 +20165,14 @@
                         "additionalProperties": false
                       }
                     },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
                     "next": {
                       "type": [
                         "string",
@@ -19985,6 +20186,7 @@
                     "pending",
                     "migrated",
                     "items",
+                    "nextCursor",
                     "next"
                   ],
                   "additionalProperties": false
@@ -20731,6 +20933,15 @@
             "required": true,
             "name": "orgId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
@@ -20815,10 +21026,17 @@
                           "canRelease"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -21584,6 +21802,17 @@
         "tags": [
           "org-lifecycle"
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -21633,10 +21862,17 @@
                           "held"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -21676,7 +21912,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -21978,7 +22215,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -22042,7 +22280,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -22053,6 +22292,15 @@
             },
             "required": false,
             "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -22129,10 +22377,17 @@
                           "createdAt"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -22187,7 +22442,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -22733,7 +22989,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -22860,7 +23117,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -23123,7 +23381,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -24734,7 +24993,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -24887,7 +25147,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -25122,7 +25383,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -25191,7 +25453,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -26323,7 +26586,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -27073,7 +27337,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -29110,7 +29375,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -29166,7 +29432,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -29191,6 +29458,15 @@
             },
             "required": true,
             "name": "provider",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -29382,10 +29658,17 @@
                           "approvals"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -30139,7 +30422,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -30164,6 +30448,15 @@
             },
             "required": true,
             "name": "provider",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -30477,6 +30770,12 @@
                         ]
                       }
                     },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "promotable": {
                       "type": "array",
                       "items": {
@@ -30486,7 +30785,8 @@
                   },
                   "required": [
                     "active",
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -30801,7 +31101,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -31356,7 +31657,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -31560,7 +31862,8 @@
                   "orgId": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 64
+                    "maxLength": 64,
+                    "x-platform-only": true
                   },
                   "templateId": {
                     "type": "string",
@@ -32524,6 +32827,15 @@
             "required": true,
             "name": "id",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
@@ -32574,10 +32886,17 @@
                           "createdAt"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -35786,7 +36105,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -35879,7 +36199,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -36959,7 +37280,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -37747,7 +38069,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -38326,7 +38649,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -38885,7 +39209,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -38959,7 +39284,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -39681,7 +40007,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -40286,7 +40613,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -40443,7 +40771,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -40499,7 +40828,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -40555,7 +40885,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -40673,7 +41004,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -40790,7 +41122,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -41583,7 +41916,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -41826,7 +42160,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -42109,7 +42444,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -42364,7 +42700,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -42504,7 +42841,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -42657,7 +42995,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -42720,7 +43059,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -42796,7 +43136,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -46303,7 +46644,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -49602,7 +49944,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -50626,7 +50969,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -50664,6 +51008,15 @@
             },
             "required": false,
             "name": "dayEnd",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -50748,10 +51101,17 @@
                           "hasEmail"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -50968,6 +51328,16 @@
             },
             "required": true,
             "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -51005,10 +51375,17 @@
                           "email"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -51063,7 +51440,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -51194,7 +51572,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -51325,7 +51704,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -51408,7 +51788,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -51523,7 +51904,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -51653,6 +52035,15 @@
             "required": true,
             "name": "id",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
@@ -51727,10 +52118,17 @@
                           "updatedAt"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -51937,7 +52335,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -52848,7 +53247,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -55179,6 +55579,16 @@
             },
             "required": false,
             "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -55439,10 +55849,17 @@
                           "defaults"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -55495,7 +55912,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -55792,6 +56210,16 @@
             },
             "required": false,
             "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -55960,10 +56388,17 @@
                           "createdAt"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -59314,7 +59749,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -61112,7 +61548,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -62862,7 +63299,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -65460,7 +65898,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -68544,7 +68983,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -69223,7 +69663,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -69784,7 +70225,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -70008,7 +70450,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -70063,7 +70506,8 @@
             },
             "required": false,
             "name": "from",
-            "in": "query"
+            "in": "query",
+            "deprecated": true
           },
           {
             "schema": {
@@ -70074,6 +70518,29 @@
             },
             "required": false,
             "name": "to",
+            "in": "query",
+            "deprecated": true
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "required": false,
+            "name": "createdAfter",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "required": false,
+            "name": "createdBefore",
             "in": "query"
           },
           {
@@ -70240,7 +70707,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -70295,7 +70763,8 @@
             },
             "required": false,
             "name": "from",
-            "in": "query"
+            "in": "query",
+            "deprecated": true
           },
           {
             "schema": {
@@ -70306,6 +70775,29 @@
             },
             "required": false,
             "name": "to",
+            "in": "query",
+            "deprecated": true
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "required": false,
+            "name": "createdAfter",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "required": false,
+            "name": "createdBefore",
             "in": "query"
           },
           {
@@ -70472,7 +70964,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -70527,7 +71020,8 @@
             },
             "required": false,
             "name": "from",
-            "in": "query"
+            "in": "query",
+            "deprecated": true
           },
           {
             "schema": {
@@ -70538,6 +71032,29 @@
             },
             "required": false,
             "name": "to",
+            "in": "query",
+            "deprecated": true
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "required": false,
+            "name": "createdAfter",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "required": false,
+            "name": "createdBefore",
             "in": "query"
           }
         ],
@@ -70579,7 +71096,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -70634,7 +71152,8 @@
             },
             "required": false,
             "name": "from",
-            "in": "query"
+            "in": "query",
+            "deprecated": true
           },
           {
             "schema": {
@@ -70645,6 +71164,29 @@
             },
             "required": false,
             "name": "to",
+            "in": "query",
+            "deprecated": true
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "required": false,
+            "name": "createdAfter",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "required": false,
+            "name": "createdBefore",
             "in": "query"
           }
         ],
@@ -70850,6 +71392,17 @@
         "tags": [
           "status"
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -70927,10 +71480,17 @@
                           "errorCode"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -70970,7 +71530,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -71527,7 +72088,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -72084,7 +72646,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -72518,6 +73081,15 @@
             "required": true,
             "name": "q",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
@@ -72556,10 +73128,17 @@
                           "role"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -74348,6 +74927,15 @@
             "required": false,
             "name": "dayEnd",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
@@ -74431,10 +75019,17 @@
                           "hasEmail"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -75663,6 +76258,19 @@
             },
             "required": false,
             "name": "since",
+            "in": "query",
+            "deprecated": true
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "required": false,
+            "name": "updatedSince",
             "in": "query"
           }
         ],
@@ -76689,6 +77297,19 @@
             },
             "required": false,
             "name": "since",
+            "in": "query",
+            "deprecated": true
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "required": false,
+            "name": "updatedSince",
             "in": "query"
           },
           {
@@ -77113,7 +77734,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -78330,7 +78952,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -80396,7 +81019,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -84187,7 +84811,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -84716,7 +85341,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -84902,7 +85528,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -84989,7 +85616,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "responses": {
@@ -85378,7 +86006,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -86742,7 +87371,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -86866,7 +87496,8 @@
             },
             "required": false,
             "name": "from",
-            "in": "query"
+            "in": "query",
+            "deprecated": true
           },
           {
             "schema": {
@@ -86878,6 +87509,31 @@
             },
             "required": false,
             "name": "to",
+            "in": "query",
+            "deprecated": true
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "required": false,
+            "name": "createdAfter",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "required": false,
+            "name": "createdBefore",
             "in": "query"
           }
         ],
@@ -86983,7 +87639,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -87286,7 +87943,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -87564,7 +88222,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -87843,7 +88502,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -88122,7 +88782,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -88490,7 +89151,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -88759,7 +89421,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -88862,6 +89525,15 @@
             "required": true,
             "name": "passId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
           }
         ],
         "responses": {
@@ -90164,7 +90836,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -92095,6 +92768,16 @@
             },
             "required": true,
             "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -93400,6 +94083,16 @@
             },
             "required": false,
             "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -93746,7 +94439,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           },
           {
             "schema": {
@@ -93944,7 +94638,8 @@
             },
             "required": false,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {
@@ -94600,6 +95295,16 @@
             },
             "required": true,
             "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
             "in": "query"
           }
         ],
@@ -94744,7 +95449,8 @@
             },
             "required": true,
             "name": "orgId",
-            "in": "query"
+            "in": "query",
+            "x-platform-only": true
           }
         ],
         "requestBody": {

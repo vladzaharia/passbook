@@ -233,7 +233,7 @@ export const UpdateWebhookEndpointSchema = z.object({
 export const WEBHOOK_USER_AGENT = 'PassBook-Webhooks/1.0';
 
 export const WebhookSecretSchema = z.object({ secret: z.string() });
-export const WebhookEndpointListSchema = z.object({ items: z.array(WebhookEndpointSchema) });
+export const WebhookEndpointListSchema = pageOf(WebhookEndpointSchema);
 export const WebhookEndpointCreatedSchema = z.object({
   endpoint: WebhookEndpointSchema,
   secret: z.string(),

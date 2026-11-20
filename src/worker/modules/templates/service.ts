@@ -255,7 +255,7 @@ export async function recentUploads(
     includeGlobal: auth?.kind === 'api_key' && auth.orgId === null,
     limit: query.limit,
   });
-  return { items };
+  return { items, nextCursor: null };
 }
 
 export async function importStatus(

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EmailSchema, IdSchema, PlainLineSchema, TimestampSchema } from './common.ts';
+import { EmailSchema, IdSchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
 
 export const VISITOR_STATUSES = ['expected', 'in', 'out', 'no_show', 'cancelled'] as const;
 export const VisitorStatusSchema = z.enum(VISITOR_STATUSES);
@@ -33,7 +33,7 @@ export const VisitorSchema = z.object({
 });
 export type Visitor = z.infer<typeof VisitorSchema>;
 
-export const VisitorListSchema = z.object({ items: z.array(VisitorSchema) });
+export const VisitorListSchema = pageOf(VisitorSchema);
 
 export const NewVisitorSchema = z
   .strictObject({
@@ -62,4 +62,5 @@ export const VisitorOrgQuerySchema = z.object({ orgId: IdSchema });
 export const HostListSchema = z.object({
   /** Emails come only with members:manage. */
   items: z.array(z.object({ id: IdSchema, name: z.string(), email: z.string().nullable() })),
+  nextCursor: z.string().nullable(),
 });

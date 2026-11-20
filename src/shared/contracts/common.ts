@@ -103,3 +103,6 @@ export const ModeSchema = z.enum(['live', 'test']);
 export type Mode = z.infer<typeof ModeSchema>;
 /** Admin sessions pick a mode with this header; anything but `test` means live. */
 export const MODE_HEADER = 'x-passbook-mode';
+
+/** Lists that return everything at once still take `cursor`, so a client can page every list the same way. */
+export const CursorQuerySchema = z.object({ cursor: z.string().max(512).optional() });

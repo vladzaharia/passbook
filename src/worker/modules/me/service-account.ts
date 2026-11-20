@@ -29,7 +29,7 @@ export async function listMyEmails(ctx: ServiceContext, userId: string) {
   if (user && !items.some((e) => e.primary) && knownEmail(user.primary_email)) {
     items.push({ email: user.primary_email, verifiedAt: null, verifiedVia: null, primary: true });
   }
-  return { items };
+  return { items, nextCursor: null };
 }
 
 /**
@@ -94,6 +94,7 @@ export async function listMySessions(ctx: ServiceContext, userId: string, curren
       userAgent: s.user_agent,
       current: s.id_hash === currentId,
     })),
+    nextCursor: null,
   };
 }
 

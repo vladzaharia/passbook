@@ -297,6 +297,8 @@ export const ScanListQuerySchema = PageQuerySchema.extend({
   reason: ScanReasonSchema.optional(),
   from: z.coerce.number().int().nonnegative().optional(),
   to: z.coerce.number().int().nonnegative().optional(),
+  createdAfter: z.coerce.number().int().nonnegative().optional(),
+  createdBefore: z.coerce.number().int().nonnegative().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 export const ScanRecordListSchema = pageOf(ScanRecordSchema);

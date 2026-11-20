@@ -73,7 +73,10 @@ export async function listCandidates(
     scope.orgId,
     isPlatformAdmin(auth),
   );
-  return { items: rows.map((row, i) => toCandidate(row, approvals[i] ?? [], names)) };
+  return {
+    items: rows.map((row, i) => toCandidate(row, approvals[i] ?? [], names)),
+    nextCursor: null,
+  };
 }
 
 export async function approveCandidate(
@@ -176,6 +179,7 @@ export async function listReleases(
   return {
     active: active ? { ...active, createdByName: names.get(active.createdBy ?? '') ?? null } : null,
     items: rows.map((r) => toRelease(r, names)),
+    nextCursor: null,
     ...(promotable?.length ? { promotable } : {}),
   };
 }

@@ -99,7 +99,12 @@ export function createScansRoutes(deps: { undo: ConsoleUndo }) {
       const ctx = serviceContext(c);
       const auth = c.var.auth;
       const query = c.req.valid('query');
-      const filter = { ...query, mode: modeOf(auth) };
+      const filter = {
+        ...query,
+        from: query.createdAfter ?? query.from,
+        to: query.createdBefore ?? query.to,
+        mode: modeOf(auth),
+      };
       if (auth?.kind === 'api_key') {
         if (query.q !== undefined)
           throw new ForbiddenError(

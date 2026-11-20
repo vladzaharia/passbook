@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 import {
   AcceptOrgInvitationSchema,
+  CursorQuerySchema,
   IdParamSchema,
   InviteOrgMemberSchema,
   OkSchema,
@@ -91,9 +92,14 @@ register(
     method: 'get',
     path: '/memberships/me',
     summary: 'List my active organization memberships',
+    query: CursorQuerySchema,
     response: OrgMembershipListSchema,
   },
-  async (c) => c.json({ items: await listMyOrgMemberships(serviceContext(c), session(c).userId) }),
+  async (c) =>
+    c.json({
+      items: await listMyOrgMemberships(serviceContext(c), session(c).userId),
+      nextCursor: null,
+    }),
 );
 register(
   membershipRoutes,
@@ -103,11 +109,13 @@ register(
     path: '/{id}/memberships',
     summary: 'List organization memberships',
     params: IdParamSchema,
+    query: CursorQuerySchema,
     response: OrgMemberListSchema,
   },
   async (c) =>
     c.json({
       items: await listOrgMembers(serviceContext(c), session(c), c.req.valid('param').id),
+      nextCursor: null,
     }),
 );
 register(
@@ -118,11 +126,13 @@ register(
     path: '/{id}/invitations',
     summary: 'List organization invitations',
     params: IdParamSchema,
+    query: CursorQuerySchema,
     response: OrgInvitationListSchema,
   },
   async (c) =>
     c.json({
       items: await listOrgInvitations(serviceContext(c), session(c), c.req.valid('param').id),
+      nextCursor: null,
     }),
 );
 register(

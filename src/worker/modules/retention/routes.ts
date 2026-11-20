@@ -1,4 +1,4 @@
-import { OkSchema } from '../../../shared/contracts/common.ts';
+import { CursorQuerySchema, OkSchema } from '../../../shared/contracts/common.ts';
 import {
   HoldIdParamsSchema,
   HoldListSchema,
@@ -60,12 +60,16 @@ register(
     path: '/{orgId}/retention/holds',
     summary: 'List legal holds',
     params: HoldParamsSchema,
+    query: CursorQuerySchema,
     response: HoldListSchema,
   },
   async (c) => {
     const { orgId } = c.req.valid('param');
     await orgBy(c, orgId, 'audit:read');
-    return c.json({ items: await listHoldViews(serviceContext(c).env.DB, orgId, 'org') });
+    return c.json({
+      items: await listHoldViews(serviceContext(c).env.DB, orgId, 'org'),
+      nextCursor: null,
+    });
   },
 );
 
@@ -160,11 +164,13 @@ register(
     path: '/orgs/{orgId}/retention/holds',
     summary: 'List the legal holds of an organization',
     params: HoldParamsSchema,
+    query: CursorQuerySchema,
     response: HoldListSchema,
   },
   async (c) =>
     c.json({
       items: await listHoldViews(serviceContext(c).env.DB, c.req.valid('param').orgId, 'platform'),
+      nextCursor: null,
     }),
 );
 

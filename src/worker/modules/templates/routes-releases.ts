@@ -2,6 +2,7 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import {
   ApproveTemplateCandidateSchema,
   CreateTemplateCandidateSchema,
+  CursorQuerySchema,
   IdParamSchema,
   PromoteTemplateSchema,
   PublishTemplateReleaseSchema,
@@ -41,7 +42,7 @@ export function registerTemplateReleases(router: Router): void {
       path: '/{id}/candidates',
       summary: 'List template release candidates',
       params: IdParamSchema,
-      query: TemplateReleaseScopeSchema,
+      query: TemplateReleaseScopeSchema.extend(CursorQuerySchema.shape),
       response: TemplateCandidateListSchema,
     },
     async (c) =>
@@ -138,7 +139,7 @@ export function registerTemplateReleases(router: Router): void {
       path: '/{id}/releases',
       summary: 'List template releases',
       params: IdParamSchema,
-      query: TemplateReleaseScopeSchema,
+      query: TemplateReleaseScopeSchema.extend(CursorQuerySchema.shape),
       response: TemplateReleaseListSchema,
     },
     async (c) =>

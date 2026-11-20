@@ -193,7 +193,7 @@ export async function listOrgCredentials(
     mode: auth.mode,
     ...(provider ? { provider } : {}),
   });
-  return { items: rows.map(credentialDto) };
+  return { items: rows.map(credentialDto), nextCursor: null };
 }
 
 export async function saveOrgCredential(
@@ -225,7 +225,10 @@ export async function listPlatformCredentials(
   auth: SessionAuth,
 ): Promise<WalletCredentialList> {
   platformWriter(auth, 'platform.wallet.credential_save');
-  return { items: (await listCredentials(ctx.env.DB, { orgId: null })).map(credentialDto) };
+  return {
+    items: (await listCredentials(ctx.env.DB, { orgId: null })).map(credentialDto),
+    nextCursor: null,
+  };
 }
 
 export async function savePlatformCredential(

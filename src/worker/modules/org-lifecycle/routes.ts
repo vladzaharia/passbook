@@ -1,3 +1,4 @@
+import { CursorQuerySchema } from '../../../shared/contracts/common.ts';
 import {
   ClosedOrgListSchema,
   CloseOrgSchema,
@@ -122,11 +123,13 @@ register(
     path: '/{orgId}/exports',
     summary: 'List organization exports',
     params: OrgLifecycleParamsSchema,
+    query: CursorQuerySchema,
     response: OrgExportListSchema,
   },
   async (c) =>
     c.json({
       items: await listExports(serviceContext(c), c.req.valid('param').orgId, callerOf(c)),
+      nextCursor: null,
     }),
 );
 
@@ -209,7 +212,8 @@ register(
     method: 'get',
     path: '/closed-orgs',
     summary: 'List closed organizations',
+    query: CursorQuerySchema,
     response: ClosedOrgListSchema,
   },
-  async (c) => c.json({ items: await listClosed(serviceContext(c)) }),
+  async (c) => c.json({ items: await listClosed(serviceContext(c)), nextCursor: null }),
 );

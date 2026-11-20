@@ -2,6 +2,7 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 import { z } from 'zod';
 import {
+  CursorQuerySchema,
   IdParamSchema,
   IdSchema,
   OkSchema,
@@ -34,6 +35,7 @@ const RetainedWebhookListSchema = z.object({
       updatedAt: z.number(),
     }),
   ),
+  nextCursor: z.string().nullable(),
 });
 
 function assertLive(c: Context<AppBindings>): void {
@@ -51,6 +53,7 @@ export function registerWebhookRetentionRoutes(router: OpenAPIHono<AppBindings>)
       path: '/{id}/webhook-failures',
       summary: 'List retained webhook status',
       params: IdParamSchema,
+      query: CursorQuerySchema,
       response: RetainedWebhookListSchema,
     },
     async (c) => {
@@ -84,6 +87,7 @@ export function registerWebhookRetentionRoutes(router: OpenAPIHono<AppBindings>)
             updatedAt,
           }),
         ),
+        nextCursor: null,
       });
     },
   );

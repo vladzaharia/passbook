@@ -241,6 +241,21 @@ Clients written against the earlier API keep working with these differences (as 
 - **Cutover**: uploaded templates start with a `legacy` release at their active version, so
   existing integrations keep creating passes. New versions need a candidate, a second reviewer
   and a release (see [Approved template releases](#approved-template-releases)).
+- **Lists and filters**: every collection `GET` returns `{ items, nextCursor }` and takes `cursor`;
+  `nextCursor` is `null` on the last page and on lists that return everything at once. `after` stays
+  only on the `/events` and `/scan/live` streams. `createdAfter`, `createdBefore` and
+  `updatedSince` (ms) are the names for `from`, `to` and `since`; the old names still work and are
+  marked deprecated in the reference. `orgId` is `x-platform-only`: an org-bound key never sends it.
+
+## Conventions for new routes
+
+- **Status**: creating a resource returns `201`; queuing a job returns `202` and names the job
+  or resource to poll; an action on an existing resource returns `200`. `POST /roll-calls` and
+  `POST /offboard` answer `200` today; they change only under a dated version.
+- **Lists**: return `pageOf(item)` (`{ items, nextCursor }`) and take `cursor` and `limit`. Use
+  `after` only for an ordered stream.
+- **Time filters**: `createdAfter`, `createdBefore`, `updatedSince`, in ms.
+- **Path ids**: one name per resource, `{id}` or `{orgId}`; never both for the same path.
 
 ## Signed webhooks
 
