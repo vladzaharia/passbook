@@ -508,7 +508,7 @@ Roll forward only once migrations have run (owner answer 6). `0059` and `0065` m
 
 The scan and fence rewrite is complete. What is left:
 - Wallet providers stay on column equality (7.3).
-- A rekey of the keyset singleton must migrate every provider commitment column (instances, operations, refs, bindings, tombstones, candidates, approvals, releases, evidence) explicitly: provider SQL no longer re-checks the singleton per statement; services pin it once at entry.
+- A rekey of the keyset singleton must migrate every provider commitment column (instances, operations, refs, bindings, tombstones, candidates, approvals, releases, evidence) explicitly: provider SQL no longer re-checks the singleton per statement; services pin it once at entry and carry no commitment between layers. Provider SQL reads the stored value from the singleton through `pinnedKeysetSql` (`wallet-providers/repo-keyset-pin.ts`).
 
 Done:
 
