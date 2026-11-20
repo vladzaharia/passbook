@@ -11,6 +11,7 @@ import {
 import type { ValidationIssue } from '@/passkit/types.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { PHONE, useMediaQuery } from '../../../lib/media.ts';
+import { useOrgScope } from '../../../lib/org-filter.tsx';
 import {
   Button,
   Callout,
@@ -53,6 +54,19 @@ const MODES = [
   { value: 'pass', label: 'Pass' },
   { value: 'scan', label: 'Scan screen' },
 ] as const;
+
+/** An issued pass shows the org's name beside the logo; the draft card does too. */
+function withOrgLogoText(
+  passJson: Record<string, unknown> | undefined,
+  orgName: string | undefined,
+): Record<string, unknown> | null {
+  if (!passJson) return null;
+  if (!orgName) return passJson;
+  const next = { ...passJson };
+  for (const key of ['logoText', 'eventLogoText'])
+    if (typeof next[key] === 'string') next[key] = orgName;
+  return next;
+}
 
 /** A template that cannot be changed: the card and its issues stay, the structure is inert. */
 export interface ReadOnlyDesign {
@@ -114,12 +128,17 @@ export function Designer({
   const select = useMemo(() => validSelection(state), [state]);
   const base_ = assetBase(version);
   const stamps = useStampsPreview(state.doc, base_);
+  const orgName = useOrgScope().membership?.orgName;
   const check = useDesignCheck(
     templateId,
     state.doc,
     !readOnly,
     stamps.checkCount,
     create ? { orgId: create.orgId, name: create.name } : undefined,
+  );
+  const shownPass = useMemo(
+    () => withOrgLogoText(check.lastBuilt, orgName),
+    [check.lastBuilt, orgName],
   );
 
   const edit = useCallback(
@@ -292,7 +311,7 @@ export function Designer({
                 onPaper={
                   readOnly || phone ? undefined : (patch) => edit({ op: 'paper', patch }, 'paper')
                 }
-                passJson={readOnly ? readOnly.passJson : (check.lastBuilt ?? null)}
+                passJson={readOnly ? readOnly.passJson : shownPass}
                 assets={state.doc.assets}
                 assetBase={base_}
                 checking={readOnly ? false : check.checking}

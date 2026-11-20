@@ -81,6 +81,7 @@ export function invitationPage(nonce: string, theme?: PageTheme): Response {
     theme,
     title: 'Organization invitation',
     art: 'confirm',
+    css: '.btn[hidden]{display:none}',
     body,
   });
   return new Response(html, {
