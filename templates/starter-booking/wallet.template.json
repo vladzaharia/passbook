@@ -4,8 +4,17 @@
   "description": "An appointment or table at a set time.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png",
+        "thumbnail": "wallets/google/thumbnail.png"
+      }
+    },
     "samsung": {}
+  },
+  "channels": {
+    "paper": "on",
+    "nfc": "on"
   },
   "blueprint": true,
   "inputs": {

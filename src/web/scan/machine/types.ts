@@ -1,7 +1,6 @@
 /**
  * The scan machine's frozen contract (AC 3.1-3.3 with SA 7.5's amendments and the B card layer).
  * One pure reducer `reduce(state, event, { now, id }) -> { state, cmds }` serves both postures.
- * Stream CC implements it; the UI streams build against these shapes and the fixtures.
  */
 import type {
   ScanCard,
@@ -9,6 +8,7 @@ import type {
   ScanOutcome as ServerOutcome,
 } from '../../../shared/contracts/scan.ts';
 import type { ScanDisplay } from '../../../shared/contracts/scan-display.ts';
+import type { OfflineMode } from '../../../shared/scan-offline.ts';
 import type { ScanInput } from '../input/types.ts';
 import type { FailCode, PinNote } from './fail.ts';
 
@@ -32,6 +32,7 @@ export interface Draft {
   /** A `set`: the card's version the staff read, so a card that moved answers `stale`. */
   expectedVersion?: number;
   override?: boolean;
+  group?: boolean; // check in every pass of the scanned pass's bundle
   overrideOf?: string;
   confirmed?: boolean;
   /** A Manager's PIN approval for this one action. The PIN sheet re-sends the draft under a new key. */
@@ -150,6 +151,7 @@ export interface ScanState {
   online: boolean;
   unsure: Unsure[];
   queue: { pending: number; oldestAt: number | null; conflicts: number };
+  offline: { mode: OfflineMode; listAt: number | null; syncing: boolean };
   reader: { kind: 'none' | 'barcode' | 'nfc'; lastAt: number | null; badLayout: number };
   undo: { scanId: string; key: string; since: number } | null;
   /** At most 20, pruned on every event. */
@@ -187,6 +189,7 @@ export type ScanEvent =
   | { type: 'switch' }
   | { type: 'keep' }
   | { type: 'override'; actionId: string }
+  | { type: 'group' } // "Check in all N": the same scan with `group: 'bundle'` under a new key
   /** The Manager PIN sheet's Approve: re-sends the same draft under a new key with `approval`. */
   | { type: 'approve'; staffId?: string; pin: string }
   | { type: 'arm'; actionId: string; amount: number | null; sticky: boolean }
@@ -195,12 +198,12 @@ export type ScanEvent =
   | { type: 'undo'; scanId: string; approval?: Approval }
   | { type: 'undone'; key: string; outcome: ScanOutcome }
   | { type: 'dismiss' }
-  /** A deadline from `nextDeadline()` passed. */
-  | { type: 'tick' }
+  | { type: 'tick' } // a deadline from `nextDeadline()` passed
   | { type: 'visible'; visible: boolean }
   | { type: 'focus'; focused: boolean }
   | { type: 'online'; online: boolean }
   | { type: 'queue'; pending: number; oldestAt: number | null; conflicts: number }
+  | { type: 'offline.status'; listAt: number | null; syncing: boolean }
   | { type: 'overlay'; open: ScanState['overlay'] }
   | { type: 'resume' }
   | { type: 'prefs'; prefs: Partial<ScanState['prefs']> }
@@ -240,7 +243,7 @@ export type Cmd =
   | { c: 'undo'; key: string; scanId: string; approval?: Approval }
   | { c: 'unsure.keep'; entry: Unsure }
   | { c: 'unsure.drop'; key: string }
-  | { c: 'offline.decide'; key: string; input: ScanInput }
+  | { c: 'offline.decide'; key: string; input: ScanInput; unverified?: boolean }
   | { c: 'camera'; op: 'start' | 'pause' | 'resume' | 'stop' | 'slow' }
   | { c: 'wake'; op: 'request' | 'release' }
   | { c: 'audio'; op: 'unlock' }
@@ -266,6 +269,8 @@ export type ClientReason =
   | 'server'
   | 'rate_limited'
   | 'saved_offline'
+  | 'offline_decide'
+  | 'not_listed'
   | 'add_link';
 
 /** The server's outcome, widened by the client-only kinds `system` and `queued`. */

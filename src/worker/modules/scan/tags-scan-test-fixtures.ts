@@ -15,12 +15,11 @@ export async function tagScanFixture(options: { enabled?: boolean } = {}) {
   });
   const otherTpl = await kit.scanTemplate('Pool card', { actions: [CHECK_IN] });
   const db = kit.env.DB;
-  if (options.enabled !== false)
-    await run(
-      db,
-      "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'nfc.tags', '{\"enabled\":true}', 1)",
-      [`org:${kit.org.id}`],
-    );
+  await run(
+    db,
+    "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'nfc.tags', ?, 1)",
+    [`org:${kit.org.id}`, JSON.stringify({ enabled: options.enabled !== false })],
+  );
   let counter = 0;
   const uid = () => `04${(++counter).toString(16).padStart(12, '0')}`;
   const read = (u: string = uid()) => ({ uid: u, tech: 'a' as const, source: 'native' as const });

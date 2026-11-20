@@ -2,8 +2,8 @@ import type { z } from 'zod';
 import {
   anyDigitalOn,
   DIGITAL_CHANNELS,
+  defaultOf,
   effectiveChannels,
-  templateDefault,
 } from '../../../shared/channels.ts';
 import type {
   Channel,
@@ -24,7 +24,7 @@ import * as repo from './repo.ts';
 import { rotatedCount } from './repo-replace.ts';
 import { latestRun, pendingRun } from './repo-runs.ts';
 import { writeTemplatePolicy } from './repo-write.ts';
-import { loadTemplate } from './service.ts';
+import { channelDefaults, loadTemplate } from './service.ts';
 import { openWindows, splitWindows, WINDOW_HORIZON_MS } from './windows.ts';
 
 type PutTemplateResponse = z.infer<typeof PutTemplateChannelsResponseSchema>;
@@ -59,7 +59,7 @@ export async function putTemplateChannels(
     throw new ConflictError('The channels changed. Reload and retry.', 'TEMPLATE_CHANNELS_CHANGED');
   const merged = { ...policy, ...body.channels };
   const changed = (Object.keys(body.channels) as Channel[]).filter(
-    (c) => (policy?.[c] ?? templateDefault(c)) !== body.channels[c],
+    (c) => (policy?.[c] ?? defaultOf(inputs, c)) !== body.channels[c],
   );
   const now = ctx.clock.now();
   const replace = body.replaceCodes ? replaceSet(merged, changed) : [];
@@ -94,7 +94,7 @@ export async function putTemplateChannels(
   const impact = [];
   const cleared: Channel[] = [];
   for (const channel of changed) {
-    const prev = policy?.[channel] ?? templateDefault(channel);
+    const prev = policy?.[channel] ?? defaultOf(inputs, channel);
     const next = body.channels[channel] as TemplateChannelState;
     const blocked = !effectiveChannels({ ...inputs, template: { ...policy, [channel]: 'on' } })[
       channel
@@ -166,6 +166,7 @@ export async function putTemplateChannels(
     channels: saved,
     revision: wrote ? revision + 1 : revision,
     effective: effectiveChannels(view.inputs),
+    defaults: channelDefaults(view.inputs),
     impact,
     workflowInstanceId,
     replaceSupported: supported,

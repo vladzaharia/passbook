@@ -308,8 +308,22 @@ describe('warnings', () => {
         generic: { primaryFields: [] },
       } as unknown as PassJson),
     ).toContain('PATH');
-    const shadow = manifestOf({ ...inputs, scan: { type: 'string' } }, {}, doc());
-    expect(codes(null, 'warning', shadow)).toContain('SHADOWED');
+    const shadow = (value: string) =>
+      manifestOf(
+        { ...inputs, access: { type: 'string' } },
+        {},
+        doc({ panels: [panelOf([row({ value })])] }),
+      );
+    const bare = scanDisplayIssues(shadow('{{access}}')).filter(
+      (i) => i.code === 'SCAN_DISPLAY_SHADOWED',
+    );
+    expect(bare.map((i) => i.path)).toEqual(['scan.display.panels.0.rows.0.value']);
+    expect(codes(null, 'warning', shadow('{{access.x}}'))).toContain('SHADOWED');
+    expect(
+      codes(null, 'warning', shadow('{{access}} {{access}}')).filter((c) => c === 'SHADOWED'),
+    ).toHaveLength(1);
+    expect(codes(null, 'warning', shadow('{{inputs.access}}'))).not.toContain('SHADOWED');
+    expect(codes(null, 'warning', shadow('{{inputs.seat}}'))).not.toContain('SHADOWED');
     expect(
       codes(
         doc({ panels: [panelOf([row({})], { when: { path: 'inputs.tier', eq: 'VIP' } })] }),

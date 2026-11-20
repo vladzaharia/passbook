@@ -6,6 +6,7 @@ import { localZone, zoneLabel } from '../../lib/timezones.ts';
 import {
   CheckboxField,
   DateTimeField,
+  DependentSettings,
   FormField,
   SegmentedControl,
   Select,
@@ -58,26 +59,24 @@ export function MessageSection({
         checked={state.clearing}
         onCheckedChange={(on) => onChange({ clearing: on === true, clear: 'never' })}
       />
-      {state.clearing ? null : (
-        <>
-          <SwitchRow
-            label="Notify holders"
-            help="Wallet can show it on the lock screen."
-            checked={state.notify}
-            onCheckedChange={(notify) => onChange({ notify })}
-          />
-          <FormField label="Expires">
-            {(control) => (
-              <Select
-                {...control}
-                options={CLEAR_CHOICES.map(({ value, label }) => ({ value, label }))}
-                value={state.clear}
-                onValueChange={(clear) => onChange({ clear })}
-              />
-            )}
-          </FormField>
-        </>
-      )}
+      <DependentSettings open={!state.clearing}>
+        <SwitchRow
+          label="Notify holders"
+          help="Wallet can show it on the lock screen."
+          checked={state.notify}
+          onCheckedChange={(notify) => onChange({ notify })}
+        />
+        <FormField label="Expires">
+          {(control) => (
+            <Select
+              {...control}
+              options={CLEAR_CHOICES.map(({ value, label }) => ({ value, label }))}
+              value={state.clear}
+              onValueChange={(clear) => onChange({ clear })}
+            />
+          )}
+        </FormField>
+      </DependentSettings>
     </div>
   );
 }

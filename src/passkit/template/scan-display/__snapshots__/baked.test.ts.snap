@@ -1350,6 +1350,269 @@ exports[`starter-coupon default display > matches its snapshot, and so does each
 }
 `;
 
+exports[`starter-credential default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{pass.title}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Credential",
+          "type": "field",
+          "value": "{{fields.credential}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "Holder",
+          "type": "field",
+          "value": "{{fields.holder}}",
+        },
+        {
+          "id": "r_field3",
+          "label": "Valid until",
+          "type": "field",
+          "value": "{{fields.until}}",
+        },
+        {
+          "id": "r_field4",
+          "label": "Number",
+          "type": "field",
+          "value": "{{fields.number}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-credential default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "CPR / AED Provider",
+    "initials": "C/",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Credential",
+          "strong": false,
+          "type": "field",
+          "value": "Sample credential",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Holder",
+          "strong": false,
+          "type": "field",
+          "value": "Sample holder",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Valid until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-credential default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "CPR / AED Provider",
+    "initials": "C/",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Credential",
+          "strong": false,
+          "type": "field",
+          "value": "Sample credential",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Holder",
+          "strong": false,
+          "type": "field",
+          "value": "Sample holder",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Valid until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Number",
+          "strong": false,
+          "type": "field",
+          "value": "Sample number",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-credential default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "CPR / AED Provider",
+    "initials": "C/",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Credential",
+          "strong": false,
+          "type": "field",
+          "value": "Sample credential",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Holder",
+          "strong": false,
+          "type": "field",
+          "value": "Sample holder",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Valid until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Number",
+          "strong": false,
+          "type": "field",
+          "value": "Sample number",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-credential default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "CPR / AED Provider",
+    "initials": "C/",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
 exports[`starter-day-pass default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
 {
   "header": {},
@@ -2071,6 +2334,269 @@ exports[`starter-guest-pass default display > matches its snapshot, and so does 
 }
 `;
 
+exports[`starter-hotel-stay default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{pass.title}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Guest",
+          "type": "field",
+          "value": "{{fields.holder}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "Check-in",
+          "type": "field",
+          "value": "{{fields.in}}",
+        },
+        {
+          "id": "r_field3",
+          "label": "Check-out",
+          "type": "field",
+          "value": "{{fields.out}}",
+        },
+        {
+          "id": "r_field4",
+          "label": "Breakfast",
+          "type": "field",
+          "value": "{{fields.breakfast}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-hotel-stay default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Ana Rivera",
+    "initials": "AR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Guest",
+          "strong": false,
+          "type": "field",
+          "value": "Sample holder",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Check-in",
+          "strong": false,
+          "type": "field",
+          "value": "Sample in",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Check-out",
+          "strong": false,
+          "type": "field",
+          "value": "Sample out",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-hotel-stay default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Ana Rivera",
+    "initials": "AR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Guest",
+          "strong": false,
+          "type": "field",
+          "value": "Sample holder",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Check-in",
+          "strong": false,
+          "type": "field",
+          "value": "Sample in",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Check-out",
+          "strong": false,
+          "type": "field",
+          "value": "Sample out",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Breakfast",
+          "strong": false,
+          "type": "field",
+          "value": "Sample breakfast",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-hotel-stay default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Ana Rivera",
+    "initials": "AR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Guest",
+          "strong": false,
+          "type": "field",
+          "value": "Sample holder",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Check-in",
+          "strong": false,
+          "type": "field",
+          "value": "Sample in",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Check-out",
+          "strong": false,
+          "type": "field",
+          "value": "Sample out",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Breakfast",
+          "strong": false,
+          "type": "field",
+          "value": "Sample breakfast",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-hotel-stay default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Ana Rivera",
+    "initials": "AR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
 exports[`starter-id-card default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
 {
   "header": {},
@@ -2502,6 +3028,240 @@ exports[`starter-monthly-pass default display > matches its snapshot, and so doe
   "identity": {
     "holder": "Alex Morgan",
     "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-multi-day-pass default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.name}}",
+  "panels": [
+    {
+      "id": "p_main",
+      "rows": [
+        {
+          "id": "r_main",
+          "type": "progress",
+          "value": "{{inputs.parking}}",
+        },
+      ],
+    },
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Festival",
+          "type": "field",
+          "value": "{{fields.event}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-multi-day-pass default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Ana Rivera",
+    "initials": "AR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "before": null,
+          "caption": "1 left",
+          "goal": 1,
+          "icon": null,
+          "id": "r_main",
+          "rewards": 0,
+          "style": "stamps",
+          "type": "progress",
+          "value": 1,
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-multi-day-pass default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Ana Rivera",
+    "initials": "AR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "before": null,
+          "caption": "1 left",
+          "goal": 1,
+          "icon": null,
+          "id": "r_main",
+          "rewards": 0,
+          "style": "stamps",
+          "type": "progress",
+          "value": 1,
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Festival",
+          "strong": false,
+          "type": "field",
+          "value": "Sample event",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-multi-day-pass default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Ana Rivera",
+    "initials": "AR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "before": null,
+          "caption": "1 left",
+          "goal": 1,
+          "icon": null,
+          "id": "r_main",
+          "rewards": 0,
+          "style": "stamps",
+          "type": "progress",
+          "value": 1,
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Festival",
+          "strong": false,
+          "type": "field",
+          "value": "Sample event",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-multi-day-pass default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Ana Rivera",
+    "initials": "AR",
     "photo": null,
   },
   "notes": {
@@ -3443,6 +4203,247 @@ exports[`starter-poster-generic default display > matches its snapshot, and so d
   "identity": {
     "holder": "Alex Morgan",
     "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-staff-badge default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.memberName}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Team",
+          "type": "field",
+          "value": "{{fields.team}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "Valid until",
+          "type": "field",
+          "value": "{{fields.until}}",
+        },
+        {
+          "id": "r_field3",
+          "label": "Employee",
+          "type": "field",
+          "value": "{{fields.member}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-staff-badge default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Priya Shah",
+    "initials": "PS",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Team",
+          "strong": false,
+          "type": "field",
+          "value": "Sample team",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Valid until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Employee",
+          "strong": false,
+          "type": "field",
+          "value": "Sample member",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-staff-badge default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Priya Shah",
+    "initials": "PS",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Team",
+          "strong": false,
+          "type": "field",
+          "value": "Sample team",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Valid until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Employee",
+          "strong": false,
+          "type": "field",
+          "value": "Sample member",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-staff-badge default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Priya Shah",
+    "initials": "PS",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Team",
+          "strong": false,
+          "type": "field",
+          "value": "Sample team",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Valid until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Employee",
+          "strong": false,
+          "type": "field",
+          "value": "Sample member",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-staff-badge default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Priya Shah",
+    "initials": "PS",
     "photo": null,
   },
   "notes": {
@@ -4442,6 +5443,269 @@ exports[`starter-transit-ticket default display > matches its snapshot, and so d
   "identity": {
     "holder": "Sam Reed",
     "initials": "SR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-visitor-pass default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.memberName}}",
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Host",
+          "type": "field",
+          "value": "{{fields.host}}",
+        },
+        {
+          "id": "r_field2",
+          "label": "Go to",
+          "type": "field",
+          "value": "{{fields.where}}",
+        },
+        {
+          "id": "r_field3",
+          "label": "Until",
+          "type": "field",
+          "value": "{{fields.until}}",
+        },
+        {
+          "id": "r_field4",
+          "label": "Company",
+          "type": "field",
+          "value": "{{fields.company}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-visitor-pass default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Leo Brandt",
+    "initials": "LB",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Host",
+          "strong": false,
+          "type": "field",
+          "value": "Sample host",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Go to",
+          "strong": false,
+          "type": "field",
+          "value": "Sample where",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-visitor-pass default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Leo Brandt",
+    "initials": "LB",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Host",
+          "strong": false,
+          "type": "field",
+          "value": "Sample host",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Go to",
+          "strong": false,
+          "type": "field",
+          "value": "Sample where",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Company",
+          "strong": false,
+          "type": "field",
+          "value": "Sample company",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-visitor-pass default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Leo Brandt",
+    "initials": "LB",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Host",
+          "strong": false,
+          "type": "field",
+          "value": "Sample host",
+        },
+        {
+          "icon": null,
+          "id": "r_field2",
+          "label": "Go to",
+          "strong": false,
+          "type": "field",
+          "value": "Sample where",
+        },
+        {
+          "icon": null,
+          "id": "r_field3",
+          "label": "Until",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+        {
+          "icon": null,
+          "id": "r_field4",
+          "label": "Company",
+          "strong": false,
+          "type": "field",
+          "value": "Sample company",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-visitor-pass default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Leo Brandt",
+    "initials": "LB",
     "photo": null,
   },
   "notes": {

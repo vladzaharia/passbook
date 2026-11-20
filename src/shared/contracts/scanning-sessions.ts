@@ -7,7 +7,7 @@ import {
   pageOf,
   TimestampSchema,
 } from './common.ts';
-import { ScannerTagsSettingsSchema, TagLevelSchema } from './nfc-tags.ts';
+import { SessionTagRulesSchema } from './nfc-tags.ts';
 import { ScanApprovalSchema, ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
 import { HoursSpanSchema, ZoneIdsSchema } from './scan-access.ts';
 import { AdmitsSchema } from './scanners.ts';
@@ -105,7 +105,7 @@ export type SessionCustomerSettings = z.infer<typeof SessionCustomerSettingsSche
 export const ScanningSessionSettingsSchema = ScannerSettingsSchema.extend({
   customer: SessionCustomerSettingsSchema.optional(),
   /** The assign rights of every device, plus the session's tag level (absent: the org's). */
-  tags: ScannerTagsSettingsSchema.extend({ level: TagLevelSchema.optional() }).optional(),
+  tags: SessionTagRulesSchema.optional(),
 });
 export const ScanningSessionStatusSchema = z.enum(['active', 'paused', 'ended']);
 const DateKeySchema = z.string().refine((v) => {

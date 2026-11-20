@@ -159,6 +159,8 @@ export interface Capability {
   samsung: boolean;
   /** The manifest's paper block allows a holder print (absent: it does). */
   paperHolder: boolean;
+  /** The manifest's `channels` defaults; a channel it does not name is absent. */
+  defaults: Partial<Record<Channel, 'on' | 'off'>>;
 }
 
 /** What a template version can serve: a wallets block per provider (type absent or not off) per provider. */
@@ -168,13 +170,15 @@ export async function capabilityOf(
   version: string | null,
 ): Promise<Capability> {
   const r = version
-    ? await first<{ g: string | null; s: string | null; h: number | null }>(
+    ? await first<{ g: string | null; s: string | null; h: number | null; d: string | null }>(
         db,
         `SELECT CASE WHEN json_type(manifest, '$.wallets.google') = 'object'
              THEN COALESCE(json_extract(manifest, '$.wallets.google.type'), 'on') END AS g,
            CASE WHEN json_type(manifest, '$.wallets.samsung') = 'object'
              THEN COALESCE(json_extract(manifest, '$.wallets.samsung.type'), 'on') END AS s,
-           json_extract(manifest, '$.paper.holder') AS h
+           json_extract(manifest, '$.paper.holder') AS h,
+           CASE WHEN json_type(manifest, '$.channels') = 'object'
+             THEN json_extract(manifest, '$.channels') END AS d
          FROM template_versions WHERE template_id = ? AND version = ?`,
         [templateId, version],
       )
@@ -183,7 +187,31 @@ export async function capabilityOf(
     google: !!r?.g && r.g !== 'off',
     samsung: !!r?.s && r.s !== 'off',
     paperHolder: r?.h !== 0,
+    defaults: parseDefaults(r?.d),
   };
+}
+
+/** A template's manifest defaults as the org sees them: its released version, else the active one. */
+export async function templateDefaultsOf(
+  db: D1Database,
+  templateId: string,
+  orgId: string,
+  mode: Mode,
+): Promise<Capability['defaults']> {
+  const version =
+    (await releasedVersion(db, templateId, orgId, mode)) ??
+    (await templateOwner(db, templateId))?.activeVersion ??
+    null;
+  return (await capabilityOf(db, templateId, version)).defaults;
+}
+
+/** `json_extract` of an object is valid JSON text, so the parse cannot fail. */
+function parseDefaults(raw: string | null | undefined): Capability['defaults'] {
+  const out: Capability['defaults'] = {};
+  if (!raw) return out;
+  const parsed = JSON.parse(raw) as Record<string, unknown>;
+  for (const c of CHANNELS) if (parsed[c] === 'on' || parsed[c] === 'off') out[c] = parsed[c];
+  return out;
 }
 
 export interface OverrideGroup {

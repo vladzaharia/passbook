@@ -5,24 +5,32 @@ import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 import { healHead } from './head-store.ts';
+import { settlePhotoObjects } from './photo-keys.ts';
 import { retentionPlan } from './plan.ts';
 import { DAY, excludedFromPlatformPass, nextBatch } from './policy.ts';
 import { prepareReceipt, recordHead } from './receipt-service.ts';
+import { photoKeys } from './repo-photo-keys.ts';
 import { chainHead } from './repo-receipts.ts';
 import {
   CHUNK,
   type Cutoffs,
   deleteChunkStmt,
+  deleteRollCallsStmt,
   FAILED_MAIL_DAYS,
+  photoRetireStmts,
   receiptGate,
+  rollCallsGate,
   type Scope,
   type SweepClass,
+  type SweepTable,
   selectChunk,
+  selectRollCalls,
 } from './repo-sweep.ts';
 
 export const SWEEP_LIMITS = { platformChunks: 50, orgChunks: 50, orgBudgetMs: 15_000 };
 
 interface Target {
+  table: SweepTable;
   scope: Scope;
   /** Receipt chain: null is the platform pass. */
   orgId: string | null;
@@ -52,7 +60,7 @@ async function sweepChunk(
   cutoffs: Cutoffs,
 ): Promise<number> {
   for (let attempt = 0; attempt < 3; attempt++) {
-    const ids = await selectChunk(ctx.env.DB, cls, t.scope, cutoffs);
+    const ids = await selectChunk(ctx.env.DB, t.table, t.scope, cutoffs);
     if (ids.length === 0) return 0;
     const prepared = await prepareReceipt(
       ctx,
@@ -64,18 +72,54 @@ async function sweepChunk(
         cutoffAt: cutoffs.cutoff,
         deleted: ids.length,
       },
-      receiptGate(cls, t.scope, cutoffs, ids),
+      receiptGate(t.table, t.scope, cutoffs, ids),
     );
+    const keys = cls === 'photos' ? await photoKeys(ctx.env.DB, ids) : [];
     const [receipt] = await ctx.env.DB.batch([
       prepared.stmt,
-      deleteChunkStmt(ctx.env.DB, cls, t.scope, cutoffs, ids, prepared.receipt.id),
+      deleteChunkStmt(ctx.env.DB, t.table, t.scope, cutoffs, ids, prepared.receipt.id),
+      ...(cls === 'photos'
+        ? photoRetireStmts(ctx.env.DB, ids, prepared.receipt.id, ctx.clock.now())
+        : []),
     ]);
     if (receipt?.meta.changes === 1) {
       await recordHead(ctx, prepared.receipt);
+      await settlePhotoObjects(ctx, keys);
       return ids.length;
     }
   }
   throw new ConflictError('Retention receipt chain is busy.', 'RETENTION_RECEIPT_BUSY');
+}
+
+/** Ended roll calls leave with the scans window, one receipt per chunk like any other row. Returns the calls removed. */
+async function sweepRollCalls(ctx: ServiceContext, t: Target, cutoffs: Cutoffs): Promise<number> {
+  let removed = 0;
+  for (let i = 0; i < t.maxChunks; i++) {
+    const ids = await selectRollCalls(ctx.env.DB, t.scope, cutoffs);
+    if (ids.length === 0) break;
+    const prepared = await prepareReceipt(
+      ctx,
+      {
+        orgId: t.orgId,
+        cls: 'scans',
+        kind: 'sweep',
+        policyDays: t.days,
+        cutoffAt: cutoffs.cutoff,
+        deleted: ids.length,
+      },
+      rollCallsGate(t.scope, cutoffs, ids),
+    );
+    const [receipt] = await ctx.env.DB.batch([
+      prepared.stmt,
+      deleteRollCallsStmt(ctx.env.DB, t.scope, cutoffs, ids, prepared.receipt.id),
+    ]);
+    // A lost race or a hold changed the rows: they are chosen again next run.
+    if (receipt?.meta.changes !== 1) break;
+    await recordHead(ctx, prepared.receipt);
+    removed += ids.length;
+    if (ids.length < CHUNK) break;
+  }
+  return removed;
 }
 
 /** Returns rows removed and whether the target stopped at its cap with rows left. */
@@ -94,6 +138,7 @@ async function sweepTarget(
     if (n < CHUNK) break;
     capped = i === t.maxChunks - 1;
   }
+  if (cls === 'scans') removed += await sweepRollCalls(ctx, t, cutoffs);
   if (capped)
     ctx.log.warn('retention.backlog', { cls, orgId: t.orgId, removed, code: 'RETENTION_BACKLOG' });
   return { removed, capped };
@@ -108,16 +153,19 @@ export async function sweepClass(
   ctx: ServiceContext,
   cls: SweepClass,
   limits = SWEEP_LIMITS,
+  /** A table that ages with the class (offline reads with scans): same plan, holds and receipt chain. */
+  table: SweepTable = cls,
 ): Promise<{ platform: number; orgs: number }> {
   const plan = await retentionPlan(ctx, cls);
   if (plan.blocked) return { platform: 0, orgs: 0 };
   const { removed: platform } = await sweepTarget(ctx, cls, {
+    table,
     scope: { kind: 'platform', exclude: excludedFromPlatformPass(plan) },
     orgId: null,
     days: plan.platformDays,
     maxChunks: limits.platformChunks,
   });
-  const key = `retention.cursor:${cls}`;
+  const key = `retention.cursor:${table}`;
   const stored = await readSystemValue(ctx.env.DB, key);
   const next = nextBatch(plan.special, typeof stored === 'string' ? stored : null);
   const started = performance.now();
@@ -135,6 +183,7 @@ export async function sweepClass(
     }
     orgs += (
       await sweepTarget(ctx, cls, {
+        table,
         scope: { kind: 'org', orgId: o.orgId },
         orgId: o.orgId,
         days: o.days,

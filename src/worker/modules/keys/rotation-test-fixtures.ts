@@ -2,6 +2,7 @@ import { stagePendingCredentialTransfer } from '../../../../test/helpers/credent
 import { makeScanStaff, withoutTrigger } from '../../../../test/helpers/index.ts';
 import { credentialAad, type Envelope, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { first, run } from '../../platform/db.ts';
+import { seedTagKeys } from '../nfc/keyset-rotation-test-fixtures.ts';
 import { sealBody } from '../sandbox/captured-body.ts';
 import type { setupSamsungCallbacks } from '../wallet-providers/callbacks-test-fixtures.ts';
 import {
@@ -200,7 +201,6 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
     kind: 'wallet.provider.outcome',
     text: outcomeText,
   });
-
   const googleReceiptId = id();
   const instance = await first<{ account_id: string; mode: string; provider: string }>(
     db,
@@ -244,7 +244,7 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
     provider: `${instance?.provider}`,
   };
   plain.push(await seedAccountHmac(db, { ...account, seal }));
-
+  plain.push(...(await seedTagKeys(db, { orgId: org, now, id, seal })));
   const captureId = id();
   await run(
     db,

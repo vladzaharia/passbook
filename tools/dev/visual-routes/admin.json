@@ -91,6 +91,16 @@
   },
   {
     "role": "org",
+    "path": "/admin/o/{orgId}/passes/photos",
+    "name": "admin-pass-photos"
+  },
+  {
+    "role": "org",
+    "path": "/admin/o/{orgId}/visitors",
+    "name": "admin-visitors"
+  },
+  {
+    "role": "org",
     "path": "/admin/o/{orgId}/passes/import",
     "name": "admin-pass-import"
   },
@@ -323,6 +333,11 @@
     "role": "org",
     "path": "/admin/passes/new",
     "name": "legacy-pass-new"
+  },
+  {
+    "role": "org",
+    "path": "/admin/passes/photos",
+    "name": "legacy-pass-photos"
   },
   {
     "role": "org",

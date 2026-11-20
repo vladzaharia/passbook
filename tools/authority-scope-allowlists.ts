@@ -97,8 +97,8 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/scan/repo-act-claim.ts': {
     reason:
-      "reopen, quarantine and fail of the actor's own claim generation after a key collision, still fenced by the claim authority predicate; a fresh claim is the org_mode.scan.claim upsert",
-    writes: ['scans:eae11c80b490'],
+      "reopen, quarantine and fail of the actor's own claim generation after a key collision, still fenced by the claim authority predicate; a fresh claim is the org_mode.scan.claim upsert. Also the offline flag on a done scan a queued read produced (set once, not authority)",
+    writes: ['scans:eae11c80b490', 'scans:6dcbf3a04bfc'],
   },
   'src/worker/modules/scan/repo-gate-recovery.ts': {
     reason:
@@ -118,7 +118,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/apple/repo-events.ts': {
     reason:
       'device.fetched ledger rows from the Apple device protocol, fenced in SQL by the credential serial and generation; the device principal has no ledger purpose',
-    writes: ['pass_events:9f58dbf16fba'],
+    writes: ['pass_events:93fa910529e3'],
   },
   'src/worker/modules/passes/repo-remove-compensate.ts': {
     reason:
@@ -241,7 +241,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/delivery/repo-devices.ts': {
     reason:
       'push device outcomes (outbox cancel, pass_events) written while delivering a leased push',
-    writes: ['outbox:4599402ca096', 'outbox:d8027ae6e23e', 'pass_events:8194770a5634'],
+    writes: ['outbox:965be41de4bd', 'outbox:ea24d4f8a142', 'pass_events:a5300ed933c7'],
   },
   'src/worker/modules/delivery/repo-issuance-recovery.ts': {
     reason:
@@ -259,8 +259,14 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/retention/repo-sweep.ts': {
     reason:
-      'the daily retention sweep (platform job, no principal) deletes server-selected rowids of live scans, live pass events and finished outbox rows; each delete repeats the class condition, scope and hold check, and runs only while the receipt that records it exists in the same batch',
-    writes: ['outbox:90161c5a75f9', 'pass_events:4a717a8505a1', 'scans:06e74b44b9ac'],
+      'the daily retention sweep (platform job, no principal) deletes server-selected rowids of live scans, live pass events, finished outbox rows, ended roll calls (with the scans window, holds honoured) and photos of voided or removed passes (member_photos, by pass id); each delete repeats the class condition, scope and hold check, and runs only while the receipt that records it exists in the same batch',
+    writes: [
+      'member_photos:0bd69e0fb6c1',
+      'outbox:fe45188998a1',
+      'pass_events:ab7364044a77',
+      'roll_calls:866387433c67',
+      'scans:87ef4dfab208',
+    ],
   },
   'src/worker/modules/retention/repo-receipts.ts': {
     reason:
@@ -277,6 +283,8 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     writes: [
       'captured_emails:511fe05ea909',
       'connection_webhook_retention:84821c1d359b',
+      'nfc_tag_keys:2c11078e8a24',
+      'nfc_tag_sun:7326dc55a42b',
       'wallet_credential_versions:7751be830869',
       'webhook_endpoint_secrets:b1f2bc9c7907',
     ],
@@ -289,6 +297,8 @@ export const DYNAMIC_WRITE_ALLOWLIST: Record<string, string> = {
     'deleteInBatches takes its table from the caller; a call that names a guarded table is a raw-guarded-write finding at the call site',
   'src/worker/platform/db.ts':
     'casUpdate takes its table from the caller (identifier-checked); a call that names a guarded table is a raw-guarded-write finding at the call site',
+  'src/worker/modules/org-lifecycle/repo-purge.ts':
+    'the org purge (platform job, no principal) deletes the tables of PURGE_STEPS; every delete repeats the closed, in-purge and no-hold test, and a schema test proves each table is a step, a cascade of one, kept or not tenant data',
   'src/worker/modules/passes/repo-credential-transfer.ts':
     'deviceRows builds a writePart: buildPart lints the expanded target at runtime (one target, no guarded table, tenant and pass ties)',
 };

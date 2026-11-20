@@ -4,7 +4,7 @@ import { SCAN_COPY, SCAN_REASON_COPY } from './scan.ts';
 import { CUSTOMER_COPY, CUSTOMER_REASON_SUB } from './scan-customer.ts';
 import { TAG_COPY, TAG_ERROR_COPY } from './tags.ts';
 
-const TAG_REASONS = ['tag_lost', 'tag_not_allowed', 'tag_invalid'] as const;
+const TAG_REASONS = ['tag_lost', 'tag_not_allowed', 'tag_invalid', 'tag_expired'] as const;
 
 describe('tag copy', () => {
   it.each(TAG_REASONS)(
@@ -32,6 +32,16 @@ describe('tag copy', () => {
 
   it('has no error text for an unknown code', () => {
     expect(Object.keys(TAG_ERROR_COPY).sort()).toEqual([...TAG_ERROR_CODES].sort());
+  });
+
+  it('has the tag type words of the design', () => {
+    expect(TAG_COPY.types.title).toBe('Tag types');
+    expect(TAG_COPY.types.empty).toBe('Every tag is Standard.');
+    expect(TAG_COPY.types.system).toEqual({ uid: 'Basic', sun: 'Secure' });
+    expect(TAG_COPY.types.confirm.manager).toBe('Manager PIN');
+    expect(TAG_COPY.channels.nfcOff).toBe('Ends {n} tag assignments. The tags become spares.');
+    expect(SCAN_REASON_COPY.tag_expired.headline).toBe('Tag assignment ended');
+    expect(SCAN_COPY.tags.door.basicTag).toBe('Basic tag. Check the photo.');
   });
 
   it('names tags the way the deck does', () => {

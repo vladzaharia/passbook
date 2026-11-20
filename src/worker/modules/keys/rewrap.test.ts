@@ -32,6 +32,7 @@ import {
   WRITE_BATCH,
   WRITE_BUDGET,
 } from './rewrap.ts';
+import { ENVELOPE_TABLES } from './rewrap-tables.ts';
 
 const kek = (byte: number) => btoa(String.fromCharCode(...new Uint8Array(32).fill(byte)));
 const hex = (b: ArrayBuffer | undefined) => Buffer.from(new Uint8Array(b ?? [])).toString('hex');
@@ -358,7 +359,9 @@ describe('keys.rewrap', () => {
       ],
     );
     const { ctx, lines } = jobOf(kit.v2, kit.f);
-    for (let i = 0; i < 5; i++) await rewrapEnvelopes(ctx);
+    // A run reads at most READ_BUDGET tables, so the sweep reaches the captures after one run per four places.
+    for (let i = 0; i < Math.ceil(ENVELOPE_TABLES.length / READ_BUDGET) + 1; i++)
+      await rewrapEnvelopes(ctx);
     expect(lines.some((l) => l.code === 'KEK_REWRAP_FAILED')).toBe(false);
     const rows = await all<{ id: string; html: string }>(
       db,
@@ -485,7 +488,7 @@ describe('keys.rewrap', () => {
     const quiet = jobOf(counted.env, kit.f);
     await rewrapEnvelopes(quiet.ctx);
     expect(codes(quiet.lines)).toEqual([]);
-    expect(counted.count()).toBe(2 + 19 + 1);
+    expect(counted.count()).toBe(2 + ENVELOPE_TABLES.length + 1);
     expect(((await readSystemValue(db, DONE)) as { at: number }).at).toBe(kit.f.clock.now());
   });
 

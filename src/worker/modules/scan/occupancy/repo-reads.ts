@@ -1,7 +1,9 @@
 // Occupancy reads: a lost entry's rows, In now with revisions, an undo's rows and who's inside.
+
 import { type AfterRead, afterRead } from '../../../platform/authority-after.ts';
 import { all, type SqlValue, stmt } from '../../../platform/db.ts';
 import type { PresenceRow } from '../admission-types.ts';
+import { HOLD_HORIZON_MS } from '../roll-call/hold.ts';
 import { LIVE, marks } from './repo.ts';
 
 /** A pass's row at a zone as a scan reads it before its batch; `changed_at` is when it last moved. */
@@ -105,7 +107,10 @@ export interface DueRow {
 export const stayKey = (r: Pick<DueRow, 'pass_id' | 'scope' | 'last_entry_at'>) =>
   `${r.pass_id}:${r.scope}:${r.last_entry_at}`;
 
-/** In rows of active orgs past their due time, oldest first (`scan_presence_due`), but not the `skip` stays. */
+/**
+ * In rows of active orgs past their due time, oldest first (`scan_presence_due`), but not the `skip` stays and
+ * not the rows an open roll call holds (looked up by `roll_calls_open`), so held rows never fill the batch.
+ */
 export const dueRows = (db: D1Database, now: number, limit: number, skip: readonly string[] = []) =>
   all<DueRow>(
     db,
@@ -116,8 +121,11 @@ export const dueRows = (db: D1Database, now: number, limit: number, skip: readon
      JOIN passes p ON p.id = x.pass_id
      WHERE x.state = 'in' AND x.due_at IS NOT NULL AND x.due_at <= ? AND x.entered_at IS NOT NULL
        AND (x.pass_id || ':' || x.scope || ':' || x.last_entry_at) NOT IN (SELECT value FROM json_each(?))
+       AND NOT EXISTS (SELECT 1 FROM roll_calls rc, json_each(rc.places) j
+         WHERE rc.org_id = x.org_id AND rc.mode = x.mode AND rc.ended_at IS NULL AND rc.started_at > ?
+           AND json_extract(j.value, '$.place') = x.scope)
      ORDER BY x.due_at LIMIT ?`,
-    [now, JSON.stringify(skip), limit],
+    [now, JSON.stringify(skip), now - HOLD_HORIZON_MS, limit],
   );
 
 export interface InRow {

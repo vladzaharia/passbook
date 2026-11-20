@@ -37,6 +37,7 @@ async function whenReady(
   count: number,
   preparing: string | number,
   startSkipped: number,
+  why: string,
 ): Promise<void> {
   const path = `/api/v1/passes/bulk-print/${encodeURIComponent(jobId)}`;
   for (let i = 0; i < POLL_TRIES; i++) {
@@ -53,6 +54,7 @@ async function whenReady(
           plural(status.count || count),
           status.lossy,
           startSkipped + status.skipped,
+          why,
         ),
         {
           label: PRINT_COPY.bulkDownload,
@@ -100,9 +102,10 @@ export function BulkPrintAction({
         return;
       }
       const left = started.skipped.length;
-      const preparing = toast.info(PRINT_COPY.bulkPreparing(plural(started.count), left));
-      void whenReady(orgId, started.jobId, started.count, preparing, left).catch((e: unknown) =>
-        toast.error(e, PRINT_COPY.couldNotPrint),
+      const why = [...new Set(started.skipped.map((s) => s.reason).filter(Boolean))].join('; ');
+      const preparing = toast.info(PRINT_COPY.bulkPreparing(plural(started.count), left, why));
+      void whenReady(orgId, started.jobId, started.count, preparing, left, why).catch(
+        (e: unknown) => toast.error(e, PRINT_COPY.couldNotPrint),
       );
     } catch (error) {
       toast.error(error, PRINT_COPY.couldNotPrint);

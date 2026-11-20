@@ -17,6 +17,8 @@ export async function saveAccountConfiguration(
     isNew: boolean;
     expectedRevision: number;
     credentialId: string;
+    /** `storedIdentityHash` of the new credential; the account epoch moves when it differs from the old one. */
+    identityHash: string;
     eventId: string;
     envelope: Envelope;
   },
@@ -42,8 +44,8 @@ export async function saveAccountConfiguration(
     stmt(
       db,
       `INSERT INTO wallet_provider_credentials
-    (id, account_id, org_id, mode, provider, kek_version, iv, wrapped_dek, ciphertext, created_at)
-    SELECT ?, a.id, a.org_id, a.mode, a.provider, ?, ?, ?, ?, ?
+    (id, account_id, org_id, mode, provider, kek_version, iv, wrapped_dek, ciphertext, identity_hash, created_at)
+    SELECT ?, a.id, a.org_id, a.mode, a.provider, ?, ?, ?, ?, ?, ?
     FROM wallet_provider_accounts a WHERE a.id = ? AND a.org_id = ? AND a.mode = ? AND a.provider = ?
       AND a.revision = ? AND a.credential_source_id IS NULL AND a.enrolment_revision = 0 AND ${guard}`,
       [
@@ -52,6 +54,7 @@ export async function saveAccountConfiguration(
         input.envelope.iv,
         input.envelope.wrappedDek,
         input.envelope.ciphertext,
+        input.identityHash,
         now,
         input.accountId,
         scope.orgId,

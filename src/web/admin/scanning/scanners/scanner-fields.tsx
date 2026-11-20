@@ -2,6 +2,7 @@ import type { Mode } from '@/shared/contracts/common.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import {
   CheckboxField,
+  DependentSettings,
   FormField,
   Input,
   NumberField,
@@ -163,7 +164,9 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
                   </p>
                 </div>
               )}
-              {!draft.adminUserId && (draft.kind === 'terminal' || !draft.staffSignIn) ? (
+              <DependentSettings
+                open={!draft.adminUserId && (draft.kind === 'terminal' || !draft.staffSignIn)}
+              >
                 <FormField label="Without sign-in, scans as">
                   {(p) => (
                     <Select
@@ -176,7 +179,7 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
                     />
                   )}
                 </FormField>
-              ) : null}
+              </DependentSettings>
               <FormField label="Let in again">
                 {(p) => (
                   <Select

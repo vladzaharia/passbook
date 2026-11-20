@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { Button } from '../../ui/button.tsx';
+import type { ScanApi } from '../api/scan-api.ts';
 import { TagFlag } from '../assign/tag-flag.tsx';
 import { tagReasonLine } from '../assign/tag-lines.ts';
 import { DisplayPanels } from '../display/display-panels.tsx';
@@ -11,7 +12,9 @@ import { accessLines, directionPill } from '../machine/access-view.ts';
 import { admitLine } from '../machine/admit-line.ts';
 import type { Draft, PinNote, ScanOutcome } from '../machine/types.ts';
 import { verdictLine } from '../machine/verdict-lines.ts';
+import { AddPhoto } from './add-photo.tsx';
 import { ApprovalSheet } from './approval-sheet.tsx';
+import { GroupChip } from './group-chip.tsx';
 import { IdentityRow } from './identity-row.tsx';
 import { ValuePicker } from './value-picker.tsx';
 import { VerdictGlyph } from './verdict-glyph.tsx';
@@ -23,18 +26,23 @@ export function ResultCard({
   outcome: o,
   phase,
   onAction,
+  onGroup,
   eventNote,
   holdMs,
   onPass,
   clock,
   desk,
   tagRead = false,
+  addPhoto,
 }: {
+  /** Set when this device may add photos: the desk card offers it for a pass with none. */
+  addPhoto?: ScanApi | undefined;
   /** The scan was a tag read: an unknown one has its own words. */
   tagRead?: boolean;
   outcome: ScanOutcome;
   phase?: string;
   onAction?: (actionId: string) => void;
+  onGroup?: () => void;
   eventNote?: string | null;
   holdMs?: number | null;
   onPass?: (card: ScanCard | null) => void;
@@ -66,6 +74,9 @@ export function ResultCard({
   }, [refused]);
   const d = o.display;
   const ok = o.kind === 'ok';
+  const chip = (ok || o.kind === 'heads_up') && Boolean(o.bundle || o.group);
+  // A read saved offline is a check-in the door has taken: it wears the green verdict.
+  const shown = o.kind === 'queued' ? 'ok' : o.kind;
   const ready = o.kind === 'ready';
   const noExit =
     o.reason === 'not_accepted' && o.checkIn?.direction === 'out' && o.checkIn.mode !== 'in_out';
@@ -103,7 +114,7 @@ export function ResultCard({
   const customLine = custom && !noExit && !noReentry ? d?.header.title : null;
   const nameInBand = custom && Boolean(d) && d?.header.title === d?.identity.holder;
   const CustomGlyph = ok && d?.header.icon ? scanIcon(d.header.icon) : null;
-  const layout = custom ? 'custom' : o.kind === 'ok' || o.kind === 'heads_up' ? 'row' : 'stack';
+  const layout = custom ? 'custom' : shown === 'ok' || shown === 'heads_up' ? 'row' : 'stack';
   // A refusal or a hold (gym full, already in) changed nothing: no stamp, balance or staff note
   // for a grant, so the card cannot read as granted.
   const denied =
@@ -134,7 +145,7 @@ export function ResultCard({
     <section
       ref={root}
       className="scan-result"
-      data-kind={o.kind}
+      data-kind={shown}
       data-phase={phase}
       data-screen={d?.screen ?? o.kind}
       data-reason={o.reason}
@@ -147,7 +158,7 @@ export function ResultCard({
           className="scan-result-band"
           data-layout={layout}
           data-testid="scan-verdict"
-          data-kind={o.kind}
+          data-kind={shown}
           data-reason={o.reason}
           data-phase={phase}
           data-screen={d?.screen ?? o.kind}
@@ -161,7 +172,7 @@ export function ResultCard({
                 </span>
               </span>
             ) : (
-              <VerdictGlyph kind={o.kind} />
+              <VerdictGlyph kind={shown} />
             )}
           </div>
           <div className="scan-verdict-text">
@@ -203,7 +214,7 @@ export function ResultCard({
           Choose an action
         </h1>
       )}
-      {d || o.card || o.tag || notes.length ? (
+      {d || o.card || o.tag || notes.length || chip ? (
         <div className="scan-result-body">
           <IdentityRow
             outcome={o}
@@ -214,6 +225,9 @@ export function ResultCard({
               onPass?.(o.card);
             }}
           />
+          {ready && o.card && addPhoto && !d?.identity.photo?.url ? (
+            <AddPhoto api={addPhoto} passId={o.card.passId} />
+          ) : null}
           {o.tag ? (
             <TagFlag
               tag={o.tag}
@@ -221,7 +235,7 @@ export function ResultCard({
               refused={o.kind === 'refused'}
             />
           ) : null}
-          {d && !denied && !desk?.picker ? <DisplayPanels display={d} /> : null}
+          {d && !denied && !desk?.picker && !o.group ? <DisplayPanels display={d} /> : null}
           {notes.length ? (
             <div className="scan-result-notes">
               <Info size={18} aria-hidden />
@@ -255,6 +269,7 @@ export function ResultCard({
               </Button>
             ))
           )}
+          {chip ? <GroupChip outcome={o} onGroup={onGroup} /> : null}
           {o.reason === 'needs_approval' && desk && o.approvals ? (
             pin ? (
               <ApprovalSheet

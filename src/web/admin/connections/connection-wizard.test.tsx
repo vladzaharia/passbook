@@ -439,7 +439,7 @@ describe('create connection wizard', () => {
     await next(user);
     await next(user);
     expect(await screen.findByRole('radio', { name: /Webhook/ })).toBeChecked();
-    expect(screen.queryByLabelText('Interval')).toBeNull();
+    expect(screen.queryByRole('spinbutton', { name: 'Interval' })).toBeNull();
     await user.click(screen.getByRole('checkbox', { name: 'Create passes for new records' }));
     await next(user);
     expect(await screen.findByText('Choose a template on Mapping to create passes.')).toBeVisible();

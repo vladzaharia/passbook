@@ -38,9 +38,10 @@ describe('staff PDF', () => {
     const print = await mint(pass.id);
     await staffPdf(pass.id);
     const key = pdfKey(kit.org.id, pass.id, print.id);
+    const drawn = (await kit.env.BUCKET.head(key))?.customMetadata ?? {};
     const put = (version: number) =>
       kit.env.BUCKET.put(key, 'cached copy', {
-        customMetadata: { passVersion: String(version) },
+        customMetadata: { ...drawn, passVersion: String(version) },
       });
     await put(pass.version);
     expect(await (await staffPdf(pass.id)).text()).toBe('cached copy');
@@ -51,13 +52,28 @@ describe('staff PDF', () => {
     );
   });
 
+  it('redraws when what the drawing reads changed, even at the same pass version', async () => {
+    const { kit, printPass, mint, staffPdf } = await pdfKit();
+    const pass = await printPass();
+    const print = await mint(pass.id);
+    await staffPdf(pass.id);
+    const key = pdfKey(kit.org.id, pass.id, print.id);
+    const drawn = (await kit.env.BUCKET.head(key))?.customMetadata ?? {};
+    expect(drawn.fingerprint).toMatch(/^[0-9a-f]{24}$/);
+    await kit.env.BUCKET.put(key, 'cached copy', {
+      customMetadata: { ...drawn, fingerprint: 'stale' },
+    });
+    expect(head(await bytesOf(await staffPdf(pass.id)))).toBe('%PDF-');
+    expect((await kit.env.BUCKET.head(key))?.customMetadata?.fingerprint).toBe(drawn.fingerprint);
+  });
+
   it('draws the print code and the holder, never the scan code, wallet barcode or serial', async () => {
     const { printPass, mint, staffPdf } = await pdfKit();
     const pass = await printPass();
     const print = await mint(pass.id);
     const text = await pdfText(await bytesOf(await staffPdf(pass.id)));
     expect(text).toContain('Spring Concert');
-    expect(text.replace(/ /g, '')).toContain(print.code);
+    expect(text.replace(/\s/g, '')).toContain(print.code);
     for (const secret of [FORBIDDEN, pass.scanCode ?? 'no-scan-code', pass.serial, 'T-77'])
       expect(text).not.toContain(secret);
   });

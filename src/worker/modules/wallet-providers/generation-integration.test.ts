@@ -92,13 +92,14 @@ async function seedReadyActivation(input: {
       db,
       `UPDATE wallet_provider_instances SET lifecycle = 'active', account_id = ?,
       identity_projection_release_id = ?, desired_version = 1, desired_operation_id = ?, updated_at = ?
-      WHERE id = ? AND lifecycle = 'ready'`,
+      WHERE id = ? AND lifecycle = 'ready' RETURNING id`,
       [accountId, releaseId, operationId, now, instanceId],
     ),
     stmt(db, operationGuard),
     stmt(db, bindingGuard),
   ]);
-  if (results[2]?.meta.changes !== 1 || results[3]?.meta.changes !== 1)
+  // RETURNING counts rows: the instance epoch trigger adds a change to meta.changes.
+  if (results[2]?.meta.changes !== 1 || results[3]?.results.length !== 1)
     throw new Error('Historical structural activation failed');
   return operationId;
 }

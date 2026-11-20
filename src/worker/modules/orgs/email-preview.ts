@@ -1,10 +1,12 @@
 import { EMAIL_BADGE } from '../../../shared/email-art.ts';
 import { resolveColors } from '../../../shared/pass-view/color.ts';
+import { emailBrandOf } from '../../email/brand.ts';
 import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderPassEmail } from '../../email/pass.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { readBranding, tenantPassJson } from '../passes/branding.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
+import { orgBrandOf } from './brand.ts';
 import { previewImages, previewTemplate } from './preview-art.ts';
 import { requireOrg } from './service.ts';
 
@@ -29,10 +31,11 @@ export async function renderEmailPreview(
   draft: EmailPreviewDraft = {},
 ): Promise<string> {
   const row = await requireOrg(ctx, orgId);
-  const [settings, platform, template] = await Promise.all([
+  const [settings, platform, template, brand] = await Promise.all([
     getOrgSettings(ctx, orgId),
     getPlatformSettings(ctx),
     previewTemplate(ctx, orgId),
+    orgBrandOf(ctx, orgId),
   ]);
   const raw = JSON.parse(row.branding) as { supportEmail?: string; supportUrl?: string };
   const branding = readBranding(raw);
@@ -63,5 +66,6 @@ export async function renderEmailPreview(
     logoText: typeof passJson.logoText === 'string' ? passJson.logoText : null,
     senderName: platform['email.senderName'],
     buddyBase: (draft.buddy ?? settings['email.buddy']) ? origin : null,
+    brand: emailBrandOf({ PUBLIC_BASE_URL: origin }, brand),
   }).html;
 }

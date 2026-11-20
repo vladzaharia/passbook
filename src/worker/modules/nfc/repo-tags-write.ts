@@ -6,6 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
+import { UID_SYSTEM } from './systems/uid.ts';
 
 type Session = Extract<TenantPassWrite, { kind: 'session' }>;
 
@@ -42,7 +43,15 @@ export interface TagActor {
 }
 
 /** The causes an admin or a staff member ends a binding with. */
-export type EndCause = 'admin' | 'staff' | 'undo' | 'lost' | 'replaced' | 'moved' | 'tag_retired';
+export type EndCause =
+  | 'admin'
+  | 'staff'
+  | 'undo'
+  | 'lost'
+  | 'replaced'
+  | 'moved'
+  | 'tag_retired'
+  | 'offboard';
 
 /** Ends one active binding. The batch is refused if it already ended. */
 export function endBinding(
@@ -109,8 +118,8 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
   if (p.newTag)
     g.upsert(
       'nfc_tags',
-      ['id', 'tag_ref', 'kind', 'hint', 'label', 'created_at'],
-      [p.tagId, p.newTag.ref, 'uid', p.newTag.hint, p.newTag.label, now],
+      ['id', 'tag_ref', 'system', 'hint', 'label', 'created_at'],
+      [p.tagId, p.newTag.ref, UID_SYSTEM.id, p.newTag.hint, p.newTag.label, now],
       { doNothing: true },
     );
   if (p.clearsLost)

@@ -11,8 +11,8 @@ import type { Grant } from '../../platform/authority.ts';
 import { issueToken, revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { principalOf, withIdempotency } from '../../platform/idempotency.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { sendOnce } from '../delivery/idempotent-send.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { assertWritableMode, type ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
@@ -278,7 +278,7 @@ export async function sendBundleEmail(
   orgScope: ScopeArg,
   execution: BundleWriteExecution,
   idempotencyKey?: string,
-): Promise<void> {
+): Promise<{ replayed: boolean }> {
   const { row, authority } = await requireBundle(
     ctx,
     id,
@@ -302,22 +302,29 @@ export async function sendBundleEmail(
       actor,
       { holdersOnly: actor.type !== 'user' },
     );
-  if (idempotencyKey === undefined || !authority) {
+  const auth = executionAuth(execution);
+  if (idempotencyKey === undefined || !authority || !auth) {
     await send();
-    return;
+    return { replayed: false };
   }
-  await sendOnce(
+  const { replayed } = await withIdempotency(
     ctx,
     {
       orgId: row.org_id,
-      scope: `bundle-send:${id}`,
+      mode: row.mode,
+      principal: principalOf(auth),
+      operation: 'POST /bundles/{id}/send-email',
       key: idempotencyKey,
-      request: [id, input.to?.toLowerCase() ?? null],
-      authority,
+      request: {
+        method: 'POST',
+        path: `/bundles/${id}/send-email`,
+        body: { to: input.to?.toLowerCase() },
+      },
     },
     async () => {
       await send();
-      return { ok: true as const };
+      return { status: 202, body: { ok: true as const } };
     },
   );
+  return { replayed };
 }

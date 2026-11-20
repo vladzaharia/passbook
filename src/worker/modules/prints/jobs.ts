@@ -4,7 +4,9 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { readStoredBulk, writeBulkStatus } from './bulk-status.ts';
 import { printPageModel } from './page.ts';
-import { fallbackPdf, type PrintSheet } from './pdf-fallback.ts';
+import { type ImageCache, loadImages, logImageProblem } from './pdf-images.ts';
+import { type PrintSheet, renderPdf } from './pdf-render.ts';
+import { sheetOf } from './pdf-service.ts';
 import { bulkKey, putPdf } from './pdf-store.ts';
 import { activePrintIds } from './repo.ts';
 
@@ -18,6 +20,7 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
   if (stored?.state !== 'pending') return;
   const sheets: PrintSheet[] = [];
   const printIds: string[] = [];
+  const imageCache: ImageCache = new Map();
   let skipped = 0;
   const skip = (passId: string, code: string) => {
     skipped++;
@@ -36,7 +39,10 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
     try {
       const model = await printPageModel(ctx, pass, 'staff');
       if (model.state === 'ready') {
-        sheets.push({ design: model.design, content: model.content, code: model.code });
+        sheets.push({
+          ...sheetOf(model),
+          images: await loadImages(ctx, pass, model.files, imageCache),
+        });
         printIds.push(model.printId);
       } else skip(passId, `PRINT_${model.state.toUpperCase()}`);
     } catch (error) {
@@ -55,9 +61,13 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
     return;
   }
   let lossy = false;
-  const bytes = await fallbackPdf(sheets, () => {
-    lossy = true;
-    ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' });
+  const bytes = await renderPdf(sheets, {
+    assets: ctx.env.ASSETS,
+    onLossy: () => {
+      lossy = true;
+      ctx.log.warn('prints.pdf_lossy_text', { code: 'PRINT_PDF_TEXT_LOSSY' });
+    },
+    onImageError: logImageProblem(ctx),
   });
   const key = bulkKey(job.orgId, job.jobId, 'pdf');
   await putPdf(bucket, key, bytes);

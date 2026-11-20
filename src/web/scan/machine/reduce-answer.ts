@@ -114,6 +114,10 @@ export function fail(s: MachineState, ev: Fail, env: Env): Out {
   let state = s;
   const cmds: Cmd[] = [];
   if (ev.error === 'network' || ev.error === 'timeout') {
+    if (act && s.offline.mode !== 'stop' && l.input.code !== undefined) {
+      // The request may have reached the server: the queued read keeps its key, so it replays, not repeats.
+      return out(s, [{ c: 'offline.decide', key: l.key, input: l.input }]);
+    }
     if (act) {
       const entry: Unsure = {
         key: l.key,

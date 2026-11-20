@@ -98,10 +98,12 @@ export const SCOPE_LABEL: Record<string, string> = {
   'holders:write': 'Assign holders',
   'templates:read': 'Read templates',
   'messages:write': 'Send messages and scheduled changes',
+  'scans:read': 'Read scans and counts',
   'scans:write': 'Scan as a terminal',
   'connections:read': 'Read connections',
   'connections:write': 'Create and update connections',
   'webhooks:manage': 'Manage webhooks',
+  'brand:manage': 'Manage brand kit',
 };
 
 const TerminalListSchema = pageOf(

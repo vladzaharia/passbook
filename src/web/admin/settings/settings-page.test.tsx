@@ -19,6 +19,8 @@ const entries = (over: Record<string, unknown> = {}, saved: string[] = []) => {
     'retention.eventsDays': 90,
     'retention.scansDays': 396,
     'sandbox.purgeDays': 30,
+    'print.enabled': false,
+    'nfc.enabled': false,
     'scan.undoWindowMinutes': 10,
     'scan.lookupsPerHour': 200,
   };
@@ -33,6 +35,7 @@ const entries = (over: Record<string, unknown> = {}, saved: string[] = []) => {
       source: saved.includes(key) ? 'org' : 'default',
     })),
     oidc: { issuer: 'https://id.plrs.im', adminGroup: 'wallet-admins', userGroup: null },
+    released: { google: false, samsung: false },
   };
 };
 
@@ -74,7 +77,7 @@ describe('settings page', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('shows only platform settings, with join, NFC and retention bounds under Advanced', async () => {
+  it('shows only platform settings, with join and retention bounds under Advanced', async () => {
     await renderApp('/admin/settings', {
       session: 'admin',
       handlers: { '/api/v1/settings': () => json(entries()) },
@@ -82,10 +85,47 @@ describe('settings page', () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole('radio', { name: 'Advanced' }));
     expect(screen.getByRole('heading', { name: 'Join links' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'NFC' })).toBeInTheDocument();
     expect(screen.getByLabelText('Scans maximum')).toBeInTheDocument();
     expect(screen.queryByLabelText('Support email')).toBeNull();
     expect(screen.queryByLabelText('Buddy in pass emails')).toBeNull();
+  });
+
+  it('shows channel state and turns Paper and Apple phone tap on', async () => {
+    const bodies: unknown[] = [];
+    await renderApp('/admin/settings', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/settings': (_url, init) => {
+          if (init?.method === 'PUT') bodies.push(JSON.parse(String(init.body)));
+          return json(entries());
+        },
+      },
+    });
+    const user = userEvent.setup();
+    const paper = await screen.findByRole('switch', {
+      name: 'Paper tickets for all organizations',
+    });
+    expect(paper.closest('li')).not.toHaveTextContent('Not available');
+    expect(screen.getAllByText('Not available')).toHaveLength(2);
+    expect(screen.getAllByLabelText(/Not released yet/)).toHaveLength(2);
+    await user.click(paper);
+    await waitFor(() => expect(bodies[0]).toMatchObject({ values: { 'print.enabled': true } }));
+    await user.click(screen.getByRole('switch', { name: 'Apple phone tap' }));
+    await waitFor(() => expect(bodies[1]).toMatchObject({ values: { 'nfc.enabled': true } }));
+  });
+
+  it('hides the join limits while join links are off, and shows them when on', async () => {
+    await renderApp('/admin/settings', {
+      session: 'admin',
+      handlers: { '/api/v1/settings': () => json(entries()) },
+    });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('radio', { name: 'Advanced' }));
+    const join = screen.getByRole('switch', { name: 'Join links' });
+    if (join.getAttribute('aria-checked') === 'true') await user.click(join);
+    expect(screen.queryByRole('spinbutton', { name: 'Join cards per day' })).toBeNull();
+    await user.click(join);
+    expect(screen.getByRole('spinbutton', { name: 'Join cards per day' })).toBeVisible();
   });
 
   it('links to the configured issuer', async () => {

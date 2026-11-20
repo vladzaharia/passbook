@@ -98,6 +98,7 @@ export const SCAN_TAG_COPY = {
   door: {
     unknownTag: { headline: 'Unknown tag', sub: "This tag isn't assigned to anyone." },
     flag: 'Tag',
+    basicTag: 'Basic tag. Check the photo.',
     flagOfMany: "Tag · 1 of {name}'s {n} passes",
     noneLetsIn: "None of {name}'s {n} passes lets them in here.",
     noneAccepted: {

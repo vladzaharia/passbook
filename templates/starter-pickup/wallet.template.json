@@ -4,8 +4,17 @@
   "description": "An order code, buzzed when ready.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png",
+        "thumbnail": "wallets/google/thumbnail.png"
+      }
+    },
     "samsung": {}
+  },
+  "channels": {
+    "paper": "on",
+    "nfc": "off"
   },
   "blueprint": true,
   "inputs": {
@@ -310,5 +319,12 @@
         "refused": "Ask at the counter."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "a4",
+    "barcode": "qr",
+    "kind": "pickup",
+    "ink": "mono"
   }
 }

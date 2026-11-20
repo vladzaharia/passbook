@@ -561,7 +561,7 @@ describe('0042 pending transfer snapshots', () => {
       run(db, 'DELETE FROM pass_credential_transfers WHERE id = ?', [transferId]),
     ).rejects.toThrow(/credential transfer history is immutable/);
     await expect(run(db, 'DELETE FROM passes WHERE id = ?', [pass.id])).rejects.toThrow(
-      /provider retirement incomplete/,
+      /pending credential transfer cannot be deleted/,
     );
     await expect(
       run(db, 'UPDATE passes SET credential_generation = credential_generation + 1 WHERE id = ?', [

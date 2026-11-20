@@ -13,6 +13,7 @@ import { type AdminAuthority, adminPrincipal } from '../repo-admin-grant.ts';
 import { assertUnderOverrideCap, countOverride } from '../repo-override-cap.ts';
 import { includeSystemRetentionProof } from '../repo-scan-retention-part.ts';
 import { orgZoneRows } from '../repo-zones.ts';
+import { ROLL_TABLES, type WithGrant } from '../roll-call/tables.ts';
 import { scanPassChecks } from '../scan-pass-checks.ts';
 import { SCAN_COMMIT_TABLES, scanIs } from '../scan-write-grant.ts';
 import { ledgerEvent } from '../scan-write-statements.ts';
@@ -56,7 +57,7 @@ async function consoleScope(
   };
 }
 
-const titles =
+export const titles =
   (ctx: ServiceContext, orgId: string, mode: Mode): Identify =>
   async (ids) => {
     const out = new Map<
@@ -121,7 +122,8 @@ export async function consoleMarkOut(
   authority: AdminAuthority,
   t: ConsoleTarget,
   input: { passId: string; place: string },
-): Promise<void> {
+  extra?: WithGrant,
+): Promise<string> {
   const { orgId, mode } = authority;
   const scope = await consoleScope(ctx, orgId, mode, t);
   const pass = scope.places.some((p) => p.place === input.place)
@@ -137,7 +139,8 @@ export async function consoleMarkOut(
   if (!held || !liveIn({ state: held.state, due_at: held.dueAt }, now))
     throw new ConflictError('They are already out.', 'NOT_INSIDE');
   const capActor = { orgId, actorKey: `u:${userId}`, actor: { type: 'user' as const, id: userId } };
-  await assertUnderOverrideCap(ctx, capActor);
+  // A roll call Out is not a desk override: an evacuation must not meet the hourly cap.
+  if (!extra) await assertUnderOverrideCap(ctx, capActor);
   const scanId = ctx.ids.ordered(now);
   // Desk work, so `passes:operate` suffices: the same right the device API gives an admin.
   if (authority.userId !== userId || authority.orgId !== orgId) throw new ForbiddenError();
@@ -190,7 +193,7 @@ export async function consoleMarkOut(
     purpose: 'org_mode.scan.mark_out',
     principal: adminPrincipal(authority),
     checks: [...capabilityChecks(authority), ...scanPassChecks(pass.id, { pass, credential: {} })],
-    tables: [...SCAN_COMMIT_TABLES],
+    tables: extra ? [...SCAN_COMMIT_TABLES, ...ROLL_TABLES] : [...SCAN_COMMIT_TABLES],
     codes: { lineage: 'SCAN_PASS_CHANGED' },
     target: pass.id,
   });
@@ -219,8 +222,10 @@ export async function consoleMarkOut(
     },
     [scanIs(scanId, { state: 'done' })],
   );
+  extra?.(g, scanId, won);
   const committed = await g.commit();
   if (!(committed[g.indexOf(inserted)]?.results ?? []).length)
     throw new ConflictError('They are already out.', 'NOT_INSIDE');
-  await countOverride(ctx, capActor);
+  if (!extra) await countOverride(ctx, capActor);
+  return scanId;
 }

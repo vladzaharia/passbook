@@ -4,8 +4,17 @@
   "description": "Plate and zone, valid to a date.",
   "wallets": {
     "schema": 1,
-    "google": {},
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png",
+        "thumbnail": "wallets/google/thumbnail.png"
+      }
+    },
     "samsung": {}
+  },
+  "channels": {
+    "paper": "on",
+    "nfc": "on"
   },
   "blueprint": true,
   "inputs": {
@@ -272,7 +281,8 @@
       }
     ],
     "lookup": {
-      "input": "plate"
+      "input": "plate",
+      "public": true
     },
     "window": {
       "from": "validFrom",
@@ -330,5 +340,11 @@
         "refused": "Send them to the parking office."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "half",
+    "barcode": "qr",
+    "kind": "permit"
   }
 }

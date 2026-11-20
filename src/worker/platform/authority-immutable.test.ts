@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import { withoutTrigger } from '../../../test/helpers/index.ts';
 import { EPOCH_TABLES } from './authority-columns.ts';
 import { seedAuthority } from './authority-test-fixtures.ts';
 import { all, first, run, type SqlValue } from './db.ts';
@@ -151,6 +152,30 @@ describe('REPLACE and UPSERT never overwrite a guarded row', () => {
   });
 });
 
+const seedWalletAccount = async (orgId: string) => {
+  const id = crypto.randomUUID();
+  await run(
+    db,
+    "INSERT INTO wallet_provider_accounts (id, org_id, mode, provider, created_at, updated_at) VALUES (?, ?, 'live', 'google', 1, 1)",
+    [id, orgId],
+  );
+  return id;
+};
+
+/** The insert guard is the issuance gate, not what this test is about; a blocked placeholder needs no account. */
+const seedWalletInstance = async (orgId: string, passId: string) => {
+  const id = crypto.randomUUID();
+  await withoutTrigger(db, 'wallet_provider_generation_insert_guard', () =>
+    run(
+      db,
+      `INSERT INTO wallet_provider_instances (id, pass_id, org_id, mode, provider, credential_generation, lifecycle, desired_version, created_at, updated_at)
+       VALUES (?, ?, ?, 'live', 'google', 1, 'blocked', 0, 1, 1)`,
+      [id, passId, orgId],
+    ),
+  );
+  return id;
+};
+
 describe('Rule-2 immutable inputs', () => {
   it('sessions: roles and amr cannot change; a revoke still can', async () => {
     const s = await seedAuthority('imm-sessions');
@@ -207,6 +232,8 @@ describe('Rule-2 immutable inputs', () => {
       scan_events: s.event.id,
       scanning_sessions: s.scanningSessionId,
       connections: s.connectionId,
+      wallet_provider_accounts: await seedWalletAccount(s.org.id),
+      wallet_provider_instances: await seedWalletInstance(s.org.id, s.pass.id),
     };
     for (const t of EPOCH_TABLES) {
       for (const column of t.fixed) {
@@ -218,7 +245,7 @@ describe('Rule-2 immutable inputs', () => {
           ]),
           `${t.table}.${column}`,
         ).rejects.toThrow(
-          /connections identity is immutable|orgs identity is immutable|passes identity is immutable|scan_events identity is immutable|scan_staff identity is immutable|scanner ID is immutable|scanners identity is immutable|scanning_sessions identity is immutable/,
+          /connections identity is immutable|orgs identity is immutable|passes identity is immutable|scan_events identity is immutable|scan_staff identity is immutable|scanner ID is immutable|scanners identity is immutable|scanning_sessions identity is immutable|invalid wallet provider account transition|provider instance identity is immutable|provider keyset commitment is immutable/,
         );
       }
     }

@@ -1,0 +1,240 @@
+/* Roll call on the Who's in sheet. The rows reuse the .scan-in-* pieces. */
+.scan-rc {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100%;
+  padding: 0 16px 16px;
+}
+.scan-rc-head {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-inline: -16px;
+  padding: 12px 16px;
+  background: var(--pk-danger-subtle);
+  border-block-end: 1px solid color-mix(in srgb, var(--pk-danger) 30%, transparent);
+}
+.scan-rc[data-done] .scan-rc-head {
+  background: var(--pk-success-subtle);
+  border-block-end-color: color-mix(in srgb, var(--pk-success) 30%, transparent);
+}
+.scan-rc-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scan-rc-top h2 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font: 650 17px / 22px var(--pk-font-sans);
+  overflow-wrap: anywhere;
+}
+.scan-rc-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  font: 400 14px / 20px var(--pk-font-sans);
+  font-variant-numeric: tabular-nums;
+}
+.scan-rc-basis {
+  margin: 0;
+  color: var(--sd-muted);
+  font: 400 13px / 18px var(--pk-font-sans);
+}
+.scan-rc-basis:empty {
+  display: none;
+}
+.scan-rc-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+.scan-rc-filter {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid transparent;
+  border-radius: 22px;
+  background: var(--sd-fill-gray);
+  color: var(--sd-strong);
+  font: 600 14px / 1 var(--pk-font-sans);
+  cursor: pointer;
+}
+.scan-rc-filter[aria-pressed="true"] {
+  border-color: var(--sd-accent);
+  background: color-mix(in srgb, var(--sd-accent) 14%, var(--sd-fill-gray));
+}
+.scan-rc-filter:focus-visible {
+  outline: 3px solid var(--sd-accent);
+  outline-offset: 2px;
+}
+.scan-rc-body {
+  flex: 1;
+}
+.scan-rc-stale .scan-in-list {
+  opacity: 0.7;
+}
+.scan-rc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding-block: 8px;
+  border-block-end: 1px solid var(--sd-line);
+}
+.scan-rc-row[data-lapsed] {
+  margin-inline: -8px;
+  padding-inline: 8px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--scan-heads) 14%, transparent);
+}
+.scan-rc-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+.scan-rc-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.scan-rc-who {
+  font: 650 16px / 20px var(--pk-font-sans);
+  color: var(--sd-strong);
+  overflow-wrap: anywhere;
+}
+.scan-rc-by {
+  color: var(--pk-success);
+}
+.scan-rc-acts {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+.scan-rc-out[aria-pressed="true"] {
+  background: var(--sd-fill-gray);
+  color: var(--sd-strong);
+}
+.scan-rc-safe {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 44px;
+  border: 1.5px solid var(--pk-border-strong);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: 600 14px / 1 var(--pk-font-sans);
+  cursor: pointer;
+}
+.scan-rc-safe:focus-visible {
+  outline: 3px solid var(--sd-accent);
+  outline-offset: 2px;
+}
+.scan-rc-safe[aria-pressed="true"] {
+  border-color: var(--pk-success);
+  background: var(--pk-success);
+  color: var(--pk-success-on);
+}
+.scan-rc-foot {
+  position: sticky;
+  inset-block-end: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-inline: -16px;
+  padding: 12px 16px;
+  background: var(--pk-surface-raised);
+  border-block-start: 1px solid var(--sd-line);
+}
+.scan-rc-foot > * {
+  flex: 1;
+}
+@media (max-width: 420px) {
+  .scan-rc-out {
+    min-width: 44px;
+    padding-inline: 0;
+  }
+  .scan-rc-out > :not(svg) {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scan-rc-row {
+    animation: scan-in-rise 280ms var(--wl-ease-spring, ease-out) backwards;
+    animation-delay: calc(min(var(--i, 0), 8) * 30ms);
+  }
+  .scan-rc-safe[aria-pressed="true"] {
+    animation: scan-rc-tick 280ms var(--wl-ease-spring, ease-out);
+  }
+}
+@keyframes scan-rc-tick {
+  0% {
+    transform: scale(0.9);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+}
+
+.scan-rc-print {
+  display: none;
+}
+@media print {
+  body[data-rc-print] > *:not(.scan-rc-print) {
+    display: none !important;
+  }
+  body[data-rc-print] .scan-rc-print {
+    display: block;
+    padding: 12mm;
+    color: #000;
+    background: #fff;
+    font:
+      12pt / 1.4 system-ui,
+      sans-serif;
+  }
+  .scan-rc-print h1 {
+    margin: 0 0 4pt;
+    font-size: 18pt;
+  }
+  .scan-rc-print p {
+    margin: 0 0 4pt;
+  }
+  .scan-rc-print table {
+    width: 100%;
+    margin-block-start: 10pt;
+    border-collapse: collapse;
+  }
+  .scan-rc-print th,
+  .scan-rc-print td {
+    padding: 5pt 6pt;
+    border-block-end: 0.5pt solid #888;
+    text-align: start;
+  }
+  .scan-rc-print tr {
+    break-inside: avoid;
+  }
+  .scan-rc-print .box {
+    width: 14pt;
+  }
+  .scan-rc-print .box::before {
+    display: inline-block;
+    width: 11pt;
+    height: 11pt;
+    border: 1pt solid #000;
+    content: "";
+  }
+}

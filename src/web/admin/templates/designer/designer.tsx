@@ -30,6 +30,7 @@ import { useGoalFlow } from './goal-flow.tsx';
 import { Issues } from './issues.tsx';
 import { DesignerLayout } from './layout.tsx';
 import { type DesignDoc, findField, type Selection } from './model.ts';
+import { useOrgBrandedPass } from './org-logo-text.ts';
 import { Outline } from './outline.tsx';
 import {
   canRedo,
@@ -121,6 +122,7 @@ export function Designer({
     stamps.checkCount,
     create ? { orgId: create.orgId, name: create.name } : undefined,
   );
+  const shownPass = useOrgBrandedPass(check.lastBuilt);
 
   const edit = useCallback(
     (op: Op, merge?: string) => {
@@ -181,6 +183,8 @@ export function Designer({
     check.isError || check.checking || check.isPlaceholderData || !check.data?.report.ok
       ? null
       : blocking;
+  const live = useRef({ blocked, checking: check.checking });
+  live.current = { blocked, checking: check.checking };
   const created = useCreateFlow(create, blocked);
   // A new template is unsaved until Create template, edits or not.
   const guard = useUnsavedChangesGuard(create ? created.made === null : dirty);
@@ -190,7 +194,8 @@ export function Designer({
     latest,
     savedDoc: state.saved,
     draftBase: version,
-    blocked,
+    blocked: () => live.current.blocked(),
+    checking: () => live.current.checking,
     dispatch,
     onSaved: (v) => {
       setVersion(v);
@@ -288,7 +293,7 @@ export function Designer({
                 onPaper={
                   readOnly || phone ? undefined : (patch) => edit({ op: 'paper', patch }, 'paper')
                 }
-                passJson={readOnly ? readOnly.passJson : (check.lastBuilt ?? null)}
+                passJson={readOnly ? readOnly.passJson : shownPass}
                 assets={state.doc.assets}
                 assetBase={base_}
                 checking={readOnly ? false : check.checking}

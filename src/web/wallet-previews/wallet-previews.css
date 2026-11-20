@@ -1,0 +1,91 @@
+/* Google and Samsung wallet previews (google/google-card.tsx, samsung/samsung-card.tsx): the card
+   as each app draws it, from the compiled bodies. Card colours come from the pass; the rest is
+   the app's own tokens. The white tile under a code is the one fixed colour: a code needs it. */
+.wp {
+  --wp-ink: #fff;
+  --wp-ink-soft: rgb(255 255 255 / 0.78);
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+  color: var(--pk-text-strong);
+}
+.wp h3,
+.wp h4,
+.wp p,
+.wp dl,
+.wp dd {
+  margin: 0;
+}
+.wp-tile {
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #000;
+}
+.wp-code {
+  display: block;
+  height: 3.5rem;
+  width: auto;
+  max-width: 100%;
+}
+.wp-code[data-square] {
+  height: 8rem;
+}
+.wp-code-pending {
+  height: 3.5rem;
+  width: 8rem;
+  border-radius: 0.25rem;
+  background: rgb(127 127 127 / 0.15);
+}
+.wp-code-missing {
+  font-size: 0.75rem;
+  color: #555;
+}
+
+/* The card and its report: stacked in a narrow column, side by side from 40rem of room. */
+.wp-wrap {
+  container-type: inline-size;
+}
+.wp-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+@container (min-width: 40rem) {
+  .wp-split {
+    grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+  }
+}
+
+/* The mobile frame: a phone-width viewport, scrolling inside its own rounded bezel. */
+.wp-phone-shell {
+  width: 100%;
+  max-width: 24.375rem;
+  padding: 0.375rem;
+  border: 1px solid var(--pk-border-strong, var(--pk-border-subtle));
+  border-radius: 2rem;
+  background: var(--pk-surface-sunken, var(--pk-surface-raised));
+}
+.wp-phone {
+  display: block;
+  width: 100%;
+  height: min(38rem, 78dvh);
+  border: 0;
+  border-radius: 1.625rem;
+  background: var(--pk-surface-page);
+}
+
+/* Five channel names in one row: the kit's segment padding, tightened. */
+.wl-seg.wp-switch > [role="radio"] {
+  padding-inline: 0.5rem;
+}
+
+/* A preview is for the ticket: it leads, where the iPhone's page puts the badge first. */
+.wp-phone-page .wl-holder[data-lead] {
+  grid-template-areas: "pass" "add" "details" "help";
+}

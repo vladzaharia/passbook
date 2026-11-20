@@ -13,6 +13,7 @@ import type {
   WalletPassView,
   WalletRole,
 } from '../types.ts';
+import { formatWhen } from '../when.ts';
 import { DEFAULT_LANGUAGE } from './limits.ts';
 import type { GoogleLocalized } from './types.ts';
 
@@ -89,7 +90,7 @@ export class Ctx {
       case 'number':
         return role.text;
       case 'date':
-        return role.iso;
+        return formatWhen(role.iso);
       case 'money':
         return `${role.amount} ${role.currencyCode}`;
       case 'channel':

@@ -23,7 +23,7 @@ import {
 import { activeBinding, type PassFacts, passFacts } from '../nfc/repo-tag-bindings.ts';
 import { orgTagCount, tagByRef } from '../nfc/repo-tags.ts';
 import { addBind, type BindPlan, bindChecks, ENROLL_TABLES } from '../nfc/repo-tags-write.ts';
-import { canonicalUid, tagRef } from '../nfc/tag-ref.ts';
+import { UID_SYSTEM } from '../nfc/systems/uid.ts';
 import { decideBind, TAGS_PER_ORG_MODE, triggerRefusal } from '../nfc/tags.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import type { ScanActor } from './guard.ts';
@@ -214,7 +214,7 @@ async function complete(
     throw holderChanged();
   await assertBindable(ctx, orgId, pass.id);
   await ensureCredentialRefKeyset(db, ctx.env);
-  const { ref, hint } = await tagRef(ctx.env, orgId, mode, canonicalUid(uid));
+  const { ref, hint } = await UID_SYSTEM.identify(ctx.env, orgId, mode, uid);
   const facts: PassFacts = pass;
 
   for (let attempt = 1; ; attempt++) {

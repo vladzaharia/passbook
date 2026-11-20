@@ -24,6 +24,8 @@ export interface EventValues {
   reentry: boolean;
   hardLimit: boolean;
   note: string | null;
+  /** Set by Scan passes: one live event per template, start and name. */
+  setupKey?: string | null;
 }
 
 /** org_id and mode come from the grant row. */
@@ -50,6 +52,7 @@ export const addEventInsert = (
       'created_by',
       'created_at',
       'updated_at',
+      ...(e.setupKey ? ['setup_key'] : []),
     ],
     [
       e.id,
@@ -66,6 +69,7 @@ export const addEventInsert = (
       createdBy,
       now,
       now,
+      ...(e.setupKey ? [e.setupKey] : []),
     ],
   );
 

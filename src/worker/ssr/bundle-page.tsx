@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
+import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import type { Mode } from '../../shared/contracts/common.ts';
 import type { WalletProvider } from '../../shared/contracts/wallet-providers.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
@@ -20,7 +21,8 @@ import { Badge } from '../../web/ui/badge.tsx';
 import bundleCss from './bundle-page.css?raw';
 import { documentStart, type PageTheme } from './head.ts';
 import { REPLAY_SCRIPT } from './hosted.ts';
-import { OrgBar } from './org-bar.tsx';
+import { OrgBar, OrgMark } from './org-bar.tsx';
+import { brandCss } from './org-brand-css.ts';
 import { PAGE_CSS } from './pass-page.tsx';
 import { TestRibbon } from './test-ribbon.tsx';
 
@@ -55,6 +57,8 @@ export interface BundlePageProps {
   theme?: PageTheme;
   /** The org's name for the header (never the platform's). */
   orgName: string;
+  /** The org's brand kit (`orgBrandOf`). */
+  brand?: OrgBrand;
   /** The org record's name, for link previews. */
   orgLabel: string;
   name: string;
@@ -128,7 +132,7 @@ function BundleBody(props: BundlePageProps) {
         };
   return (
     <div className="flex min-h-dvh flex-col [--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">
-      <OrgBar orgName={props.orgName} />
+      <OrgBar orgName={props.orgName} brand={props.brand} />
       <TestRibbon mode={props.mode} what="bundle" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <HolderHeading
@@ -213,6 +217,7 @@ function BundleBody(props: BundlePageProps) {
           </div>
         ) : null}
       </main>
+      <OrgMark brand={props.brand} />
     </div>
   );
 }
@@ -225,5 +230,5 @@ function previewHead(org: string): string {
 }
 
 export function renderBundlePage(props: BundlePageProps): string {
-  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel)}<title>${escapeHtml(props.orgLabel ? `${props.orgLabel} passes` : 'Passes')}</title>${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}\n${bundleCss}</style></head><body>${renderToStaticMarkup(<BundleBody {...props} />)}</body></html>`;
+  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel)}<title>${escapeHtml(props.orgLabel ? `${props.orgLabel} passes` : 'Passes')}</title>${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}\n${bundleCss}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<BundleBody {...props} />)}</body></html>`;
 }

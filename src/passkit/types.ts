@@ -1,5 +1,4 @@
 /** Shared passkit types. No Cloudflare or Hono imports: this module runs in Node and in Workers. */
-
 import type { PassJson } from './schema/pass-types.ts';
 import type { PaperManifest } from './template/paper.ts';
 import type { ScanCheckIn } from './template/scan-check-in.ts';
@@ -225,15 +224,15 @@ export interface ScanManifest {
   /** 1-6. */
   actions: ScanAction[];
   /** A typed member, card or ticket number. */
-  lookup?: { input: string };
+  lookup?: { input: string; public?: boolean };
   window?: { from?: string; until?: string; earlyMinutes?: number; lateMinutes?: number };
   flags?: { input: string; label: string; equals?: string[]; stop?: boolean }[];
   /** The result screen. No display means `defaultScanDisplay` at read, never persisted. */
   display?: ScanDisplayDoc;
   /** An Access card: plans and zones decide the verdict. Every check-in repeats. */
   access?: AccessManifest;
-  /** The weakest tag that may be bound to or admit on this pass. Absent means `basic`. */
-  tags?: { min?: 'basic' | 'secure' };
+  /** The weakest tag that may be bound to or admit on this pass (absent: `basic`), and the uses it takes (absent: any). */
+  tags?: { min?: 'basic' | 'secure'; uses?: ('member' | 'staff' | 'visitor')[] };
   checkIn?: ScanCheckIn;
 }
 
@@ -311,6 +310,7 @@ export interface TemplateManifest {
   wallets?: WalletsManifest;
   /** Printed ticket layout (size, barcode, fields, terms). Absent: derived from the roles. */
   paper?: PaperManifest;
+  channels?: Partial<Record<string, 'on' | 'off'>>;
 }
 
 export type Personalization = Record<string, Json>;

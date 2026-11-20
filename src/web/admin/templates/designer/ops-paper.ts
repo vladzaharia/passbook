@@ -1,4 +1,4 @@
-import type { PaperBarcode, PaperSize } from '@/passkit/template/paper.ts';
+import type { PaperBarcode, PaperInk, PaperKind, PaperSize } from '@/passkit/template/paper.ts';
 import type { DesignDoc } from './model.ts';
 import { copy } from './ops-pass.ts';
 
@@ -9,11 +9,19 @@ export type PaperPatch = null | {
   fields?: string[];
   terms?: string;
   holder?: boolean;
+  /** `null` goes back to the layout derived from the template. */
+  kind?: PaperKind | null;
+  ink?: PaperInk;
+  fold?: boolean;
+  /** Extra "Bring" lines, one per line. */
+  bring?: string;
+  buddy?: boolean;
 };
 
 /**
  * Writes the block with the same shape paper.ts validates: schema 1, size and barcode always, and
- * `fields`, `terms` and `holder: false` only when set. A patch on a derived layout starts from the
+ * the rest (`fields`, `terms`, `holder: false`, `kind`, `ink: mono`, `fold: false`, `bring`, `buddy: true`)
+ * only when set. A patch on a derived layout starts from the
  * defaults (A4, QR).
  */
 export function setPaper(doc: DesignDoc, patch: PaperPatch): DesignDoc {
@@ -37,6 +45,16 @@ export function setPaper(doc: DesignDoc, patch: PaperPatch): DesignDoc {
   if (typeof terms === 'string' ? terms.trim() : terms) block.terms = terms;
   const holder = 'holder' in patch ? patch.holder : old.holder;
   if (holder === false) block.holder = false;
+  const kind = 'kind' in patch ? patch.kind : old.kind;
+  if (typeof kind === 'string') block.kind = kind;
+  const ink = patch.ink ?? old.ink;
+  if (ink === 'mono') block.ink = ink;
+  const fold = 'fold' in patch ? patch.fold : old.fold;
+  if (fold === false) block.fold = false;
+  const bring = 'bring' in patch ? patch.bring : old.bring;
+  if (typeof bring === 'string' && bring.trim()) block.bring = bring;
+  const buddy = 'buddy' in patch ? patch.buddy : old.buddy;
+  if (buddy === true) block.buddy = true;
   next.manifest.paper = block;
   return next;
 }

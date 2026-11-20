@@ -34,6 +34,7 @@ export function fixtureState(over: Partial<ScanState> = {}): ScanState {
     online: true,
     unsure: [],
     queue: { pending: 0, oldestAt: null, conflicts: 0 },
+    offline: { mode: 'stop', listAt: null, syncing: false },
     reader: { kind: 'none', lastAt: null, badLayout: 0 },
     undo: null,
     ignore: [],

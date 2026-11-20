@@ -71,6 +71,16 @@
       "class_name": "ChannelApply"
     },
     {
+      "name": "wallet-vitest-org-export",
+      "binding": "ORG_EXPORT",
+      "class_name": "OrgExport"
+    },
+    {
+      "name": "wallet-vitest-org-purge",
+      "binding": "ORG_PURGE",
+      "class_name": "OrgPurge"
+    },
+    {
       "name": "wallet-vitest-pass-import",
       "binding": "PASS_IMPORT",
       "class_name": "PassImport"

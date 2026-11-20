@@ -231,6 +231,21 @@ describe('authenticated Samsung card-state evidence', () => {
     expect(history[0]).toMatchObject({
       credential_keyset_commitment: f.proof.credentialKeysetCommitment,
     });
+    const epoch = await first<{ e: number; c: number }>(
+      f.kit.env.DB,
+      `SELECT a.authority_epoch AS e, k.provider_account_epoch AS c FROM template_candidates k
+       JOIN wallet_provider_accounts a ON a.id = k.provider_account_id WHERE k.id = ?`,
+      [c.id],
+    );
+    expect(epoch?.e).toBeGreaterThan(0);
+    expect(epoch?.c).toBe(epoch?.e);
+    expect(current?.account_epoch).toBe(epoch?.e);
+    expect(history[0]?.account_epoch).toBe(epoch?.e);
+    for (const sql of [
+      'UPDATE template_candidates SET provider_account_epoch = 99 WHERE id = ?',
+      'UPDATE wallet_provider_projection_evidence_history SET account_epoch = 99 WHERE candidate_id = ?',
+    ])
+      await expect(run(f.kit.env.DB, sql, [c.id])).rejects.toThrow(/immutable/);
     expect(JSON.stringify({ current, history })).not.toContain(f.credentials.partnerPrivateKeyPem);
     expect(JSON.stringify({ current, history })).not.toContain('provider-private-label');
     await expect(

@@ -1,0 +1,49 @@
+.scan-group {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+  color: inherit;
+}
+.scan-group-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.scan-group ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.scan-group li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+.scan-group li > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scan-group li[data-state="refused"] > span:last-child {
+  font-weight: 600;
+  color: var(--scan-refused);
+}
+.scan-group li[data-state="already"] > span:last-child {
+  color: var(--scan-heads);
+}
+.scan-group-count {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+/* The chip stays in reach when the card scrolls. */
+.scan-group[data-testid="scan-group-chip"] {
+  position: sticky;
+  bottom: 0;
+  padding-bottom: 8px;
+  background: var(--scan-card);
+}

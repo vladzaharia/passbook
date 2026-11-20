@@ -68,7 +68,8 @@ export async function preview(
     id,
     version,
   );
-  const tenant = body.orgId ? await getPassOrg(ctx.env.DB, body.orgId) : null;
+  // A selected org brands the preview even when the body names none (the batch and released reads).
+  const tenant = selectedOrgId ? await getPassOrg(ctx.env.DB, selectedOrgId) : null;
   const org = tenant ?? (row.orgId ? await getOrgName(ctx.env.DB, row.orgId) : null);
   const branding = readBranding(tenant?.branding);
   const template = tenant

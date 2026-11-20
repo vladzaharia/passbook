@@ -1,0 +1,100 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(250,204,21)",
+  "barcodes": [
+    {
+      "altText": "VIS-0001",
+      "format": "PKBarcodeFormatQR",
+      "message": "SNAPSHOT-SCAN-CODE",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Visitor pass",
+  "expirationDate": "2030-11-18T17:00:00-08:00",
+  "foregroundColor": "rgb(40,26,8)",
+  "formatVersion": 1,
+  "generic": {
+    "auxiliaryFields": [
+      {
+        "dateStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true,
+        "key": "until",
+        "label": "Until",
+        "timeStyle": "PKDateStyleShort",
+        "value": "2030-11-18T17:00:00-08:00"
+      },
+      {
+        "key": "company",
+        "label": "Company",
+        "value": "Acme Ltd"
+      }
+    ],
+    "backFields": [
+      {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Good for one day. Wear it where staff can see it."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "headerFields": [
+      {
+        "dateStyle": "PKDateStyleNone",
+        "ignoresTimeZone": true,
+        "key": "arrives",
+        "label": "Arrives",
+        "timeStyle": "PKDateStyleShort",
+        "value": "2030-11-18T09:30:00-08:00"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "Visitor",
+        "value": "Leo Brandt"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "host",
+        "label": "Host",
+        "value": "Priya Shah"
+      },
+      {
+        "key": "where",
+        "label": "Go to",
+        "value": "Floor 3, Oslo"
+      }
+    ]
+  },
+  "labelColor": "rgb(110,72,0)",
+  "logoText": "Organization",
+  "organizationName": "PassBook",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "relevantDate": "2030-11-18T17:30:00Z",
+  "relevantDates": [
+    {
+      "endDate": "2030-11-19T01:00:00Z",
+      "startDate": "2030-11-18T16:30:00Z"
+    }
+  ],
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "webServiceURL": "https://wallet.example/wallet"
+}

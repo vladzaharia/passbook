@@ -15,6 +15,7 @@ import { tenantScanRole } from './actor.ts';
 import { admitsJson } from './admits.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { kickScreen } from './live.ts';
+import { noteSessionChange, savedOfflineSettings } from './offline-policy.ts';
 import {
   adminGrant,
   audited,
@@ -115,6 +116,8 @@ export async function createScanningSession(
   input: z.infer<typeof CreateScanningSessionSchema>,
   authority: TenantPassWrite,
   countAuthority: SessionReadAuthority,
+  /** Scan passes: the template this session is for. One live session per template (unique index). */
+  setupTemplateId?: string,
 ) {
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
   if (countAuthority.orgId !== input.orgId || countAuthority.mode !== mode)
@@ -122,16 +125,19 @@ export async function createScanningSession(
   if (!(await orgIsActive(ctx.env.DB, input.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const accepts = input.accepts ? await checkAccepts(ctx, input.orgId, mode, input.accepts) : null;
-  const settings = ScanningSessionSettingsSchema.parse({
-    ...DEFAULT_SETTINGS,
-    lookup: true,
-    showPhoto: true,
-    ...input.settings,
-    acceptAllTemplates: input.accepts === null,
-  });
+  const zoneIds = input.zoneIds ?? [];
+  const settings = savedOfflineSettings(
+    ScanningSessionSettingsSchema.parse({
+      ...DEFAULT_SETTINGS,
+      lookup: true,
+      showPhoto: true,
+      ...input.settings,
+      acceptAllTemplates: input.accepts === null,
+    }),
+    zoneIds.length,
+  );
   if (settings.checkIn?.eventId)
     await checkAccepts(ctx, input.orgId, mode, { eventId: settings.checkIn.eventId });
-  const zoneIds = input.zoneIds ?? [];
   const zoneChecks = await sessionZoneChecks(ctx, input.orgId, zoneIds, eventOnly(accepts));
   const now = ctx.clock.now();
   const id = ctx.ids.id();
@@ -161,6 +167,7 @@ export async function createScanningSession(
       ...newTiming(input.timeZone, input.hours ?? null, now),
       created_at: now,
       updated_at: now,
+      ...(setupTemplateId ? { setup_template_id: setupTemplateId } : {}),
     },
     userId,
   );
@@ -170,10 +177,10 @@ export async function createScanningSession(
       orgId: input.orgId,
       actorType: 'user',
       actorId: userId,
-      action: 'scanning.session_create',
+      action: setupTemplateId ? 'scan.template_setup' : 'scanning.session_create',
       targetType: 'scanning_session',
       targetId: id,
-      detail: { mode },
+      detail: setupTemplateId ? { mode, templateId: setupTemplateId } : { mode },
     }),
   );
   await g.commit();
@@ -211,16 +218,22 @@ export async function updateScanningSession(
       [],
       'SCANNING_SESSION_SETTINGS_INVALID',
     );
+  const zoneCount = input.zoneIds
+    ? input.zoneIds.length
+    : (await sessionZoneIds(ctx.env.DB, row.org_id, id)).length;
   const settings = settingsChanged
-    ? ScanningSessionSettingsSchema.parse({
-        ...storedCustomer(row.settings),
-        ...previousSettings,
-        ...input.settings,
-        acceptAllTemplates:
-          input.accepts === undefined
-            ? (previousSettings?.acceptAllTemplates ?? false)
-            : input.accepts === null,
-      })
+    ? savedOfflineSettings(
+        ScanningSessionSettingsSchema.parse({
+          ...storedCustomer(row.settings),
+          ...previousSettings,
+          ...input.settings,
+          acceptAllTemplates:
+            input.accepts === undefined
+              ? (previousSettings?.acceptAllTemplates ?? false)
+              : input.accepts === null,
+        }),
+        zoneCount,
+      )
     : null;
   if (input.settings?.checkIn?.eventId)
     await checkAccepts(ctx, row.org_id, row.mode, { eventId: input.settings.checkIn.eventId });
@@ -263,6 +276,8 @@ export async function updateScanningSession(
     {
       ...(input.name === undefined ? {} : { name: input.name }),
       ...(input.status === undefined ? {} : { status: input.status }),
+      // An ended session lets go of its template, so ending then reopening cannot clash with a newer one.
+      ...(input.status === 'ended' ? { setup_template_id: null } : {}),
       ...(input.timeZone === undefined ? {} : { time_zone: input.timeZone }),
       ...(accepted === undefined ? {} : { accepts: next.accepts }),
       ...(settings ? { settings: next.settings } : {}),
@@ -306,6 +321,7 @@ export async function updateScanningSession(
       );
     throw error;
   }
+  await noteSessionChange(ctx, row, next.status, settings ?? effectiveSessionSettings(row), now);
   await Promise.all(devices.map((d) => kickScreen(ctx, row.org_id, row.mode, d.scanner_id)));
   return scanningSessionDetailForAuthority(ctx, id, row.mode, countAuthority);
 }

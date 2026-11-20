@@ -12,6 +12,7 @@ import {
   WALLET_ROLES,
   type WalletRole,
 } from '../types.ts';
+import { formatWhen } from '../when.ts';
 import type { Ctx } from './ctx.ts';
 import { DEFAULT_LANGUAGE, MAX_MODULES, MAX_URIS, TEXT } from './limits.ts';
 import type {
@@ -70,6 +71,8 @@ const localizedOf = (ctx: Ctx, text: string): GoogleLocalized | undefined => {
 };
 
 function bodyOf(field: ViewField): string {
+  if ((field.dateStyle || field.timeStyle) && typeof field.value === 'string')
+    return formatWhen(field.value, field.dateStyle, field.timeStyle);
   const numeric = field.currencyCode !== undefined && Number.isFinite(Number(field.text));
   return numeric ? `${field.text} ${field.currencyCode}` : field.text;
 }
@@ -78,6 +81,8 @@ class Modules {
   readonly text: GoogleTextModule[] = [];
   readonly uris: GoogleLinkUri[] = [];
   readonly emitted = new Set<string>();
+  /** What each module said before dates were written out: a role's ISO value matches it. */
+  readonly raw = new Set<string>();
   /** The last module's full body and path, so overflow can be appended to it. */
   private tail: { raw: string; path: string; langs: Map<string, string> } | undefined;
 
@@ -183,21 +188,34 @@ function fieldModules(ctx: Ctx, m: Modules): void {
     }
     m.add(f.path, f.label, bodyOf(f), f.path);
     m.emitted.add(f.path);
+    m.raw.add(f.text);
     ctx.note(capability, f.path, 'text', 'Carried as a text module.');
-    if (f.dateStyle || f.timeStyle || f.numberStyle)
+    if (f.dateStyle || f.timeStyle)
       ctx.note(
         capability,
         f.path,
         'difference',
-        'Shown as written: Google has no date or number style.',
+        'Written out in English: Google has no date style.',
       );
+    else if (f.numberStyle)
+      ctx.note(capability, f.path, 'difference', 'Shown as written: Google has no number style.');
     for (const link of f.links) m.link(link, f.label ?? f.text, f.path);
   }
 }
 
+/** The role as the field text it would match: a date by its ISO value, anything else as text. */
+const rawOf = (ctx: Ctx, role: WalletRole): string | undefined => {
+  const value = ctx.role(role);
+  return value?.kind === 'date' ? value.iso : ctx.roleText(role);
+};
+
 /** Everything the pass already says, so a role that repeats it adds nothing. */
 const carried = (ctx: Ctx, m: Modules): Set<string | undefined> =>
-  new Set([...m.text.map((x) => x.body), ...[...ctx.placed].map((r) => ctx.roleText(r))]);
+  new Set([
+    ...m.text.map((x) => x.body),
+    ...m.raw,
+    ...[...ctx.placed].flatMap((r) => [ctx.roleText(r), rawOf(ctx, r)]),
+  ]);
 
 /** Roles with no native slot: a field-backed one is already a module; one from an expression becomes one. */
 function roleModules(ctx: Ctx, m: Modules): void {
@@ -212,7 +230,7 @@ function roleModules(ctx: Ctx, m: Modules): void {
     }
     const body = ctx.roleText(role);
     if (value.source === 'style' || body === undefined || ctx.left(`role.${role}`)) continue;
-    if (carried(ctx, m).has(body)) {
+    if (carried(ctx, m).has(body) || carried(ctx, m).has(rawOf(ctx, role))) {
       ctx.note(`role.${role}`, '', 'text', 'Carried elsewhere on the pass.');
       continue;
     }
@@ -234,11 +252,11 @@ function upcoming(ctx: Ctx, m: Modules, options: ModuleOptions): void {
   }
   if (ctx.left('upcoming.multi', 'events')) return;
   if (m.full()) {
-    const lines = events.map((e) => (e.date ? `${e.name}: ${e.date}` : e.name));
+    const lines = events.map((e) => (e.date ? `${e.name}: ${formatWhen(e.date)}` : e.name));
     m.fold('upcoming.multi', 'events', 'Upcoming', lines.join('\n'));
     return;
   }
-  const lines = events.map((e) => (e.date ? `${e.name}: ${e.date}` : e.name));
+  const lines = events.map((e) => (e.date ? `${e.name}: ${formatWhen(e.date)}` : e.name));
   m.add('upcoming', 'Upcoming', lines.join('\n'), 'events');
   ctx.note('upcoming.multi', 'events', 'text', 'The events are listed as text.');
 }

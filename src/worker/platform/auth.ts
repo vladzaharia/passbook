@@ -8,10 +8,16 @@ import {
   type Mode,
   type RoleSchema,
 } from '../../shared/contracts/common.ts';
+import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
+import { type PlatformScope, scopeExercises } from './api-scopes.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
 import { type DeniedEvent, reportDenied } from './denied.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
+
+/** Guards the route inventory test recognises; every guard of this file registers itself. */
+const knownGuards = new WeakSet<object>();
+export const isKnownGuard = (handler: object): boolean => knownGuards.has(handler);
 
 export type Role = z.infer<typeof RoleSchema>;
 export type Amr = 'oidc' | 'magic_link' | 'breakglass';
@@ -127,6 +133,8 @@ export const requireSession: MiddlewareHandler<AppBindings> = createMiddleware(a
   await next();
 });
 
+knownGuards.add(requireSession);
+
 /** Cookie session with the admin role. */
 export const requireAdmin: MiddlewareHandler<AppBindings> = createMiddleware(async (c, next) => {
   const session = await sessionOrThrow(c);
@@ -135,6 +143,8 @@ export const requireAdmin: MiddlewareHandler<AppBindings> = createMiddleware(asy
   await csrfGuard(c, session);
   await next();
 });
+
+knownGuards.add(requireAdmin);
 
 /** The mode an admin session works in. Only the exact value `test` selects test mode. */
 export function modeFromRequest(c: Context): Mode {
@@ -152,42 +162,130 @@ function requireAdminRole(c: Context<AppBindings>, session: SessionAuth): void {
   throw new ForbiddenError('Admin access is required.');
 }
 
-export type ScopeSelector = ApiScope | ((c: Context<AppBindings>) => ApiScope);
+/** Scopes that let a key in: one, any of several, or one for reads (GET, HEAD) and one for the rest. */
+export type ScopeRule = ApiScope | readonly ApiScope[] | { read: ApiScope; write: ApiScope };
 
-/** Picks the scope from the HTTP method: reads need `read`, everything else `write`. */
-export function methodScope(scopes: { read: ApiScope; write: ApiScope }): ScopeSelector {
-  return Object.assign(
-    (c: Context<AppBindings>) =>
-      c.req.method === 'GET' || c.req.method === 'HEAD' ? scopes.read : scopes.write,
-    { scopes },
-  );
+/** Reads (GET, HEAD) need `read`, everything else `write`. */
+export function methodScope(scopes: { read: ApiScope; write: ApiScope }): ScopeRule {
+  return scopes;
 }
 
 /**
- * Machine API: a bearer API key with the scope, or an admin cookie session. API-key requests are
- * cookie-free and exempt from CSRF. Handlers must still apply org scoping with `assertOrgAccess`.
+ * Who may call a route. Declared once per route (`RouteSpec.auth`); `requireCaller` enforces it and
+ * `openapi-security.ts` writes it into the document, so the two cannot disagree.
  */
-export function requireApiKeyOrAdmin(scope: ScopeSelector): MiddlewareHandler<AppBindings> {
-  return createMiddleware(async (c, next) => {
-    const key = bearer(c);
-    if (key) {
-      const auth = await c.var.stores.apiKeys.resolve(key);
-      if (!auth)
+export type RouteAuth =
+  /**
+   * A bearer API key holding the scope, or else a tenant cookie session. `capability` is what the
+   * handler must prove with tenantAuthorityOf for the org it acts on (a session's membership, a
+   * key's scope): `register` turns a success response without that proof into a 500
+   * AUTHORITY_UNPROVEN. `session: 'admin'` takes an admin session instead of any tenant session.
+   */
+  | { scope: ScopeRule; capability?: OrgCapability; session?: 'admin' }
+  /** A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header. */
+  | { human: true; requestMode?: boolean }
+  /** A platform admin session. Keys never pass until a platform key kind exists. */
+  | { platform: PlatformScope };
+
+// Only requireCaller tags the scope it verified, so a handler can trust it.
+const verifiedScopes = new WeakMap<AuthContext, ApiScope>();
+
+/** The scope `requireCaller` checked on this key principal; undefined for anything else. */
+export function verifiedScopeOf(auth: AuthContext): ApiScope | undefined {
+  return verifiedScopes.get(auth);
+}
+
+// A declared `capability` is a promise the handler proves with tenantAuthorityOf. The state hangs
+// on the principal object requireCaller puts in the context, which is fresh for every request.
+const capabilityState = new WeakMap<AuthContext, { capability: OrgCapability; proven: boolean }>();
+
+/** Called by tenantAuthorityOf once membership (or the key's scope) is proven for `capability`. */
+export function proveCapability(auth: AuthContext, capability: OrgCapability): void {
+  const state = capabilityState.get(auth);
+  if (!state) return;
+  const scope = verifiedScopes.get(auth);
+  if (state.capability === capability || (scope && scopeExercises(scope, capability)))
+    state.proven = true;
+}
+
+/** True when the route declared a capability and its handler never proved it. */
+export function authorityUnproven(auth: AuthContext | undefined): boolean {
+  const state = auth ? capabilityState.get(auth) : undefined;
+  return state !== undefined && !state.proven;
+}
+
+const isRead = (c: Context) => c.req.method === 'GET' || c.req.method === 'HEAD';
+
+/** The scope the key must hold, or null when none of several matches. Named scopes give a named refusal. */
+function neededScope(rule: ScopeRule, c: Context, held: readonly ApiScope[]): ApiScope | null {
+  if (typeof rule === 'string') return rule;
+  if (Array.isArray(rule)) return rule.find((candidate) => held.includes(candidate)) ?? null;
+  const split = rule as { read: ApiScope; write: ApiScope };
+  return isRead(c) ? split.read : split.write;
+}
+
+type SessionKind = 'plain' | 'tenant' | 'admin';
+
+function sessionKindOf(auth: RouteAuth): SessionKind {
+  if ('platform' in auth) return 'admin';
+  if ('human' in auth) return auth.requestMode ? 'tenant' : 'plain';
+  return auth.session === 'admin' ? 'admin' : 'tenant';
+}
+
+/**
+ * The single place a route's `auth` is evaluated.
+ *
+ * 1. `scope` routes with a Bearer header: the key alone decides, and a cookie is never consulted.
+ *    The key must resolve (401 INVALID_API_KEY) and hold the scope (403 MISSING_SCOPE, audited).
+ *    The verified scope is tagged on a copy of the principal (`verifiedScopeOf`).
+ * 2. Otherwise a cookie session (401 without one) that passes CSRF. `scope` routes take any tenant
+ *    session, or an admin one with `session: 'admin'`; `human` routes take any session; `platform`
+ *    routes take an admin session. Admin and tenant sessions adopt the request mode.
+ * 3. `human` and `platform` routes ignore a Bearer header: a key is never a person.
+ */
+export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
+  const rule = 'scope' in auth ? auth.scope : null;
+  const capability = 'scope' in auth ? auth.capability : undefined;
+  const sessionKind = sessionKindOf(auth);
+  const guard = createMiddleware<AppBindings>(async (c, next) => {
+    const token = rule ? bearer(c) : null;
+    if (rule && token) {
+      const key = await c.var.stores.apiKeys.resolve(token);
+      if (!key)
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
-      const needed = typeof scope === 'function' ? scope(c) : scope;
-      if (!auth.scopes.includes(needed)) {
-        reportDenied(c, 'MISSING_SCOPE', auth);
-        throw new ForbiddenError(`The API key lacks the ${needed} scope.`, 'MISSING_SCOPE');
+      const needed = neededScope(rule, c, key.scopes);
+      if (!needed || !key.scopes.includes(needed)) {
+        reportDenied(c, 'MISSING_SCOPE', key);
+        throw new ForbiddenError(
+          needed ? `The API key lacks the ${needed} scope.` : 'The API key lacks a required scope.',
+          'MISSING_SCOPE',
+        );
       }
-      c.set('auth', auth);
+      const scoped = { ...key };
+      // Admin-session routes are not tenant routes: their keys carry no verified scope, so
+      // tenantAuthorityOf refuses them, as it always has.
+      if (sessionKind !== 'admin') verifiedScopes.set(scoped, needed);
+      if (capability) capabilityState.set(scoped, { capability, proven: false });
+      c.set('auth', scoped);
       return next();
     }
     const session = await sessionOrThrow(c);
-    requireAdminRole(c, session);
-    c.set('auth', { ...session, mode: modeFromRequest(c) });
+    if (sessionKind === 'admin') requireAdminRole(c, session);
+    if (sessionKind !== 'plain') {
+      const principal = { ...session, mode: modeFromRequest(c) };
+      if (capability) capabilityState.set(principal, { capability, proven: false });
+      c.set('auth', principal);
+    }
     await csrfGuard(c, session);
     return next();
   });
+  knownGuards.add(guard);
+  return guard;
+}
+
+/** Machine API: a bearer API key with the scope, or an admin cookie session. */
+export function requireApiKeyOrAdmin(scope: ScopeRule): MiddlewareHandler<AppBindings> {
+  return requireCaller({ scope, session: 'admin' });
 }
 
 /** Org-scoped API keys may only touch their own org; platform keys and admins may touch any. */

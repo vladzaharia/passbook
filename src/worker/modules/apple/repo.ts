@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, batch, chunk, first, placeholders, run, stmt } from '../../platform/db.ts';
+import { ORG_SERVES_SQL } from '../orgs/repo.ts';
 import {
   type AppleCredential,
   appleCredentialParams,
@@ -194,7 +195,7 @@ export async function serialsSince(
     `SELECT p.serial, p.revision, p.id AS pass_id, p.org_id, p.mode, p.version, p.credential_generation
      FROM registrations r JOIN passes p ON p.id = r.pass_id
        AND r.credential_generation = p.credential_generation
-     JOIN orgs o ON o.id = p.org_id AND o.status = 'active'
+     JOIN orgs o ON o.id = p.org_id AND ${ORG_SERVES_SQL}
      WHERE r.device_id = ? AND r.identity_id = ? AND p.identity_id = r.identity_id AND p.revision > ?
        AND p.test_data_quarantined = 0
        AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
@@ -229,7 +230,7 @@ export async function currentSerials(
        AND p.credential_generation = json_extract(expected.value, '$.credentialGeneration')
      JOIN registrations r ON r.pass_id = p.id AND r.identity_id = p.identity_id
        AND r.credential_generation = p.credential_generation
-     JOIN orgs o ON o.id = p.org_id AND o.status = 'active'
+     JOIN orgs o ON o.id = p.org_id AND ${ORG_SERVES_SQL}
      WHERE r.device_id = ? AND r.identity_id = ? AND p.test_data_quarantined = 0
        AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
          WHERE t.pass_id = p.id AND t.state = 'pending')`,

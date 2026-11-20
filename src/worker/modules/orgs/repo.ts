@@ -107,6 +107,24 @@ export async function orgState(db: D1Database, id: string): Promise<OrgState | n
   return row?.status ?? null;
 }
 
+/**
+ * An active org serves its passes. A closed org serves only a voided one: the last version Wallet fetches
+ * before the purge (org-lifecycle). Alias the orgs row as `o` and the passes row as `p`.
+ */
+export const ORG_SERVES_SQL = `(o.status = 'active'
+  OR (o.status = 'deleted' AND o.closed_at IS NOT NULL AND p.status = 'voided'))`;
+
+/** The org serves this pass now: see `ORG_SERVES_SQL`. */
+export async function orgServesPass(db: D1Database, passId: string): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 AS x FROM passes p JOIN orgs o ON o.id = p.org_id AND ${ORG_SERVES_SQL} WHERE p.id = ?`,
+      [passId],
+    )) !== null
+  );
+}
+
 /** Creating anything needs an active org. */
 export async function orgIsActive(db: D1Database, id: string): Promise<boolean> {
   return (await orgState(db, id)) === 'active';

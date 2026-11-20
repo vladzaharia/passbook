@@ -127,6 +127,8 @@ export interface ScanActor {
   /** Guard-captured raw assignment; used only to authorize minimal historical receipts. */
   scannerAssignment?: ScannerAssignmentSnapshot | null;
   timeZone: string;
+  /** The instant a queued offline read was made: its daily gate is that day's, not the sync day's. */
+  gateAt?: number;
   /** Null only on routes exempt from staff sign-in, while it is required and missing. */
   role: ScanRole | null;
   staff: BoundStaff | null;

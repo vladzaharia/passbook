@@ -5,14 +5,20 @@
  * code; the door credential on paper is the print code.
  */
 import { z } from 'zod';
-import type { Expr, TemplateManifest, ValidationIssue } from '../types.ts';
+import type { Expr, PassJson, TemplateManifest, ValidationIssue } from '../types.ts';
 import { checkExpr, exprReferences } from './expr.ts';
+import { paperInk } from './paper-ink.ts';
 
 export const PAPER_SCHEMA = 1;
 export const PAPER_SIZES = ['a4', 'letter', 'half', 'cr80'] as const;
 export type PaperSize = (typeof PAPER_SIZES)[number];
 export const PAPER_BARCODES = ['qr', 'code128'] as const;
 export type PaperBarcode = (typeof PAPER_BARCODES)[number];
+/** The layout family: what the door panel leads with. Absent in the manifest means derived. */
+export const PAPER_KINDS = ['admission', 'membership', 'permit', 'coupon', 'pickup'] as const;
+export type PaperKind = (typeof PAPER_KINDS)[number];
+export const PAPER_INKS = ['colour', 'mono'] as const;
+export type PaperInk = (typeof PAPER_INKS)[number];
 
 export interface PaperSpec {
   label: string;
@@ -52,6 +58,15 @@ export const PaperManifestSchema = z.strictObject({
   terms: expr.optional(),
   /** `false`: staff print only; the holder's link offers no print. */
   holder: z.boolean().optional(),
+  kind: z.enum(PAPER_KINDS).optional(),
+  /** `mono` prints without colour; `colour` still falls back to mono when the greyscale check fails. */
+  ink: z.enum(PAPER_INKS).optional(),
+  /** Fold marks on A4 and Letter. Default on. */
+  fold: z.boolean().optional(),
+  /** Extra "Bring" lines: text with `{{input}}`, one line per item. */
+  bring: expr.optional(),
+  /** The PassBook buddy as a small cameo beside "Issued with PassBook". Default off. */
+  buddy: z.boolean().optional(),
 });
 export type PaperManifest = z.infer<typeof PaperManifestSchema>;
 
@@ -62,6 +77,12 @@ export interface PaperDesign {
   fields: string[];
   terms?: Expr;
   holder: boolean;
+  /** Absent: derived from the template. */
+  kind?: PaperKind;
+  ink: PaperInk;
+  fold: boolean;
+  bring?: Expr;
+  buddy: boolean;
   /** No block in the manifest: the layout comes from the roles. */
   derived: boolean;
 }
@@ -71,6 +92,9 @@ export const DERIVED_PAPER: PaperDesign = {
   barcode: 'qr',
   fields: [],
   holder: true,
+  ink: 'colour',
+  fold: true,
+  buddy: false,
   derived: true,
 };
 
@@ -79,7 +103,7 @@ export function resolvePaper(raw: unknown): PaperDesign {
   if (raw === undefined || raw === null) return DERIVED_PAPER;
   const parsed = PaperManifestSchema.safeParse(raw);
   if (!parsed.success) return DERIVED_PAPER;
-  const { size, barcode, fields, terms, holder } = parsed.data;
+  const { size, barcode, fields, terms, holder, kind, ink, fold, bring, buddy } = parsed.data;
   return {
     size,
     // A card has no room for Code 128 (a validation error); it draws QR.
@@ -87,6 +111,11 @@ export function resolvePaper(raw: unknown): PaperDesign {
     fields: fields ?? [],
     ...(terms === undefined ? {} : { terms }),
     holder: holder !== false,
+    ...(kind ? { kind } : {}),
+    ink: ink ?? 'colour',
+    fold: fold !== false,
+    ...(bring === undefined ? {} : { bring }),
+    buddy: buddy === true,
     derived: false,
   };
 }
@@ -113,6 +142,12 @@ function shapeIssues(error: z.ZodError): ValidationIssue[] {
     } else if (raw.path[0] === 'barcode') {
       code = 'PAPER_BARCODE';
       message = 'barcode is qr or code128.';
+    } else if (raw.path[0] === 'kind') {
+      code = 'PAPER_KIND';
+      message = `kind is one of ${PAPER_KINDS.join(', ')}.`;
+    } else if (raw.path[0] === 'ink') {
+      code = 'PAPER_INK';
+      message = 'ink is colour or mono.';
     } else if (raw.path[0] === 'fields') {
       code = 'PAPER_FIELD';
       message = `fields is a list of up to ${MAX_PAPER_FIELDS} field keys.`;
@@ -123,6 +158,13 @@ function shapeIssues(error: z.ZodError): ValidationIssue[] {
   }
   return out;
 }
+
+/**
+ * The template declares its `scan.lookup` value public (a plate, on the windscreen anyway): paper may
+ * print it. Never set it for an order number, member id or anything else a holder keeps private.
+ */
+export const lookupIsPublic = (manifest: Pick<TemplateManifest, 'scan'>): boolean =>
+  (manifest.scan as { lookup?: { public?: unknown } } | undefined)?.lookup?.public === true;
 
 const keyOf = (ref: string) => ref.split('.').at(-1) ?? ref;
 
@@ -147,6 +189,7 @@ export function paperManifestIssues(
   const properties = (manifest.inputs?.properties ?? {}) as Record<string, unknown>;
   const lookups = new Set(Object.keys(manifest.lookups ?? {}));
   const lookupInput = (manifest as { scan?: { lookup?: { input?: unknown } } }).scan?.lookup?.input;
+  const publicLookup = lookupIsPublic(manifest);
 
   const checkExprAt = (value: Expr, path: string) => {
     const problem = checkExpr(value);
@@ -158,7 +201,7 @@ export function paperManifestIssues(
       error('PAPER_SCAN_CODE', 'Paper never prints the scan code.', path);
     const refs = exprReferences(value);
     for (const name of refs.inputs) {
-      if (name === lookupInput)
+      if (name === lookupInput && !publicLookup)
         error('PAPER_LOOKUP_FIELD', 'Paper never prints the scan lookup value.', path);
       else if (!Object.hasOwn(properties, name))
         warn('PAPER_INPUT', `Unknown input "${name}".`, path, { name });
@@ -167,6 +210,7 @@ export function paperManifestIssues(
       if (!lookups.has(name)) error('PAPER_LOOKUP', `Unknown lookup table "${name}".`, path);
   };
   if (paper.terms !== undefined) checkExprAt(paper.terms, 'paper.terms');
+  if (paper.bring !== undefined) checkExprAt(paper.bring, 'paper.bring');
 
   const known = new Set<string>();
   if (options.passJson && typeof options.passJson === 'object') {
@@ -189,11 +233,21 @@ export function paperManifestIssues(
       if (!targets.includes(key) || b.value === undefined) continue;
       if (typeof b.value === 'string' && /\bpass\.scanCode\b/.test(b.value))
         error('PAPER_SCAN_CODE', 'This field carries the scan code.', path);
-      if (typeof lookupInput === 'string' && exprReferences(b.value).inputs.includes(lookupInput))
+      if (
+        !publicLookup &&
+        typeof lookupInput === 'string' &&
+        exprReferences(b.value).inputs.includes(lookupInput)
+      )
         error('PAPER_LOOKUP_FIELD', 'This field carries the scan lookup value.', path);
     }
   }
   if (paper.size === 'cr80' && paper.barcode === 'code128')
     error('PAPER_BARCODE', 'Code 128 does not fit a card. Use QR.', 'paper.barcode');
+  if (paper.ink !== 'mono' && options.passJson && !paperInk(options.passJson as PassJson).colour)
+    warn(
+      'PAPER_INK',
+      'The pass colours are too light for black and white. Paper prints mono.',
+      'paper.ink',
+    );
   return issues;
 }

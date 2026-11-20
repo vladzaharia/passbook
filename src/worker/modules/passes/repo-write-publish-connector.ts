@@ -34,6 +34,8 @@ export interface ConnectorWrite {
   authority?: TenantPassWrite | undefined;
   /** A device holder (Apple personalize): the grant's principal in place of a job grant. */
   holder?: HolderPrincipal | undefined;
+  /** Org-lifecycle purge: the job grant acts for a closed org (allowlisted purpose only). */
+  closedOk?: true | undefined;
   /** A staged removal also pins the claim it made. */
   removalClaim?: boolean | undefined;
   extraChecks?: readonly Check[] | undefined;
@@ -136,6 +138,7 @@ export async function casConnector(ctx: ServiceContext, w: ConnectorWrite): Prom
           job: c ? 'connection-sync' : 'pass-publish',
           orgId: p.orgId,
           mode: p.mode,
+          ...(w.closedOk ? { closedOk: true as const } : {}),
         });
   if (w.rotation) addRotationMark(g, ctx.requestId ?? null, w.id, w.expectedVersion, w.rotation);
   const update = g.update('passes', {

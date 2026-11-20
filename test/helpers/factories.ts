@@ -35,7 +35,11 @@ export interface OrgRow {
   name: string;
 }
 
-export async function makeOrg(f: Fixtures, overrides: Partial<OrgRow> = {}): Promise<OrgRow> {
+export async function makeOrg(
+  f: Fixtures,
+  overrides: Partial<OrgRow> & { preset?: string } = {},
+): Promise<OrgRow> {
+  const preset = overrides.preset ?? 'legacy';
   const id = overrides.id ?? f.ids.id();
   const row = {
     id,
@@ -47,6 +51,12 @@ export async function makeOrg(f: Fixtures, overrides: Partial<OrgRow> = {}): Pro
     f.env.DB,
     'INSERT INTO orgs (id, slug, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
     [row.id, row.slug, row.name, now, now],
+  );
+  // Every org has an entitlements row; a test org is `legacy` (every flag on, no limits) unless it says otherwise.
+  await run(
+    f.env.DB,
+    'INSERT INTO org_entitlements (org_id, preset, updated_at) VALUES (?, ?, ?)',
+    [row.id, preset, now],
   );
   return row;
 }

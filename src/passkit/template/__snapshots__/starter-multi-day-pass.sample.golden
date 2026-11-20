@@ -1,0 +1,198 @@
+{
+  "authenticationToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "backgroundColor": "rgb(196,52,44)",
+  "barcodes": [
+    {
+      "altText": "RIVER-0001",
+      "format": "PKBarcodeFormatQR",
+      "message": "SNAPSHOT-SCAN-CODE",
+      "messageEncoding": "iso-8859-1"
+    }
+  ],
+  "description": "Multi-day pass",
+  "eventLogoText": "Organization",
+  "eventTicket": {
+    "auxiliaryFields": [
+      {
+        "changeMessage": "%@.",
+        "key": "parking",
+        "label": "Parking",
+        "value": "1 left"
+      },
+      {
+        "changeMessage": "%@.",
+        "key": "locker",
+        "label": "Locker",
+        "value": "None left"
+      }
+    ],
+    "backFields": [
+      {
+        "changeMessage": "%@",
+        "key": "message",
+        "label": "Message",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Keep your wristband on. Show the code at each gate."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ],
+    "headerFields": [
+      {
+        "key": "type",
+        "label": "Ticket",
+        "value": "3-day"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "event",
+        "label": "Festival",
+        "value": "Riverbend Festival"
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Ana Rivera"
+      },
+      {
+        "key": "gate",
+        "label": "Gate",
+        "value": "Gate B"
+      }
+    ]
+  },
+  "expirationDate": "2030-06-13T23:00:00-05:00",
+  "foregroundColor": "rgb(255,244,236)",
+  "formatVersion": 1,
+  "labelColor": "rgb(255,214,196)",
+  "logoText": "Organization",
+  "organizationName": "PassBook",
+  "passTypeIdentifier": "pass.im.plrs.wallet",
+  "preferredStyleSchemes": [
+    "posterEventTicket",
+    "eventTicket"
+  ],
+  "relevantDate": "2030-06-11T17:00:00Z",
+  "relevantDates": [
+    {
+      "endDate": "2030-06-12T15:00:00Z",
+      "startDate": "2030-06-11T15:00:00Z"
+    },
+    {
+      "endDate": "2030-06-12T04:00:00Z",
+      "startDate": "2030-06-11T15:00:00Z"
+    },
+    {
+      "endDate": "2030-06-13T04:00:00Z",
+      "startDate": "2030-06-12T15:00:00Z"
+    },
+    {
+      "endDate": "2030-06-14T04:00:00Z",
+      "startDate": "2030-06-13T15:00:00Z"
+    }
+  ],
+  "semantics": {
+    "admissionLevel": "3-day",
+    "attendeeName": "Ana Rivera",
+    "eventEndDate": "2030-06-13T23:00:00-05:00",
+    "eventName": "Riverbend Festival",
+    "eventStartDate": "2030-06-11T12:00:00-05:00",
+    "eventType": "PKEventTypeGeneric",
+    "venueName": "Riverbend Park",
+    "venueRegionName": "Austin, TX",
+    "venueRoom": "Riverbend Park"
+  },
+  "serialNumber": "SNAPSHOT-SERIAL",
+  "sharingProhibited": true,
+  "teamIdentifier": "48H7CLBV8Y",
+  "upcomingPassInformation": [
+    {
+      "backFields": [
+        {
+          "key": "venue",
+          "label": "Venue",
+          "value": "Riverbend Park, Austin, TX"
+        }
+      ],
+      "dateInformation": {
+        "date": "2030-06-11T12:00:00-05:00",
+        "timeZone": "America/Chicago"
+      },
+      "identifier": "riverbend-2030-friday-203006111200",
+      "isActive": false,
+      "name": "Riverbend 2030: Friday",
+      "semantics": {
+        "eventEndDate": "2030-06-11T23:00:00-05:00",
+        "eventName": "Riverbend 2030: Friday",
+        "eventStartDate": "2030-06-11T12:00:00-05:00",
+        "venueName": "Riverbend Park",
+        "venueRegionName": "Austin, TX"
+      },
+      "type": "event"
+    },
+    {
+      "backFields": [
+        {
+          "key": "venue",
+          "label": "Venue",
+          "value": "Riverbend Park, Austin, TX"
+        }
+      ],
+      "dateInformation": {
+        "date": "2030-06-12T12:00:00-05:00",
+        "timeZone": "America/Chicago"
+      },
+      "identifier": "riverbend-2030-saturday-203006121200",
+      "isActive": false,
+      "name": "Riverbend 2030: Saturday",
+      "semantics": {
+        "eventEndDate": "2030-06-12T23:00:00-05:00",
+        "eventName": "Riverbend 2030: Saturday",
+        "eventStartDate": "2030-06-12T12:00:00-05:00",
+        "venueName": "Riverbend Park",
+        "venueRegionName": "Austin, TX"
+      },
+      "type": "event"
+    },
+    {
+      "backFields": [
+        {
+          "key": "venue",
+          "label": "Venue",
+          "value": "Riverbend Park, Austin, TX"
+        }
+      ],
+      "dateInformation": {
+        "date": "2030-06-13T12:00:00-05:00",
+        "timeZone": "America/Chicago"
+      },
+      "identifier": "riverbend-2030-sunday-203006131200",
+      "isActive": false,
+      "name": "Riverbend 2030: Sunday",
+      "semantics": {
+        "eventEndDate": "2030-06-13T23:00:00-05:00",
+        "eventName": "Riverbend 2030: Sunday",
+        "eventStartDate": "2030-06-13T12:00:00-05:00",
+        "venueName": "Riverbend Park",
+        "venueRegionName": "Austin, TX"
+      },
+      "type": "event"
+    }
+  ],
+  "webServiceURL": "https://wallet.example/wallet"
+}

@@ -93,7 +93,10 @@ function holdFor(o: ScanOutcome, posture: 'door' | 'desk', opts: PresentOpts): n
   switch (o.kind) {
     case 'ok':
     case 'queued':
-      return SCAN_TIMING.OK_HOLD;
+      // A bundle chip to tap, or a group with a refusal to read, stays longer.
+      return (o.bundle && !o.group) || (o.group && o.group.refused > 0)
+        ? SCAN_TIMING.REFUSED_HOLD
+        : SCAN_TIMING.OK_HOLD;
     case 'refused':
       return posture === 'desk' || HOLD_REASONS.has(String(o.reason))
         ? null

@@ -113,3 +113,19 @@
 .scan-result-notes p + p {
   margin-top: 8px;
 }
+.scan-add-photo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.scan-add-photo-done,
+.scan-add-photo-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 14px;
+}
+.scan-add-photo-error {
+  color: var(--scan-refused);
+}

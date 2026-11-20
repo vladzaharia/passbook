@@ -1,7 +1,13 @@
 import { toHex } from '../../platform/ids.ts';
 import { readCapped } from '../../platform/read-capped.ts';
 import { ConnectorError } from '../types.ts';
-import { decodeBase64_32, decodeHex32, decodeUtf8Strict, parseStripeSignature } from './decode.ts';
+import {
+  decodeBase64_32,
+  decodeHex32,
+  decodeUtf8Strict,
+  parseStripeSignature,
+  parseTicketTailorSignature,
+} from './decode.ts';
 
 export const SIGNATURE_HEADER = 'x-wallet-signature';
 export const TIMESTAMP_HEADER = 'x-wallet-timestamp';
@@ -107,7 +113,7 @@ export interface CustomHeaders {
 }
 
 export interface WebhookVerifier {
-  id: 'custom' | 'shopify' | 'stripe' | 'calcom';
+  id: 'custom' | 'shopify' | 'stripe' | 'calcom' | 'woocommerce' | 'tickettailor';
   maxBytes: number;
   /** Where the replay bound comes from: a signed header, or a signed time in the body that the recipe must bound. */
   replay: 'header-window' | 'body-window';
@@ -189,6 +195,22 @@ const calcom: WebhookVerifier = {
   },
 };
 
+/** WooCommerce: base64 HMAC-SHA256 of the body, no signed time. */
+const woocommerce: WebhookVerifier = {
+  id: 'woocommerce',
+  maxBytes: SHOPIFY_MAX_BYTES,
+  replay: 'body-window',
+  verify: async (req, secrets) => {
+    const header = req.headers.get('x-wc-webhook-signature');
+    return signed(
+      req,
+      secrets,
+      SHOPIFY_MAX_BYTES,
+      orNull(header === null ? null : decodeBase64_32(header)),
+    );
+  },
+};
+
 const stripe: WebhookVerifier = {
   id: 'stripe',
   maxBytes: MAX_WEBHOOK_BYTES,
@@ -202,8 +224,27 @@ const stripe: WebhookVerifier = {
       MAX_WEBHOOK_BYTES,
       parsed && { signatures: parsed.v1, prefix: `${parsed.t}.` },
     );
-    // A matching MAC proves `t` is authentic; the window then bounds replays.
     const signedAt = (parsed?.t ?? 0) * 1000;
+    if (!withinWindow(now, signedAt, REPLAY_WINDOW_MS, FUTURE_SKEW_MS)) throw auth();
+    return { ...body, signedAt };
+  },
+};
+
+/** Ticket Tailor: hex HMAC over timestamp+body, no separator: https://developers.tickettailor.com/docs/webhook/security */
+const tickettailor: WebhookVerifier = {
+  id: 'tickettailor',
+  maxBytes: MAX_WEBHOOK_BYTES,
+  replay: 'header-window',
+  verify: async (req, secrets, now) => {
+    const header = req.headers.get('tickettailor-webhook-signature');
+    const parsed = header === null ? null : parseTicketTailorSignature(header);
+    const body = await signed(
+      req,
+      secrets,
+      MAX_WEBHOOK_BYTES,
+      parsed && { signatures: [parsed.signature], prefix: parsed.timestamp },
+    );
+    const signedAt = Number(parsed?.timestamp ?? 0) * 1000;
     if (!withinWindow(now, signedAt, REPLAY_WINDOW_MS, FUTURE_SKEW_MS)) throw auth();
     return { ...body, signedAt };
   },
@@ -232,6 +273,8 @@ export const VERIFIERS: Record<WebhookVerifier['id'], WebhookVerifier> = {
   shopify,
   stripe,
   calcom,
+  woocommerce,
+  tickettailor,
 };
 
 /** Current secret first, the previous one only while its overlap lasts (runtime.ts decides). */

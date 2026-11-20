@@ -36,11 +36,12 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `holders:write` | assign, reassign, unassign holders |
 | `templates:read` | GET templates |
 | `messages:write` | broadcasts: list, read, create, edit, preview, send, send again, cancel, per-pass items. A `change` also needs `passes:write` |
-| `scans:read` | scoped scanner event and scan-log reads |
-| `scans:write` | scan from a till as one named terminal (see Scan from a till); org-bound keys only |
+| `scans:read` | scoped scanner event and scan-log reads; read a roll call |
+| `scans:write` | scan from a till as one named terminal (see Scan from a till); start, confirm and end a roll call; org-bound keys only |
 | `connections:read` | scoped connection reads |
 | `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
 | `webhooks:manage` | read and manage outbound webhook endpoints, deliveries, replay and test events (see Outbound webhooks). Neither `connections:*` nor `passes:*` scopes reach these routes, and this scope reaches nothing else |
+| `brand:manage` | read and edit the org's brand kit (`/api/v1/brand`): web logo, accent, mark level. Reaches nothing else |
 
 Tenant list requests name an organization with `orgId`. An org-bound key may omit it (on pass create
 and on pass, holder and bundle lists it defaults to the key's org) and must otherwise send exactly
@@ -387,7 +388,7 @@ effective approved release is used (see Changes for existing clients).
 
 - `input` is validated against the template's `inputs` schema. See `GET /api/v1/templates/{id}`.
 - `Idempotency-Key` (1 to 200 chars): a retry with the same key and body returns the first result.
-  The same key with a different body is 409 `IDEMPOTENCY_KEY_REUSED`.
+  The same key with a different body is 422 `IDEMPOTENCY_KEY_REUSED`.
 - `templateId` must be a template. A blueprint answers 409 `TEMPLATE_IS_BLUEPRINT`
   (`docs/design/blueprints-and-templates.md`).
 - Optional: `serial`, `externalId`, `identityId`, `connectionId` + `externalRef`.
@@ -718,6 +719,20 @@ curl -X POST https://passbook.mobile/api/v1/scan/actions \
 - A key revoked or expired, or an org whose access changed, while a scan is in flight is checked again when the scan commits: 401 `INVALID_API_KEY` or 403 `ORG_ACCESS_CHANGED`, nothing written.
 - Each scan records the key (`api_key_id`); history, the scans CSV (**API key**) and the ledger carry it. Rate limits and miss counts are the key's own (`k:<keyId>:s:<terminalId>`), so a key cannot lock out the physical till.
 
+## Roll call
+
+A roll call freezes who is inside and records who is confirmed present or out. Calls are over one scanning session's places (`sessionId`) or every tracked zone of the org. One call is open per scope; starting again joins it. Names show as the pass title. Max stay and Clear at exits in its places wait until it ends (at most 12 hours).
+
+| | |
+| --- | --- |
+| `GET /roll-calls?orgId=&sessionId=` | the open call, or `{ "rollCall": null }`. `scans:read` |
+| `POST /roll-calls?orgId=&sessionId=` | start, or join the open call. `scans:write` |
+| `GET /roll-calls/{id}` | a call, open or ended. `scans:read` |
+| `POST /roll-calls/{id}/marks` | `{ "marks": [{ "rollCallId", "passId", "status": "present" \| "out" \| "none", "at" }] }`, up to 100. Every mark names this call. The answer is the call plus `results`, one per mark: `applied` or `refused` with a `code` (`ROLL_CALL_MARK_MISMATCH`, `ROLL_CALL_NOT_LISTED`, `ROLL_CALL_SCANNED_SINCE`, `SCAN_UNDO_FORBIDDEN`, `SCAN_UNDO_EXPIRED`); a refused mark never fails the others. 409 `ROLL_CALL_ENDED` is for the whole request. The later `at` wins per person; `at` is the device time corrected by its offset from `serverNow`, and never later than the server's own. `scans:write` |
+| `POST /roll-calls/{id}/end` | end it; ending twice answers with the record. `scans:write` |
+
+`orgId` is for signed-in users; an org-bound key names its org. Each person carries `presence` (`in`, `left`, `lapsed`), `late` (tapped in after the start) and `notConfirmedOut` (the clock closed the stay and no one confirmed it). Out also exits the person from the place and taking it back puts them back in; for an API key Out is a confirmation alone. A key with `scans:write` acts as its terminals: it reaches only the calls of their sessions (`sessionId`), anything else is 404. Names are read from the pass when a call is shown, never stored; ended calls leave with the scans retention window (holds honoured) and a deleted pass takes its marks. Scanners use the same calls under `/scan/roll-call` with the device's own sign-in; a key reaches only `/roll-calls`.
+
 ## Scanner history
 
 Scanning lists and forms use an explicit `orgId` and the caller's scanning capabilities. The
@@ -753,6 +768,30 @@ Where no scoped release history exists, a valid legacy pass may use its pinned p
 but ineligible or corrupt release head never reopens that fallback.
 Hard-deleted passes retain only trusted nonexcluded, noninvalidated ledger and aggregate evidence;
 quarantine at deletion permanently excludes their historical rows.
+
+## Close an organization
+
+Session only: no API key reaches these routes (an export hands over every holder's data).
+
+- `POST /orgs/{orgId}/close`: a platform admin, or an org admin with `{ "confirmSlug": "<slug>" }`. 409 `ORG_HELD` under a legal hold. Passes stop updating; 30 days to export.
+- `POST /orgs/{orgId}/reopen`: platform admin, inside the 30 days (409 `ORG_REOPEN_WINDOW`, `ORG_PURGING`).
+- `GET /orgs/{orgId}/lifecycle`: `status` (`active`, `suspended`, `closed`), `closedAt`, `purgeAfter`, `held`, `canReopen`. `GET /platform/closed-orgs` lists closed orgs.
+- `POST /orgs/{orgId}/exports` (202) starts an archive, one at a time (409 `ORG_EXPORT_RUNNING`); `GET /orgs/{orgId}/exports` lists them; `POST /orgs/{orgId}/exports/{id}/link` returns `{ url, expiresAt }` once it is `ready`. The link is the credential (24 hours): `GET /org-exports/{id}/download?exp&sig` returns the zip, NDJSON per entity plus template, brand and member photo files, without secrets or key material. `repo-export.ts` lists the entities and `repo-export-excluded.ts` the tables left out, each with its reason.
+
+## Brand kit
+
+`/api/v1/brand` reads and edits the org's look on holder pages and emails. A key needs `brand:manage`; a session needs
+`org:read` to view and `org:manage` to change. An org-bound key may omit `orgId`.
+
+| Call | Does |
+| --- | --- |
+| `GET /api/v1/brand` | the kit: `accent`, `webLogo` (`/brand/{orgId}/{sha}.png`, `w`, `h`), support contacts, `mark` (what holders see), `markChosen`, `markAllowed`, `configRevision` |
+| `PATCH /api/v1/brand` | `accent` (hex, `null` clears) and `mark` (`full`, `small`, `none`). `none` is `403 BRAND_MARK_NOT_ALLOWED` until the org's plan includes it |
+| `PUT /api/v1/brand/web-logo` | `{ "png": "<base64>" }`: a still PNG, at most 1024 by 512 px and 512 KB |
+| `DELETE /api/v1/brand/web-logo` | removes it |
+
+Send the `configRevision` you read; a save from older values is a `409`. SVG, JPEG and animated PNG are refused with
+`422`. The logo is served without a session at its content-addressed path, so a changed logo is a new URL.
 
 ## Other
 
@@ -808,5 +847,15 @@ quarantine at deletion permanently excludes their historical rows.
   version? }`, 201 with the template. `version` is a draft (`passJson`, `manifest`, `assets`); without it
   the copy is exact. Its first version is a candidate: release it as usual. `POST /templates/{id}/use/check`
   takes the same body with `version` and returns the dry-run report and the built pass.
+- `POST /templates/{id}/scan-setup` (session with `scanning:manage` in `orgId`; no API key) sets up
+  scanning for a template: `{ orgId, timeZone? }`, 200 `{ session, created, events, noEvents }`. The session
+  is live (active or paused), admits the template and has no hours, so each pass's own `scan.window` gates
+  entry. A template that names its event on each pass (`eventName` plus a start input, or an
+  upcoming-events list) also gets one event per distinct upcoming event on its issued, unvoided passes in the
+  request's mode (soonest 10); the template's `sample` is never read. Repeat calls reuse the live session
+  and add events passes have gained since (`created: false`, `events` lists what was added). One live
+  session per template and mode is held by a unique index, so concurrent calls end with one. `noEvents` is
+  true when the template names events but no pass has an upcoming one. A blueprint answers 422
+  `BLUEPRINT_NOT_SCANNABLE`, a template with no active version 409 `TEMPLATE_NOT_RELEASED`.
 - Public pass and bundle links (`/p/{token}`, `/b/{token}`), the Apple web service (`/wallet/v1`) and webhooks
   (`/hooks/connections/{id}`) have their own auth and are not part of the key API.

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type {
   TemplateCandidate,
+  TemplateReleaseProvider,
   TemplateReleaseScope,
 } from '@/shared/contracts/template-releases.ts';
 import { errorMessage } from '../../../lib/errors.ts';
@@ -8,9 +9,11 @@ import { Callout, Card, CardBody, ErrorState, Skeleton, toast } from '../../../u
 import { useReleaseActions, useReleaseLists } from './api.ts';
 import { CandidateSection } from './candidates.tsx';
 import { eligibleApproval, selfApproved } from './eligibility.ts';
+import { PROVIDER } from './labels.ts';
 import { ReleaseDialog, type ReleaseOperation } from './release-dialog.tsx';
 import { ReleaseHistory } from './release-history.tsx';
 import type { TemplateReleasesPanelProps } from './types.ts';
+import { WalletRows } from './wallet-rows.tsx';
 
 export type { TemplateReleasesPanelProps } from './types.ts';
 
@@ -25,8 +28,11 @@ function ScopedPanel({
   capabilities,
   currentUserId,
 }: TemplateReleasesPanelProps & { orgId: string }) {
-  const scope: TemplateReleaseScope = { orgId, mode, provider: 'apple' };
+  const [provider, setProvider] = useState<TemplateReleaseProvider>('apple');
+  const scope: TemplateReleaseScope = { orgId, mode, provider };
+  const apple = provider === 'apple';
   const { releases, candidates } = useReleaseLists(templateId, scope);
+  const appleLists = useReleaseLists(templateId, { orgId, mode, provider: 'apple' });
   const actions = useReleaseActions(templateId, scope);
   const [operation, setOperation] = useState<ReleaseOperation | null>(null);
   const [error, setError] = useState<string>();
@@ -137,15 +143,30 @@ function ScopedPanel({
     : pending.length
       ? 'A different reviewer must approve a candidate, or the only reviewer approves their own. Then a publisher releases it.'
       : 'Create a candidate from a saved version, get it approved, then publish it.';
-  const blocked =
-    templateOrigin === 'baked'
+  const blocked = !apple
+    ? `${PROVIDER[provider]} Wallet has no release.`
+    : templateOrigin === 'baked'
       ? 'No active system release, so issuing passes is blocked. Ask a platform administrator.'
       : templateStatus !== 'active'
         ? 'No active release.'
         : `No active release for this organization and mode, so issuing passes is blocked. ${nextStep}`;
   return (
     <div className="grid gap-4">
-      <p className="text-sm text-fg-muted">{mode === 'live' ? 'Live' : 'Test'} mode · Apple</p>
+      <p className="text-sm text-fg-muted">
+        {mode === 'live' ? 'Live' : 'Test'} mode · {PROVIDER[provider]}
+      </p>
+      <WalletRows
+        templateId={templateId}
+        orgId={orgId}
+        mode={mode}
+        versions={versions}
+        selected={provider}
+        onSelect={setProvider}
+        apple={{
+          active: appleLists.releases.data?.active ?? null,
+          candidates: appleLists.candidates.data?.items ?? [],
+        }}
+      />
       {error ? <Callout tone="danger">{error}</Callout> : null}
       {templateOrigin === 'baked' ? (
         <Callout>
@@ -170,13 +191,13 @@ function ScopedPanel({
         active={releases.data.active}
         versions={versions}
         currentUserId={currentUserId}
-        canAuthor={capabilities.includes('templates:author')}
+        canAuthor={apple && capabilities.includes('templates:author')}
         canReview={capabilities.includes('templates:review')}
         canPublish={capabilities.includes('templates:publish')}
         editable={editable}
         releasable={releasable}
         busy={busy}
-        promotable={releases.data.promotable ?? []}
+        promotable={apple ? (releases.data.promotable ?? []) : []}
         onCreate={create}
         onPromote={promote}
         onApprove={approve}

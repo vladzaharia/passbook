@@ -71,7 +71,11 @@ describe('generated SSR tokens', () => {
     expect(generated).toContain('url("/fonts/rubik-var-latin-ext.woff2")');
     expect(generated.match(/font-family:"Rubik Fallback"/g)).toHaveLength(2);
     const { files } = fontSheet(sources);
-    expect(readdirSync(resolve(root, 'public/fonts')).sort()).toEqual([...files].sort());
+    // public/fonts/pdf holds the ticket PDF's own fonts; only the files beside it are generated.
+    const generatedFiles = readdirSync(resolve(root, 'public/fonts'), { withFileTypes: true })
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name);
+    expect(generatedFiles.sort()).toEqual([...files].sort());
     for (const file of files) {
       const brand = readFileSync(resolve(root, FONT_SOURCE, '..', file));
       expect(readFileSync(resolve(root, 'public/fonts', file)).equals(brand)).toBe(true);

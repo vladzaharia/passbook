@@ -1,12 +1,15 @@
 import type { SessionCustomerSettings } from '@/shared/contracts/scanning-sessions.ts';
 import { CUSTOMER_COPY } from '@/shared/copy/scan-customer.ts';
-import { FormField, Input, SwitchRow } from '@/web/ui/index.ts';
+import { DependentSettings, FormField, Input, SwitchRow } from '@/web/ui/index.ts';
 
 /** What the session's customer screens say. Empty lines keep the defaults. */
 export function SessionCustomerFields({
   value,
   onChange,
+  desk,
 }: {
+  /** Desk actions are on: the desk card and draft amounts only show for them. */
+  desk: boolean;
   value: SessionCustomerSettings | undefined;
   onChange: (next: SessionCustomerSettings) => void;
 }) {
@@ -45,18 +48,20 @@ export function SessionCustomerFields({
         checked={c.greet ?? true}
         onCheckedChange={(greet) => set({ greet })}
       />
-      <SwitchRow
-        label="Show the desk card"
-        help="While staff choose an action: “Hi, Sam · Balance $42.50”."
-        checked={c.showReady ?? true}
-        onCheckedChange={(showReady) => set({ showReady })}
-      />
-      <SwitchRow
-        label="Show amounts under review"
-        help="“To pay $12.00” before staff confirm."
-        checked={c.showDraft ?? true}
-        onCheckedChange={(showDraft) => set({ showDraft })}
-      />
+      <DependentSettings open={desk}>
+        <SwitchRow
+          label="Show the desk card"
+          help="While staff choose an action: “Hi, Sam · Balance $42.50”."
+          checked={c.showReady ?? true}
+          onCheckedChange={(showReady) => set({ showReady })}
+        />
+        <SwitchRow
+          label="Show amounts under review"
+          help="“To pay $12.00” before staff confirm."
+          checked={c.showDraft ?? true}
+          onCheckedChange={(showDraft) => set({ showDraft })}
+        />
+      </DependentSettings>
     </div>
   );
 }

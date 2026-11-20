@@ -154,6 +154,7 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
   {
     key: 'join.orgDailyCap',
     group: 'Join links',
+    parent: 'join.enabled',
     label: 'Join cards per organization per day',
     kind: 'int',
     help: 'Across its live links. 1 to 50000.',
@@ -163,6 +164,7 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
   {
     key: 'join.platformDailyCap',
     group: 'Join links',
+    parent: 'join.enabled',
     label: 'Join cards per day',
     kind: 'int',
     help: 'Whole platform, per UTC day. Over it every link answers closed. 1 to 1000000.',
@@ -172,6 +174,7 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
   {
     key: 'join.unusedDays',
     group: 'Join links',
+    parent: 'join.enabled',
     label: 'Unused join cards kept',
     kind: 'int',
     suffix: 'days',
@@ -179,14 +182,6 @@ export const PLATFORM_FIELDS: readonly SettingField[] = [
     range: [7, 365],
     unit: 'days',
     schema: P['join.unusedDays'],
-  },
-  {
-    key: 'nfc.enabled',
-    group: 'NFC',
-    label: 'NFC',
-    kind: 'boolean',
-    help: 'Off until Apple approves the pass type. Off turns NFC tags off for every organization.',
-    schema: P['nfc.enabled'],
   },
   ...RETENTION_CLASSES.map(
     (cls): SettingField => ({

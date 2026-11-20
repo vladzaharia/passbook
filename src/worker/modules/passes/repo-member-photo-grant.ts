@@ -1,6 +1,7 @@
 import { grant } from '../../platform/authority.ts';
-import { passRow, rawCheck, rowIs } from '../../platform/authority-checks.ts';
+import { type Check, passRow, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { notExists } from '../../platform/authority-cond.ts';
+import type { Principal } from '../../platform/authority-principal.ts';
 import { first } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -10,6 +11,12 @@ import type { ImageMutationResult } from './repo-history-image.ts';
 import type { Pass } from './repo-map.ts';
 import type { MemberPhotoRow } from './repo-member-photo.ts';
 import { noPendingTransfer, PASS_LOST, permitsPassWrite } from './repo-pass-grant.ts';
+
+/** A non-tenant principal (a scan device) that brings its own checks; the pass and image fences are the same. */
+export interface GrantedWriter {
+  principal: Principal;
+  checks: Check[];
+}
 
 const LOST: ImageMutationResult = { saved: false, candidateId: null, imageGeneration: null };
 
@@ -23,25 +30,33 @@ export async function replaceMemberPhotoGranted(
   ctx: ServiceContext,
   next: MemberPhotoRow | null,
   previousVersion: string | null,
-  guard: { pass: Pass; imageGeneration: number; authority: TenantPassWrite; uploadKey?: string },
+  guard: {
+    pass: Pass;
+    imageGeneration: number;
+    authority?: TenantPassWrite;
+    writer?: GrantedWriter;
+    uploadKey?: string;
+  },
 ): Promise<ImageMutationResult> {
-  const { pass, authority, imageGeneration, uploadKey } = guard;
+  const { pass, authority, writer, imageGeneration, uploadKey } = guard;
+  if (!authority === !writer) return LOST;
   if (
     (next && (next.pass_id !== pass.id || next.org_id !== pass.orgId)) ||
-    authority.orgId !== pass.orgId ||
-    authority.mode !== pass.mode ||
-    !permitsPassWrite(authority) ||
+    (authority &&
+      (authority.orgId !== pass.orgId ||
+        authority.mode !== pass.mode ||
+        !permitsPassWrite(authority))) ||
     (uploadKey !== undefined && next?.r2_key !== uploadKey) ||
     (!next && previousVersion === null)
   )
     return LOST;
   const g = grant(ctx, {
     purpose: 'org_mode.pass.member_photo',
-    principal: tenantPrincipal(authority),
+    principal: writer ? writer.principal : tenantPrincipal(authority as TenantPassWrite),
     target: pass.id,
     tables: ['passes', 'member_photos'],
     checks: [
-      ...capabilityChecks(authority),
+      ...(writer ? writer.checks : capabilityChecks(authority as TenantPassWrite)),
       ...passRow(pass.id, pass.rowVersion),
       rowIs(
         'passes',

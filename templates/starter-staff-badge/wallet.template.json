@@ -1,0 +1,393 @@
+{
+  "schema": 1,
+  "name": "Staff badge",
+  "description": "Entry check and attendance for your team. Never a door credential.",
+  "wallets": {
+    "schema": 1,
+    "google": {
+      "images": {
+        "logo": "wallets/google/logo.png",
+        "thumbnail": "wallets/google/thumbnail.png"
+      }
+    },
+    "samsung": {}
+  },
+  "blueprint": true,
+  "inputs": {
+    "type": "object",
+    "required": [
+      "memberName",
+      "memberId"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "memberName": {
+        "type": "string",
+        "x-label": "Name",
+        "x-group": "Person",
+        "x-order": 10,
+        "minLength": 1,
+        "maxLength": 80,
+        "x-search": true
+      },
+      "memberId": {
+        "type": "string",
+        "x-label": "Employee number",
+        "x-group": "Person",
+        "x-order": 20,
+        "minLength": 1,
+        "maxLength": 64,
+        "x-search": true
+      },
+      "company": {
+        "type": "string",
+        "x-label": "Company",
+        "x-group": "Person",
+        "x-order": 30,
+        "maxLength": 80
+      },
+      "team": {
+        "type": "string",
+        "x-label": "Team",
+        "x-group": "Person",
+        "x-order": 40,
+        "maxLength": 60
+      },
+      "plan": {
+        "type": "string",
+        "x-label": "Type",
+        "x-group": "Access",
+        "x-order": 50,
+        "enum": [
+          "staff",
+          "shift",
+          "contractor"
+        ],
+        "default": "staff",
+        "x-widget": "select",
+        "x-enumLabels": {
+          "staff": "Staff",
+          "shift": "Shift",
+          "contractor": "Contractor"
+        }
+      },
+      "zones": {
+        "type": "array",
+        "maxItems": 24,
+        "items": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+        },
+        "x-label": "Extra zones",
+        "x-group": "Access",
+        "x-order": 60,
+        "x-widget": "access-zones",
+        "x-help": "Pick from the zones in Scanning."
+      },
+      "validFrom": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Valid from",
+        "x-group": "Access",
+        "x-order": 70,
+        "x-widget": "datetime",
+        "x-noneLabel": "Now"
+      },
+      "validUntil": {
+        "type": "string",
+        "format": "date-time",
+        "x-label": "Valid until",
+        "x-group": "Access",
+        "x-order": 80,
+        "x-widget": "datetime",
+        "x-noneLabel": "No end date",
+        "x-help": "Required for contractors. The badge stops working then."
+      },
+      "status": {
+        "type": "string",
+        "x-label": "Status",
+        "x-group": "Access",
+        "x-order": 90,
+        "enum": [
+          "Active",
+          "On leave",
+          "Suspended"
+        ],
+        "default": "Active",
+        "x-widget": "select"
+      },
+      "message": {
+        "type": "string",
+        "x-label": "Message",
+        "x-group": "Message",
+        "x-order": 900,
+        "maxLength": 256,
+        "x-widget": "textarea",
+        "x-help": "Shown on the back."
+      },
+      "note": {
+        "type": "string",
+        "x-label": "Note",
+        "x-group": "Message",
+        "x-order": 901,
+        "maxLength": 256,
+        "x-widget": "textarea"
+      }
+    }
+  },
+  "sample": {
+    "memberName": "Priya Shah",
+    "memberId": "E-1042",
+    "company": "Northwind Labs",
+    "team": "Platform",
+    "plan": "staff",
+    "status": "Active"
+  },
+  "bindings": [
+    {
+      "to": {
+        "field": "plan"
+      },
+      "value": "{{lookups.plans[plan].label}}"
+    },
+    {
+      "to": {
+        "field": "holder"
+      },
+      "value": "{{memberName}}"
+    },
+    {
+      "to": {
+        "field": "team"
+      },
+      "value": "{{team}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "member"
+      },
+      "value": "{{memberId}}"
+    },
+    {
+      "to": {
+        "field": "until"
+      },
+      "value": "{{validUntil}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "pointer": "/expirationDate"
+      },
+      "value": "{{validUntil}}",
+      "omitIfEmpty": true
+    },
+    {
+      "to": {
+        "field": "message"
+      },
+      "value": "{{message}}"
+    },
+    {
+      "to": {
+        "field": "note"
+      },
+      "value": "{{note}}",
+      "remove": {
+        "input": "note",
+        "empty": true
+      }
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "message"
+      },
+      "value": "{{pass.scanCode}}"
+    },
+    {
+      "to": {
+        "barcode": "*",
+        "prop": "altText"
+      },
+      "value": "{{memberId}}"
+    }
+  ],
+  "display": {
+    "icon": "id-card",
+    "group": "get-in",
+    "aliases": [
+      "staff",
+      "employee",
+      "badge",
+      "contractor",
+      "shift",
+      "team"
+    ],
+    "title": "{{memberName}}",
+    "subtitle": "{{company}} \u00b7 {{memberId}}",
+    "status": "{{status}}",
+    "search": [
+      "memberName",
+      "memberId",
+      "team"
+    ]
+  },
+  "lookups": {
+    "plans": {
+      "staff": {
+        "label": "Staff"
+      },
+      "shift": {
+        "label": "Shift"
+      },
+      "contractor": {
+        "label": "Contractor"
+      }
+    }
+  },
+  "channels": {
+    "paper": "off",
+    "nfc": "on"
+  },
+  "messaging": {
+    "input": "message"
+  },
+  "scan": {
+    "actions": [
+      {
+        "id": "enter",
+        "label": "Let in",
+        "kind": "check_in",
+        "repeat": "always",
+        "minRole": "door"
+      }
+    ],
+    "lookup": {
+      "input": "memberId"
+    },
+    "access": {
+      "input": {
+        "plan": "plan",
+        "zones": "zones",
+        "from": "validFrom",
+        "until": "validUntil"
+      },
+      "plans": [
+        {
+          "id": "staff",
+          "label": "Staff",
+          "kind": "always",
+          "zones": [
+            {
+              "zone": "*"
+            }
+          ]
+        },
+        {
+          "id": "shift",
+          "label": "Shift",
+          "kind": "timed",
+          "hours": {
+            "mon": [
+              "07:00-19:00"
+            ],
+            "tue": [
+              "07:00-19:00"
+            ],
+            "wed": [
+              "07:00-19:00"
+            ],
+            "thu": [
+              "07:00-19:00"
+            ],
+            "fri": [
+              "07:00-19:00"
+            ]
+          },
+          "zones": [
+            {
+              "zone": "*"
+            }
+          ]
+        },
+        {
+          "id": "contractor",
+          "label": "Contractor",
+          "kind": "guest",
+          "days": 90,
+          "zones": [
+            {
+              "zone": "*"
+            }
+          ]
+        }
+      ],
+      "suspend": {
+        "input": "status",
+        "equals": [
+          "On leave",
+          "Suspended"
+        ]
+      },
+      "rules": {
+        "visitGapMinutes": 120,
+        "reentryMinutes": null
+      }
+    },
+    "display": {
+      "v": 1,
+      "holder": "{{inputs.memberName}}",
+      "photo": {
+        "minRole": "door"
+      },
+      "header": {
+        "chips": [
+          {
+            "id": "c_plan",
+            "text": "{{access.plan}}",
+            "tone": "teal",
+            "icon": "id-card"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": "p_details",
+          "preset": {
+            "id": "details",
+            "v": 1
+          },
+          "title": "Person",
+          "icon": "info",
+          "rows": [
+            {
+              "id": "r_field1",
+              "slot": "field1",
+              "type": "field",
+              "label": "Team",
+              "value": "{{inputs.team}}"
+            },
+            {
+              "id": "r_field2",
+              "slot": "field2",
+              "type": "field",
+              "label": "Company",
+              "value": "{{inputs.company}}"
+            }
+          ]
+        }
+      ],
+      "notes": {
+        "refused": "Send them to security."
+      },
+      "customer": {
+        "chips": [
+          "c_plan"
+        ],
+        "panel": null
+      }
+    }
+  }
+}

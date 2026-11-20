@@ -1,5 +1,5 @@
 import { zoneLabel } from '@/web/lib/timezones.ts';
-import { Callout, SwitchRow, WeekGrid } from '@/web/ui/index.ts';
+import { Callout, DependentSettings, SwitchRow, WeekGrid } from '@/web/ui/index.ts';
 import type { SessionDraft } from './draft.ts';
 import { ClosedDates } from './session-closed-dates.tsx';
 import { DEFAULT_HOURS, hoursProblem } from './session-hours.ts';
@@ -23,26 +23,24 @@ export function SessionHoursFields({
           set({ hoursOn, hours: hoursOn ? (draft.hours ?? DEFAULT_HOURS) : draft.hours })
         }
       />
-      {draft.hoursOn ? (
-        <>
-          <p className="text-xs text-fg-muted">
-            Times are in {zoneLabel(draft.timeZone)}. A span that ends before it starts runs past
-            midnight.
-          </p>
-          <WeekGrid
-            label="Session"
-            hours={draft.hours}
-            mergeKey="session-hours"
-            onChange={(hours) => set({ hours })}
-          />
-          <ClosedDates
-            dates={draft.dates}
-            timeZone={draft.timeZone}
-            onChange={(dates) => set({ dates })}
-          />
-          {problem ? <Callout tone="warning">{problem}</Callout> : null}
-        </>
-      ) : null}
+      <DependentSettings open={draft.hoursOn} className="gap-3">
+        <p className="text-xs text-fg-muted">
+          Times are in {zoneLabel(draft.timeZone)}. A span that ends before it starts runs past
+          midnight.
+        </p>
+        <WeekGrid
+          label="Session"
+          hours={draft.hours}
+          mergeKey="session-hours"
+          onChange={(hours) => set({ hours })}
+        />
+        <ClosedDates
+          dates={draft.dates}
+          timeZone={draft.timeZone}
+          onChange={(dates) => set({ dates })}
+        />
+        {problem ? <Callout tone="warning">{problem}</Callout> : null}
+      </DependentSettings>
     </section>
   );
 }

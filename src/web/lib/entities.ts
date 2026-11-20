@@ -5,6 +5,7 @@ import {
   Building2,
   Cable,
   CalendarCheck,
+  DoorOpen,
   DraftingCompass,
   FileBadge,
   FileSpreadsheet,
@@ -75,6 +76,7 @@ export const ENTITY = {
   // Scanning. Art is borrowed until BU.1 adds scanner, stub and badge (entities.test PENDING_ART).
   scanner: { label: 'Scanner', plural: 'scanners', icon: ScanLine, art: 'phone' },
   event: { label: 'Event', plural: 'events', icon: CalendarCheck, art: 'passes' },
+  visitor: { label: 'Visitor', plural: 'visitors', icon: DoorOpen, art: 'people' },
   staff: { label: 'Staff', plural: 'staff', icon: IdCard, art: 'people' },
   search: { label: 'Result', plural: 'results', icon: SearchX, art: 'lens' },
 } as const satisfies Record<string, Entity>;

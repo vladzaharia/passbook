@@ -58,8 +58,8 @@ describe('channel routes', () => {
       source: 'platform',
       reason: 'not_released',
     });
-    expect(body.effective.paper).toEqual({ on: false, source: 'platform', reason: 'printing_off' });
-    expect(body.effective.nfc).toEqual({ on: false, source: 'org', reason: 'tags_off' });
+    expect(body.effective.paper).toEqual({ on: false, source: 'template', reason: 'template_off' });
+    expect(body.effective.nfc).toEqual({ on: true, source: 'template' });
     expect(body.overrides).toEqual({});
   });
 

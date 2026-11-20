@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, PageQuerySchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
+import { EntitlementPresetSchema } from './entitlements.ts';
 import { OrgSettingsSchema } from './settings.ts';
 
 const HexColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/);
@@ -11,6 +12,9 @@ export const BrandingImageSchema = z.object({
   h: z.number().int().positive(),
 });
 export const BrandingSlotSchema = z.enum(['logo', 'icon']);
+/** The PassBook mark on holder pages: wordmark, one quiet line, or nothing (gated by entitlement). */
+export const BrandMarkSchema = z.enum(['full', 'small', 'none']);
+export type BrandMark = z.infer<typeof BrandMarkSchema>;
 
 export const OrgBrandingSchema = z.object({
   accent: HexColorSchema.optional(),
@@ -23,6 +27,10 @@ export const OrgBrandingSchema = z.object({
   /** Set by the image upload endpoint; ignored on update. */
   logo: BrandingImageSchema.optional(),
   icon: BrandingImageSchema.optional(),
+  /** The web logo (holder pages, emails); set by its own endpoint, ignored on update. */
+  web: BrandingImageSchema.optional(),
+  /** Set through the brand kit; kept on update. Absent: full. */
+  mark: BrandMarkSchema.optional(),
   /** The logo already shows the org name, so passes leave logoText empty. */
   logoHasName: z.boolean().optional(),
 });
@@ -66,12 +74,16 @@ export const CreateOrgSchema = z.object({
   name: PlainLineSchema(120),
   defaultIdentityId: IdSchema.nullable().optional(),
   branding: OrgBrandingSchema.optional(),
+  /** The org's Features (entitlements); `standard` when omitted. */
+  preset: EntitlementPresetSchema.optional(),
 });
-export const UpdateOrgSchema = CreateOrgSchema.partial().extend({
-  status: z.enum(['active', 'suspended']).optional(),
-  /** The `configRevision` the form was loaded with; a save from older values is a 409. */
-  configRevision: z.number().int().optional(),
-});
+export const UpdateOrgSchema = CreateOrgSchema.omit({ preset: true })
+  .partial()
+  .extend({
+    status: z.enum(['active', 'suspended']).optional(),
+    /** The `configRevision` the form was loaded with; a save from older values is a 409. */
+    configRevision: z.number().int().optional(),
+  });
 /** Suspend stops pass updates and API keys for the org; audited as org.suspend / org.reactivate. */
 export const OrgStatusSchema = z.object({ status: z.enum(['active', 'suspended']) });
 export const OrgListSchema = pageOf(OrgSummarySchema);

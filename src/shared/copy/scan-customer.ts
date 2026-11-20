@@ -56,6 +56,7 @@ export const CUSTOMER_REASON_SUB: Record<ScanReason, string | null> = {
   tag_lost: null,
   tag_not_allowed: null,
   tag_invalid: null,
+  tag_expired: null,
   already_done: null,
   cooldown: null,
   not_yet_valid: null,

@@ -56,6 +56,7 @@ export function useEnrollment({
       onNudge: (nudge) => {
         if (nudge.kind === 'cancelled') dispatch({ type: 'enroll.cancelled', id: nudge.id });
         else if (nudge.kind === 'resolved') resolved.current(nudge.resolved);
+        else if (nudge.kind === 'rollCall') return;
         else read();
       },
     });

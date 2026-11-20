@@ -1,6 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Tag, TagBinding } from '../../../shared/contracts/nfc-tags.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
+import { assuranceOfSystem } from './systems/registry.ts';
 
 type Db = D1Database;
 
@@ -15,9 +16,10 @@ export interface TagRow {
   lostBy: string | null;
 }
 
-const VIEW = `SELECT t.id, t.mode, t.kind, t.hint, t.label, t.status, t.created_at, t.last_seen_at,
+const VIEW = `SELECT t.id, t.mode, t.system, t.hint, t.label, t.status, t.created_at, t.last_seen_at,
     b.id AS b_id, b.scope AS b_scope, b.pass_id AS b_pass_id, b.user_id AS b_user_id, b.source AS b_source,
-    b.bound_at AS b_bound_at, p.display_title AS pass_title, hu.name AS holder_name,
+    b.bound_at AS b_bound_at, b.expires_at AS b_expires_at,
+    y.id AS type_id, y.name AS type_name, y.use AS type_use, p.display_title AS pass_title, hu.name AS holder_name,
     CASE b.bound_by_type
       WHEN 'user' THEN (SELECT u.name FROM users u WHERE u.id = b.bound_by)
       WHEN 'staff' THEN (SELECT s.name FROM scan_staff s WHERE s.id = b.bound_by AND s.org_id = t.org_id)
@@ -27,12 +29,13 @@ const VIEW = `SELECT t.id, t.mode, t.kind, t.hint, t.label, t.status, t.created_
   FROM nfc_tags t INDEXED BY nfc_tags_list
   LEFT JOIN tag_bindings b ON b.tag_id = t.id AND b.ended_at IS NULL
   LEFT JOIN passes p ON p.id = b.pass_id AND p.org_id = t.org_id AND p.mode = t.mode
-  LEFT JOIN users hu ON hu.id = b.user_id`;
+  LEFT JOIN users hu ON hu.id = b.user_id
+  LEFT JOIN nfc_tag_types y ON y.id = t.type_id`;
 
 interface ViewRow {
   id: string;
   mode: Mode;
-  kind: 'uid' | 'sun';
+  system: 'uid' | 'sun';
   hint: string;
   label: string | null;
   status: 'active' | 'retired';
@@ -44,6 +47,10 @@ interface ViewRow {
   b_user_id: string | null;
   b_source: 'scanner' | 'remote' | 'admin' | null;
   b_bound_at: number | null;
+  b_expires_at: number | null;
+  type_id: string | null;
+  type_name: string | null;
+  type_use: 'member' | 'staff' | 'visitor' | null;
   pass_title: string | null;
   holder_name: string | null;
   bound_by_name: string | null;
@@ -67,6 +74,7 @@ function toTag(r: ViewRow): Tag {
           boundAt: r.b_bound_at,
           boundByName: r.bound_by_name,
           scannerName: r.scanner_name,
+          expiresAt: r.b_expires_at,
           endedAt: null,
           endCause: null,
         }
@@ -82,8 +90,13 @@ function toTag(r: ViewRow): Tag {
   return {
     id: r.id,
     mode: r.mode,
-    kind: r.kind,
-    assurance: r.kind === 'sun' ? 'secure' : 'basic',
+    kind: r.system,
+    system: r.system,
+    type:
+      r.type_id && r.type_name && r.type_use
+        ? { id: r.type_id, name: r.type_name, use: r.type_use }
+        : null,
+    assurance: assuranceOfSystem(r.system),
     hint: r.hint,
     label: r.label,
     pool: false,

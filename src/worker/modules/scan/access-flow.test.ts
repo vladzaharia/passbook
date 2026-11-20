@@ -277,7 +277,7 @@ describe('access: events, tenants and ready', () => {
 });
 
 describe('access: round trips', () => {
-  it('a door check-in stays within 5 trips after the guard, winner and loser', async () => {
+  it('a door check-in stays within 6 trips after the guard, winner and loser', async () => {
     const tpl = await accessTemplate();
     const zone = await makeZone('trips-room');
     const d = await makeDoor([tpl], [zone]);

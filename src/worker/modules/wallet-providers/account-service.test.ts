@@ -634,6 +634,7 @@ describe('wallet provider accounts', () => {
         isNew: false,
         expectedRevision: 99,
         credentialId,
+        identityHash: 'a'.repeat(64),
         eventId: f.ids.id(),
         envelope,
       }),

@@ -7,8 +7,10 @@ import { safeMail, safeUrl } from './safe.ts';
 import {
   badgeButtonHtml,
   EMAIL_LIGHT as c,
+  type EmailBrand,
   emailShell,
   escapeHtml,
+  markLine,
   stackHtml,
   supportFooter,
   testNoteHtml,
@@ -46,6 +48,8 @@ export interface BundleEmailInput {
   /** A test bundle's email carries the amber strip. */
   mode?: 'live' | 'test';
   buddyBase?: string | null;
+  /** The org's web logo and mark level (`emailBrandOf`). */
+  brand?: EmailBrand;
 }
 
 const TITLE = 'Your passes';
@@ -109,6 +113,7 @@ export function renderBundleEmail(input: BundleEmailInput): RenderedEmail {
     '',
     PRIVATE_LINE,
     ...footer.text,
+    ...(markLine(input.brand?.mark) ? ['', markLine(input.brand?.mark) as string] : []),
   ].join('\n');
   const muted = (margin: string, line: string) =>
     `<p class="e-muted" style="margin:${margin};${type('sm')};color:${c.muted}">${line}</p>`;
@@ -127,6 +132,7 @@ ${footer.html}`;
     title: subject,
     header: input.orgName,
     ...(mark ? { headerMark: mark } : {}),
+    ...(input.brand ? { brand: input.brand } : {}),
     ...(buddyBase ? { buddy: { base: buddyBase, mood: PASS_EMAIL_MOOD, tier: 'm' } } : {}),
     body,
   });

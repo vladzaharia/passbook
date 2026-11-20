@@ -16,6 +16,7 @@ export function useSaveFlow({
   savedDoc,
   draftBase,
   blocked,
+  checking,
   dispatch,
   onSaved,
 }: {
@@ -28,6 +29,8 @@ export function useSaveFlow({
   draftBase: string;
   /** Number of errors (or null when the check is unusable): saving waits until it is 0. */
   blocked: () => number | null;
+  /** True while the check of the latest edit is pending; Save is held until it settles. */
+  checking: () => boolean;
   dispatch: Dispatch<Action>;
   onSaved: (version: string) => void;
 }) {
@@ -40,6 +43,10 @@ export function useSaveFlow({
   }
 
   async function run(snapshot: DesignDoc): Promise<'saved' | 'refused' | 'failed'> {
+    if (checking()) {
+      toast.info('Checking your changes. Save again in a moment.');
+      return 'refused';
+    }
     const errors = blocked();
     if (errors !== 0) {
       toast.error(

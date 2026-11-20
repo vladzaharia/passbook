@@ -1,5 +1,5 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { type BrandingSlot, brandingKey } from './branding-files.ts';
+import { type BrandingSlot, brandingKey, webLogoKey } from './branding-files.ts';
 import {
   currentBranding,
   dropBrandingKey,
@@ -7,7 +7,9 @@ import {
   queueBrandingKeys,
 } from './repo-branding-gc.ts';
 
-type Stored = Partial<Record<BrandingSlot, { storageVersion?: string }>>;
+type Stored = Partial<Record<BrandingSlot, { storageVersion?: string }>> & {
+  web?: { sha?: string };
+};
 
 const parse = (json: string): Stored | null => {
   try {
@@ -19,13 +21,24 @@ const parse = (json: string): Stored | null => {
   }
 };
 
-const keysOf = (orgId: string, branding: Stored) =>
-  (['logo', 'icon'] as const).flatMap((slot) => {
+const keysOf = (orgId: string, branding: Stored) => [
+  ...(['logo', 'icon'] as const).flatMap((slot) => {
     const image = branding[slot];
     return image
       ? ([3, 2] as const).map((scale) => brandingKey(orgId, slot, scale, image.storageVersion))
       : [];
-  });
+  }),
+  ...(branding.web?.sha ? [webLogoKey(orgId, branding.web.sha)] : []),
+];
+
+/** An uploaded web logo whose commit failed: queued, and kept if the org's kit uses it. */
+export async function queueWebLogoKey(ctx: ServiceContext, orgId: string, key: string) {
+  try {
+    await queueBrandingKeys(ctx.env.DB, orgId, [key], ctx.clock.now());
+  } catch (error) {
+    ctx.log.error('branding.gc_failed', { orgId, code: 'BRANDING_GC_QUEUE', error });
+  }
+}
 
 /** Superseded objects stay readable this long, for pass builds that started before the commit. */
 export const BRANDING_GC_GRACE_MS = 24 * 60 * 60_000;

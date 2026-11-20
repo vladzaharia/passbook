@@ -2,6 +2,8 @@ import { CloudOff, Keyboard, Users, X } from 'lucide-react';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { CountUp } from '../../ui/count-up.tsx';
 import { ModeLabel as ModePill } from '../../ui/layout/mode-label.tsx';
+import { pendingBadge, savedCount } from '../machine/derive.ts';
+import type { ScanState } from '../machine/types.ts';
 import { fill } from './copy.ts';
 import { ACCESS_COPY } from './copy-access.ts';
 
@@ -119,7 +121,17 @@ export function ReaderChip({ state, onTap }: { state: ReaderChipState; onTap?: (
 export type SyncChipState =
   | { kind: 'offline'; queued: number }
   | { kind: 'syncing'; queued: number }
-  | { kind: 'stale'; queued: number };
+  | { kind: 'stale'; queued: number }
+  /** Synced, and some entries the door let in did not hold. */
+  | { kind: 'conflicts'; queued: number };
+
+/** The sync chip, or none: offline, waiting to sync, or synced with entries that did not hold. */
+export function syncChipOf(s: ScanState, now: number): SyncChipState | null {
+  const queued = savedCount(s);
+  if (!s.online) return { kind: 'offline', queued };
+  if (s.queue.pending > 0) return { kind: pendingBadge(s, now).late ? 'stale' : 'syncing', queued };
+  return s.queue.conflicts > 0 ? { kind: 'conflicts', queued: s.queue.conflicts } : null;
+}
 
 export function SyncChip({ state }: { state: SyncChipState }) {
   if (state.kind === 'offline') {
@@ -131,6 +143,12 @@ export function SyncChip({ state }: { state: SyncChipState }) {
       </span>
     );
   }
+  if (state.kind === 'conflicts')
+    return (
+      <span className="scan-chip" data-tone="amber" data-testid="sync-conflicts">
+        {state.queued} {state.queued === 1 ? 'conflict' : 'conflicts'}
+      </span>
+    );
   return state.kind === 'syncing' ? (
     <span className="scan-chip">Syncing {state.queued}</span>
   ) : (
