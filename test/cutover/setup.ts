@@ -8,6 +8,7 @@ import type { AppEnv } from '../../src/worker/platform/env.ts';
 import { createServiceContext } from '../../src/worker/platform/service-context.ts';
 import { makeEnv, TEST_NOW } from '../helpers/index.ts';
 import {
+  addGrantLimitKey,
   dataFingerprint,
   finishMigrations,
   type Legacy,
@@ -84,6 +85,7 @@ export async function runCutover(
   if (options.production) await seedProduction(db, bindings.BUCKET, legacy);
   const before = await dataFingerprint(db, TABLES);
   await migrateForward(db);
+  await addGrantLimitKey(db);
   const { plan, sql } = await runBootstrap(db, OWNER, NOW);
   const beforeSync: Record<string, string | null> = {};
   for (const p of legacy.passes)
