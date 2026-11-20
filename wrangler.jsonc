@@ -124,7 +124,9 @@
       "name": "wallet-connection-sync",
       "binding": "CONNECTION_SYNC",
       "class_name": "ConnectionSync"
-    }
+    },
+    { "name": "wallet-org-export", "binding": "ORG_EXPORT", "class_name": "OrgExport" },
+    { "name": "wallet-org-purge", "binding": "ORG_PURGE", "class_name": "OrgPurge" }
   ],
 
   "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["delivery@passbook.mobile"] }],

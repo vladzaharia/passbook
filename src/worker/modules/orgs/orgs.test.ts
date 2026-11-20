@@ -167,7 +167,7 @@ describe('orgs api', () => {
       'org.create',
       'org.update',
       'org.suspend',
-      'org.delete',
+      'org.close',
     ]);
     expect(JSON.parse(actions[1]?.detail ?? '{}').changes.name).toEqual({
       from: 'Acme',

@@ -11,7 +11,7 @@ import {
   holdRow,
   insertHold,
   listHoldRows,
-  orgHasActiveHold,
+  orgExists,
   passHeld,
   passInOrg,
 } from './repo-holds.ts';
@@ -42,8 +42,11 @@ export async function placeHold(
     throw new ValidationError('Invalid hold.', [
       { path: 'reason', message: 'Give a reason, up to 500 characters.' },
     ]);
-  if (!(await orgIsReadable(ctx.env.DB, orgId)))
-    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  // PassBook may preserve a closed org's data before its purge; an org cannot act once it is closed.
+  const reachable =
+    (await orgIsReadable(ctx.env.DB, orgId)) ||
+    (by.kind === 'platform' && (await orgExists(ctx.env.DB, orgId)));
+  if (!reachable) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const passId = input.passId ?? null;
   if (passId !== null && !(await passInOrg(ctx.env.DB, orgId, passId)))
     throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
@@ -98,7 +101,3 @@ export const listHolds = (ctx: ServiceContext, orgId: string): Promise<HoldRow[]
 /** True while an org-wide hold or a hold on this pass is active: deletes and erasure skip it. */
 export const isPassHeld = (ctx: ServiceContext, orgId: string, passId: string): Promise<boolean> =>
   passHeld(ctx.env.DB, orgId, passId);
-
-/** True while any hold, org-wide or on a pass, is active: the org cannot be deleted. */
-export const orgIsHeld = (ctx: ServiceContext, orgId: string): Promise<boolean> =>
-  orgHasActiveHold(ctx.env.DB, orgId);
