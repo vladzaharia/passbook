@@ -39,7 +39,7 @@ export function mountScanGuards(router: OpenAPIHono<AppBindings>): void {
   );
   // A Desk-actions monitor opens the photos Who's in lists.
   const photoActor = requireScanActor({ capability: 'scanning:read', screenActions: true });
-  for (const path of ['/summary', '/stats', '/activity'])
+  for (const path of ['/summary', '/stats', '/activity', '/devices'])
     router.use(path, (c, next) => (c.req.method === 'GET' ? readActor : manageActor)(c, next));
   // History and notes are for a scan device or a console that reads scans: a monitor screen has none.
   const personRead = /\/passes\/[^/]+\/(?:history|notes)$/;

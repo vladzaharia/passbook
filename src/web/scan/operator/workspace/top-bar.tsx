@@ -1,4 +1,4 @@
-import { Layers } from 'lucide-react';
+import { Layers, Siren } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ScanCounts } from '../../../../shared/contracts/scan.ts';
 import type { ScanSession } from '../../../../shared/contracts/scan-session.ts';
@@ -54,6 +54,7 @@ export function TopBar({
   menu,
   testing,
   onStaff,
+  rollCall,
 }: {
   session: ScanSession;
   chip: SessionChip;
@@ -64,6 +65,8 @@ export function TopBar({
   menu: ReactNode;
   testing: ReactNode;
   onStaff: () => void;
+  /** A roll call is open: how far it is. */
+  rollCall?: { done: number; total: number } | null | undefined;
 }) {
   const org = session.scanner?.orgName ?? session.admin?.orgs[0]?.name ?? '';
   const name = session.workspace?.session.name ?? session.scanner?.name ?? 'Scan';
@@ -102,6 +105,17 @@ export function TopBar({
         </span>
       ) : null}
       <div className="op-top-end">
+        {rollCall ? (
+          <span className="op-chip op-chip-roll" role="status">
+            <Siren aria-hidden />
+            {T.roll}
+            <b>
+              {T.rollOf
+                .replace('{n}', String(rollCall.done))
+                .replace('{total}', String(rollCall.total))}
+            </b>
+          </span>
+        ) : null}
         {chips}
         <InNowChip counts={counts} />
         {staff ? (

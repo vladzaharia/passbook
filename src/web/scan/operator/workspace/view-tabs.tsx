@@ -55,7 +55,7 @@ export function ViewTabs({
             {n ? (
               <span className="op-count" data-tone={v === 'problems' ? 'alert' : undefined}>
                 {n}
-                <span className="sr-only"> need you</span>
+                {v === 'problems' ? <span className="sr-only"> need you</span> : null}
               </span>
             ) : null}
           </button>

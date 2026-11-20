@@ -9,8 +9,6 @@
   box-shadow:
     0 24px 48px -12px rgb(0 0 0 / 0.45),
     0 0 0 0.5px rgb(0 0 0 / 0.08);
-  /* At 200 % text, or on a short screen, the card grows to its top limit and then scrolls under
-     the band. The card scrolls, not the body, so a touch on the open button still scrolls it. */
 }
 /* A fade over the foot says there is more below (`data-more`, set by useScrollCue until the end). */
 .scan-result[data-density="glance"][data-more]::after {
