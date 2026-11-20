@@ -14,6 +14,8 @@
       "!**/playwright-report",
       "!**/test-results",
       "!src/generated",
+      "!sdk/typescript/src/generated",
+      "!sdk/typescript/dist",
       "!test/setup/schema-snapshot.generated.json",
       "!src/web/routeTree.gen.ts",
       "!worker-configuration.d.ts",
@@ -70,7 +72,13 @@
       }
     },
     {
-      "includes": ["tools/**", "e2e/**", "test/mock-oidc/**", "*.config.ts"],
+      "includes": [
+        "tools/**",
+        "e2e/**",
+        "test/mock-oidc/**",
+        "*.config.ts",
+        "sdk/typescript/examples/**"
+      ],
       "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
     },
     // The Playwright rules also match vitest describe(name, opts, fn), jest-dom matchers and any
