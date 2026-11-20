@@ -1,9 +1,8 @@
 /**
  * The device API client (SA 5.1). Typed calls for every route under `/api/v1/scan`.
  *
- * It does not use the shared `api` client: a paired scanner sends no mode header (its mode is bound
- * on the server), the CSRF secret comes from the scan session and is kept in memory only, and a
- * 429 must surface its `Retry-After`.
+ * It does not use the shared `api` client: a paired scanner sends no mode header (bound on the server),
+ * its CSRF secret stays in memory, and a 429 must surface `Retry-After`.
  */
 import type { z } from 'zod';
 import {
