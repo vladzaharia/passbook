@@ -10216,7 +10216,13 @@
             }
           }
         },
-        "operationId": "auth.getAuthOidcStart"
+        "operationId": "auth.getAuthOidcStart",
+        "x-sdk": {
+          "resource": "auth.oidc",
+          "method": "start",
+          "sdk": false,
+          "reason": "Browser sign-in flow."
+        }
       }
     },
     "/auth/oidc/callback": {
@@ -10240,7 +10246,13 @@
             }
           }
         },
-        "operationId": "auth.getAuthOidcCallback"
+        "operationId": "auth.getAuthOidcCallback",
+        "x-sdk": {
+          "resource": "auth.oidc",
+          "method": "callback",
+          "sdk": false,
+          "reason": "Browser sign-in flow."
+        }
       }
     },
     "/auth/oidc/client-metadata.json": {
@@ -10264,7 +10276,13 @@
             }
           }
         },
-        "operationId": "auth.getAuthOidcClientMetadataJson"
+        "operationId": "auth.getAuthOidcClientMetadataJson",
+        "x-sdk": {
+          "resource": "auth.oidc",
+          "method": "retrieveClientMetadata",
+          "sdk": false,
+          "reason": "Browser sign-in flow."
+        }
       }
     },
     "/auth/no-access": {
@@ -10288,7 +10306,13 @@
             }
           }
         },
-        "operationId": "auth.getAuthNoAccess"
+        "operationId": "auth.getAuthNoAccess",
+        "x-sdk": {
+          "resource": "auth",
+          "method": "retrieveNoAccessPage",
+          "sdk": false,
+          "reason": "Browser sign-in flow."
+        }
       }
     },
     "/auth/magic/request": {
@@ -10366,7 +10390,13 @@
             }
           }
         },
-        "operationId": "auth.postAuthMagicRequest"
+        "operationId": "auth.postAuthMagicRequest",
+        "x-sdk": {
+          "resource": "auth.magicLinks",
+          "method": "request",
+          "sdk": false,
+          "reason": "Browser sign-in flow."
+        }
       }
     },
     "/auth/magic": {
@@ -10390,7 +10420,13 @@
             }
           }
         },
-        "operationId": "auth.getAuthMagic"
+        "operationId": "auth.getAuthMagic",
+        "x-sdk": {
+          "resource": "auth.magicLinks",
+          "method": "retrievePage",
+          "sdk": false,
+          "reason": "Browser sign-in flow."
+        }
       }
     },
     "/auth/magic/consume": {
@@ -10414,7 +10450,13 @@
             }
           }
         },
-        "operationId": "auth.postAuthMagicConsume"
+        "operationId": "auth.postAuthMagicConsume",
+        "x-sdk": {
+          "resource": "auth.magicLinks",
+          "method": "consume",
+          "sdk": false,
+          "reason": "Browser sign-in flow."
+        }
       }
     },
     "/auth/magic/resend": {
@@ -10438,7 +10480,13 @@
             }
           }
         },
-        "operationId": "auth.postAuthMagicResend"
+        "operationId": "auth.postAuthMagicResend",
+        "x-sdk": {
+          "resource": "auth.magicLinks",
+          "method": "resend",
+          "sdk": false,
+          "reason": "Browser sign-in flow."
+        }
       }
     },
     "/auth/logout": {
@@ -10484,7 +10532,13 @@
             }
           }
         },
-        "operationId": "auth.postAuthLogout"
+        "operationId": "auth.postAuthLogout",
+        "x-sdk": {
+          "resource": "auth",
+          "method": "signOut",
+          "sdk": false,
+          "reason": "Browser sign-in flow."
+        }
       }
     },
     "/auth/breakglass": {
@@ -10508,7 +10562,13 @@
             }
           }
         },
-        "operationId": "auth.getAuthBreakglass"
+        "operationId": "auth.getAuthBreakglass",
+        "x-sdk": {
+          "resource": "auth.breakglass",
+          "method": "retrievePage",
+          "sdk": false,
+          "reason": "Browser sign-in flow."
+        }
       },
       "post": {
         "summary": "Break-glass admin sign-in",
@@ -10530,7 +10590,13 @@
             }
           }
         },
-        "operationId": "auth.postAuthBreakglass"
+        "operationId": "auth.postAuthBreakglass",
+        "x-sdk": {
+          "resource": "auth.breakglass",
+          "method": "signIn",
+          "sdk": false,
+          "reason": "Browser sign-in flow."
+        }
       }
     },
     "/api/v1/session": {
@@ -10659,7 +10725,13 @@
             }
           }
         },
-        "operationId": "session.getSession"
+        "operationId": "session.getSession",
+        "x-sdk": {
+          "resource": "session",
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "The browser session and its CSRF token."
+        }
       }
     },
     "/api/v1/me/passes": {
@@ -11435,7 +11507,13 @@
             }
           }
         },
-        "operationId": "me.getMePasses"
+        "operationId": "me.getMePasses",
+        "x-sdk": {
+          "resource": "me.passes",
+          "method": "list",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/passes.pkpasses": {
@@ -11481,7 +11559,13 @@
             }
           }
         },
-        "operationId": "me.getMePassesPkpasses"
+        "operationId": "me.getMePassesPkpasses",
+        "x-sdk": {
+          "resource": "me.passes",
+          "method": "downloadAll",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/passes/{id}": {
@@ -12134,7 +12218,13 @@
             }
           }
         },
-        "operationId": "me.getMePassesById"
+        "operationId": "me.getMePassesById",
+        "x-sdk": {
+          "resource": "me.passes",
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       },
       "delete": {
         "summary": "Remove from my passes (blocks re-attach)",
@@ -12227,7 +12317,13 @@
             }
           }
         },
-        "operationId": "me.deleteMePassesById"
+        "operationId": "me.deleteMePassesById",
+        "x-sdk": {
+          "resource": "me.passes",
+          "method": "del",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/passes/{id}/barcode": {
@@ -12263,7 +12359,13 @@
             }
           }
         },
-        "operationId": "me.getMePassesByIdBarcode"
+        "operationId": "me.getMePassesByIdBarcode",
+        "x-sdk": {
+          "resource": "me.passes",
+          "method": "retrieveBarcode",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/passes/{id}/refresh": {
@@ -12326,7 +12428,13 @@
             }
           }
         },
-        "operationId": "me.postMePassesByIdRefresh"
+        "operationId": "me.postMePassesByIdRefresh",
+        "x-sdk": {
+          "resource": "me.passes",
+          "method": "refresh",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/passes/{id}/resend": {
@@ -12380,7 +12488,13 @@
             }
           }
         },
-        "operationId": "me.postMePassesByIdResend"
+        "operationId": "me.postMePassesByIdResend",
+        "x-sdk": {
+          "resource": "me.passes",
+          "method": "sendEmail",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/passes/{id}/lost-phone": {
@@ -12444,7 +12558,13 @@
             }
           }
         },
-        "operationId": "me.postMePassesByIdLostPhone"
+        "operationId": "me.postMePassesByIdLostPhone",
+        "x-sdk": {
+          "resource": "me.passes",
+          "method": "replaceLostPhone",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/pass-removals/{id}": {
@@ -12508,7 +12628,13 @@
             }
           }
         },
-        "operationId": "me.getMePassRemovalsById"
+        "operationId": "me.getMePassRemovalsById",
+        "x-sdk": {
+          "resource": "me.passRemovals",
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/tags/{id}/lost": {
@@ -12562,7 +12688,13 @@
             }
           }
         },
-        "operationId": "me.postMeTagsByIdLost"
+        "operationId": "me.postMeTagsByIdLost",
+        "x-sdk": {
+          "resource": "me.tags",
+          "method": "reportLost",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/emails": {
@@ -12637,7 +12769,13 @@
             }
           }
         },
-        "operationId": "me.getMeEmails"
+        "operationId": "me.getMeEmails",
+        "x-sdk": {
+          "resource": "me.emails",
+          "method": "list",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       },
       "post": {
         "summary": "Add an email and send a verification link",
@@ -12696,7 +12834,13 @@
             }
           }
         },
-        "operationId": "me.postMeEmails"
+        "operationId": "me.postMeEmails",
+        "x-sdk": {
+          "resource": "me.emails",
+          "method": "create",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/emails/{email}": {
@@ -12781,7 +12925,13 @@
             }
           }
         },
-        "operationId": "me.deleteMeEmailsByEmail"
+        "operationId": "me.deleteMeEmailsByEmail",
+        "x-sdk": {
+          "resource": "me.emails",
+          "method": "del",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/emails/{email}/primary": {
@@ -12867,7 +13017,13 @@
             }
           }
         },
-        "operationId": "me.postMeEmailsByEmailPrimary"
+        "operationId": "me.postMeEmailsByEmailPrimary",
+        "x-sdk": {
+          "resource": "me.emails",
+          "method": "makePrimary",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/sessions": {
@@ -12940,7 +13096,13 @@
             }
           }
         },
-        "operationId": "me.getMeSessions"
+        "operationId": "me.getMeSessions",
+        "x-sdk": {
+          "resource": "me.sessions",
+          "method": "list",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/sessions/revoke-all": {
@@ -12982,7 +13144,13 @@
             }
           }
         },
-        "operationId": "me.postMeSessionsRevokeAll"
+        "operationId": "me.postMeSessionsRevokeAll",
+        "x-sdk": {
+          "resource": "me.sessions",
+          "method": "revokeAll",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/me/sessions/{id}": {
@@ -13036,7 +13204,13 @@
             }
           }
         },
-        "operationId": "me.deleteMeSessionsById"
+        "operationId": "me.deleteMeSessionsById",
+        "x-sdk": {
+          "resource": "me.sessions",
+          "method": "revoke",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/orgs/{id}/entitlements": {
@@ -13186,14 +13360,18 @@
             }
           }
         },
-        "operationId": "entitlements.getOrgsByIdEntitlements"
+        "operationId": "entitlements.getOrgsByIdEntitlements",
+        "x-sdk": {
+          "resource": "orgs.entitlements",
+          "method": "retrieve"
+        }
       }
     },
     "/api/v1/orgs/invitations/accept": {
       "get": {
         "summary": "Open an organization invitation",
         "tags": [
-          "organization memberships"
+          "organization-memberships"
         ],
         "responses": {
           "200": {
@@ -13210,12 +13388,18 @@
             }
           }
         },
-        "operationId": "organization-memberships.getOrgsInvitationsAccept"
+        "operationId": "organization-memberships.getOrgsInvitationsAccept",
+        "x-sdk": {
+          "resource": "invitations",
+          "method": "open",
+          "sdk": false,
+          "reason": "Invitee flow; needs the invited person's own session."
+        }
       },
       "post": {
         "summary": "Accept an invitation with a verified account email",
         "tags": [
-          "organization memberships"
+          "organization-memberships"
         ],
         "requestBody": {
           "required": true,
@@ -13346,14 +13530,20 @@
             }
           }
         },
-        "operationId": "organization-memberships.postOrgsInvitationsAccept"
+        "operationId": "organization-memberships.postOrgsInvitationsAccept",
+        "x-sdk": {
+          "resource": "invitations",
+          "method": "accept",
+          "sdk": false,
+          "reason": "Invitee flow; needs the invited person's own session."
+        }
       }
     },
     "/api/v1/orgs/invitations/preview": {
       "post": {
         "summary": "Name the organization an invitation link joins",
         "tags": [
-          "organization memberships"
+          "organization-memberships"
         ],
         "requestBody": {
           "required": true,
@@ -13405,14 +13595,20 @@
             }
           }
         },
-        "operationId": "organization-memberships.postOrgsInvitationsPreview"
+        "operationId": "organization-memberships.postOrgsInvitationsPreview",
+        "x-sdk": {
+          "resource": "invitations",
+          "method": "preview",
+          "sdk": false,
+          "reason": "Invitee flow; needs the invited person's own session."
+        }
       }
     },
     "/api/v1/orgs/memberships/me": {
       "get": {
         "summary": "List my active organization memberships",
         "tags": [
-          "organization memberships"
+          "organization-memberships"
         ],
         "responses": {
           "200": {
@@ -13534,14 +13730,20 @@
             }
           }
         },
-        "operationId": "organization-memberships.getOrgsMembershipsMe"
+        "operationId": "organization-memberships.getOrgsMembershipsMe",
+        "x-sdk": {
+          "resource": "me.memberships",
+          "method": "list",
+          "sdk": false,
+          "reason": "Acts on the signed-in person's own account; needs a person's session."
+        }
       }
     },
     "/api/v1/orgs/{id}/memberships": {
       "get": {
         "summary": "List organization memberships",
         "tags": [
-          "organization memberships"
+          "organization-memberships"
         ],
         "parameters": [
           {
@@ -13689,14 +13891,18 @@
             }
           }
         },
-        "operationId": "organization-memberships.getOrgsByIdMemberships"
+        "operationId": "organization-memberships.getOrgsByIdMemberships",
+        "x-sdk": {
+          "resource": "memberships",
+          "method": "list"
+        }
       }
     },
     "/api/v1/orgs/{id}/invitations": {
       "get": {
         "summary": "List organization invitations",
         "tags": [
-          "organization memberships"
+          "organization-memberships"
         ],
         "parameters": [
           {
@@ -13807,12 +14013,16 @@
             }
           }
         },
-        "operationId": "organization-memberships.getOrgsByIdInvitations"
+        "operationId": "organization-memberships.getOrgsByIdInvitations",
+        "x-sdk": {
+          "resource": "invitations",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Invite an organization member",
         "tags": [
-          "organization memberships"
+          "organization-memberships"
         ],
         "parameters": [
           {
@@ -13949,14 +14159,18 @@
             }
           }
         },
-        "operationId": "organization-memberships.postOrgsByIdInvitations"
+        "operationId": "organization-memberships.postOrgsByIdInvitations",
+        "x-sdk": {
+          "resource": "invitations",
+          "method": "create"
+        }
       }
     },
     "/api/v1/orgs/{id}/invitations/{invitationId}": {
       "delete": {
         "summary": "Revoke an organization invitation",
         "tags": [
-          "organization memberships"
+          "organization-memberships"
         ],
         "parameters": [
           {
@@ -14013,14 +14227,18 @@
             }
           }
         },
-        "operationId": "organization-memberships.deleteOrgsByIdInvitationsByInvitationId"
+        "operationId": "organization-memberships.deleteOrgsByIdInvitationsByInvitationId",
+        "x-sdk": {
+          "resource": "invitations",
+          "method": "revoke"
+        }
       }
     },
     "/api/v1/orgs/{id}/memberships/{membershipId}": {
       "delete": {
         "summary": "Revoke an organization membership",
         "tags": [
-          "organization memberships"
+          "organization-memberships"
         ],
         "parameters": [
           {
@@ -14077,7 +14295,11 @@
             }
           }
         },
-        "operationId": "organization-memberships.deleteOrgsByIdMembershipsByMembershipId"
+        "operationId": "organization-memberships.deleteOrgsByIdMembershipsByMembershipId",
+        "x-sdk": {
+          "resource": "memberships",
+          "method": "revoke"
+        }
       }
     },
     "/api/v1/orgs": {
@@ -14220,7 +14442,11 @@
             }
           }
         },
-        "operationId": "orgs.getOrgs"
+        "operationId": "orgs.getOrgs",
+        "x-sdk": {
+          "resource": "platform.orgs",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Create an organization",
@@ -14293,7 +14519,11 @@
             }
           }
         },
-        "operationId": "orgs.postOrgs"
+        "operationId": "orgs.postOrgs",
+        "x-sdk": {
+          "resource": "platform.orgs",
+          "method": "create"
+        }
       }
     },
     "/api/v1/orgs/{id}": {
@@ -14399,7 +14629,11 @@
             }
           }
         },
-        "operationId": "orgs.getOrgsById"
+        "operationId": "orgs.getOrgsById",
+        "x-sdk": {
+          "resource": "platform.orgs",
+          "method": "retrieve"
+        }
       },
       "patch": {
         "summary": "Update an organization",
@@ -14482,7 +14716,11 @@
             }
           }
         },
-        "operationId": "orgs.patchOrgsById"
+        "operationId": "orgs.patchOrgsById",
+        "x-sdk": {
+          "resource": "orgs",
+          "method": "update"
+        }
       },
       "delete": {
         "summary": "Delete an organization",
@@ -14534,7 +14772,11 @@
             }
           }
         },
-        "operationId": "orgs.deleteOrgsById"
+        "operationId": "orgs.deleteOrgsById",
+        "x-sdk": {
+          "resource": "platform.orgs",
+          "method": "del"
+        }
       }
     },
     "/api/v1/orgs/{id}/workspace": {
@@ -14577,7 +14819,11 @@
             }
           }
         },
-        "operationId": "orgs.getOrgsByIdWorkspace"
+        "operationId": "orgs.getOrgsByIdWorkspace",
+        "x-sdk": {
+          "resource": "orgs",
+          "method": "retrieve"
+        }
       }
     },
     "/api/v1/orgs/{id}/status": {
@@ -14705,7 +14951,11 @@
             }
           }
         },
-        "operationId": "orgs.postOrgsByIdStatus"
+        "operationId": "orgs.postOrgsByIdStatus",
+        "x-sdk": {
+          "resource": "platform.orgs",
+          "method": "setStatus"
+        }
       }
     },
     "/api/v1/orgs/{id}/branding/{slot}": {
@@ -14786,7 +15036,11 @@
             }
           }
         },
-        "operationId": "orgs.putOrgsByIdBrandingBySlot"
+        "operationId": "orgs.putOrgsByIdBrandingBySlot",
+        "x-sdk": {
+          "resource": "brand.passImages",
+          "method": "upload"
+        }
       },
       "delete": {
         "summary": "Remove the pass logo or icon",
@@ -14839,7 +15093,11 @@
             }
           }
         },
-        "operationId": "orgs.deleteOrgsByIdBrandingBySlot"
+        "operationId": "orgs.deleteOrgsByIdBrandingBySlot",
+        "x-sdk": {
+          "resource": "brand.passImages",
+          "method": "del"
+        }
       }
     },
     "/api/v1/orgs/{id}/branding/{slot}/{scale}": {
@@ -14899,7 +15157,11 @@
             }
           }
         },
-        "operationId": "orgs.getOrgsByIdBrandingBySlotByScale"
+        "operationId": "orgs.getOrgsByIdBrandingBySlotByScale",
+        "x-sdk": {
+          "resource": "brand.passImages",
+          "method": "download"
+        }
       }
     },
     "/api/v1/orgs/{id}/email-preview": {
@@ -14985,7 +15247,11 @@
             }
           }
         },
-        "operationId": "orgs.getOrgsByIdEmailPreview"
+        "operationId": "orgs.getOrgsByIdEmailPreview",
+        "x-sdk": {
+          "resource": "brand",
+          "method": "previewEmail"
+        }
       }
     },
     "/api/v1/brand": {
@@ -15122,6 +15388,10 @@
           }
         },
         "operationId": "brand.getBrand",
+        "x-sdk": {
+          "resource": "brand",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -15203,6 +15473,10 @@
           }
         },
         "operationId": "brand.patchBrand",
+        "x-sdk": {
+          "resource": "brand",
+          "method": "update"
+        },
         "security": [
           {
             "apiKey": [
@@ -15278,6 +15552,10 @@
           }
         },
         "operationId": "brand.putBrandWebLogo",
+        "x-sdk": {
+          "resource": "brand.webLogo",
+          "method": "upload"
+        },
         "security": [
           {
             "apiKey": [
@@ -15340,6 +15618,10 @@
           }
         },
         "operationId": "brand.deleteBrandWebLogo",
+        "x-sdk": {
+          "resource": "brand.webLogo",
+          "method": "del"
+        },
         "security": [
           {
             "apiKey": [
@@ -15356,7 +15638,7 @@
       "get": {
         "summary": "List the organization wallet credentials of the session mode",
         "tags": [
-          "wallet credentials"
+          "wallet-credentials"
         ],
         "parameters": [
           {
@@ -15495,12 +15777,16 @@
             }
           }
         },
-        "operationId": "wallet-credentials.getOrgsByOrgIdWalletCredentials"
+        "operationId": "wallet-credentials.getOrgsByOrgIdWalletCredentials",
+        "x-sdk": {
+          "resource": "walletCredentials",
+          "method": "list"
+        }
       },
       "put": {
         "summary": "Create or rotate the organization wallet credential",
         "tags": [
-          "wallet credentials"
+          "wallet-credentials"
         ],
         "parameters": [
           {
@@ -15756,14 +16042,18 @@
             }
           }
         },
-        "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials"
+        "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
+        "x-sdk": {
+          "resource": "walletCredentials",
+          "method": "upsert"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke": {
       "post": {
         "summary": "Revoke an organization wallet credential",
         "tags": [
-          "wallet credentials"
+          "wallet-credentials"
         ],
         "parameters": [
           {
@@ -15908,14 +16198,18 @@
             }
           }
         },
-        "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke"
+        "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke",
+        "x-sdk": {
+          "resource": "walletCredentials",
+          "method": "revoke"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/wallet-credentials/{id}/check": {
       "post": {
         "summary": "Check an organization wallet credential with its provider",
         "tags": [
-          "wallet credentials"
+          "wallet-credentials"
         ],
         "parameters": [
           {
@@ -15979,14 +16273,18 @@
             }
           }
         },
-        "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdCheck"
+        "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdCheck",
+        "x-sdk": {
+          "resource": "walletCredentials.checks",
+          "method": "create"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/wallet-credentials/{id}/checks/{checkId}": {
       "get": {
         "summary": "Read the result of a wallet credential check",
         "tags": [
-          "wallet credentials"
+          "wallet-credentials"
         ],
         "parameters": [
           {
@@ -16077,14 +16375,18 @@
             }
           }
         },
-        "operationId": "wallet-credentials.getOrgsByOrgIdWalletCredentialsByIdChecksByCheckId"
+        "operationId": "wallet-credentials.getOrgsByOrgIdWalletCredentialsByIdChecksByCheckId",
+        "x-sdk": {
+          "resource": "walletCredentials.checks",
+          "method": "retrieve"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/wallet-enrolments": {
       "get": {
         "summary": "List the wallet provider enrolments of the session mode",
         "tags": [
-          "wallet enrolments"
+          "wallet-enrolments"
         ],
         "parameters": [
           {
@@ -16277,14 +16579,18 @@
             }
           }
         },
-        "operationId": "wallet-enrolments.getOrgsByOrgIdWalletEnrolments"
+        "operationId": "wallet-enrolments.getOrgsByOrgIdWalletEnrolments",
+        "x-sdk": {
+          "resource": "walletEnrolments",
+          "method": "list"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/wallet-enrolments/{provider}": {
       "put": {
         "summary": "Pick the credential source of a provider",
         "tags": [
-          "wallet enrolments"
+          "wallet-enrolments"
         ],
         "parameters": [
           {
@@ -16505,14 +16811,18 @@
             }
           }
         },
-        "operationId": "wallet-enrolments.putOrgsByOrgIdWalletEnrolmentsByProvider"
+        "operationId": "wallet-enrolments.putOrgsByOrgIdWalletEnrolmentsByProvider",
+        "x-sdk": {
+          "resource": "walletEnrolments",
+          "method": "update"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/wallet-enrolments/{provider}/enable": {
       "post": {
         "summary": "Enable a wallet provider enrolment",
         "tags": [
-          "wallet enrolments"
+          "wallet-enrolments"
         ],
         "parameters": [
           {
@@ -16725,14 +17035,18 @@
             }
           }
         },
-        "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderEnable"
+        "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderEnable",
+        "x-sdk": {
+          "resource": "walletEnrolments",
+          "method": "enable"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/wallet-enrolments/{provider}/disable": {
       "post": {
         "summary": "Disable a wallet provider enrolment",
         "tags": [
-          "wallet enrolments"
+          "wallet-enrolments"
         ],
         "parameters": [
           {
@@ -16945,14 +17259,18 @@
             }
           }
         },
-        "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderDisable"
+        "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderDisable",
+        "x-sdk": {
+          "resource": "walletEnrolments",
+          "method": "disable"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/wallet-enrolments/{provider}/revoke": {
       "post": {
         "summary": "Revoke a wallet provider enrolment",
         "tags": [
-          "wallet enrolments"
+          "wallet-enrolments"
         ],
         "parameters": [
           {
@@ -17165,7 +17483,11 @@
             }
           }
         },
-        "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderRevoke"
+        "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderRevoke",
+        "x-sdk": {
+          "resource": "walletEnrolments",
+          "method": "revoke"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/retention/holds": {
@@ -17288,7 +17610,11 @@
             }
           }
         },
-        "operationId": "retention.getOrgsByOrgIdRetentionHolds"
+        "operationId": "retention.getOrgsByOrgIdRetentionHolds",
+        "x-sdk": {
+          "resource": "legalHolds",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Place a legal hold on the organization or one pass",
@@ -17369,7 +17695,11 @@
             }
           }
         },
-        "operationId": "retention.postOrgsByOrgIdRetentionHolds"
+        "operationId": "retention.postOrgsByOrgIdRetentionHolds",
+        "x-sdk": {
+          "resource": "legalHolds",
+          "method": "create"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/retention/holds/{holdId}/release": {
@@ -17433,7 +17763,11 @@
             }
           }
         },
-        "operationId": "retention.postOrgsByOrgIdRetentionHoldsByHoldIdRelease"
+        "operationId": "retention.postOrgsByOrgIdRetentionHoldsByHoldIdRelease",
+        "x-sdk": {
+          "resource": "legalHolds",
+          "method": "release"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/retention/receipts": {
@@ -17569,7 +17903,11 @@
             }
           }
         },
-        "operationId": "retention.getOrgsByOrgIdRetentionReceipts"
+        "operationId": "retention.getOrgsByOrgIdRetentionReceipts",
+        "x-sdk": {
+          "resource": "retentionReceipts",
+          "method": "list"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/retention/receipts/{receiptId}/download": {
@@ -17723,7 +18061,11 @@
             }
           }
         },
-        "operationId": "retention.getOrgsByOrgIdRetentionReceiptsByReceiptIdDownload"
+        "operationId": "retention.getOrgsByOrgIdRetentionReceiptsByReceiptIdDownload",
+        "x-sdk": {
+          "resource": "retentionReceipts",
+          "method": "download"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/lifecycle": {
@@ -17817,7 +18159,11 @@
             }
           }
         },
-        "operationId": "org-lifecycle.getOrgsByOrgIdLifecycle"
+        "operationId": "org-lifecycle.getOrgsByOrgIdLifecycle",
+        "x-sdk": {
+          "resource": "orgs",
+          "method": "retrieveLifecycle"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/close": {
@@ -17929,7 +18275,11 @@
             }
           }
         },
-        "operationId": "org-lifecycle.postOrgsByOrgIdClose"
+        "operationId": "org-lifecycle.postOrgsByOrgIdClose",
+        "x-sdk": {
+          "resource": "orgs",
+          "method": "close"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/reopen": {
@@ -18023,7 +18373,11 @@
             }
           }
         },
-        "operationId": "org-lifecycle.postOrgsByOrgIdReopen"
+        "operationId": "org-lifecycle.postOrgsByOrgIdReopen",
+        "x-sdk": {
+          "resource": "orgs",
+          "method": "reopen"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/exports": {
@@ -18143,7 +18497,11 @@
             }
           }
         },
-        "operationId": "org-lifecycle.getOrgsByOrgIdExports"
+        "operationId": "org-lifecycle.getOrgsByOrgIdExports",
+        "x-sdk": {
+          "resource": "orgExports",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Export everything the organization holds",
@@ -18250,7 +18608,11 @@
             }
           }
         },
-        "operationId": "org-lifecycle.postOrgsByOrgIdExports"
+        "operationId": "org-lifecycle.postOrgsByOrgIdExports",
+        "x-sdk": {
+          "resource": "orgExports",
+          "method": "create"
+        }
       }
     },
     "/api/v1/orgs/{orgId}/exports/{exportId}/link": {
@@ -18316,7 +18678,11 @@
             }
           }
         },
-        "operationId": "org-lifecycle.postOrgsByOrgIdExportsByExportIdLink"
+        "operationId": "org-lifecycle.postOrgsByOrgIdExportsByExportIdLink",
+        "x-sdk": {
+          "resource": "orgExports",
+          "method": "createLink"
+        }
       }
     },
     "/api/v1/org-exports/{exportId}/download": {
@@ -18370,14 +18736,20 @@
             }
           }
         },
-        "operationId": "org-lifecycle.getOrgExportsByExportIdDownload"
+        "operationId": "org-lifecycle.getOrgExportsByExportIdDownload",
+        "x-sdk": {
+          "resource": "orgExports",
+          "method": "download",
+          "sdk": false,
+          "reason": "Signed link from orgExports.createLink; the signature in the URL is the credential."
+        }
       }
     },
     "/api/v1/platform/wallet-credentials": {
       "get": {
         "summary": "List the platform wallet credentials",
         "tags": [
-          "wallet platform"
+          "wallet-platform"
         ],
         "responses": {
           "200": {
@@ -18492,12 +18864,16 @@
             }
           }
         },
-        "operationId": "wallet-platform.getPlatformWalletCredentials"
+        "operationId": "wallet-platform.getPlatformWalletCredentials",
+        "x-sdk": {
+          "resource": "platform.walletCredentials",
+          "method": "list"
+        }
       },
       "put": {
         "summary": "Create or rotate a platform wallet credential",
         "tags": [
-          "wallet platform"
+          "wallet-platform"
         ],
         "requestBody": {
           "required": true,
@@ -18757,14 +19133,18 @@
             }
           }
         },
-        "operationId": "wallet-platform.putPlatformWalletCredentials"
+        "operationId": "wallet-platform.putPlatformWalletCredentials",
+        "x-sdk": {
+          "resource": "platform.walletCredentials",
+          "method": "upsert"
+        }
       }
     },
     "/api/v1/platform/wallet-credentials/{id}/revoke": {
       "post": {
         "summary": "Revoke a platform wallet credential",
         "tags": [
-          "wallet platform"
+          "wallet-platform"
         ],
         "parameters": [
           {
@@ -18899,14 +19279,18 @@
             }
           }
         },
-        "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke"
+        "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke",
+        "x-sdk": {
+          "resource": "platform.walletCredentials",
+          "method": "revoke"
+        }
       }
     },
     "/api/v1/platform/wallet-credentials/{id}/check": {
       "post": {
         "summary": "Check a platform wallet credential with its provider",
         "tags": [
-          "wallet platform"
+          "wallet-platform"
         ],
         "parameters": [
           {
@@ -18960,14 +19344,18 @@
             }
           }
         },
-        "operationId": "wallet-platform.postPlatformWalletCredentialsByIdCheck"
+        "operationId": "wallet-platform.postPlatformWalletCredentialsByIdCheck",
+        "x-sdk": {
+          "resource": "platform.walletCredentials.checks",
+          "method": "create"
+        }
       }
     },
     "/api/v1/platform/wallet-credentials/{id}/checks/{checkId}": {
       "get": {
         "summary": "Read the result of a platform wallet credential check",
         "tags": [
-          "wallet platform"
+          "wallet-platform"
         ],
         "parameters": [
           {
@@ -19048,14 +19436,18 @@
             }
           }
         },
-        "operationId": "wallet-platform.getPlatformWalletCredentialsByIdChecksByCheckId"
+        "operationId": "wallet-platform.getPlatformWalletCredentialsByIdChecksByCheckId",
+        "x-sdk": {
+          "resource": "platform.walletCredentials.checks",
+          "method": "retrieve"
+        }
       }
     },
     "/api/v1/platform/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/hold": {
       "post": {
         "summary": "Hold a wallet provider enrolment",
         "tags": [
-          "wallet platform"
+          "wallet-platform"
         ],
         "parameters": [
           {
@@ -19150,14 +19542,18 @@
             }
           }
         },
-        "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderHold"
+        "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderHold",
+        "x-sdk": {
+          "resource": "platform.orgs.walletEnrolments",
+          "method": "hold"
+        }
       }
     },
     "/api/v1/platform/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/release": {
       "post": {
         "summary": "Release a held wallet provider enrolment",
         "tags": [
-          "wallet platform"
+          "wallet-platform"
         ],
         "parameters": [
           {
@@ -19231,14 +19627,18 @@
             }
           }
         },
-        "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderRelease"
+        "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderRelease",
+        "x-sdk": {
+          "resource": "platform.orgs.walletEnrolments",
+          "method": "release"
+        }
       }
     },
     "/api/v1/platform/wallet-enrolments": {
       "get": {
         "summary": "List every organization enrolment of a wallet provider",
         "tags": [
-          "wallet platform"
+          "wallet-platform"
         ],
         "parameters": [
           {
@@ -19394,14 +19794,18 @@
             }
           }
         },
-        "operationId": "wallet-platform.getPlatformWalletEnrolments"
+        "operationId": "wallet-platform.getPlatformWalletEnrolments",
+        "x-sdk": {
+          "resource": "platform.walletEnrolments",
+          "method": "list"
+        }
       }
     },
     "/api/v1/platform/wallet-credentials/migrate": {
       "get": {
         "summary": "Report the legacy wallet accounts waiting for a credential source",
         "tags": [
-          "wallet platform"
+          "wallet-platform"
         ],
         "parameters": [
           {
@@ -19557,12 +19961,16 @@
             }
           }
         },
-        "operationId": "wallet-platform.getPlatformWalletCredentialsMigrate"
+        "operationId": "wallet-platform.getPlatformWalletCredentialsMigrate",
+        "x-sdk": {
+          "resource": "platform.walletCredentials",
+          "method": "retrieveMigration"
+        }
       },
       "post": {
         "summary": "Queue the migration of legacy wallet accounts onto credential sources",
         "tags": [
-          "wallet platform"
+          "wallet-platform"
         ],
         "responses": {
           "200": {
@@ -19596,14 +20004,18 @@
             }
           }
         },
-        "operationId": "wallet-platform.postPlatformWalletCredentialsMigrate"
+        "operationId": "wallet-platform.postPlatformWalletCredentialsMigrate",
+        "x-sdk": {
+          "resource": "platform.walletCredentials",
+          "method": "migrate"
+        }
       }
     },
     "/api/v1/platform/wallet-credentials/migrate/resolve": {
       "post": {
         "summary": "Resolve a refused legacy wallet account: assign the platform credential, merge or retire",
         "tags": [
-          "wallet platform"
+          "wallet-platform"
         ],
         "requestBody": {
           "required": true,
@@ -19683,7 +20095,11 @@
             }
           }
         },
-        "operationId": "wallet-platform.postPlatformWalletCredentialsMigrateResolve"
+        "operationId": "wallet-platform.postPlatformWalletCredentialsMigrateResolve",
+        "x-sdk": {
+          "resource": "platform.walletCredentials",
+          "method": "resolveMigration"
+        }
       }
     },
     "/api/v1/platform/orgs/{id}/entitlements": {
@@ -19930,7 +20346,11 @@
             }
           }
         },
-        "operationId": "entitlements.getPlatformOrgsByIdEntitlements"
+        "operationId": "entitlements.getPlatformOrgsByIdEntitlements",
+        "x-sdk": {
+          "resource": "platform.orgs.entitlements",
+          "method": "retrieve"
+        }
       },
       "put": {
         "security": [
@@ -20251,7 +20671,11 @@
             }
           }
         },
-        "operationId": "entitlements.putPlatformOrgsByIdEntitlements"
+        "operationId": "entitlements.putPlatformOrgsByIdEntitlements",
+        "x-sdk": {
+          "resource": "platform.orgs.entitlements",
+          "method": "update"
+        }
       }
     },
     "/api/v1/platform/orgs/{orgId}/retention/holds": {
@@ -20374,7 +20798,11 @@
             }
           }
         },
-        "operationId": "retention.getPlatformOrgsByOrgIdRetentionHolds"
+        "operationId": "retention.getPlatformOrgsByOrgIdRetentionHolds",
+        "x-sdk": {
+          "resource": "platform.orgs.legalHolds",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Place a platform legal hold; only a platform administrator releases it",
@@ -20455,7 +20883,11 @@
             }
           }
         },
-        "operationId": "retention.postPlatformOrgsByOrgIdRetentionHolds"
+        "operationId": "retention.postPlatformOrgsByOrgIdRetentionHolds",
+        "x-sdk": {
+          "resource": "platform.orgs.legalHolds",
+          "method": "create"
+        }
       }
     },
     "/api/v1/platform/orgs/{orgId}/retention/holds/{holdId}/release": {
@@ -20519,7 +20951,11 @@
             }
           }
         },
-        "operationId": "retention.postPlatformOrgsByOrgIdRetentionHoldsByHoldIdRelease"
+        "operationId": "retention.postPlatformOrgsByOrgIdRetentionHoldsByHoldIdRelease",
+        "x-sdk": {
+          "resource": "platform.orgs.legalHolds",
+          "method": "release"
+        }
       }
     },
     "/api/v1/platform/orgs/{orgId}/retention/receipts": {
@@ -20655,7 +21091,11 @@
             }
           }
         },
-        "operationId": "retention.getPlatformOrgsByOrgIdRetentionReceipts"
+        "operationId": "retention.getPlatformOrgsByOrgIdRetentionReceipts",
+        "x-sdk": {
+          "resource": "platform.orgs.retentionReceipts",
+          "method": "list"
+        }
       }
     },
     "/api/v1/platform/orgs/{orgId}/retention/receipts/{receiptId}/download": {
@@ -20809,7 +21249,11 @@
             }
           }
         },
-        "operationId": "retention.getPlatformOrgsByOrgIdRetentionReceiptsByReceiptIdDownload"
+        "operationId": "retention.getPlatformOrgsByOrgIdRetentionReceiptsByReceiptIdDownload",
+        "x-sdk": {
+          "resource": "platform.orgs.retentionReceipts",
+          "method": "download"
+        }
       }
     },
     "/api/v1/platform/retention/receipts": {
@@ -20935,7 +21379,11 @@
             }
           }
         },
-        "operationId": "retention.getPlatformRetentionReceipts"
+        "operationId": "retention.getPlatformRetentionReceipts",
+        "x-sdk": {
+          "resource": "platform.retentionReceipts",
+          "method": "list"
+        }
       }
     },
     "/api/v1/platform/retention/receipts/{receiptId}/download": {
@@ -21079,7 +21527,11 @@
             }
           }
         },
-        "operationId": "retention.getPlatformRetentionReceiptsByReceiptIdDownload"
+        "operationId": "retention.getPlatformRetentionReceiptsByReceiptIdDownload",
+        "x-sdk": {
+          "resource": "platform.retentionReceipts",
+          "method": "download"
+        }
       }
     },
     "/api/v1/platform/closed-orgs": {
@@ -21157,7 +21609,11 @@
             }
           }
         },
-        "operationId": "org-lifecycle.getPlatformClosedOrgs"
+        "operationId": "org-lifecycle.getPlatformClosedOrgs",
+        "x-sdk": {
+          "resource": "platform.orgs",
+          "method": "listClosed"
+        }
       }
     },
     "/api/v1/templates": {
@@ -21443,6 +21899,10 @@
           }
         },
         "operationId": "templates.getTemplates",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -21525,7 +21985,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesUploads"
+        "operationId": "templates.postTemplatesUploads",
+        "x-sdk": {
+          "resource": "templateImports",
+          "method": "create"
+        }
       },
       "get": {
         "summary": "Recent template imports",
@@ -21649,6 +22113,10 @@
           }
         },
         "operationId": "templates.getTemplatesUploads",
+        "x-sdk": {
+          "resource": "templateImports",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -21815,6 +22283,10 @@
           }
         },
         "operationId": "templates.getTemplatesUploadsById",
+        "x-sdk": {
+          "resource": "templateImports",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -22201,7 +22673,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdShare"
+        "operationId": "templates.postTemplatesByIdShare",
+        "x-sdk": {
+          "resource": "platform.templates",
+          "method": "share"
+        }
       }
     },
     "/api/v1/templates/previews": {
@@ -22327,6 +22803,10 @@
           }
         },
         "operationId": "templates.getTemplatesPreviews",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "listPreviews"
+        },
         "security": [
           {
             "apiKey": [
@@ -22580,6 +23060,10 @@
           }
         },
         "operationId": "templates.getTemplatesEligible",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "listEligible"
+        },
         "security": [
           {
             "apiKey": [
@@ -22959,6 +23443,10 @@
           }
         },
         "operationId": "templates.getTemplatesById",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -23348,7 +23836,11 @@
             }
           }
         },
-        "operationId": "templates.patchTemplatesById"
+        "operationId": "templates.patchTemplatesById",
+        "x-sdk": {
+          "resource": "platform.templates",
+          "method": "assign"
+        }
       },
       "delete": {
         "summary": "Delete or archive an uploaded template (baked: 403 TEMPLATE_BAKED)",
@@ -23408,7 +23900,11 @@
             }
           }
         },
-        "operationId": "templates.deleteTemplatesById"
+        "operationId": "templates.deleteTemplatesById",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "del"
+        }
       }
     },
     "/api/v1/templates/{id}/clone": {
@@ -23792,7 +24288,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdClone"
+        "operationId": "templates.postTemplatesByIdClone",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "clone"
+        }
       }
     },
     "/api/v1/templates/{id}/manifest": {
@@ -24170,7 +24670,11 @@
             }
           }
         },
-        "operationId": "templates.putTemplatesByIdManifest"
+        "operationId": "templates.putTemplatesByIdManifest",
+        "x-sdk": {
+          "resource": "templates.versions",
+          "method": "createFromManifest"
+        }
       }
     },
     "/api/v1/templates/{id}/preview": {
@@ -24308,7 +24812,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdPreview"
+        "operationId": "templates.postTemplatesByIdPreview",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "preview"
+        }
       }
     },
     "/api/v1/templates/{id}/versions/{version}": {
@@ -24524,6 +25032,10 @@
           }
         },
         "operationId": "templates.getTemplatesByIdVersionsByVersion",
+        "x-sdk": {
+          "resource": "templates.versions",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -24613,6 +25125,10 @@
           }
         },
         "operationId": "templates.getTemplatesByIdVersionsByVersionAssetsByName",
+        "x-sdk": {
+          "resource": "templates.versions",
+          "method": "downloadAsset"
+        },
         "security": [
           {
             "apiKey": [
@@ -25072,6 +25588,10 @@
           }
         },
         "operationId": "templates.getTemplatesByIdChannels",
+        "x-sdk": {
+          "resource": "templates.channels",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -25737,7 +26257,11 @@
             }
           }
         },
-        "operationId": "templates.putTemplatesByIdChannels"
+        "operationId": "templates.putTemplatesByIdChannels",
+        "x-sdk": {
+          "resource": "templates.channels",
+          "method": "update"
+        }
       }
     },
     "/api/v1/templates/{id}/channels/runs": {
@@ -25873,6 +26397,10 @@
           }
         },
         "operationId": "templates.getTemplatesByIdChannelsRuns",
+        "x-sdk": {
+          "resource": "templates.channels",
+          "method": "listRuns"
+        },
         "security": [
           {
             "apiKey": [
@@ -26472,7 +27000,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdVersions"
+        "operationId": "templates.postTemplatesByIdVersions",
+        "x-sdk": {
+          "resource": "templates.versions",
+          "method": "create"
+        }
       }
     },
     "/api/v1/templates/{id}/stamps-impact": {
@@ -26564,6 +27096,10 @@
           }
         },
         "operationId": "templates.getTemplatesByIdStampsImpact",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "retrieveStampsImpact"
+        },
         "security": [
           {
             "apiKey": [
@@ -27025,7 +27561,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdUse"
+        "operationId": "templates.postTemplatesByIdUse",
+        "x-sdk": {
+          "resource": "blueprints",
+          "method": "use"
+        }
       }
     },
     "/api/v1/templates/{id}/use/check": {
@@ -27631,7 +28171,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdUseCheck"
+        "operationId": "templates.postTemplatesByIdUseCheck",
+        "x-sdk": {
+          "resource": "blueprints",
+          "method": "checkUse"
+        }
       }
     },
     "/api/v1/templates/{id}/scan-setup": {
@@ -27767,7 +28311,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdScanSetup"
+        "operationId": "templates.postTemplatesByIdScanSetup",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "setUpScanning"
+        }
       }
     },
     "/api/v1/templates/{id}/archive": {
@@ -28126,7 +28674,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdArchive"
+        "operationId": "templates.postTemplatesByIdArchive",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "archive"
+        }
       }
     },
     "/api/v1/templates/{id}/restore": {
@@ -28485,7 +29037,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdRestore"
+        "operationId": "templates.postTemplatesByIdRestore",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "restore"
+        }
       }
     },
     "/api/v1/templates/{id}/package": {
@@ -28532,6 +29088,10 @@
           }
         },
         "operationId": "templates.getTemplatesByIdPackage",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "downloadPackage"
+        },
         "security": [
           {
             "apiKey": [
@@ -28806,6 +29366,10 @@
           }
         },
         "operationId": "templates.getTemplatesByIdCandidates",
+        "x-sdk": {
+          "resource": "templates.candidates",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -29079,7 +29643,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdCandidates"
+        "operationId": "templates.postTemplatesByIdCandidates",
+        "x-sdk": {
+          "resource": "templates.candidates",
+          "method": "create"
+        }
       }
     },
     "/api/v1/templates/{id}/candidates/promote": {
@@ -29336,7 +29904,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdCandidatesPromote"
+        "operationId": "templates.postTemplatesByIdCandidatesPromote",
+        "x-sdk": {
+          "resource": "templates.candidates",
+          "method": "promote"
+        }
       }
     },
     "/api/v1/templates/{id}/candidates/{candidateId}/approve": {
@@ -29479,7 +30051,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdCandidatesByCandidateIdApprove"
+        "operationId": "templates.postTemplatesByIdCandidatesByCandidateIdApprove",
+        "x-sdk": {
+          "resource": "templates.candidates",
+          "method": "approve"
+        }
       }
     },
     "/api/v1/templates/{id}/releases": {
@@ -29872,6 +30448,10 @@
           }
         },
         "operationId": "templates.getTemplatesByIdReleases",
+        "x-sdk": {
+          "resource": "templates.releases",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -30126,7 +30706,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdReleases"
+        "operationId": "templates.postTemplatesByIdReleases",
+        "x-sdk": {
+          "resource": "templates.releases",
+          "method": "create"
+        }
       }
     },
     "/api/v1/templates/{id}/releases/impact": {
@@ -30430,6 +31014,10 @@
           }
         },
         "operationId": "templates.getTemplatesByIdReleasesImpact",
+        "x-sdk": {
+          "resource": "templates.releases",
+          "method": "retrieveImpact"
+        },
         "security": [
           {
             "apiKey": [
@@ -30686,7 +31274,11 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdReleasesRollback"
+        "operationId": "templates.postTemplatesByIdReleasesRollback",
+        "x-sdk": {
+          "resource": "templates.releases",
+          "method": "rollback"
+        }
       }
     },
     "/api/v1/passes": {
@@ -30882,6 +31474,10 @@
           }
         },
         "operationId": "passes.getPasses",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -31000,6 +31596,10 @@
           }
         },
         "operationId": "passes.postPasses",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "create"
+        },
         "security": [
           {
             "apiKey": [
@@ -31053,6 +31653,10 @@
           }
         },
         "operationId": "passes.getPassesById",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -31115,6 +31719,10 @@
           }
         },
         "operationId": "passes.deletePassesById",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "del"
+        },
         "security": [
           {
             "apiKey": [
@@ -31201,6 +31809,10 @@
           }
         },
         "operationId": "passes.patchPassesById",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "update"
+        },
         "security": [
           {
             "apiKey": [
@@ -31289,6 +31901,10 @@
           }
         },
         "operationId": "passes.putPassesByIdConnection",
+        "x-sdk": {
+          "resource": "passes.connection",
+          "method": "update"
+        },
         "security": [
           {
             "apiKey": [
@@ -31342,6 +31958,10 @@
           }
         },
         "operationId": "passes.postPassesByIdVoid",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "void"
+        },
         "security": [
           {
             "apiKey": [
@@ -31395,6 +32015,10 @@
           }
         },
         "operationId": "passes.postPassesByIdUnvoid",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "unvoid"
+        },
         "security": [
           {
             "apiKey": [
@@ -31464,6 +32088,10 @@
           }
         },
         "operationId": "passes.postPassesByIdRefresh",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "refresh"
+        },
         "security": [
           {
             "apiKey": [
@@ -31529,6 +32157,10 @@
           }
         },
         "operationId": "passes.postPassesByIdRotateLink",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "rotateLink"
+        },
         "security": [
           {
             "apiKey": [
@@ -31593,6 +32225,10 @@
           }
         },
         "operationId": "passes.getPassesByIdVersionsByVersion",
+        "x-sdk": {
+          "resource": "passes.versions",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -31689,6 +32325,10 @@
           }
         },
         "operationId": "passes.getPassesByIdDiff",
+        "x-sdk": {
+          "resource": "passes.versions",
+          "method": "diff"
+        },
         "security": [
           {
             "apiKey": [
@@ -31753,6 +32393,10 @@
           }
         },
         "operationId": "passes.postPassesByIdNewCode",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "rotateCode"
+        },
         "security": [
           {
             "apiKey": [
@@ -31836,6 +32480,10 @@
           }
         },
         "operationId": "passes.postPassesByIdResendEmail",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "sendEmail"
+        },
         "security": [
           {
             "apiKey": [
@@ -31935,6 +32583,10 @@
           }
         },
         "operationId": "passes.getPassesByIdAssets",
+        "x-sdk": {
+          "resource": "passes.assets",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -32032,6 +32684,10 @@
           }
         },
         "operationId": "passes.putPassesByIdAssetsByName",
+        "x-sdk": {
+          "resource": "passes.assets",
+          "method": "upload"
+        },
         "security": [
           {
             "apiKey": [
@@ -32103,6 +32759,10 @@
           }
         },
         "operationId": "passes.deletePassesByIdAssetsByName",
+        "x-sdk": {
+          "resource": "passes.assets",
+          "method": "del"
+        },
         "security": [
           {
             "apiKey": [
@@ -32195,6 +32855,10 @@
           }
         },
         "operationId": "passes.getPassesByIdMemberPhoto",
+        "x-sdk": {
+          "resource": "passes.memberPhoto",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -32309,6 +32973,10 @@
           }
         },
         "operationId": "passes.putPassesByIdMemberPhoto",
+        "x-sdk": {
+          "resource": "passes.memberPhoto",
+          "method": "upload"
+        },
         "security": [
           {
             "apiKey": [
@@ -32417,6 +33085,10 @@
           }
         },
         "operationId": "passes.patchPassesByIdMemberPhoto",
+        "x-sdk": {
+          "resource": "passes.memberPhoto",
+          "method": "update"
+        },
         "security": [
           {
             "apiKey": [
@@ -32507,6 +33179,10 @@
           }
         },
         "operationId": "passes.deletePassesByIdMemberPhoto",
+        "x-sdk": {
+          "resource": "passes.memberPhoto",
+          "method": "del"
+        },
         "security": [
           {
             "apiKey": [
@@ -32553,6 +33229,10 @@
           }
         },
         "operationId": "passes.getPassesByIdMemberPhotoImage",
+        "x-sdk": {
+          "resource": "passes.memberPhoto",
+          "method": "download"
+        },
         "security": [
           {
             "apiKey": [
@@ -32661,6 +33341,10 @@
           }
         },
         "operationId": "passes.postPassesPhotosMatch",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "matchPhotos"
+        },
         "security": [
           {
             "apiKey": [
@@ -32921,6 +33605,10 @@
           }
         },
         "operationId": "passes.getPassesByIdCheckIn",
+        "x-sdk": {
+          "resource": "passes.checkInRules",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -33254,6 +33942,10 @@
           }
         },
         "operationId": "passes.putPassesByIdCheckIn",
+        "x-sdk": {
+          "resource": "passes.checkInRules",
+          "method": "update"
+        },
         "security": [
           {
             "apiKey": [
@@ -33352,6 +34044,10 @@
           }
         },
         "operationId": "passes.postPassesByIdStamps",
+        "x-sdk": {
+          "resource": "passes.stamps",
+          "method": "apply"
+        },
         "security": [
           {
             "apiKey": [
@@ -33416,6 +34112,10 @@
           }
         },
         "operationId": "passes.postPassesByIdRenew",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "renew"
+        },
         "security": [
           {
             "apiKey": [
@@ -33529,6 +34229,10 @@
           }
         },
         "operationId": "passes.postPassesBulk",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "bulkApply"
+        },
         "security": [
           {
             "apiKey": [
@@ -33615,7 +34319,11 @@
             }
           }
         },
-        "operationId": "passes.postPassesBulkReissue"
+        "operationId": "passes.postPassesBulkReissue",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "bulkReissue"
+        }
       }
     },
     "/api/v1/passes/bulk/channels": {
@@ -33870,6 +34578,10 @@
           }
         },
         "operationId": "passes.postPassesBulkChannels",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "bulkUpdateChannels"
+        },
         "security": [
           {
             "apiKey": [
@@ -34364,6 +35076,10 @@
           }
         },
         "operationId": "passes.getPassesByIdChannels",
+        "x-sdk": {
+          "resource": "passes.channels",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -34955,6 +35671,10 @@
           }
         },
         "operationId": "passes.putPassesByIdChannels",
+        "x-sdk": {
+          "resource": "passes.channels",
+          "method": "update"
+        },
         "security": [
           {
             "apiKey": [
@@ -35063,6 +35783,10 @@
           }
         },
         "operationId": "passes.postPassesBulkPrint",
+        "x-sdk": {
+          "resource": "printJobs",
+          "method": "create"
+        },
         "security": [
           {
             "apiKey": [
@@ -35156,6 +35880,10 @@
           }
         },
         "operationId": "passes.getPassesBulkPrintByJobId",
+        "x-sdk": {
+          "resource": "printJobs",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -35211,6 +35939,10 @@
           }
         },
         "operationId": "passes.getPassesBulkPrintByJobIdPdf",
+        "x-sdk": {
+          "resource": "printJobs",
+          "method": "downloadPdf"
+        },
         "security": [
           {
             "apiKey": [
@@ -35318,6 +36050,10 @@
           }
         },
         "operationId": "passes.postPassesByIdPrints",
+        "x-sdk": {
+          "resource": "passes.prints",
+          "method": "create"
+        },
         "security": [
           {
             "apiKey": [
@@ -35430,6 +36166,10 @@
           }
         },
         "operationId": "passes.getPassesByIdPrints",
+        "x-sdk": {
+          "resource": "passes.prints",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -35543,6 +36283,10 @@
           }
         },
         "operationId": "passes.postPassesByIdPrintsByPrintIdVoid",
+        "x-sdk": {
+          "resource": "passes.prints",
+          "method": "void"
+        },
         "security": [
           {
             "apiKey": [
@@ -35589,6 +36333,10 @@
           }
         },
         "operationId": "passes.getPassesByIdPrint",
+        "x-sdk": {
+          "resource": "passes.prints",
+          "method": "retrievePage"
+        },
         "security": [
           {
             "apiKey": [
@@ -35635,6 +36383,10 @@
           }
         },
         "operationId": "passes.getPassesByIdPrintPdf",
+        "x-sdk": {
+          "resource": "passes.prints",
+          "method": "downloadPdf"
+        },
         "security": [
           {
             "apiKey": [
@@ -35690,6 +36442,10 @@
           }
         },
         "operationId": "passes.getPassesByIdPrintAssetsByName",
+        "x-sdk": {
+          "resource": "passes.prints",
+          "method": "downloadAsset"
+        },
         "security": [
           {
             "apiKey": [
@@ -35911,6 +36667,10 @@
           }
         },
         "operationId": "passes.getPassesByIdEvents",
+        "x-sdk": {
+          "resource": "passes.events",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -36123,6 +36883,10 @@
           }
         },
         "operationId": "passes.getPassesByIdDevices",
+        "x-sdk": {
+          "resource": "passes.devices",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -36192,6 +36956,10 @@
           }
         },
         "operationId": "passes.postPassesByIdRemove",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "remove"
+        },
         "security": [
           {
             "apiKey": [
@@ -36245,6 +37013,10 @@
           }
         },
         "operationId": "passes.postPassesByIdRestore",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "restore"
+        },
         "security": [
           {
             "apiKey": [
@@ -37015,6 +37787,10 @@
           }
         },
         "operationId": "pass-imports.postPassImports",
+        "x-sdk": {
+          "resource": "passImports",
+          "method": "create"
+        },
         "security": [
           {
             "apiKey": [
@@ -37602,6 +38378,10 @@
           }
         },
         "operationId": "pass-imports.getPassImports",
+        "x-sdk": {
+          "resource": "passImports",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -38163,6 +38943,10 @@
           }
         },
         "operationId": "pass-imports.getPassImportsById",
+        "x-sdk": {
+          "resource": "passImports",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -38235,6 +39019,10 @@
           }
         },
         "operationId": "pass-imports.deletePassImportsById",
+        "x-sdk": {
+          "resource": "passImports",
+          "method": "del"
+        },
         "security": [
           {
             "apiKey": [
@@ -38957,6 +39745,10 @@
           }
         },
         "operationId": "pass-imports.postPassImportsByIdCheck",
+        "x-sdk": {
+          "resource": "passImports",
+          "method": "check"
+        },
         "security": [
           {
             "apiKey": [
@@ -39539,6 +40331,10 @@
           }
         },
         "operationId": "pass-imports.postPassImportsByIdCommit",
+        "x-sdk": {
+          "resource": "passImports",
+          "method": "commit"
+        },
         "security": [
           {
             "apiKey": [
@@ -39719,6 +40515,10 @@
           }
         },
         "operationId": "pass-imports.getPassImportsByIdRows",
+        "x-sdk": {
+          "resource": "passImports.rows",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -39775,6 +40575,10 @@
           }
         },
         "operationId": "pass-imports.getPassImportsByIdErrorsCsv",
+        "x-sdk": {
+          "resource": "passImports",
+          "method": "downloadErrors"
+        },
         "security": [
           {
             "apiKey": [
@@ -39831,6 +40635,10 @@
           }
         },
         "operationId": "pass-imports.getPassImportsByIdResultsCsv",
+        "x-sdk": {
+          "resource": "passImports",
+          "method": "downloadResults"
+        },
         "security": [
           {
             "apiKey": [
@@ -39953,7 +40761,11 @@
             }
           }
         },
-        "operationId": "pass-imports.postPassImportsByIdRemoveCreated"
+        "operationId": "pass-imports.postPassImportsByIdRemoveCreated",
+        "x-sdk": {
+          "resource": "passImports",
+          "method": "removeCreated"
+        }
       }
     },
     "/api/v1/pass-imports/{id}/email-rest": {
@@ -40051,6 +40863,10 @@
           }
         },
         "operationId": "pass-imports.postPassImportsByIdEmailRest",
+        "x-sdk": {
+          "resource": "passImports",
+          "method": "sendEmails"
+        },
         "security": [
           {
             "apiKey": [
@@ -40244,6 +41060,10 @@
           }
         },
         "operationId": "bundles.getBundles",
+        "x-sdk": {
+          "resource": "bundles",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -40419,6 +41239,10 @@
           }
         },
         "operationId": "bundles.postBundles",
+        "x-sdk": {
+          "resource": "bundles",
+          "method": "create"
+        },
         "security": [
           {
             "apiKey": [
@@ -40564,6 +41388,10 @@
           }
         },
         "operationId": "bundles.getBundlesById",
+        "x-sdk": {
+          "resource": "bundles",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -40626,6 +41454,10 @@
           }
         },
         "operationId": "bundles.deleteBundlesById",
+        "x-sdk": {
+          "resource": "bundles",
+          "method": "del"
+        },
         "security": [
           {
             "apiKey": [
@@ -40706,6 +41538,10 @@
           }
         },
         "operationId": "bundles.postBundlesByIdSendEmail",
+        "x-sdk": {
+          "resource": "bundles",
+          "method": "sendEmail"
+        },
         "security": [
           {
             "apiKey": [
@@ -40851,6 +41687,10 @@
           }
         },
         "operationId": "bundles.postBundlesByIdRotateLink",
+        "x-sdk": {
+          "resource": "bundles",
+          "method": "rotateLink"
+        },
         "security": [
           {
             "apiKey": [
@@ -41100,7 +41940,11 @@
             }
           }
         },
-        "operationId": "join-links.getJoinLinksByTemplateId"
+        "operationId": "join-links.getJoinLinksByTemplateId",
+        "x-sdk": {
+          "resource": "joinLinks",
+          "method": "retrieve"
+        }
       },
       "put": {
         "summary": "Create a join link (revision 0) or change it",
@@ -41376,7 +42220,11 @@
             }
           }
         },
-        "operationId": "join-links.putJoinLinksByTemplateId"
+        "operationId": "join-links.putJoinLinksByTemplateId",
+        "x-sdk": {
+          "resource": "joinLinks",
+          "method": "upsert"
+        }
       }
     },
     "/api/v1/join-links/{templateId}/rotate": {
@@ -41616,7 +42464,11 @@
             }
           }
         },
-        "operationId": "join-links.postJoinLinksByTemplateIdRotate"
+        "operationId": "join-links.postJoinLinksByTemplateIdRotate",
+        "x-sdk": {
+          "resource": "joinLinks",
+          "method": "rotate"
+        }
       }
     },
     "/api/v1/test-inbox": {
@@ -41757,6 +42609,10 @@
           }
         },
         "operationId": "sandbox.getTestInbox",
+        "x-sdk": {
+          "resource": "testEmails",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -41910,6 +42766,10 @@
           }
         },
         "operationId": "sandbox.getTestInboxById",
+        "x-sdk": {
+          "resource": "testEmails",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -41977,7 +42837,13 @@
             }
           }
         },
-        "operationId": "sandbox.getTestInboxByIdHtml"
+        "operationId": "sandbox.getTestInboxByIdHtml",
+        "x-sdk": {
+          "resource": "testEmails",
+          "method": "retrieveHtml",
+          "sdk": false,
+          "reason": "Console preview frame; testEmails.retrieve returns the same HTML."
+        }
       }
     },
     "/api/v1/test-inbox/{id}/send-to-me": {
@@ -42038,7 +42904,13 @@
             }
           }
         },
-        "operationId": "sandbox.postTestInboxByIdSendToMe"
+        "operationId": "sandbox.postTestInboxByIdSendToMe",
+        "x-sdk": {
+          "resource": "testEmails",
+          "method": "sendToMe",
+          "sdk": false,
+          "reason": "Sends to the signed-in person's own verified address."
+        }
       }
     },
     "/api/v1/broadcasts": {
@@ -42475,6 +43347,10 @@
           }
         },
         "operationId": "broadcasts.getBroadcasts",
+        "x-sdk": {
+          "resource": "broadcasts",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -43049,6 +43925,10 @@
           }
         },
         "operationId": "broadcasts.postBroadcasts",
+        "x-sdk": {
+          "resource": "broadcasts",
+          "method": "create"
+        },
         "security": [
           {
             "apiKey": [
@@ -43281,6 +44161,10 @@
           }
         },
         "operationId": "broadcasts.postBroadcastsPreview",
+        "x-sdk": {
+          "resource": "broadcasts",
+          "method": "preview"
+        },
         "security": [
           {
             "apiKey": [
@@ -43659,6 +44543,10 @@
           }
         },
         "operationId": "broadcasts.getBroadcastsById",
+        "x-sdk": {
+          "resource": "broadcasts",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -44245,6 +45133,10 @@
           }
         },
         "operationId": "broadcasts.patchBroadcastsById",
+        "x-sdk": {
+          "resource": "broadcasts",
+          "method": "update"
+        },
         "security": [
           {
             "apiKey": [
@@ -44639,6 +45531,10 @@
           }
         },
         "operationId": "broadcasts.postBroadcastsByIdSend",
+        "x-sdk": {
+          "resource": "broadcasts",
+          "method": "send"
+        },
         "security": [
           {
             "apiKey": [
@@ -45017,6 +45913,10 @@
           }
         },
         "operationId": "broadcasts.postBroadcastsByIdCancel",
+        "x-sdk": {
+          "resource": "broadcasts",
+          "method": "cancel"
+        },
         "security": [
           {
             "apiKey": [
@@ -45395,6 +46295,10 @@
           }
         },
         "operationId": "broadcasts.postBroadcastsByIdRetry",
+        "x-sdk": {
+          "resource": "broadcasts",
+          "method": "retry"
+        },
         "security": [
           {
             "apiKey": [
@@ -45536,6 +46440,10 @@
           }
         },
         "operationId": "broadcasts.getBroadcastsByIdItems",
+        "x-sdk": {
+          "resource": "broadcasts.recipients",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -45915,6 +46823,10 @@
           }
         },
         "operationId": "message-rules.getMessageRules",
+        "x-sdk": {
+          "resource": "messageRules",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -46449,6 +47361,10 @@
           }
         },
         "operationId": "message-rules.postMessageRules",
+        "x-sdk": {
+          "resource": "messageRules",
+          "method": "create"
+        },
         "security": [
           {
             "apiKey": [
@@ -46778,6 +47694,10 @@
           }
         },
         "operationId": "message-rules.getMessageRulesById",
+        "x-sdk": {
+          "resource": "messageRules",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -47329,6 +48249,10 @@
           }
         },
         "operationId": "message-rules.putMessageRulesById",
+        "x-sdk": {
+          "resource": "messageRules",
+          "method": "update"
+        },
         "security": [
           {
             "apiKey": [
@@ -47391,6 +48315,10 @@
           }
         },
         "operationId": "message-rules.deleteMessageRulesById",
+        "x-sdk": {
+          "resource": "messageRules",
+          "method": "del"
+        },
         "security": [
           {
             "apiKey": [
@@ -47720,6 +48648,10 @@
           }
         },
         "operationId": "message-rules.postMessageRulesByIdPause",
+        "x-sdk": {
+          "resource": "messageRules",
+          "method": "pause"
+        },
         "security": [
           {
             "apiKey": [
@@ -48136,6 +49068,10 @@
           }
         },
         "operationId": "message-rules.getMessageRulesByIdRuns",
+        "x-sdk": {
+          "resource": "messageRules.runs",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -48435,6 +49371,10 @@
           }
         },
         "operationId": "message-rules.postMessageRulesPreview",
+        "x-sdk": {
+          "resource": "messageRules",
+          "method": "preview"
+        },
         "security": [
           {
             "apiKey": [
@@ -48833,6 +49773,10 @@
           }
         },
         "operationId": "message-rules.postMessageRulesByIdTest",
+        "x-sdk": {
+          "resource": "messageRules",
+          "method": "sendTest"
+        },
         "security": [
           {
             "apiKey": [
@@ -49030,6 +49974,10 @@
           }
         },
         "operationId": "holders.getHolders",
+        "x-sdk": {
+          "resource": "holders",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -49168,6 +50116,10 @@
           }
         },
         "operationId": "holders.getHoldersById",
+        "x-sdk": {
+          "resource": "holders",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -49319,6 +50271,10 @@
           }
         },
         "operationId": "holders.postHoldersAssign",
+        "x-sdk": {
+          "resource": "holders",
+          "method": "assign"
+        },
         "security": [
           {
             "apiKey": [
@@ -49501,6 +50457,10 @@
           }
         },
         "operationId": "holders.postHoldersAssignBulk",
+        "x-sdk": {
+          "resource": "holders",
+          "method": "bulkAssign"
+        },
         "security": [
           {
             "apiKey": [
@@ -49655,6 +50615,10 @@
           }
         },
         "operationId": "holders.postHoldersReassign",
+        "x-sdk": {
+          "resource": "holders",
+          "method": "reassign"
+        },
         "security": [
           {
             "apiKey": [
@@ -49801,6 +50765,10 @@
           }
         },
         "operationId": "holders.postHoldersUnassign",
+        "x-sdk": {
+          "resource": "holders",
+          "method": "unassign"
+        },
         "security": [
           {
             "apiKey": [
@@ -49879,6 +50847,10 @@
           }
         },
         "operationId": "holders.postHoldersClearBlock",
+        "x-sdk": {
+          "resource": "holders",
+          "method": "clearBlock"
+        },
         "security": [
           {
             "apiKey": [
@@ -50049,6 +51021,10 @@
           }
         },
         "operationId": "visitors.getVisitors",
+        "x-sdk": {
+          "resource": "visitors",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -50221,6 +51197,10 @@
           }
         },
         "operationId": "visitors.postVisitors",
+        "x-sdk": {
+          "resource": "visitors",
+          "method": "create"
+        },
         "security": [
           {
             "apiKey": [
@@ -50306,6 +51286,10 @@
           }
         },
         "operationId": "visitors.getVisitorsHosts",
+        "x-sdk": {
+          "resource": "visitors",
+          "method": "listHosts"
+        },
         "security": [
           {
             "apiKey": [
@@ -50437,6 +51421,10 @@
           }
         },
         "operationId": "visitors.postVisitorsByIdCheckOut",
+        "x-sdk": {
+          "resource": "visitors",
+          "method": "checkOut"
+        },
         "security": [
           {
             "apiKey": [
@@ -50568,6 +51556,10 @@
           }
         },
         "operationId": "visitors.postVisitorsByIdCancel",
+        "x-sdk": {
+          "resource": "visitors",
+          "method": "cancel"
+        },
         "security": [
           {
             "apiKey": [
@@ -50661,6 +51653,10 @@
           }
         },
         "operationId": "visitors.postVisitorsByIdHostEmail",
+        "x-sdk": {
+          "resource": "visitors",
+          "method": "sendHostEmail"
+        },
         "security": [
           {
             "apiKey": [
@@ -50776,6 +51772,10 @@
           }
         },
         "operationId": "offboard.postOffboard",
+        "x-sdk": {
+          "resource": "holders",
+          "method": "offboard"
+        },
         "security": [
           {
             "apiKey": [
@@ -50905,6 +51905,10 @@
           }
         },
         "operationId": "delivery.getDelivery",
+        "x-sdk": {
+          "resource": "deliveries",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -51028,6 +52032,10 @@
           }
         },
         "operationId": "connections.getConnectionsByIdWebhookFailures",
+        "x-sdk": {
+          "resource": "connections.webhookFailures",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -51102,6 +52110,10 @@
           }
         },
         "operationId": "connections.postConnectionsByIdWebhookFailuresByRetentionIdReplay",
+        "x-sdk": {
+          "resource": "connections.webhookFailures",
+          "method": "replay"
+        },
         "security": [
           {
             "apiKey": [
@@ -51190,6 +52202,10 @@
           }
         },
         "operationId": "connections.postConnectionsByIdWebhookFailuresByRetentionIdResolve",
+        "x-sdk": {
+          "resource": "connections.webhookFailures",
+          "method": "resolve"
+        },
         "security": [
           {
             "apiKey": [
@@ -51596,6 +52612,10 @@
           }
         },
         "operationId": "connections.getConnections",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -52101,6 +53121,10 @@
           }
         },
         "operationId": "connections.postConnections",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "create"
+        },
         "security": [
           {
             "apiKey": [
@@ -52223,6 +53247,10 @@
           }
         },
         "operationId": "connections.getConnectionsSummary",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "retrieveSummary"
+        },
         "security": [
           {
             "apiKey": [
@@ -52689,6 +53717,10 @@
           }
         },
         "operationId": "connections.getConnectionsById",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -53229,6 +54261,10 @@
           }
         },
         "operationId": "connections.patchConnectionsById",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "update"
+        },
         "security": [
           {
             "apiKey": [
@@ -53291,6 +54327,10 @@
           }
         },
         "operationId": "connections.deleteConnectionsById",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "del"
+        },
         "security": [
           {
             "apiKey": [
@@ -53405,6 +54445,10 @@
           }
         },
         "operationId": "connections.postConnectionsTestConfig",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "testConfig"
+        },
         "security": [
           {
             "apiKey": [
@@ -53494,6 +54538,10 @@
           }
         },
         "operationId": "connections.postConnectionsByIdTest",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "test"
+        },
         "security": [
           {
             "apiKey": [
@@ -53561,6 +54609,10 @@
           }
         },
         "operationId": "connections.postConnectionsByIdSync",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "sync"
+        },
         "security": [
           {
             "apiKey": [
@@ -53739,6 +54791,10 @@
           }
         },
         "operationId": "connections.getConnectionsByIdRuns",
+        "x-sdk": {
+          "resource": "connections.runs",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -54093,6 +55149,10 @@
           }
         },
         "operationId": "connections.postConnectionsByIdWebhookSecret",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "rotateWebhookSecret"
+        },
         "security": [
           {
             "apiKey": [
@@ -54432,6 +55492,10 @@
           }
         },
         "operationId": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "revokePreviousWebhookSecret"
+        },
         "security": [
           {
             "apiKey": [
@@ -54740,6 +55804,10 @@
           }
         },
         "operationId": "connectors.getConnectors",
+        "x-sdk": {
+          "resource": "connectors",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -55045,6 +56113,10 @@
           }
         },
         "operationId": "connectors.getConnectorsByType",
+        "x-sdk": {
+          "resource": "connectors",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -55261,6 +56333,10 @@
           }
         },
         "operationId": "webhooks.getWebhookEndpoints",
+        "x-sdk": {
+          "resource": "webhookEndpoints",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -55547,6 +56623,10 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpoints",
+        "x-sdk": {
+          "resource": "webhookEndpoints",
+          "method": "create"
+        },
         "security": [
           {
             "apiKey": [
@@ -55752,6 +56832,10 @@
           }
         },
         "operationId": "webhooks.getWebhookEndpointsById",
+        "x-sdk": {
+          "resource": "webhookEndpoints",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -56039,6 +57123,10 @@
           }
         },
         "operationId": "webhooks.patchWebhookEndpointsById",
+        "x-sdk": {
+          "resource": "webhookEndpoints",
+          "method": "update"
+        },
         "security": [
           {
             "apiKey": [
@@ -56101,6 +57189,10 @@
           }
         },
         "operationId": "webhooks.deleteWebhookEndpointsById",
+        "x-sdk": {
+          "resource": "webhookEndpoints",
+          "method": "del"
+        },
         "security": [
           {
             "apiKey": [
@@ -56197,6 +57289,10 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpointsByIdSecret",
+        "x-sdk": {
+          "resource": "webhookEndpoints",
+          "method": "rotateSecret"
+        },
         "security": [
           {
             "apiKey": [
@@ -56277,6 +57373,10 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpointsByIdTest",
+        "x-sdk": {
+          "resource": "webhookEndpoints",
+          "method": "sendTest"
+        },
         "security": [
           {
             "apiKey": [
@@ -56510,6 +57610,10 @@
           }
         },
         "operationId": "webhooks.getWebhookEndpointsByIdDeliveries",
+        "x-sdk": {
+          "resource": "webhookEndpoints.deliveries",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -58394,6 +59498,10 @@
           }
         },
         "operationId": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+        "x-sdk": {
+          "resource": "webhookEndpoints.deliveries",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -58466,6 +59574,10 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpointsByIdDeliveriesByEventIdReplay",
+        "x-sdk": {
+          "resource": "webhookEndpoints.deliveries",
+          "method": "replay"
+        },
         "security": [
           {
             "apiKey": [
@@ -58567,6 +59679,10 @@
           }
         },
         "operationId": "webhooks.postWebhookEndpointsByIdReplay",
+        "x-sdk": {
+          "resource": "webhookEndpoints.deliveries",
+          "method": "bulkReplay"
+        },
         "security": [
           {
             "apiKey": [
@@ -60355,6 +61471,10 @@
           }
         },
         "operationId": "events.getEvents",
+        "x-sdk": {
+          "resource": "events",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -62095,6 +63215,10 @@
           }
         },
         "operationId": "events.getEventsById",
+        "x-sdk": {
+          "resource": "events",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -62537,7 +63661,11 @@
             }
           }
         },
-        "operationId": "identities.getIdentities"
+        "operationId": "identities.getIdentities",
+        "x-sdk": {
+          "resource": "identities",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Upload an Apple identity",
@@ -62870,7 +63998,11 @@
             }
           }
         },
-        "operationId": "identities.postIdentities"
+        "operationId": "identities.postIdentities",
+        "x-sdk": {
+          "resource": "platform.identities",
+          "method": "create"
+        }
       }
     },
     "/api/v1/identities/{id}": {
@@ -63168,7 +64300,11 @@
             }
           }
         },
-        "operationId": "identities.getIdentitiesById"
+        "operationId": "identities.getIdentitiesById",
+        "x-sdk": {
+          "resource": "platform.identities",
+          "method": "retrieve"
+        }
       },
       "patch": {
         "summary": "Update an Apple identity",
@@ -63494,7 +64630,11 @@
             }
           }
         },
-        "operationId": "identities.patchIdentitiesById"
+        "operationId": "identities.patchIdentitiesById",
+        "x-sdk": {
+          "resource": "platform.identities",
+          "method": "update"
+        }
       },
       "delete": {
         "summary": "Delete an Apple identity",
@@ -63546,7 +64686,11 @@
             }
           }
         },
-        "operationId": "identities.deleteIdentitiesById"
+        "operationId": "identities.deleteIdentitiesById",
+        "x-sdk": {
+          "resource": "platform.identities",
+          "method": "del"
+        }
       }
     },
     "/api/v1/identities/{id}/rotate": {
@@ -63874,7 +65018,11 @@
             }
           }
         },
-        "operationId": "identities.postIdentitiesByIdRotate"
+        "operationId": "identities.postIdentitiesByIdRotate",
+        "x-sdk": {
+          "resource": "platform.identities",
+          "method": "rotate"
+        }
       }
     },
     "/api/v1/identities/{id}/apns-check": {
@@ -63956,7 +65104,11 @@
             }
           }
         },
-        "operationId": "identities.postIdentitiesByIdApnsCheck"
+        "operationId": "identities.postIdentitiesByIdApnsCheck",
+        "x-sdk": {
+          "resource": "platform.identities",
+          "method": "checkApns"
+        }
       }
     },
     "/api/v1/identities/{id}/push-key": {
@@ -64280,7 +65432,11 @@
             }
           }
         },
-        "operationId": "identities.putIdentitiesByIdPushKey"
+        "operationId": "identities.putIdentitiesByIdPushKey",
+        "x-sdk": {
+          "resource": "platform.identities.pushKey",
+          "method": "upload"
+        }
       },
       "delete": {
         "summary": "Remove the APNs push key of the identity team",
@@ -64576,14 +65732,18 @@
             }
           }
         },
-        "operationId": "identities.deleteIdentitiesByIdPushKey"
+        "operationId": "identities.deleteIdentitiesByIdPushKey",
+        "x-sdk": {
+          "resource": "platform.identities.pushKey",
+          "method": "del"
+        }
       }
     },
     "/api/v1/wallet-providers/accounts/verify": {
       "post": {
         "summary": "Check Samsung card-template state for an independently reviewed projection",
         "tags": [
-          "wallet providers"
+          "wallet-providers"
         ],
         "requestBody": {
           "required": true,
@@ -64672,14 +65832,18 @@
             }
           }
         },
-        "operationId": "wallet-providers.postWalletProvidersAccountsVerify"
+        "operationId": "wallet-providers.postWalletProvidersAccountsVerify",
+        "x-sdk": {
+          "resource": "walletProviderAccounts",
+          "method": "verify"
+        }
       }
     },
     "/api/v1/wallet-providers/accounts": {
       "get": {
         "summary": "Get provider account readiness",
         "tags": [
-          "wallet providers"
+          "wallet-providers"
         ],
         "parameters": [
           {
@@ -64846,12 +66010,16 @@
             }
           }
         },
-        "operationId": "wallet-providers.getWalletProvidersAccounts"
+        "operationId": "wallet-providers.getWalletProvidersAccounts",
+        "x-sdk": {
+          "resource": "walletProviderAccounts",
+          "method": "retrieve"
+        }
       },
       "put": {
         "summary": "Configure or rotate a provider account",
         "tags": [
-          "wallet providers"
+          "wallet-providers"
         ],
         "requestBody": {
           "required": true,
@@ -65151,14 +66319,18 @@
             }
           }
         },
-        "operationId": "wallet-providers.putWalletProvidersAccounts"
+        "operationId": "wallet-providers.putWalletProvidersAccounts",
+        "x-sdk": {
+          "resource": "walletProviderAccounts",
+          "method": "upsert"
+        }
       }
     },
     "/api/v1/wallet-providers/accounts/revoke": {
       "post": {
         "summary": "Revoke a provider account",
         "tags": [
-          "wallet providers"
+          "wallet-providers"
         ],
         "requestBody": {
           "required": true,
@@ -65331,14 +66503,18 @@
             }
           }
         },
-        "operationId": "wallet-providers.postWalletProvidersAccountsRevoke"
+        "operationId": "wallet-providers.postWalletProvidersAccountsRevoke",
+        "x-sdk": {
+          "resource": "walletProviderAccounts",
+          "method": "revoke"
+        }
       }
     },
     "/api/v1/wallet-providers/passes/{id}": {
       "get": {
         "summary": "Get local provider instance status for a pass",
         "tags": [
-          "wallet providers"
+          "wallet-providers"
         ],
         "parameters": [
           {
@@ -65707,6 +66883,10 @@
           }
         },
         "operationId": "wallet-providers.getWalletProvidersPassesById",
+        "x-sdk": {
+          "resource": "passes",
+          "method": "retrieveWalletStatus"
+        },
         "security": [
           {
             "apiKey": [
@@ -65880,7 +67060,11 @@
             }
           }
         },
-        "operationId": "users.getUsers"
+        "operationId": "users.getUsers",
+        "x-sdk": {
+          "resource": "platform.users",
+          "method": "list"
+        }
       }
     },
     "/api/v1/users/{id}": {
@@ -66217,7 +67401,11 @@
             }
           }
         },
-        "operationId": "users.getUsersById"
+        "operationId": "users.getUsersById",
+        "x-sdk": {
+          "resource": "platform.users",
+          "method": "retrieve"
+        }
       },
       "patch": {
         "summary": "Disable or enable a user",
@@ -66336,7 +67524,11 @@
             }
           }
         },
-        "operationId": "users.patchUsersById"
+        "operationId": "users.patchUsersById",
+        "x-sdk": {
+          "resource": "platform.users",
+          "method": "update"
+        }
       }
     },
     "/api/v1/users/{id}/emails": {
@@ -66692,7 +67884,11 @@
             }
           }
         },
-        "operationId": "users.postUsersByIdEmails"
+        "operationId": "users.postUsersByIdEmails",
+        "x-sdk": {
+          "resource": "platform.users.emails",
+          "method": "create"
+        }
       }
     },
     "/api/v1/users/{id}/emails/{email}": {
@@ -67037,7 +68233,11 @@
             }
           }
         },
-        "operationId": "users.deleteUsersByIdEmailsByEmail"
+        "operationId": "users.deleteUsersByIdEmailsByEmail",
+        "x-sdk": {
+          "resource": "platform.users.emails",
+          "method": "del"
+        }
       }
     },
     "/api/v1/users/{id}/emails/{email}/primary": {
@@ -67382,7 +68582,11 @@
             }
           }
         },
-        "operationId": "users.postUsersByIdEmailsByEmailPrimary"
+        "operationId": "users.postUsersByIdEmailsByEmailPrimary",
+        "x-sdk": {
+          "resource": "platform.users.emails",
+          "method": "makePrimary"
+        }
       }
     },
     "/api/v1/users/{id}/sessions/revoke": {
@@ -67436,7 +68640,11 @@
             }
           }
         },
-        "operationId": "users.postUsersByIdSessionsRevoke"
+        "operationId": "users.postUsersByIdSessionsRevoke",
+        "x-sdk": {
+          "resource": "platform.users.sessions",
+          "method": "revokeAll"
+        }
       }
     },
     "/api/v1/users/{id}/sessions/{sessionId}": {
@@ -67500,7 +68708,11 @@
             }
           }
         },
-        "operationId": "users.deleteUsersByIdSessionsBySessionId"
+        "operationId": "users.deleteUsersByIdSessionsBySessionId",
+        "x-sdk": {
+          "resource": "platform.users.sessions",
+          "method": "revoke"
+        }
       }
     },
     "/api/v1/api-keys/me": {
@@ -67631,6 +68843,10 @@
           }
         },
         "operationId": "api-keys.getApiKeysMe",
+        "x-sdk": {
+          "resource": "apiKeys",
+          "method": "retrieveCurrent"
+        },
         "security": [
           {
             "apiKey": []
@@ -67869,7 +69085,11 @@
             }
           }
         },
-        "operationId": "api-keys.getApiKeys"
+        "operationId": "api-keys.getApiKeys",
+        "x-sdk": {
+          "resource": "apiKeys",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Create an organization or platform API key (secret shown once)",
@@ -68099,7 +69319,11 @@
             }
           }
         },
-        "operationId": "api-keys.postApiKeys"
+        "operationId": "api-keys.postApiKeys",
+        "x-sdk": {
+          "resource": "apiKeys",
+          "method": "create"
+        }
       }
     },
     "/api/v1/api-keys/{id}": {
@@ -68173,7 +69397,11 @@
             }
           }
         },
-        "operationId": "api-keys.deleteApiKeysById"
+        "operationId": "api-keys.deleteApiKeysById",
+        "x-sdk": {
+          "resource": "apiKeys",
+          "method": "revoke"
+        }
       }
     },
     "/api/v1/settings": {
@@ -68333,7 +69561,11 @@
             }
           }
         },
-        "operationId": "settings.getSettings"
+        "operationId": "settings.getSettings",
+        "x-sdk": {
+          "resource": "settings",
+          "method": "retrieve"
+        }
       },
       "put": {
         "summary": "Update settings",
@@ -68506,7 +69738,11 @@
             }
           }
         },
-        "operationId": "settings.putSettings"
+        "operationId": "settings.putSettings",
+        "x-sdk": {
+          "resource": "settings",
+          "method": "update"
+        }
       }
     },
     "/api/v1/settings/impact": {
@@ -68545,7 +69781,11 @@
             }
           }
         },
-        "operationId": "settings.getSettingsImpact"
+        "operationId": "settings.getSettingsImpact",
+        "x-sdk": {
+          "resource": "platform.settings",
+          "method": "retrieveImpact"
+        }
       }
     },
     "/api/v1/settings/reply-to": {
@@ -68607,7 +69847,11 @@
             }
           }
         },
-        "operationId": "settings.getSettingsReplyTo"
+        "operationId": "settings.getSettingsReplyTo",
+        "x-sdk": {
+          "resource": "settings.replyTo",
+          "method": "retrieve"
+        }
       }
     },
     "/api/v1/settings/reply-to/resend": {
@@ -68677,7 +69921,11 @@
             }
           }
         },
-        "operationId": "settings.postSettingsReplyToResend"
+        "operationId": "settings.postSettingsReplyToResend",
+        "x-sdk": {
+          "resource": "settings.replyTo",
+          "method": "resendConfirmation"
+        }
       }
     },
     "/api/v1/settings/reply-to/confirm": {
@@ -68753,7 +70001,11 @@
             }
           }
         },
-        "operationId": "settings.postSettingsReplyToConfirm"
+        "operationId": "settings.postSettingsReplyToConfirm",
+        "x-sdk": {
+          "resource": "settings.replyTo",
+          "method": "confirm"
+        }
       }
     },
     "/api/v1/audit": {
@@ -68980,7 +70232,11 @@
             }
           }
         },
-        "operationId": "audit.getAudit"
+        "operationId": "audit.getAudit",
+        "x-sdk": {
+          "resource": "auditEntries",
+          "method": "list"
+        }
       }
     },
     "/api/v1/audit/platform": {
@@ -69207,7 +70463,11 @@
             }
           }
         },
-        "operationId": "audit.getAuditPlatform"
+        "operationId": "audit.getAuditPlatform",
+        "x-sdk": {
+          "resource": "platform.auditEntries",
+          "method": "list"
+        }
       }
     },
     "/api/v1/audit/export": {
@@ -69309,7 +70569,11 @@
             }
           }
         },
-        "operationId": "audit.getAuditExport"
+        "operationId": "audit.getAuditExport",
+        "x-sdk": {
+          "resource": "auditEntries",
+          "method": "export"
+        }
       }
     },
     "/api/v1/audit/platform/export": {
@@ -69411,7 +70675,11 @@
             }
           }
         },
-        "operationId": "audit.getAuditPlatformExport"
+        "operationId": "audit.getAuditPlatformExport",
+        "x-sdk": {
+          "resource": "platform.auditEntries",
+          "method": "export"
+        }
       }
     },
     "/api/v1/status": {
@@ -69579,7 +70847,11 @@
             }
           }
         },
-        "operationId": "status.getStatus"
+        "operationId": "status.getStatus",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "retrieve"
+        }
       }
     },
     "/api/v1/status/workflows": {
@@ -69685,7 +70957,11 @@
             }
           }
         },
-        "operationId": "status.getStatusWorkflows"
+        "operationId": "status.getStatusWorkflows",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "listWorkflowRuns"
+        }
       }
     },
     "/api/v1/metrics/overview": {
@@ -70237,7 +71513,11 @@
             }
           }
         },
-        "operationId": "metrics.getMetricsOverview"
+        "operationId": "metrics.getMetricsOverview",
+        "x-sdk": {
+          "resource": "metrics",
+          "method": "retrieveOverview"
+        }
       }
     },
     "/api/v1/metrics/platform/overview": {
@@ -70789,7 +72069,11 @@
             }
           }
         },
-        "operationId": "metrics.getMetricsPlatformOverview"
+        "operationId": "metrics.getMetricsPlatformOverview",
+        "x-sdk": {
+          "resource": "platform.metrics",
+          "method": "retrieveOverview"
+        }
       }
     },
     "/api/v1/metrics/activity": {
@@ -70994,7 +72278,11 @@
             }
           }
         },
-        "operationId": "metrics.getMetricsActivity"
+        "operationId": "metrics.getMetricsActivity",
+        "x-sdk": {
+          "resource": "metrics",
+          "method": "retrieveActivity"
+        }
       }
     },
     "/api/v1/scan/pair/preview": {
@@ -71065,7 +72353,13 @@
             }
           }
         },
-        "operationId": "scan.postScanPairPreview"
+        "operationId": "scan.postScanPairPreview",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "previewPairing",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/pair": {
@@ -71116,7 +72410,13 @@
             }
           }
         },
-        "operationId": "scan.postScanPair"
+        "operationId": "scan.postScanPair",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "pair",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/unpair": {
@@ -71140,7 +72440,13 @@
             }
           }
         },
-        "operationId": "scan.postScanUnpair"
+        "operationId": "scan.postScanUnpair",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "unpair",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/session": {
@@ -71197,7 +72503,13 @@
             }
           }
         },
-        "operationId": "scan.getScanSession"
+        "operationId": "scan.getScanSession",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "retrieveSession",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/staff": {
@@ -71274,7 +72586,13 @@
             }
           }
         },
-        "operationId": "scan.getScanStaff"
+        "operationId": "scan.getScanStaff",
+        "x-sdk": {
+          "resource": "terminal.staff",
+          "method": "search",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       },
       "post": {
         "summary": "Sign in staff on this scanner",
@@ -71328,7 +72646,13 @@
             }
           }
         },
-        "operationId": "scan.postScanStaff"
+        "operationId": "scan.postScanStaff",
+        "x-sdk": {
+          "resource": "terminal.staff",
+          "method": "signIn",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       },
       "delete": {
         "summary": "Sign out staff on this scanner",
@@ -71357,7 +72681,13 @@
             }
           }
         },
-        "operationId": "scan.deleteScanStaff"
+        "operationId": "scan.deleteScanStaff",
+        "x-sdk": {
+          "resource": "terminal.staff",
+          "method": "signOut",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/roll-call": {
@@ -71605,7 +72935,13 @@
             }
           }
         },
-        "operationId": "scan.getScanRollCall"
+        "operationId": "scan.getScanRollCall",
+        "x-sdk": {
+          "resource": "terminal.rollCalls",
+          "method": "retrieveOpen",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       },
       "post": {
         "summary": "Start a roll call, or join the open one",
@@ -71840,7 +73176,13 @@
             }
           }
         },
-        "operationId": "scan.postScanRollCall"
+        "operationId": "scan.postScanRollCall",
+        "x-sdk": {
+          "resource": "terminal.rollCalls",
+          "method": "create",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/roll-call/{id}": {
@@ -72089,7 +73431,13 @@
             }
           }
         },
-        "operationId": "scan.getScanRollCallById"
+        "operationId": "scan.getScanRollCallById",
+        "x-sdk": {
+          "resource": "terminal.rollCalls",
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/roll-call/{id}/marks": {
@@ -72427,7 +73775,13 @@
             }
           }
         },
-        "operationId": "scan.postScanRollCallByIdMarks"
+        "operationId": "scan.postScanRollCallByIdMarks",
+        "x-sdk": {
+          "resource": "terminal.rollCalls",
+          "method": "mark",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/roll-call/{id}/end": {
@@ -72676,7 +74030,13 @@
             }
           }
         },
-        "operationId": "scan.postScanRollCallByIdEnd"
+        "operationId": "scan.postScanRollCallByIdEnd",
+        "x-sdk": {
+          "resource": "terminal.rollCalls",
+          "method": "end",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/mark-out": {
@@ -72776,7 +74136,13 @@
             }
           }
         },
-        "operationId": "scan.postScanMarkOut"
+        "operationId": "scan.postScanMarkOut",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "markOut",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/overrides": {
@@ -72897,7 +74263,13 @@
             }
           }
         },
-        "operationId": "scan.postScanOverrides"
+        "operationId": "scan.postScanOverrides",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "override",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/overrides/{scanId}/note": {
@@ -72958,7 +74330,13 @@
             }
           }
         },
-        "operationId": "scan.postScanOverridesByScanIdNote"
+        "operationId": "scan.postScanOverridesByScanIdNote",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "addOverrideNote",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/visitors": {
@@ -73094,7 +74472,13 @@
             }
           }
         },
-        "operationId": "scan.getScanVisitors"
+        "operationId": "scan.getScanVisitors",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "listVisitors",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/sign-out": {
@@ -73187,7 +74571,13 @@
             }
           }
         },
-        "operationId": "scan.postScanSignOut"
+        "operationId": "scan.postScanSignOut",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "signOutEverywhere",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/role": {
@@ -73272,7 +74662,13 @@
             }
           }
         },
-        "operationId": "scan.postScanRole"
+        "operationId": "scan.postScanRole",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "setRole",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/tags/inspect": {
@@ -73462,7 +74858,13 @@
             }
           }
         },
-        "operationId": "scan.postScanTagsInspect"
+        "operationId": "scan.postScanTagsInspect",
+        "x-sdk": {
+          "resource": "terminal.tags",
+          "method": "inspect",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/tags/bind": {
@@ -73786,7 +75188,13 @@
             }
           }
         },
-        "operationId": "scan.postScanTagsBind"
+        "operationId": "scan.postScanTagsBind",
+        "x-sdk": {
+          "resource": "terminal.tags",
+          "method": "bind",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/tags/bindings/{bindingId}/undo": {
@@ -73844,7 +75252,13 @@
             }
           }
         },
-        "operationId": "scan.postScanTagsBindingsByBindingIdUndo"
+        "operationId": "scan.postScanTagsBindingsByBindingIdUndo",
+        "x-sdk": {
+          "resource": "terminal.tags",
+          "method": "undoBind",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/session/open-now": {
@@ -73950,7 +75364,13 @@
             }
           }
         },
-        "operationId": "scan.postScanSessionOpenNow"
+        "operationId": "scan.postScanSessionOpenNow",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "openSessionNow",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/tag-enrollments/pending": {
@@ -74030,7 +75450,13 @@
             }
           }
         },
-        "operationId": "scan.getScanTagEnrollmentsPending"
+        "operationId": "scan.getScanTagEnrollmentsPending",
+        "x-sdk": {
+          "resource": "terminal.tagEnrollments",
+          "method": "retrievePending",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/tag-enrollments/{id}/complete": {
@@ -74173,7 +75599,13 @@
             }
           }
         },
-        "operationId": "scan.postScanTagEnrollmentsByIdComplete"
+        "operationId": "scan.postScanTagEnrollmentsByIdComplete",
+        "x-sdk": {
+          "resource": "terminal.tagEnrollments",
+          "method": "complete",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/tag-enrollments/{id}/decline": {
@@ -74227,7 +75659,13 @@
             }
           }
         },
-        "operationId": "scan.postScanTagEnrollmentsByIdDecline"
+        "operationId": "scan.postScanTagEnrollmentsByIdDecline",
+        "x-sdk": {
+          "resource": "terminal.tagEnrollments",
+          "method": "decline",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/roster": {
@@ -74281,7 +75719,13 @@
             }
           }
         },
-        "operationId": "scan.getScanRoster"
+        "operationId": "scan.getScanRoster",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "retrieveRoster",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/batch": {
@@ -74405,7 +75849,13 @@
             }
           }
         },
-        "operationId": "scan.postScanBatch"
+        "operationId": "scan.postScanBatch",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "uploadBatch",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/branding/logo": {
@@ -74440,7 +75890,13 @@
             }
           }
         },
-        "operationId": "scan.getScanBrandingLogo"
+        "operationId": "scan.getScanBrandingLogo",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "downloadLogo",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/passes/{passId}/photo": {
@@ -74544,7 +76000,13 @@
             }
           }
         },
-        "operationId": "scan.postScanPassesByPassIdPhoto"
+        "operationId": "scan.postScanPassesByPassIdPhoto",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "addMemberPhoto",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/activity": {
@@ -74588,7 +76050,13 @@
             }
           }
         },
-        "operationId": "scan.getScanActivity"
+        "operationId": "scan.getScanActivity",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "listActivity",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/device": {
@@ -74662,7 +76130,13 @@
             }
           }
         },
-        "operationId": "scan.postScanDevice"
+        "operationId": "scan.postScanDevice",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "reportDevice",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/resolve": {
@@ -74883,6 +76357,10 @@
           }
         },
         "operationId": "scan.postScanResolve",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "resolve"
+        },
         "security": [
           {
             "apiKey": [
@@ -75174,6 +76652,10 @@
           }
         },
         "operationId": "scan.postScanActions",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "act"
+        },
         "security": [
           {
             "apiKey": [
@@ -75227,7 +76709,13 @@
             }
           }
         },
-        "operationId": "scan.getScanScans"
+        "operationId": "scan.getScanScans",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "listScans",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/summary": {
@@ -75285,7 +76773,13 @@
             }
           }
         },
-        "operationId": "scan.getScanSummary"
+        "operationId": "scan.getScanSummary",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "retrieveSummary",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/stats": {
@@ -75330,7 +76824,13 @@
             }
           }
         },
-        "operationId": "scan.getScanStats"
+        "operationId": "scan.getScanStats",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "retrieveStats",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/passes/{passId}/assets/{name}": {
@@ -75380,7 +76880,13 @@
             }
           }
         },
-        "operationId": "scan.getScanPassesByPassIdAssetsByName"
+        "operationId": "scan.getScanPassesByPassIdAssetsByName",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "downloadPassAsset",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/lookup": {
@@ -75485,7 +76991,13 @@
             }
           }
         },
-        "operationId": "scan.postScanLookup"
+        "operationId": "scan.postScanLookup",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "lookup",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/scans/{scanId}/undo": {
@@ -75604,6 +77116,10 @@
           }
         },
         "operationId": "scan.postScanScansByScanIdUndo",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "undo"
+        },
         "security": [
           {
             "apiKey": [
@@ -75726,7 +77242,11 @@
             }
           }
         },
-        "operationId": "scanners.getScanners"
+        "operationId": "scanners.getScanners",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Create a scanner (a device comes with a pairing code)",
@@ -76017,7 +77537,11 @@
             }
           }
         },
-        "operationId": "scanners.postScanners"
+        "operationId": "scanners.postScanners",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "create"
+        }
       }
     },
     "/api/v1/scanners/{id}": {
@@ -76060,7 +77584,11 @@
             }
           }
         },
-        "operationId": "scanners.getScannersById"
+        "operationId": "scanners.getScannersById",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "retrieve"
+        }
       },
       "patch": {
         "summary": "Edit a scanner",
@@ -76339,7 +77867,11 @@
             }
           }
         },
-        "operationId": "scanners.patchScannersById"
+        "operationId": "scanners.patchScannersById",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "update"
+        }
       }
     },
     "/api/v1/scanners/{id}/pairing": {
@@ -76410,7 +77942,11 @@
             }
           }
         },
-        "operationId": "scanners.postScannersByIdPairing"
+        "operationId": "scanners.postScannersByIdPairing",
+        "x-sdk": {
+          "resource": "scanners.pairing",
+          "method": "create"
+        }
       },
       "get": {
         "summary": "Poll a pairing",
@@ -76484,7 +78020,11 @@
             }
           }
         },
-        "operationId": "scanners.getScannersByIdPairing"
+        "operationId": "scanners.getScannersByIdPairing",
+        "x-sdk": {
+          "resource": "scanners.pairing",
+          "method": "retrieve"
+        }
       }
     },
     "/api/v1/scanners/{id}/pair-here": {
@@ -76538,7 +78078,13 @@
             }
           }
         },
-        "operationId": "scanners.postScannersByIdPairHere"
+        "operationId": "scanners.postScannersByIdPairHere",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "pairHere",
+          "sdk": false,
+          "reason": "Binds the calling browser or the signed-in admin as a scanner device."
+        }
       }
     },
     "/api/v1/scanners/{id}/token": {
@@ -76605,7 +78151,11 @@
             }
           }
         },
-        "operationId": "scanners.postScannersByIdToken"
+        "operationId": "scanners.postScannersByIdToken",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "rotateToken"
+        }
       }
     },
     "/api/v1/scanners/{id}/revoke": {
@@ -76648,7 +78198,11 @@
             }
           }
         },
-        "operationId": "scanners.postScannersByIdRevoke"
+        "operationId": "scanners.postScannersByIdRevoke",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "revoke"
+        }
       }
     },
     "/api/v1/scanners/{id}/mode": {
@@ -76716,7 +78270,11 @@
             }
           }
         },
-        "operationId": "scanners.postScannersByIdMode"
+        "operationId": "scanners.postScannersByIdMode",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "setMode"
+        }
       }
     },
     "/api/v1/scanners/{id}/sample-pass": {
@@ -76775,7 +78333,11 @@
             }
           }
         },
-        "operationId": "scanners.postScannersByIdSamplePass"
+        "operationId": "scanners.postScannersByIdSamplePass",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "createSamplePass"
+        }
       }
     },
     "/api/v1/scan-setups": {
@@ -77159,7 +78721,11 @@
             }
           }
         },
-        "operationId": "scanners.getScanSetups"
+        "operationId": "scanners.getScanSetups",
+        "x-sdk": {
+          "resource": "scanSetups",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Create a managed scanner or screen",
@@ -77808,7 +79374,11 @@
             }
           }
         },
-        "operationId": "scanners.postScanSetups"
+        "operationId": "scanners.postScanSetups",
+        "x-sdk": {
+          "resource": "scanSetups",
+          "method": "create"
+        }
       }
     },
     "/api/v1/scan-setups/admin-session": {
@@ -77895,7 +79465,13 @@
             }
           }
         },
-        "operationId": "scanners.postScanSetupsAdminSession"
+        "operationId": "scanners.postScanSetupsAdminSession",
+        "x-sdk": {
+          "resource": "scanSetups",
+          "method": "createAdminSession",
+          "sdk": false,
+          "reason": "Binds the calling browser or the signed-in admin as a scanner device."
+        }
       }
     },
     "/api/v1/scan-setups/{id}": {
@@ -78209,7 +79785,11 @@
             }
           }
         },
-        "operationId": "scanners.getScanSetupsById"
+        "operationId": "scanners.getScanSetupsById",
+        "x-sdk": {
+          "resource": "scanSetups",
+          "method": "retrieve"
+        }
       },
       "patch": {
         "summary": "Update a managed scanner or screen",
@@ -78816,7 +80396,11 @@
             }
           }
         },
-        "operationId": "scanners.patchScanSetupsById"
+        "operationId": "scanners.patchScanSetupsById",
+        "x-sdk": {
+          "resource": "scanSetups",
+          "method": "update"
+        }
       }
     },
     "/api/v1/scanning-sessions": {
@@ -78897,7 +80481,11 @@
             }
           }
         },
-        "operationId": "scanners.getScanningSessions"
+        "operationId": "scanners.getScanningSessions",
+        "x-sdk": {
+          "resource": "scanningSessions",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Create a shared scanning session",
@@ -79355,7 +80943,11 @@
             }
           }
         },
-        "operationId": "scanners.postScanningSessions"
+        "operationId": "scanners.postScanningSessions",
+        "x-sdk": {
+          "resource": "scanningSessions",
+          "method": "create"
+        }
       }
     },
     "/api/v1/scanning-sessions/join": {
@@ -79442,7 +81034,13 @@
             }
           }
         },
-        "operationId": "scanners.postScanningSessionsJoin"
+        "operationId": "scanners.postScanningSessionsJoin",
+        "x-sdk": {
+          "resource": "scanningSessions",
+          "method": "join",
+          "sdk": false,
+          "reason": "Binds the calling browser or the signed-in admin as a scanner device."
+        }
       }
     },
     "/api/v1/scanning-sessions/{id}": {
@@ -79485,7 +81083,11 @@
             }
           }
         },
-        "operationId": "scanners.getScanningSessionsById"
+        "operationId": "scanners.getScanningSessionsById",
+        "x-sdk": {
+          "resource": "scanningSessions",
+          "method": "retrieve"
+        }
       },
       "patch": {
         "summary": "Update shared session rules",
@@ -79956,7 +81558,11 @@
             }
           }
         },
-        "operationId": "scanners.patchScanningSessionsById"
+        "operationId": "scanners.patchScanningSessionsById",
+        "x-sdk": {
+          "resource": "scanningSessions",
+          "method": "update"
+        }
       }
     },
     "/api/v1/scanning-sessions/{id}/summary": {
@@ -79999,7 +81605,11 @@
             }
           }
         },
-        "operationId": "scanners.getScanningSessionsByIdSummary"
+        "operationId": "scanners.getScanningSessionsByIdSummary",
+        "x-sdk": {
+          "resource": "scanningSessions",
+          "method": "retrieveSummary"
+        }
       }
     },
     "/api/v1/scanning-sessions/{id}/hold": {
@@ -80114,7 +81724,11 @@
             }
           }
         },
-        "operationId": "scanners.postScanningSessionsByIdHold"
+        "operationId": "scanners.postScanningSessionsByIdHold",
+        "x-sdk": {
+          "resource": "scanningSessions",
+          "method": "overrideHours"
+        }
       }
     },
     "/api/v1/scanning-sessions/{id}/devices": {
@@ -80225,7 +81839,11 @@
             }
           }
         },
-        "operationId": "scanners.postScanningSessionsByIdDevices"
+        "operationId": "scanners.postScanningSessionsByIdDevices",
+        "x-sdk": {
+          "resource": "scanningSessions.devices",
+          "method": "create"
+        }
       }
     },
     "/api/v1/scanning-sessions/{id}/devices/{deviceId}": {
@@ -80345,7 +81963,11 @@
             }
           }
         },
-        "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId"
+        "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+        "x-sdk": {
+          "resource": "scanningSessions.devices",
+          "method": "update"
+        }
       }
     },
     "/api/v1/scan/live": {
@@ -81959,7 +83581,13 @@
             }
           }
         },
-        "operationId": "scan.getScanLive"
+        "operationId": "scan.getScanLive",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "connectLive",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/live/passes/{passId}/assets/member.png": {
@@ -82005,7 +83633,13 @@
             }
           }
         },
-        "operationId": "scan.getScanLivePassesByPassIdAssetsMemberPng"
+        "operationId": "scan.getScanLivePassesByPassIdAssetsMemberPng",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "downloadMemberPhoto",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan/live/inside": {
@@ -82235,7 +83869,13 @@
             }
           }
         },
-        "operationId": "scan.getScanLiveInside"
+        "operationId": "scan.getScanLiveInside",
+        "x-sdk": {
+          "resource": "terminal",
+          "method": "listInside",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        }
       }
     },
     "/api/v1/scan-events/{id}/inside": {
@@ -82475,7 +84115,11 @@
             }
           }
         },
-        "operationId": "scan-events.getScanEventsByIdInside"
+        "operationId": "scan-events.getScanEventsByIdInside",
+        "x-sdk": {
+          "resource": "scanEvents",
+          "method": "listInside"
+        }
       }
     },
     "/api/v1/scan-events/{id}/mark-out": {
@@ -82537,7 +84181,11 @@
             }
           }
         },
-        "operationId": "scan-events.postScanEventsByIdMarkOut"
+        "operationId": "scan-events.postScanEventsByIdMarkOut",
+        "x-sdk": {
+          "resource": "scanEvents",
+          "method": "markOut"
+        }
       }
     },
     "/api/v1/scan-events": {
@@ -82641,7 +84289,11 @@
             }
           }
         },
-        "operationId": "scan-events.getScanEvents"
+        "operationId": "scan-events.getScanEvents",
+        "x-sdk": {
+          "resource": "scanEvents",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Create a scan event",
@@ -82771,7 +84423,11 @@
             }
           }
         },
-        "operationId": "scan-events.postScanEvents"
+        "operationId": "scan-events.postScanEvents",
+        "x-sdk": {
+          "resource": "scanEvents",
+          "method": "create"
+        }
       }
     },
     "/api/v1/scan-events/{id}": {
@@ -82814,7 +84470,11 @@
             }
           }
         },
-        "operationId": "scan-events.getScanEventsById"
+        "operationId": "scan-events.getScanEventsById",
+        "x-sdk": {
+          "resource": "scanEvents",
+          "method": "retrieve"
+        }
       },
       "patch": {
         "summary": "Edit a scan event",
@@ -82946,7 +84606,11 @@
             }
           }
         },
-        "operationId": "scan-events.patchScanEventsById"
+        "operationId": "scan-events.patchScanEventsById",
+        "x-sdk": {
+          "resource": "scanEvents",
+          "method": "update"
+        }
       }
     },
     "/api/v1/scan-events/{id}/archive": {
@@ -82989,7 +84653,11 @@
             }
           }
         },
-        "operationId": "scan-events.postScanEventsByIdArchive"
+        "operationId": "scan-events.postScanEventsByIdArchive",
+        "x-sdk": {
+          "resource": "scanEvents",
+          "method": "archive"
+        }
       }
     },
     "/api/v1/scan-events/{id}/scanners": {
@@ -83056,7 +84724,11 @@
             }
           }
         },
-        "operationId": "scan-events.postScanEventsByIdScanners"
+        "operationId": "scan-events.postScanEventsByIdScanners",
+        "x-sdk": {
+          "resource": "scanEvents",
+          "method": "attachScanners"
+        }
       }
     },
     "/api/v1/scan-staff": {
@@ -83144,7 +84816,11 @@
             }
           }
         },
-        "operationId": "scan-staff.getScanStaff"
+        "operationId": "scan-staff.getScanStaff",
+        "x-sdk": {
+          "resource": "scanStaff",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Create a staff member and reveal their PIN once",
@@ -83222,7 +84898,11 @@
             }
           }
         },
-        "operationId": "scan-staff.postScanStaff"
+        "operationId": "scan-staff.postScanStaff",
+        "x-sdk": {
+          "resource": "scanStaff",
+          "method": "create"
+        }
       }
     },
     "/api/v1/scan-staff/{id}": {
@@ -83304,7 +84984,11 @@
             }
           }
         },
-        "operationId": "scan-staff.patchScanStaffById"
+        "operationId": "scan-staff.patchScanStaffById",
+        "x-sdk": {
+          "resource": "scanStaff",
+          "method": "update"
+        }
       }
     },
     "/api/v1/scan-staff/{id}/reset-pin": {
@@ -83366,7 +85050,11 @@
             }
           }
         },
-        "operationId": "scan-staff.postScanStaffByIdResetPin"
+        "operationId": "scan-staff.postScanStaffByIdResetPin",
+        "x-sdk": {
+          "resource": "scanStaff",
+          "method": "resetPin"
+        }
       }
     },
     "/api/v1/scan-zones/{id}/inside": {
@@ -83606,7 +85294,11 @@
             }
           }
         },
-        "operationId": "scan-zones.getScanZonesByIdInside"
+        "operationId": "scan-zones.getScanZonesByIdInside",
+        "x-sdk": {
+          "resource": "scanZones",
+          "method": "listInside"
+        }
       }
     },
     "/api/v1/scan-zones/{id}/mark-out": {
@@ -83668,7 +85360,11 @@
             }
           }
         },
-        "operationId": "scan-zones.postScanZonesByIdMarkOut"
+        "operationId": "scan-zones.postScanZonesByIdMarkOut",
+        "x-sdk": {
+          "resource": "scanZones",
+          "method": "markOut"
+        }
       }
     },
     "/api/v1/scan-zones": {
@@ -83932,7 +85628,11 @@
             }
           }
         },
-        "operationId": "scan-zones.getScanZones"
+        "operationId": "scan-zones.getScanZones",
+        "x-sdk": {
+          "resource": "scanZones",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Create a zone",
@@ -84217,7 +85917,11 @@
             }
           }
         },
-        "operationId": "scan-zones.postScanZones"
+        "operationId": "scan-zones.postScanZones",
+        "x-sdk": {
+          "resource": "scanZones",
+          "method": "create"
+        }
       }
     },
     "/api/v1/scan-zones/{id}": {
@@ -84505,7 +86209,11 @@
             }
           }
         },
-        "operationId": "scan-zones.patchScanZonesById"
+        "operationId": "scan-zones.patchScanZonesById",
+        "x-sdk": {
+          "resource": "scanZones",
+          "method": "update"
+        }
       }
     },
     "/api/v1/scan-zones/{id}/archive": {
@@ -84719,7 +86427,11 @@
             }
           }
         },
-        "operationId": "scan-zones.postScanZonesByIdArchive"
+        "operationId": "scan-zones.postScanZonesByIdArchive",
+        "x-sdk": {
+          "resource": "scanZones",
+          "method": "archive"
+        }
       }
     },
     "/api/v1/scan-zones/{id}/restore": {
@@ -84933,7 +86645,11 @@
             }
           }
         },
-        "operationId": "scan-zones.postScanZonesByIdRestore"
+        "operationId": "scan-zones.postScanZonesByIdRestore",
+        "x-sdk": {
+          "resource": "scanZones",
+          "method": "restore"
+        }
       }
     },
     "/api/v1/scan-zones/visits/{id}/reset": {
@@ -84993,7 +86709,11 @@
             }
           }
         },
-        "operationId": "scan-zones.postScanZonesVisitsByIdReset"
+        "operationId": "scan-zones.postScanZonesVisitsByIdReset",
+        "x-sdk": {
+          "resource": "scanZones",
+          "method": "resetVisits"
+        }
       }
     },
     "/api/v1/scans": {
@@ -85245,6 +86965,10 @@
           }
         },
         "operationId": "scans.getScans",
+        "x-sdk": {
+          "resource": "scans",
+          "method": "list"
+        },
         "security": [
           {
             "apiKey": [
@@ -85445,7 +87169,11 @@
             }
           }
         },
-        "operationId": "scans.getScansExport"
+        "operationId": "scans.getScansExport",
+        "x-sdk": {
+          "resource": "scans",
+          "method": "export"
+        }
       }
     },
     "/api/v1/scans/{id}": {
@@ -85488,7 +87216,11 @@
             }
           }
         },
-        "operationId": "scans.getScansById"
+        "operationId": "scans.getScansById",
+        "x-sdk": {
+          "resource": "scans",
+          "method": "retrieve"
+        }
       }
     },
     "/api/v1/scans/{id}/undo": {
@@ -85551,7 +87283,11 @@
             }
           }
         },
-        "operationId": "scans.postScansByIdUndo"
+        "operationId": "scans.postScansByIdUndo",
+        "x-sdk": {
+          "resource": "scans",
+          "method": "undo"
+        }
       }
     },
     "/api/v1/roll-calls": {
@@ -85822,6 +87558,10 @@
           }
         },
         "operationId": "roll-calls.getRollCalls",
+        "x-sdk": {
+          "resource": "rollCalls",
+          "method": "retrieveOpen"
+        },
         "security": [
           {
             "apiKey": [
@@ -86089,6 +87829,10 @@
           }
         },
         "operationId": "roll-calls.postRollCalls",
+        "x-sdk": {
+          "resource": "rollCalls",
+          "method": "create"
+        },
         "security": [
           {
             "apiKey": [
@@ -86368,6 +88112,10 @@
           }
         },
         "operationId": "roll-calls.getRollCallsById",
+        "x-sdk": {
+          "resource": "rollCalls",
+          "method": "retrieve"
+        },
         "security": [
           {
             "apiKey": [
@@ -86736,6 +88484,10 @@
           }
         },
         "operationId": "roll-calls.postRollCallsByIdMarks",
+        "x-sdk": {
+          "resource": "rollCalls",
+          "method": "mark"
+        },
         "security": [
           {
             "apiKey": [
@@ -87015,6 +88767,10 @@
           }
         },
         "operationId": "roll-calls.postRollCallsByIdEnd",
+        "x-sdk": {
+          "resource": "rollCalls",
+          "method": "end"
+        },
         "security": [
           {
             "apiKey": [
@@ -87121,7 +88877,11 @@
             }
           }
         },
-        "operationId": "scan-display.getScanDisplayPreview"
+        "operationId": "scan-display.getScanDisplayPreview",
+        "x-sdk": {
+          "resource": "scanDisplays",
+          "method": "preview"
+        }
       }
     },
     "/api/v1/nfc/passes/{passId}/tags": {
@@ -87442,7 +89202,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcPassesByPassIdTags"
+        "operationId": "nfc-tags.getNfcPassesByPassIdTags",
+        "x-sdk": {
+          "resource": "nfc.tags",
+          "method": "listForPass"
+        }
       },
       "post": {
         "summary": "Put a removed tag back on a pass",
@@ -87772,7 +89536,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.postNfcPassesByPassIdTags"
+        "operationId": "nfc-tags.postNfcPassesByPassIdTags",
+        "x-sdk": {
+          "resource": "nfc.tags",
+          "method": "rebind"
+        }
       }
     },
     "/api/v1/nfc/bindings/{bindingId}": {
@@ -88075,7 +89843,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.deleteNfcBindingsByBindingId"
+        "operationId": "nfc-tags.deleteNfcBindingsByBindingId",
+        "x-sdk": {
+          "resource": "nfc.bindings",
+          "method": "del"
+        }
       },
       "patch": {
         "summary": "Change what a tag works with",
@@ -88404,7 +90176,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.patchNfcBindingsByBindingId"
+        "operationId": "nfc-tags.patchNfcBindingsByBindingId",
+        "x-sdk": {
+          "resource": "nfc.bindings",
+          "method": "update"
+        }
       }
     },
     "/api/v1/nfc/tags": {
@@ -88768,7 +90544,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcTags"
+        "operationId": "nfc-tags.getNfcTags",
+        "x-sdk": {
+          "resource": "nfc.tags",
+          "method": "list"
+        }
       }
     },
     "/api/v1/nfc/tags/{id}": {
@@ -89071,7 +90851,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcTagsById"
+        "operationId": "nfc-tags.getNfcTagsById",
+        "x-sdk": {
+          "resource": "nfc.tags",
+          "method": "retrieve"
+        }
       },
       "patch": {
         "summary": "Rename a tag",
@@ -89396,7 +91180,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.patchNfcTagsById"
+        "operationId": "nfc-tags.patchNfcTagsById",
+        "x-sdk": {
+          "resource": "nfc.tags",
+          "method": "update"
+        }
       }
     },
     "/api/v1/nfc/tags/{id}/retire": {
@@ -89699,7 +91487,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.postNfcTagsByIdRetire"
+        "operationId": "nfc-tags.postNfcTagsByIdRetire",
+        "x-sdk": {
+          "resource": "nfc.tags",
+          "method": "retire"
+        }
       }
     },
     "/api/v1/nfc/tags/{id}/restore": {
@@ -90002,7 +91794,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.postNfcTagsByIdRestore"
+        "operationId": "nfc-tags.postNfcTagsByIdRestore",
+        "x-sdk": {
+          "resource": "nfc.tags",
+          "method": "restore"
+        }
       }
     },
     "/api/v1/nfc/tags/{id}/lost": {
@@ -90305,7 +92101,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.postNfcTagsByIdLost"
+        "operationId": "nfc-tags.postNfcTagsByIdLost",
+        "x-sdk": {
+          "resource": "nfc.tags",
+          "method": "reportLost"
+        }
       }
     },
     "/api/v1/nfc/scanners": {
@@ -90432,7 +92232,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcScanners"
+        "operationId": "nfc-tags.getNfcScanners",
+        "x-sdk": {
+          "resource": "nfc.enrollments",
+          "method": "listScanners"
+        }
       }
     },
     "/api/v1/nfc/passes/{passId}/enrollments": {
@@ -90750,7 +92554,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.postNfcPassesByPassIdEnrollments"
+        "operationId": "nfc-tags.postNfcPassesByPassIdEnrollments",
+        "x-sdk": {
+          "resource": "nfc.enrollments",
+          "method": "create"
+        }
       }
     },
     "/api/v1/nfc/passes/{passId}/enrollments/{id}": {
@@ -91049,7 +92857,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcPassesByPassIdEnrollmentsById"
+        "operationId": "nfc-tags.getNfcPassesByPassIdEnrollmentsById",
+        "x-sdk": {
+          "resource": "nfc.enrollments",
+          "method": "retrieve"
+        }
       },
       "delete": {
         "summary": "Cancel a tag request",
@@ -91346,7 +93158,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.deleteNfcPassesByPassIdEnrollmentsById"
+        "operationId": "nfc-tags.deleteNfcPassesByPassIdEnrollmentsById",
+        "x-sdk": {
+          "resource": "nfc.enrollments",
+          "method": "cancel"
+        }
       }
     },
     "/api/v1/nfc/tags/{id}/history": {
@@ -91575,7 +93391,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcTagsByIdHistory"
+        "operationId": "nfc-tags.getNfcTagsByIdHistory",
+        "x-sdk": {
+          "resource": "nfc.tags",
+          "method": "listHistory"
+        }
       }
     },
     "/api/v1/nfc/users/{userId}/tags": {
@@ -91916,7 +93736,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcUsersByUserIdTags"
+        "operationId": "nfc-tags.getNfcUsersByUserIdTags",
+        "x-sdk": {
+          "resource": "nfc.tags",
+          "method": "listForUser"
+        }
       }
     },
     "/api/v1/nfc/tag-types": {
@@ -92116,7 +93940,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcTagTypes"
+        "operationId": "nfc-tags.getNfcTagTypes",
+        "x-sdk": {
+          "resource": "nfc.tagTypes",
+          "method": "list"
+        }
       },
       "post": {
         "security": [
@@ -92360,7 +94188,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.postNfcTagTypes"
+        "operationId": "nfc-tags.postNfcTagTypes",
+        "x-sdk": {
+          "resource": "nfc.tagTypes",
+          "method": "create"
+        }
       }
     },
     "/api/v1/nfc/tag-types/{id}": {
@@ -92599,7 +94431,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.patchNfcTagTypesById"
+        "operationId": "nfc-tags.patchNfcTagTypesById",
+        "x-sdk": {
+          "resource": "nfc.tagTypes",
+          "method": "update"
+        }
       }
     },
     "/api/v1/nfc/tag-types/{id}/archive": {
@@ -92780,7 +94616,11 @@
             }
           }
         },
-        "operationId": "nfc-tags.postNfcTagTypesByIdArchive"
+        "operationId": "nfc-tags.postNfcTagTypesByIdArchive",
+        "x-sdk": {
+          "resource": "nfc.tagTypes",
+          "method": "archive"
+        }
       }
     },
     "/api/v1/nfc/keysets": {
@@ -92921,7 +94761,11 @@
             }
           }
         },
-        "operationId": "nfc-keysets.getNfcKeysets"
+        "operationId": "nfc-keysets.getNfcKeysets",
+        "x-sdk": {
+          "resource": "nfc.keysets",
+          "method": "list"
+        }
       },
       "post": {
         "summary": "Create a tag keyset",
@@ -93127,7 +94971,11 @@
             }
           }
         },
-        "operationId": "nfc-keysets.postNfcKeysets"
+        "operationId": "nfc-keysets.postNfcKeysets",
+        "x-sdk": {
+          "resource": "nfc.keysets",
+          "method": "create"
+        }
       }
     },
     "/api/v1/nfc/keysets/{id}/rotate": {
@@ -93315,7 +95163,11 @@
             }
           }
         },
-        "operationId": "nfc-keysets.postNfcKeysetsByIdRotate"
+        "operationId": "nfc-keysets.postNfcKeysetsByIdRotate",
+        "x-sdk": {
+          "resource": "nfc.keysets",
+          "method": "rotate"
+        }
       }
     },
     "/api/v1/nfc/keysets/{id}/keys/{version}/retire": {
@@ -93448,7 +95300,11 @@
             }
           }
         },
-        "operationId": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire"
+        "operationId": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire",
+        "x-sdk": {
+          "resource": "nfc.keysets",
+          "method": "retireKey"
+        }
       }
     },
     "/api/v1/nfc/keysets/{id}/disable": {
@@ -93571,7 +95427,11 @@
             }
           }
         },
-        "operationId": "nfc-keysets.postNfcKeysetsByIdDisable"
+        "operationId": "nfc-keysets.postNfcKeysetsByIdDisable",
+        "x-sdk": {
+          "resource": "nfc.keysets",
+          "method": "disable"
+        }
       }
     },
     "/t/{slug}": {
@@ -93605,7 +95465,13 @@
             }
           }
         },
-        "operationId": "nfc.getTBySlug"
+        "operationId": "nfc.getTBySlug",
+        "x-sdk": {
+          "resource": "public.tags",
+          "method": "retrievePage",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/wallet/v1/google/{accountId}": {
@@ -93640,7 +95506,13 @@
             }
           }
         },
-        "operationId": "google-wallet.postWalletV1GoogleByAccountId"
+        "operationId": "google-wallet.postWalletV1GoogleByAccountId",
+        "x-sdk": {
+          "resource": "googleWallet",
+          "method": "receiveCallback",
+          "sdk": false,
+          "reason": "Wallet provider server callback, signed by the provider."
+        }
       }
     },
     "/wallet/v1/samsung/cards/{cardId}/{refId}": {
@@ -93684,7 +95556,13 @@
             }
           }
         },
-        "operationId": "samsung.getWalletV1SamsungCardsByCardIdByRefId"
+        "operationId": "samsung.getWalletV1SamsungCardsByCardIdByRefId",
+        "x-sdk": {
+          "resource": "samsungWallet.cards",
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "Wallet provider server callback, signed by the provider."
+        }
       },
       "post": {
         "summary": "Receive a Samsung Wallet card-state callback",
@@ -93726,7 +95604,13 @@
             }
           }
         },
-        "operationId": "samsung.postWalletV1SamsungCardsByCardIdByRefId"
+        "operationId": "samsung.postWalletV1SamsungCardsByCardIdByRefId",
+        "x-sdk": {
+          "resource": "samsungWallet",
+          "method": "receiveCallback",
+          "sdk": false,
+          "reason": "Wallet provider server callback, signed by the provider."
+        }
       }
     },
     "/wallet/v1/devices/{deviceId}/registrations/{passTypeId}/{serial}": {
@@ -93776,7 +95660,13 @@
             }
           }
         },
-        "operationId": "apple.postWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial"
+        "operationId": "apple.postWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial",
+        "x-sdk": {
+          "resource": "apple.registrations",
+          "method": "create",
+          "sdk": false,
+          "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
+        }
       },
       "delete": {
         "summary": "Unregister a device",
@@ -93824,7 +95714,13 @@
             }
           }
         },
-        "operationId": "apple.deleteWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial"
+        "operationId": "apple.deleteWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial",
+        "x-sdk": {
+          "resource": "apple.registrations",
+          "method": "del",
+          "sdk": false,
+          "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
+        }
       }
     },
     "/wallet/v1/devices/{deviceId}/registrations/{passTypeId}": {
@@ -93874,7 +95770,13 @@
             }
           }
         },
-        "operationId": "apple.getWalletV1DevicesByDeviceIdRegistrationsByPassTypeId"
+        "operationId": "apple.getWalletV1DevicesByDeviceIdRegistrationsByPassTypeId",
+        "x-sdk": {
+          "resource": "apple.registrations",
+          "method": "listUpdated",
+          "sdk": false,
+          "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
+        }
       }
     },
     "/wallet/v1/passes/{passTypeId}/{serial}": {
@@ -93916,7 +95818,13 @@
             }
           }
         },
-        "operationId": "apple.getWalletV1PassesByPassTypeIdBySerial"
+        "operationId": "apple.getWalletV1PassesByPassTypeIdBySerial",
+        "x-sdk": {
+          "resource": "apple.passes",
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
+        }
       }
     },
     "/wallet/v1/passes/{passTypeId}/{serial}/personalize": {
@@ -93958,7 +95866,13 @@
             }
           }
         },
-        "operationId": "apple.postWalletV1PassesByPassTypeIdBySerialPersonalize"
+        "operationId": "apple.postWalletV1PassesByPassTypeIdBySerialPersonalize",
+        "x-sdk": {
+          "resource": "apple.passes",
+          "method": "personalize",
+          "sdk": false,
+          "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
+        }
       }
     },
     "/wallet/v1/log": {
@@ -94005,7 +95919,13 @@
             }
           }
         },
-        "operationId": "apple.postWalletV1Log"
+        "operationId": "apple.postWalletV1Log",
+        "x-sdk": {
+          "resource": "apple.logs",
+          "method": "create",
+          "sdk": false,
+          "reason": "Apple Wallet web service: called by iOS with the pass auth token, not by integrations."
+        }
       }
     },
     "/p/{token}/wallet/{provider}": {
@@ -94053,7 +95973,13 @@
             }
           }
         },
-        "operationId": "public.getPByTokenWalletByProvider"
+        "operationId": "public.getPByTokenWalletByProvider",
+        "x-sdk": {
+          "resource": "public.passes",
+          "method": "addToWallet",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/p/wallet/samsung/{offer}": {
@@ -94089,7 +96015,13 @@
             }
           }
         },
-        "operationId": "public.getPWalletSamsungByOffer"
+        "operationId": "public.getPWalletSamsungByOffer",
+        "x-sdk": {
+          "resource": "public.passes",
+          "method": "openSamsungOffer",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/w/i/{file}": {
@@ -94124,7 +96056,13 @@
             }
           }
         },
-        "operationId": "public.getWIByFile"
+        "operationId": "public.getWIByFile",
+        "x-sdk": {
+          "resource": "public.walletImages",
+          "method": "download",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/brand/{orgId}/{file}": {
@@ -94169,7 +96107,13 @@
             }
           }
         },
-        "operationId": "public.getBrandByOrgIdByFile"
+        "operationId": "public.getBrandByOrgIdByFile",
+        "x-sdk": {
+          "resource": "public.brand",
+          "method": "downloadWebLogo",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/p/{token}": {
@@ -94205,7 +96149,13 @@
             }
           }
         },
-        "operationId": "public.getPByToken"
+        "operationId": "public.getPByToken",
+        "x-sdk": {
+          "resource": "public.passes",
+          "method": "retrievePage",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/p/{token}/barcode": {
@@ -94241,7 +96191,13 @@
             }
           }
         },
-        "operationId": "public.getPByTokenBarcode"
+        "operationId": "public.getPByTokenBarcode",
+        "x-sdk": {
+          "resource": "public.passes",
+          "method": "retrieveBarcode",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/p/{token}/pass.pkpass": {
@@ -94277,7 +96233,13 @@
             }
           }
         },
-        "operationId": "public.getPByTokenPassPkpass"
+        "operationId": "public.getPByTokenPassPkpass",
+        "x-sdk": {
+          "resource": "public.passes",
+          "method": "download",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/p/{token}/assets/{name}": {
@@ -94322,7 +96284,13 @@
             }
           }
         },
-        "operationId": "public.getPByTokenAssetsByName"
+        "operationId": "public.getPByTokenAssetsByName",
+        "x-sdk": {
+          "resource": "public.passes",
+          "method": "downloadAsset",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/b/{token}": {
@@ -94358,7 +96326,13 @@
             }
           }
         },
-        "operationId": "public.getBByToken"
+        "operationId": "public.getBByToken",
+        "x-sdk": {
+          "resource": "public.bundles",
+          "method": "retrievePage",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/b/{token}/passes.pkpasses": {
@@ -94394,7 +96368,13 @@
             }
           }
         },
-        "operationId": "public.getBByTokenPassesPkpasses"
+        "operationId": "public.getBByTokenPassesPkpasses",
+        "x-sdk": {
+          "resource": "public.bundles",
+          "method": "downloadAll",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/b/{token}/{passId}/pass.pkpass": {
@@ -94440,7 +96420,13 @@
             }
           }
         },
-        "operationId": "public.getBByTokenByPassIdPassPkpass"
+        "operationId": "public.getBByTokenByPassIdPassPkpass",
+        "x-sdk": {
+          "resource": "public.bundles",
+          "method": "downloadPass",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/b/{token}/{passId}/wallet/{provider}": {
@@ -94498,7 +96484,13 @@
             }
           }
         },
-        "operationId": "public.getBByTokenByPassIdWalletByProvider"
+        "operationId": "public.getBByTokenByPassIdWalletByProvider",
+        "x-sdk": {
+          "resource": "public.bundles",
+          "method": "addPassToWallet",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/b/{token}/{passId}/barcode": {
@@ -94544,7 +96536,13 @@
             }
           }
         },
-        "operationId": "public.getBByTokenByPassIdBarcode"
+        "operationId": "public.getBByTokenByPassIdBarcode",
+        "x-sdk": {
+          "resource": "public.bundles",
+          "method": "retrievePassBarcode",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/b/{token}/{passId}/assets/{name}": {
@@ -94600,7 +96598,13 @@
             }
           }
         },
-        "operationId": "public.getBByTokenByPassIdAssetsByName"
+        "operationId": "public.getBByTokenByPassIdAssetsByName",
+        "x-sdk": {
+          "resource": "public.bundles",
+          "method": "downloadPassAsset",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/j/{token}": {
@@ -94636,7 +96640,13 @@
             }
           }
         },
-        "operationId": "join.getJByToken"
+        "operationId": "join.getJByToken",
+        "x-sdk": {
+          "resource": "public.joinLinks",
+          "method": "retrievePage",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       },
       "post": {
         "summary": "Join form post: makes a card, or answers why not",
@@ -94670,7 +96680,13 @@
             }
           }
         },
-        "operationId": "join.postJByToken"
+        "operationId": "join.postJByToken",
+        "x-sdk": {
+          "resource": "public.joinLinks",
+          "method": "submit",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/j/{token}/card/{name}": {
@@ -94715,7 +96731,13 @@
             }
           }
         },
-        "operationId": "join.getJByTokenCardByName"
+        "operationId": "join.getJByTokenCardByName",
+        "x-sdk": {
+          "resource": "public.joinLinks",
+          "method": "downloadCardImage",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        }
       }
     },
     "/hooks/connections/{id}": {
@@ -94769,7 +96791,13 @@
             }
           }
         },
-        "operationId": "connections.postHooksConnectionsById"
+        "operationId": "connections.postHooksConnectionsById",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "receiveWebhook",
+          "sdk": false,
+          "reason": "Inbound connection webhook, authenticated by its HMAC signature, not an API key."
+        }
       }
     }
   },

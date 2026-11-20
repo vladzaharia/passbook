@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppBindings } from './context.ts';
+import { withSdkNames } from './openapi-sdk.ts';
 import { withSecurity } from './openapi-security.ts';
 
 type Op = { operationId?: string; tags?: string[]; 'x-operation-key'?: string };
@@ -17,6 +18,16 @@ export function deriveOperationId(tag: string, method: string, path: string): st
     .filter(Boolean)
     .map((seg) => (seg.startsWith('{') ? `By${pascal(seg.slice(1, -1))}` : pascal(seg)));
   return `${tag.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.${method}${parts.join('')}`;
+}
+
+/** Lowercases each tag and turns runs of non-alphanumerics into `-`. Ids derive from the same form. */
+export function withKebabTags(doc: Doc): Doc {
+  for (const item of Object.values(doc.paths ?? {})) {
+    for (const op of Object.values(item)) {
+      if (op?.tags) op.tags = op.tags.map((t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+    }
+  }
+  return doc;
 }
 
 /** Gives every operation without an explicit `operationId` its derived one. */
@@ -37,5 +48,5 @@ export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
     info: { title: 'PassBook API', version: '1.0.0' },
     servers: [{ url: '/' }],
   }) as unknown as Doc;
-  return withSecurity(app, withOperationIds(doc) as never) as unknown as Doc;
+  return withSecurity(app, withSdkNames(withOperationIds(withKebabTags(doc))) as never) as unknown as Doc;
 }
