@@ -20,6 +20,7 @@ import { meRoutes } from './modules/me/routes.ts';
 import { messageRulesRoutes } from './modules/message-rules/routes.ts';
 import { metricsRoutes } from './modules/metrics/routes.ts';
 import { nfcRoutes } from './modules/nfc/routes.ts';
+import { tagPageRoutes } from './modules/nfc/tag-page.ts';
 import { orgsRoutes } from './modules/orgs/routes.ts';
 import { passesRoutes } from './modules/passes/routes.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
@@ -172,6 +173,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/scans', scansRoutes);
   app.route('/api/v1/scan-display', scanDisplayRoutes);
   app.route('/api/v1/nfc', nfcRoutes);
+  app.route('/t', tagPageRoutes);
   app.route('/wallet/v1/google', googleCallbackRoutes);
   app.route('/wallet/v1/samsung', samsungCallbackRoutes);
   app.route('/wallet/v1', appleRoutes);
