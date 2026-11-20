@@ -10,10 +10,25 @@ import { ConflictError, NotFoundError, RateLimitedError } from '../../platform/e
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { fenceOf, type WebhookAccess } from './access.ts';
-import { assertCaptureHome, CAPTURE_URL, openActiveSecrets, storeCapture } from './capture.ts';
-import { captureEndpointId, getCapture, listCaptures } from './repo-capture.ts';
+import {
+  assertCaptureHome,
+  assertCaptureSize,
+  CAPTURE_URL,
+  type CaptureInput,
+  captureLimited,
+  openActiveSecrets,
+  signedHeaders,
+} from './capture.ts';
+import { captureEndpointId, getCapture, insertCapture, listCaptures } from './repo-capture.ts';
 import type { EndpointRow } from './repo-endpoints.ts';
-import { makeEndpoint, requireEndpoint, toDto } from './service.ts';
+import {
+  auditEndpoint,
+  commitEndpoint,
+  makeEndpoint,
+  requireEndpoint,
+  toDto,
+  webhookGrant,
+} from './service.ts';
 
 type ListQuery = z.infer<typeof WebhookCaptureListQuerySchema>;
 
@@ -49,6 +64,49 @@ export async function get(
 }
 
 /**
+ * Stores one signed request on a capture endpoint, for a test send or a replay: through the caller's grant, so
+ * the org and mode are the authority's and the endpoint must be theirs. Delivery has its own batch.
+ */
+export async function storeCapture(
+  ctx: ServiceContext,
+  access: WebhookAccess,
+  endpoint: EndpointRow,
+  input: CaptureInput & { trigger: 'test' | 'replay' },
+): Promise<WebhookCaptureDto> {
+  if (endpoint.target !== 'capture')
+    throw new ConflictError('This endpoint sends to a URL.', 'NOT_A_CAPTURE_ENDPOINT');
+  await assertCaptureHome(ctx, endpoint.orgId, endpoint.mode);
+  assertCaptureSize(input.body);
+  const id = ctx.ids.id();
+  const g = webhookGrant(ctx, access, 'capture');
+  insertCapture(g, endpoint.id, {
+    id,
+    eventId: input.eventId,
+    eventType: input.eventType,
+    trigger: input.trigger,
+    headers: await signedHeaders(input),
+    body: input.body,
+    durationMs: Math.max(0, ctx.clock.now() - input.now),
+    at: input.now,
+  });
+  try {
+    await commitEndpoint(g);
+  } catch (error) {
+    if (error instanceof Error && /capture hourly limit/.test(error.message))
+      throw captureLimited(input.now);
+    throw error;
+  }
+  ctx.log.info('webhooks.captured', {
+    orgId: endpoint.orgId,
+    endpointId: endpoint.id,
+    trigger: input.trigger,
+  });
+  const stored = await getCapture(ctx.env.DB, endpoint, endpoint.id, id);
+  if (!stored) throw new ConflictError('The capture was not stored.', 'CAPTURE_NOT_STORED');
+  return stored;
+}
+
+/**
  * Signs the stored body again with a fresh timestamp and stores it as a new capture: the same event id and
  * bytes, a new signature, so a receiver's dedupe on the event id is exercised. Nothing is sent.
  */
@@ -66,7 +124,7 @@ export async function replay(
   const secrets = await openActiveSecrets(ctx, await loadKekRing(ctx.env), endpoint);
   if (secrets.length === 0)
     throw new ConflictError('The endpoint has no signing secret.', 'SECRET_UNAVAILABLE');
-  return storeCapture(ctx, endpoint, {
+  return storeCapture(ctx, access, endpoint, {
     eventId: source.eventId,
     eventType: source.type,
     body: source.body,
@@ -82,6 +140,7 @@ export async function replay(
  */
 export async function revealSecret(
   ctx: ServiceContext,
+  actor: Actor,
   access: WebhookAccess,
   id: string,
 ): Promise<string> {
@@ -90,6 +149,11 @@ export async function revealSecret(
   const [current] = await openActiveSecrets(ctx, await loadKekRing(ctx.env), endpoint);
   if (!current)
     throw new ConflictError('The endpoint has no signing secret.', 'SECRET_UNAVAILABLE');
+  // Recorded before the secret leaves, and without it.
+  const g = webhookGrant(ctx, access, 'secret.reveal');
+  auditEndpoint(ctx, g, actor, access, 'webhook.capture_secret.reveal', id, {});
+  await commitEndpoint(g);
+  ctx.log.info('webhooks.capture_secret_revealed', { orgId: endpoint.orgId, endpointId: id });
   return current;
 }
 
@@ -113,12 +177,23 @@ export async function ensureCapture(
       secret: null,
       created: false,
     };
-  const made = await makeEndpoint(ctx, actor, access, {
-    url: CAPTURE_URL,
-    target: 'capture',
-    description: 'Test capture endpoint',
-    eventTypes: eventTypes ?? SUBSCRIBABLE_EVENT_TYPES,
-    templateIds: null,
-  });
-  return { ...made, created: true };
+  try {
+    const made = await makeEndpoint(ctx, actor, access, {
+      url: CAPTURE_URL,
+      target: 'capture',
+      description: 'Test capture endpoint',
+      eventTypes: eventTypes ?? SUBSCRIBABLE_EVENT_TYPES,
+      templateIds: null,
+    });
+    return { ...made, created: true };
+  } catch (error) {
+    // A concurrent create won (one capture endpoint per org, in SQL): answer with theirs.
+    const winner = await captureEndpointId(ctx.env.DB, orgId);
+    if (!winner) throw error;
+    return {
+      endpoint: toDto(await requireEndpoint(ctx, access, winner), true),
+      secret: null,
+      created: false,
+    };
+  }
 }

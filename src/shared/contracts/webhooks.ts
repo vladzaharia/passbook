@@ -151,6 +151,8 @@ const envelope = <T extends WebhookEventType, P extends z.ZodType>(type: T, pass
     mode: ModeSchema,
     pass,
     data: WEBHOOK_DATA_SCHEMAS[type],
+    /** Only on a sample sent from "Send test": it describes no real pass. */
+    sample: z.literal(true).optional(),
   });
 
 const P = WebhookPassRefSchema;

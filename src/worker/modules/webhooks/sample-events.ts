@@ -2,11 +2,11 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { WebhookEventType } from '../../../shared/contracts/webhooks.ts';
 import type { FeedRow } from './payload.ts';
 
-/** The pass every sample event describes. It is not a real pass: nothing resolves it. */
+/** The pass every sample event describes. It is not a real pass: nothing resolves it, and the event says `sample: true`. */
 const SAMPLE_PASS = {
   passId: 'sample-pass',
   templateId: 'sample-template',
-  externalId: 'order-1042',
+  externalId: 'sample_order_1042',
 };
 
 /** What the ledger would hold for each type: `buildEnvelope` then keeps only the allowlisted fields. */

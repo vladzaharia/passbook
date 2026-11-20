@@ -43,7 +43,6 @@ export interface ActionEntry {
 
 const a = (label: string, icon: LucideIcon, tone: Tone): ActionEntry => ({ label, icon, tone });
 const I = ACTION_ICON;
-
 /** Audit and activity vocabulary: a label, a glyph and a tone per action code. */
 export const ACTIONS: Record<string, ActionEntry> = {
   'broadcast.cancel': a('Message cancelled', I.void, 'warning'),
@@ -74,6 +73,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'connection.webhook_resolve': a('Webhook item resolved', CircleCheck, 'info'),
   'connection.webhook_secret': a('Webhook secret rotated', I.rotate, 'info'),
   'connection.webhook_secret_revoke_previous': a('Old webhook secret revoked', I.rotate, 'warning'),
+  'webhook.capture_secret.reveal': a('Capture secret viewed', I.test, 'info'),
   'webhook.endpoint.create': a('Webhook endpoint created', ENTITY.connection.icon, 'success'),
   'webhook.endpoint.update': a('Webhook endpoint updated', I.edit, 'info'),
   'webhook.endpoint.delete': a('Webhook endpoint deleted', I.delete, 'danger'),

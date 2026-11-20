@@ -110,7 +110,7 @@ export function registerCaptureRoutes(router: OpenAPIHono<AppBindings>): void {
       const id = c.req.valid('param').id;
       const access = await authorizeStoredEndpoint(ctx, c.var.auth, id, 'integrations:manage');
       c.header('cache-control', 'no-store');
-      return c.json({ secret: await captures.revealSecret(ctx, access, id) });
+      return c.json({ secret: await captures.revealSecret(ctx, actorOf(c.var.auth), access, id) });
     },
   );
 }

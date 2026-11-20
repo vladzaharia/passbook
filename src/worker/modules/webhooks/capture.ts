@@ -1,11 +1,9 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
 import { WEBHOOK_CAPTURE_LIMITS } from '../../../shared/contracts/webhook-captures.ts';
 import type { KekRing } from '../../platform/crypto.ts';
 import { ConflictError, RateLimitedError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { capturesThisHour, getCapture, isDeveloperOrg } from './repo-capture.ts';
-import { captureStmt } from './repo-delivery-state.ts';
+import { capturesThisHour, isDeveloperOrg } from './repo-capture.ts';
 import type { EndpointRow } from './repo-endpoints.ts';
 import { activeSecrets } from './repo-secrets.ts';
 import { openSecret } from './secrets.ts';
@@ -32,7 +30,7 @@ export async function assertCaptureHome(
     );
 }
 
-const limited = (now: number) =>
+export const captureLimited = (now: number) =>
   new RateLimitedError(
     Math.max(1, Math.ceil(((Math.floor(now / HOUR) + 1) * HOUR - now) / 1000)),
     `Capture limit reached: ${WEBHOOK_CAPTURE_LIMITS.perHour} an hour. Try again next hour.`,
@@ -98,47 +96,4 @@ export const signedHeaders = (input: CaptureInput) =>
 export function assertCaptureSize(body: string): void {
   if (new TextEncoder().encode(body).length > WEBHOOK_CAPTURE_LIMITS.maxBytes)
     throw new ValidationError('The capture is over 256 KiB.', [], 'CAPTURE_TOO_LARGE');
-}
-
-/** Stores one signed request on a capture endpoint, for a test send or a replay. */
-export async function storeCapture(
-  ctx: ServiceContext,
-  endpoint: EndpointRow,
-  input: CaptureInput,
-): Promise<WebhookCaptureDto> {
-  if (endpoint.target !== 'capture')
-    throw new ConflictError('This endpoint sends to a URL.', 'NOT_A_CAPTURE_ENDPOINT');
-  await assertCaptureHome(ctx, endpoint.orgId, endpoint.mode);
-  const { body } = input;
-  assertCaptureSize(body);
-  const headers = await signedHeaders(input);
-  const id = ctx.ids.id();
-  try {
-    await captureStmt(
-      ctx.env.DB,
-      { endpointId: endpoint.id, orgId: endpoint.orgId, mode: endpoint.mode },
-      {
-        id,
-        eventId: input.eventId,
-        eventType: input.eventType,
-        trigger: input.trigger,
-        headers,
-        body,
-        durationMs: Math.max(0, ctx.clock.now() - input.now),
-        at: input.now,
-      },
-    ).run();
-  } catch (error) {
-    if (error instanceof Error && /capture hourly limit/.test(error.message))
-      throw limited(input.now);
-    throw error;
-  }
-  ctx.log.info('webhooks.captured', {
-    orgId: endpoint.orgId,
-    endpointId: endpoint.id,
-    trigger: input.trigger,
-  });
-  const stored = await getCapture(ctx.env.DB, endpoint, endpoint.id, id);
-  if (!stored) throw new ConflictError('The capture was not stored.', 'CAPTURE_NOT_STORED');
-  return stored;
 }

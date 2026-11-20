@@ -46,6 +46,7 @@ const TABLES = [
   'webhook_endpoint_secrets',
   'webhook_deliveries',
   'webhook_attempts',
+  'webhook_captures',
 ] as const;
 
 export const notFound = () =>
@@ -194,6 +195,9 @@ export async function makeEndpoint(
   input: NewEndpointInput,
 ): Promise<{ endpoint: WebhookEndpointDto; secret: string }> {
   const { orgId, mode } = access.authority;
+  // Each create costs a secret and an audit row: per org, counted from the audit log so a delete does not reset it.
+  if ((await countRecentCreates(ctx.env.DB, orgId, ctx.clock.now() - HOUR)) >= MAX_CREATES_PER_HOUR)
+    throw new RateLimitedError(3600, 'Too many endpoints created. Try again later.');
   const endpointId = ctx.ids.id();
   const secretId = ctx.ids.id();
   const secret = newEndpointSecret(ctx);
@@ -240,9 +244,6 @@ export async function create(
   const url = await checkedUrl(ctx, input.url);
   const templateIds = await checkTemplates(ctx, orgId, input.templateIds);
   if (dryRun) return null;
-  // Each create costs DoH lookups and a secret: per org, counted from the audit log so a delete does not reset it.
-  if ((await countRecentCreates(ctx.env.DB, orgId, ctx.clock.now() - HOUR)) >= MAX_CREATES_PER_HOUR)
-    throw new RateLimitedError(3600, 'Too many endpoints created. Try again later.');
   return makeEndpoint(ctx, actor, access, {
     url,
     target: 'url',

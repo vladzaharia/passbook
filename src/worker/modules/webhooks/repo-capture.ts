@@ -1,6 +1,8 @@
 import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
 import type { WebhookEventType } from '../../../shared/contracts/webhooks.ts';
+import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
+import { assertOrgModeGrant } from './repo-endpoints.ts';
 import type { FeedFence } from './repo-feed.ts';
 
 interface Raw {
@@ -109,4 +111,39 @@ export async function captureEndpointId(db: D1Database, orgId: string): Promise<
 export async function isDeveloperOrg(db: D1Database, orgId: string): Promise<boolean> {
   const row = await first<{ kind: string }>(db, 'SELECT kind FROM orgs WHERE id = ?', [orgId]);
   return row?.kind === 'developer';
+}
+
+/** A request-path capture (test send, replay): the grant supplies the org and mode, and the endpoint must be the tenant's. */
+export function insertCapture(
+  g: Grant,
+  endpointId: string,
+  c: {
+    id: string;
+    eventId: string;
+    eventType: string;
+    trigger: 'test' | 'replay';
+    headers: Record<string, string>;
+    body: string;
+    durationMs: number;
+    at: number;
+  },
+): GrantedStatement {
+  assertOrgModeGrant(g);
+  return g.insertSelect(
+    'webhook_captures',
+    ['id', 'event_id', 'event_type', 'trigger', 'headers', 'body', 'duration_ms', 'created_at'],
+    [
+      c.id,
+      c.eventId,
+      c.eventType,
+      c.trigger,
+      JSON.stringify(c.headers),
+      c.body,
+      c.durationMs,
+      c.at,
+    ],
+    {
+      from: { table: 'webhook_endpoints', where: { id: endpointId }, copy: { endpoint_id: 'id' } },
+    },
+  );
 }

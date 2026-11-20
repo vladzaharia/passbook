@@ -561,6 +561,7 @@ export type EmailFailedEvent = {
   data: {
     code?: string | null;
   };
+  sample?: true;
 };
 
 export type EventPage = {
@@ -979,6 +980,7 @@ export type PassChannelsChangedEvent = {
     to: "on" | "off";
     source: "pass" | "template" | "org" | "platform";
   };
+  sample?: true;
 };
 
 export type PassDetail = {
@@ -1222,6 +1224,7 @@ export type PassInstalledEvent = {
     deviceCount: number;
     firstDevice: boolean;
   };
+  sample?: true;
 };
 
 export type PassIssuedEvent = {
@@ -1236,6 +1239,7 @@ export type PassIssuedEvent = {
     version?: number;
     source?: string | null;
   };
+  sample?: true;
 };
 
 export type PassPage = {
@@ -1255,6 +1259,7 @@ export type PassPrintVoidedEvent = {
     printId: string;
     cause?: string | null;
   };
+  sample?: true;
 };
 
 export type PassPrintedEvent = {
@@ -1270,6 +1275,7 @@ export type PassPrintedEvent = {
     generation: number;
     voided?: number;
   };
+  sample?: true;
 };
 
 export type PassRemovedEvent = {
@@ -1284,6 +1290,7 @@ export type PassRemovedEvent = {
     version?: number;
     message?: boolean;
   };
+  sample?: true;
 };
 
 export type PassRestoredEvent = {
@@ -1297,6 +1304,7 @@ export type PassRestoredEvent = {
   data: {
     version?: number;
   };
+  sample?: true;
 };
 
 export type PassScanRefusedEvent = {
@@ -1315,6 +1323,7 @@ export type PassScanRefusedEvent = {
     staffId?: string | null;
     eventId?: string | null;
   };
+  sample?: true;
 };
 
 export type PassScanUndoneEvent = {
@@ -1330,6 +1339,7 @@ export type PassScanUndoneEvent = {
     scannerId?: string | null;
     staffId?: string | null;
   };
+  sample?: true;
 };
 
 export type PassScannedEvent = {
@@ -1353,6 +1363,7 @@ export type PassScannedEvent = {
     offline?: boolean;
     amount?: number;
   };
+  sample?: true;
 };
 
 export type PassSummary = {
@@ -1395,6 +1406,7 @@ export type PassUninstalledEvent = {
     lastDevice: boolean;
     cause: "wallet" | "push_gone";
   };
+  sample?: true;
 };
 
 export type PassUnvoidedEvent = {
@@ -1408,6 +1420,7 @@ export type PassUnvoidedEvent = {
   data: {
     actorType?: string | null;
   };
+  sample?: true;
 };
 
 export type PassUpdatedEvent = {
@@ -1424,6 +1437,7 @@ export type PassUpdatedEvent = {
     source?: string | null;
     notified?: boolean;
   };
+  sample?: true;
 };
 
 export type PassVersion = {
@@ -1448,6 +1462,7 @@ export type PassVoidedEvent = {
   data: {
     actorType?: string | null;
   };
+  sample?: true;
 };
 
 export type PassesBulkApplyParams = {
@@ -1683,6 +1698,7 @@ export type PushFailedEvent = {
     reason?: string | null;
     code?: string | null;
   };
+  sample?: true;
 };
 
 export type RollCallsMarkParams = {
@@ -3904,6 +3920,7 @@ export type WebhookTestEvent = {
   mode: "live" | "test";
   pass: null;
   data: Record<string, unknown>;
+  sample?: true;
 };
 
 export type WebhookTestResult = {

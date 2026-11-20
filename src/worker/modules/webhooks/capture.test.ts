@@ -203,6 +203,108 @@ describe('capture only works in developer orgs, in Test', () => {
   });
 });
 
+describe('one capture endpoint per org', () => {
+  it('leaves one after concurrent creates, and SQL refuses a second', async () => {
+    const s = await sandbox();
+    await run(kit.env.DB, 'DELETE FROM webhook_endpoints WHERE org_id = ?', [s.orgId]);
+    const results = await Promise.all(
+      Array.from({ length: 4 }, () => call('POST', '/webhook-endpoints/capture', s.key, {})),
+    );
+    expect(results.every(([status]) => status === 200 || status === 201)).toBe(true);
+    expect(results.filter(([status]) => status === 201)).toHaveLength(1);
+    const rows = await all<{ id: string }>(
+      kit.env.DB,
+      "SELECT id FROM webhook_endpoints WHERE org_id = ? AND target = 'capture'",
+      [s.orgId],
+    );
+    expect(rows).toHaveLength(1);
+    expect(new Set(results.map(([, body]) => body.endpoint.id))).toEqual(new Set([rows[0]?.id]));
+    await expect(
+      run(
+        kit.env.DB,
+        `INSERT INTO webhook_endpoints (id, org_id, mode, url, event_types, api_version, target, created_at, updated_at)
+         VALUES ('second', ?, 'test', 'https://capture.invalid/', '["pass.issued"]', '2026-12-01', 'capture', 1, 1)`,
+        [s.orgId],
+      ),
+    ).rejects.toThrow(/UNIQUE/);
+  });
+
+  it('counts a capture create against the hourly create limit', async () => {
+    const s = await sandbox();
+    await run(kit.env.DB, 'DELETE FROM webhook_endpoints WHERE org_id = ?', [s.orgId]);
+    await run(
+      kit.env.DB,
+      `INSERT INTO audit_log (at, org_id, actor_type, action, target_type, target_id, detail)
+       SELECT ?, ?, 'system', 'webhook.endpoint.create', 'webhook_endpoint', 'x' || value, '{}'
+       FROM json_each('[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]')`,
+      [kit.clock.now(), s.orgId],
+    );
+    const [status, problem] = await call('POST', '/webhook-endpoints/capture', s.key, {});
+    expect([status, problem.code]).toEqual([429, 'RATE_LIMITED']);
+  });
+});
+
+describe('secret reveal', () => {
+  it('is audited without the secret', async () => {
+    const s = await sandbox();
+    const { id, secret } = await captureOf(s);
+    const rows = await all<{ action: string; detail: string; target_id: string }>(
+      kit.env.DB,
+      "SELECT action, detail, target_id FROM audit_log WHERE org_id = ? AND action = 'webhook.capture_secret.reveal'",
+      [s.orgId],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.target_id).toBe(id);
+    expect(JSON.stringify(rows)).not.toContain(secret);
+  });
+});
+
+describe('erasing a pass', () => {
+  it('erases what the sandbox captured about it, and only that', async () => {
+    const s = await sandbox();
+    const { id } = await captureOf(s);
+    const sample = (
+      (await (await send('GET', `/templates/${s.templateId}`, s.key)).json()) as {
+        manifest: { sample?: object };
+      }
+    ).manifest.sample;
+    const make = async () => {
+      const res = await send('POST', '/passes', s.key, {
+        templateId: s.templateId,
+        input: sample ?? {},
+      });
+      expect(res.status).toBe(201);
+      return ((await res.json()) as { id: string }).id;
+    };
+    const gone = await make();
+    const kept = await make();
+    const insert = (passId: string, n: number) =>
+      run(
+        kit.env.DB,
+        `INSERT INTO webhook_captures (id, endpoint_id, org_id, mode, event_id, event_type, trigger, headers, body, created_at)
+         VALUES (?, ?, ?, 'test', 'e', 'pass.issued', 'event', '{}', ?, ?)`,
+        [`${id}:p${n}`, id, s.orgId, JSON.stringify({ pass: { id: passId } }), kit.clock.now() + n],
+      );
+    await insert(gone, 1);
+    await insert(kept, 2);
+    await insert('x', 3);
+    await run(
+      kit.env.DB,
+      "INSERT INTO webhook_captures (id, endpoint_id, org_id, mode, event_id, event_type, trigger, headers, body, created_at) VALUES (?, ?, ?, 'test', 'e', 'pass.issued', 'event', '{}', 'not json', ?)",
+      [`${id}:raw`, id, s.orgId, kit.clock.now() + 4],
+    );
+    await run(kit.env.DB, 'DELETE FROM passes WHERE id = ?', [gone]);
+    const left = (
+      await all<{ id: string }>(
+        kit.env.DB,
+        'SELECT id FROM webhook_captures WHERE id LIKE ? ORDER BY id',
+        [`${id}:%`],
+      )
+    ).map((r) => r.id.split(':')[1]);
+    expect(left).toEqual(['p2', 'p3', 'raw']);
+  });
+});
+
 describe('send test event', () => {
   it('sends every event type: a signed capture that verifies, and nothing leaves', async () => {
     const s = await sandbox();
@@ -220,6 +322,12 @@ describe('send test event', () => {
       const event = WebhookEventSchema.parse(JSON.parse(stored.body));
       expect(event.type).toBe(type);
       expect(stored.type).toBe(type);
+      // A sample says so, and names no real order.
+      if (type !== 'webhook.test')
+        expect(JSON.parse(stored.body)).toMatchObject({
+          sample: true,
+          pass: { externalId: 'sample_order_1042' },
+        });
       expect(stored.trigger).toBe('test');
       seen.add(type);
       const now = Math.floor(stored.createdAt / 1000);

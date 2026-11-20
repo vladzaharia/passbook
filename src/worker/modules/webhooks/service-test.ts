@@ -6,7 +6,7 @@ import { checkRateLimit } from '../../platform/rate-limit.ts';
 import { createSafeFetch, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { WebhookAccess } from './access.ts';
-import { openActiveSecrets, storeCapture } from './capture.ts';
+import { openActiveSecrets } from './capture.ts';
 import { SEND_TIMEOUT_MS } from './deliver.ts';
 import { sendAllowed } from './deliver-gate.ts';
 import { bodyOf, buildEnvelope, testEnvelope } from './payload.ts';
@@ -14,6 +14,7 @@ import { insertTestAttempt } from './repo-api.ts';
 import { memoResolver } from './resolver-memo.ts';
 import { sampleRow } from './sample-events.ts';
 import { commitEndpoint, requireEndpoint, webhookGrant } from './service.ts';
+import { storeCapture } from './service-captures.ts';
 import { requestHeaders } from './sign.ts';
 
 export interface TestResult {
@@ -68,6 +69,7 @@ export async function sendTest(
             now: startedAt,
           }),
           endpoint.apiVersion,
+          true,
         );
   let status: number | null = null;
   let errorCode: string | null = null;
@@ -83,7 +85,7 @@ export async function sendTest(
       secrets,
       now: startedAt,
     } as const;
-    captureId = (await storeCapture(ctx, endpoint, input)).id;
+    captureId = (await storeCapture(ctx, access, endpoint, input)).id;
     status = 200;
   } else {
     const body = bodyOf(event);

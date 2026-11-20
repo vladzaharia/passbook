@@ -65,6 +65,12 @@
                 "maxLength": 300
               }
             }
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -168,6 +174,12 @@
                 "type": "boolean"
               }
             }
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -231,6 +243,12 @@
                 "maxLength": 300
               }
             }
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -294,6 +312,12 @@
                 "maxLength": 300
               }
             }
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -357,6 +381,12 @@
                 "type": "boolean"
               }
             }
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -417,6 +447,12 @@
                 "minimum": 0
               }
             }
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -498,6 +534,12 @@
               "device",
               "deviceCount",
               "firstDevice"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
             ]
           }
         },
@@ -588,6 +630,12 @@
               "deviceCount",
               "lastDevice",
               "cause"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
             ]
           }
         },
@@ -713,6 +761,12 @@
             "required": [
               "outcome"
             ]
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -811,6 +865,12 @@
                 "maxLength": 300
               }
             }
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -888,6 +948,12 @@
                 "maxLength": 300
               }
             }
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -984,6 +1050,12 @@
               "to",
               "source"
             ]
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1056,6 +1128,12 @@
               "printId",
               "generation"
             ]
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1125,6 +1203,12 @@
             },
             "required": [
               "printId"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
             ]
           }
         },
@@ -1203,6 +1287,12 @@
                 "maxLength": 300
               }
             }
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1266,6 +1356,12 @@
                 "maxLength": 300
               }
             }
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
@@ -1321,6 +1417,12 @@
           "data": {
             "type": "object",
             "properties": {}
+          },
+          "sample": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [

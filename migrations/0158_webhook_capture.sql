@@ -7,6 +7,9 @@ WHEN NEW.target = 'capture' AND (NEW.mode != 'test'
   OR NOT EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.kind = 'developer'))
 BEGIN SELECT RAISE(ABORT, 'a capture endpoint is for a developer org in Test'); END;
 
+-- One capture endpoint per org: two concurrent creates leave one.
+CREATE UNIQUE INDEX webhook_endpoints_one_capture ON webhook_endpoints (org_id) WHERE target = 'capture';
+
 CREATE TRIGGER webhook_endpoints_target_immutable BEFORE UPDATE OF target ON webhook_endpoints
 WHEN NEW.target IS NOT OLD.target
 BEGIN SELECT RAISE(ABORT, 'immutable webhook endpoint target'); END;
@@ -60,6 +63,15 @@ BEGIN
   DELETE FROM webhook_captures WHERE endpoint_id = NEW.endpoint_id AND rowid NOT IN (
     SELECT rowid FROM webhook_captures WHERE endpoint_id = NEW.endpoint_id
     ORDER BY created_at DESC, rowid DESC LIMIT 200);
+END;
+
+-- Erasing a pass erases what the sandbox captured about it.
+CREATE TRIGGER webhook_captures_pass_erased AFTER DELETE ON passes
+WHEN EXISTS (SELECT 1 FROM webhook_endpoints e WHERE e.org_id = OLD.org_id AND e.target = 'capture')
+BEGIN
+  DELETE FROM webhook_captures
+  WHERE endpoint_id IN (SELECT e.id FROM webhook_endpoints e WHERE e.org_id = OLD.org_id AND e.target = 'capture')
+    AND CASE WHEN json_valid(body) THEN json_extract(body, '$.pass.id') END = OLD.id;
 END;
 
 CREATE TRIGGER webhook_captures_append_only BEFORE UPDATE ON webhook_captures
