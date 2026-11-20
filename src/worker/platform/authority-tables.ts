@@ -162,6 +162,13 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   channel_apply_marks: { org: null, edges: [edge('run_id', 'channel_apply_runs')] },
   // Printed tickets (0110): minted and voided through grants; the triggers void them with the pass.
   pass_prints: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
+  // Roll call (0122): the frozen list and each person's confirmation. Marks upsert by (call, pass).
+  roll_calls: { org: 'org_id', mode: 'mode' },
+  roll_call_marks: {
+    org: 'org_id',
+    mode: 'mode',
+    conflict: ['roll_call_id', 'pass_id'],
+  },
   data_requests: { org: 'org_id' },
   data_request_passes: { org: null, edges: [edge('request_id', 'data_requests')] },
   // Wallet provider credentials (0112): a platform-scope row has a null org_id, so no org grant matches it; children take its tenant.

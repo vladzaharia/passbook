@@ -181,6 +181,8 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'scan.lookup': a('Passes looked up', ENTITY.scanner.icon, 'neutral'),
   'scan.undo': a('Scan undone', I.rotate, 'info'),
   'scan.mark_out': a('Marked as out', ENTITY.scanner.icon, 'info'),
+  'rollcall.start': a('Roll call started', ShieldAlert, 'warning'),
+  'rollcall.end': a('Roll call ended', ShieldAlert, 'info'),
   'scan.override': a('Let in by the desk', ShieldAlert, 'info'),
   'scan.overrides_capped': a('Overrides paused after 120 in an hour', ShieldAlert, 'warning'),
   'scan.misses_capped': a('Scanner paused after misses', ShieldAlert, 'warning'),

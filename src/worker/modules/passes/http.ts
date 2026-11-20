@@ -104,7 +104,9 @@ export async function tenantAuthorityOf(
     // Holder and pass routes use different scopes. The endpoint guard supplies the exact
     // scope it verified, which is checked again in the final D1 predicate.
     const scope = verifiedScopeOf(auth);
-    if (!scope || !scopeExercises(scope, capability) || !auth.scopes.includes(scope))
+    // A till's `scans:write` is not tenant authority anywhere else; only the roll-call routes verify it.
+    const rollCall = scope === 'scans:write' && capability === 'passes:operate';
+    if (!scope || !(rollCall || scopeExercises(scope, capability)) || !auth.scopes.includes(scope))
       throw new ForbiddenError();
     authority = {
       kind: 'api_key',

@@ -262,6 +262,7 @@ export async function createRuntime(
     clear: () => wipeLocal(localStores),
     /** Send what is queued now: the shift sheet's Sync now. */
     syncNow: () => offline?.kick(),
+    rollCallQueue: localStores.meta,
     fields,
     emit,
     checkIn: store.checkIn,

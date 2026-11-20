@@ -3,7 +3,9 @@ import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import type { MachineEvent } from '../machine/access-events.ts';
 import type { Counts } from '../machine/types.ts';
+import type { KeyValue } from '../offline/wipe.ts';
 import type { ScanRuntime } from '../platform/runtime.ts';
+import type { QueuedMark } from '../roll-call/roll-call-model.ts';
 import { CountChip, PlaceChip } from './chips.tsx';
 import { DirectionChip } from './direction-chip.tsx';
 import { DirectionSheet } from './direction-sheet.tsx';
@@ -92,6 +94,8 @@ export function useAccessUi({
             open={sheet === 'inside'}
             online={online}
             onClose={() => show(null)}
+            onOpen={() => show('inside')}
+            store={runtime.rollCallQueue as KeyValue<QueuedMark[]>}
             onOpenRow={(row) => {
               show(null);
               runtime.emit({ method: 'manual', passId: row.passId });

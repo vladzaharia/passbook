@@ -43,3 +43,19 @@ export async function refusedUpgrade(
   const refusal = await staleScanRead(ctx, captured.actor);
   return refusal.status === 409 ? problemResponse(refusal) : new Response(null, { status: 401 });
 }
+
+/** The sockets a doorbell reaches: one scanner's device (and its screens), or every device of the hub. */
+export function doorbellSockets(
+  state: DurableObjectState,
+  scannerId: string | undefined,
+  screens: boolean,
+): WebSocket[] {
+  if (scannerId)
+    return [
+      ...state.getWebSockets(deviceTag(scannerId)),
+      ...(screens ? state.getWebSockets(scannerId) : []),
+    ];
+  return state
+    .getWebSockets()
+    .filter((s) => state.getTags(s).some((t) => t.startsWith(DEVICE_TAG)));
+}

@@ -124,3 +124,13 @@ export async function markOutEffect(
     },
   };
 }
+
+/** Why a scan's exit happened (`desk`, `stay`, `clear`, `zone`), or null for any other scan. */
+export async function outCauseOf(db: D1Database, scanId: string): Promise<string | null> {
+  const row = await first<{ c: string | null }>(
+    db,
+    'SELECT out_cause AS c FROM scans WHERE id = ?',
+    [scanId],
+  );
+  return row?.c ?? null;
+}

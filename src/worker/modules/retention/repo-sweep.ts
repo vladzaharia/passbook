@@ -175,3 +175,56 @@ export function photoRetireStmts(
     ]),
   ];
 }
+
+/** Ended roll calls: older than the cutoff, in the scope, and not under a hold (org-wide, or on a pass on the call). */
+function rollCallsEligible(scope: Scope, cutoffs: Cutoffs) {
+  const sc = scopeSql('roll_calls', scope);
+  return {
+    sql: `roll_calls.mode = 'live' AND roll_calls.ended_at < ? AND ${sc.sql}
+       AND NOT EXISTS (SELECT 1 FROM retention_holds h WHERE h.released_at IS NULL AND h.org_id = roll_calls.org_id
+         AND (h.pass_id IS NULL
+           OR EXISTS (SELECT 1 FROM roll_call_marks m WHERE m.roll_call_id = roll_calls.id AND m.pass_id = h.pass_id)
+           OR EXISTS (SELECT 1 FROM json_each(roll_calls.snapshot) j WHERE json_extract(j.value, '$.passId') = h.pass_id)))`,
+    params: [cutoffs.cutoff, ...sc.params],
+  };
+}
+
+/** The next ended roll calls past the scans cutoff, never a held one. They leave with the scans window. */
+export async function selectRollCalls(
+  db: D1Database,
+  scope: Scope,
+  cutoffs: Cutoffs,
+): Promise<string[]> {
+  const e = rollCallsEligible(scope, cutoffs);
+  const rows = await all<{ id: string }>(
+    db,
+    `SELECT roll_calls.id AS id FROM roll_calls WHERE ${e.sql} LIMIT ${CHUNK}`,
+    e.params,
+  );
+  return rows.map((r) => r.id);
+}
+
+/** A receipt-insert condition: exactly `ids.length` of the chosen calls are still eligible. */
+export function rollCallsGate(scope: Scope, cutoffs: Cutoffs, ids: readonly string[]) {
+  const e = rollCallsEligible(scope, cutoffs);
+  return {
+    sql: `(SELECT count(*) FROM roll_calls WHERE roll_calls.id IN (SELECT value FROM json_each(?)) AND ${e.sql}) = ?`,
+    params: [JSON.stringify(ids), ...e.params, ids.length],
+  };
+}
+
+/** Deletes the chosen calls (their marks cascade) only while eligible and the receipt exists. */
+export function deleteRollCallsStmt(
+  db: D1Database,
+  scope: Scope,
+  cutoffs: Cutoffs,
+  ids: readonly string[],
+  receiptId: string,
+): D1PreparedStatement {
+  const e = rollCallsEligible(scope, cutoffs);
+  return stmt(
+    db,
+    `DELETE FROM roll_calls WHERE roll_calls.id IN (SELECT value FROM json_each(?)) AND ${e.sql} AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`,
+    [JSON.stringify(ids), ...e.params, receiptId],
+  );
+}

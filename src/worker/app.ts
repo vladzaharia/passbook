@@ -27,6 +27,7 @@ import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
 import { retentionPlatformRoutes, retentionRoutes } from './modules/retention/routes.ts';
 import { sandboxRoutes } from './modules/sandbox/routes.ts';
+import { rollCallRoutes } from './modules/scan/roll-call/routes-api.ts';
 import { scanRoutes } from './modules/scan/routes.ts';
 import { scanDisplayRoutes } from './modules/scan/routes-display.ts';
 import { scanEventsRoutes } from './modules/scan/routes-events.ts';
@@ -178,6 +179,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/scan-staff', scanStaffRoutes);
   app.route('/api/v1/scan-zones', scanZonesRoutes);
   app.route('/api/v1/scans', scansRoutes);
+  app.route('/api/v1/roll-calls', rollCallRoutes);
   app.route('/api/v1/scan-display', scanDisplayRoutes);
   app.route('/api/v1/nfc', nfcRoutes);
   app.route('/t', tagPageRoutes);
