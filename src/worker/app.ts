@@ -37,6 +37,7 @@ import {
 import { passesRoutes } from './modules/passes/routes.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
+import { previewRoutes } from './modules/public/routes-preview.ts';
 import { retentionPlatformRoutes, retentionRoutes } from './modules/retention/routes.ts';
 import { sandboxRoutes } from './modules/sandbox/routes.ts';
 import { rollCallRoutes } from './modules/scan/roll-call/routes-api.ts';
@@ -212,6 +213,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/w/i', walletImageRoutes);
   app.route('/brand', brandAssetRoutes);
   app.route('/p', publicRoutes);
+  app.route('/preview', previewRoutes);
   app.route('/b', bundlePublicRoutes);
   app.route('/j', joinPublicRoutes);
   app.route('/hooks', hooksRoutes);

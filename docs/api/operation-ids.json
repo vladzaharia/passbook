@@ -251,6 +251,8 @@
   "public.getPByTokenPassPkpass",
   "public.getPByTokenWalletByProvider",
   "public.getPWalletSamsungByOffer",
+  "public.getPreviewByToken",
+  "public.getPreviewByTokenAssetsByName",
   "public.getWIByFile",
   "retention.getOrgsByOrgIdRetentionHolds",
   "retention.getOrgsByOrgIdRetentionReceipts",
