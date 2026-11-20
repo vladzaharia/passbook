@@ -22,13 +22,10 @@ export function allOf(terms: readonly string[]): string {
 }
 
 /** Every earlier generation of the pass has settled its retirement (the single settle definition, D5). */
-// The retirement view is evaluated in a CTE: its own expression depth would add to the caller's (D1 caps it at 100).
-// PE5d replaces the view with the settled column, and this with `retirement_settled_at IS NULL`.
+// Settledness is the stored column (D5, 0148).
 export const previousGenerationsSettledSql = (i: string) =>
   `NOT EXISTS (SELECT 1 FROM wallet_provider_instances previous WHERE previous.pass_id = ${i}.pass_id
-    AND previous.credential_generation < ${i}.credential_generation
-    AND NOT EXISTS (WITH completed_retirement AS MATERIALIZED (SELECT id FROM wallet_provider_retirement_complete
-      WHERE id = previous.id) SELECT 1 FROM completed_retirement))`;
+    AND previous.credential_generation < ${i}.credential_generation AND previous.retirement_settled_at IS NULL)`;
 
 /** The account's credential is of the identity the instance was created under (D6): a rotation keeps it, a change loses it. */
 export const revokeIdentitySql = (i: string) =>

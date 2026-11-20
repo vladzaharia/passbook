@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { stmt } from '../../platform/db.ts';
+import { type SqlValue, stmt } from '../../platform/db.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { templateAuthorityPredicate } from '../templates/repo-authority.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
@@ -18,7 +18,7 @@ function currentSourceAndAccount(alias: string): string {
       JOIN template_versions version ON version.template_id = source.template_id AND version.version = source.version
       JOIN wallet_provider_accounts account ON account.id = ${alias}.provider_account_id
         AND account.org_id = ${alias}.org_id AND account.mode = ${alias}.mode AND account.provider = ${alias}.provider
-        AND account.revision = ${alias}.provider_account_revision AND account.credential_id IS NOT NULL
+        AND account.authority_epoch = ${alias}.provider_account_epoch AND account.credential_id IS NOT NULL
         AND account.revoked_at IS NULL
       WHERE source.id = ${alias}.source_release_id AND source.template_id = ${alias}.template_id
         AND source.mode = ${alias}.mode AND source.version = ${alias}.version
@@ -49,22 +49,35 @@ function guard(
   return { sql: `? = 1 AND (${predicate.sql})`, params: [valid ? 1 : 0, ...predicate.params] };
 }
 
-export function insertProjectionCandidateStmt(
-  db: D1Database,
+const sqlLiteral = (value: string) => `'${value.replaceAll("'", "''")}'`;
+
+/**
+ * Source, version and account columns are copied from the rows the guards join, so the statement binds
+ * about 30 values instead of 47. The caller's copies are still compared (generation, hashes, ids), and
+ * the account guard is the epoch the candidate captured: a key rotation under the same identity does not
+ * move it. The revision rides along as the credential locator only.
+ */
+export function projectionCandidateInsert(
   c: ProjectionCandidate,
   authority: ProjectionAuthority,
   now: number,
-): D1PreparedStatement {
+): { sql: string; params: SqlValue[] } {
   const auth = guard(authority, 'templates:author', 'source_scope.org_id', c.mode, now);
   const policy = projectionPolicy(c.provider);
-  return stmt(
-    db,
-    `INSERT INTO template_candidates (id, template_id, org_id, mode, provider, version,
+  const onPolicy =
+    c.adapterRevision === policy.adapterRevision &&
+    c.audiencePolicyRevision === policy.audiencePolicyRevision &&
+    JSON.stringify(c.adapterCapabilities) === JSON.stringify(policy.adapterCapabilities);
+  return {
+    sql: `INSERT INTO template_candidates (id, template_id, org_id, mode, provider, version,
     candidate_hash, content_hash, adapter_revision, adapter_capabilities, audience_policy_revision,
     author_id, version_author_id, created_at, source_release_id, source_release_generation, source_release_hash,
     provider_account_id, provider_account_revision, provider_identity_hash, projection_json, credential_keyset_commitment,
     provider_account_epoch)
-    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, account.authority_epoch
+    SELECT ?, source.template_id, source_scope.org_id, source.mode, account.provider, source.version,
+      ?, source.content_hash, ${policy.adapterRevision}, ${sqlLiteral(JSON.stringify(policy.adapterCapabilities))},
+      ${policy.audiencePolicyRevision}, ?, v.created_by, ?, source.id, source.generation, source.candidate_hash,
+      account.id, account.revision, ?, ?, ?, account.authority_epoch
     FROM (SELECT ? AS org_id) source_scope
     JOIN template_provider_apple_sources source ON source.id = ? AND source.template_id = ?
       AND source.mode = ? AND source.version = ? AND source.generation = ? AND source.candidate_hash = ?
@@ -72,31 +85,16 @@ export function insertProjectionCandidateStmt(
         OR (source.org_id IS NULL AND source.origin = 'baked' AND source.template_org_id IS NULL))
     JOIN template_versions v ON v.template_id = source.template_id AND v.version = source.version AND v.created_by IS ?
     JOIN wallet_provider_accounts account ON account.id = ? AND account.org_id = source_scope.org_id
-      AND account.mode = ? AND account.provider = ? AND account.revision = ?
-      AND account.credential_id IS NOT NULL
+      AND account.mode = source.mode AND account.provider = ? AND account.revision = ?
+      AND account.authority_epoch = ? AND account.credential_id IS NOT NULL
       AND account.revoked_at IS NULL
-    WHERE ? = ? AND ? = ? AND ? = ? AND ? = ? AND ? = ${pinnedKeysetSql}
+    WHERE ? = 1 AND ? = ? AND ? = ${pinnedKeysetSql}
       AND (${auth.sql})`,
-    [
+    params: [
       c.id,
-      c.templateId,
-      c.orgId,
-      c.mode,
-      c.provider,
-      c.version,
       c.candidateHash,
-      c.contentHash,
-      c.adapterRevision,
-      JSON.stringify(c.adapterCapabilities),
-      c.audiencePolicyRevision,
       c.authorId,
-      c.versionAuthorId,
       c.createdAt,
-      c.sourceReleaseId,
-      c.sourceReleaseGeneration,
-      c.sourceReleaseHash,
-      c.accountId,
-      c.accountRevision,
       c.providerIdentityHash,
       canonicalJson(c.projection),
       c.credentialKeysetCommitment,
@@ -110,21 +108,26 @@ export function insertProjectionCandidateStmt(
       c.contentHash,
       c.versionAuthorId,
       c.accountId,
-      c.mode,
       c.provider,
       c.accountRevision,
+      c.accountEpoch,
+      onPolicy ? 1 : 0,
       c.authorId,
       authority.userId,
-      c.adapterRevision,
-      policy.adapterRevision,
-      JSON.stringify(c.adapterCapabilities),
-      JSON.stringify(policy.adapterCapabilities),
-      c.audiencePolicyRevision,
-      policy.audiencePolicyRevision,
       c.credentialKeysetCommitment,
       ...auth.params,
     ],
-  );
+  };
+}
+
+export function insertProjectionCandidateStmt(
+  db: D1Database,
+  c: ProjectionCandidate,
+  authority: ProjectionAuthority,
+  now: number,
+): D1PreparedStatement {
+  const { sql, params } = projectionCandidateInsert(c, authority, now);
+  return stmt(db, sql, params);
 }
 
 export function insertProjectionApprovalStmt(

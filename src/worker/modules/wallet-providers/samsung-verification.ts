@@ -89,12 +89,12 @@ async function probe(
     const scope = { orgId: candidate.orgId, mode: candidate.mode, provider: 'samsung' as const };
     const account = await readConfiguredWalletProviderCredentials(ctx, scope, {
       accountId: candidate.accountId,
-      accountRevision: candidate.accountRevision,
+      authorityEpoch: candidate.accountEpoch,
     });
     if (
       account?.provider !== 'samsung' ||
       account.accountId !== candidate.accountId ||
-      account.revision !== candidate.accountRevision ||
+      account.authorityEpoch !== candidate.accountEpoch ||
       (await providerIdentityHash(account, candidate.projection.cardType)) !==
         candidate.providerIdentityHash
     )

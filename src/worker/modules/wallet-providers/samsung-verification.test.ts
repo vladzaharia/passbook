@@ -14,7 +14,7 @@ import {
   requireCredentialRefKeyset,
 } from '../passes/credential-keyset.ts';
 import { setupKit } from '../passes/pass-test-fixtures.ts';
-import { configureWalletProviderAccount } from './account-service.ts';
+import { configureWalletProviderAccount, revokeWalletProviderAccount } from './account-service.ts';
 import { replaceCallbackKeysetForTest } from './callbacks-test-fixtures.ts';
 import { makeProviderTestTemplate } from './offers-test-fixtures.ts';
 import { approveProjectionCandidate, createProjectionCandidate } from './projection-service.ts';
@@ -413,7 +413,7 @@ describe('authenticated Samsung card-state evidence', () => {
     );
   });
 
-  it('cannot commit an in-flight response after credential rotation or a newer failed probe', async () => {
+  it('commits an in-flight response across a rotation under the same identity', async () => {
     const f = await fixture();
     await f.approve();
     vi.stubGlobal(
@@ -423,6 +423,25 @@ describe('authenticated Samsung card-state evidence', () => {
           ...f.scope,
           expectedRevision: f.configured.revision,
           credentials: f.credentials,
+        });
+        return success();
+      }),
+    );
+    expect((await refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, f.input)).verified).toBe(
+      true,
+    );
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored())).toBe(true);
+  });
+
+  it('cannot commit an in-flight response after a revoke or a newer failed probe', async () => {
+    const f = await fixture();
+    await f.approve();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        await revokeWalletProviderAccount(f.kit.ctx, f.auth, {
+          ...f.scope,
+          expectedRevision: f.configured.revision,
         });
         return success();
       }),

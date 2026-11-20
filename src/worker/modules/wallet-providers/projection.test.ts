@@ -740,9 +740,15 @@ describe('native projection approval', () => {
         accountCandidate.candidateHash,
       ),
     ).toBe(true);
-    await configureWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
+    // A rotation under the same identity keeps the candidate (projection-epochs.test.ts); a revoke
+    // and a new configure moves the account epoch and voids it.
+    await revokeWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
       ...staleAccount.scope,
       expectedRevision: 1,
+    });
+    await configureWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
+      ...staleAccount.scope,
+      expectedRevision: 2,
       credentials,
     });
     await expect(
@@ -760,7 +766,7 @@ describe('native projection approval', () => {
     ).toBe(true);
     await revokeWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
       ...staleAccount.scope,
-      expectedRevision: 2,
+      expectedRevision: 3,
     });
     await expect(
       insertDirectProjectionRelease(staleAccount, revokedCandidate, revokedApproval),

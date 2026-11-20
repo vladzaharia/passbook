@@ -1,5 +1,4 @@
 import { first } from '../../platform/db.ts';
-import { walletRetiredInstanceSettledSql } from './repo-instance-retirement.ts';
 
 /**
  * Purges check every incarnation; transfer completion checks only generations older than the
@@ -24,7 +23,7 @@ export function providerRetirementCompleteSql(
           WHERE wallet_retention_pass.id = wallet_retention_instance.pass_id
             AND wallet_retention_pass.org_id = wallet_retention_instance.org_id
             AND wallet_retention_pass.mode = wallet_retention_instance.mode)
-        OR NOT ${walletRetiredInstanceSettledSql('wallet_retention_instance')}))`;
+        OR wallet_retention_instance.retirement_settled_at IS NULL))`;
 }
 
 /** True until every provider instance is retired and no provider write remains in flight. */

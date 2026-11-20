@@ -166,7 +166,7 @@ describe('existing provider instance runtime', () => {
     expect(await projectionReleaseBindingValid(f.kit.env.DB, newerBinding)).toBe(false);
   });
 
-  it('keeps reviewer and evidence on the exact release and fences account rotation', async () => {
+  it('keeps reviewer and evidence on the exact release and fences an account revoke', async () => {
     const f = await publishedProjectionBindingFixture();
     const db = f.kit.env.DB;
     const newer = await f.publish('samsung', 1);
@@ -238,12 +238,21 @@ describe('existing provider instance runtime', () => {
     }
     expect(await projectionReleaseBindingValid(db, binding)).toBe(true);
 
+    // A key rotation under the same identity keeps the approved release current.
     await configureWalletProviderAccount(f.kit.ctx, f.auth, {
       orgId: f.binding.orgId,
       mode: f.binding.mode,
       provider: 'samsung',
       expectedRevision: f.accountRevision,
       credentials: f.samsung,
+    });
+    expect(await projectionReleaseBindingValid(db, binding)).toBe(true);
+    // A revoke voids it, and a new configure does not bring it back.
+    await revokeWalletProviderAccount(f.kit.ctx, f.auth, {
+      orgId: f.binding.orgId,
+      mode: f.binding.mode,
+      provider: 'samsung',
+      expectedRevision: f.accountRevision + 1,
     });
     expect(await projectionReleaseBindingValid(db, binding)).toBe(false);
   });

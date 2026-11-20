@@ -36,9 +36,10 @@ export const isSystemAuthored = (candidate: { authorId: string }): boolean =>
   candidate.authorId === SYSTEM_AUTHOR;
 
 /**
- * Independence from the Apple version author. A system candidate is exempt: its author is the
- * platform, so the person who wrote the version (a solo admin included) may approve it. The author
- * itself is never exempt: `reviewer != author` stays in every statement that uses this.
+ * Independence from the Apple version author. A Google system candidate is exempt: its author is the
+ * platform, so the person who wrote the version (a solo admin included) may approve it. Samsung is not
+ * exempt: its retirement and tombstone proofs (0043, 0050, repo-instance-retirement-sql.ts) keep the
+ * raw predicate. The author itself is never exempt: `reviewer != author` stays in every statement.
  */
 export const versionAuthorIndependentSql = (candidate: string, reviewer: string): string =>
-  `(${candidate}.version_author_id IS NULL OR ${candidate}.author_id = '${SYSTEM_AUTHOR}' OR ${reviewer} != ${candidate}.version_author_id)`;
+  `(${candidate}.version_author_id IS NULL OR (${candidate}.author_id = '${SYSTEM_AUTHOR}' AND ${candidate}.provider = 'google') OR ${reviewer} != ${candidate}.version_author_id)`;

@@ -601,6 +601,11 @@ describe('0043 provider generation fences', () => {
         instanceId,
       ]),
     ).toBeNull();
+    const settledAt = () =>
+      first(db, 'SELECT retirement_settled_at AS at FROM wallet_provider_instances WHERE id = ?', [
+        instanceId,
+      ]);
+    expect(await settledAt()).toEqual({ at: null });
     await expect(
       run(db, 'DELETE FROM wallet_provider_instance_operations WHERE id = ?', [upsertId]),
     ).rejects.toThrow(/provider operation history is retained/);
@@ -633,6 +638,8 @@ describe('0043 provider generation fences', () => {
         instanceId,
       ]),
     ).toEqual({ id: instanceId });
+    // The last busy operation finishing settles the retired instance (wallet_provider_operations_settle).
+    expect(await settledAt()).toEqual({ at: now });
     await run(db, 'DELETE FROM passes WHERE id = ?', [pass.id]);
     expect(await first(db, 'SELECT id FROM passes WHERE id = ?', [pass.id])).toBeNull();
   });
