@@ -63,7 +63,8 @@ function compare(
     const oList = o[key];
     const nList = n[key];
     if (Array.isArray(oList) && Array.isArray(nList) && oList.length === nList.length)
-      oList.forEach((s, i) => compare(a, b, s, nList[i], side, `${where}|${i}`, out, seen));
+      for (const [i, s] of oList.entries())
+        compare(a, b, s, nList[i], side, `${where}|${i}`, out, seen);
   }
 }
 

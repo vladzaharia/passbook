@@ -83,8 +83,10 @@ describe('breakingChanges', () => {
   });
 
   it('fails a changed operationId', () => {
-    expect(
-      edit((d) => void ((d.paths?.['/a']?.post as { operationId: string }).operationId = 'y'))[0],
-    ).toMatch(/operationId/);
+    const found = edit((d) => {
+      const o = d.paths?.['/a']?.post as { operationId: string };
+      o.operationId = 'y';
+    });
+    expect(found[0]).toMatch(/operationId/);
   });
 });
