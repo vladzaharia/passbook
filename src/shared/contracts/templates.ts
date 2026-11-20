@@ -81,6 +81,9 @@ export const TemplateVersionDetailSchema = TemplateVersionSchema.extend({
   passJson: z.record(z.string(), z.unknown()),
 });
 
+/** The JSON Schema a pass's `input` must satisfy (GET /templates/{id}/input-schema). */
+export const TemplateInputSchemaSchema = z.record(z.string(), JsonSchema);
+
 export const TemplateDetailSchema = TemplateSummarySchema.extend({
   /** JSON Schema (with x-label, x-group, x-order, x-widget, x-enumLabels) for the active version. */
   inputSchema: JsonSchema,

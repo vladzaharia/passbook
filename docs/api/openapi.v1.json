@@ -2146,6 +2146,10 @@
           "versions"
         ]
       },
+      "TemplateInputSchema": {
+        "type": "object",
+        "additionalProperties": {}
+      },
       "PassPage": {
         "type": "object",
         "properties": {
@@ -15701,7 +15705,8 @@
           },
           "input": {
             "type": "object",
-            "additionalProperties": {}
+            "additionalProperties": {},
+            "description": "The template's fields. GET /templates/{id}/input-schema returns the schema."
           },
           "holderEmail": {
             "type": "string",
@@ -15709,20 +15714,24 @@
           },
           "externalId": {
             "type": "string",
-            "maxLength": 200
+            "maxLength": 200,
+            "description": "Your own key for the pass, any time. Filter with GET /passes?externalId=. Unique per org and mode only if the template says so."
           },
           "serial": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9._~-]{1,100}$"
+            "pattern": "^[A-Za-z0-9._~-]{1,100}$",
+            "description": "Sets the Wallet serial. Honored only on the organization's own signing identity; the platform identity picks its own."
           },
           "connectionId": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 64
+            "maxLength": 64,
+            "description": "Binds the pass to a connection. Send with externalRef."
           },
           "externalRef": {
             "type": "string",
-            "maxLength": 500
+            "maxLength": 500,
+            "description": "The upstream record id, for passes created by a connection. Send with connectionId."
           },
           "sendEmail": {
             "type": "boolean"
@@ -38449,6 +38458,147 @@
           "resource": "templates",
           "method": "preview"
         },
+        "x-codes": [
+          "ARCHIVE_TOO_LARGE",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IMPORT_CONFLICT",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "INVALID_INPUT",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "MANIFEST_INVALID",
+          "MISSING_SCOPE",
+          "NOT_A_ZIP",
+          "NOT_FOUND",
+          "NO_FILE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_NONE",
+          "STAMPS_QUERY",
+          "STAMPS_REDRAW",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONFLICT",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_IN_USE",
+          "TEMPLATE_IS_BLUEPRINT",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_SHAREABLE",
+          "TEMPLATE_NOT_TESTED",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_NOT_FOUND",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_USED_BY_OTHER_ORG",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "UPLOAD_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/templates/{id}/input-schema": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "templates:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Get the JSON Schema of a template's pass input",
+        "tags": [
+          "templates"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateInputSchema"
+                },
+                "example": {
+                  "type": "object",
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "x-label": "Name"
+                    },
+                    "seat": {
+                      "type": "string",
+                      "x-label": "Seat"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "templates.getTemplatesByIdInputSchema",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "retrieveInputSchema"
+        },
+        "description": "Returns the JSON Schema that `input` must satisfy in `POST /passes` for this template's active version. Field labels, groups and order are in the `x-label`, `x-group` and `x-order` keywords. Use it to build a form or generate types.",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",

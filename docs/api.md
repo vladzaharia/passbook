@@ -26,7 +26,7 @@ page covers what it does not: conventions, headers, common tasks.
 
 ```
 curl "https://passbook.mobile/api/v1/passes" \
-  -H "Authorization: Bearer $WALLET_API_KEY"
+  -H "Authorization: Bearer $PASSBOOK_KEY"
 ```
 
 | Scope | Allows |
@@ -232,6 +232,7 @@ routes and filters). The reference's `info.version` is not a release number.
 Clients written against the earlier API keep working with these differences (as of 2026-11).
 
 - **Problem `type`** (2026-11): `type` is now `https://passbook.mobile/developers/errors/<CODE>`, not `urn:wallet:problem:<code>`. Branch on `code`, which is unchanged. Every operation lists its `x-codes`.
+- **Names** (2026-11): inbound connector webhooks accept `x-passbook-signature` and `x-passbook-timestamp` as well as `x-wallet-*`. `GET /templates/{id}/input-schema` is new.
 - **Pass create with a key**: `templateVersion`, `releaseId` and `releaseGeneration` are optional
   together. Send none and the server uses the scope's effective approved release; with none it
   returns `409 TEMPLATE_RELEASE_REQUIRED` (approve and publish a release in the admin console, then
@@ -267,11 +268,11 @@ secret. Sign the raw request body:
 ts=$(date +%s)
 sig=$(printf '%s.%s' "$ts" "$BODY" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" -hex | sed 's/^.* //')
 curl -X POST "https://passbook.mobile/hooks/connections/$CONNECTION_ID" \
-  -H "x-wallet-timestamp: $ts" -H "x-wallet-signature: v1=$sig" \
+  -H "x-passbook-timestamp: $ts" -H "x-passbook-signature: v1=$sig" \
   -H "Content-Type: application/json" --data-binary "$BODY"
 ```
 
-The MAC is HMAC-SHA-256 over `<timestamp>.<raw body>`, hex, prefixed `v1=`. The timestamp is in
+The older `x-wallet-timestamp` and `x-wallet-signature` are accepted too. The MAC is HMAC-SHA-256 over `<timestamp>.<raw body>`, hex, prefixed `v1=`. The timestamp is in
 seconds; the server refuses one older than 5 minutes or more than 1 minute ahead, a body over
 256 KB, and a signature that does not match (constant-time compare). Use the exact bytes you
 send: re-serializing the JSON changes the MAC. Rotate the secret with
@@ -455,7 +456,7 @@ evidence. Routes must be deployed before use; see [operations](operations.md#goo
 
 ```
 curl -X POST https://passbook.mobile/api/v1/passes \
-  -H "Authorization: Bearer $WALLET_API_KEY" \
+  -H "Authorization: Bearer $PASSBOOK_KEY" \
   -H "Idempotency-Key: member-000123-v1" \
   -H "Content-Type: application/json" \
   -d '{ "templateId": "<template id>", "externalId": "member-000123",
@@ -466,12 +467,12 @@ curl -X POST https://passbook.mobile/api/v1/passes \
 An org-bound key sends no `orgId`, `mode` or release fields: the key's org and mode apply and the
 effective approved release is used (see Changes for existing clients).
 
-- `input` is validated against the template's `inputs` schema. See `GET /api/v1/templates/{id}`.
+- `input` is validated against the template's `inputs` schema. `GET /api/v1/templates/{id}/input-schema` returns it as JSON Schema (key scope `templates:read`).
 - `Idempotency-Key` (1 to 200 chars): a retry with the same key and body returns the first result.
   The same key with a different body is 422 `IDEMPOTENCY_KEY_REUSED`.
 - `templateId` must be a template. A blueprint answers 409 `TEMPLATE_IS_BLUEPRINT`
   (`docs/design/blueprints-and-templates.md`).
-- Optional: `serial`, `externalId`, `identityId`, `connectionId` + `externalRef`.
+- Optional: `serial` (honored only on your own signing identity), `externalId` (your key, any time), `identityId`, `connectionId` + `externalRef` (connection-created passes only).
 - `externalId` is your own key. `GET /passes?externalId=` returns the passes with exactly that value
   (case-sensitive, inside the key's org and mode). It is not unique by default. A template whose
   manifest sets `"externalId": { "unique": true }` allows one pass per value, per org and mode: a
@@ -509,14 +510,14 @@ parameter (an org-bound key needs none). An import belongs to the caller's mode.
 
 ```
 curl -X POST "https://passbook.mobile/api/v1/pass-imports" \
-  -H "Authorization: Bearer $WALLET_API_KEY" -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $PASSBOOK_KEY" -H "Content-Type: application/json" \
   -d '{ "templateId": "<template id>",
         "source": { "kind": "file", "name": "people.csv", "csv": "Name,Ref\nAna,A1\nBen,A2" },
         "plan": { "mapping": { "holder": { "from": "/Name" } },
                   "holderEmail": null, "externalId": { "from": "/Ref" },
                   "match": "externalId", "keepManual": false, "save": false } }'
 # state "ready" with counts; fix errors or send skipInvalid, then:
-curl -X POST ".../pass-imports/$ID/commit" -H "Authorization: Bearer $WALLET_API_KEY" \
+curl -X POST ".../pass-imports/$ID/commit" -H "Authorization: Bearer $PASSBOOK_KEY" \
   -H "Content-Type: application/json" -d '{ "skipInvalid": false, "email": false }'
 ```
 
@@ -532,7 +533,7 @@ without it. Guide: [importing-passes.md](importing-passes.md).
 
 ```
 curl -X PATCH https://passbook.mobile/api/v1/passes/$ID \
-  -H "Authorization: Bearer $WALLET_API_KEY" -H "If-Match: 3" \
+  -H "Authorization: Bearer $PASSBOOK_KEY" -H "If-Match: 3" \
   -H "Content-Type: application/json" \
   -d '{ "input": { "points": 1300 } }'
 ```
@@ -786,7 +787,7 @@ A `scans:write` key scans as one of the terminals it was minted for, in its own 
 
 ```bash
 curl -X POST https://passbook.mobile/api/v1/scan/actions \
-  -H "Authorization: Bearer $WALLET_API_KEY" \
+  -H "Authorization: Bearer $PASSBOOK_KEY" \
   -H "x-passbook-device: $TERMINAL_ID" \
   -H "Content-Type: application/json" -d '{ ... }'
 ```
