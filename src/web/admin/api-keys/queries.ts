@@ -69,6 +69,8 @@ export function useRevokeKey(principal: string) {
         queryKey: [...KEYS, principal, orgId, 'revoked'],
         exact: true,
       });
+      for (const part of ['detail', 'children', 'activity'])
+        void client.invalidateQueries({ queryKey: [...KEYS, principal, part] });
     },
   });
 }
@@ -85,9 +87,13 @@ export function useCreateKey(principal: string) {
   });
 }
 
-export function keyState(key: ApiKey, now: number): 'revoked' | 'expired' | 'active' {
+export type KeyStateName = 'revoked' | 'expired' | 'retired' | 'retiring' | 'active';
+
+/** Revoked, expired, retired (its set time passed), retiring (set, still working) or active. */
+export function keyState(key: ApiKey, now: number): KeyStateName {
   if (key.revokedAt !== null) return 'revoked';
   if (key.expiresAt !== null && key.expiresAt <= now) return 'expired';
+  if (typeof key.retireAt === 'number') return key.retireAt <= now ? 'retired' : 'retiring';
   return 'active';
 }
 
@@ -105,6 +111,7 @@ export const SCOPE_LABEL: Record<string, string> = {
   'webhooks:manage': 'Manage webhooks',
   'brand:manage': 'Manage brand kit',
   'scanning:write': 'Set up scanning',
+  'api-keys:write': 'Manage its own child keys',
 };
 
 const TerminalListSchema = pageOf(

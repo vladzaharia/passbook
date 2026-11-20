@@ -8,11 +8,20 @@ import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { MetaLink, RowActions, StatusPill } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { ROLE_LABELS } from '../orgs/org-roles.ts';
+import { KeyNameLink } from './key-name-link.tsx';
 import { type ApiKey, keyState, SCOPE_LABEL } from './queries.ts';
 
-const STATE_TONE = { active: 'success', expired: 'warning', revoked: 'neutral' } as const;
+export const STATE_TONE = {
+  active: 'success',
+  retiring: 'warning',
+  retired: 'neutral',
+  expired: 'warning',
+  revoked: 'neutral',
+} as const;
 
 export interface KeyColumnsOptions {
+  /** The organization of the list, or null for the platform's. */
+  orgId: string | null;
   /** Revoked on this page: the glyph plays its undo turn. */
   justRevoked: ReadonlySet<string>;
   now: number;
@@ -24,9 +33,10 @@ export interface KeyColumnsOptions {
 export const keyPrefix = (k: Pick<ApiKey, 'prefix' | 'secretPrefix'>) =>
   k.secretPrefix ?? `wlt_${k.prefix}`;
 
-/** Name (no detail page: plain strong text), mode, scopes, created by, last used, status, actions. */
+/** Name (links to the key's page), mode, scopes, created by, last used, status, actions. */
 
 export function keyColumns({
+  orgId,
   justRevoked,
   now,
   canRevoke,
@@ -49,11 +59,13 @@ export function keyColumns({
               <KeyRound />
             </span>
             <div className="min-w-0">
-              <span className="block truncate font-medium text-fg-strong">
-                {k.name}
-                {k.kind === 'service' ? null : (
-                  <span className="ml-2 text-xs font-normal text-fg-muted">
-                    {k.kind === 'personal' ? 'Personal' : 'Platform'}
+              <span className="flex min-w-0 items-baseline gap-2">
+                <KeyNameLink orgId={orgId} id={k.id}>
+                  {k.name}
+                </KeyNameLink>
+                {k.kind === 'service' && !k.parentKeyId ? null : (
+                  <span className="shrink-0 text-xs font-normal text-fg-muted">
+                    {k.parentKeyId ? 'Child' : k.kind === 'personal' ? 'Personal' : 'Platform'}
                   </span>
                 )}
               </span>

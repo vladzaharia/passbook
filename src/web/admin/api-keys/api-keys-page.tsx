@@ -3,8 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/web/lib/cn.ts';
 import { revokeKeyConfirm } from '@/web/lib/confirms.ts';
 import { formatDay } from '@/web/lib/format.ts';
-import { useAdminScope, useOrgScope } from '@/web/lib/org-filter.tsx';
-import { useMemberships, useSession } from '@/web/lib/session.ts';
 import {
   Button,
   ConfirmDialog,
@@ -20,6 +18,7 @@ import './api-keys.css';
 import { CreateKeyDialog } from './create-key-dialog.tsx';
 import { keyColumns } from './key-columns.tsx';
 import { type ApiKey, useApiKeyPages, useRevokeKey } from './queries.ts';
+import { useKeyAccess } from './use-key-access.ts';
 
 export { keyState } from './queries.ts';
 
@@ -33,52 +32,27 @@ export function ApiKeysPage({
   createRequested: boolean;
   onCreateRequestHandled: () => void;
 }) {
-  const scope = useOrgScope();
-  const session = useSession();
-  const grants = useMemberships();
-  const adminScope = useAdminScope();
-  // The URL's scope: platform keys for an admin, or this organization's keys for a member.
-  const principal = session.isError ? undefined : session.authed?.user.id;
-  const platform = Boolean(session.isAdmin && principal && adminScope?.kind === 'platform');
-  const needsMembership = !platform;
-  const loading =
-    session.isLoading ||
-    session.isFetching ||
-    (needsMembership && (scope.isLoading || grants.isFetching));
-  const failed = needsMembership && scope.isError;
-  const membership =
-    grants.isFetching || scope.isError || !scope.hasExplicitOrg
-      ? undefined
-      : scope.memberships.find(
-          (m) =>
-            m.userId === principal &&
-            m.orgId === scope.requestedOrgId &&
-            m.capabilities.includes('integrations:read'),
-        );
-  const canRead = Boolean(principal && (platform || membership));
-  const canManage = Boolean(
-    principal &&
-      (platform || (canRead && membership?.capabilities.includes('integrations:manage'))),
-  );
-  const orgId = platform ? null : membership?.orgId;
+  const access = useKeyAccess();
+  const canManage = access.state === 'ready' && access.canManage;
   useEffect(() => {
-    if (createRequested && !loading && !failed && !canManage) onCreateRequestHandled();
-  }, [createRequested, loading, failed, canManage, onCreateRequestHandled]);
+    if (createRequested && access.state !== 'loading' && access.state !== 'org-error' && !canManage)
+      onCreateRequestHandled();
+  }, [createRequested, access.state, canManage, onCreateRequestHandled]);
 
-  if (loading) return <SkeletonRows label="Loading organization access" />;
-  if (session.isError)
-    return <ErrorState subject="session" error={session.error} onRetry={session.refetch} />;
-  if (failed)
-    return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
-  if (!principal || !canRead || orgId === undefined) {
+  if (access.state === 'loading') return <SkeletonRows label="Loading organization access" />;
+  if (access.state === 'session-error')
+    return <ErrorState subject="session" error={access.error} onRetry={access.retry} />;
+  if (access.state === 'org-error')
+    return <ErrorState subject="organization access" error={access.error} onRetry={access.retry} />;
+  if (access.state === 'denied') {
     return <EmptyState heading art="lock" title="You do not have access" />;
   }
   return (
     <ScopedApiKeys
-      key={JSON.stringify([principal, orgId, canManage])}
-      principal={principal}
-      orgId={orgId}
-      orgName={membership?.orgName ?? 'Platform'}
+      key={JSON.stringify([access.principal, access.orgId, canManage])}
+      principal={access.principal}
+      orgId={access.orgId}
+      orgName={access.orgName}
       canManage={canManage}
       createRequested={createRequested}
       onCreateRequestHandled={onCreateRequestHandled}
@@ -128,12 +102,13 @@ function ScopedApiKeys({
   const columns = useMemo(
     () =>
       keyColumns({
+        orgId,
         justRevoked,
         now,
         canRevoke: canManage,
         onRevoke: setRevoking,
       }),
-    [justRevoked, now, canManage],
+    [orgId, justRevoked, now, canManage],
   );
 
   const create = (variant: 'primary' | 'outline') =>

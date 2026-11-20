@@ -6,17 +6,28 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 
+/** Scopes no child holds: minting stops at one level, and a terminal's scope is bound to its terminals. */
+export const CHILD_NEVER: readonly ApiScope[] = ['api-keys:write', 'scans:write'];
+
+/** A key caller is a service key of the org (it holds `api-keys:write`): it reaches its own children only. */
 export type ApiKeyAuthority =
   | { kind: 'platform'; userId: string; sessionId: string }
-  | Extract<TenantPassWrite, { kind: 'session' }>;
+  | Extract<TenantPassWrite, { kind: 'session' | 'api_key' }>;
 
 /** An org filter selects a tenant; it never grants authority over that tenant. */
 export async function authorizeApiKeys(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   orgId: string | null,
-  capability: 'org:read' | 'integrations:read' | 'integrations:manage',
+  capability: 'org:read' | 'integrations:read' | 'integrations:manage' | 'audit:read',
 ): Promise<ApiKeyAuthority> {
+  if (auth?.kind === 'api_key') {
+    // A key acts in its own org only (a platform key names none), and always as `integrations:manage`.
+    if (orgId === null || auth.orgId !== orgId) throw new ForbiddenError();
+    const authority = await tenantAuthorityOf(ctx, auth, orgId, 'integrations:manage');
+    if (authority.kind !== 'api_key') throw new ForbiddenError();
+    return authority;
+  }
   if (auth?.kind !== 'session') throw new UnauthenticatedError();
   if (orgId === null) {
     if (!auth.roles.includes('admin')) throw new ForbiddenError();
@@ -27,8 +38,18 @@ export async function authorizeApiKeys(
   return authority;
 }
 
+/** The audit actor of a call: the person, or the key. */
+export function actorOf(authority: ApiKeyAuthority): {
+  actorType: 'user' | 'api_key';
+  actorId: string;
+} {
+  return authority.kind === 'api_key'
+    ? { actorType: 'api_key', actorId: authority.keyId }
+    : { actorType: 'user', actorId: authority.userId };
+}
+
 export function authorityOrgId(authority: ApiKeyAuthority): string | null {
-  return authority.kind === 'session' ? authority.orgId : null;
+  return authority.kind === 'platform' ? null : authority.orgId;
 }
 
 /**
@@ -38,6 +59,9 @@ export function authorityOrgId(authority: ApiKeyAuthority): string | null {
  */
 export function delegableScopes(authority: ApiKeyAuthority): ApiScope[] {
   if (authority.kind === 'platform') return [...MINTABLE_SCOPES];
+  // A child holds a subset of its parent's scopes, but never the right to mint (one level) or a terminal's scope.
+  if (authority.kind === 'api_key')
+    return authority.scopes.filter((scope) => !CHILD_NEVER.includes(scope));
   return MINTABLE_SCOPES.filter(
     (scope) =>
       !isPlatformScope(scope) &&

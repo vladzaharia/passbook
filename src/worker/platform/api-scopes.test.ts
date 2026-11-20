@@ -6,7 +6,7 @@ import { rolesGranting } from './org-role-grants.ts';
 
 describe('role presets', () => {
   // A bundle is copied onto a key when it is minted. Changing one is a reviewed diff of this snapshot:
-  // it reaches only keys made afterwards.
+  // it reaches only keys made afterwards. `api-keys:write` joined with child keys (WP6): a role key made from now holds it.
   it('are these bundles exactly', () => {
     expect(ROLE_PRESETS).toEqual({
       org_admin: [
@@ -20,6 +20,7 @@ describe('role presets', () => {
         'connections:read',
         'connections:write',
         'webhooks:manage',
+        'api-keys:write',
         'brand:manage',
       ],
       integration_admin: [
@@ -27,6 +28,7 @@ describe('role presets', () => {
         'connections:read',
         'connections:write',
         'webhooks:manage',
+        'api-keys:write',
       ],
       template_author: ['templates:read'],
       template_reviewer: ['templates:read'],

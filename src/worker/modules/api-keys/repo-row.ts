@@ -22,10 +22,26 @@ export interface ApiKeyRow {
   ip_allow: string | null;
   rate_tier: string | null;
   secret_label: string;
+  parent_key_id: string | null;
+  rotated_from: string | null;
+  /** The key that made this row: a child's parent, or a key that replaced itself. Null when a person did. */
+  created_by_key: string | null;
+  last_ip_prefix: string | null;
+}
+
+/** The key a rotation replaces: it retires at `retireAt` in the batch that mints its successor. */
+export interface Replaces {
+  id: string;
+  retireAt: number;
+  /** The replaced key's own parent, which the new key keeps. */
+  parent: string | null;
+  /** A key rotating itself may keep every scope it holds, including the one that lets it mint. */
+  self: boolean;
 }
 
 /** What a key is written with besides its own row. */
 export interface KeyExtras {
+  replaces: Replaces;
   terminalIds: readonly string[];
   templateIds: readonly string[];
   passStyles: readonly string[];

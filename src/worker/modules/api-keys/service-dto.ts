@@ -19,6 +19,8 @@ export interface Resources {
 export function toDto(
   row: repo.ApiKeyRow & { created_by_name?: string | null },
   resources: Resources = { templateIds: [], passStyles: [] },
+  /** A key caller is not told which member made a key: no id, no name. */
+  showCreator = true,
 ): ApiKeyDto {
   return {
     id: row.id,
@@ -28,8 +30,8 @@ export function toDto(
     secretPrefix: `${row.secret_label}_${row.prefix}`,
     scopes: parseScopes(row.scopes),
     mode: row.mode,
-    createdBy: row.created_by,
-    createdByName: row.created_by_name ?? null,
+    createdBy: showCreator ? row.created_by : null,
+    createdByName: showCreator ? (row.created_by_name ?? null) : null,
     createdAt: row.created_at,
     lastUsedAt: row.last_used_at,
     expiresAt: row.expires_at,
@@ -40,5 +42,7 @@ export function toDto(
     ipAllow: row.ip_allow ? (JSON.parse(row.ip_allow) as string[]) : [],
     ...resources,
     rateTier: (row.rate_tier as ApiKeyDto['rateTier']) ?? null,
+    parentKeyId: row.parent_key_id,
+    rotatedFrom: row.rotated_from,
   };
 }

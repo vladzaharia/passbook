@@ -59,6 +59,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'api_key.create': a('API key created', ENTITY.apiKey.icon, 'success'),
   'api_key.revoke': a('API key revoked', ENTITY.apiKey.icon, 'warning'),
   'api_key.retire': a('API key retiring', ENTITY.apiKey.icon, 'warning'),
+  'api_key.rotate': a('API key replaced', ENTITY.apiKey.icon, 'info'),
   'auth.sign_in': a('Signed in', LogIn, 'success'),
   'auth.sign_out': a('Signed out', I.signOut, 'neutral'),
   'connection.breaker_open': a('Connection paused after failures', Pause, 'warning'),
