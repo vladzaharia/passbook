@@ -12,6 +12,8 @@ export const RING = 'recent';
 /** A device's control socket is tagged apart from screens, so the screen cap never counts or closes it. */
 export const DEVICE_TAG = 'dev:';
 export const deviceTag = (scannerId: string) => `${DEVICE_TAG}${scannerId}`;
+/** A device socket is also tagged with its session, so a pulse finds only that session's sockets. */
+export const pulseTag = (sessionId: string) => `pulse:${sessionId}`;
 
 /** Pin one key ring for every asynchronous live operation. */
 export function liveContext(env: AppEnv, callerNow?: number) {
@@ -32,6 +34,12 @@ export async function readRing(storage: DurableObjectStorage, now: number): Prom
     .map(ringRowOf)
     .filter((r): r is LiveRingRow => r !== null && now - r.row.at < LIVE_ROW_TTL_MS);
 }
+
+/** What a socket is tagged with: a device by its scanner and session, a screen by its scanner. */
+export const socketTags = (a: LiveAttachment): string[] =>
+  a.role === 'device'
+    ? [deviceTag(a.scannerId), ...(a.session ? [pulseTag(a.session.id)] : [])]
+    : [a.scannerId];
 
 /** The attachment sealed on a socket when it connected; null when it will not open. */
 export async function socketAttachment(

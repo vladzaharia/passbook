@@ -30,6 +30,7 @@ import {
   readRing,
   refusedUpgrade,
   socketAttachment,
+  socketTags,
 } from './scan-hub-support.ts';
 
 /** One org and mode per object. HTTP mutations remain in D1; this is a bounded display feed. */
@@ -59,9 +60,7 @@ export class ScanHub extends DurableObject<AppEnv> {
     for (const socket of previous.slice(0, Math.max(0, previous.length - (device ? 1 : 2))))
       socket.close(4408, device ? 'Replaced' : 'Too many screens');
     server.serializeAttachment(raw);
-    this.ctx.acceptWebSocket(server, [
-      device ? deviceTag(attachment.scannerId) : attachment.scannerId,
-    ]);
+    this.ctx.acceptWebSocket(server, socketTags(attachment));
     this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
     await this.schedule(attachment.expiresAt);
     if (device) return new Response(null, { status: 101, webSocket: client });

@@ -60,7 +60,9 @@ export function useFloor({
   const { retry } = inside;
   // biome-ignore lint/correctness/useExhaustiveDependencies: a pulse is the reason to read again
   useEffect(() => {
-    if (insideNeeded && online && hub.pulses > 0) void retry();
+    if (!insideNeeded || !online || hub.pulses === 0) return;
+    const t = setTimeout(() => void retry(), 200);
+    return () => clearTimeout(t);
   }, [hub.pulses]);
   const roll = useRollCall({
     port: useMemo(() => rollCallPort(api), [api]),
@@ -87,8 +89,9 @@ export function useFloor({
   }, [open]);
   const gate = { online, kick: hub.pulses * 2 + Number(hub.up) };
   const visitors = useVisitors(api, { ...gate, active: desk });
-  const devices = useDevices(api, { ...gate, active: desk && wide });
-  const shift = useShift(api, shiftStart, { ...gate, active: wide });
+  // Presence and shift totals do not move with a scan: their own timers carry them.
+  const devices = useDevices(api, { ...gate, kick: 0, active: desk && wide });
+  const shift = useShift(api, shiftStart, { ...gate, kick: 0, active: wide });
   return { desk, tracks, hub, inside, roll, visitors, devices, shift };
 }
 export type Floor = ReturnType<typeof useFloor>;

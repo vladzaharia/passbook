@@ -112,9 +112,10 @@ export function connectDeviceSocket(deps: DeviceSocketDeps): { close(): void } {
     };
     s.onclose = () => {
       stopPing();
-      deps.onClose?.();
+      // A socket that is no longer the current one must not say the hub is down.
       if (closed || socket !== s) return;
       socket = null;
+      deps.onClose?.();
       const wait = BACKOFF_MS[Math.min(attempt++, BACKOFF_MS.length - 1)] ?? 30_000;
       retry = later(() => {
         retry = null;

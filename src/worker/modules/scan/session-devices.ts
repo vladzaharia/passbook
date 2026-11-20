@@ -5,6 +5,7 @@ import type { ScanActor } from './actor.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { scanHub } from './live.ts';
 import { scanningSessionDevices } from './repo-session-devices.ts';
+import { resolveSessionScope } from './scanning-session-dto.ts';
 import { scanSessionCountAuthority } from './scanning-workspace.ts';
 import {
   captureObservedScanningSession,
@@ -29,6 +30,9 @@ export async function sessionDevicesFor(
   if (!actor.role || (actor.scanningSession && !observed))
     throw new UnauthenticatedError('Pair this scanner to continue.', 'SCANNER_UNAUTHENTICATED');
   if (actor.invalidScannerScope || !observed) return { items: [] };
+  // As /activity: a session whose scope no longer resolves is stale, not empty.
+  if (!(await resolveSessionScope(ctx, observed.parent)).valid)
+    throw await staleScanRead(ctx, sourceActor);
   const now = ctx.clock.now();
   const rows = await scanningSessionDevices(
     ctx.env.DB,
