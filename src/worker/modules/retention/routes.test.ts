@@ -105,7 +105,10 @@ describe('retention holds routes', () => {
     ).toBe(201);
     const list = (await (await call('GET', org(p.orgId, 'holds'), p.admin)).json()) as Holds;
     const hold = list.items[0];
-    expect(hold).toMatchObject({ placedByLabel: 'PassBook', canRelease: false });
+    expect(hold).toMatchObject({ placedByLabel: 'PassBook', canRelease: false, reason: null });
+    expect(JSON.stringify(list)).not.toContain('Preserve');
+    const seen = (await (await call('GET', platform(p.orgId, 'holds'), p.root)).json()) as Holds;
+    expect(seen.items[0]?.reason).toBe('Preserve');
     const denied = await call('POST', org(p.orgId, `holds/${hold?.id}/release`), p.admin);
     expect(denied.status).toBe(403);
     expect(await denied.text()).toContain('RETENTION_HOLD_PLATFORM');
@@ -213,5 +216,64 @@ describe('platform-scope receipts routes', () => {
     expect(
       (await call('GET', `/api/v1/platform/retention/receipts/${r.id}/download`, p.reader)).status,
     ).toBe(403);
+  });
+});
+
+describe('who released a hold', () => {
+  it('an org hold released through the platform route reads PassBook, never the administrator', async () => {
+    const p = await people();
+    await call('POST', org(p.orgId, 'holds'), p.admin, { reason: 'Org hold' });
+    const id = ((await (await call('GET', org(p.orgId, 'holds'), p.admin)).json()) as Holds)
+      .items[0]?.id;
+    expect((await call('POST', platform(p.orgId, `holds/${id}/release`), p.root)).status).toBe(200);
+    const after = (await (await call('GET', org(p.orgId, 'holds'), p.reader)).json()) as {
+      items: { releasedByLabel: string | null; reason: string | null }[];
+    };
+    expect(after.items[0]).toMatchObject({ releasedByLabel: 'PassBook', reason: 'Org hold' });
+    const named =
+      (await (await call('POST', org(p.orgId, 'holds'), p.admin, { reason: 'Again' })).status) ===
+      201;
+    expect(named).toBe(true);
+    const again = ((await (await call('GET', org(p.orgId, 'holds'), p.admin)).json()) as Holds)
+      .items[0]?.id;
+    await call('POST', org(p.orgId, `holds/${again}/release`), p.admin);
+    const final = (await (await call('GET', org(p.orgId, 'holds'), p.admin)).json()) as {
+      items: { releasedByLabel: string | null }[];
+    };
+    expect(final.items.map((h) => h.releasedByLabel)).not.toContain(null);
+    expect(final.items.some((h) => h.releasedByLabel === 'PassBook')).toBe(true);
+    expect(final.items.some((h) => h.releasedByLabel && h.releasedByLabel !== 'PassBook')).toBe(
+      true,
+    );
+  });
+});
+
+describe('receipts paging', () => {
+  it('pages the list and downloads from one chain without writing', async () => {
+    const p = await people();
+    for (let i = 0; i < 5; i++)
+      await writeReceipt(rk.kit.ctx, {
+        orgId: p.orgId,
+        cls: i % 2 ? 'scans' : 'events',
+        kind: 'sweep',
+        deleted: i,
+      });
+    const first = (await (
+      await call('GET', `${org(p.orgId, 'receipts')}?limit=2`, p.reader)
+    ).json()) as {
+      items: { id: string }[];
+      nextCursor: string | null;
+    };
+    expect(first.items).toHaveLength(2);
+    const second = (await (
+      await call('GET', `${org(p.orgId, 'receipts')}?limit=10&cursor=${first.nextCursor}`, p.reader)
+    ).json()) as { items: { id: string }[]; nextCursor: string | null };
+    expect(second.items).toHaveLength(3);
+    expect(second.nextCursor).toBeNull();
+    const ids = [...first.items, ...second.items].map((i) => i.id);
+    expect(new Set(ids).size).toBe(5);
+    expect((await call('GET', `${org(p.orgId, 'receipts')}?cursor=bad`, p.reader)).status).toBe(
+      422,
+    );
   });
 });

@@ -19,6 +19,8 @@ interface Raw {
 
 const PLACER = userLabelSql('h.placed_by', 'h.org_id', false);
 const RELEASER = userLabelSql('h.released_by', 'h.org_id', false);
+/** A releaser who never belonged to the org is a platform administrator, who is never named to an org. */
+const MEMBER = `EXISTS (SELECT 1 FROM org_memberships m WHERE m.org_id = h.org_id AND m.user_id = h.released_by)`;
 
 /**
  * Holds of one org for the console, active first. A platform administrator is never named to an org: the
@@ -34,7 +36,8 @@ export async function listHoldViews(
     `SELECT h.id, h.pass_id, p.serial AS pass_serial, h.placed_by_kind,
         CASE WHEN h.placed_by_kind = 'org' THEN ${PLACER} END AS placed_label,
         h.reason, h.created_at, h.released_at,
-        CASE WHEN h.placed_by_kind = 'org' AND h.released_by IS NOT NULL THEN ${RELEASER} END AS released_label
+        CASE WHEN h.released_by IS NULL OR h.placed_by_kind = 'platform' THEN NULL
+             WHEN ${MEMBER} THEN ${RELEASER} END AS released_label
      FROM retention_holds h LEFT JOIN passes p ON p.id = h.pass_id
      WHERE h.org_id = ?
      ORDER BY (h.released_at IS NOT NULL), h.created_at DESC, h.id DESC LIMIT 200`,
@@ -46,15 +49,16 @@ export async function listHoldViews(
     passLabel: r.pass_id ? `Pass ${r.pass_serial ?? r.pass_id.slice(0, 8)}` : null,
     placedByKind: r.placed_by_kind,
     placedByLabel: r.placed_by_kind === 'platform' ? 'PassBook' : (r.placed_label ?? 'Account'),
-    reason: r.reason,
+    // An org learns that PassBook holds records, and since when, but not why.
+    reason: r.placed_by_kind === 'platform' && viewer === 'org' ? null : r.reason,
     createdAt: r.created_at,
     releasedAt: r.released_at,
     releasedByLabel:
       r.released_at === null
         ? null
-        : r.placed_by_kind === 'platform'
+        : r.placed_by_kind === 'platform' || r.released_label === null
           ? 'PassBook'
-          : (r.released_label ?? 'Account'),
+          : r.released_label,
     canRelease: r.released_at === null && (viewer === 'platform' || r.placed_by_kind === 'org'),
   }));
 }

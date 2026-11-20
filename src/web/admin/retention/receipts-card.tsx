@@ -16,6 +16,7 @@ import {
   ErrorState,
   ListRow,
   ListRows,
+  LoadMore,
   SkeletonRows,
   toast,
 } from '@/web/ui/index.ts';
@@ -44,7 +45,7 @@ export function ReceiptsCard({
   enabled?: boolean;
 }) {
   const query = useReceipts(scope, orgId, enabled);
-  const items = query.data?.items ?? [];
+  const items = query.data?.pages.flatMap((p) => p.items) ?? [];
   const save = (r: Receipt) =>
     saveFromApi(
       `${retentionBase(scope, orgId)}/receipts/${encodeURIComponent(r.id)}/download`,
@@ -91,6 +92,9 @@ export function ReceiptsCard({
             ))}
           </ListRows>
         )}
+        {items.length > 0 ? (
+          <LoadMore query={query} shown={items.length} noun={['receipt', 'receipts']} />
+        ) : null}
       </CardBody>
     </Card>
   );

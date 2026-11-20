@@ -25,29 +25,40 @@ export function csvRow(e: Entry): string {
     .join(',')}\r\n`;
 }
 
+export const EXPORT_MAX_ROWS = 10_000;
+const PAGE = 200;
+
 /**
- * Streams every entry the query matches, a page at a time, as CSV. `read` is the same service call the list
- * route makes, so filters, tenant scope and redaction are identical. The first page is read before the stream
- * opens, so a refusal is an ordinary error response, not a half-written file.
+ * Reads the entries the query matches, a page at a time, up to `max` rows, and returns the CSV. `read` is the
+ * same service call the list route makes, so filters, tenant scope and redaction are identical. `admit` runs
+ * after the first page, which proves the caller may read the log, so a refused caller never spends budget.
+ * Past the cap the file ends with a note line and `truncated` is true: the caller sets a header.
  */
-export async function auditCsvStream(
-  read: (cursor: string | undefined) => Promise<Page>,
-): Promise<ReadableStream<Uint8Array>> {
-  const encoder = new TextEncoder();
-  let page = await read(undefined);
-  let sentHead = false;
-  return new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      if (!sentHead) {
-        sentHead = true;
-        controller.enqueue(encoder.encode(`${HEAD.join(',')}\r\n`));
+export async function auditCsv(
+  read: (cursor: string | undefined, limit: number) => Promise<Page>,
+  admit: () => Promise<void>,
+  max = EXPORT_MAX_ROWS,
+): Promise<{ csv: string; truncated: boolean }> {
+  let page = await read(undefined, Math.min(PAGE, max + 1));
+  await admit();
+  const lines: string[] = [`${HEAD.join(',')}\r\n`];
+  let rows = 0;
+  let truncated = false;
+  for (;;) {
+    for (const entry of page.items) {
+      if (rows >= max) {
+        truncated = true;
+        break;
       }
-      controller.enqueue(encoder.encode(page.items.map(csvRow).join('')));
-      if (!page.nextCursor) {
-        controller.close();
-        return;
-      }
-      page = await read(page.nextCursor);
-    },
-  });
+      lines.push(csvRow(entry));
+      rows++;
+    }
+    if (truncated || !page.nextCursor) break;
+    page = await read(page.nextCursor, PAGE);
+  }
+  if (truncated)
+    lines.push(
+      `# truncated at ${String(max).replace(/\B(?=(\d{3})+$)/g, ',')} rows; narrow the dates\r\n`,
+    );
+  return { csv: lines.join(''), truncated };
 }

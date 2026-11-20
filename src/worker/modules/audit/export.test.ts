@@ -3,6 +3,7 @@ import { fakeAuth, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
 import { type RetentionKit, retentionKit } from '../retention/retention-test-fixtures.ts';
+import { auditCsv } from './export.ts';
 import { recordAudit } from './service.ts';
 
 const fake = fakeAuth();
@@ -109,5 +110,64 @@ describe('audit export', () => {
     expect(text).toContain('other.org');
     expect(text).toContain('pass.update');
     expect(text).not.toContain('private');
+  });
+
+  it('the 7th export in an hour is refused with the wait; a refused caller spends nothing', async () => {
+    const p = await setup(1);
+    for (let i = 0; i < 6; i++)
+      expect((await get(`/api/v1/audit/export?orgId=${p.orgId}`, p.admin)).status).toBe(200);
+    const limited = await get(`/api/v1/audit/export?orgId=${p.orgId}`, p.admin);
+    expect(limited.status).toBe(429);
+    expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(0);
+    expect(await limited.text()).toMatch(/Try again in \d+ minute/);
+    // 403s never reach the counter.
+    for (let i = 0; i < 8; i++)
+      expect((await get(`/api/v1/audit/export?orgId=${p.orgId}`, p.author)).status).toBe(403);
+  });
+
+  it('the platform export has its own per-admin budget', async () => {
+    const p = await setup(1);
+    for (let i = 0; i < 6; i++)
+      expect((await get('/api/v1/audit/platform/export', p.root)).status).toBe(200);
+    expect((await get('/api/v1/audit/platform/export', p.root)).status).toBe(429);
+  });
+});
+
+describe('audit csv cap', () => {
+  const entry = (id: number) => ({
+    id,
+    at: 0,
+    orgId: 'o',
+    actorType: 'user' as const,
+    actorId: null,
+    actorLabel: null,
+    action: 'x.y',
+    targetType: null,
+    targetId: null,
+    targetLabel: null,
+    requestId: null,
+    detail: null,
+  });
+  const pages = (total: number) => async (cursor: string | undefined, limit: number) => {
+    const from = cursor ? Number(cursor) : 0;
+    const n = Math.min(limit, total - from);
+    return {
+      items: Array.from({ length: n }, (_, i) => entry(from + i)),
+      nextCursor: from + n < total ? String(from + n) : null,
+    };
+  };
+
+  it('ends with a note once the cap is hit, and says so', async () => {
+    const out = await auditCsv(pages(1000), async () => {}, 450);
+    expect(out.truncated).toBe(true);
+    const lines = out.csv.trim().split('\r\n');
+    expect(lines).toHaveLength(1 + 450 + 1);
+    expect(lines.at(-1)).toBe('# truncated at 450 rows; narrow the dates');
+  });
+
+  it('does not truncate at exactly the cap', async () => {
+    const out = await auditCsv(pages(450), async () => {}, 450);
+    expect(out.truncated).toBe(false);
+    expect(out.csv).not.toContain('# truncated');
   });
 });

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IdSchema, TimestampSchema } from './common.ts';
+import { IdSchema, pageOf, TimestampSchema } from './common.ts';
 
 export const HoldParamsSchema = z.strictObject({ orgId: IdSchema });
 export const HoldIdParamsSchema = z.strictObject({ orgId: IdSchema, holdId: IdSchema });
@@ -20,7 +20,8 @@ export const HoldSchema = z.object({
   /** Platform holds name PassBook, never the administrator. */
   placedByKind: z.enum(['org', 'platform']),
   placedByLabel: z.string(),
-  reason: z.string(),
+  /** Null for a PassBook hold read by the organization. */
+  reason: z.string().nullable(),
   createdAt: TimestampSchema,
   releasedAt: TimestampSchema.nullable(),
   releasedByLabel: z.string().nullable(),
@@ -41,7 +42,11 @@ export const ReceiptSchema = z.object({
   /** The MAC and chain check out. */
   verified: z.boolean(),
 });
-export const ReceiptListSchema = z.object({ items: z.array(ReceiptSchema) });
+export const ReceiptListSchema = pageOf(ReceiptSchema);
+export const ReceiptListQuerySchema = z.object({
+  cursor: z.string().max(100).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
 
 /** The file a download returns: everything needed to check the receipt offline. */
 export const ReceiptFileSchema = z.object({

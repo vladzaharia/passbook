@@ -39,7 +39,7 @@ export function PassHold({ passId, orgId }: { passId: string; orgId: string }) {
             <span className="text-fg">None</span>
           )}
         </span>
-        {own ? <span className="text-xs text-fg-muted">{own.reason}</span> : null}
+        {own?.reason ? <span className="text-xs text-fg-muted">{own.reason}</span> : null}
         {!own && wide ? (
           <span className="text-xs text-fg-muted">{RETENTION_COPY.holdNote}</span>
         ) : null}

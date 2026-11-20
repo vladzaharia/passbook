@@ -35,6 +35,7 @@ async function sweep(
 }
 
 const receipts = {
+  nextCursor: null,
   items: [
     ['scans', 12, 0, 396],
     ['events', 340, 0, 90],
@@ -108,7 +109,7 @@ test.describe('retention console', () => {
         `/api/v1/platform/orgs/${org.id}/retention/holds`,
       );
       holdId = list.items.find((h) => h.placedByKind === 'platform')?.id ?? '';
-      await page.route('**/retention/receipts', (route) => route.fulfill({ json: receipts }));
+      await page.route('**/retention/receipts*', (route) => route.fulfill({ json: receipts }));
       await page.goto(`/admin/o/${org.id}/retention`);
       await expect(page.getByText('PassBook placed this hold')).toBeVisible();
       await expect(page.getByRole('button', { name: 'Release' })).toHaveCount(0);
@@ -188,7 +189,7 @@ test.describe('retention console', () => {
         await expect(page.getByText('On this pass')).toBeVisible();
         await page.waitForTimeout(300);
       });
-      await page.route('**/api/v1/platform/retention/receipts', (route) =>
+      await page.route('**/api/v1/platform/retention/receipts*', (route) =>
         route.fulfill({ json: receipts }),
       );
       await sweep(page, '/admin/platform/retention', 'platform-retention', async () => {

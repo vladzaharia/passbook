@@ -44,7 +44,7 @@ function setup(rows: Record<string, Row>, onPut?: (body: unknown) => void, page 
       '/api/v1/orgs/o1/invitations': () => json({ items: [] }),
       '/api/v1/identities': () => json({ items: [], nextCursor: null }),
       '/api/v1/orgs/o1/retention/holds': () => json({ items: [] }),
-      '/api/v1/orgs/o1/retention/receipts': () => json({ items: [] }),
+      '/api/v1/orgs/o1/retention/receipts': () => json({ items: [], nextCursor: null }),
       '/api/v1/settings': (_url, init) => {
         if (init?.method === 'PUT') onPut?.(JSON.parse(String(init.body)));
         return json({ items: Object.entries(rows).map(([key, row]) => item(key, row)) });

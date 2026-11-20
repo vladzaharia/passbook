@@ -138,6 +138,37 @@ export async function chainRows(
   };
 }
 
+/** One page of an org's (or the platform's) receipts, newest first; `after` is the last row of the page before. */
+export async function receiptPageRows(
+  db: D1Database,
+  orgId: string | null,
+  after: { ranAt: number; id: string } | null,
+  limit: number,
+): Promise<Receipt[]> {
+  const rows = await all<Raw>(
+    db,
+    `SELECT ${COLS} FROM retention_receipts
+     WHERE org_id IS ? ${after ? 'AND (ran_at < ? OR (ran_at = ? AND id < ?))' : ''}
+     ORDER BY ran_at DESC, id DESC LIMIT ?`,
+    [orgId, ...(after ? [after.ranAt, after.ranAt, after.id] : []), limit],
+  );
+  return rows.map(toReceipt);
+}
+
+/** The class of one receipt of this org (or the platform), so one chain is read, not all. */
+export async function receiptClass(
+  db: D1Database,
+  orgId: string | null,
+  id: string,
+): Promise<string | null> {
+  const r = await first<{ class: string }>(
+    db,
+    'SELECT class FROM retention_receipts WHERE id = ? AND org_id IS ?',
+    [id, orgId],
+  );
+  return r?.class ?? null;
+}
+
 /** Newest receipt per class of one org, for the summary. */
 export async function lastReceiptRows(
   db: D1Database,

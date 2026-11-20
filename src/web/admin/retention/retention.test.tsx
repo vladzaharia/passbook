@@ -50,6 +50,7 @@ function setup(capabilities: string[], holds: unknown[]) {
               verified: true,
             },
           ],
+          nextCursor: null,
         }),
       '/api/v1/settings': () => json({ items: [] }),
     },

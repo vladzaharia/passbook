@@ -22,6 +22,7 @@ describe('platform retention page', () => {
                 verified: true,
               },
             ],
+            nextCursor: null,
           }),
       },
     });

@@ -3,7 +3,8 @@ import { requireAdmin, requireSession } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { auditCsvStream } from './export.ts';
+import { auditCsv } from './export.ts';
+import { enforceExportLimit } from './export-limit.ts';
 import { listPlatformAudit, listTenantAudit } from './service.ts';
 
 export const auditRoutes = createRouter();
@@ -47,7 +48,12 @@ const csvHeaders = {
   'cache-control': 'no-store',
 };
 
-// Same filters as the list; the page size is the export's own, and the cursor is the export's.
+const csvResponse = ({ csv, truncated }: { csv: string; truncated: boolean }) =>
+  new Response(csv, {
+    headers: { ...csvHeaders, ...(truncated ? { 'x-export-truncated': '1' } : {}) },
+  });
+
+// Same filters as the list; the page size and cursor are the export's own.
 const ExportQuerySchema = AuditQuerySchema.omit({ cursor: true, limit: true });
 
 register(
@@ -56,7 +62,7 @@ register(
   {
     method: 'get',
     path: '/export',
-    summary: 'Export an organization audit log as CSV',
+    summary: 'Export an organization audit log as CSV (10,000 entries at most; 6 an hour)',
     query: ExportQuerySchema,
   },
   async (c) => {
@@ -64,10 +70,12 @@ register(
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
     const ctx = serviceContext(c);
     const query = c.req.valid('query');
-    const body = await auditCsvStream((cursor) =>
-      listTenantAudit(ctx, auth.userId, { ...query, cursor, limit: 200 }),
+    return csvResponse(
+      await auditCsv(
+        (cursor, limit) => listTenantAudit(ctx, auth.userId, { ...query, cursor, limit }),
+        () => enforceExportLimit(ctx, [`user:${auth.userId}`, `org:${query.orgId}`]),
+      ),
     );
-    return new Response(body, { headers: csvHeaders });
   },
 );
 
@@ -77,15 +85,19 @@ register(
   {
     method: 'get',
     path: '/platform/export',
-    summary: 'Export the platform audit log as CSV',
+    summary: 'Export the platform audit log as CSV (10,000 entries at most; 6 an hour)',
     query: ExportQuerySchema,
   },
   async (c) => {
+    const auth = c.var.auth;
+    if (auth?.kind !== 'session') throw new UnauthenticatedError();
     const ctx = serviceContext(c);
     const query = c.req.valid('query');
-    const body = await auditCsvStream((cursor) =>
-      listPlatformAudit(ctx, { ...query, cursor, limit: 200 }),
+    return csvResponse(
+      await auditCsv(
+        (cursor, limit) => listPlatformAudit(ctx, { ...query, cursor, limit }),
+        () => enforceExportLimit(ctx, [`user:${auth.userId}`]),
+      ),
     );
-    return new Response(body, { headers: csvHeaders });
   },
 );

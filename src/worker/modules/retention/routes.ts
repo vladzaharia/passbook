@@ -7,6 +7,7 @@ import {
   PlatformReceiptParamsSchema,
   ReceiptFileSchema,
   ReceiptIdParamsSchema,
+  ReceiptListQuerySchema,
   ReceiptListSchema,
 } from '../../../shared/contracts/retention.ts';
 import { requireAdmin } from '../../platform/auth.ts';
@@ -114,12 +115,13 @@ register(
     path: '/{orgId}/retention/receipts',
     summary: 'List retention receipts',
     params: HoldParamsSchema,
+    query: ReceiptListQuerySchema,
     response: ReceiptListSchema,
   },
   async (c) => {
     const { orgId } = c.req.valid('param');
     await orgBy(c, orgId, 'audit:read');
-    return c.json({ items: await listReceiptItems(serviceContext(c), orgId) });
+    return c.json(await listReceiptItems(serviceContext(c), orgId, c.req.valid('query')));
   },
 );
 
@@ -214,10 +216,13 @@ register(
     path: '/orgs/{orgId}/retention/receipts',
     summary: 'List the retention receipts of an organization',
     params: HoldParamsSchema,
+    query: ReceiptListQuerySchema,
     response: ReceiptListSchema,
   },
   async (c) =>
-    c.json({ items: await listReceiptItems(serviceContext(c), c.req.valid('param').orgId) }),
+    c.json(
+      await listReceiptItems(serviceContext(c), c.req.valid('param').orgId, c.req.valid('query')),
+    ),
 );
 
 register(
@@ -245,9 +250,10 @@ register(
     method: 'get',
     path: '/retention/receipts',
     summary: 'List retention receipts of platform-scope deletions',
+    query: ReceiptListQuerySchema,
     response: ReceiptListSchema,
   },
-  async (c) => c.json({ items: await listReceiptItems(serviceContext(c), null) }),
+  async (c) => c.json(await listReceiptItems(serviceContext(c), null, c.req.valid('query'))),
 );
 
 register(

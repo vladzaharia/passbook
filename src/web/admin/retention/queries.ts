@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { OkSchema } from '@/shared/contracts/common.ts';
 import { HoldListSchema, ReceiptListSchema } from '@/shared/contracts/retention.ts';
 import { api } from '@/web/lib/api.ts';
@@ -27,11 +27,16 @@ export function useHolds(scope: RetentionScope, orgId: string, enabled = true) {
 }
 
 export function useReceipts(scope: RetentionScope, orgId: string, enabled = true) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: key(scope, orgId, 'receipts'),
     enabled,
-    queryFn: ({ signal }) =>
-      api.get(`${retentionBase(scope, orgId)}/receipts`, ReceiptListSchema, { signal }),
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }) =>
+      api.get(`${retentionBase(scope, orgId)}/receipts`, ReceiptListSchema, {
+        query: { cursor: pageParam, limit: 50 },
+        signal,
+      }),
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
 }
 
