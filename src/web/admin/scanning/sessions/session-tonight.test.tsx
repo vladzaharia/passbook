@@ -40,6 +40,10 @@ describe('SessionTonight', () => {
         scope: 'session',
         timeZone: 'UTC',
         byHour: [{ start: 3_600_000, label: '01:00', count: 12, refused: 2 }],
+        byType: [
+          { templateId: 't1', name: 'Day pass', count: 8 },
+          { templateId: 't2', name: 'Monthly', count: 2 },
+        ],
         byStaff: [{ staffId: 'a', name: 'Sam', count: 12, overrides: 1, refused: 2 }],
         overrides: {
           count: 1,
@@ -50,6 +54,9 @@ describe('SessionTonight', () => {
     const { container } = show();
     expect(await screen.findByRole('region', { name: 'By staff' })).toHaveTextContent('Sam');
     expect(screen.getByRole('region', { name: 'Overrides' })).toHaveTextContent('Alex');
+    const types = screen.getByRole('region', { name: 'By pass type' });
+    expect(types).toHaveTextContent('Day pass');
+    expect(types).toHaveTextContent('Monthly');
     expect((await axe(container)).violations).toEqual([]);
   });
 

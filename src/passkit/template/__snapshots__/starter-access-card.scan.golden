@@ -91,6 +91,26 @@
       "minRole": "door",
       "notify": false,
       "repeat": "always"
+    },
+    {
+      "allowAgain": true,
+      "allowOnConnected": false,
+      "amount": {
+        "max": 10,
+        "presets": [
+          1,
+          2,
+          3
+        ]
+      },
+      "confirm": true,
+      "id": "guest_in",
+      "input": "guests",
+      "kind": "take",
+      "label": "Guest in",
+      "minRole": "door",
+      "notify": false,
+      "repeat": "always"
     }
   ],
   "display": {

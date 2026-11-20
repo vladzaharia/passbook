@@ -96,6 +96,21 @@ export const BLUEPRINTS: Record<string, Slot[]> = {
     { file: 'logo', w: 50, h: 50, paint: logo(WHITE) },
     { file: 'thumbnail', w: 90, h: 90, paint: permitThumb },
   ],
+  'starter-monthly-pass': [
+    { file: 'icon', w: 38, h: 38, paint: icon(PALETTE.cobalt.bg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(WHITE) },
+    { file: 'thumbnail', w: 90, h: 90, paint: accessThumb },
+  ],
+  'starter-day-pass': [
+    { file: 'icon', w: 38, h: 38, paint: icon(PALETTE.sky.bg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(WHITE) },
+    { file: 'thumbnail', w: 90, h: 90, paint: accessThumb },
+  ],
+  'starter-guest-pass': [
+    { file: 'icon', w: 38, h: 38, paint: icon(PALETTE.tangerine.bg) },
+    { file: 'logo', w: 50, h: 50, paint: logo(WHITE) },
+    { file: 'thumbnail', w: 90, h: 90, paint: accessThumb },
+  ],
   'starter-id-card': [
     { file: 'icon', w: 38, h: 38, paint: icon(ID.bg, ID.fg) },
     { file: 'logo', w: 50, h: 50, paint: logo(ID.fg) },

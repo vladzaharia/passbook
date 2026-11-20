@@ -31,6 +31,9 @@ const STYLE_OF: Record<string, string> = {
   'starter-pickup': 'generic',
   'starter-permit': 'generic',
   'starter-id-card': 'generic',
+  'starter-monthly-pass': 'generic',
+  'starter-day-pass': 'generic',
+  'starter-guest-pass': 'generic',
 };
 
 const SCAN_CODED = new Set([
@@ -43,6 +46,9 @@ const SCAN_CODED = new Set([
   'starter-booking',
   'starter-pickup',
   'starter-permit',
+  'starter-monthly-pass',
+  'starter-day-pass',
+  'starter-guest-pass',
   // PS-28: every blueprint's barcode is the scan code (the ID card keeps its number, PS-19).
   'starter-event-ticket',
   'starter-boarding-pass',

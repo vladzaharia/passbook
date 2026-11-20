@@ -1,0 +1,58 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { channelOn } from '../channels/gate.ts';
+import type { Pass } from '../passes/repo.ts';
+import { getWalletInstance } from './instance.ts';
+import { walletProviderDisabledReason } from './provider-policy.ts';
+import { removalWallets } from './removal.ts';
+
+vi.mock('./provider-policy.ts', () => ({ walletProviderDisabledReason: vi.fn(async () => null) }));
+vi.mock('./instance.ts', () => ({ getWalletInstance: vi.fn() }));
+vi.mock('../channels/gate.ts', () => ({ channelOn: vi.fn(async () => true) }));
+
+const pass = { id: 'p1', orgId: 'o1', mode: 'live' } as Pass;
+const ctx = { env: { DB: {} } } as unknown as ServiceContext;
+const instance = vi.mocked(getWalletInstance);
+const channel = vi.mocked(channelOn);
+const reason = vi.mocked(walletProviderDisabledReason);
+const lifecycles = (map: Record<string, string>) =>
+  instance.mockImplementation((async (_db: unknown, scope: { provider: string }) =>
+    map[scope.provider] ? { lifecycle: map[scope.provider] } : null) as never);
+
+afterEach(() => {
+  instance.mockReset();
+  reason.mockImplementation(async () => null);
+  channel.mockImplementation(async () => true);
+});
+
+describe('removalWallets', () => {
+  it('is Apple alone while Google and Samsung are not released or enrolled, whatever copies exist', async () => {
+    reason.mockImplementation(async () => 'not_released');
+    lifecycles({ google: 'active', samsung: 'active' });
+    expect(await removalWallets(ctx, pass)).toEqual(['apple']);
+    expect(instance).not.toHaveBeenCalled();
+  });
+
+  it('adds each released wallet with a live copy and skips the rest', async () => {
+    lifecycles({ google: 'active', samsung: 'revoked' });
+    expect(await removalWallets(ctx, pass)).toEqual(['apple', 'google']);
+    lifecycles({});
+    expect(await removalWallets(ctx, pass)).toEqual(['apple']);
+    lifecycles({ google: 'active', samsung: 'active' });
+    expect(await removalWallets(ctx, pass)).toEqual(['apple', 'google', 'samsung']);
+  });
+
+  it('leaves out a wallet the org is not enrolled in', async () => {
+    lifecycles({ google: 'active', samsung: 'active' });
+    reason.mockImplementation(async (_db, provider) =>
+      provider === 'samsung' ? 'not_enrolled' : null,
+    );
+    expect(await removalWallets(ctx, pass)).toEqual(['apple', 'google']);
+  });
+
+  it('leaves out a wallet that is off for the pass org, however live its copy', async () => {
+    lifecycles({ google: 'active', samsung: 'active' });
+    channel.mockImplementation(async (_ctx, _pass, c) => c !== 'google');
+    expect(await removalWallets(ctx, pass)).toEqual(['apple', 'samsung']);
+  });
+});

@@ -236,6 +236,14 @@ describe('Samsung authenticated callback route', () => {
       [t.pass.id],
     );
     expect(instance?.installation_state).toBe('unknown');
+    // Each admitted card event is one pass event; the redeliveries above add none.
+    const wallet = await all<{ kind: string; data: string }>(
+      t.kit.env.DB,
+      "SELECT kind, data FROM pass_events WHERE pass_id = ? AND kind LIKE 'wallet.%' ORDER BY at, id",
+      [t.pass.id],
+    );
+    expect(wallet.map((e) => e.kind)).toEqual(['wallet.saved', 'wallet.removed']);
+    expect(JSON.parse(wallet[0]?.data ?? '{}')).toEqual({ provider: 'samsung' });
     const rows = await all<{
       id: string;
       org_id: string;

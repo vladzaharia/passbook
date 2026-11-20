@@ -22,9 +22,9 @@ import {
   findGoogleCallbackAccount,
   findGoogleCallbackBinding,
   isGoogleCallbackReceiptCurrent,
-  isGoogleCallbackRedelivery,
   putGoogleCallbackReceipt,
 } from './repo-google-callback.ts';
+import { isGoogleCallbackRedelivery } from './repo-google-callback-replay.ts';
 
 const rejected = () =>
   new UnauthenticatedError('Google Wallet callback is invalid.', 'GOOGLE_CALLBACK_INVALID');

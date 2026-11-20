@@ -54,6 +54,14 @@ export function useAccessUi({
   };
   const place = trackedPlace(counts, session.event);
   const setting = session.scanner?.settings.direction ?? 'in';
+  const syncPlaces = (places: { name: string; inNow: number }[]) => {
+    const now = places.find((p) => p.name === place?.name);
+    if (place && counts.place && now && now.inNow !== place.inNow)
+      dispatch({
+        type: 'counts',
+        counts: { ...counts, place: { ...counts.place, inNow: now.inNow } },
+      });
+  };
   const deskInside = place !== null && isDeskRole(session);
   const chips = place ? (
     <>
@@ -87,6 +95,7 @@ export function useAccessUi({
               runtime.emit({ method: 'manual', passId: row.passId });
             }}
             onFail={(info) => dispatch({ type: 'fail', key: '', ...info })}
+            onPlaces={syncPlaces}
           />
         </Suspense>
       ) : null}
