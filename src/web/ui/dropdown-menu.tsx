@@ -35,7 +35,7 @@ const ITEM =
 
 /**
  * The menu opens on pointer down, so on a phone's bottom action sheet an item can land under the
- * finger and the same tap's pointer up would activate it. Touch and pen items ignore a pointer up
+ * finger and the same tap's pointer up would activate it. Touch, pen and coarse-pointer devices (whose taps can report as mouse) ignore a pointer up
  * this soon after they mount; mouse press-drag-release and keyboard select immediately.
  */
 const OPENING_GESTURE_MS = 350;
@@ -45,7 +45,11 @@ export function useIgnoreOpeningGesture() {
   if (mountedAt.current === null) mountedAt.current = performance.now();
   const opened = mountedAt.current;
   return (event: PointerEvent) => {
-    if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
+    const touchLike =
+      event.pointerType === 'touch' ||
+      event.pointerType === 'pen' ||
+      window.matchMedia?.('(pointer: coarse)').matches;
+    if (!touchLike) return;
     if (performance.now() - opened < OPENING_GESTURE_MS) event.preventDefault();
   };
 }
