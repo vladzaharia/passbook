@@ -277,7 +277,7 @@ export async function setOrgEntitlements(
     throw error;
   }
   // Delivery channels the plan gates converge their passes: one channel-apply run per template.
-  await onEntitlementsChanged(ctx, orgId, was, after, admin.userId);
+  await onEntitlementsChanged(ctx, orgId, was, after, admin.userId, before.revision + 1);
   ctx.log.info('org.entitlements_set', { orgId, preset: input.preset });
   return readOrgEntitlements(ctx, orgId);
 }

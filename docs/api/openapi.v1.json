@@ -6166,6 +6166,7 @@
                         }
                       ]
                     },
+                    "minItems": 1,
                     "maxItems": 12
                   },
                   "confirmBasic": {
@@ -6730,6 +6731,34 @@
                   "off",
                   "basic",
                   "secure"
+                ]
+              },
+              "types": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "standard"
+                      ]
+                    }
+                  ]
+                },
+                "minItems": 1,
+                "maxItems": 12
+              },
+              "confirmBasic": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "staff",
+                  "manager"
                 ]
               }
             }
@@ -13059,6 +13088,7 @@
                         }
                       ]
                     },
+                    "minItems": 1,
                     "maxItems": 12
                   },
                   "confirmBasic": {
@@ -20084,6 +20114,34 @@
                       "basic",
                       "secure"
                     ]
+                  },
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "standard"
+                          ]
+                        }
+                      ]
+                    },
+                    "minItems": 1,
+                    "maxItems": 12
+                  },
+                  "confirmBasic": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "staff",
+                      "manager"
+                    ]
                   }
                 }
               }
@@ -20326,6 +20384,34 @@
                       "off",
                       "basic",
                       "secure"
+                    ]
+                  },
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "standard"
+                          ]
+                        }
+                      ]
+                    },
+                    "minItems": 1,
+                    "maxItems": 12
+                  },
+                  "confirmBasic": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "staff",
+                      "manager"
                     ]
                   }
                 }
@@ -20601,6 +20687,34 @@
                       "off",
                       "basic",
                       "secure"
+                    ]
+                  },
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "standard"
+                          ]
+                        }
+                      ]
+                    },
+                    "minItems": 1,
+                    "maxItems": 12
+                  },
+                  "confirmBasic": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "staff",
+                      "manager"
                     ]
                   }
                 }
@@ -20904,6 +21018,34 @@
                       "off",
                       "basic",
                       "secure"
+                    ]
+                  },
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "standard"
+                          ]
+                        }
+                      ]
+                    },
+                    "minItems": 1,
+                    "maxItems": 12
+                  },
+                  "confirmBasic": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "staff",
+                      "manager"
                     ]
                   }
                 }
@@ -21241,6 +21383,7 @@
                         }
                       ]
                     },
+                    "minItems": 1,
                     "maxItems": 12
                   },
                   "confirmBasic": {
@@ -21657,6 +21800,7 @@
                         }
                       ]
                     },
+                    "minItems": 1,
                     "maxItems": 12
                   },
                   "confirmBasic": {
@@ -22776,6 +22920,32 @@
               "fileKey"
             ],
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "perTag": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "metaKey": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{32}$"
+              }
+            },
+            "required": [
+              "name",
+              "perTag",
+              "metaKey"
+            ],
+            "additionalProperties": false
           }
         ]
       },
@@ -22811,6 +22981,19 @@
             "required": [
               "metaKey",
               "fileKey"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "metaKey": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{32}$"
+              }
+            },
+            "required": [
+              "metaKey"
             ],
             "additionalProperties": false
           }
@@ -52435,6 +52618,7 @@
     },
     "/api/v1/passes/{id}/prints": {
       "post": {
+        "x-feature": "print",
         "summary": "Print a ticket; an earlier print of the pass is voided",
         "tags": [
           "passes"
@@ -91714,6 +91898,11 @@
                     ],
                     "default": "pass"
                   },
+                  "typeId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
                   "move": {
                     "type": "boolean"
                   },
@@ -91786,6 +91975,35 @@
                       "enum": [
                         "pass",
                         "user"
+                      ]
+                    },
+                    "type": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "use": {
+                          "type": "string",
+                          "enum": [
+                            "member",
+                            "staff",
+                            "visitor"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "use"
                       ]
                     },
                     "bindingId": {
@@ -118543,6 +118761,10 @@
         ]
       },
       "post": {
+        "x-feature": {
+          "key": "nfc",
+          "atLeast": "basic"
+        },
         "summary": "Put a removed tag back on a pass",
         "tags": [
           "nfc-tags"
@@ -119251,6 +119473,10 @@
         ]
       },
       "patch": {
+        "x-feature": {
+          "key": "nfc",
+          "atLeast": "basic"
+        },
         "summary": "Change what a tag works with",
         "tags": [
           "nfc-tags"
@@ -121963,6 +122189,10 @@
     },
     "/api/v1/nfc/passes/{passId}/enrollments": {
       "post": {
+        "x-feature": {
+          "key": "nfc",
+          "atLeast": "basic"
+        },
         "summary": "Ask a scanner to read a tag for a pass",
         "tags": [
           "nfc-tags"
@@ -122216,6 +122446,11 @@
                         "TAG_TYPE_LIMIT",
                         "TAG_USE_MISMATCH",
                         "TAG_SECURE_NEEDS_TAP",
+                        "TAG_TYPE_SET",
+                        "TAG_TYPE_SYSTEM",
+                        "TAG_TYPE_SCOPE",
+                        "TAG_TYPED_OFF",
+                        "TAG_TYPE_CHOOSE",
                         null
                       ]
                     },
@@ -122562,6 +122797,11 @@
                         "TAG_TYPE_LIMIT",
                         "TAG_USE_MISMATCH",
                         "TAG_SECURE_NEEDS_TAP",
+                        "TAG_TYPE_SET",
+                        "TAG_TYPE_SYSTEM",
+                        "TAG_TYPE_SCOPE",
+                        "TAG_TYPED_OFF",
+                        "TAG_TYPE_CHOOSE",
                         null
                       ]
                     },
@@ -122906,6 +123146,11 @@
                         "TAG_TYPE_LIMIT",
                         "TAG_USE_MISMATCH",
                         "TAG_SECURE_NEEDS_TAP",
+                        "TAG_TYPE_SET",
+                        "TAG_TYPE_SYSTEM",
+                        "TAG_TYPE_SCOPE",
+                        "TAG_TYPED_OFF",
+                        "TAG_TYPE_CHOOSE",
                         null
                       ]
                     },
@@ -124614,6 +124859,9 @@
                           "diversify": {
                             "type": "boolean"
                           },
+                          "perTag": {
+                            "type": "boolean"
+                          },
                           "createdAt": {
                             "type": "integer",
                             "minimum": 0
@@ -124654,6 +124902,13 @@
                                   ],
                                   "minimum": 0
                                 },
+                                "revokedAt": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 0
+                                },
                                 "tags": {
                                   "type": "integer",
                                   "minimum": 0
@@ -124664,6 +124919,7 @@
                                 "state",
                                 "createdAt",
                                 "stateAt",
+                                "revokedAt",
                                 "tags"
                               ]
                             }
@@ -124674,6 +124930,7 @@
                           "name",
                           "slug",
                           "diversify",
+                          "perTag",
                           "createdAt",
                           "disabledAt",
                           "versions"
@@ -124755,6 +125012,10 @@
         ]
       },
       "post": {
+        "x-feature": {
+          "key": "nfc",
+          "atLeast": "secure"
+        },
         "summary": "Create a tag keyset",
         "tags": [
           "nfc-keysets"
@@ -124803,6 +125064,9 @@
                       "pattern": "^[a-z0-9]{8}$"
                     },
                     "diversify": {
+                      "type": "boolean"
+                    },
+                    "perTag": {
                       "type": "boolean"
                     },
                     "createdAt": {
@@ -124865,6 +125129,13 @@
                             ],
                             "minimum": 0
                           },
+                          "revokedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
                           "tags": {
                             "type": "integer",
                             "minimum": 0
@@ -124875,6 +125146,7 @@
                           "state",
                           "createdAt",
                           "stateAt",
+                          "revokedAt",
                           "tags"
                         ]
                       }
@@ -124885,6 +125157,7 @@
                     "name",
                     "slug",
                     "diversify",
+                    "perTag",
                     "createdAt",
                     "disabledAt",
                     "keys",
@@ -125005,6 +125278,9 @@
                     "diversify": {
                       "type": "boolean"
                     },
+                    "perTag": {
+                      "type": "boolean"
+                    },
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
@@ -125065,6 +125341,13 @@
                             ],
                             "minimum": 0
                           },
+                          "revokedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
                           "tags": {
                             "type": "integer",
                             "minimum": 0
@@ -125075,6 +125358,7 @@
                           "state",
                           "createdAt",
                           "stateAt",
+                          "revokedAt",
                           "tags"
                         ]
                       }
@@ -125085,6 +125369,7 @@
                     "name",
                     "slug",
                     "diversify",
+                    "perTag",
                     "createdAt",
                     "disabledAt",
                     "keys",
@@ -125206,6 +125491,9 @@
                     "diversify": {
                       "type": "boolean"
                     },
+                    "perTag": {
+                      "type": "boolean"
+                    },
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
@@ -125246,6 +125534,13 @@
                             ],
                             "minimum": 0
                           },
+                          "revokedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
                           "tags": {
                             "type": "integer",
                             "minimum": 0
@@ -125256,6 +125551,7 @@
                           "state",
                           "createdAt",
                           "stateAt",
+                          "revokedAt",
                           "tags"
                         ]
                       }
@@ -125266,6 +125562,7 @@
                     "name",
                     "slug",
                     "diversify",
+                    "perTag",
                     "createdAt",
                     "disabledAt",
                     "versions"
@@ -125335,9 +125632,9 @@
         ]
       }
     },
-    "/api/v1/nfc/keysets/{id}/disable": {
+    "/api/v1/nfc/keysets/{id}/keys/{version}/revoke": {
       "post": {
-        "summary": "Disable a keyset",
+        "summary": "Revoke a key version: tags on it must be written again",
         "tags": [
           "nfc-keysets"
         ],
@@ -125350,6 +125647,16 @@
             },
             "required": true,
             "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 255
+            },
+            "required": true,
+            "name": "version",
             "in": "path"
           }
         ],
@@ -125374,6 +125681,9 @@
                       "pattern": "^[a-z0-9]{8}$"
                     },
                     "diversify": {
+                      "type": "boolean"
+                    },
+                    "perTag": {
                       "type": "boolean"
                     },
                     "createdAt": {
@@ -125416,6 +125726,13 @@
                             ],
                             "minimum": 0
                           },
+                          "revokedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
                           "tags": {
                             "type": "integer",
                             "minimum": 0
@@ -125426,6 +125743,7 @@
                           "state",
                           "createdAt",
                           "stateAt",
+                          "revokedAt",
                           "tags"
                         ]
                       }
@@ -125436,6 +125754,465 @@
                     "name",
                     "slug",
                     "diversify",
+                    "perTag",
+                    "createdAt",
+                    "disabledAt",
+                    "versions"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke",
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/v1/nfc/keysets/{id}/reenrol": {
+      "post": {
+        "summary": "Move the tags of a keyset to another keyset",
+        "tags": [
+          "nfc-keysets"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "toKeysetId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "toKeysetId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "moved": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "ownKey": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "keyset": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string",
+                          "pattern": "^[a-z0-9]{8}$"
+                        },
+                        "diversify": {
+                          "type": "boolean"
+                        },
+                        "perTag": {
+                          "type": "boolean"
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "disabledAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "versions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 255
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "active",
+                                  "retiring",
+                                  "retired"
+                                ]
+                              },
+                              "createdAt": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "stateAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
+                              "revokedAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
+                              "tags": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "state",
+                              "createdAt",
+                              "stateAt",
+                              "revokedAt",
+                              "tags"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "slug",
+                        "diversify",
+                        "perTag",
+                        "createdAt",
+                        "disabledAt",
+                        "versions"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "moved",
+                    "ownKey",
+                    "keyset"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "nfc-keysets.postNfcKeysetsByIdReenrol",
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/v1/nfc/keysets/{id}/import": {
+      "post": {
+        "summary": "Import supplier-personalised tags (dry run or add)",
+        "tags": [
+          "nfc-keysets"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "csv": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60000
+                  },
+                  "dryRun": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "csv",
+                  "dryRun"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "dryRun": {
+                      "type": "boolean"
+                    },
+                    "rows": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "ok": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "added": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "problems": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "line": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0
+                          },
+                          "uid": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 40
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": [
+                              "bad_uid",
+                              "bad_key",
+                              "weak_key",
+                              "dup_file",
+                              "dup_key",
+                              "meta_key",
+                              "exists"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "line",
+                          "uid",
+                          "reason"
+                        ]
+                      },
+                      "maxItems": 50
+                    },
+                    "moreProblems": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "dryRun",
+                    "rows",
+                    "ok",
+                    "added",
+                    "problems",
+                    "moreProblems"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/v1/nfc/keysets/{id}/disable": {
+      "post": {
+        "summary": "Disable a keyset",
+        "tags": [
+          "nfc-keysets"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "slug": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9]{8}$"
+                    },
+                    "diversify": {
+                      "type": "boolean"
+                    },
+                    "perTag": {
+                      "type": "boolean"
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "disabledAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "versions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 255
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "retiring",
+                              "retired"
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "stateAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "revokedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "tags": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "state",
+                          "createdAt",
+                          "stateAt",
+                          "revokedAt",
+                          "tags"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "diversify",
+                    "perTag",
                     "createdAt",
                     "disabledAt",
                     "versions"

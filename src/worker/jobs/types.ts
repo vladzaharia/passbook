@@ -118,11 +118,12 @@ export const JobSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('channel.entitlement'),
     orgId: z.string().min(1),
-    /** The channels the plan blocked before the change. */
+    /** The entitlement revision this change made: the runs it opens are keyed on it. */
+    revision: z.number().int().positive(),
+    /** The channels the plan blocked before the change, and after it. */
     blockedBefore: z.array(ChannelSchema),
+    blockedAfter: z.array(ChannelSchema),
     requestedBy: z.string().min(1),
-    /** When the change committed: a retry skips templates that already have a run since. */
-    at: z.number().int().nonnegative(),
   }),
   /** A bulk "turn off and replace codes": the pass gets a new scan code once its windows are closed. */
   z.object({

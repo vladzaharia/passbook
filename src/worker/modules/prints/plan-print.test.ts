@@ -79,6 +79,29 @@ describe('the print feature', () => {
     expect(res.status).toBe(403);
   });
 
+  it('the holder gets the ticket they have back after a downgrade, and holder copy when there is none (L6)', async () => {
+    const { kit, api, pass, print } = await setup();
+    const token = await linkToken(kit.env, pass as never);
+    const holder = () =>
+      kit.app.request(
+        `${ORIGIN}/p/${token}/print`,
+        { method: 'POST', headers: { origin: ORIGIN } },
+        kit.env,
+      );
+    await print(0);
+    const refused = await holder();
+    expect(refused.status).toBe(403);
+    const body = await refused.json();
+    expect(body).toMatchObject({ code: 'FEATURE_NOT_INCLUDED', feature: 'print' });
+    expect(JSON.stringify(body)).not.toContain('PassBook');
+    await print(1);
+    const minted = (await (await api('POST', `/passes/${pass.id}/prints`)).json()) as Minted;
+    await print(0);
+    const again = await holder();
+    expect(again.status).toBe(200);
+    expect(((await again.json()) as Minted).id).toBe(minted.id);
+  });
+
   it('a downgrade pauses: the ticket stays, can be listed and voided, and a mint returns on upgrade', async () => {
     const { api, pass, print, prints } = await setup();
     const minted = (await (await api('POST', `/passes/${pass.id}/prints`)).json()) as Minted;

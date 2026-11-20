@@ -9,6 +9,7 @@ import { derivedHmacKey } from '../../platform/crypto.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { safeEqualBytes, toBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import type { Confirm, TagTypeFacts } from '../nfc/policy.ts';
 import type { SunSeen } from '../nfc/repo-sun.ts';
 import type { TagAssurance } from '../nfc/systems/types.ts';
 import { rolesGranting } from '../orgs/access.ts';
@@ -168,6 +169,10 @@ export interface ScanTagAuthority {
   passId: string;
   /** What the tag proves: a template that asks for more refuses it at commit too. */
   assurance: TagAssurance;
+  /** The tag's type (null: Standard): the template and its uses are re-checked against it at commit. */
+  type?: TagTypeFacts | null;
+  /** The second factor this door asks of the tag: its type's, and the session's for a Basic tag. */
+  confirm?: Confirm;
   /** A SUN read: the counter the scan's claim consumes, in the same batch. */
   sun?: SunSeen;
 }

@@ -15,7 +15,7 @@ import {
 } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { CHANNEL_COPY } from '../../../shared/copy/channels.ts';
-import { entitlementsOf } from '../../platform/entitlements.ts';
+import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
@@ -43,7 +43,13 @@ async function levels(
   if (!platformSettings['nfc.tagsEnabled']) platform.nfc = 'tags_off';
   const blocked: Per<ChannelReason> = {};
   for (const p of ['google', 'samsung'] as const) {
-    const reason = await walletProviderDisabledReason(ctx.env.DB, p, orgId, mode);
+    const reason = await walletProviderDisabledReason(
+      ctx.env.DB,
+      p,
+      orgId,
+      mode,
+      isEntitled(entitlements, `wallet.${p}`),
+    );
     if (reason === 'not_released') platform[p] = reason;
     else if (reason === 'not_enrolled') blocked[p] = reason;
   }

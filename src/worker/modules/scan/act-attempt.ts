@@ -85,6 +85,7 @@ export async function attempt(
       window: !!capturedOverride && !!WINDOW_REASONS[capturedOverride.reason],
       access: capturedOverride?.reason,
       confirmed: req.confirmed === true,
+      approved: !!req.approval,
       direction: req.direction,
       override: !!req.overrideOf,
     },

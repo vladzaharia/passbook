@@ -8,6 +8,7 @@ import {
   RateLimitedError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { existingChannels } from '../channels/door.ts';
 import { passChannels } from '../channels/service.ts';
 import { recordPassEvents } from '../events/record.ts';
 import type { Pass } from '../passes/repo-map.ts';
@@ -17,6 +18,7 @@ import * as repo from './repo.ts';
 import { type PrintWriter, writeMint, writeVoid } from './repo-write.ts';
 
 const HOUR = 3_600_000;
+const PRINT_UNAVAILABLE = 'Printing is not available for this ticket.';
 /** Print changes a holder may make per pass per hour (mint, reprint and void count alike). */
 export const HOLDER_PRINTS_PER_HOUR = 3;
 /** The same window for staff and keys, who print in bulk at an event. */
@@ -50,12 +52,17 @@ export async function mintPrint(
 ): Promise<MintedPrint> {
   if (pass.status !== 'active' || pass.removedAt !== null)
     throw new ConflictError('Only an active pass can be printed.', 'PASS_NOT_ACTIVE');
-  const paper = (await passChannels(ctx, pass)).effective.paper;
-  if (paper.reason === 'not_included')
-    throw new FeatureNotIncludedError('print', featureNotIncluded('print'));
-  if (!paper.on) throw new ConflictError('Printing is off for this ticket.', 'PRINTING_OFF');
+  // The plan is set aside for what is already printed: a holder's first use returns the ticket they have.
+  if (!(await existingChannels(ctx, pass)).paper.on)
+    throw new ConflictError('Printing is off for this ticket.', 'PRINTING_OFF');
   const existing = await repo.activePrint(ctx.env.DB, pass.id);
   if (existing && !replace) return { ...existing, code: await codeOf(ctx, pass, existing) };
+  // A new print needs the plan; the holder is not told to ask PassBook.
+  if ((await passChannels(ctx, pass)).effective.paper.reason === 'not_included')
+    throw new FeatureNotIncludedError(
+      'print',
+      caller.writer.by === 'holder' ? PRINT_UNAVAILABLE : featureNotIncluded('print'),
+    );
   await spend(ctx, pass, caller.limit);
   const id = ctx.ids.id();
   const generation = await repo.nextGeneration(ctx.env.DB, pass.id);

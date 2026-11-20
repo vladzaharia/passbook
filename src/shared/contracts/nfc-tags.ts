@@ -75,19 +75,21 @@ export const TagEndCauseSchema = z.enum([
 export const TagAssignRoleSchema = z.enum(['desk', 'manager', 'never']);
 /** A session's tag level; absent means the org's. */
 export const TagLevelSchema = z.enum(['off', 'basic', 'secure']);
-/** `assign` binds a tag to the scanned pass, `assignAll` to the person. */
+const TYPES_EMPTY = 'Name at least one tag type, or set the level to off.';
+/**
+ * `assign` binds a tag to the scanned pass, `assignAll` to the person. The rest is the door's tag policy: the
+ * weakest tag it takes (`secure` refuses a Basic tag, `off` every tag; absent: any), the tag types it takes
+ * (`standard` is a tag with no type; absent: all; never empty, `level: off` takes none) and what a Basic tag needs besides.
+ */
 export const ScannerTagsSettingsSchema = z.object({
   assign: TagAssignRoleSchema.default('desk'),
   assignAll: TagAssignRoleSchema.default('manager'),
-  /** The weakest tag a door takes: `secure` refuses a Basic tag, `off` every tag. Absent: any. */
   level: TagLevelSchema.optional(),
-});
-/** The session's tag rules: the level, the types a door takes (`standard` is a tag with no type) and what a Basic tag needs. */
-export const SessionTagRulesSchema = ScannerTagsSettingsSchema.extend({
-  level: TagLevelSchema.optional(),
-  types: z.array(TagTypeKeySchema).max(12).optional(),
+  types: z.array(TagTypeKeySchema).min(1, TYPES_EMPTY).max(12).optional(),
   confirmBasic: TagConfirmSchema.optional(),
 });
+/** The session's tag rules are the scanner's. */
+export const SessionTagRulesSchema = ScannerTagsSettingsSchema;
 
 /**
  * One of a user-bound tag's passes, for **Why this pass** / **Why not?** (Desk and up). `used`: the pass the
@@ -115,32 +117,7 @@ export const ScanTagSchema = z.object({
 });
 export type ScanTag = z.infer<typeof ScanTagSchema>;
 
-export const TAG_ERROR_CODES = [
-  'TAG_LOST',
-  'TAG_SECURE_REQUIRED',
-  'TAG_CHECK_FAILED',
-  'TAG_ALREADY_ASSIGNED',
-  'TAG_REQUEST_BUSY',
-  'TAG_REQUEST_EXPIRED',
-  'TAG_HELD_BY_OTHER',
-  'TAG_NO_ACCOUNT',
-  'TAG_RETIRED',
-  'TAG_UID_RANDOM',
-  'TAG_BINDING_LIMIT',
-  'TAG_LIMIT',
-  'TAG_ASSURANCE_LOW',
-  'TAG_HOLDER_CHANGED',
-  'SCANNER_OFFLINE',
-  'TAG_UNDO_EXPIRED',
-  'TAG_PASS_VOIDED',
-  'TAG_PASS_REMOVED',
-  'TAG_PASS_EXPIRED',
-  'TAG_TYPE_MISMATCH',
-  'TAG_TYPE_LIMIT',
-  'TAG_USE_MISMATCH',
-  'TAG_SECURE_NEEDS_TAP',
-] as const;
-export const TagErrorCodeSchema = z.enum(TAG_ERROR_CODES);
+export { TAG_ERROR_CODES, TagErrorCodeSchema } from './nfc-tag-errors.ts';
 
 export const TagBindingSchema = z.object({
   id: IdSchema,
@@ -239,6 +216,8 @@ export const ScanTagBindRequestSchema = z.strictObject({
   /** True: check and describe, write nothing. */
   preview: z.boolean().default(false),
   binding: TagScopeSchema.default('pass'),
+  /** The type of a new tag; absent: the only type that fits, else the org's default, else Standard. */
+  typeId: IdSchema.optional(),
   /** Move the tag from another holder. Needs a Manager PIN. */
   move: z.boolean().optional(),
   /** A loaner on a visitor pass; pass scope only. */
@@ -258,6 +237,8 @@ export const ScanTagBindResultSchema = z.object({
   hint: z.string().regex(/^[0-9A-F]{4}$/),
   assurance: TagAssuranceSchema,
   scope: TagScopeSchema,
+  /** The type the tag has or gets; null: Standard. */
+  type: TagTypeRefSchema.nullable().optional(),
   bindingId: IdSchema.nullable(),
   card: z.object({
     passId: IdSchema,
@@ -283,15 +264,18 @@ export const TagKeysetSchema = z.object({
   /** The 8-character path of the tag URL, `/t/{slug}`. */
   slug: z.string().regex(/^[a-z0-9]{8}$/),
   diversify: z.boolean(),
+  /** The tags carry their own file keys, imported from the supplier. */
+  perTag: z.boolean(),
   createdAt: TimestampSchema,
   disabledAt: TimestampSchema.nullable(),
 });
 export const KeyHexSchema = z.string().regex(/^[0-9a-fA-F]{32}$/, 'A key is 32 hex digits.');
 const keysetName = { name: PlainLineSchema(40), diversify: z.boolean().default(true) };
-/** Entered keys, or `generate: true` (recommended). */
+/** Entered keys, `generate: true` (recommended), or `perTag`: the shared meta key only, each tag's own file key comes by import. */
 export const CreateTagKeysetSchema = z.union([
   z.strictObject({ ...keysetName, generate: z.literal(true) }),
   z.strictObject({ ...keysetName, metaKey: KeyHexSchema, fileKey: KeyHexSchema }),
+  z.strictObject({ name: PlainLineSchema(40), perTag: z.literal(true), metaKey: KeyHexSchema }),
 ]);
 /** The generated keys are shown once, in this response. */
 export const CreatedTagKeysetSchema = TagKeysetSchema.extend({

@@ -2,6 +2,7 @@ import type { PaperDesign } from '../../../passkit/template/paper.ts';
 import type { PaperContent } from '../../../passkit/template/paper-content.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { existingChannels } from '../channels/door.ts';
 import { passChannels } from '../channels/service.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { getOrg } from '../passes/repo-read-issuance.ts';
@@ -43,14 +44,16 @@ export async function printPageModel(
   if (pass.status !== 'active' || pass.removedAt !== null || pass.deletedAt !== null)
     throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   const snapshot = audience === 'holder' ? await capturePassSnapshot(ctx, pass) : null;
-  const [channels, org, ticket] = await Promise.all([
+  const [channels, existing, org, ticket] = await Promise.all([
     passChannels(ctx, pass),
+    existingChannels(ctx, pass),
     getOrg(ctx.env.DB, pass.orgId),
     paperTicket(ctx, pass),
   ]);
   const base = { orgName: org?.name ?? '', mode: pass.mode };
   let model: PrintPageModel = { ...base, state: 'unavailable' };
-  if (channels.effective.paper.on && ticket && (audience === 'staff' || ticket.design.holder)) {
+  // A printed ticket stays viewable after a downgrade (the plan is set aside); a new one is not offered.
+  if (existing.paper.on && ticket && (audience === 'staff' || ticket.design.holder)) {
     const print = await repo.activePrint(ctx.env.DB, pass.id);
     model = print
       ? {
@@ -69,7 +72,9 @@ export async function printPageModel(
             mode: pass.mode,
           }),
         }
-      : { ...base, state: 'empty' };
+      : channels.effective.paper.on
+        ? { ...base, state: 'empty' }
+        : model;
   }
   if (snapshot) await assertPassSnapshot(ctx, snapshot);
   return model;

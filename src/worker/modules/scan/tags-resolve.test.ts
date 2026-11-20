@@ -226,6 +226,7 @@ describe('a pass-bound tag', () => {
     expect(tag).toEqual({
       hint: expect.stringMatching(/^[0-9A-F]{4}$/),
       assurance: 'basic',
+      system: 'uid',
       scope: 'pass',
     });
     expect(same(rest as typeof byTag)).toEqual(same(byCode));

@@ -7,7 +7,8 @@ import type { ScanActor } from './guard.ts';
 import { boundRow } from './repo-tags-bind.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
-import { notFound, TABLES, TAG_UNDO_MS } from './tags-bind.ts';
+import { notFound, TABLES } from './tags-bind.ts';
+import { TAG_UNDO_MS } from './tags-bind-replay.ts';
 import { tagRights } from './tags-inspect.ts';
 
 /** Ends a binding this device made in the last 10 minutes. The tag stays; what it replaced is not restored. */

@@ -57,7 +57,8 @@ export type PolicyRequest =
   | { kind: 'mark_out' }
   | { kind: 'undo'; scan: UndoTarget; now: number; undoWindowMinutes: number }
   | { kind: 'bundle' }
-  | { kind: 'card' };
+  | { kind: 'card' }
+  | { kind: 'tag_confirm' };
 
 export type PolicyVerdict =
   | { allow: true; view?: 'summary' }
@@ -146,6 +147,7 @@ export function scanPolicy(
       return managerOnly();
     case 'cooldown_override':
     case 'access_override':
+    case 'tag_confirm':
       return managerOnly();
     case 'mark_out':
       return !actor.terminal && ROLE_RANK[actor.role] >= ROLE_RANK.desk ? ALLOW : FORBIDDEN;

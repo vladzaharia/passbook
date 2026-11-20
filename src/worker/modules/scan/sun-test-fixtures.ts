@@ -1,11 +1,15 @@
+import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { loadKekRing } from '../../platform/crypto.ts';
 import { first, run } from '../../platform/db.ts';
+import { resolveSession } from '../auth/sessions.ts';
 import { aesCmac } from '../nfc/aes-cmac.ts';
 import { diversifyKey } from '../nfc/diversify.ts';
-import { sealVersion } from '../nfc/keyset-seal.ts';
+import { sealTagKey, sealVersion } from '../nfc/keyset-seal.ts';
+import { keysetAuthorityOf } from '../nfc/keysets.ts';
 import { bytesToHex, hexToBytes } from '../nfc/sun.ts';
 import { tagRef } from '../nfc/tag-ref.ts';
-import type { ScanKit } from './test-kit.ts';
+import { tenantAuthorityOf } from '../passes/http.ts';
+import { grantScanMembership, type ScanKit } from './test-kit.ts';
 
 export const ZERO = new Uint8Array(16);
 const h = (hex: string) => hexToBytes(hex) as Uint8Array;
@@ -19,6 +23,8 @@ export interface SunKeyset {
   meta: Uint8Array;
   file: Uint8Array;
   diversify: boolean;
+  /** The tags carry their own file keys. */
+  perTag: boolean;
 }
 
 let seq = 0;
@@ -31,6 +37,7 @@ export async function sunKeyset(
   options: {
     mode?: 'live' | 'test';
     diversify?: boolean;
+    perTag?: boolean;
     meta?: Uint8Array;
     file?: Uint8Array;
   } = {},
@@ -44,13 +51,14 @@ export async function sunKeyset(
     meta: options.meta ?? random(),
     file: options.file ?? random(),
     diversify: options.diversify ?? false,
+    perTag: options.perTag ?? false,
   };
   const now = kit.clock.now();
   await run(
     kit.env.DB,
-    `INSERT INTO nfc_tag_keysets (id, org_id, mode, name, slug, diversify, created_at, created_by)
-     VALUES (?, ?, ?, 'Badges', ?, ?, ?, 'test')`,
-    [keyset.id, orgId, mode, keyset.slug, keyset.diversify ? 1 : 0, now],
+    `INSERT INTO nfc_tag_keysets (id, org_id, mode, name, slug, diversify, per_tag, created_at, created_by)
+     VALUES (?, ?, ?, 'Badges', ?, ?, ?, ?, 'test')`,
+    [keyset.id, orgId, mode, keyset.slug, keyset.diversify ? 1 : 0, keyset.perTag ? 1 : 0, now],
   );
   await addKeyVersion(kit, keyset, 1, keyset.meta, keyset.file);
   return keyset;
@@ -84,7 +92,7 @@ export async function sunTap(
   keyset: Pick<SunKeyset, 'slug' | 'meta' | 'file' | 'diversify'>,
   uid: string,
   ctr: number,
-  options: { host?: string; slug?: string; p?: string; m?: string } = {},
+  options: { host?: string; slug?: string; p?: string; m?: string; tagKey?: Uint8Array } = {},
 ) {
   const uidBytes = h(uid);
   const counter = new Uint8Array([ctr & 0xff, (ctr >> 8) & 0xff, (ctr >> 16) & 0xff]);
@@ -98,7 +106,8 @@ export async function sunTap(
   const p = new Uint8Array(
     await crypto.subtle.encrypt({ name: 'AES-CBC', iv: new Uint8Array(16) }, metaKey, plain),
   ).slice(0, 16);
-  const fileKey = keyset.diversify ? await diversifyKey(keyset.file, uidBytes) : keyset.file;
+  const fileKey =
+    options.tagKey ?? (keyset.diversify ? await diversifyKey(keyset.file, uidBytes) : keyset.file);
   const sv2 = h(`3cc300010080${uid}${bytesToHex(counter)}`);
   const mac = (await aesCmac(await aesCmac(fileKey, sv2), new Uint8Array(0))).filter(
     (_, i) => i % 2,
@@ -119,6 +128,7 @@ export async function enrolledSunTag(
   uid: string,
   pass: { id: string; orgId: string; mode: 'live' | 'test' },
   ctr: number,
+  ownKey?: Uint8Array,
 ) {
   const { ref, hint } = await tagRef(kit.env, keyset.orgId, keyset.mode, uid);
   const tagId = kit.fx.ids.id();
@@ -128,11 +138,25 @@ export async function enrolledSunTag(
     `INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at) VALUES (?, ?, ?, ?, 'sun', ?, ?)`,
     [tagId, keyset.orgId, keyset.mode, ref, hint, now],
   );
-  await run(
-    kit.env.DB,
-    'INSERT INTO nfc_tag_sun (tag_id, keyset_id, key_version, ctr, ctr_at) VALUES (?, ?, 1, ?, ?)',
-    [tagId, keyset.id, ctr, now],
-  );
+  if (ownKey) {
+    const e = await sealTagKey(
+      await loadKekRing(kit.env),
+      { orgId: keyset.orgId, mode: keyset.mode, keysetId: keyset.id },
+      tagId,
+      ownKey,
+    );
+    await run(
+      kit.env.DB,
+      `INSERT INTO nfc_tag_sun (tag_id, keyset_id, key_version, kek_version, iv, wrapped_dek, ciphertext, ctr, ctr_at)
+       VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?)`,
+      [tagId, keyset.id, e.kekVersion, e.iv, e.wrappedDek, e.ciphertext, ctr, now],
+    );
+  } else
+    await run(
+      kit.env.DB,
+      'INSERT INTO nfc_tag_sun (tag_id, keyset_id, key_version, ctr, ctr_at) VALUES (?, ?, 1, ?, ?)',
+      [tagId, keyset.id, ctr, now],
+    );
   const owner = await first<{ owner_user_id: string | null; credential_generation: number }>(
     kit.env.DB,
     'SELECT owner_user_id, credential_generation FROM passes WHERE id = ?',
@@ -161,3 +185,19 @@ export const sunCounter = async (kit: Pick<ScanKit, 'env'>, tagId: string) =>
       tagId,
     ])
   )?.ctr;
+
+/** The captured scanning:manage authority of a new org admin, as a keyset route builds it. */
+export async function keysetAdmin(
+  kit: Pick<ScanKit, 'env' | 'fx' | 'clock' | 'ctx'>,
+  orgId: string,
+  mode: 'live' | 'test' = 'live',
+) {
+  const user = await makeUser(kit.fx);
+  await grantScanMembership(kit.fx, orgId, user.id, ['org_admin']);
+  const session = await makeSession(kit.fx, { userId: user.id, roles: ['user'] });
+  const resolved = await resolveSession(kit.env, kit.clock, session.cookieValue);
+  if (!resolved) throw new Error('The admin session did not resolve.');
+  return keysetAuthorityOf(
+    await tenantAuthorityOf(kit.ctx, { ...resolved, mode }, orgId, 'scanning:manage'),
+  );
+}

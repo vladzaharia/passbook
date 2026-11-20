@@ -85,9 +85,12 @@ export function inherit(
 export function planGateIssue(
   entitlements: Entitlements,
   upserts: Record<string, unknown>,
+  deletes: readonly string[] = [],
 ): { key: 'nfc' } | null {
   const tags = upserts['nfc.tags'] as { enabled?: boolean } | undefined;
-  return tags?.enabled === true && !nfcIncluded(entitlements) ? { key: 'nfc' } : null;
+  // A reset reads as the default, which is on: it turns the setting on as much as writing it does.
+  const on = tags?.enabled === true || deletes.includes('nfc.tags');
+  return on && !nfcIncluded(entitlements) ? { key: 'nfc' } : null;
 }
 
 /** An org write the platform's switches or ceilings refuse, or null. */

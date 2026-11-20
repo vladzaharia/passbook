@@ -12,6 +12,8 @@ export interface KeysetRow {
   name: string;
   slug: string;
   diversify: boolean;
+  /** The tags carry their own file keys (imported); the keyset holds the shared meta key. */
+  perTag: boolean;
   createdAt: number;
   disabledAt: number | null;
 }
@@ -21,6 +23,8 @@ export interface KeyRow {
   state: KeyState;
   createdAt: number;
   stateAt: number | null;
+  /** Cut off at once, tags still on it included. */
+  revokedAt: number | null;
   /** Tags whose last read used this version. */
   tags: number;
 }
@@ -32,11 +36,12 @@ interface RawKeyset {
   name: string;
   slug: string;
   diversify: number;
+  per_tag: number;
   created_at: number;
   disabled_at: number | null;
 }
 
-const KEYSET = 'id, org_id, mode, name, slug, diversify, created_at, disabled_at';
+const KEYSET = 'id, org_id, mode, name, slug, diversify, per_tag, created_at, disabled_at';
 const keysetOf = (r: RawKeyset): KeysetRow => ({
   id: r.id,
   orgId: r.org_id,
@@ -44,6 +49,7 @@ const keysetOf = (r: RawKeyset): KeysetRow => ({
   name: r.name,
   slug: r.slug,
   diversify: r.diversify === 1,
+  perTag: r.per_tag === 1,
   createdAt: r.created_at,
   disabledAt: r.disabled_at,
 });
@@ -95,10 +101,11 @@ export async function keyVersionsOf(
     state: KeyState;
     created_at: number;
     state_at: number | null;
+    revoked_at: number | null;
     tags: number;
   }>(
     db,
-    `SELECT k.keyset_id, k.version, k.state, k.created_at, k.state_at,
+    `SELECT k.keyset_id, k.version, k.state, k.created_at, k.state_at, k.revoked_at,
         (SELECT count(*) FROM nfc_tag_sun s WHERE s.keyset_id = k.keyset_id AND s.key_version = k.version) AS tags
       FROM nfc_tag_keys k WHERE k.keyset_id IN (${keysetIds.map(() => '?').join(', ')})
       ORDER BY k.keyset_id, k.version`,
@@ -111,6 +118,7 @@ export async function keyVersionsOf(
       state: r.state,
       createdAt: r.created_at,
       stateAt: r.state_at,
+      revokedAt: r.revoked_at,
       tags: r.tags,
     });
     out.set(r.keyset_id, list);
