@@ -1,0 +1,106 @@
+/* The handheld sheet frame (design 6): 700 px, grab handle, header, scrolling body, thumb footer. */
+.scan-pass-sheet {
+  position: fixed;
+  z-index: 50;
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: min(700px, calc(100dvh - env(safe-area-inset-top, 0px) - 48px));
+  padding-inline: 16px;
+  border-radius: 28px 28px 0 0;
+  background: var(--scan-card);
+  color: var(--sd-body);
+  font-family: var(--pk-font-sans);
+  box-shadow: 0 -12px 40px rgb(0 0 0 / 0.35);
+  outline: none;
+}
+.scan-pass-sheet[data-snap="half"] {
+  height: min(460px, calc(100dvh - env(safe-area-inset-top, 0px) - 48px));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scan-pass-sheet {
+    transition: height 200ms var(--wl-ease-out);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .scan-pass-sheet {
+    --sd-muted: #a9b1c4;
+  }
+}
+:root[data-theme="dark"] .scan-pass-sheet {
+  --sd-muted: #a9b1c4;
+}
+/* A 44 px band at the top takes the pull; the handle is a visual in it. */
+.scan-sheet-grab {
+  display: grid;
+  flex: none;
+  place-items: center;
+  height: 32px;
+  margin-inline: -16px;
+  cursor: grab;
+  touch-action: none;
+}
+.scan-sheet-grab > span {
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--sd-rule);
+}
+.scan-sheet-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 6px 12px;
+}
+.scan-sheet-x {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-inline-end: -6px;
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: none;
+  color: var(--sd-strong);
+  cursor: pointer;
+}
+.scan-sheet-scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block-end: 8px;
+}
+.scan-sheet-foot {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  padding-block: 12px max(20px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+}
+.scan-sheet-foot > * {
+  flex: 1;
+}
+.scan-detail-sheet .scan-sheet-head {
+  padding-inline: 20px;
+  padding-block-start: 16px;
+}
+.scan-detail-sheet .scan-sheet-scroll {
+  padding-inline: 20px;
+}
+.scan-detail-sheet .scan-sheet-foot {
+  padding-inline: 20px;
+}
+
+.scan-sheet-col {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}

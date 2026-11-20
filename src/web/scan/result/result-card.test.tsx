@@ -69,9 +69,10 @@ describe('the scanner result interface', () => {
   it('opens the full pass through the identity row', () => {
     const onPass = vi.fn();
     const card = fixtureCard();
-    render(<ResultCard outcome={fixtureOutcome('ok', null, { card })} onPass={onPass} />);
+    const outcome = fixtureOutcome('ok', null, { card });
+    render(<ResultCard outcome={outcome} onPass={onPass} />);
     screen.getByRole('button', { name: 'View pass' }).click();
-    expect(onPass).toHaveBeenCalledWith(card);
+    expect(onPass).toHaveBeenCalledWith(card, outcome);
   });
   it('fills a stamp cooldown from the outcome, with no check-in words', () => {
     render(

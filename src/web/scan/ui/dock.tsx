@@ -19,7 +19,7 @@ export function Dock({ strip, children }: { strip: ReactNode; children?: ReactNo
 export interface DockButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
   /** `gray` grows; `filled` is the accent. */
   variant?: 'gray' | 'filled';
-  /** `square` is 50 x 50 (torch, keyboard); `fixed` is 116 wide (Done). */
+  /** `square` is 56 x 56 on a handheld (torch, keyboard); `fixed` is 116 wide (Done). */
   shape?: 'square' | 'fixed';
   /** The primary action; the e2e hook. */
   primary?: boolean;

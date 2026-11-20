@@ -52,6 +52,8 @@ export interface ScanAppViewProps {
   card?: ReactNode;
   buddy?: ReactNode;
   tint?: Tint;
+  /** A tap on the tint outside the card dismisses the verdict. */
+  onTint?: () => void;
   announcement?: Announcement | null;
   on?: {
     pair?: (code: string) => void;
@@ -82,6 +84,7 @@ export function ScanAppView({
   card,
   buddy,
   tint = 'none',
+  onTint,
   announcement = null,
   branding,
   on = {},
@@ -124,6 +127,7 @@ export function ScanAppView({
       sidebar={screen.s === 'loop' ? sidebar : null}
       camera={screen.s === 'loop' ? camera : null}
       tint={tint}
+      {...(onTint ? { onTint } : {})}
       cardMode={screen.s === 'loop' ? 'result' : 'boot'}
       card={body}
       dock={

@@ -9,7 +9,7 @@ import { ScanAppView } from './app.tsx';
 import { useTagUi } from './assign/use-tag-ui.tsx';
 import { needsSessionRefetch } from './boot/use-scan-session.ts';
 import { LoopMenu } from './loop-menu.tsx';
-import { loopScreen } from './loop-screen.ts';
+import { loopScreen, tagExtraActions, tintDismissible } from './loop-screen.tsx';
 import type { ScanOutcome } from './machine/types.ts';
 import { useScanMachine } from './machine/use-scan-machine.ts';
 import type { ScanRuntime } from './platform/runtime.ts';
@@ -101,6 +101,7 @@ export function ScanLoop({
   const operator = session.workspace?.device.effectiveSurface === 'operator';
   const operatorPane = operator || duoLayout;
   // Phones keep the handheld layout and its operator panel.
+  const handheld = phone && !operatorPane;
   const workspace = operator && !duoLayout && s.started && !phone;
   const nativeBarcode =
     session.workspace?.device.capabilities?.nativeBarcode ??
@@ -152,9 +153,9 @@ export function ScanLoop({
     <ResultCard
       key={s.card.id}
       outcome={result}
-      onPass={(card) => {
-        if (card) setPass({ card });
-        else if ('input' in l) setPass({ input: l.input });
+      density={handheld ? 'glance' : 'full'}
+      onPass={(card, outcome) => {
+        setPass({ outcome, card, live: true, ...('input' in l ? { input: l.input } : {}) });
         dispatch({ type: 'overlay', open: 'settings' });
       }}
       phase={s.card.phase}
@@ -230,6 +231,9 @@ export function ScanLoop({
       }
       card={cardNode}
       tint={tags.tint ?? view.tint}
+      {...(handheld && tintDismissible(result, Boolean(s.overlay || tags.card))
+        ? { onTint: () => dispatch({ type: 'dismiss' }) }
+        : {})}
       buddy={
         <Buddy
           key={view.buddy.key}
@@ -262,7 +266,11 @@ export function ScanLoop({
           setShiftStart(Date.now());
           runtime.start();
         },
-        openRecent: () => showPanel('recent'),
+        openRecent: () => {
+          const o = last?.outcome ?? null;
+          setPass({ outcome: o, card: o?.card ?? null, tab: o ? 'pass' : 'recent' });
+          dispatch({ type: 'overlay', open: 'recent' });
+        },
         undo: () => {
           if (tags.strip && tags.onUndo) tags.onUndo();
           else if (last?.scanId) dispatch({ type: 'undo', scanId: last.scanId });
@@ -294,6 +302,9 @@ export function ScanLoop({
         sessionTotals={session.staff?.role === 'manager' && Boolean(session.workspace)}
         orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}
         timeZone={session.event?.timeZone}
+        where={scanner?.name ?? ''}
+        extraActions={tagExtraActions(tags.addTag)}
+        eventNote={session.event?.note}
         sheet={sheet}
         panel={panel}
         pass={pass}
