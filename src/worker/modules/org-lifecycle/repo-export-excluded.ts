@@ -8,6 +8,7 @@ const DERIVED = 'derived from rows the archive holds, rebuilt from them';
  * table is an entity of `EXPORT_ENTITIES`, listed here, or not tenant data (`PURGE_NOT_TENANT`).
  */
 export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
+  api_key_resources: 'template and style limits of an API key; keys are never exported',
   api_key_terminals: 'links an API key to a scanner; keys are never exported',
   api_keys: 'key hashes: mint a new key after a restore',
   authority_grants: BOOKKEEPING,
