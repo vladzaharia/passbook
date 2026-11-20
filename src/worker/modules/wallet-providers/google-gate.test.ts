@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { handleGoogleCallback } from './google-callback-handler.ts';
-import { walletProviderDisabledReason } from './provider-policy.ts';
+import { walletProviderReleaseReason } from './provider-policy.ts';
 import {
   createGoogleRuntimeOffer,
   googleRuntimeIdHashes,
@@ -23,7 +23,7 @@ afterEach(() => vi.unstubAllGlobals());
 // The Google blockers (token cache, key cache, timeouts, PATCH-first) must not open issuance.
 describe('Google stays dark behind the policy gate', () => {
   it('rejects every runtime operation before any token exchange or REST call', async () => {
-    expect(walletProviderDisabledReason('google')).toBe('not_released');
+    expect(walletProviderReleaseReason('google')).toBe('not_released');
     const f = await runtimeTestFixture();
     const scope = await f.scopeOf(await f.configuredGoogle());
     const responses = await f.encryptedResponseSink();
