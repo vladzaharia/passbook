@@ -21,7 +21,7 @@ import {
   rollbackProjectionRelease,
 } from '../wallet-providers/projection-service.ts';
 import { queueSystemProjections } from '../wallet-providers/projection-system-queue.ts';
-import { authorizeTemplateWrite } from './access.ts';
+import { authorizeTemplateWrite, keysApplyOnly } from './access.ts';
 import { activeAppleRelease } from './releases-active.ts';
 import { approvalMatches, scopedCandidate } from './releases-candidate.ts';
 import { commitRelease } from './releases-commit.ts';
@@ -83,6 +83,7 @@ export async function approveCandidate(
   candidateId: string,
   body: ApproveTemplateCandidate,
 ): Promise<TemplateApproval> {
+  keysApplyOnly(auth, body.provider);
   if (body.provider !== 'apple')
     return approveProjectionCandidate(ctx, auth, templateId, candidateId, body);
   const template = await scopedTemplate(ctx, auth, templateId, body);
@@ -185,6 +186,7 @@ export async function publishRelease(
   templateId: string,
   body: PublishTemplateRelease,
 ): Promise<TemplateRelease> {
+  keysApplyOnly(auth, body.provider);
   if (body.provider !== 'apple') return publishProjectionRelease(ctx, auth, templateId, body);
   const template = await scopedTemplate(ctx, auth, templateId, body);
   writable(template, body, body.mode === 'live' && template.orgId === body.orgId);

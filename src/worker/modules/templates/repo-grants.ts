@@ -1,11 +1,12 @@
 import { type Grant, grant, jobGrant } from '../../platform/authority.ts';
-import type { Check } from '../../platform/authority-checks.ts';
+import { type Check, rawCheck } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { membershipCapability, tenantPrincipal } from '../passes/repo-authority.ts';
 import type { TemplateAuthority } from './access.ts';
 import { userIsActiveAdmin } from './repo-grant-checks.ts';
+import { creatorGrantsParams, creatorGrantsSql } from './repo-key-creator.ts';
 
 /** Every table a template grant writes, typed or through parts. Anything else is refused. */
 const TEMPLATE_TABLES = [
@@ -46,6 +47,11 @@ export function templatePrincipal(authority: TemplateAuthority, deferred: boolea
       userId: authority.userId,
       sessionIdHash: authority.sessionId,
     };
+  if (authority.kind === 'api_key') {
+    // Queued work outlives a key's request, so a key never starts any.
+    if (deferred) throw new Error('A key cannot start deferred template work.');
+    return tenantPrincipal(authority);
+  }
   if (!deferred) return tenantPrincipal(authority);
   return {
     kind: 'membership',
@@ -76,6 +82,20 @@ export function templateGrant(
     tables: TEMPLATE_TABLES,
   };
   const extra = options.checks ?? [];
+  if (authority.kind === 'api_key')
+    return grant(ctx, {
+      purpose: `org.template.${action}`,
+      principal: templatePrincipal(authority, deferred),
+      checks: [
+        rawCheck(
+          'actor',
+          creatorGrantsSql,
+          creatorGrantsParams(authority.membershipId, authority.userId, authority.capability),
+        ),
+        ...extra,
+      ],
+      ...shared,
+    });
   if (authority.kind === 'session')
     return grant(ctx, {
       purpose: `org.template.${action}`,

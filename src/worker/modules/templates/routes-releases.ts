@@ -62,6 +62,7 @@ export function registerTemplateReleases(router: Router): void {
       method: 'post',
       path: '/{id}/candidates',
       summary: 'Create a template release candidate',
+      auth: { scope: 'templates:write', capability: 'templates:author' },
       params: IdParamSchema,
       body: CreateTemplateCandidateSchema,
       response: TemplateCandidateSchema,
@@ -109,7 +110,8 @@ export function registerTemplateReleases(router: Router): void {
     {
       method: 'post',
       path: '/{id}/candidates/{candidateId}/approve',
-      summary: 'Approve a template release candidate',
+      summary: 'Approve a template release candidate (a key only in Test)',
+      auth: { scope: 'templates:review', capability: 'templates:review' },
       params: TemplateCandidateParamSchema,
       body: ApproveTemplateCandidateSchema,
       response: TemplateApprovalSchema,
@@ -202,7 +204,8 @@ export function registerTemplateReleases(router: Router): void {
     {
       method: 'post',
       path: '/{id}/releases',
-      summary: 'Publish an approved template release',
+      summary: 'Publish an approved template release (a key only in Test)',
+      auth: { scope: 'templates:publish', capability: 'templates:publish' },
       params: IdParamSchema,
       body: PublishTemplateReleaseSchema,
       response: TemplateReleaseSchema,

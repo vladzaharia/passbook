@@ -6,7 +6,7 @@ import type { AuthContext } from '../../platform/auth.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { createProjectionCandidate } from '../wallet-providers/projection-service.ts';
-import { authorizeTemplateWrite } from './access.ts';
+import { authorizeTemplateWrite, keysApplyOnly } from './access.ts';
 import {
   APPLE_ADAPTER_CAPABILITIES,
   APPLE_ADAPTER_REVISION,
@@ -26,6 +26,7 @@ export async function createCandidate(
   templateId: string,
   body: CreateTemplateCandidate,
 ): Promise<TemplateCandidate> {
+  keysApplyOnly(auth, body.provider);
   if (body.provider !== 'apple') return createProjectionCandidate(ctx, auth, templateId, body);
   if (body.sourceReleaseId !== undefined || body.projection !== undefined)
     throw new ValidationError('Apple candidates cannot contain projection fields.');
