@@ -1,5 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import type { ApiScope } from '../../platform/auth.ts';
+import { scopeCapability, type TenantScope } from '../../platform/api-scopes.ts';
 import { grant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
@@ -14,7 +14,7 @@ import {
   membershipCapability,
   tenantPrincipal,
 } from '../passes/repo-authority.ts';
-import { type ApiKeyAuthority, delegableScopes, scopeCapability } from './access.ts';
+import { type ApiKeyAuthority, delegableScopes } from './access.ts';
 
 type Db = D1Database;
 
@@ -103,7 +103,7 @@ export async function createKey(
     checks: [
       ...capabilityChecks(authority),
       ...wanted.map((scope) =>
-        membershipCapability(authority.membershipId, scopeCapability[scope as ApiScope]),
+        membershipCapability(authority.membershipId, scopeCapability[scope as TenantScope]),
       ),
       // A terminal of the grant's org and mode, still in service; the binding is written with the key.
       ...terminalIds.map((id) =>

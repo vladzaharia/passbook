@@ -62,6 +62,32 @@ export const ApiScopeSchema = z.enum([
   'connections:write',
   /** Manages the org's outbound webhook endpoints (`integrations:manage` for a session). */
   'webhooks:manage',
+  // Reserved up front so per-area packages never edit this list. No route accepts them until its
+  // area declares them (`RouteSpec.auth`); `worker/platform/api-scopes.ts` maps each to a capability.
+  'templates:write',
+  'templates:review',
+  'templates:publish',
+  'messages:read',
+  'scanning:write',
+  'nfc:read',
+  'nfc:write',
+  'wallet:read',
+  'wallet:write',
+  'api-keys:write',
+  'org:read',
+  'org:write',
+  'members:read',
+  'members:write',
+  'audit:read',
+  /** Platform scopes: only a platform admin acts on them, never an org member or an org key. */
+  'platform:orgs',
+  'platform:users',
+  'platform:identities',
+  'platform:wallet',
+  'platform:settings',
+  'platform:status',
+  'platform:templates',
+  'platform:audit',
 ]);
 export const RoleSchema = z.enum(['admin', 'user']);
 

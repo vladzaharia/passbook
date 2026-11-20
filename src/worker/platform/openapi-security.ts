@@ -1,6 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { MiddlewareHandler } from 'hono';
-import type { ApiScope } from './auth.ts';
+import type { ApiScope, RouteAuth, ScopeRule } from './auth.ts';
 import { SESSION_COOKIE } from './auth.ts';
 import type { AppBindings } from './context.ts';
 
@@ -12,6 +12,14 @@ export interface KeyAccess {
   anyKey?: boolean;
   /** Limits the claim to doc paths that match. */
   only?: RegExp;
+}
+
+/** The scopes a rule accepts, for reads and for the rest. */
+export function keyAccessOf(rule: ScopeRule): KeyAccess {
+  if (typeof rule === 'string') return { read: [rule], write: [rule] };
+  if (Array.isArray(rule)) return { read: rule, write: rule };
+  const split = rule as { read: ApiScope; write: ApiScope };
+  return { read: [split.read], write: [split.write] };
 }
 
 const accessOf = new WeakMap<object, KeyAccess>();
@@ -26,6 +34,26 @@ export function declareKeyAccess<T extends MiddlewareHandler<AppBindings>>(
 }
 
 const isRead = (method: string) => method === 'get' || method === 'head';
+
+/** The scopes a rule accepts for a method: the read half for GET and HEAD, the write half else. */
+export function scopesForMethod(rule: ScopeRule, method: string): readonly ApiScope[] {
+  const access = keyAccessOf(rule);
+  return isRead(method) ? access.read : (access.write ?? []);
+}
+
+/** Whether a guard declared its key scopes, which puts its routes in the OpenAPI document. */
+export const hasKeyAccess = (guard: object): boolean => accessOf.has(guard);
+
+/** The OpenAPI `security` (and extensions) a route's `auth` declaration writes. */
+export function operationSecurity(
+  auth: RouteAuth,
+  method: string,
+): { security: unknown[]; 'x-human-only'?: true; 'x-platform-scope'?: string } {
+  if ('human' in auth) return { security: [{ session: [] }], 'x-human-only': true };
+  if ('platform' in auth) return { security: [{ session: [] }], 'x-platform-scope': auth.platform };
+  const scopes = scopesForMethod(auth.scope, method);
+  return { security: [...scopes.map((scope) => ({ apiKey: [scope] })), { session: [] }] };
+}
 const patternOf = (path: string) =>
   new RegExp(
     `^${path
@@ -67,7 +95,8 @@ type Doc = {
 export function withSecurity(app: OpenAPIHono<AppBindings>, doc: Doc): Doc {
   for (const [path, item] of Object.entries(doc.paths ?? {})) {
     for (const [method, op] of Object.entries(item)) {
-      if (!op || typeof op !== 'object') continue;
+      // A route that declares `auth` already carries its own security.
+      if (!op || typeof op !== 'object' || op.security !== undefined) continue;
       const key = keyScopes(app, method, path);
       if (!key) continue;
       op.security = [
