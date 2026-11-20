@@ -88,7 +88,7 @@ export async function ensureSamsungFetchRef(
   ctx: ServiceContext,
   scope: SamsungOperationScope & { expiresAt: number },
 ): Promise<string | null> {
-  if (!walletProviderEnabled('samsung')) return null;
+  if (!walletProviderEnabled('samsung', scope.mode)) return null;
   ctx = pinSamsungCredentialContext(ctx);
   scope = { ...scope };
   await requireSamsungCredentialKeyset(ctx, scope.credentialKeysetCommitment);

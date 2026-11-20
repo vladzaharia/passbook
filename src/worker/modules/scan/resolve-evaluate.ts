@@ -5,7 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { paperOff, printRefusal } from '../prints/door.ts';
 import { accessStop, isGuestPass, joinReads, planAccessReads } from './access.ts';
-import { planAdmission } from './admission.ts';
+import { passRulesOf, planAdmission } from './admission.ts';
 import {
   type CredentialTombstoneSnapshot,
   captureCredentialTombstoneSnapshot,
@@ -194,7 +194,7 @@ async function evaluateObserved(
     return stop('refused', 'channel_off', { ...candidateAudit(one), channel: channel.channel });
   const configured =
     options.admits?.(found) !== false &&
-    (Object.keys(found.checkInRules ?? {}).length > 0 ||
+    (Object.keys(passRulesOf(found)).length > 0 ||
       Object.keys(actor.settings.checkIn ?? {}).length > 0 ||
       actor.settings.direction === 'out' ||
       actor.settings.direction === 'both');

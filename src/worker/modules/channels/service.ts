@@ -20,6 +20,7 @@ type Per<T> = Partial<Record<Channel, T>>;
 async function levels(
   ctx: ServiceContext,
   orgId: string,
+  mode: Mode,
 ): Promise<Pick<ChannelInputs, 'platform' | 'org'>> {
   const [platformSettings, org] = await Promise.all([
     getPlatformSettings(ctx),
@@ -27,9 +28,12 @@ async function levels(
   ]);
   const platform: Per<ChannelReason> = {};
   if (!platformSettings['print.enabled']) platform.paper = 'printing_off';
-  for (const p of ['google', 'samsung'] as const)
-    if (walletProviderDisabledReason(p)) platform[p] = 'not_released';
   const blocked: Per<ChannelReason> = {};
+  for (const p of ['google', 'samsung'] as const) {
+    const reason = await walletProviderDisabledReason(ctx.env.DB, p, orgId, mode);
+    if (reason === 'not_released') platform[p] = reason;
+    else if (reason) blocked[p] = reason;
+  }
   for (const c of org['channels.blocked']) blocked[c] = 'blocked';
   if (!org['nfc.tags'].enabled) blocked.nfc = 'tags_off';
   return { platform, org: blocked };
@@ -84,7 +88,7 @@ export async function loadMany(
   await Promise.all(
     passes.map(async (pass) => {
       const [levelsOf, policy, capability] = await Promise.all([
-        memo(lv, pass.orgId, () => levels(ctx, pass.orgId)),
+        memo(lv, `${pass.orgId}:${pass.mode}`, () => levels(ctx, pass.orgId, pass.mode)),
         memo(pol, `${pass.orgId}:${pass.mode}:${pass.templateId}`, () =>
           repo
             .getPolicy(ctx.env.DB, pass.orgId, pass.mode, pass.templateId)
@@ -143,7 +147,7 @@ export async function loadTemplate(
   policyOverride?: repo.Policy,
 ): Promise<{ inputs: ChannelInputs; policy: repo.Policy | null; revision: number }> {
   const [lv, stored, version] = await Promise.all([
-    levels(ctx, template.orgId),
+    levels(ctx, template.orgId, mode),
     repo.getPolicy(ctx.env.DB, template.orgId, mode, template.id),
     repo.releasedVersion(ctx.env.DB, template.id, template.orgId, mode),
   ]);

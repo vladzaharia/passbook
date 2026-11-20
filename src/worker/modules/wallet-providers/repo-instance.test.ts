@@ -720,5 +720,17 @@ describe('wallet provider due-operation selection', () => {
     );
     expect(await operationFresh(db, { ...claim, now: claim.now + 119_999 })).toBe(true);
     expect(await operationFresh(db, { ...claim, now: claim.now + 120_000 })).toBe(false);
+    // WA5: a platform hold on the enrolment (the kill switch, legacy rows too) ends an in-flight upsert.
+    for (const { name } of await all<{ name: string }>(
+      db,
+      "SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name = 'wallet_provider_accounts'",
+    ))
+      await run(db, `DROP TRIGGER ${name}`);
+    await run(
+      db,
+      'UPDATE wallet_provider_accounts SET platform_hold_at = ? WHERE org_id = ? AND mode = ? AND provider = ?',
+      [claim.now, claim.orgId, claim.mode, claim.provider],
+    );
+    expect(await operationFresh(db, claim)).toBe(false);
   });
 });

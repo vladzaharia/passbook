@@ -9,7 +9,6 @@ import type { Check } from '../../platform/authority-checks.ts';
 import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
-import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { accountHmacKind } from '../keys/rewrap-tables.ts';
 import { decryptAccount, snapshotWalletCredentialContext } from './account-credential-material.ts';
@@ -35,6 +34,7 @@ import {
   type EnrolmentRow,
   findEnrolment,
 } from './repo-enrolments.ts';
+import { samsungCardMap } from './samsung-cards.ts';
 
 type Mode = 'live' | 'test';
 type Provider = 'google' | 'samsung';
@@ -122,8 +122,7 @@ export async function planSource(
     kind: 'create',
     identityHash,
     hint: identityOf(secret).slice(-4),
-    cardMap:
-      secret.provider === 'samsung' ? { generic: await sha256Hex(secret.credentials.cardId) } : {},
+    cardMap: secret.provider === 'samsung' ? await samsungCardMap(secret.credentials) : {},
     secret,
     unproven: (await unprovenOrgs(db, a.org_id, a.mode, a.provider, identityHash)).map((r) => ({
       orgId: r.org_id,

@@ -67,7 +67,7 @@ export async function putSamsungFetchRef(
   scope: SamsungOperationScope,
   input: { id: string; hash: string; envelope: Envelope; now: number; expiresAt: number },
 ): Promise<SamsungRefEnvelope | null> {
-  if (!walletProviderEnabled('samsung')) return null;
+  if (!walletProviderEnabled('samsung', scope.mode)) return null;
   const { now, expiresAt, envelope } = input;
   if (
     !Number.isSafeInteger(now) ||

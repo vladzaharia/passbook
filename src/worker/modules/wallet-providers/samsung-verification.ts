@@ -94,7 +94,7 @@ async function probe(
   if (
     candidate.projection.provider !== 'samsung' ||
     candidate.projection.schema !== 1 ||
-    !walletProviderEnabled('samsung')
+    !walletProviderEnabled('samsung', candidate.mode)
   )
     return unverified();
   const probeId = ctx.ids.id();
@@ -114,11 +114,16 @@ async function probe(
       account.accountId !== candidate.accountId ||
       account.revision !== candidate.accountRevision ||
       account.credentialKeysetCommitment !== proof.credentialKeysetCommitment ||
-      (await providerIdentityHash(account)) !== candidate.providerIdentityHash
+      (await providerIdentityHash(account, candidate.projection.cardType)) !==
+        candidate.providerIdentityHash
     )
       throw new Error();
     const startedAt = ctx.clock.now();
-    const credentials = await validateSamsungCredentials(account.credentials, startedAt);
+    const credentials = await validateSamsungCredentials(
+      account.credentials,
+      startedAt,
+      candidate.projection.cardType,
+    );
     const response = await probeSamsungActiveTemplate(credentials, {
       cardType: candidate.projection.cardType,
       subType: candidate.projection.cardSubType,
@@ -169,7 +174,7 @@ export async function refreshSamsungProjectionEvidence(
   if (auth?.kind !== 'session' || auth.mode !== parsed.data.mode) throw new ForbiddenError();
   const authority = await tenantAuthorityOf(ctx, auth, parsed.data.orgId, 'integrations:manage');
   if (authority.kind !== 'session') throw new ForbiddenError();
-  assertWalletProviderEnabled('samsung');
+  assertWalletProviderEnabled('samsung', parsed.data.mode);
   const proof = {
     credentialKeysetCommitment: await requireCredentialRefKeyset(ctx.env.DB, ctx.env),
   };

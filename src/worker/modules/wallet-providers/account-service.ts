@@ -85,7 +85,11 @@ async function validateCredentials(
 ): Promise<void> {
   try {
     if (input.provider === 'google') await validateGoogleAccount(input.credentials);
-    else await validateSamsungCredentials(input.credentials, now);
+    else {
+      // Per-type cards live in the credential versions; this legacy path cannot keep them append-only.
+      if (input.credentials.cardIds) throw invalid();
+      await validateSamsungCredentials(input.credentials, now);
+    }
   } catch {
     throw invalid();
   }
@@ -99,7 +103,7 @@ function readiness(scope: WalletProviderScope, row: AccountRow | null): WalletPr
     revision: row?.revision ?? 0,
     state,
     externalApprovalVerified: false,
-    issuance: walletProviderIssuance(scope.provider),
+    issuance: walletProviderIssuance(scope.provider, scope.mode),
     updatedAt: row?.updated_at ?? null,
   };
 }

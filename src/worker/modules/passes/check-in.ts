@@ -32,6 +32,13 @@ export async function getPassCheckIn(ctx: ServiceContext, passId: string, scope:
     mode: action?.repeat === 'once' ? 'single' : action?.repeat === 'daily' ? 'daily' : 'unlimited',
     validFrom: Number.isFinite(from) ? from - (scan.window?.earlyMinutes ?? 0) * 60_000 : null,
     validUntil: Number.isFinite(until) ? until + (scan.window?.lateMinutes ?? 0) * 60_000 : null,
+    ...(scan.checkIn?.days === undefined ? {} : { days: scan.checkIn.days }),
+    ...(scan.checkIn?.durationMinutes === undefined
+      ? {}
+      : { durationMinutes: scan.checkIn.durationMinutes }),
+    ...(scan.checkIn?.durationFrom === undefined
+      ? {}
+      : { durationFrom: scan.checkIn.durationFrom }),
   };
   const stored = await passCheckIn(ctx.env.DB, pass.orgId, passId);
   return {

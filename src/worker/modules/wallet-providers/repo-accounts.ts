@@ -73,7 +73,7 @@ export interface AccountRow {
  * The fence revision: a legacy row's `revision`, an enrolment without a legacy envelope its
  * `enrolment_revision`. Both columns and the own-key envelope, for the account selects below.
  */
-const REVISION_EXPR =
+export const REVISION_EXPR =
   'CASE WHEN a.credential_id IS NULL THEN a.enrolment_revision ELSE a.revision END';
 const OWN_KEY = 'a.hmac_kek_version, a.hmac_iv, a.hmac_wrapped_dek, a.hmac_ciphertext';
 /** An account the runtime can open: a legacy envelope or its own key. */
@@ -243,14 +243,20 @@ export function findSamsungTombstoneCredential(
     credentialKeysetCommitment: string;
   },
 ): Promise<
-  (AccountRow & { provider_identity_hash: string; pin_version_id: string | null }) | null
+  | (AccountRow & {
+      provider_identity_hash: string;
+      pin_version_id: string | null;
+      card_type: string | null;
+    })
+  | null
 > {
   return first(
     db,
     `SELECT a.id, a.org_id, a.mode, a.provider, t.account_revision AS revision,
       e.credential_id, NULL AS revoked_at,
       e.created_at AS updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext,
-      t.provider_identity_hash, t.credential_version_id AS pin_version_id
+      t.provider_identity_hash, t.credential_version_id AS pin_version_id,
+      json_extract(candidate.projection_json, '$.cardType') AS card_type
     FROM wallet_samsung_tombstones t
     JOIN wallet_provider_accounts a ON a.id = t.account_id AND a.org_id = t.org_id
       AND a.mode = t.mode AND a.provider = 'samsung'
