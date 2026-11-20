@@ -28,6 +28,9 @@ export const SEARCH_COPY = {
     body: 'It stays on this device; search did not send it. If it was shared, roll it.',
     roll: 'Roll key',
     clear: 'Clear',
+    signingTitle: 'This is a webhook signing secret.',
+    signingBody: 'It stays on this device; search did not send it. If it was shared, rotate it.',
+    rotate: 'Rotate secret',
   },
   id: {
     looking: 'Looking up this id.',

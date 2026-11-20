@@ -1,6 +1,7 @@
 import { Hash, Lock, RotateCw } from 'lucide-react';
 import { type ReactNode, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
+import { PATHS } from '../../../shared/developers.ts';
 import { classify } from '../../../shared/developers-search.ts';
 import { CommandPalette } from '../../ui/command-palette.tsx';
 import { actionItem, groupsOf, guideItem, item } from './items.tsx';
@@ -83,18 +84,30 @@ function useResults(index: SearchIndex | null, query: string, secret: boolean): 
   return results;
 }
 
-function SecretCard({ tail, onClear }: { tail: string; onClear: () => void }) {
+/** A signing secret is rolled on the webhook endpoint, an API key on the keys page. */
+const SIGNING_HELP = ['ref:webhook-endpoints', 'test-webhook'];
+const WEBHOOK_ENDPOINTS = `${PATHS.reference}/webhook-endpoints`;
+
+function SecretCard({
+  tail,
+  signing,
+  onClear,
+}: {
+  tail: string;
+  signing: boolean;
+  onClear: () => void;
+}) {
   return (
     <div className="srch-secret" role="alert">
       <div className="srch-secret-h">
         <Lock aria-hidden />
-        <span className="strong">{C.secret.title}</span>
+        <span className="strong">{signing ? C.secret.signingTitle : C.secret.title}</span>
       </div>
-      <p className="sm">{C.secret.body}</p>
+      <p className="sm">{signing ? C.secret.signingBody : C.secret.body}</p>
       <div className="srch-actions">
-        <a className="btn sm" href="/admin/api-keys">
+        <a className="btn sm" href={signing ? WEBHOOK_ENDPOINTS : '/admin/api-keys'}>
           <RotateCw aria-hidden />
-          {C.secret.roll} …{tail}
+          {signing ? C.secret.rotate : C.secret.roll} …{tail}
         </a>
         <button type="button" className="btn outline sm" onClick={onClear}>
           {C.secret.clear}
@@ -164,14 +177,14 @@ export function SearchPalette({
           }),
         ]
       : [];
-  const also = index
-    ? [
-        ...index.guides.filter((g) => index.secretHelp.includes(g.id)).map((g) => guideItem(g, [])),
-        ...index.actions
-          .filter((a) => index.secretHelp.includes(a.id))
-          .map((a) => actionItem(a, [])),
-      ]
-    : [];
+  const helpIds = pasted.kind === 'secret' && pasted.signing ? SIGNING_HELP : index?.secretHelp;
+  const also =
+    index && helpIds
+      ? [
+          ...index.guides.filter((g) => helpIds.includes(g.id)).map((g) => guideItem(g, [])),
+          ...index.actions.filter((a) => helpIds.includes(a.id)).map((a) => actionItem(a, [])),
+        ]
+      : [];
 
   const groups =
     pasted.kind === 'secret'
@@ -185,7 +198,7 @@ export function SearchPalette({
 
   const banner =
     pasted.kind === 'secret' ? (
-      <SecretCard tail={pasted.tail} onClear={() => setQuery('')} />
+      <SecretCard tail={pasted.tail} signing={pasted.signing} onClear={() => setQuery('')} />
     ) : pasted.kind === 'id' ? (
       <IdStatus lookup={lookup} />
     ) : load.state === 'failed' ? (
