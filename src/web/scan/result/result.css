@@ -170,7 +170,7 @@
     flex-direction: row;
     border-radius: 32px;
   }
-  .scan-result:not(:has(.scan-result-body)) {
+  .scan-result:not(:has(.scan-result-body:not(:empty))) {
     width: 600px;
   }
   .scan-result-band {
@@ -275,7 +275,7 @@
 }
 
 @media (min-width: 1024px) {
-  .scan-result:not(:has(.scan-result-body)) .scan-result-band {
+  .scan-result:not(:has(.scan-result-body:not(:empty))) .scan-result-band {
     width: 100%;
   }
 }
@@ -298,4 +298,7 @@
   line-height: 20px;
   font-weight: 600;
   opacity: 0.85;
+}
+.scan-result-body:empty {
+  display: none;
 }

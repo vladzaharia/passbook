@@ -25,6 +25,7 @@ import { type Lifecycle, LifecycleFields, lifecycleError } from './lifecycle-fie
 import { TemplateSelect } from './template-select.tsx';
 import { TestModeNote } from './test-mode-note.tsx';
 import { useConnectionCreation } from './use-connection-creation.ts';
+import { useWizardRecipe } from './use-wizard-recipe.ts';
 import { useWizardConfig } from './wizard-config.ts';
 import { ReviewStep, WizardAside } from './wizard-review.tsx';
 import { type ConfigDraft, ConfigStep, ConnectorStep } from './wizard-steps.tsx';
@@ -46,6 +47,7 @@ const DEFAULT_LIFE: Lifecycle = {
   autoCreate: false,
   autoEmail: false,
   onMissing: 'flag',
+  voidWhen: [],
 };
 
 export function CreateConnectionWizard() {
@@ -100,10 +102,13 @@ export function CreateConnectionWizard() {
   const { cfgErrors, secErrors, shownSecrets } = useWizardConfig(info, draft);
   const mapped = fromRows(rows);
   const lifeError = lifecycleError(life);
+  const sender = useWizardRecipe({ info, draft, setDraft, setRows, setLife });
   const sample =
     test?.kind === 'result' && test.result.sample
       ? test.result.sample
-      : Object.keys(info?.outputFields ?? {}).map((k) => ({ pointer: `/${k}` }));
+      : Object.keys(sender.recipe?.outputFields ?? info?.outputFields ?? {}).map((k) => ({
+          pointer: `/${k}`,
+        }));
   const targets = selectedTemplate
     ? targetsOf(flatFields(describeSchema(selectedTemplate.inputSchema)))
     : [];
@@ -137,7 +142,7 @@ export function CreateConnectionWizard() {
   // Without a secret to show, the new connection opens at once.
   // biome-ignore lint/correctness/useExhaustiveDependencies: navigate once per creation
   useEffect(() => {
-    if (created && !created.secret) open(created.id);
+    if (created && !created.secret && !sender.pasted) open(created.id);
   }, [created]);
 
   const currentCreate = create.variables?.scope === scopeToken;
@@ -148,7 +153,9 @@ export function CreateConnectionWizard() {
 
   /** False keeps the step: the Wizard focuses the first error and announces the count. */
   function next(): boolean {
-    const invalid = Object.keys(cfgErrors).length + Object.keys(secErrors).length > 0;
+    const invalid =
+      Object.keys(cfgErrors).length + Object.keys(secErrors).length > 0 ||
+      Boolean(sender.secretError);
     const blocked =
       (step === 0 && (!orgId || !type)) ||
       (step === 1 && (!draft.name.trim() || invalid)) ||
@@ -167,7 +174,7 @@ export function CreateConnectionWizard() {
     return true;
   }
 
-  if (created?.secret) {
+  if (created && (created.secret || sender.pasted)) {
     return (
       <>
         <PageHeader title="Connection created" breadcrumbs={crumbs} />
@@ -175,6 +182,7 @@ export function CreateConnectionWizard() {
           url={created.url}
           secret={created.secret}
           connectorType={type ?? ''}
+          sender={sender.recipe}
           onDone={() => open(created.id)}
         />
       </>
@@ -235,9 +243,12 @@ export function CreateConnectionWizard() {
               serverErrors={{
                 config: prefixed(serverFields, 'config.'),
                 secrets: prefixed(serverFields, 'secrets.'),
+                signing: serverFields.webhookSecret,
               }}
               test={test}
               onTest={onTested}
+              onRecipe={sender.pick}
+              secretError={sender.secretError}
             />
           ) : connector.isError ? (
             <ErrorState inline error={connector.error} onRetry={() => void connector.refetch()} />

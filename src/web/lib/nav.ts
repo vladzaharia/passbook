@@ -1,4 +1,4 @@
-import { Inbox, LayoutDashboard, type LucideIcon, Settings } from 'lucide-react';
+import { Hourglass, Inbox, LayoutDashboard, type LucideIcon, Settings } from 'lucide-react';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
 import { ENTITY, type EntityKind } from './entities.ts';
 import { canAccessAdminPath, isAdminPath } from './guards.ts';
@@ -30,6 +30,12 @@ const page = (
 const overview: NavSection = { label: 'Overview', section: '', icon: LayoutDashboard };
 const settings: NavSection = { label: 'Settings', section: '/settings', icon: Settings };
 const audit = page('Audit log', '/audit', 'audit');
+const retention: NavSection = {
+  label: 'Retention',
+  section: '/retention',
+  icon: Hourglass,
+  keywords: ['holds', 'legal hold', 'receipts', 'deletion', 'privacy'],
+};
 const apiKeys = page('API keys', '/api-keys', 'apiKey');
 
 /** An organization's console, in sidebar order; groups are separated by hairlines. */
@@ -56,6 +62,7 @@ export const ORG_NAV: readonly (readonly NavSection[])[] = [
     page('Wallet accounts', '/wallet-accounts', 'identity', ['apple', 'google', 'samsung']),
     apiKeys,
     audit,
+    retention,
     { ...settings, keywords: ['organization', 'branding'] },
   ],
 ];
@@ -64,7 +71,7 @@ export const ORG_NAV: readonly (readonly NavSection[])[] = [
 export const PLATFORM_NAV: readonly (readonly NavSection[])[] = [
   [overview],
   [page('Organizations', '/orgs', 'org', ['tenants']), page('Users', '/users', 'user')],
-  [page('Status', '/status', 'status', ['health']), audit],
+  [page('Status', '/status', 'status', ['health']), audit, retention],
   [
     page('Wallet accounts', '/wallet-accounts', 'identity', [
       'apple',

@@ -4,19 +4,12 @@ import { useMemo } from 'react';
 import type { BroadcastPreviewDto } from '@/shared/contracts/broadcasts.ts';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { formatCount } from '../../lib/format.ts';
-import {
-  Callout,
-  CheckboxField,
-  FormField,
-  Input,
-  Select,
-  Skeleton,
-  SwitchRow,
-} from '../../ui/index.ts';
+import { Callout, FormField, Input, Select, SwitchRow } from '../../ui/index.ts';
 import { useScanEvents } from '../scanning/scanner-api.ts';
 import { templateDetailQuery } from '../templates/api.ts';
 import type { ComposerState, HolderChoice } from './composer-state.ts';
 import { HOLDER_LABEL } from './labels.ts';
+import { TemplateChoices } from './template-choices.tsx';
 
 const HOLDERS: readonly { value: HolderChoice; label: string }[] = [
   { value: 'any', label: 'Any holder' },
@@ -72,45 +65,16 @@ export function AudienceSection({
   const c = count.isPlaceholderData ? undefined : count.data;
   return (
     <div className="flex flex-col gap-4">
-      <fieldset
-        className="flex min-w-0 flex-col gap-1"
-        aria-describedby={error ? 'tpl-error' : undefined}
-      >
-        <legend className="mb-2 text-sm font-medium text-fg-strong">Templates</legend>
-        {!orgId ? (
-          <p className="text-sm text-fg-muted">Choose an organization first.</p>
-        ) : loading ? (
-          <Skeleton className="h-10 w-full" />
-        ) : templates.length === 0 ? (
-          <p className="text-sm text-fg-muted">No templates yet.</p>
-        ) : (
-          templates.map((t) => {
-            const detail = details.get(t.id);
-            const noMessage =
-              state.kind === 'message' &&
-              detail !== undefined &&
-              !(detail.manifest as { messaging?: unknown } | null)?.messaging;
-            // A template whose details have not loaded cannot be told apart yet.
-            const unknown = state.kind === 'message' && detail === undefined;
-            return (
-              <div key={t.id} className="flex flex-wrap items-center gap-x-3">
-                <CheckboxField
-                  label={t.name}
-                  checked={state.templateIds.includes(t.id)}
-                  disabled={noMessage || (unknown && !state.templateIds.includes(t.id))}
-                  onCheckedChange={(on) => toggle(t.id, on === true)}
-                />
-                {noMessage ? <span className="text-xs text-fg-muted">No message field</span> : null}
-              </div>
-            );
-          })
-        )}
-        {error ? (
-          <p id="tpl-error" className="mt-1 text-xs text-danger">
-            {error}
-          </p>
-        ) : null}
-      </fieldset>
+      <TemplateChoices
+        orgId={orgId}
+        templates={templates}
+        loading={loading}
+        details={details}
+        chosen={state.templateIds}
+        needsMessage={state.kind === 'message'}
+        onToggle={toggle}
+        error={error}
+      />
       <SwitchRow
         label="On a device only"
         help="Only passes with a device registration are included."

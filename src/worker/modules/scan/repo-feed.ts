@@ -16,6 +16,7 @@ export interface ScanLogFilter {
   scannerId?: string | undefined;
   staffId?: string | undefined;
   eventId?: string | undefined;
+  templateId?: string | undefined;
   passId?: string | undefined;
   outcome?: string | undefined;
   q?: string | undefined;

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { z } from 'zod';
-import type { ConnectorInfoSchema } from '@/shared/contracts/connections.ts';
+import type { ConnectorInfoSchema, RecipeId } from '@/shared/contracts/connections.ts';
 import { connectorIcon } from '../../lib/entities.ts';
 import {
   Card,
@@ -14,6 +14,8 @@ import {
 } from '../../ui/index.ts';
 import { type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
 import { authOptions, flattenSchema, WIZARD_HIDDEN } from './config-schema.ts';
+import { recipeHidden } from './recipe-copy.ts';
+import { RecipePicker, SigningSecretField } from './recipe-picker.tsx';
 import { secretSchema } from './secret-schema.ts';
 import type { TestOutcome } from './test-result.tsx';
 import { WizardTest } from './wizard-test.tsx';
@@ -121,6 +123,8 @@ export interface ConfigDraft {
   name: string;
   config: FormValues;
   secrets: FormValues;
+  /** A secret the sender made (Shopify, Stripe), pasted. */
+  signingSecret?: string;
 }
 
 export function ConfigStep({
@@ -132,20 +136,35 @@ export function ConfigStep({
   serverErrors,
   test,
   onTest,
+  onRecipe,
+  secretError,
 }: {
   connector: Connector;
   orgId: string;
   draft: ConfigDraft;
   onChange: (next: ConfigDraft) => void;
   showErrors: boolean;
-  serverErrors: { config?: Record<string, string>; secrets?: Record<string, string> };
+  serverErrors: {
+    config?: Record<string, string>;
+    secrets?: Record<string, string>;
+    /** The server refused the pasted signing secret. */
+    signing?: string | undefined;
+  };
   test: TestOutcome | undefined;
   onTest: (outcome: TestOutcome) => void;
+  /** Picks a sender: the wizard seeds the mapping and void rules from it. */
+  onRecipe: (id: RecipeId) => void;
+  secretError?: string | undefined;
 }) {
   const flat = useMemo(() => flattenSchema(connector.configSchema), [connector.configSchema]);
   const auth = authOptions(flat);
   const authType = String(draft.config['auth.type'] ?? 'none');
-  const hidden = useMemo(() => WIZARD_HIDDEN(flat, authType), [flat, authType]);
+  const recipe = (draft.config.recipe as RecipeId | undefined) ?? 'custom';
+  const offered = connector.recipes.length > 0;
+  const hidden = useMemo(
+    () => new Set([...WIZARD_HIDDEN(flat, authType), ...recipeHidden(recipe, offered)]),
+    [flat, authType, recipe, offered],
+  );
   const keys = Object.keys((flat?.properties as object | undefined) ?? {});
   const mainHidden = useMemo(
     () => new Set([...hidden, ...keys.filter((k) => k.startsWith('auth.'))]),
@@ -197,6 +216,17 @@ export function ConfigStep({
             />
           )}
         </FormField>
+        {offered ? (
+          <RecipePicker recipes={connector.recipes} value={recipe} onChange={onRecipe} />
+        ) : null}
+        {recipe !== 'custom' && connector.recipes.find((r) => r.id === recipe)?.pasteSecret ? (
+          <SigningSecretField
+            recipe={recipe}
+            value={draft.signingSecret ?? ''}
+            onChange={(signingSecret) => set({ signingSecret })}
+            error={(showErrors ? secretError : undefined) ?? serverErrors.signing}
+          />
+        ) : null}
         <SchemaForm
           schema={flat}
           value={draft.config}

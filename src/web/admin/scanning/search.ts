@@ -29,6 +29,7 @@ export const scanningSearchSchema = z.object({
   scannerId: id,
   staffId: id,
   eventId: id,
+  templateId: id,
   outcome: z.enum(['ok', 'heads_up', 'refused', 'undone']).optional().catch(undefined),
   reason: z.string().min(1).max(40).optional().catch(undefined),
   range: z.enum(['today', '7d', '30d']).optional().catch(undefined),

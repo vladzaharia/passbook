@@ -270,10 +270,7 @@ describe('session dialog organization authority', () => {
     expect(await within(dialog).findByRole('textbox', { name: 'Session name' })).toHaveValue(
       'Membership desk copy',
     );
-    expect(within(dialog).getByRole('radio', { name: 'Event' })).toHaveAttribute(
-      'aria-checked',
-      'true',
-    );
+    expect(within(dialog).getByRole('button', { name: 'Remove Event' })).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeEnabled();
     expect(writes).toEqual([]);
   });
@@ -298,7 +295,7 @@ describe('session dialog organization authority', () => {
     await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o2'));
     await waitFor(() => expect(organization(dialog)).toHaveTextContent('Harbor'));
     expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeDisabled();
-    await user.click(within(dialog).getByRole('radio', { name: 'All passes' }));
+    await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
     await user.click(within(dialog).getByRole('button', { name: 'Create session' }));
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith('created'));
     expect(writes[0]).toMatchObject({
@@ -330,7 +327,7 @@ describe('session dialog organization authority', () => {
     const user = userEvent.setup();
     const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
     await user.type(within(dialog).getByRole('textbox', { name: 'Session name' }), 'Entry');
-    await user.click(within(dialog).getByRole('radio', { name: 'Templates' }));
+    await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
     await user.click(await within(dialog).findByRole('checkbox', { name: 'Gala ticket' }));
     expect(
       within(dialog).queryByRole('checkbox', { name: 'Harbor ticket' }),
@@ -366,7 +363,7 @@ describe('session dialog organization authority', () => {
     const user = userEvent.setup();
     const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
     await user.type(within(dialog).getByRole('textbox', { name: 'Session name' }), 'Entry');
-    await user.click(within(dialog).getByRole('radio', { name: 'Templates' }));
+    await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
     await user.click(await within(dialog).findByRole('checkbox', { name: 'Gala ticket' }));
     expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeEnabled();
 

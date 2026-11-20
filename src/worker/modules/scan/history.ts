@@ -155,6 +155,7 @@ export async function summaryFor(
     byHour: [],
     byValue: [],
     byReason: [],
+    byType: [],
     byStaff: [],
     overrides: { count: 0, latest: [] },
   };

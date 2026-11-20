@@ -48,7 +48,7 @@ export class Session {
   }
 
   async raw(method: string, path: string, body?: BodyInit, headers: Record<string, string> = {}) {
-    const res = await fetch(`${this.base}${path}`, {
+    const res = await fetchRetrying(`${this.base}${path}`, {
       method,
       redirect: 'manual',
       headers: {
@@ -129,6 +129,21 @@ export class Session {
     const token = await nextMagicToken(mailDir, this.base, before);
     await retryRateLimited(() => this.send('POST', '/auth/magic/consume', { token }));
     this.csrf = (await this.get('/api/v1/session')).csrfToken;
+  }
+}
+
+const RESET = new Set(['ECONNRESET', 'ECONNREFUSED', 'UND_ERR_SOCKET']);
+
+/** A fresh dev server drops connections while vite reloads; try again a few times before failing. */
+async function fetchRetrying(url: string, init: RequestInit): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fetch(url, init);
+    } catch (error) {
+      const code = (error as { cause?: { code?: string } }).cause?.code ?? '';
+      if (!RESET.has(code) || attempt >= 5) throw error;
+      await new Promise((r) => setTimeout(r, 2_000));
+    }
   }
 }
 
