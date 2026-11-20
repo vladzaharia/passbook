@@ -2109,6 +2109,26 @@
     "resource": "webhookEndpoints",
     "method": "retrieve"
   },
+  "webhooks.getWebhookEndpointsByIdCaptures": {
+    "resource": "webhookEndpoints.captures",
+    "method": "list"
+  },
+  "webhooks.getWebhookEndpointsByIdCapturesByCaptureId": {
+    "resource": "webhookEndpoints.captures",
+    "method": "retrieve"
+  },
+  "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay": {
+    "resource": "webhookEndpoints.captures",
+    "method": "replay"
+  },
+  "webhooks.postWebhookEndpointsByIdCapturesSecret": {
+    "resource": "webhookEndpoints.captures",
+    "method": "revealSecret"
+  },
+  "webhooks.postWebhookEndpointsCapture": {
+    "resource": "webhookEndpoints",
+    "method": "ensureCapture"
+  },
   "webhooks.getWebhookEndpointsByIdDeliveries": {
     "resource": "webhookEndpoints.deliveries",
     "method": "list"

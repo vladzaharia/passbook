@@ -87,6 +87,10 @@
               }
             },
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -203,6 +207,10 @@
               }
             },
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -300,6 +308,10 @@
               }
             },
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -397,6 +409,10 @@
               }
             },
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -491,6 +507,10 @@
               }
             },
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -582,6 +602,10 @@
               }
             },
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -697,6 +721,10 @@
               "firstDevice"
             ],
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -820,6 +848,10 @@
               "cause"
             ],
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -998,6 +1030,10 @@
               "outcome"
             ],
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1150,6 +1186,10 @@
               }
             },
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1269,6 +1309,10 @@
               }
             },
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1395,6 +1439,10 @@
               "source"
             ],
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1499,6 +1547,10 @@
               "generation"
             ],
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1603,6 +1655,10 @@
               "printId"
             ],
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1721,6 +1777,10 @@
               }
             },
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1818,6 +1878,10 @@
               }
             },
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
@@ -1879,6 +1943,10 @@
             "type": "object",
             "properties": {},
             "additionalProperties": false
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [

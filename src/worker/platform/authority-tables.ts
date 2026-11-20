@@ -132,6 +132,9 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   webhook_endpoint_secrets: { org: 'org_id', mode: 'mode' },
   webhook_deliveries: { org: 'org_id', mode: 'mode', conflict: ['endpoint_id', 'event_seq'] },
   webhook_attempts: { org: 'org_id', mode: 'mode' },
+  // The webhook tester (0158): stored requests of a capture endpoint, and the per-hour count that caps them.
+  webhook_captures: { org: 'org_id', mode: 'mode' },
+  webhook_capture_hours: { org: 'org_id' },
   event_feed: { org: 'org_id', mode: 'mode' },
   // A remote tag request: its triggers check scanner and pass share the tenant and that a user scope names the pass's owner.
   tag_enrollments: { org: 'org_id', mode: 'mode' },

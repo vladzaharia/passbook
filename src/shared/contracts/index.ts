@@ -39,4 +39,5 @@ export * from './templates.ts';
 export * from './users.ts';
 export * from './wallet-provider-status.ts';
 export * from './wallet-providers.ts';
+export * from './webhook-captures.ts';
 export * from './webhooks.ts';

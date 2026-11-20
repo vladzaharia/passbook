@@ -2,6 +2,8 @@ const RESET_MS = 1500;
 
 /** The text a copy button stands for: the visible sample, the response, the path or the command. */
 function textFor(button: HTMLElement): string {
+  // A button that carries its own text (a command built from a capture).
+  if (button.dataset.copyText !== undefined) return button.dataset.copyText;
   const owner = button.closest<HTMLElement>('[data-samples], .resp, .endpoint, .cmd, .code');
   if (!owner) return '';
   if (owner.matches('.endpoint')) return owner.querySelector('code')?.textContent ?? '';

@@ -156,25 +156,51 @@ export function ProtocolsView({ site }: { site: Site }) {
 
 export function WebhooksView({ site }: { site: Site }) {
   return (
-    <>
-      <Head
-        title="Webhooks"
-        line="Signed events, one POST per delivery. Verify x-passbook-signature over the raw body, and dedupe on x-passbook-event-id."
-      />
-      <h2 className="h2 mt8">Events</h2>
-      <div className="list card mt4">
-        {site.webhookEvents.map((e) => (
-          <div key={e.type} className="lrow wrap-row">
-            <code className="mono sm strong">{e.type}</code>
-            <span className="push muted sm">{e.summary}</span>
-          </div>
-        ))}
+    <div className="wh">
+      <div className="wh-head">
+        <div className="stack g1">
+          <div className="eyebrow">Webhooks</div>
+          <h1 className="h1">Tester</h1>
+        </div>
       </div>
-      <p className="mt6 muted">
-        Endpoints are managed with the{' '}
-        <a href={`${PATHS.reference}/webhook-endpoints`}>webhook endpoints</a> API.
+      <p className="muted wh-lede">
+        Your sandbox captures every delivery with its real signature. Nothing leaves PassBook.
       </p>
-    </>
+      <div
+        className="stack g4"
+        data-island="webhook-tester"
+        data-types={site.webhookEvents.map((e) => e.type).join(',')}
+      >
+        <div className="card card-b stack g2">
+          <h2 className="h3">Sign in to capture webhooks</h2>
+          <p className="muted">Your sandbox gets a capture endpoint when you make it.</p>
+          <p>
+            <a className="btn" href="/login?next=%2Fdevelopers%2Fwebhooks">
+              {DEV_COPY.signIn}
+            </a>
+          </p>
+        </div>
+      </div>
+      <section>
+        <h2 className="h2">Events</h2>
+        <p className="muted mt2 prose">
+          Signed events, one POST per delivery. Verify x-passbook-signature over the raw body, and
+          dedupe on x-passbook-event-id.
+        </p>
+        <div className="list card mt4">
+          {site.webhookEvents.map((e) => (
+            <div key={e.type} className="lrow wrap-row">
+              <code className="mono sm strong">{e.type}</code>
+              <span className="push muted sm">{e.summary}</span>
+            </div>
+          ))}
+        </div>
+        <p className="mt6 muted">
+          Endpoints are managed with the{' '}
+          <a href={`${PATHS.reference}/webhook-endpoints`}>webhook endpoints</a> API.
+        </p>
+      </section>
+    </div>
   );
 }
 

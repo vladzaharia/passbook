@@ -65,6 +65,12 @@ import {
   TemplateSummarySchema,
 } from '../../shared/contracts/templates.ts';
 import {
+  CaptureEndpointCreatedSchema,
+  CaptureSecretSchema,
+  WebhookCaptureListSchema,
+  WebhookCaptureSchema,
+} from '../../shared/contracts/webhook-captures.ts';
+import {
   EventFeedPageSchema,
   WebhookDeliveryDetailSchema,
   WebhookDeliveryListSchema,
@@ -137,6 +143,10 @@ const names = {
   WebhookDeliveryPage: WebhookDeliveryListSchema,
   WebhookDeliveryDetail: WebhookDeliveryDetailSchema,
   WebhookTestResult: WebhookTestResultSchema,
+  WebhookCapture: WebhookCaptureSchema,
+  WebhookCapturePage: WebhookCaptureListSchema,
+  CaptureEndpointCreated: CaptureEndpointCreatedSchema,
+  CaptureSecret: CaptureSecretSchema,
   EventPage: EventFeedPageSchema,
 };
 

@@ -1,0 +1,123 @@
+import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
+import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
+
+/** A problem+json answer. `code` is the API's stable code. */
+export class ApiProblem extends Error {
+  readonly status: number;
+  readonly code: string;
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export type TesterAuth =
+  | { kind: 'signed-out' }
+  | { kind: 'no-sandbox' }
+  | { kind: 'ready'; api: TesterApi };
+
+export interface TesterApi {
+  endpoints(): Promise<WebhookEndpointDto[]>;
+  /** The sandbox's capture endpoint, made if it has none. */
+  ensureCapture(): Promise<WebhookEndpointDto>;
+  captures(id: string, type?: string): Promise<WebhookCaptureDto[]>;
+  sendTest(id: string, type: string): Promise<{ captureId: string | null; ok: boolean }>;
+  replay(id: string, captureId: string): Promise<WebhookCaptureDto>;
+  secret(id: string): Promise<string>;
+}
+
+const REFRESH_BEFORE_MS = 60_000;
+
+async function problem(res: Response): Promise<ApiProblem> {
+  let body: { code?: unknown; detail?: unknown; title?: unknown } = {};
+  try {
+    body = (await res.json()) as typeof body;
+  } catch {
+    // Not JSON: the status says enough.
+  }
+  const text = [body.detail, body.title].find((v) => typeof v === 'string');
+  return new ApiProblem(
+    res.status,
+    typeof body.code === 'string' ? body.code : 'ERROR',
+    typeof text === 'string' ? text : `The request failed (${res.status}).`,
+  );
+}
+
+/**
+ * Signed in through the session cookie, calling the API with a try token (15 minutes, Test only, this
+ * sandbox only): the page never holds a key. A 401 mid-session gets one new token, then gives up.
+ */
+export async function connect(
+  fetchFn: typeof fetch = (input, init) => fetch(input, init),
+  now: () => number = Date.now,
+): Promise<TesterAuth> {
+  let token: { value: string; expiresAt: number } | null = null;
+  let csrf = '';
+
+  async function mint(): Promise<'ok' | 'signed-out' | 'no-sandbox'> {
+    const session = await fetchFn('/api/v1/session', { headers: { accept: 'application/json' } });
+    if (!session.ok) throw await problem(session);
+    const state = (await session.json()) as { authenticated: boolean; csrfToken?: string };
+    if (!state.authenticated) return 'signed-out';
+    csrf = state.csrfToken ?? '';
+    const res = await fetchFn('/api/v1/developer/try-token', {
+      method: 'POST',
+      headers: { accept: 'application/json', 'x-csrf-token': csrf },
+    });
+    if (res.status === 404) return 'no-sandbox';
+    if (!res.ok) throw await problem(res);
+    const body = (await res.json()) as { token: string; expiresAt: number };
+    token = { value: body.token, expiresAt: body.expiresAt };
+    return 'ok';
+  }
+
+  async function call<T>(method: string, path: string, body?: unknown, retry = true): Promise<T> {
+    if (!token || token.expiresAt - now() < REFRESH_BEFORE_MS) await mint();
+    const res = await fetchFn(`/api/v1${path}`, {
+      method,
+      headers: {
+        accept: 'application/json',
+        authorization: `Bearer ${token?.value ?? ''}`,
+        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    if (res.status === 401 && retry) {
+      token = null;
+      return call<T>(method, path, body, false);
+    }
+    if (!res.ok) throw await problem(res);
+    return (await res.json()) as T;
+  }
+
+  const first = await mint();
+  if (first !== 'ok') return { kind: first };
+  const base = (id: string) => `/webhook-endpoints/${encodeURIComponent(id)}`;
+  return {
+    kind: 'ready',
+    api: {
+      endpoints: async () =>
+        (await call<{ items: WebhookEndpointDto[] }>('GET', '/webhook-endpoints')).items,
+      ensureCapture: async () =>
+        (await call<{ endpoint: WebhookEndpointDto }>('POST', '/webhook-endpoints/capture', {}))
+          .endpoint,
+      captures: async (id, type) =>
+        (
+          await call<{ items: WebhookCaptureDto[] }>(
+            'GET',
+            `${base(id)}/captures?limit=50${type ? `&type=${encodeURIComponent(type)}` : ''}`,
+          )
+        ).items,
+      sendTest: (id, type) =>
+        call<{ captureId: string | null; ok: boolean }>('POST', `${base(id)}/test`, { type }),
+      replay: (id, captureId) =>
+        call<WebhookCaptureDto>(
+          'POST',
+          `${base(id)}/captures/${encodeURIComponent(captureId)}/replay`,
+        ),
+      secret: async (id) =>
+        (await call<{ secret: string }>('POST', `${base(id)}/captures/secret`)).secret,
+    },
+  };
+}

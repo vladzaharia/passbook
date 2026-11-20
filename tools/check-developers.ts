@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { developerFailures, type Guide } from './lib/developers-check.ts';
 import { buildErrorCatalogFile, buildEventCatalog } from './lib/error-catalog-files.ts';
 import type { Doc } from './lib/openapi-diff.ts';
+import { buildWebhookVectors } from './lib/webhook-vectors.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const read = (file: string): string => readFileSync(resolve(root, file), 'utf8');
@@ -20,6 +21,10 @@ const failures = developerFailures({
     'docs/api/webhook-events.json': {
       on: read('docs/api/webhook-events.json'),
       fresh: buildEventCatalog(),
+    },
+    'docs/api/webhook-vectors.json': {
+      on: read('docs/api/webhook-vectors.json'),
+      fresh: await buildWebhookVectors(),
     },
   },
 });

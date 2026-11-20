@@ -11,6 +11,7 @@
       "!docs/api/openapi.v1.json",
       "!docs/api/errors.json",
       "!docs/api/webhook-events.json",
+      "!docs/api/webhook-vectors.json",
       "!**/playwright-report",
       "!**/test-results",
       "!src/generated",

@@ -681,7 +681,11 @@ events of its own mode only. Other orgs' and the other mode's endpoints answer `
 | `POST /webhook-endpoints` | manage | `{ orgId?, url, description?, eventTypes, templateIds? }`. `201` `{ endpoint, secret }`. `?validate=1` checks everything, writes nothing, answers `200 { ok: true }` |
 | `GET`, `PATCH`, `DELETE /webhook-endpoints/{id}` | read, manage, manage | `PATCH` takes any create field plus `status` (`active`, `paused`) and `apiVersion`. A resume clears the failure counters |
 | `POST /webhook-endpoints/{id}/secret` | manage | `{ overlapHours: 0 \| 24 \| 72 }` (default 24). `{ secret }`, shown once |
-| `POST /webhook-endpoints/{id}/test` | manage | sends one `webhook.test` to this endpoint: `{ ok, status, durationMs, errorCode }`. 10 a minute per org and mode, then `429`; the destination host's shared send budget is charged too |
+| `POST /webhook-endpoints/{id}/test` | manage | `{ type? }`, default `webhook.test`: sends one signed event to this endpoint: `{ ok, status, durationMs, errorCode, captureId }`. Any other type carries sample data (`sample: true` on the event, `externalId` `sample_order_1042`) and goes to Test endpoints only (`409 SAMPLE_EVENT_LIVE`). 10 a minute per org and mode, then `429`; the destination host's shared send budget is charged too |
+| `POST /webhook-endpoints/capture` | manage | the sandbox's capture endpoint, made if it has none: `201 { endpoint, secret }`, or `200` with `secret: null` when it exists. `409 CAPTURE_DEVELOPER_ONLY` outside a developer sandbox in Test |
+| `GET /webhook-endpoints/{id}/captures`, `.../captures/{captureId}` | read | stored requests, newest first (`type`, `limit`, `cursor`): headers and the raw body |
+| `POST /webhook-endpoints/{id}/captures/{captureId}/replay` | manage | signs the stored body again and stores it as a new capture, same event id |
+| `POST /webhook-endpoints/{id}/captures/secret` | manage | `{ secret }`, the capture endpoint's current signing secret; audited as `webhook.capture_secret.reveal` |
 | `GET /webhook-endpoints/{id}/deliveries` | read | `state`, `type`, `limit`, `cursor`; newest first |
 | `GET /webhook-endpoints/{id}/deliveries/{eventId}` | read | adds `attemptLog` and the `payload` |
 | `POST /webhook-endpoints/{id}/deliveries/{eventId}/replay` | manage | one delivery again; `409 DELIVERY_PENDING` while it waits |
@@ -706,6 +710,16 @@ retries, and a `Retry-After` on `429` or `503` is honored (capped). After 72 hou
 10 failed attempts in a row the endpoint is disabled and its pending deliveries are cancelled; patch
 `status: "active"` to resume. Redirects are not followed. The response body is ignored. Sends to one host are paced per org
 (120 a minute) and across all orgs (600 a minute); a delivery over its share waits, uncounted.
+
+### Capture endpoints (the webhook tester)
+
+A developer sandbox in Test mode has a capture endpoint (`target: "capture"`). It stores the signed request
+PassBook would send, with the same headers, body and signature code, and sends nothing: it has no URL, takes
+nothing from outside, and exists nowhere else. `POST /test` with a `type`, a pass change in the sandbox and a
+replay all land there; erasing a pass erases its captures. It keeps 200 captures per endpoint, 600 an hour per org and 256 KiB per capture, for 7
+days; over the hourly count a delivery waits and a test send answers `429`. The developer portal's
+Webhooks page reads them every 3 seconds and checks each signature in the browser. `docs/api/webhook-vectors.json`
+holds golden requests signed by the server, passing and failing, for testing your own verification.
 
 ### Receive and verify
 

@@ -10,6 +10,7 @@ import {
 } from '../../../shared/copy/developer.ts';
 import { isPlatformScope } from '../../platform/api-scopes.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
+import { actorOf } from '../../platform/context.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -18,6 +19,8 @@ import { createApiKey } from '../api-keys/service-create.ts';
 import { approveCandidate, publishRelease } from '../templates/releases.ts';
 import { createCandidate } from '../templates/releases-create.ts';
 import { useBlueprint as forkBlueprint } from '../templates/use-blueprint.ts';
+import { authorizeWebhooks } from '../webhooks/access.ts';
+import { ensureCapture } from '../webhooks/service-captures.ts';
 import {
   approvalOf,
   candidateOf,
@@ -51,7 +54,14 @@ const dto = (row: SandboxRow, templateId: string | null): DeveloperSandbox => ({
 });
 
 /** The steps of provisioning, in order. A test fails the request after one to prove a retry completes the rest. */
-export type SandboxStep = 'org' | 'template' | 'candidate' | 'approval' | 'release' | 'key';
+export type SandboxStep =
+  | 'org'
+  | 'template'
+  | 'candidate'
+  | 'approval'
+  | 'release'
+  | 'capture'
+  | 'key';
 export interface SandboxHooks {
   after?: (step: SandboxStep) => Promise<void>;
 }
@@ -177,6 +187,13 @@ export async function createSandbox(
     // Everything in the sandbox is Test: the person acts in it as a Test session.
     const test: SessionAuth = { ...session, mode: 'test' };
     const templateId = await quickstartTemplate(ctx, test, row.org_id, tick);
+    // The webhook tester's endpoint; a sandbox made before it existed gets it on this call.
+    await ensureCapture(
+      ctx,
+      actorOf(test),
+      await authorizeWebhooks(ctx, test, row.org_id, 'integrations:manage'),
+    );
+    await tick('capture');
     const prior = await sandboxKeyOf(db, row.org_id, session.userId, SANDBOX_KEY_NAME);
     if (prior) return { ...dto(row, templateId), key: null, previousKey: prior };
     const authority = await authorizeApiKeys(ctx, test, row.org_id, 'org:read');

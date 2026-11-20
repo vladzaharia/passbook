@@ -18,6 +18,7 @@
         "templateIds": null,
         "apiVersion": "2026-12-01",
         "status": "active",
+        "target": "url",
         "failingSince": null,
         "disabledAt": null,
         "lastSuccessAt": null,
@@ -31,12 +32,16 @@
     }
   },
   "webhooks.postWebhookEndpointsByIdTest": {
-    "description": "Sends a `webhook.test` event to the endpoint and reports the result.",
+    "description": "Sends one signed event to the endpoint and reports the result. `type` is any event type and defaults to `webhook.test`; every other type carries sample data and goes to Test endpoints only. A capture endpoint stores the request and returns its `captureId`.",
+    "request": {
+      "type": "pass.updated"
+    },
     "response": {
       "ok": true,
       "status": 200,
-      "durationMs": 84,
-      "errorCode": null
+      "durationMs": 12,
+      "errorCode": null,
+      "captureId": "0193a1b2-7c00-7000-8000-0000000000d1"
     }
   },
   "webhooks.getWebhookEndpoints": {
@@ -54,6 +59,7 @@
           "templateIds": null,
           "apiVersion": "2026-12-01",
           "status": "active",
+          "target": "url",
           "failingSince": null,
           "disabledAt": null,
           "lastSuccessAt": null,
@@ -80,6 +86,7 @@
       "templateIds": null,
       "apiVersion": "2026-12-01",
       "status": "active",
+      "target": "url",
       "failingSince": null,
       "disabledAt": null,
       "lastSuccessAt": null,
@@ -106,6 +113,7 @@
       "templateIds": null,
       "apiVersion": "2026-12-01",
       "status": "paused",
+      "target": "url",
       "failingSince": null,
       "disabledAt": null,
       "lastSuccessAt": null,
@@ -213,6 +221,113 @@
     },
     "response": {
       "queued": 12
+    }
+  },
+  "webhooks.postWebhookEndpointsCapture": {
+    "description": "Returns the capture endpoint of your sandbox, making it if there is none. A capture endpoint stores the signed requests PassBook would send, so you can read and verify them; it sends nothing and takes nothing from outside. Sandbox orgs in Test mode only. The signing `secret` is shown once, on creation; later calls return `secret: null`.",
+    "request": {
+      "eventTypes": ["pass.issued", "pass.updated"]
+    },
+    "response": {
+      "endpoint": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000f2",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "mode": "test",
+        "url": "https://capture.invalid/",
+        "urlMasked": "capture.invalid",
+        "description": "Test capture endpoint",
+        "eventTypes": ["pass.issued", "pass.updated", "pass.scanned"],
+        "templateIds": null,
+        "apiVersion": "2026-12-01",
+        "status": "active",
+        "target": "capture",
+        "failingSince": null,
+        "disabledAt": null,
+        "lastSuccessAt": null,
+        "lastFailureAt": null,
+        "lastStatus": null,
+        "secretCreatedAt": 1764000000000,
+        "previousSecretExpiresAt": null,
+        "createdAt": 1764000000000
+      },
+      "secret": "whsec_example_1111111111111111111111111111"
+    }
+  },
+  "webhooks.getWebhookEndpointsByIdCaptures": {
+    "description": "Requests a capture endpoint stored, newest first. Keeps 200 per endpoint for 7 days. Filter by `type`.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+          "endpointId": "0193a1b2-7c00-7000-8000-0000000000f2",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000e2",
+          "type": "pass.updated",
+          "trigger": "test",
+          "status": 200,
+          "durationMs": 12,
+          "headers": {
+            "content-type": "application/json",
+            "user-agent": "PassBook-Webhooks/1.0",
+            "x-passbook-event-id": "0193a1b2-7c00-7000-8000-0000000000e2",
+            "x-passbook-event-type": "pass.updated",
+            "x-passbook-timestamp": "1764000000",
+            "x-passbook-signature": "v1=5f2c0e9a1b7d4c3e8a6f0d2b9c4e1a7f3d5b8c0e2a4f6d8b1c3e5a7f9b0d2c4e"
+          },
+          "body": "{\"id\":\"0193a1b2-7c00-7000-8000-0000000000e2\",\"type\":\"pass.updated\"}",
+          "createdAt": 1764000000000
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "webhooks.getWebhookEndpointsByIdCapturesByCaptureId": {
+    "description": "One stored request: the exact headers and raw body. Verify the signature over these bytes.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "endpointId": "0193a1b2-7c00-7000-8000-0000000000f2",
+      "eventId": "0193a1b2-7c00-7000-8000-0000000000e2",
+      "type": "pass.updated",
+      "trigger": "test",
+      "status": 200,
+      "durationMs": 12,
+      "headers": {
+        "content-type": "application/json",
+        "user-agent": "PassBook-Webhooks/1.0",
+        "x-passbook-event-id": "0193a1b2-7c00-7000-8000-0000000000e2",
+        "x-passbook-event-type": "pass.updated",
+        "x-passbook-timestamp": "1764000000",
+        "x-passbook-signature": "v1=5f2c0e9a1b7d4c3e8a6f0d2b9c4e1a7f3d5b8c0e2a4f6d8b1c3e5a7f9b0d2c4e"
+      },
+      "body": "{\"id\":\"0193a1b2-7c00-7000-8000-0000000000e2\",\"type\":\"pass.updated\"}",
+      "createdAt": 1764000000000
+    }
+  },
+  "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay": {
+    "description": "Signs a stored request again with a fresh timestamp and stores it as a new capture with the same event id.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "endpointId": "0193a1b2-7c00-7000-8000-0000000000f2",
+      "eventId": "0193a1b2-7c00-7000-8000-0000000000e2",
+      "type": "pass.updated",
+      "trigger": "test",
+      "status": 200,
+      "durationMs": 12,
+      "headers": {
+        "content-type": "application/json",
+        "user-agent": "PassBook-Webhooks/1.0",
+        "x-passbook-event-id": "0193a1b2-7c00-7000-8000-0000000000e2",
+        "x-passbook-event-type": "pass.updated",
+        "x-passbook-timestamp": "1764000000",
+        "x-passbook-signature": "v1=5f2c0e9a1b7d4c3e8a6f0d2b9c4e1a7f3d5b8c0e2a4f6d8b1c3e5a7f9b0d2c4e"
+      },
+      "body": "{\"id\":\"0193a1b2-7c00-7000-8000-0000000000e2\",\"type\":\"pass.updated\"}",
+      "createdAt": 1764000000000
+    }
+  },
+  "webhooks.postWebhookEndpointsByIdCapturesSecret": {
+    "description": "Returns the current signing secret of a capture endpoint, so you can verify its captures. It protects nothing outside your sandbox.",
+    "response": {
+      "secret": "whsec_example_1111111111111111111111111111"
     }
   }
 }

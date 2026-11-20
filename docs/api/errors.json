@@ -523,6 +523,42 @@
       ]
     },
     {
+      "code": "CAPTURE_DEVELOPER_ONLY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
+      "code": "CAPTURE_NOT_STORED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
+      "code": "CAPTURE_TOO_LARGE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
+      "code": "CAPTURE_URL_FIXED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
       "code": "CHANNEL_APPLY_STALE",
       "statuses": [
         409
@@ -1897,6 +1933,15 @@
       ]
     },
     {
+      "code": "NOT_A_CAPTURE_ENDPOINT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
       "code": "NOT_A_ZIP",
       "statuses": [
         400
@@ -2781,6 +2826,15 @@
       ]
     },
     {
+      "code": "SAMPLE_EVENT_LIVE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "webhooks"
+      ]
+    },
+    {
       "code": "SAMPLE_TEST_ONLY",
       "statuses": [
         422
@@ -3598,6 +3652,15 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "SECRET_UNAVAILABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "webhooks"
       ]
     },
     {
@@ -5032,6 +5095,15 @@
       ],
       "modules": [
         "connections"
+      ]
+    },
+    {
+      "code": "WEBHOOK_CAPTURE_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "webhooks"
       ]
     },
     {

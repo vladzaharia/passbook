@@ -1,3 +1,4 @@
+import { WEBHOOK_CAPTURE_LIMITS } from '../../../shared/contracts/webhook-captures.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { all, stmt } from '../../platform/db.ts';
 import type { Scope } from '../retention/repo-sweep.ts';
@@ -113,3 +114,13 @@ export const purgeSecrets = (db: D1Database, before: number): Promise<number> =>
   deleteInBatches(db, 'webhook_endpoint_secrets', 'expires_at IS NOT NULL AND expires_at < ?', [
     before,
   ]);
+
+/** Captures keep 7 days (and their hourly counters 2 days): a test bench, not history, so no class or hold. */
+export async function purgeCaptures(db: D1Database, now: number): Promise<number> {
+  await deleteInBatches(db, 'webhook_capture_hours', 'hour < ?', [
+    Math.floor(now / 3_600_000) - 48,
+  ]);
+  return deleteInBatches(db, 'webhook_captures', 'created_at < ?', [
+    now - WEBHOOK_CAPTURE_LIMITS.retentionDays * 86_400_000,
+  ]);
+}
