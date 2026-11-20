@@ -11,7 +11,7 @@ import type { AppEnv } from '../../platform/env.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
 import { parseJsonArray } from '../../platform/json-column.ts';
-import { enforceRateLimit } from '../../platform/rate-limit.ts';
+import { enforceApiKeyRate, rememberApiTier } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import { orgIsActive } from '../orgs/repo.ts';
@@ -177,15 +177,22 @@ export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiK
       if (row.revoked_at !== null || (row.expires_at !== null && row.expires_at <= now))
         return null;
       if (row.org_id !== null && row.org_status !== 'active') return null;
-      await enforceRateLimit(env, 'RL_API_KEY', `key:${row.id}`);
+      // WP4 adds api_keys.rate_tier; until then the column is absent and the env default applies.
+      const tier = await enforceApiKeyRate(
+        env,
+        { keyId: row.id, orgId: row.org_id },
+        (row as { rate_tier?: unknown }).rate_tier,
+      );
       await repo.touchKey(env.DB, row.id, now, TOUCH_EVERY_MS);
-      return {
+      const auth: ApiKeyAuth = {
         kind: 'api_key',
         keyId: row.id,
         orgId: row.org_id,
         scopes: parseScopes(row.scopes),
         mode: row.mode,
       };
+      rememberApiTier(auth, tier);
+      return auth;
     },
   };
 }

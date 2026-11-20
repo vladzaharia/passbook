@@ -26,6 +26,7 @@ import type { Announcement } from './ui/live-announcer.tsx';
 import { modeLabel } from './ui/mode-label.ts';
 import type { CameraChoice } from './ui/scan-menu.tsx';
 import { ScanOverlays, type ScanPanel } from './ui/scan-overlays.tsx';
+import { setSessionZone } from './ui/session-time.ts';
 import { dockStrip, savedCount } from './ui/strip-of.ts';
 import { useAccessUi } from './ui/use-access-ui.tsx';
 import './buddy/beats.css';
@@ -52,6 +53,7 @@ export function ScanLoop({
   leave: () => void;
 }) {
   const { state: s, view, dispatch, now } = useScanMachine();
+  setSessionZone(session.scanner?.timeZone ?? session.event?.timeZone);
   const [sheet, setSheet] = useState(false);
   const [panel, setPanel] = useState<ScanPanel>(null);
   const [pass, setPass] = useState<PassInspection | null>(null);

@@ -15,7 +15,15 @@ export function exportQuery(
   timeZone: string,
 ): URLSearchParams {
   const query = new URLSearchParams({ orgId, from: String(from), to: String(to), timeZone });
-  for (const key of ['q', 'scannerId', 'staffId', 'eventId', 'outcome', 'reason'] as const) {
+  for (const key of [
+    'q',
+    'scannerId',
+    'staffId',
+    'eventId',
+    'templateId',
+    'outcome',
+    'reason',
+  ] as const) {
     const value = search[key];
     if (value) query.set(key, value);
   }
