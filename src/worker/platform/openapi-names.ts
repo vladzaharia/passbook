@@ -60,6 +60,7 @@ import {
 } from '../../shared/contracts/scanning-sessions.ts';
 import {
   TemplateDetailSchema,
+  TemplateInputSchemaSchema,
   TemplateListSchema,
   TemplateSummarySchema,
 } from '../../shared/contracts/templates.ts';
@@ -125,6 +126,7 @@ const names = {
   ApiKeyRetired: RetiredApiKeySchema,
   TemplateSummary: TemplateSummarySchema,
   TemplateDetail: TemplateDetailSchema,
+  TemplateInputSchema: TemplateInputSchemaSchema,
   TemplatePage: TemplateListSchema,
   CapturedEmail: CapturedEmailSchema,
   CapturedEmailDetail: CapturedEmailDetailSchema,

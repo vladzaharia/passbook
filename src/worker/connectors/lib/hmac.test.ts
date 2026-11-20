@@ -548,6 +548,16 @@ describe('custom scheme (verifySignedRequest, signWebhook)', () => {
     expect(res.signature).toMatch(/^[0-9a-f]{64}$/);
   });
 
+  it('accepts the x-passbook-* spelling, and either one when both are present', async () => {
+    const sig = await signWebhook(secret, ts, body);
+    const send = (headers: Record<string, string>) =>
+      new Request('https://x.test/hook', { method: 'POST', body, headers });
+    const passbook = { 'x-passbook-timestamp': String(ts), 'x-passbook-signature': sig };
+    expect(await verify(send(passbook))).toBe('ok');
+    expect(await verify(send({ ...passbook, 'x-wallet-signature': 'v1=junk' }))).toBe('ok');
+    expect(await verify(send({ 'x-passbook-timestamp': String(ts) }))).toBe('AUTH');
+  });
+
   it('rejects a tampered body', async () => {
     expect(await verify(await request({ body: body.replace('evt1', 'evt2') }))).toBe('AUTH');
   });

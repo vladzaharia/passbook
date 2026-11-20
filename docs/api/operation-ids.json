@@ -385,6 +385,7 @@
   "templates.getTemplatesByIdCandidates",
   "templates.getTemplatesByIdChannels",
   "templates.getTemplatesByIdChannelsRuns",
+  "templates.getTemplatesByIdInputSchema",
   "templates.getTemplatesByIdPackage",
   "templates.getTemplatesByIdReleases",
   "templates.getTemplatesByIdReleasesImpact",

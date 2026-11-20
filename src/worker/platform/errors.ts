@@ -236,6 +236,9 @@ export interface Problem {
   used?: number;
 }
 
+/** Where a `Problem.type` points: the catalog page of the code (docs/api/errors.json). */
+const PROBLEM_TYPE_BASE = 'https://passbook.mobile/developers/errors/';
+
 const TITLES: Record<number, string> = {
   400: 'Bad request',
   401: 'Unauthenticated',
@@ -289,7 +292,7 @@ export function toProblem(
     detail = status < 500 ? error.message || TITLES[status] || 'Request failed.' : detail;
   }
   return {
-    type: `urn:wallet:problem:${code.toLowerCase().replaceAll('_', '-')}`,
+    type: `${PROBLEM_TYPE_BASE}${code}`,
     title: TITLES[status] ?? 'Error',
     status,
     code,

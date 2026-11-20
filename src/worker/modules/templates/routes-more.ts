@@ -6,6 +6,7 @@ import {
   SaveVersionSchema,
   ShareTemplateSchema,
   TemplateDetailSchema,
+  TemplateInputSchemaSchema,
   UploadListQuerySchema,
   UploadListSchema,
 } from '../../../shared/contracts/index.ts';
@@ -14,7 +15,7 @@ import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { setArchived, templatePackage } from './lifecycle.ts';
 import { ScopedPreviewBatchQuerySchema, TemplateScopeQuerySchema } from './route-scope.ts';
-import { previewMany, recentUploads } from './service.ts';
+import { detail, previewMany, recentUploads } from './service.ts';
 import { setShared } from './sharing.ts';
 import { stampsImpact } from './stamps.ts';
 import { saveVersion } from './versions.ts';
@@ -123,6 +124,32 @@ export function registerLifecycle(router: Router): void {
           'x-content-type-options': 'nosniff',
         },
       });
+    },
+  );
+}
+
+/** GET /{id}/input-schema: the JSON Schema of `input` for POST /passes, so callers can build forms and types. */
+export function registerInputSchema(router: Router): void {
+  register(
+    router,
+    'templates',
+    {
+      method: 'get',
+      path: '/{id}/input-schema',
+      summary: "Get the JSON Schema of a template's pass input",
+      auth: { scope: 'templates:read' },
+      params: IdParamSchema,
+      query: TemplateScopeQuerySchema,
+      response: TemplateInputSchemaSchema,
+    },
+    async (c) => {
+      const { inputSchema } = await detail(
+        serviceContext(c),
+        c.var.auth,
+        c.req.valid('param').id,
+        c.req.valid('query').orgId,
+      );
+      return c.json(inputSchema as Record<string, unknown>);
     },
   );
 }

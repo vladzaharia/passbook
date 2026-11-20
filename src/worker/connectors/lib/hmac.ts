@@ -8,9 +8,9 @@ import {
   parseStripeSignature,
   parseTicketTailorSignature,
 } from './decode.ts';
+import { inboundHeader, SIGNATURE_HEADERS, TIMESTAMP_HEADERS } from './inbound-headers.ts';
 
-export const SIGNATURE_HEADER = 'x-wallet-signature';
-export const TIMESTAMP_HEADER = 'x-wallet-timestamp';
+export { SIGNATURE_HEADER, TIMESTAMP_HEADER } from './inbound-headers.ts';
 export const REPLAY_WINDOW_MS = 5 * 60_000;
 const FUTURE_SKEW_MS = 60_000;
 export const MAX_WEBHOOK_BYTES = 256 * 1024;
@@ -255,8 +255,8 @@ const custom: WebhookVerifier = {
   maxBytes: MAX_WEBHOOK_BYTES,
   replay: 'header-window',
   verify: async (req, secrets, now, opts = {}) => {
-    const header = req.headers.get(opts.signatureHeader ?? SIGNATURE_HEADER);
-    const ts = req.headers.get(opts.timestampHeader ?? TIMESTAMP_HEADER);
+    const header = inboundHeader(req, SIGNATURE_HEADERS, opts.signatureHeader);
+    const ts = inboundHeader(req, TIMESTAMP_HEADERS, opts.timestampHeader);
     const match = header === null ? null : /^v1=([0-9a-f]{64})$/.exec(header);
     const sig = match?.[1] ? decodeHex32(match[1]) : null;
     const parsed =

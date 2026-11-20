@@ -1767,6 +1767,10 @@
     "resource": "templates.channels",
     "method": "listRuns"
   },
+  "templates.getTemplatesByIdInputSchema": {
+    "resource": "templates",
+    "method": "retrieveInputSchema"
+  },
   "templates.getTemplatesByIdPackage": {
     "resource": "templates",
     "method": "downloadPackage"

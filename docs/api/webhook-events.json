@@ -1,0 +1,1898 @@
+{
+  "events": [
+    {
+      "type": "pass.issued",
+      "summary": "A pass was created.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.issued"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "source": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.updated",
+      "summary": "A pass changed and a new version was published.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.updated"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "cause": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "source": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "notified": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.voided",
+      "summary": "A pass was voided.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.voided"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "actorType": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.unvoided",
+      "summary": "A void was undone.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.unvoided"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "actorType": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.removed",
+      "summary": "A pass was removed from Wallet.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.removed"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "message": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.restored",
+      "summary": "A removed pass was restored.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.restored"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.installed",
+      "summary": "A pass was added to a device's Wallet.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.installed"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "wallet": {
+                "type": "string",
+                "const": "apple"
+              },
+              "device": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 12
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deviceCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "firstDevice": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "wallet",
+              "device",
+              "deviceCount",
+              "firstDevice"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.uninstalled",
+      "summary": "A pass left a device's Wallet.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.uninstalled"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "wallet": {
+                "type": "string",
+                "const": "apple"
+              },
+              "device": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 12
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deviceCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "lastDevice": {
+                "type": "boolean"
+              },
+              "cause": {
+                "type": "string",
+                "enum": [
+                  "wallet",
+                  "push_gone"
+                ]
+              }
+            },
+            "required": [
+              "wallet",
+              "device",
+              "deviceCount",
+              "lastDevice",
+              "cause"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.scanned",
+      "summary": "A scan of the pass succeeded.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.scanned"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "scanId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "action": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "ok",
+                  "heads_up"
+                ]
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "in",
+                  "out"
+                ]
+              },
+              "method": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "scannerId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "staffId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "eventId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "override": {
+                "type": "boolean"
+              },
+              "offline": {
+                "type": "boolean"
+              },
+              "amount": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "outcome"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.scan_refused",
+      "summary": "A scan of the pass was refused.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.scan_refused"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "scanId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "method": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "scannerId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "staffId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "eventId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.scan_undone",
+      "summary": "A scan was undone.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.scan_undone"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "scanId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "scannerId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "staffId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.channels_changed",
+      "summary": "A delivery channel of the pass turned on or off.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.channels_changed"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "channel": {
+                "type": "string",
+                "enum": [
+                  "mobile",
+                  "apple",
+                  "google",
+                  "samsung",
+                  "paper",
+                  "nfc"
+                ]
+              },
+              "from": {
+                "type": "string",
+                "enum": [
+                  "on",
+                  "off"
+                ]
+              },
+              "to": {
+                "type": "string",
+                "enum": [
+                  "on",
+                  "off"
+                ]
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "pass",
+                  "template",
+                  "org",
+                  "platform"
+                ]
+              }
+            },
+            "required": [
+              "channel",
+              "from",
+              "to",
+              "source"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.printed",
+      "summary": "A printed ticket was issued.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.printed"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "printId": {
+                "type": "string",
+                "maxLength": 300
+              },
+              "generation": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "voided": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "printId",
+              "generation"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "pass.print_voided",
+      "summary": "A printed ticket was voided.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "pass.print_voided"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "printId": {
+                "type": "string",
+                "maxLength": 300
+              },
+              "cause": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "printId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "push.failed",
+      "summary": "A Wallet push for the pass failed.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "push.failed"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "status": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "code": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "email.failed",
+      "summary": "An email for the pass failed.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "email.failed"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "externalId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "id",
+              "externalId",
+              "templateId"
+            ],
+            "additionalProperties": false
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "webhook.test",
+      "summary": "Sent on request to test an endpoint.",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "const": "webhook.test"
+          },
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "2026-12-01"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "pass": {
+            "type": "null"
+          },
+          "data": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "apiVersion",
+          "createdAt",
+          "orgId",
+          "mode",
+          "pass",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

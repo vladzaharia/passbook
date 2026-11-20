@@ -33,6 +33,7 @@ import { assignOrg } from './org-assignment.ts';
 import { TemplateScopeQuerySchema } from './route-scope.ts';
 import { registerBlueprints } from './routes-blueprints.ts';
 import {
+  registerInputSchema,
   registerLifecycle,
   registerPreviewBatch,
   registerStampsImpact,
@@ -299,6 +300,7 @@ register(
     ),
 );
 
+registerInputSchema(templatesRoutes);
 registerVersionReads(templatesRoutes);
 registerTemplateChannelRoutes(templatesRoutes);
 
