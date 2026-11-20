@@ -55,6 +55,8 @@ export interface ScanKit extends Kit {
       passStyle?: Record<string, unknown>;
       assets?: Record<string, Uint8Array>;
       releaseModes?: readonly ('live' | 'test')[];
+      /** The barcode message binding; the scan code by default. */
+      barcode?: string;
     },
   ): Promise<string>;
   /** A real pass through the service (scan code, barcode hash and pass.json all written). */
@@ -253,7 +255,7 @@ export async function setupScanKit(options: Parameters<typeof setupKit>[0] = {})
         },
         bindings: [
           ...base.manifest.bindings,
-          { to: { barcode: 0, prop: 'message' }, value: '{{pass.scanCode}}' },
+          { to: { barcode: 0, prop: 'message' }, value: options.barcode ?? '{{pass.scanCode}}' },
         ],
         scan,
       };

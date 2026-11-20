@@ -18,6 +18,7 @@ const WireRowSchema = z.object({
   holder: z.string().nullable(),
   photoUrl: z.string().nullable(),
   plan: z.string().nullable(),
+  type: z.string().nullable().default(null),
   place: PlaceKeySchema,
   placeName: z.string(),
   parentName: z.string().nullable(),
@@ -48,6 +49,7 @@ export interface InsideRow {
   holder: string | null;
   photoUrl: string | null;
   plan: string | null;
+  type: string | null;
   place: string;
   since: number;
   via: string | null;

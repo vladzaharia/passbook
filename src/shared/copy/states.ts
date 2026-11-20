@@ -24,6 +24,8 @@ export const STATE_COPY = {
   tryAgain: TRY_AGAIN,
   rateLimited: 'Too many requests',
   network: 'Could not reach PassBook. Check your connection.',
+  /** A request that never answered. */
+  timeout: 'PassBook did not answer. Try again.',
   /** A page's code did not load: offline, or a deploy replaced it. */
   pageLoadFailed: 'Could not load this page. Check your connection.',
   /** The response did not match the app's schema: a reload fetches the current app. */

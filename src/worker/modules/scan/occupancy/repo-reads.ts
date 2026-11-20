@@ -8,14 +8,17 @@ import { LIVE, marks } from './repo.ts';
 export interface PlaceRow extends PresenceRow {
   due_at: number | null;
   changed_at: number | null;
+  /** The scanner that made the last move. */
+  via: string | null;
 }
 
 /** The pass's rows at every zone, read with the access zones: an in row moved at entry, an out row at its exit scan. */
 export const zoneRowsStmt = (db: D1Database, orgId: string, passId: string): D1PreparedStatement =>
   stmt(
     db,
-    `SELECT x.*, CASE WHEN x.state = 'in' THEN x.entered_at ELSE s.at END AS changed_at
+    `SELECT x.*, CASE WHEN x.state = 'in' THEN x.entered_at ELSE s.at END AS changed_at, sc.name AS via
      FROM scan_presence x LEFT JOIN scans s ON s.id = x.last_scan_id AND s.org_id = x.org_id
+     LEFT JOIN scanners sc ON sc.id = s.scanner_id AND sc.org_id = x.org_id
      WHERE x.org_id = ? AND x.pass_id = ? AND x.scope LIKE 'zone:%'`,
     [orgId, passId],
   );

@@ -32,6 +32,10 @@ export async function cameraFixture(api: Api, orgId: string, reader: 'none' | 'b
     const detail = await api.get(`/api/v1/templates/${cloned.id}/versions/${initialVersion}`);
     const sample = group[0]?.[0] === 'ean13' ? '5901234123457' : '123456789012';
     detail.manifest.sample.memberId = sample;
+    // The barcode carries the member ID, so the camera read is a barcode hit (not a lookup-only check).
+    for (const binding of detail.manifest.bindings)
+      if (binding.to?.barcode !== undefined && binding.to.prop === 'message')
+        binding.value = '{{memberId}}';
     detail.passJson.barcodes = group.map((f) => ({
       format: `PKBarcodeFormat${f[1]}`,
       message: sample,

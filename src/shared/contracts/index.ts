@@ -17,6 +17,7 @@ export * from './orgs.ts';
 export * from './passes.ts';
 export * from './prints.ts';
 export * from './public.ts';
+export * from './retention.ts';
 export * from './sandbox.ts';
 export * from './scan.ts';
 export * from './scan-display.ts';

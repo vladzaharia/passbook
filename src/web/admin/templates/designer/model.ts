@@ -105,6 +105,7 @@ export type Section =
   | 'colors'
   | 'images'
   | 'stamps'
+  | 'counters'
   | 'inputs'
   | 'barcode'
   | 'relevance'
@@ -127,6 +128,7 @@ export const SECTION_LABEL: Record<Exclude<Section, GroupId>, string> = {
   colors: 'Colors',
   images: 'Images',
   stamps: 'Stamps',
+  counters: 'Counters',
   inputs: 'Inputs',
   barcode: 'Barcode',
   relevance: 'Relevance',

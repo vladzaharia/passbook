@@ -271,9 +271,14 @@ export function ConnectionDetail({
                 url={c.webhookUrl}
                 hasSecret={c.hasWebhookSecret}
                 canManage={canManage}
-                onRotate={async (webhookSecret) => {
+                sender={connector.data?.recipes.find((r) => r.id === c.config.recipe)}
+                prevUntil={c.webhookPrevUntil}
+                onRotate={async (webhookSecret, overlapSeconds) => {
                   if (!canManage) return;
-                  await actions.update.mutateAsync({ webhookSecret });
+                  await actions.update.mutateAsync({
+                    webhookSecret,
+                    overlapSeconds: overlapSeconds as 0 | 3600 | 86400 | 604800,
+                  });
                   setTest(undefined);
                 }}
               />

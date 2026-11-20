@@ -12,15 +12,19 @@ type Template = {
 
 export async function releaseTemplates(owner: Session, templates: Template[]): Promise<void> {
   for (const t of templates) {
-    if (t.status !== 'active' || !t.orgId || t.activeVersion) continue;
+    // The seeded failed import never gets a version; waiting for it would only stall the run.
+    if (t.status !== 'active' || !t.orgId || t.activeVersion || t.name === 'Broken Badge') continue;
     let version: string | undefined;
     // An upload or blueprint copy imports asynchronously; its version appears when the build is done.
-    for (let attempt = 0; attempt < 30 && !version; attempt++) {
+    for (let attempt = 0; attempt < 90 && !version; attempt++) {
       version = (await owner.get(`/api/v1/templates/${t.id}?orgId=${t.orgId}`)).versions?.[0]
         ?.version;
       if (!version) await new Promise((done) => setTimeout(done, 1000));
     }
-    if (!version) continue;
+    if (!version) {
+      console.warn(`- ${t.name} has no version yet; not released`);
+      continue;
+    }
     const scope = { orgId: t.orgId, mode: 'live', provider: 'apple' };
     const base = `/api/v1/templates/${t.id}`;
     const candidate = await owner.send('POST', `${base}/candidates`, { ...scope, version });

@@ -3,11 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import type { z } from 'zod';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import type { SessionActivitySchema } from '../../../shared/contracts/scanning-sessions.ts';
-import { formatTime } from '../../lib/format.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import { LookupPanel } from '../lookup/lookup-panel.tsx';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
 import type { ScanRuntime } from '../platform/runtime.ts';
+import { sessionTime } from '../ui/session-time.ts';
 import './operator.css';
 
 export function OperatorPanel({
@@ -125,7 +125,7 @@ export function OperatorPanel({
                         : row.outcome === 'ok'
                           ? 'In'
                           : 'Review'}{' '}
-                    · {row.deviceName} · {formatTime(row.at, session.scanner?.timeZone)}
+                    · {row.deviceName} · {sessionTime(row.at, session.scanner?.timeZone)}
                   </p>
                 </div>
               </li>
