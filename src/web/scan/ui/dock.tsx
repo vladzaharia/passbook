@@ -56,8 +56,11 @@ export function DoorThumbRow({
   inside,
   visitors,
   tapToRead,
+  direction,
 }: {
   onLookUp: () => void;
+  /** A Both scanner on a handheld: the direction button (one tap goes Auto, In, Out). */
+  direction?: ReactNode;
   /** iPhone and iPad: the system reader opens per tap. */
   tapToRead?: () => void;
   onTorch?: () => void;
@@ -94,6 +97,7 @@ export function DoorThumbRow({
           {VISITOR_COPY.title}
         </DockButton>
       ) : null}
+      {direction}
       {canTorch ? (
         <DockButton
           shape="square"

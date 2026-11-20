@@ -4,6 +4,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { act } from './act.ts';
 import type { ActRequestInput } from './act-claim.ts';
+import { memberInitials } from './group-members.ts';
 import type { ScanActor } from './guard.ts';
 import { publishScan } from './live.ts';
 import {
@@ -67,7 +68,14 @@ export async function withBundle(
   const bundle = passId && (await bundleOf(ctx.env.DB, actor.orgId, actor.mode, passId));
   if (!bundle || bundle.passIds.length < 2) return o;
   const checkedIn = await checkedInCount(ctx.env.DB, actor, bundle.id, ctx.clock.now());
-  const chip = { id: bundle.id, name: bundle.name, size: bundle.passIds.length, checkedIn };
+  const members = await memberInitials(ctx, actor, passId, bundle.passIds);
+  const chip = {
+    id: bundle.id,
+    name: bundle.name,
+    size: bundle.passIds.length,
+    checkedIn,
+    ...(members ? { members } : {}),
+  };
   return { ...o, bundle: chip, ...(o.card ? { card: { ...o.card, bundle: chip } } : {}) };
 }
 

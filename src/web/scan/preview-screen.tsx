@@ -1,9 +1,11 @@
 import { type ReactNode, useState } from 'react';
 import type { ScanCard } from '../../shared/contracts/scan.ts';
 import type { ScanBranding, ScanSession } from '../../shared/contracts/scan-session.ts';
+import { SCAN_COPY } from '../../shared/copy/scan.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
 import type { ScanApi } from './api/scan-api.ts';
 import { ScanAppView } from './app.tsx';
+import type { ShownDirection } from './machine/direction-view.ts';
 import { initialState } from './machine/initial-state.ts';
 import { moodOf, viewOf } from './machine/present.ts';
 import type { ScanStore } from './machine/store.ts';
@@ -43,7 +45,12 @@ function useStaticStore(recent: Recent[], at: number) {
 }
 
 export interface ScanPreviewScreenProps {
-  outcome: ScanOutcome;
+  /** None: the door is ready for the next code. */
+  outcome: ScanOutcome | null;
+  /** The camera layer; a plain stage when absent. */
+  camera?: ReactNode;
+  /** The way the scanner reads, for the dock button and the state line. */
+  direction?: { value: ShownDirection; onCycle?: () => void };
   /** `phone` is the door and iPad layout; `operator` adds the desk's sidebar. */
   surface?: 'phone' | 'operator';
   phase?: 'up' | 'rising';
@@ -86,7 +93,7 @@ function OperatorSidebar({
   orgName,
   runtime,
 }: {
-  outcome: ScanOutcome;
+  outcome: ScanOutcome | null;
   orgName: string;
   runtime: ScanRuntime;
 }) {
@@ -101,7 +108,7 @@ function OperatorSidebar({
               deviceId: '01900000-0000-7000-8000-000000000001',
               deviceName: 'West entrance',
               passId: '01900000-0000-7000-8000-000000000001',
-              title: `${outcome.display?.identity.holder ?? 'Pass'} · accepted`,
+              title: `${outcome?.display?.identity.holder ?? 'Pass'} · accepted`,
               outcome: 'ok',
               direction: 'in',
             },
@@ -133,6 +140,8 @@ function OperatorSidebar({
  */
 export function ScanPreviewScreen({
   outcome,
+  camera,
+  direction,
   surface = 'phone',
   phase = 'up',
   orgName = 'Northwind Live',
@@ -162,7 +171,7 @@ export function ScanPreviewScreen({
         camera: { hasTorch: () => false, toggleTorch: async () => false },
       }) as unknown as ScanRuntime,
   );
-  const mood = moodOf(outcome.kind);
+  const mood = moodOf(outcome?.kind ?? 'ready');
   return (
     <ScanStoreContext.Provider value={store}>
       <ScanAppView
@@ -176,10 +185,11 @@ export function ScanPreviewScreen({
           orgName,
           logoUrl: logoUrl !== undefined ? logoUrl : scanBrandLogoUrl(branding),
           state: capsuleState,
+          ...(direction ? { direction: SCAN_COPY.direction[direction.value] } : {}),
           ...(chips ? { chips } : {}),
           ...(menu ? { menu } : {}),
         }}
-        camera={<div className="scan-visual-camera" />}
+        camera={camera ?? <div className="scan-visual-camera" />}
         sidebar={
           surface === 'operator' ? (
             <OperatorSidebar outcome={outcome} orgName={orgName} runtime={runtime} />
@@ -196,19 +206,23 @@ export function ScanPreviewScreen({
             open={() => undefined}
             onError={() => undefined}
             approval={approval}
+            handheld={density === 'glance'}
+            direction={direction}
           />
         }
         card={
-          <ResultCard
-            outcome={outcome}
-            phase={phase}
-            onPass={onPass}
-            onGroup={() => undefined}
-            addPhoto={addPhoto}
-            density={density}
-            approvedBy={approvedBy}
-            {...(clock ? { clock } : {})}
-          />
+          outcome ? (
+            <ResultCard
+              outcome={outcome}
+              phase={phase}
+              onPass={onPass}
+              onGroup={() => undefined}
+              addPhoto={addPhoto}
+              density={density}
+              approvedBy={approvedBy}
+              {...(clock ? { clock } : {})}
+            />
+          ) : null
         }
       />
       {children}

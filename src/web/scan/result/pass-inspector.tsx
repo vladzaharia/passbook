@@ -154,7 +154,7 @@ export function PassInspector({
               {actions.slice(2).map((a) => (
                 <DropdownMenuItem
                   key={a.key}
-                  className="min-h-14 text-lg"
+                  className="min-h-14 max-sm:min-h-14 pointer-coarse:min-h-14 text-lg"
                   disabled={a.key === 'show' && !card}
                   onSelect={a.run}
                 >

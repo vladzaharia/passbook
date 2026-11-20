@@ -1,8 +1,9 @@
 import { ChevronUp, Info } from 'lucide-react';
 import type { ScanDisplay } from '../../../shared/contracts/scan-display.ts';
 import { SCAN_HANDHELD_COPY } from '../../../shared/copy/scan-handheld.ts';
+import { groupView } from '../machine/group-view.ts';
 import type { ScanOutcome } from '../machine/types.ts';
-import { GroupChip } from './group-chip.tsx';
+import { GroupRow } from './group-row.tsx';
 import { KeyFact, keyFactOf } from './key-fact.tsx';
 
 /**
@@ -25,12 +26,13 @@ export function GlanceTail({
   onGroup?: (() => void) | undefined;
 }) {
   const instruction = o.kind === 'refused' || o.kind === 'heads_up';
+  const group = chip ? groupView(o) : null;
   const fact = denied || chip || o.reason === 'needs_approval' ? null : keyFactOf(display);
   const note = notes[0];
   const showNote = note && (instruction || !fact) && !chip;
   return (
     <>
-      {chip ? <GroupChip outcome={o} onGroup={onGroup} /> : null}
+      {group ? <GroupRow view={group} outcome={o} onGroup={onGroup} /> : null}
       {showNote ? (
         <div className="scan-result-notes" data-testid="scan-glance-note">
           <Info size={20} aria-hidden />

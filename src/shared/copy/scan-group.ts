@@ -6,6 +6,20 @@ export const SCAN_GROUP_COPY = {
   already: '{n} already in',
   refused: '{n} not let in',
   state: { done: 'In', already: 'Already in', refused: 'Not let in' },
+  /** The handheld: the dock button, the verdict lines and the person row. */
+  checkInMore: 'Check in {n} more',
+  checkedInMore: 'Checked in {n} more',
+  checkedInN: 'Checked in {n}',
+  ofIn: '{n} of {total} in {who}',
+  whose: "{name}'s group",
+  theGroup: 'the group',
+  person: {
+    in: 'in',
+    pending: 'not in yet',
+    already: 'already in',
+    refused: 'not let in',
+  },
+  label: 'Group',
 } as const;
 
 export const groupLine = (g: { done: number; already: number; refused: number }): string =>
