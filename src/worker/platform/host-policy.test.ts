@@ -55,6 +55,23 @@ describe('hostDecision', () => {
       expect(decide(url), url).toEqual({ action: 'refuse' });
   });
 
+  it('moves a DEVELOPERS_HOSTS host into /developers, keeping the query', () => {
+    const env = { ...hosts, DEVELOPERS_HOSTS: 'developers.passbook.mobile' };
+    const go = (url: string) => hostDecision(env, new URL(url));
+    expect(go('https://developers.passbook.mobile/')).toEqual({
+      action: 'redirect',
+      location: `${CANONICAL}/developers`,
+    });
+    expect(go('https://developers.passbook.mobile/reference/passes?a=1')).toEqual({
+      action: 'redirect',
+      location: `${CANONICAL}/developers/reference/passes?a=1`,
+    });
+    expect(go('https://developers.passbook.mobile/developers/errors').action).toBe('redirect');
+    expect(hostDecision(hosts, new URL('https://developers.passbook.mobile/'))).toEqual({
+      action: 'refuse',
+    });
+  });
+
   it('reads REDIRECT_HOSTS as a trimmed, case-insensitive list', () => {
     expect(
       redirectHosts({ PUBLIC_BASE_URL: CANONICAL, REDIRECT_HOSTS: ' A.example , b.example,' }),
