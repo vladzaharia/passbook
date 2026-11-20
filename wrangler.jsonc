@@ -183,7 +183,9 @@
       "simple": { "limit": 12000, "period": 60 }
     },
     // Aggregate per org (key org:<id>) across all its keys; platform keys are exempt.
-    { "name": "RL_API_ORG", "namespace_id": "1022", "simple": { "limit": 6000, "period": 60 } }
+    { "name": "RL_API_ORG", "namespace_id": "1022", "simple": { "limit": 6000, "period": 60 } },
+    // Developer try tokens: mint and use per person (key user:<id>).
+    { "name": "RL_API_TRY", "namespace_id": "1023", "simple": { "limit": 60, "period": 60 } }
   ],
 
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_events" }],

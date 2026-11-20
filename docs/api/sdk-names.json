@@ -311,6 +311,12 @@
     "resource": "developer.sandbox",
     "method": "close"
   },
+  "developer.deleteTryToken": {
+    "resource": "developer.tryTokens",
+    "method": "revokeAll",
+    "sdk": false,
+    "reason": "Developer portal Try it: a signed-in person in a browser, not an integration."
+  },
   "developer.getSandbox": {
     "resource": "developer.sandbox",
     "method": "retrieve"
@@ -318,6 +324,12 @@
   "developer.postSandbox": {
     "resource": "developer.sandbox",
     "method": "create"
+  },
+  "developer.postTryToken": {
+    "resource": "developer.tryTokens",
+    "method": "create",
+    "sdk": false,
+    "reason": "Developer portal Try it: a signed-in person in a browser, not an integration."
   },
   "entitlements.getOrgsByIdEntitlements": {
     "resource": "orgs.entitlements",

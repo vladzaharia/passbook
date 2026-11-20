@@ -139,3 +139,38 @@ export async function closeSandbox(
   const [closed] = await g.commit();
   return (closed?.results.length ?? 0) > 0;
 }
+
+/**
+ * `platform.job.developer_sandbox.try_revoke`: raises the open sandbox's try generation, so every try token made
+ * before stops at once. Only the sandbox's person, from a live session. False when there is no open sandbox.
+ */
+export async function bumpTryGeneration(
+  ctx: ServiceContext,
+  orgId: string,
+  by: { userId: string; sessionIdHash: string },
+): Promise<boolean> {
+  const now = ctx.clock.now();
+  const live = rawCheck(
+    'actor',
+    `EXISTS (SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
+      WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL
+        AND s.expires_at > ? AND s.idle_expires_at > ?)`,
+    [by.sessionIdHash, by.userId, now, now],
+  );
+  const g = developerSandboxGrant(ctx, 'platform.job.developer_sandbox.try_revoke', [live], orgId);
+  g.update('developer_sandboxes', {
+    set: { try_generation: maxNow(now) },
+    where: { org_id: orgId, user_id: by.userId, closed_at: null },
+    returning: ['id'],
+  });
+  grantedAudit(g, ctx, {
+    orgId,
+    actorType: 'user',
+    actorId: by.userId,
+    action: 'developer_sandbox.try_revoke',
+    targetType: 'org',
+    targetId: orgId,
+  });
+  const [bumped] = await g.commit();
+  return (bumped?.results.length ?? 0) > 0;
+}

@@ -3,6 +3,8 @@ import {
   CreateDeveloperSandboxSchema,
   CreatedDeveloperSandboxSchema,
   DeveloperSandboxSchema,
+  OkSchema,
+  TryTokenSchema,
 } from '../../../shared/contracts/index.ts';
 import { TURNSTILE_SANDBOX_ACTION } from '../../../shared/turnstile.ts';
 import { limitBody } from '../../platform/body-limit.ts';
@@ -12,6 +14,7 @@ import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { verifyTurnstile } from '../auth/turnstile.ts';
 import { closeOwnSandbox, createSandbox, getSandbox } from './service.ts';
+import { mintTryToken, revokeTryTokens } from './try-token.ts';
 
 export const developerRoutes = createRouter();
 developerRoutes.use('*', limitBody(8 * 1024));
@@ -85,5 +88,44 @@ register(
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
     return c.json(await closeOwnSandbox(serviceContext(c), auth));
+  },
+);
+
+register(
+  developerRoutes,
+  'developer',
+  {
+    method: 'post',
+    path: '/try-token',
+    summary: 'A 15-minute token for Try it: your sandbox key, Test only, ends with this session',
+    operationId: 'developer.postTryToken',
+    auth: { human: true },
+    status: 201,
+    response: TryTokenSchema,
+  },
+  async (c) => {
+    const auth = c.var.auth;
+    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    c.header('cache-control', 'no-store');
+    return c.json(await mintTryToken(serviceContext(c), auth), 201);
+  },
+);
+
+register(
+  developerRoutes,
+  'developer',
+  {
+    method: 'delete',
+    path: '/try-token',
+    summary: 'End every Try it token of your sandbox',
+    operationId: 'developer.deleteTryToken',
+    auth: { human: true },
+    response: OkSchema,
+  },
+  async (c) => {
+    const auth = c.var.auth;
+    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    await revokeTryTokens(serviceContext(c), auth);
+    return c.json({ ok: true as const });
   },
 );

@@ -37,3 +37,13 @@ export const CreatedDeveloperSandboxSchema = DeveloperSandboxSchema.extend({
   previousKey: z.object({ id: IdSchema, name: z.string() }).nullable(),
 });
 export type CreatedDeveloperSandbox = z.infer<typeof CreatedDeveloperSandboxSchema>;
+
+/**
+ * `POST /developer/try-token`: a 15-minute bearer for the portal's Try it, bound to the session and the sandbox's
+ * Test key. Refresh at 12 minutes; keep it in memory only, never in storage or a URL.
+ */
+export const TryTokenSchema = z.object({
+  token: z.string(),
+  expiresAt: TimestampSchema,
+});
+export type TryToken = z.infer<typeof TryTokenSchema>;

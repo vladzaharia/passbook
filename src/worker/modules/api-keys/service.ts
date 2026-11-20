@@ -2,7 +2,7 @@ import type { z } from 'zod';
 import type { ApiKeyListQuerySchema } from '../../../shared/contracts/index.ts';
 import { apiKeyPrefixOf } from '../../platform/api-key-token.ts';
 import { rolesCapableOf } from '../../platform/api-scopes.ts';
-import type { ApiKeyAuth, ApiKeyStore } from '../../platform/auth.ts';
+import type { ApiKeyAuth, ApiKeyStore, KeyCaller } from '../../platform/auth.ts';
 import { type Clock, systemClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
@@ -164,6 +164,70 @@ export async function retireApiKey(
   });
 }
 
+/**
+ * The principal of a found key row, or null when the key may not act now: revoked, expired, retired, its org or
+ * member gone, or the caller outside its IP list. Throws 429 over the key's limit. Shared by the secret and the
+ * developer try-token paths, so both apply the same rules.
+ */
+export async function keyAuthOf(
+  env: AppEnv,
+  clock: Clock,
+  row: repo.ResolvedKeyRow,
+  caller: KeyCaller | undefined,
+  options: { limited?: 'ok' } | undefined,
+): Promise<ApiKeyAuth | null> {
+  const now = clock.now();
+  if (
+    row.revoked_at !== null ||
+    (row.expires_at !== null && row.expires_at <= now) ||
+    (row.retire_at !== null && row.retire_at <= now)
+  )
+    return null;
+  if (row.org_id !== null && row.org_status !== 'active') return null;
+  // A child ends with its parent: revoked, expired or retired, or gone.
+  if (row.parent_key_id !== null) {
+    const parent = row.parent
+      ? (JSON.parse(row.parent) as Record<'revoked_at' | 'expires_at' | 'retire_at', number | null>)
+      : null;
+    const ends = parent ? [parent.expires_at, parent.retire_at].filter((t) => t !== null) : [];
+    if (!parent || parent.revoked_at !== null || ends.some((t) => t <= now)) return null;
+  }
+  // A personal key dies with its membership or user; its reach is capped by the member's roles now.
+  if (row.kind === 'personal' && row.member_roles === null) return null;
+  // The caller's address is not an oracle: a wrong address looks like a wrong key. No address means no match.
+  const allow = row.ip_allow ? (JSON.parse(row.ip_allow) as string[]) : [];
+  if (allow.length > 0 && !ipAllowed(caller?.ip, allow)) return null;
+  const tier = await enforceApiKeyRate(env, { keyId: row.id, orgId: row.org_id }, row.rate_tier);
+  // A key limited to templates or styles is for routes that enforce the limit (`templateScoped`); anywhere else
+  // it is refused, so a route that reads or writes outside the grant builder never sees another template's data.
+  if (row.restricted === 1 && options?.limited !== 'ok')
+    throw new ForbiddenError(
+      'This key is limited to templates and cannot call this route.',
+      'API_KEY_RESTRICTED_ROUTE',
+    );
+  await repo.touchKey(env.DB, row.id, now, TOUCH_EVERY_MS, ipPrefix(caller?.ip));
+  // A platform key made before 0142 has no expiry or IP list: it keeps working, and every use is logged.
+  if (row.kind === 'platform' && (row.expires_at === null || allow.length === 0))
+    createLogger().warn('api_key.platform_unbounded', {
+      code: 'API_KEY_PLATFORM_UNBOUNDED',
+      keyId: row.id,
+    });
+  const held = parseScopes(row.scopes);
+  const memberRoles = row.member_roles ? parseRoles(row.member_roles) : null;
+  const auth: ApiKeyAuth = {
+    kind: 'api_key',
+    keyId: row.id,
+    orgId: row.org_id,
+    scopes: memberRoles
+      ? held.filter((s) => rolesCapableOf(s).some((role) => memberRoles.includes(role)))
+      : held,
+    mode: row.mode,
+    ...(row.restricted === 1 ? { limited: true as const } : {}),
+  };
+  rememberApiTier(auth, tier);
+  return auth;
+}
+
 /** Resolves a presented key. Null for anything invalid; throws 429 when the key is over its limit. */
 export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiKeyStore {
   return {
@@ -172,63 +236,7 @@ export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiK
       if (!prefix) return null;
       const row = await repo.findByPrefix(env.DB, prefix);
       if (!row || !(await safeEqual(await sha256Hex(rawKey), row.key_hash))) return null;
-      const now = clock.now();
-      if (
-        row.revoked_at !== null ||
-        (row.expires_at !== null && row.expires_at <= now) ||
-        (row.retire_at !== null && row.retire_at <= now)
-      )
-        return null;
-      if (row.org_id !== null && row.org_status !== 'active') return null;
-      // A child ends with its parent: revoked, expired or retired, or gone.
-      if (row.parent_key_id !== null) {
-        const parent = row.parent
-          ? (JSON.parse(row.parent) as Record<
-              'revoked_at' | 'expires_at' | 'retire_at',
-              number | null
-            >)
-          : null;
-        const ends = parent ? [parent.expires_at, parent.retire_at].filter((t) => t !== null) : [];
-        if (!parent || parent.revoked_at !== null || ends.some((t) => t <= now)) return null;
-      }
-      // A personal key dies with its membership or user; its reach is capped by the member's roles now.
-      if (row.kind === 'personal' && row.member_roles === null) return null;
-      // The caller's address is not an oracle: a wrong address looks like a wrong key. No address means no match.
-      const allow = row.ip_allow ? (JSON.parse(row.ip_allow) as string[]) : [];
-      if (allow.length > 0 && !ipAllowed(caller?.ip, allow)) return null;
-      const tier = await enforceApiKeyRate(
-        env,
-        { keyId: row.id, orgId: row.org_id },
-        row.rate_tier,
-      );
-      // A key limited to templates or styles is for routes that enforce the limit (`templateScoped`); anywhere else
-      // it is refused, so a route that reads or writes outside the grant builder never sees another template's data.
-      if (row.restricted === 1 && options?.limited !== 'ok')
-        throw new ForbiddenError(
-          'This key is limited to templates and cannot call this route.',
-          'API_KEY_RESTRICTED_ROUTE',
-        );
-      await repo.touchKey(env.DB, row.id, now, TOUCH_EVERY_MS, ipPrefix(caller?.ip));
-      // A platform key made before 0142 has no expiry or IP list: it keeps working, and every use is logged.
-      if (row.kind === 'platform' && (row.expires_at === null || allow.length === 0))
-        createLogger().warn('api_key.platform_unbounded', {
-          code: 'API_KEY_PLATFORM_UNBOUNDED',
-          keyId: row.id,
-        });
-      const held = parseScopes(row.scopes);
-      const memberRoles = row.member_roles ? parseRoles(row.member_roles) : null;
-      const auth: ApiKeyAuth = {
-        kind: 'api_key',
-        keyId: row.id,
-        orgId: row.org_id,
-        scopes: memberRoles
-          ? held.filter((s) => rolesCapableOf(s).some((role) => memberRoles.includes(role)))
-          : held,
-        mode: row.mode,
-        ...(row.restricted === 1 ? { limited: true as const } : {}),
-      };
-      rememberApiTier(auth, tier);
-      return auth;
+      return keyAuthOf(env, clock, row, caller, options);
     },
   };
 }

@@ -26402,6 +26402,114 @@
         }
       }
     },
+    "/api/v1/developer/try-token": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "A 15-minute token for Try it: your sandbox key, Test only, ends with this session",
+        "operationId": "developer.postTryToken",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "expiresAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.tryTokens",
+          "method": "create",
+          "sdk": false,
+          "reason": "Developer portal Try it: a signed-in person in a browser, not an integration."
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "End every Try it token of your sandbox",
+        "operationId": "developer.deleteTryToken",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.tryTokens",
+          "method": "revokeAll",
+          "sdk": false,
+          "reason": "Developer portal Try it: a signed-in person in a browser, not an integration."
+        }
+      }
+    },
     "/api/v1/orgs/{id}/entitlements": {
       "get": {
         "security": [

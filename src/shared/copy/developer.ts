@@ -16,5 +16,7 @@ export const SANDBOX_HUMAN_ONLY_COPY = 'Sign in to make a sandbox.';
 export const SANDBOX_CHECK_COPY = 'Check failed. Reload and try again.';
 export const SANDBOX_TEMPLATE_NAME = 'Quickstart ticket';
 export const SANDBOX_KEY_NAME = 'Sandbox key';
+export const SANDBOX_KEY_MISSING_COPY =
+  'Your sandbox has no usable key. Roll or make one, then try again.';
 /** The path a sandbox pass links to; the token is the pass's capability. PX9 renders it. */
 export const TEST_PREVIEW_PATH = '/developers/preview/';

@@ -10,6 +10,7 @@ import {
 } from '../../shared/contracts/common.ts';
 import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
 import { scopeExercises } from './api-scopes.ts';
+import { refuseKeyInBrowser } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
 import { type DeniedEvent, reportDenied } from './denied.ts';
@@ -53,6 +54,8 @@ export interface ApiKeyAuth {
   mode: Mode;
   /** The key is limited to templates or styles (`api_key_resources`); only a `templateScoped` route admits it. */
   limited?: true;
+  /** Presented as a developer try token (`pbtry_`), not the key's secret. */
+  via?: 'try';
 }
 
 export const SCANNER_COOKIE = '__Host-wallet_scan';
@@ -94,7 +97,11 @@ export interface ApiKeyStore {
 export interface KeyCaller {
   ip: string | undefined;
 }
-export const keyCaller = (c: Context): KeyCaller => ({ ip: c.req.header('cf-connecting-ip') });
+/** Every key guard calls this before it resolves a bearer, so a key sent from a browser is refused first. */
+export function keyCaller(c: Context): KeyCaller {
+  refuseKeyInBrowser(c);
+  return { ip: c.req.header('cf-connecting-ip') };
+}
 
 /**
  * Implemented by modules/scan. Null for an unknown or malformed token. A known token whose scanner

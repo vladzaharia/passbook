@@ -58,6 +58,8 @@ A secret scanner can match the labels. Keys are never logged: the logger and aud
 
 **Personal keys and sessions.** A personal key is its own credential, bounded by the membership and the user, not by a browser session: signing out or revoking a session does not end it. Revoke it, retire it, or remove the membership.
 
+**Keys stay on servers.** A key sent from a browser is refused with `KEY_IN_BROWSER` (403) before it is looked up, live or test. A request counts as a browser's when it carries `Sec-Fetch-Site`, `Origin` or a `__Host-wallet_` cookie. curl, Node `fetch`, Python, Go and Workers `fetch` send none of these (`Sec-Fetch-Mode`, `User-Agent` and other cookies do not count). A server that proxies a browser request must not forward `Origin`, `Sec-Fetch-*` or `Cookie`. `/api/v1` sends no CORS headers. In the browser, the developer portal's Try it uses a try token (see Developer sandbox).
+
 **Roles.** `roles` holds role presets: `org_admin`, `integration_admin`, `template_author`, `template_reviewer`,
 `template_publisher`, `pass_operator`, `read_only`. The role's scopes are copied into the key's `scopes` when it is made and the role stays as a label: a bundle that gains a scope later never reaches an existing key. A creator can give a role only if every scope in it is within their own roles
 (`403 API_KEY_SCOPE_EXCEEDS_CREATOR`). The terminal scope `scans:write` is never in a role.
@@ -296,6 +298,8 @@ Delivery features follow the plan too: Google and Samsung Wallet (`wallet.google
 ## Developer sandbox
 
 `POST /api/v1/developer/sandbox` (a signed-in person: session, CSRF and a Turnstile token; never a key) makes your sandbox, once per person: a `developer` organization with you as admin, a Test personal key (`pbp_test_...`, 30 days, the secret shown once) and a "Quickstart ticket" template released in Test. `GET` reads it back. A repeat `POST` finishes a sandbox a failed request left half made and returns it; the key is minted once, so the repeat has `key: null` and `previousKey`: roll it. `DELETE` closes your sandbox (read-only, keys revoked); it is not made again.
+
+**Try tokens.** `POST /api/v1/developer/try-token` (signed-in person, CSRF) returns `{ token, expiresAt }`: a `pbtry_` bearer that acts as your sandbox's Test key for 15 minutes, and the one bearer a browser may send. It ends at expiry, sign-out, a revoked session, a revoked, expired or retired key, a closed sandbox, or `DELETE /api/v1/developer/try-token` (ends every try token of your sandbox). Routes for a signed-in person never take it. Both calls share `RL_API_TRY`: 60 a minute per person. The portal keeps it in memory and refreshes it at 12 minutes; never store it or put it in a URL.
 
 A sandbox pass is a preview. Nothing in a sandbox is ever signed, added to a wallet, pushed or mailed: issue and send calls answer with the same shapes, `downloadUrl` is the TEST preview page (`/developers/preview/<token>`), and mail lands in the test inbox. `GET /p/<token>/pass.pkpass` answers `SANDBOX_PREVIEW_ONLY` (409). A sandbox never holds Live: a Live key or request is refused. Its plan is the `developer` preset (500 test passes, 10 templates, 3 webhook endpoints); a create at a cap answers `SANDBOX_QUOTA` (403) with `feature`, `limit` and `used`, as `FEATURE_LIMIT_REACHED` does elsewhere. A sandbox with no activity for 90 days closes.
 
