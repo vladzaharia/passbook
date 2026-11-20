@@ -15,6 +15,7 @@ type Session = Extract<TenantPassWrite, { kind: 'session' }>;
 /** A tag edit is a console action: the captured session holds passes:operate. */
 export type TagAuthority = Session & { capability: 'passes:operate' };
 
+const DAY_MS = 86_400_000;
 const TAG_TABLES = ['nfc_tags', 'tag_bindings', 'nfc_tag_sun'] as const;
 /** What an enrollment grant writes: its own row, and the binding it creates. */
 export const ENROLL_TABLES = [
@@ -58,14 +59,15 @@ export type EndCause =
   | 'replaced'
   | 'moved'
   | 'tag_retired'
-  | 'offboard';
+  | 'offboard'
+  | 'expired';
 
 /** Ends one active binding. The batch is refused if it already ended. */
 export function endBinding(
   g: Grant,
   binding: { id: string },
   cause: EndCause,
-  actor: TagActor,
+  actor: { type: TagActor['type'] | 'system'; id: string },
   now: number,
 ): GrantedStatement {
   return g.joined('tag_bindings', {
@@ -80,7 +82,14 @@ export function endBinding(
 export interface BindPlan {
   tagId: string;
   /** Set when the tag has not been seen: its row is created in the same batch. */
-  newTag: { ref: string; hint: string; label: string | null; system: TagSystemId } | null;
+  newTag: {
+    ref: string;
+    hint: string;
+    label: string | null;
+    system: TagSystemId;
+    /** The tag's type; null is Standard. */
+    typeId?: string | null;
+  } | null;
   /** A SUN read: a new tag's side row starts at its counter, a known tag's moves up to it (or the batch is refused). */
   sun?: SunSeen | null;
   bindingId: string;
@@ -88,12 +97,16 @@ export interface BindPlan {
   scope: 'pass' | 'user';
   userId: string | null;
   /** The active binding this one replaces or takes over. */
-  end: { id: string; cause: 'replaced' | 'moved' } | null;
+  end: { id: string; cause: 'replaced' | 'moved' | 'expired' } | null;
+  /** Other bindings of this holder that lapsed: they end in this batch, so they hold up no limit. */
+  endLapsed?: readonly string[];
   /** The pass's credential generation and owner read with the plan: pinned at commit, kept on the binding. */
   holderGeneration: number;
   holderOwner: string | null;
   /** The tag is reported lost: this bind (a move or a restore) clears that. */
   clearsLost: boolean;
+  /** The binding ends by itself this many days after it is made (the type's `binding_days`). */
+  expiryDays?: number | null;
   /** The lost report this bind clears, kept on the binding so a scanner Undo can restore it. */
   cleared?: { at: number; by: string } | null;
   /** A scanner bind's idempotency key and request hash: a retry replays the result. */
@@ -137,15 +150,37 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
   if (p.newTag)
     g.upsert(
       'nfc_tags',
-      ['id', 'tag_ref', 'system', 'hint', 'label', 'created_at'],
-      [p.tagId, p.newTag.ref, p.newTag.system, p.newTag.hint, p.newTag.label, now],
+      ['id', 'tag_ref', 'system', 'type_id', 'hint', 'label', 'created_at'],
+      [
+        p.tagId,
+        p.newTag.ref,
+        p.newTag.system,
+        p.newTag.typeId ?? null,
+        p.newTag.hint,
+        p.newTag.label,
+        now,
+      ],
       { doNothing: true },
     );
   if (p.sun && p.newTag) enrolSun(g, p.tagId, p.sun, now);
   else if (p.sun) consumeSun(g, p.tagId, p.sun, now);
   if (p.clearsLost)
     g.update('nfc_tags', { set: { lost_at: null, lost_by: null }, where: { id: p.tagId } });
-  if (p.end) endBinding(g, p.end, p.end.cause, p.actor, now);
+  for (const id of p.endLapsed ?? [])
+    if (id !== p.end?.id)
+      g.joined('tag_bindings', {
+        via: 'tag_id',
+        where: { id, ended_at: null },
+        set: { ended_at: now, ended_by_type: 'system', ended_by: 'expiry', end_cause: 'expired' },
+      });
+  if (p.end)
+    endBinding(
+      g,
+      p.end,
+      p.end.cause,
+      p.end.cause === 'expired' ? { type: 'system', id: 'expiry' } : p.actor,
+      now,
+    );
   const insert = g.insertJoined('tag_bindings', {
     parents: { tag_id: p.tagId, pass_id: p.passId },
     columns: [
@@ -163,6 +198,7 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
       'request_hash',
       'cleared_lost_at',
       'cleared_lost_by',
+      'expires_at',
     ],
     values: [
       p.bindingId,
@@ -179,6 +215,7 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
       p.idempotency?.hash ?? null,
       p.cleared?.at ?? null,
       p.cleared?.by ?? null,
+      p.expiryDays ? now + p.expiryDays * DAY_MS : null,
     ],
     returning: ['id'],
   });

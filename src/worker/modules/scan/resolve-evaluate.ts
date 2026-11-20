@@ -32,6 +32,7 @@ import { channelVerdict } from './resolve-channels.ts';
 import { stop, type Waive, windowStop } from './resolve-policy.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { candidateTakesTag, levelAllows } from './tag-assurance.ts';
+import { tagCheck, tagTypeHolds } from './tag-confirm.ts';
 
 /** Additional request-local reads sharing the admission snapshot transaction. */
 export interface EvaluationReadPlan {
@@ -152,7 +153,8 @@ async function evaluateObserved(
     actor.tag &&
     !(
       candidateTakesTag(ctx, one, actor.tag.assurance) &&
-      levelAllows(actor.settings.tags?.level, actor.tag.assurance)
+      levelAllows(actor.settings.tags?.level, actor.tag.assurance) &&
+      tagTypeHolds(actor, one)
     )
   )
     return stop('refused', 'tag_not_allowed');
@@ -274,12 +276,17 @@ async function evaluateObserved(
   // An Access card has its own window (the plan and the pass's start and end): AX 3.4 skips 11-12.
   const held = exiting || found.access ? null : windowStop(actor, found, now, waive);
   if (held) return held;
+  // A tag that asks for a second factor: a Manager's PIN stops the tap alone, a staff check joins the flags.
+  const tagged = exiting ? null : tagCheck(actor, waive);
+  if (tagged?.kind === 'manager')
+    return stop('heads_up', 'needs_approval', { ...known, at: null, flags: [tagged.flag] });
   const flagged = activeFlags(found).filter((flag) => flag.stop);
   const typed = channel?.kind === 'typed';
-  if ((flagged.length > 0 || typed) && !waive.confirmed && !zoneExit)
+  if (tagged || ((flagged.length > 0 || typed) && !waive.confirmed && !zoneExit))
     return stop('heads_up', 'check_required', {
       ...known,
       flags: [
+        ...(tagged ? [tagged.flag] : []),
         ...(typed ? [TYPED_NUMBER_FLAG] : []),
         ...activeFlags(found, actor)
           .filter((flag) => flag.stop)
