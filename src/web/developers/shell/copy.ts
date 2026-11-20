@@ -14,17 +14,26 @@ function textFor(button: HTMLElement): string {
   return lines.length > 0 ? lines.map((l) => l.textContent).join('\n') : (region.textContent ?? '');
 }
 
+/** True when the text is on the clipboard. Islands use it too, so the one clipboard call lives here. */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Not the kit's copyText: that toasts through sonner and React, which the portal's first load cannot afford.
 export function initCopy(): void {
   document.addEventListener('click', async (event) => {
     const button = (event.target as Element).closest<HTMLElement>('[data-copy]');
     if (!button) return;
     const label = button.getAttribute('aria-label') ?? 'Copy';
-    try {
-      await navigator.clipboard.writeText(textFor(button));
+    if (await copyToClipboard(textFor(button))) {
       button.dataset.state = 'copied';
       button.setAttribute('aria-label', 'Copied');
-    } catch {
+    } else {
       button.dataset.state = 'failed';
       button.setAttribute('aria-label', 'Could not copy. Allow clipboard access and try again.');
     }

@@ -18,6 +18,11 @@ export const SCAN_BUDGET_BYTES = 150_000;
  * playground and tester are lazy chunks.
  */
 export const DEV_BUDGET_BYTES = 60_000;
+/**
+ * The Try it island, everything its loader pulls (React, the console, its stylesheet), in gzip
+ * bytes: 88.3 kB measured. It loads only for a signed-in visitor, so it sits outside the 60 kB.
+ */
+export const DEV_ISLAND_BUDGET_BYTES = 95_000;
 /** Literal strings: this check matches text, so an identifier would not survive minification. */
 export const FORBIDDEN = [
   'cmdk-',
@@ -39,6 +44,20 @@ export function initialAssets(html: string, stylesheets = false): string[] {
   ].map((m) => m[1] ?? '');
   return urls.filter(Boolean);
 }
+
+/**
+ * The files a lazy island pulls: its loader chunk and the `__vite__mapDeps` list Vite writes into
+ * it. `entry` is the developers script; `name` the island loader's file prefix (`run-entry`).
+ */
+export function islandAssets(read: (url: string) => string, entry: string, name: string): string[] {
+  const loader = new RegExp(`/assets/${name}-[\\w-]+\\.js`).exec(withAssetDir(read(entry)))?.[0];
+  if (!loader) return [];
+  const deps = /m\.f=(\[[^\]]*\])/.exec(read(loader))?.[1];
+  const list = deps ? (JSON.parse(deps) as string[]).map((d) => `/${d}`) : [];
+  return [loader, ...list];
+}
+
+const withAssetDir = (js: string): string => js.replace(/\.\//g, '/assets/');
 
 export function checkBundle(
   read: (url: string) => string,
@@ -93,6 +112,37 @@ if (import.meta.main) {
       process.stderr.write(`${errors.join('\n')}\n`);
       failed = true;
     }
+  }
+  const devEntry = initialAssets(readFileSync(join(dist, 'developers.html'), 'utf8'))[0] ?? '';
+  const island = islandAssets(
+    (url) => readFileSync(join(dist, url.replace(/^\//, '')), 'utf8'),
+    devEntry,
+    'run-entry',
+  );
+  const initial = new Set(initialAssets(readFileSync(join(dist, 'developers.html'), 'utf8'), true));
+  const islandOnly = island.filter((u) => !initial.has(u));
+  let islandTotal = 0;
+  for (const url of islandOnly) {
+    const body = readFileSync(join(dist, url.replace(/^\//, '')), 'utf8');
+    islandTotal += gzipSync(body).length;
+    for (const marker of DEV_FORBIDDEN)
+      if (body.includes(marker)) {
+        process.stderr.write(`${url} contains ${marker}\n`);
+        failed = true;
+      }
+  }
+  process.stdout.write(
+    `developers run island gzip: ${islandTotal} B (${islandOnly.length} files)\n`,
+  );
+  if (islandOnly.length === 0) {
+    process.stderr.write('developers run island: no chunk found\n');
+    failed = true;
+  }
+  if (islandTotal > DEV_ISLAND_BUDGET_BYTES) {
+    process.stderr.write(
+      `developers run island ${islandTotal} B exceeds budget ${DEV_ISLAND_BUDGET_BYTES} B\n`,
+    );
+    failed = true;
   }
   if (failed) process.exit(1);
 }

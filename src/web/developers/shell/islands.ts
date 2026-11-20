@@ -1,13 +1,21 @@
 export interface Island {
-  mount(el: HTMLElement): void;
+  mount(el: HTMLElement): void | Promise<void>;
 }
 
 /**
  * Placeholders the prerendered pages carry as `data-island="<name>"`, each a lazy chunk. Add a
- * loader here and the island mounts when its element nears the viewport. Registered so far:
- * none; the static markup inside a placeholder is its signed-out state.
+ * loader here and the island mounts when its element nears the viewport. `run` is the Try it
+ * console (a signed-out visitor never loads React: the entry looks at the session first) and
+ * `org-chip` the sandbox chip in the top bar. The static markup inside a placeholder is its
+ * signed-out state.
  */
-export const ISLANDS: Record<string, () => Promise<Island>> = {};
+export const ISLANDS: Record<string, () => Promise<Island>> = {
+  run: () => import('../console/run-entry.ts'),
+  'org-chip': async () => {
+    const { mountOrgChip } = await import('../console/org-chip.ts');
+    return { mount: mountOrgChip };
+  },
+};
 
 export function mountIslands(root: ParentNode = document): void {
   const pending = [...root.querySelectorAll<HTMLElement>('[data-island]')].filter(

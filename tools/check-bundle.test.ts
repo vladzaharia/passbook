@@ -3,8 +3,10 @@ import {
   checkBundle,
   DEV_BUDGET_BYTES,
   DEV_FORBIDDEN,
+  DEV_ISLAND_BUDGET_BYTES,
   FORBIDDEN,
   initialAssets,
+  islandAssets,
   SCAN_BUDGET_BYTES,
   SCAN_FORBIDDEN,
 } from './check-bundle.ts';
@@ -90,5 +92,22 @@ describe('check-bundle', () => {
     const css = Array.from({ length: 80_000 }, () => Math.random().toString(36)).join('');
     const over = checkBundle(() => css, html, DEV_BUDGET_BYTES, DEV_FORBIDDEN, true);
     expect(over.errors.some((e) => e.includes('exceeds budget 60000 B'))).toBe(true);
+  });
+
+  it('finds the Try it island: its loader and the chunks Vite lists in it', () => {
+    const files: Record<string, string> = {
+      '/assets/developers-A.js': 'x(()=>import("./run-entry-B1.js"),__vite__mapDeps([0]))',
+      '/assets/run-entry-B1.js':
+        'const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/mount-C.js","assets/react-D.js","assets/mount-C.css"])))=>i.map(i=>d[i]);',
+    };
+    const read = (url: string) => files[url] ?? '';
+    expect(islandAssets(read, '/assets/developers-A.js', 'run-entry')).toEqual([
+      '/assets/run-entry-B1.js',
+      '/assets/mount-C.js',
+      '/assets/react-D.js',
+      '/assets/mount-C.css',
+    ]);
+    expect(islandAssets(read, '/assets/developers-A.js', 'missing')).toEqual([]);
+    expect(DEV_ISLAND_BUDGET_BYTES).toBe(95_000);
   });
 });
