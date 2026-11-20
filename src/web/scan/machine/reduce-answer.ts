@@ -86,6 +86,8 @@ export function answer(s: MachineState, ev: Answer, env: Env): Out {
       next: l.next,
       // The Manager's PIN is spent: the draft a later approval re-sends never holds one.
       ...(l.s === 'applying' ? { draft: withoutApproval(l.draft) } : {}),
+      // A PIN went with this request (`retry` is the hold it came from): a manager approved.
+      ...(l.s === 'applying' && l.retry ? { approved: true } : {}),
       // A door's read that needs a Manager: the PIN re-sends the draft the read went with.
       ...(l.s === 'checking' &&
       ev.outcome.reason === 'needs_approval' &&

@@ -40,6 +40,24 @@ describe('a Manager PIN at the door', () => {
     );
   });
 
+  it('a Manager approving makes the buddy nod, and a plain check-in does not', () => {
+    const sent = step(held().state, { type: 'approve', staffId: 'm1', pin: '482913' }, at(200));
+    const ok = step(sent.state, answerOf(requestKey(sent.cmds), 'ok', null), at(300));
+    expect(ok.cmds).toContainEqual({ c: 'beat', beat: 'nod' });
+    // The tray and its opener are gone: focus goes to the verdict word, not to the page.
+    expect(ok.cmds).toContainEqual({ c: 'focus', target: 'card-heading' });
+    const scanned = step(states.ready(), readOf('PASS-0003'));
+    const plain = step(scanned.state, answerOf(requestKey(scanned.cmds), 'ok', null), at(100));
+    expect(plain.cmds).not.toContainEqual({ c: 'beat', beat: 'nod' });
+    expect(plain.cmds).not.toContainEqual({ c: 'focus', target: 'card-heading' });
+  });
+
+  it('a refused approval does not nod', () => {
+    const sent = step(held().state, { type: 'approve', pin: '482913' }, at(200));
+    const refused = step(sent.state, answerOf(requestKey(sent.cmds), 'refused', 'voided'), at(300));
+    expect(refused.cmds).not.toContainEqual({ c: 'beat', beat: 'nod' });
+  });
+
   it('brings the hold back with the tries left, without the PIN', () => {
     const sent = step(held().state, { type: 'approve', pin: '482913' }, at(200));
     const wrong = step(

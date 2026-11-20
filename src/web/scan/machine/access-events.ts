@@ -12,6 +12,9 @@ export type AccessBeat = 'gate' | 'bye' | 'relent';
 /** `BuddyBeat` has no access beats yet. The view passes the name through to the buddy as a string. */
 export const accessBeat = (beat: AccessBeat): BuddyBeat => beat as unknown as BuddyBeat;
 
+/** Check in more landed: the buddy counts the people it added. Beyond `BuddyBeat`, as the access beats are. */
+export const COUNT_BEAT = 'count' as unknown as BuddyBeat;
+
 export type AccessEvent =
   /** The dock's Tap in, Tap out: an explicit direction on a held scan, past the turnaround guard. */
   | { type: 'turn'; direction: 'in' | 'out' }

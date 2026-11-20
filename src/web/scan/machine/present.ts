@@ -4,6 +4,7 @@
  * Layers and phases only: no geometry, no colour (that is stream UI's).
  */
 import { SCAN_TIMING } from '../timing.ts';
+import { COUNT_BEAT } from './access-events.ts';
 import { accessBeatOf, accessLines } from './access-view.ts';
 import { groupAction, groupHeadline, groupSub, groupView } from './group-view.ts';
 import { headlineOf } from './outcome.ts';
@@ -48,7 +49,9 @@ export function promotedAction(card: Card | null | undefined) {
 }
 
 function beatFor(o: ScanOutcome): BuddyBeat | null {
-  if (o.milestone || (o.group && o.group.refused === 0)) return 'fan';
+  if (o.milestone) return 'fan';
+  // Check in more landed: the buddy counts the people it added.
+  if (o.group && o.kind === 'ok') return COUNT_BEAT;
   switch (o.kind) {
     case 'ok': {
       const held = accessBeatOf(o);
