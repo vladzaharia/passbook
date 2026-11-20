@@ -62,7 +62,7 @@ describe('bulk print with an API key', () => {
       read,
     );
     expect(start.status).toBe(403);
-    expect(start.status).toBe(404);
+    expect(await start.json()).toMatchObject({ code: 'MISSING_SCOPE' });
     const none = await keyOf(['templates:read']);
     const status = await api('GET', `/passes/bulk-print/x?orgId=${kit.org.id}`, undefined, none);
     expect(status.status).toBe(403);

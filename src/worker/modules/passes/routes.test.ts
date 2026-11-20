@@ -3,7 +3,7 @@ import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { PassDetailSchema, PassListSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
-import { all, first, run as runSql } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 import { activeRelease, type TemplateRelease } from '../templates/releases.ts';
 import { approveAppleRelease } from './apple-release-test-fixtures.ts';
 import { ICON_PNG, type Kit, setupKit } from './pass-test-fixtures.ts';
@@ -364,19 +364,14 @@ describe('refresh, email and bulk reissue', () => {
   });
 
   it('starts a tenant bulk reissue for a session and records the run', async () => {
-    // The document lists passes:write for this route, so a key with it is admitted and one without is not.
-    const withKey = (scopes: ('passes:read' | 'passes:write')[]) =>
-      auth
-        .apiKey({ orgId: kit.org.id, scopes })
-        .then((key) => json(key, { orgId: kit.org.id, templateId: kit.template.id }));
-    const readOnly = await api('/passes/bulk-reissue', await withKey(['passes:read']));
-    expect(readOnly.status).toBe(403);
-    expect(await readOnly.json()).toMatchObject({ code: 'MISSING_SCOPE' });
-    expect((await api('/passes/bulk-reissue', await withKey(['passes:write']))).status).toBe(202);
-    await runSql(
-      kit.env.DB,
-      "UPDATE workflow_runs SET status = 'complete' WHERE kind = 'bulk_reissue'",
+    const denied = await api(
+      '/passes/bulk-reissue',
+      json(await auth.apiKey({ orgId: kit.org.id, scopes: ['passes:write'] }), {
+        orgId: kit.org.id,
+        templateId: kit.template.id,
+      }),
     );
+    expect(denied.status).toBe(401);
     const res = await api(
       '/passes/bulk-reissue',
       json(auth.admin(), { orgId: kit.org.id, templateId: kit.template.id }),
@@ -513,19 +508,13 @@ describe('tenant isolation', () => {
     });
   });
 
-  it('scopes delivery reads and keeps a key bulk reissue inside its org', async () => {
+  it('scopes delivery reads and requires a session for bulk reissue', async () => {
     expect(
       (await api(`/delivery?orgId=${kit.org.id}&passId=${foreign.id}`, { headers: keyA })).status,
     ).toBe(404);
-    // A key reissues only inside its own org: naming another is refused.
     expect(
-      (
-        await api(
-          '/passes/bulk-reissue',
-          json(keyA, { templateId: kit.template.id, orgId: orgB.id }),
-        )
-      ).status,
-    ).toBe(403);
+      (await api('/passes/bulk-reissue', json(keyA, { templateId: kit.template.id }))).status,
+    ).toBe(401);
     expect(
       (
         await api(`/delivery?orgId=${orgB.id}&passId=${foreign.id}`, {

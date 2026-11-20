@@ -16,6 +16,7 @@ import { methodScope, modeOf } from '../../platform/auth.ts';
 import { defaultBodyLimit } from '../../platform/body-limit.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { registerPassChannelRoutes } from '../channels/routes.ts';
 import { registerEventRoutes } from '../events/routes.ts';
 import { registerPassPrintRoutes } from '../prints/routes.ts';
@@ -48,7 +49,11 @@ export const passesRoutes = createRouter({ bodyLimit: false });
 passesRoutes.use('*', defaultBodyLimit(/\/(?:assets\/[^/]+|member-photo)$/));
 guard(
   passesRoutes,
-  requireTenantSessionOrApiKey(methodScope({ read: 'passes:read', write: 'passes:write' })),
+  // Rebuilding a whole template stays with a signed-in user (routes-bulk.ts), so keys are not offered it.
+  declareKeyAccess(
+    requireTenantSessionOrApiKey(methodScope({ read: 'passes:read', write: 'passes:write' })),
+    { read: ['passes:read'], write: ['passes:write'], only: /^(?!.*\/bulk-reissue$)/ },
+  ),
 );
 
 register(

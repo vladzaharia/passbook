@@ -102,7 +102,7 @@ describe('OpenAPI document and guards agree', () => {
     expect(wrong).toEqual([]);
   }, 600_000);
 
-  it('documents the till routes and the bulk and import routes for keys', async () => {
+  it('documents the till, bulk print and import routes for keys', async () => {
     const { doc } = await setup();
     const scopesOf = (method: string, path: string) =>
       (doc.paths[path]?.[method]?.security ?? [])
@@ -114,7 +114,7 @@ describe('OpenAPI document and guards agree', () => {
       '/api/v1/scan/scans/{scanId}/undo',
     ])
       expect(scopesOf('post', path)).toEqual(['scans:write']);
-    expect(scopesOf('post', '/api/v1/passes/bulk-reissue')).toEqual(['passes:write']);
+    expect(scopesOf('post', '/api/v1/passes/bulk-reissue')).toEqual([]);
     expect(scopesOf('post', '/api/v1/passes/bulk-print')).toEqual(['passes:write']);
     expect(scopesOf('get', '/api/v1/passes/bulk-print/{jobId}')).toEqual(['passes:read']);
     expect(scopesOf('delete', '/api/v1/pass-imports/{id}')).toEqual(['passes:write']);
