@@ -1,0 +1,75 @@
+{
+  "formatVersion": 1,
+  "description": "Guest pass",
+  "organizationName": "Organization",
+  "backgroundColor": "rgb(181,64,0)",
+  "foregroundColor": "rgb(255,255,255)",
+  "labelColor": "rgb(255,238,221)",
+  "logoText": "Organization",
+  "sharingProhibited": true,
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "GUEST-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "GUEST-0001"
+    }
+  ],
+  "generic": {
+    "headerFields": [
+      {
+        "key": "plan",
+        "label": "Pass",
+        "value": "Guest"
+      }
+    ],
+    "primaryFields": [
+      {
+        "key": "holder",
+        "label": "Name",
+        "value": "Alex Morgan"
+      }
+    ],
+    "secondaryFields": [],
+    "auxiliaryFields": [
+      {
+        "key": "member",
+        "label": "Pass ID",
+        "value": "GUEST-0001"
+      }
+    ],
+    "backFields": [
+      {
+        "key": "message",
+        "label": "Message",
+        "value": "",
+        "changeMessage": "%@"
+      },
+      {
+        "key": "note",
+        "label": "Note",
+        "value": ""
+      },
+      {
+        "key": "guestOf",
+        "label": "Guest of",
+        "value": ""
+      },
+      {
+        "key": "terms",
+        "label": "Terms",
+        "value": "Good for one visit. It's for you only."
+      },
+      {
+        "key": "contact",
+        "label": "Contact",
+        "value": ""
+      },
+      {
+        "key": "pass-service",
+        "label": "Pass service",
+        "value": ""
+      }
+    ]
+  }
+}

@@ -428,6 +428,38 @@ exports[`fidelityReport over every starter and baked template > starter-coupon 1
 }
 `;
 
+exports[`fidelityReport over every starter and baked template > starter-day-pass 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
 exports[`fidelityReport over every starter and baked template > starter-event-ticket 1`] = `
 {
   "compilerRevision": 1,
@@ -500,6 +532,38 @@ exports[`fidelityReport over every starter and baked template > starter-generic 
 }
 `;
 
+exports[`fidelityReport over every starter and baked template > starter-guest-pass 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
 exports[`fidelityReport over every starter and baked template > starter-id-card 1`] = `
 {
   "compilerRevision": 1,
@@ -535,6 +599,38 @@ exports[`fidelityReport over every starter and baked template > starter-id-card 
   "status": {
     "count": 1,
     "kind": "omissions",
+  },
+  "target": "samsung",
+  "type": "loyalty",
+}
+`;
+
+exports[`fidelityReport over every starter and baked template > starter-monthly-pass 1`] = `
+{
+  "compilerRevision": 1,
+  "hash": "ed2f55ba73caeff95bc1b2b015a57c20d135263d2df8b0f28d4c9c68daaf46a2",
+  "items": [
+    {
+      "capability": "sharing",
+      "chosen": false,
+      "message": "sharing difference",
+      "path": "",
+      "severity": "difference",
+      "support": "difference",
+    },
+    {
+      "capability": "text.length",
+      "chosen": false,
+      "message": "Shortened to 4 characters.",
+      "path": "title",
+      "severity": "difference",
+      "support": "difference",
+    },
+  ],
+  "label": "Ready",
+  "schema": 1,
+  "status": {
+    "kind": "ready",
   },
   "target": "samsung",
   "type": "loyalty",

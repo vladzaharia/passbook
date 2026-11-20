@@ -428,6 +428,16 @@ exports[`starter-access-card default display > matches its snapshot, and so does
   "holder": "{{inputs.memberName}}",
   "panels": [
     {
+      "id": "p_main",
+      "rows": [
+        {
+          "id": "r_main",
+          "type": "progress",
+          "value": "{{inputs.guests}}",
+        },
+      ],
+    },
+    {
       "icon": "info",
       "id": "p_details",
       "rows": [
@@ -1340,6 +1350,118 @@ exports[`starter-coupon default display > matches its snapshot, and so does each
 }
 `;
 
+exports[`starter-day-pass default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.memberName}}",
+  "v": 1,
+}
+`;
+
+exports[`starter-day-pass default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Sam Reed",
+    "initials": "SR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-day-pass default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Sam Reed",
+    "initials": "SR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-day-pass default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Sam Reed",
+    "initials": "SR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-day-pass default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Sam Reed",
+    "initials": "SR",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
 exports[`starter-event-ticket default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
 {
   "header": {},
@@ -1837,6 +1959,118 @@ exports[`starter-generic default display > matches its snapshot, and so does eac
 }
 `;
 
+exports[`starter-guest-pass default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.memberName}}",
+  "v": 1,
+}
+`;
+
+exports[`starter-guest-pass default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Jordan Lee",
+    "initials": "JL",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-guest-pass default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Jordan Lee",
+    "initials": "JL",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-guest-pass default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Jordan Lee",
+    "initials": "JL",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-guest-pass default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Jordan Lee",
+    "initials": "JL",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
 exports[`starter-id-card default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
 {
   "header": {},
@@ -2034,6 +2268,240 @@ exports[`starter-id-card default display > matches its snapshot, and so does eac
   "identity": {
     "holder": "Maya Chen",
     "initials": "MC",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [],
+  "screen": "refused",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-monthly-pass default display > matches its snapshot, and so does each screen it renders > doc 1`] = `
+{
+  "header": {},
+  "holder": "{{inputs.memberName}}",
+  "panels": [
+    {
+      "id": "p_main",
+      "rows": [
+        {
+          "id": "r_main",
+          "type": "progress",
+          "value": "{{inputs.guests}}",
+        },
+      ],
+    },
+    {
+      "icon": "info",
+      "id": "p_details",
+      "rows": [
+        {
+          "id": "r_field1",
+          "label": "Paid through",
+          "type": "field",
+          "value": "{{fields.until}}",
+        },
+      ],
+      "title": "Details",
+    },
+  ],
+  "v": 1,
+}
+`;
+
+exports[`starter-monthly-pass default display > matches its snapshot, and so does each screen it renders > heads_up 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "before": null,
+          "caption": "2 of 10",
+          "goal": 10,
+          "icon": null,
+          "id": "r_main",
+          "rewards": 0,
+          "style": "stamps",
+          "type": "progress",
+          "value": 2,
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
+  ],
+  "screen": "heads_up",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-monthly-pass default display > matches its snapshot, and so does each screen it renders > ok 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "before": null,
+          "caption": "2 of 10",
+          "goal": 10,
+          "icon": null,
+          "id": "r_main",
+          "rewards": 0,
+          "style": "stamps",
+          "type": "progress",
+          "value": 2,
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Paid through",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ok",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-monthly-pass default display > matches its snapshot, and so does each screen it renders > ready 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
+    "photo": null,
+  },
+  "notes": {
+    "refused": null,
+    "staff": null,
+  },
+  "panels": [
+    {
+      "icon": null,
+      "id": "p_main",
+      "kind": "custom",
+      "rows": [
+        {
+          "before": null,
+          "caption": "2 of 10",
+          "goal": 10,
+          "icon": null,
+          "id": "r_main",
+          "rewards": 0,
+          "style": "stamps",
+          "type": "progress",
+          "value": 2,
+        },
+      ],
+      "title": null,
+      "tone": null,
+    },
+    {
+      "icon": "info",
+      "id": "p_details",
+      "kind": "custom",
+      "rows": [
+        {
+          "icon": null,
+          "id": "r_field1",
+          "label": "Paid through",
+          "strong": false,
+          "type": "field",
+          "value": "Sample until",
+        },
+      ],
+      "title": "Details",
+      "tone": null,
+    },
+  ],
+  "screen": "ready",
+  "templateVersion": "sample",
+  "v": 1,
+  "variant": null,
+}
+`;
+
+exports[`starter-monthly-pass default display > matches its snapshot, and so does each screen it renders > refused 1`] = `
+{
+  "header": {
+    "chips": [],
+    "icon": null,
+    "meta": null,
+    "title": null,
+    "titleLines": 1,
+  },
+  "identity": {
+    "holder": "Alex Morgan",
+    "initials": "AM",
     "photo": null,
   },
   "notes": {

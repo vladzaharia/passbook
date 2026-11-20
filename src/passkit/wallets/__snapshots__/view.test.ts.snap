@@ -517,6 +517,72 @@ exports[`resolveWalletView over every starter and baked template > starter-coupo
 }
 `;
 
+exports[`resolveWalletView over every starter and baked template > starter-day-pass 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#03528e",
+    "foreground": "#ffffff",
+    "label": "#bfe4fb",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.plan",
+    "primaryFields.holder",
+    "auxiliaryFields.member",
+    "backFields.message",
+    "backFields.hours",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "title": "style text: Sam Reed",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
 exports[`resolveWalletView over every starter and baked template > starter-event-ticket 1`] = `
 {
   "barcodes": [
@@ -707,6 +773,72 @@ exports[`resolveWalletView over every starter and baked template > starter-gener
 }
 `;
 
+exports[`resolveWalletView over every starter and baked template > starter-guest-pass 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#b54000",
+    "foreground": "#ffffff",
+    "label": "#ffeedd",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.plan",
+    "primaryFields.holder",
+    "auxiliaryFields.member",
+    "backFields.message",
+    "backFields.guestOf",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "title": "style text: Jordan Lee",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
 exports[`resolveWalletView over every starter and baked template > starter-id-card 1`] = `
 {
   "barcodes": [
@@ -772,6 +904,77 @@ exports[`resolveWalletView over every starter and baked template > starter-id-ca
   "urls": [],
   "validity": {
     "expirationDate": "2030-08-31T00:00:00Z",
+    "expired": false,
+    "voided": false,
+  },
+}
+`;
+
+exports[`resolveWalletView over every starter and baked template > starter-monthly-pass 1`] = `
+{
+  "barcodes": [
+    "qr SNAPSHOT-SCAN-CODE",
+  ],
+  "colors": {
+    "background": "#1d3aba",
+    "foreground": "#ffffff",
+    "label": "#cfe0ff",
+  },
+  "events": [],
+  "featured": [],
+  "fields": [
+    "headerFields.plan",
+    "primaryFields.holder",
+    "secondaryFields.until",
+    "auxiliaryFields.member",
+    "auxiliaryFields.guests",
+    "backFields.message",
+    "backFields.hours",
+    "backFields.terms",
+    "backFields.contact",
+    "backFields.pass-service",
+  ],
+  "flags": [
+    true,
+    false,
+    false,
+  ],
+  "images": {
+    "icon": [
+      "icon@3x.png",
+      "icon@2x.png",
+    ],
+    "logo": [
+      "logo@3x.png",
+      "logo@2x.png",
+    ],
+    "thumbnail": [
+      "thumbnail@3x.png",
+      "thumbnail@2x.png",
+    ],
+  },
+  "messaging": {
+    "fields": [
+      "backFields.message",
+    ],
+    "input": "message",
+  },
+  "notes": [],
+  "relevance": {
+    "beacons": 0,
+    "dates": [],
+    "locations": 0,
+  },
+  "roles": {
+    "subtitle": "style text: 2030-01-01T00:00:00Z",
+    "title": "style text: Alex Morgan",
+    "validUntil": "style date: 2030-01-01T00:00:00Z",
+  },
+  "schemes": [],
+  "style": "generic",
+  "urls": [],
+  "validity": {
+    "expirationDate": "2030-01-01T00:00:00Z",
     "expired": false,
     "voided": false,
   },
