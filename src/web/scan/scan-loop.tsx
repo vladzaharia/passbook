@@ -133,6 +133,7 @@ export function ScanLoop({
     online: s.online,
     overlay: s.overlay,
     dispatch,
+    hosts: !workspace,
   });
   const tags = useTagUi({ runtime, session, api, state: s, result, open, dispatch });
   const lastUndo = last?.scanId && last.undoable && (last.outcome.undoUntil ?? 0) > now;
@@ -282,6 +283,7 @@ export function ScanLoop({
             scanCard={result && s.card && !s.block && !tags.card ? null : cardNode}
             dock={tags.dock}
             onTitle={() => showPanel('shift')}
+            shiftStart={shiftStart}
           />
         </Suspense>
       ) : (

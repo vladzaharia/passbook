@@ -7,7 +7,19 @@ import type { OperatorView } from './keys.ts';
 
 /** A person's record, whichever list or key opened it. */
 export type RecordRef =
-  | { kind: 'pass'; passId: string; from: 'activity' | 'problems' | 'search' | 'preview' | 'open' }
+  | {
+      kind: 'pass';
+      passId: string;
+      from:
+        | 'activity'
+        | 'problems'
+        | 'inside'
+        | 'visitors'
+        | 'roll-call'
+        | 'search'
+        | 'preview'
+        | 'open';
+    }
   | { kind: 'scan'; scanId: string };
 
 export interface OperatorState {

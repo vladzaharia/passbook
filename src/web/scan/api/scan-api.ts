@@ -49,6 +49,7 @@ import {
   type ScanStaffSignInSchema,
   ScanSummarySchema,
 } from '../../../shared/contracts/scan-session.ts';
+import { SessionDevicesSchema } from '../../../shared/contracts/scanning-session-devices.ts';
 import {
   type ScanDeviceCapabilities,
   ScanSessionOpenedSchema,
@@ -208,6 +209,7 @@ export function createScanApi(deps: ScanApiDeps) {
   return {
     activity: (call?: Call) =>
       request('GET', activityPath(call), SessionActivitySchema, undefined, call),
+    devices: (call?: Call) => request('GET', '/devices', SessionDevicesSchema, undefined, call),
     reportDevice: (capabilities: ScanDeviceCapabilities, call?: Call) =>
       request('POST', '/device', ScanWorkspaceSchema.nullable(), { capabilities }, call),
     pairPreview: (code: string) =>

@@ -121,14 +121,17 @@
 .op-tabs {
   display: flex;
   justify-content: flex-start;
-  gap: 18px;
+  gap: 12px;
   padding: 0 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
   border-bottom: 1px solid var(--op-line);
 }
 .op-tab {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  flex: none;
   height: 40px;
   margin-bottom: -1px;
   padding: 0 2px;

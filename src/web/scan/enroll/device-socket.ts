@@ -19,6 +19,8 @@ const RollCallNudge = z.object({
   rollCall: z.object({ id: z.string().min(1).max(100), rev: z.number(), ended: z.boolean() }),
 });
 const Control = z.object({ control: z.literal('reset') });
+/** The session was scanned in: nothing to read here, the device reads its own lists again. */
+const Pulse = z.object({ pulse: z.literal(1) });
 export type DeviceNudge =
   | { kind: 'enroll'; id: string }
   | { kind: 'cancelled'; id: string }
@@ -27,7 +29,9 @@ export type DeviceNudge =
   /** A desk started, marked or ended a roll call: read it again. */
   | { kind: 'rollCall'; id: string; rev: number; ended: boolean }
   /** The hub reset the device: read the request again. */
-  | { kind: 'reset' };
+  | { kind: 'reset' }
+  /** A scan was recorded in this device's session. */
+  | { kind: 'activity' };
 
 interface SocketLike {
   onopen: (() => void) | null;
@@ -45,6 +49,8 @@ export interface DeviceSocketDeps {
   onNudge(nudge: DeviceNudge): void;
   /** Every open, the first and each reconnect. */
   onOpen(): void;
+  /** Every close, so a caller can fall back to polling while the hub is away. */
+  onClose?(): void;
   Socket?: SocketCtor;
   setTimeout?: (fn: () => void, ms: number) => unknown;
   clearTimeout?: (handle: unknown) => void;
@@ -102,9 +108,11 @@ export function connectDeviceSocket(deps: DeviceSocketDeps): { close(): void } {
       if (resolved.success) deps.onNudge({ kind: 'resolved', resolved: resolved.data.resolved });
       else if (roll.success) deps.onNudge({ kind: 'rollCall', ...roll.data.rollCall });
       else if (Control.safeParse(json).success) deps.onNudge({ kind: 'reset' });
+      else if (Pulse.safeParse(json).success) deps.onNudge({ kind: 'activity' });
     };
     s.onclose = () => {
       stopPing();
+      deps.onClose?.();
       if (closed || socket !== s) return;
       socket = null;
       const wait = BACKOFF_MS[Math.min(attempt++, BACKOFF_MS.length - 1)] ?? 30_000;

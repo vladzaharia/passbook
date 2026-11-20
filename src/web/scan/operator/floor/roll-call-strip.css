@@ -1,0 +1,42 @@
+/* a record opened from the roll call: its band and keys */
+.op-rc-strip {
+  min-width: 0;
+  max-width: 980px;
+  margin: 0 auto 12px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--op-line);
+  border-radius: 16px;
+  background: var(--op-raised);
+}
+.op-rc-band {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--scan-system);
+  color: var(--scan-system-on);
+  font-size: 14px;
+}
+.op-rc-band b {
+  font-size: 19px;
+  font-weight: 650;
+  line-height: 24px;
+}
+.op-rc-strip[data-state="safe"] .op-rc-band {
+  background: var(--scan-ok);
+  color: var(--scan-ok-on);
+}
+.op-rc-strip[data-state="out"] .op-rc-band {
+  background: var(--pk-surface-sunken);
+  color: var(--pk-text-strong);
+}
+.op-rc-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 18px;
+}
+.op-rc-keys .op-kbd {
+  margin-inline-start: 4px;
+}

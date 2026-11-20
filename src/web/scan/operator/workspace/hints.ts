@@ -6,6 +6,7 @@ export function hintsOf(f: {
   record: boolean;
   undoable: boolean;
   views: number;
+  rollCall?: boolean;
 }): KeyHint[] {
   if (f.searching)
     return [
@@ -14,7 +15,13 @@ export function hintsOf(f: {
       { keys: 'Esc', label: 'Clear' },
     ];
   const hints: KeyHint[] = [{ keys: '/', label: 'Search' }];
-  if (f.record) hints.push({ keys: '↵', label: 'Primary' }, { keys: 'Esc', label: 'Close' });
+  if (f.record && f.rollCall)
+    hints.push(
+      { keys: 'S', label: 'Safe' },
+      { keys: 'X', label: 'Out' },
+      { keys: 'Esc', label: 'Close' },
+    );
+  else if (f.record) hints.push({ keys: '↵', label: 'Primary' }, { keys: 'Esc', label: 'Close' });
   if (f.undoable) hints.push({ keys: '⌘Z', label: 'Undo last' });
   if (f.views > 1) hints.push({ keys: `⌥1-${f.views}`, label: 'Lists' });
   hints.push({ keys: '?', label: 'Shortcuts' });

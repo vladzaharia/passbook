@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScanApi } from '../../api/scan-api.ts';
-import { POLL_STEPS_MS, useSessionActivity } from './use-session-activity.ts';
+import { HUB_POLL_MS, POLL_STEPS_MS, useSessionActivity } from './use-session-activity.ts';
 
 const page = { items: [] };
 beforeEach(() => vi.useFakeTimers());
@@ -97,5 +97,40 @@ describe('useSessionActivity', () => {
     });
     expect(calls[0]?.signal?.aborted).toBe(true);
     expect(result.current.loaded).toBe(true);
+  });
+
+  describe('with the hub', () => {
+    it('reads once, shortly after a pulse, however many come together', async () => {
+      const { api, calls } = fake(async () => page);
+      const { rerender } = renderHook(
+        ({ kick }) => useSessionActivity(api, true, { kick, hubUp: true }),
+        { initialProps: { kick: 0 } },
+      );
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      expect(calls).toHaveLength(2);
+      rerender({ kick: 1 });
+      rerender({ kick: 2 });
+      rerender({ kick: 3 });
+      await act(() => vi.advanceTimersByTimeAsync(300));
+      expect(calls).toHaveLength(4);
+    });
+
+    it('polls at the safety rate while the hub is up, and at 4 s once it is gone', async () => {
+      const { api, calls } = fake(async () => page);
+      const { rerender } = renderHook(
+        ({ hubUp }) => useSessionActivity(api, true, { kick: 0, hubUp }),
+        { initialProps: { hubUp: true } },
+      );
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      await act(() => vi.advanceTimersByTimeAsync(POLL_STEPS_MS[0] * 3));
+      expect(calls).toHaveLength(2);
+      await act(() => vi.advanceTimersByTimeAsync(HUB_POLL_MS));
+      expect(calls).toHaveLength(4);
+      rerender({ hubUp: false });
+      await act(() => vi.advanceTimersByTimeAsync(0));
+      expect(calls).toHaveLength(6);
+      await act(() => vi.advanceTimersByTimeAsync(POLL_STEPS_MS[0] + 1));
+      expect(calls).toHaveLength(8);
+    });
   });
 });

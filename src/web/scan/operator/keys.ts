@@ -4,7 +4,6 @@
  * sheet is drawn from the same table.
  */
 
-export const OPERATOR_VIEWS = ['activity', 'problems'] as const;
 export type OperatorView = 'activity' | 'problems' | 'inside' | 'visitors';
 
 /** Where focus is: the command field, another text control (a note), or anywhere else. */

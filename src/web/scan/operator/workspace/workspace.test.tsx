@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScanSession } from '../../../../shared/contracts/scan-session.ts';
+import { ThemeProvider } from '../../../lib/theme.tsx';
 import type { ScanApi } from '../../api/scan-api.ts';
 import { sessionFixture } from '../../boot/session.test-support.ts';
 import { WedgeFieldsContext } from '../../input/wedge-field.tsx';
@@ -97,25 +98,28 @@ function setup(over: { lookup?: ScanApi['lookup']; items?: unknown[] } = {}) {
     },
   } as ScanSession;
   render(
-    <ScanStoreContext.Provider value={store}>
-      <WedgeFieldsContext.Provider value={fields}>
-        <OperatorWorkspace
-          api={api}
-          runtime={runtime}
-          session={session}
-          counts={session.counts}
-          branding={null}
-          logoUrl={null}
-          modeLabel="Operator"
-          chips={null}
-          testing={null}
-          menu={null}
-          scanCard={null}
-          announcement={{ text: 'No visits left.', polite: false, n: 1 }}
-          onTitle={() => undefined}
-        />
-      </WedgeFieldsContext.Provider>
-    </ScanStoreContext.Provider>,
+    <ThemeProvider>
+      <ScanStoreContext.Provider value={store}>
+        <WedgeFieldsContext.Provider value={fields}>
+          <OperatorWorkspace
+            live={false}
+            api={api}
+            runtime={runtime}
+            session={session}
+            counts={session.counts}
+            branding={null}
+            logoUrl={null}
+            modeLabel="Operator"
+            chips={null}
+            testing={null}
+            menu={null}
+            scanCard={null}
+            announcement={{ text: 'No visits left.', polite: false, n: 1 }}
+            onTitle={() => undefined}
+          />
+        </WedgeFieldsContext.Provider>
+      </ScanStoreContext.Provider>
+    </ThemeProvider>,
   );
   return { api, lookup, resolve, emitted, store };
 }

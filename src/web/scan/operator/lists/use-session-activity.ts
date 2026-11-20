@@ -2,8 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ScanApi } from '../../api/scan-api.ts';
 import type { ActivityItem } from './activity-model.ts';
 
-/** Seconds between polls: a device gets no rows from the hub, so this is as live as the list gets. */
+/** Between polls while the hub is away: this is as live as the list gets. */
 export const POLL_STEPS_MS = [4000, 8000, 16_000, 30_000] as const;
+/** Between polls while the hub is up: a pulse reads at once, so this only catches a pulse that never came. */
+export const HUB_POLL_MS = 30_000;
+/** Pulses that arrive together read once. */
+const PULSE_WAIT_MS = 200;
+
+export interface ActivityPoll {
+  /** Changes with each hub pulse. */
+  kick: number;
+  hubUp: boolean;
+}
 const TIMEOUT_MS = 8000;
 
 /**
@@ -11,10 +21,13 @@ const TIMEOUT_MS = 8000;
  * last 15 minutes, which the newest-20 page cannot hold at a busy door).
  *
  * One request at a time: a tick that finds one in flight waits. Only `refresh`, after this
- * device's own scan or undo, replaces a request. A failure backs the poll off (4, 8, 16, 30 s);
- * a hidden tab or no connection pauses it; coming back, or the network returning, loads at once.
+ * device's own scan or undo, or a hub pulse, replaces a request. A failure backs the poll off
+ * (4, 8, 16, 30 s); a hidden tab or no connection pauses it; coming back, or the network
+ * returning, loads at once. With the hub up the poll is a 30 s safety net, not the feed.
  */
-export function useSessionActivity(api: ScanApi, online: boolean) {
+export function useSessionActivity(api: ScanApi, online: boolean, hub?: ActivityPoll) {
+  const hubUp = hub?.hubUp ?? false;
+  const kick = hub?.kick ?? 0;
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [problemItems, setProblemItems] = useState<ActivityItem[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -23,8 +36,8 @@ export function useSessionActivity(api: ScanApi, online: boolean) {
   const inflight = useRef<AbortController | null>(null);
   const step = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const live = useRef({ online });
-  live.current = { online };
+  const live = useRef({ online, hubUp });
+  live.current = { online, hubUp };
 
   const load = useCallback(
     async (replace: boolean) => {
@@ -61,15 +74,19 @@ export function useSessionActivity(api: ScanApi, online: boolean) {
     [api],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `hubUp` sets the cadence; the schedule restarts when it changes
   useEffect(() => {
     let stopped = false;
     const schedule = () => {
       clearTimeout(timer.current);
-      timer.current = setTimeout(async () => {
-        if (stopped) return;
-        if (!document.hidden && live.current.online) await load(false);
-        if (!stopped) schedule();
-      }, POLL_STEPS_MS[step.current]);
+      timer.current = setTimeout(
+        async () => {
+          if (stopped) return;
+          if (!document.hidden && live.current.online) await load(false);
+          if (!stopped) schedule();
+        },
+        live.current.hubUp ? HUB_POLL_MS : POLL_STEPS_MS[step.current],
+      );
     };
     const now = () => {
       if (document.hidden || !live.current.online) return;
@@ -89,7 +106,14 @@ export function useSessionActivity(api: ScanApi, online: boolean) {
       window.removeEventListener('focus', now);
       window.removeEventListener('online', now);
     };
-  }, [load]);
+  }, [load, hubUp]);
+
+  // A pulse is a scan somewhere in the session: read again, once for a burst of them.
+  useEffect(() => {
+    if (kick === 0) return;
+    const t = setTimeout(() => void load(true), PULSE_WAIT_MS);
+    return () => clearTimeout(t);
+  }, [kick, load]);
 
   const refresh = useCallback(() => load(true), [load]);
   return { items, problemItems, loaded, unavailable, syncedAt, refresh };
