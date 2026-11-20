@@ -46,11 +46,25 @@
         "default": "Active",
         "x-widget": "select"
       },
+      "plan": {
+        "type": "string",
+        "x-label": "Plan",
+        "x-group": "Pass",
+        "enum": [
+          "day"
+        ],
+        "default": "day",
+        "x-widget": "select",
+        "x-enumLabels": {
+          "day": "Day pass"
+        },
+        "x-order": 40
+      },
       "message": {
         "type": "string",
         "x-label": "Message",
         "x-group": "Message",
-        "x-order": 40,
+        "x-order": 50,
         "maxLength": 256,
         "x-widget": "textarea",
         "x-help": "Shown on the back."
@@ -59,7 +73,7 @@
         "type": "string",
         "x-label": "Note",
         "x-group": "Message",
-        "x-order": 50,
+        "x-order": 60,
         "maxLength": 256,
         "x-widget": "textarea"
       }
@@ -68,7 +82,8 @@
   "sample": {
     "memberName": "Sam Reed",
     "memberId": "DAY-0001",
-    "status": "Active"
+    "status": "Active",
+    "plan": "day"
   },
   "bindings": [
     {
@@ -214,15 +229,32 @@
       "days": 1,
       "durationFrom": "first_scan"
     },
-    "flags": [
-      {
+    "access": {
+      "input": {
+        "plan": "plan"
+      },
+      "plans": [
+        {
+          "id": "day",
+          "label": "Day pass",
+          "kind": "always",
+          "zones": [
+            {
+              "zone": "*"
+            }
+          ]
+        }
+      ],
+      "suspend": {
         "input": "status",
-        "label": "Suspended",
         "equals": [
           "Suspended"
-        ],
-        "stop": true
+        ]
+      },
+      "rules": {
+        "visitGapMinutes": 120,
+        "reentryMinutes": null
       }
-    ]
+    }
   }
 }

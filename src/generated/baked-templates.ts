@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "94930af149d61ebe2f00d89870ffa1cf06b37060";
+export const BAKED_BUILD_HASH = "cbb8f945bdcde482f8ccd4a5e93001de10b1e28f";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -4334,7 +4334,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-day-pass",
     "slug": "starter-day-pass",
-    "version": "ad404953853f0b0a",
+    "version": "b223188e78a4ed0e",
     "name": "Day pass",
     "description": "One day of entry, ending at midnight. Unlimited visits until then.",
     "org": null,
@@ -4390,11 +4390,25 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "default": "Active",
             "x-widget": "select"
           },
+          "plan": {
+            "type": "string",
+            "x-label": "Plan",
+            "x-group": "Pass",
+            "enum": [
+              "day"
+            ],
+            "default": "day",
+            "x-widget": "select",
+            "x-enumLabels": {
+              "day": "Day pass"
+            },
+            "x-order": 40
+          },
           "message": {
             "type": "string",
             "x-label": "Message",
             "x-group": "Message",
-            "x-order": 40,
+            "x-order": 50,
             "maxLength": 256,
             "x-widget": "textarea",
             "x-help": "Shown on the back."
@@ -4403,7 +4417,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
             "type": "string",
             "x-label": "Note",
             "x-group": "Message",
-            "x-order": 50,
+            "x-order": 60,
             "maxLength": 256,
             "x-widget": "textarea"
           }
@@ -4412,7 +4426,8 @@ export const bakedTemplates: readonly BakedTemplate[] = [
       "sample": {
         "memberName": "Sam Reed",
         "memberId": "DAY-0001",
-        "status": "Active"
+        "status": "Active",
+        "plan": "day"
       },
       "bindings": [
         {
@@ -4558,16 +4573,33 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "days": 1,
           "durationFrom": "first_scan"
         },
-        "flags": [
-          {
+        "access": {
+          "input": {
+            "plan": "plan"
+          },
+          "plans": [
+            {
+              "id": "day",
+              "label": "Day pass",
+              "kind": "always",
+              "zones": [
+                {
+                  "zone": "*"
+                }
+              ]
+            }
+          ],
+          "suspend": {
             "input": "status",
-            "label": "Suspended",
             "equals": [
               "Suspended"
-            ],
-            "stop": true
+            ]
+          },
+          "rules": {
+            "visitGapMinutes": 120,
+            "reentryMinutes": null
           }
-        ]
+        }
       }
     },
     "passJson": {
@@ -4656,7 +4688,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2019410701,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ad404953853f0b0a/en.lproj/pass.strings"
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/en.lproj/pass.strings"
         }
       },
       {
@@ -4670,7 +4702,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ad404953853f0b0a/icon@2x.png"
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/icon@2x.png"
         }
       },
       {
@@ -4684,7 +4716,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ad404953853f0b0a/icon@3x.png"
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/icon@3x.png"
         }
       },
       {
@@ -4698,7 +4730,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ad404953853f0b0a/logo@2x.png"
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/logo@2x.png"
         }
       },
       {
@@ -4712,7 +4744,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ad404953853f0b0a/logo@3x.png"
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/logo@3x.png"
         }
       },
       {
@@ -4726,7 +4758,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ad404953853f0b0a/thumbnail@2x.png"
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/thumbnail@2x.png"
         }
       },
       {
@@ -4740,7 +4772,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ad404953853f0b0a/thumbnail@3x.png"
+          "path": "/templates/starter-day-pass/b223188e78a4ed0e/thumbnail@3x.png"
         }
       }
     ],

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PassJson } from '../types.ts';
+import { decide } from './access/decide.ts';
 import { accessIssues } from './access/index.ts';
 import { loadBaked } from './baked-fixtures.ts';
 import { ScanDisplayDocSchema } from './scan-display/schema.ts';
@@ -48,11 +49,6 @@ describe('entry pass types', () => {
 
   it('Day pass is check-in only: one day from the first scan, unlimited entries', async () => {
     const { template } = await loadBaked('starter-day-pass', { strips: false });
-    expect(template.manifest.scan?.access).toBeUndefined();
-    // No access plan, so Suspended stops the scan through a flag on the status input.
-    expect(template.manifest.scan?.flags).toEqual([
-      { input: 'status', label: 'Suspended', equals: ['Suspended'], stop: true },
-    ]);
     expect(template.manifest.scan?.checkIn).toEqual({
       mode: 'unlimited',
       days: 1,
@@ -63,5 +59,24 @@ describe('entry pass types', () => {
   it('Guest pass is one day, one visit', async () => {
     const [plan] = await plans('starter-guest-pass');
     expect(plan).toMatchObject({ id: 'guest', kind: 'guest', days: 1, visits: 1 });
+  });
+
+  it('Day pass refuses a suspended pass and admits an active one', async () => {
+    const { template } = await loadBaked('starter-day-pass', { strips: false });
+    const access = template.manifest.scan?.access;
+    if (!access) throw new Error('Day pass has no access block');
+    const now = Date.parse('2030-01-01T12:00:00Z');
+    const run = (status: string) =>
+      decide({
+        access,
+        inputs: { plan: 'day', status },
+        createdAt: now,
+        now,
+        zones: [],
+        scannerZoneIds: [],
+        timeZone: 'UTC',
+      });
+    expect(run('Suspended')).toMatchObject({ allowed: false, reason: 'suspended' });
+    expect(run('Active')).toMatchObject({ allowed: true, reason: null });
   });
 });
