@@ -1,6 +1,7 @@
 import { AuthorityError } from './authority-error.ts';
 import { identifier, renderCond, type WhereValue } from './authority-expr.ts';
 import type { Binds, GrantScope } from './authority-principal.ts';
+import { restrictRow } from './authority-restrict.ts';
 import { assertPlainParams, assertSqlText } from './authority-sqltext.ts';
 import { GUARDED_TABLES, ownedColumns } from './authority-tables.ts';
 import type { SqlValue } from './db.ts';
@@ -33,6 +34,10 @@ export function tenantMatch(
       : `${alias}.${t.org === 'id' ? 'id' : t.org} = ${tenant}.org_id`;
   return scope === 'org_mode' && t.mode ? `${org} AND ${alias}.mode = ${tenant}.mode` : org;
 }
+
+/** A key limited to templates sees only rows of its templates, so a row of another one fails a lineage check as a missing one. */
+const limit = (b: Binds, table: string, alias: string, reason: DenyReason): string =>
+  b.keyed && reason === 'lineage' ? restrictRow(table, alias, 'a.limit_key') : '';
 
 /** A check may narrow a row by its own columns, never by the tenant columns the grant owns. */
 export function rejectOwnedConditions(table: string, scope: GrantScope, keys: string[]): void {
@@ -70,11 +75,11 @@ export function exactlyOne(
         const e = t.edges?.find((x) => x.column === edge);
         if (e) {
           from = `${table} t JOIN ${e.parent} p ON p.${e.key} = t.${e.column}`;
-          tenant = tenantMatch(e.parent, 'p', scope);
+          tenant = tenantMatch(e.parent, 'p', scope) + limit(b, e.parent, 'p', reason);
         }
       } else {
         rejectOwnedConditions(table, scope, Object.keys(where));
-        tenant = tenantMatch(table, 't', scope);
+        tenant = tenantMatch(table, 't', scope) + limit(b, table, 't', reason);
       }
       for (const v of local) b.bind(v);
       return `(SELECT count(*) FROM ${from} WHERE ${[...conds, tenant].join(' AND ')}) = 1`;
@@ -101,7 +106,7 @@ export function rowIs(
           ? `t.${identifier(column)} IS NULL`
           : `t.${identifier(column)} = ${b.bind(value)}`,
       );
-      return `EXISTS (SELECT 1 FROM ${table} t WHERE ${target} AND ${tenantMatch(table, 't', scope)}${extra.map((e) => ` AND ${e}`).join('')})`;
+      return `EXISTS (SELECT 1 FROM ${table} t WHERE ${target} AND ${tenantMatch(table, 't', scope)}${limit(b, table, 't', reason)}${extra.map((e) => ` AND ${e}`).join('')})`;
     },
   };
 }

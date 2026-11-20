@@ -437,9 +437,16 @@ export async function makeApiKey(
     retireAt?: number;
     ipAllow?: string[];
     rateTier?: 'standard' | 'high' | 'bulk';
+    /** Limits the key to these templates and pass styles (`api_key_resources`); either list makes it limited. */
+    templateIds?: string[];
+    passStyles?: string[];
   } = {},
 ): Promise<ApiKeyFixture> {
   const id = f.ids.id();
+  const limits = [
+    ...(options.templateIds ?? []).map((value) => ['template', value] as const),
+    ...(options.passStyles ?? []).map((value) => ['pass_style', value] as const),
+  ];
   const prefix = f.ids.token(6);
   const secret = `wlt_${prefix}_${f.ids.token()}`;
   // A key with no org is a platform key. One made here without an expiry or IP list stands for a key
@@ -449,8 +456,8 @@ export async function makeApiKey(
     run(
       f.env.DB,
       `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at,
-       kind, roles, membership_id, expires_at, retire_at, ip_allow, rate_tier)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       kind, roles, membership_id, expires_at, retire_at, ip_allow, rate_tier, restricted)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         options.orgId ?? null,
@@ -467,10 +474,17 @@ export async function makeApiKey(
         options.retireAt ?? null,
         options.ipAllow ? JSON.stringify(options.ipAllow) : null,
         options.rateTier ?? null,
+        limits.length > 0 ? 1 : 0,
       ],
     );
   if (legacyPlatform) await withoutTrigger(f.env.DB, 'api_keys_kind_rules', insert);
   else await insert();
+  for (const [kind, value] of limits)
+    await run(f.env.DB, 'INSERT INTO api_key_resources (key_id, kind, value) VALUES (?, ?, ?)', [
+      id,
+      kind,
+      value,
+    ]);
   return { id, secret, headers: { authorization: `Bearer ${secret}` } };
 }
 

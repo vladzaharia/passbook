@@ -200,7 +200,7 @@ describe('restricted keys', () => {
     });
   });
 
-  it('is refused at use until grants enforce the restriction, with nothing exposed', async () => {
+  it('is refused on a route that does not enforce the limit, with nothing exposed', async () => {
     const { session } = await member('org_admin');
     const res = await create(session.headers, {
       ...keyBody(org.id),
@@ -208,13 +208,10 @@ describe('restricted keys', () => {
       templateIds: [await templateOf(org.id)],
     });
     const key = (await res.json()) as CreatedKey;
-    await expectProblem(await listPasses(bearer(key.secret)), 403, 'API_KEY_RESTRICTION_PENDING');
-    // The same row cannot be used through a grant either.
-    expect(
-      await first(h.env.DB, `SELECT 1 FROM api_keys k WHERE k.id = ? AND k.restricted = 0`, [
-        key.id,
-      ]),
-    ).toBeNull();
+    await expectProblem(await listPasses(bearer(key.secret)), 403, 'API_KEY_RESTRICTED_ROUTE');
+    // Only the key's own description (`/me`) takes it: it reads the key row, nothing of the org's data.
+    const me = await h.call('/api/v1/api-keys/me', { headers: bearer(key.secret) });
+    expect(me.status).toBe(200);
   });
 
   it("refuses another org's template, platform keys, roles and scopes no template narrows", async () => {

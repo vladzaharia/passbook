@@ -144,7 +144,7 @@ export async function retireApiKey(
 /** Resolves a presented key. Null for anything invalid; throws 429 when the key is over its limit. */
 export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiKeyStore {
   return {
-    async resolve(rawKey, caller): Promise<ApiKeyAuth | null> {
+    async resolve(rawKey, caller, options): Promise<ApiKeyAuth | null> {
       const prefix = apiKeyPrefixOf(rawKey);
       if (!prefix) return null;
       const row = await repo.findByPrefix(env.DB, prefix);
@@ -162,16 +162,18 @@ export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiK
       // The caller's address is not an oracle: a wrong address looks like a wrong key. No address means no match.
       const allow = row.ip_allow ? (JSON.parse(row.ip_allow) as string[]) : [];
       if (allow.length > 0 && !ipAllowed(caller?.ip, allow)) return null;
-      if (row.restricted === 1)
-        throw new ForbiddenError(
-          'A key limited to templates cannot be used yet.',
-          'API_KEY_RESTRICTION_PENDING',
-        );
       const tier = await enforceApiKeyRate(
         env,
         { keyId: row.id, orgId: row.org_id },
         row.rate_tier,
       );
+      // A key limited to templates or styles is for routes that enforce the limit (`templateScoped`); anywhere else
+      // it is refused, so a route that reads or writes outside the grant builder never sees another template's data.
+      if (row.restricted === 1 && options?.limited !== 'ok')
+        throw new ForbiddenError(
+          'This key is limited to templates and cannot call this route.',
+          'API_KEY_RESTRICTED_ROUTE',
+        );
       await repo.touchKey(env.DB, row.id, now, TOUCH_EVERY_MS, ipPrefix(caller?.ip));
       // A platform key made before 0142 has no expiry or IP list: it keeps working, and every use is logged.
       if (row.kind === 'platform' && (row.expires_at === null || allow.length === 0))
@@ -189,6 +191,7 @@ export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiK
           ? held.filter((s) => rolesCapableOf(s).some((role) => memberRoles.includes(role)))
           : held,
         mode: row.mode,
+        ...(row.restricted === 1 ? { limited: true as const } : {}),
       };
       rememberApiTier(auth, tier);
       return auth;

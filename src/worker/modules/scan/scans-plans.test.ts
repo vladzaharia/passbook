@@ -16,7 +16,7 @@ import { readStaffActivity } from './repo-staff-activity.ts';
 /** A fence whose actor is a fixed org and mode: only the plan of the read itself is under test. */
 const fixedAuth: ScanReadAuthority = {
   ctes: `actor AS MATERIALIZED (SELECT 'o' AS org_id, 'live' AS mode, 1 AS actor_ok, 1 AS org_ok),
-    actor_ok AS MATERIALIZED (SELECT org_id, mode FROM actor)`,
+    actor_ok AS MATERIALIZED (SELECT org_id, mode, NULL AS limit_key FROM actor)`,
   params: [],
   ok: 'EXISTS (SELECT 1 FROM actor_ok)',
   tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
@@ -26,7 +26,7 @@ const fixedAuth: ScanReadAuthority = {
 const platformAuth: ScanReadAuthority = {
   ...fixedAuth,
   ctes: `actor AS MATERIALIZED (SELECT NULL AS org_id, 'live' AS mode, 1 AS actor_ok, 1 AS org_ok),
-    actor_ok AS MATERIALIZED (SELECT org_id, mode FROM actor)`,
+    actor_ok AS MATERIALIZED (SELECT org_id, mode, NULL AS limit_key FROM actor)`,
   tenant: (alias) => `${alias}.mode = (SELECT mode FROM actor_ok)`,
 };
 
