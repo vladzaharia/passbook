@@ -7,14 +7,14 @@ import { type GroupPerson, type GroupView, groupAction } from '../machine/group-
 import type { ScanOutcome } from '../machine/types.ts';
 import './group.css';
 
-const initials = (name: string): string => name.slice(0, 2).toUpperCase();
+const initials = (p: GroupPerson): string => p.initials || p.name.slice(0, 2).toUpperCase();
 
 function Disc({ person }: { person: GroupPerson }) {
   if (person.state === 'in') return <Check size={20} strokeWidth={3} aria-hidden />;
   if (person.state === 'already') return <Clock size={20} strokeWidth={2.5} aria-hidden />;
   if (person.state === 'refused') return <X size={20} strokeWidth={3} aria-hidden />;
-  return person.name ? (
-    <b aria-hidden>{initials(person.name)}</b>
+  return initials(person) ? (
+    <b aria-hidden>{initials(person)}</b>
   ) : (
     <UserRound size={20} aria-hidden />
   );
@@ -55,10 +55,10 @@ export function GroupRow({
               <Disc person={p} />
             </span>
             <span className="scan-group-name" aria-hidden>
-              {p.name}
+              {p.name || (p.state === 'in' ? p.initials : '')}
             </span>
             <span className="sr-only">
-              {p.name ? `${p.name}, ` : ''}
+              {p.name || p.initials ? `${p.name || p.initials}, ` : ''}
               {SCAN_GROUP_COPY.person[p.state]}
             </span>
           </li>

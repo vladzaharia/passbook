@@ -31,11 +31,24 @@ export const DOOR_CASES = [
   'bundle-partial',
   'queue',
   'queue-sheet',
+  'shift',
+  'shift-end',
 ] as const;
 export type DoorCase = (typeof DOOR_CASES)[number];
 
 const NOW = FIXTURE_NOW;
-const bundle = { id: 'b1', name: 'Family pack', size: 4, checkedIn: 1 };
+const bundle = {
+  id: 'b1',
+  name: 'Family pack',
+  size: 4,
+  checkedIn: 1,
+  members: [
+    { initials: 'AP', checkedIn: true },
+    { initials: 'BP', checkedIn: false },
+    { initials: 'CP', checkedIn: false },
+    { initials: 'DP', checkedIn: false },
+  ],
+};
 const family = () => {
   const d = fixtureDisplay('ok');
   return {
@@ -128,6 +141,8 @@ const DIRECTION: Partial<Record<DoorCase, { value: ShownDirection; onCycle?: () 
   'bundle-heads': { value: 'in', onCycle: () => undefined },
   queue: { value: 'in', onCycle: () => undefined },
   'queue-sheet': { value: 'in', onCycle: () => undefined },
+  shift: { value: 'in', onCycle: () => undefined },
+  'shift-end': { value: 'in', onCycle: () => undefined },
 };
 
 const OFFLINE: ScanState['offline'] = { mode: 'list', listAt: NOW - 6 * 60_000, syncing: false };
@@ -151,7 +166,8 @@ const summary = ScanSummarySchema.parse({
   overrides: { count: 0, latest: [] },
 });
 
-function QueueSheet() {
+function ShiftView({ scenario }: { scenario: DoorCase }) {
+  const queued = scenario === 'queue-sheet';
   const [api] = useState(() => ({ summary: async () => summary }) as unknown as ScanApi);
   const rows = async () => [
     {
@@ -179,14 +195,22 @@ function QueueSheet() {
   return (
     <ShiftSheet
       open
-      ending={false}
-      focus="queue"
+      ending={scenario === 'shift-end'}
+      {...(queued ? { focus: 'queue' as const } : {})}
       api={api}
       since={NOW - 3_600_000}
       pending={3}
+      counts={{
+        today: 312,
+        event: { arrived: 312, inside: null, expected: 500, capacity: 500 },
+        asOf: NOW,
+        configRev: 1,
+      }}
       onClose={() => undefined}
       onEnd={() => undefined}
-      offline={{ state: OFFLINE, queue: QUEUE, onSync: () => undefined, rows }}
+      {...(queued
+        ? { offline: { state: OFFLINE, queue: QUEUE, onSync: () => undefined, rows } }
+        : {})}
     />
   );
 }
@@ -236,7 +260,9 @@ export function DoorVisual({ scenario }: { scenario: DoorCase }) {
       clock={NOW}
       tint={outcome ? (TINT[outcome.kind === 'queued' ? 'ok' : outcome.kind] ?? 'none') : 'none'}
     >
-      {scenario === 'queue-sheet' ? <QueueSheet /> : null}
+      {scenario === 'queue-sheet' || scenario.startsWith('shift') ? (
+        <ShiftView scenario={scenario} />
+      ) : null}
     </ScanPreviewScreen>
   );
 }

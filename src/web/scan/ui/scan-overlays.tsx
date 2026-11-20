@@ -94,6 +94,8 @@ export function ScanOverlays({
             since={shiftStart}
             sessionTotals={sessionTotals}
             pending={state.unsure.length + state.queue.pending}
+            counts={state.counts}
+            onEnding={() => showPanel('end')}
             offline={{
               state: state.offline,
               queue: state.queue,

@@ -41,4 +41,18 @@ export const SCAN_HANDHELD_COPY = {
     turnedAway: 'Turned away',
     method: { camera: 'Camera', wedge: 'Reader', nfc: 'Tag', manual: 'Typed' },
   },
+  shift: {
+    title: 'This shift',
+    ending: 'End shift?',
+    since: 'Since {time}',
+    in: 'in',
+    today: 'in today',
+    of: 'of {cap}',
+    you: 'You: {in} in · {refused} refused · {undone} undone',
+    all: 'All numbers',
+    end: 'End shift',
+    keep: 'Keep scanning',
+    endNote: 'This device stays paired. Start a new shift when you’re ready.',
+    pending: '{n} scans need confirmation. Keep this shift open.',
+  },
 } as const;

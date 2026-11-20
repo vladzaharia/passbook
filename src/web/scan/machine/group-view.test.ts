@@ -19,6 +19,25 @@ describe('the group on a handheld', () => {
     expect(v?.people[0]?.name).toBe('Anna');
   });
 
+  it('uses the server members: initials per person, and who is in is theirs', () => {
+    const members = [
+      { initials: 'AP', checkedIn: true },
+      { initials: 'BP', checkedIn: false },
+      { initials: '', checkedIn: false },
+      { initials: 'DP', checkedIn: true },
+    ];
+    const v = groupView(
+      fixtureOutcome('ok', null, { ...lead, bundle: { ...bundle, checkedIn: 2, members } }),
+    );
+    expect(v?.people.map((p) => [p.state, p.initials ?? ''])).toEqual([
+      ['in', 'AP'],
+      ['pending', 'BP'],
+      ['pending', ''],
+      ['in', 'DP'],
+    ]);
+    expect(v?.remaining).toBe(2);
+  });
+
   it('offers the people left, and nothing when all are in or it is not an entry', () => {
     const ok = fixtureOutcome('ok', null, { ...lead, bundle });
     expect(groupAction(ok)).toEqual({ n: 3, label: 'Check in 3 more' });

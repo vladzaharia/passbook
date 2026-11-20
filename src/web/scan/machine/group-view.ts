@@ -8,6 +8,8 @@ export interface GroupPerson {
   state: PersonState;
   /** Why a member was not let in: a scan reason. */
   reason?: string;
+  /** The server's initials for this person; empty when this role may not read the name. */
+  initials?: string;
 }
 export interface GroupView {
   people: GroupPerson[];
@@ -64,13 +66,12 @@ export function groupView(o: ScanOutcome): GroupView | null {
   const b = o.bundle;
   if (!b || b.size < 2) return null;
   const inCount = Math.min(b.size, Math.max(1, b.checkedIn ?? 1));
-  const people = Array.from(
-    { length: Math.min(b.size, MAX_PEOPLE) },
-    (_, i): GroupPerson => ({
-      name: i === 0 ? name : '',
-      state: i < inCount ? 'in' : 'pending',
-    }),
-  );
+  const people = Array.from({ length: Math.min(b.size, MAX_PEOPLE) }, (_, i): GroupPerson => {
+    const m = b.members?.[i];
+    // With the server's member list, who is in is each person's own; else the first `inCount`.
+    const state: PersonState = (m ? m.checkedIn : i < inCount) ? 'in' : 'pending';
+    return { name: i === 0 ? name : '', state, ...(m?.initials ? { initials: m.initials } : {}) };
+  });
   return {
     people,
     inCount,
