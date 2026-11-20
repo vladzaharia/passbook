@@ -4,6 +4,7 @@ import { validityOf } from '../../../shared/pass-view/validity.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { channelGate } from '../channels/gate.ts';
+import { orgBrandOf } from '../orgs/brand.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getOrg } from '../passes/repo-read-issuance.ts';
@@ -85,9 +86,10 @@ function barcodeOf(json: PassJson, scanCode: string | null): PresentationBarcode
 export async function presentationForPass(ctx: ServiceContext, pass: Pass) {
   await channelGate(ctx, pass, 'mobile');
   const snapshot = await capturePassSnapshot(ctx, pass);
-  const [raw, org] = await Promise.all([
+  const [raw, org, brand] = await Promise.all([
     passJsonAtVersion(ctx.env.DB, pass.id, pass.version),
     getOrg(ctx.env.DB, pass.orgId),
+    orgBrandOf(ctx, pass.orgId),
   ]);
   if (
     pass.status !== 'active' ||
@@ -106,6 +108,7 @@ export async function presentationForPass(ctx: ServiceContext, pass: Pass) {
   const model = {
     barcode: json ? barcodeOf(json, pass.scanCode) : null,
     orgName,
+    brand,
     passTitle: pass.displayTitle ?? json?.description ?? orgName,
     mode: pass.mode,
     /** The pass's own expiry, so a saved copy is never shown past it. */

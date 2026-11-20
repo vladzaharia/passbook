@@ -1,5 +1,6 @@
 import { EMAIL_BADGE } from '../../../shared/email-art.ts';
 import { NATIVE_WALLET_BADGES } from '../../../shared/wallet-choice.ts';
+import { emailBrandOf } from '../../email/brand.ts';
 import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderBundleEmail } from '../../email/bundle.ts';
 import { passEmailImages } from '../../email/pass-images.ts';
@@ -18,6 +19,7 @@ import type { OutboxRow } from '../delivery/repo-outbox-map.ts';
 import { finishOutbox } from '../delivery/repo-outbox-processing.ts';
 import { ATTEMPT_CANCEL_CODE, beginProviderAttempt } from '../delivery/repo-provider-attempt.ts';
 import { isOrgActive } from '../orgs/active.ts';
+import { orgBrandOf } from '../orgs/brand.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getOrg } from '../passes/repo-read-issuance.ts';
 import { passImages, supportContacts } from '../public/service.ts';
@@ -153,6 +155,7 @@ export async function deliverBundleEmail(
     fromName: orgFromName(ctx, settings['email.fromName'], platform['email.senderName']),
     mode: bundle.mode,
     buddyBase: settings['email.buddy'] ? base : null,
+    brand: emailBrandOf(ctx.env, await orgBrandOf(ctx, bundle.org_id)),
   });
   if (bundle.mode === 'test') {
     if (!(await stillCurrent())) return;

@@ -5,6 +5,7 @@ import { ASSET_MISSES_PER_MINUTE, gateMisses, rateLimit } from '../../platform/r
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage } from '../../ssr/pass-page.tsx';
 import { PRINT_HEADERS, renderPrintPage } from '../../ssr/print-page.tsx';
+import { orgBrandOf } from '../orgs/brand.ts';
 import { svc } from '../passes/http.ts';
 import { passForToken } from '../public/service.ts';
 import { printPageModel } from './page.ts';
@@ -52,6 +53,7 @@ holderPrintRoutes.get('/:token/print', async (c) => {
       backHref: `/p/${token}`,
       pdfHref: `/p/${token}/print/pdf`,
       nonce: c.var.nonce,
+      brand: await orgBrandOf(ctx, pass.orgId),
       ...(theme ? { theme } : {}),
     });
     return new Response(html, { headers: PRINT_HEADERS });

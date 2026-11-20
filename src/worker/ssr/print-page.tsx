@@ -1,5 +1,6 @@
 import { Ban, Download, Printer, RotateCcw } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import { PRINT_COPY } from '../../shared/copy/print.ts';
 import { toSvg } from '../../shared/pass-view/barcode-svg.ts';
 import { PAPER_CSS, pageRule } from '../../web/paper/css.ts';
@@ -77,6 +78,8 @@ export interface PrintPageProps {
   pdfHref?: string;
   nonce: string;
   theme?: PageTheme;
+  /** The org's brand kit (`orgBrandOf`): its logo leads the band, its mark sets the foot. */
+  brand?: OrgBrand;
 }
 
 /** The print page. The code appears only in the sheet's barcode geometry and its typed line. */
@@ -91,6 +94,7 @@ export function renderPrintPage(props: PrintPageProps): string {
     return hostedPage({
       nonce: props.nonce,
       ...(props.theme ? { theme: props.theme } : {}),
+      ...(props.brand ? { brand: props.brand } : {}),
       title: PRINT_COPY.unavailable,
       art: 'no-access',
       css: PAGE_CSS,
@@ -138,6 +142,7 @@ export function renderPrintPage(props: PrintPageProps): string {
   return hostedPage({
     nonce: props.nonce,
     ...(props.theme ? { theme: props.theme } : {}),
+    ...(props.brand ? { brand: props.brand } : {}),
     title,
     art: 'login',
     ...(model.state === 'ready' ? { lede: escapeHtml(PRINT_COPY.lede) } : {}),

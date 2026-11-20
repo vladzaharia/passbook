@@ -10,6 +10,7 @@ import { type createRouter, register } from '../../platform/openapi.ts';
 import { renderErrorPage } from '../../ssr/error-page.tsx';
 import { requestTheme } from '../../ssr/head.ts';
 import { PRINT_HEADERS, renderPrintPage } from '../../ssr/print-page.tsx';
+import { orgBrandOf } from '../orgs/brand.ts';
 import { actorFor, authOf, passScopeOf, svc } from '../passes/http.ts';
 import { tenantPassForRead, tenantPassForWrite } from '../passes/pass-access.ts';
 import { printPageModel } from './page.ts';
@@ -99,6 +100,7 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
           model,
           audience: 'staff',
           nonce: c.var.nonce,
+          brand: await orgBrandOf(ctx, pass.orgId),
           pdfHref: `/api/v1/passes/${encodeURIComponent(pass.id)}/print/pdf`,
           ...(theme ? { theme } : {}),
         });
