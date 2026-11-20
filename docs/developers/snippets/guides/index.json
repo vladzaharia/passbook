@@ -109,7 +109,7 @@
   },
   {
     "id": "remove-pass",
-    "title": "Remove a pass from phones",
+    "title": "Remove a pass from Wallet",
     "guide": "update-a-pass",
     "ops": [
       "passes.postPassesByIdRemove"

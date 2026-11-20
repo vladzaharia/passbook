@@ -105,11 +105,11 @@ describe('build-developers', () => {
         const [path, hash] = href.split('#') as [string, string | undefined];
         if (!path.startsWith('/') || outside.some((o) => path.startsWith(o))) continue;
         expect(served.has(path), `${url} -> ${href}`).toBe(true);
-        if (hash && !path.endsWith('.md')) {
+        // The console's operation ids come from its island, not from the page.
+        if (hash && !path.endsWith('.md') && path !== '/developers/console') {
           const asset = manifest[path]?.asset ?? '';
           const file = asset.endsWith('/') ? `${asset}index.html` : `${asset}.html`;
-          if (path !== '/developers/guides')
-            expect(ids(read(file)).has(hash), `${url} -> ${href}`).toBe(true);
+          expect(ids(read(file)).has(hash), `${url} -> ${href}`).toBe(true);
         }
       }
     }
