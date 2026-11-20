@@ -5,14 +5,13 @@ import { errorMessage } from '../../../lib/errors.ts';
 import {
   Button,
   Callout,
-  CheckboxField,
   Sheet,
   SheetContent,
   SwitchRow,
 } from '../../../ui/index.ts';
 import { useCommitImport } from './api.ts';
 
-/** The confirm sheet: email the new holders, skip rows with errors, then start. */
+/** The confirm sheet: email the new holders, then start. The button names any rows it skips. */
 export function CommitSheet({
   imp,
   orgId,
@@ -26,12 +25,10 @@ export function CommitSheet({
 }) {
   const commit = useCommitImport(imp.id, orgId);
   const [email, setEmail] = useState(false);
-  const [skip, setSkip] = useState(false);
   const counts = imp.counts;
   if (!counts) return null;
   const budget = imp.emailBudget ?? 0;
   const canEmail = counts.emailable > 0 && budget > 0;
-  const blocked = counts.errors > 0 && !skip;
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent title={C.sheet.title}>
@@ -45,20 +42,12 @@ export function CommitSheet({
             disabled={!canEmail}
             onCheckedChange={setEmail}
           />
-          {counts.errors > 0 ? (
-            <CheckboxField
-              label={C.sheet.skip(counts.errors)}
-              checked={skip}
-              onCheckedChange={(v) => setSkip(v === true)}
-            />
-          ) : null}
           {commit.isError ? <Callout tone="danger">{errorMessage(commit.error)}</Callout> : null}
           <Button
-            disabled={blocked}
             loading={commit.isPending}
             onClick={() =>
               commit.mutate(
-                { skipInvalid: skip, email: email && canEmail },
+                { skipInvalid: counts.errors > 0, email: email && canEmail },
                 { onSuccess: () => onOpenChange(false) },
               )
             }

@@ -182,11 +182,10 @@ describe('check', () => {
     });
     await user.click(await screen.findByRole('button', { name: /^(Create|Update) \d+/ }));
     const go = await screen.findByRole('button', { name: 'Create 120 and update 40' });
-    expect(go).toHaveProperty('disabled', true);
+    expect(go).toHaveProperty('disabled', false);
     expect(
       screen.getByText('The first 80 get an email. The rest are listed after the import.'),
     ).toBeTruthy();
-    await user.click(screen.getByRole('checkbox', { name: 'Skip 3 rows with errors' }));
     await user.click(screen.getByRole('switch', { name: 'Email new holders' }));
     await user.click(go);
     await waitFor(() => expect(posts).toEqual([{ skipInvalid: true, email: true }]));
