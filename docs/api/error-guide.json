@@ -6,9 +6,9 @@
     "retryable": false
   },
   "ADMITS_TOO_MANY": {
-    "title": "Admits too many",
-    "when": "Admit at most … pass types, counting each event's.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Too many admitted pass types",
+    "when": "The scanner's admits list names more pass types than allowed, counting each event's.",
+    "fix": "Shorten admits so it names fewer pass types, then send the request again.",
     "retryable": false
   },
   "API_KEY_CHILD_CANNOT_MINT": {
@@ -42,15 +42,15 @@
     "retryable": false
   },
   "API_KEY_NO_APPROVAL": {
-    "title": "API key no approval",
-    "when": "An API key cannot approve or override.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Key cannot approve",
+    "when": "A key tried to approve or override a scan decision.",
+    "fix": "Approve on a paired scanner with a staff PIN.",
     "retryable": false
   },
   "API_KEY_ORG_REQUIRED": {
-    "title": "API key org required",
-    "when": "A platform key cannot scan.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Organization key required",
+    "when": "A platform key called a scan endpoint.",
+    "fix": "Call scan endpoints with a key scoped to one organization.",
     "retryable": false
   },
   "API_KEY_PARENT_RETIRING": {
@@ -84,9 +84,9 @@
     "retryable": false
   },
   "API_KEY_ROUTE": {
-    "title": "API key route",
-    "when": "An API key cannot call this route.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Route not open to keys",
+    "when": "A key called a scanner route that keys cannot use.",
+    "fix": "Call this route from a paired scanner or a signed-in session.",
     "retryable": false
   },
   "API_KEY_SCAN_ORG_REQUIRED": {
@@ -163,8 +163,8 @@
   },
   "BLUEPRINT_NOT_SCANNABLE": {
     "title": "Blueprint not scannable",
-    "when": "Make a template from this blueprint first.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "when": "Scan setup was requested on a blueprint instead of a template.",
+    "fix": "Create a template from the blueprint with POST /api/v1/templates/{id}/use, then set up scanning on it.",
     "retryable": false
   },
   "BRAND_IMAGE_NOT_FOUND": {
@@ -366,9 +366,9 @@
     "retryable": true
   },
   "DEVICE_REQUIRED": {
-    "title": "Device required",
-    "when": "Name the terminal in ….",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Terminal not named",
+    "when": "A scan call from a key did not say which terminal scanned, or a key opened a device connection.",
+    "fix": "Name the terminal in the device header on scan calls; open live connections from a paired scanner.",
     "retryable": false
   },
   "DEVICE_TOKEN_UNAVAILABLE": {
@@ -396,15 +396,15 @@
     "retryable": true
   },
   "ENROLLMENT_ENDED": {
-    "title": "Enrollment ended",
-    "when": "This request is over.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Enrollment already ended",
+    "when": "The device or tag enrollment request was already approved, denied or cancelled.",
+    "fix": "Start a new enrollment request.",
     "retryable": false
   },
   "ENROLLMENT_NOT_FOUND": {
     "title": "Enrollment not found",
-    "when": "Request not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "No enrollment request with this id exists in this mode and organization.",
+    "fix": "Check the enrollment id and start a new request if it expired.",
     "retryable": false
   },
   "ENTITLEMENTS_CHANGED": {
@@ -415,26 +415,26 @@
   },
   "EVENT_ARCHIVED": {
     "title": "Event archived",
-    "when": "This event is archived.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "when": "The event is archived and cannot be used or changed.",
+    "fix": "Use an event that is not archived, or create a new one.",
     "retryable": false
   },
   "EVENT_IN_USE": {
     "title": "Event in use",
-    "when": "A session already uses this event.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "A scanning session still uses this event.",
+    "fix": "End or change the sessions that use the event, then send the request again.",
     "retryable": false
   },
   "EVENT_MATCH_INPUT": {
-    "title": "Event match input",
-    "when": "… has no single-value input called ….",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Event match input missing",
+    "when": "The event's match input does not name a single-value input on its template.",
+    "fix": "Set the match input to a single-value input from GET /api/v1/templates/{id}/input-schema.",
     "retryable": false
   },
   "EVENT_NEEDS_CAPACITY": {
-    "title": "Event needs capacity",
-    "when": "Set a capacity first.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Event needs a capacity",
+    "when": "The setting needs a capacity and the event has none.",
+    "fix": "Set the event's capacity, then send the request again.",
     "retryable": false
   },
   "EVENT_NOT_FOUND": {
@@ -444,15 +444,15 @@
     "retryable": false
   },
   "EVENT_TEMPLATE_NO_CHECK_IN": {
-    "title": "Event template no check in",
-    "when": "… has no check-in action.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Template has no check-in",
+    "when": "The event's template has no check-in action.",
+    "fix": "Pick a template that defines check-in, or add the action to this one.",
     "retryable": false
   },
   "EVENT_TEMPLATE_RELEASE_REQUIRED": {
-    "title": "Event template release required",
-    "when": "Every event template needs an approved release or an eligible legacy pass in this mode.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Template release required",
+    "when": "An event template needs an approved release or an eligible legacy pass in this mode.",
+    "fix": "Approve a release for the template with POST /api/v1/templates/{id}/releases, then retry.",
     "retryable": false
   },
   "EXPIRY_PAST": {
@@ -475,38 +475,38 @@
   },
   "GOOGLE_CALLBACK_INVALID": {
     "title": "Google callback invalid",
-    "when": "Google Wallet callback is invalid.",
-    "fix": "Send a valid API key in the Authorization header.",
+    "when": "A Google Wallet callback failed signature or format checks.",
+    "fix": "Send callbacks only from Google; check the callback URL set in Google Wallet.",
     "retryable": false
   },
   "GOOGLE_CALLBACK_UNAVAILABLE": {
     "title": "Google callback unavailable",
-    "when": "Google Wallet callback service is unavailable.",
-    "fix": "Retry with backoff.",
+    "when": "The service that processes Google Wallet callbacks is down.",
+    "fix": "Retry with backoff; Google resends failed callbacks.",
     "retryable": true
   },
   "GRANT_BAD_PURPOSE": {
-    "title": "Grant bad purpose",
-    "when": "Webhook writes need an org_mode grant.",
+    "title": "Internal grant error",
+    "when": "The server built an internal database grant incorrectly.",
     "fix": "Retry once; if it persists, send the requestId to support.",
-    "retryable": false
+    "retryable": true
   },
   "GRANT_FOREIGN_STATEMENT": {
-    "title": "Grant foreign statement",
-    "when": "The keyset statement was not captured.",
+    "title": "Internal grant error",
+    "when": "The server ran a database statement that its grant did not build.",
     "fix": "Retry once; if it persists, send the requestId to support.",
-    "retryable": false
+    "retryable": true
   },
   "GRANT_SCOPE_OVERRIDE": {
-    "title": "Grant scope override",
-    "when": "A miss window binds as many values as it has marks.",
+    "title": "Internal grant error",
+    "when": "The server built a database statement that overrides its grant's scope.",
     "fix": "Retry once; if it persists, send the requestId to support.",
-    "retryable": false
+    "retryable": true
   },
   "GROUP_ENTRY_ONLY": {
-    "title": "Group entry only",
-    "when": "Check in all is for entry scanners.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Check in all needs an entry scanner",
+    "when": "Check in all was used on a scanner that is not an entry scanner.",
+    "fix": "Use check in all only on an entry scanner.",
     "retryable": false
   },
   "HOLDER_CHANGED": {
@@ -709,38 +709,38 @@
   },
   "KEYSET_CHANGED": {
     "title": "Keyset changed",
-    "when": "Tags still use this version.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "The NFC keyset changed while your request ran, or it has no active key.",
+    "fix": "Fetch the keyset and send the change again.",
     "retryable": false
   },
   "KEYSET_KEY_INVALID": {
     "title": "Keyset key invalid",
-    "when": "A key is 32 hex digits.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "when": "A key is not 32 hex digits.",
+    "fix": "Send each key as 32 hexadecimal characters.",
     "retryable": false
   },
   "KEYSET_KEY_NOT_FOUND": {
-    "title": "Keyset key not found",
-    "when": "Key version not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "title": "Keyset key version not found",
+    "when": "The keyset has no key with this version.",
+    "fix": "Check the key version against the keyset's list and send it again.",
     "retryable": false
   },
   "KEYSET_KEY_REUSED": {
     "title": "Keyset key reused",
-    "when": "Enter keys this organization has not used.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "when": "A key was already used by this organization.",
+    "fix": "Send new keys this organization has never used.",
     "retryable": false
   },
   "KEYSET_KEY_WEAK": {
-    "title": "Keyset key weak",
-    "when": "Use two different keys, and not the factory default.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Keyset key too weak",
+    "when": "The two keys are the same, or one is the factory default.",
+    "fix": "Send two different, randomly generated keys.",
     "retryable": false
   },
   "KEYSET_NOT_FOUND": {
     "title": "Keyset not found",
-    "when": "Keyset not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "No NFC keyset with this id exists in this mode and organization.",
+    "fix": "Check the keyset id and the key's mode.",
     "retryable": false
   },
   "KEY_CREATOR_GONE": {
@@ -852,27 +852,27 @@
     "retryable": false
   },
   "NOTE_CAP": {
-    "title": "Note cap",
-    "when": "This device has added all it can to this person today.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Note limit reached",
+    "when": "The pass already holds the maximum number of notes.",
+    "fix": "Delete an old note before adding another.",
     "retryable": false
   },
   "NOTE_DEVICE_CAP": {
-    "title": "Note device cap",
-    "when": "This device has added all it can to this person today.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Device note limit reached",
+    "when": "This device has added its daily limit of notes to this person.",
+    "fix": "Add the note from another device or wait until tomorrow.",
     "retryable": false
   },
   "NOTE_NOT_FOUND": {
     "title": "Note not found",
-    "when": "Note not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "No note with this id exists on the pass.",
+    "fix": "Check the note id.",
     "retryable": false
   },
   "NOTE_ROLE": {
-    "title": "Note role",
-    "when": "Only Desk staff can read notes.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Note role not allowed",
+    "when": "Reading or adding notes needs Desk staff, and changing one needs its author or a manager.",
+    "fix": "Sign in as Desk staff or a manager with the staff PIN.",
     "retryable": false
   },
   "NOT_A_ZIP": {
@@ -912,15 +912,15 @@
     "retryable": false
   },
   "OFFLINE_OFF": {
-    "title": "Offline off",
-    "when": "This session does not use an offline list.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Offline scanning off",
+    "when": "The session does not use an offline list or take offline scans.",
+    "fix": "Turn on offline scanning for the session, or scan online.",
     "retryable": false
   },
   "OFFLINE_TOO_BIG": {
-    "title": "Offline too big",
-    "when": "Too many passes for an offline list.",
-    "fix": "Narrow the session.",
+    "title": "Offline list too large",
+    "when": "The session covers more passes than an offline list can hold.",
+    "fix": "Narrow the session to fewer events or pass types.",
     "retryable": false
   },
   "ORG_ACCESS_CHANGED": {
@@ -978,9 +978,9 @@
     "retryable": false
   },
   "PAIRING_INVALID": {
-    "title": "Pairing invalid",
-    "when": "Code not valid.",
-    "fix": "Ask for a new one.",
+    "title": "Pairing code invalid",
+    "when": "The pairing code is wrong, used or expired.",
+    "fix": "Create a new pairing code and enter it again.",
     "retryable": false
   },
   "PASS_CONFLICT": {
@@ -1056,33 +1056,33 @@
     "retryable": true
   },
   "PHOTO_PASS_INACTIVE": {
-    "title": "Photo pass inactive",
-    "when": "This pass is not active.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Pass not active",
+    "when": "A photo cannot be added to an inactive pass.",
+    "fix": "Use an active pass.",
     "retryable": false
   },
   "PHOTO_ROLE": {
-    "title": "Photo role",
+    "title": "Photo role not allowed",
     "when": "Only Desk staff can add photos.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "fix": "Sign in as Desk staff with the staff PIN.",
     "retryable": false
   },
   "PIN_GENERATION_FAILED": {
-    "title": "PIN generation failed",
-    "when": "Could not generate a new PIN.",
-    "fix": "Try again.",
+    "title": "PIN not generated",
+    "when": "The server could not generate a new unique PIN.",
+    "fix": "Retry the request.",
     "retryable": true
   },
   "PIN_INVALID": {
-    "title": "PIN invalid",
-    "when": "Wrong PIN.",
-    "fix": "Try again later.",
+    "title": "PIN wrong",
+    "when": "The PIN does not match any staff member.",
+    "fix": "Enter the correct PIN; repeated misses lock the entry for a while.",
     "retryable": true
   },
   "PIN_MANAGER_REQUIRED": {
-    "title": "PIN manager required",
-    "when": "Choose the manager.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Manager required",
+    "when": "The action needs a manager and none was chosen.",
+    "fix": "Name a manager in the request.",
     "retryable": false
   },
   "RATE_LIMITED": {
@@ -1134,39 +1134,39 @@
     "retryable": false
   },
   "ROLE_NOT_ALLOWED": {
-    "title": "Role not allowed",
+    "title": "Scanner role not allowed",
     "when": "This device cannot change its role.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "fix": "Change the role from the scanner's setup in the admin console.",
     "retryable": false
   },
   "ROLL_CALL_ENDED": {
     "title": "Roll call ended",
-    "when": "This roll call has ended.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "The roll call is closed and takes no more marks.",
+    "fix": "Start a new roll call.",
     "retryable": false
   },
   "ROLL_CALL_NOT_FOUND": {
     "title": "Roll call not found",
-    "when": "Roll call not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "No roll call with this id exists for this scanner.",
+    "fix": "Check the roll call id.",
     "retryable": false
   },
   "ROLL_CALL_NO_PLACES": {
-    "title": "Roll call no places",
-    "when": "Nothing is tracked here, so there is no one to call.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Nothing tracked",
+    "when": "The scanner's session tracks no place, so there is no one to call.",
+    "fix": "Turn on occupancy tracking for the session, then start the roll call.",
     "retryable": false
   },
   "ROLL_CALL_NO_SESSION": {
-    "title": "Roll call no session",
-    "when": "This device is not in a scanning session.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Scanner not in a session",
+    "when": "The scanner is not assigned to a scanning session.",
+    "fix": "Assign the scanner to a session in the admin console, then start the roll call.",
     "retryable": false
   },
   "ROLL_CALL_TOO_LARGE": {
-    "title": "Roll call too large",
-    "when": "Too many people inside to freeze a list.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Too many people inside",
+    "when": "More people are inside than a roll call list can hold.",
+    "fix": "Mark people out in bulk before starting the roll call.",
     "retryable": false
   },
   "RULE_HOURS_NEED_DATETIME": {
@@ -1206,26 +1206,26 @@
     "retryable": true
   },
   "SAMPLE_TEST_ONLY": {
-    "title": "Sample test only",
-    "when": "Sample passes are for test scanners.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Sample passes are test-only",
+    "when": "A sample pass was requested from a live scanner.",
+    "fix": "Request sample passes from a test-mode scanner.",
     "retryable": false
   },
   "SAMSUNG_FIELDS_INVALID": {
     "title": "Samsung fields invalid",
-    "when": "Invalid Samsung Wallet fields.",
-    "fix": "Correct the request and send it again.",
+    "when": "The Samsung Wallet callback has missing or malformed fields.",
+    "fix": "Send callbacks only from Samsung Wallet; check the callback setup.",
     "retryable": false
   },
   "SAMSUNG_UNAUTHENTICATED": {
-    "title": "Samsung unauthenticated",
-    "when": "Samsung Wallet authorization is invalid.",
-    "fix": "Send a valid API key in the Authorization header.",
+    "title": "Samsung authorization invalid",
+    "when": "The Samsung Wallet callback's authorization did not verify.",
+    "fix": "Check the Samsung Wallet partner credentials stored for the organization.",
     "retryable": false
   },
   "SAMSUNG_UNAVAILABLE": {
-    "title": "Samsung unavailable",
-    "when": "Samsung Wallet service is unavailable.",
+    "title": "Samsung service unavailable",
+    "when": "The Samsung Wallet service is unreachable.",
     "fix": "Retry with backoff.",
     "retryable": true
   },
@@ -1242,75 +1242,75 @@
     "retryable": false
   },
   "SCANNER_ADMIN_ROLE": {
-    "title": "Scanner admin role",
-    "when": "Admin user not found.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Admin setup needs a browser device",
+    "when": "An admin setup was given a non-browser device role.",
+    "fix": "Use a browser device for admin sign-in.",
     "retryable": false
   },
   "SCANNER_ADMIN_SETUP_EXISTS": {
-    "title": "Scanner admin setup exists",
-    "when": "Use the existing admin setup in that mode.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Admin setup exists",
+    "when": "The admin already has a scanner setup in that mode.",
+    "fix": "Use the existing admin setup.",
     "retryable": false
   },
   "SCANNER_ADMIN_USER": {
-    "title": "Scanner admin user",
+    "title": "Admin setup owner",
     "when": "An admin setup belongs to the admin who creates it.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "fix": "Create it signed in as that admin, and leave out another user.",
     "retryable": false
   },
   "SCANNER_CANNOT_SCAN": {
-    "title": "Scanner cannot scan",
-    "when": "Scanner not found.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Device cannot scan",
+    "when": "The device is not a scanning device, so it cannot take an event.",
+    "fix": "Assign events only to scanning devices.",
     "retryable": false
   },
   "SCANNER_CHANGED": {
     "title": "Scanner changed",
-    "when": "This scanner changed.",
-    "fix": "Reload its settings and try again.",
+    "when": "Another request changed this scanner while yours ran.",
+    "fix": "Fetch the scanner and send your change again.",
     "retryable": true
   },
   "SCANNER_EXPIRED": {
-    "title": "Scanner expired",
-    "when": "This scanner was removed.",
-    "fix": "Send a valid API key in the Authorization header.",
+    "title": "Scanner pairing expired",
+    "when": "The scanner's pairing is no longer valid.",
+    "fix": "Pair the scanner again.",
     "retryable": false
   },
   "SCANNER_NAME_TAKEN": {
     "title": "Scanner name taken",
-    "when": "Another scanner already has that name.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "Another scanner already has this name.",
+    "fix": "Choose a different name.",
     "retryable": false
   },
   "SCANNER_NOT_FOUND": {
     "title": "Scanner not found",
-    "when": "Scanner not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "No scanner with this id exists in this mode and organization.",
+    "fix": "Check the scanner id and the key's mode.",
     "retryable": false
   },
   "SCANNER_NOT_PAIRABLE": {
-    "title": "Scanner not pairable",
+    "title": "Scanner cannot pair with a code",
     "when": "Only browser devices pair with a code.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "fix": "Use the pairing method for this device type.",
     "retryable": false
   },
   "SCANNER_NOT_TERMINAL": {
-    "title": "Scanner not terminal",
+    "title": "Scanner is not a till",
     "when": "Only tills use a token.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "fix": "Create a token only for a till scanner.",
     "retryable": false
   },
   "SCANNER_NO_TAGS": {
-    "title": "Scanner no tags",
-    "when": "Scanner not found.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Scanner cannot read tags",
+    "when": "The scanner is not set up to read NFC tags.",
+    "fix": "Pick a scanner with tag reading on.",
     "retryable": false
   },
   "SCANNER_OFFLINE": {
     "title": "Scanner offline",
-    "when": "The scanner is offline.",
-    "fix": "Open it and try again.",
+    "when": "The scanner is not connected, so it cannot take the tag request.",
+    "fix": "Open the scanner app, then send the request again.",
     "retryable": true
   },
   "SCANNER_REPAIR": {
@@ -1320,159 +1320,159 @@
     "retryable": false
   },
   "SCANNER_REQUESTS_OFF": {
-    "title": "Scanner requests off",
-    "when": "This scanner cannot read tags.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Tag requests off",
+    "when": "The scanner does not take tag requests.",
+    "fix": "Turn on tag requests for the scanner, or pick another.",
     "retryable": false
   },
   "SCANNER_REVOKED": {
     "title": "Scanner revoked",
-    "when": "This scanner was removed.",
-    "fix": "Send a valid API key in the Authorization header.",
+    "when": "The scanner was removed from the organization.",
+    "fix": "Pair a new scanner.",
     "retryable": false
   },
   "SCANNER_ROLE_INVALID": {
     "title": "Scanner role invalid",
-    "when": "Choose a role this device supports.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "when": "The role is not supported by this device type.",
+    "fix": "Choose a role the device supports.",
     "retryable": false
   },
   "SCANNER_SETUP_EXISTS": {
     "title": "Scanner setup exists",
     "when": "A setup with this name or admin already exists.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "fix": "Use the existing setup or give the new one another name.",
     "retryable": false
   },
   "SCANNER_UNASSIGNED": {
-    "title": "Scanner unassigned",
-    "when": "Choose what this scanner accepts first.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Scanner has no assignment",
+    "when": "The scanner does not yet accept any events or pass types.",
+    "fix": "Choose what it accepts, then send the request again.",
     "retryable": false
   },
   "SCANNER_UNAUTHENTICATED": {
-    "title": "Scanner unauthenticated",
-    "when": "Pair this scanner to continue.",
-    "fix": "Send a valid API key in the Authorization header.",
+    "title": "Scanner not paired",
+    "when": "The request has no valid scanner session.",
+    "fix": "Pair the scanner, then sign in with the staff PIN.",
     "retryable": false
   },
   "SCANNER_WATCH_INVALID": {
-    "title": "Scanner watch invalid",
-    "when": "Choose the scanners or sessions this screen should follow.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Watch list invalid",
+    "when": "The screen's watch list names no valid scanners or sessions.",
+    "fix": "Choose at least one scanner or session to follow.",
     "retryable": false
   },
   "SCANNER_WATCH_MODE": {
-    "title": "Scanner watch mode",
-    "when": "Move the watched scanners, sessions and event to that mode first.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Watch list mixes modes",
+    "when": "The watched scanners, sessions and event are not all in the screen's mode.",
+    "fix": "Move them to the same mode, or choose others.",
     "retryable": false
   },
   "SCANNER_WATCH_NOT_FOUND": {
-    "title": "Scanner watch not found",
-    "when": "A watched … is unavailable.",
-    "fix": "Check the id, mode and organization of the key.",
+    "title": "Watched item not found",
+    "when": "A scanner, session or event in the watch list no longer exists.",
+    "fix": "Remove it from the watch list.",
     "retryable": false
   },
   "SCANNING_DEVICE_CHANGED": {
     "title": "Scanning device changed",
-    "when": "This device changed.",
-    "fix": "Reload its settings and try again.",
+    "when": "Another request changed this device while yours ran.",
+    "fix": "Fetch the device and send your change again.",
     "retryable": true
   },
   "SCANNING_DEVICE_NOT_FOUND": {
     "title": "Scanning device not found",
-    "when": "Device not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "No device with this id exists in this mode and organization.",
+    "fix": "Check the device id.",
     "retryable": false
   },
   "SCANNING_HOLD_RANGE": {
-    "title": "Scanning hold range",
-    "when": "Scanning is already open.",
-    "fix": "Correct the request and send it again.",
+    "title": "Hold duration out of range",
+    "when": "The open-for duration is longer than 24 hours.",
+    "fix": "Open scanning for at most 24 hours.",
     "retryable": false
   },
   "SCANNING_HOURS_NONE": {
-    "title": "Scanning hours none",
-    "when": "Nothing opens in the next 8 days.",
-    "fix": "Use Pause.",
+    "title": "No scanning hours ahead",
+    "when": "The session has no scheduled opening in the next 8 days.",
+    "fix": "Pause the session instead, or add scanning hours.",
     "retryable": false
   },
   "SCANNING_SESSION_CHANGED": {
     "title": "Scanning session changed",
-    "when": "This session changed.",
-    "fix": "Reload its settings and try again.",
+    "when": "Another request changed this session while yours ran.",
+    "fix": "Fetch the session and send your change again.",
     "retryable": true
   },
   "SCANNING_SESSION_CLOSED": {
-    "title": "Scanning session closed",
-    "when": "Resume the scanning session first.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Scanning closed",
+    "when": "The session is outside its scanning hours, or is already closed.",
+    "fix": "Wait for the next opening, or open it for a while.",
     "retryable": false
   },
   "SCANNING_SESSION_CONFIG_REQUIRED": {
-    "title": "Scanning session config required",
-    "when": "Configure this device from its scanning session.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Configure from the session",
+    "when": "The device takes its settings from its scanning session.",
+    "fix": "Change the settings on the session, not on the device.",
     "retryable": false
   },
   "SCANNING_SESSION_COUNTS_UNAVAILABLE": {
-    "title": "Scanning session counts unavailable",
-    "when": "Scanning session counts are unavailable.",
+    "title": "Session counts unavailable",
+    "when": "The session's counts could not be read.",
     "fix": "Retry with backoff.",
     "retryable": true
   },
   "SCANNING_SESSION_MODE": {
-    "title": "Scanning session mode",
-    "when": "Open the device in its session’s mode.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Session in another mode",
+    "when": "The device is open in a mode that differs from its session's.",
+    "fix": "Open the device in the session's mode.",
     "retryable": false
   },
   "SCANNING_SESSION_NOT_FOUND": {
     "title": "Scanning session not found",
-    "when": "Scanning session not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "No session with this id exists in this mode and organization.",
+    "fix": "Check the session id.",
     "retryable": false
   },
   "SCANNING_SESSION_OPEN": {
-    "title": "Scanning session open",
-    "when": "Scanning is already open.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Scanning already open",
+    "when": "The session is already open.",
+    "fix": "Do nothing; close it first to change how long it stays open.",
     "retryable": false
   },
   "SCANNING_SESSION_PAUSED": {
-    "title": "Scanning session paused",
-    "when": "This scanning session is paused.",
-    "fix": "Resume it in Scanning.",
+    "title": "Scanning paused",
+    "when": "The session is paused, so it takes no scans.",
+    "fix": "Resume the session, then scan again.",
     "retryable": false
   },
   "SCANNING_SESSION_SCOPE_INVALID": {
-    "title": "Scanning session scope invalid",
-    "when": "Correct this scanning session’s scope and settings before adding devices.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Session scope invalid",
+    "when": "The session's scope or settings are invalid, so devices cannot be added.",
+    "fix": "Correct the session's scope and settings, then add the device.",
     "retryable": false
   },
   "SCANNING_SESSION_SETTINGS_INVALID": {
-    "title": "Scanning session settings invalid",
-    "when": "Correct this scanning session’s settings first.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Session settings invalid",
+    "when": "The session's settings are invalid, so devices cannot open it.",
+    "fix": "Correct the session's settings, then retry.",
     "retryable": false
   },
   "SCAN_ACCESS_CHANGED": {
     "title": "Scan access changed",
-    "when": "Your access changed.",
-    "fix": "Reload and retry.",
+    "when": "The caller's access changed while the request ran.",
+    "fix": "Reload the session and send the request again.",
     "retryable": true
   },
   "SCAN_ADMIN_SETUP_REQUIRED": {
-    "title": "Scan admin setup required",
-    "when": "Choose your admin scanner setup.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Admin scanner setup required",
+    "when": "An admin must choose their admin scanner setup before scanning.",
+    "fix": "Choose the admin setup in the console, then retry.",
     "retryable": false
   },
   "SCAN_BODY_INVALID": {
     "title": "Scan body invalid",
     "when": "The request body is not valid JSON.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "fix": "Send a JSON body with Content-Type: application/json.",
     "retryable": false
   },
   "SCAN_CONFIG_CHANGED": {
@@ -1483,32 +1483,32 @@
   },
   "SCAN_COUNTS_UNAVAILABLE": {
     "title": "Scan counts unavailable",
-    "when": "Scanning counts are unavailable.",
+    "when": "The scan counts could not be read.",
     "fix": "Retry with backoff.",
     "retryable": true
   },
   "SCAN_CREDENTIAL_CHANGED": {
-    "title": "Scan credential changed",
-    "when": "The scanner credential changed.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Scanner credential changed",
+    "when": "The scanner's credential was rotated while its live connection was open.",
+    "fix": "Reconnect the scanner so it picks up the new credential.",
     "retryable": false
   },
   "SCAN_DISPLAY_PREVIEW_NOT_FOUND": {
-    "title": "Scan display preview not found",
-    "when": "Preview not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "title": "Display preview not found",
+    "when": "No scan display preview exists for this id.",
+    "fix": "Create the preview again and use its new id.",
     "retryable": false
   },
   "SCAN_EPOCHS_MISSING": {
-    "title": "Scan epochs missing",
-    "when": "Scan authority was not captured for this actor.",
+    "title": "Internal scan authority error",
+    "when": "The server read a scanner row without its authority epochs.",
     "fix": "Retry once; if it persists, send the requestId to support.",
-    "retryable": false
+    "retryable": true
   },
   "SCAN_EVENT_CHANGED": {
     "title": "Scan event changed",
-    "when": "The event templates changed.",
-    "fix": "Reload and try again.",
+    "when": "The event's templates or release changed while your request ran.",
+    "fix": "Fetch the event with GET /api/v1/scan/events and send your change again.",
     "retryable": true
   },
   "SCAN_EVENT_NOT_FOUND": {
@@ -1518,129 +1518,129 @@
     "retryable": false
   },
   "SCAN_EXPORT_RANGE": {
-    "title": "Scan export range",
-    "when": "Export up to 92 days at a time.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Export range too long",
+    "when": "The export covers more than 92 days.",
+    "fix": "Export up to 92 days per request.",
     "retryable": false
   },
   "SCAN_EXPORT_TOO_LARGE": {
-    "title": "Scan export too large",
-    "when": "Export up to 100,000 scans at a time.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Export too large",
+    "when": "The export holds more than 100,000 scans.",
+    "fix": "Narrow the date range or filters and export in parts.",
     "retryable": false
   },
   "SCAN_HISTORY_UNAVAILABLE": {
     "title": "Scan history unavailable",
-    "when": "Scan history is unavailable.",
-    "fix": "Try again.",
+    "when": "The scan history could not be read.",
+    "fix": "Retry with backoff.",
     "retryable": true
   },
   "SCAN_IN_PROGRESS": {
-    "title": "Scan in progress",
-    "when": "This scan is still being recorded.",
-    "fix": "Try again.",
+    "title": "Scan still recording",
+    "when": "An earlier request with this key is still being recorded.",
+    "fix": "Wait a moment and resend the identical request.",
     "retryable": true
   },
   "SCAN_KEY_REUSED": {
-    "title": "Scan key reused",
-    "when": "That request key was used for something else.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Request key reused",
+    "when": "This request key was already used for a different scan action.",
+    "fix": "Use a new unique request key for each action.",
     "retryable": false
   },
   "SCAN_LIVE_ORIGIN": {
-    "title": "Scan live origin",
-    "when": "Open the screen on this site.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Live screen on wrong origin",
+    "when": "The live scan screen was opened from another site.",
+    "fix": "Open the screen on the PassBook site.",
     "retryable": false
   },
   "SCAN_LOOKUP_DISABLED": {
-    "title": "Scan lookup disabled",
-    "when": "Lookup is disabled for this scanner.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Lookup disabled",
+    "when": "Lookup is turned off for this scanner.",
+    "fix": "Turn on lookup in the scanner's settings.",
     "retryable": false
   },
   "SCAN_MARK_OUT_INVALID": {
-    "title": "Scan mark out invalid",
-    "when": "That person cannot be marked out.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Cannot mark out",
+    "when": "The person cannot be marked out, for example they are not inside.",
+    "fix": "Check who is inside, then mark out someone who is.",
     "retryable": false
   },
   "SCAN_MODE_MISMATCH": {
     "title": "Scan mode mismatch",
-    "when": "… is in a different mode.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "when": "The scan, scanner or event is in a different mode (test or live).",
+    "fix": "Use a key and objects of the same mode.",
     "retryable": false
   },
   "SCAN_NOT_FOUND": {
     "title": "Scan not found",
-    "when": "Scan not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "No scan with this id exists for this scanner, or it cannot be undone from here.",
+    "fix": "Check the scan id and the scanner's mode.",
     "retryable": false
   },
   "SCAN_NO_SESSION": {
-    "title": "Scan no session",
-    "when": "Session totals are for Managers.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Scanner not in a session",
+    "when": "The scanner is not assigned to a scanning session.",
+    "fix": "Assign the scanner to a session in the admin console.",
     "retryable": false
   },
   "SCAN_OVERRIDE_FORBIDDEN": {
-    "title": "Scan override forbidden",
-    "when": "Full.",
-    "fix": "No one can let them in.",
+    "title": "Override not allowed",
+    "when": "This refusal cannot be overridden, such as a full event.",
+    "fix": "Do not retry; no one can let this person in.",
     "retryable": false
   },
   "SCAN_OVERRIDE_INVALID": {
-    "title": "Scan override invalid",
-    "when": "That scan cannot be let through.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Override not valid",
+    "when": "This scan cannot be let through.",
+    "fix": "Override only scans that were refused for an overridable reason.",
     "retryable": false
   },
   "SCAN_OVERRIDE_NOTE_CLOSED": {
-    "title": "Scan override note closed",
-    "when": "That note can no longer be added.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Override note closed",
+    "when": "The override's note can no longer be added.",
+    "fix": "Add the note when you override, not afterwards.",
     "retryable": false
   },
   "SCAN_OVERRIDE_TAKEN": {
-    "title": "Scan override taken",
-    "when": "Someone else already let them in.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Already overridden",
+    "when": "Someone else already let this person in.",
+    "fix": "Do nothing; check the scan's history.",
     "retryable": false
   },
   "SCAN_PASS_CHANGED": {
-    "title": "Scan pass changed",
-    "when": "The pass changed.",
-    "fix": "Scan again.",
-    "retryable": false
+    "title": "Pass changed during scan",
+    "when": "The pass changed between reading and recording the scan.",
+    "fix": "Scan the pass again.",
+    "retryable": true
   },
   "SCAN_SCOPE_NOT_ALLOWED": {
     "title": "Scan scope not allowed",
-    "when": "A scanner cannot choose what it scans.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "when": "A scanner sent a scope it is not allowed to choose.",
+    "fix": "Leave out the scope; a paired scanner uses its own.",
     "retryable": false
   },
   "SCAN_SCOPE_REQUIRED": {
     "title": "Scan scope required",
-    "when": "Choose an organization to scan for.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "when": "The request does not say which organization to scan for.",
+    "fix": "Send orgId, or use a key scoped to one organization.",
     "retryable": false
   },
   "SCAN_SEARCH_FORBIDDEN": {
-    "title": "Scan search forbidden",
-    "when": "Pass-name search is for administrators.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Name search not allowed",
+    "when": "Searching by pass name needs an administrator.",
+    "fix": "Search by pass id or code, or sign in as an administrator.",
     "retryable": false
   },
   "SCAN_SETTINGS_INVALID": {
-    "title": "Scan settings invalid",
-    "when": "Correct this scanner’s settings first.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Scanner settings invalid",
+    "when": "The scanner's saved settings fail validation.",
+    "fix": "Correct the settings named in issues, then retry.",
     "retryable": false
   },
   "SCAN_SETUP_CONFLICT": {
-    "title": "Scan setup conflict",
+    "title": "Template already scanned",
     "when": "Another session already scans this template.",
-    "fix": "Reload and try again.",
+    "fix": "Remove the template from the other session, or reuse that session.",
     "retryable": true
   },
   "SCAN_STAFF_CHANGED": {
@@ -1650,51 +1650,51 @@
     "retryable": true
   },
   "SCAN_STAFF_CURSOR": {
-    "title": "Scan staff cursor",
-    "when": "That page is no longer valid.",
-    "fix": "Reload the list.",
+    "title": "Staff cursor invalid",
+    "when": "The cursor is no longer valid for the staff list.",
+    "fix": "Drop the cursor and list again from the start.",
     "retryable": false
   },
   "SCAN_STAFF_NOT_FOUND": {
-    "title": "Scan staff not found",
-    "when": "Staff member not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "title": "Staff member not found",
+    "when": "No staff member with this id exists.",
+    "fix": "Check the id with the scanner's staff list.",
     "retryable": false
   },
   "SCAN_SUMMARY_SESSION_FORBIDDEN": {
-    "title": "Scan summary session forbidden",
-    "when": "Session totals are for Managers.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Session totals need a manager",
+    "when": "Only Managers can read session totals.",
+    "fix": "Sign in with a manager PIN.",
     "retryable": false
   },
   "SCAN_SURFACE_UNSUPPORTED": {
-    "title": "Scan surface unsupported",
+    "title": "Surface not supported",
     "when": "A terminal cannot be used as a display.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "fix": "Use a screen device for displays.",
     "retryable": false
   },
   "SCAN_TOO_MANY_MISSES": {
-    "title": "Scan too many misses",
-    "when": "Too many codes not found.",
-    "fix": "Wait a few minutes.",
+    "title": "Too many unknown codes",
+    "when": "The scanner read too many codes that match no pass.",
+    "fix": "Wait a few minutes, then scan again.",
     "retryable": true
   },
   "SCAN_TOO_MANY_OVERRIDES": {
-    "title": "Scan too many overrides",
-    "when": "Too many overrides this hour.",
-    "fix": "Wait a bit.",
+    "title": "Too many overrides",
+    "when": "The scanner reached its override limit for this hour.",
+    "fix": "Wait for the next hour, or ask a manager.",
     "retryable": true
   },
   "SCAN_UNDO_EXPIRED": {
-    "title": "Scan undo expired",
-    "when": "This scan is too old to undo.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Undo window passed",
+    "when": "The scan is too old to undo.",
+    "fix": "Correct the record by other means, such as marking the person out.",
     "retryable": false
   },
   "SCAN_UNDO_FORBIDDEN": {
-    "title": "Scan undo forbidden",
-    "when": "This scan cannot be undone by this operator.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Undo not allowed",
+    "when": "This operator cannot undo this scan.",
+    "fix": "Ask a manager, or the operator who made the scan, to undo it.",
     "retryable": false
   },
   "SCAN_WINDOW_INVALID": {
@@ -1704,15 +1704,15 @@
     "retryable": false
   },
   "SCREEN_ONLY": {
-    "title": "Screen only",
-    "when": "This device is a screen.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Device is a screen",
+    "when": "A screen device tried to scan or act.",
+    "fix": "Use a scanner device for scanning.",
     "retryable": false
   },
   "SCREEN_REQUIRED": {
-    "title": "Screen required",
-    "when": "Choose a screen view in Scanning.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Screen view required",
+    "when": "A live connection needs a device set to a screen view.",
+    "fix": "Choose a screen view for the device in Scanning.",
     "retryable": false
   },
   "SERIAL_TAKEN": {
@@ -1722,9 +1722,9 @@
     "retryable": false
   },
   "SESSION_OPEN_FORBIDDEN": {
-    "title": "Session open forbidden",
-    "when": "A manager must open this.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Manager must open",
+    "when": "Only a manager can open this session.",
+    "fix": "Sign in with a manager PIN, then open it.",
     "retryable": false
   },
   "SESSION_REQUIRED": {
@@ -1740,33 +1740,33 @@
     "retryable": true
   },
   "SQL_SIZE_BUDGET": {
-    "title": "Sql size budget",
-    "when": "Statement is … bytes (limit …).",
+    "title": "Internal statement too large",
+    "when": "A server database statement exceeded its size limit.",
     "fix": "Retry once; if it persists, send the requestId to support.",
-    "retryable": false
+    "retryable": true
   },
   "STAFF_NAME_TAKEN": {
     "title": "Staff name taken",
-    "when": "Another active staff member already has that name.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "Another active staff member already has this name.",
+    "fix": "Choose a different name.",
     "retryable": false
   },
   "STAFF_REQUIRED": {
-    "title": "Staff required",
-    "when": "Sign in to scan.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Staff sign-in required",
+    "when": "The scanner has no signed-in staff member.",
+    "fix": "Sign in with a staff PIN, then retry.",
     "retryable": false
   },
   "STAFF_SIGN_IN_DISABLED": {
-    "title": "Staff sign in disabled",
-    "when": "Staff sign-in is not enabled on this scanner.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Staff sign-in off",
+    "when": "Staff sign-in is not turned on for this scanner.",
+    "fix": "Turn on staff sign-in in the scanner's settings.",
     "retryable": false
   },
   "STAFF_SIGN_IN_UNAVAILABLE": {
-    "title": "Staff sign in unavailable",
-    "when": "Staff sign-in is only available on a paired scanner.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Staff sign-in needs a paired scanner",
+    "when": "Staff sign-in works only on a paired scanner.",
+    "fix": "Pair the scanner, then sign in.",
     "retryable": false
   },
   "STALE_CONTEXT": {
@@ -1813,68 +1813,68 @@
   },
   "TAGS_OFF": {
     "title": "Tags off",
-    "when": "Turn on tags in settings first.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "NFC tags are not turned on for the organization.",
+    "fix": "Turn on tags in the organization's settings.",
     "retryable": false
   },
   "TAG_ALREADY_ASSIGNED": {
     "title": "Tag already assigned",
-    "when": "The tag was assigned again.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "The tag was assigned to another pass while yours ran.",
+    "fix": "Fetch the tag and check its holder before reassigning.",
     "retryable": false
   },
   "TAG_APPROVAL_REQUIRED": {
-    "title": "Tag approval required",
-    "when": "A till cannot approve.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Manager approval required",
+    "when": "Binding this tag needs a manager's approval.",
+    "fix": "Have a manager approve it with their PIN.",
     "retryable": false
   },
   "TAG_ASSIGN_FORBIDDEN": {
-    "title": "Tag assign forbidden",
-    "when": "Assigning to a person is off on this scanner.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Tag assignment not allowed",
+    "when": "Assigning tags is off on this scanner, or the staff role is too low.",
+    "fix": "Turn on assigning in the scanner's settings, or sign in as Desk or above.",
     "retryable": false
   },
   "TAG_ASSURANCE_LOW": {
-    "title": "Tag assurance low",
-    "when": "Pass not found.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Secure tag required",
+    "when": "The pass needs a tag with stronger security than this one.",
+    "fix": "Assign a secure tag type to the pass.",
     "retryable": false
   },
   "TAG_CARD_AMBIGUOUS": {
-    "title": "Tag card ambiguous",
-    "when": "This scanner does not take that pass.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Several passes match",
+    "when": "The card matches more than one pass.",
+    "fix": "Scan the card again, or assign the tag to a pass directly.",
     "retryable": false
   },
   "TAG_CHECK_FAILED": {
     "title": "Tag check failed",
-    "when": "The tag failed its check.",
-    "fix": "Use another tag.",
+    "when": "The tag failed its authenticity check.",
+    "fix": "Use a different tag.",
     "retryable": false
   },
   "TAG_HOLDER_CHANGED": {
     "title": "Tag holder changed",
-    "when": "Tag not found.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "The tag's holder changed while your request ran.",
+    "fix": "Fetch the tag and send the request again.",
     "retryable": false
   },
   "TAG_KEY_UNREADABLE": {
     "title": "Tag key unreadable",
-    "when": "A tag key could not be read.",
+    "when": "A stored tag key could not be decrypted.",
     "fix": "Retry once; if it persists, send the requestId to support.",
-    "retryable": false
+    "retryable": true
   },
   "TAG_LIMIT": {
-    "title": "Tag limit",
-    "when": "This organization has the most tags allowed.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Tag limit reached",
+    "when": "The organization already has the most tags its plan allows.",
+    "fix": "Release unused tags, or ask the platform owner to raise the limit.",
     "retryable": false
   },
   "TAG_NOT_ASSIGNED": {
     "title": "Tag not assigned",
-    "when": "The tag is not assigned.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "The tag is not assigned to any pass.",
+    "fix": "Assign the tag before this action.",
     "retryable": false
   },
   "TAG_NOT_FOUND": {
@@ -1884,81 +1884,81 @@
     "retryable": false
   },
   "TAG_NO_ACCOUNT": {
-    "title": "Tag no account",
-    "when": "This person has no account yet.",
+    "title": "Holder has no account",
+    "when": "The person has no account to bind the tag to yet.",
     "fix": "Assign the tag to the pass instead.",
     "retryable": false
   },
   "TAG_PASS_NOT_ACCEPTED": {
-    "title": "Tag pass not accepted",
-    "when": "This scanner does not take that pass.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Pass not accepted here",
+    "when": "The scanner does not accept this pass.",
+    "fix": "Add the pass's template or event to the scanner's session.",
     "retryable": false
   },
   "TAG_POOL_UNSUPPORTED": {
-    "title": "Tag pool unsupported",
-    "when": "Loaner tags are not available.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Loaner tags unavailable",
+    "when": "Loaner tag pools are not available yet.",
+    "fix": "Assign the tag to a pass or person instead.",
     "retryable": false
   },
   "TAG_REQUEST_BUSY": {
-    "title": "Tag request busy",
-    "when": "A tag request is already open.",
-    "fix": "Cancel it or wait.",
+    "title": "Tag request open",
+    "when": "A tag request is already open for this pass.",
+    "fix": "Cancel the open request or wait for it to finish.",
     "retryable": false
   },
   "TAG_REQUEST_EXPIRED": {
     "title": "Tag request expired",
-    "when": "This request is over.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "The tag request timed out before a scanner finished it.",
+    "fix": "Create a new tag request.",
     "retryable": false
   },
   "TAG_SCANNER_ONLY": {
-    "title": "Tag scanner only",
-    "when": "Assign tags on a scanner.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Tags assign on a scanner",
+    "when": "Tag assignment was attempted outside a scanner.",
+    "fix": "Assign the tag from a paired scanner.",
     "retryable": false
   },
   "TAG_SUN_REPLAY": {
-    "title": "Tag sun replay",
-    "when": "The request ran into tag sun replay.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Tag read replayed",
+    "when": "The tag's one-time read counter was already used, so the read looks copied.",
+    "fix": "Tap the tag again for a fresh read.",
     "retryable": false
   },
   "TAG_SYSTEM_DISABLED": {
-    "title": "Tag system disabled",
-    "when": "A tag type with this name exists.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Tag system unavailable",
+    "when": "The tag system is not available for this organization.",
+    "fix": "Pick a tag system that is available, or contact the platform owner.",
     "retryable": false
   },
   "TAG_TYPE_ARCHIVED": {
     "title": "Tag type archived",
-    "when": "This tag type is archived.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "The tag type is archived and cannot be used or changed.",
+    "fix": "Restore the tag type or use another.",
     "retryable": false
   },
   "TAG_TYPE_CHANGED": {
     "title": "Tag type changed",
-    "when": "A tag type with this name exists.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "Another request changed this tag type while yours ran.",
+    "fix": "Fetch the tag type and send your change again.",
     "retryable": false
   },
   "TAG_TYPE_NAME_TAKEN": {
     "title": "Tag type name taken",
-    "when": "A tag type with this name exists.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "Another tag type in the organization has this name.",
+    "fix": "Choose a different name.",
     "retryable": false
   },
   "TAG_TYPE_NOT_FOUND": {
     "title": "Tag type not found",
-    "when": "Tag type not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "No tag type with this id exists in this mode and organization.",
+    "fix": "Check the tag type id.",
     "retryable": false
   },
   "TAG_UID_RANDOM": {
-    "title": "Tag uid random",
-    "when": "This tag changes its ID.",
-    "fix": "Try another tag.",
+    "title": "Tag randomizes its ID",
+    "when": "The tag changes its ID on each read, so it cannot be registered.",
+    "fix": "Use a tag with a fixed ID.",
     "retryable": false
   },
   "TAG_UNDO_EXPIRED": {
@@ -1968,15 +1968,15 @@
     "retryable": false
   },
   "TAG_UNDO_FORBIDDEN": {
-    "title": "Tag undo forbidden",
-    "when": "Undo is on the scanner that assigned the tag.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Undo on another scanner",
+    "when": "Only the scanner that assigned the tag can undo it.",
+    "fix": "Undo on that scanner, or have an admin remove the tag.",
     "retryable": false
   },
   "TAG_UNREADABLE": {
     "title": "Tag unreadable",
-    "when": "This tag changes its ID.",
-    "fix": "Try another tag.",
+    "when": "The scanner could not read the tag.",
+    "fix": "Hold the tag steady, or use another tag.",
     "retryable": false
   },
   "TEMPLATE_ARCHIVED": {
@@ -2065,8 +2065,8 @@
   },
   "TEMPLATE_NOT_RELEASED": {
     "title": "Template not released",
-    "when": "Release the template first.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "The template has no approved release for scanning.",
+    "fix": "Release the template with POST /api/v1/templates/{id}/releases.",
     "retryable": false
   },
   "TEMPLATE_NOT_SHAREABLE": {
@@ -2112,9 +2112,9 @@
     "retryable": false
   },
   "TEMPLATE_SELF_APPROVAL": {
-    "title": "Template self approval",
-    "when": "The author cannot approve this candidate.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Authors cannot approve",
+    "when": "The candidate's author tried to approve it.",
+    "fix": "Have a different member approve the candidate.",
     "retryable": false
   },
   "TEMPLATE_SLUG_CONFLICT": {
@@ -2149,14 +2149,14 @@
   },
   "TERMINAL_NOT_FOUND": {
     "title": "Terminal not found",
-    "when": "Terminal not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "The terminal named in the device header does not exist in this organization.",
+    "fix": "Use a terminal id from the key's terminals.",
     "retryable": false
   },
   "TERMINAL_ONLY": {
-    "title": "Terminal only",
-    "when": "A key acts only as a terminal.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Key acts as a terminal",
+    "when": "A scan key can act only as one of its terminals.",
+    "fix": "Name one of the key's terminals in the device header.",
     "retryable": false
   },
   "TERM_MANAGED": {
@@ -2215,14 +2215,14 @@
   },
   "UNDO_SUPERSEDED": {
     "title": "Undo superseded",
-    "when": "Scan not found.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "A later scan replaced this one.",
+    "fix": "Undo the latest scan instead.",
     "retryable": false
   },
   "UNDO_UNCONFIRMED": {
-    "title": "Undo unconfirmed",
-    "when": "The undo could not be confirmed.",
-    "fix": "Retry once; if it persists, send the requestId to support.",
+    "title": "Undo not confirmed",
+    "when": "The server could not confirm that the undo was written.",
+    "fix": "Check the scan's state, then retry once; if it persists, send the requestId to support.",
     "retryable": false
   },
   "UNKNOWN_TEMPLATE": {
@@ -2232,9 +2232,9 @@
     "retryable": false
   },
   "UNLOCK_REQUIRED": {
-    "title": "Unlock required",
-    "when": "Enter a staff PIN to switch back.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Staff PIN required",
+    "when": "Switching back from this role needs a staff PIN.",
+    "fix": "Enter a staff PIN.",
     "retryable": false
   },
   "UNSAFE_URL": {
@@ -2340,147 +2340,147 @@
     "retryable": false
   },
   "WALLET_ACCOUNT_CONFLICT": {
-    "title": "Wallet account conflict",
-    "when": "The wallet credential cannot be checked.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Wallet account changed",
+    "when": "The wallet credential or enrolment changed while your request ran.",
+    "fix": "Fetch it again and send your change.",
     "retryable": false
   },
   "WALLET_ACCOUNT_INSTANCES_ACTIVE": {
-    "title": "Wallet account instances active",
-    "when": "Retire all provider instances before revoking this account.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Wallet account still in use",
+    "when": "Provider instances are still active under this account.",
+    "fix": "Retire all provider instances, then revoke the account.",
     "retryable": false
   },
   "WALLET_ACCOUNT_MOVED": {
     "title": "Wallet account moved",
-    "when": "The request ran into wallet account moved.",
-    "fix": "Create the resource again.",
+    "when": "The wallet account was moved and this id no longer applies.",
+    "fix": "List accounts with GET /api/v1/wallet-providers/accounts and use the current one.",
     "retryable": false
   },
   "WALLET_ART_MISMATCH": {
-    "title": "Wallet art mismatch",
-    "when": "… cannot be cut to the size … needs.",
-    "fix": "Replace the image.",
+    "title": "Wallet art cannot be resized",
+    "when": "An image cannot be cut to the size the wallet provider needs.",
+    "fix": "Replace the image with one at the size shown in issues.",
     "retryable": false
   },
   "WALLET_CREDENTIALS_INVALID": {
     "title": "Wallet credentials invalid",
-    "when": "Wallet provider settings moved to credentials and enrolments.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "when": "The provider credentials failed validation.",
+    "fix": "Fix the credentials named in issues and send them again.",
     "retryable": false
   },
   "WALLET_CREDENTIALS_UNAVAILABLE": {
     "title": "Wallet credentials unavailable",
-    "when": "Wallet provider credentials are unavailable.",
+    "when": "The stored provider credentials could not be loaded.",
     "fix": "Retry with backoff.",
     "retryable": true
   },
   "WALLET_ENROLMENT_HELD": {
-    "title": "Wallet enrolment held",
-    "when": "The wallet account changed.",
-    "fix": "Reload and retry.",
+    "title": "Enrolment held by platform",
+    "when": "The platform owner holds this enrolment, so it cannot change.",
+    "fix": "Ask the platform owner to release the hold.",
     "retryable": true
   },
   "WALLET_ENROLMENT_PREREQUISITE": {
-    "title": "Wallet enrolment prerequisite",
-    "when": "Finish the missing steps first.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Enrolment steps missing",
+    "when": "The enrolment needs earlier steps finished first.",
+    "fix": "Finish the steps listed in the response, then retry.",
     "retryable": false
   },
   "WALLET_IDENTITY_IMMUTABLE": {
-    "title": "Wallet identity immutable",
-    "when": "A wallet account issuer cannot be changed.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Provider identity cannot change",
+    "when": "The issuer or identity of a wallet account cannot be edited.",
+    "fix": "Create a new account for the new identity.",
     "retryable": false
   },
   "WALLET_IMAGE_NOT_FOUND": {
     "title": "Wallet image not found",
-    "when": "Image not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "No stored wallet image matches this hash.",
+    "fix": "Rebuild the wallet projection and use the new image URL.",
     "retryable": false
   },
   "WALLET_MODE_MISMATCH": {
     "title": "Wallet mode mismatch",
-    "when": "The requested mode does not match the session.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "when": "The requested mode differs from the key's mode.",
+    "fix": "Use a key of the same mode as the request.",
     "retryable": false
   },
   "WALLET_OFFER_NOT_FOUND": {
     "title": "Wallet offer not found",
-    "when": "This wallet offer is not available.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "The wallet offer link is not valid anymore.",
+    "fix": "Request a new offer for the pass.",
     "retryable": false
   },
   "WALLET_OP_ACTOR": {
-    "title": "Wallet op actor",
-    "when": "The request ran into wallet op actor.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Wallet operation not permitted",
+    "when": "The actor that queued the operation lost access.",
+    "fix": "Queue the operation again with a key that has access.",
     "retryable": false
   },
   "WALLET_OP_CONFIG": {
-    "title": "Wallet op config",
-    "when": "The request ran into wallet op config.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Wallet operation outdated",
+    "when": "The wallet configuration changed after the operation was queued.",
+    "fix": "Queue the operation again.",
     "retryable": false
   },
   "WALLET_OP_LINEAGE": {
-    "title": "Wallet op lineage",
-    "when": "The request ran into wallet op lineage.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Wallet operation outdated",
+    "when": "The pass or account changed after the operation was queued.",
+    "fix": "Queue the operation again.",
     "retryable": false
   },
   "WALLET_OP_ORG": {
-    "title": "Wallet op org",
-    "when": "The request ran into wallet op org.",
-    "fix": "Use a key with the needed scope and mode, or ask an organization admin.",
+    "title": "Wallet operation wrong organization",
+    "when": "The operation does not belong to the caller's organization.",
+    "fix": "Use a key scoped to the organization that queued it.",
     "retryable": false
   },
   "WALLET_OP_RELEASE": {
-    "title": "Wallet op release",
-    "when": "The request ran into wallet op release.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Wallet operation outdated",
+    "when": "The template release changed after the operation was queued.",
+    "fix": "Queue the operation again.",
     "retryable": false
   },
   "WALLET_OP_STALE": {
-    "title": "Wallet op stale",
-    "when": "The request ran into wallet op stale.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Wallet operation outdated",
+    "when": "The pass changed after the operation was queued.",
+    "fix": "Queue the operation again.",
     "retryable": false
   },
   "WALLET_PROJECTION_BLOCKED": {
     "title": "Wallet projection blocked",
-    "when": "The request ran into wallet projection blocked.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "The template cannot be projected to the provider as it stands.",
+    "fix": "Fix the problems the response lists and build the projection again.",
     "retryable": false
   },
   "WALLET_PROJECTION_CONFLICT": {
-    "title": "Wallet projection conflict",
-    "when": "The wallet projection, source release or provider account changed.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Wallet projection changed",
+    "when": "The projection, source release or provider account changed while your request ran.",
+    "fix": "Fetch the candidate again and send your request.",
     "retryable": false
   },
   "WALLET_PROJECTION_NOT_FOUND": {
     "title": "Wallet projection not found",
-    "when": "Wallet projection candidate not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "No projection candidate with this id exists.",
+    "fix": "Check the id and create a candidate if it expired.",
     "retryable": false
   },
   "WALLET_PROJECTION_SCHEMA": {
-    "title": "Wallet projection schema",
-    "when": "Create a new candidate: Google releases use the compiled wallet format.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Projection format outdated",
+    "when": "The candidate uses an older wallet format than the Google release needs.",
+    "fix": "Create a new candidate from the current release.",
     "retryable": false
   },
   "WALLET_PROJECTION_UNSUPPORTED": {
-    "title": "Wallet projection unsupported",
-    "when": "This template contains wallet semantics that are not supported by the selected native projection.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Template not supported by the provider",
+    "when": "The template uses wallet features the provider's native format cannot show.",
+    "fix": "Remove the unsupported features or release without this provider.",
     "retryable": false
   },
   "WALLET_VERIFICATION_CONFLICT": {
-    "title": "Wallet verification conflict",
-    "when": "A newer verification is in progress.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "title": "Newer verification running",
+    "when": "A newer account verification is already in progress.",
+    "fix": "Wait for it to finish, then verify again if needed.",
     "retryable": false
   },
   "WEBHOOK_ALREADY_FINISHED": {
@@ -2635,44 +2635,44 @@
   },
   "ZONE_ARCHIVED": {
     "title": "Zone archived",
-    "when": "This zone is archived.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "when": "The zone is archived.",
+    "fix": "Use a zone that is not archived.",
     "retryable": false
   },
   "ZONE_CYCLE": {
-    "title": "Zone cycle",
-    "when": "A zone cannot sit inside itself.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Zone inside itself",
+    "when": "The new parent is inside the zone's own subtree.",
+    "fix": "Choose a parent outside the zone.",
     "retryable": false
   },
   "ZONE_DEPTH": {
-    "title": "Zone depth",
-    "when": "A zone cannot sit inside itself.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Zones nested too deep",
+    "when": "Zones nest three levels deep at most.",
+    "fix": "Move the zone higher in the tree.",
     "retryable": false
   },
   "ZONE_EVENT_SESSION": {
-    "title": "Zone event session",
-    "when": "An event session takes no zones.",
-    "fix": "Fix the fields listed in issues and send it again.",
+    "title": "Event sessions take no zones",
+    "when": "The session tracks an event, not zones.",
+    "fix": "Use a zone session, or remove the zones.",
     "retryable": false
   },
   "ZONE_KEY_TAKEN": {
     "title": "Zone key taken",
-    "when": "That key is already in use.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "Another zone already uses this key.",
+    "fix": "Choose a different key.",
     "retryable": false
   },
   "ZONE_NAME_TAKEN": {
     "title": "Zone name taken",
-    "when": "That key is already in use.",
-    "fix": "Fetch the current resource, then send the change again.",
+    "when": "Another zone already has this name.",
+    "fix": "Choose a different name.",
     "retryable": false
   },
   "ZONE_NOT_FOUND": {
     "title": "Zone not found",
-    "when": "Zone not found.",
-    "fix": "Check the id, mode and organization of the key.",
+    "when": "No zone with this id exists in this mode and organization.",
+    "fix": "Check the zone id.",
     "retryable": false
   }
 }
