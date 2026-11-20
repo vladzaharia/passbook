@@ -17,73 +17,69 @@ export const ScanSurfaceSchema = z.enum(['phone', 'operator', 'desk', 'customer'
 export type ScanSurface = z.infer<typeof ScanSurfaceSchema>;
 export const ScanSurfaceChoiceSchema = z.enum(['auto', 'phone', 'operator', 'desk', 'customer']);
 /** Native platform capabilities supplement browser-observable device inputs. */
-export const NativeScannerCapabilitiesSchema = z
-  .strictObject({
-    platform: z.enum(['ios', 'android']),
-    appVersion: z.string().max(32),
-    camera: z.strictObject({
-      available: z.boolean(),
-      permission: z.enum(['unknown', 'prompt', 'granted', 'denied', 'restricted', 'unavailable']),
-    }),
-    keyboard: z.strictObject({
-      supported: z.boolean(),
-      connected: z.boolean().nullable(),
-      connectionObservable: z.boolean(),
-    }),
-    nfc: z.strictObject({
-      available: z.boolean(),
-      reading: z.boolean(),
-      /** The app reads tags without a `tagRead` request (wire v2). */
-      continuous: z.boolean().optional(),
-      formats: z.array(z.enum(['ndef', 'wallet-vas', 'tag-uid', 'tag-sun'])).max(4),
-    }),
-    /** The shell plays `{op:'haptic', pattern}` (wire v1). */
-    haptics: z.boolean().optional(),
-    vas: z.strictObject({
-      deviceSupported: z.boolean(),
-      available: z.boolean(),
-      reader: z.enum(['proximityReader', 'android-native', 'none']),
-      reason: z.string().max(240),
-    }),
-    externalReader: z.strictObject({
-      mode: z.enum(['keyboard', 'unknown']),
-      connected: z.boolean().nullable(),
-    }),
-    customerDisplay: z.strictObject({
-      supported: z.boolean(),
-      available: z.boolean(),
-      active: z.boolean(),
-    }),
-    layout: z
-      .strictObject({
-        posture: z.enum(['unknown', 'folded', 'unfolded', 'half-folded']),
-        division: z
-          .strictObject({
-            x: z.number().min(0).max(32768),
-            y: z.number().min(0).max(32768),
-            width: z.number().min(0).max(32768),
-            height: z.number().min(0).max(32768),
-          })
-          .nullable(),
-      })
-      .optional(),
-  })
-  .meta({ id: 'NativeScannerCapabilities' });
+export const NativeScannerCapabilitiesSchema = z.strictObject({
+  platform: z.enum(['ios', 'android']),
+  appVersion: z.string().max(32),
+  camera: z.strictObject({
+    available: z.boolean(),
+    permission: z.enum(['unknown', 'prompt', 'granted', 'denied', 'restricted', 'unavailable']),
+  }),
+  keyboard: z.strictObject({
+    supported: z.boolean(),
+    connected: z.boolean().nullable(),
+    connectionObservable: z.boolean(),
+  }),
+  nfc: z.strictObject({
+    available: z.boolean(),
+    reading: z.boolean(),
+    /** The app reads tags without a `tagRead` request (wire v2). */
+    continuous: z.boolean().optional(),
+    formats: z.array(z.enum(['ndef', 'wallet-vas', 'tag-uid', 'tag-sun'])).max(4),
+  }),
+  /** The shell plays `{op:'haptic', pattern}` (wire v1). */
+  haptics: z.boolean().optional(),
+  vas: z.strictObject({
+    deviceSupported: z.boolean(),
+    available: z.boolean(),
+    reader: z.enum(['proximityReader', 'android-native', 'none']),
+    reason: z.string().max(240),
+  }),
+  externalReader: z.strictObject({
+    mode: z.enum(['keyboard', 'unknown']),
+    connected: z.boolean().nullable(),
+  }),
+  customerDisplay: z.strictObject({
+    supported: z.boolean(),
+    available: z.boolean(),
+    active: z.boolean(),
+  }),
+  layout: z
+    .strictObject({
+      posture: z.enum(['unknown', 'folded', 'unfolded', 'half-folded']),
+      division: z
+        .strictObject({
+          x: z.number().min(0).max(32768),
+          y: z.number().min(0).max(32768),
+          width: z.number().min(0).max(32768),
+          height: z.number().min(0).max(32768),
+        })
+        .nullable(),
+    })
+    .optional(),
+});
 export type NativeScannerCapabilities = z.infer<typeof NativeScannerCapabilitiesSchema>;
 
-export const ScanDeviceCapabilitiesSchema = z
-  .strictObject({
-    width: z.number().int().min(1).max(32768),
-    height: z.number().int().min(1).max(32768),
-    touch: z.boolean(),
-    camera: z.enum(['unknown', 'available', 'unavailable']),
-    keyboard: z.boolean(),
-    nativeBarcode: z.boolean(),
-    native: NativeScannerCapabilitiesSchema.optional(),
-    surfaces: z.array(ScanSurfaceSchema).min(1).max(4),
-    preferred: ScanSurfaceSchema,
-  })
-  .meta({ id: 'ScanDeviceCapabilities' });
+export const ScanDeviceCapabilitiesSchema = z.strictObject({
+  width: z.number().int().min(1).max(32768),
+  height: z.number().int().min(1).max(32768),
+  touch: z.boolean(),
+  camera: z.enum(['unknown', 'available', 'unavailable']),
+  keyboard: z.boolean(),
+  nativeBarcode: z.boolean(),
+  native: NativeScannerCapabilitiesSchema.optional(),
+  surfaces: z.array(ScanSurfaceSchema).min(1).max(4),
+  preferred: ScanSurfaceSchema,
+});
 export type ScanDeviceCapabilities = z.infer<typeof ScanDeviceCapabilitiesSchema>;
 
 /** Admission, staff rights, accepted passes and time zone always belong to the session. */
@@ -170,33 +166,31 @@ export const SessionWindowSchema = z.object({
   closesAt: TimestampSchema.nullable(),
 });
 export type SessionWindow = z.infer<typeof SessionWindowSchema>;
-export const ScanningSessionSchema = z
-  .object({
-    id: IdSchema,
-    orgId: IdSchema,
-    orgName: z.string(),
-    mode: ModeSchema,
-    name: PlainLineSchema(80),
-    status: ScanningSessionStatusSchema,
-    accepts: AdmitsSchema.nullable(),
-    settings: ScanningSessionSettingsSchema,
-    /** Access zones this session checks. Absent from servers that predate zones. */
-    zoneIds: ZoneIdsSchema.optional(),
-    timeZone: TimeZoneSchema,
-    /** Absent from servers that predate session hours; null: always open. */
-    hours: SessionHoursSchema.nullable().optional(),
-    /** The stored schedule no longer parses, so the session stays closed until it is saved again. */
-    hoursInvalid: z.literal(true).optional(),
-    /** The hold in force, if any. */
-    hold: SessionHoldSchema.nullable().optional(),
-    window: SessionWindowSchema.optional(),
-    createdAt: TimestampSchema,
-    updatedAt: TimestampSchema,
-    deviceCount: z.number().int(),
-    onlineCount: z.number().int(),
-    today: z.number().int(),
-  })
-  .meta({ id: 'ScanningSession' });
+export const ScanningSessionSchema = z.object({
+  id: IdSchema,
+  orgId: IdSchema,
+  orgName: z.string(),
+  mode: ModeSchema,
+  name: PlainLineSchema(80),
+  status: ScanningSessionStatusSchema,
+  accepts: AdmitsSchema.nullable(),
+  settings: ScanningSessionSettingsSchema,
+  /** Access zones this session checks. Absent from servers that predate zones. */
+  zoneIds: ZoneIdsSchema.optional(),
+  timeZone: TimeZoneSchema,
+  /** Absent from servers that predate session hours; null: always open. */
+  hours: SessionHoursSchema.nullable().optional(),
+  /** The stored schedule no longer parses, so the session stays closed until it is saved again. */
+  hoursInvalid: z.literal(true).optional(),
+  /** The hold in force, if any. */
+  hold: SessionHoldSchema.nullable().optional(),
+  window: SessionWindowSchema.optional(),
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema,
+  deviceCount: z.number().int(),
+  onlineCount: z.number().int(),
+  today: z.number().int(),
+});
 export type ScanningSession = z.infer<typeof ScanningSessionSchema>;
 export const ScanningSessionListSchema = pageOf(ScanningSessionSchema);
 export const ScanningSessionQuerySchema = PageQuerySchema.extend({ orgId: IdSchema.optional() });
@@ -236,49 +230,45 @@ export const ScanSessionOpenNowSchema = z.strictObject({
   approval: ScanApprovalSchema.optional(),
 });
 export const ScanSessionOpenedSchema = z.object({ window: SessionWindowSchema });
-export const ScanningDeviceSchema = z
-  .object({
-    id: IdSchema,
-    sessionId: IdSchema,
-    name: z.string(),
-    surface: ScanSurfaceChoiceSchema,
-    effectiveSurface: ScanSurfaceSchema,
-    overrides: ScanDeviceOverridesSchema,
-    settings: ScannerSettingsSchema,
-    capabilities: ScanDeviceCapabilitiesSchema.nullable(),
-    reportedAt: TimestampSchema.nullable(),
-    paired: z.boolean(),
-    online: z.boolean(),
-    revoked: z.boolean(),
-    lastSeenAt: TimestampSchema.nullable(),
-    updatedAt: TimestampSchema,
-    signIn: z.enum(['paired', 'admin']),
-    adminName: z.string().nullable(),
-  })
-  .meta({ id: 'ScanningDevice' });
+export const ScanningDeviceSchema = z.object({
+  id: IdSchema,
+  sessionId: IdSchema,
+  name: z.string(),
+  surface: ScanSurfaceChoiceSchema,
+  effectiveSurface: ScanSurfaceSchema,
+  overrides: ScanDeviceOverridesSchema,
+  settings: ScannerSettingsSchema,
+  capabilities: ScanDeviceCapabilitiesSchema.nullable(),
+  reportedAt: TimestampSchema.nullable(),
+  paired: z.boolean(),
+  online: z.boolean(),
+  revoked: z.boolean(),
+  lastSeenAt: TimestampSchema.nullable(),
+  updatedAt: TimestampSchema,
+  signIn: z.enum(['paired', 'admin']),
+  adminName: z.string().nullable(),
+});
 export type ScanningDevice = z.infer<typeof ScanningDeviceSchema>;
-export const SessionActivitySchema = z
-  .object({
-    items: z
-      .array(
-        z.object({
-          id: IdSchema,
-          at: TimestampSchema,
-          deviceId: IdSchema,
-          deviceName: z.string(),
-          passId: IdSchema.nullable(),
-          title: z.string().nullable(),
-          outcome: z.enum(['ok', 'heads_up', 'refused', 'undone']),
-          direction: z.enum(['in', 'out']).nullable(),
-        }),
-      )
-      .max(20),
-  })
-  .meta({ id: 'SessionActivity' });
+export const SessionActivitySchema = z.object({
+  items: z
+    .array(
+      z.object({
+        id: IdSchema,
+        at: TimestampSchema,
+        deviceId: IdSchema,
+        deviceName: z.string(),
+        passId: IdSchema.nullable(),
+        title: z.string().nullable(),
+        outcome: z.enum(['ok', 'heads_up', 'refused', 'undone']),
+        direction: z.enum(['in', 'out']).nullable(),
+      }),
+    )
+    .max(20),
+});
 export const ScanningSessionDetailSchema = ScanningSessionSchema.extend({
   devices: z.array(ScanningDeviceSchema),
   activity: SessionActivitySchema.shape.items.default([]),
-}).meta({ id: 'ScanningSessionDetail' });
+});
 export const CreateScanningDeviceSchema = z.strictObject({
   name: PlainLineSchema(40),
   surface: ScanSurfaceChoiceSchema.default('auto'),
@@ -298,17 +288,15 @@ export const DevicePairingSchema = z.object({
 });
 export const CreatedScanningDeviceSchema = ScanningDeviceSchema.extend({
   pairing: DevicePairingSchema.nullable(),
-}).meta({ id: 'CreatedScanningDevice' });
+});
 export const JoinAdminScanningSessionSchema = z.strictObject({
   sessionId: IdSchema,
   deviceKey: z.uuid(),
 });
-export const ScanWorkspaceSchema = z
-  .object({
-    session: ScanningSessionSchema,
-    device: ScanningDeviceSchema,
-  })
-  .meta({ id: 'ScanWorkspace' });
+export const ScanWorkspaceSchema = z.object({
+  session: ScanningSessionSchema,
+  device: ScanningDeviceSchema,
+});
 export type ScanWorkspace = z.infer<typeof ScanWorkspaceSchema>;
 export const ReportScanDeviceSchema = z.object({
   capabilities: ScanDeviceCapabilitiesSchema,

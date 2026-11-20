@@ -8,6 +8,7 @@ import { authorityUnproven, type RouteAuth, requireCaller } from './auth.ts';
 import { defaultBodyLimit } from './body-limit.ts';
 import type { AppBindings } from './context.ts';
 import { AppError } from './errors.ts';
+import './openapi-names.ts';
 import { operationSecurity, scopesForMethod } from './openapi-security.ts';
 
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';

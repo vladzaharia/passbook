@@ -24,19 +24,17 @@ export const TimestampSchema = z.number().int().nonnegative();
 export const JsonSchema = z.any() as z.ZodType<Json>;
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
-export const ProblemSchema = z
-  .object({
-    type: z.string(),
-    title: z.string(),
-    status: z.number().int(),
-    code: z.string(),
-    detail: z.string(),
-    requestId: z.string().optional(),
-    issues: z
-      .array(z.object({ path: z.string(), message: z.string(), code: z.string().optional() }))
-      .optional(),
-  })
-  .meta({ id: 'Problem' });
+export const ProblemSchema = z.object({
+  type: z.string(),
+  title: z.string(),
+  status: z.number().int(),
+  code: z.string(),
+  detail: z.string(),
+  requestId: z.string().optional(),
+  issues: z
+    .array(z.object({ path: z.string(), message: z.string(), code: z.string().optional() }))
+    .optional(),
+});
 export type ProblemDto = z.infer<typeof ProblemSchema>;
 
 export const PageQuerySchema = z.object({
