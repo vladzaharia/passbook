@@ -228,6 +228,7 @@ export async function keyAuthOf(
       : held,
     mode: row.mode,
     ...(row.restricted === 1 ? { limited: true as const } : {}),
+    ...(row.org_kind === 'developer' ? { orgKind: 'developer' as const } : {}),
   };
   rememberApiTier(auth, tier);
   return auth;

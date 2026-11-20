@@ -103,7 +103,10 @@ export const RequestLogQuerySchema = z.object({
   cursor: z.string().max(512).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
-export const RequestLogPageSchema = pageOf(RequestLogEntrySchema);
+/** `capped`: the sandbox's log is full for this hour (2,000 rows) or in all (20,000), so newer calls are not recorded. */
+export const RequestLogPageSchema = pageOf(RequestLogEntrySchema).extend({
+  capped: z.enum(['hour', 'total']).nullable(),
+});
 
 /** The "Your API" rail: the sandbox key's mode, scopes and tier, and the calls of the last hour. */
 export const ApiRailSchema = z.object({

@@ -51,14 +51,8 @@ describe('/developers/status', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('application/json');
     const body = (await res.json()) as { components: { id: string }[] };
-    expect(body.components.map((c) => c.id)).toEqual([
-      'api',
-      'apple_push',
-      'email',
-      'webhooks',
-      'google',
-      'samsung',
-    ]);
+    expect(body.components.map((c) => c.id)).toEqual(['api', 'apple_push', 'email', 'webhooks']);
+    // Google and Samsung are listed only once a platform credential exists.
     expect(Object.keys(body).sort()).toEqual(['checkedAt', 'components', 'incidents', 'overall']);
   });
 });

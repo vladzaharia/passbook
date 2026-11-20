@@ -27057,11 +27057,23 @@
                         "string",
                         "null"
                       ]
+                    },
+                    "capped": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "hour",
+                        "total",
+                        null
+                      ]
                     }
                   },
                   "required": [
                     "items",
-                    "nextCursor"
+                    "nextCursor",
+                    "capped"
                   ]
                 }
               }

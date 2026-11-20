@@ -36,10 +36,8 @@ export interface NewLog {
   method: string;
   route: string | null;
   path: string;
-  /** The query with values redacted: kept for a developer Test call. */
+  /** The query with values redacted. */
   query: string | null;
-  /** The query's parameter names alone: what every other call keeps. */
-  queryKeys: string | null;
   status: number;
   code: string | null;
   durationMs: number;
@@ -48,42 +46,65 @@ export interface NewLog {
   responseBody: string | null;
 }
 
+export const HOUR_ROWS_CAP = 2000;
+export const TOTAL_ROWS_CAP = 20_000;
+
 /**
- * The one write of a request. Bodies and query values are kept only when the org is a developer org and the call
- * was Test: the SELECT decides that from the org row, so a body for any other call is never bound to a column, and
- * the table's triggers refuse one anyway.
+ * The one write of a request, for a developer org's Test call only: the SELECT reads the org row (`kind =
+ * 'developer'`) and the sandbox's row budget, so a Live call, a real org's call, or a sandbox over its hourly or
+ * total cap writes nothing, and a body is bound only when the call was Test. The table's triggers refuse a body
+ * or a query value anywhere else. Returns whether a row was written.
  */
-export const insertLog = (db: D1Database, l: NewLog) =>
-  run(
+export const insertLog = async (db: D1Database, l: NewLog) =>
+  (
+    await run(
+      db,
+      `INSERT INTO request_log (id, org_id, key_id, via, mode, request_id, method, route, path, query, status, code,
+         duration_ms, at, has_bodies, request_body, response_body)
+       SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14,
+         CASE WHEN ?5 = 'test' AND (?15 IS NOT NULL OR ?16 IS NOT NULL) THEN 1 ELSE 0 END,
+         CASE WHEN ?5 = 'test' THEN ?15 END,
+         CASE WHEN ?5 = 'test' THEN ?16 END
+       FROM orgs o WHERE o.id = ?2 AND o.kind = 'developer'
+         AND COALESCE((SELECT CASE WHEN b.hour = CAST(?14 AS INTEGER) / 3600000 THEN b.hour_rows ELSE 0 END
+                       FROM request_log_budget b WHERE b.org_id = ?2), 0) < ${HOUR_ROWS_CAP}
+         AND COALESCE((SELECT b.total_rows FROM request_log_budget b WHERE b.org_id = ?2), 0) < ${TOTAL_ROWS_CAP}`,
+      [
+        l.id,
+        l.orgId,
+        l.keyId,
+        l.via,
+        l.mode,
+        l.requestId,
+        l.method,
+        l.route,
+        l.path,
+        l.query,
+        l.status,
+        l.code,
+        l.durationMs,
+        l.at,
+        l.requestBody,
+        l.responseBody,
+      ],
+    )
+  ).changes > 0;
+
+/** `hour`: this hour's cap is spent; `total`: the sandbox holds its most rows. Null: room left. */
+export async function logCap(
+  db: D1Database,
+  orgId: string,
+  now: number,
+): Promise<'hour' | 'total' | null> {
+  const b = await first<{ hour: number; hour_rows: number; total_rows: number }>(
     db,
-    `INSERT INTO request_log (id, org_id, key_id, via, mode, request_id, method, route, path, query, status, code,
-       duration_ms, at, has_bodies, request_body, response_body)
-     SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9,
-       CASE WHEN ?5 = 'test' AND o.kind = 'developer' THEN ?10 ELSE ?17 END, ?11, ?12, ?13, ?14,
-       CASE WHEN ?5 = 'test' AND o.kind = 'developer' AND (?15 IS NOT NULL OR ?16 IS NOT NULL) THEN 1 ELSE 0 END,
-       CASE WHEN ?5 = 'test' AND o.kind = 'developer' THEN ?15 END,
-       CASE WHEN ?5 = 'test' AND o.kind = 'developer' THEN ?16 END
-     FROM orgs o WHERE o.id = ?2`,
-    [
-      l.id,
-      l.orgId,
-      l.keyId,
-      l.via,
-      l.mode,
-      l.requestId,
-      l.method,
-      l.route,
-      l.path,
-      l.query,
-      l.status,
-      l.code,
-      l.durationMs,
-      l.at,
-      l.requestBody,
-      l.responseBody,
-      l.queryKeys,
-    ],
+    'SELECT hour, hour_rows, total_rows FROM request_log_budget WHERE org_id = ?',
+    [orgId],
   );
+  if (!b) return null;
+  if (b.total_rows >= TOTAL_ROWS_CAP) return 'total';
+  return b.hour === Math.floor(now / 3_600_000) && b.hour_rows >= HOUR_ROWS_CAP ? 'hour' : null;
+}
 
 export interface LogFilter {
   keyId?: string;

@@ -12,7 +12,14 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { getKey } from '../api-keys/repo.ts';
 import { parseScopes } from '../api-keys/service-dto.ts';
 import { sandboxOfUser } from './repo.ts';
-import { callsSince, getLog, LOG_BODY_MS, type LogRow, listLogs } from './repo-request-log.ts';
+import {
+  callsSince,
+  getLog,
+  LOG_BODY_MS,
+  type LogRow,
+  listLogs,
+  logCap,
+} from './repo-request-log.ts';
 import { tryKeyOf } from './repo-try.ts';
 
 type Entry = z.infer<typeof RequestLogEntrySchema>;
@@ -53,7 +60,7 @@ export async function listRequestLog(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   query: Query,
-): Promise<{ items: Entry[]; nextCursor: string | null }> {
+): Promise<{ items: Entry[]; nextCursor: string | null; capped: 'hour' | 'total' | null }> {
   const orgId = await orgOf(ctx, auth);
   const { cursor, limit, ...filter } = query;
   const rows = await listLogs(ctx.env.DB, orgId, filter, limit + 1, ctx.clock.now(), cursor);
@@ -61,6 +68,7 @@ export async function listRequestLog(
   return {
     items: page.map(entryOf),
     nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
+    capped: await logCap(ctx.env.DB, orgId, ctx.clock.now()),
   };
 }
 

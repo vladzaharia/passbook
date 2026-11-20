@@ -20,16 +20,10 @@ const fresh = () => {
 };
 
 describe('the public status', () => {
-  it('is six components in three states and incident notes, and nothing else', async () => {
+  it('is four components (six with wallet credentials) in three states and incident notes, and nothing else', async () => {
     const status = PublicStatusSchema.parse(await fresh());
-    expect(status.components.map((c) => c.id)).toEqual([
-      'api',
-      'apple_push',
-      'email',
-      'webhooks',
-      'google',
-      'samsung',
-    ]);
+    expect(status.components.map((c) => c.id)).toEqual(['api', 'apple_push', 'email', 'webhooks']);
+    // Google and Samsung are listed only once a platform credential exists.
     for (const c of status.components)
       expect(Object.keys(c).sort()).toEqual(['id', 'label', 'state']);
     expect(Object.keys(status).sort()).toEqual(['checkedAt', 'components', 'incidents', 'overall']);

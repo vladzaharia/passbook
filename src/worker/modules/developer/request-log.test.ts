@@ -1,7 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { makeApiKey, makeOrg } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
-import { writeLog } from './request-log.ts';
+import {
+  HOUR_ROWS_CAP,
+  insertLog,
+  logCap,
+  type NewLog,
+  TOTAL_ROWS_CAP,
+} from './repo-request-log.ts';
 import { gatedDb, type Kit, logKit } from './request-log-test-fixtures.ts';
 import { bearer } from './try-token-test-fixtures.ts';
 
@@ -21,16 +27,40 @@ const post = (body: unknown) => ({
 type Dev = Awaited<ReturnType<Kit['developer']>>;
 
 /** A failing pass create with personal data in its body, sent with the sandbox's own key. */
-const badCreate = (d: Dev) =>
+const badCreate = (d: Dev, body: unknown = {}) =>
   t.call('/passes', {
     ...post({
       templateId: 'no-such-template',
       input: { memberName: 'Ada Lovelace', note: 'hello' },
       email: 'ada@example.com',
       secret: SECRET,
+      ...(body as object),
     }),
     headers: { ...JSON_HEADERS, ...bearer(d.key.secret) },
   });
+
+const newLog = (orgId: string, over: Partial<NewLog> = {}): NewLog => {
+  const id = t.kit.f.ids.id();
+  return {
+    id,
+    orgId,
+    keyId: 'k',
+    via: null,
+    mode: 'test',
+    requestId: id,
+    method: 'GET',
+    route: null,
+    path: '/api/v1/passes',
+    query: null,
+    status: 200,
+    code: null,
+    durationMs: 1,
+    at: t.kit.clock.now(),
+    requestBody: null,
+    responseBody: null,
+    ...over,
+  };
+};
 
 describe('the request log writes', () => {
   it('keeps metadata, the error code and redacted bodies of a sandbox Test call', async () => {
@@ -55,123 +85,86 @@ describe('the request log writes', () => {
       expect(stored, leak).not.toContain(leak);
   });
 
-  it('never stores a body for Live traffic, and the table refuses one', async () => {
+  it('writes nothing for a Live call or a real org: no row, and no statement at all', async () => {
     const std = await makeOrg(t.kit.f);
-    const key = await makeApiKey(t.kit.f, {
+    const live = await makeApiKey(t.kit.f, {
       orgId: std.id,
       mode: 'live',
-      scopes: ['passes:write'],
+      scopes: ['passes:read', 'passes:write'],
     });
-    await t.call('/passes', {
-      ...post({ templateId: 'x', input: { a: SECRET } }),
-      headers: { ...JSON_HEADERS, ...key.headers },
-    });
-    await t.settle();
-    const rows = await t.rows(std.id);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({
-      mode: 'live',
-      has_bodies: 0,
-      request_body: null,
-      response_body: null,
-    });
-    expect(rows[0]?.status).toBeGreaterThanOrEqual(400);
-    expect(rows[0]?.code).not.toBeNull();
-
-    // A Live call keeps the names of its query parameters, never their values.
-    const reader = await makeApiKey(t.kit.f, {
+    const test = await makeApiKey(t.kit.f, {
       orgId: std.id,
-      mode: 'live',
+      mode: 'test',
       scopes: ['passes:read'],
     });
-    await t.call('/passes?limit=5&q=Ada%20Lovelace&externalId=SENTINEL-7', {
-      headers: reader.headers,
-    });
-    await t.settle();
-    const listed = (await t.rows(std.id)).find((r) => r.key_id === reader.id);
-    expect(listed?.query).toBe('limit&q&externalId');
-
-    // The write path: a body handed to a Live row, or to a Test row of a standard org, is not bound at all.
-    const body = (text: string) =>
-      new ReadableStream<Uint8Array>({
-        start(c) {
-          c.enqueue(new TextEncoder().encode(text));
-          c.close();
-        },
-      });
-    for (const mode of ['live', 'test'] as const) {
-      const id = t.kit.f.ids.id();
-      await writeLog(
-        t.ctx(),
-        {
-          id,
-          orgId: std.id,
-          keyId: key.id,
-          via: null,
-          mode,
-          requestId: id,
-          method: 'POST',
-          route: null,
-          path: '/api/v1/passes',
-          query: null,
-          queryKeys: null,
-          status: 200,
-          durationMs: 1,
-          at: t.kit.clock.now(),
-        },
-        {
-          test: true,
-          type: 'application/json',
-          requestType: 'application/json',
-          sent: body('{"a":1}'),
-          received: body('{"b":2}'),
-        },
-      );
-      const stored = await first<Record<string, unknown>>(
-        t.kit.env.DB,
-        'SELECT * FROM request_log WHERE id = ?',
-        [id],
-      );
-      expect(stored, mode).toMatchObject({
-        has_bodies: 0,
-        request_body: null,
-        response_body: null,
-      });
+    const seen: string[] = [];
+    const env = { ...t.kit.env, DB: gatedDb(t.kit.env.DB, Promise.resolve(), seen) };
+    for (const key of [live, test]) {
+      const res = await t.call('/passes?limit=5', { headers: key.headers }, env);
+      expect(res.status).toBe(200);
     }
-    // And a direct write of one is refused by the triggers, on insert and on update.
-    const raw = (orgId: string, mode: string, id: string) =>
+    await t.call(
+      '/passes',
+      {
+        ...post({ templateId: 'x', input: { a: SECRET } }),
+        headers: { ...JSON_HEADERS, ...live.headers },
+      },
+      env,
+    );
+    await t.settle();
+    expect(await t.rows(std.id)).toHaveLength(0);
+    expect(seen.filter((s) => s.includes('request_log'))).toEqual([]);
+    // The insert is itself a developer-org write: a row for a real org is refused by the SELECT.
+    expect(await insertLog(t.kit.env.DB, newLog(std.id, { requestBody: '{}' }))).toBe(false);
+    expect(await insertLog(t.kit.env.DB, newLog(std.id, { mode: 'live' }))).toBe(false);
+    expect(await t.rows(std.id)).toHaveLength(0);
+  });
+
+  it('refuses a body or a query value anywhere but a developer Test row, by trigger', async () => {
+    const std = await makeOrg(t.kit.f);
+    const dev = await t.developer();
+    const raw = (orgId: string, mode: string, id: string, col: string) =>
       run(
         t.kit.env.DB,
-        `INSERT INTO request_log (id, org_id, mode, request_id, method, path, status, duration_ms, at, has_bodies, request_body)
-         VALUES (?, ?, ?, 'r', 'GET', '/x', 200, 1, 1, 1, '{}')`,
-        [id, orgId, mode],
+        `INSERT INTO request_log (id, org_id, mode, request_id, method, path, status, duration_ms, at, has_bodies, request_body, query)
+         VALUES (?, ?, ?, 'r', 'GET', '/x', 200, 1, 1, ?, ?, ?)`,
+        [
+          id,
+          orgId,
+          mode,
+          col === 'body' ? 1 : 0,
+          col === 'body' ? '{}' : null,
+          col === 'query' ? 'a=1' : null,
+        ],
       );
-    await expect(raw(std.id, 'test', 'raw-1')).rejects.toThrow(/developer Test traffic only/);
-    const dev = await t.developer();
-    await expect(raw(dev.made.orgId, 'live', 'raw-2')).rejects.toThrow(
-      /holds no Live data|developer Test traffic only/,
+    await expect(raw(std.id, 'test', 'raw-1', 'body')).rejects.toThrow(
+      /developer Test traffic only/,
+    );
+    await expect(raw(std.id, 'test', 'raw-2', 'query')).rejects.toThrow(/query values/);
+    await expect(raw(dev.made.orgId, 'live', 'raw-3', 'body')).rejects.toThrow(
+      /Live data|Test traffic only/,
     );
     await run(
       t.kit.env.DB,
-      `INSERT INTO request_log (id, org_id, mode, request_id, method, path, status, duration_ms, at) VALUES ('raw-3', ?, 'live', 'r', 'GET', '/x', 200, 1, 1)`,
+      `INSERT INTO request_log (id, org_id, mode, request_id, method, path, status, duration_ms, at) VALUES ('raw-4', ?, 'live', 'r', 'GET', '/x', 200, 1, 1)`,
       [std.id],
     );
     await expect(
       run(
         t.kit.env.DB,
-        "UPDATE request_log SET has_bodies = 1, request_body = '{}' WHERE id = 'raw-3'",
+        "UPDATE request_log SET has_bodies = 1, request_body = '{}' WHERE id = 'raw-4'",
       ),
     ).rejects.toThrow();
   });
 
   it('keeps the redacted query of a sandbox call, so a bad filter can be read back', async () => {
     const d = await t.developer();
-    await t.call('/passes?limit=5&externalId=SENTINEL-7&status=active', {
+    await t.call('/passes?limit=5&externalId=SENTINEL-7&status=active&pin=1234', {
       headers: bearer(d.key.secret),
     });
     await t.settle();
     expect((await t.rows(d.made.orgId))[0]?.query).toBe(
-      'limit=5&externalId=%5Bredacted%5D&status=active',
+      'limit=5&externalId=%5Bredacted%5D&status=active&pin=%5Bredacted%5D',
     );
   });
 
@@ -184,6 +177,24 @@ describe('the request log writes', () => {
     expect(await t.rows(d.made.orgId)).toHaveLength(0);
   });
 
+  it('stores no body above 16 KB but keeps the call, and cancels what it will not read', async () => {
+    const d = await t.developer();
+    await badCreate(d, { input: { big: 'x'.repeat(20_000) } });
+    await t.call('/passes', {
+      method: 'POST',
+      headers: { 'content-type': 'text/csv', ...bearer(d.key.secret) },
+      body: 'a,b\n1,2',
+    });
+    await t.settle();
+    const rows = await t.rows(d.made.orgId);
+    expect(rows).toHaveLength(2);
+    expect(rows.map((r) => r.request_body).sort()).toEqual([
+      '[json, too large to keep]',
+      '[text/csv]',
+    ]);
+    for (const r of rows) expect(String(r.request_body)).not.toContain('xxxx');
+  });
+
   it('costs the request one background write: the response is back while the insert is still held', async () => {
     const d = await t.developer();
     const seen: string[] = [];
@@ -194,16 +205,76 @@ describe('the request log writes', () => {
     const env = { ...t.kit.env, DB: gatedDb(t.kit.env.DB, gate, seen) };
     const res = await t.call('/passes', { headers: bearer(d.key.secret) }, env);
     expect(res.status).toBe(200);
-    // The response is complete while the one insert is still held: the request did not wait for it.
     for (let i = 0; i < 50 && !seen.some((s) => s.includes('request_log')); i++)
       await new Promise((r) => setTimeout(r, 5));
     expect(await t.rows(d.made.orgId)).toHaveLength(0);
     open();
     await t.settle();
     expect(await t.rows(d.made.orgId)).toHaveLength(1);
-    // Nothing else touched the table: one statement, an INSERT.
     const touching = seen.filter((s) => s.includes('request_log'));
     expect(touching).toHaveLength(1);
     expect(touching[0]).toMatch(/^\s*INSERT INTO request_log/);
+  });
+});
+
+describe('the sandbox caps', () => {
+  it('records no more than 2,000 rows an hour, and the next hour starts again', async () => {
+    const d = await t.developer();
+    const db = t.kit.env.DB;
+    await run(
+      db,
+      'INSERT INTO request_log_budget (org_id, hour, hour_rows, total_rows) VALUES (?, ?, ?, ?)',
+      [
+        d.made.orgId,
+        Math.floor(t.kit.clock.now() / 3_600_000),
+        HOUR_ROWS_CAP - 1,
+        HOUR_ROWS_CAP - 1,
+      ],
+    );
+    expect(await insertLog(db, newLog(d.made.orgId))).toBe(true);
+    expect(await logCap(db, d.made.orgId, t.kit.clock.now())).toBe('hour');
+    expect(await insertLog(db, newLog(d.made.orgId))).toBe(false);
+    await t.call('/passes', { headers: bearer(d.key.secret) });
+    await t.settle();
+    expect(await t.rows(d.made.orgId)).toHaveLength(1);
+    const later = t.kit.clock.now() + 3_600_000;
+    expect(await logCap(db, d.made.orgId, later)).toBeNull();
+    expect(await insertLog(db, newLog(d.made.orgId, { at: later }))).toBe(true);
+    expect(
+      await first<{ hour_rows: number }>(
+        db,
+        'SELECT hour_rows FROM request_log_budget WHERE org_id = ?',
+        [d.made.orgId],
+      ),
+    ).toMatchObject({ hour_rows: 1 });
+  });
+
+  it('holds at most 20,000 rows in all, says so in the log, and frees room as rows expire', async () => {
+    const d = await t.developer();
+    const db = t.kit.env.DB;
+    await run(
+      db,
+      'INSERT INTO request_log_budget (org_id, hour, hour_rows, total_rows) VALUES (?, 0, 0, ?)',
+      [d.made.orgId, TOTAL_ROWS_CAP],
+    );
+    expect(await insertLog(db, newLog(d.made.orgId, { requestBody: '{}' }))).toBe(false);
+    const res = await t.call('/developer/logs', { headers: d.browser });
+    expect(await res.json()).toMatchObject({ capped: 'total', items: [] });
+    await run(db, 'UPDATE request_log_budget SET total_rows = ? WHERE org_id = ?', [
+      TOTAL_ROWS_CAP - 1,
+      d.made.orgId,
+    ]);
+    expect(await insertLog(db, newLog(d.made.orgId))).toBe(true);
+    // A delete returns the room.
+    await run(db, 'DELETE FROM request_log WHERE org_id = ?', [d.made.orgId]);
+    expect(
+      (
+        await first<{ total_rows: number }>(
+          db,
+          'SELECT total_rows FROM request_log_budget WHERE org_id = ?',
+          [d.made.orgId],
+        )
+      )?.total_rows,
+    ).toBe(TOTAL_ROWS_CAP - 1);
   });
 });

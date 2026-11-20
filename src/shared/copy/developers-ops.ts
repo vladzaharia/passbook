@@ -41,7 +41,11 @@ export const LOGS_COPY = {
     { value: '4xx', label: '4xx client error' },
     { value: '5xx', label: '5xx server error' },
   ],
-  retention: 'Bodies hold no secrets, keys or personal data. Live calls keep no bodies.',
+  capped: {
+    hour: 'The log is full for this hour: calls are not recorded until the next hour.',
+    total: 'The log is full: calls are not recorded until older ones expire.',
+  },
+  retention: 'Bodies hold no secrets, keys or personal data. Only sandbox calls are logged.',
 } as const;
 
 export const RAIL_COPY = {

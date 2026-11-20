@@ -41,6 +41,14 @@
   font-size: 13px;
 }
 
+.logs-full {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  color: var(--pk-warning);
+  background: var(--pk-warning-subtle);
+  border: 1px solid color-mix(in oklab, var(--pk-warning-border) 55%, transparent);
+  border-radius: var(--pk-radius-md);
+}
 .logs-filters {
   display: flex;
   flex-wrap: wrap;

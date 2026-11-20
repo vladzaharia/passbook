@@ -122,7 +122,11 @@ function rowView(row: RequestLogEntry, ops: Promise<OpIndex>): HTMLElement {
   return el;
 }
 
-type Page = { items: RequestLogEntry[]; nextCursor: string | null };
+type Page = {
+  items: RequestLogEntry[];
+  nextCursor: string | null;
+  capped: 'hour' | 'total' | null;
+};
 
 const notice = (text: string, action?: HTMLElement) =>
   h('div', { class: 'card card-b' }, h('p', { class: 'muted' }, text), action);
@@ -170,8 +174,10 @@ export async function mountLogs(el: HTMLElement, ops: Promise<OpIndex>): Promise
   );
   const list = h('div', { class: 'list card logs-list' });
   const more = h('button', { type: 'button', class: 'btn outline', hidden: true }, LOGS_COPY.more);
+  const full = h('p', { class: 'sm logs-full', role: 'status', hidden: true });
   fill(
     el,
+    full,
     bar,
     list,
     h('div', { class: 'logs-more' }, more),
@@ -190,6 +196,8 @@ export async function mountLogs(el: HTMLElement, ops: Promise<OpIndex>): Promise
   function show(body: Page, append: boolean) {
     cursor = body.nextCursor;
     more.hidden = cursor === null;
+    full.hidden = body.capped === null;
+    full.textContent = body.capped ? LOGS_COPY.capped[body.capped] : '';
     const rows = body.items.map((r) => rowView(r, ops));
     if (append) return list.append(...rows);
     const empty = Object.keys(filters()).length > 0 ? LOGS_COPY.noMatch : LOGS_COPY.empty;

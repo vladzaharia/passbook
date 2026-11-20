@@ -68,14 +68,17 @@ export async function publicStatus(ctx: ServiceContext): Promise<PublicStatus> {
         .filter((c) => c.scope === 'platform' && c.mode === 'live' && c.provider === name)
         .map((c) => PUBLIC_STATE[rowOf(c, now).state]),
     );
-  const components = (Object.keys(LABELS) as ComponentId[]).map((id) => ({
-    id,
-    label: LABELS[id],
-    state:
-      id === 'google' || id === 'samsung'
-        ? provider(id)
-        : worstOf((CHECKS[id] ?? []).flatMap((c) => byId.get(c) ?? [])),
-  }));
+  // Google and Samsung are listed once a platform credential exists: a dark integration is not announced.
+  const components = (Object.keys(LABELS) as ComponentId[])
+    .map((id) => ({
+      id,
+      label: LABELS[id],
+      state:
+        id === 'google' || id === 'samsung'
+          ? provider(id)
+          : worstOf((CHECKS[id] ?? []).flatMap((c) => byId.get(c) ?? [])),
+    }))
+    .filter((c) => !(c.state === 'off' && (c.id === 'google' || c.id === 'samsung')));
   const open = notes.filter((n) => n.resolved_at === null && n.impact !== 'notice');
   const overall = worstOf([
     ...components.map((c) => c.state),

@@ -60,6 +60,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('idempotency_keys'),
   inOrg('idempotent_requests'),
   { ...inOrg('request_log'), slices: true },
+  inOrg('request_log_budget'),
   inOrg('org_entitlement_overrides'),
   inOrg('branding_gc_queue'),
   inOrg('org_reply_to'),

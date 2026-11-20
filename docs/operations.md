@@ -527,7 +527,7 @@ gap; turning it back on does not backfill.
 
 ### Request log and status notes
 
-`request_log` holds one row per API-key call: metadata for 7 days, request and response bodies for 24 hours, only for Test calls of a developer org (a trigger refuses a body anywhere else). The minute cron hook `developer.request_log_purge` runs the purge at minute 07 of every hour; reads already hide bodies older than 24 hours and rows older than 7 days, so a missed run only delays freeing the space.
+`request_log` holds one row per Test call of a developer org (sandboxes only; Live and real orgs write nothing): metadata for 7 days, request and response bodies for 24 hours (a trigger refuses a body or a query value anywhere else). A sandbox keeps at most 2,000 rows an hour and 20,000 in all (`request_log_budget`). The minute cron hook `developer.request_log_purge` purges on a 20-second budget every minute, so a backlog is caught up; reads already hide bodies older than 24 hours and rows older than 7 days.
 
 Public status incident notes are rows of `status_incidents`; there is no admin screen yet. Open one:
 

@@ -4,7 +4,7 @@ import { makeSession, makeUser } from '../../../../test/helpers/index.ts';
 import { RequestLogDetailSchema, RequestLogPageSchema } from '../../../shared/contracts/index.ts';
 import { first, run } from '../../platform/db.ts';
 import { insertLog, LOG_BODY_MS, LOG_META_MS, type NewLog } from './repo-request-log.ts';
-import { hourlyRequestLogPurge, purgeRequestLog } from './request-log-jobs.ts';
+import { minutelyRequestLogPurge, purgeRequestLog } from './request-log-jobs.ts';
 import { logKit } from './request-log-test-fixtures.ts';
 import { BROWSER, bearer, fromPage } from './try-token-test-fixtures.ts';
 
@@ -28,7 +28,6 @@ const entry = (orgId: string, keyId: string, over: Partial<NewLog> = {}): NewLog
     route: '/api/v1/passes',
     path: '/api/v1/passes',
     query: null,
-    queryKeys: null,
     status: 200,
     code: null,
     durationMs: 4,
@@ -239,18 +238,49 @@ describe('the purges', () => {
     expect((await purgeRequestLog(t.ctx())).bodies).toBeGreaterThanOrEqual(2);
   });
 
-  it('runs from the minute cron once an hour', async () => {
+  it('runs from the minute cron every minute, until caught up', async () => {
     const d = await t.developer();
     const old = entry(d.made.orgId, d.key.id, { at: t.kit.clock.now() - 3 * LOG_BODY_MS });
     await insertLog(t.kit.env.DB, old);
-    const minute = new Date(t.kit.clock.now()).getUTCMinutes();
-    t.kit.clock.advance(((7 - minute + 60) % 60 || 60) * 60_000 - 60_000);
-    await hourlyRequestLogPurge(t.ctx());
-    expect(await countOf(`id = '${old.id}' AND has_bodies = 1`)).toBe(1);
-    t.kit.clock.advance(60_000);
-    expect(new Date(t.kit.clock.now()).getUTCMinutes()).toBe(7);
-    await hourlyRequestLogPurge(t.ctx());
+    await minutelyRequestLogPurge(t.ctx());
     expect(await countOf(`id = '${old.id}' AND has_bodies = 1`)).toBe(0);
     await run(t.kit.env.DB, 'DELETE FROM request_log WHERE id = ?', [old.id]);
+  });
+
+  it('keeps up under 600 calls a minute: a backlog of 12,000 old rows goes in one run', async () => {
+    const d = await t.developer();
+    const db = t.kit.env.DB;
+    const now = t.kit.clock.now();
+    // 20 minutes of a sandbox at its 600 a minute tier, all past 24 hours and the older half past 7 days.
+    await run(
+      db,
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 12000)
+       INSERT INTO request_log (id, org_id, mode, request_id, method, path, status, duration_ms, at, has_bodies, request_body)
+       SELECT 'bulk-' || i, ?1, 'test', 'r', 'GET', '/api/v1/passes', 200, 3, ?2 - CASE WHEN i % 2 = 0 THEN ?3 ELSE ?4 END - i, 1, '{}' FROM n`,
+      [d.made.orgId, now, LOG_META_MS + HOUR, LOG_BODY_MS + HOUR],
+    );
+    expect(await countOf("id LIKE 'bulk-%' AND has_bodies = 1")).toBe(12_000);
+    await minutelyRequestLogPurge(t.ctx());
+    expect(await countOf("id LIKE 'bulk-%' AND has_bodies = 1")).toBe(0);
+    expect(await countOf("id LIKE 'bulk-%'")).toBe(6000);
+    // The budget follows the deletes.
+    const budget = await first<{ total_rows: number }>(
+      db,
+      'SELECT total_rows FROM request_log_budget WHERE org_id = ?',
+      [d.made.orgId],
+    );
+    expect(budget?.total_rows).toBe(6000);
+  }, 60_000);
+
+  it('stops at its time budget and carries on the next minute', async () => {
+    const d = await t.developer();
+    const db = t.kit.env.DB;
+    for (let i = 0; i < 3; i++)
+      await insertLog(
+        db,
+        entry(d.made.orgId, d.key.id, { at: t.kit.clock.now() - 3 * LOG_BODY_MS }),
+      );
+    expect((await purgeRequestLog(t.ctx(), 0)).bodies).toBe(0);
+    expect((await purgeRequestLog(t.ctx())).bodies).toBeGreaterThanOrEqual(3);
   });
 });

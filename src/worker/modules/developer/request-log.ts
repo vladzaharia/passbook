@@ -3,14 +3,13 @@ import type { AppBindings } from '../../platform/context.ts';
 import { redactString } from '../../platform/log.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { insertLog, type NewLog } from './repo-request-log.ts';
-import { BODY_READ_MAX_BYTES, queryKeys, redactBody, redactQuery } from './request-log-redact.ts';
+import { BODY_READ_MAX_BYTES, redactBody, redactQuery } from './request-log-redact.ts';
 
-/** Only a Test secret or a try token can have a body kept, so only they are ever copied: a Live call is never read. */
+/** Only a Test secret or a try token can be a sandbox's, so only they are ever copied: a Live call is never read. */
 const TEST_BEARER = /^Bearer\s+(?:pbp?_test_|pbtry_)/i;
 /** Reading the log is not logged. */
 const NOT_LOGGED = /^\/api\/v1\/developer\/(?:logs|rail)(?:\/|$)/;
 const CODE = /^[A-Z0-9_]{2,64}$/;
-const PROBLEM_MAX_BYTES = 4096;
 
 interface Read {
   text: string;
@@ -65,24 +64,44 @@ function codeOf(read: Read | null): string | null {
   }
 }
 
+/** What the request body will be: nothing, a copy of its stream, or a one-line marker (not JSON, or too large). */
+type Sent = { copy: ReadableStream<Uint8Array> } | { marker: string } | null;
+
+function sentOf(c: { req: { raw: Request; header(name: string): string | undefined } }): Sent {
+  const raw = c.req.raw;
+  if (!raw.body) return null;
+  const type = c.req.header('content-type') ?? null;
+  if (!isJson(type)) return { marker: redactBody('', type, 0) };
+  // No length (chunked): copied and read up to the cap, which `readCapped` enforces.
+  const length = Number(c.req.header('content-length') ?? 0);
+  if (length > BODY_READ_MAX_BYTES)
+    return { marker: redactBody('', type, BODY_READ_MAX_BYTES + 1) };
+  const copy = raw.clone().body;
+  return copy ? { copy } : null;
+}
+
 /**
- * Logs every API-key call to `request_log` after the response is made: one background write (`waitUntil`), so the
- * request pays for nothing but copying a stream. Metadata for every call. Bodies only for a Test secret or try
- * token, and the write itself keeps them only for a developer org (`insertLog`). The code of an error is read from
- * the problem body, which is never stored for a Live call.
+ * Logs a developer org's Test calls to `request_log` after the response is made: one background write
+ * (`waitUntil`), so the request pays for nothing but copying a small JSON stream. Nothing else is logged: not a
+ * Live call, not a real org's call (`auth.orgKind`), and the insert backs that up. The request is copied only
+ * when its bearer looks like a Test secret or try token and its body is JSON of at most 16 KB.
  */
 export const requestLog = createMiddleware<AppBindings>(async (c, next) => {
-  const test = TEST_BEARER.test(c.req.header('authorization') ?? '');
-  const requestType = c.req.header('content-type') ?? null;
-  const sent = test && c.req.raw.body ? c.req.raw.clone().body : null;
+  const sent = TEST_BEARER.test(c.req.header('authorization') ?? '') ? sentOf(c) : null;
   const started = c.var.clock.now();
   await next();
   const auth = c.var.auth;
-  if (auth?.kind !== 'api_key' || auth.orgId === null || NOT_LOGGED.test(c.req.path)) return;
+  if (
+    auth?.kind !== 'api_key' ||
+    auth.orgId === null ||
+    auth.orgKind !== 'developer' ||
+    auth.mode !== 'test' ||
+    NOT_LOGGED.test(c.req.path)
+  ) {
+    if (sent && 'copy' in sent) void sent.copy.cancel();
+    return;
+  }
   const res = c.res;
-  const type = res.headers.get('content-type');
-  const received = test || (res.status >= 400 && isJson(type)) ? res.clone().body : null;
-  const search = new URL(c.req.url).search;
   const ctx = serviceContext(c);
   const row: Omit<NewLog, 'requestBody' | 'responseBody' | 'code'> = {
     id: c.var.ids.id(),
@@ -94,44 +113,42 @@ export const requestLog = createMiddleware<AppBindings>(async (c, next) => {
     method: c.req.method,
     route: c.req.routePath === '/*' ? null : c.req.routePath,
     path: redactString(c.req.path).slice(0, 300),
-    query: redactQuery(search),
-    queryKeys: queryKeys(search),
+    query: redactQuery(new URL(c.req.url).search),
     status: res.status,
     durationMs: c.var.clock.now() - started,
     at: started,
   };
-  ctx.waitUntil(writeLog(ctx, row, { sent, requestType, received, type, test }));
+  const type = res.headers.get('content-type');
+  ctx.waitUntil(writeLog(ctx, row, { sent, received: res.clone().body, type }));
 });
 
 interface Copies {
-  sent: ReadableStream<Uint8Array> | null;
-  requestType: string | null;
+  sent: Sent;
   received: ReadableStream<Uint8Array> | null;
   type: string | null;
-  test: boolean;
 }
 
 /** Reads the copies, then makes the one insert. A failure is logged by `waitUntil`, never thrown into the request. */
 export async function writeLog(
   ctx: ServiceContext,
   row: Omit<NewLog, 'requestBody' | 'responseBody' | 'code'>,
-  copies: Copies,
+  { sent, received, type }: Copies,
 ): Promise<void> {
-  const { test, type, requestType, sent, received } = copies;
-  const sentJson = isJson(requestType);
   const receivedJson = isJson(type);
-  // A Live call is read for its error code only, and only as far as a problem body goes.
   const [sentRead, receivedRead] = await Promise.all([
-    test && sentJson ? readCapped(sent, BODY_READ_MAX_BYTES) : null,
-    receivedJson ? readCapped(received, test ? BODY_READ_MAX_BYTES : PROBLEM_MAX_BYTES) : null,
+    sent && 'copy' in sent ? readCapped(sent.copy, BODY_READ_MAX_BYTES) : null,
+    receivedJson ? readCapped(received, BODY_READ_MAX_BYTES) : null,
   ]);
   // Not JSON: nothing of it is read, only its type is noted.
-  if (sent && !(test && sentJson)) await sent.cancel();
   if (received && !receivedJson) await received.cancel();
   await insertLog(ctx.env.DB, {
     ...row,
-    requestBody: test && sent ? stored(sentRead, requestType) : null,
-    responseBody: test && received ? stored(receivedRead, type) : null,
+    requestBody: !sent
+      ? null
+      : 'marker' in sent
+        ? sent.marker
+        : stored(sentRead, 'application/json'),
+    responseBody: received ? stored(receivedRead, type) : null,
     code: receivedJson && row.status >= 400 ? codeOf(receivedRead) : null,
   });
 }
