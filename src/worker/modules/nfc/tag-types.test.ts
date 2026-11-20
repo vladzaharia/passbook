@@ -111,10 +111,27 @@ describe('tag type CRUD', () => {
     expect(dupe.status).toBe(409);
     expect(await dupe.json()).toMatchObject({ code: 'TAG_TYPE_NAME_TAKEN' });
     const secure = { ...body, name: 'Secure', system: 'sun', typed: false };
-    expect((await call(admin, 'POST', `?orgId=${org.id}`, secure)).status).toBe(201);
+    // S3 removes this guard: until the SUN plugin verifies taps, a sun type is refused.
+    const notReady = await call(admin, 'POST', `?orgId=${org.id}`, secure);
+    expect(notReady.status).toBe(409);
+    expect(await notReady.json()).toMatchObject({ code: 'NFC_SYSTEM_NOT_READY' });
     expect(
       (await call(admin, 'POST', `?orgId=${org.id}`, { ...body, name: 'S', system: 'sun' })).status,
     ).toBe(422);
+  });
+
+  it('refuses to update a sun type until the SUN plugin lands', async () => {
+    const { org, admin } = await setup();
+    const id = f.kit.fx.ids.id();
+    await run(
+      f.kit.env.DB,
+      `INSERT INTO nfc_tag_types (id, org_id, name, system, use, typed, created_at, created_by, updated_at)
+       VALUES (?, ?, 'Badge', 'sun', 'staff', 0, 1, 'x', 1)`,
+      [id, org.id],
+    );
+    const res = await call(admin, 'PATCH', `/${id}`, { version: 1, name: 'Badge 2' });
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ code: 'NFC_SYSTEM_NOT_READY' });
   });
 
   it('refuses a template of another org on create and on update', async () => {
