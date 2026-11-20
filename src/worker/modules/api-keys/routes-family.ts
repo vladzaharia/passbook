@@ -28,7 +28,7 @@ export async function authorizeKey(
   auth: AuthContext | undefined,
   orgId: string | null,
   id: string,
-  capability: 'integrations:read' | 'integrations:manage',
+  capability: 'integrations:read' | 'integrations:manage' | 'audit:read',
 ): Promise<ApiKeyAuthority> {
   if (auth?.kind === 'api_key') return authorizeApiKeys(ctx, auth, orgId, 'integrations:manage');
   const member = orgId === null ? null : await authorizeApiKeys(ctx, auth, orgId, 'org:read');
@@ -118,7 +118,8 @@ export function registerKeyFamilyRoutes(router: Router): void {
       const ctx = serviceContext(c);
       const { id } = c.req.valid('param');
       const { orgId, limit } = c.req.valid('query');
-      const authority = await authorizeKey(ctx, c.var.auth, orgId, id, 'integrations:read');
+      // The audit log is behind `audit:read`: a member sees a key's trail with it, or their own personal key's.
+      const authority = await authorizeKey(ctx, c.var.auth, orgId, id, 'audit:read');
       return c.json(await getApiKeyActivity(ctx, authority, id, limit));
     },
   );

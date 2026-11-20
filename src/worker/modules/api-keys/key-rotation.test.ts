@@ -246,6 +246,109 @@ describe('rotation with an overlap window', () => {
   });
 });
 
+describe('rotation keeps what the platform set, and binds to the caller', () => {
+  it('keeps a rate tier', async () => {
+    const { key, session } = await mint();
+    await run(h.env.DB, "UPDATE api_keys SET rate_tier = 'high' WHERE id = ?", [key.id]);
+    const next = ((await (await rotate(session.headers, key.id)).json()) as Rotated).key;
+    expect((await row(next.id))?.rate_tier).toBe('high');
+  });
+
+  it('a key replaces itself or its children only: another key`s id fails whatever the caller claims', async () => {
+    const { key: mine } = await mint();
+    const { key: other } = await mint({ name: 'Other', scopes: ['passes:read'] });
+    const ctx = createServiceContext(h.env, { clock: h.clock });
+    const rev = await first<{ access_revision: number }>(
+      h.env.DB,
+      'SELECT access_revision FROM orgs WHERE id = ?',
+      [org.id],
+    );
+    const authority = {
+      kind: 'api_key' as const,
+      orgId: org.id,
+      orgAccessRevision: rev?.access_revision ?? 0,
+      keyId: mine.id,
+      keyOrgId: org.id,
+      scopes: ['passes:read', 'api-keys:write'] as never,
+      scope: 'api-keys:write' as const,
+      mode: 'live' as const,
+    };
+    const old = (await row(other.id)) as unknown as ApiKeyRow;
+    const attempt = (replaces: { self: boolean; parent: string | null }) => {
+      const id = f().ids.id();
+      return createKey(
+        ctx,
+        {
+          ...old,
+          id,
+          prefix: id.slice(-8),
+          key_hash: `h${id}`,
+          rotated_from: other.id,
+          created_by_key: mine.id,
+          // What the caller claims about the key it replaces: a child of its own, or no one's.
+          parent_key_id: replaces.parent,
+        },
+        authority,
+        {
+          orgId: org.id,
+          actorType: 'api_key',
+          actorId: mine.id,
+          action: 'api_key.rotate',
+          targetType: 'api_key',
+          targetId: id,
+        },
+        { replaces: { id: other.id, retireAt: h.clock.now() + HOUR, ...replaces } },
+      );
+    };
+    // The claim `self` for a key that is not the caller, and the claim `my child` for a key that is nobody's child.
+    await expect(attempt({ self: true, parent: null })).rejects.toMatchObject({
+      code: 'API_KEY_SCOPE_EXCEEDS_CREATOR',
+    });
+    await expect(attempt({ self: false, parent: null })).rejects.toMatchObject({
+      code: 'API_KEY_SCOPE_EXCEEDS_CREATOR',
+    });
+    await expect(attempt({ self: false, parent: mine.id })).rejects.toMatchObject({
+      code: 'API_KEY_NOT_FOUND',
+    });
+    expect(await count()).toBe(2);
+    expect((await row(other.id))?.retire_at).toBeNull();
+  });
+});
+
+describe('a key that replaced itself does not outlive its revocation', () => {
+  it('revokes the successors it made hop by hop, and none a person made', async () => {
+    const { key, session } = await mint();
+    const hop = async (from: Minted) =>
+      (
+        (await (
+          await h.call('/api/v1/api-keys/me/rotate', {
+            method: 'POST',
+            headers: as(from),
+            json: { overlapHours: 24 },
+          })
+        ).json()) as Rotated
+      ).key;
+    const second = await hop(key);
+    const third = await hop(second);
+    const byPerson = ((await (await rotate(session.headers, third.id)).json()) as Rotated).key;
+    expect((await row(third.id))?.created_by_key).toBe(second.id);
+    expect((await row(byPerson.id))?.created_by_key).toBeNull();
+    const res = await h.call(`/api/v1/api-keys/${key.id}?orgId=${org.id}`, {
+      method: 'DELETE',
+      headers: session.headers,
+    });
+    expect(res.status).toBe(200);
+    for (const k of [key, second, third])
+      expect((await row(k.id))?.revoked_at, k.id).not.toBeNull();
+    expect((await row(byPerson.id))?.revoked_at).toBeNull();
+    const audit = await first<{ detail: string }>(
+      h.env.DB,
+      "SELECT detail FROM audit_log WHERE action = 'api_key.revoke'",
+    );
+    expect(JSON.parse(audit?.detail ?? '{}')).toEqual({ successors: 2 });
+  });
+});
+
 describe('a key rotates itself and its children', () => {
   it('replaces itself with the same reach, including the right to mint, and the old key retires', async () => {
     const { key } = await mint();

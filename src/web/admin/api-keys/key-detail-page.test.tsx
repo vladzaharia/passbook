@@ -76,6 +76,12 @@ const activity = {
 };
 const manager = membershipFixture('o1', {
   orgName: 'North',
+  roles: ['org_admin'],
+  capabilities: ['org:read', 'integrations:read', 'integrations:manage', 'audit:read'],
+});
+// An integration manager reads keys but not the audit log.
+const integrator = membershipFixture('o1', {
+  orgName: 'North',
   roles: ['integration_admin'],
   capabilities: ['org:read', 'integrations:read', 'integrations:manage'],
 });
@@ -222,5 +228,36 @@ describe('API key page', () => {
       },
     });
     expect(await screen.findByText(/not found/i)).toBeInTheDocument();
+  });
+
+  it('hides the activity card, and never asks for it, without audit:read', async () => {
+    let asked = false;
+    await renderApp('/admin/o/o1/api-keys/k1', {
+      session: 'user',
+      memberships: [integrator],
+      handlers: handlers({
+        '/api/v1/api-keys/k1/activity': () => {
+          asked = true;
+          return json(activity);
+        },
+      }),
+    });
+    expect(await screen.findByRole('heading', { name: 'Deploy job' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Rotate' })).toBeInTheDocument();
+    expect(screen.queryByText('Activity')).toBeNull();
+    expect(asked).toBe(false);
+  });
+
+  it("offers no rotation of another member's personal key, or of a platform key without expiry or addresses", async () => {
+    await renderApp('/admin/o/o1/api-keys/k1', {
+      session: 'user',
+      memberships: [manager],
+      handlers: handlers({
+        '/api/v1/api-keys/k1': () => json({ ...base, kind: 'personal', createdBy: 'someone-else' }),
+      }),
+    });
+    expect(await screen.findByRole('heading', { name: 'Deploy job' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Rotate' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Revoke' })).toBeInTheDocument();
   });
 });

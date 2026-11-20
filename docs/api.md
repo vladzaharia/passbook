@@ -80,11 +80,15 @@ the parent's), `templateIds` and `passStyles` (inside the parent's). Anything wi
 `403 API_KEY_SCOPE_EXCEEDS_CREATOR`. A key reaches only its own children: `GET /api-keys`, `GET /api-keys/{id}`,
 `GET /api-keys/{id}/activity`, `POST /api-keys/{id}/rotate`, `POST /api-keys/{id}/retire` and `DELETE /api-keys/{id}` take a child of
 the caller, and any other key is `404 API_KEY_NOT_FOUND`. A child ends with its parent: revoking the parent revokes its children,
-and retiring or rotating it retires them at the same instant. A key without `api-keys:write` is `403 MISSING_SCOPE`.
+and retiring or rotating it retires them at the same instant; a retiring key mints no more (`403 API_KEY_PARENT_RETIRING`). A key holds at
+most 50 open children (`422 API_KEY_CHILD_LIMIT`). Revoking a key also revokes the keys it replaced itself with through
+`/me/rotate`, hop by hop; a key a person rotated is not touched. A key without `api-keys:write` is `403 MISSING_SCOPE`. A key caller is
+not told which member made a key.
 
 **Activity.** `GET /api-keys/{id}` adds the parent, the key that replaced it, its open children and the network of its last use.
 `GET /api-keys/{id}/activity` gives the last use, the calls of the last 30 days by action, and the latest calls (time, action, target,
-network, and for a refused call its code). It reads the audit log: no request bodies and no secrets.
+network, and for a refused call its code). It reads the audit log: no request bodies and no secrets. A member needs `audit:read` for it (or
+the key is their own personal key); `GET /api-keys/{id}` needs only `integrations:read`.
 
 **IP allowlist.** `ipAllow` lists addresses or CIDR ranges (`203.0.113.0/24`, `2001:db8::/32`), set when the key is made
 and never changed; ranges wider than an IPv4 /8 or IPv6 /32, or lists that cover every address, are refused (`422 API_KEY_IP_TOO_BROAD`). A request from any other address, or with none, is `401 INVALID_API_KEY`, the same as a wrong key.

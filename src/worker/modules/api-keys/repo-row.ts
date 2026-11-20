@@ -24,6 +24,8 @@ export interface ApiKeyRow {
   secret_label: string;
   parent_key_id: string | null;
   rotated_from: string | null;
+  /** The key that made this row: a child's parent, or a key that replaced itself. Null when a person did. */
+  created_by_key: string | null;
   last_ip_prefix: string | null;
 }
 

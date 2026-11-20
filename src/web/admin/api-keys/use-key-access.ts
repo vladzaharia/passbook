@@ -13,6 +13,8 @@ export type KeyAccess =
       orgId: string | null;
       orgName: string;
       canManage: boolean;
+      /** The audit log, where a key's activity is read from. */
+      canAudit: boolean;
     };
 
 /**
@@ -54,5 +56,6 @@ export function useKeyAccess(): KeyAccess {
     orgId,
     orgName: membership?.orgName ?? 'Platform',
     canManage: platform || Boolean(membership?.capabilities.includes('integrations:manage')),
+    canAudit: platform || Boolean(membership?.capabilities.includes('audit:read')),
   };
 }

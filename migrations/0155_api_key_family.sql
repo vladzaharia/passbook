@@ -3,23 +3,26 @@
 ALTER TABLE api_keys ADD COLUMN parent_key_id TEXT REFERENCES api_keys (id) ON DELETE CASCADE;
 -- The key this one replaced. No foreign key: the old key's row may be purged first.
 ALTER TABLE api_keys ADD COLUMN rotated_from TEXT;
+-- The key that made this row (a child's parent, or a key that replaced itself); NULL when a person did. No foreign key.
+ALTER TABLE api_keys ADD COLUMN created_by_key TEXT;
 CREATE INDEX api_keys_parent ON api_keys (parent_key_id) WHERE parent_key_id IS NOT NULL;
 CREATE INDEX api_keys_rotated_from ON api_keys (rotated_from) WHERE rotated_from IS NOT NULL;
 
-CREATE TRIGGER api_keys_family_immutable BEFORE UPDATE OF parent_key_id, rotated_from ON api_keys
+CREATE TRIGGER api_keys_family_immutable BEFORE UPDATE OF parent_key_id, rotated_from, created_by_key ON api_keys
 WHEN NEW.parent_key_id IS NOT OLD.parent_key_id OR NEW.rotated_from IS NOT OLD.rotated_from
+  OR NEW.created_by_key IS NOT OLD.created_by_key
 BEGIN SELECT RAISE(ABORT, 'api key family is immutable'); END;
 
--- A child is narrower than its parent in every dimension the row can show: the same org and mode, a service key
--- that holds no scope the parent lacks (never `api-keys:write`, so one level only, nor the terminal scope), an expiry
--- no later than the parent's, and an IP list whenever the parent has one. The service also checks that each child CIDR
+-- A child is narrower than its parent in every dimension the row can show, and is minted only while the parent is
+-- neither revoked nor retiring: the same org and mode, a service key that holds no scope the parent lacks (never
+-- `api-keys:write`, so one level only, nor the terminal scope), an expiry no later than the parent's, and an IP list whenever the parent has one. The service also checks that each child CIDR
 -- lies inside the parent's, which SQL cannot; resources are checked on insert below.
 CREATE TRIGGER api_keys_child_rules BEFORE INSERT ON api_keys
 WHEN NEW.parent_key_id IS NOT NULL AND NOT EXISTS (
   SELECT 1 FROM api_keys p
   WHERE p.id = NEW.parent_key_id AND p.parent_key_id IS NULL AND p.kind = 'service'
     AND NEW.kind = 'service' AND NEW.org_id IS NOT NULL AND p.org_id = NEW.org_id AND p.mode = NEW.mode
-    AND p.revoked_at IS NULL
+    AND p.revoked_at IS NULL AND p.retire_at IS NULL
     AND (p.expires_at IS NULL OR (NEW.expires_at IS NOT NULL AND NEW.expires_at <= p.expires_at))
     AND (p.ip_allow IS NULL OR json_array_length(p.ip_allow) = 0
       OR (NEW.ip_allow IS NOT NULL AND json_array_length(NEW.ip_allow) > 0))

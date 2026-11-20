@@ -74,9 +74,10 @@ export async function rotateApiKey(
     last_used_at: null,
     revoked_at: null,
     retire_at: null,
-    rate_tier: null,
+    // `rate_tier` stays: a tier a platform admin set follows the key.
     last_ip_prefix: null,
     rotated_from: old.id,
+    created_by_key: authority.kind === 'api_key' ? authority.keyId : null,
   };
   await createKey(
     ctx,

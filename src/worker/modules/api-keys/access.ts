@@ -19,7 +19,7 @@ export async function authorizeApiKeys(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   orgId: string | null,
-  capability: 'org:read' | 'integrations:read' | 'integrations:manage',
+  capability: 'org:read' | 'integrations:read' | 'integrations:manage' | 'audit:read',
 ): Promise<ApiKeyAuthority> {
   if (auth?.kind === 'api_key') {
     // A key acts in its own org only (a platform key names none), and always as `integrations:manage`.

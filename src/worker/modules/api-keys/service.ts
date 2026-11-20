@@ -15,6 +15,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { seesAccountEmails } from '../passes/account-email.ts';
 import { type ApiKeyAuthority, actorOf, authorityOrgId } from './access.ts';
 import * as repo from './repo.ts';
+import { selfSuccessors } from './repo-family.ts';
 import { invalid } from './service-create.ts';
 import { type ApiKeyDto, parseRoles, parseScopes, type Resources, toDto } from './service-dto.ts';
 
@@ -81,7 +82,7 @@ export async function listApiKeys(
       .map((r) => r.value) as Resources['passStyles'],
   });
   return {
-    items: page.map((row) => toDto(row, of(row.id))),
+    items: page.map((row) => toDto(row, of(row.id), authority.kind !== 'api_key')),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
     revokedCount,
   };
@@ -115,14 +116,28 @@ export async function revokeApiKey(
 ): Promise<void> {
   const key = await reachable(ctx, authority, id);
   const children = await repo.countOpenChildren(ctx.env.DB, id);
-  await repo.revokeKey(ctx, id, authority, {
-    orgId: key.org_id,
-    ...actorOf(authority),
-    action: 'api_key.revoke',
-    targetType: 'api_key',
-    targetId: id,
-    ...(children > 0 ? { detail: { children } } : {}),
-  });
+  const successors = await selfSuccessors(ctx.env.DB, id);
+  await repo.revokeKey(
+    ctx,
+    id,
+    authority,
+    {
+      orgId: key.org_id,
+      ...actorOf(authority),
+      action: 'api_key.revoke',
+      targetType: 'api_key',
+      targetId: id,
+      ...(children + successors.length > 0
+        ? {
+            detail: {
+              ...(children > 0 ? { children } : {}),
+              ...(successors.length > 0 ? { successors: successors.length } : {}),
+            },
+          }
+        : {}),
+    },
+    successors,
+  );
 }
 
 /** Ends a key at an instant before it would otherwise end. Once only: a second call is a conflict. */

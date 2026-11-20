@@ -35,7 +35,7 @@ export async function getApiKey(
   if (!row || (authority.kind === 'api_key' && row.parent_key_id !== authority.keyId))
     throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
   return {
-    ...toDto(row, await resourcesOf(ctx, id)),
+    ...toDto(row, await resourcesOf(ctx, id), authority.kind !== 'api_key'),
     lastIpPrefix: row.last_ip_prefix,
     parent: named(row.parent),
     replacedBy: named(row.replaced_by),

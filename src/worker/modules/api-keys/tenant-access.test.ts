@@ -223,6 +223,7 @@ describe('API key tenant authorization', () => {
       secret_label: 'wlt',
       parent_key_id: null,
       rotated_from: null,
+      created_by_key: null,
       last_ip_prefix: null,
     };
     await expect(

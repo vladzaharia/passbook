@@ -41,6 +41,7 @@ export function KeyDetailPage({ keyId }: { keyId: string }) {
       orgId={access.orgId}
       orgName={access.orgName}
       canManage={access.canManage}
+      canAudit={access.canAudit}
     />
   );
 }
@@ -51,17 +52,21 @@ function KeyDetail({
   orgId,
   orgName,
   canManage,
+  canAudit,
 }: {
   keyId: string;
   principal: string;
   orgId: string | null;
   orgName: string;
   canManage: boolean;
+  canAudit: boolean;
 }) {
   const listPath = orgId === null ? platformPath('/api-keys') : orgPath(orgId, '/api-keys');
   const detail = useKeyDetail(principal, orgId, keyId);
   const children = useKeyChildren(principal, orgId, keyId);
-  const activity = useKeyActivity(principal, orgId, keyId);
+  // The audit log is read with audit:read, or for a member's own personal key.
+  const own = detail.data?.kind === 'personal' && detail.data.createdBy === principal;
+  const activity = useKeyActivity(principal, orgId, keyId, canAudit || own);
   const revoke = useRevokeKey(principal);
   const [rotating, setRotating] = useState(false);
   const [revoking, setRevoking] = useState(false);
@@ -86,6 +91,9 @@ function KeyDetail({
     );
   const state = keyState(key, now);
   const live = state === 'active';
+  // A personal key is its member's to rotate; a platform key made before expiry and addresses were required is replaced, not rotated.
+  const legacy = key.kind === 'platform' && (key.expiresAt === null || key.ipAllow.length === 0);
+  const canRotate = live && !legacy && (own || (canManage && key.kind !== 'personal'));
   // Platform keys have no children; a personal or child key mints none.
   const mints = key.kind === 'service' && key.parentKeyId === null && key.orgId !== null;
   return (
@@ -109,9 +117,9 @@ function KeyDetail({
           </>
         }
         actions={
-          canManage && (live || state === 'retiring') ? (
+          (canManage || own) && (live || state === 'retiring') ? (
             <>
-              {live ? (
+              {canRotate ? (
                 <Button
                   variant="outline"
                   iconStart={<RefreshCw aria-hidden />}
@@ -133,13 +141,15 @@ function KeyDetail({
       />
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <AccessCard detail={key} now={now} orgName={orgName} />
-        <ActivityCard
-          data={activity.data}
-          now={now}
-          loading={activity.isPending}
-          error={activity.error}
-          onRetry={() => void activity.refetch()}
-        />
+        {canAudit || own ? (
+          <ActivityCard
+            data={activity.data}
+            now={now}
+            loading={activity.isPending}
+            error={activity.error}
+            onRetry={() => void activity.refetch()}
+          />
+        ) : null}
         {mints ? (
           <div className="lg:col-span-2">
             <ChildrenCard

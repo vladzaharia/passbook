@@ -98,6 +98,31 @@ describe('key detail', () => {
   });
 });
 
+describe('key activity is behind audit:read', () => {
+  it('is read with audit:read, or for the member`s own personal key, and not by integration managers', async () => {
+    const { key } = await mint();
+    const manager = await member('integration_admin');
+    await expectProblem(await get(manager.session.headers, `${key.id}/activity`), 403, [
+      'FORBIDDEN',
+      'INSUFFICIENT_ROLE',
+    ]);
+    // The detail, which shows no audit rows, stays with integrations:read.
+    expect((await get(manager.session.headers, key.id)).status).toBe(200);
+    const made = await create(manager.session.headers, {
+      orgId: org.id,
+      name: 'Mine',
+      kind: 'personal',
+      scopes: ['connections:read'],
+      expiresAt: h.clock.now() + 86_400_000,
+    });
+    expect(made.status).toBe(201);
+    const own = (await made.json()) as Minted;
+    expect((await get(manager.session.headers, `${own.id}/activity`)).status).toBe(200);
+    const admin = await member('org_admin');
+    expect((await get(admin.session.headers, `${key.id}/activity`)).status).toBe(200);
+  });
+});
+
 describe('key activity', () => {
   it('summarises calls by action and lists the latest, with no body, secret or detail but the refusal code', async () => {
     const { key, session } = await mint();

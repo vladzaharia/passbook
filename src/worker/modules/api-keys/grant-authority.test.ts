@@ -37,6 +37,7 @@ const row = (orgId: string | null, scopes: string[], id = f().ids.id()): ApiKeyR
   secret_label: 'wlt',
   parent_key_id: null,
   rotated_from: null,
+  created_by_key: null,
   last_ip_prefix: null,
 });
 const entry = (action: string, targetId: string) => ({

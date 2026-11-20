@@ -1,7 +1,7 @@
 import { grant } from '../../platform/authority.ts';
 import { type Check, exactlyOne } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
-import { gte, orNull } from '../../platform/authority-expr.ts';
+import { gte, inList, orNull } from '../../platform/authority-expr.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { all, first, run, type SqlValue } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
@@ -60,13 +60,16 @@ function reach(authority: ApiKeyAuthority, id: string): Reach {
 /**
  * Revokes a key under `org.api_key.revoke` / `platform.api_key.revoke`. Idempotent: the audit row is
  * written, in the same batch, only when this call revokes the key. A key outside the actor's org is a
- * lineage refusal. Its children are revoked with it (they would stop anyway: a child ends with its parent).
+ * lineage refusal. Its children are revoked with it (they would stop anyway: a child ends with its parent), and so
+ * are the keys it replaced itself with.
  */
 export async function revokeKey(
   ctx: ServiceContext,
   id: string,
   authority: ApiKeyAuthority,
   audit: AuditEntry,
+  /** Keys this key replaced itself with, hop by hop (`selfSuccessors`): a leaked key must not outlive its revocation as its own successor. */
+  successors: readonly string[] = [],
 ): Promise<void> {
   const { principal, checks, where } = reach(authority, id);
   const g = grant(ctx, {
@@ -82,6 +85,11 @@ export async function revokeKey(
     g.update('api_keys', {
       set: { revoked_at: now },
       where: { parent_key_id: id, revoked_at: null },
+    });
+  if (successors.length > 0)
+    g.update('api_keys', {
+      set: { revoked_at: now },
+      where: { id: inList(successors.slice(0, 20)), revoked_at: null },
     });
   g.update('api_keys', { set: { revoked_at: now }, where: { ...where, revoked_at: null } });
   await g.commit();

@@ -10,7 +10,7 @@ import type { AuditEntry } from '../audit/types.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import { type ApiKeyAuthority, actorOf, authorityOrgId, delegableScopes } from './access.ts';
 import { attenuate } from './attenuate.ts';
-import { getKey, keyResources } from './repo.ts';
+import { countOpenChildren, getKey, keyResources } from './repo.ts';
 import { createKey } from './repo-create.ts';
 import type { ApiKeyRow } from './repo-row.ts';
 import { type ApiKeyDto, parseRoles, parseScopes, type Resources, toDto } from './service-dto.ts';
@@ -18,6 +18,8 @@ import { type ApiKeyDto, parseRoles, parseScopes, type Resources, toDto } from '
 /** A personal or platform key lives at most 90 days; a day of slack covers a client clock that runs ahead. */
 const MAX_LIFETIME_MS = 91 * 86_400_000;
 /** Scopes a template or pass-style restriction can narrow: those whose routes name a template. */
+/** Open (not revoked) child keys one key may hold. */
+const MAX_CHILDREN = 50;
 const RESTRICTABLE = /^(passes|templates|nfc):|^holders:write$/;
 
 /** A fresh secret: shown once, stored only as its hash. */
@@ -104,6 +106,16 @@ async function childInput(
     throw new ForbiddenError();
   if (parent.parent_key_id !== null)
     throw new ForbiddenError('A child key cannot mint keys.', 'API_KEY_CHILD_CANNOT_MINT');
+  // A key that is about to stop leaves no new family behind.
+  if (parent.retire_at !== null)
+    throw new ForbiddenError('A retiring key cannot mint keys.', 'API_KEY_PARENT_RETIRING');
+  // Splitting into many keys is how a leaked parent hides: a parent holds a bounded family.
+  if ((await countOpenChildren(ctx.env.DB, parent.id)) >= MAX_CHILDREN)
+    throw invalid(
+      `A key holds at most ${MAX_CHILDREN} open child keys. Revoke one first.`,
+      'API_KEY_CHILD_LIMIT',
+      'name',
+    );
   const rows = await keyResources(ctx.env.DB, [parent.id]);
   const held: Resources = {
     templateIds: rows.filter((r) => r.kind === 'template').map((r) => r.value),
@@ -207,6 +219,7 @@ export async function createApiKey(
     secret_label: label,
     parent_key_id: authority.kind === 'api_key' ? authority.keyId : null,
     rotated_from: null,
+    created_by_key: authority.kind === 'api_key' ? authority.keyId : null,
     last_ip_prefix: null,
   };
   const audit: AuditEntry = {

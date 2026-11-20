@@ -37,8 +37,14 @@ export function useKeyChildren(principal: string, orgId: string | null, parent: 
   });
 }
 
-export function useKeyActivity(principal: string, orgId: string | null, id: string) {
+export function useKeyActivity(
+  principal: string,
+  orgId: string | null,
+  id: string,
+  enabled: boolean,
+) {
   return useQuery({
+    enabled,
     queryKey: [...root(principal), 'activity', orgId, id],
     queryFn: ({ signal }) =>
       api.get(path(id, '/activity'), ApiKeyActivitySchema, {

@@ -19,6 +19,7 @@ beforeEach(async () => {
 });
 afterEach(teardown);
 
+const HOUR = 3_600_000;
 const DAY = 86_400_000;
 const NET = '198.51.100.0/24';
 const IN = '198.51.100.7';
@@ -160,6 +161,82 @@ describe('a key mints a child', () => {
     await expectProblem(await child(forged, {}), 403, 'API_KEY_CHILD_CANNOT_MINT');
     const platform = await makeApiKey(f(), { scopes: ['api-keys:write'] });
     await expectProblem(await child(platform, {}), 403, 'FORBIDDEN');
+  });
+});
+
+describe('a retiring parent', () => {
+  it('mints no child: the service, the database and the grant each refuse', async () => {
+    const parent = await mint();
+    const { session } = await member('org_admin');
+    await h.call(`/api/v1/api-keys/${parent.id}/retire`, {
+      method: 'POST',
+      headers: session.headers,
+      json: { orgId: org.id, retireAt: h.clock.now() + DAY },
+    });
+    await expectProblem(await child(parent, {}), 403, 'API_KEY_PARENT_RETIRING');
+    // Past the service: the insert trigger.
+    await expect(
+      run(
+        h.env.DB,
+        `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, parent_key_id)
+         VALUES ('late', ?, 'c', 'late', 'hlate', '["passes:read"]', 'live', ?, 'service', ?)`,
+        [org.id, h.clock.now(), parent.id],
+      ),
+    ).rejects.toThrow(/wider than its parent/);
+    expect(await row('late')).toBeNull();
+  });
+
+  it('stops a child at the grant when the retire time passes, though the child has none of its own', async () => {
+    const parent = await mint();
+    const kid = (await (await child(parent, {})).json()) as Minted;
+    const grantLive = async () => {
+      const live = keyLive('k', h.clock.now(), true);
+      return first(h.env.DB, `SELECT 1 AS ok FROM api_keys k WHERE k.id = ? AND ${live.sql}`, [
+        kid.id,
+        ...live.params,
+      ]);
+    };
+    // A retire time set on the parent row alone, as a cascade that missed the child would leave it.
+    await run(h.env.DB, 'UPDATE api_keys SET retire_at = ? WHERE id = ?', [
+      h.clock.now() + HOUR,
+      parent.id,
+    ]);
+    expect(await grantLive()).not.toBeNull();
+    h.clock.advance(HOUR);
+    expect(await grantLive()).toBeNull();
+    expect((await row(kid.id))?.retire_at).toBeNull();
+  });
+});
+
+describe('what a key caller is told', () => {
+  it('names no member as the creator of a child, in a list or a read', async () => {
+    const parent = await mint();
+    const kid = (await (await child(parent, {})).json()) as Minted;
+    const listed = (await (
+      await h.call(`/api/v1/api-keys?orgId=${org.id}`, { headers: as(parent) })
+    ).json()) as { items: { createdBy: string | null; createdByName: string | null }[] };
+    const read = (await (
+      await h.call(`/api/v1/api-keys/${kid.id}?orgId=${org.id}`, { headers: as(parent) })
+    ).json()) as { createdBy: string | null; createdByName: string | null };
+    for (const k of [...listed.items, read])
+      expect(k).toMatchObject({ createdBy: null, createdByName: null });
+  });
+});
+
+describe('a family is bounded', () => {
+  it('holds at most 50 open children, and a revoked one frees a place', async () => {
+    const parent = await mint();
+    const insert = (n: number) =>
+      run(
+        h.env.DB,
+        `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, parent_key_id)
+         VALUES (?, ?, 'c', ?, ?, '["passes:read"]', 'live', ?, 'service', ?)`,
+        [`kid-${n}`, org.id, `kid-${n}`, `h${n}`, h.clock.now(), parent.id],
+      );
+    for (let n = 0; n < 50; n++) await insert(n);
+    await expectProblem(await child(parent, {}), 422, 'API_KEY_CHILD_LIMIT');
+    await run(h.env.DB, "UPDATE api_keys SET revoked_at = ? WHERE id = 'kid-0'", [h.clock.now()]);
+    expect((await child(parent, {})).status).toBe(201);
   });
 });
 

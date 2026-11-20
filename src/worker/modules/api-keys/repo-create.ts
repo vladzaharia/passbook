@@ -6,7 +6,7 @@ import {
   type TenantScope,
 } from '../../platform/api-scopes.ts';
 import { grant } from '../../platform/authority.ts';
-import { exactlyOne, rowIs } from '../../platform/authority-checks.ts';
+import { type Check, exactlyOne, rowIs } from '../../platform/authority-checks.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -22,6 +22,25 @@ import type { ApiKeyRow, KeyExtras, Replaces } from './repo-row.ts';
 
 const PLATFORM_KEY_TENANT = ['org_id', 'mode'];
 const OPEN = { revoked_at: null, retire_at: null };
+
+/**
+ * The key a rotation replaces, as the new row copies it: open, with the parent the caller claims, and the same
+ * scopes, roles, kind, addresses, expiry and limit, so a rotation cannot swap in another key's secret or reach.
+ */
+function replacedKey(key: ApiKeyRow, replaces: Replaces): Check {
+  return rowIs('api_keys', replaces.id, {
+    ...OPEN,
+    parent_key_id: replaces.parent,
+    scopes: key.scopes,
+    roles: key.roles,
+    kind: key.kind,
+    ip_allow: key.ip_allow,
+    expires_at: key.expires_at,
+    restricted: key.restricted,
+    // A personal key is rotated by its member only.
+    ...(key.kind === 'personal' ? { membership_id: key.membership_id } : {}),
+  });
+}
 
 /** The old key ends at `retireAt`, in the same batch as the new one; the batch fails if it was no longer open. */
 function retireOld(g: ReturnType<typeof grant>, replaces: Replaces) {
@@ -65,6 +84,8 @@ export async function createKey(
     'secret_label',
     'parent_key_id',
     'rotated_from',
+    'created_by_key',
+    'rate_tier',
   ];
   const values = [
     key.name,
@@ -82,15 +103,24 @@ export async function createKey(
     key.secret_label,
     key.parent_key_id,
     key.rotated_from,
+    key.created_by_key,
+    // A tier a platform admin set follows the key through rotation; a new key has none.
+    rotating ? key.rate_tier : null,
   ];
   if (authority.kind === 'platform') {
-    if (key.org_id !== null || key.kind !== 'platform' || terminalIds.length > 0)
+    if (
+      key.org_id !== null ||
+      key.kind !== 'platform' ||
+      terminalIds.length > 0 ||
+      key.created_by_key !== null ||
+      (rotating && key.rotated_from !== replaces.id)
+    )
       throw new ForbiddenError();
     const g = grant(ctx, {
       purpose: rotating ? 'platform.api_key.rotate' : 'platform.api_key.create',
       principal: { kind: 'platform', userId: authority.userId, sessionIdHash: authority.sessionId },
       target: key.id,
-      ...(rotating ? { checks: [rowIs('api_keys', replaces.id, OPEN)] } : {}),
+      ...(rotating ? { checks: [replacedKey(key, replaces)] } : {}),
     });
     // A platform grant injects no tenant: a platform key names its own (null) org and mode.
     const platformColumns = ['id', ...PLATFORM_KEY_TENANT, ...columns];
@@ -124,6 +154,13 @@ export async function createKey(
     (byKey &&
       (key.kind !== 'service' ||
         key.parent_key_id !== (rotating ? replaces.parent : authority.keyId))) ||
+    // What made the row, and what it replaces, are the caller's own: a key rotates itself or its children only.
+    key.created_by_key !== (byKey ? authority.keyId : null) ||
+    (rotating &&
+      (key.rotated_from !== replaces.id ||
+        (byKey &&
+          (replaces.self !== (replaces.id === authority.keyId) ||
+            (!replaces.self && replaces.parent !== authority.keyId))))) ||
     beyond
   )
     throw new ForbiddenError(
@@ -146,9 +183,16 @@ export async function createKey(
         : []),
       // A key mints children of itself, never when it is a child; a rotation reads the key it replaces.
       ...(byKey && !rotating
-        ? [rowIs('api_keys', authority.keyId, { parent_key_id: null, kind: 'service' }, 'actor')]
+        ? [
+            rowIs(
+              'api_keys',
+              authority.keyId,
+              { parent_key_id: null, kind: 'service', retire_at: null },
+              'actor',
+            ),
+          ]
         : []),
-      ...(rotating ? [rowIs('api_keys', replaces.id, OPEN)] : []),
+      ...(rotating ? [replacedKey(key, replaces)] : []),
       // A terminal of the grant's org and mode, still in service; the binding is written with the key.
       ...terminalIds.map((id) =>
         exactlyOne('scanners', { id, kind: 'terminal', revoked_at: null }),

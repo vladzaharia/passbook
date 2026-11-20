@@ -66,3 +66,23 @@ export const terminalsOf = async (db: Db, keyId: string) =>
       [keyId],
     )
   ).map((row) => row.scanner_id);
+
+/**
+ * The keys that `id` replaced itself with, then those they did, and so on (at most 10 hops): rows whose
+ * `created_by_key` is the key they replaced. A key replaced by a person is not among them.
+ */
+export async function selfSuccessors(db: Db, id: string): Promise<string[]> {
+  const found: string[] = [];
+  let frontier = [id];
+  for (let hop = 0; hop < 10 && frontier.length > 0; hop++) {
+    const rows = await all<{ id: string }>(
+      db,
+      `SELECT id FROM api_keys WHERE created_by_key = rotated_from
+         AND rotated_from IN (SELECT value FROM json_each(?))`,
+      [JSON.stringify(frontier)],
+    );
+    frontier = rows.map((row) => row.id).filter((next) => !found.includes(next) && next !== id);
+    found.push(...frontier);
+  }
+  return found;
+}
