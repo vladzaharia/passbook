@@ -8,6 +8,7 @@ const SECRETS = [
   'pbo_9fK2xQ7mLp3sD8vA',
   'pbtry_eyJ2MTprZXk6c2Vz.9fK2xQ7mLp3sD8vA',
   'wlt_9fK2xQ7mLp3sD8vA',
+  'whsec_9fK2xQ7mLp3sD8vA9fK2xQ7mLp3sD8vA9fK2xQ7mLp',
   'curl -H "Authorization: Bearer pb_live_ab12_9fK2xQ7mLp3sD8vA" https://x',
 ];
 
@@ -17,7 +18,15 @@ describe('classify', () => {
       expect(isSecret(text), text).toBe(true);
       expect(classify(text).kind, text).toBe('secret');
     }
-    expect(classify('pb_test_9fK2xQ7mLp3sD8vA9fK2')).toEqual({ kind: 'secret', tail: '9fK2' });
+    expect(classify('pb_test_9fK2xQ7mLp3sD8vA9fK2')).toEqual({
+      kind: 'secret',
+      tail: '9fK2',
+      signing: false,
+    });
+    expect(classify('whsec_9fK2xQ7mLp3sD8vA9fK2xQ7mLp3sD8vA9fK2xQ7mLp')).toMatchObject({
+      kind: 'secret',
+      signing: true,
+    });
   });
 
   it('does not call a word a secret: a prefix being typed, a name that merely contains one', () => {
@@ -58,6 +67,9 @@ describe('missTerm', () => {
     expect(missTerm('  Refund   Policy ')).toBe('refund policy');
     expect(missTerm('passes.create')).toBe('passes.create');
     expect(missTerm('post /widgets')).toBe('post /widgets');
+    expect(missTerm('POST /templates/{id}/releases')).not.toBeNull();
+    expect(missTerm('oauth2 scopes')).toBe('oauth2 scopes');
+    expect(missTerm('x509 certificate')).toBe('x509 certificate');
   });
 
   it('keeps nothing that could be personal or a credential', () => {
@@ -76,6 +88,22 @@ describe('missTerm', () => {
       '"quoted"',
       'x',
       'y'.repeat(61),
+      '555-123-4567',
+      '415 555 0199',
+      '(415) 555-0199',
+      '+44 20 7946 0958',
+      '4242 4242 4242 4242',
+      '4242-4242-4242-4242',
+      '424242424242',
+      'maya smith 12 main st',
+      '4 Oak Avenue',
+      '1600 pennsylvania ave',
+      'join/Ab3dE5gH7jK9',
+      '/join/Ab3dE5gH7jK9mN',
+      'invite/x7Yz1Qw',
+      'passbook.mobile/join/tok3nValue',
+      '/p/Ab3dE5gH7jK9mN2pQ',
+      '/passes/abcdefghijklmnopqrstuv',
     ];
     for (const text of refused) expect(missTerm(text), text).toBeNull();
   });
