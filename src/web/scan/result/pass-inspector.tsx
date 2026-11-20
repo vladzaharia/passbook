@@ -158,7 +158,9 @@ export function PassInspector({
                   disabled={a.key === 'show' && !card}
                   onSelect={a.run}
                 >
-                  {a.icon}
+                  <span aria-hidden className="contents">
+                    {a.icon}
+                  </span>
                   {a.label}
                 </DropdownMenuItem>
               ))}
