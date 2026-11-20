@@ -4,7 +4,7 @@ import {
   prepareSystemScanRetentionProof,
 } from '../scan-retention-proof.ts';
 import type { ProofAuthority } from '../scan-retention-proof-data.ts';
-import type { MarkOutScan } from './repo-mark-out.ts';
+import type { MarkOutEffect, MarkOutScan } from './repo-mark-out.ts';
 
 /** The desk's ledger row with the authority of the grant that writes it, and the proof signed for it and the scan row `s`. */
 export async function signMarkOut(
@@ -12,12 +12,15 @@ export async function signMarkOut(
   ledger: EventRow,
   s: MarkOutScan,
   authority: ProofAuthority,
+  effect: MarkOutEffect | null,
 ): Promise<{ event: EventRow; retention: PreparedScanRetentionProof }> {
   const event = {
     ...ledger,
     data: JSON.stringify({
       ...JSON.parse(ledger.data),
+      eventId: s.eventId,
       authority,
+      ...(effect ? { effect } : {}),
     }),
   };
   const retention = await prepareSystemScanRetentionProof(env, event, {
