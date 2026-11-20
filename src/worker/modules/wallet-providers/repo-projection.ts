@@ -10,6 +10,7 @@ import {
   type NativeProvider,
   SAMSUNG_PROJECTION_POLICY,
 } from './projection-contract.ts';
+import { versionAuthorIndependentSql } from './projection-system-authority.ts';
 import { getProjectionCandidate, projectionCandidateEnvelope } from './repo-projection-store.ts';
 import { samsungProjectionEvidencePredicateSql } from './repo-samsung-verification.ts';
 
@@ -73,7 +74,7 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
         AND pc.adapter_capabilities = pr.adapter_capabilities
         AND pc.audience_policy_revision = pr.audience_policy_revision)
       AND (pv.created_by IS pc.version_author_id AND pa.reviewer_id != pc.author_id
-        AND (pc.version_author_id IS NULL OR pa.reviewer_id != pc.version_author_id)
+        AND ${versionAuthorIndependentSql('pc', 'pa.reviewer_id')}
         AND pr.created_by IS NOT NULL
         AND pc.projection_json IS NOT NULL AND json_valid(pc.projection_json)
         AND json_type(pc.projection_json) = 'object' AND length(pc.provider_identity_hash) = 64)
@@ -229,7 +230,7 @@ export async function getProjectionRetirementMetadata(
         AND r.candidate_hash = c.candidate_hash AND a.candidate_hash = c.candidate_hash
         AND r.credential_keyset_commitment = ? AND c.credential_keyset_commitment = r.credential_keyset_commitment
         AND a.credential_keyset_commitment = r.credential_keyset_commitment AND ${credentialRefKeysetSql}
-        AND a.reviewer_id != c.author_id AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id)`,
+        AND a.reviewer_id != c.author_id AND ${versionAuthorIndependentSql('c', 'a.reviewer_id')}`,
     [releaseId, credentialKeysetCommitment, credentialKeysetCommitment],
   );
   if (!row) return null;

@@ -6,8 +6,8 @@
 import type { WalletsManifest } from '../template/wallets/schema.ts';
 import type {
   FidelityItem,
-  ItemGroup,
   FidelityReport,
+  ItemGroup,
   ItemSeverity,
   ReportItem,
   ReportStatus,
