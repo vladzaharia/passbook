@@ -33,6 +33,10 @@
   outline: 2px solid var(--pk-focus);
   outline-offset: 2px;
 }
+/* Headings and the pane take focus from code (a scan lands, a record opens): no ring, the live region speaks. */
+.op-app [tabindex="-1"]:focus-visible {
+  outline: none;
+}
 
 /* status bar */
 .op-status {
