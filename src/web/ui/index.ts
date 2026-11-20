@@ -17,6 +17,7 @@ export * from './count-up.tsx';
 export * from './data-table.tsx';
 export * from './date-time-field.tsx';
 export * from './detail-error.tsx';
+export * from './dependent-settings.tsx';
 export * from './dialog.tsx';
 export * from './diff-viewer.tsx';
 export * from './dropdown-menu.tsx';
