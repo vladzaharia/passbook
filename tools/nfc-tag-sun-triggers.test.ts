@@ -1,6 +1,6 @@
 // 0129: Secure tags on, and the keyset, key and counter tables with their triggers. Built on the 0128 world
-// (tools/nfc-tags-fixtures.ts) with 0129 applied. Key material here is dummy sealed text: the database only
-// checks its shape; sealing is tested in src/worker/modules/nfc/keysets.test.ts.
+// (tools/nfc-tags-fixtures.ts) with 0129 applied. Key material here is dummy envelope columns: the database only
+// checks their shape; sealing is tested in src/worker/modules/nfc/keysets.test.ts.
 import { describe, expect, it } from 'vitest';
 import { row, tagWorld } from './nfc-tags-fixtures.ts';
 import { dump, migrationFile, read } from './wallet-instances-fixtures.ts';
@@ -15,10 +15,24 @@ world.db.exec(sql0129);
 const { db, rolledBack, sql, tag } = world;
 const afterDump = dump(db);
 
-const SEALED = 'v1.1.aaaa.bbbb.cccc';
-type V = string | number | null;
+type V = string | number | null | Uint8Array;
+const blob = (byte: number, length: number) => new Uint8Array(length).fill(byte);
+/** The four envelope columns of a keyset version (32 + 16 bytes of ciphertext) or of a per-tag key (16 + 16). */
+const envelope = (ciphertext: number, kek = 1): Record<string, V> => ({
+  kek_version: kek,
+  iv: blob(1, 12),
+  wrapped_dek: blob(2, 60),
+  ciphertext: blob(3, ciphertext),
+});
+/** `row` for blobs too. */
+function ins(table: string, values: Record<string, V>) {
+  const cols = Object.keys(values);
+  db.prepare(
+    `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
+  ).run(...(Object.values(values) as (string | number | null | Uint8Array)[]));
+}
 const keyset = (id: string, over: Record<string, V> = {}) =>
-  row(db, 'nfc_tag_keysets', {
+  ins('nfc_tag_keysets', {
     id,
     org_id: 'o1',
     mode: 'live',
@@ -30,17 +44,17 @@ const keyset = (id: string, over: Record<string, V> = {}) =>
     ...over,
   });
 const key = (keysetId: string, version: number, over: Record<string, V> = {}) =>
-  row(db, 'nfc_tag_keys', {
+  ins('nfc_tag_keys', {
+    id: `${keysetId}-${version}`,
     keyset_id: keysetId,
     version,
-    meta_key: SEALED,
-    file_key: SEALED,
+    ...envelope(48),
     state: 'active',
     created_at: 1,
     ...over,
   });
 const side = (tagId: string, keysetId: string, over: Record<string, V> = {}) =>
-  row(db, 'nfc_tag_sun', {
+  ins('nfc_tag_sun', {
     tag_id: tagId,
     keyset_id: keysetId,
     key_version: 1,
@@ -48,7 +62,7 @@ const side = (tagId: string, keysetId: string, over: Record<string, V> = {}) =>
     ctr_at: 1,
     ...over,
   });
-const WIPE = "state = 'retired', meta_key = '', file_key = ''";
+const RETIRE = "state = 'retired'";
 
 describe('enabling Secure', () => {
   it('turns sun on, leaves uid on, and keeps nfc_tag_systems read-only with the 0128 trigger text', () => {
@@ -174,54 +188,53 @@ describe('keys', () => {
           sql("UPDATE nfc_tag_keys SET state = 'retiring' WHERE keyset_id = 'ka' AND version = 2"),
         /UNIQUE/,
       );
-      sql(`UPDATE nfc_tag_keys SET ${WIPE} WHERE keyset_id = 'ka' AND version = 1`);
+      sql(`UPDATE nfc_tag_keys SET ${RETIRE} WHERE keyset_id = 'ka' AND version = 1`);
       sql("UPDATE nfc_tag_keys SET state = 'retiring' WHERE keyset_id = 'ka' AND version = 2");
       key('ka', 3);
     });
   });
 
-  it('is sealed text while live, and nothing but a wipe once retired', () => {
+  it('holds the envelope shape, and changes it only by a rewrap: a higher kek_version and a new wrapped_dek together', () => {
     rolledBack(() => {
       keyset('ka');
       const shapes: Record<string, V>[] = [
-        { meta_key: 'plain' },
-        { file_key: '' },
-        { meta_key: '00112233445566778899aabbccddeeff' },
+        { iv: blob(1, 11) },
+        { wrapped_dek: blob(2, 59) },
+        { ciphertext: blob(3, 32) },
+        { kek_version: 0 },
+        { kek_version: null },
+        { iv: 'text' },
       ];
-      for (const over of shapes) refuses(() => key('ka', 1, over), /CHECK/);
+      for (const over of shapes) refuses(() => key('ka', 1, over), /CHECK|NOT NULL/);
       refuses(() => key('ka', 1, { state: 'retiring' }), /tag_key_state/);
       key('ka', 1);
-      sql("UPDATE nfc_tag_keys SET state = 'retiring' WHERE keyset_id = 'ka'");
+      const set = (text: string) => () =>
+        sql(`UPDATE nfc_tag_keys SET ${text} WHERE keyset_id = 'ka'`);
+      sql(
+        "UPDATE nfc_tag_keys SET kek_version = 2, wrapped_dek = x'" +
+          '09'.repeat(60) +
+          "' WHERE keyset_id = 'ka'",
+      );
+      const w = `x'${'08'.repeat(60)}'`;
       refuses(
-        () => sql("UPDATE nfc_tag_keys SET meta_key = 'v1.2.a.b.c' WHERE keyset_id = 'ka'"),
+        set(`kek_version = 3, wrapped_dek = ${w}, iv = x'${'07'.repeat(12)}'`),
         /tag_key_fixed/,
       );
       refuses(
-        () => sql("UPDATE nfc_tag_keys SET file_key = 'v1.2.a.b.c' WHERE keyset_id = 'ka'"),
+        set(`kek_version = 3, wrapped_dek = ${w}, ciphertext = x'${'07'.repeat(48)}'`),
         /tag_key_fixed/,
       );
-      // Retired with the material still there breaks the shape rule.
-      refuses(
-        () => sql("UPDATE nfc_tag_keys SET state = 'retired' WHERE keyset_id = 'ka'"),
-        /CHECK/,
-      );
-      refuses(
-        () => sql("UPDATE nfc_tag_keys SET version = 9 WHERE keyset_id = 'ka'"),
-        /tag_key_fixed/,
-      );
-      refuses(
-        () => sql("UPDATE nfc_tag_keys SET created_at = 9 WHERE keyset_id = 'ka'"),
-        /tag_key_fixed/,
-      );
-      sql(`UPDATE nfc_tag_keys SET ${WIPE} WHERE keyset_id = 'ka'`);
-      refuses(
-        () => sql("UPDATE nfc_tag_keys SET state = 'active' WHERE keyset_id = 'ka'"),
-        /tag_key_state|CHECK/,
-      );
-      refuses(
-        () => sql("UPDATE nfc_tag_keys SET meta_key = 'v1.2.a.b.c' WHERE keyset_id = 'ka'"),
-        /tag_key_fixed/,
-      );
+      refuses(set(`wrapped_dek = ${w}`), /tag_key_fixed/);
+      refuses(set('kek_version = 3'), /tag_key_fixed/);
+      refuses(set(`kek_version = 2, wrapped_dek = ${w}`), /tag_key_fixed/);
+      refuses(set(`kek_version = 1, wrapped_dek = ${w}`), /tag_key_fixed/);
+      for (const column of ['id', 'keyset_id', 'version', 'created_at'])
+        refuses(set(`${column} = 9`), /tag_key_fixed|FOREIGN/);
+      // A state change is not a rewrap, and a retired key stays where it is.
+      sql("UPDATE nfc_tag_keys SET state = 'retiring', state_at = 4 WHERE keyset_id = 'ka'");
+      sql(`UPDATE nfc_tag_keys SET ${RETIRE} WHERE keyset_id = 'ka'`);
+      refuses(set("state = 'active'"), /tag_key_state/);
+      sql(`UPDATE nfc_tag_keys SET kek_version = 3, wrapped_dek = ${w} WHERE keyset_id = 'ka'`);
       refuses(() => sql("DELETE FROM nfc_tag_keys WHERE keyset_id = 'ka'"), /tag_key_fixed/);
     });
   });
@@ -230,13 +243,16 @@ describe('keys', () => {
     rolledBack(() => {
       keyset('ka');
       key('ka', 1);
-      refuses(() => sql(`UPDATE nfc_tag_keys SET ${WIPE} WHERE keyset_id = 'ka'`), /tag_key_state/);
+      refuses(
+        () => sql(`UPDATE nfc_tag_keys SET ${RETIRE} WHERE keyset_id = 'ka'`),
+        /tag_key_state/,
+      );
       sql("UPDATE nfc_tag_keys SET state = 'retiring' WHERE keyset_id = 'ka'");
       refuses(
         () => sql("UPDATE nfc_tag_keys SET state = 'active' WHERE keyset_id = 'ka'"),
         /tag_key_state/,
       );
-      sql(`UPDATE nfc_tag_keys SET ${WIPE} WHERE keyset_id = 'ka'`);
+      sql(`UPDATE nfc_tag_keys SET ${RETIRE} WHERE keyset_id = 'ka'`);
     });
   });
 
@@ -248,11 +264,11 @@ describe('keys', () => {
       side('x', 'ka');
       sql("UPDATE nfc_tag_keys SET state = 'retiring' WHERE keyset_id = 'ka'");
       refuses(
-        () => sql(`UPDATE nfc_tag_keys SET ${WIPE} WHERE keyset_id = 'ka'`),
+        () => sql(`UPDATE nfc_tag_keys SET ${RETIRE} WHERE keyset_id = 'ka'`),
         /tag_key_in_use/,
       );
       sql("UPDATE nfc_tag_keysets SET disabled_at = 5 WHERE id = 'ka'");
-      sql(`UPDATE nfc_tag_keys SET ${WIPE} WHERE keyset_id = 'ka'`);
+      sql(`UPDATE nfc_tag_keys SET ${RETIRE} WHERE keyset_id = 'ka'`);
     });
   });
 
@@ -261,15 +277,12 @@ describe('keys', () => {
       keyset('ka');
       key('ka', 1);
       refuses(
-        () =>
-          sql(
-            "UPDATE nfc_tag_keys SET state = 'retired', meta_key = '', file_key = '' WHERE keyset_id = 'ka'",
-          ),
+        () => sql("UPDATE nfc_tag_keys SET state = 'retired' WHERE keyset_id = 'ka'"),
         /tag_key_state/,
       );
       sql("UPDATE nfc_tag_keysets SET disabled_at = 5 WHERE id = 'ka'");
       refuses(() => key('ka', 2), /keyset_disabled/);
-      sql(`UPDATE nfc_tag_keys SET ${WIPE} WHERE keyset_id = 'ka'`);
+      sql(`UPDATE nfc_tag_keys SET ${RETIRE} WHERE keyset_id = 'ka'`);
     });
   });
 });
@@ -292,8 +305,15 @@ describe('per-tag side rows', () => {
       refuses(() => side('sun-test', 'ka'), /tag_sun_tenant/);
       refuses(() => side('sun-live', 'ka', { key_version: 2 }), /FOREIGN KEY|tag_key_state/);
       refuses(() => side('sun-live', 'ka', { ctr: 16777216 }), /CHECK/);
-      refuses(() => side('sun-live', 'ka', { file_key: 'plain' }), /CHECK/);
-      side('sun-live', 'ka', { file_key: SEALED });
+      // A per-tag key is all four columns or none, and the right size.
+      const bad: Record<string, V>[] = [
+        { kek_version: 1 },
+        { ...envelope(32), iv: null },
+        { ...envelope(48) },
+        { ...envelope(32), kek_version: 0 },
+      ];
+      for (const over of bad) refuses(() => side('sun-live', 'ka', over), /CHECK/);
+      side('sun-live', 'ka', envelope(32));
       side('sun-test', 'kt');
       refuses(() => side('sun-live', 'ka'), /UNIQUE/);
     });
@@ -305,7 +325,7 @@ describe('per-tag side rows', () => {
       key('ka', 1);
       sql("UPDATE nfc_tag_keys SET state = 'retiring' WHERE keyset_id = 'ka'");
       key('ka', 2);
-      sql(`UPDATE nfc_tag_keys SET ${WIPE} WHERE keyset_id = 'ka' AND version = 1`);
+      sql(`UPDATE nfc_tag_keys SET ${RETIRE} WHERE keyset_id = 'ka' AND version = 1`);
       tag('x', { system: 'sun' });
       refuses(() => side('x', 'ka'), /tag_key_state/);
       side('x', 'ka', { key_version: 2 });
@@ -314,6 +334,38 @@ describe('per-tag side rows', () => {
       tag('y', { system: 'sun' });
       sql("UPDATE nfc_tag_keysets SET disabled_at = 5 WHERE id = 'kb'");
       refuses(() => side('y', 'kb'), /keyset_disabled/);
+    });
+  });
+
+  it('never changes a per-tag key but by a rewrap, and never gains or loses one', () => {
+    rolledBack(() => {
+      keyset('ka');
+      key('ka', 1);
+      tag('x', { system: 'sun' });
+      tag('y', { system: 'sun' });
+      side('x', 'ka', envelope(32));
+      side('y', 'ka');
+      const set = (id: string, text: string) => () =>
+        sql(`UPDATE nfc_tag_sun SET ${text} WHERE tag_id = '${id}'`);
+      const w = `x'${'08'.repeat(60)}'`;
+      refuses(set('x', `iv = x'${'07'.repeat(12)}'`), /tag_sun_fixed/);
+      refuses(set('x', `ciphertext = x'${'07'.repeat(32)}'`), /tag_sun_fixed/);
+      refuses(set('x', `wrapped_dek = ${w}`), /tag_sun_fixed/);
+      refuses(set('x', 'kek_version = 3'), /tag_sun_fixed/);
+      refuses(set('x', `kek_version = 1, wrapped_dek = ${w}`), /tag_sun_fixed/);
+      refuses(
+        set('x', 'kek_version = NULL, iv = NULL, wrapped_dek = NULL, ciphertext = NULL'),
+        /tag_sun_fixed/,
+      );
+      refuses(
+        set(
+          'y',
+          `kek_version = 1, iv = x'${'01'.repeat(12)}', wrapped_dek = ${w}, ciphertext = x'${'03'.repeat(32)}'`,
+        ),
+        /tag_sun_fixed/,
+      );
+      sql(`UPDATE nfc_tag_sun SET kek_version = 2, wrapped_dek = ${w} WHERE tag_id = 'x'`);
+      sql("UPDATE nfc_tag_sun SET ctr = 4 WHERE tag_id = 'y'");
     });
   });
 

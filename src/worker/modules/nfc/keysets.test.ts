@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadKekRing } from '../../platform/crypto.ts';
 import { all, first, run } from '../../platform/db.ts';
-import { openKeyVersion, openTagKey, sealKeyVersion, sealTagKey } from './keyset-seal.ts';
+import { openTagKey, openVersion, sealTagKey, sealVersion } from './keyset-seal.ts';
 import {
   createKeyset,
   disableKeyset,
@@ -12,7 +12,7 @@ import {
   verifyingKeys,
 } from './keysets.ts';
 import { keysetFixture } from './keysets-test-fixtures.ts';
-import { keysetById, sealedKeys } from './repo-keysets.ts';
+import { keysetById, versionEnvelopes } from './repo-keysets.ts';
 import { bytesToHex } from './sun.ts';
 import { tagRef } from './tag-ref.ts';
 
@@ -41,7 +41,7 @@ async function keyset(options: { mode?: 'live' | 'test' } = {}) {
 }
 
 describe('create', () => {
-  it('shows generated keys once and stores only sealed text', async () => {
+  it('shows generated keys once and stores only the sealed envelope', async () => {
     const { authority, made } = await keyset();
     expect(made.keys?.metaKey).toMatch(/^[0-9a-f]{32}$/);
     expect(made.keys?.fileKey).toMatch(/^[0-9a-f]{32}$/);
@@ -51,15 +51,12 @@ describe('create', () => {
     expect(made.versions).toEqual([
       { version: 1, state: 'active', createdAt: expect.any(Number), stateAt: null, tags: 0 },
     ]);
-    const row = await sealedKeys(db(), made.id, 1);
-    const pairs: [string, string][] = [
-      [row?.metaKey ?? '', made.keys?.metaKey ?? ''],
-      [row?.fileKey ?? '', made.keys?.fileKey ?? ''],
-    ];
-    for (const [sealed, plain] of pairs) {
-      expect(sealed).toMatch(/^v1\./);
-      expect(sealed.toLowerCase()).not.toContain(plain);
-    }
+    const [stored] = await versionEnvelopes(db(), made.id);
+    const cipher = bytesToHex(stored?.envelope.ciphertext ?? new Uint8Array());
+    expect(stored?.envelope.ciphertext.length).toBe(48);
+    expect(stored?.envelope.kekVersion).toBe(1);
+    expect(cipher).not.toContain(made.keys?.metaKey);
+    expect(cipher).not.toContain(made.keys?.fileKey);
     // Nothing reads the keys back: not the view, not the audit row.
     const again = JSON.stringify(await keysetView(ctx(), authority, made.id));
     expect(again).not.toContain(made.keys?.metaKey);
@@ -154,98 +151,98 @@ describe('four keysets per org and mode', () => {
 });
 
 describe('sealed keys are bound to where they were sealed', () => {
-  const scope = { orgId: 'o1', mode: 'live', keysetId: 'k1' } as const;
-  const key = new Uint8Array(16).map((_, i) => i + 1);
+  const scope = { orgId: 'o1', mode: 'live', keysetId: 'k1', keyId: 'key-1', version: 1 } as const;
+  const meta = new Uint8Array(16).map((_, i) => i + 1);
+  const file = new Uint8Array(16).map((_, i) => i + 101);
 
-  it('opens only under the org, mode, keyset, version and role it was sealed for', async () => {
+  it('opens only under the org, mode, keyset, version and row it was sealed for', async () => {
     const ring = await loadKekRing(f.kit.env);
-    const sealed = await sealKeyVersion(ring, scope, 'meta', 1, key);
-    expect(await openKeyVersion(ring, scope, 'meta', 1, sealed)).toEqual(key);
-    const wrong = [
-      openKeyVersion(ring, { ...scope, orgId: 'o2' }, 'meta', 1, sealed),
-      openKeyVersion(ring, { ...scope, mode: 'test' }, 'meta', 1, sealed),
-      openKeyVersion(ring, { ...scope, keysetId: 'k2' }, 'meta', 1, sealed),
-      openKeyVersion(ring, scope, 'meta', 2, sealed),
-      openKeyVersion(ring, scope, 'file', 1, sealed),
-    ];
-    for (const attempt of wrong) await refused(attempt, 'TAG_KEY_UNREADABLE');
+    const sealed = await sealVersion(ring, scope, meta, file);
+    expect(await openVersion(ring, scope, sealed)).toEqual({ meta, file });
+    for (const wrong of [
+      { ...scope, orgId: 'o2' },
+      { ...scope, mode: 'test' as const },
+      { ...scope, keysetId: 'k2' },
+      { ...scope, version: 2 },
+      { ...scope, keyId: 'key-2' },
+    ])
+      await refused(openVersion(ring, wrong, sealed), 'TAG_KEY_UNREADABLE');
   });
 
   it('opens a per-tag key only for its tag, keyset, mode and org', async () => {
     const ring = await loadKekRing(f.kit.env);
-    const sealed = await sealTagKey(ring, scope, 't1', key);
-    expect(await openTagKey(ring, scope, 't1', sealed)).toEqual(key);
+    const sealed = await sealTagKey(ring, scope, 't1', meta);
+    expect(await openTagKey(ring, scope, 't1', sealed)).toEqual(meta);
     for (const attempt of [
       openTagKey(ring, scope, 't2', sealed),
       openTagKey(ring, { ...scope, keysetId: 'k2' }, 't1', sealed),
       openTagKey(ring, { ...scope, mode: 'test' }, 't1', sealed),
       openTagKey(ring, { ...scope, orgId: 'o2' }, 't1', sealed),
-      // A keyset key is not a tag key.
-      openKeyVersion(ring, scope, 'file', 1, sealed),
+      // A tag key is not a keyset version, and a version is not a tag key.
+      openVersion(ring, scope, sealed),
+      openTagKey(ring, scope, 'key-1', await sealVersion(ring, scope, meta, file)),
     ])
       await refused(attempt, 'TAG_KEY_UNREADABLE');
   });
 
-  it('refuses damaged text, a missing KEK and a key of the wrong size', async () => {
+  it('refuses damaged columns, a missing KEK and a key of the wrong size', async () => {
     const ring = await loadKekRing(f.kit.env);
-    const sealed = await sealKeyVersion(ring, scope, 'meta', 1, key);
-    const parts = sealed.split('.');
-    const flipped = [...parts];
-    flipped[4] = `${(flipped[4] ?? '').slice(0, -4)}AAAA`;
+    const sealed = await sealVersion(ring, scope, meta, file);
+    const flip = (b: Uint8Array) => b.map((x, i) => (i === 0 ? x ^ 1 : x));
     for (const bad of [
-      '',
-      'v1',
-      `${sealed}.x`,
-      `v2.${parts.slice(1).join('.')}`,
-      flipped.join('.'),
-      `v1.99.${parts.slice(2).join('.')}`,
-      'v1.1.%%%.%%%.%%%',
+      { ...sealed, iv: flip(sealed.iv) },
+      { ...sealed, wrappedDek: flip(sealed.wrappedDek) },
+      { ...sealed, ciphertext: flip(sealed.ciphertext) },
+      { ...sealed, ciphertext: sealed.ciphertext.slice(1) },
+      { ...sealed, kekVersion: 99 },
     ])
-      await refused(openKeyVersion(ring, scope, 'meta', 1, bad), 'TAG_KEY_UNREADABLE');
-    await refused(sealKeyVersion(ring, scope, 'meta', 1, new Uint8Array(15)), 'TAG_KEY_UNREADABLE');
+      await refused(openVersion(ring, scope, bad), 'TAG_KEY_UNREADABLE');
+    await refused(sealVersion(ring, scope, new Uint8Array(15), file), 'TAG_KEY_UNREADABLE');
+    await refused(sealTagKey(ring, scope, 't1', new Uint8Array(17)), 'TAG_KEY_UNREADABLE');
   });
 
-  it('a stored row opened as another keyset, mode or version does not open', async () => {
+  it('a stored row opened as another keyset, mode, version or row does not open', async () => {
     const a = await keyset();
     const b = await keyset({ mode: 'test' });
     const ring = await loadKekRing(f.kit.env);
-    const row = await sealedKeys(db(), a.made.id, 1);
-    const own = { orgId: a.t.org.id, mode: 'live', keysetId: a.made.id } as const;
-    expect((await openKeyVersion(ring, own, 'meta', 1, row?.metaKey ?? '')).length).toBe(16);
-    await refused(
-      openKeyVersion(
-        ring,
-        { orgId: b.t.org.id, mode: 'test', keysetId: b.made.id },
-        'meta',
-        1,
-        row?.metaKey ?? '',
-      ),
-      'TAG_KEY_UNREADABLE',
-    );
-    await refused(
-      openKeyVersion(ring, { ...own, mode: 'test' }, 'meta', 1, row?.metaKey ?? ''),
-      'TAG_KEY_UNREADABLE',
-    );
-    await refused(openKeyVersion(ring, own, 'meta', 2, row?.metaKey ?? ''), 'TAG_KEY_UNREADABLE');
+    const [row] = await versionEnvelopes(db(), a.made.id);
+    if (!row) throw new Error('No key.');
+    const own = {
+      orgId: a.t.org.id,
+      mode: 'live',
+      keysetId: a.made.id,
+      keyId: row.id,
+      version: 1,
+    } as const;
+    expect((await openVersion(ring, own, row.envelope)).meta.length).toBe(16);
+    for (const wrong of [
+      { ...own, orgId: b.t.org.id, mode: 'test' as const, keysetId: b.made.id },
+      { ...own, mode: 'test' as const },
+      { ...own, version: 2 },
+      { ...own, keyId: 'other' },
+    ])
+      await refused(openVersion(ring, wrong, row.envelope), 'TAG_KEY_UNREADABLE');
   });
 
   it('a keyset whose row was swapped for another keyset’s fails to verify', async () => {
     const a = await keyset();
     const b = await keyset();
-    const rowB = await sealedKeys(db(), b.made.id, 1);
-    // The database refuses a rewrite of key material; drop that guard only to prove the seal still holds.
+    const [rowB] = await versionEnvelopes(db(), b.made.id);
+    if (!rowB) throw new Error('No key.');
+    // The database refuses a rewrite of the envelope; drop that guard only to prove the seal still holds.
     await run(db(), 'DROP TRIGGER nfc_tag_keys_update');
-    await run(db(), 'UPDATE nfc_tag_keys SET meta_key = ? WHERE keyset_id = ?', [
-      rowB?.metaKey ?? '',
-      a.made.id,
-    ]);
+    await run(
+      db(),
+      'UPDATE nfc_tag_keys SET iv = ?, wrapped_dek = ?, ciphertext = ? WHERE keyset_id = ?',
+      [rowB.envelope.iv, rowB.envelope.wrappedDek, rowB.envelope.ciphertext, a.made.id],
+    );
     await refused(verifyingKeys(ctx(), await rowOf(a.made.id)), 'TAG_KEY_UNREADABLE');
     expect(await verifyingKeys(ctx(), await rowOf(b.made.id))).toHaveLength(1);
   });
 });
 
 describe('rotate, retire and disable', () => {
-  it('rotation keeps the old key verifying until it is retired, then wipes it', async () => {
+  it('rotation keeps the old key verifying until it is retired, then it stops', async () => {
     const { authority, made } = await keyset();
     const k1 = await verifyingKeys(ctx(), await rowOf(made.id));
     const rotated = await rotateKeyset(ctx(), authority, made.id, { generate: true });
@@ -273,11 +270,7 @@ describe('rotate, retire and disable', () => {
       [2, 'active'],
     ]);
     expect(await verifyingKeys(ctx(), row)).toHaveLength(1);
-    expect(await sealedKeys(db(), made.id, 1)).toMatchObject({
-      metaKey: '',
-      fileKey: '',
-      state: 'retired',
-    });
+    expect((await versionEnvelopes(db(), made.id, ['retired'])).map((v) => v.version)).toEqual([1]);
     // Again is a no-op, and a rotation can follow.
     await retireKeyVersion(ctx(), authority, made.id, 1);
     const third = await rotateKeyset(ctx(), authority, made.id, { generate: true });
@@ -296,6 +289,40 @@ describe('rotate, retire and disable', () => {
     expect(rotated.keys).toBeNull();
     const [active] = await verifyingKeys(ctx(), await rowOf(made.id));
     expect(bytesToHex(active?.fileKey ?? new Uint8Array())).toBe(fileKey);
+  });
+
+  it('refuses entered keys this keyset has already used, retired ones included', async () => {
+    const t = await f.org();
+    const authority = await t.admin.authority();
+    const meta = '00112233445566778899aabbccddeeff';
+    const file = 'ffeeddccbbaa99887766554433221100';
+    const made = await createKeyset(ctx(), authority, {
+      name: 'Own keys',
+      diversify: false,
+      metaKey: meta,
+      fileKey: file,
+    });
+    const fresh = '0f1e2d3c4b5a69788796a5b4c3d2e1f0';
+    for (const keys of [
+      { metaKey: meta, fileKey: file },
+      { metaKey: fresh, fileKey: file },
+      { metaKey: meta, fileKey: fresh },
+      // A key in the other role is still a reused key.
+      { metaKey: file, fileKey: fresh },
+    ])
+      await refused(rotateKeyset(ctx(), authority, made.id, keys), 'KEYSET_KEY_REUSED');
+    await rotateKeyset(ctx(), authority, made.id, {
+      metaKey: fresh,
+      fileKey: '1234567890abcdef1234567890abcdef',
+    });
+    await retireKeyVersion(ctx(), authority, made.id, 1);
+    await refused(
+      rotateKeyset(ctx(), authority, made.id, {
+        metaKey: meta,
+        fileKey: 'abcdefabcdefabcdefabcdefabcdefab',
+      }),
+      'KEYSET_KEY_REUSED',
+    );
   });
 
   it('keeps a version while tags use it, and counts them', async () => {
@@ -323,7 +350,7 @@ describe('rotate, retire and disable', () => {
     ]);
   });
 
-  it('disable refuses every tag at once, wipes the keys and stays disabled', async () => {
+  it('disable refuses every tag at once and stays disabled', async () => {
     const { t, authority, made } = await keyset();
     await rotateKeyset(ctx(), authority, made.id, { generate: true });
     const disabled = await disableKeyset(ctx(), authority, made.id);
@@ -331,7 +358,6 @@ describe('rotate, retire and disable', () => {
     expect(disabled.versions.map((v) => v.state)).toEqual(['retired', 'retired']);
     const row = await rowOf(made.id);
     expect(await verifyingKeys(ctx(), row)).toEqual([]);
-    expect(await sealedKeys(db(), made.id, 2)).toMatchObject({ metaKey: '', fileKey: '' });
     await refused(rotateKeyset(ctx(), authority, made.id, { generate: true }), 'KEYSET_DISABLED');
     // Again changes nothing, and nothing turns it back on.
     expect((await disableKeyset(ctx(), authority, made.id)).disabledAt).toBe(disabled.disabledAt);

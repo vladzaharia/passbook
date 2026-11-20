@@ -15,22 +15,24 @@ import {
 import { randomBytes } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
-import { KEY_BYTES, type KeysetScope, openKeyVersion, sealKeyVersion } from './keyset-seal.ts';
+import { KEY_BYTES, type KeyScope, openVersion, sealVersion } from './keyset-seal.ts';
 import {
-  createKeysetGrant,
-  disableKeysetGrant,
   type KeyRow,
-  type KeysetAuthority,
   type KeysetRow,
   keysetById,
   keysetsOf,
   keyVersionsOf,
   liveKeysetCount,
+  versionEnvelopes,
+} from './repo-keysets.ts';
+import {
+  createKeysetGrant,
+  disableKeysetGrant,
+  type KeysetAuthority,
   retireKeyGrant,
   rotateKeysetGrant,
-  sealedKeys,
-} from './repo-keysets.ts';
-import { bytesToHex, hexToBytes } from './sun.ts';
+} from './repo-keysets-write.ts';
+import { bytesToHex, constantTimeEqual, hexToBytes } from './sun.ts';
 
 /** Live (not disabled) keysets per org and mode. */
 export const KEYSETS_PER_ORG_MODE = 4;
@@ -115,7 +117,7 @@ function slug(): string {
   return out;
 }
 
-const scopeOf = (k: Pick<KeysetRow, 'id' | 'orgId' | 'mode'>): KeysetScope => ({
+const scopeOf = (k: Pick<KeysetRow, 'id' | 'orgId' | 'mode'>): KeyScope => ({
   orgId: k.orgId,
   mode: k.mode,
   keysetId: k.id,
@@ -159,10 +161,16 @@ export async function createKeyset(
   const { meta, file, shown } = pickKeys(input);
   const ring = await loadKekRing(ctx.env);
   const id = ctx.ids.id();
-  const scope = scopeOf({ id, orgId: a.orgId, mode: a.mode });
-  const sealed = {
-    metaKey: await sealKeyVersion(ring, scope, 'meta', 1, meta),
-    fileKey: await sealKeyVersion(ring, scope, 'file', 1, file),
+  const keyId = ctx.ids.id();
+  const first = {
+    id: keyId,
+    version: 1,
+    envelope: await sealVersion(
+      ring,
+      { ...scopeOf({ id, orgId: a.orgId, mode: a.mode }), keyId, version: 1 },
+      meta,
+      file,
+    ),
   };
   for (let attempt = 1; ; attempt++) {
     const g = createKeysetGrant(ctx, a, {
@@ -170,7 +178,7 @@ export async function createKeyset(
       name: input.name,
       slug: slug(),
       diversify: input.diversify,
-      ...sealed,
+      first,
     });
     try {
       await commitKeyset(g);
@@ -203,17 +211,31 @@ export async function rotateKeyset(
   const { meta, file, shown } = pickKeys(input);
   const ring = await loadKekRing(ctx.env);
   const scope = scopeOf(row);
+  // Entered keys must be new: a key already used in this keyset (retired ones included) is not a rotation.
+  if (shown === null)
+    for (const v of await versionEnvelopes(ctx.env.DB, id)) {
+      const old = await openVersion(
+        ring,
+        { ...scope, keyId: v.id, version: v.version },
+        v.envelope,
+      );
+      if (
+        [old.meta, old.file].some((k) => constantTimeEqual(k, meta) || constantTimeEqual(k, file))
+      )
+        throw new ValidationError('Enter keys this keyset has not used.', [], 'KEYSET_KEY_REUSED');
+    }
+  const keyId = ctx.ids.id();
   await commitKeyset(
     rotateKeysetGrant(ctx, a, id, active.version, {
+      id: keyId,
       version: next,
-      metaKey: await sealKeyVersion(ring, scope, 'meta', next, meta),
-      fileKey: await sealKeyVersion(ring, scope, 'file', next, file),
+      envelope: await sealVersion(ring, { ...scope, keyId, version: next }, meta, file),
     }),
   );
   return { ...(await keysetView(ctx, a, id)), keys: shown };
 }
 
-/** Retires an old version once no tag uses it: its key material is wiped. */
+/** Retires an old version once no tag uses it. It no longer verifies. */
 export async function retireKeyVersion(
   ctx: ServiceContext,
   a: KeysetAuthority,
@@ -254,25 +276,22 @@ export interface VerifyKey {
 }
 
 /**
- * The keys a read may be checked with, in order: the active version, then the retiring one. A disabled
- * keyset has none. Opening fails (TAG_KEY_UNREADABLE) if a row's org, mode, keyset or version is not the one
- * it was sealed for. For the verifier (S3); no route calls it.
+ * The keys a read may be checked with, in order: the active version, then the retiring one. One read gives
+ * both, so a retire or a disable that lands meanwhile leaves the answer as of that read. A disabled keyset
+ * has none. Opening fails (TAG_KEY_UNREADABLE) if a row's org, mode, keyset or version is not the one it was
+ * sealed for. For the verifier (S3); no route calls it.
  */
 export async function verifyingKeys(ctx: ServiceContext, keyset: KeysetRow): Promise<VerifyKey[]> {
   if (keyset.disabledAt !== null) return [];
   const ring = await loadKekRing(ctx.env);
   const scope = scopeOf(keyset);
-  const versions = (await keyVersionsOf(ctx.env.DB, [keyset.id])).get(keyset.id) ?? [];
-  const order = ['active', 'retiring'] as const;
   const out: VerifyKey[] = [];
-  for (const state of order) {
-    const v = versions.find((x) => x.state === state);
-    const sealed = v && (await sealedKeys(ctx.env.DB, keyset.id, v.version));
-    if (!v || !sealed) continue;
+  for (const v of await versionEnvelopes(ctx.env.DB, keyset.id, ['active', 'retiring'])) {
+    const keys = await openVersion(ring, { ...scope, keyId: v.id, version: v.version }, v.envelope);
     out.push({
       version: v.version,
-      metaKey: await openKeyVersion(ring, scope, 'meta', v.version, sealed.metaKey),
-      fileKey: await openKeyVersion(ring, scope, 'file', v.version, sealed.fileKey),
+      metaKey: keys.meta,
+      fileKey: keys.file,
       diversified: keyset.diversify,
     });
   }
