@@ -70,6 +70,7 @@ export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'scan_retention_delete_intents',
   'scan_retained_gates',
   'pass_holder_reissue_required',
+  'request_log',
   'scan_offline_reads',
   'scan_session_changes',
 ]);
