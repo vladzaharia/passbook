@@ -142,6 +142,7 @@ export function floorApi(scenario: string): Partial<ScanApi> {
         autoOut: false,
         hasEmail: true,
       })),
+      nextCursor: null,
     }),
     devices: async () => ({
       items: [
