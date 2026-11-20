@@ -72,6 +72,9 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
         item.credentialKeysetCommitment,
       );
       if (result === 'scheduled' || result === 'unchanged') await ackDirtyWalletInstance(db, item);
+      else if (instance.lifecycle === 'revoked' && instance.retirementCause === 'channel_off')
+        // A settled channel-off copy has nothing left to schedule; a successor is a different row.
+        await ackDirtyWalletInstance(db, item);
       else if (
         !(
           (instance.lifecycle === 'blocked' || instance.lifecycle === 'ready') &&

@@ -1,4 +1,4 @@
-import type { EffectiveChannels } from '../../../shared/contracts/channels.ts';
+import type { EffectiveChannels, OfferHold } from '../../../shared/contracts/channels.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { channelOn } from '../channels/gate.ts';
@@ -33,6 +33,12 @@ export function setRuntimeAccountCheckForTest(
     runtimeAccountCheck = previous;
   };
 }
+
+/** Why a provider offer is withheld while its channel is on, after a channel-off retirement. */
+export type WalletOfferHold = OfferHold;
+
+/** Re-enabling creates a successor instance at epoch + 1; 16 is the schema's last epoch. */
+export const MAX_CHANNEL_EPOCH = 16;
 
 export interface OfferPassSnapshot {
   pass: Pass;

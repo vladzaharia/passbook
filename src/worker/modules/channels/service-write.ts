@@ -1,5 +1,10 @@
 import type { z } from 'zod';
-import { channelTransition, effectiveChannels, templateDefault } from '../../../shared/channels.ts';
+import {
+  anyDigitalOn,
+  channelTransition,
+  DIGITAL_CHANNELS,
+  effectiveChannels,
+} from '../../../shared/channels.ts';
 import {
   type BulkPassChannelsResponseSchema,
   type BulkPassChannelsSchema,
@@ -7,35 +12,38 @@ import {
   type Channel,
   type PassChannelState,
   type PutPassChannelsSchema,
-  type PutTemplateChannelsResponseSchema,
-  type TemplateChannelState,
 } from '../../../shared/contracts/channels.ts';
-import type { Mode } from '../../../shared/contracts/common.ts';
 import { bump, read } from '../../platform/counters.ts';
-import { ConflictError, RateLimitedError } from '../../platform/errors.ts';
+import { RateLimitedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordPassEvents } from '../events/record.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
+import { assertNewCodeAllowed, countNewCode } from '../passes/new-code.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import type { Actor } from '../passes/service.ts';
 import { activePrint } from '../prints/repo.ts';
 import { adminWriter, writeVoid } from '../prints/repo-write.ts';
-import * as repo from './repo.ts';
-import { writePassChannels, writeTemplatePolicy } from './repo-write.ts';
-import { loadPass, loadTemplate, passChannels } from './service.ts';
+import {
+  assertNoOpenWindow,
+  noticeHolder,
+  refuseAllOff,
+  refuseUnsupported,
+  rotateCode,
+  rotationOwed,
+} from './replace.ts';
+import { passReplaceable } from './replaceable.ts';
+import { writePassChannels } from './repo-write.ts';
+import { loadPass, passChannels } from './service.ts';
+import { openWindows } from './windows.ts';
 
 type PutPass = z.infer<typeof PutPassChannelsSchema>;
-type PutTemplateResponse = z.infer<typeof PutTemplateChannelsResponseSchema>;
 type Bulk = z.infer<typeof BulkPassChannelsSchema>;
 type BulkResponse = z.infer<typeof BulkPassChannelsResponseSchema>;
 
 const HOUR = 3_600_000;
 /** Override changes one pass may make per hour (the same window as New code). */
 export const OVERRIDE_CHANGES_PER_HOUR = 20;
-
-const replaceUnavailable = () =>
-  new ConflictError('Replacing codes is not available yet.', 'CHANNEL_REPLACE_UNAVAILABLE');
 
 /** Sets or clears a pass's overrides; effective changes are audited and journaled. */
 export async function putPassChannels(
@@ -45,7 +53,6 @@ export async function putPassChannels(
   pass: Pass,
   body: PutPass,
 ) {
-  if (body.replaceCodes) throw replaceUnavailable();
   const now = ctx.clock.now();
   const window = now - (now % HOUR);
   const key = `channels:override:${pass.id}`;
@@ -63,7 +70,35 @@ export async function putPassChannels(
   const actions = channelTransition(before, after, {
     copies: new Set(rows.copies),
     retired: new Set(Object.keys(rows.retired) as Channel[]),
+    replaceCodes: body.replaceCodes,
   });
+  const rotation = actions.find((a) => a.kind === 'rotate_codes');
+  const rotates = rotation !== undefined;
+  // A channel retired before the pass's last new code was already covered by it: no second code.
+  const retiredNow = Object.fromEntries(
+    actions.flatMap((a) => (a.kind === 'retire' ? [[a.channel, now]] : [])),
+  );
+  const owed =
+    rotation?.kind === 'rotate_codes' &&
+    (await rotationOwed(
+      ctx.env.DB,
+      pass.orgId,
+      pass.id,
+      { ...rows.retired, ...retiredNow },
+      rotation.channels,
+    ));
+  if (body.replaceCodes) {
+    const touchesDigital = (Object.keys(body.channels) as Channel[]).some((c) =>
+      DIGITAL_CHANNELS.includes(c),
+    );
+    if (touchesDigital && !anyDigitalOn(after)) refuseAllOff();
+  }
+  // Refused before anything is written: the pass would be off with its old code still working.
+  if (owed) {
+    if (!(await passReplaceable(ctx, pass))) refuseUnsupported();
+    assertNoOpenWindow(await openWindows(ctx, pass.orgId, pass.mode, pass.templateId, now, 1));
+    await assertNewCodeAllowed(ctx, pass.id);
+  }
 
   const touched = new Set<Channel>(Object.keys(body.channels) as Channel[]);
   const retired = { ...rows.retired };
@@ -99,6 +134,7 @@ export async function putPassChannels(
         to: after[channel].on ? 'on' : 'off',
         source: after[channel].source,
         ...(was === now ? {} : { override: { from: was, to: now } }),
+        ...(rotates ? { codesReplaced: true } : {}),
       },
     ];
   });
@@ -141,6 +177,39 @@ export async function putPassChannels(
       data,
     })),
   );
+  if (owed) {
+    // A system actor id, not the user's: a replace keeps the pass's print (the 0115 trigger reads the prefix).
+    // The user is on the channel audit rows above.
+    const done = await rotateCode(
+      ctx,
+      pass.id,
+      `channel_replace:${ctx.requestId ?? ctx.ids.id()}`,
+      authority,
+    );
+    if (done === 'rotated') await countNewCode(ctx, pass.id);
+  }
+  // Queued for any pass whose code was replaced since its channel went off: the mail job sends it once,
+  // so a retry after a crash between the rotation and this line still tells the holder.
+  if (rotates) await noticeHolder(ctx, pass.id);
+  const stopped = actions.flatMap((a) =>
+    a.kind === 'retire' && rows.copies.includes(a.channel) && DIGITAL_CHANNELS.includes(a.channel)
+      ? [a.channel]
+      : [],
+  );
+  // A copy stopped working: the holder is told, unless a new code's notice already said so.
+  if (body.notify && !rotates && stopped.length > 0)
+    await ctx.env.JOBS.send({
+      kind: 'pass.holder_mail',
+      passId: pass.id,
+      userId: null,
+      reason: 'channel_off',
+      channels: stopped.filter((c) => c !== 'paper' && c !== 'nfc') as (
+        | 'mobile'
+        | 'apple'
+        | 'google'
+        | 'samsung'
+      )[],
+    });
   return passChannels(ctx, pass);
 }
 
@@ -152,10 +221,10 @@ export async function bulkPassChannels(
   passes: Pass[],
   body: Bulk,
 ): Promise<BulkResponse> {
-  if (body.replaceCodes) throw replaceUnavailable();
   const value: PassChannelState | null = body.action === 'reset' ? null : body.action;
   const channels = Object.fromEntries(body.channels.map((c) => [c, value]));
   const out: BulkResponse = { done: 0, skipped: [] };
+  const bulkKey = ctx.requestId ?? ctx.ids.id();
   for (const pass of passes) {
     try {
       await putPassChannels(ctx, actor, authority, pass, {
@@ -163,6 +232,13 @@ export async function bulkPassChannels(
         notify: body.notify,
         replaceCodes: false,
       });
+      // The overrides are in; the new code waits for its windows in one job per pass.
+      if (body.replaceCodes && value === 'off')
+        await ctx.env.JOBS.send({
+          kind: 'channel.replace_code',
+          passId: pass.id,
+          key: `channel_bulk:${bulkKey}`,
+        });
       out.done += 1;
     } catch (error) {
       if (!(error instanceof RateLimitedError)) throw error;
@@ -170,87 +246,4 @@ export async function bulkPassChannels(
     }
   }
   return out;
-}
-
-const onWith = (state: TemplateChannelState, ov: PassChannelState | null) =>
-  state !== 'never' && (ov === null ? state === 'on' : ov === 'on');
-
-/** Saves a template's policy for one mode. `dryRun` returns the impact only. */
-export async function putTemplateChannels(
-  ctx: ServiceContext,
-  actor: Actor,
-  authority: TenantPassWrite,
-  template: repo.TemplateRef,
-  mode: Mode,
-  body: {
-    channels: Partial<Record<Channel, TemplateChannelState>>;
-    revision: number;
-    dryRun: boolean;
-    replaceCodes: boolean;
-    expectedCleared?: number | undefined;
-  },
-): Promise<PutTemplateResponse> {
-  if (body.replaceCodes) throw replaceUnavailable();
-  const { inputs, policy, revision } = await loadTemplate(ctx, template, mode);
-  if (!body.dryRun && body.revision !== revision)
-    throw new ConflictError('The channels changed. Reload and retry.', 'TEMPLATE_CHANNELS_CHANGED');
-  const merged = { ...policy, ...body.channels };
-  const changed = (Object.keys(body.channels) as Channel[]).filter(
-    (c) => (policy?.[c] ?? templateDefault(c)) !== body.channels[c],
-  );
-  const impact = [];
-  const cleared: Channel[] = [];
-  for (const channel of changed) {
-    const prev = policy?.[channel] ?? templateDefault(channel);
-    const next = body.channels[channel] as TemplateChannelState;
-    const blocked = !effectiveChannels({ ...inputs, template: { ...policy, [channel]: 'on' } })[
-      channel
-    ].on;
-    let passes = 0;
-    let clearedOverrides = 0;
-    for (const g of await repo.overrideGroups(
-      ctx.env.DB,
-      template.orgId,
-      mode,
-      template.id,
-      channel,
-    )) {
-      if (!blocked && onWith(prev, g.override) && !onWith(next, g.override)) passes += g.passes;
-      if (next === 'never' && g.override !== null) clearedOverrides += g.passes;
-    }
-    if (next === 'never') cleared.push(channel);
-    impact.push({ channel, passes, rotated: 0, clearedOverrides });
-  }
-  const clearedTotal = impact.reduce((n, i) => n + i.clearedOverrides, 0);
-  if (!body.dryRun && body.expectedCleared !== undefined && body.expectedCleared !== clearedTotal)
-    throw new ConflictError(
-      `This now clears ${clearedTotal} pass overrides, not ${body.expectedCleared}. Review and save again.`,
-      'TEMPLATE_CHANNELS_IMPACT_CHANGED',
-    );
-  if (!body.dryRun && changed.length > 0)
-    await writeTemplatePolicy(
-      ctx,
-      authority,
-      actor,
-      template.id,
-      actor.id ?? actor.type,
-      merged,
-      cleared,
-      {
-        mode,
-        channels: Object.fromEntries(changed.map((c) => [c, body.channels[c]])),
-        cleared: clearedTotal,
-      },
-      body.revision,
-    );
-  const saved = body.dryRun ? policy : merged;
-  const view = await loadTemplate(ctx, template, mode, saved ?? undefined);
-  const wrote = !body.dryRun && changed.length > 0;
-  return {
-    channels: saved,
-    revision: wrote ? revision + 1 : revision,
-    effective: effectiveChannels(view.inputs),
-    impact,
-    workflowInstanceId: null,
-  };
 }

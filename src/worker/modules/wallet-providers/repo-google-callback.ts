@@ -20,6 +20,7 @@ export interface GoogleCallbackBinding extends GoogleCallbackAccountScope {
   passId: string;
   releaseId: string;
   credentialGeneration: number;
+  channelEpoch: number;
 }
 
 export interface GoogleCallbackBindingInput {
@@ -29,6 +30,7 @@ export interface GoogleCallbackBindingInput {
   releaseId: string;
   /** The immutable generation of the instance, not the pass's current generation. */
   credentialGeneration: number;
+  channelEpoch: number;
   operationVersion: number;
 }
 
@@ -52,7 +54,7 @@ export function findGoogleCallbackAccount(
 function googleBindingProof(scope: WalletRuntimeScope, input: GoogleCallbackBindingInput) {
   const where = `i.id = ? AND i.pass_id = ? AND i.org_id = ? AND i.mode = ?
     AND i.provider = 'google' AND i.account_id = ? AND i.identity_projection_release_id = ?
-    AND i.credential_generation = ? AND op.version = ? AND op.account_revision = ? AND op.kind = 'upsert'
+    AND i.credential_generation = ? AND i.channel_epoch = ? AND op.version = ? AND op.account_revision = ? AND op.kind = 'upsert'
     AND op.state IN ('pending', 'retry', 'claimed', 'succeeded')
     AND i.credential_keyset_commitment = ? AND op.credential_keyset_commitment = ?
     AND ${credentialRefKeysetSql}
@@ -65,6 +67,7 @@ function googleBindingProof(scope: WalletRuntimeScope, input: GoogleCallbackBind
     scope.accountId,
     input.releaseId,
     input.credentialGeneration,
+    input.channelEpoch,
     input.operationVersion,
     scope.accountRevision,
     scope.credentialKeysetCommitment,
@@ -152,7 +155,7 @@ export async function findGoogleCallbackBinding(
     db,
     `SELECT i.id AS instanceId, i.pass_id AS passId,
       i.identity_projection_release_id AS releaseId, i.credential_generation AS credentialGeneration,
-      a.id AS accountId, a.org_id AS orgId, a.mode, ${REVISION_EXPR} AS accountRevision,
+      i.channel_epoch AS channelEpoch, a.id AS accountId, a.org_id AS orgId, a.mode, ${REVISION_EXPR} AS accountRevision,
       CASE WHEN i.credential_keyset_commitment = b.credential_keyset_commitment
         THEN b.credential_keyset_commitment END AS credentialKeysetCommitment
     FROM wallet_google_callback_bindings b
@@ -161,8 +164,7 @@ export async function findGoogleCallbackBinding(
       AND a.mode = i.mode AND a.provider = i.provider
     WHERE b.account_id = ? AND b.class_id_hash = ? AND b.object_id_hash = ?
       AND i.org_id = ? AND i.mode = ? AND i.provider = 'google'
-      AND ${REVISION_EXPR} = ? AND a.revoked_at IS NULL
-      AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
+      AND ${REVISION_EXPR} = ? AND a.revoked_at IS NULL AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
       AND ${credentialRefKeysetSql}`,
     [
       scope.accountId,
@@ -201,9 +203,8 @@ function googleReceiptProof(binding: GoogleCallbackBinding, input: GoogleCallbac
     JOIN wallet_provider_accounts a ON a.id = i.account_id AND a.org_id = i.org_id
       AND a.mode = i.mode AND a.provider = i.provider`;
   const guard = `i.id = ? AND i.pass_id = ? AND i.identity_projection_release_id = ?
-      AND i.credential_generation = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'google' AND a.id = ?
-      AND ${REVISION_EXPR} = ? AND a.revoked_at IS NULL
-      AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
+      AND i.credential_generation = ? AND i.channel_epoch = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'google' AND a.id = ?
+      AND ${REVISION_EXPR} = ? AND a.revoked_at IS NULL AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
       AND b.class_id_hash = ? AND b.object_id_hash = ?
       AND i.credential_keyset_commitment = ? AND b.credential_keyset_commitment = ?
       AND ${credentialRefKeysetSql} AND ? > ?`;
@@ -212,6 +213,7 @@ function googleReceiptProof(binding: GoogleCallbackBinding, input: GoogleCallbac
     binding.passId,
     binding.releaseId,
     binding.credentialGeneration,
+    binding.channelEpoch,
     binding.orgId,
     binding.mode,
     binding.accountId,

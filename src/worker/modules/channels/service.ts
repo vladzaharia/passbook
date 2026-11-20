@@ -6,10 +6,13 @@ import type {
   TemplateChannelsDto,
 } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { CHANNEL_COPY } from '../../../shared/copy/channels.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { walletProviderDisabledReason } from '../wallet-providers/provider-policy.ts';
+import { passReplaceable } from './replaceable.ts';
 import * as repo from './repo.ts';
+import { openWindows } from './windows.ts';
 
 type Per<T> = Partial<Record<Channel, T>>;
 
@@ -36,7 +39,7 @@ async function levels(
   return { platform, org: blocked };
 }
 
-function capabilityReasons(cap: repo.Capability): Per<ChannelReason> {
+export function capabilityReasons(cap: repo.Capability): Per<ChannelReason> {
   const out: Per<ChannelReason> = {};
   if (!cap.google) out.google = 'no_design';
   if (!cap.samsung) out.samsung = 'no_design';
@@ -125,7 +128,15 @@ export async function passChannels(
   pass: Parameters<typeof loadPass>[1],
 ): Promise<PassChannelsDto> {
   const { inputs } = await loadPass(ctx, pass);
-  return { effective: effectiveChannels(inputs), overrides: inputs.pass };
+  const [supported, windows] = await Promise.all([
+    passReplaceable(ctx, pass),
+    openWindows(ctx, pass.orgId, pass.mode, pass.templateId, ctx.clock.now()),
+  ]);
+  return {
+    effective: effectiveChannels(inputs),
+    overrides: inputs.pass,
+    replace: { supported, windows },
+  };
 }
 
 /** The template's own view: platform, org and capability of the org's released version, before any pass override. */
@@ -162,4 +173,23 @@ export async function templateChannels(
 ): Promise<TemplateChannelsDto> {
   const { inputs, policy, revision } = await loadTemplate(ctx, template, mode);
   return { channels: policy, revision, effective: effectiveChannels(inputs) };
+}
+
+const NOTICE_DAYS = 14;
+
+/**
+ * The line the hosted pass page shows when the code changed, whether or not an email went out (it may
+ * be capped or skipped), and its holder opens the page to see the new code. Shown for two weeks.
+ */
+export async function codesReplacedNotice(
+  ctx: ServiceContext,
+  pass: { id: string; orgId: string },
+): Promise<string | undefined> {
+  const rotated = await repo.rotatedSince(
+    ctx.env.DB,
+    pass.orgId,
+    pass.id,
+    ctx.clock.now() - NOTICE_DAYS * 86_400_000,
+  );
+  return rotated ? CHANNEL_COPY.codesReplaced : undefined;
 }

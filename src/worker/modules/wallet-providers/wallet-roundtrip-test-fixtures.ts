@@ -282,6 +282,7 @@ export async function seedInstance(
       releaseId,
       passId: pass.id,
       credentialGeneration: live.credential_generation,
+      channelEpoch: 1,
     },
   );
   await run(

@@ -95,16 +95,29 @@ export async function createWalletInstanceAndOffer(
   const offer = { hash: refHash, expiresAt, authority: p.authority };
   let instance = await getInstanceByPass(db, p);
   if (instance && instance.credentialKeysetCommitment !== p.credentialKeysetCommitment) return null;
-  if (!instance || instance.lifecycle === 'ready') {
-    const instanceId = instance?.id ?? p.instanceId;
+  // A settled channel-off predecessor is replaced by a successor born active with its first operation.
+  const predecessor =
+    instance?.retirementCause === 'channel_off' &&
+    (instance.lifecycle === 'revoked' || instance.lifecycle === 'retired')
+      ? instance
+      : null;
+  if (!instance || instance.lifecycle === 'ready' || predecessor) {
+    const instanceId = predecessor ? p.instanceId : (instance?.id ?? p.instanceId);
     await insertInstance(
       db,
-      { ...p, instanceId, operationId: p.newId(), requestHash: hash },
+      {
+        ...p,
+        instanceId,
+        operationId: p.newId(),
+        requestHash: hash,
+        ...(predecessor ? { channelEpoch: predecessor.channelEpoch + 1 } : {}),
+      },
       offer,
     );
     instance = await getInstanceByPass(db, p);
     if (
       !instance ||
+      instance.retirementCause === 'channel_off' ||
       instance.credentialKeysetCommitment !== p.credentialKeysetCommitment ||
       instance.lifecycle === 'ready' ||
       instance.lifecycle === 'blocked'

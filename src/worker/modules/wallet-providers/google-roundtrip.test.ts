@@ -75,6 +75,7 @@ describe('Google save callback for a new-model Test enrolment', () => {
       releaseId: 'release-b',
       passId: 'pass-b',
       credentialGeneration: 1,
+      channelEpoch: 1,
     });
 
     const app = new Hono<AppBindings>();

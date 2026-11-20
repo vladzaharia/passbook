@@ -38,6 +38,7 @@ describe('Google stays dark behind the policy gate', () => {
       releaseId: 'release-1',
       passId: 'pass-1',
       credentialGeneration: 1,
+      channelEpoch: 1,
       projection: objectProjection,
       onProviderResponse: responses.onProviderResponse,
     };
@@ -47,6 +48,7 @@ describe('Google stays dark behind the policy gate', () => {
           releaseId: 'release-1',
           passId: 'pass-1',
           credentialGeneration: 1,
+          channelEpoch: 1,
           origins: ['https://passbook.mobile'],
         }),
       () =>
@@ -54,6 +56,7 @@ describe('Google stays dark behind the policy gate', () => {
           releaseId: 'release-1',
           passId: 'pass-1',
           credentialGeneration: 1,
+          channelEpoch: 1,
         }),
       () => upsertGoogleRuntimeClass(f.ctx, scope, cls),
       () => patchGoogleRuntimeClass(f.ctx, scope, cls),
@@ -64,6 +67,7 @@ describe('Google stays dark behind the policy gate', () => {
           releaseId: 'release-1',
           passId: 'pass-1',
           credentialGeneration: 1,
+          channelEpoch: 1,
           retirement: {
             instanceId: 'instance-1',
             operationId: 'operation-1',

@@ -82,6 +82,21 @@ describe('enrolment gate in the database and the claim proof', () => {
     await expect(setLifecycle('active')).rejects.toThrow(/enrolment is not on/);
     await setLifecycle('revoked');
     await expect(setLifecycle('active')).rejects.toThrow(/enrolment is not on/);
+
+    // A successor instance (next channel epoch), born active, is refused on the held enrolment too.
+    await expect(
+      run(
+        env.DB,
+        `INSERT INTO wallet_provider_instances (id, pass_id, org_id, mode, provider, account_id,
+          identity_projection_release_id, credential_generation, channel_epoch, lifecycle, desired_version,
+          desired_operation_id, created_at, updated_at, credential_keyset_commitment)
+         SELECT ?, pass_id, org_id, mode, provider, account_id, identity_projection_release_id,
+          credential_generation, 2, 'active', desired_version, desired_operation_id, created_at,
+          updated_at, credential_keyset_commitment
+         FROM wallet_provider_instances WHERE id = ?`,
+        [kit.ctx.ids.id(), seeded.instanceId],
+      ),
+    ).rejects.toThrow(/enrolment is not on/);
   });
 
   it('leaves a legacy envelope row alone: its instance and offer ref are not gated', async () => {

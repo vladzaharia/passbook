@@ -12,6 +12,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
+import type { PassEmailNotice } from './binding.ts';
 import {
   bindPass,
   type ConnectionEmailAuthority,
@@ -243,6 +244,8 @@ export async function enqueuePassEmail(
     schedule?: boolean;
     /** The mail answers a join link: it carries the "You asked for this card" line. */
     joined?: boolean;
+    /** A channel went off or codes were replaced: the mail says so. */
+    notice?: PassEmailNotice;
     /** Recorded in the queueing batch, as one transaction with the mail. */
     auditEntry?: AuditEntry;
   },
@@ -283,6 +286,7 @@ export async function enqueuePassEmail(
     ...(also ? { also } : {}),
     ...(input.issuanceIntentId ? { issuanceId: input.issuanceIntentId } : {}),
     ...(input.joined ? { joined: true } : {}),
+    ...(input.notice ? { notice: input.notice } : {}),
   };
   const _recipient = await recipientKey(ctx.env, to);
   const outboxId = ctx.ids.id();
