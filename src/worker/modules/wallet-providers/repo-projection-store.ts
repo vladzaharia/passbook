@@ -8,12 +8,6 @@ import {
 } from './projection-contract.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 
-export {
-  insertProjectionApprovalStmt,
-  insertProjectionCandidateStmt,
-  insertProjectionReleaseStmt,
-} from './repo-projection-write.ts';
-
 export interface ProjectionCandidate extends Omit<CandidateRow, 'orgId' | 'provider'> {
   orgId: string;
   /** The keyset the candidate was authored under; the insert guard requires it to be the pinned one. */

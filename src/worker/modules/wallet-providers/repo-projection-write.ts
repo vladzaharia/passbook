@@ -1,7 +1,10 @@
-import type { Mode } from '../../../shared/contracts/common.ts';
-import { type SqlValue, stmt } from '../../platform/db.ts';
+import type { Grant } from '../../platform/authority.ts';
+import type { Check } from '../../platform/authority-checks.ts';
+import { exists } from '../../platform/authority-cond.ts';
+import type { DenyReason } from '../../platform/errors.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { grantedAudit } from '../audit/repo-granted.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
-import { templateAuthorityPredicate } from '../templates/repo-authority.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
 import { projectionPolicy } from './projection-contract.ts';
 import {
@@ -9,11 +12,23 @@ import {
   versionAuthorIndependentSql,
 } from './projection-system-authority.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
+import { projectionGrant } from './repo-projection-grants.ts';
 import type { ProjectionCandidate } from './repo-projection-store.ts';
-import { samsungProjectionEvidencePredicateSql } from './repo-samsung-verification.ts';
+
+/** A check over template and wallet tables compares tenant columns with the actor row `a`. */
+export const check = (
+  reason: DenyReason,
+  sql: (bind: (v: string | number | null) => string) => string,
+) => ({ reason, ok: (b) => sql((v) => b.bind(v)) }) satisfies Check;
+
+/** The audit row that commits with a write, and only while the written row exists. */
+export interface ProjectionAudit {
+  action: string;
+  detail: Record<string, unknown>;
+}
 
 /** SQL predicates refer only to immutable, trusted aliases chosen by these repository methods. */
-function currentSourceAndAccount(alias: string): string {
+export function currentSourceAndAccount(alias: string): string {
   return `EXISTS (SELECT 1 FROM template_provider_apple_sources source
       JOIN template_versions version ON version.template_id = source.template_id AND version.version = source.version
       JOIN wallet_provider_accounts account ON account.id = ${alias}.provider_account_id
@@ -26,218 +41,181 @@ function currentSourceAndAccount(alias: string): string {
         AND source.generation = ${alias}.source_release_generation AND source.candidate_hash = ${alias}.source_release_hash
         AND source.content_hash = ${alias}.content_hash AND version.created_by IS ${alias}.version_author_id)`;
 }
-function guard(
+
+const ENTITY = {
+  candidate: 'template_candidates',
+  approve: 'template_approvals',
+  release: 'template_releases',
+} as const;
+
+/** Commits a grant that wrote one row of `entity` and its audit; false when the row did not land. */
+export async function commitOne(
+  ctx: ServiceContext,
+  g: Grant,
+  entity: keyof typeof ENTITY,
+  entityId: string,
   authority: ProjectionAuthority,
-  capability: 'templates:author' | 'templates:review' | 'templates:publish',
-  orgSql: string,
-  mode: Mode,
-  now: number,
-) {
-  if (authority.kind === 'system') {
-    // The author role writes candidates; the reviewer role approves and publishes. The org must be active.
-    const valid =
-      authority.mode === mode &&
-      authority.role === (capability === 'templates:author' ? 'author' : 'reviewer');
-    return {
-      sql: `? = 1 AND (${orgSql}) = ? AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = ? AND o.status = 'active')`,
-      params: [valid ? 1 : 0, authority.orgId, authority.orgId],
-    };
-  }
-  const valid =
-    authority.kind === 'session' && authority.capability === capability && authority.mode === mode;
-  const predicate = templateAuthorityPredicate(authority, orgSql, now);
-  return { sql: `? = 1 AND (${predicate.sql})`, params: [valid ? 1 : 0, ...predicate.params] };
+  orgId: string,
+  templateId: string,
+  audit: ProjectionAudit,
+  write: () => void,
+): Promise<boolean> {
+  write();
+  g.add(
+    grantedAudit(
+      g,
+      ctx,
+      {
+        orgId,
+        actorType: authority.userId.startsWith('system:') ? 'system' : 'user',
+        actorId: authority.userId,
+        action: audit.action,
+        targetType: 'template',
+        targetId: templateId,
+        detail: audit.detail,
+      },
+      [exists(ENTITY[entity], { id: entityId })],
+    ),
+  );
+  const [inserted] = await g.commit();
+  return (inserted?.results.length ?? 0) === 1;
 }
 
-const sqlLiteral = (value: string) => `'${value.replaceAll("'", "''")}'`;
+const CANDIDATE_COLUMNS = [
+  'id',
+  'template_id',
+  'mode',
+  'provider',
+  'version',
+  'candidate_hash',
+  'content_hash',
+  'adapter_revision',
+  'adapter_capabilities',
+  'audience_policy_revision',
+  'author_id',
+  'version_author_id',
+  'created_at',
+  'source_release_id',
+  'source_release_generation',
+  'source_release_hash',
+  'provider_account_id',
+  'provider_account_revision',
+  'provider_identity_hash',
+  'projection_json',
+  'credential_keyset_commitment',
+  'provider_account_epoch',
+];
 
 /**
- * Source, version and account columns are copied from the rows the guards join, so the statement binds
- * about 30 values instead of 47. The caller's copies are still compared (generation, hashes, ids), and
- * the account guard is the epoch the candidate captured: a key rotation under the same identity does not
- * move it. The revision rides along as the credential locator only.
+ * The org and mode come from the grant. The source, version and account must still be what the candidate
+ * names: the account under the epoch it captured (a key rotation under the same identity does not move it).
  */
-export function projectionCandidateInsert(
+export async function writeProjectionCandidate(
+  ctx: ServiceContext,
   c: ProjectionCandidate,
   authority: ProjectionAuthority,
-  now: number,
-): { sql: string; params: SqlValue[] } {
-  const auth = guard(authority, 'templates:author', 'source_scope.org_id', c.mode, now);
+  audit: ProjectionAudit,
+): Promise<boolean> {
   const policy = projectionPolicy(c.provider);
   const onPolicy =
     c.adapterRevision === policy.adapterRevision &&
     c.audiencePolicyRevision === policy.audiencePolicyRevision &&
     JSON.stringify(c.adapterCapabilities) === JSON.stringify(policy.adapterCapabilities);
-  return {
-    sql: `INSERT INTO template_candidates (id, template_id, org_id, mode, provider, version,
-    candidate_hash, content_hash, adapter_revision, adapter_capabilities, audience_policy_revision,
-    author_id, version_author_id, created_at, source_release_id, source_release_generation, source_release_hash,
-    provider_account_id, provider_account_revision, provider_identity_hash, projection_json, credential_keyset_commitment,
-    provider_account_epoch)
-    SELECT ?, source.template_id, source_scope.org_id, source.mode, account.provider, source.version,
-      ?, source.content_hash, ${policy.adapterRevision}, ${sqlLiteral(JSON.stringify(policy.adapterCapabilities))},
-      ${policy.audiencePolicyRevision}, ?, v.created_by, ?, source.id, source.generation, source.candidate_hash,
-      account.id, account.revision, ?, ?, ?, account.authority_epoch
-    FROM (SELECT ? AS org_id) source_scope
-    JOIN template_provider_apple_sources source ON source.id = ? AND source.template_id = ?
-      AND source.mode = ? AND source.version = ? AND source.generation = ? AND source.candidate_hash = ?
-      AND source.content_hash = ? AND (source.org_id = source_scope.org_id
-        OR (source.org_id IS NULL AND source.origin = 'baked' AND source.template_org_id IS NULL))
-    JOIN template_versions v ON v.template_id = source.template_id AND v.version = source.version AND v.created_by IS ?
-    JOIN wallet_provider_accounts account ON account.id = ? AND account.org_id = source_scope.org_id
-      AND account.mode = source.mode AND account.provider = ? AND account.revision = ?
-      AND account.authority_epoch = ? AND account.credential_id IS NOT NULL
-      AND account.revoked_at IS NULL
-    WHERE ? = 1 AND ? = ? AND ? = ${pinnedKeysetSql}
-      AND (${auth.sql})`,
-    params: [
-      c.id,
-      c.candidateHash,
-      c.authorId,
-      c.createdAt,
-      c.providerIdentityHash,
-      canonicalJson(c.projection),
-      c.credentialKeysetCommitment,
-      c.orgId,
-      c.sourceReleaseId,
-      c.templateId,
-      c.mode,
-      c.version,
-      c.sourceReleaseGeneration,
-      c.sourceReleaseHash,
-      c.contentHash,
-      c.versionAuthorId,
-      c.accountId,
-      c.provider,
-      c.accountRevision,
-      c.accountEpoch,
-      onPolicy ? 1 : 0,
-      c.authorId,
-      authority.userId,
-      c.credentialKeysetCommitment,
-      ...auth.params,
-    ],
-  };
-}
-
-export function insertProjectionCandidateStmt(
-  db: D1Database,
-  c: ProjectionCandidate,
-  authority: ProjectionAuthority,
-  now: number,
-): D1PreparedStatement {
-  const { sql, params } = projectionCandidateInsert(c, authority, now);
-  return stmt(db, sql, params);
-}
-
-export function insertProjectionApprovalStmt(
-  db: D1Database,
-  a: ApprovalRow,
-  c: ProjectionCandidate,
-  authority: ProjectionAuthority,
-  now: number,
-): D1PreparedStatement {
-  const auth = guard(authority, 'templates:review', 'c.org_id', c.mode, now);
-  const policy = projectionPolicy(c.provider);
-  return stmt(
-    db,
-    `INSERT INTO template_approvals
-    (id, candidate_id, candidate_hash, reviewer_id, created_at, credential_keyset_commitment)
-    SELECT ?, c.id, c.candidate_hash, ?, ?, c.credential_keyset_commitment FROM template_candidates c
-    WHERE c.id = ? AND c.org_id = ? AND c.mode = ? AND c.provider = ? AND c.candidate_hash = ?
-      AND c.author_id != ? AND ${versionAuthorIndependentSql('c', '?')}
-      AND ? = ? AND c.adapter_revision = ? AND c.adapter_capabilities = ? AND c.audience_policy_revision = ?
-      AND c.credential_keyset_commitment = ${pinnedKeysetSql}
-      AND (${currentSourceAndAccount('c')}) AND (${auth.sql})`,
-    [
-      a.id,
-      a.reviewerId,
-      a.createdAt,
-      c.id,
-      c.orgId,
-      c.mode,
-      c.provider,
-      a.candidateHash,
-      a.reviewerId,
-      a.reviewerId,
-      a.reviewerId,
-      authority.userId,
-      policy.adapterRevision,
-      JSON.stringify(policy.adapterCapabilities),
-      policy.audiencePolicyRevision,
-      ...auth.params,
-    ],
+  const g = projectionGrant(ctx, authority, 'candidate', c.mode, c.id, [
+    check(
+      'config',
+      (p) => `EXISTS (SELECT 1 FROM wallet_provider_accounts x
+        WHERE x.id = ${p(c.accountId)} AND x.org_id = a.org_id AND x.mode = ${p(c.mode)} AND x.provider = ${p(c.provider)}
+          AND x.authority_epoch = ${p(c.accountEpoch)} AND x.credential_id IS NOT NULL AND x.revoked_at IS NULL)`,
+    ),
+    check(
+      'lineage',
+      (p) => `EXISTS (SELECT 1 FROM template_provider_apple_sources source
+        JOIN template_versions v ON v.template_id = source.template_id AND v.version = source.version
+        WHERE source.id = ${p(c.sourceReleaseId)} AND source.template_id = ${p(c.templateId)}
+          AND source.mode = ${p(c.mode)} AND source.version = ${p(c.version)} AND source.generation = ${p(c.sourceReleaseGeneration)}
+          AND source.candidate_hash = ${p(c.sourceReleaseHash)} AND source.content_hash = ${p(c.contentHash)}
+          AND (source.org_id = a.org_id OR (source.org_id IS NULL AND source.origin = 'baked' AND source.template_org_id IS NULL))
+          AND v.created_by IS ${p(c.versionAuthorId)})`,
+    ),
+    check('config', (p) => `${p(c.credentialKeysetCommitment)} = ${pinnedKeysetSql}`),
+    check(
+      'lineage',
+      (p) => `${p(onPolicy ? 1 : 0)} = 1 AND ${p(c.authorId)} = ${p(authority.userId)}`,
+    ),
+  ]);
+  if (!g) return false;
+  return commitOne(ctx, g, 'candidate', c.id, authority, c.orgId, c.templateId, audit, () =>
+    g.insertSelect(
+      'template_candidates',
+      CANDIDATE_COLUMNS,
+      [
+        c.id,
+        c.templateId,
+        c.mode,
+        c.provider,
+        c.version,
+        c.candidateHash,
+        c.contentHash,
+        c.adapterRevision,
+        JSON.stringify(c.adapterCapabilities),
+        c.audiencePolicyRevision,
+        c.authorId,
+        c.versionAuthorId,
+        c.createdAt,
+        c.sourceReleaseId,
+        c.sourceReleaseGeneration,
+        c.sourceReleaseHash,
+        c.accountId,
+        c.accountRevision,
+        c.providerIdentityHash,
+        canonicalJson(c.projection),
+        c.credentialKeysetCommitment,
+        c.accountEpoch,
+      ],
+      { returning: ['id'] },
+    ),
   );
 }
 
-export function insertProjectionReleaseStmt(
-  db: D1Database,
-  input: {
-    id: string;
-    candidate: ProjectionCandidate;
-    approval: ApprovalRow;
-    authority: ProjectionAuthority;
-    expectedGeneration: number;
-    expectedReleaseId: string | null;
-    action: 'release' | 'rollback';
-    targetReleaseId: string | null;
-    now: number;
-  },
-): D1PreparedStatement {
-  const { candidate: c, approval: a, authority } = input;
-  const auth = guard(authority, 'templates:publish', 'c.org_id', c.mode, input.now);
+/** The candidate as approved: hash, authors, policy, keyset, source and the account's epoch. */
+const approvable = (c: ProjectionCandidate, reviewerId: string) => {
   const policy = projectionPolicy(c.provider);
-  const same = `r.template_id = c.template_id AND r.org_id = c.org_id AND r.mode = c.mode AND r.provider = c.provider`;
-  return stmt(
-    db,
-    `INSERT INTO template_releases (id, template_id, org_id, mode, provider, generation,
-    version, candidate_hash, content_hash, adapter_revision, adapter_capabilities, audience_policy_revision,
-    source, action, candidate_id, approval_id, previous_release_id, rollback_of_release_id, created_by, created_at,
-    credential_keyset_commitment)
-    SELECT ?, c.template_id, c.org_id, c.mode, c.provider, ? + 1, c.version, c.candidate_hash, c.content_hash,
-      c.adapter_revision, c.adapter_capabilities, c.audience_policy_revision, 'approved', ?, c.id, a.id, ?, ?, ?, ?,
-      c.credential_keyset_commitment
-    FROM template_candidates c JOIN template_approvals a ON a.candidate_id = c.id AND a.candidate_hash = c.candidate_hash
-    CROSS JOIN (SELECT ? AS now_ms) proof_clock
-    WHERE c.id = ? AND a.id = ? AND c.org_id = ? AND c.mode = ? AND c.provider = ? AND c.candidate_hash = ?
-      AND c.credential_keyset_commitment = ${pinnedKeysetSql} AND a.credential_keyset_commitment = c.credential_keyset_commitment
-      AND a.reviewer_id != c.author_id AND ${versionAuthorIndependentSql('c', 'a.reviewer_id')}
-      AND c.adapter_revision = ? AND c.adapter_capabilities = ? AND c.audience_policy_revision = ?
-      AND (c.provider = 'google' OR (${samsungProjectionEvidencePredicateSql('c', 'proof_clock.now_ms')}))
-      AND json_extract(c.projection_json, '$.schema') = CASE c.provider WHEN 'google' THEN 2 ELSE 1 END
-      AND (${currentSourceAndAccount('c')}) AND (${auth.sql})
-      AND COALESCE((SELECT MAX(r.generation) FROM template_releases r WHERE ${same}), 0) = ?
-      AND (SELECT r.id FROM template_releases r WHERE ${same} ORDER BY r.generation DESC LIMIT 1) IS ?
-      AND ((? = 'release' AND ? IS NULL AND NOT EXISTS (SELECT 1 FROM template_releases r WHERE r.candidate_id = c.id))
-        OR (? = 'rollback' AND EXISTS (SELECT 1 FROM template_releases r WHERE r.id = ? AND ${same}
-          AND r.generation < ? AND r.candidate_id = c.id AND r.approval_id = a.id AND r.candidate_hash = c.candidate_hash
-          AND r.credential_keyset_commitment = c.credential_keyset_commitment)))`,
-    [
-      input.id,
-      input.expectedGeneration,
-      input.action,
-      input.expectedReleaseId,
-      input.targetReleaseId,
-      authority.userId,
-      input.now,
-      input.now,
-      c.id,
-      a.id,
-      c.orgId,
-      c.mode,
-      c.provider,
-      c.candidateHash,
-      policy.adapterRevision,
-      JSON.stringify(policy.adapterCapabilities),
-      policy.audiencePolicyRevision,
-      ...auth.params,
-      input.expectedGeneration,
-      input.expectedReleaseId,
-      input.action,
-      input.targetReleaseId,
-      input.action,
-      input.targetReleaseId,
-      input.expectedGeneration,
-    ],
+  return check(
+    'lineage',
+    (p) => `EXISTS (SELECT 1 FROM template_candidates c
+      WHERE c.id = ${p(c.id)} AND c.org_id = a.org_id AND c.mode = ${p(c.mode)} AND c.provider = ${p(c.provider)}
+        AND c.candidate_hash = ${p(c.candidateHash)}
+        AND c.author_id != ${p(reviewerId)} AND ${versionAuthorIndependentSql('c', p(reviewerId))}
+        AND c.adapter_revision = ${p(policy.adapterRevision)}
+        AND c.adapter_capabilities = ${p(JSON.stringify(policy.adapterCapabilities))}
+        AND c.audience_policy_revision = ${p(policy.audiencePolicyRevision)}
+        AND c.credential_keyset_commitment = ${pinnedKeysetSql}
+        AND (${currentSourceAndAccount('c')}))`,
+  );
+};
+
+export async function writeProjectionApproval(
+  ctx: ServiceContext,
+  a: ApprovalRow,
+  c: ProjectionCandidate,
+  authority: ProjectionAuthority,
+  audit: ProjectionAudit,
+): Promise<boolean> {
+  const g = projectionGrant(ctx, authority, 'approve', c.mode, a.id, [approvable(c, a.reviewerId)]);
+  if (!g || a.reviewerId !== authority.userId) return false;
+  return commitOne(ctx, g, 'approve', a.id, authority, c.orgId, c.templateId, audit, () =>
+    g.insertJoined('template_approvals', {
+      parents: { candidate_id: c.id },
+      columns: [
+        'id',
+        'candidate_hash',
+        'reviewer_id',
+        'created_at',
+        'credential_keyset_commitment',
+      ],
+      values: [a.id, a.candidateHash, a.reviewerId, a.createdAt, c.credentialKeysetCommitment],
+      returning: ['id'],
+    }),
   );
 }

@@ -77,9 +77,7 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
         AND pr.created_by IS NOT NULL
         AND pc.projection_json IS NOT NULL AND json_valid(pc.projection_json)
         AND json_type(pc.projection_json) = 'object' AND length(pc.provider_identity_hash) = 64)
-      AND NOT EXISTS (SELECT 1 FROM template_releases newer WHERE newer.template_id = pr.template_id
-        AND newer.org_id = pr.org_id AND newer.mode = pr.mode AND newer.provider = pr.provider
-        AND newer.generation > pr.generation)
+      AND EXISTS (SELECT 1 FROM template_release_heads head WHERE head.release_id = pr.id)
   INTERSECT
   SELECT pb.id FROM projection_binding_release pb
     JOIN template_candidates pc ON pc.id = pb.candidate_id

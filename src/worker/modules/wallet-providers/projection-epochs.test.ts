@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
 import { configureWalletProviderAccount, revokeWalletProviderAccount } from './account-service.ts';
 import { getApprovedProjection } from './projection-service.ts';
-import { systemAuthority } from './projection-system-authority.ts';
 import {
   approveOf,
   candidateOf,
@@ -19,7 +18,6 @@ import {
 } from './projection-v2-test-fixtures.ts';
 import { findAccount } from './repo-accounts.ts';
 import { getProjectionCandidate } from './repo-projection-store.ts';
-import { projectionCandidateInsert } from './repo-projection-write.ts';
 
 installV2Env();
 
@@ -112,23 +110,6 @@ describe('projection approvals and the account epoch', () => {
       ),
     ).rejects.toThrow();
     expect(stored?.author_id).toBeTruthy();
-  });
-});
-
-describe('candidate insert', () => {
-  it('binds fewer than 40 values and copies source and account columns', async () => {
-    const kit = await setup();
-    const candidate = await candidateOf(kit, request((await pinsOf(kit)).approvedOmissions));
-    const stored = await getProjectionCandidate(S.env.DB, candidate.id);
-    if (!stored) throw new Error('Missing candidate.');
-    const { sql, params } = projectionCandidateInsert(
-      stored,
-      systemAuthority('author', kit.orgId, 'live'),
-      S.clock.now(),
-    );
-    expect(params.length).toBeLessThan(40);
-    expect(sql).toContain('source.generation');
-    expect(sql).toContain('account.authority_epoch');
   });
 });
 

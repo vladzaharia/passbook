@@ -137,7 +137,7 @@ async function probe(
     // Never log upstream errors, credentials, identifiers, tokens, or response bodies.
     ctx.log.warn('wallet.verification_failed', { code: 'WALLET_VERIFY_FAILED' });
   }
-  await failSamsungProjectionProbe(ctx, candidate.id, probeId);
+  await failSamsungProjectionProbe(ctx, authority, candidate, probeId);
   return unverified();
 }
 
@@ -181,11 +181,12 @@ export async function ensureSamsungProjectionEvidence(
   ctx: ServiceContext,
   candidateId: string,
   expectedHash: string,
+  authority: Authority | null = null,
 ): Promise<boolean> {
   ctx = snapshotWalletCredentialContext(ctx);
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const candidate = await candidateForProbe(ctx, candidateId, expectedHash);
   if (!candidate) return false;
   if (await hasSamsungProjectionEvidence(ctx, candidate)) return true;
-  return (await probe(ctx, candidate, null)).verified;
+  return (await probe(ctx, candidate, authority)).verified;
 }
