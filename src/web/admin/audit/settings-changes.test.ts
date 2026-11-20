@@ -28,6 +28,22 @@ describe('settingChanges', () => {
     expect(change?.to).toBe('[redacted]');
   });
 
+  it('reads a features change in the feature names and values', () => {
+    expect(
+      settingChanges({
+        changes: {
+          apps: { from: 1, to: 0 },
+          'passes.live': { from: null, to: 100 },
+          nfc: { from: 'secure', to: 'basic' },
+        },
+      }),
+    ).toEqual([
+      { key: 'apps', label: 'Apps', from: 'On', to: 'Off' },
+      { key: 'passes.live', label: 'Live passes', from: 'No limit', to: '100' },
+      { key: 'nfc', label: 'NFC tags', from: 'Secure', to: 'Basic' },
+    ]);
+  });
+
   it('is undefined for details without changes', () => {
     expect(settingChanges({ scope: 'org' })).toBeUndefined();
     expect(settingChanges(null)).toBeUndefined();

@@ -29,6 +29,10 @@ import {
 import { brandAssetRoutes } from './modules/orgs/brand-assets.ts';
 import { brandRoutes } from './modules/orgs/brand-routes.ts';
 import { orgsRoutes } from './modules/orgs/routes.ts';
+import {
+  orgEntitlementsRoutes,
+  platformEntitlementsRoutes,
+} from './modules/orgs/routes-entitlements.ts';
 import { passesRoutes } from './modules/passes/routes.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
@@ -144,6 +148,8 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/auth', authRoutes);
   app.route('/api/v1/session', sessionRoutes);
   app.route('/api/v1/me', meRoutes);
+  // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
+  app.route('/api/v1/orgs', orgEntitlementsRoutes);
   app.route('/api/v1/orgs', orgsRoutes);
   app.route('/api/v1/brand', brandRoutes);
   app.route('/api/v1/orgs', walletCredentialRoutes);
@@ -152,6 +158,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/orgs', orgLifecycleRoutes);
   app.route('/api/v1/org-exports', orgExportDownloadRoutes);
   app.route('/api/v1/platform', walletPlatformRoutes);
+  app.route('/api/v1/platform', platformEntitlementsRoutes);
   app.route('/api/v1/platform', retentionPlatformRoutes);
   app.route('/api/v1/platform', orgClosedRoutes);
   app.route('/api/v1/templates', templatesRoutes);
