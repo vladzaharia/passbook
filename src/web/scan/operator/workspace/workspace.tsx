@@ -66,15 +66,17 @@ export function OperatorWorkspace(props: WorkspaceProps) {
     : !state.focused || state.loop.s === 'paused'
       ? 'paused'
       : 'ready';
+  // A boot or paused card is a record too: on one column it must show over the list.
+  const recordOpen = op.recordOpen || Boolean(props.scanCard);
   const selectedPassId = op.record?.kind === 'pass' ? op.record.passId : null;
   const hints = hintsOf({
     searching: isSearching,
-    record: op.recordOpen,
+    record: recordOpen,
     undoable: op.undoable,
     views: OPERATOR_VIEWS.length,
   });
   const shortcuts = shortcutsFor({
-    record: op.recordOpen,
+    record: recordOpen,
     rollCall: false,
     views: OPERATOR_VIEWS.length,
     walkIn: false,
@@ -165,7 +167,7 @@ export function OperatorWorkspace(props: WorkspaceProps) {
       className="op-app"
       data-testid="operator-workspace"
       data-surface="operator"
-      data-record={op.recordOpen ? 'open' : 'closed'}
+      data-record={recordOpen ? 'open' : 'closed'}
       style={scanBrandStyle(props.branding)}
     >
       <TopBar
@@ -210,7 +212,7 @@ export function OperatorWorkspace(props: WorkspaceProps) {
           data-operator-record
           aria-label={OPERATOR_COPY.landmark.record}
         >
-          {op.recordOpen ? (
+          {recordOpen ? (
             <>
               <button type="button" className="op-back" onClick={op.close}>
                 <ArrowLeft aria-hidden /> Back

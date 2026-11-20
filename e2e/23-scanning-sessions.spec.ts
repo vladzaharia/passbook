@@ -102,7 +102,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
       templateVersion: release.version,
       mode: 'live',
     });
-    const field = desk.getByRole('textbox', { name: 'Name, email or code', exact: true });
+    const field = desk.getByRole('combobox', { name: 'Name, email or code', exact: true });
     await field.fill(holderName);
     const previewAsset = desk.waitForResponse((r) =>
       r.url().includes(`/scan/passes/${pass.id}/assets/`),
@@ -149,7 +149,7 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await expect(phone.getByTestId('scan-start')).toHaveCount(0);
     await expect(phone.locator('video')).toHaveCount(0);
     await phone.screenshot({ path: 'test-results/shared-session-phone-operator.png' });
-    await desk.getByRole('button', { name: 'Done', exact: true }).click();
+    await desk.getByRole('button', { name: /^Close/ }).click();
     const update = await api.send('PATCH', `/api/v1/scanning-sessions/${sessionId}`, {
       settings: { flow: 'choose' },
     });
