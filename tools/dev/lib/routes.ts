@@ -7,8 +7,8 @@ export type Route = {
   path: string;
   name: string;
   waitFor?: string;
-  /** Selector clicked once the page has loaded (a mode toggle, a tab). */
-  click?: string;
+  /** Selector clicked once the page has loaded (a mode toggle, a tab); a list is clicked in order. */
+  click?: string | string[];
   /** Viewports for this route instead of the requested ones; `--viewports` still narrows them. */
   viewports?: ViewportName[];
   /** Placeholder that holds the org the console filters to for this route, instead of `{orgId}`. */
