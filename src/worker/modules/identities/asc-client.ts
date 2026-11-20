@@ -1,9 +1,4 @@
-import type {
-  AppleRpc,
-  CallRow,
-  CertificateInfo,
-  PassTypeRef,
-} from '../../../../workers/apple-provisioner/src/types.ts';
+import type { AppleRpc } from '../../../../workers/apple-provisioner/src/types.ts';
 import {
   AppError,
   ConflictError,
@@ -13,8 +8,6 @@ import {
   UnavailableError,
   UpstreamError,
 } from '../../platform/errors.ts';
-
-export type { CallRow, CertificateInfo, PassTypeRef };
 
 const CODE = /^(ASC_[A-Z_]+): ?(.*)$/s;
 
