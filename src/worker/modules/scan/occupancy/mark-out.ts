@@ -115,7 +115,8 @@ export async function markOut(
   if (!held || !liveIn({ state: held.state, due_at: held.dueAt }, now))
     throw new ConflictError('They are already out.', 'NOT_INSIDE');
 
-  await assertUnderOverrideCap(ctx, actor);
+  // A roll call Out is not a desk override: an evacuation must not meet the hourly cap.
+  if (!extra) await assertUnderOverrideCap(ctx, actor);
   const scanId = ctx.ids.ordered(now);
   const scanRow: MarkOutScan = {
     id: scanId,
@@ -209,7 +210,7 @@ export async function markOut(
     if (error instanceof ConflictError) throw error;
     throw await scannerRefusal(ctx, actor, error);
   }
-  await countOverride(ctx, actor);
+  if (!extra) await countOverride(ctx, actor);
   return done(
     false,
     await countNow(),

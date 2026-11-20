@@ -21,6 +21,13 @@ export interface RollCallPort {
 const gone = (error: unknown) =>
   error instanceof ApiError && (error.code === 'ROLL_CALL_ENDED' || error.status === 404);
 
+/** A tap the server could not take because the call had ended: shown to the desk, never dropped silently. */
+export interface UnsavedMark {
+  passId: string;
+  status: RollCallStatus;
+  name: string | null;
+}
+
 const BATCH = 100;
 const QUEUE_KEY = 'roll-call-queue';
 
@@ -60,6 +67,7 @@ export function useRollCall({
   const [busy, setBusy] = useState(false);
   const [asOf, setAsOf] = useState<number | null>(null);
   const [blocked, setBlocked] = useState(false);
+  const [unsaved, setUnsaved] = useState<UnsavedMark[]>([]);
   const live = useRef({ server, queue, onAppear, onRefused, onBlocked, blocked });
   live.current = { server, queue, onAppear, onRefused, onBlocked, blocked };
   // Transient failures (network, 5xx) retry with a growing delay, never in a tight loop.
@@ -129,6 +137,14 @@ export function useRollCall({
     } catch (error) {
       const status = error instanceof ApiError ? error.status : 0;
       if (gone(error)) {
+        // The call ended under these taps. They are not lost silently: the desk is shown them to note down.
+        const people = new Map(call.people.map((p) => [p.passId, p.holder]));
+        const lost = batch.map((m) => ({
+          passId: m.passId,
+          status: m.status,
+          name: people.get(m.passId) ?? null,
+        }));
+        setUnsaved((u) => [...u, ...lost]);
         setQueue([]);
         await reload();
       } else if (status === 401 || status === 403) {
@@ -136,11 +152,6 @@ export function useRollCall({
         setBlocked(true);
         setError(true);
         live.current.onBlocked?.(error);
-      } else if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
-        drop();
-        const code = error instanceof ApiError ? error.code : '';
-        live.current.onRefused?.(batch.map((m) => ({ passId: m.passId, code })));
-        await reload();
       } else {
         const fails = retry.current.fails + 1;
         retry.current = { fails, at: Date.now() + Math.min(60_000, 1000 * 2 ** fails) };
@@ -211,6 +222,19 @@ export function useRollCall({
   }, [port, flush, reload]);
 
   const call = useMemo(() => (server ? withQueue(server, queue, by) : null), [server, queue, by]);
-  return { call, pending: queue.length, error, busy, asOf, blocked, mark, start, end, reload };
+  return {
+    call,
+    pending: queue.length,
+    error,
+    busy,
+    asOf,
+    blocked,
+    unsaved,
+    clearUnsaved: () => setUnsaved([]),
+    mark,
+    start,
+    end,
+    reload,
+  };
 }
 export type RollCallState = ReturnType<typeof useRollCall>;

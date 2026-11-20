@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeOrg } from '../../../../../test/helpers/index.ts';
 import { all, run } from '../../../platform/db.ts';
+import { AppError } from '../../../platform/errors.ts';
 import { createJobContext } from '../../../platform/service-context.ts';
 import { kit, setupActionFixture } from '../act-test-fixtures.ts';
 import { autoTapOut } from '../occupancy/jobs.ts';
@@ -248,6 +249,55 @@ describe('roll call: one refused mark does not fail the batch', () => {
     const after = await read(a, call.id);
     expect(after.counts.present).toBe(2);
     expect(after.people.find((p) => p.passId === gone.id)?.mark?.status).toBe('out');
+  });
+});
+
+describe('roll call: what counts as a refused mark', () => {
+  it('only mark-level refusals are refused per mark; capacity, auth and server errors fail the request', async () => {
+    const { isMarkRefusal } = await import('./marks.ts');
+    for (const code of [
+      'UNDO_SUPERSEDED',
+      'SCAN_UNDO_FORBIDDEN',
+      'SCAN_UNDO_EXPIRED',
+      'SCAN_NOT_FOUND',
+      'NOT_INSIDE',
+    ])
+      expect(isMarkRefusal(new AppError(code, 409, 'x')), code).toBe(true);
+    for (const [code, status] of [
+      ['SCAN_TOO_MANY_OVERRIDES', 429],
+      ['SCANNER_REVOKED', 403],
+      ['INTERNAL', 500],
+      ['SCAN_CONFIG_CHANGED', 409],
+    ] as const)
+      expect(isMarkRefusal(new AppError(code, status, 'x')), code).toBe(false);
+    expect(isMarkRefusal(new Error('boom'))).toBe(false);
+  });
+
+  it('roll call Outs do not count toward the desk override cap', async () => {
+    const pool = await trackedZone();
+    const place = `zone:${pool.id}`;
+    const people = [];
+    for (let i = 0; i < 3; i++) people.push(await personInside(tpl, `Evac ${i}`, [place]));
+    const a = await station([tpl], [pool.id]);
+    const call = (await start(a)).body;
+    const t = kit.clock.now();
+    await mark(
+      a,
+      call.id,
+      people.map((p, i) => ({ passId: p.id, status: 'out' as const, at: t - 3000 + i })),
+    );
+    const rows = await all(kit.env.DB, "SELECT 1 FROM counters WHERE key LIKE 'scan:ovr:%'");
+    expect(rows).toHaveLength(0);
+    for (const p of people)
+      expect(
+        (
+          await all<{ state: string }>(
+            kit.env.DB,
+            'SELECT state FROM scan_presence WHERE pass_id = ?',
+            [p.id],
+          )
+        )[0]?.state,
+      ).toBe('out');
   });
 });
 

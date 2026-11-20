@@ -81,6 +81,8 @@ export const ACCESS_COPY = {
       other: "Couldn't apply that tap.",
     },
     blocked: 'Sync stopped. Sign in again.',
+    endedLost: "This roll call ended. {n} marks weren't saved.",
+    endedLostOne: "This roll call ended. 1 mark wasn't saved.",
     empty: 'No one on the list.',
     printTitle: 'Roll call · {place}',
     printMeta: 'Started {time} by {name}',

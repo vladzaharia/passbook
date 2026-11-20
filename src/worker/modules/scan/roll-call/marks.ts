@@ -59,6 +59,18 @@ function addMark(g: Grant, w: MarkWrite, when: GrantCond[] = [], bump = false): 
   );
 }
 
+/**
+ * Refusals that are about the mark, not the request: the person scanned since, is not on the call, or is
+ * unknown, or this desk may not take the Out back. Anything else (capacity, auth, a failed commit, 5xx) is not
+ * the mark's fault: the request fails and the device retries the same marks.
+ */
+export const isMarkRefusal = (error: unknown): error is AppError =>
+  error instanceof AppError &&
+  (scannedSince(error) ||
+    ['SCAN_UNDO_FORBIDDEN', 'SCAN_UNDO_EXPIRED', 'SCAN_NOT_FOUND', 'NOT_INSIDE'].includes(
+      error.code,
+    ));
+
 /** The undo found the exit no longer the person's last scan: they have scanned since. */
 const scannedSince = (error: unknown) =>
   error instanceof AppError &&
@@ -158,7 +170,7 @@ export async function markRollCall(
         exitScan = null;
       } else addMark(g, mark(exitScan));
     } catch (error) {
-      if (!(error instanceof AppError)) throw error;
+      if (!isMarkRefusal(error)) throw error;
       refuse(scannedSince(error) ? 'ROLL_CALL_SCANNED_SINCE' : error.code);
       continue;
     }

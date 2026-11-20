@@ -124,6 +124,27 @@ export default function InsideHost({
           setConfirm(null);
         }}
       />
+      <ConfirmDialog
+        open={roll.unsaved.length > 0}
+        onOpenChange={(next) => !next && roll.clearUnsaved()}
+        title={
+          roll.unsaved.length === 1
+            ? COPY.endedLostOne
+            : fill(COPY.endedLost, { n: roll.unsaved.length })
+        }
+        description={
+          <ul>
+            {roll.unsaved.map((u) => (
+              <li key={`${u.passId}-${u.status}`}>
+                {u.name ?? ACCESS_COPY.inside.unnamed}: {u.status === 'out' ? COPY.out : COPY.safe}
+              </li>
+            ))}
+          </ul>
+        }
+        hideConfirm
+        cancelLabel="Close"
+        onConfirm={() => roll.clearUnsaved()}
+      />
       {printing && roll.call ? (
         <RollCallPrint call={roll.call} onDone={() => setPrinting(false)} />
       ) : null}

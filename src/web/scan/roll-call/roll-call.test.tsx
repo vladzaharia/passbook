@@ -166,7 +166,7 @@ describe('useRollCall: refused and failed syncs', () => {
     await waitFor(() => expect(h.result.current.pending).toBe(0));
   });
 
-  it('a 404 means the call is gone: the queue is cleared', async () => {
+  it('a 404 means the call is gone: the taps are kept visible as unsaved, not dropped silently', async () => {
     const { port, h } = rig();
     await waitFor(() => expect(h.result.current.call).not.toBeNull());
     port.fail = new ApiError({ status: 404, code: 'ROLL_CALL_NOT_FOUND' });
@@ -174,17 +174,26 @@ describe('useRollCall: refused and failed syncs', () => {
     act(() => h.result.current.mark(person(0).passId, 'present'));
     await waitFor(() => expect(h.result.current.call).toBeNull());
     expect(h.result.current.pending).toBe(0);
+    expect(h.result.current.unsaved).toEqual([
+      { passId: person(0).passId, status: 'present', name: person(0).holder },
+    ]);
+    act(() => h.result.current.clearUnsaved());
+    expect(h.result.current.unsaved).toEqual([]);
   });
 
-  it('another 4xx drops the batch with its code rather than retrying forever', async () => {
+  it('a 409 on the final commit retries the batch; it is never dropped', async () => {
     const { port, onRefused, h } = rig();
     await waitFor(() => expect(h.result.current.call).not.toBeNull());
-    port.fail = new ApiError({ status: 422, code: 'VALIDATION' });
+    port.fail = new ApiError({ status: 409, code: 'SCAN_IN_PROGRESS' });
     act(() => h.result.current.mark(person(0).passId, 'present'));
-    await waitFor(() =>
-      expect(onRefused).toHaveBeenCalledWith([{ passId: person(0).passId, code: 'VALIDATION' }]),
-    );
-    expect(h.result.current.pending).toBe(0);
+    await waitFor(() => expect(port.calls.marks).toHaveLength(1));
+    expect(onRefused).not.toHaveBeenCalled();
+    expect(h.result.current.pending).toBe(1);
+    port.fail = null;
+    await act(async () => void (await vi.advanceTimersByTimeAsync(5000)));
+    await act(async () => void (await h.result.current.reload()));
+    await waitFor(() => expect(h.result.current.pending).toBe(0));
+    expect(h.result.current.call?.counts.present).toBe(1);
   });
 });
 

@@ -130,7 +130,8 @@ export async function consoleMarkOut(
   if (!held || !liveIn({ state: held.state, due_at: held.dueAt }, now))
     throw new ConflictError('They are already out.', 'NOT_INSIDE');
   const capActor = { orgId, actorKey: `u:${userId}`, actor: { type: 'user' as const, id: userId } };
-  await assertUnderOverrideCap(ctx, capActor);
+  // A roll call Out is not a desk override: an evacuation must not meet the hourly cap.
+  if (!extra) await assertUnderOverrideCap(ctx, capActor);
   const scanId = ctx.ids.ordered(now);
   // Desk work, so `passes:operate` suffices: the same right the device API gives an admin.
   if (authority.userId !== userId || authority.orgId !== orgId) throw new ForbiddenError();
@@ -216,6 +217,6 @@ export async function consoleMarkOut(
   const committed = await g.commit();
   if (!(committed[g.indexOf(inserted)]?.results ?? []).length)
     throw new ConflictError('They are already out.', 'NOT_INSIDE');
-  await countOverride(ctx, capActor);
+  if (!extra) await countOverride(ctx, capActor);
   return scanId;
 }
