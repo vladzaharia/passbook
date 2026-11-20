@@ -30,6 +30,15 @@ afterEach(() => {
   localStorage.removeItem('wallet-org-filter');
 });
 
+const DAY_RULE = {
+  mode: 'unlimited',
+  days: 1,
+  durationMinutes: null,
+  durationFrom: 'first_scan',
+  plans: [],
+  source: 'template',
+};
+
 const eventFixture = (n: number, status = 'upcoming') => ({
   id: `e${n}`,
   orgId: 'o1',
@@ -68,7 +77,11 @@ function setup({
     '/api/v1/templates/eligible': () =>
       json({
         items: Array.from({ length: types }, (_, i) =>
-          eligibleTemplateFixture({ templateId: `t${i + 1}`, name: `Type ${i + 1}` }),
+          eligibleTemplateFixture({
+            templateId: `t${i + 1}`,
+            name: `Type ${i + 1}`,
+            rule: i === 0 ? DAY_RULE : null,
+          }),
         ),
         nextCursor: null,
       }),
@@ -172,5 +185,17 @@ describe('the Admits picker', () => {
     expect(await within(dialog).findByRole('checkbox', { name: 'Type 1' })).toBeChecked();
     expect(within(dialog).getByRole('checkbox', { name: /Gala 1/ })).toBeChecked();
     expect(writes).toEqual([]);
+  });
+
+  it('lists the rule of each admitted type with its source', async () => {
+    setup({ types: 2 });
+    const { user, dialog } = await open();
+    await user.click(await within(dialog).findByRole('checkbox', { name: 'Type 1' }));
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Type 2' }));
+    const rules = await within(dialog).findByRole('region', { name: 'Rules by pass type' });
+    expect(rules).toHaveTextContent('Every visit · all day from first scan');
+    expect(rules).toHaveTextContent('Template default');
+    expect(rules).toHaveTextContent('No check-in action');
+    expect(within(rules).getAllByRole('link', { name: 'Scan settings' })).toHaveLength(2);
   });
 });

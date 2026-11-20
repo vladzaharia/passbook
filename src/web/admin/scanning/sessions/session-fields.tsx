@@ -12,6 +12,7 @@ import {
 } from '@/web/ui/index.ts';
 import { CheckInFields } from '../check-in-fields.tsx';
 import { AdmitsPicker } from './admits-picker.tsx';
+import { AdmitsRules } from './admits-rules.tsx';
 import type { SessionDraft as ScannerDraft } from './draft.ts';
 import { SessionAccessFields } from './session-access-fields.tsx';
 import { SessionCustomerFields } from './session-customer-fields.tsx';
@@ -56,6 +57,9 @@ function SessionScope({
         onAnyChange={(any) => set({ accepts: any ? 'all' : 'templates' })}
         onChange={set}
       />
+      {draft.accepts === 'all' ? null : (
+        <AdmitsRules orgId={draft.orgId} templateIds={draft.templateIds} cap={draft.checkIn} />
+      )}
     </div>
   );
 }
