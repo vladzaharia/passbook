@@ -28,6 +28,8 @@ export interface UnsavedMark {
 }
 
 const BATCH = 100;
+/** Rounds of isolation in which a tap alone gets a 5xx before it is set aside. */
+const SET_ASIDE_AFTER = 2;
 const QUEUE_KEY = 'roll-call-queue';
 
 /**
@@ -75,6 +77,8 @@ export function useRollCall({
   // The same 4xx or 5xx answer to the same first tap, over and over: after STUCK of them the batch is sent
   // one mark at a time, so the bad tap is found and the rest are saved.
   const repeats = useRef({ key: '', n: 0 });
+  // Isolated 5xx answers per tap: one failing alone is retried before it is set aside.
+  const strikes = useRef(new Map<string, number>());
   const sending = useRef(false);
   // The device's clock against the server's, measured on every read; taps carry the corrected time.
   const offset = useRef(0);
@@ -110,6 +114,8 @@ export function useRollCall({
     setServer((cur) => (next && cur && cur.id === next.id && cur.rev > next.rev ? cur : next));
     setAsOf(Date.now());
     setError(false);
+    // A stall belongs to the call whose taps it holds.
+    if (next?.id !== had) setStalled(false);
     if (next && next.id !== had && !quiet) live.current.onAppear?.();
   }, []);
 
@@ -164,8 +170,17 @@ export function useRollCall({
         retry.current = { fails: 0, at: 0 };
         if (one.last) take(one.last, true);
         const saved = one.done.length > 0;
-        // A 5xx to a tap alone is its fault only when other taps got through; otherwise the server is down.
-        const bad = [...one.bad, ...(saved ? one.failed : [])];
+        // A 5xx to a tap alone is its fault only when other taps got through, and only on the second round:
+        // the first leaves it queued to be tried again. With nothing through, the server is down.
+        const key = (m: QueuedMark) => `${m.passId}:${m.status}:${m.at}`;
+        const again = saved
+          ? one.failed.filter((f) => {
+              const n = (strikes.current.get(key(f.mark)) ?? 0) + 1;
+              strikes.current.set(key(f.mark), n);
+              return n >= SET_ASIDE_AFTER;
+            })
+          : [];
+        const bad = [...one.bad, ...again];
         setQueue((q) => q.filter((m) => !one.done.includes(m)));
         setAside(bad.map((b) => ({ mark: b.mark, code: b.code || 'server' })));
         if (one.halt)
@@ -173,7 +188,7 @@ export function useRollCall({
             one.halt,
             batch.filter((m) => !one.done.includes(m) && !bad.some((b) => b.mark === m)),
           );
-        else if (!saved && status >= 500 && one.failed.length > 0) {
+        else if (!saved && one.failed.length > 0) {
           setStalled(true);
           setError(true);
         }
@@ -189,6 +204,7 @@ export function useRollCall({
       retry.current = { fails: 0, at: 0 };
       setQueue((q) => q.filter((m) => !batch.includes(m)));
       repeats.current = { key: '', n: 0 };
+      setStalled(false);
       told(next);
       take(next, true);
     } catch (error) {
@@ -226,6 +242,8 @@ export function useRollCall({
 
   useEffect(() => {
     if (online && queue.length > 0) void flush();
+    // Nothing left to sync: there is nothing to stall on.
+    if (queue.length === 0) setStalled(false);
   }, [online, queue, flush]);
 
   const mark = useCallback((passId: string, status: RollCallStatus) => {

@@ -66,20 +66,27 @@ describe('a batch that keeps failing', () => {
     expect(h.result.current.call?.counts.present).toBe(1);
   });
 
-  it('sets aside only the bad tap of a 5xx that never succeeds', async () => {
+  it('sets aside a tap that keeps getting a 5xx alone while other taps get through', async () => {
     const { port, h } = rig();
     await waitFor(() => expect(h.result.current.call).not.toBeNull());
     port.failFor.set(person(0).passId, new ApiError({ status: 500, code: 'INTERNAL' }));
     act(() => h.result.current.mark(person(0).passId, 'out'));
     act(() => h.result.current.mark(person(1).passId, 'present'));
-    for (let i = 0; i < 8 && h.result.current.unsaved.length === 0; i++) await tick(h);
+    // Round one saves the good tap; the bad one is alone after that, so the sync stalls with it queued.
+    for (let i = 0; i < 40 && !h.result.current.stalled; i++) await tick(h);
+    await waitFor(() => expect(h.result.current.stalled).toBe(true));
+    expect(h.result.current.unsaved).toEqual([]);
+    // Round two: another tap gets through, so the failing one is the problem and is set aside.
+    act(() => h.result.current.mark(person(2).passId, 'present'));
+    act(() => h.result.current.retryStalled());
+    for (let i = 0; i < 40 && h.result.current.unsaved.length === 0; i++) await tick(h);
     await waitFor(() => expect(h.result.current.unsaved).toHaveLength(1));
     expect(h.result.current.unsaved[0]).toMatchObject({
       passId: person(0).passId,
       reason: 'INTERNAL',
     });
     await waitFor(() => expect(h.result.current.pending).toBe(0));
-    expect(h.result.current.call?.counts.present).toBe(1);
+    expect(h.result.current.call?.counts.present).toBe(2);
     expect(h.result.current.stalled).toBe(false);
   });
 
@@ -111,5 +118,52 @@ describe('a batch that keeps failing', () => {
     await waitFor(() => expect(h.result.current.pending).toBe(0));
     expect(h.result.current.stalled).toBe(false);
     expect(h.result.current.call?.counts.present).toBe(1);
+  });
+
+  it('retries a tap that got a 5xx alone, and saves it once the server recovers', async () => {
+    const { port, h } = rig();
+    await waitFor(() => expect(h.result.current.call).not.toBeNull());
+    port.failFor.set(person(0).passId, new ApiError({ status: 500, code: 'INTERNAL' }));
+    act(() => h.result.current.mark(person(0).passId, 'out'));
+    act(() => h.result.current.mark(person(1).passId, 'present'));
+    // One round of isolation: the good tap is saved, the failing one stays queued, not set aside.
+    for (let i = 0; i < 40 && h.result.current.pending > 1; i++) await tick(h);
+    await waitFor(() => expect(h.result.current.pending).toBe(1));
+    expect(h.result.current.unsaved).toEqual([]);
+    port.failFor.clear();
+    for (let i = 0; i < 10 && h.result.current.pending > 0; i++) await tick(h);
+    await waitFor(() => expect(h.result.current.pending).toBe(0));
+    expect(h.result.current.unsaved).toEqual([]);
+    expect(h.result.current.call?.counts.out).toBe(1);
+  });
+
+  it('stalls when a 4xx batch gets a 5xx for every tap alone', async () => {
+    const { port, h } = rig();
+    await waitFor(() => expect(h.result.current.call).not.toBeNull());
+    const send = port.marks;
+    port.marks = async (_id, marks) => {
+      if (marks.length > 1) throw new ApiError({ status: 400, code: 'BAD' });
+      throw new ApiError({ status: 503, code: 'UNAVAILABLE' });
+    };
+    act(() => h.result.current.mark(person(0).passId, 'present'));
+    act(() => h.result.current.mark(person(1).passId, 'present'));
+    for (let i = 0; i < 12 && !h.result.current.stalled; i++) await tick(h);
+    await waitFor(() => expect(h.result.current.stalled).toBe(true));
+    expect(h.result.current.pending).toBe(2);
+    port.marks = send;
+  });
+
+  it('clears the stall when the call ends, so the chip never reads 0 to sync', async () => {
+    const { port, h } = rig();
+    await waitFor(() => expect(h.result.current.call).not.toBeNull());
+    port.fail = new ApiError({ status: 503, code: 'UNAVAILABLE' });
+    act(() => h.result.current.mark(person(0).passId, 'present'));
+    for (let i = 0; i < 8 && !h.result.current.stalled; i++) await tick(h);
+    await waitFor(() => expect(h.result.current.stalled).toBe(true));
+    port.server = null;
+    await act(async () => void (await h.result.current.reload()));
+    await waitFor(() => expect(h.result.current.call).toBeNull());
+    expect(h.result.current.pending).toBe(0);
+    expect(h.result.current.stalled).toBe(false);
   });
 });

@@ -502,4 +502,47 @@ describe('template scan setup', () => {
     expect(all3.more).toBe(false);
     expect(all3.values.map((v) => v.name).sort()).toEqual(['Busy night', 'Oldest night']);
   });
+
+  it('does not archive an event another session attached while this call failed', async () => {
+    const id = await eventTemplate(fixture.kit, 'Shared ticket');
+    await ticket(id, { eventName: 'Shared One' });
+    const first = await setup(id);
+    await ticket(id, {
+      eventName: 'Shared Two',
+      startsAt: iso(now() + 24 * HOUR),
+      endsAt: iso(now() + 26 * HOUR),
+    });
+    const db = fixture.kit.env.DB;
+    const settings = JSON.stringify(DEFAULT_SETTINGS);
+    // Another call's session takes the new event the moment it exists; this call's own update then fails.
+    await run(
+      db,
+      `CREATE TRIGGER setup_take AFTER INSERT ON scan_events WHEN NEW.name = 'Shared Two'
+       BEGIN
+         INSERT INTO scanning_sessions (id, org_id, mode, name, status, accepts, settings, time_zone, created_at, updated_at)
+         VALUES ('takes-event', NEW.org_id, NEW.mode, 'Other', 'active',
+           json_object('templateIds', json_array(), 'eventIds', json_array(NEW.id)), '${settings}', 'UTC', 1, 1);
+       END`,
+    );
+    await run(
+      db,
+      `CREATE TRIGGER setup_fail2 BEFORE UPDATE OF accepts ON scanning_sessions WHEN OLD.id = '${first.session.id}'
+       BEGIN SELECT RAISE(ABORT, 'boom'); END`,
+    );
+    try {
+      expect((await post(id)).status).toBe(500);
+    } finally {
+      await run(db, 'DROP TRIGGER setup_take');
+      await run(db, 'DROP TRIGGER setup_fail2');
+    }
+    const live = await rows<{ id: string }>(
+      "SELECT id FROM scan_events WHERE org_id = ? AND archived_at IS NULL AND name = 'Shared Two'",
+      fixture.kit.org.id,
+    );
+    expect(live).toHaveLength(1);
+    const [other] = await rows<{ accepts: string }>(
+      "SELECT accepts FROM scanning_sessions WHERE id = 'takes-event'",
+    );
+    expect(JSON.parse(other?.accepts ?? '{}').eventIds).toEqual([live[0]?.id]);
+  });
 });

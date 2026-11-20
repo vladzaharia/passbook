@@ -93,3 +93,14 @@ export async function deleteVisit(
   g.delete('visitors', { where: { id: v.id }, require: 'one' });
   await g.commitAfter(receipt.stmt);
 }
+
+/** The retention job already soft-deleted this pass (a crash after it, before the visit row went). */
+export async function passRemovedBySystem(db: D1Database, v: RetentionVisit): Promise<boolean> {
+  const row = await first<{ n: number }>(
+    db,
+    `SELECT count(*) AS n FROM audit_log
+     WHERE org_id = ? AND action = 'pass.delete' AND target_id = ? AND actor_type = 'system'`,
+    [v.org_id, v.pass_id],
+  );
+  return (row?.n ?? 0) > 0;
+}

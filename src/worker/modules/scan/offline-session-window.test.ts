@@ -44,8 +44,34 @@ describe('a queued read against the session it syncs into', () => {
   });
 
   it('a read dated before the last clean online contact is backdated', () => {
-    expect(sessionAcceptsAt(actor('active'), 10_000, [], 100_000)).toBe(false);
-    expect(sessionAcceptsAt(actor('active'), 100_000, [], 100_000)).toBe(true);
+    expect(sessionAcceptsAt(actor('active'), 100_000, [], 1_000_000)).toBe(false);
+    expect(sessionAcceptsAt(actor('active'), 1_000_000, [], 1_000_000)).toBe(true);
+  });
+
+  it('forgives a door clock up to five minutes behind its last clean contact', () => {
+    expect(sessionAcceptsAt(actor('active'), 1_000_000 - 4 * 60_000, [], 1_000_000)).toBe(true);
+    expect(sessionAcceptsAt(actor('active'), 1_000_000 - 6 * 60_000, [], 1_000_000)).toBe(false);
+  });
+
+  it("a read after a row from before timing was kept uses the next row's earlier timing", () => {
+    const open = JSON.stringify({ hours: null, hold: null, timeZone: 'UTC' });
+    const closed = JSON.stringify({
+      hours: null,
+      hold: '{"state":"closed","until":99999}',
+      timeZone: 'UTC',
+    });
+    const old = {
+      at: 1000,
+      status: 'active',
+      mode: 'list',
+      prev_status: 'active',
+      prev_mode: 'list',
+      timing: null,
+      prev_timing: null,
+    };
+    const next = { ...old, at: 5000, timing: closed, prev_timing: open };
+    expect(sessionAcceptsAt(actor('active'), 3000, [old, next])).toBe(true);
+    expect(sessionAcceptsAt(actor('active'), 6000, [old, next])).toBe(false);
   });
 
   it("judges hours and holds by the timing in force then, not the session's current ones", () => {

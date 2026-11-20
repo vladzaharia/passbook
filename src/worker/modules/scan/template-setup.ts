@@ -119,12 +119,14 @@ export async function setupTemplateScan(
       return { id: winner.id, name: e.name, created: false };
     }
   };
-  /** Archive what this call made and nothing holds, so no stray event is left. */
+  /** Archive what this call made and no session or scanner uses, so no stray event is left and no one else's is dropped. */
   const discard = async (events: readonly Made[]) => {
     for (const e of events.filter((made) => made.created)) {
       try {
-        await archiveEvent(ctx, auth.userId, e.id, await eventAuthority());
+        await archiveEvent(ctx, auth.userId, e.id, await eventAuthority(), { unattached: true });
       } catch (cleanup) {
+        // Another call attached it: it is that call's event now.
+        if (cleanup instanceof AppError && cleanup.code === 'EVENT_IN_USE') continue;
         ctx.log.error('scan.template_setup.cleanup_failed', {
           orgId,
           code: 'SETUP_CLEANUP_FAILED',

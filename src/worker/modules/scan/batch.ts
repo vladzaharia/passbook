@@ -32,8 +32,13 @@ import {
 } from './scanning-workspace-observation.ts';
 import { type HoursFields, openAt } from './session-hours.ts';
 
-/** Clock drift between a door and the server. */
-const ONLINE_SLACK_MS = 60_000;
+/**
+ * Clock drift between a door and the server, around its last clean contact. The floor is a server time and a
+ * read's date is the door's clock, so a door running behind would lose honest reads around the contact.
+ * The same bound as a future date (`CLIENT_TS_SLACK_MS`) is what the server already tolerates; a read refused
+ * by the floor logs how far before it was dated.
+ */
+const ONLINE_SLACK_MS = CLIENT_TS_SLACK_MS;
 
 type Request = z.infer<typeof ScanBatchRequestSchema>;
 type Item = Request['items'][number];
@@ -99,8 +104,14 @@ const timingOf = (raw: string | null): HoursFields | null => {
 /** The session's status, offline mode and timing in force at `t`, from its recorded changes; the current ones when it never changed. */
 function stateAt(actor: ScanActor, changes: readonly SessionChange[], t: number): StateAt {
   const past = changes.filter((c) => c.at <= t).at(-1);
-  if (past) return { status: past.status, mode: past.mode, timing: timingOf(past.timing) };
   const later = changes.find((c) => c.at > t);
+  // A row from before timing was kept has none: the next row's `prev_timing` is what was in force until it.
+  if (past)
+    return {
+      status: past.status,
+      mode: past.mode,
+      timing: timingOf(past.timing) ?? timingOf(later?.prev_timing ?? null),
+    };
   if (later)
     return {
       status: later.prev_status,
@@ -205,6 +216,12 @@ export async function syncBatch(
           door,
         );
     }
+    if (onlineAt && clientTs < onlineAt - ONLINE_SLACK_MS && door !== 'refused')
+      ctx.log.info('scan.batch.read_before_contact', {
+        orgId: actor.orgId,
+        code: 'READ_BEFORE_CONTACT',
+        gapMs: onlineAt - clientTs,
+      });
     const conflict = door !== 'refused' && outcome.kind !== 'ok';
     await recordOfflineRead(ctx.env.DB, {
       id: ctx.ids.id(),

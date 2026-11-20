@@ -216,12 +216,17 @@ export async function archiveEvent(
   userId: string,
   id: string,
   authority: EventAuthority,
+  /** Archive only an event no session or scanner is on; the commit asserts that. Else EVENT_IN_USE. */
+  options: { unattached?: boolean } = {},
 ) {
   const row = await loadManageEvent(ctx, id, userId, authority);
   const archive = row.archivedAt === null;
   const dependents = archive
     ? await eventDependents(ctx.env.DB, row.orgId, row.mode, id)
     : undefined;
+  const used = dependents && dependents.sessions.length + dependents.scanners.length > 0;
+  if (options.unattached && used)
+    throw new ConflictError('A session already uses this event.', 'EVENT_IN_USE');
   const now = ctx.clock.now();
   const g = adminGrant(
     ctx,
