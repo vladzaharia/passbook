@@ -272,9 +272,11 @@ export async function putGoogleCallbackReceipt(
       ],
     ),
     walletHolderEventStmt(db, {
+      orgId: binding.orgId,
+      passId: binding.passId,
+      mode: binding.mode,
       receiptTable: 'wallet_google_callback_receipts',
       receiptId: input.id,
-      instanceId: binding.instanceId,
       provider: 'google',
       event: input.eventType === 'save' ? 'saved' : 'removed',
       at: input.now,
