@@ -577,4 +577,17 @@ describe('select labels', () => {
     expect(show('{{inputs.tier}}', { tier: 'other' })).toMatchObject([{ value: 'other' }]);
     expect(show('{{inputs.seat}}', { seat: 'F12' })).toMatchObject([{ value: 'F12' }]);
   });
+
+  it('labels a mixed string and a filtered bare input', () => {
+    expect(show('Plan {{inputs.tier}}')).toMatchObject([{ value: 'Plan Gold member' }]);
+    expect(show('{{inputs.tier | upper}}')).toMatchObject([{ value: 'GOLD MEMBER' }]);
+  });
+
+  it('ignores a label table that holds __proto__', () => {
+    const out = inputLabels({ properties: { ['__proto__']: { 'x-enumLabels': { a: 'A' } } } }, [
+      '__proto__',
+    ]);
+    expect(Object.getPrototypeOf(out)).toBeNull();
+    expect(Object.keys(out)).toEqual(['__proto__']);
+  });
 });

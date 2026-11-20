@@ -319,6 +319,9 @@ describe('warnings', () => {
     );
     expect(bare.map((i) => i.path)).toEqual(['scan.display.panels.0.rows.0.value']);
     expect(codes(null, 'warning', shadow('{{access.x}}'))).toContain('SHADOWED');
+    expect(
+      codes(null, 'warning', shadow('{{access}} {{access}}')).filter((c) => c === 'SHADOWED'),
+    ).toHaveLength(1);
     expect(codes(null, 'warning', shadow('{{inputs.access}}'))).not.toContain('SHADOWED');
     expect(codes(null, 'warning', shadow('{{inputs.seat}}'))).not.toContain('SHADOWED');
     expect(

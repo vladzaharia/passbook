@@ -49,7 +49,7 @@ export function inputLabels(
   schema: { properties?: Record<string, unknown> } | undefined,
   only: Iterable<string>,
 ): Record<string, Json> {
-  const out: Record<string, Json> = {};
+  const out: Record<string, Json> = Object.create(null);
   for (const name of only) {
     const labels = (schema?.properties?.[name] as Record<string, unknown> | undefined)?.[
       'x-enumLabels'

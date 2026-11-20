@@ -82,6 +82,8 @@ const SHADOWED = [
   'now',
 ];
 
+const warned = new WeakMap<Ctx, Set<string>>();
+
 const HOLDER_PARTS = new Set(['name', 'firstName', 'initials']);
 
 /** Checks one binding path. Returns the input it reads, if any. */
@@ -90,14 +92,20 @@ export function checkPath(ctx: Ctx, path: string, at: string): string | null {
   if (!split) return null;
   const { root, rest } = split;
   const first = rest[0];
-  if (root !== 'inputs' && SHADOWED.includes(root) && root in ctx.inputs)
-    ctx.push(
-      'warning',
-      'SHADOWED',
-      at,
-      `The scanner display cannot read "${root}" directly. Write inputs.${root} to show it.`,
-      { name: root },
-    );
+  if (root !== 'inputs' && SHADOWED.includes(root) && root in ctx.inputs) {
+    const seen = warned.get(ctx) ?? new Set<string>();
+    warned.set(ctx, seen);
+    if (!seen.has(root)) {
+      seen.add(root);
+      ctx.push(
+        'warning',
+        'SHADOWED',
+        at,
+        `The scanner display cannot read "${root}" directly. Write inputs.${root} to show it.`,
+        { name: root },
+      );
+    }
+  }
   if (root === 'pass') {
     if (first && SECRET_PASS_KEYS.has(first))
       ctx.push('error', 'SECRET', at, `pass.${first} is never shown on scanners.`);
