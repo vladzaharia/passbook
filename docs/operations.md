@@ -515,7 +515,7 @@ gap; turning it back on does not backfill.
 
 ### Printed ticket PDFs
 
-PDFs are drawn in the Worker with pdf-lib (Latin-1 text; other characters are folded or become "?", logged once per PDF as `PRINT_PDF_TEXT_LOSSY`). They are cached in R2 under `prints/{orgId}/{passId}/{printId}.pdf`, with bulk files under `prints/{orgId}/bulk/`. The daily `prints.pdf_sweep` deletes PDFs of ended prints and bulk files after 24 h.
+PDFs are drawn in the Worker with pdf-lib from the same content and layout boxes as the print page. Text is Rubik and JetBrains Mono, embedded as subsets from the static assets (`public/fonts/pdf/`, rebuilt by `tools/build-pdf-fonts.sh`), so names in Latin, Latin extended and Cyrillic stay real text. A character those fonts lack (CJK, emoji, Vietnamese tone marks, Hebrew, Arabic) becomes its base letter or "?", logged once per PDF as `PRINT_PDF_TEXT_LOSSY`. A logo or art file that cannot be read or embedded is left out and logged as `PRINT_PDF_IMAGE_MISSING` or `PRINT_PDF_IMAGE_INVALID`. PDFs are cached in R2 under `prints/{orgId}/{passId}/{printId}.pdf`, valid while the pass version and the drawing fingerprint (design, content, code, test mode, print number, image names, `PDF_RENDER_VERSION`) match; bump `PDF_RENDER_VERSION` in `pdf-render.ts` when the drawing changes. Bulk files are under `prints/{orgId}/bulk/`. The daily `prints.pdf_sweep` deletes PDFs of ended prints and bulk files after 24 h.
 
 ## Runtime decisions
 

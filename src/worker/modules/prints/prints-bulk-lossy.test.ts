@@ -3,10 +3,11 @@ import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { handlePrintsBulk } from './jobs.ts';
 import { pdfKit } from './pdf-test-fixtures.ts';
 
-// The fallback reports replaced text through its callback; the job must record it in the status.
-vi.mock('./pdf-fallback.ts', () => ({
-  fallbackPdf: async (_sheets: unknown, onLossy?: () => void) => {
-    onLossy?.();
+// The renderer reports replaced text through its callback; the job must record it in the status.
+vi.mock('./pdf-render.ts', async (original) => ({
+  ...(await original<typeof import('./pdf-render.ts')>()),
+  renderPdf: async (_sheets: unknown, options: { onLossy?: () => void }) => {
+    options.onLossy?.();
     return new Uint8Array([37, 80, 68, 70]);
   },
 }));

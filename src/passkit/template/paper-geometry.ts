@@ -35,6 +35,8 @@ export const FULL_PARTS = {
   buddyInset: 6,
 } as const;
 export const HALF_FOOT = 12;
+/** The coupon's colour band; the offer and the code sit under it. */
+const COUPON_BAND = 50;
 
 export interface PaperBoxes {
   page: Box;
@@ -101,7 +103,7 @@ export function paperBoxes(
     const side: Box =
       kind === 'permit'
         ? { x: W - PAPER_INSET - 54, y: 31, w: 54, h: 84 }
-        : { x: W - 10.5 - 97, y: 10.5 + 27 + 5, w: 97, h: H - 21 - 27 - 5 - 14 };
+        : { x: W - 10.5 - 97, y: 10.5 + COUPON_BAND + 4, w: 97, h: H - 21 - COUPON_BAND - 4 - 14 };
     const out: PaperBoxes = { page, code: centred(side, code.w, code.h) };
     if (options.buddy && kind === 'coupon') out.buddy = buddyBox(W - 10.5 - 4, H - 10.5 - 11);
     return out;
