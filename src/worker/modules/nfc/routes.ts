@@ -15,6 +15,7 @@ import { listTags, passTagViews, tagView } from './repo-tags.ts';
 import { actingIn, orgNotFound, passNotFound, tagNotFound, tagOrg } from './route-access.ts';
 import { registerEnrollmentRoutes } from './routes-enrollments.ts';
 import { registerTagMoreRoutes } from './routes-more.ts';
+import { registerTagTypeRoutes } from './routes-types.ts';
 import {
   reportTagLost,
   restoreTag,
@@ -158,3 +159,4 @@ for (const [action, summary, act] of [
 
 registerEnrollmentRoutes(nfcRoutes);
 registerTagMoreRoutes(nfcRoutes);
+registerTagTypeRoutes(nfcRoutes);

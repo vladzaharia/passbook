@@ -120,6 +120,7 @@ export async function tenantAuthorityOf(
         scope === 'webhooks:manage') ||
       (capability === 'templates:read' && scope === 'templates:read') ||
       (capability === 'scanning:read' && scope === 'scans:read') ||
+      (capability === 'scanning:manage' && scope === 'scans:write') ||
       ((capability === 'messages:read' || capability === 'messages:manage') &&
         scope === 'messages:write');
     if (!scope || !permitted || !auth.scopes.includes(scope)) throw new ForbiddenError();
